@@ -1,0 +1,183 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  UV_SYSTEM_PYTHON: 1
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          # Unit tests should be runnable on Linux without macOS-only deps
+          # and without pulling heavy e2e tooling like Playwright.
+          uv pip install -e ".[test]" --system
+
+      - name: Run unit tests with coverage
+        run: |
+          uv run pytest tests/unit/ -q --cov=holdspeak --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: unit
+          name: unit-tests
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  integration-tests:
+    name: Integration Tests (macOS)
+    runs-on: macos-14  # Apple Silicon
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install system dependencies
+        run: |
+          # Install PortAudio for sounddevice
+          brew install portaudio
+
+      - name: Install dependencies
+        run: |
+          # Integration suite should be explicit and lightweight.
+          uv pip install -e ".[test]" --system
+
+      - name: Run integration tests with coverage
+        run: |
+          uv run python -m pytest tests/integration/ -v --cov=holdspeak --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: integration
+          name: integration-tests
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  e2e-tests:
+    name: E2E Tests (macOS)
+    runs-on: macos-14  # Apple Silicon
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install system dependencies
+        run: |
+          # Install PortAudio for sounddevice
+          brew install portaudio
+
+      - name: Install dependencies
+        run: |
+          # E2E job runs mock-based tests (excluding metal hardware tests).
+          uv pip install -e ".[test]" --system
+
+      - name: Run E2E tests with coverage
+        run: |
+          uv run python -m pytest tests/e2e/ -v -m "e2e and not metal" --cov=holdspeak --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: e2e
+          name: e2e-tests
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  linux-smoke:
+    name: Linux Smoke
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg libportaudio2
+
+      - name: Install dependencies
+        run: |
+          # Linux smoke should use explicit Linux extras and avoid Apple-only deps.
+          uv pip install -e ".[test,linux]" --system
+
+      - name: Run Linux smoke checks
+        run: |
+          bash scripts/linux_smoke.sh
+
+  all-tests:
+    name: All Tests Summary
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-tests, linux-smoke]
+    if: always()
+
+    steps:
+      - name: Check test results
+        run: |
+          if [[ "${{ needs.unit-tests.result }}" == "failure" ]] || \
+             [[ "${{ needs.integration-tests.result }}" == "failure" ]] || \
+             [[ "${{ needs.e2e-tests.result }}" == "failure" ]] || \
+             [[ "${{ needs.linux-smoke.result }}" == "failure" ]]; then
+            echo "One or more test jobs failed"
+            exit 1
+          fi
+          echo "All test jobs passed or were skipped"

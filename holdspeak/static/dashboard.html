@@ -1,0 +1,1027 @@
+<!doctype html>
+<html lang="en" class="dark h-full bg-slate-950">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HoldSpeak Meeting</title>
+
+    <script>
+      window.tailwind = window.tailwind || {};
+      window.tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            boxShadow: {
+              glow: "0 0 0 1px rgba(148,163,184,0.08), 0 10px 30px rgba(0,0,0,0.55)",
+            },
+          },
+        },
+      };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+      [x-cloak] {
+        display: none !important;
+      }
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.25);
+        border-radius: 999px;
+        border: 2px solid rgba(2, 6, 23, 1);
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(148, 163, 184, 0.35);
+      }
+    </style>
+
+    <script>
+      function HoldSpeakDashboard() {
+        const MAX_ENTRIES = 2000;
+
+        const pad2 = (n) => String(n).padStart(2, "0");
+        const formatSeconds = (seconds) => {
+          const s = Math.max(0, Math.floor(Number(seconds) || 0));
+          const h = Math.floor(s / 3600);
+          const m = Math.floor((s % 3600) / 60);
+          const ss = s % 60;
+          return h ? `${pad2(h)}:${pad2(m)}:${pad2(ss)}` : `${pad2(m)}:${pad2(ss)}`;
+        };
+
+        const safeJsonParse = (text) => {
+          try {
+            return JSON.parse(text);
+          } catch {
+            return null;
+          }
+        };
+
+        return {
+          ws: null,
+          pingTimer: null,
+          reconnectTimer: null,
+          reconnectAttempt: 0,
+          reconnectAt: null,
+          connectionState: "connecting", // connecting | connected | reconnecting | disconnected | stopped
+
+          duration: "00:00",
+          stopped: false,
+          stopInProgress: false,
+
+          entries: [],
+          segments: [],
+          intel: { topics: [], action_items: [], summary: "" },
+          intelBuffer: "",
+          intelStreaming: false,
+
+          exportOpen: false,
+          bookmarkModalOpen: false,
+          bookmarkLabel: "",
+
+          metadataModalOpen: false,
+          editingTitle: "",
+          editingTags: "",
+          meetingTitle: "",
+          meetingTags: [],
+
+          notifications: [],
+
+          init() {
+            this.fetchInitialState();
+            this.connect();
+            window.addEventListener("beforeunload", () => this.cleanup());
+          },
+
+          cleanup() {
+            if (this.reconnectTimer) window.clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+            if (this.pingTimer) window.clearInterval(this.pingTimer);
+            this.pingTimer = null;
+            if (this.ws) {
+              try {
+                this.ws.close();
+              } catch {}
+            }
+            this.ws = null;
+          },
+
+          wsUrl() {
+            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+            return `${protocol}//${window.location.host}/ws`;
+          },
+
+          connectionLabel() {
+            if (this.connectionState === "connected") return "Connected";
+            if (this.connectionState === "connecting") return "Connecting…";
+            if (this.connectionState === "stopped") return "Stopped";
+            if (this.connectionState === "reconnecting") {
+              if (!this.reconnectAt) return "Reconnecting…";
+              const remaining = Math.max(0, Math.ceil((this.reconnectAt - Date.now()) / 1000));
+              return remaining ? `Reconnecting in ${remaining}s…` : "Reconnecting…";
+            }
+            return "Disconnected";
+          },
+
+          connectionDotClass() {
+            if (this.connectionState === "connected") return "bg-emerald-400 shadow-[0_0_0_3px_rgba(16,185,129,0.15)]";
+            if (this.connectionState === "connecting") return "bg-sky-400 shadow-[0_0_0_3px_rgba(56,189,248,0.15)]";
+            if (this.connectionState === "reconnecting") return "bg-amber-400 shadow-[0_0_0_3px_rgba(251,191,36,0.15)]";
+            if (this.connectionState === "stopped") return "bg-slate-500 shadow-[0_0_0_3px_rgba(100,116,139,0.15)]";
+            return "bg-rose-400 shadow-[0_0_0_3px_rgba(244,63,94,0.15)]";
+          },
+
+          async fetchInitialState() {
+            try {
+              const resp = await fetch("/api/state", { headers: { accept: "application/json" } });
+              if (!resp.ok) return;
+              const state = await resp.json();
+              if (typeof state?.formatted_duration === "string" && state.formatted_duration) {
+                this.duration = state.formatted_duration;
+              } else if (typeof state?.duration === "number") {
+                this.duration = formatSeconds(state.duration);
+              }
+              if (typeof state?.title === "string") {
+                this.meetingTitle = state.title;
+              }
+              if (Array.isArray(state?.tags)) {
+                this.meetingTags = state.tags;
+              }
+            } catch {}
+          },
+
+          connect() {
+            if (this.stopped) return;
+            if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) return;
+
+            this.connectionState = this.reconnectAttempt ? "reconnecting" : "connecting";
+            this.reconnectAt = null;
+
+            try {
+              this.ws = new WebSocket(this.wsUrl());
+            } catch (e) {
+              this.scheduleReconnect("ws_create_failed");
+              return;
+            }
+
+            this.ws.onopen = () => {
+              this.connectionState = "connected";
+              this.reconnectAttempt = 0;
+              this.reconnectAt = null;
+              this.startPing();
+              this.toast("Connected to meeting stream.");
+            };
+
+            this.ws.onmessage = (event) => {
+              const msg = typeof event.data === "string" ? safeJsonParse(event.data) : null;
+              if (!msg || typeof msg.type !== "string") return;
+              this.handleMessage(msg);
+            };
+
+            this.ws.onerror = () => {
+              // Allow onclose to handle reconnection.
+            };
+
+            this.ws.onclose = () => {
+              if (this.connectionState !== "stopped") this.connectionState = "disconnected";
+              this.stopPing();
+              this.ws = null;
+              this.scheduleReconnect("ws_closed");
+            };
+          },
+
+          startPing() {
+            this.stopPing();
+            this.pingTimer = window.setInterval(() => {
+              if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+              try {
+                this.ws.send("ping");
+              } catch {}
+            }, 15000);
+          },
+
+          stopPing() {
+            if (this.pingTimer) window.clearInterval(this.pingTimer);
+            this.pingTimer = null;
+          },
+
+          scheduleReconnect(reason) {
+            if (this.stopped) return;
+            if (this.reconnectTimer) return;
+
+            this.reconnectAttempt = Math.min(this.reconnectAttempt + 1, 8);
+            const base = 500 * Math.pow(2, this.reconnectAttempt - 1);
+            const delay = Math.min(12000, base + Math.floor(Math.random() * 400));
+            this.connectionState = "reconnecting";
+            this.reconnectAt = Date.now() + delay;
+
+            this.reconnectTimer = window.setTimeout(() => {
+              this.reconnectTimer = null;
+              this.connect();
+            }, delay);
+
+            if (reason) this.toast("Connection lost. Reconnecting…");
+          },
+
+          handleMessage(msg) {
+            const { type, data } = msg;
+            if (type === "duration") {
+              if (typeof data === "string") this.duration = data;
+              return;
+            }
+            if (type === "segment") {
+              this.addSegment(data || {});
+              return;
+            }
+            if (type === "intel") {
+              this.updateIntel(data || {});
+              return;
+            }
+            if (type === "intel_token") {
+              // Streaming token from LLM
+              if (!this.intelStreaming) {
+                // New streaming session - clear previous buffer
+                this.intelBuffer = "";
+                this.intelStreaming = true;
+              }
+              this.intelBuffer += data;
+              return;
+            }
+            if (type === "intel_complete") {
+              // Final parsed intel result
+              this.updateIntel(data || {});
+              this.intelBuffer = "";
+              this.intelStreaming = false;
+              return;
+            }
+            if (type === "bookmark") {
+              this.addBookmark(data || {});
+              return;
+            }
+            if (type === "action_item_updated") {
+              this.updateActionItemInList(data || {});
+              return;
+            }
+            if (type === "stopped") {
+              this.stopped = true;
+              this.connectionState = "stopped";
+              this.toast("Meeting stopped.");
+              this.cleanup();
+              return;
+            }
+            if (type === "meeting_updated") {
+              if (typeof data?.title !== "undefined") {
+                this.meetingTitle = data.title || "";
+              }
+              if (Array.isArray(data?.tags)) {
+                this.meetingTags = data.tags;
+              }
+              return;
+            }
+          },
+
+          timeLabel(value) {
+            if (typeof value === "number") return formatSeconds(value);
+            if (typeof value === "string" && value.trim()) return value.trim();
+            return "";
+          },
+
+          speakerStyle(speaker) {
+            const s = String(speaker || "").toLowerCase();
+            if (s === "me" || s.includes("me")) {
+              return {
+                badge: "bg-sky-500/15 text-sky-200 ring-1 ring-inset ring-sky-500/30",
+                dot: "bg-sky-400",
+                border: "border-sky-500/40",
+              };
+            }
+            if (s === "remote" || s.includes("remote")) {
+              return {
+                badge: "bg-emerald-500/15 text-emerald-200 ring-1 ring-inset ring-emerald-500/30",
+                dot: "bg-emerald-400",
+                border: "border-emerald-500/40",
+              };
+            }
+            return {
+              badge: "bg-slate-500/15 text-slate-200 ring-1 ring-inset ring-slate-500/30",
+              dot: "bg-slate-400",
+              border: "border-slate-500/40",
+            };
+          },
+
+          addSegment(data) {
+            const speaker = data?.speaker ?? "Unknown";
+            const start = this.timeLabel(data?.start_time);
+            const end = this.timeLabel(data?.end_time);
+            const text = String(data?.text ?? "").trim();
+            if (!text) return;
+
+            const segment = {
+              kind: "segment",
+              id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+              speaker,
+              start,
+              end,
+              text,
+              receivedAt: new Date().toISOString(),
+            };
+
+            this.segments.push(segment);
+            this.entries.push(segment);
+            if (this.entries.length > MAX_ENTRIES) this.entries.splice(0, this.entries.length - MAX_ENTRIES);
+
+            this.$nextTick(() => this.scrollTranscriptToBottom());
+          },
+
+          addBookmark(data) {
+            const timestamp = data?.timestamp ?? data?.time ?? "";
+            const label = String(data?.label ?? "Bookmark").trim() || "Bookmark";
+            const entry = {
+              kind: "bookmark",
+              id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+              label,
+              timestamp: this.timeLabel(timestamp),
+            };
+            this.entries.push(entry);
+            if (this.entries.length > MAX_ENTRIES) this.entries.splice(0, this.entries.length - MAX_ENTRIES);
+            this.toast(`Saved bookmark: ${label}`);
+            this.$nextTick(() => this.scrollTranscriptToBottom());
+          },
+
+          updateIntel(data) {
+            const topics = Array.isArray(data?.topics) ? data.topics.filter((t) => typeof t === "string") : [];
+            const action_items = Array.isArray(data?.action_items) ? data.action_items : [];
+            const summary = typeof data?.summary === "string" ? data.summary : "";
+
+            this.intel = {
+              topics,
+              action_items: action_items.map((item) => ({
+                id: String(item?.id ?? "").trim(),
+                task: String(item?.task ?? "").trim(),
+                owner: String(item?.owner ?? "").trim(),
+                due: String(item?.due ?? "").trim(),
+                status: String(item?.status ?? "pending").trim(),
+              })),
+              summary,
+            };
+          },
+
+          updateActionItemInList(updatedItem) {
+            // Find and update the action item in the intel list
+            const idx = this.intel.action_items.findIndex((item) => item.id === updatedItem.id);
+            if (idx >= 0) {
+              this.intel.action_items[idx] = {
+                id: String(updatedItem?.id ?? "").trim(),
+                task: String(updatedItem?.task ?? "").trim(),
+                owner: String(updatedItem?.owner ?? "").trim(),
+                due: String(updatedItem?.due ?? "").trim(),
+                status: String(updatedItem?.status ?? "pending").trim(),
+              };
+            }
+          },
+
+          async toggleActionItemStatus(item) {
+            if (!item.id) return;
+
+            // Toggle between pending and done
+            const newStatus = item.status === "done" ? "pending" : "done";
+
+            try {
+              const resp = await fetch(`/api/action-items/${item.id}`, {
+                method: "PATCH",
+                headers: { "content-type": "application/json", accept: "application/json" },
+                body: JSON.stringify({ status: newStatus }),
+              });
+              if (!resp.ok) throw new Error("update_failed");
+              // The WebSocket will broadcast the update
+            } catch {
+              this.toast("Failed to update action item.");
+            }
+          },
+
+          async dismissActionItem(item) {
+            if (!item.id) return;
+
+            try {
+              const resp = await fetch(`/api/action-items/${item.id}`, {
+                method: "PATCH",
+                headers: { "content-type": "application/json", accept: "application/json" },
+                body: JSON.stringify({ status: "dismissed" }),
+              });
+              if (!resp.ok) throw new Error("dismiss_failed");
+              // The WebSocket will broadcast the update
+            } catch {
+              this.toast("Failed to dismiss action item.");
+            }
+          },
+
+          scrollTranscriptToBottom() {
+            const el = this.$refs.transcriptScroll;
+            if (!el) return;
+            el.scrollTop = el.scrollHeight;
+          },
+
+          transcriptPlainText() {
+            return this.segments
+              .map((s) => {
+                const t = s.start ? `[${s.start}${s.end ? `–${s.end}` : ""}] ` : "";
+                const who = s.speaker ? `${s.speaker}: ` : "";
+                return `${t}${who}${s.text}`;
+              })
+              .join("\n");
+          },
+
+          async copyAll() {
+            const text = this.transcriptPlainText();
+            if (!text.trim()) {
+              this.toast("Nothing to copy yet.");
+              return;
+            }
+            try {
+              await navigator.clipboard.writeText(text);
+              this.toast("Copied transcript to clipboard.");
+            } catch {
+              const ta = document.createElement("textarea");
+              ta.value = text;
+              ta.setAttribute("readonly", "true");
+              ta.style.position = "fixed";
+              ta.style.top = "-9999px";
+              document.body.appendChild(ta);
+              ta.select();
+              try {
+                document.execCommand("copy");
+                this.toast("Copied transcript to clipboard.");
+              } catch {
+                this.toast("Copy failed.");
+              } finally {
+                document.body.removeChild(ta);
+              }
+            }
+          },
+
+          download(filename, content, mime) {
+            const blob = new Blob([content], { type: mime || "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+          },
+
+          exportAs(format) {
+            const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+            if (format === "txt") {
+              this.download(`holdspeak-meeting-${stamp}.txt`, this.transcriptPlainText(), "text/plain;charset=utf-8");
+              this.exportOpen = false;
+              return;
+            }
+            if (format === "json") {
+              const payload = {
+                exported_at: new Date().toISOString(),
+                duration: this.duration,
+                transcript: this.segments,
+                intelligence: this.intel,
+              };
+              this.download(
+                `holdspeak-meeting-${stamp}.json`,
+                JSON.stringify(payload, null, 2),
+                "application/json;charset=utf-8"
+              );
+              this.exportOpen = false;
+              return;
+            }
+          },
+
+          openBookmarkModal() {
+            this.bookmarkLabel = "";
+            this.bookmarkModalOpen = true;
+            this.$nextTick(() => this.$refs.bookmarkInput?.focus?.());
+          },
+
+          async submitBookmark() {
+            const label = String(this.bookmarkLabel || "").trim();
+            try {
+              const resp = await fetch("/api/bookmark", {
+                method: "POST",
+                headers: { "content-type": "application/json", accept: "application/json" },
+                body: JSON.stringify({ label }),
+              });
+              if (!resp.ok) throw new Error("bookmark_failed");
+              this.toast("Bookmark requested.");
+            } catch {
+              this.toast("Bookmark failed.");
+            } finally {
+              this.bookmarkModalOpen = false;
+              this.bookmarkLabel = "";
+            }
+          },
+
+          openMetadataModal() {
+            this.editingTitle = this.meetingTitle;
+            this.editingTags = this.meetingTags.join(", ");
+            this.metadataModalOpen = true;
+            this.$nextTick(() => this.$refs.titleInput?.focus?.());
+          },
+
+          async saveMetadata() {
+            const title = String(this.editingTitle || "").trim();
+            const tagsStr = String(this.editingTags || "");
+            const tags = tagsStr.split(",").map(t => t.trim().toLowerCase()).filter(t => t);
+
+            try {
+              const resp = await fetch("/api/meeting", {
+                method: "PATCH",
+                headers: { "content-type": "application/json", accept: "application/json" },
+                body: JSON.stringify({ title, tags }),
+              });
+              if (!resp.ok) throw new Error("metadata_failed");
+              this.toast("Meeting details saved.");
+            } catch {
+              this.toast("Failed to save meeting details.");
+            } finally {
+              this.metadataModalOpen = false;
+            }
+          },
+
+          async stopMeeting() {
+            if (this.stopped || this.stopInProgress) return;
+            const ok = window.confirm("Stop the meeting session?");
+            if (!ok) return;
+            this.stopInProgress = true;
+            try {
+              const resp = await fetch("/api/stop", { method: "POST", headers: { accept: "application/json" } });
+              if (!resp.ok) throw new Error("stop_failed");
+              this.toast("Stop requested.");
+            } catch {
+              this.toast("Stop failed.");
+            } finally {
+              this.stopInProgress = false;
+            }
+          },
+
+          toast(message) {
+            const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            this.notifications.push({ id, message });
+            window.setTimeout(() => {
+              const idx = this.notifications.findIndex((n) => n.id === id);
+              if (idx >= 0) this.notifications.splice(idx, 1);
+            }, 3500);
+          },
+        };
+      }
+    </script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  </head>
+
+  <body class="min-h-full text-slate-100 selection:bg-sky-500/20 selection:text-slate-100">
+    <div
+      x-data="HoldSpeakDashboard()"
+      x-init="init()"
+      class="min-h-screen flex flex-col bg-[radial-gradient(800px_circle_at_20%_-10%,rgba(56,189,248,0.10),transparent_55%),radial-gradient(900px_circle_at_110%_20%,rgba(16,185,129,0.10),transparent_55%),radial-gradient(1000px_circle_at_50%_110%,rgba(139,92,246,0.09),transparent_60%)]"
+    >
+      <header class="border-b border-slate-800/60 bg-slate-950/50 backdrop-blur">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div class="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-start justify-between gap-4 sm:items-center">
+              <div>
+                <div class="flex items-center gap-3">
+                  <div class="h-10 w-10 rounded-xl bg-slate-900 ring-1 ring-inset ring-slate-800/70 shadow-glow grid place-items-center">
+                    <span class="text-sm font-semibold tracking-wide text-slate-200">HS</span>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <h1 class="text-xl sm:text-2xl font-semibold tracking-tight" x-text="meetingTitle || 'HoldSpeak Meeting'"></h1>
+                      <button
+                        type="button"
+                        class="p-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                        :disabled="stopped"
+                        @click="openMetadataModal()"
+                        title="Edit meeting details"
+                      >
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <p class="text-sm text-slate-400" x-text="meetingTitle ? 'Live transcript and meeting intelligence' : 'Live transcript and meeting intelligence'"></p>
+                      <template x-for="tag in meetingTags" :key="tag">
+                        <span class="inline-flex items-center rounded-full bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-300 ring-1 ring-inset ring-violet-500/20" x-text="tag"></span>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3 sm:justify-end">
+              <div class="flex items-center gap-2 rounded-full bg-slate-900/70 px-3 py-1.5 ring-1 ring-inset ring-slate-800/70">
+                <span class="h-2.5 w-2.5 rounded-full" :class="connectionDotClass()"></span>
+                <span class="text-xs text-slate-300" x-text="connectionLabel()"></span>
+              </div>
+
+              <div class="flex items-center gap-2 rounded-xl bg-slate-900/70 px-3 py-2 ring-1 ring-inset ring-slate-800/70">
+                <span class="text-xs uppercase tracking-wider text-slate-400">Duration</span>
+                <span class="font-mono text-sm text-slate-200" x-text="duration"></span>
+              </div>
+
+              <button
+                type="button"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600/90 px-4 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-rose-500/40 hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-400/50 disabled:opacity-60 disabled:hover:bg-rose-600/90"
+                :disabled="stopped || stopInProgress"
+                @click="stopMeeting()"
+              >
+                <span x-show="!stopInProgress" x-cloak>Stop</span>
+                <span x-show="stopInProgress" x-cloak>Stopping…</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1">
+        <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <section class="rounded-2xl bg-slate-950/40 ring-1 ring-inset ring-slate-800/60 shadow-glow overflow-hidden">
+              <div class="flex items-center justify-between border-b border-slate-800/60 px-4 py-3">
+                <div>
+                  <h2 class="text-sm font-semibold text-slate-200">Live Transcript</h2>
+                  <p class="text-xs text-slate-400" x-text="`${segments.length} segments`"></p>
+                </div>
+                <button
+                  type="button"
+                  class="text-xs text-slate-300 hover:text-slate-100 rounded-lg px-2 py-1 ring-1 ring-inset ring-slate-800/70 hover:ring-slate-700/70"
+                  @click="scrollTranscriptToBottom()"
+                >
+                  Jump to latest
+                </button>
+              </div>
+
+              <div
+                class="h-[60vh] lg:h-[68vh] overflow-y-auto px-4 py-4"
+                x-ref="transcriptScroll"
+                @click.outside="exportOpen = false"
+              >
+                <div class="space-y-3">
+                  <template x-if="entries.length === 0">
+                    <div class="rounded-xl border border-dashed border-slate-800/80 bg-slate-950/30 px-4 py-6">
+                      <p class="text-sm text-slate-300">Waiting for transcript…</p>
+                      <p class="mt-1 text-xs text-slate-500">When audio segments arrive, they will appear here in real time.</p>
+                    </div>
+                  </template>
+
+                  <template x-for="entry in entries" :key="entry.id">
+                    <div>
+                      <template x-if="entry.kind === 'bookmark'">
+                        <div class="relative overflow-hidden rounded-xl border border-slate-800/70 bg-slate-900/30 px-4 py-3">
+                          <div class="absolute inset-y-0 left-0 w-1 bg-amber-400/70"></div>
+                          <div class="flex items-center justify-between gap-3">
+                            <div class="min-w-0">
+                              <div class="text-sm font-semibold text-slate-200" x-text="entry.label"></div>
+                              <div class="text-xs text-slate-400" x-text="entry.timestamp ? `Bookmark at ${entry.timestamp}` : 'Bookmark'"></div>
+                            </div>
+                            <div class="text-xs text-amber-200/90 ring-1 ring-inset ring-amber-500/30 bg-amber-500/10 rounded-full px-2 py-1">
+                              Bookmark
+                            </div>
+                          </div>
+                        </div>
+                      </template>
+
+                      <template x-if="entry.kind === 'segment'">
+                        <div class="flex gap-3">
+                          <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-900/70 ring-1 ring-inset ring-slate-800/70">
+                            <span class="h-2.5 w-2.5 rounded-full" :class="speakerStyle(entry.speaker).dot"></span>
+                          </div>
+                          <div class="min-w-0 flex-1 rounded-2xl bg-slate-900/30 ring-1 ring-inset ring-slate-800/70 px-4 py-3">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                              <div class="flex items-center gap-2 min-w-0">
+                                <span
+                                  class="inline-flex items-center gap-2 rounded-full px-2 py-1 text-xs font-semibold"
+                                  :class="speakerStyle(entry.speaker).badge"
+                                >
+                                  <span class="h-1.5 w-1.5 rounded-full" :class="speakerStyle(entry.speaker).dot"></span>
+                                  <span class="truncate" x-text="entry.speaker"></span>
+                                </span>
+                                <span class="text-xs font-mono text-slate-400" x-text="entry.start ? `[${entry.start}${entry.end ? `–${entry.end}` : ''}]` : ''"></span>
+                              </div>
+                            </div>
+                            <p class="mt-2 text-sm leading-relaxed text-slate-100 whitespace-pre-wrap break-words" x-text="entry.text"></p>
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </section>
+
+            <section class="space-y-6">
+              <!-- Streaming Intel Indicator -->
+              <div
+                x-show="intelStreaming"
+                x-cloak
+                class="rounded-2xl bg-slate-950/40 ring-1 ring-inset ring-violet-500/40 shadow-glow overflow-hidden"
+              >
+                <div class="border-b border-violet-500/30 px-4 py-3">
+                  <div class="flex items-center gap-3">
+                    <div class="relative flex h-3 w-3">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-violet-500"></span>
+                    </div>
+                    <h2 class="text-sm font-semibold text-violet-200">Analyzing...</h2>
+                  </div>
+                  <p class="text-xs text-slate-400 mt-1">AI is extracting meeting intelligence</p>
+                </div>
+                <div class="px-4 py-4 max-h-48 overflow-y-auto">
+                  <pre class="text-xs text-slate-300 font-mono whitespace-pre-wrap break-all" x-text="intelBuffer"></pre>
+                  <span class="inline-block w-2 h-4 bg-violet-400 animate-pulse ml-0.5"></span>
+                </div>
+              </div>
+
+              <div class="rounded-2xl bg-slate-950/40 ring-1 ring-inset ring-slate-800/60 shadow-glow overflow-hidden">
+                <div class="border-b border-slate-800/60 px-4 py-3">
+                  <h2 class="text-sm font-semibold text-slate-200">Topics</h2>
+                  <p class="text-xs text-slate-400">Key themes detected from the conversation</p>
+                </div>
+                <div class="px-4 py-4">
+                  <template x-if="intel.topics.length === 0">
+                    <p class="text-sm text-slate-400">No topics yet.</p>
+                  </template>
+                  <div class="flex flex-wrap gap-2" x-show="intel.topics.length > 0" x-cloak>
+                    <template x-for="topic in intel.topics" :key="topic">
+                      <span
+                        class="inline-flex items-center rounded-full bg-slate-900/60 px-3 py-1 text-xs font-semibold text-slate-200 ring-1 ring-inset ring-slate-800/70"
+                        x-text="topic"
+                      ></span>
+                    </template>
+                  </div>
+                </div>
+              </div>
+
+              <div class="rounded-2xl bg-slate-950/40 ring-1 ring-inset ring-slate-800/60 shadow-glow overflow-hidden">
+                <div class="border-b border-slate-800/60 px-4 py-3">
+                  <h2 class="text-sm font-semibold text-slate-200">Action Items</h2>
+                  <p class="text-xs text-slate-400">Tasks captured during the meeting</p>
+                </div>
+                <div class="px-4 py-4">
+                  <template x-if="intel.action_items.length === 0">
+                    <p class="text-sm text-slate-400">No action items yet.</p>
+                  </template>
+                  <ul class="space-y-3" x-show="intel.action_items.length > 0" x-cloak>
+                    <template x-for="(item, idx) in intel.action_items.filter(i => i.status !== 'dismissed')" :key="item.id || `${idx}-${item.task}`">
+                      <li
+                        class="flex items-start gap-3 rounded-xl px-3 py-3"
+                        :class="item.status === 'done'
+                          ? 'bg-emerald-950/20 ring-1 ring-inset ring-emerald-800/40'
+                          : 'bg-slate-900/30 ring-1 ring-inset ring-slate-800/70'"
+                      >
+                        <button
+                          type="button"
+                          class="mt-0.5 h-5 w-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors"
+                          :class="item.status === 'done'
+                            ? 'border-emerald-500 bg-emerald-500 text-white'
+                            : 'border-slate-600 bg-slate-950 hover:border-slate-500'"
+                          @click="toggleActionItemStatus(item)"
+                          :disabled="stopped"
+                        >
+                          <svg x-show="item.status === 'done'" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </button>
+                        <div class="min-w-0 flex-1">
+                          <div class="flex flex-wrap items-center justify-between gap-2">
+                            <p
+                              class="text-sm font-semibold"
+                              :class="item.status === 'done' ? 'line-through text-slate-500' : 'text-slate-100'"
+                              x-text="item.task || 'Action item'"
+                            ></p>
+                            <div class="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                              <span x-show="item.owner" x-cloak class="rounded-full bg-slate-900/60 ring-1 ring-inset ring-slate-800/70 px-2 py-1" x-text="`Owner: ${item.owner}`"></span>
+                              <span x-show="item.due" x-cloak class="rounded-full bg-slate-900/60 ring-1 ring-inset ring-slate-800/70 px-2 py-1" x-text="`Due: ${item.due}`"></span>
+                              <button
+                                type="button"
+                                class="rounded-full bg-slate-900/60 ring-1 ring-inset ring-slate-800/70 px-2 py-1 hover:bg-rose-900/40 hover:ring-rose-700/50 hover:text-rose-300 transition-colors"
+                                @click="dismissActionItem(item)"
+                                :disabled="stopped"
+                                title="Dismiss"
+                              >
+                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    </template>
+                  </ul>
+                  <!-- Dismissed items count -->
+                  <div
+                    x-show="intel.action_items.filter(i => i.status === 'dismissed').length > 0"
+                    x-cloak
+                    class="mt-3 text-xs text-slate-500"
+                  >
+                    <span x-text="`${intel.action_items.filter(i => i.status === 'dismissed').length} dismissed`"></span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="rounded-2xl bg-slate-950/40 ring-1 ring-inset ring-slate-800/60 shadow-glow overflow-hidden">
+                <div class="border-b border-slate-800/60 px-4 py-3">
+                  <h2 class="text-sm font-semibold text-slate-200">Summary</h2>
+                  <p class="text-xs text-slate-400">High-level meeting recap</p>
+                </div>
+                <div class="px-4 py-4">
+                  <template x-if="!intel.summary">
+                    <p class="text-sm text-slate-400">No summary yet.</p>
+                  </template>
+                  <div x-show="intel.summary" x-cloak class="rounded-xl bg-slate-900/30 ring-1 ring-inset ring-slate-800/70 p-4">
+                    <p class="text-sm leading-relaxed text-slate-100 whitespace-pre-wrap" x-text="intel.summary"></p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+
+      <footer class="border-t border-slate-800/60 bg-slate-950/50 backdrop-blur">
+        <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="text-xs text-slate-400">
+              <span class="text-slate-300 font-semibold">HoldSpeak</span> · Meeting Dashboard
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 sm:justify-end">
+              <button
+                type="button"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900/60 px-4 py-2 text-sm font-semibold text-slate-100 ring-1 ring-inset ring-slate-800/70 hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+                :disabled="stopped"
+                @click="openBookmarkModal()"
+              >
+                Bookmark
+              </button>
+
+              <button
+                type="button"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900/60 px-4 py-2 text-sm font-semibold text-slate-100 ring-1 ring-inset ring-slate-800/70 hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+                @click="copyAll()"
+              >
+                Copy All
+              </button>
+
+              <div class="relative" @keydown.escape.window="exportOpen = false">
+                <button
+                  type="button"
+                  class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900/60 px-4 py-2 text-sm font-semibold text-slate-100 ring-1 ring-inset ring-slate-800/70 hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+                  @click="exportOpen = !exportOpen"
+                >
+                  Export
+                  <svg class="h-4 w-4 text-slate-300" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path
+                      fill-rule="evenodd"
+                      d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </button>
+
+                <div
+                  x-show="exportOpen"
+                  x-cloak
+                  @click.outside="exportOpen = false"
+                  class="absolute right-0 z-20 mt-2 w-44 overflow-hidden rounded-xl bg-slate-950 ring-1 ring-inset ring-slate-800/70 shadow-glow"
+                >
+                  <button
+                    type="button"
+                    class="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-900/60"
+                    @click="exportAs('txt')"
+                  >
+                    Export .txt
+                  </button>
+                  <button
+                    type="button"
+                    class="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-900/60"
+                    @click="exportAs('json')"
+                  >
+                    Export .json
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      <div class="fixed inset-x-0 top-3 z-50 flex justify-center px-4 sm:justify-end">
+        <div class="w-full max-w-md space-y-2">
+          <template x-for="note in notifications" :key="note.id">
+            <div class="rounded-xl bg-slate-950/80 ring-1 ring-inset ring-slate-800/70 px-4 py-3 shadow-glow backdrop-blur">
+              <p class="text-sm text-slate-200" x-text="note.message"></p>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <div
+        x-show="bookmarkModalOpen"
+        x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm"
+        @keydown.escape.window="bookmarkModalOpen = false"
+      >
+        <div class="w-full max-w-md overflow-hidden rounded-2xl bg-slate-950 ring-1 ring-inset ring-slate-800/70 shadow-glow">
+          <div class="border-b border-slate-800/60 px-5 py-4">
+            <h3 class="text-sm font-semibold text-slate-100">Add bookmark</h3>
+            <p class="mt-1 text-xs text-slate-400">Optional label to help you find this moment later.</p>
+          </div>
+          <div class="px-5 py-4">
+            <label class="block text-xs font-semibold text-slate-300">Label</label>
+            <input
+              x-ref="bookmarkInput"
+              type="text"
+              class="mt-2 w-full rounded-xl bg-slate-900/50 px-3 py-2 text-sm text-slate-100 ring-1 ring-inset ring-slate-800/70 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+              placeholder="e.g. Decision on Q1 roadmap"
+              x-model="bookmarkLabel"
+              @keydown.enter.prevent="submitBookmark()"
+            />
+          </div>
+          <div class="flex items-center justify-end gap-2 border-t border-slate-800/60 px-5 py-4">
+            <button
+              type="button"
+              class="rounded-xl px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-inset ring-slate-800/70 hover:bg-slate-900/60"
+              @click="bookmarkModalOpen = false"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="rounded-xl bg-sky-600/90 px-4 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-sky-500/40 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-400/40"
+              @click="submitBookmark()"
+            >
+              Save bookmark
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metadata Modal -->
+      <div
+        x-show="metadataModalOpen"
+        x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm"
+        @keydown.escape.window="metadataModalOpen = false"
+      >
+        <div class="w-full max-w-md overflow-hidden rounded-2xl bg-slate-950 ring-1 ring-inset ring-slate-800/70 shadow-glow">
+          <div class="border-b border-slate-800/60 px-5 py-4">
+            <h3 class="text-sm font-semibold text-slate-100">Meeting Details</h3>
+            <p class="mt-1 text-xs text-slate-400">Set a title and tags for this meeting.</p>
+          </div>
+          <div class="px-5 py-4 space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300">Title</label>
+              <input
+                x-ref="titleInput"
+                type="text"
+                class="mt-2 w-full rounded-xl bg-slate-900/50 px-3 py-2 text-sm text-slate-100 ring-1 ring-inset ring-slate-800/70 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+                placeholder="e.g. Weekly standup"
+                x-model="editingTitle"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300">Tags</label>
+              <p class="text-xs text-slate-500 mt-0.5">Separate multiple tags with commas</p>
+              <input
+                type="text"
+                class="mt-2 w-full rounded-xl bg-slate-900/50 px-3 py-2 text-sm text-slate-100 ring-1 ring-inset ring-slate-800/70 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+                placeholder="e.g. planning, team, q1"
+                x-model="editingTags"
+                @keydown.enter.prevent="saveMetadata()"
+              />
+            </div>
+          </div>
+          <div class="flex items-center justify-end gap-2 border-t border-slate-800/60 px-5 py-4">
+            <button
+              type="button"
+              class="rounded-xl px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-inset ring-slate-800/70 hover:bg-slate-900/60"
+              @click="metadataModalOpen = false"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="rounded-xl bg-sky-600/90 px-4 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-sky-500/40 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-400/40"
+              @click="saveMetadata()"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

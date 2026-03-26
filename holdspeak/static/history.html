@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting History - HoldSpeak</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0b0f14;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #1e293b;
+        }
+        h1 {
+            color: #38bdf8;
+            font-size: 24px;
+        }
+        .tabs {
+            display: flex;
+            gap: 8px;
+        }
+        .tab {
+            padding: 8px 16px;
+            background: #1e293b;
+            border: none;
+            border-radius: 6px;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .tab.active {
+            background: #38bdf8;
+            color: #0b0f14;
+        }
+        .search-box {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 10px 14px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #e2e8f0;
+            font-size: 14px;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #38bdf8;
+        }
+        .search-box button {
+            padding: 10px 20px;
+            background: #38bdf8;
+            border: none;
+            border-radius: 6px;
+            color: #0b0f14;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .meetings-list, .actions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .meeting-card, .action-card {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .meeting-card:hover, .action-card:hover {
+            border-color: #38bdf8;
+        }
+        .meeting-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .meeting-title {
+            font-weight: 500;
+            color: #e2e8f0;
+        }
+        .meeting-date {
+            color: #64748b;
+            font-size: 13px;
+        }
+        .meeting-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .action-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        .action-task {
+            flex: 1;
+        }
+        .action-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .action-status.pending { background: #fef3c7; color: #92400e; }
+        .action-status.done { background: #d1fae5; color: #065f46; }
+        .action-status.dismissed { background: #e2e8f0; color: #475569; }
+        .action-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: #64748b;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 48px;
+            color: #64748b;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .modal {
+            background: #0f172a;
+            border-radius: 12px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #1e293b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 {
+            color: #38bdf8;
+            font-size: 18px;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .transcript-segment {
+            padding: 8px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+        .transcript-segment:last-child { border-bottom: none; }
+        .segment-speaker {
+            font-weight: 500;
+            color: #38bdf8;
+        }
+        .segment-time {
+            color: #64748b;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        .segment-text {
+            margin-top: 4px;
+            color: #e2e8f0;
+        }
+        .filter-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        .filter-toggle input {
+            width: 18px;
+            height: 18px;
+        }
+        .loading {
+            text-align: center;
+            padding: 24px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body x-data="historyApp()">
+    <div class="container">
+        <header>
+            <h1>HoldSpeak Meeting History</h1>
+            <div class="tabs">
+                <button class="tab" :class="{ active: tab === 'meetings' }" @click="tab = 'meetings'">Meetings</button>
+                <button class="tab" :class="{ active: tab === 'actions' }" @click="tab = 'actions'">Action Items</button>
+            </div>
+        </header>
+
+        <!-- Meetings Tab -->
+        <div x-show="tab === 'meetings'">
+            <div class="search-box">
+                <input type="text" placeholder="Search transcripts..." x-model="searchQuery" @keyup.enter="searchMeetings">
+                <button @click="searchMeetings">Search</button>
+            </div>
+
+            <div x-show="loading" class="loading">Loading meetings...</div>
+
+            <div x-show="!loading && meetings.length === 0" class="empty-state">
+                <p>No meetings found. Start a meeting to see it here.</p>
+            </div>
+
+            <div class="meetings-list" x-show="!loading && meetings.length > 0">
+                <template x-for="meeting in meetings" :key="meeting.id">
+                    <div class="meeting-card" @click="openMeeting(meeting.id)">
+                        <div class="meeting-header">
+                            <span class="meeting-title" x-text="meeting.title || '(untitled)'"></span>
+                            <span class="meeting-date" x-text="formatDate(meeting.started_at)"></span>
+                        </div>
+                        <div class="meeting-stats">
+                            <span class="stat">
+                                <span x-text="formatDuration(meeting.duration_seconds)"></span>
+                            </span>
+                            <span class="stat" x-text="meeting.segment_count + ' segments'"></span>
+                            <span class="stat" x-show="meeting.action_item_count > 0" x-text="meeting.action_item_count + ' action items'"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Action Items Tab -->
+        <div x-show="tab === 'actions'">
+            <div class="filter-toggle">
+                <input type="checkbox" id="showCompleted" x-model="showCompleted" @change="loadActionItems">
+                <label for="showCompleted">Show completed/dismissed items</label>
+            </div>
+
+            <div x-show="loadingActions" class="loading">Loading action items...</div>
+
+            <div x-show="!loadingActions && actionItems.length === 0" class="empty-state">
+                <p x-text="showCompleted ? 'No action items found.' : 'No pending action items.'"></p>
+            </div>
+
+            <div class="actions-list" x-show="!loadingActions && actionItems.length > 0">
+                <template x-for="item in actionItems" :key="item.id">
+                    <div class="action-card" @click="toggleActionStatus(item)">
+                        <div class="action-header">
+                            <span class="action-task" x-text="item.task"></span>
+                            <span class="action-status" :class="item.status" x-text="item.status"></span>
+                        </div>
+                        <div class="action-meta">
+                            <span x-show="item.owner" x-text="'@' + item.owner"></span>
+                            <span x-text="formatDate(item.meeting_date)"></span>
+                            <span x-text="item.meeting_title || item.meeting_id.substring(0, 8)"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Meeting Detail Modal -->
+        <div class="modal-overlay" x-show="selectedMeeting" @click.self="selectedMeeting = null" x-cloak>
+            <div class="modal" x-show="selectedMeeting">
+                <div class="modal-header">
+                    <h2 x-text="selectedMeeting?.title || 'Meeting Transcript'"></h2>
+                    <button class="modal-close" @click="selectedMeeting = null">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <template x-if="selectedMeeting">
+                        <div>
+                            <p style="color: #64748b; margin-bottom: 16px;">
+                                <span x-text="formatDate(selectedMeeting.started_at)"></span> |
+                                <span x-text="formatDuration(selectedMeeting.duration)"></span> |
+                                <span x-text="(selectedMeeting.segments?.length || 0) + ' segments'"></span>
+                            </p>
+
+                            <template x-if="selectedMeeting.intel?.summary">
+                                <div style="background: #1e293b; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+                                    <strong style="color: #38bdf8;">Summary</strong>
+                                    <p style="margin-top: 8px;" x-text="selectedMeeting.intel.summary"></p>
+                                </div>
+                            </template>
+
+                            <template x-if="selectedMeeting.intel?.topics?.length">
+                                <div style="margin-bottom: 16px;">
+                                    <strong style="color: #38bdf8;">Topics:</strong>
+                                    <span x-text="selectedMeeting.intel.topics.join(', ')"></span>
+                                </div>
+                            </template>
+
+                            <h3 style="color: #38bdf8; margin-bottom: 12px;">Transcript</h3>
+                            <template x-for="segment in selectedMeeting.segments" :key="segment.start_time">
+                                <div class="transcript-segment">
+                                    <span class="segment-speaker" x-text="segment.speaker"></span>
+                                    <span class="segment-time" x-text="formatTimestamp(segment.start_time)"></span>
+                                    <p class="segment-text" x-text="segment.text"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function historyApp() {
+            return {
+                tab: 'meetings',
+                loading: true,
+                loadingActions: true,
+                meetings: [],
+                actionItems: [],
+                searchQuery: '',
+                showCompleted: false,
+                selectedMeeting: null,
+
+                async init() {
+                    await this.loadMeetings();
+                    await this.loadActionItems();
+                },
+
+                async loadMeetings() {
+                    this.loading = true;
+                    try {
+                        const res = await fetch('/api/meetings');
+                        const data = await res.json();
+                        this.meetings = data.meetings || [];
+                    } catch (e) {
+                        console.error('Failed to load meetings:', e);
+                        this.meetings = [];
+                    }
+                    this.loading = false;
+                },
+
+                async searchMeetings() {
+                    if (!this.searchQuery.trim()) {
+                        return this.loadMeetings();
+                    }
+                    this.loading = true;
+                    try {
+                        const res = await fetch(`/api/meetings?search=${encodeURIComponent(this.searchQuery)}`);
+                        const data = await res.json();
+                        this.meetings = data.meetings || [];
+                    } catch (e) {
+                        console.error('Failed to search meetings:', e);
+                    }
+                    this.loading = false;
+                },
+
+                async loadActionItems() {
+                    this.loadingActions = true;
+                    try {
+                        const res = await fetch(`/api/all-action-items?include_completed=${this.showCompleted}`);
+                        const data = await res.json();
+                        this.actionItems = data.action_items || [];
+                    } catch (e) {
+                        console.error('Failed to load action items:', e);
+                        this.actionItems = [];
+                    }
+                    this.loadingActions = false;
+                },
+
+                async openMeeting(id) {
+                    try {
+                        const res = await fetch(`/api/meetings/${id}`);
+                        this.selectedMeeting = await res.json();
+                    } catch (e) {
+                        console.error('Failed to load meeting:', e);
+                    }
+                },
+
+                async toggleActionStatus(item) {
+                    const newStatus = item.status === 'done' ? 'pending' : 'done';
+                    try {
+                        await fetch(`/api/all-action-items/${item.id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus })
+                        });
+                        item.status = newStatus;
+                    } catch (e) {
+                        console.error('Failed to update action item:', e);
+                    }
+                },
+
+                formatDate(iso) {
+                    if (!iso) return '';
+                    const d = new Date(iso);
+                    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                },
+
+                formatDuration(seconds) {
+                    if (!seconds) return '--:--';
+                    const mins = Math.floor(seconds / 60);
+                    const secs = Math.floor(seconds % 60);
+                    if (mins >= 60) {
+                        const hrs = Math.floor(mins / 60);
+                        const m = mins % 60;
+                        return `${hrs}:${String(m).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                    }
+                    return `${mins}:${String(secs).padStart(2, '0')}`;
+                },
+
+                formatTimestamp(seconds) {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = Math.floor(seconds % 60);
+                    return `[${mins}:${String(secs).padStart(2, '0')}]`;
+                }
+            };
+        }
+    </script>
+</body>
+</html>

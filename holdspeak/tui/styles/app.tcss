@@ -1,0 +1,1289 @@
+/* Design tokens for HoldSpeak TUI */
+
+$bg-base: #0b0f14;
+$bg-surface: #0c1420;
+$bg-elevated: #0a111a;
+$bg-hover: #111827;
+
+$text-primary: #e5e7eb;
+$text-secondary: #9ca3af;
+$text-muted: #6b7280;
+
+/* QuakeWorld-ish cyan HUD accent */
+$accent-primary: #22d3ee;
+$accent-secondary: #67e8f9;
+
+$status-success: #34d399;
+$status-warning: #fbbf24;
+$status-error: #fb7185;
+$status-info: #60a5fa;
+
+$border-subtle: #1f2937;
+$border-default: #253046;
+$border-accent: #374151;
+
+/* Meeting-specific tokens */
+$meeting-bg: $bg-elevated;
+$meeting-indicator: $status-error;
+$meeting-text: $text-primary;
+$meeting-text-secondary: $text-secondary;
+$meeting-info: $text-muted;
+$meeting-levels: $accent-secondary;
+$meeting-url: $accent-secondary;
+
+/* Bookmark tokens */
+$bookmark-text: #fbbf24;
+$bookmark-bg: #422006;
+/* Component styles for HoldSpeak TUI */
+
+/* Screen base */
+Screen {
+    background: $bg-base;
+    color: $text-primary;
+}
+
+/* Main chrome container */
+#chrome {
+    height: 100%;
+    width: 100%;
+    border: heavy $border-default;
+    background: $bg-surface;
+    layers: texture base;
+}
+
+/* Subtle CRT texture overlay */
+#crt_overlay {
+    layer: texture;
+    position: absolute;
+    offset: 0 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.12;
+    color: $accent-secondary;
+}
+
+#chrome > * {
+    layer: base;
+}
+
+#chrome > #crt_overlay {
+    layer: texture;
+}
+
+/* Header */
+#header {
+    height: 3;
+    padding: 0 2;
+    background: $bg-elevated;
+    border-bottom: solid $border-default;
+}
+
+#title {
+    width: auto;
+    content-align: left middle;
+    text-style: bold;
+    color: $accent-primary;
+    margin-top: 1;
+}
+
+HeaderRule {
+    width: 1fr;
+    height: 1;
+    content-align: left middle;
+    margin: 0 1;
+    color: $border-default;
+    margin-top: 1;
+}
+
+/* Icon buttons */
+IconButton {
+    width: 5;
+    height: 1;
+    content-align: center middle;
+    margin-left: 1;
+    color: $text-muted;
+    background: $bg-surface;
+    border: solid $border-default;
+    margin-top: 0;
+}
+
+IconButton:hover {
+    color: $text-primary;
+    background: $bg-hover;
+    border: solid $accent-secondary;
+}
+
+/* Status bar */
+#statusbar {
+    height: 3;
+    padding: 0 2;
+    border-bottom: solid $border-default;
+    background: $bg-surface;
+}
+
+StatusWidget {
+    width: auto;
+    height: 1;
+    content-align: left middle;
+    margin-top: 1;
+}
+
+#status_indicator {
+    width: 2;
+    content-align: left middle;
+}
+
+#status_label {
+    text-style: bold;
+}
+
+StatusWidget.idle #status_indicator { color: $accent-secondary; }
+StatusWidget.recording #status_indicator { color: $status-error; }
+StatusWidget.transcribing #status_indicator { color: $accent-primary; }
+StatusWidget.loading #status_indicator { color: $accent-primary; }
+StatusWidget.error #status_indicator { color: $status-error; }
+
+/* Audio meter */
+AudioMeterWidget {
+    width: 1fr;
+    height: 1;
+    margin: 0 2;
+    content-align: left middle;
+    margin-top: 1;
+}
+
+/* Hotkey hint */
+HotkeyHintWidget {
+    width: auto;
+    height: 1;
+    content-align: right middle;
+    color: $text-muted;
+    margin-top: 1;
+}
+
+/* History widget */
+HistoryWidget {
+    height: 1fr;
+    padding: 0 1;
+    background: $bg-surface;
+}
+
+#history_container {
+    height: 100%;
+    width: 100%;
+}
+
+#empty_state {
+    padding: 2 4;
+    text-align: center;
+    color: $text-muted;
+}
+
+#history_list {
+    background: transparent;
+}
+
+.history_line {
+    color: $text-primary;
+}
+
+ListView > ListItem {
+    padding: 0 1;
+    background: transparent;
+}
+
+ListView > ListItem:hover {
+    background: $bg-elevated;
+}
+
+ListView > ListItem.--highlight {
+    background: $bg-hover;
+}
+
+/* Footer */
+#footer {
+    height: auto;
+    min-height: 1;
+    padding: 0 2;
+    border-top: solid $accent-primary;
+    background: $bg-elevated;
+    color: $text-muted;
+}
+
+/* Meeting bar */
+MeetingBarWidget {
+    height: 1;
+    padding: 0 2;
+    background: $bg-elevated;
+    border-bottom: solid $accent-primary;
+    display: none;
+}
+
+MeetingBarWidget.active {
+    display: block;
+}
+
+#meeting_indicator {
+    width: 2;
+    color: $meeting-indicator;
+    text-style: bold;
+}
+
+#meeting_label {
+    width: auto;
+    margin-left: 1;
+    color: $meeting-text;
+    text-style: bold;
+}
+
+#meeting_duration {
+    width: auto;
+    margin-left: 2;
+    color: $meeting-text-secondary;
+}
+
+#meeting_spacer {
+    width: 1fr;
+}
+
+#meeting_info {
+    width: auto;
+    color: $meeting-info;
+}
+
+#meeting_levels {
+    width: auto;
+    margin-left: 2;
+    color: $meeting-levels;
+}
+
+#meeting_url {
+    width: auto;
+    margin-left: 2;
+    color: $meeting-url;
+}
+
+#meeting_title_display {
+    width: auto;
+    margin-left: 2;
+    color: $meeting-text;
+    text-style: italic;
+}
+/* Screen/modal styles for HoldSpeak TUI */
+
+/* Settings dialog */
+#settings_dialog {
+    width: 90%;
+    max-width: 72;
+    height: 85%;
+    padding: 1 1;
+    background: $bg-surface;
+    border: heavy $border-default;
+}
+
+#settings_title {
+    text-style: bold;
+    color: $accent-primary;
+    margin-bottom: 1;
+}
+
+#settings_scroll {
+    height: 1fr;
+}
+
+.settings_label {
+    color: $text-muted;
+    margin-top: 1;
+}
+
+#settings_actions {
+    margin-top: 1;
+    height: 3;
+    content-align: right middle;
+}
+
+#settings_actions Button {
+    margin-left: 1;
+}
+
+/* Transcript dialog */
+#transcript_dialog {
+    width: 80%;
+    height: 80%;
+    padding: 1 2;
+    background: $bg-surface;
+    border: heavy $border-default;
+}
+
+#transcript_title {
+    text-style: bold;
+    color: $accent-primary;
+    margin-bottom: 1;
+}
+
+#transcript_list {
+    height: 1fr;
+    background: $bg-elevated;
+    border: solid $border-default;
+    margin-bottom: 1;
+}
+
+.transcript_line {
+    color: $text-primary;
+}
+
+.bookmark_marker {
+    color: $bookmark-text;
+    background: $bookmark-bg;
+    padding: 0 1;
+}
+
+#transcript_actions {
+    height: 3;
+    content-align: right middle;
+}
+
+#transcript_actions Button {
+    margin-left: 1;
+}
+
+/* History screen */
+#history_dialog {
+    width: 70;
+    height: 80%;
+    padding: 1 2;
+    background: $bg-surface;
+    border: round $accent-primary;
+}
+
+#history_title {
+    text-align: center;
+    text-style: bold;
+    color: $accent-primary;
+    margin-bottom: 1;
+}
+
+#history_actions {
+    height: 3;
+    content-align: right middle;
+}
+
+#history_actions Button {
+    margin-left: 1;
+}
+
+/* Action Items screen */
+#actions_dialog {
+    width: 70;
+    height: 80%;
+    padding: 1 2;
+    background: $bg-surface;
+    border: round $accent-primary;
+}
+
+#actions_title {
+    text-align: center;
+    text-style: bold;
+    color: $accent-primary;
+    margin-bottom: 1;
+}
+
+#actions_list {
+    height: 1fr;
+    background: $bg-elevated;
+    border: solid $border-default;
+    margin-bottom: 1;
+}
+
+.action_line {
+    color: $text-primary;
+}
+
+#actions_actions {
+    height: 3;
+    content-align: right middle;
+}
+
+#actions_actions Button {
+    margin-left: 1;
+}
+
+/* Metadata dialog */
+#metadata_dialog {
+    width: 60;
+    padding: 1 2;
+    background: $bg-surface;
+    border: round $accent-primary;
+}
+
+#metadata_title {
+    text-align: center;
+    text-style: bold;
+    color: $accent-primary;
+    margin-bottom: 1;
+}
+
+.field_label {
+    color: $text-muted;
+    margin-top: 1;
+}
+
+#title_input, #tags_input {
+    margin-top: 0;
+    margin-bottom: 1;
+}
+
+#metadata_actions {
+    height: 3;
+    margin-top: 1;
+    content-align: right middle;
+}
+
+#metadata_actions Button {
+    margin-left: 1;
+}
+
+/* Help dialog */
+#help_dialog {
+    width: 80;
+    height: 85%;
+    padding: 1 2;
+    background: $bg-surface;
+    border: round $accent-primary;
+}
+
+#help_title {
+    text-align: center;
+    text-style: bold;
+    color: $accent-primary;
+    margin-bottom: 1;
+}
+
+#help_tabs {
+    height: 1fr;
+}
+
+#help_tabs ContentSwitcher {
+    height: 1fr;
+}
+
+#help_tabs TabPane {
+    padding: 1;
+}
+
+#help_tabs VerticalScroll {
+    height: 100%;
+    background: $bg-elevated;
+    border: solid $border-default;
+}
+
+#help_tabs Static {
+    padding: 1 2;
+}
+
+#help_actions {
+    height: 3;
+    margin-top: 1;
+    content-align: right middle;
+}
+
+#help_actions Button {
+    margin-left: 1;
+}
+
+/* Meeting cockpit screen */
+#meeting_cockpit {
+    height: 100%;
+    width: 100%;
+    background: $bg-base;
+}
+
+#meeting_header {
+    height: 2;
+    padding: 0 2;
+    background: $meeting-bg;
+}
+
+#cockpit_indicator {
+    width: 2;
+    color: $meeting-indicator;
+    text-style: bold;
+}
+
+#cockpit_label {
+    width: auto;
+    margin-left: 1;
+    color: $meeting-text;
+    text-style: bold;
+}
+
+#cockpit_title {
+    width: auto;
+    margin-left: 2;
+    color: $meeting-text;
+    text-style: italic;
+}
+
+#cockpit_duration {
+    width: auto;
+    margin-left: 2;
+    color: $meeting-text-secondary;
+}
+
+#cockpit_levels {
+    width: auto;
+    margin-left: 2;
+    color: $meeting-levels;
+}
+
+#cockpit_spacer {
+    width: 1fr;
+}
+
+#cockpit_info {
+    width: auto;
+    color: $meeting-info;
+}
+
+#meeting_content {
+    height: 1fr;
+    padding: 1;
+}
+
+#transcript_panel {
+    width: 2fr;
+    height: 100%;
+    margin-right: 1;
+    background: $bg-surface;
+    border: solid $border-default;
+}
+
+#intel_panel {
+    width: 1fr;
+    height: 100%;
+    background: $bg-surface;
+    border: solid $border-default;
+}
+
+.panel_title {
+    padding: 0 1;
+    text-style: bold;
+    color: $accent-primary;
+    border-bottom: solid $border-default;
+}
+
+#transcript_live {
+    height: 1fr;
+    background: transparent;
+}
+
+#intel_scroll {
+    height: 1fr;
+    padding: 1;
+}
+
+#intel_content {
+    padding: 0;
+}
+
+#meeting_footer {
+    height: 1;
+    padding: 0 2;
+    background: $bg-elevated;
+    color: $text-muted;
+    border-top: solid $border-default;
+}
+
+/* ========== Tab Bar Styles ========== */
+
+TabBarWidget {
+    height: 2;
+    padding: 0 2;
+    background: $bg-elevated;
+    border-bottom: solid $border-default;
+}
+
+#hud_title {
+    width: auto;
+    content-align: left middle;
+    color: $accent-primary;
+    text-style: bold;
+}
+
+#hud_spacer_left {
+    width: 1fr;
+}
+
+#hud_spacer_right {
+    width: 1fr;
+}
+
+.tab_item {
+    width: auto;
+    height: 1;
+    padding: 0 2;
+    margin-right: 1;
+    margin-top: 0;
+    color: $text-muted;
+    background: $bg-surface;
+    border: solid $border-default;
+}
+
+.tab_item:hover {
+    color: $text-primary;
+    background: $bg-hover;
+}
+
+.tab_item.active {
+    color: $bg-base;
+    text-style: bold;
+    background: $accent-primary;
+    border: solid $accent-secondary;
+}
+
+/* Main content switcher */
+#main_content {
+    height: 1fr;
+}
+
+/* Voice typing pane */
+#voice_typing_pane {
+    height: 100%;
+}
+
+/* ========== Meetings Hub Styles ========== */
+
+MeetingsHubPane {
+    height: 100%;
+    padding: 1;
+    background: $bg-surface;
+}
+
+#meetings_hub_header {
+    height: 3;
+    padding: 0 1;
+}
+
+#meetings_hub_title {
+    width: auto;
+    text-style: bold;
+    color: $accent-primary;
+    margin-top: 1;
+}
+
+#meetings_hub_spacer {
+    width: 1fr;
+}
+
+#meetings_search_input {
+    width: 40;
+    margin-top: 0;
+}
+
+#meetings_filter_bar {
+    height: 3;
+    padding: 0 1;
+    margin-bottom: 1;
+}
+
+.filter_btn {
+    margin-right: 1;
+}
+
+.filter_btn.active {
+    background: $accent-primary;
+    color: $bg-base;
+}
+
+#filter_spacer {
+    width: 1fr;
+}
+
+#meetings_count_label {
+    width: auto;
+    margin-right: 2;
+    margin-top: 1;
+    color: $text-muted;
+}
+
+#meetings_content {
+    height: 1fr;
+}
+
+#meetings_list_panel {
+    width: 2fr;
+    margin-right: 1;
+}
+
+#meetings_list_container {
+    height: 1fr;
+    background: $bg-elevated;
+    border: solid $border-default;
+}
+
+#meetings_list {
+    padding: 1;
+}
+
+#meetings_empty_state {
+    padding: 4;
+    text-align: center;
+    color: $text-muted;
+    display: none;
+}
+
+#meetings_preview_panel {
+    width: 1fr;
+    padding: 1;
+    background: $bg-elevated;
+    border: solid $border-default;
+}
+
+#meetings_preview_title {
+    text-style: bold;
+    color: $accent-primary;
+    margin-bottom: 1;
+}
+
+#meetings_preview_body {
+    height: 1fr;
+    padding: 0 1;
+    color: $text-primary;
+    border: solid $border-subtle;
+    background: $bg-surface;
+}
+
+#meetings_preview_actions {
+    margin-top: 1;
+    height: 3;
+    content-align: left middle;
+}
+
+#meetings_preview_actions Button {
+    margin-right: 1;
+}
+
+#preview_delete_cancel {
+    display: none;
+}
+
+/* ========== Meeting Row Styles (List + Selection) ========== */
+
+.meeting_row {
+    height: auto;
+    min-height: 5;
+    padding: 0 1 1 1;
+    background: $bg-surface;
+    border-bottom: solid $border-subtle;
+    border-left: heavy transparent;
+}
+
+.meeting_row:hover {
+    background: $bg-hover;
+}
+
+.meeting_row.selected {
+    border-left: heavy $accent-primary;
+    background: #0f1a27;
+}
+
+.meeting_row_body {
+    width: 1fr;
+    margin-top: 1;
+    margin-right: 1;
+}
+
+.meeting_row_title {
+    width: 100%;
+    text-style: bold;
+    color: $text-primary;
+    margin-bottom: 0;
+}
+
+.meeting_row_meta {
+    width: 100%;
+    color: $text-muted;
+    margin-top: 0;
+}
+
+.meeting_row_tags {
+    width: 100%;
+    color: $accent-secondary;
+    margin-top: 0;
+}
+
+.meeting_row_open_btn {
+    width: 9;
+    min-width: 9;
+    margin-top: 1;
+}
+
+/* ========== Meeting Detail Screen ========== */
+
+#meeting_detail_dialog {
+    width: 90%;
+    height: 90%;
+    background: $bg-surface;
+    border: round $accent-primary;
+    padding: 1 2;
+}
+
+#meeting_detail_header {
+    height: auto;
+    margin-bottom: 1;
+    border-bottom: solid $border-default;
+    padding-bottom: 1;
+}
+
+#detail_title {
+    text-style: bold;
+    color: $accent-primary;
+    text-align: center;
+    width: 100%;
+}
+
+#detail_meta {
+    height: 1;
+    margin-top: 1;
+    content-align: center middle;
+}
+
+.detail_meta_item {
+    width: auto;
+    margin-right: 3;
+    color: $text-muted;
+}
+
+#detail_tags {
+    height: 1;
+    margin-top: 1;
+    content-align: center middle;
+}
+
+.detail_tag {
+    width: auto;
+    padding: 0 1;
+    margin-right: 1;
+    color: $accent-secondary;
+    background: $bg-elevated;
+}
+
+#meeting_detail_tabs {
+    height: 1fr;
+}
+
+#meeting_detail_footer {
+    height: 3;
+    margin-top: 1;
+    content-align: right middle;
+    border-top: solid $border-default;
+    padding-top: 1;
+}
+
+#meeting_detail_footer Button {
+    margin-left: 1;
+}
+
+/* Overview tab */
+#overview_scroll {
+    height: 100%;
+    padding: 1;
+}
+
+.detail_section {
+    margin-bottom: 2;
+}
+
+.detail_section_title {
+    text-style: bold;
+    color: $accent-primary;
+    margin-bottom: 1;
+}
+
+.detail_summary_text {
+    color: $text-primary;
+    padding: 1;
+    background: $bg-elevated;
+    border: solid $border-subtle;
+}
+
+.detail_empty {
+    color: $text-muted;
+    padding: 1;
+}
+
+.detail_empty_full {
+    color: $text-muted;
+    padding: 2;
+    text-align: center;
+}
+
+.detail_topic {
+    color: $text-secondary;
+    padding-left: 1;
+}
+
+.detail_action_summary {
+    color: $text-muted;
+    margin-bottom: 1;
+}
+
+.detail_action_preview {
+    color: $text-primary;
+    padding-left: 1;
+}
+
+/* Actions tab */
+#actions_scroll {
+    height: 100%;
+    padding: 1;
+}
+
+.detail_action_group_title {
+    text-style: bold;
+    color: $text-secondary;
+    margin-top: 1;
+    margin-bottom: 1;
+}
+
+.action_item_row {
+    height: auto;
+    padding: 0 1;
+    margin-bottom: 1;
+    background: $bg-elevated;
+    border: solid $border-subtle;
+}
+
+.action_item_row:hover {
+    background: $bg-hover;
+}
+
+.action_item_meta {
+    color: $text-muted;
+    margin-left: 3;
+}
+
+/* Transcript tab */
+#transcript_scroll {
+    height: 100%;
+    padding: 1;
+    background: $bg-elevated;
+}
+
+.transcript_bookmark {
+    color: $bookmark-text;
+    background: $bookmark-bg;
+    padding: 0 1;
+    margin: 1 0;
+}
+
+.transcript_speaker {
+    color: $accent-secondary;
+    text-style: bold;
+    margin-top: 1;
+}
+
+.transcript_text {
+    color: $text-primary;
+    padding-left: 2;
+    margin-bottom: 1;
+}
+
+/* Speakers tab */
+#speakers_scroll {
+    height: 100%;
+    padding: 1;
+}
+
+.speaker_diarization_hint {
+    color: $text-muted;
+    padding: 1;
+    margin-bottom: 1;
+    background: $bg-elevated;
+    border: dashed $border-subtle;
+}
+
+/* Speaker card - contact list style */
+.speaker_card {
+    height: auto;
+    padding: 1;
+    margin-bottom: 1;
+    background: $bg-elevated;
+    border: solid $border-subtle;
+}
+
+.speaker_card:hover {
+    background: $bg-hover;
+    border: solid $accent-secondary;
+}
+
+.speaker_card:focus {
+    border: solid $accent-primary;
+}
+
+.speaker_card_header {
+    height: 1;
+}
+
+.speaker_avatar {
+    width: 3;
+    text-align: center;
+}
+
+.speaker_name {
+    width: auto;
+    text-style: bold;
+    color: $text-primary;
+    margin-right: 1;
+}
+
+.speaker_edit_icon {
+    width: 2;
+    color: $text-muted;
+}
+
+.speaker_card:hover .speaker_edit_icon {
+    color: $accent-primary;
+}
+
+.speaker_stat_badge {
+    width: auto;
+    dock: right;
+    padding: 0 1;
+    color: $accent-secondary;
+    background: $bg-surface;
+}
+
+.speaker_meta {
+    color: $text-muted;
+    margin-top: 0;
+    padding-left: 2;
+}
+
+.speaker_rename_hint {
+    color: $accent-primary;
+    text-style: italic;
+    padding-left: 2;
+    margin-top: 0;
+}
+
+/* Speaker rename modal */
+#speaker_rename_dialog {
+    width: 50;
+    padding: 1 2;
+    background: $bg-surface;
+    border: round $accent-primary;
+}
+
+#speaker_rename_title {
+    text-align: center;
+    text-style: bold;
+    color: $accent-primary;
+    margin-bottom: 1;
+}
+
+.speaker_rename_hint_label {
+    color: $text-muted;
+    margin-bottom: 1;
+}
+
+#speaker_rename_input {
+    margin-bottom: 1;
+}
+
+#speaker_rename_actions {
+    height: 3;
+    margin-top: 1;
+    content-align: right middle;
+}
+
+#speaker_rename_actions Button {
+    margin-left: 1;
+}
+
+/* Avatar preview row */
+#avatar_preview_row {
+    height: 3;
+    margin-bottom: 1;
+    content-align: center middle;
+}
+
+#avatar_preview {
+    width: 4;
+    text-align: center;
+    text-style: bold;
+}
+
+#avatar_preview_name {
+    width: auto;
+    text-style: bold;
+    color: $text-primary;
+    margin-left: 1;
+}
+
+/* Avatar grid picker */
+#avatar_grid {
+    grid-size: 8;
+    grid-gutter: 1;
+    height: auto;
+    margin-bottom: 1;
+    padding: 1;
+    background: $bg-elevated;
+    border: solid $border-subtle;
+}
+
+.avatar_btn {
+    width: 3;
+    min-width: 3;
+    height: 1;
+    padding: 0;
+    background: $bg-surface;
+    border: none;
+}
+
+.avatar_btn:hover {
+    background: $bg-hover;
+}
+
+.avatar_btn.selected {
+    background: $accent-primary;
+    color: $bg-base;
+}
+
+/* ========== Speaker Profile Screen ========== */
+
+#speaker_profile_dialog {
+    width: 85%;
+    height: 90%;
+    background: $bg-surface;
+    border: round $accent-primary;
+    padding: 1 2;
+}
+
+#speaker_profile_header {
+    height: auto;
+    padding: 1;
+    margin-bottom: 1;
+    border-bottom: solid $border-default;
+    text-align: center;
+}
+
+#profile_avatar {
+    width: 100%;
+    text-align: center;
+    text-style: bold;
+}
+
+#profile_name {
+    width: 100%;
+    text-align: center;
+    text-style: bold;
+    color: $accent-primary;
+    margin-top: 1;
+}
+
+#profile_stats_line {
+    width: 100%;
+    text-align: center;
+    color: $text-secondary;
+    margin-top: 1;
+}
+
+#profile_dates_line {
+    width: 100%;
+    text-align: center;
+    color: $text-muted;
+}
+
+#profile_actions {
+    height: 3;
+    margin-top: 1;
+    content-align: center middle;
+}
+
+#profile_actions Button {
+    margin: 0 1;
+}
+
+#speaker_profile_body {
+    height: 1fr;
+    padding: 1;
+}
+
+#profile_loading {
+    text-align: center;
+    color: $text-muted;
+    padding: 2;
+}
+
+.profile_empty {
+    text-align: center;
+    color: $text-muted;
+    padding: 2;
+}
+
+/* Meeting group cards */
+.meeting_group_card {
+    margin-bottom: 2;
+    padding: 1;
+    background: $bg-elevated;
+    border: solid $border-subtle;
+}
+
+.meeting_group_card:hover {
+    border: solid $border-default;
+}
+
+.meeting_group_header {
+    height: 1;
+    margin-bottom: 1;
+    border-bottom: dashed $border-subtle;
+    padding-bottom: 1;
+}
+
+.meeting_group_title {
+    width: auto;
+    text-style: bold;
+    color: $accent-primary;
+}
+
+.meeting_group_date {
+    width: auto;
+    margin-left: 1;
+    color: $text-muted;
+}
+
+.meeting_group_segments {
+    padding: 0 1;
+}
+
+.profile_segment_row {
+    height: 1;
+    margin-bottom: 1;
+}
+
+.profile_segment_time {
+    width: 10;
+    color: $text-muted;
+}
+
+.profile_segment_text {
+    width: 1fr;
+    color: $text-primary;
+}
+
+.profile_segment_more {
+    color: $text-muted;
+    text-style: italic;
+    padding-left: 10;
+}
+
+.meeting_group_footer {
+    height: 2;
+    margin-top: 1;
+    content-align: right middle;
+}
+
+.meeting_group_view_btn {
+    width: auto;
+}
