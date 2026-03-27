@@ -490,16 +490,34 @@ class HoldSpeakMenuBar(rumps.App):
                 state = self._meeting_session.stop()
                 log.info(f"Meeting stopped: {state.id}, {len(state.segments)} segments")
 
-                # Save meeting
+                # Save meeting and report the actual persistence outcome.
                 try:
-                    path = self._meeting_session.save()
-                    rumps.notification(
-                        title="HoldSpeak",
-                        subtitle="Meeting Saved",
-                        message=f"{len(state.segments)} segments recorded",
-                    )
+                    save_result = self._meeting_session.save()
+                    if save_result.database_saved:
+                        rumps.notification(
+                            title="HoldSpeak",
+                            subtitle="Meeting Saved",
+                            message=f"{len(state.segments)} segments recorded",
+                        )
+                    elif save_result.json_saved:
+                        rumps.notification(
+                            title="HoldSpeak",
+                            subtitle="Partial Save",
+                            message="Saved to JSON only; database save failed",
+                        )
+                    else:
+                        rumps.notification(
+                            title="HoldSpeak",
+                            subtitle="Save Failed",
+                            message="Meeting stopped, but persistence failed",
+                        )
                 except Exception as e:
                     log.error(f"Failed to save meeting: {e}")
+                    rumps.notification(
+                        title="HoldSpeak",
+                        subtitle="Save Failed",
+                        message=f"Failed to save meeting: {e}",
+                    )
 
                 self._meeting_session = None
                 self._set_state("idle")

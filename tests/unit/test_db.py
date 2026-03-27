@@ -1,5 +1,6 @@
 """Unit tests for the meeting database module."""
 
+import ast
 import pytest
 from datetime import datetime
 from pathlib import Path
@@ -301,10 +302,142 @@ class TestActionItems:
         assert items[0].status == "done"
         assert items[0].completed_at is not None
 
+    def test_update_action_item_status_dismissed_sets_completed_at(self, db, sample_meeting):
+        """Dismissed action items are terminal and should get a completion timestamp."""
+        sample_meeting.intel = IntelSnapshot(
+            timestamp=60.0,
+            topics=[],
+            action_items=[
+                {
+                    "id": "action1",
+                    "task": "Task one",
+                    "owner": "Me",
+                    "status": "pending",
+                    "created_at": datetime.now().isoformat(),
+                },
+            ],
+        )
+        db.save_meeting(sample_meeting)
+
+        result = db.update_action_item_status("action1", "dismissed")
+        assert result is True
+
+        items = db.list_action_items(include_completed=True)
+        assert items[0].status == "dismissed"
+        assert items[0].completed_at is not None
+
+    def test_update_action_item_status_pending_clears_completed_at(self, db, sample_meeting):
+        """Returning an action item to pending should clear any terminal timestamp."""
+        sample_meeting.intel = IntelSnapshot(
+            timestamp=60.0,
+            topics=[],
+            action_items=[
+                {
+                    "id": "action1",
+                    "task": "Task one",
+                    "owner": "Me",
+                    "status": "done",
+                    "created_at": datetime.now().isoformat(),
+                    "completed_at": datetime.now().isoformat(),
+                },
+            ],
+        )
+        db.save_meeting(sample_meeting)
+
+        result = db.update_action_item_status("action1", "pending")
+        assert result is True
+
+        items = db.list_action_items(include_completed=True)
+        assert items[0].status == "pending"
+        assert items[0].completed_at is None
+
     def test_update_nonexistent_action_item(self, db):
         """Test updating an action item that doesn't exist."""
         result = db.update_action_item_status("nonexistent", "done")
         assert result is False
+
+    def test_update_action_item_status_rejects_invalid_status(self, db, sample_meeting):
+        """The DB layer should reject statuses outside the supported contract."""
+        sample_meeting.intel = IntelSnapshot(
+            timestamp=60.0,
+            topics=[],
+            action_items=[
+                {
+                    "id": "action1",
+                    "task": "Task one",
+                    "owner": "Me",
+                    "status": "pending",
+                    "created_at": datetime.now().isoformat(),
+                },
+            ],
+        )
+        db.save_meeting(sample_meeting)
+
+        with pytest.raises(ValueError, match="Invalid action item status"):
+            db.update_action_item_status("action1", "archived")
+
+    def test_save_meeting_preserves_terminal_action_item_status_across_resave(self, db, sample_meeting):
+        """A later re-save should not reset a completed item back to pending."""
+        sample_meeting.intel = IntelSnapshot(
+            timestamp=60.0,
+            topics=[],
+            action_items=[
+                {
+                    "id": "action1",
+                    "task": "Task one",
+                    "owner": "Me",
+                    "status": "pending",
+                    "created_at": datetime.now().isoformat(),
+                },
+            ],
+        )
+        db.save_meeting(sample_meeting)
+
+        result = db.update_action_item_status("action1", "done")
+        assert result is True
+
+        completed_item = db.list_action_items(include_completed=True)[0]
+        original_completed_at = completed_item.completed_at
+        assert original_completed_at is not None
+
+        # Simulate a subsequent intel extraction for the same action item.
+        sample_meeting.intel = IntelSnapshot(
+            timestamp=120.0,
+            topics=[],
+            action_items=[
+                {
+                    "id": "action1",
+                    "task": "Task one",
+                    "owner": "Me",
+                    "status": "pending",
+                    "created_at": datetime.now().isoformat(),
+                },
+            ],
+        )
+        db.save_meeting(sample_meeting)
+
+        resaved_item = db.list_action_items(include_completed=True)[0]
+        assert resaved_item.status == "done"
+        assert resaved_item.completed_at == original_completed_at
+
+    def test_save_meeting_rejects_invalid_action_item_status(self, db, sample_meeting):
+        """Meeting saves should fail fast on unsupported persisted action-item states."""
+        sample_meeting.intel = IntelSnapshot(
+            timestamp=60.0,
+            topics=[],
+            action_items=[
+                {
+                    "id": "action1",
+                    "task": "Task one",
+                    "owner": "Me",
+                    "status": "archived",
+                    "created_at": datetime.now().isoformat(),
+                },
+            ],
+        )
+
+        with pytest.raises(ValueError, match="Invalid action item status"):
+            db.save_meeting(sample_meeting)
 
 
 class TestTranscriptSearch:
@@ -389,3 +522,26 @@ class TestUpsert:
         retrieved = db.get_meeting(sample_meeting.id)
         assert retrieved.title == "Updated Title"
         assert len(retrieved.segments) == 3
+
+
+class TestDatabaseShape:
+    """Tests for structural invariants in the DB layer."""
+
+    def test_meeting_database_has_no_duplicate_method_definitions(self, project_root: Path):
+        """Public DB methods should have one canonical implementation each."""
+        db_path = project_root / "holdspeak" / "db.py"
+        module = ast.parse(db_path.read_text())
+
+        methods: dict[str, list[int]] = {}
+        for node in module.body:
+            if isinstance(node, ast.ClassDef) and node.name == "MeetingDatabase":
+                for item in node.body:
+                    if isinstance(item, ast.FunctionDef):
+                        methods.setdefault(item.name, []).append(item.lineno)
+
+        duplicates = {
+            name: lines
+            for name, lines in methods.items()
+            if len(lines) > 1 and not name.startswith("_")
+        }
+        assert duplicates == {}

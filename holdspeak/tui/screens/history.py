@@ -1,5 +1,6 @@
 """Meeting history screen."""
 
+from ..services.meetings import list_saved_meetings
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal
 from textual.screen import ModalScreen
@@ -26,11 +27,9 @@ class MeetingHistoryScreen(ModalScreen[None]):
         self._load_meetings()
 
     def _load_meetings(self) -> None:
-        """Load meetings from database."""
+        """Load meetings via the TUI service layer."""
         try:
-            from ...db import get_database
-            db = get_database()
-            meetings = db.list_meetings(limit=50)
+            meetings = list_saved_meetings(limit=50)
         except Exception:
             meetings = []
 

@@ -15,6 +15,7 @@ from ..messages import (
     SavedMeetingOpenDetail,
     SavedMeetingDelete,
 )
+from ..services.meetings import get_saved_meeting, list_saved_meetings, search_saved_meetings
 
 
 class MeetingRow(Horizontal):
@@ -152,22 +153,14 @@ class MeetingsHubPane(Container):
         date_from: Optional[datetime] = None,
         search_query: Optional[str] = None,
     ) -> None:
-        """Load meetings from database."""
+        """Load meetings via the TUI service layer."""
         try:
-            from ...db import get_database
-
-            db = get_database()
-
             if search_query:
-                # Full-text search returns (meeting_id, segment) tuples
-                results = db.search_transcripts(search_query, limit=100)
-                # Get unique meeting IDs
-                meeting_ids = list(dict.fromkeys(r[0] for r in results))
-                # Load summaries for those meetings
-                all_meetings = db.list_meetings(limit=100, date_from=date_from)
-                meetings = [m for m in all_meetings if m.id in meeting_ids]
+                meetings = search_saved_meetings(
+                    search_query, limit=100, date_from=date_from
+                )
             else:
-                meetings = db.list_meetings(limit=50, date_from=date_from)
+                meetings = list_saved_meetings(limit=50, date_from=date_from)
         except Exception as e:
             meetings = []
             try:
@@ -352,9 +345,7 @@ class MeetingsHubPane(Container):
         snippet = "No transcript preview available."
 
         try:
-            from ...db import get_database
-
-            detail = get_database().get_meeting(summary.id)
+            detail = get_saved_meeting(summary.id)
             if detail and detail.intel and detail.intel.summary:
                 snippet = detail.intel.summary.strip()
             elif detail and detail.segments:

@@ -1,6 +1,6 @@
 """Speaker profile screen - view all segments from a speaker across meetings."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from textual.app import ComposeResult
@@ -9,6 +9,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Label, Static
 
 from .meeting_detail import SpeakerRenameScreen, SpeakerUpdate
+from ..services.speakers import get_speaker_profile_data, update_speaker_identity
 
 
 class SpeakerProfileScreen(ModalScreen[None]):
@@ -58,23 +59,16 @@ class SpeakerProfileScreen(ModalScreen[None]):
         self._load_speaker_data()
 
     def _load_speaker_data(self) -> None:
-        """Load speaker info, stats, and segments from database."""
+        """Load speaker info, stats, and segments via the TUI service layer."""
         try:
-            from ...db import get_database
-
-            db = get_database()
-
-            # Load speaker info
-            self._speaker = db.get_speaker(self._speaker_id)
-            if not self._speaker:
+            profile = get_speaker_profile_data(self._speaker_id)
+            if not profile:
                 self._show_error("Speaker not found")
                 return
 
-            # Load stats
-            self._stats = db.get_speaker_stats(self._speaker_id)
-
-            # Load meeting groups with segments
-            self._meeting_groups = db.get_speaker_segments(self._speaker_id)
+            self._speaker = profile.speaker
+            self._stats = profile.stats
+            self._meeting_groups = profile.meeting_groups
 
             # Update UI
             self._render_header()
@@ -262,13 +256,9 @@ class SpeakerProfileScreen(ModalScreen[None]):
         )
 
     def _do_update_speaker(self, new_name: str, new_avatar: str) -> None:
-        """Persist speaker update and refresh UI."""
+        """Persist speaker update via the TUI service layer and refresh UI."""
         try:
-            from ...db import get_database
-
-            db = get_database()
-            db.update_speaker_name(self._speaker_id, new_name)
-            db.update_speaker_avatar(self._speaker_id, new_avatar)
+            update_speaker_identity(self._speaker_id, new_name, new_avatar)
 
             # Update local state
             if self._speaker:
@@ -325,7 +315,7 @@ class SpeakerProfileScreen(ModalScreen[None]):
 
         if date == today:
             return "Today"
-        elif date == today.replace(day=today.day - 1):
+        elif date == today - timedelta(days=1):
             return "Yesterday"
         else:
             return dt.strftime("%b %d, %Y")

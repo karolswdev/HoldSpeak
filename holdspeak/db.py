@@ -13,6 +13,8 @@ from .logging_config import get_logger
 
 log = get_logger("db")
 
+VALID_ACTION_ITEM_STATUSES = frozenset({"pending", "done", "dismissed"})
+
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
 SCHEMA_VERSION = 3
@@ -263,6 +265,29 @@ class MeetingDatabase:
         )
         log.info(f"Database schema updated to version {SCHEMA_VERSION}")
 
+    def _normalize_action_item_status(self, status: object) -> str:
+        """Validate and normalize an action item status value."""
+        normalized = str(status).strip().lower()
+        if normalized not in VALID_ACTION_ITEM_STATUSES:
+            raise ValueError(
+                f"Invalid action item status: {status!r}. "
+                f"Expected one of {sorted(VALID_ACTION_ITEM_STATUSES)}"
+            )
+        return normalized
+
+    def _normalize_completed_at(
+        self,
+        *,
+        status: str,
+        completed_at: object,
+    ) -> Optional[str]:
+        """Normalize completion timestamps to match the action item status."""
+        if status == "pending":
+            return None
+        if completed_at in (None, ""):
+            return datetime.now().isoformat()
+        return str(completed_at)
+
     # === Meeting CRUD ===
 
     def save_meeting(self, state: "MeetingState") -> None:
@@ -388,14 +413,31 @@ class MeetingDatabase:
             if not item_id:
                 continue
 
+            status = self._normalize_action_item_status(status)
+            completed_at = self._normalize_completed_at(
+                status=status,
+                completed_at=completed_at,
+            )
+
             conn.execute("""
                 INSERT INTO action_items
                 (id, meeting_id, task, owner, due, status, source_timestamp,
                  created_at, completed_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
-                    status = excluded.status,
-                    completed_at = excluded.completed_at
+                    meeting_id = excluded.meeting_id,
+                    task = excluded.task,
+                    owner = excluded.owner,
+                    due = excluded.due,
+                    source_timestamp = excluded.source_timestamp,
+                    status = CASE
+                        WHEN excluded.status = 'pending' THEN action_items.status
+                        ELSE excluded.status
+                    END,
+                    completed_at = CASE
+                        WHEN excluded.status = 'pending' THEN action_items.completed_at
+                        ELSE excluded.completed_at
+                    END
             """, (
                 item_id,
                 meeting_id,
@@ -626,8 +668,12 @@ class MeetingDatabase:
         self, item_id: str, status: str
     ) -> bool:
         """Update action item status. Returns True if found."""
+        status = self._normalize_action_item_status(status)
         with self._connection() as conn:
-            completed_at = datetime.now().isoformat() if status in ('done', 'dismissed') else None
+            completed_at = self._normalize_completed_at(
+                status=status,
+                completed_at=None,
+            )
             result = conn.execute("""
                 UPDATE action_items
                 SET status = ?, completed_at = ?
@@ -660,20 +706,6 @@ class MeetingDatabase:
                 )
                 results.append((r['meeting_id'], segment))
             return results
-
-    def update_action_item_status(self, action_id: str, status: str) -> bool:
-        """Update action item status. Returns True if found."""
-        with self._connection() as conn:
-            completed_at = (
-                "datetime('now')" if status == "done" else "NULL"
-            )
-            result = conn.execute(
-                f"""UPDATE action_items
-                   SET status = ?, completed_at = {completed_at}
-                   WHERE id = ?""",
-                (status, action_id),
-            )
-            return result.rowcount > 0
 
     def update_meeting_metadata(
         self, meeting_id: str, title: str, tags: list[str]

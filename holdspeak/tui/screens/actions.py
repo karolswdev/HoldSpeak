@@ -1,5 +1,6 @@
 """Action items screen."""
 
+from ..services.action_items import list_action_items, update_action_item_status
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal
 from textual.screen import ModalScreen
@@ -31,11 +32,9 @@ class ActionItemsScreen(ModalScreen[None]):
         self._load_action_items()
 
     def _load_action_items(self) -> None:
-        """Load action items from database."""
+        """Load action items via the TUI service layer."""
         try:
-            from ...db import get_database
-            db = get_database()
-            items = db.list_action_items(include_completed=self._include_completed)
+            items = list_action_items(include_completed=self._include_completed)
         except Exception:
             items = []
 
@@ -97,11 +96,8 @@ class ActionItemsScreen(ModalScreen[None]):
     def _toggle_action_item(self, item_id: str) -> None:
         """Toggle action item between pending and done."""
         try:
-            from ...db import get_database
-            db = get_database()
-
             # Find current status
-            items = db.list_action_items(include_completed=True)
+            items = list_action_items(include_completed=True)
             current_item = None
             for item in items:
                 if item.id == item_id:
@@ -110,7 +106,7 @@ class ActionItemsScreen(ModalScreen[None]):
 
             if current_item:
                 new_status = "pending" if current_item.status == "done" else "done"
-                db.update_action_item_status(item_id, new_status)
+                update_action_item_status(item_id, new_status)
                 self._load_action_items()
                 self.app.notify(f"Marked as {new_status}", timeout=1.0)
         except Exception as e:

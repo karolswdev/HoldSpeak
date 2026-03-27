@@ -32,7 +32,28 @@ Voice typing for macOS and Linux - hold a hotkey, speak, release.
 - `menubar` command is macOS-only (TUI/CLI flows are cross-platform).
 - Linux system audio capture requires an available Pulse/PipeWire monitor source.
 
+## Quick Install (Linux/macOS)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/scripts/install.sh | bash
+```
+
+Then run:
+
+```bash
+holdspeak doctor
+holdspeak
+```
+
+Optional meeting extras:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/scripts/install.sh | bash -s -- --with-meeting
+```
+
 ## Installation
+
+For local installs from this checkout:
 
 ```bash
 uv pip install -e .
@@ -81,6 +102,14 @@ holdspeak
 
 Hold your configured hotkey (default: **Right Alt/Option**) and speak.
 If global hooks are unavailable (common on Wayland), keep HoldSpeak focused and hold **v** to record.
+
+### Diagnostics
+
+```bash
+holdspeak doctor
+```
+
+Use this to verify microphone/hotkey/text-injection/transcription prerequisites and get platform-specific fixes.
 
 #### Punctuation Commands
 

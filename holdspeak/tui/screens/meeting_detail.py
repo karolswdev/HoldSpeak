@@ -8,8 +8,11 @@ from textual.containers import Container, Grid, Horizontal, Vertical, VerticalSc
 from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, Input, Label, Static, TabbedContent, TabPane
 
+from ...meeting_exports import write_meeting_export
 from ...meeting_session import MeetingState
 from ...speaker_intel import SPEAKER_AVATARS
+from ..services.action_items import update_action_item_status
+from ..services.speakers import get_known_speakers_map, update_speaker_identity
 
 
 @dataclass
@@ -378,14 +381,10 @@ class MeetingDetailScreen(ModalScreen[None]):
     def _compose_speakers(self) -> ComposeResult:
         m = self._meeting
 
-        # Load speaker avatars from database
+        # Load speaker avatars from the TUI service layer.
         db_speakers: dict[str, dict] = {}
         try:
-            from ...db import get_database
-
-            db = get_database()
-            for s in db.get_all_speakers():
-                db_speakers[s.id] = {"avatar": s.avatar, "name": s.name}
+            db_speakers = get_known_speakers_map()
         except Exception:
             pass  # Gracefully handle database errors
 
@@ -646,12 +645,9 @@ class MeetingDetailScreen(ModalScreen[None]):
             self._update_action_status(action_id, new_status)
 
     def _update_action_status(self, action_id: str, status: str) -> None:
-        """Update action item status in database."""
+        """Update action item status via the TUI service layer."""
         try:
-            from ...db import get_database
-
-            db = get_database()
-            db.update_action_item_status(action_id, status)
+            update_action_item_status(action_id, status)
             self.app.notify(
                 "Marked complete" if status == "done" else "Marked pending",
                 timeout=1.0,
@@ -662,13 +658,11 @@ class MeetingDetailScreen(ModalScreen[None]):
     def _do_update_speaker(
         self, speaker_id: str, new_name: str, new_avatar: str
     ) -> None:
-        """Persist speaker update to database and update UI."""
+        """Persist speaker update via the TUI service layer and update UI."""
         try:
-            from ...db import get_database
-
-            db = get_database()
-            name_success = db.update_speaker_name(speaker_id, new_name)
-            avatar_success = db.update_speaker_avatar(speaker_id, new_avatar)
+            name_success, avatar_success = update_speaker_identity(
+                speaker_id, new_name, new_avatar
+            )
 
             if name_success or avatar_success:
                 self.app.notify(f"Updated {new_avatar} {new_name}", timeout=1.5)
@@ -696,50 +690,7 @@ class MeetingDetailScreen(ModalScreen[None]):
     def _export_meeting(self) -> None:
         """Export meeting to markdown file."""
         try:
-            from pathlib import Path
-
-            m = self._meeting
-            timestamp = m.started_at.strftime("%Y%m%d_%H%M%S")
-            filename = f"meeting_{m.id[:8]}_{timestamp}.md"
-            filepath = Path.home() / "Documents" / filename
-
-            lines = [
-                f"# {m.title or 'Meeting Transcript'}",
-                "",
-                f"**Date:** {m.started_at.strftime('%Y-%m-%d %H:%M')}",
-                f"**Duration:** {m.format_duration()}",
-                "",
-            ]
-
-            if m.intel:
-                if m.intel.summary:
-                    lines.extend(["## Summary", "", m.intel.summary, ""])
-                if m.intel.topics:
-                    lines.extend(["## Topics", ""])
-                    for topic in m.intel.topics:
-                        lines.append(f"- {topic}")
-                    lines.append("")
-                if m.intel.action_items:
-                    lines.extend(["## Action Items", ""])
-                    for item in m.intel.action_items:
-                        task = self._get_task(item)
-                        owner = self._get_owner(item)
-                        status = self._get_status(item)
-                        check = "x" if status == "done" else " "
-                        owner_str = f" (@{owner})" if owner else ""
-                        lines.append(f"- [{check}] {task}{owner_str}")
-                    lines.append("")
-
-            if m.tags:
-                lines.extend(["## Tags", "", ", ".join(m.tags), ""])
-
-            lines.append("## Transcript")
-            lines.append("")
-            for seg in m.segments:
-                lines.append(f"**{seg.speaker}** [{seg.start_time:.0f}s]: {seg.text}")
-                lines.append("")
-
-            filepath.write_text("\n".join(lines))
+            filepath = write_meeting_export(self._meeting, "markdown")
             self.app.notify(f"Exported to {filepath.name}", timeout=2.0)
         except Exception as e:
             self.app.notify(f"Export failed: {e}", severity="error", timeout=2.0)

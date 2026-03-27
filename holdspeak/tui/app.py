@@ -26,6 +26,12 @@ from .messages import (
     SavedMeetingOpenDetail,
     SpeakerOpenProfile,
 )
+from .services.meetings import (
+    delete_saved_meeting,
+    export_saved_meeting_markdown,
+    get_saved_meeting,
+    update_saved_meeting_metadata,
+)
 from .screens import (
     ActionItemsScreen,
     MainScreen,
@@ -195,9 +201,7 @@ class HoldSpeakApp(App):
         meeting_id = message.meeting_id
 
         def work() -> None:
-            from ..db import get_database
-
-            meeting = get_database().get_meeting(meeting_id)
+            meeting = get_saved_meeting(meeting_id)
             if meeting is None:
                 self.call_from_thread(lambda: self.notify("Meeting not found", severity="warning", timeout=1.5))
                 return
@@ -212,9 +216,7 @@ class HoldSpeakApp(App):
         meeting_id = message.meeting_id
 
         def work() -> None:
-            from ..db import get_database
-
-            meeting = get_database().get_meeting(meeting_id)
+            meeting = get_saved_meeting(meeting_id)
             if meeting is None:
                 self.call_from_thread(lambda: self.notify("Meeting not found", severity="warning", timeout=1.5))
                 return
@@ -231,37 +233,10 @@ class HoldSpeakApp(App):
         meeting_id = message.meeting_id
 
         def work() -> None:
-            from pathlib import Path
-            from ..db import get_database
-
-            meeting = get_database().get_meeting(meeting_id)
-            if meeting is None:
+            filepath = export_saved_meeting_markdown(meeting_id)
+            if filepath is None:
                 self.call_from_thread(lambda: self.notify("Meeting not found", severity="warning", timeout=1.5))
                 return
-
-            timestamp = meeting.started_at.strftime("%Y%m%d_%H%M%S")
-            filename = f"meeting_{meeting_id[:8]}_{timestamp}.md"
-            filepath = Path.home() / "Documents" / filename
-
-            lines = [
-                f"# {meeting.title or 'Meeting Transcript'}",
-                "",
-                f"**Date:** {meeting.started_at.strftime('%Y-%m-%d %H:%M')}",
-                f"**Duration:** {meeting.format_duration()}",
-                "",
-            ]
-            if meeting.intel and meeting.intel.summary:
-                lines.extend(["## Summary", "", meeting.intel.summary, ""])
-            if meeting.tags:
-                lines.extend(["## Tags", "", ", ".join(meeting.tags), ""])
-
-            lines.append("## Transcript")
-            lines.append("")
-            for seg in meeting.segments:
-                lines.append(f"**{seg.speaker}** [{seg.start_time:.0f}s]: {seg.text}")
-                lines.append("")
-
-            filepath.write_text("\n".join(lines))
             self.call_from_thread(lambda: self.notify(f"Exported to {filepath.name}", timeout=2.0))
 
         self.run_worker(work, thread=True, exclusive=True, group="saved_meeting_export", exit_on_error=False)
@@ -270,9 +245,7 @@ class HoldSpeakApp(App):
         meeting_id = message.meeting_id
 
         def work() -> None:
-            from ..db import get_database
-
-            deleted = get_database().delete_meeting(meeting_id)
+            deleted = delete_saved_meeting(meeting_id)
 
             def _apply() -> None:
                 if deleted:
@@ -426,10 +399,7 @@ class HoldSpeakApp(App):
         if meeting_id:
             self._saved_meeting_metadata_id = None
             try:
-                from ..db import get_database
-
-                db = get_database()
-                db.update_meeting_metadata(meeting_id, message.title, message.tags)
+                update_saved_meeting_metadata(meeting_id, message.title, message.tags)
             except Exception as exc:
                 self.notify(f"Update failed: {exc}", severity="error", timeout=2.0)
                 return

@@ -122,6 +122,17 @@ class IntelSnapshot:
         return None
 
 
+@dataclass(frozen=True)
+class MeetingSaveResult:
+    """Structured result for persisting a meeting."""
+
+    database_saved: bool
+    json_saved: bool
+    json_path: Optional[Path]
+    database_error: Optional[str] = None
+    json_error: Optional[str] = None
+
+
 @dataclass
 class MeetingState:
     """Current state of a meeting session."""
@@ -421,71 +432,96 @@ class MeetingSession:
 
             # Signal stop
             self._stop_event.set()
+            transcribe_thread = self._transcribe_thread
+            intel_thread = self._intel_thread
+            recorder = self._recorder
+            # Detach the recorder under lock so no other thread can attempt to use it.
+            self._recorder = None
 
         # Wait for transcription thread
-        if self._transcribe_thread is not None:
-            self._transcribe_thread.join(timeout=5.0)
+        if transcribe_thread is not None:
+            transcribe_thread.join(timeout=5.0)
 
         # Wait for any pending intel thread
-        if self._intel_thread is not None:
-            self._intel_thread.join(timeout=10.0)
+        if intel_thread is not None:
+            intel_thread.join(timeout=10.0)
+
+        # Stop recorder and do final transcription outside the session lock. The
+        # final transcription path appends segments under self._lock.
+        if recorder is not None:
+            try:
+                mic_chunks, system_chunks = recorder.stop()
+                self._transcribe_chunks(mic_chunks, system_chunks, final=True)
+            except Exception as e:
+                log.error(f"Error stopping recorder: {e}")
 
         with self._lock:
-            # Stop recorder and get remaining chunks
-            if self._recorder is not None:
-                try:
-                    mic_chunks, system_chunks = self._recorder.stop()
-                    # Final transcription of remaining audio
-                    self._transcribe_chunks(mic_chunks, system_chunks, final=True)
-                except Exception as e:
-                    log.error(f"Error stopping recorder: {e}")
-                self._recorder = None
+            state = self._state
+            intel = self._intel
+            web_server = self._web_server
+            diarizer = self._diarizer
 
-            # Run final intel analysis
-            if self._intel is not None and self._state and self._state.segments:
-                try:
-                    self._run_intel_analysis(final=True)
-                except Exception as e:
-                    log.error(f"Final intel analysis failed: {e}")
+        assert state is not None
 
-            # Auto-generate title if not manually set
-            if self._intel is not None and self._state and not self._state.title:
-                if self._state.segments:
-                    try:
-                        transcript = "\n".join(str(s) for s in self._state.segments)
-                        title = self._intel.generate_title(transcript)
-                        if title:
+        # Run final intel analysis outside the lock. The analysis path calls
+        # back into methods like get_formatted_transcript(), which also use
+        # self._lock.
+        if intel is not None and state.segments:
+            try:
+                self._run_intel_analysis(final=True)
+            except Exception as e:
+                log.error(f"Final intel analysis failed: {e}")
+
+        # Auto-generate title if not manually set.
+        if intel is not None and not state.title and state.segments:
+            try:
+                transcript = "\n".join(str(s) for s in state.segments)
+                title = intel.generate_title(transcript)
+                if title:
+                    with self._lock:
+                        if self._state is not None and not self._state.title:
                             self._state.title = title
-                            log.info(f"Auto-generated meeting title: {title}")
-                    except Exception as e:
-                        log.error(f"Auto-title generation failed: {e}")
+                    log.info(f"Auto-generated meeting title: {title}")
+            except Exception as e:
+                log.error(f"Auto-title generation failed: {e}")
 
-            # Stop web server
-            if self._web_server is not None:
-                try:
-                    self._web_server.stop()
-                except Exception as e:
-                    log.error(f"Error stopping web server: {e}")
-                self._web_server = None
+        # Stop web server outside the lock because shutdown can block while the
+        # server loop is draining websocket clients.
+        if web_server is not None:
+            try:
+                web_server.stop()
+            except Exception as e:
+                log.error(f"Error stopping web server: {e}")
 
+        # Save speaker embeddings outside the lock because it performs DB I/O.
+        if diarizer is not None:
+            try:
+                diarizer.save_speakers()
+                log.info("Speaker embeddings saved")
+            except Exception as e:
+                log.error(f"Failed to save speaker embeddings: {e}")
+
+        with self._lock:
             # Save speaker embeddings for cross-meeting recognition
-            if self._diarizer is not None:
-                try:
-                    self._diarizer.save_speakers()
-                    log.info("Speaker embeddings saved")
-                except Exception as e:
-                    log.error(f"Failed to save speaker embeddings: {e}")
+            if self._web_server is web_server:
+                self._web_server = None
+            if self._diarizer is diarizer:
                 self._diarizer = None
 
-            # Clean up intel
+            # Clean up intel/runtime references
             self._intel = None
             self._intel_thread = None
+            self._transcribe_thread = None
+            self._current_analysis_id = None
 
             # Mark as ended
             self._state.ended_at = datetime.now()
+            final_state = self._state
 
-            log.info(f"Meeting stopped: {self._state.id}, duration={self._state.format_duration()}")
-            return self._state
+        assert final_state is not None
+
+        log.info(f"Meeting stopped: {final_state.id}, duration={final_state.format_duration()}")
+        return final_state
 
     def add_bookmark(self, label: str = "", auto_label: bool = True) -> Optional[Bookmark]:
         """Add a bookmark at the current time.
@@ -831,42 +867,63 @@ class MeetingSession:
             if self._intel is not None and self._segments_since_intel >= self.INTEL_SEGMENT_INTERVAL:
                 self._maybe_run_intel()
 
-    def save(self, directory: Optional[Path] = None) -> Path:
+    def save(self, directory: Optional[Path] = None) -> MeetingSaveResult:
         """Save meeting state to disk (JSON and SQLite database).
 
         Args:
             directory: Directory to save JSON to (default: ~/.local/share/holdspeak/meetings/).
 
         Returns:
-            Path to saved JSON file.
+            Structured save result covering both DB and JSON persistence.
         """
         with self._lock:
             if self._state is None:
                 raise RuntimeError("No meeting to save")
+            state = self._state
 
-            # Save to SQLite database
-            try:
-                from .db import get_database
-                db = get_database()
-                db.save_meeting(self._state)
-                log.info(f"Meeting saved to database: {self._state.id}")
-            except Exception as e:
-                log.error(f"Failed to save meeting to database: {e}")
+        database_saved = False
+        json_saved = False
+        database_error: Optional[str] = None
+        json_error: Optional[str] = None
+        json_path: Optional[Path] = None
 
-            # Save to JSON (backward compatibility)
-            if directory is None:
-                directory = Path.home() / ".local" / "share" / "holdspeak" / "meetings"
+        # Save to SQLite database.
+        try:
+            from .db import get_database
 
+            db = get_database()
+            db.save_meeting(state)
+            database_saved = True
+            log.info(f"Meeting saved to database: {state.id}")
+        except Exception as e:
+            database_error = f"{type(e).__name__}: {e}"
+            log.error(f"Failed to save meeting to database: {e}")
+
+        # Save to JSON (backward compatibility).
+        if directory is None:
+            directory = Path.home() / ".local" / "share" / "holdspeak" / "meetings"
+
+        filename = f"meeting_{state.id}_{state.started_at.strftime('%Y%m%d_%H%M%S')}.json"
+        filepath = directory / filename
+
+        try:
             directory.mkdir(parents=True, exist_ok=True)
-
-            filename = f"meeting_{self._state.id}_{self._state.started_at.strftime('%Y%m%d_%H%M%S')}.json"
-            filepath = directory / filename
-
             with open(filepath, "w") as f:
-                json.dump(self._state.to_dict(), f, indent=2)
-
+                json.dump(state.to_dict(), f, indent=2)
+            json_saved = True
+            json_path = filepath
             log.info(f"Meeting saved to JSON: {filepath}")
-            return filepath
+        except Exception as e:
+            json_error = f"{type(e).__name__}: {e}"
+            log.error(f"Failed to save meeting to JSON: {e}")
+
+        return MeetingSaveResult(
+            database_saved=database_saved,
+            json_saved=json_saved,
+            json_path=json_path,
+            database_error=database_error,
+            json_error=json_error,
+        )
 
     def _maybe_run_intel(self) -> None:
         """Run intel analysis in background if not already running."""
