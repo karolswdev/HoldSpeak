@@ -187,6 +187,10 @@ class HoldSpeakApp(App):
 
         self._ui(lambda: self.push_screen(HelpScreen()))
 
+    def request_quit(self) -> None:
+        """Exit hook for screen-level quit actions."""
+        self.exit()
+
     def on_settings_screen_applied(self, message: SettingsScreen.Applied) -> None:
         self.config = message.config
         self.update_hotkey_display(self.config.hotkey.display)

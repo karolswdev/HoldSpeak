@@ -279,8 +279,8 @@ class TestKeyboardShortcuts:
         app = HoldSpeakApp()
         async with app.run_test(size=(100, 30)) as pilot:
             await pilot.press("q")
-            # App should have exited - check return value is None
-            assert app.return_value is None
+            await pilot.pause()
+            assert app.is_running is False
 
     @pytest.mark.asyncio
     async def test_s_opens_settings(self):
@@ -380,6 +380,34 @@ class TestSettingsScreen:
 
             model_select = app.screen.query_one("#model_select")
             assert model_select is not None
+
+    @pytest.mark.asyncio
+    async def test_settings_has_meeting_and_speaker_controls(self):
+        """Settings should expose meeting audio + speaker controls."""
+        app = HoldSpeakApp()
+        async with app.run_test(size=(100, 30)) as pilot:
+            app.show_settings()
+            await pilot.pause()
+
+            assert app.screen.query_one("#mic_select") is not None
+            assert app.screen.query_one("#system_audio_select") is not None
+            assert app.screen.query_one("#mic_label_input") is not None
+            assert app.screen.query_one("#remote_label_input") is not None
+            assert app.screen.query_one("#intel_enabled") is not None
+            assert app.screen.query_one("#intel_provider_select") is not None
+            assert app.screen.query_one("#intel_cloud_model_input") is not None
+            assert app.screen.query_one("#intel_cloud_api_key_env_input") is not None
+            assert app.screen.query_one("#intel_cloud_base_url_input") is not None
+            assert app.screen.query_one("#intel_deferred_enabled") is not None
+            assert app.screen.query_one("#intel_queue_poll_input") is not None
+            assert app.screen.query_one("#web_enabled") is not None
+            assert app.screen.query_one("#web_auto_open") is not None
+            assert app.screen.query_one("#diarization_enabled") is not None
+            assert app.screen.query_one("#diarize_mic") is not None
+            assert app.screen.query_one("#cross_meeting_recognition") is not None
+            assert app.screen.query_one("#similarity_threshold_input") is not None
+            assert app.screen.query_one("#auto_export") is not None
+            assert app.screen.query_one("#export_format_select") is not None
 
 
 # ============================================================

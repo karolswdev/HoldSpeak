@@ -14,6 +14,7 @@ from textual.containers import Container
 from textual.screen import Screen
 from textual.widgets import ContentSwitcher, Input
 
+from ...logging_config import get_logger
 from ..components import (
     AudioMeterWidget,
     CrtOverlay,
@@ -39,6 +40,8 @@ from ..messages import (
 from .help import HelpScreen
 from .diagnostics import DiagnosticsScreen
 from .settings import SettingsScreen
+
+log = get_logger("tui.main")
 
 
 class MainScreen(Screen[None]):
@@ -111,8 +114,13 @@ class MainScreen(Screen[None]):
             self.set_meeting_title(meeting.title)
             self.set_meeting_web_url(meeting.web_url)
         except Exception:
-            # Don't let UI init failures crash the app; they'll show up elsewhere.
-            pass
+            # Keep the app responsive, but surface the failure instead of swallowing it.
+            log.exception("MainScreen state initialization failed")
+            self.app.notify(
+                "UI initialization issue detected. Run diagnostics (d) and check logs.",
+                severity="warning",
+                timeout=3.0,
+            )
 
     # ===== Imperative update API (called by App/controller) =====
     def set_state(self, state: str) -> None:
@@ -223,6 +231,9 @@ class MainScreen(Screen[None]):
 
     def action_diagnostics(self) -> None:
         self.app.push_screen(DiagnosticsScreen())
+
+    def action_quit(self) -> None:
+        self.app.request_quit()
 
     def action_copy_last(self) -> None:
         last = self.query_one("#history", HistoryWidget).get_last()

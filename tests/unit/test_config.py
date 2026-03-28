@@ -142,8 +142,12 @@ class TestMeetingConfig:
         assert config.auto_export is False
         assert config.export_format == "markdown"
         assert config.intel_enabled is True
+        assert config.intel_provider == "local"
         assert config.intel_realtime_model == "~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf"
         assert config.intel_summary_model is None
+        assert config.intel_cloud_model == "gpt-5-mini"
+        assert config.intel_cloud_api_key_env == "OPENAI_API_KEY"
+        assert config.intel_cloud_base_url is None
         assert config.web_enabled is True
         assert config.web_auto_open is False
 
@@ -447,8 +451,12 @@ class TestConfigRoundTrip:
                 auto_export=True,
                 export_format="json",
                 intel_enabled=True,
+                intel_provider="auto",
                 intel_realtime_model="/path/to/model.gguf",
                 intel_summary_model="/path/to/summary.gguf",
+                intel_cloud_model="gpt-5.4",
+                intel_cloud_api_key_env="ALT_OPENAI_KEY",
+                intel_cloud_base_url="https://api.example.com/v1",
                 web_enabled=False,
                 web_auto_open=True,
             )
@@ -462,8 +470,12 @@ class TestConfigRoundTrip:
         assert loaded.meeting.auto_export is True
         assert loaded.meeting.export_format == "json"
         assert loaded.meeting.intel_enabled is True
+        assert loaded.meeting.intel_provider == "auto"
         assert loaded.meeting.intel_realtime_model == "/path/to/model.gguf"
         assert loaded.meeting.intel_summary_model == "/path/to/summary.gguf"
+        assert loaded.meeting.intel_cloud_model == "gpt-5.4"
+        assert loaded.meeting.intel_cloud_api_key_env == "ALT_OPENAI_KEY"
+        assert loaded.meeting.intel_cloud_base_url == "https://api.example.com/v1"
         assert loaded.meeting.web_enabled is False
         assert loaded.meeting.web_auto_open is True
 

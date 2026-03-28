@@ -49,8 +49,16 @@ class MeetingConfig:
 
     # Intel (LLM-powered analysis)
     intel_enabled: bool = True
+    intel_provider: str = "local"  # local, cloud, auto (local-first then cloud fallback)
     intel_realtime_model: str = "~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf"
     intel_summary_model: Optional[str] = None  # Falls back to realtime if None
+    intel_deferred_enabled: bool = True  # Queue intel when no suitable local model is available
+    intel_queue_poll_seconds: int = 120  # Background retry interval for deferred intel jobs
+    intel_cloud_model: str = "gpt-5-mini"
+    intel_cloud_api_key_env: str = "OPENAI_API_KEY"
+    intel_cloud_base_url: Optional[str] = None
+    intel_cloud_reasoning_effort: Optional[str] = None
+    intel_cloud_store: bool = False
 
     # Web dashboard
     web_enabled: bool = True

@@ -11,10 +11,12 @@ import concurrent.futures
 import json
 import socket
 import threading
+from copy import deepcopy
 from pathlib import Path
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Callable, Optional
+from urllib.parse import urlparse
 
 from .logging_config import get_logger
 
@@ -93,6 +95,40 @@ class _UpdateMeetingRequest(BaseModel):
     tags: Optional[list[str]] = None
 
 
+class _GlobalActionItemUpdateRequest(BaseModel):
+    status: str
+
+
+class _SpeakerUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    avatar: Optional[str] = None
+
+
+class _IntelProcessRequest(BaseModel):
+    max_jobs: Optional[int] = None
+
+
+def _validate_cloud_base_url(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    raw = str(value).strip()
+    if not raw:
+        return None
+    parsed = urlparse(raw)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("intel_cloud_base_url must start with http:// or https://")
+    return raw
+
+
+def _merge_dict(dst: dict[str, Any], src: dict[str, Any]) -> dict[str, Any]:
+    for key, value in src.items():
+        if isinstance(value, dict) and isinstance(dst.get(key), dict):
+            _merge_dict(dst[key], value)
+        else:
+            dst[key] = value
+    return dst
+
+
 class WebSocketManager:
     """Tracks connected WebSocket clients and broadcasts messages."""
 
@@ -149,6 +185,7 @@ class MeetingWebServer:
         on_update_action_item: Optional[Callable[[str, str], Any]] = None,
         on_set_title: Optional[Callable[[str], None]] = None,
         on_set_tags: Optional[Callable[[list[str]], None]] = None,
+        on_settings_applied: Optional[Callable[[Any], None]] = None,
         host: str = "127.0.0.1",
     ) -> None:
         if _IMPORT_ERROR is not None:
@@ -163,6 +200,7 @@ class MeetingWebServer:
         self.on_update_action_item = on_update_action_item
         self.on_set_title = on_set_title
         self.on_set_tags = on_set_tags
+        self.on_settings_applied = on_settings_applied
         self.host = host
 
         self.port: Optional[int] = None
@@ -423,6 +461,118 @@ class MeetingWebServer:
                 )
             return HTMLResponse(html)
 
+        @app.get("/settings")
+        async def settings_dashboard() -> Any:
+            """Serve web settings UI (currently integrated with history dashboard)."""
+            return await history_dashboard()
+
+        @app.get("/api/settings")
+        async def api_get_settings() -> Any:
+            try:
+                from .config import Config
+                config = Config.load()
+                return JSONResponse(config.to_dict())
+            except Exception as e:
+                log.error(f"Failed to load settings: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.put("/api/settings")
+        async def api_update_settings(payload: dict[str, Any]) -> Any:
+            """Persist app settings from web UI."""
+            try:
+                from .config import Config, HotkeyConfig, ModelConfig, UIConfig, MeetingConfig, KEY_MAP, KEY_DISPLAY
+
+                current = Config.load()
+                merged = deepcopy(current.to_dict())
+                _merge_dict(merged, payload or {})
+
+                hotkey_data = merged.get("hotkey", {})
+                model_data = merged.get("model", {})
+                ui_data = merged.get("ui", {})
+                meeting_data = merged.get("meeting", {})
+
+                hotkey_key = str(hotkey_data.get("key", current.hotkey.key))
+                if hotkey_key not in KEY_MAP:
+                    return JSONResponse(
+                        {"success": False, "error": f"Invalid hotkey key: {hotkey_key}"},
+                        status_code=400,
+                    )
+                hotkey_data["key"] = hotkey_key
+                hotkey_data["display"] = KEY_DISPLAY.get(hotkey_key, hotkey_key)
+
+                model_name = str(model_data.get("name", current.model.name))
+                if model_name not in {"tiny", "base", "small", "medium", "large"}:
+                    return JSONResponse(
+                        {"success": False, "error": f"Invalid model name: {model_name}"},
+                        status_code=400,
+                    )
+                model_data["name"] = model_name
+
+                export_format = str(meeting_data.get("export_format", current.meeting.export_format))
+                if export_format not in {"txt", "markdown", "json", "srt"}:
+                    return JSONResponse(
+                        {"success": False, "error": f"Invalid export format: {export_format}"},
+                        status_code=400,
+                    )
+                meeting_data["export_format"] = export_format
+
+                intel_provider = str(meeting_data.get("intel_provider", current.meeting.intel_provider)).lower()
+                if intel_provider not in {"local", "cloud", "auto"}:
+                    return JSONResponse(
+                        {"success": False, "error": f"Invalid intel provider: {intel_provider}"},
+                        status_code=400,
+                    )
+                meeting_data["intel_provider"] = intel_provider
+
+                poll_seconds = int(meeting_data.get("intel_queue_poll_seconds", current.meeting.intel_queue_poll_seconds))
+                if poll_seconds < 5:
+                    return JSONResponse(
+                        {"success": False, "error": "intel_queue_poll_seconds must be at least 5"},
+                        status_code=400,
+                    )
+                meeting_data["intel_queue_poll_seconds"] = poll_seconds
+
+                similarity = float(meeting_data.get("similarity_threshold", current.meeting.similarity_threshold))
+                if not (0.0 <= similarity <= 1.0):
+                    return JSONResponse(
+                        {"success": False, "error": "similarity_threshold must be between 0.0 and 1.0"},
+                        status_code=400,
+                    )
+                meeting_data["similarity_threshold"] = similarity
+
+                try:
+                    meeting_data["intel_cloud_base_url"] = _validate_cloud_base_url(
+                        meeting_data.get("intel_cloud_base_url")
+                    )
+                except ValueError as e:
+                    return JSONResponse({"success": False, "error": str(e)}, status_code=400)
+
+                meeting_data["intel_cloud_api_key_env"] = str(
+                    meeting_data.get("intel_cloud_api_key_env", current.meeting.intel_cloud_api_key_env)
+                ).strip() or "OPENAI_API_KEY"
+                meeting_data["intel_cloud_model"] = str(
+                    meeting_data.get("intel_cloud_model", current.meeting.intel_cloud_model)
+                ).strip() or "gpt-5-mini"
+
+                updated = Config(
+                    hotkey=HotkeyConfig(**hotkey_data),
+                    model=ModelConfig(**model_data),
+                    ui=UIConfig(**ui_data),
+                    meeting=MeetingConfig(**meeting_data),
+                )
+                updated.save()
+
+                if self.on_settings_applied is not None:
+                    try:
+                        self.on_settings_applied(updated)
+                    except Exception as e:
+                        log.error(f"on_settings_applied failed: {e}")
+
+                return JSONResponse({"success": True, "settings": updated.to_dict()})
+            except Exception as e:
+                log.error(f"Failed to update settings: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
         @app.get("/api/meetings")
         async def api_list_meetings(
             limit: int = 50,
@@ -458,6 +608,8 @@ class MeetingWebServer:
                             "segment_count": m.segment_count,
                             "action_item_count": m.action_item_count,
                             "tags": m.tags,
+                            "intel_status": m.intel_status,
+                            "intel_status_detail": m.intel_status_detail,
                         }
                         for m in meetings
                     ],
@@ -468,6 +620,119 @@ class MeetingWebServer:
                 return JSONResponse(
                     {"error": str(e)}, status_code=500
                 )
+
+        @app.get("/api/speakers")
+        async def api_list_speakers() -> Any:
+            """List known speakers with aggregate stats."""
+            try:
+                from .db import get_database
+
+                db = get_database()
+                speakers = db.get_all_speakers()
+                payload: list[dict[str, Any]] = []
+                for speaker in speakers:
+                    stats = db.get_speaker_stats(speaker.id)
+                    payload.append(
+                        {
+                            "id": speaker.id,
+                            "name": speaker.name,
+                            "avatar": speaker.avatar,
+                            "sample_count": speaker.sample_count,
+                            "total_segments": stats.get("total_segments", 0),
+                            "total_speaking_time": stats.get("total_speaking_time", 0.0),
+                            "meeting_count": stats.get("meeting_count", 0),
+                            "first_seen": stats["first_seen"].isoformat() if stats.get("first_seen") else None,
+                            "last_seen": stats["last_seen"].isoformat() if stats.get("last_seen") else None,
+                        }
+                    )
+
+                payload.sort(key=lambda s: (s.get("last_seen") or "", s.get("sample_count") or 0), reverse=True)
+                return JSONResponse({"speakers": payload, "total": len(payload)})
+            except Exception as e:
+                log.error(f"Failed to list speakers: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.get("/api/speakers/{speaker_id}")
+        async def api_get_speaker(speaker_id: str, limit: int = 500) -> Any:
+            """Get speaker profile, stats, and related segments grouped by meeting."""
+            try:
+                from .db import get_database
+
+                db = get_database()
+                speaker = db.get_speaker(speaker_id)
+                if speaker is None:
+                    return JSONResponse({"error": "Speaker not found"}, status_code=404)
+
+                stats = db.get_speaker_stats(speaker_id)
+                groups = db.get_speaker_segments(speaker_id, limit=limit)
+                for group in groups:
+                    if isinstance(group.get("meeting_date"), datetime):
+                        group["meeting_date"] = group["meeting_date"].isoformat()
+
+                return JSONResponse(
+                    {
+                        "speaker": {
+                            "id": speaker.id,
+                            "name": speaker.name,
+                            "avatar": speaker.avatar,
+                            "sample_count": speaker.sample_count,
+                        },
+                        "stats": {
+                            "total_segments": stats.get("total_segments", 0),
+                            "total_speaking_time": stats.get("total_speaking_time", 0.0),
+                            "meeting_count": stats.get("meeting_count", 0),
+                            "first_seen": stats["first_seen"].isoformat() if stats.get("first_seen") else None,
+                            "last_seen": stats["last_seen"].isoformat() if stats.get("last_seen") else None,
+                        },
+                        "meetings": groups,
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to get speaker: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.patch("/api/speakers/{speaker_id}")
+        async def api_update_speaker(speaker_id: str, payload: _SpeakerUpdateRequest) -> Any:
+            """Rename speaker and/or update avatar."""
+            try:
+                from .db import get_database
+
+                db = get_database()
+                updated = False
+
+                if payload.name is not None:
+                    name = payload.name.strip()
+                    if not name:
+                        return JSONResponse({"success": False, "error": "Speaker name cannot be empty"}, status_code=400)
+                    updated = db.update_speaker_name(speaker_id, name) or updated
+
+                if payload.avatar is not None:
+                    avatar = payload.avatar.strip()
+                    if not avatar:
+                        return JSONResponse({"success": False, "error": "Speaker avatar cannot be empty"}, status_code=400)
+                    updated = db.update_speaker_avatar(speaker_id, avatar) or updated
+
+                if not updated:
+                    return JSONResponse({"success": False, "error": "Speaker not found"}, status_code=404)
+
+                speaker = db.get_speaker(speaker_id)
+                if speaker is None:
+                    return JSONResponse({"success": False, "error": "Speaker not found"}, status_code=404)
+
+                return JSONResponse(
+                    {
+                        "success": True,
+                        "speaker": {
+                            "id": speaker.id,
+                            "name": speaker.name,
+                            "avatar": speaker.avatar,
+                            "sample_count": speaker.sample_count,
+                        },
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to update speaker: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
         @app.get("/api/meetings/{meeting_id}")
         async def api_get_meeting(meeting_id: str) -> Any:
@@ -527,7 +792,7 @@ class MeetingWebServer:
 
         @app.patch("/api/all-action-items/{item_id}")
         async def api_update_global_action_item(
-            item_id: str, payload: _ActionItemUpdateRequest
+            item_id: str, payload: _GlobalActionItemUpdateRequest
         ) -> Any:
             """Update action item status in database."""
             status = payload.status
@@ -552,6 +817,76 @@ class MeetingWebServer:
                 return JSONResponse(
                     {"success": False, "error": str(e)}, status_code=500
                 )
+
+        @app.get("/api/intel/jobs")
+        async def api_list_intel_jobs(status: str = "all", limit: int = 20) -> Any:
+            """List deferred intelligence jobs."""
+            try:
+                from .db import get_database
+
+                db = get_database()
+                jobs = db.list_intel_jobs(status=status, limit=limit)
+                return JSONResponse(
+                    {
+                        "jobs": [
+                            {
+                                "meeting_id": job.meeting_id,
+                                "status": job.status,
+                                "transcript_hash": job.transcript_hash,
+                                "requested_at": job.requested_at.isoformat(),
+                                "updated_at": job.updated_at.isoformat(),
+                                "attempts": job.attempts,
+                                "last_error": job.last_error,
+                                "meeting_title": job.meeting_title,
+                                "started_at": job.started_at.isoformat() if job.started_at else None,
+                                "intel_status_detail": job.intel_status_detail,
+                            }
+                            for job in jobs
+                        ]
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to list intel jobs: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.post("/api/intel/process")
+        async def api_process_intel_jobs(payload: Optional[_IntelProcessRequest] = None) -> Any:
+            """Process queued deferred-intel jobs now."""
+            try:
+                from .config import Config
+                from .intel_queue import drain_intel_queue
+
+                cfg = Config.load().meeting
+                max_jobs = payload.max_jobs if payload is not None else None
+                processed = drain_intel_queue(
+                    cfg.intel_realtime_model,
+                    provider=cfg.intel_provider,
+                    cloud_model=cfg.intel_cloud_model,
+                    cloud_api_key_env=cfg.intel_cloud_api_key_env,
+                    cloud_base_url=cfg.intel_cloud_base_url,
+                    cloud_reasoning_effort=cfg.intel_cloud_reasoning_effort,
+                    cloud_store=cfg.intel_cloud_store,
+                    max_jobs=max_jobs,
+                )
+                return JSONResponse({"success": True, "processed": processed})
+            except Exception as e:
+                log.error(f"Failed to process intel jobs: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+        @app.post("/api/intel/retry/{meeting_id}")
+        async def api_retry_intel_job(meeting_id: str) -> Any:
+            """Requeue deferred intelligence for a specific meeting."""
+            try:
+                from .db import get_database
+
+                db = get_database()
+                ok = db.requeue_intel_job(meeting_id, reason="Manual retry requested from web UI.")
+                if not ok:
+                    return JSONResponse({"success": False, "error": "Meeting not found or transcript is empty"}, status_code=404)
+                return JSONResponse({"success": True})
+            except Exception as e:
+                log.error(f"Failed to retry intel job: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
         @app.websocket("/ws")
         async def websocket_endpoint(websocket: WebSocket) -> None:

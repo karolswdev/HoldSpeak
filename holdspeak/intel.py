@@ -1,9 +1,8 @@
-"""Local meeting intelligence extraction using llama-cpp-python.
+"""Meeting intelligence extraction for local and cloud providers.
 
-`MeetingIntel` lazily loads a GGUF model and analyzes transcript text to extract:
-- topics
-- action items
-- summary
+`MeetingIntel` can run using:
+- local GGUF models via llama-cpp-python
+- OpenAI chat models in the cloud
 
 The model is prompted to return JSON-only output for reliable parsing.
 """
@@ -12,7 +11,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+from urllib.parse import urlparse
 from collections.abc import Iterator
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
@@ -35,8 +36,21 @@ except Exception as exc:  # pragma: no cover
 else:  # pragma: no cover
     _IMPORT_ERROR = None
 
+try:
+    from openai import OpenAI
+except Exception as exc:  # pragma: no cover
+    OpenAI = None  # type: ignore[assignment]
+    _OPENAI_IMPORT_ERROR = exc
+    log.debug(f"openai not available: {exc}")
+else:  # pragma: no cover
+    _OPENAI_IMPORT_ERROR = None
+
 
 DEFAULT_INTEL_MODEL_PATH = "~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf"
+DEFAULT_INTEL_PROVIDER = "local"
+DEFAULT_INTEL_CLOUD_MODEL = "gpt-5-mini"
+DEFAULT_INTEL_CLOUD_API_KEY_ENV = "OPENAI_API_KEY"
+VALID_INTEL_PROVIDERS = frozenset({"local", "cloud", "auto"})
 
 
 class MeetingIntelError(RuntimeError):
@@ -88,6 +102,142 @@ class IntelResult:
     action_items: list[ActionItem]
     summary: str
     raw_response: str
+    error: Optional[str] = None
+
+
+def _normalize_provider(provider: Optional[str]) -> str:
+    value = (provider or DEFAULT_INTEL_PROVIDER).strip().lower()
+    if value not in VALID_INTEL_PROVIDERS:
+        return DEFAULT_INTEL_PROVIDER
+    return value
+
+
+def _resolve_cloud_api_key(api_key_env: Optional[str]) -> Optional[str]:
+    env_name = (api_key_env or DEFAULT_INTEL_CLOUD_API_KEY_ENV).strip()
+    if not env_name:
+        env_name = DEFAULT_INTEL_CLOUD_API_KEY_ENV
+    value = os.environ.get(env_name)
+    if value:
+        return value.strip() or None
+    return None
+
+
+def _validate_base_url(base_url: Optional[str]) -> Optional[str]:
+    if not base_url:
+        return None
+    value = base_url.strip()
+    if not value:
+        return None
+    parsed = urlparse(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return f"Invalid cloud base URL: {value}"
+    return None
+
+
+def get_local_intel_runtime_status(
+    model_path: str = DEFAULT_INTEL_MODEL_PATH,
+) -> tuple[bool, Optional[str]]:
+    """Return whether local meeting intelligence can run right now."""
+    if Llama is None:
+        return False, "llama-cpp-python is not available"
+
+    resolved = Path(model_path).expanduser()
+    if not resolved.exists():
+        return False, f"Intel model not found: {resolved}"
+
+    return True, None
+
+
+def get_cloud_intel_runtime_status(
+    *,
+    cloud_model: str = DEFAULT_INTEL_CLOUD_MODEL,
+    cloud_api_key_env: str = DEFAULT_INTEL_CLOUD_API_KEY_ENV,
+    cloud_base_url: Optional[str] = None,
+) -> tuple[bool, Optional[str]]:
+    """Return whether cloud meeting intelligence can run right now."""
+    if OpenAI is None:
+        return False, "openai package is not available"
+
+    if not (cloud_model or "").strip():
+        return False, "Cloud intel model is not configured"
+
+    base_url_error = _validate_base_url(cloud_base_url)
+    if base_url_error is not None:
+        return False, base_url_error
+
+    if not _resolve_cloud_api_key(cloud_api_key_env):
+        return False, f"Missing API key in ${cloud_api_key_env}"
+
+    return True, None
+
+
+def resolve_intel_provider(
+    provider: str = DEFAULT_INTEL_PROVIDER,
+    *,
+    model_path: str = DEFAULT_INTEL_MODEL_PATH,
+    cloud_model: str = DEFAULT_INTEL_CLOUD_MODEL,
+    cloud_api_key_env: str = DEFAULT_INTEL_CLOUD_API_KEY_ENV,
+    cloud_base_url: Optional[str] = None,
+) -> tuple[Optional[str], Optional[str]]:
+    """Resolve the active provider for this runtime.
+
+    Returns:
+        (provider, None) on success where provider is "local" or "cloud".
+        (None, reason) when unavailable.
+    """
+    normalized = _normalize_provider(provider)
+
+    if normalized == "local":
+        ok, reason = get_local_intel_runtime_status(model_path)
+        return ("local", None) if ok else (None, reason)
+
+    if normalized == "cloud":
+        ok, reason = get_cloud_intel_runtime_status(
+            cloud_model=cloud_model,
+            cloud_api_key_env=cloud_api_key_env,
+            cloud_base_url=cloud_base_url,
+        )
+        return ("cloud", None) if ok else (None, reason)
+
+    # auto = local-first fallback to cloud
+    local_ok, local_reason = get_local_intel_runtime_status(model_path)
+    if local_ok:
+        return "local", None
+
+    cloud_ok, cloud_reason = get_cloud_intel_runtime_status(
+        cloud_model=cloud_model,
+        cloud_api_key_env=cloud_api_key_env,
+        cloud_base_url=cloud_base_url,
+    )
+    if cloud_ok:
+        return "cloud", None
+
+    return (
+        None,
+        "Local intel unavailable"
+        f" ({local_reason}); cloud intel unavailable ({cloud_reason})",
+    )
+
+
+def get_intel_runtime_status(
+    model_path: str = DEFAULT_INTEL_MODEL_PATH,
+    *,
+    provider: str = DEFAULT_INTEL_PROVIDER,
+    cloud_model: str = DEFAULT_INTEL_CLOUD_MODEL,
+    cloud_api_key_env: str = DEFAULT_INTEL_CLOUD_API_KEY_ENV,
+    cloud_base_url: Optional[str] = None,
+) -> tuple[bool, Optional[str]]:
+    """Return whether the configured meeting-intel mode can run right now."""
+    active, reason = resolve_intel_provider(
+        provider,
+        model_path=model_path,
+        cloud_model=cloud_model,
+        cloud_api_key_env=cloud_api_key_env,
+        cloud_base_url=cloud_base_url,
+    )
+    if active is None:
+        return False, reason
+    return True, None
 
 
 def _json_only_messages(transcript: str) -> list[dict[str, str]]:
@@ -188,13 +338,51 @@ def _coerce_action_items(value: object) -> list[ActionItem]:
     return items
 
 
+def _extract_openai_message_text(content: object) -> str:
+    """Extract text from OpenAI SDK message content variants."""
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+                continue
+            if isinstance(item, dict):
+                text_value = item.get("text")
+                if text_value:
+                    parts.append(str(text_value))
+                    continue
+                nested = item.get("content")
+                if nested:
+                    parts.append(str(nested))
+                    continue
+                if "type" in item and item.get("type") == "output_text" and item.get("text"):
+                    parts.append(str(item["text"]))
+                    continue
+            else:
+                text_attr = getattr(item, "text", None)
+                if text_attr:
+                    parts.append(str(text_attr))
+        return "".join(parts)
+    return str(content)
+
+
 class MeetingIntel:
-    """Extract structured meeting intelligence using llama-cpp-python."""
+    """Extract structured meeting intelligence via local or cloud provider."""
 
     def __init__(
         self,
         *,
+        provider: str = DEFAULT_INTEL_PROVIDER,
         model_path: str = DEFAULT_INTEL_MODEL_PATH,
+        cloud_model: str = DEFAULT_INTEL_CLOUD_MODEL,
+        cloud_api_key_env: str = DEFAULT_INTEL_CLOUD_API_KEY_ENV,
+        cloud_base_url: Optional[str] = None,
+        cloud_reasoning_effort: Optional[str] = None,
+        cloud_store: bool = False,
         chat_format: Optional[str] = None,
         n_ctx: int = 4096,
         n_threads: Optional[int] = None,
@@ -202,7 +390,13 @@ class MeetingIntel:
         temperature: float = 0.2,
         max_tokens: int = 800,
     ) -> None:
+        self.provider = _normalize_provider(provider)
         self.model_path = model_path
+        self.cloud_model = cloud_model
+        self.cloud_api_key_env = cloud_api_key_env
+        self.cloud_base_url = cloud_base_url
+        self.cloud_reasoning_effort = cloud_reasoning_effort
+        self.cloud_store = cloud_store
         self.chat_format = chat_format
         self.n_ctx = n_ctx
         self.n_threads = n_threads
@@ -211,11 +405,39 @@ class MeetingIntel:
         self.max_tokens = max_tokens
 
         self._llm: Optional["Llama"] = None
+        self._openai_client = None
+        self._active_provider: Optional[str] = None
+
+    @property
+    def active_provider(self) -> Optional[str]:
+        return self._active_provider
 
     def _resolved_model_path(self) -> Path:
         return Path(self.model_path).expanduser()
 
-    def _ensure_model_loaded(self) -> None:
+    def _ensure_openai_client_loaded(self) -> None:
+        if self._openai_client is not None:
+            return
+
+        if OpenAI is None:
+            raise MeetingIntelError(
+                "openai package is not available. Install dependencies first."
+            ) from _OPENAI_IMPORT_ERROR
+
+        api_key = _resolve_cloud_api_key(self.cloud_api_key_env)
+        if not api_key:
+            raise MeetingIntelError(f"Missing API key in ${self.cloud_api_key_env}")
+
+        kwargs: dict[str, object] = {"api_key": api_key}
+        if self.cloud_base_url:
+            kwargs["base_url"] = self.cloud_base_url
+
+        try:
+            self._openai_client = OpenAI(**kwargs)
+        except Exception as exc:
+            raise MeetingIntelError(f"Failed to initialize OpenAI client: {exc}") from exc
+
+    def _ensure_local_model_loaded(self) -> None:
         if self._llm is not None:
             return
 
@@ -245,23 +467,83 @@ class MeetingIntel:
             log.error(f"Failed to load intel model: {exc}", exc_info=True)
             raise MeetingIntelError(f"Failed to load intel model: {exc}") from exc
 
-    def _analyze_once(self, transcript: str) -> IntelResult:
-        self._ensure_model_loaded()
-        assert self._llm is not None
+    def _ensure_runtime_loaded(self) -> None:
+        if self._active_provider is None:
+            provider, reason = resolve_intel_provider(
+                self.provider,
+                model_path=self.model_path,
+                cloud_model=self.cloud_model,
+                cloud_api_key_env=self.cloud_api_key_env,
+                cloud_base_url=self.cloud_base_url,
+            )
+            if provider is None:
+                raise MeetingIntelError(reason or "No compatible intel provider available")
+            self._active_provider = provider
 
-        messages = _json_only_messages(transcript)
-        try:
+        if self._active_provider == "local":
+            self._ensure_local_model_loaded()
+        else:
+            self._ensure_openai_client_loaded()
+
+    def _ensure_model_loaded(self) -> None:
+        """Backward-compatible alias for older tests/callers."""
+        self._ensure_runtime_loaded()
+
+    def _chat_completion_text(
+        self,
+        messages: list[dict[str, str]],
+        *,
+        temperature: float,
+        max_tokens: int,
+    ) -> str:
+        self._ensure_model_loaded()
+
+        if self._active_provider == "local":
+            assert self._llm is not None
             response = self._llm.create_chat_completion(
                 messages=messages,
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
+                temperature=temperature,
+                max_tokens=max_tokens,
             )
             raw = (
                 response.get("choices", [{}])[0]
                 .get("message", {})
                 .get("content", "")
             )
-            raw_text = str(raw)
+            return str(raw)
+
+        assert self._openai_client is not None
+        base_kwargs: dict[str, object] = {
+            "model": self.cloud_model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        if self.cloud_reasoning_effort:
+            base_kwargs["reasoning_effort"] = self.cloud_reasoning_effort
+        if self.cloud_store:
+            base_kwargs["store"] = True
+
+        try:
+            response = self._openai_client.chat.completions.create(**base_kwargs)
+        except TypeError:
+            # Compatibility fallback for clients/endpoints that use max_completion_tokens.
+            fallback_kwargs = dict(base_kwargs)
+            fallback_kwargs.pop("max_tokens", None)
+            fallback_kwargs["max_completion_tokens"] = max_tokens
+            response = self._openai_client.chat.completions.create(**fallback_kwargs)
+
+        raw = response.choices[0].message.content if response.choices else ""
+        return _extract_openai_message_text(raw)
+
+    def _analyze_once(self, transcript: str) -> IntelResult:
+        messages = _json_only_messages(transcript)
+        try:
+            raw_text = self._chat_completion_text(
+                messages,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+            )
         except Exception as exc:
             log.error(f"Intel inference failed: {exc}", exc_info=True)
             raise MeetingIntelError(f"Intel inference failed: {exc}") from exc
@@ -309,17 +591,46 @@ class MeetingIntel:
                     action_items=[],
                     summary="",
                     raw_response=f"ERROR: {exc}",
+                    error=str(exc),
                 )
 
         return self._analyze_stream(transcript)
 
     def _analyze_stream(self, transcript: str) -> Iterator[Union[str, IntelResult]]:
+        """Stream analysis when available.
+
+        Cloud mode currently emits only the final IntelResult.
+        """
         raw_parts: list[str] = []
 
         try:
             self._ensure_model_loaded()
-            assert self._llm is not None
+        except Exception as exc:
+            log.error(f"Intel analyze(stream=True) failed to start: {exc}", exc_info=True)
+            yield IntelResult(
+                topics=[],
+                action_items=[],
+                summary="",
+                raw_response=f"ERROR: {exc}",
+                error=str(exc),
+            )
+            return
 
+        if self._active_provider == "cloud":
+            try:
+                yield self._analyze_once(transcript)
+            except Exception as exc:
+                yield IntelResult(
+                    topics=[],
+                    action_items=[],
+                    summary="",
+                    raw_response=f"ERROR: {exc}",
+                    error=str(exc),
+                )
+            return
+
+        try:
+            assert self._llm is not None
             messages = _json_only_messages(transcript)
             stream_iter = self._llm.create_chat_completion(
                 messages=messages,
@@ -334,6 +645,7 @@ class MeetingIntel:
                 action_items=[],
                 summary="",
                 raw_response=f"ERROR: {exc}",
+                error=str(exc),
             )
             return
 
@@ -360,6 +672,7 @@ class MeetingIntel:
                 action_items=[],
                 summary="",
                 raw_response=f"ERROR: {exc}",
+                error=str(exc),
             )
             return
 
@@ -396,9 +709,6 @@ class MeetingIntel:
             return None
 
         try:
-            self._ensure_model_loaded()
-            assert self._llm is not None
-
             # Truncate transcript for faster processing
             truncated = transcript[:3000] if len(transcript) > 3000 else transcript
 
@@ -417,13 +727,12 @@ class MeetingIntel:
                 },
             ]
 
-            response = self._llm.create_chat_completion(
-                messages=messages,
+            title = self._chat_completion_text(
+                messages,
                 temperature=0.3,
                 max_tokens=30,
-            )
+            ).strip()
 
-            title = response["choices"][0]["message"]["content"].strip()
             # Clean up common LLM artifacts
             title = title.strip('"\'')
             title = title.rstrip('.')
@@ -452,9 +761,6 @@ class MeetingIntel:
             return None
 
         try:
-            self._ensure_model_loaded()
-            assert self._llm is not None
-
             messages = [
                 {
                     "role": "system",
@@ -471,13 +777,11 @@ class MeetingIntel:
                 },
             ]
 
-            response = self._llm.create_chat_completion(
-                messages=messages,
+            label = self._chat_completion_text(
+                messages,
                 temperature=0.3,
                 max_tokens=20,
-            )
-
-            label = response["choices"][0]["message"]["content"].strip()
+            ).strip()
             # Clean up common LLM artifacts
             label = label.strip('"\'')
             label = label.rstrip('.')
@@ -515,9 +819,6 @@ class MeetingIntel:
             return None
 
         try:
-            self._ensure_model_loaded()
-            assert self._llm is not None
-
             # Build context with meeting summary for grounding
             grounding = ""
             if meeting_summary:
@@ -541,13 +842,11 @@ class MeetingIntel:
                 },
             ]
 
-            response = self._llm.create_chat_completion(
-                messages=messages,
+            label = self._chat_completion_text(
+                messages,
                 temperature=0.3,
                 max_tokens=20,
-            )
-
-            label = response["choices"][0]["message"]["content"].strip()
+            ).strip()
             # Clean up common LLM artifacts
             label = label.strip('"\'')
             label = label.rstrip('.')

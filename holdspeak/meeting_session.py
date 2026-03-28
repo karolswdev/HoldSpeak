@@ -6,13 +6,14 @@ and session persistence.
 
 from __future__ import annotations
 
+import hashlib
 import threading
 import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 import json
 
 import numpy as np
@@ -23,11 +24,19 @@ from .logging_config import get_logger
 
 # Optional imports for intel and web server
 try:
-    from .intel import MeetingIntel, IntelResult, ActionItem
+    from .intel import (
+        MeetingIntel,
+        IntelResult,
+        ActionItem,
+        get_intel_runtime_status,
+        resolve_intel_provider,
+    )
 except ImportError:
     MeetingIntel = None  # type: ignore
     IntelResult = None  # type: ignore
     ActionItem = None  # type: ignore
+    get_intel_runtime_status = None  # type: ignore
+    resolve_intel_provider = None  # type: ignore
 
 try:
     from .web_server import MeetingWebServer
@@ -131,6 +140,7 @@ class MeetingSaveResult:
     json_path: Optional[Path]
     database_error: Optional[str] = None
     json_error: Optional[str] = None
+    intel_job_enqueued: bool = False
 
 
 @dataclass
@@ -144,6 +154,10 @@ class MeetingState:
     segments: list[TranscriptSegment] = field(default_factory=list)
     bookmarks: list[Bookmark] = field(default_factory=list)
     intel: Optional[IntelSnapshot] = None  # Latest intel snapshot
+    intel_status: str = "disabled"
+    intel_status_detail: Optional[str] = None
+    intel_requested_at: Optional[datetime] = None
+    intel_completed_at: Optional[datetime] = None
     mic_label: str = "Me"
     remote_label: str = "Remote"
     web_url: Optional[str] = None  # URL of web dashboard
@@ -187,6 +201,14 @@ class MeetingState:
             return ""
         return " ".join(seg.text for seg in context_segments)
 
+    def transcript_hash(self) -> str:
+        """Return a stable digest of the current transcript contents."""
+        payload = "\n".join(
+            f"{seg.start_time:.3f}|{seg.end_time:.3f}|{seg.speaker}|{seg.text}"
+            for seg in self.segments
+        )
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
     def to_dict(self) -> dict:
         return {
             "id": self.id,
@@ -199,6 +221,12 @@ class MeetingState:
             "segments": [s.to_dict() for s in self.segments],
             "bookmarks": [b.to_dict() for b in self.bookmarks],
             "intel": self.intel.to_dict() if self.intel else None,
+            "intel_status": {
+                "state": self.intel_status,
+                "detail": self.intel_status_detail,
+                "requested_at": self.intel_requested_at.isoformat() if self.intel_requested_at else None,
+                "completed_at": self.intel_completed_at.isoformat() if self.intel_completed_at else None,
+            },
             "mic_label": self.mic_label,
             "remote_label": self.remote_label,
             "web_url": self.web_url,
@@ -231,8 +259,16 @@ class MeetingSession:
         on_mic_level: Optional[Callable[[float], None]] = None,
         on_system_level: Optional[Callable[[float], None]] = None,
         on_intel: Optional[Callable[[IntelSnapshot], None]] = None,
+        on_settings_applied: Optional[Callable[[Any], None]] = None,
         intel_enabled: bool = False,
         intel_model_path: Optional[str] = None,
+        intel_provider: str = "local",
+        intel_cloud_model: str = "gpt-5-mini",
+        intel_cloud_api_key_env: str = "OPENAI_API_KEY",
+        intel_cloud_base_url: Optional[str] = None,
+        intel_cloud_reasoning_effort: Optional[str] = None,
+        intel_cloud_store: bool = False,
+        intel_deferred_enabled: bool = True,
         web_enabled: bool = False,
         diarization_enabled: bool = False,
         diarize_mic: bool = False,
@@ -250,8 +286,15 @@ class MeetingSession:
             on_mic_level: Callback for mic level updates.
             on_system_level: Callback for system level updates.
             on_intel: Callback when new intel snapshot is generated.
+            on_settings_applied: Callback invoked when settings are saved via web UI.
             intel_enabled: Enable LLM-powered meeting intelligence.
             intel_model_path: Path to GGUF model for intel (None for default).
+            intel_provider: Meeting intel provider mode (local/cloud/auto).
+            intel_cloud_model: Cloud model name when provider uses cloud.
+            intel_cloud_api_key_env: Env var containing cloud API key.
+            intel_cloud_base_url: Optional OpenAI-compatible base URL.
+            intel_cloud_reasoning_effort: Reserved for future cloud tuning.
+            intel_cloud_store: Whether cloud requests may be stored server-side.
             web_enabled: Enable per-meeting web dashboard.
             diarization_enabled: Enable speaker diarization for system audio.
             diarize_mic: Also diarize mic input (for on-site meetings).
@@ -266,8 +309,16 @@ class MeetingSession:
         self.on_mic_level = on_mic_level
         self.on_system_level = on_system_level
         self.on_intel = on_intel
+        self.on_settings_applied = on_settings_applied
         self.intel_enabled = intel_enabled and MeetingIntel is not None
         self.intel_model_path = intel_model_path
+        self.intel_provider = intel_provider
+        self.intel_cloud_model = intel_cloud_model
+        self.intel_cloud_api_key_env = intel_cloud_api_key_env
+        self.intel_cloud_base_url = intel_cloud_base_url
+        self.intel_cloud_reasoning_effort = intel_cloud_reasoning_effort
+        self.intel_cloud_store = intel_cloud_store
+        self.intel_deferred_enabled = intel_deferred_enabled
         self.web_enabled = web_enabled and MeetingWebServer is not None
         self.diarization_enabled = diarization_enabled and SpeakerDiarizer is not None
         self.diarize_mic = diarize_mic and SpeakerDiarizer is not None
@@ -285,6 +336,7 @@ class MeetingSession:
         self._intel_thread: Optional[threading.Thread] = None
         self._segments_since_intel = 0
         self._current_analysis_id: Optional[str] = None  # For handling interruptions
+        self._deferred_intel_reason: Optional[str] = None
 
         # Web server
         self._web_server: Optional["MeetingWebServer"] = None
@@ -321,6 +373,50 @@ class MeetingSession:
             return False
         return self._recorder.has_system_audio
 
+    def _set_intel_status_locked(
+        self,
+        status: str,
+        detail: Optional[str] = None,
+        *,
+        requested_at: Optional[datetime] = None,
+        completed_at: Optional[datetime] = None,
+    ) -> None:
+        """Update meeting intel status while already holding the session lock."""
+        if self._state is None:
+            return
+
+        self._state.intel_status = status
+        self._state.intel_status_detail = detail
+        if requested_at is not None:
+            self._state.intel_requested_at = requested_at
+        if completed_at is not None or status in {"ready", "error"}:
+            self._state.intel_completed_at = completed_at
+
+    def _set_intel_status(
+        self,
+        status: str,
+        detail: Optional[str] = None,
+        *,
+        requested_at: Optional[datetime] = None,
+        completed_at: Optional[datetime] = None,
+    ) -> None:
+        """Update meeting intel status and broadcast it to the web dashboard."""
+        with self._lock:
+            self._set_intel_status_locked(
+                status,
+                detail,
+                requested_at=requested_at,
+                completed_at=completed_at,
+            )
+            state = self._state
+            web_server = self._web_server
+
+        if state is not None and web_server is not None:
+            try:
+                web_server.broadcast("intel_status", state.to_dict().get("intel_status", {}))
+            except Exception as exc:
+                log.debug(f"Failed to broadcast intel_status: {exc}")
+
     def start(self) -> MeetingState:
         """Start a new meeting session.
 
@@ -342,18 +438,92 @@ class MeetingSession:
                 remote_label=self.remote_label,
             )
 
+            if self.intel_enabled:
+                self._state.intel_requested_at = datetime.now()
+                self._state.intel_status = "initializing"
+                self._state.intel_status_detail = "Checking meeting intelligence runtime."
+            else:
+                self._state.intel_status = "disabled"
+                self._state.intel_status_detail = "Meeting intelligence disabled in config."
+
             # Initialize intel if enabled
             if self.intel_enabled and MeetingIntel is not None:
-                try:
-                    kwargs = {}
+                runtime_ok = True
+                runtime_error: Optional[str] = None
+                runtime_provider: Optional[str] = None
+                if get_intel_runtime_status is not None:
+                    runtime_kwargs = {
+                        "provider": self.intel_provider,
+                        "cloud_model": self.intel_cloud_model,
+                        "cloud_api_key_env": self.intel_cloud_api_key_env,
+                        "cloud_base_url": self.intel_cloud_base_url,
+                    }
                     if self.intel_model_path:
-                        kwargs["model_path"] = self.intel_model_path
-                    self._intel = MeetingIntel(**kwargs)
-                    self._segments_since_intel = 0
-                    log.info("Meeting intel initialized")
-                except Exception as e:
-                    log.error(f"Failed to initialize intel: {e}")
+                        runtime_ok, runtime_error = get_intel_runtime_status(self.intel_model_path, **runtime_kwargs)
+                    else:
+                        runtime_ok, runtime_error = get_intel_runtime_status(**runtime_kwargs)
+                    if runtime_ok and resolve_intel_provider is not None:
+                        if self.intel_model_path:
+                            runtime_provider, _ = resolve_intel_provider(
+                                self.intel_provider,
+                                model_path=self.intel_model_path,
+                                cloud_model=self.intel_cloud_model,
+                                cloud_api_key_env=self.intel_cloud_api_key_env,
+                                cloud_base_url=self.intel_cloud_base_url,
+                            )
+                        else:
+                            runtime_provider, _ = resolve_intel_provider(
+                                self.intel_provider,
+                                cloud_model=self.intel_cloud_model,
+                                cloud_api_key_env=self.intel_cloud_api_key_env,
+                                cloud_base_url=self.intel_cloud_base_url,
+                            )
+
+                if runtime_ok:
+                    try:
+                        kwargs = {}
+                        if self.intel_model_path:
+                            kwargs["model_path"] = self.intel_model_path
+                        kwargs["provider"] = self.intel_provider
+                        kwargs["cloud_model"] = self.intel_cloud_model
+                        kwargs["cloud_api_key_env"] = self.intel_cloud_api_key_env
+                        kwargs["cloud_base_url"] = self.intel_cloud_base_url
+                        kwargs["cloud_reasoning_effort"] = self.intel_cloud_reasoning_effort
+                        kwargs["cloud_store"] = self.intel_cloud_store
+                        self._intel = MeetingIntel(**kwargs)
+                        self._segments_since_intel = 0
+                        self._state.intel_status = "live"
+                        if runtime_provider == "cloud":
+                            self._state.intel_status_detail = "Cloud meeting intelligence active."
+                        elif runtime_provider == "local":
+                            self._state.intel_status_detail = "Local meeting intelligence active."
+                        else:
+                            self._state.intel_status_detail = "Meeting intelligence active."
+                        self._deferred_intel_reason = None
+                        log.info("Meeting intel initialized")
+                    except Exception as e:
+                        log.error(f"Failed to initialize intel: {e}")
+                        self._intel = None
+                        self._deferred_intel_reason = str(e)
+                        if self.intel_deferred_enabled:
+                            self._state.intel_status = "queued"
+                            self._state.intel_status_detail = f"Queued for later processing: {e}"
+                        else:
+                            self._state.intel_status = "error"
+                            self._state.intel_status_detail = str(e)
+                else:
                     self._intel = None
+                    self._deferred_intel_reason = runtime_error
+                    if self.intel_deferred_enabled:
+                        self._state.intel_status = "queued"
+                        self._state.intel_status_detail = (
+                            f"Queued for later processing: {runtime_error}"
+                            if runtime_error
+                            else "Queued for later processing."
+                        )
+                    else:
+                        self._state.intel_status = "error"
+                        self._state.intel_status_detail = runtime_error or "Meeting intelligence unavailable."
 
             # Initialize web server if enabled
             if self.web_enabled and MeetingWebServer is not None:
@@ -365,6 +535,7 @@ class MeetingSession:
                         on_update_action_item=self.update_action_item,
                         on_set_title=self.set_title,
                         on_set_tags=self.set_tags,
+                        on_settings_applied=self.on_settings_applied,
                     )
                     url = self._web_server.start()
                     self._state.web_url = url
@@ -886,6 +1057,7 @@ class MeetingSession:
         database_error: Optional[str] = None
         json_error: Optional[str] = None
         json_path: Optional[Path] = None
+        intel_job_enqueued = False
 
         # Save to SQLite database.
         try:
@@ -894,6 +1066,18 @@ class MeetingSession:
             db = get_database()
             db.save_meeting(state)
             database_saved = True
+            if (
+                self.intel_enabled
+                and self.intel_deferred_enabled
+                and state.intel_status == "queued"
+                and state.segments
+            ):
+                db.enqueue_intel_job(
+                    state.id,
+                    transcript_hash=state.transcript_hash(),
+                    reason=state.intel_status_detail,
+                )
+                intel_job_enqueued = True
             log.info(f"Meeting saved to database: {state.id}")
         except Exception as e:
             database_error = f"{type(e).__name__}: {e}"
@@ -923,6 +1107,7 @@ class MeetingSession:
             json_path=json_path,
             database_error=database_error,
             json_error=json_error,
+            intel_job_enqueued=intel_job_enqueued,
         )
 
     def _maybe_run_intel(self) -> None:
@@ -936,6 +1121,7 @@ class MeetingSession:
             return
 
         self._segments_since_intel = 0
+        self._set_intel_status("running", "Analyzing the latest transcript window.")
         self._intel_thread = threading.Thread(
             target=self._run_intel_analysis,
             daemon=True,
@@ -978,6 +1164,17 @@ class MeetingSession:
                 else:
                     # Final IntelResult
                     result = chunk
+                    if getattr(result, "error", None):
+                        detail = f"Deferred intel required: {result.error}"
+                        log.warning(f"Intel analysis deferred: {result.error}")
+                        if self.intel_deferred_enabled:
+                            self._deferred_intel_reason = result.error
+                            with self._lock:
+                                self._intel = None
+                            self._set_intel_status("queued", detail)
+                        else:
+                            self._set_intel_status("error", result.error, completed_at=datetime.now())
+                        return
 
                     # Create snapshot - preserve ActionItem objects for status tracking
                     snapshot = IntelSnapshot(
@@ -991,11 +1188,22 @@ class MeetingSession:
                     with self._lock:
                         if self._state:
                             self._state.intel = snapshot
+                            self._state.intel_status = "ready"
+                            self._state.intel_status_detail = (
+                                "Meeting intelligence ready."
+                                if not final
+                                else "Final meeting intelligence ready."
+                            )
+                            self._state.intel_completed_at = datetime.now()
 
                     # Broadcast completion via web server
                     if self._web_server is not None:
                         try:
                             self._web_server.broadcast("intel_complete", snapshot.to_dict())
+                            self._web_server.broadcast(
+                                "intel_status",
+                                self._get_state_dict().get("intel_status", {}),
+                            )
                         except Exception as e:
                             log.error(f"Failed to broadcast intel_complete: {e}")
 
@@ -1014,6 +1222,13 @@ class MeetingSession:
 
         except Exception as e:
             log.error(f"Intel analysis failed: {e}")
+            if self.intel_deferred_enabled:
+                self._deferred_intel_reason = str(e)
+                with self._lock:
+                    self._intel = None
+                self._set_intel_status("queued", f"Deferred intel required: {e}")
+            else:
+                self._set_intel_status("error", str(e), completed_at=datetime.now())
 
     def _refine_bookmark_labels(self, meeting_summary: str) -> None:
         """Refine all bookmark labels using full meeting context.

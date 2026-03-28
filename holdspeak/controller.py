@@ -9,6 +9,7 @@ from typing import Optional
 from .audio import AudioRecorder
 from .config import Config
 from .hotkey import HotkeyListener
+from .intel_queue import IntelQueueWorker, start_intel_queue_worker
 from .logging_config import get_logger
 from .meeting_session import IntelSnapshot, MeetingSession, TranscriptSegment
 from .text_processor import TextProcessor
@@ -29,13 +30,13 @@ class HoldSpeakController:
     ):
         log.info("Initializing HoldSpeakController")
         self.app = app
-        self.config = app.config
+        config = self.app.config
 
         self._transcriber = preloaded_transcriber
         self._transcriber_model = preloaded_transcriber.model_name if preloaded_transcriber else None
 
         self.recorder = AudioRecorder(
-            device=self.config.meeting.mic_device,
+            device=config.meeting.mic_device,
             on_level=self._on_audio_level,
         )
         self.text_processor = TextProcessor()
@@ -58,11 +59,11 @@ class HoldSpeakController:
         self._global_hotkey_enabled = True
         self._global_hotkey_disabled_reason = ""
         try:
-            log.debug(f"Setting up hotkey listener with key: {self.config.hotkey.key}")
+            log.debug(f"Setting up hotkey listener with key: {config.hotkey.key}")
             self.hotkey_listener = HotkeyListener(
                 on_press=self._on_hotkey_press,
                 on_release=self._on_hotkey_release,
-                hotkey=self.config.hotkey.key,
+                hotkey=config.hotkey.key,
             )
         except Exception as exc:
             self.hotkey_listener = None
@@ -74,12 +75,16 @@ class HoldSpeakController:
 
         self._meeting_session: Optional[MeetingSession] = None
         self._meeting_timer_thread: Optional[threading.Thread] = None
+        self._meeting_stop_thread: Optional[threading.Thread] = None
         self._meeting_stop_timer = threading.Event()
         self._meeting_stopping = False
+        self._intel_queue_worker: Optional[IntelQueueWorker] = None
 
         self._last_mic_level_update = 0.0
         self._last_system_level_update = 0.0
         self._level_update_interval = 0.066
+
+        self._sync_intel_queue_worker()
 
         log.info(f"HoldSpeakController initialized (transcriber preloaded: {preloaded_transcriber is not None})")
 
@@ -159,7 +164,7 @@ class HoldSpeakController:
                                 self.app.notify("Copy from history and paste manually", timeout=2.5)
                     else:
                         if max_abs < 0.01 and rms < 0.003:
-                            dev = self.config.meeting.mic_device or "default"
+                            dev = self.app.config.meeting.mic_device or "default"
                             self.app.notify(
                                 f"No speech detected (mic='{dev}', peak={max_abs:.4f}, rms={rms:.4f}). "
                                 "Check input device/permissions in Settings.",
@@ -188,13 +193,73 @@ class HoldSpeakController:
             self._global_hotkey_disabled_reason = f"{type(exc).__name__}: {exc}"
             self.app.set_global_hotkey_status(False, self._global_hotkey_disabled_reason)
 
-    def stop(self) -> None:
+    def stop(self, *, finalize_active_meeting: bool = False, notify: bool = False) -> None:
+        if finalize_active_meeting:
+            self._finalize_active_meeting_for_shutdown(notify=notify)
+        if self._intel_queue_worker is not None:
+            self._intel_queue_worker.stop(timeout=5.0)
+            self._intel_queue_worker = None
         if self.hotkey_listener is not None:
             self.hotkey_listener.stop()
 
     def update_hotkey(self, key: str) -> None:
         if self.hotkey_listener is not None:
             self.hotkey_listener.hotkey = key
+
+    def apply_runtime_config(self) -> None:
+        """Apply latest app config to long-lived runtime components."""
+        config = self.app.config
+        self.recorder.device = config.meeting.mic_device
+        self.update_hotkey(config.hotkey.key)
+        self._sync_intel_queue_worker()
+
+    def _sync_intel_queue_worker(self) -> None:
+        """Ensure deferred-intel worker matches current config."""
+        config = self.app.config.meeting
+        should_run = config.intel_enabled and config.intel_deferred_enabled
+        desired_model = config.intel_realtime_model
+        desired_provider = config.intel_provider
+        desired_cloud_model = config.intel_cloud_model
+        desired_cloud_api_key_env = config.intel_cloud_api_key_env
+        desired_cloud_base_url = config.intel_cloud_base_url
+        desired_cloud_reasoning_effort = config.intel_cloud_reasoning_effort
+        desired_cloud_store = config.intel_cloud_store
+        desired_poll = max(5.0, float(config.intel_queue_poll_seconds))
+
+        worker = self._intel_queue_worker
+        if not should_run:
+            if worker is not None:
+                worker.stop(timeout=5.0)
+                self._intel_queue_worker = None
+            return
+
+        if (
+            worker is not None
+            and worker.is_alive()
+            and worker.model_path == desired_model
+            and worker.provider == desired_provider
+            and worker.cloud_model == desired_cloud_model
+            and worker.cloud_api_key_env == desired_cloud_api_key_env
+            and worker.cloud_base_url == desired_cloud_base_url
+            and worker.cloud_reasoning_effort == desired_cloud_reasoning_effort
+            and worker.cloud_store == desired_cloud_store
+            and worker.poll_seconds == desired_poll
+        ):
+            return
+
+        if worker is not None:
+            worker.stop(timeout=5.0)
+
+        self._intel_queue_worker = start_intel_queue_worker(
+            model_path=desired_model,
+            provider=desired_provider,
+            cloud_model=desired_cloud_model,
+            cloud_api_key_env=desired_cloud_api_key_env,
+            cloud_base_url=desired_cloud_base_url,
+            cloud_reasoning_effort=desired_cloud_reasoning_effort,
+            cloud_store=desired_cloud_store,
+            poll_seconds=desired_poll,
+        )
 
     def start_voice_typing_recording(self) -> None:
         if not self.app.ui_state.is_idle:
@@ -221,23 +286,32 @@ class HoldSpeakController:
         if self._meeting_stopping:
             return
         transcriber = self._ensure_transcriber()
+        config = self.app.config
 
         self._meeting_session = MeetingSession(
             transcriber=transcriber,
-            mic_label=self.config.meeting.mic_label,
-            remote_label=self.config.meeting.remote_label,
-            mic_device=self.config.meeting.mic_device,
-            system_device=self.config.meeting.system_audio_device,
+            mic_label=config.meeting.mic_label,
+            remote_label=config.meeting.remote_label,
+            mic_device=config.meeting.mic_device,
+            system_device=config.meeting.system_audio_device,
             on_segment=self._on_meeting_segment,
             on_mic_level=self._on_meeting_mic_level,
             on_system_level=self._on_meeting_system_level,
             on_intel=self._on_meeting_intel,
-            intel_enabled=self.config.meeting.intel_enabled,
-            intel_model_path=self.config.meeting.intel_realtime_model,
-            web_enabled=self.config.meeting.web_enabled,
-            diarization_enabled=self.config.meeting.diarization_enabled,
-            diarize_mic=self.config.meeting.diarize_mic,
-            cross_meeting_recognition=self.config.meeting.cross_meeting_recognition,
+            on_settings_applied=self._on_web_settings_applied,
+            intel_enabled=config.meeting.intel_enabled,
+            intel_model_path=config.meeting.intel_realtime_model,
+            intel_provider=config.meeting.intel_provider,
+            intel_cloud_model=config.meeting.intel_cloud_model,
+            intel_cloud_api_key_env=config.meeting.intel_cloud_api_key_env,
+            intel_cloud_base_url=config.meeting.intel_cloud_base_url,
+            intel_cloud_reasoning_effort=config.meeting.intel_cloud_reasoning_effort,
+            intel_cloud_store=config.meeting.intel_cloud_store,
+            intel_deferred_enabled=config.meeting.intel_deferred_enabled,
+            web_enabled=config.meeting.web_enabled,
+            diarization_enabled=config.meeting.diarization_enabled,
+            diarize_mic=config.meeting.diarize_mic,
+            cross_meeting_recognition=config.meeting.cross_meeting_recognition,
         )
 
         try:
@@ -269,9 +343,31 @@ class HoldSpeakController:
             self.app.notify(f"Meeting failed: {e}", severity="error", timeout=3.0, markup=False)
             self._meeting_session = None
 
+    def _on_web_settings_applied(self, updated_config: Config) -> None:
+        """Apply settings saved from the web UI at runtime."""
+        try:
+            self.app.config = updated_config
+            self.app.update_hotkey_display(updated_config.hotkey.display)
+            self.apply_runtime_config()
+            self.app.notify("Settings saved from web UI", timeout=1.8)
+        except Exception as exc:
+            log.error(f"Failed to apply web settings: {exc}")
+
     def _stop_meeting(self) -> None:
-        if self._meeting_session is None:
+        session = self._prepare_meeting_stop(notify=True)
+        if session is None:
             return
+
+        def _do_stop() -> None:
+            self._finalize_meeting_stop(session, notify=True)
+
+        stop_thread = threading.Thread(target=_do_stop, daemon=True)
+        self._meeting_stop_thread = stop_thread
+        stop_thread.start()
+
+    def _prepare_meeting_stop(self, *, notify: bool) -> Optional[MeetingSession]:
+        if self._meeting_session is None:
+            return None
 
         self._meeting_stopping = True
         self._meeting_stop_timer.set()
@@ -280,43 +376,69 @@ class HoldSpeakController:
         self.app.set_meeting_mic_level(0.0)
         self.app.set_meeting_system_level(0.0)
         self.app.hide_meeting_cockpit()
-        self.app.notify("Stopping meeting...", timeout=1.0)
+        if notify:
+            self.app.notify("Stopping meeting...", timeout=1.0)
 
         session = self._meeting_session
         self._meeting_session = None
+        return session
 
-        def _do_stop() -> None:
+    def _finalize_meeting_stop(self, session: MeetingSession, *, notify: bool) -> None:
+        try:
             try:
                 state = session.stop()
                 log.info(f"Meeting stopped: {state.id}, {len(state.segments)} segments")
-
-                try:
-                    save_result = session.save()
-                    if save_result.database_saved:
-                        self.app.notify(f"Meeting saved: {len(state.segments)} segments", timeout=2.0)
-                    elif save_result.json_saved:
-                        self.app.notify(
-                            "Meeting archived to JSON only; history DB save failed",
-                            severity="warning",
-                            timeout=3.0,
-                        )
-                    else:
-                        self.app.notify(
-                            "Meeting stop completed, but persistence failed",
-                            severity="error",
-                            timeout=3.0,
-                        )
-                except Exception as e:
-                    log.error(f"Failed to save meeting: {e}")
-                    self.app.notify(f"Save failed: {e}", severity="error", timeout=3.0)
-
             except Exception as e:
                 log.error(f"Failed to stop meeting: {e}")
-                self.app.notify(f"Stop failed: {e}", severity="error", timeout=3.0)
-            finally:
-                self._meeting_stopping = False
+                if notify:
+                    self.app.notify(f"Stop failed: {e}", severity="error", timeout=3.0)
+                return
 
-        threading.Thread(target=_do_stop, daemon=True).start()
+            try:
+                save_result = session.save()
+            except Exception as e:
+                log.error(f"Failed to save meeting: {e}")
+                if notify:
+                    self.app.notify(f"Save failed: {e}", severity="error", timeout=3.0)
+                return
+
+            if not notify:
+                return
+
+            if save_result.database_saved:
+                if save_result.intel_job_enqueued:
+                    self.app.notify(
+                        "Meeting saved; intelligence queued for later processing",
+                        timeout=3.0,
+                    )
+                else:
+                    self.app.notify(f"Meeting saved: {len(state.segments)} segments", timeout=2.0)
+            elif save_result.json_saved:
+                self.app.notify(
+                    "Meeting archived to JSON only; history DB save failed",
+                    severity="warning",
+                    timeout=3.0,
+                )
+            else:
+                self.app.notify(
+                    "Meeting stop completed, but persistence failed",
+                    severity="error",
+                    timeout=3.0,
+                )
+        finally:
+            self._meeting_stopping = False
+            if threading.current_thread() is self._meeting_stop_thread:
+                self._meeting_stop_thread = None
+
+    def _finalize_active_meeting_for_shutdown(self, *, notify: bool) -> None:
+        if self._meeting_session is not None and self._meeting_session.is_active and not self._meeting_stopping:
+            session = self._prepare_meeting_stop(notify=notify)
+            if session is not None:
+                self._finalize_meeting_stop(session, notify=notify)
+
+        stop_thread = self._meeting_stop_thread
+        if stop_thread is not None and stop_thread.is_alive() and stop_thread is not threading.current_thread():
+            stop_thread.join(timeout=30.0)
 
     def _on_meeting_mic_level(self, level: float) -> None:
         now = time.monotonic()
@@ -434,12 +556,20 @@ class HoldSpeakAppWithController(HoldSpeakApp):
 
     def on_unmount(self) -> None:
         if self._controller:
-            self._controller.stop()
+            self._controller.stop(finalize_active_meeting=True, notify=False)
 
     def on_settings_screen_applied(self, message) -> None:
         super().on_settings_screen_applied(message)
         if self._controller:
-            self._controller.update_hotkey(self.config.hotkey.key)
+            self._controller.apply_runtime_config()
+
+    def request_quit(self) -> None:
+        if self._controller:
+            self._controller.stop(finalize_active_meeting=True, notify=False)
+        self.exit()
+
+    async def action_quit(self) -> None:
+        self.request_quit()
 
     def on_meeting_toggle(self, message) -> None:
         if self._controller:

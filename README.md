@@ -2,7 +2,7 @@
 
 Voice typing for macOS and Linux - hold a hotkey, speak, release.
 
-**100% local. 100% private. Fast.**
+**Local-first. Private by default. Cloud optional. Fast.**
 
 ## Features
 
@@ -11,8 +11,9 @@ Voice typing for macOS and Linux - hold a hotkey, speak, release.
 - **Clipboard Insertion**: Say "clipboard" to insert your clipboard contents
 - **Meeting Mode**: Record meetings with dual-stream capture (mic + system audio)
 - **Live Transcription**: Real-time transcript with speaker labels
-- **Meeting Intelligence**: AI-powered topics, action items, and summaries via local LLM
-- **Web Dashboard**: Modern browser UI for viewing meetings in real-time
+- **Meeting Intelligence**: AI-powered topics, action items, and summaries via local or cloud models
+- **Deferred Intel Queue**: If no compatible local model is available, queue meeting intelligence for later processing
+- **Web Interfaces**: Live meeting dashboard plus browser-based archive/settings hub
 
 ## Platform Support
 
@@ -174,9 +175,16 @@ When a meeting starts, a web dashboard URL appears. Open it in your browser to s
 - Live transcript with speaker labels (Me / Remote)
 - AI-extracted topics and action items
 - Meeting summary
-- Bookmark, copy, and export controls
+- Bookmark, per-segment copy, and export controls
+- Clear intel status when analysis is live, queued, unavailable, or complete
+
+The same local web server also exposes:
+- `/history` for meeting search, action tracking, speaker tracking, and intel queue management
+- `/settings` for browser-based config updates (including cloud `intel_provider` and optional `intel_cloud_base_url`)
+- Local-only access (`127.0.0.1` loopback) by default
 
 **For complete setup instructions and troubleshooting, see the [Meeting Mode Guide](docs/MEETING_MODE_GUIDE.md).**
+Before shipping broadly, run through the [Release Hardening Checklist](docs/RELEASE_HARDENING_CHECKLIST.md).
 
 ## Testing
 
@@ -188,6 +196,9 @@ uv run pytest -q tests/integration
 # Optional meeting/web integration subset
 uv pip install -e '.[meeting]'
 uv run pytest -q tests/integration -m requires_meeting
+
+# Strict release gate (fails if checklist items are unchecked)
+uv run python scripts/release_gate.py
 ```
 
 ## Configuration
@@ -208,8 +219,16 @@ Config file: `~/.config/holdspeak/config.json`
     "mic_label": "Me",
     "remote_label": "Remote",
     "intel_enabled": true,
+    "intel_provider": "local",
     "intel_realtime_model": "~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf",
-    "web_enabled": true
+    "intel_queue_poll_seconds": 120,
+    "intel_cloud_model": "gpt-5-mini",
+    "intel_cloud_api_key_env": "OPENAI_API_KEY",
+    "intel_cloud_base_url": null,
+    "intel_deferred_enabled": true,
+    "web_enabled": true,
+    "web_auto_open": false,
+    "similarity_threshold": 0.75
   }
 }
 ```
@@ -236,15 +255,20 @@ Config file: `~/.config/holdspeak/config.json`
 │  Bookmarks: Auto-labeled from context (±10s window)         │
 ├─────────────────────────────────────────────────────────────┤
 │                     Per-Meeting Web Server                  │
-│  GET  /          → Dashboard HTML (Alpine.js + Tailwind)   │
-│  GET  /api/state → Current meeting state                   │
-│  WS   /ws        → Real-time segment/intel broadcast       │
+│  GET  /          → Live dashboard (meeting in progress)     │
+│  GET  /history   → Meeting archive + actions + speakers     │
+│  GET  /settings  → Browser settings UI                      │
+│  GET  /api/state → Current meeting state                    │
+│  WS   /ws        → Real-time segment/intel broadcast        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ## Screenshots
 
 ### TUI (Terminal UI)
+![TUI Meeting Cockpit](docs/screenshots/tui_meeting.svg)
+
+### Voice Typing
 ![TUI Recording](docs/screenshots/tui_recording.svg)
 
 ### Meeting Dashboard

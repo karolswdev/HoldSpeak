@@ -17,7 +17,7 @@ VALID_ACTION_ITEM_STATUSES = frozenset({"pending", "done", "dismissed"})
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -37,6 +37,10 @@ CREATE TABLE IF NOT EXISTS meetings (
     ended_at TEXT,
     title TEXT,
     duration_seconds REAL,
+    intel_status TEXT NOT NULL DEFAULT 'disabled',
+    intel_status_detail TEXT,
+    intel_requested_at TEXT,
+    intel_completed_at TEXT,
     mic_label TEXT NOT NULL DEFAULT 'Me',
     remote_label TEXT NOT NULL DEFAULT 'Remote',
     web_url TEXT,
@@ -105,6 +109,17 @@ CREATE TABLE IF NOT EXISTS intel_snapshots (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Deferred intel jobs for meetings that need later processing
+CREATE TABLE IF NOT EXISTS intel_jobs (
+    meeting_id TEXT PRIMARY KEY REFERENCES meetings(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'queued',
+    transcript_hash TEXT NOT NULL,
+    requested_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    attempts INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT
+);
+
 -- Speaker identities for cross-meeting recognition
 CREATE TABLE IF NOT EXISTS speakers (
     id TEXT PRIMARY KEY,
@@ -152,6 +167,7 @@ CREATE INDEX IF NOT EXISTS idx_action_items_status ON action_items(status);
 CREATE INDEX IF NOT EXISTS idx_action_items_owner ON action_items(owner);
 CREATE INDEX IF NOT EXISTS idx_topics_meeting ON topics(meeting_id);
 CREATE INDEX IF NOT EXISTS idx_meetings_date ON meetings(started_at);
+CREATE INDEX IF NOT EXISTS idx_intel_jobs_status ON intel_jobs(status, requested_at);
 CREATE INDEX IF NOT EXISTS idx_segments_speaker_id ON segments(speaker_id);
 CREATE INDEX IF NOT EXISTS idx_speakers_name ON speakers(name);
 """
@@ -168,6 +184,24 @@ class MeetingSummary:
     segment_count: int
     action_item_count: int
     tags: list[str]
+    intel_status: str = "disabled"
+    intel_status_detail: Optional[str] = None
+
+
+@dataclass
+class IntelJob:
+    """Deferred intelligence job metadata."""
+
+    meeting_id: str
+    status: str
+    transcript_hash: str
+    requested_at: datetime
+    updated_at: datetime
+    attempts: int
+    last_error: Optional[str]
+    meeting_title: Optional[str] = None
+    started_at: Optional[datetime] = None
+    intel_status_detail: Optional[str] = None
 
 
 @dataclass
@@ -256,6 +290,20 @@ class MeetingDatabase:
                     log.info("Migrating speakers table: adding avatar column")
                     conn.execute("ALTER TABLE speakers ADD COLUMN avatar TEXT")
 
+            # Migration v3 -> v4: Add intel status fields to meetings
+            if from_version < 4:
+                for column_name, column_sql in (
+                    ("intel_status", "ALTER TABLE meetings ADD COLUMN intel_status TEXT NOT NULL DEFAULT 'disabled'"),
+                    ("intel_status_detail", "ALTER TABLE meetings ADD COLUMN intel_status_detail TEXT"),
+                    ("intel_requested_at", "ALTER TABLE meetings ADD COLUMN intel_requested_at TEXT"),
+                    ("intel_completed_at", "ALTER TABLE meetings ADD COLUMN intel_completed_at TEXT"),
+                ):
+                    try:
+                        conn.execute(f"SELECT {column_name} FROM meetings LIMIT 1")
+                    except sqlite3.OperationalError:
+                        log.info(f"Migrating meetings table: adding {column_name} column")
+                        conn.execute(column_sql)
+
         # Now apply the full schema (creates tables/indexes that don't exist)
         conn.executescript(SCHEMA_SQL)
 
@@ -298,12 +346,17 @@ class MeetingDatabase:
             # Upsert meeting
             conn.execute("""
                 INSERT INTO meetings (id, started_at, ended_at, title,
-                    duration_seconds, mic_label, remote_label, web_url)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    duration_seconds, intel_status, intel_status_detail,
+                    intel_requested_at, intel_completed_at, mic_label, remote_label, web_url)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     ended_at = excluded.ended_at,
                     title = excluded.title,
                     duration_seconds = excluded.duration_seconds,
+                    intel_status = excluded.intel_status,
+                    intel_status_detail = excluded.intel_status_detail,
+                    intel_requested_at = excluded.intel_requested_at,
+                    intel_completed_at = excluded.intel_completed_at,
                     updated_at = datetime('now')
             """, (
                 state.id,
@@ -311,6 +364,10 @@ class MeetingDatabase:
                 state.ended_at.isoformat() if state.ended_at else None,
                 state.title,
                 state.duration if state.ended_at else None,
+                state.intel_status,
+                state.intel_status_detail,
+                state.intel_requested_at.isoformat() if state.intel_requested_at else None,
+                state.intel_completed_at.isoformat() if state.intel_completed_at else None,
                 state.mic_label,
                 state.remote_label,
                 state.web_url,
@@ -519,6 +576,10 @@ class MeetingDatabase:
             segments=segments,
             bookmarks=bookmarks,
             intel=intel,
+            intel_status=row["intel_status"] or "disabled",
+            intel_status_detail=row["intel_status_detail"],
+            intel_requested_at=datetime.fromisoformat(row["intel_requested_at"]) if row["intel_requested_at"] else None,
+            intel_completed_at=datetime.fromisoformat(row["intel_completed_at"]) if row["intel_completed_at"] else None,
             mic_label=row['mic_label'],
             remote_label=row['remote_label'],
             web_url=row['web_url'],
@@ -572,6 +633,230 @@ class MeetingDatabase:
             summary=row['summary'],
         )
 
+    # === Deferred Intel Queue ===
+
+    def enqueue_intel_job(
+        self,
+        meeting_id: str,
+        *,
+        transcript_hash: str,
+        reason: Optional[str] = None,
+    ) -> None:
+        """Queue or refresh deferred intelligence processing for a meeting."""
+        now = datetime.now().isoformat()
+        with self._connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO intel_jobs (
+                    meeting_id, status, transcript_hash, requested_at, updated_at, attempts, last_error
+                )
+                VALUES (?, 'queued', ?, ?, ?, 0, ?)
+                ON CONFLICT(meeting_id) DO UPDATE SET
+                    status = 'queued',
+                    transcript_hash = excluded.transcript_hash,
+                    requested_at = excluded.requested_at,
+                    updated_at = excluded.updated_at,
+                    last_error = excluded.last_error
+                """,
+                (meeting_id, transcript_hash, now, now, reason),
+            )
+
+            conn.execute(
+                """
+                UPDATE meetings
+                SET intel_status = 'queued',
+                    intel_status_detail = ?,
+                    intel_requested_at = COALESCE(intel_requested_at, ?),
+                    intel_completed_at = NULL,
+                    updated_at = datetime('now')
+                WHERE id = ?
+                """,
+                (
+                    reason or "Queued for later processing.",
+                    now,
+                    meeting_id,
+                ),
+            )
+
+    def claim_next_intel_job(self) -> Optional[IntelJob]:
+        """Claim the next queued intelligence job for processing."""
+        with self._connection() as conn:
+            row = conn.execute(
+                """
+                SELECT * FROM intel_jobs
+                WHERE status = 'queued'
+                ORDER BY requested_at ASC
+                LIMIT 1
+                """
+            ).fetchone()
+            if row is None:
+                return None
+
+            updated_at = datetime.now().isoformat()
+            conn.execute(
+                """
+                UPDATE intel_jobs
+                SET status = 'running',
+                    attempts = attempts + 1,
+                    updated_at = ?,
+                    last_error = NULL
+                WHERE meeting_id = ?
+                """,
+                (updated_at, row["meeting_id"]),
+            )
+
+            conn.execute(
+                """
+                UPDATE meetings
+                SET intel_status = 'running',
+                    intel_status_detail = 'Processing queued meeting intelligence.',
+                    updated_at = datetime('now')
+                WHERE id = ?
+                """,
+                (row["meeting_id"],),
+            )
+
+            return IntelJob(
+                meeting_id=row["meeting_id"],
+                status="running",
+                transcript_hash=row["transcript_hash"],
+                requested_at=datetime.fromisoformat(row["requested_at"]),
+                updated_at=datetime.fromisoformat(updated_at),
+                attempts=int(row["attempts"]) + 1,
+                last_error=None,
+            )
+
+    def complete_intel_job(self, meeting_id: str) -> None:
+        """Remove a completed deferred intelligence job."""
+        with self._connection() as conn:
+            conn.execute("DELETE FROM intel_jobs WHERE meeting_id = ?", (meeting_id,))
+
+    def list_intel_jobs(
+        self,
+        *,
+        status: Optional[str] = None,
+        limit: int = 20,
+    ) -> list[IntelJob]:
+        """List deferred intelligence jobs with meeting context."""
+        with self._connection() as conn:
+            query = """
+                SELECT
+                    j.*,
+                    m.title AS meeting_title,
+                    m.started_at AS meeting_started_at,
+                    m.intel_status_detail AS intel_status_detail
+                FROM intel_jobs j
+                JOIN meetings m ON m.id = j.meeting_id
+                WHERE 1=1
+            """
+            params: list[Any] = []
+
+            if status and status != "all":
+                query += " AND j.status = ?"
+                params.append(status)
+
+            query += """
+                ORDER BY
+                    CASE j.status
+                        WHEN 'running' THEN 0
+                        WHEN 'queued' THEN 1
+                        WHEN 'failed' THEN 2
+                        ELSE 3
+                    END,
+                    j.requested_at ASC
+                LIMIT ?
+            """
+            params.append(limit)
+
+            return [
+                IntelJob(
+                    meeting_id=row["meeting_id"],
+                    status=row["status"],
+                    transcript_hash=row["transcript_hash"],
+                    requested_at=datetime.fromisoformat(row["requested_at"]),
+                    updated_at=datetime.fromisoformat(row["updated_at"]),
+                    attempts=int(row["attempts"]),
+                    last_error=row["last_error"],
+                    meeting_title=row["meeting_title"],
+                    started_at=(
+                        datetime.fromisoformat(row["meeting_started_at"])
+                        if row["meeting_started_at"]
+                        else None
+                    ),
+                    intel_status_detail=row["intel_status_detail"],
+                )
+                for row in conn.execute(query, params)
+            ]
+
+    def fail_intel_job(self, meeting_id: str, error: str) -> None:
+        """Mark a deferred intelligence job as failed."""
+        now = datetime.now().isoformat()
+        with self._connection() as conn:
+            conn.execute(
+                """
+                UPDATE intel_jobs
+                SET status = 'failed',
+                    updated_at = ?,
+                    last_error = ?
+                WHERE meeting_id = ?
+                """,
+                (now, error, meeting_id),
+            )
+            conn.execute(
+                """
+                UPDATE meetings
+                SET intel_status = 'error',
+                    intel_status_detail = ?,
+                    intel_completed_at = ?,
+                    updated_at = datetime('now')
+                WHERE id = ?
+                """,
+                (error, now, meeting_id),
+            )
+
+    def requeue_intel_job(self, meeting_id: str, *, reason: Optional[str] = None) -> bool:
+        """Requeue deferred intelligence processing for a meeting."""
+        meeting = self.get_meeting(meeting_id)
+        if meeting is None or not meeting.segments:
+            return False
+
+        self.enqueue_intel_job(
+            meeting_id,
+            transcript_hash=meeting.transcript_hash(),
+            reason=reason or "Manual retry requested.",
+        )
+        return True
+
+    def update_meeting_intel_status(
+        self,
+        meeting_id: str,
+        *,
+        status: str,
+        detail: Optional[str] = None,
+        requested_at: Optional[datetime] = None,
+        completed_at: Optional[datetime] = None,
+    ) -> None:
+        """Update persisted intel status for a meeting."""
+        with self._connection() as conn:
+            conn.execute(
+                """
+                UPDATE meetings
+                SET intel_status = ?,
+                    intel_status_detail = ?,
+                    intel_requested_at = COALESCE(?, intel_requested_at),
+                    intel_completed_at = ?,
+                    updated_at = datetime('now')
+                WHERE id = ?
+                """,
+                (
+                    status,
+                    detail,
+                    requested_at.isoformat() if requested_at else None,
+                    completed_at.isoformat() if completed_at else None,
+                    meeting_id,
+                ),
+            )
+
     # === Query Methods ===
 
     def list_meetings(
@@ -617,6 +902,8 @@ class MeetingDatabase:
                     segment_count=r['segment_count'],
                     action_item_count=r['action_count'],
                     tags=r['tags'].split(',') if r['tags'] else [],
+                    intel_status=r["intel_status"] or "disabled",
+                    intel_status_detail=r["intel_status_detail"],
                 )
                 for r in conn.execute(query, params)
             ]

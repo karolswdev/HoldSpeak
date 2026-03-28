@@ -132,7 +132,7 @@ async def capture_tui_screenshots() -> bool:
 
     print("  Capturing TUI idle state...")
     app = HoldSpeakApp(config=config)
-    async with app.run_test(size=(100, 30)) as pilot:
+    async with app.run_test(size=(112, 30)) as pilot:
         # Add some history items
         for text in SAMPLE_TRANSCRIPTIONS:
             app.add_transcription(text)
@@ -142,7 +142,7 @@ async def capture_tui_screenshots() -> bool:
 
     print("  Capturing TUI recording state...")
     app = HoldSpeakApp(config=config)
-    async with app.run_test(size=(100, 30)) as pilot:
+    async with app.run_test(size=(112, 30)) as pilot:
         for text in SAMPLE_TRANSCRIPTIONS[:2]:
             app.add_transcription(text)
         app.set_state("recording")
@@ -152,30 +152,43 @@ async def capture_tui_screenshots() -> bool:
 
     print("  Capturing TUI transcribing state...")
     app = HoldSpeakApp(config=config)
-    async with app.run_test(size=(100, 30)) as pilot:
+    async with app.run_test(size=(112, 30)) as pilot:
         for text in SAMPLE_TRANSCRIPTIONS[:3]:
             app.add_transcription(text)
         app.set_state("transcribing")
         await pilot.pause()
         app.save_screenshot(str(OUTPUT_DIR / "tui_transcribing.svg"))
 
-    print("  Capturing TUI meeting mode...")
+    print("  Capturing TUI meeting cockpit...")
     app = HoldSpeakApp(config=config)
-    async with app.run_test(size=(100, 30)) as pilot:
-        for text in SAMPLE_TRANSCRIPTIONS:
-            app.add_transcription(text)
-        app.set_meeting_active(True)
+    async with app.run_test(size=(120, 34)) as pilot:
+        app.show_meeting_cockpit(title=SAMPLE_MEETING_TITLE, has_system_audio=True)
+        await pilot.pause()
         app.set_meeting_duration("05:23")
-        app.set_meeting_segment_count(12)
-        app.set_meeting_has_system_audio(True)
-        app.set_meeting_title(SAMPLE_MEETING_TITLE)
-        # Note: web_url skipped as Rich markup parser has issues with URLs
+        app.set_meeting_segment_count(len(SAMPLE_SEGMENTS))
+        app.set_meeting_mic_level(0.61)
+        app.set_meeting_system_level(0.54)
+        for seg in SAMPLE_SEGMENTS[:4]:
+            app.update_meeting_cockpit_segment(
+                TranscriptSegment(
+                    text=seg["text"],
+                    speaker=seg["speaker"],
+                    start_time=seg["start_time"],
+                    end_time=seg["end_time"],
+                )
+            )
+        app.update_meeting_cockpit_bookmark(Bookmark(timestamp=45.0, label="OAuth decision"))
+        app.update_meeting_cockpit_intel(
+            SAMPLE_INTEL["topics"],
+            SAMPLE_INTEL["action_items"],
+            SAMPLE_INTEL["summary"],
+        )
         await pilot.pause()
         app.save_screenshot(str(OUTPUT_DIR / "tui_meeting.svg"))
 
     print("  Capturing TUI meeting metadata modal...")
     app = HoldSpeakApp(config=config)
-    async with app.run_test(size=(100, 30)) as pilot:
+    async with app.run_test(size=(112, 32)) as pilot:
         for text in SAMPLE_TRANSCRIPTIONS[:2]:
             app.add_transcription(text)
         app.set_meeting_active(True)
@@ -186,7 +199,7 @@ async def capture_tui_screenshots() -> bool:
 
     print("  Capturing TUI settings modal...")
     app = HoldSpeakApp(config=config)
-    async with app.run_test(size=(100, 30)) as pilot:
+    async with app.run_test(size=(112, 32)) as pilot:
         for text in SAMPLE_TRANSCRIPTIONS[:2]:
             app.add_transcription(text)
         app.push_screen(SettingsScreen(config))
@@ -195,7 +208,7 @@ async def capture_tui_screenshots() -> bool:
 
     print("  Capturing TUI transcript modal...")
     app = HoldSpeakApp(config=config)
-    async with app.run_test(size=(100, 30)) as pilot:
+    async with app.run_test(size=(120, 34)) as pilot:
         # Create sample TranscriptSegment objects
         segments = [
             TranscriptSegment(
@@ -254,6 +267,8 @@ async def capture_web_screenshots() -> bool:
         started_at=started_at,
         title=SAMPLE_MEETING_TITLE,
         tags=SAMPLE_MEETING_TAGS,
+        intel_status="live",
+        intel_status_detail="Live meeting intelligence active.",
         mic_label="Me",
         remote_label="Remote",
     )
@@ -344,7 +359,7 @@ SCENARIOS = {
         ("tui_idle.svg", "TUI in idle state with transcription history"),
         ("tui_recording.svg", "TUI recording with audio level bar active"),
         ("tui_transcribing.svg", "TUI in transcribing state"),
-        ("tui_meeting.svg", "TUI with meeting mode active (with title)"),
+        ("tui_meeting.svg", "TUI meeting cockpit with live transcript and intelligence"),
         ("tui_metadata.svg", "Meeting metadata modal for title/tags editing"),
         ("tui_settings.svg", "Settings modal open"),
         ("tui_transcript.svg", "Meeting transcript modal with segments"),

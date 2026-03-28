@@ -20,6 +20,7 @@ from .text_processor import TextProcessor
 from .commands.actions import run_actions_command
 from .commands.doctor import run_doctor_command
 from .commands.history import run_history_command
+from .commands.intel import run_intel_command
 from .commands.migrate import run_migrate_command
 from .logging_config import setup_logging, get_logger, LOG_FILE
 
@@ -62,6 +63,7 @@ Examples:
   holdspeak meeting      # Start in meeting mode (capture mic + system audio)
   holdspeak meeting --setup  # Check system audio setup
   holdspeak doctor       # Verify runtime deps and setup
+  holdspeak intel        # Inspect or process deferred meeting intelligence
   holdspeak --no-tui     # Run in simple terminal mode (legacy)
   holdspeak --verbose    # Show debug output in terminal
 
@@ -184,6 +186,45 @@ Logs are written to: {LOG_FILE}
         help="Dismiss action item",
     )
 
+    # Intel subcommand
+    intel_parser = subparsers.add_parser(
+        "intel",
+        help="Inspect and process deferred meeting intelligence",
+    )
+    intel_actions = intel_parser.add_mutually_exclusive_group()
+    intel_actions.add_argument(
+        "--process",
+        action="store_true",
+        help="Process queued deferred-intel jobs now",
+    )
+    intel_actions.add_argument(
+        "--retry",
+        metavar="MEETING_ID",
+        help="Requeue deferred intelligence for a specific meeting",
+    )
+    intel_actions.add_argument(
+        "--retry-failed",
+        action="store_true",
+        help="Requeue failed deferred-intel jobs",
+    )
+    intel_parser.add_argument(
+        "--status",
+        choices=["all", "queued", "running", "failed"],
+        default="all",
+        help="Filter listed jobs by status (default: all)",
+    )
+    intel_parser.add_argument(
+        "--limit", "-n",
+        type=int,
+        default=20,
+        help="Number of jobs to list or retry (default: 20)",
+    )
+    intel_parser.add_argument(
+        "--max-jobs",
+        type=int,
+        help="Maximum number of jobs to process with --process",
+    )
+
     # Migrate subcommand
     migrate_parser = subparsers.add_parser(
         "migrate",
@@ -213,7 +254,7 @@ Logs are written to: {LOG_FILE}
 
     # If the DB is empty but JSON meetings exist, import them automatically so
     # the Meetings Hub and `holdspeak history` work out of the box.
-    if args.command in (None, "history", "actions"):
+    if args.command in (None, "history", "actions", "intel"):
         _auto_migrate_json_meetings_if_needed()
 
     # Handle meeting subcommand
@@ -237,6 +278,10 @@ Logs are written to: {LOG_FILE}
     if args.command == "actions":
         run_actions_command(args)
         return
+
+    # Handle intel subcommand
+    if args.command == "intel":
+        raise SystemExit(run_intel_command(args))
 
     # Handle migrate subcommand
     if args.command == "migrate":

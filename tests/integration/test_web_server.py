@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
+from types import SimpleNamespace
 from unittest.mock import MagicMock, AsyncMock
 
 import pytest
@@ -371,6 +372,238 @@ class TestApiStopEndpoint:
         data = response.json()
         assert data["success"] is False
         assert "error" in data
+
+
+@pytest.mark.integration
+class TestHistoryUiSmoke:
+    """Smoke checks for the browser-facing history/settings UI."""
+
+    def test_history_page_contains_control_plane_tabs_and_handlers(self, test_client):
+        response = test_client.get("/history")
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+
+        html = response.text
+        for label in ("Meetings", "Action Items", "Speakers", "Intel Queue", "Settings"):
+            assert label in html
+        for marker in ("saveSettings", "openSpeaker", "processIntelJobs", "retryIntelJob"):
+            assert marker in html
+        for endpoint in ("/api/settings", "/api/speakers", "/api/intel/jobs", "/api/all-action-items"):
+            assert endpoint in html
+
+    def test_settings_route_serves_history_ui_shell(self, test_client):
+        response = test_client.get("/settings")
+        assert response.status_code == 200
+        assert "HoldSpeak History" in response.text
+        assert "OpenAI-Compatible Base URL" in response.text
+
+
+@pytest.mark.integration
+class TestSettingsApiEndpoints:
+    """Tests for web settings API."""
+
+    def test_settings_get_and_put_apply_runtime_callback(self, tmp_path, monkeypatch, mock_callbacks):
+        import holdspeak.config as config_module
+        from holdspeak.config import Config
+
+        monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
+        on_settings_applied = MagicMock()
+        server = MeetingWebServer(
+            on_bookmark=mock_callbacks["on_bookmark"],
+            on_stop=mock_callbacks["on_stop"],
+            get_state=mock_callbacks["get_state"],
+            on_settings_applied=on_settings_applied,
+        )
+        client = TestClient(server.app)
+
+        get_response = client.get("/api/settings")
+        assert get_response.status_code == 200
+        assert get_response.json()["meeting"]["intel_provider"] in {"local", "cloud", "auto"}
+
+        payload = {
+            "meeting": {
+                "intel_provider": "cloud",
+                "intel_cloud_model": "gpt-5-mini",
+                "intel_cloud_api_key_env": "OPENAI_API_KEY",
+                "intel_cloud_base_url": "https://api.openai.com/v1",
+                "intel_queue_poll_seconds": 30,
+                "similarity_threshold": 0.82,
+            }
+        }
+        put_response = client.put("/api/settings", json=payload)
+        assert put_response.status_code == 200
+        data = put_response.json()
+        assert data["success"] is True
+        assert data["settings"]["meeting"]["intel_provider"] == "cloud"
+        assert data["settings"]["meeting"]["intel_cloud_base_url"] == "https://api.openai.com/v1"
+        assert data["settings"]["meeting"]["intel_queue_poll_seconds"] == 30
+        assert data["settings"]["meeting"]["similarity_threshold"] == pytest.approx(0.82)
+        on_settings_applied.assert_called_once()
+
+        persisted = Config.load(path=tmp_path / "config.json")
+        assert persisted.meeting.intel_provider == "cloud"
+        assert persisted.meeting.intel_cloud_base_url == "https://api.openai.com/v1"
+        assert persisted.meeting.intel_queue_poll_seconds == 30
+
+    def test_settings_put_rejects_invalid_cloud_base_url(self, tmp_path, monkeypatch, test_client):
+        import holdspeak.config as config_module
+
+        monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
+        response = test_client.put(
+            "/api/settings",
+            json={"meeting": {"intel_cloud_base_url": "ftp://example.com/v1"}},
+        )
+        assert response.status_code == 400
+        payload = response.json()
+        assert payload["success"] is False
+        assert "base_url" in payload["error"]
+
+
+@pytest.mark.integration
+class TestSpeakerApiEndpoints:
+    """Tests for speaker management endpoints."""
+
+    def test_speaker_endpoints(self, monkeypatch, test_client):
+        class FakeDb:
+            def __init__(self):
+                self._speakers = {
+                    "spk-1": SimpleNamespace(id="spk-1", name="Alice", avatar="👩", sample_count=4),
+                    "spk-2": SimpleNamespace(id="spk-2", name="Bob", avatar="🧑", sample_count=2),
+                }
+
+            def get_all_speakers(self):
+                return list(self._speakers.values())
+
+            def get_speaker_stats(self, speaker_id):
+                return {
+                    "total_segments": 7 if speaker_id == "spk-1" else 3,
+                    "total_speaking_time": 61.0 if speaker_id == "spk-1" else 21.0,
+                    "meeting_count": 2 if speaker_id == "spk-1" else 1,
+                    "first_seen": datetime(2025, 1, 10, 9, 0, 0),
+                    "last_seen": datetime(2025, 1, 11, 10, 30, 0),
+                }
+
+            def get_speaker(self, speaker_id):
+                return self._speakers.get(speaker_id)
+
+            def get_speaker_segments(self, speaker_id, limit=500):
+                _ = limit
+                if speaker_id not in self._speakers:
+                    return []
+                return [
+                    {
+                        "meeting_id": "m-001",
+                        "meeting_title": "Weekly sync",
+                        "meeting_date": datetime(2025, 1, 11, 10, 30, 0),
+                        "meeting_duration": 1200.0,
+                        "segments": [
+                            {"text": "Action item follow-up", "speaker": "Alice", "start_time": 42.0, "end_time": 48.0, "is_bookmarked": False}
+                        ],
+                    }
+                ]
+
+            def update_speaker_name(self, speaker_id, name):
+                speaker = self._speakers.get(speaker_id)
+                if speaker is None:
+                    return False
+                speaker.name = name
+                return True
+
+            def update_speaker_avatar(self, speaker_id, avatar):
+                speaker = self._speakers.get(speaker_id)
+                if speaker is None:
+                    return False
+                speaker.avatar = avatar
+                return True
+
+        fake_db = FakeDb()
+        import holdspeak.db as db_module
+        monkeypatch.setattr(db_module, "get_database", lambda: fake_db)
+
+        list_response = test_client.get("/api/speakers")
+        assert list_response.status_code == 200
+        list_data = list_response.json()
+        assert list_data["total"] == 2
+        assert {speaker["id"] for speaker in list_data["speakers"]} == {"spk-1", "spk-2"}
+
+        detail_response = test_client.get("/api/speakers/spk-1")
+        assert detail_response.status_code == 200
+        detail_data = detail_response.json()
+        assert detail_data["speaker"]["name"] == "Alice"
+        assert detail_data["stats"]["meeting_count"] == 2
+        assert detail_data["meetings"][0]["meeting_id"] == "m-001"
+
+        update_response = test_client.patch(
+            "/api/speakers/spk-1",
+            json={"name": "Alicia", "avatar": "🧠"},
+        )
+        assert update_response.status_code == 200
+        update_data = update_response.json()
+        assert update_data["success"] is True
+        assert update_data["speaker"]["name"] == "Alicia"
+        assert update_data["speaker"]["avatar"] == "🧠"
+
+        invalid_response = test_client.patch(
+            "/api/speakers/spk-1",
+            json={"name": "   "},
+        )
+        assert invalid_response.status_code == 400
+        assert "cannot be empty" in invalid_response.json()["error"]
+
+
+@pytest.mark.integration
+class TestIntelQueueApiEndpoints:
+    """Tests for deferred intel queue endpoints."""
+
+    def test_intel_jobs_list_retry_and_process(self, monkeypatch, test_client):
+        class FakeDb:
+            def list_intel_jobs(self, *, status="all", limit=20):
+                _ = status, limit
+                return [
+                    SimpleNamespace(
+                        meeting_id="m-001",
+                        status="queued",
+                        transcript_hash="abc123",
+                        requested_at=datetime(2025, 1, 11, 10, 30, 0),
+                        updated_at=datetime(2025, 1, 11, 10, 31, 0),
+                        attempts=2,
+                        last_error="transient issue",
+                        meeting_title="Weekly sync",
+                        started_at=datetime(2025, 1, 11, 10, 0, 0),
+                        intel_status_detail="Queued for retry",
+                    )
+                ]
+
+            def requeue_intel_job(self, meeting_id, *, reason=None):
+                _ = reason
+                return meeting_id == "m-001"
+
+        import holdspeak.db as db_module
+        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+
+        import holdspeak.intel_queue as intel_queue_module
+        monkeypatch.setattr(intel_queue_module, "drain_intel_queue", lambda *args, **kwargs: 3)
+
+        jobs_response = test_client.get("/api/intel/jobs?status=queued&limit=5")
+        assert jobs_response.status_code == 200
+        jobs_data = jobs_response.json()
+        assert len(jobs_data["jobs"]) == 1
+        assert jobs_data["jobs"][0]["meeting_id"] == "m-001"
+        assert jobs_data["jobs"][0]["status"] == "queued"
+
+        retry_response = test_client.post("/api/intel/retry/m-001")
+        assert retry_response.status_code == 200
+        assert retry_response.json()["success"] is True
+
+        retry_missing = test_client.post("/api/intel/retry/unknown")
+        assert retry_missing.status_code == 404
+        assert retry_missing.json()["success"] is False
+
+        process_response = test_client.post("/api/intel/process", json={"max_jobs": 2})
+        assert process_response.status_code == 200
+        process_data = process_response.json()
+        assert process_data["success"] is True
+        assert process_data["processed"] == 3
 
 
 # ============================================================

@@ -14,6 +14,7 @@ import sys
 from ..audio_devices import check_blackhole_setup, get_default_input_device
 from ..config import CONFIG_FILE, Config
 from ..hotkey import HotkeyListener
+from ..intel import get_intel_runtime_status
 from ..transcribe import TranscriberError, _resolve_backend
 from ..typer import TextTyper
 
@@ -264,6 +265,48 @@ def _check_system_audio_capture() -> DoctorCheck:
     )
 
 
+def _check_meeting_intel_runtime(config: Config) -> DoctorCheck:
+    meeting = config.meeting
+    if not meeting.intel_enabled:
+        return DoctorCheck(
+            name="Meeting intelligence runtime",
+            status="PASS",
+            detail="Disabled in config",
+        )
+
+    ok, reason = get_intel_runtime_status(
+        meeting.intel_realtime_model,
+        provider=meeting.intel_provider,
+        cloud_model=meeting.intel_cloud_model,
+        cloud_api_key_env=meeting.intel_cloud_api_key_env,
+        cloud_base_url=meeting.intel_cloud_base_url,
+    )
+    if ok:
+        return DoctorCheck(
+            name="Meeting intelligence runtime",
+            status="PASS",
+            detail=f"Provider mode `{meeting.intel_provider}` is ready",
+        )
+
+    fix = None
+    if meeting.intel_provider == "cloud":
+        fix = f"Set {meeting.intel_cloud_api_key_env} and verify cloud model '{meeting.intel_cloud_model}'."
+    elif meeting.intel_provider == "auto":
+        fix = (
+            f"Provide a local model at '{meeting.intel_realtime_model}' "
+            f"or set {meeting.intel_cloud_api_key_env} for cloud fallback."
+        )
+    else:
+        fix = f"Set a valid local model path (currently '{meeting.intel_realtime_model}')."
+
+    return DoctorCheck(
+        name="Meeting intelligence runtime",
+        status="WARN",
+        detail=reason or "Meeting intelligence runtime is unavailable",
+        fix=fix,
+    )
+
+
 def collect_doctor_checks() -> list[DoctorCheck]:
     """Collect all doctor checks in display order."""
     is_wayland = _is_wayland_session()
@@ -274,6 +317,7 @@ def collect_doctor_checks() -> list[DoctorCheck]:
         config_check,
         _check_microphone(),
         _check_transcription_backend(),
+        _check_meeting_intel_runtime(config),
         _check_hotkey(config.hotkey.key, is_wayland=is_wayland),
         _check_text_injection(is_wayland=is_wayland),
         _check_clipboard_tools(is_wayland=is_wayland),

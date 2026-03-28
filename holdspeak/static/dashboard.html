@@ -1,43 +1,1111 @@
 <!doctype html>
-<html lang="en" class="dark h-full bg-slate-950">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>HoldSpeak Meeting</title>
-
-    <script>
-      window.tailwind = window.tailwind || {};
-      window.tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            boxShadow: {
-              glow: "0 0 0 1px rgba(148,163,184,0.08), 0 10px 30px rgba(0,0,0,0.55)",
-            },
-          },
-        },
-      };
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
-
     <style>
+      :root {
+        color-scheme: dark;
+        --canvas: #07111d;
+        --canvas-2: #0d1a2a;
+        --panel: rgba(9, 18, 31, 0.84);
+        --panel-strong: rgba(12, 23, 38, 0.96);
+        --panel-soft: rgba(13, 27, 44, 0.76);
+        --line: rgba(158, 196, 229, 0.16);
+        --line-strong: rgba(158, 196, 229, 0.28);
+        --text: #edf5ff;
+        --muted: #9db1c8;
+        --muted-strong: #c3d2e2;
+        --accent: #64d7ff;
+        --accent-2: #75f4d3;
+        --warm: #ffb86b;
+        --danger: #ff647e;
+        --shadow: 0 24px 60px rgba(0, 0, 0, 0.38);
+        --radius-xl: 30px;
+        --radius-lg: 22px;
+        --radius-md: 16px;
+        --radius-sm: 12px;
+        --font-ui: "Sora", "Avenir Next", "Segoe UI", sans-serif;
+        --font-mono: "JetBrains Mono", "SFMono-Regular", "SF Mono", Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+      }
+
+      body {
+        margin: 0;
+        font-family: var(--font-ui);
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(100, 215, 255, 0.24), transparent 30%),
+          radial-gradient(circle at top right, rgba(255, 184, 107, 0.18), transparent 32%),
+          radial-gradient(circle at bottom, rgba(117, 244, 211, 0.14), transparent 28%),
+          linear-gradient(160deg, #050c14 0%, #09111e 46%, #07101a 100%);
+        letter-spacing: -0.01em;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
       [x-cloak] {
         display: none !important;
       }
+
+      ::selection {
+        background: rgba(100, 215, 255, 0.2);
+        color: var(--text);
+      }
+
       ::-webkit-scrollbar {
         width: 10px;
         height: 10px;
       }
+
       ::-webkit-scrollbar-thumb {
-        background: rgba(148, 163, 184, 0.25);
+        background: rgba(157, 177, 200, 0.28);
         border-radius: 999px;
-        border: 2px solid rgba(2, 6, 23, 1);
+        border: 2px solid transparent;
+        background-clip: padding-box;
       }
-      ::-webkit-scrollbar-thumb:hover {
-        background: rgba(148, 163, 184, 0.35);
+
+      .app-shell {
+        position: relative;
+        min-height: 100vh;
+        overflow: hidden;
+      }
+
+      .app-shell::before,
+      .app-shell::after {
+        content: "";
+        position: absolute;
+        inset: auto;
+        pointer-events: none;
+        filter: blur(24px);
+      }
+
+      .app-shell::before {
+        top: 7rem;
+        left: -5rem;
+        width: 18rem;
+        height: 18rem;
+        background: rgba(100, 215, 255, 0.08);
+      }
+
+      .app-shell::after {
+        right: -4rem;
+        bottom: 8rem;
+        width: 14rem;
+        height: 14rem;
+        background: rgba(255, 184, 107, 0.08);
+      }
+
+      .shell-inner {
+        position: relative;
+        z-index: 1;
+        width: min(1440px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 28px 0 32px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.9fr);
+        gap: 18px;
+        margin-bottom: 20px;
+      }
+
+      .hero-card,
+      .panel,
+      .dock,
+      .toast,
+      .modal-card {
+        background: linear-gradient(180deg, rgba(15, 28, 45, 0.98), rgba(8, 17, 29, 0.96));
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px);
+      }
+
+      .hero-card {
+        border-radius: var(--radius-xl);
+        padding: 28px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(100, 215, 255, 0.08), transparent 32%, rgba(255, 184, 107, 0.06));
+        pointer-events: none;
+      }
+
+      .hero-main {
+        display: flex;
+        gap: 18px;
+        align-items: flex-start;
+        justify-content: space-between;
+      }
+
+      .brand-stack {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        min-width: 0;
+      }
+
+      .brand-mark {
+        flex: none;
+        width: 54px;
+        height: 54px;
+        border-radius: 18px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(160deg, rgba(100, 215, 255, 0.28), rgba(117, 244, 211, 0.14));
+        border: 1px solid rgba(100, 215, 255, 0.26);
+        color: var(--text);
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--accent-2);
+      }
+
+      .meeting-title-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .meeting-title {
+        margin: 0;
+        font-size: clamp(1.8rem, 2.4vw, 2.8rem);
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+      }
+
+      .inline-icon-btn,
+      .ghost-btn,
+      .control-btn,
+      .export-option,
+      .icon-plain {
+        border: 0;
+        background: none;
+      }
+
+      .inline-icon-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        display: inline-grid;
+        place-items: center;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+      }
+
+      .inline-icon-btn:hover,
+      .ghost-btn:hover,
+      .control-btn:hover,
+      .export-option:hover,
+      .icon-plain:hover {
+        transform: translateY(-1px);
+        transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, color 140ms ease;
+      }
+
+      .hero-copy {
+        max-width: 54ch;
+        margin: 14px 0 18px;
+        color: var(--muted-strong);
+        line-height: 1.65;
+      }
+
+      .tag-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .tag-chip {
+        border-radius: 999px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: var(--muted-strong);
+        font-size: 0.8rem;
+      }
+
+      .hero-side {
+        display: grid;
+        gap: 14px;
+      }
+
+      .stat-cluster {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .metric-card {
+        min-height: 104px;
+        border-radius: var(--radius-lg);
+        padding: 18px;
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(10, 20, 34, 0.86), rgba(8, 15, 26, 0.74));
+      }
+
+      .metric-label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+      }
+
+      .metric-value {
+        font-size: clamp(1.25rem, 2vw, 1.8rem);
+        font-weight: 700;
+        letter-spacing: -0.04em;
+      }
+
+      .metric-note {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 0.83rem;
+      }
+
+      .connection-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        border-radius: 999px;
+        width: fit-content;
+        border: 1px solid var(--line);
+        background: rgba(8, 18, 30, 0.9);
+        color: var(--muted-strong);
+      }
+
+      .connection-pill.status-connected {
+        border-color: rgba(117, 244, 211, 0.34);
+      }
+
+      .connection-pill.status-reconnecting {
+        border-color: rgba(255, 184, 107, 0.34);
+      }
+
+      .connection-pill.status-disconnected,
+      .connection-pill.status-stopped {
+        border-color: rgba(255, 100, 126, 0.28);
+      }
+
+      .status-dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px rgba(100, 215, 255, 0.12);
+      }
+
+      .status-connected .status-dot {
+        background: var(--accent-2);
+        box-shadow: 0 0 0 5px rgba(117, 244, 211, 0.12);
+      }
+
+      .status-reconnecting .status-dot {
+        background: var(--warm);
+        box-shadow: 0 0 0 5px rgba(255, 184, 107, 0.14);
+      }
+
+      .status-disconnected .status-dot,
+      .status-stopped .status-dot {
+        background: var(--danger);
+        box-shadow: 0 0 0 5px rgba(255, 100, 126, 0.12);
+      }
+
+      .stop-btn {
+        min-height: 56px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 100, 126, 0.28);
+        background: linear-gradient(180deg, rgba(255, 100, 126, 0.94), rgba(214, 48, 86, 0.96));
+        color: white;
+        font-weight: 700;
+        padding: 0 18px;
+      }
+
+      .stop-btn:disabled,
+      .control-btn:disabled,
+      .checkbox-btn:disabled,
+      .icon-plain:disabled {
+        opacity: 0.58;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .board {
+        display: grid;
+        grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.95fr);
+        gap: 18px;
+      }
+
+      .panel {
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+      }
+
+      .panel-header {
+        padding: 22px 24px 18px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        justify-content: space-between;
+      }
+
+      .panel-title {
+        margin: 0;
+        font-size: 1.02rem;
+      }
+
+      .panel-subtitle {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+
+      .ghost-btn {
+        flex: none;
+        min-height: 42px;
+        padding: 0 16px;
+        border-radius: 14px;
+        color: var(--muted-strong);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .ghost-btn.primary {
+        color: #07111d;
+        border-color: rgba(100, 215, 255, 0.26);
+        background: linear-gradient(180deg, var(--accent), #47bff1);
+      }
+
+      .ghost-btn:hover,
+      .inline-icon-btn:hover,
+      .control-btn:hover,
+      .export-option:hover,
+      .icon-plain:hover {
+        border-color: var(--line-strong);
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.07);
+      }
+
+      .ghost-btn.primary:hover {
+        color: #07111d;
+        background: linear-gradient(180deg, #80dfff, #58c8f4);
+      }
+
+      .transcript-body {
+        position: relative;
+        min-height: 68vh;
+        max-height: 76vh;
+        overflow: auto;
+        padding: 24px 24px 30px 78px;
+      }
+
+      .transcript-body::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 46px;
+        width: 1px;
+        background: linear-gradient(180deg, rgba(100, 215, 255, 0.28), rgba(157, 177, 200, 0.08));
+      }
+
+      .entry-stream {
+        display: grid;
+        gap: 16px;
+      }
+
+      .empty-card,
+      .segment-card,
+      .bookmark-card,
+      .intel-card,
+      .summary-card {
+        position: relative;
+        border-radius: 24px;
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(13, 25, 40, 0.96), rgba(8, 16, 27, 0.9));
+      }
+
+      .empty-card {
+        padding: 28px;
+      }
+
+      .empty-title {
+        margin: 0 0 10px;
+        font-size: 1.08rem;
+      }
+
+      .empty-copy {
+        margin: 0;
+        max-width: 44ch;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .stream-entry {
+        position: relative;
+      }
+
+      .stream-marker {
+        position: absolute;
+        left: -47px;
+        top: 24px;
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        border: 4px solid rgba(7, 17, 29, 0.94);
+        background: var(--accent);
+        box-shadow: 0 0 0 5px rgba(100, 215, 255, 0.08);
+      }
+
+      .stream-entry.tone-remote .stream-marker {
+        background: var(--accent-2);
+        box-shadow: 0 0 0 5px rgba(117, 244, 211, 0.08);
+      }
+
+      .stream-entry.tone-other .stream-marker {
+        background: var(--warm);
+        box-shadow: 0 0 0 5px rgba(255, 184, 107, 0.08);
+      }
+
+      .stream-entry.bookmark .stream-marker {
+        background: var(--warm);
+      }
+
+      .segment-card {
+        padding: 18px 20px 18px 22px;
+        cursor: pointer;
+        transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+      }
+
+      .segment-card:hover {
+        transform: translateY(-1px);
+        border-color: var(--line-strong);
+        background: linear-gradient(180deg, rgba(15, 30, 48, 0.98), rgba(8, 17, 29, 0.94));
+      }
+
+      .segment-card::before,
+      .bookmark-card::before {
+        content: "";
+        position: absolute;
+        inset: 10px auto 10px 0;
+        width: 4px;
+        border-radius: 999px;
+      }
+
+      .tone-me .segment-card::before {
+        background: linear-gradient(180deg, rgba(100, 215, 255, 0.98), rgba(100, 215, 255, 0.18));
+      }
+
+      .tone-remote .segment-card::before {
+        background: linear-gradient(180deg, rgba(117, 244, 211, 0.98), rgba(117, 244, 211, 0.18));
+      }
+
+      .tone-other .segment-card::before {
+        background: linear-gradient(180deg, rgba(255, 184, 107, 0.98), rgba(255, 184, 107, 0.18));
+      }
+
+      .bookmark-card {
+        padding: 18px 20px 18px 22px;
+      }
+
+      .bookmark-card::before {
+        background: linear-gradient(180deg, rgba(255, 184, 107, 1), rgba(255, 184, 107, 0.2));
+      }
+
+      .segment-meta,
+      .bookmark-meta,
+      .action-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .speaker-pill,
+      .bookmark-pill,
+      .meta-pill,
+      .topic-pill,
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .speaker-pill svg,
+      .bookmark-pill svg {
+        width: 13px;
+        height: 13px;
+      }
+
+      .speaker-pill.tone-me {
+        background: rgba(100, 215, 255, 0.14);
+        color: #d9f6ff;
+        border-color: rgba(100, 215, 255, 0.22);
+      }
+
+      .speaker-pill.tone-remote {
+        background: rgba(117, 244, 211, 0.14);
+        color: #dcfff6;
+        border-color: rgba(117, 244, 211, 0.22);
+      }
+
+      .speaker-pill.tone-other,
+      .bookmark-pill {
+        background: rgba(255, 184, 107, 0.12);
+        color: #ffe7c7;
+        border-color: rgba(255, 184, 107, 0.2);
+      }
+
+      .meta-pill {
+        color: var(--muted-strong);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .segment-copy-hint {
+        margin-left: auto;
+        color: var(--muted);
+        font-size: 0.76rem;
+      }
+
+      .segment-text,
+      .summary-text {
+        margin: 14px 0 0;
+        color: var(--text);
+        line-height: 1.72;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .stack {
+        display: grid;
+        gap: 18px;
+      }
+
+      .intel-card,
+      .summary-card {
+        padding: 20px 22px 22px;
+      }
+
+      .card-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .card-head h2 {
+        margin: 0;
+        font-size: 1.02rem;
+      }
+
+      .card-head p {
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.5;
+      }
+
+      .topic-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .topic-pill {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .placeholder {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .intel-live {
+        border-color: rgba(100, 215, 255, 0.22);
+      }
+
+      .live-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--accent);
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+
+      .pulse {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 0 0 rgba(100, 215, 255, 0.45);
+        animation: pulse 1.8s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(100, 215, 255, 0.4);
+        }
+        70% {
+          box-shadow: 0 0 0 12px rgba(100, 215, 255, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(100, 215, 255, 0);
+        }
+      }
+
+      .streaming-text {
+        margin: 0;
+        padding: 14px 16px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted-strong);
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .typing-caret {
+        display: inline-block;
+        width: 8px;
+        height: 1rem;
+        margin-left: 4px;
+        vertical-align: middle;
+        background: var(--accent);
+        animation: blink 1s steps(2, start) infinite;
+      }
+
+      @keyframes blink {
+        to {
+          opacity: 0;
+        }
+      }
+
+      .action-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .action-item {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .action-item.is-done {
+        background: rgba(117, 244, 211, 0.08);
+        border-color: rgba(117, 244, 211, 0.18);
+      }
+
+      .checkbox-btn {
+        width: 22px;
+        height: 22px;
+        margin-top: 1px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(0, 0, 0, 0.18);
+        color: transparent;
+        display: grid;
+        place-items: center;
+      }
+
+      .action-item.is-done .checkbox-btn {
+        color: #06121d;
+        background: var(--accent-2);
+        border-color: rgba(117, 244, 211, 0.4);
+      }
+
+      .action-task {
+        margin: 0;
+        line-height: 1.5;
+        font-weight: 600;
+      }
+
+      .action-item.is-done .action-task {
+        color: var(--muted);
+        text-decoration: line-through;
+        text-decoration-thickness: 2px;
+      }
+
+      .status-pill.status-done {
+        color: #06121d;
+        background: rgba(117, 244, 211, 0.94);
+      }
+
+      .status-pill.status-dismissed {
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .status-pill.status-pending {
+        color: #07111d;
+        background: rgba(255, 184, 107, 0.94);
+      }
+
+      .icon-plain {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        display: inline-grid;
+        place-items: center;
+        color: var(--muted);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .dismissed-note {
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .dock-wrap {
+        position: sticky;
+        bottom: 18px;
+        margin-top: 22px;
+        display: flex;
+        justify-content: center;
+        pointer-events: none;
+      }
+
+      .dock {
+        width: min(100%, 920px);
+        border-radius: 999px;
+        padding: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        pointer-events: auto;
+      }
+
+      .dock-copy {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        color: var(--muted);
+        padding: 0 12px;
+        font-size: 0.84rem;
+      }
+
+      .dock-copy strong {
+        color: var(--text);
+      }
+
+      .dock-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .control-btn {
+        min-height: 46px;
+        padding: 0 18px;
+        border-radius: 16px;
+        color: var(--text);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .control-btn.primary {
+        color: #07111d;
+        border-color: rgba(100, 215, 255, 0.22);
+        background: linear-gradient(180deg, rgba(100, 215, 255, 0.98), rgba(66, 186, 235, 0.96));
+      }
+
+      .export-menu {
+        position: absolute;
+        right: 0;
+        bottom: calc(100% + 10px);
+        width: 210px;
+        border-radius: 20px;
+        overflow: hidden;
+        background: rgba(10, 20, 33, 0.98);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+      }
+
+      .export-option {
+        display: flex;
+        width: 100%;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 16px;
+        color: var(--text);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .export-option:last-child {
+        border-bottom: 0;
+      }
+
+      .export-option span:last-child {
+        color: var(--muted);
+        font-size: 0.76rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+      }
+
+      .toast-stack {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 40;
+        display: grid;
+        gap: 12px;
+        width: min(100vw - 32px, 360px);
+      }
+
+      .toast {
+        border-radius: 18px;
+        padding: 16px 18px;
+        animation: toast-in 180ms ease;
+      }
+
+      @keyframes toast-in {
+        from {
+          transform: translateY(-6px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .toast p {
+        margin: 0;
+        line-height: 1.5;
+        color: var(--text);
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: rgba(3, 8, 13, 0.66);
+        backdrop-filter: blur(10px);
+      }
+
+      .modal-card {
+        width: min(100%, 520px);
+        border-radius: 28px;
+        overflow: hidden;
+      }
+
+      .modal-head,
+      .modal-actions {
+        padding: 22px 24px;
+      }
+
+      .modal-head {
+        border-bottom: 1px solid var(--line);
+      }
+
+      .modal-head h3 {
+        margin: 0;
+        font-size: 1.18rem;
+      }
+
+      .modal-head p {
+        margin: 10px 0 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .modal-body {
+        padding: 20px 24px 24px;
+      }
+
+      .form-field + .form-field {
+        margin-top: 16px;
+      }
+
+      .form-field label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.84rem;
+        color: var(--muted-strong);
+      }
+
+      .input {
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        border-radius: 16px;
+        padding: 14px 16px;
+      }
+
+      .input:focus {
+        outline: none;
+        border-color: rgba(100, 215, 255, 0.28);
+        box-shadow: 0 0 0 4px rgba(100, 215, 255, 0.09);
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        border-top: 1px solid var(--line);
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      @media (max-width: 1120px) {
+        .hero,
+        .board {
+          grid-template-columns: 1fr;
+        }
+
+        .transcript-body {
+          min-height: 56vh;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .shell-inner {
+          width: min(100vw - 20px, 100%);
+          padding-top: 16px;
+        }
+
+        .hero-card,
+        .panel,
+        .modal-card {
+          border-radius: 24px;
+        }
+
+        .hero-card,
+        .panel-header,
+        .transcript-body,
+        .intel-card,
+        .summary-card,
+        .modal-head,
+        .modal-body,
+        .modal-actions {
+          padding-left: 18px;
+          padding-right: 18px;
+        }
+
+        .hero-main {
+          flex-direction: column;
+        }
+
+        .brand-stack {
+          gap: 14px;
+        }
+
+        .stat-cluster {
+          grid-template-columns: 1fr;
+        }
+
+        .transcript-body {
+          padding-left: 62px;
+          max-height: none;
+        }
+
+        .transcript-body::before {
+          left: 34px;
+        }
+
+        .stream-marker {
+          left: -33px;
+        }
+
+        .action-item {
+          grid-template-columns: auto 1fr;
+        }
+
+        .action-item > :last-child {
+          grid-column: 2;
+          justify-self: end;
+        }
+
+        .dock {
+          border-radius: 28px;
+          justify-content: flex-start;
+        }
+
+        .dock-copy {
+          width: 100%;
+          padding-top: 4px;
+        }
+
+        .toast-stack {
+          top: auto;
+          bottom: 18px;
+          right: 10px;
+          left: 10px;
+          width: auto;
+        }
       }
     </style>
-
     <script>
       function HoldSpeakDashboard() {
         const MAX_ENTRIES = 2000;
@@ -59,34 +1127,57 @@
           }
         };
 
+        const copyText = async (text) => {
+          try {
+            await navigator.clipboard.writeText(text);
+            return true;
+          } catch {
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.setAttribute("readonly", "true");
+            ta.style.position = "fixed";
+            ta.style.top = "-9999px";
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+              return document.execCommand("copy");
+            } catch {
+              return false;
+            } finally {
+              document.body.removeChild(ta);
+            }
+          }
+        };
+
         return {
           ws: null,
           pingTimer: null,
           reconnectTimer: null,
           reconnectAttempt: 0,
           reconnectAt: null,
-          connectionState: "connecting", // connecting | connected | reconnecting | disconnected | stopped
-
+          connectionState: "connecting",
           duration: "00:00",
           stopped: false,
           stopInProgress: false,
-
+          intelStatus: {
+            state: "unknown",
+            detail: "Waiting for meeting status.",
+            requested_at: null,
+            completed_at: null,
+          },
           entries: [],
           segments: [],
           intel: { topics: [], action_items: [], summary: "" },
           intelBuffer: "",
           intelStreaming: false,
-
           exportOpen: false,
           bookmarkModalOpen: false,
           bookmarkLabel: "",
-
           metadataModalOpen: false,
           editingTitle: "",
           editingTags: "",
           meetingTitle: "",
           meetingTags: [],
-
           notifications: [],
 
           init() {
@@ -115,22 +1206,72 @@
 
           connectionLabel() {
             if (this.connectionState === "connected") return "Connected";
-            if (this.connectionState === "connecting") return "Connecting…";
+            if (this.connectionState === "connecting") return "Connecting...";
             if (this.connectionState === "stopped") return "Stopped";
             if (this.connectionState === "reconnecting") {
-              if (!this.reconnectAt) return "Reconnecting…";
+              if (!this.reconnectAt) return "Reconnecting...";
               const remaining = Math.max(0, Math.ceil((this.reconnectAt - Date.now()) / 1000));
-              return remaining ? `Reconnecting in ${remaining}s…` : "Reconnecting…";
+              return remaining ? `Reconnecting in ${remaining}s...` : "Reconnecting...";
             }
             return "Disconnected";
           },
 
-          connectionDotClass() {
-            if (this.connectionState === "connected") return "bg-emerald-400 shadow-[0_0_0_3px_rgba(16,185,129,0.15)]";
-            if (this.connectionState === "connecting") return "bg-sky-400 shadow-[0_0_0_3px_rgba(56,189,248,0.15)]";
-            if (this.connectionState === "reconnecting") return "bg-amber-400 shadow-[0_0_0_3px_rgba(251,191,36,0.15)]";
-            if (this.connectionState === "stopped") return "bg-slate-500 shadow-[0_0_0_3px_rgba(100,116,139,0.15)]";
-            return "bg-rose-400 shadow-[0_0_0_3px_rgba(244,63,94,0.15)]";
+          connectionTone() {
+            return `status-${this.connectionState}`;
+          },
+
+          activeActionItems() {
+            return this.intel.action_items.filter((item) => item.status !== "dismissed");
+          },
+
+          intelStatusTitle() {
+            const state = String(this.intelStatus?.state || "").toLowerCase();
+            if (state === "live") return "Live";
+            if (state === "running") return "Processing";
+            if (state === "queued") return "Queued";
+            if (state === "ready") return "Ready";
+            if (state === "error") return "Unavailable";
+            if (state === "disabled") return "Disabled";
+            return "Pending";
+          },
+
+          intelStatusCopy() {
+            const detail = String(this.intelStatus?.detail || "").trim();
+            if (detail) return detail;
+            const state = String(this.intelStatus?.state || "").toLowerCase();
+            if (state === "ready") return "Meeting intelligence is available for this session.";
+            if (state === "queued") return "Meeting intelligence will run later when a compatible local model is available.";
+            if (state === "running") return "Meeting intelligence is processing the latest transcript.";
+            if (state === "live") return "Meeting intelligence will stream live while the meeting is active.";
+            if (state === "disabled") return "Meeting intelligence is disabled in config.";
+            return "Waiting for meeting intelligence status.";
+          },
+
+          dismissedCount() {
+            return this.intel.action_items.filter((item) => item.status === "dismissed").length;
+          },
+
+          speakerTone(speaker) {
+            const s = String(speaker || "").toLowerCase();
+            if (s === "me" || s.includes("me")) return "me";
+            if (s === "remote" || s.includes("remote")) return "remote";
+            return "other";
+          },
+
+          speakerLabel(speaker) {
+            return String(speaker || "Unknown").trim() || "Unknown";
+          },
+
+          statusClass(status) {
+            const value = String(status || "pending").trim().toLowerCase();
+            return `status-${value || "pending"}`;
+          },
+
+          statusLabel(status) {
+            const value = String(status || "pending").trim().toLowerCase();
+            if (value === "done") return "Done";
+            if (value === "dismissed") return "Dismissed";
+            return "Pending";
           },
 
           async fetchInitialState() {
@@ -149,6 +1290,9 @@
               if (Array.isArray(state?.tags)) {
                 this.meetingTags = state.tags;
               }
+              if (state?.intel_status && typeof state.intel_status === "object") {
+                this.intelStatus = state.intel_status;
+              }
             } catch {}
           },
 
@@ -161,7 +1305,7 @@
 
             try {
               this.ws = new WebSocket(this.wsUrl());
-            } catch (e) {
+            } catch {
               this.scheduleReconnect("ws_create_failed");
               return;
             }
@@ -180,9 +1324,7 @@
               this.handleMessage(msg);
             };
 
-            this.ws.onerror = () => {
-              // Allow onclose to handle reconnection.
-            };
+            this.ws.onerror = () => {};
 
             this.ws.onclose = () => {
               if (this.connectionState !== "stopped") this.connectionState = "disconnected";
@@ -222,7 +1364,7 @@
               this.connect();
             }, delay);
 
-            if (reason) this.toast("Connection lost. Reconnecting…");
+            if (reason) this.toast("Connection lost. Reconnecting...");
           },
 
           handleMessage(msg) {
@@ -239,10 +1381,12 @@
               this.updateIntel(data || {});
               return;
             }
+            if (type === "intel_status") {
+              if (data && typeof data === "object") this.intelStatus = data;
+              return;
+            }
             if (type === "intel_token") {
-              // Streaming token from LLM
               if (!this.intelStreaming) {
-                // New streaming session - clear previous buffer
                 this.intelBuffer = "";
                 this.intelStreaming = true;
               }
@@ -250,7 +1394,6 @@
               return;
             }
             if (type === "intel_complete") {
-              // Final parsed intel result
               this.updateIntel(data || {});
               this.intelBuffer = "";
               this.intelStreaming = false;
@@ -278,7 +1421,6 @@
               if (Array.isArray(data?.tags)) {
                 this.meetingTags = data.tags;
               }
-              return;
             }
           },
 
@@ -286,29 +1428,6 @@
             if (typeof value === "number") return formatSeconds(value);
             if (typeof value === "string" && value.trim()) return value.trim();
             return "";
-          },
-
-          speakerStyle(speaker) {
-            const s = String(speaker || "").toLowerCase();
-            if (s === "me" || s.includes("me")) {
-              return {
-                badge: "bg-sky-500/15 text-sky-200 ring-1 ring-inset ring-sky-500/30",
-                dot: "bg-sky-400",
-                border: "border-sky-500/40",
-              };
-            }
-            if (s === "remote" || s.includes("remote")) {
-              return {
-                badge: "bg-emerald-500/15 text-emerald-200 ring-1 ring-inset ring-emerald-500/30",
-                dot: "bg-emerald-400",
-                border: "border-emerald-500/40",
-              };
-            }
-            return {
-              badge: "bg-slate-500/15 text-slate-200 ring-1 ring-inset ring-slate-500/30",
-              dot: "bg-slate-400",
-              border: "border-slate-500/40",
-            };
           },
 
           addSegment(data) {
@@ -331,7 +1450,6 @@
             this.segments.push(segment);
             this.entries.push(segment);
             if (this.entries.length > MAX_ENTRIES) this.entries.splice(0, this.entries.length - MAX_ENTRIES);
-
             this.$nextTick(() => this.scrollTranscriptToBottom());
           },
 
@@ -362,14 +1480,13 @@
                 task: String(item?.task ?? "").trim(),
                 owner: String(item?.owner ?? "").trim(),
                 due: String(item?.due ?? "").trim(),
-                status: String(item?.status ?? "pending").trim(),
+                status: String(item?.status ?? "pending").trim().toLowerCase() || "pending",
               })),
               summary,
             };
           },
 
           updateActionItemInList(updatedItem) {
-            // Find and update the action item in the intel list
             const idx = this.intel.action_items.findIndex((item) => item.id === updatedItem.id);
             if (idx >= 0) {
               this.intel.action_items[idx] = {
@@ -377,15 +1494,13 @@
                 task: String(updatedItem?.task ?? "").trim(),
                 owner: String(updatedItem?.owner ?? "").trim(),
                 due: String(updatedItem?.due ?? "").trim(),
-                status: String(updatedItem?.status ?? "pending").trim(),
+                status: String(updatedItem?.status ?? "pending").trim().toLowerCase() || "pending",
               };
             }
           },
 
           async toggleActionItemStatus(item) {
             if (!item.id) return;
-
-            // Toggle between pending and done
             const newStatus = item.status === "done" ? "pending" : "done";
 
             try {
@@ -395,7 +1510,6 @@
                 body: JSON.stringify({ status: newStatus }),
               });
               if (!resp.ok) throw new Error("update_failed");
-              // The WebSocket will broadcast the update
             } catch {
               this.toast("Failed to update action item.");
             }
@@ -411,7 +1525,6 @@
                 body: JSON.stringify({ status: "dismissed" }),
               });
               if (!resp.ok) throw new Error("dismiss_failed");
-              // The WebSocket will broadcast the update
             } catch {
               this.toast("Failed to dismiss action item.");
             }
@@ -426,11 +1539,55 @@
           transcriptPlainText() {
             return this.segments
               .map((s) => {
-                const t = s.start ? `[${s.start}${s.end ? `–${s.end}` : ""}] ` : "";
+                const t = s.start ? `[${s.start}${s.end ? `-${s.end}` : ""}] ` : "";
                 const who = s.speaker ? `${s.speaker}: ` : "";
                 return `${t}${who}${s.text}`;
               })
               .join("\n");
+          },
+
+          transcriptMarkdown() {
+            const lines = [];
+            const title = this.meetingTitle || "HoldSpeak Meeting";
+            lines.push(`# ${title}`);
+            lines.push("");
+            lines.push(`- Duration: ${this.duration}`);
+            if (this.meetingTags.length) lines.push(`- Tags: ${this.meetingTags.join(", ")}`);
+            if (this.intel.topics.length) lines.push(`- Topics: ${this.intel.topics.join(", ")}`);
+            lines.push("");
+
+            if (this.intel.summary) {
+              lines.push("## Summary");
+              lines.push("");
+              lines.push(this.intel.summary);
+              lines.push("");
+            }
+
+            if (this.activeActionItems().length) {
+              lines.push("## Action Items");
+              lines.push("");
+              this.activeActionItems().forEach((item) => {
+                const parts = [item.task || "Action item"];
+                if (item.owner) parts.push(`owner: ${item.owner}`);
+                if (item.due) parts.push(`due: ${item.due}`);
+                if (item.status) parts.push(`status: ${item.status}`);
+                lines.push(`- ${parts.join(" | ")}`);
+              });
+              lines.push("");
+            }
+
+            lines.push("## Transcript");
+            lines.push("");
+            if (!this.segments.length) {
+              lines.push("_No transcript yet._");
+            } else {
+              this.segments.forEach((segment) => {
+                const timing = segment.start ? `[${segment.start}${segment.end ? `-${segment.end}` : ""}] ` : "";
+                lines.push(`- ${timing}${segment.speaker}: ${segment.text}`);
+              });
+            }
+
+            return lines.join("\n");
           },
 
           async copyAll() {
@@ -439,26 +1596,15 @@
               this.toast("Nothing to copy yet.");
               return;
             }
-            try {
-              await navigator.clipboard.writeText(text);
-              this.toast("Copied transcript to clipboard.");
-            } catch {
-              const ta = document.createElement("textarea");
-              ta.value = text;
-              ta.setAttribute("readonly", "true");
-              ta.style.position = "fixed";
-              ta.style.top = "-9999px";
-              document.body.appendChild(ta);
-              ta.select();
-              try {
-                document.execCommand("copy");
-                this.toast("Copied transcript to clipboard.");
-              } catch {
-                this.toast("Copy failed.");
-              } finally {
-                document.body.removeChild(ta);
-              }
-            }
+            const copied = await copyText(text);
+            this.toast(copied ? "Copied transcript to clipboard." : "Copy failed.");
+          },
+
+          async copySegment(segment) {
+            const prefix = segment.start ? `[${segment.start}${segment.end ? `-${segment.end}` : ""}] ` : "";
+            const text = `${prefix}${segment.speaker}: ${segment.text}`.trim();
+            const copied = await copyText(text);
+            this.toast(copied ? `Copied ${segment.speaker} segment.` : "Copy failed.");
           },
 
           download(filename, content, mime) {
@@ -480,6 +1626,11 @@
               this.exportOpen = false;
               return;
             }
+            if (format === "md") {
+              this.download(`holdspeak-meeting-${stamp}.md`, this.transcriptMarkdown(), "text/markdown;charset=utf-8");
+              this.exportOpen = false;
+              return;
+            }
             if (format === "json") {
               const payload = {
                 exported_at: new Date().toISOString(),
@@ -493,7 +1644,6 @@
                 "application/json;charset=utf-8"
               );
               this.exportOpen = false;
-              return;
             }
           },
 
@@ -531,7 +1681,10 @@
           async saveMetadata() {
             const title = String(this.editingTitle || "").trim();
             const tagsStr = String(this.editingTags || "");
-            const tags = tagsStr.split(",").map(t => t.trim().toLowerCase()).filter(t => t);
+            const tags = tagsStr
+              .split(",")
+              .map((tag) => tag.trim().toLowerCase())
+              .filter((tag) => tag);
 
             try {
               const resp = await fetch("/api/meeting", {
@@ -568,7 +1721,7 @@
             const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
             this.notifications.push({ id, message });
             window.setTimeout(() => {
-              const idx = this.notifications.findIndex((n) => n.id === id);
+              const idx = this.notifications.findIndex((note) => note.id === id);
               if (idx >= 0) this.notifications.splice(idx, 1);
             }, 3500);
           },
@@ -577,448 +1730,348 @@
     </script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   </head>
-
-  <body class="min-h-full text-slate-100 selection:bg-sky-500/20 selection:text-slate-100">
-    <div
-      x-data="HoldSpeakDashboard()"
-      x-init="init()"
-      class="min-h-screen flex flex-col bg-[radial-gradient(800px_circle_at_20%_-10%,rgba(56,189,248,0.10),transparent_55%),radial-gradient(900px_circle_at_110%_20%,rgba(16,185,129,0.10),transparent_55%),radial-gradient(1000px_circle_at_50%_110%,rgba(139,92,246,0.09),transparent_60%)]"
-    >
-      <header class="border-b border-slate-800/60 bg-slate-950/50 backdrop-blur">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div class="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-start justify-between gap-4 sm:items-center">
-              <div>
-                <div class="flex items-center gap-3">
-                  <div class="h-10 w-10 rounded-xl bg-slate-900 ring-1 ring-inset ring-slate-800/70 shadow-glow grid place-items-center">
-                    <span class="text-sm font-semibold tracking-wide text-slate-200">HS</span>
+  <body>
+    <div class="app-shell" x-data="HoldSpeakDashboard()" x-init="init()">
+      <div class="shell-inner">
+        <header class="hero">
+          <section class="hero-card">
+            <div class="hero-main">
+              <div class="brand-stack">
+                <div class="brand-mark" aria-hidden="true">HS</div>
+                <div>
+                  <p class="eyebrow">Live Meeting Cockpit</p>
+                  <div class="meeting-title-row">
+                    <h1 class="meeting-title" x-text="meetingTitle || 'HoldSpeak Meeting'"></h1>
+                    <button
+                      type="button"
+                      class="inline-icon-btn"
+                      :disabled="stopped"
+                      @click="openMetadataModal()"
+                      title="Edit meeting details"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 20h4l10.5-10.5a2.12 2.12 0 0 0-3-3L5 17v3z" />
+                      </svg>
+                      <span class="sr-only">Edit meeting details</span>
+                    </button>
                   </div>
-                  <div>
-                    <div class="flex items-center gap-2">
-                      <h1 class="text-xl sm:text-2xl font-semibold tracking-tight" x-text="meetingTitle || 'HoldSpeak Meeting'"></h1>
-                      <button
-                        type="button"
-                        class="p-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-                        :disabled="stopped"
-                        @click="openMetadataModal()"
-                        title="Edit meeting details"
-                      >
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <p class="text-sm text-slate-400" x-text="meetingTitle ? 'Live transcript and meeting intelligence' : 'Live transcript and meeting intelligence'"></p>
-                      <template x-for="tag in meetingTags" :key="tag">
-                        <span class="inline-flex items-center rounded-full bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-300 ring-1 ring-inset ring-violet-500/20" x-text="tag"></span>
-                      </template>
-                    </div>
+                  <p class="hero-copy">
+                    Real-time transcript, live meeting intelligence, and export controls in one focused workspace.
+                    Segments stream in as they land, then fold into topics, action items, and a running recap.
+                  </p>
+                  <div class="tag-row">
+                    <template x-for="tag in meetingTags" :key="tag">
+                      <span class="tag-chip" x-text="tag"></span>
+                    </template>
+                    <span class="tag-chip" x-show="meetingTags.length === 0" x-cloak>No tags yet</span>
                   </div>
                 </div>
               </div>
             </div>
+          </section>
 
-            <div class="flex flex-wrap items-center gap-3 sm:justify-end">
-              <div class="flex items-center gap-2 rounded-full bg-slate-900/70 px-3 py-1.5 ring-1 ring-inset ring-slate-800/70">
-                <span class="h-2.5 w-2.5 rounded-full" :class="connectionDotClass()"></span>
-                <span class="text-xs text-slate-300" x-text="connectionLabel()"></span>
+          <aside class="hero-side">
+            <section class="hero-card">
+              <div class="connection-pill" :class="connectionTone()">
+                <span class="status-dot" aria-hidden="true"></span>
+                <span x-text="connectionLabel()"></span>
               </div>
-
-              <div class="flex items-center gap-2 rounded-xl bg-slate-900/70 px-3 py-2 ring-1 ring-inset ring-slate-800/70">
-                <span class="text-xs uppercase tracking-wider text-slate-400">Duration</span>
-                <span class="font-mono text-sm text-slate-200" x-text="duration"></span>
+              <div class="stat-cluster" style="margin-top: 18px;">
+                <div class="metric-card">
+                  <span class="metric-label">Duration</span>
+                  <div class="metric-value" x-text="duration"></div>
+                  <div class="metric-note">Continuous timer synced from the meeting session.</div>
+                </div>
+                <div class="metric-card">
+                  <span class="metric-label">Transcript</span>
+                  <div class="metric-value" x-text="segments.length"></div>
+                  <div class="metric-note">Segments currently visible in the live stream.</div>
+                </div>
+                <div class="metric-card">
+                  <span class="metric-label">Topics</span>
+                  <div class="metric-value" x-text="intel.topics.length"></div>
+                  <div class="metric-note">Themes surfaced by local meeting intelligence.</div>
+                </div>
+                <div class="metric-card">
+                  <span class="metric-label">Open Actions</span>
+                  <div class="metric-value" x-text="activeActionItems().filter(item => item.status !== 'done').length"></div>
+                  <div class="metric-note">Pending work still carried by this meeting.</div>
+                </div>
               </div>
-
               <button
                 type="button"
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600/90 px-4 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-rose-500/40 hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-400/50 disabled:opacity-60 disabled:hover:bg-rose-600/90"
+                class="stop-btn"
+                style="margin-top: 16px; width: 100%;"
                 :disabled="stopped || stopInProgress"
                 @click="stopMeeting()"
               >
-                <span x-show="!stopInProgress" x-cloak>Stop</span>
-                <span x-show="stopInProgress" x-cloak>Stopping…</span>
+                <span x-show="!stopInProgress" x-cloak>Stop Meeting</span>
+                <span x-show="stopInProgress" x-cloak>Stopping...</span>
               </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main class="flex-1">
-        <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <section class="rounded-2xl bg-slate-950/40 ring-1 ring-inset ring-slate-800/60 shadow-glow overflow-hidden">
-              <div class="flex items-center justify-between border-b border-slate-800/60 px-4 py-3">
-                <div>
-                  <h2 class="text-sm font-semibold text-slate-200">Live Transcript</h2>
-                  <p class="text-xs text-slate-400" x-text="`${segments.length} segments`"></p>
-                </div>
-                <button
-                  type="button"
-                  class="text-xs text-slate-300 hover:text-slate-100 rounded-lg px-2 py-1 ring-1 ring-inset ring-slate-800/70 hover:ring-slate-700/70"
-                  @click="scrollTranscriptToBottom()"
-                >
-                  Jump to latest
-                </button>
-              </div>
-
-              <div
-                class="h-[60vh] lg:h-[68vh] overflow-y-auto px-4 py-4"
-                x-ref="transcriptScroll"
-                @click.outside="exportOpen = false"
-              >
-                <div class="space-y-3">
-                  <template x-if="entries.length === 0">
-                    <div class="rounded-xl border border-dashed border-slate-800/80 bg-slate-950/30 px-4 py-6">
-                      <p class="text-sm text-slate-300">Waiting for transcript…</p>
-                      <p class="mt-1 text-xs text-slate-500">When audio segments arrive, they will appear here in real time.</p>
-                    </div>
-                  </template>
-
-                  <template x-for="entry in entries" :key="entry.id">
-                    <div>
-                      <template x-if="entry.kind === 'bookmark'">
-                        <div class="relative overflow-hidden rounded-xl border border-slate-800/70 bg-slate-900/30 px-4 py-3">
-                          <div class="absolute inset-y-0 left-0 w-1 bg-amber-400/70"></div>
-                          <div class="flex items-center justify-between gap-3">
-                            <div class="min-w-0">
-                              <div class="text-sm font-semibold text-slate-200" x-text="entry.label"></div>
-                              <div class="text-xs text-slate-400" x-text="entry.timestamp ? `Bookmark at ${entry.timestamp}` : 'Bookmark'"></div>
-                            </div>
-                            <div class="text-xs text-amber-200/90 ring-1 ring-inset ring-amber-500/30 bg-amber-500/10 rounded-full px-2 py-1">
-                              Bookmark
-                            </div>
-                          </div>
-                        </div>
-                      </template>
-
-                      <template x-if="entry.kind === 'segment'">
-                        <div class="flex gap-3">
-                          <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-900/70 ring-1 ring-inset ring-slate-800/70">
-                            <span class="h-2.5 w-2.5 rounded-full" :class="speakerStyle(entry.speaker).dot"></span>
-                          </div>
-                          <div class="min-w-0 flex-1 rounded-2xl bg-slate-900/30 ring-1 ring-inset ring-slate-800/70 px-4 py-3">
-                            <div class="flex flex-wrap items-center justify-between gap-2">
-                              <div class="flex items-center gap-2 min-w-0">
-                                <span
-                                  class="inline-flex items-center gap-2 rounded-full px-2 py-1 text-xs font-semibold"
-                                  :class="speakerStyle(entry.speaker).badge"
-                                >
-                                  <span class="h-1.5 w-1.5 rounded-full" :class="speakerStyle(entry.speaker).dot"></span>
-                                  <span class="truncate" x-text="entry.speaker"></span>
-                                </span>
-                                <span class="text-xs font-mono text-slate-400" x-text="entry.start ? `[${entry.start}${entry.end ? `–${entry.end}` : ''}]` : ''"></span>
-                              </div>
-                            </div>
-                            <p class="mt-2 text-sm leading-relaxed text-slate-100 whitespace-pre-wrap break-words" x-text="entry.text"></p>
-                          </div>
-                        </div>
-                      </template>
-                    </div>
-                  </template>
-                </div>
-              </div>
             </section>
+          </aside>
+        </header>
 
-            <section class="space-y-6">
-              <!-- Streaming Intel Indicator -->
-              <div
-                x-show="intelStreaming"
-                x-cloak
-                class="rounded-2xl bg-slate-950/40 ring-1 ring-inset ring-violet-500/40 shadow-glow overflow-hidden"
-              >
-                <div class="border-b border-violet-500/30 px-4 py-3">
-                  <div class="flex items-center gap-3">
-                    <div class="relative flex h-3 w-3">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-3 w-3 bg-violet-500"></span>
-                    </div>
-                    <h2 class="text-sm font-semibold text-violet-200">Analyzing...</h2>
-                  </div>
-                  <p class="text-xs text-slate-400 mt-1">AI is extracting meeting intelligence</p>
-                </div>
-                <div class="px-4 py-4 max-h-48 overflow-y-auto">
-                  <pre class="text-xs text-slate-300 font-mono whitespace-pre-wrap break-all" x-text="intelBuffer"></pre>
-                  <span class="inline-block w-2 h-4 bg-violet-400 animate-pulse ml-0.5"></span>
-                </div>
+        <main class="board">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title">Transcript Stream</h2>
+                <p class="panel-subtitle">
+                  Click any segment to copy it. Bookmarks stay inline so important decisions remain anchored to the transcript.
+                </p>
               </div>
+              <button type="button" class="ghost-btn" @click="scrollTranscriptToBottom()">Jump to Latest</button>
+            </div>
 
-              <div class="rounded-2xl bg-slate-950/40 ring-1 ring-inset ring-slate-800/60 shadow-glow overflow-hidden">
-                <div class="border-b border-slate-800/60 px-4 py-3">
-                  <h2 class="text-sm font-semibold text-slate-200">Topics</h2>
-                  <p class="text-xs text-slate-400">Key themes detected from the conversation</p>
-                </div>
-                <div class="px-4 py-4">
-                  <template x-if="intel.topics.length === 0">
-                    <p class="text-sm text-slate-400">No topics yet.</p>
-                  </template>
-                  <div class="flex flex-wrap gap-2" x-show="intel.topics.length > 0" x-cloak>
-                    <template x-for="topic in intel.topics" :key="topic">
-                      <span
-                        class="inline-flex items-center rounded-full bg-slate-900/60 px-3 py-1 text-xs font-semibold text-slate-200 ring-1 ring-inset ring-slate-800/70"
-                        x-text="topic"
-                      ></span>
-                    </template>
+            <div class="transcript-body" x-ref="transcriptScroll">
+              <div class="entry-stream">
+                <template x-if="entries.length === 0">
+                  <div class="empty-card">
+                    <h3 class="empty-title">Waiting for transcript...</h3>
+                    <p class="empty-copy">
+                      Once audio arrives, the stream will build here from top to bottom with speaker chips, timestamps, and bookmark callouts.
+                    </p>
                   </div>
-                </div>
-              </div>
+                </template>
 
-              <div class="rounded-2xl bg-slate-950/40 ring-1 ring-inset ring-slate-800/60 shadow-glow overflow-hidden">
-                <div class="border-b border-slate-800/60 px-4 py-3">
-                  <h2 class="text-sm font-semibold text-slate-200">Action Items</h2>
-                  <p class="text-xs text-slate-400">Tasks captured during the meeting</p>
-                </div>
-                <div class="px-4 py-4">
-                  <template x-if="intel.action_items.length === 0">
-                    <p class="text-sm text-slate-400">No action items yet.</p>
-                  </template>
-                  <ul class="space-y-3" x-show="intel.action_items.length > 0" x-cloak>
-                    <template x-for="(item, idx) in intel.action_items.filter(i => i.status !== 'dismissed')" :key="item.id || `${idx}-${item.task}`">
-                      <li
-                        class="flex items-start gap-3 rounded-xl px-3 py-3"
-                        :class="item.status === 'done'
-                          ? 'bg-emerald-950/20 ring-1 ring-inset ring-emerald-800/40'
-                          : 'bg-slate-900/30 ring-1 ring-inset ring-slate-800/70'"
-                      >
-                        <button
-                          type="button"
-                          class="mt-0.5 h-5 w-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors"
-                          :class="item.status === 'done'
-                            ? 'border-emerald-500 bg-emerald-500 text-white'
-                            : 'border-slate-600 bg-slate-950 hover:border-slate-500'"
-                          @click="toggleActionItemStatus(item)"
-                          :disabled="stopped"
-                        >
-                          <svg x-show="item.status === 'done'" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        </button>
-                        <div class="min-w-0 flex-1">
-                          <div class="flex flex-wrap items-center justify-between gap-2">
-                            <p
-                              class="text-sm font-semibold"
-                              :class="item.status === 'done' ? 'line-through text-slate-500' : 'text-slate-100'"
-                              x-text="item.task || 'Action item'"
-                            ></p>
-                            <div class="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                              <span x-show="item.owner" x-cloak class="rounded-full bg-slate-900/60 ring-1 ring-inset ring-slate-800/70 px-2 py-1" x-text="`Owner: ${item.owner}`"></span>
-                              <span x-show="item.due" x-cloak class="rounded-full bg-slate-900/60 ring-1 ring-inset ring-slate-800/70 px-2 py-1" x-text="`Due: ${item.due}`"></span>
-                              <button
-                                type="button"
-                                class="rounded-full bg-slate-900/60 ring-1 ring-inset ring-slate-800/70 px-2 py-1 hover:bg-rose-900/40 hover:ring-rose-700/50 hover:text-rose-300 transition-colors"
-                                @click="dismissActionItem(item)"
-                                :disabled="stopped"
-                                title="Dismiss"
-                              >
-                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </li>
-                    </template>
-                  </ul>
-                  <!-- Dismissed items count -->
+                <template x-for="entry in entries" :key="entry.id">
                   <div
-                    x-show="intel.action_items.filter(i => i.status === 'dismissed').length > 0"
-                    x-cloak
-                    class="mt-3 text-xs text-slate-500"
+                    class="stream-entry"
+                    :class="entry.kind === 'segment' ? `tone-${speakerTone(entry.speaker)}` : 'bookmark'"
                   >
-                    <span x-text="`${intel.action_items.filter(i => i.status === 'dismissed').length} dismissed`"></span>
+                    <span class="stream-marker" aria-hidden="true"></span>
+
+                    <template x-if="entry.kind === 'segment'">
+                      <article class="segment-card" @click="copySegment(entry)">
+                        <div class="segment-meta">
+                          <span class="speaker-pill" :class="`tone-${speakerTone(entry.speaker)}`">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                              <circle cx="12" cy="12" r="6"></circle>
+                            </svg>
+                            <span x-text="speakerLabel(entry.speaker)"></span>
+                          </span>
+                          <span class="meta-pill" x-text="entry.start ? `[${entry.start}${entry.end ? `-${entry.end}` : ''}]` : 'Live now'"></span>
+                          <span class="segment-copy-hint">Click to copy</span>
+                        </div>
+                        <p class="segment-text" x-text="entry.text"></p>
+                      </article>
+                    </template>
+
+                    <template x-if="entry.kind === 'bookmark'">
+                      <article class="bookmark-card">
+                        <div class="bookmark-meta">
+                          <span class="bookmark-pill">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                              <path d="M7 3h10v18l-5-3-5 3V3z"></path>
+                            </svg>
+                            Bookmark
+                          </span>
+                          <span class="meta-pill" x-text="entry.timestamp ? `At ${entry.timestamp}` : 'Captured live'"></span>
+                        </div>
+                        <p class="segment-text" x-text="entry.label"></p>
+                      </article>
+                    </template>
                   </div>
-                </div>
+                </template>
               </div>
+            </div>
+          </section>
 
-              <div class="rounded-2xl bg-slate-950/40 ring-1 ring-inset ring-slate-800/60 shadow-glow overflow-hidden">
-                <div class="border-b border-slate-800/60 px-4 py-3">
-                  <h2 class="text-sm font-semibold text-slate-200">Summary</h2>
-                  <p class="text-xs text-slate-400">High-level meeting recap</p>
-                </div>
-                <div class="px-4 py-4">
-                  <template x-if="!intel.summary">
-                    <p class="text-sm text-slate-400">No summary yet.</p>
-                  </template>
-                  <div x-show="intel.summary" x-cloak class="rounded-xl bg-slate-900/30 ring-1 ring-inset ring-slate-800/70 p-4">
-                    <p class="text-sm leading-relaxed text-slate-100 whitespace-pre-wrap" x-text="intel.summary"></p>
-                  </div>
+          <section class="stack">
+            <div class="intel-card intel-live" x-show="intelStreaming" x-cloak>
+              <div class="card-head">
+                <div>
+                  <span class="live-chip"><span class="pulse"></span>Analyzing</span>
+                  <p>Streaming tokens from the local model before the structured snapshot lands.</p>
                 </div>
               </div>
-            </section>
+              <p class="streaming-text"><span x-text="intelBuffer"></span><span class="typing-caret"></span></p>
+            </div>
+
+            <div class="intel-card">
+              <div class="card-head">
+                <div>
+                  <h2>Intelligence Status</h2>
+                  <p x-text="intelStatusTitle()"></p>
+                </div>
+              </div>
+              <p class="placeholder" x-text="intelStatusCopy()"></p>
+            </div>
+
+            <div class="intel-card">
+              <div class="card-head">
+                <div>
+                  <h2>Topics</h2>
+                  <p>Recurring threads detected across the discussion.</p>
+                </div>
+              </div>
+              <template x-if="intel.topics.length === 0">
+                <p class="placeholder">Topics will appear here after enough transcript has accumulated.</p>
+              </template>
+              <div class="topic-grid" x-show="intel.topics.length > 0" x-cloak>
+                <template x-for="topic in intel.topics" :key="topic">
+                  <span class="topic-pill" x-text="topic"></span>
+                </template>
+              </div>
+            </div>
+
+            <div class="intel-card">
+              <div class="card-head">
+                <div>
+                  <h2>Action Items</h2>
+                  <p>Captured tasks with lightweight status tracking while the meeting is still live.</p>
+                </div>
+              </div>
+              <template x-if="activeActionItems().length === 0">
+                <p class="placeholder">No action items yet.</p>
+              </template>
+              <div class="action-list" x-show="activeActionItems().length > 0" x-cloak>
+                <template x-for="(item, idx) in activeActionItems()" :key="item.id || `${idx}-${item.task}`">
+                  <article class="action-item" :class="{ 'is-done': item.status === 'done' }">
+                    <button
+                      type="button"
+                      class="checkbox-btn"
+                      :disabled="stopped"
+                      @click="toggleActionItemStatus(item)"
+                      :title="item.status === 'done' ? 'Mark pending' : 'Mark done'"
+                    >
+                      <svg x-show="item.status === 'done'" x-cloak viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span class="sr-only">Toggle action item status</span>
+                    </button>
+                    <div>
+                      <p class="action-task" x-text="item.task || 'Action item'"></p>
+                      <div class="action-meta" style="margin-top: 10px;">
+                        <span class="meta-pill" x-show="item.owner" x-cloak x-text="`Owner ${item.owner}`"></span>
+                        <span class="meta-pill" x-show="item.due" x-cloak x-text="`Due ${item.due}`"></span>
+                        <span class="status-pill" :class="statusClass(item.status)" x-text="statusLabel(item.status)"></span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      class="icon-plain"
+                      :disabled="stopped"
+                      @click="dismissActionItem(item)"
+                      title="Dismiss"
+                    >
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18" />
+                      </svg>
+                      <span class="sr-only">Dismiss action item</span>
+                    </button>
+                  </article>
+                </template>
+              </div>
+              <p class="dismissed-note" x-show="dismissedCount() > 0" x-cloak x-text="`${dismissedCount()} dismissed item${dismissedCount() === 1 ? '' : 's'}`"></p>
+            </div>
+
+            <div class="summary-card">
+              <div class="card-head">
+                <div>
+                  <h2>Summary</h2>
+                  <p>Rolling meeting recap generated from the latest transcript context.</p>
+                </div>
+              </div>
+              <template x-if="!intel.summary">
+                <p class="placeholder">No summary yet.</p>
+              </template>
+              <p class="summary-text" x-show="intel.summary" x-cloak x-text="intel.summary"></p>
+            </div>
+          </section>
+        </main>
+
+        <div class="dock-wrap">
+          <div class="dock">
+            <div class="dock-copy">
+              <strong x-text="meetingTitle || 'HoldSpeak'"></strong>
+              <span x-text="`${segments.length} transcript segment${segments.length === 1 ? '' : 's'} ready`"></span>
+            </div>
+            <div class="dock-actions">
+              <button type="button" class="control-btn" :disabled="stopped" @click="openBookmarkModal()">Bookmark</button>
+              <button type="button" class="control-btn" @click="copyAll()">Copy All</button>
+              <div class="relative" style="position: relative;">
+                <button type="button" class="control-btn primary" @click="exportOpen = !exportOpen">Export</button>
+                <div class="export-menu" x-show="exportOpen" x-cloak @click.outside="exportOpen = false">
+                  <button type="button" class="export-option" @click="exportAs('md')"><span>Meeting notes</span><span>.md</span></button>
+                  <button type="button" class="export-option" @click="exportAs('txt')"><span>Plain transcript</span><span>.txt</span></button>
+                  <button type="button" class="export-option" @click="exportAs('json')"><span>Structured data</span><span>.json</span></button>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </main>
-
-      <footer class="border-t border-slate-800/60 bg-slate-950/50 backdrop-blur">
-        <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div class="text-xs text-slate-400">
-              <span class="text-slate-300 font-semibold">HoldSpeak</span> · Meeting Dashboard
-            </div>
-
-            <div class="flex flex-wrap items-center gap-2 sm:justify-end">
-              <button
-                type="button"
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900/60 px-4 py-2 text-sm font-semibold text-slate-100 ring-1 ring-inset ring-slate-800/70 hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
-                :disabled="stopped"
-                @click="openBookmarkModal()"
-              >
-                Bookmark
-              </button>
-
-              <button
-                type="button"
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900/60 px-4 py-2 text-sm font-semibold text-slate-100 ring-1 ring-inset ring-slate-800/70 hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
-                @click="copyAll()"
-              >
-                Copy All
-              </button>
-
-              <div class="relative" @keydown.escape.window="exportOpen = false">
-                <button
-                  type="button"
-                  class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900/60 px-4 py-2 text-sm font-semibold text-slate-100 ring-1 ring-inset ring-slate-800/70 hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
-                  @click="exportOpen = !exportOpen"
-                >
-                  Export
-                  <svg class="h-4 w-4 text-slate-300" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path
-                      fill-rule="evenodd"
-                      d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
-                </button>
-
-                <div
-                  x-show="exportOpen"
-                  x-cloak
-                  @click.outside="exportOpen = false"
-                  class="absolute right-0 z-20 mt-2 w-44 overflow-hidden rounded-xl bg-slate-950 ring-1 ring-inset ring-slate-800/70 shadow-glow"
-                >
-                  <button
-                    type="button"
-                    class="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-900/60"
-                    @click="exportAs('txt')"
-                  >
-                    Export .txt
-                  </button>
-                  <button
-                    type="button"
-                    class="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-900/60"
-                    @click="exportAs('json')"
-                  >
-                    Export .json
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      <div class="fixed inset-x-0 top-3 z-50 flex justify-center px-4 sm:justify-end">
-        <div class="w-full max-w-md space-y-2">
-          <template x-for="note in notifications" :key="note.id">
-            <div class="rounded-xl bg-slate-950/80 ring-1 ring-inset ring-slate-800/70 px-4 py-3 shadow-glow backdrop-blur">
-              <p class="text-sm text-slate-200" x-text="note.message"></p>
-            </div>
-          </template>
         </div>
       </div>
 
-      <div
-        x-show="bookmarkModalOpen"
-        x-cloak
-        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm"
-        @keydown.escape.window="bookmarkModalOpen = false"
-      >
-        <div class="w-full max-w-md overflow-hidden rounded-2xl bg-slate-950 ring-1 ring-inset ring-slate-800/70 shadow-glow">
-          <div class="border-b border-slate-800/60 px-5 py-4">
-            <h3 class="text-sm font-semibold text-slate-100">Add bookmark</h3>
-            <p class="mt-1 text-xs text-slate-400">Optional label to help you find this moment later.</p>
+      <div class="toast-stack">
+        <template x-for="note in notifications" :key="note.id">
+          <div class="toast">
+            <p x-text="note.message"></p>
           </div>
-          <div class="px-5 py-4">
-            <label class="block text-xs font-semibold text-slate-300">Label</label>
-            <input
-              x-ref="bookmarkInput"
-              type="text"
-              class="mt-2 w-full rounded-xl bg-slate-900/50 px-3 py-2 text-sm text-slate-100 ring-1 ring-inset ring-slate-800/70 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
-              placeholder="e.g. Decision on Q1 roadmap"
-              x-model="bookmarkLabel"
-              @keydown.enter.prevent="submitBookmark()"
-            />
-          </div>
-          <div class="flex items-center justify-end gap-2 border-t border-slate-800/60 px-5 py-4">
-            <button
-              type="button"
-              class="rounded-xl px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-inset ring-slate-800/70 hover:bg-slate-900/60"
-              @click="bookmarkModalOpen = false"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="rounded-xl bg-sky-600/90 px-4 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-sky-500/40 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-400/40"
-              @click="submitBookmark()"
-            >
-              Save bookmark
-            </button>
-          </div>
-        </div>
+        </template>
       </div>
 
-      <!-- Metadata Modal -->
-      <div
-        x-show="metadataModalOpen"
-        x-cloak
-        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm"
-        @keydown.escape.window="metadataModalOpen = false"
-      >
-        <div class="w-full max-w-md overflow-hidden rounded-2xl bg-slate-950 ring-1 ring-inset ring-slate-800/70 shadow-glow">
-          <div class="border-b border-slate-800/60 px-5 py-4">
-            <h3 class="text-sm font-semibold text-slate-100">Meeting Details</h3>
-            <p class="mt-1 text-xs text-slate-400">Set a title and tags for this meeting.</p>
+      <div class="modal" x-show="bookmarkModalOpen" x-cloak @keydown.escape.window="bookmarkModalOpen = false">
+        <div class="modal-card">
+          <div class="modal-head">
+            <h3>Add Bookmark</h3>
+            <p>Leave the label blank to create a generic marker, or add a short reason so the moment is easy to spot later.</p>
           </div>
-          <div class="px-5 py-4 space-y-4">
-            <div>
-              <label class="block text-xs font-semibold text-slate-300">Title</label>
+          <div class="modal-body">
+            <div class="form-field">
+              <label for="bookmark-label">Label</label>
               <input
-                x-ref="titleInput"
+                id="bookmark-label"
+                x-ref="bookmarkInput"
+                class="input"
                 type="text"
-                class="mt-2 w-full rounded-xl bg-slate-900/50 px-3 py-2 text-sm text-slate-100 ring-1 ring-inset ring-slate-800/70 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
-                placeholder="e.g. Weekly standup"
-                x-model="editingTitle"
+                x-model="bookmarkLabel"
+                placeholder="Decision on rollout window"
+                @keydown.enter.prevent="submitBookmark()"
               />
             </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-300">Tags</label>
-              <p class="text-xs text-slate-500 mt-0.5">Separate multiple tags with commas</p>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="ghost-btn" @click="bookmarkModalOpen = false">Cancel</button>
+            <button type="button" class="ghost-btn primary" @click="submitBookmark()">Save Bookmark</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal" x-show="metadataModalOpen" x-cloak @keydown.escape.window="metadataModalOpen = false">
+        <div class="modal-card">
+          <div class="modal-head">
+            <h3>Edit Meeting Details</h3>
+            <p>Update the title and comma-separated tags while the meeting is in progress.</p>
+          </div>
+          <div class="modal-body">
+            <div class="form-field">
+              <label for="meeting-title">Title</label>
               <input
+                id="meeting-title"
+                x-ref="titleInput"
+                class="input"
                 type="text"
-                class="mt-2 w-full rounded-xl bg-slate-900/50 px-3 py-2 text-sm text-slate-100 ring-1 ring-inset ring-slate-800/70 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
-                placeholder="e.g. planning, team, q1"
+                x-model="editingTitle"
+                placeholder="Engineering review"
+              />
+            </div>
+            <div class="form-field">
+              <label for="meeting-tags">Tags</label>
+              <input
+                id="meeting-tags"
+                class="input"
+                type="text"
                 x-model="editingTags"
+                placeholder="planning, roadmap, follow-up"
                 @keydown.enter.prevent="saveMetadata()"
               />
             </div>
           </div>
-          <div class="flex items-center justify-end gap-2 border-t border-slate-800/60 px-5 py-4">
-            <button
-              type="button"
-              class="rounded-xl px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-inset ring-slate-800/70 hover:bg-slate-900/60"
-              @click="metadataModalOpen = false"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="rounded-xl bg-sky-600/90 px-4 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-sky-500/40 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-400/40"
-              @click="saveMetadata()"
-            >
-              Save
-            </button>
+          <div class="modal-actions">
+            <button type="button" class="ghost-btn" @click="metadataModalOpen = false">Cancel</button>
+            <button type="button" class="ghost-btn primary" @click="saveMetadata()">Save Details</button>
           </div>
         </div>
       </div>

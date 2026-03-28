@@ -72,8 +72,8 @@ def run_history_command(args) -> None:
         print("No meetings found.")
         return
 
-    print(f"{'ID':<12} {'Date':<12} {'Duration':<10} {'Segments':<10} {'Title'}")
-    print("-" * 70)
+    print(f"{'ID':<12} {'Date':<12} {'Duration':<10} {'Segments':<10} {'Intel':<10} {'Title'}")
+    print("-" * 82)
 
     for meeting in meetings:
         title = meeting.title or "(untitled)"
@@ -81,7 +81,11 @@ def run_history_command(args) -> None:
             title = title[:27] + "..."
         date_str = meeting.started_at.strftime("%Y-%m-%d")
         duration = format_duration_simple(meeting.duration_seconds) if meeting.duration_seconds else "--:--"
-        print(f"{meeting.id[:12]:<12} {date_str:<12} {duration:<10} {meeting.segment_count:<10} {title}")
+        intel_status = meeting.intel_status or "disabled"
+        print(
+            f"{meeting.id[:12]:<12} {date_str:<12} {duration:<10} "
+            f"{meeting.segment_count:<10} {intel_status[:10]:<10} {title}"
+        )
 
 
 def display_meeting_detail(meeting, verbose: bool = False) -> None:
@@ -95,6 +99,9 @@ def display_meeting_detail(meeting, verbose: bool = False) -> None:
         print(f"  Ended: {state.ended_at.strftime('%Y-%m-%d %H:%M')}")
     print(f"  Duration: {state.format_duration()}")
     print(f"  Segments: {len(state.segments)}")
+    print(f"  Intel: {state.intel_status}")
+    if state.intel_status_detail:
+        print(f"  Intel detail: {state.intel_status_detail}")
 
     if state.tags:
         print(f"  Tags: {', '.join(state.tags)}")

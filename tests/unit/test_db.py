@@ -11,6 +11,7 @@ from holdspeak.db import (
     MeetingDatabase,
     MeetingSummary,
     ActionItemSummary,
+    IntelJob,
     reset_database,
 )
 from holdspeak.meeting_session import (
@@ -522,6 +523,78 @@ class TestUpsert:
         retrieved = db.get_meeting(sample_meeting.id)
         assert retrieved.title == "Updated Title"
         assert len(retrieved.segments) == 3
+
+
+class TestDeferredIntelQueue:
+    """Tests for deferred meeting-intelligence queue persistence."""
+
+    def test_enqueue_and_claim_intel_job(self, db, sample_meeting):
+        """Queued intel jobs should be claimable for later processing."""
+        sample_meeting.intel_status = "queued"
+        sample_meeting.intel_status_detail = "Queued for later processing."
+        sample_meeting.intel_requested_at = datetime.now()
+        db.save_meeting(sample_meeting)
+
+        transcript_hash = sample_meeting.transcript_hash()
+        db.enqueue_intel_job(sample_meeting.id, transcript_hash=transcript_hash)
+
+        claimed = db.claim_next_intel_job()
+        assert isinstance(claimed, IntelJob)
+        assert claimed.meeting_id == sample_meeting.id
+        assert claimed.status == "running"
+        assert claimed.transcript_hash == transcript_hash
+
+    def test_complete_intel_job_removes_queue_entry(self, db, sample_meeting):
+        """Completed jobs should be removed from the queue."""
+        db.save_meeting(sample_meeting)
+        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+
+        claimed = db.claim_next_intel_job()
+        assert claimed is not None
+
+        db.complete_intel_job(sample_meeting.id)
+        assert db.claim_next_intel_job() is None
+
+    def test_fail_intel_job_updates_meeting_status(self, db, sample_meeting):
+        """Failed jobs should surface as meeting intel errors."""
+        db.save_meeting(sample_meeting)
+        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+
+        claimed = db.claim_next_intel_job()
+        assert claimed is not None
+
+        db.fail_intel_job(sample_meeting.id, "Deferred intel failed")
+        updated = db.get_meeting(sample_meeting.id)
+        assert updated is not None
+        assert updated.intel_status == "error"
+        assert updated.intel_status_detail == "Deferred intel failed"
+
+    def test_list_intel_jobs_includes_meeting_context(self, db, sample_meeting):
+        """Queued jobs should include meeting metadata for CLI display."""
+        db.save_meeting(sample_meeting)
+        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+
+        jobs = db.list_intel_jobs()
+        assert len(jobs) == 1
+        job = jobs[0]
+        assert job.meeting_id == sample_meeting.id
+        assert job.meeting_title == sample_meeting.title
+        assert job.started_at == sample_meeting.started_at
+
+    def test_requeue_intel_job_refreshes_failed_job(self, db, sample_meeting):
+        """Failed jobs should be requeueable for manual retry."""
+        db.save_meeting(sample_meeting)
+        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+        db.claim_next_intel_job()
+        db.fail_intel_job(sample_meeting.id, "Deferred intel failed")
+
+        assert db.requeue_intel_job(sample_meeting.id, reason="Manual retry requested.")
+
+        jobs = db.list_intel_jobs(status="queued")
+        assert len(jobs) == 1
+        assert jobs[0].meeting_id == sample_meeting.id
+        assert jobs[0].status == "queued"
+        assert jobs[0].last_error == "Manual retry requested."
 
 
 class TestDatabaseShape:

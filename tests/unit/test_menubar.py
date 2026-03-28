@@ -758,6 +758,27 @@ class TestOpenSettings:
 
         mock_rumps_module.notification.assert_called_once()
 
+
+class TestWebSettingsCallback:
+    """Tests for web settings callback behavior in menubar mode."""
+
+    def test_on_web_settings_applied_updates_hotkey_and_menu(self, mock_app):
+        updated = Config()
+        updated.hotkey.key = "f8"
+
+        previous_listener = mock_app._hotkey_listener
+        new_listener = MagicMock()
+        with patch("holdspeak.menubar.HotkeyListener", return_value=new_listener):
+            mock_rumps_module.notification.reset_mock()
+            mock_app._on_web_settings_applied(updated)
+
+        assert mock_app.config.hotkey.key == "f8"
+        assert "F8" in mock_app._record_item.title
+        previous_listener.stop.assert_called_once()
+        assert mock_app._hotkey_listener is new_listener
+        new_listener.start.assert_called_once()
+        mock_rumps_module.notification.assert_called_once()
+
     def test_open_settings_opens_config_file(self, mock_app):
         """_open_settings opens config file if it exists."""
         with patch("os.path.exists", return_value=True):

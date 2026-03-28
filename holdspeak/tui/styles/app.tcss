@@ -275,7 +275,8 @@ MeetingBarWidget.active {
 #settings_dialog {
     width: 90%;
     max-width: 72;
-    height: 85%;
+    height: 90%;
+    min-height: 18;
     padding: 1 1;
     background: $bg-surface;
     border: heavy $border-default;
@@ -284,20 +285,35 @@ MeetingBarWidget.active {
 #settings_title {
     text-style: bold;
     color: $accent-primary;
+}
+
+#settings_hint {
+    color: $text-muted;
     margin-bottom: 1;
 }
 
-#settings_scroll {
+#settings_tabs {
     height: 1fr;
+}
+
+#settings_tabs TabPane {
+    padding: 0 1;
 }
 
 .settings_label {
     color: $text-muted;
-    margin-top: 1;
+    margin-top: 0;
+    margin-bottom: 1;
+}
+
+.settings_form_section Select,
+.settings_form_section Checkbox,
+.settings_form_section Input {
+    margin-bottom: 1;
 }
 
 #settings_actions {
-    margin-top: 1;
+    margin-top: 0;
     height: 3;
     content-align: right middle;
 }

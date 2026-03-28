@@ -1,6 +1,6 @@
 # Meeting Mode - Complete User Guide
 
-HoldSpeak's Meeting Mode transforms your Mac into a powerful meeting assistant. It captures both your microphone and remote participants' audio, transcribes in real-time, and uses local AI to extract actionable intelligence.
+HoldSpeak's Meeting Mode captures your microphone plus remote participants' audio, transcribes in real-time, and extracts structured meeting intelligence. It runs local-first, with optional cloud inference when configured.
 
 ## Table of Contents
 
@@ -8,7 +8,7 @@ HoldSpeak's Meeting Mode transforms your Mac into a powerful meeting assistant. 
 2. [Prerequisites](#prerequisites)
 3. [BlackHole Setup](#blackhole-setup)
 4. [Using Meeting Mode](#using-meeting-mode)
-5. [Web Dashboard](#web-dashboard)
+5. [Web Interfaces](#web-interfaces)
 6. [Meeting Intelligence](#meeting-intelligence)
 7. [Configuration Reference](#configuration-reference)
 8. [Web API Reference](#web-api-reference)
@@ -19,10 +19,10 @@ HoldSpeak's Meeting Mode transforms your Mac into a powerful meeting assistant. 
 ## Quick Start
 
 ```bash
-# 1. Install BlackHole for system audio capture
+# 1. macOS: install BlackHole for system audio capture
 brew install blackhole-2ch
 
-# 2. Check setup
+# 2. Check setup (Linux: verifies Pulse/PipeWire monitor source)
 holdspeak meeting --setup
 
 # 3. Start HoldSpeak
@@ -36,7 +36,7 @@ holdspeak
 ## Prerequisites
 
 ### Required
-- **macOS** (Apple Silicon recommended)
+- **macOS or Linux**
 - **Python 3.10+**
 - **Microphone permissions** granted to Terminal/iTerm
 
@@ -46,8 +46,9 @@ holdspeak
 ### For Meeting Intelligence (AI)
 - **GGUF model** - Local LLM for extracting topics, action items, and summaries
 - Recommended: Qwen2.5-32B or Mistral-7B
+- Optional cloud mode: `OPENAI_API_KEY` (or your configured env var) when using `intel_provider: "cloud"` or fallback mode `auto`
 
-### For Web Dashboard
+### For Web Interfaces
 - **FastAPI + Uvicorn** - Web server dependencies
 ```bash
 uv pip install fastapi uvicorn
@@ -100,9 +101,15 @@ From the TUI, press `m` to toggle meeting mode on/off.
 
 When a meeting starts:
 1. Recording begins on both mic and system audio
-2. A web dashboard URL appears (e.g., `http://127.0.0.1:8234`)
+2. A live dashboard URL appears (e.g., `http://127.0.0.1:8234`)
 3. Transcription happens automatically every ~10 seconds
 4. AI intelligence runs every few segments (if enabled)
+
+At any time, you can also open:
+- `http://127.0.0.1:<port>/history` for archive search and cross-meeting workflows
+- `http://127.0.0.1:<port>/settings` for browser-based configuration
+
+![TUI Meeting Cockpit](screenshots/tui_meeting.svg)
 
 ### TUI Controls
 
@@ -120,45 +127,44 @@ Press `m` again to stop. The meeting data is preserved until you start a new one
 
 ---
 
-## Web Dashboard
+## Web Interfaces
 
-When a meeting starts, HoldSpeak launches a local web server with a modern dashboard.
+When a meeting starts, HoldSpeak launches a local-only web server on `127.0.0.1` with two browser experiences.
 
-### Accessing the Dashboard
+### 1) Live Dashboard (`/`)
 
-1. Look for the URL in the TUI meeting bar (e.g., `http://127.0.0.1:8234`)
-2. Open it in any browser
-3. The dashboard updates in real-time via WebSocket
+Use this during an active meeting for real-time operations:
+- Live transcript with speaker labels and timestamps
+- Streaming intelligence updates and clear intel status (`live`, `running`, `queued`, `ready`, `error`, `disabled`)
+- Bookmark, copy, export, and stop-meeting controls
 
-### Dashboard Features
+### 2) Archive + Settings Hub (`/history` and `/settings`)
 
-**Transcript Panel**
-- Live scrolling transcript
-- Speaker labels (Me / Remote) color-coded
-- Timestamps for each segment
-- Click any segment to copy
-
-**Intelligence Panel**
-- Topics discussed
-- Action items with owners and due dates
-- Rolling summary of the meeting
-- Updates automatically as new content arrives
-
-**Controls**
-- **Bookmark** - Mark important moments
-- **Copy** - Copy full transcript
-- **Export** - Download as Markdown, JSON, or TXT
-- **Stop Meeting** - End recording from browser
+Use this during or after meetings for cross-session management:
+- Search meetings by transcript content
+- Track action items across meetings and toggle status
+- Inspect and update speaker profiles (name/avatar) with speaking history
+- Manage deferred-intel queue (list jobs, process now, retry meeting jobs)
+- Edit app settings from browser, including cloud options:
+  - `intel_provider` (`local`, `cloud`, `auto`)
+  - `intel_cloud_model`
+  - `intel_cloud_api_key_env`
+  - `intel_cloud_base_url` (OpenAI-compatible endpoint override)
 
 ### Multiple Clients
 
-Multiple browsers/tabs can connect to the same meeting dashboard. All receive real-time updates.
+Multiple local browser tabs can connect at once. Live pages receive real-time updates via WebSocket.
 
 ---
 
 ## Meeting Intelligence
 
-HoldSpeak uses local LLM inference to extract structured intelligence from your meeting transcript.
+HoldSpeak supports three intelligence modes:
+- `local`: requires a local GGUF model
+- `cloud`: uses your configured OpenAI-compatible endpoint + API key env var
+- `auto`: local-first, then cloud fallback
+
+If no compatible runtime is currently available and deferred mode is enabled, HoldSpeak queues intelligence and fills in topics/actions/summaries later.
 
 ### What It Extracts
 
@@ -226,10 +232,22 @@ Configuration file: `~/.config/holdspeak/config.json`
     "auto_export": false,
     "export_format": "markdown",
     "intel_enabled": true,
+    "intel_provider": "local",
     "intel_realtime_model": "~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf",
+    "intel_queue_poll_seconds": 120,
+    "intel_cloud_model": "gpt-5-mini",
+    "intel_cloud_api_key_env": "OPENAI_API_KEY",
+    "intel_cloud_base_url": null,
+    "intel_cloud_reasoning_effort": null,
+    "intel_cloud_store": false,
     "intel_summary_model": null,
+    "intel_deferred_enabled": true,
     "web_enabled": true,
-    "web_auto_open": false
+    "web_auto_open": false,
+    "diarization_enabled": false,
+    "diarize_mic": false,
+    "cross_meeting_recognition": true,
+    "similarity_threshold": 0.75
   }
 }
 ```
@@ -244,21 +262,39 @@ Configuration file: `~/.config/holdspeak/config.json`
 | `auto_export` | bool | false | Automatically export when meeting ends |
 | `export_format` | string | "markdown" | Export format: txt, markdown, json, srt |
 | `intel_enabled` | bool | true | Enable AI intelligence extraction |
+| `intel_provider` | string | "local" | Intel mode: `local`, `cloud`, or `auto` (local-first, cloud fallback) |
 | `intel_realtime_model` | string | (Mistral path) | Path to GGUF model for real-time intel |
+| `intel_queue_poll_seconds` | int | 120 | Interval for deferred-intel background worker polling |
+| `intel_cloud_model` | string | "gpt-5-mini" | Cloud model used when provider is `cloud` or `auto` falls back to cloud |
+| `intel_cloud_api_key_env` | string | "OPENAI_API_KEY" | Environment variable name containing your cloud API key |
+| `intel_cloud_base_url` | string | null | Optional OpenAI-compatible base URL (for proxies/compatible providers) |
+| `intel_cloud_reasoning_effort` | string | null | Optional cloud reasoning setting (provider dependent) |
+| `intel_cloud_store` | bool | false | Allow provider-side storage for cloud requests |
 | `intel_summary_model` | string | null | Path to larger model for end-of-meeting summary. Falls back to realtime model if null. |
+| `intel_deferred_enabled` | bool | true | Queue meeting intel for later if no compatible local model is currently available |
 | `web_enabled` | bool | true | Enable web dashboard server |
 | `web_auto_open` | bool | false | Auto-open browser when meeting starts |
+| `diarization_enabled` | bool | false | Enable speaker diarization for system audio |
+| `diarize_mic` | bool | false | Enable diarization for microphone stream |
+| `cross_meeting_recognition` | bool | true | Persist speaker identities across meetings |
+| `similarity_threshold` | float | 0.75 | Matching threshold for speaker recognition (`0.0` to `1.0`) |
 
 ---
 
 ## Web API Reference
 
-The meeting web server exposes these endpoints:
+The local meeting web server exposes these routes:
 
 ### HTTP Endpoints
 
 #### `GET /`
-Returns the dashboard HTML page.
+Live meeting dashboard HTML.
+
+#### `GET /history`
+Archive/control-plane UI (meetings, actions, speakers, intel queue).
+
+#### `GET /settings`
+Settings UI (same web app shell as `/history`).
 
 #### `GET /health`
 Health check endpoint.
@@ -268,55 +304,28 @@ Health check endpoint.
 {"status": "ok"}
 ```
 
-#### `GET /api/state`
-Returns current meeting state.
+#### Live meeting APIs
+- `GET /api/state` - current meeting state
+- `POST /api/bookmark` - add bookmark
+- `POST /api/stop` - stop meeting
+- `PATCH /api/action-items/{item_id}` - update in-memory action item status
+- `PATCH /api/meeting` - update title/tags
 
-**Response:**
-```json
-{
-  "started_at": "2024-01-15T10:30:00",
-  "duration": 1234.5,
-  "formatted_duration": "20:34",
-  "segments": [
-    {
-      "speaker": "Me",
-      "text": "Let's discuss the project timeline.",
-      "timestamp": 0.0
-    }
-  ],
-  "intel": {
-    "topics": ["Project timeline", "Budget review"],
-    "action_items": [
-      {"task": "Send proposal", "owner": "Me", "due": "Friday"}
-    ],
-    "summary": "Discussed project timeline and budget."
-  },
-  "bookmarks": [
-    {"timestamp": 300.0, "label": "Important decision"}
-  ]
-}
-```
+#### Archive/data APIs
+- `GET /api/meetings`
+- `GET /api/meetings/{meeting_id}`
+- `GET /api/all-action-items`
+- `PATCH /api/all-action-items/{item_id}`
+- `GET /api/speakers`
+- `GET /api/speakers/{speaker_id}`
+- `PATCH /api/speakers/{speaker_id}`
 
-#### `POST /api/bookmark`
-Add a bookmark at current timestamp.
-
-**Request:**
-```json
-{"label": "Important point"}
-```
-
-**Response:**
-```json
-{"success": true}
-```
-
-#### `POST /api/stop`
-Stop the meeting.
-
-**Response:**
-```json
-{"success": true}
-```
+#### Settings/intel queue APIs
+- `GET /api/settings`
+- `PUT /api/settings`
+- `GET /api/intel/jobs`
+- `POST /api/intel/process`
+- `POST /api/intel/retry/{meeting_id}`
 
 ### WebSocket
 
@@ -329,8 +338,12 @@ Real-time updates via WebSocket connection.
 // New transcript segment
 {"type": "segment", "data": {"speaker": "Me", "text": "...", "timestamp": 123.4}}
 
-// Intel update
-{"type": "intel", "data": {"topics": [...], "action_items": [...], "summary": "..."}}
+// Streaming intel token + final intel snapshot
+{"type": "intel_token", "data": "..."}
+{"type": "intel_complete", "data": {"topics": [...], "action_items": [...], "summary": "..."}}
+
+// Intel status transitions
+{"type": "intel_status", "data": {"state": "running", "detail": "Analyzing..."}}
 
 // Duration tick (every second)
 {"type": "duration", "data": "12:34"}
@@ -372,6 +385,13 @@ Send `"ping"` text message, receive `"pong"` response.
 1. Check FastAPI is installed: `uv pip install fastapi uvicorn`
 2. Verify URL in TUI is accessible
 3. Check firewall isn't blocking localhost
+4. Try `/history` directly on the same port to confirm server health
+
+### Cloud intel errors (`provider=cloud` or `auto`)
+
+1. Confirm your API key env var exists (default: `OPENAI_API_KEY`)
+2. Verify `intel_cloud_base_url` is null or starts with `http://` / `https://`
+3. Check model name in `intel_cloud_model`
 
 ### Transcription quality is poor
 

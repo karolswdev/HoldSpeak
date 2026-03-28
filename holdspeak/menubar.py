@@ -440,8 +440,15 @@ class HoldSpeakMenuBar(rumps.App):
                     remote_label=self.config.meeting.remote_label,
                     mic_device=self.config.meeting.mic_device,
                     system_device=self.config.meeting.system_audio_device,
+                    on_settings_applied=self._on_web_settings_applied,
                     intel_enabled=self.config.meeting.intel_enabled,
                     intel_model_path=self.config.meeting.intel_realtime_model,
+                    intel_provider=self.config.meeting.intel_provider,
+                    intel_cloud_model=self.config.meeting.intel_cloud_model,
+                    intel_cloud_api_key_env=self.config.meeting.intel_cloud_api_key_env,
+                    intel_cloud_base_url=self.config.meeting.intel_cloud_base_url,
+                    intel_cloud_reasoning_effort=self.config.meeting.intel_cloud_reasoning_effort,
+                    intel_cloud_store=self.config.meeting.intel_cloud_store,
                     web_enabled=self.config.meeting.web_enabled,
                 )
 
@@ -479,6 +486,31 @@ class HoldSpeakMenuBar(rumps.App):
                 self._meeting_session = None
 
         threading.Thread(target=start, daemon=True).start()
+
+    def _on_web_settings_applied(self, updated_config: Config) -> None:
+        """Apply settings updates coming from the web UI."""
+        self.config = updated_config
+        hotkey = self.config.hotkey.key
+        hotkey_display = KEY_DISPLAY.get(hotkey, hotkey)
+        self._record_item.title = f"Start Recording ({hotkey_display})"
+
+        try:
+            if self._hotkey_listener is not None:
+                self._hotkey_listener.stop()
+            self._hotkey_listener = HotkeyListener(
+                on_press=self._on_hotkey_press,
+                on_release=self._on_hotkey_release,
+                hotkey=hotkey,
+            )
+            self._hotkey_listener.start()
+        except Exception as exc:
+            log.error(f"Failed to apply hotkey after web settings update: {exc}")
+
+        rumps.notification(
+            title="HoldSpeak",
+            subtitle="Settings Updated",
+            message=f"Web settings applied ({hotkey_display})",
+        )
 
     def _stop_meeting(self, _sender: rumps.MenuItem) -> None:
         """Stop the current meeting."""

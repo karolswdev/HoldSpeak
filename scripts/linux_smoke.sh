@@ -42,6 +42,11 @@ done
 echo
 
 resolve_python() {
+  if [[ -x ".venv/bin/python" ]]; then
+    printf '%s\n' "$(pwd)/.venv/bin/python"
+    return 0
+  fi
+
   if [[ -n "${VIRTUAL_ENV:-}" && -x "${VIRTUAL_ENV}/bin/python" ]]; then
     printf '%s\n' "${VIRTUAL_ENV}/bin/python"
     return 0

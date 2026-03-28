@@ -32,6 +32,7 @@ meeting = [
     "fastapi>=0.100.0",
     "uvicorn>=0.20.0",
     "llama-cpp-python>=0.2.0",
+    "openai>=1.0.0",
     "resemblyzer>=0.1.3",
 ]
 dev = [
