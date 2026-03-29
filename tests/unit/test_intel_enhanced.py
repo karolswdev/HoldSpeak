@@ -290,6 +290,20 @@ class TestActionItemDismiss:
         assert item.completed_at != original_completed
 
 
+class TestActionItemAccept:
+    """Tests for ActionItem accept() review behavior."""
+
+    def test_accept_sets_review_state_and_timestamp(self):
+        item = ActionItem(task="Task")
+        assert item.review_state == "pending"
+        assert item.reviewed_at is None
+
+        item.accept()
+
+        assert item.review_state == "accepted"
+        assert item.reviewed_at is not None
+
+
 # ============================================================
 # Tests for ActionItem to_dict() Method
 # ============================================================
@@ -312,6 +326,8 @@ class TestActionItemToDict:
         assert "due" in result
         assert "id" in result
         assert "status" in result
+        assert "review_state" in result
+        assert "reviewed_at" in result
         assert "source_timestamp" in result
         assert "created_at" in result
         assert "completed_at" in result
@@ -334,6 +350,7 @@ class TestActionItemToDict:
         assert result["due"] == "Monday"
         assert result["id"] == "test-id-123"
         assert result["status"] == "done"
+        assert result["review_state"] == "pending"
         assert result["completed_at"] == "2024-01-15T10:30:00"
 
     def test_to_dict_with_none_values(self):

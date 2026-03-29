@@ -312,6 +312,18 @@
         background: rgba(255, 255, 255, 0.06);
       }
 
+      .status-pill.review-pending {
+        color: #fdd8a8;
+        border-color: rgba(255, 184, 107, 0.44);
+        background: rgba(255, 184, 107, 0.14);
+      }
+
+      .status-pill.review-accepted {
+        color: #07111d;
+        border-color: rgba(117, 244, 211, 0.64);
+        background: rgba(117, 244, 211, 0.94);
+      }
+
       .meta-line {
         margin-top: 14px;
         color: var(--muted);
@@ -332,6 +344,13 @@
         gap: 10px;
         align-items: center;
         margin-bottom: 18px;
+      }
+
+      .action-controls {
+        margin-top: 12px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
       }
 
       .toggle {
@@ -747,7 +766,7 @@
 
               <div class="grid" x-show="!loadingActions && actionItems.length > 0">
                 <template x-for="item in actionItems" :key="item.id">
-                  <button class="action-card" @click="toggleActionStatus(item)">
+                  <div class="action-card">
                     <div class="card-top">
                       <div style="text-align: left;">
                         <p class="card-title" x-text="item.task"></p>
@@ -759,8 +778,29 @@
                       <span class="pill" x-show="item.owner" x-cloak x-text="`Owner ${item.owner}`"></span>
                       <span class="pill" x-show="item.due" x-cloak x-text="`Due ${item.due}`"></span>
                       <span class="pill" x-text="formatDate(item.meeting_date)"></span>
+                      <span
+                        class="status-pill"
+                        :class="`review-${reviewStateValue(item.review_state)}`"
+                        x-text="reviewStateLabel(item.review_state)"
+                      ></span>
                     </div>
-                  </button>
+                    <div class="action-controls">
+                      <button
+                        class="btn"
+                        @click="toggleActionStatus(item)"
+                        x-text="item.status === 'done' ? 'Mark Pending' : 'Mark Done'"
+                      ></button>
+                      <button
+                        class="btn"
+                        x-show="reviewStateValue(item.review_state) !== 'accepted'"
+                        x-cloak
+                        @click="acceptActionItem(item)"
+                      >
+                        Accept
+                      </button>
+                      <button class="btn primary" @click="editActionItem(item)">Edit</button>
+                    </div>
+                  </div>
                 </template>
               </div>
             </div>
@@ -1084,6 +1124,11 @@
                       <div class="pill-row">
                         <span class="pill" x-show="item.owner" x-cloak x-text="`Owner ${item.owner}`"></span>
                         <span class="pill" x-show="item.due" x-cloak x-text="`Due ${item.due}`"></span>
+                        <span
+                          class="status-pill"
+                          :class="`review-${reviewStateValue(item.review_state)}`"
+                          x-text="reviewStateLabel(item.review_state)"
+                        ></span>
                       </div>
                     </div>
                   </template>
@@ -1187,6 +1232,14 @@
             return "Pending";
           },
 
+          reviewStateValue(state) {
+            return String(state || "pending").trim().toLowerCase() === "accepted" ? "accepted" : "pending";
+          },
+
+          reviewStateLabel(state) {
+            return this.reviewStateValue(state) === "accepted" ? "Accepted" : "Needs review";
+          },
+
           async loadMeetings() {
             this.loading = true;
             try {
@@ -1251,6 +1304,60 @@
             } catch (error) {
               console.error("Failed to update action item:", error);
               this.flash(`Action update failed: ${error.message}`, true);
+            }
+          },
+
+          async acceptActionItem(item) {
+            try {
+              await this.apiJson(`/api/all-action-items/${item.id}/review`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ review_state: "accepted" }),
+              });
+              await this.loadActionItems();
+              if (this.selectedMeeting && this.selectedMeeting.id === item.meeting_id) {
+                await this.openMeeting(item.meeting_id);
+              }
+              this.flash("Action item accepted.");
+            } catch (error) {
+              console.error("Failed to accept action item:", error);
+              this.flash(`Accept failed: ${error.message}`, true);
+            }
+          },
+
+          async editActionItem(item) {
+            const initialTask = String(item.task || "");
+            const task = window.prompt("Edit task", initialTask);
+            if (task === null) return;
+            const cleanTask = task.trim();
+            if (!cleanTask) {
+              this.flash("Task cannot be empty.", true);
+              return;
+            }
+
+            const owner = window.prompt("Owner (leave blank to clear)", item.owner || "");
+            if (owner === null) return;
+            const due = window.prompt("Due (leave blank to clear)", item.due || "");
+            if (due === null) return;
+
+            try {
+              await this.apiJson(`/api/all-action-items/${item.id}/edit`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  task: cleanTask,
+                  owner: owner.trim(),
+                  due: due.trim(),
+                }),
+              });
+              await this.loadActionItems();
+              if (this.selectedMeeting && this.selectedMeeting.id === item.meeting_id) {
+                await this.openMeeting(item.meeting_id);
+              }
+              this.flash("Action item edited and accepted.");
+            } catch (error) {
+              console.error("Failed to edit action item:", error);
+              this.flash(`Edit failed: ${error.message}`, true);
             }
           },
 

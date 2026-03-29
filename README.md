@@ -174,12 +174,13 @@ holdspeak meeting --list-devices
 When a meeting starts, a web dashboard URL appears. Open it in your browser to see:
 - Live transcript with speaker labels (Me / Remote)
 - AI-extracted topics and action items
+- Action-item review workflow (`Needs review`/`Accepted`) with accept and edit controls
 - Meeting summary
 - Bookmark, per-segment copy, and export controls
 - Clear intel status when analysis is live, queued, unavailable, or complete
 
 The same local web server also exposes:
-- `/history` for meeting search, action tracking, speaker tracking, and intel queue management
+- `/history` for meeting search, action tracking, action-item review/edit, speaker tracking, and intel queue management
 - `/settings` for browser-based config updates (including cloud `intel_provider` and optional `intel_cloud_base_url`)
 - Local-only access (`127.0.0.1` loopback) by default
 

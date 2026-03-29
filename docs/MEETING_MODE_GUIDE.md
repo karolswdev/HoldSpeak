@@ -136,13 +136,17 @@ When a meeting starts, HoldSpeak launches a local-only web server on `127.0.0.1`
 Use this during an active meeting for real-time operations:
 - Live transcript with speaker labels and timestamps
 - Streaming intelligence updates and clear intel status (`live`, `running`, `queued`, `ready`, `error`, `disabled`)
+- Action-item lifecycle + review controls:
+  - Status: `pending`, `done`, `dismissed`
+  - Review: `pending` ("Needs review") or `accepted`
+  - Edit action items in-place; editing auto-accepts
 - Bookmark, copy, export, and stop-meeting controls
 
 ### 2) Archive + Settings Hub (`/history` and `/settings`)
 
 Use this during or after meetings for cross-session management:
 - Search meetings by transcript content
-- Track action items across meetings and toggle status
+- Track action items across meetings, toggle status, review/accept, and edit
 - Inspect and update speaker profiles (name/avatar) with speaking history
 - Manage deferred-intel queue (list jobs, process now, retry meeting jobs)
 - Edit app settings from browser, including cloud options:
@@ -177,6 +181,8 @@ If no compatible runtime is currently available and deferred mode is enabled, Ho
 Task: Document API endpoints
 Owner: Me
 Due: Friday
+Status: pending
+Review: pending (needs review)
 ```
 
 **Summary**
@@ -309,13 +315,17 @@ Health check endpoint.
 - `POST /api/bookmark` - add bookmark
 - `POST /api/stop` - stop meeting
 - `PATCH /api/action-items/{item_id}` - update in-memory action item status
+- `PATCH /api/action-items/{item_id}/review` - update in-memory action item review state (`pending` or `accepted`)
+- `PATCH /api/action-items/{item_id}/edit` - edit in-memory action item (`task`/`owner`/`due`), auto-accepts
 - `PATCH /api/meeting` - update title/tags
 
 #### Archive/data APIs
 - `GET /api/meetings`
 - `GET /api/meetings/{meeting_id}`
 - `GET /api/all-action-items`
-- `PATCH /api/all-action-items/{item_id}`
+- `PATCH /api/all-action-items/{item_id}` - update persisted action item status
+- `PATCH /api/all-action-items/{item_id}/review` - update persisted action item review state
+- `PATCH /api/all-action-items/{item_id}/edit` - edit persisted action item (`task`/`owner`/`due`), auto-accepts
 - `GET /api/speakers`
 - `GET /api/speakers/{speaker_id}`
 - `PATCH /api/speakers/{speaker_id}`
@@ -350,6 +360,9 @@ Real-time updates via WebSocket connection.
 
 // Bookmark added
 {"type": "bookmark", "data": {"timestamp": 300.0, "label": "..."}}
+
+// Action item updated (status, review, or edit)
+{"type": "action_item_updated", "data": {"id": "...", "task": "...", "status": "pending", "review_state": "accepted"}}
 
 // Meeting stopped
 {"type": "stopped", "data": {"status": "stopped"}}

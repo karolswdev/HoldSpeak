@@ -134,11 +134,39 @@ def mock_callbacks_with_action_items():
                 return item.to_dict()
         return None
 
+    def update_action_item_review(item_id: str, review_state: str) -> Optional[dict]:
+        for item in action_items:
+            if item.id == item_id:
+                if review_state == "accepted":
+                    item.accept()
+                elif review_state == "pending":
+                    item.review_state = "pending"
+                    item.reviewed_at = None
+                else:
+                    return None
+                return item.to_dict()
+        return None
+
+    def edit_action_item(item_id: str, task: str, owner: str | None, due: str | None) -> Optional[dict]:
+        clean_task = str(task).strip()
+        if not clean_task:
+            return None
+        for item in action_items:
+            if item.id == item_id:
+                item.task = clean_task
+                item.owner = owner.strip() if isinstance(owner, str) and owner.strip() else None
+                item.due = due.strip() if isinstance(due, str) and due.strip() else None
+                item.accept()
+                return item.to_dict()
+        return None
+
     return {
         "on_bookmark": MagicMock(return_value={"timestamp": 10.5}),
         "on_stop": MagicMock(return_value={"status": "stopped"}),
         "get_state": MagicMock(return_value=state),
         "on_update_action_item": MagicMock(side_effect=update_action_item),
+        "on_update_action_item_review": MagicMock(side_effect=update_action_item_review),
+        "on_edit_action_item": MagicMock(side_effect=edit_action_item),
         "action_items": action_items,
     }
 
@@ -151,6 +179,8 @@ def web_server_with_action_items(mock_callbacks_with_action_items):
         on_stop=mock_callbacks_with_action_items["on_stop"],
         get_state=mock_callbacks_with_action_items["get_state"],
         on_update_action_item=mock_callbacks_with_action_items["on_update_action_item"],
+        on_update_action_item_review=mock_callbacks_with_action_items["on_update_action_item_review"],
+        on_edit_action_item=mock_callbacks_with_action_items["on_edit_action_item"],
         host="127.0.0.1",
     )
     return server
@@ -385,6 +415,76 @@ class TestActionItemPatchEndpoint:
 
         assert response.status_code == 500
 
+    def test_patch_action_item_review_accepts(self, test_client_with_action_items):
+        response = test_client_with_action_items.patch(
+            "/api/action-items/item-001/review",
+            json={"review_state": "accepted"},
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["success"] is True
+        assert payload["action_item"]["review_state"] == "accepted"
+        assert payload["action_item"]["reviewed_at"] is not None
+
+    def test_patch_action_item_review_invalid_state_returns_400(self, test_client_with_action_items):
+        response = test_client_with_action_items.patch(
+            "/api/action-items/item-001/review",
+            json={"review_state": "approved"},
+        )
+        assert response.status_code == 400
+
+    def test_patch_action_item_edit_auto_accepts(self, test_client_with_action_items):
+        response = test_client_with_action_items.patch(
+            "/api/action-items/item-001/edit",
+            json={"task": "Edited task", "owner": "", "due": "Friday"},
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["success"] is True
+        assert payload["action_item"]["task"] == "Edited task"
+        assert payload["action_item"]["owner"] is None
+        assert payload["action_item"]["due"] == "Friday"
+        assert payload["action_item"]["review_state"] == "accepted"
+
+    def test_patch_action_item_edit_empty_task_returns_400(self, test_client_with_action_items):
+        response = test_client_with_action_items.patch(
+            "/api/action-items/item-001/edit",
+            json={"task": "   "},
+        )
+        assert response.status_code == 400
+
+    def test_patch_action_item_review_without_handler_returns_501(self):
+        server = MeetingWebServer(
+            on_bookmark=MagicMock(),
+            on_stop=MagicMock(),
+            get_state=MagicMock(return_value={}),
+            on_update_action_item=MagicMock(return_value={}),
+            on_update_action_item_review=None,
+            on_edit_action_item=MagicMock(return_value={}),
+        )
+        client = TestClient(server.app)
+        response = client.patch(
+            "/api/action-items/item-001/review",
+            json={"review_state": "accepted"},
+        )
+        assert response.status_code == 501
+
+    def test_patch_action_item_edit_without_handler_returns_501(self):
+        server = MeetingWebServer(
+            on_bookmark=MagicMock(),
+            on_stop=MagicMock(),
+            get_state=MagicMock(return_value={}),
+            on_update_action_item=MagicMock(return_value={}),
+            on_update_action_item_review=MagicMock(return_value={}),
+            on_edit_action_item=None,
+        )
+        client = TestClient(server.app)
+        response = client.patch(
+            "/api/action-items/item-001/edit",
+            json={"task": "Edited task"},
+        )
+        assert response.status_code == 501
+
 
 # ============================================================
 # Tests for WebSocket Broadcasts
@@ -618,6 +718,56 @@ class TestMeetingSessionIntelIntegration:
 
         result = session.update_action_item("some-id", "done")
         assert result is None
+
+    def test_update_action_item_review_accepts(self, mock_transcriber):
+        session = MeetingSession(
+            transcriber=mock_transcriber,
+            intel_enabled=False,
+            web_enabled=False,
+        )
+        action_item = ActionItem(task="Test task", id="test-id-001")
+        session._state = MeetingState(
+            id="test-123",
+            started_at=datetime.now(),
+        )
+        session._state.intel = IntelSnapshot(
+            timestamp=0.0,
+            action_items=[action_item],
+        )
+
+        result = session.update_action_item_review("test-id-001", "accepted")
+        assert result is not None
+        assert result["review_state"] == "accepted"
+        assert result["reviewed_at"] is not None
+
+    def test_edit_action_item_auto_accepts(self, mock_transcriber):
+        session = MeetingSession(
+            transcriber=mock_transcriber,
+            intel_enabled=False,
+            web_enabled=False,
+        )
+        action_item = ActionItem(task="Test task", owner="Me", id="test-id-001")
+        session._state = MeetingState(
+            id="test-123",
+            started_at=datetime.now(),
+        )
+        session._state.intel = IntelSnapshot(
+            timestamp=0.0,
+            action_items=[action_item],
+        )
+
+        result = session.edit_action_item(
+            "test-id-001",
+            task="Edited task",
+            owner="Remote",
+            due="Friday",
+        )
+        assert result is not None
+        assert result["task"] == "Edited task"
+        assert result["owner"] == "Remote"
+        assert result["due"] == "Friday"
+        assert result["review_state"] == "accepted"
+        assert result["reviewed_at"] is not None
 
 
 # ============================================================

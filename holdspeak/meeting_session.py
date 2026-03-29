@@ -533,6 +533,8 @@ class MeetingSession:
                         on_stop=self.stop,
                         get_state=self._get_state_dict,
                         on_update_action_item=self.update_action_item,
+                        on_update_action_item_review=self.update_action_item_review,
+                        on_edit_action_item=self.edit_action_item,
                         on_set_title=self.set_title,
                         on_set_tags=self.set_tags,
                         on_settings_applied=self.on_settings_applied,
@@ -764,23 +766,128 @@ class MeetingSession:
             if self._state is None or self._state.intel is None:
                 return None
 
-            # Find the action item
+            normalized = str(status).strip().lower()
+            if normalized not in {"done", "pending", "dismissed"}:
+                log.warning(f"Unknown action item status: {status}")
+                return None
+
             for item in self._state.intel.action_items:
                 if hasattr(item, "id") and item.id == item_id:
-                    # Update status using ActionItem methods
-                    if status == "done":
+                    if normalized == "done":
                         item.mark_done()
-                    elif status == "dismissed":
+                    elif normalized == "dismissed":
                         item.dismiss()
-                    elif status == "pending":
+                    else:
                         item.status = "pending"
                         item.completed_at = None
-                    else:
-                        log.warning(f"Unknown action item status: {status}")
-                        return None
-
-                    log.info(f"Action item {item_id} updated to status={status}")
+                    log.info(f"Action item {item_id} updated to status={normalized}")
                     return item.to_dict()
+
+                if isinstance(item, dict) and item.get("id") == item_id:
+                    item["status"] = normalized
+                    if normalized == "pending":
+                        item["completed_at"] = None
+                    else:
+                        item["completed_at"] = datetime.now().isoformat()
+                    log.info(f"Action item {item_id} updated to status={normalized}")
+                    return item
+
+            log.warning(f"Action item not found: {item_id}")
+            return None
+
+    def update_action_item_review(self, item_id: str, review_state: str) -> Optional[dict]:
+        """Update review state of an action item.
+
+        Args:
+            item_id: The unique ID of the action item.
+            review_state: New review state ("pending" or "accepted").
+
+        Returns:
+            Updated action item dict, or None if not found/invalid.
+        """
+        with self._lock:
+            if self._state is None or self._state.intel is None:
+                return None
+
+            normalized = str(review_state).strip().lower()
+            if normalized not in {"pending", "accepted"}:
+                log.warning(f"Unknown action item review_state: {review_state}")
+                return None
+
+            for item in self._state.intel.action_items:
+                if hasattr(item, "id") and item.id == item_id:
+                    if normalized == "accepted":
+                        if hasattr(item, "accept"):
+                            item.accept()
+                        else:
+                            item.review_state = "accepted"
+                            item.reviewed_at = datetime.now().isoformat()
+                    else:
+                        item.review_state = "pending"
+                        item.reviewed_at = None
+                    log.info(f"Action item {item_id} updated to review_state={normalized}")
+                    return item.to_dict()
+
+                if isinstance(item, dict) and item.get("id") == item_id:
+                    item["review_state"] = normalized
+                    item["reviewed_at"] = datetime.now().isoformat() if normalized == "accepted" else None
+                    log.info(f"Action item {item_id} updated to review_state={normalized}")
+                    return item
+
+            log.warning(f"Action item not found: {item_id}")
+            return None
+
+    def edit_action_item(
+        self,
+        item_id: str,
+        *,
+        task: str,
+        owner: Optional[str],
+        due: Optional[str],
+    ) -> Optional[dict]:
+        """Edit action-item content and mark it accepted.
+
+        Args:
+            item_id: The unique ID of the action item.
+            task: New task text.
+            owner: Optional owner text (None/empty clears).
+            due: Optional due text (None/empty clears).
+
+        Returns:
+            Updated action item dict, or None if not found/invalid.
+        """
+        clean_task = str(task).strip()
+        if not clean_task:
+            return None
+
+        clean_owner = owner.strip() if isinstance(owner, str) else None
+        clean_due = due.strip() if isinstance(due, str) else None
+
+        with self._lock:
+            if self._state is None or self._state.intel is None:
+                return None
+
+            for item in self._state.intel.action_items:
+                if hasattr(item, "id") and item.id == item_id:
+                    item.task = clean_task
+                    item.owner = clean_owner or None
+                    item.due = clean_due or None
+                    if hasattr(item, "accept"):
+                        item.accept()
+                    else:
+                        item.review_state = "accepted"
+                        item.reviewed_at = datetime.now().isoformat()
+                    log.info(f"Action item {item_id} edited and accepted")
+                    return item.to_dict()
+
+                if isinstance(item, dict) and item.get("id") == item_id:
+                    item["task"] = clean_task
+                    item["owner"] = clean_owner or None
+                    item["due"] = clean_due or None
+                    item["review_state"] = "accepted"
+                    item["reviewed_at"] = datetime.now().isoformat()
+                    log.info(f"Action item {item_id} edited and accepted")
+                    return item
 
             log.warning(f"Action item not found: {item_id}")
             return None

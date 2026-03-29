@@ -130,7 +130,6 @@ It is intentionally “mechanical” so we can improve safely without guessing.
   - Transcription loop, segment creation, diarization integration, bookmarks.
   - Saves to SQLite via `holdspeak/db.py` and to JSON for compatibility.
 - `holdspeak/db.py`: SQLite persistence + FTS search.
-- `holdspeak/db_migration.py`: JSON → SQLite migration (auto-run in some commands).
 - `holdspeak/web_server.py`: per-meeting FastAPI dashboard, WS broadcasting.
 
 ## Interaction Contracts (Sequences)
@@ -261,4 +260,3 @@ To keep improving, capture these next:
 - A list of **widget IDs** that are assumed globally (`#status`, `#meter`, etc.) and which screens actually contain them.
 - A list of **App actions** and which screen should own each.
 - A list of **threaded callbacks** and their expected UI thread marshaling behavior.
-

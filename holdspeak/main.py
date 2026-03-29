@@ -21,33 +21,9 @@ from .commands.actions import run_actions_command
 from .commands.doctor import run_doctor_command
 from .commands.history import run_history_command
 from .commands.intel import run_intel_command
-from .commands.migrate import run_migrate_command
 from .logging_config import setup_logging, get_logger, LOG_FILE
 
 log = get_logger("main")
-
-
-def _auto_migrate_json_meetings_if_needed() -> None:
-    """Import legacy JSON meetings into SQLite if DB is empty."""
-    try:
-        from .db import get_database
-
-        db = get_database()
-        if db.list_meetings(limit=1):
-            return
-
-        # Only import if there are JSON meetings present.
-        from .db_migration import list_json_meetings, migrate_json_meetings
-
-        if not list_json_meetings():
-            return
-
-        migrated, skipped, errors = migrate_json_meetings()
-        if migrated:
-            log.info(f"Auto-migrated {migrated} JSON meeting(s) into SQLite (skipped={skipped}, errors={len(errors)})")
-    except Exception as exc:
-        # Never block the app on migration; meetings UI can still function (empty).
-        log.debug(f"Auto-migration skipped/failed: {exc}", exc_info=True)
 
 def main():
     """Entry point for the holdspeak command."""
@@ -225,17 +201,6 @@ Logs are written to: {LOG_FILE}
         help="Maximum number of jobs to process with --process",
     )
 
-    # Migrate subcommand
-    migrate_parser = subparsers.add_parser(
-        "migrate",
-        help="Migrate JSON meetings to database",
-    )
-    migrate_parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Show what would be migrated without changing anything",
-    )
-
     # Doctor subcommand
     doctor_parser = subparsers.add_parser(
         "doctor",
@@ -251,11 +216,6 @@ Logs are written to: {LOG_FILE}
 
     # Setup logging (always to file, optionally to stderr)
     setup_logging(verbose=args.verbose)
-
-    # If the DB is empty but JSON meetings exist, import them automatically so
-    # the Meetings Hub and `holdspeak history` work out of the box.
-    if args.command in (None, "history", "actions", "intel"):
-        _auto_migrate_json_meetings_if_needed()
 
     # Handle meeting subcommand
     if args.command == "meeting":
@@ -282,11 +242,6 @@ Logs are written to: {LOG_FILE}
     # Handle intel subcommand
     if args.command == "intel":
         raise SystemExit(run_intel_command(args))
-
-    # Handle migrate subcommand
-    if args.command == "migrate":
-        run_migrate_command(args)
-        return
 
     # Handle doctor subcommand
     if args.command == "doctor":

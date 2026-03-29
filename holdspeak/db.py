@@ -14,10 +14,11 @@ from .logging_config import get_logger
 log = get_logger("db")
 
 VALID_ACTION_ITEM_STATUSES = frozenset({"pending", "done", "dismissed"})
+VALID_ACTION_ITEM_REVIEW_STATES = frozenset({"pending", "accepted"})
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -85,6 +86,8 @@ CREATE TABLE IF NOT EXISTS action_items (
     owner TEXT,
     due TEXT,
     status TEXT NOT NULL DEFAULT 'pending',
+    review_state TEXT NOT NULL DEFAULT 'pending',
+    reviewed_at TEXT,
     source_timestamp REAL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     completed_at TEXT
@@ -212,11 +215,13 @@ class ActionItemSummary:
     owner: Optional[str]
     due: Optional[str]
     status: str
+    review_state: str
     meeting_id: str
     meeting_title: Optional[str]
     meeting_date: datetime
     created_at: datetime
     completed_at: Optional[datetime]
+    reviewed_at: Optional[datetime]
 
 
 class MeetingDatabase:
@@ -304,6 +309,18 @@ class MeetingDatabase:
                         log.info(f"Migrating meetings table: adding {column_name} column")
                         conn.execute(column_sql)
 
+            # Migration v4 -> v5: Add review-state fields for action-item triage.
+            if from_version < 5:
+                for column_name, column_sql in (
+                    ("review_state", "ALTER TABLE action_items ADD COLUMN review_state TEXT NOT NULL DEFAULT 'pending'"),
+                    ("reviewed_at", "ALTER TABLE action_items ADD COLUMN reviewed_at TEXT"),
+                ):
+                    try:
+                        conn.execute(f"SELECT {column_name} FROM action_items LIMIT 1")
+                    except sqlite3.OperationalError:
+                        log.info(f"Migrating action_items table: adding {column_name} column")
+                        conn.execute(column_sql)
+
         # Now apply the full schema (creates tables/indexes that don't exist)
         conn.executescript(SCHEMA_SQL)
 
@@ -320,6 +337,16 @@ class MeetingDatabase:
             raise ValueError(
                 f"Invalid action item status: {status!r}. "
                 f"Expected one of {sorted(VALID_ACTION_ITEM_STATUSES)}"
+            )
+        return normalized
+
+    def _normalize_action_item_review_state(self, state: object) -> str:
+        """Validate and normalize an action-item review-state value."""
+        normalized = str(state).strip().lower()
+        if normalized not in VALID_ACTION_ITEM_REVIEW_STATES:
+            raise ValueError(
+                f"Invalid action item review_state: {state!r}. "
+                f"Expected one of {sorted(VALID_ACTION_ITEM_REVIEW_STATES)}"
             )
         return normalized
 
@@ -453,9 +480,11 @@ class MeetingDatabase:
                 owner = action_item.owner
                 due = action_item.due
                 status = action_item.status
+                review_state = getattr(action_item, 'review_state', 'pending')
                 source_timestamp = getattr(action_item, 'source_timestamp', None)
                 created_at = getattr(action_item, 'created_at', datetime.now().isoformat())
                 completed_at = getattr(action_item, 'completed_at', None)
+                reviewed_at = getattr(action_item, 'reviewed_at', None)
             else:
                 # Dict format
                 item_id = item.get('id', '')
@@ -463,24 +492,31 @@ class MeetingDatabase:
                 owner = item.get('owner')
                 due = item.get('due')
                 status = item.get('status', 'pending')
+                review_state = item.get('review_state', 'pending')
                 source_timestamp = item.get('source_timestamp')
                 created_at = item.get('created_at', datetime.now().isoformat())
                 completed_at = item.get('completed_at')
+                reviewed_at = item.get('reviewed_at')
 
             if not item_id:
                 continue
 
             status = self._normalize_action_item_status(status)
+            review_state = self._normalize_action_item_review_state(review_state)
             completed_at = self._normalize_completed_at(
                 status=status,
                 completed_at=completed_at,
             )
+            if review_state == "pending":
+                reviewed_at = None
+            elif reviewed_at in (None, ""):
+                reviewed_at = datetime.now().isoformat()
 
             conn.execute("""
                 INSERT INTO action_items
-                (id, meeting_id, task, owner, due, status, source_timestamp,
-                 created_at, completed_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, meeting_id, task, owner, due, status, review_state, reviewed_at,
+                 source_timestamp, created_at, completed_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     meeting_id = excluded.meeting_id,
                     task = excluded.task,
@@ -494,6 +530,14 @@ class MeetingDatabase:
                     completed_at = CASE
                         WHEN excluded.status = 'pending' THEN action_items.completed_at
                         ELSE excluded.completed_at
+                    END,
+                    review_state = CASE
+                        WHEN excluded.review_state = 'pending' THEN action_items.review_state
+                        ELSE excluded.review_state
+                    END,
+                    reviewed_at = CASE
+                        WHEN excluded.review_state = 'pending' THEN action_items.reviewed_at
+                        ELSE excluded.reviewed_at
                     END
             """, (
                 item_id,
@@ -502,6 +546,8 @@ class MeetingDatabase:
                 owner,
                 due,
                 status,
+                review_state,
+                reviewed_at,
                 source_timestamp,
                 created_at,
                 completed_at,
@@ -621,6 +667,8 @@ class MeetingDatabase:
                 'owner': r['owner'],
                 'due': r['due'],
                 'status': r['status'],
+                'review_state': r['review_state'] or "pending",
+                'reviewed_at': r['reviewed_at'],
                 'source_timestamp': r['source_timestamp'],
                 'created_at': r['created_at'],
                 'completed_at': r['completed_at'],
@@ -936,20 +984,42 @@ class MeetingDatabase:
             query += " ORDER BY a.created_at DESC"
 
             return [
-                ActionItemSummary(
-                    id=r['id'],
-                    task=r['task'],
-                    owner=r['owner'],
-                    due=r['due'],
-                    status=r['status'],
-                    meeting_id=r['meeting_id'],
-                    meeting_title=r['meeting_title'],
-                    meeting_date=datetime.fromisoformat(r['meeting_date']),
-                    created_at=datetime.fromisoformat(r['created_at']),
-                    completed_at=datetime.fromisoformat(r['completed_at']) if r['completed_at'] else None,
-                )
+                self._row_to_action_item_summary(r)
                 for r in conn.execute(query, params)
             ]
+
+    def _row_to_action_item_summary(self, row: sqlite3.Row) -> ActionItemSummary:
+        """Convert a DB row to ActionItemSummary."""
+        return ActionItemSummary(
+            id=row['id'],
+            task=row['task'],
+            owner=row['owner'],
+            due=row['due'],
+            status=row['status'],
+            review_state=row['review_state'] or "pending",
+            meeting_id=row['meeting_id'],
+            meeting_title=row['meeting_title'],
+            meeting_date=datetime.fromisoformat(row['meeting_date']),
+            created_at=datetime.fromisoformat(row['created_at']),
+            completed_at=datetime.fromisoformat(row['completed_at']) if row['completed_at'] else None,
+            reviewed_at=datetime.fromisoformat(row['reviewed_at']) if row['reviewed_at'] else None,
+        )
+
+    def get_action_item(self, item_id: str) -> Optional[ActionItemSummary]:
+        """Get a single action item by ID, including meeting metadata."""
+        with self._connection() as conn:
+            row = conn.execute(
+                """
+                SELECT a.*, m.title as meeting_title, m.started_at as meeting_date
+                FROM action_items a
+                JOIN meetings m ON a.meeting_id = m.id
+                WHERE a.id = ?
+                """,
+                (item_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            return self._row_to_action_item_summary(row)
 
     def update_action_item_status(
         self, item_id: str, status: str
@@ -966,6 +1036,59 @@ class MeetingDatabase:
                 SET status = ?, completed_at = ?
                 WHERE id = ?
             """, (status, completed_at, item_id))
+            return result.rowcount > 0
+
+    def update_action_item_review_state(
+        self, item_id: str, review_state: str
+    ) -> bool:
+        """Update action item review state. Returns True if found."""
+        review_state = self._normalize_action_item_review_state(review_state)
+        with self._connection() as conn:
+            reviewed_at = datetime.now().isoformat() if review_state == "accepted" else None
+            result = conn.execute(
+                """
+                UPDATE action_items
+                SET review_state = ?, reviewed_at = ?
+                WHERE id = ?
+                """,
+                (review_state, reviewed_at, item_id),
+            )
+            return result.rowcount > 0
+
+    def edit_action_item(
+        self,
+        item_id: str,
+        *,
+        task: str,
+        owner: Optional[str],
+        due: Optional[str],
+    ) -> bool:
+        """Edit action-item content and mark the item as accepted."""
+        clean_task = str(task).strip()
+        if not clean_task:
+            raise ValueError("Action item task cannot be empty")
+
+        clean_owner = owner.strip() if isinstance(owner, str) else owner
+        clean_due = due.strip() if isinstance(due, str) else due
+        with self._connection() as conn:
+            result = conn.execute(
+                """
+                UPDATE action_items
+                SET task = ?,
+                    owner = ?,
+                    due = ?,
+                    review_state = 'accepted',
+                    reviewed_at = ?
+                WHERE id = ?
+                """,
+                (
+                    clean_task,
+                    clean_owner or None,
+                    clean_due or None,
+                    datetime.now().isoformat(),
+                    item_id,
+                ),
+            )
             return result.rowcount > 0
 
     def search_transcripts(

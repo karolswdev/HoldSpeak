@@ -23,10 +23,9 @@ Use this checklist before calling a build "production-ready."
 - [x] Changing settings in-app updates runtime behavior without restart where applicable.
 - [x] Config validation prevents invalid numeric values (queue poll, thresholds).
 
-## 4) Persistence / Migration
+## 4) Persistence
 
 - [x] New install creates valid config and DB schema.
-- [ ] Existing installs migrate legacy JSON meetings safely.
 - [x] Failure path falls back to JSON archive if DB write fails.
 
 ## 5) Diagnostics

@@ -429,7 +429,6 @@ Recommended split:
   - argument parsing and subcommand dispatch
 - `holdspeak/commands/history.py`
 - `holdspeak/commands/actions.py`
-- `holdspeak/commands/migrate.py`
 - keep `holdspeak/main.py` as a thin entrypoint
 
 Acceptance criteria:
@@ -623,7 +622,6 @@ Main entry decomposition:
 - Extracted CLI subcommand handlers into:
   - `holdspeak/commands/history.py`
   - `holdspeak/commands/actions.py`
-  - `holdspeak/commands/migrate.py`
 - Extracted runtime/controller wiring into:
   - `holdspeak/controller.py`
 

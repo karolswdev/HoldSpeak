@@ -794,6 +794,18 @@
         background: rgba(255, 184, 107, 0.94);
       }
 
+      .status-pill.status-review-pending {
+        color: #fdd8a8;
+        background: rgba(255, 184, 107, 0.16);
+        border-color: rgba(255, 184, 107, 0.38);
+      }
+
+      .status-pill.status-review-accepted {
+        color: #06121d;
+        background: rgba(117, 244, 211, 0.92);
+        border-color: rgba(117, 244, 211, 0.5);
+      }
+
       .icon-plain {
         width: 34px;
         height: 34px;
@@ -809,6 +821,29 @@
         margin-top: 12px;
         color: var(--muted);
         font-size: 0.82rem;
+      }
+
+      .action-controls {
+        margin-top: 10px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .action-btn {
+        min-height: 30px;
+        border-radius: 10px;
+        padding: 0 10px;
+        color: var(--muted-strong);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+        font-size: 0.78rem;
+      }
+
+      .action-btn.primary {
+        color: #06121d;
+        border-color: rgba(100, 215, 255, 0.26);
+        background: rgba(100, 215, 255, 0.9);
       }
 
       .dock-wrap {
@@ -1274,6 +1309,16 @@
             return "Pending";
           },
 
+          reviewStatusClass(reviewState) {
+            const value = String(reviewState || "pending").trim().toLowerCase();
+            return value === "accepted" ? "status-review-accepted" : "status-review-pending";
+          },
+
+          reviewStatusLabel(reviewState) {
+            const value = String(reviewState || "pending").trim().toLowerCase();
+            return value === "accepted" ? "Accepted" : "Needs review";
+          },
+
           async fetchInitialState() {
             try {
               const resp = await fetch("/api/state", { headers: { accept: "application/json" } });
@@ -1481,6 +1526,8 @@
                 owner: String(item?.owner ?? "").trim(),
                 due: String(item?.due ?? "").trim(),
                 status: String(item?.status ?? "pending").trim().toLowerCase() || "pending",
+                review_state: String(item?.review_state ?? "pending").trim().toLowerCase() || "pending",
+                reviewed_at: String(item?.reviewed_at ?? "").trim(),
               })),
               summary,
             };
@@ -1495,6 +1542,8 @@
                 owner: String(updatedItem?.owner ?? "").trim(),
                 due: String(updatedItem?.due ?? "").trim(),
                 status: String(updatedItem?.status ?? "pending").trim().toLowerCase() || "pending",
+                review_state: String(updatedItem?.review_state ?? "pending").trim().toLowerCase() || "pending",
+                reviewed_at: String(updatedItem?.reviewed_at ?? "").trim(),
               };
             }
           },
@@ -1527,6 +1576,52 @@
               if (!resp.ok) throw new Error("dismiss_failed");
             } catch {
               this.toast("Failed to dismiss action item.");
+            }
+          },
+
+          async acceptActionItem(item) {
+            if (!item.id) return;
+
+            try {
+              const resp = await fetch(`/api/action-items/${item.id}/review`, {
+                method: "PATCH",
+                headers: { "content-type": "application/json", accept: "application/json" },
+                body: JSON.stringify({ review_state: "accepted" }),
+              });
+              if (!resp.ok) throw new Error("review_failed");
+            } catch {
+              this.toast("Failed to accept action item.");
+            }
+          },
+
+          async editActionItem(item) {
+            if (!item.id) return;
+            const taskRaw = window.prompt("Edit task", item.task || "");
+            if (taskRaw === null) return;
+            const task = String(taskRaw).trim();
+            if (!task) {
+              this.toast("Task cannot be empty.");
+              return;
+            }
+
+            const ownerRaw = window.prompt("Owner (blank clears)", item.owner || "");
+            if (ownerRaw === null) return;
+            const dueRaw = window.prompt("Due (blank clears)", item.due || "");
+            if (dueRaw === null) return;
+
+            try {
+              const resp = await fetch(`/api/action-items/${item.id}/edit`, {
+                method: "PATCH",
+                headers: { "content-type": "application/json", accept: "application/json" },
+                body: JSON.stringify({
+                  task,
+                  owner: String(ownerRaw).trim(),
+                  due: String(dueRaw).trim(),
+                }),
+              });
+              if (!resp.ok) throw new Error("edit_failed");
+            } catch {
+              this.toast("Failed to edit action item.");
             }
           },
 
@@ -1571,6 +1666,7 @@
                 if (item.owner) parts.push(`owner: ${item.owner}`);
                 if (item.due) parts.push(`due: ${item.due}`);
                 if (item.status) parts.push(`status: ${item.status}`);
+                if (item.review_state) parts.push(`review: ${item.review_state}`);
                 lines.push(`- ${parts.join(" | ")}`);
               });
               lines.push("");
@@ -1947,6 +2043,25 @@
                         <span class="meta-pill" x-show="item.owner" x-cloak x-text="`Owner ${item.owner}`"></span>
                         <span class="meta-pill" x-show="item.due" x-cloak x-text="`Due ${item.due}`"></span>
                         <span class="status-pill" :class="statusClass(item.status)" x-text="statusLabel(item.status)"></span>
+                        <span class="status-pill" :class="reviewStatusClass(item.review_state)" x-text="reviewStatusLabel(item.review_state)"></span>
+                      </div>
+                      <div class="action-controls">
+                        <button
+                          type="button"
+                          class="action-btn"
+                          :disabled="stopped || item.review_state === 'accepted'"
+                          @click="acceptActionItem(item)"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          type="button"
+                          class="action-btn primary"
+                          :disabled="stopped"
+                          @click="editActionItem(item)"
+                        >
+                          Edit
+                        </button>
                       </div>
                     </div>
                     <button

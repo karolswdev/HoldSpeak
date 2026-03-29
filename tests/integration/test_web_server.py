@@ -552,6 +552,138 @@ class TestSpeakerApiEndpoints:
 
 
 @pytest.mark.integration
+class TestGlobalActionItemsApiEndpoints:
+    """Tests for global action-item list, status, review, and edit endpoints."""
+
+    def test_action_item_endpoints_include_review_and_edit(self, monkeypatch, test_client):
+        now = datetime(2025, 1, 12, 9, 0, 0)
+
+        class FakeDb:
+            def __init__(self):
+                self._items = {
+                    "a-1": SimpleNamespace(
+                        id="a-1",
+                        task="Initial task",
+                        owner="Me",
+                        due=None,
+                        status="pending",
+                        review_state="pending",
+                        meeting_id="m-001",
+                        meeting_title="Weekly sync",
+                        meeting_date=now,
+                        created_at=now,
+                        completed_at=None,
+                        reviewed_at=None,
+                    )
+                }
+
+            def list_action_items(self, include_completed=False, owner=None, meeting_id=None):
+                items = list(self._items.values())
+                if not include_completed:
+                    items = [item for item in items if item.status == "pending"]
+                if owner:
+                    items = [item for item in items if item.owner == owner]
+                if meeting_id:
+                    items = [item for item in items if item.meeting_id == meeting_id]
+                return items
+
+            def get_action_item(self, item_id):
+                return self._items.get(item_id)
+
+            def update_action_item_status(self, item_id, status):
+                item = self._items.get(item_id)
+                if item is None:
+                    return False
+                item.status = status
+                item.completed_at = now if status in {"done", "dismissed"} else None
+                return True
+
+            def update_action_item_review_state(self, item_id, review_state):
+                item = self._items.get(item_id)
+                if item is None:
+                    return False
+                item.review_state = review_state
+                item.reviewed_at = now if review_state == "accepted" else None
+                return True
+
+            def edit_action_item(self, item_id, *, task, owner, due):
+                item = self._items.get(item_id)
+                if item is None:
+                    return False
+                item.task = task
+                item.owner = owner or None
+                item.due = due or None
+                item.review_state = "accepted"
+                item.reviewed_at = now
+                return True
+
+        import holdspeak.db as db_module
+        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+
+        list_response = test_client.get("/api/all-action-items?include_completed=true")
+        assert list_response.status_code == 200
+        payload = list_response.json()["action_items"][0]
+        assert payload["review_state"] == "pending"
+        assert payload["reviewed_at"] is None
+
+        status_response = test_client.patch(
+            "/api/all-action-items/a-1",
+            json={"status": "done"},
+        )
+        assert status_response.status_code == 200
+        assert status_response.json()["action_item"]["status"] == "done"
+
+        review_response = test_client.patch(
+            "/api/all-action-items/a-1/review",
+            json={"review_state": "accepted"},
+        )
+        assert review_response.status_code == 200
+        reviewed_item = review_response.json()["action_item"]
+        assert reviewed_item["review_state"] == "accepted"
+        assert reviewed_item["reviewed_at"] is not None
+
+        edit_response = test_client.patch(
+            "/api/all-action-items/a-1/edit",
+            json={"task": "Edited task", "owner": "", "due": "Friday"},
+        )
+        assert edit_response.status_code == 200
+        edited_item = edit_response.json()["action_item"]
+        assert edited_item["task"] == "Edited task"
+        assert edited_item["owner"] is None
+        assert edited_item["due"] == "Friday"
+        assert edited_item["review_state"] == "accepted"
+
+    def test_action_item_review_and_edit_validation(self, monkeypatch, test_client):
+        class FakeDb:
+            def update_action_item_review_state(self, item_id, review_state):
+                _ = item_id, review_state
+                return False
+
+            def edit_action_item(self, item_id, *, task, owner, due):
+                _ = item_id, task, owner, due
+                return False
+
+            def get_action_item(self, item_id):
+                _ = item_id
+                return None
+
+        import holdspeak.db as db_module
+        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+
+        invalid_review = test_client.patch(
+            "/api/all-action-items/a-1/review",
+            json={"review_state": "approved"},
+        )
+        assert invalid_review.status_code == 400
+
+        invalid_edit = test_client.patch(
+            "/api/all-action-items/a-1/edit",
+            json={"task": "   "},
+        )
+        assert invalid_edit.status_code == 400
+
+
+@pytest.mark.integration
 class TestIntelQueueApiEndpoints:
     """Tests for deferred intel queue endpoints."""
 

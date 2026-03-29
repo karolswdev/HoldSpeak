@@ -72,6 +72,8 @@ class ActionItem:
     due: Optional[str] = None
     id: str = ""  # Unique ID for tracking
     status: str = "pending"  # pending, done, dismissed
+    review_state: str = "pending"  # pending, accepted
+    reviewed_at: Optional[str] = None
     source_timestamp: Optional[float] = None  # Link to transcript timestamp
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     completed_at: Optional[str] = None
@@ -94,6 +96,11 @@ class ActionItem:
         """Dismiss this action item."""
         self.status = "dismissed"
         self.completed_at = datetime.now().isoformat()
+
+    def accept(self) -> None:
+        """Mark this action item as reviewed/accepted."""
+        self.review_state = "accepted"
+        self.reviewed_at = datetime.now().isoformat()
 
 
 @dataclass

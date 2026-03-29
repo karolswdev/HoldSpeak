@@ -244,6 +244,8 @@ class TestActionItems:
         items = db.list_action_items(include_completed=False)
         assert len(items) == 1
         assert items[0].task == "Task one"
+        assert items[0].review_state == "pending"
+        assert items[0].reviewed_at is None
 
         # All items
         items = db.list_action_items(include_completed=True)
@@ -376,6 +378,142 @@ class TestActionItems:
 
         with pytest.raises(ValueError, match="Invalid action item status"):
             db.update_action_item_status("action1", "archived")
+
+    def test_update_action_item_review_state(self, db, sample_meeting):
+        """Action items can be explicitly accepted during intel review."""
+        sample_meeting.intel = IntelSnapshot(
+            timestamp=60.0,
+            topics=[],
+            action_items=[
+                {
+                    "id": "action1",
+                    "task": "Task one",
+                    "owner": "Me",
+                    "status": "pending",
+                    "created_at": datetime.now().isoformat(),
+                },
+            ],
+        )
+        db.save_meeting(sample_meeting)
+
+        assert db.update_action_item_review_state("action1", "accepted")
+        item = db.get_action_item("action1")
+        assert item is not None
+        assert item.review_state == "accepted"
+        assert item.reviewed_at is not None
+
+    def test_update_action_item_review_state_rejects_invalid_value(self, db, sample_meeting):
+        sample_meeting.intel = IntelSnapshot(
+            timestamp=60.0,
+            topics=[],
+            action_items=[
+                {
+                    "id": "action1",
+                    "task": "Task one",
+                    "owner": "Me",
+                    "status": "pending",
+                    "created_at": datetime.now().isoformat(),
+                },
+            ],
+        )
+        db.save_meeting(sample_meeting)
+
+        with pytest.raises(ValueError, match="Invalid action item review_state"):
+            db.update_action_item_review_state("action1", "approved")
+
+    def test_edit_action_item_auto_accepts(self, db, sample_meeting):
+        """Editing an intel item should count as accepting it."""
+        sample_meeting.intel = IntelSnapshot(
+            timestamp=60.0,
+            topics=[],
+            action_items=[
+                {
+                    "id": "action1",
+                    "task": "Original task",
+                    "owner": "Me",
+                    "status": "pending",
+                    "created_at": datetime.now().isoformat(),
+                },
+            ],
+        )
+        db.save_meeting(sample_meeting)
+
+        assert db.edit_action_item(
+            "action1",
+            task="Edited task",
+            owner="Remote",
+            due="Friday",
+        )
+
+        item = db.get_action_item("action1")
+        assert item is not None
+        assert item.task == "Edited task"
+        assert item.owner == "Remote"
+        assert item.due == "Friday"
+        assert item.review_state == "accepted"
+        assert item.reviewed_at is not None
+
+    def test_edit_action_item_rejects_empty_task(self, db, sample_meeting):
+        sample_meeting.intel = IntelSnapshot(
+            timestamp=60.0,
+            topics=[],
+            action_items=[
+                {
+                    "id": "action1",
+                    "task": "Original task",
+                    "owner": "Me",
+                    "status": "pending",
+                    "created_at": datetime.now().isoformat(),
+                },
+            ],
+        )
+        db.save_meeting(sample_meeting)
+
+        with pytest.raises(ValueError, match="cannot be empty"):
+            db.edit_action_item("action1", task="   ", owner=None, due=None)
+
+    def test_save_meeting_preserves_review_state_across_resave(self, db, sample_meeting):
+        """A later extraction should not reset accepted review state to pending."""
+        sample_meeting.intel = IntelSnapshot(
+            timestamp=60.0,
+            topics=[],
+            action_items=[
+                {
+                    "id": "action1",
+                    "task": "Task one",
+                    "owner": "Me",
+                    "status": "pending",
+                    "created_at": datetime.now().isoformat(),
+                },
+            ],
+        )
+        db.save_meeting(sample_meeting)
+        assert db.update_action_item_review_state("action1", "accepted")
+        accepted = db.get_action_item("action1")
+        assert accepted is not None
+        accepted_reviewed_at = accepted.reviewed_at
+        assert accepted_reviewed_at is not None
+
+        sample_meeting.intel = IntelSnapshot(
+            timestamp=120.0,
+            topics=[],
+            action_items=[
+                {
+                    "id": "action1",
+                    "task": "Task one",
+                    "owner": "Me",
+                    "status": "pending",
+                    "review_state": "pending",
+                    "created_at": datetime.now().isoformat(),
+                },
+            ],
+        )
+        db.save_meeting(sample_meeting)
+
+        resaved = db.get_action_item("action1")
+        assert resaved is not None
+        assert resaved.review_state == "accepted"
+        assert resaved.reviewed_at == accepted_reviewed_at
 
     def test_save_meeting_preserves_terminal_action_item_status_across_resave(self, db, sample_meeting):
         """A later re-save should not reset a completed item back to pending."""

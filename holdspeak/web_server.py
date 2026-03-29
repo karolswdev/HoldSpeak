@@ -90,6 +90,16 @@ class _ActionItemUpdateRequest(BaseModel):
     status: str  # "done", "pending", or "dismissed"
 
 
+class _ActionItemReviewRequest(BaseModel):
+    review_state: str  # "pending" or "accepted"
+
+
+class _ActionItemEditRequest(BaseModel):
+    task: str
+    owner: Optional[str] = None
+    due: Optional[str] = None
+
+
 class _UpdateMeetingRequest(BaseModel):
     title: Optional[str] = None
     tags: Optional[list[str]] = None
@@ -97,6 +107,16 @@ class _UpdateMeetingRequest(BaseModel):
 
 class _GlobalActionItemUpdateRequest(BaseModel):
     status: str
+
+
+class _GlobalActionItemReviewRequest(BaseModel):
+    review_state: str
+
+
+class _GlobalActionItemEditRequest(BaseModel):
+    task: str
+    owner: Optional[str] = None
+    due: Optional[str] = None
 
 
 class _SpeakerUpdateRequest(BaseModel):
@@ -183,6 +203,8 @@ class MeetingWebServer:
         on_stop: Callable[[], Any],
         get_state: Callable[[], dict[str, Any]],
         on_update_action_item: Optional[Callable[[str, str], Any]] = None,
+        on_update_action_item_review: Optional[Callable[[str, str], Any]] = None,
+        on_edit_action_item: Optional[Callable[..., Any]] = None,
         on_set_title: Optional[Callable[[str], None]] = None,
         on_set_tags: Optional[Callable[[list[str]], None]] = None,
         on_settings_applied: Optional[Callable[[Any], None]] = None,
@@ -198,6 +220,8 @@ class MeetingWebServer:
         self.on_stop = on_stop
         self.get_state = get_state
         self.on_update_action_item = on_update_action_item
+        self.on_update_action_item_review = on_update_action_item_review
+        self.on_edit_action_item = on_edit_action_item
         self.on_set_title = on_set_title
         self.on_set_tags = on_set_tags
         self.on_settings_applied = on_settings_applied
@@ -426,6 +450,75 @@ class MeetingWebServer:
             # Broadcast the update to all connected clients
             self.broadcast("action_item_updated", result)
 
+            return JSONResponse({"success": True, "action_item": result})
+
+        @app.patch("/api/action-items/{item_id}/review")
+        async def api_update_action_item_review(
+            item_id: str, payload: _ActionItemReviewRequest
+        ) -> Any:
+            if self.on_update_action_item_review is None:
+                return JSONResponse(
+                    {"success": False, "error": "Action item review updates not supported"},
+                    status_code=501,
+                )
+
+            review_state = str(payload.review_state or "").strip().lower()
+            if review_state not in ("pending", "accepted"):
+                return JSONResponse(
+                    {"success": False, "error": f"Invalid review_state: {review_state}"},
+                    status_code=400,
+                )
+
+            try:
+                result = self.on_update_action_item_review(item_id, review_state)
+            except Exception as e:
+                log.error(f"on_update_action_item_review failed: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+            if result is None:
+                return JSONResponse(
+                    {"success": False, "error": "Action item not found"},
+                    status_code=404,
+                )
+
+            self.broadcast("action_item_updated", result)
+            return JSONResponse({"success": True, "action_item": result})
+
+        @app.patch("/api/action-items/{item_id}/edit")
+        async def api_edit_action_item(
+            item_id: str, payload: _ActionItemEditRequest
+        ) -> Any:
+            if self.on_edit_action_item is None:
+                return JSONResponse(
+                    {"success": False, "error": "Action item edits not supported"},
+                    status_code=501,
+                )
+
+            task = str(payload.task or "").strip()
+            if not task:
+                return JSONResponse(
+                    {"success": False, "error": "Action item task cannot be empty"},
+                    status_code=400,
+                )
+
+            try:
+                result = self.on_edit_action_item(
+                    item_id,
+                    task=task,
+                    owner=payload.owner,
+                    due=payload.due,
+                )
+            except Exception as e:
+                log.error(f"on_edit_action_item failed: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+            if result is None:
+                return JSONResponse(
+                    {"success": False, "error": "Action item not found"},
+                    status_code=404,
+                )
+
+            self.broadcast("action_item_updated", result)
             return JSONResponse({"success": True, "action_item": result})
 
         @app.patch("/api/meeting")
@@ -775,11 +868,13 @@ class MeetingWebServer:
                             "owner": item.owner,
                             "due": item.due,
                             "status": item.status,
+                            "review_state": item.review_state,
                             "meeting_id": item.meeting_id,
                             "meeting_title": item.meeting_title,
                             "meeting_date": item.meeting_date.isoformat(),
                             "created_at": item.created_at.isoformat(),
                             "completed_at": item.completed_at.isoformat() if item.completed_at else None,
+                            "reviewed_at": item.reviewed_at.isoformat() if item.reviewed_at else None,
                         }
                         for item in items
                     ]
@@ -811,12 +906,166 @@ class MeetingWebServer:
                         {"success": False, "error": "Action item not found"},
                         status_code=404,
                     )
-                return JSONResponse({"success": True})
+                updated = db.get_action_item(item_id) if hasattr(db, "get_action_item") else None
+                return JSONResponse(
+                    {
+                        "success": True,
+                        "action_item": (
+                            {
+                                "id": updated.id,
+                                "task": updated.task,
+                                "owner": updated.owner,
+                                "due": updated.due,
+                                "status": updated.status,
+                                "review_state": updated.review_state,
+                                "meeting_id": updated.meeting_id,
+                                "meeting_title": updated.meeting_title,
+                                "meeting_date": updated.meeting_date.isoformat(),
+                                "created_at": updated.created_at.isoformat(),
+                                "completed_at": (
+                                    updated.completed_at.isoformat()
+                                    if updated.completed_at
+                                    else None
+                                ),
+                                "reviewed_at": (
+                                    updated.reviewed_at.isoformat()
+                                    if updated.reviewed_at
+                                    else None
+                                ),
+                            }
+                            if updated is not None
+                            else None
+                        ),
+                    }
+                )
             except Exception as e:
                 log.error(f"Failed to update action item: {e}")
                 return JSONResponse(
                     {"success": False, "error": str(e)}, status_code=500
                 )
+
+        @app.patch("/api/all-action-items/{item_id}/review")
+        async def api_review_global_action_item(
+            item_id: str, payload: _GlobalActionItemReviewRequest
+        ) -> Any:
+            """Update action item review state."""
+            review_state = str(payload.review_state or "").strip().lower()
+            if review_state not in ("pending", "accepted"):
+                return JSONResponse(
+                    {"success": False, "error": f"Invalid review_state: {review_state}"},
+                    status_code=400,
+                )
+
+            try:
+                from .db import get_database
+                db = get_database()
+                success = db.update_action_item_review_state(item_id, review_state)
+                if not success:
+                    return JSONResponse(
+                        {"success": False, "error": "Action item not found"},
+                        status_code=404,
+                    )
+                updated = db.get_action_item(item_id) if hasattr(db, "get_action_item") else None
+                return JSONResponse(
+                    {
+                        "success": True,
+                        "action_item": (
+                            {
+                                "id": updated.id,
+                                "task": updated.task,
+                                "owner": updated.owner,
+                                "due": updated.due,
+                                "status": updated.status,
+                                "review_state": updated.review_state,
+                                "meeting_id": updated.meeting_id,
+                                "meeting_title": updated.meeting_title,
+                                "meeting_date": updated.meeting_date.isoformat(),
+                                "created_at": updated.created_at.isoformat(),
+                                "completed_at": (
+                                    updated.completed_at.isoformat()
+                                    if updated.completed_at
+                                    else None
+                                ),
+                                "reviewed_at": (
+                                    updated.reviewed_at.isoformat()
+                                    if updated.reviewed_at
+                                    else None
+                                ),
+                            }
+                            if updated is not None
+                            else None
+                        ),
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to update action item review state: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+        @app.patch("/api/all-action-items/{item_id}/edit")
+        async def api_edit_global_action_item(
+            item_id: str, payload: _GlobalActionItemEditRequest
+        ) -> Any:
+            """Edit action item details and auto-accept the item."""
+            task = str(payload.task or "").strip()
+            if not task:
+                return JSONResponse(
+                    {"success": False, "error": "Action item task cannot be empty"},
+                    status_code=400,
+                )
+
+            owner = payload.owner
+            due = payload.due
+            try:
+                from .db import get_database
+                db = get_database()
+                success = db.edit_action_item(
+                    item_id,
+                    task=task,
+                    owner=owner,
+                    due=due,
+                )
+                if not success:
+                    return JSONResponse(
+                        {"success": False, "error": "Action item not found"},
+                        status_code=404,
+                    )
+                updated = db.get_action_item(item_id) if hasattr(db, "get_action_item") else None
+                return JSONResponse(
+                    {
+                        "success": True,
+                        "action_item": (
+                            {
+                                "id": updated.id,
+                                "task": updated.task,
+                                "owner": updated.owner,
+                                "due": updated.due,
+                                "status": updated.status,
+                                "review_state": updated.review_state,
+                                "meeting_id": updated.meeting_id,
+                                "meeting_title": updated.meeting_title,
+                                "meeting_date": updated.meeting_date.isoformat(),
+                                "created_at": updated.created_at.isoformat(),
+                                "completed_at": (
+                                    updated.completed_at.isoformat()
+                                    if updated.completed_at
+                                    else None
+                                ),
+                                "reviewed_at": (
+                                    updated.reviewed_at.isoformat()
+                                    if updated.reviewed_at
+                                    else None
+                                ),
+                            }
+                            if updated is not None
+                            else None
+                        ),
+                    }
+                )
+            except ValueError as e:
+                return JSONResponse({"success": False, "error": str(e)}, status_code=400)
+            except Exception as e:
+                log.error(f"Failed to edit action item: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
         @app.get("/api/intel/jobs")
         async def api_list_intel_jobs(status: str = "all", limit: int = 20) -> Any:
