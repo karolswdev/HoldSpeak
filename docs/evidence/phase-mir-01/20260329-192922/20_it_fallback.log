@@ -1,0 +1,4 @@
+# command: uv run pytest -q tests/unit/test_web_runtime.py -k 'fails_with_actionable_exit or runtime_meeting_control_callbacks_are_wired'
+2026-03-29T19:30:12-06:00
+..                                                                       [100%]
+2 passed, 2 deselected in 0.35s

@@ -25,10 +25,13 @@ brew install blackhole-2ch
 # 2. Check setup (Linux: verifies Pulse/PipeWire monitor source)
 holdspeak meeting --setup
 
-# 3. Start HoldSpeak
+# 3. Start HoldSpeak web runtime (default command)
 holdspeak
 
-# 4. Press 'm' to start a meeting
+# 4. Start TUI mode for meeting controls in this phase
+holdspeak tui
+
+# 5. Press 'm' to start a meeting
 ```
 
 ---
@@ -95,9 +98,29 @@ Shows all available audio input/output devices. Look for "BlackHole 2ch" in the 
 
 ## Using Meeting Mode
 
+### Runtime Entry Commands
+
+```bash
+# Default: web runtime
+holdspeak
+
+# Explicit web runtime
+holdspeak web
+
+# Explicit TUI mode
+holdspeak tui
+```
+
+`holdspeak --no-tui` is deprecated and currently maps to `holdspeak web --no-open`.
+Voice typing hotkey capture is available in both `web` and `tui` runtimes.
+
 ### Starting a Meeting
 
-From the TUI, press `m` to toggle meeting mode on/off.
+From web runtime, use dashboard controls:
+- `POST /api/meeting/start` to begin a meeting
+- `POST /api/meeting/stop` to stop and persist meeting output
+
+TUI still supports meeting toggling as a compatibility path (`holdspeak tui`, then press `m`).
 
 When a meeting starts:
 1. Recording begins on both mic and system audio
@@ -149,6 +172,8 @@ Use this during or after meetings for cross-session management:
 - Track action items across meetings, toggle status, review/accept, and edit
 - Inspect and update speaker profiles (name/avatar) with speaking history
 - Manage deferred-intel queue (list jobs, process now, retry meeting jobs)
+- Manage deferred MIR plugin queue (list jobs, process due jobs, force retry scheduled jobs, retry/cancel individual jobs)
+- Run MIR CLI dry-run and manual reroute flows for saved meetings
 - Edit app settings from browser, including cloud options:
   - `intel_provider` (`local`, `cloud`, `auto`)
   - `intel_cloud_model`
@@ -169,6 +194,29 @@ HoldSpeak supports three intelligence modes:
 - `auto`: local-first, then cloud fallback
 
 If no compatible runtime is currently available and deferred mode is enabled, HoldSpeak queues intelligence and fills in topics/actions/summaries later.
+Deferred queue retries use exponential backoff automatically (up to a capped delay and max attempts) so short homelab outages recover without tight retry loops.
+
+### MIR CLI Dry-Run and Re-Route
+
+Use saved meeting transcripts to preview deterministic MIR routing (dry run), or persist a manual profile-override reroute window:
+
+```bash
+holdspeak intel --route-dry-run <MEETING_ID> --profile architect
+holdspeak intel --reroute <MEETING_ID> --profile incident --override-intents incident,comms
+```
+
+Notes:
+- `--route-dry-run` prints a stable JSON payload and does not write DB records.
+- `--reroute` writes/updates one reroute intent window (`<meeting_id>:cli-reroute`) for audit/history APIs.
+
+### Homelab Fast Path (`intel_provider=cloud`)
+
+For local-first capture plus remote intel on your LAN:
+
+1. Run an OpenAI-compatible endpoint on homelab (for example vLLM/Ollama-compatible API).
+2. Set `intel_cloud_base_url` to that endpoint (`http://host:port/v1`).
+3. Keep `intel_deferred_enabled: true` so meetings continue when the homelab is temporarily unavailable.
+4. Export your API key env var and run `holdspeak doctor` to preflight reachability + model availability.
 
 ### What It Extracts
 
@@ -241,6 +289,14 @@ Configuration file: `~/.config/holdspeak/config.json`
     "intel_provider": "local",
     "intel_realtime_model": "~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf",
     "intel_queue_poll_seconds": 120,
+    "intel_retry_base_seconds": 30,
+    "intel_retry_max_seconds": 900,
+    "intel_retry_max_attempts": 6,
+    "intel_retry_failure_alert_percent": 50.0,
+    "intel_retry_failure_hysteresis_minutes": 5.0,
+    "intel_retry_failure_webhook_url": null,
+    "intel_retry_failure_webhook_header_name": null,
+    "intel_retry_failure_webhook_header_value": null,
     "intel_cloud_model": "gpt-5-mini",
     "intel_cloud_api_key_env": "OPENAI_API_KEY",
     "intel_cloud_base_url": null,
@@ -271,6 +327,14 @@ Configuration file: `~/.config/holdspeak/config.json`
 | `intel_provider` | string | "local" | Intel mode: `local`, `cloud`, or `auto` (local-first, cloud fallback) |
 | `intel_realtime_model` | string | (Mistral path) | Path to GGUF model for real-time intel |
 | `intel_queue_poll_seconds` | int | 120 | Interval for deferred-intel background worker polling |
+| `intel_retry_base_seconds` | int | 30 | Initial deferred-intel retry delay after a failed run |
+| `intel_retry_max_seconds` | int | 900 | Maximum deferred-intel retry delay cap |
+| `intel_retry_max_attempts` | int | 6 | Deferred-intel attempts before terminal `failed` status |
+| `intel_retry_failure_alert_percent` | float | 50.0 | `/history` alert threshold when failed-jobs ratio exceeds this percent |
+| `intel_retry_failure_hysteresis_minutes` | float | 5.0 | Time the failure rate must remain above threshold before alerting |
+| `intel_retry_failure_webhook_url` | string | null | Optional HTTP(S) webhook for sustained failure alerts |
+| `intel_retry_failure_webhook_header_name` | string | null | Optional custom header name added to failure-alert webhooks |
+| `intel_retry_failure_webhook_header_value` | string | null | Optional custom header value (set together with header name) |
 | `intel_cloud_model` | string | "gpt-5-mini" | Cloud model used when provider is `cloud` or `auto` falls back to cloud |
 | `intel_cloud_api_key_env` | string | "OPENAI_API_KEY" | Environment variable name containing your cloud API key |
 | `intel_cloud_base_url` | string | null | Optional OpenAI-compatible base URL (for proxies/compatible providers) |
@@ -311,9 +375,16 @@ Health check endpoint.
 ```
 
 #### Live meeting APIs
+- `GET /api/runtime/status` - runtime mode + meeting-active status
 - `GET /api/state` - current meeting state
+- `POST /api/meeting/start` - start meeting from web runtime control plane
+- `POST /api/meeting/stop` - stop active meeting and persist it
+- `GET /api/intents/control` - MIR routing control state (enabled/profile/override/preview)
+- `PUT /api/intents/profile` - update MIR routing profile
+- `PUT /api/intents/override` - update manual intent override set
+- `POST /api/intents/preview` - deterministic route preview from transcript/tags/scores
 - `POST /api/bookmark` - add bookmark
-- `POST /api/stop` - stop meeting
+- `POST /api/stop` - legacy stop alias (meeting stop when active)
 - `PATCH /api/action-items/{item_id}` - update in-memory action item status
 - `PATCH /api/action-items/{item_id}/review` - update in-memory action item review state (`pending` or `accepted`)
 - `PATCH /api/action-items/{item_id}/edit` - edit in-memory action item (`task`/`owner`/`due`), auto-accepts
@@ -322,6 +393,9 @@ Health check endpoint.
 #### Archive/data APIs
 - `GET /api/meetings`
 - `GET /api/meetings/{meeting_id}`
+- `GET /api/meetings/{meeting_id}/intent-timeline` - persisted MIR timeline windows + transitions
+- `GET /api/meetings/{meeting_id}/plugin-runs` - persisted MIR plugin execution history
+- `GET /api/meetings/{meeting_id}/artifacts` - synthesized artifacts with lineage sources
 - `GET /api/all-action-items`
 - `PATCH /api/all-action-items/{item_id}` - update persisted action item status
 - `PATCH /api/all-action-items/{item_id}/review` - update persisted action item review state
@@ -334,8 +408,14 @@ Health check endpoint.
 - `GET /api/settings`
 - `PUT /api/settings`
 - `GET /api/intel/jobs`
-- `POST /api/intel/process`
+- `GET /api/intel/summary`
+- `POST /api/intel/process` (`mode`: `respect_backoff` or `retry_now`)
 - `POST /api/intel/retry/{meeting_id}`
+- `GET /api/plugin-jobs`
+- `GET /api/plugin-jobs/summary`
+- `POST /api/plugin-jobs/process` (`mode`: `respect_backoff` or `retry_now`)
+- `POST /api/plugin-jobs/{job_id}/retry-now`
+- `POST /api/plugin-jobs/{job_id}/cancel`
 
 ### WebSocket
 
@@ -366,6 +446,9 @@ Real-time updates via WebSocket connection.
 
 // Meeting stopped
 {"type": "stopped", "data": {"status": "stopped"}}
+
+// Deferred plugin queue processing completed
+{"type": "plugin_jobs_processed", "data": {"success": true, "mode": "respect_backoff", "processed": 2}}
 ```
 
 **Ping/Pong:**
@@ -402,9 +485,11 @@ Send `"ping"` text message, receive `"pong"` response.
 
 ### Cloud intel errors (`provider=cloud` or `auto`)
 
-1. Confirm your API key env var exists (default: `OPENAI_API_KEY`)
-2. Verify `intel_cloud_base_url` is null or starts with `http://` / `https://`
-3. Check model name in `intel_cloud_model`
+1. Run `holdspeak doctor` and check the `Cloud intel preflight` line.
+2. If it reports DNS/connection failures, verify the homelab hostname/IP, LAN routing, and firewall.
+3. If it reports auth failures (HTTP 401/403), verify your `intel_cloud_api_key_env` value and token.
+4. If it reports model mismatch, set `intel_cloud_model` to one of the model IDs exposed by `/models`.
+5. Verify `intel_cloud_base_url` starts with `http://` or `https://` and includes the right API prefix (commonly `/v1`).
 
 ### Transcription quality is poor
 

@@ -1,0 +1,5 @@
+intent_windows: 1
+intent_window_scores: 2
+plugin_runs: 1
+artifacts: 1
+artifact_sources: 2

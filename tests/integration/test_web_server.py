@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 import asyncio
 from datetime import datetime
 from types import SimpleNamespace
@@ -276,6 +277,41 @@ class TestDashboardEndpoint:
         response = test_client.get("/")
         assert "HoldSpeak" in response.text or "holdspeak" in response.text.lower()
 
+    def test_dashboard_references_runtime_control_endpoints(self, test_client):
+        """Dashboard should use runtime-level meeting control endpoints."""
+        response = test_client.get("/")
+        assert response.status_code == 200
+        html = response.text
+        assert "/api/runtime/status" in html
+        assert "/api/meeting/start" in html
+        assert "/api/meeting/stop" in html
+        assert "/api/intents/control" in html
+        assert "/api/intents/profile" in html
+        assert "/api/intents/override" in html
+        assert "/api/intents/preview" in html
+        assert "/api/plugin-jobs" in html
+        assert "/api/plugin-jobs/summary" in html
+        assert "/api/plugin-jobs/process" in html
+        assert "Routing Profile" in html
+        assert "Preview Route" in html
+        assert "Deferred Plugin Jobs" in html
+
+    def test_dashboard_includes_idle_mode_guidance_markers(self, test_client):
+        """Dashboard should include explicit idle/live control guidance copy."""
+        response = test_client.get("/")
+        assert response.status_code == 200
+        html = response.text
+        assert "Idle mode: start a meeting to unlock live editing controls." in html
+        assert "History and settings remain available while idle." in html
+        assert "Read-only while idle. Start a meeting to edit status, review state, and details." in html
+
+    def test_dashboard_bootstrap_prefers_runtime_status_payload(self, test_client):
+        response = test_client.get("/")
+        assert response.status_code == 200
+        html = response.text
+        assert "this.fetchRuntimeStatus();" in html
+        assert "await this.fetchInitialState();" in html
+
 
 @pytest.mark.integration
 class TestHealthEndpoint:
@@ -375,6 +411,734 @@ class TestApiStopEndpoint:
 
 
 @pytest.mark.integration
+class TestRuntimeControlEndpoints:
+    """Tests for runtime-level meeting control routes."""
+
+    def test_runtime_status_falls_back_to_state(self, test_client):
+        response = test_client.get("/api/runtime/status")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["status"] == "ok"
+        assert payload["mode"] == "web"
+        assert payload["meeting_active"] is True
+        assert payload["meeting"]["id"] == "test-123"
+        assert payload["meeting_id"] == "test-123"
+        assert payload["state"]["id"] == "test-123"
+
+    def test_runtime_status_prefers_explicit_meeting_active_flag(self, mock_callbacks):
+        state = {
+            "id": "web-runtime",
+            "started_at": "2026-03-29T10:00:00",
+            "ended_at": None,
+            "meeting_active": False,
+        }
+        server = MeetingWebServer(
+            on_bookmark=mock_callbacks["on_bookmark"],
+            on_stop=mock_callbacks["on_stop"],
+            get_state=MagicMock(return_value=state),
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        response = client.get("/api/runtime/status")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["meeting_active"] is False
+        assert payload["meeting"] is None
+        assert payload["meeting_id"] is None
+
+    def test_runtime_status_normalizes_callback_payload(self, mock_callbacks):
+        state = {"id": "runtime", "meeting_active": False, "segments": [], "bookmarks": []}
+        server = MeetingWebServer(
+            on_bookmark=mock_callbacks["on_bookmark"],
+            on_stop=mock_callbacks["on_stop"],
+            get_state=MagicMock(return_value=state),
+            on_get_status=MagicMock(return_value={"voice_state": "idle"}),
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        response = client.get("/api/runtime/status")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["status"] == "ok"
+        assert payload["mode"] == "web"
+        assert payload["meeting_active"] is False
+        assert payload["voice_state"] == "idle"
+        assert payload["state"]["id"] == "runtime"
+
+    def test_meeting_start_not_supported_without_callback(self, test_client):
+        response = test_client.post("/api/meeting/start")
+        assert response.status_code == 501
+        payload = response.json()
+        assert payload["success"] is False
+
+    def test_meeting_stop_uses_stop_callback_by_default(self, test_client, mock_callbacks):
+        response = test_client.post("/api/meeting/stop")
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+        mock_callbacks["on_stop"].assert_called_once()
+
+    def test_meeting_stop_prefers_on_meeting_stop_callback(self, mock_callbacks):
+        on_meeting_stop = MagicMock(return_value={"status": "meeting_stopped"})
+        server = MeetingWebServer(
+            on_bookmark=mock_callbacks["on_bookmark"],
+            on_stop=mock_callbacks["on_stop"],
+            on_meeting_stop=on_meeting_stop,
+            get_state=mock_callbacks["get_state"],
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        response = client.post("/api/meeting/stop")
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+        on_meeting_stop.assert_called_once()
+        mock_callbacks["on_stop"].assert_not_called()
+
+
+@pytest.mark.integration
+class TestIntentRoutingControlEndpoints:
+    """Tests for MIR control-plane endpoints."""
+
+    def test_get_intent_controls_returns_safe_default_without_callback(self, test_client):
+        response = test_client.get("/api/intents/control")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["enabled"] is False
+        assert payload["profile"] == "balanced"
+        assert payload["available_profiles"] == []
+        assert payload["supported_intents"] == []
+
+    def test_intent_profile_and_override_require_callbacks(self, test_client):
+        profile_response = test_client.put("/api/intents/profile", json={"profile": "architect"})
+        assert profile_response.status_code == 501
+        override_response = test_client.put("/api/intents/override", json={"intents": ["architecture"]})
+        assert override_response.status_code == 501
+        preview_response = test_client.post("/api/intents/preview", json={"profile": "architect"})
+        assert preview_response.status_code == 501
+
+    def test_intent_controls_round_trip_with_callbacks(self, mock_callbacks):
+        controls = {
+            "enabled": True,
+            "profile": "balanced",
+            "available_profiles": ["balanced", "architect"],
+            "supported_intents": ["architecture", "delivery"],
+            "override_intents": [],
+            "threshold": 0.6,
+            "last_preview": None,
+        }
+
+        def _get_controls() -> dict[str, object]:
+            return deepcopy(controls)
+
+        def _set_profile(profile: str) -> dict[str, object]:
+            controls["profile"] = str(profile).strip().lower() or "balanced"
+            return _get_controls()
+
+        def _set_override(intents: list[str] | None) -> dict[str, object]:
+            controls["override_intents"] = [str(intent).strip().lower() for intent in (intents or []) if str(intent).strip()]
+            return _get_controls()
+
+        def _preview_route(**kwargs) -> dict[str, object]:
+            _ = kwargs
+            route = {
+                "profile": controls["profile"],
+                "active_intents": list(controls["override_intents"]) or ["architecture"],
+                "plugin_chain": ["requirements_extractor", "mermaid_architecture"],
+                "intent_scores": {"architecture": 0.84},
+                "threshold": 0.6,
+                "hysteresis_applied": False,
+                "override_intents": list(controls["override_intents"]),
+            }
+            controls["last_preview"] = route
+            return route
+
+        server = MeetingWebServer(
+            on_bookmark=mock_callbacks["on_bookmark"],
+            on_stop=mock_callbacks["on_stop"],
+            get_state=mock_callbacks["get_state"],
+            on_get_intent_controls=_get_controls,
+            on_set_intent_profile=_set_profile,
+            on_set_intent_override=_set_override,
+            on_route_preview=_preview_route,
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        initial = client.get("/api/intents/control")
+        assert initial.status_code == 200
+        assert initial.json()["profile"] == "balanced"
+
+        profile_update = client.put("/api/intents/profile", json={"profile": "architect"})
+        assert profile_update.status_code == 200
+        assert profile_update.json()["controls"]["profile"] == "architect"
+
+        override_update = client.put("/api/intents/override", json={"intents": ["architecture", "delivery"]})
+        assert override_update.status_code == 200
+        assert override_update.json()["controls"]["override_intents"] == ["architecture", "delivery"]
+
+        preview = client.post("/api/intents/preview", json={"profile": "architect"})
+        assert preview.status_code == 200
+        route = preview.json()["route"]
+        assert route["profile"] == "architect"
+        assert route["active_intents"] == ["architecture", "delivery"]
+        assert "mermaid_architecture" in route["plugin_chain"]
+
+
+@pytest.mark.integration
+class TestMirHistoryApiEndpoints:
+    """Tests for persisted MIR timeline and plugin-run meeting APIs."""
+
+    def test_meeting_intent_timeline_endpoint(self, monkeypatch, test_client):
+        now = datetime(2026, 3, 29, 18, 0, 0)
+
+        class FakeDb:
+            def get_meeting(self, meeting_id):
+                if meeting_id != "m-001":
+                    return None
+                return SimpleNamespace(id="m-001")
+
+            def list_intent_windows(self, meeting_id, *, limit=200):
+                _ = meeting_id, limit
+                return [
+                    SimpleNamespace(
+                        meeting_id="m-001",
+                        window_id="m-001:w0001",
+                        start_seconds=0.0,
+                        end_seconds=90.0,
+                        transcript_hash="h-1",
+                        transcript_excerpt="Architecture and scope planning",
+                        profile="balanced",
+                        threshold=0.6,
+                        active_intents=["architecture", "delivery"],
+                        intent_scores={"architecture": 0.81, "delivery": 0.72},
+                        override_intents=[],
+                        tags=["architecture"],
+                        metadata={"source": "route_preview"},
+                        created_at=now,
+                        updated_at=now,
+                    ),
+                    SimpleNamespace(
+                        meeting_id="m-001",
+                        window_id="m-001:w0002",
+                        start_seconds=30.0,
+                        end_seconds=120.0,
+                        transcript_hash="h-2",
+                        transcript_excerpt="Incident mitigation and handoff",
+                        profile="incident_response",
+                        threshold=0.5,
+                        active_intents=["incident"],
+                        intent_scores={"incident": 0.93},
+                        override_intents=["incident"],
+                        tags=["incident"],
+                        metadata={"source": "route_preview"},
+                        created_at=now,
+                        updated_at=now,
+                    ),
+                ]
+
+        import holdspeak.db as db_module
+
+        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+
+        response = test_client.get("/api/meetings/m-001/intent-timeline?limit=25")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["meeting_id"] == "m-001"
+        assert len(payload["windows"]) == 2
+        assert payload["windows"][0]["intent_scores"]["architecture"] == pytest.approx(0.81)
+        assert payload["windows"][1]["active_intents"] == ["incident"]
+        assert len(payload["transitions"]) == 2
+        assert payload["transitions"][1]["added"] == ["incident"]
+
+        missing = test_client.get("/api/meetings/missing/intent-timeline")
+        assert missing.status_code == 404
+
+    def test_meeting_plugin_runs_endpoint(self, monkeypatch, test_client):
+        now = datetime(2026, 3, 29, 18, 0, 0)
+
+        class FakeDb:
+            def get_meeting(self, meeting_id):
+                if meeting_id != "m-001":
+                    return None
+                return SimpleNamespace(id="m-001")
+
+            def list_plugin_runs(self, meeting_id, *, window_id=None, limit=500):
+                _ = meeting_id, limit
+                all_runs = [
+                    SimpleNamespace(
+                        id=11,
+                        meeting_id="m-001",
+                        window_id="m-001:w0002",
+                        plugin_id="incident_timeline",
+                        plugin_version="preview",
+                        status="planned",
+                        idempotency_key="idem-2",
+                        duration_ms=0.0,
+                        output={"source": "route_preview"},
+                        error=None,
+                        deduped=False,
+                        created_at=now,
+                        updated_at=now,
+                    ),
+                    SimpleNamespace(
+                        id=10,
+                        meeting_id="m-001",
+                        window_id="m-001:w0001",
+                        plugin_id="requirements_extractor",
+                        plugin_version="1.0.0",
+                        status="success",
+                        idempotency_key="idem-1",
+                        duration_ms=44.2,
+                        output={"requirements": 4},
+                        error=None,
+                        deduped=False,
+                        created_at=now,
+                        updated_at=now,
+                    ),
+                ]
+                if window_id:
+                    return [run for run in all_runs if run.window_id == window_id]
+                return all_runs
+
+        import holdspeak.db as db_module
+
+        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+
+        response = test_client.get("/api/meetings/m-001/plugin-runs?limit=50")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["meeting_id"] == "m-001"
+        assert len(payload["runs"]) == 2
+        assert payload["runs"][0]["plugin_id"] == "incident_timeline"
+        assert payload["runs"][1]["status"] == "success"
+
+        filtered = test_client.get("/api/meetings/m-001/plugin-runs?window_id=m-001:w0001")
+        assert filtered.status_code == 200
+        filtered_payload = filtered.json()
+        assert filtered_payload["window_id"] == "m-001:w0001"
+        assert len(filtered_payload["runs"]) == 1
+        assert filtered_payload["runs"][0]["plugin_id"] == "requirements_extractor"
+
+        missing = test_client.get("/api/meetings/missing/plugin-runs")
+        assert missing.status_code == 404
+
+    def test_meeting_artifacts_endpoint(self, monkeypatch, test_client):
+        now = datetime(2026, 3, 29, 18, 0, 0)
+
+        class FakeDb:
+            def get_meeting(self, meeting_id):
+                if meeting_id != "m-001":
+                    return None
+                return SimpleNamespace(id="m-001")
+
+            def list_artifacts(self, meeting_id, *, limit=200):
+                _ = meeting_id, limit
+                return [
+                    SimpleNamespace(
+                        id="art-001",
+                        meeting_id="m-001",
+                        artifact_type="requirements",
+                        title="Requirements Extractor",
+                        body_markdown="### Requirements\n\nDefine API acceptance criteria.",
+                        structured_json={"plugin_run_ids": ["10"], "window_ids": ["m-001:w0001"]},
+                        confidence=0.82,
+                        status="draft",
+                        plugin_id="requirements_extractor",
+                        plugin_version="1.0.0",
+                        sources=[
+                            {"source_type": "intent_window", "source_ref": "m-001:w0001"},
+                            {"source_type": "plugin_run", "source_ref": "10"},
+                        ],
+                        created_at=now,
+                        updated_at=now,
+                    )
+                ]
+
+        import holdspeak.db as db_module
+
+        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+
+        response = test_client.get("/api/meetings/m-001/artifacts?limit=25")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["meeting_id"] == "m-001"
+        assert len(payload["artifacts"]) == 1
+        artifact = payload["artifacts"][0]
+        assert artifact["artifact_type"] == "requirements"
+        assert artifact["confidence"] == pytest.approx(0.82)
+        refs = {(source["source_type"], source["source_ref"]) for source in artifact["sources"]}
+        assert ("intent_window", "m-001:w0001") in refs
+        assert ("plugin_run", "10") in refs
+
+        missing = test_client.get("/api/meetings/missing/artifacts")
+        assert missing.status_code == 404
+
+    def test_legacy_meeting_without_mir_history_rows_remains_loadable(self, monkeypatch, test_client):
+        class FakeDb:
+            def get_meeting(self, meeting_id):
+                if meeting_id != "m-legacy":
+                    return None
+                return SimpleNamespace(id="m-legacy")
+
+            def list_intent_windows(self, meeting_id, *, limit=200):
+                _ = meeting_id, limit
+                return []
+
+            def list_plugin_runs(self, meeting_id, *, window_id=None, limit=500):
+                _ = meeting_id, window_id, limit
+                return []
+
+            def list_artifacts(self, meeting_id, *, limit=200):
+                _ = meeting_id, limit
+                return []
+
+        import holdspeak.db as db_module
+
+        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+
+        timeline = test_client.get("/api/meetings/m-legacy/intent-timeline")
+        assert timeline.status_code == 200
+        timeline_payload = timeline.json()
+        assert timeline_payload["meeting_id"] == "m-legacy"
+        assert timeline_payload["windows"] == []
+        assert timeline_payload["transitions"] == []
+
+        runs = test_client.get("/api/meetings/m-legacy/plugin-runs")
+        assert runs.status_code == 200
+        runs_payload = runs.json()
+        assert runs_payload["meeting_id"] == "m-legacy"
+        assert runs_payload["runs"] == []
+
+        artifacts = test_client.get("/api/meetings/m-legacy/artifacts")
+        assert artifacts.status_code == 200
+        artifacts_payload = artifacts.json()
+        assert artifacts_payload["meeting_id"] == "m-legacy"
+        assert artifacts_payload["artifacts"] == []
+
+    def test_cli_reroute_persistence_is_visible_in_timeline_api(self, monkeypatch, test_client):
+        now = datetime(2026, 3, 29, 19, 30, 0)
+        windows_by_id: dict[str, dict[str, object]] = {}
+        meeting = SimpleNamespace(
+            id="m-reroute",
+            title="Reroute Demo",
+            tags=["incident"],
+            segments=[
+                SimpleNamespace(speaker="Me", text="We have an active incident bridge.", end_time=9.0),
+                SimpleNamespace(speaker="Remote", text="Draft stakeholder comms and runbook changes.", end_time=18.0),
+            ],
+            duration=18.0,
+            transcript_hash=lambda: "reroute-hash",
+        )
+
+        class FakeDb:
+            def get_meeting(self, meeting_id):
+                if meeting_id != "m-reroute":
+                    return None
+                return meeting
+
+            def record_intent_window(self, **kwargs):
+                windows_by_id[str(kwargs["window_id"])] = dict(kwargs)
+
+            def list_intent_windows(self, meeting_id, *, limit=200):
+                _ = limit
+                if meeting_id != "m-reroute":
+                    return []
+                output = []
+                for row in windows_by_id.values():
+                    output.append(
+                        SimpleNamespace(
+                            meeting_id=str(row["meeting_id"]),
+                            window_id=str(row["window_id"]),
+                            start_seconds=float(row.get("start_seconds") or 0.0),
+                            end_seconds=float(row.get("end_seconds") or 0.0),
+                            transcript_hash=str(row.get("transcript_hash") or ""),
+                            transcript_excerpt=str(row.get("transcript_excerpt") or ""),
+                            profile=str(row.get("profile") or "balanced"),
+                            threshold=float(row.get("threshold") or 0.6),
+                            active_intents=list(row.get("active_intents") or []),
+                            intent_scores=dict(row.get("intent_scores") or {}),
+                            override_intents=list(row.get("override_intents") or []),
+                            tags=list(row.get("tags") or []),
+                            metadata=dict(row.get("metadata") or {}),
+                            created_at=now,
+                            updated_at=now,
+                        )
+                    )
+                return output
+
+        fake_db = FakeDb()
+        import holdspeak.db as db_module
+        import holdspeak.commands.intel as intel_command
+
+        monkeypatch.setattr(db_module, "get_database", lambda: fake_db)
+        monkeypatch.setattr(intel_command, "get_database", lambda: fake_db)
+        monkeypatch.setattr(
+            intel_command,
+            "Config",
+            SimpleNamespace(
+                load=lambda: SimpleNamespace(
+                    meeting=SimpleNamespace(mir_profile="balanced"),
+                )
+            ),
+        )
+
+        rc = intel_command.run_intel_command(
+            SimpleNamespace(
+                process=False,
+                retry=None,
+                retry_failed=False,
+                route_dry_run=None,
+                reroute="m-reroute",
+                profile="incident",
+                threshold=0.65,
+                override_intents="incident,comms",
+                status="all",
+                limit=20,
+                max_jobs=None,
+            )
+        )
+        assert rc == 0
+
+        response = test_client.get("/api/meetings/m-reroute/intent-timeline")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["meeting_id"] == "m-reroute"
+        assert len(payload["windows"]) == 1
+        window = payload["windows"][0]
+        assert window["window_id"] == "m-reroute:cli-reroute"
+        assert window["profile"] == "incident"
+        assert window["override_intents"] == ["incident", "comms"]
+        assert window["metadata"]["source"] == "cli_reroute"
+
+
+@pytest.mark.integration
+class TestMeetingMetadataEndpoints:
+    """Tests for runtime-level meeting metadata updates."""
+
+    def test_meeting_patch_uses_runtime_update_callback(self, mock_callbacks):
+        on_update_meeting = MagicMock(
+            return_value={
+                "id": "meeting-1",
+                "meeting_active": True,
+                "title": "Planning Sync",
+                "tags": ["ops", "planning"],
+            }
+        )
+        server = MeetingWebServer(
+            on_bookmark=mock_callbacks["on_bookmark"],
+            on_stop=mock_callbacks["on_stop"],
+            on_update_meeting=on_update_meeting,
+            get_state=mock_callbacks["get_state"],
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        response = client.patch("/api/meeting", json={"title": "Planning Sync", "tags": ["ops", "planning"]})
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["success"] is True
+        assert payload["meeting"]["title"] == "Planning Sync"
+        assert payload["meeting"]["tags"] == ["ops", "planning"]
+        on_update_meeting.assert_called_once_with(title="Planning Sync", tags=["ops", "planning"])
+
+    def test_meeting_patch_falls_back_to_title_and_tags_callbacks(self, mock_callbacks):
+        on_set_title = MagicMock()
+        on_set_tags = MagicMock()
+        get_state = MagicMock(
+            return_value={
+                "id": "meeting-2",
+                "meeting_active": True,
+                "title": "Retro",
+                "tags": ["team"],
+            }
+        )
+        server = MeetingWebServer(
+            on_bookmark=mock_callbacks["on_bookmark"],
+            on_stop=mock_callbacks["on_stop"],
+            get_state=get_state,
+            on_set_title=on_set_title,
+            on_set_tags=on_set_tags,
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        response = client.patch("/api/meeting", json={"title": "Retro", "tags": ["team"]})
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["success"] is True
+        assert payload["meeting"]["title"] == "Retro"
+        assert payload["meeting"]["tags"] == ["team"]
+        on_set_title.assert_called_once_with("Retro")
+        on_set_tags.assert_called_once_with(["team"])
+
+
+@pytest.mark.integration
+class TestDashboardLifecycleStateTransitions:
+    """Integration coverage for dashboard lifecycle controls and WS updates."""
+
+    def test_start_stop_start_cycle_hydrates_state_and_emits_ws_events(self):
+        state_holder: dict[str, dict[str, object]] = {
+            "state": {
+                "id": "web-runtime",
+                "mode": "web",
+                "meeting_active": False,
+                "segments": [],
+                "bookmarks": [],
+                "intel": {"topics": [], "action_items": [], "summary": ""},
+                "intel_status": {
+                    "state": "idle",
+                    "detail": "No meeting active",
+                    "requested_at": None,
+                    "completed_at": None,
+                },
+            }
+        }
+        meeting_counter = {"value": 0}
+
+        def _active_meeting_state(index: int) -> dict[str, object]:
+            return {
+                "id": f"meeting-{index}",
+                "mode": "web",
+                "meeting_active": True,
+                "title": f"Sprint Sync {index}",
+                "tags": ["ops", f"cycle-{index}"],
+                "segments": [
+                    {
+                        "speaker": "Me",
+                        "start_time": 0.0,
+                        "end_time": 1.2,
+                        "text": f"cycle-{index} kickoff",
+                    }
+                ],
+                "bookmarks": [{"timestamp": 0.6, "label": f"bookmark-{index}"}],
+                "intel": {
+                    "topics": [f"topic-{index}"],
+                    "action_items": [
+                        {
+                            "id": f"ai-{index}",
+                            "task": f"Ship patch {index}",
+                            "owner": "Me",
+                            "due": "Friday",
+                            "status": "pending",
+                            "review_state": "pending",
+                        }
+                    ],
+                    "summary": f"summary-{index}",
+                },
+                "intel_status": {
+                    "state": "ready",
+                    "detail": f"intel-ready-{index}",
+                    "requested_at": None,
+                    "completed_at": None,
+                },
+            }
+
+        def _get_state() -> dict[str, object]:
+            return deepcopy(state_holder["state"])
+
+        def _on_start() -> dict[str, object]:
+            meeting_counter["value"] += 1
+            next_state = _active_meeting_state(meeting_counter["value"])
+            state_holder["state"] = deepcopy(next_state)
+            return deepcopy(next_state)
+
+        def _on_meeting_stop() -> dict[str, object]:
+            stopped_state = deepcopy(state_holder["state"])
+            stopped_state["meeting_active"] = False
+            stopped_state["ended_at"] = "2026-03-29T18:00:00"
+            state_holder["state"] = deepcopy(stopped_state)
+            return {"status": "stopped", "meeting": deepcopy(stopped_state)}
+
+        def _on_get_status() -> dict[str, object]:
+            state = deepcopy(state_holder["state"])
+            return {
+                "status": "ok",
+                "mode": "web",
+                "meeting_active": bool(state.get("meeting_active")),
+                "state": state,
+            }
+
+        server = MeetingWebServer(
+            on_bookmark=MagicMock(return_value={"timestamp": 0.0, "label": "bookmark"}),
+            on_stop=_on_meeting_stop,
+            on_meeting_stop=_on_meeting_stop,
+            on_start=_on_start,
+            on_get_status=_on_get_status,
+            get_state=_get_state,
+            host="127.0.0.1",
+        )
+        broadcast_events: list[tuple[str, object]] = []
+        server.broadcast = lambda message_type, data: broadcast_events.append(
+            (message_type, deepcopy(data))
+        )
+        client = TestClient(server.app)
+
+        initial_status = client.get("/api/runtime/status")
+        assert initial_status.status_code == 200
+        assert initial_status.json()["meeting_active"] is False
+        assert initial_status.json()["state"]["id"] == "web-runtime"
+
+        start_first = client.post("/api/meeting/start")
+        assert start_first.status_code == 200
+        assert start_first.json()["success"] is True
+        assert start_first.json()["meeting"]["id"] == "meeting-1"
+
+        status_after_first_start = client.get("/api/runtime/status")
+        assert status_after_first_start.status_code == 200
+        assert status_after_first_start.json()["meeting_active"] is True
+        assert status_after_first_start.json()["state"]["id"] == "meeting-1"
+        assert status_after_first_start.json()["state"]["intel"]["summary"] == "summary-1"
+
+        stop_first = client.post("/api/meeting/stop")
+        assert stop_first.status_code == 200
+        assert stop_first.json()["success"] is True
+
+        status_after_first_stop = client.get("/api/runtime/status")
+        assert status_after_first_stop.status_code == 200
+        assert status_after_first_stop.json()["meeting_active"] is False
+        assert status_after_first_stop.json()["state"]["id"] == "meeting-1"
+        assert status_after_first_stop.json()["state"]["ended_at"] == "2026-03-29T18:00:00"
+
+        start_second = client.post("/api/meeting/start")
+        assert start_second.status_code == 200
+        assert start_second.json()["success"] is True
+        assert start_second.json()["meeting"]["id"] == "meeting-2"
+
+        state_after_second_start = client.get("/api/state")
+        assert state_after_second_start.status_code == 200
+        assert state_after_second_start.json()["id"] == "meeting-2"
+        assert state_after_second_start.json()["segments"][0]["text"] == "cycle-2 kickoff"
+
+        final_status = client.get("/api/runtime/status")
+        assert final_status.status_code == 200
+        assert final_status.json()["meeting_active"] is True
+        assert final_status.json()["state"]["id"] == "meeting-2"
+        assert [event[0] for event in broadcast_events] == [
+            "meeting_started",
+            "stopped",
+            "meeting_started",
+        ]
+        assert broadcast_events[0][1]["id"] == "meeting-1"
+        assert broadcast_events[1][1]["meeting"]["id"] == "meeting-1"
+        assert broadcast_events[2][1]["id"] == "meeting-2"
+
+    def test_websocket_supports_ping_pong_keepalive(self):
+        server = MeetingWebServer(
+            on_bookmark=MagicMock(return_value={"timestamp": 0.0, "label": "bookmark"}),
+            on_stop=MagicMock(return_value={"status": "stopped"}),
+            get_state=lambda: {},
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        with client.websocket_connect("/ws") as websocket:
+            websocket.send_text("ping")
+            assert websocket.receive_text() == "pong"
+
+
+@pytest.mark.integration
 class TestHistoryUiSmoke:
     """Smoke checks for the browser-facing history/settings UI."""
 
@@ -386,9 +1150,25 @@ class TestHistoryUiSmoke:
         html = response.text
         for label in ("Meetings", "Action Items", "Speakers", "Intel Queue", "Settings"):
             assert label in html
-        for marker in ("saveSettings", "openSpeaker", "processIntelJobs", "retryIntelJob"):
+        assert "Deferred Plugin Jobs" in html
+        for marker in (
+            "saveSettings",
+            "openSpeaker",
+            "processIntelJobs",
+            "retryIntelJob",
+            "loadPluginJobs",
+            "retryPluginJob",
+            "cancelPluginJob",
+        ):
             assert marker in html
-        for endpoint in ("/api/settings", "/api/speakers", "/api/intel/jobs", "/api/all-action-items"):
+        for endpoint in (
+            "/api/settings",
+            "/api/speakers",
+            "/api/intel/jobs",
+            "/api/intel/summary",
+            "/api/plugin-jobs",
+            "/api/all-action-items",
+        ):
             assert endpoint in html
 
     def test_settings_route_serves_history_ui_shell(self, test_client):
@@ -427,6 +1207,9 @@ class TestSettingsApiEndpoints:
                 "intel_cloud_api_key_env": "OPENAI_API_KEY",
                 "intel_cloud_base_url": "https://api.openai.com/v1",
                 "intel_queue_poll_seconds": 30,
+                "intel_retry_failure_webhook_url": "https://ops.example.com/hooks/holdspeak",
+                "intel_retry_failure_webhook_header_name": "Authorization",
+                "intel_retry_failure_webhook_header_value": "Bearer test-token",
                 "similarity_threshold": 0.82,
             }
         }
@@ -437,6 +1220,8 @@ class TestSettingsApiEndpoints:
         assert data["settings"]["meeting"]["intel_provider"] == "cloud"
         assert data["settings"]["meeting"]["intel_cloud_base_url"] == "https://api.openai.com/v1"
         assert data["settings"]["meeting"]["intel_queue_poll_seconds"] == 30
+        assert data["settings"]["meeting"]["intel_retry_failure_webhook_header_name"] == "Authorization"
+        assert data["settings"]["meeting"]["intel_retry_failure_webhook_header_value"] == "Bearer test-token"
         assert data["settings"]["meeting"]["similarity_threshold"] == pytest.approx(0.82)
         on_settings_applied.assert_called_once()
 
@@ -444,6 +1229,8 @@ class TestSettingsApiEndpoints:
         assert persisted.meeting.intel_provider == "cloud"
         assert persisted.meeting.intel_cloud_base_url == "https://api.openai.com/v1"
         assert persisted.meeting.intel_queue_poll_seconds == 30
+        assert persisted.meeting.intel_retry_failure_webhook_header_name == "Authorization"
+        assert persisted.meeting.intel_retry_failure_webhook_header_value == "Bearer test-token"
 
     def test_settings_put_rejects_invalid_cloud_base_url(self, tmp_path, monkeypatch, test_client):
         import holdspeak.config as config_module
@@ -457,6 +1244,50 @@ class TestSettingsApiEndpoints:
         payload = response.json()
         assert payload["success"] is False
         assert "base_url" in payload["error"]
+
+    def test_settings_put_rejects_invalid_retry_webhook_url(self, tmp_path, monkeypatch, test_client):
+        import holdspeak.config as config_module
+
+        monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
+        response = test_client.put(
+            "/api/settings",
+            json={"meeting": {"intel_retry_failure_webhook_url": "ftp://example.com/hook"}},
+        )
+        assert response.status_code == 400
+        payload = response.json()
+        assert payload["success"] is False
+        assert "webhook" in payload["error"].lower()
+
+    def test_settings_put_rejects_partial_retry_webhook_header(self, tmp_path, monkeypatch, test_client):
+        import holdspeak.config as config_module
+
+        monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
+        response = test_client.put(
+            "/api/settings",
+            json={"meeting": {"intel_retry_failure_webhook_header_name": "Authorization"}},
+        )
+        assert response.status_code == 400
+        payload = response.json()
+        assert payload["success"] is False
+        assert "both be set" in payload["error"]
+
+    def test_settings_put_rejects_invalid_retry_webhook_header_name(self, tmp_path, monkeypatch, test_client):
+        import holdspeak.config as config_module
+
+        monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
+        response = test_client.put(
+            "/api/settings",
+            json={
+                "meeting": {
+                    "intel_retry_failure_webhook_header_name": "Authorization:",
+                    "intel_retry_failure_webhook_header_value": "Bearer test-token",
+                }
+            },
+        )
+        assert response.status_code == 400
+        payload = response.json()
+        assert payload["success"] is False
+        assert "header_name" in payload["error"]
 
 
 @pytest.mark.integration
@@ -706,6 +1537,29 @@ class TestIntelQueueApiEndpoints:
                     )
                 ]
 
+            def get_intel_queue_summary(self):
+                return SimpleNamespace(
+                    total_jobs=3,
+                    queued_jobs=2,
+                    running_jobs=0,
+                    failed_jobs=1,
+                    queued_due_jobs=1,
+                    scheduled_retry_jobs=1,
+                    next_retry_at=datetime(2025, 1, 11, 10, 45, 0),
+                )
+
+            def list_intel_job_attempts(self, meeting_id, *, limit=5):
+                _ = meeting_id, limit
+                return [
+                    SimpleNamespace(
+                        attempt=2,
+                        outcome="scheduled_retry",
+                        error="transient issue",
+                        retry_at=datetime(2025, 1, 11, 10, 35, 0),
+                        created_at=datetime(2025, 1, 11, 10, 31, 0),
+                    )
+                ]
+
             def requeue_intel_job(self, meeting_id, *, reason=None):
                 _ = reason
                 return meeting_id == "m-001"
@@ -722,6 +1576,18 @@ class TestIntelQueueApiEndpoints:
         assert len(jobs_data["jobs"]) == 1
         assert jobs_data["jobs"][0]["meeting_id"] == "m-001"
         assert jobs_data["jobs"][0]["status"] == "queued"
+        assert jobs_data["jobs"][0]["retry_scheduled"] is False
+        assert "retries_remaining" in jobs_data["jobs"][0]
+        assert len(jobs_data["jobs"][0]["retry_history"]) == 1
+
+        summary_response = test_client.get("/api/intel/summary")
+        assert summary_response.status_code == 200
+        summary_data = summary_response.json()
+        assert summary_data["total_jobs"] == 3
+        assert summary_data["queued_jobs"] == 2
+        assert summary_data["failed_jobs"] == 1
+        assert summary_data["scheduled_retry_jobs"] == 1
+        assert summary_data["next_retry_at"] is not None
 
         retry_response = test_client.post("/api/intel/retry/m-001")
         assert retry_response.status_code == 200
@@ -731,11 +1597,238 @@ class TestIntelQueueApiEndpoints:
         assert retry_missing.status_code == 404
         assert retry_missing.json()["success"] is False
 
-        process_response = test_client.post("/api/intel/process", json={"max_jobs": 2})
+        process_response = test_client.post("/api/intel/process", json={"max_jobs": 2, "mode": "retry_now"})
         assert process_response.status_code == 200
         process_data = process_response.json()
         assert process_data["success"] is True
         assert process_data["processed"] == 3
+        assert process_data["mode"] == "retry_now"
+
+        process_invalid_mode = test_client.post("/api/intel/process", json={"mode": "invalid"})
+        assert process_invalid_mode.status_code == 400
+
+
+@pytest.mark.integration
+class TestPluginRunQueueApiEndpoints:
+    """Tests for deferred MIR plugin-run queue endpoints."""
+
+    def test_plugin_jobs_list_retry_and_cancel(self, monkeypatch, test_client):
+        now = datetime(2026, 3, 29, 20, 0, 0)
+
+        class FakeDb:
+            def __init__(self):
+                self.jobs = {
+                    1: SimpleNamespace(
+                        id=1,
+                        meeting_id="m-001",
+                        window_id="m-001:w0001",
+                        plugin_id="incident_timeline",
+                        plugin_version="1.0.0",
+                        transcript_hash="hash-1",
+                        idempotency_key="idem-1",
+                        context={},
+                        status="queued",
+                        requested_at=datetime(2027, 3, 29, 20, 5, 0),
+                        updated_at=now,
+                        attempts=1,
+                        last_error="Transient issue",
+                    ),
+                    2: SimpleNamespace(
+                        id=2,
+                        meeting_id="m-001",
+                        window_id="m-001:w0002",
+                        plugin_id="risk_heatmap",
+                        plugin_version="1.0.0",
+                        transcript_hash="hash-2",
+                        idempotency_key="idem-2",
+                        context={},
+                        status="failed",
+                        requested_at=datetime(2026, 3, 29, 19, 0, 0),
+                        updated_at=now,
+                        attempts=4,
+                        last_error="Timed out repeatedly",
+                    ),
+                    3: SimpleNamespace(
+                        id=3,
+                        meeting_id="m-002",
+                        window_id="m-002:w0001",
+                        plugin_id="stakeholder_update_drafter",
+                        plugin_version="1.0.0",
+                        transcript_hash="hash-3",
+                        idempotency_key="idem-3",
+                        context={},
+                        status="running",
+                        requested_at=datetime(2026, 3, 29, 19, 30, 0),
+                        updated_at=now,
+                        attempts=2,
+                        last_error=None,
+                    ),
+                }
+
+            def list_plugin_run_jobs(self, *, status="all", meeting_id=None, limit=200):
+                output = list(self.jobs.values())
+                if status != "all":
+                    output = [job for job in output if job.status == status]
+                if meeting_id:
+                    output = [job for job in output if job.meeting_id == meeting_id]
+                output.sort(key=lambda job: (job.requested_at, job.id))
+                return output[:limit]
+
+            def get_plugin_run_job(self, job_id):
+                return self.jobs.get(int(job_id))
+
+            def retry_plugin_run_job(self, job_id, *, error, retry_at):
+                job = self.jobs[int(job_id)]
+                job.status = "queued"
+                job.last_error = error
+                job.requested_at = retry_at
+                job.updated_at = retry_at
+
+            def complete_plugin_run_job(self, job_id):
+                self.jobs.pop(int(job_id), None)
+
+            def get_plugin_run_job_summary(self):
+                return SimpleNamespace(
+                    total_jobs=3,
+                    queued_jobs=1,
+                    running_jobs=1,
+                    failed_jobs=1,
+                    queued_due_jobs=0,
+                    scheduled_retry_jobs=1,
+                    next_retry_at=datetime(2027, 3, 29, 20, 5, 0),
+                )
+
+        fake_db = FakeDb()
+        import holdspeak.db as db_module
+
+        monkeypatch.setattr(db_module, "get_database", lambda: fake_db)
+
+        jobs_response = test_client.get("/api/plugin-jobs?status=all&limit=10")
+        assert jobs_response.status_code == 200
+        jobs_data = jobs_response.json()
+        assert len(jobs_data["jobs"]) == 3
+        jobs_by_id = {job["id"]: job for job in jobs_data["jobs"]}
+        assert jobs_by_id[1]["status"] == "queued"
+        assert jobs_by_id[1]["retry_scheduled"] is True
+        assert jobs_by_id[1]["next_retry_at"] is not None
+        assert jobs_by_id[2]["status"] == "failed"
+        assert jobs_by_id[2]["retry_scheduled"] is False
+
+        queued_response = test_client.get("/api/plugin-jobs?status=queued&limit=10")
+        assert queued_response.status_code == 200
+        queued_jobs = queued_response.json()["jobs"]
+        assert len(queued_jobs) == 1
+        assert queued_jobs[0]["id"] == 1
+
+        summary_response = test_client.get("/api/plugin-jobs/summary")
+        assert summary_response.status_code == 200
+        summary_data = summary_response.json()
+        assert summary_data["total_jobs"] == 3
+        assert summary_data["queued_jobs"] == 1
+        assert summary_data["running_jobs"] == 1
+        assert summary_data["failed_jobs"] == 1
+        assert summary_data["queued_due_jobs"] == 0
+        assert summary_data["scheduled_retry_jobs"] == 1
+        assert summary_data["next_retry_at"] is not None
+
+        retry_response = test_client.post("/api/plugin-jobs/2/retry-now")
+        assert retry_response.status_code == 200
+        retry_data = retry_response.json()
+        assert retry_data["success"] is True
+        assert retry_data["job"]["id"] == 2
+        assert retry_data["job"]["status"] == "queued"
+
+        cancel_response = test_client.post("/api/plugin-jobs/1/cancel")
+        assert cancel_response.status_code == 200
+        assert cancel_response.json()["success"] is True
+        assert fake_db.get_plugin_run_job(1) is None
+
+        retry_running = test_client.post("/api/plugin-jobs/3/retry-now")
+        assert retry_running.status_code == 409
+        assert retry_running.json()["success"] is False
+
+        cancel_running = test_client.post("/api/plugin-jobs/3/cancel")
+        assert cancel_running.status_code == 409
+        assert cancel_running.json()["success"] is False
+
+        missing_retry = test_client.post("/api/plugin-jobs/999/retry-now")
+        assert missing_retry.status_code == 404
+        assert missing_retry.json()["success"] is False
+
+        missing_cancel = test_client.post("/api/plugin-jobs/999/cancel")
+        assert missing_cancel.status_code == 404
+        assert missing_cancel.json()["success"] is False
+
+    def test_plugin_jobs_process_requires_runtime_callback(self, test_client):
+        response = test_client.post("/api/plugin-jobs/process", json={"mode": "retry_now", "max_jobs": 3})
+        assert response.status_code == 501
+        payload = response.json()
+        assert payload["success"] is False
+        assert "not supported" in payload["error"].lower()
+
+    def test_plugin_jobs_process_uses_runtime_callback(self, mock_callbacks):
+        callback_calls: list[dict[str, object]] = []
+        broadcasts: list[tuple[str, object]] = []
+
+        def _on_process_plugin_jobs(*, max_jobs=None, include_scheduled=False):
+            callback_calls.append(
+                {
+                    "max_jobs": max_jobs,
+                    "include_scheduled": include_scheduled,
+                }
+            )
+            if not include_scheduled:
+                return {
+                    "processed": 0,
+                    "skipped_active_meeting": True,
+                    "deferred_queue_jobs": 0,
+                    "deferred_queue_error": None,
+                }
+            return {
+                "processed": 2,
+                "skipped_active_meeting": False,
+                "deferred_queue_jobs": 1,
+                "deferred_queue_error": None,
+            }
+
+        server = MeetingWebServer(
+            on_bookmark=mock_callbacks["on_bookmark"],
+            on_stop=mock_callbacks["on_stop"],
+            get_state=mock_callbacks["get_state"],
+            on_process_plugin_jobs=_on_process_plugin_jobs,
+            host="127.0.0.1",
+        )
+        server.broadcast = lambda message_type, data: broadcasts.append((message_type, deepcopy(data)))
+        client = TestClient(server.app)
+
+        response = client.post("/api/plugin-jobs/process", json={"mode": "retry_now", "max_jobs": 5})
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["success"] is True
+        assert payload["processed"] == 2
+        assert payload["mode"] == "retry_now"
+        assert callback_calls == [{"max_jobs": 5, "include_scheduled": True}]
+        assert broadcasts[0][0] == "plugin_jobs_processed"
+        assert broadcasts[0][1]["processed"] == 2
+
+        default_mode = client.post("/api/plugin-jobs/process", json={"max_jobs": 2})
+        assert default_mode.status_code == 200
+        default_payload = default_mode.json()
+        assert default_payload["success"] is True
+        assert default_payload["mode"] == "respect_backoff"
+        assert default_payload["processed"] == 0
+        assert default_payload["skipped_active_meeting"] is True
+        assert callback_calls[1] == {"max_jobs": 2, "include_scheduled": False}
+        assert broadcasts[1][0] == "plugin_jobs_processed"
+        assert broadcasts[1][1]["mode"] == "respect_backoff"
+
+        invalid_mode = client.post("/api/plugin-jobs/process", json={"mode": "invalid"})
+        assert invalid_mode.status_code == 400
+        assert invalid_mode.json()["success"] is False
+
+        invalid_max_jobs = client.post("/api/plugin-jobs/process", json={"max_jobs": 0})
+        assert invalid_max_jobs.status_code == 400
+        assert invalid_max_jobs.json()["success"] is False
 
 
 # ============================================================

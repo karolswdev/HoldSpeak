@@ -1,0 +1,5 @@
+# command: uv run pytest -q tests/integration/test_web_server.py -m requires_meeting -k 'legacy_meeting_without_mir_history_rows_remains_loadable'
+2026-03-29T20:49:52-06:00
+git_commit=b434e2c
+.                                                                        [100%]
+1 passed, 68 deselected in 0.53s

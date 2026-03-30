@@ -2,7 +2,7 @@
 
 import ast
 import pytest
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 import tempfile
 import shutil
@@ -12,6 +12,9 @@ from holdspeak.db import (
     MeetingSummary,
     ActionItemSummary,
     IntelJob,
+    IntentWindowSummary,
+    PluginRunSummary,
+    ArtifactSummary,
     reset_database,
 )
 from holdspeak.meeting_session import (
@@ -733,6 +736,430 @@ class TestDeferredIntelQueue:
         assert jobs[0].meeting_id == sample_meeting.id
         assert jobs[0].status == "queued"
         assert jobs[0].last_error == "Manual retry requested."
+
+    def test_claim_next_intel_job_skips_future_scheduled_jobs(self, db, sample_meeting):
+        """Claim should ignore queued jobs that are not due yet."""
+        db.save_meeting(sample_meeting)
+        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+
+        future = datetime.now() + timedelta(minutes=5)
+        db.retry_intel_job(
+            sample_meeting.id,
+            "Deferred intel failed: temporary network issue",
+            retry_at=future,
+            attempt=1,
+            max_attempts=6,
+        )
+
+        assert db.claim_next_intel_job() is None
+        assert db.claim_next_intel_job(include_scheduled=True) is not None
+
+    def test_retry_intel_job_requeues_and_updates_meeting_status(self, db, sample_meeting):
+        """retry_intel_job should keep job queued with retry details."""
+        db.save_meeting(sample_meeting)
+        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+        claimed = db.claim_next_intel_job()
+        assert claimed is not None
+
+        retry_at = datetime.now() + timedelta(seconds=30)
+        db.retry_intel_job(
+            sample_meeting.id,
+            "Deferred intel failed: timeout",
+            retry_at=retry_at,
+            attempt=claimed.attempts,
+            max_attempts=6,
+        )
+
+        queued = db.list_intel_jobs(status="queued")
+        assert len(queued) == 1
+        assert queued[0].meeting_id == sample_meeting.id
+        assert queued[0].status == "queued"
+        assert queued[0].last_error == "Deferred intel failed: timeout"
+        assert queued[0].requested_at >= retry_at.replace(microsecond=0)
+
+        meeting = db.get_meeting(sample_meeting.id)
+        assert meeting is not None
+        assert meeting.intel_status == "queued"
+        assert "Retrying at" in (meeting.intel_status_detail or "")
+
+    def test_get_intel_queue_summary_reports_aggregate_telemetry(self, db, sample_meeting):
+        """Queue summary should report due/scheduled/retry telemetry accurately."""
+        db.save_meeting(sample_meeting)
+        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+
+        summary = db.get_intel_queue_summary()
+        assert summary.total_jobs == 1
+        assert summary.queued_jobs == 1
+        assert summary.queued_due_jobs == 1
+        assert summary.scheduled_retry_jobs == 0
+        assert summary.next_retry_at is None
+
+        claimed = db.claim_next_intel_job()
+        assert claimed is not None
+        retry_at = datetime.now() + timedelta(minutes=2)
+        db.retry_intel_job(
+            sample_meeting.id,
+            "Deferred intel failed: timeout",
+            retry_at=retry_at,
+            attempt=claimed.attempts,
+            max_attempts=6,
+        )
+
+        scheduled = db.get_intel_queue_summary()
+        assert scheduled.total_jobs == 1
+        assert scheduled.queued_jobs == 1
+        assert scheduled.queued_due_jobs == 0
+        assert scheduled.scheduled_retry_jobs == 1
+        assert scheduled.next_retry_at is not None
+
+    def test_intel_job_attempt_history_round_trips(self, db, sample_meeting):
+        """Attempt history should persist and return latest-first order."""
+        db.save_meeting(sample_meeting)
+        now = datetime.now()
+        db.record_intel_job_attempt(
+            sample_meeting.id,
+            attempt=1,
+            outcome="scheduled_retry",
+            error="timeout",
+            retry_at=now + timedelta(seconds=30),
+        )
+        db.record_intel_job_attempt(
+            sample_meeting.id,
+            attempt=2,
+            outcome="terminal_failure",
+            error="auth failure",
+            retry_at=None,
+        )
+
+        attempts = db.list_intel_job_attempts(sample_meeting.id, limit=5)
+        assert len(attempts) == 2
+        assert attempts[0].attempt == 2
+        assert attempts[0].outcome == "terminal_failure"
+        assert attempts[1].attempt == 1
+        assert attempts[1].retry_at is not None
+
+
+class TestMirPersistence:
+    """Tests for MIR intent-window and plugin-run persistence."""
+
+    def test_record_and_list_intent_windows(self, db, sample_meeting):
+        db.save_meeting(sample_meeting)
+
+        db.record_intent_window(
+            meeting_id=sample_meeting.id,
+            window_id=f"{sample_meeting.id}:w0001",
+            start_seconds=0.0,
+            end_seconds=90.0,
+            transcript_hash="abc123",
+            transcript_excerpt="Architecture and delivery scope",
+            profile="balanced",
+            threshold=0.6,
+            active_intents=["architecture", "delivery"],
+            intent_scores={"architecture": 0.83, "delivery": 0.71},
+            override_intents=[],
+            tags=["design", "planning"],
+            metadata={"source": "test"},
+        )
+
+        windows = db.list_intent_windows(sample_meeting.id)
+        assert len(windows) == 1
+        window = windows[0]
+        assert isinstance(window, IntentWindowSummary)
+        assert window.window_id == f"{sample_meeting.id}:w0001"
+        assert window.active_intents == ["architecture", "delivery"]
+        assert window.intent_scores["architecture"] == pytest.approx(0.83)
+        assert window.intent_scores["delivery"] == pytest.approx(0.71)
+        assert window.tags == ["design", "planning"]
+        assert window.metadata["source"] == "test"
+
+        # Upsert same window id should refresh values instead of duplicating rows.
+        db.record_intent_window(
+            meeting_id=sample_meeting.id,
+            window_id=f"{sample_meeting.id}:w0001",
+            start_seconds=30.0,
+            end_seconds=120.0,
+            transcript_hash="def456",
+            transcript_excerpt="Incident handoff update",
+            profile="incident_response",
+            threshold=0.5,
+            active_intents=["incident"],
+            intent_scores={"incident": 0.92},
+            override_intents=["incident"],
+            tags=["incident"],
+            metadata={"source": "refresh"},
+        )
+
+        refreshed = db.list_intent_windows(sample_meeting.id)
+        assert len(refreshed) == 1
+        row = refreshed[0]
+        assert row.start_seconds == pytest.approx(30.0)
+        assert row.end_seconds == pytest.approx(120.0)
+        assert row.transcript_hash == "def456"
+        assert row.profile == "incident_response"
+        assert row.active_intents == ["incident"]
+        assert row.intent_scores["incident"] == pytest.approx(0.92)
+        assert row.override_intents == ["incident"]
+        assert row.tags == ["incident"]
+        assert row.metadata["source"] == "refresh"
+
+    def test_record_and_list_plugin_runs(self, db, sample_meeting):
+        db.save_meeting(sample_meeting)
+        window_id = f"{sample_meeting.id}:w0001"
+
+        db.record_intent_window(
+            meeting_id=sample_meeting.id,
+            window_id=window_id,
+            start_seconds=0.0,
+            end_seconds=90.0,
+            transcript_hash="abc123",
+            intent_scores={"architecture": 0.9},
+        )
+
+        db.record_plugin_run(
+            meeting_id=sample_meeting.id,
+            window_id=window_id,
+            plugin_id="requirements_extractor",
+            plugin_version="1.0.0",
+            status="success",
+            idempotency_key="idem-1",
+            duration_ms=42.0,
+            output={"items": 3},
+            error=None,
+            deduped=False,
+        )
+
+        # Same idempotency key should upsert, not duplicate.
+        db.record_plugin_run(
+            meeting_id=sample_meeting.id,
+            window_id=window_id,
+            plugin_id="requirements_extractor",
+            plugin_version="1.0.1",
+            status="deduped",
+            idempotency_key="idem-1",
+            duration_ms=0.0,
+            output={"items": 3},
+            error=None,
+            deduped=True,
+        )
+
+        db.record_plugin_run(
+            meeting_id=sample_meeting.id,
+            window_id=window_id,
+            plugin_id="risk_heatmap",
+            plugin_version="2.0.0",
+            status="error",
+            idempotency_key=None,
+            duration_ms=15.0,
+            output=None,
+            error="RuntimeError: boom",
+            deduped=False,
+        )
+
+        runs = db.list_plugin_runs(sample_meeting.id)
+        assert len(runs) == 2
+        assert all(isinstance(run, PluginRunSummary) for run in runs)
+
+        first = runs[0]
+        second = runs[1]
+        # Newest record first.
+        assert first.plugin_id == "risk_heatmap"
+        assert first.status == "error"
+        assert first.error == "RuntimeError: boom"
+        assert first.output is None
+
+        assert second.plugin_id == "requirements_extractor"
+        assert second.status == "deduped"
+        assert second.plugin_version == "1.0.1"
+        assert second.idempotency_key == "idem-1"
+        assert second.deduped is True
+        assert second.output == {"items": 3}
+
+        filtered = db.list_plugin_runs(sample_meeting.id, window_id=window_id)
+        assert len(filtered) == 2
+
+    def test_record_and_list_artifacts_with_lineage(self, db, sample_meeting):
+        db.save_meeting(sample_meeting)
+
+        db.record_artifact(
+            artifact_id="art-1",
+            meeting_id=sample_meeting.id,
+            artifact_type="requirements",
+            title="Requirements Extractor",
+            body_markdown="### Requirements\n\nDefine acceptance criteria.",
+            structured_json={"plugin_run_ids": ["11"], "window_ids": [f"{sample_meeting.id}:w0001"]},
+            confidence=0.82,
+            status="draft",
+            plugin_id="requirements_extractor",
+            plugin_version="1.0.0",
+            sources=[
+                {"source_type": "intent_window", "source_ref": f"{sample_meeting.id}:w0001"},
+                {"source_type": "plugin_run", "source_ref": "11"},
+            ],
+        )
+
+        # Upsert should replace body + sources without duplicating record.
+        db.record_artifact(
+            artifact_id="art-1",
+            meeting_id=sample_meeting.id,
+            artifact_type="requirements",
+            title="Requirements Extractor",
+            body_markdown="### Requirements\n\nUpdated with rollout constraints.",
+            structured_json={"plugin_run_ids": ["11", "12"], "window_ids": [f"{sample_meeting.id}:w0001", f"{sample_meeting.id}:w0002"]},
+            confidence=0.74,
+            status="needs_review",
+            plugin_id="requirements_extractor",
+            plugin_version="1.1.0",
+            sources=[
+                {"source_type": "intent_window", "source_ref": f"{sample_meeting.id}:w0002"},
+                {"source_type": "plugin_run", "source_ref": "12"},
+            ],
+        )
+
+        artifacts = db.list_artifacts(sample_meeting.id)
+        assert len(artifacts) == 1
+        artifact = artifacts[0]
+        assert isinstance(artifact, ArtifactSummary)
+        assert artifact.id == "art-1"
+        assert artifact.status == "needs_review"
+        assert artifact.plugin_version == "1.1.0"
+        assert artifact.body_markdown.endswith("rollout constraints.")
+        assert artifact.structured_json["plugin_run_ids"] == ["11", "12"]
+        refs = {(src["source_type"], src["source_ref"]) for src in artifact.sources}
+        assert ("intent_window", f"{sample_meeting.id}:w0002") in refs
+        assert ("plugin_run", "12") in refs
+
+    def test_plugin_run_job_queue_lifecycle(self, db, sample_meeting):
+        db.save_meeting(sample_meeting)
+        idempotency_key = "queue-key-1"
+
+        inserted = db.enqueue_plugin_run_job(
+            meeting_id=sample_meeting.id,
+            window_id=f"{sample_meeting.id}:w0001",
+            plugin_id="risk_heatmap",
+            plugin_version="1.0.0",
+            transcript_hash="hash-1",
+            idempotency_key=idempotency_key,
+            context={"active_intents": ["incident"]},
+        )
+        assert inserted is True
+
+        inserted_again = db.enqueue_plugin_run_job(
+            meeting_id=sample_meeting.id,
+            window_id=f"{sample_meeting.id}:w0001",
+            plugin_id="risk_heatmap",
+            plugin_version="1.0.0",
+            transcript_hash="hash-1",
+            idempotency_key=idempotency_key,
+            context={"active_intents": ["incident"]},
+        )
+        assert inserted_again is False
+
+        queued = db.list_plugin_run_jobs(status="queued")
+        assert len(queued) == 1
+        assert queued[0].idempotency_key == idempotency_key
+        loaded = db.get_plugin_run_job(queued[0].id)
+        assert loaded is not None
+        assert loaded.id == queued[0].id
+        assert loaded.status == "queued"
+
+        claimed = db.claim_next_plugin_run_job()
+        assert claimed is not None
+        assert claimed.idempotency_key == idempotency_key
+        assert claimed.status == "running"
+        assert claimed.attempts == 1
+
+        db.retry_plugin_run_job(
+            claimed.id,
+            error="Transient failure",
+            retry_at=datetime.now() - timedelta(seconds=1),
+        )
+        claimed_again = db.claim_next_plugin_run_job()
+        assert claimed_again is not None
+        assert claimed_again.id == claimed.id
+        assert claimed_again.attempts == 2
+        assert claimed_again.status == "running"
+
+        db.complete_plugin_run_job(claimed_again.id)
+        assert db.list_plugin_run_jobs(status="all") == []
+        assert db.get_plugin_run_job(claimed_again.id) is None
+
+    def test_plugin_run_job_fail_status(self, db, sample_meeting):
+        db.save_meeting(sample_meeting)
+        db.enqueue_plugin_run_job(
+            meeting_id=sample_meeting.id,
+            window_id=f"{sample_meeting.id}:w0002",
+            plugin_id="incident_timeline",
+            plugin_version="1.1.0",
+            transcript_hash="hash-2",
+            idempotency_key="queue-key-fail",
+            context={"active_intents": ["incident"]},
+        )
+        claimed = db.claim_next_plugin_run_job()
+        assert claimed is not None
+        db.fail_plugin_run_job(claimed.id, error="Timed out repeatedly")
+
+        failed = db.list_plugin_run_jobs(status="failed")
+        assert len(failed) == 1
+        assert failed[0].id == claimed.id
+        assert failed[0].status == "failed"
+        assert failed[0].last_error == "Timed out repeatedly"
+
+    def test_plugin_run_job_summary_reports_queue_telemetry(self, db, sample_meeting):
+        db.save_meeting(sample_meeting)
+        for idx in range(1, 5):
+            db.enqueue_plugin_run_job(
+                meeting_id=sample_meeting.id,
+                window_id=f"{sample_meeting.id}:w{idx:04d}",
+                plugin_id=f"plugin-{idx}",
+                plugin_version="1.0.0",
+                transcript_hash=f"hash-{idx}",
+                idempotency_key=f"summary-key-{idx}",
+                context={"active_intents": ["incident"]},
+            )
+
+        running = db.claim_next_plugin_run_job()
+        assert running is not None
+        failed = db.claim_next_plugin_run_job()
+        assert failed is not None
+        db.fail_plugin_run_job(failed.id, error="Permanent failure")
+
+        queued = db.list_plugin_run_jobs(status="queued")
+        assert len(queued) == 2
+        scheduled = queued[0]
+        retry_at = datetime.now() + timedelta(minutes=5)
+        db.retry_plugin_run_job(scheduled.id, error="Retry later", retry_at=retry_at)
+
+        summary = db.get_plugin_run_job_summary()
+        assert summary.total_jobs == 4
+        assert summary.queued_jobs == 2
+        assert summary.running_jobs == 1
+        assert summary.failed_jobs == 1
+        assert summary.queued_due_jobs == 1
+        assert summary.scheduled_retry_jobs == 1
+        assert summary.next_retry_at is not None
+
+    def test_claim_next_plugin_run_job_can_include_scheduled(self, db, sample_meeting):
+        db.save_meeting(sample_meeting)
+        db.enqueue_plugin_run_job(
+            meeting_id=sample_meeting.id,
+            window_id=f"{sample_meeting.id}:w-scheduled",
+            plugin_id="incident_timeline",
+            plugin_version="1.0.0",
+            transcript_hash="hash-scheduled",
+            idempotency_key="queue-key-scheduled",
+            context={"active_intents": ["incident"]},
+        )
+
+        queued = db.list_plugin_run_jobs(status="queued")
+        assert len(queued) == 1
+        retry_at = datetime.now() + timedelta(minutes=10)
+        db.retry_plugin_run_job(queued[0].id, error="retry later", retry_at=retry_at)
+
+        assert db.claim_next_plugin_run_job() is None
+        claimed = db.claim_next_plugin_run_job(include_scheduled=True)
+        assert claimed is not None
+        assert claimed.id == queued[0].id
+        assert claimed.status == "running"
 
 
 class TestDatabaseShape:

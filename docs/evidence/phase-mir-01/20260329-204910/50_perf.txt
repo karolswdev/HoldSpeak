@@ -1,0 +1,6 @@
+# command: uv run python - <<PY (routing micro-bench sample)
+2026-03-29T20:50:46-06:00
+git_commit=b434e2c
+samples=60
+median_ms=0.023
+max_ms=0.244

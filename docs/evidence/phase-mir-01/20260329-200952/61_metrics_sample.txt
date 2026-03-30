@@ -1,0 +1,4 @@
+# command: uv run python - <<PY (router/host metrics sample)
+2026-03-29T20:11:28-06:00
+router_counters={'routed_windows': 1, 'dropped_windows': 1}
+host_metrics={'runs_total': 3, 'success': 1, 'error': 0, 'timeout': 1, 'deduped': 1, 'blocked': 0}

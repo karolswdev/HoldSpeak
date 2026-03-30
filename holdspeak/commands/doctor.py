@@ -6,10 +6,16 @@ Performs lightweight environment checks and prints actionable remediation.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 import os
 import platform
+import socket
 import shutil
+import ssl
 import sys
+from urllib import error as urlerror
+from urllib import request as urlrequest
+from urllib.parse import urlparse
 
 from ..audio_devices import check_blackhole_setup, get_default_input_device
 from ..config import CONFIG_FILE, Config
@@ -307,6 +313,174 @@ def _check_meeting_intel_runtime(config: Config) -> DoctorCheck:
     )
 
 
+def _normalize_cloud_base_url(base_url: str | None) -> str:
+    value = (base_url or "").strip()
+    if value:
+        return value.rstrip("/")
+    return "https://api.openai.com/v1"
+
+
+def _describe_preflight_network_error(host: str, reason: object) -> tuple[str, str]:
+    if isinstance(reason, socket.gaierror):
+        return (
+            f"DNS lookup failed for `{host}`.",
+            "Verify hostname/IP and local DNS routing (VPN/LAN).",
+        )
+    if isinstance(reason, (socket.timeout, TimeoutError)):
+        return (
+            f"Connection to `{host}` timed out.",
+            "Check host reachability, firewall rules, and network latency.",
+        )
+    if isinstance(reason, ConnectionRefusedError):
+        return (
+            f"Connection refused by `{host}`.",
+            "Ensure the intel API service is running and listening on the configured port.",
+        )
+    if isinstance(reason, ssl.SSLError):
+        return (
+            f"TLS handshake failed for `{host}`: {reason}",
+            "Fix certificate chain/hostname, or use a trusted LAN cert.",
+        )
+    return (
+        f"Unable to reach `{host}`: {reason}",
+        "Verify endpoint address, network routing, and service availability.",
+    )
+
+
+def _check_meeting_intel_cloud_preflight(config: Config, *, timeout_seconds: float = 4.0) -> DoctorCheck:
+    meeting = config.meeting
+    if not meeting.intel_enabled:
+        return DoctorCheck(
+            name="Cloud intel preflight",
+            status="PASS",
+            detail="Skipped (meeting intelligence disabled)",
+        )
+    if meeting.intel_provider == "local":
+        return DoctorCheck(
+            name="Cloud intel preflight",
+            status="PASS",
+            detail="Skipped (provider mode `local`)",
+        )
+
+    api_key_env = (meeting.intel_cloud_api_key_env or "OPENAI_API_KEY").strip() or "OPENAI_API_KEY"
+    api_key = (os.environ.get(api_key_env) or "").strip()
+    if not api_key:
+        return DoctorCheck(
+            name="Cloud intel preflight",
+            status="WARN",
+            detail=f"Missing API key in ${api_key_env}",
+            fix=f"Set {api_key_env} in your shell or service environment before running cloud intel.",
+        )
+
+    base_url = _normalize_cloud_base_url(meeting.intel_cloud_base_url)
+    parsed = urlparse(base_url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return DoctorCheck(
+            name="Cloud intel preflight",
+            status="WARN",
+            detail=f"Invalid cloud base URL: {base_url}",
+            fix="Set `intel_cloud_base_url` to a valid http(s) URL, e.g. http://homelab.local:8000/v1.",
+        )
+
+    models_url = f"{base_url}/models"
+    request = urlrequest.Request(
+        models_url,
+        headers={
+            "Accept": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
+        method="GET",
+    )
+
+    try:
+        with urlrequest.urlopen(request, timeout=timeout_seconds) as response:
+            payload_bytes = response.read()
+    except urlerror.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace").strip()
+        if exc.code in {401, 403}:
+            return DoctorCheck(
+                name="Cloud intel preflight",
+                status="WARN",
+                detail=f"Auth rejected by `{models_url}` (HTTP {exc.code}).",
+                fix=f"Check token in ${api_key_env} and endpoint auth configuration.",
+            )
+        if exc.code == 404:
+            return DoctorCheck(
+                name="Cloud intel preflight",
+                status="WARN",
+                detail=f"`{models_url}` returned HTTP 404.",
+                fix="Verify `intel_cloud_base_url` includes the correct API prefix (commonly `/v1`).",
+            )
+        return DoctorCheck(
+            name="Cloud intel preflight",
+            status="WARN",
+            detail=f"`{models_url}` returned HTTP {exc.code}: {body[:140] or 'no response body'}",
+            fix="Confirm endpoint compatibility and API access policy.",
+        )
+    except urlerror.URLError as exc:
+        host = parsed.hostname or parsed.netloc or base_url
+        detail, fix = _describe_preflight_network_error(host, exc.reason)
+        return DoctorCheck(
+            name="Cloud intel preflight",
+            status="WARN",
+            detail=detail,
+            fix=fix,
+        )
+    except TimeoutError:
+        host = parsed.hostname or parsed.netloc or base_url
+        return DoctorCheck(
+            name="Cloud intel preflight",
+            status="WARN",
+            detail=f"Connection to `{host}` timed out.",
+            fix="Check host reachability, firewall rules, and endpoint load.",
+        )
+    except Exception as exc:
+        return DoctorCheck(
+            name="Cloud intel preflight",
+            status="WARN",
+            detail=f"Unexpected preflight failure: {exc}",
+            fix="Verify endpoint compatibility with the OpenAI `/models` API.",
+        )
+
+    try:
+        payload = json.loads(payload_bytes.decode("utf-8", errors="replace"))
+    except Exception:
+        payload = None
+
+    configured_model = (meeting.intel_cloud_model or "").strip()
+    model_ids: list[str] = []
+    if isinstance(payload, dict):
+        data = payload.get("data")
+        if isinstance(data, list):
+            for row in data:
+                if isinstance(row, dict):
+                    model_id = row.get("id")
+                    if isinstance(model_id, str) and model_id.strip():
+                        model_ids.append(model_id.strip())
+
+    if model_ids and configured_model and configured_model not in model_ids:
+        sample = ", ".join(model_ids[:5])
+        return DoctorCheck(
+            name="Cloud intel preflight",
+            status="WARN",
+            detail=f"Endpoint reachable, but model `{configured_model}` is unavailable.",
+            fix=f"Set `intel_cloud_model` to a served model id (examples: {sample}).",
+        )
+
+    if not model_ids:
+        return DoctorCheck(
+            name="Cloud intel preflight",
+            status="PASS",
+            detail=f"Endpoint reachable at `{base_url}` (model list unavailable; model check skipped).",
+        )
+
+    return DoctorCheck(
+        name="Cloud intel preflight",
+        status="PASS",
+        detail=f"Endpoint reachable at `{base_url}` and model `{configured_model}` is available.",
+    )
+
+
 def collect_doctor_checks() -> list[DoctorCheck]:
     """Collect all doctor checks in display order."""
     is_wayland = _is_wayland_session()
@@ -318,6 +492,7 @@ def collect_doctor_checks() -> list[DoctorCheck]:
         _check_microphone(),
         _check_transcription_backend(),
         _check_meeting_intel_runtime(config),
+        _check_meeting_intel_cloud_preflight(config),
         _check_hotkey(config.hotkey.key, is_wayland=is_wayland),
         _check_text_injection(is_wayland=is_wayland),
         _check_clipboard_tools(is_wayland=is_wayland),

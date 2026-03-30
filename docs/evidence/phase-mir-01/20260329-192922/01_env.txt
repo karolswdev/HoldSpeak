@@ -1,0 +1,6 @@
+timestamp=2026-03-29T19:29:22-06:00
+cwd=/home/karol/holdspeak-linux-integration
+python=Python 3.13.3
+uv=uv 0.9.26
+platform=Linux karol-fw 6.14.0-37-generic #37-Ubuntu SMP PREEMPT_DYNAMIC Fri Nov 14 22:10:32 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+git_commit=b434e2c

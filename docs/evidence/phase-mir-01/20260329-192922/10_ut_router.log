@@ -1,0 +1,4 @@
+# command: uv run pytest -q tests/unit/test_intent_signals.py tests/unit/test_intent_timeline.py tests/unit/test_intent_router.py tests/unit/test_plugin_host.py tests/unit/test_plugin_host_idempotency.py tests/unit/test_artifact_synthesis.py
+2026-03-29T19:30:09-06:00
+.........................                                                [100%]
+25 passed in 0.07s

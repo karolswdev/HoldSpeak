@@ -1,0 +1,4 @@
+# command: uv run pytest -q tests/integration/test_web_server.py -m requires_meeting -k 'intent|plugin|artifacts'
+2026-03-29T20:11:25-06:00
+......                                                                   [100%]
+6 passed, 62 deselected in 0.40s

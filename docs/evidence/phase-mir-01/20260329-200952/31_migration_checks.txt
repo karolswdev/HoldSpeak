@@ -1,0 +1,6 @@
+# command: uv run python - <<PY (migration idempotence check v8)
+2026-03-29T20:12:03-06:00
+db_path=/tmp/holdspeak-mir-migrate-u4uhf1_c/migrate.db
+schema_version=8
+expected_version=8
+migration_idempotent=True

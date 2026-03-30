@@ -1,0 +1,5 @@
+# command: uv run python - <<PY (DB MIR table checks)
+2026-03-29T20:12:03-06:00
+db_path=/tmp/holdspeak-mir-db-6zjh9z0w/test.db
+missing_tables=[]
+has_required_tables=True

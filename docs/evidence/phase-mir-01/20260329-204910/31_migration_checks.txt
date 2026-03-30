@@ -1,0 +1,7 @@
+# command: uv run python - <<PY (migration idempotence check v9)
+2026-03-29T20:51:24-06:00
+git_commit=b434e2c
+db_path=/tmp/holdspeak-mir-migrate-l0hfvjqt/migrate.db
+schema_version=9
+expected_version=9
+migration_idempotent=True

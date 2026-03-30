@@ -224,6 +224,14 @@ class HoldSpeakController:
         desired_cloud_base_url = config.intel_cloud_base_url
         desired_cloud_reasoning_effort = config.intel_cloud_reasoning_effort
         desired_cloud_store = config.intel_cloud_store
+        desired_retry_base_seconds = config.intel_retry_base_seconds
+        desired_retry_max_seconds = config.intel_retry_max_seconds
+        desired_retry_max_attempts = config.intel_retry_max_attempts
+        desired_failure_alert_percent = config.intel_retry_failure_alert_percent
+        desired_failure_hysteresis_minutes = config.intel_retry_failure_hysteresis_minutes
+        desired_failure_webhook_url = config.intel_retry_failure_webhook_url
+        desired_failure_webhook_header_name = config.intel_retry_failure_webhook_header_name
+        desired_failure_webhook_header_value = config.intel_retry_failure_webhook_header_value
         desired_poll = max(5.0, float(config.intel_queue_poll_seconds))
 
         worker = self._intel_queue_worker
@@ -243,6 +251,14 @@ class HoldSpeakController:
             and worker.cloud_base_url == desired_cloud_base_url
             and worker.cloud_reasoning_effort == desired_cloud_reasoning_effort
             and worker.cloud_store == desired_cloud_store
+            and worker.retry_base_seconds == desired_retry_base_seconds
+            and worker.retry_max_seconds == desired_retry_max_seconds
+            and worker.retry_max_attempts == desired_retry_max_attempts
+            and worker.failure_alert_percent == desired_failure_alert_percent
+            and worker.failure_alert_hysteresis_seconds == max(0.0, float(desired_failure_hysteresis_minutes) * 60.0)
+            and worker.failure_alert_webhook_url == ((desired_failure_webhook_url or "").strip() or None)
+            and worker.failure_alert_webhook_header_name == ((desired_failure_webhook_header_name or "").strip() or None)
+            and worker.failure_alert_webhook_header_value == ((desired_failure_webhook_header_value or "").strip() or None)
             and worker.poll_seconds == desired_poll
         ):
             return
@@ -258,6 +274,14 @@ class HoldSpeakController:
             cloud_base_url=desired_cloud_base_url,
             cloud_reasoning_effort=desired_cloud_reasoning_effort,
             cloud_store=desired_cloud_store,
+            retry_base_seconds=desired_retry_base_seconds,
+            retry_max_seconds=desired_retry_max_seconds,
+            retry_max_attempts=desired_retry_max_attempts,
+            failure_alert_percent=desired_failure_alert_percent,
+            failure_alert_hysteresis_minutes=desired_failure_hysteresis_minutes,
+            failure_alert_webhook_url=desired_failure_webhook_url,
+            failure_alert_webhook_header_name=desired_failure_webhook_header_name,
+            failure_alert_webhook_header_value=desired_failure_webhook_header_value,
             poll_seconds=desired_poll,
         )
 

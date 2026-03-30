@@ -889,12 +889,46 @@
 
           <template x-if="tab === 'intel'">
             <div class="stack">
+              <div class="metric-grid">
+                <div class="metric">
+                  <span class="metric-label">Queue Total</span>
+                  <div class="metric-value" x-text="intelSummary?.total_jobs ?? 0"></div>
+                  <div class="metric-note">All deferred-intel jobs currently tracked.</div>
+                </div>
+                <div class="metric">
+                  <span class="metric-label">Ready Now</span>
+                  <div class="metric-value" x-text="intelSummary?.queued_due_jobs ?? 0"></div>
+                  <div class="metric-note">Queued jobs eligible to run immediately.</div>
+                </div>
+                <div class="metric">
+                  <span class="metric-label">Scheduled</span>
+                  <div class="metric-value" x-text="intelSummary?.scheduled_retry_jobs ?? 0"></div>
+                  <div class="metric-note" x-text="intelNextRetryLabel()"></div>
+                </div>
+                <div class="metric">
+                  <span class="metric-label">Failure Rate</span>
+                  <div class="metric-value" x-text="intelFailureRateLabel()"></div>
+                  <div class="metric-note">Failed jobs as a share of current queue state.</div>
+                </div>
+              </div>
+
+              <div
+                class="notice error"
+                x-show="intelFailureAlertActive()"
+                x-cloak
+                x-text="intelFailureAlertMessage()"
+              ></div>
+
               <div class="filter-row">
                 <select class="status-filter" x-model="intelStatusFilter" @change="loadIntelJobs">
                   <option value="all">All jobs</option>
                   <option value="queued">Queued</option>
                   <option value="running">Running</option>
                   <option value="failed">Failed</option>
+                </select>
+                <select class="status-filter" x-model="intelProcessMode">
+                  <option value="respect_backoff">Process due jobs only</option>
+                  <option value="retry_now">Retry all queued now</option>
                 </select>
                 <input class="input" style="max-width: 140px;" type="number" min="1" x-model.number="intelLimit" placeholder="Limit" />
                 <input class="input" style="max-width: 180px;" type="number" min="1" x-model.number="intelMaxJobs" placeholder="Process max jobs" />
@@ -920,14 +954,89 @@
                     </div>
                     <div class="pill-row">
                       <span class="pill" x-text="`Attempts ${job.attempts}`"></span>
-                      <span class="pill" x-text="`Requested ${formatDate(job.requested_at)}`"></span>
+                      <span class="pill" x-show="typeof job.retries_remaining === 'number'" x-cloak x-text="`Remaining ${job.retries_remaining}`"></span>
+                      <span class="pill" x-text="intelQueueScheduleLabel(job)"></span>
                     </div>
                     <p class="meta-line" x-show="job.last_error" x-cloak x-text="job.last_error"></p>
+                    <div class="stack" x-show="job.retry_history && job.retry_history.length > 0" x-cloak>
+                      <p class="meta-line">Recent attempts:</p>
+                      <template x-for="event in job.retry_history" :key="`${job.meeting_id}-${event.created_at}-${event.attempt}-${event.outcome}`">
+                        <p
+                          class="meta-line"
+                          x-text="`• ${formatDate(event.created_at)} · attempt ${event.attempt} · ${intelAttemptOutcomeLabel(event)}${event.retry_at ? ` (next ${formatDate(event.retry_at)})` : ''}`"
+                        ></p>
+                      </template>
+                    </div>
                     <div class="search-row">
                       <button class="btn" :disabled="processingIntel" @click="retryIntelJob(job.meeting_id)">Retry Meeting</button>
                     </div>
                   </div>
                 </template>
+              </div>
+
+              <div class="detail-card">
+                <h4>Deferred Plugin Jobs</h4>
+                <p>Heavy MIR plugin runs that were deferred to the durable queue.</p>
+
+                <div class="pill-row">
+                  <span class="pill" x-text="`Total ${pluginJobs.length}`"></span>
+                  <span class="pill" x-text="`Queued ${pluginJobs.filter(j => j.status === 'queued').length}`"></span>
+                  <span class="pill" x-text="`Running ${pluginJobs.filter(j => j.status === 'running').length}`"></span>
+                  <span class="pill" x-text="`Failed ${pluginJobs.filter(j => j.status === 'failed').length}`"></span>
+                </div>
+
+                <div class="filter-row" style="margin-top: 12px;">
+                  <select class="status-filter" x-model="pluginJobStatusFilter" @change="loadPluginJobs">
+                    <option value="all">All plugin jobs</option>
+                    <option value="queued">Queued</option>
+                    <option value="running">Running</option>
+                    <option value="failed">Failed</option>
+                  </select>
+                  <input class="input" style="max-width: 140px;" type="number" min="1" x-model.number="pluginJobLimit" placeholder="Limit" />
+                  <button class="btn" @click="loadPluginJobs">Refresh</button>
+                </div>
+
+                <div x-show="loadingPluginJobs" class="loading" style="margin-top: 12px;">Loading deferred plugin jobs...</div>
+
+                <div x-show="!loadingPluginJobs && pluginJobs.length === 0" class="empty" style="margin-top: 12px;">
+                  <p>No deferred plugin jobs match this filter.</p>
+                </div>
+
+                <div class="grid" x-show="!loadingPluginJobs && pluginJobs.length > 0" style="margin-top: 12px;">
+                  <template x-for="job in pluginJobs" :key="job.id">
+                    <div class="action-card">
+                      <div class="card-top">
+                        <div style="text-align: left;">
+                          <p class="card-title" x-text="job.plugin_id"></p>
+                          <p class="card-subtitle mono" x-text="`${job.meeting_id} · ${job.window_id}`"></p>
+                        </div>
+                        <span class="status-pill" :class="job.status" x-text="job.status"></span>
+                      </div>
+                      <div class="pill-row">
+                        <span class="pill" x-text="`Attempts ${job.attempts}`"></span>
+                        <span class="pill" x-show="job.retry_scheduled" x-cloak x-text="pluginJobScheduleLabel(job)"></span>
+                        <span class="pill" x-show="!job.retry_scheduled" x-cloak x-text="`Requested ${formatDate(job.requested_at)}`"></span>
+                      </div>
+                      <p class="meta-line" x-show="job.last_error" x-cloak x-text="job.last_error"></p>
+                      <div class="search-row">
+                        <button
+                          class="btn"
+                          :disabled="processingPluginJobs || job.status === 'running'"
+                          @click="retryPluginJob(job.id)"
+                        >
+                          Retry Now
+                        </button>
+                        <button
+                          class="btn"
+                          :disabled="processingPluginJobs || job.status === 'running'"
+                          @click="cancelPluginJob(job.id)"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+                </div>
               </div>
             </div>
           </template>
@@ -1034,6 +1143,38 @@
                       <div class="field">
                         <label>Intel Queue Poll (seconds)</label>
                         <input class="input" type="number" min="5" x-model.number="settings.meeting.intel_queue_poll_seconds" />
+                      </div>
+                      <div class="field">
+                        <label>Retry Base Delay (seconds)</label>
+                        <input class="input" type="number" min="1" x-model.number="settings.meeting.intel_retry_base_seconds" />
+                      </div>
+                      <div class="field">
+                        <label>Retry Max Delay (seconds)</label>
+                        <input class="input" type="number" min="1" x-model.number="settings.meeting.intel_retry_max_seconds" />
+                      </div>
+                      <div class="field">
+                        <label>Retry Max Attempts</label>
+                        <input class="input" type="number" min="1" x-model.number="settings.meeting.intel_retry_max_attempts" />
+                      </div>
+                      <div class="field">
+                        <label>Failure Alert Threshold (%)</label>
+                        <input class="input" type="number" min="0" max="100" step="0.1" x-model.number="settings.meeting.intel_retry_failure_alert_percent" />
+                      </div>
+                      <div class="field">
+                        <label>Failure Alert Hysteresis (minutes)</label>
+                        <input class="input" type="number" min="0" step="0.5" x-model.number="settings.meeting.intel_retry_failure_hysteresis_minutes" />
+                      </div>
+                      <div class="field full">
+                        <label>Failure Alert Webhook URL (optional)</label>
+                        <input class="input" type="text" placeholder="https://ops.example.com/hooks/holdspeak" x-model="settings.meeting.intel_retry_failure_webhook_url" />
+                      </div>
+                      <div class="field">
+                        <label>Webhook Header Name (optional)</label>
+                        <input class="input" type="text" placeholder="Authorization" x-model="settings.meeting.intel_retry_failure_webhook_header_name" />
+                      </div>
+                      <div class="field">
+                        <label>Webhook Header Value (optional)</label>
+                        <input class="input" type="text" placeholder="Bearer <token>" x-model="settings.meeting.intel_retry_failure_webhook_header_value" />
                       </div>
                       <div class="field">
                         <label>Speaker Similarity Threshold</label>
@@ -1149,11 +1290,14 @@
           loadingSpeakers: true,
           loadingSpeakerDetail: false,
           loadingIntel: true,
+          loadingPluginJobs: true,
           loadingSettings: true,
           meetings: [],
           actionItems: [],
           speakers: [],
           intelJobs: [],
+          intelSummary: null,
+          pluginJobs: [],
           settings: null,
           searchQuery: "",
           showCompleted: false,
@@ -1164,15 +1308,22 @@
           selectedSpeaker: null,
           speakerDraft: { name: "", avatar: "" },
           intelStatusFilter: "all",
+          intelProcessMode: "respect_backoff",
           intelLimit: 20,
           intelMaxJobs: 5,
+          pluginJobStatusFilter: "all",
+          pluginJobLimit: 20,
           uiMessage: "",
           uiError: false,
           savingSettings: false,
           savingSpeaker: false,
           processingIntel: false,
+          processingPluginJobs: false,
           settingsValidationErrors: [],
+          clockTick: Date.now(),
+          intelFailureAboveSinceMs: null,
           _messageTimer: null,
+          _clockTimer: null,
 
           async init() {
             await Promise.all([
@@ -1180,8 +1331,15 @@
               this.loadActionItems(),
               this.loadSpeakers(),
               this.loadIntelJobs(),
+              this.loadIntelSummary(),
+              this.loadPluginJobs(),
               this.loadSettings(),
             ]);
+            if (!this._clockTimer) {
+              this._clockTimer = setInterval(() => {
+                this.clockTick = Date.now();
+              }, 1000);
+            }
           },
 
           async apiJson(url, options = {}) {
@@ -1217,7 +1375,11 @@
             this.tab = name;
             if (name === "actions") this.loadActionItems();
             if (name === "speakers" && this.speakers.length === 0) this.loadSpeakers();
-            if (name === "intel") this.loadIntelJobs();
+            if (name === "intel") {
+              this.loadIntelJobs();
+              this.loadIntelSummary();
+              this.loadPluginJobs();
+            }
             if (name === "settings" && !this.settings) this.loadSettings();
           },
 
@@ -1238,6 +1400,100 @@
 
           reviewStateLabel(state) {
             return this.reviewStateValue(state) === "accepted" ? "Accepted" : "Needs review";
+          },
+
+          intelQueueScheduleLabel(job) {
+            // Touch the clock ticker so labels naturally refresh each second.
+            void this.clockTick;
+            const requested = job?.requested_at ? new Date(job.requested_at) : null;
+            if (!requested || Number.isNaN(requested.getTime())) return "Requested --";
+            const now = new Date();
+            const hasFailure = Boolean(job?.last_error);
+            if (String(job?.status || "").toLowerCase() === "queued" && hasFailure && requested > now) {
+              const rel = this.formatRelativeFromNow(job.requested_at);
+              return rel ? `Retry ${this.formatDate(job.requested_at)} (${rel})` : `Retry ${this.formatDate(job.requested_at)}`;
+            }
+            return `Requested ${this.formatDate(job.requested_at)}`;
+          },
+
+          pluginJobScheduleLabel(job) {
+            // Touch the clock ticker so labels naturally refresh each second.
+            void this.clockTick;
+            const requested = job?.requested_at ? new Date(job.requested_at) : null;
+            if (!requested || Number.isNaN(requested.getTime())) return "Retry scheduled";
+            const rel = this.formatRelativeFromNow(job.requested_at);
+            if (!rel) return `Retry ${this.formatDate(job.requested_at)}`;
+            return `Retry ${this.formatDate(job.requested_at)} (${rel})`;
+          },
+
+          intelFailureRateLabel() {
+            const total = Number(this.intelSummary?.total_jobs || 0);
+            if (total <= 0) return "0%";
+            const failed = Number(this.intelSummary?.failed_jobs || 0);
+            return `${Math.round((failed / total) * 100)}%`;
+          },
+
+          intelFailurePercentValue() {
+            const total = Number(this.intelSummary?.total_jobs || 0);
+            if (total <= 0) return 0;
+            const failed = Number(this.intelSummary?.failed_jobs || 0);
+            return (failed / total) * 100;
+          },
+
+          intelFailureAlertThreshold() {
+            const configured = Number(this.settings?.meeting?.intel_retry_failure_alert_percent);
+            if (Number.isFinite(configured) && configured >= 0) return configured;
+            return 50;
+          },
+
+          intelFailureAlertHysteresisMinutes() {
+            const configured = Number(this.settings?.meeting?.intel_retry_failure_hysteresis_minutes);
+            if (Number.isFinite(configured) && configured >= 0) return configured;
+            return 5;
+          },
+
+          intelFailureAlertActive() {
+            // Touch the clock ticker so alert hysteresis refreshes each second.
+            void this.clockTick;
+            if (!this.intelSummary) return false;
+            if (Number(this.intelSummary.total_jobs || 0) <= 0) {
+              this.intelFailureAboveSinceMs = null;
+              return false;
+            }
+            if (this.intelFailurePercentValue() < this.intelFailureAlertThreshold()) {
+              this.intelFailureAboveSinceMs = null;
+              return false;
+            }
+            const nowMs = Date.now();
+            if (!Number.isFinite(this.intelFailureAboveSinceMs)) {
+              this.intelFailureAboveSinceMs = nowMs;
+              return false;
+            }
+            const requiredMs = this.intelFailureAlertHysteresisMinutes() * 60 * 1000;
+            return nowMs - Number(this.intelFailureAboveSinceMs) >= requiredMs;
+          },
+
+          intelFailureAlertMessage() {
+            const threshold = this.intelFailureAlertThreshold();
+            const current = this.intelFailurePercentValue().toFixed(1);
+            const hysteresis = this.intelFailureAlertHysteresisMinutes();
+            return `Intel queue failure rate is ${current}% (threshold ${threshold.toFixed(1)}%, hysteresis ${hysteresis.toFixed(1)}m).`;
+          },
+
+          intelNextRetryLabel() {
+            const nextRetryAt = this.intelSummary?.next_retry_at;
+            if (!nextRetryAt) return "No scheduled retry currently pending.";
+            const rel = this.formatRelativeFromNow(nextRetryAt);
+            if (!rel) return `Next retry ${this.formatDate(nextRetryAt)}`;
+            return `Next retry ${this.formatDate(nextRetryAt)} (${rel}).`;
+          },
+
+          intelAttemptOutcomeLabel(event) {
+            const value = String(event?.outcome || "").toLowerCase();
+            if (value === "scheduled_retry") return "scheduled retry";
+            if (value === "terminal_failure") return "terminal failure";
+            if (value === "success") return "success";
+            return value || "unknown";
           },
 
           async loadMeetings() {
@@ -1433,7 +1689,7 @@
             this.loadingIntel = true;
             try {
               const limit = Number.isFinite(this.intelLimit) && this.intelLimit > 0 ? this.intelLimit : 20;
-              const data = await this.apiJson(`/api/intel/jobs?status=${encodeURIComponent(this.intelStatusFilter)}&limit=${limit}`);
+              const data = await this.apiJson(`/api/intel/jobs?status=${encodeURIComponent(this.intelStatusFilter)}&limit=${limit}&history_limit=5`);
               this.intelJobs = data.jobs || [];
             } catch (error) {
               console.error("Failed to load intel jobs:", error);
@@ -1443,6 +1699,30 @@
             this.loadingIntel = false;
           },
 
+          async loadIntelSummary() {
+            try {
+              this.intelSummary = await this.apiJson("/api/intel/summary");
+            } catch (error) {
+              console.error("Failed to load intel summary:", error);
+              this.intelSummary = null;
+            }
+          },
+
+          async loadPluginJobs() {
+            this.loadingPluginJobs = true;
+            try {
+              const limit = Number.isFinite(this.pluginJobLimit) && this.pluginJobLimit > 0 ? this.pluginJobLimit : 20;
+              const status = String(this.pluginJobStatusFilter || "all").trim().toLowerCase() || "all";
+              const data = await this.apiJson(`/api/plugin-jobs?status=${encodeURIComponent(status)}&limit=${limit}`);
+              this.pluginJobs = data.jobs || [];
+            } catch (error) {
+              console.error("Failed to load plugin jobs:", error);
+              this.pluginJobs = [];
+              this.flash(`Plugin queue load failed: ${error.message}`, true);
+            }
+            this.loadingPluginJobs = false;
+          },
+
           async processIntelJobs() {
             this.processingIntel = true;
             try {
@@ -1450,10 +1730,11 @@
               const data = await this.apiJson("/api/intel/process", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ max_jobs: maxJobs }),
+                body: JSON.stringify({ max_jobs: maxJobs, mode: this.intelProcessMode }),
               });
-              await Promise.all([this.loadIntelJobs(), this.loadMeetings()]);
-              this.flash(`Processed ${data.processed || 0} intel job(s).`);
+              await Promise.all([this.loadIntelJobs(), this.loadIntelSummary(), this.loadMeetings()]);
+              const modeLabel = data.mode === "retry_now" ? "retry-now" : "respect-backoff";
+              this.flash(`Processed ${data.processed || 0} intel job(s) [${modeLabel}].`);
             } catch (error) {
               console.error("Failed to process intel jobs:", error);
               this.flash(`Intel processing failed: ${error.message}`, true);
@@ -1465,13 +1746,39 @@
             this.processingIntel = true;
             try {
               await this.apiJson(`/api/intel/retry/${meetingId}`, { method: "POST" });
-              await Promise.all([this.loadIntelJobs(), this.loadMeetings()]);
+              await Promise.all([this.loadIntelJobs(), this.loadIntelSummary(), this.loadMeetings()]);
               this.flash("Meeting intelligence requeued.");
             } catch (error) {
               console.error("Failed to retry intel job:", error);
               this.flash(`Retry failed: ${error.message}`, true);
             }
             this.processingIntel = false;
+          },
+
+          async retryPluginJob(jobId) {
+            this.processingPluginJobs = true;
+            try {
+              await this.apiJson(`/api/plugin-jobs/${jobId}/retry-now`, { method: "POST" });
+              await this.loadPluginJobs();
+              this.flash("Plugin job requeued for immediate retry.");
+            } catch (error) {
+              console.error("Failed to retry plugin job:", error);
+              this.flash(`Plugin retry failed: ${error.message}`, true);
+            }
+            this.processingPluginJobs = false;
+          },
+
+          async cancelPluginJob(jobId) {
+            this.processingPluginJobs = true;
+            try {
+              await this.apiJson(`/api/plugin-jobs/${jobId}/cancel`, { method: "POST" });
+              await this.loadPluginJobs();
+              this.flash("Plugin job canceled.");
+            } catch (error) {
+              console.error("Failed to cancel plugin job:", error);
+              this.flash(`Plugin cancel failed: ${error.message}`, true);
+            }
+            this.processingPluginJobs = false;
           },
 
           validateSettingsPayload(payload) {
@@ -1482,10 +1789,18 @@
             const provider = String(meeting.intel_provider || "").toLowerCase();
             const exportFormat = String(meeting.export_format || "");
             const pollSeconds = Number(meeting.intel_queue_poll_seconds);
+            const retryBase = Number(meeting.intel_retry_base_seconds);
+            const retryMax = Number(meeting.intel_retry_max_seconds);
+            const retryAttempts = Number(meeting.intel_retry_max_attempts);
+            const failureAlertPercent = Number(meeting.intel_retry_failure_alert_percent);
+            const failureHysteresisMinutes = Number(meeting.intel_retry_failure_hysteresis_minutes);
             const similarity = Number(meeting.similarity_threshold);
             const cloudModel = String(meeting.intel_cloud_model || "").trim();
             const cloudApiEnv = String(meeting.intel_cloud_api_key_env || "").trim();
             const cloudBaseUrl = String(meeting.intel_cloud_base_url || "").trim();
+            const failureWebhookUrl = String(meeting.intel_retry_failure_webhook_url || "").trim();
+            const failureWebhookHeaderName = String(meeting.intel_retry_failure_webhook_header_name || "").trim();
+            const failureWebhookHeaderValue = String(meeting.intel_retry_failure_webhook_header_value || "").trim();
 
             if (!hotkey) errors.push("Hotkey is required.");
             if (!["tiny", "base", "small", "medium", "large"].includes(model)) {
@@ -1499,6 +1814,21 @@
             }
             if (!Number.isInteger(pollSeconds) || pollSeconds < 5) {
               errors.push("Intel queue poll seconds must be an integer >= 5.");
+            }
+            if (!Number.isInteger(retryBase) || retryBase < 1) {
+              errors.push("Retry base delay must be an integer >= 1 second.");
+            }
+            if (!Number.isInteger(retryMax) || retryMax < retryBase) {
+              errors.push("Retry max delay must be an integer >= retry base delay.");
+            }
+            if (!Number.isInteger(retryAttempts) || retryAttempts < 1) {
+              errors.push("Retry max attempts must be an integer >= 1.");
+            }
+            if (!Number.isFinite(failureAlertPercent) || failureAlertPercent < 0 || failureAlertPercent > 100) {
+              errors.push("Failure alert threshold must be between 0 and 100.");
+            }
+            if (!Number.isFinite(failureHysteresisMinutes) || failureHysteresisMinutes < 0) {
+              errors.push("Failure alert hysteresis must be >= 0 minutes.");
             }
             if (!Number.isFinite(similarity) || similarity < 0 || similarity > 1) {
               errors.push("Speaker similarity threshold must be between 0 and 1.");
@@ -1518,6 +1848,22 @@
               } catch (_error) {
                 errors.push("Cloud base URL must be a valid URL.");
               }
+            }
+            if (failureWebhookUrl) {
+              try {
+                const parsed = new URL(failureWebhookUrl);
+                if (!["http:", "https:"].includes(parsed.protocol)) {
+                  errors.push("Failure alert webhook URL must use http:// or https://");
+                }
+              } catch (_error) {
+                errors.push("Failure alert webhook URL must be a valid URL.");
+              }
+            }
+            if ((failureWebhookHeaderName && !failureWebhookHeaderValue) || (!failureWebhookHeaderName && failureWebhookHeaderValue)) {
+              errors.push("Webhook header name and value must both be set or both be empty.");
+            }
+            if (failureWebhookHeaderName && !/^[A-Za-z0-9-]+$/.test(failureWebhookHeaderName)) {
+              errors.push("Webhook header name may only contain letters, digits, and hyphens.");
             }
             return errors;
           },
@@ -1542,8 +1888,16 @@
             try {
               const payload = JSON.parse(JSON.stringify(this.settings));
               payload.meeting.intel_queue_poll_seconds = Number(payload.meeting.intel_queue_poll_seconds);
+              payload.meeting.intel_retry_base_seconds = Number(payload.meeting.intel_retry_base_seconds);
+              payload.meeting.intel_retry_max_seconds = Number(payload.meeting.intel_retry_max_seconds);
+              payload.meeting.intel_retry_max_attempts = Number(payload.meeting.intel_retry_max_attempts);
+              payload.meeting.intel_retry_failure_alert_percent = Number(payload.meeting.intel_retry_failure_alert_percent);
+              payload.meeting.intel_retry_failure_hysteresis_minutes = Number(payload.meeting.intel_retry_failure_hysteresis_minutes);
               payload.meeting.similarity_threshold = Number(payload.meeting.similarity_threshold);
               payload.meeting.intel_cloud_base_url = String(payload.meeting.intel_cloud_base_url || "").trim() || null;
+              payload.meeting.intel_retry_failure_webhook_url = String(payload.meeting.intel_retry_failure_webhook_url || "").trim() || null;
+              payload.meeting.intel_retry_failure_webhook_header_name = String(payload.meeting.intel_retry_failure_webhook_header_name || "").trim() || null;
+              payload.meeting.intel_retry_failure_webhook_header_value = String(payload.meeting.intel_retry_failure_webhook_header_value || "").trim() || null;
               payload.meeting.intel_cloud_api_key_env = String(payload.meeting.intel_cloud_api_key_env || "").trim();
               payload.meeting.intel_cloud_model = String(payload.meeting.intel_cloud_model || "").trim();
               payload.meeting.intel_provider = String(payload.meeting.intel_provider || "").toLowerCase();
@@ -1576,6 +1930,19 @@
             if (!iso) return "";
             const date = new Date(iso);
             return date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          },
+
+          formatRelativeFromNow(iso) {
+            if (!iso) return "";
+            const target = new Date(iso);
+            if (Number.isNaN(target.getTime())) return "";
+            const deltaMs = target.getTime() - Date.now();
+            const deltaSeconds = Math.round(Math.abs(deltaMs) / 1000);
+            if (deltaSeconds < 60) return deltaMs >= 0 ? "in <1m" : "<1m ago";
+            const deltaMinutes = Math.round(deltaSeconds / 60);
+            if (deltaMinutes < 60) return deltaMs >= 0 ? `in ${deltaMinutes}m` : `${deltaMinutes}m ago`;
+            const deltaHours = Math.round(deltaMinutes / 60);
+            return deltaMs >= 0 ? `in ${deltaHours}h` : `${deltaHours}h ago`;
           },
 
           formatDuration(seconds) {

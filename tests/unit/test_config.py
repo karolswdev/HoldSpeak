@@ -145,11 +145,21 @@ class TestMeetingConfig:
         assert config.intel_provider == "local"
         assert config.intel_realtime_model == "~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf"
         assert config.intel_summary_model is None
+        assert config.intel_retry_base_seconds == 30
+        assert config.intel_retry_max_seconds == 900
+        assert config.intel_retry_max_attempts == 6
+        assert config.intel_retry_failure_alert_percent == 50.0
+        assert config.intel_retry_failure_hysteresis_minutes == 5.0
+        assert config.intel_retry_failure_webhook_url is None
+        assert config.intel_retry_failure_webhook_header_name is None
+        assert config.intel_retry_failure_webhook_header_value is None
         assert config.intel_cloud_model == "gpt-5-mini"
         assert config.intel_cloud_api_key_env == "OPENAI_API_KEY"
         assert config.intel_cloud_base_url is None
         assert config.web_enabled is True
         assert config.web_auto_open is False
+        assert config.mir_enabled is True
+        assert config.mir_profile == "balanced"
 
     def test_custom_audio_device(self):
         """MeetingConfig accepts custom audio device."""

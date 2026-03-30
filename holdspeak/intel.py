@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import re
+import socket
 from urllib.parse import urlparse
 from collections.abc import Iterator
 from dataclasses import dataclass, field, asdict
@@ -50,6 +51,7 @@ DEFAULT_INTEL_MODEL_PATH = "~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf"
 DEFAULT_INTEL_PROVIDER = "local"
 DEFAULT_INTEL_CLOUD_MODEL = "gpt-5-mini"
 DEFAULT_INTEL_CLOUD_API_KEY_ENV = "OPENAI_API_KEY"
+DEFAULT_INTEL_CLOUD_TIMEOUT_SECONDS = 20.0
 VALID_INTEL_PROVIDERS = frozenset({"local", "cloud", "auto"})
 
 
@@ -377,6 +379,72 @@ def _extract_openai_message_text(content: object) -> str:
     return str(content)
 
 
+def _extract_status_code(exc: BaseException) -> Optional[int]:
+    for attr in ("status_code", "status"):
+        value = getattr(exc, attr, None)
+        if isinstance(value, int):
+            return value
+
+    response = getattr(exc, "response", None)
+    if response is not None:
+        for attr in ("status_code", "status"):
+            value = getattr(response, attr, None)
+            if isinstance(value, int):
+                return value
+    return None
+
+
+def _describe_cloud_exception(exc: BaseException, *, model: str, base_url: Optional[str]) -> str:
+    endpoint = (base_url or "https://api.openai.com/v1").strip() or "https://api.openai.com/v1"
+    message = str(exc).strip() or exc.__class__.__name__
+    message_lower = message.lower()
+    exc_name = exc.__class__.__name__.lower()
+    status_code = _extract_status_code(exc)
+
+    if status_code in {401, 403} or "unauthorized" in message_lower or "forbidden" in message_lower:
+        return f"Cloud auth failed for {endpoint}: {message}"
+
+    if (
+        "model" in message_lower
+        and ("not found" in message_lower or "does not exist" in message_lower or "unknown" in message_lower)
+    ) or (status_code == 404 and "model" in message_lower):
+        return f"Cloud model '{model}' not found at {endpoint}: {message}"
+
+    if status_code == 404:
+        return f"Cloud endpoint not found at {endpoint}: {message}"
+
+    if status_code == 429 or "rate limit" in message_lower:
+        return f"Cloud rate limit hit at {endpoint}: {message}"
+
+    if status_code is not None and status_code >= 500:
+        return f"Cloud server error ({status_code}) at {endpoint}: {message}"
+
+    if (
+        isinstance(exc, (TimeoutError, socket.timeout))
+        or "timeout" in exc_name
+        or "timed out" in message_lower
+        or "read timeout" in message_lower
+    ):
+        return f"Cloud request timed out to {endpoint}: {message}"
+
+    if isinstance(exc, ConnectionRefusedError):
+        return f"Cloud connection refused by {endpoint}: {message}"
+
+    if isinstance(exc, socket.gaierror):
+        return f"Cloud DNS resolution failed for {endpoint}: {message}"
+
+    if (
+        "connection" in exc_name
+        or "connection" in message_lower
+        or "name or service not known" in message_lower
+        or "temporary failure in name resolution" in message_lower
+        or "failed to establish a new connection" in message_lower
+    ):
+        return f"Cloud connection failed to {endpoint}: {message}"
+
+    return f"Cloud request failed at {endpoint}: {message}"
+
+
 class MeetingIntel:
     """Extract structured meeting intelligence via local or cloud provider."""
 
@@ -390,6 +458,7 @@ class MeetingIntel:
         cloud_base_url: Optional[str] = None,
         cloud_reasoning_effort: Optional[str] = None,
         cloud_store: bool = False,
+        cloud_timeout_seconds: float = DEFAULT_INTEL_CLOUD_TIMEOUT_SECONDS,
         chat_format: Optional[str] = None,
         n_ctx: int = 4096,
         n_threads: Optional[int] = None,
@@ -404,6 +473,7 @@ class MeetingIntel:
         self.cloud_base_url = cloud_base_url
         self.cloud_reasoning_effort = cloud_reasoning_effort
         self.cloud_store = cloud_store
+        self.cloud_timeout_seconds = max(1.0, float(cloud_timeout_seconds))
         self.chat_format = chat_format
         self.n_ctx = n_ctx
         self.n_threads = n_threads
@@ -438,6 +508,7 @@ class MeetingIntel:
         kwargs: dict[str, object] = {"api_key": api_key}
         if self.cloud_base_url:
             kwargs["base_url"] = self.cloud_base_url
+        kwargs["timeout"] = self.cloud_timeout_seconds
 
         try:
             self._openai_client = OpenAI(**kwargs)
@@ -532,13 +603,24 @@ class MeetingIntel:
             base_kwargs["store"] = True
 
         try:
-            response = self._openai_client.chat.completions.create(**base_kwargs)
-        except TypeError:
-            # Compatibility fallback for clients/endpoints that use max_completion_tokens.
-            fallback_kwargs = dict(base_kwargs)
-            fallback_kwargs.pop("max_tokens", None)
-            fallback_kwargs["max_completion_tokens"] = max_tokens
-            response = self._openai_client.chat.completions.create(**fallback_kwargs)
+            try:
+                response = self._openai_client.chat.completions.create(**base_kwargs)
+            except TypeError as exc:
+                # Compatibility fallback for clients/endpoints that use max_completion_tokens.
+                if "max_tokens" not in str(exc):
+                    raise
+                fallback_kwargs = dict(base_kwargs)
+                fallback_kwargs.pop("max_tokens", None)
+                fallback_kwargs["max_completion_tokens"] = max_tokens
+                response = self._openai_client.chat.completions.create(**fallback_kwargs)
+        except Exception as exc:
+            raise MeetingIntelError(
+                _describe_cloud_exception(
+                    exc,
+                    model=self.cloud_model,
+                    base_url=self.cloud_base_url,
+                )
+            ) from exc
 
         raw = response.choices[0].message.content if response.choices else ""
         return _extract_openai_message_text(raw)
@@ -551,6 +633,8 @@ class MeetingIntel:
                 temperature=self.temperature,
                 max_tokens=self.max_tokens,
             )
+        except MeetingIntelError:
+            raise
         except Exception as exc:
             log.error(f"Intel inference failed: {exc}", exc_info=True)
             raise MeetingIntelError(f"Intel inference failed: {exc}") from exc

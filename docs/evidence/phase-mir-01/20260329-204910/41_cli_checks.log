@@ -1,0 +1,83 @@
+# command: uv run holdspeak --help && uv run holdspeak intel --help && uv run pytest -q tests/unit/test_intel_command.py -k 'route_dry_run or reroute'
+2026-03-29T20:50:42-06:00
+git_commit=b434e2c
+usage: holdspeak [-h] [--no-tui] [-v]
+                 {web,tui,meeting,menubar,history,actions,intel,doctor} ...
+
+HoldSpeak - Voice typing for macOS and Linux. Hold, speak, release.
+
+positional arguments:
+  {web,tui,meeting,menubar,history,actions,intel,doctor}
+    web                 Start web flagship runtime
+    tui                 Start legacy TUI voice-typing interface
+    meeting             Start in meeting mode (capture mic + system audio)
+    menubar             Run as menu bar app (macOS only, no terminal window
+                        needed)
+    history             Browse meeting history
+    actions             Manage action items across meetings
+    intel               Inspect deferred intel queue and run MIR route
+                        simulation/reroute tooling
+    doctor              Run environment checks and show setup fixes
+
+options:
+  -h, --help            show this help message and exit
+  --no-tui              Deprecated: alias for `holdspeak web --no-open`
+  -v, --verbose         Enable verbose logging to stderr
+
+Examples:
+  holdspeak              # Launch web flagship runtime (default)
+  holdspeak web          # Launch web flagship runtime explicitly
+  holdspeak web --no-open  # Headless web service mode (no browser launch)
+  holdspeak tui          # Launch legacy TUI mode explicitly
+  holdspeak menubar      # Launch menu bar mode (macOS only)
+  holdspeak meeting      # Start in meeting mode (capture mic + system audio)
+  holdspeak meeting --setup  # Check system audio setup
+  holdspeak doctor       # Verify runtime deps and setup
+  holdspeak intel        # Inspect or process deferred meeting intelligence
+  holdspeak intel --route-dry-run <MEETING_ID> --profile architect
+                        # Simulate MIR route for a saved meeting
+  holdspeak intel --reroute <MEETING_ID> --profile incident
+                        # Persist manual MIR profile-override reroute window
+  holdspeak --no-tui     # Deprecated alias for: holdspeak web --no-open
+  holdspeak --verbose    # Show debug output in terminal
+
+Logs are written to: /home/karol/.local/share/holdspeak/holdspeak.log
+        
+
+usage: holdspeak intel [-h] [--process | --retry MEETING_ID | --retry-failed |
+                       --route-dry-run MEETING_ID | --reroute MEETING_ID]
+                       [--status {all,queued,running,failed}] [--limit LIMIT]
+                       [--max-jobs MAX_JOBS]
+                       [--retry-mode {respect-backoff,retry-now}]
+                       [--profile PROFILE]
+                       [--override-intents OVERRIDE_INTENTS]
+                       [--threshold THRESHOLD]
+
+options:
+  -h, --help            show this help message and exit
+  --process             Process queued deferred-intel jobs now
+  --retry MEETING_ID    Requeue deferred intelligence for a specific meeting
+  --retry-failed        Requeue failed deferred-intel jobs
+  --route-dry-run MEETING_ID
+                        Simulate MIR routing for a saved meeting transcript
+                        (no DB writes)
+  --reroute MEETING_ID  Apply manual MIR profile override reroute for a saved
+                        meeting
+  --status {all,queued,running,failed}
+                        Filter listed jobs by status (default: all)
+  --limit, -n LIMIT     Number of jobs to list or retry (default: 20)
+  --max-jobs MAX_JOBS   Maximum number of jobs to process with --process
+  --retry-mode {respect-backoff,retry-now}
+                        When processing queue: respect scheduled retry delays
+                        or force retry-now
+  --profile PROFILE     Routing profile override for --route-dry-run/--reroute
+                        (balanced, architect, delivery, product, incident)
+  --override-intents OVERRIDE_INTENTS
+                        Comma-separated manual intent override set for
+                        --route-dry-run/--reroute
+  --threshold THRESHOLD
+                        Intent threshold override for --route-dry-
+                        run/--reroute
+
+...                                                                      [100%]
+3 passed, 4 deselected in 0.55s

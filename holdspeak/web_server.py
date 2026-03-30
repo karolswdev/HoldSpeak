@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 import json
+import re
 import socket
 import threading
 from copy import deepcopy
@@ -21,6 +22,7 @@ from urllib.parse import urlparse
 from .logging_config import get_logger
 
 log = get_logger("web_server")
+_HTTP_HEADER_NAME_RE = re.compile(r"^[A-Za-z0-9-]+$")
 
 _DASHBOARD_HTML_PATH = Path(__file__).resolve().parent / "static" / "dashboard.html"
 
@@ -69,6 +71,50 @@ def _parse_iso_datetime(value: Any) -> Optional[datetime]:
         return None
 
 
+def _meeting_active_from_state(state: dict[str, Any]) -> bool:
+    if isinstance(state.get("meeting_active"), bool):
+        return bool(state.get("meeting_active"))
+    return bool(state.get("started_at")) and not bool(state.get("ended_at"))
+
+
+def _meeting_summary_from_state(state: dict[str, Any]) -> Optional[dict[str, Any]]:
+    if not _meeting_active_from_state(state):
+        return None
+    meeting_id = state.get("id")
+    if not meeting_id:
+        return None
+    return {
+        "id": meeting_id,
+        "title": state.get("title"),
+        "tags": state.get("tags") if isinstance(state.get("tags"), list) else [],
+        "started_at": state.get("started_at"),
+        "ended_at": state.get("ended_at"),
+        "duration": state.get("duration"),
+        "formatted_duration": state.get("formatted_duration"),
+    }
+
+
+def _normalize_runtime_status_payload(raw_payload: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
+    payload = dict(raw_payload)
+    payload_state = payload.get("state")
+    if not isinstance(payload_state, dict):
+        payload_state = state
+    meeting_active = (
+        bool(payload.get("meeting_active"))
+        if isinstance(payload.get("meeting_active"), bool)
+        else _meeting_active_from_state(payload_state)
+    )
+    payload["status"] = payload.get("status") or "ok"
+    payload["mode"] = payload.get("mode") or "web"
+    payload["meeting_active"] = meeting_active
+    payload["state"] = payload_state
+    if "meeting_id" not in payload:
+        payload["meeting_id"] = payload_state.get("id") if meeting_active else None
+    if "meeting" not in payload:
+        payload["meeting"] = _meeting_summary_from_state(payload_state)
+    return payload
+
+
 @dataclass(frozen=True)
 class BroadcastMessage:
     type: str
@@ -105,6 +151,24 @@ class _UpdateMeetingRequest(BaseModel):
     tags: Optional[list[str]] = None
 
 
+class _IntentProfileRequest(BaseModel):
+    profile: str
+
+
+class _IntentOverrideRequest(BaseModel):
+    intents: Optional[list[str]] = None
+
+
+class _IntentPreviewRequest(BaseModel):
+    profile: Optional[str] = None
+    threshold: Optional[float] = None
+    intent_scores: Optional[dict[str, float]] = None
+    override_intents: Optional[list[str]] = None
+    previous_intents: Optional[list[str]] = None
+    tags: Optional[list[str]] = None
+    transcript: Optional[str] = None
+
+
 class _GlobalActionItemUpdateRequest(BaseModel):
     status: str
 
@@ -126,6 +190,12 @@ class _SpeakerUpdateRequest(BaseModel):
 
 class _IntelProcessRequest(BaseModel):
     max_jobs: Optional[int] = None
+    mode: Optional[str] = None
+
+
+class _PluginJobProcessRequest(BaseModel):
+    max_jobs: Optional[int] = None
+    mode: Optional[str] = None
 
 
 def _validate_cloud_base_url(value: Optional[str]) -> Optional[str]:
@@ -202,6 +272,15 @@ class MeetingWebServer:
         on_bookmark: Callable[[str], Any],
         on_stop: Callable[[], Any],
         get_state: Callable[[], dict[str, Any]],
+        on_start: Optional[Callable[[], Any]] = None,
+        on_meeting_stop: Optional[Callable[[], Any]] = None,
+        on_get_status: Optional[Callable[[], Any]] = None,
+        on_update_meeting: Optional[Callable[..., Any]] = None,
+        on_get_intent_controls: Optional[Callable[[], Any]] = None,
+        on_set_intent_profile: Optional[Callable[[str], Any]] = None,
+        on_set_intent_override: Optional[Callable[[Optional[list[str]]], Any]] = None,
+        on_route_preview: Optional[Callable[..., Any]] = None,
+        on_process_plugin_jobs: Optional[Callable[..., Any]] = None,
         on_update_action_item: Optional[Callable[[str, str], Any]] = None,
         on_update_action_item_review: Optional[Callable[[str, str], Any]] = None,
         on_edit_action_item: Optional[Callable[..., Any]] = None,
@@ -218,7 +297,16 @@ class MeetingWebServer:
 
         self.on_bookmark = on_bookmark
         self.on_stop = on_stop
+        self.on_meeting_stop = on_meeting_stop
         self.get_state = get_state
+        self.on_start = on_start
+        self.on_get_status = on_get_status
+        self.on_update_meeting = on_update_meeting
+        self.on_get_intent_controls = on_get_intent_controls
+        self.on_set_intent_profile = on_set_intent_profile
+        self.on_set_intent_override = on_set_intent_override
+        self.on_route_preview = on_route_preview
+        self.on_process_plugin_jobs = on_process_plugin_jobs
         self.on_update_action_item = on_update_action_item
         self.on_update_action_item_review = on_update_action_item_review
         self.on_edit_action_item = on_edit_action_item
@@ -373,6 +461,101 @@ class MeetingWebServer:
                 state = {}
             return JSONResponse(state)
 
+        @app.get("/api/runtime/status")
+        async def api_runtime_status() -> Any:
+            try:
+                state = self.get_state() or {}
+            except Exception as e:
+                log.error(f"get_state failed: {e}")
+                state = {}
+
+            if self.on_get_status is not None:
+                try:
+                    raw_payload = self.on_get_status()
+                except Exception as e:
+                    log.error(f"on_get_status failed: {e}")
+                    return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+                if isinstance(raw_payload, dict):
+                    return JSONResponse(_normalize_runtime_status_payload(raw_payload, state))
+                return JSONResponse({"status": "ok", "runtime_status": raw_payload})
+
+            return JSONResponse(_normalize_runtime_status_payload({}, state))
+
+        @app.get("/api/intents/control")
+        async def api_get_intent_controls() -> Any:
+            if self.on_get_intent_controls is None:
+                return JSONResponse(
+                    {
+                        "enabled": False,
+                        "profile": "balanced",
+                        "available_profiles": [],
+                        "supported_intents": [],
+                        "override_intents": [],
+                    }
+                )
+            try:
+                payload = self.on_get_intent_controls()
+            except Exception as e:
+                log.error(f"on_get_intent_controls failed: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+            return JSONResponse(payload if isinstance(payload, dict) else {"controls": payload})
+
+        @app.put("/api/intents/profile")
+        async def api_set_intent_profile(payload: _IntentProfileRequest) -> Any:
+            if self.on_set_intent_profile is None:
+                return JSONResponse(
+                    {"success": False, "error": "Intent profile updates not supported"},
+                    status_code=501,
+                )
+            try:
+                result = self.on_set_intent_profile(payload.profile)
+            except Exception as e:
+                log.error(f"on_set_intent_profile failed: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+            if isinstance(result, dict):
+                self.broadcast("intent_controls_updated", result)
+            return JSONResponse({"success": True, "controls": result})
+
+        @app.put("/api/intents/override")
+        async def api_set_intent_override(payload: _IntentOverrideRequest) -> Any:
+            if self.on_set_intent_override is None:
+                return JSONResponse(
+                    {"success": False, "error": "Intent override updates not supported"},
+                    status_code=501,
+                )
+            try:
+                result = self.on_set_intent_override(payload.intents)
+            except Exception as e:
+                log.error(f"on_set_intent_override failed: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+            if isinstance(result, dict):
+                self.broadcast("intent_controls_updated", result)
+            return JSONResponse({"success": True, "controls": result})
+
+        @app.post("/api/intents/preview")
+        async def api_preview_intent_route(payload: Optional[_IntentPreviewRequest] = None) -> Any:
+            if self.on_route_preview is None:
+                return JSONResponse(
+                    {"success": False, "error": "Intent route preview not supported"},
+                    status_code=501,
+                )
+            try:
+                result = self.on_route_preview(
+                    profile=payload.profile if payload is not None else None,
+                    threshold=payload.threshold if payload is not None else None,
+                    intent_scores=payload.intent_scores if payload is not None else None,
+                    override_intents=payload.override_intents if payload is not None else None,
+                    previous_intents=payload.previous_intents if payload is not None else None,
+                    tags=payload.tags if payload is not None else None,
+                    transcript=payload.transcript if payload is not None else None,
+                )
+            except Exception as e:
+                log.error(f"on_route_preview failed: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+            return JSONResponse({"success": True, "route": result})
+
         @app.post("/api/bookmark")
         async def api_bookmark(payload: Optional[_BookmarkRequest] = None) -> Any:
             try:
@@ -396,10 +579,9 @@ class MeetingWebServer:
 
             return JSONResponse({"success": True})
 
-        @app.post("/api/stop")
-        async def api_stop(_: Optional[_StopRequest] = None) -> Any:
+        async def _handle_stop_request(callback: Callable[[], Any]) -> Any:
             try:
-                result = self.on_stop()
+                result = callback()
             except Exception as e:
                 log.error(f"on_stop failed: {e}")
                 return JSONResponse({"success": False, "error": str(e)}, status_code=500)
@@ -417,6 +599,43 @@ class MeetingWebServer:
 
             self.broadcast("stopped", stopped_data)
             return JSONResponse({"success": True})
+
+        @app.post("/api/meeting/start")
+        async def api_meeting_start() -> Any:
+            if self.on_start is None:
+                return JSONResponse(
+                    {"success": False, "error": "Meeting start control not supported"},
+                    status_code=501,
+                )
+
+            try:
+                result = self.on_start()
+            except Exception as e:
+                log.error(f"on_start failed: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+            meeting_data: Any = None
+            if hasattr(result, "to_dict"):
+                try:
+                    meeting_data = result.to_dict()
+                except Exception:
+                    meeting_data = None
+            elif isinstance(result, dict):
+                meeting_data = result
+
+            if meeting_data is not None:
+                self.broadcast("meeting_started", meeting_data)
+            return JSONResponse({"success": True, "meeting": meeting_data})
+
+        @app.post("/api/meeting/stop")
+        async def api_meeting_stop(_: Optional[_StopRequest] = None) -> Any:
+            callback = self.on_meeting_stop or self.on_stop
+            return await _handle_stop_request(callback)
+
+        @app.post("/api/stop")
+        async def api_stop(_: Optional[_StopRequest] = None) -> Any:
+            # Backward-compatible alias.
+            return await _handle_stop_request(self.on_stop)
 
         @app.patch("/api/action-items/{item_id}")
         async def api_update_action_item(
@@ -525,11 +744,35 @@ class MeetingWebServer:
         async def api_update_meeting(payload: _UpdateMeetingRequest) -> Any:
             """Update meeting title and/or tags."""
             try:
-                if payload.title is not None and self.on_set_title is not None:
-                    self.on_set_title(payload.title)
-                if payload.tags is not None and self.on_set_tags is not None:
-                    self.on_set_tags(payload.tags)
-                return JSONResponse({"success": True})
+                meeting_data: Optional[dict[str, Any]] = None
+                if self.on_update_meeting is not None:
+                    result = self.on_update_meeting(title=payload.title, tags=payload.tags)
+                    if hasattr(result, "to_dict"):
+                        try:
+                            meeting_data = result.to_dict()
+                        except Exception:
+                            meeting_data = None
+                    elif isinstance(result, dict):
+                        meeting_data = result
+                else:
+                    if payload.title is not None and self.on_set_title is not None:
+                        self.on_set_title(payload.title)
+                    if payload.tags is not None and self.on_set_tags is not None:
+                        self.on_set_tags(payload.tags)
+                    try:
+                        meeting_data = self.get_state() or {}
+                    except Exception:
+                        meeting_data = None
+
+                if isinstance(meeting_data, dict):
+                    self.broadcast(
+                        "meeting_updated",
+                        {
+                            "title": meeting_data.get("title"),
+                            "tags": meeting_data.get("tags") if isinstance(meeting_data.get("tags"), list) else [],
+                        },
+                    )
+                return JSONResponse({"success": True, "meeting": meeting_data})
             except Exception as e:
                 log.error(f"Failed to update meeting: {e}")
                 return JSONResponse(
@@ -617,6 +860,21 @@ class MeetingWebServer:
                     )
                 meeting_data["intel_provider"] = intel_provider
 
+                from .plugins.router import available_profiles
+
+                meeting_data["mir_enabled"] = bool(
+                    meeting_data.get("mir_enabled", current.meeting.mir_enabled)
+                )
+                mir_profile = str(
+                    meeting_data.get("mir_profile", current.meeting.mir_profile)
+                ).strip().lower()
+                if mir_profile not in set(available_profiles()):
+                    return JSONResponse(
+                        {"success": False, "error": f"Invalid mir profile: {mir_profile}"},
+                        status_code=400,
+                    )
+                meeting_data["mir_profile"] = mir_profile
+
                 poll_seconds = int(meeting_data.get("intel_queue_poll_seconds", current.meeting.intel_queue_poll_seconds))
                 if poll_seconds < 5:
                     return JSONResponse(
@@ -624,6 +882,122 @@ class MeetingWebServer:
                         status_code=400,
                     )
                 meeting_data["intel_queue_poll_seconds"] = poll_seconds
+
+                retry_base_seconds = int(
+                    meeting_data.get("intel_retry_base_seconds", current.meeting.intel_retry_base_seconds)
+                )
+                if retry_base_seconds < 1:
+                    return JSONResponse(
+                        {"success": False, "error": "intel_retry_base_seconds must be at least 1"},
+                        status_code=400,
+                    )
+                meeting_data["intel_retry_base_seconds"] = retry_base_seconds
+
+                retry_max_seconds = int(
+                    meeting_data.get("intel_retry_max_seconds", current.meeting.intel_retry_max_seconds)
+                )
+                if retry_max_seconds < retry_base_seconds:
+                    return JSONResponse(
+                        {
+                            "success": False,
+                            "error": "intel_retry_max_seconds must be >= intel_retry_base_seconds",
+                        },
+                        status_code=400,
+                    )
+                meeting_data["intel_retry_max_seconds"] = retry_max_seconds
+
+                retry_max_attempts = int(
+                    meeting_data.get("intel_retry_max_attempts", current.meeting.intel_retry_max_attempts)
+                )
+                if retry_max_attempts < 1:
+                    return JSONResponse(
+                        {"success": False, "error": "intel_retry_max_attempts must be at least 1"},
+                        status_code=400,
+                    )
+                meeting_data["intel_retry_max_attempts"] = retry_max_attempts
+
+                failure_alert_percent = float(
+                    meeting_data.get(
+                        "intel_retry_failure_alert_percent",
+                        current.meeting.intel_retry_failure_alert_percent,
+                    )
+                )
+                if not (0.0 <= failure_alert_percent <= 100.0):
+                    return JSONResponse(
+                        {
+                            "success": False,
+                            "error": "intel_retry_failure_alert_percent must be between 0 and 100",
+                        },
+                        status_code=400,
+                    )
+                meeting_data["intel_retry_failure_alert_percent"] = failure_alert_percent
+
+                failure_hysteresis_minutes = float(
+                    meeting_data.get(
+                        "intel_retry_failure_hysteresis_minutes",
+                        current.meeting.intel_retry_failure_hysteresis_minutes,
+                    )
+                )
+                if failure_hysteresis_minutes < 0.0:
+                    return JSONResponse(
+                        {
+                            "success": False,
+                            "error": "intel_retry_failure_hysteresis_minutes must be >= 0",
+                        },
+                        status_code=400,
+                    )
+                meeting_data["intel_retry_failure_hysteresis_minutes"] = failure_hysteresis_minutes
+
+                webhook_url = str(
+                    meeting_data.get(
+                        "intel_retry_failure_webhook_url",
+                        current.meeting.intel_retry_failure_webhook_url or "",
+                    )
+                    or ""
+                ).strip()
+                if webhook_url:
+                    parsed_webhook = urlparse(webhook_url)
+                    if parsed_webhook.scheme not in {"http", "https"} or not parsed_webhook.netloc:
+                        return JSONResponse(
+                            {
+                                "success": False,
+                                "error": "intel_retry_failure_webhook_url must be a valid http(s) URL",
+                            },
+                            status_code=400,
+                        )
+                meeting_data["intel_retry_failure_webhook_url"] = webhook_url or None
+                webhook_header_name = str(
+                    meeting_data.get(
+                        "intel_retry_failure_webhook_header_name",
+                        current.meeting.intel_retry_failure_webhook_header_name or "",
+                    )
+                    or ""
+                ).strip()
+                webhook_header_value = str(
+                    meeting_data.get(
+                        "intel_retry_failure_webhook_header_value",
+                        current.meeting.intel_retry_failure_webhook_header_value or "",
+                    )
+                    or ""
+                ).strip()
+                if bool(webhook_header_name) != bool(webhook_header_value):
+                    return JSONResponse(
+                        {
+                            "success": False,
+                            "error": "intel_retry_failure_webhook_header_name and intel_retry_failure_webhook_header_value must both be set or both be empty",
+                        },
+                        status_code=400,
+                    )
+                if webhook_header_name and not _HTTP_HEADER_NAME_RE.match(webhook_header_name):
+                    return JSONResponse(
+                        {
+                            "success": False,
+                            "error": "intel_retry_failure_webhook_header_name must contain only letters, digits, and hyphens",
+                        },
+                        status_code=400,
+                    )
+                meeting_data["intel_retry_failure_webhook_header_name"] = webhook_header_name or None
+                meeting_data["intel_retry_failure_webhook_header_value"] = webhook_header_value or None
 
                 similarity = float(meeting_data.get("similarity_threshold", current.meeting.similarity_threshold))
                 if not (0.0 <= similarity <= 1.0):
@@ -844,6 +1218,331 @@ class MeetingWebServer:
                 return JSONResponse(
                     {"error": str(e)}, status_code=500
                 )
+
+        @app.get("/api/meetings/{meeting_id}/intent-timeline")
+        async def api_get_meeting_intent_timeline(
+            meeting_id: str,
+            limit: int = 200,
+        ) -> Any:
+            """Get persisted MIR intent timeline for one meeting."""
+            try:
+                from .db import get_database
+                from .intent_timeline import detect_intent_transitions
+
+                db = get_database()
+                meeting = db.get_meeting(meeting_id)
+                if meeting is None:
+                    return JSONResponse(
+                        {"error": "Meeting not found"},
+                        status_code=404,
+                    )
+
+                windows = db.list_intent_windows(meeting_id, limit=limit)
+                transitions = detect_intent_transitions(
+                    [(window.window_id, list(window.active_intents)) for window in windows]
+                )
+                return JSONResponse(
+                    {
+                        "meeting_id": meeting_id,
+                        "windows": [
+                            {
+                                "meeting_id": window.meeting_id,
+                                "window_id": window.window_id,
+                                "start_seconds": window.start_seconds,
+                                "end_seconds": window.end_seconds,
+                                "transcript_hash": window.transcript_hash,
+                                "transcript_excerpt": window.transcript_excerpt,
+                                "profile": window.profile,
+                                "threshold": window.threshold,
+                                "active_intents": window.active_intents,
+                                "intent_scores": window.intent_scores,
+                                "override_intents": window.override_intents,
+                                "tags": window.tags,
+                                "metadata": window.metadata,
+                                "created_at": window.created_at.isoformat(),
+                                "updated_at": window.updated_at.isoformat(),
+                            }
+                            for window in windows
+                        ],
+                        "transitions": transitions,
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to load meeting intent timeline: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.get("/api/meetings/{meeting_id}/plugin-runs")
+        async def api_get_meeting_plugin_runs(
+            meeting_id: str,
+            limit: int = 500,
+            window_id: Optional[str] = None,
+        ) -> Any:
+            """Get persisted MIR plugin-run history for one meeting."""
+            try:
+                from .db import get_database
+
+                db = get_database()
+                meeting = db.get_meeting(meeting_id)
+                if meeting is None:
+                    return JSONResponse(
+                        {"error": "Meeting not found"},
+                        status_code=404,
+                    )
+
+                runs = db.list_plugin_runs(meeting_id, window_id=window_id, limit=limit)
+                return JSONResponse(
+                    {
+                        "meeting_id": meeting_id,
+                        "window_id": window_id,
+                        "runs": [
+                            {
+                                "id": run.id,
+                                "meeting_id": run.meeting_id,
+                                "window_id": run.window_id,
+                                "plugin_id": run.plugin_id,
+                                "plugin_version": run.plugin_version,
+                                "status": run.status,
+                                "idempotency_key": run.idempotency_key,
+                                "duration_ms": run.duration_ms,
+                                "output": run.output,
+                                "error": run.error,
+                                "deduped": run.deduped,
+                                "created_at": run.created_at.isoformat(),
+                                "updated_at": run.updated_at.isoformat(),
+                            }
+                            for run in runs
+                        ],
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to load meeting plugin runs: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.get("/api/meetings/{meeting_id}/artifacts")
+        async def api_get_meeting_artifacts(
+            meeting_id: str,
+            limit: int = 200,
+        ) -> Any:
+            """Get synthesized artifacts and lineage for one meeting."""
+            try:
+                from .db import get_database
+
+                db = get_database()
+                meeting = db.get_meeting(meeting_id)
+                if meeting is None:
+                    return JSONResponse(
+                        {"error": "Meeting not found"},
+                        status_code=404,
+                    )
+
+                artifacts = db.list_artifacts(meeting_id, limit=limit)
+                return JSONResponse(
+                    {
+                        "meeting_id": meeting_id,
+                        "artifacts": [
+                            {
+                                "id": artifact.id,
+                                "meeting_id": artifact.meeting_id,
+                                "artifact_type": artifact.artifact_type,
+                                "title": artifact.title,
+                                "body_markdown": artifact.body_markdown,
+                                "structured_json": artifact.structured_json,
+                                "confidence": artifact.confidence,
+                                "status": artifact.status,
+                                "plugin_id": artifact.plugin_id,
+                                "plugin_version": artifact.plugin_version,
+                                "sources": artifact.sources,
+                                "created_at": artifact.created_at.isoformat(),
+                                "updated_at": artifact.updated_at.isoformat(),
+                            }
+                            for artifact in artifacts
+                        ],
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to load meeting artifacts: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.get("/api/plugin-jobs")
+        async def api_list_plugin_jobs(
+            status: str = "all",
+            meeting_id: Optional[str] = None,
+            limit: int = 200,
+        ) -> Any:
+            """List deferred MIR plugin-run queue jobs."""
+            try:
+                from .db import get_database
+
+                db = get_database()
+                jobs = db.list_plugin_run_jobs(status=status, meeting_id=meeting_id, limit=limit)
+                now = datetime.now()
+                return JSONResponse(
+                    {
+                        "jobs": [
+                            {
+                                "id": job.id,
+                                "meeting_id": job.meeting_id,
+                                "window_id": job.window_id,
+                                "plugin_id": job.plugin_id,
+                                "plugin_version": job.plugin_version,
+                                "transcript_hash": job.transcript_hash,
+                                "idempotency_key": job.idempotency_key,
+                                "status": job.status,
+                                "requested_at": job.requested_at.isoformat(),
+                                "updated_at": job.updated_at.isoformat(),
+                                "attempts": job.attempts,
+                                "last_error": job.last_error,
+                                "retry_scheduled": (
+                                    job.status == "queued"
+                                    and bool(job.last_error)
+                                    and job.requested_at > now
+                                ),
+                                "next_retry_at": (
+                                    job.requested_at.isoformat()
+                                    if (
+                                        job.status == "queued"
+                                        and bool(job.last_error)
+                                        and job.requested_at > now
+                                    )
+                                    else None
+                                ),
+                            }
+                            for job in jobs
+                        ]
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to list deferred plugin jobs: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.get("/api/plugin-jobs/summary")
+        async def api_plugin_jobs_summary() -> Any:
+            """Return aggregate telemetry for deferred MIR plugin-run queue."""
+            try:
+                from .db import get_database
+
+                db = get_database()
+                summary = db.get_plugin_run_job_summary()
+                return JSONResponse(
+                    {
+                        "total_jobs": summary.total_jobs,
+                        "queued_jobs": summary.queued_jobs,
+                        "running_jobs": summary.running_jobs,
+                        "failed_jobs": summary.failed_jobs,
+                        "queued_due_jobs": summary.queued_due_jobs,
+                        "scheduled_retry_jobs": summary.scheduled_retry_jobs,
+                        "next_retry_at": (
+                            summary.next_retry_at.isoformat() if summary.next_retry_at else None
+                        ),
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to load deferred plugin-job summary: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.post("/api/plugin-jobs/process")
+        async def api_process_plugin_jobs(payload: Optional[_PluginJobProcessRequest] = None) -> Any:
+            """Process deferred plugin-run queue jobs now."""
+            if self.on_process_plugin_jobs is None:
+                return JSONResponse(
+                    {"success": False, "error": "Deferred plugin queue processing not supported"},
+                    status_code=501,
+                )
+            max_jobs = payload.max_jobs if payload is not None else None
+            if max_jobs is not None and int(max_jobs) <= 0:
+                return JSONResponse(
+                    {"success": False, "error": "max_jobs must be greater than 0"},
+                    status_code=400,
+                )
+            mode = (payload.mode if payload is not None else None) or "respect_backoff"
+            normalized_mode = str(mode).strip().lower()
+            if normalized_mode not in {"respect_backoff", "retry_now"}:
+                return JSONResponse(
+                    {"success": False, "error": "mode must be respect_backoff or retry_now"},
+                    status_code=400,
+                )
+            include_scheduled = normalized_mode == "retry_now"
+            try:
+                result = self.on_process_plugin_jobs(
+                    max_jobs=max_jobs,
+                    include_scheduled=include_scheduled,
+                )
+                payload_data = dict(result) if isinstance(result, dict) else {"processed": int(result)}
+                payload_data["mode"] = normalized_mode
+                payload_data["success"] = True
+                self.broadcast("plugin_jobs_processed", payload_data)
+                return JSONResponse(payload_data)
+            except Exception as e:
+                log.error(f"Failed to process deferred plugin jobs: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+        @app.post("/api/plugin-jobs/{job_id}/retry-now")
+        async def api_retry_plugin_job_now(job_id: int) -> Any:
+            """Reschedule one deferred MIR plugin-run job for immediate retry."""
+            try:
+                from .db import get_database
+
+                db = get_database()
+                job = db.get_plugin_run_job(job_id) if hasattr(db, "get_plugin_run_job") else None
+                if job is None:
+                    return JSONResponse({"success": False, "error": "Plugin job not found"}, status_code=404)
+                if str(job.status).strip().lower() == "running":
+                    return JSONResponse(
+                        {"success": False, "error": "Cannot retry a running plugin job"},
+                        status_code=409,
+                    )
+
+                db.retry_plugin_run_job(
+                    int(job_id),
+                    error="Manual retry requested from web UI.",
+                    retry_at=datetime.now(),
+                )
+                updated = db.get_plugin_run_job(job_id) if hasattr(db, "get_plugin_run_job") else None
+                return JSONResponse(
+                    {
+                        "success": True,
+                        "job": (
+                            {
+                                "id": updated.id,
+                                "meeting_id": updated.meeting_id,
+                                "window_id": updated.window_id,
+                                "plugin_id": updated.plugin_id,
+                                "plugin_version": updated.plugin_version,
+                                "status": updated.status,
+                                "requested_at": updated.requested_at.isoformat(),
+                                "updated_at": updated.updated_at.isoformat(),
+                                "attempts": updated.attempts,
+                                "last_error": updated.last_error,
+                            }
+                            if updated is not None
+                            else None
+                        ),
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to retry deferred plugin job {job_id}: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+        @app.post("/api/plugin-jobs/{job_id}/cancel")
+        async def api_cancel_plugin_job(job_id: int) -> Any:
+            """Cancel one deferred MIR plugin-run job."""
+            try:
+                from .db import get_database
+
+                db = get_database()
+                job = db.get_plugin_run_job(job_id) if hasattr(db, "get_plugin_run_job") else None
+                if job is None:
+                    return JSONResponse({"success": False, "error": "Plugin job not found"}, status_code=404)
+                if str(job.status).strip().lower() == "running":
+                    return JSONResponse(
+                        {"success": False, "error": "Cannot cancel a running plugin job"},
+                        status_code=409,
+                    )
+                db.complete_plugin_run_job(job_id)
+                return JSONResponse({"success": True})
+            except Exception as e:
+                log.error(f"Failed to cancel deferred plugin job {job_id}: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
         @app.get("/api/all-action-items")
         async def api_list_all_action_items(
@@ -1068,13 +1767,21 @@ class MeetingWebServer:
                 return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
         @app.get("/api/intel/jobs")
-        async def api_list_intel_jobs(status: str = "all", limit: int = 20) -> Any:
+        async def api_list_intel_jobs(
+            status: str = "all",
+            limit: int = 20,
+            history_limit: int = 5,
+        ) -> Any:
             """List deferred intelligence jobs."""
             try:
                 from .db import get_database
+                from .config import Config
 
                 db = get_database()
                 jobs = db.list_intel_jobs(status=status, limit=limit)
+                retry_max_attempts = max(1, int(Config.load().meeting.intel_retry_max_attempts))
+                now = datetime.now()
+                bounded_history_limit = max(1, min(int(history_limit), 20))
                 return JSONResponse(
                     {
                         "jobs": [
@@ -1089,6 +1796,35 @@ class MeetingWebServer:
                                 "meeting_title": job.meeting_title,
                                 "started_at": job.started_at.isoformat() if job.started_at else None,
                                 "intel_status_detail": job.intel_status_detail,
+                                "retry_scheduled": (
+                                    job.status == "queued"
+                                    and bool(job.last_error)
+                                    and job.requested_at > now
+                                ),
+                                "next_retry_at": (
+                                    job.requested_at.isoformat()
+                                    if (
+                                        job.status == "queued"
+                                        and bool(job.last_error)
+                                        and job.requested_at > now
+                                    )
+                                    else None
+                                ),
+                                "retries_remaining": max(0, retry_max_attempts - int(job.attempts)),
+                                "retry_max_attempts": retry_max_attempts,
+                                "retry_history": [
+                                    {
+                                        "attempt": event.attempt,
+                                        "outcome": event.outcome,
+                                        "error": event.error,
+                                        "retry_at": event.retry_at.isoformat() if event.retry_at else None,
+                                        "created_at": event.created_at.isoformat(),
+                                    }
+                                    for event in db.list_intel_job_attempts(
+                                        job.meeting_id,
+                                        limit=bounded_history_limit,
+                                    )
+                                ],
                             }
                             for job in jobs
                         ]
@@ -1096,6 +1832,31 @@ class MeetingWebServer:
                 )
             except Exception as e:
                 log.error(f"Failed to list intel jobs: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.get("/api/intel/summary")
+        async def api_intel_queue_summary() -> Any:
+            """Return aggregate deferred-intel queue telemetry."""
+            try:
+                from .db import get_database
+
+                db = get_database()
+                summary = db.get_intel_queue_summary()
+                return JSONResponse(
+                    {
+                        "total_jobs": summary.total_jobs,
+                        "queued_jobs": summary.queued_jobs,
+                        "running_jobs": summary.running_jobs,
+                        "failed_jobs": summary.failed_jobs,
+                        "queued_due_jobs": summary.queued_due_jobs,
+                        "scheduled_retry_jobs": summary.scheduled_retry_jobs,
+                        "next_retry_at": (
+                            summary.next_retry_at.isoformat() if summary.next_retry_at else None
+                        ),
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to load intel queue summary: {e}")
                 return JSONResponse({"error": str(e)}, status_code=500)
 
         @app.post("/api/intel/process")
@@ -1107,6 +1868,14 @@ class MeetingWebServer:
 
                 cfg = Config.load().meeting
                 max_jobs = payload.max_jobs if payload is not None else None
+                mode = (payload.mode if payload is not None else None) or "respect_backoff"
+                normalized_mode = str(mode).strip().lower()
+                if normalized_mode not in {"respect_backoff", "retry_now"}:
+                    return JSONResponse(
+                        {"success": False, "error": "mode must be respect_backoff or retry_now"},
+                        status_code=400,
+                    )
+                include_scheduled = normalized_mode == "retry_now"
                 processed = drain_intel_queue(
                     cfg.intel_realtime_model,
                     provider=cfg.intel_provider,
@@ -1115,9 +1884,19 @@ class MeetingWebServer:
                     cloud_base_url=cfg.intel_cloud_base_url,
                     cloud_reasoning_effort=cfg.intel_cloud_reasoning_effort,
                     cloud_store=cfg.intel_cloud_store,
+                    retry_base_seconds=cfg.intel_retry_base_seconds,
+                    retry_max_seconds=cfg.intel_retry_max_seconds,
+                    retry_max_attempts=cfg.intel_retry_max_attempts,
+                    include_scheduled=include_scheduled,
                     max_jobs=max_jobs,
                 )
-                return JSONResponse({"success": True, "processed": processed})
+                return JSONResponse(
+                    {
+                        "success": True,
+                        "processed": processed,
+                        "mode": normalized_mode,
+                    }
+                )
             except Exception as e:
                 log.error(f"Failed to process intel jobs: {e}")
                 return JSONResponse({"success": False, "error": str(e)}, status_code=500)

@@ -54,6 +54,14 @@ class MeetingConfig:
     intel_summary_model: Optional[str] = None  # Falls back to realtime if None
     intel_deferred_enabled: bool = True  # Queue intel when no suitable local model is available
     intel_queue_poll_seconds: int = 120  # Background retry interval for deferred intel jobs
+    intel_retry_base_seconds: int = 30  # Initial deferred-intel retry delay
+    intel_retry_max_seconds: int = 900  # Maximum deferred-intel retry delay
+    intel_retry_max_attempts: int = 6  # Attempts before marking deferred intel as failed
+    intel_retry_failure_alert_percent: float = 50.0  # UI alert threshold for failed/total queue ratio
+    intel_retry_failure_hysteresis_minutes: float = 5.0  # Failure rate must stay above threshold for this duration
+    intel_retry_failure_webhook_url: Optional[str] = None  # Optional POST endpoint for sustained failure alerts
+    intel_retry_failure_webhook_header_name: Optional[str] = None  # Optional custom header name for alert webhooks
+    intel_retry_failure_webhook_header_value: Optional[str] = None  # Optional custom header value for alert webhooks
     intel_cloud_model: str = "gpt-5-mini"
     intel_cloud_api_key_env: str = "OPENAI_API_KEY"
     intel_cloud_base_url: Optional[str] = None
@@ -63,6 +71,8 @@ class MeetingConfig:
     # Web dashboard
     web_enabled: bool = True
     web_auto_open: bool = False  # Auto-open browser on meeting start
+    mir_enabled: bool = True  # Enable multi-intent routing controls in web runtime
+    mir_profile: str = "balanced"  # balanced, architect, delivery, product, incident
 
     # Speaker diarization
     diarization_enabled: bool = False  # Identify multiple speakers in system audio

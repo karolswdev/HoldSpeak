@@ -1,0 +1,4 @@
+# command: uv run pytest -q tests/integration/test_web_server.py -m requires_meeting -k 'intent or reroute or plugin or artifacts'
+2026-03-29T20:11:23-06:00
+.......                                                                  [100%]
+7 passed, 61 deselected in 0.57s

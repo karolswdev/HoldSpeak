@@ -1,0 +1,6 @@
+# command: date; uname -a; uv --version; uv run python --version
+2026-03-29T20:49:16-06:00
+git_commit=b434e2c
+Linux karol-fw 6.14.0-37-generic #37-Ubuntu SMP PREEMPT_DYNAMIC Fri Nov 14 22:10:32 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+uv 0.9.26
+Python 3.13.3

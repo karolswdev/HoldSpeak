@@ -1,0 +1,45 @@
+# command: git status --short && git rev-parse --abbrev-ref HEAD && git rev-parse HEAD
+2026-03-29T20:49:16-06:00
+git_commit=b434e2c
+main
+b434e2cdd945ab9ccc8cd4ca1ffb62b580001bcf
+ M README.md
+ M docs/MEETING_MODE_GUIDE.md
+ M holdspeak/commands/doctor.py
+ M holdspeak/commands/intel.py
+ M holdspeak/config.py
+ M holdspeak/controller.py
+ M holdspeak/db.py
+ M holdspeak/intel.py
+ M holdspeak/intel_queue.py
+ M holdspeak/main.py
+ M holdspeak/static/dashboard.html
+ M holdspeak/static/history.html
+ M holdspeak/web_server.py
+ M tests/integration/test_web_server.py
+ M tests/unit/test_config.py
+ M tests/unit/test_controller.py
+ M tests/unit/test_db.py
+ M tests/unit/test_doctor_command.py
+ M tests/unit/test_intel_cloud.py
+ M tests/unit/test_intel_command.py
+ M tests/unit/test_intel_queue.py
+?? docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md
+?? docs/PLAN_PHASE_MULTI_INTENT_ROUTING.md
+?? docs/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md
+?? docs/evidence/
+?? holdspeak/artifacts.py
+?? holdspeak/intent_timeline.py
+?? holdspeak/plugins/
+?? holdspeak/web_runtime.py
+?? tests/unit/test_artifact_synthesis.py
+?? tests/unit/test_intent_observability.py
+?? tests/unit/test_intent_router.py
+?? tests/unit/test_intent_security.py
+?? tests/unit/test_intent_signals.py
+?? tests/unit/test_intent_timeline.py
+?? tests/unit/test_main_modes.py
+?? tests/unit/test_plugin_host.py
+?? tests/unit/test_plugin_host_idempotency.py
+?? tests/unit/test_plugin_queue.py
+?? tests/unit/test_web_runtime.py

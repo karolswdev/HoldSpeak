@@ -244,6 +244,14 @@ def test_intel_queue_worker_restarts_on_runtime_config_changes(monkeypatch) -> N
             cloud_base_url=None,
             cloud_reasoning_effort=None,
             cloud_store=False,
+            retry_base_seconds=30,
+            retry_max_seconds=900,
+            retry_max_attempts=6,
+            failure_alert_percent=50.0,
+            failure_alert_hysteresis_minutes=5.0,
+            failure_alert_webhook_url=None,
+            failure_alert_webhook_header_name=None,
+            failure_alert_webhook_header_value=None,
         ):
             self.model_path = model_path
             self.provider = provider
@@ -252,6 +260,14 @@ def test_intel_queue_worker_restarts_on_runtime_config_changes(monkeypatch) -> N
             self.cloud_base_url = cloud_base_url
             self.cloud_reasoning_effort = cloud_reasoning_effort
             self.cloud_store = cloud_store
+            self.retry_base_seconds = retry_base_seconds
+            self.retry_max_seconds = retry_max_seconds
+            self.retry_max_attempts = retry_max_attempts
+            self.failure_alert_percent = failure_alert_percent
+            self.failure_alert_hysteresis_seconds = max(0.0, float(failure_alert_hysteresis_minutes) * 60.0)
+            self.failure_alert_webhook_url = (failure_alert_webhook_url or "").strip() or None
+            self.failure_alert_webhook_header_name = (failure_alert_webhook_header_name or "").strip() or None
+            self.failure_alert_webhook_header_value = (failure_alert_webhook_header_value or "").strip() or None
             self.poll_seconds = poll_seconds
             self._alive = True
             self.stop_calls = 0
@@ -273,6 +289,14 @@ def test_intel_queue_worker_restarts_on_runtime_config_changes(monkeypatch) -> N
         cloud_base_url=None,
         cloud_reasoning_effort=None,
         cloud_store=False,
+        retry_base_seconds=30,
+        retry_max_seconds=900,
+        retry_max_attempts=6,
+        failure_alert_percent=50.0,
+        failure_alert_hysteresis_minutes=5.0,
+        failure_alert_webhook_url=None,
+        failure_alert_webhook_header_name=None,
+        failure_alert_webhook_header_value=None,
         poll_seconds=120.0,
     ):
         worker = _FakeWorker(
@@ -284,6 +308,14 @@ def test_intel_queue_worker_restarts_on_runtime_config_changes(monkeypatch) -> N
             cloud_base_url=cloud_base_url,
             cloud_reasoning_effort=cloud_reasoning_effort,
             cloud_store=cloud_store,
+            retry_base_seconds=retry_base_seconds,
+            retry_max_seconds=retry_max_seconds,
+            retry_max_attempts=retry_max_attempts,
+            failure_alert_percent=failure_alert_percent,
+            failure_alert_hysteresis_minutes=failure_alert_hysteresis_minutes,
+            failure_alert_webhook_url=failure_alert_webhook_url,
+            failure_alert_webhook_header_name=failure_alert_webhook_header_name,
+            failure_alert_webhook_header_value=failure_alert_webhook_header_value,
         )
         started_workers.append(worker)
         return worker

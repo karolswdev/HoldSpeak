@@ -13,6 +13,7 @@ Voice typing for macOS and Linux - hold a hotkey, speak, release.
 - **Live Transcription**: Real-time transcript with speaker labels
 - **Meeting Intelligence**: AI-powered topics, action items, and summaries via local or cloud models
 - **Deferred Intel Queue**: If no compatible local model is available, queue meeting intelligence for later processing
+- **Deferred MIR Plugin Queue**: Queue heavy MIR plugin runs and process/retry/cancel them from web controls
 - **Web Interfaces**: Live meeting dashboard plus browser-based archive/settings hub
 
 ## Platform Support
@@ -95,10 +96,30 @@ CMAKE_ARGS="-DGGML_METAL=on" uv pip install llama-cpp-python
 
 ## Usage
 
-### Voice Typing
+### Web Runtime (Default)
 
 ```bash
 holdspeak
+```
+
+This starts the local web runtime (loopback only, `127.0.0.1`).
+Use this when you want browser-first access to `/history` and `/settings`.
+Voice typing is also active in web mode via the configured global hotkey.
+
+Explicit web command (same runtime):
+
+```bash
+holdspeak web
+holdspeak web --no-open
+```
+
+`--no-open` keeps web mode headless (no browser auto-open).  
+`--no-tui` is deprecated and currently aliases to `holdspeak web --no-open`.
+
+### Voice Typing (Explicit TUI Mode)
+
+```bash
+holdspeak tui
 ```
 
 Hold your configured hotkey (default: **Right Alt/Option**) and speak.
@@ -111,6 +132,40 @@ holdspeak doctor
 ```
 
 Use this to verify microphone/hotkey/text-injection/transcription prerequisites and get platform-specific fixes.
+When `meeting.intel_provider` is `cloud` or `auto`, doctor also runs a cloud preflight (`/models`) and reports DNS, TLS, auth, and model-id mismatches.
+
+### MIR CLI Routing Tools
+
+Use `intel` for deterministic route simulation and manual profile-override reroute on saved meetings:
+
+```bash
+holdspeak intel --route-dry-run <MEETING_ID> --profile architect
+holdspeak intel --reroute <MEETING_ID> --profile incident --override-intents incident,comms
+```
+
+### Homelab Cloud Intel (OpenAI-Compatible)
+
+Point HoldSpeak at your LAN endpoint to keep transcription local while offloading meeting intel:
+
+```json
+{
+  "meeting": {
+    "intel_provider": "cloud",
+    "intel_cloud_model": "qwen2.5-32b-instruct",
+    "intel_cloud_api_key_env": "HOMELAB_INTEL_API_KEY",
+    "intel_cloud_base_url": "http://homelab.local:8000/v1",
+    "intel_deferred_enabled": true,
+    "intel_queue_poll_seconds": 30
+  }
+}
+```
+
+Then validate from the same shell environment:
+
+```bash
+export HOMELAB_INTEL_API_KEY=...
+holdspeak doctor
+```
 
 #### Punctuation Commands
 
@@ -140,7 +195,7 @@ Say **"clipboard"** to insert whatever text is currently on your clipboard.
 
 ### Meeting Mode
 
-Start a meeting from the TUI by pressing `m`, or run setup first:
+Run setup checks first:
 
 ```bash
 # Check system-audio setup (BlackHole on macOS, Pulse monitor on Linux)
@@ -149,6 +204,9 @@ holdspeak meeting --setup
 # List audio devices
 holdspeak meeting --list-devices
 ```
+
+Meeting start/stop is available from the web runtime dashboard (`holdspeak` or `holdspeak web`).
+TUI meeting controls remain available as a compatibility path (`holdspeak tui`, then press `m`).
 
 #### TUI Navigation
 
@@ -176,12 +234,16 @@ When a meeting starts, a web dashboard URL appears. Open it in your browser to s
 - AI-extracted topics and action items
 - Action-item review workflow (`Needs review`/`Accepted`) with accept and edit controls
 - Meeting summary
+- MIR routing controls (profile, intent override, deterministic route preview)
 - Bookmark, per-segment copy, and export controls
 - Clear intel status when analysis is live, queued, unavailable, or complete
 
 The same local web server also exposes:
 - `/history` for meeting search, action tracking, action-item review/edit, speaker tracking, and intel queue management
 - `/settings` for browser-based config updates (including cloud `intel_provider` and optional `intel_cloud_base_url`)
+- MIR control-plane APIs: `/api/intents/control`, `/api/intents/profile`, `/api/intents/override`, `/api/intents/preview`
+- MIR history APIs: `/api/meetings/{meeting_id}/intent-timeline`, `/api/meetings/{meeting_id}/plugin-runs`, `/api/meetings/{meeting_id}/artifacts`
+- Deferred plugin-job APIs: `/api/plugin-jobs`, `/api/plugin-jobs/summary`, `/api/plugin-jobs/process`, `/api/plugin-jobs/{job_id}/retry-now`, `/api/plugin-jobs/{job_id}/cancel`
 - Local-only access (`127.0.0.1` loopback) by default
 
 **For complete setup instructions and troubleshooting, see the [Meeting Mode Guide](docs/MEETING_MODE_GUIDE.md).**
@@ -223,12 +285,22 @@ Config file: `~/.config/holdspeak/config.json`
     "intel_provider": "local",
     "intel_realtime_model": "~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf",
     "intel_queue_poll_seconds": 120,
+    "intel_retry_base_seconds": 30,
+    "intel_retry_max_seconds": 900,
+    "intel_retry_max_attempts": 6,
+    "intel_retry_failure_alert_percent": 50.0,
+    "intel_retry_failure_hysteresis_minutes": 5.0,
+    "intel_retry_failure_webhook_url": null,
+    "intel_retry_failure_webhook_header_name": null,
+    "intel_retry_failure_webhook_header_value": null,
     "intel_cloud_model": "gpt-5-mini",
     "intel_cloud_api_key_env": "OPENAI_API_KEY",
     "intel_cloud_base_url": null,
     "intel_deferred_enabled": true,
     "web_enabled": true,
     "web_auto_open": false,
+    "mir_enabled": true,
+    "mir_profile": "balanced",
     "similarity_threshold": 0.75
   }
 }

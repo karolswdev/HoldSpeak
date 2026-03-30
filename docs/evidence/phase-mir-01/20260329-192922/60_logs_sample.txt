@@ -1,0 +1,4 @@
+timestamp=2026-03-29T19:30:15-06:00
+sample_log_fields=meeting_id,window_id,intent_set,plugin_id
+status=partial
+note=Structured logging field contract documented; dedicated emitted log sampling for MIR-O-001/MIR-S-003 still pending full observability pass.

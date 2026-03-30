@@ -34,13 +34,20 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
 Examples:
-  holdspeak              # Launch TUI with default settings
+  holdspeak              # Launch web flagship runtime (default)
+  holdspeak web          # Launch web flagship runtime explicitly
+  holdspeak web --no-open  # Headless web service mode (no browser launch)
+  holdspeak tui          # Launch legacy TUI mode explicitly
   holdspeak menubar      # Launch menu bar mode (macOS only)
   holdspeak meeting      # Start in meeting mode (capture mic + system audio)
   holdspeak meeting --setup  # Check system audio setup
   holdspeak doctor       # Verify runtime deps and setup
   holdspeak intel        # Inspect or process deferred meeting intelligence
-  holdspeak --no-tui     # Run in simple terminal mode (legacy)
+  holdspeak intel --route-dry-run <MEETING_ID> --profile architect
+                        # Simulate MIR route for a saved meeting
+  holdspeak intel --reroute <MEETING_ID> --profile incident
+                        # Persist manual MIR profile-override reroute window
+  holdspeak --no-tui     # Deprecated alias for: holdspeak web --no-open
   holdspeak --verbose    # Show debug output in terminal
 
 Logs are written to: {LOG_FILE}
@@ -49,7 +56,7 @@ Logs are written to: {LOG_FILE}
     parser.add_argument(
         "--no-tui",
         action="store_true",
-        help="Run without TUI (simple terminal output)",
+        help="Deprecated: alias for `holdspeak web --no-open`",
     )
     parser.add_argument(
         "-v", "--verbose",
@@ -59,6 +66,33 @@ Logs are written to: {LOG_FILE}
 
     # Subcommands
     subparsers = parser.add_subparsers(dest="command")
+
+    # Web mode
+    web_parser = subparsers.add_parser(
+        "web",
+        help="Start web flagship runtime",
+    )
+    web_parser.add_argument(
+        "--no-open",
+        action="store_true",
+        help="Do not auto-open browser (headless local service mode)",
+    )
+    web_parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="Enable verbose logging to stderr",
+    )
+
+    # TUI mode
+    tui_parser = subparsers.add_parser(
+        "tui",
+        help="Start legacy TUI voice-typing interface",
+    )
+    tui_parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="Enable verbose logging to stderr",
+    )
 
     # Meeting mode
     meeting_parser = subparsers.add_parser(
@@ -165,7 +199,7 @@ Logs are written to: {LOG_FILE}
     # Intel subcommand
     intel_parser = subparsers.add_parser(
         "intel",
-        help="Inspect and process deferred meeting intelligence",
+        help="Inspect deferred intel queue and run MIR route simulation/reroute tooling",
     )
     intel_actions = intel_parser.add_mutually_exclusive_group()
     intel_actions.add_argument(
@@ -182,6 +216,16 @@ Logs are written to: {LOG_FILE}
         "--retry-failed",
         action="store_true",
         help="Requeue failed deferred-intel jobs",
+    )
+    intel_actions.add_argument(
+        "--route-dry-run",
+        metavar="MEETING_ID",
+        help="Simulate MIR routing for a saved meeting transcript (no DB writes)",
+    )
+    intel_actions.add_argument(
+        "--reroute",
+        metavar="MEETING_ID",
+        help="Apply manual MIR profile override reroute for a saved meeting",
     )
     intel_parser.add_argument(
         "--status",
@@ -200,6 +244,25 @@ Logs are written to: {LOG_FILE}
         type=int,
         help="Maximum number of jobs to process with --process",
     )
+    intel_parser.add_argument(
+        "--retry-mode",
+        choices=["respect-backoff", "retry-now"],
+        default="respect-backoff",
+        help="When processing queue: respect scheduled retry delays or force retry-now",
+    )
+    intel_parser.add_argument(
+        "--profile",
+        help="Routing profile override for --route-dry-run/--reroute (balanced, architect, delivery, product, incident)",
+    )
+    intel_parser.add_argument(
+        "--override-intents",
+        help="Comma-separated manual intent override set for --route-dry-run/--reroute",
+    )
+    intel_parser.add_argument(
+        "--threshold",
+        type=float,
+        help="Intent threshold override for --route-dry-run/--reroute",
+    )
 
     # Doctor subcommand
     doctor_parser = subparsers.add_parser(
@@ -216,6 +279,24 @@ Logs are written to: {LOG_FILE}
 
     # Setup logging (always to file, optionally to stderr)
     setup_logging(verbose=args.verbose)
+
+    if args.no_tui:
+        _emit_no_tui_deprecation()
+
+    # Handle web subcommand
+    if args.command == "web":
+        no_open = bool(args.no_open or args.no_tui)
+        log.info(f"HoldSpeak web mode starting (no_open={no_open})")
+        _run_web_mode(no_open=no_open)
+        return
+
+    # Handle tui subcommand
+    if args.command == "tui":
+        if args.no_tui:
+            log.info("Ignoring deprecated --no-tui flag while running explicit `tui` mode")
+        log.info("HoldSpeak TUI mode starting")
+        _run_tui_mode()
+        return
 
     # Handle meeting subcommand
     if args.command == "meeting":
@@ -247,18 +328,37 @@ Logs are written to: {LOG_FILE}
     if args.command == "doctor":
         raise SystemExit(run_doctor_command(args))
 
-    log.info(f"HoldSpeak starting (verbose={args.verbose}, no_tui={args.no_tui})")
+    # Default mode: web-first runtime.
+    no_open = bool(args.no_tui)
+    log.info(f"HoldSpeak default mode routing to web (no_open={no_open})")
+    _run_web_mode(no_open=no_open)
 
-    if args.no_tui:
-        # Legacy mode without TUI
-        _run_simple_mode()
-    else:
-        # TUI mode - preload model BEFORE starting Textual to avoid
-        # multiprocessing conflicts with file descriptors
-        config = Config.load()
-        transcriber = _preload_model_before_tui(config.model.name)
-        app = HoldSpeakAppWithController(config=config, preloaded_transcriber=transcriber)
-        app.run()
+
+def _emit_no_tui_deprecation() -> None:
+    import sys
+    message = (
+        "DEPRECATION: `--no-tui` is deprecated and will be removed in a future release. "
+        "Use `holdspeak web --no-open` for headless web mode, or `holdspeak tui` for terminal UI."
+    )
+    print(message, file=sys.stderr)
+    log.warning(message)
+
+
+def _run_web_mode(*, no_open: bool = False) -> None:
+    """Start web runtime lifecycle (staged Step 2 extraction)."""
+    from .web_runtime import run_web_runtime
+
+    run_web_runtime(no_open=no_open)
+
+
+def _run_tui_mode() -> None:
+    """Run the legacy TUI mode."""
+    # TUI mode - preload model BEFORE starting Textual to avoid
+    # multiprocessing conflicts with file descriptors
+    config = Config.load()
+    transcriber = _preload_model_before_tui(config.model.name)
+    app = HoldSpeakAppWithController(config=config, preloaded_transcriber=transcriber)
+    app.run()
 
 
 def _preload_model_before_tui(model_name: str) -> Optional[Transcriber]:
@@ -361,7 +461,7 @@ def _run_simple_mode():
         )
     except Exception as exc:
         print(f"\nGlobal hotkey unavailable: {exc}")
-        print("Try running the TUI (`holdspeak`) and use focused hold-to-talk.")
+        print("Try running the TUI (`holdspeak tui`) and use focused hold-to-talk.")
         return
 
     def signal_handler(sig, frame):

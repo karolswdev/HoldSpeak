@@ -1,0 +1,4 @@
+# command: uv run pytest -q tests/integration/test_web_server.py -m requires_meeting -k 'meeting_artifacts_endpoint'
+2026-03-29T20:11:24-06:00
+.                                                                        [100%]
+1 passed, 67 deselected in 0.28s

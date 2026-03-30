@@ -1,0 +1,4 @@
+# command: uv run pytest -q tests/unit/test_intent_security.py tests/unit/test_plugin_host.py tests/unit/test_plugin_host_idempotency.py
+2026-03-29T20:11:22-06:00
+..........                                                               [100%]
+10 passed in 0.07s

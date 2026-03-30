@@ -128,3 +128,66 @@ def test_meeting_intel_cloud_falls_back_to_max_completion_tokens(monkeypatch) ->
     assert len(create_calls) == 2
     assert "max_tokens" in create_calls[0]
     assert "max_completion_tokens" in create_calls[1]
+
+
+def test_meeting_intel_cloud_surfaces_timeout_errors(monkeypatch) -> None:
+    class _FakeCompletions:
+        def create(self, **kwargs):
+            _ = kwargs
+            raise TimeoutError("request timed out")
+
+    class _FakeOpenAI:
+        def __init__(self, **kwargs):
+            _ = kwargs
+            self.chat = SimpleNamespace(completions=_FakeCompletions())
+
+    monkeypatch.setattr(intel_module, "OpenAI", _FakeOpenAI)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    intel = MeetingIntel(provider="cloud", cloud_model="gpt-5-mini")
+    result = intel.analyze("[00:00:00] Me: test", stream=False)
+
+    assert result.error is not None
+    assert "timed out" in result.error.lower()
+
+
+def test_meeting_intel_cloud_surfaces_auth_errors(monkeypatch) -> None:
+    class _FakeCompletions:
+        def create(self, **kwargs):
+            _ = kwargs
+            raise RuntimeError("401 Unauthorized")
+
+    class _FakeOpenAI:
+        def __init__(self, **kwargs):
+            _ = kwargs
+            self.chat = SimpleNamespace(completions=_FakeCompletions())
+
+    monkeypatch.setattr(intel_module, "OpenAI", _FakeOpenAI)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    intel = MeetingIntel(provider="cloud", cloud_model="gpt-5-mini")
+    result = intel.analyze("[00:00:00] Me: test", stream=False)
+
+    assert result.error is not None
+    assert "auth failed" in result.error.lower()
+
+
+def test_meeting_intel_cloud_surfaces_model_not_found_errors(monkeypatch) -> None:
+    class _FakeCompletions:
+        def create(self, **kwargs):
+            _ = kwargs
+            raise RuntimeError("404 model not found")
+
+    class _FakeOpenAI:
+        def __init__(self, **kwargs):
+            _ = kwargs
+            self.chat = SimpleNamespace(completions=_FakeCompletions())
+
+    monkeypatch.setattr(intel_module, "OpenAI", _FakeOpenAI)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    intel = MeetingIntel(provider="cloud", cloud_model="qwen2.5-32b-instruct")
+    result = intel.analyze("[00:00:00] Me: test", stream=False)
+
+    assert result.error is not None
+    assert "model 'qwen2.5-32b-instruct' not found" in result.error.lower()
