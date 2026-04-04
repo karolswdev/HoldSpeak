@@ -25,6 +25,7 @@ from .router import (
     select_active_intents,
 )
 from .signals import SUPPORTED_INTENTS as SIGNAL_INTENTS, extract_intent_signals
+from .project_detector import ProjectDetectorPlugin
 from .synthesis import synthesize_meeting_artifacts
 
 __all__ = [
@@ -56,4 +57,5 @@ __all__ = [
     "PLUGIN_QUEUE_RETRY_BASE_SECONDS",
     "PLUGIN_QUEUE_RETRY_MAX_SECONDS",
     "PLUGIN_QUEUE_RETRY_MAX_ATTEMPTS",
+    "ProjectDetectorPlugin",
 ]

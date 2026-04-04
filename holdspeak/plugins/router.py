@@ -139,7 +139,7 @@ def _dedupe_keep_order(values: list[str]) -> list[str]:
 
 def build_plugin_chain(profile: str, active_intents: list[str]) -> list[str]:
     normalized_profile = normalize_profile(profile)
-    chain = list(PROFILE_PLUGIN_BASE_CHAINS.get(normalized_profile, []))
+    chain = ["project_detector"] + list(PROFILE_PLUGIN_BASE_CHAINS.get(normalized_profile, []))
     for intent in active_intents:
         chain.extend(_INTENT_PLUGIN_CHAIN.get(intent, []))
     if not chain:

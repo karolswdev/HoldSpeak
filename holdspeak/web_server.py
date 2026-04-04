@@ -287,6 +287,7 @@ class MeetingWebServer:
         on_set_title: Optional[Callable[[str], None]] = None,
         on_set_tags: Optional[Callable[[list[str]], None]] = None,
         on_settings_applied: Optional[Callable[[Any], None]] = None,
+        project_detector: Optional[Any] = None,
         host: str = "127.0.0.1",
     ) -> None:
         if _IMPORT_ERROR is not None:
@@ -313,6 +314,7 @@ class MeetingWebServer:
         self.on_set_title = on_set_title
         self.on_set_tags = on_set_tags
         self.on_settings_applied = on_settings_applied
+        self._project_detector = project_detector
         self.host = host
 
         self.port: Optional[int] = None
@@ -843,6 +845,43 @@ class MeetingWebServer:
                         status_code=400,
                     )
                 model_data["name"] = model_name
+
+                # --- UIConfig validation ---
+                theme = str(ui_data.get("theme", current.ui.theme)).strip().lower()
+                if theme not in {"dark", "light", "dracula", "monokai"}:
+                    return JSONResponse(
+                        {"success": False, "error": f"Invalid theme: {theme}"},
+                        status_code=400,
+                    )
+                ui_data["theme"] = theme
+
+                history_lines = int(ui_data.get("history_lines", current.ui.history_lines))
+                if not (1 <= history_lines <= 100):
+                    return JSONResponse(
+                        {"success": False, "error": "history_lines must be between 1 and 100"},
+                        status_code=400,
+                    )
+                ui_data["history_lines"] = history_lines
+                ui_data["show_audio_meter"] = bool(
+                    ui_data.get("show_audio_meter", current.ui.show_audio_meter)
+                )
+
+                # --- Optional string / bool fields in MeetingConfig ---
+                meeting_data["mic_device"] = (
+                    str(meeting_data.get("mic_device") or "").strip() or None
+                )
+                meeting_data["system_audio_device"] = (
+                    str(meeting_data.get("system_audio_device") or "").strip() or None
+                )
+                meeting_data["auto_export"] = bool(
+                    meeting_data.get("auto_export", current.meeting.auto_export)
+                )
+                meeting_data["intel_summary_model"] = (
+                    str(meeting_data.get("intel_summary_model") or "").strip() or None
+                )
+                meeting_data["intel_cloud_reasoning_effort"] = (
+                    str(meeting_data.get("intel_cloud_reasoning_effort") or "").strip() or None
+                )
 
                 export_format = str(meeting_data.get("export_format", current.meeting.export_format))
                 if export_format not in {"txt", "markdown", "json", "srt"}:
@@ -1915,6 +1954,332 @@ class MeetingWebServer:
             except Exception as e:
                 log.error(f"Failed to retry intel job: {e}")
                 return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+        # ── Project knowledge-base endpoints ──────────────────────────────
+
+        @app.get("/api/projects")
+        async def api_list_projects(include_archived: bool = False) -> Any:
+            try:
+                from .db import get_database
+                db = get_database()
+                projects = db.list_projects(include_archived=include_archived)
+                return JSONResponse({
+                    "projects": [
+                        {
+                            "id": p.id,
+                            "name": p.name,
+                            "description": p.description,
+                            "keywords": p.keywords,
+                            "team_members": p.team_members,
+                            "context": p.context,
+                            "detection_threshold": p.detection_threshold,
+                            "is_archived": p.is_archived,
+                            "meeting_count": p.meeting_count,
+                            "created_at": p.created_at.isoformat(),
+                            "updated_at": p.updated_at.isoformat(),
+                        }
+                        for p in projects
+                    ]
+                })
+            except Exception as e:
+                log.error(f"Failed to list projects: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.post("/api/projects")
+        async def api_create_project(payload: dict[str, Any]) -> Any:
+            try:
+                import uuid
+                from .db import get_database
+                db = get_database()
+                name = str(payload.get("name") or "").strip()
+                if not name:
+                    return JSONResponse(
+                        {"success": False, "error": "Project name is required"},
+                        status_code=400,
+                    )
+                project_id = f"proj-{uuid.uuid4().hex[:12]}"
+                keywords = payload.get("keywords") or []
+                if isinstance(keywords, str):
+                    keywords = [k.strip() for k in keywords.split(",") if k.strip()]
+                team_members = payload.get("team_members") or []
+                if isinstance(team_members, str):
+                    team_members = [m.strip() for m in team_members.split(",") if m.strip()]
+                threshold = float(payload.get("detection_threshold", 0.4))
+                if not (0.0 <= threshold <= 1.0):
+                    return JSONResponse(
+                        {"success": False, "error": "detection_threshold must be between 0 and 1"},
+                        status_code=400,
+                    )
+                db.create_project(
+                    project_id=project_id,
+                    name=name,
+                    description=str(payload.get("description") or ""),
+                    keywords=keywords,
+                    team_members=team_members,
+                    context=payload.get("context") or {},
+                    detection_threshold=threshold,
+                )
+                # Reload detector
+                if self._project_detector is not None:
+                    self._project_detector.reload_projects(
+                        db.get_all_projects_for_detector()
+                    )
+                project = db.get_project(project_id)
+                return JSONResponse({
+                    "success": True,
+                    "project": {
+                        "id": project.id,
+                        "name": project.name,
+                        "description": project.description,
+                        "keywords": project.keywords,
+                        "team_members": project.team_members,
+                        "context": project.context,
+                        "detection_threshold": project.detection_threshold,
+                        "is_archived": project.is_archived,
+                        "meeting_count": project.meeting_count,
+                        "created_at": project.created_at.isoformat(),
+                        "updated_at": project.updated_at.isoformat(),
+                    } if project else None,
+                })
+            except Exception as e:
+                log.error(f"Failed to create project: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+        @app.get("/api/projects/{project_id}")
+        async def api_get_project(project_id: str) -> Any:
+            try:
+                from .db import get_database
+                db = get_database()
+                project = db.get_project(project_id)
+                if not project:
+                    return JSONResponse({"error": "Project not found"}, status_code=404)
+                return JSONResponse({
+                    "id": project.id,
+                    "name": project.name,
+                    "description": project.description,
+                    "keywords": project.keywords,
+                    "team_members": project.team_members,
+                    "context": project.context,
+                    "detection_threshold": project.detection_threshold,
+                    "is_archived": project.is_archived,
+                    "meeting_count": project.meeting_count,
+                    "created_at": project.created_at.isoformat(),
+                    "updated_at": project.updated_at.isoformat(),
+                })
+            except Exception as e:
+                log.error(f"Failed to get project: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.patch("/api/projects/{project_id}")
+        async def api_update_project(project_id: str, payload: dict[str, Any]) -> Any:
+            try:
+                from .db import get_database
+                db = get_database()
+                existing = db.get_project(project_id)
+                if not existing:
+                    return JSONResponse(
+                        {"success": False, "error": "Project not found"},
+                        status_code=404,
+                    )
+                update_fields: dict[str, Any] = {}
+                if "name" in payload:
+                    name = str(payload["name"]).strip()
+                    if not name:
+                        return JSONResponse(
+                            {"success": False, "error": "Project name cannot be empty"},
+                            status_code=400,
+                        )
+                    update_fields["name"] = name
+                if "description" in payload:
+                    update_fields["description"] = str(payload["description"] or "")
+                if "keywords" in payload:
+                    kw = payload["keywords"]
+                    if isinstance(kw, str):
+                        kw = [k.strip() for k in kw.split(",") if k.strip()]
+                    update_fields["keywords"] = kw
+                if "team_members" in payload:
+                    tm = payload["team_members"]
+                    if isinstance(tm, str):
+                        tm = [m.strip() for m in tm.split(",") if m.strip()]
+                    update_fields["team_members"] = tm
+                if "context" in payload:
+                    update_fields["context"] = payload["context"] or {}
+                if "detection_threshold" in payload:
+                    threshold = float(payload["detection_threshold"])
+                    if not (0.0 <= threshold <= 1.0):
+                        return JSONResponse(
+                            {"success": False, "error": "detection_threshold must be between 0 and 1"},
+                            status_code=400,
+                        )
+                    update_fields["detection_threshold"] = threshold
+                if update_fields:
+                    db.update_project(project_id, **update_fields)
+                # Reload detector
+                if self._project_detector is not None:
+                    self._project_detector.reload_projects(
+                        db.get_all_projects_for_detector()
+                    )
+                updated = db.get_project(project_id)
+                return JSONResponse({
+                    "success": True,
+                    "project": {
+                        "id": updated.id,
+                        "name": updated.name,
+                        "description": updated.description,
+                        "keywords": updated.keywords,
+                        "team_members": updated.team_members,
+                        "context": updated.context,
+                        "detection_threshold": updated.detection_threshold,
+                        "is_archived": updated.is_archived,
+                        "meeting_count": updated.meeting_count,
+                        "created_at": updated.created_at.isoformat(),
+                        "updated_at": updated.updated_at.isoformat(),
+                    } if updated else None,
+                })
+            except Exception as e:
+                log.error(f"Failed to update project: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+        @app.delete("/api/projects/{project_id}")
+        async def api_archive_project(project_id: str) -> Any:
+            try:
+                from .db import get_database
+                db = get_database()
+                existing = db.get_project(project_id)
+                if not existing:
+                    return JSONResponse(
+                        {"success": False, "error": "Project not found"},
+                        status_code=404,
+                    )
+                db.update_project(project_id, is_archived=True)
+                if self._project_detector is not None:
+                    self._project_detector.reload_projects(
+                        db.get_all_projects_for_detector()
+                    )
+                return JSONResponse({"success": True})
+            except Exception as e:
+                log.error(f"Failed to archive project: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+        @app.get("/api/projects/{project_id}/meetings")
+        async def api_project_meetings(
+            project_id: str, limit: int = 50, offset: int = 0
+        ) -> Any:
+            try:
+                from .db import get_database
+                db = get_database()
+                meetings = db.get_project_meetings(project_id, limit=limit, offset=offset)
+                return JSONResponse({"meetings": meetings})
+            except Exception as e:
+                log.error(f"Failed to get project meetings: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.post("/api/projects/{project_id}/meetings/{meeting_id}")
+        async def api_associate_meeting(project_id: str, meeting_id: str) -> Any:
+            try:
+                from .db import get_database
+                db = get_database()
+                db.associate_meeting_project(
+                    meeting_id=meeting_id,
+                    project_id=project_id,
+                    source="manual",
+                    confidence=1.0,
+                )
+                return JSONResponse({"success": True})
+            except Exception as e:
+                log.error(f"Failed to associate meeting: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+        @app.delete("/api/projects/{project_id}/meetings/{meeting_id}")
+        async def api_disassociate_meeting(project_id: str, meeting_id: str) -> Any:
+            try:
+                from .db import get_database
+                db = get_database()
+                db.disassociate_meeting_project(
+                    meeting_id=meeting_id,
+                    project_id=project_id,
+                )
+                return JSONResponse({"success": True})
+            except Exception as e:
+                log.error(f"Failed to disassociate meeting: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+        @app.get("/api/meetings/{meeting_id}/projects")
+        async def api_meeting_projects(meeting_id: str) -> Any:
+            try:
+                from .db import get_database
+                db = get_database()
+                projects = db.get_meeting_projects(meeting_id)
+                return JSONResponse({"projects": projects})
+            except Exception as e:
+                log.error(f"Failed to get meeting projects: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.get("/api/projects/{project_id}/summary")
+        async def api_project_summary(project_id: str) -> Any:
+            try:
+                from .db import get_database
+                db = get_database()
+                summary = db.get_project_summary(project_id)
+                return JSONResponse(summary)
+            except Exception as e:
+                log.error(f"Failed to get project summary: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.get("/api/projects/{project_id}/action-items")
+        async def api_project_action_items(project_id: str) -> Any:
+            try:
+                from .db import get_database
+                db = get_database()
+                items = db.get_project_action_items(project_id)
+                return JSONResponse({
+                    "action_items": [
+                        {
+                            "id": ai.id,
+                            "task": ai.task,
+                            "owner": ai.owner,
+                            "due": ai.due,
+                            "status": ai.status,
+                            "review_state": ai.review_state,
+                            "meeting_id": ai.meeting_id,
+                            "meeting_title": ai.meeting_title,
+                            "meeting_date": ai.meeting_date.isoformat(),
+                            "created_at": ai.created_at.isoformat(),
+                            "completed_at": ai.completed_at.isoformat() if ai.completed_at else None,
+                            "reviewed_at": ai.reviewed_at.isoformat() if ai.reviewed_at else None,
+                        }
+                        for ai in items
+                    ]
+                })
+            except Exception as e:
+                log.error(f"Failed to get project action items: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.get("/api/projects/{project_id}/artifacts")
+        async def api_project_artifacts(project_id: str) -> Any:
+            try:
+                from .db import get_database
+                db = get_database()
+                artifacts = db.get_project_artifacts(project_id)
+                return JSONResponse({
+                    "artifacts": [
+                        {
+                            "id": a.id,
+                            "meeting_id": a.meeting_id,
+                            "artifact_type": a.artifact_type,
+                            "title": a.title,
+                            "body_markdown": a.body_markdown,
+                            "confidence": a.confidence,
+                            "status": a.status,
+                            "plugin_id": a.plugin_id,
+                            "created_at": a.created_at.isoformat(),
+                        }
+                        for a in artifacts
+                    ]
+                })
+            except Exception as e:
+                log.error(f"Failed to get project artifacts: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
 
         @app.websocket("/ws")
         async def websocket_endpoint(websocket: WebSocket) -> None:

@@ -697,6 +697,7 @@
             <button class="tab" :class="{ active: tab === 'meetings' }" @click="setTab('meetings')">Meetings</button>
             <button class="tab" :class="{ active: tab === 'actions' }" @click="setTab('actions')">Action Items</button>
             <button class="tab" :class="{ active: tab === 'speakers' }" @click="setTab('speakers')">Speakers</button>
+            <button class="tab" :class="{ active: tab === 'projects' }" @click="setTab('projects')">Projects</button>
             <button class="tab" :class="{ active: tab === 'intel' }" @click="setTab('intel')">Intel Queue</button>
             <button class="tab" :class="{ active: tab === 'settings' }" @click="setTab('settings')">Settings</button>
           </div>
@@ -887,6 +888,199 @@
             </div>
           </template>
 
+          <template x-if="tab === 'projects'">
+            <div>
+              <!-- List view -->
+              <div x-show="!selectedProject">
+                <div class="search-row">
+                  <button class="btn primary" @click="openNewProjectForm">+ New Project</button>
+                </div>
+
+                <div x-show="loadingProjects" class="loading">Loading projects...</div>
+                <div x-show="!loadingProjects && projects.length === 0" class="empty">
+                  <p>No projects yet. Create one to start tracking meeting intelligence per project.</p>
+                </div>
+
+                <div class="grid" x-show="!loadingProjects && projects.length > 0">
+                  <template x-for="proj in projects" :key="proj.id">
+                    <button class="meeting-card" @click="openProject(proj.id)">
+                      <div class="card-top">
+                        <div style="text-align: left;">
+                          <p class="card-title" x-text="proj.name"></p>
+                          <p class="card-subtitle" x-text="proj.description || '(no description)'"></p>
+                        </div>
+                      </div>
+                      <div class="pill-row">
+                        <span class="pill" x-text="`${(proj.keywords || []).length} keywords`"></span>
+                        <span class="pill" x-text="`${(proj.team_members || []).length} members`"></span>
+                        <span class="pill" x-text="`${proj.meeting_count || 0} meetings`"></span>
+                        <span class="pill" x-text="`threshold ${(proj.detection_threshold * 100).toFixed(0)}%`"></span>
+                      </div>
+                    </button>
+                  </template>
+                </div>
+              </div>
+
+              <!-- New project form -->
+              <div x-show="showNewProjectForm && !selectedProject" x-cloak>
+                <div class="detail-card">
+                  <h4>New Project</h4>
+                  <div class="form-grid">
+                    <div class="field full">
+                      <label>Name</label>
+                      <input class="input" type="text" x-model="projectDraft.name" placeholder="Project Atlas" />
+                    </div>
+                    <div class="field full">
+                      <label>Description</label>
+                      <input class="input" type="text" x-model="projectDraft.description" placeholder="Auth service rewrite for compliance" />
+                    </div>
+                    <div class="field full">
+                      <label>Keywords (comma-separated)</label>
+                      <input class="input" type="text" x-model="projectDraft.keywords" placeholder="auth, oauth, session, token, compliance" />
+                    </div>
+                    <div class="field full">
+                      <label>Team Members (comma-separated)</label>
+                      <input class="input" type="text" x-model="projectDraft.team_members" placeholder="Alice, Bob Chen, Carol" />
+                    </div>
+                    <div class="field">
+                      <label>Detection Threshold</label>
+                      <input class="input" type="number" min="0" max="1" step="0.05" x-model.number="projectDraft.detection_threshold" />
+                    </div>
+                  </div>
+                  <div class="search-row" style="margin-top: 12px;">
+                    <button class="btn primary" @click="createProject" :disabled="!projectDraft.name.trim()">Create Project</button>
+                    <button class="btn" @click="showNewProjectForm = false">Cancel</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Detail view -->
+              <div x-show="selectedProject" x-cloak>
+                <div class="search-row">
+                  <button class="btn" @click="selectedProject = null">&larr; Back to Projects</button>
+                </div>
+
+                <div class="detail-card">
+                  <h4>
+                    <span x-text="selectedProject?.name"></span>
+                    <span class="meta-line" x-text="selectedProject?.description" style="margin-left: 12px;"></span>
+                  </h4>
+                  <div class="form-grid">
+                    <div class="field full">
+                      <label>Name</label>
+                      <input class="input" type="text" x-model="selectedProject.name" @change="patchProject('name', selectedProject.name)" />
+                    </div>
+                    <div class="field full">
+                      <label>Description</label>
+                      <input class="input" type="text" x-model="selectedProject.description" @change="patchProject('description', selectedProject.description)" />
+                    </div>
+                    <div class="field full">
+                      <label>Keywords</label>
+                      <input class="input" type="text"
+                        :value="(selectedProject?.keywords || []).join(', ')"
+                        @change="patchProject('keywords', $event.target.value)" />
+                    </div>
+                    <div class="field full">
+                      <label>Team Members</label>
+                      <input class="input" type="text"
+                        :value="(selectedProject?.team_members || []).join(', ')"
+                        @change="patchProject('team_members', $event.target.value)" />
+                    </div>
+                    <div class="field">
+                      <label>Detection Threshold</label>
+                      <input class="input" type="number" min="0" max="1" step="0.05"
+                        :value="selectedProject?.detection_threshold"
+                        @change="patchProject('detection_threshold', parseFloat($event.target.value))" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Project summary -->
+                <div class="detail-card" x-show="projectSummary" x-cloak>
+                  <h4>Summary</h4>
+                  <div class="pill-row">
+                    <span class="pill" x-text="`${projectSummary?.meeting_count || 0} meetings`"></span>
+                    <span class="pill" x-text="`${projectSummary?.artifact_count || 0} artifacts`"></span>
+                    <template x-for="[status, count] in Object.entries(projectSummary?.action_items_by_status || {})" :key="status">
+                      <span class="pill" x-text="`${count} ${status}`"></span>
+                    </template>
+                  </div>
+                  <p class="meta-line" x-show="projectSummary?.first_meeting" x-cloak>
+                    <span x-text="`First meeting: ${formatDate(projectSummary?.first_meeting)}`"></span>
+                    <span x-text="` — Last: ${formatDate(projectSummary?.last_meeting)}`"></span>
+                  </p>
+                </div>
+
+                <!-- Project meetings -->
+                <div class="detail-card">
+                  <h4>Meetings</h4>
+                  <div x-show="!projectMeetings.length" class="empty"><p>No meetings associated yet.</p></div>
+                  <div class="grid" x-show="projectMeetings.length > 0">
+                    <template x-for="m in projectMeetings" :key="m.id">
+                      <div class="meeting-card" style="cursor: default;">
+                        <div class="card-top">
+                          <div style="text-align: left;">
+                            <p class="card-title" x-text="m.title || '(untitled)'"></p>
+                            <p class="card-subtitle" x-text="formatDate(m.started_at)"></p>
+                          </div>
+                          <div class="pill-row">
+                            <span class="pill" x-text="`${(m.confidence * 100).toFixed(0)}%`"></span>
+                            <span class="status-pill" :class="m.source === 'auto' ? 'running' : 'completed'" x-text="m.source"></span>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+
+                <!-- Project action items -->
+                <div class="detail-card">
+                  <h4>Action Items</h4>
+                  <div x-show="!projectActionItems.length" class="empty"><p>No action items from project meetings.</p></div>
+                  <div class="grid" x-show="projectActionItems.length > 0">
+                    <template x-for="ai in projectActionItems" :key="ai.id">
+                      <div class="segment">
+                        <div class="card-top">
+                          <p class="card-title" x-text="ai.task"></p>
+                          <span class="status-pill" :class="ai.status" x-text="ai.status"></span>
+                        </div>
+                        <div class="pill-row">
+                          <span class="pill" x-show="ai.owner" x-cloak x-text="`Owner: ${ai.owner}`"></span>
+                          <span class="pill" x-show="ai.due" x-cloak x-text="`Due: ${ai.due}`"></span>
+                          <span class="pill" x-text="ai.meeting_title || '(untitled)'"></span>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+
+                <!-- Project artifacts -->
+                <div class="detail-card">
+                  <h4>Artifacts</h4>
+                  <div x-show="!projectArtifacts.length" class="empty"><p>No artifacts from project meetings.</p></div>
+                  <div class="grid" x-show="projectArtifacts.length > 0">
+                    <template x-for="a in projectArtifacts" :key="a.id">
+                      <div class="segment">
+                        <div class="card-top">
+                          <p class="card-title" x-text="a.title"></p>
+                          <span class="status-pill" :class="a.status" x-text="a.artifact_type"></span>
+                        </div>
+                        <div class="pill-row">
+                          <span class="pill" x-text="`${(a.confidence * 100).toFixed(0)}% confidence`"></span>
+                          <span class="pill" x-text="formatDate(a.created_at)"></span>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+
+                <div class="search-row">
+                  <button class="btn" style="color: var(--danger);" @click="archiveProject">Archive Project</button>
+                </div>
+              </div>
+            </div>
+          </template>
+
           <template x-if="tab === 'intel'">
             <div class="stack">
               <div class="metric-grid">
@@ -1054,6 +1248,28 @@
               <template x-if="settings">
                 <div class="stack">
                   <div class="detail-card">
+                    <h4>Appearance &amp; UI</h4>
+                    <div class="form-grid">
+                      <div class="field">
+                        <label>Theme</label>
+                        <select class="select" x-model="settings.ui.theme">
+                          <option value="dark">Dark</option>
+                          <option value="light">Light</option>
+                          <option value="dracula">Dracula</option>
+                          <option value="monokai">Monokai</option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label>History Lines</label>
+                        <input class="input" type="number" min="1" max="100" x-model.number="settings.ui.history_lines" />
+                      </div>
+                    </div>
+                    <div class="check-row" style="margin-top: 12px;">
+                      <label class="check"><input type="checkbox" x-model="settings.ui.show_audio_meter" /> Show audio meter</label>
+                    </div>
+                  </div>
+
+                  <div class="detail-card">
                     <h4>Core Settings</h4>
                     <div class="form-grid">
                       <div class="field">
@@ -1118,10 +1334,36 @@
                           <option value="auto">auto</option>
                         </select>
                       </div>
+                      <div class="field">
+                        <label>MIR Profile</label>
+                        <select class="select" x-model="settings.meeting.mir_profile">
+                          <option value="balanced">Balanced</option>
+                          <option value="architect">Architect</option>
+                          <option value="delivery">Delivery</option>
+                          <option value="product">Product</option>
+                          <option value="incident">Incident</option>
+                        </select>
+                      </div>
                       <div class="field full">
                         <label>Local Realtime Model Path</label>
                         <input class="input" type="text" x-model="settings.meeting.intel_realtime_model" />
                       </div>
+                      <div class="field full">
+                        <label>Local Summary Model Path (optional, falls back to realtime)</label>
+                        <input class="input" type="text" placeholder="Leave empty to use realtime model" x-model="settings.meeting.intel_summary_model" />
+                      </div>
+                      <div class="field">
+                        <label>Mic Device (optional)</label>
+                        <input class="input" type="text" placeholder="System default" x-model="settings.meeting.mic_device" />
+                      </div>
+                      <div class="field">
+                        <label>System Audio Device (optional)</label>
+                        <input class="input" type="text" placeholder="System default" x-model="settings.meeting.system_audio_device" />
+                      </div>
+                    </div>
+                    <div class="check-row" style="margin-top: 12px;">
+                      <label class="check"><input type="checkbox" x-model="settings.meeting.auto_export" /> Auto-export on meeting end</label>
+                      <label class="check"><input type="checkbox" x-model="settings.meeting.mir_enabled" /> MIR routing enabled</label>
                     </div>
                   </div>
 
@@ -1135,6 +1377,10 @@
                       <div class="field">
                         <label>API Key Env Var</label>
                         <input class="input" type="text" x-model="settings.meeting.intel_cloud_api_key_env" />
+                      </div>
+                      <div class="field">
+                        <label>Cloud Reasoning Effort (optional)</label>
+                        <input class="input" type="text" placeholder="e.g. low, medium, high" x-model="settings.meeting.intel_cloud_reasoning_effort" />
                       </div>
                       <div class="field full">
                         <label>OpenAI-Compatible Base URL</label>
@@ -1325,6 +1571,17 @@
           _messageTimer: null,
           _clockTimer: null,
 
+          // Project state
+          projects: [],
+          loadingProjects: true,
+          selectedProject: null,
+          showNewProjectForm: false,
+          projectDraft: { name: "", description: "", keywords: "", team_members: "", detection_threshold: 0.4 },
+          projectSummary: null,
+          projectMeetings: [],
+          projectActionItems: [],
+          projectArtifacts: [],
+
           async init() {
             await Promise.all([
               this.loadMeetings(),
@@ -1381,6 +1638,7 @@
               this.loadPluginJobs();
             }
             if (name === "settings" && !this.settings) this.loadSettings();
+            if (name === "projects") this.loadProjects();
           },
 
           intelStatusLabel(state) {
@@ -1785,9 +2043,13 @@
             const errors = [];
             const hotkey = String(payload?.hotkey?.key || "");
             const model = String(payload?.model?.name || "");
+            const ui = payload?.ui || {};
             const meeting = payload?.meeting || {};
             const provider = String(meeting.intel_provider || "").toLowerCase();
             const exportFormat = String(meeting.export_format || "");
+            const theme = String(ui.theme || "").toLowerCase();
+            const historyLines = Number(ui.history_lines);
+            const mirProfile = String(meeting.mir_profile || "").toLowerCase();
             const pollSeconds = Number(meeting.intel_queue_poll_seconds);
             const retryBase = Number(meeting.intel_retry_base_seconds);
             const retryMax = Number(meeting.intel_retry_max_seconds);
@@ -1811,6 +2073,15 @@
             }
             if (!["local", "cloud", "auto"].includes(provider)) {
               errors.push("Intel provider must be local, cloud, or auto.");
+            }
+            if (!["dark", "light", "dracula", "monokai"].includes(theme)) {
+              errors.push("Theme must be dark, light, dracula, or monokai.");
+            }
+            if (!Number.isInteger(historyLines) || historyLines < 1 || historyLines > 100) {
+              errors.push("History lines must be an integer between 1 and 100.");
+            }
+            if (!["balanced", "architect", "delivery", "product", "incident"].includes(mirProfile)) {
+              errors.push("MIR profile must be balanced, architect, delivery, product, or incident.");
             }
             if (!Number.isInteger(pollSeconds) || pollSeconds < 5) {
               errors.push("Intel queue poll seconds must be an integer >= 5.");
@@ -1868,6 +2139,118 @@
             return errors;
           },
 
+          // ── Project methods ──────────────────────────────────
+
+          async loadProjects() {
+            this.loadingProjects = true;
+            try {
+              const data = await this.apiJson("/api/projects");
+              this.projects = data.projects || [];
+            } catch (error) {
+              console.error("Failed to load projects:", error);
+              this.projects = [];
+              this.flash(`Projects load failed: ${error.message}`, true);
+            }
+            this.loadingProjects = false;
+          },
+
+          openNewProjectForm() {
+            this.showNewProjectForm = true;
+            this.projectDraft = { name: "", description: "", keywords: "", team_members: "", detection_threshold: 0.4 };
+          },
+
+          async createProject() {
+            const draft = this.projectDraft;
+            if (!draft.name.trim()) return;
+            try {
+              const payload = {
+                name: draft.name.trim(),
+                description: draft.description.trim(),
+                keywords: draft.keywords,
+                team_members: draft.team_members,
+                detection_threshold: draft.detection_threshold,
+              };
+              const data = await this.apiJson("/api/projects", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+              if (data.success) {
+                this.flash("Project created.");
+                this.showNewProjectForm = false;
+                await this.loadProjects();
+              } else {
+                this.flash(data.error || "Failed to create project.", true);
+              }
+            } catch (error) {
+              this.flash(`Create project failed: ${error.message}`, true);
+            }
+          },
+
+          async openProject(projectId) {
+            try {
+              const project = await this.apiJson(`/api/projects/${projectId}`);
+              this.selectedProject = project;
+              this.projectSummary = null;
+              this.projectMeetings = [];
+              this.projectActionItems = [];
+              this.projectArtifacts = [];
+              // Load sub-data in parallel
+              const [summary, meetings, actionItems, artifacts] = await Promise.all([
+                this.apiJson(`/api/projects/${projectId}/summary`),
+                this.apiJson(`/api/projects/${projectId}/meetings`),
+                this.apiJson(`/api/projects/${projectId}/action-items`),
+                this.apiJson(`/api/projects/${projectId}/artifacts`),
+              ]);
+              this.projectSummary = summary;
+              this.projectMeetings = meetings.meetings || [];
+              this.projectActionItems = actionItems.action_items || [];
+              this.projectArtifacts = artifacts.artifacts || [];
+            } catch (error) {
+              this.flash(`Failed to load project: ${error.message}`, true);
+            }
+          },
+
+          async patchProject(field, value) {
+            if (!this.selectedProject) return;
+            try {
+              const payload = {};
+              payload[field] = value;
+              const data = await this.apiJson(`/api/projects/${this.selectedProject.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+              if (data.success && data.project) {
+                this.selectedProject = data.project;
+                this.flash("Project updated.");
+                await this.loadProjects();
+              } else {
+                this.flash(data.error || "Failed to update project.", true);
+              }
+            } catch (error) {
+              this.flash(`Update failed: ${error.message}`, true);
+            }
+          },
+
+          async archiveProject() {
+            if (!this.selectedProject) return;
+            try {
+              const data = await this.apiJson(`/api/projects/${this.selectedProject.id}`, {
+                method: "DELETE",
+              });
+              if (data.success) {
+                this.flash("Project archived.");
+                this.selectedProject = null;
+                await this.loadProjects();
+              } else {
+                this.flash(data.error || "Failed to archive.", true);
+              }
+            } catch (error) {
+              this.flash(`Archive failed: ${error.message}`, true);
+            }
+          },
+
           async loadSettings() {
             this.loadingSettings = true;
             try {
@@ -1901,6 +2284,13 @@
               payload.meeting.intel_cloud_api_key_env = String(payload.meeting.intel_cloud_api_key_env || "").trim();
               payload.meeting.intel_cloud_model = String(payload.meeting.intel_cloud_model || "").trim();
               payload.meeting.intel_provider = String(payload.meeting.intel_provider || "").toLowerCase();
+              payload.meeting.intel_summary_model = String(payload.meeting.intel_summary_model || "").trim() || null;
+              payload.meeting.intel_cloud_reasoning_effort = String(payload.meeting.intel_cloud_reasoning_effort || "").trim() || null;
+              payload.meeting.mic_device = String(payload.meeting.mic_device || "").trim() || null;
+              payload.meeting.system_audio_device = String(payload.meeting.system_audio_device || "").trim() || null;
+              payload.meeting.mir_profile = String(payload.meeting.mir_profile || "").toLowerCase();
+              payload.ui.history_lines = Number(payload.ui.history_lines);
+              payload.ui.theme = String(payload.ui.theme || "").toLowerCase();
 
               const validationErrors = this.validateSettingsPayload(payload);
               if (validationErrors.length > 0) {

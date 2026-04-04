@@ -24,6 +24,7 @@ from .plugins.router import (
 )
 from .plugins.builtin import register_builtin_plugins
 from .plugins.host import PluginHost, build_idempotency_key
+from .plugins.project_detector import ProjectDetectorPlugin
 from .plugins.queue import drain_plugin_run_queue, process_next_plugin_run_job
 from .plugins.signals import extract_intent_signals
 from .text_processor import TextProcessor
@@ -70,6 +71,16 @@ def run_web_runtime(
     text_processor = TextProcessor()
     plugin_host = PluginHost(default_timeout_seconds=0.35)
     register_builtin_plugins(plugin_host)
+
+    # Project knowledge-base detector (runs first in every chain)
+    project_detector = ProjectDetectorPlugin()
+    try:
+        from .db import get_database as _get_db_for_projects
+        project_detector.reload_projects(_get_db_for_projects().get_all_projects_for_detector())
+    except Exception as _proj_init_err:
+        log.warning(f"Could not load projects for detector at startup: {_proj_init_err}")
+    plugin_host.register(project_detector)
+
     plugin_queue_thread: Optional[threading.Thread] = None
 
     try:
@@ -338,6 +349,8 @@ def run_web_runtime(
                 "mir_save_error": None,
                 "artifacts_saved": 0,
                 "artifact_synthesis_error": None,
+                "projects_associated": 0,
+                "project_association_error": None,
                 "deferred_queue_jobs": int(queue_flush.get("queued_jobs") or 0),
                 "deferred_queue_error": queue_flush_error,
             }
@@ -349,6 +362,9 @@ def run_web_runtime(
                 artifacts_result = _synthesize_and_persist_artifacts(meeting_id)
                 save_payload["artifacts_saved"] = int(artifacts_result.get("artifacts_saved") or 0)
                 save_payload["artifact_synthesis_error"] = artifacts_result.get("error")
+                project_result = _associate_meeting_with_projects(meeting_id)
+                save_payload["projects_associated"] = int(project_result.get("projects_associated") or 0)
+                save_payload["project_association_error"] = project_result.get("error")
         except Exception as exc:
             save_error = str(exc)
             log.error(f"Failed to save meeting from web runtime: {exc}")
@@ -722,6 +738,73 @@ def run_web_runtime(
             log.error(f"Failed to synthesize artifacts for meeting {clean_meeting_id}: {message}")
             return {"artifacts_saved": 0, "error": message}
 
+    def _associate_meeting_with_projects(meeting_id: str) -> dict[str, object]:
+        """Auto-associate a meeting with projects based on project_detector plugin runs."""
+        clean_meeting_id = str(meeting_id).strip()
+        if not clean_meeting_id:
+            return {"projects_associated": 0, "error": None}
+
+        try:
+            from .db import get_database
+            db = get_database()
+            runs = db.list_plugin_runs(clean_meeting_id, limit=5000)
+
+            # Filter to successful project_detector runs
+            detector_runs = [
+                r for r in runs
+                if r.plugin_id == "project_detector" and r.status in ("success", "deduped")
+                and r.output
+            ]
+
+            if not detector_runs:
+                return {"projects_associated": 0, "error": None}
+
+            # Aggregate max score per project across all windows
+            project_max_scores: dict[str, dict[str, object]] = {}
+            for run in detector_runs:
+                matched = run.output.get("matched_projects") or []
+                for match in matched:
+                    pid = str(match.get("project_id") or "").strip()
+                    if not pid:
+                        continue
+                    score = float(match.get("score") or 0)
+                    threshold = float(match.get("detection_threshold") or 0.4)
+                    existing = project_max_scores.get(pid)
+                    if existing is None or score > float(existing["max_score"]):
+                        project_max_scores[pid] = {
+                            "max_score": score,
+                            "threshold": threshold,
+                        }
+                    # Log each window detection
+                    db.log_project_detection(
+                        meeting_id=clean_meeting_id,
+                        project_id=pid,
+                        window_id=run.window_id,
+                        score=score,
+                        keyword_hits=match.get("keyword_hits"),
+                        member_hits=match.get("member_hits"),
+                    )
+
+            # Associate meeting with projects that exceed their threshold
+            associated = 0
+            for pid, data in project_max_scores.items():
+                max_score = float(data["max_score"])
+                threshold = float(data["threshold"])
+                if max_score >= threshold:
+                    db.associate_meeting_project(
+                        meeting_id=clean_meeting_id,
+                        project_id=pid,
+                        source="auto",
+                        confidence=max_score,
+                    )
+                    associated += 1
+
+            return {"projects_associated": associated, "error": None}
+        except Exception as exc:
+            message = str(exc)
+            log.error(f"Failed to associate meeting {clean_meeting_id} with projects: {message}")
+            return {"projects_associated": 0, "error": message}
+
     def _on_get_intent_controls() -> dict[str, object]:
         return _mir_controls_payload()
 
@@ -928,6 +1011,7 @@ def run_web_runtime(
             on_update_action_item_review=_on_update_action_item_review,
             on_edit_action_item=_on_edit_action_item,
             on_settings_applied=_apply_updated_config,
+            project_detector=project_detector,
             host="127.0.0.1",
         )
         runtime_url = server.start()

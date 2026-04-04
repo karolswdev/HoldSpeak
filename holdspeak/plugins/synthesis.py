@@ -23,6 +23,7 @@ _ARTIFACT_TYPE_BY_PLUGIN: dict[str, str] = {
     "stakeholder_update_drafter": "stakeholder_update",
     "runbook_delta": "runbook_delta",
     "decision_announcement_drafter": "decision_announcement",
+    "project_detector": "project_association",
 }
 
 
