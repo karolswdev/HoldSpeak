@@ -206,6 +206,25 @@ def _check_clipboard_tools(*, is_wayland: bool) -> DoctorCheck:
     )
 
 
+def _check_web_runtime() -> DoctorCheck:
+    """Verify deps for the default `holdspeak` web runtime are importable."""
+    from importlib.util import find_spec
+
+    missing = [m for m in ("fastapi", "uvicorn", "websockets") if find_spec(m) is None]
+    if not missing:
+        return DoctorCheck(
+            name="Web runtime",
+            status="PASS",
+            detail="fastapi, uvicorn, and websockets are importable",
+        )
+    return DoctorCheck(
+        name="Web runtime",
+        status="FAIL",
+        detail=f"Missing modules: {', '.join(missing)}",
+        fix="Reinstall HoldSpeak (these are core deps): `uv pip install -e .` or `pip install -e .`.",
+    )
+
+
 def _check_ffmpeg() -> DoctorCheck:
     if _command_exists("ffmpeg"):
         return DoctorCheck(
@@ -491,6 +510,7 @@ def collect_doctor_checks() -> list[DoctorCheck]:
         config_check,
         _check_microphone(),
         _check_transcription_backend(),
+        _check_web_runtime(),
         _check_meeting_intel_runtime(config),
         _check_meeting_intel_cloud_preflight(config),
         _check_hotkey(config.hotkey.key, is_wayland=is_wayland),

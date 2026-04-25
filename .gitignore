@@ -41,3 +41,6 @@ models/
 # Test fixtures (large audio files)
 tests/fixtures/*.wav
 tests/fixtures/*.mp3
+
+# pmo-roadmap pre-commit contract scratch
+.tmp/

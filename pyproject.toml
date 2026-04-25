@@ -1,6 +1,6 @@
 [project]
 name = "holdspeak"
-version = "0.2.0"
+version = "0.2.1"
 description = "Voice typing for macOS and Linux - hold a hotkey, speak, release. Local & private."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -11,6 +11,10 @@ dependencies = [
     "pynput>=1.7.6",
     "pyperclip>=1.8.2",
     "textual>=0.50.0",
+    # Web runtime is the default `holdspeak` command, so its deps live in core.
+    # `uvicorn[standard]` pulls in websockets/uvloop/httptools/watchfiles.
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.20.0",
 ]
 
 [project.optional-dependencies]
@@ -29,8 +33,6 @@ menubar = [
     "rumps>=0.4.0; sys_platform == \"darwin\"",
 ]
 meeting = [
-    "fastapi>=0.100.0",
-    "uvicorn>=0.20.0",
     "llama-cpp-python>=0.2.0",
     "openai>=1.0.0",
     "resemblyzer>=0.1.3",
