@@ -290,33 +290,23 @@ class HoldSpeakController:
 
         All `holdspeak.plugins.dictation.*` imports happen inside this
         method so the disabled path never touches the dictation
-        modules (DIR-C-001 byte-identical guarantee).
+        modules (DIR-C-001 byte-identical guarantee). Assembly logic
+        lives in `dictation.assembly` so the CLI (HS-1-08) and doctor
+        (HS-1-09) share the same builder.
         """
-        cfg = self.app.config.dictation
-        from holdspeak.plugins.dictation.blocks import resolve_blocks
-        from holdspeak.plugins.dictation.builtin.intent_router import IntentRouter
-        from holdspeak.plugins.dictation.builtin.kb_enricher import KbEnricher
-        from holdspeak.plugins.dictation.pipeline import DictationPipeline
-        from holdspeak.plugins.dictation.runtime import build_runtime
+        from holdspeak.plugins.dictation.assembly import build_pipeline
 
-        blocks = resolve_blocks(_GLOBAL_BLOCKS_PATH, None)
-        runtime = build_runtime(
-            backend=cfg.runtime.backend,
-            mlx_model=cfg.runtime.mlx_model,
-            llama_cpp_model_path=cfg.runtime.llama_cpp_model_path,
-            n_ctx=cfg.runtime.n_ctx,
-            n_threads=cfg.runtime.n_threads,
-            n_gpu_layers=cfg.runtime.n_gpu_layers,
-            warm_on_start=cfg.runtime.warm_on_start,
-            eviction_idle_seconds=cfg.runtime.eviction_idle_seconds,
-        )
-        stages = [IntentRouter(runtime, blocks), KbEnricher(blocks)]
-        return DictationPipeline(
-            stages,
-            enabled=True,
-            llm_enabled=True,
+        result = build_pipeline(
+            self.app.config.dictation,
             on_run=self._emit_pipeline_run,
+            global_blocks_path=_GLOBAL_BLOCKS_PATH,
         )
+        if result.runtime_status != "loaded":
+            log.warning(
+                f"Dictation runtime unavailable ({result.runtime_detail}); "
+                "pipeline will run with intent-router skipped."
+            )
+        return result.pipeline
 
     def _emit_pipeline_run(self, run: Any) -> None:
         """DIR-O-001: structured log line for one pipeline run."""

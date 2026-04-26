@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-25 (DIR-01: HS-1-07 controller wiring — pipeline plumbed into the live voice-typing path, gated off by default — shipped).
+**Last updated:** 2026-04-25 (DIR-01: HS-1-08 CLI — `holdspeak dictation dry-run / blocks / runtime` + shared assembly helper — shipped).
 **Current phase:** [phase-1-dictation-intent-routing](./phase-1-dictation-intent-routing/current-phase-status.md)
 **Status:** in-progress.
 

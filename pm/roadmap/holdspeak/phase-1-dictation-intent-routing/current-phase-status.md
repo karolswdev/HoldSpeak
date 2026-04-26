@@ -1,6 +1,6 @@
 # Phase 1 — Dictation Intent Routing (DIR-01)
 
-**Last updated:** 2026-04-25 (HS-1-07 controller wiring shipped — pipeline plumbed into the live voice-typing path, gated off by default).
+**Last updated:** 2026-04-25 (HS-1-08 CLI shipped — `holdspeak dictation dry-run / blocks / runtime` + shared assembly helper).
 
 ## Goal
 
@@ -44,7 +44,7 @@ created ahead of time as `backlog` so the work is visible; only the
 | HS-1-05 | Step 4 — Block config loader | done | [story-05-blocks](./story-05-blocks.md) | tests pass (24 unit cases) |
 | HS-1-06 | Step 5 — Built-in stages (intent-router + kb-enricher) | done | [story-06-builtin-stages](./story-06-builtin-stages.md) | tests pass (29 unit cases) |
 | HS-1-07 | Step 6 — Controller wiring | done | [story-07-controller](./story-07-controller.md) | tests pass (5 new controller cases) + full suite green (excl. pre-existing metal hw fail) |
-| HS-1-08 | Step 7 — CLI (`holdspeak dictation …`) | backlog | (pending) | — |
+| HS-1-08 | Step 7 — CLI (`holdspeak dictation …`) | done | [story-08-cli](./story-08-cli.md) | tests pass (13 new CLI cases) + full suite green (excl. pre-existing metal hw fail) |
 | HS-1-09 | Step 8 — Doctor checks (LLM runtime + structured-output compile) | backlog | (pending) | — |
 | ~~HS-1-10~~ | ~~Step 9 — Benchmarks~~ | dropped | — | n/a — no pre-shipping measurement gate per 2026-04-25 amendment |
 | HS-1-11 | Step 10 — Full regression + DoD | backlog | (pending) | — |
@@ -57,6 +57,26 @@ Spec amended (2026-04-25) to ship two backends (`mlx-lm` +
 measurement is dropped — DIR-01 banks on the chosen models and goes
 straight to implementation. `HS-1-01` (baseline) and `HS-1-10`
 (benchmarks) are dropped.
+
+**HS-1-08 done.** `holdspeak dictation` CLI surface landed:
+`dry-run "<text>"` (DIR-F-010) prints stage-by-stage report, falls
+back to `llm_enabled=False` (with a clear warning) when the runtime
+backend can't load so block authors can validate YAML without
+`mlx-lm` or `llama-cpp-python` installed; `blocks ls / show <id> /
+validate [--project PATH]` (DIR-A-001); `runtime status` reports
+the resolved backend + model availability without ever exiting
+non-zero (it's a discovery surface — the doctor check is HS-1-09's
+job). Pipeline assembly was lifted into
+`holdspeak/plugins/dictation/assembly.py` with a `BuildResult`
+return value; the controller's `_build_dictation_pipeline` now
+delegates to it (single source of truth — the CLI and controller
+can't drift). 13 new unit cases in `tests/unit/test_dictation_cli.py`;
+full regression: 895 passed, 13 skipped, 1 pre-existing
+hardware-only `tests/e2e/test_metal.py` fail (unrelated). Next:
+**HS-1-09** (doctor checks: `LLM runtime` + `Structured-output
+compilation`).
+
+---
 
 **HS-1-07 done.** Controller wiring landed in
 `holdspeak/controller.py`. The dictation pipeline is invoked between

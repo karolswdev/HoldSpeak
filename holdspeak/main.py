@@ -18,6 +18,11 @@ from .transcribe import Transcriber
 from .typer import TextTyper
 from .text_processor import TextProcessor
 from .commands.actions import run_actions_command
+from .commands.dictation import (
+    _build_argparse_subparsers as _build_dictation_subparsers,
+    normalize_args as _normalize_dictation_args,
+    run_dictation_command,
+)
 from .commands.doctor import run_doctor_command
 from .commands.history import run_history_command
 from .commands.intel import run_intel_command
@@ -264,6 +269,13 @@ Logs are written to: {LOG_FILE}
         help="Intent threshold override for --route-dry-run/--reroute",
     )
 
+    # Dictation subcommand (DIR-01)
+    dictation_parser = subparsers.add_parser(
+        "dictation",
+        help="Inspect / dry-run the DIR-01 dictation pipeline",
+    )
+    _build_dictation_subparsers(dictation_parser)
+
     # Doctor subcommand
     doctor_parser = subparsers.add_parser(
         "doctor",
@@ -323,6 +335,10 @@ Logs are written to: {LOG_FILE}
     # Handle intel subcommand
     if args.command == "intel":
         raise SystemExit(run_intel_command(args))
+
+    # Handle dictation subcommand (DIR-01 CLI surface)
+    if args.command == "dictation":
+        raise SystemExit(run_dictation_command(_normalize_dictation_args(args)))
 
     # Handle doctor subcommand
     if args.command == "doctor":
