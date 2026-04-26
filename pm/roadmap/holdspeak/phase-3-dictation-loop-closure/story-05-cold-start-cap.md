@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 3
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-3-04 (counters in place so the disable event is visible)
 - **Unblocks:** "useful" being protected from a runaway first call
 - **Owner:** unassigned
@@ -32,12 +32,12 @@ press of a session — the opposite of "actually useful."
 
 ## Acceptance criteria
 
-- [ ] Cold-start path detects exceedance of `max_total_latency_ms × 5` and short-circuits.
-- [ ] Session is marked LLM-disabled; subsequent classify calls return the short-circuit immediately without invoking the runtime.
-- [ ] A structured log line names the breach (measured ms vs. cap) at WARN level.
-- [ ] Doctor surface (HS-3-03 counter check or a sibling) reports `llm_disabled_for_session=true` when the breach has occurred.
-- [ ] Unit + integration tests pass.
-- [ ] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS.
+- [x] Cold-start path detects exceedance of `max_total_latency_ms × 5` and short-circuits — `CountingRuntime.classify()` measures elapsed time on first call when `warm_on_start=False` and raises `LLMRuntimeDisabledError` if cap exceeded.
+- [x] Session is marked LLM-disabled; subsequent classify calls return the short-circuit immediately without invoking the inner runtime — verified by `test_subsequent_classify_short_circuits_without_calling_inner` (asserts `inner.classify_calls` does not advance after breach).
+- [x] A structured log line names the breach (measured ms vs. cap) at WARN level — `log.warning("dictation cold-start cap breached: backend=%s elapsed_ms=%.0f cap_ms=%d ...")`.
+- [x] Doctor surface reports `llm_disabled_for_session=True` when the breach has occurred — extended `_check_dictation_runtime_counters` to flip from PASS to WARN with a remediation hint when the session-disabled flag is set.
+- [x] 6 unit tests for the cold-start cap + 2 integration tests for the pipeline-level fall-back behavior. All pass.
+- [x] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` → 1007 passed, 13 skipped (delta +8 vs. HS-3-04 baseline 999: 6 cold-start unit + 2 cold-start integration).
 
 ## Test plan
 

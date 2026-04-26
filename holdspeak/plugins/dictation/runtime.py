@@ -129,6 +129,7 @@ def build_runtime(
     n_gpu_layers: int = -1,
     warm_on_start: bool = False,
     eviction_idle_seconds: int = 0,
+    cold_start_cap_ms: int | None = None,
     # Test seams — production callers leave these defaulted.
     on_arm64: Callable[[], bool] | None = None,
     mlx_importable: Callable[[], bool] | None = None,
@@ -166,9 +167,14 @@ def build_runtime(
             eviction_idle_seconds=eviction_idle_seconds,
         )
 
-    # DIR-O-002: wrap with counter-instrumenting delegate.
+    # DIR-O-002 + DIR-R-003: wrap with counter-instrumenting +
+    # cold-start-capping delegate.
     from holdspeak.plugins.dictation.runtime_counters import CountingRuntime
-    return CountingRuntime(inner)
+    return CountingRuntime(
+        inner,
+        warm_on_start=warm_on_start,
+        cold_start_cap_ms=cold_start_cap_ms,
+    )
 
 
 def _default_factories() -> dict[str, Callable[..., LLMRuntime]]:

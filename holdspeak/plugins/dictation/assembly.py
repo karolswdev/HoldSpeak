@@ -91,6 +91,8 @@ def _try_build_runtime(
     runtime_factory: Callable[..., LLMRuntime] | None,
 ) -> tuple[Optional[LLMRuntime], RuntimeStatus, str]:
     factory = runtime_factory if runtime_factory is not None else build_runtime
+    # DIR-R-003: cold-start hard-cap is `max_total_latency_ms × 5`.
+    cold_start_cap_ms = cfg.pipeline.max_total_latency_ms * 5
     try:
         runtime = factory(
             backend=cfg.runtime.backend,
@@ -101,6 +103,7 @@ def _try_build_runtime(
             n_gpu_layers=cfg.runtime.n_gpu_layers,
             warm_on_start=cfg.runtime.warm_on_start,
             eviction_idle_seconds=cfg.runtime.eviction_idle_seconds,
+            cold_start_cap_ms=cold_start_cap_ms,
         )
     except RuntimeUnavailableError as exc:
         return None, "unavailable", str(exc)

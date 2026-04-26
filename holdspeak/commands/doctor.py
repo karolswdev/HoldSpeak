@@ -702,15 +702,27 @@ def _check_dictation_runtime_counters(config: Config) -> DoctorCheck:
             detail="dictation pipeline disabled (opt-in)",
         )
 
-    from ..plugins.dictation.runtime_counters import get_counters
+    from ..plugins.dictation.runtime_counters import (
+        get_counters,
+        get_session_status,
+    )
 
     counters = get_counters()
+    session = get_session_status()
     detail = (
         f"model_loads={counters['model_loads']} "
         f"classify_calls={counters['classify_calls']} "
         f"classify_failures={counters['classify_failures']} "
-        f"constrained_retries={counters['constrained_retries']}"
+        f"constrained_retries={counters['constrained_retries']} "
+        f"llm_disabled_for_session={session['llm_disabled_for_session']}"
     )
+    if session["llm_disabled_for_session"]:
+        return DoctorCheck(
+            name="LLM runtime counters",
+            status="WARN",
+            detail=detail + f" — {session['disabled_reason']}",
+            fix="Restart `holdspeak` to retry. If it keeps tripping, raise `dictation.pipeline.max_total_latency_ms` or `warm_on_start: true`.",
+        )
     return DoctorCheck(
         name="LLM runtime counters",
         status="PASS",

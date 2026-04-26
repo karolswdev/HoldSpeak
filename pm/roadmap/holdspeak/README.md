@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-3-04 done — DIR-O-002 runtime counters via CountingRuntime wrapper + doctor surface; full sweep 999 passed, 13 skipped, +26 cumulative pass delta vs. HS-3 baseline).
+**Last updated:** 2026-04-26 (HS-3-05 done — DIR-R-003 cold-start hard-cap + session-disable + doctor WARN; full sweep 1007 passed, 13 skipped, +34 cumulative pass delta vs. HS-3 baseline. Phase 3 has only DoD remaining).
 **Current phase:** [phase-3-dictation-loop-closure](./phase-3-dictation-loop-closure/) — DIR-01 deferred-item closure.
 **Status:** in-progress.
 
