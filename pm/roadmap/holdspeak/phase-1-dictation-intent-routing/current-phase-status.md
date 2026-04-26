@@ -1,6 +1,6 @@
 # Phase 1 — Dictation Intent Routing (DIR-01)
 
-**Last updated:** 2026-04-25 (HS-1-04 pluggable LLM runtime + structured-output compiler shipped).
+**Last updated:** 2026-04-25 (HS-1-05 block-config loader shipped).
 
 ## Goal
 
@@ -41,7 +41,7 @@ created ahead of time as `backlog` so the work is visible; only the
 | HS-1-02 | Step 1 — Transducer contracts | done | [story-02-contracts](./story-02-contracts.md) | tests pass (5/5) + full suite green (excl. pre-existing metal hw fails) |
 | HS-1-03 | Step 2 — Pipeline executor | done | [story-03-pipeline](./story-03-pipeline.md) | tests pass (11/11) + full suite green (excl. one pre-existing metal hw fail) |
 | HS-1-04 | Step 3 — Pluggable LLM runtime (mlx + llama_cpp) + structured output | done | [story-04-runtime](./story-04-runtime.md) | tests pass (29 unit cases + 2 model-gated integration harnesses skip cleanly) |
-| HS-1-05 | Step 4 — Block config loader | backlog | (pending) | — |
+| HS-1-05 | Step 4 — Block config loader | done | [story-05-blocks](./story-05-blocks.md) | tests pass (24 unit cases) |
 | HS-1-06 | Step 5 — Built-in stages (intent-router + kb-enricher) | backlog | (pending) | — |
 | HS-1-07 | Step 6 — Controller wiring | backlog | (pending) | — |
 | HS-1-08 | Step 7 — CLI (`holdspeak dictation …`) | backlog | (pending) | — |
@@ -58,26 +58,21 @@ measurement is dropped — DIR-01 banks on the chosen models and goes
 straight to implementation. `HS-1-01` (baseline) and `HS-1-10`
 (benchmarks) are dropped.
 
-**HS-1-04 done.** Pluggable LLM runtime + structured-output schema
-compiler landed across
-`holdspeak/plugins/dictation/{runtime,runtime_llama_cpp,runtime_mlx,grammars}.py`.
-`LLMRuntime` is a `runtime_checkable` Protocol; `MlxRuntime` and
-`LlamaCppRuntime` both conform. `auto` resolves to `mlx` on
-darwin/arm64 when `mlx_lm` is importable, else `llama_cpp`; explicit
-backends never fall back and surface
-`RuntimeUnavailableError` with a remediation hint. Both
-backend imports are lazy and live exclusively inside their respective
-modules. The shared schema compiler emits GBNF (for `llama_cpp`,
-validated via `LlamaGrammar.from_string` when the extra is installed)
-and JSON-schema (for `mlx` via an `outlines`-style logits processor)
-from the same `BlockSet`; the cross-backend equivalence test confirms
-identical block-id and extras-enum domains. `DictationConfig`
-(`pipeline` + `runtime`) is plumbed onto `Config` with
-`pipeline.enabled=False` by default (DIR-C-001). 29-case unit suite
-passes; integration tests skip cleanly without the model files. Full
-regression: 824 passed, 1 pre-existing hardware-only
-`tests/e2e/test_metal.py` fail (Whisper model load), unrelated. Next:
-**HS-1-05** (block config loader).
+**HS-1-05 done.** `holdspeak/plugins/dictation/blocks.py` ships the
+typed loader for the §8 block-config YAML: `Block`, `MatchSpec`,
+`InjectSpec`, `LoadedBlocks` (frozen), `InjectMode` enum, and
+`load_blocks_yaml` / `resolve_blocks` / `validate_template`.
+`yaml.safe_load` covers DIR-S-001 (rejects `!!python/object/...`
+tags); `validate_template` enforces DIR-S-002 by accepting only
+dotted-name placeholders (`{a.b.c}`) and rejecting format specs,
+conversions, method calls, item access, and arithmetic.
+`resolve_blocks` implements §8.1 / DIR-F-008 — project-scope blocks
+fully replace global. `LoadedBlocks.to_block_set()` bridges to the
+HS-1-04 constraint compiler. `PyYAML>=6.0` is now an explicit core
+dep. 24-case unit suite passes; full regression: 848 passed, 1
+pre-existing hardware-only `tests/e2e/test_metal.py` fail (Whisper
+model load), unrelated. Next: **HS-1-06** (built-in `intent-router`
++ `kb-enricher` stages).
 
 ## Active risks
 
