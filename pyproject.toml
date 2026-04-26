@@ -37,6 +37,13 @@ meeting = [
     "openai>=1.0.0",
     "resemblyzer>=0.1.3",
 ]
+dictation-llama = [
+    "llama-cpp-python>=0.2.90",
+]
+dictation-mlx = [
+    "mlx-lm>=0.19; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "outlines>=0.1.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
+]
 dev = [
     "playwright>=1.40.0",
     "pytest>=8.0",
@@ -60,6 +67,8 @@ markers = [
     "requires_model: requires ML model to be loaded",
     "requires_macos: requires macOS system",
     "requires_meeting: requires optional meeting/web dependencies (e.g., fastapi)",
+    "requires_mlx: requires the [dictation-mlx] extra and a loadable MLX Qwen model",
+    "requires_llama_cpp: requires the [dictation-llama] extra and a loadable GGUF Qwen model",
     "integration: integration test",
     "e2e: end-to-end test",
     "metal: hardware tests requiring real mic/model/keyboard (local only)",

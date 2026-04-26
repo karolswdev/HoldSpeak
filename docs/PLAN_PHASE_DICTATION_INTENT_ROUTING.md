@@ -4,9 +4,9 @@
 
 ### 1.1 Objective
 
-Introduce a real-time, on-device transcript enrichment pipeline for the voice-typing path. After Whisper transcription and before text injection, the transcript flows through an ordered chain of pluggable stages. The first concrete stage is an **LLM-driven intent router** powered by a small Qwen GGUF model running through `llama-cpp-python` (Metal-accelerated on Apple Silicon, CPU/CUDA elsewhere). It classifies the utterance against a user-defined block taxonomy (e.g., "AI prompt buildout", "code exercise", "documentation exercise") and triggers an enrichment stage that injects grounded context drawn from project knowledge bases into the final typed output.
+Introduce a real-time, on-device transcript enrichment pipeline for the voice-typing path. After Whisper transcription and before text injection, the transcript flows through an ordered chain of pluggable stages. The first concrete stage is an **LLM-driven intent router** powered by a small Qwen model behind a backend-agnostic runtime Protocol. DIR-01 ships two concrete backends — `mlx-lm` (Apple Silicon native, primary on the reference Mac) and `llama-cpp-python` (cross-platform GGUF) — selected by config. It classifies the utterance against a user-defined block taxonomy (e.g., "AI prompt buildout", "code exercise", "documentation exercise") and triggers an enrichment stage that injects grounded context drawn from project knowledge bases into the final typed output.
 
-The choice of `llama-cpp-python` over MLX-LM is deliberate: the existing `holdspeak/intel.py` meeting-intel runtime already uses `llama-cpp-python` for GGUF inference. DIR-01 reuses that runtime layer rather than introducing a second on-device LLM stack, which keeps the dependency surface small and makes the pipeline trivially cross-platform from day one. The accepted cost is ~30–50% lower peak throughput on Apple Silicon vs. MLX-LM, which is well inside the latency budget for the 1.5B–3B-class models DIR-01 targets.
+Shipping two backends is a deliberate architectural commitment: stage code is backend-agnostic, dependency surface is contained per-extra (`[dictation-mlx]` vs `[dictation-llama]`), and the same pipeline runs natively on Apple Silicon (MLX) and cross-platform (GGUF). The reference-Mac primary is `mlx` with `Qwen3-8B-MLX-4bit`; the cross-platform default is `llama_cpp` with `Qwen2.5-3B-Instruct-Q4_K_M`.
 
 ### 1.2 Why This Phase Exists
 
@@ -29,7 +29,7 @@ The existing plugin work in `docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` and `docs/PLA
 
 ### 1.4 Reference Hardware
 
-Primary: Apple Silicon (M-series), Metal-accelerated. All latency targets and benchmark commitments are stated against that target. Linux x86_64 is a **secondary supported target** for DIR-01 because `llama-cpp-python` runs there too; it has looser latency expectations (see §9.6) and is verified by integration tests rather than benchmarks.
+Primary: Apple Silicon (M-series), Metal-accelerated, running the `mlx` backend. All latency targets and benchmark commitments on the reference Mac are stated against that configuration. Linux x86_64 is a **secondary supported target** for DIR-01 via the `llama_cpp` backend (Qwen2.5 GGUF); it has looser latency expectations (see §9.6) and is verified by integration tests rather than benchmarks.
 
 ## 2. Normative Language
 
@@ -41,7 +41,7 @@ Primary: Apple Silicon (M-series), Metal-accelerated. All latency targets and be
 
 1. New `transducer` plugin kind (transcript-in, transcript-out) extending the existing `Plugin` contract.
 2. Ordered pipeline executor wrapped around the existing typing path with feature-flagged activation.
-3. Long-lived `llama-cpp-python` runtime service exposed to stages via a typed handle, sharing the loader pattern with the existing `holdspeak/intel.py` runtime.
+3. Long-lived **pluggable LLM runtime** service exposed to stages via a backend-agnostic handle. DIR-01 ships two concrete runtimes — `llama-cpp-python` (GGUF) and `mlx-lm` (Apple Silicon native) — selected by config. The `llama-cpp` runtime shares the loader pattern with `holdspeak/intel.py`.
 4. Built-in `intent-router` stage with constrained-output classification and pluggable block taxonomy.
 5. Built-in `kb-enricher` stage that consumes router output and injects project-KB content per user template.
 6. Block-config schema, file-based persistence, and per-project overrides via the existing `project_detector`.
@@ -51,12 +51,12 @@ Primary: Apple Silicon (M-series), Metal-accelerated. All latency targets and be
 
 ### 3.2 Out of Scope
 
-1. MLX-LM or any second on-device LLM stack. Single backend (`llama-cpp-python`) is a hard rule for DIR-01.
-2. Cloud LLM router fallback. Phase DIR-02 candidate.
-3. Replacement of the meeting-side MIR-01 routing. DIR-01 and MIR-01 are independent pipelines; they MAY share contracts but MUST NOT share state.
-4. External plugin discovery (entry points, third-party packages). Out-of-tree plugins follow the lifecycle proposed in `PLAN_ARCHITECT_PLUGIN_SYSTEM.md` Phase 4; DIR-01 ships in-tree built-ins only.
-5. Multi-utterance windowing or rolling-context state. Each utterance is classified and enriched independently. Stateful chains are deferred.
-6. Sharing a single loaded model file between `intel.py` and the dictation runtime. They MAY use different models concurrently; runtime memory budgeting across both is a DIR-02 question.
+1. Cloud LLM router fallback. Phase DIR-02 candidate.
+2. Replacement of the meeting-side MIR-01 routing. DIR-01 and MIR-01 are independent pipelines; they MAY share contracts but MUST NOT share state.
+3. External plugin discovery (entry points, third-party packages). Out-of-tree plugins follow the lifecycle proposed in `PLAN_ARCHITECT_PLUGIN_SYSTEM.md` Phase 4; DIR-01 ships in-tree built-ins only.
+4. Multi-utterance windowing or rolling-context state. Each utterance is classified and enriched independently. Stateful chains are deferred.
+5. Sharing a single loaded model file between `intel.py` and the dictation runtime. They MAY use different models concurrently; runtime memory budgeting across both is a DIR-02 question.
+6. Additional backends beyond `llama-cpp-python` and `mlx-lm` (e.g., remote/cloud, vLLM, ollama). The runtime Protocol is designed for extension; new backends are DIR-02+.
 
 ## 4. Relationship to Existing Plans
 
@@ -70,9 +70,8 @@ All MUST be true before implementation begins.
 
 1. Baseline `uv run pytest` passes.
 2. `holdspeak doctor` reports `Web runtime: PASS` and `Transcription backend: mlx` on the reference machine.
-3. `llama-cpp-python>=0.2.90` is installed (Metal-enabled wheel on macOS arm64; standard wheel elsewhere) and a Qwen-family GGUF can be loaded outside the application.
-4. Existing typing path benchmarks captured: median time from hotkey release to text injection over a 50-utterance fixture set, recorded in evidence as `00_baseline_typing_latency.txt`.
-5. Disk space available for at least one 4-bit Qwen model (≤6 GB).
+3. At least one DIR-01 backend is installed and importable: either `mlx-lm>=0.19` (reference Mac) or `llama-cpp-python>=0.2.90` with the platform-appropriate wheel (Metal on macOS arm64, standard or CUDA on Linux).
+4. Disk space available for at least one 4-bit Qwen model (≤6 GB).
 
 ## 6. Architecture Delta
 
@@ -104,7 +103,9 @@ The pipeline is a **single in-process call**. Stages run synchronously in declar
 1. `holdspeak/plugins/dictation/__init__.py`
 2. `holdspeak/plugins/dictation/pipeline.py` — ordered executor, error isolation, telemetry hooks.
 3. `holdspeak/plugins/dictation/contracts.py` — `Utterance`, `IntentTag`, `Transducer` protocol, `StageResult`.
-4. `holdspeak/plugins/dictation/runtime.py` — long-lived `LLMRuntime` service wrapping `llama-cpp-python`, sharing loader patterns with `holdspeak/intel.py` (warm-up, eviction, error surfacing).
+4. `holdspeak/plugins/dictation/runtime.py` — backend-agnostic `LLMRuntime` Protocol, `StructuredOutputSchema` type, and `auto`-selection logic. Concrete backends:
+   - `holdspeak/plugins/dictation/runtime_llama_cpp.py` — wraps `llama-cpp-python`, shares loader patterns with `holdspeak/intel.py` (warm-up, eviction, error surfacing).
+   - `holdspeak/plugins/dictation/runtime_mlx.py` — wraps `mlx-lm` with `outlines`-style structured-output sampling.
 5. `holdspeak/plugins/dictation/builtin/intent_router.py` — built-in classifier stage.
 6. `holdspeak/plugins/dictation/builtin/kb_enricher.py` — built-in enrichment stage.
 7. `holdspeak/plugins/dictation/blocks.py` — block-config loader, validation, project overrides.
@@ -156,25 +157,71 @@ class Transducer(Protocol):
 
 ## 7. On-Device LLM Runtime
 
-### 7.1 Backend
+### 7.1 Backends
 
-`llama-cpp-python>=0.2.90`. The runtime MUST load the model once on first use and keep it resident. The runtime MUST be a singleton scoped to the controller process; no per-utterance reinstantiation. On macOS arm64 the Metal-enabled wheel is required (the project README already documents the `CMAKE_ARGS="-DGGML_METAL=on" uv pip install llama-cpp-python` pattern); on Linux x86_64 the standard wheel suffices, with optional CUDA-enabled builds documented but not required.
+DIR-01 ships **two** concrete on-device backends behind a single backend-agnostic `LLMRuntime` Protocol. Stage code MUST NOT import either backend directly; it MUST go through `runtime.py`.
 
-The runtime layer MUST be implemented so that the eventual addition of a Metal-native backend (MLX-LM) or a remote backend is a localized change in `runtime.py` and does not touch stage code. This is a structural requirement, not a delivery requirement.
+| Backend | Library | Format | Platforms | Purpose |
+|---|---|---|---|---|
+| `llama_cpp` | `llama-cpp-python>=0.2.90` | GGUF | macOS arm64 (Metal), Linux x86_64 (CPU/CUDA) | Cross-platform default; shares loader pattern with `holdspeak/intel.py` |
+| `mlx` | `mlx-lm>=0.19` | MLX (4-bit) | macOS arm64 only | Apple Silicon native; preferred default on the reference Mac for first-token latency |
+
+Backend selection is `dictation.runtime.backend: llama_cpp | mlx | auto` (default `auto`):
+
+- `auto` resolves to `mlx` on `darwin/arm64` when `mlx-lm` is importable, else `llama_cpp`.
+- An explicit value never falls back; if the chosen backend is unavailable, the dictation runtime MUST refuse to start and `holdspeak doctor` MUST surface the reason.
+
+Both runtimes MUST load the model once on first use and keep it resident. Both MUST be singletons scoped to the controller process; no per-utterance reinstantiation. On macOS arm64 the `llama_cpp` Metal-enabled wheel is required when that backend is selected (`CMAKE_ARGS="-DGGML_METAL=on" uv pip install llama-cpp-python`).
+
+The Protocol surface (`runtime.py`):
+
+```
+class LLMRuntime(Protocol):
+    backend: str
+    def load(self) -> None: ...
+    def info(self) -> dict: ...   # {backend, model, device, n_ctx, ...}
+    def classify(
+        self,
+        prompt: str,
+        schema: StructuredOutputSchema,
+        *,
+        max_tokens: int = 128,
+        temperature: float = 0.0,
+    ) -> dict: ...   # parsed JSON conforming to schema
+```
+
+`StructuredOutputSchema` is a backend-neutral description (block-id enum, extras schema, confidence range). Each backend compiles it to its native constrained-decoding mechanism (§7.3).
 
 ### 7.2 Model Selection (Reference Defaults)
 
-Per the user constraint "we need qwen", the candidate set is restricted to the Qwen family in GGUF format. Recommended sources are `bartowski/Qwen2.5-*-Instruct-GGUF` and `lmstudio-community/Qwen2.5-*-Instruct-GGUF` on HuggingFace. Quant choice favors `Q4_K_M` (good speed/quality tradeoff) over `Q4_0` (faster, lower quality) and `Q5_K_M` (slower, marginal gain) for routing tasks.
+Per the user constraint "we need qwen", the candidate set is restricted to the Qwen family. Each backend has its own default; on the reference Mac the `mlx` backend with Qwen3-8B-MLX-4bit is the committed primary.
 
-| Tier | Model | Use case | Latency target (warm, reference Mac) |
+**`mlx` backend (Apple Silicon, primary on reference Mac):**
+
+| Tier | Model | Source | Use case |
 |---|---|---|---|
-| Default | `Qwen2.5-3B-Instruct-Q4_K_M.gguf` | Routing + classification | first-token ≤ 250ms, ≥40 tok/s sustained |
-| Fast | `Qwen2.5-1.5B-Instruct-Q4_K_M.gguf` | Strict latency budgets | first-token ≤ 150ms |
-| Quality | `Qwen2.5-7B-Instruct-Q4_K_M.gguf` | Fallback when 3B misclassifies | first-token ≤ 500ms |
+| **Default** | `Qwen3-8B-MLX-4bit` | `Qwen/Qwen3-8B-MLX-4bit` | Routing + classification (decided) |
 
-Note the latency targets are slightly looser than an MLX-LM variant of this design would be (~30–50% slower at the same quant on Apple Silicon), but stay well inside the §9.6 budget for the 1.5B/3B tiers.
+**`llama_cpp` backend (cross-platform, Linux primary):**
 
-**Validation requirement:** §12.10 mandates a benchmark spike that measures all three tiers on the reference machine and records actual numbers. The default tier MAY be revised to a Qwen3 GGUF variant **only if** the benchmark demonstrates better latency *and* equal-or-better label accuracy on the fixture set. Until then, Qwen2.5-3B-Q4_K_M is the committed default.
+| Tier | Model | Source | Use case |
+|---|---|---|---|
+| Default | `Qwen2.5-3B-Instruct-Q4_K_M.gguf` | `bartowski/Qwen2.5-3B-Instruct-GGUF` | Routing + classification |
+| Fast | `Qwen2.5-1.5B-Instruct-Q4_K_M.gguf` | `bartowski/Qwen2.5-1.5B-Instruct-GGUF` | Strict latency budgets |
+| Quality | `Qwen2.5-7B-Instruct-Q4_K_M.gguf` | `bartowski/Qwen2.5-7B-Instruct-GGUF` | Fallback when 3B misclassifies |
+
+Latency targets (warm, reference Mac, post-warmup):
+
+- `mlx` Qwen3-8B-4bit default: first-token ≤ 250 ms, ≥ 40 tok/s sustained.
+- `llama_cpp` Qwen2.5-3B-Q4_K_M default: first-token ≤ 250 ms, ≥ 40 tok/s sustained.
+- `llama_cpp` 1.5B fast tier: first-token ≤ 150 ms.
+
+**No measurement gate.** DIR-01 commits to the model choices above without a pre-shipping benchmark. If real-use latency turns out to be unacceptable on the `mlx` primary, the cross-backend default falls back to `llama_cpp` Qwen2.5-3B-Q4_K_M and the decision log is amended at that time.
+
+Models are downloaded manually (DIR-01 §13 risk #7 — no auto-download). Conventional locations:
+
+- MLX: `~/Models/mlx/Qwen3-8B-MLX-4bit/` (the HuggingFace snapshot directory).
+- GGUF: `~/Models/gguf/<file>.gguf`.
 
 ### 7.3 Constrained Decoding
 
@@ -184,20 +231,20 @@ The intent router MUST emit a structured response conforming to a fixed JSON sch
 {"matched": true, "block_id": "ai_prompt_buildout", "confidence": 0.87, "extras": {"stage": "buildout"}}
 ```
 
-Free-form prose output is forbidden. DIR-01 commits to **GBNF grammar-constrained decoding** as built into `llama-cpp-python` via the `grammar=` argument on `Llama.create_completion` / `Llama.__call__`. Rationale:
+Free-form prose output is forbidden. The token sampler MUST be constrained at decode time so malformed JSON is structurally impossible. Each backend implements this in its idiomatic mechanism, behind the shared `StructuredOutputSchema → backend-native artifact` compiler in `holdspeak/plugins/dictation/grammars.py`:
 
-1. Built into the chosen runtime — zero additional library dependency.
-2. Deterministic and exhaustive: the model token sampler is restricted at decode time, not validated post-hoc, so malformed JSON is structurally impossible.
-3. Block-id and extras-enum values are derived directly from the loaded `blocks.yaml`, so the grammar is data-driven and updates whenever block config changes.
-4. Mature and well-tested; no library-churn risk.
+- **`llama_cpp`:** GBNF grammar via the `grammar=` argument on `Llama.create_completion` / `Llama.__call__`. The schema compiler emits a GBNF string and validates it via `LlamaGrammar.from_string` at config-load time.
+- **`mlx`:** `outlines`-style logits-processor over `mlx-lm` (regex-or-JSON-schema constrained sampling). The schema compiler emits the matching regex/JSON-schema artifact and validates it at config-load time. `outlines` is accepted as a localized dependency for the `mlx` backend only; churn risk is contained to `runtime_mlx.py`.
 
-The grammar generation is the responsibility of `holdspeak/plugins/dictation/grammars.py` (new module), which MUST produce a GBNF string for a given set of blocks and validate it via `LlamaGrammar.from_string` at config-load time.
+In both cases:
 
-JSON-mode + post-hoc retry is **explicitly rejected** as a fallback: with grammar-constrained decoding there is nothing to fall back to. If the grammar fails to compile, the dictation runtime MUST refuse to start and `holdspeak doctor` MUST surface the error.
+1. Block-id and extras-enum values are derived directly from the loaded `blocks.yaml`, so the constraint is data-driven and updates whenever block config changes.
+2. JSON-mode + post-hoc retry is **explicitly rejected** as a fallback. If the constraint fails to compile for the active backend, the dictation runtime MUST refuse to start and `holdspeak doctor` MUST surface the error.
+3. The compiler MUST produce semantically equivalent constraints across backends — the same `blocks.yaml` MUST yield outputs from the same value set regardless of which runtime served them.
 
 ### 7.4 Forward Compatibility
 
-See §7.1 final paragraph. The runtime interface (`classify(prompt, schema) → dict`) is backend-agnostic. A future MLX-LM backend, if measured benchmarks justify the second runtime, would land as `runtime_mlx.py` selected by config — no stage-code changes. This is **not** a DIR-01 deliverable.
+The runtime Protocol (`classify(prompt, schema) → dict`) is backend-agnostic. Adding a remote backend (cloud LLM with provider tool-schema) or a new local stack (vLLM, ollama) is a localized change: a new `runtime_<name>.py` plus a new branch in the schema compiler. Stage code does not change. This extension is **not** a DIR-01 deliverable.
 
 ## 8. Block Configuration Schema
 
@@ -310,11 +357,14 @@ class DictationPipelineConfig:
 
 @dataclass
 class LLMRuntimeConfig:
-    backend: str = "llama-cpp"         # only value in DIR-01
-    model_path: str = "~/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf"
-    n_ctx: int = 2048                  # ample for one utterance + grammar overhead
-    n_threads: int | None = None       # None → llama-cpp default
-    n_gpu_layers: int = -1             # -1 = all on GPU/Metal where available
+    backend: str = "auto"              # "auto" | "mlx" | "llama_cpp"
+    # Backend-specific model location. Exactly one of these is honored
+    # per the resolved backend; the other is ignored.
+    mlx_model: str = "~/Models/mlx/Qwen3-8B-MLX-4bit"        # HF snapshot dir or repo id
+    llama_cpp_model_path: str = "~/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf"
+    n_ctx: int = 2048                  # ample for one utterance + structured-output overhead
+    n_threads: int | None = None       # llama_cpp only; None → library default
+    n_gpu_layers: int = -1             # llama_cpp only; -1 = all on GPU/Metal where available
     warm_on_start: bool = False        # if true, load model at controller init
     eviction_idle_seconds: int = 0     # 0 = never evict
 ```
@@ -324,18 +374,15 @@ class LLMRuntimeConfig:
 
 ### 9.5 Doctor Requirements
 
-- `DIR-DOC-001` New check `LLM runtime` reports backend, model id, and load status (loaded | available | missing).
-- `DIR-DOC-002` New check `Grammar compilation` reports whether the GBNF grammar generated from the loaded `blocks.yaml` compiles successfully via `LlamaGrammar.from_string`.
+- `DIR-DOC-001` New check `LLM runtime` reports the resolved backend (`mlx` | `llama_cpp`), model id, and load status (loaded | available | missing). For `auto`, the resolution path MUST also be reported.
+- `DIR-DOC-002` New check `Structured-output compilation` reports whether the constraint artifact generated from the loaded `blocks.yaml` compiles successfully against the active backend (GBNF for `llama_cpp`, regex/JSON-schema for `mlx`).
 - `DIR-DOC-003` Both checks MUST be `INFO`/`WARN` (not `FAIL`) when DIR-01 is disabled — the pipeline is opt-in.
 
 ### 9.6 Reliability and Performance Requirements
 
-- `DIR-R-001` Warm `intent-router` median latency MUST be ≤ 250ms on reference Mac (Qwen2.5-3B-Q4_K_M, Metal).
-- `DIR-R-002` Warm `intent-router` p95 latency MUST be ≤ 500ms on reference Mac.
-- `DIR-R-001-LX` On Linux x86_64 with no GPU, the intent router MAY take ≤ 800ms median; this is informational, not a phase gate.
+- `DIR-R-001` Warm `intent-router` SHOULD feel instantaneous on the reference Mac with the primary configuration (`mlx` backend, `Qwen3-8B-MLX-4bit`). DIR-01 commits to the model choice, not to a numeric latency target; if real use surfaces a perception problem the cross-backend default is revisited via amendment.
 - `DIR-R-003` Cold-start (first call after `holdspeak` launch with `warm_on_start=false`) MUST complete or short-circuit within `max_total_latency_ms` × 5; otherwise log and disable for the session.
-- `DIR-R-004` `kb-enricher` MUST be pure template substitution; latency MUST be ≤ 5ms.
-- `DIR-R-005` Total pipeline latency overhead vs baseline MUST be ≤ 250ms median, ≤ 500ms p95 on the reference machine.
+- `DIR-R-004` `kb-enricher` MUST be pure template substitution and MUST NOT call the LLM runtime.
 
 ### 9.7 Observability Requirements
 
@@ -377,7 +424,9 @@ class LLMRuntimeConfig:
 | DIR-C-001 | UT | Default config: pipeline disabled | `10_ut_config.log` |
 | DIR-C-002 | UT | Unknown stage id rejected | `10_ut_config.log` |
 | DIR-DOC-001..003 | AT | Doctor output text contains required check names | `41_doctor_checks.log` |
-| DIR-R-001..R-005 | BT | Benchmark harness on reference machine | `50_perf.txt` |
+| DIR-R-001 | MT | Manual end-to-end run on reference machine; perception check, not numeric | `61_runtime_trace.txt` |
+| DIR-R-003 | UT | Unit test forces cold-start path and asserts short-circuit | `10_ut_runtime.log` |
+| DIR-R-004 | UT | Unit test asserts `kb_enricher` makes no runtime calls | `10_ut_enricher.log` |
 | DIR-O-001..O-002 | LG | Log line and counter inspection | `60_logs_sample.txt` |
 | DIR-S-001 | UT | YAML loader rejects unsafe tags | `10_ut_security.log` |
 | DIR-S-002 | UT | Template substitution rejects expressions | `10_ut_security.log` |
@@ -391,7 +440,7 @@ class LLMRuntimeConfig:
 
 ### 11.2 Required Files
 
-`00_baseline_typing_latency.txt`, `00_manifest.md`, `01_env.txt`, `02_git_status.txt`, `03_traceability.md`, `10_ut_pipeline.log`, `10_ut_router.log`, `10_ut_enricher.log`, `10_ut_blocks.log`, `10_ut_runtime.log`, `10_ut_config.log`, `10_ut_security.log`, `12_grammar_validation.log`, `40_cli_checks.log`, `41_doctor_checks.log`, `50_perf.txt`, `51_model_tier_benchmark.md`, `60_logs_sample.txt`, `61_runtime_trace.txt`, `99_phase_summary.md`.
+`00_manifest.md`, `01_env.txt`, `02_git_status.txt`, `03_traceability.md`, `10_ut_pipeline.log`, `10_ut_router.log`, `10_ut_enricher.log`, `10_ut_blocks.log`, `10_ut_runtime.log`, `10_ut_config.log`, `10_ut_security.log`, `12_structured_output_validation.log`, `40_cli_checks.log`, `41_doctor_checks.log`, `60_logs_sample.txt`, `61_runtime_trace.txt`, `99_phase_summary.md`.
 
 ### 11.3 Validity Rules
 
@@ -399,11 +448,12 @@ Identical to `PLAN_PHASE_MULTI_INTENT_ROUTING.md` §8.3 (commands, timestamps, c
 
 ## 12. Implementation Recipe
 
-### 12.1 Step 0 — Baseline + Spike
+### 12.1 Step 0 — (removed)
 
-1. Capture baseline typing latency (50-utterance fixture) → `00_baseline_typing_latency.txt`.
-2. Confirm `llama-cpp-python` Metal wheel is installed (reuse the existing `[meeting]` extra path; document the `CMAKE_ARGS="-DGGML_METAL=on"` install if rebuild needed).
-3. Spike: load `Qwen2.5-3B-Instruct-Q4_K_M.gguf`, run a 10-prompt classification fixture with a fixed GBNF grammar, measure first-token + total. Record raw → `51_model_tier_benchmark.md` (initial entry).
+DIR-01 has no Step 0. The phase commits to `Qwen3-8B-MLX-4bit` on the
+`mlx` backend (and `Qwen2.5-3B-Q4_K_M` on `llama_cpp`) and proceeds
+directly to contracts. No baseline measurement, no validation spike.
+The first concrete work is §12.2 (contracts).
 
 ### 12.2 Step 1 — Contracts
 
@@ -416,11 +466,13 @@ Identical to `PLAN_PHASE_MULTI_INTENT_ROUTING.md` §8.3 (commands, timestamps, c
 1. Implement `pipeline.py` with ordered execution, error isolation, ring buffer.
 2. Unit tests: `tests/unit/test_dictation_pipeline.py`.
 
-### 12.4 Step 3 — LLM Runtime
+### 12.4 Step 3 — Pluggable LLM Runtime + Structured Output
 
-1. Implement `runtime.py` wrapping `llama-cpp-python` (`Llama` instance, warm/lazy modes, `classify(prompt, grammar) → dict`). Reuse the loader-failure handling pattern from `holdspeak/intel.py`.
-2. Implement `grammars.py` to generate a GBNF grammar from a loaded `BlockSet` and validate it via `LlamaGrammar.from_string` at construction.
-3. Unit tests with a mocked `Llama`; integration tests gated on a `requires_llama_cpp` marker (skipped if the runtime can't load the configured model).
+1. Implement `runtime.py`: `LLMRuntime` Protocol, `StructuredOutputSchema` dataclass, `auto`-resolution, registry/factory.
+2. Implement `runtime_llama_cpp.py` (`Llama` instance, warm/lazy modes, `classify(prompt, schema) → dict`). Reuse the loader-failure handling pattern from `holdspeak/intel.py`.
+3. Implement `runtime_mlx.py` (`mlx-lm` model + `outlines`-style logits processor for structured output).
+4. Implement `grammars.py` as the schema compiler with two emitters: GBNF (for `llama_cpp`, validated via `LlamaGrammar.from_string`) and regex/JSON-schema (for `mlx`, validated via `outlines`-style compile-time check). Both compile from the same `BlockSet`.
+5. Unit tests with mocked backends; integration tests gated on `requires_mlx` / `requires_llama_cpp` markers (skipped if the corresponding model isn't loadable).
 
 ### 12.5 Step 4 — Blocks
 
@@ -449,11 +501,12 @@ Identical to `PLAN_PHASE_MULTI_INTENT_ROUTING.md` §8.3 (commands, timestamps, c
 1. Add LLM runtime + constrained-decoding checks per §9.5.
 2. Update `tests/unit/test_doctor_command.py`.
 
-### 12.10 Step 9 — Benchmarks
+### 12.10 Step 9 — (removed)
 
-1. Implement `scripts/bench_dictation_pipeline.py` running the fixture against all three Qwen tiers.
-2. Run on reference machine; record numbers → `50_perf.txt`, `51_model_tier_benchmark.md`.
-3. **Decision gate:** if Qwen2.5-3B does not meet DIR-R-001/R-002, escalate per §13.
+The pre-shipping benchmark step is removed. DIR-01 ships on the
+chosen models without a measurement gate. If real users surface a
+perception problem the decision log is amended and a targeted
+measurement is added at that time.
 
 ### 12.11 Step 10 — Full Regression
 
@@ -465,30 +518,30 @@ uv run python -m compileall holdspeak
 
 ## 13. Risks and Mitigations
 
-1. **LLM latency exceeds budget on weaker M-chips.** Mitigation: ship Qwen2.5-1.5B-Q4_K_M as fallback default if 3B fails on baseline reference machine; document the floor (e.g., M1 8GB).
-2. **`llama-cpp-python` wheel mismatch (no Metal).** A pip-installed wheel without Metal flags will run CPU-only on Apple Silicon and miss latency targets dramatically. Mitigation: doctor check inspects whether the loaded `Llama` reports GPU offload >0; surface a clear remediation hint pointing to the `CMAKE_ARGS="-DGGML_METAL=on"` rebuild command (which the project README already documents for the meeting-intel path).
-3. **Concurrent memory pressure with `intel.py`.** If the user runs meeting-intel and the dictation router simultaneously, two GGUF models compete for RAM. Mitigation: §3.2 item 6 marks shared-model-instance as out of scope; DIR-01 documents the conservative defaults and leaves coexistence as a DIR-02 question.
-4. **Project KB key drift.** Templates reference `{project.kb.*}` keys that may not exist in older KBs. Mitigation: DIR-F-007 + actionable warning + `dictation blocks validate --project` CLI.
-5. **User confusion when enrichment silently no-ops.** Mitigation: ring-buffer introspection (DIR-F-009) + dry-run CLI (DIR-F-010) make every decision auditable.
-6. **Mid-utterance context bleed across utterances.** Out of scope — DIR-01 is stateless. Documented as a non-goal in §3.2.
-7. **Model file size + first-launch surprise.** A Q4_K_M 3B Qwen GGUF is ~2 GB. Mitigation: doctor emits the warning; pipeline stays disabled by default; never auto-download in DIR-01.
-8. **GBNF grammar bug from malformed `blocks.yaml`.** Mitigation: grammar compilation is checked at config-load time (DIR-DOC-002) and at `dictation blocks validate`; pipeline refuses to start with a broken grammar.
+1. **LLM latency exceeds budget.** Mitigation: per-backend tier ladder. `mlx` falls back from Qwen3-8B-4bit to a smaller MLX Qwen if needed; `llama_cpp` falls back from Qwen2.5-3B-Q4_K_M to 1.5B; document the floor (e.g., M1 8GB).
+2. **`llama-cpp-python` wheel mismatch (no Metal).** A pip-installed wheel without Metal flags will run CPU-only on Apple Silicon and miss latency targets dramatically. Mitigation: doctor check inspects whether the loaded `Llama` reports GPU offload >0 when the `llama_cpp` backend is active; surface a clear remediation hint pointing to the `CMAKE_ARGS="-DGGML_METAL=on"` rebuild command.
+3. **Concurrent memory pressure with `intel.py`.** If the user runs meeting-intel and the dictation router simultaneously, both stacks compete for RAM/VRAM (Qwen3-8B-MLX-4bit ≈ 5 GB resident; Mistral-7B-Q6_K ≈ 6 GB). Mitigation: §3.2 item 5 marks shared-model-instance as out of scope; DIR-01 documents the conservative defaults and leaves coexistence as a DIR-02 question. Doctor SHOULD warn when both runtimes are configured for warm-on-start on a <16 GB machine.
+4. **Two LLM stacks installed concurrently.** Both `mlx-lm` and `llama-cpp-python` may be installed on the reference Mac; install size and cold-start exposure grow. Mitigation: extras-gated install (`[dictation-mlx]`, `[dictation-llama]`); doctor reports which extras are present and which backend is active.
+5. **Project KB key drift.** Templates reference `{project.kb.*}` keys that may not exist in older KBs. Mitigation: DIR-F-007 + actionable warning + `dictation blocks validate --project` CLI.
+6. **User confusion when enrichment silently no-ops.** Mitigation: ring-buffer introspection (DIR-F-009) + dry-run CLI (DIR-F-010) make every decision auditable.
+7. **Mid-utterance context bleed across utterances.** Out of scope — DIR-01 is stateless. Documented as a non-goal in §3.2.
+8. **Model file size + first-launch surprise.** Qwen3-8B-MLX-4bit ≈ 5 GB; Qwen2.5-3B-Q4_K_M ≈ 2 GB. Mitigation: doctor emits the warning; pipeline stays disabled by default; never auto-download in DIR-01.
+9. **Structured-output compile failure.** Mitigation: schema compilation is checked at config-load time per active backend (DIR-DOC-002) and at `dictation blocks validate`; pipeline refuses to start with a broken constraint.
 
 ## 14. Definition of Done
 
 1. Every `DIR-*` requirement has passing verification evidence.
 2. Required evidence files exist and are non-empty.
-3. Pipeline runs end-to-end on the reference machine with default-Qwen2.5-3B and meets DIR-R-001/R-002.
+3. Pipeline runs end-to-end on the reference machine with the `mlx` Qwen3-8B-MLX-4bit primary. The `llama_cpp` Qwen2.5-3B-Q4_K_M path also runs end-to-end (cross-backend equivalence smoke-tested).
 4. With `dictation.pipeline.enabled=false`, all baseline behavior is byte-identical to pre-DIR-01.
 5. `holdspeak doctor` cleanly reports the new checks in both enabled and disabled states.
-6. `51_model_tier_benchmark.md` contains measured numbers for all three Qwen tiers; the chosen default is justified by those numbers.
-7. Phase summary lists known gaps and explicitly defers DIR-02 items (cross-platform backend, cloud router, multi-utterance state).
+6. Phase summary lists known gaps and explicitly defers DIR-02 items (additional backends beyond mlx/llama_cpp, cloud router, multi-utterance state).
 
 ## 15. Open Questions (Resolve Before Step 5)
 
-1. ~~**Outlines vs json-mode.**~~ Resolved: DIR-01 uses GBNF grammar via `llama-cpp-python` (§7.3).
-2. **Qwen2.5 vs Qwen3.** Should the default be re-evaluated against a Qwen3-3B-class GGUF if one with stable accuracy exists at phase start? Resolved by §12.10 benchmark.
+1. ~~**Outlines vs json-mode vs GBNF.**~~ Resolved: GBNF for `llama_cpp`, `outlines`-style logits-processor for `mlx`. Both compiled from the same `BlockSet` by `grammars.py` (§7.3).
+2. ~~**Qwen2.5 vs Qwen3.**~~ Resolved (2026-04-25): `mlx` primary is `Qwen3-8B-MLX-4bit`; `llama_cpp` default remains `Qwen2.5-3B-Q4_K_M`. Cross-backend default chosen by §12.10 measurement.
 3. **Template engine.** Plain `str.format` vs Jinja2 (sandboxed). DIR-01 commits to plain `str.format` for security simplicity (§9.8). Revisit only if real users hit expressivity limits.
 4. **Where do block-config edits live in the web UI?** Out of scope for DIR-01; CLI and file editing only. Web editor is a DIR-02 candidate.
 5. **Should the router emit multi-label outputs?** No, DIR-01 commits to single-block-match for simplicity. Multi-label is a DIR-02 candidate, aligned with MIR-01's multi-label patterns.
-6. **Model coexistence with `intel.py`.** Two simultaneously loaded GGUFs is unconstrained in DIR-01. A DIR-02 spike should evaluate (a) sharing one model across both runtimes and (b) a process-level memory budget.
+6. **Model coexistence with `intel.py`.** Two simultaneously loaded models (mlx-lm or llama-cpp dictation runtime + llama-cpp Mistral in `intel.py`) is unconstrained in DIR-01. A DIR-02 spike should evaluate (a) sharing one model across runtimes and (b) a process-level memory budget.

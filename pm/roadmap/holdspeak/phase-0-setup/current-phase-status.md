@@ -48,8 +48,10 @@ HS-0-02 (packaging fix) ship as a deliberate bundle — rationale in
 before the framework existed, splitting it now would create an
 artificial first commit with no real work. From the next commit forward
 the one-story-per-commit rule applies normally. Phase 1 (DIR-01) is
-ready to begin in a fresh session — start with `HS-1-01`
-(`phase-1-dictation-intent-routing/story-01-baseline-and-spike.md`).
+ready to begin in a fresh session — start with `HS-1-02`
+(`phase-1-dictation-intent-routing/story-02-contracts.md`). HS-1-01
+and HS-1-10 were dropped on 2026-04-25; see DIR-01 status doc for
+context.
 
 ## Active risks
 

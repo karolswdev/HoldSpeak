@@ -1,29 +1,32 @@
 # Phase 1 — Dictation Intent Routing (DIR-01)
 
-**Last updated:** 2026-04-25.
+**Last updated:** 2026-04-25 (HS-1-01 + HS-1-10 dropped; banking on Qwen3-8B-MLX-4bit, no measurement gates).
 
 ## Goal
 
 Deliver DIR-01 per `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md`: a
 real-time, on-device transcript enrichment pipeline for the voice-typing
-path. The pipeline runs an LLM-driven intent router (Qwen GGUF on
-`llama-cpp-python`, GBNF-constrained) followed by a KB-driven enrichment
-stage between Whisper and the keyboard. Off by default; opt-in per user
-config. This section is **immutable** for the life of the phase.
+path. The pipeline runs an LLM-driven intent router behind a pluggable
+`LLMRuntime` Protocol — DIR-01 ships two concrete backends (`mlx-lm`
+with `Qwen3-8B-MLX-4bit` as the reference-Mac primary, and
+`llama-cpp-python` with `Qwen2.5-3B-Q4_K_M` as the cross-platform
+default), with constrained-decoding behind a shared schema compiler
+(GBNF on `llama_cpp`, `outlines`-style on `mlx`). A KB-driven enrichment
+stage follows. Off by default; opt-in per user config. This section is
+**immutable** for the life of the phase.
 
 ## Scope
 
-- **In:** Everything declared in scope by `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §3.1. Implemented via stories `HS-1-01` through `HS-1-11` (one per spec §12 step). Phase exit is gated by the spec's §14 "Definition of Done".
+- **In:** Everything declared in scope by `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §3.1. Implemented via stories `HS-1-02` through `HS-1-09` and `HS-1-11` (HS-1-01 and HS-1-10 dropped per the 2026-04-25 amendment). Phase exit is gated by the spec's §14 "Definition of Done".
 - **Out:** Everything declared out-of-scope by `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §3.2 — notably MLX-LM as a second on-device backend, cloud router fallback, web block editor, multi-utterance state, and shared model file with `intel.py`.
 
 ## Exit criteria (evidence required)
 
 - [ ] All §9 `DIR-*` requirements have passing verification per the matrix in §10.2.
 - [ ] Evidence bundle at `docs/evidence/phase-dir-01/<YYYYMMDD-HHMM>/` contains every file listed in spec §11.2.
-- [ ] `dictation.pipeline.enabled = true` end-to-end run on the reference Mac with default Qwen2.5-3B-Q4_K_M meets DIR-R-001 (≤250ms median) and DIR-R-002 (≤500ms p95).
-- [ ] With `dictation.pipeline.enabled = false`, baseline typing behavior is byte-identical to pre-DIR-01.
-- [ ] `holdspeak doctor` cleanly reports new checks (`LLM runtime`, `Grammar compilation`) in both enabled and disabled states.
-- [ ] `51_model_tier_benchmark.md` records measured numbers for all three Qwen tiers; chosen default is justified by those numbers.
+- [ ] `dictation.pipeline.enabled = true` end-to-end run on the reference Mac with the `mlx` Qwen3-8B-MLX-4bit primary works and feels responsive in real use. The `llama_cpp` Qwen2.5-3B-Q4_K_M path also runs end-to-end.
+- [ ] With `dictation.pipeline.enabled = false`, typing behavior is byte-identical to pre-DIR-01.
+- [ ] `holdspeak doctor` cleanly reports new checks (`LLM runtime`, `Structured-output compilation`) in both enabled and disabled states, for the active backend.
 - [ ] Phase summary lists known gaps and explicitly defers DIR-02 items.
 
 ## Story status
@@ -34,46 +37,57 @@ created ahead of time as `backlog` so the work is visible; only the
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-1-01 | Step 0 — Baseline + llama-cpp/Qwen spike | ready | [story-01-baseline-and-spike](./story-01-baseline-and-spike.md) | (pending) |
-| HS-1-02 | Step 1 — Transducer contracts | ready | [story-02-contracts](./story-02-contracts.md) | (pending) |
+| ~~HS-1-01~~ | ~~Step 0 — Baseline / spike~~ | dropped | — | n/a — no pre-shipping measurement gate per 2026-04-25 amendment |
+| HS-1-02 | Step 1 — Transducer contracts | done | [story-02-contracts](./story-02-contracts.md) | tests pass (5/5) + full suite green (excl. pre-existing metal hw fails) |
 | HS-1-03 | Step 2 — Pipeline executor | backlog | (pending) | — |
-| HS-1-04 | Step 3 — LLM runtime + GBNF grammars | backlog | (pending) | — |
+| HS-1-04 | Step 3 — Pluggable LLM runtime (mlx + llama_cpp) + structured output | backlog | [story-04-runtime](./story-04-runtime.md) | — |
 | HS-1-05 | Step 4 — Block config loader | backlog | (pending) | — |
 | HS-1-06 | Step 5 — Built-in stages (intent-router + kb-enricher) | backlog | (pending) | — |
 | HS-1-07 | Step 6 — Controller wiring | backlog | (pending) | — |
 | HS-1-08 | Step 7 — CLI (`holdspeak dictation …`) | backlog | (pending) | — |
-| HS-1-09 | Step 8 — Doctor checks (LLM runtime + grammar compilation) | backlog | (pending) | — |
-| HS-1-10 | Step 9 — Benchmarks across Qwen tiers | backlog | (pending) | — |
+| HS-1-09 | Step 8 — Doctor checks (LLM runtime + structured-output compile) | backlog | (pending) | — |
+| ~~HS-1-10~~ | ~~Step 9 — Benchmarks~~ | dropped | — | n/a — no pre-shipping measurement gate per 2026-04-25 amendment |
 | HS-1-11 | Step 10 — Full regression + DoD | backlog | (pending) | — |
 
 ## Where we are
 
-Phase opening. Spec is locked. `HS-1-01` is the next thing to ship: a
-baseline-typing-latency measurement, a `llama-cpp-python`/Metal
-Qwen2.5-3B-Q4_K_M install verification, and a 10-prompt classification
-spike with a fixed GBNF grammar. The result of HS-1-01 either confirms
-or invalidates the §7.2 latency targets before any pipeline code is
-written.
+Spec amended (2026-04-25) to ship two backends (`mlx-lm` +
+`llama-cpp-python`) behind a pluggable `LLMRuntime` Protocol with
+`Qwen3-8B-MLX-4bit` as the reference-Mac primary. All pre-shipping
+measurement is dropped — DIR-01 banks on the chosen models and goes
+straight to implementation. `HS-1-01` (baseline) and `HS-1-10`
+(benchmarks) are dropped.
+
+**HS-1-02 done.** Contracts module
+(`holdspeak/plugins/dictation/contracts.py`) ships `Utterance`,
+`IntentTag`, `StageResult`, and the `Transducer` Protocol per DIR-01
+§6.4. Five-case test suite passes. Full regression green except for two
+pre-existing hardware-only failures in `tests/e2e/test_metal.py` (mic +
+Whisper) unrelated to this story. Next: **HS-1-03** (pipeline executor).
 
 ## Active risks
 
 | Risk | Likelihood | Mitigation | Stop signal |
 |---|---|---|---|
-| `llama-cpp-python` Metal wheel not installed → CPU-only inference, latency targets fail | medium | Doctor check inspects GPU offload; HS-1-01 spike measures and surfaces immediately | Spike measurement shows >2× the §7.2 target latency |
-| Qwen2.5-3B-Q4_K_M misclassifies the fixture → forces escalation to 7B | medium | HS-1-10 benchmarks the full tier set; default can be revised to 1.5B (faster) or 7B (more accurate) per measurement | Spike accuracy <70% on the 10-prompt fixture |
-| GBNF grammar from `blocks.yaml` fails to compile | low | DIR-DOC-002 doctor check + config-load-time validation in `grammars.py` | Any `LlamaGrammar.from_string` exception in CI |
-| Pipeline overhead pushes hotkey-release-to-typing latency past the perception threshold (~400ms total) | medium | DIR-R-005 caps overhead at ≤250ms median; if breached, default tier drops to 1.5B | DIR-R-001 evidence shows median >250ms after warm-up |
-| Two GGUF models (intel + dictation) loaded concurrently OOM the user's machine | medium | §3.2 item 6 marks shared-instance out of scope; conservative defaults; documented in risks | First user report of OOM |
+| `llama-cpp-python` Metal wheel not installed → CPU-only inference when `llama_cpp` backend is active | medium | Doctor check inspects GPU offload; remediation hint surfaces immediately | First user report of slow `llama_cpp` path |
+| `mlx-lm` import failure on `auto` resolution silently falls back to `llama_cpp` and surprises the user | low | `auto` resolution path reported by `DIR-DOC-001`; explicit backend choice never falls back | Any user reports unexpected backend |
+| Qwen3-8B-MLX-4bit RAM footprint (~5 GB resident) + `intel.py` Mistral-7B (~6 GB) OOM a 16 GB machine | medium | §3.2 #5 (no shared instance); doctor warns when both runtimes are warm-on-start on <16 GB | First user report of OOM |
+| Constraint compile failure (GBNF or `outlines`) from a malformed `blocks.yaml` | low | DIR-DOC-002 + config-load-time validation in `grammars.py` for the active backend | Any compile exception in CI |
+| Pipeline feels sluggish in real use on the `mlx` primary | medium | No numeric gate; if surfaced, default falls back to `llama_cpp` Qwen2.5-3B and the decision log is amended at that time | First user report of perception lag |
+| Dual stack (`mlx-lm` + `llama-cpp-python`) bloats install / cold-start | low | Extras-gated install (`[dictation-mlx]`, `[dictation-llama]`); doctor reports which extras are present | Install size complaints in user feedback |
 
 ## Decisions made (this phase)
 
-- 2026-04-25 — Backend is `llama-cpp-python` (Metal on Mac, CPU/CUDA on Linux). MLX-LM rejected for DIR-01 — would mean two on-device LLM stacks alongside `intel.py` — owner: agent + user (user pushback that we should reuse the existing runtime).
-- 2026-04-25 — Constrained decoding via GBNF grammar (built into `llama-cpp-python`). `outlines` rejected — extra dep, library churn risk, no benefit over GBNF — owner: agent.
-- 2026-04-25 — Default model `Qwen2.5-3B-Instruct-Q4_K_M.gguf` (sources: `bartowski/`, `lmstudio-community/`). Tiers: 1.5B (fast), 3B (default), 7B (quality fallback). Qwen3 only after a benchmark beats Qwen2.5 — owner: agent + user (user said "we need qwen").
 - 2026-04-25 — Pipeline off by default (`dictation.pipeline.enabled = false`). Opt-in via config — owner: agent.
+- 2026-04-25 — **Pluggable LLM runtime: DIR-01 ships two backends.** `mlx-lm` (Apple Silicon native) and `llama-cpp-python` (cross-platform GGUF) behind a single `LLMRuntime` Protocol; selected by `dictation.runtime.backend: auto | mlx | llama_cpp` (default `auto`). **Supersedes the prior single-backend decision** — owner: agent + user (user: "abstracting away the execution interface ... implementing both").
+- 2026-04-25 — **`mlx` primary model: `Qwen3-8B-MLX-4bit`** (`Qwen/Qwen3-8B-MLX-4bit`). Reference-Mac default. **Supersedes the prior "Qwen2.5-only" decision** — owner: user.
+- 2026-04-25 — `llama_cpp` default model retained: `Qwen2.5-3B-Instruct-Q4_K_M.gguf` (`bartowski/Qwen2.5-3B-Instruct-GGUF`). Tiers: 1.5B / 3B / 7B — owner: agent.
+- 2026-04-25 — Constrained decoding split per backend: GBNF for `llama_cpp`, `outlines`-style logits-processor for `mlx`. Both compiled from the same `BlockSet` by `grammars.py`. **Supersedes the prior "GBNF-only, outlines rejected" decision** — owner: agent + user (`outlines` accepted as a localized dep on the `mlx` path; churn risk contained to `runtime_mlx.py`).
+- 2026-04-25 — **No pre-shipping measurement.** All baseline benches, validation spikes, and pre-ship benchmark gates are removed from DIR-01. The phase banks on `Qwen3-8B-MLX-4bit` (and the `llama_cpp` Qwen2.5-3B fallback) and ships on perception alone. **Drops HS-1-01 and HS-1-10.** **Supersedes the prior "validation via abstraction + HS-1-10 measurement" decision** — owner: user (explicit instruction: "I don't need a freakin' bench, we bank on qwen3-8b-mlx-4bit").
 
 ## Decisions deferred
 
-- MLX-LM as a second backend — trigger: a real user benchmark on Apple Silicon shows the 30–50% latency advantage matters for their flow — default: never adopt.
 - Cloud LLM router fallback — trigger: enough users want zero-local-model setup — default: never (HoldSpeak is local-first).
+- Additional on-device backends beyond `mlx` and `llama_cpp` (vLLM, ollama, etc.) — trigger: measured advantage on the reference fixture — default: never.
 - Web-based block editor — trigger: ≥3 user reports that file editing is the friction — default: CLI + file editing only.
+- Shared model instance between `intel.py` and the dictation runtime — trigger: real OOM reports on common hardware — default: keep separate.

@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-25.
+**Last updated:** 2026-04-25 (DIR-01: dual LLM runtime amendment + HS-1-02 contracts shipped).
 **Current phase:** [phase-1-dictation-intent-routing](./phase-1-dictation-intent-routing/current-phase-status.md)
 **Status:** in-progress.
 

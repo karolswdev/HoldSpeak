@@ -2,8 +2,8 @@
 
 - **Project:** holdspeak
 - **Phase:** 1
-- **Status:** ready
-- **Depends on:** HS-1-01 (spike must validate the latency assumption first)
+- **Status:** done
+- **Depends on:** HS-0-01, HS-0-02
 - **Unblocks:** HS-1-03 (pipeline executor needs the contracts)
 - **Owner:** unassigned
 
@@ -33,12 +33,12 @@ MUST share `holdspeak/plugins/contracts.py` types where they overlap."
 
 ## Acceptance criteria
 
-- [ ] `holdspeak/plugins/dictation/__init__.py` and `holdspeak/plugins/dictation/contracts.py` exist.
-- [ ] `Utterance`, `IntentTag`, `StageResult` are `@dataclass(frozen=True)`; field names and types match DIR-01 §6.4 exactly.
-- [ ] `Transducer` is a `typing.Protocol` with the three attributes and the `run` method spec'd in §6.4.
-- [ ] `Plugin.kind` accepts `"transducer"` without breaking existing MIR-01 kinds. Verify with a quick search that no MIR-01 code paths regress.
-- [ ] `tests/unit/test_dictation_contracts.py` exists with ≥4 cases (one per dataclass + one Protocol conformance check) and all pass.
-- [ ] `uv run pytest tests/unit/test_dictation_contracts.py -q` exit code 0; output captured in `evidence-story-02.md`.
+- [x] `holdspeak/plugins/dictation/__init__.py` and `holdspeak/plugins/dictation/contracts.py` exist.
+- [x] `Utterance`, `IntentTag`, `StageResult` are `@dataclass(frozen=True)`; field names and types match DIR-01 §6.4 exactly.
+- [x] `Transducer` is a `typing.Protocol` (decorated `@runtime_checkable`) with the three attributes and the `run` method spec'd in §6.4.
+- [x] `Plugin.kind` accepts `"transducer"`. The existing system uses a free-form `kind: str` on `DeterministicPlugin` (`holdspeak/plugins/builtin.py`), so no enum extension was required; existing kinds (`synthesizer`, `validator`, `artifact_generator`, `signals`) are unchanged.
+- [x] `tests/unit/test_dictation_contracts.py` exists with 5 cases (Utterance, IntentTag, StageResult, Protocol conformance, Transducer.run smoke) — all pass (`uv run pytest tests/unit/test_dictation_contracts.py -q` → `5 passed in 0.04s`).
+- [x] Full regression: `uv run pytest tests/ -q` → 783 passed, 10 skipped, 2 unrelated hardware-only failures in `tests/e2e/test_metal.py` (mic + Whisper, pre-existing).
 
 ## Test plan
 
