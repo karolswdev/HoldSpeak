@@ -2819,8 +2819,9 @@ class MeetingWebServer:
                 warnings.append({
                     "code": "pipeline_disabled",
                     "message": "Dictation pipeline is disabled.",
-                    "action": "Open Runtime and enable the pipeline.",
+                    "action": "Enable the dictation pipeline from Runtime.",
                     "section": "runtime",
+                    "runtime_action": "enable_pipeline",
                 })
             if project is None:
                 warnings.append({

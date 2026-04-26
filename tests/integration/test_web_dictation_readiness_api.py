@@ -125,6 +125,9 @@ def test_readiness_disabled_no_project_reports_next_actions(
     assert body["runtime"]["status"] == "disabled"
     codes = {warning["code"] for warning in body["warnings"]}
     assert {"pipeline_disabled", "no_project", "no_blocks"} <= codes
+    pipeline = next(w for w in body["warnings"] if w["code"] == "pipeline_disabled")
+    assert pipeline["runtime_action"] == "enable_pipeline"
+    assert pipeline["section"] == "runtime"
     no_blocks = next(w for w in body["warnings"] if w["code"] == "no_blocks")
     assert no_blocks["template_id"] == "action_item"
     assert no_blocks["template_action"] == "create_dry_run"
@@ -219,3 +222,4 @@ def test_dictation_page_includes_readiness_panel() -> None:
     assert "Dictation Readiness" in body
     assert "data-ready-template-id" in body
     assert "data-ready-kb-starter" in body
+    assert "data-ready-runtime-action" in body

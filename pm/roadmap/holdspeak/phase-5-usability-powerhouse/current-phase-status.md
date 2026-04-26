@@ -1,6 +1,6 @@
 # Phase 5 — Usability Powerhouse
 
-**Last updated:** 2026-04-26 (HS-5-07 done — Project KB now has a starter endpoint, KB editor action, and readiness missing-KB fix; full sweep 1097 passed / 13 skipped).
+**Last updated:** 2026-04-26 (HS-5-08 done — disabled-pipeline readiness warnings now expose an Enable pipeline action that saves through the existing Runtime settings path; full sweep 1098 passed / 13 skipped).
 
 ## Goal
 
@@ -34,14 +34,16 @@ test it safely in the browser."
 | HS-5-05 | Browser project switcher polish | done | [story-05-project-switcher-polish.md](./story-05-project-switcher-polish.md) | [evidence-story-05.md](./evidence-story-05.md) — project-context validation API + recent roots selector; 3 new integration tests |
 | HS-5-06 | Readiness starter actions | done | [story-06-readiness-starter-actions.md](./story-06-readiness-starter-actions.md) | [evidence-story-06.md](./evidence-story-06.md) — no-blocks readiness warning can create + dry-run the recommended starter; 2 new integration tests |
 | HS-5-07 | Project KB starter action | done | [story-07-project-kb-starter-action.md](./story-07-project-kb-starter-action.md) | [evidence-story-07.md](./evidence-story-07.md) — starter Project KB endpoint + readiness/editor actions; 4 new integration tests |
+| HS-5-08 | Runtime readiness action | done | [story-08-runtime-readiness-action.md](./story-08-runtime-readiness-action.md) | [evidence-story-08.md](./evidence-story-08.md) — disabled pipeline warning can enable Runtime through existing settings; 3 new integration tests |
 
 ## Where We Are
 
-HS-5-07 completes the first setup-fix loop for both blocks and Project
-KB. Missing blocks can be fixed with a starter plus sample dry-run, and
-missing Project KB can be fixed with a canonical starter file from
-readiness or the KB editor. The setup loop is now browser-first across
-project selection, readiness, starter blocks, starter KB, and dry-run.
+HS-5-08 closes the obvious readiness-fix loop for the dictation
+cockpit. Missing blocks, missing Project KB, and disabled pipeline
+warnings now have direct browser actions, while settings mutation still
+flows through the existing config endpoints. The setup loop is now
+browser-first across project selection, readiness, starter blocks,
+starter KB, runtime enablement, and dry-run.
 
 Next likely chunks:
 
@@ -49,5 +51,5 @@ Next likely chunks:
    and review states more prominently in history/detail views.
 2. Browser project switcher follow-up: optional file-picker integration
    or explicit current-cwd project display on page load.
-3. Disabled-runtime readiness action that can enable the dictation
-   pipeline from the warning after previewing the config change.
+3. Model/runtime install guidance for missing backend or model-file
+   warnings.

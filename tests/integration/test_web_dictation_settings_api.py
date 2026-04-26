@@ -141,6 +141,31 @@ class TestSettingsPutPersistsDictation:
         out = response.json()["settings"]["dictation"]
         assert out["pipeline"]["enabled"] is True
 
+    def test_partial_put_enables_pipeline_and_preserves_runtime(
+        self,
+        test_client: TestClient,
+        settings_path: Path,
+        on_settings_applied: MagicMock,
+    ) -> None:
+        cfg = Config()
+        cfg.dictation.pipeline.enabled = False
+        cfg.dictation.runtime.backend = "llama_cpp"
+        cfg.save(path=settings_path)
+
+        response = test_client.put(
+            "/api/settings",
+            json={"dictation": {"pipeline": {"enabled": True}}},
+        )
+
+        assert response.status_code == 200, response.text
+        out = response.json()["settings"]["dictation"]
+        assert out["pipeline"]["enabled"] is True
+        assert out["runtime"]["backend"] == "llama_cpp"
+        persisted = Config.load(path=settings_path)
+        assert persisted.dictation.pipeline.enabled is True
+        assert persisted.dictation.runtime.backend == "llama_cpp"
+        on_settings_applied.assert_called_once()
+
     def test_put_drops_runtime_status_if_echoed_back(
         self, test_client: TestClient, settings_path: Path
     ) -> None:

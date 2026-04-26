@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-5-07 done — Project KB now has a starter endpoint, KB editor action, and readiness missing-KB fix; full sweep 1097 passed / 13 skipped).
+**Last updated:** 2026-04-26 (HS-5-08 done — disabled-pipeline readiness warnings now expose an Enable pipeline action that saves through the existing Runtime settings path; full sweep 1098 passed / 13 skipped).
 **Current phase:** [phase-5-usability-powerhouse](./phase-5-usability-powerhouse/) — reduce daily-use friction and make the web runtime a stronger end-user cockpit.
 **Status:** in-progress.
 

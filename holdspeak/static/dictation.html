@@ -798,6 +798,7 @@
             ${w.section && w.section !== "readiness" ? `<button class="btn" data-ready-section="${escapeAttr(w.section)}" style="float:right;">Open</button>` : ""}
             ${w.template_id ? `<button class="btn primary" data-ready-template-id="${escapeAttr(w.template_id)}" data-ready-template-scope="${escapeAttr(w.template_scope || "global")}" style="float:right;margin-right:8px;">Create + dry-run</button>` : ""}
             ${w.kb_action === "create_starter" ? `<button class="btn primary" data-ready-kb-starter="1" style="float:right;margin-right:8px;">Create starter KB</button>` : ""}
+            ${w.runtime_action === "enable_pipeline" ? `<button class="btn primary" data-ready-runtime-action="enable_pipeline" style="float:right;margin-right:8px;">Enable pipeline</button>` : ""}
           </div>
         `).join("");
         actions.querySelectorAll("button[data-ready-section]").forEach((btn) => {
@@ -816,6 +817,9 @@
           btn.addEventListener("click", () => {
             createStarterKB({ switchToKB: true });
           });
+        });
+        actions.querySelectorAll("button[data-ready-runtime-action]").forEach((btn) => {
+          btn.addEventListener("click", () => enablePipelineFromReadiness());
         });
       }
 
@@ -1031,7 +1035,7 @@
           `${v} ms  ·  cold-start cap: ${v * 5} ms (DIR-R-003)`;
       }
 
-      async function saveRuntime() {
+      async function saveRuntime(options = {}) {
         const msg = document.getElementById("rt-msg");
         msg.innerHTML = "";
         const payload = {
@@ -1050,11 +1054,18 @@
         };
         try {
           await api("PUT", "/api/settings", payload);
-          msg.innerHTML = `<div class="ok-box">Saved. New utterances pick up the config on next pipeline rebuild.</div>`;
+          msg.innerHTML = `<div class="ok-box">${escapeHtml(options.message || "Saved. New utterances pick up the config on next pipeline rebuild.")}</div>`;
           await loadRuntime();
         } catch (e) {
           msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
         }
+      }
+
+      async function enablePipelineFromReadiness() {
+        activateSection("runtime");
+        await loadRuntime();
+        document.getElementById("rt-enabled").checked = true;
+        await saveRuntime({ message: "Enabled. New utterances pick up the config on next pipeline rebuild." });
       }
 
       // ── Dry-run preview ────────────────────────────────────────────────
