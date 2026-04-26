@@ -146,32 +146,63 @@
     </header>
 
     <main id="app">
-      <h2>Block Editor</h2>
-      <p style="color: var(--muted); max-width: 720px;">
-        Author dictation blocks (DIR-01) without hand-editing
-        <code>blocks.yaml</code>. Changes write atomically to the
-        underlying file (<code>WFS-CFG-006</code>) and are validated
-        before persisting.
-      </p>
-
-      <div class="scope-row">
-        <button id="scope-global" data-scope="global" class="active">Global</button>
-        <button id="scope-project" data-scope="project">Project</button>
+      <div class="scope-row" style="margin-bottom: 24px;">
+        <button id="section-blocks" data-section="blocks" class="active">Blocks</button>
+        <button id="section-kb" data-section="kb">Project KB</button>
       </div>
 
-      <div id="meta-banner" class="meta-banner">Loading…</div>
+      <section id="view-blocks">
+        <h2>Block Editor</h2>
+        <p style="color: var(--muted); max-width: 720px;">
+          Author dictation blocks (DIR-01) without hand-editing
+          <code>blocks.yaml</code>. Changes write atomically to the
+          underlying file (<code>WFS-CFG-006</code>) and are validated
+          before persisting.
+        </p>
 
-      <div class="grid">
-        <section class="panel">
-          <h3>Blocks <button id="btn-new" class="btn primary" style="float:right;">+ New block</button></h3>
-          <div id="block-list" class="block-list"></div>
-        </section>
+        <div class="scope-row">
+          <button id="scope-global" data-scope="global" class="active">Global</button>
+          <button id="scope-project" data-scope="project">Project</button>
+        </div>
 
+        <div id="meta-banner" class="meta-banner">Loading…</div>
+
+        <div class="grid">
+          <section class="panel">
+            <h3>Blocks <button id="btn-new" class="btn primary" style="float:right;">+ New block</button></h3>
+            <div id="block-list" class="block-list"></div>
+          </section>
+
+          <section class="panel">
+            <h3 id="editor-title">Select a block to edit</h3>
+            <div id="editor"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="view-kb" style="display:none;">
+        <h2>Project Knowledge Base</h2>
+        <p style="color: var(--muted); max-width: 720px;">
+          Edit the <code>kb</code> mapping in
+          <code>&lt;project_root&gt;/.holdspeak/project.yaml</code>.
+          Keys become <code>{project.kb.&lt;key&gt;}</code> placeholders
+          inside block templates. Keys must match
+          <code>[A-Za-z_][A-Za-z0-9_]*</code>; values are strings (or null).
+        </p>
+        <div id="kb-meta-banner" class="meta-banner">Loading…</div>
         <section class="panel">
-          <h3 id="editor-title">Select a block to edit</h3>
-          <div id="editor"></div>
+          <h3>Knowledge-base entries
+            <button id="kb-btn-add" class="btn primary" style="float:right;">+ New entry</button>
+          </h3>
+          <div id="kb-rows"></div>
+          <div id="kb-msg"></div>
+          <div class="actions">
+            <button class="btn primary" id="kb-btn-save">Save</button>
+            <button class="btn" id="kb-btn-reset">Reset</button>
+            <button class="btn danger" id="kb-btn-delete">Delete file</button>
+          </div>
         </section>
-      </div>
+      </section>
     </main>
 
     <script>
@@ -208,7 +239,7 @@
       // ── Loading ──────────────────────────────────────────────────────────
       async function loadScope(scope) {
         state.scope = scope;
-        document.querySelectorAll(".scope-row button").forEach((b) =>
+        document.querySelectorAll('.scope-row button[data-scope]').forEach((b) =>
           b.classList.toggle("active", b.dataset.scope === scope)
         );
         const banner = document.getElementById("meta-banner");
@@ -457,11 +488,150 @@
       }
       function escapeAttr(s) { return escapeHtml(s); }
 
+      // ── Project KB editor ───────────────────────────────────────────────
+      const kbState = { detected: null, kbPath: null, lastLoaded: null, rows: [] };
+
+      function activateSection(name) {
+        document.getElementById("view-blocks").style.display = name === "blocks" ? "" : "none";
+        document.getElementById("view-kb").style.display = name === "kb" ? "" : "none";
+        document.querySelectorAll('.scope-row button[data-section]').forEach((b) =>
+          b.classList.toggle("active", b.dataset.section === name)
+        );
+        if (name === "kb") loadKB();
+      }
+
+      async function loadKB() {
+        const banner = document.getElementById("kb-meta-banner");
+        banner.classList.remove("warn", "error");
+        banner.textContent = "Loading…";
+        try {
+          const data = await api("GET", "/api/dictation/project-kb");
+          kbState.detected = data.detected;
+          kbState.kbPath = data.kb_path;
+          kbState.lastLoaded = data.kb;
+          kbState.rows = Object.entries(data.kb || {}).map(([k, v]) => ({ key: k, value: v ?? "" }));
+          renderKBMeta(data);
+          renderKBRows();
+        } catch (e) {
+          banner.classList.add("error");
+          banner.textContent = e.message;
+        }
+      }
+
+      function renderKBMeta(data) {
+        const banner = document.getElementById("kb-meta-banner");
+        if (!data.detected) {
+          banner.classList.add("warn");
+          banner.innerHTML = data.message || "no project root detected from cwd";
+          return;
+        }
+        const d = data.detected;
+        const parts = [
+          `project: <strong>${escapeHtml(d.name)}</strong> (${escapeHtml(d.anchor)})`,
+          `root: ${escapeHtml(d.root)}`,
+          `path: ${escapeHtml(data.kb_path)}`,
+        ];
+        if (data.kb === null) parts.push(`<em style="color:var(--warn);">file does not exist yet — first save will create it</em>`);
+        banner.innerHTML = parts.join("  ·  ");
+      }
+
+      function renderKBRows() {
+        const host = document.getElementById("kb-rows");
+        if (!kbState.detected) {
+          host.innerHTML = `<p style="color:var(--muted);font-size:13px;">No project detected. Navigate <code>holdspeak</code> from inside a project directory.</p>`;
+          return;
+        }
+        if (!kbState.rows.length) {
+          host.innerHTML = `<p style="color:var(--muted);font-size:13px;">No entries yet. Click <strong>+ New entry</strong> to add one.</p>`;
+          return;
+        }
+        host.innerHTML = kbState.rows.map((row, idx) => `
+          <div class="row" style="margin-bottom: 8px; align-items: stretch;">
+            <input type="text" data-kb-idx="${idx}" data-kb-field="key" placeholder="key" value="${escapeAttr(row.key)}" style="flex: 0 0 30%; font-family: var(--font-mono);" />
+            <input type="text" data-kb-idx="${idx}" data-kb-field="value" placeholder="value (string or empty for null)" value="${escapeAttr(row.value ?? "")}" />
+            <button class="btn danger" data-kb-remove="${idx}" style="flex: 0 0 auto;">remove</button>
+          </div>
+        `).join("");
+        host.querySelectorAll("input[data-kb-idx]").forEach((el) => {
+          el.addEventListener("input", (ev) => {
+            const idx = Number(ev.target.dataset.kbIdx);
+            const field = ev.target.dataset.kbField;
+            kbState.rows[idx][field] = ev.target.value;
+          });
+        });
+        host.querySelectorAll("button[data-kb-remove]").forEach((el) => {
+          el.addEventListener("click", () => {
+            kbState.rows.splice(Number(el.dataset.kbRemove), 1);
+            renderKBRows();
+          });
+        });
+      }
+
+      function kbAdd() {
+        if (!kbState.detected) return;
+        kbState.rows.push({ key: "", value: "" });
+        renderKBRows();
+      }
+
+      function kbReset() {
+        kbState.rows = Object.entries(kbState.lastLoaded || {}).map(([k, v]) => ({ key: k, value: v ?? "" }));
+        document.getElementById("kb-msg").innerHTML = "";
+        renderKBRows();
+      }
+
+      async function kbSave() {
+        const msg = document.getElementById("kb-msg");
+        msg.innerHTML = "";
+        const kb = {};
+        const seen = new Set();
+        for (const row of kbState.rows) {
+          const key = row.key.trim();
+          if (!key) continue;
+          if (seen.has(key)) {
+            msg.innerHTML = `<div class="error-box">duplicate key ${escapeHtml(key)}</div>`;
+            return;
+          }
+          seen.add(key);
+          kb[key] = row.value === "" ? null : row.value;
+        }
+        try {
+          const data = await api("PUT", "/api/dictation/project-kb", { kb });
+          kbState.lastLoaded = data.kb;
+          kbState.detected = data.detected;
+          kbState.kbPath = data.kb_path;
+          msg.innerHTML = `<div class="ok-box">Saved.</div>`;
+          renderKBMeta(data);
+        } catch (e) {
+          msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+        }
+      }
+
+      async function kbDelete() {
+        if (!kbState.detected) return;
+        if (!confirm(`Delete ${kbState.kbPath}? The .holdspeak/ directory itself is preserved.`)) return;
+        const msg = document.getElementById("kb-msg");
+        msg.innerHTML = "";
+        try {
+          await api("DELETE", "/api/dictation/project-kb");
+          await loadKB();
+          msg.innerHTML = `<div class="ok-box">Deleted.</div>`;
+        } catch (e) {
+          msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+        }
+      }
+
       // ── Init ─────────────────────────────────────────────────────────────
-      document.querySelectorAll(".scope-row button").forEach((b) =>
+      document.querySelectorAll('.scope-row button[data-scope]').forEach((b) =>
         b.addEventListener("click", () => loadScope(b.dataset.scope))
       );
+      document.querySelectorAll('.scope-row button[data-section]').forEach((b) =>
+        b.addEventListener("click", () => activateSection(b.dataset.section))
+      );
       document.getElementById("btn-new").addEventListener("click", newBlock);
+      document.getElementById("kb-btn-add").addEventListener("click", kbAdd);
+      document.getElementById("kb-btn-save").addEventListener("click", kbSave);
+      document.getElementById("kb-btn-reset").addEventListener("click", kbReset);
+      document.getElementById("kb-btn-delete").addEventListener("click", kbDelete);
       loadScope("global");
     </script>
   </body>

@@ -1,6 +1,6 @@
 # Phase 4 — Web Flagship Runtime + Interactive Configurability (WFS-01 extended)
 
-**Last updated:** 2026-04-26 (HS-4-02 done — block authoring API (`GET/POST/PUT/DELETE /api/dictation/blocks`) + atomic-write helper + `static/dictation.html` editor with client-side template preview; 24 new integration tests; full sweep 1036 passed, +24 vs. HS-4-01 baseline).
+**Last updated:** 2026-04-26 (HS-4-03 done — project KB authoring API (`GET/PUT/DELETE /api/dictation/project-kb`) + new `plugins/dictation/project_kb.py` module + KB editor section in `static/dictation.html`; 16 new integration tests; full sweep 1052 passed, +16 vs. HS-4-02 baseline).
 
 ## Goal
 
@@ -45,31 +45,32 @@ another window.
 |---|---|---|---|---|
 | HS-4-01 | Audit + integration coverage for existing web-flagship surfaces | done | [story-01-audit](./story-01-audit.md) | [evidence-story-01](./evidence-story-01.md) — 5 audit tests + WFS-* traceability matrix; full sweep 1012 passed |
 | HS-4-02 | Block authoring API + UI (`WFS-CFG-001` + `WFS-CFG-002`) | done | [story-02-blocks-api-ui](./story-02-blocks-api-ui.md) | [evidence-story-02](./evidence-story-02.md) — 5 endpoints, atomic-write helper, `static/dictation.html` editor, 24 integration tests |
-| HS-4-03 | Project KB authoring API + UI (`WFS-CFG-003`) | backlog | [story-03-project-kb-api-ui](./story-03-project-kb-api-ui.md) | — |
+| HS-4-03 | Project KB authoring API + UI (`WFS-CFG-003`) | done | [story-03-project-kb-api-ui](./story-03-project-kb-api-ui.md) | [evidence-story-03](./evidence-story-03.md) — 3 endpoints, new `project_kb.py` module, KB editor section, 16 integration tests |
 | HS-4-04 | Dictation runtime config UI (`WFS-CFG-004`) | backlog | [story-04-dictation-config-ui](./story-04-dictation-config-ui.md) | — |
 | HS-4-05 | Dry-run preview API + UI (`WFS-CFG-005`) | backlog | [story-05-dry-run-preview](./story-05-dry-run-preview.md) | — |
 | HS-4-06 | DoD sweep + phase exit | backlog | [story-06-dod](./story-06-dod.md) | — |
 
 ## Where we are
 
-**HS-4-02 shipped.** The first net-new configurability surface is
-live: full CRUD on `~/.config/holdspeak/blocks.yaml` (and
-per-project `<root>/.holdspeak/blocks.yaml`) via `/api/dictation/blocks`,
-with validation parity to `BlockConfigError`, atomic-write
-semantics (`WFS-CFG-006`), and an editor at `/dictation` that
-ships a live client-side template preview against the
-auto-detected project context. 24 new integration tests; full
-sweep 1036 passed (+24 vs. HS-4-01 baseline 1012).
+**HS-4-03 shipped.** Project KB authoring is live: 3 endpoints
+under `/api/dictation/project-kb` with key/value validation
+(`[A-Za-z_][A-Za-z0-9_]*` keys; string-or-null values),
+atomic-write parity with HS-4-02, and a "Project KB" section on
+`/dictation` with row-based add/remove/save/reset. The PUT
+response re-detects after the write so a fresh `.holdspeak/`
+directory upgrades the anchor signal visibly to the UI. 16 new
+integration tests; full sweep 1052 passed (+16 vs. HS-4-02
+baseline 1036).
 
-Cache-invalidation contract is shaped (`on_dictation_config_changed`
-optional callback on `MeetingWebServer`) but unwired in
-`web_runtime.py`, which doesn't run dictation locally. HS-4-04
-(dictation runtime config) is the natural place to wire it.
+Cumulative phase delta vs. phase-3 exit (1007): **+45 tests**
+across HS-4-01 (audit, +5), HS-4-02 (blocks, +24), HS-4-03
+(project KB, +16).
 
-Next: HS-4-03 (project KB authoring API + UI for `WFS-CFG-003`).
-The pattern from HS-4-02 carries over directly — same scope-toggle
-shape, same atomic-write helper signature (will need a project-KB
-analogue), same client-side editing model.
+Next: HS-4-04 (dictation runtime config UI for `WFS-CFG-004`).
+This is the story that finally has somewhere to wire
+`on_dictation_config_changed` from — it extends `/api/settings`
+with `dictation.pipeline.*` + `dictation.runtime.*` fields and
+the controller path that owns `_dictation_pipeline` cache.
 
 ## Earlier context — phase opening
 

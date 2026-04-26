@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 4
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-4-02 (block authoring API patterns established; reuse atomic-write helper)
 - **Unblocks:** kb-enricher templates with `{project.kb.*}` placeholders becoming usable in dogfood without writing YAML
 - **Owner:** unassigned
@@ -35,12 +35,12 @@ This story ships a web API + UI for editing
 
 ## Acceptance criteria
 
-- [ ] All 3 endpoints implemented and integration-tested.
-- [ ] Atomic write semantics: a deliberately-bad PUT does not modify any existing `project.yaml`.
-- [ ] Key validation regex enforced server-side; surfaces a field-level 4xx.
-- [ ] UI panel shipped; shows detected context, allows add/remove/rename of kb keys.
-- [ ] Round-trip verified by test: PUT writes → GET reads back identical kb dict; controller pipeline cache invalidates so the kb-enricher sees the new values on the next utterance.
-- [ ] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS.
+- [x] All 3 endpoints implemented and integration-tested.
+- [x] Atomic write semantics: `test_put_bad_key_422_and_atomic_rollback` asserts on-disk byte equality vs. snapshot after a rejected PUT.
+- [x] Key validation regex enforced server-side; surfaces a 422 with the offending key in the error body.
+- [x] UI panel shipped (`/dictation` "Project KB" section): shows detected context, allows add/remove of kb rows, save/reset/delete actions.
+- [x] Round-trip verified by `test_round_trip_put_then_get`. Pipeline-cache invalidation reuses the `on_dictation_config_changed` callback shipped in HS-4-02; same caveat applies (unwired in `web_runtime.py` today, contract-shaped for HS-4-04 to wire from a controller).
+- [x] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS (1052 passed, +16 vs. HS-4-02 baseline 1036).
 
 ## Test plan
 

@@ -2516,6 +2516,102 @@ class MeetingWebServer:
                 {"scope": scope, "path": str(path), "document": document}
             )
 
+        # ── Project KB endpoints (WFS-CFG-003) ─────────────────────────────
+
+        @app.get("/api/dictation/project-kb")
+        async def api_dictation_project_kb_get() -> Any:
+            from .plugins.dictation.project_kb import ProjectKBError, read_project_kb
+            from .plugins.dictation.project_root import detect_project_for_cwd
+
+            ctx = detect_project_for_cwd()
+            if ctx is None:
+                return JSONResponse({
+                    "detected": None,
+                    "kb": None,
+                    "kb_path": None,
+                    "message": f"no project root detected from cwd={Path.cwd()}",
+                })
+            root = Path(ctx["root"])
+            try:
+                kb = read_project_kb(root)
+            except ProjectKBError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=422)
+            return JSONResponse({
+                "detected": dict(ctx),
+                "kb": kb,
+                "kb_path": str(root / ".holdspeak" / "project.yaml"),
+            })
+
+        @app.put("/api/dictation/project-kb")
+        async def api_dictation_project_kb_put(payload: dict[str, Any]) -> Any:
+            from .plugins.dictation.project_kb import (
+                ProjectKBError,
+                kb_path_for,
+                read_project_kb,
+                write_project_kb,
+            )
+            from .plugins.dictation.project_root import detect_project_for_cwd
+
+            kb = payload.get("kb") if isinstance(payload, dict) else None
+            if not isinstance(kb, dict):
+                return JSONResponse(
+                    {"error": "request body must be {'kb': {<key>: <value>, ...}}"},
+                    status_code=400,
+                )
+            ctx = detect_project_for_cwd()
+            if ctx is None:
+                return JSONResponse(
+                    {"error": f"no project root detected from cwd={Path.cwd()}"},
+                    status_code=404,
+                )
+            root = Path(ctx["root"])
+            try:
+                write_project_kb(root, kb)
+            except ProjectKBError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=422)
+            if self.on_dictation_config_changed is not None:
+                try:
+                    self.on_dictation_config_changed()
+                except Exception as exc:
+                    log.error(f"on_dictation_config_changed failed: {exc}")
+            try:
+                fresh_kb = read_project_kb(root)
+            except ProjectKBError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=500)
+            # Re-detect so the caller sees the upgraded anchor signal
+            # when this PUT just created `<root>/.holdspeak/`.
+            redetected = detect_project_for_cwd() or ctx
+            return JSONResponse({
+                "detected": dict(redetected),
+                "kb": fresh_kb,
+                "kb_path": str(kb_path_for(root)),
+            })
+
+        @app.delete("/api/dictation/project-kb")
+        async def api_dictation_project_kb_delete() -> Any:
+            from .plugins.dictation.project_kb import delete_project_kb
+            from .plugins.dictation.project_root import detect_project_for_cwd
+
+            ctx = detect_project_for_cwd()
+            if ctx is None:
+                return JSONResponse(
+                    {"error": f"no project root detected from cwd={Path.cwd()}"},
+                    status_code=404,
+                )
+            root = Path(ctx["root"])
+            removed = delete_project_kb(root)
+            if not removed:
+                return JSONResponse(
+                    {"error": f"no project.yaml at {root / '.holdspeak' / 'project.yaml'}"},
+                    status_code=404,
+                )
+            if self.on_dictation_config_changed is not None:
+                try:
+                    self.on_dictation_config_changed()
+                except Exception as exc:
+                    log.error(f"on_dictation_config_changed failed: {exc}")
+            return JSONResponse({"detected": dict(ctx), "kb": None, "kb_path": None})
+
         @app.websocket("/ws")
         async def websocket_endpoint(websocket: WebSocket) -> None:
             log.info(f"WebSocket connection attempt from {websocket.client}")
