@@ -9,7 +9,6 @@ from dataclasses import dataclass
 import json
 import os
 import platform
-import shlex
 import socket
 import shutil
 import ssl
@@ -45,51 +44,6 @@ def _is_wayland_session() -> bool:
 
 def _command_exists(name: str) -> bool:
     return shutil.which(name) is not None
-
-
-def _quote_path(path: Path) -> str:
-    return shlex.quote(str(path))
-
-
-def _dictation_runtime_install_fix(requested: str) -> str:
-    def command(backend: str) -> str:
-        if (
-            backend == "llama_cpp"
-            and platform.system() == "Darwin"
-            and platform.machine() == "arm64"
-        ):
-            return 'CMAKE_ARGS="-DGGML_METAL=on" uv pip install -e \'.[dictation-llama]\''
-        if backend == "llama_cpp":
-            return "uv pip install -e '.[dictation-llama]'"
-        return "uv pip install -e '.[dictation-mlx]'"
-
-    if requested == "mlx":
-        return f"Install the MLX dictation backend: {command('mlx')}"
-    if requested == "llama_cpp":
-        return f"Install the llama_cpp dictation backend: {command('llama_cpp')}"
-    commands = []
-    if platform.system() == "Darwin" and platform.machine() == "arm64":
-        commands.append(command("mlx"))
-    commands.append(command("llama_cpp"))
-    return "Install one dictation backend: " + " OR ".join(commands)
-
-
-def _dictation_model_fix(backend: str, target: Path) -> str:
-    parent = target.expanduser().parent
-    if backend == "mlx":
-        return (
-            f"Create the model directory and download Qwen3-8B-MLX-4bit: "
-            f"mkdir -p {_quote_path(parent)} && "
-            "huggingface-cli download mlx-community/Qwen3-8B-MLX-4bit "
-            f"--local-dir {_quote_path(target)}"
-        )
-    return (
-        f"Create the model directory and download Qwen2.5-3B-Instruct-Q4_K_M.gguf: "
-        f"mkdir -p {_quote_path(parent)} && "
-        "huggingface-cli download bartowski/Qwen2.5-3B-Instruct-GGUF "
-        "Qwen2.5-3B-Instruct-Q4_K_M.gguf "
-        f"--local-dir {_quote_path(parent)} --local-dir-use-symlinks False"
-    )
 
 
 def _check_runtime() -> DoctorCheck:
@@ -614,6 +568,7 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
             detail="dictation pipeline disabled (opt-in)",
         )
 
+    from ..plugins.dictation.guidance import doctor_model_fix, doctor_runtime_install_fix
     from ..plugins.dictation.runtime import RuntimeUnavailableError, resolve_backend
 
     requested = cfg.runtime.backend
@@ -624,7 +579,7 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
             name="LLM runtime",
             status="WARN",
             detail=f"requested={requested!r}; resolution failed: {exc}",
-            fix=_dictation_runtime_install_fix(requested),
+            fix=doctor_runtime_install_fix(requested),
         )
 
     target = (
@@ -637,7 +592,7 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
             name="LLM runtime",
             status="WARN",
             detail=f"resolved={resolved} ({reason}); model missing at {target}",
-            fix=_dictation_model_fix(resolved, target),
+            fix=doctor_model_fix(resolved, target),
         )
 
     return DoctorCheck(
