@@ -1,6 +1,6 @@
 # Phase 5 — Usability Powerhouse
 
-**Last updated:** 2026-04-26 (HS-5-08 done — disabled-pipeline readiness warnings now expose an Enable pipeline action that saves through the existing Runtime settings path; full sweep 1098 passed / 13 skipped).
+**Last updated:** 2026-04-26 (HS-5-09 done — runtime unavailable/missing-model readiness warnings now include copyable install/model guidance in Readiness and Runtime; full sweep 1099 passed / 13 skipped).
 
 ## Goal
 
@@ -35,15 +35,16 @@ test it safely in the browser."
 | HS-5-06 | Readiness starter actions | done | [story-06-readiness-starter-actions.md](./story-06-readiness-starter-actions.md) | [evidence-story-06.md](./evidence-story-06.md) — no-blocks readiness warning can create + dry-run the recommended starter; 2 new integration tests |
 | HS-5-07 | Project KB starter action | done | [story-07-project-kb-starter-action.md](./story-07-project-kb-starter-action.md) | [evidence-story-07.md](./evidence-story-07.md) — starter Project KB endpoint + readiness/editor actions; 4 new integration tests |
 | HS-5-08 | Runtime readiness action | done | [story-08-runtime-readiness-action.md](./story-08-runtime-readiness-action.md) | [evidence-story-08.md](./evidence-story-08.md) — disabled pipeline warning can enable Runtime through existing settings; 3 new integration tests |
+| HS-5-09 | Model/runtime install guidance | done | [story-09-runtime-install-guidance.md](./story-09-runtime-install-guidance.md) | [evidence-story-09.md](./evidence-story-09.md) — missing backend/model warnings now show copyable install/model guidance; 2 new integration tests |
 
 ## Where We Are
 
-HS-5-08 closes the obvious readiness-fix loop for the dictation
-cockpit. Missing blocks, missing Project KB, and disabled pipeline
-warnings now have direct browser actions, while settings mutation still
-flows through the existing config endpoints. The setup loop is now
-browser-first across project selection, readiness, starter blocks,
-starter KB, runtime enablement, and dry-run.
+HS-5-09 extends the readiness-fix loop into runtime setup guidance.
+Missing blocks, missing Project KB, disabled pipeline, missing backend
+extras, and missing model files now surface browser-first next steps.
+The setup loop is now browser-first across project selection,
+readiness, starter blocks, starter KB, runtime enablement, install/model
+guidance, and dry-run.
 
 Next likely chunks:
 
@@ -51,5 +52,5 @@ Next likely chunks:
    and review states more prominently in history/detail views.
 2. Browser project switcher follow-up: optional file-picker integration
    or explicit current-cwd project display on page load.
-3. Model/runtime install guidance for missing backend or model-file
-   warnings.
+3. Model/runtime follow-up: optional doctor/readiness parity for the
+   same install guidance outside the browser.

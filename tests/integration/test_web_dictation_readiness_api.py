@@ -40,10 +40,16 @@ def test_client(settings_path: Path, global_blocks_path: Path) -> TestClient:
     return TestClient(server.app)
 
 
-def _save_config(path: Path, *, enabled: bool, model_path: Path | None = None) -> None:
+def _save_config(
+    path: Path,
+    *,
+    enabled: bool,
+    model_path: Path | None = None,
+    backend: str = "llama_cpp",
+) -> None:
     cfg = Config()
     cfg.dictation.pipeline.enabled = enabled
-    cfg.dictation.runtime.backend = "llama_cpp"
+    cfg.dictation.runtime.backend = backend
     if model_path is not None:
         cfg.dictation.runtime.llama_cpp_model_path = str(model_path)
     cfg.save(path=path)
@@ -175,7 +181,40 @@ def test_readiness_missing_model_is_actionable(
     body = response.json()
     assert body["ready"] is False
     assert body["runtime"]["status"] == "missing_model"
-    assert "runtime_model_missing" in {warning["code"] for warning in body["warnings"]}
+    warning = next(w for w in body["warnings"] if w["code"] == "runtime_model_missing")
+    guidance = warning["guidance"]
+    assert guidance["kind"] == "missing_model"
+    assert guidance["backend"] == "llama_cpp"
+    assert guidance["model_path"] == str(missing_model)
+    assert str(missing_model) in guidance["next_step"]
+    assert any(str(missing_model.parent) in item["command"] for item in guidance["commands"])
+
+
+def test_readiness_runtime_unavailable_includes_install_guidance(
+    test_client: TestClient,
+    settings_path: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _save_config(settings_path, enabled=True, backend="llama_cpp")
+    root = tmp_path / "project"
+    _write_project(root)
+
+    def _raise_unavailable(requested: str) -> tuple[str, str]:
+        raise runtime_module.RuntimeUnavailableError("llama_cpp missing")
+
+    monkeypatch.setattr(runtime_module, "resolve_backend", _raise_unavailable)
+
+    response = test_client.get(f"/api/dictation/readiness?project_root={root}")
+
+    assert response.status_code == 200
+    body = response.json()
+    warning = next(w for w in body["warnings"] if w["code"] == "runtime_unavailable")
+    guidance = warning["guidance"]
+    assert guidance["kind"] == "unavailable"
+    assert guidance["backend"] == "llama_cpp"
+    assert guidance["model_path"] is None
+    assert any("dictation-llama" in item["command"] for item in guidance["commands"])
 
 
 def test_readiness_missing_project_kb_recommends_starter_action(
@@ -223,3 +262,6 @@ def test_dictation_page_includes_readiness_panel() -> None:
     assert "data-ready-template-id" in body
     assert "data-ready-kb-starter" in body
     assert "data-ready-runtime-action" in body
+    assert "rt-guidance" in body
+    assert "renderRuntimeGuidance" in body
+    assert "data-copy-command" in body

@@ -167,6 +167,19 @@
       .readiness-card.warn { border-color: var(--warn); }
       .readiness-card.error { border-color: var(--danger); }
       .warning-list { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+      .guidance-block {
+        border-top: 1px solid var(--line); margin-top: 10px; padding-top: 10px;
+      }
+      .guidance-block p { margin: 6px 0; color: var(--muted); }
+      .command-snippet {
+        display: flex; align-items: stretch; gap: 8px; margin-top: 8px;
+      }
+      .command-snippet code {
+        flex: 1; min-width: 0; overflow-x: auto; white-space: pre;
+        background: var(--canvas); border: 1px solid var(--line);
+        border-radius: 8px; padding: 8px 10px; color: var(--text);
+        font-family: var(--font-mono); font-size: 12px;
+      }
     </style>
   </head>
   <body>
@@ -291,6 +304,7 @@
           <section class="panel">
             <h3>Runtime status <button id="rt-btn-refresh" class="btn" style="float:right;">Refresh</button></h3>
             <div id="rt-session-banner"></div>
+            <div id="rt-guidance"></div>
             <div id="rt-counters" style="font-family: var(--font-mono); font-size: 13px;"></div>
             <p style="color: var(--muted); font-size: 12px; margin-top: 16px;">
               Counters reset on every <code>holdspeak</code> restart.
@@ -799,6 +813,7 @@
             ${w.template_id ? `<button class="btn primary" data-ready-template-id="${escapeAttr(w.template_id)}" data-ready-template-scope="${escapeAttr(w.template_scope || "global")}" style="float:right;margin-right:8px;">Create + dry-run</button>` : ""}
             ${w.kb_action === "create_starter" ? `<button class="btn primary" data-ready-kb-starter="1" style="float:right;margin-right:8px;">Create starter KB</button>` : ""}
             ${w.runtime_action === "enable_pipeline" ? `<button class="btn primary" data-ready-runtime-action="enable_pipeline" style="float:right;margin-right:8px;">Enable pipeline</button>` : ""}
+            ${renderRuntimeGuidance(w.guidance)}
           </div>
         `).join("");
         actions.querySelectorAll("button[data-ready-section]").forEach((btn) => {
@@ -821,6 +836,7 @@
         actions.querySelectorAll("button[data-ready-runtime-action]").forEach((btn) => {
           btn.addEventListener("click", () => enablePipelineFromReadiness());
         });
+        wireCopyCommandButtons(actions);
       }
 
       function readinessCard(title, value, status, detail) {
@@ -831,6 +847,42 @@
             <div style="color:var(--muted);font-size:12px;margin-top:8px;word-break:break-word;">${escapeHtml(detail || "")}</div>
           </div>
         `;
+      }
+
+      function renderRuntimeGuidance(guidance) {
+        if (!guidance) return "";
+        const commands = (guidance.commands || []).map((item) => `
+          <div class="command-snippet">
+            <code>${escapeHtml(item.command || "")}</code>
+            <button class="btn" data-copy-command="${escapeAttr(item.command || "")}">Copy</button>
+          </div>
+        `).join("");
+        const modelPath = guidance.model_path
+          ? `<p>missing path: <code>${escapeHtml(guidance.model_path)}</code></p>`
+          : "";
+        const links = (guidance.links || []).map((link) =>
+          `<a href="${escapeAttr(link.target || "#")}">${escapeHtml(link.label || "Docs")}</a>`
+        ).join(" · ");
+        return `
+          <div class="guidance-block">
+            <strong>${escapeHtml(guidance.title || "Runtime guidance")}</strong>
+            <p>${escapeHtml(guidance.summary || "")}</p>
+            ${modelPath}
+            <p>${escapeHtml(guidance.next_step || "")}</p>
+            ${commands}
+            ${links ? `<p>${links}</p>` : ""}
+          </div>
+        `;
+      }
+
+      function wireCopyCommandButtons(root) {
+        root.querySelectorAll("button[data-copy-command]").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            await navigator.clipboard.writeText(btn.dataset.copyCommand || "");
+            btn.textContent = "Copied";
+            setTimeout(() => { btn.textContent = "Copy"; }, 1200);
+          });
+        });
       }
 
       async function loadKB() {
@@ -981,15 +1033,21 @@
         banner.textContent = "Loading…";
         try {
           const data = await api("GET", "/api/settings");
+          let readiness = null;
+          try {
+            readiness = await api("GET", `/api/dictation/readiness${projectRootParam("?")}`);
+          } catch (_) {
+            readiness = null;
+          }
           rtState.last = data;
-          renderRuntime(data);
+          renderRuntime(data, readiness);
         } catch (e) {
           banner.classList.add("error");
           banner.textContent = e.message;
         }
       }
 
-      function renderRuntime(data) {
+      function renderRuntime(data, readiness = null) {
         const dictation = data.dictation || {};
         const pipeline = dictation.pipeline || {};
         const runtime = dictation.runtime || {};
@@ -1027,6 +1085,12 @@
         } else {
           sessionBanner.innerHTML = `<div class="ok-box">LLM stage active for this session.</div>`;
         }
+
+        const guidance = readiness?.runtime?.guidance ||
+          (readiness?.warnings || []).find((w) => w.guidance)?.guidance;
+        const guidanceHost = document.getElementById("rt-guidance");
+        guidanceHost.innerHTML = renderRuntimeGuidance(guidance);
+        wireCopyCommandButtons(guidanceHost);
       }
 
       function updateLatencyVis() {

@@ -9,7 +9,9 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 import json
+import platform
 import re
+import shlex
 import socket
 import threading
 from copy import deepcopy
@@ -28,6 +30,108 @@ _DASHBOARD_HTML_PATH = Path(__file__).resolve().parent / "static" / "dashboard.h
 
 # WFS-CFG-001: global dictation blocks file. Tests monkeypatch this constant.
 _GLOBAL_BLOCKS_PATH = Path.home() / ".config" / "holdspeak" / "blocks.yaml"
+
+
+def _shell_quote_path(path: Path) -> str:
+    return shlex.quote(str(path))
+
+
+def _runtime_guidance(
+    *,
+    kind: str,
+    requested_backend: str,
+    resolved_backend: Optional[str] = None,
+    model_path: Optional[Path] = None,
+) -> dict[str, Any]:
+    """Return browser-facing remediation guidance without mutating anything."""
+    backend = resolved_backend or requested_backend
+    links = [
+        {
+            "label": "README: Optional Dictation LLM Backend",
+            "target": "README.md#optional-dictation-llm-backend",
+        }
+    ]
+
+    def install_command(target_backend: str) -> str:
+        if (
+            target_backend == "llama_cpp"
+            and platform.system() == "Darwin"
+            and platform.machine() == "arm64"
+        ):
+            return 'CMAKE_ARGS="-DGGML_METAL=on" uv pip install -e \'.[dictation-llama]\''
+        if target_backend == "llama_cpp":
+            return "uv pip install -e '.[dictation-llama]'"
+        return "uv pip install -e '.[dictation-mlx]'"
+
+    def model_command(target_backend: str, target_path: Path) -> Optional[str]:
+        expanded = target_path.expanduser()
+        if target_backend == "mlx":
+            return (
+                "huggingface-cli download mlx-community/Qwen3-8B-MLX-4bit "
+                f"--local-dir {_shell_quote_path(expanded)}"
+            )
+        if target_backend == "llama_cpp":
+            parent = expanded.parent
+            return (
+                f"mkdir -p {_shell_quote_path(parent)} && "
+                "huggingface-cli download bartowski/Qwen2.5-3B-Instruct-GGUF "
+                "Qwen2.5-3B-Instruct-Q4_K_M.gguf "
+                f"--local-dir {_shell_quote_path(parent)} --local-dir-use-symlinks False"
+            )
+        return None
+
+    if kind == "missing_model" and model_path is not None:
+        expanded_model_path = model_path.expanduser()
+        commands = [
+            {
+                "label": "Create model directory",
+                "command": f"mkdir -p {_shell_quote_path(expanded_model_path.parent)}",
+            }
+        ]
+        download = model_command(backend, expanded_model_path)
+        if download is not None:
+            commands.append({"label": "Download default model", "command": download})
+        return {
+            "kind": kind,
+            "backend": backend,
+            "title": f"Add the {backend} model",
+            "summary": (
+                "The dictation pipeline is enabled, but the selected runtime model "
+                "path does not exist."
+            ),
+            "model_path": str(expanded_model_path),
+            "next_step": (
+                f"Place a compatible {backend} model at {expanded_model_path} "
+                "or update the model path in Runtime."
+            ),
+            "commands": commands,
+            "links": links,
+        }
+
+    commands: list[dict[str, str]] = []
+    if requested_backend == "auto":
+        if platform.system() == "Darwin" and platform.machine() == "arm64":
+            commands.append({"label": "Install MLX extra", "command": install_command("mlx")})
+        commands.append({
+            "label": "Install llama_cpp extra",
+            "command": install_command("llama_cpp"),
+        })
+    else:
+        commands.append({
+            "label": f"Install {requested_backend} extra",
+            "command": install_command(requested_backend),
+        })
+
+    return {
+        "kind": kind,
+        "backend": requested_backend,
+        "title": f"Install the {requested_backend} runtime",
+        "summary": "The selected dictation runtime backend is not importable in this environment.",
+        "model_path": None,
+        "next_step": "Install the runtime extra, then refresh readiness before downloading a model.",
+        "commands": commands,
+        "links": links,
+    }
 
 try:
     import uvicorn
@@ -2735,6 +2839,10 @@ class MeetingWebServer:
                     "detail": str(exc),
                     "model_path": None,
                     "model_exists": False,
+                    "guidance": _runtime_guidance(
+                        kind="unavailable",
+                        requested_backend=cfg.runtime.backend,
+                    ),
                     "counters": get_counters(),
                     "session": get_session_status(),
                 }
@@ -2752,6 +2860,12 @@ class MeetingWebServer:
                 "detail": reason if model_exists else f"model file missing at {model_path}",
                 "model_path": str(model_path),
                 "model_exists": model_exists,
+                "guidance": None if model_exists else _runtime_guidance(
+                    kind="missing_model",
+                    requested_backend=cfg.runtime.backend,
+                    resolved_backend=resolved_backend,
+                    model_path=model_path,
+                ),
                 "counters": get_counters(),
                 "session": get_session_status(),
             }
@@ -2868,6 +2982,7 @@ class MeetingWebServer:
                     "message": runtime_payload["detail"],
                     "action": "Install the selected runtime extra or change backend.",
                     "section": "runtime",
+                    "guidance": runtime_payload.get("guidance"),
                 })
             elif runtime_payload["status"] == "missing_model":
                 warnings.append({
@@ -2875,6 +2990,7 @@ class MeetingWebServer:
                     "message": runtime_payload["detail"],
                     "action": "Download the model or update the runtime model path.",
                     "section": "runtime",
+                    "guidance": runtime_payload.get("guidance"),
                 })
 
             ready = (

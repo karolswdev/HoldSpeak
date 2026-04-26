@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-5-08 done — disabled-pipeline readiness warnings now expose an Enable pipeline action that saves through the existing Runtime settings path; full sweep 1098 passed / 13 skipped).
+**Last updated:** 2026-04-26 (HS-5-09 done — runtime unavailable/missing-model readiness warnings now include copyable install/model guidance in Readiness and Runtime; full sweep 1099 passed / 13 skipped).
 **Current phase:** [phase-5-usability-powerhouse](./phase-5-usability-powerhouse/) — reduce daily-use friction and make the web runtime a stronger end-user cockpit.
 **Status:** in-progress.
 
