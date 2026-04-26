@@ -74,11 +74,57 @@ class MeetingConfig:
     mir_enabled: bool = True  # Enable multi-intent routing controls in web runtime
     mir_profile: str = "balanced"  # balanced, architect, delivery, product, incident
 
+    # MIR-01 routing pipeline gating + tuning (spec §9.9). The pipeline runs
+    # at MeetingSession.stop() finalization (HS-2-06) when enabled. Defaults
+    # are conservative (off + matching the in-code defaults of
+    # build_intent_windows / DEFAULT_INTENT_THRESHOLD / DEFAULT_HYSTERESIS).
+    intent_router_enabled: bool = False  # off by default — opt-in
+    intent_window_seconds: int = 90      # rolling-window length
+    intent_step_seconds: int = 30        # rolling-window step
+    intent_score_threshold: float = 0.6  # gate above which an intent is "active"
+    intent_hysteresis_windows: int = 1   # damping windows; converted to float via intent_hysteresis()
+    plugin_profile: str = "balanced"     # routing profile selecting the chain
+
     # Speaker diarization
     diarization_enabled: bool = False  # Identify multiple speakers in system audio
     diarize_mic: bool = False  # Also diarize mic input (for on-site meetings)
     cross_meeting_recognition: bool = True  # Recognize speakers across meetings
     similarity_threshold: float = 0.75  # Cosine similarity for speaker matching
+
+    def __post_init__(self) -> None:
+        # MIR-01 spec §9.9 — conservative validation. Reject on construction
+        # so typos / drifted user-config values surface immediately rather
+        # than at first meeting stop.
+        if self.intent_window_seconds <= 0:
+            raise ValueError(
+                f"intent_window_seconds must be > 0, got {self.intent_window_seconds!r}"
+            )
+        if self.intent_step_seconds <= 0:
+            raise ValueError(
+                f"intent_step_seconds must be > 0, got {self.intent_step_seconds!r}"
+            )
+        if not 0.0 <= self.intent_score_threshold <= 1.0:
+            raise ValueError(
+                f"intent_score_threshold must be in [0.0, 1.0], "
+                f"got {self.intent_score_threshold!r}"
+            )
+        if self.intent_hysteresis_windows < 0:
+            raise ValueError(
+                f"intent_hysteresis_windows must be >= 0, "
+                f"got {self.intent_hysteresis_windows!r}"
+            )
+        if not isinstance(self.plugin_profile, str) or not self.plugin_profile.strip():
+            raise ValueError(
+                f"plugin_profile must be a non-empty string, "
+                f"got {self.plugin_profile!r}"
+            )
+
+    def intent_hysteresis(self) -> float:
+        """Convert `intent_hysteresis_windows` (int) to the float gap value
+        used by `iter_intent_transitions(hysteresis=...)`. Each window of
+        damping subtracts 0.05 from the threshold gate; capped at 0.5 to
+        keep hysteresis below half the score range."""
+        return min(0.5, max(0.0, 0.05 * float(self.intent_hysteresis_windows)))
 
 
 @dataclass

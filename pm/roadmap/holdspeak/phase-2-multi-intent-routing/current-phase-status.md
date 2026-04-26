@@ -1,6 +1,6 @@
 # Phase 2 — Multi-Intent Routing (MIR-01)
 
-**Last updated:** 2026-04-25 (HS-2-08 done — 14 new web API integration tests across the 4 intent-controls + 3 timeline endpoints; surfaced + fixed a circular-import bug in `holdspeak/plugins/pipeline.py`; 954 passed end-to-end).
+**Last updated:** 2026-04-26 (HS-2-09 done — 6 spec-named MIR fields on `MeetingConfig` with validation + `intent_hysteresis()` helper; 5 new `MeetingSession` kwargs threaded into the pipeline; 11 new tests, 965 passed end-to-end).
 
 ## Goal
 
@@ -47,28 +47,28 @@ table below mirrors it.
 | HS-2-06 | Step 5 — Meeting runtime wiring | done | [story-06-runtime-wiring](./story-06-runtime-wiring.md) | tests pass (5 unit + 6 integration) + full suite green (932 passed, metal excluded) |
 | HS-2-07 | Step 6 — Synthesis pass | done | [story-07-synthesis](./story-07-synthesis.md) | tests pass (5 unit + 3 integration + 3 pre-existing synthesis = 11/11) + full suite green (940 passed, metal excluded) |
 | HS-2-08 | Step 7 — API + CLI surfaces | done | [story-08-api-cli](./story-08-api-cli.md) | tests pass (6 timeline + 8 controls = 14 new + 7 pre-existing intel-command) + full suite green (954 passed, metal excluded) |
-| HS-2-09 | Step 8 — Config + feature flags | backlog | [story-09-config-flags](./story-09-config-flags.md) | — |
+| HS-2-09 | Step 8 — Config + feature flags | done | [story-09-config-flags](./story-09-config-flags.md) | tests pass (7 unit config + 3 integration + 1 extended defaults case) + full suite green (965 passed, metal excluded) |
 | HS-2-10 | Step 9 — Observability + hardening | backlog | [story-10-observability](./story-10-observability.md) | — |
 | HS-2-11 | Step 10 — Full regression gate + DoD | backlog | [story-11-dod](./story-11-dod.md) | — |
 
 ## Where we are
 
-HS-2-08 done — 14 new web API integration tests covering the 7
-existing endpoints (3 read-side: timeline / plugin-runs / artifacts,
-4 control-side: control / profile / override / preview). Wiring
-the first integration test surfaced a real circular-import bug —
-`plugins/__init__.py` ↔ `intent_timeline.py` cycle through the new
-`pipeline.py` — fixed by lazy-loading `build_intent_windows` inside
-`process_meeting_state`. CLI subcommand additions deferred (existing
-`holdspeak intel route` covers spec §9.8 line 2; web is the
-flagship per MIR-A-008). Web UI HTML/JS controls deferred to the
-DoD sweep where they get a human-in-the-loop verify. Next:
-**HS-2-09 (config + feature flags)** — `MeetingConfig` knobs for
-`intent_router_enabled`, `intent_window_seconds`,
+HS-2-09 done — `MeetingConfig` carries the 6 spec-named MIR-01
+fields (`intent_router_enabled` off by default; `intent_window_seconds`,
 `intent_step_seconds`, `intent_score_threshold`,
-`intent_hysteresis_windows`, `plugin_profile`, with conservative
-defaults and validation, threaded through to `MeetingSession` so
-the user can flip MIR on without code changes.
+`intent_hysteresis_windows`, `plugin_profile`) with `__post_init__`
+validation that rejects out-of-range values at construction.
+`intent_hysteresis()` helper converts the int windows count to the
+float gap (0.05/window, capped at 0.5). `MeetingSession.__init__`
+gained 5 new kwargs (the 4 tuning values + `mir_synthesize`) and
+threads them into `process_meeting_state(...)` so an integration
+test can drive end-to-end behavior change just by varying the
+config. The user can now flip MIR routing on without code changes.
+Web settings API validation + doctor checks deferred to HS-2-10.
+Next: **HS-2-10 (observability + hardening)** — structured logs
+include `meeting_id`/`window_id`/`intent_set`/`plugin_id`, runtime
+counters on the router + plugin host, MIR-specific doctor checks,
+stop-path safety hardening.
 
 ## Active risks
 

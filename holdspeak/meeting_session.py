@@ -277,6 +277,11 @@ class MeetingSession:
         mir_profile: str = "balanced",
         mir_plugin_host: Optional[Any] = None,
         mir_db: Optional[Any] = None,
+        mir_window_seconds: float = 90.0,
+        mir_step_seconds: float = 30.0,
+        mir_score_threshold: float = 0.6,
+        mir_hysteresis: float = 0.05,
+        mir_synthesize: bool = False,
     ) -> None:
         """Initialize meeting session.
 
@@ -336,6 +341,14 @@ class MeetingSession:
         self._mir_plugin_host = mir_plugin_host
         self._mir_db = mir_db
         self._mir_last_result: Optional[Any] = None
+        # HS-2-09: pipeline tuning knobs (sourced from MeetingConfig at
+        # construction time by the caller; defaults match the in-code
+        # defaults of build_intent_windows / DEFAULT_INTENT_THRESHOLD).
+        self._mir_window_seconds = float(mir_window_seconds)
+        self._mir_step_seconds = float(mir_step_seconds)
+        self._mir_score_threshold = float(mir_score_threshold)
+        self._mir_hysteresis = float(mir_hysteresis)
+        self._mir_synthesize = bool(mir_synthesize)
 
         self._state: Optional[MeetingState] = None
         self._recorder: Optional[MeetingRecorder] = None
@@ -700,7 +713,12 @@ class MeetingSession:
                     state,
                     self._mir_plugin_host,
                     profile=self.mir_profile,
+                    threshold=self._mir_score_threshold,
+                    hysteresis=self._mir_hysteresis,
+                    window_seconds=self._mir_window_seconds,
+                    step_seconds=self._mir_step_seconds,
                     db=self._mir_db,
+                    synthesize=self._mir_synthesize,
                 )
                 log.info(
                     "MIR routing finalized: "
