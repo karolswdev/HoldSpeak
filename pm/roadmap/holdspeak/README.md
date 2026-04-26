@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-5-09 done — runtime unavailable/missing-model readiness warnings now include copyable install/model guidance in Readiness and Runtime; full sweep 1099 passed / 13 skipped).
+**Last updated:** 2026-04-26 (HS-5-10 done — `/dictation` now shows the detected cwd project on load when no manual override is active; full sweep 1100 passed / 13 skipped).
 **Current phase:** [phase-5-usability-powerhouse](./phase-5-usability-powerhouse/) — reduce daily-use friction and make the web runtime a stronger end-user cockpit.
 **Status:** in-progress.
 

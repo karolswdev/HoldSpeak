@@ -1265,6 +1265,7 @@
           rememberProjectRoot(state.projectRootOverride);
         } else {
           localStorage.removeItem("holdspeak.projectRootOverride");
+          loadDetectedProjectContext();
         }
         refreshProjectScopedView();
       }
@@ -1272,10 +1273,30 @@
       function clearProjectRootOverride() {
         state.projectRootOverride = "";
         document.getElementById("project-root-override").value = "";
-        document.getElementById("project-root-status").textContent = "Using cwd project detection.";
-        document.getElementById("project-root-status").style.color = "var(--muted)";
         localStorage.removeItem("holdspeak.projectRootOverride");
+        loadDetectedProjectContext();
         refreshProjectScopedView();
+      }
+
+      async function loadDetectedProjectContext() {
+        const status = document.getElementById("project-root-status");
+        if (state.projectRootOverride.trim()) {
+          status.style.color = "var(--accent-2)";
+          status.textContent = `Selected override: ${state.projectRootOverride.trim()}`;
+          return;
+        }
+        status.style.color = "var(--muted)";
+        status.textContent = "Detecting cwd project…";
+        try {
+          const data = await api("GET", "/api/dictation/project-context");
+          const project = data.project || {};
+          status.style.color = "var(--accent-2)";
+          status.textContent =
+            `Using cwd: ${project.name || "project"} (${project.anchor || "detected"}) @ ${project.root || ""}`;
+        } catch (e) {
+          status.style.color = e.status === 404 ? "var(--warn)" : "var(--danger)";
+          status.textContent = e.status === 404 ? "No cwd project detected." : e.message;
+        }
       }
 
       function loadRecentProjectRoots() {
@@ -1348,6 +1369,7 @@
       document.getElementById("project-root-recent").addEventListener("change", useRecentProjectRoot);
       document.getElementById("ready-btn-refresh").addEventListener("click", loadReadiness);
       renderRecentProjectRoots();
+      loadDetectedProjectContext();
       loadStarterTemplates();
       loadScope("global");
     </script>

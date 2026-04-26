@@ -120,6 +120,8 @@ def test_dictation_page_route_serves_html() -> None:
     assert "Starter templates" in body
     assert "Create + dry-run" in body
     assert "project-root-recent" in body
+    assert "loadDetectedProjectContext" in body
+    assert "Using cwd:" in body
 
 
 @pytest.fixture
@@ -137,6 +139,20 @@ def test_client(cache_invalidator: MagicMock) -> TestClient:
 
 
 class TestProjectContext:
+    def test_project_context_reports_detected_cwd_project(
+        self, test_client: TestClient, project_root_dir: Path
+    ) -> None:
+        response = test_client.get("/api/dictation/project-context")
+
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["project"] == {
+            "name": "proj",
+            "root": str(project_root_dir),
+            "anchor": "holdspeak",
+        }
+        assert body["paths"]["blocks"] == str(project_root_dir / ".holdspeak" / "blocks.yaml")
+
     def test_project_context_validates_manual_root(
         self, test_client: TestClient, tmp_path: Path
     ) -> None:
