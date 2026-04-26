@@ -32,6 +32,7 @@ from .router import (
     reset_router_counters,
     select_active_intents,
 )
+from .scoring import iter_intent_transitions, score_window, score_windows
 from .signals import SUPPORTED_INTENTS as SIGNAL_INTENTS, extract_intent_signals
 from .project_detector import ProjectDetectorPlugin
 from .synthesis import synthesize_meeting_artifacts
@@ -59,7 +60,10 @@ __all__ = [
     "SIGNAL_INTENTS",
     "available_profiles",
     "extract_intent_signals",
+    "iter_intent_transitions",
     "normalize_profile",
+    "score_window",
+    "score_windows",
     "preview_route",
     "preview_route_from_transcript",
     "register_builtin_plugins",

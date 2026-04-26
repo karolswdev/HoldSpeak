@@ -1,6 +1,6 @@
 # Phase 2 — Multi-Intent Routing (MIR-01)
 
-**Last updated:** 2026-04-25 (HS-2-02 done — four typed contracts `IntentScore` / `IntentTransition` / `PluginRun` / `ArtifactLineage` shipped; HS-2-01 dropped per the no-pre-shipping-measurement-gate convention that already dropped HS-1-01 and HS-1-10).
+**Last updated:** 2026-04-25 (HS-2-03 done — typed `score_window` / `score_windows` / `iter_intent_transitions` helpers ship in `holdspeak/plugins/scoring.py` on top of the existing dict-shaped infra; 8 new unit cases, 907 passed end-to-end).
 
 ## Goal
 
@@ -41,7 +41,7 @@ table below mirrors it.
 |---|---|---|---|---|
 | ~~HS-2-01~~ | ~~Step 0 — Baseline capture~~ | dropped | — | n/a — no pre-shipping measurement gate (mirrors the DIR-01 amendment that dropped HS-1-01 and HS-1-10) |
 | HS-2-02 | Step 1 — Contracts + router skeleton | done | [story-02-contracts-router](./story-02-contracts-router.md) | tests pass (7 new + 10 adjacent intent cases = 17/17) + full suite green (excl. pre-existing metal hw fail) |
-| HS-2-03 | Step 2 — Windowing + multi-label scoring | backlog | [story-03-windowing](./story-03-windowing.md) | — |
+| HS-2-03 | Step 2 — Windowing + multi-label scoring | done | [story-03-windowing](./story-03-windowing.md) | tests pass (8 new + 21 adjacent intent cases = 29/29) + full suite green (907 passed, metal excluded) |
 | HS-2-04 | Step 3 — Plugin host integration | backlog | [story-04-plugin-host](./story-04-plugin-host.md) | — |
 | HS-2-05 | Step 4 — Persistence + migration | backlog | [story-05-persistence](./story-05-persistence.md) | — |
 | HS-2-06 | Step 5 — Meeting runtime wiring | backlog | [story-06-runtime-wiring](./story-06-runtime-wiring.md) | — |
@@ -53,15 +53,14 @@ table below mirrors it.
 
 ## Where we are
 
-HS-2-02 done — typed contracts `IntentScore` / `IntentTransition` /
-`PluginRun` / `ArtifactLineage` ship in `holdspeak/plugins/contracts.py`
-with 7 unit cases. The router skeleton + window builder + transition
-detector were already in place from prior MIR-01 infra; this story
-filled the spec §5.1 gap they leaned on. HS-2-01 dropped (no
-pre-shipping measurement gate, same call as DIR-01's HS-1-01).
-Next: HS-2-03 (windowing + multi-label scoring) — extend
-`detect_intent_transitions` to emit typed `IntentTransition`s and
-build the multi-label scorer producing `IntentScore` per window.
+HS-2-03 done — typed `score_window` / `score_windows` /
+`iter_intent_transitions` ship in `holdspeak/plugins/scoring.py` and
+sit on top of the existing dict-shaped lexical extractor + hysteresis
+selector (no logic duplication). 8 new unit cases; the dict APIs
+remain in place for live meeting-runtime callers. Next:
+**HS-2-04 (plugin host integration)** — `PluginHost` consumes
+`score_windows(...)` output and dispatches per-intent chains,
+emitting typed `PluginRun` records with idempotency suppression.
 
 ## Active risks
 
