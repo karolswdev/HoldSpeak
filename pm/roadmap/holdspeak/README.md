@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-25 (DIR-01: HS-1-05 block-config loader shipped).
+**Last updated:** 2026-04-25 (DIR-01: HS-1-06 built-in stages — intent-router + kb-enricher — shipped).
 **Current phase:** [phase-1-dictation-intent-routing](./phase-1-dictation-intent-routing/current-phase-status.md)
 **Status:** in-progress.
 

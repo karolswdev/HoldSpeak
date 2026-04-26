@@ -1,6 +1,6 @@
 # Phase 1 — Dictation Intent Routing (DIR-01)
 
-**Last updated:** 2026-04-25 (HS-1-05 block-config loader shipped).
+**Last updated:** 2026-04-25 (HS-1-06 built-in stages shipped — intent-router + kb-enricher).
 
 ## Goal
 
@@ -42,7 +42,7 @@ created ahead of time as `backlog` so the work is visible; only the
 | HS-1-03 | Step 2 — Pipeline executor | done | [story-03-pipeline](./story-03-pipeline.md) | tests pass (11/11) + full suite green (excl. one pre-existing metal hw fail) |
 | HS-1-04 | Step 3 — Pluggable LLM runtime (mlx + llama_cpp) + structured output | done | [story-04-runtime](./story-04-runtime.md) | tests pass (29 unit cases + 2 model-gated integration harnesses skip cleanly) |
 | HS-1-05 | Step 4 — Block config loader | done | [story-05-blocks](./story-05-blocks.md) | tests pass (24 unit cases) |
-| HS-1-06 | Step 5 — Built-in stages (intent-router + kb-enricher) | backlog | (pending) | — |
+| HS-1-06 | Step 5 — Built-in stages (intent-router + kb-enricher) | done | [story-06-builtin-stages](./story-06-builtin-stages.md) | tests pass (29 unit cases) |
 | HS-1-07 | Step 6 — Controller wiring | backlog | (pending) | — |
 | HS-1-08 | Step 7 — CLI (`holdspeak dictation …`) | backlog | (pending) | — |
 | HS-1-09 | Step 8 — Doctor checks (LLM runtime + structured-output compile) | backlog | (pending) | — |
@@ -58,21 +58,23 @@ measurement is dropped — DIR-01 banks on the chosen models and goes
 straight to implementation. `HS-1-01` (baseline) and `HS-1-10`
 (benchmarks) are dropped.
 
-**HS-1-05 done.** `holdspeak/plugins/dictation/blocks.py` ships the
-typed loader for the §8 block-config YAML: `Block`, `MatchSpec`,
-`InjectSpec`, `LoadedBlocks` (frozen), `InjectMode` enum, and
-`load_blocks_yaml` / `resolve_blocks` / `validate_template`.
-`yaml.safe_load` covers DIR-S-001 (rejects `!!python/object/...`
-tags); `validate_template` enforces DIR-S-002 by accepting only
-dotted-name placeholders (`{a.b.c}`) and rejecting format specs,
-conversions, method calls, item access, and arithmetic.
-`resolve_blocks` implements §8.1 / DIR-F-008 — project-scope blocks
-fully replace global. `LoadedBlocks.to_block_set()` bridges to the
-HS-1-04 constraint compiler. `PyYAML>=6.0` is now an explicit core
-dep. 24-case unit suite passes; full regression: 848 passed, 1
-pre-existing hardware-only `tests/e2e/test_metal.py` fail (Whisper
-model load), unrelated. Next: **HS-1-06** (built-in `intent-router`
-+ `kb-enricher` stages).
+**HS-1-06 done.** Built-in stages landed in
+`holdspeak/plugins/dictation/builtin/{intent_router,kb_enricher}.py`.
+`IntentRouter` (`requires_llm=True`) builds a prompt from the loaded
+blocks, calls the constrained-decoded runtime, coerces the dict into
+an `IntentTag`, and never raises — on parse failure / unknown block id
+/ runtime exception, retries `classify()` exactly once and falls back
+to `IntentTag(matched=False, confidence=0.0)` (DIR-F-004); empty
+blocks short-circuit without calling the runtime.
+`KbEnricher` (`requires_llm=False`, no runtime arg per DIR-R-004) is
+pure template substitution: gates on `matched=True` + `confidence >=
+threshold` (per-block or default — DIR-F-006), resolves `{a.b.c}`
+placeholders against an utterance + intent.extras context using a
+custom resolver (no `str.format`), and skips injection entirely with
+a warning when any placeholder is unresolved (DIR-F-007). 29-case
+unit suite passes; full regression: 877 passed, 1 pre-existing
+hardware-only `tests/e2e/test_metal.py` fail (Whisper model load),
+unrelated. Next: **HS-1-07** (controller wiring).
 
 ## Active risks
 
