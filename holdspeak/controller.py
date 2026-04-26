@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import threading
 import time
-from typing import Optional
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Optional
 
 from .audio import AudioRecorder
 from .config import Config
@@ -18,6 +20,18 @@ from .tui import HoldSpeakApp
 from .typer import TextTyper
 
 log = get_logger("controller")
+dictation_log = get_logger("dictation.pipeline")
+
+# Audio is captured at 16 kHz mono throughout HoldSpeak; expressing
+# this here keeps the controller from needing to know about the
+# transcriber's internals when it stamps `audio_duration_s` on the
+# DIR-01 `Utterance`.
+_AUDIO_SAMPLE_RATE_HZ = 16000
+
+# Global blocks file location per spec §8.1. Kept at module scope so
+# the dictation pipeline builder can be exercised without spinning
+# up a controller in tests.
+_GLOBAL_BLOCKS_PATH = Path.home() / ".config" / "holdspeak" / "blocks.yaml"
 
 
 class HoldSpeakController:
@@ -72,6 +86,14 @@ class HoldSpeakController:
         self.app.set_global_hotkey_status(self._global_hotkey_enabled, self._global_hotkey_disabled_reason)
 
         self._transcription_lock = threading.Lock()
+
+        # DIR-01 dictation pipeline cache. Built lazily on the first
+        # utterance when `dictation.pipeline.enabled` is true; stays
+        # None when disabled so no module under
+        # `holdspeak.plugins.dictation.*` is ever imported on the
+        # default path (DIR-C-001 byte-identical guarantee).
+        self._dictation_pipeline: Optional[Any] = None
+        self._dictation_pipeline_failed: bool = False
 
         self._meeting_session: Optional[MeetingSession] = None
         self._meeting_timer_thread: Optional[threading.Thread] = None
@@ -140,6 +162,11 @@ class HoldSpeakController:
                     text = transcriber.transcribe(audio)
                     if text:
                         text = self.text_processor.process(text)
+                        text = self._maybe_run_dictation_pipeline(
+                            text,
+                            audio_duration_s=len(audio) / _AUDIO_SAMPLE_RATE_HZ,
+                            transcribed_at=datetime.now(),
+                        )
                         self.app.add_transcription(text)
                         if self._text_injection_enabled and self.typer is not None:
                             try:
@@ -206,12 +233,118 @@ class HoldSpeakController:
         if self.hotkey_listener is not None:
             self.hotkey_listener.hotkey = key
 
+    def _maybe_run_dictation_pipeline(
+        self,
+        text: str,
+        *,
+        audio_duration_s: float,
+        transcribed_at: datetime,
+    ) -> str:
+        """Run the DIR-01 dictation pipeline if enabled, else passthrough.
+
+        Returns the (possibly enriched) text. Any unexpected failure
+        falls back to the input text so the live voice-typing path
+        keeps working — this is defense in depth on top of the
+        executor's own per-stage error isolation (DIR-F-003).
+        """
+        cfg = self.app.config.dictation
+        if not cfg.pipeline.enabled:
+            return text
+
+        pipeline = self._get_dictation_pipeline()
+        if pipeline is None:
+            return text
+
+        try:
+            from holdspeak.plugins.dictation.contracts import Utterance
+
+            utt = Utterance(
+                raw_text=text,
+                audio_duration_s=audio_duration_s,
+                transcribed_at=transcribed_at,
+                project=None,
+            )
+            run = pipeline.run(utt)
+            return run.final_text
+        except Exception as exc:
+            log.warning(f"Dictation pipeline raised; falling back to processed text: {exc}")
+            return text
+
+    def _get_dictation_pipeline(self) -> Optional[Any]:
+        """Return the cached pipeline or build it on first use."""
+        if self._dictation_pipeline is not None:
+            return self._dictation_pipeline
+        if self._dictation_pipeline_failed:
+            return None
+        try:
+            self._dictation_pipeline = self._build_dictation_pipeline()
+        except Exception as exc:
+            self._dictation_pipeline_failed = True
+            self._dictation_pipeline = None
+            log.warning(f"Dictation pipeline build failed; staying disabled this session: {exc}")
+            return None
+        return self._dictation_pipeline
+
+    def _build_dictation_pipeline(self) -> Any:
+        """Lazy-construct the dictation pipeline.
+
+        All `holdspeak.plugins.dictation.*` imports happen inside this
+        method so the disabled path never touches the dictation
+        modules (DIR-C-001 byte-identical guarantee).
+        """
+        cfg = self.app.config.dictation
+        from holdspeak.plugins.dictation.blocks import resolve_blocks
+        from holdspeak.plugins.dictation.builtin.intent_router import IntentRouter
+        from holdspeak.plugins.dictation.builtin.kb_enricher import KbEnricher
+        from holdspeak.plugins.dictation.pipeline import DictationPipeline
+        from holdspeak.plugins.dictation.runtime import build_runtime
+
+        blocks = resolve_blocks(_GLOBAL_BLOCKS_PATH, None)
+        runtime = build_runtime(
+            backend=cfg.runtime.backend,
+            mlx_model=cfg.runtime.mlx_model,
+            llama_cpp_model_path=cfg.runtime.llama_cpp_model_path,
+            n_ctx=cfg.runtime.n_ctx,
+            n_threads=cfg.runtime.n_threads,
+            n_gpu_layers=cfg.runtime.n_gpu_layers,
+            warm_on_start=cfg.runtime.warm_on_start,
+            eviction_idle_seconds=cfg.runtime.eviction_idle_seconds,
+        )
+        stages = [IntentRouter(runtime, blocks), KbEnricher(blocks)]
+        return DictationPipeline(
+            stages,
+            enabled=True,
+            llm_enabled=True,
+            on_run=self._emit_pipeline_run,
+        )
+
+    def _emit_pipeline_run(self, run: Any) -> None:
+        """DIR-O-001: structured log line for one pipeline run."""
+        intent = run.intent
+        dictation_log.info(
+            "dictation_pipeline_run",
+            extra={
+                "stage_ids": [r.stage_id for r in run.stage_results],
+                "elapsed_ms": {r.stage_id: r.elapsed_ms for r in run.stage_results},
+                "total_elapsed_ms": run.total_elapsed_ms,
+                "intent_matched": bool(intent and intent.matched),
+                "intent_block_id": intent.block_id if intent else None,
+                "warnings": run.warnings,
+                "short_circuited": run.short_circuited,
+            },
+        )
+
     def apply_runtime_config(self) -> None:
         """Apply latest app config to long-lived runtime components."""
         config = self.app.config
         self.recorder.device = config.meeting.mic_device
         self.update_hotkey(config.hotkey.key)
         self._sync_intel_queue_worker()
+        # Drop the cached pipeline so a `dictation.*` config edit
+        # (e.g. enabling the feature, swapping backend, pointing at
+        # a different blocks file) takes effect on the next utterance.
+        self._dictation_pipeline = None
+        self._dictation_pipeline_failed = False
 
     def _sync_intel_queue_worker(self) -> None:
         """Ensure deferred-intel worker matches current config."""

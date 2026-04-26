@@ -1,6 +1,6 @@
 # Phase 1 — Dictation Intent Routing (DIR-01)
 
-**Last updated:** 2026-04-25 (HS-1-06 built-in stages shipped — intent-router + kb-enricher).
+**Last updated:** 2026-04-25 (HS-1-07 controller wiring shipped — pipeline plumbed into the live voice-typing path, gated off by default).
 
 ## Goal
 
@@ -43,7 +43,7 @@ created ahead of time as `backlog` so the work is visible; only the
 | HS-1-04 | Step 3 — Pluggable LLM runtime (mlx + llama_cpp) + structured output | done | [story-04-runtime](./story-04-runtime.md) | tests pass (29 unit cases + 2 model-gated integration harnesses skip cleanly) |
 | HS-1-05 | Step 4 — Block config loader | done | [story-05-blocks](./story-05-blocks.md) | tests pass (24 unit cases) |
 | HS-1-06 | Step 5 — Built-in stages (intent-router + kb-enricher) | done | [story-06-builtin-stages](./story-06-builtin-stages.md) | tests pass (29 unit cases) |
-| HS-1-07 | Step 6 — Controller wiring | backlog | (pending) | — |
+| HS-1-07 | Step 6 — Controller wiring | done | [story-07-controller](./story-07-controller.md) | tests pass (5 new controller cases) + full suite green (excl. pre-existing metal hw fail) |
 | HS-1-08 | Step 7 — CLI (`holdspeak dictation …`) | backlog | (pending) | — |
 | HS-1-09 | Step 8 — Doctor checks (LLM runtime + structured-output compile) | backlog | (pending) | — |
 | ~~HS-1-10~~ | ~~Step 9 — Benchmarks~~ | dropped | — | n/a — no pre-shipping measurement gate per 2026-04-25 amendment |
@@ -58,23 +58,32 @@ measurement is dropped — DIR-01 banks on the chosen models and goes
 straight to implementation. `HS-1-01` (baseline) and `HS-1-10`
 (benchmarks) are dropped.
 
-**HS-1-06 done.** Built-in stages landed in
-`holdspeak/plugins/dictation/builtin/{intent_router,kb_enricher}.py`.
-`IntentRouter` (`requires_llm=True`) builds a prompt from the loaded
-blocks, calls the constrained-decoded runtime, coerces the dict into
-an `IntentTag`, and never raises — on parse failure / unknown block id
-/ runtime exception, retries `classify()` exactly once and falls back
-to `IntentTag(matched=False, confidence=0.0)` (DIR-F-004); empty
-blocks short-circuit without calling the runtime.
-`KbEnricher` (`requires_llm=False`, no runtime arg per DIR-R-004) is
-pure template substitution: gates on `matched=True` + `confidence >=
-threshold` (per-block or default — DIR-F-006), resolves `{a.b.c}`
-placeholders against an utterance + intent.extras context using a
-custom resolver (no `str.format`), and skips injection entirely with
-a warning when any placeholder is unresolved (DIR-F-007). 29-case
-unit suite passes; full regression: 877 passed, 1 pre-existing
+**HS-1-07 done.** Controller wiring landed in
+`holdspeak/controller.py`. The dictation pipeline is invoked between
+`text_processor.process` and `typer.type_text`, gated by
+`dictation.pipeline.enabled` (DIR-C-001 — default `False`). All
+`holdspeak.plugins.dictation.*` imports are confined to the lazy
+`_build_dictation_pipeline` method, so the disabled path never
+touches the dictation modules and stays byte-identical to pre-DIR-01
+typing behavior (phase exit criterion #4). When enabled, the
+controller resolves blocks via `resolve_blocks(global, None)`,
+builds the runtime via `runtime.build_runtime(...)`, instantiates
+`IntentRouter` + `KbEnricher` once per controller, and runs them
+through `DictationPipeline` with a controller-side `on_run`
+callback that emits the DIR-O-001 structured log line (stage IDs,
+per-stage `elapsed_ms`, intent block_id, warnings,
+`total_elapsed_ms`). Build failures are sticky for the controller
+lifetime (no retry storms on a missing model file); `Utterance.run`
+exceptions fall back to the original processed text — defense in
+depth on top of the executor's per-stage error isolation
+(DIR-F-003). `apply_runtime_config()` invalidates the cached
+pipeline so toggling `dictation.*` config takes effect on the next
+utterance. `Utterance.project = None` for now; `kb-enricher`'s
+DIR-F-007 placeholder skip already handles missing `{project.*}`
+context. Five new unit cases in `tests/unit/test_controller.py`;
+full regression: 882 passed, 13 skipped, 1 pre-existing
 hardware-only `tests/e2e/test_metal.py` fail (Whisper model load),
-unrelated. Next: **HS-1-07** (controller wiring).
+unrelated. Next: **HS-1-08** (CLI `holdspeak dictation …`).
 
 ## Active risks
 

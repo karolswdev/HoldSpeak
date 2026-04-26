@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -373,3 +374,206 @@ def test_on_web_settings_applied_updates_runtime(monkeypatch) -> None:
     assert app.hotkey_display == "F9"
     apply_runtime_config.assert_called_once()
     assert any(message == "Settings saved from web UI" for message, _kwargs in app.notifications)
+
+
+# ---------------------------------------------------------------------------
+# DIR-01 (HS-1-07) — controller wiring of the dictation pipeline.
+# ---------------------------------------------------------------------------
+
+
+class _FakeStageResult:
+    def __init__(self, stage_id: str, elapsed_ms: float) -> None:
+        self.stage_id = stage_id
+        self.elapsed_ms = elapsed_ms
+
+
+class _FakeIntent:
+    def __init__(self, matched: bool, block_id: str | None) -> None:
+        self.matched = matched
+        self.block_id = block_id
+
+
+class _FakePipelineRun:
+    def __init__(
+        self,
+        final_text: str,
+        *,
+        stage_results=None,
+        intent=None,
+        warnings=None,
+        total_elapsed_ms: float = 0.0,
+        short_circuited: bool = False,
+    ) -> None:
+        self.final_text = final_text
+        self.stage_results = stage_results or []
+        self.intent = intent
+        self.warnings = warnings or []
+        self.total_elapsed_ms = total_elapsed_ms
+        self.short_circuited = short_circuited
+
+
+class _FakeDictationPipeline:
+    def __init__(self, run_result: _FakePipelineRun, on_run=None) -> None:
+        self._run_result = run_result
+        self._on_run = on_run
+        self.calls: list[object] = []
+
+    def run(self, utt):
+        self.calls.append(utt)
+        if self._on_run is not None:
+            self._on_run(self._run_result)
+        return self._run_result
+
+
+def _make_controller(monkeypatch, *, pipeline_enabled: bool = False) -> HoldSpeakController:
+    _patch_runtime_deps(monkeypatch)
+    config = Config()
+    config.dictation.pipeline.enabled = pipeline_enabled
+    app = _FakeApp(config)
+    return HoldSpeakController(app, preloaded_transcriber=_FakeTranscriber())
+
+
+def test_dictation_disabled_path_is_byte_identical_and_does_not_build_pipeline(monkeypatch) -> None:
+    controller = _make_controller(monkeypatch, pipeline_enabled=False)
+
+    builder_called = []
+
+    def _refuse_to_build() -> object:
+        builder_called.append(True)
+        raise AssertionError("builder must not be called when pipeline disabled")
+
+    monkeypatch.setattr(controller, "_build_dictation_pipeline", _refuse_to_build)
+
+    out = controller._maybe_run_dictation_pipeline(
+        "hello world",
+        audio_duration_s=1.0,
+        transcribed_at=datetime.now(),
+    )
+
+    assert out == "hello world"
+    assert builder_called == []
+    assert controller._dictation_pipeline is None
+    assert controller._dictation_pipeline_failed is False
+
+
+def test_dictation_enabled_runs_pipeline_and_types_final_text(monkeypatch) -> None:
+    controller = _make_controller(monkeypatch, pipeline_enabled=True)
+
+    intent = _FakeIntent(matched=True, block_id="ai_prompt_buildout")
+    run_result = _FakePipelineRun(
+        final_text="ENRICHED",
+        stage_results=[_FakeStageResult("intent-router", 12.5), _FakeStageResult("kb-enricher", 0.4)],
+        intent=intent,
+        warnings=[],
+        total_elapsed_ms=13.0,
+    )
+    fake_pipeline = _FakeDictationPipeline(run_result, on_run=controller._emit_pipeline_run)
+
+    monkeypatch.setattr(controller, "_build_dictation_pipeline", lambda: fake_pipeline)
+
+    log_records: list[tuple[str, dict]] = []
+
+    def _capture(msg, *args, **kwargs):
+        log_records.append((msg, kwargs.get("extra", {})))
+
+    monkeypatch.setattr(controller_module.dictation_log, "info", _capture)
+
+    out = controller._maybe_run_dictation_pipeline(
+        "raw text",
+        audio_duration_s=2.5,
+        transcribed_at=datetime.now(),
+    )
+
+    assert out == "ENRICHED"
+    assert len(fake_pipeline.calls) == 1
+    utt = fake_pipeline.calls[0]
+    assert utt.raw_text == "raw text"
+    assert utt.audio_duration_s == 2.5
+    assert utt.project is None
+
+    # DIR-O-001 — one structured log line per run with the expected keys.
+    assert len(log_records) == 1
+    msg, extra = log_records[0]
+    assert msg == "dictation_pipeline_run"
+    assert extra["stage_ids"] == ["intent-router", "kb-enricher"]
+    assert extra["elapsed_ms"] == {"intent-router": 12.5, "kb-enricher": 0.4}
+    assert extra["intent_matched"] is True
+    assert extra["intent_block_id"] == "ai_prompt_buildout"
+    assert extra["total_elapsed_ms"] == 13.0
+
+
+def test_dictation_pipeline_build_failure_falls_back_to_processed_text(monkeypatch) -> None:
+    controller = _make_controller(monkeypatch, pipeline_enabled=True)
+
+    build_calls = []
+
+    def _broken_build() -> object:
+        build_calls.append(True)
+        raise RuntimeError("model file not found")
+
+    monkeypatch.setattr(controller, "_build_dictation_pipeline", _broken_build)
+
+    out = controller._maybe_run_dictation_pipeline(
+        "fallback text",
+        audio_duration_s=0.5,
+        transcribed_at=datetime.now(),
+    )
+    assert out == "fallback text"
+    assert controller._dictation_pipeline_failed is True
+
+    # Sticky for the controller lifetime: subsequent utterance does not rebuild.
+    out2 = controller._maybe_run_dictation_pipeline(
+        "another",
+        audio_duration_s=0.5,
+        transcribed_at=datetime.now(),
+    )
+    assert out2 == "another"
+    assert len(build_calls) == 1
+
+
+def test_dictation_pipeline_run_exception_falls_back_to_processed_text(monkeypatch) -> None:
+    controller = _make_controller(monkeypatch, pipeline_enabled=True)
+
+    class _Exploding:
+        def run(self, _utt):
+            raise RuntimeError("backend exploded")
+
+    monkeypatch.setattr(controller, "_build_dictation_pipeline", lambda: _Exploding())
+
+    out = controller._maybe_run_dictation_pipeline(
+        "stays the same",
+        audio_duration_s=1.0,
+        transcribed_at=datetime.now(),
+    )
+    assert out == "stays the same"
+
+
+def test_apply_runtime_config_invalidates_dictation_pipeline(monkeypatch) -> None:
+    controller = _make_controller(monkeypatch, pipeline_enabled=True)
+
+    builds = []
+
+    def _build():
+        builds.append(True)
+        return _FakeDictationPipeline(_FakePipelineRun(final_text="X"))
+
+    monkeypatch.setattr(controller, "_build_dictation_pipeline", _build)
+
+    controller._maybe_run_dictation_pipeline(
+        "first",
+        audio_duration_s=1.0,
+        transcribed_at=datetime.now(),
+    )
+    assert len(builds) == 1
+    assert controller._dictation_pipeline is not None
+
+    controller.apply_runtime_config()
+    assert controller._dictation_pipeline is None
+    assert controller._dictation_pipeline_failed is False
+
+    controller._maybe_run_dictation_pipeline(
+        "second",
+        audio_duration_s=1.0,
+        transcribed_at=datetime.now(),
+    )
+    assert len(builds) == 2
