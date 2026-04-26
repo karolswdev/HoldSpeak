@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-3 scaffold + amendment — phase 3 opened with 6 backlog stories after splitting project-context plumbing into a detector function + wiring; closes the DIR-01 deferred items).
+**Last updated:** 2026-04-26 (HS-3-01 done — `detect_project_for_cwd()` pure function shipped; 8 unit tests pass; full sweep 981 passed, +8 vs. baseline).
 **Current phase:** [phase-3-dictation-loop-closure](./phase-3-dictation-loop-closure/) — DIR-01 deferred-item closure.
 **Status:** in-progress.
 

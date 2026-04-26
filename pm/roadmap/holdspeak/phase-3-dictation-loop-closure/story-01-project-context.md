@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 3
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-2-11 (MIR-01 closed; phase-3 scaffold landed)
 - **Unblocks:** HS-3-02 (wiring needs the detector to exist)
 - **Owner:** unassigned
@@ -38,12 +38,12 @@ the rest of the phase wires through.
 
 ## Acceptance criteria
 
-- [ ] `detect_project_for_cwd(start: Path | None = None) -> ProjectContext | None` exists and is importable from a stable path (documented in the story's evidence).
-- [ ] Returned dict, when non-None, contains at least `name`, `root`, `anchor` keys.
-- [ ] Anchor priority is `.holdspeak/` > `.git/` > language manifests.
-- [ ] All 6 unit-test scenarios pass.
-- [ ] Function does not touch the filesystem outside the cwd→root walk and at most one name-source file read.
-- [ ] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS.
+- [x] `detect_project_for_cwd(start: Path | None = None) -> ProjectContext | None` exists at `holdspeak/plugins/dictation/project_root.py`.
+- [x] Returned dict, when non-None, contains at least `name`, `root`, `anchor` keys (plus optional `kb`).
+- [x] Anchor priority is `.holdspeak/` > `.git/` > `pyproject.toml` > `package.json` > `Cargo.toml`.
+- [x] 8 unit-test scenarios pass (slightly broader than the original 6 — added `kb_loaded_when_project_yaml_present` as the positive-case partner of `kb_absent`, and the name-derivation test packs 4 sub-cases).
+- [x] Function does not touch the filesystem outside the cwd→root walk plus at most one TOML/JSON read for name + one optional YAML read for `kb`.
+- [x] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` → 981 passed, 12 skipped (delta +8 vs. baseline 973).
 
 ## Test plan
 
