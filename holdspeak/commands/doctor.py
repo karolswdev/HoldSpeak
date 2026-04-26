@@ -688,6 +688,36 @@ def _check_dictation_constraint_compile(config: Config) -> DoctorCheck:
     )
 
 
+def _check_dictation_runtime_counters(config: Config) -> DoctorCheck:
+    """DIR-O-002: surface the four LLM-runtime counters (HS-3-04).
+
+    Always PASS — counters are advisory observability, not a health
+    signal. Skipped with PASS when the dictation pipeline is disabled
+    so the default doctor output stays quiet.
+    """
+    if not config.dictation.pipeline.enabled:
+        return DoctorCheck(
+            name="LLM runtime counters",
+            status="PASS",
+            detail="dictation pipeline disabled (opt-in)",
+        )
+
+    from ..plugins.dictation.runtime_counters import get_counters
+
+    counters = get_counters()
+    detail = (
+        f"model_loads={counters['model_loads']} "
+        f"classify_calls={counters['classify_calls']} "
+        f"classify_failures={counters['classify_failures']} "
+        f"constrained_retries={counters['constrained_retries']}"
+    )
+    return DoctorCheck(
+        name="LLM runtime counters",
+        status="PASS",
+        detail=detail,
+    )
+
+
 def _check_mir_routing(config: Config) -> DoctorCheck:
     """MIR-O-001 / spec §9.10: report MIR-01 routing-pipeline config posture.
 
@@ -787,6 +817,7 @@ def collect_doctor_checks() -> list[DoctorCheck]:
         _check_dictation_project_context(config),
         _check_dictation_runtime(config),
         _check_dictation_constraint_compile(config),
+        _check_dictation_runtime_counters(config),
         _check_mir_routing(config),
         _check_mir_telemetry(),
         _check_hotkey(config.hotkey.key, is_wayland=is_wayland),

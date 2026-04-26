@@ -252,6 +252,35 @@ def test_project_context_check_warn_when_no_project_detected(
     assert result.fix and ".holdspeak" in result.fix
 
 
+def test_runtime_counters_check_pass_when_pipeline_disabled() -> None:
+    cfg = Config()  # dictation pipeline disabled by default
+    result = doctor._check_dictation_runtime_counters(cfg)
+    assert result.status == "PASS"
+    assert "disabled" in result.detail
+
+
+def test_runtime_counters_check_reports_snapshot_when_enabled(monkeypatch) -> None:
+    from holdspeak.plugins.dictation import runtime_counters
+
+    runtime_counters.reset_counters()
+    runtime_counters._bump("classify_calls", 3)
+    runtime_counters._bump("model_loads")
+
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = True
+
+    try:
+        result = doctor._check_dictation_runtime_counters(cfg)
+    finally:
+        runtime_counters.reset_counters()
+
+    assert result.status == "PASS"
+    assert "classify_calls=3" in result.detail
+    assert "model_loads=1" in result.detail
+    assert "classify_failures=0" in result.detail
+    assert "constrained_retries=0" in result.detail
+
+
 def test_dictation_compile_check_pass_when_pipeline_disabled() -> None:
     cfg = Config()
     result = doctor._check_dictation_constraint_compile(cfg)

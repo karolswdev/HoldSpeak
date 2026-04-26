@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 3
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-3-03 (`llama_cpp` leg verified so counters can be exercised on both backends)
 - **Unblocks:** dogfood-friendly observability of the LLM stage
 - **Owner:** unassigned
@@ -33,11 +33,11 @@ anything" signal.
 
 ## Acceptance criteria
 
-- [ ] LLM runtime exposes a `counters()` snapshot returning `{model_loads, classify_calls, classify_failures, constrained_retries}` as ints.
-- [ ] `holdspeak doctor` prints the counter snapshot when an LLM backend is configured.
-- [ ] Unit tests for the counter object pass.
-- [ ] An integration test forcing one classify call asserts `classify_calls` increments by 1.
-- [ ] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS.
+- [x] Module-level `get_counters()` returns `{model_loads, classify_calls, classify_failures, constrained_retries}` as ints (`holdspeak/plugins/dictation/runtime_counters.py`).
+- [x] `holdspeak doctor` prints the counter snapshot under "LLM runtime counters" check (PASS-only — observability, not health).
+- [x] 9 unit tests for the counter module + wrapper pass: initial-zero snapshot, first-load advances `model_loads` (subsequent loads do not), classify advances calls, failure advances failures + re-raises, `note_constrained_retry`, `reset_counters`, attribute delegation, info delegation, build_runtime end-to-end wraps with CountingRuntime.
+- [x] An integration-style test (`test_build_runtime_wraps_with_counting_and_classify_advances`) forces one classify call through `build_runtime` with stub factories and asserts `classify_calls == 1` (and `model_loads == 1`).
+- [x] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` → 999 passed, 13 skipped (delta +11 vs. HS-3-03 baseline 988: 9 counter unit + 2 doctor unit).
 
 ## Test plan
 

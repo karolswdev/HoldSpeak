@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-3-03 done — `llama_cpp` end-to-end test + README install/GGUF docs; full sweep 988 passed, 13 skipped, +15 cumulative pass delta vs. HS-3 baseline).
+**Last updated:** 2026-04-26 (HS-3-04 done — DIR-O-002 runtime counters via CountingRuntime wrapper + doctor surface; full sweep 999 passed, 13 skipped, +26 cumulative pass delta vs. HS-3 baseline).
 **Current phase:** [phase-3-dictation-loop-closure](./phase-3-dictation-loop-closure/) — DIR-01 deferred-item closure.
 **Status:** in-progress.
 

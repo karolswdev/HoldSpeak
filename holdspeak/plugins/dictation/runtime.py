@@ -151,19 +151,24 @@ def build_runtime(
     factories = factories if factories is not None else _default_factories()
 
     if resolved == "mlx":
-        return factories["mlx"](
+        inner = factories["mlx"](
             model=mlx_model,
             warm_on_start=warm_on_start,
             eviction_idle_seconds=eviction_idle_seconds,
         )
-    return factories["llama_cpp"](
-        model_path=llama_cpp_model_path,
-        n_ctx=n_ctx,
-        n_threads=n_threads,
-        n_gpu_layers=n_gpu_layers,
-        warm_on_start=warm_on_start,
-        eviction_idle_seconds=eviction_idle_seconds,
-    )
+    else:
+        inner = factories["llama_cpp"](
+            model_path=llama_cpp_model_path,
+            n_ctx=n_ctx,
+            n_threads=n_threads,
+            n_gpu_layers=n_gpu_layers,
+            warm_on_start=warm_on_start,
+            eviction_idle_seconds=eviction_idle_seconds,
+        )
+
+    # DIR-O-002: wrap with counter-instrumenting delegate.
+    from holdspeak.plugins.dictation.runtime_counters import CountingRuntime
+    return CountingRuntime(inner)
 
 
 def _default_factories() -> dict[str, Callable[..., LLMRuntime]]:
