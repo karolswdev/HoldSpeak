@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-25 (HS-2-03 done — typed scoring + transition helpers on top of the existing lexical infra; 907 passed end-to-end).
+**Last updated:** 2026-04-25 (HS-2-04 done — typed `PluginRun` dispatcher over the existing `PluginHost`; 913 passed end-to-end).
 **Current phase:** [phase-2-multi-intent-routing](./phase-2-multi-intent-routing/current-phase-status.md)
 **Status:** in-progress.
 

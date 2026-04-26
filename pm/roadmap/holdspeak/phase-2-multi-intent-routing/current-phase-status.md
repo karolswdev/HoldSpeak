@@ -1,6 +1,6 @@
 # Phase 2 — Multi-Intent Routing (MIR-01)
 
-**Last updated:** 2026-04-25 (HS-2-03 done — typed `score_window` / `score_windows` / `iter_intent_transitions` helpers ship in `holdspeak/plugins/scoring.py` on top of the existing dict-shaped infra; 8 new unit cases, 907 passed end-to-end).
+**Last updated:** 2026-04-25 (HS-2-04 done — typed `dispatch_window` / `dispatch_windows` orchestrate `PluginHost` runs and emit `PluginRun` contract records with real wall-clock boundaries; 6 new unit cases, 913 passed end-to-end).
 
 ## Goal
 
@@ -42,7 +42,7 @@ table below mirrors it.
 | ~~HS-2-01~~ | ~~Step 0 — Baseline capture~~ | dropped | — | n/a — no pre-shipping measurement gate (mirrors the DIR-01 amendment that dropped HS-1-01 and HS-1-10) |
 | HS-2-02 | Step 1 — Contracts + router skeleton | done | [story-02-contracts-router](./story-02-contracts-router.md) | tests pass (7 new + 10 adjacent intent cases = 17/17) + full suite green (excl. pre-existing metal hw fail) |
 | HS-2-03 | Step 2 — Windowing + multi-label scoring | done | [story-03-windowing](./story-03-windowing.md) | tests pass (8 new + 21 adjacent intent cases = 29/29) + full suite green (907 passed, metal excluded) |
-| HS-2-04 | Step 3 — Plugin host integration | backlog | [story-04-plugin-host](./story-04-plugin-host.md) | — |
+| HS-2-04 | Step 3 — Plugin host integration | done | [story-04-plugin-host](./story-04-plugin-host.md) | tests pass (6 new + 23 host-suite cases) + full suite green (913 passed, metal excluded) |
 | HS-2-05 | Step 4 — Persistence + migration | backlog | [story-05-persistence](./story-05-persistence.md) | — |
 | HS-2-06 | Step 5 — Meeting runtime wiring | backlog | [story-06-runtime-wiring](./story-06-runtime-wiring.md) | — |
 | HS-2-07 | Step 6 — Synthesis pass | backlog | [story-07-synthesis](./story-07-synthesis.md) | — |
@@ -53,14 +53,20 @@ table below mirrors it.
 
 ## Where we are
 
-HS-2-03 done — typed `score_window` / `score_windows` /
-`iter_intent_transitions` ship in `holdspeak/plugins/scoring.py` and
-sit on top of the existing dict-shaped lexical extractor + hysteresis
-selector (no logic duplication). 8 new unit cases; the dict APIs
-remain in place for live meeting-runtime callers. Next:
-**HS-2-04 (plugin host integration)** — `PluginHost` consumes
-`score_windows(...)` output and dispatches per-intent chains,
-emitting typed `PluginRun` records with idempotency suppression.
+HS-2-04 done — `holdspeak/plugins/dispatch.py` ships
+`dispatch_window` / `dispatch_windows` that derive the route from
+`IntentScore`, run each plugin via the existing `PluginHost`, and
+return typed `PluginRun` records carrying real wall-clock
+`started_at` / `finished_at` (something `PluginRunResult.duration_ms`
+alone can't supply). Per-plugin failure isolation, MIR-F-008
+idempotency dedup across re-dispatch, and missing-plugin error
+surfacing all covered by 6 new cases. The pre-existing
+`PluginHost` + `execute_chain` were not touched — they already met
+the spec §9.4 surface; this story is the typed-output bridge HS-2-02
+predicted. Next: **HS-2-05 (persistence + migration)** — DB schema
+for `PluginRun` + `ArtifactLineage` rows, schema-version bump in
+`holdspeak/db.py`, migration tests in
+`tests/unit/test_db_intent_timeline.py`.
 
 ## Active risks
 

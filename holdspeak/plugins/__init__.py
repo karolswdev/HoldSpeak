@@ -32,6 +32,7 @@ from .router import (
     reset_router_counters,
     select_active_intents,
 )
+from .dispatch import dispatch_window, dispatch_windows
 from .scoring import iter_intent_transitions, score_window, score_windows
 from .signals import SUPPORTED_INTENTS as SIGNAL_INTENTS, extract_intent_signals
 from .project_detector import ProjectDetectorPlugin
@@ -59,6 +60,8 @@ __all__ = [
     "get_router_counters",
     "SIGNAL_INTENTS",
     "available_profiles",
+    "dispatch_window",
+    "dispatch_windows",
     "extract_intent_signals",
     "iter_intent_transitions",
     "normalize_profile",
