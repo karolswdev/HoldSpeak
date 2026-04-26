@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 4
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-3-06 (phase 3 closed; phase-4 scaffold landed)
 - **Unblocks:** HS-4-02..05 (audit confirms which surfaces are stable to build on top of)
 - **Owner:** unassigned
@@ -33,10 +33,10 @@ configurability amendment.
 
 ## Acceptance criteria
 
-- [ ] At least 4 new integration tests at `tests/integration/test_web_flagship_audit.py` (or extension of `tests/integration/test_web_server.py`) covering the WFS-P / WFS-R / WFS-C requirements named above.
-- [ ] Tests execute in the standard sweep without requiring the `requires_meeting` mark (or document why if they need it).
-- [ ] Any audit-discovered gaps are recorded in `evidence-story-01.md` with a one-line "Defer to..." pointer.
-- [ ] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS.
+- [x] 5 new integration tests at `tests/integration/test_web_flagship_audit.py` covering WFS-R-004 (loopback default + explicit host override), WFS-R-001+R-002 (idle `/history` + `/settings`), WFS-P-003 (runtime-status payload shape with `mode="web"`), WFS-P-002 (meeting start/stop routes mounted).
+- [x] Tests execute without `requires_meeting` mark — they use the minimal `MeetingWebServer` fixture pattern from existing `test_web_server.py`.
+- [x] Audit found that `tests/unit/test_main_modes.py` (7 tests) already covers WFS-C-001/C-002/C-003 + doctor passthrough, and `tests/integration/test_web_server.py` already covers TestRuntimeControlEndpoints / TestSettingsApiEndpoints / TestHistoryUiSmoke. Documented in `evidence-story-01.md`. The new audit file is small *because* the surface is already well-covered — the audit's value is the WFS-* requirement traceability.
+- [x] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` → 1012 passed, 13 skipped (delta +5 vs. HS-3-06 baseline 1007).
 
 ## Test plan
 

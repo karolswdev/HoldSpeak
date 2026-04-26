@@ -1,6 +1,6 @@
 # Phase 4 — Web Flagship Runtime + Interactive Configurability (WFS-01 extended)
 
-**Last updated:** 2026-04-26 (HS-4 scaffold — phase opened with 6 backlog stories; WFS-CFG-* requirement family amended into `docs/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md` §5.5).
+**Last updated:** 2026-04-26 (HS-4-01 done — audit + 5 integration tests covering WFS-R-004 / WFS-R-001+R-002 / WFS-P-003 / WFS-P-002; WFS-* requirement→test traceability matrix in evidence; full sweep 1012 passed, +5 vs. HS-3-06 baseline).
 
 ## Goal
 
@@ -43,7 +43,7 @@ another window.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-4-01 | Audit + integration coverage for existing web-flagship surfaces | backlog | [story-01-audit](./story-01-audit.md) | — |
+| HS-4-01 | Audit + integration coverage for existing web-flagship surfaces | done | [story-01-audit](./story-01-audit.md) | [evidence-story-01](./evidence-story-01.md) — 5 audit tests + WFS-* traceability matrix; full sweep 1012 passed |
 | HS-4-02 | Block authoring API + UI (`WFS-CFG-001` + `WFS-CFG-002`) | backlog | [story-02-blocks-api-ui](./story-02-blocks-api-ui.md) | — |
 | HS-4-03 | Project KB authoring API + UI (`WFS-CFG-003`) | backlog | [story-03-project-kb-api-ui](./story-03-project-kb-api-ui.md) | — |
 | HS-4-04 | Dictation runtime config UI (`WFS-CFG-004`) | backlog | [story-04-dictation-config-ui](./story-04-dictation-config-ui.md) | — |
@@ -52,7 +52,20 @@ another window.
 
 ## Where we are
 
-Phase opened. The audit finding that drove the phase shape: the
+**HS-4-01 shipped.** The WFS-* requirement-to-test traceability
+matrix is in `evidence-story-01.md`; 14 of 17 requirements have
+explicit test coverage either pre-existing (`test_main_modes.py` +
+`test_web_server.py`) or new in this story
+(`test_web_flagship_audit.py`). 3 WFS-O-* observability requirements
+(O-001/O-002/O-003) are documented as gaps for follow-up if dogfood
+demands. Full sweep 1012 passed (+5 vs. HS-3-06 baseline 1007).
+
+Next: HS-4-02 (block authoring API + UI) — the first net-new
+configurability surface.
+
+## Earlier context — phase opening
+
+The audit finding that drove the phase shape: the
 runtime/CLI/meeting-control halves of WFS-01 are *already built*
 (`holdspeak/web_runtime.py` exists at 1101 LOC; `holdspeak/main.py`
 ships `web` + `tui` subcommands with `--no-tui` deprecation; the

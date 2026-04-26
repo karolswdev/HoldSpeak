@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-4 scaffold — phase 4 opened with 6 backlog stories targeting interactive configuration of dictation surfaces in the web UI; WFS-CFG-* requirement family amended into `docs/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md` §5.5).
+**Last updated:** 2026-04-26 (HS-4-01 done — audit + 5 integration tests covering pre-existing WFS-* surfaces; full sweep 1012 passed, 13 skipped, +5 vs. HS-3-06 baseline).
 **Current phase:** [phase-4-web-flagship-runtime](./phase-4-web-flagship-runtime/) — WFS-01 extended (audit existing surfaces + ship interactive configurability for blocks / project KB / dictation runtime / dry-run preview).
 **Status:** in-progress.
 
