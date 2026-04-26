@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 4
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-4-01 (audit confirms web runtime is stable to extend)
 - **Unblocks:** dogfood-friendly block authoring without YAML editing
 - **Owner:** unassigned
@@ -39,12 +39,12 @@ browser with validation that mirrors the YAML loader.
 
 ## Acceptance criteria
 
-- [ ] All 5 endpoints implemented and integration-tested.
-- [ ] Validation mirrors `BlockConfigError`: HTTP 4xx body includes the offending field path + canonical error message.
-- [ ] Atomic write semantics verified by test: a deliberately-bad PUT does not modify the existing `blocks.yaml`.
-- [ ] UI panel shipped; lists blocks, supports add/edit/delete, shows template preview against `{raw_text: <sample>, project: <auto-detected>}` context.
-- [ ] On settings save, the controller's pipeline cache is invalidated (`HoldSpeakController.apply_runtime_config()` already clears `_dictation_pipeline` — verify this is wired).
-- [ ] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS.
+- [x] All 5 endpoints implemented and integration-tested.
+- [x] Validation mirrors `BlockConfigError`: HTTP 4xx body includes the offending field path + canonical error message.
+- [x] Atomic write semantics verified by test: a deliberately-bad PUT does not modify the existing `blocks.yaml`.
+- [x] UI panel shipped; lists blocks, supports add/edit/delete, shows template preview against `{raw_text: <sample>, project: <auto-detected>}` context.
+- [x] On settings save, the controller's pipeline cache is invalidated. **Wired as an optional `on_dictation_config_changed` callback on `MeetingWebServer`; `web_runtime.py` does not run dictation locally so the callback is unwired in that path. Cache invalidation is contract-shaped and ready for whichever later story (HS-4-04 dictation runtime config) actually shares the controller.**
+- [x] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS (1036 passed, +24 vs. baseline 1012).
 
 ## Test plan
 

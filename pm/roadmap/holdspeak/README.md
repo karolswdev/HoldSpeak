@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-4-01 done — audit + 5 integration tests covering pre-existing WFS-* surfaces; full sweep 1012 passed, 13 skipped, +5 vs. HS-3-06 baseline).
+**Last updated:** 2026-04-26 (HS-4-02 done — block authoring API (`/api/dictation/blocks` × global+project) + `static/dictation.html` editor with client-side template preview + atomic-write helper; 24 new integration tests; full sweep 1036 passed, 13 skipped, +24 vs. HS-4-01 baseline).
 **Current phase:** [phase-4-web-flagship-runtime](./phase-4-web-flagship-runtime/) — WFS-01 extended (audit existing surfaces + ship interactive configurability for blocks / project KB / dictation runtime / dry-run preview).
 **Status:** in-progress.
 

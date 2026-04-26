@@ -32,6 +32,7 @@ HS-1-06's `kb-enricher` stage.
 
 from __future__ import annotations
 
+import os
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -126,6 +127,30 @@ def validate_template(template: str, *, where: str) -> None:
                 f"{where}: placeholder {{{inner}!r}} is not a simple "
                 "dotted name. Only {{name}} or {{a.b.c}} are allowed."
             )
+
+
+def save_blocks_yaml(path: Path, data: Mapping[str, Any]) -> None:
+    """Validate `data` and write it to `path` atomically (`WFS-CFG-006`).
+
+    Validation runs first via the same `_build_loaded_blocks` rules
+    used on read; on failure `BlockConfigError` is raised and `path`
+    is left untouched. On success the YAML is written to a sibling
+    temp file and `os.replace`-d into place so a partial / clobbered
+    target is not observable.
+    """
+    _build_loaded_blocks(data, source=path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.parent / f".{path.name}.tmp.{os.getpid()}"
+    serialized = yaml.safe_dump(dict(data), sort_keys=False, allow_unicode=True)
+    try:
+        tmp.write_text(serialized, encoding="utf-8")
+        os.replace(tmp, path)
+    finally:
+        if tmp.exists():
+            try:
+                tmp.unlink()
+            except OSError:
+                pass
 
 
 def load_blocks_yaml(path: Path) -> LoadedBlocks:

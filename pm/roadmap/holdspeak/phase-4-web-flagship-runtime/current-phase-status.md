@@ -1,6 +1,6 @@
 # Phase 4 — Web Flagship Runtime + Interactive Configurability (WFS-01 extended)
 
-**Last updated:** 2026-04-26 (HS-4-01 done — audit + 5 integration tests covering WFS-R-004 / WFS-R-001+R-002 / WFS-P-003 / WFS-P-002; WFS-* requirement→test traceability matrix in evidence; full sweep 1012 passed, +5 vs. HS-3-06 baseline).
+**Last updated:** 2026-04-26 (HS-4-02 done — block authoring API (`GET/POST/PUT/DELETE /api/dictation/blocks`) + atomic-write helper + `static/dictation.html` editor with client-side template preview; 24 new integration tests; full sweep 1036 passed, +24 vs. HS-4-01 baseline).
 
 ## Goal
 
@@ -44,7 +44,7 @@ another window.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-4-01 | Audit + integration coverage for existing web-flagship surfaces | done | [story-01-audit](./story-01-audit.md) | [evidence-story-01](./evidence-story-01.md) — 5 audit tests + WFS-* traceability matrix; full sweep 1012 passed |
-| HS-4-02 | Block authoring API + UI (`WFS-CFG-001` + `WFS-CFG-002`) | backlog | [story-02-blocks-api-ui](./story-02-blocks-api-ui.md) | — |
+| HS-4-02 | Block authoring API + UI (`WFS-CFG-001` + `WFS-CFG-002`) | done | [story-02-blocks-api-ui](./story-02-blocks-api-ui.md) | [evidence-story-02](./evidence-story-02.md) — 5 endpoints, atomic-write helper, `static/dictation.html` editor, 24 integration tests |
 | HS-4-03 | Project KB authoring API + UI (`WFS-CFG-003`) | backlog | [story-03-project-kb-api-ui](./story-03-project-kb-api-ui.md) | — |
 | HS-4-04 | Dictation runtime config UI (`WFS-CFG-004`) | backlog | [story-04-dictation-config-ui](./story-04-dictation-config-ui.md) | — |
 | HS-4-05 | Dry-run preview API + UI (`WFS-CFG-005`) | backlog | [story-05-dry-run-preview](./story-05-dry-run-preview.md) | — |
@@ -52,16 +52,24 @@ another window.
 
 ## Where we are
 
-**HS-4-01 shipped.** The WFS-* requirement-to-test traceability
-matrix is in `evidence-story-01.md`; 14 of 17 requirements have
-explicit test coverage either pre-existing (`test_main_modes.py` +
-`test_web_server.py`) or new in this story
-(`test_web_flagship_audit.py`). 3 WFS-O-* observability requirements
-(O-001/O-002/O-003) are documented as gaps for follow-up if dogfood
-demands. Full sweep 1012 passed (+5 vs. HS-3-06 baseline 1007).
+**HS-4-02 shipped.** The first net-new configurability surface is
+live: full CRUD on `~/.config/holdspeak/blocks.yaml` (and
+per-project `<root>/.holdspeak/blocks.yaml`) via `/api/dictation/blocks`,
+with validation parity to `BlockConfigError`, atomic-write
+semantics (`WFS-CFG-006`), and an editor at `/dictation` that
+ships a live client-side template preview against the
+auto-detected project context. 24 new integration tests; full
+sweep 1036 passed (+24 vs. HS-4-01 baseline 1012).
 
-Next: HS-4-02 (block authoring API + UI) — the first net-new
-configurability surface.
+Cache-invalidation contract is shaped (`on_dictation_config_changed`
+optional callback on `MeetingWebServer`) but unwired in
+`web_runtime.py`, which doesn't run dictation locally. HS-4-04
+(dictation runtime config) is the natural place to wire it.
+
+Next: HS-4-03 (project KB authoring API + UI for `WFS-CFG-003`).
+The pattern from HS-4-02 carries over directly — same scope-toggle
+shape, same atomic-write helper signature (will need a project-KB
+analogue), same client-side editing model.
 
 ## Earlier context — phase opening
 

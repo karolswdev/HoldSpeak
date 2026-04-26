@@ -26,6 +26,9 @@ _HTTP_HEADER_NAME_RE = re.compile(r"^[A-Za-z0-9-]+$")
 
 _DASHBOARD_HTML_PATH = Path(__file__).resolve().parent / "static" / "dashboard.html"
 
+# WFS-CFG-001: global dictation blocks file. Tests monkeypatch this constant.
+_GLOBAL_BLOCKS_PATH = Path.home() / ".config" / "holdspeak" / "blocks.yaml"
+
 try:
     import uvicorn
     from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -287,6 +290,7 @@ class MeetingWebServer:
         on_set_title: Optional[Callable[[str], None]] = None,
         on_set_tags: Optional[Callable[[list[str]], None]] = None,
         on_settings_applied: Optional[Callable[[Any], None]] = None,
+        on_dictation_config_changed: Optional[Callable[[], None]] = None,
         project_detector: Optional[Any] = None,
         host: str = "127.0.0.1",
     ) -> None:
@@ -314,6 +318,7 @@ class MeetingWebServer:
         self.on_set_title = on_set_title
         self.on_set_tags = on_set_tags
         self.on_settings_applied = on_settings_applied
+        self.on_dictation_config_changed = on_dictation_config_changed
         self._project_detector = project_detector
         self.host = host
 
@@ -803,6 +808,21 @@ class MeetingWebServer:
         async def settings_dashboard() -> Any:
             """Serve web settings UI (currently integrated with history dashboard)."""
             return await history_dashboard()
+
+        @app.get("/dictation")
+        async def dictation_dashboard() -> Any:
+            """Serve the dictation block-config UI (HS-4-02)."""
+            page = Path(__file__).resolve().parent / "static" / "dictation.html"
+            try:
+                html = page.read_text(encoding="utf-8")
+            except Exception as e:
+                log.error(f"Failed to read dictation.html: {e}")
+                html = (
+                    "<!doctype html><html><head><meta charset='utf-8'/>"
+                    "<title>HoldSpeak Dictation</title></head>"
+                    "<body><h1>Dictation</h1><p>Page unavailable.</p></body></html>"
+                )
+            return HTMLResponse(html)
 
         @app.get("/api/settings")
         async def api_get_settings() -> Any:
@@ -2280,6 +2300,221 @@ class MeetingWebServer:
             except Exception as e:
                 log.error(f"Failed to get project artifacts: {e}")
                 return JSONResponse({"error": str(e)}, status_code=500)
+
+        # ── Dictation block-config endpoints (WFS-CFG-001 + WFS-CFG-002) ──
+
+        def _resolve_blocks_target(scope: str) -> tuple[Path, Optional[dict[str, Any]]]:
+            """Return `(path, project_ctx)` for the requested scope.
+
+            Raises `ValueError` with a user-facing message on bad input.
+            """
+            from . import web_server as _self_module
+            from .plugins.dictation.project_root import detect_project_for_cwd
+
+            if scope == "global":
+                return _self_module._GLOBAL_BLOCKS_PATH, None
+            if scope == "project":
+                ctx = detect_project_for_cwd()
+                if ctx is None:
+                    raise ValueError("no project detected for current working directory")
+                return Path(ctx["root"]) / ".holdspeak" / "blocks.yaml", dict(ctx)
+            raise ValueError(f"scope must be 'global' or 'project', got {scope!r}")
+
+        def _read_blocks_document(path: Path) -> tuple[dict[str, Any], bool]:
+            """Read `path` as a raw YAML mapping; return empty default if missing."""
+            import yaml
+
+            if not path.exists():
+                return {"version": 1, "default_match_confidence": 0.6, "blocks": []}, False
+            raw = path.read_text(encoding="utf-8")
+            data = yaml.safe_load(raw)
+            if data is None:
+                return {"version": 1, "default_match_confidence": 0.6, "blocks": []}, True
+            if not isinstance(data, dict):
+                raise ValueError(
+                    f"{path}: top-level YAML must be a mapping, got {type(data).__name__}"
+                )
+            data.setdefault("version", 1)
+            data.setdefault("default_match_confidence", 0.6)
+            data.setdefault("blocks", [])
+            return data, True
+
+        @app.get("/api/dictation/blocks")
+        async def api_dictation_blocks_list(scope: str = "global") -> Any:
+            from .plugins.dictation.blocks import BlockConfigError, load_blocks_yaml
+
+            try:
+                path, project = _resolve_blocks_target(scope)
+            except ValueError as exc:
+                status = 404 if "no project detected" in str(exc) else 400
+                return JSONResponse({"error": str(exc)}, status_code=status)
+            try:
+                document, exists = _read_blocks_document(path)
+                if exists:
+                    load_blocks_yaml(path)  # validate, surface errors to UI
+            except BlockConfigError as exc:
+                return JSONResponse(
+                    {"error": str(exc), "scope": scope, "path": str(path)},
+                    status_code=422,
+                )
+            except Exception as exc:
+                log.error(f"Failed to read blocks document: {exc}")
+                return JSONResponse({"error": str(exc)}, status_code=500)
+            return JSONResponse(
+                {
+                    "scope": scope,
+                    "path": str(path),
+                    "exists": exists,
+                    "project": project,
+                    "document": document,
+                }
+            )
+
+        @app.post("/api/dictation/blocks")
+        async def api_dictation_blocks_create(payload: dict[str, Any], scope: str = "global") -> Any:
+            from .plugins.dictation.blocks import BlockConfigError, save_blocks_yaml
+
+            block = payload.get("block") if isinstance(payload, dict) else None
+            if not isinstance(block, dict):
+                return JSONResponse(
+                    {"error": "request body must be {'block': {...}}"},
+                    status_code=400,
+                )
+            try:
+                path, _project = _resolve_blocks_target(scope)
+            except ValueError as exc:
+                status = 404 if "no project detected" in str(exc) else 400
+                return JSONResponse({"error": str(exc)}, status_code=status)
+
+            try:
+                document, _exists = _read_blocks_document(path)
+            except Exception as exc:
+                log.error(f"Failed to read blocks document: {exc}")
+                return JSONResponse({"error": str(exc)}, status_code=500)
+
+            new_id = block.get("id")
+            existing_ids = {b.get("id") for b in document["blocks"] if isinstance(b, dict)}
+            if new_id in existing_ids:
+                return JSONResponse(
+                    {"error": f"block id {new_id!r} already exists"},
+                    status_code=409,
+                )
+            document["blocks"].append(block)
+            try:
+                save_blocks_yaml(path, document)
+            except BlockConfigError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=422)
+            if self.on_dictation_config_changed is not None:
+                try:
+                    self.on_dictation_config_changed()
+                except Exception as exc:
+                    log.error(f"on_dictation_config_changed failed: {exc}")
+            return JSONResponse(
+                {"scope": scope, "path": str(path), "document": document},
+                status_code=201,
+            )
+
+        @app.put("/api/dictation/blocks/{block_id}")
+        async def api_dictation_blocks_update(block_id: str, payload: dict[str, Any], scope: str = "global") -> Any:
+            from .plugins.dictation.blocks import BlockConfigError, save_blocks_yaml
+
+            block = payload.get("block") if isinstance(payload, dict) else None
+            if not isinstance(block, dict):
+                return JSONResponse(
+                    {"error": "request body must be {'block': {...}}"},
+                    status_code=400,
+                )
+            try:
+                path, _project = _resolve_blocks_target(scope)
+            except ValueError as exc:
+                status = 404 if "no project detected" in str(exc) else 400
+                return JSONResponse({"error": str(exc)}, status_code=status)
+            if not path.exists():
+                return JSONResponse(
+                    {"error": f"no blocks file at {path}"},
+                    status_code=404,
+                )
+            try:
+                document, _exists = _read_blocks_document(path)
+            except Exception as exc:
+                log.error(f"Failed to read blocks document: {exc}")
+                return JSONResponse({"error": str(exc)}, status_code=500)
+
+            blocks = document["blocks"]
+            target_idx = next(
+                (i for i, b in enumerate(blocks) if isinstance(b, dict) and b.get("id") == block_id),
+                None,
+            )
+            if target_idx is None:
+                return JSONResponse(
+                    {"error": f"unknown block id {block_id!r}"},
+                    status_code=404,
+                )
+            new_id = block.get("id", block_id)
+            if new_id != block_id and any(
+                isinstance(b, dict) and b.get("id") == new_id for b in blocks
+            ):
+                return JSONResponse(
+                    {"error": f"block id {new_id!r} already exists"},
+                    status_code=409,
+                )
+            blocks[target_idx] = block
+            try:
+                save_blocks_yaml(path, document)
+            except BlockConfigError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=422)
+            if self.on_dictation_config_changed is not None:
+                try:
+                    self.on_dictation_config_changed()
+                except Exception as exc:
+                    log.error(f"on_dictation_config_changed failed: {exc}")
+            return JSONResponse(
+                {"scope": scope, "path": str(path), "document": document}
+            )
+
+        @app.delete("/api/dictation/blocks/{block_id}")
+        async def api_dictation_blocks_delete(block_id: str, scope: str = "global") -> Any:
+            from .plugins.dictation.blocks import BlockConfigError, save_blocks_yaml
+
+            try:
+                path, _project = _resolve_blocks_target(scope)
+            except ValueError as exc:
+                status = 404 if "no project detected" in str(exc) else 400
+                return JSONResponse({"error": str(exc)}, status_code=status)
+            if not path.exists():
+                return JSONResponse(
+                    {"error": f"no blocks file at {path}"},
+                    status_code=404,
+                )
+            try:
+                document, _exists = _read_blocks_document(path)
+            except Exception as exc:
+                log.error(f"Failed to read blocks document: {exc}")
+                return JSONResponse({"error": str(exc)}, status_code=500)
+            blocks = document["blocks"]
+            kept = [b for b in blocks if not (isinstance(b, dict) and b.get("id") == block_id)]
+            if len(kept) == len(blocks):
+                return JSONResponse(
+                    {"error": f"unknown block id {block_id!r}"},
+                    status_code=404,
+                )
+            document["blocks"] = kept
+            try:
+                save_blocks_yaml(path, document)
+            except BlockConfigError as exc:
+                # save_blocks_yaml requires at least one block; an empty list is
+                # rejected by `_build_match`/`blocks` shape rules. Surface the
+                # 422 to the caller — they should DELETE-then-recreate or use
+                # a "deactivate" toggle (out of scope for v1).
+                return JSONResponse({"error": str(exc)}, status_code=422)
+            if self.on_dictation_config_changed is not None:
+                try:
+                    self.on_dictation_config_changed()
+                except Exception as exc:
+                    log.error(f"on_dictation_config_changed failed: {exc}")
+            return JSONResponse(
+                {"scope": scope, "path": str(path), "document": document}
+            )
 
         @app.websocket("/ws")
         async def websocket_endpoint(websocket: WebSocket) -> None:

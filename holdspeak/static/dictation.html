@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HoldSpeak — Dictation Blocks</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --canvas: #07111d;
+        --panel: rgba(9, 18, 31, 0.9);
+        --panel-strong: rgba(12, 23, 38, 0.96);
+        --line: rgba(158, 196, 229, 0.16);
+        --line-strong: rgba(158, 196, 229, 0.28);
+        --text: #edf5ff;
+        --muted: #9db1c8;
+        --accent: #64d7ff;
+        --accent-2: #75f4d3;
+        --warn: #ffb86b;
+        --danger: #ff647e;
+        --radius-md: 16px;
+        --font-ui: "Sora", "Avenir Next", "Segoe UI", sans-serif;
+        --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font-ui);
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(100, 215, 255, 0.18), transparent 30%),
+          radial-gradient(circle at bottom right, rgba(117, 244, 211, 0.12), transparent 35%),
+          var(--canvas);
+      }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      header.topbar {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 24px 40px; border-bottom: 1px solid var(--line);
+      }
+      .brand { font-weight: 600; letter-spacing: 0.02em; }
+      .brand small { color: var(--muted); margin-left: 8px; font-weight: 400; }
+      nav.routes a { margin-left: 16px; color: var(--muted); }
+      nav.routes a.active { color: var(--text); }
+
+      main { max-width: 1200px; margin: 0 auto; padding: 32px 40px 80px; }
+      h2 { margin-top: 0; }
+      .scope-row {
+        display: flex; gap: 8px; margin-bottom: 16px;
+      }
+      .scope-row button {
+        background: var(--panel); border: 1px solid var(--line);
+        color: var(--text); padding: 8px 18px; border-radius: 999px;
+        cursor: pointer; font-family: var(--font-ui);
+      }
+      .scope-row button.active {
+        background: var(--accent); color: #07111d; border-color: var(--accent);
+      }
+      .meta-banner {
+        background: var(--panel); border: 1px solid var(--line);
+        border-radius: var(--radius-md); padding: 12px 16px;
+        font-size: 13px; color: var(--muted); margin-bottom: 16px;
+        font-family: var(--font-mono);
+      }
+      .meta-banner strong { color: var(--text); font-family: var(--font-ui); }
+      .meta-banner.warn { border-color: var(--warn); color: var(--warn); }
+      .meta-banner.error { border-color: var(--danger); color: var(--danger); }
+
+      .grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+      }
+      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+      .panel {
+        background: var(--panel); border: 1px solid var(--line);
+        border-radius: var(--radius-md); padding: 20px;
+      }
+      .panel h3 { margin-top: 0; }
+
+      .block-list { display: flex; flex-direction: column; gap: 12px; }
+      .block-card {
+        border: 1px solid var(--line); border-radius: 12px;
+        padding: 12px 14px; background: var(--panel-strong);
+        cursor: pointer; transition: border-color 0.15s;
+      }
+      .block-card:hover { border-color: var(--line-strong); }
+      .block-card.selected { border-color: var(--accent); }
+      .block-id { font-family: var(--font-mono); font-weight: 600; }
+      .block-desc { color: var(--muted); font-size: 13px; margin-top: 4px; }
+      .block-card .pill {
+        display: inline-block; padding: 2px 8px; border-radius: 999px;
+        background: rgba(100, 215, 255, 0.15); color: var(--accent);
+        font-size: 11px; margin-left: 8px;
+      }
+
+      label { display: block; margin-top: 12px; font-size: 13px; color: var(--muted); }
+      input[type="text"], input[type="number"], textarea, select {
+        width: 100%; background: var(--canvas); border: 1px solid var(--line);
+        border-radius: 8px; padding: 8px 10px; color: var(--text);
+        font-family: var(--font-mono); font-size: 13px;
+      }
+      textarea { min-height: 90px; resize: vertical; }
+      .row { display: flex; gap: 12px; }
+      .row > * { flex: 1; }
+
+      .btn {
+        padding: 8px 18px; border-radius: 8px; border: 1px solid var(--line);
+        background: var(--panel); color: var(--text); cursor: pointer;
+        font-family: var(--font-ui); font-size: 13px;
+      }
+      .btn.primary { background: var(--accent); color: #07111d; border-color: var(--accent); }
+      .btn.danger { color: var(--danger); border-color: var(--danger); }
+      .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .actions { display: flex; gap: 8px; margin-top: 16px; }
+
+      .preview {
+        background: var(--canvas); border: 1px dashed var(--line);
+        border-radius: 8px; padding: 12px; margin-top: 8px;
+        font-family: var(--font-mono); font-size: 13px;
+        white-space: pre-wrap; min-height: 80px;
+      }
+      .preview .missing { color: var(--warn); }
+
+      .error-box {
+        background: rgba(255, 100, 126, 0.12); border: 1px solid var(--danger);
+        color: var(--danger); border-radius: 8px; padding: 10px 12px;
+        margin-top: 12px; font-size: 13px; font-family: var(--font-mono);
+      }
+      .ok-box {
+        background: rgba(117, 244, 211, 0.12); border: 1px solid var(--accent-2);
+        color: var(--accent-2); border-radius: 8px; padding: 10px 12px;
+        margin-top: 12px; font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">HoldSpeak <small>Dictation Blocks</small></div>
+      <nav class="routes">
+        <a href="/">Cockpit</a>
+        <a href="/history">History</a>
+        <a href="/settings">Settings</a>
+        <a href="/dictation" class="active">Dictation</a>
+      </nav>
+    </header>
+
+    <main id="app">
+      <h2>Block Editor</h2>
+      <p style="color: var(--muted); max-width: 720px;">
+        Author dictation blocks (DIR-01) without hand-editing
+        <code>blocks.yaml</code>. Changes write atomically to the
+        underlying file (<code>WFS-CFG-006</code>) and are validated
+        before persisting.
+      </p>
+
+      <div class="scope-row">
+        <button id="scope-global" data-scope="global" class="active">Global</button>
+        <button id="scope-project" data-scope="project">Project</button>
+      </div>
+
+      <div id="meta-banner" class="meta-banner">Loading…</div>
+
+      <div class="grid">
+        <section class="panel">
+          <h3>Blocks <button id="btn-new" class="btn primary" style="float:right;">+ New block</button></h3>
+          <div id="block-list" class="block-list"></div>
+        </section>
+
+        <section class="panel">
+          <h3 id="editor-title">Select a block to edit</h3>
+          <div id="editor"></div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const state = {
+        scope: "global",
+        document: null,
+        path: null,
+        project: null,
+        exists: false,
+        selectedId: null,
+        editorMode: "idle", // idle | new | edit
+        draft: null,
+      };
+
+      const PLACEHOLDER_RE = /\{([^{}]*)\}/g;
+      const VALID_NAME_RE = /^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*$/;
+
+      // ── HTTP ─────────────────────────────────────────────────────────────
+      async function api(method, url, body) {
+        const opts = { method, headers: { "Content-Type": "application/json" } };
+        if (body !== undefined) opts.body = JSON.stringify(body);
+        const r = await fetch(url, opts);
+        let data = null;
+        try { data = await r.json(); } catch (_e) { /* empty */ }
+        if (!r.ok) {
+          const err = new Error((data && data.error) || `HTTP ${r.status}`);
+          err.status = r.status;
+          err.data = data;
+          throw err;
+        }
+        return data;
+      }
+
+      // ── Loading ──────────────────────────────────────────────────────────
+      async function loadScope(scope) {
+        state.scope = scope;
+        document.querySelectorAll(".scope-row button").forEach((b) =>
+          b.classList.toggle("active", b.dataset.scope === scope)
+        );
+        const banner = document.getElementById("meta-banner");
+        banner.classList.remove("warn", "error");
+        banner.textContent = "Loading…";
+        try {
+          const data = await api("GET", `/api/dictation/blocks?scope=${scope}`);
+          state.document = data.document;
+          state.path = data.path;
+          state.project = data.project;
+          state.exists = data.exists;
+          renderMeta();
+          renderBlockList();
+          state.selectedId = null;
+          state.editorMode = "idle";
+          renderEditor();
+        } catch (e) {
+          state.document = null;
+          banner.classList.add(e.status === 404 ? "warn" : "error");
+          banner.textContent = e.message;
+          document.getElementById("block-list").innerHTML = "";
+          state.editorMode = "idle";
+          renderEditor();
+        }
+      }
+
+      function renderMeta() {
+        const banner = document.getElementById("meta-banner");
+        const parts = [`scope: <strong>${state.scope}</strong>`, `path: ${escapeHtml(state.path || "—")}`];
+        if (state.project) parts.push(`project: <strong>${escapeHtml(state.project.name)}</strong> (${escapeHtml(state.project.anchor)})`);
+        if (!state.exists) parts.push(`<em style="color:var(--warn);">file does not exist yet — first write will create it</em>`);
+        banner.innerHTML = parts.join("  ·  ");
+      }
+
+      function renderBlockList() {
+        const list = document.getElementById("block-list");
+        const blocks = (state.document && state.document.blocks) || [];
+        if (!blocks.length) {
+          list.innerHTML = `<div style="color:var(--muted);font-size:13px;">No blocks yet. Use "+ New block" to add one.</div>`;
+          return;
+        }
+        list.innerHTML = blocks.map((b) => `
+          <div class="block-card${b.id === state.selectedId ? " selected" : ""}" data-id="${escapeHtml(b.id)}">
+            <div><span class="block-id">${escapeHtml(b.id)}</span><span class="pill">${escapeHtml(b.inject?.mode || "?")}</span></div>
+            <div class="block-desc">${escapeHtml(b.description || "(no description)")}</div>
+          </div>
+        `).join("");
+        list.querySelectorAll(".block-card").forEach((el) =>
+          el.addEventListener("click", () => selectBlock(el.dataset.id))
+        );
+      }
+
+      // ── Editor ───────────────────────────────────────────────────────────
+      function selectBlock(id) {
+        state.selectedId = id;
+        const blocks = (state.document && state.document.blocks) || [];
+        const b = blocks.find((x) => x.id === id);
+        if (!b) return;
+        state.draft = deepClone(b);
+        state.editorMode = "edit";
+        renderBlockList();
+        renderEditor();
+      }
+
+      function newBlock() {
+        state.selectedId = null;
+        state.draft = {
+          id: "",
+          description: "",
+          match: { examples: [""], negative_examples: [], threshold: 0.7 },
+          inject: { mode: "append", template: "{raw_text}\n" },
+        };
+        state.editorMode = "new";
+        renderBlockList();
+        renderEditor();
+      }
+
+      function renderEditor() {
+        const titleEl = document.getElementById("editor-title");
+        const editor = document.getElementById("editor");
+        if (state.editorMode === "idle" || !state.draft) {
+          titleEl.textContent = "Select a block to edit";
+          editor.innerHTML = `<p style="color:var(--muted);font-size:13px;">Pick a block from the list, or click <strong>+ New block</strong>.</p>`;
+          return;
+        }
+        const d = state.draft;
+        titleEl.textContent = state.editorMode === "new" ? "New block" : `Edit: ${d.id}`;
+        const extrasJson = d.match.extras_schema ? JSON.stringify(d.match.extras_schema, null, 2) : "";
+
+        editor.innerHTML = `
+          <label>id <input type="text" id="f-id" value="${escapeAttr(d.id)}" /></label>
+          <label>description <input type="text" id="f-desc" value="${escapeAttr(d.description || "")}" /></label>
+
+          <label>examples (one per line, at least one)
+            <textarea id="f-examples">${escapeHtml((d.match.examples || []).join("\n"))}</textarea>
+          </label>
+          <label>negative examples (one per line, optional)
+            <textarea id="f-neg">${escapeHtml((d.match.negative_examples || []).join("\n"))}</textarea>
+          </label>
+
+          <div class="row">
+            <label>threshold (0.0–1.0)
+              <input type="number" id="f-threshold" step="0.05" min="0" max="1" value="${d.match.threshold ?? ""}" />
+            </label>
+            <label>inject mode
+              <select id="f-mode">
+                ${["append", "prepend", "replace"].map((m) => `<option value="${m}"${m === d.inject.mode ? " selected" : ""}>${m}</option>`).join("")}
+              </select>
+            </label>
+          </div>
+
+          <label>template (placeholders: <code>{raw_text}</code> · <code>{project.name}</code> · <code>{project.kb.*}</code> · <code>{intent.extras.*}</code>)
+            <textarea id="f-template">${escapeHtml(d.inject.template || "")}</textarea>
+          </label>
+
+          <label>extras_schema (JSON, optional — e.g. <code>{"stage": {"type": "enum", "values": ["draft","final"]}}</code>)
+            <textarea id="f-extras" placeholder="leave blank for none">${escapeHtml(extrasJson)}</textarea>
+          </label>
+
+          <label>template preview against sample utterance
+            <input type="text" id="f-sample" value="hello world" />
+          </label>
+          <div class="preview" id="preview"></div>
+
+          <div id="msg"></div>
+
+          <div class="actions">
+            <button class="btn primary" id="btn-save">${state.editorMode === "new" ? "Create" : "Save"}</button>
+            ${state.editorMode === "edit" ? `<button class="btn danger" id="btn-delete">Delete</button>` : ""}
+            <button class="btn" id="btn-cancel">Cancel</button>
+          </div>
+        `;
+
+        // Live preview wiring
+        const previewInputs = ["f-template", "f-sample", "f-id"];
+        previewInputs.forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.addEventListener("input", refreshPreview);
+        });
+        document.getElementById("btn-save").addEventListener("click", saveDraft);
+        document.getElementById("btn-cancel").addEventListener("click", () => {
+          state.editorMode = "idle"; state.draft = null; state.selectedId = null;
+          renderBlockList(); renderEditor();
+        });
+        const delBtn = document.getElementById("btn-delete");
+        if (delBtn) delBtn.addEventListener("click", deleteDraft);
+
+        refreshPreview();
+      }
+
+      function refreshPreview() {
+        const tmplEl = document.getElementById("f-template");
+        const sampleEl = document.getElementById("f-sample");
+        const previewEl = document.getElementById("preview");
+        if (!tmplEl || !previewEl) return;
+        const tmpl = tmplEl.value;
+        const sample = (sampleEl && sampleEl.value) || "";
+        const ctx = {
+          raw_text: sample,
+          project: state.project ? { name: state.project.name, kb: state.project.kb || {} } : { name: "(no project)", kb: {} },
+          intent: { extras: {} },
+        };
+        previewEl.innerHTML = renderTemplate(tmpl, ctx);
+      }
+
+      function renderTemplate(tmpl, ctx) {
+        return escapeHtml(tmpl).replace(/\{([^{}]*)\}/g, (_m, raw) => {
+          const inner = raw.trim();
+          if (!inner) return `<span class="missing">{}</span>`;
+          if (!VALID_NAME_RE.test(inner)) return `<span class="missing">{${escapeHtml(inner)}!}</span>`;
+          const value = resolveDotted(ctx, inner);
+          if (value === undefined) return `<span class="missing">{${escapeHtml(inner)}?}</span>`;
+          return escapeHtml(String(value));
+        });
+      }
+
+      function resolveDotted(obj, path) {
+        const parts = path.split(".");
+        let cur = obj;
+        for (const p of parts) {
+          if (cur && typeof cur === "object" && p in cur) cur = cur[p];
+          else return undefined;
+        }
+        return cur;
+      }
+
+      // ── Save / delete ────────────────────────────────────────────────────
+      function collectDraft() {
+        const get = (id) => document.getElementById(id);
+        const examples = get("f-examples").value.split("\n").map((s) => s.trim()).filter(Boolean);
+        const neg = get("f-neg").value.split("\n").map((s) => s.trim()).filter(Boolean);
+        const thresholdRaw = get("f-threshold").value.trim();
+        const threshold = thresholdRaw === "" ? null : Number(thresholdRaw);
+        let extras = null;
+        const extrasRaw = get("f-extras").value.trim();
+        if (extrasRaw) {
+          try { extras = JSON.parse(extrasRaw); }
+          catch (e) { throw new Error(`extras_schema is not valid JSON: ${e.message}`); }
+        }
+        const block = {
+          id: get("f-id").value.trim(),
+          description: get("f-desc").value,
+          match: { examples, negative_examples: neg },
+          inject: { mode: get("f-mode").value, template: get("f-template").value },
+        };
+        if (threshold !== null && !Number.isNaN(threshold)) block.match.threshold = threshold;
+        if (extras !== null) block.match.extras_schema = extras;
+        return block;
+      }
+
+      async function saveDraft() {
+        const msg = document.getElementById("msg");
+        msg.innerHTML = "";
+        let block;
+        try { block = collectDraft(); }
+        catch (e) { msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`; return; }
+        try {
+          if (state.editorMode === "new") {
+            await api("POST", `/api/dictation/blocks?scope=${state.scope}`, { block });
+          } else {
+            await api("PUT", `/api/dictation/blocks/${encodeURIComponent(state.selectedId)}?scope=${state.scope}`, { block });
+          }
+          await loadScope(state.scope);
+        } catch (e) {
+          msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+        }
+      }
+
+      async function deleteDraft() {
+        if (!state.selectedId) return;
+        if (!confirm(`Delete block ${state.selectedId}?`)) return;
+        const msg = document.getElementById("msg");
+        msg.innerHTML = "";
+        try {
+          await api("DELETE", `/api/dictation/blocks/${encodeURIComponent(state.selectedId)}?scope=${state.scope}`);
+          await loadScope(state.scope);
+        } catch (e) {
+          msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+        }
+      }
+
+      // ── Helpers ──────────────────────────────────────────────────────────
+      function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
+      function escapeHtml(s) {
+        return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
+      }
+      function escapeAttr(s) { return escapeHtml(s); }
+
+      // ── Init ─────────────────────────────────────────────────────────────
+      document.querySelectorAll(".scope-row button").forEach((b) =>
+        b.addEventListener("click", () => loadScope(b.dataset.scope))
+      );
+      document.getElementById("btn-new").addEventListener("click", newBlock);
+      loadScope("global");
+    </script>
+  </body>
+</html>
