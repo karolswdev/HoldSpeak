@@ -1,0 +1,12 @@
+# Captured: 2026-04-26T06:38:39Z
+# Git: c603638d83e653ced93e544f567123678b941579
+# MIR-D-005: idempotent migration. Construct DB twice against the same path; second call must not raise and must keep the schema version.
+
+## First construction (cold)
+   SCHEMA_VERSION=10; rows ok
+## Second construction (re-run migration on existing DB)
+   SCHEMA_VERSION=10; idempotent re-run OK
+## Third construction (sanity)
+   SCHEMA_VERSION=10; idempotent re-run OK
+
+PASS — re-running migration on an existing DB is idempotent.

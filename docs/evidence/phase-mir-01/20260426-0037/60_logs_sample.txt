@@ -1,0 +1,13 @@
+# Captured: 2026-04-26T06:39:18Z
+# Git: c603638d83e653ced93e544f567123678b941579
+# MIR-O-001: logs MUST include meeting_id, window_id, intent_set, and plugin_id where relevant.
+# Capture: drive one host.execute through and dump the JSON-shaped log payloads.
+
+{"context_keys":["active_intents","api_key"],"event":"mir_plugin_run_start","intent_set":["delivery","comms"],"meeting_id":"m-logs","plugin_id":"requirements_extractor","redacted_keys":["api_key"],"window_id":"m-logs:w0001"}
+{"context_keys":["active_intents","api_key"],"event":"mir_plugin_run_finish","intent_set":["delivery","comms"],"meeting_id":"m-logs","plugin_id":"requirements_extractor","redacted_keys":["api_key"],"status":"success","window_id":"m-logs:w0001"}
+
+Returned status: success
+Returned plugin_id: requirements_extractor
+
+MIR-O-001 PASS — start + finish events both carry meeting_id, window_id, plugin_id, intent_set.
+MIR-S-003 PASS — 'api_key' appears in `redacted_keys`, never in `context_keys` payload.

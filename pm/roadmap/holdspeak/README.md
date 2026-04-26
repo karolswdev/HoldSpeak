@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-2-10 done — 2 MIR doctor checks + failure-isolation integration test; 973 passed end-to-end).
-**Current phase:** [phase-2-multi-intent-routing](./phase-2-multi-intent-routing/current-phase-status.md)
-**Status:** in-progress.
+**Last updated:** 2026-04-26 (HS-2-11 DoD sweep complete — **MIR-01 PHASE DONE**; spec §8.2 evidence bundle at `docs/evidence/phase-mir-01/20260426-0037/`; 973 passed end-to-end).
+**Current phase:** none — both DIR-01 and MIR-01 closed; pick the next via the project's `docs/PLAN_*` files.
+**Status:** between phases.
 
 ## Vision
 
@@ -37,7 +37,7 @@ canon, canon wins.
 |---|---|---|---|
 | 0 | Project + roadmap setup; packaging hardening | done | [phase-0-setup](./phase-0-setup/) |
 | 1 | DIR-01: Dictation intent routing + transcript enrichment pipeline | done | [phase-1-dictation-intent-routing](./phase-1-dictation-intent-routing/) |
-| 2 | MIR-01: Meeting-side multi-intent routing + artifact synthesis | in-progress | [phase-2-multi-intent-routing](./phase-2-multi-intent-routing/) |
+| 2 | MIR-01: Meeting-side multi-intent routing + artifact synthesis | done | [phase-2-multi-intent-routing](./phase-2-multi-intent-routing/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

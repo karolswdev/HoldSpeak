@@ -1,0 +1,25 @@
+# git status capture
+# Captured: 2026-04-26T06:37:48Z
+# Commands: git status --short; git log --oneline -15
+
+## git status --short
+ M uv.lock
+?? .claude/
+?? docs/evidence/phase-mir-01/20260426-0037/
+
+## git log --oneline -15
+c603638 HS-2-10: MIR doctor checks + failure-isolation integration test
+385f078 HS-2-09: MeetingConfig MIR-01 routing knobs + MeetingSession bridge
+c14bc39 HS-2-08: web API integration tests + circular-import bugfix
+d6a5826 HS-2-07: synthesis-persist bridge + process_meeting_state(synthesize=True)
+4b8a4a4 HS-2-06: MIR pipeline + MeetingSession.stop() hook (off by default)
+a616dc8 HS-2-05: typed persistence adapters for IntentWindow, PluginRun, ArtifactLineage
+c127356 HS-2-04: typed plugin-chain dispatcher emitting PluginRun records
+8756384 HS-2-03: typed scoring + transition helpers (score_window, iter_intent_transitions)
+1068d33 HS-2-02: typed MIR contracts (IntentScore, IntentTransition, PluginRun, ArtifactLineage)
+29a4b5f HS-2 scaffold: open phase-2 (MIR-01) — backlog stories + index update
+d6db964 HS-1-11: DIR-01 DoD sweep — phase complete (real model on the reference Mac)
+56618f3 HS-1-09: doctor checks for DIR-01 LLM runtime + structured-output compile
+c09bd27 HS-1-08: holdspeak dictation CLI + shared assembly helper
+ff6447f HS-1-07: controller wires DIR-01 dictation pipeline (gated, off by default)
+d2a240f HS-1-06: built-in intent-router + kb-enricher stages

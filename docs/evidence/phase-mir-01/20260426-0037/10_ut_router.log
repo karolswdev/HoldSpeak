@@ -1,0 +1,66 @@
+# Captured: 2026-04-26T06:38:03Z
+# Git: c603638d83e653ced93e544f567123678b941579
+# Command: uv run pytest tests/unit/test_intent_router.py tests/unit/test_intent_scoring.py tests/unit/test_intent_contracts.py tests/unit/test_intent_dispatch.py tests/unit/test_intent_persistence.py tests/unit/test_intent_pipeline.py tests/unit/test_intent_signals.py tests/unit/test_intent_timeline.py tests/unit/test_intent_observability.py -v
+
+============================= test session starts ==============================
+platform darwin -- Python 3.13.11, pytest-9.0.2, pluggy-1.6.0 -- /Users/karol/dev/tools/HoldSpeak/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/karol/dev/tools/HoldSpeak
+configfile: pyproject.toml
+plugins: anyio-4.12.1, mock-3.15.1, timeout-2.4.0, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 51 items
+
+tests/unit/test_intent_router.py::test_available_profiles_include_balanced_and_domain_profiles PASSED [  1%]
+tests/unit/test_intent_router.py::test_normalize_profile_falls_back_to_default PASSED [  3%]
+tests/unit/test_intent_router.py::test_normalize_intent_scores_clamps_unknowns_and_invalids PASSED [  5%]
+tests/unit/test_intent_router.py::test_select_active_intents_uses_threshold_and_hysteresis PASSED [  7%]
+tests/unit/test_intent_router.py::test_preview_route_honors_override_intents_and_profile_chain PASSED [  9%]
+tests/unit/test_intent_router.py::test_preview_route_uses_scores_when_no_override PASSED [ 11%]
+tests/unit/test_intent_router.py::test_preview_route_from_transcript_extracts_signals_before_routing PASSED [ 13%]
+tests/unit/test_intent_scoring.py::test_score_window_returns_typed_intent_score_with_window_id PASSED [ 15%]
+tests/unit/test_intent_scoring.py::test_score_window_supports_multi_label_above_threshold_mir_f_002 PASSED [ 17%]
+tests/unit/test_intent_scoring.py::test_score_window_tag_boost_promotes_intent PASSED [ 19%]
+tests/unit/test_intent_scoring.py::test_score_windows_preserves_input_order PASSED [ 21%]
+tests/unit/test_intent_scoring.py::test_iter_intent_transitions_emits_typed_events_on_change PASSED [ 23%]
+tests/unit/test_intent_scoring.py::test_iter_intent_transitions_hysteresis_suppresses_oscillation_mir_f_005 PASSED [ 25%]
+tests/unit/test_intent_scoring.py::test_iter_intent_transitions_empty_input_returns_empty PASSED [ 27%]
+tests/unit/test_intent_scoring.py::test_score_windows_works_end_to_end_with_build_intent_windows PASSED [ 29%]
+tests/unit/test_intent_contracts.py::test_intent_score_labels_above_threshold_orders_by_score_then_label PASSED [ 31%]
+tests/unit/test_intent_contracts.py::test_intent_score_is_frozen PASSED  [ 33%]
+tests/unit/test_intent_contracts.py::test_intent_transition_round_trips_to_dict PASSED [ 35%]
+tests/unit/test_intent_contracts.py::test_plugin_run_accepts_known_statuses PASSED [ 37%]
+tests/unit/test_intent_contracts.py::test_plugin_run_rejects_unknown_status PASSED [ 39%]
+tests/unit/test_intent_contracts.py::test_artifact_lineage_preserves_window_and_plugin_run_links PASSED [ 41%]
+tests/unit/test_intent_contracts.py::test_contracts_re_exported_from_plugins_package PASSED [ 43%]
+tests/unit/test_intent_dispatch.py::test_dispatch_window_returns_typed_plugin_runs_for_chain PASSED [ 45%]
+tests/unit/test_intent_dispatch.py::test_dispatch_window_passes_active_intents_into_plugin_context PASSED [ 47%]
+tests/unit/test_intent_dispatch.py::test_dispatch_window_idempotency_dedups_second_dispatch_mir_f_008 PASSED [ 49%]
+tests/unit/test_intent_dispatch.py::test_dispatch_window_isolates_plugin_failure_mir_r_004 PASSED [ 50%]
+tests/unit/test_intent_dispatch.py::test_dispatch_windows_preserves_window_order_with_typed_records PASSED [ 52%]
+tests/unit/test_intent_dispatch.py::test_dispatch_window_missing_plugin_id_surfaces_as_error_record PASSED [ 54%]
+tests/unit/test_intent_persistence.py::test_record_intent_window_round_trips_typed_score PASSED [ 56%]
+tests/unit/test_intent_persistence.py::test_record_intent_window_rejects_window_id_mismatch PASSED [ 58%]
+tests/unit/test_intent_persistence.py::test_record_plugin_run_round_trips_typed_record PASSED [ 60%]
+tests/unit/test_intent_persistence.py::test_record_plugin_run_marks_deduped_status_with_dedup_flag PASSED [ 62%]
+tests/unit/test_intent_persistence.py::test_record_plugin_runs_persists_batch_in_order PASSED [ 64%]
+tests/unit/test_intent_persistence.py::test_record_artifact_with_lineage_packs_window_and_plugin_run_sources PASSED [ 66%]
+tests/unit/test_intent_persistence.py::test_record_artifact_rejects_lineage_id_mismatch PASSED [ 68%]
+tests/unit/test_intent_persistence.py::test_back_compat_meeting_without_intent_data_loads_clean_mir_d_006 PASSED [ 70%]
+tests/unit/test_intent_pipeline.py::test_process_meeting_state_returns_empty_result_for_empty_segments PASSED [ 72%]
+tests/unit/test_intent_pipeline.py::test_process_meeting_state_returns_error_when_id_missing PASSED [ 74%]
+tests/unit/test_intent_pipeline.py::test_process_meeting_state_runs_full_pipeline_end_to_end PASSED [ 76%]
+tests/unit/test_intent_pipeline.py::test_process_meeting_state_persists_when_db_supplied PASSED [ 78%]
+tests/unit/test_intent_pipeline.py::test_process_meeting_state_dispatch_failure_is_recorded_not_raised PASSED [ 80%]
+tests/unit/test_intent_signals.py::test_extract_intent_signals_returns_all_supported_intents PASSED [ 82%]
+tests/unit/test_intent_signals.py::test_extract_intent_signals_detects_architecture_vs_delivery PASSED [ 84%]
+tests/unit/test_intent_signals.py::test_extract_intent_signals_tag_boost_applies PASSED [ 86%]
+tests/unit/test_intent_signals.py::test_extract_intent_signals_empty_input_is_zeroed PASSED [ 88%]
+tests/unit/test_intent_timeline.py::test_build_intent_windows_creates_overlapping_windows PASSED [ 90%]
+tests/unit/test_intent_timeline.py::test_build_intent_windows_sorts_and_filters_invalid_segments PASSED [ 92%]
+tests/unit/test_intent_timeline.py::test_detect_intent_transitions_reports_added_and_removed_intents PASSED [ 94%]
+tests/unit/test_intent_observability.py::test_router_counters_track_routed_and_dropped_windows PASSED [ 96%]
+tests/unit/test_intent_observability.py::test_plugin_host_metrics_count_success_error_timeout_and_deduped PASSED [ 98%]
+tests/unit/test_intent_observability.py::test_plugin_host_structured_logs_include_fields_and_redact_secrets PASSED [100%]
+
+============================== 51 passed in 0.43s ==============================

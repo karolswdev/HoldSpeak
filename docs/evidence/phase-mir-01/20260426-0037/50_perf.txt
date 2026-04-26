@@ -1,0 +1,16 @@
+# Captured: 2026-04-26T06:39:17Z
+# Git: c603638d83e653ced93e544f567123678b941579
+# MIR-R-001: routing for one window SHOULD complete within 300ms median on developer hardware.
+# This sample exercises score_window over 100 representative windows on the reference Mac.
+
+Samples: 100
+min:    0.0091 ms
+median: 0.0096 ms
+mean:   0.0251 ms
+p95:    0.0136 ms
+max:    1.4562 ms
+
+MIR-R-001 gate: median <= 300.0ms — PASS (median=0.0096ms)
+
+Note: this is the lexical scorer (HS-2-03 typed bridge over the dict-shaped extract_intent_signals).
+LLM-backed scoring would land far above this baseline; the MIR-R-001 SHOULD applies to that future path.

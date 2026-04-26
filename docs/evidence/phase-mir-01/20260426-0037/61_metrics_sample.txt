@@ -1,0 +1,14 @@
+# Captured: 2026-04-26T06:39:37Z
+# Git: c603638d83e653ced93e544f567123678b941579
+# MIR-O-002 / MIR-O-003: router counters for routed/dropped windows; host counters for success/error/timeout/deduped/blocked/queued.
+
+## After first dispatch
+router counters: {'routed_windows': 1, 'dropped_windows': 0}
+host metrics:    {'runs_total': 5, 'success': 4, 'error': 1, 'timeout': 0, 'deduped': 0, 'blocked': 0, 'queued': 0}
+
+## After second dispatch (idempotency cache hits)
+router counters: {'routed_windows': 2, 'dropped_windows': 0}
+host metrics:    {'runs_total': 10, 'success': 4, 'error': 2, 'timeout': 0, 'deduped': 4, 'blocked': 0, 'queued': 0}
+
+MIR-O-002 PASS — router emits routed/dropped counters incrementing across calls.
+MIR-O-003 PASS — host emits success/error/deduped counters per status.

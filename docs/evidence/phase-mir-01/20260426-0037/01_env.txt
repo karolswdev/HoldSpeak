@@ -1,0 +1,22 @@
+# Environment capture
+# Captured: 2026-04-26T06:37:48Z
+# Commands: uname -a; sw_vers; uv run python --version; uv --version; git rev-parse HEAD
+
+## uname -a
+Darwin Karols-MacBook-Pro.local 25.2.0 Darwin Kernel Version 25.2.0: Tue Nov 18 21:07:05 PST 2025; root:xnu-12377.61.12~1/RELEASE_ARM64_T6020 arm64
+
+## sw_vers
+ProductName:		macOS
+ProductVersion:		26.2
+BuildVersion:		25C56
+
+## python
+Python 3.13.11
+
+## uv
+uv 0.9.28 (Homebrew 2026-01-29)
+
+## git HEAD
+c603638d83e653ced93e544f567123678b941579
+c603638 HS-2-10: MIR doctor checks + failure-isolation integration test
+  Karol, Sun Apr 26 00:35:34 2026 -0600

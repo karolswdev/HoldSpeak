@@ -1,6 +1,6 @@
 # Phase 2 — Multi-Intent Routing (MIR-01)
 
-**Last updated:** 2026-04-26 (HS-2-10 done — 2 MIR doctor checks (`MIR routing`, `MIR telemetry`) honoring DIR-DOC-003 never-FAIL + spec-named failure-isolation integration test; 8 new tests, 973 passed end-to-end).
+**Last updated:** 2026-04-26 (HS-2-11 DoD sweep complete — **MIR-01 PHASE DONE**; spec §8.2 evidence bundle at `docs/evidence/phase-mir-01/20260426-0037/`; spec §9.11 4-command gate all PASS; 973 passed end-to-end).
 
 ## Goal
 
@@ -21,13 +21,13 @@ meeting-side sibling to DIR-01; the two phases share
 
 ## Exit criteria (evidence required)
 
-- [ ] Every `MIR-*` requirement has passing verification per spec §7.2 matrix.
-- [ ] Evidence bundle at `docs/evidence/phase-mir-01/<YYYYMMDD-HHMM>/` contains every file listed in spec §8.2.
-- [ ] Router supports dynamic intent shifts and multi-intent windows on a real meeting transcript end-to-end.
-- [ ] Synthesis pass runs and stores `ArtifactLineage` links from artifacts back to source windows + plugin runs.
-- [ ] No regressions in existing deferred-intel paths.
-- [ ] Web UI exposes MIR-01 controls end-to-end without requiring TUI (per spec §11 item 7).
-- [ ] Phase summary lists known gaps and explicitly defers follow-up work.
+- [x] Every `MIR-*` requirement has passing verification per spec §7.2 matrix. — `docs/evidence/phase-mir-01/20260426-0037/03_traceability.md`
+- [x] Evidence bundle at `docs/evidence/phase-mir-01/20260426-0037/` contains every file listed in spec §8.2 (17/17). — `00_manifest.md`
+- [x] Router supports dynamic intent shifts and multi-intent windows on a real meeting transcript end-to-end. — `20_it_routing.log` (`test_pipeline_emits_transitions_across_intent_arc`)
+- [x] Synthesis pass runs and stores `ArtifactLineage` links from artifacts back to source windows + plugin runs. — `20_it_synthesis.log` (`test_synthesize_and_persist_writes_artifacts_with_lineage`)
+- [x] No regressions in existing deferred-intel paths. — full sweep clean (973 passed, 12 skipped, 0 failed; metal excluded per standing memory).
+- [x] Web UI exposes MIR-01 controls end-to-end without requiring TUI (per spec §11 item 7). — `40_api_checks.log` (14 cases across 7 endpoints; CLI is supplementary).
+- [x] Phase summary lists known gaps and explicitly defers follow-up work. — `99_phase_summary.md` (8 deferred items enumerated).
 
 ## Story status
 
@@ -49,26 +49,24 @@ table below mirrors it.
 | HS-2-08 | Step 7 — API + CLI surfaces | done | [story-08-api-cli](./story-08-api-cli.md) | tests pass (6 timeline + 8 controls = 14 new + 7 pre-existing intel-command) + full suite green (954 passed, metal excluded) |
 | HS-2-09 | Step 8 — Config + feature flags | done | [story-09-config-flags](./story-09-config-flags.md) | tests pass (7 unit config + 3 integration + 1 extended defaults case) + full suite green (965 passed, metal excluded) |
 | HS-2-10 | Step 9 — Observability + hardening | done | [story-10-observability](./story-10-observability.md) | tests pass (5 new doctor + 3 new integration + 21 doctor + 3 pre-existing observability) + full suite green (973 passed, metal excluded) |
-| HS-2-11 | Step 10 — Full regression gate + DoD | backlog | [story-11-dod](./story-11-dod.md) | — |
+| HS-2-11 | Step 10 — Full regression gate + DoD | done | [story-11-dod](./story-11-dod.md) | spec §8.2 bundle 17/17 + spec §9.11 4-command gate all PASS + 973 passed end-to-end |
 
 ## Where we are
 
-HS-2-10 done — 2 new MIR doctor checks (`MIR routing`,
-`MIR telemetry`) join the dictation pair in `collect_doctor_checks`,
-both honoring DIR-DOC-003 (never FAIL — MIR-01 is opt-in). The
-routing check validates `plugin_profile` against `available_profiles`
-so typos surface at `holdspeak doctor` rather than at meeting stop;
-the telemetry check is a smoke probe that the router/host counter
-APIs are callable. The spec-named integration test
-`test_intent_failure_isolation.py` covers MIR-R-004 end-to-end:
-one failing chain plugin → siblings still execute, the failed run
-persists with `status=error`. Pre-existing
-`test_intent_observability.py` already covered MIR-O-001/002/003
-at the unit level (router counters, host metrics, structured logs
-with secret redaction) — no new router/host code was needed.
-Next: **HS-2-11 (DoD sweep)** — full §7.2 matrix verification,
-evidence bundle at `docs/evidence/phase-mir-01/<YYYYMMDD-HHMM>/`,
-phase summary, mark phase done. Mirrors HS-1-11.
+**MIR-01 is complete.** HS-2-11 shipped the spec §8.2 evidence
+bundle at `docs/evidence/phase-mir-01/20260426-0037/` (17/17 files,
+all leading with command + timestamp + git sha per §8.3). Spec §9.11
+4-command verification gate all PASS (`compileall holdspeak`;
+770 unit / 191 integration / 128 requires_meeting). Full sweep
+clean: 973 passed, 12 skipped, 0 failed (metal excluded per
+standing memory). 7 phase exit-criteria boxes all checked above
+with evidence pointers; spec §11 DoD items 1-7 explicitly
+addressed in `99_phase_summary.md`.
+
+Phase 2 closed across 11 commits / 9 stories shipped / 81 new
+test cases / ~5.7k lines added. The next phase has not been
+picked yet; 8 deferred follow-up items are enumerated in
+`99_phase_summary.md` for the next operator.
 
 ## Active risks
 
