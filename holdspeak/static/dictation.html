@@ -344,6 +344,7 @@
         <section class="panel">
           <h3>Knowledge-base entries
             <button id="kb-btn-add" class="btn primary" style="float:right;">+ New entry</button>
+            <button id="kb-btn-starter" class="btn" style="float:right;margin-right:8px;">Use starter</button>
           </h3>
           <div id="kb-rows"></div>
           <div id="kb-msg"></div>
@@ -796,6 +797,7 @@
             <span>${escapeHtml(w.action || "")}</span>
             ${w.section && w.section !== "readiness" ? `<button class="btn" data-ready-section="${escapeAttr(w.section)}" style="float:right;">Open</button>` : ""}
             ${w.template_id ? `<button class="btn primary" data-ready-template-id="${escapeAttr(w.template_id)}" data-ready-template-scope="${escapeAttr(w.template_scope || "global")}" style="float:right;margin-right:8px;">Create + dry-run</button>` : ""}
+            ${w.kb_action === "create_starter" ? `<button class="btn primary" data-ready-kb-starter="1" style="float:right;margin-right:8px;">Create starter KB</button>` : ""}
           </div>
         `).join("");
         actions.querySelectorAll("button[data-ready-section]").forEach((btn) => {
@@ -808,6 +810,11 @@
               dryRun: true,
               scope: btn.dataset.readyTemplateScope || "global",
             });
+          });
+        });
+        actions.querySelectorAll("button[data-ready-kb-starter]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            createStarterKB({ switchToKB: true });
           });
         });
       }
@@ -923,6 +930,25 @@
           kbState.kbPath = data.kb_path;
           msg.innerHTML = `<div class="ok-box">Saved.</div>`;
           renderKBMeta(data);
+        } catch (e) {
+          msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+        }
+      }
+
+      async function createStarterKB(options = {}) {
+        const msg = document.getElementById("kb-msg");
+        msg.innerHTML = "";
+        try {
+          const data = await api("POST", `/api/dictation/project-kb/starter${projectRootParam("?")}`);
+          if (options.switchToKB) activateSection("kb");
+          kbState.lastLoaded = data.kb;
+          kbState.detected = data.detected;
+          kbState.kbPath = data.kb_path;
+          kbState.rows = Object.entries(data.kb || {}).map(([k, v]) => ({ key: k, value: v ?? "" }));
+          msg.innerHTML = `<div class="ok-box">Created starter Project KB.</div>`;
+          renderKBMeta(data);
+          renderKBRows();
+          if (state.activeSection === "readiness") loadReadiness();
         } catch (e) {
           msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
         }
@@ -1233,6 +1259,7 @@
       );
       document.getElementById("btn-new").addEventListener("click", newBlock);
       document.getElementById("kb-btn-add").addEventListener("click", kbAdd);
+      document.getElementById("kb-btn-starter").addEventListener("click", createStarterKB);
       document.getElementById("kb-btn-save").addEventListener("click", kbSave);
       document.getElementById("kb-btn-reset").addEventListener("click", kbReset);
       document.getElementById("kb-btn-delete").addEventListener("click", kbDelete);

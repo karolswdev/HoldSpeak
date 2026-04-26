@@ -195,6 +195,52 @@ class TestPutProjectKB:
         assert response.status_code == 404
 
 
+# ── Starter ──────────────────────────────────────────────────────────
+
+
+class TestStarterProjectKB:
+    def test_starter_creates_canonical_project_kb(
+        self, test_client: TestClient, project_root_dir: Path, cache_invalidator: MagicMock
+    ) -> None:
+        response = test_client.post("/api/dictation/project-kb/starter")
+
+        assert response.status_code == 201, response.text
+        body = response.json()
+        assert body["starter"] is True
+        assert body["kb"] == {"stack": None, "task_focus": None, "constraints": None}
+        on_disk = yaml.safe_load((project_root_dir / ".holdspeak" / "project.yaml").read_text())
+        assert on_disk == {"kb": {"stack": None, "task_focus": None, "constraints": None}}
+        cache_invalidator.assert_called_once()
+
+    def test_starter_honors_project_root_override(
+        self, test_client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        target = tmp_path / "target"
+        target.mkdir()
+        (target / "pyproject.toml").write_text('[project]\nname = "target-proj"\n', encoding="utf-8")
+        monkeypatch.chdir(tmp_path)
+
+        response = test_client.post(f"/api/dictation/project-kb/starter?project_root={target}")
+
+        assert response.status_code == 201, response.text
+        body = response.json()
+        assert body["detected"]["name"] == "target-proj"
+        assert yaml.safe_load((target / ".holdspeak" / "project.yaml").read_text()) == {
+            "kb": {"stack": None, "task_focus": None, "constraints": None}
+        }
+
+    def test_starter_refuses_to_overwrite_existing_file(
+        self, test_client: TestClient, project_root_dir: Path, cache_invalidator: MagicMock
+    ) -> None:
+        path = _seed_kb(project_root_dir, {"stack": "python"})
+
+        response = test_client.post("/api/dictation/project-kb/starter")
+
+        assert response.status_code == 409
+        assert yaml.safe_load(path.read_text()) == {"kb": {"stack": "python"}}
+        cache_invalidator.assert_not_called()
+
+
 # ── DELETE ────────────────────────────────────────────────────────────
 
 
@@ -238,6 +284,8 @@ def test_dictation_page_includes_project_kb_section() -> None:
     body = response.text
     assert "Project KB" in body
     assert "/api/dictation/project-kb" in body  # JS fetches the API
+    assert "/api/dictation/project-kb/starter" in body
+    assert "kb-btn-starter" in body
 
 
 def test_round_trip_put_then_get(test_client: TestClient, project_root_dir: Path) -> None:

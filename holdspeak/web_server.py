@@ -2562,6 +2562,11 @@ class MeetingWebServer:
                 },
             },
         )
+        _STARTER_PROJECT_KB: dict[str, Any] = {
+            "stack": None,
+            "task_focus": None,
+            "constraints": None,
+        }
 
         def _starter_template(template_id: str) -> Optional[dict[str, Any]]:
             for template in _STARTER_BLOCK_TEMPLATES:
@@ -2845,8 +2850,9 @@ class MeetingWebServer:
                 warnings.append({
                     "code": "missing_project_kb",
                     "message": "Project KB file is missing.",
-                    "action": "Open Project KB and save the fields this project needs.",
+                    "action": "Create a starter Project KB file.",
                     "section": "kb",
+                    "kb_action": "create_starter",
                 })
             if not kb_payload["valid"]:
                 warnings.append({
@@ -3262,6 +3268,53 @@ class MeetingWebServer:
                 "kb": fresh_kb,
                 "kb_path": str(kb_path_for(root)),
             })
+
+        @app.post("/api/dictation/project-kb/starter")
+        async def api_dictation_project_kb_starter(project_root: Optional[str] = None) -> Any:
+            from .plugins.dictation.project_kb import (
+                ProjectKBError,
+                kb_path_for,
+                read_project_kb,
+                write_project_kb,
+            )
+
+            try:
+                ctx = _resolve_project_context(project_root)
+            except ValueError as exc:
+                return JSONResponse(
+                    {"error": str(exc)},
+                    status_code=400 if project_root else 404,
+                )
+            root = Path(ctx["root"])
+            path = kb_path_for(root)
+            if path.exists():
+                return JSONResponse(
+                    {"error": f"project KB already exists at {path}"},
+                    status_code=409,
+                )
+            try:
+                write_project_kb(root, _STARTER_PROJECT_KB)
+            except ProjectKBError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=422)
+            if self.on_dictation_config_changed is not None:
+                try:
+                    self.on_dictation_config_changed()
+                except Exception as exc:
+                    log.error(f"on_dictation_config_changed failed: {exc}")
+            try:
+                fresh_kb = read_project_kb(root)
+            except ProjectKBError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=500)
+            redetected = _resolve_project_context(project_root) if project_root else ctx
+            return JSONResponse(
+                {
+                    "detected": dict(redetected),
+                    "kb": fresh_kb,
+                    "kb_path": str(path),
+                    "starter": True,
+                },
+                status_code=201,
+            )
 
         @app.delete("/api/dictation/project-kb")
         async def api_dictation_project_kb_delete(project_root: Optional[str] = None) -> Any:

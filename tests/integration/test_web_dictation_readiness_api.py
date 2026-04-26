@@ -175,6 +175,24 @@ def test_readiness_missing_model_is_actionable(
     assert "runtime_model_missing" in {warning["code"] for warning in body["warnings"]}
 
 
+def test_readiness_missing_project_kb_recommends_starter_action(
+    test_client: TestClient,
+    settings_path: Path,
+    tmp_path: Path,
+) -> None:
+    _save_config(settings_path, enabled=True)
+    root = tmp_path / "project"
+    _write_project(root, with_kb=False, with_blocks=True)
+
+    response = test_client.get(f"/api/dictation/readiness?project_root={root}")
+
+    assert response.status_code == 200
+    body = response.json()
+    warning = next(w for w in body["warnings"] if w["code"] == "missing_project_kb")
+    assert warning["kb_action"] == "create_starter"
+    assert warning["section"] == "kb"
+
+
 def test_readiness_rejects_bad_project_root(test_client: TestClient, settings_path: Path) -> None:
     _save_config(settings_path, enabled=True)
 
@@ -200,3 +218,4 @@ def test_dictation_page_includes_readiness_panel() -> None:
     assert "/api/dictation/readiness" in body
     assert "Dictation Readiness" in body
     assert "data-ready-template-id" in body
+    assert "data-ready-kb-starter" in body
