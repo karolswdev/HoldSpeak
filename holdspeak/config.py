@@ -82,12 +82,44 @@ class MeetingConfig:
 
 
 @dataclass
+class LLMRuntimeConfig:
+    """DIR-01 dictation LLM runtime config (spec §9.4)."""
+
+    backend: str = "auto"  # "auto" | "mlx" | "llama_cpp"
+    mlx_model: str = "~/Models/mlx/Qwen3-8B-MLX-4bit"
+    llama_cpp_model_path: str = "~/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf"
+    n_ctx: int = 2048
+    n_threads: Optional[int] = None
+    n_gpu_layers: int = -1
+    warm_on_start: bool = False
+    eviction_idle_seconds: int = 0
+
+
+@dataclass
+class DictationPipelineConfig:
+    """DIR-01 dictation pipeline config (spec §9.4). OFF by default."""
+
+    enabled: bool = False
+    stages: list[str] = field(default_factory=lambda: ["intent-router", "kb-enricher"])
+    max_total_latency_ms: int = 600
+
+
+@dataclass
+class DictationConfig:
+    """Container for the DIR-01 dictation feature."""
+
+    pipeline: DictationPipelineConfig = field(default_factory=DictationPipelineConfig)
+    runtime: LLMRuntimeConfig = field(default_factory=LLMRuntimeConfig)
+
+
+@dataclass
 class Config:
     """Main configuration container."""
     hotkey: HotkeyConfig = field(default_factory=HotkeyConfig)
     model: ModelConfig = field(default_factory=ModelConfig)
     ui: UIConfig = field(default_factory=UIConfig)
     meeting: MeetingConfig = field(default_factory=MeetingConfig)
+    dictation: DictationConfig = field(default_factory=DictationConfig)
 
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "Config":
@@ -103,11 +135,20 @@ class Config:
             with open(config_path) as f:
                 data = json.load(f)
 
+            dictation_data = data.get("dictation", {}) or {}
+            pipeline_data = dictation_data.get("pipeline", {}) or {}
+            runtime_data = dictation_data.get("runtime", {}) or {}
+            dictation = DictationConfig(
+                pipeline=DictationPipelineConfig(**pipeline_data),
+                runtime=LLMRuntimeConfig(**runtime_data),
+            )
+
             return cls(
                 hotkey=HotkeyConfig(**data.get("hotkey", {})),
                 model=ModelConfig(**data.get("model", {})),
                 ui=UIConfig(**data.get("ui", {})),
                 meeting=MeetingConfig(**data.get("meeting", {})),
+                dictation=dictation,
             )
         except Exception:
             # Fall back to defaults on any error

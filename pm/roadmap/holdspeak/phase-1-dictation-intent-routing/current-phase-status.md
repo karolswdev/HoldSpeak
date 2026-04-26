@@ -1,6 +1,6 @@
 # Phase 1 — Dictation Intent Routing (DIR-01)
 
-**Last updated:** 2026-04-25 (HS-1-03 pipeline executor shipped).
+**Last updated:** 2026-04-25 (HS-1-04 pluggable LLM runtime + structured-output compiler shipped).
 
 ## Goal
 
@@ -40,7 +40,7 @@ created ahead of time as `backlog` so the work is visible; only the
 | ~~HS-1-01~~ | ~~Step 0 — Baseline / spike~~ | dropped | — | n/a — no pre-shipping measurement gate per 2026-04-25 amendment |
 | HS-1-02 | Step 1 — Transducer contracts | done | [story-02-contracts](./story-02-contracts.md) | tests pass (5/5) + full suite green (excl. pre-existing metal hw fails) |
 | HS-1-03 | Step 2 — Pipeline executor | done | [story-03-pipeline](./story-03-pipeline.md) | tests pass (11/11) + full suite green (excl. one pre-existing metal hw fail) |
-| HS-1-04 | Step 3 — Pluggable LLM runtime (mlx + llama_cpp) + structured output | backlog | [story-04-runtime](./story-04-runtime.md) | — |
+| HS-1-04 | Step 3 — Pluggable LLM runtime (mlx + llama_cpp) + structured output | done | [story-04-runtime](./story-04-runtime.md) | tests pass (29 unit cases + 2 model-gated integration harnesses skip cleanly) |
 | HS-1-05 | Step 4 — Block config loader | backlog | (pending) | — |
 | HS-1-06 | Step 5 — Built-in stages (intent-router + kb-enricher) | backlog | (pending) | — |
 | HS-1-07 | Step 6 — Controller wiring | backlog | (pending) | — |
@@ -58,18 +58,26 @@ measurement is dropped — DIR-01 banks on the chosen models and goes
 straight to implementation. `HS-1-01` (baseline) and `HS-1-10`
 (benchmarks) are dropped.
 
-**HS-1-03 done.** `DictationPipeline` ordered executor +
-`PipelineRun` record landed at
-`holdspeak/plugins/dictation/pipeline.py`. Synchronous, in-process,
-error-isolating per DIR-01 §6.1: stage exceptions short-circuit to
-the post-`TextProcessor` text; `requires_llm` stages are skipped
-silently when the runtime is disabled (DIR-F-011); a bounded ring
-buffer captures the last N runs for introspection (DIR-F-009). The
-executor is I/O-free; the controller will hook the structured-log
-emitter (DIR-O-001) via the `on_run` callback in HS-1-07. Eleven-case
-unit suite passes; full regression: 795 passed, 1 pre-existing
-hardware-only `tests/e2e/test_metal.py` fail (Whisper model load),
-unrelated. Next: **HS-1-04** (pluggable LLM runtime).
+**HS-1-04 done.** Pluggable LLM runtime + structured-output schema
+compiler landed across
+`holdspeak/plugins/dictation/{runtime,runtime_llama_cpp,runtime_mlx,grammars}.py`.
+`LLMRuntime` is a `runtime_checkable` Protocol; `MlxRuntime` and
+`LlamaCppRuntime` both conform. `auto` resolves to `mlx` on
+darwin/arm64 when `mlx_lm` is importable, else `llama_cpp`; explicit
+backends never fall back and surface
+`RuntimeUnavailableError` with a remediation hint. Both
+backend imports are lazy and live exclusively inside their respective
+modules. The shared schema compiler emits GBNF (for `llama_cpp`,
+validated via `LlamaGrammar.from_string` when the extra is installed)
+and JSON-schema (for `mlx` via an `outlines`-style logits processor)
+from the same `BlockSet`; the cross-backend equivalence test confirms
+identical block-id and extras-enum domains. `DictationConfig`
+(`pipeline` + `runtime`) is plumbed onto `Config` with
+`pipeline.enabled=False` by default (DIR-C-001). 29-case unit suite
+passes; integration tests skip cleanly without the model files. Full
+regression: 824 passed, 1 pre-existing hardware-only
+`tests/e2e/test_metal.py` fail (Whisper model load), unrelated. Next:
+**HS-1-05** (block config loader).
 
 ## Active risks
 
