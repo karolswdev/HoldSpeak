@@ -93,6 +93,12 @@
         background: rgba(100, 215, 255, 0.15); color: var(--accent);
         font-size: 11px; margin-left: 8px;
       }
+      .template-card {
+        border: 1px solid var(--line); border-radius: 8px;
+        padding: 10px; margin-top: 10px; background: var(--canvas);
+      }
+      .template-card .template-title { font-weight: 600; }
+      .template-card .template-desc { color: var(--muted); font-size: 12px; margin: 4px 0 8px; }
 
       label { display: block; margin-top: 12px; font-size: 13px; color: var(--muted); }
       input[type="text"], input[type="number"], textarea, select {
@@ -132,6 +138,35 @@
         color: var(--accent-2); border-radius: 8px; padding: 10px 12px;
         margin-top: 12px; font-size: 13px;
       }
+      .trace-stage {
+        border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+        background: var(--panel-strong); margin-top: 10px;
+      }
+      .trace-stage header {
+        display: flex; justify-content: space-between; gap: 12px;
+        font-family: var(--font-mono); font-size: 12px; color: var(--muted);
+      }
+      .trace-stage pre, .final-box {
+        margin: 10px 0 0; white-space: pre-wrap; word-break: break-word;
+        font-family: var(--font-mono); font-size: 13px;
+        background: var(--canvas); border: 1px solid var(--line);
+        border-radius: 8px; padding: 10px;
+      }
+      .readiness-grid {
+        display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;
+      }
+      @media (max-width: 900px) { .readiness-grid { grid-template-columns: 1fr 1fr; } }
+      @media (max-width: 560px) { .readiness-grid { grid-template-columns: 1fr; } }
+      .readiness-card {
+        border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+        background: var(--panel-strong); min-height: 104px;
+      }
+      .readiness-card strong { display:block; margin-bottom: 8px; }
+      .readiness-card .value { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+      .readiness-card.ok { border-color: var(--accent-2); }
+      .readiness-card.warn { border-color: var(--warn); }
+      .readiness-card.error { border-color: var(--danger); }
+      .warning-list { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
     </style>
   </head>
   <body>
@@ -147,10 +182,37 @@
 
     <main id="app">
       <div class="scope-row" style="margin-bottom: 24px;">
+        <button id="section-readiness" data-section="readiness">Readiness</button>
         <button id="section-blocks" data-section="blocks" class="active">Blocks</button>
         <button id="section-kb" data-section="kb">Project KB</button>
         <button id="section-runtime" data-section="runtime">Runtime</button>
+        <button id="section-dry-run" data-section="dry-run">Dry-run</button>
       </div>
+      <div class="meta-banner" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <strong>Project root</strong>
+        <input
+          type="text"
+          id="project-root-override"
+          placeholder="current holdspeak cwd"
+          style="flex:1 1 420px;"
+        />
+        <button class="btn primary" id="project-root-apply">Apply</button>
+        <button class="btn" id="project-root-clear">Use cwd</button>
+      </div>
+
+      <section id="view-readiness" style="display:none;">
+        <h2>Dictation Readiness</h2>
+        <p style="color: var(--muted); max-width: 760px;">
+          One snapshot of the selected project's dictation setup:
+          pipeline, blocks, project KB, runtime model, and next actions.
+        </p>
+        <div id="ready-meta" class="meta-banner">Loading…</div>
+        <div id="ready-cards" class="readiness-grid"></div>
+        <section class="panel" style="margin-top: 16px;">
+          <h3>Next actions <button class="btn" id="ready-btn-refresh" style="float:right;">Refresh</button></h3>
+          <div id="ready-actions" class="warning-list"></div>
+        </section>
+      </section>
 
       <section id="view-blocks">
         <h2>Block Editor</h2>
@@ -172,6 +234,11 @@
           <section class="panel">
             <h3>Blocks <button id="btn-new" class="btn primary" style="float:right;">+ New block</button></h3>
             <div id="block-list" class="block-list"></div>
+            <div style="margin-top: 20px; border-top: 1px solid var(--line); padding-top: 14px;">
+              <h3 style="font-size:16px;">Starter templates</h3>
+              <div id="template-list"></div>
+              <div id="template-msg"></div>
+            </div>
           </section>
 
           <section class="panel">
@@ -232,6 +299,34 @@
         </div>
       </section>
 
+      <section id="view-dry-run" style="display:none;">
+        <h2>Dry-run Preview</h2>
+        <p style="color: var(--muted); max-width: 720px;">
+          Run the current DIR-01 pipeline against typed text without
+          touching the keyboard. The trace uses the current project
+          detected from the <code>holdspeak</code> process cwd.
+        </p>
+        <div class="grid">
+          <section class="panel">
+            <h3>Input</h3>
+            <label>utterance
+              <textarea id="dry-utterance" placeholder="Type the utterance to preview"></textarea>
+            </label>
+            <div id="dry-msg"></div>
+            <div class="actions">
+              <button class="btn primary" id="dry-btn-run">Run dry-run</button>
+              <button class="btn" id="dry-btn-clear">Clear</button>
+            </div>
+          </section>
+          <section class="panel">
+            <h3>Result</h3>
+            <div id="dry-meta" class="meta-banner">No dry-run yet.</div>
+            <div id="dry-final"></div>
+            <div id="dry-trace"></div>
+          </section>
+        </div>
+      </section>
+
       <section id="view-kb" style="display:none;">
         <h2>Project Knowledge Base</h2>
         <p style="color: var(--muted); max-width: 720px;">
@@ -267,6 +362,9 @@
         selectedId: null,
         editorMode: "idle", // idle | new | edit
         draft: null,
+        templates: [],
+        projectRootOverride: localStorage.getItem("holdspeak.projectRootOverride") || "",
+        activeSection: "blocks",
       };
 
       const PLACEHOLDER_RE = /\{([^{}]*)\}/g;
@@ -298,7 +396,7 @@
         banner.classList.remove("warn", "error");
         banner.textContent = "Loading…";
         try {
-          const data = await api("GET", `/api/dictation/blocks?scope=${scope}`);
+          const data = await api("GET", `/api/dictation/blocks?scope=${scope}${scope === "project" ? projectRootParam("&") : ""}`);
           state.document = data.document;
           state.path = data.path;
           state.project = data.project;
@@ -342,6 +440,53 @@
         list.querySelectorAll(".block-card").forEach((el) =>
           el.addEventListener("click", () => selectBlock(el.dataset.id))
         );
+      }
+
+      async function loadStarterTemplates() {
+        try {
+          const data = await api("GET", "/api/dictation/block-templates");
+          state.templates = data.templates || [];
+          renderStarterTemplates();
+        } catch (e) {
+          document.getElementById("template-list").innerHTML =
+            `<div class="error-box">${escapeHtml(e.message)}</div>`;
+        }
+      }
+
+      function renderStarterTemplates() {
+        const host = document.getElementById("template-list");
+        if (!state.templates.length) {
+          host.innerHTML = `<div style="color:var(--muted);font-size:13px;">No starter templates available.</div>`;
+          return;
+        }
+        host.innerHTML = state.templates.map((t) => `
+          <div class="template-card">
+            <div class="template-title">${escapeHtml(t.title)}</div>
+            <div class="template-desc">${escapeHtml(t.description)}</div>
+            <div style="font-family:var(--font-mono);font-size:12px;color:var(--muted);">${escapeHtml(t.sample_utterance || "")}</div>
+            <button class="btn" data-template-id="${escapeAttr(t.id)}" style="margin-top:8px;">Create</button>
+          </div>
+        `).join("");
+        host.querySelectorAll("button[data-template-id]").forEach((btn) => {
+          btn.addEventListener("click", () => createFromTemplate(btn.dataset.templateId));
+        });
+      }
+
+      async function createFromTemplate(templateId) {
+        const msg = document.getElementById("template-msg");
+        msg.innerHTML = "";
+        try {
+          const data = await api(
+            "POST",
+            `/api/dictation/blocks/from-template?scope=${state.scope}${state.scope === "project" ? projectRootParam("&") : ""}`,
+            { template_id: templateId }
+          );
+          msg.innerHTML = `<div class="ok-box">Created ${escapeHtml(data.block.id)} from ${escapeHtml(data.template.title)}.</div>`;
+          await loadScope(state.scope);
+          if (data.block && data.block.id) selectBlock(data.block.id);
+        } catch (e) {
+          msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+        }
       }
 
       // ── Editor ───────────────────────────────────────────────────────────
@@ -510,9 +655,9 @@
         catch (e) { msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`; return; }
         try {
           if (state.editorMode === "new") {
-            await api("POST", `/api/dictation/blocks?scope=${state.scope}`, { block });
+            await api("POST", `/api/dictation/blocks?scope=${state.scope}${state.scope === "project" ? projectRootParam("&") : ""}`, { block });
           } else {
-            await api("PUT", `/api/dictation/blocks/${encodeURIComponent(state.selectedId)}?scope=${state.scope}`, { block });
+            await api("PUT", `/api/dictation/blocks/${encodeURIComponent(state.selectedId)}?scope=${state.scope}${state.scope === "project" ? projectRootParam("&") : ""}`, { block });
           }
           await loadScope(state.scope);
         } catch (e) {
@@ -526,7 +671,7 @@
         const msg = document.getElementById("msg");
         msg.innerHTML = "";
         try {
-          await api("DELETE", `/api/dictation/blocks/${encodeURIComponent(state.selectedId)}?scope=${state.scope}`);
+          await api("DELETE", `/api/dictation/blocks/${encodeURIComponent(state.selectedId)}?scope=${state.scope}${state.scope === "project" ? projectRootParam("&") : ""}`);
           await loadScope(state.scope);
         } catch (e) {
           msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
@@ -544,14 +689,106 @@
       const kbState = { detected: null, kbPath: null, lastLoaded: null, rows: [] };
 
       function activateSection(name) {
+        state.activeSection = name;
+        document.getElementById("view-readiness").style.display = name === "readiness" ? "" : "none";
         document.getElementById("view-blocks").style.display = name === "blocks" ? "" : "none";
         document.getElementById("view-kb").style.display = name === "kb" ? "" : "none";
         document.getElementById("view-runtime").style.display = name === "runtime" ? "" : "none";
+        document.getElementById("view-dry-run").style.display = name === "dry-run" ? "" : "none";
         document.querySelectorAll('.scope-row button[data-section]').forEach((b) =>
           b.classList.toggle("active", b.dataset.section === name)
         );
+        if (name === "readiness") loadReadiness();
         if (name === "kb") loadKB();
         if (name === "runtime") loadRuntime();
+      }
+
+      // ── Readiness snapshot ──────────────────────────────────────────────
+      async function loadReadiness() {
+        const meta = document.getElementById("ready-meta");
+        const cards = document.getElementById("ready-cards");
+        const actions = document.getElementById("ready-actions");
+        meta.classList.remove("warn", "error");
+        meta.textContent = "Loading…";
+        cards.innerHTML = "";
+        actions.innerHTML = "";
+        try {
+          const data = await api("GET", `/api/dictation/readiness${projectRootParam("?")}`);
+          renderReadiness(data);
+        } catch (e) {
+          meta.classList.add("error");
+          meta.textContent = e.message;
+        }
+      }
+
+      function renderReadiness(data) {
+        const meta = document.getElementById("ready-meta");
+        meta.classList.remove("warn", "error");
+        if (!data.ready) meta.classList.add("warn");
+        const project = data.project
+          ? `${escapeHtml(data.project.name)} (${escapeHtml(data.project.anchor)} @ ${escapeHtml(data.project.root)})`
+          : "(none selected)";
+        meta.innerHTML =
+          `status: <strong>${data.ready ? "ready" : "needs attention"}</strong>` +
+          `  ·  project: <strong>${project}</strong>`;
+
+        const blocks = data.blocks || {};
+        const kb = data.project_kb || {};
+        const runtime = data.runtime || {};
+        const config = data.config || {};
+        document.getElementById("ready-cards").innerHTML = [
+          readinessCard(
+            "Pipeline",
+            config.pipeline_enabled ? "enabled" : "disabled",
+            config.pipeline_enabled ? "ok" : "warn",
+            `${config.max_total_latency_ms || "?"} ms target`
+          ),
+          readinessCard(
+            "Blocks",
+            `${blocks.resolved?.count ?? 0} loaded`,
+            (blocks.resolved?.valid && (blocks.resolved?.count || 0) > 0) ? "ok" : "warn",
+            `${blocks.resolved_scope || "global"} · ${blocks.resolved?.path || "no file"}`
+          ),
+          readinessCard(
+            "Project KB",
+            kb.exists ? `${(kb.keys || []).length} keys` : "missing",
+            kb.valid && kb.exists ? "ok" : "warn",
+            kb.path || "no project"
+          ),
+          readinessCard(
+            "Runtime",
+            runtime.status || "unknown",
+            runtime.status === "available" ? "ok" : (runtime.status === "disabled" ? "warn" : "error"),
+            runtime.resolved_backend || runtime.requested_backend || "not resolved"
+          ),
+        ].join("");
+
+        const warnings = data.warnings || [];
+        const actions = document.getElementById("ready-actions");
+        if (!warnings.length) {
+          actions.innerHTML = `<div class="ok-box">Ready for dry-run and live dictation.</div>`;
+          return;
+        }
+        actions.innerHTML = warnings.map((w) => `
+          <div class="${w.section === "runtime" && w.code !== "pipeline_disabled" ? "error-box" : "meta-banner warn"}">
+            <strong>${escapeHtml(w.message)}</strong><br />
+            <span>${escapeHtml(w.action || "")}</span>
+            ${w.section && w.section !== "readiness" ? `<button class="btn" data-ready-section="${escapeAttr(w.section)}" style="float:right;">Open</button>` : ""}
+          </div>
+        `).join("");
+        actions.querySelectorAll("button[data-ready-section]").forEach((btn) => {
+          btn.addEventListener("click", () => activateSection(btn.dataset.readySection));
+        });
+      }
+
+      function readinessCard(title, value, status, detail) {
+        return `
+          <div class="readiness-card ${status}">
+            <strong>${escapeHtml(title)}</strong>
+            <div class="value">${escapeHtml(value)}</div>
+            <div style="color:var(--muted);font-size:12px;margin-top:8px;word-break:break-word;">${escapeHtml(detail || "")}</div>
+          </div>
+        `;
       }
 
       async function loadKB() {
@@ -559,7 +796,7 @@
         banner.classList.remove("warn", "error");
         banner.textContent = "Loading…";
         try {
-          const data = await api("GET", "/api/dictation/project-kb");
+          const data = await api("GET", `/api/dictation/project-kb${projectRootParam("?")}`);
           kbState.detected = data.detected;
           kbState.kbPath = data.kb_path;
           kbState.lastLoaded = data.kb;
@@ -649,7 +886,7 @@
           kb[key] = row.value === "" ? null : row.value;
         }
         try {
-          const data = await api("PUT", "/api/dictation/project-kb", { kb });
+          const data = await api("PUT", `/api/dictation/project-kb${projectRootParam("?")}`, { kb });
           kbState.lastLoaded = data.kb;
           kbState.detected = data.detected;
           kbState.kbPath = data.kb_path;
@@ -666,7 +903,7 @@
         const msg = document.getElementById("kb-msg");
         msg.innerHTML = "";
         try {
-          await api("DELETE", "/api/dictation/project-kb");
+          await api("DELETE", `/api/dictation/project-kb${projectRootParam("?")}`);
           await loadKB();
           msg.innerHTML = `<div class="ok-box">Deleted.</div>`;
         } catch (e) {
@@ -763,7 +1000,133 @@
         }
       }
 
+      // ── Dry-run preview ────────────────────────────────────────────────
+      async function runDryRun() {
+        const msg = document.getElementById("dry-msg");
+        const meta = document.getElementById("dry-meta");
+        const finalHost = document.getElementById("dry-final");
+        const trace = document.getElementById("dry-trace");
+        msg.innerHTML = "";
+        meta.classList.remove("warn", "error");
+        meta.textContent = "Running…";
+        finalHost.innerHTML = "";
+        trace.innerHTML = "";
+        const utterance = document.getElementById("dry-utterance").value;
+        try {
+          const payload = { utterance };
+          if (state.projectRootOverride.trim()) payload.project_root = state.projectRootOverride.trim();
+          const data = await api("POST", "/api/dictation/dry-run", payload);
+          renderDryRun(data);
+        } catch (e) {
+          meta.classList.add("error");
+          meta.textContent = e.message;
+          msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+        }
+      }
+
+      function renderDryRun(data) {
+        const meta = document.getElementById("dry-meta");
+        const finalHost = document.getElementById("dry-final");
+        const trace = document.getElementById("dry-trace");
+        meta.classList.remove("warn", "error");
+        if (data.runtime_status !== "loaded") meta.classList.add(data.runtime_status === "disabled" ? "warn" : "error");
+        const project = data.project
+          ? `${escapeHtml(data.project.name)} (${escapeHtml(data.project.anchor)} @ ${escapeHtml(data.project.root)})`
+          : "(none detected)";
+        meta.innerHTML =
+          `runtime: <strong>${escapeHtml(data.runtime_status)}</strong> (${escapeHtml(data.runtime_detail || "")})` +
+          `  ·  project: <strong>${project}</strong>` +
+          `  ·  blocks: <strong>${data.blocks_count ?? 0}</strong>` +
+          `  ·  total: <strong>${Number(data.total_elapsed_ms || 0).toFixed(2)} ms</strong>`;
+
+        const warnings = (data.warnings || []).length
+          ? `<div class="error-box">${(data.warnings || []).map(escapeHtml).join("<br>")}</div>`
+          : "";
+        finalHost.innerHTML = `
+          <div class="actions" style="justify-content: space-between; align-items: center;">
+            <strong>Final text</strong>
+            <button class="btn" id="dry-btn-copy">Copy final text</button>
+          </div>
+          <div class="final-box" id="dry-final-text">${escapeHtml(data.final_text || "")}</div>
+          ${warnings}
+        `;
+        document.getElementById("dry-btn-copy").addEventListener("click", () => {
+          navigator.clipboard.writeText(data.final_text || "");
+        });
+
+        const stages = data.stages || [];
+        if (!stages.length) {
+          trace.innerHTML = `<p style="color:var(--muted);font-size:13px;">No stages executed.</p>`;
+          return;
+        }
+        trace.innerHTML = stages.map((stage) => renderDryStage(stage)).join("");
+      }
+
+      function renderDryStage(stage) {
+        const intent = stage.intent
+          ? `matched=${stage.intent.matched} block=${escapeHtml(stage.intent.block_id || "—")} confidence=${Number(stage.intent.confidence || 0).toFixed(2)}`
+          : "intent=—";
+        const warnings = (stage.warnings || []).length
+          ? `<div class="error-box">${stage.warnings.map(escapeHtml).join("<br>")}</div>`
+          : "";
+        const metadata = stage.metadata && Object.keys(stage.metadata).length
+          ? `<pre>${escapeHtml(JSON.stringify(stage.metadata, null, 2))}</pre>`
+          : "";
+        return `
+          <div class="trace-stage">
+            <header>
+              <strong>${escapeHtml(stage.stage_id)}</strong>
+              <span>${Number(stage.elapsed_ms || 0).toFixed(2)} ms</span>
+            </header>
+            <div style="margin-top:8px;color:var(--muted);font-family:var(--font-mono);font-size:12px;">${intent}</div>
+            ${warnings}
+            ${metadata}
+            <pre>${escapeHtml(stage.text || "")}</pre>
+          </div>
+        `;
+      }
+
+      function clearDryRun() {
+        document.getElementById("dry-utterance").value = "";
+        document.getElementById("dry-msg").innerHTML = "";
+        document.getElementById("dry-meta").textContent = "No dry-run yet.";
+        document.getElementById("dry-meta").classList.remove("warn", "error");
+        document.getElementById("dry-final").innerHTML = "";
+        document.getElementById("dry-trace").innerHTML = "";
+      }
+
+      function projectRootParam(prefix) {
+        const value = state.projectRootOverride.trim();
+        return value ? `${prefix}project_root=${encodeURIComponent(value)}` : "";
+      }
+
+      function applyProjectRootOverride() {
+        const input = document.getElementById("project-root-override");
+        state.projectRootOverride = input.value.trim();
+        if (state.projectRootOverride) {
+          localStorage.setItem("holdspeak.projectRootOverride", state.projectRootOverride);
+        } else {
+          localStorage.removeItem("holdspeak.projectRootOverride");
+        }
+        refreshProjectScopedView();
+      }
+
+      function clearProjectRootOverride() {
+        state.projectRootOverride = "";
+        document.getElementById("project-root-override").value = "";
+        localStorage.removeItem("holdspeak.projectRootOverride");
+        refreshProjectScopedView();
+      }
+
+      function refreshProjectScopedView() {
+        if (state.activeSection === "readiness") loadReadiness();
+        if (state.activeSection === "blocks" && state.scope === "project") loadScope("project");
+        if (state.activeSection === "kb") loadKB();
+        if (state.activeSection === "dry-run") clearDryRun();
+      }
+
       // ── Init ─────────────────────────────────────────────────────────────
+      document.getElementById("project-root-override").value = state.projectRootOverride;
       document.querySelectorAll('.scope-row button[data-scope]').forEach((b) =>
         b.addEventListener("click", () => loadScope(b.dataset.scope))
       );
@@ -778,6 +1141,12 @@
       document.getElementById("rt-btn-save").addEventListener("click", saveRuntime);
       document.getElementById("rt-btn-reset").addEventListener("click", () => rtState.last && renderRuntime(rtState.last));
       document.getElementById("rt-btn-refresh").addEventListener("click", loadRuntime);
+      document.getElementById("dry-btn-run").addEventListener("click", runDryRun);
+      document.getElementById("dry-btn-clear").addEventListener("click", clearDryRun);
+      document.getElementById("project-root-apply").addEventListener("click", applyProjectRootOverride);
+      document.getElementById("project-root-clear").addEventListener("click", clearProjectRootOverride);
+      document.getElementById("ready-btn-refresh").addEventListener("click", loadReadiness);
+      loadStarterTemplates();
       loadScope("global");
     </script>
   </body>

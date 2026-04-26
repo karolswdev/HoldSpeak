@@ -1,0 +1,15 @@
+# Command: uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py
+# Captured: 2026-04-26 15:37:36 MDT
+# Git: 0868153 (pre-commit; working tree contains HS-4-05/HS-4-06 changes)
+
+See `70_regression.log` for full output.
+
+Relevant covered subcommands:
+- `holdspeak doctor`
+- `holdspeak history`
+- `holdspeak actions`
+- `holdspeak intel`
+- `holdspeak dictation`
+
+Result:
+1072 passed, 13 skipped in 18.65s

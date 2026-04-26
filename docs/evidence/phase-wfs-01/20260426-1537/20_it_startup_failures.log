@@ -1,0 +1,12 @@
+# Command: uv run pytest -q tests/integration/test_web_flagship_audit.py tests/integration/test_web_server.py
+# Captured: 2026-04-26 15:37:36 MDT
+# Git: 0868153 (pre-commit; working tree contains HS-4-05/HS-4-06 changes)
+
+........................................................................ [ 93%]
+.....                                                                    [100%]
+77 passed in 1.63s
+
+Startup/degraded-state evidence:
+- Missing meeting-start callback returns an actionable non-404 JSON response.
+- Runtime status endpoint still reports a normalized web-mode payload.
+- Full regression covers broader startup and runtime behavior.

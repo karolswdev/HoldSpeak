@@ -81,6 +81,26 @@ class TestGetProjectKB:
         assert body["kb"] is None
         assert body["kb_path"].endswith(".holdspeak/project.yaml")
 
+    def test_project_root_override_selects_project_without_relaunch(
+        self, test_client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        target = tmp_path / "target"
+        target.mkdir()
+        (target / "pyproject.toml").write_text('[project]\nname = "target-proj"\n', encoding="utf-8")
+        monkeypatch.chdir(tmp_path)
+
+        response = test_client.put(
+            f"/api/dictation/project-kb?project_root={target}",
+            json={"kb": {"stack": "python"}},
+        )
+
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["detected"]["name"] == "target-proj"
+        assert yaml.safe_load((target / ".holdspeak" / "project.yaml").read_text()) == {
+            "kb": {"stack": "python"}
+        }
+
     def test_project_with_kb_returns_dict(
         self, test_client: TestClient, project_root_dir: Path
     ) -> None:

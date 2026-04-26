@@ -126,17 +126,12 @@ def _read_toml_name(path: Path, dotted: tuple[str, ...]) -> str | None:
 
 
 def _load_optional_kb(root: Path) -> dict[str, Any] | None:
-    kb_path = root / ".holdspeak" / "project.yaml"
-    if not kb_path.is_file():
-        return None
     try:
-        import yaml  # type: ignore[import-untyped]
+        from holdspeak.plugins.dictation.project_kb import ProjectKBError, read_project_kb
     except ImportError:
         return None
+
     try:
-        data = yaml.safe_load(kb_path.read_text(encoding="utf-8"))
-    except (OSError, yaml.YAMLError):
+        return read_project_kb(root)
+    except ProjectKBError:
         return None
-    if isinstance(data, dict):
-        return data
-    return None

@@ -1,7 +1,7 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-4-04 done — dictation runtime config in `/api/settings` (incl. `_runtime_status` enrichment) + Runtime section on `/dictation` with cap × 5 visualization; 11 new integration tests; full sweep 1063 passed, 13 skipped, +11 vs. HS-4-03 baseline).
-**Current phase:** [phase-4-web-flagship-runtime](./phase-4-web-flagship-runtime/) — WFS-01 extended (audit existing surfaces + ship interactive configurability for blocks / project KB / dictation runtime / dry-run preview).
+**Last updated:** 2026-04-26 (HS-5-03 done — starter block templates API + `/dictation` template picker for first useful blocks; supports global/project scope, project-root override, and duplicate-safe IDs; 5 new integration tests; full sweep 1086 passed / 13 skipped).
+**Current phase:** [phase-5-usability-powerhouse](./phase-5-usability-powerhouse/) — reduce daily-use friction and make the web runtime a stronger end-user cockpit.
 **Status:** in-progress.
 
 ## Vision
@@ -39,7 +39,8 @@ canon, canon wins.
 | 1 | DIR-01: Dictation intent routing + transcript enrichment pipeline | done | [phase-1-dictation-intent-routing](./phase-1-dictation-intent-routing/) |
 | 2 | MIR-01: Meeting-side multi-intent routing + artifact synthesis | done | [phase-2-multi-intent-routing](./phase-2-multi-intent-routing/) |
 | 3 | DIR-01 loop closure: project context, llama_cpp leg, runtime counters, cold-start cap | done | [phase-3-dictation-loop-closure](./phase-3-dictation-loop-closure/) |
-| 4 | WFS-01 extended: audit web flagship + interactive config for blocks / project KB / dictation runtime / dry-run preview | in-progress | [phase-4-web-flagship-runtime](./phase-4-web-flagship-runtime/) |
+| 4 | WFS-01 extended: audit web flagship + interactive config for blocks / project KB / dictation runtime / dry-run preview | done | [phase-4-web-flagship-runtime](./phase-4-web-flagship-runtime/) |
+| 5 | Usability powerhouse: reduce setup/dogfood friction and make web workflows faster | in-progress | [phase-5-usability-powerhouse](./phase-5-usability-powerhouse/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

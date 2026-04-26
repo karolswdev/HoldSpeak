@@ -1,0 +1,12 @@
+# Command: uv run pytest -q tests/integration/test_web_flagship_audit.py tests/integration/test_web_server.py
+# Captured: 2026-04-26 15:37:36 MDT
+# Git: 0868153 (pre-commit; working tree contains HS-4-05/HS-4-06 changes)
+
+........................................................................ [ 93%]
+.....                                                                    [100%]
+77 passed in 1.63s
+
+Relevant checks:
+- `test_wfs_p_002_meeting_routes_mounted_and_return_json`
+- `TestRuntimeControlEndpoints` in `tests/integration/test_web_server.py`
+- `/api/meeting/start` and `/api/meeting/stop` are mounted and return JSON-shaped outcomes.

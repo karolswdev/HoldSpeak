@@ -1,0 +1,12 @@
+# Command: uv run pytest -q tests/integration/test_web_intent_controls.py tests/integration/test_web_intent_timeline_api.py
+# Captured: 2026-04-26 15:37:36 MDT
+# Git: 0868153 (pre-commit; working tree contains HS-4-05/HS-4-06 changes)
+
+..............                                                           [100%]
+14 passed in 0.73s
+
+Coverage:
+- MIR profile control endpoint.
+- MIR override endpoint.
+- MIR route preview endpoint.
+- persisted timeline/plugin/artifact read APIs.

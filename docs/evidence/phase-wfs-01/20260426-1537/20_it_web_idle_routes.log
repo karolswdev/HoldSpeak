@@ -1,0 +1,12 @@
+# Command: uv run pytest -q tests/integration/test_web_flagship_audit.py tests/integration/test_web_server.py
+# Captured: 2026-04-26 15:37:36 MDT
+# Git: 0868153 (pre-commit; working tree contains HS-4-05/HS-4-06 changes)
+
+........................................................................ [ 93%]
+.....                                                                    [100%]
+77 passed in 1.63s
+
+Relevant checks:
+- `/history` returns HTML while runtime is idle.
+- `/settings` returns HTML while runtime is idle.
+- dashboard idle mode remains usable without a meeting.

@@ -1,6 +1,6 @@
 # Phase 4 — Web Flagship Runtime + Interactive Configurability (WFS-01 extended)
 
-**Last updated:** 2026-04-26 (HS-4-04 done — dictation runtime config in `/api/settings` GET/PUT (incl. `_runtime_status` enrichment), Runtime section on `/dictation` with cap × 5 visualization + counter snapshot, fixed pre-existing bug where PUT silently dropped `dictation.*` payloads; 11 new integration tests; full sweep 1063 passed, +11 vs. HS-4-03 baseline).
+**Last updated:** 2026-04-26 (HS-4-06 done — phase 4 closed with `docs/evidence/phase-wfs-01/20260426-1537/` evidence bundle: 22 artifacts, full WFS/WFS-CFG traceability, full sweep 1072 passed / 13 skipped; phase 5 opened immediately afterward for usability work).
 
 ## Goal
 
@@ -32,12 +32,12 @@ another window.
 
 ## Exit criteria (evidence required)
 
-- [ ] All `WFS-CFG-*` requirements (§5.5 amendment) have passing verification.
-- [ ] `WFS-P-001` through `WFS-O-004` (original WFS-01 requirements) audited in HS-4-01; existing surfaces verified by integration tests and any gaps documented as deferred.
-- [ ] Web UI ships interactive editors for: blocks (global + per-project), project KB, dictation pipeline + runtime config, dry-run preview.
-- [ ] Configurability writes are atomic (temp + rename) and validate before persisting.
-- [ ] Full regression clean: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS.
-- [ ] Phase summary at `docs/evidence/phase-wfs-01/<YYYYMMDD-HHMM>/99_phase_summary.md` enumerates what shipped + remaining deferreds.
+- [x] All `WFS-CFG-*` requirements (§5.5 amendment) have passing verification. Evidence: `docs/evidence/phase-wfs-01/20260426-1537/03_traceability.md`, `50_cfg_blocks.log` through `54_cfg_atomic_validation.log`.
+- [x] `WFS-P-001` through `WFS-O-004` (original WFS-01 requirements) audited in HS-4-01; existing surfaces verified by integration tests and any gaps documented as deferred. Evidence: `03_traceability.md`, `20_it_*`, `40_api_runtime.log`, `41_cli_contract.log`.
+- [x] Web UI ships interactive editors for: blocks (global + per-project), project KB, dictation pipeline + runtime config, dry-run preview. Evidence: HS-4-02 through HS-4-05 story evidence + `99_phase_summary.md`.
+- [x] Configurability writes are atomic (temp + rename) and validate before persisting. Evidence: `54_cfg_atomic_validation.log`.
+- [x] Full regression clean: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS. Evidence: `70_regression.log` (1072 passed, 13 skipped).
+- [x] Phase summary at `docs/evidence/phase-wfs-01/20260426-1537/99_phase_summary.md` enumerates what shipped + remaining deferreds.
 
 ## Story status
 
@@ -47,30 +47,32 @@ another window.
 | HS-4-02 | Block authoring API + UI (`WFS-CFG-001` + `WFS-CFG-002`) | done | [story-02-blocks-api-ui](./story-02-blocks-api-ui.md) | [evidence-story-02](./evidence-story-02.md) — 5 endpoints, atomic-write helper, `static/dictation.html` editor, 24 integration tests |
 | HS-4-03 | Project KB authoring API + UI (`WFS-CFG-003`) | done | [story-03-project-kb-api-ui](./story-03-project-kb-api-ui.md) | [evidence-story-03](./evidence-story-03.md) — 3 endpoints, new `project_kb.py` module, KB editor section, 16 integration tests |
 | HS-4-04 | Dictation runtime config UI (`WFS-CFG-004`) | done | [story-04-dictation-config-ui](./story-04-dictation-config-ui.md) | [evidence-story-04](./evidence-story-04.md) — `/api/settings` extended for dictation slice + `_runtime_status`, Runtime section on `/dictation`, 11 integration tests, fixes silent-drop bug |
-| HS-4-05 | Dry-run preview API + UI (`WFS-CFG-005`) | backlog | [story-05-dry-run-preview](./story-05-dry-run-preview.md) | — |
-| HS-4-06 | DoD sweep + phase exit | backlog | [story-06-dod](./story-06-dod.md) | — |
+| HS-4-05 | Dry-run preview API + UI (`WFS-CFG-005`) | done | [story-05-dry-run-preview](./story-05-dry-run-preview.md) | [evidence-story-05](./evidence-story-05.md) — `/api/dictation/dry-run`, Dry-run section on `/dictation`, canonical project-KB schema, 9 integration tests |
+| HS-4-06 | DoD sweep + phase exit | done | [story-06-dod](./story-06-dod.md) | [phase evidence bundle](../../../../docs/evidence/phase-wfs-01/20260426-1537/) — 22 artifacts, WFS/WFS-CFG traceability, full sweep 1072 passed |
 
 ## Where we are
 
-**HS-4-04 shipped.** Dictation runtime config now editable from
-the web UI: `/api/settings` GET carries the `dictation.*` block
-plus a top-level `_runtime_status` enrichment (counters +
-session-disabled state); PUT validates the slice and persists.
-A pre-existing bug where the PUT's `Config(...)` reconstruction
-silently dropped any `dictation.*` payload was fixed in passing.
-The new "Runtime" section on `/dictation` exposes enabled toggle,
-backend dropdown, model paths, `warm_on_start`, a latency slider
-with the cold-start cap × 5 visualization (`DIR-R-003`), and a
-live counter / session panel. 11 new integration tests; full
-sweep 1063 passed (+11 vs. HS-4-03 baseline 1052).
+**Phase 4 is closed.** HS-4-06 produced the phase-exit evidence
+bundle at `docs/evidence/phase-wfs-01/20260426-1537/`: 22 artifacts
+covering the original WFS-01 requirements plus the WFS-CFG
+amendment, with full traceability in `03_traceability.md` and final
+summary in `99_phase_summary.md`. The final non-metal regression is
+clean: 1072 passed, 13 skipped.
 
-Cumulative phase delta vs. phase-3 exit (1007): **+56 tests**
-across HS-4-01 (+5), HS-4-02 (+24), HS-4-03 (+16), HS-4-04 (+11).
+What phase 4 shipped: web-first command/runtime behavior verified by
+audit, browser block CRUD for global + project scopes, project-KB
+authoring for the canonical `kb: {...}` schema, dictation runtime
+settings with live counters/session state, and dry-run preview that
+executes the full DIR-01 pipeline without touching the keyboard.
 
-Next: HS-4-05 (dry-run preview API + UI for `WFS-CFG-005`). The
-last net-new surface — `POST /api/dictation/dry-run` mirroring
-the CLI subcommand, plus a UI that takes an utterance string and
-renders the per-stage trace.
+Cumulative phase delta vs. phase-3 exit (1007): **+65 tests** across
+HS-4-01 (+5), HS-4-02 (+24), HS-4-03 (+16), HS-4-04 (+11), HS-4-05
+(+9). HS-4-06 adds no product tests; it closes evidence and status.
+
+Next phase selected immediately after closure: phase 5
+(`phase-5-usability-powerhouse`) focuses on daily usability, making
+the flagship web surfaces feel like a cohesive cockpit and reducing
+setup/dogfood friction.
 
 ## Earlier context — phase opening
 

@@ -1,0 +1,13 @@
+# Command: uv run pytest -q tests/integration/test_web_flagship_audit.py tests/integration/test_web_server.py
+# Captured: 2026-04-26 15:37:36 MDT
+# Git: 0868153 (pre-commit; working tree contains HS-4-05/HS-4-06 changes)
+
+........................................................................ [ 93%]
+.....                                                                    [100%]
+77 passed in 1.63s
+
+Relevant checks:
+- `test_wfs_r_001_r_002_idle_runtime_serves_history_and_settings`
+- `test_wfs_r_004_default_host_is_loopback`
+- `TestHistoryUiSmoke`
+- runtime routes are available without an active meeting.

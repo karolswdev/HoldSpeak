@@ -1,0 +1,13 @@
+# Command: uv run pytest -q tests/integration/test_web_dictation_blocks_api.py tests/integration/test_web_project_kb_api.py tests/integration/test_web_dictation_settings_api.py tests/integration/test_web_dry_run_api.py
+# Captured: 2026-04-26 15:37:36 MDT
+# Git: 0868153 (pre-commit; working tree contains HS-4-05/HS-4-06 changes)
+
+............................................................             [100%]
+60 passed in 1.67s
+
+Atomic/validation evidence:
+- `test_create_invalid_block_422_and_atomic_rollback`
+- `test_update_invalid_block_422_and_atomic_rollback`
+- `test_put_bad_key_422_and_atomic_rollback`
+- settings bad-backend / zero-latency / non-integer-latency / unknown-stage 400 tests
+- dry-run missing / empty / non-string utterance 400 tests with `detail.utterance`

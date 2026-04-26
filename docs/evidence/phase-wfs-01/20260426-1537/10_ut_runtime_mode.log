@@ -1,0 +1,12 @@
+# Command: uv run pytest -q tests/unit/test_main_modes.py tests/unit/test_web_runtime.py
+# Captured: 2026-04-26 15:37:36 MDT
+# Git: 0868153 (pre-commit; working tree contains HS-4-05/HS-4-06 changes)
+
+...........                                                              [100%]
+11 passed in 0.53s
+
+Coverage:
+- `holdspeak` default web routing.
+- `holdspeak web` / `holdspeak tui` mode routing.
+- `--no-tui` deprecation alias behavior.
+- web runtime unit lifecycle surfaces.

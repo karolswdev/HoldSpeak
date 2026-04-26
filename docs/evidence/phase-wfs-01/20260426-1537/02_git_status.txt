@@ -1,0 +1,28 @@
+# Command: git status --short --branch && git log --oneline -5
+# Captured: 2026-04-26 15:37:36 MDT
+# Git: 0868153 (pre-commit; working tree contains HS-4-05/HS-4-06 changes)
+
+## main...origin/main [ahead 5]
+ M holdspeak/plugins/dictation/project_root.py
+ M holdspeak/static/dictation.html
+ M holdspeak/web_server.py
+ M pm/roadmap/holdspeak/README.md
+ M pm/roadmap/holdspeak/phase-4-web-flagship-runtime/current-phase-status.md
+ M pm/roadmap/holdspeak/phase-4-web-flagship-runtime/story-05-dry-run-preview.md
+ M tests/unit/test_project_detector_cwd.py
+ M uv.lock
+?? .claude/
+?? docs/evidence/phase-wfs-01/20260426-1537/
+?? pm/roadmap/holdspeak/phase-4-web-flagship-runtime/evidence-story-05.md
+?? tests/integration/test_web_dry_run_api.py
+
+Recent commits:
+0868153 HS-4-04: dictation runtime config UI (WFS-CFG-004)
+d85a48c HS-4-03: project KB authoring API + UI (WFS-CFG-003)
+3e76510 HS-4-02: block authoring API + UI (WFS-CFG-001 + WFS-CFG-002)
+7328d2e HS-4-01: audit + integration coverage for existing web-flagship surfaces
+8cfd676 HS-4 scaffold: open phase-4 (WFS-01 extended) - backlog stories + WFS-CFG-* amendment
+
+Notes:
+- `uv.lock` and `.claude/` pre-existed this HS-4-05/HS-4-06 work and were not intentionally edited for phase closure.
+- HS-4-05 and HS-4-06 are captured pre-commit, so HEAD still points to HS-4-04.

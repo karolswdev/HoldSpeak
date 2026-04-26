@@ -1,0 +1,17 @@
+# Command: manual log/observability sample from passing API and startup tests
+# Captured: 2026-04-26 15:37:36 MDT
+# Git: 0868153 (pre-commit; working tree contains HS-4-05/HS-4-06 changes)
+
+Startup/runtime observability sample:
+- CLI routing tests exercise `holdspeak` default web mode and explicit TUI fallback.
+- Runtime API returns a normalized payload with `mode=web`, `status=ok`, `meeting_active`, and current `state`.
+- Web server startup binds loopback by default: `127.0.0.1`.
+- Startup/degraded routes return JSON with actionable status codes instead of silent 404s.
+
+Representative payload asserted by tests:
+{
+  "mode": "web",
+  "status": "ok",
+  "meeting_active": false,
+  "meeting_id": null
+}

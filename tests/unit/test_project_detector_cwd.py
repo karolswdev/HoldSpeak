@@ -111,7 +111,7 @@ def test_kb_loaded_when_project_yaml_present(tmp_path: Path, monkeypatch: pytest
     root = _mk(tmp_path / "proj")
     _mk(root / ".holdspeak")
     (root / ".holdspeak" / "project.yaml").write_text(
-        "stack: python\nrecent_adrs_short: ADR-007\n", encoding="utf-8"
+        "kb:\n  stack: python\n  recent_adrs_short: ADR-007\n", encoding="utf-8"
     )
 
     ctx = detect_project_for_cwd(root)

@@ -1,0 +1,11 @@
+# Command: uv run pytest -q tests/unit/test_web_runtime.py tests/integration/test_web_flagship_audit.py
+# Captured: 2026-04-26 15:37:36 MDT
+# Git: 0868153 (pre-commit; working tree contains HS-4-05/HS-4-06 changes)
+
+Evidence source:
+- `tests/unit/test_web_runtime.py` was included in `10_ut_runtime_mode.log` and passed.
+- `tests/integration/test_web_flagship_audit.py` was included in `20_it_web_start.log` and passed.
+
+Observed result:
+- Web runtime lifecycle and idle-route behavior passed in the targeted sweep.
+- Full regression also passed: see `70_regression.log`.

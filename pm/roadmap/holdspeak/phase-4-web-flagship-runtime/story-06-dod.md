@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 4
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-4-01 through HS-4-05
 - **Unblocks:** phase 4 closure
 - **Owner:** unassigned
@@ -30,11 +30,11 @@ HS-2-11 / HS-3-06.
 
 ## Acceptance criteria
 
-- [ ] Evidence bundle exists at `docs/evidence/phase-wfs-01/<YYYYMMDD-HHMM>/` with all listed files non-empty, each leading with command + timestamp + git sha.
-- [ ] All 6 phase-exit boxes in `current-phase-status.md` are checked with evidence pointers.
-- [ ] `99_phase_summary.md` enumerates what shipped + remaining deferreds (if any).
-- [ ] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS.
-- [ ] Project README phase index shows phase 4 as `done` and "Current phase" reverts to "between phases" (or the user's next pick).
+- [x] Evidence bundle exists at `docs/evidence/phase-wfs-01/20260426-1537/` with all listed files non-empty, each leading with command + timestamp + git sha.
+- [x] All 6 phase-exit boxes in `current-phase-status.md` are checked with evidence pointers.
+- [x] `99_phase_summary.md` enumerates what shipped + remaining deferreds.
+- [x] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS (1072 passed, 13 skipped).
+- [x] Project README phase index shows phase 4 as `done` and "Current phase" reverts to "between phases".
 
 ## Test plan
 
@@ -46,3 +46,4 @@ HS-2-11 / HS-3-06.
 
 - Bundle path uses the timestamp at the start of the sweep, not at commit time (HS-2-11 / HS-3-06 convention).
 - Mark each WFS-* and WFS-CFG-* requirement against its evidence file in `03_traceability.md` per spec §7.2.
+- Bundling note: committed together with HS-4-05 and HS-5-01..03 because the user asked to commit the accumulated significant work from this session. `.tmp/BUNDLE-OK.md` records the intentional bundle.

@@ -86,6 +86,8 @@ def test_dictation_page_route_serves_html() -> None:
     body = response.text
     assert "Dictation Blocks" in body
     assert "/api/dictation/blocks" in body  # JS fetches the API
+    assert "/api/dictation/block-templates" in body
+    assert "Starter templates" in body
 
 
 @pytest.fixture
@@ -129,6 +131,23 @@ class TestGetBlocks:
         assert body["scope"] == "project"
         assert body["project"]["name"] == "proj"
         assert body["path"].endswith(".holdspeak/blocks.yaml")
+
+    def test_project_root_override_selects_project_without_relaunch(
+        self, test_client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        target = tmp_path / "target"
+        (target / ".holdspeak").mkdir(parents=True)
+        (target / "pyproject.toml").write_text('[project]\nname = "target-proj"\n', encoding="utf-8")
+        monkeypatch.chdir(tmp_path)
+
+        response = test_client.get(
+            f"/api/dictation/blocks?scope=project&project_root={target}"
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["project"]["name"] == "target-proj"
+        assert body["path"] == str(target / ".holdspeak" / "blocks.yaml")
 
     def test_project_404_when_no_project_detected(self, test_client: TestClient, no_project: None) -> None:
         response = test_client.get("/api/dictation/blocks?scope=project")
@@ -216,6 +235,67 @@ class TestCreateBlock:
     def test_project_scope_no_project_404(self, test_client: TestClient, no_project: None) -> None:
         response = test_client.post(
             "/api/dictation/blocks?scope=project", json={"block": _block()}
+        )
+        assert response.status_code == 404
+
+
+# ── Starter templates ─────────────────────────────────────────────────
+
+
+class TestStarterTemplates:
+    def test_list_templates(self, test_client: TestClient) -> None:
+        response = test_client.get("/api/dictation/block-templates")
+        assert response.status_code == 200
+        body = response.json()
+        ids = {template["id"] for template in body["templates"]}
+        assert {"ai_prompt_context", "action_item", "concise_note", "code_review_focus"} <= ids
+        assert all("block" in template for template in body["templates"])
+
+    def test_create_from_template_global(
+        self, test_client: TestClient, global_path: Path
+    ) -> None:
+        response = test_client.post(
+            "/api/dictation/blocks/from-template?scope=global",
+            json={"template_id": "action_item"},
+        )
+        assert response.status_code == 201, response.text
+        body = response.json()
+        assert body["block"]["id"] == "action_item"
+        on_disk = yaml.safe_load(global_path.read_text())
+        assert [block["id"] for block in on_disk["blocks"]] == ["action_item"]
+
+    def test_create_from_template_uses_unique_id_when_duplicate(
+        self, test_client: TestClient, global_path: Path
+    ) -> None:
+        _seed_global(global_path, _block("action_item"))
+        response = test_client.post(
+            "/api/dictation/blocks/from-template?scope=global",
+            json={"template_id": "action_item"},
+        )
+        assert response.status_code == 201
+        body = response.json()
+        assert body["block"]["id"] == "action_item_2"
+        on_disk = yaml.safe_load(global_path.read_text())
+        assert [block["id"] for block in on_disk["blocks"]] == ["action_item", "action_item_2"]
+
+    def test_create_from_template_project_root_override(
+        self, test_client: TestClient, tmp_path: Path
+    ) -> None:
+        target = tmp_path / "target"
+        target.mkdir()
+        (target / "pyproject.toml").write_text('[project]\nname = "target-proj"\n', encoding="utf-8")
+        response = test_client.post(
+            f"/api/dictation/blocks/from-template?scope=project&project_root={target}",
+            json={"template_id": "concise_note"},
+        )
+        assert response.status_code == 201, response.text
+        target_file = target / ".holdspeak" / "blocks.yaml"
+        assert yaml.safe_load(target_file.read_text())["blocks"][0]["id"] == "concise_note"
+
+    def test_create_from_unknown_template_404(self, test_client: TestClient) -> None:
+        response = test_client.post(
+            "/api/dictation/blocks/from-template?scope=global",
+            json={"template_id": "missing"},
         )
         assert response.status_code == 404
 

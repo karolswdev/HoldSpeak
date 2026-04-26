@@ -2391,20 +2391,39 @@ class MeetingWebServer:
 
         # ── Dictation block-config endpoints (WFS-CFG-001 + WFS-CFG-002) ──
 
-        def _resolve_blocks_target(scope: str) -> tuple[Path, Optional[dict[str, Any]]]:
+        def _resolve_project_context(project_root: Optional[str] = None) -> dict[str, Any]:
+            """Return detected/manual project context for dictation project APIs."""
+            from .plugins.dictation.project_root import detect_project_for_cwd
+
+            if project_root is None or not str(project_root).strip():
+                ctx = detect_project_for_cwd()
+                if ctx is None:
+                    raise ValueError("no project detected for current working directory")
+                return dict(ctx)
+
+            root = Path(str(project_root)).expanduser().resolve()
+            if not root.exists() or not root.is_dir():
+                raise ValueError(f"project_root must be an existing directory: {root}")
+
+            ctx = detect_project_for_cwd(root)
+            if ctx is not None:
+                return dict(ctx)
+            return {"name": root.name, "root": str(root), "anchor": "manual"}
+
+        def _resolve_blocks_target(
+            scope: str,
+            project_root: Optional[str] = None,
+        ) -> tuple[Path, Optional[dict[str, Any]]]:
             """Return `(path, project_ctx)` for the requested scope.
 
             Raises `ValueError` with a user-facing message on bad input.
             """
             from . import web_server as _self_module
-            from .plugins.dictation.project_root import detect_project_for_cwd
 
             if scope == "global":
                 return _self_module._GLOBAL_BLOCKS_PATH, None
             if scope == "project":
-                ctx = detect_project_for_cwd()
-                if ctx is None:
-                    raise ValueError("no project detected for current working directory")
+                ctx = _resolve_project_context(project_root)
                 return Path(ctx["root"]) / ".holdspeak" / "blocks.yaml", dict(ctx)
             raise ValueError(f"scope must be 'global' or 'project', got {scope!r}")
 
@@ -2427,12 +2446,373 @@ class MeetingWebServer:
             data.setdefault("blocks", [])
             return data, True
 
+        _STARTER_BLOCK_TEMPLATES: tuple[dict[str, Any], ...] = (
+            {
+                "id": "ai_prompt_context",
+                "title": "AI prompt context",
+                "description": "Append the selected project name and clear instruction context to AI-assistant prompts.",
+                "sample_utterance": "help me design the settings panel",
+                "requires_project": True,
+                "block": {
+                    "id": "ai_prompt_context",
+                    "description": "User is dictating a prompt for an AI assistant and wants project context attached.",
+                    "match": {
+                        "examples": [
+                            "Claude help me write a function for this project",
+                            "build a prompt for the settings panel",
+                            "ask the assistant to debug this module",
+                        ],
+                        "negative_examples": ["remind me to buy milk"],
+                        "threshold": 0.7,
+                    },
+                    "inject": {
+                        "mode": "append",
+                        "template": "\n\nProject: {project.name}\nUse the selected project's constraints and local context when answering.",
+                    },
+                },
+            },
+            {
+                "id": "action_item",
+                "title": "Action item",
+                "description": "Turn short task dictation into a consistent action-item line.",
+                "sample_utterance": "follow up with Sam about the launch checklist",
+                "requires_project": False,
+                "block": {
+                    "id": "action_item",
+                    "description": "User is capturing a task or follow-up item.",
+                    "match": {
+                        "examples": [
+                            "follow up with Sam about the launch checklist",
+                            "remember to review the pull request",
+                            "make a task to update the docs",
+                        ],
+                        "negative_examples": ["write a paragraph about the architecture"],
+                        "threshold": 0.7,
+                    },
+                    "inject": {
+                        "mode": "replace",
+                        "template": "Action item: {raw_text}",
+                    },
+                },
+            },
+            {
+                "id": "concise_note",
+                "title": "Concise note",
+                "description": "Format quick thoughts as a clean note that is easy to scan later.",
+                "sample_utterance": "the retry worker should surface its next scheduled run",
+                "requires_project": False,
+                "block": {
+                    "id": "concise_note",
+                    "description": "User is dictating a concise note or implementation observation.",
+                    "match": {
+                        "examples": [
+                            "note that the retry worker needs a status line",
+                            "capture this implementation idea",
+                            "write down this design concern",
+                        ],
+                        "negative_examples": ["send an email to Alex"],
+                        "threshold": 0.7,
+                    },
+                    "inject": {
+                        "mode": "replace",
+                        "template": "Note: {raw_text}",
+                    },
+                },
+            },
+            {
+                "id": "code_review_focus",
+                "title": "Code review focus",
+                "description": "Append a review rubric for correctness, edge cases, and tests.",
+                "sample_utterance": "review the queue processing change",
+                "requires_project": False,
+                "block": {
+                    "id": "code_review_focus",
+                    "description": "User is dictating a code-review request.",
+                    "match": {
+                        "examples": [
+                            "review the queue processing change",
+                            "look over this implementation for bugs",
+                            "check this diff for edge cases",
+                        ],
+                        "negative_examples": ["start a meeting recording"],
+                        "threshold": 0.7,
+                    },
+                    "inject": {
+                        "mode": "append",
+                        "template": "\n\nReview focus: correctness, edge cases, regressions, and missing tests.",
+                    },
+                },
+            },
+        )
+
+        def _starter_template(template_id: str) -> Optional[dict[str, Any]]:
+            for template in _STARTER_BLOCK_TEMPLATES:
+                if template["id"] == template_id:
+                    return deepcopy(template)
+            return None
+
+        def _unique_block_id(base_id: str, document: dict[str, Any]) -> str:
+            existing = {
+                b.get("id")
+                for b in document.get("blocks", [])
+                if isinstance(b, dict)
+            }
+            if base_id not in existing:
+                return base_id
+            index = 2
+            while f"{base_id}_{index}" in existing:
+                index += 1
+            return f"{base_id}_{index}"
+
+        def _block_summary(path: Path) -> dict[str, Any]:
+            from .plugins.dictation.blocks import BlockConfigError, load_blocks_yaml
+
+            if not path.exists():
+                return {
+                    "path": str(path),
+                    "exists": False,
+                    "valid": True,
+                    "count": 0,
+                    "error": None,
+                }
+            try:
+                loaded = load_blocks_yaml(path)
+            except BlockConfigError as exc:
+                return {
+                    "path": str(path),
+                    "exists": True,
+                    "valid": False,
+                    "count": 0,
+                    "error": str(exc),
+                }
+            return {
+                "path": str(path),
+                "exists": True,
+                "valid": True,
+                "count": len(loaded.blocks),
+                "error": None,
+            }
+
+        @app.get("/api/dictation/block-templates")
+        async def api_dictation_block_templates() -> Any:
+            return JSONResponse(
+                {
+                    "templates": [
+                        {
+                            "id": template["id"],
+                            "title": template["title"],
+                            "description": template["description"],
+                            "sample_utterance": template["sample_utterance"],
+                            "requires_project": template["requires_project"],
+                            "block": deepcopy(template["block"]),
+                        }
+                        for template in _STARTER_BLOCK_TEMPLATES
+                    ]
+                }
+            )
+
+        def _runtime_readiness(cfg: Any) -> dict[str, Any]:
+            from .plugins.dictation import runtime as runtime_module
+            from .plugins.dictation.runtime_counters import get_counters, get_session_status
+
+            if not cfg.pipeline.enabled:
+                return {
+                    "status": "disabled",
+                    "requested_backend": cfg.runtime.backend,
+                    "resolved_backend": None,
+                    "detail": "dictation pipeline disabled",
+                    "model_path": None,
+                    "model_exists": False,
+                    "counters": get_counters(),
+                    "session": get_session_status(),
+                }
+
+            try:
+                resolved_backend, reason = runtime_module.resolve_backend(cfg.runtime.backend)
+            except runtime_module.RuntimeUnavailableError as exc:
+                return {
+                    "status": "unavailable",
+                    "requested_backend": cfg.runtime.backend,
+                    "resolved_backend": None,
+                    "detail": str(exc),
+                    "model_path": None,
+                    "model_exists": False,
+                    "counters": get_counters(),
+                    "session": get_session_status(),
+                }
+
+            model_path = Path(
+                cfg.runtime.mlx_model
+                if resolved_backend == "mlx"
+                else cfg.runtime.llama_cpp_model_path
+            ).expanduser()
+            model_exists = model_path.exists()
+            return {
+                "status": "available" if model_exists else "missing_model",
+                "requested_backend": cfg.runtime.backend,
+                "resolved_backend": resolved_backend,
+                "detail": reason if model_exists else f"model file missing at {model_path}",
+                "model_path": str(model_path),
+                "model_exists": model_exists,
+                "counters": get_counters(),
+                "session": get_session_status(),
+            }
+
+        @app.get("/api/dictation/readiness")
+        async def api_dictation_readiness(project_root: Optional[str] = None) -> Any:
+            """Return one browser-facing readiness snapshot for dictation setup."""
+            from .config import Config
+            from .plugins.dictation.project_kb import ProjectKBError, kb_path_for, read_project_kb
+
+            cfg = Config.load().dictation
+            warnings: list[dict[str, str]] = []
+
+            project: Optional[dict[str, Any]]
+            project_error: Optional[str] = None
+            try:
+                project = _resolve_project_context(project_root)
+            except ValueError as exc:
+                if project_root:
+                    return JSONResponse({"error": str(exc)}, status_code=400)
+                project = None
+                project_error = str(exc)
+
+            global_path, _ = _resolve_blocks_target("global")
+            global_blocks = _block_summary(global_path)
+
+            project_blocks: Optional[dict[str, Any]] = None
+            project_root_path: Optional[Path] = None
+            if project is not None:
+                project_root_path = Path(project["root"])
+                project_blocks = _block_summary(project_root_path / ".holdspeak" / "blocks.yaml")
+
+            resolved_blocks = (
+                project_blocks
+                if project_blocks is not None and project_blocks["exists"]
+                else global_blocks
+            )
+            resolved_scope = (
+                "project"
+                if project_blocks is not None and project_blocks["exists"]
+                else "global"
+            )
+
+            kb_payload: dict[str, Any] = {
+                "path": None,
+                "exists": False,
+                "valid": True,
+                "keys": [],
+                "error": None,
+            }
+            if project_root_path is not None:
+                kb_path = kb_path_for(project_root_path)
+                kb_payload["path"] = str(kb_path)
+                kb_payload["exists"] = kb_path.exists()
+                try:
+                    kb = read_project_kb(project_root_path)
+                    kb_payload["keys"] = sorted((kb or {}).keys())
+                except ProjectKBError as exc:
+                    kb_payload["valid"] = False
+                    kb_payload["error"] = str(exc)
+
+            runtime_payload = _runtime_readiness(cfg)
+
+            if not cfg.pipeline.enabled:
+                warnings.append({
+                    "code": "pipeline_disabled",
+                    "message": "Dictation pipeline is disabled.",
+                    "action": "Open Runtime and enable the pipeline.",
+                    "section": "runtime",
+                })
+            if project is None:
+                warnings.append({
+                    "code": "no_project",
+                    "message": project_error or "No project root detected.",
+                    "action": "Set a project root override or launch holdspeak from a project directory.",
+                    "section": "readiness",
+                })
+            if not resolved_blocks["exists"] or int(resolved_blocks["count"]) == 0:
+                warnings.append({
+                    "code": "no_blocks",
+                    "message": "No dictation blocks are loaded for the selected project.",
+                    "action": "Create a global or project block.",
+                    "section": "blocks",
+                })
+            if not global_blocks["valid"] or (project_blocks is not None and not project_blocks["valid"]):
+                warnings.append({
+                    "code": "invalid_blocks",
+                    "message": "A blocks.yaml file is invalid.",
+                    "action": "Open Blocks and fix the validation error.",
+                    "section": "blocks",
+                })
+            if project is not None and not kb_payload["exists"]:
+                warnings.append({
+                    "code": "missing_project_kb",
+                    "message": "Project KB file is missing.",
+                    "action": "Open Project KB and save the fields this project needs.",
+                    "section": "kb",
+                })
+            if not kb_payload["valid"]:
+                warnings.append({
+                    "code": "invalid_project_kb",
+                    "message": "Project KB file is invalid.",
+                    "action": "Open Project KB and fix the validation error.",
+                    "section": "kb",
+                })
+            if runtime_payload["status"] == "unavailable":
+                warnings.append({
+                    "code": "runtime_unavailable",
+                    "message": runtime_payload["detail"],
+                    "action": "Install the selected runtime extra or change backend.",
+                    "section": "runtime",
+                })
+            elif runtime_payload["status"] == "missing_model":
+                warnings.append({
+                    "code": "runtime_model_missing",
+                    "message": runtime_payload["detail"],
+                    "action": "Download the model or update the runtime model path.",
+                    "section": "runtime",
+                })
+
+            ready = (
+                cfg.pipeline.enabled
+                and project is not None
+                and bool(resolved_blocks["valid"])
+                and int(resolved_blocks["count"]) > 0
+                and bool(kb_payload["valid"])
+                and runtime_payload["status"] == "available"
+            )
+
+            return JSONResponse(
+                {
+                    "ready": ready,
+                    "project": project,
+                    "config": {
+                        "pipeline_enabled": cfg.pipeline.enabled,
+                        "max_total_latency_ms": cfg.pipeline.max_total_latency_ms,
+                        "backend": cfg.runtime.backend,
+                    },
+                    "blocks": {
+                        "global": global_blocks,
+                        "project": project_blocks,
+                        "resolved_scope": resolved_scope,
+                        "resolved": resolved_blocks,
+                    },
+                    "project_kb": kb_payload,
+                    "runtime": runtime_payload,
+                    "warnings": warnings,
+                }
+            )
+
         @app.get("/api/dictation/blocks")
-        async def api_dictation_blocks_list(scope: str = "global") -> Any:
+        async def api_dictation_blocks_list(
+            scope: str = "global",
+            project_root: Optional[str] = None,
+        ) -> Any:
             from .plugins.dictation.blocks import BlockConfigError, load_blocks_yaml
 
             try:
-                path, project = _resolve_blocks_target(scope)
+                path, project = _resolve_blocks_target(scope, project_root)
             except ValueError as exc:
                 status = 404 if "no project detected" in str(exc) else 400
                 return JSONResponse({"error": str(exc)}, status_code=status)
@@ -2459,7 +2839,11 @@ class MeetingWebServer:
             )
 
         @app.post("/api/dictation/blocks")
-        async def api_dictation_blocks_create(payload: dict[str, Any], scope: str = "global") -> Any:
+        async def api_dictation_blocks_create(
+            payload: dict[str, Any],
+            scope: str = "global",
+            project_root: Optional[str] = None,
+        ) -> Any:
             from .plugins.dictation.blocks import BlockConfigError, save_blocks_yaml
 
             block = payload.get("block") if isinstance(payload, dict) else None
@@ -2469,7 +2853,7 @@ class MeetingWebServer:
                     status_code=400,
                 )
             try:
-                path, _project = _resolve_blocks_target(scope)
+                path, _project = _resolve_blocks_target(scope, project_root)
             except ValueError as exc:
                 status = 404 if "no project detected" in str(exc) else 400
                 return JSONResponse({"error": str(exc)}, status_code=status)
@@ -2502,8 +2886,82 @@ class MeetingWebServer:
                 status_code=201,
             )
 
+        @app.post("/api/dictation/blocks/from-template")
+        async def api_dictation_blocks_create_from_template(
+            payload: dict[str, Any],
+            scope: str = "global",
+            project_root: Optional[str] = None,
+        ) -> Any:
+            from .plugins.dictation.blocks import BlockConfigError, save_blocks_yaml
+
+            template_id = payload.get("template_id") if isinstance(payload, dict) else None
+            if not isinstance(template_id, str) or not template_id.strip():
+                return JSONResponse(
+                    {"error": "request body must include template_id"},
+                    status_code=400,
+                )
+            template = _starter_template(template_id.strip())
+            if template is None:
+                return JSONResponse(
+                    {"error": f"unknown starter template {template_id!r}"},
+                    status_code=404,
+                )
+            try:
+                path, project = _resolve_blocks_target(scope, project_root)
+            except ValueError as exc:
+                status = 404 if "no project detected" in str(exc) else 400
+                return JSONResponse({"error": str(exc)}, status_code=status)
+
+            requested_block_id = payload.get("block_id") if isinstance(payload, dict) else None
+            if requested_block_id is not None and not isinstance(requested_block_id, str):
+                return JSONResponse(
+                    {"error": "block_id must be a string when provided"},
+                    status_code=400,
+                )
+            try:
+                document, _exists = _read_blocks_document(path)
+            except Exception as exc:
+                log.error(f"Failed to read blocks document: {exc}")
+                return JSONResponse({"error": str(exc)}, status_code=500)
+
+            block = deepcopy(template["block"])
+            base_id = (requested_block_id or block["id"]).strip()
+            if not base_id:
+                return JSONResponse({"error": "block_id cannot be empty"}, status_code=400)
+            block["id"] = _unique_block_id(base_id, document)
+            document["blocks"].append(block)
+            try:
+                save_blocks_yaml(path, document)
+            except BlockConfigError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=422)
+            if self.on_dictation_config_changed is not None:
+                try:
+                    self.on_dictation_config_changed()
+                except Exception as exc:
+                    log.error(f"on_dictation_config_changed failed: {exc}")
+            return JSONResponse(
+                {
+                    "scope": scope,
+                    "path": str(path),
+                    "project": project,
+                    "template": {
+                        "id": template["id"],
+                        "title": template["title"],
+                        "sample_utterance": template["sample_utterance"],
+                    },
+                    "block": block,
+                    "document": document,
+                },
+                status_code=201,
+            )
+
         @app.put("/api/dictation/blocks/{block_id}")
-        async def api_dictation_blocks_update(block_id: str, payload: dict[str, Any], scope: str = "global") -> Any:
+        async def api_dictation_blocks_update(
+            block_id: str,
+            payload: dict[str, Any],
+            scope: str = "global",
+            project_root: Optional[str] = None,
+        ) -> Any:
             from .plugins.dictation.blocks import BlockConfigError, save_blocks_yaml
 
             block = payload.get("block") if isinstance(payload, dict) else None
@@ -2513,7 +2971,7 @@ class MeetingWebServer:
                     status_code=400,
                 )
             try:
-                path, _project = _resolve_blocks_target(scope)
+                path, _project = _resolve_blocks_target(scope, project_root)
             except ValueError as exc:
                 status = 404 if "no project detected" in str(exc) else 400
                 return JSONResponse({"error": str(exc)}, status_code=status)
@@ -2561,11 +3019,15 @@ class MeetingWebServer:
             )
 
         @app.delete("/api/dictation/blocks/{block_id}")
-        async def api_dictation_blocks_delete(block_id: str, scope: str = "global") -> Any:
+        async def api_dictation_blocks_delete(
+            block_id: str,
+            scope: str = "global",
+            project_root: Optional[str] = None,
+        ) -> Any:
             from .plugins.dictation.blocks import BlockConfigError, save_blocks_yaml
 
             try:
-                path, _project = _resolve_blocks_target(scope)
+                path, _project = _resolve_blocks_target(scope, project_root)
             except ValueError as exc:
                 status = 404 if "no project detected" in str(exc) else 400
                 return JSONResponse({"error": str(exc)}, status_code=status)
@@ -2607,12 +3069,14 @@ class MeetingWebServer:
         # ── Project KB endpoints (WFS-CFG-003) ─────────────────────────────
 
         @app.get("/api/dictation/project-kb")
-        async def api_dictation_project_kb_get() -> Any:
+        async def api_dictation_project_kb_get(project_root: Optional[str] = None) -> Any:
             from .plugins.dictation.project_kb import ProjectKBError, read_project_kb
-            from .plugins.dictation.project_root import detect_project_for_cwd
 
-            ctx = detect_project_for_cwd()
-            if ctx is None:
+            try:
+                ctx = _resolve_project_context(project_root)
+            except ValueError as exc:
+                if project_root:
+                    return JSONResponse({"error": str(exc)}, status_code=400)
                 return JSONResponse({
                     "detected": None,
                     "kb": None,
@@ -2631,14 +3095,16 @@ class MeetingWebServer:
             })
 
         @app.put("/api/dictation/project-kb")
-        async def api_dictation_project_kb_put(payload: dict[str, Any]) -> Any:
+        async def api_dictation_project_kb_put(
+            payload: dict[str, Any],
+            project_root: Optional[str] = None,
+        ) -> Any:
             from .plugins.dictation.project_kb import (
                 ProjectKBError,
                 kb_path_for,
                 read_project_kb,
                 write_project_kb,
             )
-            from .plugins.dictation.project_root import detect_project_for_cwd
 
             kb = payload.get("kb") if isinstance(payload, dict) else None
             if not isinstance(kb, dict):
@@ -2646,11 +3112,12 @@ class MeetingWebServer:
                     {"error": "request body must be {'kb': {<key>: <value>, ...}}"},
                     status_code=400,
                 )
-            ctx = detect_project_for_cwd()
-            if ctx is None:
+            try:
+                ctx = _resolve_project_context(project_root)
+            except ValueError as exc:
                 return JSONResponse(
-                    {"error": f"no project root detected from cwd={Path.cwd()}"},
-                    status_code=404,
+                    {"error": str(exc)},
+                    status_code=400 if project_root else 404,
                 )
             root = Path(ctx["root"])
             try:
@@ -2668,7 +3135,7 @@ class MeetingWebServer:
                 return JSONResponse({"error": str(exc)}, status_code=500)
             # Re-detect so the caller sees the upgraded anchor signal
             # when this PUT just created `<root>/.holdspeak/`.
-            redetected = detect_project_for_cwd() or ctx
+            redetected = _resolve_project_context(project_root) if project_root else ctx
             return JSONResponse({
                 "detected": dict(redetected),
                 "kb": fresh_kb,
@@ -2676,15 +3143,15 @@ class MeetingWebServer:
             })
 
         @app.delete("/api/dictation/project-kb")
-        async def api_dictation_project_kb_delete() -> Any:
+        async def api_dictation_project_kb_delete(project_root: Optional[str] = None) -> Any:
             from .plugins.dictation.project_kb import delete_project_kb
-            from .plugins.dictation.project_root import detect_project_for_cwd
 
-            ctx = detect_project_for_cwd()
-            if ctx is None:
+            try:
+                ctx = _resolve_project_context(project_root)
+            except ValueError as exc:
                 return JSONResponse(
-                    {"error": f"no project root detected from cwd={Path.cwd()}"},
-                    status_code=404,
+                    {"error": str(exc)},
+                    status_code=400 if project_root else 404,
                 )
             root = Path(ctx["root"])
             removed = delete_project_kb(root)
@@ -2699,6 +3166,116 @@ class MeetingWebServer:
                 except Exception as exc:
                     log.error(f"on_dictation_config_changed failed: {exc}")
             return JSONResponse({"detected": dict(ctx), "kb": None, "kb_path": None})
+
+        # ── Dictation dry-run endpoint (WFS-CFG-005) ───────────────────────
+
+        def _serialize_intent(intent: Any) -> Optional[dict[str, Any]]:
+            if intent is None:
+                return None
+            return {
+                "matched": bool(getattr(intent, "matched", False)),
+                "block_id": getattr(intent, "block_id", None),
+                "confidence": float(getattr(intent, "confidence", 0.0)),
+                "raw_label": getattr(intent, "raw_label", None),
+                "extras": dict(getattr(intent, "extras", {}) or {}),
+            }
+
+        def _serialize_stage_result(result: Any) -> dict[str, Any]:
+            return {
+                "stage_id": str(getattr(result, "stage_id", "")),
+                "elapsed_ms": float(getattr(result, "elapsed_ms", 0.0)),
+                "intent": _serialize_intent(getattr(result, "intent", None)),
+                "warnings": list(getattr(result, "warnings", []) or []),
+                "metadata": dict(getattr(result, "metadata", {}) or {}),
+                "text": str(getattr(result, "text", "")),
+            }
+
+        @app.post("/api/dictation/dry-run")
+        async def api_dictation_dry_run(payload: dict[str, Any]) -> Any:
+            from .config import Config
+            from .plugins.dictation.assembly import build_pipeline
+            from .plugins.dictation.contracts import Utterance
+
+            utterance = payload.get("utterance") if isinstance(payload, dict) else None
+            if not isinstance(utterance, str):
+                return JSONResponse(
+                    {
+                        "error": "utterance must be a string",
+                        "detail": {"utterance": "required string"},
+                    },
+                    status_code=400,
+                )
+            text = utterance.strip()
+            if not text:
+                return JSONResponse(
+                    {
+                        "error": "utterance must not be empty",
+                        "detail": {"utterance": "must not be empty"},
+                    },
+                    status_code=400,
+                )
+            project_root_override = payload.get("project_root") if isinstance(payload, dict) else None
+            if project_root_override is not None and not isinstance(project_root_override, str):
+                return JSONResponse(
+                    {
+                        "error": "project_root must be a string when provided",
+                        "detail": {"project_root": "optional string path"},
+                    },
+                    status_code=400,
+                )
+
+            try:
+                cfg = Config.load().dictation
+                try:
+                    project = _resolve_project_context(project_root_override)
+                except ValueError as exc:
+                    if project_root_override:
+                        return JSONResponse({"error": str(exc)}, status_code=400)
+                    project = None
+                project_root = Path(project["root"]) if project else None
+
+                if not cfg.pipeline.enabled:
+                    return JSONResponse(
+                        {
+                            "project": dict(project) if project else None,
+                            "runtime_status": "disabled",
+                            "runtime_detail": "dictation pipeline disabled (opt-in)",
+                            "blocks_count": 0,
+                            "stages": [],
+                            "final_text": text,
+                            "total_elapsed_ms": 0.0,
+                            "warnings": ["dictation pipeline disabled"],
+                        }
+                    )
+
+                result = build_pipeline(
+                    cfg,
+                    project_root=project_root,
+                    global_blocks_path=_GLOBAL_BLOCKS_PATH,
+                )
+                run = result.pipeline.run(
+                    Utterance(
+                        raw_text=text,
+                        audio_duration_s=0.0,
+                        transcribed_at=datetime.now(),
+                        project=project,
+                    )
+                )
+                return JSONResponse(
+                    {
+                        "project": dict(project) if project else None,
+                        "runtime_status": result.runtime_status,
+                        "runtime_detail": result.runtime_detail,
+                        "blocks_count": len(result.blocks.blocks),
+                        "stages": [_serialize_stage_result(sr) for sr in run.stage_results],
+                        "final_text": run.final_text,
+                        "total_elapsed_ms": float(run.total_elapsed_ms),
+                        "warnings": list(run.warnings),
+                    }
+                )
+            except Exception as exc:
+                log.error(f"Dictation dry-run failed: {exc}")
+                return JSONResponse({"error": str(exc)}, status_code=500)
 
         @app.websocket("/ws")
         async def websocket_endpoint(websocket: WebSocket) -> None:

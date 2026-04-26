@@ -1,0 +1,9 @@
+# Command: uv run python --version && uv --version && uname -a && git branch --show-current
+# Captured: 2026-04-26 15:37:36 MDT
+# Git: 0868153 (pre-commit; working tree contains HS-4-05/HS-4-06 changes)
+
+Python 3.13.11
+uv 0.9.28 (Homebrew 2026-01-29)
+Darwin Karols-MacBook-Pro.local 25.2.0 Darwin Kernel Version 25.2.0: Tue Nov 18 21:07:05 PST 2025; root:xnu-12377.61.12~1/RELEASE_ARM64_T6020 arm64
+branch: main
+timezone: America/Denver

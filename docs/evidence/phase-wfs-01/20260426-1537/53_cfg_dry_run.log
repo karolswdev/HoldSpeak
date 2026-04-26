@@ -1,0 +1,14 @@
+# Command: uv run pytest -q tests/integration/test_web_dry_run_api.py
+# Captured: 2026-04-26 15:37:36 MDT
+# Git: 0868153 (pre-commit; working tree contains HS-4-05/HS-4-06 changes)
+
+.........                                                                [100%]
+9 passed in 0.40s
+
+Coverage:
+- matched block + project-KB enrichment.
+- no-project execution.
+- LLM-unavailable state.
+- disabled-pipeline state.
+- bad utterance validation.
+- `/dictation` Dry-run UI anchors and copy-final-text affordance.
