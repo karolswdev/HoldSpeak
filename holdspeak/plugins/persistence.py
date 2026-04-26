@@ -68,6 +68,8 @@ def record_plugin_run(
 
     `run.started_at` / `run.finished_at` are not persisted — see module
     docstring for the documented gap. `run.duration_ms` is preserved.
+    The explicit `output` kwarg overrides `run.output` when both are set
+    (callers that captured richer output post-dispatch should pass it in).
     """
     db.record_plugin_run(
         meeting_id=run.meeting_id,
@@ -77,7 +79,7 @@ def record_plugin_run(
         status=run.status,
         idempotency_key=run.idempotency_key,
         duration_ms=run.duration_ms,
-        output=output,
+        output=output if output is not None else run.output,
         error=run.error,
         deduped=(run.status == "deduped"),
     )

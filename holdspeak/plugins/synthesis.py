@@ -5,9 +5,10 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any, Iterable, Optional
 
 from ..artifacts import ArtifactDraft, ArtifactSourceRef, artifact_status_from_confidence
+from .contracts import ArtifactLineage
 
 _ARTIFACT_TYPE_BY_PLUGIN: dict[str, str] = {
     "requirements_extractor": "requirements",
@@ -203,4 +204,71 @@ def synthesize_meeting_artifacts(
 
     artifacts.sort(key=lambda artifact: (artifact.plugin_id, artifact.artifact_id))
     return artifacts[:max_artifacts]
+
+
+def to_artifact_lineage(draft: ArtifactDraft) -> ArtifactLineage:
+    """Project an `ArtifactDraft` into the typed `ArtifactLineage` contract (HS-2-07)."""
+    window_ids = sorted(
+        {src.source_ref for src in draft.sources if src.source_type == "intent_window"}
+    )
+    plugin_run_keys = sorted(
+        {src.source_ref for src in draft.sources if src.source_type == "plugin_run"}
+    )
+    return ArtifactLineage(
+        artifact_id=draft.artifact_id,
+        meeting_id=draft.meeting_id,
+        window_ids=window_ids,
+        plugin_run_keys=plugin_run_keys,
+    )
+
+
+def synthesize_and_persist(
+    db: Any,
+    meeting_id: str,
+    *,
+    max_artifacts: int = 200,
+    plugin_runs: Optional[Iterable[object]] = None,
+) -> tuple[list[ArtifactDraft], list[ArtifactLineage]]:
+    """Synthesize artifacts from a meeting's plugin runs and persist them (MIR-F-010, MIR-F-011).
+
+    When `plugin_runs` is omitted, falls back to `db.list_plugin_runs(meeting_id)`
+    so the caller doesn't have to re-marshal what's already on disk. Each
+    drafted artifact is persisted via `db.record_artifact` with its
+    `(source_type, source_ref)` lineage rows; the matching typed
+    `ArtifactLineage` projections are returned alongside the drafts so the
+    caller can hand them straight to a web API or CLI surface.
+    """
+    clean_meeting_id = _clean_text(meeting_id)
+    if not clean_meeting_id:
+        return ([], [])
+
+    if plugin_runs is None:
+        plugin_runs = db.list_plugin_runs(clean_meeting_id)
+
+    drafts = synthesize_meeting_artifacts(
+        meeting_id=clean_meeting_id,
+        plugin_runs=plugin_runs,
+        max_artifacts=max_artifacts,
+    )
+
+    lineages: list[ArtifactLineage] = []
+    for draft in drafts:
+        lineage = to_artifact_lineage(draft)
+        lineages.append(lineage)
+        sources = [(src.source_type, src.source_ref) for src in draft.sources]
+        db.record_artifact(
+            artifact_id=draft.artifact_id,
+            meeting_id=draft.meeting_id,
+            artifact_type=draft.artifact_type,
+            title=draft.title,
+            body_markdown=draft.body_markdown,
+            structured_json=dict(draft.structured_json),
+            confidence=draft.confidence,
+            status=draft.status,
+            plugin_id=draft.plugin_id,
+            plugin_version=draft.plugin_version,
+            sources=sources,
+        )
+
+    return (drafts, lineages)
 

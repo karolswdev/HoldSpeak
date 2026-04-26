@@ -1,6 +1,6 @@
 # Phase 2 — Multi-Intent Routing (MIR-01)
 
-**Last updated:** 2026-04-25 (HS-2-06 done — first non-bridge phase-2 story: end-to-end MIR pipeline + `MeetingSession.stop()` hook, off by default; 11 new tests across unit + 2 integration files, 932 passed end-to-end).
+**Last updated:** 2026-04-25 (HS-2-07 done — synthesis-persist bridge + `process_meeting_state(synthesize=True)` end-to-end; additive `PluginRun.output` field; 8 new tests, 940 passed end-to-end).
 
 ## Goal
 
@@ -45,7 +45,7 @@ table below mirrors it.
 | HS-2-04 | Step 3 — Plugin host integration | done | [story-04-plugin-host](./story-04-plugin-host.md) | tests pass (6 new + 23 host-suite cases) + full suite green (913 passed, metal excluded) |
 | HS-2-05 | Step 4 — Persistence + migration | done | [story-05-persistence](./story-05-persistence.md) | tests pass (8 new + 6 engine MIR-persistence cases) + full suite green (921 passed, metal excluded) |
 | HS-2-06 | Step 5 — Meeting runtime wiring | done | [story-06-runtime-wiring](./story-06-runtime-wiring.md) | tests pass (5 unit + 6 integration) + full suite green (932 passed, metal excluded) |
-| HS-2-07 | Step 6 — Synthesis pass | backlog | [story-07-synthesis](./story-07-synthesis.md) | — |
+| HS-2-07 | Step 6 — Synthesis pass | done | [story-07-synthesis](./story-07-synthesis.md) | tests pass (5 unit + 3 integration + 3 pre-existing synthesis = 11/11) + full suite green (940 passed, metal excluded) |
 | HS-2-08 | Step 7 — API + CLI surfaces | backlog | [story-08-api-cli](./story-08-api-cli.md) | — |
 | HS-2-09 | Step 8 — Config + feature flags | backlog | [story-09-config-flags](./story-09-config-flags.md) | — |
 | HS-2-10 | Step 9 — Observability + hardening | backlog | [story-10-observability](./story-10-observability.md) | — |
@@ -53,20 +53,23 @@ table below mirrors it.
 
 ## Where we are
 
-HS-2-06 done — first non-bridge phase-2 story. `holdspeak/plugins/pipeline.py`
-provides `process_meeting_state(state, host, *, db, ...)` chaining
-windowing → scoring → transitions → dispatch → persistence with
-per-stage `try/except` (MIR-F-012). `MeetingSession.__init__` now
-accepts 4 MIR kwargs (off by default); `MeetingSession.stop()` runs
-the pipeline after intel/title/web/diarizer cleanup, wrapped in
-try/except, no lock held — no new deadlock surface. 11 new tests:
-5 unit, 3 routing integration (idempotency dedup + transitions),
-3 stop-path integration (with `@pytest.mark.timeout(15)` to fail
-loud on any deadlock). On-segment-update wiring deferred (the hot
-path through `_transcribe_loop` deserves its own story). Next:
-**HS-2-07 (synthesis pass)** — consume `MIRPipelineResult.runs` +
-transitions to materialize artifacts with `ArtifactLineage` via
-the HS-2-05 adapter.
+HS-2-07 done — pipeline now runs end-to-end including artifact
+synthesis. `holdspeak/plugins/synthesis.py` gained
+`to_artifact_lineage(draft) -> ArtifactLineage` (typed projection)
+and `synthesize_and_persist(db, meeting_id, *, max_artifacts,
+plugin_runs=None)` (orchestrator: read runs → synthesize → persist
+via `db.record_artifact`). `process_meeting_state(synthesize=True,
+db=db)` wires it in; `MIRPipelineResult` grows `artifacts` +
+`artifact_lineages` fields. Required an additive contract change —
+`PluginRun.output: dict | None = None` — threaded through
+dispatch + persistence so synthesis has data to dedupe + summarize
+on. Default-None keeps it non-breaking; reverses HS-2-04's earlier
+"no output on PluginRun" decision (rationale documented in
+story-07 Notes). 8 new tests: 5 unit + 3 integration. Next:
+**HS-2-08 (API + CLI surfaces)** — web API + `holdspeak meeting`
+CLI subcommand to expose `db.list_intent_windows`,
+`db.list_plugin_runs`, `db.list_artifacts` for introspection +
+manual override.
 
 ## Active risks
 

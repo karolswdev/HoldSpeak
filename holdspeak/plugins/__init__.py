@@ -43,7 +43,11 @@ from .persistence import (
 from .scoring import iter_intent_transitions, score_window, score_windows
 from .signals import SUPPORTED_INTENTS as SIGNAL_INTENTS, extract_intent_signals
 from .project_detector import ProjectDetectorPlugin
-from .synthesis import synthesize_meeting_artifacts
+from .synthesis import (
+    synthesize_and_persist,
+    synthesize_meeting_artifacts,
+    to_artifact_lineage,
+)
 
 __all__ = [
     "DEFAULT_INTENT_THRESHOLD",
@@ -85,7 +89,9 @@ __all__ = [
     "register_builtin_plugins",
     "reset_router_counters",
     "select_active_intents",
+    "synthesize_and_persist",
     "synthesize_meeting_artifacts",
+    "to_artifact_lineage",
     "process_next_plugin_run_job",
     "PLUGIN_QUEUE_RETRY_BASE_SECONDS",
     "PLUGIN_QUEUE_RETRY_MAX_SECONDS",

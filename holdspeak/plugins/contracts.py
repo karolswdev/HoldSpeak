@@ -80,6 +80,7 @@ class PluginRun:
     finished_at: float
     duration_ms: float
     error: str | None = None
+    output: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.status not in PLUGIN_RUN_STATUSES:
@@ -100,6 +101,7 @@ class PluginRun:
             "finished_at": float(self.finished_at),
             "duration_ms": float(self.duration_ms),
             "error": self.error,
+            "output": dict(self.output) if isinstance(self.output, dict) else None,
         }
 
 

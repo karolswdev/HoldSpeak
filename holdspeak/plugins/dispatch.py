@@ -44,6 +44,7 @@ def _to_plugin_run(
         finished_at=finished_at,
         duration_ms=result.duration_ms,
         error=result.error,
+        output=dict(result.output) if isinstance(result.output, dict) else None,
     )
 
 

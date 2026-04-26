@@ -15,11 +15,13 @@ from dataclasses import dataclass, field
 from typing import Any, Optional, Protocol
 
 from ..intent_timeline import build_intent_windows
-from .contracts import IntentScore, IntentTransition, IntentWindow, PluginRun
+from ..artifacts import ArtifactDraft
+from .contracts import ArtifactLineage, IntentScore, IntentTransition, IntentWindow, PluginRun
 from .dispatch import dispatch_window
 from .host import PluginHost
 from .persistence import record_intent_window, record_plugin_run
 from .scoring import iter_intent_transitions, score_window
+from .synthesis import synthesize_and_persist
 
 
 class _MeetingDatabaseLike(Protocol):
@@ -37,6 +39,8 @@ class MIRPipelineResult:
     scores: list[IntentScore] = field(default_factory=list)
     transitions: list[IntentTransition] = field(default_factory=list)
     runs: list[PluginRun] = field(default_factory=list)
+    artifacts: list[ArtifactDraft] = field(default_factory=list)
+    artifact_lineages: list[ArtifactLineage] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 
 
@@ -68,6 +72,8 @@ def process_meeting_state(
     db: Optional[_MeetingDatabaseLike] = None,
     timeout_seconds: Optional[float] = None,
     defer_heavy: bool = True,
+    synthesize: bool = False,
+    max_artifacts: int = 200,
 ) -> MIRPipelineResult:
     """Run the MIR pipeline over a meeting state, in process, returning typed results.
 
@@ -160,10 +166,27 @@ def process_meeting_state(
                     f"persist_run[{run.window_id}/{run.plugin_id}]: {type(exc).__name__}: {exc}"
                 )
 
+    # 6. Synthesis — only if requested AND a db was supplied (synthesis reads
+    #    from db.list_plugin_runs to get persisted output payloads, then
+    #    persists each artifact via db.record_artifact).
+    artifacts: list[ArtifactDraft] = []
+    artifact_lineages: list[ArtifactLineage] = []
+    if synthesize and db is not None:
+        try:
+            artifacts, artifact_lineages = synthesize_and_persist(
+                db,
+                meeting_id,
+                max_artifacts=max_artifacts,
+            )
+        except Exception as exc:
+            errors.append(f"synthesis: {type(exc).__name__}: {exc}")
+
     return MIRPipelineResult(
         windows=list(windows),
         scores=list(scores),
         transitions=list(transitions),
         runs=list(runs),
+        artifacts=list(artifacts),
+        artifact_lineages=list(artifact_lineages),
         errors=list(errors),
     )
