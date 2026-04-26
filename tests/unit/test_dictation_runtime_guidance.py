@@ -31,6 +31,9 @@ def test_runtime_guidance_auto_offers_backend_commands() -> None:
     assert len(commands) == 2
     assert any("dictation-mlx" in command for command in commands)
     assert any("dictation-llama" in command for command in commands)
+    assert guidance["links"] == [
+        {"label": "Dictation runtime setup", "target": "/docs/dictation-runtime"}
+    ]
 
 
 def test_doctor_model_fix_reuses_download_command(tmp_path: Path) -> None:

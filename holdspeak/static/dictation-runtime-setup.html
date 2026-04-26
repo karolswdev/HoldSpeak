@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HoldSpeak - Dictation Runtime Setup</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --canvas: #07111d;
+        --panel: rgba(9, 18, 31, 0.9);
+        --line: rgba(158, 196, 229, 0.18);
+        --text: #edf5ff;
+        --muted: #9db1c8;
+        --accent: #64d7ff;
+        --accent-2: #75f4d3;
+        --font-ui: "Sora", "Avenir Next", "Segoe UI", sans-serif;
+        --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; min-height: 100vh; color: var(--text);
+        font-family: var(--font-ui); background: var(--canvas);
+      }
+      header {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 24px 40px; border-bottom: 1px solid var(--line);
+      }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      main { max-width: 960px; margin: 0 auto; padding: 32px 40px 80px; }
+      h1 { margin: 0 0 10px; }
+      h2 { margin-top: 32px; }
+      p, li { color: var(--muted); line-height: 1.6; }
+      .panel {
+        background: var(--panel); border: 1px solid var(--line);
+        border-radius: 8px; padding: 18px; margin-top: 18px;
+      }
+      pre {
+        overflow-x: auto; background: #030912; border: 1px solid var(--line);
+        border-radius: 8px; padding: 14px; font-family: var(--font-mono);
+        font-size: 13px; color: var(--text);
+      }
+      code { font-family: var(--font-mono); color: var(--text); }
+      .note { color: var(--accent-2); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>HoldSpeak Runtime Setup</strong>
+      <nav><a href="/dictation">Back to Dictation</a></nav>
+    </header>
+    <main>
+      <h1>Dictation Runtime Setup</h1>
+      <p>
+        The dictation pipeline uses a local LLM runtime for block
+        classification and Project KB enrichment. Pick one backend and
+        place the matching model at the configured path.
+      </p>
+
+      <section class="panel">
+        <h2>Apple Silicon</h2>
+        <p>Use MLX on Apple Silicon when available.</p>
+        <pre>uv pip install -e '.[dictation-mlx]'
+
+huggingface-cli download mlx-community/Qwen3-8B-MLX-4bit --local-dir ~/Models/mlx/Qwen3-8B-MLX-4bit</pre>
+        <p>Default model path: <code>~/Models/mlx/Qwen3-8B-MLX-4bit</code></p>
+      </section>
+
+      <section class="panel">
+        <h2>Cross-Platform GGUF</h2>
+        <p>
+          Use <code>llama_cpp</code> on Linux x86_64, or as a macOS
+          fallback. On macOS arm64, build with Metal flags.
+        </p>
+        <pre>CMAKE_ARGS="-DGGML_METAL=on" uv pip install -e '.[dictation-llama]'
+
+mkdir -p ~/Models/gguf
+huggingface-cli download bartowski/Qwen2.5-3B-Instruct-GGUF \
+  Qwen2.5-3B-Instruct-Q4_K_M.gguf --local-dir ~/Models/gguf --local-dir-use-symlinks False</pre>
+        <p>Default model path: <code>~/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf</code></p>
+      </section>
+
+      <section class="panel">
+        <h2>Enable Runtime</h2>
+        <p>
+          Enable the dictation pipeline from the Runtime tab, or set
+          <code>dictation.pipeline.enabled</code> in
+          <code>~/.config/holdspeak/config.json</code>.
+        </p>
+        <p class="note">Readiness and doctor only show commands; they do not install packages or download models.</p>
+      </section>
+    </main>
+  </body>
+</html>

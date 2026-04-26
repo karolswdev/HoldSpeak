@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-5-12 done — browser readiness and `holdspeak doctor` now share one runtime guidance implementation; full sweep 1104 passed / 13 skipped).
+**Last updated:** 2026-04-26 (HS-5-13 done — runtime guidance docs links now point to a served local setup route; full sweep 1105 passed / 13 skipped).
 **Current phase:** [phase-5-usability-powerhouse](./phase-5-usability-powerhouse/) — reduce daily-use friction and make the web runtime a stronger end-user cockpit.
 **Status:** in-progress.
 

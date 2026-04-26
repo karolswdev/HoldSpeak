@@ -70,8 +70,8 @@ def runtime_guidance(
     backend = resolved_backend or requested_backend
     links = [
         {
-            "label": "README: Optional Dictation LLM Backend",
-            "target": "README.md#optional-dictation-llm-backend",
+            "label": "Dictation runtime setup",
+            "target": "/docs/dictation-runtime",
         }
     ]
 

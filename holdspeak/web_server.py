@@ -824,6 +824,22 @@ class MeetingWebServer:
                 )
             return HTMLResponse(html)
 
+        @app.get("/docs/dictation-runtime")
+        async def dictation_runtime_docs() -> Any:
+            """Serve local dictation runtime setup guidance."""
+            page = Path(__file__).resolve().parent / "static" / "dictation-runtime-setup.html"
+            try:
+                html = page.read_text(encoding="utf-8")
+            except Exception as e:
+                log.error(f"Failed to read dictation-runtime-setup.html: {e}")
+                html = (
+                    "<!doctype html><html><head><meta charset='utf-8'/>"
+                    "<title>Dictation Runtime Setup</title></head>"
+                    "<body><h1>Dictation Runtime Setup</h1>"
+                    "<p>Page unavailable.</p></body></html>"
+                )
+            return HTMLResponse(html)
+
         @app.get("/api/settings")
         async def api_get_settings() -> Any:
             try:

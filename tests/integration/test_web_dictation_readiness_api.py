@@ -214,6 +214,7 @@ def test_readiness_runtime_unavailable_includes_install_guidance(
     assert guidance["kind"] == "unavailable"
     assert guidance["backend"] == "llama_cpp"
     assert guidance["model_path"] is None
+    assert guidance["links"][0]["target"] == "/docs/dictation-runtime"
     assert any("dictation-llama" in item["command"] for item in guidance["commands"])
 
 
@@ -265,3 +266,21 @@ def test_dictation_page_includes_readiness_panel() -> None:
     assert "rt-guidance" in body
     assert "renderRuntimeGuidance" in body
     assert "data-copy-command" in body
+
+
+def test_dictation_runtime_docs_route_serves_setup_page() -> None:
+    server = MeetingWebServer(
+        on_bookmark=MagicMock(),
+        on_stop=MagicMock(),
+        get_state=MagicMock(return_value={}),
+    )
+    client = TestClient(server.app)
+
+    response = client.get("/docs/dictation-runtime")
+
+    assert response.status_code == 200
+    body = response.text
+    assert "Dictation Runtime Setup" in body
+    assert "dictation-mlx" in body
+    assert "dictation-llama" in body
+    assert "Qwen2.5-3B-Instruct-Q4_K_M.gguf" in body
