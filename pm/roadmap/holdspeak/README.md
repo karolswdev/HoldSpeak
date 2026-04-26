@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-2-11 DoD sweep complete — **MIR-01 PHASE DONE**; spec §8.2 evidence bundle at `docs/evidence/phase-mir-01/20260426-0037/`; 973 passed end-to-end).
-**Current phase:** none — both DIR-01 and MIR-01 closed; pick the next via the project's `docs/PLAN_*` files.
-**Status:** between phases.
+**Last updated:** 2026-04-26 (HS-3 scaffold — phase 3 opened with 5 backlog stories; closes the DIR-01 deferred items: project-context plumbing, `llama_cpp` end-to-end leg, DIR-O-002 counters, DIR-R-003 cold-start cap).
+**Current phase:** [phase-3-dictation-loop-closure](./phase-3-dictation-loop-closure/) — DIR-01 deferred-item closure.
+**Status:** in-progress.
 
 ## Vision
 
@@ -38,6 +38,7 @@ canon, canon wins.
 | 0 | Project + roadmap setup; packaging hardening | done | [phase-0-setup](./phase-0-setup/) |
 | 1 | DIR-01: Dictation intent routing + transcript enrichment pipeline | done | [phase-1-dictation-intent-routing](./phase-1-dictation-intent-routing/) |
 | 2 | MIR-01: Meeting-side multi-intent routing + artifact synthesis | done | [phase-2-multi-intent-routing](./phase-2-multi-intent-routing/) |
+| 3 | DIR-01 loop closure: project context, llama_cpp leg, runtime counters, cold-start cap | in-progress | [phase-3-dictation-loop-closure](./phase-3-dictation-loop-closure/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
