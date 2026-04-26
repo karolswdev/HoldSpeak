@@ -57,6 +57,15 @@ def runtime_model_download_command(backend: str, model_path: Path) -> Optional[s
     return None
 
 
+def runtime_docs_target(backend: str) -> str:
+    """Return the local docs route for a backend-specific setup section."""
+    if backend == "mlx":
+        return "/docs/dictation-runtime#mlx"
+    if backend == "llama_cpp":
+        return "/docs/dictation-runtime#llama-cpp"
+    return "/docs/dictation-runtime"
+
+
 def runtime_guidance(
     *,
     kind: str,
@@ -71,7 +80,7 @@ def runtime_guidance(
     links = [
         {
             "label": "Dictation runtime setup",
-            "target": "/docs/dictation-runtime",
+            "target": runtime_docs_target(backend),
         }
     ]
 

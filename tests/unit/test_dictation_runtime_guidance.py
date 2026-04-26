@@ -8,6 +8,7 @@ from holdspeak.plugins.dictation.guidance import (
     doctor_model_fix,
     doctor_runtime_install_fix,
     runtime_guidance,
+    runtime_docs_target,
     runtime_install_command,
 )
 
@@ -37,6 +38,12 @@ def test_runtime_guidance_auto_offers_backend_commands() -> None:
     ]
 
 
+def test_runtime_docs_target_uses_backend_anchors() -> None:
+    assert runtime_docs_target("mlx") == "/docs/dictation-runtime#mlx"
+    assert runtime_docs_target("llama_cpp") == "/docs/dictation-runtime#llama-cpp"
+    assert runtime_docs_target("auto") == "/docs/dictation-runtime"
+
+
 def test_missing_model_guidance_has_copyable_command_bundle(tmp_path: Path) -> None:
     target = tmp_path / "models" / "qwen.gguf"
 
@@ -50,6 +57,7 @@ def test_missing_model_guidance_has_copyable_command_bundle(tmp_path: Path) -> N
     commands = [item["command"] for item in guidance["commands"]]
     assert len(commands) == 2
     assert guidance["command_bundle"] == "\n".join(commands)
+    assert guidance["links"][0]["target"] == "/docs/dictation-runtime#llama-cpp"
 
 
 def test_doctor_model_fix_reuses_download_command(tmp_path: Path) -> None:
