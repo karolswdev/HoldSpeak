@@ -1,6 +1,14 @@
 """Plugin and routing primitives for MIR controls."""
 
-from .contracts import IntentWindow, RouteDecision
+from .contracts import (
+    PLUGIN_RUN_STATUSES,
+    ArtifactLineage,
+    IntentScore,
+    IntentTransition,
+    IntentWindow,
+    PluginRun,
+    RouteDecision,
+)
 from .builtin import DeterministicPlugin, register_builtin_plugins
 from .host import DeferredPluginRun, PluginHost, PluginRunResult, build_idempotency_key
 from .queue import (
@@ -37,7 +45,12 @@ __all__ = [
     "PluginHost",
     "PluginRunResult",
     "SUPPORTED_INTENTS",
+    "ArtifactLineage",
+    "IntentScore",
+    "IntentTransition",
     "IntentWindow",
+    "PLUGIN_RUN_STATUSES",
+    "PluginRun",
     "RouteDecision",
     "build_idempotency_key",
     "compute_retry_delay_seconds",

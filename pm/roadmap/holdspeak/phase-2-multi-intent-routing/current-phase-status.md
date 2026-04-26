@@ -1,6 +1,6 @@
 # Phase 2 — Multi-Intent Routing (MIR-01)
 
-**Last updated:** 2026-04-25 (phase opened — scaffolding only; no story is in-progress yet).
+**Last updated:** 2026-04-25 (HS-2-02 done — four typed contracts `IntentScore` / `IntentTransition` / `PluginRun` / `ArtifactLineage` shipped; HS-2-01 dropped per the no-pre-shipping-measurement-gate convention that already dropped HS-1-01 and HS-1-10).
 
 ## Goal
 
@@ -39,8 +39,8 @@ table below mirrors it.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-2-01 | Step 0 — Baseline capture | backlog | [story-01-baseline](./story-01-baseline.md) | — |
-| HS-2-02 | Step 1 — Contracts + router skeleton | backlog | [story-02-contracts-router](./story-02-contracts-router.md) | — |
+| ~~HS-2-01~~ | ~~Step 0 — Baseline capture~~ | dropped | — | n/a — no pre-shipping measurement gate (mirrors the DIR-01 amendment that dropped HS-1-01 and HS-1-10) |
+| HS-2-02 | Step 1 — Contracts + router skeleton | done | [story-02-contracts-router](./story-02-contracts-router.md) | tests pass (7 new + 10 adjacent intent cases = 17/17) + full suite green (excl. pre-existing metal hw fail) |
 | HS-2-03 | Step 2 — Windowing + multi-label scoring | backlog | [story-03-windowing](./story-03-windowing.md) | — |
 | HS-2-04 | Step 3 — Plugin host integration | backlog | [story-04-plugin-host](./story-04-plugin-host.md) | — |
 | HS-2-05 | Step 4 — Persistence + migration | backlog | [story-05-persistence](./story-05-persistence.md) | — |
@@ -53,12 +53,15 @@ table below mirrors it.
 
 ## Where we are
 
-Phase opened on 2026-04-25 immediately after DIR-01 closed at
-`d6db964`. No story picked up yet. Next move: user picks the first
-story to break ground on (likely `HS-2-02` if Step 0 baseline is
-dropped per the same "no pre-shipping measurement gate" call that
-dropped HS-1-01 — but that's the user's decision, not a presumption
-of this scaffold).
+HS-2-02 done — typed contracts `IntentScore` / `IntentTransition` /
+`PluginRun` / `ArtifactLineage` ship in `holdspeak/plugins/contracts.py`
+with 7 unit cases. The router skeleton + window builder + transition
+detector were already in place from prior MIR-01 infra; this story
+filled the spec §5.1 gap they leaned on. HS-2-01 dropped (no
+pre-shipping measurement gate, same call as DIR-01's HS-1-01).
+Next: HS-2-03 (windowing + multi-label scoring) — extend
+`detect_intent_transitions` to emit typed `IntentTransition`s and
+build the multi-label scorer producing `IntentScore` per window.
 
 ## Active risks
 
@@ -71,9 +74,9 @@ Carried forward from spec §12 verbatim:
 
 ## Decisions made (this phase)
 
-(none yet — phase opened)
+- 2026-04-25 — HS-2-01 (Step 0 baseline capture) dropped, same call as DIR-01's HS-1-01 / HS-1-10. No pre-shipping measurement gate per the standing project convention.
+- 2026-04-25 — HS-2-02 keeps the existing `holdspeak/plugins/host.py::PluginRunResult` and `holdspeak/db.py::PluginRunSummary` in place rather than collapsing them into the new `PluginRun` contract. Rationale: they serve different layers (in-process result wrapper vs. persisted summary vs. canonical contract entity); collapsing is HS-2-04/HS-2-05's job once persistence and host wiring need a single shape.
 
 ## Decisions deferred
 
-- Whether HS-2-01 (Step 0 baseline) ships or is dropped, mirroring the DIR-01 amendment that dropped HS-1-01 and HS-1-10 (no pre-shipping measurement gate). The spec §9.1 still calls for it; the project-level memory says skip pre-measurement / validation gates. User to call.
 - Choice of LLM backend(s) for window-level multi-label scoring — DIR-01 settled on `mlx-lm` (Qwen3-8B-MLX-4bit) primary + `llama-cpp-python` (Qwen2.5-3B-Q4_K_M) cross-platform default; MIR-01 is expected to reuse the `LLMRuntime` Protocol from DIR-01 but the per-stage model choice isn't fixed yet.

@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-25 (phase-2 MIR-01 opened; phase-1 DIR-01 closed at `d6db964` and pushed to `origin/main`).
+**Last updated:** 2026-04-25 (HS-2-02 done — four typed MIR contracts shipped; HS-2-01 dropped; phase-2 first ship after the scaffold at `29a4b5f`).
 **Current phase:** [phase-2-multi-intent-routing](./phase-2-multi-intent-routing/current-phase-status.md)
 **Status:** in-progress.
 
