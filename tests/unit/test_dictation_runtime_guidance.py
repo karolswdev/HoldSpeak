@@ -31,9 +31,25 @@ def test_runtime_guidance_auto_offers_backend_commands() -> None:
     assert len(commands) == 2
     assert any("dictation-mlx" in command for command in commands)
     assert any("dictation-llama" in command for command in commands)
+    assert guidance["command_bundle"] == "\n".join(commands)
     assert guidance["links"] == [
         {"label": "Dictation runtime setup", "target": "/docs/dictation-runtime"}
     ]
+
+
+def test_missing_model_guidance_has_copyable_command_bundle(tmp_path: Path) -> None:
+    target = tmp_path / "models" / "qwen.gguf"
+
+    guidance = runtime_guidance(
+        kind="missing_model",
+        requested_backend="llama_cpp",
+        resolved_backend="llama_cpp",
+        model_path=target,
+    )
+
+    commands = [item["command"] for item in guidance["commands"]]
+    assert len(commands) == 2
+    assert guidance["command_bundle"] == "\n".join(commands)
 
 
 def test_doctor_model_fix_reuses_download_command(tmp_path: Path) -> None:

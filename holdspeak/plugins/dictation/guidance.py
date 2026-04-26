@@ -86,6 +86,7 @@ def runtime_guidance(
         download = runtime_model_download_command(backend, expanded_model_path)
         if download is not None:
             commands.append({"label": "Download default model", "command": download})
+        command_bundle = "\n".join(item["command"] for item in commands)
         return {
             "kind": kind,
             "backend": backend,
@@ -100,6 +101,7 @@ def runtime_guidance(
                 "or update the model path in Runtime."
             ),
             "commands": commands,
+            "command_bundle": command_bundle,
             "links": links,
         }
 
@@ -132,6 +134,7 @@ def runtime_guidance(
         "model_path": None,
         "next_step": "Install the runtime extra, then refresh readiness before downloading a model.",
         "commands": commands,
+        "command_bundle": "\n".join(item["command"] for item in commands),
         "links": links,
     }
 

@@ -187,6 +187,7 @@ def test_readiness_missing_model_is_actionable(
     assert guidance["backend"] == "llama_cpp"
     assert guidance["model_path"] == str(missing_model)
     assert str(missing_model) in guidance["next_step"]
+    assert "huggingface-cli download" in guidance["command_bundle"]
     assert any(str(missing_model.parent) in item["command"] for item in guidance["commands"])
 
 
@@ -266,6 +267,7 @@ def test_dictation_page_includes_readiness_panel() -> None:
     assert "rt-guidance" in body
     assert "renderRuntimeGuidance" in body
     assert "data-copy-command" in body
+    assert "Copy all setup commands" in body
 
 
 def test_dictation_runtime_docs_route_serves_setup_page() -> None:

@@ -863,6 +863,9 @@
         const links = (guidance.links || []).map((link) =>
           `<a href="${escapeAttr(link.target || "#")}">${escapeHtml(link.label || "Docs")}</a>`
         ).join(" · ");
+        const bundle = guidance.command_bundle && (guidance.commands || []).length > 1
+          ? `<button class="btn primary" data-copy-command="${escapeAttr(guidance.command_bundle)}" style="margin-top:10px;">Copy all setup commands</button>`
+          : "";
         return `
           <div class="guidance-block">
             <strong>${escapeHtml(guidance.title || "Runtime guidance")}</strong>
@@ -870,6 +873,7 @@
             ${modelPath}
             <p>${escapeHtml(guidance.next_step || "")}</p>
             ${commands}
+            ${bundle}
             ${links ? `<p>${links}</p>` : ""}
           </div>
         `;

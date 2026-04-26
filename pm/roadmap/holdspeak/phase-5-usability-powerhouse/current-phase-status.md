@@ -1,6 +1,6 @@
 # Phase 5 — Usability Powerhouse
 
-**Last updated:** 2026-04-26 (HS-5-13 done — runtime guidance docs links now point to a served local setup route; full sweep 1105 passed / 13 skipped).
+**Last updated:** 2026-04-26 (HS-5-14 done — runtime guidance now exposes a copy-all setup command bundle in `/dictation`; full sweep 1106 passed / 13 skipped).
 
 ## Goal
 
@@ -40,20 +40,20 @@ test it safely in the browser."
 | HS-5-11 | Doctor runtime guidance parity | done | [story-11-doctor-runtime-guidance.md](./story-11-doctor-runtime-guidance.md) | [evidence-story-11.md](./evidence-story-11.md) — doctor now reports concrete runtime install/model commands; 2 updated unit assertions |
 | HS-5-12 | Runtime guidance shared source | done | [story-12-runtime-guidance-shared-source.md](./story-12-runtime-guidance-shared-source.md) | [evidence-story-12.md](./evidence-story-12.md) — readiness and doctor now reuse one runtime guidance helper; 4 new unit tests |
 | HS-5-13 | Runtime guidance docs route | done | [story-13-runtime-guidance-docs-route.md](./story-13-runtime-guidance-docs-route.md) | [evidence-story-13.md](./evidence-story-13.md) — runtime guidance links now open a served local setup page; 2 new integration assertions |
+| HS-5-14 | Runtime guidance copy bundle | done | [story-14-runtime-guidance-copy-bundle.md](./story-14-runtime-guidance-copy-bundle.md) | [evidence-story-14.md](./evidence-story-14.md) — multi-command runtime guidance now has a copy-all setup command; 2 new assertions |
 
 ## Where We Are
 
-HS-5-13 makes runtime setup guidance self-contained in the browser.
+HS-5-14 makes multi-step runtime setup easier to copy from the browser.
 The setup loop is now browser-first across project selection, cwd
 project visibility, readiness, starter blocks, starter KB, runtime
-enablement, install/model guidance, local setup docs, and dry-run, with
-`holdspeak doctor` providing matching concrete commands from the same
-implementation source.
+enablement, install/model guidance, local setup docs, copy-all setup
+commands, and dry-run, with `holdspeak doctor` providing matching
+concrete commands from the same implementation source.
 
 Next likely chunks:
 
 1. Meeting/user action follow-through: surface action item provenance
    and review states more prominently in history/detail views.
 2. Browser project switcher follow-up: optional file-picker integration.
-3. Runtime follow-up: optional "copy all setup commands" bundle for the
-   selected backend.
+3. Runtime follow-up: optional backend-specific docs page deep links.
