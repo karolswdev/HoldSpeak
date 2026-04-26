@@ -638,6 +638,89 @@ def _check_dictation_constraint_compile(config: Config) -> DoctorCheck:
     )
 
 
+def _check_mir_routing(config: Config) -> DoctorCheck:
+    """MIR-O-001 / spec §9.10: report MIR-01 routing-pipeline config posture.
+
+    Never returns `FAIL` — the pipeline is opt-in (mirrors DIR-DOC-003).
+    Validates the configured `plugin_profile` against the pre-defined
+    profile set so a typo surfaces here rather than at meeting stop.
+    """
+    cfg = config.meeting
+    if not cfg.intent_router_enabled:
+        return DoctorCheck(
+            name="MIR routing",
+            status="PASS",
+            detail="MIR-01 routing pipeline disabled (opt-in)",
+        )
+
+    try:
+        from ..plugins.router import available_profiles
+    except Exception as exc:
+        return DoctorCheck(
+            name="MIR routing",
+            status="WARN",
+            detail=f"router import failed: {type(exc).__name__}: {exc}",
+            fix="Inspect holdspeak/plugins/router.py for import errors.",
+        )
+
+    profiles = list(available_profiles())
+    if cfg.plugin_profile not in profiles:
+        return DoctorCheck(
+            name="MIR routing",
+            status="WARN",
+            detail=(
+                f"plugin_profile={cfg.plugin_profile!r} not in available profiles "
+                f"({', '.join(profiles)})"
+            ),
+            fix=(
+                "Set meeting.plugin_profile to one of the available profiles "
+                "in your config.json."
+            ),
+        )
+
+    return DoctorCheck(
+        name="MIR routing",
+        status="PASS",
+        detail=(
+            f"enabled; profile={cfg.plugin_profile}, "
+            f"window={cfg.intent_window_seconds}s/step={cfg.intent_step_seconds}s, "
+            f"threshold={cfg.intent_score_threshold}, "
+            f"hysteresis_windows={cfg.intent_hysteresis_windows}"
+        ),
+    )
+
+
+def _check_mir_telemetry() -> DoctorCheck:
+    """MIR-O-002 / MIR-O-003 / spec §9.10: smoke-check that the
+    router + plugin-host counter APIs are callable and return the
+    expected shape. Always PASS — the APIs are pure-Python and
+    exercising them costs microseconds."""
+    try:
+        from ..plugins.host import PluginHost
+        from ..plugins.router import get_router_counters
+
+        router_counters = get_router_counters()
+        host_metrics = PluginHost().get_metrics()
+    except Exception as exc:
+        return DoctorCheck(
+            name="MIR telemetry",
+            status="WARN",
+            detail=f"telemetry API failed: {type(exc).__name__}: {exc}",
+            fix="Inspect holdspeak/plugins/router.py + host.py for regressions.",
+        )
+
+    router_keys = sorted(router_counters.keys())
+    host_keys = sorted(host_metrics.keys())
+    return DoctorCheck(
+        name="MIR telemetry",
+        status="PASS",
+        detail=(
+            f"router_counters=[{', '.join(router_keys)}]; "
+            f"host_metrics=[{', '.join(host_keys)}]"
+        ),
+    )
+
+
 def collect_doctor_checks() -> list[DoctorCheck]:
     """Collect all doctor checks in display order."""
     is_wayland = _is_wayland_session()
@@ -653,6 +736,8 @@ def collect_doctor_checks() -> list[DoctorCheck]:
         _check_meeting_intel_cloud_preflight(config),
         _check_dictation_runtime(config),
         _check_dictation_constraint_compile(config),
+        _check_mir_routing(config),
+        _check_mir_telemetry(),
         _check_hotkey(config.hotkey.key, is_wayland=is_wayland),
         _check_text_injection(is_wayland=is_wayland),
         _check_clipboard_tools(is_wayland=is_wayland),

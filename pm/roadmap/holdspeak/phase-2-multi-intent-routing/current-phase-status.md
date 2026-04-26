@@ -1,6 +1,6 @@
 # Phase 2 — Multi-Intent Routing (MIR-01)
 
-**Last updated:** 2026-04-26 (HS-2-09 done — 6 spec-named MIR fields on `MeetingConfig` with validation + `intent_hysteresis()` helper; 5 new `MeetingSession` kwargs threaded into the pipeline; 11 new tests, 965 passed end-to-end).
+**Last updated:** 2026-04-26 (HS-2-10 done — 2 MIR doctor checks (`MIR routing`, `MIR telemetry`) honoring DIR-DOC-003 never-FAIL + spec-named failure-isolation integration test; 8 new tests, 973 passed end-to-end).
 
 ## Goal
 
@@ -48,27 +48,27 @@ table below mirrors it.
 | HS-2-07 | Step 6 — Synthesis pass | done | [story-07-synthesis](./story-07-synthesis.md) | tests pass (5 unit + 3 integration + 3 pre-existing synthesis = 11/11) + full suite green (940 passed, metal excluded) |
 | HS-2-08 | Step 7 — API + CLI surfaces | done | [story-08-api-cli](./story-08-api-cli.md) | tests pass (6 timeline + 8 controls = 14 new + 7 pre-existing intel-command) + full suite green (954 passed, metal excluded) |
 | HS-2-09 | Step 8 — Config + feature flags | done | [story-09-config-flags](./story-09-config-flags.md) | tests pass (7 unit config + 3 integration + 1 extended defaults case) + full suite green (965 passed, metal excluded) |
-| HS-2-10 | Step 9 — Observability + hardening | backlog | [story-10-observability](./story-10-observability.md) | — |
+| HS-2-10 | Step 9 — Observability + hardening | done | [story-10-observability](./story-10-observability.md) | tests pass (5 new doctor + 3 new integration + 21 doctor + 3 pre-existing observability) + full suite green (973 passed, metal excluded) |
 | HS-2-11 | Step 10 — Full regression gate + DoD | backlog | [story-11-dod](./story-11-dod.md) | — |
 
 ## Where we are
 
-HS-2-09 done — `MeetingConfig` carries the 6 spec-named MIR-01
-fields (`intent_router_enabled` off by default; `intent_window_seconds`,
-`intent_step_seconds`, `intent_score_threshold`,
-`intent_hysteresis_windows`, `plugin_profile`) with `__post_init__`
-validation that rejects out-of-range values at construction.
-`intent_hysteresis()` helper converts the int windows count to the
-float gap (0.05/window, capped at 0.5). `MeetingSession.__init__`
-gained 5 new kwargs (the 4 tuning values + `mir_synthesize`) and
-threads them into `process_meeting_state(...)` so an integration
-test can drive end-to-end behavior change just by varying the
-config. The user can now flip MIR routing on without code changes.
-Web settings API validation + doctor checks deferred to HS-2-10.
-Next: **HS-2-10 (observability + hardening)** — structured logs
-include `meeting_id`/`window_id`/`intent_set`/`plugin_id`, runtime
-counters on the router + plugin host, MIR-specific doctor checks,
-stop-path safety hardening.
+HS-2-10 done — 2 new MIR doctor checks (`MIR routing`,
+`MIR telemetry`) join the dictation pair in `collect_doctor_checks`,
+both honoring DIR-DOC-003 (never FAIL — MIR-01 is opt-in). The
+routing check validates `plugin_profile` against `available_profiles`
+so typos surface at `holdspeak doctor` rather than at meeting stop;
+the telemetry check is a smoke probe that the router/host counter
+APIs are callable. The spec-named integration test
+`test_intent_failure_isolation.py` covers MIR-R-004 end-to-end:
+one failing chain plugin → siblings still execute, the failed run
+persists with `status=error`. Pre-existing
+`test_intent_observability.py` already covered MIR-O-001/002/003
+at the unit level (router counters, host metrics, structured logs
+with secret redaction) — no new router/host code was needed.
+Next: **HS-2-11 (DoD sweep)** — full §7.2 matrix verification,
+evidence bundle at `docs/evidence/phase-mir-01/<YYYYMMDD-HHMM>/`,
+phase summary, mark phase done. Mirrors HS-1-11.
 
 ## Active risks
 

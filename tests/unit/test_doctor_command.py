@@ -276,3 +276,56 @@ def test_dictation_compile_check_warn_when_compiler_raises(monkeypatch, tmp_path
     assert result.status == "WARN"
     assert "compile failed" in result.detail
     assert result.fix and "holdspeak dictation blocks validate" in result.fix
+
+
+# ============================================================
+# HS-2-10 / spec §9.10 — MIR-01 doctor checks
+# ============================================================
+
+
+def test_mir_routing_check_pass_when_router_disabled() -> None:
+    config = Config()  # MeetingConfig.intent_router_enabled defaults to False
+    result = doctor._check_mir_routing(config)
+    assert result.status == "PASS"
+    assert "disabled" in result.detail.lower()
+
+
+def test_mir_routing_check_pass_when_enabled_with_valid_profile() -> None:
+    config = Config()
+    config.meeting.intent_router_enabled = True
+    config.meeting.plugin_profile = "architect"
+    result = doctor._check_mir_routing(config)
+    assert result.status == "PASS"
+    assert "enabled" in result.detail
+    assert "profile=architect" in result.detail
+
+
+def test_mir_routing_check_warn_for_unknown_profile() -> None:
+    config = Config()
+    config.meeting.intent_router_enabled = True
+    config.meeting.plugin_profile = "no-such-profile"
+    result = doctor._check_mir_routing(config)
+    assert result.status == "WARN"
+    assert "no-such-profile" in result.detail
+    assert result.fix and "plugin_profile" in result.fix
+
+
+def test_mir_routing_check_never_returns_fail() -> None:
+    """MIR-01 mirrors DIR-DOC-003: opt-in, so doctor never escalates to FAIL."""
+    for enabled, profile in [(False, "balanced"), (True, "balanced"), (True, "garbage")]:
+        config = Config()
+        config.meeting.intent_router_enabled = enabled
+        config.meeting.plugin_profile = profile
+        result = doctor._check_mir_routing(config)
+        assert result.status in {"PASS", "WARN"}
+
+
+def test_mir_telemetry_check_smoke_passes() -> None:
+    result = doctor._check_mir_telemetry()
+    assert result.status == "PASS"
+    # Smoke detail contains both telemetry surfaces.
+    assert "router_counters=" in result.detail
+    assert "host_metrics=" in result.detail
+    # The router counter API exposes routed/dropped windows.
+    assert "routed_windows" in result.detail
+    assert "dropped_windows" in result.detail

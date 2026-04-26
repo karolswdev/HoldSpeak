@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-2-09 done — 6 spec-named MIR config fields + validation + MeetingSession bridge; 965 passed end-to-end).
+**Last updated:** 2026-04-26 (HS-2-10 done — 2 MIR doctor checks + failure-isolation integration test; 973 passed end-to-end).
 **Current phase:** [phase-2-multi-intent-routing](./phase-2-multi-intent-routing/current-phase-status.md)
 **Status:** in-progress.
 
