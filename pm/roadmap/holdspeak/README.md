@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-25 (DIR-01: HS-1-08 CLI — `holdspeak dictation dry-run / blocks / runtime` + shared assembly helper — shipped).
+**Last updated:** 2026-04-25 (DIR-01: HS-1-09 doctor checks — `LLM runtime` + `Structured-output compilation` — shipped).
 **Current phase:** [phase-1-dictation-intent-routing](./phase-1-dictation-intent-routing/current-phase-status.md)
 **Status:** in-progress.
 

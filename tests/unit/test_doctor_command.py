@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from types import SimpleNamespace
 from urllib import error as urlerror
 
 import pytest
 
 import holdspeak.commands.doctor as doctor
+from holdspeak.config import Config
 
 
 def test_check_hotkey_wayland_failure_is_warn(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -134,3 +136,143 @@ def test_cloud_preflight_passes_when_model_available(monkeypatch: pytest.MonkeyP
 
     assert result.status == "PASS"
     assert "reachable" in result.detail
+
+
+# ---------------------------------------------------------------------------
+# DIR-01 (HS-1-09) — `LLM runtime` + `Structured-output compilation` checks.
+# ---------------------------------------------------------------------------
+
+
+_VALID_BLOCKS_YAML = """\
+version: 1
+default_match_confidence: 0.6
+blocks:
+  - id: ai_prompt_buildout
+    description: User is building out a prompt for an AI assistant.
+    match:
+      examples:
+        - "Claude, please build me a function that..."
+    inject:
+      mode: append
+      template: "{raw_text}"
+"""
+
+
+def _enabled_dictation_config(model_path: Path) -> Config:
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = True
+    cfg.dictation.runtime.backend = "llama_cpp"
+    cfg.dictation.runtime.llama_cpp_model_path = str(model_path)
+    return cfg
+
+
+def test_dictation_runtime_check_pass_when_pipeline_disabled() -> None:
+    cfg = Config()  # default: pipeline.enabled = False
+    result = doctor._check_dictation_runtime(cfg)
+    assert result.status == "PASS"
+    assert "disabled" in result.detail
+
+
+def test_dictation_runtime_check_warn_when_backend_unresolvable(monkeypatch, tmp_path) -> None:
+    cfg = _enabled_dictation_config(tmp_path / "model.gguf")
+    from holdspeak.plugins.dictation.runtime import RuntimeUnavailableError
+
+    def _refuse(requested, **_kw):
+        raise RuntimeUnavailableError("no backend installed")
+
+    monkeypatch.setattr("holdspeak.plugins.dictation.runtime.resolve_backend", _refuse)
+    result = doctor._check_dictation_runtime(cfg)
+    assert result.status == "WARN"
+    assert "resolution failed" in result.detail
+    assert result.fix and "holdspeak[dictation-" in result.fix
+
+
+def test_dictation_runtime_check_warn_when_model_missing(monkeypatch, tmp_path) -> None:
+    cfg = _enabled_dictation_config(tmp_path / "missing.gguf")
+    monkeypatch.setattr(
+        "holdspeak.plugins.dictation.runtime.resolve_backend",
+        lambda requested, **_kw: ("llama_cpp", "stubbed"),
+    )
+    result = doctor._check_dictation_runtime(cfg)
+    assert result.status == "WARN"
+    assert "model missing" in result.detail
+    assert result.fix and "Download" in result.fix
+
+
+def test_dictation_runtime_check_pass_when_model_available(monkeypatch, tmp_path) -> None:
+    model_path = tmp_path / "model.gguf"
+    model_path.write_bytes(b"weights")
+    cfg = _enabled_dictation_config(model_path)
+    monkeypatch.setattr(
+        "holdspeak.plugins.dictation.runtime.resolve_backend",
+        lambda requested, **_kw: ("llama_cpp", "stubbed"),
+    )
+    result = doctor._check_dictation_runtime(cfg)
+    assert result.status == "PASS"
+    assert "model available" in result.detail
+    assert "llama_cpp" in result.detail
+
+
+def test_dictation_compile_check_pass_when_pipeline_disabled() -> None:
+    cfg = Config()
+    result = doctor._check_dictation_constraint_compile(cfg)
+    assert result.status == "PASS"
+    assert "disabled" in result.detail
+
+
+def test_dictation_compile_check_pass_when_no_blocks_file(monkeypatch, tmp_path) -> None:
+    cfg = _enabled_dictation_config(tmp_path / "model.gguf")
+    monkeypatch.setattr(
+        "holdspeak.plugins.dictation.assembly.DEFAULT_GLOBAL_BLOCKS_PATH",
+        tmp_path / "no-blocks-here.yaml",
+    )
+    monkeypatch.setattr(
+        "holdspeak.plugins.dictation.runtime.resolve_backend",
+        lambda requested, **_kw: ("llama_cpp", "stubbed"),
+    )
+    result = doctor._check_dictation_constraint_compile(cfg)
+    assert result.status == "PASS"
+    assert "nothing to compile" in result.detail
+
+
+def test_dictation_compile_check_pass_for_valid_blocks(monkeypatch, tmp_path) -> None:
+    blocks_path = tmp_path / "blocks.yaml"
+    blocks_path.write_text(_VALID_BLOCKS_YAML, encoding="utf-8")
+    cfg = _enabled_dictation_config(tmp_path / "model.gguf")
+    monkeypatch.setattr(
+        "holdspeak.plugins.dictation.assembly.DEFAULT_GLOBAL_BLOCKS_PATH",
+        blocks_path,
+    )
+    monkeypatch.setattr(
+        "holdspeak.plugins.dictation.runtime.resolve_backend",
+        lambda requested, **_kw: ("llama_cpp", "stubbed"),
+    )
+    result = doctor._check_dictation_constraint_compile(cfg)
+    assert result.status == "PASS"
+    assert "1 block(s) compiled cleanly" in result.detail
+
+
+def test_dictation_compile_check_warn_when_compiler_raises(monkeypatch, tmp_path) -> None:
+    blocks_path = tmp_path / "blocks.yaml"
+    blocks_path.write_text(_VALID_BLOCKS_YAML, encoding="utf-8")
+    cfg = _enabled_dictation_config(tmp_path / "model.gguf")
+    monkeypatch.setattr(
+        "holdspeak.plugins.dictation.assembly.DEFAULT_GLOBAL_BLOCKS_PATH",
+        blocks_path,
+    )
+    monkeypatch.setattr(
+        "holdspeak.plugins.dictation.runtime.resolve_backend",
+        lambda requested, **_kw: ("llama_cpp", "stubbed"),
+    )
+
+    def _explode(_schema):
+        raise RuntimeError("schema not acceptable")
+
+    monkeypatch.setattr("holdspeak.commands.doctor.to_gbnf", _explode, raising=False)
+    # to_gbnf is imported inside the function — patch at the source module instead.
+    monkeypatch.setattr("holdspeak.plugins.dictation.grammars.to_gbnf", _explode)
+
+    result = doctor._check_dictation_constraint_compile(cfg)
+    assert result.status == "WARN"
+    assert "compile failed" in result.detail
+    assert result.fix and "holdspeak dictation blocks validate" in result.fix

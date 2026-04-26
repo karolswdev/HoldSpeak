@@ -17,6 +17,8 @@ from urllib import error as urlerror
 from urllib import request as urlrequest
 from urllib.parse import urlparse
 
+from pathlib import Path
+
 from ..audio_devices import check_blackhole_setup, get_default_input_device
 from ..config import CONFIG_FILE, Config
 from ..hotkey import HotkeyListener
@@ -500,6 +502,142 @@ def _check_meeting_intel_cloud_preflight(config: Config, *, timeout_seconds: flo
     )
 
 
+def _check_dictation_runtime(config: Config) -> DoctorCheck:
+    """DIR-DOC-001: report the resolved dictation LLM runtime + model availability.
+
+    Never returns `FAIL` — DIR-01 is opt-in (DIR-DOC-003), so a
+    misconfiguration is at most a `WARN`. The check does not load
+    the model; it inspects the configured path with `Path.exists()`
+    to keep `holdspeak doctor` cheap.
+    """
+    cfg = config.dictation
+    if not cfg.pipeline.enabled:
+        return DoctorCheck(
+            name="LLM runtime",
+            status="PASS",
+            detail="dictation pipeline disabled (opt-in)",
+        )
+
+    from ..plugins.dictation.runtime import RuntimeUnavailableError, resolve_backend
+
+    requested = cfg.runtime.backend
+    try:
+        resolved, reason = resolve_backend(requested)
+    except RuntimeUnavailableError as exc:
+        fix_hint = (
+            "Install holdspeak[dictation-mlx] (Apple Silicon) or "
+            "holdspeak[dictation-llama] (cross-platform), or set "
+            "dictation.runtime.backend = 'auto'."
+        )
+        return DoctorCheck(
+            name="LLM runtime",
+            status="WARN",
+            detail=f"requested={requested!r}; resolution failed: {exc}",
+            fix=fix_hint,
+        )
+
+    target = (
+        Path(cfg.runtime.mlx_model).expanduser()
+        if resolved == "mlx"
+        else Path(cfg.runtime.llama_cpp_model_path).expanduser()
+    )
+    if not target.exists():
+        if resolved == "mlx":
+            fix_hint = (
+                f"Download Qwen3-8B-MLX-4bit to {target} "
+                "(see docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md §7.2)."
+            )
+        else:
+            fix_hint = (
+                f"Download Qwen2.5-3B-Instruct-Q4_K_M.gguf to {target} "
+                "(see docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md §7.2)."
+            )
+        return DoctorCheck(
+            name="LLM runtime",
+            status="WARN",
+            detail=f"resolved={resolved} ({reason}); model missing at {target}",
+            fix=fix_hint,
+        )
+
+    return DoctorCheck(
+        name="LLM runtime",
+        status="PASS",
+        detail=f"resolved={resolved} ({reason}); model available at {target}",
+    )
+
+
+def _check_dictation_constraint_compile(config: Config) -> DoctorCheck:
+    """DIR-DOC-002: compile the loaded `blocks.yaml` against the active backend.
+
+    Pure-Python compile (cheap), so the doctor runs it eagerly. Never
+    returns `FAIL` per DIR-DOC-003.
+    """
+    cfg = config.dictation
+    if not cfg.pipeline.enabled:
+        return DoctorCheck(
+            name="Structured-output compilation",
+            status="PASS",
+            detail="dictation pipeline disabled (opt-in)",
+        )
+
+    from ..plugins.dictation.assembly import DEFAULT_GLOBAL_BLOCKS_PATH
+    from ..plugins.dictation.blocks import BlockConfigError, resolve_blocks
+    from ..plugins.dictation.grammars import (
+        GrammarCompileError,
+        StructuredOutputSchema,
+        to_gbnf,
+        to_outlines,
+    )
+    from ..plugins.dictation.runtime import RuntimeUnavailableError, resolve_backend
+
+    try:
+        loaded = resolve_blocks(DEFAULT_GLOBAL_BLOCKS_PATH, None)
+    except BlockConfigError as exc:
+        return DoctorCheck(
+            name="Structured-output compilation",
+            status="WARN",
+            detail=f"blocks.yaml failed to load: {exc}",
+            fix="Run `holdspeak dictation blocks validate` for the full error.",
+        )
+
+    if not loaded.blocks:
+        return DoctorCheck(
+            name="Structured-output compilation",
+            status="PASS",
+            detail="no blocks loaded; nothing to compile",
+        )
+
+    try:
+        resolved, _reason = resolve_backend(cfg.runtime.backend)
+    except RuntimeUnavailableError:
+        # The runtime check already reported this; reporting again
+        # would be noise. Compile against both shapes so block
+        # authors still get a "your YAML is structurally valid"
+        # signal.
+        resolved = "llama_cpp"
+
+    try:
+        block_set = loaded.to_block_set()
+        schema = StructuredOutputSchema.from_block_set(block_set)
+        if resolved == "mlx":
+            to_outlines(schema)
+        else:
+            to_gbnf(schema)
+    except (GrammarCompileError, Exception) as exc:
+        return DoctorCheck(
+            name="Structured-output compilation",
+            status="WARN",
+            detail=f"{resolved} compile failed: {type(exc).__name__}: {exc}",
+            fix="Run `holdspeak dictation blocks validate` to see the offending block.",
+        )
+
+    return DoctorCheck(
+        name="Structured-output compilation",
+        status="PASS",
+        detail=f"{resolved}: {len(loaded.blocks)} block(s) compiled cleanly",
+    )
+
+
 def collect_doctor_checks() -> list[DoctorCheck]:
     """Collect all doctor checks in display order."""
     is_wayland = _is_wayland_session()
@@ -513,6 +651,8 @@ def collect_doctor_checks() -> list[DoctorCheck]:
         _check_web_runtime(),
         _check_meeting_intel_runtime(config),
         _check_meeting_intel_cloud_preflight(config),
+        _check_dictation_runtime(config),
+        _check_dictation_constraint_compile(config),
         _check_hotkey(config.hotkey.key, is_wayland=is_wayland),
         _check_text_injection(is_wayland=is_wayland),
         _check_clipboard_tools(is_wayland=is_wayland),

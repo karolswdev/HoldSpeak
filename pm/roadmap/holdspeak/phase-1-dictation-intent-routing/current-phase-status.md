@@ -1,6 +1,6 @@
 # Phase 1 — Dictation Intent Routing (DIR-01)
 
-**Last updated:** 2026-04-25 (HS-1-08 CLI shipped — `holdspeak dictation dry-run / blocks / runtime` + shared assembly helper).
+**Last updated:** 2026-04-25 (HS-1-09 doctor checks shipped — `LLM runtime` + `Structured-output compilation`).
 
 ## Goal
 
@@ -45,7 +45,7 @@ created ahead of time as `backlog` so the work is visible; only the
 | HS-1-06 | Step 5 — Built-in stages (intent-router + kb-enricher) | done | [story-06-builtin-stages](./story-06-builtin-stages.md) | tests pass (29 unit cases) |
 | HS-1-07 | Step 6 — Controller wiring | done | [story-07-controller](./story-07-controller.md) | tests pass (5 new controller cases) + full suite green (excl. pre-existing metal hw fail) |
 | HS-1-08 | Step 7 — CLI (`holdspeak dictation …`) | done | [story-08-cli](./story-08-cli.md) | tests pass (13 new CLI cases) + full suite green (excl. pre-existing metal hw fail) |
-| HS-1-09 | Step 8 — Doctor checks (LLM runtime + structured-output compile) | backlog | (pending) | — |
+| HS-1-09 | Step 8 — Doctor checks (LLM runtime + structured-output compile) | done | [story-09-doctor](./story-09-doctor.md) | tests pass (8 new doctor cases) + full suite green (excl. pre-existing metal hw fail) |
 | ~~HS-1-10~~ | ~~Step 9 — Benchmarks~~ | dropped | — | n/a — no pre-shipping measurement gate per 2026-04-25 amendment |
 | HS-1-11 | Step 10 — Full regression + DoD | backlog | (pending) | — |
 
@@ -57,6 +57,34 @@ Spec amended (2026-04-25) to ship two backends (`mlx-lm` +
 measurement is dropped — DIR-01 banks on the chosen models and goes
 straight to implementation. `HS-1-01` (baseline) and `HS-1-10`
 (benchmarks) are dropped.
+
+**HS-1-09 done.** Two new doctor checks landed in
+`holdspeak/commands/doctor.py`:
+- `LLM runtime` (DIR-DOC-001) — reports requested + resolved
+  backend (`mlx` | `llama_cpp`), resolution reason (so `auto` paths
+  are visible), and configured model availability via
+  `Path.exists()` (no cold-load on every doctor run). `WARN` with a
+  `holdspeak[dictation-*]` install hint when the backend can't
+  resolve, or with a "download model to PATH" hint when the file is
+  missing.
+- `Structured-output compilation` (DIR-DOC-002) — loads the global
+  `blocks.yaml` via `resolve_blocks`, projects to a `BlockSet`, and
+  runs the active backend's compiler (`to_outlines` for `mlx`,
+  `to_gbnf` for `llama_cpp`). Pure-Python compile is cheap, so the
+  doctor runs it eagerly. `WARN` on any compile-side exception with
+  a "run `holdspeak dictation blocks validate`" hint.
+
+Both checks honor DIR-DOC-003 — never `FAIL` (the existing
+`PASS|WARN|FAIL` enum collapses spec "INFO" onto `PASS` per the
+existing doctor convention; a clean install with
+`pipeline.enabled = false` produces two informational `PASS` lines,
+not noise). 8 new unit cases in `tests/unit/test_doctor_command.py`;
+full regression: 903 passed, 13 skipped, 1 pre-existing
+hardware-only `tests/e2e/test_metal.py` fail. Next: **HS-1-11** (DoD
+sweep — every `DIR-*` requirement verified, evidence bundle, phase
+summary).
+
+---
 
 **HS-1-08 done.** `holdspeak dictation` CLI surface landed:
 `dry-run "<text>"` (DIR-F-010) prints stage-by-stage report, falls
