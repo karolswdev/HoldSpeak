@@ -1,0 +1,89 @@
+=== holdspeak dictation runtime status ===
+requested backend: auto
+mlx_model: ~/Models/mlx/Qwen3-8B-MLX-4bit
+llama_cpp_model_path: ~/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf
+resolved backend: mlx (auto: darwin/arm64 with mlx_lm importable)
+model: available at /Users/karol/Models/mlx/Qwen3-8B-MLX-4bit
+
+=== holdspeak dictation dry-run (real Qwen3-8B-MLX-4bit on reference Mac) ===
+--- input: Claude, please write a Python function that parses a CSV file and returns a list of dicts.
+resolved blocks: 2 from /Users/karol/.config/holdspeak/blocks.yaml
+runtime: loaded (backend=mlx)
+input: 'Claude, please write a Python function that parses a CSV file and returns a list of dicts.'
+---
+[intent-router] elapsed_ms=2696.05
+  intent: matched=True block_id=ai_prompt_buildout confidence=1.00
+  metadata: {'taxonomy_size': 2}
+  text: 'Claude, please write a Python function that parses a CSV file and returns a list of dicts.'
+[kb-enricher] elapsed_ms=0.02
+  metadata: {'applied_block': 'ai_prompt_buildout', 'mode': 'replace'}
+  text: 'Claude, please write a Python function that parses a CSV file and returns a list of dicts.\n\n---\n(HoldSpeak: prompt-buildout block matched — context appended)\n'
+---
+final_text: 'Claude, please write a Python function that parses a CSV file and returns a list of dicts.\n\n---\n(HoldSpeak: prompt-buildout block matched — context appended)\n'
+total_elapsed_ms: 2696.09
+real 5.19
+user 2.97
+sys 1.62
+
+--- input: This module is responsible for converting Whisper transcripts into typed text on the user's keyboard.
+resolved blocks: 2 from /Users/karol/.config/holdspeak/blocks.yaml
+runtime: loaded (backend=mlx)
+input: "This module is responsible for converting Whisper transcripts into typed text on the user's keyboard."
+---
+[intent-router] elapsed_ms=2696.65
+  intent: matched=True block_id=documentation_exercise confidence=0.95
+  metadata: {'taxonomy_size': 2}
+  text: "This module is responsible for converting Whisper transcripts into typed text on the user's keyboard."
+[kb-enricher] elapsed_ms=0.02
+  metadata: {'applied_block': 'documentation_exercise', 'mode': 'replace'}
+  text: "This module is responsible for converting Whisper transcripts into typed text on the user's keyboard.\n\n<!-- HoldSpeak: documentation block matched -->\n"
+---
+final_text: "This module is responsible for converting Whisper transcripts into typed text on the user's keyboard.\n\n<!-- HoldSpeak: documentation block matched -->\n"
+total_elapsed_ms: 2696.70
+real 5.21
+user 2.97
+sys 1.66
+
+--- input: What time is it?
+resolved blocks: 2 from /Users/karol/.config/holdspeak/blocks.yaml
+runtime: loaded (backend=mlx)
+input: 'What time is it?'
+---
+[intent-router] elapsed_ms=2590.24
+  intent: matched=False block_id=None confidence=0.00
+  metadata: {'taxonomy_size': 2}
+  text: 'What time is it?'
+[kb-enricher] elapsed_ms=0.00
+  metadata: {'reason': 'no_match', 'applied_block': None}
+  text: 'What time is it?'
+---
+final_text: 'What time is it?'
+total_elapsed_ms: 2590.27
+real 5.07
+user 2.99
+sys 1.59
+
+=== ls of model snapshot dir ===
+total 8531008
+-rw-r--r--   1 karol  staff        1570 Apr 25 20:23 .gitattributes
+-rw-r--r--   1 karol  staff         941 Apr 25 20:23 config.json
+-rw-r--r--   1 karol  staff       11343 Apr 25 20:23 LICENSE
+-rw-r--r--   1 karol  staff     1671853 Apr 25 20:23 merges.txt
+-rw-r--r--   1 karol  staff  4351884216 Apr 25 20:31 model.safetensors
+-rw-r--r--   1 karol  staff       64065 Apr 25 20:23 model.safetensors.index.json
+-rw-r--r--   1 karol  staff       14709 Apr 25 20:23 README.md
+-rw-r--r--   1 karol  staff        9690 Apr 25 20:23 tokenizer_config.json
+-rw-r--r--   1 karol  staff    11422654 Apr 25 20:23 tokenizer.json
+
+=== DIR-S-003 — runtime modules contain no network calls ===
+--- grep -nE 'urllib|socket|requests|httpx|http\.client' holdspeak/plugins/dictation/runtime*.py:
+(no matches — clean)
+
+=== holdspeak doctor — DIR-01 lines (both states) ===
+--- pipeline.enabled = false (default):
+[PASS] LLM runtime: dictation pipeline disabled (opt-in)
+[PASS] Structured-output compilation: dictation pipeline disabled (opt-in)
+
+--- pipeline.enabled = true (override):
+[PASS] LLM runtime: resolved=mlx (auto: darwin/arm64 with mlx_lm importable); model available at /Users/karol/Models/mlx/Qwen3-8B-MLX-4bit
+[PASS] Structured-output compilation: mlx: 2 block(s) compiled cleanly

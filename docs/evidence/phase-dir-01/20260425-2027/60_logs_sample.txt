@@ -1,0 +1,8 @@
+[dictation.pipeline] msg= dictation_pipeline_run
+  stage_ids: ['intent-router', 'kb-enricher']
+  elapsed_ms: {'intent-router': 132.4, 'kb-enricher': 0.4}
+  total_elapsed_ms: 133.0
+  intent_matched: True
+  intent_block_id: ai_prompt_buildout
+  warnings: []
+  short_circuited: False

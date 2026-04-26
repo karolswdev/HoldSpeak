@@ -1,0 +1,35 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.11, pytest-9.0.2, pluggy-1.6.0 -- /Users/karol/dev/tools/HoldSpeak/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/karol/dev/tools/HoldSpeak
+configfile: pyproject.toml
+plugins: anyio-4.12.1, mock-3.15.1, timeout-2.4.0, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 24 items
+
+tests/unit/test_dictation_blocks.py::test_load_blocks_yaml_happy_path PASSED [  4%]
+tests/unit/test_dictation_blocks.py::test_to_block_set_bridges_to_grammars PASSED [  8%]
+tests/unit/test_dictation_blocks.py::test_missing_version_rejected PASSED [ 12%]
+tests/unit/test_dictation_blocks.py::test_unsupported_version_rejected PASSED [ 16%]
+tests/unit/test_dictation_blocks.py::test_missing_description_rejected PASSED [ 20%]
+tests/unit/test_dictation_blocks.py::test_duplicate_block_id_rejected PASSED [ 25%]
+tests/unit/test_dictation_blocks.py::test_invalid_inject_mode_rejected PASSED [ 29%]
+tests/unit/test_dictation_blocks.py::test_default_match_confidence_out_of_range_rejected PASSED [ 33%]
+tests/unit/test_dictation_blocks.py::test_extras_schema_must_be_enum PASSED [ 37%]
+tests/unit/test_dictation_blocks.py::test_resolve_blocks_project_replaces_global PASSED [ 41%]
+tests/unit/test_dictation_blocks.py::test_resolve_blocks_falls_back_to_global_when_no_project_file PASSED [ 45%]
+tests/unit/test_dictation_blocks.py::test_resolve_blocks_returns_empty_when_neither_exists PASSED [ 50%]
+tests/unit/test_dictation_blocks.py::test_resolve_blocks_with_no_global_no_project_root PASSED [ 54%]
+tests/unit/test_dictation_blocks.py::test_safe_load_rejects_python_object_tag PASSED [ 58%]
+tests/unit/test_dictation_blocks.py::test_malformed_yaml_message_names_file PASSED [ 62%]
+tests/unit/test_dictation_blocks.py::test_validate_template_accepts_simple_dotted_placeholders PASSED [ 66%]
+tests/unit/test_dictation_blocks.py::test_validate_template_rejects_format_magic[{name:!r}] PASSED [ 70%]
+tests/unit/test_dictation_blocks.py::test_validate_template_rejects_format_magic[{name!r}] PASSED [ 75%]
+tests/unit/test_dictation_blocks.py::test_validate_template_rejects_format_magic[{name()}] PASSED [ 79%]
+tests/unit/test_dictation_blocks.py::test_validate_template_rejects_format_magic[{items[0]}] PASSED [ 83%]
+tests/unit/test_dictation_blocks.py::test_validate_template_rejects_format_magic[{1+2}] PASSED [ 87%]
+tests/unit/test_dictation_blocks.py::test_validate_template_rejects_format_magic[{}] PASSED [ 91%]
+tests/unit/test_dictation_blocks.py::test_validate_template_rejects_format_magic[{name spaced}] PASSED [ 95%]
+tests/unit/test_dictation_blocks.py::test_block_with_evil_template_is_rejected_at_load PASSED [100%]
+
+============================== 24 passed in 0.06s ==============================

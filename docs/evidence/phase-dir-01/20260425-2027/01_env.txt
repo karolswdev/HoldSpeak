@@ -1,0 +1,8 @@
+Darwin Karols-MacBook-Pro.local 25.2.0 Darwin Kernel Version 25.2.0: Tue Nov 18 21:07:05 PST 2025; root:xnu-12377.61.12~1/RELEASE_ARM64_T6020 arm64
+
+ProductName:		macOS
+ProductVersion:		26.2
+BuildVersion:		25C56
+
+Python 3.14.4
+uv 0.9.28 (Homebrew 2026-01-29)

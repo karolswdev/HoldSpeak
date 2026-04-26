@@ -294,10 +294,27 @@ def test_llama_cpp_runtime_info_reports_backend():
 # ---------------------------------------------------------------------------
 
 
-class _FakeProcessor:
-    def __init__(self, schema: str, *, tokenizer: Any) -> None:
-        self.schema = schema
-        self.tokenizer = tokenizer
+def _make_generator_factory(payload: dict[str, Any], captured: dict[str, Any] | None = None):
+    """Test helper: builds a `generator_factory` that returns a fixed JSON payload.
+
+    Mirrors the production seam shape:
+    `generator_factory(model, tokenizer, schema_dict) -> callable(prompt, max_tokens) -> str`.
+    """
+    def _factory(model: Any, tokenizer: Any, schema_dict: dict[str, Any]) -> Any:
+        if captured is not None:
+            captured["schema_dict"] = schema_dict
+            captured["model"] = model
+            captured["tokenizer"] = tokenizer
+
+        def _generate(prompt: str, *, max_tokens: int = 128) -> str:
+            if captured is not None:
+                captured["prompt"] = prompt
+                captured["max_tokens"] = max_tokens
+            return json.dumps(payload)
+
+        return _generate
+
+    return _factory
 
 
 def test_mlx_runtime_classify_returns_parsed_json():
@@ -309,31 +326,28 @@ def test_mlx_runtime_classify_returns_parsed_json():
         captured["loaded"] = model_id
         return ("model-obj", "tokenizer-obj")
 
-    def fake_generate(model: Any, tokenizer: Any, **kwargs: Any) -> str:
-        captured["generate_kwargs"] = kwargs
-        return json.dumps(
+    rt = MlxRuntime(
+        model="hf-repo/qwen-mlx",  # not a path; should not require existence
+        load_fn=fake_load,
+        generator_factory=_make_generator_factory(
             {
                 "matched": True,
                 "block_id": "documentation_exercise",
                 "confidence": 0.55,
                 "extras": {},
-            }
-        )
-
-    rt = MlxRuntime(
-        model="hf-repo/qwen-mlx",  # not a path; should not require existence
-        load_fn=fake_load,
-        generate_fn=fake_generate,
-        processor_factory=_FakeProcessor,
+            },
+            captured,
+        ),
     )
 
     result = rt.classify("hi", _schema())
     assert result["block_id"] == "documentation_exercise"
     assert captured["loaded"] == "hf-repo/qwen-mlx"
-    processors = captured["generate_kwargs"]["logits_processors"]
-    assert isinstance(processors[0], _FakeProcessor)
-    # The schema string is JSON-parseable.
-    json.loads(processors[0].schema)
+    assert captured["model"] == "model-obj"
+    assert captured["tokenizer"] == "tokenizer-obj"
+    # The schema dict the generator received is the one to_outlines emits.
+    assert "oneOf" in captured["schema_dict"]
+    assert any("block_id" in branch.get("properties", {}) for branch in captured["schema_dict"]["oneOf"])
 
 
 def test_mlx_runtime_missing_path_raises():
@@ -342,8 +356,7 @@ def test_mlx_runtime_missing_path_raises():
     rt = MlxRuntime(
         model="~/Models/mlx/does-not-exist",
         load_fn=lambda _: ("m", "t"),
-        generate_fn=lambda *a, **k: "",
-        processor_factory=_FakeProcessor,
+        generator_factory=_make_generator_factory({"matched": False, "confidence": 0.0}),
     )
     with pytest.raises(RuntimeUnavailableError, match="not found"):
         rt.load()
@@ -355,8 +368,7 @@ def test_mlx_runtime_info_reports_backend():
     rt = MlxRuntime(
         model="hf-repo/qwen",
         load_fn=lambda _: ("m", "t"),
-        generate_fn=lambda *a, **k: "",
-        processor_factory=_FakeProcessor,
+        generator_factory=_make_generator_factory({"matched": False, "confidence": 0.0}),
     )
     info = rt.info()
     assert info["backend"] == "mlx"
@@ -401,7 +413,7 @@ def test_both_backends_produce_outputs_in_schema_value_set():
     rt_mlx = MlxRuntime(
         model="hf-repo/qwen",
         load_fn=lambda _: ("m", "t"),
-        generate_fn=lambda *a, **k: json.dumps(
+        generator_factory=_make_generator_factory(
             {
                 "matched": True,
                 "block_id": "ai_prompt_buildout",
@@ -409,7 +421,6 @@ def test_both_backends_produce_outputs_in_schema_value_set():
                 "extras": {"stage": "buildout"},
             }
         ),
-        processor_factory=_FakeProcessor,
     )
 
     out_mlx = rt_mlx.classify("p", schema)

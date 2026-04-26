@@ -574,3 +574,27 @@ class TestKeyMapCompleteness:
         # = 22 keys
         assert len(KEY_MAP) == 22
         assert len(KEY_DISPLAY) == 22
+
+
+class TestDictationPipelineValidation:
+    """DIR-C-002: unknown stage IDs MUST be rejected at config load time."""
+
+    def test_default_stages_accepted(self):
+        from holdspeak.config import DictationPipelineConfig
+
+        cfg = DictationPipelineConfig()
+        assert cfg.stages == ["intent-router", "kb-enricher"]
+
+    def test_known_stages_accepted(self):
+        from holdspeak.config import DictationPipelineConfig
+
+        cfg = DictationPipelineConfig(stages=["kb-enricher"])
+        assert cfg.stages == ["kb-enricher"]
+
+    def test_unknown_stage_id_rejected(self):
+        from holdspeak.config import DictationConfigError, DictationPipelineConfig
+
+        with pytest.raises(DictationConfigError) as exc:
+            DictationPipelineConfig(stages=["intent-router", "made-up"])
+        assert "made-up" in str(exc.value)
+        assert "kb-enricher" in str(exc.value)  # surfaces the canonical list

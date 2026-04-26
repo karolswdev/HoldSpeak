@@ -1,0 +1,23 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.11, pytest-9.0.2, pluggy-1.6.0 -- /Users/karol/dev/tools/HoldSpeak/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/karol/dev/tools/HoldSpeak
+configfile: pyproject.toml
+plugins: anyio-4.12.1, mock-3.15.1, timeout-2.4.0, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 10 items
+
+tests/unit/test_dictation_grammars.py::test_structured_output_schema_from_block_set_round_trip PASSED [ 10%]
+tests/unit/test_dictation_grammars.py::test_block_set_rejects_empty PASSED [ 20%]
+tests/unit/test_dictation_grammars.py::test_block_set_rejects_invalid_block_id PASSED [ 30%]
+tests/unit/test_dictation_grammars.py::test_block_set_rejects_duplicate_block_ids PASSED [ 40%]
+tests/unit/test_dictation_grammars.py::test_block_set_rejects_empty_extras_enum PASSED [ 50%]
+tests/unit/test_dictation_grammars.py::test_to_gbnf_contains_all_block_ids PASSED [ 60%]
+tests/unit/test_dictation_grammars.py::test_to_gbnf_validates_with_llama_grammar_when_available SKIPPED [ 70%]
+tests/unit/test_dictation_grammars.py::test_to_outlines_emits_oneof_per_block PASSED [ 80%]
+tests/unit/test_dictation_grammars.py::test_to_outlines_json_is_valid_json_and_round_trips PASSED [ 90%]
+tests/unit/test_dictation_grammars.py::test_cross_backend_equivalence_value_sets_match PASSED [100%]
+
+=========================== short test summary info ============================
+SKIPPED [1] tests/unit/test_dictation_grammars.py:91: could not import 'llama_cpp': No module named 'llama_cpp'
+========================= 9 passed, 1 skipped in 0.03s =========================

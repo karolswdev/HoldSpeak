@@ -1,6 +1,6 @@
 # Phase 1 — Dictation Intent Routing (DIR-01)
 
-**Last updated:** 2026-04-25 (HS-1-09 doctor checks shipped — `LLM runtime` + `Structured-output compilation`).
+**Last updated:** 2026-04-25 (HS-1-11 DoD sweep complete — DIR-01 phase **done**; real-model end-to-end on the reference Mac, evidence bundle shipped, two real-bug fixes in `runtime_mlx.py` surfaced and patched).
 
 ## Goal
 
@@ -47,7 +47,7 @@ created ahead of time as `backlog` so the work is visible; only the
 | HS-1-08 | Step 7 — CLI (`holdspeak dictation …`) | done | [story-08-cli](./story-08-cli.md) | tests pass (13 new CLI cases) + full suite green (excl. pre-existing metal hw fail) |
 | HS-1-09 | Step 8 — Doctor checks (LLM runtime + structured-output compile) | done | [story-09-doctor](./story-09-doctor.md) | tests pass (8 new doctor cases) + full suite green (excl. pre-existing metal hw fail) |
 | ~~HS-1-10~~ | ~~Step 9 — Benchmarks~~ | dropped | — | n/a — no pre-shipping measurement gate per 2026-04-25 amendment |
-| HS-1-11 | Step 10 — Full regression + DoD | backlog | (pending) | — |
+| HS-1-11 | Step 10 — Full regression + DoD | done | [story-11-dod](./story-11-dod.md) | DIR-* matrix in [evidence-story-11](./evidence-story-11.md) + bundle at `docs/evidence/phase-dir-01/20260425-2027/` |
 
 ## Where we are
 
@@ -57,6 +57,53 @@ Spec amended (2026-04-25) to ship two backends (`mlx-lm` +
 measurement is dropped — DIR-01 banks on the chosen models and goes
 straight to implementation. `HS-1-01` (baseline) and `HS-1-10`
 (benchmarks) are dropped.
+
+**HS-1-11 done. DIR-01 phase complete.** The DoD sweep:
+- Closed the one remaining spec gap, **DIR-C-002**, by adding
+  `__post_init__` validation on `DictationPipelineConfig` that
+  rejects unknown stage IDs at config load time. 3 new unit cases
+  in `tests/unit/test_config.py::TestDictationPipelineValidation`.
+- Downloaded `Qwen3-8B-MLX-4bit` (4.35 GB) to
+  `~/Models/mlx/Qwen3-8B-MLX-4bit/` and exercised the **real**
+  pipeline end-to-end on the reference Mac via `holdspeak
+  dictation dry-run` against three utterances:
+  - `"Claude, please write a Python function ..."` →
+    `matched=ai_prompt_buildout, confidence=1.00`.
+  - `"This module is responsible for ..."` →
+    `matched=documentation_exercise, confidence=0.95`.
+  - `"What time is it?"` → `matched=False, confidence=0.00`.
+  All three classify cleanly; total elapsed ≈ 2.7 s warm.
+- Surfaced and fixed **two real bugs** the unit suite couldn't
+  catch:
+  1. `MlxRuntime` didn't expand `~` in the model path; `mlx_lm`
+     interpreted `~/Models/...` as an HF repo id and failed to
+     load.
+  2. `MlxRuntime` was bound to a removed `outlines` API
+     (`outlines.processors.JSONLogitsProcessor` no longer exists
+     in `outlines>=1.0`). Refactored to the current `Generator(
+     from_mlxlm(model, tokenizer), output_type=JsonSchema(schema))`
+     shape; `tests/integration/test_runtime_mlx.py` is now active
+     on the reference Mac and passes.
+- Ran `holdspeak doctor` in both states: with
+  `pipeline.enabled=false` both new checks `[PASS]` (informational —
+  DIR-DOC-003); with `pipeline.enabled=true` both `[PASS]` against
+  the loaded model + compiled schema.
+- Shipped the evidence bundle at
+  `docs/evidence/phase-dir-01/20260425-2027/` per spec §11.2,
+  including the DIR-* traceability matrix
+  (`03_traceability.md`), per-area UT logs
+  (`10_ut_*.log`), CLI + doctor logs (`40_*`, `41_*`), the DIR-O-001
+  log-line sample (`60_logs_sample.txt`), the real-model trace
+  (`61_runtime_trace.txt`), and the phase summary
+  (`99_phase_summary.md`).
+
+Full regression: 907 passed, 12 skipped, 1 pre-existing
+hardware-only `tests/e2e/test_metal.py` Whisper-loader fail
+(unrelated). DIR-R-003 hard-cap, DIR-O-002 counters, and the
+`llama_cpp` end-to-end leg are explicitly deferred to DIR-02 with
+rationale in `99_phase_summary.md`.
+
+---
 
 **HS-1-09 done.** Two new doctor checks landed in
 `holdspeak/commands/doctor.py`:

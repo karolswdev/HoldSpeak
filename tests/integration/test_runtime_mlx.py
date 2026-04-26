@@ -28,7 +28,8 @@ DEFAULT_MODEL = Path("~/Models/mlx/Qwen3-8B-MLX-4bit").expanduser()
 def _have_stack() -> bool:
     try:
         import mlx_lm  # noqa: F401  type: ignore[import-not-found]
-        from outlines.processors import JSONLogitsProcessor  # noqa: F401  type: ignore[import-not-found]
+        from outlines import Generator, from_mlxlm  # noqa: F401  type: ignore[import-not-found]
+        from outlines.types import JsonSchema  # noqa: F401  type: ignore[import-not-found]
     except Exception:
         return False
     return DEFAULT_MODEL.exists()

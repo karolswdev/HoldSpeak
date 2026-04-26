@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-25 (DIR-01: HS-1-09 doctor checks — `LLM runtime` + `Structured-output compilation` — shipped).
+**Last updated:** 2026-04-25 (DIR-01: **phase complete** — HS-1-11 DoD sweep shipped, real-model end-to-end on the reference Mac, evidence bundle at `holdspeak/phase-1-dictation-intent-routing` + `docs/evidence/phase-dir-01/`).
 **Current phase:** [phase-1-dictation-intent-routing](./phase-1-dictation-intent-routing/current-phase-status.md)
 **Status:** in-progress.
 

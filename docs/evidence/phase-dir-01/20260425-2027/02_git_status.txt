@@ -1,0 +1,13 @@
+56618f342c29834d18e6be674a9ab5a95bde03d9
+ M holdspeak/config.py
+ M holdspeak/plugins/dictation/runtime_mlx.py
+ M pm/roadmap/holdspeak/README.md
+ M pm/roadmap/holdspeak/phase-1-dictation-intent-routing/current-phase-status.md
+ M tests/integration/test_runtime_mlx.py
+ M tests/unit/test_config.py
+ M tests/unit/test_dictation_runtime.py
+ M uv.lock
+?? .claude/
+?? docs/evidence/phase-dir-01/
+?? pm/roadmap/holdspeak/phase-1-dictation-intent-routing/evidence-story-11.md
+?? pm/roadmap/holdspeak/phase-1-dictation-intent-routing/story-11-dod.md

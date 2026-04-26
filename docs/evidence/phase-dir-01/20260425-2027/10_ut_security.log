@@ -1,0 +1,22 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.11, pytest-9.0.2, pluggy-1.6.0 -- /Users/karol/dev/tools/HoldSpeak/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/karol/dev/tools/HoldSpeak
+configfile: pyproject.toml
+plugins: anyio-4.12.1, mock-3.15.1, timeout-2.4.0, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 24 items / 13 deselected / 11 selected
+
+tests/unit/test_dictation_blocks.py::test_load_blocks_yaml_happy_path PASSED [  9%]
+tests/unit/test_dictation_blocks.py::test_malformed_yaml_message_names_file PASSED [ 18%]
+tests/unit/test_dictation_blocks.py::test_validate_template_accepts_simple_dotted_placeholders PASSED [ 27%]
+tests/unit/test_dictation_blocks.py::test_validate_template_rejects_format_magic[{name:!r}] PASSED [ 36%]
+tests/unit/test_dictation_blocks.py::test_validate_template_rejects_format_magic[{name!r}] PASSED [ 45%]
+tests/unit/test_dictation_blocks.py::test_validate_template_rejects_format_magic[{name()}] PASSED [ 54%]
+tests/unit/test_dictation_blocks.py::test_validate_template_rejects_format_magic[{items[0]}] PASSED [ 63%]
+tests/unit/test_dictation_blocks.py::test_validate_template_rejects_format_magic[{1+2}] PASSED [ 72%]
+tests/unit/test_dictation_blocks.py::test_validate_template_rejects_format_magic[{}] PASSED [ 81%]
+tests/unit/test_dictation_blocks.py::test_validate_template_rejects_format_magic[{name spaced}] PASSED [ 90%]
+tests/unit/test_dictation_blocks.py::test_block_with_evil_template_is_rejected_at_load PASSED [100%]
+
+====================== 11 passed, 13 deselected in 0.04s =======================

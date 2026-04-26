@@ -1,0 +1,22 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.11, pytest-9.0.2, pluggy-1.6.0 -- /Users/karol/dev/tools/HoldSpeak/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/karol/dev/tools/HoldSpeak
+configfile: pyproject.toml
+plugins: anyio-4.12.1, mock-3.15.1, timeout-2.4.0, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 11 items
+
+tests/unit/test_dictation_intent_router.py::test_intent_router_conforms_to_transducer_protocol PASSED [  9%]
+tests/unit/test_dictation_intent_router.py::test_happy_path_returns_intent_tag PASSED [ 18%]
+tests/unit/test_dictation_intent_router.py::test_no_match_response_is_normalized PASSED [ 27%]
+tests/unit/test_dictation_intent_router.py::test_unknown_block_id_triggers_retry_then_no_match PASSED [ 36%]
+tests/unit/test_dictation_intent_router.py::test_retry_recovers_on_second_attempt PASSED [ 45%]
+tests/unit/test_dictation_intent_router.py::test_runtime_exceptions_never_propagate PASSED [ 54%]
+tests/unit/test_dictation_intent_router.py::test_invalid_confidence_triggers_retry PASSED [ 63%]
+tests/unit/test_dictation_intent_router.py::test_non_dict_response_triggers_retry PASSED [ 72%]
+tests/unit/test_dictation_intent_router.py::test_empty_blockset_short_circuits_without_runtime_call PASSED [ 81%]
+tests/unit/test_dictation_intent_router.py::test_prompt_includes_block_descriptions_and_examples PASSED [ 90%]
+tests/unit/test_dictation_intent_router.py::test_custom_prompt_builder_is_used PASSED [100%]
+
+============================== 11 passed in 0.04s ==============================

@@ -95,13 +95,31 @@ class LLMRuntimeConfig:
     eviction_idle_seconds: int = 0
 
 
+_KNOWN_DICTATION_STAGES = ("intent-router", "kb-enricher")
+
+
+class DictationConfigError(ValueError):
+    """Raised when dictation config validation fails (DIR-C-002)."""
+
+
 @dataclass
 class DictationPipelineConfig:
     """DIR-01 dictation pipeline config (spec §9.4). OFF by default."""
 
     enabled: bool = False
-    stages: list[str] = field(default_factory=lambda: ["intent-router", "kb-enricher"])
+    stages: list[str] = field(default_factory=lambda: list(_KNOWN_DICTATION_STAGES))
     max_total_latency_ms: int = 600
+
+    def __post_init__(self) -> None:
+        # DIR-C-002: reject unknown stage IDs at config load time so
+        # typos surface immediately instead of silently no-op'ing on
+        # the live path.
+        unknown = [s for s in self.stages if s not in _KNOWN_DICTATION_STAGES]
+        if unknown:
+            raise DictationConfigError(
+                f"unknown dictation stage id(s): {unknown}; "
+                f"known stages are {list(_KNOWN_DICTATION_STAGES)}"
+            )
 
 
 @dataclass

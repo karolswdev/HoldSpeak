@@ -1,0 +1,27 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.11, pytest-9.0.2, pluggy-1.6.0 -- /Users/karol/dev/tools/HoldSpeak/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/karol/dev/tools/HoldSpeak
+configfile: pyproject.toml
+plugins: anyio-4.12.1, mock-3.15.1, timeout-2.4.0, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 16 items / 8 deselected / 8 selected
+
+tests/unit/test_doctor_command.py::test_dictation_runtime_check_pass_when_pipeline_disabled PASSED [ 12%]
+tests/unit/test_doctor_command.py::test_dictation_runtime_check_warn_when_backend_unresolvable PASSED [ 25%]
+tests/unit/test_doctor_command.py::test_dictation_runtime_check_warn_when_model_missing PASSED [ 37%]
+tests/unit/test_doctor_command.py::test_dictation_runtime_check_pass_when_model_available PASSED [ 50%]
+tests/unit/test_doctor_command.py::test_dictation_compile_check_pass_when_pipeline_disabled PASSED [ 62%]
+tests/unit/test_doctor_command.py::test_dictation_compile_check_pass_when_no_blocks_file PASSED [ 75%]
+tests/unit/test_doctor_command.py::test_dictation_compile_check_pass_for_valid_blocks PASSED [ 87%]
+tests/unit/test_doctor_command.py::test_dictation_compile_check_warn_when_compiler_raises PASSED [100%]
+
+======================= 8 passed, 8 deselected in 0.34s ========================
+=== holdspeak doctor — pipeline.enabled=false (default) ===
+[PASS] LLM runtime: dictation pipeline disabled (opt-in)
+[PASS] Structured-output compilation: dictation pipeline disabled (opt-in)
+
+=== holdspeak doctor — pipeline.enabled=true (override config) ===
+BlackHole not found among input devices
+[PASS] LLM runtime: resolved=mlx (auto: darwin/arm64 with mlx_lm importable); model available at /Users/karol/Models/mlx/Qwen3-8B-MLX-4bit
+[PASS] Structured-output compilation: mlx: 2 block(s) compiled cleanly

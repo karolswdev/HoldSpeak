@@ -1,0 +1,29 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.11, pytest-9.0.2, pluggy-1.6.0 -- /Users/karol/dev/tools/HoldSpeak/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/karol/dev/tools/HoldSpeak
+configfile: pyproject.toml
+plugins: anyio-4.12.1, mock-3.15.1, timeout-2.4.0, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 18 items
+
+tests/unit/test_dictation_kb_enricher.py::test_kb_enricher_conforms_to_transducer_protocol PASSED [  5%]
+tests/unit/test_dictation_kb_enricher.py::test_kb_enricher_constructor_takes_no_runtime PASSED [ 11%]
+tests/unit/test_dictation_kb_enricher.py::test_below_default_threshold_no_op PASSED [ 16%]
+tests/unit/test_dictation_kb_enricher.py::test_per_block_threshold_overrides_default PASSED [ 22%]
+tests/unit/test_dictation_kb_enricher.py::test_at_or_above_threshold_applies_template PASSED [ 27%]
+tests/unit/test_dictation_kb_enricher.py::test_no_intent_tag_no_op PASSED [ 33%]
+tests/unit/test_dictation_kb_enricher.py::test_unmatched_intent_no_op PASSED [ 38%]
+tests/unit/test_dictation_kb_enricher.py::test_unknown_block_id_no_op PASSED [ 44%]
+tests/unit/test_dictation_kb_enricher.py::test_append_mode_concatenates_after PASSED [ 50%]
+tests/unit/test_dictation_kb_enricher.py::test_prepend_mode_concatenates_before PASSED [ 55%]
+tests/unit/test_dictation_kb_enricher.py::test_replace_mode_overwrites_text PASSED [ 61%]
+tests/unit/test_dictation_kb_enricher.py::test_extras_placeholder_resolves PASSED [ 66%]
+tests/unit/test_dictation_kb_enricher.py::test_nested_project_kb_placeholder_resolves PASSED [ 72%]
+tests/unit/test_dictation_kb_enricher.py::test_unresolved_placeholder_skips_injection PASSED [ 77%]
+tests/unit/test_dictation_kb_enricher.py::test_unresolved_when_project_is_none PASSED [ 83%]
+tests/unit/test_dictation_kb_enricher.py::test_no_unresolved_braces_ever_typed_smoke PASSED [ 88%]
+tests/unit/test_dictation_kb_enricher.py::test_acts_on_latest_text_not_raw_text PASSED [ 94%]
+tests/unit/test_dictation_kb_enricher.py::test_extras_dict_round_trip PASSED [100%]
+
+============================== 18 passed in 0.04s ==============================
