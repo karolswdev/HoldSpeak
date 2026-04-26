@@ -1,0 +1,35 @@
+# Captured: 2026-04-26T17:12:26Z
+# Git: 3f3604633137395e3f46d9f761dff4a11b72d435
+# Command: uv run holdspeak doctor
+# Notes: pipeline is opt-in (default disabled); the dictation
+# checks therefore PASS-skip with 'disabled' detail. Behavior with
+# pipeline enabled is verified via the doctor unit tests (see
+# 10_ut_doctor.log).
+
+HoldSpeak Doctor
+===============
+[PASS] Runtime: Darwin 25.2.0 (arm64), Python 3.13.11
+[PASS] Config: Loaded /Users/karol/.config/holdspeak/config.json
+[PASS] Microphone: Default input: MacBook Pro Microphone (index 1)
+[PASS] Transcription backend: `auto` resolves to `mlx`
+[PASS] Web runtime: fastapi, uvicorn, and websockets are importable
+[WARN] Meeting intelligence runtime: llama-cpp-python is not available
+[PASS] Cloud intel preflight: Skipped (provider mode `local`)
+[PASS] Project context: dictation pipeline disabled (opt-in)
+[PASS] LLM runtime: dictation pipeline disabled (opt-in)
+[PASS] Structured-output compilation: dictation pipeline disabled (opt-in)
+[PASS] LLM runtime counters: dictation pipeline disabled (opt-in)
+[PASS] MIR routing: MIR-01 routing pipeline disabled (opt-in)
+[PASS] MIR telemetry: router_counters=[dropped_windows, routed_windows]; host_metrics=[blocked, deduped, error, queued, runs_total, success, timeout]
+[PASS] Global hotkey: Hotkey listener initialized for `alt_r`
+[PASS] Text injection: Keyboard injection backend initialized
+[PASS] Clipboard backend: Platform default clipboard backend
+[PASS] ffmpeg: Detected in PATH
+[PASS] pactl: Not required on this platform
+[WARN] System audio capture: System-audio capture source not configured
+
+Summary: 17 passed, 2 warnings, 0 failed
+
+Suggested fixes:
+- Meeting intelligence runtime: Set a valid local model path (currently '~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf').
+- System audio capture: Run `holdspeak meeting --setup` and follow the printed instructions.

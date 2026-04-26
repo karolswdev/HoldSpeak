@@ -1,0 +1,22 @@
+# Captured: 2026-04-26T17:11:58Z
+# Git: 3f3604633137395e3f46d9f761dff4a11b72d435
+# Command: uv run pytest tests/integration/test_dictation_llama_cpp_e2e.py -v --timeout=30
+# Expected: SKIPPED (gated on llama-cpp-python + GGUF; both absent on dev box)
+
+============================= test session starts ==============================
+platform darwin -- Python 3.13.11, pytest-9.0.2, pluggy-1.6.0 -- /Users/karol/dev/tools/HoldSpeak/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/karol/dev/tools/HoldSpeak
+configfile: pyproject.toml
+plugins: anyio-4.12.1, mock-3.15.1, timeout-2.4.0, asyncio-1.3.0, cov-7.0.0
+timeout: 30.0s
+timeout method: signal
+timeout func_only: False
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 1 item
+
+tests/integration/test_dictation_llama_cpp_e2e.py::test_full_pipeline_runs_through_llama_cpp_with_project_context SKIPPED [100%]
+
+=========================== short test summary info ============================
+SKIPPED [1] tests/integration/test_dictation_llama_cpp_e2e.py:72: llama-cpp-python and /Users/karol/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf are required for this integration test
+============================== 1 skipped in 0.03s ==============================

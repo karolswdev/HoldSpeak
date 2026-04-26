@@ -1,0 +1,19 @@
+# Captured: 2026-04-26T17:11:36Z
+# Git: 3f3604633137395e3f46d9f761dff4a11b72d435
+
+## git log -10 --oneline
+3f36046 HS-3-05: DIR-R-003 cold-start hard-cap
+d7cbf34 HS-3-04: DIR-O-002 runtime counters via CountingRuntime wrapper
+505794f HS-3-03: llama_cpp end-to-end leg
+e56202f HS-3-02: wire detect_project_for_cwd() into Utterance + blocks loader
+6659662 HS-3-01: detect_project_for_cwd() pure function
+c27e8f0 HS-3 scaffold amendment: split HS-3-01 into detector + wiring; renumber
+eefba0a HS-3 scaffold: open phase-3 (dictation loop closure) — backlog stories + index update
+5c97b5e HS-2-11: DoD sweep — MIR-01 PHASE COMPLETE
+c603638 HS-2-10: MIR doctor checks + failure-isolation integration test
+385f078 HS-2-09: MeetingConfig MIR-01 routing knobs + MeetingSession bridge
+
+## git status --short
+ M uv.lock
+?? .claude/
+?? docs/evidence/phase-dir-loop-closure/

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 3
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-3-01 through HS-3-05
 - **Unblocks:** phase 3 closure
 - **Owner:** unassigned
@@ -28,11 +28,11 @@ HS-2-11.
 
 ## Acceptance criteria
 
-- [ ] Evidence bundle exists at `docs/evidence/phase-dir-loop-closure/<YYYYMMDD-HHMM>/` with all listed files non-empty, each leading with command + timestamp + git sha.
-- [ ] All 6 phase-exit boxes in `current-phase-status.md` are checked with evidence pointers.
-- [ ] `99_phase_summary.md` enumerates what shipped + remaining deferreds (if any).
-- [ ] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS.
-- [ ] Project README phase index shows phase 3 as `done` and "Current phase" reverts to "between phases" (or the user's next pick).
+- [x] Evidence bundle exists at `docs/evidence/phase-dir-loop-closure/20260426-1111/` with 11 files non-empty, each leading with `# Captured: <ISO>` + `# Git: <sha>` (and where applicable `# Command: <exact>`).
+- [x] All 6 phase-exit boxes in `current-phase-status.md` are checked with evidence pointers.
+- [x] `99_phase_summary.md` enumerates what shipped + 8 deferred follow-up items.
+- [x] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` → 1007 passed, 13 skipped (`30_full_regression.log`).
+- [x] Project README phase index shows phase 3 as `done` and "Current phase" reverts to `between phases`.
 
 ## Test plan
 

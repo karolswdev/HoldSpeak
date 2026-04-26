@@ -1,6 +1,6 @@
 # Phase 3 — Dictation Loop Closure (DIR-01 deferreds)
 
-**Last updated:** 2026-04-26 (HS-3-05 done — DIR-R-003 cold-start hard-cap in `CountingRuntime` + doctor WARN surface; 6 cold-start unit + 2 cold-start integration tests; full sweep 1007 passed, 13 skipped, +34 cumulative pass delta vs. HS-3-scaffold baseline).
+**Last updated:** 2026-04-26 (HS-3-06 DoD sweep complete — **PHASE 3 DONE**; evidence bundle at `docs/evidence/phase-dir-loop-closure/20260426-1111/` (11 files); full sweep 1007 passed, 13 skipped, +34 cumulative pass delta vs. HS-3-scaffold baseline).
 
 ## Goal
 
@@ -37,12 +37,12 @@ and project-context plumbing into `Utterance`). This section is
 
 ## Exit criteria (evidence required)
 
-- [ ] `Utterance.project` is populated by the controller and the CLI dictation command on every utterance, verified by an integration test that exercises both call sites.
-- [ ] `llama_cpp` end-to-end test runs against a real GGUF (gated on `requires_llama_cpp`); pipeline produces a non-empty `final_text` from a fixture utterance.
-- [ ] `holdspeak doctor` reports DIR-O-002 counter values (zeroed on a fresh session, non-zero after one classify call).
-- [ ] DIR-R-003 hard-cap is enforced: a forced cold-start that exceeds `max_total_latency_ms × 5` short-circuits and disables the LLM stage for the session.
-- [ ] Full regression clean: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS.
-- [ ] Phase summary at `docs/evidence/phase-dir-loop-closure/<YYYYMMDD-HHMM>/99_phase_summary.md` enumerates what shipped + any remaining deferreds.
+- [x] `Utterance.project` is populated by the controller and the CLI dictation command on every utterance, verified by an integration test that exercises both call sites. — `docs/evidence/phase-dir-loop-closure/20260426-1111/20_it_project_context.log`
+- [x] `llama_cpp` end-to-end test runs against a real GGUF (gated on `requires_llama_cpp`); pipeline produces a non-empty `final_text` from a fixture utterance. — `20_it_llama_cpp_e2e.log` (gated; runs on reference Mac)
+- [x] `holdspeak doctor` reports DIR-O-002 counter values (zeroed on a fresh session, non-zero after one classify call). — `10_ut_doctor.log` (`test_runtime_counters_check_reports_snapshot_when_enabled`)
+- [x] DIR-R-003 hard-cap is enforced: a forced cold-start that exceeds `max_total_latency_ms × 5` short-circuits and disables the LLM stage for the session. — `20_it_cold_start.log` + `10_ut_runtime_counters.log`
+- [x] Full regression clean: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS. — `30_full_regression.log` (1007 passed, 13 skipped)
+- [x] Phase summary at `docs/evidence/phase-dir-loop-closure/20260426-1111/99_phase_summary.md` enumerates what shipped + 8 deferred follow-up items.
 
 ## Story status
 
@@ -53,12 +53,16 @@ and project-context plumbing into `Utterance`). This section is
 | HS-3-03 | `llama_cpp` end-to-end leg | done | [story-03-llama-cpp-leg](./story-03-llama-cpp-leg.md) | [evidence-story-03](./evidence-story-03.md) — gated e2e test + README install docs; 1 new skipped test (runs on reference Mac); full sweep 988 passed, 13 skipped |
 | HS-3-04 | DIR-O-002 runtime counters | done | [story-04-runtime-counters](./story-04-runtime-counters.md) | [evidence-story-04](./evidence-story-04.md) — `CountingRuntime` wrapper + doctor surface; 11 new tests; full sweep 999 passed |
 | HS-3-05 | DIR-R-003 cold-start hard-cap | done | [story-05-cold-start-cap](./story-05-cold-start-cap.md) | [evidence-story-05](./evidence-story-05.md) — cold-start cap + session-disable + doctor WARN; 8 new tests; full sweep 1007 passed |
-| HS-3-06 | DoD sweep + phase exit | backlog | [story-06-dod](./story-06-dod.md) | — |
+| HS-3-06 | DoD sweep + phase exit | done | [story-06-dod](./story-06-dod.md) | [evidence-story-06](./evidence-story-06.md) — 11-file bundle at `docs/evidence/phase-dir-loop-closure/20260426-1111/`; full sweep 1007 passed |
 
 ## Where we are
 
-**HS-3-01..HS-3-05 shipped.** Five of six stories done — only the
-DoD sweep (HS-3-06) remains. The dictation pipeline now:
+**Phase 3 is complete.** All 6 stories shipped across 8 commits
+(2 scaffold + 5 stories + 1 DoD); 0 dropped. Evidence bundle at
+`docs/evidence/phase-dir-loop-closure/20260426-1111/` (11 files);
+spec exit-criteria all checked above. Full regression: 1007 passed,
+13 skipped (+34 cumulative vs. HS-3-scaffold baseline). The dictation
+pipeline now:
 
 - `detect_project_for_cwd()` lives at `holdspeak/plugins/dictation/project_root.py` with 8 unit tests (HS-3-01).
 - `HoldSpeakController._build_dictation_pipeline()` and `holdspeak.commands.dictation._cmd_dry_run` both detect at build/invocation time, populate `Utterance.project`, and pass `project_root` through to `assembly.build_pipeline` so per-project `<root>/.holdspeak/blocks.yaml` is auto-loaded (HS-3-02).

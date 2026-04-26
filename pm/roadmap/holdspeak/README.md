@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-3-05 done — DIR-R-003 cold-start hard-cap + session-disable + doctor WARN; full sweep 1007 passed, 13 skipped, +34 cumulative pass delta vs. HS-3 baseline. Phase 3 has only DoD remaining).
-**Current phase:** [phase-3-dictation-loop-closure](./phase-3-dictation-loop-closure/) — DIR-01 deferred-item closure.
-**Status:** in-progress.
+**Last updated:** 2026-04-26 (HS-3-06 DoD sweep complete — **PHASE 3 DONE**; evidence bundle at `docs/evidence/phase-dir-loop-closure/20260426-1111/` (11 files); full sweep 1007 passed, 13 skipped).
+**Current phase:** none — DIR-01, MIR-01, and DIR-01 deferred-item closure (phase 3) are all done; pick the next via the project's `docs/PLAN_*` files.
+**Status:** between phases.
 
 ## Vision
 
@@ -38,7 +38,7 @@ canon, canon wins.
 | 0 | Project + roadmap setup; packaging hardening | done | [phase-0-setup](./phase-0-setup/) |
 | 1 | DIR-01: Dictation intent routing + transcript enrichment pipeline | done | [phase-1-dictation-intent-routing](./phase-1-dictation-intent-routing/) |
 | 2 | MIR-01: Meeting-side multi-intent routing + artifact synthesis | done | [phase-2-multi-intent-routing](./phase-2-multi-intent-routing/) |
-| 3 | DIR-01 loop closure: project context, llama_cpp leg, runtime counters, cold-start cap | in-progress | [phase-3-dictation-loop-closure](./phase-3-dictation-loop-closure/) |
+| 3 | DIR-01 loop closure: project context, llama_cpp leg, runtime counters, cold-start cap | done | [phase-3-dictation-loop-closure](./phase-3-dictation-loop-closure/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
