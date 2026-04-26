@@ -1,9 +1,9 @@
-# HS-3-03 — DIR-O-002 runtime counters
+# HS-3-04 — DIR-O-002 runtime counters
 
 - **Project:** holdspeak
 - **Phase:** 3
 - **Status:** backlog
-- **Depends on:** HS-3-02 (`llama_cpp` leg verified so counters can be exercised on both backends)
+- **Depends on:** HS-3-03 (`llama_cpp` leg verified so counters can be exercised on both backends)
 - **Unblocks:** dogfood-friendly observability of the LLM stage
 - **Owner:** unassigned
 

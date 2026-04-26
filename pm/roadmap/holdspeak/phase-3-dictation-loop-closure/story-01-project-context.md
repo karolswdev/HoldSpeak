@@ -1,52 +1,57 @@
-# HS-3-01 — Project-context plumbing into `Utterance`
+# HS-3-01 — `detect_project_for_cwd()` pure function
 
 - **Project:** holdspeak
 - **Phase:** 3
 - **Status:** backlog
 - **Depends on:** HS-2-11 (MIR-01 closed; phase-3 scaffold landed)
-- **Unblocks:** HS-3-02 (llama_cpp leg can verify project context flowing); the kb-enricher (HS-1-06) becoming live in dogfood
+- **Unblocks:** HS-3-02 (wiring needs the detector to exist)
 - **Owner:** unassigned
 
 ## Problem
 
-`Utterance.project` exists in the dictation contract
-(`holdspeak/plugins/dictation/contracts.py:29`) and the kb-enricher
-stage (`holdspeak/plugins/dictation/builtin/kb_enricher.py`) reads
-off it, but no Utterance constructor populates it: both call sites
-hard-code `project=None` (`holdspeak/controller.py:265`,
-`holdspeak/commands/dictation.py:89`). The kb-enricher therefore has
-nothing to enrich — the entire DIR-01 block-grounded path is inert
-in dogfood. This story wires `holdspeak/plugins/project_detector.py`
-output into both call sites so blocks earn their keep.
+DIR-01 §8.1 says project-override blocks are "auto-discovered via
+`project_detector`", and DIR-01 §6.4 declares
+`Utterance.project: ProjectContext | None  # from project_detector`.
+But `holdspeak/plugins/project_detector.py` is the **MIR-side
+keyword scorer** that matches transcripts to project KBs — there is
+no cwd-based project-root finder anywhere in the codebase. `grep`
+for `find_project_root` / `detect_project` returns zero hits.
+`holdspeak/plugins/dictation/blocks.py:150` accepts a
+`project_root: Path | None` parameter but no caller passes a
+non-None value. This story builds the pure detector function that
+the rest of the phase wires through.
 
 ## Scope
 
 - **In:**
-  - Add a `detect_project()` (or equivalent) call at both Utterance construction sites; pass the result through to `Utterance.project`.
-  - Cache project-context detection across utterances when the cwd hasn't changed (cheap memoization keyed on cwd + mtime of project markers); no new module required if the existing detector is already idempotent.
-  - Integration test exercising the controller path end-to-end: feed a synthetic transcript, assert the pipeline's `Utterance.project` is non-None and contains the expected detector keys.
-  - Integration test for the CLI path (`holdspeak dictate ...`): same shape.
-  - Doctor check (or extension of an existing one) reporting whether project context is being detected from the current cwd.
+  - New module-level function `detect_project_for_cwd(start: Path | None = None) -> ProjectContext | None` (location: `holdspeak/plugins/project_detector.py` alongside the existing class — keeps the spec's "via project_detector" wording honest, or a sibling `holdspeak/plugins/dictation/project_root.py` if the file gets crowded; pick at implementation time).
+  - Walk strategy: from `start` (default `Path.cwd()`), walk up until one of the anchors is found, in priority order: `.holdspeak/` (strongest signal — explicit project opt-in), `.git/` (most projects), `pyproject.toml` / `package.json` / `Cargo.toml` (language hints, lowest priority). Stop at filesystem root or `$HOME`, whichever comes first; return `None` if no anchor matched.
+  - Returned `ProjectContext` shape (matches the kb-enricher template surface in spec §8.4): `{"name": <derived>, "root": <abs path str>, "anchor": <which marker matched>}`. Optional: if `<root>/.holdspeak/project.yaml` (or similar canonical KB file) exists, load it and merge under a `kb` key — but only if the file exists. Don't invent KB content.
+  - `name` derivation: prefer `[project].name` from `pyproject.toml` if present, else `[package].name` from `Cargo.toml`, else `"name"` from `package.json`, else the basename of `root`.
+  - Pure function, no side effects beyond filesystem reads. Cheap (one stat per ancestor + at most one small file read for the name).
+  - Unit tests at `tests/unit/test_project_detector_cwd.py` covering: (1) anchor priority (`.holdspeak/` beats `.git/` beats `pyproject.toml`), (2) walks up correctly from a nested dir, (3) returns `None` outside any project tree, (4) name derivation falls back through the priority chain, (5) `kb` key absent when no KB file present, (6) doesn't escape `$HOME`.
 - **Out:**
-  - Narrowing `ProjectContext` from `dict[str, Any]` to a dataclass — DIR-01 §6.4 explicitly leaves the loose typing for kb-enricher's benefit.
-  - New project-detector heuristics. The detector is HS-1-06 territory; this story consumes it as-is.
-  - Web/UI surfacing of project context.
+  - Wiring it into `Utterance` or `blocks.py` — that's HS-3-02.
+  - Caching across calls — premature; the function is cheap. Add only if profiling in HS-3-02 shows it matters.
+  - Reading project KB content beyond a single optional file at the root.
+  - Cross-platform path corner cases beyond what the existing `pathlib` usage handles.
 
 ## Acceptance criteria
 
-- [ ] `holdspeak/controller.py` and `holdspeak/commands/dictation.py` both populate `Utterance.project` from `project_detector` output (no more hard-coded `None`).
-- [ ] An integration test in `tests/integration/` constructs an Utterance via the controller path and asserts `utt.project is not None` with at least the expected detector keys present.
-- [ ] An integration test for the CLI path asserts the same.
-- [ ] `holdspeak doctor` reports project-context detection status for the current cwd (loaded | unavailable | error).
+- [ ] `detect_project_for_cwd(start: Path | None = None) -> ProjectContext | None` exists and is importable from a stable path (documented in the story's evidence).
+- [ ] Returned dict, when non-None, contains at least `name`, `root`, `anchor` keys.
+- [ ] Anchor priority is `.holdspeak/` > `.git/` > language manifests.
+- [ ] All 6 unit-test scenarios pass.
+- [ ] Function does not touch the filesystem outside the cwd→root walk and at most one name-source file read.
 - [ ] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS.
 
 ## Test plan
 
-- **Unit:** any new helper (e.g., the cache wrapper) gets a unit test.
-- **Integration:** the two end-to-end tests above.
-- **Regression:** the documented full-suite command (metal excluded per standing memory).
+- **Unit:** `tests/unit/test_project_detector_cwd.py` — 6 cases, using `tmp_path` fixtures to construct synthetic project trees.
+- **Regression:** documented full-suite command (metal excluded).
 
 ## Notes / open questions
 
-- The detection cache is a perf concern only if `detect_project` does file I/O on every utterance. Verify before adding the cache; if it's already cheap, skip the cache and document why in evidence.
-- The doctor extension may be a sub-check on an existing `Project context` check (if one exists) or a new check in `holdspeak/commands/doctor.py`. Decide at implementation time.
+- Module location is a small judgement call. Adding to the existing `project_detector.py` keeps the spec wording literal but mixes two distinct surfaces (MIR-side scorer + dictation-side cwd detector). The implementation should pick the location that minimizes confusion and document the choice in evidence.
+- `$HOME` boundary protects against runaway walks if `holdspeak` is launched from `/` or similar.
+- The optional `kb` key is deliberately additive: HS-1-06 (kb-enricher) reads `{project.kb.*}` placeholders; if no KB file exists, those templates correctly fall through to DIR-F-007's "skip injection" path.

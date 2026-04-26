@@ -1,6 +1,6 @@
 # Phase 3 — Dictation Loop Closure (DIR-01 deferreds)
 
-**Last updated:** 2026-04-26 (HS-3 scaffold — phase opened with 5 backlog stories; no story shipped yet).
+**Last updated:** 2026-04-26 (HS-3 scaffold + amendment — phase opened with 6 backlog stories after splitting project-context plumbing into a detector function (HS-3-01) and a wiring story (HS-3-02); no story shipped yet).
 
 ## Goal
 
@@ -24,11 +24,12 @@ and project-context plumbing into `Utterance`). This section is
 ## Scope
 
 - **In:**
-  - HS-3-01 — wire `holdspeak/plugins/project_detector.py` output into the dictation `Utterance.project` field at every construction site (`holdspeak/controller.py`, `holdspeak/commands/dictation.py`); kb-enricher (HS-1-06) already reads off it.
-  - HS-3-02 — `llama_cpp` end-to-end leg: documented install path (extra + GGUF download), an integration test gated on `requires_llama_cpp`, and a verified end-to-end pipeline run on a real GGUF.
-  - HS-3-03 — DIR-O-002 runtime counters (`model_loads`, `classify_calls`, `classify_failures`, `constrained_retries`) surfaced via `holdspeak doctor`.
-  - HS-3-04 — DIR-R-003 cold-start hard-cap: first call after launch with `warm_on_start=false` must complete or short-circuit within `max_total_latency_ms × 5`; otherwise log and disable for the session.
-  - HS-3-05 — DoD sweep + phase-exit evidence bundle (mirrors HS-1-11 / HS-2-11).
+  - HS-3-01 — `detect_project_for_cwd()` pure function: walks cwd→root looking for `.holdspeak/`, `.git/`, or language manifests; returns a `ProjectContext` dict; unit-tested.
+  - HS-3-02 — wire HS-3-01 through both `Utterance` construction sites (`holdspeak/controller.py`, `holdspeak/commands/dictation.py`) and through `holdspeak/plugins/dictation/blocks.py:150`'s `project_root` parameter; integration tests + doctor surface.
+  - HS-3-03 — `llama_cpp` end-to-end leg: documented install path (extra + GGUF download), an integration test gated on `requires_llama_cpp`, and a verified end-to-end pipeline run on a real GGUF.
+  - HS-3-04 — DIR-O-002 runtime counters (`model_loads`, `classify_calls`, `classify_failures`, `constrained_retries`) surfaced via `holdspeak doctor`.
+  - HS-3-05 — DIR-R-003 cold-start hard-cap: first call after launch with `warm_on_start=false` must complete or short-circuit within `max_total_latency_ms × 5`; otherwise log and disable for the session.
+  - HS-3-06 — DoD sweep + phase-exit evidence bundle (mirrors HS-1-11 / HS-2-11).
 - **Out:**
   - Cloud router, multi-utterance state, additional backends beyond the existing `mlx` + `llama_cpp` pair — explicitly deferred in DIR-01 §11 and outside DIR-01's spec.
   - Web UI HTML/JS controls for DIR-01 — the JSON contract is a meeting-side concern and is part of the MIR-01 deferred set, not this phase.
@@ -47,23 +48,29 @@ and project-context plumbing into `Utterance`). This section is
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-3-01 | Project-context plumbing into `Utterance` | backlog | [story-01-project-context](./story-01-project-context.md) | — |
-| HS-3-02 | `llama_cpp` end-to-end leg | backlog | [story-02-llama-cpp-leg](./story-02-llama-cpp-leg.md) | — |
-| HS-3-03 | DIR-O-002 runtime counters | backlog | [story-03-runtime-counters](./story-03-runtime-counters.md) | — |
-| HS-3-04 | DIR-R-003 cold-start hard-cap | backlog | [story-04-cold-start-cap](./story-04-cold-start-cap.md) | — |
-| HS-3-05 | DoD sweep + phase exit | backlog | [story-05-dod](./story-05-dod.md) | — |
+| HS-3-01 | `detect_project_for_cwd()` pure function | backlog | [story-01-project-context](./story-01-project-context.md) | — |
+| HS-3-02 | Wire detector into `Utterance` + blocks loader | backlog | [story-02-wire-detector](./story-02-wire-detector.md) | — |
+| HS-3-03 | `llama_cpp` end-to-end leg | backlog | [story-03-llama-cpp-leg](./story-03-llama-cpp-leg.md) | — |
+| HS-3-04 | DIR-O-002 runtime counters | backlog | [story-04-runtime-counters](./story-04-runtime-counters.md) | — |
+| HS-3-05 | DIR-R-003 cold-start hard-cap | backlog | [story-05-cold-start-cap](./story-05-cold-start-cap.md) | — |
+| HS-3-06 | DoD sweep + phase exit | backlog | [story-06-dod](./story-06-dod.md) | — |
 
 ## Where we are
 
-Phase opened. No stories shipped yet. The five-story arc is
-ordered by user-facing leverage: **HS-3-01** is the change that
-turns blocks from scaffolding into "dictation grounded in the
-project I'm in" — it's the highest-leverage item in the phase
-and ships first. **HS-3-02** earns the cross-platform default
-its keep. **HS-3-03/HS-3-04** are operational hardening so we
-can read what the LLM stage is doing and protect typing from
-catastrophic cold-start regressions. **HS-3-05** is the DoD
-sweep.
+Phase opened. No stories shipped yet. The six-story arc is
+ordered by user-facing leverage: **HS-3-01 + HS-3-02** are the
+project-context plumbing that turns blocks from scaffolding into
+"dictation grounded in the project I'm in" — split into a pure
+detector function (HS-3-01) and the wiring through the two
+Utterance construction sites + blocks loader (HS-3-02). The split
+came from the audit finding that the spec-referenced
+`project_detector` is the MIR-side keyword scorer, not a cwd-based
+project-root finder; the function HS-3-01 builds is genuinely new
+code, ~150–300 lines, and benefits from its own commit + tests.
+**HS-3-03** earns the cross-platform default its keep.
+**HS-3-04/HS-3-05** are operational hardening so we can read what
+the LLM stage is doing and protect typing from catastrophic
+cold-start regressions. **HS-3-06** is the DoD sweep.
 
 ## Active risks
 
@@ -73,8 +80,10 @@ sweep.
 
 ## Decisions made (this phase)
 
-- 2026-04-26 — phase canon is DIR-01's `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md`; no separate spec doc for this 5-story closure phase.
+- 2026-04-26 — phase canon is DIR-01's `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md`; no separate spec doc for this 6-story closure phase.
 - 2026-04-26 — HS-3-01 (project-context plumbing) ships first per the user's "actually useful" framing — it is the change that makes the rest of the DIR-01 surface earn its keep.
+- 2026-04-26 — Split HS-3-01 into HS-3-01 (pure detector function) + HS-3-02 (wiring) after audit revealed the spec-referenced `project_detector` is the MIR-side keyword scorer, not a cwd-based project-root finder. The detector function is genuinely new code; cleaner story boundaries warrant the split.
+- 2026-04-26 — Considered introducing `~/.holdspeak/` as global config home for symmetry with per-project `<root>/.holdspeak/`. Decision: keep `~/.config/holdspeak/` because it's XDG-compliant (the actual reason it exists). Asymmetry retained.
 
 ## Decisions deferred
 

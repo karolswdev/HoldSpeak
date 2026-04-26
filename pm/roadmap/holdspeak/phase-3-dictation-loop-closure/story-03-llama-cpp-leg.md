@@ -1,9 +1,9 @@
-# HS-3-02 — `llama_cpp` end-to-end leg
+# HS-3-03 — `llama_cpp` end-to-end leg
 
 - **Project:** holdspeak
 - **Phase:** 3
 - **Status:** backlog
-- **Depends on:** HS-3-01 (project context flowing so the leg exercises a realistic utterance)
+- **Depends on:** HS-3-02 (project context wired so the leg exercises a realistic utterance)
 - **Unblocks:** the cross-platform default declared in DIR-01 §5; Linux x86_64 secondary support
 - **Owner:** unassigned
 

@@ -1,9 +1,9 @@
-# HS-3-05 — DoD sweep + phase exit
+# HS-3-06 — DoD sweep + phase exit
 
 - **Project:** holdspeak
 - **Phase:** 3
 - **Status:** backlog
-- **Depends on:** HS-3-01 through HS-3-04
+- **Depends on:** HS-3-01 through HS-3-05
 - **Unblocks:** phase 3 closure
 - **Owner:** unassigned
 
@@ -20,9 +20,9 @@ HS-2-11.
 - **In:**
   - Generate the phase evidence bundle: `00_manifest.md`, `01_env.txt`, `02_git_status.txt`, `10_ut_*.log` (counter + cold-start unit tests), `20_it_*.log` (project-context, llama_cpp e2e, cold-start integration tests), `40_doctor_checks.log` (counters + project-context surface), `99_phase_summary.md`.
   - Run the full-regression command (`uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py`) and capture in evidence.
-  - Phase tracking docs: flip `current-phase-status.md` story table HS-3-05 to done; check the 6 exit-criteria boxes; bump "Last updated"; project README phase index flips phase 3 to "done"; project README "Last updated" + status updated.
+  - Phase tracking docs: flip `current-phase-status.md` story table HS-3-06 to done; check the 6 exit-criteria boxes; bump "Last updated"; project README phase index flips phase 3 to "done"; project README "Last updated" + status updated.
 - **Out:**
-  - New product code — phase 3 product surface is complete as of HS-3-04.
+  - New product code — phase 3 product surface is complete as of HS-3-05.
   - Test additions beyond what the bundle captures from the existing phase-3 suite.
   - Any deferred items the phase enumerated for follow-up.
 

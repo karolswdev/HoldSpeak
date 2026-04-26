@@ -1,9 +1,9 @@
-# HS-3-04 — DIR-R-003 cold-start hard-cap
+# HS-3-05 — DIR-R-003 cold-start hard-cap
 
 - **Project:** holdspeak
 - **Phase:** 3
 - **Status:** backlog
-- **Depends on:** HS-3-03 (counters in place so the disable event is visible)
+- **Depends on:** HS-3-04 (counters in place so the disable event is visible)
 - **Unblocks:** "useful" being protected from a runaway first call
 - **Owner:** unassigned
 

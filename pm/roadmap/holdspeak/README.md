@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-3 scaffold — phase 3 opened with 5 backlog stories; closes the DIR-01 deferred items: project-context plumbing, `llama_cpp` end-to-end leg, DIR-O-002 counters, DIR-R-003 cold-start cap).
+**Last updated:** 2026-04-26 (HS-3 scaffold + amendment — phase 3 opened with 6 backlog stories after splitting project-context plumbing into a detector function + wiring; closes the DIR-01 deferred items).
 **Current phase:** [phase-3-dictation-loop-closure](./phase-3-dictation-loop-closure/) — DIR-01 deferred-item closure.
 **Status:** in-progress.
 
