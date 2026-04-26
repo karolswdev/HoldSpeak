@@ -14,9 +14,31 @@ import pytest
 import yaml
 from fastapi.testclient import TestClient
 
+import holdspeak.config as config_module
 from holdspeak import web_server as web_server_module
+from holdspeak.config import Config
+from holdspeak.plugins.dictation import assembly as assembly_module
 from holdspeak.plugins.dictation import project_root as project_root_module
 from holdspeak.web_server import MeetingWebServer
+
+
+class _StubRuntime:
+    backend = "stub"
+
+    def load(self) -> None:
+        pass
+
+    def info(self) -> dict:
+        return {"backend": "stub"}
+
+    def classify(self, prompt, schema, *, max_tokens=128, temperature=0.0):
+        block_id = schema.block_ids[0] if schema.block_ids else None
+        return {
+            "matched": block_id is not None,
+            "block_id": block_id,
+            "confidence": 0.96 if block_id is not None else 0.0,
+            "extras": {},
+        }
 
 
 def _block(block_id: str = "b1", template: str = "{raw_text}\n") -> dict:
@@ -47,6 +69,13 @@ def _seed_global(path: Path, *blocks: dict) -> None:
 def global_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     target = tmp_path / "config" / "holdspeak" / "blocks.yaml"
     monkeypatch.setattr(web_server_module, "_GLOBAL_BLOCKS_PATH", target)
+    return target
+
+
+@pytest.fixture
+def settings_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    target = tmp_path / "config.json"
+    monkeypatch.setattr(config_module, "CONFIG_FILE", target)
     return target
 
 
@@ -88,6 +117,7 @@ def test_dictation_page_route_serves_html() -> None:
     assert "/api/dictation/blocks" in body  # JS fetches the API
     assert "/api/dictation/block-templates" in body
     assert "Starter templates" in body
+    assert "Create + dry-run" in body
 
 
 @pytest.fixture
@@ -250,6 +280,7 @@ class TestStarterTemplates:
         ids = {template["id"] for template in body["templates"]}
         assert {"ai_prompt_context", "action_item", "concise_note", "code_review_focus"} <= ids
         assert all("block" in template for template in body["templates"])
+        assert all(template["sample_utterance"] for template in body["templates"])
 
     def test_create_from_template_global(
         self, test_client: TestClient, global_path: Path
@@ -291,6 +322,79 @@ class TestStarterTemplates:
         assert response.status_code == 201, response.text
         target_file = target / ".holdspeak" / "blocks.yaml"
         assert yaml.safe_load(target_file.read_text())["blocks"][0]["id"] == "concise_note"
+
+    def test_create_from_template_with_dry_run_global(
+        self,
+        test_client: TestClient,
+        settings_path: Path,
+        global_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        cfg = Config()
+        cfg.dictation.pipeline.enabled = True
+        cfg.save(path=settings_path)
+        monkeypatch.setattr(
+            assembly_module,
+            "build_runtime",
+            lambda **_kwargs: _StubRuntime(),
+        )
+
+        response = test_client.post(
+            "/api/dictation/blocks/from-template?scope=global",
+            json={"template_id": "action_item", "dry_run": True},
+        )
+
+        assert response.status_code == 201, response.text
+        body = response.json()
+        assert body["block"]["id"] == "action_item"
+        assert body["dry_run"]["created_block_id"] == "action_item"
+        assert body["dry_run"]["sample_utterance"] == body["template"]["sample_utterance"]
+        assert body["dry_run"]["runtime_status"] == "loaded"
+        assert body["dry_run"]["stages"][0]["intent"]["block_id"] == "action_item"
+        assert body["dry_run"]["final_text"].startswith("Action item: follow up")
+
+    def test_create_from_template_with_dry_run_project_root_override(
+        self,
+        test_client: TestClient,
+        settings_path: Path,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        cfg = Config()
+        cfg.dictation.pipeline.enabled = True
+        cfg.save(path=settings_path)
+        target = tmp_path / "target"
+        target.mkdir()
+        (target / "pyproject.toml").write_text('[project]\nname = "target-proj"\n', encoding="utf-8")
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr(
+            assembly_module,
+            "build_runtime",
+            lambda **_kwargs: _StubRuntime(),
+        )
+
+        response = test_client.post(
+            f"/api/dictation/blocks/from-template?scope=project&project_root={target}",
+            json={"template_id": "concise_note", "dry_run": True},
+        )
+
+        assert response.status_code == 201, response.text
+        body = response.json()
+        assert body["project"]["name"] == "target-proj"
+        assert body["dry_run"]["project"]["name"] == "target-proj"
+        assert body["dry_run"]["created_block_id"] == "concise_note"
+        assert body["dry_run"]["stages"][0]["intent"]["block_id"] == "concise_note"
+        assert body["dry_run"]["final_text"].startswith("Note: the retry worker")
+
+    def test_create_from_template_rejects_non_boolean_dry_run(
+        self, test_client: TestClient
+    ) -> None:
+        response = test_client.post(
+            "/api/dictation/blocks/from-template?scope=global",
+            json={"template_id": "action_item", "dry_run": "yes"},
+        )
+        assert response.status_code == 400
+        assert "dry_run" in response.json()["error"]
 
     def test_create_from_unknown_template_404(self, test_client: TestClient) -> None:
         response = test_client.post(

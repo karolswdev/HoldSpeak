@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-5-03 done — starter block templates API + `/dictation` template picker for first useful blocks; supports global/project scope, project-root override, and duplicate-safe IDs; 5 new integration tests; full sweep 1086 passed / 13 skipped).
+**Last updated:** 2026-04-26 (HS-5-04 done — starter templates can now create a block and immediately run the sample dry-run from `/dictation`; combined API returns created block ID, sample input, trace, and final output; full sweep 1089 passed / 13 skipped).
 **Current phase:** [phase-5-usability-powerhouse](./phase-5-usability-powerhouse/) — reduce daily-use friction and make the web runtime a stronger end-user cockpit.
 **Status:** in-progress.
 

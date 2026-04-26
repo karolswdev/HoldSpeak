@@ -2551,6 +2551,81 @@ class MeetingWebServer:
                     return deepcopy(template)
             return None
 
+        def _serialize_intent(intent: Any) -> Optional[dict[str, Any]]:
+            if intent is None:
+                return None
+            return {
+                "matched": bool(getattr(intent, "matched", False)),
+                "block_id": getattr(intent, "block_id", None),
+                "confidence": float(getattr(intent, "confidence", 0.0)),
+                "raw_label": getattr(intent, "raw_label", None),
+                "extras": dict(getattr(intent, "extras", {}) or {}),
+            }
+
+        def _serialize_stage_result(result: Any) -> dict[str, Any]:
+            return {
+                "stage_id": str(getattr(result, "stage_id", "")),
+                "elapsed_ms": float(getattr(result, "elapsed_ms", 0.0)),
+                "intent": _serialize_intent(getattr(result, "intent", None)),
+                "warnings": list(getattr(result, "warnings", []) or []),
+                "metadata": dict(getattr(result, "metadata", {}) or {}),
+                "text": str(getattr(result, "text", "")),
+            }
+
+        def _run_dictation_dry_run_text(
+            text: str,
+            project_root_override: Optional[str],
+        ) -> dict[str, Any]:
+            """Execute the browser dry-run path for already-validated text."""
+            from .config import Config
+            from .plugins.dictation.assembly import build_pipeline
+            from .plugins.dictation.contracts import Utterance
+
+            cfg = Config.load().dictation
+            try:
+                project = _resolve_project_context(project_root_override)
+            except ValueError:
+                if project_root_override:
+                    raise
+                project = None
+            project_root = Path(project["root"]) if project else None
+
+            if not cfg.pipeline.enabled:
+                return {
+                    "project": dict(project) if project else None,
+                    "runtime_status": "disabled",
+                    "runtime_detail": "dictation pipeline disabled (opt-in)",
+                    "blocks_count": 0,
+                    "stages": [],
+                    "final_text": text,
+                    "total_elapsed_ms": 0.0,
+                    "warnings": ["dictation pipeline disabled"],
+                }
+
+            result = build_pipeline(
+                cfg,
+                project_root=project_root,
+                global_blocks_path=_GLOBAL_BLOCKS_PATH,
+            )
+            run = result.pipeline.run(
+                Utterance(
+                    raw_text=text,
+                    audio_duration_s=0.0,
+                    transcribed_at=datetime.now(),
+                    project=project,
+                )
+            )
+            return {
+                "project": dict(project) if project else None,
+                "runtime_status": result.runtime_status,
+                "runtime_detail": result.runtime_detail,
+                "blocks_count": len(result.blocks.blocks),
+                "stages": [_serialize_stage_result(sr) for sr in run.stage_results],
+                "final_text": run.final_text,
+                "total_elapsed_ms": float(run.total_elapsed_ms),
+                "warnings": list(run.warnings),
+            }
+
         def _unique_block_id(base_id: str, document: dict[str, Any]) -> str:
             existing = {
                 b.get("id")
@@ -2906,11 +2981,22 @@ class MeetingWebServer:
                     {"error": f"unknown starter template {template_id!r}"},
                     status_code=404,
                 )
+            run_dry_run = bool(payload.get("dry_run", False))
+            if "dry_run" in payload and not isinstance(payload.get("dry_run"), bool):
+                return JSONResponse(
+                    {"error": "dry_run must be a boolean when provided"},
+                    status_code=400,
+                )
             try:
                 path, project = _resolve_blocks_target(scope, project_root)
             except ValueError as exc:
                 status = 404 if "no project detected" in str(exc) else 400
                 return JSONResponse({"error": str(exc)}, status_code=status)
+            if run_dry_run and project_root:
+                try:
+                    _resolve_project_context(project_root)
+                except ValueError as exc:
+                    return JSONResponse({"error": str(exc)}, status_code=400)
 
             requested_block_id = payload.get("block_id") if isinstance(payload, dict) else None
             if requested_block_id is not None and not isinstance(requested_block_id, str):
@@ -2939,21 +3025,35 @@ class MeetingWebServer:
                     self.on_dictation_config_changed()
                 except Exception as exc:
                     log.error(f"on_dictation_config_changed failed: {exc}")
-            return JSONResponse(
-                {
-                    "scope": scope,
-                    "path": str(path),
-                    "project": project,
-                    "template": {
-                        "id": template["id"],
-                        "title": template["title"],
-                        "sample_utterance": template["sample_utterance"],
-                    },
-                    "block": block,
-                    "document": document,
+            response_payload = {
+                "scope": scope,
+                "path": str(path),
+                "project": project,
+                "template": {
+                    "id": template["id"],
+                    "title": template["title"],
+                    "sample_utterance": template["sample_utterance"],
                 },
-                status_code=201,
-            )
+                "block": block,
+                "document": document,
+            }
+            if run_dry_run:
+                try:
+                    dry_run = _run_dictation_dry_run_text(
+                        str(template["sample_utterance"]),
+                        project_root,
+                    )
+                except ValueError as exc:
+                    return JSONResponse({"error": str(exc)}, status_code=400)
+                except Exception as exc:
+                    log.error(f"Template dry-run failed: {exc}")
+                    return JSONResponse({"error": str(exc)}, status_code=500)
+                dry_run["created_block_id"] = block["id"]
+                dry_run["template_id"] = template["id"]
+                dry_run["template_title"] = template["title"]
+                dry_run["sample_utterance"] = template["sample_utterance"]
+                response_payload["dry_run"] = dry_run
+            return JSONResponse(response_payload, status_code=201)
 
         @app.put("/api/dictation/blocks/{block_id}")
         async def api_dictation_blocks_update(
@@ -3169,33 +3269,8 @@ class MeetingWebServer:
 
         # ── Dictation dry-run endpoint (WFS-CFG-005) ───────────────────────
 
-        def _serialize_intent(intent: Any) -> Optional[dict[str, Any]]:
-            if intent is None:
-                return None
-            return {
-                "matched": bool(getattr(intent, "matched", False)),
-                "block_id": getattr(intent, "block_id", None),
-                "confidence": float(getattr(intent, "confidence", 0.0)),
-                "raw_label": getattr(intent, "raw_label", None),
-                "extras": dict(getattr(intent, "extras", {}) or {}),
-            }
-
-        def _serialize_stage_result(result: Any) -> dict[str, Any]:
-            return {
-                "stage_id": str(getattr(result, "stage_id", "")),
-                "elapsed_ms": float(getattr(result, "elapsed_ms", 0.0)),
-                "intent": _serialize_intent(getattr(result, "intent", None)),
-                "warnings": list(getattr(result, "warnings", []) or []),
-                "metadata": dict(getattr(result, "metadata", {}) or {}),
-                "text": str(getattr(result, "text", "")),
-            }
-
         @app.post("/api/dictation/dry-run")
         async def api_dictation_dry_run(payload: dict[str, Any]) -> Any:
-            from .config import Config
-            from .plugins.dictation.assembly import build_pipeline
-            from .plugins.dictation.contracts import Utterance
-
             utterance = payload.get("utterance") if isinstance(payload, dict) else None
             if not isinstance(utterance, str):
                 return JSONResponse(
@@ -3225,54 +3300,9 @@ class MeetingWebServer:
                 )
 
             try:
-                cfg = Config.load().dictation
-                try:
-                    project = _resolve_project_context(project_root_override)
-                except ValueError as exc:
-                    if project_root_override:
-                        return JSONResponse({"error": str(exc)}, status_code=400)
-                    project = None
-                project_root = Path(project["root"]) if project else None
-
-                if not cfg.pipeline.enabled:
-                    return JSONResponse(
-                        {
-                            "project": dict(project) if project else None,
-                            "runtime_status": "disabled",
-                            "runtime_detail": "dictation pipeline disabled (opt-in)",
-                            "blocks_count": 0,
-                            "stages": [],
-                            "final_text": text,
-                            "total_elapsed_ms": 0.0,
-                            "warnings": ["dictation pipeline disabled"],
-                        }
-                    )
-
-                result = build_pipeline(
-                    cfg,
-                    project_root=project_root,
-                    global_blocks_path=_GLOBAL_BLOCKS_PATH,
-                )
-                run = result.pipeline.run(
-                    Utterance(
-                        raw_text=text,
-                        audio_duration_s=0.0,
-                        transcribed_at=datetime.now(),
-                        project=project,
-                    )
-                )
-                return JSONResponse(
-                    {
-                        "project": dict(project) if project else None,
-                        "runtime_status": result.runtime_status,
-                        "runtime_detail": result.runtime_detail,
-                        "blocks_count": len(result.blocks.blocks),
-                        "stages": [_serialize_stage_result(sr) for sr in run.stage_results],
-                        "final_text": run.final_text,
-                        "total_elapsed_ms": float(run.total_elapsed_ms),
-                        "warnings": list(run.warnings),
-                    }
-                )
+                return JSONResponse(_run_dictation_dry_run_text(text, project_root_override))
+            except ValueError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=400)
             except Exception as exc:
                 log.error(f"Dictation dry-run failed: {exc}")
                 return JSONResponse({"error": str(exc)}, status_code=500)

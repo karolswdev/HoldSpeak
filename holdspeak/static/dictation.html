@@ -464,26 +464,41 @@
             <div class="template-title">${escapeHtml(t.title)}</div>
             <div class="template-desc">${escapeHtml(t.description)}</div>
             <div style="font-family:var(--font-mono);font-size:12px;color:var(--muted);">${escapeHtml(t.sample_utterance || "")}</div>
-            <button class="btn" data-template-id="${escapeAttr(t.id)}" style="margin-top:8px;">Create</button>
+            <div class="actions" style="margin-top:8px;">
+              <button class="btn" data-template-id="${escapeAttr(t.id)}">Create</button>
+              <button class="btn primary" data-template-dry-run-id="${escapeAttr(t.id)}">Create + dry-run</button>
+            </div>
           </div>
         `).join("");
         host.querySelectorAll("button[data-template-id]").forEach((btn) => {
           btn.addEventListener("click", () => createFromTemplate(btn.dataset.templateId));
         });
+        host.querySelectorAll("button[data-template-dry-run-id]").forEach((btn) => {
+          btn.addEventListener("click", () => createFromTemplate(btn.dataset.templateDryRunId, { dryRun: true }));
+        });
       }
 
-      async function createFromTemplate(templateId) {
+      async function createFromTemplate(templateId, options = {}) {
         const msg = document.getElementById("template-msg");
         msg.innerHTML = "";
+        const dryRun = !!options.dryRun;
         try {
           const data = await api(
             "POST",
-            `/api/dictation/blocks/from-template?scope=${state.scope}${state.scope === "project" ? projectRootParam("&") : ""}`,
-            { template_id: templateId }
+            `/api/dictation/blocks/from-template?scope=${state.scope}${projectRootParam("&")}`,
+            { template_id: templateId, dry_run: dryRun }
           );
           msg.innerHTML = `<div class="ok-box">Created ${escapeHtml(data.block.id)} from ${escapeHtml(data.template.title)}.</div>`;
           await loadScope(state.scope);
           if (data.block && data.block.id) selectBlock(data.block.id);
+          if (dryRun && data.dry_run) {
+            document.getElementById("dry-utterance").value =
+              data.dry_run.sample_utterance || data.template.sample_utterance || "";
+            activateSection("dry-run");
+            renderDryRun(data.dry_run);
+            document.getElementById("dry-msg").innerHTML =
+              `<div class="ok-box">Created ${escapeHtml(data.block.id)} and ran the starter sample.</div>`;
+          }
         } catch (e) {
           msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
         }
@@ -1033,11 +1048,20 @@
         const project = data.project
           ? `${escapeHtml(data.project.name)} (${escapeHtml(data.project.anchor)} @ ${escapeHtml(data.project.root)})`
           : "(none detected)";
+        const source = data.created_block_id
+          ? `  ·  created: <strong>${escapeHtml(data.created_block_id)}</strong>` +
+            ` from <strong>${escapeHtml(data.template_title || data.template_id || "template")}</strong>`
+          : "";
+        const sample = data.sample_utterance
+          ? `  ·  input: <strong>${escapeHtml(data.sample_utterance)}</strong>`
+          : "";
         meta.innerHTML =
           `runtime: <strong>${escapeHtml(data.runtime_status)}</strong> (${escapeHtml(data.runtime_detail || "")})` +
           `  ·  project: <strong>${project}</strong>` +
           `  ·  blocks: <strong>${data.blocks_count ?? 0}</strong>` +
-          `  ·  total: <strong>${Number(data.total_elapsed_ms || 0).toFixed(2)} ms</strong>`;
+          `  ·  total: <strong>${Number(data.total_elapsed_ms || 0).toFixed(2)} ms</strong>` +
+          source +
+          sample;
 
         const warnings = (data.warnings || []).length
           ? `<div class="error-box">${(data.warnings || []).map(escapeHtml).join("<br>")}</div>`
