@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-25 (HS-2-05 done — typed persistence adapters over the existing `MeetingDatabase`; 921 passed end-to-end).
+**Last updated:** 2026-04-25 (HS-2-06 done — MIR pipeline + `MeetingSession.stop()` hook, off by default; 932 passed end-to-end).
 **Current phase:** [phase-2-multi-intent-routing](./phase-2-multi-intent-routing/current-phase-status.md)
 **Status:** in-progress.
 

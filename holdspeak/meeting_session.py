@@ -273,6 +273,10 @@ class MeetingSession:
         diarization_enabled: bool = False,
         diarize_mic: bool = False,
         cross_meeting_recognition: bool = True,
+        mir_routing_enabled: bool = False,
+        mir_profile: str = "balanced",
+        mir_plugin_host: Optional[Any] = None,
+        mir_db: Optional[Any] = None,
     ) -> None:
         """Initialize meeting session.
 
@@ -323,6 +327,15 @@ class MeetingSession:
         self.diarization_enabled = diarization_enabled and SpeakerDiarizer is not None
         self.diarize_mic = diarize_mic and SpeakerDiarizer is not None
         self.cross_meeting_recognition = cross_meeting_recognition
+        # MIR-01 routing pipeline (HS-2-06). Off by default; when enabled,
+        # `stop()` runs windowing + scoring + dispatch + persistence over the
+        # finalized meeting state. Production wiring of `mir_plugin_host` /
+        # `mir_db` happens in HS-2-09 (config + feature flags).
+        self.mir_routing_enabled = bool(mir_routing_enabled)
+        self.mir_profile = str(mir_profile or "balanced")
+        self._mir_plugin_host = mir_plugin_host
+        self._mir_db = mir_db
+        self._mir_last_result: Optional[Any] = None
 
         self._state: Optional[MeetingState] = None
         self._recorder: Optional[MeetingRecorder] = None
@@ -673,6 +686,30 @@ class MeetingSession:
                 log.info("Speaker embeddings saved")
             except Exception as e:
                 log.error(f"Failed to save speaker embeddings: {e}")
+
+        # MIR-01 routing pass over the finalized meeting state (HS-2-06).
+        # Off by default; runs only when the session was constructed with
+        # `mir_routing_enabled=True` and a plugin host. Per-stage failures
+        # degrade gracefully (MIR-F-012); nothing here can raise into the
+        # caller and nothing holds `self._lock`.
+        if self.mir_routing_enabled and self._mir_plugin_host is not None and state.segments:
+            try:
+                from .plugins.pipeline import process_meeting_state as _mir_process
+
+                self._mir_last_result = _mir_process(
+                    state,
+                    self._mir_plugin_host,
+                    profile=self.mir_profile,
+                    db=self._mir_db,
+                )
+                log.info(
+                    "MIR routing finalized: "
+                    f"windows={len(self._mir_last_result.windows)}, "
+                    f"runs={len(self._mir_last_result.runs)}, "
+                    f"errors={len(self._mir_last_result.errors)}"
+                )
+            except Exception as e:
+                log.error(f"MIR routing finalization failed: {e}")
 
         with self._lock:
             # Save speaker embeddings for cross-meeting recognition

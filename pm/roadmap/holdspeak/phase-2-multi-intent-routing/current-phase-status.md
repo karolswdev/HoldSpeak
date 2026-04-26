@@ -1,6 +1,6 @@
 # Phase 2 — Multi-Intent Routing (MIR-01)
 
-**Last updated:** 2026-04-25 (HS-2-05 done — typed persistence adapters `persist_intent_window` / `persist_plugin_run*` / `record_artifact_with_lineage` wrap the existing engine CRUD; 8 new unit cases, 921 passed end-to-end).
+**Last updated:** 2026-04-25 (HS-2-06 done — first non-bridge phase-2 story: end-to-end MIR pipeline + `MeetingSession.stop()` hook, off by default; 11 new tests across unit + 2 integration files, 932 passed end-to-end).
 
 ## Goal
 
@@ -44,7 +44,7 @@ table below mirrors it.
 | HS-2-03 | Step 2 — Windowing + multi-label scoring | done | [story-03-windowing](./story-03-windowing.md) | tests pass (8 new + 21 adjacent intent cases = 29/29) + full suite green (907 passed, metal excluded) |
 | HS-2-04 | Step 3 — Plugin host integration | done | [story-04-plugin-host](./story-04-plugin-host.md) | tests pass (6 new + 23 host-suite cases) + full suite green (913 passed, metal excluded) |
 | HS-2-05 | Step 4 — Persistence + migration | done | [story-05-persistence](./story-05-persistence.md) | tests pass (8 new + 6 engine MIR-persistence cases) + full suite green (921 passed, metal excluded) |
-| HS-2-06 | Step 5 — Meeting runtime wiring | backlog | [story-06-runtime-wiring](./story-06-runtime-wiring.md) | — |
+| HS-2-06 | Step 5 — Meeting runtime wiring | done | [story-06-runtime-wiring](./story-06-runtime-wiring.md) | tests pass (5 unit + 6 integration) + full suite green (932 passed, metal excluded) |
 | HS-2-07 | Step 6 — Synthesis pass | backlog | [story-07-synthesis](./story-07-synthesis.md) | — |
 | HS-2-08 | Step 7 — API + CLI surfaces | backlog | [story-08-api-cli](./story-08-api-cli.md) | — |
 | HS-2-09 | Step 8 — Config + feature flags | backlog | [story-09-config-flags](./story-09-config-flags.md) | — |
@@ -53,18 +53,20 @@ table below mirrors it.
 
 ## Where we are
 
-HS-2-05 done — `holdspeak/plugins/persistence.py` ships typed-bridge
-adapters (`persist_intent_window`, `persist_plugin_run`,
-`persist_plugin_runs`, `record_artifact_with_lineage`) over the
-existing `MeetingDatabase` CRUD. The DB schema was already at
-version 10 with every spec §6.2 table in place; the engine-side
-round-trip tests already cover MIR-D-001..D-006. This story is
-the typed-input front-door so HS-2-06+ callers can hand contracts
-straight in. Documented gap: `PluginRun.started_at` / `finished_at`
-are not persisted — HS-2-10 owns that decision. Next:
-**HS-2-06 (meeting runtime wiring)** — connect the live meeting
-runtime to dispatch + persistence so a real session drives the
-new pipeline end-to-end.
+HS-2-06 done — first non-bridge phase-2 story. `holdspeak/plugins/pipeline.py`
+provides `process_meeting_state(state, host, *, db, ...)` chaining
+windowing → scoring → transitions → dispatch → persistence with
+per-stage `try/except` (MIR-F-012). `MeetingSession.__init__` now
+accepts 4 MIR kwargs (off by default); `MeetingSession.stop()` runs
+the pipeline after intel/title/web/diarizer cleanup, wrapped in
+try/except, no lock held — no new deadlock surface. 11 new tests:
+5 unit, 3 routing integration (idempotency dedup + transitions),
+3 stop-path integration (with `@pytest.mark.timeout(15)` to fail
+loud on any deadlock). On-segment-update wiring deferred (the hot
+path through `_transcribe_loop` deserves its own story). Next:
+**HS-2-07 (synthesis pass)** — consume `MIRPipelineResult.runs` +
+transitions to materialize artifacts with `ArtifactLineage` via
+the HS-2-05 adapter.
 
 ## Active risks
 

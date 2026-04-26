@@ -33,6 +33,7 @@ from .router import (
     select_active_intents,
 )
 from .dispatch import dispatch_window, dispatch_windows
+from .pipeline import MIRPipelineResult, process_meeting_state
 from .persistence import (
     record_artifact_with_lineage,
     record_intent_window as persist_intent_window,
@@ -69,8 +70,10 @@ __all__ = [
     "dispatch_window",
     "dispatch_windows",
     "extract_intent_signals",
+    "MIRPipelineResult",
     "iter_intent_transitions",
     "normalize_profile",
+    "process_meeting_state",
     "persist_intent_window",
     "persist_plugin_run",
     "persist_plugin_runs",
