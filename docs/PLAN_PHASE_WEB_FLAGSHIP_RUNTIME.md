@@ -117,6 +117,26 @@ Target:
 - `WFS-O-003` Startup failures MUST produce actionable remediation text.
 - `WFS-O-004` Existing meeting persistence and deferred-intel flows MUST not regress.
 
+### 5.5 Configurability Requirements (amendment, 2026-04-26)
+
+Original WFS-01 §5.1 only required *exposure* of state and MIR-01 controls
+in the web UI. The current operator audit (2026-04-26) found that core
+DIR-01 dictation surfaces still require hand-rolled YAML editing —
+specifically `~/.config/holdspeak/blocks.yaml`,
+`<root>/.holdspeak/blocks.yaml`, `<root>/.holdspeak/project.yaml`, and
+the dictation pipeline + runtime fields of `~/.config/holdspeak/config.json`.
+The amendment below adds a `WFS-CFG-*` requirement family covering
+interactive configuration of those surfaces from the web UI. This is a
+strict superset of the original WFS-01 scope.
+
+- `WFS-CFG-001` Web UI MUST expose CRUD over global blocks (`~/.config/holdspeak/blocks.yaml`) without requiring the user to edit YAML by hand. List, create, edit, delete; client-side validation mirroring `holdspeak.plugins.dictation.blocks.BlockConfigError`.
+- `WFS-CFG-002` Web UI MUST expose the same CRUD over per-project blocks (`<project_root>/.holdspeak/blocks.yaml`) when a project is detected by `detect_project_for_cwd()`.
+- `WFS-CFG-003` Web UI MUST expose the auto-detected `ProjectContext` (`name`, `root`, `anchor`) and a form-driven editor for `<root>/.holdspeak/project.yaml` `kb.*` fields. The kb keys are user-defined; the editor MUST allow add/remove/rename of arbitrary string-valued kb fields.
+- `WFS-CFG-004` Web UI MUST expose `dictation.pipeline.enabled`, `dictation.pipeline.max_total_latency_ms`, `dictation.runtime.backend`, `dictation.runtime.mlx_model`, `dictation.runtime.llama_cpp_model_path`, `dictation.runtime.warm_on_start` as editable settings, and surface the live `runtime_counters.get_counters()` snapshot + `runtime_counters.get_session_status()` flag inline.
+- `WFS-CFG-005` Web UI MUST expose a "dry-run" preview that runs the full DictationPipeline against a user-provided utterance string without touching the keyboard, mirroring `holdspeak dictation dry-run`. Output MUST show per-stage `elapsed_ms`, the matched intent (or no-match), and the final enriched text.
+- `WFS-CFG-006` All configurability writes MUST be local-only (loopback bind preserved per WFS-R-004) and MUST atomically persist to disk (write-temp + rename) so concurrent reads never see partial files.
+- `WFS-CFG-007` Configurability writes MUST validate before persisting and surface validation errors as actionable HTTP 4xx responses with field-level detail. Bad writes MUST NOT clobber existing valid files.
+
 ## 6. Verification Strategy
 
 ### 6.1 Verification Methods

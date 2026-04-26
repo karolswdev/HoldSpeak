@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-3-06 DoD sweep complete — **PHASE 3 DONE**; evidence bundle at `docs/evidence/phase-dir-loop-closure/20260426-1111/` (11 files); full sweep 1007 passed, 13 skipped).
-**Current phase:** none — DIR-01, MIR-01, and DIR-01 deferred-item closure (phase 3) are all done; pick the next via the project's `docs/PLAN_*` files.
-**Status:** between phases.
+**Last updated:** 2026-04-26 (HS-4 scaffold — phase 4 opened with 6 backlog stories targeting interactive configuration of dictation surfaces in the web UI; WFS-CFG-* requirement family amended into `docs/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md` §5.5).
+**Current phase:** [phase-4-web-flagship-runtime](./phase-4-web-flagship-runtime/) — WFS-01 extended (audit existing surfaces + ship interactive configurability for blocks / project KB / dictation runtime / dry-run preview).
+**Status:** in-progress.
 
 ## Vision
 
@@ -39,6 +39,7 @@ canon, canon wins.
 | 1 | DIR-01: Dictation intent routing + transcript enrichment pipeline | done | [phase-1-dictation-intent-routing](./phase-1-dictation-intent-routing/) |
 | 2 | MIR-01: Meeting-side multi-intent routing + artifact synthesis | done | [phase-2-multi-intent-routing](./phase-2-multi-intent-routing/) |
 | 3 | DIR-01 loop closure: project context, llama_cpp leg, runtime counters, cold-start cap | done | [phase-3-dictation-loop-closure](./phase-3-dictation-loop-closure/) |
+| 4 | WFS-01 extended: audit web flagship + interactive config for blocks / project KB / dictation runtime / dry-run preview | in-progress | [phase-4-web-flagship-runtime](./phase-4-web-flagship-runtime/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
