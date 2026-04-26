@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-4-03 done — project KB authoring API (`/api/dictation/project-kb`) + new `project_kb.py` module + KB editor section on `/dictation`; 16 new integration tests; full sweep 1052 passed, 13 skipped, +16 vs. HS-4-02 baseline).
+**Last updated:** 2026-04-26 (HS-4-04 done — dictation runtime config in `/api/settings` (incl. `_runtime_status` enrichment) + Runtime section on `/dictation` with cap × 5 visualization; 11 new integration tests; full sweep 1063 passed, 13 skipped, +11 vs. HS-4-03 baseline).
 **Current phase:** [phase-4-web-flagship-runtime](./phase-4-web-flagship-runtime/) — WFS-01 extended (audit existing surfaces + ship interactive configurability for blocks / project KB / dictation runtime / dry-run preview).
 **Status:** in-progress.
 

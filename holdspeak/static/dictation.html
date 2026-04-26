@@ -149,6 +149,7 @@
       <div class="scope-row" style="margin-bottom: 24px;">
         <button id="section-blocks" data-section="blocks" class="active">Blocks</button>
         <button id="section-kb" data-section="kb">Project KB</button>
+        <button id="section-runtime" data-section="runtime">Runtime</button>
       </div>
 
       <section id="view-blocks">
@@ -176,6 +177,57 @@
           <section class="panel">
             <h3 id="editor-title">Select a block to edit</h3>
             <div id="editor"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="view-runtime" style="display:none;">
+        <h2>Dictation Runtime</h2>
+        <p style="color: var(--muted); max-width: 720px;">
+          Configure the DIR-01 pipeline without editing
+          <code>~/.config/holdspeak/config.json</code>. Counters are
+          process-scoped (since runtime start). The cold-start cap is
+          <code>max_total_latency_ms × 5</code> — first
+          <code>classify()</code> after launch slower than the cap
+          disables the LLM stage for the session
+          (<code>DIR-R-003</code>).
+        </p>
+        <div id="rt-meta-banner" class="meta-banner">Loading…</div>
+        <div class="grid">
+          <section class="panel">
+            <h3>Pipeline + runtime</h3>
+            <label><input type="checkbox" id="rt-enabled" /> enable dictation pipeline</label>
+            <label>backend
+              <select id="rt-backend">
+                <option value="auto">auto (prefer MLX)</option>
+                <option value="mlx">mlx</option>
+                <option value="llama_cpp">llama_cpp</option>
+              </select>
+            </label>
+            <label>MLX model path <input type="text" id="rt-mlx-model" /></label>
+            <label>llama_cpp GGUF path <input type="text" id="rt-llama-path" /></label>
+            <label><input type="checkbox" id="rt-warm" /> warm_on_start (load model at launch)</label>
+            <label>max_total_latency_ms
+              <input type="range" id="rt-latency" min="100" max="5000" step="50" />
+            </label>
+            <div id="rt-latency-vis" style="font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-top: -4px;"></div>
+            <div id="rt-msg"></div>
+            <div class="actions">
+              <button class="btn primary" id="rt-btn-save">Save</button>
+              <button class="btn" id="rt-btn-reset">Reset</button>
+            </div>
+          </section>
+          <section class="panel">
+            <h3>Runtime status <button id="rt-btn-refresh" class="btn" style="float:right;">Refresh</button></h3>
+            <div id="rt-session-banner"></div>
+            <div id="rt-counters" style="font-family: var(--font-mono); font-size: 13px;"></div>
+            <p style="color: var(--muted); font-size: 12px; margin-top: 16px;">
+              Counters reset on every <code>holdspeak</code> restart.
+              <code>classify_failures</code> includes both LLM errors
+              and constraint-rejected outputs;
+              <code>constrained_retries</code> is the count of
+              GBNF-grammar re-prompts.
+            </p>
           </section>
         </div>
       </section>
@@ -494,10 +546,12 @@
       function activateSection(name) {
         document.getElementById("view-blocks").style.display = name === "blocks" ? "" : "none";
         document.getElementById("view-kb").style.display = name === "kb" ? "" : "none";
+        document.getElementById("view-runtime").style.display = name === "runtime" ? "" : "none";
         document.querySelectorAll('.scope-row button[data-section]').forEach((b) =>
           b.classList.toggle("active", b.dataset.section === name)
         );
         if (name === "kb") loadKB();
+        if (name === "runtime") loadRuntime();
       }
 
       async function loadKB() {
@@ -620,6 +674,95 @@
         }
       }
 
+      // ── Runtime config editor ───────────────────────────────────────────
+      const rtState = { last: null };
+
+      async function loadRuntime() {
+        const banner = document.getElementById("rt-meta-banner");
+        banner.classList.remove("warn", "error");
+        banner.textContent = "Loading…";
+        try {
+          const data = await api("GET", "/api/settings");
+          rtState.last = data;
+          renderRuntime(data);
+        } catch (e) {
+          banner.classList.add("error");
+          banner.textContent = e.message;
+        }
+      }
+
+      function renderRuntime(data) {
+        const dictation = data.dictation || {};
+        const pipeline = dictation.pipeline || {};
+        const runtime = dictation.runtime || {};
+        const status = data._runtime_status || { counters: {}, session: {} };
+
+        document.getElementById("rt-meta-banner").innerHTML =
+          `pipeline: <strong>${pipeline.enabled ? "enabled" : "disabled"}</strong>  ·  ` +
+          `backend: <strong>${escapeHtml(runtime.backend || "auto")}</strong>  ·  ` +
+          `cold-start cap: <strong>${(pipeline.max_total_latency_ms || 0) * 5} ms</strong>`;
+
+        document.getElementById("rt-enabled").checked = !!pipeline.enabled;
+        document.getElementById("rt-backend").value = runtime.backend || "auto";
+        document.getElementById("rt-mlx-model").value = runtime.mlx_model || "";
+        document.getElementById("rt-llama-path").value = runtime.llama_cpp_model_path || "";
+        document.getElementById("rt-warm").checked = !!runtime.warm_on_start;
+        const slider = document.getElementById("rt-latency");
+        slider.value = pipeline.max_total_latency_ms || 600;
+        slider.oninput = updateLatencyVis;
+        updateLatencyVis();
+
+        // Counters
+        const counters = status.counters || {};
+        document.getElementById("rt-counters").innerHTML = `
+          <div>model_loads:        <strong>${counters.model_loads ?? 0}</strong></div>
+          <div>classify_calls:     <strong>${counters.classify_calls ?? 0}</strong></div>
+          <div>classify_failures:  <strong>${counters.classify_failures ?? 0}</strong></div>
+          <div>constrained_retries: <strong>${counters.constrained_retries ?? 0}</strong></div>
+        `;
+
+        // Session-disabled banner
+        const sessionBanner = document.getElementById("rt-session-banner");
+        const session = status.session || {};
+        if (session.llm_disabled_for_session) {
+          sessionBanner.innerHTML = `<div class="error-box">LLM disabled for this session: ${escapeHtml(session.disabled_reason || "(no reason)")}</div>`;
+        } else {
+          sessionBanner.innerHTML = `<div class="ok-box">LLM stage active for this session.</div>`;
+        }
+      }
+
+      function updateLatencyVis() {
+        const v = Number(document.getElementById("rt-latency").value);
+        document.getElementById("rt-latency-vis").textContent =
+          `${v} ms  ·  cold-start cap: ${v * 5} ms (DIR-R-003)`;
+      }
+
+      async function saveRuntime() {
+        const msg = document.getElementById("rt-msg");
+        msg.innerHTML = "";
+        const payload = {
+          dictation: {
+            pipeline: {
+              enabled: document.getElementById("rt-enabled").checked,
+              max_total_latency_ms: Number(document.getElementById("rt-latency").value),
+            },
+            runtime: {
+              backend: document.getElementById("rt-backend").value,
+              mlx_model: document.getElementById("rt-mlx-model").value.trim(),
+              llama_cpp_model_path: document.getElementById("rt-llama-path").value.trim(),
+              warm_on_start: document.getElementById("rt-warm").checked,
+            },
+          },
+        };
+        try {
+          await api("PUT", "/api/settings", payload);
+          msg.innerHTML = `<div class="ok-box">Saved. New utterances pick up the config on next pipeline rebuild.</div>`;
+          await loadRuntime();
+        } catch (e) {
+          msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+        }
+      }
+
       // ── Init ─────────────────────────────────────────────────────────────
       document.querySelectorAll('.scope-row button[data-scope]').forEach((b) =>
         b.addEventListener("click", () => loadScope(b.dataset.scope))
@@ -632,6 +775,9 @@
       document.getElementById("kb-btn-save").addEventListener("click", kbSave);
       document.getElementById("kb-btn-reset").addEventListener("click", kbReset);
       document.getElementById("kb-btn-delete").addEventListener("click", kbDelete);
+      document.getElementById("rt-btn-save").addEventListener("click", saveRuntime);
+      document.getElementById("rt-btn-reset").addEventListener("click", () => rtState.last && renderRuntime(rtState.last));
+      document.getElementById("rt-btn-refresh").addEventListener("click", loadRuntime);
       loadScope("global");
     </script>
   </body>

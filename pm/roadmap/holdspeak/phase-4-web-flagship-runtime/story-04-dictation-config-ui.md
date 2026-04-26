@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 4
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-4-03 (existing pattern of dictation-side panels established)
 - **Unblocks:** opting the dictation pipeline in / configuring backend without editing `~/.config/holdspeak/config.json`
 - **Owner:** unassigned
@@ -36,12 +36,12 @@ visible from the UI.
 
 ## Acceptance criteria
 
-- [ ] `/api/settings` GET includes the dictation block + `_runtime_status`; existing meeting-side fields unchanged.
-- [ ] `/api/settings` PUT accepts the dictation fields, validates, persists atomically (existing helper), and triggers `apply_runtime_config()`.
-- [ ] UI panel shipped with all controls + counter snapshot + cap visualization.
-- [ ] Session-disabled banner appears when the cold-start cap has been breached.
-- [ ] Integration tests cover GET+PUT+validation+apply hook.
-- [ ] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS.
+- [x] `/api/settings` GET includes the dictation block + `_runtime_status`; existing meeting-side fields unchanged (verified by `test_get_returns_dictation_block`, `test_get_includes_runtime_status`, and pre-existing `test_settings_get_and_put_apply_runtime_callback`).
+- [x] `/api/settings` PUT accepts the dictation fields, validates, persists atomically, and fires `on_settings_applied` (which calls `apply_runtime_config()` in the controller path). `test_put_persists_pipeline_and_runtime_fields` asserts both round-trip + callback fire.
+- [x] UI panel shipped on `/dictation` "Runtime" section: enabled toggle, backend dropdown, model paths, warm_on_start toggle, latency slider with `× 5 = <N> ms` indicator, counter snapshot, session-disabled banner.
+- [x] Session-disabled banner asserted by `test_get_surfaces_session_disabled_state` (sets `_SESSION_DISABLED` and reads back via the API).
+- [x] 11 new integration tests in `tests/integration/test_web_dictation_settings_api.py`.
+- [x] Full regression: 1063 passed, +11 vs. HS-4-03 baseline 1052.
 
 ## Test plan
 

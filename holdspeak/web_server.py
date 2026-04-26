@@ -828,8 +828,18 @@ class MeetingWebServer:
         async def api_get_settings() -> Any:
             try:
                 from .config import Config
+                from .plugins.dictation.runtime_counters import get_counters, get_session_status
+
                 config = Config.load()
-                return JSONResponse(config.to_dict())
+                payload = config.to_dict()
+                # WFS-CFG-004: surface runtime counters + session-disabled state
+                # alongside the persisted config. Read-only — clients should
+                # not echo this back on PUT.
+                payload["_runtime_status"] = {
+                    "counters": get_counters(),
+                    "session": get_session_status(),
+                }
+                return JSONResponse(payload)
             except Exception as e:
                 log.error(f"Failed to load settings: {e}")
                 return JSONResponse({"error": str(e)}, status_code=500)
@@ -838,7 +848,19 @@ class MeetingWebServer:
         async def api_update_settings(payload: dict[str, Any]) -> Any:
             """Persist app settings from web UI."""
             try:
-                from .config import Config, HotkeyConfig, ModelConfig, UIConfig, MeetingConfig, KEY_MAP, KEY_DISPLAY
+                from .config import (
+                    Config,
+                    DictationConfig,
+                    DictationConfigError,
+                    DictationPipelineConfig,
+                    HotkeyConfig,
+                    KEY_DISPLAY,
+                    KEY_MAP,
+                    LLMRuntimeConfig,
+                    MeetingConfig,
+                    ModelConfig,
+                    UIConfig,
+                )
 
                 current = Config.load()
                 merged = deepcopy(current.to_dict())
@@ -1080,11 +1102,77 @@ class MeetingWebServer:
                     meeting_data.get("intel_cloud_model", current.meeting.intel_cloud_model)
                 ).strip() or "gpt-5-mini"
 
+                # WFS-CFG-004: validate the dictation slice (preserves
+                # current values when payload omits them; merged already
+                # carries `current.to_dict()["dictation"]` as the base).
+                # Drops the read-only `_runtime_status` enrichment if the
+                # client echoed it back.
+                merged.pop("_runtime_status", None)
+                dictation_data = merged.get("dictation", {}) or {}
+                pipeline_data = dictation_data.get("pipeline", {}) or {}
+                runtime_data = dictation_data.get("runtime", {}) or {}
+
+                pipeline_data["enabled"] = bool(pipeline_data.get(
+                    "enabled", current.dictation.pipeline.enabled
+                ))
+                try:
+                    max_lat = int(pipeline_data.get(
+                        "max_total_latency_ms",
+                        current.dictation.pipeline.max_total_latency_ms,
+                    ))
+                except (TypeError, ValueError):
+                    return JSONResponse(
+                        {"success": False, "error": "dictation.pipeline.max_total_latency_ms must be an integer"},
+                        status_code=400,
+                    )
+                if max_lat <= 0:
+                    return JSONResponse(
+                        {"success": False, "error": "dictation.pipeline.max_total_latency_ms must be > 0"},
+                        status_code=400,
+                    )
+                pipeline_data["max_total_latency_ms"] = max_lat
+
+                backend = str(runtime_data.get(
+                    "backend", current.dictation.runtime.backend
+                )).strip().lower()
+                if backend not in {"auto", "mlx", "llama_cpp"}:
+                    return JSONResponse(
+                        {"success": False, "error": f"Invalid dictation backend: {backend!r}"},
+                        status_code=400,
+                    )
+                runtime_data["backend"] = backend
+                runtime_data["mlx_model"] = str(runtime_data.get(
+                    "mlx_model", current.dictation.runtime.mlx_model
+                )).strip() or current.dictation.runtime.mlx_model
+                runtime_data["llama_cpp_model_path"] = str(runtime_data.get(
+                    "llama_cpp_model_path", current.dictation.runtime.llama_cpp_model_path
+                )).strip() or current.dictation.runtime.llama_cpp_model_path
+                runtime_data["warm_on_start"] = bool(runtime_data.get(
+                    "warm_on_start", current.dictation.runtime.warm_on_start
+                ))
+
+                try:
+                    dictation_cfg = DictationConfig(
+                        pipeline=DictationPipelineConfig(**pipeline_data),
+                        runtime=LLMRuntimeConfig(**runtime_data),
+                    )
+                except DictationConfigError as exc:
+                    return JSONResponse(
+                        {"success": False, "error": str(exc)},
+                        status_code=400,
+                    )
+                except TypeError as exc:
+                    return JSONResponse(
+                        {"success": False, "error": f"Invalid dictation field: {exc}"},
+                        status_code=400,
+                    )
+
                 updated = Config(
                     hotkey=HotkeyConfig(**hotkey_data),
                     model=ModelConfig(**model_data),
                     ui=UIConfig(**ui_data),
                     meeting=MeetingConfig(**meeting_data),
+                    dictation=dictation_cfg,
                 )
                 updated.save()
 
