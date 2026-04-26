@@ -1,7 +1,7 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-25 (DIR-01: **phase complete** — HS-1-11 DoD sweep shipped, real-model end-to-end on the reference Mac, evidence bundle at `holdspeak/phase-1-dictation-intent-routing` + `docs/evidence/phase-dir-01/`).
-**Current phase:** [phase-1-dictation-intent-routing](./phase-1-dictation-intent-routing/current-phase-status.md)
+**Last updated:** 2026-04-25 (phase-2 MIR-01 opened; phase-1 DIR-01 closed at `d6db964` and pushed to `origin/main`).
+**Current phase:** [phase-2-multi-intent-routing](./phase-2-multi-intent-routing/current-phase-status.md)
 **Status:** in-progress.
 
 ## Vision
@@ -36,7 +36,8 @@ canon, canon wins.
 | Phase | Goal (one line) | Status | Folder |
 |---|---|---|---|
 | 0 | Project + roadmap setup; packaging hardening | done | [phase-0-setup](./phase-0-setup/) |
-| 1 | DIR-01: Dictation intent routing + transcript enrichment pipeline | in-progress | [phase-1-dictation-intent-routing](./phase-1-dictation-intent-routing/) |
+| 1 | DIR-01: Dictation intent routing + transcript enrichment pipeline | done | [phase-1-dictation-intent-routing](./phase-1-dictation-intent-routing/) |
+| 2 | MIR-01: Meeting-side multi-intent routing + artifact synthesis | in-progress | [phase-2-multi-intent-routing](./phase-2-multi-intent-routing/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
