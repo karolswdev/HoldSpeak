@@ -1,6 +1,6 @@
 # Phase 5 — Usability Powerhouse
 
-**Last updated:** 2026-04-26 (HS-5-10 done — `/dictation` now shows the detected cwd project on load when no manual override is active; full sweep 1100 passed / 13 skipped).
+**Last updated:** 2026-04-26 (HS-5-11 done — `holdspeak doctor` now mirrors runtime install/model guidance with concrete commands; full sweep 1100 passed / 13 skipped).
 
 ## Goal
 
@@ -37,18 +37,20 @@ test it safely in the browser."
 | HS-5-08 | Runtime readiness action | done | [story-08-runtime-readiness-action.md](./story-08-runtime-readiness-action.md) | [evidence-story-08.md](./evidence-story-08.md) — disabled pipeline warning can enable Runtime through existing settings; 3 new integration tests |
 | HS-5-09 | Model/runtime install guidance | done | [story-09-runtime-install-guidance.md](./story-09-runtime-install-guidance.md) | [evidence-story-09.md](./evidence-story-09.md) — missing backend/model warnings now show copyable install/model guidance; 2 new integration tests |
 | HS-5-10 | Current cwd project visibility | done | [story-10-cwd-project-visibility.md](./story-10-cwd-project-visibility.md) | [evidence-story-10.md](./evidence-story-10.md) — `/dictation` now shows cwd-detected project context before override; 1 new integration test |
+| HS-5-11 | Doctor runtime guidance parity | done | [story-11-doctor-runtime-guidance.md](./story-11-doctor-runtime-guidance.md) | [evidence-story-11.md](./evidence-story-11.md) — doctor now reports concrete runtime install/model commands; 2 updated unit assertions |
 
 ## Where We Are
 
-HS-5-10 makes the selected project legible before the user touches a
-control. The setup loop is now browser-first across project selection,
-cwd project visibility, readiness, starter blocks, starter KB, runtime
-enablement, install/model guidance, and dry-run.
+HS-5-11 brings the browser runtime guidance back to the terminal. The
+setup loop is now browser-first across project selection, cwd project
+visibility, readiness, starter blocks, starter KB, runtime enablement,
+install/model guidance, and dry-run, with `holdspeak doctor` providing
+matching concrete commands for terminal-first setup.
 
 Next likely chunks:
 
 1. Meeting/user action follow-through: surface action item provenance
    and review states more prominently in history/detail views.
 2. Browser project switcher follow-up: optional file-picker integration.
-3. Model/runtime follow-up: optional doctor/readiness parity for the
-   same install guidance outside the browser.
+3. Runtime follow-up: optional docs dedupe so browser and doctor
+   guidance share one implementation source.

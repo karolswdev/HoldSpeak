@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import json
 import os
 import platform
+import shlex
 import socket
 import shutil
 import ssl
@@ -44,6 +45,51 @@ def _is_wayland_session() -> bool:
 
 def _command_exists(name: str) -> bool:
     return shutil.which(name) is not None
+
+
+def _quote_path(path: Path) -> str:
+    return shlex.quote(str(path))
+
+
+def _dictation_runtime_install_fix(requested: str) -> str:
+    def command(backend: str) -> str:
+        if (
+            backend == "llama_cpp"
+            and platform.system() == "Darwin"
+            and platform.machine() == "arm64"
+        ):
+            return 'CMAKE_ARGS="-DGGML_METAL=on" uv pip install -e \'.[dictation-llama]\''
+        if backend == "llama_cpp":
+            return "uv pip install -e '.[dictation-llama]'"
+        return "uv pip install -e '.[dictation-mlx]'"
+
+    if requested == "mlx":
+        return f"Install the MLX dictation backend: {command('mlx')}"
+    if requested == "llama_cpp":
+        return f"Install the llama_cpp dictation backend: {command('llama_cpp')}"
+    commands = []
+    if platform.system() == "Darwin" and platform.machine() == "arm64":
+        commands.append(command("mlx"))
+    commands.append(command("llama_cpp"))
+    return "Install one dictation backend: " + " OR ".join(commands)
+
+
+def _dictation_model_fix(backend: str, target: Path) -> str:
+    parent = target.expanduser().parent
+    if backend == "mlx":
+        return (
+            f"Create the model directory and download Qwen3-8B-MLX-4bit: "
+            f"mkdir -p {_quote_path(parent)} && "
+            "huggingface-cli download mlx-community/Qwen3-8B-MLX-4bit "
+            f"--local-dir {_quote_path(target)}"
+        )
+    return (
+        f"Create the model directory and download Qwen2.5-3B-Instruct-Q4_K_M.gguf: "
+        f"mkdir -p {_quote_path(parent)} && "
+        "huggingface-cli download bartowski/Qwen2.5-3B-Instruct-GGUF "
+        "Qwen2.5-3B-Instruct-Q4_K_M.gguf "
+        f"--local-dir {_quote_path(parent)} --local-dir-use-symlinks False"
+    )
 
 
 def _check_runtime() -> DoctorCheck:
@@ -574,16 +620,11 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
     try:
         resolved, reason = resolve_backend(requested)
     except RuntimeUnavailableError as exc:
-        fix_hint = (
-            "Install holdspeak[dictation-mlx] (Apple Silicon) or "
-            "holdspeak[dictation-llama] (cross-platform), or set "
-            "dictation.runtime.backend = 'auto'."
-        )
         return DoctorCheck(
             name="LLM runtime",
             status="WARN",
             detail=f"requested={requested!r}; resolution failed: {exc}",
-            fix=fix_hint,
+            fix=_dictation_runtime_install_fix(requested),
         )
 
     target = (
@@ -592,21 +633,11 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
         else Path(cfg.runtime.llama_cpp_model_path).expanduser()
     )
     if not target.exists():
-        if resolved == "mlx":
-            fix_hint = (
-                f"Download Qwen3-8B-MLX-4bit to {target} "
-                "(see docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md §7.2)."
-            )
-        else:
-            fix_hint = (
-                f"Download Qwen2.5-3B-Instruct-Q4_K_M.gguf to {target} "
-                "(see docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md §7.2)."
-            )
         return DoctorCheck(
             name="LLM runtime",
             status="WARN",
             detail=f"resolved={resolved} ({reason}); model missing at {target}",
-            fix=fix_hint,
+            fix=_dictation_model_fix(resolved, target),
         )
 
     return DoctorCheck(

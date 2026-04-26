@@ -184,7 +184,8 @@ def test_dictation_runtime_check_warn_when_backend_unresolvable(monkeypatch, tmp
     result = doctor._check_dictation_runtime(cfg)
     assert result.status == "WARN"
     assert "resolution failed" in result.detail
-    assert result.fix and "holdspeak[dictation-" in result.fix
+    assert result.fix and "uv pip install" in result.fix
+    assert "dictation-llama" in result.fix
 
 
 def test_dictation_runtime_check_warn_when_model_missing(monkeypatch, tmp_path) -> None:
@@ -196,7 +197,9 @@ def test_dictation_runtime_check_warn_when_model_missing(monkeypatch, tmp_path) 
     result = doctor._check_dictation_runtime(cfg)
     assert result.status == "WARN"
     assert "model missing" in result.detail
-    assert result.fix and "Download" in result.fix
+    assert result.fix and "huggingface-cli download" in result.fix
+    assert str(tmp_path) in result.fix
+    assert "Qwen2.5-3B-Instruct-Q4_K_M.gguf" in result.fix
 
 
 def test_dictation_runtime_check_pass_when_model_available(monkeypatch, tmp_path) -> None:
