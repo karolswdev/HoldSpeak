@@ -1,6 +1,6 @@
 # Phase 2 — Multi-Intent Routing (MIR-01)
 
-**Last updated:** 2026-04-25 (HS-2-04 done — typed `dispatch_window` / `dispatch_windows` orchestrate `PluginHost` runs and emit `PluginRun` contract records with real wall-clock boundaries; 6 new unit cases, 913 passed end-to-end).
+**Last updated:** 2026-04-25 (HS-2-05 done — typed persistence adapters `persist_intent_window` / `persist_plugin_run*` / `record_artifact_with_lineage` wrap the existing engine CRUD; 8 new unit cases, 921 passed end-to-end).
 
 ## Goal
 
@@ -43,7 +43,7 @@ table below mirrors it.
 | HS-2-02 | Step 1 — Contracts + router skeleton | done | [story-02-contracts-router](./story-02-contracts-router.md) | tests pass (7 new + 10 adjacent intent cases = 17/17) + full suite green (excl. pre-existing metal hw fail) |
 | HS-2-03 | Step 2 — Windowing + multi-label scoring | done | [story-03-windowing](./story-03-windowing.md) | tests pass (8 new + 21 adjacent intent cases = 29/29) + full suite green (907 passed, metal excluded) |
 | HS-2-04 | Step 3 — Plugin host integration | done | [story-04-plugin-host](./story-04-plugin-host.md) | tests pass (6 new + 23 host-suite cases) + full suite green (913 passed, metal excluded) |
-| HS-2-05 | Step 4 — Persistence + migration | backlog | [story-05-persistence](./story-05-persistence.md) | — |
+| HS-2-05 | Step 4 — Persistence + migration | done | [story-05-persistence](./story-05-persistence.md) | tests pass (8 new + 6 engine MIR-persistence cases) + full suite green (921 passed, metal excluded) |
 | HS-2-06 | Step 5 — Meeting runtime wiring | backlog | [story-06-runtime-wiring](./story-06-runtime-wiring.md) | — |
 | HS-2-07 | Step 6 — Synthesis pass | backlog | [story-07-synthesis](./story-07-synthesis.md) | — |
 | HS-2-08 | Step 7 — API + CLI surfaces | backlog | [story-08-api-cli](./story-08-api-cli.md) | — |
@@ -53,20 +53,18 @@ table below mirrors it.
 
 ## Where we are
 
-HS-2-04 done — `holdspeak/plugins/dispatch.py` ships
-`dispatch_window` / `dispatch_windows` that derive the route from
-`IntentScore`, run each plugin via the existing `PluginHost`, and
-return typed `PluginRun` records carrying real wall-clock
-`started_at` / `finished_at` (something `PluginRunResult.duration_ms`
-alone can't supply). Per-plugin failure isolation, MIR-F-008
-idempotency dedup across re-dispatch, and missing-plugin error
-surfacing all covered by 6 new cases. The pre-existing
-`PluginHost` + `execute_chain` were not touched — they already met
-the spec §9.4 surface; this story is the typed-output bridge HS-2-02
-predicted. Next: **HS-2-05 (persistence + migration)** — DB schema
-for `PluginRun` + `ArtifactLineage` rows, schema-version bump in
-`holdspeak/db.py`, migration tests in
-`tests/unit/test_db_intent_timeline.py`.
+HS-2-05 done — `holdspeak/plugins/persistence.py` ships typed-bridge
+adapters (`persist_intent_window`, `persist_plugin_run`,
+`persist_plugin_runs`, `record_artifact_with_lineage`) over the
+existing `MeetingDatabase` CRUD. The DB schema was already at
+version 10 with every spec §6.2 table in place; the engine-side
+round-trip tests already cover MIR-D-001..D-006. This story is
+the typed-input front-door so HS-2-06+ callers can hand contracts
+straight in. Documented gap: `PluginRun.started_at` / `finished_at`
+are not persisted — HS-2-10 owns that decision. Next:
+**HS-2-06 (meeting runtime wiring)** — connect the live meeting
+runtime to dispatch + persistence so a real session drives the
+new pipeline end-to-end.
 
 ## Active risks
 

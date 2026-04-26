@@ -33,6 +33,12 @@ from .router import (
     select_active_intents,
 )
 from .dispatch import dispatch_window, dispatch_windows
+from .persistence import (
+    record_artifact_with_lineage,
+    record_intent_window as persist_intent_window,
+    record_plugin_run as persist_plugin_run,
+    record_plugin_runs as persist_plugin_runs,
+)
 from .scoring import iter_intent_transitions, score_window, score_windows
 from .signals import SUPPORTED_INTENTS as SIGNAL_INTENTS, extract_intent_signals
 from .project_detector import ProjectDetectorPlugin
@@ -65,6 +71,10 @@ __all__ = [
     "extract_intent_signals",
     "iter_intent_transitions",
     "normalize_profile",
+    "persist_intent_window",
+    "persist_plugin_run",
+    "persist_plugin_runs",
+    "record_artifact_with_lineage",
     "score_window",
     "score_windows",
     "preview_route",
