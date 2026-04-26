@@ -198,6 +198,10 @@
         />
         <button class="btn primary" id="project-root-apply">Apply</button>
         <button class="btn" id="project-root-clear">Use cwd</button>
+        <select id="project-root-recent" style="flex:0 1 260px;">
+          <option value="">Recent roots</option>
+        </select>
+        <span id="project-root-status" style="flex:1 1 100%; color:var(--muted); font-family:var(--font-mono); font-size:12px;"></span>
       </div>
 
       <section id="view-readiness" style="display:none;">
@@ -364,6 +368,7 @@
         draft: null,
         templates: [],
         projectRootOverride: localStorage.getItem("holdspeak.projectRootOverride") || "",
+        recentProjectRoots: loadRecentProjectRoots(),
         activeSection: "blocks",
       };
 
@@ -1124,11 +1129,28 @@
         return value ? `${prefix}project_root=${encodeURIComponent(value)}` : "";
       }
 
-      function applyProjectRootOverride() {
+      async function applyProjectRootOverride() {
         const input = document.getElementById("project-root-override");
+        const raw = input.value.trim();
+        const status = document.getElementById("project-root-status");
+        status.style.color = "var(--muted)";
+        status.textContent = raw ? "Validating…" : "Using cwd project detection.";
+        if (raw) {
+          try {
+            const data = await api("GET", `/api/dictation/project-context?project_root=${encodeURIComponent(raw)}`);
+            input.value = data.project.root;
+            status.style.color = "var(--accent-2)";
+            status.textContent = `Selected ${data.project.name} (${data.project.anchor})`;
+          } catch (e) {
+            status.style.color = "var(--danger)";
+            status.textContent = e.message;
+            return;
+          }
+        }
         state.projectRootOverride = input.value.trim();
         if (state.projectRootOverride) {
           localStorage.setItem("holdspeak.projectRootOverride", state.projectRootOverride);
+          rememberProjectRoot(state.projectRootOverride);
         } else {
           localStorage.removeItem("holdspeak.projectRootOverride");
         }
@@ -1138,8 +1160,49 @@
       function clearProjectRootOverride() {
         state.projectRootOverride = "";
         document.getElementById("project-root-override").value = "";
+        document.getElementById("project-root-status").textContent = "Using cwd project detection.";
+        document.getElementById("project-root-status").style.color = "var(--muted)";
         localStorage.removeItem("holdspeak.projectRootOverride");
         refreshProjectScopedView();
+      }
+
+      function loadRecentProjectRoots() {
+        try {
+          const raw = JSON.parse(localStorage.getItem("holdspeak.recentProjectRoots") || "[]");
+          return Array.isArray(raw) ? raw.filter((x) => typeof x === "string" && x.trim()).slice(0, 6) : [];
+        } catch (_e) {
+          return [];
+        }
+      }
+
+      function saveRecentProjectRoots() {
+        localStorage.setItem("holdspeak.recentProjectRoots", JSON.stringify(state.recentProjectRoots.slice(0, 6)));
+        renderRecentProjectRoots();
+      }
+
+      function rememberProjectRoot(root) {
+        const normalized = String(root || "").trim();
+        if (!normalized) return;
+        state.recentProjectRoots = [
+          normalized,
+          ...state.recentProjectRoots.filter((r) => r !== normalized),
+        ].slice(0, 6);
+        saveRecentProjectRoots();
+      }
+
+      function renderRecentProjectRoots() {
+        const select = document.getElementById("project-root-recent");
+        select.innerHTML = `<option value="">Recent roots</option>` + state.recentProjectRoots.map((root) =>
+          `<option value="${escapeAttr(root)}">${escapeHtml(root)}</option>`
+        ).join("");
+      }
+
+      async function useRecentProjectRoot() {
+        const select = document.getElementById("project-root-recent");
+        if (!select.value) return;
+        document.getElementById("project-root-override").value = select.value;
+        await applyProjectRootOverride();
+        select.value = "";
       }
 
       function refreshProjectScopedView() {
@@ -1169,7 +1232,9 @@
       document.getElementById("dry-btn-clear").addEventListener("click", clearDryRun);
       document.getElementById("project-root-apply").addEventListener("click", applyProjectRootOverride);
       document.getElementById("project-root-clear").addEventListener("click", clearProjectRootOverride);
+      document.getElementById("project-root-recent").addEventListener("change", useRecentProjectRoot);
       document.getElementById("ready-btn-refresh").addEventListener("click", loadReadiness);
+      renderRecentProjectRoots();
       loadStarterTemplates();
       loadScope("global");
     </script>

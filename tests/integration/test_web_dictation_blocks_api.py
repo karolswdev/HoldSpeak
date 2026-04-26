@@ -116,8 +116,10 @@ def test_dictation_page_route_serves_html() -> None:
     assert "Dictation Blocks" in body
     assert "/api/dictation/blocks" in body  # JS fetches the API
     assert "/api/dictation/block-templates" in body
+    assert "/api/dictation/project-context" in body
     assert "Starter templates" in body
     assert "Create + dry-run" in body
+    assert "project-root-recent" in body
 
 
 @pytest.fixture
@@ -132,6 +134,40 @@ def test_client(cache_invalidator: MagicMock) -> TestClient:
 
 
 # ── GET ───────────────────────────────────────────────────────────────
+
+
+class TestProjectContext:
+    def test_project_context_validates_manual_root(
+        self, test_client: TestClient, tmp_path: Path
+    ) -> None:
+        target = tmp_path / "target"
+        target.mkdir()
+        (target / "pyproject.toml").write_text('[project]\nname = "target-proj"\n', encoding="utf-8")
+
+        response = test_client.get(f"/api/dictation/project-context?project_root={target}")
+
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["project"]["name"] == "target-proj"
+        assert body["project"]["root"] == str(target)
+        assert body["paths"]["blocks"] == str(target / ".holdspeak" / "blocks.yaml")
+        assert body["paths"]["project_kb"] == str(target / ".holdspeak" / "project.yaml")
+
+    def test_project_context_rejects_missing_manual_root(
+        self, test_client: TestClient
+    ) -> None:
+        response = test_client.get("/api/dictation/project-context?project_root=/not/a/real/path")
+
+        assert response.status_code == 400
+        assert "project_root" in response.json()["error"]
+
+    def test_project_context_reports_no_cwd_project(
+        self, test_client: TestClient, no_project: None
+    ) -> None:
+        response = test_client.get("/api/dictation/project-context")
+
+        assert response.status_code == 404
+        assert "no project" in response.json()["error"]
 
 
 class TestGetBlocks:

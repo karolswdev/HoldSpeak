@@ -2427,6 +2427,24 @@ class MeetingWebServer:
                 return Path(ctx["root"]) / ".holdspeak" / "blocks.yaml", dict(ctx)
             raise ValueError(f"scope must be 'global' or 'project', got {scope!r}")
 
+        @app.get("/api/dictation/project-context")
+        async def api_dictation_project_context(project_root: Optional[str] = None) -> Any:
+            """Validate and describe the active/manual dictation project root."""
+            try:
+                project = _resolve_project_context(project_root)
+            except ValueError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=400 if project_root else 404)
+            root = Path(project["root"])
+            return JSONResponse(
+                {
+                    "project": project,
+                    "paths": {
+                        "blocks": str(root / ".holdspeak" / "blocks.yaml"),
+                        "project_kb": str(root / ".holdspeak" / "project.yaml"),
+                    },
+                }
+            )
+
         def _read_blocks_document(path: Path) -> tuple[dict[str, Any], bool]:
             """Read `path` as a raw YAML mapping; return empty default if missing."""
             import yaml

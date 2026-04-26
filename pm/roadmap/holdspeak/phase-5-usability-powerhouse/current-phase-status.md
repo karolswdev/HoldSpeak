@@ -1,6 +1,6 @@
 # Phase 5 — Usability Powerhouse
 
-**Last updated:** 2026-04-26 (HS-5-04 done — starter templates can now create a block and immediately run the sample dry-run from `/dictation`; combined API returns created block ID, sample input, trace, and final output; full sweep 1089 passed / 13 skipped).
+**Last updated:** 2026-04-26 (HS-5-05 done — `/dictation` now validates project-root overrides before saving, exposes recent browser-local roots, and adds a project-context API; full sweep 1092 passed / 13 skipped).
 
 ## Goal
 
@@ -31,21 +31,22 @@ test it safely in the browser."
 | HS-5-02 | Dictation readiness panel | done | [story-02-dictation-readiness.md](./story-02-dictation-readiness.md) | [evidence-story-02.md](./evidence-story-02.md) — readiness API + UI checklist; 5 new integration tests |
 | HS-5-03 | Starter block templates | done | [story-03-starter-block-templates.md](./story-03-starter-block-templates.md) | [evidence-story-03.md](./evidence-story-03.md) — templates API + UI picker; 5 new integration tests |
 | HS-5-04 | Template create + dry-run loop | done | [story-04-template-create-dry-run.md](./story-04-template-create-dry-run.md) | [evidence-story-04.md](./evidence-story-04.md) — one-click template create + sample dry-run; 3 new integration tests |
+| HS-5-05 | Browser project switcher polish | done | [story-05-project-switcher-polish.md](./story-05-project-switcher-polish.md) | [evidence-story-05.md](./evidence-story-05.md) — project-context validation API + recent roots selector; 3 new integration tests |
 
 ## Where We Are
 
-HS-5-04 closes the first-test loop. A user can choose a starter
-template, create a duplicate-safe block in global or project scope, and
-immediately see that template's sample utterance move through the
-pipeline trace to final output. The readiness panel, starter picker,
-project-root override, and dry-run surface now form one browser-first
-setup path.
+HS-5-05 makes project switching less brittle. The browser now validates
+manual project roots before saving them, remembers recent roots locally,
+and exposes a project-context API that gives the UI resolved project
+identity plus expected blocks/KB paths. The setup loop is now: choose
+project, inspect readiness, create a starter block, and dry-run it
+without leaving the browser.
 
 Next likely chunks:
 
 1. Meeting/user action follow-through: surface action item provenance
    and review states more prominently in history/detail views.
-2. Browser-side project switcher polish: recent project roots,
-   validation feedback, and faster switching.
-3. Readiness next-action deep links that preselect starter templates or
+2. Readiness next-action deep links that preselect starter templates or
    dry-run samples based on the warning that triggered them.
+3. Browser project switcher follow-up: optional file-picker integration
+   or explicit current-cwd project display on page load.
