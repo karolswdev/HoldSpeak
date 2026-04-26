@@ -14,7 +14,6 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any, Optional, Protocol
 
-from ..intent_timeline import build_intent_windows
 from ..artifacts import ArtifactDraft
 from .contracts import ArtifactLineage, IntentScore, IntentTransition, IntentWindow, PluginRun
 from .dispatch import dispatch_window
@@ -22,6 +21,12 @@ from .host import PluginHost
 from .persistence import record_intent_window, record_plugin_run
 from .scoring import iter_intent_transitions, score_window
 from .synthesis import synthesize_and_persist
+
+# Note: `build_intent_windows` is imported lazily inside `process_meeting_state`
+# to avoid a circular import. `holdspeak/intent_timeline.py` imports
+# `IntentWindow` from `.plugins.contracts`, which loads `holdspeak.plugins`
+# which loads this module — pulling `build_intent_windows` here at module
+# scope would land us mid-init of `intent_timeline`.
 
 
 class _MeetingDatabaseLike(Protocol):
@@ -96,7 +101,10 @@ def process_meeting_state(
 
     errors: list[str] = []
 
-    # 1. Windowing.
+    # 1. Windowing — lazy import to avoid the
+    # plugins.__init__ ↔ intent_timeline circular load described above.
+    from ..intent_timeline import build_intent_windows
+
     try:
         windows = build_intent_windows(
             _state_segments(state),
