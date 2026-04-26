@@ -1,6 +1,6 @@
 # Phase 5 — Usability Powerhouse
 
-**Last updated:** 2026-04-26 (HS-5-05 done — `/dictation` now validates project-root overrides before saving, exposes recent browser-local roots, and adds a project-context API; full sweep 1092 passed / 13 skipped).
+**Last updated:** 2026-04-26 (HS-5-06 done — readiness no-blocks warnings now recommend an Action item starter and expose a one-click Create + dry-run action; full sweep 1093 passed / 13 skipped).
 
 ## Goal
 
@@ -32,21 +32,20 @@ test it safely in the browser."
 | HS-5-03 | Starter block templates | done | [story-03-starter-block-templates.md](./story-03-starter-block-templates.md) | [evidence-story-03.md](./evidence-story-03.md) — templates API + UI picker; 5 new integration tests |
 | HS-5-04 | Template create + dry-run loop | done | [story-04-template-create-dry-run.md](./story-04-template-create-dry-run.md) | [evidence-story-04.md](./evidence-story-04.md) — one-click template create + sample dry-run; 3 new integration tests |
 | HS-5-05 | Browser project switcher polish | done | [story-05-project-switcher-polish.md](./story-05-project-switcher-polish.md) | [evidence-story-05.md](./evidence-story-05.md) — project-context validation API + recent roots selector; 3 new integration tests |
+| HS-5-06 | Readiness starter actions | done | [story-06-readiness-starter-actions.md](./story-06-readiness-starter-actions.md) | [evidence-story-06.md](./evidence-story-06.md) — no-blocks readiness warning can create + dry-run the recommended starter; 2 new integration tests |
 
 ## Where We Are
 
-HS-5-05 makes project switching less brittle. The browser now validates
-manual project roots before saving them, remembers recent roots locally,
-and exposes a project-context API that gives the UI resolved project
-identity plus expected blocks/KB paths. The setup loop is now: choose
-project, inspect readiness, create a starter block, and dry-run it
-without leaving the browser.
+HS-5-06 makes readiness warnings operational. If the selected setup has
+no blocks, readiness now recommends the Action item starter in the
+right scope and the browser can create it plus run the sample dry-run
+directly from the warning. The setup loop is now: choose project,
+inspect readiness, click the recommended fix, and inspect the trace.
 
 Next likely chunks:
 
 1. Meeting/user action follow-through: surface action item provenance
    and review states more prominently in history/detail views.
-2. Readiness next-action deep links that preselect starter templates or
-   dry-run samples based on the warning that triggered them.
-3. Browser project switcher follow-up: optional file-picker integration
+2. Browser project switcher follow-up: optional file-picker integration
    or explicit current-cwd project display on page load.
+3. Broader readiness actions for missing KB and disabled runtime.

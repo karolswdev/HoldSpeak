@@ -487,14 +487,15 @@
         const msg = document.getElementById("template-msg");
         msg.innerHTML = "";
         const dryRun = !!options.dryRun;
+        const targetScope = options.scope || state.scope;
         try {
           const data = await api(
             "POST",
-            `/api/dictation/blocks/from-template?scope=${state.scope}${projectRootParam("&")}`,
+            `/api/dictation/blocks/from-template?scope=${targetScope}${projectRootParam("&")}`,
             { template_id: templateId, dry_run: dryRun }
           );
           msg.innerHTML = `<div class="ok-box">Created ${escapeHtml(data.block.id)} from ${escapeHtml(data.template.title)}.</div>`;
-          await loadScope(state.scope);
+          await loadScope(targetScope);
           if (data.block && data.block.id) selectBlock(data.block.id);
           if (dryRun && data.dry_run) {
             document.getElementById("dry-utterance").value =
@@ -794,10 +795,20 @@
             <strong>${escapeHtml(w.message)}</strong><br />
             <span>${escapeHtml(w.action || "")}</span>
             ${w.section && w.section !== "readiness" ? `<button class="btn" data-ready-section="${escapeAttr(w.section)}" style="float:right;">Open</button>` : ""}
+            ${w.template_id ? `<button class="btn primary" data-ready-template-id="${escapeAttr(w.template_id)}" data-ready-template-scope="${escapeAttr(w.template_scope || "global")}" style="float:right;margin-right:8px;">Create + dry-run</button>` : ""}
           </div>
         `).join("");
         actions.querySelectorAll("button[data-ready-section]").forEach((btn) => {
           btn.addEventListener("click", () => activateSection(btn.dataset.readySection));
+        });
+        actions.querySelectorAll("button[data-ready-template-id]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            activateSection("blocks");
+            createFromTemplate(btn.dataset.readyTemplateId, {
+              dryRun: true,
+              scope: btn.dataset.readyTemplateScope || "global",
+            });
+          });
         });
       }
 

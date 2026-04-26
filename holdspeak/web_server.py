@@ -2758,7 +2758,7 @@ class MeetingWebServer:
             from .plugins.dictation.project_kb import ProjectKBError, kb_path_for, read_project_kb
 
             cfg = Config.load().dictation
-            warnings: list[dict[str, str]] = []
+            warnings: list[dict[str, Any]] = []
 
             project: Optional[dict[str, Any]]
             project_error: Optional[str] = None
@@ -2828,8 +2828,11 @@ class MeetingWebServer:
                 warnings.append({
                     "code": "no_blocks",
                     "message": "No dictation blocks are loaded for the selected project.",
-                    "action": "Create a global or project block.",
+                    "action": "Create the Action item starter and run its sample.",
                     "section": "blocks",
+                    "template_id": "action_item",
+                    "template_action": "create_dry_run",
+                    "template_scope": "project" if project is not None else "global",
                 })
             if not global_blocks["valid"] or (project_blocks is not None and not project_blocks["valid"]):
                 warnings.append({

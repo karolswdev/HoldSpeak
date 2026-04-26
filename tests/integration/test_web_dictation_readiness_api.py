@@ -125,6 +125,29 @@ def test_readiness_disabled_no_project_reports_next_actions(
     assert body["runtime"]["status"] == "disabled"
     codes = {warning["code"] for warning in body["warnings"]}
     assert {"pipeline_disabled", "no_project", "no_blocks"} <= codes
+    no_blocks = next(w for w in body["warnings"] if w["code"] == "no_blocks")
+    assert no_blocks["template_id"] == "action_item"
+    assert no_blocks["template_action"] == "create_dry_run"
+    assert no_blocks["template_scope"] == "global"
+
+
+def test_readiness_no_project_blocks_recommends_project_template_scope(
+    test_client: TestClient,
+    settings_path: Path,
+    tmp_path: Path,
+) -> None:
+    _save_config(settings_path, enabled=True)
+    root = tmp_path / "project"
+    _write_project(root, with_blocks=False)
+
+    response = test_client.get(f"/api/dictation/readiness?project_root={root}")
+
+    assert response.status_code == 200
+    body = response.json()
+    no_blocks = next(w for w in body["warnings"] if w["code"] == "no_blocks")
+    assert no_blocks["template_id"] == "action_item"
+    assert no_blocks["template_action"] == "create_dry_run"
+    assert no_blocks["template_scope"] == "project"
 
 
 def test_readiness_missing_model_is_actionable(
@@ -176,3 +199,4 @@ def test_dictation_page_includes_readiness_panel() -> None:
     assert 'data-section="readiness"' in body
     assert "/api/dictation/readiness" in body
     assert "Dictation Readiness" in body
+    assert "data-ready-template-id" in body

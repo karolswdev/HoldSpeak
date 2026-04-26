@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-5-05 done — `/dictation` now validates project-root overrides before saving, exposes recent browser-local roots, and adds a project-context API; full sweep 1092 passed / 13 skipped).
+**Last updated:** 2026-04-26 (HS-5-06 done — readiness no-blocks warnings now recommend an Action item starter and expose a one-click Create + dry-run action; full sweep 1093 passed / 13 skipped).
 **Current phase:** [phase-5-usability-powerhouse](./phase-5-usability-powerhouse/) — reduce daily-use friction and make the web runtime a stronger end-user cockpit.
 **Status:** in-progress.
 
