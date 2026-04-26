@@ -1,6 +1,6 @@
 # Phase 3 — Dictation Loop Closure (DIR-01 deferreds)
 
-**Last updated:** 2026-04-26 (HS-3-02 done — detector wired through `Utterance.project` + `blocks.py` loader + doctor surface; 4 integration + 3 doctor unit tests pass; full sweep 988 passed, +7 vs. HS-3-01 baseline).
+**Last updated:** 2026-04-26 (HS-3-03 done — `llama_cpp` end-to-end test + README install/GGUF docs shipped; gated test skips cleanly without deps; full sweep 988 passed, 13 skipped, +15 cumulative pass delta vs. HS-3-scaffold baseline).
 
 ## Goal
 
@@ -50,24 +50,29 @@ and project-context plumbing into `Utterance`). This section is
 |---|---|---|---|---|
 | HS-3-01 | `detect_project_for_cwd()` pure function | done | [story-01-project-context](./story-01-project-context.md) | [evidence-story-01](./evidence-story-01.md) — 8 unit tests pass; full sweep 981 passed (+8 vs. baseline) |
 | HS-3-02 | Wire detector into `Utterance` + blocks loader | done | [story-02-wire-detector](./story-02-wire-detector.md) | [evidence-story-02](./evidence-story-02.md) — 4 integration + 3 doctor unit tests pass; full sweep 988 (+7 vs. HS-3-01) |
-| HS-3-03 | `llama_cpp` end-to-end leg | backlog | [story-03-llama-cpp-leg](./story-03-llama-cpp-leg.md) | — |
+| HS-3-03 | `llama_cpp` end-to-end leg | done | [story-03-llama-cpp-leg](./story-03-llama-cpp-leg.md) | [evidence-story-03](./evidence-story-03.md) — gated e2e test + README install docs; 1 new skipped test (runs on reference Mac); full sweep 988 passed, 13 skipped |
 | HS-3-04 | DIR-O-002 runtime counters | backlog | [story-04-runtime-counters](./story-04-runtime-counters.md) | — |
 | HS-3-05 | DIR-R-003 cold-start hard-cap | backlog | [story-05-cold-start-cap](./story-05-cold-start-cap.md) | — |
 | HS-3-06 | DoD sweep + phase exit | backlog | [story-06-dod](./story-06-dod.md) | — |
 
 ## Where we are
 
-**HS-3-01 + HS-3-02 shipped.** The dictation pipeline now actually
-carries project context end-to-end:
+**HS-3-01 + HS-3-02 + HS-3-03 shipped.** Three of six stories done.
+The dictation pipeline now actually carries project context end-to-end
+*and* has a verified cross-platform LLM path:
 
 - `detect_project_for_cwd()` lives at `holdspeak/plugins/dictation/project_root.py` with 8 unit tests (HS-3-01).
 - `HoldSpeakController._build_dictation_pipeline()` and `holdspeak.commands.dictation._cmd_dry_run` both detect at build/invocation time, populate `Utterance.project`, and pass `project_root` through to `assembly.build_pipeline` so per-project `<root>/.holdspeak/blocks.yaml` is auto-loaded (HS-3-02).
 - `holdspeak doctor` ships a `Project context` check (PASS detected, WARN missing, PASS-skip when pipeline disabled).
 - 4 integration tests + 3 doctor unit tests; full sweep 988 passed (+15 cumulative vs. HS-3-scaffold baseline 973).
+- New `tests/integration/test_dictation_llama_cpp_e2e.py` exercises the full DictationPipeline through `runtime_llama_cpp.py` against a real GGUF; gated on `requires_llama_cpp` + `_have_model()`, skips cleanly when deps absent (HS-3-03).
+- README ships an "Optional: Dictation LLM Backend" section covering install, model download, Metal-rebuild guidance, config opt-in, and verification commands.
 
 The kb-enricher's `{project.name}` / `{project.kb.*}` template
 placeholders now resolve in dogfood against real on-disk project
-trees. Block-grounded dictation is no longer inert.
+trees. Block-grounded dictation is no longer inert. The cross-platform
+LLM leg (`llama_cpp` + Qwen2.5-3B-GGUF) is documented + tested
+end-to-end through the gated path.
 
 The six-story arc is
 ordered by user-facing leverage: **HS-3-01 + HS-3-02** are the

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 3
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-3-02 (project context wired so the leg exercises a realistic utterance)
 - **Unblocks:** the cross-platform default declared in DIR-01 §5; Linux x86_64 secondary support
 - **Owner:** unassigned
@@ -32,11 +32,11 @@ so the cross-backend default is real, not aspirational.
 
 ## Acceptance criteria
 
-- [ ] README dictation section documents the `[dictation-llama]` install + GGUF download path.
-- [ ] An integration test marked `requires_llama_cpp` exists at `tests/integration/test_dictation_llama_cpp_e2e.py` (or similar) and runs the full pipeline against a real GGUF when the marker passes.
-- [ ] On a machine without `llama_cpp` installed, the test is skipped (not failed).
-- [ ] `holdspeak doctor` reports the resolved backend + GGUF load status when `dictation.runtime.backend = llama_cpp` is set.
-- [ ] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS.
+- [x] README dictation section documents the `[dictation-llama]` install + GGUF download path with the Metal `CMAKE_ARGS` rebuild guidance.
+- [x] An integration test marked `requires_llama_cpp` exists at `tests/integration/test_dictation_llama_cpp_e2e.py` and runs the full pipeline (build_pipeline → intent-router → kb-enricher) against a real GGUF when both deps are present.
+- [x] On a machine without `llama_cpp`/GGUF installed, the test is skipped — verified locally: `1 skipped` with the documented reason. (The gated test was authored but not executed against a real GGUF in this session — the reference Mac with the model is the user's environment, not the dev box; user verifies on next run.)
+- [x] `holdspeak doctor` already reports DIR-DOC-001 (resolved backend + model availability) and DIR-DOC-002 (GBNF compilation) for the `llama_cpp` path — verified by the existing 4 doctor unit tests that already stub `resolve_backend → ("llama_cpp", ...)`. No extension needed.
+- [x] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` → 988 passed, 13 skipped (delta vs. HS-3-02: +0 passed, +1 skipped — the new gated test).
 
 ## Test plan
 

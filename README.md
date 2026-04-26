@@ -94,6 +94,56 @@ uv pip install -e '.[meeting]'
 CMAKE_ARGS="-DGGML_METAL=on" uv pip install llama-cpp-python
 ```
 
+### Optional: Dictation LLM Backend
+
+The DIR-01 dictation pipeline routes utterances against a user-defined block taxonomy and enriches them with project-KB context. It ships two backends; pick one based on platform.
+
+**Apple Silicon (primary on the reference Mac):**
+
+```bash
+uv pip install -e '.[dictation-mlx]'
+
+# Default model: ~/Models/mlx/Qwen3-8B-MLX-4bit
+# Download via huggingface-cli once you have HF auth configured:
+huggingface-cli download mlx-community/Qwen3-8B-MLX-4bit --local-dir ~/Models/mlx/Qwen3-8B-MLX-4bit
+```
+
+**Cross-platform (Linux x86_64, or macOS fallback):**
+
+```bash
+# IMPORTANT on macOS arm64: rebuild llama-cpp-python with Metal flags
+# or it falls back to CPU-only and misses latency targets dramatically.
+CMAKE_ARGS="-DGGML_METAL=on" uv pip install -e '.[dictation-llama]'
+
+# Default model: ~/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf
+mkdir -p ~/Models/gguf
+huggingface-cli download bartowski/Qwen2.5-3B-Instruct-GGUF \
+  Qwen2.5-3B-Instruct-Q4_K_M.gguf --local-dir ~/Models/gguf --local-dir-use-symlinks False
+```
+
+After install, opt the dictation pipeline in via `~/.config/holdspeak/config.json`:
+
+```json
+{
+  "dictation": {
+    "pipeline": { "enabled": true },
+    "runtime": { "backend": "auto" }
+  }
+}
+```
+
+`backend: "auto"` resolves to `mlx` on `darwin/arm64` when `mlx-lm` is importable, else `llama_cpp`. Override with `"mlx"` or `"llama_cpp"` to force a backend.
+
+Verify with:
+
+```bash
+holdspeak doctor                          # reports resolved backend + model + project context
+holdspeak dictation runtime status        # reports backend resolution + model availability
+holdspeak dictation dry-run "your text"   # runs the full pipeline once
+```
+
+User-defined blocks live at `~/.config/holdspeak/blocks.yaml`; per-project overrides at `<project_root>/.holdspeak/blocks.yaml`. See `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §8 for the schema.
+
 ## Usage
 
 ### Web Runtime (Default)
