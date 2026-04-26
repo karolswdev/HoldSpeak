@@ -213,6 +213,45 @@ def test_dictation_runtime_check_pass_when_model_available(monkeypatch, tmp_path
     assert "llama_cpp" in result.detail
 
 
+def test_project_context_check_pass_when_pipeline_disabled() -> None:
+    cfg = Config()  # default: dictation pipeline disabled
+    result = doctor._check_dictation_project_context(cfg)
+    assert result.status == "PASS"
+    assert "disabled" in result.detail
+
+
+def test_project_context_check_pass_when_project_detected(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    root = tmp_path / "proj"
+    (root / ".holdspeak").mkdir(parents=True)
+    monkeypatch.chdir(root)
+
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = True
+
+    result = doctor._check_dictation_project_context(cfg)
+    assert result.status == "PASS"
+    assert "proj" in result.detail
+    assert "anchor=holdspeak" in result.detail
+
+
+def test_project_context_check_warn_when_no_project_detected(
+    monkeypatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    bare = tmp_path / "no_project"
+    bare.mkdir()
+    monkeypatch.chdir(bare)
+
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = True
+
+    result = doctor._check_dictation_project_context(cfg)
+    assert result.status == "WARN"
+    assert "no project root detected" in result.detail
+    assert result.fix and ".holdspeak" in result.fix
+
+
 def test_dictation_compile_check_pass_when_pipeline_disabled() -> None:
     cfg = Config()
     result = doctor._check_dictation_constraint_compile(cfg)

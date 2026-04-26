@@ -68,11 +68,15 @@ def run_dictation_command(args, *, stream: TextIO | None = None) -> int:
 def _cmd_dry_run(args, out: TextIO) -> int:
     from ..plugins.dictation.assembly import build_pipeline
     from ..plugins.dictation.contracts import Utterance
+    from ..plugins.dictation.project_root import detect_project_for_cwd
 
     cfg = Config.load()
     text: str = args.text
 
-    result = build_pipeline(cfg.dictation)
+    project = detect_project_for_cwd()
+    project_root = Path(project["root"]) if project else None
+
+    result = build_pipeline(cfg.dictation, project_root=project_root)
     if result.runtime_status != "loaded":
         print(
             f"warning: LLM runtime unavailable ({result.runtime_detail}); "
@@ -80,6 +84,10 @@ def _cmd_dry_run(args, out: TextIO) -> int:
             file=out,
         )
 
+    if project is not None:
+        print(f"project: {project['name']} ({project['anchor']} @ {project['root']})", file=out)
+    else:
+        print("project: (none detected)", file=out)
     print(f"resolved blocks: {len(result.blocks.blocks)} from "
           f"{result.blocks.source_path or '(no blocks file)'}", file=out)
     print(f"runtime: {result.runtime_status} ({result.runtime_detail})", file=out)
@@ -90,7 +98,7 @@ def _cmd_dry_run(args, out: TextIO) -> int:
         raw_text=text,
         audio_duration_s=0.0,
         transcribed_at=datetime.now(),
-        project=None,
+        project=project,
     )
     run = result.pipeline.run(utt)
 

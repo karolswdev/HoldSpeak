@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 3
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-3-01 (detector function exists + unit-tested)
 - **Unblocks:** HS-3-03 (llama_cpp leg can verify project context flowing); kb-enricher (HS-1-06) becoming live in dogfood
 - **Owner:** unassigned
@@ -32,12 +32,12 @@ path runs for real on dogfood.
 
 ## Acceptance criteria
 
-- [ ] `holdspeak/controller.py` and `holdspeak/commands/dictation.py` both populate `Utterance.project` from `detect_project_for_cwd()` (no more hard-coded `None`).
-- [ ] Block loader call sites pass the resolved `project_root` so per-project blocks load when present.
-- [ ] An integration test under `tests/integration/` constructs an Utterance via the controller path inside a temp project tree and asserts `utt.project["name"] == <expected>` plus successful template resolution downstream.
-- [ ] An integration test for the CLI path asserts the same.
-- [ ] `holdspeak doctor` reports project-context detection status for cwd.
-- [ ] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` PASS.
+- [x] `holdspeak/controller.py` and `holdspeak/commands/dictation.py` both populate `Utterance.project` from `detect_project_for_cwd()` (no more hard-coded `None`).
+- [x] Block loader call sites pass the resolved `project_root` (`HoldSpeakController._build_dictation_pipeline` and `_cmd_dry_run` both pass it through to `assembly.build_pipeline`).
+- [x] Integration test (controller path): `test_controller_pipeline_build_passes_project_root_and_utterance_carries_project` asserts `captured["project_root"] == root.resolve()` and `utt.project["name"] == "myproj"` from a temp project tree.
+- [x] Integration test (CLI path): `test_cli_dry_run_populates_project_from_cwd` runs `_cmd_dry_run` from a temp project tree and asserts `"project: myproj"` + the project's blocks file is loaded.
+- [x] `holdspeak doctor` ships `_check_dictation_project_context` (PASS when detected, WARN when no project, PASS-skip when pipeline disabled); 3 unit tests cover the cases.
+- [x] Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py` → 988 passed, 12 skipped (delta +7 vs. HS-3-01 baseline 981).
 
 ## Test plan
 

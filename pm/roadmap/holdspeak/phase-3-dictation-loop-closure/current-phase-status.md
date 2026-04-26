@@ -1,6 +1,6 @@
 # Phase 3 — Dictation Loop Closure (DIR-01 deferreds)
 
-**Last updated:** 2026-04-26 (HS-3-01 done — `detect_project_for_cwd()` pure function shipped at `holdspeak/plugins/dictation/project_root.py`; 8 unit tests pass; full sweep 981 passed, +8 vs. baseline).
+**Last updated:** 2026-04-26 (HS-3-02 done — detector wired through `Utterance.project` + `blocks.py` loader + doctor surface; 4 integration + 3 doctor unit tests pass; full sweep 988 passed, +7 vs. HS-3-01 baseline).
 
 ## Goal
 
@@ -49,7 +49,7 @@ and project-context plumbing into `Utterance`). This section is
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-3-01 | `detect_project_for_cwd()` pure function | done | [story-01-project-context](./story-01-project-context.md) | [evidence-story-01](./evidence-story-01.md) — 8 unit tests pass; full sweep 981 passed (+8 vs. baseline) |
-| HS-3-02 | Wire detector into `Utterance` + blocks loader | backlog | [story-02-wire-detector](./story-02-wire-detector.md) | — |
+| HS-3-02 | Wire detector into `Utterance` + blocks loader | done | [story-02-wire-detector](./story-02-wire-detector.md) | [evidence-story-02](./evidence-story-02.md) — 4 integration + 3 doctor unit tests pass; full sweep 988 (+7 vs. HS-3-01) |
 | HS-3-03 | `llama_cpp` end-to-end leg | backlog | [story-03-llama-cpp-leg](./story-03-llama-cpp-leg.md) | — |
 | HS-3-04 | DIR-O-002 runtime counters | backlog | [story-04-runtime-counters](./story-04-runtime-counters.md) | — |
 | HS-3-05 | DIR-R-003 cold-start hard-cap | backlog | [story-05-cold-start-cap](./story-05-cold-start-cap.md) | — |
@@ -57,13 +57,17 @@ and project-context plumbing into `Utterance`). This section is
 
 ## Where we are
 
-**HS-3-01 shipped.** `detect_project_for_cwd()` is in place at
-`holdspeak/plugins/dictation/project_root.py` with 8 unit tests; full
-regression 981 passed (+8 vs. HS-3-scaffold baseline). The detector
-is module-located on the dictation side rather than appended to the
-existing MIR-side `holdspeak/plugins/project_detector.py` — the two
-serve different consumers and shapes. Self-detection on the HoldSpeak
-repo returns `{name: 'holdspeak', root: '...', anchor: 'git'}`.
+**HS-3-01 + HS-3-02 shipped.** The dictation pipeline now actually
+carries project context end-to-end:
+
+- `detect_project_for_cwd()` lives at `holdspeak/plugins/dictation/project_root.py` with 8 unit tests (HS-3-01).
+- `HoldSpeakController._build_dictation_pipeline()` and `holdspeak.commands.dictation._cmd_dry_run` both detect at build/invocation time, populate `Utterance.project`, and pass `project_root` through to `assembly.build_pipeline` so per-project `<root>/.holdspeak/blocks.yaml` is auto-loaded (HS-3-02).
+- `holdspeak doctor` ships a `Project context` check (PASS detected, WARN missing, PASS-skip when pipeline disabled).
+- 4 integration tests + 3 doctor unit tests; full sweep 988 passed (+15 cumulative vs. HS-3-scaffold baseline 973).
+
+The kb-enricher's `{project.name}` / `{project.kb.*}` template
+placeholders now resolve in dogfood against real on-disk project
+trees. Block-grounded dictation is no longer inert.
 
 The six-story arc is
 ordered by user-facing leverage: **HS-3-01 + HS-3-02** are the

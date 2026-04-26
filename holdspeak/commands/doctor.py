@@ -502,6 +502,56 @@ def _check_meeting_intel_cloud_preflight(config: Config, *, timeout_seconds: flo
     )
 
 
+def _check_dictation_project_context(config: Config) -> DoctorCheck:
+    """Report cwd-based project detection (HS-3-02).
+
+    Always opt-in via dictation.pipeline.enabled — when disabled,
+    skips with PASS to keep `holdspeak doctor` quiet on the default
+    path. Never returns FAIL: a missing project just means the
+    `kb-enricher` stage has no context to inject (DIR-F-007 covers
+    that path).
+    """
+    if not config.dictation.pipeline.enabled:
+        return DoctorCheck(
+            name="Project context",
+            status="PASS",
+            detail="dictation pipeline disabled (opt-in)",
+        )
+
+    from ..plugins.dictation.project_root import detect_project_for_cwd
+
+    try:
+        project = detect_project_for_cwd()
+    except Exception as exc:  # pragma: no cover — defensive
+        return DoctorCheck(
+            name="Project context",
+            status="WARN",
+            detail=f"detection raised {type(exc).__name__}: {exc}",
+            fix="File a bug — `detect_project_for_cwd` should never raise on a normal cwd.",
+        )
+
+    if project is None:
+        return DoctorCheck(
+            name="Project context",
+            status="WARN",
+            detail=f"no project root detected from cwd={Path.cwd()}",
+            fix=(
+                "Launch holdspeak from inside a project directory, "
+                "or `mkdir <project>/.holdspeak` to mark a project root."
+            ),
+        )
+
+    return DoctorCheck(
+        name="Project context",
+        status="PASS",
+        detail=(
+            f"detected {project['name']} (anchor={project['anchor']}) "
+            f"at {project['root']}"
+            + (" + KB" if "kb" in project else "")
+        ),
+    )
+
+
 def _check_dictation_runtime(config: Config) -> DoctorCheck:
     """DIR-DOC-001: report the resolved dictation LLM runtime + model availability.
 
@@ -734,6 +784,7 @@ def collect_doctor_checks() -> list[DoctorCheck]:
         _check_web_runtime(),
         _check_meeting_intel_runtime(config),
         _check_meeting_intel_cloud_preflight(config),
+        _check_dictation_project_context(config),
         _check_dictation_runtime(config),
         _check_dictation_constraint_compile(config),
         _check_mir_routing(config),

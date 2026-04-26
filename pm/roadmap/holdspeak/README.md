@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-3-01 done — `detect_project_for_cwd()` pure function shipped; 8 unit tests pass; full sweep 981 passed, +8 vs. baseline).
+**Last updated:** 2026-04-26 (HS-3-02 done — detector wired through `Utterance.project` + blocks loader + doctor surface; 4 integration + 3 doctor unit tests pass; full sweep 988 passed, +15 cumulative vs. HS-3 baseline).
 **Current phase:** [phase-3-dictation-loop-closure](./phase-3-dictation-loop-closure/) — DIR-01 deferred-item closure.
 **Status:** in-progress.
 

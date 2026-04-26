@@ -94,6 +94,7 @@ class HoldSpeakController:
         # default path (DIR-C-001 byte-identical guarantee).
         self._dictation_pipeline: Optional[Any] = None
         self._dictation_pipeline_failed: bool = False
+        self._dictation_project: Optional[dict[str, Any]] = None
 
         self._meeting_session: Optional[MeetingSession] = None
         self._meeting_timer_thread: Optional[threading.Thread] = None
@@ -262,7 +263,7 @@ class HoldSpeakController:
                 raw_text=text,
                 audio_duration_s=audio_duration_s,
                 transcribed_at=transcribed_at,
-                project=None,
+                project=self._dictation_project,
             )
             run = pipeline.run(utt)
             return run.final_text
@@ -294,11 +295,22 @@ class HoldSpeakController:
         lives in `dictation.assembly` so the CLI (HS-1-08) and doctor
         (HS-1-09) share the same builder.
         """
+        from pathlib import Path as _Path
         from holdspeak.plugins.dictation.assembly import build_pipeline
+        from holdspeak.plugins.dictation.project_root import detect_project_for_cwd
+
+        # Detect the project once per pipeline build: the same context
+        # rides every Utterance through the session, and the same
+        # project_root drives `<root>/.holdspeak/blocks.yaml`
+        # auto-discovery (DIR-01 §8.1). Cleared in
+        # `apply_runtime_config` so config edits trigger re-detection.
+        self._dictation_project = detect_project_for_cwd()
+        project_root = _Path(self._dictation_project["root"]) if self._dictation_project else None
 
         result = build_pipeline(
             self.app.config.dictation,
             on_run=self._emit_pipeline_run,
+            project_root=project_root,
             global_blocks_path=_GLOBAL_BLOCKS_PATH,
         )
         if result.runtime_status != "loaded":
@@ -335,6 +347,7 @@ class HoldSpeakController:
         # a different blocks file) takes effect on the next utterance.
         self._dictation_pipeline = None
         self._dictation_pipeline_failed = False
+        self._dictation_project = None
 
     def _sync_intel_queue_worker(self) -> None:
         """Ensure deferred-intel worker matches current config."""
