@@ -43,6 +43,9 @@ def test_activity_page_serves_browser_surface(test_client: TestClient) -> None:
     assert "Local Activity" in response.text
     assert "/api/activity/status" in response.text
     assert "/api/activity/meeting-candidates/preview" in response.text
+    assert "candidate-status-filter" in response.text
+    assert "No preview loaded" in response.text
+    assert "candidates-message" in response.text
 
 
 def test_activity_status_reports_default_enabled_state(test_client: TestClient) -> None:

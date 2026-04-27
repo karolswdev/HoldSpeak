@@ -58,6 +58,17 @@
       .panel { padding: 16px; }
       .panel + .panel { margin-top: 14px; }
       .panel h2 { font-size: 1rem; margin-bottom: 12px; }
+      .panel-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .panel-heading h2 { margin-bottom: 0; }
+      .panel-heading select {
+        width: min(180px, 100%);
+      }
       .row {
         display: flex;
         justify-content: space-between;
@@ -95,6 +106,10 @@
       button {
         padding: 0 12px;
         cursor: pointer;
+      }
+      button:disabled {
+        cursor: wait;
+        opacity: 0.58;
       }
       button.primary {
         background: var(--accent);
@@ -155,6 +170,14 @@
         padding: 10px;
         background: rgba(255, 255, 255, 0.03);
       }
+      .candidate-preview-item {
+        border-color: rgba(255, 184, 107, 0.34);
+        background: rgba(255, 184, 107, 0.055);
+      }
+      .candidate-saved-item {
+        border-color: rgba(100, 215, 255, 0.28);
+        background: rgba(100, 215, 255, 0.04);
+      }
       .rule-actions {
         display: flex;
         gap: 8px;
@@ -199,8 +222,20 @@
         padding: 24px;
         border: 1px dashed var(--line);
         border-radius: 8px;
-        text-align: center;
+        line-height: 1.45;
       }
+      .empty strong {
+        display: block;
+        color: var(--text);
+        margin-bottom: 4px;
+      }
+      .panel-message {
+        min-height: 20px;
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .panel-message.error { color: var(--danger); }
       .error { color: var(--danger); margin-top: 10px; }
       @media (max-width: 860px) {
         .grid { grid-template-columns: 1fr; }
@@ -255,6 +290,7 @@
               <input id="domain-input" placeholder="example.com" aria-label="Domain to exclude" />
               <button id="exclude-domain" type="button">Exclude</button>
             </div>
+            <p id="domains-message" class="panel-message"></p>
             <div id="domains"></div>
           </section>
         </aside>
@@ -307,17 +343,28 @@
               <button id="reset-rule" type="button">New</button>
               <button id="apply-rules" type="button">Apply all</button>
             </div>
+            <p id="rules-message" class="panel-message"></p>
             <div id="rule-preview" class="preview-list"></div>
             <div id="rules" class="rule-list"></div>
           </section>
 
           <section class="panel">
-            <h2>Meeting Candidates</h2>
+            <div class="panel-heading">
+              <h2>Meeting Candidates</h2>
+              <select id="candidate-status-filter" aria-label="Candidate status filter">
+                <option value="">All saved</option>
+                <option value="candidate">Candidates</option>
+                <option value="armed">Armed</option>
+                <option value="started">Started</option>
+                <option value="dismissed">Dismissed</option>
+              </select>
+            </div>
             <div class="button-row">
               <button id="preview-candidates" type="button">Preview</button>
               <button id="refresh-candidates" type="button">Refresh saved</button>
               <button id="clear-dismissed-candidates" class="danger" type="button">Clear dismissed</button>
             </div>
+            <p id="candidates-message" class="panel-message"></p>
             <div id="candidate-preview" class="candidate-list"></div>
             <div id="meeting-candidates" class="candidate-list"></div>
           </section>
@@ -338,6 +385,7 @@
         rules: [],
         candidatePreviews: [],
         meetingCandidates: [],
+        candidateStatusFilter: "",
       };
       const $ = (id) => document.getElementById(id);
 
@@ -354,6 +402,21 @@
       function setMessage(text, isError = false) {
         $("message").textContent = isError ? "" : text;
         $("error").textContent = isError ? text : "";
+      }
+
+      function setPanelMessage(id, text, isError = false) {
+        const el = $(id);
+        el.textContent = text || "";
+        el.classList.toggle("error", Boolean(isError));
+      }
+
+      async function withButtonBusy(button, action) {
+        if (button) button.disabled = true;
+        try {
+          return await action();
+        } finally {
+          if (button) button.disabled = false;
+        }
       }
 
       function escapeHtml(value) {
@@ -395,7 +458,7 @@
                 <button type="button" data-remove-domain="${escapeHtml(rule.domain)}">Remove</button>
               </div>
             `).join("")
-          : `<p class="sub">No domains excluded.</p>`;
+          : `<div class="empty"><strong>No excluded domains.</strong>Add a domain above to keep matching local activity out of the ledger.</div>`;
       }
 
       function renderProjects() {
@@ -426,7 +489,7 @@
                 </div>
               </article>
             `).join("")
-          : `<div class="empty">No project rules yet.</div>`;
+          : `<div class="empty"><strong>No project rules yet.</strong>Create a rule to attach matching local activity to a known project.</div>`;
       }
 
       function renderRecords() {
@@ -445,14 +508,14 @@
                 </div>
               </article>
             `).join("")
-          : `<div class="empty">No imported activity yet.</div>`;
+          : `<div class="empty"><strong>No imported activity yet.</strong>Use Refresh after enabling a readable browser source, or keep ingestion paused if you do not want local activity imported.</div>`;
       }
 
       function renderCandidatePreviews() {
         const previews = state.candidatePreviews || [];
         $("candidate-preview").innerHTML = previews.length
           ? previews.map((candidate, index) => `
-              <article class="rule-item">
+              <article class="rule-item candidate-preview-item">
                 <div class="record-top">
                   <div>
                     <div class="record-title">${escapeHtml(candidate.title)}</div>
@@ -469,14 +532,15 @@
                 </div>
               </article>
             `).join("")
-          : `<div class="empty">No candidate previews loaded.</div>`;
+          : `<div class="empty"><strong>No preview loaded.</strong>Preview scans imported local calendar activity without saving or starting a recording.</div>`;
       }
 
       function renderMeetingCandidates() {
         const candidates = state.meetingCandidates || [];
+        const filterLabel = state.candidateStatusFilter || "all";
         $("meeting-candidates").innerHTML = candidates.length
           ? candidates.map((candidate) => `
-              <article class="rule-item">
+              <article class="rule-item candidate-saved-item">
                 <div class="record-top">
                   <div>
                     <div class="record-title">${escapeHtml(candidate.title)}</div>
@@ -490,14 +554,14 @@
                   <div class="tag">${escapeHtml(candidate.status)}</div>
                 </div>
                 <div class="rule-actions">
-                  <button class="primary" type="button" data-start-candidate="${escapeHtml(candidate.id)}">Start</button>
-                  <button type="button" data-candidate-status="armed" data-candidate-id="${escapeHtml(candidate.id)}">Arm</button>
-                  <button type="button" data-candidate-status="dismissed" data-candidate-id="${escapeHtml(candidate.id)}">Dismiss</button>
-                  <button type="button" data-candidate-status="candidate" data-candidate-id="${escapeHtml(candidate.id)}">Reset</button>
+                  <button class="primary" type="button" data-start-candidate="${escapeHtml(candidate.id)}" ${candidate.status === "started" ? "disabled" : ""}>Start</button>
+                  <button type="button" data-candidate-status="armed" data-candidate-id="${escapeHtml(candidate.id)}" ${candidate.status === "armed" ? "disabled" : ""}>Arm</button>
+                  <button type="button" data-candidate-status="dismissed" data-candidate-id="${escapeHtml(candidate.id)}" ${candidate.status === "dismissed" ? "disabled" : ""}>Dismiss</button>
+                  <button type="button" data-candidate-status="candidate" data-candidate-id="${escapeHtml(candidate.id)}" ${candidate.status === "candidate" ? "disabled" : ""}>Reset</button>
                 </div>
               </article>
             `).join("")
-          : `<div class="empty">No saved meeting candidates.</div>`;
+          : `<div class="empty"><strong>No ${escapeHtml(filterLabel)} saved candidates.</strong>Preview local calendar activity, save a candidate, then start it manually when you are ready to record.</div>`;
       }
 
       function resetRuleForm() {
@@ -553,7 +617,7 @@
             request("/api/activity/records?limit=100"),
             request("/api/projects"),
             request("/api/activity/project-rules"),
-            request("/api/activity/meeting-candidates"),
+            request(`/api/activity/meeting-candidates${state.candidateStatusFilter ? `?status=${encodeURIComponent(state.candidateStatusFilter)}` : ""}`),
           ]);
           state.status = status;
           state.activity = activity;
@@ -567,123 +631,149 @@
           renderMeetingCandidates();
           renderRecords();
           setMessage("");
+          setPanelMessage("rules-message", "");
+          setPanelMessage("candidates-message", "");
+          setPanelMessage("domains-message", "");
         } catch (error) {
           setMessage(error.message, true);
         }
       }
 
       $("toggle-enabled").addEventListener("click", async () => {
+        const button = $("toggle-enabled");
         const enabled = !(state.status && state.status.settings && state.status.settings.enabled);
-        try {
-          const payload = await request("/api/activity/settings", {
-            method: "PUT",
-            body: JSON.stringify({ enabled }),
-          });
-          state.status = payload.status;
-          renderStatus();
-          setMessage(enabled ? "Activity ingestion resumed." : "Activity ingestion paused.");
-        } catch (error) {
-          setMessage(error.message, true);
-        }
+        await withButtonBusy(button, async () => {
+          try {
+            const payload = await request("/api/activity/settings", {
+              method: "PUT",
+              body: JSON.stringify({ enabled }),
+            });
+            state.status = payload.status;
+            renderStatus();
+            setMessage(enabled ? "Activity ingestion resumed." : "Activity ingestion paused.");
+          } catch (error) {
+            setMessage(error.message, true);
+          }
+        });
       });
 
       $("refresh").addEventListener("click", async () => {
-        try {
-          await request("/api/activity/refresh", { method: "POST", body: "{}" });
-          setMessage("Activity refreshed.");
-          await load();
-        } catch (error) {
-          setMessage(error.message, true);
-        }
+        const button = $("refresh");
+        await withButtonBusy(button, async () => {
+          try {
+            await request("/api/activity/refresh", { method: "POST", body: "{}" });
+            setMessage("Activity refreshed.");
+            await load();
+          } catch (error) {
+            setMessage(error.message, true);
+          }
+        });
       });
 
       $("clear").addEventListener("click", async () => {
         if (!confirm("Delete imported activity records?")) return;
-        try {
-          await request("/api/activity/records", { method: "DELETE" });
-          setMessage("Imported activity cleared.");
-          await load();
-        } catch (error) {
-          setMessage(error.message, true);
-        }
+        const button = $("clear");
+        await withButtonBusy(button, async () => {
+          try {
+            await request("/api/activity/records", { method: "DELETE" });
+            setMessage("Imported activity cleared.");
+            await load();
+          } catch (error) {
+            setMessage(error.message, true);
+          }
+        });
       });
 
       $("save-retention").addEventListener("click", async () => {
-        try {
-          const retention_days = Number($("retention-input").value || 30);
-          const payload = await request("/api/activity/settings", {
-            method: "PUT",
-            body: JSON.stringify({ retention_days }),
-          });
-          state.status = payload.status;
-          renderStatus();
-          setMessage("Retention saved.");
-        } catch (error) {
-          setMessage(error.message, true);
-        }
+        const button = $("save-retention");
+        await withButtonBusy(button, async () => {
+          try {
+            const retention_days = Number($("retention-input").value || 30);
+            const payload = await request("/api/activity/settings", {
+              method: "PUT",
+              body: JSON.stringify({ retention_days }),
+            });
+            state.status = payload.status;
+            renderStatus();
+            setMessage("Retention saved.");
+          } catch (error) {
+            setMessage(error.message, true);
+          }
+        });
       });
 
       $("exclude-domain").addEventListener("click", async () => {
+        const button = $("exclude-domain");
         const domain = $("domain-input").value.trim();
         if (!domain) return;
-        try {
-          const payload = await request("/api/activity/domains", {
-            method: "POST",
-            body: JSON.stringify({ domain, action: "exclude" }),
-          });
-          state.status = payload.status;
-          $("domain-input").value = "";
-          renderStatus();
-          setMessage(`${domain} excluded.`);
-        } catch (error) {
-          setMessage(error.message, true);
-        }
+        await withButtonBusy(button, async () => {
+          try {
+            const payload = await request("/api/activity/domains", {
+              method: "POST",
+              body: JSON.stringify({ domain, action: "exclude" }),
+            });
+            state.status = payload.status;
+            $("domain-input").value = "";
+            renderStatus();
+            setPanelMessage("domains-message", `${domain} excluded.`);
+          } catch (error) {
+            setPanelMessage("domains-message", error.message, true);
+          }
+        });
       });
 
       $("domains").addEventListener("click", async (event) => {
         const button = event.target.closest("[data-remove-domain]");
         if (!button) return;
         const domain = button.getAttribute("data-remove-domain");
-        try {
-          const payload = await request(`/api/activity/domains/${encodeURIComponent(domain)}`, { method: "DELETE" });
-          state.status = payload.status;
-          renderStatus();
-          setMessage(`${domain} removed.`);
-        } catch (error) {
-          setMessage(error.message, true);
-        }
+        await withButtonBusy(button, async () => {
+          try {
+            const payload = await request(`/api/activity/domains/${encodeURIComponent(domain)}`, { method: "DELETE" });
+            state.status = payload.status;
+            renderStatus();
+            setPanelMessage("domains-message", `${domain} removed.`);
+          } catch (error) {
+            setPanelMessage("domains-message", error.message, true);
+          }
+        });
       });
 
       $("preview-rule").addEventListener("click", async () => {
-        try {
-          const payload = await request("/api/activity/project-rules/preview", {
-            method: "POST",
-            body: JSON.stringify(rulePayload()),
-          });
-          renderPreview(payload.matches || []);
-          setMessage(`${payload.count || 0} matching records.`);
-        } catch (error) {
-          setMessage(error.message, true);
-        }
+        const button = $("preview-rule");
+        await withButtonBusy(button, async () => {
+          try {
+            const payload = await request("/api/activity/project-rules/preview", {
+              method: "POST",
+              body: JSON.stringify(rulePayload()),
+            });
+            renderPreview(payload.matches || []);
+            setPanelMessage("rules-message", `${payload.count || 0} matching records.`);
+          } catch (error) {
+            setPanelMessage("rules-message", error.message, true);
+          }
+        });
       });
 
       $("save-rule").addEventListener("click", async () => {
-        try {
-          const id = $("rule-id").value;
-          const payload = await request(
-            id ? `/api/activity/project-rules/${encodeURIComponent(id)}` : "/api/activity/project-rules",
-            {
-              method: id ? "PUT" : "POST",
-              body: JSON.stringify(rulePayload()),
-            },
-          );
-          const saved = payload.rule;
-          await load();
-          editRule(saved);
-          setMessage("Project rule saved.");
-        } catch (error) {
-          setMessage(error.message, true);
-        }
+        const button = $("save-rule");
+        await withButtonBusy(button, async () => {
+          try {
+            const id = $("rule-id").value;
+            const payload = await request(
+              id ? `/api/activity/project-rules/${encodeURIComponent(id)}` : "/api/activity/project-rules",
+              {
+                method: id ? "PUT" : "POST",
+                body: JSON.stringify(rulePayload()),
+              },
+            );
+            const saved = payload.rule;
+            await load();
+            editRule(saved);
+            setPanelMessage("rules-message", "Project rule saved.");
+          } catch (error) {
+            setPanelMessage("rules-message", error.message, true);
+          }
+        });
       });
 
       $("reset-rule").addEventListener("click", () => {
@@ -692,16 +782,19 @@
       });
 
       $("apply-rules").addEventListener("click", async () => {
-        try {
-          const payload = await request("/api/activity/project-rules/apply", {
-            method: "POST",
-            body: "{}",
-          });
-          setMessage(`${payload.updated || 0} records updated.`);
-          await load();
-        } catch (error) {
-          setMessage(error.message, true);
-        }
+        const button = $("apply-rules");
+        await withButtonBusy(button, async () => {
+          try {
+            const payload = await request("/api/activity/project-rules/apply", {
+              method: "POST",
+              body: "{}",
+            });
+            setPanelMessage("rules-message", `${payload.updated || 0} records updated.`);
+            await load();
+          } catch (error) {
+            setPanelMessage("rules-message", error.message, true);
+          }
+        });
       });
 
       $("rules").addEventListener("click", async (event) => {
@@ -715,36 +808,51 @@
         }
         if (!remove) return;
         const id = remove.getAttribute("data-delete-rule");
-        try {
-          await request(`/api/activity/project-rules/${encodeURIComponent(id)}`, { method: "DELETE" });
-          resetRuleForm();
-          setMessage("Project rule deleted.");
-          await load();
-        } catch (error) {
-          setMessage(error.message, true);
-        }
+        await withButtonBusy(remove, async () => {
+          try {
+            await request(`/api/activity/project-rules/${encodeURIComponent(id)}`, { method: "DELETE" });
+            resetRuleForm();
+            setPanelMessage("rules-message", "Project rule deleted.");
+            await load();
+          } catch (error) {
+            setPanelMessage("rules-message", error.message, true);
+          }
+        });
       });
 
       $("preview-candidates").addEventListener("click", async () => {
-        try {
-          const payload = await request("/api/activity/meeting-candidates/preview");
-          state.candidatePreviews = payload.candidates || [];
-          renderCandidatePreviews();
-          setMessage(`${payload.count || 0} meeting candidates found.`);
-        } catch (error) {
-          setMessage(error.message, true);
-        }
+        const button = $("preview-candidates");
+        await withButtonBusy(button, async () => {
+          try {
+            const payload = await request("/api/activity/meeting-candidates/preview");
+            state.candidatePreviews = payload.candidates || [];
+            renderCandidatePreviews();
+            setPanelMessage("candidates-message", `${payload.count || 0} meeting candidates found.`);
+          } catch (error) {
+            setPanelMessage("candidates-message", error.message, true);
+          }
+        });
       });
 
       $("refresh-candidates").addEventListener("click", async () => {
-        try {
-          const payload = await request("/api/activity/meeting-candidates");
-          state.meetingCandidates = payload.candidates || [];
-          renderMeetingCandidates();
-          setMessage(`${payload.count || 0} saved meeting candidates.`);
-        } catch (error) {
-          setMessage(error.message, true);
-        }
+        const button = $("refresh-candidates");
+        await withButtonBusy(button, async () => {
+          try {
+            const path = `/api/activity/meeting-candidates${state.candidateStatusFilter ? `?status=${encodeURIComponent(state.candidateStatusFilter)}` : ""}`;
+            const payload = await request(path);
+            state.meetingCandidates = payload.candidates || [];
+            renderMeetingCandidates();
+            setPanelMessage("candidates-message", `${payload.count || 0} saved meeting candidates.`);
+          } catch (error) {
+            setPanelMessage("candidates-message", error.message, true);
+          }
+        });
+      });
+
+      $("candidate-status-filter").addEventListener("change", async () => {
+        state.candidateStatusFilter = $("candidate-status-filter").value;
+        setPanelMessage("candidates-message", "");
+        await load();
       });
 
       $("candidate-preview").addEventListener("click", async (event) => {
@@ -752,67 +860,78 @@
         if (!button) return;
         const candidate = state.candidatePreviews[Number(button.getAttribute("data-save-candidate"))];
         if (!candidate) return;
-        try {
-          await request("/api/activity/meeting-candidates", {
-            method: "POST",
-            body: JSON.stringify({
-              source_connector_id: candidate.source_connector_id,
-              source_activity_record_id: candidate.source_activity_record_id,
-              title: candidate.title,
-              starts_at: candidate.starts_at,
-              ends_at: candidate.ends_at,
-              meeting_url: candidate.meeting_url,
-              confidence: candidate.confidence,
-            }),
-          });
-          setMessage("Meeting candidate saved.");
-          await load();
-        } catch (error) {
-          setMessage(error.message, true);
-        }
+        await withButtonBusy(button, async () => {
+          try {
+            await request("/api/activity/meeting-candidates", {
+              method: "POST",
+              body: JSON.stringify({
+                source_connector_id: candidate.source_connector_id,
+                source_activity_record_id: candidate.source_activity_record_id,
+                title: candidate.title,
+                starts_at: candidate.starts_at,
+                ends_at: candidate.ends_at,
+                meeting_url: candidate.meeting_url,
+                confidence: candidate.confidence,
+              }),
+            });
+            setPanelMessage("candidates-message", "Meeting candidate saved.");
+            await load();
+          } catch (error) {
+            setPanelMessage("candidates-message", error.message, true);
+          }
+        });
       });
 
       $("meeting-candidates").addEventListener("click", async (event) => {
         const startButton = event.target.closest("[data-start-candidate]");
         if (startButton) {
+          if (startButton.disabled) return;
           const id = startButton.getAttribute("data-start-candidate");
-          try {
-            const payload = await request(`/api/activity/meeting-candidates/${encodeURIComponent(id)}/start`, {
-              method: "POST",
-            });
-            const meetingId = payload.meeting && payload.meeting.id ? ` (${payload.meeting.id})` : "";
-            setMessage(`Meeting started from candidate${meetingId}.`);
-            await load();
-          } catch (error) {
-            setMessage(error.message, true);
-          }
+          await withButtonBusy(startButton, async () => {
+            try {
+              const payload = await request(`/api/activity/meeting-candidates/${encodeURIComponent(id)}/start`, {
+                method: "POST",
+              });
+              const meetingId = payload.meeting && payload.meeting.id ? ` (${payload.meeting.id})` : "";
+              setPanelMessage("candidates-message", `Meeting started from candidate${meetingId}.`);
+              await load();
+            } catch (error) {
+              setPanelMessage("candidates-message", error.message, true);
+            }
+          });
           return;
         }
 
         const statusButton = event.target.closest("[data-candidate-status]");
         if (!statusButton) return;
+        if (statusButton.disabled) return;
         const id = statusButton.getAttribute("data-candidate-id");
         const status = statusButton.getAttribute("data-candidate-status");
-        try {
-          await request(`/api/activity/meeting-candidates/${encodeURIComponent(id)}/status`, {
-            method: "PUT",
-            body: JSON.stringify({ status }),
-          });
-          setMessage(`Meeting candidate marked ${status}.`);
-          await load();
-        } catch (error) {
-          setMessage(error.message, true);
-        }
+        await withButtonBusy(statusButton, async () => {
+          try {
+            await request(`/api/activity/meeting-candidates/${encodeURIComponent(id)}/status`, {
+              method: "PUT",
+              body: JSON.stringify({ status }),
+            });
+            setPanelMessage("candidates-message", `Meeting candidate marked ${status}.`);
+            await load();
+          } catch (error) {
+            setPanelMessage("candidates-message", error.message, true);
+          }
+        });
       });
 
       $("clear-dismissed-candidates").addEventListener("click", async () => {
-        try {
-          const payload = await request("/api/activity/meeting-candidates?status=dismissed", { method: "DELETE" });
-          setMessage(`${payload.deleted || 0} dismissed candidates cleared.`);
-          await load();
-        } catch (error) {
-          setMessage(error.message, true);
-        }
+        const button = $("clear-dismissed-candidates");
+        await withButtonBusy(button, async () => {
+          try {
+            const payload = await request("/api/activity/meeting-candidates?status=dismissed", { method: "DELETE" });
+            setPanelMessage("candidates-message", `${payload.deleted || 0} dismissed candidates cleared.`);
+            await load();
+          } catch (error) {
+            setPanelMessage("candidates-message", error.message, true);
+          }
+        });
       });
 
       load();

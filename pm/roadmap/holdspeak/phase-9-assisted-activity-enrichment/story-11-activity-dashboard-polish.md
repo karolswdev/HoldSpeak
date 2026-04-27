@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-9-08
 - **Unblocks:** comfortable dogfooding of local activity and enrichment
 - **Owner:** unassigned
@@ -33,12 +33,12 @@ feedback is minimal.
 
 ## Acceptance Criteria
 
-- [ ] Empty states tell the user what to do next.
-- [ ] Preview candidates and saved candidates are visually distinct.
-- [ ] Buttons do not allow repeated accidental submits while actions run.
-- [ ] Errors surface near the relevant panel.
-- [ ] Candidate status can be filtered or scanned quickly.
-- [ ] Focused web tests pass.
+- [x] Empty states tell the user what to do next.
+- [x] Preview candidates and saved candidates are visually distinct.
+- [x] Buttons do not allow repeated accidental submits while actions run.
+- [x] Errors surface near the relevant panel.
+- [x] Candidate status can be filtered or scanned quickly.
+- [x] Focused web tests pass.
 
 ## Test Plan
 
