@@ -1,0 +1,4 @@
+git status --short
+
+ M uv.lock
+?? .claude/

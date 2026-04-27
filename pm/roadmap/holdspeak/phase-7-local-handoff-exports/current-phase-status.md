@@ -1,6 +1,6 @@
 # Phase 7 - Local Handoff Exports
 
-**Last updated:** 2026-04-26 (HS-7-04 done - public docs describe local handoff exports and no external sync behavior).
+**Last updated:** 2026-04-26 (HS-7-05 done - Phase 7 closed with local handoff export evidence bundle).
 
 ## Goal
 
@@ -32,11 +32,11 @@ automatic SaaS sync exists.
 | HS-7-02 | Saved meeting export API | done | [story-02-saved-meeting-export-api.md](./story-02-saved-meeting-export-api.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-7-03 | Browser handoff export action | done | [story-03-browser-handoff-export-action.md](./story-03-browser-handoff-export-action.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-7-04 | Handoff export docs | done | [story-04-handoff-export-docs.md](./story-04-handoff-export-docs.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-7-05 | DoD sweep + phase exit | backlog | [story-05-dod.md](./story-05-dod.md) | pending |
+| HS-7-05 | DoD sweep + phase exit | done | [story-05-dod.md](./story-05-dod.md) | [evidence-story-05.md](./evidence-story-05.md) |
 
 ## Where We Are
 
-Phase 7 has three shipped handoff foundations. HS-7-01 made the shared
+Phase 7 is complete. HS-7-01 made the shared
 meeting export renderer carry the data Phase 6 made trustworthy: action
 review state, source timestamps, due dates, and optional synthesized
 artifacts in Markdown/JSON outputs. HS-7-02 exposed that renderer through
@@ -45,7 +45,8 @@ download controls to the selected meeting detail view in `/history`.
 HS-7-04 documented the workflow in public meeting docs and clarified that
 handoff exports are local downloads, not external task-system sync.
 
-The next story is the Phase 7 DoD sweep.
+HS-7-05 captured the phase evidence bundle and verified focused handoff
+export coverage plus the full non-Metal regression.
 
 ## Initial Hypothesis
 

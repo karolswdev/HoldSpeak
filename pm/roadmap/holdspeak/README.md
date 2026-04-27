@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-7-04 done - local handoff export workflow documented in README and Meeting Mode Guide).
-**Current phase:** [phase-7-local-handoff-exports](./phase-7-local-handoff-exports/) — make reviewed meeting work portable as local Markdown/JSON handoff material.
-**Status:** in-progress.
+**Last updated:** 2026-04-26 (HS-7-05 done - Phase 7 closed with local handoff export evidence bundle).
+**Current phase:** [phase-7-local-handoff-exports](./phase-7-local-handoff-exports/) — complete.
+**Status:** done.
 
 ## Vision
 
@@ -42,7 +42,7 @@ canon, canon wins.
 | 4 | WFS-01 extended: audit web flagship + interactive config for blocks / project KB / dictation runtime / dry-run preview | done | [phase-4-web-flagship-runtime](./phase-4-web-flagship-runtime/) |
 | 5 | Usability powerhouse: reduce setup/dogfood friction and make web workflows faster | done | [phase-5-usability-powerhouse](./phase-5-usability-powerhouse/) |
 | 6 | Action follow-through: make meeting action items and artifacts reviewable and traceable | done | [phase-6-action-follow-through](./phase-6-action-follow-through/) |
-| 7 | Local handoff exports: make reviewed meeting work portable as local Markdown/JSON outputs | in-progress | [phase-7-local-handoff-exports](./phase-7-local-handoff-exports/) |
+| 7 | Local handoff exports: make reviewed meeting work portable as local Markdown/JSON outputs | done | [phase-7-local-handoff-exports](./phase-7-local-handoff-exports/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

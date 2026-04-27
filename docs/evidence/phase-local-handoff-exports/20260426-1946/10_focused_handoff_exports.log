@@ -1,0 +1,11 @@
+$ uv run pytest -q tests/unit/test_meeting_exports.py
+6 passed in 0.25s
+
+$ uv run pytest -q tests/integration/test_web_server.py -k "meeting_export_endpoint or meeting_artifacts"
+2 passed, 71 deselected in 0.51s
+
+$ uv run pytest -q tests/integration/test_web_server.py -k "HistoryUiSmoke or meeting_export_endpoint"
+3 passed, 70 deselected in 0.47s
+
+$ uv run pytest -q tests/integration/test_web_server.py tests/unit/test_meeting_exports.py
+79 passed in 1.75s
