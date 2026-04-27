@@ -237,6 +237,17 @@ class _ActivityMeetingCandidateStatusRequest(BaseModel):
     status: str
 
 
+class _ActivityEnrichmentConnectorRequest(BaseModel):
+    enabled: Optional[bool] = None
+    settings: Optional[dict[str, Any]] = None
+
+
+class _ActivityGithubEnrichmentRunRequest(BaseModel):
+    limit: Optional[int] = None
+    timeout_seconds: Optional[float] = None
+    max_bytes: Optional[int] = None
+
+
 def _model_fields_set(model: Any) -> set[str]:
     fields = getattr(model, "model_fields_set", None)
     if fields is not None:
@@ -295,6 +306,18 @@ def _activity_meeting_candidate_payload(candidate: Any) -> dict[str, Any]:
         "status": getattr(candidate, "status", "preview"),
         "created_at": candidate.created_at.isoformat() if getattr(candidate, "created_at", None) else None,
         "updated_at": candidate.updated_at.isoformat() if getattr(candidate, "updated_at", None) else None,
+    }
+
+
+def _activity_enrichment_connector_payload(connector: Any) -> dict[str, Any]:
+    return {
+        "id": connector.id,
+        "enabled": connector.enabled,
+        "settings": connector.settings,
+        "last_run_at": connector.last_run_at.isoformat() if connector.last_run_at else None,
+        "last_error": connector.last_error,
+        "created_at": connector.created_at.isoformat(),
+        "updated_at": connector.updated_at.isoformat(),
     }
 
 
@@ -1233,6 +1256,135 @@ class MeetingWebServer:
             except Exception as e:
                 log.error(f"Failed to apply activity project rules: {e}")
                 return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.get("/api/activity/enrichment/connectors")
+        async def api_list_activity_enrichment_connectors() -> Any:
+            try:
+                from .activity_github import CONNECTOR_ID, github_cli_status
+                from .db import get_database
+
+                db = get_database()
+                connector = db.get_activity_enrichment_connector(CONNECTOR_ID)
+                if connector is None:
+                    connector = db.upsert_activity_enrichment_connector(connector_id=CONNECTOR_ID)
+                return JSONResponse(
+                    {
+                        "connectors": [_activity_enrichment_connector_payload(connector)],
+                        "github": github_cli_status(),
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to list activity enrichment connectors: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.put("/api/activity/enrichment/connectors/{connector_id}")
+        async def api_update_activity_enrichment_connector(
+            connector_id: str,
+            payload: _ActivityEnrichmentConnectorRequest,
+        ) -> Any:
+            if connector_id != "gh":
+                return JSONResponse({"error": f"Unknown activity enrichment connector: {connector_id}"}, status_code=404)
+            try:
+                from .db import get_database
+
+                db = get_database()
+                connector = db.upsert_activity_enrichment_connector(
+                    connector_id=connector_id,
+                    enabled=payload.enabled,
+                    settings=payload.settings,
+                )
+                return JSONResponse({"connector": _activity_enrichment_connector_payload(connector)})
+            except ValueError as e:
+                return JSONResponse({"error": str(e)}, status_code=400)
+            except Exception as e:
+                log.error(f"Failed to update activity enrichment connector: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.get("/api/activity/enrichment/github/preview")
+        async def api_preview_github_activity_enrichment(limit: int = 50) -> Any:
+            try:
+                from .activity_github import CONNECTOR_ID, preview_github_cli_enrichment
+                from .db import get_database
+
+                db = get_database()
+                connector = db.get_activity_enrichment_connector(CONNECTOR_ID)
+                if connector is None:
+                    connector = db.upsert_activity_enrichment_connector(connector_id=CONNECTOR_ID)
+                records = db.list_activity_records(limit=max(1, min(int(limit), 500)))
+                preview = preview_github_cli_enrichment(records, limit=limit)
+                return JSONResponse(
+                    {
+                        **preview,
+                        "connector": _activity_enrichment_connector_payload(connector),
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to preview GitHub activity enrichment: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.post("/api/activity/enrichment/github/run")
+        async def api_run_github_activity_enrichment(
+            payload: Optional[_ActivityGithubEnrichmentRunRequest] = None,
+        ) -> Any:
+            try:
+                from .activity_github import CONNECTOR_ID, run_github_cli_enrichment
+                from .db import get_database
+
+                db = get_database()
+                connector = db.get_activity_enrichment_connector(CONNECTOR_ID)
+                if connector is None:
+                    connector = db.upsert_activity_enrichment_connector(connector_id=CONNECTOR_ID)
+                if not connector.enabled:
+                    return JSONResponse(
+                        {
+                            "success": False,
+                            "error": "GitHub activity enrichment connector is disabled",
+                            "connector": _activity_enrichment_connector_payload(connector),
+                        },
+                        status_code=403,
+                    )
+
+                settings = connector.settings or {}
+                limit = payload.limit if payload and payload.limit is not None else settings.get("limit", 25)
+                timeout_seconds = (
+                    payload.timeout_seconds
+                    if payload and payload.timeout_seconds is not None
+                    else settings.get("timeout_seconds", 5.0)
+                )
+                max_bytes = (
+                    payload.max_bytes
+                    if payload and payload.max_bytes is not None
+                    else settings.get("max_bytes", 65536)
+                )
+                records = db.list_activity_records(
+                    entity_type="github_pull_request",
+                    limit=max(1, min(int(limit), 500)),
+                )
+                issue_records = db.list_activity_records(
+                    entity_type="github_issue",
+                    limit=max(1, min(int(limit), 500)),
+                )
+                results = run_github_cli_enrichment(
+                    db,
+                    [*records, *issue_records],
+                    limit=max(1, min(int(limit), 100)),
+                    timeout_seconds=max(0.1, float(timeout_seconds)),
+                    max_bytes=max(1024, min(int(max_bytes), 1048576)),
+                )
+                connector = db.get_activity_enrichment_connector(CONNECTOR_ID) or connector
+                return JSONResponse(
+                    {
+                        "success": True,
+                        "connector": _activity_enrichment_connector_payload(connector),
+                        "count": len(results),
+                        "results": [result.to_payload() for result in results],
+                    }
+                )
+            except ValueError as e:
+                return JSONResponse({"success": False, "error": str(e)}, status_code=400)
+            except Exception as e:
+                log.error(f"Failed to run GitHub activity enrichment: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
         @app.get("/api/activity/meeting-candidates/preview")
         async def api_preview_activity_meeting_candidates(limit: int = 50) -> Any:

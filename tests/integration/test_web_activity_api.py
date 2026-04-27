@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -315,3 +316,90 @@ def test_activity_meeting_candidate_manual_start_requires_runtime_start_support(
     assert persisted is not None
     assert persisted.status == "candidate"
     assert persisted.started_meeting_id is None
+
+
+def test_github_enrichment_preview_is_visible_and_disabled_by_default(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+) -> None:
+    record = activity_db.upsert_activity_record(
+        source_browser="safari",
+        url="https://github.com/openai/codex/pull/42",
+        title="PR 42",
+        domain="github.com",
+        last_seen_at=datetime(2026, 4, 27, 11, 0),
+        entity_type="github_pull_request",
+        entity_id="openai/codex#42",
+    )
+
+    preview_response = test_client.get("/api/activity/enrichment/github/preview")
+
+    assert preview_response.status_code == 200
+    preview = preview_response.json()
+    assert preview["connector"]["id"] == "gh"
+    assert preview["connector"]["enabled"] is False
+    assert preview["count"] == 1
+    assert preview["commands"][0]["activity_record_id"] == record.id
+    assert preview["commands"][0]["command"][1:4] == ["pr", "view", "42"]
+
+    run_response = test_client.post("/api/activity/enrichment/github/run", json={})
+    assert run_response.status_code == 403
+    assert run_response.json()["success"] is False
+    assert activity_db.list_activity_annotations(source_connector_id="gh") == []
+
+
+def test_github_enrichment_run_requires_explicit_enablement(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    activity_db.upsert_activity_record(
+        source_browser="safari",
+        url="https://github.com/openai/codex/issues/99",
+        title="Issue 99",
+        domain="github.com",
+        entity_type="github_issue",
+        entity_id="openai/codex#99",
+    )
+
+    def fake_run(db, records, **kwargs):
+        record = list(records)[0]
+        annotation = db.create_activity_annotation(
+            activity_record_id=record.id,
+            source_connector_id="gh",
+            annotation_type="github_issue",
+            title="Issue 99 enriched",
+            value={"state": "OPEN"},
+            confidence=1.0,
+        )
+        return [
+            SimpleNamespace(
+                to_payload=lambda: {
+                    "plan": {"activity_record_id": record.id},
+                    "annotation": {
+                        "id": annotation.id,
+                        "title": annotation.title,
+                    },
+                    "error": None,
+                }
+            )
+        ]
+
+    monkeypatch.setattr("holdspeak.activity_github.run_github_cli_enrichment", fake_run)
+    enable_response = test_client.put(
+        "/api/activity/enrichment/connectors/gh",
+        json={"enabled": True, "settings": {"timeout_seconds": 2.0}},
+    )
+    assert enable_response.status_code == 200
+    assert enable_response.json()["connector"]["enabled"] is True
+
+    run_response = test_client.post("/api/activity/enrichment/github/run", json={"limit": 1})
+
+    assert run_response.status_code == 200
+    payload = run_response.json()
+    assert payload["success"] is True
+    assert payload["count"] == 1
+    assert payload["results"][0]["annotation"]["title"] == "Issue 99 enriched"
+    annotations = activity_db.list_activity_annotations(source_connector_id="gh")
+    assert len(annotations) == 1
+    assert annotations[0].annotation_type == "github_issue"
