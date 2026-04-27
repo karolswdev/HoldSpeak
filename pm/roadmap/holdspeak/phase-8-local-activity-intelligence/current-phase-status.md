@@ -1,6 +1,6 @@
 # Phase 8 - Local Activity Intelligence
 
-**Last updated:** 2026-04-26 (phase opened after Phase 7 closure - focus shifts to opt-in local browser-history activity context).
+**Last updated:** 2026-04-26 (scope adjusted - activity intelligence is default-on for this personal local tool, with visible pause/clear/exclude controls).
 
 ## Goal
 
@@ -15,25 +15,29 @@ The core product idea is a **Local Attention Ledger**: a normalized,
 auditable local timeline of work objects, not raw surveillance. HoldSpeak
 should use it to help answer "what have I been working on?", enrich
 meeting/dictation context, and assemble better handoff material while
-remaining local, opt-in, inspectable, and deletable.
+remaining local, enabled by default, inspectable, pausable, and
+deletable.
 
 ## Scope
 
 - **In:**
-  - Opt-in browser-history source plugin for Safari and Firefox.
+  - Default-enabled browser-history source plugin for Safari and Firefox
+    when source databases are available and readable.
   - Read-only ingestion using safe database-copy strategies.
   - Local persistence for normalized activity records.
   - Entity extraction for Jira, Miro, GitHub, Linear, Confluence/Atlassian
     pages, Google Docs/Drive, Notion, and generic domains.
   - Project-linking rules and recent activity surfaces.
-  - Privacy controls: pause, clear imported activity, allowlist/denylist,
-    retention, and exact-data visibility.
+  - Privacy controls: visible enabled/paused state, pause, clear imported
+    activity, allowlist/denylist, retention, and exact-data visibility.
 - **Out:**
   - Scraping page contents or browser cookies.
   - Reading credentials, form contents, or private browsing windows.
   - Network calls to Jira/Miro/GitHub/etc.
   - Automatic external task creation.
-  - Always-on hidden collection. The feature must be opt-in and visible.
+  - Hidden collection. The feature may be enabled by default for this
+    personal local tool, but it must be visible, local-only, pausable,
+    and deletable.
 
 ## Story Status
 
@@ -59,7 +63,8 @@ runtime must enforce.
 
 The strongest value loop is:
 
-1. User opts into local activity intelligence.
+1. HoldSpeak starts local activity intelligence by default when browser
+   history sources are available.
 2. HoldSpeak imports browser history metadata from Safari/Firefox,
    read-only, via a safe temporary copy.
 3. HoldSpeak normalizes recently viewed work objects into a local ledger.

@@ -11,13 +11,16 @@
 
 HoldSpeak needs source readers that can safely import Safari and Firefox
 history metadata into the activity ledger without mutating browser
-databases or depending on live browser state.
+databases or depending on live browser state. In this personal local
+tool, available readers should run by default once the persistence and
+privacy controls exist.
 
 ## Scope
 
 - **In:**
   - Safari reader using the audited schema and safe copy path.
   - Firefox profile discovery and `places.sqlite` reader.
+  - Default-enabled import behavior for readable local sources.
   - Incremental import using per-source checkpoints.
   - Tests with fixture SQLite databases.
 - **Out:**
@@ -30,6 +33,7 @@ databases or depending on live browser state.
 - [ ] Safari fixture history imports into the ledger.
 - [ ] Firefox fixture history imports into the ledger.
 - [ ] Locked/live database strategy is safe and read-only.
+- [ ] Readable sources are enabled by default.
 - [ ] Incremental import avoids reimport churn.
 - [ ] Focused and full tests pass.
 

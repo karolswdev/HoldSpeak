@@ -9,14 +9,17 @@
 
 ## Problem
 
-Browser history ingestion is sensitive. Users need explicit control over
-whether it runs, which domains are included/excluded, how long records
-are retained, and how to delete imported data.
+Browser history ingestion is sensitive even for a personal local tool.
+The feature should ship enabled by default, but users still need explicit
+visibility and control over whether it is running, which domains are
+included/excluded, how long records are retained, and how to delete
+imported data.
 
 ## Scope
 
 - **In:**
-  - Opt-in setting and visible enabled/paused state.
+  - Default-enabled setting with visible enabled/paused state.
+  - First-run/browser-surface copy that names the active local sources.
   - Domain allowlist/denylist.
   - Retention controls.
   - Delete imported activity controls.
@@ -27,7 +30,8 @@ are retained, and how to delete imported data.
 
 ## Acceptance Criteria
 
-- [ ] Activity ingestion is opt-in.
+- [ ] Activity ingestion is enabled by default when local sources are readable.
+- [ ] UI/API visibly reports that ingestion is enabled.
 - [ ] User can pause ingestion.
 - [ ] User can exclude domains.
 - [ ] User can delete imported activity.

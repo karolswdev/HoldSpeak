@@ -22,6 +22,7 @@ permissions, and privacy boundaries.
   - Define a safe read-only copy strategy for locked SQLite databases.
   - Document macOS permission expectations and Linux Firefox behavior.
   - Define the minimum data contract for history metadata ingestion.
+  - Define default-enabled behavior and startup visibility requirements.
   - Produce evidence that confirms what can be inspected without page
     content scraping.
 - **Out:**
@@ -36,6 +37,7 @@ permissions, and privacy boundaries.
 - [ ] Firefox source path/profile/schema expectations are documented.
 - [ ] Safe copy/read strategy is documented.
 - [ ] Privacy boundaries are explicit.
+- [ ] Default-enabled startup behavior is explicit and visible.
 - [ ] HS-8-02 and HS-8-03 scopes are confirmed or adjusted from findings.
 
 ## Test Plan
