@@ -779,6 +779,7 @@
                       <span class="pill" x-show="item.owner" x-cloak x-text="`Owner ${item.owner}`"></span>
                       <span class="pill" x-show="item.due" x-cloak x-text="`Due ${item.due}`"></span>
                       <span class="pill" x-text="formatDate(item.meeting_date)"></span>
+                      <span class="pill" x-show="item.source_timestamp !== null && item.source_timestamp !== undefined" x-cloak x-text="`Source ${formatTimestamp(item.source_timestamp)}`"></span>
                       <span
                         class="status-pill"
                         :class="`review-${reviewStateValue(item.review_state)}`"
@@ -1048,6 +1049,7 @@
                           <span class="pill" x-show="ai.owner" x-cloak x-text="`Owner: ${ai.owner}`"></span>
                           <span class="pill" x-show="ai.due" x-cloak x-text="`Due: ${ai.due}`"></span>
                           <span class="pill" x-text="ai.meeting_title || '(untitled)'"></span>
+                          <span class="pill" x-show="ai.source_timestamp !== null && ai.source_timestamp !== undefined" x-cloak x-text="`Source ${formatTimestamp(ai.source_timestamp)}`"></span>
                         </div>
                       </div>
                     </template>
@@ -1511,6 +1513,7 @@
                       <div class="pill-row">
                         <span class="pill" x-show="item.owner" x-cloak x-text="`Owner ${item.owner}`"></span>
                         <span class="pill" x-show="item.due" x-cloak x-text="`Due ${item.due}`"></span>
+                        <span class="pill" x-show="item.source_timestamp !== null && item.source_timestamp !== undefined" x-cloak x-text="`Source ${formatTimestamp(item.source_timestamp)}`"></span>
                         <span
                           class="status-pill"
                           :class="`review-${reviewStateValue(item.review_state)}`"

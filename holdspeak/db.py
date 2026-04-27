@@ -401,6 +401,7 @@ class ActionItemSummary:
     meeting_id: str
     meeting_title: Optional[str]
     meeting_date: datetime
+    source_timestamp: Optional[float]
     created_at: datetime
     completed_at: Optional[datetime]
     reviewed_at: Optional[datetime]
@@ -2532,6 +2533,7 @@ class MeetingDatabase:
             meeting_id=row['meeting_id'],
             meeting_title=row['meeting_title'],
             meeting_date=datetime.fromisoformat(row['meeting_date']),
+            source_timestamp=row['source_timestamp'],
             created_at=datetime.fromisoformat(row['created_at']),
             completed_at=datetime.fromisoformat(row['completed_at']) if row['completed_at'] else None,
             reviewed_at=datetime.fromisoformat(row['reviewed_at']) if row['reviewed_at'] else None,
@@ -3205,6 +3207,7 @@ class MeetingDatabase:
             rows = conn.execute(
                 """
                 SELECT ai.id, ai.task, ai.owner, ai.due, ai.status, ai.review_state,
+                       ai.source_timestamp,
                        ai.meeting_id, m.title as meeting_title, m.started_at as meeting_date,
                        ai.created_at, ai.completed_at, ai.reviewed_at
                 FROM action_items ai
@@ -3226,6 +3229,7 @@ class MeetingDatabase:
                     meeting_id=row["meeting_id"],
                     meeting_title=row["meeting_title"],
                     meeting_date=datetime.fromisoformat(row["meeting_date"]),
+                    source_timestamp=row["source_timestamp"],
                     created_at=datetime.fromisoformat(row["created_at"]),
                     completed_at=datetime.fromisoformat(row["completed_at"]) if row["completed_at"] else None,
                     reviewed_at=datetime.fromisoformat(row["reviewed_at"]) if row["reviewed_at"] else None,

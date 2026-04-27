@@ -1170,6 +1170,8 @@ class TestHistoryUiSmoke:
             "/api/all-action-items",
         ):
             assert endpoint in html
+        assert "source_timestamp" in html
+        assert "Source ${formatTimestamp" in html
 
     def test_settings_route_serves_history_ui_shell(self, test_client):
         response = test_client.get("/settings")
@@ -1399,6 +1401,7 @@ class TestGlobalActionItemsApiEndpoints:
                         due=None,
                         status="pending",
                         review_state="pending",
+                        source_timestamp=125.5,
                         meeting_id="m-001",
                         meeting_title="Weekly sync",
                         meeting_date=now,
@@ -1456,13 +1459,16 @@ class TestGlobalActionItemsApiEndpoints:
         payload = list_response.json()["action_items"][0]
         assert payload["review_state"] == "pending"
         assert payload["reviewed_at"] is None
+        assert payload["source_timestamp"] == pytest.approx(125.5)
 
         status_response = test_client.patch(
             "/api/all-action-items/a-1",
             json={"status": "done"},
         )
         assert status_response.status_code == 200
-        assert status_response.json()["action_item"]["status"] == "done"
+        status_item = status_response.json()["action_item"]
+        assert status_item["status"] == "done"
+        assert status_item["source_timestamp"] == pytest.approx(125.5)
 
         review_response = test_client.patch(
             "/api/all-action-items/a-1/review",
@@ -1472,6 +1478,7 @@ class TestGlobalActionItemsApiEndpoints:
         reviewed_item = review_response.json()["action_item"]
         assert reviewed_item["review_state"] == "accepted"
         assert reviewed_item["reviewed_at"] is not None
+        assert reviewed_item["source_timestamp"] == pytest.approx(125.5)
 
         edit_response = test_client.patch(
             "/api/all-action-items/a-1/edit",
@@ -1483,6 +1490,7 @@ class TestGlobalActionItemsApiEndpoints:
         assert edited_item["owner"] is None
         assert edited_item["due"] == "Friday"
         assert edited_item["review_state"] == "accepted"
+        assert edited_item["source_timestamp"] == pytest.approx(125.5)
 
     def test_action_item_review_and_edit_validation(self, monkeypatch, test_client):
         class FakeDb:

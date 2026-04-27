@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 6
-- **Status:** ready
+- **Status:** done
 - **Depends on:** HS-5-16
 - **Unblocks:** safe action follow-through UI/API work
 - **Owner:** unassigned
@@ -10,10 +10,15 @@
 ## Problem
 
 HoldSpeak can synthesize meeting action items and artifacts, but the
-current web experience needs a precise audit before adding review
-controls. We need to know what the data model already exposes, what the
-history/detail UI already renders, which API contracts exist, and where
-tests are missing.
+current web experience needed a precise audit before adding review
+controls. We needed to know what the data model already exposed, what
+the history/detail UI already rendered, which API contracts existed, and
+where tests were missing.
+
+The audit found that action items already persisted a `source_timestamp`,
+but cross-meeting/project summary APIs and the history action-item
+surfaces did not expose it. HS-6-01 shipped that provenance field through
+the relevant summary APIs and rendered it in the browser.
 
 ## Scope
 
@@ -31,16 +36,21 @@ tests are missing.
 
 ## Acceptance Criteria
 
-- [ ] Existing action item/artifact API surfaces are mapped with file references.
-- [ ] Existing history/detail UI surfaces are mapped with file references.
-- [ ] Current behavior has focused regression coverage where practical.
-- [ ] Gaps are listed in the story evidence.
-- [ ] HS-6-02 scope is confirmed or adjusted based on audit findings.
+- [x] Existing action item/artifact API surfaces are mapped with file references.
+- [x] Existing history/detail UI surfaces are mapped with file references.
+- [x] Current behavior has focused regression coverage where practical.
+- [x] Gaps are listed in the story evidence.
+- [x] HS-6-02 scope is confirmed or adjusted based on audit findings.
 
 ## Test Plan
 
-- Focused tests selected during audit, likely around `tests/integration/test_web_server.py`, history UI smoke coverage, and persistence/action item APIs.
-- Full regression: `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py`
+- `uv run pytest -q tests/integration/test_web_server.py -k "HistoryUiSmoke or GlobalActionItems"`
+- `uv run pytest -q tests/integration/test_web_server.py tests/integration/test_intel_streaming.py`
+- `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py`
+
+## Evidence
+
+- [evidence-story-01.md](./evidence-story-01.md)
 
 ## Notes
 

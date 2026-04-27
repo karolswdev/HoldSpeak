@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-5-16 done - Phase 5 closed with evidence bundle; Phase 6 opened for meeting action follow-through).
+**Last updated:** 2026-04-26 (HS-6-01 done - action item provenance now reaches summary APIs and history follow-through views).
 **Current phase:** [phase-6-action-follow-through](./phase-6-action-follow-through/) — make meeting action items and artifacts reviewable, traceable, and easy to follow through.
 **Status:** in-progress.
 

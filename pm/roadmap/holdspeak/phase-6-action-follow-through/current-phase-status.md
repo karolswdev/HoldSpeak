@@ -1,6 +1,6 @@
 # Phase 6 - Action Follow-Through Cockpit
 
-**Last updated:** 2026-04-26 (phase opened after Phase 5 closure - focus shifts from dictation setup to meeting action item provenance, review, and follow-through workflows).
+**Last updated:** 2026-04-26 (HS-6-01 done - action item source timestamps now flow through summary APIs and history views).
 
 ## Goal
 
@@ -30,7 +30,7 @@ review, filter, and carry forward.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-6-01 | Action item provenance audit | ready | [story-01-action-provenance-audit.md](./story-01-action-provenance-audit.md) | pending |
+| HS-6-01 | Action item provenance audit | done | [story-01-action-provenance-audit.md](./story-01-action-provenance-audit.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-6-02 | Action item review controls | backlog | [story-02-action-review-controls.md](./story-02-action-review-controls.md) | pending |
 | HS-6-03 | Action item filters and open-work view | backlog | [story-03-action-filters.md](./story-03-action-filters.md) | pending |
 | HS-6-04 | Artifact/action detail linking | backlog | [story-04-artifact-action-links.md](./story-04-artifact-action-links.md) | pending |
@@ -38,11 +38,15 @@ review, filter, and carry forward.
 
 ## Where We Are
 
-Phase 6 is open. The first story is an audit because the meeting-side
-data model and history UI already contain some action/artifact surfaces.
-Before changing behavior, HS-6-01 should map what exists, cover the
-current contract with tests where missing, and identify the smallest
-browser-visible follow-through loop to ship next.
+Phase 6 has its first shipped follow-through improvement. HS-6-01 mapped
+the action item persistence/API/UI surfaces and closed the first
+provenance gap: stored source timestamps are now exposed by the
+cross-meeting and project action-item APIs and rendered in the global,
+project, and meeting-detail history views.
+
+The next story should build on this by improving browser review
+ergonomics for existing action-item review state, rather than adding new
+persistence primitives.
 
 ## Initial Hypothesis
 
