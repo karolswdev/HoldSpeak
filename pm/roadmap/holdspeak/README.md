@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-27 (HS-8-07 project activity mapping rules shipped).
+**Last updated:** 2026-04-27 (HS-8-08 assisted enrichment sources scoped).
 **Current phase:** [phase-8-local-activity-intelligence](./phase-8-local-activity-intelligence/) — build a default-on local attention ledger from browser-history metadata with visible privacy controls.
 **Status:** in-progress.
 

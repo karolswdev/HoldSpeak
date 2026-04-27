@@ -31,4 +31,9 @@ summary of shipped local activity intelligence workflows.
 
 ## Test Plan
 
-- To be finalized after HS-8-08.
+- Focused activity-intelligence sweep:
+  `uv run pytest -q tests/unit/test_activity_context.py tests/unit/test_activity_entities.py tests/unit/test_activity_history.py tests/unit/test_activity_mapping.py tests/unit/test_db.py tests/integration/test_web_activity_api.py`
+- Full non-Metal regression:
+  `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py`
+- Whitespace check:
+  `git diff --check`

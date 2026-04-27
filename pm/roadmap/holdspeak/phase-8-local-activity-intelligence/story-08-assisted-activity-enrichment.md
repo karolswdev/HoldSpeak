@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 8
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-8-05, HS-8-06, HS-8-07
 - **Unblocks:** richer local intelligence from calendar, browser, and local CLIs
 - **Owner:** unassigned
@@ -21,6 +21,10 @@ the enrichment materially improves meeting scheduling, handoffs,
 dictation context, or project activity mapping.
 
 ## Design
+
+Detailed design artifact:
+
+- [Local Activity Assisted Enrichment Plan](../../../../docs/PLAN_ACTIVITY_ASSISTED_ENRICHMENT.md)
 
 Add an "assisted enrichment" layer with connector contracts. Each
 connector reads from one local/user-authorized source and emits normalized
@@ -146,12 +150,12 @@ Rules:
 
 ## Acceptance Criteria
 
-- [ ] Assisted enrichment connector contract is documented.
-- [ ] Calendar/Outlook meeting-candidate flow is scoped.
-- [ ] Firefox extension companion architecture is scoped.
-- [ ] `gh`/`jira` CLI enrichment boundaries are scoped.
-- [ ] Permission and privacy matrix exists.
-- [ ] Follow-up implementation stories are identified.
+- [x] Assisted enrichment connector contract is documented.
+- [x] Calendar/Outlook meeting-candidate flow is scoped.
+- [x] Firefox extension companion architecture is scoped.
+- [x] `gh`/`jira` CLI enrichment boundaries are scoped.
+- [x] Permission and privacy matrix exists.
+- [x] Follow-up implementation stories are identified.
 
 ## Test Plan
 
