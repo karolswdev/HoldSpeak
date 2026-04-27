@@ -1263,6 +1263,10 @@ class TestHistoryUiSmoke:
         assert "selectedMeetingArtifacts" in html
         assert "/api/meetings/${id}/artifacts" in html
         assert "Open Meeting" in html
+        assert "downloadSelectedMeetingExport" in html
+        assert "/api/meetings/${encodeURIComponent(meetingId)}/export?format=${normalized}" in html
+        assert "Local Markdown" in html
+        assert "Local JSON" in html
 
     def test_settings_route_serves_history_ui_shell(self, test_client):
         response = test_client.get("/settings")

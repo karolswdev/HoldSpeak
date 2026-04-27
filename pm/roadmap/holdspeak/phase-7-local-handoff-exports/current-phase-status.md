@@ -1,6 +1,6 @@
 # Phase 7 - Local Handoff Exports
 
-**Last updated:** 2026-04-26 (HS-7-02 done - saved meetings can be exported through a local Markdown/JSON handoff API).
+**Last updated:** 2026-04-26 (HS-7-03 done - selected meeting detail now downloads local Markdown/JSON handoff exports).
 
 ## Goal
 
@@ -30,20 +30,21 @@ automatic SaaS sync exists.
 |---|---|---|---|---|
 | HS-7-01 | Handoff export renderer | done | [story-01-handoff-export-renderer.md](./story-01-handoff-export-renderer.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-7-02 | Saved meeting export API | done | [story-02-saved-meeting-export-api.md](./story-02-saved-meeting-export-api.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-7-03 | Browser handoff export action | backlog | [story-03-browser-handoff-export-action.md](./story-03-browser-handoff-export-action.md) | pending |
+| HS-7-03 | Browser handoff export action | done | [story-03-browser-handoff-export-action.md](./story-03-browser-handoff-export-action.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-7-04 | Handoff export docs | backlog | [story-04-handoff-export-docs.md](./story-04-handoff-export-docs.md) | pending |
 | HS-7-05 | DoD sweep + phase exit | backlog | [story-05-dod.md](./story-05-dod.md) | pending |
 
 ## Where We Are
 
-Phase 7 has two shipped handoff foundations. HS-7-01 made the shared
+Phase 7 has three shipped handoff foundations. HS-7-01 made the shared
 meeting export renderer carry the data Phase 6 made trustworthy: action
 review state, source timestamps, due dates, and optional synthesized
 artifacts in Markdown/JSON outputs. HS-7-02 exposed that renderer through
-a local saved-meeting export API.
+a local saved-meeting export API. HS-7-03 added local Markdown/JSON
+download controls to the selected meeting detail view in `/history`.
 
-The next story should add browser controls in selected meeting detail so
-users can download those local handoff exports from `/history`.
+The next story should document the local handoff workflow and make clear
+that it produces local downloads, not external task-system sync.
 
 ## Initial Hypothesis
 

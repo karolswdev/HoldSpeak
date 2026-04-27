@@ -1503,7 +1503,11 @@
             <h3 x-text="selectedMeeting?.title || 'Meeting Detail'"></h3>
             <p x-text="selectedMeeting ? `${formatDate(selectedMeeting.started_at)} • ${formatDuration(selectedMeeting.duration)}` : ''"></p>
           </div>
-          <button class="modal-close" @click="selectedMeeting = null">×</button>
+          <div class="action-controls" x-show="selectedMeeting?.id" x-cloak>
+            <button class="btn" @click="downloadSelectedMeetingExport('markdown')">Local Markdown</button>
+            <button class="btn" @click="downloadSelectedMeetingExport('json')">Local JSON</button>
+            <button class="modal-close" @click="selectedMeeting = null">×</button>
+          </div>
         </div>
         <div class="modal-body" x-show="selectedMeeting">
           <div class="detail-grid">
@@ -2007,6 +2011,20 @@
               console.error("Failed to load meeting:", error);
               this.flash(`Meeting detail failed: ${error.message}`, true);
             }
+          },
+
+          downloadSelectedMeetingExport(format) {
+            if (!this.selectedMeeting?.id) return;
+            const normalized = format === "json" ? "json" : "markdown";
+            const extension = normalized === "json" ? "json" : "md";
+            const meetingId = String(this.selectedMeeting.id);
+            const link = document.createElement("a");
+            link.href = `/api/meetings/${encodeURIComponent(meetingId)}/export?format=${normalized}`;
+            link.download = `holdspeak-meeting-${meetingId}.${extension}`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            this.flash(`Local ${normalized} handoff export started.`);
           },
 
           async loadSpeakers() {
