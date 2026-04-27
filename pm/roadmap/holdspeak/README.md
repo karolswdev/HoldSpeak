@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-8-03 done - Safari and Firefox history readers import metadata into the local activity ledger).
+**Last updated:** 2026-04-26 (HS-8-04 done - browser activity imports now extract deterministic work entities).
 **Current phase:** [phase-8-local-activity-intelligence](./phase-8-local-activity-intelligence/) — build a default-on local attention ledger from browser-history metadata with visible privacy controls.
 **Status:** in-progress.
 

@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Iterable, Optional
 from urllib.parse import urlsplit
 
+from .activity_entities import extract_activity_entity
 from .db import MeetingDatabase, get_database
 from .logging_config import get_logger
 
@@ -185,6 +186,7 @@ def _import_history_source(
             for row in rows:
                 if not _is_importable_url(row["url"]):
                     continue
+                entity = extract_activity_entity(str(row["url"]), title=str(row["title"] or ""))
                 first_seen = timestamp_converter(row["first_visit_raw"])
                 last_seen = timestamp_converter(row["last_visit_raw"])
                 db.upsert_activity_record(
@@ -198,6 +200,8 @@ def _import_history_source(
                     first_seen_at=first_seen,
                     last_seen_at=last_seen,
                     last_visit_raw=row["last_visit_raw"],
+                    entity_type=entity.entity_type,
+                    entity_id=entity.entity_id,
                 )
                 imported += 1
                 max_raw = _max_raw_timestamp(max_raw, row["last_visit_raw"])

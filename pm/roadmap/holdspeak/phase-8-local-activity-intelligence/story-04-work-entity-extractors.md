@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 8
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-8-02
 - **Unblocks:** useful activity summaries from raw URLs
 - **Owner:** unassigned
@@ -31,12 +31,17 @@ tickets, Miro boards, GitHub PRs/issues, docs, and generic domains.
 
 ## Acceptance Criteria
 
-- [ ] Known work URLs map to stable entity types/ids.
-- [ ] Jira keys are extracted from URLs and titles where safe.
-- [ ] Unknown URLs retain useful generic domain records.
-- [ ] Extractors are deterministic and tested.
-- [ ] Focused and full tests pass.
+- [x] Known work URLs map to stable entity types/ids.
+- [x] Jira keys are extracted from URLs and titles where safe.
+- [x] Unknown URLs retain useful generic domain records.
+- [x] Extractors are deterministic and tested.
+- [x] Focused and full tests pass.
 
 ## Test Plan
 
-- To be finalized after HS-8-02.
+- `uv run pytest -q tests/unit/test_activity_entities.py tests/unit/test_activity_history.py tests/unit/test_db.py`
+- `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py`
+
+## Evidence
+
+- [evidence-story-04.md](./evidence-story-04.md)

@@ -152,6 +152,8 @@ def test_import_safari_history_fixture_persists_activity_and_checkpoint(tmp_path
     assert records[0].url == "https://example.atlassian.net/browse/HS-803"
     assert records[0].title == "HS-803 activity reader"
     assert records[0].visit_count == 2
+    assert records[0].entity_type == "jira_ticket"
+    assert records[0].entity_id == "HS-803"
     assert records[0].first_seen_at == datetime(2026, 4, 30, 0, 0)
     assert records[0].last_visit_raw == "799203600.0"
 
@@ -184,6 +186,8 @@ def test_import_firefox_history_fixture_persists_activity_and_checkpoint(tmp_pat
     assert records[0].normalized_url == "https://miro.com/app/board/uXjVTestBoard"
     assert records[0].title == "Miro board"
     assert records[0].visit_count == 4
+    assert records[0].entity_type == "miro_board"
+    assert records[0].entity_id == "uXjVTestBoard"
     assert records[0].last_seen_at == datetime(2025, 4, 26, 12, 0)
     assert records[0].last_visit_raw == "1745668800000000"
 

@@ -1,6 +1,6 @@
 # Phase 8 - Local Activity Intelligence
 
-**Last updated:** 2026-04-26 (HS-8-03 done - Safari and Firefox history readers import into the activity ledger).
+**Last updated:** 2026-04-26 (HS-8-04 done - deterministic work entity extractors added).
 
 ## Goal
 
@@ -46,7 +46,7 @@ deletable.
 | HS-8-01 | Browser history source audit | done | [story-01-browser-history-source-audit.md](./story-01-browser-history-source-audit.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-8-02 | Activity ledger persistence | done | [story-02-activity-ledger-persistence.md](./story-02-activity-ledger-persistence.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-8-03 | Safari and Firefox history readers | done | [story-03-browser-history-readers.md](./story-03-browser-history-readers.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-8-04 | Work entity extractors | backlog | [story-04-work-entity-extractors.md](./story-04-work-entity-extractors.md) | pending |
+| HS-8-04 | Work entity extractors | done | [story-04-work-entity-extractors.md](./story-04-work-entity-extractors.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-8-05 | Project activity linking and surface | backlog | [story-05-project-activity-surface.md](./story-05-project-activity-surface.md) | pending |
 | HS-8-06 | Privacy controls and retention | backlog | [story-06-privacy-controls.md](./story-06-privacy-controls.md) | pending |
 | HS-8-07 | DoD sweep + phase exit | backlog | [story-07-dod.md](./story-07-dod.md) | pending |
@@ -70,9 +70,14 @@ discovery, read-only temp-copy imports for Safari and Firefox, WAL/SHM
 companion copying, browser timestamp normalization, checkpoint-based
 incremental imports, and fixture coverage.
 
-The next story should make imported records useful by extracting work
-entities such as Jira tickets, Miro boards, GitHub PRs/issues, docs, and
-generic domains.
+HS-8-04 added deterministic work-entity extraction and wired it into the
+browser-history importer. Imported records can now identify Jira tickets,
+Miro boards, GitHub PRs/issues, Linear issues, Confluence pages, Google
+Docs/Sheets/Drive files, Notion pages, or a generic domain fallback
+without any network calls.
+
+The next story should link activity records to configured HoldSpeak
+projects and surface recent project activity.
 
 ## Initial Hypothesis
 
