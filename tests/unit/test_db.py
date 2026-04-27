@@ -823,6 +823,32 @@ class TestActivityLedgerPersistence:
         assert len(remaining) == 1
         assert remaining[0].domain == "recent.example.com"
 
+    def test_activity_privacy_settings_default_enabled_and_updateable(self, db):
+        settings = db.get_activity_privacy_settings()
+        assert settings["enabled"] is True
+        assert settings["paused"] is False
+        assert settings["retention_days"] == 30
+
+        updated = db.update_activity_privacy_settings(
+            enabled=False,
+            retention_days=14,
+        )
+
+        assert updated["enabled"] is False
+        assert updated["paused"] is True
+        assert updated["retention_days"] == 14
+
+    def test_activity_domain_rules_match_subdomains(self, db):
+        rule = db.upsert_activity_domain_rule(domain="Example.COM", action="exclude")
+
+        assert rule["domain"] == "example.com"
+        assert db.is_activity_domain_excluded("example.com") is True
+        assert db.is_activity_domain_excluded("docs.example.com") is True
+        assert db.is_activity_domain_excluded("other.com") is False
+
+        assert db.delete_activity_domain_rule("example.com") is True
+        assert db.is_activity_domain_excluded("example.com") is False
+
 
 class TestDeferredIntelQueue:
     """Tests for deferred meeting-intelligence queue persistence."""

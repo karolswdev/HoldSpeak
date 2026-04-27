@@ -171,6 +171,7 @@ def test_import_firefox_history_fixture_persists_activity_and_checkpoint(tmp_pat
     places_path = tmp_path / "places.sqlite"
     _create_firefox_history(places_path)
     db = MeetingDatabase(tmp_path / "holdspeak.db")
+    db.update_activity_privacy_settings(retention_days=3650)
 
     result = import_firefox_history(
         BrowserHistorySource("firefox", "work", places_path),
@@ -205,3 +206,36 @@ def test_import_browser_history_uses_checkpoints_to_skip_reimport_churn(tmp_path
     assert second_result.imported_count == 0
     assert second_result.checkpoint_raw == "799203600.0"
     assert len(db.list_activity_records(source_browser="safari")) == 1
+
+
+def test_import_browser_history_respects_global_pause(tmp_path):
+    history_path = tmp_path / "History.db"
+    _create_safari_history(history_path)
+    db = MeetingDatabase(tmp_path / "holdspeak.db")
+    db.update_activity_privacy_settings(enabled=False)
+
+    result = import_safari_history(
+        BrowserHistorySource("safari", "default", history_path),
+        db=db,
+    )
+
+    assert result.enabled is False
+    assert result.imported_count == 0
+    assert db.list_activity_records() == []
+
+
+def test_import_browser_history_respects_excluded_domains(tmp_path):
+    history_path = tmp_path / "History.db"
+    _create_safari_history(history_path)
+    db = MeetingDatabase(tmp_path / "holdspeak.db")
+    db.upsert_activity_domain_rule(domain="example.atlassian.net", action="exclude")
+
+    result = import_safari_history(
+        BrowserHistorySource("safari", "default", history_path),
+        db=db,
+    )
+
+    assert result.enabled is True
+    assert result.imported_count == 0
+    assert result.checkpoint_raw == "799203600.0"
+    assert db.list_activity_records() == []

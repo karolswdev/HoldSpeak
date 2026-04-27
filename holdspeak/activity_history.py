@@ -170,6 +170,16 @@ def _import_history_source(
     timestamp_converter,
 ) -> BrowserHistoryImportResult:
     source_hash = source.source_path_hash
+    privacy = db.get_activity_privacy_settings()
+    if not privacy["enabled"]:
+        return BrowserHistoryImportResult(
+            source_browser=source.source_browser,
+            source_profile=source.source_profile,
+            source_path_hash=source_hash,
+            imported_count=0,
+            checkpoint_raw=None,
+            enabled=False,
+        )
     checkpoint = db.get_activity_import_checkpoint(
         source_browser=source.source_browser,
         source_profile=source.source_profile,
@@ -186,6 +196,10 @@ def _import_history_source(
             for row in rows:
                 if not _is_importable_url(row["url"]):
                     continue
+                max_raw = _max_raw_timestamp(max_raw, row["last_visit_raw"])
+                domain = _domain_from_url(str(row["url"]))
+                if db.is_activity_domain_excluded(domain):
+                    continue
                 entity = extract_activity_entity(str(row["url"]), title=str(row["title"] or ""))
                 first_seen = timestamp_converter(row["first_visit_raw"])
                 last_seen = timestamp_converter(row["last_visit_raw"])
@@ -195,7 +209,7 @@ def _import_history_source(
                     source_path_hash=source_hash,
                     url=row["url"],
                     title=row["title"],
-                    domain=_domain_from_url(row["url"]),
+                    domain=domain,
                     visit_count=row["visit_count"],
                     first_seen_at=first_seen,
                     last_seen_at=last_seen,
@@ -204,7 +218,11 @@ def _import_history_source(
                     entity_id=entity.entity_id,
                 )
                 imported += 1
-                max_raw = _max_raw_timestamp(max_raw, row["last_visit_raw"])
+
+        retention_days = int(privacy.get("retention_days") or 30)
+        db.delete_activity_records(
+            older_than=datetime.now() - timedelta(days=retention_days)
+        )
 
         db.set_activity_import_checkpoint(
             source_browser=source.source_browser,

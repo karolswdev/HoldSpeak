@@ -1,6 +1,6 @@
 # Phase 8 - Local Activity Intelligence
 
-**Last updated:** 2026-04-26 (HS-8-05 done - activity ledger exposed as shared plugin context).
+**Last updated:** 2026-04-26 (HS-8-06 done - visible activity privacy controls and retention shipped).
 
 ## Goal
 
@@ -48,7 +48,7 @@ deletable.
 | HS-8-03 | Safari and Firefox history readers | done | [story-03-browser-history-readers.md](./story-03-browser-history-readers.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-8-04 | Work entity extractors | done | [story-04-work-entity-extractors.md](./story-04-work-entity-extractors.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-8-05 | Shared activity context for plugins | done | [story-05-project-activity-surface.md](./story-05-project-activity-surface.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-8-06 | Privacy controls and retention | backlog | [story-06-privacy-controls.md](./story-06-privacy-controls.md) | pending |
+| HS-8-06 | Privacy controls and retention | done | [story-06-privacy-controls.md](./story-06-privacy-controls.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-8-07 | DoD sweep + phase exit | backlog | [story-07-dod.md](./story-07-dod.md) | pending |
 
 ## Where We Are
@@ -82,8 +82,14 @@ providers, web runtime registers the activity provider by default, and
 dictation transducers have an `Utterance.activity` field with the same
 bundle shape.
 
-The next story should add the browser-facing privacy controls and recent
-activity surface around this data source.
+HS-8-06 added the trust layer around that active data source: `/activity`
+browser surface, status/records/settings/refresh/domain/clear APIs,
+default-enabled privacy settings, pause/resume, retention days, domain
+exclusions, source/checkpoint visibility, and importer enforcement.
+
+The remaining Phase 8 work is the DoD sweep: verify the end-to-end
+activity loop, document the final behavior, and decide whether project
+mapping needs a follow-up phase or can remain a next enhancement.
 
 ## Initial Hypothesis
 

@@ -20,7 +20,7 @@ VALID_ACTION_ITEM_REVIEW_STATES = frozenset({"pending", "accepted"})
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 11
+SCHEMA_VERSION = 12
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -377,6 +377,21 @@ CREATE TABLE IF NOT EXISTS activity_import_checkpoints (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (source_browser, source_profile, source_path_hash)
+);
+
+-- Activity privacy controls
+CREATE TABLE IF NOT EXISTS activity_privacy_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    enabled INTEGER NOT NULL DEFAULT 1,
+    retention_days INTEGER NOT NULL DEFAULT 30,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS activity_domain_rules (
+    domain TEXT PRIMARY KEY,
+    action TEXT NOT NULL DEFAULT 'exclude',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 """
 
@@ -1042,8 +1057,44 @@ class MeetingDatabase:
                     """
                 )
 
+            if from_version < 12:
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS activity_privacy_settings (
+                        id INTEGER PRIMARY KEY CHECK (id = 1),
+                        enabled INTEGER NOT NULL DEFAULT 1,
+                        retention_days INTEGER NOT NULL DEFAULT 30,
+                        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                    )
+                    """
+                )
+                conn.execute(
+                    """
+                    INSERT OR IGNORE INTO activity_privacy_settings
+                        (id, enabled, retention_days, updated_at)
+                    VALUES (1, 1, 30, datetime('now'))
+                    """
+                )
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS activity_domain_rules (
+                        domain TEXT PRIMARY KEY,
+                        action TEXT NOT NULL DEFAULT 'exclude',
+                        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                    )
+                    """
+                )
+
         # Now apply the full schema (creates tables/indexes that don't exist)
         conn.executescript(SCHEMA_SQL)
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO activity_privacy_settings
+                (id, enabled, retention_days, updated_at)
+            VALUES (1, 1, 30, datetime('now'))
+            """
+        )
 
         conn.execute(
             "INSERT OR REPLACE INTO schema_version (version) VALUES (?)",
@@ -3823,6 +3874,18 @@ class MeetingDatabase:
             ).fetchone()
             return self._row_to_activity_checkpoint(row)
 
+    def list_activity_import_checkpoints(self) -> list[ActivityImportCheckpoint]:
+        """List all browser history import checkpoints."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT *
+                FROM activity_import_checkpoints
+                ORDER BY source_browser ASC, source_profile ASC, source_path_hash ASC
+                """
+            ).fetchall()
+            return [self._row_to_activity_checkpoint(row) for row in rows]
+
     def get_activity_import_checkpoint(
         self,
         *,
@@ -3849,6 +3912,147 @@ class MeetingDatabase:
             if row is None:
                 return None
             return self._row_to_activity_checkpoint(row)
+
+    def get_activity_privacy_settings(self) -> dict[str, Any]:
+        """Return activity ingestion privacy settings with defaults."""
+        with self._connection() as conn:
+            row = conn.execute(
+                """
+                SELECT enabled, retention_days, updated_at
+                FROM activity_privacy_settings
+                WHERE id = 1
+                """
+            ).fetchone()
+            if row is None:
+                conn.execute(
+                    """
+                    INSERT INTO activity_privacy_settings
+                        (id, enabled, retention_days, updated_at)
+                    VALUES (1, 1, 30, ?)
+                    """,
+                    (datetime.now().isoformat(),),
+                )
+                row = conn.execute(
+                    """
+                    SELECT enabled, retention_days, updated_at
+                    FROM activity_privacy_settings
+                    WHERE id = 1
+                    """
+                ).fetchone()
+            return {
+                "enabled": bool(row["enabled"]),
+                "paused": not bool(row["enabled"]),
+                "retention_days": int(row["retention_days"] or 30),
+                "updated_at": str(row["updated_at"]),
+            }
+
+    def update_activity_privacy_settings(
+        self,
+        *,
+        enabled: Optional[bool] = None,
+        retention_days: Optional[int] = None,
+    ) -> dict[str, Any]:
+        """Update activity ingestion privacy settings."""
+        current = self.get_activity_privacy_settings()
+        next_enabled = current["enabled"] if enabled is None else bool(enabled)
+        next_retention = current["retention_days"]
+        if retention_days is not None:
+            next_retention = max(1, min(int(retention_days), 3650))
+        with self._connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO activity_privacy_settings
+                    (id, enabled, retention_days, updated_at)
+                VALUES (1, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    enabled = excluded.enabled,
+                    retention_days = excluded.retention_days,
+                    updated_at = excluded.updated_at
+                """,
+                (int(next_enabled), int(next_retention), datetime.now().isoformat()),
+            )
+        return self.get_activity_privacy_settings()
+
+    def list_activity_domain_rules(self) -> list[dict[str, str]]:
+        """List domain allow/deny rules for activity ingestion."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT domain, action, created_at, updated_at
+                FROM activity_domain_rules
+                ORDER BY domain ASC
+                """
+            ).fetchall()
+            return [
+                {
+                    "domain": str(row["domain"]),
+                    "action": str(row["action"] or "exclude"),
+                    "created_at": str(row["created_at"]),
+                    "updated_at": str(row["updated_at"]),
+                }
+                for row in rows
+            ]
+
+    def upsert_activity_domain_rule(
+        self,
+        *,
+        domain: str,
+        action: str = "exclude",
+    ) -> dict[str, str]:
+        """Create or update one activity domain privacy rule."""
+        clean_domain = str(domain or "").strip().lower()
+        if not clean_domain:
+            raise ValueError("domain is required")
+        clean_action = str(action or "exclude").strip().lower()
+        if clean_action not in {"exclude", "allow"}:
+            raise ValueError("activity domain action must be 'exclude' or 'allow'")
+        now_iso = datetime.now().isoformat()
+        with self._connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO activity_domain_rules (domain, action, created_at, updated_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(domain) DO UPDATE SET
+                    action = excluded.action,
+                    updated_at = excluded.updated_at
+                """,
+                (clean_domain, clean_action, now_iso, now_iso),
+            )
+        return next(
+            rule for rule in self.list_activity_domain_rules()
+            if rule["domain"] == clean_domain
+        )
+
+    def delete_activity_domain_rule(self, domain: str) -> bool:
+        """Delete one activity domain privacy rule."""
+        clean_domain = str(domain or "").strip().lower()
+        if not clean_domain:
+            return False
+        with self._connection() as conn:
+            cursor = conn.execute(
+                "DELETE FROM activity_domain_rules WHERE domain = ?",
+                (clean_domain,),
+            )
+            return bool(cursor.rowcount)
+
+    def is_activity_domain_excluded(self, domain: str) -> bool:
+        """Return true if a domain or one of its parents is excluded."""
+        clean_domain = str(domain or "").strip().lower()
+        if not clean_domain:
+            return False
+        with self._connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT domain, action
+                FROM activity_domain_rules
+                WHERE action = 'exclude'
+                """
+            ).fetchall()
+        for row in rows:
+            rule_domain = str(row["domain"] or "").lower()
+            if clean_domain == rule_domain or clean_domain.endswith(f".{rule_domain}"):
+                return True
+        return False
 
     def _row_to_activity_record(self, row: sqlite3.Row) -> ActivityRecord:
         return ActivityRecord(

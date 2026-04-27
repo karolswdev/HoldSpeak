@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HoldSpeak Activity</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #07111d;
+        --panel: #0d1a2a;
+        --panel-2: #102237;
+        --line: rgba(180, 207, 235, 0.18);
+        --text: #edf5ff;
+        --muted: #9db1c8;
+        --accent: #64d7ff;
+        --ok: #75f4d3;
+        --warn: #ffb86b;
+        --danger: #ff647e;
+        --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+        --mono: "SFMono-Regular", Consolas, monospace;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+      }
+      .shell {
+        width: min(1180px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 24px 0 32px;
+      }
+      .topbar, .panel {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: 8px;
+      }
+      .topbar {
+        padding: 18px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 14px;
+      }
+      h1, h2, p { margin: 0; }
+      h1 { font-size: 1.35rem; }
+      .sub { color: var(--muted); margin-top: 6px; line-height: 1.45; }
+      .grid {
+        display: grid;
+        grid-template-columns: 360px minmax(0, 1fr);
+        gap: 14px;
+      }
+      .panel { padding: 16px; }
+      .panel + .panel { margin-top: 14px; }
+      .panel h2 { font-size: 1rem; margin-bottom: 12px; }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        padding: 10px 0;
+        border-top: 1px solid var(--line);
+      }
+      .row:first-of-type { border-top: 0; }
+      .label { color: var(--muted); }
+      .value { font-family: var(--mono); font-size: 0.88rem; text-align: right; }
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 0 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        color: var(--ok);
+        background: rgba(117, 244, 211, 0.08);
+        font-size: 0.86rem;
+      }
+      .status-pill.paused {
+        color: var(--warn);
+        background: rgba(255, 184, 107, 0.08);
+      }
+      button, input {
+        min-height: 38px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: var(--panel-2);
+        color: var(--text);
+        font: inherit;
+      }
+      button {
+        padding: 0 12px;
+        cursor: pointer;
+      }
+      button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #06111c;
+      }
+      button.danger {
+        color: var(--danger);
+      }
+      input {
+        width: 100%;
+        padding: 0 10px;
+      }
+      .button-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .form-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .records {
+        display: grid;
+        gap: 10px;
+      }
+      .record {
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.035);
+        border-radius: 8px;
+        padding: 12px;
+      }
+      .record-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      .record-title {
+        font-weight: 700;
+        overflow-wrap: anywhere;
+      }
+      .record-meta {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 0.86rem;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+      }
+      .tag {
+        font-family: var(--mono);
+        color: var(--accent);
+        font-size: 0.78rem;
+        white-space: nowrap;
+      }
+      .empty {
+        color: var(--muted);
+        padding: 24px;
+        border: 1px dashed var(--line);
+        border-radius: 8px;
+        text-align: center;
+      }
+      .error { color: var(--danger); margin-top: 10px; }
+      @media (max-width: 860px) {
+        .grid { grid-template-columns: 1fr; }
+        .topbar { align-items: flex-start; flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <h1>Local Activity</h1>
+          <p class="sub">Private browser-history metadata used as plugin context. Local only, inspectable, pausable, and deletable.</p>
+        </div>
+        <span id="enabled-pill" class="status-pill">Loading</span>
+      </section>
+
+      <div class="grid">
+        <aside>
+          <section class="panel">
+            <h2>Controls</h2>
+            <div class="row">
+              <span class="label">Records</span>
+              <span id="record-count" class="value">0</span>
+            </div>
+            <div class="row">
+              <span class="label">Retention days</span>
+              <span id="retention-value" class="value">30</span>
+            </div>
+            <div class="button-row">
+              <button id="toggle-enabled" class="primary" type="button">Pause</button>
+              <button id="refresh" type="button">Refresh</button>
+              <button id="clear" class="danger" type="button">Clear imported</button>
+            </div>
+            <div class="form-row">
+              <input id="retention-input" type="number" min="1" max="3650" value="30" aria-label="Retention days" />
+              <button id="save-retention" type="button">Save</button>
+            </div>
+            <p id="message" class="sub"></p>
+            <p id="error" class="error"></p>
+          </section>
+
+          <section class="panel">
+            <h2>Sources</h2>
+            <div id="sources"></div>
+          </section>
+
+          <section class="panel">
+            <h2>Excluded Domains</h2>
+            <div class="form-row">
+              <input id="domain-input" placeholder="example.com" aria-label="Domain to exclude" />
+              <button id="exclude-domain" type="button">Exclude</button>
+            </div>
+            <div id="domains"></div>
+          </section>
+        </aside>
+
+        <section class="panel">
+          <h2>Recent Activity</h2>
+          <div id="records" class="records"></div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const state = { status: null, activity: null };
+      const $ = (id) => document.getElementById(id);
+
+      async function request(path, options = {}) {
+        const response = await fetch(path, {
+          headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+          ...options,
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || response.statusText);
+        return payload;
+      }
+
+      function setMessage(text, isError = false) {
+        $("message").textContent = isError ? "" : text;
+        $("error").textContent = isError ? text : "";
+      }
+
+      function renderStatus() {
+        const status = state.status || {};
+        const settings = status.settings || { enabled: true, retention_days: 30 };
+        const pill = $("enabled-pill");
+        pill.textContent = settings.enabled ? "Enabled" : "Paused";
+        pill.classList.toggle("paused", !settings.enabled);
+        $("toggle-enabled").textContent = settings.enabled ? "Pause" : "Resume";
+        $("record-count").textContent = String(status.record_count || 0);
+        $("retention-value").textContent = String(settings.retention_days || 30);
+        $("retention-input").value = String(settings.retention_days || 30);
+
+        const sources = status.sources || [];
+        $("sources").innerHTML = sources.length
+          ? sources.map((source) => `
+              <div class="row">
+                <span class="label">${source.source_browser} / ${source.source_profile}</span>
+                <span class="value">${source.enabled ? "enabled" : "paused"}</span>
+              </div>
+            `).join("")
+          : `<div class="empty">No readable browser sources found.</div>`;
+
+        const rules = (status.domain_rules || []).filter((rule) => rule.action === "exclude");
+        $("domains").innerHTML = rules.length
+          ? rules.map((rule) => `
+              <div class="row">
+                <span class="label">${rule.domain}</span>
+                <button type="button" data-remove-domain="${rule.domain}">Remove</button>
+              </div>
+            `).join("")
+          : `<p class="sub">No domains excluded.</p>`;
+      }
+
+      function renderRecords() {
+        const records = (state.activity && state.activity.records) || [];
+        $("records").innerHTML = records.length
+          ? records.map((record) => `
+              <article class="record">
+                <div class="record-top">
+                  <div class="record-title">${record.title || record.url}</div>
+                  <div class="tag">${record.entity_type || "domain"}</div>
+                </div>
+                <div class="record-meta">
+                  ${record.entity_id || record.domain} · ${record.source_browser} · visits ${record.visit_count}
+                  <br />
+                  ${record.last_seen_at || "no timestamp"} · ${record.url}
+                </div>
+              </article>
+            `).join("")
+          : `<div class="empty">No imported activity yet.</div>`;
+      }
+
+      async function load() {
+        try {
+          const [status, activity] = await Promise.all([
+            request("/api/activity/status"),
+            request("/api/activity/records?limit=100"),
+          ]);
+          state.status = status;
+          state.activity = activity;
+          renderStatus();
+          renderRecords();
+          setMessage("");
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      }
+
+      $("toggle-enabled").addEventListener("click", async () => {
+        const enabled = !(state.status && state.status.settings && state.status.settings.enabled);
+        try {
+          const payload = await request("/api/activity/settings", {
+            method: "PUT",
+            body: JSON.stringify({ enabled }),
+          });
+          state.status = payload.status;
+          renderStatus();
+          setMessage(enabled ? "Activity ingestion resumed." : "Activity ingestion paused.");
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+
+      $("refresh").addEventListener("click", async () => {
+        try {
+          await request("/api/activity/refresh", { method: "POST", body: "{}" });
+          setMessage("Activity refreshed.");
+          await load();
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+
+      $("clear").addEventListener("click", async () => {
+        if (!confirm("Delete imported activity records?")) return;
+        try {
+          await request("/api/activity/records", { method: "DELETE" });
+          setMessage("Imported activity cleared.");
+          await load();
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+
+      $("save-retention").addEventListener("click", async () => {
+        try {
+          const retention_days = Number($("retention-input").value || 30);
+          const payload = await request("/api/activity/settings", {
+            method: "PUT",
+            body: JSON.stringify({ retention_days }),
+          });
+          state.status = payload.status;
+          renderStatus();
+          setMessage("Retention saved.");
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+
+      $("exclude-domain").addEventListener("click", async () => {
+        const domain = $("domain-input").value.trim();
+        if (!domain) return;
+        try {
+          const payload = await request("/api/activity/domains", {
+            method: "POST",
+            body: JSON.stringify({ domain, action: "exclude" }),
+          });
+          state.status = payload.status;
+          $("domain-input").value = "";
+          renderStatus();
+          setMessage(`${domain} excluded.`);
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+
+      $("domains").addEventListener("click", async (event) => {
+        const button = event.target.closest("[data-remove-domain]");
+        if (!button) return;
+        const domain = button.getAttribute("data-remove-domain");
+        try {
+          const payload = await request(`/api/activity/domains/${encodeURIComponent(domain)}`, { method: "DELETE" });
+          state.status = payload.status;
+          renderStatus();
+          setMessage(`${domain} removed.`);
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+
+      load();
+    </script>
+  </body>
+</html>

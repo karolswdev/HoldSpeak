@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-8-05 done - local activity ledger is now available as shared plugin context).
+**Last updated:** 2026-04-26 (HS-8-06 done - local activity privacy controls and browser surface shipped).
 **Current phase:** [phase-8-local-activity-intelligence](./phase-8-local-activity-intelligence/) — build a default-on local attention ledger from browser-history metadata with visible privacy controls.
 **Status:** in-progress.
 

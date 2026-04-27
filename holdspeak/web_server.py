@@ -202,6 +202,16 @@ class _PluginJobProcessRequest(BaseModel):
     mode: Optional[str] = None
 
 
+class _ActivitySettingsRequest(BaseModel):
+    enabled: Optional[bool] = None
+    retention_days: Optional[int] = None
+
+
+class _ActivityDomainRuleRequest(BaseModel):
+    domain: str
+    action: str = "exclude"
+
+
 def _validate_cloud_base_url(value: Optional[str]) -> Optional[str]:
     if value is None:
         return None
@@ -810,6 +820,21 @@ class MeetingWebServer:
             """Serve web settings UI (currently integrated with history dashboard)."""
             return await history_dashboard()
 
+        @app.get("/activity")
+        async def activity_dashboard() -> Any:
+            """Serve the local activity intelligence dashboard."""
+            page = Path(__file__).resolve().parent / "static" / "activity.html"
+            try:
+                html = page.read_text(encoding="utf-8")
+            except Exception as e:
+                log.error(f"Failed to read activity.html: {e}")
+                html = (
+                    "<!doctype html><html><head><meta charset='utf-8'/>"
+                    "<title>HoldSpeak Activity</title></head>"
+                    "<body><h1>Local Activity</h1><p>Page unavailable.</p></body></html>"
+                )
+            return HTMLResponse(html)
+
         @app.get("/dictation")
         async def dictation_dashboard() -> Any:
             """Serve the dictation block-config UI (HS-4-02)."""
@@ -840,6 +865,173 @@ class MeetingWebServer:
                     "<p>Page unavailable.</p></body></html>"
                 )
             return HTMLResponse(html)
+
+        # === Local activity intelligence routes ===
+
+        def _activity_status_payload() -> dict[str, Any]:
+            from .activity_history import discover_browser_history_sources
+            from .db import get_database
+
+            db = get_database()
+            settings = db.get_activity_privacy_settings()
+            rules = db.list_activity_domain_rules()
+            checkpoints = db.list_activity_import_checkpoints()
+            checkpoint_payload = [
+                {
+                    "source_browser": checkpoint.source_browser,
+                    "source_profile": checkpoint.source_profile,
+                    "source_path_hash": checkpoint.source_path_hash,
+                    "last_visit_raw": checkpoint.last_visit_raw,
+                    "last_imported_at": checkpoint.last_imported_at.isoformat() if checkpoint.last_imported_at else None,
+                    "last_error": checkpoint.last_error,
+                    "enabled": checkpoint.enabled,
+                }
+                for checkpoint in checkpoints
+            ]
+            discovered = [
+                {
+                    "source_browser": source.source_browser,
+                    "source_profile": source.source_profile,
+                    "source_path_hash": source.source_path_hash,
+                    "readable": source.path.is_file(),
+                    "enabled": bool(source.enabled and settings["enabled"]),
+                }
+                for source in discover_browser_history_sources()
+            ]
+            return {
+                "settings": settings,
+                "sources": discovered,
+                "checkpoints": checkpoint_payload,
+                "domain_rules": rules,
+                "record_count": len(db.list_activity_records(limit=5000)),
+            }
+
+        @app.get("/api/activity/status")
+        async def api_activity_status() -> Any:
+            try:
+                return JSONResponse(_activity_status_payload())
+            except Exception as e:
+                log.error(f"Failed to read activity status: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.get("/api/activity/records")
+        async def api_activity_records(
+            project_id: Optional[str] = None,
+            domain: Optional[str] = None,
+            entity_type: Optional[str] = None,
+            limit: int = 100,
+        ) -> Any:
+            try:
+                from .activity_context import build_activity_context
+                from .db import get_database
+
+                db = get_database()
+                bundle = build_activity_context(
+                    db=db,
+                    project_id=project_id,
+                    limit=limit,
+                    refresh=False,
+                ).to_dict()
+                records = bundle["records"]
+                if domain:
+                    clean_domain = domain.strip().lower()
+                    records = [record for record in records if record.get("domain") == clean_domain]
+                if entity_type:
+                    clean_type = entity_type.strip().lower()
+                    records = [record for record in records if record.get("entity_type") == clean_type]
+                bundle["records"] = records
+                return JSONResponse(bundle)
+            except Exception as e:
+                log.error(f"Failed to read activity records: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.post("/api/activity/refresh")
+        async def api_activity_refresh() -> Any:
+            try:
+                from .activity_history import import_browser_history
+                from .db import get_database
+
+                db = get_database()
+                results = import_browser_history(db=db)
+                return JSONResponse(
+                    {
+                        "results": [
+                            {
+                                "source_browser": result.source_browser,
+                                "source_profile": result.source_profile,
+                                "source_path_hash": result.source_path_hash,
+                                "imported_count": result.imported_count,
+                                "checkpoint_raw": result.checkpoint_raw,
+                                "enabled": result.enabled,
+                                "error": result.error,
+                            }
+                            for result in results
+                        ],
+                        "status": _activity_status_payload(),
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to refresh activity: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.put("/api/activity/settings")
+        async def api_activity_settings(payload: _ActivitySettingsRequest) -> Any:
+            try:
+                from .db import get_database
+
+                db = get_database()
+                settings = db.update_activity_privacy_settings(
+                    enabled=payload.enabled,
+                    retention_days=payload.retention_days,
+                )
+                return JSONResponse({"settings": settings, "status": _activity_status_payload()})
+            except Exception as e:
+                log.error(f"Failed to update activity settings: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.post("/api/activity/domains")
+        async def api_activity_domain_rule(payload: _ActivityDomainRuleRequest) -> Any:
+            try:
+                from .db import get_database
+
+                db = get_database()
+                rule = db.upsert_activity_domain_rule(
+                    domain=payload.domain,
+                    action=payload.action,
+                )
+                return JSONResponse({"rule": rule, "status": _activity_status_payload()})
+            except ValueError as e:
+                return JSONResponse({"error": str(e)}, status_code=400)
+            except Exception as e:
+                log.error(f"Failed to update activity domain rule: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.delete("/api/activity/domains/{domain}")
+        async def api_delete_activity_domain_rule(domain: str) -> Any:
+            try:
+                from .db import get_database
+
+                db = get_database()
+                deleted = db.delete_activity_domain_rule(domain)
+                return JSONResponse({"deleted": deleted, "status": _activity_status_payload()})
+            except Exception as e:
+                log.error(f"Failed to delete activity domain rule: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.delete("/api/activity/records")
+        async def api_delete_activity_records(
+            domain: Optional[str] = None,
+            project_id: Optional[str] = None,
+        ) -> Any:
+            try:
+                from .db import get_database
+
+                db = get_database()
+                deleted = db.delete_activity_records(domain=domain, project_id=project_id)
+                return JSONResponse({"deleted": deleted, "status": _activity_status_payload()})
+            except Exception as e:
+                log.error(f"Failed to delete activity records: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
 
         @app.get("/api/settings")
         async def api_get_settings() -> Any:
