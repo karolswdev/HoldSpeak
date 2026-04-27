@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-9-08
 - **Unblocks:** usable meeting-candidate lists instead of noisy repeated previews
 - **Owner:** unassigned
@@ -32,11 +32,11 @@ candidate panel useful as proof, but not yet pleasant for daily use.
 
 ## Acceptance Criteria
 
-- [ ] Saving the same preview twice does not create duplicate rows.
-- [ ] Candidate list remains stable after repeated preview/save cycles.
-- [ ] Basic time hints are extracted when visible in local metadata.
-- [ ] Time parsing failures are silent and do not block candidate creation.
-- [ ] Focused DB/API/UI tests pass.
+- [x] Saving the same preview twice does not create duplicate rows.
+- [x] Candidate list remains stable after repeated preview/save cycles.
+- [x] Basic time hints are extracted when visible in local metadata.
+- [x] Time parsing failures are silent and do not block candidate creation.
+- [x] Focused DB/API/UI tests pass.
 
 ## Test Plan
 
@@ -44,3 +44,7 @@ candidate panel useful as proof, but not yet pleasant for daily use.
 - Unit tests for simple time-hint extraction.
 - Integration test for repeated save via `/api/activity/meeting-candidates`.
 - Focused activity API sweep.
+
+## Evidence
+
+- [evidence-story-09.md](./evidence-story-09.md)

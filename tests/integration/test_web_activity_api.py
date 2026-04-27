@@ -215,6 +215,20 @@ def test_activity_meeting_candidate_api_previews_persists_and_updates(
     assert create_response.status_code == 200
     candidate = create_response.json()["candidate"]
     assert candidate["status"] == "candidate"
+    duplicate_response = test_client.post(
+        "/api/activity/meeting-candidates",
+        json={
+            "source_connector_id": preview["candidates"][0]["source_connector_id"],
+            "source_activity_record_id": preview["candidates"][0]["source_activity_record_id"],
+            "title": "Customer sync meeting updated",
+            "meeting_url": preview["candidates"][0]["meeting_url"],
+            "confidence": 0.9,
+        },
+    )
+    assert duplicate_response.status_code == 200
+    duplicate = duplicate_response.json()["candidate"]
+    assert duplicate["id"] == candidate["id"]
+    assert duplicate["title"] == "Customer sync meeting updated"
 
     list_response = test_client.get("/api/activity/meeting-candidates")
     assert list_response.status_code == 200

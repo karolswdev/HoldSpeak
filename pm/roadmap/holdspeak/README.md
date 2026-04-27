@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-27 (Phase 9 polish and Phase 10 connector ecosystem stories scoped).
+**Last updated:** 2026-04-27 (HS-9-09 candidate dedupe and time hints shipped).
 **Current phase:** [phase-9-assisted-activity-enrichment](./phase-9-assisted-activity-enrichment/) — build optional local enrichment connectors on top of the activity ledger.
 **Status:** in-progress.
 

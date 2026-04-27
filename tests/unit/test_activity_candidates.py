@@ -47,3 +47,18 @@ def test_preview_calendar_meeting_candidates_falls_back_to_domain_titles(tmp_pat
 
     assert previews[0].title == "Google Meet meeting"
     assert previews[0].confidence == 0.7
+
+
+def test_preview_calendar_meeting_candidates_extracts_visible_time_hints(tmp_path):
+    db = MeetingDatabase(tmp_path / "holdspeak.db")
+    record = db.upsert_activity_record(
+        source_browser="safari",
+        url="https://outlook.office.com/calendar/item/123",
+        title="Customer sync 2026-04-27 15:00-15:30",
+        domain="outlook.office.com",
+    )
+
+    previews = preview_calendar_meeting_candidates([record])
+
+    assert previews[0].starts_at == datetime(2026, 4, 27, 15, 0, 0)
+    assert previews[0].ends_at == datetime(2026, 4, 27, 15, 30, 0)

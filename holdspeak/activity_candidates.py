@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Iterable, Optional
+from urllib.parse import unquote
 
 from .db import ActivityRecord
 
@@ -17,6 +19,13 @@ CALENDAR_DOMAINS = frozenset(
         "outlook.office365.com",
         "teams.microsoft.com",
     }
+)
+
+DATE_TIME_RE = re.compile(
+    r"\b(?P<date>\d{4}-\d{2}-\d{2})[T ]+"
+    r"(?P<start>\d{1,2}:\d{2})"
+    r"(?:\s*(?:-|to)\s*(?P<end>\d{1,2}:\d{2}))?\b",
+    re.IGNORECASE,
 )
 
 
@@ -45,11 +54,12 @@ def preview_calendar_meeting_candidates(
         if not _is_calendar_record(record):
             continue
         title = _candidate_title(record)
+        starts_at, ends_at = _candidate_time_hints(record)
         previews.append(
             ActivityMeetingCandidatePreview(
                 title=title,
-                starts_at=None,
-                ends_at=None,
+                starts_at=starts_at,
+                ends_at=ends_at,
                 meeting_url=record.url,
                 source_activity_record_id=record.id,
                 source_connector_id=source_connector_id,
@@ -88,3 +98,21 @@ def _candidate_confidence(record: ActivityRecord) -> float:
     if "teams.microsoft.com" in record.domain or "meet.google.com" in record.domain:
         return 0.7
     return 0.55
+
+
+def _candidate_time_hints(record: ActivityRecord) -> tuple[Optional[datetime], Optional[datetime]]:
+    text = f"{record.title or ''} {unquote(record.url or '')}"
+    match = DATE_TIME_RE.search(text)
+    if match is None:
+        return None, None
+    try:
+        starts_at = datetime.fromisoformat(f"{match.group('date')}T{match.group('start')}:00")
+        end_text = match.group("end")
+        if not end_text:
+            return starts_at, None
+        ends_at = datetime.fromisoformat(f"{match.group('date')}T{end_text}:00")
+        if ends_at < starts_at:
+            ends_at += timedelta(days=1)
+        return starts_at, ends_at
+    except ValueError:
+        return None, None

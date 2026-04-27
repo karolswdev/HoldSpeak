@@ -285,6 +285,7 @@ def _activity_meeting_candidate_payload(candidate: Any) -> dict[str, Any]:
         "id": getattr(candidate, "id", None),
         "source_connector_id": candidate.source_connector_id,
         "source_activity_record_id": candidate.source_activity_record_id,
+        "dedupe_key": getattr(candidate, "dedupe_key", ""),
         "title": candidate.title,
         "starts_at": candidate.starts_at.isoformat() if candidate.starts_at else None,
         "ends_at": candidate.ends_at.isoformat() if candidate.ends_at else None,

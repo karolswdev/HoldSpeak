@@ -1022,6 +1022,7 @@ class TestActivityLedgerPersistence:
 
         assert isinstance(candidate, ActivityMeetingCandidate)
         assert candidate.source_activity_record_id == record.id
+        assert candidate.dedupe_key == f"calendar_activity:record:{record.id}"
         assert candidate.title == "Customer sync"
         assert candidate.starts_at == starts_at
         assert candidate.ends_at == ends_at
@@ -1052,6 +1053,39 @@ class TestActivityLedgerPersistence:
                 title="Bad status",
                 status="auto_record",
             )
+
+    def test_activity_meeting_candidates_dedupe_repeated_saves(self, db):
+        record = db.upsert_activity_record(
+            source_browser="safari",
+            url="https://outlook.office.com/calendar/item/123",
+            title="Customer sync",
+            domain="outlook.office.com",
+        )
+
+        first = db.create_activity_meeting_candidate(
+            source_connector_id="calendar_activity",
+            source_activity_record_id=record.id,
+            title="Customer sync",
+            meeting_url=record.url,
+            confidence=0.55,
+        )
+        armed = db.update_activity_meeting_candidate_status(first.id, "armed")
+        assert armed is not None
+        second = db.create_activity_meeting_candidate(
+            source_connector_id="calendar_activity",
+            source_activity_record_id=record.id,
+            title="Customer sync updated",
+            starts_at=datetime(2026, 4, 27, 15, 0, 0),
+            meeting_url=record.url,
+            confidence=0.8,
+        )
+
+        assert second.id == first.id
+        assert second.title == "Customer sync updated"
+        assert second.starts_at == datetime(2026, 4, 27, 15, 0, 0)
+        assert second.confidence == 0.8
+        assert second.status == "armed"
+        assert db.list_activity_meeting_candidates() == [second]
 
 
 class TestDeferredIntelQueue:
