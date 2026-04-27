@@ -1035,6 +1035,16 @@ class TestActivityLedgerPersistence:
         assert updated is not None
         assert updated.status == "armed"
         assert db.list_activity_meeting_candidates(status="armed") == [updated]
+        assert db.get_activity_meeting_candidate(candidate.id) == updated
+
+        started = db.mark_activity_meeting_candidate_started(
+            candidate.id,
+            meeting_id="meeting-123",
+        )
+        assert started is not None
+        assert started.status == "started"
+        assert started.started_meeting_id == "meeting-123"
+        assert db.list_activity_meeting_candidates(status="started") == [started]
 
         assert db.delete_activity_meeting_candidates(source_connector_id="calendar_activity") == 1
         assert db.list_activity_meeting_candidates(source_connector_id="calendar_activity") == []

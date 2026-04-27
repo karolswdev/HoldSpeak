@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-9-09
 - **Unblocks:** turning a saved candidate into a visible recording action
 - **Owner:** unassigned
@@ -30,11 +30,11 @@ meeting recording without automatic join or hidden recording.
 
 ## Acceptance Criteria
 
-- [ ] User can manually start recording from a candidate.
-- [ ] Candidate status becomes `started` only after visible user action.
-- [ ] Started meeting carries candidate title/context when available.
-- [ ] Candidate-to-meeting linkage is persisted or inspectable.
-- [ ] No automatic recording is introduced.
+- [x] User can manually start recording from a candidate.
+- [x] Candidate status becomes `started` only after visible user action.
+- [x] Started meeting carries candidate title/context when available.
+- [x] Candidate-to-meeting linkage is persisted or inspectable.
+- [x] No automatic recording is introduced.
 
 ## Test Plan
 

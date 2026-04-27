@@ -24,7 +24,7 @@ VALID_ACTIVITY_MEETING_CANDIDATE_STATUSES = frozenset(
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 16
+SCHEMA_VERSION = 17
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -453,6 +453,7 @@ CREATE TABLE IF NOT EXISTS activity_meeting_candidates (
     starts_at TEXT,
     ends_at TEXT,
     meeting_url TEXT,
+    started_meeting_id TEXT,
     confidence REAL NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'candidate',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -746,6 +747,7 @@ class ActivityMeetingCandidate:
     starts_at: Optional[datetime]
     ends_at: Optional[datetime]
     meeting_url: Optional[str]
+    started_meeting_id: Optional[str]
     confidence: float
     status: str
     created_at: datetime
@@ -1343,6 +1345,17 @@ class MeetingDatabase:
                     WHERE dedupe_key != ''
                     """
                 )
+
+            if from_version < 17:
+                try:
+                    conn.execute("SELECT started_meeting_id FROM activity_meeting_candidates LIMIT 1")
+                except sqlite3.OperationalError:
+                    conn.execute(
+                        """
+                        ALTER TABLE activity_meeting_candidates
+                        ADD COLUMN started_meeting_id TEXT
+                        """
+                    )
 
         # Now apply the full schema (creates tables/indexes that don't exist)
         conn.executescript(SCHEMA_SQL)
@@ -4924,10 +4937,10 @@ class MeetingDatabase:
                 """
                 INSERT INTO activity_meeting_candidates (
                     id, source_connector_id, source_activity_record_id, dedupe_key, title,
-                    starts_at, ends_at, meeting_url, confidence, status,
+                    starts_at, ends_at, meeting_url, started_meeting_id, confidence, status,
                     created_at, updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     clean_id,
@@ -4938,6 +4951,7 @@ class MeetingDatabase:
                     starts_iso,
                     ends_iso,
                     clean_meeting_url,
+                    None,
                     clean_confidence,
                     clean_status,
                     now_iso,
@@ -4949,6 +4963,21 @@ class MeetingDatabase:
                 (clean_id,),
             ).fetchone()
             return self._row_to_activity_meeting_candidate(row)
+
+    def get_activity_meeting_candidate(
+        self,
+        candidate_id: str,
+    ) -> Optional[ActivityMeetingCandidate]:
+        """Fetch one local meeting candidate by ID."""
+        clean_id = str(candidate_id or "").strip()
+        if not clean_id:
+            return None
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM activity_meeting_candidates WHERE id = ?",
+                (clean_id,),
+            ).fetchone()
+            return self._row_to_activity_meeting_candidate(row) if row is not None else None
 
     def list_activity_meeting_candidates(
         self,
@@ -4993,6 +5022,36 @@ class MeetingDatabase:
                 WHERE id = ?
                 """,
                 (clean_status, datetime.now().isoformat(), clean_id),
+            )
+            if not cursor.rowcount:
+                return None
+            row = conn.execute(
+                "SELECT * FROM activity_meeting_candidates WHERE id = ?",
+                (clean_id,),
+            ).fetchone()
+            return self._row_to_activity_meeting_candidate(row)
+
+    def mark_activity_meeting_candidate_started(
+        self,
+        candidate_id: str,
+        *,
+        meeting_id: Optional[str] = None,
+    ) -> Optional[ActivityMeetingCandidate]:
+        """Mark a candidate as manually started and persist the started meeting ID."""
+        clean_id = str(candidate_id or "").strip()
+        if not clean_id:
+            return None
+        clean_meeting_id = str(meeting_id).strip() if meeting_id not in (None, "") else None
+        with self._connection() as conn:
+            cursor = conn.execute(
+                """
+                UPDATE activity_meeting_candidates
+                SET status = 'started',
+                    started_meeting_id = COALESCE(?, started_meeting_id),
+                    updated_at = ?
+                WHERE id = ?
+                """,
+                (clean_meeting_id, datetime.now().isoformat(), clean_id),
             )
             if not cursor.rowcount:
                 return None
@@ -5090,6 +5149,7 @@ class MeetingDatabase:
             starts_at=datetime.fromisoformat(row["starts_at"]) if row["starts_at"] else None,
             ends_at=datetime.fromisoformat(row["ends_at"]) if row["ends_at"] else None,
             meeting_url=row["meeting_url"],
+            started_meeting_id=row["started_meeting_id"],
             confidence=float(row["confidence"] or 0),
             status=str(row["status"]),
             created_at=datetime.fromisoformat(row["created_at"]),

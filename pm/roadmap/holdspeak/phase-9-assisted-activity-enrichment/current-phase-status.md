@@ -1,6 +1,6 @@
 # Phase 9 - Assisted Activity Enrichment
 
-**Last updated:** 2026-04-27 (HS-9-09 candidate dedupe and time hints shipped).
+**Last updated:** 2026-04-27 (HS-9-10 candidate recording workflow shipped).
 
 ## Goal
 
@@ -40,7 +40,7 @@ metadata without hidden collection or external writes.
 | HS-9-07 | Meeting candidate API surface | done | [story-07-meeting-candidate-api.md](./story-07-meeting-candidate-api.md) | [evidence-story-07.md](./evidence-story-07.md) |
 | HS-9-08 | Meeting candidate browser controls | done | [story-08-meeting-candidate-browser-controls.md](./story-08-meeting-candidate-browser-controls.md) | [evidence-story-08.md](./evidence-story-08.md) |
 | HS-9-09 | Meeting candidate dedupe and time hints | done | [story-09-candidate-dedupe-time-hints.md](./story-09-candidate-dedupe-time-hints.md) | [evidence-story-09.md](./evidence-story-09.md) |
-| HS-9-10 | Meeting candidate recording workflow | backlog | [story-10-candidate-recording-workflow.md](./story-10-candidate-recording-workflow.md) | pending |
+| HS-9-10 | Meeting candidate recording workflow | done | [story-10-candidate-recording-workflow.md](./story-10-candidate-recording-workflow.md) | [evidence-story-10.md](./evidence-story-10.md) |
 | HS-9-11 | Activity dashboard polish | backlog | [story-11-activity-dashboard-polish.md](./story-11-activity-dashboard-polish.md) | pending |
 | HS-9-12 | Connector controls and output deletion | backlog | [story-12-connector-controls-output-deletion.md](./story-12-connector-controls-output-deletion.md) | pending |
 | HS-9-13 | Connector dry-run harness | backlog | [story-13-connector-dry-run-harness.md](./story-13-connector-dry-run-harness.md) | pending |
@@ -81,6 +81,12 @@ HS-9-09 shipped candidate dedupe and simple visible time hints. Repeated
 saves from the same connector/source record now merge into one candidate,
 preserving armed/dismissed status where appropriate, and local titles/URLs
 with `YYYY-MM-DD HH:MM[-HH:MM]` text can populate start/end hints.
+
+HS-9-10 shipped the first visible candidate-to-recording workflow. Saved
+meeting candidates can now be manually started from `/activity`, use the
+normal runtime start hook, carry the candidate title into the meeting where
+the runtime supports meeting updates, and persist the started meeting ID
+back onto the candidate row.
 
 ## Source Design
 

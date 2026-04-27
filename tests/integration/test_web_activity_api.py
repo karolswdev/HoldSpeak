@@ -244,3 +244,71 @@ def test_activity_meeting_candidate_api_previews_persists_and_updates(
     delete_response = test_client.delete("/api/activity/meeting-candidates?status=armed")
     assert delete_response.status_code == 200
     assert delete_response.json()["deleted"] == 1
+
+
+def test_activity_meeting_candidate_manual_start_marks_started(
+    activity_db: MeetingDatabase,
+) -> None:
+    candidate = activity_db.create_activity_meeting_candidate(
+        source_connector_id="calendar_activity",
+        title="Customer sync meeting",
+        meeting_url="https://teams.microsoft.com/l/meetup-join/customer-sync",
+        confidence=0.9,
+    )
+    on_start = MagicMock(return_value={"id": "meeting-1", "title": "Untitled"})
+    on_update_meeting = MagicMock(
+        return_value={"id": "meeting-1", "title": "Customer sync meeting", "meeting_active": True}
+    )
+    server = MeetingWebServer(
+        on_bookmark=MagicMock(),
+        on_stop=MagicMock(),
+        on_start=on_start,
+        on_update_meeting=on_update_meeting,
+        get_state=MagicMock(return_value={}),
+    )
+    broadcast_events: list[tuple[str, object]] = []
+    server.broadcast = lambda message_type, data: broadcast_events.append((message_type, data))
+    client = TestClient(server.app)
+
+    before_start = activity_db.get_activity_meeting_candidate(candidate.id)
+    assert before_start is not None
+    assert before_start.status == "candidate"
+    assert before_start.started_meeting_id is None
+
+    response = client.post(f"/api/activity/meeting-candidates/{candidate.id}/start")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["meeting"]["id"] == "meeting-1"
+    assert payload["meeting"]["title"] == "Customer sync meeting"
+    assert payload["candidate"]["status"] == "started"
+    assert payload["candidate"]["started_meeting_id"] == "meeting-1"
+    on_start.assert_called_once_with()
+    on_update_meeting.assert_called_once_with(title="Customer sync meeting", tags=None)
+    assert broadcast_events[0][0] == "meeting_started"
+    assert broadcast_events[0][1]["activity_meeting_candidate_id"] == candidate.id
+
+    persisted = activity_db.get_activity_meeting_candidate(candidate.id)
+    assert persisted is not None
+    assert persisted.status == "started"
+    assert persisted.started_meeting_id == "meeting-1"
+
+
+def test_activity_meeting_candidate_manual_start_requires_runtime_start_support(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+) -> None:
+    candidate = activity_db.create_activity_meeting_candidate(
+        source_connector_id="calendar_activity",
+        title="Customer sync meeting",
+    )
+
+    response = test_client.post(f"/api/activity/meeting-candidates/{candidate.id}/start")
+
+    assert response.status_code == 501
+    assert response.json()["success"] is False
+    persisted = activity_db.get_activity_meeting_candidate(candidate.id)
+    assert persisted is not None
+    assert persisted.status == "candidate"
+    assert persisted.started_meeting_id is None

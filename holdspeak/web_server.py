@@ -290,11 +290,35 @@ def _activity_meeting_candidate_payload(candidate: Any) -> dict[str, Any]:
         "starts_at": candidate.starts_at.isoformat() if candidate.starts_at else None,
         "ends_at": candidate.ends_at.isoformat() if candidate.ends_at else None,
         "meeting_url": candidate.meeting_url,
+        "started_meeting_id": getattr(candidate, "started_meeting_id", None),
         "confidence": candidate.confidence,
         "status": getattr(candidate, "status", "preview"),
         "created_at": candidate.created_at.isoformat() if getattr(candidate, "created_at", None) else None,
         "updated_at": candidate.updated_at.isoformat() if getattr(candidate, "updated_at", None) else None,
     }
+
+
+def _meeting_callback_payload(result: Any) -> Any:
+    if hasattr(result, "to_dict"):
+        try:
+            return result.to_dict()
+        except Exception:
+            return None
+    if isinstance(result, dict):
+        return result
+    return None
+
+
+def _meeting_payload_id(meeting_data: Any) -> Optional[str]:
+    if not isinstance(meeting_data, dict):
+        return None
+    meeting_id = meeting_data.get("id")
+    if meeting_id not in (None, ""):
+        return str(meeting_id)
+    nested = meeting_data.get("meeting")
+    if isinstance(nested, dict) and nested.get("id") not in (None, ""):
+        return str(nested["id"])
+    return None
 
 
 def _validate_cloud_base_url(value: Optional[str]) -> Optional[str]:
@@ -717,14 +741,7 @@ class MeetingWebServer:
                 log.error(f"on_start failed: {e}")
                 return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
-            meeting_data: Any = None
-            if hasattr(result, "to_dict"):
-                try:
-                    meeting_data = result.to_dict()
-                except Exception:
-                    meeting_data = None
-            elif isinstance(result, dict):
-                meeting_data = result
+            meeting_data = _meeting_callback_payload(result)
 
             if meeting_data is not None:
                 self.broadcast("meeting_started", meeting_data)
@@ -1309,6 +1326,68 @@ class MeetingWebServer:
             except Exception as e:
                 log.error(f"Failed to update activity meeting candidate: {e}")
                 return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.post("/api/activity/meeting-candidates/{candidate_id}/start")
+        async def api_start_activity_meeting_candidate(candidate_id: str) -> Any:
+            if self.on_start is None:
+                return JSONResponse(
+                    {"success": False, "error": "Meeting start control not supported"},
+                    status_code=501,
+                )
+
+            try:
+                from .db import get_database
+
+                db = get_database()
+                candidate = db.get_activity_meeting_candidate(candidate_id)
+                if candidate is None:
+                    return JSONResponse({"error": "activity meeting candidate not found"}, status_code=404)
+
+                result = self.on_start()
+                meeting_data = _meeting_callback_payload(result)
+
+                title_warning = None
+                if self.on_update_meeting is not None and str(candidate.title or "").strip():
+                    try:
+                        updated = self.on_update_meeting(title=candidate.title, tags=None)
+                        updated_payload = _meeting_callback_payload(updated)
+                        if updated_payload is not None:
+                            meeting_data = updated_payload
+                    except Exception as e:
+                        title_warning = str(e)
+                        log.error(f"Failed to apply candidate title to started meeting: {e}")
+
+                meeting_id = _meeting_payload_id(meeting_data)
+                candidate = db.mark_activity_meeting_candidate_started(
+                    candidate.id,
+                    meeting_id=meeting_id,
+                )
+                if candidate is None:
+                    return JSONResponse({"error": "activity meeting candidate not found"}, status_code=404)
+
+                if meeting_data is not None:
+                    self.broadcast(
+                        "meeting_started",
+                        {
+                            **meeting_data,
+                            "activity_meeting_candidate_id": candidate.id,
+                            "activity_meeting_candidate_title": candidate.title,
+                            "activity_meeting_candidate_url": candidate.meeting_url,
+                        },
+                    )
+                response_payload: dict[str, Any] = {
+                    "success": True,
+                    "candidate": _activity_meeting_candidate_payload(candidate),
+                    "meeting": meeting_data,
+                }
+                if title_warning:
+                    response_payload["warning"] = f"Meeting started, but title update failed: {title_warning}"
+                return JSONResponse(response_payload)
+            except ValueError as e:
+                return JSONResponse({"error": str(e)}, status_code=400)
+            except Exception as e:
+                log.error(f"Failed to start activity meeting candidate: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
         @app.delete("/api/activity/meeting-candidates")
         async def api_delete_activity_meeting_candidates(

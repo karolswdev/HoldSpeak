@@ -484,11 +484,13 @@
                       ${escapeHtml(candidate.source_connector_id)} · confidence ${Number(candidate.confidence || 0).toFixed(2)}
                       <br />
                       ${escapeHtml(candidate.meeting_url || "")}
+                      ${candidate.started_meeting_id ? `<br />started meeting ${escapeHtml(candidate.started_meeting_id)}` : ""}
                     </div>
                   </div>
                   <div class="tag">${escapeHtml(candidate.status)}</div>
                 </div>
                 <div class="rule-actions">
+                  <button class="primary" type="button" data-start-candidate="${escapeHtml(candidate.id)}">Start</button>
                   <button type="button" data-candidate-status="armed" data-candidate-id="${escapeHtml(candidate.id)}">Arm</button>
                   <button type="button" data-candidate-status="dismissed" data-candidate-id="${escapeHtml(candidate.id)}">Dismiss</button>
                   <button type="button" data-candidate-status="candidate" data-candidate-id="${escapeHtml(candidate.id)}">Reset</button>
@@ -771,10 +773,26 @@
       });
 
       $("meeting-candidates").addEventListener("click", async (event) => {
-        const button = event.target.closest("[data-candidate-status]");
-        if (!button) return;
-        const id = button.getAttribute("data-candidate-id");
-        const status = button.getAttribute("data-candidate-status");
+        const startButton = event.target.closest("[data-start-candidate]");
+        if (startButton) {
+          const id = startButton.getAttribute("data-start-candidate");
+          try {
+            const payload = await request(`/api/activity/meeting-candidates/${encodeURIComponent(id)}/start`, {
+              method: "POST",
+            });
+            const meetingId = payload.meeting && payload.meeting.id ? ` (${payload.meeting.id})` : "";
+            setMessage(`Meeting started from candidate${meetingId}.`);
+            await load();
+          } catch (error) {
+            setMessage(error.message, true);
+          }
+          return;
+        }
+
+        const statusButton = event.target.closest("[data-candidate-status]");
+        if (!statusButton) return;
+        const id = statusButton.getAttribute("data-candidate-id");
+        const status = statusButton.getAttribute("data-candidate-status");
         try {
           await request(`/api/activity/meeting-candidates/${encodeURIComponent(id)}/status`, {
             method: "PUT",
