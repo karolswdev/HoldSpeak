@@ -15,6 +15,8 @@ from holdspeak.db import (
     IntentWindowSummary,
     PluginRunSummary,
     ArtifactSummary,
+    ActivityRecord,
+    ActivityImportCheckpoint,
     reset_database,
 )
 from holdspeak.meeting_session import (
@@ -664,6 +666,162 @@ class TestUpsert:
         retrieved = db.get_meeting(sample_meeting.id)
         assert retrieved.title == "Updated Title"
         assert len(retrieved.segments) == 3
+
+
+class TestActivityLedgerPersistence:
+    """Tests for local activity intelligence persistence."""
+
+    def test_upsert_activity_record_persists_locally(self, db):
+        seen = datetime(2026, 4, 26, 9, 30, 0)
+
+        record = db.upsert_activity_record(
+            source_browser="Safari",
+            source_profile="default",
+            source_path_hash="hash-safari",
+            url="https://example.atlassian.net/browse/HS-123?b=2&a=1#comment",
+            title="HS-123 work item",
+            visit_count=3,
+            first_seen_at=seen,
+            last_seen_at=seen,
+            last_visit_raw="799320600.0",
+            entity_type="jira_ticket",
+            entity_id="HS-123",
+        )
+
+        assert isinstance(record, ActivityRecord)
+        assert record.source_browser == "safari"
+        assert record.source_profile == "default"
+        assert record.domain == "example.atlassian.net"
+        assert record.normalized_url == "https://example.atlassian.net/browse/HS-123?a=1&b=2"
+        assert record.last_visit_raw == "799320600.0"
+        assert record.last_seen_at == seen
+
+        listed = db.list_activity_records(source_browser="safari")
+        assert len(listed) == 1
+        assert listed[0].id == record.id
+
+    def test_duplicate_activity_records_merge_by_normalized_url(self, db):
+        first = datetime(2026, 4, 26, 9, 0, 0)
+        last = datetime(2026, 4, 26, 11, 0, 0)
+
+        created = db.upsert_activity_record(
+            source_browser="firefox",
+            source_profile="work",
+            url="https://miro.com/app/board/uXjVMiro123/?utm_source=email",
+            title="Miro board",
+            visit_count=2,
+            first_seen_at=last,
+            last_seen_at=last,
+            last_visit_raw="1745665200000000",
+        )
+        merged = db.upsert_activity_record(
+            source_browser="firefox",
+            source_profile="work",
+            url="https://miro.com/app/board/uXjVMiro123?utm_source=email",
+            title="Renamed Miro board",
+            visit_count=5,
+            first_seen_at=first,
+            last_seen_at=last,
+            last_visit_raw="1745672400000000",
+        )
+
+        assert merged.id == created.id
+        assert merged.title == "Renamed Miro board"
+        assert merged.visit_count == 5
+        assert merged.first_seen_at == first
+        assert merged.last_seen_at == last
+        assert db.list_activity_records(source_browser="firefox", source_profile="work") == [merged]
+
+    def test_duplicate_activity_records_merge_by_entity(self, db):
+        first = datetime(2026, 4, 26, 9, 0, 0)
+        second = datetime(2026, 4, 26, 10, 0, 0)
+
+        created = db.upsert_activity_record(
+            source_browser="safari",
+            url="https://github.com/acme/app/pull/42",
+            title="PR 42",
+            first_seen_at=first,
+            last_seen_at=first,
+            entity_type="github_pull_request",
+            entity_id="acme/app#42",
+        )
+        merged = db.upsert_activity_record(
+            source_browser="safari",
+            url="https://github.com/acme/app/pull/42/files",
+            title="PR 42 files",
+            first_seen_at=second,
+            last_seen_at=second,
+            entity_type="github_pull_request",
+            entity_id="acme/app#42",
+        )
+
+        assert merged.id == created.id
+        assert merged.normalized_url == "https://github.com/acme/app/pull/42/files"
+        assert merged.first_seen_at == first
+        assert merged.last_seen_at == second
+        assert len(db.list_activity_records(entity_type="github_pull_request")) == 1
+
+    def test_activity_import_checkpoint_round_trips_per_source_profile(self, db):
+        imported_at = datetime(2026, 4, 26, 12, 0, 0)
+
+        checkpoint = db.set_activity_import_checkpoint(
+            source_browser="Safari",
+            source_profile="default",
+            source_path_hash="path-hash",
+            last_visit_raw="799320600.0",
+            last_imported_at=imported_at,
+            enabled=True,
+        )
+
+        assert isinstance(checkpoint, ActivityImportCheckpoint)
+        assert checkpoint.source_browser == "safari"
+        assert checkpoint.source_profile == "default"
+        assert checkpoint.source_path_hash == "path-hash"
+        assert checkpoint.last_visit_raw == "799320600.0"
+        assert checkpoint.last_imported_at == imported_at
+        assert checkpoint.enabled is True
+
+        db.set_activity_import_checkpoint(
+            source_browser="safari",
+            source_profile="default",
+            source_path_hash="path-hash",
+            last_visit_raw="799321000.0",
+            last_imported_at=imported_at,
+            last_error="temporary lock",
+            enabled=False,
+        )
+        updated = db.get_activity_import_checkpoint(
+            source_browser="safari",
+            source_profile="default",
+            source_path_hash="path-hash",
+        )
+        assert updated is not None
+        assert updated.last_visit_raw == "799321000.0"
+        assert updated.last_error == "temporary lock"
+        assert updated.enabled is False
+
+    def test_delete_activity_records_supports_retention_filters(self, db):
+        old = datetime(2026, 4, 1, 9, 0, 0)
+        recent = datetime(2026, 4, 26, 9, 0, 0)
+        db.upsert_activity_record(
+            source_browser="safari",
+            url="https://old.example.com/ticket",
+            domain="old.example.com",
+            last_seen_at=old,
+        )
+        db.upsert_activity_record(
+            source_browser="safari",
+            url="https://recent.example.com/ticket",
+            domain="recent.example.com",
+            last_seen_at=recent,
+        )
+
+        deleted = db.delete_activity_records(older_than=datetime(2026, 4, 10))
+
+        assert deleted == 1
+        remaining = db.list_activity_records()
+        assert len(remaining) == 1
+        assert remaining[0].domain == "recent.example.com"
 
 
 class TestDeferredIntelQueue:

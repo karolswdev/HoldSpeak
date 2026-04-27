@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 8
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-8-01
 - **Unblocks:** importing browser activity records
 - **Owner:** unassigned
@@ -33,13 +33,18 @@ Safari and Firefox readers also need per-source/profile checkpoints.
 
 ## Acceptance Criteria
 
-- [ ] Activity records persist locally.
-- [ ] Duplicate visits merge into one normalized record.
-- [ ] Import checkpoints are stored per source/profile.
-- [ ] Raw source timestamps can be retained without becoming the primary user-facing time.
-- [ ] Deletion/retention primitives exist.
-- [ ] Focused and full tests pass.
+- [x] Activity records persist locally.
+- [x] Duplicate visits merge into one normalized record.
+- [x] Import checkpoints are stored per source/profile.
+- [x] Raw source timestamps can be retained without becoming the primary user-facing time.
+- [x] Deletion/retention primitives exist.
+- [x] Focused and full tests pass.
 
 ## Test Plan
 
-- To be finalized after HS-8-01.
+- `uv run pytest -q tests/unit/test_db.py`
+- `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py`
+
+## Evidence
+
+- [evidence-story-02.md](./evidence-story-02.md)
