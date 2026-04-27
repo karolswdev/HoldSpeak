@@ -393,6 +393,7 @@ Health check endpoint.
 #### Archive/data APIs
 - `GET /api/meetings`
 - `GET /api/meetings/{meeting_id}`
+- `GET /api/meetings/{meeting_id}/export?format=markdown|json` - local handoff download with transcript, action review/provenance, and artifacts
 - `GET /api/meetings/{meeting_id}/intent-timeline` - persisted MIR timeline windows + transitions
 - `GET /api/meetings/{meeting_id}/plugin-runs` - persisted MIR plugin execution history
 - `GET /api/meetings/{meeting_id}/artifacts` - synthesized artifacts with lineage sources
@@ -529,8 +530,14 @@ b                            # Add bookmark when something important happens
 
 # After the meeting
 m                            # Stop meeting
-# Export from dashboard or use auto_export
+# Export from dashboard, /history local handoff downloads, or auto_export
 ```
+
+Saved meeting detail in `/history` offers local Markdown and JSON handoff
+downloads. Handoff files include the transcript, meeting intelligence,
+action-item review state, source timestamps when available, and synthesized
+artifacts. They are local downloads only and do not publish to Jira, Linear,
+GitHub Issues, Slack, or any other external system.
 
 ---
 

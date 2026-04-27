@@ -293,8 +293,15 @@ The same local web server also exposes:
 - `/settings` for browser-based config updates (including cloud `intel_provider` and optional `intel_cloud_base_url`)
 - MIR control-plane APIs: `/api/intents/control`, `/api/intents/profile`, `/api/intents/override`, `/api/intents/preview`
 - MIR history APIs: `/api/meetings/{meeting_id}/intent-timeline`, `/api/meetings/{meeting_id}/plugin-runs`, `/api/meetings/{meeting_id}/artifacts`
+- Local handoff export API: `/api/meetings/{meeting_id}/export?format=markdown|json`
 - Deferred plugin-job APIs: `/api/plugin-jobs`, `/api/plugin-jobs/summary`, `/api/plugin-jobs/process`, `/api/plugin-jobs/{job_id}/retry-now`, `/api/plugin-jobs/{job_id}/cancel`
 - Local-only access (`127.0.0.1` loopback) by default
+
+Saved meeting detail in `/history` can download local Markdown or JSON handoff files.
+Those exports include transcript, summary/topics, reviewed action-item state,
+source timestamps when available, and synthesized artifacts. They are local
+downloads only; HoldSpeak does not create Jira, Linear, GitHub Issues, Slack, or
+other external records from this workflow.
 
 **For complete setup instructions and troubleshooting, see the [Meeting Mode Guide](docs/MEETING_MODE_GUIDE.md).**
 Before shipping broadly, run through the [Release Hardening Checklist](docs/RELEASE_HARDENING_CHECKLIST.md).

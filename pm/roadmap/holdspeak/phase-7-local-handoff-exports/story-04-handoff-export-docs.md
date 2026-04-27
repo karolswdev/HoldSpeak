@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 7
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-7-03
 - **Unblocks:** discoverable local export workflow
 - **Owner:** unassigned
@@ -24,10 +24,15 @@ external systems.
 
 ## Acceptance Criteria
 
-- [ ] Public docs describe the handoff export workflow.
-- [ ] Docs state that exports are local files/downloads only.
-- [ ] Focused docs/UI tests pass where relevant.
+- [x] Public docs describe the handoff export workflow.
+- [x] Docs state that exports are local files/downloads only.
+- [x] Focused docs/UI tests pass where relevant.
 
 ## Test Plan
 
-- To be finalized after HS-7-03.
+- `uv run pytest -q tests/integration/test_web_server.py -k "HistoryUiSmoke or meeting_export_endpoint"`
+- `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py`
+
+## Evidence
+
+- [evidence-story-04.md](./evidence-story-04.md)
