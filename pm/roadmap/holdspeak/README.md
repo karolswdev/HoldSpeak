@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-7-05 done - Phase 7 closed with local handoff export evidence bundle).
-**Current phase:** [phase-7-local-handoff-exports](./phase-7-local-handoff-exports/) — complete.
-**Status:** done.
+**Last updated:** 2026-04-26 (Phase 8 opened - local activity intelligence via opt-in Safari/Firefox history metadata).
+**Current phase:** [phase-8-local-activity-intelligence](./phase-8-local-activity-intelligence/) — build an opt-in local attention ledger from browser-history metadata.
+**Status:** in-progress.
 
 ## Vision
 
@@ -43,6 +43,7 @@ canon, canon wins.
 | 5 | Usability powerhouse: reduce setup/dogfood friction and make web workflows faster | done | [phase-5-usability-powerhouse](./phase-5-usability-powerhouse/) |
 | 6 | Action follow-through: make meeting action items and artifacts reviewable and traceable | done | [phase-6-action-follow-through](./phase-6-action-follow-through/) |
 | 7 | Local handoff exports: make reviewed meeting work portable as local Markdown/JSON outputs | done | [phase-7-local-handoff-exports](./phase-7-local-handoff-exports/) |
+| 8 | Local activity intelligence: mine opt-in Safari/Firefox history metadata into a private work-context ledger | in-progress | [phase-8-local-activity-intelligence](./phase-8-local-activity-intelligence/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
