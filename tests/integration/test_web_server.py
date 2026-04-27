@@ -1172,6 +1172,8 @@ class TestHistoryUiSmoke:
             assert endpoint in html
         assert "source_timestamp" in html
         assert "Source ${formatTimestamp" in html
+        assert "setActionReviewState" in html
+        assert "Mark Needs Review" in html
 
     def test_settings_route_serves_history_ui_shell(self, test_client):
         response = test_client.get("/settings")
@@ -1479,6 +1481,16 @@ class TestGlobalActionItemsApiEndpoints:
         assert reviewed_item["review_state"] == "accepted"
         assert reviewed_item["reviewed_at"] is not None
         assert reviewed_item["source_timestamp"] == pytest.approx(125.5)
+
+        pending_review_response = test_client.patch(
+            "/api/all-action-items/a-1/review",
+            json={"review_state": "pending"},
+        )
+        assert pending_review_response.status_code == 200
+        pending_review_item = pending_review_response.json()["action_item"]
+        assert pending_review_item["review_state"] == "pending"
+        assert pending_review_item["reviewed_at"] is None
+        assert pending_review_item["source_timestamp"] == pytest.approx(125.5)
 
         edit_response = test_client.patch(
             "/api/all-action-items/a-1/edit",

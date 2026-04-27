@@ -796,9 +796,17 @@
                         class="btn"
                         x-show="reviewStateValue(item.review_state) !== 'accepted'"
                         x-cloak
-                        @click="acceptActionItem(item)"
+                        @click="setActionReviewState(item, 'accepted')"
                       >
                         Accept
+                      </button>
+                      <button
+                        class="btn"
+                        x-show="reviewStateValue(item.review_state) === 'accepted'"
+                        x-cloak
+                        @click="setActionReviewState(item, 'pending')"
+                      >
+                        Mark Needs Review
                       </button>
                       <button class="btn primary" @click="editActionItem(item)">Edit</button>
                     </div>
@@ -1050,6 +1058,29 @@
                           <span class="pill" x-show="ai.due" x-cloak x-text="`Due: ${ai.due}`"></span>
                           <span class="pill" x-text="ai.meeting_title || '(untitled)'"></span>
                           <span class="pill" x-show="ai.source_timestamp !== null && ai.source_timestamp !== undefined" x-cloak x-text="`Source ${formatTimestamp(ai.source_timestamp)}`"></span>
+                          <span
+                            class="status-pill"
+                            :class="`review-${reviewStateValue(ai.review_state)}`"
+                            x-text="reviewStateLabel(ai.review_state)"
+                          ></span>
+                        </div>
+                        <div class="action-controls" x-show="ai.id" x-cloak>
+                          <button
+                            class="btn"
+                            x-show="reviewStateValue(ai.review_state) !== 'accepted'"
+                            x-cloak
+                            @click="setActionReviewState(ai, 'accepted')"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            class="btn"
+                            x-show="reviewStateValue(ai.review_state) === 'accepted'"
+                            x-cloak
+                            @click="setActionReviewState(ai, 'pending')"
+                          >
+                            Mark Needs Review
+                          </button>
                         </div>
                       </div>
                     </template>
@@ -1520,6 +1551,24 @@
                           x-text="reviewStateLabel(item.review_state)"
                         ></span>
                       </div>
+                      <div class="action-controls" x-show="item.id" x-cloak>
+                        <button
+                          class="btn"
+                          x-show="reviewStateValue(item.review_state) !== 'accepted'"
+                          x-cloak
+                          @click="setActionReviewState(item, 'accepted')"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          class="btn"
+                          x-show="reviewStateValue(item.review_state) === 'accepted'"
+                          x-cloak
+                          @click="setActionReviewState(item, 'pending')"
+                        >
+                          Mark Needs Review
+                        </button>
+                      </div>
                     </div>
                   </template>
                 </div>
@@ -1824,22 +1873,30 @@
             }
           },
 
-          async acceptActionItem(item) {
+          async setActionReviewState(item, reviewState) {
+            const normalized = this.reviewStateValue(reviewState);
             try {
               await this.apiJson(`/api/all-action-items/${item.id}/review`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ review_state: "accepted" }),
+                body: JSON.stringify({ review_state: normalized }),
               });
               await this.loadActionItems();
               if (this.selectedMeeting && this.selectedMeeting.id === item.meeting_id) {
                 await this.openMeeting(item.meeting_id);
               }
-              this.flash("Action item accepted.");
+              if (this.selectedProject) {
+                await this.refreshProjectActionItems();
+              }
+              this.flash(normalized === "accepted" ? "Action item accepted." : "Action item marked needs review.");
             } catch (error) {
-              console.error("Failed to accept action item:", error);
-              this.flash(`Accept failed: ${error.message}`, true);
+              console.error("Failed to update action item review state:", error);
+              this.flash(`Review update failed: ${error.message}`, true);
             }
+          },
+
+          async acceptActionItem(item) {
+            return this.setActionReviewState(item, "accepted");
           },
 
           async editActionItem(item) {
@@ -1870,6 +1927,9 @@
               await this.loadActionItems();
               if (this.selectedMeeting && this.selectedMeeting.id === item.meeting_id) {
                 await this.openMeeting(item.meeting_id);
+              }
+              if (this.selectedProject) {
+                await this.refreshProjectActionItems();
               }
               this.flash("Action item edited and accepted.");
             } catch (error) {
@@ -2212,6 +2272,12 @@
             } catch (error) {
               this.flash(`Failed to load project: ${error.message}`, true);
             }
+          },
+
+          async refreshProjectActionItems() {
+            if (!this.selectedProject) return;
+            const data = await this.apiJson(`/api/projects/${this.selectedProject.id}/action-items`);
+            this.projectActionItems = data.action_items || [];
           },
 
           async patchProject(field, value) {

@@ -1,6 +1,6 @@
 # Phase 6 - Action Follow-Through Cockpit
 
-**Last updated:** 2026-04-26 (HS-6-01 done - action item source timestamps now flow through summary APIs and history views).
+**Last updated:** 2026-04-26 (HS-6-02 done - action item review controls now work from global, project, and meeting-detail history views).
 
 ## Goal
 
@@ -31,22 +31,21 @@ review, filter, and carry forward.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-6-01 | Action item provenance audit | done | [story-01-action-provenance-audit.md](./story-01-action-provenance-audit.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-6-02 | Action item review controls | backlog | [story-02-action-review-controls.md](./story-02-action-review-controls.md) | pending |
+| HS-6-02 | Action item review controls | done | [story-02-action-review-controls.md](./story-02-action-review-controls.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-6-03 | Action item filters and open-work view | backlog | [story-03-action-filters.md](./story-03-action-filters.md) | pending |
 | HS-6-04 | Artifact/action detail linking | backlog | [story-04-artifact-action-links.md](./story-04-artifact-action-links.md) | pending |
 | HS-6-05 | DoD sweep + phase exit | backlog | [story-05-dod.md](./story-05-dod.md) | pending |
 
 ## Where We Are
 
-Phase 6 has its first shipped follow-through improvement. HS-6-01 mapped
-the action item persistence/API/UI surfaces and closed the first
-provenance gap: stored source timestamps are now exposed by the
-cross-meeting and project action-item APIs and rendered in the global,
-project, and meeting-detail history views.
+Phase 6 now has two shipped follow-through loops. HS-6-01 made action
+item provenance visible by carrying source timestamps through summary
+APIs and history views. HS-6-02 built on that by adding browser review
+controls in the global Action Items tab, project action-item lists, and
+selected meeting detail action items.
 
-The next story should build on this by improving browser review
-ergonomics for existing action-item review state, rather than adding new
-persistence primitives.
+The next story should make outstanding work easier to scan by adding
+filters or a dedicated open-work view for status and review state.
 
 ## Initial Hypothesis
 
