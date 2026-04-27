@@ -1,6 +1,6 @@
 # Phase 8 - Local Activity Intelligence
 
-**Last updated:** 2026-04-26 (scope adjusted - activity intelligence is default-on for this personal local tool, with visible pause/clear/exclude controls).
+**Last updated:** 2026-04-26 (HS-8-01 done - Safari/Firefox source audit completed with safe copy strategy and privacy contract).
 
 ## Goal
 
@@ -43,7 +43,7 @@ deletable.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-8-01 | Browser history source audit | ready | [story-01-browser-history-source-audit.md](./story-01-browser-history-source-audit.md) | pending |
+| HS-8-01 | Browser history source audit | done | [story-01-browser-history-source-audit.md](./story-01-browser-history-source-audit.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-8-02 | Activity ledger persistence | backlog | [story-02-activity-ledger-persistence.md](./story-02-activity-ledger-persistence.md) | pending |
 | HS-8-03 | Safari and Firefox history readers | backlog | [story-03-browser-history-readers.md](./story-03-browser-history-readers.md) | pending |
 | HS-8-04 | Work entity extractors | backlog | [story-04-work-entity-extractors.md](./story-04-work-entity-extractors.md) | pending |
@@ -53,11 +53,16 @@ deletable.
 
 ## Where We Are
 
-Phase 8 is open. The first story is intentionally an audit because
-browser history storage is platform- and permission-sensitive. Before
-writing ingestion code, HS-8-01 should map Safari and Firefox paths,
-schema expectations, lock/copy behavior, and the privacy contract the
-runtime must enforce.
+Phase 8 has completed its source audit. HS-8-01 confirmed Safari history
+is available locally as a WAL-mode SQLite database under
+`~/Library/Safari/History.db`, with URL metadata in `history_items` and
+visit/title metadata in `history_visits`. Firefox is not installed in the
+standard local profile locations on this machine, so HS-8-03 must use
+fixture `places.sqlite` databases to confirm exact columns while
+targeting Mozilla Places' `moz_places` plus `moz_historyvisits` model.
+
+The next story should add the local activity ledger persistence and
+checkpoint primitives before any browser reader imports real data.
 
 ## Initial Hypothesis
 

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 8
-- **Status:** ready
+- **Status:** done
 - **Depends on:** HS-7-05
 - **Unblocks:** safe browser-history ingestion
 - **Owner:** unassigned
@@ -33,15 +33,19 @@ permissions, and privacy boundaries.
 
 ## Acceptance Criteria
 
-- [ ] Safari source path/schema expectations are documented.
-- [ ] Firefox source path/profile/schema expectations are documented.
-- [ ] Safe copy/read strategy is documented.
-- [ ] Privacy boundaries are explicit.
-- [ ] Default-enabled startup behavior is explicit and visible.
-- [ ] HS-8-02 and HS-8-03 scopes are confirmed or adjusted from findings.
+- [x] Safari source path/schema expectations are documented.
+- [x] Firefox source path/profile/schema expectations are documented.
+- [x] Safe copy/read strategy is documented.
+- [x] Privacy boundaries are explicit.
+- [x] Default-enabled startup behavior is explicit and visible.
+- [x] HS-8-02 and HS-8-03 scopes are confirmed or adjusted from findings.
 
 ## Test Plan
 
 - Docs/audit validation.
 - Focused command evidence from local schema inspection where safe.
 - `git diff --check`
+
+## Evidence
+
+- [evidence-story-01.md](./evidence-story-01.md)

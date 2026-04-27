@@ -21,6 +21,7 @@ privacy controls exist.
   - Safari reader using the audited schema and safe copy path.
   - Firefox profile discovery and `places.sqlite` reader.
   - Default-enabled import behavior for readable local sources.
+  - Copy main SQLite files plus `-wal`/`-shm` companions before reading.
   - Incremental import using per-source checkpoints.
   - Tests with fixture SQLite databases.
 - **Out:**
@@ -33,6 +34,7 @@ privacy controls exist.
 - [ ] Safari fixture history imports into the ledger.
 - [ ] Firefox fixture history imports into the ledger.
 - [ ] Locked/live database strategy is safe and read-only.
+- [ ] WAL-mode databases are copied with companion files where present.
 - [ ] Readable sources are enabled by default.
 - [ ] Incremental import avoids reimport churn.
 - [ ] Focused and full tests pass.
