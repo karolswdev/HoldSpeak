@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 8
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-8-01 through HS-8-08
 - **Unblocks:** Phase 8 closure
 - **Owner:** unassigned
@@ -24,10 +24,10 @@ summary of shipped local activity intelligence workflows.
 
 ## Acceptance Criteria
 
-- [ ] Phase evidence bundle exists.
-- [ ] Focused activity-intelligence sweep passes.
-- [ ] Full regression passes.
-- [ ] Phase 8 status is updated.
+- [x] Phase evidence bundle exists.
+- [x] Focused activity-intelligence sweep passes.
+- [x] Full regression passes.
+- [x] Phase 8 status is updated.
 
 ## Test Plan
 

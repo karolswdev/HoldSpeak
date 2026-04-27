@@ -1,6 +1,6 @@
 # Phase 8 - Local Activity Intelligence
 
-**Last updated:** 2026-04-27 (HS-8-08 assisted enrichment sources scoped).
+**Last updated:** 2026-04-27 (Phase 8 complete).
 
 ## Goal
 
@@ -61,7 +61,7 @@ more structure without hiding collection or bypassing local controls.
 | HS-8-06 | Privacy controls and retention | done | [story-06-privacy-controls.md](./story-06-privacy-controls.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-8-07 | Project activity mapping rules | done | [story-07-project-activity-mapping-rules.md](./story-07-project-activity-mapping-rules.md) | [evidence-story-07.md](./evidence-story-07.md) |
 | HS-8-08 | Assisted activity enrichment sources | done | [story-08-assisted-activity-enrichment.md](./story-08-assisted-activity-enrichment.md) | [evidence-story-08.md](./evidence-story-08.md) |
-| HS-8-09 | DoD sweep + phase exit | backlog | [story-09-dod.md](./story-09-dod.md) | pending |
+| HS-8-09 | DoD sweep + phase exit | done | [story-09-dod.md](./story-09-dod.md) | [evidence-story-09.md](./evidence-story-09.md) |
 
 ## Where We Are
 
@@ -110,8 +110,11 @@ HS-8-08 scoped richer optional sources in
 activity annotation and meeting-candidate storage design,
 Calendar/Outlook candidate flow, Firefox companion extension architecture,
 local `gh`/`jira` CLI enrichment boundaries, and a permission/privacy
-matrix. The next Phase 8 step is HS-8-09: evidence, regression, and phase
-exit.
+matrix.
+
+HS-8-09 closed Phase 8 with a phase evidence bundle, focused activity
+test sweep, full non-Metal regression, and roadmap status updates. Phase
+8 is complete.
 
 ## Initial Hypothesis
 

@@ -1,0 +1,4 @@
+## main...origin/main [ahead 40]
+ M uv.lock
+?? .claude/
+?? docs/evidence/phase-local-activity-intelligence/
