@@ -222,6 +222,21 @@ class _ActivityProjectRuleRequest(BaseModel):
     entity_type: Optional[str] = None
 
 
+class _ActivityMeetingCandidateRequest(BaseModel):
+    source_connector_id: Optional[str] = None
+    source_activity_record_id: Optional[int] = None
+    title: Optional[str] = None
+    starts_at: Optional[str] = None
+    ends_at: Optional[str] = None
+    meeting_url: Optional[str] = None
+    confidence: Optional[float] = None
+    status: Optional[str] = None
+
+
+class _ActivityMeetingCandidateStatusRequest(BaseModel):
+    status: str
+
+
 def _model_fields_set(model: Any) -> set[str]:
     fields = getattr(model, "model_fields_set", None)
     if fields is not None:
@@ -262,6 +277,22 @@ def _activity_record_payload(record: Any) -> dict[str, Any]:
         "entity_type": record.entity_type,
         "entity_id": record.entity_id,
         "project_id": record.project_id,
+    }
+
+
+def _activity_meeting_candidate_payload(candidate: Any) -> dict[str, Any]:
+    return {
+        "id": getattr(candidate, "id", None),
+        "source_connector_id": candidate.source_connector_id,
+        "source_activity_record_id": candidate.source_activity_record_id,
+        "title": candidate.title,
+        "starts_at": candidate.starts_at.isoformat() if candidate.starts_at else None,
+        "ends_at": candidate.ends_at.isoformat() if candidate.ends_at else None,
+        "meeting_url": candidate.meeting_url,
+        "confidence": candidate.confidence,
+        "status": getattr(candidate, "status", "preview"),
+        "created_at": candidate.created_at.isoformat() if getattr(candidate, "created_at", None) else None,
+        "updated_at": candidate.updated_at.isoformat() if getattr(candidate, "updated_at", None) else None,
     }
 
 
@@ -1183,6 +1214,119 @@ class MeetingWebServer:
                 return JSONResponse({"updated": updated})
             except Exception as e:
                 log.error(f"Failed to apply activity project rules: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.get("/api/activity/meeting-candidates/preview")
+        async def api_preview_activity_meeting_candidates(limit: int = 50) -> Any:
+            try:
+                from .activity_candidates import preview_calendar_meeting_candidates
+                from .db import get_database
+
+                db = get_database()
+                records = db.list_activity_records(limit=max(1, min(int(limit), 500)))
+                previews = preview_calendar_meeting_candidates(records, limit=limit)
+                return JSONResponse(
+                    {
+                        "count": len(previews),
+                        "candidates": [_activity_meeting_candidate_payload(candidate) for candidate in previews],
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to preview activity meeting candidates: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.get("/api/activity/meeting-candidates")
+        async def api_activity_meeting_candidates(
+            source_connector_id: Optional[str] = None,
+            status: Optional[str] = None,
+            limit: int = 100,
+        ) -> Any:
+            try:
+                from .db import get_database
+
+                db = get_database()
+                candidates = db.list_activity_meeting_candidates(
+                    source_connector_id=source_connector_id,
+                    status=status,
+                    limit=limit,
+                )
+                return JSONResponse(
+                    {
+                        "count": len(candidates),
+                        "candidates": [_activity_meeting_candidate_payload(candidate) for candidate in candidates],
+                    }
+                )
+            except ValueError as e:
+                return JSONResponse({"error": str(e)}, status_code=400)
+            except Exception as e:
+                log.error(f"Failed to list activity meeting candidates: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.post("/api/activity/meeting-candidates")
+        async def api_create_activity_meeting_candidate(
+            payload: _ActivityMeetingCandidateRequest,
+        ) -> Any:
+            try:
+                from .db import get_database
+
+                db = get_database()
+                candidate = db.create_activity_meeting_candidate(
+                    source_connector_id=payload.source_connector_id or "calendar_activity",
+                    source_activity_record_id=payload.source_activity_record_id,
+                    title=payload.title or "",
+                    starts_at=_parse_iso_datetime(payload.starts_at),
+                    ends_at=_parse_iso_datetime(payload.ends_at),
+                    meeting_url=payload.meeting_url,
+                    confidence=payload.confidence if payload.confidence is not None else 0.0,
+                    status=payload.status or "candidate",
+                )
+                return JSONResponse({"candidate": _activity_meeting_candidate_payload(candidate)})
+            except ValueError as e:
+                return JSONResponse({"error": str(e)}, status_code=400)
+            except Exception as e:
+                log.error(f"Failed to create activity meeting candidate: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.put("/api/activity/meeting-candidates/{candidate_id}/status")
+        async def api_update_activity_meeting_candidate_status(
+            candidate_id: str,
+            payload: _ActivityMeetingCandidateStatusRequest,
+        ) -> Any:
+            try:
+                from .db import get_database
+
+                db = get_database()
+                candidate = db.update_activity_meeting_candidate_status(
+                    candidate_id,
+                    payload.status,
+                )
+                if candidate is None:
+                    return JSONResponse({"error": "activity meeting candidate not found"}, status_code=404)
+                return JSONResponse({"candidate": _activity_meeting_candidate_payload(candidate)})
+            except ValueError as e:
+                return JSONResponse({"error": str(e)}, status_code=400)
+            except Exception as e:
+                log.error(f"Failed to update activity meeting candidate: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.delete("/api/activity/meeting-candidates")
+        async def api_delete_activity_meeting_candidates(
+            source_connector_id: Optional[str] = None,
+            status: Optional[str] = None,
+        ) -> Any:
+            try:
+                from .db import get_database
+
+                db = get_database()
+                deleted = db.delete_activity_meeting_candidates(
+                    source_connector_id=source_connector_id,
+                    status=status,
+                )
+                return JSONResponse({"deleted": deleted})
+            except ValueError as e:
+                return JSONResponse({"error": str(e)}, status_code=400)
+            except Exception as e:
+                log.error(f"Failed to delete activity meeting candidates: {e}")
                 return JSONResponse({"error": str(e)}, status_code=500)
 
         @app.delete("/api/activity/records")

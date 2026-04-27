@@ -180,3 +180,52 @@ def test_activity_project_rule_api_previews_and_applies_mappings(
     delete_response = test_client.delete(f"/api/activity/project-rules/{rule['id']}")
     assert delete_response.status_code == 200
     assert delete_response.json()["deleted"] is True
+
+
+def test_activity_meeting_candidate_api_previews_persists_and_updates(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+) -> None:
+    record = activity_db.upsert_activity_record(
+        source_browser="safari",
+        url="https://outlook.office.com/calendar/item/customer-sync",
+        title="Customer sync meeting",
+        domain="outlook.office.com",
+        last_seen_at=datetime(2026, 4, 27, 9, 0),
+    )
+
+    preview_response = test_client.get("/api/activity/meeting-candidates/preview")
+    assert preview_response.status_code == 200
+    preview = preview_response.json()
+    assert preview["count"] == 1
+    assert preview["candidates"][0]["title"] == "Customer sync meeting"
+    assert preview["candidates"][0]["source_activity_record_id"] == record.id
+
+    create_response = test_client.post(
+        "/api/activity/meeting-candidates",
+        json={
+            "source_connector_id": preview["candidates"][0]["source_connector_id"],
+            "source_activity_record_id": preview["candidates"][0]["source_activity_record_id"],
+            "title": preview["candidates"][0]["title"],
+            "meeting_url": preview["candidates"][0]["meeting_url"],
+            "confidence": preview["candidates"][0]["confidence"],
+        },
+    )
+    assert create_response.status_code == 200
+    candidate = create_response.json()["candidate"]
+    assert candidate["status"] == "candidate"
+
+    list_response = test_client.get("/api/activity/meeting-candidates")
+    assert list_response.status_code == 200
+    assert list_response.json()["count"] == 1
+
+    armed_response = test_client.put(
+        f"/api/activity/meeting-candidates/{candidate['id']}/status",
+        json={"status": "armed"},
+    )
+    assert armed_response.status_code == 200
+    assert armed_response.json()["candidate"]["status"] == "armed"
+
+    delete_response = test_client.delete("/api/activity/meeting-candidates?status=armed")
+    assert delete_response.status_code == 200
+    assert delete_response.json()["deleted"] == 1

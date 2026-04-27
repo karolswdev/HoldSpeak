@@ -1,6 +1,6 @@
 # Phase 9 - Assisted Activity Enrichment
 
-**Last updated:** 2026-04-27 (HS-9-02 calendar and Outlook candidates shipped).
+**Last updated:** 2026-04-27 (HS-9-07 meeting candidate API shipped).
 
 ## Goal
 
@@ -37,6 +37,7 @@ metadata without hidden collection or external writes.
 | HS-9-04 | GitHub CLI enrichment annotations | backlog | [story-04-gh-cli-enrichment.md](./story-04-gh-cli-enrichment.md) | pending |
 | HS-9-05 | Jira CLI enrichment annotations | backlog | [story-05-jira-cli-enrichment.md](./story-05-jira-cli-enrichment.md) | pending |
 | HS-9-06 | Assisted enrichment controls + phase exit | backlog | [story-06-controls-dod.md](./story-06-controls-dod.md) | pending |
+| HS-9-07 | Meeting candidate API surface | done | [story-07-meeting-candidate-api.md](./story-07-meeting-candidate-api.md) | [evidence-story-07.md](./evidence-story-07.md) |
 
 ## Where We Are
 
@@ -51,6 +52,11 @@ candidate previews from existing calendar-related activity records. The
 preview path recognizes Outlook, Microsoft Teams, Google Calendar, and
 Google Meet domains from already-imported local activity metadata and
 does not introduce network calls.
+
+HS-9-07 made those candidates directly testable through the local web API:
+preview, persist, list, update status, and delete. The API stays local to
+existing ledger data and does not introduce cloud calls or automatic
+recording.
 
 ## Source Design
 
