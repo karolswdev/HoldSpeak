@@ -1177,6 +1177,9 @@ class TestHistoryUiSmoke:
         assert "actionReviewFilter" in html
         assert "Open Work" in html
         assert "No pending action items need review." in html
+        assert "selectedMeetingArtifacts" in html
+        assert "/api/meetings/${id}/artifacts" in html
+        assert "Open Meeting" in html
 
     def test_settings_route_serves_history_ui_shell(self, test_client):
         response = test_client.get("/settings")

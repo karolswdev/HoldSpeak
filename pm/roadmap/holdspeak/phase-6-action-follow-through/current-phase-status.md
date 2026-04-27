@@ -1,6 +1,6 @@
 # Phase 6 - Action Follow-Through Cockpit
 
-**Last updated:** 2026-04-26 (HS-6-03 done - Actions now defaults to open needs-review work with status/review filters).
+**Last updated:** 2026-04-26 (HS-6-04 done - action items and artifacts now link back to source meeting context).
 
 ## Goal
 
@@ -33,20 +33,24 @@ review, filter, and carry forward.
 | HS-6-01 | Action item provenance audit | done | [story-01-action-provenance-audit.md](./story-01-action-provenance-audit.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-6-02 | Action item review controls | done | [story-02-action-review-controls.md](./story-02-action-review-controls.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-6-03 | Action item filters and open-work view | done | [story-03-action-filters.md](./story-03-action-filters.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-6-04 | Artifact/action detail linking | backlog | [story-04-artifact-action-links.md](./story-04-artifact-action-links.md) | pending |
+| HS-6-04 | Artifact/action detail linking | done | [story-04-artifact-action-links.md](./story-04-artifact-action-links.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-6-05 | DoD sweep + phase exit | backlog | [story-05-dod.md](./story-05-dod.md) | pending |
 
 ## Where We Are
 
-Phase 6 now has three shipped follow-through loops. HS-6-01 made action
+Phase 6 now has four shipped follow-through loops. HS-6-01 made action
 item provenance visible by carrying source timestamps through summary
 APIs and history views. HS-6-02 added browser review controls in the
 global Action Items tab, project action-item lists, and selected meeting
 detail action items. HS-6-03 made the Actions tab default to open
-needs-review work and added status/review filters plus an Open Work reset.
+needs-review work and added status/review filters plus an Open Work
+reset. HS-6-04 connected action items and project artifacts back to their
+source meeting and loads meeting artifacts inside the selected meeting
+detail view.
 
-The next story should connect artifacts and action items more directly
-inside the meeting/project history surfaces.
+The next story is the Phase 6 DoD sweep: verify the full follow-through
+cockpit, close remaining documentation gaps, and decide whether Phase 6
+is complete or needs one more targeted story.
 
 ## Initial Hypothesis
 

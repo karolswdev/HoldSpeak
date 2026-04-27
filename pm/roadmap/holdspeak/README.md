@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-6-03 done - Actions now opens on pending needs-review work with status/review filters).
+**Last updated:** 2026-04-26 (HS-6-04 done - action items and artifacts now link back to source meeting context).
 **Current phase:** [phase-6-action-follow-through](./phase-6-action-follow-through/) — make meeting action items and artifacts reviewable, traceable, and easy to follow through.
 **Status:** in-progress.
 

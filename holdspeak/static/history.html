@@ -815,6 +815,7 @@
                         Mark Needs Review
                       </button>
                       <button class="btn primary" @click="editActionItem(item)">Edit</button>
+                      <button class="btn" @click="openMeeting(item.meeting_id)">Open Meeting</button>
                     </div>
                   </div>
                 </template>
@@ -1087,6 +1088,7 @@
                           >
                             Mark Needs Review
                           </button>
+                          <button class="btn" @click="openMeeting(ai.meeting_id)">Open Meeting</button>
                         </div>
                       </div>
                     </template>
@@ -1107,6 +1109,9 @@
                         <div class="pill-row">
                           <span class="pill" x-text="`${(a.confidence * 100).toFixed(0)}% confidence`"></span>
                           <span class="pill" x-text="formatDate(a.created_at)"></span>
+                        </div>
+                        <div class="action-controls">
+                          <button class="btn" @click="openMeeting(a.meeting_id)">Open Meeting</button>
                         </div>
                       </div>
                     </template>
@@ -1579,6 +1584,26 @@
                   </template>
                 </div>
               </div>
+
+              <div class="detail-card" x-show="selectedMeetingArtifacts.length" x-cloak>
+                <h4>Artifacts</h4>
+                <div class="grid">
+                  <template x-for="artifact in selectedMeetingArtifacts" :key="artifact.id">
+                    <div class="segment">
+                      <div class="card-top">
+                        <p class="card-title" x-text="artifact.title"></p>
+                        <span class="status-pill" :class="artifact.status" x-text="artifact.artifact_type"></span>
+                      </div>
+                      <div class="pill-row">
+                        <span class="pill" x-text="`${(artifact.confidence * 100).toFixed(0)}% confidence`"></span>
+                        <span class="pill" x-text="formatDate(artifact.created_at)"></span>
+                        <span class="pill" x-show="artifact.sources?.length" x-cloak x-text="`${artifact.sources.length} sources`"></span>
+                      </div>
+                      <p class="meta-line" x-show="artifact.body_markdown" x-cloak x-text="artifact.body_markdown"></p>
+                    </div>
+                  </template>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1609,6 +1634,7 @@
           actionReviewFilter: "pending",
           speakerSearch: "",
           selectedMeeting: null,
+          selectedMeetingArtifacts: [],
           selectedSpeakerId: "",
           selectedSpeaker: null,
           speakerDraft: { name: "", avatar: "" },
@@ -1967,7 +1993,16 @@
 
           async openMeeting(id) {
             try {
+              this.tab = "meetings";
+              this.selectedMeetingArtifacts = [];
               this.selectedMeeting = await this.apiJson(`/api/meetings/${id}`);
+              try {
+                const artifacts = await this.apiJson(`/api/meetings/${id}/artifacts`);
+                this.selectedMeetingArtifacts = artifacts.artifacts || [];
+              } catch (artifactError) {
+                console.error("Failed to load meeting artifacts:", artifactError);
+                this.selectedMeetingArtifacts = [];
+              }
             } catch (error) {
               console.error("Failed to load meeting:", error);
               this.flash(`Meeting detail failed: ${error.message}`, true);
