@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-9-01
 - **Unblocks:** visible meeting-candidate scheduling from local activity
 - **Owner:** unassigned
@@ -29,7 +29,17 @@ the user manually arm or start recording.
 
 ## Acceptance Criteria
 
-- [ ] Candidate schema exists.
-- [ ] Calendar/Outlook records can be previewed as candidates.
-- [ ] Candidates can be stored and dismissed.
-- [ ] No network calls are introduced.
+- [x] Candidate schema exists.
+- [x] Calendar/Outlook records can be previewed as candidates.
+- [x] Candidates can be stored and dismissed.
+- [x] No network calls are introduced.
+
+## Test Plan
+
+- `uv run pytest -q tests/unit/test_activity_candidates.py tests/unit/test_db.py -k "activity_meeting_candidates or activity_candidates"`
+- `uv run pytest -q tests/unit/test_activity_candidates.py tests/unit/test_db.py`
+- `git diff --check`
+
+## Evidence
+
+- [evidence-story-02.md](./evidence-story-02.md)

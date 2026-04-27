@@ -20,6 +20,7 @@ from holdspeak.db import (
     ActivityProjectRule,
     ActivityEnrichmentConnectorState,
     ActivityAnnotation,
+    ActivityMeetingCandidate,
     reset_database,
 )
 from holdspeak.meeting_session import (
@@ -997,6 +998,59 @@ class TestActivityLedgerPersistence:
                 activity_record_id=999,
                 source_connector_id="gh",
                 annotation_type="github_pr",
+            )
+
+    def test_activity_meeting_candidates_round_trip_and_status_update(self, db):
+        starts_at = datetime(2026, 4, 27, 15, 0, 0)
+        ends_at = datetime(2026, 4, 27, 15, 30, 0)
+        record = db.upsert_activity_record(
+            source_browser="safari",
+            url="https://outlook.office.com/calendar/item/123",
+            title="Customer sync",
+            domain="outlook.office.com",
+        )
+
+        candidate = db.create_activity_meeting_candidate(
+            source_connector_id="calendar_activity",
+            source_activity_record_id=record.id,
+            title="Customer sync",
+            starts_at=starts_at,
+            ends_at=ends_at,
+            meeting_url=record.url,
+            confidence=0.8,
+        )
+
+        assert isinstance(candidate, ActivityMeetingCandidate)
+        assert candidate.source_activity_record_id == record.id
+        assert candidate.title == "Customer sync"
+        assert candidate.starts_at == starts_at
+        assert candidate.ends_at == ends_at
+        assert candidate.meeting_url == record.url
+        assert candidate.confidence == 0.8
+        assert candidate.status == "candidate"
+        assert db.list_activity_meeting_candidates(status="candidate") == [candidate]
+
+        updated = db.update_activity_meeting_candidate_status(candidate.id, "armed")
+        assert updated is not None
+        assert updated.status == "armed"
+        assert db.list_activity_meeting_candidates(status="armed") == [updated]
+
+        assert db.delete_activity_meeting_candidates(source_connector_id="calendar_activity") == 1
+        assert db.list_activity_meeting_candidates(source_connector_id="calendar_activity") == []
+
+    def test_activity_meeting_candidates_validate_status_and_record_reference(self, db):
+        with pytest.raises(ValueError, match="activity record not found"):
+            db.create_activity_meeting_candidate(
+                source_connector_id="calendar_activity",
+                source_activity_record_id=999,
+                title="Missing source",
+            )
+
+        with pytest.raises(ValueError, match="candidate status"):
+            db.create_activity_meeting_candidate(
+                source_connector_id="calendar_activity",
+                title="Bad status",
+                status="auto_record",
             )
 
 

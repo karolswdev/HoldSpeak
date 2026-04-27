@@ -18,10 +18,13 @@ log = get_logger("db")
 
 VALID_ACTION_ITEM_STATUSES = frozenset({"pending", "done", "dismissed"})
 VALID_ACTION_ITEM_REVIEW_STATES = frozenset({"pending", "accepted"})
+VALID_ACTIVITY_MEETING_CANDIDATE_STATUSES = frozenset(
+    {"candidate", "armed", "dismissed", "started"}
+)
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 14
+SCHEMA_VERSION = 15
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -440,6 +443,25 @@ CREATE INDEX IF NOT EXISTS idx_activity_annotations_record
 ON activity_annotations(activity_record_id, annotation_type);
 CREATE INDEX IF NOT EXISTS idx_activity_annotations_connector
 ON activity_annotations(source_connector_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS activity_meeting_candidates (
+    id TEXT PRIMARY KEY,
+    source_connector_id TEXT NOT NULL,
+    source_activity_record_id INTEGER REFERENCES activity_records(id) ON DELETE SET NULL,
+    title TEXT NOT NULL,
+    starts_at TEXT,
+    ends_at TEXT,
+    meeting_url TEXT,
+    confidence REAL NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'candidate',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_activity_meeting_candidates_time
+ON activity_meeting_candidates(starts_at, status);
+CREATE INDEX IF NOT EXISTS idx_activity_meeting_candidates_connector
+ON activity_meeting_candidates(source_connector_id, created_at DESC);
 """
 
 
@@ -704,6 +726,23 @@ class ActivityAnnotation:
     title: str
     value: dict[str, Any]
     confidence: float
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass
+class ActivityMeetingCandidate:
+    """Local candidate for a meeting action derived from activity metadata."""
+
+    id: str
+    source_connector_id: str
+    source_activity_record_id: Optional[int]
+    title: str
+    starts_at: Optional[datetime]
+    ends_at: Optional[datetime]
+    meeting_url: Optional[str]
+    confidence: float
+    status: str
     created_at: datetime
     updated_at: datetime
 
@@ -1247,6 +1286,37 @@ class MeetingDatabase:
                     """
                     CREATE INDEX IF NOT EXISTS idx_activity_annotations_connector
                     ON activity_annotations(source_connector_id, created_at DESC)
+                    """
+                )
+
+            if from_version < 15:
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS activity_meeting_candidates (
+                        id TEXT PRIMARY KEY,
+                        source_connector_id TEXT NOT NULL,
+                        source_activity_record_id INTEGER REFERENCES activity_records(id) ON DELETE SET NULL,
+                        title TEXT NOT NULL,
+                        starts_at TEXT,
+                        ends_at TEXT,
+                        meeting_url TEXT,
+                        confidence REAL NOT NULL DEFAULT 0,
+                        status TEXT NOT NULL DEFAULT 'candidate',
+                        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                    )
+                    """
+                )
+                conn.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_activity_meeting_candidates_time
+                    ON activity_meeting_candidates(starts_at, status)
+                    """
+                )
+                conn.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_activity_meeting_candidates_connector
+                    ON activity_meeting_candidates(source_connector_id, created_at DESC)
                     """
                 )
 
@@ -4743,6 +4813,150 @@ class MeetingDatabase:
             cursor = conn.execute(query, params)
             return int(cursor.rowcount if cursor.rowcount is not None else 0)
 
+    def create_activity_meeting_candidate(
+        self,
+        *,
+        source_connector_id: str,
+        title: str,
+        source_activity_record_id: Optional[int] = None,
+        starts_at: Optional[datetime] = None,
+        ends_at: Optional[datetime] = None,
+        meeting_url: Optional[str] = None,
+        confidence: float = 0.0,
+        status: str = "candidate",
+        candidate_id: Optional[str] = None,
+    ) -> ActivityMeetingCandidate:
+        """Persist one local meeting candidate from an enrichment connector."""
+        clean_connector = str(source_connector_id or "").strip()
+        if not clean_connector:
+            raise ValueError("source_connector_id is required")
+        clean_title = str(title or "").strip()
+        if not clean_title:
+            raise ValueError("title is required")
+        clean_status = self._normalize_activity_meeting_candidate_status(status)
+        record_id = int(source_activity_record_id) if source_activity_record_id is not None else None
+        clean_id = str(candidate_id or f"amc-{uuid.uuid4().hex[:12]}").strip()
+        now_iso = datetime.now().isoformat()
+        with self._connection() as conn:
+            if record_id is not None:
+                exists = conn.execute(
+                    "SELECT 1 FROM activity_records WHERE id = ?",
+                    (record_id,),
+                ).fetchone()
+                if exists is None:
+                    raise ValueError(f"activity record not found: {record_id}")
+            conn.execute(
+                """
+                INSERT INTO activity_meeting_candidates (
+                    id, source_connector_id, source_activity_record_id, title,
+                    starts_at, ends_at, meeting_url, confidence, status,
+                    created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    clean_id,
+                    clean_connector,
+                    record_id,
+                    clean_title,
+                    self._activity_time_to_iso(starts_at),
+                    self._activity_time_to_iso(ends_at),
+                    str(meeting_url).strip() if meeting_url not in (None, "") else None,
+                    max(0.0, min(1.0, float(confidence))),
+                    clean_status,
+                    now_iso,
+                    now_iso,
+                ),
+            )
+            row = conn.execute(
+                "SELECT * FROM activity_meeting_candidates WHERE id = ?",
+                (clean_id,),
+            ).fetchone()
+            return self._row_to_activity_meeting_candidate(row)
+
+    def list_activity_meeting_candidates(
+        self,
+        *,
+        source_connector_id: Optional[str] = None,
+        status: Optional[str] = None,
+        limit: int = 100,
+    ) -> list[ActivityMeetingCandidate]:
+        """List local meeting candidates."""
+        where: list[str] = []
+        params: list[Any] = []
+        if source_connector_id:
+            where.append("source_connector_id = ?")
+            params.append(str(source_connector_id).strip())
+        if status:
+            where.append("status = ?")
+            params.append(self._normalize_activity_meeting_candidate_status(status))
+        query = "SELECT * FROM activity_meeting_candidates"
+        if where:
+            query += " WHERE " + " AND ".join(where)
+        query += " ORDER BY starts_at ASC, created_at DESC, id DESC LIMIT ?"
+        params.append(max(1, min(int(limit), 5000)))
+        with self._connection() as conn:
+            rows = conn.execute(query, params).fetchall()
+            return [self._row_to_activity_meeting_candidate(row) for row in rows]
+
+    def update_activity_meeting_candidate_status(
+        self,
+        candidate_id: str,
+        status: str,
+    ) -> Optional[ActivityMeetingCandidate]:
+        """Update one meeting candidate status."""
+        clean_id = str(candidate_id or "").strip()
+        if not clean_id:
+            return None
+        clean_status = self._normalize_activity_meeting_candidate_status(status)
+        with self._connection() as conn:
+            cursor = conn.execute(
+                """
+                UPDATE activity_meeting_candidates
+                SET status = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (clean_status, datetime.now().isoformat(), clean_id),
+            )
+            if not cursor.rowcount:
+                return None
+            row = conn.execute(
+                "SELECT * FROM activity_meeting_candidates WHERE id = ?",
+                (clean_id,),
+            ).fetchone()
+            return self._row_to_activity_meeting_candidate(row)
+
+    def delete_activity_meeting_candidates(
+        self,
+        *,
+        source_connector_id: Optional[str] = None,
+        status: Optional[str] = None,
+    ) -> int:
+        """Delete local meeting candidates by connector or status."""
+        where: list[str] = []
+        params: list[Any] = []
+        if source_connector_id:
+            where.append("source_connector_id = ?")
+            params.append(str(source_connector_id).strip())
+        if status:
+            where.append("status = ?")
+            params.append(self._normalize_activity_meeting_candidate_status(status))
+        query = "DELETE FROM activity_meeting_candidates"
+        if where:
+            query += " WHERE " + " AND ".join(where)
+        with self._connection() as conn:
+            cursor = conn.execute(query, params)
+            return int(cursor.rowcount if cursor.rowcount is not None else 0)
+
+    def _normalize_activity_meeting_candidate_status(self, status: object) -> str:
+        clean_status = str(status or "").strip().lower()
+        if clean_status not in VALID_ACTIVITY_MEETING_CANDIDATE_STATUSES:
+            raise ValueError(
+                "activity meeting candidate status must be one of "
+                f"{sorted(VALID_ACTIVITY_MEETING_CANDIDATE_STATUSES)}"
+            )
+        return clean_status
+
     def _row_to_activity_record(self, row: sqlite3.Row) -> ActivityRecord:
         return ActivityRecord(
             id=int(row["id"]),
@@ -4760,6 +4974,28 @@ class MeetingDatabase:
             entity_type=row["entity_type"],
             entity_id=row["entity_id"],
             project_id=row["project_id"],
+            created_at=datetime.fromisoformat(row["created_at"]),
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
+
+    def _row_to_activity_meeting_candidate(
+        self,
+        row: sqlite3.Row,
+    ) -> ActivityMeetingCandidate:
+        return ActivityMeetingCandidate(
+            id=str(row["id"]),
+            source_connector_id=str(row["source_connector_id"]),
+            source_activity_record_id=(
+                int(row["source_activity_record_id"])
+                if row["source_activity_record_id"] is not None
+                else None
+            ),
+            title=str(row["title"]),
+            starts_at=datetime.fromisoformat(row["starts_at"]) if row["starts_at"] else None,
+            ends_at=datetime.fromisoformat(row["ends_at"]) if row["ends_at"] else None,
+            meeting_url=row["meeting_url"],
+            confidence=float(row["confidence"] or 0),
+            status=str(row["status"]),
             created_at=datetime.fromisoformat(row["created_at"]),
             updated_at=datetime.fromisoformat(row["updated_at"]),
         )
