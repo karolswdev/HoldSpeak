@@ -1,6 +1,6 @@
 # Phase 8 - Local Activity Intelligence
 
-**Last updated:** 2026-04-26 (HS-8-02 done - activity ledger persistence and checkpoints added).
+**Last updated:** 2026-04-26 (HS-8-03 done - Safari and Firefox history readers import into the activity ledger).
 
 ## Goal
 
@@ -45,7 +45,7 @@ deletable.
 |---|---|---|---|---|
 | HS-8-01 | Browser history source audit | done | [story-01-browser-history-source-audit.md](./story-01-browser-history-source-audit.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-8-02 | Activity ledger persistence | done | [story-02-activity-ledger-persistence.md](./story-02-activity-ledger-persistence.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-8-03 | Safari and Firefox history readers | backlog | [story-03-browser-history-readers.md](./story-03-browser-history-readers.md) | pending |
+| HS-8-03 | Safari and Firefox history readers | done | [story-03-browser-history-readers.md](./story-03-browser-history-readers.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-8-04 | Work entity extractors | backlog | [story-04-work-entity-extractors.md](./story-04-work-entity-extractors.md) | pending |
 | HS-8-05 | Project activity linking and surface | backlog | [story-05-project-activity-surface.md](./story-05-project-activity-surface.md) | pending |
 | HS-8-06 | Privacy controls and retention | backlog | [story-06-privacy-controls.md](./story-06-privacy-controls.md) | pending |
@@ -53,20 +53,26 @@ deletable.
 
 ## Where We Are
 
-Phase 8 has completed its source audit and local ledger foundation.
-HS-8-01 confirmed Safari history is available locally as a WAL-mode
-SQLite database under `~/Library/Safari/History.db`, with URL metadata in
-`history_items` and visit/title metadata in `history_visits`. Firefox is
-not installed in the standard local profile locations on this machine,
-so HS-8-03 must use fixture `places.sqlite` databases to confirm exact
-columns while targeting Mozilla Places' `moz_places` plus
-`moz_historyvisits` model.
+Phase 8 has completed its source audit, local ledger foundation, and
+first browser-history readers. HS-8-01 confirmed Safari history is
+available locally as a WAL-mode SQLite database under
+`~/Library/Safari/History.db`, with URL metadata in `history_items` and
+visit/title metadata in `history_visits`. Firefox is not installed in
+the standard local profile locations on this machine, so HS-8-03 used
+fixture `places.sqlite` databases to validate the expected Mozilla
+Places-style `moz_places` plus `moz_historyvisits` model.
 
 HS-8-02 added normalized `activity_records` persistence, per-source
 `activity_import_checkpoints`, deduplication by normalized URL or
 extracted entity, raw source timestamp retention, and deletion primitives
-for clear/retention controls. The next story can import real browser
-metadata into the ledger without expanding the DB contract.
+for clear/retention controls. HS-8-03 added default-enabled local source
+discovery, read-only temp-copy imports for Safari and Firefox, WAL/SHM
+companion copying, browser timestamp normalization, checkpoint-based
+incremental imports, and fixture coverage.
+
+The next story should make imported records useful by extracting work
+entities such as Jira tickets, Miro boards, GitHub PRs/issues, docs, and
+generic domains.
 
 ## Initial Hypothesis
 

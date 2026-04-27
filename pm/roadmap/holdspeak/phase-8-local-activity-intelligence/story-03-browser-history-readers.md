@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 8
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-8-01, HS-8-02
 - **Unblocks:** actual local activity ingestion
 - **Owner:** unassigned
@@ -31,14 +31,19 @@ privacy controls exist.
 
 ## Acceptance Criteria
 
-- [ ] Safari fixture history imports into the ledger.
-- [ ] Firefox fixture history imports into the ledger.
-- [ ] Locked/live database strategy is safe and read-only.
-- [ ] WAL-mode databases are copied with companion files where present.
-- [ ] Readable sources are enabled by default.
-- [ ] Incremental import avoids reimport churn.
-- [ ] Focused and full tests pass.
+- [x] Safari fixture history imports into the ledger.
+- [x] Firefox fixture history imports into the ledger.
+- [x] Locked/live database strategy is safe and read-only.
+- [x] WAL-mode databases are copied with companion files where present.
+- [x] Readable sources are enabled by default.
+- [x] Incremental import avoids reimport churn.
+- [x] Focused and full tests pass.
 
 ## Test Plan
 
-- To be finalized after HS-8-02.
+- `uv run pytest -q tests/unit/test_activity_history.py tests/unit/test_db.py`
+- `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py`
+
+## Evidence
+
+- [evidence-story-03.md](./evidence-story-03.md)
