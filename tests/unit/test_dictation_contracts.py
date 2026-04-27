@@ -27,6 +27,7 @@ def test_utterance_construction_and_immutability():
     assert utt.audio_duration_s == 1.25
     assert utt.transcribed_at == ts
     assert utt.project == {"name": "holdspeak"}
+    assert utt.activity == {}
 
     with pytest.raises(FrozenInstanceError):
         utt.raw_text = "mutated"  # type: ignore[misc]

@@ -257,6 +257,7 @@ class HoldSpeakController:
             return text
 
         try:
+            from holdspeak.activity_context import build_activity_context
             from holdspeak.plugins.dictation.contracts import Utterance
 
             utt = Utterance(
@@ -264,6 +265,7 @@ class HoldSpeakController:
                 audio_duration_s=audio_duration_s,
                 transcribed_at=transcribed_at,
                 project=self._dictation_project,
+                activity=build_activity_context(limit=20, refresh=False).to_dict(),
             )
             run = pipeline.run(utt)
             return run.final_text

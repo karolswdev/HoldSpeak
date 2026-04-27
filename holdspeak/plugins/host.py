@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 import hashlib
@@ -117,6 +118,7 @@ class PluginHost:
         default_timeout_seconds: float = 2.0,
         enabled_capabilities: set[str] | None = None,
         allow_actuators: bool = False,
+        context_providers: list[Callable[[dict[str, Any]], dict[str, Any]]] | None = None,
     ) -> None:
         self._plugins: dict[str, HostPlugin] = {}
         self._default_timeout_seconds = max(0.01, float(default_timeout_seconds))
@@ -127,6 +129,7 @@ class PluginHost:
             for cap in (enabled_capabilities or set())
             if str(cap).strip()
         }
+        self._context_providers = list(context_providers or [])
         self._deferred_lock = Lock()
         self._deferred_runs: list[DeferredPluginRun] = []
         self._deferred_keys: set[str] = set()
@@ -172,6 +175,13 @@ class PluginHost:
         if not hasattr(plugin, "run"):
             raise ValueError("Plugin must implement run(context)")
         self._plugins[plugin_id] = plugin
+
+    def register_context_provider(
+        self,
+        provider: Callable[[dict[str, Any]], dict[str, Any]],
+    ) -> None:
+        """Register a callable that enriches every plugin context."""
+        self._context_providers.append(provider)
 
     def get_plugin(self, plugin_id: str) -> HostPlugin | None:
         return self._plugins.get(str(plugin_id))
@@ -220,6 +230,18 @@ class PluginHost:
             if any(token in normalized for token in _SENSITIVE_KEY_TOKENS):
                 redacted.append(str(key))
         return sorted(redacted)
+
+    def _enrich_context(self, context: dict[str, Any]) -> dict[str, Any]:
+        enriched = dict(context)
+        for provider in self._context_providers:
+            try:
+                provided = provider(dict(enriched))
+            except Exception as exc:
+                log.warning("Plugin context provider failed: %s", exc)
+                continue
+            if isinstance(provided, dict):
+                enriched.update(provided)
+        return enriched
 
     def _log_event(
         self,
@@ -309,6 +331,8 @@ class PluginHost:
         plugin = self.get_plugin(plugin_id)
         if plugin is None:
             raise KeyError(f"Unknown plugin: {plugin_id}")
+
+        context = self._enrich_context(context)
 
         key = build_idempotency_key(
             meeting_id=meeting_id,

@@ -69,7 +69,10 @@ def run_web_runtime(
     meeting_session: Optional[MeetingSession] = None
     transcription_lock = threading.Lock()
     text_processor = TextProcessor()
+    from .activity_context import ActivityContextProvider
+
     plugin_host = PluginHost(default_timeout_seconds=0.35)
+    plugin_host.register_context_provider(ActivityContextProvider(refresh=True, refresh_once=True))
     register_builtin_plugins(plugin_host)
 
     # Project knowledge-base detector (runs first in every chain)

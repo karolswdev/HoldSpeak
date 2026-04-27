@@ -27,6 +27,7 @@ class Utterance:
     audio_duration_s: float
     transcribed_at: datetime
     project: ProjectContext | None = None
+    activity: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
