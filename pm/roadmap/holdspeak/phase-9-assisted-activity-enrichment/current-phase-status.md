@@ -1,6 +1,6 @@
 # Phase 9 - Assisted Activity Enrichment
 
-**Last updated:** 2026-04-27 (HS-9-07 meeting candidate API shipped).
+**Last updated:** 2026-04-27 (HS-9-08 meeting candidate browser controls shipped).
 
 ## Goal
 
@@ -38,6 +38,7 @@ metadata without hidden collection or external writes.
 | HS-9-05 | Jira CLI enrichment annotations | backlog | [story-05-jira-cli-enrichment.md](./story-05-jira-cli-enrichment.md) | pending |
 | HS-9-06 | Assisted enrichment controls + phase exit | backlog | [story-06-controls-dod.md](./story-06-controls-dod.md) | pending |
 | HS-9-07 | Meeting candidate API surface | done | [story-07-meeting-candidate-api.md](./story-07-meeting-candidate-api.md) | [evidence-story-07.md](./evidence-story-07.md) |
+| HS-9-08 | Meeting candidate browser controls | done | [story-08-meeting-candidate-browser-controls.md](./story-08-meeting-candidate-browser-controls.md) | [evidence-story-08.md](./evidence-story-08.md) |
 
 ## Where We Are
 
@@ -57,6 +58,11 @@ HS-9-07 made those candidates directly testable through the local web API:
 preview, persist, list, update status, and delete. The API stays local to
 existing ledger data and does not introduce cloud calls or automatic
 recording.
+
+HS-9-08 added browser controls to `/activity` for the same candidate
+workflow: preview candidates from local activity, save a candidate,
+refresh saved candidates, arm/dismiss/reset status, and clear dismissed
+candidates.
 
 ## Source Design
 

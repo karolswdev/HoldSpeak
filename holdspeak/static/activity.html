@@ -144,7 +144,7 @@
         min-height: 38px;
         color: var(--muted);
       }
-      .rule-list, .preview-list {
+      .rule-list, .preview-list, .candidate-list {
         display: grid;
         gap: 8px;
         margin-top: 12px;
@@ -312,6 +312,17 @@
           </section>
 
           <section class="panel">
+            <h2>Meeting Candidates</h2>
+            <div class="button-row">
+              <button id="preview-candidates" type="button">Preview</button>
+              <button id="refresh-candidates" type="button">Refresh saved</button>
+              <button id="clear-dismissed-candidates" class="danger" type="button">Clear dismissed</button>
+            </div>
+            <div id="candidate-preview" class="candidate-list"></div>
+            <div id="meeting-candidates" class="candidate-list"></div>
+          </section>
+
+          <section class="panel">
             <h2>Recent Activity</h2>
             <div id="records" class="records"></div>
           </section>
@@ -320,7 +331,14 @@
     </main>
 
     <script>
-      const state = { status: null, activity: null, projects: [], rules: [] };
+      const state = {
+        status: null,
+        activity: null,
+        projects: [],
+        rules: [],
+        candidatePreviews: [],
+        meetingCandidates: [],
+      };
       const $ = (id) => document.getElementById(id);
 
       async function request(path, options = {}) {
@@ -430,6 +448,56 @@
           : `<div class="empty">No imported activity yet.</div>`;
       }
 
+      function renderCandidatePreviews() {
+        const previews = state.candidatePreviews || [];
+        $("candidate-preview").innerHTML = previews.length
+          ? previews.map((candidate, index) => `
+              <article class="rule-item">
+                <div class="record-top">
+                  <div>
+                    <div class="record-title">${escapeHtml(candidate.title)}</div>
+                    <div class="record-meta">
+                      ${escapeHtml(candidate.source_connector_id)} · confidence ${Number(candidate.confidence || 0).toFixed(2)}
+                      <br />
+                      ${escapeHtml(candidate.meeting_url || "")}
+                    </div>
+                  </div>
+                  <div class="tag">preview</div>
+                </div>
+                <div class="rule-actions">
+                  <button type="button" data-save-candidate="${index}">Save</button>
+                </div>
+              </article>
+            `).join("")
+          : `<div class="empty">No candidate previews loaded.</div>`;
+      }
+
+      function renderMeetingCandidates() {
+        const candidates = state.meetingCandidates || [];
+        $("meeting-candidates").innerHTML = candidates.length
+          ? candidates.map((candidate) => `
+              <article class="rule-item">
+                <div class="record-top">
+                  <div>
+                    <div class="record-title">${escapeHtml(candidate.title)}</div>
+                    <div class="record-meta">
+                      ${escapeHtml(candidate.source_connector_id)} · confidence ${Number(candidate.confidence || 0).toFixed(2)}
+                      <br />
+                      ${escapeHtml(candidate.meeting_url || "")}
+                    </div>
+                  </div>
+                  <div class="tag">${escapeHtml(candidate.status)}</div>
+                </div>
+                <div class="rule-actions">
+                  <button type="button" data-candidate-status="armed" data-candidate-id="${escapeHtml(candidate.id)}">Arm</button>
+                  <button type="button" data-candidate-status="dismissed" data-candidate-id="${escapeHtml(candidate.id)}">Dismiss</button>
+                  <button type="button" data-candidate-status="candidate" data-candidate-id="${escapeHtml(candidate.id)}">Reset</button>
+                </div>
+              </article>
+            `).join("")
+          : `<div class="empty">No saved meeting candidates.</div>`;
+      }
+
       function resetRuleForm() {
         $("rule-id").value = "";
         $("rule-name").value = "";
@@ -478,19 +546,23 @@
 
       async function load() {
         try {
-          const [status, activity, projects, rules] = await Promise.all([
+          const [status, activity, projects, rules, candidates] = await Promise.all([
             request("/api/activity/status"),
             request("/api/activity/records?limit=100"),
             request("/api/projects"),
             request("/api/activity/project-rules"),
+            request("/api/activity/meeting-candidates"),
           ]);
           state.status = status;
           state.activity = activity;
           state.projects = projects.projects || [];
           state.rules = rules.rules || [];
+          state.meetingCandidates = candidates.candidates || [];
           renderStatus();
           renderProjects();
           renderRules();
+          renderCandidatePreviews();
+          renderMeetingCandidates();
           renderRecords();
           setMessage("");
         } catch (error) {
@@ -645,6 +717,80 @@
           await request(`/api/activity/project-rules/${encodeURIComponent(id)}`, { method: "DELETE" });
           resetRuleForm();
           setMessage("Project rule deleted.");
+          await load();
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+
+      $("preview-candidates").addEventListener("click", async () => {
+        try {
+          const payload = await request("/api/activity/meeting-candidates/preview");
+          state.candidatePreviews = payload.candidates || [];
+          renderCandidatePreviews();
+          setMessage(`${payload.count || 0} meeting candidates found.`);
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+
+      $("refresh-candidates").addEventListener("click", async () => {
+        try {
+          const payload = await request("/api/activity/meeting-candidates");
+          state.meetingCandidates = payload.candidates || [];
+          renderMeetingCandidates();
+          setMessage(`${payload.count || 0} saved meeting candidates.`);
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+
+      $("candidate-preview").addEventListener("click", async (event) => {
+        const button = event.target.closest("[data-save-candidate]");
+        if (!button) return;
+        const candidate = state.candidatePreviews[Number(button.getAttribute("data-save-candidate"))];
+        if (!candidate) return;
+        try {
+          await request("/api/activity/meeting-candidates", {
+            method: "POST",
+            body: JSON.stringify({
+              source_connector_id: candidate.source_connector_id,
+              source_activity_record_id: candidate.source_activity_record_id,
+              title: candidate.title,
+              starts_at: candidate.starts_at,
+              ends_at: candidate.ends_at,
+              meeting_url: candidate.meeting_url,
+              confidence: candidate.confidence,
+            }),
+          });
+          setMessage("Meeting candidate saved.");
+          await load();
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+
+      $("meeting-candidates").addEventListener("click", async (event) => {
+        const button = event.target.closest("[data-candidate-status]");
+        if (!button) return;
+        const id = button.getAttribute("data-candidate-id");
+        const status = button.getAttribute("data-candidate-status");
+        try {
+          await request(`/api/activity/meeting-candidates/${encodeURIComponent(id)}/status`, {
+            method: "PUT",
+            body: JSON.stringify({ status }),
+          });
+          setMessage(`Meeting candidate marked ${status}.`);
+          await load();
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+
+      $("clear-dismissed-candidates").addEventListener("click", async () => {
+        try {
+          const payload = await request("/api/activity/meeting-candidates?status=dismissed", { method: "DELETE" });
+          setMessage(`${payload.deleted || 0} dismissed candidates cleared.`);
           await load();
         } catch (error) {
           setMessage(error.message, true);
