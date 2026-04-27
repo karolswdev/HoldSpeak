@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-27 (HS-9-08 meeting candidate browser controls shipped).
+**Last updated:** 2026-04-27 (Phase 9 polish and Phase 10 connector ecosystem stories scoped).
 **Current phase:** [phase-9-assisted-activity-enrichment](./phase-9-assisted-activity-enrichment/) — build optional local enrichment connectors on top of the activity ledger.
 **Status:** in-progress.
 
@@ -46,6 +46,7 @@ canon, canon wins.
 | 7 | Local handoff exports: make reviewed meeting work portable as local Markdown/JSON outputs | done | [phase-7-local-handoff-exports](./phase-7-local-handoff-exports/) |
 | 8 | Local activity intelligence: mine Safari/Firefox history metadata into a private default-on work-context ledger | done | [phase-8-local-activity-intelligence](./phase-8-local-activity-intelligence/) |
 | 9 | Assisted activity enrichment: add opt-in local connectors, annotations, and meeting candidates | in-progress | [phase-9-assisted-activity-enrichment](./phase-9-assisted-activity-enrichment/) |
+| 10 | Local connector ecosystem: reusable manifests, fixtures, first-party connector packs, and developer docs | planning | [phase-10-local-connector-ecosystem](./phase-10-local-connector-ecosystem/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

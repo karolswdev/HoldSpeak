@@ -1,6 +1,6 @@
 # Phase 9 - Assisted Activity Enrichment
 
-**Last updated:** 2026-04-27 (HS-9-08 meeting candidate browser controls shipped).
+**Last updated:** 2026-04-27 (Phase 9 polish and ecosystem runway scoped).
 
 ## Goal
 
@@ -39,6 +39,11 @@ metadata without hidden collection or external writes.
 | HS-9-06 | Assisted enrichment controls + phase exit | backlog | [story-06-controls-dod.md](./story-06-controls-dod.md) | pending |
 | HS-9-07 | Meeting candidate API surface | done | [story-07-meeting-candidate-api.md](./story-07-meeting-candidate-api.md) | [evidence-story-07.md](./evidence-story-07.md) |
 | HS-9-08 | Meeting candidate browser controls | done | [story-08-meeting-candidate-browser-controls.md](./story-08-meeting-candidate-browser-controls.md) | [evidence-story-08.md](./evidence-story-08.md) |
+| HS-9-09 | Meeting candidate dedupe and time hints | backlog | [story-09-candidate-dedupe-time-hints.md](./story-09-candidate-dedupe-time-hints.md) | pending |
+| HS-9-10 | Meeting candidate recording workflow | backlog | [story-10-candidate-recording-workflow.md](./story-10-candidate-recording-workflow.md) | pending |
+| HS-9-11 | Activity dashboard polish | backlog | [story-11-activity-dashboard-polish.md](./story-11-activity-dashboard-polish.md) | pending |
+| HS-9-12 | Connector controls and output deletion | backlog | [story-12-connector-controls-output-deletion.md](./story-12-connector-controls-output-deletion.md) | pending |
+| HS-9-13 | Connector dry-run harness | backlog | [story-13-connector-dry-run-harness.md](./story-13-connector-dry-run-harness.md) | pending |
 
 ## Where We Are
 
@@ -63,6 +68,14 @@ HS-9-08 added browser controls to `/activity` for the same candidate
 workflow: preview candidates from local activity, save a candidate,
 refresh saved candidates, arm/dismiss/reset status, and clear dismissed
 candidates.
+
+The next polishing work is now explicitly scoped. HS-9-09 makes candidate
+results less noisy through dedupe and simple time hints. HS-9-10 connects
+armed candidates to a visible recording workflow. HS-9-11 improves the
+`/activity` user experience around empty states, saved/previewed
+candidates, and repeated actions. HS-9-12 adds connector-level controls
+and output deletion. HS-9-13 adds a dry-run harness so connector behavior
+can be tested without mutating the ledger.
 
 ## Source Design
 
