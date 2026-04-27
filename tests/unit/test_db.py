@@ -18,6 +18,8 @@ from holdspeak.db import (
     ActivityRecord,
     ActivityImportCheckpoint,
     ActivityProjectRule,
+    ActivityEnrichmentConnectorState,
+    ActivityAnnotation,
     reset_database,
 )
 from holdspeak.meeting_session import (
@@ -930,6 +932,72 @@ class TestActivityLedgerPersistence:
         assert db.list_activity_project_rules(include_disabled=True) == [updated]
         assert db.delete_activity_project_rule(rule.id) is True
         assert db.list_activity_project_rules(include_disabled=True) == []
+
+    def test_activity_enrichment_connector_state_round_trips(self, db):
+        run_at = datetime(2026, 4, 27, 10, 30, 0)
+
+        state = db.upsert_activity_enrichment_connector(
+            connector_id="gh",
+            enabled=True,
+            settings={"timeout_seconds": 4, "max_bytes": 2048},
+            last_error="not run yet",
+        )
+
+        assert isinstance(state, ActivityEnrichmentConnectorState)
+        assert state.id == "gh"
+        assert state.enabled is True
+        assert state.settings == {"timeout_seconds": 4, "max_bytes": 2048}
+        assert state.last_error == "not run yet"
+
+        updated = db.record_activity_enrichment_run(
+            connector_id="gh",
+            last_run_at=run_at,
+        )
+
+        assert updated.enabled is True
+        assert updated.settings == {"timeout_seconds": 4, "max_bytes": 2048}
+        assert updated.last_run_at == run_at
+        assert updated.last_error is None
+        assert db.list_activity_enrichment_connectors() == [updated]
+
+    def test_activity_annotations_attach_to_records_and_delete_by_connector(self, db):
+        record = db.upsert_activity_record(
+            source_browser="safari",
+            url="https://github.com/openai/codex/pull/42",
+            title="PR 42",
+            domain="github.com",
+            entity_type="github_pull_request",
+            entity_id="openai/codex#42",
+        )
+
+        annotation = db.create_activity_annotation(
+            activity_record_id=record.id,
+            source_connector_id="gh",
+            annotation_type="github_pr",
+            title="Add enrichment substrate",
+            value={"state": "OPEN", "labels": ["activity"]},
+            confidence=1.5,
+        )
+
+        assert isinstance(annotation, ActivityAnnotation)
+        assert annotation.activity_record_id == record.id
+        assert annotation.source_connector_id == "gh"
+        assert annotation.annotation_type == "github_pr"
+        assert annotation.value == {"state": "OPEN", "labels": ["activity"]}
+        assert annotation.confidence == 1.0
+        assert db.list_activity_annotations(activity_record_id=record.id) == [annotation]
+        assert db.list_activity_annotations(source_connector_id="gh") == [annotation]
+
+        assert db.delete_activity_annotations(source_connector_id="gh") == 1
+        assert db.list_activity_annotations(source_connector_id="gh") == []
+
+    def test_activity_annotations_validate_record_reference(self, db):
+        with pytest.raises(ValueError, match="activity record not found"):
+            db.create_activity_annotation(
+                activity_record_id=999,
+                source_connector_id="gh",
+                annotation_type="github_pr",
+            )
 
 
 class TestDeferredIntelQueue:

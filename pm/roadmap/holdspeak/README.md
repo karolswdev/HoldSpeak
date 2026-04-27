@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-27 (Phase 8 local activity intelligence complete).
-**Current phase:** [phase-8-local-activity-intelligence](./phase-8-local-activity-intelligence/) — complete.
-**Status:** done.
+**Last updated:** 2026-04-27 (Phase 9 opened with connector registry and annotation persistence).
+**Current phase:** [phase-9-assisted-activity-enrichment](./phase-9-assisted-activity-enrichment/) — build optional local enrichment connectors on top of the activity ledger.
+**Status:** in-progress.
 
 ## Vision
 
@@ -29,6 +29,7 @@ canon, canon wins.
 - `docs/PLAN_PHASE_MULTI_INTENT_ROUTING.md` — sibling phase: meeting-side multi-intent routing (MIR-01).
 - `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` — DIR-01 spec for the dictation pipeline.
 - `docs/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md` — web-first runtime migration.
+- `docs/PLAN_ACTIVITY_ASSISTED_ENRICHMENT.md` — local activity assisted enrichment design.
 - `pyproject.toml` — package contract; the source of truth for installable extras.
 
 ## Phase index
@@ -44,6 +45,7 @@ canon, canon wins.
 | 6 | Action follow-through: make meeting action items and artifacts reviewable and traceable | done | [phase-6-action-follow-through](./phase-6-action-follow-through/) |
 | 7 | Local handoff exports: make reviewed meeting work portable as local Markdown/JSON outputs | done | [phase-7-local-handoff-exports](./phase-7-local-handoff-exports/) |
 | 8 | Local activity intelligence: mine Safari/Firefox history metadata into a private default-on work-context ledger | done | [phase-8-local-activity-intelligence](./phase-8-local-activity-intelligence/) |
+| 9 | Assisted activity enrichment: add opt-in local connectors, annotations, and meeting candidates | in-progress | [phase-9-assisted-activity-enrichment](./phase-9-assisted-activity-enrichment/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

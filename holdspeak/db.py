@@ -21,7 +21,7 @@ VALID_ACTION_ITEM_REVIEW_STATES = frozenset({"pending", "accepted"})
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 13
+SCHEMA_VERSION = 14
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -412,6 +412,34 @@ CREATE INDEX IF NOT EXISTS idx_activity_project_rules_enabled
 ON activity_project_rules(enabled, priority DESC, created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_activity_project_rules_project
 ON activity_project_rules(project_id, priority DESC);
+
+-- Assisted activity enrichment connector state and local annotations
+CREATE TABLE IF NOT EXISTS activity_enrichment_connectors (
+    id TEXT PRIMARY KEY,
+    enabled INTEGER NOT NULL DEFAULT 0,
+    settings_json TEXT NOT NULL DEFAULT '{}',
+    last_run_at TEXT,
+    last_error TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS activity_annotations (
+    id TEXT PRIMARY KEY,
+    activity_record_id INTEGER REFERENCES activity_records(id) ON DELETE CASCADE,
+    source_connector_id TEXT NOT NULL,
+    annotation_type TEXT NOT NULL,
+    title TEXT NOT NULL DEFAULT '',
+    value_json TEXT NOT NULL DEFAULT '{}',
+    confidence REAL NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_activity_annotations_record
+ON activity_annotations(activity_record_id, annotation_type);
+CREATE INDEX IF NOT EXISTS idx_activity_annotations_connector
+ON activity_annotations(source_connector_id, created_at DESC);
 """
 
 
@@ -648,6 +676,34 @@ class ActivityProjectRule:
     match_type: str
     pattern: str
     entity_type: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass
+class ActivityEnrichmentConnectorState:
+    """Persisted state for an optional activity enrichment connector."""
+
+    id: str
+    enabled: bool
+    settings: dict[str, Any]
+    last_run_at: Optional[datetime]
+    last_error: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass
+class ActivityAnnotation:
+    """Local enrichment annotation attached to an activity record or entity."""
+
+    id: str
+    activity_record_id: Optional[int]
+    source_connector_id: str
+    annotation_type: str
+    title: str
+    value: dict[str, Any]
+    confidence: float
     created_at: datetime
     updated_at: datetime
 
@@ -1149,6 +1205,48 @@ class MeetingDatabase:
                     """
                     CREATE INDEX IF NOT EXISTS idx_activity_project_rules_project
                     ON activity_project_rules(project_id, priority DESC)
+                    """
+                )
+
+            if from_version < 14:
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS activity_enrichment_connectors (
+                        id TEXT PRIMARY KEY,
+                        enabled INTEGER NOT NULL DEFAULT 0,
+                        settings_json TEXT NOT NULL DEFAULT '{}',
+                        last_run_at TEXT,
+                        last_error TEXT,
+                        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                    )
+                    """
+                )
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS activity_annotations (
+                        id TEXT PRIMARY KEY,
+                        activity_record_id INTEGER REFERENCES activity_records(id) ON DELETE CASCADE,
+                        source_connector_id TEXT NOT NULL,
+                        annotation_type TEXT NOT NULL,
+                        title TEXT NOT NULL DEFAULT '',
+                        value_json TEXT NOT NULL DEFAULT '{}',
+                        confidence REAL NOT NULL DEFAULT 0,
+                        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                    )
+                    """
+                )
+                conn.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_activity_annotations_record
+                    ON activity_annotations(activity_record_id, annotation_type)
+                    """
+                )
+                conn.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_activity_annotations_connector
+                    ON activity_annotations(source_connector_id, created_at DESC)
                     """
                 )
 
@@ -4428,6 +4526,223 @@ class MeetingDatabase:
             clean_pattern = clean_pattern.lower()
         return clean_match_type, clean_pattern, clean_entity_type
 
+    def upsert_activity_enrichment_connector(
+        self,
+        *,
+        connector_id: str,
+        enabled: Optional[bool] = None,
+        settings: Optional[dict[str, Any]] = None,
+        last_run_at: Optional[datetime] = None,
+        last_error: Optional[str] = None,
+    ) -> ActivityEnrichmentConnectorState:
+        """Create or update persisted state for one enrichment connector."""
+        clean_id = str(connector_id or "").strip()
+        if not clean_id:
+            raise ValueError("connector_id is required")
+        current = self.get_activity_enrichment_connector(clean_id)
+        next_enabled = bool(enabled) if enabled is not None else (current.enabled if current else False)
+        next_settings = settings if settings is not None else (current.settings if current else {})
+        now_iso = datetime.now().isoformat()
+        last_run_iso = (
+            last_run_at.isoformat()
+            if isinstance(last_run_at, datetime)
+            else (current.last_run_at.isoformat() if current and current.last_run_at else None)
+        )
+        clean_error = (
+            str(last_error)
+            if last_error not in (None, "")
+            else (current.last_error if current and last_error is None else None)
+        )
+        with self._connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO activity_enrichment_connectors (
+                    id, enabled, settings_json, last_run_at, last_error,
+                    created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    enabled = excluded.enabled,
+                    settings_json = excluded.settings_json,
+                    last_run_at = excluded.last_run_at,
+                    last_error = excluded.last_error,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    clean_id,
+                    int(next_enabled),
+                    self._json_dumps(next_settings or {}, fallback="{}"),
+                    last_run_iso,
+                    clean_error,
+                    now_iso,
+                    now_iso,
+                ),
+            )
+        state = self.get_activity_enrichment_connector(clean_id)
+        if state is None:
+            raise RuntimeError("activity enrichment connector was not created")
+        return state
+
+    def get_activity_enrichment_connector(
+        self,
+        connector_id: str,
+    ) -> Optional[ActivityEnrichmentConnectorState]:
+        """Load persisted state for one enrichment connector."""
+        clean_id = str(connector_id or "").strip()
+        if not clean_id:
+            return None
+        with self._connection() as conn:
+            row = conn.execute(
+                """
+                SELECT *
+                FROM activity_enrichment_connectors
+                WHERE id = ?
+                """,
+                (clean_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            return self._row_to_activity_enrichment_connector(row)
+
+    def list_activity_enrichment_connectors(self) -> list[ActivityEnrichmentConnectorState]:
+        """List persisted enrichment connector states."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT *
+                FROM activity_enrichment_connectors
+                ORDER BY id ASC
+                """
+            ).fetchall()
+            return [self._row_to_activity_enrichment_connector(row) for row in rows]
+
+    def record_activity_enrichment_run(
+        self,
+        *,
+        connector_id: str,
+        last_run_at: Optional[datetime] = None,
+        last_error: Optional[str] = None,
+    ) -> ActivityEnrichmentConnectorState:
+        """Persist the latest run result for one enrichment connector."""
+        state = self.get_activity_enrichment_connector(connector_id)
+        return self.upsert_activity_enrichment_connector(
+            connector_id=connector_id,
+            enabled=state.enabled if state else False,
+            settings=state.settings if state else {},
+            last_run_at=last_run_at or datetime.now(),
+            last_error=last_error if last_error is not None else "",
+        )
+
+    def create_activity_annotation(
+        self,
+        *,
+        source_connector_id: str,
+        annotation_type: str,
+        title: str = "",
+        value: Optional[dict[str, Any]] = None,
+        confidence: float = 0.0,
+        activity_record_id: Optional[int] = None,
+        annotation_id: Optional[str] = None,
+    ) -> ActivityAnnotation:
+        """Persist one local enrichment annotation."""
+        clean_connector = str(source_connector_id or "").strip()
+        if not clean_connector:
+            raise ValueError("source_connector_id is required")
+        clean_type = str(annotation_type or "").strip().lower()
+        if not clean_type:
+            raise ValueError("annotation_type is required")
+        clean_id = str(annotation_id or f"ann-{uuid.uuid4().hex[:12]}").strip()
+        record_id = int(activity_record_id) if activity_record_id is not None else None
+        now_iso = datetime.now().isoformat()
+        with self._connection() as conn:
+            if record_id is not None:
+                exists = conn.execute(
+                    "SELECT 1 FROM activity_records WHERE id = ?",
+                    (record_id,),
+                ).fetchone()
+                if exists is None:
+                    raise ValueError(f"activity record not found: {record_id}")
+            conn.execute(
+                """
+                INSERT INTO activity_annotations (
+                    id, activity_record_id, source_connector_id, annotation_type,
+                    title, value_json, confidence, created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    clean_id,
+                    record_id,
+                    clean_connector,
+                    clean_type,
+                    str(title or "").strip(),
+                    self._json_dumps(value or {}, fallback="{}"),
+                    max(0.0, min(1.0, float(confidence))),
+                    now_iso,
+                    now_iso,
+                ),
+            )
+            row = conn.execute(
+                "SELECT * FROM activity_annotations WHERE id = ?",
+                (clean_id,),
+            ).fetchone()
+            return self._row_to_activity_annotation(row)
+
+    def list_activity_annotations(
+        self,
+        *,
+        activity_record_id: Optional[int] = None,
+        source_connector_id: Optional[str] = None,
+        annotation_type: Optional[str] = None,
+        limit: int = 100,
+    ) -> list[ActivityAnnotation]:
+        """List local enrichment annotations."""
+        where: list[str] = []
+        params: list[Any] = []
+        if activity_record_id is not None:
+            where.append("activity_record_id = ?")
+            params.append(int(activity_record_id))
+        if source_connector_id:
+            where.append("source_connector_id = ?")
+            params.append(str(source_connector_id).strip())
+        if annotation_type:
+            where.append("annotation_type = ?")
+            params.append(str(annotation_type).strip().lower())
+        query = "SELECT * FROM activity_annotations"
+        if where:
+            query += " WHERE " + " AND ".join(where)
+        query += " ORDER BY created_at DESC, id DESC LIMIT ?"
+        params.append(max(1, min(int(limit), 5000)))
+        with self._connection() as conn:
+            rows = conn.execute(query, params).fetchall()
+            return [self._row_to_activity_annotation(row) for row in rows]
+
+    def delete_activity_annotations(
+        self,
+        *,
+        activity_record_id: Optional[int] = None,
+        source_connector_id: Optional[str] = None,
+        annotation_type: Optional[str] = None,
+    ) -> int:
+        """Delete local enrichment annotations by connector, record, or type."""
+        where: list[str] = []
+        params: list[Any] = []
+        if activity_record_id is not None:
+            where.append("activity_record_id = ?")
+            params.append(int(activity_record_id))
+        if source_connector_id:
+            where.append("source_connector_id = ?")
+            params.append(str(source_connector_id).strip())
+        if annotation_type:
+            where.append("annotation_type = ?")
+            params.append(str(annotation_type).strip().lower())
+        query = "DELETE FROM activity_annotations"
+        if where:
+            query += " WHERE " + " AND ".join(where)
+        with self._connection() as conn:
+            cursor = conn.execute(query, params)
+            return int(cursor.rowcount if cursor.rowcount is not None else 0)
+
     def _row_to_activity_record(self, row: sqlite3.Row) -> ActivityRecord:
         return ActivityRecord(
             id=int(row["id"]),
@@ -4445,6 +4760,33 @@ class MeetingDatabase:
             entity_type=row["entity_type"],
             entity_id=row["entity_id"],
             project_id=row["project_id"],
+            created_at=datetime.fromisoformat(row["created_at"]),
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
+
+    def _row_to_activity_enrichment_connector(
+        self,
+        row: sqlite3.Row,
+    ) -> ActivityEnrichmentConnectorState:
+        return ActivityEnrichmentConnectorState(
+            id=str(row["id"]),
+            enabled=bool(row["enabled"]),
+            settings=self._json_loads_dict(row["settings_json"]),
+            last_run_at=datetime.fromisoformat(row["last_run_at"]) if row["last_run_at"] else None,
+            last_error=row["last_error"],
+            created_at=datetime.fromisoformat(row["created_at"]),
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
+
+    def _row_to_activity_annotation(self, row: sqlite3.Row) -> ActivityAnnotation:
+        return ActivityAnnotation(
+            id=str(row["id"]),
+            activity_record_id=int(row["activity_record_id"]) if row["activity_record_id"] is not None else None,
+            source_connector_id=str(row["source_connector_id"]),
+            annotation_type=str(row["annotation_type"]),
+            title=str(row["title"] or ""),
+            value=self._json_loads_dict(row["value_json"]),
+            confidence=float(row["confidence"] or 0),
             created_at=datetime.fromisoformat(row["created_at"]),
             updated_at=datetime.fromisoformat(row["updated_at"]),
         )
