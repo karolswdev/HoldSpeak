@@ -1,9 +1,9 @@
-# HS-8-07 - DoD sweep + phase exit
+# HS-8-09 - DoD sweep + phase exit
 
 - **Project:** holdspeak
 - **Phase:** 8
 - **Status:** backlog
-- **Depends on:** HS-8-01 through HS-8-06
+- **Depends on:** HS-8-01 through HS-8-08
 - **Unblocks:** Phase 8 closure
 - **Owner:** unassigned
 
@@ -31,4 +31,4 @@ summary of shipped local activity intelligence workflows.
 
 ## Test Plan
 
-- To be finalized after HS-8-06.
+- To be finalized after HS-8-08.

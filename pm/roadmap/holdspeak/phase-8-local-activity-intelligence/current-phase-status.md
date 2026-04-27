@@ -1,6 +1,6 @@
 # Phase 8 - Local Activity Intelligence
 
-**Last updated:** 2026-04-26 (HS-8-06 done - visible activity privacy controls and retention shipped).
+**Last updated:** 2026-04-26 (Phase 8 extended - project activity mapping and assisted enrichment stories added).
 
 ## Goal
 
@@ -18,6 +18,12 @@ meeting/dictation context, and assemble better handoff material while
 remaining local, enabled by default, inspectable, pausable, and
 deletable.
 
+The ledger should also become the stable substrate for optional assisted
+enrichment. Browser history remains the default source, while explicit
+user-enabled helpers such as project mapping rules, calendar/Outlook
+parsing, a Firefox companion extension, or local developer CLIs may add
+more structure without hiding collection or bypassing local controls.
+
 ## Scope
 
 - **In:**
@@ -30,11 +36,15 @@ deletable.
   - Project-linking rules and recent activity surfaces.
   - Privacy controls: visible enabled/paused state, pause, clear imported
     activity, allowlist/denylist, retention, and exact-data visibility.
+  - User-authored activity-to-project mapping rules.
+  - Assisted enrichment design for calendar/Outlook candidates, optional
+    Firefox extension capture, and local `gh`/`jira` CLI lookups.
 - **Out:**
   - Scraping page contents or browser cookies.
   - Reading credentials, form contents, or private browsing windows.
-  - Network calls to Jira/Miro/GitHub/etc.
+  - Hidden network calls to Jira/Miro/GitHub/etc.
   - Automatic external task creation.
+  - Automatic meeting join or recording without visible user control.
   - Hidden collection. The feature may be enabled by default for this
     personal local tool, but it must be visible, local-only, pausable,
     and deletable.
@@ -49,7 +59,9 @@ deletable.
 | HS-8-04 | Work entity extractors | done | [story-04-work-entity-extractors.md](./story-04-work-entity-extractors.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-8-05 | Shared activity context for plugins | done | [story-05-project-activity-surface.md](./story-05-project-activity-surface.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-8-06 | Privacy controls and retention | done | [story-06-privacy-controls.md](./story-06-privacy-controls.md) | [evidence-story-06.md](./evidence-story-06.md) |
-| HS-8-07 | DoD sweep + phase exit | backlog | [story-07-dod.md](./story-07-dod.md) | pending |
+| HS-8-07 | Project activity mapping rules | backlog | [story-07-project-activity-mapping-rules.md](./story-07-project-activity-mapping-rules.md) | pending |
+| HS-8-08 | Assisted activity enrichment sources | backlog | [story-08-assisted-activity-enrichment.md](./story-08-assisted-activity-enrichment.md) | pending |
+| HS-8-09 | DoD sweep + phase exit | backlog | [story-09-dod.md](./story-09-dod.md) | pending |
 
 ## Where We Are
 
@@ -87,9 +99,13 @@ browser surface, status/records/settings/refresh/domain/clear APIs,
 default-enabled privacy settings, pause/resume, retention days, domain
 exclusions, source/checkpoint visibility, and importer enforcement.
 
-The remaining Phase 8 work is the DoD sweep: verify the end-to-end
-activity loop, document the final behavior, and decide whether project
-mapping needs a follow-up phase or can remain a next enhancement.
+The phase has been extended before DoD because the next product step is
+clear: users need easy rules that map browsing activity to projects, and
+the system needs a deliberate design for richer optional sources. HS-8-07
+will add deterministic project activity mapping rules. HS-8-08 will scope
+assisted enrichment from calendar/Outlook signals, a Firefox companion
+extension, and local `gh`/`jira` CLI lookups without breaking the
+local-first privacy model.
 
 ## Initial Hypothesis
 
