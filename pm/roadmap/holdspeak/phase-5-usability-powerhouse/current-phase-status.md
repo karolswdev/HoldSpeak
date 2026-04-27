@@ -1,6 +1,6 @@
 # Phase 5 — Usability Powerhouse
 
-**Last updated:** 2026-04-26 (HS-5-15 done — runtime setup docs links now jump to backend-specific sections; full sweep 1107 passed / 13 skipped).
+**Last updated:** 2026-04-26 (HS-5-16 DoD complete - **PHASE 5 DONE**; evidence bundle at `docs/evidence/phase-usability-powerhouse/20260426-1755/`; focused sweep 121 passed; full sweep 1107 passed / 13 skipped).
 
 ## Goal
 
@@ -42,21 +42,20 @@ test it safely in the browser."
 | HS-5-13 | Runtime guidance docs route | done | [story-13-runtime-guidance-docs-route.md](./story-13-runtime-guidance-docs-route.md) | [evidence-story-13.md](./evidence-story-13.md) — runtime guidance links now open a served local setup page; 2 new integration assertions |
 | HS-5-14 | Runtime guidance copy bundle | done | [story-14-runtime-guidance-copy-bundle.md](./story-14-runtime-guidance-copy-bundle.md) | [evidence-story-14.md](./evidence-story-14.md) — multi-command runtime guidance now has a copy-all setup command; 2 new assertions |
 | HS-5-15 | Runtime docs backend deep links | done | [story-15-runtime-docs-deep-links.md](./story-15-runtime-docs-deep-links.md) | [evidence-story-15.md](./evidence-story-15.md) — runtime setup docs links now jump to backend-specific anchors; 3 new assertions |
+| HS-5-16 | DoD sweep + phase exit | done | [story-16-dod.md](./story-16-dod.md) | [evidence-story-16.md](./evidence-story-16.md) — phase evidence bundle; focused sweep 121 passed; full sweep 1107 passed / 13 skipped |
 
 ## Where We Are
 
-HS-5-15 makes runtime setup guidance more precise by linking directly
-to the selected backend's docs section. The setup loop is now
-browser-first across project selection, cwd project visibility,
-readiness, starter blocks, starter KB, runtime enablement,
-install/model guidance, local setup docs, copy-all setup commands, and
-dry-run, with `holdspeak doctor` providing matching concrete commands
-from the same implementation source.
+**Phase 5 is complete.** HS-5-16 captured the phase evidence bundle at
+`docs/evidence/phase-usability-powerhouse/20260426-1755/`, including a
+focused Phase 5 sweep (`121 passed`) and the full non-Metal regression
+(`1107 passed, 13 skipped`).
 
-Next likely chunks:
+What Phase 5 shipped: the dictation cockpit now handles project
+selection, cwd project visibility, readiness, starter blocks, starter
+Project KB, disabled-pipeline enablement, runtime install/model
+guidance, local setup docs, copy-all setup commands, and dry-run loops.
+`holdspeak doctor` provides matching terminal setup guidance through the
+same shared runtime guidance implementation.
 
-1. Meeting/user action follow-through: surface action item provenance
-   and review states more prominently in history/detail views.
-2. Browser project switcher follow-up: optional file-picker integration.
-3. Runtime follow-up: optional browser-side detection of installed
-   package/model state in the Runtime panel.
+Next phase selected: Phase 6 - meeting action follow-through.

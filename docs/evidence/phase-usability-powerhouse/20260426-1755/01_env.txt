@@ -1,0 +1,5 @@
+# Captured: 2026-04-26T17:55:00-06:00
+# Git: 139f84c
+# Command: uv run python -VV && uv --version
+Python 3.13.11 (main, Dec  5 2025, 16:06:33) [Clang 17.0.0 (clang-1700.6.3.2)]
+uv 0.9.28 (Homebrew 2026-01-29)

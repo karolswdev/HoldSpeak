@@ -1,7 +1,7 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-5-15 done — runtime setup docs links now jump to backend-specific sections; full sweep 1107 passed / 13 skipped).
-**Current phase:** [phase-5-usability-powerhouse](./phase-5-usability-powerhouse/) — reduce daily-use friction and make the web runtime a stronger end-user cockpit.
+**Last updated:** 2026-04-26 (HS-5-16 done - Phase 5 closed with evidence bundle; Phase 6 opened for meeting action follow-through).
+**Current phase:** [phase-6-action-follow-through](./phase-6-action-follow-through/) — make meeting action items and artifacts reviewable, traceable, and easy to follow through.
 **Status:** in-progress.
 
 ## Vision
@@ -40,7 +40,8 @@ canon, canon wins.
 | 2 | MIR-01: Meeting-side multi-intent routing + artifact synthesis | done | [phase-2-multi-intent-routing](./phase-2-multi-intent-routing/) |
 | 3 | DIR-01 loop closure: project context, llama_cpp leg, runtime counters, cold-start cap | done | [phase-3-dictation-loop-closure](./phase-3-dictation-loop-closure/) |
 | 4 | WFS-01 extended: audit web flagship + interactive config for blocks / project KB / dictation runtime / dry-run preview | done | [phase-4-web-flagship-runtime](./phase-4-web-flagship-runtime/) |
-| 5 | Usability powerhouse: reduce setup/dogfood friction and make web workflows faster | in-progress | [phase-5-usability-powerhouse](./phase-5-usability-powerhouse/) |
+| 5 | Usability powerhouse: reduce setup/dogfood friction and make web workflows faster | done | [phase-5-usability-powerhouse](./phase-5-usability-powerhouse/) |
+| 6 | Action follow-through: make meeting action items and artifacts reviewable and traceable | in-progress | [phase-6-action-follow-through](./phase-6-action-follow-through/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
