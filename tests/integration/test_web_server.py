@@ -1174,6 +1174,9 @@ class TestHistoryUiSmoke:
         assert "Source ${formatTimestamp" in html
         assert "setActionReviewState" in html
         assert "Mark Needs Review" in html
+        assert "actionReviewFilter" in html
+        assert "Open Work" in html
+        assert "No pending action items need review." in html
 
     def test_settings_route_serves_history_ui_shell(self, test_client):
         response = test_client.get("/settings")

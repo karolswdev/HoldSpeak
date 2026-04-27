@@ -757,12 +757,18 @@
                   <option value="done">Done</option>
                   <option value="dismissed">Dismissed</option>
                 </select>
+                <select class="status-filter" x-model="actionReviewFilter" @change="loadActionItems">
+                  <option value="pending">Needs review</option>
+                  <option value="accepted">Accepted</option>
+                  <option value="all">All review states</option>
+                </select>
+                <button class="btn" @click="showOpenActionWork">Open Work</button>
               </div>
 
               <div x-show="loadingActions" class="loading">Loading action items...</div>
 
               <div x-show="!loadingActions && actionItems.length === 0" class="empty">
-                <p x-text="showCompleted ? 'No action items found.' : 'No pending action items.'"></p>
+                <p x-text="actionItemsEmptyMessage()"></p>
               </div>
 
               <div class="grid" x-show="!loadingActions && actionItems.length > 0">
@@ -1599,7 +1605,8 @@
           settings: null,
           searchQuery: "",
           showCompleted: false,
-          actionStatusFilter: "all",
+          actionStatusFilter: "pending",
+          actionReviewFilter: "pending",
           speakerSearch: "",
           selectedMeeting: null,
           selectedSpeakerId: "",
@@ -1845,16 +1852,36 @@
             try {
               const includeCompleted = this.showCompleted || this.actionStatusFilter !== "pending";
               const data = await this.apiJson(`/api/all-action-items?include_completed=${includeCompleted}`);
-              const items = data.action_items || [];
-              this.actionItems = this.actionStatusFilter === "all"
+              let items = data.action_items || [];
+              items = this.actionStatusFilter === "all"
                 ? items
                 : items.filter((item) => item.status === this.actionStatusFilter);
+              this.actionItems = this.actionReviewFilter === "all"
+                ? items
+                : items.filter((item) => this.reviewStateValue(item.review_state) === this.actionReviewFilter);
             } catch (error) {
               console.error("Failed to load action items:", error);
               this.actionItems = [];
               this.flash(`Action list failed: ${error.message}`, true);
             }
             this.loadingActions = false;
+          },
+
+          async showOpenActionWork() {
+            this.showCompleted = false;
+            this.actionStatusFilter = "pending";
+            this.actionReviewFilter = "pending";
+            await this.loadActionItems();
+          },
+
+          actionItemsEmptyMessage() {
+            if (this.actionStatusFilter === "pending" && this.actionReviewFilter === "pending") {
+              return "No pending action items need review.";
+            }
+            if (this.actionReviewFilter === "pending") {
+              return "No action items need review for these filters.";
+            }
+            return "No action items found for these filters.";
           },
 
           async toggleActionStatus(item) {

@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-6-02 done - action item review controls now span global, project, and meeting-detail history views).
+**Last updated:** 2026-04-26 (HS-6-03 done - Actions now opens on pending needs-review work with status/review filters).
 **Current phase:** [phase-6-action-follow-through](./phase-6-action-follow-through/) — make meeting action items and artifacts reviewable, traceable, and easy to follow through.
 **Status:** in-progress.
 
