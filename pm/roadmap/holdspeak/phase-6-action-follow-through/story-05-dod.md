@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 6
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-6-01 through HS-6-04
 - **Unblocks:** phase 6 closure
 - **Owner:** unassigned
@@ -24,11 +24,18 @@ summary of shipped action follow-through workflows.
 
 ## Acceptance Criteria
 
-- [ ] Phase evidence bundle exists.
-- [ ] Focused action follow-through sweep passes.
-- [ ] Full regression passes.
-- [ ] Phase 6 status is updated.
+- [x] Phase evidence bundle exists.
+- [x] Focused action follow-through sweep passes.
+- [x] Full regression passes.
+- [x] Phase 6 status is updated.
 
 ## Test Plan
 
-- To be finalized after HS-6-04.
+- `uv run pytest -q tests/integration/test_web_server.py -k "HistoryUiSmoke or GlobalActionItems or meeting_artifacts"`
+- `uv run pytest -q tests/integration/test_web_server.py tests/integration/test_intel_streaming.py`
+- `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py`
+
+## Evidence
+
+- [evidence-story-05.md](./evidence-story-05.md)
+- [phase evidence bundle](../../../../docs/evidence/phase-action-follow-through/20260426-1819/)

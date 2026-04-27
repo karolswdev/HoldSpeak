@@ -1,0 +1,8 @@
+$ uv run pytest -q tests/integration/test_web_server.py -k "HistoryUiSmoke or GlobalActionItems or meeting_artifacts"
+.....                                                                    [100%]
+5 passed, 67 deselected in 0.49s
+
+$ uv run pytest -q tests/integration/test_web_server.py tests/integration/test_intel_streaming.py
+........................................................................ [ 63%]
+..........................................                               [100%]
+114 passed in 2.13s

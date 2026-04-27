@@ -1,0 +1,5 @@
+date: 2026-04-26T18:20:41-0600
+python: Python 3.13.11
+uv: uv 0.9.28 (Homebrew 2026-01-29)
+branch: main
+head: 973db55

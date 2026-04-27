@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-6-04 done - action items and artifacts now link back to source meeting context).
-**Current phase:** [phase-6-action-follow-through](./phase-6-action-follow-through/) — make meeting action items and artifacts reviewable, traceable, and easy to follow through.
-**Status:** in-progress.
+**Last updated:** 2026-04-26 (HS-6-05 done - Phase 6 closed with action follow-through evidence bundle).
+**Current phase:** [phase-6-action-follow-through](./phase-6-action-follow-through/) — complete.
+**Status:** done.
 
 ## Vision
 
@@ -41,7 +41,7 @@ canon, canon wins.
 | 3 | DIR-01 loop closure: project context, llama_cpp leg, runtime counters, cold-start cap | done | [phase-3-dictation-loop-closure](./phase-3-dictation-loop-closure/) |
 | 4 | WFS-01 extended: audit web flagship + interactive config for blocks / project KB / dictation runtime / dry-run preview | done | [phase-4-web-flagship-runtime](./phase-4-web-flagship-runtime/) |
 | 5 | Usability powerhouse: reduce setup/dogfood friction and make web workflows faster | done | [phase-5-usability-powerhouse](./phase-5-usability-powerhouse/) |
-| 6 | Action follow-through: make meeting action items and artifacts reviewable and traceable | in-progress | [phase-6-action-follow-through](./phase-6-action-follow-through/) |
+| 6 | Action follow-through: make meeting action items and artifacts reviewable and traceable | done | [phase-6-action-follow-through](./phase-6-action-follow-through/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
