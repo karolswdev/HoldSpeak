@@ -1,6 +1,6 @@
 # Phase 7 - Local Handoff Exports
 
-**Last updated:** 2026-04-26 (HS-7-01 done - shared handoff renderer now includes action provenance/review state and optional synthesized artifacts).
+**Last updated:** 2026-04-26 (HS-7-02 done - saved meetings can be exported through a local Markdown/JSON handoff API).
 
 ## Goal
 
@@ -29,20 +29,21 @@ automatic SaaS sync exists.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-7-01 | Handoff export renderer | done | [story-01-handoff-export-renderer.md](./story-01-handoff-export-renderer.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-7-02 | Saved meeting export API | backlog | [story-02-saved-meeting-export-api.md](./story-02-saved-meeting-export-api.md) | pending |
+| HS-7-02 | Saved meeting export API | done | [story-02-saved-meeting-export-api.md](./story-02-saved-meeting-export-api.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-7-03 | Browser handoff export action | backlog | [story-03-browser-handoff-export-action.md](./story-03-browser-handoff-export-action.md) | pending |
 | HS-7-04 | Handoff export docs | backlog | [story-04-handoff-export-docs.md](./story-04-handoff-export-docs.md) | pending |
 | HS-7-05 | DoD sweep + phase exit | backlog | [story-05-dod.md](./story-05-dod.md) | pending |
 
 ## Where We Are
 
-Phase 7 is open with its first shipped foundation story. HS-7-01 made
-the shared meeting export renderer carry the data Phase 6 made
-trustworthy: action review state, source timestamps, due dates, and
-optional synthesized artifacts in Markdown/JSON outputs.
+Phase 7 has two shipped handoff foundations. HS-7-01 made the shared
+meeting export renderer carry the data Phase 6 made trustworthy: action
+review state, source timestamps, due dates, and optional synthesized
+artifacts in Markdown/JSON outputs. HS-7-02 exposed that renderer through
+a local saved-meeting export API.
 
-The next story should expose this renderer through a saved-meeting local
-API so browser handoff export controls can use the same code path.
+The next story should add browser controls in selected meeting detail so
+users can download those local handoff exports from `/history`.
 
 ## Initial Hypothesis
 

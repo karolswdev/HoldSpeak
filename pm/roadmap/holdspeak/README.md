@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-26 (HS-7-01 done - Phase 7 opened for local handoff exports and the renderer now carries action provenance plus artifacts).
+**Last updated:** 2026-04-26 (HS-7-02 done - saved meetings now have a local Markdown/JSON handoff export API).
 **Current phase:** [phase-7-local-handoff-exports](./phase-7-local-handoff-exports/) — make reviewed meeting work portable as local Markdown/JSON handoff material.
 **Status:** in-progress.
 

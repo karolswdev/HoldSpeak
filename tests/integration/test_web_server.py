@@ -26,6 +26,7 @@ from holdspeak.web_server import (
     _find_free_port,
     _parse_iso_datetime,
 )
+from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
 
 
 # ============================================================
@@ -773,6 +774,88 @@ class TestMirHistoryApiEndpoints:
         assert ("plugin_run", "10") in refs
 
         missing = test_client.get("/api/meetings/missing/artifacts")
+        assert missing.status_code == 404
+
+    def test_meeting_export_endpoint_renders_handoff_formats(self, monkeypatch, test_client):
+        now = datetime(2026, 3, 29, 18, 0, 0)
+        meeting = MeetingState(
+            id="m-export",
+            started_at=now,
+            title="Export Handoff",
+            segments=[
+                TranscriptSegment(
+                    text="Define API acceptance criteria.",
+                    speaker="Me",
+                    start_time=0.0,
+                    end_time=4.0,
+                )
+            ],
+            intel=IntelSnapshot(
+                timestamp=10.0,
+                topics=["API"],
+                action_items=[
+                    {
+                        "id": "ai-1",
+                        "task": "Send requirements",
+                        "owner": "Me",
+                        "due": "Friday",
+                        "status": "pending",
+                        "review_state": "accepted",
+                        "source_timestamp": 125.5,
+                    }
+                ],
+                summary="Discussed export handoff.",
+            ),
+        )
+
+        class FakeDb:
+            def get_meeting(self, meeting_id):
+                return meeting if meeting_id == "m-export" else None
+
+            def list_artifacts(self, meeting_id, *, limit=200):
+                _ = meeting_id, limit
+                return [
+                    SimpleNamespace(
+                        id="art-001",
+                        meeting_id="m-export",
+                        artifact_type="requirements",
+                        title="API Requirements",
+                        body_markdown="### Requirements\n\nDefine API acceptance criteria.",
+                        structured_json={"items": 1},
+                        confidence=0.82,
+                        status="needs_review",
+                        plugin_id="requirements_extractor",
+                        plugin_version="1.0.0",
+                        sources=[{"source_type": "intent_window", "source_ref": "w-1"}],
+                        created_at=now,
+                        updated_at=now,
+                    )
+                ]
+
+        import holdspeak.db as db_module
+
+        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+
+        markdown = test_client.get("/api/meetings/m-export/export?format=markdown")
+        assert markdown.status_code == 200
+        assert markdown.headers["content-type"].startswith("text/markdown")
+        assert 'filename="holdspeak-meeting-m-export.md"' in markdown.headers["content-disposition"]
+        assert "# Export Handoff" in markdown.text
+        assert "review accepted; source 02:05" in markdown.text
+        assert "## Artifacts" in markdown.text
+        assert "### API Requirements" in markdown.text
+
+        json_response = test_client.get("/api/meetings/m-export/export?format=json")
+        assert json_response.status_code == 200
+        assert json_response.headers["content-type"].startswith("application/json")
+        payload = json_response.json()
+        assert payload["id"] == "m-export"
+        assert payload["artifacts"][0]["title"] == "API Requirements"
+
+        invalid = test_client.get("/api/meetings/m-export/export?format=pdf")
+        assert invalid.status_code == 400
+
+        missing = test_client.get("/api/meetings/missing/export")
         assert missing.status_code == 404
 
     def test_legacy_meeting_without_mir_history_rows_remains_loadable(self, monkeypatch, test_client):

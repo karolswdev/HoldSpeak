@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 7
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-7-01
 - **Unblocks:** browser handoff export actions
 - **Owner:** unassigned
@@ -24,11 +24,17 @@ saved-meeting export API that returns the shared handoff renderer output.
 
 ## Acceptance Criteria
 
-- [ ] A saved meeting can be exported through a local API.
-- [ ] Markdown and JSON outputs use the shared handoff renderer.
-- [ ] Invalid formats fail clearly.
-- [ ] Focused and full tests pass.
+- [x] A saved meeting can be exported through a local API.
+- [x] Markdown and JSON outputs use the shared handoff renderer.
+- [x] Invalid formats fail clearly.
+- [x] Focused and full tests pass.
 
 ## Test Plan
 
-- To be finalized after HS-7-01.
+- `uv run pytest -q tests/integration/test_web_server.py -k "meeting_export_endpoint or meeting_artifacts"`
+- `uv run pytest -q tests/integration/test_web_server.py tests/unit/test_meeting_exports.py`
+- `uv run pytest tests/ --timeout=30 -q --ignore=tests/e2e/test_metal.py`
+
+## Evidence
+
+- [evidence-story-02.md](./evidence-story-02.md)

@@ -32,7 +32,7 @@ _GLOBAL_BLOCKS_PATH = Path.home() / ".config" / "holdspeak" / "blocks.yaml"
 try:
     import uvicorn
     from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-    from fastapi.responses import HTMLResponse, JSONResponse
+    from fastapi.responses import HTMLResponse, JSONResponse, Response
     from pydantic import BaseModel
 except Exception as e:  # pragma: no cover - optional dependency at runtime
     uvicorn = None  # type: ignore[assignment]
@@ -41,6 +41,7 @@ except Exception as e:  # pragma: no cover - optional dependency at runtime
     WebSocketDisconnect = None  # type: ignore[assignment]
     HTMLResponse = None  # type: ignore[assignment]
     JSONResponse = None  # type: ignore[assignment]
+    Response = None  # type: ignore[assignment]
     BaseModel = object  # type: ignore[assignment]
     _IMPORT_ERROR: Optional[Exception] = e
 else:
@@ -1378,6 +1379,56 @@ class MeetingWebServer:
                 return JSONResponse(meeting.to_dict())
             except Exception as e:
                 log.error(f"Failed to get meeting: {e}")
+                return JSONResponse(
+                    {"error": str(e)}, status_code=500
+                )
+
+        @app.get("/api/meetings/{meeting_id}/export")
+        async def api_export_meeting(
+            meeting_id: str,
+            format: str = "markdown",
+        ) -> Any:
+            """Render a saved meeting handoff export."""
+            export_format = str(format or "").strip().lower()
+            if export_format == "md":
+                export_format = "markdown"
+            if export_format not in {"markdown", "json"}:
+                return JSONResponse(
+                    {"error": f"Invalid export format: {format}"},
+                    status_code=400,
+                )
+
+            try:
+                from .db import get_database
+                from .meeting_exports import render_meeting_export
+
+                db = get_database()
+                meeting = db.get_meeting(meeting_id)
+                if meeting is None:
+                    return JSONResponse(
+                        {"error": "Meeting not found"}, status_code=404
+                    )
+
+                artifacts = db.list_artifacts(meeting_id, limit=200)
+                content = render_meeting_export(
+                    meeting,
+                    export_format,  # type: ignore[arg-type]
+                    artifacts=artifacts,
+                )
+                extension = "md" if export_format == "markdown" else "json"
+                media_type = (
+                    "text/markdown; charset=utf-8"
+                    if export_format == "markdown"
+                    else "application/json; charset=utf-8"
+                )
+                filename = f"holdspeak-meeting-{meeting_id}.{extension}"
+                return Response(
+                    content=content,
+                    media_type=media_type,
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+                )
+            except Exception as e:
+                log.error(f"Failed to export meeting: {e}")
                 return JSONResponse(
                     {"error": str(e)}, status_code=500
                 )
