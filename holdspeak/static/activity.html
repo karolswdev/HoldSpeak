@@ -84,7 +84,7 @@
         color: var(--warn);
         background: rgba(255, 184, 107, 0.08);
       }
-      button, input {
+      button, input, select {
         min-height: 38px;
         border-radius: 6px;
         border: 1px solid var(--line);
@@ -104,9 +104,13 @@
       button.danger {
         color: var(--danger);
       }
-      input {
+      input, select {
         width: 100%;
         padding: 0 10px;
+      }
+      input[type="checkbox"] {
+        width: auto;
+        min-height: auto;
       }
       .button-row {
         display: flex;
@@ -119,6 +123,43 @@
         grid-template-columns: minmax(0, 1fr) auto;
         gap: 8px;
         margin-top: 10px;
+      }
+      .field-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+      .field label {
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+      .toggle-field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 38px;
+        color: var(--muted);
+      }
+      .rule-list, .preview-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .rule-item {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .rule-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 8px;
       }
       .records {
         display: grid;
@@ -163,6 +204,7 @@
       .error { color: var(--danger); margin-top: 10px; }
       @media (max-width: 860px) {
         .grid { grid-template-columns: 1fr; }
+        .field-grid { grid-template-columns: 1fr; }
         .topbar { align-items: flex-start; flex-direction: column; }
       }
     </style>
@@ -217,15 +259,68 @@
           </section>
         </aside>
 
-        <section class="panel">
-          <h2>Recent Activity</h2>
-          <div id="records" class="records"></div>
-        </section>
+        <div>
+          <section class="panel">
+            <h2>Project Rules</h2>
+            <input id="rule-id" type="hidden" />
+            <div class="field-grid">
+              <div class="field">
+                <label for="rule-project">Project</label>
+                <select id="rule-project"></select>
+              </div>
+              <div class="field">
+                <label for="rule-match-type">Match</label>
+                <select id="rule-match-type">
+                  <option value="domain">Domain</option>
+                  <option value="url_contains">URL contains</option>
+                  <option value="title_contains">Title contains</option>
+                  <option value="entity_type">Entity type</option>
+                  <option value="entity_id_prefix">Entity ID prefix</option>
+                  <option value="github_repo">GitHub repo</option>
+                  <option value="source_browser">Source browser</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="rule-pattern">Pattern</label>
+                <input id="rule-pattern" placeholder="example.com" />
+              </div>
+              <div class="field">
+                <label for="rule-entity-type">Entity type</label>
+                <input id="rule-entity-type" placeholder="optional" />
+              </div>
+              <div class="field">
+                <label for="rule-name">Name</label>
+                <input id="rule-name" placeholder="HoldSpeak Jira" />
+              </div>
+              <div class="field">
+                <label for="rule-priority">Priority</label>
+                <input id="rule-priority" type="number" value="100" />
+              </div>
+            </div>
+            <label class="toggle-field">
+              <input id="rule-enabled" type="checkbox" checked />
+              Enabled
+            </label>
+            <div class="button-row">
+              <button id="preview-rule" type="button">Preview</button>
+              <button id="save-rule" class="primary" type="button">Save rule</button>
+              <button id="reset-rule" type="button">New</button>
+              <button id="apply-rules" type="button">Apply all</button>
+            </div>
+            <div id="rule-preview" class="preview-list"></div>
+            <div id="rules" class="rule-list"></div>
+          </section>
+
+          <section class="panel">
+            <h2>Recent Activity</h2>
+            <div id="records" class="records"></div>
+          </section>
+        </div>
       </div>
     </main>
 
     <script>
-      const state = { status: null, activity: null };
+      const state = { status: null, activity: null, projects: [], rules: [] };
       const $ = (id) => document.getElementById(id);
 
       async function request(path, options = {}) {
@@ -243,6 +338,16 @@
         $("error").textContent = isError ? text : "";
       }
 
+      function escapeHtml(value) {
+        return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        }[char]));
+      }
+
       function renderStatus() {
         const status = state.status || {};
         const settings = status.settings || { enabled: true, retention_days: 30 };
@@ -258,7 +363,7 @@
         $("sources").innerHTML = sources.length
           ? sources.map((source) => `
               <div class="row">
-                <span class="label">${source.source_browser} / ${source.source_profile}</span>
+                <span class="label">${escapeHtml(source.source_browser)} / ${escapeHtml(source.source_profile)}</span>
                 <span class="value">${source.enabled ? "enabled" : "paused"}</span>
               </div>
             `).join("")
@@ -268,11 +373,42 @@
         $("domains").innerHTML = rules.length
           ? rules.map((rule) => `
               <div class="row">
-                <span class="label">${rule.domain}</span>
-                <button type="button" data-remove-domain="${rule.domain}">Remove</button>
+                <span class="label">${escapeHtml(rule.domain)}</span>
+                <button type="button" data-remove-domain="${escapeHtml(rule.domain)}">Remove</button>
               </div>
             `).join("")
           : `<p class="sub">No domains excluded.</p>`;
+      }
+
+      function renderProjects() {
+        $("rule-project").innerHTML = state.projects.length
+          ? state.projects.map((project) => `
+              <option value="${escapeHtml(project.id)}">${escapeHtml(project.name)}</option>
+            `).join("")
+          : `<option value="">No projects</option>`;
+      }
+
+      function renderRules() {
+        $("rules").innerHTML = state.rules.length
+          ? state.rules.map((rule) => `
+              <article class="rule-item">
+                <div class="record-top">
+                  <div>
+                    <div class="record-title">${escapeHtml(rule.name || rule.pattern)}</div>
+                    <div class="record-meta">
+                      ${escapeHtml(rule.project_name || rule.project_id)} · ${escapeHtml(rule.match_type)} · ${escapeHtml(rule.pattern)}
+                      ${rule.entity_type ? ` · ${escapeHtml(rule.entity_type)}` : ""}
+                    </div>
+                  </div>
+                  <div class="tag">${rule.enabled ? "enabled" : "off"} · ${Number(rule.priority || 0)}</div>
+                </div>
+                <div class="rule-actions">
+                  <button type="button" data-edit-rule="${escapeHtml(rule.id)}">Edit</button>
+                  <button class="danger" type="button" data-delete-rule="${escapeHtml(rule.id)}">Delete</button>
+                </div>
+              </article>
+            `).join("")
+          : `<div class="empty">No project rules yet.</div>`;
       }
 
       function renderRecords() {
@@ -281,28 +417,80 @@
           ? records.map((record) => `
               <article class="record">
                 <div class="record-top">
-                  <div class="record-title">${record.title || record.url}</div>
-                  <div class="tag">${record.entity_type || "domain"}</div>
+                  <div class="record-title">${escapeHtml(record.title || record.url)}</div>
+                  <div class="tag">${escapeHtml(record.project_id || record.entity_type || "domain")}</div>
                 </div>
                 <div class="record-meta">
-                  ${record.entity_id || record.domain} · ${record.source_browser} · visits ${record.visit_count}
+                  ${escapeHtml(record.entity_id || record.domain)} · ${escapeHtml(record.source_browser)} · visits ${Number(record.visit_count || 0)}
                   <br />
-                  ${record.last_seen_at || "no timestamp"} · ${record.url}
+                  ${escapeHtml(record.last_seen_at || "no timestamp")} · ${escapeHtml(record.url)}
                 </div>
               </article>
             `).join("")
           : `<div class="empty">No imported activity yet.</div>`;
       }
 
+      function resetRuleForm() {
+        $("rule-id").value = "";
+        $("rule-name").value = "";
+        $("rule-pattern").value = "";
+        $("rule-entity-type").value = "";
+        $("rule-priority").value = "100";
+        $("rule-enabled").checked = true;
+        $("rule-match-type").value = "domain";
+        $("rule-preview").innerHTML = "";
+      }
+
+      function rulePayload() {
+        return {
+          project_id: $("rule-project").value,
+          name: $("rule-name").value.trim(),
+          match_type: $("rule-match-type").value,
+          pattern: $("rule-pattern").value.trim(),
+          entity_type: $("rule-entity-type").value.trim() || null,
+          priority: Number($("rule-priority").value || 100),
+          enabled: $("rule-enabled").checked,
+        };
+      }
+
+      function editRule(rule) {
+        $("rule-id").value = rule.id;
+        $("rule-project").value = rule.project_id;
+        $("rule-name").value = rule.name || "";
+        $("rule-match-type").value = rule.match_type;
+        $("rule-pattern").value = rule.pattern;
+        $("rule-entity-type").value = rule.entity_type || "";
+        $("rule-priority").value = String(rule.priority || 100);
+        $("rule-enabled").checked = Boolean(rule.enabled);
+        $("rule-preview").innerHTML = "";
+      }
+
+      function renderPreview(matches) {
+        $("rule-preview").innerHTML = matches.length
+          ? matches.slice(0, 8).map((record) => `
+              <article class="rule-item">
+                <div class="record-title">${escapeHtml(record.title || record.url)}</div>
+                <div class="record-meta">${escapeHtml(record.entity_id || record.domain)} · ${escapeHtml(record.url)}</div>
+              </article>
+            `).join("")
+          : `<div class="empty">No matches.</div>`;
+      }
+
       async function load() {
         try {
-          const [status, activity] = await Promise.all([
+          const [status, activity, projects, rules] = await Promise.all([
             request("/api/activity/status"),
             request("/api/activity/records?limit=100"),
+            request("/api/projects"),
+            request("/api/activity/project-rules"),
           ]);
           state.status = status;
           state.activity = activity;
+          state.projects = projects.projects || [];
+          state.rules = rules.rules || [];
           renderStatus();
+          renderProjects();
+          renderRules();
           renderRecords();
           setMessage("");
         } catch (error) {
@@ -387,6 +575,77 @@
           state.status = payload.status;
           renderStatus();
           setMessage(`${domain} removed.`);
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+
+      $("preview-rule").addEventListener("click", async () => {
+        try {
+          const payload = await request("/api/activity/project-rules/preview", {
+            method: "POST",
+            body: JSON.stringify(rulePayload()),
+          });
+          renderPreview(payload.matches || []);
+          setMessage(`${payload.count || 0} matching records.`);
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+
+      $("save-rule").addEventListener("click", async () => {
+        try {
+          const id = $("rule-id").value;
+          const payload = await request(
+            id ? `/api/activity/project-rules/${encodeURIComponent(id)}` : "/api/activity/project-rules",
+            {
+              method: id ? "PUT" : "POST",
+              body: JSON.stringify(rulePayload()),
+            },
+          );
+          const saved = payload.rule;
+          await load();
+          editRule(saved);
+          setMessage("Project rule saved.");
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+
+      $("reset-rule").addEventListener("click", () => {
+        resetRuleForm();
+        setMessage("");
+      });
+
+      $("apply-rules").addEventListener("click", async () => {
+        try {
+          const payload = await request("/api/activity/project-rules/apply", {
+            method: "POST",
+            body: "{}",
+          });
+          setMessage(`${payload.updated || 0} records updated.`);
+          await load();
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+
+      $("rules").addEventListener("click", async (event) => {
+        const edit = event.target.closest("[data-edit-rule]");
+        const remove = event.target.closest("[data-delete-rule]");
+        if (edit) {
+          const id = edit.getAttribute("data-edit-rule");
+          const rule = state.rules.find((item) => item.id === id);
+          if (rule) editRule(rule);
+          return;
+        }
+        if (!remove) return;
+        const id = remove.getAttribute("data-delete-rule");
+        try {
+          await request(`/api/activity/project-rules/${encodeURIComponent(id)}`, { method: "DELETE" });
+          resetRuleForm();
+          setMessage("Project rule deleted.");
+          await load();
         } catch (error) {
           setMessage(error.message, true);
         }

@@ -1,6 +1,6 @@
 # Phase 8 - Local Activity Intelligence
 
-**Last updated:** 2026-04-26 (Phase 8 extended - project activity mapping and assisted enrichment stories added).
+**Last updated:** 2026-04-27 (HS-8-07 project activity mapping rules shipped).
 
 ## Goal
 
@@ -59,7 +59,7 @@ more structure without hiding collection or bypassing local controls.
 | HS-8-04 | Work entity extractors | done | [story-04-work-entity-extractors.md](./story-04-work-entity-extractors.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-8-05 | Shared activity context for plugins | done | [story-05-project-activity-surface.md](./story-05-project-activity-surface.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-8-06 | Privacy controls and retention | done | [story-06-privacy-controls.md](./story-06-privacy-controls.md) | [evidence-story-06.md](./evidence-story-06.md) |
-| HS-8-07 | Project activity mapping rules | backlog | [story-07-project-activity-mapping-rules.md](./story-07-project-activity-mapping-rules.md) | pending |
+| HS-8-07 | Project activity mapping rules | done | [story-07-project-activity-mapping-rules.md](./story-07-project-activity-mapping-rules.md) | [evidence-story-07.md](./evidence-story-07.md) |
 | HS-8-08 | Assisted activity enrichment sources | backlog | [story-08-assisted-activity-enrichment.md](./story-08-assisted-activity-enrichment.md) | pending |
 | HS-8-09 | DoD sweep + phase exit | backlog | [story-09-dod.md](./story-09-dod.md) | pending |
 
@@ -99,13 +99,16 @@ browser surface, status/records/settings/refresh/domain/clear APIs,
 default-enabled privacy settings, pause/resume, retention days, domain
 exclusions, source/checkpoint visibility, and importer enforcement.
 
-The phase has been extended before DoD because the next product step is
-clear: users need easy rules that map browsing activity to projects, and
-the system needs a deliberate design for richer optional sources. HS-8-07
-will add deterministic project activity mapping rules. HS-8-08 will scope
-assisted enrichment from calendar/Outlook signals, a Firefox companion
-extension, and local `gh`/`jira` CLI lookups without breaking the
-local-first privacy model.
+HS-8-07 added deterministic project activity mapping rules. Users can
+create, edit, disable, delete, preview, and apply rules from `/activity`.
+The DB stores priority-ordered rules, existing records can be backfilled
+to `activity_records.project_id`, and future imports assign projects
+after entity extraction without network calls or hidden enrichment.
+
+The remaining Phase 8 work is to scope richer optional sources. HS-8-08
+will design assisted enrichment from calendar/Outlook signals, a Firefox
+companion extension, and local `gh`/`jira` CLI lookups without breaking
+the local-first privacy model.
 
 ## Initial Hypothesis
 

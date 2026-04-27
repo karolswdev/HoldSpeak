@@ -13,6 +13,7 @@ from typing import Iterable, Optional
 from urllib.parse import urlsplit
 
 from .activity_entities import extract_activity_entity
+from .activity_mapping import ActivityMappingRecord, project_id_for_record
 from .db import MeetingDatabase, get_database
 from .logging_config import get_logger
 
@@ -188,6 +189,7 @@ def _import_history_source(
     since_raw = checkpoint.last_visit_raw if checkpoint else None
     imported = 0
     max_raw = since_raw
+    project_rules = db.list_activity_project_rules(include_disabled=False)
 
     try:
         with tempfile.TemporaryDirectory(prefix="holdspeak-history-") as tmp:
@@ -203,6 +205,17 @@ def _import_history_source(
                 entity = extract_activity_entity(str(row["url"]), title=str(row["title"] or ""))
                 first_seen = timestamp_converter(row["first_visit_raw"])
                 last_seen = timestamp_converter(row["last_visit_raw"])
+                project_id = project_id_for_record(
+                    ActivityMappingRecord(
+                        source_browser=source.source_browser,
+                        normalized_url=db._normalize_activity_url(row["url"]),
+                        title=row["title"],
+                        domain=domain,
+                        entity_type=entity.entity_type,
+                        entity_id=entity.entity_id,
+                    ),
+                    project_rules,
+                )
                 db.upsert_activity_record(
                     source_browser=source.source_browser,
                     source_profile=source.source_profile,
@@ -216,6 +229,7 @@ def _import_history_source(
                     last_visit_raw=row["last_visit_raw"],
                     entity_type=entity.entity_type,
                     entity_id=entity.entity_id,
+                    project_id=project_id,
                 )
                 imported += 1
 

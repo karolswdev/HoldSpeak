@@ -17,6 +17,7 @@ from holdspeak.db import (
     ArtifactSummary,
     ActivityRecord,
     ActivityImportCheckpoint,
+    ActivityProjectRule,
     reset_database,
 )
 from holdspeak.meeting_session import (
@@ -848,6 +849,87 @@ class TestActivityLedgerPersistence:
 
         assert db.delete_activity_domain_rule("example.com") is True
         assert db.is_activity_domain_excluded("example.com") is False
+
+    def test_activity_project_rules_preview_and_apply_records(self, db):
+        db.create_project(project_id="holdspeak", name="HoldSpeak")
+        db.create_project(project_id="other", name="Other")
+        first_seen = datetime(2026, 4, 26, 9, 0, 0)
+        db.upsert_activity_record(
+            source_browser="safari",
+            url="https://example.atlassian.net/browse/HS-123",
+            title="HS-123 activity mapping",
+            domain="example.atlassian.net",
+            last_seen_at=first_seen,
+            entity_type="jira_ticket",
+            entity_id="HS-123",
+        )
+        db.upsert_activity_record(
+            source_browser="safari",
+            url="https://example.atlassian.net/browse/OTHER-1",
+            title="OTHER-1 activity mapping",
+            domain="example.atlassian.net",
+            last_seen_at=first_seen,
+            entity_type="jira_ticket",
+            entity_id="OTHER-1",
+        )
+
+        low_priority = db.create_activity_project_rule(
+            project_id="other",
+            name="All Jira",
+            match_type="entity_type",
+            pattern="jira_ticket",
+            priority=100,
+        )
+        high_priority = db.create_activity_project_rule(
+            project_id="holdspeak",
+            name="HoldSpeak tickets",
+            match_type="entity_id_prefix",
+            pattern="HS-",
+            entity_type="jira_ticket",
+            priority=200,
+        )
+
+        assert isinstance(high_priority, ActivityProjectRule)
+        assert high_priority.project_name == "HoldSpeak"
+        assert db.list_activity_project_rules() == [high_priority, low_priority]
+        preview = db.preview_activity_project_rule(
+            project_id="holdspeak",
+            match_type="entity_id_prefix",
+            pattern="HS-",
+            entity_type="jira_ticket",
+        )
+        assert [record.entity_id for record in preview] == ["HS-123"]
+
+        assert db.apply_activity_project_rules() == 2
+        records = db.list_activity_records(limit=10)
+        assert {record.entity_id: record.project_id for record in records} == {
+            "HS-123": "holdspeak",
+            "OTHER-1": "other",
+        }
+
+    def test_activity_project_rules_update_disable_and_delete(self, db):
+        db.create_project(project_id="holdspeak", name="HoldSpeak")
+        rule = db.create_activity_project_rule(
+            project_id="holdspeak",
+            match_type="domain",
+            pattern="Example.COM",
+        )
+
+        updated = db.update_activity_project_rule(
+            rule.id,
+            name="Example",
+            enabled=False,
+            priority=300,
+        )
+
+        assert updated is not None
+        assert updated.name == "Example"
+        assert updated.enabled is False
+        assert updated.priority == 300
+        assert db.list_activity_project_rules() == []
+        assert db.list_activity_project_rules(include_disabled=True) == [updated]
+        assert db.delete_activity_project_rule(rule.id) is True
+        assert db.list_activity_project_rules(include_disabled=True) == []
 
 
 class TestDeferredIntelQueue:

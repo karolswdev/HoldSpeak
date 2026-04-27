@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 8
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-8-04, HS-8-05, HS-8-06
 - **Unblocks:** project-aware activity context for plugins and handoffs
 - **Owner:** unassigned
@@ -104,12 +104,12 @@ without writing YAML or regex.
 
 ## Acceptance Criteria
 
-- [ ] User can create, edit, disable, and delete project activity rules.
-- [ ] User can preview which records a rule will match before applying it.
-- [ ] Activity records can be backfilled to projects.
-- [ ] Future imports apply enabled mapping rules.
-- [ ] Rules are deterministic and priority-ordered.
-- [ ] Focused and full tests pass.
+- [x] User can create, edit, disable, and delete project activity rules.
+- [x] User can preview which records a rule will match before applying it.
+- [x] Activity records can be backfilled to projects.
+- [x] Future imports apply enabled mapping rules.
+- [x] Rules are deterministic and priority-ordered.
+- [x] Focused and full tests pass.
 
 ## Test Plan
 

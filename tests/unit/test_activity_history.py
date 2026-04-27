@@ -167,6 +167,30 @@ def test_import_safari_history_fixture_persists_activity_and_checkpoint(tmp_path
     assert checkpoint.enabled is True
 
 
+def test_import_safari_history_applies_project_mapping_rules(tmp_path):
+    history_path = tmp_path / "History.db"
+    _create_safari_history(history_path)
+    db = MeetingDatabase(tmp_path / "holdspeak.db")
+    db.create_project(project_id="holdspeak", name="HoldSpeak")
+    db.create_activity_project_rule(
+        project_id="holdspeak",
+        match_type="entity_id_prefix",
+        pattern="HS-",
+        entity_type="jira_ticket",
+        priority=200,
+    )
+
+    result = import_safari_history(
+        BrowserHistorySource("safari", "default", history_path),
+        db=db,
+    )
+
+    assert result.error is None
+    records = db.list_activity_records(source_browser="safari")
+    assert len(records) == 1
+    assert records[0].project_id == "holdspeak"
+
+
 def test_import_firefox_history_fixture_persists_activity_and_checkpoint(tmp_path):
     places_path = tmp_path / "places.sqlite"
     _create_firefox_history(places_path)
