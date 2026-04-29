@@ -282,10 +282,17 @@ def test_dictation_page_includes_project_kb_section() -> None:
     response = client.get("/dictation")
     assert response.status_code == 200
     body = response.text
+    # HS-10-09: KB tab label + button id remain in server-rendered HTML.
     assert "Project KB" in body
-    assert "/api/dictation/project-kb" in body  # JS fetches the API
-    assert "/api/dictation/project-kb/starter" in body
     assert "kb-btn-starter" in body
+    # KB endpoint strings live in the bundled JS chunk now.
+    import re
+
+    match = re.search(r'src="(/_built/_astro/hoisted\.[^"]+\.js)"', body)
+    assert match, "expected hoisted dictation JS chunk reference"
+    js = client.get(match.group(1)).text
+    assert "/api/dictation/project-kb" in js
+    assert "/api/dictation/project-kb/starter" in js
 
 
 def test_round_trip_put_then_get(test_client: TestClient, project_root_dir: Path) -> None:

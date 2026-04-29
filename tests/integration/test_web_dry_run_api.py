@@ -292,7 +292,18 @@ def test_dictation_page_includes_dry_run_section() -> None:
     response = client.get("/dictation")
     assert response.status_code == 200
     body = response.text
+    # Markers staying in server-rendered markup.
     assert 'data-section="dry-run"' in body
-    assert "/api/dictation/dry-run" in body
-    assert "Copy final text" in body
     assert "project-root-override" in body
+    assert "Run dry-run" in body
+    # HS-10-09: dry-run trace + final text now render through
+    # CommandPreview, so the @click handler + endpoint string live
+    # in the bundled JS chunk, not inline HTML.
+    import re
+
+    match = re.search(r'src="(/_built/_astro/hoisted\.[^"]+\.js)"', body)
+    assert match, "expected hoisted dictation JS chunk reference"
+    js = client.get(match.group(1)).text
+    assert "/api/dictation/dry-run" in js
+    assert "renderDryRun" in js
+    assert "renderDryStage" in js

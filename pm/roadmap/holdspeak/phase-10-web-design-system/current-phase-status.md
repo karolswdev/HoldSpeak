@@ -1,6 +1,6 @@
 # Phase 10 - Web Design System & Character Pass
 
-**Last updated:** 2026-04-28 (HS-10-10 / `CommandPreview` component shipped).
+**Last updated:** 2026-04-28 (HS-10-09 / `/dictation` rebuilt — last route migration).
 
 ## Goal
 
@@ -56,7 +56,7 @@ no identity layer that says "this is HoldSpeak."
 | HS-10-06 | `/` runtime dashboard rebuild | done | [story-06-dashboard-rebuild.md](./story-06-dashboard-rebuild.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-10-07 | `/activity` rebuild | done | [story-07-activity-rebuild.md](./story-07-activity-rebuild.md) | [evidence-story-07.md](./evidence-story-07.md) |
 | HS-10-08 | `/history` rebuild | done | [story-08-history-rebuild.md](./story-08-history-rebuild.md) | [evidence-story-08.md](./evidence-story-08.md) |
-| HS-10-09 | `/dictation` rebuild | backlog | [story-09-dictation-rebuild.md](./story-09-dictation-rebuild.md) | pending |
+| HS-10-09 | `/dictation` rebuild | done | [story-09-dictation-rebuild.md](./story-09-dictation-rebuild.md) | [evidence-story-09.md](./evidence-story-09.md) |
 | HS-10-10 | `CommandPreview` component | done | [story-10-command-preview.md](./story-10-command-preview.md) | [evidence-story-10.md](./evidence-story-10.md) |
 | HS-10-11 | Destructive-action confirmation pattern | backlog | [story-11-destructive-confirmation.md](./story-11-destructive-confirmation.md) | pending |
 | HS-10-12 | Motion + accessibility pass | backlog | [story-12-motion-a11y.md](./story-12-motion-a11y.md) | pending |
@@ -74,15 +74,24 @@ the legacy `dashboard.html` (2,819) + `activity.html` (940) +
 have been replaced by Astro pages that pull every visual value from
 `tokens.css`.
 
-HS-10-10 (`CommandPreview` component) shipped ahead of HS-10-09 because
-the dictation rebuild explicitly depends on it. Five gallery instances
-demonstrate the three tones, long-command wrap, and the bare form;
-copy-to-clipboard is wired with a single delegated listener.
+All five route surfaces (`/`, `/activity`, `/history` + `/settings`,
+`/dictation`, `/docs/dictation-runtime`) now serve from the Astro
+build under `AppLayout`. The legacy `holdspeak/static/*.html` files
+that previously hand-rolled topbars / styles / inline scripts are
+gone — combined removal of `dashboard.html` (2,819) +
+`activity.html` (940) + `history.html` (2,508) + `dictation.html`
+(1,381) + `dictation-runtime-setup.html` (95) = **7,743 lines** of
+ad-hoc presentation code displaced by token-driven Astro pages.
 
-Up next: HS-10-09 (`/dictation` rebuild — now unblocked, will consume
-`CommandPreview` for the dry-run trace), then HS-10-11 (destructive
-confirmation), HS-10-12 (motion/a11y), HS-10-13 (designer handoff
-refresh + phase exit).
+The dry-run trace on `/dictation` is the first production consumer
+of `CommandPreview` (HS-10-10): final text + each stage render
+through `<figure class="cmd cmd--{tone}">` markup, and stages with
+warnings flag in `cmd--danger`.
+
+Up next: HS-10-11 (destructive confirmation pattern — wires onto
+the `.btn.danger` class hooks already in place across `/activity`,
+`/history`, `/dictation`), HS-10-12 (motion + a11y pass), HS-10-13
+(designer handoff refresh + phase exit).
 
 ## Source Design
 

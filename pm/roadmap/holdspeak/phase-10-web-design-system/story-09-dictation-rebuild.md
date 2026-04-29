@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-10-03, HS-10-04, HS-10-05, HS-10-10
 - **Unblocks:** HS-10-13
-- **Owner:** unassigned
+- **Owner:** karol
 
 ## Problem
 
@@ -42,13 +42,13 @@ edge.
 
 ## Acceptance Criteria
 
-- [ ] All five tabs render on the new system.
-- [ ] Block editor supports the existing create/edit/delete flows with
+- [x] All five tabs render on the new system.
+- [x] Block editor supports the existing create/edit/delete flows with
   no regressions.
-- [ ] Readiness checks display consistently and remediation actions
+- [x] Readiness checks display consistently and remediation actions
   still work.
-- [ ] Dry-run output uses `CommandPreview` from HS-10-10.
-- [ ] `/docs/dictation-runtime` rebuilt on the new system.
+- [x] Dry-run output uses `CommandPreview` from HS-10-10.
+- [x] `/docs/dictation-runtime` rebuilt on the new system.
 
 ## Test Plan
 

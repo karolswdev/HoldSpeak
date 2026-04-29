@@ -1,0 +1,148 @@
+---
+// HS-10-09: dictation runtime setup doc rebuilt on AppLayout.
+//
+// The legacy `holdspeak/static/dictation-runtime-setup.html` was
+// 95 lines with its own header/styles. Now it lives under TopNav
+// like every other route, with shell snippets rendered through
+// CommandPreview so they pick up the standardized monospace +
+// copy-to-clipboard treatment.
+
+import AppLayout from "../../layouts/AppLayout.astro";
+import CommandPreview from "../../components/CommandPreview.astro";
+import Pill from "../../components/Pill.astro";
+---
+
+<AppLayout title="Dictation Runtime Setup" current="dictation">
+  <main class="docs">
+    <header class="docs-head">
+      <p class="kicker">Dictation</p>
+      <h1>Dictation runtime setup</h1>
+      <p class="lede">
+        The dictation pipeline uses a local LLM runtime for block
+        classification and Project KB enrichment. Pick one backend
+        and place the matching model at the configured path.
+      </p>
+    </header>
+
+    <section class="panel" id="mlx">
+      <header class="panel-head">
+        <h2>Apple Silicon</h2>
+        <Pill tone="info">recommended on M-series</Pill>
+      </header>
+      <p>Use MLX on Apple Silicon when available.</p>
+      <CommandPreview command={`uv pip install -e '.[dictation-mlx]'
+
+huggingface-cli download mlx-community/Qwen3-8B-MLX-4bit --local-dir ~/Models/mlx/Qwen3-8B-MLX-4bit`}>
+        <Fragment slot="caption">Install + download.</Fragment>
+      </CommandPreview>
+      <p class="default-path">
+        Default model path: <code>~/Models/mlx/Qwen3-8B-MLX-4bit</code>
+      </p>
+    </section>
+
+    <section class="panel" id="llama-cpp">
+      <header class="panel-head">
+        <h2>Cross-platform GGUF</h2>
+        <Pill>linux x86_64 · macOS fallback</Pill>
+      </header>
+      <p>
+        Use <code>llama_cpp</code> on Linux x86_64, or as a macOS
+        fallback. On macOS arm64, build with Metal flags.
+      </p>
+      <CommandPreview command={`CMAKE_ARGS="-DGGML_METAL=on" uv pip install -e '.[dictation-llama]'
+
+mkdir -p ~/Models/gguf
+huggingface-cli download bartowski/Qwen2.5-3B-Instruct-GGUF \\
+  Qwen2.5-3B-Instruct-Q4_K_M.gguf --local-dir ~/Models/gguf --local-dir-use-symlinks False`}>
+        <Fragment slot="caption">Install + download.</Fragment>
+      </CommandPreview>
+      <p class="default-path">
+        Default model path: <code>~/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf</code>
+      </p>
+    </section>
+
+    <section class="panel">
+      <header class="panel-head">
+        <h2>Enable runtime</h2>
+      </header>
+      <p>
+        Enable the dictation pipeline from the
+        <a href="/dictation">Runtime tab</a>, or set
+        <code>dictation.pipeline.enabled</code> in
+        <code>~/.config/holdspeak/config.json</code>.
+      </p>
+      <p class="note">
+        Readiness and doctor only show commands; they do not install
+        packages or download models.
+      </p>
+    </section>
+  </main>
+</AppLayout>
+
+<style>
+  .docs {
+    max-width: 56rem;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .docs-head {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: var(--space-4);
+  }
+  .kicker {
+    margin: 0 0 var(--space-1);
+    color: var(--accent);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose);
+  }
+  h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    color: var(--text);
+  }
+  h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    color: var(--text);
+    font-size: var(--font-size-md);
+  }
+  .lede {
+    margin: var(--space-2) 0 0;
+    color: var(--text-muted);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .panel {
+    background: var(--canvas-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-3);
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+  .panel p { margin: 0; color: var(--text-muted); line-height: var(--line-height-relaxed); }
+  .default-path { color: var(--text-faint) !important; font-size: var(--font-size-sm); }
+  .note { color: var(--success) !important; }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.95em;
+    color: var(--text);
+    background: var(--canvas);
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-1);
+  }
+  a { color: var(--accent); }
+  a:hover { text-decoration: underline; }
+</style>

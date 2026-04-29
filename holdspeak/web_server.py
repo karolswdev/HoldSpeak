@@ -996,27 +996,44 @@ class MeetingWebServer:
 
         @app.get("/dictation")
         async def dictation_dashboard() -> Any:
-            """Serve the dictation block-config UI (HS-4-02)."""
-            page = Path(__file__).resolve().parent / "static" / "dictation.html"
+            """Serve the dictation block-config UI (HS-10-09: now read
+            from the Astro-built _built/dictation/index.html)."""
+            page = (
+                Path(__file__).resolve().parent
+                / "static"
+                / "_built"
+                / "dictation"
+                / "index.html"
+            )
             try:
                 html = page.read_text(encoding="utf-8")
             except Exception as e:
-                log.error(f"Failed to read dictation.html: {e}")
+                log.error(f"Failed to read built dictation page: {e}")
                 html = (
                     "<!doctype html><html><head><meta charset='utf-8'/>"
                     "<title>HoldSpeak Dictation</title></head>"
-                    "<body><h1>Dictation</h1><p>Page unavailable.</p></body></html>"
+                    "<body><h1>HoldSpeak Dictation</h1>"
+                    "<p>Dictation UI not built. Run <code>npm run build</code> "
+                    "in <code>web/</code>.</p></body></html>"
                 )
             return HTMLResponse(html)
 
         @app.get("/docs/dictation-runtime")
         async def dictation_runtime_docs() -> Any:
-            """Serve local dictation runtime setup guidance."""
-            page = Path(__file__).resolve().parent / "static" / "dictation-runtime-setup.html"
+            """Serve local dictation runtime setup guidance (HS-10-09:
+            now read from _built/docs/dictation-runtime/index.html)."""
+            page = (
+                Path(__file__).resolve().parent
+                / "static"
+                / "_built"
+                / "docs"
+                / "dictation-runtime"
+                / "index.html"
+            )
             try:
                 html = page.read_text(encoding="utf-8")
             except Exception as e:
-                log.error(f"Failed to read dictation-runtime-setup.html: {e}")
+                log.error(f"Failed to read built dictation-runtime docs: {e}")
                 html = (
                     "<!doctype html><html><head><meta charset='utf-8'/>"
                     "<title>Dictation Runtime Setup</title></head>"

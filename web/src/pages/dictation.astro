@@ -1,0 +1,644 @@
+---
+// HS-10-09: `/dictation` rebuilt on the design system.
+//
+// The legacy page was a single 1,381-line static/dictation.html with
+// inline <style> (~177 lines), inline vanilla JS (~1,004 lines), and
+// markup that hand-rolled a topbar/navigation. This rebuild:
+//
+//   - Wraps the page in AppLayout (TopNav + LocalPill + skip link).
+//   - Loads dictation-app.js verbatim from src/scripts/.
+//   - Replaces inline <style> with scoped CSS that flows from
+//     tokens.css.
+//   - Preserves every DOM id the JS reads via getElementById.
+//   - Routes the dry-run trace through the standardized
+//     CommandPreview markup (HS-10-10) — final text + each stage
+//     emit `.cmd` figures whose copy buttons are picked up by
+//     CommandPreview's document-level click delegator.
+
+import AppLayout from "../layouts/AppLayout.astro";
+import CommandPreview from "../components/CommandPreview.astro";
+---
+
+<AppLayout title="HoldSpeak Dictation" current="dictation">
+  <main id="app" class="dictation">
+    <div class="scope-row" role="tablist" aria-label="Dictation sections">
+      <button id="section-readiness" data-section="readiness" type="button" role="tab">Readiness</button>
+      <button id="section-blocks" data-section="blocks" class="active" type="button" role="tab">Blocks</button>
+      <button id="section-kb" data-section="kb" type="button" role="tab">Project KB</button>
+      <button id="section-runtime" data-section="runtime" type="button" role="tab">Runtime</button>
+      <button id="section-dry-run" data-section="dry-run" type="button" role="tab">Dry-run</button>
+    </div>
+
+    <div class="meta-banner project-root-row">
+      <strong>Project root</strong>
+      <input
+        type="text"
+        id="project-root-override"
+        placeholder="current holdspeak cwd"
+        class="project-root-input"
+      />
+      <button class="btn primary" id="project-root-apply" type="button">Apply</button>
+      <button class="btn" id="project-root-clear" type="button">Use cwd</button>
+      <select id="project-root-recent" class="project-root-recent" aria-label="Recent project roots">
+        <option value="">Recent roots</option>
+      </select>
+      <span id="project-root-status" class="project-root-status"></span>
+    </div>
+
+    <!-- ============= Readiness ============= -->
+    <section id="view-readiness" class="view" hidden>
+      <h2>Dictation readiness</h2>
+      <p class="lede">
+        One snapshot of the selected project's dictation setup:
+        pipeline, blocks, project KB, runtime model, and next actions.
+      </p>
+      <div id="ready-meta" class="meta-banner">Loading…</div>
+      <div id="ready-cards" class="readiness-grid"></div>
+      <section class="panel">
+        <header class="panel-header">
+          <h3>Next actions</h3>
+          <button class="btn" id="ready-btn-refresh" type="button">Refresh</button>
+        </header>
+        <div id="ready-actions" class="warning-list"></div>
+      </section>
+    </section>
+
+    <!-- ============= Blocks ============= -->
+    <section id="view-blocks" class="view">
+      <h2>Block editor</h2>
+      <p class="lede">
+        Author dictation blocks (DIR-01) without hand-editing
+        <code>blocks.yaml</code>. Changes write atomically to the
+        underlying file (<code>WFS-CFG-006</code>) and are validated
+        before persisting.
+      </p>
+
+      <div class="scope-row" role="tablist" aria-label="Block scope">
+        <button id="scope-global" data-scope="global" class="active" type="button" role="tab">Global</button>
+        <button id="scope-project" data-scope="project" type="button" role="tab">Project</button>
+      </div>
+
+      <div id="meta-banner" class="meta-banner">Loading…</div>
+
+      <div class="grid">
+        <section class="panel">
+          <header class="panel-header">
+            <h3>Blocks</h3>
+            <button id="btn-new" class="btn primary" type="button">+ New block</button>
+          </header>
+          <div id="block-list" class="block-list"></div>
+          <div class="panel-divider">
+            <h3 class="subhead">Starter templates</h3>
+            <div id="template-list"></div>
+            <div id="template-msg"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <header class="panel-header">
+            <h3 id="editor-title">Select a block to edit</h3>
+          </header>
+          <div id="editor"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ============= Runtime ============= -->
+    <section id="view-runtime" class="view" hidden>
+      <h2>Dictation runtime</h2>
+      <p class="lede">
+        Configure the DIR-01 pipeline without editing
+        <code>~/.config/holdspeak/config.json</code>. Counters are
+        process-scoped (since runtime start). The cold-start cap is
+        <code>max_total_latency_ms × 5</code> — first
+        <code>classify()</code> after launch slower than the cap
+        disables the LLM stage for the session
+        (<code>DIR-R-003</code>).
+      </p>
+      <div id="rt-meta-banner" class="meta-banner">Loading…</div>
+      <div class="grid">
+        <section class="panel">
+          <header class="panel-header"><h3>Pipeline + runtime</h3></header>
+          <label class="check-label"><input type="checkbox" id="rt-enabled" /> Enable dictation pipeline</label>
+          <label>Backend
+            <select id="rt-backend">
+              <option value="auto">auto (prefer MLX)</option>
+              <option value="mlx">mlx</option>
+              <option value="llama_cpp">llama_cpp</option>
+            </select>
+          </label>
+          <label>MLX model path <input type="text" id="rt-mlx-model" /></label>
+          <label>llama_cpp GGUF path <input type="text" id="rt-llama-path" /></label>
+          <label class="check-label"><input type="checkbox" id="rt-warm" /> warm_on_start (load model at launch)</label>
+          <label>max_total_latency_ms
+            <input type="range" id="rt-latency" min="100" max="5000" step="50" />
+          </label>
+          <div id="rt-latency-vis" class="rt-latency-vis"></div>
+          <div id="rt-msg"></div>
+          <div class="actions">
+            <button class="btn primary" id="rt-btn-save" type="button">Save</button>
+            <button class="btn" id="rt-btn-reset" type="button">Reset</button>
+          </div>
+        </section>
+        <section class="panel">
+          <header class="panel-header">
+            <h3>Runtime status</h3>
+            <button id="rt-btn-refresh" class="btn" type="button">Refresh</button>
+          </header>
+          <div id="rt-session-banner"></div>
+          <div id="rt-guidance"></div>
+          <div id="rt-counters" class="rt-counters"></div>
+          <p class="rt-counter-note">
+            Counters reset on every <code>holdspeak</code> restart.
+            <code>classify_failures</code> includes both LLM errors
+            and constraint-rejected outputs;
+            <code>constrained_retries</code> is the count of
+            GBNF-grammar re-prompts.
+          </p>
+        </section>
+      </div>
+    </section>
+
+    <!-- ============= Dry-run ============= -->
+    <section id="view-dry-run" class="view" hidden>
+      <h2>Dry-run preview</h2>
+      <p class="lede">
+        Run the current DIR-01 pipeline against typed text without
+        touching the keyboard. The trace uses the current project
+        detected from the <code>holdspeak</code> process cwd.
+      </p>
+      <div class="grid">
+        <section class="panel">
+          <header class="panel-header"><h3>Input</h3></header>
+          <label>Utterance
+            <textarea id="dry-utterance" placeholder="Type the utterance to preview"></textarea>
+          </label>
+          <div id="dry-msg"></div>
+          <div class="actions">
+            <button class="btn primary" id="dry-btn-run" type="button">Run dry-run</button>
+            <button class="btn" id="dry-btn-clear" type="button">Clear</button>
+          </div>
+        </section>
+        <section class="panel">
+          <header class="panel-header"><h3>Result</h3></header>
+          <div id="dry-meta" class="meta-banner">No dry-run yet.</div>
+          <div id="dry-final"></div>
+          <div id="dry-trace"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ============= Project KB ============= -->
+    <section id="view-kb" class="view" hidden>
+      <h2>Project knowledge base</h2>
+      <p class="lede">
+        Edit the <code>kb</code> mapping in
+        <code>&lt;project_root&gt;/.holdspeak/project.yaml</code>.
+        Keys become <code>{`{project.kb.<key>}`}</code> placeholders
+        inside block templates. Keys must match
+        <code>[A-Za-z_][A-Za-z0-9_]*</code>; values are strings (or null).
+      </p>
+      <div id="kb-meta-banner" class="meta-banner">Loading…</div>
+      <section class="panel">
+        <header class="panel-header">
+          <h3>Knowledge-base entries</h3>
+          <div class="panel-toolbar">
+            <button id="kb-btn-starter" class="btn" type="button">Use starter</button>
+            <button id="kb-btn-add" class="btn primary" type="button">+ New entry</button>
+          </div>
+        </header>
+        <div id="kb-rows"></div>
+        <div id="kb-msg"></div>
+        <div class="actions">
+          <button class="btn primary" id="kb-btn-save" type="button">Save</button>
+          <button class="btn" id="kb-btn-reset" type="button">Reset</button>
+          <button class="btn danger" id="kb-btn-delete" type="button">Delete file</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  {/* Render a hidden CommandPreview so its scoped CSS + script
+      delegator are bundled with this page. The delegator handles
+      every `[data-cmd-copy]` button on the document, including the
+      ones rendered dynamically by dictation-app.js into #dry-final
+      and #dry-trace. */}
+  <div hidden aria-hidden="true">
+    <CommandPreview command="holdspeak doctor --json" />
+  </div>
+
+  <script>
+    import factorySource from "../scripts/dictation-app.js?raw";
+
+    // The legacy script ran at module level (no factory wrapper) and
+    // attached to DOM via window.addEventListener("DOMContentLoaded",
+    // ...). Astro hoists this script after the body — DOM is ready,
+    // so Function-eval'd execution runs immediately and the
+    // DOMContentLoaded handler inside the legacy code still fires
+    // because Astro emits the script as type="module" which deferrs
+    // until the document is parsed.
+    new Function(factorySource)();
+  </script>
+</AppLayout>
+
+<style>
+  /* All values flow from tokens.css. */
+
+  .dictation {
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .lede {
+    margin: 0 0 var(--space-3);
+    color: var(--text-muted);
+    line-height: var(--line-height-relaxed);
+    max-width: 48rem;
+  }
+
+  h2 {
+    margin: 0 0 var(--space-2);
+    font-family: var(--font-display);
+    color: var(--text);
+  }
+
+  .view {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .view[hidden] { display: none; }
+
+  /* === Tab + scope row =================================== */
+  .scope-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+  .scope-row button {
+    appearance: none;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    padding: var(--space-2) var(--space-3);
+    color: var(--text-muted);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: border-color var(--duration-short) var(--ease-standard),
+                color var(--duration-short) var(--ease-standard),
+                background var(--duration-short) var(--ease-standard);
+  }
+  .scope-row button:hover { color: var(--text); border-color: var(--line-strong); }
+  .scope-row button.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--text);
+  }
+  .scope-row button:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  /* === Meta banner ======================================= */
+  .meta-banner {
+    background: var(--canvas-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    line-height: var(--line-height-relaxed);
+  }
+  .meta-banner strong { color: var(--text); font-family: var(--font-ui); }
+  .meta-banner.warn { border-color: var(--warn); color: var(--warn); }
+  .meta-banner.error { border-color: var(--danger); color: var(--danger); }
+
+  .project-root-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: center;
+  }
+  .project-root-input { flex: 1 1 26rem; min-width: 0; }
+  .project-root-recent { flex: 0 1 16rem; }
+  .project-root-status {
+    flex: 1 1 100%;
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+  }
+
+  /* === Grid ============================================== */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+  }
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  /* === Panel ============================================= */
+  .panel {
+    background: var(--canvas-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-3);
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+  .panel-header h3, .panel h3 {
+    margin: 0;
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: var(--font-size-md);
+  }
+  .panel-toolbar {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+  .panel-divider {
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--line);
+  }
+  .subhead { font-size: var(--font-size-sm) !important; }
+
+  /* === Block list ======================================== */
+  .block-list { display: flex; flex-direction: column; gap: var(--space-2); }
+  .block-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--canvas);
+    cursor: pointer;
+    transition: border-color var(--duration-short) var(--ease-standard);
+  }
+  .block-card:hover { border-color: var(--line-strong); }
+  .block-card.selected { border-color: var(--accent); background: var(--accent-soft); }
+  .block-id { font-family: var(--font-mono); font-weight: 600; color: var(--text); }
+  .block-desc {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    margin-top: var(--space-1);
+  }
+  .block-card .pill {
+    display: inline-block;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: var(--font-size-xs);
+    margin-left: var(--space-2);
+  }
+  .template-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    padding: var(--space-2);
+    margin-top: var(--space-2);
+    background: var(--canvas);
+  }
+  .template-card .template-title { font-weight: 600; }
+  .template-card .template-desc {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    margin: var(--space-1) 0 var(--space-2);
+  }
+
+  /* === Form controls ===================================== */
+  label {
+    display: block;
+    margin-top: var(--space-2);
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+  }
+  .check-label { display: flex; align-items: center; gap: var(--space-2); color: var(--text); }
+  input[type="text"],
+  input[type="number"],
+  input[type="range"],
+  textarea,
+  select {
+    width: 100%;
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    padding: var(--space-2) var(--space-3);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    margin-top: var(--space-1);
+  }
+  input[type="checkbox"] { width: auto; margin: 0; }
+  input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+    border-color: var(--accent);
+  }
+  textarea { min-height: 5.5rem; resize: vertical; }
+  .row { display: flex; gap: var(--space-3); }
+  .row > * { flex: 1; }
+
+  /* === Buttons =========================================== */
+  .btn {
+    appearance: none;
+    background: var(--canvas-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    padding: var(--space-2) var(--space-3);
+    color: var(--text);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    transition: border-color var(--duration-short) var(--ease-standard),
+                background var(--duration-short) var(--ease-standard);
+  }
+  .btn:hover:not(:disabled) { border-color: var(--line-strong); }
+  .btn:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-on);
+  }
+  .btn.danger { color: var(--danger); border-color: var(--danger); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+
+  /* === Preview / boxes (used by JS-rendered editor previews) === */
+  .preview {
+    background: var(--canvas);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-2);
+    padding: var(--space-3);
+    margin-top: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    white-space: pre-wrap;
+    min-height: 5rem;
+  }
+  .preview .missing { color: var(--warn); }
+
+  .error-box {
+    background: var(--danger-soft);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    border-radius: var(--radius-2);
+    padding: var(--space-2) var(--space-3);
+    margin-top: var(--space-2);
+    font-size: var(--font-size-sm);
+    font-family: var(--font-mono);
+  }
+  .ok-box {
+    background: var(--success-soft);
+    border: 1px solid var(--success);
+    color: var(--success);
+    border-radius: var(--radius-2);
+    padding: var(--space-2) var(--space-3);
+    margin-top: var(--space-2);
+    font-size: var(--font-size-sm);
+  }
+
+  /* === Trace (dry-run) =================================== */
+  .trace-stage {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    padding: var(--space-3);
+    background: var(--canvas);
+    margin-top: var(--space-2);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .trace-stage-head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-2);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+  }
+  .trace-stage-head strong { color: var(--text); }
+  .trace-stage-elapsed { color: var(--text-faint); }
+  .trace-intent {
+    margin: 0;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+  }
+  .trace-metadata {
+    margin: 0;
+    background: var(--canvas-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    padding: var(--space-2);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .trace-empty {
+    margin: 0;
+    color: var(--text-faint);
+    font-size: var(--font-size-sm);
+  }
+
+  /* === Readiness ========================================= */
+  .readiness-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+  @media (max-width: 900px) { .readiness-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .readiness-grid { grid-template-columns: 1fr; } }
+  .readiness-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    padding: var(--space-3);
+    background: var(--canvas);
+    min-height: 6.5rem;
+  }
+  .readiness-card strong { display: block; margin-bottom: var(--space-2); color: var(--text); }
+  .readiness-card .value {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+  }
+  .readiness-card.ok { border-color: var(--success); }
+  .readiness-card.warn { border-color: var(--warn); }
+  .readiness-card.error { border-color: var(--danger); }
+
+  .warning-list { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2); }
+  .guidance-block {
+    border-top: 1px solid var(--line);
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
+  }
+  .guidance-block p { margin: var(--space-1) 0; color: var(--text-muted); }
+  .command-snippet {
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+  .command-snippet code {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    padding: var(--space-2) var(--space-3);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+  }
+
+  /* Misc small JS-injected helpers */
+  .rt-latency-vis {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+  }
+  .rt-counters {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+  }
+  .rt-counter-note {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    margin-top: var(--space-3);
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.95em;
+    color: var(--text);
+    background: var(--canvas);
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-1);
+  }
+</style>

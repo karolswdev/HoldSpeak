@@ -229,5 +229,6 @@ def test_dictation_page_includes_runtime_section() -> None:
     assert response.status_code == 200
     body = response.text
     assert 'data-section="runtime"' in body
-    assert "Dictation Runtime" in body
+    # HS-10-09: heading switched to sentence case in the rebuild.
+    assert "Dictation runtime" in body
     assert "cold-start cap" in body

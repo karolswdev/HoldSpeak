@@ -258,16 +258,26 @@ def test_dictation_page_includes_readiness_panel() -> None:
 
     assert response.status_code == 200
     body = response.text
+    # Markers staying in server-rendered markup.
     assert 'data-section="readiness"' in body
-    assert "/api/dictation/readiness" in body
-    assert "Dictation Readiness" in body
-    assert "data-ready-template-id" in body
-    assert "data-ready-kb-starter" in body
-    assert "data-ready-runtime-action" in body
+    # HS-10-09: heading now sentence-case.
+    assert "Dictation readiness" in body
     assert "rt-guidance" in body
-    assert "renderRuntimeGuidance" in body
-    assert "data-copy-command" in body
-    assert "Copy all setup commands" in body
+
+    # Endpoint + handler strings + JS-rendered data attributes live
+    # in the bundled chunk after the rebuild.
+    import re
+
+    match = re.search(r'src="(/_built/_astro/hoisted\.[^"]+\.js)"', body)
+    assert match, "expected hoisted dictation JS chunk reference"
+    js = client.get(match.group(1)).text
+    assert "/api/dictation/readiness" in js
+    assert "data-ready-template-id" in js
+    assert "data-ready-kb-starter" in js
+    assert "data-ready-runtime-action" in js
+    assert "renderRuntimeGuidance" in js
+    assert "data-copy-command" in js
+    assert "Copy all setup commands" in js
 
 
 def test_dictation_runtime_docs_route_serves_setup_page() -> None:

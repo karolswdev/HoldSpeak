@@ -49,6 +49,9 @@ SHOTS = [
     ("story-08-history-settings-desktop.png", "/_built/history/?_tab=settings", 1440, 2800),
     ("story-10-command-preview-desktop.png", GALLERY_PATH + "#command-preview", 1440, 1100),
     ("story-10-command-preview-narrow.png", GALLERY_PATH + "#command-preview", 768, 1400),
+    ("story-09-dictation-blocks-desktop.png", "/_built/dictation/", 1440, 1500),
+    ("story-09-dictation-blocks-narrow.png", "/_built/dictation/", 420, 2200),
+    ("story-09-dictation-runtime-doc-desktop.png", "/_built/docs/dictation-runtime/", 1440, 1600),
 ]
 
 
@@ -177,7 +180,7 @@ def main() -> None:
                 # story-10 captures only the CommandPreview section
                 # so it stays a viewport-bound shot focused on the
                 # component (the gallery itself is captured by story-03).
-                full_page = filename.startswith(("story-03-", "story-06-", "story-08-"))
+                full_page = filename.startswith(("story-03-", "story-06-", "story-08-", "story-09-"))
                 if filename.startswith("story-10-"):
                     page.evaluate(
                         "document.getElementById('command-preview')?.scrollIntoView({ block: 'start' })",
