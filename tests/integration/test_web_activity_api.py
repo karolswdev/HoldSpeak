@@ -403,3 +403,95 @@ def test_github_enrichment_run_requires_explicit_enablement(
     annotations = activity_db.list_activity_annotations(source_connector_id="gh")
     assert len(annotations) == 1
     assert annotations[0].annotation_type == "github_issue"
+
+
+def test_jira_enrichment_preview_is_visible_and_disabled_by_default(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+) -> None:
+    record = activity_db.upsert_activity_record(
+        source_browser="safari",
+        url="https://example.atlassian.net/browse/HS-123",
+        title="HS-123 activity mapping",
+        domain="example.atlassian.net",
+        last_seen_at=datetime(2026, 4, 28, 9, 0),
+        entity_type="jira_ticket",
+        entity_id="HS-123",
+    )
+
+    connectors_response = test_client.get("/api/activity/enrichment/connectors")
+    assert connectors_response.status_code == 200
+    connectors = connectors_response.json()["connectors"]
+    assert {connector["id"] for connector in connectors} >= {"gh", "jira"}
+
+    preview_response = test_client.get("/api/activity/enrichment/jira/preview")
+
+    assert preview_response.status_code == 200
+    preview = preview_response.json()
+    assert preview["connector"]["id"] == "jira"
+    assert preview["connector"]["enabled"] is False
+    assert preview["count"] == 1
+    assert preview["commands"][0]["activity_record_id"] == record.id
+    assert preview["commands"][0]["command"][1:] == ["issue", "view", "HS-123", "--plain"]
+
+    run_response = test_client.post("/api/activity/enrichment/jira/run", json={})
+    assert run_response.status_code == 403
+    assert run_response.json()["success"] is False
+    assert activity_db.list_activity_annotations(source_connector_id="jira") == []
+
+
+def test_jira_enrichment_run_requires_explicit_enablement(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    activity_db.upsert_activity_record(
+        source_browser="safari",
+        url="https://example.atlassian.net/browse/HS-123",
+        title="HS-123 activity mapping",
+        domain="example.atlassian.net",
+        entity_type="jira_ticket",
+        entity_id="HS-123",
+    )
+
+    def fake_run(db, records, **kwargs):
+        record = list(records)[0]
+        annotation = db.create_activity_annotation(
+            activity_record_id=record.id,
+            source_connector_id="jira",
+            annotation_type="jira_ticket",
+            title="HS-123 enriched",
+            value={"status": "In Progress"},
+            confidence=1.0,
+        )
+        return [
+            SimpleNamespace(
+                to_payload=lambda: {
+                    "plan": {"activity_record_id": record.id},
+                    "annotation": {
+                        "id": annotation.id,
+                        "title": annotation.title,
+                    },
+                    "error": None,
+                }
+            )
+        ]
+
+    monkeypatch.setattr("holdspeak.activity_jira.run_jira_cli_enrichment", fake_run)
+    enable_response = test_client.put(
+        "/api/activity/enrichment/connectors/jira",
+        json={"enabled": True, "settings": {"timeout_seconds": 2.0}},
+    )
+    assert enable_response.status_code == 200
+    assert enable_response.json()["connector"]["enabled"] is True
+
+    run_response = test_client.post("/api/activity/enrichment/jira/run", json={"limit": 1})
+
+    assert run_response.status_code == 200
+    payload = run_response.json()
+    assert payload["success"] is True
+    assert payload["count"] == 1
+    assert payload["results"][0]["annotation"]["title"] == "HS-123 enriched"
+    annotations = activity_db.list_activity_annotations(source_connector_id="jira")
+    assert len(annotations) == 1
+    assert annotations[0].annotation_type == "jira_ticket"

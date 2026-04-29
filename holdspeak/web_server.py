@@ -242,7 +242,7 @@ class _ActivityEnrichmentConnectorRequest(BaseModel):
     settings: Optional[dict[str, Any]] = None
 
 
-class _ActivityGithubEnrichmentRunRequest(BaseModel):
+class _ActivityCliEnrichmentRunRequest(BaseModel):
     limit: Optional[int] = None
     timeout_seconds: Optional[float] = None
     max_bytes: Optional[int] = None
@@ -1260,17 +1260,22 @@ class MeetingWebServer:
         @app.get("/api/activity/enrichment/connectors")
         async def api_list_activity_enrichment_connectors() -> Any:
             try:
-                from .activity_github import CONNECTOR_ID, github_cli_status
+                from .activity_github import CONNECTOR_ID as GH_CONNECTOR_ID, github_cli_status
+                from .activity_jira import CONNECTOR_ID as JIRA_CONNECTOR_ID, jira_cli_status
                 from .db import get_database
 
                 db = get_database()
-                connector = db.get_activity_enrichment_connector(CONNECTOR_ID)
-                if connector is None:
-                    connector = db.upsert_activity_enrichment_connector(connector_id=CONNECTOR_ID)
+                connectors = []
+                for connector_id in (GH_CONNECTOR_ID, JIRA_CONNECTOR_ID):
+                    connector = db.get_activity_enrichment_connector(connector_id)
+                    if connector is None:
+                        connector = db.upsert_activity_enrichment_connector(connector_id=connector_id)
+                    connectors.append(_activity_enrichment_connector_payload(connector))
                 return JSONResponse(
                     {
-                        "connectors": [_activity_enrichment_connector_payload(connector)],
+                        "connectors": connectors,
                         "github": github_cli_status(),
+                        "jira": jira_cli_status(),
                     }
                 )
             except Exception as e:
@@ -1282,7 +1287,7 @@ class MeetingWebServer:
             connector_id: str,
             payload: _ActivityEnrichmentConnectorRequest,
         ) -> Any:
-            if connector_id != "gh":
+            if connector_id not in {"gh", "jira"}:
                 return JSONResponse({"error": f"Unknown activity enrichment connector: {connector_id}"}, status_code=404)
             try:
                 from .db import get_database
@@ -1324,7 +1329,7 @@ class MeetingWebServer:
 
         @app.post("/api/activity/enrichment/github/run")
         async def api_run_github_activity_enrichment(
-            payload: Optional[_ActivityGithubEnrichmentRunRequest] = None,
+            payload: Optional[_ActivityCliEnrichmentRunRequest] = None,
         ) -> Any:
             try:
                 from .activity_github import CONNECTOR_ID, run_github_cli_enrichment
@@ -1384,6 +1389,88 @@ class MeetingWebServer:
                 return JSONResponse({"success": False, "error": str(e)}, status_code=400)
             except Exception as e:
                 log.error(f"Failed to run GitHub activity enrichment: {e}")
+                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+        @app.get("/api/activity/enrichment/jira/preview")
+        async def api_preview_jira_activity_enrichment(limit: int = 50) -> Any:
+            try:
+                from .activity_jira import CONNECTOR_ID, preview_jira_cli_enrichment
+                from .db import get_database
+
+                db = get_database()
+                connector = db.get_activity_enrichment_connector(CONNECTOR_ID)
+                if connector is None:
+                    connector = db.upsert_activity_enrichment_connector(connector_id=CONNECTOR_ID)
+                records = db.list_activity_records(entity_type="jira_ticket", limit=max(1, min(int(limit), 500)))
+                preview = preview_jira_cli_enrichment(records, limit=limit)
+                return JSONResponse(
+                    {
+                        **preview,
+                        "connector": _activity_enrichment_connector_payload(connector),
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to preview Jira activity enrichment: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.post("/api/activity/enrichment/jira/run")
+        async def api_run_jira_activity_enrichment(
+            payload: Optional[_ActivityCliEnrichmentRunRequest] = None,
+        ) -> Any:
+            try:
+                from .activity_jira import CONNECTOR_ID, run_jira_cli_enrichment
+                from .db import get_database
+
+                db = get_database()
+                connector = db.get_activity_enrichment_connector(CONNECTOR_ID)
+                if connector is None:
+                    connector = db.upsert_activity_enrichment_connector(connector_id=CONNECTOR_ID)
+                if not connector.enabled:
+                    return JSONResponse(
+                        {
+                            "success": False,
+                            "error": "Jira activity enrichment connector is disabled",
+                            "connector": _activity_enrichment_connector_payload(connector),
+                        },
+                        status_code=403,
+                    )
+
+                settings = connector.settings or {}
+                limit = payload.limit if payload and payload.limit is not None else settings.get("limit", 25)
+                timeout_seconds = (
+                    payload.timeout_seconds
+                    if payload and payload.timeout_seconds is not None
+                    else settings.get("timeout_seconds", 5.0)
+                )
+                max_bytes = (
+                    payload.max_bytes
+                    if payload and payload.max_bytes is not None
+                    else settings.get("max_bytes", 65536)
+                )
+                records = db.list_activity_records(
+                    entity_type="jira_ticket",
+                    limit=max(1, min(int(limit), 500)),
+                )
+                results = run_jira_cli_enrichment(
+                    db,
+                    records,
+                    limit=max(1, min(int(limit), 100)),
+                    timeout_seconds=max(0.1, float(timeout_seconds)),
+                    max_bytes=max(1024, min(int(max_bytes), 1048576)),
+                )
+                connector = db.get_activity_enrichment_connector(CONNECTOR_ID) or connector
+                return JSONResponse(
+                    {
+                        "success": True,
+                        "connector": _activity_enrichment_connector_payload(connector),
+                        "count": len(results),
+                        "results": [result.to_payload() for result in results],
+                    }
+                )
+            except ValueError as e:
+                return JSONResponse({"success": False, "error": str(e)}, status_code=400)
+            except Exception as e:
+                log.error(f"Failed to run Jira activity enrichment: {e}")
                 return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
         @app.get("/api/activity/meeting-candidates/preview")

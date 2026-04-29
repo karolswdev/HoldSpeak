@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-9-01
 - **Unblocks:** richer local annotations for Jira tickets
 - **Owner:** unassigned
@@ -29,7 +29,7 @@ the user.
 
 ## Acceptance Criteria
 
-- [ ] `jira` connector is disabled by default.
-- [ ] Availability and command path are visible.
-- [ ] Preview runs before writing annotations.
-- [ ] Only read-only commands are allowed.
+- [x] `jira` connector is disabled by default.
+- [x] Availability and command path are visible.
+- [x] Preview runs before writing annotations.
+- [x] Only read-only commands are allowed.

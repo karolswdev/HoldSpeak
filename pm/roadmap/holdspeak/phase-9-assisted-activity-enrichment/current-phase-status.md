@@ -1,6 +1,6 @@
 # Phase 9 - Assisted Activity Enrichment
 
-**Last updated:** 2026-04-27 (HS-9-04 GitHub CLI enrichment shipped).
+**Last updated:** 2026-04-28 (HS-9-05 Jira CLI enrichment shipped).
 
 ## Goal
 
@@ -35,7 +35,7 @@ metadata without hidden collection or external writes.
 | HS-9-02 | Calendar and Outlook meeting candidates | done | [story-02-calendar-outlook-candidates.md](./story-02-calendar-outlook-candidates.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-9-03 | Firefox companion extension events | backlog | [story-03-firefox-extension-events.md](./story-03-firefox-extension-events.md) | pending |
 | HS-9-04 | GitHub CLI enrichment annotations | done | [story-04-gh-cli-enrichment.md](./story-04-gh-cli-enrichment.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-9-05 | Jira CLI enrichment annotations | backlog | [story-05-jira-cli-enrichment.md](./story-05-jira-cli-enrichment.md) | pending |
+| HS-9-05 | Jira CLI enrichment annotations | done | [story-05-jira-cli-enrichment.md](./story-05-jira-cli-enrichment.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-9-06 | Assisted enrichment controls + phase exit | backlog | [story-06-controls-dod.md](./story-06-controls-dod.md) | pending |
 | HS-9-07 | Meeting candidate API surface | done | [story-07-meeting-candidate-api.md](./story-07-meeting-candidate-api.md) | [evidence-story-07.md](./evidence-story-07.md) |
 | HS-9-08 | Meeting candidate browser controls | done | [story-08-meeting-candidate-browser-controls.md](./story-08-meeting-candidate-browser-controls.md) | [evidence-story-08.md](./evidence-story-08.md) |
@@ -99,6 +99,12 @@ and issues can now be previewed as explicit read-only `gh` command plans,
 the connector is disabled by default, run attempts are blocked until the
 user enables `gh`, and successful runs persist local annotations with
 timeout and output-size caps.
+
+HS-9-05 mirrored that connector shape for visited Jira tickets. The
+`jira` connector is visible and disabled by default, previews exact
+read-only `jira issue view KEY --plain` commands, blocks runs until
+explicitly enabled, and persists local ticket annotations from capped
+JSON or raw CLI output.
 
 ## Source Design
 
