@@ -17,6 +17,7 @@ import InlineMessage from "../../components/InlineMessage.astro";
 import AppMark from "../../components/AppMark.astro";
 import HoldMark from "../../components/HoldMark.astro";
 import LocalPill from "../../components/LocalPill.astro";
+import CommandPreview from "../../components/CommandPreview.astro";
 ---
 
 <AppLayout title="HoldSpeak — Components">
@@ -256,6 +257,47 @@ import LocalPill from "../../components/LocalPill.astro";
         <Pill>between left</Pill>
         <Button variant="ghost" size="sm">between right</Button>
       </Toolbar>
+    </section>
+
+    <section class="block" id="command-preview" aria-labelledby="command-preview-heading">
+      <h2 id="command-preview-heading">CommandPreview</h2>
+      <p class="lede">
+        Standardized monospaced read-only block for shell commands and
+        traces (gh, jira, dictation dry-run). Always copyable, always
+        wraps, never scrolls horizontally.
+      </p>
+
+      <h3>Tones — neutral plan</h3>
+      <CommandPreview command='gh issue view 142 --repo anthropic/holdspeak'>
+        <Fragment slot="caption">This will run if you click <strong>Run</strong>.</Fragment>
+        <Fragment slot="meta">
+          <Pill tone="info" dot>plan</Pill>
+          <Pill>read-only</Pill>
+        </Fragment>
+      </CommandPreview>
+
+      <h3>Tone — warn (would-modify)</h3>
+      <CommandPreview tone="warn" command='jira issue update HS-142 --status "In Progress" --assignee karol'>
+        <Fragment slot="caption">This will modify the linked Jira issue.</Fragment>
+        <Fragment slot="meta">
+          <Pill tone="warn" dot>writes</Pill>
+          <Pill>jira</Pill>
+        </Fragment>
+      </CommandPreview>
+
+      <h3>Tone — danger (last-run-failed)</h3>
+      <CommandPreview tone="danger" command='holdspeak intel --route-dry-run abc123 --profile architect --intent-overrides "ship_decision,defer"'>
+        <Fragment slot="meta">
+          <Pill tone="danger" dot>last run failed</Pill>
+          <Pill>2.4s</Pill>
+        </Fragment>
+      </CommandPreview>
+
+      <h3>Long argument wrap (≥200 chars, no horizontal scroll)</h3>
+      <CommandPreview command='curl -sSL "https://example.internal/api/v1/projects/holdspeak/meetings/0d6f7e9c-1234-4abc-9d3e-7c4ab5bd6901/segments?include=intel,artifacts,bookmarks&limit=500&order=started_at_desc" | jq ".segments[] | select(.confidence > 0.85)"' />
+
+      <h3>Bare (no caption, no meta)</h3>
+      <CommandPreview command='holdspeak doctor --json' />
     </section>
   </main>
 </AppLayout>

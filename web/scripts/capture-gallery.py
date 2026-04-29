@@ -47,6 +47,8 @@ SHOTS = [
     ("story-08-history-meetings-desktop.png", "/_built/history/", 1440, 1800),
     ("story-08-history-meetings-narrow.png", "/_built/history/", 420, 2600),
     ("story-08-history-settings-desktop.png", "/_built/history/?_tab=settings", 1440, 2800),
+    ("story-10-command-preview-desktop.png", GALLERY_PATH + "#command-preview", 1440, 1100),
+    ("story-10-command-preview-narrow.png", GALLERY_PATH + "#command-preview", 768, 1400),
 ]
 
 
@@ -172,7 +174,15 @@ def main() -> None:
                     page.wait_for_timeout(400)
 
                 target = out_dir / filename
+                # story-10 captures only the CommandPreview section
+                # so it stays a viewport-bound shot focused on the
+                # component (the gallery itself is captured by story-03).
                 full_page = filename.startswith(("story-03-", "story-06-", "story-08-"))
+                if filename.startswith("story-10-"):
+                    page.evaluate(
+                        "document.getElementById('command-preview')?.scrollIntoView({ block: 'start' })",
+                    )
+                    page.wait_for_timeout(200)
                 page.screenshot(path=str(target), full_page=full_page)
                 print(f"wrote {target} {width}x{height} {route}")
             browser.close()

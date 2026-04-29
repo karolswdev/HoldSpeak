@@ -1,0 +1,197 @@
+---
+// HS-10-10 CommandPreview.
+//
+// Standardized monospaced read-only block for shell commands and
+// command traces (gh enrichment preview, jira enrichment preview,
+// dictation dry-run trace). Three tones drive border/edge color:
+//
+//   neutral — plan / preview-before-run
+//   warn    — would-modify-on-run / requires confirmation
+//   danger  — last-run-failed / dangerous-preview
+//
+// Slots:
+//   default  — the command text (rendered inside <pre><code>).
+//   caption  — optional copy above the block ("This will run if you
+//              click Run").
+//   meta     — optional pills/timing below the block.
+//
+// Long arguments wrap on whitespace + character boundaries; the block
+// never produces horizontal scroll. Copy-to-clipboard lives inside the
+// component as a small button with a transient "copied" pill.
+
+interface Props {
+  tone?: "neutral" | "warn" | "danger";
+  command: string;
+  ariaLabel?: string;
+  class?: string;
+}
+
+const {
+  tone = "neutral",
+  command,
+  ariaLabel = "Shell command preview",
+  class: extraClass,
+} = Astro.props;
+
+const wrapperClass = ["cmd", `cmd--${tone}`, extraClass].filter(Boolean).join(" ");
+---
+
+<figure class={wrapperClass} aria-label={ariaLabel}>
+  {Astro.slots.has("caption") && (
+    <figcaption class="cmd-caption">
+      <slot name="caption" />
+    </figcaption>
+  )}
+
+  <div class="cmd-frame">
+    <pre class="cmd-pre"><code class="cmd-code">{command}</code></pre>
+    <button
+      type="button"
+      class="cmd-copy"
+      data-cmd-copy
+      data-command={command}
+      aria-label="Copy command to clipboard"
+    >
+      <span class="cmd-copy-label" data-cmd-copy-label>Copy</span>
+    </button>
+  </div>
+
+  {Astro.slots.has("meta") && (
+    <div class="cmd-meta">
+      <slot name="meta" />
+    </div>
+  )}
+</figure>
+
+<script>
+  // One global delegator handles every CommandPreview on the page.
+  // Idempotent: only attaches once even if multiple components render.
+  if (!(window as any).__hsCommandPreviewWired) {
+    (window as any).__hsCommandPreviewWired = true;
+    document.addEventListener("click", async (event) => {
+      const target = (event.target as HTMLElement | null)?.closest(
+        "[data-cmd-copy]",
+      );
+      if (!target) return;
+      const button = target as HTMLButtonElement;
+      const cmd = button.getAttribute("data-command") ?? "";
+      const label = button.querySelector(
+        "[data-cmd-copy-label]",
+      ) as HTMLElement | null;
+      try {
+        await navigator.clipboard.writeText(cmd);
+        if (label) {
+          const original = label.textContent ?? "Copy";
+          label.textContent = "Copied";
+          button.classList.add("is-copied");
+          window.setTimeout(() => {
+            label.textContent = original;
+            button.classList.remove("is-copied");
+          }, 1400);
+        }
+      } catch {
+        if (label) {
+          const original = label.textContent ?? "Copy";
+          label.textContent = "Press ⌘C";
+          window.setTimeout(() => {
+            label.textContent = original;
+          }, 1400);
+        }
+      }
+    });
+  }
+</script>
+
+<style>
+  .cmd {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .cmd-caption {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .cmd-frame {
+    position: relative;
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--line-strong);
+    border-radius: var(--radius-2);
+    overflow: hidden;
+  }
+
+  .cmd--neutral .cmd-frame { border-left-color: var(--line-strong); }
+  .cmd--warn .cmd-frame    { border-left-color: var(--warn); }
+  .cmd--danger .cmd-frame  { border-left-color: var(--danger); }
+
+  .cmd-pre {
+    margin: 0;
+    padding: var(--space-3) calc(var(--space-3) + 4.5rem) var(--space-3) var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    color: var(--text);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    overflow-x: hidden;
+  }
+
+  .cmd-code {
+    font-family: inherit;
+    color: inherit;
+  }
+
+  .cmd-copy {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    appearance: none;
+    background: var(--canvas-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    color: var(--text-muted);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-loose);
+    padding: var(--space-1) var(--space-3);
+    cursor: pointer;
+    transition:
+      border-color var(--duration-short) var(--ease-standard),
+      color var(--duration-short) var(--ease-standard),
+      background var(--duration-short) var(--ease-standard);
+  }
+
+  .cmd-copy:hover {
+    border-color: var(--line-emphasis);
+    color: var(--text);
+  }
+
+  .cmd-copy:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  .cmd-copy.is-copied {
+    color: var(--success);
+    border-color: var(--success);
+    background: var(--success-soft);
+  }
+
+  .cmd-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cmd-copy { transition: none; }
+  }
+</style>

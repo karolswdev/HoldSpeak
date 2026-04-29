@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-10-02, HS-10-03
 - **Unblocks:** HS-10-09
-- **Owner:** unassigned
+- **Owner:** karol
 
 ## Problem
 
@@ -39,13 +39,13 @@ a standardized monospaced, copyable, inspectable style."
 
 ## Acceptance Criteria
 
-- [ ] `CommandPreview` exists, is rendered in the components gallery
+- [x] `CommandPreview` exists, is rendered in the components gallery
   in every documented state, and consumes only tokens.
-- [ ] Copy-to-clipboard works in Chrome and Safari; the success pill
+- [x] Copy-to-clipboard works in Chrome and Safari; the success pill
   auto-dismisses after a short delay.
-- [ ] Long commands (≥200 chars, including a long URL) wrap without
+- [x] Long commands (≥200 chars, including a long URL) wrap without
   horizontal scroll at 768px.
-- [ ] The component is used in every place a command or command-trace
+- [x] The component is used in every place a command or command-trace
   is shown in the product.
 
 ## Test Plan

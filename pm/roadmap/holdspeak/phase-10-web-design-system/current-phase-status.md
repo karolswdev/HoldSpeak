@@ -1,6 +1,6 @@
 # Phase 10 - Web Design System & Character Pass
 
-**Last updated:** 2026-04-28 (HS-10-08 / `/history` rebuilt on the design system).
+**Last updated:** 2026-04-28 (HS-10-10 / `CommandPreview` component shipped).
 
 ## Goal
 
@@ -57,7 +57,7 @@ no identity layer that says "this is HoldSpeak."
 | HS-10-07 | `/activity` rebuild | done | [story-07-activity-rebuild.md](./story-07-activity-rebuild.md) | [evidence-story-07.md](./evidence-story-07.md) |
 | HS-10-08 | `/history` rebuild | done | [story-08-history-rebuild.md](./story-08-history-rebuild.md) | [evidence-story-08.md](./evidence-story-08.md) |
 | HS-10-09 | `/dictation` rebuild | backlog | [story-09-dictation-rebuild.md](./story-09-dictation-rebuild.md) | pending |
-| HS-10-10 | `CommandPreview` component | backlog | [story-10-command-preview.md](./story-10-command-preview.md) | pending |
+| HS-10-10 | `CommandPreview` component | done | [story-10-command-preview.md](./story-10-command-preview.md) | [evidence-story-10.md](./evidence-story-10.md) |
 | HS-10-11 | Destructive-action confirmation pattern | backlog | [story-11-destructive-confirmation.md](./story-11-destructive-confirmation.md) | pending |
 | HS-10-12 | Motion + accessibility pass | backlog | [story-12-motion-a11y.md](./story-12-motion-a11y.md) | pending |
 | HS-10-13 | Designer handoff refresh + phase exit | backlog | [story-13-handoff-refresh-dod.md](./story-13-handoff-refresh-dod.md) | pending |
@@ -74,9 +74,15 @@ the legacy `dashboard.html` (2,819) + `activity.html` (940) +
 have been replaced by Astro pages that pull every visual value from
 `tokens.css`.
 
-Up next: HS-10-09 (`/dictation`) finishes the route rebuilds, then
-HS-10-10–13 (CommandPreview, destructive confirmation, motion/a11y,
-designer handoff refresh).
+HS-10-10 (`CommandPreview` component) shipped ahead of HS-10-09 because
+the dictation rebuild explicitly depends on it. Five gallery instances
+demonstrate the three tones, long-command wrap, and the bare form;
+copy-to-clipboard is wired with a single delegated listener.
+
+Up next: HS-10-09 (`/dictation` rebuild — now unblocked, will consume
+`CommandPreview` for the dry-run trace), then HS-10-11 (destructive
+confirmation), HS-10-12 (motion/a11y), HS-10-13 (designer handoff
+refresh + phase exit).
 
 ## Source Design
 
