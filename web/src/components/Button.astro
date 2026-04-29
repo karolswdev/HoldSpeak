@@ -1,0 +1,170 @@
+---
+// HS-10-03 Button.
+//
+// Variants: primary | secondary | danger | ghost.
+// Sizes: sm | md.
+// Loading + disabled both block click via the native `disabled` attr;
+// loading additionally sets aria-busy and renders a spinner glyph.
+// iconOnly tightens the padding and forces an aria-label.
+
+interface Props {
+  variant?: "primary" | "secondary" | "danger" | "ghost";
+  size?: "sm" | "md";
+  loading?: boolean;
+  disabled?: boolean;
+  iconOnly?: boolean;
+  type?: "button" | "submit" | "reset";
+  ariaLabel?: string;
+  class?: string;
+}
+
+const {
+  variant = "primary",
+  size = "md",
+  loading = false,
+  disabled = false,
+  iconOnly = false,
+  type = "button",
+  ariaLabel,
+  class: extraClass,
+} = Astro.props;
+
+const isInactive = disabled || loading;
+const classes = [
+  "btn",
+  `btn--${variant}`,
+  `btn--${size}`,
+  iconOnly ? "btn--icon" : null,
+  loading ? "is-loading" : null,
+  extraClass,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<button
+  type={type}
+  class={classes}
+  disabled={isInactive}
+  aria-busy={loading ? "true" : undefined}
+  aria-label={ariaLabel}
+>
+  {loading && <span class="btn-spinner" aria-hidden="true"></span>}
+  <span class="btn-content"><slot /></span>
+</button>
+
+<style>
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    font-family: var(--font-ui);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: var(--letter-spacing-loose);
+    border: 1px solid transparent;
+    border-radius: var(--radius-2);
+    cursor: pointer;
+    user-select: none;
+    transition:
+      background var(--duration-short) var(--ease-standard),
+      border-color var(--duration-short) var(--ease-standard),
+      color var(--duration-short) var(--ease-standard),
+      transform var(--duration-short) var(--ease-standard);
+  }
+
+  .btn:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  .btn:disabled,
+  .btn[aria-busy="true"] {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  .btn:not(:disabled):active {
+    transform: translateY(1px);
+  }
+
+  /* Sizes */
+  .btn--md {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--font-size-md);
+  }
+
+  .btn--sm {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+  }
+
+  .btn--icon {
+    padding: var(--space-2);
+    aspect-ratio: 1;
+  }
+
+  /* Variants */
+  .btn--primary {
+    background: var(--accent);
+    color: var(--accent-on);
+    border-color: var(--accent);
+  }
+
+  .btn--primary:not(:disabled):hover {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+  }
+
+  .btn--secondary {
+    background: var(--canvas-raised);
+    color: var(--text);
+    border-color: var(--line-strong);
+  }
+
+  .btn--secondary:not(:disabled):hover {
+    border-color: var(--line-emphasis);
+    background: var(--canvas-elevated);
+  }
+
+  .btn--danger {
+    background: var(--danger);
+    color: var(--canvas);
+    border-color: var(--danger);
+  }
+
+  .btn--danger:not(:disabled):hover {
+    background: var(--danger-strong);
+    border-color: var(--danger-strong);
+  }
+
+  .btn--ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border-color: transparent;
+  }
+
+  .btn--ghost:not(:disabled):hover {
+    color: var(--text);
+    background: var(--accent-soft);
+  }
+
+  /* Loading spinner */
+  .btn-spinner {
+    width: var(--space-3);
+    height: var(--space-3);
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    animation: btn-spin var(--duration-long) linear infinite;
+  }
+
+  .is-loading .btn-content {
+    opacity: 0.6;
+  }
+
+  @keyframes btn-spin {
+    to { transform: rotate(360deg); }
+  }
+</style>

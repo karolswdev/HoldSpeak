@@ -1,0 +1,108 @@
+---
+// HS-10-03 InlineMessage.
+//
+// A panel-anchored success/info/warn/danger message. `tone=danger`
+// and `tone=warn` use role=alert for assistive tech; info/success
+// use role=status (polite). `dismissible` adds a close button
+// (the close behavior is wired by the consumer — this component
+// does not maintain state).
+
+interface Props {
+  tone?: "info" | "success" | "warn" | "danger";
+  dismissible?: boolean;
+  class?: string;
+}
+
+const {
+  tone = "info",
+  dismissible = false,
+  class: extraClass,
+} = Astro.props;
+
+const role = tone === "danger" || tone === "warn" ? "alert" : "status";
+
+const classes = [
+  "inline-message",
+  `inline-message--${tone}`,
+  extraClass,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<div class={classes} role={role}>
+  <span class="inline-message-dot" aria-hidden="true"></span>
+  <div class="inline-message-body"><slot /></div>
+  {dismissible && (
+    <button
+      type="button"
+      class="inline-message-close"
+      aria-label="Dismiss message"
+    >
+      ×
+    </button>
+  )}
+</div>
+
+<style>
+  .inline-message {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-2);
+    border: 1px solid transparent;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+  }
+
+  .inline-message-dot {
+    width: var(--space-2);
+    height: var(--space-2);
+    border-radius: 50%;
+    margin-top: var(--space-2);
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  .inline-message-body {
+    flex: 1 1 auto;
+    color: inherit;
+  }
+
+  .inline-message-close {
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    color: inherit;
+    font-size: var(--font-size-lg);
+    line-height: 1;
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-1);
+  }
+
+  .inline-message-close:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  .inline-message--info {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .inline-message--success {
+    color: var(--success);
+    background: var(--success-soft);
+  }
+
+  .inline-message--warn {
+    color: var(--warn);
+    background: var(--warn-soft);
+  }
+
+  .inline-message--danger {
+    color: var(--danger);
+    background: var(--danger-soft);
+  }
+</style>

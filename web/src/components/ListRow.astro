@@ -1,0 +1,133 @@
+---
+// HS-10-03 ListRow.
+//
+// Slots: primary (the headline, required), secondary (one optional
+// supporting line), meta (right-aligned timestamp / status pill /
+// counter), actions (right-aligned button cluster).
+//
+// Pass `interactive=true` to make the whole row clickable (renders as
+// a <button>); pass `selected` to render the selected state.
+
+interface Props {
+  interactive?: boolean;
+  selected?: boolean;
+  ariaLabel?: string;
+  class?: string;
+}
+
+const {
+  interactive = false,
+  selected = false,
+  ariaLabel,
+  class: extraClass,
+} = Astro.props;
+
+const Tag = interactive ? "button" : "div";
+
+const classes = [
+  "list-row",
+  interactive ? "list-row--interactive" : null,
+  selected ? "is-selected" : null,
+  extraClass,
+]
+  .filter(Boolean)
+  .join(" ");
+
+const hasSecondary = Astro.slots.has("secondary");
+const hasMeta = Astro.slots.has("meta");
+const hasActions = Astro.slots.has("actions");
+---
+
+<Tag
+  class={classes}
+  aria-label={ariaLabel}
+  aria-pressed={interactive && selected ? "true" : undefined}
+  type={interactive ? "button" : undefined}
+>
+  <div class="list-row-text">
+    <div class="list-row-primary"><slot name="primary" /></div>
+    {hasSecondary && (
+      <div class="list-row-secondary"><slot name="secondary" /></div>
+    )}
+  </div>
+  {hasMeta && <div class="list-row-meta"><slot name="meta" /></div>}
+  {hasActions && <div class="list-row-actions"><slot name="actions" /></div>}
+</Tag>
+
+<style>
+  .list-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+    border: 1px solid transparent;
+    border-radius: var(--radius-2);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-md);
+    transition:
+      background var(--duration-short) var(--ease-standard),
+      border-color var(--duration-short) var(--ease-standard);
+  }
+
+  .list-row + .list-row {
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+  }
+
+  .list-row-text {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .list-row-primary {
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .list-row-secondary {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    margin-top: var(--space-1);
+    overflow-wrap: anywhere;
+  }
+
+  .list-row-meta {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .list-row-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+  }
+
+  .list-row--interactive {
+    cursor: pointer;
+  }
+
+  .list-row--interactive:hover {
+    background: var(--accent-soft);
+  }
+
+  .list-row--interactive:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: calc(-1 * var(--focus-outline-width));
+  }
+
+  .list-row.is-selected {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+</style>

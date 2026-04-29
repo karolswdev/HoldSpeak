@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-10-01, HS-10-02
 - **Unblocks:** HS-10-04, HS-10-06, HS-10-07, HS-10-08, HS-10-09
 - **Owner:** unassigned
@@ -46,15 +46,15 @@ cannot proceed until this library exists.
 
 ## Acceptance Criteria
 
-- [ ] Every listed component exists in `web/src/components/` and is
+- [x] Every listed component exists in `web/src/components/` and is
   rendered in the components gallery in all documented states.
-- [ ] No component file references a literal color, radius, or motion
+- [x] No component file references a literal color, radius, or motion
   duration; all reference tokens.
-- [ ] Loading/disabled states on Button block double-submit (the click
+- [x] Loading/disabled states on Button block double-submit (the click
   handler is no-op when `loading || disabled`).
-- [ ] Keyboard focus rings are visible on Button, Pill (when
+- [x] Keyboard focus rings are visible on Button, Pill (when
   interactive), ListRow, and EmptyState's action.
-- [ ] Tab order across the gallery is sensible (no negative tabindex
+- [x] Tab order across the gallery is sensible (no negative tabindex
   abuse).
 
 ## Test Plan

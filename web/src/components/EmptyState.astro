@@ -1,0 +1,68 @@
+---
+// HS-10-03 EmptyState.
+//
+// One title, one description, one primary action. Designed to occupy
+// a panel body when there is nothing to show. The action slot is
+// optional but encouraged — every empty state should have a useful
+// next step (per designer-handoff/style-handoff.md).
+
+interface Props {
+  title: string;
+  description?: string;
+  class?: string;
+}
+
+const { title, description, class: extraClass } = Astro.props;
+const classes = ["empty", extraClass].filter(Boolean).join(" ");
+const hasIcon = Astro.slots.has("icon");
+const hasAction = Astro.slots.has("action");
+---
+
+<div class={classes}>
+  {hasIcon && <div class="empty-icon" aria-hidden="true"><slot name="icon" /></div>}
+  <h3 class="empty-title">{title}</h3>
+  {description && <p class="empty-description">{description}</p>}
+  {hasAction && <div class="empty-action"><slot name="action" /></div>}
+</div>
+
+<style>
+  .empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-3);
+    padding: var(--space-6) var(--space-5);
+    color: var(--text-muted);
+  }
+
+  .empty-icon {
+    width: var(--space-7);
+    height: var(--space-7);
+    display: grid;
+    place-items: center;
+    color: var(--text-muted);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-3);
+  }
+
+  .empty-title {
+    margin: 0;
+    color: var(--text);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    letter-spacing: var(--letter-spacing-tight);
+  }
+
+  .empty-description {
+    margin: 0;
+    max-width: 48ch;
+    line-height: var(--line-height-relaxed);
+    color: var(--text-muted);
+  }
+
+  .empty-action {
+    margin-top: var(--space-2);
+  }
+</style>

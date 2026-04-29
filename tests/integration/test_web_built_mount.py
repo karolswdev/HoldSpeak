@@ -21,15 +21,11 @@ from holdspeak.web_server import MeetingWebServer
 pytestmark = [pytest.mark.requires_meeting]
 
 
-_BUILT_INDEX = (
-    Path(__file__).resolve().parents[2]
-    / "holdspeak"
-    / "static"
-    / "_built"
-    / "design"
-    / "check"
-    / "index.html"
+_BUILT_ROOT = (
+    Path(__file__).resolve().parents[2] / "holdspeak" / "static" / "_built"
 )
+_BUILT_INDEX = _BUILT_ROOT / "design" / "check" / "index.html"
+_GALLERY_INDEX = _BUILT_ROOT / "design" / "components" / "index.html"
 
 
 @pytest.fixture
@@ -51,6 +47,27 @@ def test_built_design_check_page_is_served(test_client: TestClient) -> None:
     assert response.status_code == 200
     assert "Design system online" in response.text
     assert "/_built/_astro/" in response.text
+
+
+@pytest.mark.skipif(
+    not _GALLERY_INDEX.is_file(),
+    reason="run `cd web && npm run build` to populate the components gallery",
+)
+def test_components_gallery_is_served(test_client: TestClient) -> None:
+    response = test_client.get("/_built/design/components/")
+    assert response.status_code == 200
+    # Every component family must show up at least once on the gallery.
+    for marker in (
+        "Component gallery",
+        "Button",
+        "Pill",
+        "Panel",
+        "ListRow",
+        "EmptyState",
+        "InlineMessage",
+        "Toolbar alignment",
+    ):
+        assert marker in response.text, marker
 
 
 def test_legacy_routes_still_serve(test_client: TestClient) -> None:

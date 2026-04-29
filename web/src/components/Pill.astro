@@ -1,0 +1,119 @@
+---
+// HS-10-03 Pill.
+//
+// Tones: neutral | info | success | warn | danger | local.
+// `local` is the privacy/local-only signal (HS-10-05 will reuse it).
+// `dot` adds a tone-tinted leading dot. `interactive=true` swaps the
+// rendered tag from <span> to <button> so it can take focus and click.
+
+interface Props {
+  tone?: "neutral" | "info" | "success" | "warn" | "danger" | "local";
+  dot?: boolean;
+  interactive?: boolean;
+  ariaLabel?: string;
+  class?: string;
+}
+
+const {
+  tone = "neutral",
+  dot = false,
+  interactive = false,
+  ariaLabel,
+  class: extraClass,
+} = Astro.props;
+
+const Tag = interactive ? "button" : "span";
+
+const classes = [
+  "pill",
+  `pill--${tone}`,
+  interactive ? "pill--interactive" : null,
+  extraClass,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<Tag
+  class={classes}
+  aria-label={ariaLabel}
+  type={interactive ? "button" : undefined}
+>
+  {dot && <span class="pill-dot" aria-hidden="true"></span>}
+  <slot />
+</Tag>
+
+<style>
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    letter-spacing: var(--letter-spacing-loose);
+    border: 1px solid transparent;
+    line-height: 1.4;
+    background: var(--canvas-raised);
+    color: var(--text-muted);
+    border-color: var(--line);
+  }
+
+  .pill-dot {
+    width: var(--space-2);
+    height: var(--space-2);
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  .pill--neutral { color: var(--text-muted); }
+
+  .pill--info {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: transparent;
+  }
+
+  .pill--success {
+    color: var(--success);
+    background: var(--success-soft);
+    border-color: transparent;
+  }
+
+  .pill--warn {
+    color: var(--warn);
+    background: var(--warn-soft);
+    border-color: transparent;
+  }
+
+  .pill--danger {
+    color: var(--danger);
+    background: var(--danger-soft);
+    border-color: transparent;
+  }
+
+  .pill--local {
+    color: var(--local);
+    background: var(--local-soft);
+    border-color: transparent;
+  }
+
+  .pill--interactive {
+    cursor: pointer;
+    font-family: var(--font-ui);
+    transition:
+      background var(--duration-short) var(--ease-standard),
+      border-color var(--duration-short) var(--ease-standard);
+  }
+
+  .pill--interactive:hover {
+    border-color: var(--line-emphasis);
+  }
+
+  .pill--interactive:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+</style>

@@ -1,0 +1,85 @@
+---
+// HS-10-03 Panel.
+//
+// Slot-driven container: header (title), toolbar (right-aligned action
+// strip), default body, and footer. `density=dense` tightens padding
+// for activity-style data lists.
+
+interface Props {
+  density?: "comfortable" | "dense";
+  class?: string;
+}
+
+const { density = "comfortable", class: extraClass } = Astro.props;
+
+const classes = ["panel", `panel--${density}`, extraClass]
+  .filter(Boolean)
+  .join(" ");
+
+const hasHeader = Astro.slots.has("header");
+const hasToolbar = Astro.slots.has("toolbar");
+const hasFooter = Astro.slots.has("footer");
+---
+
+<section class={classes}>
+  {(hasHeader || hasToolbar) && (
+    <header class="panel-header">
+      {hasHeader && (
+        <div class="panel-title"><slot name="header" /></div>
+      )}
+      {hasToolbar && (
+        <div class="panel-toolbar"><slot name="toolbar" /></div>
+      )}
+    </header>
+  )}
+  <div class="panel-body"><slot /></div>
+  {hasFooter && (
+    <footer class="panel-footer"><slot name="footer" /></footer>
+  )}
+</section>
+
+<style>
+  .panel {
+    background: var(--canvas-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-3);
+    box-shadow: var(--elev-1);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .panel--comfortable .panel-header { padding: var(--space-4) var(--space-5); }
+  .panel--dense .panel-header { padding: var(--space-3) var(--space-4); }
+
+  .panel-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: var(--letter-spacing-tight);
+  }
+
+  .panel-toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .panel--comfortable .panel-body { padding: var(--space-5); }
+  .panel--dense .panel-body { padding: var(--space-3) var(--space-4); }
+
+  .panel-footer {
+    border-top: 1px solid var(--line);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  .panel--comfortable .panel-footer { padding: var(--space-3) var(--space-5); }
+  .panel--dense .panel-footer { padding: var(--space-2) var(--space-4); }
+</style>

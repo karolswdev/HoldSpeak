@@ -1,0 +1,302 @@
+---
+// HS-10-03 components gallery.
+//
+// Living documentation for the core component library. Every component
+// is rendered in every documented state. This route is intentionally
+// dev-facing; production users will not navigate here, but it stays in
+// the repo as the canonical reference.
+
+import AppLayout from "../../layouts/AppLayout.astro";
+import Button from "../../components/Button.astro";
+import Pill from "../../components/Pill.astro";
+import Panel from "../../components/Panel.astro";
+import Toolbar from "../../components/Toolbar.astro";
+import ListRow from "../../components/ListRow.astro";
+import EmptyState from "../../components/EmptyState.astro";
+import InlineMessage from "../../components/InlineMessage.astro";
+---
+
+<AppLayout title="HoldSpeak — Components">
+  <main class="gallery">
+    <header class="gallery-header">
+      <p class="kicker">phase-10 / HS-10-03</p>
+      <h1>Component gallery</h1>
+      <p class="lead">
+        Living documentation. Every component family in every documented
+        state. New components are added here first; rebuilds (HS-10-06..09)
+        consume what's reviewable on this page.
+      </p>
+    </header>
+
+    <!-- Buttons -->
+    <section class="block" id="buttons" aria-labelledby="buttons-heading">
+      <h2 id="buttons-heading">Button</h2>
+
+      <h3>Variants &times; sizes</h3>
+      <Toolbar>
+        <Button variant="primary">Primary</Button>
+        <Button variant="secondary">Secondary</Button>
+        <Button variant="danger">Danger</Button>
+        <Button variant="ghost">Ghost</Button>
+      </Toolbar>
+      <Toolbar>
+        <Button variant="primary" size="sm">Primary sm</Button>
+        <Button variant="secondary" size="sm">Secondary sm</Button>
+        <Button variant="danger" size="sm">Danger sm</Button>
+        <Button variant="ghost" size="sm">Ghost sm</Button>
+      </Toolbar>
+
+      <h3>States</h3>
+      <Toolbar>
+        <Button variant="primary" disabled>Disabled</Button>
+        <Button variant="primary" loading>Loading</Button>
+        <Button variant="secondary" disabled>Secondary disabled</Button>
+        <Button variant="secondary" loading>Secondary loading</Button>
+        <Button variant="danger" loading>Danger loading</Button>
+      </Toolbar>
+
+      <h3>Icon-only</h3>
+      <Toolbar>
+        <Button variant="secondary" iconOnly ariaLabel="Bookmark">★</Button>
+        <Button variant="ghost" iconOnly ariaLabel="More options">…</Button>
+        <Button variant="danger" iconOnly ariaLabel="Delete">×</Button>
+      </Toolbar>
+    </section>
+
+    <!-- Pills -->
+    <section class="block" id="pills" aria-labelledby="pills-heading">
+      <h2 id="pills-heading">Pill</h2>
+
+      <h3>Tones</h3>
+      <Toolbar>
+        <Pill>neutral</Pill>
+        <Pill tone="info">info</Pill>
+        <Pill tone="success">success</Pill>
+        <Pill tone="warn">warn</Pill>
+        <Pill tone="danger">danger</Pill>
+        <Pill tone="local">local-only</Pill>
+      </Toolbar>
+
+      <h3>With dot</h3>
+      <Toolbar>
+        <Pill dot>idle</Pill>
+        <Pill tone="info" dot>recording</Pill>
+        <Pill tone="success" dot>ready</Pill>
+        <Pill tone="warn" dot>cli missing</Pill>
+        <Pill tone="danger" dot>last run failed</Pill>
+        <Pill tone="local" dot>local-only</Pill>
+      </Toolbar>
+
+      <h3>Interactive (button-rendered)</h3>
+      <Toolbar>
+        <Pill tone="info" interactive>filter: meetings</Pill>
+        <Pill tone="success" interactive>filter: ready</Pill>
+        <Pill tone="local" interactive>filter: local</Pill>
+      </Toolbar>
+    </section>
+
+    <!-- Panel -->
+    <section class="block" id="panel" aria-labelledby="panel-heading">
+      <h2 id="panel-heading">Panel</h2>
+
+      <h3>Comfortable density</h3>
+      <Panel>
+        <Fragment slot="header">Recent activity</Fragment>
+        <Fragment slot="toolbar">
+          <Pill tone="local" dot>local-only</Pill>
+          <Button variant="ghost" size="sm">Refresh</Button>
+        </Fragment>
+        <p class="muted">Body content. Records would render here.</p>
+        <Fragment slot="footer">12 records · last sync 2m ago</Fragment>
+      </Panel>
+
+      <h3>Dense density</h3>
+      <Panel density="dense">
+        <Fragment slot="header">Connectors</Fragment>
+        <Fragment slot="toolbar">
+          <Button variant="secondary" size="sm">Preview</Button>
+          <Button variant="primary" size="sm">Run</Button>
+        </Fragment>
+        <p class="muted">Tighter padding for activity-style data lists.</p>
+      </Panel>
+    </section>
+
+    <!-- List rows -->
+    <section class="block" id="list-rows" aria-labelledby="list-rows-heading">
+      <h2 id="list-rows-heading">ListRow</h2>
+
+      <Panel>
+        <Fragment slot="header">Meeting candidates</Fragment>
+        <ListRow interactive>
+          <Fragment slot="primary">Quarterly review prep</Fragment>
+          <Fragment slot="secondary">linear/PROJ-441 · 12 records · last visit 4h ago</Fragment>
+          <Fragment slot="meta"><Pill tone="info" dot>preview</Pill></Fragment>
+          <Fragment slot="actions">
+            <Button variant="secondary" size="sm">Save</Button>
+            <Button variant="ghost" size="sm" iconOnly ariaLabel="More">…</Button>
+          </Fragment>
+        </ListRow>
+        <ListRow interactive selected>
+          <Fragment slot="primary">Auth middleware migration sync</Fragment>
+          <Fragment slot="secondary">github.com/acme/auth · 3 PRs · candidate saved</Fragment>
+          <Fragment slot="meta"><Pill tone="success" dot>saved</Pill></Fragment>
+          <Fragment slot="actions">
+            <Button variant="primary" size="sm">Start</Button>
+          </Fragment>
+        </ListRow>
+        <ListRow>
+          <Fragment slot="primary">Static row (non-interactive)</Fragment>
+          <Fragment slot="secondary">Used inside meeting detail surfaces.</Fragment>
+          <Fragment slot="meta"><Pill tone="warn" dot>warn</Pill></Fragment>
+        </ListRow>
+      </Panel>
+    </section>
+
+    <!-- Empty state -->
+    <section class="block" id="empty" aria-labelledby="empty-heading">
+      <h2 id="empty-heading">EmptyState</h2>
+
+      <Panel>
+        <Fragment slot="header">Saved meetings</Fragment>
+        <EmptyState
+          title="No meetings yet"
+          description="Start a meeting from the runtime dashboard, or save a candidate from local activity to seed one."
+        >
+          <Fragment slot="icon">●</Fragment>
+          <Fragment slot="action">
+            <Button variant="primary">Start a meeting</Button>
+          </Fragment>
+        </EmptyState>
+      </Panel>
+    </section>
+
+    <!-- Inline messages -->
+    <section class="block" id="inline" aria-labelledby="inline-heading">
+      <h2 id="inline-heading">InlineMessage</h2>
+
+      <div class="stack">
+        <InlineMessage tone="info">
+          Preview shows the exact <code>gh</code> command this connector
+          would run. Nothing executes until you click Run.
+        </InlineMessage>
+        <InlineMessage tone="success">
+          Imported 142 activity records from Safari history.
+        </InlineMessage>
+        <InlineMessage tone="warn" dismissible>
+          The Jira CLI is not installed. Install <code>jira-cli</code> to
+          enable enrichment.
+        </InlineMessage>
+        <InlineMessage tone="danger" dismissible>
+          The last run failed: connector exited with status 4. The
+          source data on GitHub is untouched.
+        </InlineMessage>
+      </div>
+    </section>
+
+    <!-- Toolbar / alignment -->
+    <section class="block" id="toolbar" aria-labelledby="toolbar-heading">
+      <h2 id="toolbar-heading">Toolbar alignment</h2>
+
+      <Toolbar align="start">
+        <Pill>start</Pill>
+        <Button variant="ghost" size="sm">Action</Button>
+      </Toolbar>
+      <Toolbar align="end">
+        <Pill>end</Pill>
+        <Button variant="ghost" size="sm">Action</Button>
+      </Toolbar>
+      <Toolbar align="between">
+        <Pill>between left</Pill>
+        <Button variant="ghost" size="sm">between right</Button>
+      </Toolbar>
+    </section>
+  </main>
+</AppLayout>
+
+<style>
+  .gallery {
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: var(--space-7) var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-7);
+  }
+
+  .gallery-header {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: var(--space-5);
+  }
+
+  .kicker {
+    margin: 0 0 var(--space-2);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-loose);
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 0 0 var(--space-3);
+    font-size: var(--font-size-3xl);
+    letter-spacing: var(--letter-spacing-tight);
+  }
+
+  .lead {
+    margin: 0;
+    max-width: 64ch;
+    color: var(--text-muted);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .block h2 {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    letter-spacing: var(--letter-spacing-tight);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: var(--space-2);
+  }
+
+  .block h3 {
+    margin: var(--space-3) 0 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose);
+  }
+
+  .muted {
+    margin: 0;
+    color: var(--text-muted);
+  }
+
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    background: var(--canvas);
+    color: var(--accent);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-1);
+    border: 1px solid var(--line);
+  }
+
+  @media (max-width: 640px) {
+    .gallery {
+      padding: var(--space-5) var(--space-3);
+    }
+  }
+</style>
