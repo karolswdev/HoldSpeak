@@ -54,3 +54,10 @@ samp,
 pre {
   font-family: var(--font-mono);
 }
+
+/* HS-10-06: Alpine.js cloak directive. Elements marked x-cloak stay
+ * hidden until Alpine has finished initializing them, which prevents
+ * the brief flash of pre-evaluated x-show / x-text content on load. */
+[x-cloak] {
+  display: none !important;
+}

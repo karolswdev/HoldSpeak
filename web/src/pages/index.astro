@@ -1,0 +1,793 @@
+---
+// HS-10-06: `/` runtime dashboard rebuilt on the design system.
+//
+// State machine + WebSocket + API behavior is preserved from the
+// legacy dashboard.html: the same Alpine `HoldSpeakDashboard()` factory
+// drives the page (imported from src/scripts/dashboard-app.js, served
+// alongside Alpine.js — both self-hosted, no CDN). All x-data /
+// x-text / x-show / @click bindings are preserved verbatim.
+//
+// Astro components (Button, Pill, etc.) are intentionally NOT used
+// in this file: Astro silently drops non-prop attributes like
+// `x-show` / `:disabled` / `@click` on custom-component invocations,
+// which would break Alpine bindings. Instead this page renders raw
+// HTML using locally-scoped CSS that consumes the same design tokens.
+
+import AppLayout from "../layouts/AppLayout.astro";
+import HoldMark from "../components/HoldMark.astro";
+---
+
+<AppLayout title="HoldSpeak Runtime" current="runtime">
+  <div class="runtime" x-data="HoldSpeakDashboard()" x-init="init()">
+
+    <!-- Hero -->
+    <section class="hero" :class="{
+      'state-idle': !meetingActive && !stopInProgress,
+      'state-active': meetingActive && !stopInProgress,
+      'state-stopping': stopInProgress,
+    }">
+      <div class="hero-id">
+        <div class="hero-pills">
+          <span class="pill pill--local"><span class="pill-dot"></span>local-only</span>
+          <span class="pill pill--info" x-show="meetingActive" x-cloak><span class="pill-dot"></span>recording</span>
+          <span class="pill pill--warn" x-show="stopInProgress" x-cloak><span class="pill-dot"></span>stopping</span>
+        </div>
+
+        <div class="hero-title">
+          <h1 x-text="meetingTitle || 'HoldSpeak'"></h1>
+          <button type="button" class="title-edit" :disabled="!meetingActive" @click="openMetadataModal()" title="Edit meeting details">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4z"/>
+            </svg>
+            <span class="sr-only">Edit meeting details</span>
+          </button>
+        </div>
+
+        <p class="hero-copy">
+          Real-time transcript, live meeting intelligence, and export controls
+          in one focused workspace. Recording, transcription, and intel run
+          locally on this machine.
+        </p>
+
+        <div class="hero-tags">
+          <template x-for="tag in meetingTags" :key="tag">
+            <span class="tag-chip" x-text="tag"></span>
+          </template>
+          <span class="tag-chip-faint" x-show="meetingTags.length === 0" x-cloak>No tags yet</span>
+        </div>
+      </div>
+
+      <div class="hero-action">
+        <div class="action-stage" x-show="!meetingActive && !stopInProgress" x-cloak>
+          <HoldMark size={72} ariaLabel="Hold to talk — runtime ready" />
+          <p class="action-hint">
+            Press start, then hold to talk. Audio, transcript, and intel
+            stay on this machine.
+          </p>
+        </div>
+
+        <button type="button" class="btn btn--primary btn--hero" x-show="!meetingActive" x-cloak :disabled="startInProgress" :class="{ 'is-loading': startInProgress }" @click="startMeeting()">
+          <span class="btn-spinner" x-show="startInProgress" x-cloak></span>
+          <span x-text="startInProgress ? 'Starting...' : 'Start meeting'"></span>
+        </button>
+        <button type="button" class="btn btn--danger btn--hero" x-show="meetingActive" x-cloak :disabled="stopInProgress" :class="{ 'is-loading': stopInProgress }" @click="stopMeeting()">
+          <span class="btn-spinner" x-show="stopInProgress" x-cloak></span>
+          <span x-text="stopInProgress ? 'Stopping...' : 'Stop meeting'"></span>
+        </button>
+
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-label">Connection</span>
+            <span class="stat-value">
+              <span class="conn-dot" :class="connectionTone()"></span>
+              <span x-text="connectionLabel()"></span>
+            </span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Duration</span>
+            <span class="stat-value mono" x-text="duration"></span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Segments</span>
+            <span class="stat-value mono" x-text="segments.length"></span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Open actions</span>
+            <span class="stat-value mono" x-text="activeActionItems().filter(i => i.status !== 'done').length"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Two-column board -->
+    <div class="board">
+      <!-- Transcript -->
+      <section class="panel panel--comfortable">
+        <header class="panel-header">
+          <div class="panel-title">Transcript stream</div>
+          <div class="panel-toolbar">
+            <button type="button" class="btn btn--ghost btn--sm" @click="scrollTranscriptToBottom()">Jump to latest</button>
+          </div>
+        </header>
+        <div class="panel-body">
+          <div class="transcript-scroll" x-ref="transcriptScroll">
+            <template x-if="entries.length === 0">
+              <div class="transcript-empty">
+                <HoldMark size={56} pulse={false} ariaLabel="Idle" />
+                <h3 x-text="meetingActive ? 'Waiting for transcript' : 'Meeting idle'"></h3>
+                <p x-text="meetingActive
+                  ? 'Once audio arrives, segments stream in here with speaker chips, timestamps, and bookmark callouts.'
+                  : 'Start a meeting to begin recording, transcription, and live intelligence updates.'"></p>
+              </div>
+            </template>
+
+            <template x-for="entry in entries" :key="entry.id">
+              <div class="entry">
+                <template x-if="entry.kind === 'segment'">
+                  <article class="segment" :class="`tone-${speakerTone(entry.speaker)}`" tabindex="0" @click="copySegment(entry)" @keydown.enter="copySegment(entry)">
+                    <div class="segment-meta">
+                      <span class="speaker-pill" :class="`tone-${speakerTone(entry.speaker)}`">
+                        <span class="speaker-dot"></span>
+                        <span x-text="speakerLabel(entry.speaker)"></span>
+                      </span>
+                      <span class="ts mono" x-text="entry.start ? `[${entry.start}${entry.end ? `-${entry.end}` : ''}]` : 'live'"></span>
+                      <span class="copy-hint">Click to copy</span>
+                    </div>
+                    <p class="segment-text" x-text="entry.text"></p>
+                  </article>
+                </template>
+                <template x-if="entry.kind === 'bookmark'">
+                  <article class="bookmark">
+                    <div class="bookmark-meta">
+                      <span class="bookmark-flag">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M7 3h10v18l-5-3-5 3V3z"/></svg>
+                        <span>Bookmark</span>
+                      </span>
+                      <span class="ts mono" x-text="entry.timestamp ? `at ${entry.timestamp}` : 'live'"></span>
+                    </div>
+                    <p class="bookmark-text" x-text="entry.label"></p>
+                  </article>
+                </template>
+              </div>
+            </template>
+          </div>
+        </div>
+        <footer class="panel-footer">
+          <div class="dock">
+            <button type="button" class="btn btn--secondary btn--sm" :disabled="!meetingActive" @click="openBookmarkModal()">Bookmark</button>
+            <button type="button" class="btn btn--secondary btn--sm" @click="copyAll()">Copy all</button>
+            <div class="export-wrap">
+              <button type="button" class="btn btn--primary btn--sm" @click="exportOpen = !exportOpen">Export</button>
+              <div class="export-menu" x-show="exportOpen" x-cloak @click.outside="exportOpen = false">
+                <button type="button" class="export-item" @click="exportAs('md')"><span>Meeting notes</span><span class="mono">.md</span></button>
+                <button type="button" class="export-item" @click="exportAs('txt')"><span>Plain transcript</span><span class="mono">.txt</span></button>
+                <button type="button" class="export-item" @click="exportAs('json')"><span>Structured data</span><span class="mono">.json</span></button>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </section>
+
+      <!-- Side rail -->
+      <aside class="rail">
+        <!-- Live intel -->
+        <section class="panel panel--dense" x-show="intelStreaming" x-cloak>
+          <header class="panel-header">
+            <div class="panel-title">
+              <span class="pill pill--info"><span class="pill-dot"></span>analyzing</span>
+            </div>
+          </header>
+          <div class="panel-body">
+            <p class="streaming-text"><span x-text="intelBuffer"></span><span class="caret"></span></p>
+          </div>
+        </section>
+
+        <!-- Intelligence -->
+        <section class="panel panel--dense">
+          <header class="panel-header"><div class="panel-title">Intelligence</div></header>
+          <div class="panel-body">
+            <p class="rail-title" x-text="intelStatusTitle()"></p>
+            <p class="rail-muted" x-text="intelStatusCopy()"></p>
+          </div>
+        </section>
+
+        <!-- Topics -->
+        <section class="panel panel--dense">
+          <header class="panel-header"><div class="panel-title">Topics</div></header>
+          <div class="panel-body">
+            <template x-if="intel.topics.length === 0">
+              <p class="rail-muted">Topics will appear once enough transcript has accumulated.</p>
+            </template>
+            <div class="topics" x-show="intel.topics.length > 0" x-cloak>
+              <template x-for="topic in intel.topics" :key="topic">
+                <span class="topic-pill" x-text="topic"></span>
+              </template>
+            </div>
+          </div>
+        </section>
+
+        <!-- Summary -->
+        <section class="panel panel--dense">
+          <header class="panel-header"><div class="panel-title">Summary</div></header>
+          <div class="panel-body">
+            <template x-if="!intel.summary">
+              <p class="rail-muted">No summary yet.</p>
+            </template>
+            <p class="summary-text" x-show="intel.summary" x-cloak x-text="intel.summary"></p>
+          </div>
+        </section>
+
+        <!-- Action items -->
+        <section class="panel panel--dense">
+          <header class="panel-header">
+            <div class="panel-title">Action items</div>
+            <div class="panel-toolbar">
+              <span class="rail-faint" x-text="meetingActive ? 'Live' : 'Read-only while idle'"></span>
+            </div>
+          </header>
+          <div class="panel-body">
+            <template x-if="activeActionItems().length === 0">
+              <p class="rail-muted" x-text="meetingActive ? 'No action items yet.' : 'No active action items loaded for this session yet.'"></p>
+            </template>
+            <ul class="action-list" x-show="activeActionItems().length > 0" x-cloak>
+              <template x-for="(item, idx) in activeActionItems()" :key="item.id || `${idx}-${item.task}`">
+                <li class="action-item" :class="{ 'is-done': item.status === 'done' }">
+                  <button type="button" class="check" :disabled="!meetingActive" @click="toggleActionItemStatus(item)" :title="item.status === 'done' ? 'Mark pending' : 'Mark done'">
+                    <svg x-show="item.status === 'done'" x-cloak viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <span class="sr-only">Toggle status</span>
+                  </button>
+                  <div class="action-body">
+                    <p class="action-task" x-text="item.task || 'Action item'"></p>
+                    <div class="action-meta">
+                      <span class="meta-chip" x-show="item.owner" x-cloak x-text="`Owner ${item.owner}`"></span>
+                      <span class="meta-chip" x-show="item.due" x-cloak x-text="`Due ${item.due}`"></span>
+                      <span class="meta-chip status" :class="statusClass(item.status)" x-text="statusLabel(item.status)"></span>
+                      <span class="meta-chip status" :class="reviewStatusClass(item.review_state)" x-text="reviewStatusLabel(item.review_state)"></span>
+                    </div>
+                    <div class="action-controls">
+                      <button type="button" class="btn btn--ghost btn--sm" :disabled="!meetingActive || item.review_state === 'accepted'" @click="acceptActionItem(item)">Accept</button>
+                      <button type="button" class="btn btn--secondary btn--sm" :disabled="!meetingActive" @click="editActionItem(item)">Edit</button>
+                    </div>
+                  </div>
+                  <button type="button" class="dismiss" :disabled="!meetingActive" @click="dismissActionItem(item)" title="Dismiss">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
+                    <span class="sr-only">Dismiss</span>
+                  </button>
+                </li>
+              </template>
+            </ul>
+            <p class="rail-faint" x-show="dismissedCount() > 0" x-cloak x-text="`${dismissedCount()} dismissed item${dismissedCount() === 1 ? '' : 's'}`"></p>
+          </div>
+        </section>
+
+        <!-- Plugin jobs -->
+        <section class="panel panel--dense">
+          <header class="panel-header"><div class="panel-title">Deferred plugin jobs</div></header>
+          <div class="panel-body">
+            <div class="topics">
+              <span class="topic-pill" x-text="`Total ${pluginJobSummary?.total_jobs ?? 0}`"></span>
+              <span class="topic-pill" x-text="`Queued ${pluginJobSummary?.queued_jobs ?? 0}`"></span>
+              <span class="topic-pill" x-text="`Running ${pluginJobSummary?.running_jobs ?? 0}`"></span>
+              <span class="topic-pill" x-text="`Failed ${pluginJobSummary?.failed_jobs ?? 0}`"></span>
+              <span class="topic-pill" x-text="`Failure ${pluginQueueFailureRateLabel()}`"></span>
+            </div>
+            <p class="rail-muted" x-text="pluginQueueNextRetryLabel()"></p>
+            <div class="jobs-controls">
+              <select class="rail-input" x-model="pluginJobStatusFilter" @change="loadPluginJobs()">
+                <option value="all">All jobs</option>
+                <option value="queued">Queued</option>
+                <option value="running">Running</option>
+                <option value="failed">Failed</option>
+              </select>
+              <input class="rail-input rail-input--sm" type="number" min="1" x-model.number="pluginJobLimit" placeholder="Limit"/>
+              <button type="button" class="btn btn--secondary btn--sm" :disabled="loadingPluginJobs" @click="loadPluginJobs()">Refresh</button>
+              <button type="button" class="btn btn--primary btn--sm" :disabled="processingPluginJobs" @click="processPluginJobs('respect_backoff')">Process due</button>
+              <button type="button" class="btn btn--ghost btn--sm" :disabled="processingPluginJobs" @click="processPluginJobs('retry_now')">Retry scheduled</button>
+            </div>
+            <template x-if="loadingPluginJobs">
+              <p class="rail-muted">Loading deferred plugin jobs...</p>
+            </template>
+            <template x-if="!loadingPluginJobs && pluginJobs.length === 0">
+              <p class="rail-muted">No deferred plugin jobs match this filter.</p>
+            </template>
+            <ul class="action-list" x-show="!loadingPluginJobs && pluginJobs.length > 0" x-cloak>
+              <template x-for="job in pluginJobs" :key="job.id">
+                <li class="action-item">
+                  <span class="meta-chip status" :class="statusClass(job.status)" x-text="job.status"></span>
+                  <div class="action-body">
+                    <p class="action-task" x-text="job.plugin_id"></p>
+                    <div class="action-meta">
+                      <span class="meta-chip mono" x-text="job.meeting_id"></span>
+                      <span class="meta-chip mono" x-text="job.window_id"></span>
+                      <span class="meta-chip" x-text="`Attempts ${job.attempts}`"></span>
+                      <span class="meta-chip" x-show="job.retry_scheduled" x-cloak x-text="pluginJobScheduleLabel(job)"></span>
+                    </div>
+                    <p class="rail-muted" x-show="job.last_error" x-cloak x-text="job.last_error"></p>
+                    <div class="action-controls">
+                      <button type="button" class="btn btn--primary btn--sm" :disabled="processingPluginJobs || job.status === 'running'" @click="retryPluginJob(job.id)">Retry now</button>
+                      <button type="button" class="btn btn--ghost btn--sm" :disabled="processingPluginJobs || job.status === 'running'" @click="cancelPluginJob(job.id)">Cancel</button>
+                    </div>
+                  </div>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Intent routing -->
+        <section class="panel panel--dense" x-show="intentControls.enabled" x-cloak>
+          <header class="panel-header"><div class="panel-title">Intent routing</div></header>
+          <div class="panel-body">
+            <p class="rail-muted">Profile and override controls for deterministic MIR preview routing.</p>
+            <label class="rail-label" for="routing-profile">Profile</label>
+            <select id="routing-profile" class="rail-input" x-model="intentProfile" :disabled="intentControlSaving">
+              <template x-for="profile in intentControls.available_profiles" :key="profile">
+                <option :value="profile" x-text="profile"></option>
+              </template>
+            </select>
+            <label class="rail-label" for="routing-override">Override</label>
+            <input id="routing-override" class="rail-input" type="text" x-model="intentOverrideInput" placeholder="architecture, delivery"/>
+            <div class="jobs-controls">
+              <button type="button" class="btn btn--secondary btn--sm" :disabled="intentControlSaving" @click="saveIntentProfile()">Save profile</button>
+              <button type="button" class="btn btn--secondary btn--sm" :disabled="intentControlSaving" @click="saveIntentOverride()">Save override</button>
+              <button type="button" class="btn btn--primary btn--sm" :disabled="routePreviewLoading" @click="previewIntentRoute()">
+                <span x-text="routePreviewLoading ? 'Previewing...' : 'Preview route'"></span>
+              </button>
+            </div>
+            <p class="rail-muted" x-show="routePreview && routePreview.active_intents" x-cloak>
+              <strong>Active intents:</strong> <span x-text="(routePreview.active_intents || []).join(', ') || 'none'"></span>
+            </p>
+            <p class="rail-muted" x-show="routePreview && routePreview.plugin_chain" x-cloak>
+              <strong>Plugin chain:</strong> <span x-text="(routePreview.plugin_chain || []).join(' -> ') || 'none'"></span>
+            </p>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <!-- Toasts -->
+    <div class="toast-stack" aria-live="polite">
+      <template x-for="note in notifications" :key="note.id">
+        <div class="toast"><p x-text="note.message"></p></div>
+      </template>
+    </div>
+
+    <!-- Bookmark modal -->
+    <div class="modal" x-show="bookmarkModalOpen" x-cloak @keydown.escape.window="bookmarkModalOpen = false">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bm-title">
+        <h3 id="bm-title">Add bookmark</h3>
+        <p class="rail-muted">Leave the label blank for a generic marker, or add a short reason so the moment is easy to spot later.</p>
+        <label class="rail-label" for="bookmark-label">Label</label>
+        <input id="bookmark-label" x-ref="bookmarkInput" class="rail-input" type="text" x-model="bookmarkLabel" placeholder="Decision on rollout window" @keydown.enter.prevent="submitBookmark()"/>
+        <div class="modal-actions">
+          <button type="button" class="btn btn--ghost btn--sm" @click="bookmarkModalOpen = false">Cancel</button>
+          <button type="button" class="btn btn--primary btn--sm" @click="submitBookmark()">Save bookmark</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metadata modal -->
+    <div class="modal" x-show="metadataModalOpen" x-cloak @keydown.escape.window="metadataModalOpen = false">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="md-title">
+        <h3 id="md-title">Edit meeting details</h3>
+        <p class="rail-muted">Update the title and comma-separated tags while the meeting is in progress.</p>
+        <label class="rail-label" for="meeting-title">Title</label>
+        <input id="meeting-title" x-ref="titleInput" class="rail-input" type="text" x-model="editingTitle" placeholder="Engineering review"/>
+        <label class="rail-label" for="meeting-tags">Tags</label>
+        <input id="meeting-tags" class="rail-input" type="text" x-model="editingTags" placeholder="planning, roadmap, follow-up" @keydown.enter.prevent="saveMetadata()"/>
+        <div class="modal-actions">
+          <button type="button" class="btn btn--ghost btn--sm" @click="metadataModalOpen = false">Cancel</button>
+          <button type="button" class="btn btn--primary btn--sm" @click="saveMetadata()">Save details</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import Alpine from "alpinejs";
+    import factorySource from "../scripts/dashboard-app.js?raw";
+
+    // Eval the factory in global scope so x-data="HoldSpeakDashboard()"
+    // resolves to it; the factory body lives unmodified in
+    // src/scripts/dashboard-app.js.
+    const fn = new Function(factorySource + "; return HoldSpeakDashboard;");
+    window.HoldSpeakDashboard = fn();
+
+    window.Alpine = Alpine;
+    Alpine.start();
+  </script>
+</AppLayout>
+
+<style>
+  /* All values flow from tokens.css; no raw hex / radius / duration. */
+
+  .runtime {
+    max-width: 88rem;
+    margin: 0 auto;
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+  }
+
+  /* === Hero =============================================== */
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+    gap: var(--space-5);
+    padding: var(--space-6);
+    background: var(--canvas-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-4);
+  }
+  .hero.state-active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-soft); }
+  .hero.state-stopping { border-color: var(--warn); }
+
+  .hero-id { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+  .hero-pills { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+  .hero-title { display: flex; align-items: center; gap: var(--space-2); }
+  .hero-title h1 {
+    margin: 0; font-size: var(--font-size-3xl);
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: var(--line-height-tight); word-break: break-word;
+  }
+  .title-edit {
+    background: transparent; border: 1px solid transparent;
+    color: var(--text-muted); padding: var(--space-1);
+    border-radius: var(--radius-1); cursor: pointer;
+  }
+  .title-edit:hover { color: var(--text); border-color: var(--line); }
+  .title-edit:disabled { opacity: 0.4; cursor: not-allowed; }
+  .title-edit:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  .hero-copy {
+    margin: 0; color: var(--text-muted);
+    line-height: var(--line-height-relaxed); max-width: 60ch;
+  }
+
+  .hero-tags { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .tag-chip, .tag-chip-faint {
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-mono);
+    border: 1px solid var(--line);
+  }
+  .tag-chip { background: var(--canvas); color: var(--text-muted); }
+  .tag-chip-faint { color: var(--text-faint); border-style: dashed; }
+
+  .hero-action { display: flex; flex-direction: column; gap: var(--space-3); }
+
+  .action-stage {
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-3);
+  }
+  .action-hint {
+    margin: 0; color: var(--text-muted);
+    font-size: var(--font-size-sm); line-height: var(--line-height-relaxed);
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-2); padding: var(--space-3);
+    background: var(--canvas); border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+  }
+  .stat { display: flex; flex-direction: column; gap: var(--space-1); }
+  .stat-label {
+    color: var(--text-faint); font-size: var(--font-size-xs);
+    text-transform: uppercase; letter-spacing: var(--letter-spacing-loose);
+  }
+  .stat-value {
+    color: var(--text); font-size: var(--font-size-md);
+    display: inline-flex; align-items: center; gap: var(--space-2);
+  }
+  .stat-value.mono { font-family: var(--font-mono); }
+  .conn-dot { width: var(--space-2); height: var(--space-2); border-radius: 50%; background: var(--text-faint); }
+  .conn-dot.connected { background: var(--success); }
+  .conn-dot.connecting { background: var(--warn); }
+  .conn-dot.error { background: var(--danger); }
+
+  /* === Buttons (mirrors components/Button.astro) ========== */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: var(--space-2); padding: var(--space-3) var(--space-4);
+    font-family: var(--font-ui); font-weight: 500; font-size: var(--font-size-md);
+    line-height: 1; letter-spacing: var(--letter-spacing-loose);
+    border: 1px solid transparent; border-radius: var(--radius-2);
+    cursor: pointer; user-select: none;
+    transition:
+      background var(--duration-short) var(--ease-standard),
+      border-color var(--duration-short) var(--ease-standard),
+      color var(--duration-short) var(--ease-standard);
+  }
+  .btn:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .btn:disabled { cursor: not-allowed; opacity: 0.55; }
+  .btn--sm { padding: var(--space-2) var(--space-3); font-size: var(--font-size-sm); }
+  .btn--hero { width: 100%; padding: var(--space-4) var(--space-5); font-size: var(--font-size-lg); }
+  .btn--primary { background: var(--accent); color: var(--accent-on); border-color: var(--accent); }
+  .btn--primary:not(:disabled):hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+  .btn--secondary { background: var(--canvas-raised); color: var(--text); border-color: var(--line-strong); }
+  .btn--secondary:not(:disabled):hover { border-color: var(--line-emphasis); background: var(--canvas-elevated); }
+  .btn--danger { background: var(--danger); color: var(--canvas); border-color: var(--danger); }
+  .btn--danger:not(:disabled):hover { background: var(--danger-strong); border-color: var(--danger-strong); }
+  .btn--ghost { background: transparent; color: var(--text-muted); border-color: transparent; }
+  .btn--ghost:not(:disabled):hover { color: var(--text); background: var(--accent-soft); }
+  .btn-spinner {
+    width: var(--space-3); height: var(--space-3); border-radius: 50%;
+    border: 2px solid currentColor; border-right-color: transparent;
+    animation: btn-spin var(--duration-long) linear infinite;
+  }
+  @keyframes btn-spin { to { transform: rotate(360deg); } }
+
+  /* === Pills (mirrors components/Pill.astro) ============= */
+  .pill {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs); font-weight: 500;
+    letter-spacing: var(--letter-spacing-loose);
+    border: 1px solid transparent; line-height: 1.4;
+    background: var(--canvas-raised); color: var(--text-muted);
+    border-color: var(--line);
+  }
+  .pill-dot { width: var(--space-2); height: var(--space-2); border-radius: 50%; background: currentColor; flex-shrink: 0; }
+  .pill--info { color: var(--accent); background: var(--accent-soft); border-color: transparent; }
+  .pill--success { color: var(--success); background: var(--success-soft); border-color: transparent; }
+  .pill--warn { color: var(--warn); background: var(--warn-soft); border-color: transparent; }
+  .pill--danger { color: var(--danger); background: var(--danger-soft); border-color: transparent; }
+  .pill--local { color: var(--local); background: var(--local-soft); border-color: transparent; }
+
+  /* === Panels (mirrors components/Panel.astro) =========== */
+  .panel {
+    background: var(--canvas-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-3);
+    box-shadow: var(--elev-1);
+    overflow: hidden;
+  }
+  .panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--space-3); border-bottom: 1px solid var(--line);
+  }
+  .panel--comfortable .panel-header { padding: var(--space-4) var(--space-5); }
+  .panel--dense .panel-header { padding: var(--space-3) var(--space-4); }
+  .panel-title { font-size: var(--font-size-lg); font-weight: 600; color: var(--text); letter-spacing: var(--letter-spacing-tight); }
+  .panel-toolbar { display: flex; align-items: center; gap: var(--space-2); }
+  .panel--comfortable .panel-body { padding: var(--space-5); }
+  .panel--dense .panel-body { padding: var(--space-3) var(--space-4); }
+  .panel-footer { border-top: 1px solid var(--line); color: var(--text-muted); font-size: var(--font-size-sm); }
+  .panel--comfortable .panel-footer { padding: var(--space-3) var(--space-5); }
+
+  /* === Board ============================================= */
+  .board {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+    gap: var(--space-5);
+    align-items: start;
+  }
+
+  /* === Transcript ======================================== */
+  .transcript-scroll {
+    max-height: 70vh; overflow-y: auto;
+    display: flex; flex-direction: column; gap: var(--space-3);
+  }
+  .transcript-empty {
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; gap: var(--space-3);
+    padding: var(--space-6); color: var(--text-muted);
+  }
+  .transcript-empty h3 {
+    margin: 0; color: var(--text);
+    font-size: var(--font-size-lg); letter-spacing: var(--letter-spacing-tight);
+  }
+  .transcript-empty p { margin: 0; max-width: 52ch; line-height: var(--line-height-relaxed); }
+
+  .segment, .bookmark {
+    display: block; padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--line); border-radius: var(--radius-2);
+    background: var(--canvas); cursor: pointer;
+    transition: border-color var(--duration-short) var(--ease-standard);
+  }
+  .segment:hover, .bookmark:hover { border-color: var(--line-strong); }
+  .segment:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .segment-meta, .bookmark-meta {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: var(--space-2); margin-bottom: var(--space-2);
+    font-size: var(--font-size-xs);
+  }
+  .speaker-pill {
+    display: inline-flex; align-items: center; gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-pill);
+    background: var(--canvas-raised); border: 1px solid var(--line);
+    color: var(--text-muted);
+  }
+  .speaker-dot { width: var(--space-1); height: var(--space-1); border-radius: 50%; background: currentColor; }
+  .speaker-pill.tone-accent { color: var(--accent); }
+  .speaker-pill.tone-warm { color: var(--warm); }
+  .speaker-pill.tone-success { color: var(--success); }
+  .ts { color: var(--text-faint); }
+  .copy-hint { color: var(--text-faint); margin-left: auto; }
+  .segment-text, .bookmark-text { margin: 0; color: var(--text); line-height: var(--line-height-relaxed); }
+  .bookmark { background: var(--accent-soft); border-color: var(--accent); }
+  .bookmark-flag { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--accent); font-weight: 500; }
+
+  .dock { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+  .export-wrap { position: relative; margin-left: auto; }
+  .export-menu {
+    position: absolute; bottom: 100%; right: 0;
+    margin-bottom: var(--space-2);
+    background: var(--canvas-elevated);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-2);
+    padding: var(--space-1);
+    min-width: 16rem; box-shadow: var(--elev-3);
+    z-index: var(--z-overlay);
+  }
+  .export-item {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; background: transparent; border: 0;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-1); color: var(--text);
+    font-family: var(--font-ui); font-size: var(--font-size-sm);
+    text-align: left; cursor: pointer;
+  }
+  .export-item:hover { background: var(--accent-soft); }
+  .export-item:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .export-item .mono { font-family: var(--font-mono); color: var(--text-faint); }
+
+  /* === Rail ============================================== */
+  .rail { display: flex; flex-direction: column; gap: var(--space-3); }
+  .rail-title { margin: 0 0 var(--space-1); color: var(--text); font-weight: 500; }
+  .rail-muted {
+    margin: var(--space-2) 0 0;
+    color: var(--text-muted); font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+  .rail-faint { color: var(--text-faint); font-size: var(--font-size-xs); }
+  .rail-label {
+    display: block; color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase; letter-spacing: var(--letter-spacing-loose);
+    margin: var(--space-3) 0 var(--space-1);
+  }
+  .rail-input {
+    width: 100%; padding: var(--space-2) var(--space-3);
+    background: var(--canvas); border: 1px solid var(--line);
+    border-radius: var(--radius-2); color: var(--text);
+    font-family: var(--font-ui); font-size: var(--font-size-sm);
+  }
+  .rail-input--sm { width: auto; min-width: 6rem; }
+  .rail-input:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .topics { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-2) 0; }
+  .topic-pill {
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-pill);
+    background: var(--canvas); border: 1px solid var(--line);
+    color: var(--text-muted); font-size: var(--font-size-xs);
+    font-family: var(--font-mono);
+  }
+  .summary-text {
+    margin: 0; color: var(--text);
+    line-height: var(--line-height-relaxed); font-size: var(--font-size-sm);
+  }
+  .streaming-text {
+    margin: 0; color: var(--text);
+    font-family: var(--font-mono); font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+  .caret {
+    display: inline-block; width: 1ch; background: var(--accent);
+    margin-left: 2px;
+    animation: caret var(--duration-long) steps(1) infinite;
+  }
+  @keyframes caret { 50% { background: transparent; } }
+
+  /* === Action items ====================================== */
+  .action-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+  .action-item {
+    display: grid; grid-template-columns: auto 1fr auto;
+    gap: var(--space-3); padding: var(--space-3);
+    border: 1px solid var(--line); border-radius: var(--radius-2);
+    background: var(--canvas); align-items: start;
+  }
+  .action-item.is-done .action-task { color: var(--text-muted); text-decoration: line-through; }
+  .action-body { min-width: 0; }
+  .action-task { margin: 0; color: var(--text); line-height: var(--line-height-normal); overflow-wrap: anywhere; }
+  .action-meta { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
+  .meta-chip {
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-pill);
+    background: var(--canvas-raised); border: 1px solid var(--line);
+    color: var(--text-muted); font-size: var(--font-size-xs);
+  }
+  .meta-chip.mono { font-family: var(--font-mono); }
+  .meta-chip.status.success { color: var(--success); border-color: transparent; background: var(--success-soft); }
+  .meta-chip.status.warn { color: var(--warn); border-color: transparent; background: var(--warn-soft); }
+  .meta-chip.status.danger { color: var(--danger); border-color: transparent; background: var(--danger-soft); }
+  .meta-chip.status.info { color: var(--accent); border-color: transparent; background: var(--accent-soft); }
+  .action-controls { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+  .check, .dismiss {
+    background: transparent; border: 1px solid var(--line);
+    border-radius: var(--radius-1); color: var(--text-muted);
+    width: var(--space-5); height: var(--space-5);
+    display: grid; place-items: center; cursor: pointer; flex-shrink: 0;
+  }
+  .check:hover, .dismiss:hover { border-color: var(--line-strong); color: var(--text); }
+  .check:disabled, .dismiss:disabled { opacity: 0.45; cursor: not-allowed; }
+  .check:focus-visible, .dismiss:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .jobs-controls { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); align-items: center; }
+
+  /* === Toasts + modals =================================== */
+  .toast-stack {
+    position: fixed; bottom: var(--space-5); right: var(--space-5);
+    display: flex; flex-direction: column; gap: var(--space-2);
+    z-index: var(--z-toast);
+  }
+  .toast {
+    background: var(--canvas-elevated); color: var(--text);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-2);
+    padding: var(--space-3) var(--space-4);
+    box-shadow: var(--elev-3);
+  }
+  .toast p { margin: 0; }
+
+  .modal {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: grid; place-items: center;
+    padding: var(--space-4);
+    z-index: var(--z-dialog);
+  }
+  .modal-card {
+    width: min(36rem, 100%);
+    background: var(--canvas-elevated);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-3);
+    padding: var(--space-5);
+    box-shadow: var(--elev-4);
+    display: flex; flex-direction: column; gap: var(--space-3);
+  }
+  .modal-card h3 { margin: 0; font-size: var(--font-size-xl); letter-spacing: var(--letter-spacing-tight); }
+  .modal-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-3); }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+
+  @media (max-width: 960px) {
+    .hero { grid-template-columns: 1fr; }
+    .board { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .runtime { padding: var(--space-3); gap: var(--space-3); }
+    .hero { padding: var(--space-4); }
+    .stats { grid-template-columns: 1fr 1fr; }
+  }
+</style>

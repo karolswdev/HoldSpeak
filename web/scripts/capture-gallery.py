@@ -27,6 +27,7 @@ DEFAULT_OUT = REPO / "pm" / "roadmap" / "holdspeak" / "phase-10-web-design-syste
 
 GALLERY_PATH = "/_built/design/components/"
 DESIGN_CHECK_PATH = "/_built/design/check/"
+RUNTIME_PATH = "/_built/"
 
 SHOTS = [
     ("story-03-components-desktop.png", GALLERY_PATH, 1440, 1600),
@@ -37,6 +38,10 @@ SHOTS = [
     ("story-04-topnav-current-runtime.png", DESIGN_CHECK_PATH, 1440, 200),
     ("story-05-identity-desktop.png", GALLERY_PATH, 1440, 1900),
     ("story-05-identity-narrow.png", GALLERY_PATH, 420, 2900),
+    ("story-06-runtime-idle-desktop.png", RUNTIME_PATH, 1440, 1400),
+    ("story-06-runtime-idle-narrow.png", RUNTIME_PATH, 420, 2200),
+    ("story-06-runtime-active-desktop.png", RUNTIME_PATH + "?_state=active", 1440, 1400),
+    ("story-06-runtime-stopping-desktop.png", RUNTIME_PATH + "?_state=stopping", 1440, 1400),
 ]
 
 
@@ -74,8 +79,43 @@ def main() -> None:
                 shot_url = base_url.rstrip("/") + route
                 page.goto(shot_url, wait_until="networkidle")
                 page.wait_for_timeout(400)
+
+                # Story-06: synthesize meeting states by mutating
+                # Alpine's x-data on the runtime page directly. The
+                # backend is not running for capture, so this is the
+                # only way to render non-idle hero hierarchy.
+                if "_state=" in route:
+                    state = route.split("_state=")[-1]
+                    page.evaluate(
+                        """(state) => {
+                          const root = document.querySelector('[x-data]');
+                          if (!root || !window.Alpine) return;
+                          const data = window.Alpine.$data(root);
+                          data.meetingTitle = 'Architecture sync';
+                          data.meetingTags = ['planning', 'pluggable-pipeline'];
+                          if (state === 'active') {
+                            data.meetingActive = true;
+                            data.duration = '00:24:18';
+                            data.segments = new Array(31);
+                            data.entries = [
+                              { id: 'b1', kind: 'bookmark', label: 'Decision: defer light-mode tokens to phase 12.', timestamp: '00:09:42' },
+                              { id: 's1', kind: 'segment', speaker: 'A', text: 'OK so the connector ecosystem moves to phase 11, design phase becomes phase 10.', start: '00:23:51', end: '00:23:58' },
+                              { id: 's2', kind: 'segment', speaker: 'B', text: 'And we keep Alpine for now — the JS data layer is fine, we are rebuilding the visuals.', start: '00:24:01', end: '00:24:09' },
+                            ];
+                          }
+                          if (state === 'stopping') {
+                            data.meetingActive = true;
+                            data.stopInProgress = true;
+                            data.duration = '00:38:02';
+                            data.segments = new Array(58);
+                          }
+                        }""",
+                        state,
+                    )
+                    page.wait_for_timeout(400)
+
                 target = out_dir / filename
-                full_page = filename.startswith("story-03-")
+                full_page = filename.startswith(("story-03-", "story-06-"))
                 page.screenshot(path=str(target), full_page=full_page)
                 print(f"wrote {target} {width}x{height} {route}")
             browser.close()

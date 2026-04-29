@@ -24,7 +24,9 @@ from .logging_config import get_logger
 log = get_logger("web_server")
 _HTTP_HEADER_NAME_RE = re.compile(r"^[A-Za-z0-9-]+$")
 
-_DASHBOARD_HTML_PATH = Path(__file__).resolve().parent / "static" / "dashboard.html"
+_DASHBOARD_HTML_PATH = (
+    Path(__file__).resolve().parent / "static" / "_built" / "index.html"
+)
 
 # WFS-CFG-001: global dictation blocks file. Tests monkeypatch this constant.
 _GLOBAL_BLOCKS_PATH = Path.home() / ".config" / "holdspeak" / "blocks.yaml"
@@ -602,12 +604,14 @@ class MeetingWebServer:
             try:
                 html = _DASHBOARD_HTML_PATH.read_text(encoding="utf-8")
             except Exception as e:
-                log.error(f"Failed to read dashboard.html: {e}")
+                log.error(f"Failed to read runtime index: {e}")
                 html = (
                     "<!doctype html><html><head><meta charset='utf-8' />"
                     "<title>HoldSpeak</title></head>"
-                    "<body><h1>HoldSpeak Dashboard</h1>"
-                    "<p>Dashboard UI missing.</p></body></html>"
+                    "<body><h1>HoldSpeak Runtime</h1>"
+                    "<p>Runtime UI missing — run "
+                    "<code>cd web && npm run build</code>.</p>"
+                    "</body></html>"
                 )
             return HTMLResponse(html)
 

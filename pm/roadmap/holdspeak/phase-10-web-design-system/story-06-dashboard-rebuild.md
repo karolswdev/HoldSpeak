@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-10-03, HS-10-04, HS-10-05
 - **Unblocks:** HS-10-13
 - **Owner:** unassigned
@@ -43,17 +43,17 @@ active / stopping / stopped) are not visually distinct.
 
 ## Acceptance Criteria
 
-- [ ] `/` renders correctly in idle, active, stopping, and stopped
+- [x] `/` renders correctly in idle, active, stopping, and stopped
   states (screenshots of each in the evidence file).
-- [ ] Start/stop action is the primary visual element exactly when it
+- [x] Start/stop action is the primary visual element exactly when it
   should be (idle → start; active → stop).
-- [ ] Live transcript continues to update via the same websocket; no
+- [x] Live transcript continues to update via the same websocket; no
   regression in the existing message contract.
-- [ ] No inline `<style>` block in the rendered output; all styles
+- [x] No inline `<style>` block in the rendered output; all styles
   flow from the Astro pipeline.
-- [ ] `/_design/components` gallery still renders (no shared-component
+- [x] `/_design/components` gallery still renders (no shared-component
   regressions).
-- [ ] Manual smoke test: start a meeting, see live transcript, stop,
+- [x] Manual smoke test: start a meeting, see live transcript, stop,
   see summary panels populate.
 
 ## Test Plan

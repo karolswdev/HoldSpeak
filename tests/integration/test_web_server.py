@@ -278,40 +278,65 @@ class TestDashboardEndpoint:
         response = test_client.get("/")
         assert "HoldSpeak" in response.text or "holdspeak" in response.text.lower()
 
+    def _bundled_runtime_js(self, test_client) -> str:
+        """HS-10-06: the runtime page bundles its JS into a hashed
+        Astro chunk under /_built/_astro/. This helper fetches that
+        chunk so tests can assert against the actual runtime code
+        regardless of the hash."""
+        import re
+
+        html = test_client.get("/").text
+        match = re.search(r'src="(/_built/_astro/hoisted\.[^"]+\.js)"', html)
+        if not match:
+            return ""
+        js = test_client.get(match.group(1)).text
+        return js
+
     def test_dashboard_references_runtime_control_endpoints(self, test_client):
-        """Dashboard should use runtime-level meeting control endpoints."""
+        """Dashboard JS should still call the runtime-level meeting
+        control endpoints. The endpoint strings live in the bundled
+        Astro chunk (HS-10-06: import factorySource from
+        scripts/dashboard-app.js?raw)."""
         response = test_client.get("/")
         assert response.status_code == 200
         html = response.text
-        assert "/api/runtime/status" in html
-        assert "/api/meeting/start" in html
-        assert "/api/meeting/stop" in html
-        assert "/api/intents/control" in html
-        assert "/api/intents/profile" in html
-        assert "/api/intents/override" in html
-        assert "/api/intents/preview" in html
-        assert "/api/plugin-jobs" in html
-        assert "/api/plugin-jobs/summary" in html
-        assert "/api/plugin-jobs/process" in html
-        assert "Routing Profile" in html
-        assert "Preview Route" in html
-        assert "Deferred Plugin Jobs" in html
+        # UI labels visible in the rendered page.
+        assert "Intent routing" in html
+        assert "Preview route" in html
+        assert "Deferred plugin jobs" in html
+        # API endpoints live in the bundled runtime JS.
+        js = self._bundled_runtime_js(test_client)
+        assert js, "expected /_built/_astro/hoisted.*.js to be referenced from /"
+        assert "/api/runtime/status" in js
+        assert "/api/meeting/start" in js
+        assert "/api/meeting/stop" in js
+        assert "/api/intents/control" in js
+        assert "/api/intents/profile" in js
+        assert "/api/intents/override" in js
+        assert "/api/intents/preview" in js
+        assert "/api/plugin-jobs" in js
+        assert "/api/plugin-jobs/summary" in js
+        assert "/api/plugin-jobs/process" in js
 
     def test_dashboard_includes_idle_mode_guidance_markers(self, test_client):
-        """Dashboard should include explicit idle/live control guidance copy."""
+        """The rebuilt runtime renders copy that distinguishes idle vs.
+        live state. The exact wording was simplified in HS-10-06; what
+        matters is that idle and read-only-while-idle guidance is
+        present so users understand why controls are disabled."""
         response = test_client.get("/")
         assert response.status_code == 200
         html = response.text
-        assert "Idle mode: start a meeting to unlock live editing controls." in html
-        assert "History and settings remain available while idle." in html
-        assert "Read-only while idle. Start a meeting to edit status, review state, and details." in html
+        assert "Press start, then hold to talk" in html
+        assert "Read-only while idle" in html
+        assert "Start a meeting to begin recording" in html
 
     def test_dashboard_bootstrap_prefers_runtime_status_payload(self, test_client):
-        response = test_client.get("/")
-        assert response.status_code == 200
-        html = response.text
-        assert "this.fetchRuntimeStatus();" in html
-        assert "await this.fetchInitialState();" in html
+        """The runtime-status payload is still preferred at bootstrap.
+        The factory function lives in the bundled chunk (HS-10-06)."""
+        js = self._bundled_runtime_js(test_client)
+        assert js, "expected /_built/_astro/hoisted.*.js to be referenced from /"
+        assert "fetchRuntimeStatus" in js
+        assert "fetchInitialState" in js
 
 
 @pytest.mark.integration
