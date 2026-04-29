@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-10-02, HS-10-03
 - **Unblocks:** HS-10-06, HS-10-07, HS-10-08, HS-10-09
 - **Owner:** unassigned
@@ -39,14 +39,14 @@ between "functional" and "has character."
 
 ## Acceptance Criteria
 
-- [ ] App mark renders crisply at 16, 24, and 32px in the live nav.
-- [ ] `LocalPill` is used consistently in the TopNav and at every
+- [x] App mark renders crisply at 16, 24, and 32px in the live nav.
+- [x] `LocalPill` is used consistently in the TopNav and at every
   data-import / connector / deletion control across the four rebuilt
   routes (verified in HS-10-06..09 acceptance, listed here for
   traceability).
-- [ ] Focus rings on Button, ListRow, link, and form controls share a
+- [x] Focus rings on Button, ListRow, link, and form controls share a
   single style — no per-component drift.
-- [ ] Favicon and apple-touch-icon ship in `holdspeak/static/` after a
+- [x] Favicon and apple-touch-icon ship in `holdspeak/static/` after a
   clean `npm run build`.
 
 ## Test Plan

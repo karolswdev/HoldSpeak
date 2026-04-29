@@ -1,0 +1,43 @@
+---
+// HS-10-05 app mark.
+//
+// Monochrome SVG. Conveys a hold/keycap with a centered three-bar
+// voice waveform. Restraint is the point — the mark must read at
+// 16 px (favicon, narrow nav) without losing the gesture.
+//
+// Geometry uses integer coordinates inside a 24x24 viewBox with
+// stroke-width 2 and rounded caps so it snaps to the pixel grid at
+// every common size.
+//
+// Color is `currentColor`, so consumers control the tone via CSS.
+
+interface Props {
+  size?: number;
+  ariaLabel?: string;
+  class?: string;
+}
+
+const { size = 24, ariaLabel, class: extraClass } = Astro.props;
+const role = ariaLabel ? "img" : undefined;
+const ariaHidden = ariaLabel ? undefined : "true";
+---
+
+<svg
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  role={role}
+  aria-label={ariaLabel}
+  aria-hidden={ariaHidden}
+  class={extraClass}
+>
+  <rect x="3" y="6" width="18" height="12" rx="3" />
+  <path d="M8 11v2" />
+  <path d="M12 9v6" />
+  <path d="M16 11v2" />
+</svg>

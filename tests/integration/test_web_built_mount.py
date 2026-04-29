@@ -104,6 +104,35 @@ def test_components_gallery_is_served(test_client: TestClient) -> None:
         assert marker in response.text, marker
 
 
+@pytest.mark.skipif(
+    not _BUILT_INDEX.is_file(),
+    reason="run `cd web && npm run build` to populate holdspeak/static/_built/",
+)
+def test_identity_layer_assets_serve(test_client: TestClient) -> None:
+    """HS-10-05: app mark SVG inlines in TopNav, favicon + apple-touch-icon
+    are referenced + served, LocalPill tooltip appears."""
+    response = test_client.get("/_built/design/check/")
+    body = response.text
+    # Favicon refs in <head>.
+    assert 'href="/_built/favicon.svg"' in body
+    assert 'href="/_built/apple-touch-icon.png"' in body
+    # App mark inline SVG geometry (keycap rect + 3 waveform paths).
+    assert 'viewBox="0 0 24 24"' in body
+    assert 'rx="3"' in body
+    # Local-only pill tooltip text from LocalPill.
+    assert "Everything stays" not in body  # ensure default — we set tooltip
+    assert "stays on your machine" in body
+
+    # Static-files mount serves the SVG itself.
+    favicon = test_client.get("/_built/favicon.svg")
+    assert favicon.status_code == 200
+    assert favicon.headers["content-type"].startswith("image/svg")
+
+    icon = test_client.get("/_built/apple-touch-icon.png")
+    assert icon.status_code == 200
+    assert icon.headers["content-type"] == "image/png"
+
+
 def test_legacy_routes_still_serve(test_client: TestClient) -> None:
     for path, marker in [
         ("/", "HoldSpeak"),

@@ -1,0 +1,102 @@
+---
+// HS-10-05 hold-to-talk motif.
+//
+// Larger version of the app mark, intended for idle/empty surfaces:
+// the runtime dashboard's "ready to record" state, the history empty
+// state, the dictation readiness empty state. The waveform pulses
+// subtly using motion tokens; `prefers-reduced-motion: reduce`
+// flattens it via the global override in tokens.css.
+//
+// Pass `pulse=false` to opt out (e.g. inside a static EmptyState
+// where motion would distract).
+
+interface Props {
+  size?: number;
+  pulse?: boolean;
+  ariaLabel?: string;
+  class?: string;
+}
+
+const {
+  size = 56,
+  pulse = true,
+  ariaLabel,
+  class: extraClass,
+} = Astro.props;
+const role = ariaLabel ? "img" : undefined;
+const ariaHidden = ariaLabel ? undefined : "true";
+const classes = ["hold-mark", pulse ? "is-pulsing" : null, extraClass]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<svg
+  width={size}
+  height={size}
+  viewBox="0 0 56 56"
+  fill="none"
+  stroke="currentColor"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  role={role}
+  aria-label={ariaLabel}
+  aria-hidden={ariaHidden}
+  class={classes}
+>
+  <rect
+    x="6"
+    y="14"
+    width="44"
+    height="28"
+    rx="7"
+    stroke-width="2.5"
+  />
+  <path
+    d="M19 26v4"
+    stroke-width="3"
+    class="bar bar-1"
+  />
+  <path
+    d="M28 22v12"
+    stroke-width="3"
+    class="bar bar-2"
+  />
+  <path
+    d="M37 26v4"
+    stroke-width="3"
+    class="bar bar-3"
+  />
+</svg>
+
+<style>
+  .hold-mark {
+    color: var(--accent);
+    display: inline-block;
+  }
+
+  .hold-mark .bar {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .is-pulsing .bar-1 {
+    animation: hold-bar var(--duration-long) var(--ease-emphasized)
+      infinite alternate;
+    animation-delay: 0ms;
+  }
+  .is-pulsing .bar-2 {
+    animation: hold-bar var(--duration-long) var(--ease-emphasized)
+      infinite alternate;
+    animation-delay: 120ms;
+  }
+  .is-pulsing .bar-3 {
+    animation: hold-bar var(--duration-long) var(--ease-emphasized)
+      infinite alternate;
+    animation-delay: 60ms;
+  }
+
+  @keyframes hold-bar {
+    from { transform: scaleY(1); }
+    to { transform: scaleY(0.55); }
+  }
+</style>

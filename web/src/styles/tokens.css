@@ -120,7 +120,15 @@
   --ease-emphasized: cubic-bezier(0.3, 0, 0.2, 1);
   --ease-decelerate: cubic-bezier(0, 0, 0, 1);
 
-  /* === Focus ring ============================================= */
+  /* === Focus ring =============================================
+   * Single grammar across the entire frontend:
+   *   outline: var(--focus-outline-width) solid var(--accent);
+   *   outline-offset: var(--focus-outline-offset);
+   * Use a NEGATIVE offset for full-width interactive rows
+   * (ListRow) so the ring sits inside the row outline instead
+   * of overlapping siblings. Everything else uses the positive
+   * offset above.
+   */
   --focus-ring: 0 0 0 2px var(--canvas), 0 0 0 4px var(--accent);
   --focus-outline-width: 2px;
   --focus-outline-offset: 2px;

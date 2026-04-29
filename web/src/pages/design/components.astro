@@ -14,6 +14,9 @@ import Toolbar from "../../components/Toolbar.astro";
 import ListRow from "../../components/ListRow.astro";
 import EmptyState from "../../components/EmptyState.astro";
 import InlineMessage from "../../components/InlineMessage.astro";
+import AppMark from "../../components/AppMark.astro";
+import HoldMark from "../../components/HoldMark.astro";
+import LocalPill from "../../components/LocalPill.astro";
 ---
 
 <AppLayout title="HoldSpeak — Components">
@@ -193,6 +196,50 @@ import InlineMessage from "../../components/InlineMessage.astro";
       </div>
     </section>
 
+    <!-- Identity layer -->
+    <section class="block" id="identity" aria-labelledby="identity-heading">
+      <h2 id="identity-heading">Identity layer</h2>
+
+      <h3>App mark — sizes</h3>
+      <Toolbar>
+        <span class="mark-cell" style="color: var(--accent);">
+          <AppMark size={16} ariaLabel="HoldSpeak mark, 16 px" />
+          <code>16</code>
+        </span>
+        <span class="mark-cell" style="color: var(--accent);">
+          <AppMark size={24} ariaLabel="HoldSpeak mark, 24 px" />
+          <code>24</code>
+        </span>
+        <span class="mark-cell" style="color: var(--accent);">
+          <AppMark size={32} ariaLabel="HoldSpeak mark, 32 px" />
+          <code>32</code>
+        </span>
+        <span class="mark-cell" style="color: var(--text);">
+          <AppMark size={32} ariaLabel="HoldSpeak mark in text tone" />
+          <code>32, --text</code>
+        </span>
+      </Toolbar>
+
+      <h3>Hold-to-talk motif</h3>
+      <Panel>
+        <Fragment slot="header">Idle (pulsing)</Fragment>
+        <div class="hold-cell">
+          <HoldMark size={72} ariaLabel="Hold to talk" />
+          <p class="muted">
+            Used on the runtime dashboard idle state, the history empty
+            state, and the dictation readiness empty state. Pulse
+            flattens to static under <code>prefers-reduced-motion</code>.
+          </p>
+        </div>
+      </Panel>
+
+      <h3>Local-only pill</h3>
+      <Toolbar>
+        <LocalPill />
+        <LocalPill label="local-only · activity" />
+      </Toolbar>
+    </section>
+
     <!-- Toolbar / alignment -->
     <section class="block" id="toolbar" aria-labelledby="toolbar-heading">
       <h2 id="toolbar-heading">Toolbar alignment</h2>
@@ -294,9 +341,35 @@ import InlineMessage from "../../components/InlineMessage.astro";
     border: 1px solid var(--line);
   }
 
+  .mark-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    background: var(--canvas);
+  }
+
+  .hold-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+  }
+
+  .hold-cell p {
+    margin: 0;
+    max-width: 48ch;
+  }
+
   @media (max-width: 640px) {
     .gallery {
       padding: var(--space-5) var(--space-3);
+    }
+
+    .hold-cell {
+      flex-direction: column;
+      align-items: flex-start;
     }
   }
 </style>

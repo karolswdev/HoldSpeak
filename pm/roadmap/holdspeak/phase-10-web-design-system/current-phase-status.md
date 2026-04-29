@@ -1,6 +1,6 @@
 # Phase 10 - Web Design System & Character Pass
 
-**Last updated:** 2026-04-28 (HS-10-04 unified TopNav shipped).
+**Last updated:** 2026-04-28 (HS-10-05 HoldSpeak identity layer shipped).
 
 ## Goal
 
@@ -52,7 +52,7 @@ no identity layer that says "this is HoldSpeak."
 | HS-10-02 | Design token layer | done | [story-02-design-tokens.md](./story-02-design-tokens.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-10-03 | Core component library | done | [story-03-core-components.md](./story-03-core-components.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-10-04 | Unified TopNav and route identity | done | [story-04-top-nav.md](./story-04-top-nav.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-10-05 | HoldSpeak identity layer | backlog | [story-05-identity-layer.md](./story-05-identity-layer.md) | pending |
+| HS-10-05 | HoldSpeak identity layer | done | [story-05-identity-layer.md](./story-05-identity-layer.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-10-06 | `/` runtime dashboard rebuild | backlog | [story-06-dashboard-rebuild.md](./story-06-dashboard-rebuild.md) | pending |
 | HS-10-07 | `/activity` rebuild | backlog | [story-07-activity-rebuild.md](./story-07-activity-rebuild.md) | pending |
 | HS-10-08 | `/history` rebuild | backlog | [story-08-history-rebuild.md](./story-08-history-rebuild.md) | pending |

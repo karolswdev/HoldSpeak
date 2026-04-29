@@ -1,0 +1,39 @@
+---
+// HS-10-05 LocalPill.
+//
+// Specialized Pill that renders the "local-only" privacy signal.
+// Drops in wherever data import / connector / deletion controls live
+// — the TopNav (default fallback), each /activity panel header, the
+// history archive, and around dictation KB/runtime controls.
+//
+// The label and tooltip text live here so the wording stays
+// canonical across the product. If we ever need to change the copy,
+// it changes in exactly one place.
+
+import Pill from "./Pill.astro";
+
+interface Props {
+  label?: string;
+  tooltip?: string;
+  class?: string;
+}
+
+const {
+  label = "local-only",
+  tooltip = "All HoldSpeak data — recordings, transcripts, activity, connector output — stays on your machine. Nothing is sent to a remote server.",
+  class: extraClass,
+} = Astro.props;
+---
+
+<span class={`local-pill ${extraClass ?? ""}`} title={tooltip}>
+  <Pill tone="local" dot ariaLabel={`${label}: ${tooltip}`}>
+    {label}
+  </Pill>
+</span>
+
+<style>
+  .local-pill {
+    display: inline-flex;
+    cursor: help;
+  }
+</style>

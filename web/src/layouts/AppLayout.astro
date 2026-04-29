@@ -9,7 +9,7 @@
 
 import "../styles/global.css";
 import TopNav from "../components/TopNav.astro";
-import Pill from "../components/Pill.astro";
+import LocalPill from "../components/LocalPill.astro";
 
 type Route = "runtime" | "activity" | "history" | "dictation";
 
@@ -30,13 +30,15 @@ const hasSecondary = Astro.slots.has("secondary");
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
+    <link rel="icon" type="image/svg+xml" href="/_built/favicon.svg" />
+    <link rel="apple-touch-icon" href="/_built/apple-touch-icon.png" />
   </head>
   <body>
     <TopNav current={current}>
       {Astro.slots.has("status") ? (
         <Fragment slot="status"><slot name="status" /></Fragment>
       ) : (
-        <Pill tone="local" dot slot="status">local-only</Pill>
+        <LocalPill slot="status" />
       )}
       {Astro.slots.has("topnav-overflow") && (
         <Fragment slot="overflow"><slot name="topnav-overflow" /></Fragment>

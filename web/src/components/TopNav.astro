@@ -17,6 +17,7 @@
 // hamburger overlay would be overkill.
 
 import Pill from "./Pill.astro";
+import AppMark from "./AppMark.astro";
 
 type Route = "runtime" | "activity" | "history" | "dictation";
 
@@ -38,7 +39,7 @@ const routes: { slug: Route; label: string; href: string }[] = [
   <a href="#main" class="topnav-skip">Skip to content</a>
 
   <a href="/" class="topnav-brand" aria-label="HoldSpeak — Runtime">
-    <span class="topnav-mark" aria-hidden="true">●</span>
+    <AppMark size={24} class="topnav-mark" />
     <span class="topnav-wordmark">HoldSpeak</span>
   </a>
 
@@ -118,8 +119,7 @@ const routes: { slug: Route; label: string; href: string }[] = [
 
   .topnav-mark {
     color: var(--accent);
-    font-size: var(--font-size-lg);
-    line-height: 0;
+    flex-shrink: 0;
   }
 
   .topnav-wordmark {

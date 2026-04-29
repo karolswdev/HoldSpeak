@@ -35,6 +35,8 @@ SHOTS = [
     ("story-04-topnav-768.png", GALLERY_PATH, 768, 240),
     ("story-04-topnav-360.png", GALLERY_PATH, 360, 280),
     ("story-04-topnav-current-runtime.png", DESIGN_CHECK_PATH, 1440, 200),
+    ("story-05-identity-desktop.png", GALLERY_PATH, 1440, 1900),
+    ("story-05-identity-narrow.png", GALLERY_PATH, 420, 2900),
 ]
 
 
