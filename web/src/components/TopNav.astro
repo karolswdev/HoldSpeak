@@ -1,0 +1,189 @@
+---
+// HS-10-04 TopNav.
+//
+// Single utilitarian nav rendered by AppLayout. Left: brand mark
+// (text wordmark for now; HS-10-05 replaces the glyph with the real
+// SVG mark). Center: 4 route links. Right: local-only pill slot +
+// optional overflow slot.
+//
+// `current` matches one of the route slugs and applies aria-current
+// + the visual selected state. Pass `current={undefined}` for
+// dev-only pages (the gallery, the design-check) — nothing is then
+// announced as current.
+//
+// Narrow-viewport behavior: the whole nav uses `flex-wrap`; brand
+// stays first, links wrap to a second line at small widths. No
+// horizontal scroll. The route has only four destinations, so a
+// hamburger overlay would be overkill.
+
+import Pill from "./Pill.astro";
+
+type Route = "runtime" | "activity" | "history" | "dictation";
+
+interface Props {
+  current?: Route;
+}
+
+const { current } = Astro.props;
+
+const routes: { slug: Route; label: string; href: string }[] = [
+  { slug: "runtime", label: "Runtime", href: "/" },
+  { slug: "activity", label: "Activity", href: "/activity" },
+  { slug: "history", label: "History", href: "/history" },
+  { slug: "dictation", label: "Dictation", href: "/dictation" },
+];
+---
+
+<header class="topnav" role="banner">
+  <a href="#main" class="topnav-skip">Skip to content</a>
+
+  <a href="/" class="topnav-brand" aria-label="HoldSpeak — Runtime">
+    <span class="topnav-mark" aria-hidden="true">●</span>
+    <span class="topnav-wordmark">HoldSpeak</span>
+  </a>
+
+  <nav class="topnav-routes" aria-label="Primary">
+    {routes.map((r) => (
+      <a
+        href={r.href}
+        class:list={["topnav-link", current === r.slug && "is-current"]}
+        aria-current={current === r.slug ? "page" : undefined}
+      >
+        {r.label}
+      </a>
+    ))}
+  </nav>
+
+  <div class="topnav-tail">
+    <slot name="status">
+      <Pill tone="local" dot>local-only</Pill>
+    </slot>
+    <slot name="overflow" />
+  </div>
+</header>
+
+<style>
+  .topnav {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-5);
+    padding: var(--space-3) var(--space-5);
+    background: var(--canvas);
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-ui);
+  }
+
+  .topnav-skip {
+    position: absolute;
+    top: var(--space-2);
+    left: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--canvas-elevated);
+    color: var(--text);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-2);
+    font-size: var(--font-size-sm);
+    text-decoration: none;
+    transform: translateY(-200%);
+    transition: transform var(--duration-short) var(--ease-standard);
+    z-index: var(--z-overlay);
+  }
+
+  .topnav-skip:focus-visible {
+    transform: translateY(0);
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  .topnav-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: var(--letter-spacing-tight);
+    font-size: var(--font-size-md);
+  }
+
+  .topnav-brand:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+    border-radius: var(--radius-1);
+  }
+
+  .topnav-mark {
+    color: var(--accent);
+    font-size: var(--font-size-lg);
+    line-height: 0;
+  }
+
+  .topnav-wordmark {
+    color: var(--text);
+  }
+
+  .topnav-routes {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1);
+    flex: 1 1 auto;
+    margin: 0;
+  }
+
+  .topnav-link {
+    padding: var(--space-2) var(--space-3);
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    border-radius: var(--radius-2);
+    transition:
+      color var(--duration-short) var(--ease-standard),
+      background var(--duration-short) var(--ease-standard);
+  }
+
+  .topnav-link:hover {
+    color: var(--text);
+    background: var(--accent-soft);
+  }
+
+  .topnav-link:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  .topnav-link.is-current {
+    color: var(--text);
+    background: var(--accent-soft);
+    box-shadow: inset 0 -2px 0 var(--accent);
+  }
+
+  .topnav-tail {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-left: auto;
+  }
+
+  @media (max-width: 640px) {
+    .topnav {
+      gap: var(--space-2);
+      padding: var(--space-3);
+    }
+
+    .topnav-routes {
+      order: 3;
+      flex-basis: 100%;
+      justify-content: flex-start;
+    }
+
+    .topnav-tail {
+      margin-left: auto;
+    }
+  }
+</style>

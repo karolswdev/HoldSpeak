@@ -26,10 +26,15 @@ STATIC_DIR = REPO / "holdspeak" / "static"
 DEFAULT_OUT = REPO / "pm" / "roadmap" / "holdspeak" / "phase-10-web-design-system" / "screenshots"
 
 GALLERY_PATH = "/_built/design/components/"
+DESIGN_CHECK_PATH = "/_built/design/check/"
 
 SHOTS = [
-    ("story-03-components-desktop.png", 1440, 1600),
-    ("story-03-components-narrow.png", 420, 2400),
+    ("story-03-components-desktop.png", GALLERY_PATH, 1440, 1600),
+    ("story-03-components-narrow.png", GALLERY_PATH, 420, 2400),
+    ("story-04-topnav-1440.png", GALLERY_PATH, 1440, 200),
+    ("story-04-topnav-768.png", GALLERY_PATH, 768, 240),
+    ("story-04-topnav-360.png", GALLERY_PATH, 360, 280),
+    ("story-04-topnav-current-runtime.png", DESIGN_CHECK_PATH, 1440, 200),
 ]
 
 
@@ -58,18 +63,19 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     with serve(STATIC_DIR) as base_url:
-        url = base_url.rstrip("/") + GALLERY_PATH
         print(f"serving {STATIC_DIR} at {base_url}")
         with sync_playwright() as p:
             browser = p.chromium.launch()
             page = browser.new_page()
-            for filename, width, height in SHOTS:
+            for filename, route, width, height in SHOTS:
                 page.set_viewport_size({"width": width, "height": height})
-                page.goto(url, wait_until="networkidle")
+                shot_url = base_url.rstrip("/") + route
+                page.goto(shot_url, wait_until="networkidle")
                 page.wait_for_timeout(400)
                 target = out_dir / filename
-                page.screenshot(path=str(target), full_page=True)
-                print(f"wrote {target} {width}x{height}")
+                full_page = filename.startswith("story-03-")
+                page.screenshot(path=str(target), full_page=full_page)
+                print(f"wrote {target} {width}x{height} {route}")
             browser.close()
 
 

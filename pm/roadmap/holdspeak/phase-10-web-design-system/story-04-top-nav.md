@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-10-03
 - **Unblocks:** HS-10-06, HS-10-07, HS-10-08, HS-10-09
 - **Owner:** unassigned
@@ -37,13 +37,13 @@ mental model of "where am I" because the spatial frame keeps changing.
 
 ## Acceptance Criteria
 
-- [ ] `TopNav` renders identically (no positional shift) across the
+- [x] `TopNav` renders identically (no positional shift) across the
   design-check route and the components gallery.
-- [ ] Selected-route styling is correct for every legitimate `current`
+- [x] Selected-route styling is correct for every legitimate `current`
   value.
-- [ ] Skip-to-content works with keyboard only.
-- [ ] Narrow-viewport nav has no horizontal scroll at 360px wide.
-- [ ] Screen reader announces the selected nav item as current.
+- [x] Skip-to-content works with keyboard only.
+- [x] Narrow-viewport nav has no horizontal scroll at 360px wide.
+- [x] Screen reader announces the selected nav item as current.
 
 ## Test Plan
 

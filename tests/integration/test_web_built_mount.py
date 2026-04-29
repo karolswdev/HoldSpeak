@@ -50,6 +50,40 @@ def test_built_design_check_page_is_served(test_client: TestClient) -> None:
 
 
 @pytest.mark.skipif(
+    not _BUILT_INDEX.is_file(),
+    reason="run `cd web && npm run build` to populate holdspeak/static/_built/",
+)
+def test_topnav_renders_with_aria_current(test_client: TestClient) -> None:
+    """HS-10-04: design-check passes current=runtime; the matching nav
+    link must carry aria-current=page and the visual selected class."""
+    response = test_client.get("/_built/design/check/")
+    body = response.text
+    assert "Skip to content" in body
+    assert 'aria-current="page"' in body
+    # Exactly one nav link is current.
+    assert body.count('aria-current="page"') == 1
+    # All four primary routes are present in the nav.
+    for href in ('href="/"', 'href="/activity"', 'href="/history"', 'href="/dictation"'):
+        assert href in body, href
+
+
+@pytest.mark.skipif(
+    not _GALLERY_INDEX.is_file(),
+    reason="run `cd web && npm run build` to populate the components gallery",
+)
+def test_topnav_renders_without_current_on_gallery(
+    test_client: TestClient,
+) -> None:
+    """The gallery does not pass `current`; no nav link should be marked
+    current and the local-only fallback pill should still render."""
+    response = test_client.get("/_built/design/components/")
+    body = response.text
+    assert "Skip to content" in body
+    assert 'aria-current="page"' not in body
+    assert "local-only" in body
+
+
+@pytest.mark.skipif(
     not _GALLERY_INDEX.is_file(),
     reason="run `cd web && npm run build` to populate the components gallery",
 )

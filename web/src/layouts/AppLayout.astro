@@ -1,19 +1,26 @@
 ---
-// HS-10-02: app shell. Imports the global stylesheet (which imports
-// tokens.css and the self-hosted fonts). Pages render through this
-// layout instead of authoring their own <head>/<body>.
+// HS-10-04: app shell.
 //
-// HS-10-04 will add the unified TopNav inside this layout. For now it
-// is intentionally minimal — just the document scaffold and the <slot/>.
+// Composes TopNav + skip-to-content target + page <slot/> + optional
+// secondary toolbar slot for per-page actions (e.g. "Export", "Refresh").
+//
+// `current` is forwarded to TopNav so the active route reads as
+// aria-current=page and visually selected.
 
 import "../styles/global.css";
+import TopNav from "../components/TopNav.astro";
+import Pill from "../components/Pill.astro";
+
+type Route = "runtime" | "activity" | "history" | "dictation";
 
 interface Props {
   title: string;
   description?: string;
+  current?: Route;
 }
 
-const { title, description } = Astro.props;
+const { title, description, current } = Astro.props;
+const hasSecondary = Astro.slots.has("secondary");
 ---
 
 <!doctype html>
@@ -25,6 +32,46 @@ const { title, description } = Astro.props;
     {description && <meta name="description" content={description} />}
   </head>
   <body>
-    <slot />
+    <TopNav current={current}>
+      {Astro.slots.has("status") ? (
+        <Fragment slot="status"><slot name="status" /></Fragment>
+      ) : (
+        <Pill tone="local" dot slot="status">local-only</Pill>
+      )}
+      {Astro.slots.has("topnav-overflow") && (
+        <Fragment slot="overflow"><slot name="topnav-overflow" /></Fragment>
+      )}
+    </TopNav>
+
+    {hasSecondary && (
+      <div class="app-secondary" role="region" aria-label="Page actions">
+        <slot name="secondary" />
+      </div>
+    )}
+
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
   </body>
 </html>
+
+<style>
+  main {
+    outline: none;
+  }
+
+  .app-secondary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5);
+    background: var(--canvas);
+    border-bottom: 1px solid var(--line);
+  }
+
+  @media (max-width: 640px) {
+    .app-secondary {
+      padding: var(--space-3);
+    }
+  }
+</style>
