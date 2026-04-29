@@ -1,0 +1,17 @@
+{
+  "name": "holdspeak-web",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "HoldSpeak web frontend (Astro + Open Props). Builds into ../holdspeak/static/_built/.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "devDependencies": {
+    "astro": "^4.16.18",
+    "open-props": "^1.7.13"
+  }
+}

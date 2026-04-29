@@ -33,6 +33,7 @@ try:
     import uvicorn
     from fastapi import FastAPI, WebSocket, WebSocketDisconnect
     from fastapi.responses import HTMLResponse, JSONResponse, Response
+    from fastapi.staticfiles import StaticFiles
     from pydantic import BaseModel
 except Exception as e:  # pragma: no cover - optional dependency at runtime
     uvicorn = None  # type: ignore[assignment]
@@ -583,6 +584,18 @@ class MeetingWebServer:
                     log.debug(f"Duration task error during shutdown: {e}")
             await self._ws.close_all()
             log.debug("Meeting web server shutdown complete")
+
+        # HS-10-01: serve the Astro-built design-system output. The web/
+        # source builds into static/_built/; legacy hand-authored pages
+        # remain at static/*.html and are served by the explicit handlers
+        # below until each route's rebuild story migrates it.
+        _BUILT_DIR = Path(__file__).resolve().parent / "static" / "_built"
+        if _BUILT_DIR.is_dir():
+            app.mount(
+                "/_built",
+                StaticFiles(directory=str(_BUILT_DIR), html=True),
+                name="built",
+            )
 
         @app.get("/")
         async def dashboard() -> Any:

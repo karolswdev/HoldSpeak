@@ -1,0 +1,28 @@
+---
+// HS-10-01 smoke page. Proves source -> build -> serve -> browser.
+// Will be replaced or removed once HS-10-03 ships the components gallery.
+import "../../styles/global.css";
+const builtAt = new Date().toISOString();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HoldSpeak — Design Check</title>
+  </head>
+  <body>
+    <main>
+      <h1>Design pipeline online</h1>
+      <p>
+        This page is built by Astro, styled with Open Props tokens
+        (<code>--gray-11</code>, <code>--cyan-3</code>, <code>--radius-3</code>),
+        and served from <code>holdspeak/static/_built/</code> via the FastAPI
+        <code>/_built</code> mount.
+      </p>
+      <p>If you can read this in the runtime, HS-10-01 is alive.</p>
+      <p><code>built: {builtAt}</code></p>
+    </main>
+  </body>
+</html>

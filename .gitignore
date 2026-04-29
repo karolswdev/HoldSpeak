@@ -44,3 +44,9 @@ tests/fixtures/*.mp3
 
 # pmo-roadmap pre-commit contract scratch
 .tmp/
+
+# Web frontend build artifacts (HS-10-01)
+web/node_modules/
+web/dist/
+web/.astro/
+holdspeak/static/_built/

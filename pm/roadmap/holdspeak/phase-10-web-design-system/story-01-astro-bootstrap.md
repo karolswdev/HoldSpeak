@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** every other HS-10 story
 - **Owner:** unassigned
@@ -40,16 +40,16 @@ before anything else lands.
 
 ## Acceptance Criteria
 
-- [ ] `cd web && npm install && npm run build` produces files under
+- [x] `cd web && npm install && npm run build` produces files under
   `holdspeak/static/` without erasing the existing five legacy pages.
-- [ ] FastAPI runtime serves the new "hello" route alongside the
+- [x] FastAPI runtime serves the new "hello" route alongside the
   existing pages with no regressions.
-- [ ] `npm run dev` serves the design-check route with hot reload.
-- [ ] Open Props is reachable from a component (one variable used in a
+- [x] `npm run dev` serves the design-check route with hot reload.
+- [x] Open Props is reachable from a component (one variable used in a
   test style).
-- [ ] `web/README.md` documents the dev/build commands and the
+- [x] `web/README.md` documents the dev/build commands and the
   output-into-`holdspeak/static/` contract.
-- [ ] No new runtime Python dependency is introduced; Node is a
+- [x] No new runtime Python dependency is introduced; Node is a
   build-time dependency only.
 
 ## Test Plan
