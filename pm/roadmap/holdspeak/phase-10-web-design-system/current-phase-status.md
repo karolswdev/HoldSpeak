@@ -1,6 +1,6 @@
 # Phase 10 - Web Design System & Character Pass
 
-**Last updated:** 2026-04-28 (HS-10-01 Astro + Open Props bootstrap shipped).
+**Last updated:** 2026-04-28 (HS-10-02 design token layer shipped).
 
 ## Goal
 
@@ -49,7 +49,7 @@ no identity layer that says "this is HoldSpeak."
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-10-01 | Astro + Open Props bootstrap | done | [story-01-astro-bootstrap.md](./story-01-astro-bootstrap.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-10-02 | Design token layer | backlog | [story-02-design-tokens.md](./story-02-design-tokens.md) | pending |
+| HS-10-02 | Design token layer | done | [story-02-design-tokens.md](./story-02-design-tokens.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-10-03 | Core component library | backlog | [story-03-core-components.md](./story-03-core-components.md) | pending |
 | HS-10-04 | Unified TopNav and route identity | backlog | [story-04-top-nav.md](./story-04-top-nav.md) | pending |
 | HS-10-05 | HoldSpeak identity layer | backlog | [story-05-identity-layer.md](./story-05-identity-layer.md) | pending |

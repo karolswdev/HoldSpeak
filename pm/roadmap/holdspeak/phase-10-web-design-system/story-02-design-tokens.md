@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-10-01
 - **Unblocks:** HS-10-03, HS-10-05
 - **Owner:** unassigned
@@ -41,16 +41,16 @@ will silently re-introduce inconsistency.
 
 ## Acceptance Criteria
 
-- [ ] `tokens.css` exists, is the single source of color/type/space/
+- [x] `tokens.css` exists, is the single source of color/type/space/
   radius/motion variables, and is consumed by the design-check route
   from HS-10-01.
-- [ ] Tokens cover every value currently hard-coded in the five inline
+- [x] Tokens cover every value currently hard-coded in the five inline
   `:root` blocks (an inventory table in the evidence file proves the
   mapping).
-- [ ] Self-hosted fonts load from `holdspeak/static/` post-build, with
+- [x] Self-hosted fonts load from `holdspeak/static/` post-build, with
   no network requests to external font CDNs.
-- [ ] `prefers-reduced-motion: reduce` collapses motion tokens to 0ms.
-- [ ] WCAG AA contrast verified for body text on canvas, muted text on
+- [x] `prefers-reduced-motion: reduce` collapses motion tokens to 0ms.
+- [x] WCAG AA contrast verified for body text on canvas, muted text on
   canvas, and accent on canvas (3 ratios reported in evidence).
 
 ## Test Plan

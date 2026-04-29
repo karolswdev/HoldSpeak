@@ -1,0 +1,151 @@
+/*
+ * HoldSpeak design tokens — HS-10-02.
+ *
+ * Single source of color, typography, spacing, radius, elevation,
+ * motion, and z-index variables for the entire web frontend. Layered
+ * on top of Open Props (imported once, here) so individual stylesheets
+ * never need to import either.
+ *
+ * The character target: a quiet, dense, trustworthy local workbench.
+ * One deliberate accent ("hold cyan"), a calmer warm secondary, and
+ * explicit success/warn/danger ramps. Less navy-saturation than the
+ * legacy inline blocks; same overall mood.
+ *
+ * Light theme is intentionally deferred (HS-10-13 will record this in
+ * style-handoff.md). Every selector below assumes the dark canvas.
+ */
+
+@import "open-props/style";
+
+:root {
+  color-scheme: dark;
+
+  /* === Canvas + surfaces ====================================== */
+  --canvas: #08111c;
+  --canvas-raised: #0e1826;
+  --canvas-elevated: #142136;
+  --canvas-overlay: rgba(8, 17, 28, 0.72);
+
+  /* === Lines ================================================== */
+  --line: rgba(170, 200, 230, 0.14);
+  --line-strong: rgba(170, 200, 230, 0.26);
+  --line-emphasis: rgba(170, 200, 230, 0.42);
+
+  /* === Text =================================================== */
+  --text: #edf5ff;
+  --text-muted: #9db1c8;
+  --text-faint: #6b7e95;
+
+  /* === Accent (the "hold" cyan) =============================== */
+  --accent: #64d7ff;
+  --accent-strong: #2cc6ee;
+  --accent-soft: rgba(100, 215, 255, 0.16);
+  --accent-on: #06182a;
+
+  /* === Warm secondary ========================================= */
+  --warm: #ffb86b;
+  --warm-strong: #f59e3c;
+  --warm-soft: rgba(255, 184, 107, 0.14);
+
+  /* === Status ramps =========================================== */
+  --success: #75f4d3;
+  --success-strong: #2dd4ad;
+  --success-soft: rgba(117, 244, 211, 0.14);
+
+  --warn: #ffd17a;
+  --warn-strong: #f5a524;
+  --warn-soft: rgba(255, 209, 122, 0.14);
+
+  --danger: #ff647e;
+  --danger-strong: #f9445f;
+  --danger-soft: rgba(255, 100, 126, 0.16);
+
+  /* === Local-only signal (privacy / ledger pill) ============== */
+  --local: #b8c8d8;
+  --local-soft: rgba(184, 200, 216, 0.12);
+
+  /* === Typography ============================================= */
+  --font-ui:
+    "Sora", "Avenir Next", "Segoe UI", system-ui, -apple-system,
+    BlinkMacSystemFont, sans-serif;
+  --font-mono:
+    "JetBrains Mono", "SFMono-Regular", "SF Mono", Consolas,
+    "Liberation Mono", monospace;
+
+  --font-size-xs: 0.75rem;   /* 12 */
+  --font-size-sm: 0.8125rem; /* 13 */
+  --font-size-md: 0.9375rem; /* 15 */
+  --font-size-lg: 1.0625rem; /* 17 */
+  --font-size-xl: 1.375rem;  /* 22 */
+  --font-size-2xl: 1.75rem;  /* 28 */
+  --font-size-3xl: 2.25rem;  /* 36 */
+
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.45;
+  --line-height-relaxed: 1.6;
+
+  --letter-spacing-tight: -0.01em;
+  --letter-spacing-loose: 0.02em;
+
+  /* === Spacing scale (4 px base) ============================== */
+  --space-1: 0.25rem;  /*  4 */
+  --space-2: 0.5rem;   /*  8 */
+  --space-3: 0.75rem;  /* 12 */
+  --space-4: 1rem;     /* 16 */
+  --space-5: 1.5rem;   /* 24 */
+  --space-6: 2rem;     /* 32 */
+  --space-7: 3rem;     /* 48 */
+  --space-8: 4rem;     /* 64 */
+
+  /* === Radius ================================================= */
+  --radius-1: 4px;
+  --radius-2: 8px;
+  --radius-3: 12px;
+  --radius-4: 16px;
+  --radius-5: 24px;
+  --radius-pill: 999px;
+
+  /* === Elevation ============================================== */
+  --elev-0: none;
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.32);
+  --elev-2: 0 4px 12px rgba(0, 0, 0, 0.36);
+  --elev-3: 0 12px 28px rgba(0, 0, 0, 0.42);
+  --elev-4: 0 24px 60px rgba(0, 0, 0, 0.48);
+
+  /* === Motion ================================================= */
+  --duration-short: 120ms;
+  --duration-medium: 220ms;
+  --duration-long: 360ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.3, 0, 0.2, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0, 1);
+
+  /* === Focus ring ============================================= */
+  --focus-ring: 0 0 0 2px var(--canvas), 0 0 0 4px var(--accent);
+  --focus-outline-width: 2px;
+  --focus-outline-offset: 2px;
+
+  /* === Z-index ================================================ */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-overlay: 100;
+  --z-dialog: 200;
+  --z-toast: 300;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-short: 0ms;
+    --duration-medium: 0ms;
+    --duration-long: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}

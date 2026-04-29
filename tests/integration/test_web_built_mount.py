@@ -49,7 +49,7 @@ def test_client() -> TestClient:
 def test_built_design_check_page_is_served(test_client: TestClient) -> None:
     response = test_client.get("/_built/design/check/")
     assert response.status_code == 200
-    assert "Design pipeline online" in response.text
+    assert "Design system online" in response.text
     assert "/_built/_astro/" in response.text
 
 

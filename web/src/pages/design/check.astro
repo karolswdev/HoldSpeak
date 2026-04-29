@@ -1,28 +1,147 @@
 ---
-// HS-10-01 smoke page. Proves source -> build -> serve -> browser.
-// Will be replaced or removed once HS-10-03 ships the components gallery.
-import "../../styles/global.css";
+// HS-10-01 smoke page; HS-10-02 promoted it to consume the real token
+// layer. Will be replaced or absorbed by the components gallery in
+// HS-10-03.
+
+import AppLayout from "../../layouts/AppLayout.astro";
+
 const builtAt = new Date().toISOString();
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>HoldSpeak — Design Check</title>
-  </head>
-  <body>
-    <main>
-      <h1>Design pipeline online</h1>
-      <p>
-        This page is built by Astro, styled with Open Props tokens
-        (<code>--gray-11</code>, <code>--cyan-3</code>, <code>--radius-3</code>),
-        and served from <code>holdspeak/static/_built/</code> via the FastAPI
-        <code>/_built</code> mount.
+<AppLayout title="HoldSpeak — Design Check">
+  <main class="check">
+    <h1>Design system online</h1>
+    <p class="lead">
+      This page is rendered through <code>AppLayout</code>, styled by
+      <code>tokens.css</code>, and uses the self-hosted Sora + JetBrains
+      Mono faces. No external font requests.
+    </p>
+
+    <section class="swatches" aria-label="Color tokens">
+      <div class="swatch" style="background: var(--canvas-raised);">
+        <span class="swatch-name">--canvas-raised</span>
+      </div>
+      <div class="swatch" style="background: var(--accent-soft); color: var(--accent);">
+        <span class="swatch-name">--accent</span>
+      </div>
+      <div class="swatch" style="background: var(--warm-soft); color: var(--warm);">
+        <span class="swatch-name">--warm</span>
+      </div>
+      <div class="swatch" style="background: var(--success-soft); color: var(--success);">
+        <span class="swatch-name">--success</span>
+      </div>
+      <div class="swatch" style="background: var(--warn-soft); color: var(--warn);">
+        <span class="swatch-name">--warn</span>
+      </div>
+      <div class="swatch" style="background: var(--danger-soft); color: var(--danger);">
+        <span class="swatch-name">--danger</span>
+      </div>
+    </section>
+
+    <section class="motion">
+      <p class="muted">Motion check (hover the box):</p>
+      <div class="motion-box" aria-hidden="true"></div>
+      <p class="faint">
+        Duration tokens flatten to 0ms under
+        <code>prefers-reduced-motion: reduce</code>.
       </p>
-      <p>If you can read this in the runtime, HS-10-01 is alive.</p>
-      <p><code>built: {builtAt}</code></p>
-    </main>
-  </body>
-</html>
+    </section>
+
+    <p class="meta">
+      <code>built {builtAt}</code>
+    </p>
+  </main>
+</AppLayout>
+
+<style>
+  .check {
+    max-width: 64ch;
+    margin: var(--space-8) auto;
+    padding: var(--space-6);
+    background: var(--canvas-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-4);
+    box-shadow: var(--elev-3);
+  }
+
+  h1 {
+    margin: 0 0 var(--space-3);
+    font-size: var(--font-size-2xl);
+    letter-spacing: var(--letter-spacing-tight);
+  }
+
+  p {
+    margin: 0 0 var(--space-3);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .lead {
+    color: var(--text);
+  }
+
+  .muted {
+    color: var(--text-muted);
+  }
+
+  .faint {
+    color: var(--text-faint);
+    font-size: var(--font-size-sm);
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    background: var(--canvas);
+    color: var(--accent);
+    padding: var(--space-1) var(--space-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-1);
+  }
+
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--space-2);
+    margin: var(--space-5) 0;
+  }
+
+  .swatch {
+    padding: var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+  }
+
+  .swatch-name {
+    display: block;
+  }
+
+  .motion {
+    margin-top: var(--space-6);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--line);
+  }
+
+  .motion-box {
+    width: var(--space-7);
+    height: var(--space-7);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-2);
+    transition:
+      transform var(--duration-medium) var(--ease-emphasized),
+      background var(--duration-short) var(--ease-standard);
+  }
+
+  .motion-box:hover {
+    transform: translateX(var(--space-4));
+    background: var(--accent);
+  }
+
+  .meta {
+    margin-top: var(--space-6);
+    color: var(--text-faint);
+    font-size: var(--font-size-xs);
+  }
+</style>

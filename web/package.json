@@ -11,6 +11,8 @@
     "astro": "astro"
   },
   "devDependencies": {
+    "@fontsource/jetbrains-mono": "^5.2.8",
+    "@fontsource/sora": "^5.2.8",
     "astro": "^4.16.18",
     "open-props": "^1.7.13"
   }

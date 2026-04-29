@@ -1,52 +1,56 @@
 /*
- * HS-10-01 placeholder global styles.
+ * HS-10-02 baseline. Imports the token layer and applies a small,
+ * intentional reset. Every page picks this up via AppLayout.
  *
- * The real token layer lands in HS-10-02. This file exists only to
- * prove that an Open Props variable can be consumed from a built page
- * end-to-end (source -> astro build -> holdspeak/static/_built ->
- * FastAPI -> browser).
+ * Component CSS is HS-10-03 territory and lives in
+ * web/src/components/. Keep this file boring.
  */
 
-@import "open-props/style";
+@import "./tokens.css";
 
-:root {
-  color-scheme: dark;
+@import "@fontsource/sora/400.css";
+@import "@fontsource/sora/500.css";
+@import "@fontsource/sora/600.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
 }
 
 body {
   margin: 0;
-  background: var(--gray-12);
-  color: var(--gray-1);
-  font-family: var(--font-sans);
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
+  font-family: var(--font-ui);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-normal);
+  color: var(--text);
+  background: var(--canvas);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-main {
-  padding: var(--size-7);
-  border-radius: var(--radius-3);
-  background: var(--gray-11);
-  box-shadow: var(--shadow-3);
-  max-width: 60ch;
+:focus-visible {
+  outline: var(--focus-outline-width) solid var(--accent);
+  outline-offset: var(--focus-outline-offset);
+  border-radius: var(--radius-1);
 }
 
-h1 {
-  margin: 0 0 var(--size-3);
-  font-size: var(--font-size-5);
+::selection {
+  background: var(--accent-soft);
+  color: var(--text);
 }
 
-p {
-  margin: 0 0 var(--size-2);
-  color: var(--gray-3);
-  line-height: var(--font-lineheight-3);
-}
-
-code {
+code,
+kbd,
+samp,
+pre {
   font-family: var(--font-mono);
-  font-size: var(--font-size-1);
-  background: var(--gray-12);
-  padding: var(--size-1) var(--size-2);
-  border-radius: var(--radius-2);
-  color: var(--cyan-3);
 }
