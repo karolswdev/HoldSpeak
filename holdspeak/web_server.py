@@ -964,8 +964,15 @@ class MeetingWebServer:
 
         @app.get("/activity")
         async def activity_dashboard() -> Any:
-            """Serve the local activity intelligence dashboard."""
-            page = Path(__file__).resolve().parent / "static" / "activity.html"
+            """Serve the local activity intelligence dashboard (HS-10-07:
+            now read from the Astro-built _built/activity/index.html)."""
+            page = (
+                Path(__file__).resolve().parent
+                / "static"
+                / "_built"
+                / "activity"
+                / "index.html"
+            )
             try:
                 html = page.read_text(encoding="utf-8")
             except Exception as e:

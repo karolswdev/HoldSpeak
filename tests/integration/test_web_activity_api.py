@@ -38,15 +38,31 @@ def test_client(activity_db: MeetingDatabase) -> TestClient:
 
 
 def test_activity_page_serves_browser_surface(test_client: TestClient) -> None:
-    response = test_client.get("/activity")
+    """HS-10-07: page rebuilt on AppLayout. Title text + every DOM ID
+    the activity-app.js module reads must still be present. The
+    /api/activity/* endpoint strings now live in the bundled JS chunk
+    (referenced from the served HTML) rather than inline."""
+    import re
 
+    response = test_client.get("/activity")
     assert response.status_code == 200
-    assert "Local Activity" in response.text
-    assert "/api/activity/status" in response.text
-    assert "/api/activity/meeting-candidates/preview" in response.text
-    assert "candidate-status-filter" in response.text
-    assert "No preview loaded" in response.text
-    assert "candidates-message" in response.text
+    body = response.text
+
+    # New page title + DOM contracts JS depends on.
+    assert "Local activity" in body
+    assert 'id="enabled-pill"' in body
+    assert 'id="candidate-status-filter"' in body
+    assert 'id="candidates-message"' in body
+    assert 'id="record-count"' in body
+    assert 'id="rule-project"' in body
+    assert 'id="meeting-candidates"' in body
+
+    # Bundled JS still calls the existing /api/activity endpoints.
+    match = re.search(r'src="(/_built/_astro/hoisted\.[^"]+\.js)"', body)
+    assert match, "expected hoisted activity JS chunk reference"
+    js = test_client.get(match.group(1)).text
+    assert "/api/activity/status" in js
+    assert "/api/activity/meeting-candidates/preview" in js
 
 
 def test_activity_status_reports_default_enabled_state(test_client: TestClient) -> None:

@@ -1,0 +1,441 @@
+---
+// HS-10-07: `/activity` rebuilt on the design system.
+//
+// The legacy page used vanilla JS (no Alpine) that grabs DOM by ID
+// and renders content via innerHTML / template literals. To keep
+// product behavior unchanged, the JS module is shipped verbatim from
+// web/src/scripts/activity-app.js and the page preserves every DOM
+// ID it touches plus every class name it emits inside content
+// (`.record`, `.record-top`, `.record-title`, `.record-meta`,
+// `.rule-item`, `.rule-item.candidate-preview-item`,
+// `.rule-item.candidate-saved-item`, `.rule-actions`, `.row`,
+// `.label`, `.value`, `.tag`, `.empty`).
+//
+// Astro components are not used directly because (a) the JS injects
+// nested HTML into containers via innerHTML and (b) class names like
+// `.danger` / `.primary` on raw <button>s would conflict with the
+// component-scoped CSS. The page consumes tokens directly.
+
+import AppLayout from "../layouts/AppLayout.astro";
+---
+
+<AppLayout title="HoldSpeak Activity" current="activity">
+  <div class="activity">
+    <header class="page-head">
+      <div>
+        <h1>Local activity</h1>
+        <p class="sub">
+          Private browser-history metadata used as plugin context.
+          Local-only, inspectable, pausable, deletable.
+        </p>
+      </div>
+      <span id="enabled-pill" class="pill pill--neutral"><span class="pill-dot"></span>Loading</span>
+    </header>
+
+    <div class="grid">
+      <!-- Side rail (controls + sources + excluded) -->
+      <aside class="rail">
+        <section class="panel">
+          <header class="panel-header"><div class="panel-title">Controls</div></header>
+          <div class="panel-body">
+            <div class="row"><span class="label">Records</span><span id="record-count" class="value mono">0</span></div>
+            <div class="row"><span class="label">Retention days</span><span id="retention-value" class="value mono">30</span></div>
+            <div class="button-row">
+              <button id="toggle-enabled" class="btn btn--primary btn--sm primary" type="button">Pause</button>
+              <button id="refresh" class="btn btn--secondary btn--sm" type="button">Refresh</button>
+              <button id="clear" class="btn btn--ghost btn--sm danger" type="button">Clear imported</button>
+            </div>
+            <div class="form-row">
+              <input id="retention-input" class="input" type="number" min="1" max="3650" value="30" aria-label="Retention days"/>
+              <button id="save-retention" class="btn btn--secondary btn--sm" type="button">Save</button>
+            </div>
+            <p id="message" class="sub"></p>
+            <p id="error" class="error"></p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <header class="panel-header"><div class="panel-title">Sources</div></header>
+          <div class="panel-body">
+            <div id="sources"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <header class="panel-header"><div class="panel-title">Excluded domains</div></header>
+          <div class="panel-body">
+            <div class="form-row">
+              <input id="domain-input" class="input" placeholder="example.com" aria-label="Domain to exclude"/>
+              <button id="exclude-domain" class="btn btn--secondary btn--sm" type="button">Exclude</button>
+            </div>
+            <p id="domains-message" class="panel-message"></p>
+            <div id="domains"></div>
+          </div>
+        </section>
+      </aside>
+
+      <!-- Main column (rules + candidates + records) -->
+      <div class="main">
+        <section class="panel">
+          <header class="panel-header"><div class="panel-title">Project rules</div></header>
+          <div class="panel-body">
+            <input id="rule-id" type="hidden"/>
+            <div class="field-grid">
+              <div class="field"><label for="rule-project">Project</label><select id="rule-project" class="input"></select></div>
+              <div class="field"><label for="rule-match-type">Match</label>
+                <select id="rule-match-type" class="input">
+                  <option value="domain">Domain</option>
+                  <option value="url_contains">URL contains</option>
+                  <option value="title_contains">Title contains</option>
+                  <option value="entity_type">Entity type</option>
+                  <option value="entity_id_prefix">Entity ID prefix</option>
+                  <option value="github_repo">GitHub repo</option>
+                  <option value="source_browser">Source browser</option>
+                </select>
+              </div>
+              <div class="field"><label for="rule-pattern">Pattern</label><input id="rule-pattern" class="input" placeholder="example.com"/></div>
+              <div class="field"><label for="rule-entity-type">Entity type</label><input id="rule-entity-type" class="input" placeholder="optional"/></div>
+              <div class="field"><label for="rule-name">Name</label><input id="rule-name" class="input" placeholder="HoldSpeak Jira"/></div>
+              <div class="field"><label for="rule-priority">Priority</label><input id="rule-priority" class="input" type="number" value="100"/></div>
+            </div>
+            <label class="toggle-field">
+              <input id="rule-enabled" type="checkbox" checked/>
+              <span>Enabled</span>
+            </label>
+            <div class="button-row">
+              <button id="preview-rule" class="btn btn--secondary btn--sm" type="button">Preview</button>
+              <button id="save-rule" class="btn btn--primary btn--sm primary" type="button">Save rule</button>
+              <button id="reset-rule" class="btn btn--ghost btn--sm" type="button">New</button>
+              <button id="apply-rules" class="btn btn--secondary btn--sm" type="button">Apply all</button>
+            </div>
+            <p id="rules-message" class="panel-message"></p>
+            <div id="rule-preview" class="preview-list"></div>
+            <div id="rules" class="rule-list"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <header class="panel-header">
+            <div class="panel-title">Meeting candidates</div>
+            <div class="panel-toolbar">
+              <select id="candidate-status-filter" class="input input--sm" aria-label="Candidate status filter">
+                <option value="">All saved</option>
+                <option value="candidate">Candidates</option>
+                <option value="armed">Armed</option>
+                <option value="started">Started</option>
+                <option value="dismissed">Dismissed</option>
+              </select>
+            </div>
+          </header>
+          <div class="panel-body">
+            <div class="button-row">
+              <button id="preview-candidates" class="btn btn--secondary btn--sm" type="button">Preview</button>
+              <button id="refresh-candidates" class="btn btn--ghost btn--sm" type="button">Refresh saved</button>
+              <button id="clear-dismissed-candidates" class="btn btn--ghost btn--sm danger" type="button">Clear dismissed</button>
+            </div>
+            <p id="candidates-message" class="panel-message"></p>
+            <div id="candidate-preview" class="candidate-list"></div>
+            <div id="meeting-candidates" class="candidate-list"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <header class="panel-header"><div class="panel-title">Recent activity</div></header>
+          <div class="panel-body">
+            <div id="records" class="records"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import factorySource from "../scripts/activity-app.js?raw";
+    // The activity JS is a top-level IIFE-style script that registers
+    // event handlers and calls load() at the end. Eval it once on
+    // module import; the browser handles handler binding from there.
+    new Function(factorySource)();
+  </script>
+</AppLayout>
+
+<style>
+  /* All values flow from tokens.css. Class names below are split:
+     prefixed `.btn`/`.pill`/`.panel` mirror the design system; the
+     bare `.row`/`.label`/`.value`/`.record*`/`.rule-item` etc. are
+     contracts the JS module emits and we style here without
+     renaming. */
+
+  .activity {
+    max-width: 88rem;
+    margin: 0 auto;
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+  }
+
+  .page-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: var(--space-4); flex-wrap: wrap;
+  }
+  .page-head h1 {
+    margin: 0; font-size: var(--font-size-3xl);
+    letter-spacing: var(--letter-spacing-tight);
+  }
+  .page-head .sub {
+    margin: var(--space-2) 0 0;
+    color: var(--text-muted);
+    line-height: var(--line-height-relaxed);
+    max-width: 64ch;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+  .rail, .main { display: flex; flex-direction: column; gap: var(--space-4); }
+
+  /* === Pills === */
+  .pill {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs); font-weight: 500;
+    letter-spacing: var(--letter-spacing-loose);
+    border: 1px solid var(--line);
+    background: var(--canvas-raised); color: var(--text-muted);
+  }
+  .pill-dot { width: var(--space-2); height: var(--space-2); border-radius: 50%; background: currentColor; }
+  .pill--success { color: var(--success); background: var(--success-soft); border-color: transparent; }
+  .pill--warn { color: var(--warn); background: var(--warn-soft); border-color: transparent; }
+  .pill--danger { color: var(--danger); background: var(--danger-soft); border-color: transparent; }
+
+  /* === Panels === */
+  .panel {
+    background: var(--canvas-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-3);
+    box-shadow: var(--elev-1);
+    overflow: hidden;
+  }
+  .panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--line);
+  }
+  .panel-title { font-size: var(--font-size-md); font-weight: 600; color: var(--text); letter-spacing: var(--letter-spacing-tight); }
+  .panel-body { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+  .panel-toolbar { display: flex; align-items: center; gap: var(--space-2); }
+
+  /* === Form / row primitives (JS-emitted contracts) === */
+  .row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .row:last-child { border-bottom: 0; }
+  .label { color: var(--text-muted); font-size: var(--font-size-sm); }
+  .value { color: var(--text); font-size: var(--font-size-md); }
+  .value.mono { font-family: var(--font-mono); }
+
+  .form-row {
+    display: flex; align-items: center; gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+  .form-row .input { flex: 1 1 auto; min-width: 0; }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-3);
+  }
+  .field { display: flex; flex-direction: column; gap: var(--space-1); }
+  .field label {
+    color: var(--text-muted); font-size: var(--font-size-xs);
+    text-transform: uppercase; letter-spacing: var(--letter-spacing-loose);
+  }
+  .toggle-field {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    color: var(--text-muted); font-size: var(--font-size-sm);
+    cursor: pointer;
+  }
+
+  .input {
+    width: 100%; padding: var(--space-2) var(--space-3);
+    background: var(--canvas); border: 1px solid var(--line);
+    border-radius: var(--radius-2); color: var(--text);
+    font-family: var(--font-ui); font-size: var(--font-size-sm);
+  }
+  .input--sm { width: auto; }
+  .input:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  .button-row {
+    display: flex; flex-wrap: wrap; gap: var(--space-2);
+  }
+
+  /* === Buttons (mirrors components/Button.astro) === */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    font-family: var(--font-ui); font-weight: 500;
+    font-size: var(--font-size-sm); line-height: 1;
+    letter-spacing: var(--letter-spacing-loose);
+    border: 1px solid transparent; border-radius: var(--radius-2);
+    cursor: pointer;
+    transition: background var(--duration-short) var(--ease-standard),
+                border-color var(--duration-short) var(--ease-standard);
+  }
+  .btn:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .btn--primary, .btn.primary {
+    background: var(--accent); color: var(--accent-on); border-color: var(--accent);
+  }
+  .btn--primary:not(:disabled):hover, .btn.primary:not(:disabled):hover {
+    background: var(--accent-strong); border-color: var(--accent-strong);
+  }
+  .btn--secondary {
+    background: var(--canvas-raised); color: var(--text); border-color: var(--line-strong);
+  }
+  .btn--secondary:not(:disabled):hover { background: var(--canvas-elevated); border-color: var(--line-emphasis); }
+  .btn--ghost {
+    background: transparent; color: var(--text-muted); border-color: transparent;
+  }
+  .btn--ghost:not(:disabled):hover { color: var(--text); background: var(--accent-soft); }
+  .btn.danger {
+    color: var(--danger); border-color: transparent;
+    background: var(--danger-soft);
+  }
+  .btn.danger:not(:disabled):hover {
+    color: var(--canvas); background: var(--danger); border-color: var(--danger);
+  }
+
+  /* === Empty / error / message text === */
+  .empty {
+    padding: var(--space-4);
+    color: var(--text-muted);
+    background: var(--canvas);
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius-2);
+    line-height: var(--line-height-relaxed);
+    font-size: var(--font-size-sm);
+  }
+  .empty strong {
+    display: block; color: var(--text); margin-bottom: var(--space-1);
+    font-weight: 600;
+  }
+  .error { margin: 0; color: var(--danger); font-size: var(--font-size-sm); }
+  .panel-message { margin: 0; color: var(--text-muted); font-size: var(--font-size-sm); }
+  .panel-message.error { color: var(--danger); }
+
+  /* === Records list (JS-emitted) === */
+  .records, .rule-list, .candidate-list, .preview-list {
+    display: flex; flex-direction: column; gap: var(--space-2);
+  }
+
+  .record {
+    padding: var(--space-3);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+  }
+  .record-top {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: var(--space-2); margin-bottom: var(--space-1);
+  }
+  .record-title {
+    color: var(--text); font-weight: 500;
+    overflow-wrap: anywhere; word-break: break-word;
+    line-height: var(--line-height-normal);
+  }
+  .record-meta {
+    color: var(--text-faint); font-size: var(--font-size-xs);
+    overflow-wrap: anywhere; word-break: break-word;
+    margin-top: var(--space-1);
+  }
+
+  /* === Rule + candidate items (JS-emitted) ===
+     Preview vs saved candidate visual grammar is the AC payoff:
+     - .candidate-preview-item: dashed border + accent-soft tint
+       reads as "transient, not yet committed"
+     - .candidate-saved-item: solid accent border + filled accent-
+       soft background reads as "saved, anchored"
+     A user scanning a list of mixed rows can tell preview from
+     saved at a 2-second glance from shape alone (border style)
+     plus tone (transparent vs filled).
+  */
+  .rule-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+  }
+  .rule-item .record-title { font-weight: 500; }
+  .rule-item.candidate-preview-item {
+    border-style: dashed;
+    border-color: var(--line-emphasis);
+    background: var(--canvas);
+  }
+  .rule-item.candidate-saved-item {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .rule-actions {
+    display: flex; flex-wrap: wrap; gap: var(--space-2);
+    align-items: flex-start;
+  }
+
+  /* === Tag (rule preview matches) === */
+  .tag {
+    display: inline-block;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-mono);
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid transparent;
+    margin-right: var(--space-1);
+  }
+
+  /* === Sources / domains list === */
+  #sources > div, #domains > div {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--line);
+    color: var(--text);
+    font-size: var(--font-size-sm);
+  }
+  #sources > div:last-child, #domains > div:last-child { border-bottom: 0; }
+
+  .sub { color: var(--text-muted); font-size: var(--font-size-sm); margin: 0; line-height: var(--line-height-relaxed); }
+
+  /* === Status pill (#enabled-pill) tones via JS class swap === */
+  #enabled-pill.status-pill { color: var(--text-muted); }
+  #enabled-pill.success { color: var(--success); background: var(--success-soft); border-color: transparent; }
+  #enabled-pill.warn { color: var(--warn); background: var(--warn-soft); border-color: transparent; }
+  #enabled-pill.danger { color: var(--danger); background: var(--danger-soft); border-color: transparent; }
+  #enabled-pill.danger .pill-dot, #enabled-pill.warn .pill-dot, #enabled-pill.success .pill-dot { background: currentColor; }
+
+  @media (max-width: 960px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .activity { padding: var(--space-3); gap: var(--space-3); }
+    .page-head { flex-direction: column; align-items: flex-start; }
+  }
+</style>

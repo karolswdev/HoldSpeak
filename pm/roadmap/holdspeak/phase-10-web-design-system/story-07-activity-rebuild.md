@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-10-03, HS-10-04, HS-10-05
 - **Unblocks:** HS-10-13
-- **Owner:** unassigned
+- **Owner:** karol
 
 ## Problem
 
@@ -44,15 +44,15 @@ grammar.
 
 ## Acceptance Criteria
 
-- [ ] All five `/activity` panels render on the new system.
-- [ ] Preview vs saved candidates are distinguishable in a 2-second
+- [x] All five `/activity` panels render on the new system.
+- [x] Preview vs saved candidates are distinguishable in a 2-second
   glance (sample screenshots in evidence).
-- [ ] Connector controls follow the same grammar across `gh`, `jira`,
+- [x] Connector controls follow the same grammar across `gh`, `jira`,
   Firefox events, and calendar candidates.
-- [ ] Empty state for each panel names a useful next action.
-- [ ] Activity records list does not horizontally overflow at 1280px;
+- [x] Empty state for each panel names a useful next action.
+- [x] Activity records list does not horizontally overflow at 1280px;
   long URLs wrap or truncate per the wrap policy.
-- [ ] Existing `/activity` API contracts remain unchanged.
+- [x] Existing `/activity` API contracts remain unchanged.
 
 ## Test Plan
 

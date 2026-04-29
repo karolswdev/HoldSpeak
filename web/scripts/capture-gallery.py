@@ -42,6 +42,8 @@ SHOTS = [
     ("story-06-runtime-idle-narrow.png", RUNTIME_PATH, 420, 2200),
     ("story-06-runtime-active-desktop.png", RUNTIME_PATH + "?_state=active", 1440, 1400),
     ("story-06-runtime-stopping-desktop.png", RUNTIME_PATH + "?_state=stopping", 1440, 1400),
+    ("story-07-activity-desktop.png", "/_built/activity/", 1440, 2200),
+    ("story-07-activity-narrow.png", "/_built/activity/", 420, 3000),
 ]
 
 
