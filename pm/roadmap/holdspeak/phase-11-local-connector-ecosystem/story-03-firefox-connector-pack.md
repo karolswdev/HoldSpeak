@@ -1,9 +1,9 @@
-# HS-10-03 - Firefox companion connector pack
+# HS-11-03 - Firefox companion connector pack
 
 - **Project:** holdspeak
 - **Phase:** 10
 - **Status:** backlog
-- **Depends on:** HS-9-03, HS-10-01
+- **Depends on:** HS-9-03, HS-11-01
 - **Unblocks:** reusable browser-event connector distribution
 - **Owner:** unassigned
 

@@ -1,15 +1,15 @@
-# HS-10-07 - Connector ecosystem phase exit
+# HS-11-07 - Connector ecosystem phase exit
 
 - **Project:** holdspeak
 - **Phase:** 10
 - **Status:** backlog
-- **Depends on:** HS-10-01 through HS-10-06
+- **Depends on:** HS-11-01 through HS-11-06
 - **Unblocks:** stable connector ecosystem baseline
 - **Owner:** unassigned
 
 ## Problem
 
-Phase 10 should close with evidence that connector manifests, fixtures,
+Phase 11 should close with evidence that connector manifests, fixtures,
 first-party connector packs, and developer docs form a coherent local
 ecosystem.
 

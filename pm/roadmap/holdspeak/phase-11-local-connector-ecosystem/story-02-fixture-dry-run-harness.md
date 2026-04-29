@@ -1,9 +1,9 @@
-# HS-10-02 - Connector fixture and dry-run test harness
+# HS-11-02 - Connector fixture and dry-run test harness
 
 - **Project:** holdspeak
 - **Phase:** 10
 - **Status:** backlog
-- **Depends on:** HS-10-01
+- **Depends on:** HS-11-01
 - **Unblocks:** connector pack regression testing
 - **Owner:** unassigned
 

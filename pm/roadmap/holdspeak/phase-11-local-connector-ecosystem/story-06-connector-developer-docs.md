@@ -1,9 +1,9 @@
-# HS-10-06 - Connector developer documentation
+# HS-11-06 - Connector developer documentation
 
 - **Project:** holdspeak
 - **Phase:** 10
 - **Status:** backlog
-- **Depends on:** HS-10-01, HS-10-02
+- **Depends on:** HS-11-01, HS-11-02
 - **Unblocks:** local connector authoring beyond built-ins
 - **Owner:** unassigned
 

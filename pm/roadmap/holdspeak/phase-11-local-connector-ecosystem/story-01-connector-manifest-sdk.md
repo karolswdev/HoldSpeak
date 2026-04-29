@@ -1,4 +1,4 @@
-# HS-10-01 - Connector manifest and SDK shape
+# HS-11-01 - Connector manifest and SDK shape
 
 - **Project:** holdspeak
 - **Phase:** 10
