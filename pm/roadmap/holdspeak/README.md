@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-28 (HS-10-07 / `/activity` rebuilt on the design system).
+**Last updated:** 2026-04-28 (HS-10-08 / `/history` rebuilt on the design system).
 **Current phase:** [phase-9-assisted-activity-enrichment](./phase-9-assisted-activity-enrichment/) — build optional local enrichment connectors on top of the activity ledger.
 **Status:** in-progress.
 

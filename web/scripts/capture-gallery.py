@@ -44,6 +44,9 @@ SHOTS = [
     ("story-06-runtime-stopping-desktop.png", RUNTIME_PATH + "?_state=stopping", 1440, 1400),
     ("story-07-activity-desktop.png", "/_built/activity/", 1440, 2200),
     ("story-07-activity-narrow.png", "/_built/activity/", 420, 3000),
+    ("story-08-history-meetings-desktop.png", "/_built/history/", 1440, 1800),
+    ("story-08-history-meetings-narrow.png", "/_built/history/", 420, 2600),
+    ("story-08-history-settings-desktop.png", "/_built/history/?_tab=settings", 1440, 2800),
 ]
 
 
@@ -86,6 +89,58 @@ def main() -> None:
                 # Alpine's x-data on the runtime page directly. The
                 # backend is not running for capture, so this is the
                 # only way to render non-idle hero hierarchy.
+                if "_tab=" in route:
+                    # HS-10-08: drive the history tab system without
+                    # the FastAPI backend running. setTab() triggers
+                    # tab-specific loaders that hit /api/* — they will
+                    # fail, but `tab` flips synchronously and the
+                    # corresponding panel renders skeleton/empty state.
+                    tab = route.split("_tab=")[-1]
+                    page.evaluate(
+                        """(tab) => {
+                          const root = document.querySelector('[x-data]');
+                          if (!root || !window.Alpine) return;
+                          const data = window.Alpine.$data(root);
+                          // Seed a minimal settings object so the
+                          // settings panel renders without a backend.
+                          data.loadingSettings = false;
+                          data.settings = {
+                            ui: { theme: 'dark', history_lines: 25, show_audio_meter: true },
+                            hotkey: { key: 'alt_r' },
+                            model: { name: 'small' },
+                            meeting: {
+                              mic_label: 'Mic', remote_label: 'Remote',
+                              export_format: 'markdown', intel_provider: 'local',
+                              mir_profile: 'balanced',
+                              intel_realtime_model: '/Users/karol/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf',
+                              intel_summary_model: '',
+                              mic_device: '', system_audio_device: '',
+                              auto_export: true, mir_enabled: true,
+                              intel_cloud_model: 'gpt-4.1-mini',
+                              intel_cloud_api_key_env: 'OPENAI_API_KEY',
+                              intel_cloud_reasoning_effort: '',
+                              intel_cloud_base_url: 'https://api.openai.com/v1',
+                              intel_queue_poll_seconds: 30,
+                              intel_retry_base_seconds: 5,
+                              intel_retry_max_seconds: 600,
+                              intel_retry_max_attempts: 6,
+                              intel_retry_failure_alert_percent: 25,
+                              intel_retry_failure_hysteresis_minutes: 5,
+                              intel_retry_failure_webhook_url: '',
+                              intel_retry_failure_webhook_header_name: '',
+                              intel_retry_failure_webhook_header_value: '',
+                              similarity_threshold: 0.7,
+                              intel_enabled: true, intel_deferred_enabled: true,
+                              intel_cloud_store: false, web_enabled: true,
+                              web_auto_open: false, diarization_enabled: false,
+                              diarize_mic: false, cross_meeting_recognition: false,
+                            },
+                          };
+                          data.tab = tab;
+                        }""",
+                        tab,
+                    )
+                    page.wait_for_timeout(400)
                 if "_state=" in route:
                     state = route.split("_state=")[-1]
                     page.evaluate(
@@ -117,7 +172,7 @@ def main() -> None:
                     page.wait_for_timeout(400)
 
                 target = out_dir / filename
-                full_page = filename.startswith(("story-03-", "story-06-"))
+                full_page = filename.startswith(("story-03-", "story-06-", "story-08-"))
                 page.screenshot(path=str(target), full_page=full_page)
                 print(f"wrote {target} {width}x{height} {route}")
             browser.close()

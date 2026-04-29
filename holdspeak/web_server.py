@@ -943,17 +943,27 @@ class MeetingWebServer:
 
         @app.get("/history")
         async def history_dashboard() -> Any:
-            """Serve the history dashboard HTML."""
-            history_path = Path(__file__).resolve().parent / "static" / "history.html"
+            """Serve the history dashboard (HS-10-08: now read from the
+            Astro-built _built/history/index.html). The /settings route
+            still points here because settings live as a tab inside
+            the history page."""
+            history_path = (
+                Path(__file__).resolve().parent
+                / "static"
+                / "_built"
+                / "history"
+                / "index.html"
+            )
             try:
                 html = history_path.read_text(encoding="utf-8")
             except Exception as e:
-                log.error(f"Failed to read history.html: {e}")
+                log.error(f"Failed to read built history page: {e}")
                 html = (
                     "<!doctype html><html><head><meta charset='utf-8' />"
-                    "<title>Meeting History</title></head>"
-                    "<body><h1>Meeting History</h1>"
-                    "<p>History UI not available.</p></body></html>"
+                    "<title>HoldSpeak History</title></head>"
+                    "<body><h1>HoldSpeak History</h1>"
+                    "<p>History UI not built. Run <code>npm run build</code> "
+                    "in <code>web/</code>.</p></body></html>"
                 )
             return HTMLResponse(html)
 

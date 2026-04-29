@@ -1,0 +1,1406 @@
+---
+// HS-10-08: `/history` rebuilt on the design system.
+//
+// The legacy page was a single 2,508-line static/history.html with
+// inline <style> (~640 lines), CDN-loaded Alpine, and an inline
+// `historyApp()` factory (~890 lines). This rebuild:
+//
+//   - Wraps the page in AppLayout (TopNav + LocalPill + skip link).
+//   - Imports Alpine via the bundled npm package (no CDN).
+//   - Loads `historyApp()` verbatim from src/scripts/history-app.js.
+//   - Replaces the inline <style> block with scoped CSS that flows
+//     entirely from tokens.css.
+//   - Keeps every legacy class name and DOM contract that the factory
+//     depends on (`.shell`, `.section`, `.tab`, `.meeting-card`,
+//     `.action-card`, `.status-pill`, `.pill`, `.pill-row`,
+//     `.detail-card`, `.metric`, `.segment`, `.notice`, `.modal`,
+//     `.modal-card`, `.transcript-list`, `.btn`, `.btn primary`,
+//     `.input`, `.select`, `.toggle`, `.check`, `.action-controls`,
+//     `.search-row`, `.filter-row`, `.form-grid`, `.field`).
+//
+// Astro components are not used inside the page body for the same
+// reason as HS-10-06: Astro silently drops non-prop attributes
+// (`x-show`, `:class`, `@click`) on custom-component invocations,
+// which would break Alpine.
+
+import AppLayout from "../layouts/AppLayout.astro";
+---
+
+<AppLayout title="HoldSpeak History" current="history">
+  <div class="shell" x-data="historyApp()" x-init="init()">
+
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Meeting Archive</p>
+        <h1>HoldSpeak History</h1>
+        <p class="hero-copy">
+          Search prior meetings, review action items across sessions,
+          and see whether meeting intelligence is ready, queued, or
+          unavailable for each archive entry.
+        </p>
+      </div>
+      <div class="hero-side">
+        <div class="metric-grid">
+          <div class="metric">
+            <span class="metric-label">Meetings</span>
+            <div class="metric-value" x-text="meetings.length"></div>
+            <div class="metric-note">Entries currently visible in the archive list.</div>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Actions</span>
+            <div class="metric-value" x-text="actionItems.length"></div>
+            <div class="metric-note">Cross-meeting action items in the current filter.</div>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Queued intel</span>
+            <div class="metric-value" x-text="meetings.filter(m => m.intel_status === 'queued').length"></div>
+            <div class="metric-note">Meetings waiting for deferred intelligence processing.</div>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Search</span>
+            <div class="metric-value" x-text="searchQuery.trim() ? 'Active' : 'Idle'"></div>
+            <div class="metric-note">Full-text search across archived transcript content.</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2>Browse archive</h2>
+          <p>Archive search, action tracking, speakers, intel queue, and settings — all served locally.</p>
+        </div>
+        <nav class="tab-row" aria-label="History tabs">
+          <button class="tab" :class="{ active: tab === 'meetings' }" @click="setTab('meetings')">Meetings</button>
+          <button class="tab" :class="{ active: tab === 'actions' }" @click="setTab('actions')">Action items</button>
+          <button class="tab" :class="{ active: tab === 'speakers' }" @click="setTab('speakers')">Speakers</button>
+          <button class="tab" :class="{ active: tab === 'projects' }" @click="setTab('projects')">Projects</button>
+          <button class="tab" :class="{ active: tab === 'intel' }" @click="setTab('intel')">Intel queue</button>
+          <button class="tab" :class="{ active: tab === 'settings' }" @click="setTab('settings')">Settings</button>
+        </nav>
+      </div>
+
+      <div class="section-body">
+        <div class="notice" x-show="uiMessage" x-cloak :class="uiError ? 'error' : 'ok'" x-text="uiMessage"></div>
+
+        <!-- ============= Meetings tab ============= -->
+        <template x-if="tab === 'meetings'">
+          <div class="stack">
+            <div class="search-row">
+              <input class="input" type="text" placeholder="Search transcripts…" x-model="searchQuery" @keyup.enter="searchMeetings" />
+              <button class="btn primary" @click="searchMeetings">Search</button>
+              <button class="btn" @click="clearSearch" x-show="searchQuery.trim()" x-cloak>Clear</button>
+            </div>
+
+            <div x-show="loading" class="loading">Loading meetings…</div>
+
+            <div x-show="!loading && meetings.length === 0" class="empty">
+              <p>No meetings yet. Finish a meeting on <a href="/">Runtime</a> or save a candidate from <a href="/activity">Activity</a> and it will appear here.</p>
+            </div>
+
+            <div class="grid" x-show="!loading && meetings.length > 0">
+              <template x-for="meeting in meetings" :key="meeting.id">
+                <button class="meeting-card" @click="openMeeting(meeting.id)">
+                  <div class="card-top">
+                    <div class="card-id">
+                      <p class="card-title" x-text="meeting.title || '(untitled meeting)'"></p>
+                      <p class="card-subtitle" x-text="formatDate(meeting.started_at)"></p>
+                    </div>
+                    <span class="status-pill" :class="meeting.intel_status || 'disabled'" x-text="intelStatusLabel(meeting.intel_status)"></span>
+                  </div>
+                  <div class="pill-row">
+                    <span class="pill" x-text="formatDuration(meeting.duration_seconds)"></span>
+                    <span class="pill" x-text="`${meeting.segment_count} segments`"></span>
+                    <span class="pill" x-show="meeting.action_item_count > 0" x-cloak x-text="`${meeting.action_item_count} action items`"></span>
+                    <template x-for="tag in meeting.tags || []" :key="tag">
+                      <span class="pill" x-text="tag"></span>
+                    </template>
+                  </div>
+                  <p class="meta-line" x-show="meeting.intel_status_detail" x-cloak x-text="meeting.intel_status_detail"></p>
+                </button>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <!-- ============= Action items tab ============= -->
+        <template x-if="tab === 'actions'">
+          <div class="stack">
+            <div class="filter-row">
+              <label class="toggle">
+                <input type="checkbox" x-model="showCompleted" @change="loadActionItems" />
+                <span>Show completed and dismissed</span>
+              </label>
+              <select class="select" x-model="actionStatusFilter" @change="loadActionItems">
+                <option value="all">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="done">Done</option>
+                <option value="dismissed">Dismissed</option>
+              </select>
+              <select class="select" x-model="actionReviewFilter" @change="loadActionItems">
+                <option value="pending">Needs review</option>
+                <option value="accepted">Accepted</option>
+                <option value="all">All review states</option>
+              </select>
+              <button class="btn" @click="showOpenActionWork">Open work</button>
+            </div>
+
+            <div x-show="loadingActions" class="loading">Loading action items…</div>
+
+            <div x-show="!loadingActions && actionItems.length === 0" class="empty">
+              <p x-text="actionItemsEmptyMessage()"></p>
+            </div>
+
+            <div class="grid" x-show="!loadingActions && actionItems.length > 0">
+              <template x-for="item in actionItems" :key="item.id">
+                <div class="action-card">
+                  <div class="card-top">
+                    <div class="card-id">
+                      <p class="card-title" x-text="item.task"></p>
+                      <p class="card-subtitle" x-text="item.meeting_title || item.meeting_id.substring(0, 8)"></p>
+                    </div>
+                    <span class="status-pill" :class="item.status" x-text="item.status"></span>
+                  </div>
+                  <div class="pill-row">
+                    <span class="pill" x-show="item.owner" x-cloak x-text="`Owner ${item.owner}`"></span>
+                    <span class="pill" x-show="item.due" x-cloak x-text="`Due ${item.due}`"></span>
+                    <span class="pill" x-text="formatDate(item.meeting_date)"></span>
+                    <span class="pill" x-show="item.source_timestamp !== null && item.source_timestamp !== undefined" x-cloak x-text="`Source ${formatTimestamp(item.source_timestamp)}`"></span>
+                    <span class="status-pill" :class="`review-${reviewStateValue(item.review_state)}`" x-text="reviewStateLabel(item.review_state)"></span>
+                  </div>
+                  <div class="action-controls">
+                    <button class="btn" @click="toggleActionStatus(item)" x-text="item.status === 'done' ? 'Mark pending' : 'Mark done'"></button>
+                    <button class="btn" x-show="reviewStateValue(item.review_state) !== 'accepted'" x-cloak @click="setActionReviewState(item, 'accepted')">Accept</button>
+                    <button class="btn" x-show="reviewStateValue(item.review_state) === 'accepted'" x-cloak @click="setActionReviewState(item, 'pending')">Mark needs review</button>
+                    <button class="btn primary" @click="editActionItem(item)">Edit</button>
+                    <button class="btn" @click="openMeeting(item.meeting_id)">Open meeting</button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <!-- ============= Speakers tab ============= -->
+        <template x-if="tab === 'speakers'">
+          <div class="stack">
+            <div class="search-row">
+              <input class="input" type="text" placeholder="Search speakers…" x-model="speakerSearch" />
+              <button class="btn" @click="loadSpeakers">Refresh</button>
+            </div>
+
+            <div x-show="loadingSpeakers" class="loading">Loading speakers…</div>
+
+            <div class="layout-split" x-show="!loadingSpeakers">
+              <div class="stack">
+                <div x-show="filteredSpeakers().length === 0" class="empty">
+                  <p>No speakers found yet. Enable diarization in Settings to start tracking speaker identities.</p>
+                </div>
+                <template x-for="speaker in filteredSpeakers()" :key="speaker.id">
+                  <button class="speaker-card" :class="{ active: selectedSpeakerId === speaker.id }" @click="openSpeaker(speaker.id)">
+                    <div class="speaker-head">
+                      <p class="speaker-name" x-text="`${speaker.avatar || '🙂'} ${speaker.name}`"></p>
+                      <span class="pill" x-text="`${speaker.sample_count} samples`"></span>
+                    </div>
+                    <p class="speaker-meta" x-text="`${speaker.total_segments} segments • ${speaker.meeting_count} meetings`"></p>
+                    <p class="speaker-meta" x-show="speaker.last_seen" x-cloak x-text="`Last seen ${formatDate(speaker.last_seen)}`"></p>
+                  </button>
+                </template>
+              </div>
+
+              <div class="detail-card">
+                <div x-show="!selectedSpeakerId" class="empty">
+                  <p>Select a speaker to review history and edit profile details.</p>
+                </div>
+
+                <div x-show="loadingSpeakerDetail" class="loading">Loading speaker profile…</div>
+
+                <div class="stack" x-show="selectedSpeaker && !loadingSpeakerDetail">
+                  <h4 x-text="selectedSpeaker ? `${selectedSpeaker.speaker.avatar || '🙂'} ${selectedSpeaker.speaker.name}` : ''"></h4>
+                  <div class="form-grid">
+                    <div class="field">
+                      <label>Display name</label>
+                      <input class="input" type="text" x-model="speakerDraft.name" />
+                    </div>
+                    <div class="field">
+                      <label>Avatar</label>
+                      <input class="input" type="text" maxlength="8" x-model="speakerDraft.avatar" />
+                    </div>
+                  </div>
+                  <div class="search-row">
+                    <button class="btn primary" :disabled="savingSpeaker || !selectedSpeakerId" @click="saveSpeaker" x-text="savingSpeaker ? 'Saving…' : 'Save speaker'"></button>
+                  </div>
+                  <div class="pill-row">
+                    <span class="pill" x-text="`${selectedSpeaker?.stats?.total_segments || 0} segments`"></span>
+                    <span class="pill" x-text="`${Math.round(selectedSpeaker?.stats?.total_speaking_time || 0)}s speaking`"></span>
+                    <span class="pill" x-text="`${selectedSpeaker?.stats?.meeting_count || 0} meetings`"></span>
+                  </div>
+
+                  <div class="stack">
+                    <template x-for="group in selectedSpeaker?.meetings || []" :key="group.meeting_id">
+                      <div class="segment">
+                        <div class="card-top">
+                          <div class="card-id">
+                            <p class="card-title" x-text="group.meeting_title || '(untitled meeting)'"></p>
+                            <p class="card-subtitle" x-text="formatDate(group.meeting_date)"></p>
+                          </div>
+                          <span class="pill" x-text="`${group.segments.length} clips`"></span>
+                        </div>
+                        <div class="transcript-list">
+                          <template x-for="segment in group.segments" :key="`${group.meeting_id}-${segment.start_time}-${segment.end_time}`">
+                            <div class="meta-line">
+                              <span class="mono" x-text="formatTimestamp(segment.start_time)"></span>
+                              <span x-text="` ${segment.text}`"></span>
+                            </div>
+                          </template>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- ============= Projects tab ============= -->
+        <template x-if="tab === 'projects'">
+          <div class="stack">
+            <!-- List view -->
+            <div x-show="!selectedProject" class="stack">
+              <div class="search-row">
+                <button class="btn primary" @click="openNewProjectForm">+ New project</button>
+              </div>
+
+              <div x-show="loadingProjects" class="loading">Loading projects…</div>
+              <div x-show="!loadingProjects && projects.length === 0" class="empty">
+                <p>No projects yet. Create one to start tracking meeting intelligence per project.</p>
+              </div>
+
+              <div class="grid" x-show="!loadingProjects && projects.length > 0">
+                <template x-for="proj in projects" :key="proj.id">
+                  <button class="meeting-card" @click="openProject(proj.id)">
+                    <div class="card-top">
+                      <div class="card-id">
+                        <p class="card-title" x-text="proj.name"></p>
+                        <p class="card-subtitle" x-text="proj.description || '(no description)'"></p>
+                      </div>
+                    </div>
+                    <div class="pill-row">
+                      <span class="pill" x-text="`${(proj.keywords || []).length} keywords`"></span>
+                      <span class="pill" x-text="`${(proj.team_members || []).length} members`"></span>
+                      <span class="pill" x-text="`${proj.meeting_count || 0} meetings`"></span>
+                      <span class="pill" x-text="`threshold ${(proj.detection_threshold * 100).toFixed(0)}%`"></span>
+                    </div>
+                  </button>
+                </template>
+              </div>
+            </div>
+
+            <!-- New project form -->
+            <div x-show="showNewProjectForm && !selectedProject" x-cloak>
+              <div class="detail-card">
+                <h4>New project</h4>
+                <div class="form-grid">
+                  <div class="field full">
+                    <label>Name</label>
+                    <input class="input" type="text" x-model="projectDraft.name" placeholder="Project Atlas" />
+                  </div>
+                  <div class="field full">
+                    <label>Description</label>
+                    <input class="input" type="text" x-model="projectDraft.description" placeholder="Auth service rewrite for compliance" />
+                  </div>
+                  <div class="field full">
+                    <label>Keywords (comma-separated)</label>
+                    <input class="input" type="text" x-model="projectDraft.keywords" placeholder="auth, oauth, session, token, compliance" />
+                  </div>
+                  <div class="field full">
+                    <label>Team members (comma-separated)</label>
+                    <input class="input" type="text" x-model="projectDraft.team_members" placeholder="Alice, Bob Chen, Carol" />
+                  </div>
+                  <div class="field">
+                    <label>Detection threshold</label>
+                    <input class="input" type="number" min="0" max="1" step="0.05" x-model.number="projectDraft.detection_threshold" />
+                  </div>
+                </div>
+                <div class="search-row stack-top">
+                  <button class="btn primary" @click="createProject" :disabled="!projectDraft.name.trim()">Create project</button>
+                  <button class="btn" @click="showNewProjectForm = false">Cancel</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Detail view -->
+            <div x-show="selectedProject" x-cloak class="stack">
+              <div class="search-row">
+                <button class="btn" @click="selectedProject = null">← Back to projects</button>
+              </div>
+
+              <div class="detail-card">
+                <h4>
+                  <span x-text="selectedProject?.name"></span>
+                  <span class="meta-line meta-inline" x-text="selectedProject?.description"></span>
+                </h4>
+                <div class="form-grid">
+                  <div class="field full">
+                    <label>Name</label>
+                    <input class="input" type="text" x-model="selectedProject.name" @change="patchProject('name', selectedProject.name)" />
+                  </div>
+                  <div class="field full">
+                    <label>Description</label>
+                    <input class="input" type="text" x-model="selectedProject.description" @change="patchProject('description', selectedProject.description)" />
+                  </div>
+                  <div class="field full">
+                    <label>Keywords</label>
+                    <input class="input" type="text" :value="(selectedProject?.keywords || []).join(', ')" @change="patchProject('keywords', $event.target.value)" />
+                  </div>
+                  <div class="field full">
+                    <label>Team members</label>
+                    <input class="input" type="text" :value="(selectedProject?.team_members || []).join(', ')" @change="patchProject('team_members', $event.target.value)" />
+                  </div>
+                  <div class="field">
+                    <label>Detection threshold</label>
+                    <input class="input" type="number" min="0" max="1" step="0.05" :value="selectedProject?.detection_threshold" @change="patchProject('detection_threshold', parseFloat($event.target.value))" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="detail-card" x-show="projectSummary" x-cloak>
+                <h4>Summary</h4>
+                <div class="pill-row">
+                  <span class="pill" x-text="`${projectSummary?.meeting_count || 0} meetings`"></span>
+                  <span class="pill" x-text="`${projectSummary?.artifact_count || 0} artifacts`"></span>
+                  <template x-for="[status, count] in Object.entries(projectSummary?.action_items_by_status || {})" :key="status">
+                    <span class="pill" x-text="`${count} ${status}`"></span>
+                  </template>
+                </div>
+                <p class="meta-line" x-show="projectSummary?.first_meeting" x-cloak>
+                  <span x-text="`First meeting: ${formatDate(projectSummary?.first_meeting)}`"></span>
+                  <span x-text="` — Last: ${formatDate(projectSummary?.last_meeting)}`"></span>
+                </p>
+              </div>
+
+              <div class="detail-card">
+                <h4>Meetings</h4>
+                <div x-show="!projectMeetings.length" class="empty"><p>No meetings associated yet.</p></div>
+                <div class="grid" x-show="projectMeetings.length > 0">
+                  <template x-for="m in projectMeetings" :key="m.id">
+                    <div class="meeting-card meeting-card--static">
+                      <div class="card-top">
+                        <div class="card-id">
+                          <p class="card-title" x-text="m.title || '(untitled)'"></p>
+                          <p class="card-subtitle" x-text="formatDate(m.started_at)"></p>
+                        </div>
+                        <div class="pill-row">
+                          <span class="pill" x-text="`${(m.confidence * 100).toFixed(0)}%`"></span>
+                          <span class="status-pill" :class="m.source === 'auto' ? 'running' : 'completed'" x-text="m.source"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+
+              <div class="detail-card">
+                <h4>Action items</h4>
+                <div x-show="!projectActionItems.length" class="empty"><p>No action items from project meetings.</p></div>
+                <div class="grid" x-show="projectActionItems.length > 0">
+                  <template x-for="ai in projectActionItems" :key="ai.id">
+                    <div class="segment">
+                      <div class="card-top">
+                        <p class="card-title" x-text="ai.task"></p>
+                        <span class="status-pill" :class="ai.status" x-text="ai.status"></span>
+                      </div>
+                      <div class="pill-row">
+                        <span class="pill" x-show="ai.owner" x-cloak x-text="`Owner: ${ai.owner}`"></span>
+                        <span class="pill" x-show="ai.due" x-cloak x-text="`Due: ${ai.due}`"></span>
+                        <span class="pill" x-text="ai.meeting_title || '(untitled)'"></span>
+                        <span class="pill" x-show="ai.source_timestamp !== null && ai.source_timestamp !== undefined" x-cloak x-text="`Source ${formatTimestamp(ai.source_timestamp)}`"></span>
+                        <span class="status-pill" :class="`review-${reviewStateValue(ai.review_state)}`" x-text="reviewStateLabel(ai.review_state)"></span>
+                      </div>
+                      <div class="action-controls" x-show="ai.id" x-cloak>
+                        <button class="btn" x-show="reviewStateValue(ai.review_state) !== 'accepted'" x-cloak @click="setActionReviewState(ai, 'accepted')">Accept</button>
+                        <button class="btn" x-show="reviewStateValue(ai.review_state) === 'accepted'" x-cloak @click="setActionReviewState(ai, 'pending')">Mark needs review</button>
+                        <button class="btn" @click="openMeeting(ai.meeting_id)">Open meeting</button>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+
+              <div class="detail-card">
+                <h4>Artifacts</h4>
+                <div x-show="!projectArtifacts.length" class="empty"><p>No artifacts from project meetings.</p></div>
+                <div class="grid" x-show="projectArtifacts.length > 0">
+                  <template x-for="a in projectArtifacts" :key="a.id">
+                    <div class="segment">
+                      <div class="card-top">
+                        <p class="card-title" x-text="a.title"></p>
+                        <span class="status-pill" :class="a.status" x-text="a.artifact_type"></span>
+                      </div>
+                      <div class="pill-row">
+                        <span class="pill" x-text="`${(a.confidence * 100).toFixed(0)}% confidence`"></span>
+                        <span class="pill" x-text="formatDate(a.created_at)"></span>
+                      </div>
+                      <div class="action-controls">
+                        <button class="btn" @click="openMeeting(a.meeting_id)">Open meeting</button>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+
+              <div class="search-row">
+                <button class="btn btn--ghost danger" @click="archiveProject">Archive project</button>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- ============= Intel queue tab ============= -->
+        <template x-if="tab === 'intel'">
+          <div class="stack">
+            <div class="metric-grid metric-grid--inline">
+              <div class="metric">
+                <span class="metric-label">Queue total</span>
+                <div class="metric-value" x-text="intelSummary?.total_jobs ?? 0"></div>
+                <div class="metric-note">All deferred-intel jobs currently tracked.</div>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Ready now</span>
+                <div class="metric-value" x-text="intelSummary?.queued_due_jobs ?? 0"></div>
+                <div class="metric-note">Queued jobs eligible to run immediately.</div>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Scheduled</span>
+                <div class="metric-value" x-text="intelSummary?.scheduled_retry_jobs ?? 0"></div>
+                <div class="metric-note" x-text="intelNextRetryLabel()"></div>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Failure rate</span>
+                <div class="metric-value" x-text="intelFailureRateLabel()"></div>
+                <div class="metric-note">Failed jobs as a share of current queue state.</div>
+              </div>
+            </div>
+
+            <div class="notice error" x-show="intelFailureAlertActive()" x-cloak x-text="intelFailureAlertMessage()"></div>
+
+            <div class="filter-row">
+              <select class="select" x-model="intelStatusFilter" @change="loadIntelJobs">
+                <option value="all">All jobs</option>
+                <option value="queued">Queued</option>
+                <option value="running">Running</option>
+                <option value="failed">Failed</option>
+              </select>
+              <select class="select" x-model="intelProcessMode">
+                <option value="respect_backoff">Process due jobs only</option>
+                <option value="retry_now">Retry all queued now</option>
+              </select>
+              <input class="input input--narrow" type="number" min="1" x-model.number="intelLimit" placeholder="Limit" aria-label="Limit" />
+              <input class="input input--narrow" type="number" min="1" x-model.number="intelMaxJobs" placeholder="Max jobs" aria-label="Max jobs to process" />
+              <button class="btn" @click="loadIntelJobs">Refresh</button>
+              <button class="btn primary" :disabled="processingIntel" @click="processIntelJobs" x-text="processingIntel ? 'Processing…' : 'Process queue now'"></button>
+            </div>
+
+            <div x-show="loadingIntel" class="loading">Loading deferred intel jobs…</div>
+
+            <div x-show="!loadingIntel && intelJobs.length === 0" class="empty">
+              <p>No deferred-intel jobs match this filter.</p>
+            </div>
+
+            <div class="grid" x-show="!loadingIntel && intelJobs.length > 0">
+              <template x-for="job in intelJobs" :key="job.meeting_id">
+                <div class="action-card">
+                  <div class="card-top">
+                    <div class="card-id">
+                      <p class="card-title" x-text="job.meeting_title || job.meeting_id"></p>
+                      <p class="card-subtitle" x-text="job.started_at ? formatDate(job.started_at) : 'Unknown date'"></p>
+                    </div>
+                    <span class="status-pill" :class="job.status" x-text="job.status"></span>
+                  </div>
+                  <div class="pill-row">
+                    <span class="pill" x-text="`Attempts ${job.attempts}`"></span>
+                    <span class="pill" x-show="typeof job.retries_remaining === 'number'" x-cloak x-text="`Remaining ${job.retries_remaining}`"></span>
+                    <span class="pill" x-text="intelQueueScheduleLabel(job)"></span>
+                  </div>
+                  <p class="meta-line" x-show="job.last_error" x-cloak x-text="job.last_error"></p>
+                  <div class="stack" x-show="job.retry_history && job.retry_history.length > 0" x-cloak>
+                    <p class="meta-line">Recent attempts:</p>
+                    <template x-for="event in job.retry_history" :key="`${job.meeting_id}-${event.created_at}-${event.attempt}-${event.outcome}`">
+                      <p class="meta-line" x-text="`• ${formatDate(event.created_at)} · attempt ${event.attempt} · ${intelAttemptOutcomeLabel(event)}${event.retry_at ? ` (next ${formatDate(event.retry_at)})` : ''}`"></p>
+                    </template>
+                  </div>
+                  <div class="search-row">
+                    <button class="btn" :disabled="processingIntel" @click="retryIntelJob(job.meeting_id)">Retry meeting</button>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <div class="detail-card">
+              <h4>Deferred plugin jobs</h4>
+              <p>Heavy MIR plugin runs that were deferred to the durable queue.</p>
+              <div class="pill-row">
+                <span class="pill" x-text="`Total ${pluginJobs.length}`"></span>
+                <span class="pill" x-text="`Queued ${pluginJobs.filter(j => j.status === 'queued').length}`"></span>
+                <span class="pill" x-text="`Running ${pluginJobs.filter(j => j.status === 'running').length}`"></span>
+                <span class="pill" x-text="`Failed ${pluginJobs.filter(j => j.status === 'failed').length}`"></span>
+              </div>
+
+              <div class="filter-row stack-top">
+                <select class="select" x-model="pluginJobStatusFilter" @change="loadPluginJobs">
+                  <option value="all">All plugin jobs</option>
+                  <option value="queued">Queued</option>
+                  <option value="running">Running</option>
+                  <option value="failed">Failed</option>
+                </select>
+                <input class="input input--narrow" type="number" min="1" x-model.number="pluginJobLimit" placeholder="Limit" aria-label="Limit" />
+                <button class="btn" @click="loadPluginJobs">Refresh</button>
+              </div>
+
+              <div x-show="loadingPluginJobs" class="loading stack-top">Loading deferred plugin jobs…</div>
+
+              <div x-show="!loadingPluginJobs && pluginJobs.length === 0" class="empty stack-top">
+                <p>No deferred plugin jobs match this filter.</p>
+              </div>
+
+              <div class="grid stack-top" x-show="!loadingPluginJobs && pluginJobs.length > 0">
+                <template x-for="job in pluginJobs" :key="job.id">
+                  <div class="action-card">
+                    <div class="card-top">
+                      <div class="card-id">
+                        <p class="card-title" x-text="job.plugin_id"></p>
+                        <p class="card-subtitle mono" x-text="`${job.meeting_id} · ${job.window_id}`"></p>
+                      </div>
+                      <span class="status-pill" :class="job.status" x-text="job.status"></span>
+                    </div>
+                    <div class="pill-row">
+                      <span class="pill" x-text="`Attempts ${job.attempts}`"></span>
+                      <span class="pill" x-show="job.retry_scheduled" x-cloak x-text="pluginJobScheduleLabel(job)"></span>
+                      <span class="pill" x-show="!job.retry_scheduled" x-cloak x-text="`Requested ${formatDate(job.requested_at)}`"></span>
+                    </div>
+                    <p class="meta-line" x-show="job.last_error" x-cloak x-text="job.last_error"></p>
+                    <div class="search-row">
+                      <button class="btn" :disabled="processingPluginJobs || job.status === 'running'" @click="retryPluginJob(job.id)">Retry now</button>
+                      <button class="btn" :disabled="processingPluginJobs || job.status === 'running'" @click="cancelPluginJob(job.id)">Cancel</button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- ============= Settings tab ============= -->
+        <template x-if="tab === 'settings'">
+          <div class="stack">
+            <div x-show="loadingSettings" class="loading">Loading settings…</div>
+            <div class="notice error" x-show="settingsValidationErrors.length > 0" x-cloak>
+              <p>Fix these settings before saving:</p>
+              <template x-for="err in settingsValidationErrors" :key="err">
+                <p class="meta-line" x-text="`• ${err}`"></p>
+              </template>
+            </div>
+
+            <template x-if="settings">
+              <div class="stack">
+                <div class="detail-card">
+                  <h4>Appearance &amp; UI</h4>
+                  <div class="form-grid">
+                    <div class="field">
+                      <label>Theme</label>
+                      <select class="select" x-model="settings.ui.theme">
+                        <option value="dark">Dark</option>
+                        <option value="light">Light</option>
+                        <option value="dracula">Dracula</option>
+                        <option value="monokai">Monokai</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label>History lines</label>
+                      <input class="input" type="number" min="1" max="100" x-model.number="settings.ui.history_lines" />
+                    </div>
+                  </div>
+                  <div class="check-row stack-top">
+                    <label class="check"><input type="checkbox" x-model="settings.ui.show_audio_meter" /> Show audio meter</label>
+                  </div>
+                </div>
+
+                <div class="detail-card">
+                  <h4>Core settings</h4>
+                  <div class="form-grid">
+                    <div class="field">
+                      <label>Hotkey</label>
+                      <select class="select" x-model="settings.hotkey.key">
+                        <option value="alt_r">Alt Right</option>
+                        <option value="alt_l">Alt Left</option>
+                        <option value="ctrl_r">Ctrl Right</option>
+                        <option value="ctrl_l">Ctrl Left</option>
+                        <option value="cmd_r">Cmd Right</option>
+                        <option value="cmd_l">Cmd Left</option>
+                        <option value="shift_r">Shift Right</option>
+                        <option value="shift_l">Shift Left</option>
+                        <option value="caps_lock">Caps Lock</option>
+                        <option value="fn">Fn</option>
+                        <option value="f1">F1</option>
+                        <option value="f2">F2</option>
+                        <option value="f3">F3</option>
+                        <option value="f4">F4</option>
+                        <option value="f5">F5</option>
+                        <option value="f6">F6</option>
+                        <option value="f7">F7</option>
+                        <option value="f8">F8</option>
+                        <option value="f9">F9</option>
+                        <option value="f10">F10</option>
+                        <option value="f11">F11</option>
+                        <option value="f12">F12</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label>Whisper model</label>
+                      <select class="select" x-model="settings.model.name">
+                        <option value="tiny">tiny</option>
+                        <option value="base">base</option>
+                        <option value="small">small</option>
+                        <option value="medium">medium</option>
+                        <option value="large">large</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label>Mic label</label>
+                      <input class="input" type="text" x-model="settings.meeting.mic_label" />
+                    </div>
+                    <div class="field">
+                      <label>Remote label</label>
+                      <input class="input" type="text" x-model="settings.meeting.remote_label" />
+                    </div>
+                    <div class="field">
+                      <label>Export format</label>
+                      <select class="select" x-model="settings.meeting.export_format">
+                        <option value="txt">txt</option>
+                        <option value="markdown">markdown</option>
+                        <option value="json">json</option>
+                        <option value="srt">srt</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label>Intel provider</label>
+                      <select class="select" x-model="settings.meeting.intel_provider">
+                        <option value="local">local</option>
+                        <option value="cloud">cloud</option>
+                        <option value="auto">auto</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label>MIR profile</label>
+                      <select class="select" x-model="settings.meeting.mir_profile">
+                        <option value="balanced">Balanced</option>
+                        <option value="architect">Architect</option>
+                        <option value="delivery">Delivery</option>
+                        <option value="product">Product</option>
+                        <option value="incident">Incident</option>
+                      </select>
+                    </div>
+                    <div class="field full">
+                      <label>Local realtime model path</label>
+                      <input class="input" type="text" x-model="settings.meeting.intel_realtime_model" />
+                    </div>
+                    <div class="field full">
+                      <label>Local summary model path (optional, falls back to realtime)</label>
+                      <input class="input" type="text" placeholder="Leave empty to use realtime model" x-model="settings.meeting.intel_summary_model" />
+                    </div>
+                    <div class="field">
+                      <label>Mic device (optional)</label>
+                      <input class="input" type="text" placeholder="System default" x-model="settings.meeting.mic_device" />
+                    </div>
+                    <div class="field">
+                      <label>System audio device (optional)</label>
+                      <input class="input" type="text" placeholder="System default" x-model="settings.meeting.system_audio_device" />
+                    </div>
+                  </div>
+                  <div class="check-row stack-top">
+                    <label class="check"><input type="checkbox" x-model="settings.meeting.auto_export" /> Auto-export on meeting end</label>
+                    <label class="check"><input type="checkbox" x-model="settings.meeting.mir_enabled" /> MIR routing enabled</label>
+                  </div>
+                </div>
+
+                <div class="detail-card">
+                  <h4>Cloud intel</h4>
+                  <div class="form-grid">
+                    <div class="field">
+                      <label>Cloud model</label>
+                      <input class="input" type="text" x-model="settings.meeting.intel_cloud_model" />
+                    </div>
+                    <div class="field">
+                      <label>API key env var</label>
+                      <input class="input" type="text" x-model="settings.meeting.intel_cloud_api_key_env" />
+                    </div>
+                    <div class="field">
+                      <label>Cloud reasoning effort (optional)</label>
+                      <input class="input" type="text" placeholder="e.g. low, medium, high" x-model="settings.meeting.intel_cloud_reasoning_effort" />
+                    </div>
+                    <div class="field full">
+                      <label>OpenAI-compatible base URL</label>
+                      <input class="input" type="text" placeholder="https://api.openai.com/v1" x-model="settings.meeting.intel_cloud_base_url" />
+                    </div>
+                    <div class="field">
+                      <label>Intel queue poll (seconds)</label>
+                      <input class="input" type="number" min="5" x-model.number="settings.meeting.intel_queue_poll_seconds" />
+                    </div>
+                    <div class="field">
+                      <label>Retry base delay (seconds)</label>
+                      <input class="input" type="number" min="1" x-model.number="settings.meeting.intel_retry_base_seconds" />
+                    </div>
+                    <div class="field">
+                      <label>Retry max delay (seconds)</label>
+                      <input class="input" type="number" min="1" x-model.number="settings.meeting.intel_retry_max_seconds" />
+                    </div>
+                    <div class="field">
+                      <label>Retry max attempts</label>
+                      <input class="input" type="number" min="1" x-model.number="settings.meeting.intel_retry_max_attempts" />
+                    </div>
+                    <div class="field">
+                      <label>Failure alert threshold (%)</label>
+                      <input class="input" type="number" min="0" max="100" step="0.1" x-model.number="settings.meeting.intel_retry_failure_alert_percent" />
+                    </div>
+                    <div class="field">
+                      <label>Failure alert hysteresis (minutes)</label>
+                      <input class="input" type="number" min="0" step="0.5" x-model.number="settings.meeting.intel_retry_failure_hysteresis_minutes" />
+                    </div>
+                    <div class="field full">
+                      <label>Failure alert webhook URL (optional)</label>
+                      <input class="input" type="text" placeholder="https://ops.example.com/hooks/holdspeak" x-model="settings.meeting.intel_retry_failure_webhook_url" />
+                    </div>
+                    <div class="field">
+                      <label>Webhook header name (optional)</label>
+                      <input class="input" type="text" placeholder="Authorization" x-model="settings.meeting.intel_retry_failure_webhook_header_name" />
+                    </div>
+                    <div class="field">
+                      <label>Webhook header value (optional)</label>
+                      <input class="input" type="text" placeholder="Bearer <token>" x-model="settings.meeting.intel_retry_failure_webhook_header_value" />
+                    </div>
+                    <div class="field">
+                      <label>Speaker similarity threshold</label>
+                      <input class="input" type="number" min="0" max="1" step="0.01" x-model.number="settings.meeting.similarity_threshold" />
+                    </div>
+                  </div>
+
+                  <div class="check-row stack-top">
+                    <label class="check"><input type="checkbox" x-model="settings.meeting.intel_enabled" /> Intel enabled</label>
+                    <label class="check"><input type="checkbox" x-model="settings.meeting.intel_deferred_enabled" /> Deferred intel enabled</label>
+                    <label class="check"><input type="checkbox" x-model="settings.meeting.intel_cloud_store" /> Allow cloud response storage</label>
+                    <label class="check"><input type="checkbox" x-model="settings.meeting.web_enabled" /> Web dashboard enabled</label>
+                    <label class="check"><input type="checkbox" x-model="settings.meeting.web_auto_open" /> Auto-open dashboard</label>
+                    <label class="check"><input type="checkbox" x-model="settings.meeting.diarization_enabled" /> System audio diarization</label>
+                    <label class="check"><input type="checkbox" x-model="settings.meeting.diarize_mic" /> Mic diarization</label>
+                    <label class="check"><input type="checkbox" x-model="settings.meeting.cross_meeting_recognition" /> Cross-meeting speaker recognition</label>
+                  </div>
+                </div>
+
+                <div class="search-row">
+                  <button class="btn primary" :disabled="savingSettings || !settings" @click="saveSettings" x-text="savingSettings ? 'Saving…' : 'Save settings'"></button>
+                  <button class="btn" @click="loadSettings">Reload</button>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </section>
+
+    <!-- ============= Meeting detail modal ============= -->
+    <div class="modal" x-show="selectedMeeting" x-cloak @click.self="selectedMeeting = null">
+      <div class="modal-card" x-show="selectedMeeting">
+        <div class="modal-head">
+          <div>
+            <h3 x-text="selectedMeeting?.title || 'Meeting detail'"></h3>
+            <p x-text="selectedMeeting ? `${formatDate(selectedMeeting.started_at)} • ${formatDuration(selectedMeeting.duration)}` : ''"></p>
+          </div>
+          <div class="action-controls" x-show="selectedMeeting?.id" x-cloak>
+            <button class="btn" @click="downloadSelectedMeetingExport('markdown')">Local Markdown</button>
+            <button class="btn" @click="downloadSelectedMeetingExport('json')">Local JSON</button>
+            <button class="modal-close" @click="selectedMeeting = null" aria-label="Close">×</button>
+          </div>
+        </div>
+        <div class="modal-body" x-show="selectedMeeting">
+          <div class="detail-grid">
+            <div class="detail-card">
+              <h4>Transcript</h4>
+              <div class="transcript-list">
+                <template x-for="segment in selectedMeeting?.segments || []" :key="`${segment.start_time}-${segment.end_time}-${segment.text}`">
+                  <div class="segment">
+                    <div class="segment-top">
+                      <span class="speaker" x-text="segment.speaker"></span>
+                      <span class="time" x-text="formatTimestamp(segment.start_time)"></span>
+                    </div>
+                    <p x-text="segment.text"></p>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <div class="detail-side">
+              <div class="detail-card">
+                <h4>Intelligence</h4>
+                <span class="status-pill" :class="selectedMeeting?.intel_status?.state || 'disabled'" x-text="intelStatusLabel(selectedMeeting?.intel_status?.state)"></span>
+                <p x-show="selectedMeeting?.intel_status?.detail" x-cloak x-text="selectedMeeting?.intel_status?.detail"></p>
+                <div class="pill-row" x-show="selectedMeeting?.intel?.topics?.length" x-cloak>
+                  <template x-for="topic in selectedMeeting?.intel?.topics || []" :key="topic">
+                    <span class="pill" x-text="topic"></span>
+                  </template>
+                </div>
+              </div>
+
+              <div class="detail-card" x-show="selectedMeeting?.intel?.summary" x-cloak>
+                <h4>Summary</h4>
+                <p x-text="selectedMeeting?.intel?.summary"></p>
+              </div>
+
+              <div class="detail-card" x-show="selectedMeeting?.intel?.action_items?.length" x-cloak>
+                <h4>Action items</h4>
+                <div class="grid">
+                  <template x-for="item in selectedMeeting?.intel?.action_items || []" :key="item.id || item.task">
+                    <div class="segment">
+                      <div class="card-top">
+                        <p class="card-title" x-text="item.task"></p>
+                        <span class="status-pill" :class="item.status || 'pending'" x-text="item.status || 'pending'"></span>
+                      </div>
+                      <div class="pill-row">
+                        <span class="pill" x-show="item.owner" x-cloak x-text="`Owner ${item.owner}`"></span>
+                        <span class="pill" x-show="item.due" x-cloak x-text="`Due ${item.due}`"></span>
+                        <span class="pill" x-show="item.source_timestamp !== null && item.source_timestamp !== undefined" x-cloak x-text="`Source ${formatTimestamp(item.source_timestamp)}`"></span>
+                        <span class="status-pill" :class="`review-${reviewStateValue(item.review_state)}`" x-text="reviewStateLabel(item.review_state)"></span>
+                      </div>
+                      <div class="action-controls" x-show="item.id" x-cloak>
+                        <button class="btn" x-show="reviewStateValue(item.review_state) !== 'accepted'" x-cloak @click="setActionReviewState(item, 'accepted')">Accept</button>
+                        <button class="btn" x-show="reviewStateValue(item.review_state) === 'accepted'" x-cloak @click="setActionReviewState(item, 'pending')">Mark needs review</button>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+
+              <div class="detail-card" x-show="selectedMeetingArtifacts.length" x-cloak>
+                <h4>Artifacts</h4>
+                <div class="grid">
+                  <template x-for="artifact in selectedMeetingArtifacts" :key="artifact.id">
+                    <div class="segment">
+                      <div class="card-top">
+                        <p class="card-title" x-text="artifact.title"></p>
+                        <span class="status-pill" :class="artifact.status" x-text="artifact.artifact_type"></span>
+                      </div>
+                      <div class="pill-row">
+                        <span class="pill" x-text="`${(artifact.confidence * 100).toFixed(0)}% confidence`"></span>
+                        <span class="pill" x-text="formatDate(artifact.created_at)"></span>
+                        <span class="pill" x-show="artifact.sources?.length" x-cloak x-text="`${artifact.sources.length} sources`"></span>
+                      </div>
+                      <p class="meta-line" x-show="artifact.body_markdown" x-cloak x-text="artifact.body_markdown"></p>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import Alpine from "alpinejs";
+    import factorySource from "../scripts/history-app.js?raw";
+
+    // Eval the factory in global scope so x-data="historyApp()"
+    // resolves to it; same pattern as src/pages/index.astro.
+    const fn = new Function(factorySource + "; return historyApp;");
+    window.historyApp = fn();
+
+    if (!window.Alpine) {
+      window.Alpine = Alpine;
+      Alpine.start();
+    }
+  </script>
+</AppLayout>
+
+<style>
+  /* All values flow from tokens.css. */
+
+  .shell {
+    max-width: 88rem;
+    margin: 0 auto;
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+  }
+
+  /* === Hero =============================================== */
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+    gap: var(--space-5);
+    padding: var(--space-6);
+    background: var(--canvas-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-3);
+  }
+  .hero h1 {
+    margin: var(--space-1) 0 var(--space-2);
+    font-family: var(--font-display);
+    color: var(--text);
+  }
+  .eyebrow {
+    margin: 0;
+    color: var(--text-faint);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose);
+  }
+  .hero-copy {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: var(--line-height-relaxed);
+  }
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; }
+  }
+
+  /* === Metrics ============================================ */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+  .metric-grid--inline {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .metric {
+    padding: var(--space-3);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+  }
+  .metric-label {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose);
+  }
+  .metric-value {
+    margin-top: var(--space-1);
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: var(--font-size-xl);
+    line-height: 1.1;
+  }
+  .metric-note {
+    margin-top: var(--space-1);
+    color: var(--text-faint);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+  }
+
+  /* === Section + tabs ==================================== */
+  .section {
+    background: var(--canvas-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-3);
+    overflow: hidden;
+  }
+  .section-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: var(--space-5) var(--space-5) 0;
+  }
+  .section-head h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    color: var(--text);
+  }
+  .section-head p {
+    margin: var(--space-1) 0 0;
+    color: var(--text-muted);
+  }
+  .section-body {
+    padding: var(--space-5);
+  }
+  .tab-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+  .tab {
+    appearance: none;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    padding: var(--space-2) var(--space-3);
+    color: var(--text-muted);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: border-color var(--duration-short) var(--ease-standard),
+                color var(--duration-short) var(--ease-standard),
+                background var(--duration-short) var(--ease-standard);
+  }
+  .tab:hover { color: var(--text); border-color: var(--line-strong); }
+  .tab.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--text);
+  }
+  .tab:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  /* === Notice bar ======================================== */
+  .notice {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-2);
+    margin-bottom: var(--space-4);
+    font-size: var(--font-size-sm);
+  }
+  .notice.ok {
+    background: var(--success-soft, var(--accent-soft));
+    color: var(--success, var(--text));
+    border: 1px solid var(--success, var(--accent));
+  }
+  .notice.error {
+    background: var(--danger-soft, var(--canvas));
+    color: var(--danger);
+    border: 1px solid var(--danger);
+  }
+
+  /* === Form / list controls ============================== */
+  .stack { display: flex; flex-direction: column; gap: var(--space-3); }
+  .stack-top { margin-top: var(--space-3); }
+  .search-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: center;
+  }
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: center;
+  }
+  .input, .select {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: var(--space-2) var(--space-3);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+  }
+  .input--narrow { flex: 0 0 auto; max-width: 9rem; }
+  .input:focus-visible, .select:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+    border-color: var(--accent);
+  }
+  .toggle, .check {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text);
+    font-size: var(--font-size-sm);
+  }
+  .check-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .btn {
+    appearance: none;
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    padding: var(--space-2) var(--space-3);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: border-color var(--duration-short) var(--ease-standard),
+                background var(--duration-short) var(--ease-standard);
+  }
+  .btn:hover:not(:disabled) { border-color: var(--line-strong); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-on);
+  }
+  .btn.primary:hover:not(:disabled) { background: var(--accent-strong, var(--accent)); }
+  .btn.danger, .btn--ghost.danger { color: var(--danger); border-color: var(--danger); }
+
+  /* === Cards (meetings, actions, intel) ================== */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-3);
+  }
+  .layout-split {
+    display: grid;
+    grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+  @media (max-width: 800px) {
+    .layout-split { grid-template-columns: 1fr; }
+  }
+
+  .meeting-card, .action-card, .speaker-card, .segment {
+    appearance: none;
+    text-align: left;
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    padding: var(--space-3);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    cursor: pointer;
+    transition: border-color var(--duration-short) var(--ease-standard);
+  }
+  .segment, .meeting-card--static { cursor: default; }
+  .meeting-card:hover:not(.meeting-card--static),
+  .action-card:hover,
+  .speaker-card:hover { border-color: var(--line-strong); }
+  .speaker-card.active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .meeting-card:focus-visible,
+  .speaker-card:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  .card-top {
+    display: flex;
+    gap: var(--space-2);
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  .card-id { min-width: 0; flex: 1 1 auto; text-align: left; }
+  .card-title {
+    margin: 0;
+    color: var(--text);
+    font-weight: 500;
+    overflow-wrap: anywhere;
+    line-height: var(--line-height-normal);
+  }
+  .card-subtitle {
+    margin: var(--space-1) 0 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  .pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    align-items: center;
+  }
+  .pill {
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-pill);
+    background: var(--canvas-raised);
+    border: 1px solid var(--line);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-mono);
+  }
+  .status-pill {
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-ui);
+    border: 1px solid var(--line);
+    color: var(--text-muted);
+    background: var(--canvas-raised);
+    text-transform: capitalize;
+  }
+  .status-pill.ready, .status-pill.completed, .status-pill.done,
+  .status-pill.review-accepted {
+    color: var(--success);
+    border-color: var(--success);
+    background: var(--success-soft, var(--accent-soft));
+  }
+  .status-pill.queued, .status-pill.scheduled, .status-pill.running,
+  .status-pill.pending, .status-pill.review-pending {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .status-pill.failed, .status-pill.dismissed, .status-pill.error {
+    color: var(--danger);
+    border-color: var(--danger);
+    background: var(--danger-soft, var(--canvas-raised));
+  }
+  .status-pill.disabled, .status-pill.unknown { color: var(--text-faint); }
+
+  .meta-line {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+    overflow-wrap: anywhere;
+  }
+  .meta-inline { margin-left: var(--space-3); }
+  .mono { font-family: var(--font-mono); color: var(--text-faint); }
+
+  .action-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-1);
+  }
+
+  /* === Detail card / form-grid =========================== */
+  .detail-card {
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .detail-card h4 {
+    margin: 0 0 var(--space-2);
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: var(--font-size-md);
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-3);
+  }
+  .field { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+  .field.full { grid-column: 1 / -1; }
+  .field label {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose);
+  }
+
+  /* === Speaker list / segment ============================ */
+  .speaker-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+  .speaker-name { margin: 0; color: var(--text); font-weight: 500; }
+  .speaker-meta {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+  .transcript-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .segment-top {
+    display: flex;
+    gap: var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+  .segment .speaker { color: var(--accent); font-weight: 500; }
+  .segment .time { color: var(--text-faint); font-family: var(--font-mono); }
+
+  /* === Empty + loading ==================================== */
+  .empty, .loading {
+    padding: var(--space-5);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-2);
+    color: var(--text-muted);
+    text-align: center;
+    background: var(--canvas);
+  }
+  .empty p, .loading { margin: 0; }
+  .empty a { color: var(--accent); text-decoration: underline; }
+
+  /* === Modal ============================================== */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: var(--space-5);
+    z-index: var(--z-modal, 100);
+    overflow-y: auto;
+  }
+  .modal-card {
+    width: min(960px, 100%);
+    background: var(--canvas-raised);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-3);
+    box-shadow: var(--elev-3);
+    max-height: calc(100vh - 2 * var(--space-5));
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-head {
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+  .modal-head h3 { margin: 0; font-family: var(--font-display); color: var(--text); }
+  .modal-head p { margin: var(--space-1) 0 0; color: var(--text-muted); font-size: var(--font-size-sm); }
+  .modal-close {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-xl);
+    cursor: pointer;
+    padding: 0 var(--space-2);
+    line-height: 1;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-close:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .modal-body {
+    padding: var(--space-5);
+    overflow-y: auto;
+  }
+  .detail-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+  .detail-side { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+  @media (max-width: 900px) {
+    .detail-grid { grid-template-columns: 1fr; }
+  }
+</style>

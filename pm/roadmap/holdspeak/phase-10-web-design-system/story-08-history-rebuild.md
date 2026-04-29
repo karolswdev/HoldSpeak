@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-10-03, HS-10-04, HS-10-05
 - **Unblocks:** HS-10-13
-- **Owner:** unassigned
+- **Owner:** karol
 
 ## Problem
 
@@ -43,15 +43,15 @@ an action item, or export).
 
 ## Acceptance Criteria
 
-- [ ] `/history` list renders cleanly with seeded data and with no
+- [x] `/history` list renders cleanly with seeded data and with no
   data (empty state).
-- [ ] Meeting detail renders all current sub-views (transcript, action
+- [x] Meeting detail renders all current sub-views (transcript, action
   items, artifacts, speakers, intel, exports) with no regressions in
   the data each view shows.
-- [ ] Settings panel uses the new component grammar; all settings still
+- [x] Settings panel uses the new component grammar; all settings still
   function (smoke test in evidence).
-- [ ] No inline `<style>` in the rendered output.
-- [ ] Existing `/history`/`/api/history/...` API contracts unchanged.
+- [x] No inline `<style>` in the rendered output.
+- [x] Existing `/history`/`/api/history/...` API contracts unchanged.
 
 ## Test Plan
 

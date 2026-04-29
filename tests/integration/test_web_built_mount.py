@@ -134,13 +134,14 @@ def test_identity_layer_assets_serve(test_client: TestClient) -> None:
 
 
 def test_legacy_routes_still_serve(test_client: TestClient) -> None:
-    # HS-10-06 migrated /, HS-10-07 migrated /activity. Markers updated
-    # accordingly. /history and /dictation are still legacy until
-    # HS-10-08 / HS-10-09.
+    # HS-10-06 migrated /, HS-10-07 migrated /activity, HS-10-08
+    # migrated /history (and /settings, which routes through it).
+    # /dictation is still legacy until HS-10-09.
     for path, marker in [
         ("/", "HoldSpeak"),
         ("/activity", "Local activity"),
-        ("/history", "HoldSpeak"),
+        ("/history", "HoldSpeak History"),
+        ("/settings", "HoldSpeak History"),
         ("/dictation", "HoldSpeak"),
         ("/docs/dictation-runtime", "Dictation Runtime"),
     ]:

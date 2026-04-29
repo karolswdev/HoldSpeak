@@ -1251,14 +1251,37 @@ class TestHistoryUiSmoke:
     """Smoke checks for the browser-facing history/settings UI."""
 
     def test_history_page_contains_control_plane_tabs_and_handlers(self, test_client):
+        """HS-10-08: /history rebuilt on AppLayout. Visible labels +
+        DOM markers must remain in the served HTML; the JS handler
+        identifiers + API endpoint strings now live in the bundled
+        hoisted chunk referenced from the HTML."""
+        import re
+
         response = test_client.get("/history")
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
 
         html = response.text
-        for label in ("Meetings", "Action Items", "Speakers", "Intel Queue", "Settings"):
+        for label in ("Meetings", "Action items", "Speakers", "Intel queue", "Settings"):
             assert label in html
-        assert "Deferred Plugin Jobs" in html
+        assert "Deferred plugin jobs" in html
+        # UI strings + Alpine bindings still rendered server-side.
+        for ui_string in (
+            "Mark needs review",
+            "Open work",
+            "Local Markdown",
+            "Local JSON",
+            "source_timestamp",  # Alpine x-show / x-text bindings reference this.
+            "selectedMeetingArtifacts",  # x-show binding on the artifacts panel.
+            "setActionReviewState",  # @click binding on Accept/Mark needs review.
+            "downloadSelectedMeetingExport",  # @click binding on export buttons.
+        ):
+            assert ui_string in html
+
+        # JS handler identifiers + endpoint strings in the bundled chunk.
+        match = re.search(r'src="(/_built/_astro/hoisted\.[^"]+\.js)"', html)
+        assert match, "expected hoisted history JS chunk reference"
+        js = test_client.get(match.group(1)).text
         for marker in (
             "saveSettings",
             "openSpeaker",
@@ -1267,8 +1290,9 @@ class TestHistoryUiSmoke:
             "loadPluginJobs",
             "retryPluginJob",
             "cancelPluginJob",
+            "actionReviewFilter",
         ):
-            assert marker in html
+            assert marker in js, f"missing JS marker: {marker}"
         for endpoint in (
             "/api/settings",
             "/api/speakers",
@@ -1277,27 +1301,18 @@ class TestHistoryUiSmoke:
             "/api/plugin-jobs",
             "/api/all-action-items",
         ):
-            assert endpoint in html
-        assert "source_timestamp" in html
-        assert "Source ${formatTimestamp" in html
-        assert "setActionReviewState" in html
-        assert "Mark Needs Review" in html
-        assert "actionReviewFilter" in html
-        assert "Open Work" in html
-        assert "No pending action items need review." in html
-        assert "selectedMeetingArtifacts" in html
-        assert "/api/meetings/${id}/artifacts" in html
-        assert "Open Meeting" in html
-        assert "downloadSelectedMeetingExport" in html
-        assert "/api/meetings/${encodeURIComponent(meetingId)}/export?format=${normalized}" in html
-        assert "Local Markdown" in html
-        assert "Local JSON" in html
+            assert endpoint in js, f"missing API endpoint in bundle: {endpoint}"
+        assert "/api/meetings/" in js
+        assert "/artifacts" in js
+        assert "/export?format=" in js
+        assert "No pending action items need review." in js
 
     def test_settings_route_serves_history_ui_shell(self, test_client):
         response = test_client.get("/settings")
         assert response.status_code == 200
         assert "HoldSpeak History" in response.text
-        assert "OpenAI-Compatible Base URL" in response.text
+        # Sentence-cased after HS-10-08 rebuild.
+        assert "OpenAI-compatible base URL" in response.text
 
 
 @pytest.mark.integration
