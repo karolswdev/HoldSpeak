@@ -305,20 +305,28 @@ import CommandPreview from "../components/CommandPreview.astro";
     outline-offset: var(--focus-outline-offset);
   }
 
-  /* === Meta banner ======================================= */
+  /* HS-12-02: meta-banner reads as a Workbench tool tray —
+   * white surface, hard black border, no rounding. The .warn
+   * / .error variants swap the border colour to the matching
+   * status ramp. */
   .meta-banner {
-    background: var(--canvas-raised);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-2);
+    background: var(--wb-white);
+    border: 1px solid var(--wb-black);
     padding: var(--space-2) var(--space-3);
     font-size: var(--font-size-sm);
-    color: var(--text-muted);
+    color: var(--text);
     font-family: var(--font-mono);
     line-height: var(--line-height-relaxed);
   }
-  .meta-banner strong { color: var(--text); font-family: var(--font-ui); }
-  .meta-banner.warn { border-color: var(--warn); color: var(--warn); }
-  .meta-banner.error { border-color: var(--danger); color: var(--danger); }
+  .meta-banner strong {
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: var(--font-size-md);
+    font-weight: 400;
+    letter-spacing: 0.04em;
+  }
+  .meta-banner.warn  { border-color: var(--warn);  background: var(--warn-soft);  color: var(--warn-strong); }
+  .meta-banner.error { border-color: var(--danger); background: var(--danger-soft); color: var(--danger-strong); }
 
   .project-root-row {
     display: flex;

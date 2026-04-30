@@ -936,26 +936,33 @@ import AppLayout from "../layouts/AppLayout.astro";
   }
 
   /* === Hero =============================================== */
+  /* HS-12-02: history hero is the page's overview pane — keep
+   * the white panel (Workbench window border) but tighten the
+   * cavernous padding, scale the h1 to a sensible display
+   * size, and brighten the eyebrow so it reads against white. */
   .hero {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
-    gap: var(--space-5);
-    padding: var(--space-6);
-    background: var(--canvas-raised);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-3);
+    gap: var(--space-4);
+    padding: var(--space-4);
+    background: var(--wb-white);
+    border: 1px solid var(--wb-black);
   }
   .hero h1 {
     margin: var(--space-1) 0 var(--space-2);
     font-family: var(--font-display);
+    font-size: var(--font-size-2xl);
+    font-weight: 400;
+    letter-spacing: 0.02em;
     color: var(--text);
   }
   .eyebrow {
     margin: 0;
-    color: var(--text-faint);
+    color: var(--accent-strong);
     font-size: var(--font-size-xs);
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: var(--letter-spacing-loose);
+    letter-spacing: 0.06em;
   }
   .hero-copy {
     margin: 0;
@@ -977,9 +984,8 @@ import AppLayout from "../layouts/AppLayout.astro";
   }
   .metric {
     padding: var(--space-3);
-    background: var(--canvas);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-2);
+    background: var(--wb-gray-7);
+    border: 1px solid var(--wb-black);
   }
   .metric-label {
     color: var(--text-muted);

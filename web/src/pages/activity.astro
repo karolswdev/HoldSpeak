@@ -318,7 +318,8 @@ import CommandPreview from "../components/CommandPreview.astro";
     display: flex; flex-wrap: wrap; gap: var(--space-2);
   }
 
-  /* === Buttons (mirrors components/Button.astro) === */
+  /* === Buttons (Workbench gadgets — flat with hard 1px black
+   * border; mirrors the same scoped CSS now in /history). */
   .btn {
     display: inline-flex; align-items: center; justify-content: center;
     gap: var(--space-2);
@@ -326,36 +327,48 @@ import CommandPreview from "../components/CommandPreview.astro";
     font-family: var(--font-ui); font-weight: 500;
     font-size: var(--font-size-sm); line-height: 1;
     letter-spacing: var(--letter-spacing-loose);
-    border: 1px solid transparent; border-radius: var(--radius-2);
+    background: var(--wb-white);
+    border: 1px solid var(--wb-black);
+    color: var(--text);
     cursor: pointer;
     transition: background var(--duration-short) var(--ease-standard),
-                border-color var(--duration-short) var(--ease-standard);
+                color var(--duration-short) var(--ease-standard);
   }
+  .btn:hover:not(:disabled) { background: var(--wb-gray-6); }
   .btn:focus-visible {
     outline: var(--focus-outline-width) solid var(--accent);
     outline-offset: var(--focus-outline-offset);
   }
-  .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .btn:disabled {
+    background: var(--disabled-bg);
+    color: var(--disabled-fg);
+    border-color: var(--disabled-border);
+    cursor: not-allowed;
+  }
   .btn--primary, .btn.primary {
-    background: var(--accent); color: var(--accent-on); border-color: var(--accent);
+    background: var(--accent); color: var(--accent-on); border-color: var(--wb-black);
   }
   .btn--primary:not(:disabled):hover, .btn.primary:not(:disabled):hover {
-    background: var(--accent-strong); border-color: var(--accent-strong);
+    background: var(--accent-strong);
   }
   .btn--secondary {
-    background: var(--canvas-raised); color: var(--text); border-color: var(--line-strong);
+    background: var(--wb-white); color: var(--text); border-color: var(--wb-black);
   }
-  .btn--secondary:not(:disabled):hover { background: var(--canvas-elevated); border-color: var(--line-emphasis); }
+  .btn--secondary:not(:disabled):hover { background: var(--wb-gray-6); }
   .btn--ghost {
-    background: transparent; color: var(--text-muted); border-color: transparent;
+    background: transparent; color: inherit; border-color: transparent;
   }
-  .btn--ghost:not(:disabled):hover { color: var(--text); background: var(--accent-soft); }
-  .btn.danger {
-    color: var(--danger); border-color: transparent;
-    background: var(--danger-soft);
+  .btn--ghost:not(:disabled):hover { border-color: currentColor; background: transparent; }
+  /* Destructive: clearly red, full chrome (not ghost-soft) so the
+   * action reads as the destructive thing it is. */
+  .btn.danger, .btn--ghost.danger {
+    color: var(--wb-white);
+    background: var(--danger);
+    border-color: var(--wb-black);
   }
-  .btn.danger:not(:disabled):hover {
-    color: var(--canvas); background: var(--danger); border-color: var(--danger);
+  .btn.danger:not(:disabled):hover,
+  .btn--ghost.danger:not(:disabled):hover {
+    background: var(--danger-strong);
   }
 
   /* === Empty / error / message text === */
@@ -382,17 +395,22 @@ import CommandPreview from "../components/CommandPreview.astro";
   }
 
   /* === Connector cards (HS-9-12) === */
+  /* HS-12-02: connector cards as Workbench tool windows. The
+   * is-disabled state desaturates the surface rather than
+   * lowering opacity (more legible). has-error swaps the top
+   * border to the danger ramp so a glance picks it out. */
   .connector-card {
     padding: var(--space-3);
-    background: var(--canvas);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-2);
+    background: var(--wb-white);
+    border: 1px solid var(--wb-black);
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
   }
-  .connector-card.is-disabled { opacity: 0.85; }
-  .connector-card.has-error { border-color: var(--danger); }
+  .connector-card.is-disabled { background: var(--wb-gray-7); }
+  .connector-card.has-error {
+    border-top: 3px solid var(--danger);
+  }
   .connector-head {
     display: flex; align-items: center; flex-wrap: wrap;
     gap: var(--space-2); justify-content: space-between;
@@ -416,11 +434,13 @@ import CommandPreview from "../components/CommandPreview.astro";
   }
   .connector-body { color: var(--text-muted); font-size: var(--font-size-sm); margin: 0; line-height: var(--line-height-relaxed); }
   .connector-error {
-    color: var(--danger); font-size: var(--font-size-sm);
+    color: var(--danger-strong);
+    font-size: var(--font-size-sm);
     background: var(--danger-soft);
+    border: 1px solid var(--danger);
     padding: var(--space-2) var(--space-3);
-    border-radius: var(--radius-2);
-    margin: 0; word-break: break-word;
+    margin: 0;
+    word-break: break-word;
   }
   .connector-actions {
     display: flex; flex-wrap: wrap; gap: var(--space-2);
