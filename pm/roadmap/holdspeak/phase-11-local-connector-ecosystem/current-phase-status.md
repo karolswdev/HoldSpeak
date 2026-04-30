@@ -1,6 +1,6 @@
 # Phase 11 - Local Connector Ecosystem
 
-**Last updated:** 2026-04-29 (HS-11-01 connector manifest + SDK shape shipped).
+**Last updated:** 2026-04-29 (HS-11-01 shipped; phase paused while phase 12 lands the Workbench-evoking voice).
 
 ## Goal
 
