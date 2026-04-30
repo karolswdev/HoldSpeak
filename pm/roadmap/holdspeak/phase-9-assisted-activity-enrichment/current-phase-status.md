@@ -1,6 +1,6 @@
 # Phase 9 - Assisted Activity Enrichment
 
-**Last updated:** 2026-04-29 (HS-9-12 connector controls + output deletion shipped).
+**Last updated:** 2026-04-29 (HS-9-13 connector dry-run harness shipped).
 
 ## Goal
 
@@ -43,7 +43,7 @@ metadata without hidden collection or external writes.
 | HS-9-10 | Meeting candidate recording workflow | done | [story-10-candidate-recording-workflow.md](./story-10-candidate-recording-workflow.md) | [evidence-story-10.md](./evidence-story-10.md) |
 | HS-9-11 | Activity dashboard polish | done | [story-11-activity-dashboard-polish.md](./story-11-activity-dashboard-polish.md) | [evidence-story-11.md](./evidence-story-11.md) |
 | HS-9-12 | Connector controls and output deletion | done | [story-12-connector-controls-output-deletion.md](./story-12-connector-controls-output-deletion.md) | [evidence-story-12.md](./evidence-story-12.md) |
-| HS-9-13 | Connector dry-run harness | backlog | [story-13-connector-dry-run-harness.md](./story-13-connector-dry-run-harness.md) | pending |
+| HS-9-13 | Connector dry-run harness | done | [story-13-connector-dry-run-harness.md](./story-13-connector-dry-run-harness.md) | [evidence-story-13.md](./evidence-story-13.md) |
 
 ## Where We Are
 
@@ -119,8 +119,23 @@ candidates" actions gated by `holdspeakConfirm`. Five new
 integration tests lock down the registry surface, scoped clearing,
 and the 404/400 error paths.
 
-Up next: HS-9-13 (connector dry-run harness), HS-9-03 (Firefox
-companion extension), HS-9-06 (phase exit DoD).
+HS-9-13 adds the shared dry-run harness:
+`holdspeak/activity_connector_preview.py` exposes a single
+`dry_run(db, connector_id, *, limit) → ConnectorDryRunResult`
+that every known connector flows through, returning the same
+payload shape (`commands`, `proposed_annotations`,
+`proposed_candidates`, `warnings`, `permission_notes`,
+`truncated`). New `GET
+/api/activity/enrichment/connectors/{id}/dry-run` endpoint serves
+it. `/activity` connector cards gain a "Dry-run" button that
+expands an inline preview block — commands flow through the
+existing `CommandPreview` markup so copy works out of the box.
+Six unit tests + three integration tests prove the payload is
+mutation-free and uniform across connectors; the empty-ledger
+case warns rather than errors.
+
+Up next: HS-9-03 (Firefox companion extension), HS-9-06 (phase
+exit DoD).
 
 ## Source Design
 

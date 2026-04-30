@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-9-12
 - **Unblocks:** safe connector previews before mutation
 - **Owner:** unassigned
@@ -29,11 +29,11 @@ rules.
 
 ## Acceptance Criteria
 
-- [ ] Dry-run API returns structured preview results.
-- [ ] Dry-run results include warnings and permission notes.
-- [ ] Dry-run never writes records, annotations, or candidates.
-- [ ] Connectors can reuse the same preview response shape.
-- [ ] Tests prove DB state is unchanged after dry-run.
+- [x] Dry-run API returns structured preview results.
+- [x] Dry-run results include warnings and permission notes.
+- [x] Dry-run never writes records, annotations, or candidates.
+- [x] Connectors can reuse the same preview response shape.
+- [x] Tests prove DB state is unchanged after dry-run.
 
 ## Test Plan
 

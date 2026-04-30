@@ -609,6 +609,92 @@ def test_clear_connector_unknown_connector_returns_404(test_client: TestClient) 
     assert response.status_code == 404
 
 
+def test_connector_dry_run_returns_uniform_shape_per_connector(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+) -> None:
+    """HS-9-13: every connector returns the same dry-run payload shape."""
+    activity_db.upsert_activity_record(
+        source_browser="safari",
+        url="https://github.com/anthropic/holdspeak/pull/7",
+        title="PR 7",
+        domain="github.com",
+        last_seen_at=datetime(2026, 4, 28, 9, 0),
+        entity_type="github_pull_request",
+        entity_id="anthropic/holdspeak#7",
+    )
+
+    for connector_id in ("gh", "jira", "calendar_activity"):
+        response = test_client.get(
+            f"/api/activity/enrichment/connectors/{connector_id}/dry-run"
+        )
+        assert response.status_code == 200, response.text
+        payload = response.json()["dry_run"]
+        assert payload["connector_id"] == connector_id
+        for key in (
+            "kind",
+            "capabilities",
+            "enabled",
+            "cli_required",
+            "cli_available",
+            "commands",
+            "proposed_annotations",
+            "proposed_candidates",
+            "warnings",
+            "permission_notes",
+            "truncated",
+        ):
+            assert key in payload, f"missing key {key} for {connector_id}"
+
+
+def test_connector_dry_run_does_not_mutate_db(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+) -> None:
+    """HS-9-13: dry-run is mutation-free — the DB row counts for
+    annotations and candidates are unchanged after dry-running every
+    connector."""
+    activity_db.upsert_activity_record(
+        source_browser="safari",
+        url="https://github.com/anthropic/holdspeak/pull/7",
+        title="PR 7",
+        domain="github.com",
+        last_seen_at=datetime(2026, 4, 28, 9, 0),
+        entity_type="github_pull_request",
+        entity_id="anthropic/holdspeak#7",
+    )
+    activity_db.upsert_activity_record(
+        source_browser="safari",
+        url="https://calendar.google.com/calendar/u/0/r/eventedit/abc?starts=2026-05-01T10:00",
+        title="2026-05-01 10:00-11:00 Architecture sync",
+        domain="calendar.google.com",
+        last_seen_at=datetime(2026, 4, 28, 9, 0),
+    )
+
+    annotations_before = activity_db.list_activity_annotations(limit=1000)
+    candidates_before = activity_db.list_activity_meeting_candidates()
+
+    for connector_id in ("gh", "jira", "calendar_activity"):
+        response = test_client.get(
+            f"/api/activity/enrichment/connectors/{connector_id}/dry-run"
+        )
+        assert response.status_code == 200
+
+    annotations_after = activity_db.list_activity_annotations(limit=1000)
+    candidates_after = activity_db.list_activity_meeting_candidates()
+    assert [a.id for a in annotations_after] == [a.id for a in annotations_before]
+    assert [c.id for c in candidates_after] == [c.id for c in candidates_before]
+
+
+def test_connector_dry_run_unknown_connector_returns_404(
+    test_client: TestClient,
+) -> None:
+    response = test_client.get(
+        "/api/activity/enrichment/connectors/nope/dry-run"
+    )
+    assert response.status_code == 404
+
+
 def test_clear_connector_capability_mismatch_returns_400(
     test_client: TestClient,
 ) -> None:

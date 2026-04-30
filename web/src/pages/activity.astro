@@ -17,6 +17,7 @@
 // component-scoped CSS. The page consumes tokens directly.
 
 import AppLayout from "../layouts/AppLayout.astro";
+import CommandPreview from "../components/CommandPreview.astro";
 ---
 
 <AppLayout title="HoldSpeak Activity" current="activity">
@@ -160,6 +161,15 @@ import AppLayout from "../layouts/AppLayout.astro";
         </section>
       </div>
     </div>
+  </div>
+
+  {/* HS-9-13: hidden CommandPreview anchor — bundles the scoped
+      .cmd CSS + the document-wide [data-cmd-copy] delegator with this
+      page so the dynamically-rendered cmd figures inside each
+      connector card's dry-run output get the same copy behaviour as
+      everywhere else. */}
+  <div hidden aria-hidden="true">
+    <CommandPreview command="gh pr view 1" />
   </div>
 
   <script>
@@ -399,6 +409,49 @@ import AppLayout from "../layouts/AppLayout.astro";
   }
   .connector-actions {
     display: flex; flex-wrap: wrap; gap: var(--space-2);
+  }
+
+  /* === Dry-run output (HS-9-13) === */
+  .dry-run-output {
+    display: flex; flex-direction: column; gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--canvas-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+  }
+  .dry-section { display: flex; flex-direction: column; gap: var(--space-2); }
+  .dry-section-title {
+    margin: 0; font-size: var(--font-size-sm); font-weight: 600;
+    color: var(--text-muted); letter-spacing: var(--letter-spacing-loose);
+    text-transform: uppercase;
+  }
+  .dry-list {
+    list-style: none; margin: 0; padding: 0;
+    display: flex; flex-direction: column; gap: var(--space-1);
+  }
+  .dry-list-item {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: var(--space-2) var(--space-3);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+  }
+  .dry-list-title { color: var(--text); font-weight: 500; overflow-wrap: anywhere; }
+  .dry-list-meta {
+    color: var(--text-muted); font-size: var(--font-size-xs);
+    overflow-wrap: anywhere;
+  }
+  .dry-note {
+    margin: 0; padding: var(--space-2) var(--space-3);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    color: var(--text-muted); font-size: var(--font-size-sm);
+  }
+  .dry-note--warn {
+    background: var(--warn-soft);
+    border-color: transparent;
+    color: var(--warn);
   }
 
   .record {

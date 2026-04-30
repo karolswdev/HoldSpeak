@@ -297,6 +297,7 @@
           if (caps.includes("candidates")) {
             actions.push(`<button class="btn btn--ghost btn--sm danger" type="button" data-clear-candidates="${escapeHtml(c.id)}">Clear candidates</button>`);
           }
+          const dryRunBtn = `<button class="btn btn--secondary btn--sm" type="button" data-dry-run="${escapeHtml(c.id)}">Dry-run</button>`;
           return `
             <article class="connector-card${enabled ? "" : " is-disabled"}${c.last_error ? " has-error" : ""}" data-connector-id="${escapeHtml(c.id)}">
               <div class="connector-head">
@@ -307,12 +308,14 @@
                   ${cliPill}
                 </div>
                 <div class="connector-actions">
+                  ${dryRunBtn}
                   <button class="btn ${enabled ? "btn--ghost" : "btn--secondary"} btn--sm" type="button" data-toggle-connector="${escapeHtml(c.id)}">${enabled ? "Disable" : "Enable"}</button>
                 </div>
               </div>
               ${c.description ? `<p class="connector-body">${escapeHtml(c.description)}</p>` : ""}
               <p class="connector-meta">Capabilities: ${escapeHtml(capabilities)} · Last run: ${escapeHtml(lastRun)}${cliPath ? ` · CLI: <code>${escapeHtml(cliPath)}</code>` : ""}</p>
               ${errorBlock}
+              <div class="dry-run-output" data-dry-run-output="${escapeHtml(c.id)}" hidden></div>
               ${actions.length ? `<div class="connector-actions">${actions.join("")}</div>` : ""}
             </article>
           `;
@@ -642,10 +645,75 @@
         });
       });
 
+      function renderDryRun(connectorId, payload) {
+        const out = document.querySelector(`[data-dry-run-output="${connectorId}"]`);
+        if (!out) return;
+        const tone = payload.permission_notes && payload.permission_notes.length
+          ? "warn"
+          : "neutral";
+        const cmds = (payload.commands || []).map((cmd) => {
+          const text = (cmd.command || []).join(" ");
+          return `
+            <figure class="cmd cmd--${tone}" aria-label="Planned command">
+              <figcaption class="cmd-caption">${escapeHtml(cmd.entity_id || "")} · ${escapeHtml(cmd.annotation_type || "")}</figcaption>
+              <div class="cmd-frame">
+                <pre class="cmd-pre"><code class="cmd-code">${escapeHtml(text)}</code></pre>
+                <button type="button" class="cmd-copy" data-cmd-copy data-command="${escapeHtml(text)}" aria-label="Copy command to clipboard">
+                  <span class="cmd-copy-label" data-cmd-copy-label>Copy</span>
+                </button>
+              </div>
+            </figure>
+          `;
+        }).join("");
+        const candidates = (payload.proposed_candidates || []).map((cand) => `
+          <li class="dry-list-item">
+            <span class="dry-list-title">${escapeHtml(cand.title || "(untitled)")}</span>
+            <span class="dry-list-meta">${escapeHtml(cand.starts_at || "no start time")}${cand.meeting_url ? ` · ${escapeHtml(cand.meeting_url)}` : ""}</span>
+          </li>
+        `).join("");
+        const annotations = (payload.proposed_annotations || []).map((ann) => `
+          <li class="dry-list-item">
+            <span class="dry-list-title">${escapeHtml(ann.title || ann.annotation_type || "(annotation)")}</span>
+            <span class="dry-list-meta">activity #${escapeHtml(ann.activity_record_id ?? "—")}${ann.entity_id ? ` · ${escapeHtml(ann.entity_id)}` : ""}</span>
+          </li>
+        `).join("");
+        const notes = (payload.permission_notes || []).map((note) => `
+          <p class="dry-note dry-note--warn">${escapeHtml(note)}</p>
+        `).join("");
+        const warns = (payload.warnings || []).map((w) => `
+          <p class="dry-note">${escapeHtml(w)}</p>
+        `).join("");
+        out.hidden = false;
+        out.innerHTML = `
+          ${notes}
+          ${warns}
+          ${cmds ? `<div class="dry-section"><h4 class="dry-section-title">Commands (${payload.commands.length})</h4>${cmds}</div>` : ""}
+          ${annotations ? `<div class="dry-section"><h4 class="dry-section-title">Proposed annotations (${payload.proposed_annotations.length})</h4><ul class="dry-list">${annotations}</ul></div>` : ""}
+          ${candidates ? `<div class="dry-section"><h4 class="dry-section-title">Proposed candidates (${payload.proposed_candidates.length})</h4><ul class="dry-list">${candidates}</ul></div>` : ""}
+          ${payload.truncated ? `<p class="dry-note">Output truncated for size; re-run with a smaller limit if needed.</p>` : ""}
+          ${(!cmds && !annotations && !candidates && !notes && !warns) ? `<p class="dry-note">Nothing to preview yet — visit some relevant pages and refresh activity first.</p>` : ""}
+        `;
+      }
+
       $("connectors").addEventListener("click", async (event) => {
+        const dryRunBtn = event.target.closest("[data-dry-run]");
         const toggle = event.target.closest("[data-toggle-connector]");
         const clearAnn = event.target.closest("[data-clear-annotations]");
         const clearCand = event.target.closest("[data-clear-candidates]");
+
+        if (dryRunBtn) {
+          const id = dryRunBtn.getAttribute("data-dry-run");
+          await withButtonBusy(dryRunBtn, async () => {
+            try {
+              const payload = await request(`/api/activity/enrichment/connectors/${encodeURIComponent(id)}/dry-run?limit=25`);
+              renderDryRun(id, payload.dry_run);
+              setPanelMessage("connectors-message", "");
+            } catch (error) {
+              setPanelMessage("connectors-message", error.message, true);
+            }
+          });
+          return;
+        }
 
         if (toggle) {
           const id = toggle.getAttribute("data-toggle-connector");

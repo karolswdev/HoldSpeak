@@ -1374,6 +1374,32 @@ class MeetingWebServer:
                 log.error(f"Failed to update activity enrichment connector: {e}")
                 return JSONResponse({"error": str(e)}, status_code=500)
 
+        @app.get("/api/activity/enrichment/connectors/{connector_id}/dry-run")
+        async def api_connector_dry_run(connector_id: str, limit: int = 25) -> Any:
+            from .activity_connector_preview import (
+                MAX_LIMIT,
+                UnknownConnectorError,
+                dry_run as connector_dry_run,
+            )
+            from .db import get_database
+
+            try:
+                clean_limit = max(1, min(int(limit), MAX_LIMIT))
+            except (TypeError, ValueError):
+                clean_limit = 25
+            try:
+                db = get_database()
+                result = connector_dry_run(db, connector_id, limit=clean_limit)
+                return JSONResponse({"dry_run": result.to_payload()})
+            except UnknownConnectorError:
+                return JSONResponse(
+                    {"error": f"Unknown activity enrichment connector: {connector_id}"},
+                    status_code=404,
+                )
+            except Exception as e:
+                log.error(f"Failed to dry-run activity enrichment connector: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
         @app.delete("/api/activity/enrichment/connectors/{connector_id}/annotations")
         async def api_clear_activity_enrichment_annotations(connector_id: str) -> Any:
             from .activity_connectors import get_descriptor
