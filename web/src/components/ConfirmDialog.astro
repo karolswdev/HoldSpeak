@@ -72,18 +72,34 @@
     let pending = null;
     let returnFocusTo = null;
 
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
     function settle(value) {
       if (!pending) return;
       const resolve = pending;
       pending = null;
-      try {
-        if (dialog.open) dialog.close();
-      } catch (_) { /* no-op */ }
-      if (returnFocusTo && typeof returnFocusTo.focus === "function") {
-        try { returnFocusTo.focus(); } catch (_) { /* no-op */ }
+
+      const finalize = () => {
+        try {
+          if (dialog.open) dialog.close();
+        } catch (_) { /* no-op */ }
+        dialog.classList.remove("is-closing");
+        if (returnFocusTo && typeof returnFocusTo.focus === "function") {
+          try { returnFocusTo.focus(); } catch (_) { /* no-op */ }
+        }
+        returnFocusTo = null;
+        resolve(value);
+      };
+
+      if (reduceMotion.matches || !dialog.open) {
+        finalize();
+        return;
       }
-      returnFocusTo = null;
-      resolve(value);
+
+      // Trigger the close animation, then close the dialog. 120ms
+      // matches --duration-short.
+      dialog.classList.add("is-closing");
+      window.setTimeout(finalize, 120);
     }
 
     cancelBtn.addEventListener("click", () => settle(false));
@@ -171,13 +187,37 @@
 
   @media (prefers-reduced-motion: no-preference) {
     .confirm-dialog[open] {
-      animation: confirm-dialog-in var(--duration-short, 160ms) var(--ease-standard, ease-out);
+      animation: confirm-dialog-in var(--duration-short) var(--ease-standard);
+    }
+    .confirm-dialog[open]::backdrop {
+      animation: confirm-backdrop-in var(--duration-short) var(--ease-standard);
+    }
+    .confirm-dialog.is-closing {
+      animation: confirm-dialog-out var(--duration-short) var(--ease-standard) forwards;
+    }
+    .confirm-dialog.is-closing::backdrop {
+      animation: confirm-backdrop-out var(--duration-short) var(--ease-standard) forwards;
     }
   }
 
   @keyframes confirm-dialog-in {
     from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes confirm-dialog-out {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-4px); }
+  }
+
+  @keyframes confirm-backdrop-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  @keyframes confirm-backdrop-out {
+    from { opacity: 1; }
+    to   { opacity: 0; }
   }
 
   .confirm-dialog__form {

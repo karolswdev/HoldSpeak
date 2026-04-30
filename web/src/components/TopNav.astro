@@ -159,8 +159,15 @@ const routes: { slug: Route; label: string; href: string }[] = [
 
   .topnav-link.is-current {
     color: var(--text);
-    background: var(--accent-soft);
-    box-shadow: inset 0 -2px 0 var(--accent);
+    background: transparent;
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+  }
+
+  .topnav-link.is-current:hover {
+    background: transparent;
   }
 
   .topnav-tail {

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-10-06, HS-10-07, HS-10-08, HS-10-09, HS-10-10, HS-10-11
 - **Unblocks:** HS-10-13
 - **Owner:** unassigned
@@ -42,14 +42,14 @@ visible everywhere, and contrast holds across every state.
 
 ## Acceptance Criteria
 
-- [ ] Every micro-transition listed above exists and uses motion
+- [x] Every micro-transition listed above exists and uses motion
   tokens.
-- [ ] `prefers-reduced-motion: reduce` flattens all transitions to 0ms
+- [x] `prefers-reduced-motion: reduce` flattens all transitions to 0ms
   (verified per route).
-- [ ] Axe-core run on each route shows zero serious or critical
+- [x] Axe-core run on each route shows zero serious or critical
   violations, or each remaining violation has a written justification
   in evidence.
-- [ ] Keyboard-only walkthrough completes the four canonical workflows
+- [x] Keyboard-only walkthrough completes the four canonical workflows
   (start meeting, preview/run gh enrichment, review history meeting,
   edit a dictation block) without dead-ends.
 

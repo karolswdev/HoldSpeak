@@ -61,3 +61,24 @@ pre {
 [x-cloak] {
   display: none !important;
 }
+
+/* HS-10-12: live-status pulse. A single keyframe animation applied
+ * to a pill's dot (NOT the box) signals an in-progress state —
+ * `recording`, `stopping`, `analyzing`, `connecting`. Tone changes
+ * still flip the colour; only the dot animates so the surrounding
+ * text never moves.
+ *
+ * Carried by `.is-live` on a `.pill-dot` or `.conn-dot`. The global
+ * `prefers-reduced-motion: reduce` block in tokens.css already
+ * forces animation-duration to 0ms, so this pulse stops cleanly
+ * without per-rule overrides. */
+@keyframes hs-pulse {
+  0%   { opacity: 1;   transform: scale(1); }
+  50%  { opacity: 0.4; transform: scale(0.78); }
+  100% { opacity: 1;   transform: scale(1); }
+}
+
+.pill-dot.is-live,
+.conn-dot.is-live {
+  animation: hs-pulse 1.6s var(--ease-standard) infinite;
+}

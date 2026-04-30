@@ -1,6 +1,6 @@
 # Phase 10 - Web Design System & Character Pass
 
-**Last updated:** 2026-04-29 (HS-10-11 / destructive-action confirmation pattern shipped).
+**Last updated:** 2026-04-29 (HS-10-12 / motion + a11y pass).
 
 ## Goal
 
@@ -59,7 +59,7 @@ no identity layer that says "this is HoldSpeak."
 | HS-10-09 | `/dictation` rebuild | done | [story-09-dictation-rebuild.md](./story-09-dictation-rebuild.md) | [evidence-story-09.md](./evidence-story-09.md) |
 | HS-10-10 | `CommandPreview` component | done | [story-10-command-preview.md](./story-10-command-preview.md) | [evidence-story-10.md](./evidence-story-10.md) |
 | HS-10-11 | Destructive-action confirmation pattern | done | [story-11-destructive-confirmation.md](./story-11-destructive-confirmation.md) | [evidence-story-11.md](./evidence-story-11.md) |
-| HS-10-12 | Motion + accessibility pass | backlog | [story-12-motion-a11y.md](./story-12-motion-a11y.md) | pending |
+| HS-10-12 | Motion + accessibility pass | done | [story-12-motion-a11y.md](./story-12-motion-a11y.md) | [evidence-story-12.md](./evidence-story-12.md) |
 | HS-10-13 | Designer handoff refresh + phase exit | backlog | [story-13-handoff-refresh-dod.md](./story-13-handoff-refresh-dod.md) | pending |
 
 ## Where We Are
@@ -97,8 +97,17 @@ HS-10-11 evidence file. `grep -rn 'confirm(' web/src/` returns no
 matches; the only `window.confirm` call left in the legacy
 `dashboard-app.js` is gone.
 
-Up next: HS-10-12 (motion + a11y pass), HS-10-13 (designer handoff
-refresh + phase exit).
+HS-10-12 closes the polish gap: a global `hs-pulse` keyframe + an
+`.is-live` modifier animate the *dot* on recording / stopping /
+analyzing / connecting pills, the hero state-change eases via
+motion tokens, the ConfirmDialog gains a 120 ms close animation
+that matches its open animation, and every decorative inline SVG
+in `web/src/` carries `aria-hidden="true"`. Reduced-motion users
+collapse all of it via the existing `tokens.css:144` global rule.
+A keyboard-only walkthrough of the four canonical workflows
+completes without dead-ends.
+
+Up next: HS-10-13 (designer handoff refresh + phase exit).
 
 ## Source Design
 
