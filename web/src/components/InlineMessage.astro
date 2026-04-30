@@ -45,12 +45,14 @@ const classes = [
 </div>
 
 <style>
+  /* HS-12-02 (slice 6): Workbench notice bar — hard 1px border
+   * in the tone's deep variant, soft tint for fill. Each tone is
+   * a distinct hue thanks to the slice-3 palette expansion. */
   .inline-message {
     display: flex;
     align-items: flex-start;
     gap: var(--space-3);
-    padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-2);
+    padding: var(--space-2) var(--space-3);
     border: 1px solid transparent;
     font-size: var(--font-size-sm);
     line-height: var(--line-height-normal);
@@ -87,22 +89,26 @@ const classes = [
   }
 
   .inline-message--info {
-    color: var(--accent);
-    background: var(--accent-soft);
+    color: var(--info-strong);
+    background: var(--info-soft);
+    border-color: var(--info);
   }
 
   .inline-message--success {
-    color: var(--success);
+    color: var(--success-strong);
     background: var(--success-soft);
+    border-color: var(--success);
   }
 
   .inline-message--warn {
-    color: var(--warn);
+    color: var(--warn-strong);
     background: var(--warn-soft);
+    border-color: var(--warn);
   }
 
   .inline-message--danger {
-    color: var(--danger);
+    color: var(--danger-strong);
     background: var(--danger-soft);
+    border-color: var(--danger);
   }
 </style>

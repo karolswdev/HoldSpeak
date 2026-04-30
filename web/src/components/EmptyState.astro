@@ -36,23 +36,25 @@ const hasAction = Astro.slots.has("action");
     color: var(--text-muted);
   }
 
+  /* HS-12-02 (slice 6): icon sits in a Workbench-style inset
+   * tile — pale grey-7 fill, hard black border. */
   .empty-icon {
     width: var(--space-7);
     height: var(--space-7);
     display: grid;
     place-items: center;
     color: var(--text-muted);
-    background: var(--canvas);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-3);
+    background: var(--wb-gray-7);
+    border: 1px solid var(--wb-black);
   }
 
   .empty-title {
     margin: 0;
     color: var(--text);
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    letter-spacing: var(--letter-spacing-tight);
+    font-family: var(--font-display);
+    font-size: var(--font-size-xl);
+    font-weight: 400;
+    letter-spacing: 0.02em;
   }
 
   .empty-description {
