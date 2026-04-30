@@ -1,6 +1,6 @@
 # Phase 12 - Workbench Voice
 
-**Last updated:** 2026-04-29 (HS-12-01 token map + VT323 shipped).
+**Last updated:** 2026-04-30 (HS-12-02 + HS-12-03 done; HS-12-04 next).
 
 ## Goal
 
@@ -53,8 +53,8 @@ We want to **skip** the parts of Workbench that fight dense data:
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-12-01 | Workbench token map + pixel UI font | done | [story-01-workbench-tokens.md](./story-01-workbench-tokens.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-12-02 | Component voice pass | backlog | [story-02-component-voice.md](./story-02-component-voice.md) | pending |
-| HS-12-03 | Per-route audit + dashboard fixes | backlog | [story-03-route-audit.md](./story-03-route-audit.md) | pending |
+| HS-12-02 | Component voice pass | done | [story-02-component-voice.md](./story-02-component-voice.md) | [evidence-story-02.md](./evidence-story-02.md) |
+| HS-12-03 | Per-route audit + dashboard fixes | done | [story-03-route-audit.md](./story-03-route-audit.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-12-04 | Designer handoff refresh + phase exit | backlog | [story-04-handoff-dod.md](./story-04-handoff-dod.md) | pending |
 
 ## Where We Are
@@ -75,10 +75,20 @@ copy, primary/secondary/danger buttons, and the runtime
 dashboard hero all read unmistakably Workbench in the
 post-replatform screenshots.
 
-Up next: HS-12-02 (component voice pass — Button, Pill, Panel,
-TopNav, ConfirmDialog, CommandPreview), HS-12-03 (per-route
-audit + dashboard fixes), HS-12-04 (designer handoff refresh +
-phase exit).
+HS-12-02 closed across six review-driven slices. The user
+called direction shifts ("font is too greedy", "4 colors is
+regarded", "gray-on-gray is illegible") and each became the
+next slice's brief — the result is a meaningfully better
+design system than the slice before it.
+
+HS-12-03 closed alongside: the dashboard hero now hides the
+"HoldSpeak" wordmark fallback at idle (TopNav already shows
+it), the toast layer dedupes identical messages, hero copy
+trimmed of the redundant "...locally on this machine"
+sentence, and the "No tags yet" placeholder removed. Idle
+state shows one affordance.
+
+Up next: HS-12-04 (designer handoff refresh + phase exit).
 
 ## Source Design
 

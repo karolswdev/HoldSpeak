@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-29 (HS-12-01 Workbench token map + VT323 shipped).
+**Last updated:** 2026-04-30 (HS-12-02 + HS-12-03 done — Workbench voice + dashboard polish landed).
 **Current phase:** [phase-12-workbench-voice](./phase-12-workbench-voice/) — Workbench-evoking voice replatform: palette, pixel UI font, radius-0, hard borders, dashboard fixes. Presentation-only.
 **Status:** in-progress.
 

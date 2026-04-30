@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 12
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-12-01
 - **Unblocks:** HS-12-03
 
@@ -44,15 +44,15 @@ bevel.
 
 ## Acceptance Criteria
 
-- [ ] Every component has zero rounded corners (or a documented
+- [x] Every component has zero rounded corners (or a documented
   exception).
-- [ ] No `box-shadow` values referencing legacy `--elev-*`
+- [x] No `box-shadow` values referencing legacy `--elev-*`
   tokens remain in component CSS.
-- [ ] `/design/components` gallery renders every component +
+- [x] `/design/components` gallery renders every component +
   state legibly.
-- [ ] The destructive-action red still meets AA contrast against
+- [x] The destructive-action red still meets AA contrast against
   the new white surface.
-- [ ] Pill tones stay distinguishable when stacked in a Toolbar.
+- [x] Pill tones stay distinguishable when stacked in a Toolbar.
 
 ## Test Plan
 

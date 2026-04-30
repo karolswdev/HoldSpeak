@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 12
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-12-02
 - **Unblocks:** HS-12-04
 
@@ -42,14 +42,14 @@ that surfaced during phase-10 review and were never addressed.
 
 ## Acceptance Criteria
 
-- [ ] Hero wordmark is right-sized; brand never appears twice on
+- [x] Hero wordmark is right-sized; brand never appears twice on
   the same screen above the fold.
-- [ ] Toast layer dedupes consecutive identical messages.
-- [ ] Idle state on `/` shows exactly one "you can start a
+- [x] Toast layer dedupes consecutive identical messages.
+- [x] Idle state on `/` shows exactly one "you can start a
   meeting" affordance.
-- [ ] Each route's screenshot in `designer-handoff/screenshots/`
+- [x] Each route's screenshot in `designer-handoff/screenshots/`
   is current.
-- [ ] No regressions in dense list legibility on `/activity`
+- [x] No regressions in dense list legibility on `/activity`
   records, `/history` meetings, `/dictation` blocks.
 
 ## Test Plan
