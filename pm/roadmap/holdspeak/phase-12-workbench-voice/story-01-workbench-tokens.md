@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 12
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-10-02 (design tokens), HS-10-13 (phase 10 done)
 - **Unblocks:** HS-12-02 (component voice pass)
 - **Owner:** unassigned
@@ -38,15 +38,15 @@ UI font to come through at all.
 
 ## Acceptance Criteria
 
-- [ ] `tokens.css` loads only Workbench-palette colour values; no
+- [x] `tokens.css` loads only Workbench-palette colour values; no
   legacy cyan accent left.
-- [ ] All `--radius-*` tokens are `0`, except a documented
+- [x] All `--radius-*` tokens are `0`, except a documented
   exception list (initially: none).
-- [ ] `--font-ui` resolves to the new self-hosted pixel font;
+- [x] `--font-ui` resolves to the new self-hosted pixel font;
   fallback chain ends at `system-ui` for safety.
-- [ ] `/design/check` page renders cleanly under the new tokens —
+- [x] `/design/check` page renders cleanly under the new tokens —
   no "white-on-white" or "blue-on-blue" contrast failures.
-- [ ] No external font CDN added; everything stays local.
+- [x] No external font CDN added; everything stays local.
 
 ## Test Plan
 

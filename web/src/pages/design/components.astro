@@ -392,7 +392,9 @@ import CommandPreview from "../../components/CommandPreview.astro";
   .lead {
     margin: 0;
     max-width: 64ch;
-    color: var(--text-muted);
+    /* HS-12-01: lives on the blue desktop, not in a panel —
+     * uses the body-level on-desktop muted token. */
+    color: var(--on-desktop-muted, var(--text-muted));
     line-height: var(--line-height-relaxed);
   }
 
@@ -421,7 +423,7 @@ import CommandPreview from "../../components/CommandPreview.astro";
 
   .muted {
     margin: 0;
-    color: var(--text-muted);
+    color: var(--on-desktop-muted, var(--text-muted));
   }
 
   .stack {

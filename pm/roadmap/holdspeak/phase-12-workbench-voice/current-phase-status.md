@@ -1,6 +1,6 @@
 # Phase 12 - Workbench Voice
 
-**Last updated:** 2026-04-29 (phase scaffolded).
+**Last updated:** 2026-04-29 (HS-12-01 token map + VT323 shipped).
 
 ## Goal
 
@@ -52,17 +52,33 @@ We want to **skip** the parts of Workbench that fight dense data:
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-12-01 | Workbench token map + pixel UI font | backlog | [story-01-workbench-tokens.md](./story-01-workbench-tokens.md) | pending |
+| HS-12-01 | Workbench token map + pixel UI font | done | [story-01-workbench-tokens.md](./story-01-workbench-tokens.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-12-02 | Component voice pass | backlog | [story-02-component-voice.md](./story-02-component-voice.md) | pending |
 | HS-12-03 | Per-route audit + dashboard fixes | backlog | [story-03-route-audit.md](./story-03-route-audit.md) | pending |
 | HS-12-04 | Designer handoff refresh + phase exit | backlog | [story-04-handoff-dod.md](./story-04-handoff-dod.md) | pending |
 
 ## Where We Are
 
-Phase 12 is planned. Phase 11 (Local Connector Ecosystem) is
-in-progress (HS-11-01 done) and continues in parallel — phase 12
-is presentation-only and does not block phase 11 connector pack
-work.
+Phase 12 is **active**. Phase 11 (Local Connector Ecosystem)
+paused with HS-11-01 done; resumes after phase 12 closes.
+
+HS-12-01 ships the values layer: `tokens.css` is replatformed on
+the canonical four-colour Workbench palette (blue / white /
+black / orange) exposed both as semantic tokens (`--canvas`,
+`--text`, `--accent`, status ramps) and as a `--wb-*` reference
+set. Every radius collapses to 0, every elevation token is now
+`none`, and `--font-ui` resolves to a self-hosted VT323. The
+body itself is the blue desktop layer, so anything on the
+desktop reads white-on-blue; white-surface components keep their
+phase-10 scoped CSS unchanged. The component gallery h1, lead
+copy, primary/secondary/danger buttons, and the runtime
+dashboard hero all read unmistakably Workbench in the
+post-replatform screenshots.
+
+Up next: HS-12-02 (component voice pass — Button, Pill, Panel,
+TopNav, ConfirmDialog, CommandPreview), HS-12-03 (per-route
+audit + dashboard fixes), HS-12-04 (designer handoff refresh +
+phase exit).
 
 ## Source Design
 

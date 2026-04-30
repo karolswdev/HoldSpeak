@@ -8,9 +8,10 @@
 
 @import "./tokens.css";
 
-@import "@fontsource/sora/400.css";
-@import "@fontsource/sora/500.css";
-@import "@fontsource/sora/600.css";
+/* HS-12-01: VT323 is the pixel UI font for chrome (button, pill,
+ * panel-title, nav). JetBrains Mono stays for body data + code.
+ * Sora was the phase-10 UI font and is no longer loaded. */
+@import "@fontsource/vt323/400.css";
 @import "@fontsource/jetbrains-mono/400.css";
 @import "@fontsource/jetbrains-mono/500.css";
 
@@ -25,15 +26,32 @@ body {
   min-height: 100%;
 }
 
+/* HS-12-01: body is the Workbench desktop — saturated blue
+ * background, white text. Content surfaces (panels, dialogs,
+ * cmd frames) render on top as white surfaces; their existing
+ * scoped CSS already references `--text` (black by default,
+ * which is correct against white) and `--text-muted` (#555).
+ *
+ * The body itself uses an explicit `color: var(--wb-white)` so
+ * elements that sit *on* the desktop (gallery h1, page lead,
+ * TopNav siblings) inherit white text via standard CSS
+ * inheritance — no token rebinding gymnastics needed.
+ *
+ * The body also declares `--gallery-text-muted: rgba(255,255,255,0.78)`
+ * which gallery-style pages can opt into when their muted copy
+ * sits on the desktop. Components that live inside panels keep
+ * using `--text-muted` and read black-on-white.
+ */
 body {
   margin: 0;
   font-family: var(--font-ui);
   font-size: var(--font-size-md);
   line-height: var(--line-height-normal);
-  color: var(--text);
-  background: var(--canvas);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  color: var(--wb-white);
+  background: var(--wb-blue);
+  --on-desktop-muted: rgba(255, 255, 255, 0.78);
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: auto;
   text-rendering: optimizeLegibility;
 }
 

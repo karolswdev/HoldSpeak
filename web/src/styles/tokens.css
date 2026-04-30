@@ -1,91 +1,134 @@
 /*
- * HoldSpeak design tokens — HS-10-02.
+ * HoldSpeak design tokens — HS-12-01 (Workbench-evoking voice).
  *
- * Single source of color, typography, spacing, radius, elevation,
- * motion, and z-index variables for the entire web frontend. Layered
- * on top of Open Props (imported once, here) so individual stylesheets
- * never need to import either.
+ * Phase 10 (HS-10-02) shipped a competent dark theme. Phase 12
+ * replatforms the *values* on the same component layer so the
+ * frontend reads as the Amiga Workbench fan project it actually
+ * is: blue desktop, white windows, black hairlines, orange accent,
+ * pixel UI font.
  *
- * The character target: a quiet, dense, trustworthy local workbench.
- * One deliberate accent ("hold cyan"), a calmer warm secondary, and
- * explicit success/warn/danger ramps. Less navy-saturation than the
- * legacy inline blocks; same overall mood.
+ * Brief is "evoke Workbench, not emulate". We deliberately skip:
+ *   - Diagonal-stripe title bars on every panel.
+ *   - Full inset/outset gadget bevels on every button.
+ *   - Pixel arrow cursor; clamped 4-color rendering.
  *
- * Light theme is intentionally deferred (HS-10-13 will record this in
- * style-handoff.md). Every selector below assumes the dark canvas.
+ * What we keep:
+ *   - The four-color palette (blue / white / black / orange).
+ *   - Hard 1 px black borders, no elevation shadows.
+ *   - Square corners across the system (radius-* all 0).
+ *   - A pixel UI font (VT323) for chrome; JetBrains Mono for
+ *     body data + code.
+ *
+ * Light theme is still deferred from phase 10. The colour scheme
+ * here is *not* a dark theme — it is the canonical Workbench
+ * palette, which has light surfaces on a saturated blue desktop.
  */
 
 @import "open-props/style";
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* === Canvas + surfaces ====================================== */
-  --canvas: #08111c;
-  --canvas-raised: #0e1826;
-  --canvas-elevated: #142136;
-  --canvas-overlay: rgba(8, 17, 28, 0.72);
+  /* === Workbench palette (the four canonical colours) =========
+   * Reference: Amiga Workbench 1.3 default 4-colour set.
+   * Hex values match the historical palette as closely as
+   * modern sRGB reproduction allows. */
+  --wb-blue: #0055AA;
+  --wb-blue-strong: #003F80;
+  --wb-blue-soft: #2D7BD6;
+  --wb-white: #FFFFFF;
+  --wb-black: #000000;
+  --wb-orange: #FF8800;
+  --wb-orange-strong: #CC6600;
+  --wb-orange-soft: #FFE5C2;
 
-  /* === Lines ================================================== */
-  --line: rgba(170, 200, 230, 0.14);
-  --line-strong: rgba(170, 200, 230, 0.26);
-  --line-emphasis: rgba(170, 200, 230, 0.42);
+  /* === Canvas + surfaces ======================================
+   * Body background = blue desktop. Content lives inside white
+   * surfaces (panels, dialogs, list rows). `--canvas` resolves
+   * to the *content* surface so existing component CSS keeps
+   * working; the body picks up `--wb-blue` directly via
+   * global.css. */
+  --canvas: var(--wb-white);
+  --canvas-raised: var(--wb-white);
+  --canvas-elevated: var(--wb-white);
+  --canvas-overlay: rgba(0, 0, 0, 0.55);
 
-  /* === Text =================================================== */
-  --text: #edf5ff;
-  --text-muted: #9db1c8;
-  --text-faint: #6b7e95;
+  /* === Lines ==================================================
+   * Workbench uses a single black hairline everywhere. We keep
+   * three tokens for API compat, all pointing at black; hover
+   * picks up the orange accent via component CSS, not via a
+   * different line token. */
+  --line: var(--wb-black);
+  --line-strong: var(--wb-black);
+  --line-emphasis: var(--wb-orange);
 
-  /* === Accent (the "hold" cyan) =============================== */
-  --accent: #64d7ff;
-  --accent-strong: #2cc6ee;
-  --accent-soft: rgba(100, 215, 255, 0.16);
-  --accent-on: #06182a;
+  /* === Text ===================================================
+   * Default text reads against white surfaces (where content
+   * lives). Body chrome rendered on the blue desktop overrides
+   * these locally to white via global.css. */
+  --text: var(--wb-black);
+  --text-muted: #555555;
+  --text-faint: #777777;
+
+  /* === Accent (Workbench orange) ============================== */
+  --accent: var(--wb-orange);
+  --accent-strong: var(--wb-orange-strong);
+  --accent-soft: var(--wb-orange-soft);
+  --accent-on: var(--wb-black);
 
   /* === Warm secondary ========================================= */
-  --warm: #ffb86b;
-  --warm-strong: #f59e3c;
-  --warm-soft: rgba(255, 184, 107, 0.14);
+  --warm: var(--wb-orange);
+  --warm-strong: var(--wb-orange-strong);
+  --warm-soft: var(--wb-orange-soft);
 
-  /* === Status ramps =========================================== */
-  --success: #75f4d3;
-  --success-strong: #2dd4ad;
-  --success-soft: rgba(117, 244, 211, 0.14);
+  /* === Status ramps ===========================================
+   * Mapped to read clearly against white panels. */
+  --success: #008800;
+  --success-strong: #006600;
+  --success-soft: #C8E6C8;
 
-  --warn: #ffd17a;
-  --warn-strong: #f5a524;
-  --warn-soft: rgba(255, 209, 122, 0.14);
+  --warn: var(--wb-orange);
+  --warn-strong: var(--wb-orange-strong);
+  --warn-soft: var(--wb-orange-soft);
 
-  --danger: #ff647e;
-  --danger-strong: #f9445f;
-  --danger-soft: rgba(255, 100, 126, 0.16);
+  --danger: #CC0000;
+  --danger-strong: #990000;
+  --danger-soft: #F5C8C8;
 
-  /* === Local-only signal (privacy / ledger pill) ============== */
-  --local: #b8c8d8;
-  --local-soft: rgba(184, 200, 216, 0.12);
+  /* === Local-only signal (privacy / ledger pill) ==============
+   * Workbench blue itself reads as "this stays local". */
+  --local: var(--wb-blue);
+  --local-soft: #C8DDF0;
 
-  /* === Typography ============================================= */
+  /* === Typography =============================================
+   * VT323 is the canonical pixel UI font. Render hint
+   * `image-rendering: pixelated` is applied selectively in
+   * global.css to chrome, not body data. */
   --font-ui:
-    "Sora", "Avenir Next", "Segoe UI", system-ui, -apple-system,
-    BlinkMacSystemFont, sans-serif;
+    "VT323", "Topaz", "Press Start 2P", "Courier New",
+    monospace;
   --font-mono:
     "JetBrains Mono", "SFMono-Regular", "SF Mono", Consolas,
     "Liberation Mono", monospace;
 
-  --font-size-xs: 0.75rem;   /* 12 */
-  --font-size-sm: 0.8125rem; /* 13 */
-  --font-size-md: 0.9375rem; /* 15 */
-  --font-size-lg: 1.0625rem; /* 17 */
-  --font-size-xl: 1.375rem;  /* 22 */
-  --font-size-2xl: 1.75rem;  /* 28 */
-  --font-size-3xl: 2.25rem;  /* 36 */
+  /* VT323 renders denser per glyph, so the size scale is bumped
+   * a notch — what was 15 px in Sora reads small in pixel font. */
+  --font-size-xs: 0.875rem;   /* 14 */
+  --font-size-sm: 1rem;       /* 16 */
+  --font-size-md: 1.125rem;   /* 18 */
+  --font-size-lg: 1.25rem;    /* 20 */
+  --font-size-xl: 1.625rem;   /* 26 */
+  --font-size-2xl: 2rem;      /* 32 */
+  --font-size-3xl: 2.5rem;    /* 40 */
 
-  --line-height-tight: 1.2;
-  --line-height-normal: 1.45;
-  --line-height-relaxed: 1.6;
+  --line-height-tight: 1.1;
+  --line-height-normal: 1.35;
+  --line-height-relaxed: 1.5;
 
-  --letter-spacing-tight: -0.01em;
-  --letter-spacing-loose: 0.02em;
+  /* Pixel fonts don't benefit from negative tracking; loose
+   * tracking helps chrome read clearly. */
+  --letter-spacing-tight: 0;
+  --letter-spacing-loose: 0.04em;
 
   /* === Spacing scale (4 px base) ============================== */
   --space-1: 0.25rem;  /*  4 */
@@ -97,22 +140,30 @@
   --space-7: 3rem;     /* 48 */
   --space-8: 4rem;     /* 64 */
 
-  /* === Radius ================================================= */
-  --radius-1: 4px;
-  --radius-2: 8px;
-  --radius-3: 12px;
-  --radius-4: 16px;
-  --radius-5: 24px;
-  --radius-pill: 999px;
+  /* === Radius =================================================
+   * Workbench has no rounded corners. Every radius collapses to
+   * 0; the tokens stay defined so existing `border-radius:
+   * var(--radius-2)` rules don't error. */
+  --radius-1: 0;
+  --radius-2: 0;
+  --radius-3: 0;
+  --radius-4: 0;
+  --radius-5: 0;
+  --radius-pill: 0;
 
-  /* === Elevation ============================================== */
+  /* === Elevation =============================================
+   * Workbench surfaces are flat. Every elevation token is now
+   * `none`; existing `box-shadow: var(--elev-*)` rules render
+   * shadowless without code changes. */
   --elev-0: none;
-  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.32);
-  --elev-2: 0 4px 12px rgba(0, 0, 0, 0.36);
-  --elev-3: 0 12px 28px rgba(0, 0, 0, 0.42);
-  --elev-4: 0 24px 60px rgba(0, 0, 0, 0.48);
+  --elev-1: none;
+  --elev-2: none;
+  --elev-3: none;
+  --elev-4: none;
 
-  /* === Motion ================================================= */
+  /* === Motion =================================================
+   * Workbench feels discrete; existing 120/220/360 ms scale
+   * stays — short transitions read as "click". */
   --duration-short: 120ms;
   --duration-medium: 220ms;
   --duration-long: 360ms;
@@ -121,15 +172,9 @@
   --ease-decelerate: cubic-bezier(0, 0, 0, 1);
 
   /* === Focus ring =============================================
-   * Single grammar across the entire frontend:
-   *   outline: var(--focus-outline-width) solid var(--accent);
-   *   outline-offset: var(--focus-outline-offset);
-   * Use a NEGATIVE offset for full-width interactive rows
-   * (ListRow) so the ring sits inside the row outline instead
-   * of overlapping siblings. Everything else uses the positive
-   * offset above.
-   */
-  --focus-ring: 0 0 0 2px var(--canvas), 0 0 0 4px var(--accent);
+   * Orange focus ring against the black hairline grammar reads
+   * loud and unambiguous — exactly what a tool wants. */
+  --focus-ring: 0 0 0 2px var(--wb-white), 0 0 0 4px var(--accent);
   --focus-outline-width: 2px;
   --focus-outline-offset: 2px;
 
