@@ -115,6 +115,19 @@ import AppLayout from "../layouts/AppLayout.astro";
         </section>
 
         <section class="panel">
+          <header class="panel-header"><div class="panel-title">Connectors</div></header>
+          <div class="panel-body">
+            <p class="sub">
+              Local-only enrichment connectors. None run unless explicitly
+              enabled. Output (annotations, candidates) lives on this machine
+              and can be cleared per connector.
+            </p>
+            <p id="connectors-message" class="panel-message"></p>
+            <div id="connectors" class="connector-list"></div>
+          </div>
+        </section>
+
+        <section class="panel">
           <header class="panel-header">
             <div class="panel-title">Meeting candidates</div>
             <div class="panel-toolbar">
@@ -339,8 +352,53 @@ import AppLayout from "../layouts/AppLayout.astro";
   .panel-message.error { color: var(--danger); }
 
   /* === Records list (JS-emitted) === */
-  .records, .rule-list, .candidate-list, .preview-list {
+  .records, .rule-list, .candidate-list, .preview-list, .connector-list {
     display: flex; flex-direction: column; gap: var(--space-2);
+  }
+
+  /* === Connector cards (HS-9-12) === */
+  .connector-card {
+    padding: var(--space-3);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .connector-card.is-disabled { opacity: 0.85; }
+  .connector-card.has-error { border-color: var(--danger); }
+  .connector-head {
+    display: flex; align-items: center; flex-wrap: wrap;
+    gap: var(--space-2); justify-content: space-between;
+  }
+  .connector-head-left {
+    display: flex; align-items: center; gap: var(--space-2);
+    min-width: 0; flex-wrap: wrap;
+  }
+  .connector-title {
+    color: var(--text); font-weight: 600;
+    font-size: var(--font-size-md);
+    overflow-wrap: anywhere;
+  }
+  .connector-id {
+    font-family: var(--font-mono); font-size: var(--font-size-xs);
+    color: var(--text-muted);
+  }
+  .connector-meta {
+    color: var(--text-muted); font-size: var(--font-size-xs);
+    overflow-wrap: anywhere;
+  }
+  .connector-body { color: var(--text-muted); font-size: var(--font-size-sm); margin: 0; line-height: var(--line-height-relaxed); }
+  .connector-error {
+    color: var(--danger); font-size: var(--font-size-sm);
+    background: var(--danger-soft);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-2);
+    margin: 0; word-break: break-word;
+  }
+  .connector-actions {
+    display: flex; flex-wrap: wrap; gap: var(--space-2);
   }
 
   .record {

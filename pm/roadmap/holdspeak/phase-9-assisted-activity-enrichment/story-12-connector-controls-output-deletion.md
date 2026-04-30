@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-9-01, HS-9-08
 - **Unblocks:** safe opt-in connector execution and cleanup
 - **Owner:** unassigned
@@ -30,12 +30,12 @@ last-run errors, and deletion of connector outputs.
 
 ## Acceptance Criteria
 
-- [ ] `/activity` shows known connector states.
-- [ ] User can enable or disable a connector.
-- [ ] User can clear connector-created annotations.
-- [ ] User can clear connector-created meeting candidates.
-- [ ] Last-run errors are visible.
-- [ ] No connector can run invisibly.
+- [x] `/activity` shows known connector states.
+- [x] User can enable or disable a connector.
+- [x] User can clear connector-created annotations.
+- [x] User can clear connector-created meeting candidates.
+- [x] Last-run errors are visible.
+- [x] No connector can run invisibly.
 
 ## Test Plan
 

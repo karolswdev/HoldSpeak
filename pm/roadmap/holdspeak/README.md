@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-29 (phase 10 done — HS-10-13 closed designer handoff and phase exit).
+**Last updated:** 2026-04-29 (HS-9-12 connector controls + output deletion shipped on /activity).
 **Current phase:** [phase-9-assisted-activity-enrichment](./phase-9-assisted-activity-enrichment/) — build optional local enrichment connectors on top of the activity ledger. Phase 10 (web design system) shipped in parallel and is now done; phase 11 (local connector ecosystem) is planned next.
 **Status:** in-progress.
 

@@ -7,6 +7,7 @@
         candidatePreviews: [],
         meetingCandidates: [],
         candidateStatusFilter: "",
+        connectors: [],
       };
       const $ = (id) => document.getElementById(id);
 
@@ -233,32 +234,91 @@
 
       async function load() {
         try {
-          const [status, activity, projects, rules, candidates] = await Promise.all([
+          const [status, activity, projects, rules, candidates, connectors] = await Promise.all([
             request("/api/activity/status"),
             request("/api/activity/records?limit=100"),
             request("/api/projects"),
             request("/api/activity/project-rules"),
             request(`/api/activity/meeting-candidates${state.candidateStatusFilter ? `?status=${encodeURIComponent(state.candidateStatusFilter)}` : ""}`),
+            request("/api/activity/enrichment/connectors"),
           ]);
           state.status = status;
           state.activity = activity;
           state.projects = projects.projects || [];
           state.rules = rules.rules || [];
           state.meetingCandidates = candidates.candidates || [];
+          state.connectors = connectors.connectors || [];
           renderStatus();
           renderProjects();
           renderRules();
           renderCandidatePreviews();
           renderMeetingCandidates();
           renderRecords();
+          renderConnectors();
           setMessage("");
           setPanelMessage("rules-message", "");
           setPanelMessage("candidates-message", "");
           setPanelMessage("domains-message", "");
+          setPanelMessage("connectors-message", "");
         } catch (error) {
           setMessage(error.message, true);
         }
       }
+
+      function renderConnectors() {
+        const list = $("connectors");
+        const connectors = state.connectors || [];
+        if (!connectors.length) {
+          list.innerHTML = `<div class="empty">No connectors registered.</div>`;
+          return;
+        }
+        list.innerHTML = connectors.map((c) => {
+          const enabled = !!c.enabled;
+          const requiresCli = c.requires_cli || null;
+          const cliStatus = c.cli_status || null;
+          const cliAvailable = cliStatus ? !!cliStatus.available : true;
+          const cliPath = cliStatus && cliStatus.command_path ? cliStatus.command_path : "";
+          const lastRun = c.last_run_at ? new Date(c.last_run_at).toLocaleString() : "never";
+          const capabilities = (c.capabilities || []).join(", ") || "—";
+          const cliPill = requiresCli
+            ? `<span class="pill ${cliAvailable ? "pill--success" : "pill--warn"}"><span class="pill-dot"></span>${cliAvailable ? `${escapeHtml(requiresCli)} ready` : `${escapeHtml(requiresCli)} not found`}</span>`
+            : "";
+          const enabledPill = enabled
+            ? `<span class="pill pill--info"><span class="pill-dot"></span>enabled</span>`
+            : `<span class="pill pill--neutral"><span class="pill-dot"></span>disabled</span>`;
+          const errorBlock = c.last_error
+            ? `<p class="connector-error" role="alert">Last run: ${escapeHtml(c.last_error)}</p>`
+            : "";
+          const caps = c.capabilities || [];
+          const actions = [];
+          if (caps.includes("annotations")) {
+            actions.push(`<button class="btn btn--ghost btn--sm danger" type="button" data-clear-annotations="${escapeHtml(c.id)}">Clear annotations</button>`);
+          }
+          if (caps.includes("candidates")) {
+            actions.push(`<button class="btn btn--ghost btn--sm danger" type="button" data-clear-candidates="${escapeHtml(c.id)}">Clear candidates</button>`);
+          }
+          return `
+            <article class="connector-card${enabled ? "" : " is-disabled"}${c.last_error ? " has-error" : ""}" data-connector-id="${escapeHtml(c.id)}">
+              <div class="connector-head">
+                <div class="connector-head-left">
+                  <span class="connector-title">${escapeHtml(c.label || c.id)}</span>
+                  <span class="connector-id">${escapeHtml(c.id)}</span>
+                  ${enabledPill}
+                  ${cliPill}
+                </div>
+                <div class="connector-actions">
+                  <button class="btn ${enabled ? "btn--ghost" : "btn--secondary"} btn--sm" type="button" data-toggle-connector="${escapeHtml(c.id)}">${enabled ? "Disable" : "Enable"}</button>
+                </div>
+              </div>
+              ${c.description ? `<p class="connector-body">${escapeHtml(c.description)}</p>` : ""}
+              <p class="connector-meta">Capabilities: ${escapeHtml(capabilities)} · Last run: ${escapeHtml(lastRun)}${cliPath ? ` · CLI: <code>${escapeHtml(cliPath)}</code>` : ""}</p>
+              ${errorBlock}
+              ${actions.length ? `<div class="connector-actions">${actions.join("")}</div>` : ""}
+            </article>
+          `;
+        }).join("");
+      }
+
 
       $("toggle-enabled").addEventListener("click", async () => {
         const button = $("toggle-enabled");
@@ -580,6 +640,84 @@
             setPanelMessage("candidates-message", error.message, true);
           }
         });
+      });
+
+      $("connectors").addEventListener("click", async (event) => {
+        const toggle = event.target.closest("[data-toggle-connector]");
+        const clearAnn = event.target.closest("[data-clear-annotations]");
+        const clearCand = event.target.closest("[data-clear-candidates]");
+
+        if (toggle) {
+          const id = toggle.getAttribute("data-toggle-connector");
+          const connector = (state.connectors || []).find((c) => c.id === id);
+          if (!connector) return;
+          const nextEnabled = !connector.enabled;
+          await withButtonBusy(toggle, async () => {
+            try {
+              await request(`/api/activity/enrichment/connectors/${encodeURIComponent(id)}`, {
+                method: "PUT",
+                body: JSON.stringify({ enabled: nextEnabled }),
+              });
+              setPanelMessage("connectors-message", `${connector.label || id} ${nextEnabled ? "enabled" : "disabled"}.`);
+              await load();
+            } catch (error) {
+              setPanelMessage("connectors-message", error.message, true);
+            }
+          });
+          return;
+        }
+
+        if (clearAnn) {
+          const id = clearAnn.getAttribute("data-clear-annotations");
+          const connector = (state.connectors || []).find((c) => c.id === id);
+          const label = (connector && connector.label) || id;
+          const ok = await window.holdspeakConfirm({
+            title: `Clear local ${label} annotations?`,
+            body: `Permanently removes every locally stored annotation produced by the ${label} connector. Source data on the underlying system is not touched.`,
+            scopeNote: `Only HoldSpeak's local annotations from ${label} are affected. ${id === "gh" ? "Issues and PRs on GitHub are unchanged." : id === "jira" ? "Tickets in Jira are unchanged." : "External source systems are unchanged."}`,
+            confirmLabel: "Clear annotations",
+          });
+          if (!ok) return;
+          await withButtonBusy(clearAnn, async () => {
+            try {
+              const payload = await request(
+                `/api/activity/enrichment/connectors/${encodeURIComponent(id)}/annotations`,
+                { method: "DELETE" },
+              );
+              setPanelMessage("connectors-message", `${payload.deleted || 0} ${label} annotations cleared.`);
+              await load();
+            } catch (error) {
+              setPanelMessage("connectors-message", error.message, true);
+            }
+          });
+          return;
+        }
+
+        if (clearCand) {
+          const id = clearCand.getAttribute("data-clear-candidates");
+          const connector = (state.connectors || []).find((c) => c.id === id);
+          const label = (connector && connector.label) || id;
+          const ok = await window.holdspeakConfirm({
+            title: `Clear local ${label} candidates?`,
+            body: `Permanently removes every meeting candidate that was produced by the ${label} connector. Re-running the connector may re-surface candidates from the same source activity.`,
+            scopeNote: "Only HoldSpeak's local candidate list is affected.",
+            confirmLabel: "Clear candidates",
+          });
+          if (!ok) return;
+          await withButtonBusy(clearCand, async () => {
+            try {
+              const payload = await request(
+                `/api/activity/enrichment/connectors/${encodeURIComponent(id)}/candidates`,
+                { method: "DELETE" },
+              );
+              setPanelMessage("connectors-message", `${payload.deleted || 0} ${label} candidates cleared.`);
+              await load();
+            } catch (error) {
+              setPanelMessage("connectors-message", error.message, true);
+            }
+          });
+          return;
+        }
       });
 
       load();

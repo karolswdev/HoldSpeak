@@ -10,6 +10,8 @@ from urllib.parse import unquote
 
 from .db import ActivityRecord
 
+CALENDAR_CONNECTOR_ID = "calendar_activity"
+
 CALENDAR_DOMAINS = frozenset(
     {
         "calendar.google.com",
@@ -45,7 +47,7 @@ class ActivityMeetingCandidatePreview:
 def preview_calendar_meeting_candidates(
     records: Iterable[ActivityRecord],
     *,
-    source_connector_id: str = "calendar_activity",
+    source_connector_id: str = CALENDAR_CONNECTOR_ID,
     limit: int = 50,
 ) -> list[ActivityMeetingCandidatePreview]:
     """Derive meeting-candidate previews from existing local activity records."""

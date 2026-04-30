@@ -1,6 +1,6 @@
 # Phase 9 - Assisted Activity Enrichment
 
-**Last updated:** 2026-04-28 (HS-9-05 Jira CLI enrichment shipped).
+**Last updated:** 2026-04-29 (HS-9-12 connector controls + output deletion shipped).
 
 ## Goal
 
@@ -42,7 +42,7 @@ metadata without hidden collection or external writes.
 | HS-9-09 | Meeting candidate dedupe and time hints | done | [story-09-candidate-dedupe-time-hints.md](./story-09-candidate-dedupe-time-hints.md) | [evidence-story-09.md](./evidence-story-09.md) |
 | HS-9-10 | Meeting candidate recording workflow | done | [story-10-candidate-recording-workflow.md](./story-10-candidate-recording-workflow.md) | [evidence-story-10.md](./evidence-story-10.md) |
 | HS-9-11 | Activity dashboard polish | done | [story-11-activity-dashboard-polish.md](./story-11-activity-dashboard-polish.md) | [evidence-story-11.md](./evidence-story-11.md) |
-| HS-9-12 | Connector controls and output deletion | backlog | [story-12-connector-controls-output-deletion.md](./story-12-connector-controls-output-deletion.md) | pending |
+| HS-9-12 | Connector controls and output deletion | done | [story-12-connector-controls-output-deletion.md](./story-12-connector-controls-output-deletion.md) | [evidence-story-12.md](./evidence-story-12.md) |
 | HS-9-13 | Connector dry-run harness | backlog | [story-13-connector-dry-run-harness.md](./story-13-connector-dry-run-harness.md) | pending |
 
 ## Where We Are
@@ -105,6 +105,22 @@ HS-9-05 mirrored that connector shape for visited Jira tickets. The
 read-only `jira issue view KEY --plain` commands, blocks runs until
 explicitly enabled, and persists local ticket annotations from capped
 JSON or raw CLI output.
+
+HS-9-12 brings the connector layer to the browser. `holdspeak/
+activity_connectors.py` registers the three known connectors (`gh`,
+`jira`, `calendar_activity`) with their kind, capabilities, and
+optional CLI requirement; `/api/activity/enrichment/connectors`
+returns the registry with state + CLI status; new `DELETE
+/api/activity/enrichment/connectors/{id}/(annotations|candidates)`
+endpoints clear connector-scoped output. `/activity` adds a
+Connectors panel that shows enabled/disabled, last run, last error,
+CLI readiness, and per-capability "Clear annotations" / "Clear
+candidates" actions gated by `holdspeakConfirm`. Five new
+integration tests lock down the registry surface, scoped clearing,
+and the 404/400 error paths.
+
+Up next: HS-9-13 (connector dry-run harness), HS-9-03 (Firefox
+companion extension), HS-9-06 (phase exit DoD).
 
 ## Source Design
 

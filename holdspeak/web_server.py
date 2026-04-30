@@ -1311,20 +1311,33 @@ class MeetingWebServer:
         @app.get("/api/activity/enrichment/connectors")
         async def api_list_activity_enrichment_connectors() -> Any:
             try:
-                from .activity_github import CONNECTOR_ID as GH_CONNECTOR_ID, github_cli_status
-                from .activity_jira import CONNECTOR_ID as JIRA_CONNECTOR_ID, jira_cli_status
+                from .activity_connectors import KNOWN_CONNECTORS
+                from .activity_github import github_cli_status
+                from .activity_jira import jira_cli_status
                 from .db import get_database
 
                 db = get_database()
                 connectors = []
-                for connector_id in (GH_CONNECTOR_ID, JIRA_CONNECTOR_ID):
-                    connector = db.get_activity_enrichment_connector(connector_id)
-                    if connector is None:
-                        connector = db.upsert_activity_enrichment_connector(connector_id=connector_id)
-                    connectors.append(_activity_enrichment_connector_payload(connector))
+                for descriptor in KNOWN_CONNECTORS:
+                    state = db.get_activity_enrichment_connector(descriptor.id)
+                    if state is None:
+                        state = db.upsert_activity_enrichment_connector(connector_id=descriptor.id)
+                    payload = _activity_enrichment_connector_payload(state)
+                    payload["label"] = descriptor.label
+                    payload["kind"] = descriptor.kind
+                    payload["capabilities"] = list(descriptor.capabilities)
+                    payload["requires_cli"] = descriptor.requires_cli
+                    payload["description"] = descriptor.description
+                    cli_status = descriptor.cli_status()
+                    if cli_status is not None:
+                        payload["cli_status"] = cli_status
+                    connectors.append(payload)
                 return JSONResponse(
                     {
                         "connectors": connectors,
+                        # Kept for backwards-compat with the existing
+                        # /activity preview/run endpoints; new clients
+                        # should read connector.cli_status instead.
                         "github": github_cli_status(),
                         "jira": jira_cli_status(),
                     }
@@ -1338,8 +1351,13 @@ class MeetingWebServer:
             connector_id: str,
             payload: _ActivityEnrichmentConnectorRequest,
         ) -> Any:
-            if connector_id not in {"gh", "jira"}:
-                return JSONResponse({"error": f"Unknown activity enrichment connector: {connector_id}"}, status_code=404)
+            from .activity_connectors import KNOWN_CONNECTOR_IDS
+
+            if connector_id not in KNOWN_CONNECTOR_IDS:
+                return JSONResponse(
+                    {"error": f"Unknown activity enrichment connector: {connector_id}"},
+                    status_code=404,
+                )
             try:
                 from .db import get_database
 
@@ -1354,6 +1372,64 @@ class MeetingWebServer:
                 return JSONResponse({"error": str(e)}, status_code=400)
             except Exception as e:
                 log.error(f"Failed to update activity enrichment connector: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.delete("/api/activity/enrichment/connectors/{connector_id}/annotations")
+        async def api_clear_activity_enrichment_annotations(connector_id: str) -> Any:
+            from .activity_connectors import get_descriptor
+
+            descriptor = get_descriptor(connector_id)
+            if descriptor is None:
+                return JSONResponse(
+                    {"error": f"Unknown activity enrichment connector: {connector_id}"},
+                    status_code=404,
+                )
+            if "annotations" not in descriptor.capabilities:
+                return JSONResponse(
+                    {
+                        "error": (
+                            f"Connector {connector_id} does not produce annotations"
+                        ),
+                    },
+                    status_code=400,
+                )
+            try:
+                from .db import get_database
+
+                db = get_database()
+                deleted = db.delete_activity_annotations(source_connector_id=connector_id)
+                return JSONResponse({"deleted": int(deleted), "connector_id": connector_id})
+            except Exception as e:
+                log.error(f"Failed to clear activity enrichment annotations: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.delete("/api/activity/enrichment/connectors/{connector_id}/candidates")
+        async def api_clear_activity_enrichment_candidates(connector_id: str) -> Any:
+            from .activity_connectors import get_descriptor
+
+            descriptor = get_descriptor(connector_id)
+            if descriptor is None:
+                return JSONResponse(
+                    {"error": f"Unknown activity enrichment connector: {connector_id}"},
+                    status_code=404,
+                )
+            if "candidates" not in descriptor.capabilities:
+                return JSONResponse(
+                    {
+                        "error": (
+                            f"Connector {connector_id} does not produce candidates"
+                        ),
+                    },
+                    status_code=400,
+                )
+            try:
+                from .db import get_database
+
+                db = get_database()
+                deleted = db.delete_activity_meeting_candidates(source_connector_id=connector_id)
+                return JSONResponse({"deleted": int(deleted), "connector_id": connector_id})
+            except Exception as e:
+                log.error(f"Failed to clear activity enrichment candidates: {e}")
                 return JSONResponse({"error": str(e)}, status_code=500)
 
         @app.get("/api/activity/enrichment/github/preview")

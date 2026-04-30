@@ -57,12 +57,18 @@ def test_activity_page_serves_browser_surface(test_client: TestClient) -> None:
     assert 'id="rule-project"' in body
     assert 'id="meeting-candidates"' in body
 
-    # Bundled JS still calls the existing /api/activity endpoints.
+    # HS-9-12: connectors panel container is present.
+    assert 'id="connectors"' in body
+    assert 'id="connectors-message"' in body
+
+    # Bundled JS still calls the existing /api/activity endpoints, plus
+    # the new HS-9-12 connector endpoints.
     match = re.search(r'src="(/_built/_astro/hoisted\.[^"]+\.js)"', body)
     assert match, "expected hoisted activity JS chunk reference"
     js = test_client.get(match.group(1)).text
     assert "/api/activity/status" in js
     assert "/api/activity/meeting-candidates/preview" in js
+    assert "/api/activity/enrichment/connectors" in js
 
 
 def test_activity_status_reports_default_enabled_state(test_client: TestClient) -> None:
@@ -511,3 +517,108 @@ def test_jira_enrichment_run_requires_explicit_enablement(
     annotations = activity_db.list_activity_annotations(source_connector_id="jira")
     assert len(annotations) == 1
     assert annotations[0].annotation_type == "jira_ticket"
+
+
+def test_connector_list_includes_calendar_with_capabilities(
+    test_client: TestClient,
+) -> None:
+    """HS-9-12: the connector list surfaces every known connector
+    (gh, jira, calendar_activity), each annotated with its kind and
+    capabilities so the browser can render appropriate controls."""
+    response = test_client.get("/api/activity/enrichment/connectors")
+    assert response.status_code == 200
+    payload = response.json()
+    by_id = {c["id"]: c for c in payload["connectors"]}
+    assert set(by_id) == {"gh", "jira", "calendar_activity"}
+    assert by_id["gh"]["capabilities"] == ["annotations"]
+    assert by_id["gh"]["kind"] == "cli_enrichment"
+    assert by_id["gh"]["requires_cli"] == "gh"
+    assert "cli_status" in by_id["gh"]
+    assert by_id["jira"]["capabilities"] == ["annotations"]
+    assert by_id["calendar_activity"]["capabilities"] == ["candidates"]
+    assert by_id["calendar_activity"]["kind"] == "candidate_inference"
+    assert by_id["calendar_activity"]["requires_cli"] is None
+    assert "cli_status" not in by_id["calendar_activity"]
+
+
+def test_clear_connector_annotations_deletes_only_that_connectors_output(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+) -> None:
+    """HS-9-12: clearing annotations is scoped to the connector
+    that produced them; other connectors' annotations stay put."""
+    record = activity_db.upsert_activity_record(
+        source_browser="safari",
+        url="https://github.com/anthropic/holdspeak/issues/99",
+        title="Issue 99",
+        domain="github.com",
+        last_seen_at=datetime(2026, 4, 28, 9, 0),
+        entity_type="github_issue",
+        entity_id="anthropic/holdspeak#99",
+    )
+    activity_db.create_activity_annotation(
+        activity_record_id=record.id,
+        source_connector_id="gh",
+        annotation_type="github_issue",
+        title="Issue 99 enriched",
+    )
+    activity_db.create_activity_annotation(
+        activity_record_id=record.id,
+        source_connector_id="jira",
+        annotation_type="jira_ticket",
+        title="HS-123 enriched",
+    )
+
+    response = test_client.delete("/api/activity/enrichment/connectors/gh/annotations")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload == {"deleted": 1, "connector_id": "gh"}
+
+    assert activity_db.list_activity_annotations(source_connector_id="gh") == []
+    remaining = activity_db.list_activity_annotations(source_connector_id="jira")
+    assert len(remaining) == 1
+
+
+def test_clear_connector_candidates_deletes_only_that_connectors_output(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+) -> None:
+    """HS-9-12: calendar_activity candidates can be cleared via the
+    connector-scoped DELETE endpoint."""
+    activity_db.create_activity_meeting_candidate(
+        source_connector_id="calendar_activity",
+        title="Architecture sync",
+    )
+
+    response = test_client.delete(
+        "/api/activity/enrichment/connectors/calendar_activity/candidates"
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["deleted"] == 1
+    assert payload["connector_id"] == "calendar_activity"
+
+    assert activity_db.list_activity_meeting_candidates() == []
+
+
+def test_clear_connector_unknown_connector_returns_404(test_client: TestClient) -> None:
+    """HS-9-12: only known connector ids are accepted."""
+    response = test_client.delete(
+        "/api/activity/enrichment/connectors/not-a-connector/annotations"
+    )
+    assert response.status_code == 404
+
+
+def test_clear_connector_capability_mismatch_returns_400(
+    test_client: TestClient,
+) -> None:
+    """HS-9-12: clearing candidates on an annotations-only connector
+    is rejected — it would silently no-op otherwise."""
+    response = test_client.delete(
+        "/api/activity/enrichment/connectors/gh/candidates"
+    )
+    assert response.status_code == 400
+    response = test_client.delete(
+        "/api/activity/enrichment/connectors/calendar_activity/annotations"
+    )
+    assert response.status_code == 400
