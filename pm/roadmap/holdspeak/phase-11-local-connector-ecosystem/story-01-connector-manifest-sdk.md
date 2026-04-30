@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-9-13
 - **Unblocks:** reusable local connector packs
 - **Owner:** unassigned
@@ -29,8 +29,8 @@ types.
 
 ## Acceptance Criteria
 
-- [ ] Connector manifest schema is documented and validated.
-- [ ] SDK interfaces map cleanly to Phase 9 connector state/output tables.
-- [ ] Permission declarations are required for network-capable connectors.
-- [ ] Invalid manifests fail with actionable errors.
-- [ ] Unit tests cover validation.
+- [x] Connector manifest schema is documented and validated.
+- [x] SDK interfaces map cleanly to Phase 9 connector state/output tables.
+- [x] Permission declarations are required for network-capable connectors.
+- [x] Invalid manifests fail with actionable errors.
+- [x] Unit tests cover validation.

@@ -1,6 +1,6 @@
 # Phase 11 - Local Connector Ecosystem
 
-**Last updated:** 2026-04-27 (phase scaffolded).
+**Last updated:** 2026-04-29 (HS-11-01 connector manifest + SDK shape shipped).
 
 ## Goal
 
@@ -29,7 +29,7 @@ can be tested and installed locally without hidden network behavior.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-11-01 | Connector manifest and SDK shape | backlog | [story-01-connector-manifest-sdk.md](./story-01-connector-manifest-sdk.md) | pending |
+| HS-11-01 | Connector manifest and SDK shape | done | [story-01-connector-manifest-sdk.md](./story-01-connector-manifest-sdk.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-11-02 | Connector fixture and dry-run test harness | backlog | [story-02-fixture-dry-run-harness.md](./story-02-fixture-dry-run-harness.md) | pending |
 | HS-11-03 | Firefox companion connector pack | backlog | [story-03-firefox-connector-pack.md](./story-03-firefox-connector-pack.md) | pending |
 | HS-11-04 | GitHub CLI connector pack | backlog | [story-04-github-cli-connector-pack.md](./story-04-github-cli-connector-pack.md) | pending |
@@ -39,10 +39,24 @@ can be tested and installed locally without hidden network behavior.
 
 ## Where We Are
 
-Phase 11 is planned but not active. Phase 9 should first polish the
-first-party assisted enrichment flows enough to establish the shape of a
-connector. Phase 11 begins once connector behavior is stable enough to
-extract into reusable manifests, fixtures, and developer-facing docs.
+Phase 11 is now **active**. Phases 9 and 10 are both done; the
+phase-9 first-party connectors (`gh`, `jira`, `calendar_activity`,
+`firefox_ext`) and the shared dry-run harness from HS-9-13 are
+the substrate.
+
+HS-11-01 ships the contract: `holdspeak/connector_sdk.py` exposes
+a `ConnectorManifest` frozen dataclass + `validate_manifest()`
+that collects every problem at once + four runtime-checkable
+Protocols (`Discover`, `Preview`, `Enrich`, `Clear`). Frozen
+vocabulary sets enumerate the kinds, capabilities, and
+permissions the existing first-party connectors actually use, so
+HS-11-03..05 can rebuild them on top of this shape without
+surface drift. Permission model requires at least one network
+permission for any manifest declaring `requires_network=true`.
+
+Up next: HS-11-02 (fixture + dry-run test harness), HS-11-03..05
+(rebuild Firefox / gh / jira packs against the manifest +
+Protocols), HS-11-06 (developer docs), HS-11-07 (phase exit).
 
 ## Source Design
 
