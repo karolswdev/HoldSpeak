@@ -1,6 +1,6 @@
 # Phase 9 - Assisted Activity Enrichment
 
-**Last updated:** 2026-04-29 (HS-9-03 Firefox companion extension events shipped).
+**Last updated:** 2026-04-29 (phase 9 done — HS-9-06 closed assisted-enrichment controls and phase exit).
 
 ## Goal
 
@@ -36,7 +36,7 @@ metadata without hidden collection or external writes.
 | HS-9-03 | Firefox companion extension events | done | [story-03-firefox-extension-events.md](./story-03-firefox-extension-events.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-9-04 | GitHub CLI enrichment annotations | done | [story-04-gh-cli-enrichment.md](./story-04-gh-cli-enrichment.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-9-05 | Jira CLI enrichment annotations | done | [story-05-jira-cli-enrichment.md](./story-05-jira-cli-enrichment.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-9-06 | Assisted enrichment controls + phase exit | backlog | [story-06-controls-dod.md](./story-06-controls-dod.md) | pending |
+| HS-9-06 | Assisted enrichment controls + phase exit | done | [story-06-controls-dod.md](./story-06-controls-dod.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-9-07 | Meeting candidate API surface | done | [story-07-meeting-candidate-api.md](./story-07-meeting-candidate-api.md) | [evidence-story-07.md](./evidence-story-07.md) |
 | HS-9-08 | Meeting candidate browser controls | done | [story-08-meeting-candidate-browser-controls.md](./story-08-meeting-candidate-browser-controls.md) | [evidence-story-08.md](./evidence-story-08.md) |
 | HS-9-09 | Meeting candidate dedupe and time hints | done | [story-09-candidate-dedupe-time-hints.md](./story-09-candidate-dedupe-time-hints.md) | [evidence-story-09.md](./evidence-story-09.md) |
@@ -151,8 +151,11 @@ cover the manual install path. 9 unit + 3 integration tests
 prove the rejection contract and the no-mutation guarantee on
 rejected events.
 
-Up next: HS-9-06 (phase exit DoD) — every other phase-9 story is
-now `done`.
+HS-9-06 closed the phase. Focused assisted-enrichment sweep
+(111 tests) and full non-Metal regression (1242 / 13 skipped)
+both green; every story has an `evidence-story-{n}.md` file in
+this directory; connector controls + scoped output deletion are
+visible on `/activity`. **Phase 9 is done.**
 
 ## Source Design
 

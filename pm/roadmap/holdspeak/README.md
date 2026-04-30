@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-29 (HS-9-03 Firefox companion extension events shipped).
-**Current phase:** [phase-9-assisted-activity-enrichment](./phase-9-assisted-activity-enrichment/) — build optional local enrichment connectors on top of the activity ledger. Phase 10 (web design system) shipped in parallel and is now done; phase 11 (local connector ecosystem) is planned next.
-**Status:** in-progress.
+**Last updated:** 2026-04-29 (phase 9 done — HS-9-06 closed assisted-enrichment controls and phase exit).
+**Current phase:** [phase-11-local-connector-ecosystem](./phase-11-local-connector-ecosystem/) — reusable manifests, fixtures, first-party connector packs, and developer docs.
+**Status:** planning.
 
 ## Vision
 
@@ -45,7 +45,7 @@ canon, canon wins.
 | 6 | Action follow-through: make meeting action items and artifacts reviewable and traceable | done | [phase-6-action-follow-through](./phase-6-action-follow-through/) |
 | 7 | Local handoff exports: make reviewed meeting work portable as local Markdown/JSON outputs | done | [phase-7-local-handoff-exports](./phase-7-local-handoff-exports/) |
 | 8 | Local activity intelligence: mine Safari/Firefox history metadata into a private default-on work-context ledger | done | [phase-8-local-activity-intelligence](./phase-8-local-activity-intelligence/) |
-| 9 | Assisted activity enrichment: add opt-in local connectors, annotations, and meeting candidates | in-progress | [phase-9-assisted-activity-enrichment](./phase-9-assisted-activity-enrichment/) |
+| 9 | Assisted activity enrichment: add opt-in local connectors, annotations, and meeting candidates | done | [phase-9-assisted-activity-enrichment](./phase-9-assisted-activity-enrichment/) |
 | 10 | Web design system & character pass: tokens, components, identity, route rebuilds, refreshed designer handoff | done | [phase-10-web-design-system](./phase-10-web-design-system/) |
 | 11 | Local connector ecosystem: reusable manifests, fixtures, first-party connector packs, and developer docs | planning | [phase-11-local-connector-ecosystem](./phase-11-local-connector-ecosystem/) |
 

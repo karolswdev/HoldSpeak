@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-9-01 through HS-9-05
 - **Unblocks:** Phase 9 closure
 - **Owner:** unassigned
@@ -26,8 +26,8 @@ traceability, and regression evidence.
 
 ## Acceptance Criteria
 
-- [ ] Connector controls are visible.
-- [ ] Connector outputs are deletable.
-- [ ] Focused assisted-enrichment sweep passes.
-- [ ] Full regression passes.
-- [ ] Phase evidence bundle exists.
+- [x] Connector controls are visible.
+- [x] Connector outputs are deletable.
+- [x] Focused assisted-enrichment sweep passes.
+- [x] Full regression passes.
+- [x] Phase evidence bundle exists.
