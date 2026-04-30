@@ -1001,61 +1001,75 @@ import AppLayout from "../layouts/AppLayout.astro";
     line-height: var(--line-height-normal);
   }
 
-  /* === Section + tabs ==================================== */
+  /* === Section + tabs (HS-12-02 Workbench window grammar) === */
   .section {
-    background: var(--canvas-raised);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-3);
+    background: var(--wb-white);
+    border: 1px solid var(--wb-black);
     overflow: hidden;
   }
   .section-head {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-3);
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
-    padding: var(--space-5) var(--space-5) 0;
+    background: var(--wb-blue);
+    color: var(--wb-white);
+    border-bottom: 1px solid var(--wb-black);
+    padding: var(--space-2) var(--space-4);
   }
   .section-head h2 {
     margin: 0;
     font-family: var(--font-display);
-    color: var(--text);
+    font-size: var(--font-size-lg);
+    font-weight: 400;
+    color: var(--wb-white);
+    letter-spacing: 0.04em;
+    line-height: 1.2;
   }
   .section-head p {
     margin: var(--space-1) 0 0;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.78);
+    font-size: var(--font-size-sm);
   }
   .section-body {
-    padding: var(--space-5);
+    padding: var(--space-4);
   }
   .tab-row {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-1);
+    gap: 0;
+    border-bottom: 1px solid var(--wb-black);
+    margin-bottom: var(--space-3);
   }
+  /* Tabs read as Workbench notebook tabs — square corners, hard
+   * border on three sides, the active tab "merges" into the
+   * panel below by losing its bottom border. */
   .tab {
     appearance: none;
-    background: transparent;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-pill);
+    background: var(--wb-gray-6);
+    border: 1px solid var(--wb-black);
+    border-bottom: none;
+    margin-right: -1px;
+    margin-bottom: -1px;
     padding: var(--space-2) var(--space-3);
     color: var(--text-muted);
     font-family: var(--font-ui);
     font-size: var(--font-size-sm);
     cursor: pointer;
-    transition: border-color var(--duration-short) var(--ease-standard),
-                color var(--duration-short) var(--ease-standard),
-                background var(--duration-short) var(--ease-standard);
+    transition: background var(--duration-short) var(--ease-standard),
+                color var(--duration-short) var(--ease-standard);
   }
-  .tab:hover { color: var(--text); border-color: var(--line-strong); }
+  .tab:hover { color: var(--text); background: var(--wb-gray-5); }
   .tab.active {
-    background: var(--accent-soft);
-    border-color: var(--accent);
+    background: var(--wb-white);
     color: var(--text);
+    font-weight: 500;
   }
   .tab:focus-visible {
     outline: var(--focus-outline-width) solid var(--accent);
-    outline-offset: var(--focus-outline-offset);
+    outline-offset: -2px;
+    z-index: 1;
   }
 
   /* === Notice bar ======================================== */
@@ -1091,22 +1105,22 @@ import AppLayout from "../layouts/AppLayout.astro";
     gap: var(--space-2);
     align-items: center;
   }
+  /* Sunken Workbench fields. */
   .input, .select {
     flex: 1 1 auto;
     min-width: 0;
     padding: var(--space-2) var(--space-3);
-    background: var(--canvas);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-2);
+    background: var(--field-bg);
+    border: 1px solid var(--field-border);
     color: var(--text);
     font-family: var(--font-ui);
     font-size: var(--font-size-sm);
   }
   .input--narrow { flex: 0 0 auto; max-width: 9rem; }
   .input:focus-visible, .select:focus-visible {
-    outline: var(--focus-outline-width) solid var(--accent);
-    outline-offset: var(--focus-outline-offset);
-    border-color: var(--accent);
+    outline: none;
+    border-color: var(--field-focus-border);
+    background: var(--wb-white);
   }
   .toggle, .check {
     display: inline-flex;
@@ -1121,32 +1135,48 @@ import AppLayout from "../layouts/AppLayout.astro";
     gap: var(--space-3);
   }
 
+  /* Workbench gadgets — flat with hard 1px black border. The
+   * `.btn.primary` / `.btn.danger` legacy modifiers stay in
+   * the markup contract; we just paint them the new way. */
   .btn {
     appearance: none;
-    background: var(--canvas);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-2);
+    background: var(--wb-white);
+    border: 1px solid var(--wb-black);
     padding: var(--space-2) var(--space-3);
     color: var(--text);
     font-family: var(--font-ui);
     font-size: var(--font-size-sm);
     cursor: pointer;
-    transition: border-color var(--duration-short) var(--ease-standard),
-                background var(--duration-short) var(--ease-standard);
+    transition: background var(--duration-short) var(--ease-standard),
+                color var(--duration-short) var(--ease-standard);
   }
-  .btn:hover:not(:disabled) { border-color: var(--line-strong); }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn:hover:not(:disabled) { background: var(--wb-gray-6); }
+  .btn:disabled {
+    background: var(--disabled-bg);
+    color: var(--disabled-fg);
+    border-color: var(--disabled-border);
+    cursor: not-allowed;
+  }
   .btn:focus-visible {
     outline: var(--focus-outline-width) solid var(--accent);
     outline-offset: var(--focus-outline-offset);
   }
   .btn.primary {
     background: var(--accent);
-    border-color: var(--accent);
+    border-color: var(--wb-black);
     color: var(--accent-on);
   }
-  .btn.primary:hover:not(:disabled) { background: var(--accent-strong, var(--accent)); }
-  .btn.danger, .btn--ghost.danger { color: var(--danger); border-color: var(--danger); }
+  .btn.primary:hover:not(:disabled) { background: var(--accent-strong); }
+  .btn.danger, .btn--ghost.danger {
+    color: var(--danger);
+    border-color: var(--wb-black);
+    background: var(--danger-soft);
+  }
+  .btn.danger:hover:not(:disabled),
+  .btn--ghost.danger:hover:not(:disabled) {
+    background: var(--danger);
+    color: var(--wb-white);
+  }
 
   /* === Cards (meetings, actions, intel) ================== */
   .grid {
@@ -1163,32 +1193,37 @@ import AppLayout from "../layouts/AppLayout.astro";
     .layout-split { grid-template-columns: 1fr; }
   }
 
+  /* Workbench rows — square, hard black border, hover lights
+   * background; selected row uses the inverse-bar idiom (blue
+   * fill, white text). */
   .meeting-card, .action-card, .speaker-card, .segment {
     appearance: none;
     text-align: left;
-    background: var(--canvas);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-2);
+    background: var(--wb-white);
+    border: 1px solid var(--wb-black);
     padding: var(--space-3);
     color: var(--text);
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
     cursor: pointer;
-    transition: border-color var(--duration-short) var(--ease-standard);
+    transition: background var(--duration-short) var(--ease-standard),
+                color var(--duration-short) var(--ease-standard);
   }
   .segment, .meeting-card--static { cursor: default; }
-  .meeting-card:hover:not(.meeting-card--static),
+  .meeting-card:hover:not(.meeting-card--static):not(.meeting-card--selected),
   .action-card:hover,
-  .speaker-card:hover { border-color: var(--line-strong); }
-  .speaker-card.active {
-    border-color: var(--accent);
-    background: var(--accent-soft);
+  .speaker-card:hover:not(.active) { background: var(--wb-blue-tint); }
+  .speaker-card.active,
+  .meeting-card--selected {
+    background: var(--selected-bg);
+    color: var(--selected-fg);
+    border-color: var(--wb-black);
   }
   .meeting-card:focus-visible,
   .speaker-card:focus-visible {
     outline: var(--focus-outline-width) solid var(--accent);
-    outline-offset: var(--focus-outline-offset);
+    outline-offset: -2px;
   }
 
   .card-top {

@@ -345,12 +345,14 @@ import CommandPreview from "../components/CommandPreview.astro";
     .grid { grid-template-columns: 1fr; }
   }
 
-  /* === Panel ============================================= */
+  /* === Panel (HS-12-02 Workbench window grammar) ===========
+   * Markup keeps padding on `.panel` rather than a body div, so
+   * we use a negative margin on `.panel-header` to push the
+   * blue title strip out to the panel edges. */
   .panel {
-    background: var(--canvas-raised);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-3);
-    padding: var(--space-4);
+    background: var(--wb-white);
+    border: 1px solid var(--wb-black);
+    padding: var(--space-3);
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
@@ -360,8 +362,24 @@ import CommandPreview from "../components/CommandPreview.astro";
     align-items: center;
     justify-content: space-between;
     gap: var(--space-2);
+    background: var(--wb-blue);
+    color: var(--wb-white);
+    border-bottom: 1px solid var(--wb-black);
+    padding: var(--space-2) var(--space-3);
+    margin: calc(var(--space-3) * -1) calc(var(--space-3) * -1) 0;
   }
-  .panel-header h3, .panel h3 {
+  .panel-header h3 {
+    margin: 0;
+    color: var(--wb-white);
+    font-family: var(--font-display);
+    font-size: var(--font-size-lg);
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+  }
+  /* Sub-headings inside panel bodies (e.g. "Starter templates")
+   * read as black-on-white labels, not as title strips. */
+  .panel h3:not(.panel-header h3):not(.subhead) {
     margin: 0;
     color: var(--text);
     font-family: var(--font-display);
@@ -372,25 +390,38 @@ import CommandPreview from "../components/CommandPreview.astro";
     gap: var(--space-2);
     flex-wrap: wrap;
   }
+  .panel-toolbar .btn--ghost { color: var(--wb-white); }
   .panel-divider {
     margin-top: var(--space-3);
     padding-top: var(--space-3);
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--wb-black);
   }
-  .subhead { font-size: var(--font-size-sm) !important; }
+  .subhead {
+    font-size: var(--font-size-sm);
+    font-family: var(--font-ui);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0;
+  }
 
   /* === Block list ======================================== */
-  .block-list { display: flex; flex-direction: column; gap: var(--space-2); }
+  .block-list { display: flex; flex-direction: column; gap: var(--space-1); }
   .block-card {
-    border: 1px solid var(--line);
-    border-radius: var(--radius-2);
+    border: 1px solid var(--wb-black);
     padding: var(--space-2) var(--space-3);
-    background: var(--canvas);
+    background: var(--wb-white);
     cursor: pointer;
-    transition: border-color var(--duration-short) var(--ease-standard);
+    transition: background var(--duration-short) var(--ease-standard),
+                color var(--duration-short) var(--ease-standard);
   }
-  .block-card:hover { border-color: var(--line-strong); }
-  .block-card.selected { border-color: var(--accent); background: var(--accent-soft); }
+  .block-card:hover:not(.selected) { background: var(--wb-blue-tint); }
+  .block-card.selected {
+    background: var(--selected-bg);
+    color: var(--selected-fg);
+  }
+  .block-card.selected .block-id,
+  .block-card.selected .block-desc { color: var(--selected-fg); }
   .block-id { font-family: var(--font-mono); font-weight: 600; color: var(--text); }
   .block-desc {
     color: var(--text-muted);

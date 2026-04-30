@@ -33,8 +33,10 @@
   aria-labelledby="holdspeak-confirm-title"
   aria-describedby="holdspeak-confirm-body"
 >
-  <form method="dialog" class="confirm-dialog__form">
+  <header class="confirm-dialog__header">
     <h2 id="holdspeak-confirm-title" class="confirm-dialog__title"></h2>
+  </header>
+  <form method="dialog" class="confirm-dialog__form">
     <p id="holdspeak-confirm-body" class="confirm-dialog__body"></p>
     <p
       id="holdspeak-confirm-scope"
@@ -170,19 +172,40 @@
 </script>
 
 <style>
+  /* HS-12-02 (slice 4): Workbench window dialog. Hard 1px black
+   * border, no rounded corners, blue title strip with white
+   * VT323 caption, white body. Drop shadow stays for the
+   * "lifted off the desktop" cue but is rendered hard rather
+   * than soft to match the discrete Workbench feel. */
   .confirm-dialog {
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-3);
-    background: var(--canvas-raised);
+    border: 1px solid var(--wb-black);
+    background: var(--wb-white);
     color: var(--text);
     padding: 0;
-    box-shadow: var(--elev-3, 0 24px 60px rgba(0, 0, 0, 0.4));
+    box-shadow: 4px 4px 0 0 rgba(0, 0, 0, 0.45);
     max-width: min(34rem, calc(100vw - 2 * var(--space-5)));
     width: 100%;
   }
 
   .confirm-dialog::backdrop {
     background: rgba(0, 0, 0, 0.55);
+  }
+
+  .confirm-dialog__header {
+    background: var(--wb-blue);
+    color: var(--wb-white);
+    border-bottom: 1px solid var(--wb-black);
+    padding: var(--space-2) var(--space-4);
+  }
+
+  .confirm-dialog__header .confirm-dialog__title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-lg);
+    font-weight: 400;
+    color: var(--wb-white);
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    margin: 0;
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -223,16 +246,18 @@
   .confirm-dialog__form {
     display: flex;
     flex-direction: column;
-    gap: var(--space-4);
-    padding: var(--space-5);
+    gap: var(--space-3);
+    padding: var(--space-4);
     margin: 0;
   }
 
-  .confirm-dialog__title {
+  /* The title rule outside the header is now a no-op since the
+   * title lives inside __header — but we keep this scoped rule
+   * for any consumer that overrides the markup. */
+  .confirm-dialog__form .confirm-dialog__title {
     margin: 0;
     font-size: var(--font-size-lg);
     font-weight: 600;
-    letter-spacing: var(--letter-spacing-tight);
     color: var(--text);
   }
 
@@ -251,6 +276,9 @@
     color: var(--text-muted);
     font-size: var(--font-size-sm);
     line-height: var(--line-height-relaxed, 1.5);
+    background: var(--local-soft);
+    border: 1px solid var(--wb-blue);
+    padding: var(--space-2) var(--space-3);
   }
 
   .confirm-dialog__scope[data-empty="true"] {
@@ -259,17 +287,16 @@
 
   .confirm-dialog__scope-pill {
     flex: 0 0 auto;
-    font-family: var(--font-ui);
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-    letter-spacing: var(--letter-spacing-loose);
+    font-family: var(--font-display);
+    font-size: var(--font-size-sm);
+    font-weight: 400;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--accent);
-    background: var(--accent-soft);
-    border: 1px solid var(--accent-soft);
-    border-radius: var(--radius-pill, 999px);
-    padding: 2px var(--space-2);
-    line-height: 1.4;
+    color: var(--wb-white);
+    background: var(--wb-blue);
+    border: 1px solid var(--wb-blue);
+    padding: 0 var(--space-2);
+    line-height: 1.5;
   }
 
   .confirm-dialog__scope-note {

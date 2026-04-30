@@ -117,16 +117,21 @@ const wrapperClass = ["cmd", `cmd--${tone}`, extraClass].filter(Boolean).join(" 
     line-height: var(--line-height-relaxed);
   }
 
+  /* HS-12-02 (slice 4): cmd frame reads as a Workbench shell-
+   * window. Pale grey-7 fill (the same sunken-field tone used
+   * for inputs), hard 1px black border, and a 4px left edge
+   * coloured by tone. The left edge is the tone signal —
+   * nothing else changes per tone, so a stack of cmd previews
+   * scans cleanly. */
   .cmd-frame {
     position: relative;
-    background: var(--canvas);
-    border: 1px solid var(--line);
-    border-left: 3px solid var(--line-strong);
-    border-radius: var(--radius-2);
+    background: var(--wb-gray-7);
+    border: 1px solid var(--wb-black);
+    border-left-width: 4px;
     overflow: hidden;
   }
 
-  .cmd--neutral .cmd-frame { border-left-color: var(--line-strong); }
+  .cmd--neutral .cmd-frame { border-left-color: var(--wb-blue); }
   .cmd--warn .cmd-frame    { border-left-color: var(--warn); }
   .cmd--danger .cmd-frame  { border-left-color: var(--danger); }
 
@@ -148,29 +153,36 @@ const wrapperClass = ["cmd", `cmd--${tone}`, extraClass].filter(Boolean).join(" 
     color: inherit;
   }
 
+  /* Copy gadget — small flat Workbench button anchored top-right
+   * of the frame. Square corners, hard black border, white fill;
+   * hover swaps to the orange accent. */
   .cmd-copy {
     position: absolute;
     top: var(--space-2);
     right: var(--space-2);
     appearance: none;
-    background: var(--canvas-raised);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-pill);
-    color: var(--text-muted);
+    background: var(--wb-white);
+    border: 1px solid var(--wb-black);
+    color: var(--text);
     font-family: var(--font-ui);
     font-size: var(--font-size-xs);
     letter-spacing: var(--letter-spacing-loose);
     padding: var(--space-1) var(--space-3);
     cursor: pointer;
     transition:
-      border-color var(--duration-short) var(--ease-standard),
-      color var(--duration-short) var(--ease-standard),
-      background var(--duration-short) var(--ease-standard);
+      background var(--duration-short) var(--ease-standard),
+      color var(--duration-short) var(--ease-standard);
   }
 
   .cmd-copy:hover {
-    border-color: var(--line-emphasis);
-    color: var(--text);
+    background: var(--accent);
+    color: var(--accent-on);
+  }
+
+  .cmd-copy.is-copied {
+    background: var(--success);
+    color: var(--wb-white);
+    border-color: var(--success-strong);
   }
 
   .cmd-copy:focus-visible {
