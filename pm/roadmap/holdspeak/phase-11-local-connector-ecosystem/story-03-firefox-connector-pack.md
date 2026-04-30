@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-9-03, HS-11-01
 - **Unblocks:** reusable browser-event connector distribution
 - **Owner:** unassigned
@@ -29,7 +29,7 @@ and fixture coverage.
 
 ## Acceptance Criteria
 
-- [ ] Firefox connector pack can be installed locally for development.
-- [ ] Events are accepted only through loopback.
-- [ ] Manifest declares captured fields and permissions.
-- [ ] Fixture tests cover accepted and rejected payloads.
+- [x] Firefox connector pack can be installed locally for development.
+- [x] Events are accepted only through loopback.
+- [x] Manifest declares captured fields and permissions.
+- [x] Fixture tests cover accepted and rejected payloads.

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-9-05, HS-11-01
 - **Unblocks:** reusable Jira enrichment connector
 - **Owner:** unassigned
@@ -28,7 +28,7 @@ metadata.
 
 ## Acceptance Criteria
 
-- [ ] Connector manifest marks the connector as network-capable through local CLI.
-- [ ] Only read-only `jira` commands are allowed.
-- [ ] Fixture tests produce deterministic annotations.
-- [ ] Command failures surface as connector run errors.
+- [x] Connector manifest marks the connector as network-capable through local CLI.
+- [x] Only read-only `jira` commands are allowed.
+- [x] Fixture tests produce deterministic annotations.
+- [x] Command failures surface as connector run errors.

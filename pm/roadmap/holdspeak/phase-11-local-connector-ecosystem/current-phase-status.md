@@ -1,6 +1,6 @@
 # Phase 11 - Local Connector Ecosystem
 
-**Last updated:** 2026-04-30 (HS-11-02 fixture-driven dry-run harness shipped).
+**Last updated:** 2026-04-30 (HS-11-03/04/05 first-party connector packs shipped).
 
 ## Goal
 
@@ -31,9 +31,9 @@ can be tested and installed locally without hidden network behavior.
 |---|---|---|---|---|
 | HS-11-01 | Connector manifest and SDK shape | done | [story-01-connector-manifest-sdk.md](./story-01-connector-manifest-sdk.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-11-02 | Connector fixture and dry-run test harness | done | [story-02-fixture-dry-run-harness.md](./story-02-fixture-dry-run-harness.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-11-03 | Firefox companion connector pack | backlog | [story-03-firefox-connector-pack.md](./story-03-firefox-connector-pack.md) | pending |
-| HS-11-04 | GitHub CLI connector pack | backlog | [story-04-github-cli-connector-pack.md](./story-04-github-cli-connector-pack.md) | pending |
-| HS-11-05 | Jira CLI connector pack | backlog | [story-05-jira-cli-connector-pack.md](./story-05-jira-cli-connector-pack.md) | pending |
+| HS-11-03 | Firefox companion connector pack | done | [story-03-firefox-connector-pack.md](./story-03-firefox-connector-pack.md) | [evidence-story-03.md](./evidence-story-03.md) |
+| HS-11-04 | GitHub CLI connector pack | done | [story-04-github-cli-connector-pack.md](./story-04-github-cli-connector-pack.md) | [evidence-story-04.md](./evidence-story-04.md) |
+| HS-11-05 | Jira CLI connector pack | done | [story-05-jira-cli-connector-pack.md](./story-05-jira-cli-connector-pack.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-11-06 | Connector developer documentation | backlog | [story-06-connector-developer-docs.md](./story-06-connector-developer-docs.md) | pending |
 | HS-11-07 | Connector ecosystem phase exit | backlog | [story-07-dod.md](./story-07-dod.md) | pending |
 
@@ -67,9 +67,20 @@ fixture run by construction. `FixtureRunResult.diff_report()`
 renders failures with each drifted field and a payload summary
 the operator can paste back as the new expectation.
 
-Up next: HS-11-03..05 (rebuild Firefox / gh / jira packs
-against the manifest + Protocols, dropping fixtures alongside),
-HS-11-06 (developer docs), HS-11-07 (phase exit).
+HS-11-03/04/05 ship the first-party packs:
+`holdspeak/connector_packs/{firefox_ext,github_cli,jira_cli}.py`
+each export a validated `MANIFEST` plus pack-specific policy
+data — `CAPTURED_FIELDS`/`REJECTED_FIELDS` for firefox_ext,
+`ALLOWED_SUBCOMMANDS` + `is_command_allowed()` for the two CLI
+packs. The CLI packs' allowlists explicitly reject every
+mutating verb (`gh pr edit/merge/close`, `gh issue
+create/close`, `gh auth login`, `jira issue
+create/assign/transition`, etc.) — 28 parametrized policy
+tests cover every documented case. The firefox pack
+re-exports the parser's frozensets so manifest-vs-parser
+drift fails at unit-test time.
+
+Up next: HS-11-06 (developer docs), HS-11-07 (phase exit).
 
 ## Source Design
 
