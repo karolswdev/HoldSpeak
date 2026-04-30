@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-29 (HS-9-13 connector dry-run harness shipped).
+**Last updated:** 2026-04-29 (HS-9-03 Firefox companion extension events shipped).
 **Current phase:** [phase-9-assisted-activity-enrichment](./phase-9-assisted-activity-enrichment/) — build optional local enrichment connectors on top of the activity ledger. Phase 10 (web design system) shipped in parallel and is now done; phase 11 (local connector ecosystem) is planned next.
 **Status:** in-progress.
 

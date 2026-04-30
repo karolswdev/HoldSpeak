@@ -1,6 +1,6 @@
 # Phase 9 - Assisted Activity Enrichment
 
-**Last updated:** 2026-04-29 (HS-9-13 connector dry-run harness shipped).
+**Last updated:** 2026-04-29 (HS-9-03 Firefox companion extension events shipped).
 
 ## Goal
 
@@ -33,7 +33,7 @@ metadata without hidden collection or external writes.
 |---|---|---|---|---|
 | HS-9-01 | Connector registry and annotation persistence | done | [story-01-connector-registry-annotations.md](./story-01-connector-registry-annotations.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-9-02 | Calendar and Outlook meeting candidates | done | [story-02-calendar-outlook-candidates.md](./story-02-calendar-outlook-candidates.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-9-03 | Firefox companion extension events | backlog | [story-03-firefox-extension-events.md](./story-03-firefox-extension-events.md) | pending |
+| HS-9-03 | Firefox companion extension events | done | [story-03-firefox-extension-events.md](./story-03-firefox-extension-events.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-9-04 | GitHub CLI enrichment annotations | done | [story-04-gh-cli-enrichment.md](./story-04-gh-cli-enrichment.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-9-05 | Jira CLI enrichment annotations | done | [story-05-jira-cli-enrichment.md](./story-05-jira-cli-enrichment.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-9-06 | Assisted enrichment controls + phase exit | backlog | [story-06-controls-dod.md](./story-06-controls-dod.md) | pending |
@@ -134,8 +134,25 @@ Six unit tests + three integration tests prove the payload is
 mutation-free and uniform across connectors; the empty-ledger
 case warns rather than errors.
 
-Up next: HS-9-03 (Firefox companion extension), HS-9-06 (phase
-exit DoD).
+HS-9-03 lands the Firefox companion extension flow:
+`holdspeak/activity_extension.py` exposes a strict parser whose
+`FORBIDDEN_FIELDS` frozenset hard-rejects events shipping cookies,
+page bodies, form data, headers, screenshots, or any other
+sensitive field name (regardless of value). URLs must be
+`http(s)`; private / incognito events are rejected; `visited_at`
+must parse as ISO-8601. The new
+`POST /api/activity/extension/events` endpoint feeds parsed
+events through `db.upsert_activity_record`, then runs
+`apply_activity_project_rules` so extension-sourced records pick
+up project mapping like imported history. A minimal Firefox
+WebExtension scaffold under `extensions/firefox/` (manifest +
+background + options) plus `docs/FIREFOX_EXTENSION_GUIDE.md`
+cover the manual install path. 9 unit + 3 integration tests
+prove the rejection contract and the no-mutation guarantee on
+rejected events.
+
+Up next: HS-9-06 (phase exit DoD) — every other phase-9 story is
+now `done`.
 
 ## Source Design
 

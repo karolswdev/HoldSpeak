@@ -245,6 +245,10 @@ class _ActivityEnrichmentConnectorRequest(BaseModel):
     settings: Optional[dict[str, Any]] = None
 
 
+class _ActivityExtensionEventsRequest(BaseModel):
+    events: list[dict[str, Any]]
+
+
 class _ActivityCliEnrichmentRunRequest(BaseModel):
     limit: Optional[int] = None
     timeout_seconds: Optional[float] = None
@@ -1372,6 +1376,26 @@ class MeetingWebServer:
                 return JSONResponse({"error": str(e)}, status_code=400)
             except Exception as e:
                 log.error(f"Failed to update activity enrichment connector: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.post("/api/activity/extension/events")
+        async def api_ingest_activity_extension_events(
+            payload: _ActivityExtensionEventsRequest,
+        ) -> Any:
+            """HS-9-03: companion-extension event ingestion. Loopback-only
+            in practice — the runtime binds to 127.0.0.1 by default. Per
+            the parser contract, events that ship sensitive fields
+            (cookies, body, form data, etc.), private-browsing flags, or
+            non-http(s) URLs are rejected, never persisted."""
+            from .activity_extension import ingest_extension_events
+            from .db import get_database
+
+            try:
+                db = get_database()
+                result = ingest_extension_events(db, payload.events)
+                return JSONResponse(result.to_payload())
+            except Exception as e:
+                log.error(f"Failed to ingest activity extension events: {e}")
                 return JSONResponse({"error": str(e)}, status_code=500)
 
         @app.get("/api/activity/enrichment/connectors/{connector_id}/dry-run")

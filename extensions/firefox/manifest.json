@@ -1,0 +1,25 @@
+{
+  "manifest_version": 2,
+  "name": "HoldSpeak Companion (local)",
+  "version": "0.1.0",
+  "description": "Posts visible, opt-in active-tab metadata to a locally running HoldSpeak runtime over loopback. No page bodies, cookies, or credentials are read or sent.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "holdspeak-companion@local",
+      "strict_min_version": "115.0"
+    }
+  },
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "storage"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  }
+}

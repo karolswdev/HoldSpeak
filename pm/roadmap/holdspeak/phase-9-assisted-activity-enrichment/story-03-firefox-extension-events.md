@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-9-01
 - **Unblocks:** opt-in active-tab metadata capture
 - **Owner:** unassigned
@@ -28,7 +28,7 @@ events through loopback without reading page bodies or credentials.
 
 ## Acceptance Criteria
 
-- [ ] Extension events can be posted to localhost.
-- [ ] Events create or merge activity records.
-- [ ] Project mapping applies to extension records.
-- [ ] Tests prove private/page-body data is not accepted.
+- [x] Extension events can be posted to localhost.
+- [x] Events create or merge activity records.
+- [x] Project mapping applies to extension records.
+- [x] Tests prove private/page-body data is not accepted.

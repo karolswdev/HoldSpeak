@@ -609,6 +609,109 @@ def test_clear_connector_unknown_connector_returns_404(test_client: TestClient) 
     assert response.status_code == 404
 
 
+def test_extension_events_endpoint_creates_records(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+) -> None:
+    """HS-9-03: posting events to the loopback endpoint upserts
+    activity records under source_browser=firefox_ext."""
+    response = test_client.post(
+        "/api/activity/extension/events",
+        json={
+            "events": [
+                {
+                    "url": "https://github.com/anthropic/holdspeak/pull/9",
+                    "title": "PR 9",
+                    "visited_at": "2026-04-29T20:30:00",
+                },
+            ],
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload["accepted"]) == 1
+    assert payload["rejected"] == []
+
+    records = activity_db.list_activity_records(source_browser="firefox_ext")
+    assert len(records) == 1
+    assert records[0].entity_type == "github_pull_request"
+
+
+def test_extension_events_rejects_sensitive_fields(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+) -> None:
+    """HS-9-03: events shipping page-body / cookies / form data
+    are rejected. The DB stays empty."""
+    response = test_client.post(
+        "/api/activity/extension/events",
+        json={
+            "events": [
+                {
+                    "url": "https://example.com/page",
+                    "title": "Has cookies",
+                    "visited_at": "2026-04-29T20:30:00",
+                    "cookies": "session=abc123",
+                },
+                {
+                    "url": "https://example.com/page2",
+                    "title": "Has form data",
+                    "visited_at": "2026-04-29T20:30:01",
+                    "form_data": {"username": "a"},
+                },
+                {
+                    "url": "https://example.com/page3",
+                    "title": "Private",
+                    "visited_at": "2026-04-29T20:30:02",
+                    "private": True,
+                },
+            ],
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["accepted"] == []
+    rejected_reasons = sorted(r["reason"] for r in payload["rejected"])
+    assert rejected_reasons[0].startswith("forbidden_field:")
+    assert rejected_reasons[1].startswith("forbidden_field:")
+    assert "private_browsing_blocked" in rejected_reasons
+
+    assert activity_db.list_activity_records(source_browser="firefox_ext") == []
+
+
+def test_extension_events_applies_project_rules(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+) -> None:
+    """HS-9-03: extension records pick up the same project mapping
+    as imported history records."""
+    activity_db.create_project(project_id="holdspeak", name="HoldSpeak")
+    activity_db.create_activity_project_rule(
+        project_id="holdspeak",
+        match_type="domain",
+        pattern="github.com",
+        name="GitHub",
+    )
+
+    response = test_client.post(
+        "/api/activity/extension/events",
+        json={
+            "events": [
+                {
+                    "url": "https://github.com/anthropic/holdspeak/pull/10",
+                    "title": "PR 10",
+                    "visited_at": "2026-04-29T20:30:00",
+                },
+            ],
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["project_rule_updates"] >= 1
+    records = activity_db.list_activity_records(source_browser="firefox_ext")
+    assert records[0].project_id == "holdspeak"
+
+
 def test_connector_dry_run_returns_uniform_shape_per_connector(
     test_client: TestClient,
     activity_db: MeetingDatabase,

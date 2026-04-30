@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>HoldSpeak Companion — Options</title>
+    <style>
+      body { font-family: system-ui, sans-serif; padding: 1rem; max-width: 28rem; }
+      label { display: block; margin: 0.75rem 0 0.25rem; font-weight: 600; }
+      input { width: 100%; padding: 0.4rem; font-family: monospace; }
+      .hint { color: #666; font-size: 0.85em; }
+      .ok { color: #2a7; }
+    </style>
+  </head>
+  <body>
+    <h1>HoldSpeak Companion</h1>
+    <p>Posts active-tab URL + title to the local HoldSpeak runtime over loopback. No page bodies, cookies, or credentials are read.</p>
+    <label for="runtimeUrl">Runtime URL</label>
+    <input id="runtimeUrl" type="url" placeholder="http://127.0.0.1:64524" />
+    <p class="hint">Find the actual port in the HoldSpeak startup log. It changes per launch.</p>
+    <button id="save" type="button">Save</button>
+    <p id="saved" class="ok" hidden>Saved.</p>
+    <script src="options.js"></script>
+  </body>
+</html>
