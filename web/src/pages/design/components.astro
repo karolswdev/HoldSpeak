@@ -385,8 +385,10 @@ import CommandPreview from "../../components/CommandPreview.astro";
 
   h1 {
     margin: 0 0 var(--space-3);
+    /* HS-12-02: page-level h1 is a Workbench display moment. */
+    font-family: var(--font-display);
     font-size: var(--font-size-3xl);
-    letter-spacing: var(--letter-spacing-tight);
+    letter-spacing: 0.02em;
   }
 
   .lead {
@@ -406,15 +408,21 @@ import CommandPreview from "../../components/CommandPreview.astro";
 
   .block h2 {
     margin: 0;
+    /* Section headings on the desktop layer are also Workbench
+     * display moments. */
+    font-family: var(--font-display);
     font-size: var(--font-size-xl);
-    letter-spacing: var(--letter-spacing-tight);
-    border-bottom: 1px solid var(--line);
+    letter-spacing: 0.02em;
+    /* Border on desktop = white hairline so the divider reads
+     * against the blue, not against panel-internal black. */
+    border-bottom: 1px solid var(--wb-white);
     padding-bottom: var(--space-2);
   }
 
   .block h3 {
     margin: var(--space-3) 0 0;
-    color: var(--text-muted);
+    /* Lives on the blue desktop, not in a panel. */
+    color: var(--on-desktop-muted, var(--text-muted));
     font-size: var(--font-size-sm);
     font-weight: 500;
     text-transform: uppercase;

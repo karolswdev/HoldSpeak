@@ -101,34 +101,39 @@
   --local-soft: #C8DDF0;
 
   /* === Typography =============================================
-   * VT323 is the canonical pixel UI font. Render hint
-   * `image-rendering: pixelated` is applied selectively in
-   * global.css to chrome, not body data. */
+   * Two faces for chrome:
+   *   --font-ui      Sora — readable prose, body copy, controls.
+   *   --font-display VT323 — Workbench *moment* font, opt-in by
+   *                  components (TopNav, page h1, brand mark).
+   * Components default to --font-ui via inheritance. The display
+   * face is opt-in via `font-family: var(--font-display)`.
+   */
   --font-ui:
-    "VT323", "Topaz", "Press Start 2P", "Courier New",
-    monospace;
+    "Sora", "Avenir Next", "Segoe UI", system-ui, -apple-system,
+    BlinkMacSystemFont, sans-serif;
+  --font-display:
+    "VT323", "Topaz", "Press Start 2P", "Courier New", monospace;
   --font-mono:
     "JetBrains Mono", "SFMono-Regular", "SF Mono", Consolas,
     "Liberation Mono", monospace;
 
-  /* VT323 renders denser per glyph, so the size scale is bumped
-   * a notch — what was 15 px in Sora reads small in pixel font. */
-  --font-size-xs: 0.875rem;   /* 14 */
-  --font-size-sm: 1rem;       /* 16 */
-  --font-size-md: 1.125rem;   /* 18 */
-  --font-size-lg: 1.25rem;    /* 20 */
-  --font-size-xl: 1.625rem;   /* 26 */
-  --font-size-2xl: 2rem;      /* 32 */
-  --font-size-3xl: 2.5rem;    /* 40 */
+  /* Phase-10 size scale (Sora-tuned). Components that opt into
+   * --font-display can up-shift one step locally if a glyph
+   * size feels small in pixel font. */
+  --font-size-xs: 0.75rem;   /* 12 */
+  --font-size-sm: 0.8125rem; /* 13 */
+  --font-size-md: 0.9375rem; /* 15 */
+  --font-size-lg: 1.0625rem; /* 17 */
+  --font-size-xl: 1.375rem;  /* 22 */
+  --font-size-2xl: 1.75rem;  /* 28 */
+  --font-size-3xl: 2.25rem;  /* 36 */
 
-  --line-height-tight: 1.1;
-  --line-height-normal: 1.35;
-  --line-height-relaxed: 1.5;
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.45;
+  --line-height-relaxed: 1.6;
 
-  /* Pixel fonts don't benefit from negative tracking; loose
-   * tracking helps chrome read clearly. */
-  --letter-spacing-tight: 0;
-  --letter-spacing-loose: 0.04em;
+  --letter-spacing-tight: -0.01em;
+  --letter-spacing-loose: 0.02em;
 
   /* === Spacing scale (4 px base) ============================== */
   --space-1: 0.25rem;  /*  4 */

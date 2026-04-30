@@ -79,10 +79,19 @@ const classes = [
     outline-offset: var(--focus-outline-offset);
   }
 
-  .btn:disabled,
-  .btn[aria-busy="true"] {
+  /* HS-12-02: disabled buttons render as flat gray on gray —
+   * Workbench ghosted-control feel without the muddy
+   * opacity-0.55 hack of phase 10. Loading retains opacity
+   * so the spinner reads as "in flight". */
+  .btn:disabled {
     cursor: not-allowed;
-    opacity: 0.55;
+    background: #cccccc !important;
+    color: #888888 !important;
+    border-color: #888888 !important;
+  }
+  .btn[aria-busy="true"] {
+    cursor: progress;
+    opacity: 0.7;
   }
 
   .btn:not(:disabled):active {
@@ -139,15 +148,20 @@ const classes = [
     border-color: var(--danger-strong);
   }
 
+  /* HS-12-02: ghost button must read on both surfaces (white
+   * panel + blue desktop). `color: inherit` lets it pick up the
+   * parent's foreground (black inside panels, white on desktop).
+   * Hover reveals a hairline border so the click target reads
+   * unambiguously. */
   .btn--ghost {
     background: transparent;
-    color: var(--text-muted);
+    color: inherit;
     border-color: transparent;
   }
 
   .btn--ghost:not(:disabled):hover {
-    color: var(--text);
-    background: var(--accent-soft);
+    border-color: currentColor;
+    background: transparent;
   }
 
   /* Loading spinner */

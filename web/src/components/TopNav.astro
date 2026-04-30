@@ -75,7 +75,12 @@ const routes: { slug: Route; label: string; href: string }[] = [
     padding: var(--space-3) var(--space-5);
     background: var(--canvas);
     border-bottom: 1px solid var(--line);
-    font-family: var(--font-ui);
+    /* HS-12-02: TopNav is a Workbench *moment* — pixel display
+     * font here, normal Sora everywhere else. The size bump
+     * compensates for VT323 reading denser at the same px size. */
+    font-family: var(--font-display);
+    font-size: var(--font-size-lg);
+    letter-spacing: 0.04em;
   }
 
   .topnav-skip {

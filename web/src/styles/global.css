@@ -8,9 +8,19 @@
 
 @import "./tokens.css";
 
-/* HS-12-01: VT323 is the pixel UI font for chrome (button, pill,
- * panel-title, nav). JetBrains Mono stays for body data + code.
- * Sora was the phase-10 UI font and is no longer loaded. */
+/* HS-12-02: split UI font into a body face (Sora) and a Workbench
+ * display face (VT323). Sora handles body copy, list rows, form
+ * controls — anything that needs to be readable as prose. VT323
+ * is reserved for *symbolic* Workbench moments: the TopNav, page
+ * titles, the brand mark. JetBrains Mono stays for code/data.
+ *
+ * The brief is "evoke Workbench, not emulate". Limiting VT323 to
+ * topnav-and-titles keeps the symbol without making the whole
+ * frontend read as a museum reproduction.
+ */
+@import "@fontsource/sora/400.css";
+@import "@fontsource/sora/500.css";
+@import "@fontsource/sora/600.css";
 @import "@fontsource/vt323/400.css";
 @import "@fontsource/jetbrains-mono/400.css";
 @import "@fontsource/jetbrains-mono/500.css";
@@ -50,8 +60,8 @@ body {
   color: var(--wb-white);
   background: var(--wb-blue);
   --on-desktop-muted: rgba(255, 255, 255, 0.78);
-  -webkit-font-smoothing: none;
-  -moz-osx-font-smoothing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
