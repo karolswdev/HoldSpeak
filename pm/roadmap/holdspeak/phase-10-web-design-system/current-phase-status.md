@@ -1,6 +1,6 @@
 # Phase 10 - Web Design System & Character Pass
 
-**Last updated:** 2026-04-28 (HS-10-09 / `/dictation` rebuilt — last route migration).
+**Last updated:** 2026-04-29 (HS-10-11 / destructive-action confirmation pattern shipped).
 
 ## Goal
 
@@ -58,7 +58,7 @@ no identity layer that says "this is HoldSpeak."
 | HS-10-08 | `/history` rebuild | done | [story-08-history-rebuild.md](./story-08-history-rebuild.md) | [evidence-story-08.md](./evidence-story-08.md) |
 | HS-10-09 | `/dictation` rebuild | done | [story-09-dictation-rebuild.md](./story-09-dictation-rebuild.md) | [evidence-story-09.md](./evidence-story-09.md) |
 | HS-10-10 | `CommandPreview` component | done | [story-10-command-preview.md](./story-10-command-preview.md) | [evidence-story-10.md](./evidence-story-10.md) |
-| HS-10-11 | Destructive-action confirmation pattern | backlog | [story-11-destructive-confirmation.md](./story-11-destructive-confirmation.md) | pending |
+| HS-10-11 | Destructive-action confirmation pattern | done | [story-11-destructive-confirmation.md](./story-11-destructive-confirmation.md) | [evidence-story-11.md](./evidence-story-11.md) |
 | HS-10-12 | Motion + accessibility pass | backlog | [story-12-motion-a11y.md](./story-12-motion-a11y.md) | pending |
 | HS-10-13 | Designer handoff refresh + phase exit | backlog | [story-13-handoff-refresh-dod.md](./story-13-handoff-refresh-dod.md) | pending |
 
@@ -88,10 +88,17 @@ of `CommandPreview` (HS-10-10): final text + each stage render
 through `<figure class="cmd cmd--{tone}">` markup, and stages with
 warnings flag in `cmd--danger`.
 
-Up next: HS-10-11 (destructive confirmation pattern — wires onto
-the `.btn.danger` class hooks already in place across `/activity`,
-`/history`, `/dictation`), HS-10-12 (motion + a11y pass), HS-10-13
-(designer handoff refresh + phase exit).
+HS-10-11 lands the destructive-action confirmation pattern: a single
+native `<dialog>` mounted by `AppLayout` plus a
+`window.holdspeakConfirm({...}) → Promise<boolean>` dispatcher. Every
+destructive call site across `/`, `/activity`, `/history`, and
+`/dictation` now routes through it — the eight sites listed in the
+HS-10-11 evidence file. `grep -rn 'confirm(' web/src/` returns no
+matches; the only `window.confirm` call left in the legacy
+`dashboard-app.js` is gone.
+
+Up next: HS-10-12 (motion + a11y pass), HS-10-13 (designer handoff
+refresh + phase exit).
 
 ## Source Design
 

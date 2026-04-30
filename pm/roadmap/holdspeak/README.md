@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-28 (HS-10-09 / `/dictation` rebuilt — last route migration).
+**Last updated:** 2026-04-29 (HS-10-11 / destructive-action confirmation pattern shipped).
 **Current phase:** [phase-9-assisted-activity-enrichment](./phase-9-assisted-activity-enrichment/) — build optional local enrichment connectors on top of the activity ledger.
 **Status:** in-progress.
 

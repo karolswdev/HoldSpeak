@@ -292,7 +292,13 @@
       });
 
       $("clear").addEventListener("click", async () => {
-        if (!confirm("Delete imported activity records?")) return;
+        const ok = await window.holdspeakConfirm({
+          title: "Delete imported activity records?",
+          body: "This permanently removes the locally imported browser-history records HoldSpeak has indexed for the work-context ledger. The next refresh will re-import from your browser history.",
+          scopeNote: "Only the local HoldSpeak ledger is affected. Your browser's own history is not touched.",
+          confirmLabel: "Delete records",
+        });
+        if (!ok) return;
         const button = $("clear");
         await withButtonBusy(button, async () => {
           try {
@@ -347,6 +353,13 @@
         const button = event.target.closest("[data-remove-domain]");
         if (!button) return;
         const domain = button.getAttribute("data-remove-domain");
+        const ok = await window.holdspeakConfirm({
+          title: `Remove ${domain} from the exclude list?`,
+          body: `Future activity from ${domain} will be re-imported into the local ledger on the next refresh.`,
+          confirmLabel: "Remove",
+          danger: false,
+        });
+        if (!ok) return;
         await withButtonBusy(button, async () => {
           try {
             const payload = await request(`/api/activity/domains/${encodeURIComponent(domain)}`, { method: "DELETE" });
@@ -429,6 +442,13 @@
         }
         if (!remove) return;
         const id = remove.getAttribute("data-delete-rule");
+        const ok = await window.holdspeakConfirm({
+          title: `Delete project rule "${id}"?`,
+          body: "The rule will no longer match incoming activity. Records previously matched by this rule keep the project they were already attached to.",
+          scopeNote: "Only the local activity ledger is affected.",
+          confirmLabel: "Delete rule",
+        });
+        if (!ok) return;
         await withButtonBusy(remove, async () => {
           try {
             await request(`/api/activity/project-rules/${encodeURIComponent(id)}`, { method: "DELETE" });
@@ -543,6 +563,13 @@
       });
 
       $("clear-dismissed-candidates").addEventListener("click", async () => {
+        const ok = await window.holdspeakConfirm({
+          title: "Clear dismissed meeting candidates?",
+          body: "Permanently removes every previously dismissed meeting candidate from the local activity ledger. The connectors that produced them are not affected — re-running them may re-surface candidates from the same source data.",
+          scopeNote: "Only HoldSpeak's local candidate list is affected. The underlying connector data and any source systems (GitHub, Jira, etc.) are not touched.",
+          confirmLabel: "Clear dismissed",
+        });
+        if (!ok) return;
         const button = $("clear-dismissed-candidates");
         await withButtonBusy(button, async () => {
           try {

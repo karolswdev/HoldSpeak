@@ -1075,7 +1075,12 @@
 
           async stopMeeting() {
             if (!this.meetingActive || this.stopInProgress) return;
-            const ok = window.confirm("Stop the meeting session?");
+            const ok = await window.holdspeakConfirm({
+              title: "Stop the meeting session?",
+              body: "The current recording is finalized and the meeting is closed. The transcript, artifacts, and any pending intel jobs remain available in /history.",
+              confirmLabel: "Stop meeting",
+              danger: false,
+            });
             if (!ok) return;
             this.stopInProgress = true;
             try {

@@ -299,8 +299,65 @@ import CommandPreview from "../../components/CommandPreview.astro";
       <h3>Bare (no caption, no meta)</h3>
       <CommandPreview command='holdspeak doctor --json' />
     </section>
+
+    <!-- ConfirmDialog -->
+    <section class="block" id="confirm-dialog" aria-labelledby="confirm-dialog-heading">
+      <h2 id="confirm-dialog-heading">ConfirmDialog</h2>
+
+      <p class="muted">
+        The destructive-action confirmation pattern. One <code>&lt;dialog&gt;</code> is
+        mounted by <code>AppLayout</code> on every page; call sites trigger it
+        via <code>window.holdspeakConfirm({'{'} title, body, scopeNote, confirmLabel, cancelLabel, danger {'}'})</code>
+        which returns <code>Promise&lt;boolean&gt;</code>. Cancel takes default
+        focus, Esc resolves <code>false</code>, the originating button is re-focused
+        on close.
+      </p>
+
+      <h3>Triggers</h3>
+      <Toolbar>
+        <Button variant="danger" id="demo-confirm-delete">Delete records…</Button>
+        <Button variant="danger" id="demo-confirm-connector">Clear dismissed candidates…</Button>
+        <Button variant="secondary" id="demo-confirm-soft">Stop meeting…</Button>
+      </Toolbar>
+
+      <p class="muted">
+        Each demo trigger fires a representative dialog. Open one and walk the
+        keyboard: Tab cycles inside the dialog only, Enter activates the
+        focused (cancel) button, Esc cancels and returns focus to the trigger.
+      </p>
+    </section>
   </main>
 </AppLayout>
+
+<script is:inline>
+  document.addEventListener("DOMContentLoaded", () => {
+    const wire = (id, opts) => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.addEventListener("click", async () => {
+        await window.holdspeakConfirm(opts);
+      });
+    };
+    wire("demo-confirm-delete", {
+      title: "Delete imported activity records?",
+      body: "This permanently removes the locally imported browser-history records HoldSpeak has indexed for the work-context ledger.",
+      scopeNote: "Only the local HoldSpeak ledger is affected. Your browser's own history is not touched.",
+      confirmLabel: "Delete records",
+    });
+    wire("demo-confirm-connector", {
+      title: "Clear dismissed meeting candidates?",
+      body: "Permanently removes every dismissed meeting candidate from the local activity ledger.",
+      scopeNote: "Only HoldSpeak's local candidate list is affected. Source systems (GitHub, Jira, etc.) are not touched.",
+      confirmLabel: "Clear dismissed",
+    });
+    wire("demo-confirm-soft", {
+      title: "Stop the meeting session?",
+      body: "The current recording is finalized and the meeting is closed. The transcript and artifacts remain in /history.",
+      confirmLabel: "Stop meeting",
+      danger: false,
+    });
+  });
+</script>
 
 <style>
   .gallery {

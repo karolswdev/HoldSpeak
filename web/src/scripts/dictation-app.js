@@ -329,7 +329,13 @@ async function saveDraft() {
 
 async function deleteDraft() {
   if (!state.selectedId) return;
-  if (!confirm(`Delete block ${state.selectedId}?`)) return;
+  const ok = await window.holdspeakConfirm({
+    title: `Delete block "${state.selectedId}"?`,
+    body: "The block's match examples and injection template are removed from the local dictation taxonomy. Utterances that previously routed to this block will fall through to the next match.",
+    scopeNote: "Only the local HoldSpeak block library is affected.",
+    confirmLabel: "Delete block",
+  });
+  if (!ok) return;
   const msg = document.getElementById("msg");
   msg.innerHTML = "";
   try {
@@ -642,7 +648,13 @@ async function createStarterKB(options = {}) {
 
 async function kbDelete() {
   if (!kbState.detected) return;
-  if (!confirm(`Delete ${kbState.kbPath}? The .holdspeak/ directory itself is preserved.`)) return;
+  const ok = await window.holdspeakConfirm({
+    title: `Delete ${kbState.kbPath}?`,
+    body: "The project knowledge base file is removed from disk. The enclosing .holdspeak/ directory is preserved so other project state (blocks, runtime config) stays intact.",
+    scopeNote: "Only the local knowledge-base file is affected. Source files referenced from inside the KB are not touched.",
+    confirmLabel: "Delete file",
+  });
+  if (!ok) return;
   const msg = document.getElementById("kb-msg");
   msg.innerHTML = "";
   try {

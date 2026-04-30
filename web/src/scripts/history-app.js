@@ -767,6 +767,14 @@ function historyApp() {
 
     async archiveProject() {
       if (!this.selectedProject) return;
+      const projectName = this.selectedProject.name || `project ${this.selectedProject.id}`;
+      const ok = await window.holdspeakConfirm({
+        title: `Archive project "${projectName}"?`,
+        body: "Archived projects no longer appear in the active list. Existing meetings, transcripts, and artifacts associated with this project are kept locally.",
+        scopeNote: "Only the local project record is archived. No source data is touched.",
+        confirmLabel: "Archive project",
+      });
+      if (!ok) return;
       try {
         const data = await this.apiJson(`/api/projects/${this.selectedProject.id}`, {
           method: "DELETE",

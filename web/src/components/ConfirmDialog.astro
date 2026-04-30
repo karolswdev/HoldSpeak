@@ -1,0 +1,307 @@
+---
+// HS-10-11 ConfirmDialog.
+//
+// One <dialog> element rendered once per page (mounted by AppLayout)
+// plus a small dispatcher that exposes
+//
+//   window.holdspeakConfirm({
+//     title, body, scopeNote, confirmLabel, cancelLabel, danger
+//   }): Promise<boolean>
+//
+// Call sites await the promise — true means the user confirmed,
+// false means they cancelled (button click, Esc, or backdrop click).
+//
+// Behaviour:
+//   - Cancel button takes default focus on open and is the default
+//     Enter target — destructive actions never default-confirm.
+//   - Native <dialog>.showModal() traps focus inside the dialog.
+//   - Esc fires the dialog's `cancel` event and resolves false.
+//   - Origin element (the button that triggered the prompt) is
+//     captured at open and re-focused on close.
+//   - `scopeNote` slot below the body carries the local-only pill +
+//     scope wording for connector-output deletions ("This removes
+//     local annotations. Source data on GitHub is untouched.").
+//
+// The component renders no visible markup until showModal() is
+// called by the dispatcher. The styles below target the dialog
+// only when it is `[open]`.
+---
+
+<dialog
+  id="holdspeak-confirm-dialog"
+  class="confirm-dialog"
+  aria-labelledby="holdspeak-confirm-title"
+  aria-describedby="holdspeak-confirm-body"
+>
+  <form method="dialog" class="confirm-dialog__form">
+    <h2 id="holdspeak-confirm-title" class="confirm-dialog__title"></h2>
+    <p id="holdspeak-confirm-body" class="confirm-dialog__body"></p>
+    <p
+      id="holdspeak-confirm-scope"
+      class="confirm-dialog__scope"
+      data-empty="true"
+    ></p>
+    <div class="confirm-dialog__actions">
+      <button
+        type="button"
+        class="btn btn--secondary btn--md"
+        data-confirm-cancel
+      >Cancel</button>
+      <button
+        type="button"
+        class="btn btn--danger btn--md"
+        data-confirm-ok
+      >Confirm</button>
+    </div>
+  </form>
+</dialog>
+
+<script is:inline>
+  (() => {
+    if (window.holdspeakConfirm) return;
+
+    const dialog = document.getElementById("holdspeak-confirm-dialog");
+    if (!dialog) return;
+
+    const titleEl = dialog.querySelector("#holdspeak-confirm-title");
+    const bodyEl = dialog.querySelector("#holdspeak-confirm-body");
+    const scopeEl = dialog.querySelector("#holdspeak-confirm-scope");
+    const cancelBtn = dialog.querySelector("[data-confirm-cancel]");
+    const okBtn = dialog.querySelector("[data-confirm-ok]");
+
+    let pending = null;
+    let returnFocusTo = null;
+
+    function settle(value) {
+      if (!pending) return;
+      const resolve = pending;
+      pending = null;
+      try {
+        if (dialog.open) dialog.close();
+      } catch (_) { /* no-op */ }
+      if (returnFocusTo && typeof returnFocusTo.focus === "function") {
+        try { returnFocusTo.focus(); } catch (_) { /* no-op */ }
+      }
+      returnFocusTo = null;
+      resolve(value);
+    }
+
+    cancelBtn.addEventListener("click", () => settle(false));
+    okBtn.addEventListener("click", () => settle(true));
+
+    // Esc → native `cancel` event on <dialog>; treat as decline.
+    dialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      settle(false);
+    });
+
+    // Backdrop click (outside the form). Resolves false.
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) settle(false);
+    });
+
+    window.holdspeakConfirm = function holdspeakConfirm(opts = {}) {
+      // If a prior prompt is somehow still pending, decline it so
+      // we never resolve two promises against the same dialog.
+      if (pending) settle(false);
+
+      const {
+        title = "Confirm",
+        body = "",
+        scopeNote = "",
+        confirmLabel = "Confirm",
+        cancelLabel = "Cancel",
+        danger = true,
+      } = opts;
+
+      titleEl.textContent = title;
+      bodyEl.textContent = body;
+
+      if (scopeNote) {
+        scopeEl.innerHTML = "";
+        const pill = document.createElement("span");
+        pill.className = "confirm-dialog__scope-pill";
+        pill.textContent = "local-only";
+        const note = document.createElement("span");
+        note.className = "confirm-dialog__scope-note";
+        note.textContent = scopeNote;
+        scopeEl.appendChild(pill);
+        scopeEl.appendChild(note);
+        scopeEl.removeAttribute("data-empty");
+      } else {
+        scopeEl.textContent = "";
+        scopeEl.setAttribute("data-empty", "true");
+      }
+
+      okBtn.textContent = confirmLabel;
+      cancelBtn.textContent = cancelLabel;
+      okBtn.classList.toggle("btn--danger", !!danger);
+      okBtn.classList.toggle("btn--primary", !danger);
+
+      returnFocusTo = document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
+      return new Promise((resolve) => {
+        pending = resolve;
+        dialog.showModal();
+        // Default focus on cancel: this also makes Enter resolve to
+        // false because Enter activates the focused button.
+        requestAnimationFrame(() => cancelBtn.focus());
+      });
+    };
+  })();
+</script>
+
+<style>
+  .confirm-dialog {
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-3);
+    background: var(--canvas-raised);
+    color: var(--text);
+    padding: 0;
+    box-shadow: var(--elev-3, 0 24px 60px rgba(0, 0, 0, 0.4));
+    max-width: min(34rem, calc(100vw - 2 * var(--space-5)));
+    width: 100%;
+  }
+
+  .confirm-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.55);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .confirm-dialog[open] {
+      animation: confirm-dialog-in var(--duration-short, 160ms) var(--ease-standard, ease-out);
+    }
+  }
+
+  @keyframes confirm-dialog-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .confirm-dialog__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-5);
+    margin: 0;
+  }
+
+  .confirm-dialog__title {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    letter-spacing: var(--letter-spacing-tight);
+    color: var(--text);
+  }
+
+  .confirm-dialog__body {
+    margin: 0;
+    color: var(--text);
+    line-height: var(--line-height-relaxed, 1.5);
+    white-space: pre-wrap;
+  }
+
+  .confirm-dialog__scope {
+    margin: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed, 1.5);
+  }
+
+  .confirm-dialog__scope[data-empty="true"] {
+    display: none;
+  }
+
+  .confirm-dialog__scope-pill {
+    flex: 0 0 auto;
+    font-family: var(--font-ui);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    letter-spacing: var(--letter-spacing-loose);
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-soft);
+    border-radius: var(--radius-pill, 999px);
+    padding: 2px var(--space-2);
+    line-height: 1.4;
+  }
+
+  .confirm-dialog__scope-note {
+    flex: 1 1 auto;
+  }
+
+  .confirm-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+
+  /* Mirror Button.astro's variant + size styles for the buttons we
+     render inside the form. The component's <button>s are not
+     <Button> instances (we render them in a <script>-driven flow),
+     so we duplicate the exact ruleset here against the same tokens
+     to keep the dialog visually consistent with the rest of the
+     system. */
+
+  .confirm-dialog .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    font-family: var(--font-ui);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: var(--letter-spacing-loose);
+    border: 1px solid transparent;
+    border-radius: var(--radius-2);
+    cursor: pointer;
+    user-select: none;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--font-size-md);
+  }
+
+  .confirm-dialog .btn:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  .confirm-dialog .btn--secondary {
+    background: var(--canvas-raised);
+    color: var(--text);
+    border-color: var(--line-strong);
+  }
+
+  .confirm-dialog .btn--secondary:hover {
+    border-color: var(--line-emphasis);
+    background: var(--canvas-elevated);
+  }
+
+  .confirm-dialog .btn--danger {
+    background: var(--danger);
+    color: var(--canvas);
+    border-color: var(--danger);
+  }
+
+  .confirm-dialog .btn--danger:hover {
+    background: var(--danger-strong);
+    border-color: var(--danger-strong);
+  }
+
+  .confirm-dialog .btn--primary {
+    background: var(--accent);
+    color: var(--accent-on);
+    border-color: var(--accent);
+  }
+
+  .confirm-dialog .btn--primary:hover {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+  }
+</style>

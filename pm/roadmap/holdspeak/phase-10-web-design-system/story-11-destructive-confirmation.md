@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-10-03, HS-10-05
 - **Unblocks:** HS-10-13
 - **Owner:** unassigned
@@ -47,12 +47,12 @@ source data).
 
 ## Acceptance Criteria
 
-- [ ] Every destructive site listed above uses `ConfirmDialog`. Greps
+- [x] Every destructive site listed above uses `ConfirmDialog`. Greps
   for `window.confirm(` in `web/` return zero matches.
-- [ ] Cancel is the default focus and the default Enter target.
-- [ ] Focus is trapped while the dialog is open and restored on close.
-- [ ] Esc closes without confirming.
-- [ ] Connector-output deletions explicitly state that source data is
+- [x] Cancel is the default focus and the default Enter target.
+- [x] Focus is trapped while the dialog is open and restored on close.
+- [x] Esc closes without confirming.
+- [x] Connector-output deletions explicitly state that source data is
   untouched.
 
 ## Test Plan

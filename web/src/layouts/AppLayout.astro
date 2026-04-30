@@ -10,6 +10,7 @@
 import "../styles/global.css";
 import TopNav from "../components/TopNav.astro";
 import LocalPill from "../components/LocalPill.astro";
+import ConfirmDialog from "../components/ConfirmDialog.astro";
 
 type Route = "runtime" | "activity" | "history" | "dictation";
 
@@ -54,6 +55,8 @@ const hasSecondary = Astro.slots.has("secondary");
     <main id="main" tabindex="-1">
       <slot />
     </main>
+
+    <ConfirmDialog />
   </body>
 </html>
 
