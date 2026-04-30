@@ -1,6 +1,6 @@
 # Phase 11 - Local Connector Ecosystem
 
-**Last updated:** 2026-04-30 (HS-11-03/04/05 first-party connector packs shipped).
+**Last updated:** 2026-04-30 (phase 11 done — HS-11-06 + HS-11-07 closed developer docs and phase exit).
 
 ## Goal
 
@@ -34,8 +34,8 @@ can be tested and installed locally without hidden network behavior.
 | HS-11-03 | Firefox companion connector pack | done | [story-03-firefox-connector-pack.md](./story-03-firefox-connector-pack.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-11-04 | GitHub CLI connector pack | done | [story-04-github-cli-connector-pack.md](./story-04-github-cli-connector-pack.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-11-05 | Jira CLI connector pack | done | [story-05-jira-cli-connector-pack.md](./story-05-jira-cli-connector-pack.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-11-06 | Connector developer documentation | backlog | [story-06-connector-developer-docs.md](./story-06-connector-developer-docs.md) | pending |
-| HS-11-07 | Connector ecosystem phase exit | backlog | [story-07-dod.md](./story-07-dod.md) | pending |
+| HS-11-06 | Connector developer documentation | done | [story-06-connector-developer-docs.md](./story-06-connector-developer-docs.md) | [evidence-story-06.md](./evidence-story-06.md) |
+| HS-11-07 | Connector ecosystem phase exit | done | [story-07-dod.md](./story-07-dod.md) | [evidence-story-07.md](./evidence-story-07.md) |
 
 ## Where We Are
 
@@ -80,7 +80,16 @@ tests cover every documented case. The firefox pack
 re-exports the parser's frozensets so manifest-vs-parser
 drift fails at unit-test time.
 
-Up next: HS-11-06 (developer docs), HS-11-07 (phase exit).
+HS-11-06 ships `docs/CONNECTOR_DEVELOPMENT.md`: connector
+lifecycle, manifest reference, permission model, dry-run
+output shape, privacy checklist, runnable fixture tutorial,
+links to every built-in pack + fixture, and a complete
+~25-line minimal connector example.
+
+HS-11-07 closes the phase: focused phase-11 sweep (63 tests)
+and full non-Metal regression (1305 / 13 skipped) both green;
+every story has an `evidence-story-{n}.md` file in this
+directory; phase 11 flipped to `done`. **Phase 11 is done.**
 
 ## Source Design
 

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-11-01 through HS-11-06
 - **Unblocks:** stable connector ecosystem baseline
 - **Owner:** unassigned
@@ -26,8 +26,8 @@ ecosystem.
 
 ## Acceptance Criteria
 
-- [ ] Phase evidence bundle exists.
-- [ ] Connector manifest/fixture tests pass.
-- [ ] First-party connector dry-runs pass.
-- [ ] Full regression passes.
-- [ ] Phase status is updated.
+- [x] Phase evidence bundle exists.
+- [x] Connector manifest/fixture tests pass.
+- [x] First-party connector dry-runs pass.
+- [x] Full regression passes.
+- [x] Phase status is updated.

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-11-01, HS-11-02
 - **Unblocks:** local connector authoring beyond built-ins
 - **Owner:** unassigned
@@ -28,7 +28,7 @@ inventing incompatible output shapes.
 
 ## Acceptance Criteria
 
-- [ ] Docs explain connector lifecycle and output types.
-- [ ] Docs include a runnable fixture-based example.
-- [ ] Privacy checklist is explicit and testable.
-- [ ] Built-in connectors link to their manifests and fixtures.
+- [x] Docs explain connector lifecycle and output types.
+- [x] Docs include a runnable fixture-based example.
+- [x] Privacy checklist is explicit and testable.
+- [x] Built-in connectors link to their manifests and fixtures.
