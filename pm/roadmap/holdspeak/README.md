@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-30 (phase 12 done — Workbench voice replatform shipped).
+**Last updated:** 2026-04-30 (HS-11-02 fixture-driven connector dry-run harness shipped).
 **Current phase:** [phase-11-local-connector-ecosystem](./phase-11-local-connector-ecosystem/) — reusable manifests, fixtures, first-party connector packs, and developer docs. Resumed from HS-11-01 after phase 12 closed.
 **Status:** in-progress.
 

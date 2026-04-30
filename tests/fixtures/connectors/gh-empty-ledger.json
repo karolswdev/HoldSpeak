@@ -1,0 +1,16 @@
+{
+  "id": "gh-empty-ledger",
+  "connector": "gh",
+  "limit": 10,
+  "activity_records": [],
+  "expect": {
+    "kind": "cli_enrichment",
+    "capabilities": ["annotations"],
+    "command_count": 0,
+    "annotation_count": 0,
+    "candidate_count": 0,
+    "permission_notes_contain": ["disabled"],
+    "warnings_contain": ["No GitHub"],
+    "truncated": false
+  }
+}

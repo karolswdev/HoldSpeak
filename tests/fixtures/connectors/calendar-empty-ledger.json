@@ -1,0 +1,15 @@
+{
+  "id": "calendar-empty-ledger",
+  "connector": "calendar_activity",
+  "limit": 10,
+  "activity_records": [],
+  "expect": {
+    "kind": "candidate_inference",
+    "capabilities": ["candidates"],
+    "command_count": 0,
+    "annotation_count": 0,
+    "candidate_count": 0,
+    "warnings_contain": ["calendar"],
+    "truncated": false
+  }
+}

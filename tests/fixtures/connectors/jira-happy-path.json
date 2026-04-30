@@ -1,0 +1,34 @@
+{
+  "id": "jira-happy-path",
+  "connector": "jira",
+  "limit": 10,
+  "activity_records": [
+    {
+      "url": "https://example.atlassian.net/browse/HS-101",
+      "title": "HS-101 — connector dry-run",
+      "domain": "example.atlassian.net",
+      "entity_type": "jira_ticket",
+      "entity_id": "HS-101",
+      "last_seen_at": "2026-04-30T10:00:00"
+    },
+    {
+      "url": "https://example.atlassian.net/browse/HS-102",
+      "title": "HS-102 — connector listing",
+      "domain": "example.atlassian.net",
+      "entity_type": "jira_ticket",
+      "entity_id": "HS-102",
+      "last_seen_at": "2026-04-30T10:05:00"
+    }
+  ],
+  "expect": {
+    "kind": "cli_enrichment",
+    "capabilities": ["annotations"],
+    "enabled": false,
+    "cli_required": "jira",
+    "command_count": 2,
+    "annotation_count": 2,
+    "candidate_count": 0,
+    "permission_notes_contain": ["disabled"],
+    "truncated": false
+  }
+}

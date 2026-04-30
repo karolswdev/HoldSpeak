@@ -1,0 +1,28 @@
+{
+  "id": "calendar-happy-path",
+  "connector": "calendar_activity",
+  "limit": 10,
+  "activity_records": [
+    {
+      "url": "https://calendar.google.com/calendar/u/0/r/eventedit/abc",
+      "title": "2026-05-01 10:00-11:00 Architecture sync",
+      "domain": "calendar.google.com",
+      "last_seen_at": "2026-04-30T10:00:00"
+    },
+    {
+      "url": "https://meet.google.com/xyz-abcd-uvw",
+      "title": "Meet: Project planning",
+      "domain": "meet.google.com",
+      "last_seen_at": "2026-04-30T10:05:00"
+    }
+  ],
+  "expect": {
+    "kind": "candidate_inference",
+    "capabilities": ["candidates"],
+    "cli_required": null,
+    "cli_available": null,
+    "command_count": 0,
+    "annotation_count": 0,
+    "truncated": false
+  }
+}

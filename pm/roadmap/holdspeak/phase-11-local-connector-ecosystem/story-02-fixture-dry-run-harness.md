@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-11-01
 - **Unblocks:** connector pack regression testing
 - **Owner:** unassigned
@@ -27,7 +27,7 @@ real browser profiles, real Jira/GitHub accounts, or live network calls.
 
 ## Acceptance Criteria
 
-- [ ] Fixtures can drive connector preview behavior.
-- [ ] Dry-run tests assert no database mutation.
-- [ ] First-party connectors can share the same harness.
-- [ ] Fixture failures show readable diffs.
+- [x] Fixtures can drive connector preview behavior.
+- [x] Dry-run tests assert no database mutation.
+- [x] First-party connectors can share the same harness.
+- [x] Fixture failures show readable diffs.

@@ -1,0 +1,35 @@
+{
+  "id": "gh-happy-path",
+  "connector": "gh",
+  "limit": 10,
+  "activity_records": [
+    {
+      "url": "https://github.com/anthropic/holdspeak/pull/7",
+      "title": "PR 7 — connector dry-run",
+      "domain": "github.com",
+      "entity_type": "github_pull_request",
+      "entity_id": "anthropic/holdspeak#7",
+      "last_seen_at": "2026-04-30T10:00:00"
+    },
+    {
+      "url": "https://github.com/anthropic/holdspeak/issues/12",
+      "title": "Issue 12 — connector listing",
+      "domain": "github.com",
+      "entity_type": "github_issue",
+      "entity_id": "anthropic/holdspeak#12",
+      "last_seen_at": "2026-04-30T10:05:00"
+    }
+  ],
+  "expect": {
+    "kind": "cli_enrichment",
+    "capabilities": ["annotations"],
+    "enabled": false,
+    "cli_required": "gh",
+    "command_count": 2,
+    "annotation_count": 2,
+    "candidate_count": 0,
+    "permission_notes_contain": ["disabled"],
+    "warnings_contain": [],
+    "truncated": false
+  }
+}

@@ -1,6 +1,6 @@
 # Phase 11 - Local Connector Ecosystem
 
-**Last updated:** 2026-04-30 (phase resumes from HS-11-01 — phase 12 closed the Workbench voice replatform).
+**Last updated:** 2026-04-30 (HS-11-02 fixture-driven dry-run harness shipped).
 
 ## Goal
 
@@ -30,7 +30,7 @@ can be tested and installed locally without hidden network behavior.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-11-01 | Connector manifest and SDK shape | done | [story-01-connector-manifest-sdk.md](./story-01-connector-manifest-sdk.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-11-02 | Connector fixture and dry-run test harness | backlog | [story-02-fixture-dry-run-harness.md](./story-02-fixture-dry-run-harness.md) | pending |
+| HS-11-02 | Connector fixture and dry-run test harness | done | [story-02-fixture-dry-run-harness.md](./story-02-fixture-dry-run-harness.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-11-03 | Firefox companion connector pack | backlog | [story-03-firefox-connector-pack.md](./story-03-firefox-connector-pack.md) | pending |
 | HS-11-04 | GitHub CLI connector pack | backlog | [story-04-github-cli-connector-pack.md](./story-04-github-cli-connector-pack.md) | pending |
 | HS-11-05 | Jira CLI connector pack | backlog | [story-05-jira-cli-connector-pack.md](./story-05-jira-cli-connector-pack.md) | pending |
@@ -54,9 +54,22 @@ HS-11-03..05 can rebuild them on top of this shape without
 surface drift. Permission model requires at least one network
 permission for any manifest declaring `requires_network=true`.
 
-Up next: HS-11-02 (fixture + dry-run test harness), HS-11-03..05
-(rebuild Firefox / gh / jira packs against the manifest +
-Protocols), HS-11-06 (developer docs), HS-11-07 (phase exit).
+HS-11-02 ships the fixture harness:
+`holdspeak/connector_fixtures.py` exposes
+`load_fixture` / `discover_fixtures` / `run_fixture` plus a
+`ConnectorFixtureExpectation` whose every field is optional —
+fixtures express only the invariants they care about. Six
+golden JSON fixtures under `tests/fixtures/connectors/` cover
+the three first-party connectors at happy-path and empty-
+ledger states; a parametrized pytest auto-grows whenever a new
+JSON file lands. The mutation-free guarantee is part of every
+fixture run by construction. `FixtureRunResult.diff_report()`
+renders failures with each drifted field and a payload summary
+the operator can paste back as the new expectation.
+
+Up next: HS-11-03..05 (rebuild Firefox / gh / jira packs
+against the manifest + Protocols, dropping fixtures alongside),
+HS-11-06 (developer docs), HS-11-07 (phase exit).
 
 ## Source Design
 
