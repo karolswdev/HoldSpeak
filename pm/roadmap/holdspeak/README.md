@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-30 (phase 11 done — local connector ecosystem shipped).
-**Current phase:** none active — phases 9–12 all closed; next phase to be planned.
-**Status:** between phases.
+**Last updated:** 2026-04-30 (phase 13 scaffolded — connector runtime + pipelines + meeting context).
+**Current phase:** [phase-13-connector-runtime-and-context](./phase-13-connector-runtime-and-context/) — turn the connector framework on (substrate), chain packs (pipelines), use the chain for pre-meeting + cross-meeting context.
+**Status:** planning.
 
 ## Vision
 
@@ -49,6 +49,7 @@ canon, canon wins.
 | 10 | Web design system & character pass: tokens, components, identity, route rebuilds, refreshed designer handoff | done | [phase-10-web-design-system](./phase-10-web-design-system/) |
 | 11 | Local connector ecosystem: reusable manifests, fixtures, first-party connector packs, and developer docs | done | [phase-11-local-connector-ecosystem](./phase-11-local-connector-ecosystem/) |
 | 12 | Workbench voice: replatform tokens + components on a Workbench-evoking palette + pixel font; dashboard polish; designer handoff refresh | done | [phase-12-workbench-voice](./phase-12-workbench-voice/) |
+| 13 | Connector runtime + pipelines + meeting context: turn the framework on, chain packs, surface pre-meeting briefings + cross-meeting summaries | planning | [phase-13-connector-runtime-and-context](./phase-13-connector-runtime-and-context/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
