@@ -56,15 +56,31 @@ markup anymore.
 
 ## Current Gaps For Designer Review
 
-What's left after phase 10:
+What's left after phase 12:
 
 - First-party connector packs (`gh`, `jira`) still need the in-
-  panel UI controls that the new `Pill` + `Panel` + `ListRow`
-  grammar makes possible. Tracked in **phase 11** (Local Connector
-  Ecosystem).
-- The dictation editor is functional but visually denser than the
-  rest of the product; a follow-up polish pass would tighten the
-  rhythm. Not blocking.
+  panel UI controls that the `Pill` + `Panel` + `ListRow`
+  grammar makes possible. Tracked in **phase 11** (Local
+  Connector Ecosystem; paused while phase 12 ran).
+- The dictation editor is functional but visually denser than
+  the rest of the product; a follow-up polish pass would
+  tighten the rhythm. Not blocking.
+
+## What was closed in phase 12 (voice replatform)
+
+- Token layer rebuilt on the four-colour Workbench palette + a
+  richer supporting set (greys, hover variants, distinct status
+  hues). See `style-handoff.md` for the full reference.
+- VT323 introduced as the symbolic display font; restricted to
+  TopNav, page h1, and panel title strips.
+- Every panel reads as a Workbench window (blue title strip +
+  white VT323 caption + hard black border).
+- ConfirmDialog and CommandPreview rebuilt on the same voice.
+- `/history` notebook tabs.
+- Disabled gadgets get a proper grey ramp + hatched overlay.
+- Dashboard polish: hero hides the "HoldSpeak" wordmark
+  fallback at idle, hero copy trimmed, "No tags yet"
+  placeholder removed, toast layer dedupes identical messages.
 
 ## What was closed in phase 10
 
@@ -85,6 +101,9 @@ What's left after phase 10:
   pills + command preview) — informational only; the components
   exist, this would be a wireframe of how they assemble for `gh`
   and `jira`.
-- A light-theme token map proposal (deferred from phase 10).
+- A second theme (true dark mode) — phase 12 turned the
+  product into a light theme on a saturated Workbench-blue
+  desktop, which is a different shape from the original
+  light/dark token-pair question. Phase 13+ if needed.
 - A prioritized polish backlog for the dictation editor's
   density.

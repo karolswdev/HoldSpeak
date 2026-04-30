@@ -1,6 +1,6 @@
 # Phase 12 - Workbench Voice
 
-**Last updated:** 2026-04-30 (HS-12-02 + HS-12-03 done; HS-12-04 next).
+**Last updated:** 2026-04-30 (phase 12 done — HS-12-04 closed designer handoff and phase exit).
 
 ## Goal
 
@@ -55,7 +55,7 @@ We want to **skip** the parts of Workbench that fight dense data:
 | HS-12-01 | Workbench token map + pixel UI font | done | [story-01-workbench-tokens.md](./story-01-workbench-tokens.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-12-02 | Component voice pass | done | [story-02-component-voice.md](./story-02-component-voice.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-12-03 | Per-route audit + dashboard fixes | done | [story-03-route-audit.md](./story-03-route-audit.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-12-04 | Designer handoff refresh + phase exit | backlog | [story-04-handoff-dod.md](./story-04-handoff-dod.md) | pending |
+| HS-12-04 | Designer handoff refresh + phase exit | done | [story-04-handoff-dod.md](./story-04-handoff-dod.md) | [evidence-story-04.md](./evidence-story-04.md) |
 
 ## Where We Are
 
@@ -88,7 +88,12 @@ trimmed of the redundant "...locally on this machine"
 sentence, and the "No tags yet" placeholder removed. Idle
 state shows one affordance.
 
-Up next: HS-12-04 (designer handoff refresh + phase exit).
+HS-12-04 closed the phase: `designer-handoff/style-handoff.md`
+fully rewritten for the Workbench-evoking voice; ux-inventory
+updated; screenshots already current; phase 12 flipped to
+`done`. **Phase 12 is done.**
+
+Phase 11 (Local Connector Ecosystem) resumes from HS-11-01.
 
 ## Source Design
 

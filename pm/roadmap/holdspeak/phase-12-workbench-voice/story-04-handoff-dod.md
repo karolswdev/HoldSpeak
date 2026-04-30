@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 12
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-12-01, HS-12-02, HS-12-03
 - **Unblocks:** phase 13 (TBD)
 - **Owner:** unassigned
@@ -39,11 +39,11 @@ it, future contributors get the wrong reference.
 
 ## Acceptance Criteria
 
-- [ ] `style-handoff.md` reflects the Workbench-evoking voice;
+- [x] `style-handoff.md` reflects the Workbench-evoking voice;
   the open questions section is closed or explicitly deferred.
-- [ ] Every route screenshot in `designer-handoff/screenshots/`
+- [x] Every route screenshot in `designer-handoff/screenshots/`
   was captured against the new voice.
-- [ ] Phase 12 flipped to `done` in the project README phase
+- [x] Phase 12 flipped to `done` in the project README phase
   index in this same commit.
 
 ## Test Plan

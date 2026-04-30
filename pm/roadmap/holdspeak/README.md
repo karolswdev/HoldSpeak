@@ -1,7 +1,7 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-30 (HS-12-02 + HS-12-03 done — Workbench voice + dashboard polish landed).
-**Current phase:** [phase-12-workbench-voice](./phase-12-workbench-voice/) — Workbench-evoking voice replatform: palette, pixel UI font, radius-0, hard borders, dashboard fixes. Presentation-only.
+**Last updated:** 2026-04-30 (phase 12 done — Workbench voice replatform shipped).
+**Current phase:** [phase-11-local-connector-ecosystem](./phase-11-local-connector-ecosystem/) — reusable manifests, fixtures, first-party connector packs, and developer docs. Resumed from HS-11-01 after phase 12 closed.
 **Status:** in-progress.
 
 ## Vision
@@ -47,8 +47,8 @@ canon, canon wins.
 | 8 | Local activity intelligence: mine Safari/Firefox history metadata into a private default-on work-context ledger | done | [phase-8-local-activity-intelligence](./phase-8-local-activity-intelligence/) |
 | 9 | Assisted activity enrichment: add opt-in local connectors, annotations, and meeting candidates | done | [phase-9-assisted-activity-enrichment](./phase-9-assisted-activity-enrichment/) |
 | 10 | Web design system & character pass: tokens, components, identity, route rebuilds, refreshed designer handoff | done | [phase-10-web-design-system](./phase-10-web-design-system/) |
-| 11 | Local connector ecosystem: reusable manifests, fixtures, first-party connector packs, and developer docs | paused | [phase-11-local-connector-ecosystem](./phase-11-local-connector-ecosystem/) |
-| 12 | Workbench voice: replatform tokens + components on a Workbench-evoking palette + pixel font; dashboard polish; designer handoff refresh | in-progress | [phase-12-workbench-voice](./phase-12-workbench-voice/) |
+| 11 | Local connector ecosystem: reusable manifests, fixtures, first-party connector packs, and developer docs | in-progress | [phase-11-local-connector-ecosystem](./phase-11-local-connector-ecosystem/) |
+| 12 | Workbench voice: replatform tokens + components on a Workbench-evoking palette + pixel font; dashboard polish; designer handoff refresh | done | [phase-12-workbench-voice](./phase-12-workbench-voice/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
