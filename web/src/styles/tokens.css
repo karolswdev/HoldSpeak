@@ -29,18 +29,56 @@
 :root {
   color-scheme: light;
 
-  /* === Workbench palette (the four canonical colours) =========
-   * Reference: Amiga Workbench 1.3 default 4-colour set.
-   * Hex values match the historical palette as closely as
-   * modern sRGB reproduction allows. */
+  /* === Workbench palette =====================================
+   * The iconic four (blue / white / black / orange) are the
+   * symbolic anchors — TopNav, panel-header strip, primary
+   * gadget, hairline grammar. Everything else lives on a
+   * richer supporting palette so we can actually distinguish
+   * disabled from primary, warn from accent, info from success,
+   * etc. AmigaOS 2.x and 3.x ran 8 / 16 / 256 colour palettes
+   * — the four-colour 1.3 mode is the inspiration, not the cap. */
+
+  /* Anchors — the canonical four. */
   --wb-blue: #0055AA;
-  --wb-blue-strong: #003F80;
-  --wb-blue-soft: #2D7BD6;
   --wb-white: #FFFFFF;
   --wb-black: #000000;
   --wb-orange: #FF8800;
-  --wb-orange-strong: #CC6600;
-  --wb-orange-soft: #FFE5C2;
+
+  /* Blue family — desktop variations + selection highlight. */
+  --wb-blue-deep: #003F80;     /* hover on a primary blue surface */
+  --wb-blue-strong: #003F80;   /* alias for compat */
+  --wb-blue-mid: #1F69BC;      /* lighter title-strip top edge */
+  --wb-blue-soft: #2D7BD6;     /* secondary blue */
+  --wb-blue-tint: #E5EFFA;     /* selected list-row bg, focused field bg */
+
+  /* Orange family — primary action variations. */
+  --wb-orange-deep: #CC6600;   /* hover on primary */
+  --wb-orange-strong: #CC6600; /* alias for compat */
+  --wb-orange-mid: #FFAA3D;    /* lighter highlight band */
+  --wb-orange-soft: #FFE5C2;   /* tint for orange-toned bg */
+
+  /* Greys — disabled, secondary surfaces, sunken fields. */
+  --wb-gray-1: #1A1A1A;        /* deep — dense data text */
+  --wb-gray-2: #555555;        /* muted body text on white */
+  --wb-gray-3: #888888;        /* disabled foreground */
+  --wb-gray-4: #BBBBBB;        /* disabled border */
+  --wb-gray-5: #DDDDDD;        /* disabled background, sunken field */
+  --wb-gray-6: #EEEEEE;        /* footer strip, very light fill */
+  --wb-gray-7: #F5F5F5;        /* near-white alternate row stripe */
+
+  /* Status tones — fully distinct hues so a glance disambiguates. */
+  --wb-green: #00AA44;         /* success — distinct from warn/accent */
+  --wb-green-deep: #007A30;
+  --wb-green-tint: #D4ECDA;
+  --wb-amber: #FFCC00;         /* warn — proper Workbench yellow, NOT orange */
+  --wb-amber-deep: #CC9900;
+  --wb-amber-tint: #FFF5C8;
+  --wb-red: #CC0000;           /* danger */
+  --wb-red-deep: #990000;
+  --wb-red-tint: #F5C8C8;
+  --wb-purple: #6633CC;        /* info / neutral signal */
+  --wb-purple-deep: #4A1F99;
+  --wb-purple-tint: #E0D8F2;
 
   /* === Canvas + surfaces ======================================
    * Body background = blue desktop. Content lives inside white
@@ -67,38 +105,67 @@
    * lives). Body chrome rendered on the blue desktop overrides
    * these locally to white via global.css. */
   --text: var(--wb-black);
-  --text-muted: #555555;
-  --text-faint: #777777;
+  --text-muted: var(--wb-gray-2);
+  --text-faint: var(--wb-gray-3);
 
   /* === Accent (Workbench orange) ============================== */
   --accent: var(--wb-orange);
-  --accent-strong: var(--wb-orange-strong);
+  --accent-strong: var(--wb-orange-deep);
   --accent-soft: var(--wb-orange-soft);
   --accent-on: var(--wb-black);
 
-  /* === Warm secondary ========================================= */
+  /* === Warm secondary (also orange family) ==================== */
   --warm: var(--wb-orange);
-  --warm-strong: var(--wb-orange-strong);
+  --warm-strong: var(--wb-orange-deep);
   --warm-soft: var(--wb-orange-soft);
 
   /* === Status ramps ===========================================
-   * Mapped to read clearly against white panels. */
-  --success: #008800;
-  --success-strong: #006600;
-  --success-soft: #C8E6C8;
+   * Each tone is a different hue — at-a-glance disambiguation
+   * is the point. */
+  --success: var(--wb-green);
+  --success-strong: var(--wb-green-deep);
+  --success-soft: var(--wb-green-tint);
 
-  --warn: var(--wb-orange);
-  --warn-strong: var(--wb-orange-strong);
-  --warn-soft: var(--wb-orange-soft);
+  /* warn is amber/yellow, NOT orange — orange is reserved for
+   * the primary accent so they don't compete. */
+  --warn: var(--wb-amber);
+  --warn-strong: var(--wb-amber-deep);
+  --warn-soft: var(--wb-amber-tint);
 
-  --danger: #CC0000;
-  --danger-strong: #990000;
-  --danger-soft: #F5C8C8;
+  --danger: var(--wb-red);
+  --danger-strong: var(--wb-red-deep);
+  --danger-soft: var(--wb-red-tint);
+
+  /* New `info` ramp on purple — distinct from accent and from
+   * the local-only blue. Useful for "in flight" / "neutral
+   * advisory" states. */
+  --info: var(--wb-purple);
+  --info-strong: var(--wb-purple-deep);
+  --info-soft: var(--wb-purple-tint);
+
+  /* Disabled grammar — real gray ramp, not "primary colour with
+   * 0.55 opacity". Components compose these as
+   * background/border/text. */
+  --disabled-bg: var(--wb-gray-5);
+  --disabled-fg: var(--wb-gray-3);
+  --disabled-border: var(--wb-gray-4);
+
+  /* Selected / focused row highlight — Workbench inverse-bar
+   * idiom: blue fill, white text. */
+  --selected-bg: var(--wb-blue);
+  --selected-fg: var(--wb-white);
+  --selected-soft: var(--wb-blue-tint);
+
+  /* Sunken field (input, textarea) — slightly darker than the
+   * panel surface to read as "data goes here". */
+  --field-bg: var(--wb-gray-7);
+  --field-border: var(--wb-gray-3);
+  --field-focus-border: var(--wb-orange);
 
   /* === Local-only signal (privacy / ledger pill) ==============
    * Workbench blue itself reads as "this stays local". */
   --local: var(--wb-blue);
-  --local-soft: #C8DDF0;
+  --local-soft: var(--wb-blue-tint);
 
   /* === Typography =============================================
    * Two faces for chrome:

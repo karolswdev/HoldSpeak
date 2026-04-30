@@ -68,36 +68,48 @@ const classes = [
     flex-shrink: 0;
   }
 
-  .pill--neutral { color: var(--text-muted); }
+  /* HS-12-02 (slice 3): each tone uses its own hue + a hard
+   * 1px border in the *deep* variant, so the pill reads as
+   * a Workbench-style status tag rather than a soft fill.
+   * Distinct hues mean a glance is enough to disambiguate
+   * — info ≠ accent, warn ≠ accent, etc. */
+
+  .pill--neutral {
+    color: var(--wb-gray-1);
+    background: var(--wb-gray-6);
+    border-color: var(--wb-gray-3);
+  }
 
   .pill--info {
-    color: var(--accent);
-    background: var(--accent-soft);
-    border-color: transparent;
+    /* info is now purple — distinct from the local-only blue
+     * and the orange accent. */
+    color: var(--info-strong);
+    background: var(--info-soft);
+    border-color: var(--info);
   }
 
   .pill--success {
-    color: var(--success);
+    color: var(--success-strong);
     background: var(--success-soft);
-    border-color: transparent;
+    border-color: var(--success);
   }
 
   .pill--warn {
-    color: var(--warn);
+    color: var(--warn-strong);
     background: var(--warn-soft);
-    border-color: transparent;
+    border-color: var(--warn);
   }
 
   .pill--danger {
-    color: var(--danger);
+    color: var(--danger-strong);
     background: var(--danger-soft);
-    border-color: transparent;
+    border-color: var(--danger);
   }
 
   .pill--local {
-    color: var(--local);
+    color: var(--wb-blue-deep);
     background: var(--local-soft);
-    border-color: transparent;
+    border-color: var(--wb-blue);
   }
 
   .pill--interactive {

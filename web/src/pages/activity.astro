@@ -297,16 +297,21 @@ import CommandPreview from "../components/CommandPreview.astro";
     cursor: pointer;
   }
 
+  /* HS-12-02 (slice 3): sunken Workbench-style fields. The
+   * pale-grey fill + slate border reads as "data goes here";
+   * focus shifts the border to the orange accent. */
   .input {
     width: 100%; padding: var(--space-2) var(--space-3);
-    background: var(--canvas); border: 1px solid var(--line);
-    border-radius: var(--radius-2); color: var(--text);
+    background: var(--field-bg);
+    border: 1px solid var(--field-border);
+    color: var(--text);
     font-family: var(--font-ui); font-size: var(--font-size-sm);
   }
   .input--sm { width: auto; }
   .input:focus-visible {
-    outline: var(--focus-outline-width) solid var(--accent);
-    outline-offset: var(--focus-outline-offset);
+    outline: none;
+    border-color: var(--field-focus-border);
+    background: var(--wb-white);
   }
 
   .button-row {

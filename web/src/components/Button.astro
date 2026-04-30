@@ -79,16 +79,17 @@ const classes = [
     outline-offset: var(--focus-outline-offset);
   }
 
-  /* HS-12-02: disabled buttons keep their *variant* colour but
-   * receive a diagonal-hatch overlay — the Workbench "ghosted
-   * gadget" idiom done in CSS. The label stays in its own
-   * colour so the user can read what's not currently
-   * available. The hatch is rendered via a repeating
-   * linear-gradient on a pseudo-element so it composites over
-   * the button without affecting the text layer. */
+  /* HS-12-02 (slice 3): disabled gadgets get the proper
+   * Workbench grey ramp — slate-on-pale with a subtle
+   * diagonal hatch. Slice 2's "variant colour + hatch" was
+   * confusing because a disabled Primary still read as a wash
+   * of orange. Now disabled is unambiguously gray. */
   .btn:disabled {
     cursor: not-allowed;
     position: relative;
+    background: var(--disabled-bg) !important;
+    color: var(--disabled-fg) !important;
+    border-color: var(--disabled-border) !important;
   }
   .btn:disabled::after {
     content: "";
@@ -99,15 +100,15 @@ const classes = [
       45deg,
       transparent,
       transparent 3px,
-      rgba(0, 0, 0, 0.22) 3px,
-      rgba(0, 0, 0, 0.22) 4px
+      rgba(0, 0, 0, 0.08) 3px,
+      rgba(0, 0, 0, 0.08) 4px
     );
   }
   .btn[aria-busy="true"] {
     cursor: progress;
-    opacity: 0.75;
+    opacity: 0.85;
   }
-  .btn[aria-busy="true"]::after {
+  .btn[aria-busy="true"]:not(:disabled)::after {
     content: none;
   }
 
