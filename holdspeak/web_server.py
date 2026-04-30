@@ -1315,14 +1315,14 @@ class MeetingWebServer:
         @app.get("/api/activity/enrichment/connectors")
         async def api_list_activity_enrichment_connectors() -> Any:
             try:
-                from .activity_connectors import KNOWN_CONNECTORS
+                from .activity_connectors import enrichment_descriptors
                 from .activity_github import github_cli_status
                 from .activity_jira import jira_cli_status
                 from .db import get_database
 
                 db = get_database()
                 connectors = []
-                for descriptor in KNOWN_CONNECTORS:
+                for descriptor in enrichment_descriptors():
                     state = db.get_activity_enrichment_connector(descriptor.id)
                     if state is None:
                         state = db.upsert_activity_enrichment_connector(connector_id=descriptor.id)

@@ -1,17 +1,23 @@
-"""HS-11-03/04/05 — connector pack tests.
+"""HS-11-03/04/05 + HS-13-01 — connector pack tests.
 
 Each first-party pack ships a `MANIFEST` (validated against
 the phase-11 connector SDK) and pack-specific policy data
 (captured/forbidden fields for firefox_ext; allowed CLI
-subcommands for github_cli + jira_cli). The tests here lock
-both layers down.
+subcommands for github_cli + jira_cli; recognised domains for
+calendar_activity). The tests here lock both layers down.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from holdspeak.connector_packs import ALL_PACKS, firefox_ext, github_cli, jira_cli
+from holdspeak.connector_packs import (
+    ALL_PACKS,
+    calendar_activity,
+    firefox_ext,
+    github_cli,
+    jira_cli,
+)
 from holdspeak.connector_sdk import (
     KNOWN_KINDS,
     ConnectorManifest,
@@ -25,7 +31,7 @@ def test_all_packs_export_a_validated_manifest():
     via `validate_manifest`. This test asserts the imports
     survived (no ConnectorManifestError) and the manifests are
     instances of the immutable dataclass."""
-    assert len(ALL_PACKS) == 3
+    assert len(ALL_PACKS) == 4
     for pack in ALL_PACKS:
         assert isinstance(pack.MANIFEST, ConnectorManifest)
         # Round-trip: the payload validates again, so any loader
@@ -145,3 +151,55 @@ def test_jira_pack_manifest_shape():
 )
 def test_jira_pack_command_policy(command, allowed):
     assert jira_cli.is_command_allowed(command) is allowed
+
+
+# ─────────────────── HS-13-01 calendar_activity ──────────────────
+
+
+def test_calendar_pack_manifest_shape():
+    manifest = calendar_activity.MANIFEST
+    assert manifest.id == "calendar_activity"
+    assert manifest.kind == "candidate_inference"
+    assert manifest.capabilities == ("candidates",)
+    assert manifest.requires_cli is None
+    assert manifest.requires_network is False
+    assert "read:activity_records" in manifest.permissions
+    assert "write:activity_meeting_candidates" in manifest.permissions
+    # No shell, no network — the calendar pack is read-only over
+    # local rows.
+    assert "shell:exec" not in manifest.permissions
+    assert not (set(manifest.permissions) & NETWORK_PERMISSIONS)
+
+
+def test_calendar_pack_recognized_domains_match_extractor():
+    """The pack's `RECOGNIZED_DOMAINS` export must mirror
+    `activity_candidates.CALENDAR_DOMAINS`. Drift would mean the
+    pack documents a domain set the extractor doesn't actually
+    recognise."""
+    from holdspeak.activity_candidates import CALENDAR_DOMAINS
+
+    assert calendar_activity.RECOGNIZED_DOMAINS == CALENDAR_DOMAINS
+
+
+# ─────────────────── HS-13-01 pack-derived registry ──────────────
+
+
+def test_registry_is_derived_from_all_packs():
+    """`activity_connectors.KNOWN_CONNECTORS` is now sourced from
+    `connector_packs.ALL_PACKS`. The registry must contain
+    exactly one descriptor per pack, and the ids must match the
+    four expected first-party connectors."""
+    from holdspeak.activity_connectors import KNOWN_CONNECTORS
+
+    assert len(KNOWN_CONNECTORS) == 4
+    assert {c.id for c in KNOWN_CONNECTORS} == {
+        "firefox_ext",
+        "gh",
+        "jira",
+        "calendar_activity",
+    }
+    # Each descriptor carries its source manifest, so callers
+    # needing permissions / version / source_boundary do not have
+    # to look up the pack module separately.
+    for descriptor in KNOWN_CONNECTORS:
+        assert descriptor.manifest.id == descriptor.id

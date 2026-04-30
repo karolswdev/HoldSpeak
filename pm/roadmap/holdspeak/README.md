@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-30 (phase 13 scaffolded — connector runtime + pipelines + meeting context).
+**Last updated:** 2026-04-30 (HS-13-01 done — pack-driven runtime registry).
 **Current phase:** [phase-13-connector-runtime-and-context](./phase-13-connector-runtime-and-context/) — turn the connector framework on (substrate), chain packs (pipelines), use the chain for pre-meeting + cross-meeting context.
 **Status:** planning.
 

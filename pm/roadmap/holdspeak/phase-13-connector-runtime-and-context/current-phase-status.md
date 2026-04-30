@@ -1,6 +1,6 @@
 # Phase 13 - Connector Runtime + Pipelines + Meeting Context
 
-**Last updated:** 2026-04-30 (phase scaffolded).
+**Last updated:** 2026-04-30 (HS-13-01 done — pack-driven runtime registry).
 
 ## Goal
 
@@ -57,7 +57,7 @@ top of it) means phases 14+ build on solid ground.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-13-01 | Pack-driven runtime registry | backlog | [story-01-pack-registry.md](./story-01-pack-registry.md) | pending |
+| HS-13-01 | Pack-driven runtime registry | done | [story-01-pack-registry.md](./story-01-pack-registry.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-13-02 | Permission enforcement at runtime gates | backlog | [story-02-permission-enforcement.md](./story-02-permission-enforcement.md) | pending |
 | HS-13-03 | Pack-declared settings + defaults | backlog | [story-03-pack-settings.md](./story-03-pack-settings.md) | pending |
 | HS-13-04 | Local-user pack discovery | backlog | [story-04-user-pack-discovery.md](./story-04-user-pack-discovery.md) | pending |
@@ -70,12 +70,20 @@ top of it) means phases 14+ build on solid ground.
 
 ## Where We Are
 
-Phase 13 is planned. Phases 9, 10, 11, and 12 are all done; the
-connector framework + Workbench voice + first-party packs are the
-substrate. Phase 13 closes the runtime gap that phase 11
-deliberately left open ("the manifests sit alongside the existing
-activity_connectors registry as the manifest-shaped representation
-of the same three connectors") and then builds two layers on top.
+A-arc opening story (HS-13-01) is closed: `connector_packs/`
+ships a fourth pack (`calendar_activity`), and
+`activity_connectors.KNOWN_CONNECTORS` is now derived from
+`connector_packs.ALL_PACKS` instead of a hand-written tuple.
+The descriptor surface every existing call site reads through
+(API, dry-run harness, fixture runner) is unchanged. The
+activity-enrichment API filters the registry through
+`enrichment_descriptors()` so records-ingesters like the
+Firefox companion sit in the registry without ever appearing on
+the enrichment surface.
+
+Next: HS-13-02..05 can land independently on top of the
+pack-derived registry. -06 unblocks the B-arc; -07 unblocks
+the C-arc.
 
 ## Source Design
 

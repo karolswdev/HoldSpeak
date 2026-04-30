@@ -1,22 +1,29 @@
 """First-party connector packs.
 
-HS-11-03..05. Each pack module exports:
+HS-11-03..05 + HS-13-01. Each pack module exports:
 
   - `MANIFEST` — a `ConnectorManifest` describing the pack.
   - Pack-specific policy data (e.g. allowed CLI commands for
-    gh/jira, captured fields + forbidden fields for firefox_ext).
+    gh/jira, captured fields + forbidden fields for firefox_ext,
+    recognised domains for calendar_activity).
 
-`ALL_PACKS` is the list of pack modules in canonical order.
-Phase-11 future work will register them with the runtime; for
-now the packs sit alongside the existing `activity_connectors`
-registry as the manifest-shaped representation of the same
-three connectors.
+`ALL_PACKS` is the list of pack modules in canonical order
+(records ingester first, then enrichment kinds). Phase 13's
+runtime registry derives from this list — it is the source of
+truth, not `activity_connectors.KNOWN_CONNECTORS` (which is now
+a thin wrapper over the pack manifests).
 """
 
 from __future__ import annotations
 
-from . import firefox_ext, github_cli, jira_cli
+from . import calendar_activity, firefox_ext, github_cli, jira_cli
 
-ALL_PACKS = (firefox_ext, github_cli, jira_cli)
+ALL_PACKS = (firefox_ext, github_cli, jira_cli, calendar_activity)
 
-__all__ = ["ALL_PACKS", "firefox_ext", "github_cli", "jira_cli"]
+__all__ = [
+    "ALL_PACKS",
+    "calendar_activity",
+    "firefox_ext",
+    "github_cli",
+    "jira_cli",
+]
