@@ -1107,6 +1107,13 @@
           },
 
           toast(message) {
+            // HS-12-02: dedupe identical messages already on
+            // screen so a polling failure (e.g. loadPluginJobs)
+            // doesn't stack twice when the user opens the
+            // dashboard against an unavailable backend.
+            if (this.notifications.some((note) => note.message === message)) {
+              return;
+            }
             const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
             this.notifications.push({ id, message });
             window.setTimeout(() => {

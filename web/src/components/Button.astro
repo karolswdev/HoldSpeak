@@ -79,19 +79,36 @@ const classes = [
     outline-offset: var(--focus-outline-offset);
   }
 
-  /* HS-12-02: disabled buttons render as flat gray on gray —
-   * Workbench ghosted-control feel without the muddy
-   * opacity-0.55 hack of phase 10. Loading retains opacity
-   * so the spinner reads as "in flight". */
+  /* HS-12-02: disabled buttons keep their *variant* colour but
+   * receive a diagonal-hatch overlay — the Workbench "ghosted
+   * gadget" idiom done in CSS. The label stays in its own
+   * colour so the user can read what's not currently
+   * available. The hatch is rendered via a repeating
+   * linear-gradient on a pseudo-element so it composites over
+   * the button without affecting the text layer. */
   .btn:disabled {
     cursor: not-allowed;
-    background: #cccccc !important;
-    color: #888888 !important;
-    border-color: #888888 !important;
+    position: relative;
+  }
+  .btn:disabled::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 3px,
+      rgba(0, 0, 0, 0.22) 3px,
+      rgba(0, 0, 0, 0.22) 4px
+    );
   }
   .btn[aria-busy="true"] {
     cursor: progress;
-    opacity: 0.7;
+    opacity: 0.75;
+  }
+  .btn[aria-busy="true"]::after {
+    content: none;
   }
 
   .btn:not(:disabled):active {

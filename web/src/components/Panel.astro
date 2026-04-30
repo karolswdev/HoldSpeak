@@ -39,11 +39,19 @@ const hasFooter = Astro.slots.has("footer");
 </section>
 
 <style>
+  /* HS-12-02: panels read as Workbench *windows*, not generic
+   * cards. The header is a saturated blue strip with a white
+   * VT323 title — the single strongest non-stripe Workbench
+   * cue we ship. Body stays white-on-black-text for legible
+   * dense data.
+   *
+   * Density bump: comfortable padding goes from space-5 to
+   * space-4, dense from space-3 to space-2/3. The dashboard
+   * had too much white-space-on-white-space; tighter rhythm
+   * fixes it without changing layout. */
   .panel {
     background: var(--canvas-raised);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-3);
-    box-shadow: var(--elev-1);
+    border: 1px solid var(--wb-black);
     overflow: hidden;
   }
 
@@ -52,17 +60,27 @@ const hasFooter = Astro.slots.has("footer");
     align-items: center;
     justify-content: space-between;
     gap: var(--space-3);
-    border-bottom: 1px solid var(--line);
+    background: var(--wb-blue);
+    color: var(--wb-white);
+    border-bottom: 1px solid var(--wb-black);
   }
 
-  .panel--comfortable .panel-header { padding: var(--space-4) var(--space-5); }
-  .panel--dense .panel-header { padding: var(--space-3) var(--space-4); }
+  .panel--comfortable .panel-header {
+    padding: var(--space-2) var(--space-4);
+  }
+  .panel--dense .panel-header {
+    padding: var(--space-1) var(--space-3);
+  }
 
   .panel-title {
+    /* The window title — Workbench display font, pinned white
+     * on the blue strip. */
+    font-family: var(--font-display);
     font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: var(--letter-spacing-tight);
+    font-weight: 400;
+    color: var(--wb-white);
+    letter-spacing: 0.04em;
+    line-height: 1.2;
   }
 
   .panel-toolbar {
@@ -71,15 +89,23 @@ const hasFooter = Astro.slots.has("footer");
     gap: var(--space-2);
   }
 
-  .panel--comfortable .panel-body { padding: var(--space-5); }
-  .panel--dense .panel-body { padding: var(--space-3) var(--space-4); }
-
-  .panel-footer {
-    border-top: 1px solid var(--line);
-    color: var(--text-muted);
-    font-size: var(--font-size-sm);
+  .panel-toolbar :global(.btn) {
+    /* Toolbar buttons sit on the blue strip; ghost variants
+     * inherit `currentColor` (white) which works against blue.
+     * Filled variants keep their own bg. */
+    color: var(--wb-white);
   }
 
-  .panel--comfortable .panel-footer { padding: var(--space-3) var(--space-5); }
-  .panel--dense .panel-footer { padding: var(--space-2) var(--space-4); }
+  .panel--comfortable .panel-body { padding: var(--space-4); }
+  .panel--dense .panel-body { padding: var(--space-3); }
+
+  .panel-footer {
+    border-top: 1px solid var(--wb-black);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    background: #f5f5f5;
+  }
+
+  .panel--comfortable .panel-footer { padding: var(--space-2) var(--space-4); }
+  .panel--dense .panel-footer { padding: var(--space-2) var(--space-3); }
 </style>
