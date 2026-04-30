@@ -8,13 +8,16 @@ HoldSpeak currently exposes several local web routes:
 - `/activity` - local activity ledger, enrichment connectors, project rules,
   and meeting candidates.
 - `/history` - meeting history, saved meeting detail, exports, and review data.
-- `/settings` - currently served by the history/settings surface.
+  The Settings tab is served as a tab inside `/history` (no separate route).
 - `/dictation` - dictation blocks, runtime readiness, project KB, runtime
   settings, and dry-run preview.
 - `/docs/dictation-runtime` - local setup guidance for dictation runtime.
 
-The app is a tool, so the first screen should remain functional. Avoid turning
-these pages into landing pages.
+Phase 10 unified the navigation: every route renders inside a single
+`AppLayout` shell with one `TopNav`, so layout, density, and identity
+read identically across surfaces. The app is a tool, so the first
+screen should remain functional. Avoid turning these pages into
+landing pages.
 
 ## Primary Workflows
 

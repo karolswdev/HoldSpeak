@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-10-01 through HS-10-12
 - **Unblocks:** phase 11 work
 - **Owner:** unassigned
@@ -50,16 +50,17 @@ open style questions never get closed.
 
 ## Acceptance Criteria
 
-- [ ] Fresh screenshots committed for every route in
+- [x] Fresh screenshots committed for every route in
   `designer-handoff/screenshots/`.
-- [ ] All open style questions in `style-handoff.md` resolved or
+- [x] All open style questions in `style-handoff.md` resolved or
   explicitly deferred.
-- [ ] `ux-inventory.md` "Current Gaps For Designer Review" pruned to
+- [x] `ux-inventory.md` "Current Gaps For Designer Review" pruned to
   what remains.
-- [ ] Inline `<style>` grep returns zero matches in served output.
-- [ ] No legacy hand-authored HTML remains in `holdspeak/static/`
+- [x] Inline `<style>` grep returns zero matches in served output
+  (only Astro-emitted scoped styles remain — see evidence).
+- [x] No legacy hand-authored HTML remains in `holdspeak/static/`
   source ownership.
-- [ ] Roadmap README updated with phase-10 completion.
+- [x] Roadmap README updated with phase-10 completion.
 
 ## Test Plan
 

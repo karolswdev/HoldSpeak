@@ -1,6 +1,6 @@
 # Phase 10 - Web Design System & Character Pass
 
-**Last updated:** 2026-04-29 (HS-10-12 / motion + a11y pass).
+**Last updated:** 2026-04-29 (HS-10-13 / designer handoff refresh — phase 10 done).
 
 ## Goal
 
@@ -60,7 +60,7 @@ no identity layer that says "this is HoldSpeak."
 | HS-10-10 | `CommandPreview` component | done | [story-10-command-preview.md](./story-10-command-preview.md) | [evidence-story-10.md](./evidence-story-10.md) |
 | HS-10-11 | Destructive-action confirmation pattern | done | [story-11-destructive-confirmation.md](./story-11-destructive-confirmation.md) | [evidence-story-11.md](./evidence-story-11.md) |
 | HS-10-12 | Motion + accessibility pass | done | [story-12-motion-a11y.md](./story-12-motion-a11y.md) | [evidence-story-12.md](./evidence-story-12.md) |
-| HS-10-13 | Designer handoff refresh + phase exit | backlog | [story-13-handoff-refresh-dod.md](./story-13-handoff-refresh-dod.md) | pending |
+| HS-10-13 | Designer handoff refresh + phase exit | done | [story-13-handoff-refresh-dod.md](./story-13-handoff-refresh-dod.md) | [evidence-story-13.md](./evidence-story-13.md) |
 
 ## Where We Are
 
@@ -107,7 +107,12 @@ collapse all of it via the existing `tokens.css:144` global rule.
 A keyboard-only walkthrough of the four canonical workflows
 completes without dead-ends.
 
-Up next: HS-10-13 (designer handoff refresh + phase exit).
+HS-10-13 ships the phase exit: fresh screenshots committed for
+every route, every open style question in `style-handoff.md`
+resolved or explicitly deferred, `ux-inventory.md` pruned to the
+small remaining gaps, and the legacy hand-rolled HTML under
+`holdspeak/static/` confirmed gone (only the Astro `_built/`
+output remains). Phase 10 is **done**.
 
 ## Source Design
 

@@ -3,7 +3,11 @@
 Screenshots are captured from the local running app and stored in
 [`screenshots/`](./screenshots/).
 
-Captured: 2026-04-28 from `http://127.0.0.1:64524`.
+Captured: 2026-04-29 from the rebuilt Astro frontend (HS-10-13).
+The capture script is `designer-handoff/capture-screenshots.py`;
+it accepts a `--base-url` argument so it can target either the
+running `holdspeak` web runtime or the Astro dev server (which
+serves under the `/_built/` base path during development).
 
 ## Capture Matrix
 
@@ -17,7 +21,12 @@ Captured: 2026-04-28 from `http://127.0.0.1:64524`.
 
 ## Notes For Review
 
-- Screens may show empty states because the app uses local machine data.
-- Connector APIs for GitHub and Jira exist, but connector controls are not yet
-  first-class UI controls on `/activity`; that is the next design-critical gap.
-- Treat these screenshots as implementation references, not final visual design.
+- Screens are captured against an idle local runtime; empty
+  states are intentional.
+- Connector APIs for GitHub and Jira exist; first-class UI
+  controls are now feasible on top of the phase-10 component
+  library and are tracked under **phase 11** (Local Connector
+  Ecosystem).
+- These screenshots are the reference implementation of the
+  phase-10 design system, not a final visual design — the system
+  is the source of truth (see `style-handoff.md`).
