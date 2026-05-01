@@ -1386,9 +1386,23 @@ class MeetingWebServer:
             in practice — the runtime binds to 127.0.0.1 by default. Per
             the parser contract, events that ship sensitive fields
             (cookies, body, form data, etc.), private-browsing flags, or
-            non-http(s) URLs are rejected, never persisted."""
+            non-http(s) URLs are rejected, never persisted.
+
+            HS-13-02: gates the call on the firefox_ext pack's
+            `loopback:http` permission as defense-in-depth. The
+            check is honest enforcement, not a sandbox — a pack
+            that drops the permission must not be able to ingest
+            events even if its endpoint is still mounted."""
             from .activity_extension import ingest_extension_events
+            from .connector_packs import firefox_ext
+            from .connector_runtime import PermissionDenied, PermissionGate
             from .db import get_database
+
+            gate = PermissionGate(firefox_ext.MANIFEST)
+            try:
+                gate.accept_loopback_event()
+            except PermissionDenied as exc:
+                return JSONResponse({"error": str(exc)}, status_code=403)
 
             try:
                 db = get_database()

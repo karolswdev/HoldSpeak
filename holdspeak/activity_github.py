@@ -119,17 +119,29 @@ def run_github_cli_enrichment(
         raise RuntimeError("gh CLI is not available")
 
     plans = _github_cli_plans(records, gh_path=str(command_path), limit=limit)
-    runner = run_command or subprocess.run
+
+    from .connector_packs import github_cli as github_cli_pack
+    from .connector_runtime import PermissionDenied, PermissionGate
+
+    gate = PermissionGate(github_cli_pack.MANIFEST)
     results: list[GithubCliRunResult] = []
     for plan in plans:
         try:
-            completed = runner(
-                list(plan.command),
+            completed = gate.run_subprocess(
+                plan.command,
+                runner=run_command,
                 capture_output=True,
                 text=True,
                 timeout=max(0.1, float(timeout_seconds)),
                 check=False,
             )
+        except PermissionDenied as exc:
+            db.record_activity_enrichment_run(
+                connector_id=CONNECTOR_ID,
+                last_run_at=datetime.now(),
+                last_error=str(exc),
+            )
+            raise
         except subprocess.TimeoutExpired:
             results.append(GithubCliRunResult(plan=plan, error="gh command timed out"))
             continue

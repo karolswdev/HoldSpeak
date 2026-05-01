@@ -111,17 +111,29 @@ def run_jira_cli_enrichment(
         raise RuntimeError("jira CLI is not available")
 
     plans = _jira_cli_plans(records, jira_path=str(command_path), limit=limit)
-    runner = run_command or subprocess.run
+
+    from .connector_packs import jira_cli as jira_cli_pack
+    from .connector_runtime import PermissionDenied, PermissionGate
+
+    gate = PermissionGate(jira_cli_pack.MANIFEST)
     results: list[JiraCliRunResult] = []
     for plan in plans:
         try:
-            completed = runner(
-                list(plan.command),
+            completed = gate.run_subprocess(
+                plan.command,
+                runner=run_command,
                 capture_output=True,
                 text=True,
                 timeout=max(0.1, float(timeout_seconds)),
                 check=False,
             )
+        except PermissionDenied as exc:
+            db.record_activity_enrichment_run(
+                connector_id=CONNECTOR_ID,
+                last_run_at=datetime.now(),
+                last_error=str(exc),
+            )
+            raise
         except subprocess.TimeoutExpired:
             results.append(JiraCliRunResult(plan=plan, error="jira command timed out"))
             continue
