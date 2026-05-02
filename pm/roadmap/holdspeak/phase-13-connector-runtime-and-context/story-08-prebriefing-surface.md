@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-13-07
 - **Unblocks:** consumer-facing payoff of the connector framework
 - **Owner:** unassigned

@@ -1577,6 +1577,100 @@ class MeetingWebServer:
                 log.error(f"Failed to list activity annotations: {e}")
                 return JSONResponse({"error": str(e)}, status_code=500)
 
+        @app.get("/api/activity/briefing")
+        async def api_activity_briefing() -> Any:
+            """HS-13-08: project briefing surface for `/`.
+
+            Returns the most-recent `meeting_context_briefing`
+            annotation (the dashboard renders its markdown
+            inline), plus the most recent `connector_runs` row
+            for the meeting_context pipeline so the panel can
+            show a status pill ("success" / "stale" / "danger")
+            and a "Last refreshed" timestamp.
+
+            Single-user model: the most-recently-updated
+            briefing is treated as the "current project". A
+            multi-project switcher can layer on top of this in
+            phase 14 — the data already supports it.
+            """
+            from .db import get_database
+
+            try:
+                db = get_database()
+                annotations = db.list_activity_annotations(
+                    source_connector_id="meeting_context",
+                    annotation_type="meeting_context_briefing",
+                    limit=20,
+                )
+                briefing = annotations[0] if annotations else None
+                runs = db.list_connector_runs(
+                    connector_id="meeting_context", limit=1
+                )
+                last_run = runs[0] if runs else None
+                payload = {
+                    "briefing": (
+                        {
+                            "id": briefing.id,
+                            "title": briefing.title,
+                            "value": briefing.value,
+                            "updated_at": briefing.updated_at.isoformat(),
+                        }
+                        if briefing
+                        else None
+                    ),
+                    "last_run": last_run.to_payload() if last_run else None,
+                }
+                return JSONResponse(payload)
+            except Exception as e:
+                log.error(f"Failed to fetch activity briefing: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.post("/api/activity/enrichment/pipelines/{pipeline_id}/run")
+        async def api_run_pipeline(pipeline_id: str) -> Any:
+            """HS-13-08: kick off a pipeline pack on demand.
+
+            Wraps `PipelineRunner` so the dashboard's "Refresh
+            briefing" button has a single endpoint to call.
+            Returns the `PipelineRunResult.to_payload()` so the
+            UI can render which steps ran / were skipped /
+            failed.
+            """
+            from .activity_connectors import get_descriptor
+            from .connector_runtime import (
+                NotAPipelineError,
+                PipelineRunner,
+                UnknownPipelineError,
+            )
+            from .db import get_database
+
+            descriptor = get_descriptor(pipeline_id)
+            if descriptor is None:
+                return JSONResponse(
+                    {"error": f"Unknown pipeline: {pipeline_id}"},
+                    status_code=404,
+                )
+            if descriptor.manifest.kind != "pipeline":
+                return JSONResponse(
+                    {
+                        "error": (
+                            f"Connector {pipeline_id!r} is "
+                            f"kind={descriptor.manifest.kind!r}, not a pipeline"
+                        ),
+                    },
+                    status_code=400,
+                )
+            try:
+                db = get_database()
+                runner = PipelineRunner(db)
+                try:
+                    result = runner.run(pipeline_id)
+                except (UnknownPipelineError, NotAPipelineError) as exc:
+                    return JSONResponse({"error": str(exc)}, status_code=404)
+                return JSONResponse({"result": result.to_payload()})
+            except Exception as e:
+                log.error(f"Failed to run pipeline {pipeline_id}: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
         @app.get("/api/activity/enrichment/connectors/{connector_id}/runs")
         async def api_list_activity_enrichment_runs(
             connector_id: str,

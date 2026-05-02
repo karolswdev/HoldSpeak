@@ -1,6 +1,6 @@
 # Phase 13 - Connector Runtime + Pipelines + Meeting Context
 
-**Last updated:** 2026-05-02 (HS-13-07 done — meeting-context pipeline pack).
+**Last updated:** 2026-05-02 (HS-13-08 done — pre-meeting briefing surface on /).
 
 ## Goal
 
@@ -64,7 +64,7 @@ top of it) means phases 14+ build on solid ground.
 | HS-13-05 | Pack run history table + UI | done (API+DB; UI deferred) | [story-05-run-history.md](./story-05-run-history.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-13-06 | Pipeline manifest + dependency-graph runner | done | [story-06-pipeline-runner.md](./story-06-pipeline-runner.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-13-07 | Meeting-context pipeline pack | done | [story-07-meeting-context-pack.md](./story-07-meeting-context-pack.md) | [evidence-story-07.md](./evidence-story-07.md) |
-| HS-13-08 | Pre-meeting briefing surface on / | backlog | [story-08-prebriefing-surface.md](./story-08-prebriefing-surface.md) | pending |
+| HS-13-08 | Pre-meeting briefing surface on / | done | [story-08-prebriefing-surface.md](./story-08-prebriefing-surface.md) | [evidence-story-08.md](./evidence-story-08.md) |
 | HS-13-09 | Cross-meeting summary on /history | backlog | [story-09-history-project-summary.md](./story-09-history-project-summary.md) | pending |
 | HS-13-10 | Phase exit + DoD | backlog | [story-10-dod.md](./story-10-dod.md) | pending |
 
@@ -92,23 +92,28 @@ deferred to phase 14.
 HS-13-06 opens the B-arc with `kind: pipeline` + the
 `PipelineRunner`.
 
-HS-13-07 ships the first first-party pipeline:
-`holdspeak/connector_packs/meeting_context.py` consumes gh +
-jira annotations and calendar candidates, fuses them per
-project, and writes one deterministic markdown briefing per
-active project to `activity_annotations` with
-`source_connector_id = "meeting_context"`. Re-running the
-pipeline updates each project's briefing in place — there are
-never duplicate briefings. The synthesizer is a pure function
-over duck-typed inputs so a phase-14 LLM swap-in keeps the
-same shape. The `connector_packs` registry now ships five
-first-party packs (the producers + the pipeline). New
-`GET /api/activity/annotations` endpoint (filter by
-connector_id / type / record_id) makes the briefing queryable
-for HS-13-08's UI work.
+HS-13-07 ships the meeting_context pipeline pack: deterministic
+markdown briefing per active project, mutation-safe re-runs.
 
-Next: HS-13-08 — surface the briefing on `/`. -09 adds the
-cross-meeting `/history` view. -10 closes the phase.
+HS-13-08 surfaces it on the runtime dashboard. New "Project
+briefing" panel sits above the transcript-stream panel during
+idle, hides during active meetings. Renders the briefing
+markdown via a tiny inline renderer (h1/h2 headings, "- "
+bullets, **bold**, auto-linked URLs — no external markdown
+library). Status pill flips between "fresh" / "stale" /
+"failed" based on the most recent `connector_runs` row. The
+"Refresh briefing" button POSTs to a new
+`/api/activity/enrichment/pipelines/{id}/run` endpoint, which
+drives `PipelineRunner` and reports per-step status. The
+briefing data flows through a new `/api/activity/briefing`
+endpoint pairing the latest annotation with its run row.
+Verified live: `curl /api/activity/briefing` returns
+`{briefing: null, last_run: null}` on a fresh DB; POST'ing the
+pipeline run end-to-end exercises every step including the
+expected "jira CLI is not available" failure pill.
+
+Next: HS-13-09 (cross-meeting summary on /history). -10 closes
+the phase.
 
 ## Source Design
 

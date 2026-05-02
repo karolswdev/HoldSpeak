@@ -93,11 +93,19 @@
           meetingTags: [],
           notifications: [],
 
+          // HS-13-08: pre-meeting briefing surface state.
+          briefing: null,
+          briefingLastRun: null,
+          briefingState: "idle", // idle | success | warn | danger
+          briefingRefreshing: false,
+          briefingError: "",
+
           init() {
             this.fetchRuntimeStatus();
             this.fetchIntentControls();
             this.loadPluginJobs();
             this.loadPluginJobSummary();
+            this.fetchBriefing();
             this.connect();
             window.addEventListener("beforeunload", () => {
               this.closedByUser = true;
@@ -1121,5 +1129,161 @@
               if (idx >= 0) this.notifications.splice(idx, 1);
             }, 3500);
           },
+
+          // ───────── HS-13-08: pre-meeting briefing ─────────
+
+          async fetchBriefing() {
+            try {
+              const response = await fetch("/api/activity/briefing");
+              if (!response.ok) return;
+              const payload = await response.json();
+              this.briefing = payload.briefing;
+              this.briefingLastRun = payload.last_run;
+              this.briefingState = this.computeBriefingState();
+            } catch {
+              // Polling failure shouldn't surface to the user
+              // — the empty state covers "no briefing".
+            }
+          },
+
+          computeBriefingState() {
+            const run = this.briefingLastRun;
+            if (!run) return "idle";
+            if (run.succeeded === false) return "danger";
+            // Stale if the most recent successful run finished
+            // more than 6 hours ago. Mirrors the pipeline's
+            // freshness window for the briefing's display state
+            // — not the runner's skip rule (that uses
+            // `pipeline_freshness_seconds`).
+            const finishedAt = run.finished_at ? Date.parse(run.finished_at) : NaN;
+            if (!Number.isFinite(finishedAt)) return "idle";
+            const ageMs = Date.now() - finishedAt;
+            if (ageMs > 6 * 60 * 60 * 1000) return "warn";
+            return "success";
+          },
+
+          briefingVisible() {
+            // Show the panel whenever a briefing exists OR a
+            // run has happened (so the empty state can render
+            // after a clear). Hides during active meetings via
+            // the x-show binding in the template.
+            return this.briefing !== null || this.briefingLastRun !== null;
+          },
+
+          briefingPillClass() {
+            return {
+              "pill--success": this.briefingState === "success",
+              "pill--warn": this.briefingState === "warn",
+              "pill--danger": this.briefingState === "danger",
+            };
+          },
+
+          briefingPillLabel() {
+            switch (this.briefingState) {
+              case "success": return "fresh";
+              case "warn": return "stale";
+              case "danger": return "failed";
+              default: return "";
+            }
+          },
+
+          briefingLastRefreshed() {
+            const run = this.briefingLastRun;
+            if (!run || !run.finished_at) return "";
+            const dt = new Date(run.finished_at);
+            if (Number.isNaN(dt.getTime())) return "";
+            const pad = (n) => String(n).padStart(2, "0");
+            return `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+          },
+
+          briefingHtml() {
+            const markdown =
+              (this.briefing && this.briefing.value && this.briefing.value.markdown) || "";
+            return renderBriefingMarkdown(markdown);
+          },
+
+          async refreshBriefing() {
+            if (this.briefingRefreshing) return;
+            this.briefingRefreshing = true;
+            this.briefingError = "";
+            try {
+              const response = await fetch(
+                "/api/activity/enrichment/pipelines/meeting_context/run",
+                { method: "POST" }
+              );
+              const body = await response.json().catch(() => ({}));
+              if (!response.ok) {
+                this.briefingError = body.error || `HTTP ${response.status}`;
+              } else if (body.result && body.result.succeeded === false) {
+                const failed = (body.result.steps || []).find(
+                  (s) => s.status === "failed" || s.status === "missing_runner"
+                );
+                this.briefingError = failed
+                  ? `${failed.pack_id}: ${failed.error || failed.status}`
+                  : "Pipeline reported failure.";
+              }
+            } catch (e) {
+              this.briefingError = String(e);
+            } finally {
+              await this.fetchBriefing();
+              this.briefingRefreshing = false;
+            }
+          },
         };
+      }
+
+      // ──────────── tiny markdown renderer ────────────
+      // Inline because the dashboard intentionally has no
+      // external markdown library. Only the subset the
+      // meeting_context synthesizer uses is supported: # and ##
+      // headings, "- " bullets, **bold**, and bare URLs (auto-
+      // linked).
+      function renderBriefingMarkdown(input) {
+        if (!input) return "";
+        const lines = String(input).split(/\r?\n/);
+        const html = [];
+        let inList = false;
+        for (const raw of lines) {
+          const line = raw.trimEnd();
+          if (line.startsWith("## ")) {
+            if (inList) { html.push("</ul>"); inList = false; }
+            html.push(`<h2>${escapeHtml(line.slice(3))}</h2>`);
+          } else if (line.startsWith("# ")) {
+            if (inList) { html.push("</ul>"); inList = false; }
+            html.push(`<h1>${escapeHtml(line.slice(2))}</h1>`);
+          } else if (line.startsWith("- ")) {
+            if (!inList) { html.push("<ul>"); inList = true; }
+            html.push(`<li>${formatInline(line.slice(2))}</li>`);
+          } else if (line.length === 0) {
+            if (inList) { html.push("</ul>"); inList = false; }
+          } else {
+            if (inList) { html.push("</ul>"); inList = false; }
+            html.push(`<p>${formatInline(line)}</p>`);
+          }
+        }
+        if (inList) html.push("</ul>");
+        return html.join("");
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function formatInline(value) {
+        let out = escapeHtml(value);
+        // **bold** → <strong>
+        out = out.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+        // bare http(s) URLs → <a>. Conservative pattern: stop
+        // at whitespace or trailing punctuation.
+        out = out.replace(
+          /(https?:\/\/[^\s<>"'()]+)([.,;:!?])?/g,
+          (_m, url, trailing) =>
+            `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>${trailing || ""}`
+        );
+        return out;
       }

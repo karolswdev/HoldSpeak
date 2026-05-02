@@ -979,6 +979,130 @@ def test_list_connector_runs_unknown_connector_returns_404(
     assert response.status_code == 404
 
 
+def test_briefing_endpoint_returns_null_when_no_annotation(
+    test_client: TestClient,
+) -> None:
+    """HS-13-08: GET /api/activity/briefing returns
+    `briefing: null, last_run: null` when the pipeline has
+    never run. The dashboard's empty-state copy renders from
+    that null."""
+    response = test_client.get("/api/activity/briefing")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload == {"briefing": None, "last_run": None}
+
+
+def test_briefing_endpoint_returns_latest_briefing_and_run(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+) -> None:
+    """A fresh `meeting_context_briefing` annotation + a
+    matching run row both come back; the briefing carries its
+    value payload (including `markdown`)."""
+    activity_db.create_activity_annotation(
+        source_connector_id="meeting_context",
+        annotation_type="meeting_context_briefing",
+        title="HoldSpeak — meeting context",
+        value={
+            "project_id": "holdspeak",
+            "project_name": "HoldSpeak",
+            "markdown": "# x\n\n- y",
+            "gh_count": 1,
+            "jira_count": 0,
+            "calendar_count": 0,
+        },
+    )
+    base = datetime(2026, 5, 2, 12, 0, 0)
+    activity_db.record_connector_run(
+        connector_id="meeting_context",
+        started_at=base,
+        finished_at=base,
+        succeeded=True,
+        annotation_count=1,
+    )
+
+    response = test_client.get("/api/activity/briefing")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["briefing"] is not None
+    assert payload["briefing"]["title"].startswith("HoldSpeak")
+    assert payload["briefing"]["value"]["markdown"].startswith("# x")
+    assert payload["last_run"] is not None
+    assert payload["last_run"]["succeeded"] is True
+
+
+def test_run_pipeline_endpoint_executes_meeting_context(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+) -> None:
+    """POST /api/activity/enrichment/pipelines/meeting_context/run
+    drives the pipeline end-to-end. Upstreams are seeded as
+    fresh so the runner skips them; the pipeline writes its
+    annotation."""
+    activity_db.create_project(
+        project_id="holdspeak", name="HoldSpeak", keywords=["holdspeak"]
+    )
+    record = activity_db.upsert_activity_record(
+        source_browser="safari",
+        url="https://github.com/anthropic/holdspeak/pull/7",
+        title="PR 7",
+        domain="github.com",
+        last_seen_at=datetime(2026, 5, 2, 9, 0),
+        entity_type="github_pull_request",
+        entity_id="anthropic/holdspeak#7",
+    )
+    activity_db.assign_activity_record_project(record.id, "holdspeak")
+    activity_db.create_activity_annotation(
+        activity_record_id=record.id,
+        source_connector_id="gh",
+        annotation_type="github_pr",
+        title="Wire runtime",
+        value={"entity_id": "anthropic/holdspeak#7"},
+    )
+    base = datetime(2026, 5, 2, 11, 0, 0)
+    for upstream in ("gh", "jira", "calendar_activity"):
+        activity_db.record_connector_run(
+            connector_id=upstream,
+            started_at=base,
+            finished_at=base,
+            succeeded=True,
+        )
+
+    response = test_client.post(
+        "/api/activity/enrichment/pipelines/meeting_context/run"
+    )
+    assert response.status_code == 200
+    body = response.json()["result"]
+    assert body["target"] == "meeting_context"
+    assert body["succeeded"] is True
+    statuses = {s["pack_id"]: s["status"] for s in body["steps"]}
+    assert statuses["meeting_context"] == "ran"
+    # The briefing endpoint now reflects the freshly-written
+    # annotation.
+    follow = test_client.get("/api/activity/briefing").json()
+    assert follow["briefing"] is not None
+    assert follow["briefing"]["value"]["project_id"] == "holdspeak"
+
+
+def test_run_pipeline_endpoint_rejects_non_pipeline(
+    test_client: TestClient,
+) -> None:
+    response = test_client.post(
+        "/api/activity/enrichment/pipelines/gh/run"
+    )
+    assert response.status_code == 400
+    assert "kind=" in response.json()["error"]
+
+
+def test_run_pipeline_endpoint_rejects_unknown_id(
+    test_client: TestClient,
+) -> None:
+    response = test_client.post(
+        "/api/activity/enrichment/pipelines/no_such_pipe/run"
+    )
+    assert response.status_code == 404
+
+
 def test_list_activity_annotations_filters_by_connector(
     test_client: TestClient,
     activity_db: MeetingDatabase,
