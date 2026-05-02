@@ -381,6 +381,42 @@ import AppLayout from "../layouts/AppLayout.astro";
                 </p>
               </div>
 
+              {/* HS-13-09: Project briefing timeline. Walks
+                  meeting_context annotations for the selected
+                  project newest-first; each row expands inline
+                  to show the full markdown body via the shared
+                  renderBriefingMarkdown util. */}
+              <div class="detail-card briefing-timeline">
+                <div class="card-top">
+                  <h4>Project briefing timeline</h4>
+                  <button class="btn primary" :disabled="briefingRunInProgress" @click="runProjectBriefing()">
+                    <span x-text="briefingRunInProgress ? 'Running…' : 'Run briefing now'"></span>
+                  </button>
+                </div>
+                <p class="briefing-error" x-show="briefingTimelineError" x-cloak x-text="briefingTimelineError"></p>
+                <div x-show="!loadingBriefingTimeline && projectBriefings.length === 0" class="empty">
+                  <p>
+                    No briefings for this project yet. Run the
+                    <a href="/_built/activity">connectors</a> on a few
+                    PRs / tickets / calendar events, then click
+                    <strong>Run briefing now</strong>.
+                  </p>
+                </div>
+                <div x-show="loadingBriefingTimeline" class="loading">Loading briefing timeline…</div>
+                <ul class="briefing-list" x-show="projectBriefings.length > 0" x-cloak>
+                  <template x-for="briefing in projectBriefings" :key="briefing.id">
+                    <li class="briefing-row">
+                      <button type="button" class="briefing-row-toggle" @click="toggleBriefing(briefing.id)">
+                        <span class="briefing-row-when mono" x-text="formatDate(briefing.created_at)"></span>
+                        <span class="briefing-row-summary" x-text="briefingFirstLineFor(briefing)"></span>
+                        <span class="briefing-row-chevron" x-text="briefingExpanded[briefing.id] ? '▾' : '▸'"></span>
+                      </button>
+                      <div class="briefing-row-body" x-show="briefingExpanded[briefing.id]" x-cloak x-html="briefingHtmlFor(briefing)"></div>
+                    </li>
+                  </template>
+                </ul>
+              </div>
+
               <div class="detail-card">
                 <h4>Meetings</h4>
                 <div x-show="!projectMeetings.length" class="empty"><p>No meetings associated yet.</p></div>
@@ -910,10 +946,17 @@ import AppLayout from "../layouts/AppLayout.astro";
   <script>
     import Alpine from "alpinejs";
     import factorySource from "../scripts/history-app.js?raw";
+    import briefingMdSource from "../scripts/briefing-markdown.js?raw";
 
-    // Eval the factory in global scope so x-data="historyApp()"
-    // resolves to it; same pattern as src/pages/index.astro.
-    const fn = new Function(factorySource + "; return historyApp;");
+    // HS-13-09: prepend the shared briefing markdown renderer
+    // so historyApp's project-briefing timeline can call
+    // `renderBriefingMarkdown` / `briefingFirstLine` without
+    // duplicating the implementation.
+    const sharedSource = briefingMdSource
+      .replace(/^\s*export\s+function/gm, "function");
+    const fn = new Function(
+      sharedSource + "\n" + factorySource + "; return historyApp;"
+    );
     window.historyApp = fn();
 
     if (!window.Alpine) {
@@ -1443,5 +1486,88 @@ import AppLayout from "../layouts/AppLayout.astro";
   .detail-side { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
   @media (max-width: 900px) {
     .detail-grid { grid-template-columns: 1fr; }
+  }
+
+  /* HS-13-09: Project briefing timeline. */
+  .briefing-timeline .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  .briefing-timeline .briefing-error {
+    color: var(--danger);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    margin: 0 0 var(--space-2);
+  }
+  .briefing-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .briefing-row {
+    border: 1px solid var(--line);
+    background: var(--canvas);
+  }
+  .briefing-row-toggle {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: var(--space-2);
+    align-items: center;
+    width: 100%;
+    padding: var(--space-2);
+    background: transparent;
+    border: 0;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .briefing-row-toggle:hover { background: var(--canvas-raised); }
+  .briefing-row-when {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+  }
+  .briefing-row-summary {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .briefing-row-chevron {
+    color: var(--accent);
+    font-family: var(--font-mono);
+  }
+  .briefing-row-body {
+    border-top: 1px solid var(--line);
+    padding: var(--space-2);
+    background: var(--canvas-raised);
+  }
+  .briefing-row-body h1 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-lg);
+    margin: 0 0 var(--space-2);
+  }
+  .briefing-row-body h2 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-md);
+    margin: var(--space-2) 0 var(--space-1);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+  }
+  .briefing-row-body ul {
+    list-style: square inside;
+    margin: 0 0 var(--space-2);
+    padding: 0;
+  }
+  .briefing-row-body a {
+    color: var(--accent);
+    text-decoration: underline;
   }
 </style>

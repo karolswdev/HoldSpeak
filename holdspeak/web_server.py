@@ -1625,6 +1625,60 @@ class MeetingWebServer:
                 log.error(f"Failed to fetch activity briefing: {e}")
                 return JSONResponse({"error": str(e)}, status_code=500)
 
+        @app.get("/api/projects/{project_id}/briefings")
+        async def api_list_project_briefings(
+            project_id: str,
+            limit: int = 50,
+        ) -> Any:
+            """HS-13-09: per-project meeting_context timeline.
+
+            Returns every meeting_context briefing whose
+            `value.project_id` matches, ordered newest first.
+            The /history Projects-tab panel walks this for the
+            cross-meeting narrative.
+            """
+            from .db import get_database
+
+            try:
+                clean_limit = max(1, min(int(limit), 200))
+            except (TypeError, ValueError):
+                clean_limit = 50
+            try:
+                db = get_database()
+                if db.get_project(project_id) is None:
+                    return JSONResponse(
+                        {"error": f"Unknown project: {project_id}"},
+                        status_code=404,
+                    )
+                annotations = db.list_activity_annotations(
+                    source_connector_id="meeting_context",
+                    annotation_type="meeting_context_briefing",
+                    limit=max(clean_limit * 4, 100),
+                )
+                rows = []
+                for ann in annotations:
+                    if not isinstance(ann.value, dict):
+                        continue
+                    if ann.value.get("project_id") != project_id:
+                        continue
+                    rows.append(
+                        {
+                            "id": ann.id,
+                            "title": ann.title,
+                            "value": ann.value,
+                            "created_at": ann.created_at.isoformat(),
+                            "updated_at": ann.updated_at.isoformat(),
+                        }
+                    )
+                    if len(rows) >= clean_limit:
+                        break
+                return JSONResponse(
+                    {"project_id": project_id, "briefings": rows}
+                )
+            except Exception as e:
+                log.error(f"Failed to list project briefings: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
         @app.post("/api/activity/enrichment/pipelines/{pipeline_id}/run")
         async def api_run_pipeline(pipeline_id: str) -> Any:
             """HS-13-08: kick off a pipeline pack on demand.

@@ -1232,58 +1232,6 @@
         };
       }
 
-      // ──────────── tiny markdown renderer ────────────
-      // Inline because the dashboard intentionally has no
-      // external markdown library. Only the subset the
-      // meeting_context synthesizer uses is supported: # and ##
-      // headings, "- " bullets, **bold**, and bare URLs (auto-
-      // linked).
-      function renderBriefingMarkdown(input) {
-        if (!input) return "";
-        const lines = String(input).split(/\r?\n/);
-        const html = [];
-        let inList = false;
-        for (const raw of lines) {
-          const line = raw.trimEnd();
-          if (line.startsWith("## ")) {
-            if (inList) { html.push("</ul>"); inList = false; }
-            html.push(`<h2>${escapeHtml(line.slice(3))}</h2>`);
-          } else if (line.startsWith("# ")) {
-            if (inList) { html.push("</ul>"); inList = false; }
-            html.push(`<h1>${escapeHtml(line.slice(2))}</h1>`);
-          } else if (line.startsWith("- ")) {
-            if (!inList) { html.push("<ul>"); inList = true; }
-            html.push(`<li>${formatInline(line.slice(2))}</li>`);
-          } else if (line.length === 0) {
-            if (inList) { html.push("</ul>"); inList = false; }
-          } else {
-            if (inList) { html.push("</ul>"); inList = false; }
-            html.push(`<p>${formatInline(line)}</p>`);
-          }
-        }
-        if (inList) html.push("</ul>");
-        return html.join("");
-      }
-
-      function escapeHtml(value) {
-        return String(value)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#39;");
-      }
-
-      function formatInline(value) {
-        let out = escapeHtml(value);
-        // **bold** → <strong>
-        out = out.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-        // bare http(s) URLs → <a>. Conservative pattern: stop
-        // at whitespace or trailing punctuation.
-        out = out.replace(
-          /(https?:\/\/[^\s<>"'()]+)([.,;:!?])?/g,
-          (_m, url, trailing) =>
-            `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>${trailing || ""}`
-        );
-        return out;
-      }
+      // The shared briefing markdown renderer (`renderBriefingMarkdown`,
+      // `briefingFirstLine`) is concatenated in by index.astro before
+      // this factory body — see HS-13-08 / HS-13-09.

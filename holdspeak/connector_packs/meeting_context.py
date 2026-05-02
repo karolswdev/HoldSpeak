@@ -210,14 +210,33 @@ def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
 
     projects = [p for p in db.list_projects() if not p.is_archived]
 
-    # In-place update: clear old briefings before recreating.
-    db.delete_activity_annotations(source_connector_id=CONNECTOR_ID)
+    # HS-13-09: keep history. A run only writes a new
+    # annotation per project when the synthesized markdown
+    # differs from the most-recent briefing for that project —
+    # so re-running with no upstream changes does not pile up
+    # duplicates, but real upstream changes do append a new
+    # snapshot for the /history timeline to walk.
+    existing_by_project = {
+        a.value.get("project_id"): a
+        for a in db.list_activity_annotations(
+            source_connector_id=CONNECTOR_ID,
+            annotation_type=ANNOTATION_TYPE,
+            limit=1000,
+        )
+        if isinstance(a.value, dict) and a.value.get("project_id")
+    }
 
     created = 0
     for project in projects:
+        # HS-13-09: scan the project's full record set rather
+        # than time-slicing by `since`. The synthesizer dedupes
+        # by content hash against the previous briefing — runs
+        # that produce identical markdown skip the write — so a
+        # narrow time window would mask new annotations on
+        # older records (gh / jira can enrich existing PRs/
+        # tickets long after they were first visited).
         records = db.list_activity_records(
             project_id=project.id,
-            since=since,
             limit=capped,
         )
         record_ids = {r.id for r in records}
@@ -235,6 +254,13 @@ def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
             jira_annotations=project_jira,
             calendar_candidates=project_calendar,
         )
+
+        previous = existing_by_project.get(project.id)
+        if previous is not None and isinstance(previous.value, dict):
+            if previous.value.get("markdown") == markdown:
+                # Idempotent re-run — nothing changed for this
+                # project, so no new annotation row.
+                continue
 
         db.create_activity_annotation(
             source_connector_id=CONNECTOR_ID,

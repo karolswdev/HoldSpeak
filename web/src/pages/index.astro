@@ -430,11 +430,18 @@ import HoldMark from "../components/HoldMark.astro";
   <script>
     import Alpine from "alpinejs";
     import factorySource from "../scripts/dashboard-app.js?raw";
+    import briefingMdSource from "../scripts/briefing-markdown.js?raw";
 
-    // Eval the factory in global scope so x-data="HoldSpeakDashboard()"
-    // resolves to it; the factory body lives unmodified in
-    // src/scripts/dashboard-app.js.
-    const fn = new Function(factorySource + "; return HoldSpeakDashboard;");
+    // The factory is evaluated via `new Function`, so ES module
+    // imports don't reach inside it. Concatenating the shared
+    // briefing renderer (HS-13-08 + HS-13-09) before the factory
+    // gives both this page and /history one definition without
+    // turning either factory into an ES module.
+    const sharedSource = briefingMdSource
+      .replace(/^\s*export\s+function/gm, "function");
+    const fn = new Function(
+      sharedSource + "\n" + factorySource + "; return HoldSpeakDashboard;"
+    );
     window.HoldSpeakDashboard = fn();
 
     window.Alpine = Alpine;

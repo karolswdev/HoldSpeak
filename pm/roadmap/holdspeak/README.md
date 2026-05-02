@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-02 (HS-13-08 done — pre-meeting briefing surface on /).
+**Last updated:** 2026-05-02 (HS-13-09 done — cross-meeting summary on /history).
 **Current phase:** [phase-13-connector-runtime-and-context](./phase-13-connector-runtime-and-context/) — turn the connector framework on (substrate), chain packs (pipelines), use the chain for pre-meeting + cross-meeting context.
 **Status:** planning.
 

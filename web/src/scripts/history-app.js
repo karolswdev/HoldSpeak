@@ -54,6 +54,13 @@ function historyApp() {
     projectActionItems: [],
     projectArtifacts: [],
 
+    // HS-13-09: project briefing timeline state.
+    projectBriefings: [],
+    loadingBriefingTimeline: false,
+    briefingExpanded: {},
+    briefingRunInProgress: false,
+    briefingTimelineError: "",
+
     async init() {
       await Promise.all([
         this.loadMeetings(),
@@ -721,6 +728,9 @@ function historyApp() {
         this.projectMeetings = [];
         this.projectActionItems = [];
         this.projectArtifacts = [];
+        this.projectBriefings = [];
+        this.briefingExpanded = {};
+        this.briefingTimelineError = "";
         // Load sub-data in parallel
         const [summary, meetings, actionItems, artifacts] = await Promise.all([
           this.apiJson(`/api/projects/${projectId}/summary`),
@@ -732,8 +742,73 @@ function historyApp() {
         this.projectMeetings = meetings.meetings || [];
         this.projectActionItems = actionItems.action_items || [];
         this.projectArtifacts = artifacts.artifacts || [];
+        // HS-13-09: load the project briefing timeline alongside.
+        this.loadProjectBriefings();
       } catch (error) {
         this.flash(`Failed to load project: ${error.message}`, true);
+      }
+    },
+
+    async loadProjectBriefings() {
+      if (!this.selectedProject) return;
+      this.loadingBriefingTimeline = true;
+      try {
+        const data = await this.apiJson(
+          `/api/projects/${this.selectedProject.id}/briefings`
+        );
+        this.projectBriefings = data.briefings || [];
+      } catch (error) {
+        this.briefingTimelineError = error.message;
+      } finally {
+        this.loadingBriefingTimeline = false;
+      }
+    },
+
+    toggleBriefing(briefingId) {
+      this.briefingExpanded = {
+        ...this.briefingExpanded,
+        [briefingId]: !this.briefingExpanded[briefingId],
+      };
+    },
+
+    briefingFirstLineFor(briefing) {
+      const md = (briefing && briefing.value && briefing.value.markdown) || "";
+      // briefingFirstLine is concatenated in by history.astro's
+      // <script> loader (HS-13-09 shared util).
+      return briefingFirstLine(md);
+    },
+
+    briefingHtmlFor(briefing) {
+      const md = (briefing && briefing.value && briefing.value.markdown) || "";
+      return renderBriefingMarkdown(md);
+    },
+
+    async runProjectBriefing() {
+      if (!this.selectedProject) return;
+      if (this.briefingRunInProgress) return;
+      this.briefingRunInProgress = true;
+      this.briefingTimelineError = "";
+      try {
+        const response = await fetch(
+          "/api/activity/enrichment/pipelines/meeting_context/run",
+          { method: "POST" }
+        );
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          this.briefingTimelineError = body.error || `HTTP ${response.status}`;
+        } else if (body.result && body.result.succeeded === false) {
+          const failed = (body.result.steps || []).find(
+            (s) => s.status === "failed" || s.status === "missing_runner"
+          );
+          this.briefingTimelineError = failed
+            ? `${failed.pack_id}: ${failed.error || failed.status}`
+            : "Pipeline reported failure.";
+        }
+      } catch (error) {
+        this.briefingTimelineError = String(error);
+      } finally {
+        await this.loadProjectBriefings();
+        this.briefingRunInProgress = false;
       }
     },
 

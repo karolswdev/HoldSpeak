@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-13-07
 - **Unblocks:** "phase 13 paid off" exit (HS-13-10)
 - **Owner:** unassigned

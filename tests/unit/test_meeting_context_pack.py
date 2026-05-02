@@ -234,20 +234,47 @@ def test_run_with_empty_upstream_still_writes_briefing(db):
     assert "No new activity since the last meeting." in annotations[0].value["markdown"]
 
 
-def test_re_running_updates_in_place_no_duplicates(db):
+def test_re_running_with_no_upstream_changes_does_not_duplicate(db):
+    """HS-13-07 + HS-13-09: re-running the pipeline against
+    an unchanged upstream produces no new annotation. The
+    pack content-hashes the synthesized markdown against the
+    most-recent briefing per project; identical output means
+    no row appended."""
     _seed_project(db, "holdspeak", "HoldSpeak")
     _seed_records_and_upstreams(db, "holdspeak")
 
     meeting_context.run(db)
-    first = db.list_activity_annotations(source_connector_id="meeting_context")
-    assert len(first) == 1
+    meeting_context.run(db)
+    rows = db.list_activity_annotations(source_connector_id="meeting_context")
+    assert len(rows) == 1
+    assert rows[0].value["project_id"] == "holdspeak"
+
+
+def test_re_running_with_changed_upstream_appends_new_snapshot(db):
+    """HS-13-09: when upstream output changes between runs the
+    pipeline appends a new annotation so /history's project
+    briefing timeline can walk the cross-meeting narrative."""
+    _seed_project(db, "holdspeak", "HoldSpeak")
+    record_id = _seed_records_and_upstreams(db, "holdspeak")
 
     meeting_context.run(db)
-    second = db.list_activity_annotations(source_connector_id="meeting_context")
-    assert len(second) == 1
-    # The id rotates because we delete-and-recreate; the
-    # invariant is "exactly one row", not "same id".
-    assert second[0].value["project_id"] == "holdspeak"
+
+    # Upstream changes: a new gh annotation lands on the same
+    # record, which the synthesizer will pick up next run.
+    db.create_activity_annotation(
+        activity_record_id=record_id,
+        source_connector_id="gh",
+        annotation_type="github_pr",
+        title="Second wave",
+        value={"entity_id": "anthropic/holdspeak#8", "gh": {"state": "OPEN"}},
+    )
+
+    meeting_context.run(db)
+
+    rows = db.list_activity_annotations(source_connector_id="meeting_context")
+    assert len(rows) == 2
+    # Newest first per the listing's ORDER BY.
+    assert "Second wave" in rows[0].value["markdown"]
 
 
 def test_run_records_a_connector_run_row(db):
