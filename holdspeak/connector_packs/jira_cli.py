@@ -66,5 +66,39 @@ MANIFEST: ConnectorManifest = validate_manifest(
             "else is rejected before exec."
         ),
         "dry_run": True,
+        "settings_schema": [
+            {
+                "key": "timeout_seconds",
+                "type": "float",
+                "default": DEFAULT_TIMEOUT_SECONDS,
+                "label": "Timeout (seconds)",
+                "help": (
+                    "Per-command wall clock timeout. Commands that "
+                    "exceed it are recorded as `jira command timed "
+                    "out` and the rest of the batch continues."
+                ),
+            },
+            {
+                "key": "max_bytes",
+                "type": "int",
+                "default": DEFAULT_MAX_BYTES,
+                "label": "Max output bytes",
+                "help": (
+                    "Hard cap on the per-command stdout the runner "
+                    "will accept. Output beyond the cap is rejected "
+                    "before annotation persistence."
+                ),
+            },
+            {
+                "key": "limit",
+                "type": "int",
+                "default": DEFAULT_LIMIT,
+                "label": "Records per run",
+                "help": (
+                    "Max number of activity records visited per "
+                    "enrichment run. Higher means more network calls."
+                ),
+            },
+        ],
     }
 )

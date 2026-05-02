@@ -48,5 +48,17 @@ MANIFEST: ConnectorManifest = validate_manifest(
             "touch any other table or external resource."
         ),
         "dry_run": True,
+        "settings_schema": [
+            {
+                "key": "limit",
+                "type": "int",
+                "default": DEFAULT_LIMIT,
+                "label": "Candidates per run",
+                "help": (
+                    "Max number of meeting candidates inferred per "
+                    "preview / dry-run pass."
+                ),
+            },
+        ],
     }
 )

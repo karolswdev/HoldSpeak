@@ -76,6 +76,44 @@ _VERSION_RE = re.compile(r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.\-]+)?$")
 # ────────────────────────── Manifest model ──────────────────────────
 
 
+SETTING_TYPES: frozenset[str] = frozenset({"int", "float", "bool", "str"})
+
+
+@dataclass(frozen=True)
+class SettingDescriptor:
+    """One pack-declared tunable.
+
+    Packs declare their tunables (timeouts, limits, byte caps,
+    feature flags) as a list of `SettingDescriptor` entries on
+    the manifest. `resolve_setting` reads `connector.settings`
+    JSON first and falls back to `default` here.
+
+    Fields:
+      - `key` — settings dict key. Lower-snake-case, ≤ 32 chars.
+      - `type` — one of `SETTING_TYPES`. The PUT endpoint rejects
+        values that don't match.
+      - `default` — value used when the connector has no setting
+        for this key. Must already match `type`.
+      - `label` — short human label for a future settings UI.
+      - `help` — longer help string, also for the future UI.
+    """
+
+    key: str
+    type: str
+    default: Any
+    label: str = ""
+    help: str = ""
+
+    def to_payload(self) -> dict[str, Any]:
+        return {
+            "key": self.key,
+            "type": self.type,
+            "default": self.default,
+            "label": self.label,
+            "help": self.help,
+        }
+
+
 @dataclass(frozen=True)
 class ConnectorManifest:
     """Static description of one connector pack."""
@@ -91,6 +129,7 @@ class ConnectorManifest:
     permissions: tuple[str, ...] = field(default_factory=tuple)
     source_boundary: str = ""
     dry_run: bool = True
+    settings_schema: tuple[SettingDescriptor, ...] = field(default_factory=tuple)
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -105,7 +144,17 @@ class ConnectorManifest:
             "permissions": list(self.permissions),
             "source_boundary": self.source_boundary,
             "dry_run": self.dry_run,
+            "settings_schema": [s.to_payload() for s in self.settings_schema],
         }
+
+    def setting_keys(self) -> frozenset[str]:
+        return frozenset(s.key for s in self.settings_schema)
+
+    def setting_default(self, key: str) -> Any:
+        for descriptor in self.settings_schema:
+            if descriptor.key == key:
+                return descriptor.default
+        raise KeyError(key)
 
 
 @dataclass(frozen=True)
@@ -324,6 +373,8 @@ def validate_manifest(raw: Mapping[str, Any]) -> ConnectorManifest:
     else:
         dry_run = dry_run_value
 
+    settings_schema = _validate_settings_schema(raw.get("settings_schema", []), errors)
+
     if errors:
         raise ConnectorManifestError(errors)
 
@@ -339,7 +390,153 @@ def validate_manifest(raw: Mapping[str, Any]) -> ConnectorManifest:
         permissions=permissions,
         source_boundary=source_boundary.strip(),
         dry_run=dry_run,
+        settings_schema=settings_schema,
     )
+
+
+_SETTING_KEY_RE = re.compile(r"^[a-z][a-z0-9_]{0,31}$")
+_SETTING_TYPE_TO_PYTYPES: dict[str, tuple[type, ...]] = {
+    "int": (int,),
+    "float": (int, float),  # int is an acceptable float
+    "bool": (bool,),
+    "str": (str,),
+}
+
+
+def _validate_settings_schema(
+    raw: Any, errors: list[ManifestError]
+) -> tuple[SettingDescriptor, ...]:
+    if not isinstance(raw, list):
+        errors.append(
+            ManifestError(
+                "settings_schema",
+                "must_be_list",
+                "settings_schema, when present, must be a list of "
+                "{key, type, default, label?, help?} objects",
+            )
+        )
+        return ()
+    out: list[SettingDescriptor] = []
+    seen_keys: set[str] = set()
+    for index, entry in enumerate(raw):
+        prefix = f"settings_schema[{index}]"
+        if not isinstance(entry, Mapping):
+            errors.append(
+                ManifestError(prefix, "must_be_object", "each entry must be an object")
+            )
+            continue
+        key = entry.get("key")
+        if not isinstance(key, str) or not _SETTING_KEY_RE.match(key):
+            errors.append(
+                ManifestError(
+                    f"{prefix}.key",
+                    "key_format",
+                    "key must match ^[a-z][a-z0-9_]{0,31}$",
+                )
+            )
+            continue
+        if key in seen_keys:
+            errors.append(
+                ManifestError(
+                    f"{prefix}.key",
+                    "duplicate_key",
+                    f"key {key!r} appears more than once in settings_schema",
+                )
+            )
+            continue
+        seen_keys.add(key)
+        type_name = entry.get("type")
+        if type_name not in SETTING_TYPES:
+            errors.append(
+                ManifestError(
+                    f"{prefix}.type",
+                    "unknown_type",
+                    f"type must be one of {sorted(SETTING_TYPES)}",
+                )
+            )
+            continue
+        if "default" not in entry:
+            errors.append(
+                ManifestError(
+                    f"{prefix}.default",
+                    "required",
+                    "each setting must declare a default",
+                )
+            )
+            continue
+        default = entry["default"]
+        py_types = _SETTING_TYPE_TO_PYTYPES[type_name]
+        # bool is a subclass of int — be strict so a "type": "int"
+        # default doesn't accept True/False without complaint.
+        if type_name == "int" and isinstance(default, bool):
+            errors.append(
+                ManifestError(
+                    f"{prefix}.default",
+                    "type_mismatch",
+                    f"default must be {type_name}, got bool",
+                )
+            )
+            continue
+        if not isinstance(default, py_types):
+            errors.append(
+                ManifestError(
+                    f"{prefix}.default",
+                    "type_mismatch",
+                    f"default must be {type_name}, got "
+                    f"{type(default).__name__}",
+                )
+            )
+            continue
+        label = entry.get("label", "") or ""
+        help_text = entry.get("help", "") or ""
+        if not isinstance(label, str) or not isinstance(help_text, str):
+            errors.append(
+                ManifestError(
+                    prefix,
+                    "label_help_must_be_string",
+                    "label and help, when present, must be strings",
+                )
+            )
+            continue
+        out.append(
+            SettingDescriptor(
+                key=key,
+                type=type_name,
+                default=default,
+                label=label,
+                help=help_text,
+            )
+        )
+    return tuple(out)
+
+
+def resolve_setting(
+    manifest: ConnectorManifest,
+    settings: Optional[Mapping[str, Any]],
+    key: str,
+) -> Any:
+    """Return the user-set value if present and well-typed, else
+    the manifest's default. Raises `KeyError` if the key is not
+    declared on the manifest (caller bug)."""
+    descriptor = next(
+        (s for s in manifest.settings_schema if s.key == key), None
+    )
+    if descriptor is None:
+        raise KeyError(
+            f"connector {manifest.id!r} has no setting {key!r} "
+            f"in its schema"
+        )
+    if not settings:
+        return descriptor.default
+    if key not in settings:
+        return descriptor.default
+    user_value = settings[key]
+    py_types = _SETTING_TYPE_TO_PYTYPES[descriptor.type]
+    if descriptor.type in {"int", "float"} and isinstance(user_value, bool):
+        return descriptor.default
+    if not isinstance(user_value, py_types):
+        return descriptor.default
+    return user_value
 
 
 # ───────────────────────── SDK Protocols ────────────────────────────

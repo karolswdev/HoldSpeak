@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-13-01
 - **Unblocks:** per-connector configuration UI
 - **Owner:** unassigned

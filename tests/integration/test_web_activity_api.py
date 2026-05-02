@@ -811,3 +811,43 @@ def test_clear_connector_capability_mismatch_returns_400(
         "/api/activity/enrichment/connectors/calendar_activity/annotations"
     )
     assert response.status_code == 400
+
+
+def test_put_connector_settings_accepts_schema_keys(test_client: TestClient) -> None:
+    """HS-13-03: a setting key declared on the gh pack's schema
+    is accepted, persisted, and reflected back."""
+    response = test_client.put(
+        "/api/activity/enrichment/connectors/gh",
+        json={"enabled": False, "settings": {"timeout_seconds": 10.0}},
+    )
+    assert response.status_code == 200
+    assert response.json()["connector"]["settings"]["timeout_seconds"] == 10.0
+
+
+def test_put_connector_settings_rejects_unknown_key(test_client: TestClient) -> None:
+    """HS-13-03: a key not on the pack's schema returns 400 with
+    a message naming the offending keys + the allowed set, so a
+    misconfigured client can fix the call without guessing."""
+    response = test_client.put(
+        "/api/activity/enrichment/connectors/gh",
+        json={"enabled": False, "settings": {"hidden_token": "leak"}},
+    )
+    assert response.status_code == 400
+    body = response.json()
+    assert "hidden_token" in body["error"]
+    assert "timeout_seconds" in body["error"]
+
+
+def test_put_connector_settings_rejects_keys_on_empty_schema(
+    test_client: TestClient,
+) -> None:
+    """HS-13-03: firefox_ext declares an empty schema; any key in
+    settings is unknown and the PUT is rejected. The connector
+    still appears in the registry (HS-13-01) but the enrichment
+    PUT shape recognises it."""
+    response = test_client.put(
+        "/api/activity/enrichment/connectors/firefox_ext",
+        json={"enabled": False, "settings": {"limit": 25}},
+    )
+    assert response.status_code == 400
+    assert "limit" in response.json()["error"]

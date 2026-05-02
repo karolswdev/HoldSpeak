@@ -1355,13 +1355,29 @@ class MeetingWebServer:
             connector_id: str,
             payload: _ActivityEnrichmentConnectorRequest,
         ) -> Any:
-            from .activity_connectors import KNOWN_CONNECTOR_IDS
+            from .activity_connectors import KNOWN_CONNECTOR_IDS, get_descriptor
 
             if connector_id not in KNOWN_CONNECTOR_IDS:
                 return JSONResponse(
                     {"error": f"Unknown activity enrichment connector: {connector_id}"},
                     status_code=404,
                 )
+
+            descriptor = get_descriptor(connector_id)
+            if descriptor is not None and payload.settings:
+                allowed = descriptor.manifest.setting_keys()
+                unknown = sorted(set(payload.settings) - allowed)
+                if unknown:
+                    return JSONResponse(
+                        {
+                            "error": (
+                                f"Connector {connector_id!r} does not declare "
+                                f"setting key(s): {unknown}. Allowed: "
+                                f"{sorted(allowed)}."
+                            ),
+                        },
+                        status_code=400,
+                    )
             try:
                 from .db import get_database
 
@@ -1540,17 +1556,28 @@ class MeetingWebServer:
                         status_code=403,
                     )
 
+                from .connector_packs import github_cli as github_cli_pack
+                from .connector_sdk import resolve_setting
+
                 settings = connector.settings or {}
-                limit = payload.limit if payload and payload.limit is not None else settings.get("limit", 25)
+                limit = (
+                    payload.limit
+                    if payload and payload.limit is not None
+                    else resolve_setting(github_cli_pack.MANIFEST, settings, "limit")
+                )
                 timeout_seconds = (
                     payload.timeout_seconds
                     if payload and payload.timeout_seconds is not None
-                    else settings.get("timeout_seconds", 5.0)
+                    else resolve_setting(
+                        github_cli_pack.MANIFEST, settings, "timeout_seconds"
+                    )
                 )
                 max_bytes = (
                     payload.max_bytes
                     if payload and payload.max_bytes is not None
-                    else settings.get("max_bytes", 65536)
+                    else resolve_setting(
+                        github_cli_pack.MANIFEST, settings, "max_bytes"
+                    )
                 )
                 records = db.list_activity_records(
                     entity_type="github_pull_request",
@@ -1626,17 +1653,28 @@ class MeetingWebServer:
                         status_code=403,
                     )
 
+                from .connector_packs import jira_cli as jira_cli_pack
+                from .connector_sdk import resolve_setting
+
                 settings = connector.settings or {}
-                limit = payload.limit if payload and payload.limit is not None else settings.get("limit", 25)
+                limit = (
+                    payload.limit
+                    if payload and payload.limit is not None
+                    else resolve_setting(jira_cli_pack.MANIFEST, settings, "limit")
+                )
                 timeout_seconds = (
                     payload.timeout_seconds
                     if payload and payload.timeout_seconds is not None
-                    else settings.get("timeout_seconds", 5.0)
+                    else resolve_setting(
+                        jira_cli_pack.MANIFEST, settings, "timeout_seconds"
+                    )
                 )
                 max_bytes = (
                     payload.max_bytes
                     if payload and payload.max_bytes is not None
-                    else settings.get("max_bytes", 65536)
+                    else resolve_setting(
+                        jira_cli_pack.MANIFEST, settings, "max_bytes"
+                    )
                 )
                 records = db.list_activity_records(
                     entity_type="jira_ticket",

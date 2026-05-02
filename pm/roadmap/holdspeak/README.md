@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-04-30 (HS-13-02 done — permission enforcement at runtime gates).
+**Last updated:** 2026-05-01 (HS-13-03 done — pack-declared settings + defaults).
 **Current phase:** [phase-13-connector-runtime-and-context](./phase-13-connector-runtime-and-context/) — turn the connector framework on (substrate), chain packs (pipelines), use the chain for pre-meeting + cross-meeting context.
 **Status:** planning.
 

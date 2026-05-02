@@ -35,7 +35,11 @@ ALLOWED_SUBCOMMANDS: frozenset[tuple[str, str]] = frozenset(
     }
 )
 
-# Default tunables for runtime execution.
+# Default tunables for runtime execution. The pack manifest's
+# `settings_schema` is the source of truth — runners resolve
+# defaults via `connector_sdk.resolve_setting(MANIFEST, …)` so
+# user-set overrides in `connector.settings` JSON win, and any
+# unknown key is rejected at PUT time.
 DEFAULT_TIMEOUT_SECONDS: float = 5.0
 DEFAULT_MAX_BYTES: int = 65536
 DEFAULT_LIMIT: int = 25
@@ -84,5 +88,39 @@ MANIFEST: ConnectorManifest = validate_manifest(
             "rejected before exec."
         ),
         "dry_run": True,
+        "settings_schema": [
+            {
+                "key": "timeout_seconds",
+                "type": "float",
+                "default": DEFAULT_TIMEOUT_SECONDS,
+                "label": "Timeout (seconds)",
+                "help": (
+                    "Per-command wall clock timeout. Commands that "
+                    "exceed it are recorded as `gh command timed out` "
+                    "and the rest of the batch continues."
+                ),
+            },
+            {
+                "key": "max_bytes",
+                "type": "int",
+                "default": DEFAULT_MAX_BYTES,
+                "label": "Max output bytes",
+                "help": (
+                    "Hard cap on the per-command stdout the runner "
+                    "will accept. Output beyond the cap is rejected "
+                    "before annotation persistence."
+                ),
+            },
+            {
+                "key": "limit",
+                "type": "int",
+                "default": DEFAULT_LIMIT,
+                "label": "Records per run",
+                "help": (
+                    "Max number of activity records visited per "
+                    "enrichment run. Higher means more network calls."
+                ),
+            },
+        ],
     }
 )
