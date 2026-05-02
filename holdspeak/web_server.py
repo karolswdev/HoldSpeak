@@ -1332,6 +1332,7 @@ class MeetingWebServer:
                     payload["capabilities"] = list(descriptor.capabilities)
                     payload["requires_cli"] = descriptor.requires_cli
                     payload["description"] = descriptor.description
+                    payload["source"] = descriptor.source
                     cli_status = descriptor.cli_status()
                     if cli_status is not None:
                         payload["cli_status"] = cli_status

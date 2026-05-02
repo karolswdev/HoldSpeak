@@ -799,6 +799,45 @@ def _check_mir_telemetry() -> DoctorCheck:
     )
 
 
+def _check_connector_packs() -> DoctorCheck:
+    """HS-13-04: list every discovered connector pack and flag
+    user-pack discovery errors. The first-party packs are
+    statically enumerated; user packs come from
+    `~/.holdspeak/connector_packs/` (or whatever
+    `HOLDSPEAK_USER_PACKS_DIR` points at)."""
+    from ..activity_connectors import KNOWN_CONNECTORS, discovery_errors
+
+    by_source: dict[str, list[str]] = {}
+    for descriptor in KNOWN_CONNECTORS:
+        by_source.setdefault(descriptor.source, []).append(descriptor.id)
+    errors = discovery_errors()
+
+    parts = []
+    for source in ("first-party", "user"):
+        ids = sorted(by_source.get(source, []))
+        if ids:
+            parts.append(f"{source}: {', '.join(ids)}")
+    detail = "; ".join(parts) if parts else "no connectors"
+    if errors:
+        detail += f" (rejected: {len(errors)})"
+
+    if errors:
+        return DoctorCheck(
+            name="Connector packs",
+            status="WARN",
+            detail=detail,
+            fix=(
+                "Inspect rejected user packs:\n  "
+                + "\n  ".join(str(e) for e in errors)
+            ),
+        )
+    return DoctorCheck(
+        name="Connector packs",
+        status="PASS",
+        detail=detail,
+    )
+
+
 def collect_doctor_checks() -> list[DoctorCheck]:
     """Collect all doctor checks in display order."""
     is_wayland = _is_wayland_session()
@@ -824,6 +863,7 @@ def collect_doctor_checks() -> list[DoctorCheck]:
         _check_ffmpeg(),
         _check_pactl(),
         _check_system_audio_capture(),
+        _check_connector_packs(),
     ]
 
 
@@ -834,12 +874,51 @@ def _summarize(checks: list[DoctorCheck]) -> tuple[int, int, int]:
     return passed, warned, failed
 
 
+def run_connector_packs_listing() -> int:
+    """HS-13-04: focused connector-pack listing (`doctor --connectors`).
+
+    Prints every discovered pack with its id, source, kind, and
+    file path (for user packs) plus any discovery errors. Exit
+    code is 0 when all discovered files validated, 1 otherwise.
+    """
+    from ..activity_connectors import KNOWN_CONNECTORS, discovery_errors
+
+    print("HoldSpeak connector packs")
+    print("=" * 25)
+    from .. import activity_connectors as _ac
+    pack_files = {
+        p.manifest.id: p.file_path
+        for p in _ac._DISCOVERY.packs
+        if p.file_path is not None
+    }
+    for descriptor in KNOWN_CONNECTORS:
+        manifest = descriptor.manifest
+        path = pack_files.get(descriptor.id)
+        suffix = f" — {path}" if path else ""
+        print(
+            f"- {manifest.id} [{descriptor.source}] "
+            f"kind={manifest.kind}{suffix}"
+        )
+
+    errors = discovery_errors()
+    if errors:
+        print()
+        print(f"Rejected ({len(errors)}):")
+        for entry in errors:
+            print(f"  - {entry}")
+        return 1
+    return 0
+
+
 def run_doctor_command(args) -> int:
     """Handle the `doctor` subcommand.
 
     Returns:
         Exit code (0 for healthy enough; non-zero for failures).
     """
+    if getattr(args, "connectors", False):
+        return run_connector_packs_listing()
+
     checks = collect_doctor_checks()
 
     print("HoldSpeak Doctor")

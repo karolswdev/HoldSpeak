@@ -539,6 +539,9 @@ def test_connector_list_includes_calendar_with_capabilities(
     assert by_id["calendar_activity"]["kind"] == "candidate_inference"
     assert by_id["calendar_activity"]["requires_cli"] is None
     assert "cli_status" not in by_id["calendar_activity"]
+    # HS-13-04: every first-party pack is labelled first-party.
+    for connector_id in ("gh", "jira", "calendar_activity"):
+        assert by_id[connector_id]["source"] == "first-party"
 
 
 def test_clear_connector_annotations_deletes_only_that_connectors_output(

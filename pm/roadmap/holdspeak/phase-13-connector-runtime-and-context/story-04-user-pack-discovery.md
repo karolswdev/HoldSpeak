@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-13-01, HS-13-02
 - **Unblocks:** "drop a pack into a directory" extensibility
 - **Owner:** unassigned

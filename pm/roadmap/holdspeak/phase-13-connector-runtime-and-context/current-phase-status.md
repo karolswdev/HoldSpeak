@@ -1,6 +1,6 @@
 # Phase 13 - Connector Runtime + Pipelines + Meeting Context
 
-**Last updated:** 2026-05-01 (HS-13-03 done — pack-declared settings + defaults).
+**Last updated:** 2026-05-01 (HS-13-04 done — local-user pack discovery).
 
 ## Goal
 
@@ -60,7 +60,7 @@ top of it) means phases 14+ build on solid ground.
 | HS-13-01 | Pack-driven runtime registry | done | [story-01-pack-registry.md](./story-01-pack-registry.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-13-02 | Permission enforcement at runtime gates | done | [story-02-permission-enforcement.md](./story-02-permission-enforcement.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-13-03 | Pack-declared settings + defaults | done | [story-03-pack-settings.md](./story-03-pack-settings.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-13-04 | Local-user pack discovery | backlog | [story-04-user-pack-discovery.md](./story-04-user-pack-discovery.md) | pending |
+| HS-13-04 | Local-user pack discovery | done | [story-04-user-pack-discovery.md](./story-04-user-pack-discovery.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-13-05 | Pack run history table + UI | backlog | [story-05-run-history.md](./story-05-run-history.md) | pending |
 | HS-13-06 | Pipeline manifest + dependency-graph runner | backlog | [story-06-pipeline-runner.md](./story-06-pipeline-runner.md) | pending |
 | HS-13-07 | Meeting-context pipeline pack | backlog | [story-07-meeting-context-pack.md](./story-07-meeting-context-pack.md) | pending |
@@ -79,18 +79,26 @@ HS-13-02 ships `holdspeak/connector_runtime.py` with a
 `PermissionGate` enforcing the manifest's declared permissions
 at the runtime gates.
 
-HS-13-03 extends the manifest with a `settings_schema`
-(`SettingDescriptor(key, type, default, label, help)` per
-tunable) and adds `resolve_setting(manifest, settings, key)`
-to the SDK. gh / jira packs declare timeout / max_bytes /
-limit; calendar declares limit; firefox_ext declares an empty
-schema. The web run endpoints + the PUT settings endpoint are
-wired through the schema — any `settings` key not on the
-pack's schema is rejected with a 400 naming the offending
-keys + the allowed set.
+HS-13-03 extends the manifest with a `settings_schema` and
+adds `resolve_setting(manifest, settings, key)`; the web run
+endpoints + PUT validation read through the schema.
 
-Next: HS-13-04 (local-user pack discovery), HS-13-05 (run
-history). -06 unblocks the B-arc; -07 unblocks the C-arc.
+HS-13-04 ships `holdspeak/connector_pack_loader.py` with
+discovery + load for `~/.holdspeak/connector_packs/`
+(overridable via `HOLDSPEAK_USER_PACKS_DIR`). The loader
+catches every pack-import failure and reports it as a
+structured `DiscoveryError` instead of crashing the runtime;
+ids that collide with first-party packs are rejected (first-
+party wins). `activity_connectors.reload_registry()` swaps
+the module-level registry for tests + future re-discovery
+flows. Each `ConnectorDescriptor` carries `source`
+(`first-party` / `user`); the API surfaces it. `holdspeak
+doctor` adds a "Connector packs" check (WARN on discovery
+errors); `holdspeak doctor --connectors` prints a focused
+listing of every pack + state.
+
+Next: HS-13-05 (run history). -06 unblocks the B-arc; -07
+unblocks the C-arc.
 
 ## Source Design
 

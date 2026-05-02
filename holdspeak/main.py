@@ -286,6 +286,14 @@ Logs are written to: {LOG_FILE}
         action="store_true",
         help="Treat warnings as failures (non-zero exit)",
     )
+    doctor_parser.add_argument(
+        "--connectors",
+        action="store_true",
+        help=(
+            "List discovered connector packs (first-party + user) and any "
+            "discovery errors, then exit. Skips other doctor checks."
+        ),
+    )
 
     args = parser.parse_args()
 

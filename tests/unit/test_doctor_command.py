@@ -400,3 +400,75 @@ def test_mir_telemetry_check_smoke_passes() -> None:
     # The router counter API exposes routed/dropped windows.
     assert "routed_windows" in result.detail
     assert "dropped_windows" in result.detail
+
+
+# ─────────────── HS-13-04 connector packs check ───────────────
+
+
+def test_check_connector_packs_passes_with_only_first_party() -> None:
+    from holdspeak import activity_connectors
+
+    activity_connectors.reload_registry()
+    result = doctor._check_connector_packs()
+    assert result.status == "PASS"
+    # The detail names the first-party packs we ship.
+    assert "first-party" in result.detail
+    assert "gh" in result.detail
+    assert "calendar_activity" in result.detail
+
+
+def test_check_connector_packs_warns_on_user_pack_errors(tmp_path: Path) -> None:
+    """A malformed user pack lands in `discovery_errors()`; the
+    doctor check downgrades to WARN and surfaces the rejection
+    in its fix string so the operator can locate the offending
+    file."""
+    from holdspeak import activity_connectors
+
+    user_dir = tmp_path / "user_packs"
+    user_dir.mkdir()
+    (user_dir / "broken.py").write_text("# missing MANIFEST\n")
+
+    try:
+        activity_connectors.reload_registry(user_packs_dir=user_dir)
+        result = doctor._check_connector_packs()
+        assert result.status == "WARN"
+        assert "rejected: 1" in result.detail
+        assert result.fix is not None
+        assert "broken.py" in result.fix
+        assert "no_manifest" in result.fix
+    finally:
+        activity_connectors.reload_registry()
+
+
+def test_run_connector_packs_listing_returns_zero_with_no_errors(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from holdspeak import activity_connectors
+
+    activity_connectors.reload_registry()
+    exit_code = doctor.run_connector_packs_listing()
+    assert exit_code == 0
+    captured = capsys.readouterr().out
+    assert "HoldSpeak connector packs" in captured
+    assert "[first-party]" in captured
+    assert "gh" in captured
+
+
+def test_run_connector_packs_listing_returns_one_when_errors_present(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from holdspeak import activity_connectors
+
+    user_dir = tmp_path / "user_packs"
+    user_dir.mkdir()
+    (user_dir / "broken.py").write_text("# missing MANIFEST\n")
+    try:
+        activity_connectors.reload_registry(user_packs_dir=user_dir)
+        exit_code = doctor.run_connector_packs_listing()
+        assert exit_code == 1
+        captured = capsys.readouterr().out
+        assert "Rejected (1)" in captured
+        assert "broken.py" in captured
+    finally:
+        activity_connectors.reload_registry()

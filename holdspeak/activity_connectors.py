@@ -1,55 +1,45 @@
 """Pack-derived registry of activity connectors known to the runtime.
 
-HS-13-01. Phase 9 / 11 left the runtime reading from a
-hand-written `KNOWN_CONNECTORS` tuple while the manifests under
-`connector_packs/` sat alongside as documentation. This module
-flips the source of truth: `KNOWN_CONNECTORS` is now derived
-from `connector_packs.ALL_PACKS`, so adding or removing a pack
-module is the only change required to register a connector with
-the runtime.
+HS-13-01 + HS-13-04. The runtime registry now derives from
+both first-party packs (`connector_packs.ALL_PACKS`) and any
+user packs discovered under `~/.holdspeak/connector_packs/`
+via `connector_pack_loader.build_registry`. The descriptor
+surface is unchanged for downstream consumers; only the source
+field on `ConnectorDescriptor` and the new
+`reload_registry()`/`discovery_errors()` helpers are new.
 
-`ConnectorDescriptor` is preserved as a thin wrapper over a
-`ConnectorManifest` because every existing call site (the
-`/api/activity/enrichment/connectors` endpoint, the
-`activity_connector_preview.dry_run` harness, the fixture
-runner) reads through this surface. The descriptor exposes:
+`ConnectorDescriptor` carries:
 
   - `id`, `label`, `kind`, `capabilities`, `requires_cli`,
-    `description` — all sourced from the underlying manifest.
-  - `cli_status()` — dispatches to the pack's CLI status helper
-    (currently `gh` and `jira` only). Packs that do not shell
-    out return `None`.
+    `description` — sourced from the manifest.
+  - `source` — `"first-party"` or `"user"` so the API + doctor
+    can label each connector by provenance.
+  - `manifest` — the underlying `ConnectorManifest`.
+  - `cli_status()` — dispatches by id (gh / jira only).
 
-The descriptor's `capabilities` is the manifest's `capabilities`
-filtered down to *data-row* capabilities (annotations, candidates,
-records). The pack manifests may declare additional capabilities
-like "commands" (the dry-run command preview surface); those are
-not row-producing and are intentionally excluded from the
-descriptor that downstream consumers iterate over.
+The descriptor's `capabilities` is the manifest's
+`capabilities` filtered to row-producing capabilities so the
+manifest's `commands` / pure-preview capabilities don't leak
+into API consumers expecting a row-shape.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 from .activity_github import CONNECTOR_ID as GH_CONNECTOR_ID, github_cli_status
 from .activity_jira import CONNECTOR_ID as JIRA_CONNECTOR_ID, jira_cli_status
-from .connector_packs import ALL_PACKS
+from .connector_pack_loader import (
+    DiscoveryResult,
+    RegisteredPack,
+    build_registry,
+)
 from .connector_sdk import ConnectorManifest
 
-# Capabilities that produce rows in the local schema. The
-# descriptor surfaces only these; non-row capabilities (e.g.
-# "commands", which describes the dry-run preview surface) are
-# filtered out so existing API + fixture consumers keep their
-# stable shape.
 _ROW_CAPABILITIES: frozenset[str] = frozenset({"records", "annotations", "candidates"})
 
-# Connectors the activity-enrichment surface (the
-# `/api/activity/enrichment/connectors` endpoint and its DB-backed
-# enable/disable state) cares about. Records-ingesters like the
-# Firefox companion live in the registry for completeness but are
-# not enrichment-shaped — the API filters them out.
 ENRICHMENT_KINDS: frozenset[str] = frozenset(
     {"cli_enrichment", "candidate_inference"}
 )
@@ -57,15 +47,7 @@ ENRICHMENT_KINDS: frozenset[str] = frozenset(
 
 @dataclass(frozen=True)
 class ConnectorDescriptor:
-    """Runtime view of one pack-registered connector.
-
-    Built from a `ConnectorManifest` via
-    `_descriptor_from_manifest`. The fields mirror what every
-    pre-phase-13 call site already consumed; the underlying
-    manifest is kept on the descriptor so callers needing the
-    full manifest (permissions, version, source boundary) can
-    reach it without a second lookup.
-    """
+    """Runtime view of one pack-registered connector."""
 
     id: str
     label: str
@@ -73,6 +55,7 @@ class ConnectorDescriptor:
     capabilities: tuple[str, ...]
     requires_cli: Optional[str]
     description: str
+    source: str
     manifest: ConnectorManifest
 
     def cli_status(self) -> Optional[dict]:
@@ -83,7 +66,8 @@ class ConnectorDescriptor:
         return None
 
 
-def _descriptor_from_manifest(manifest: ConnectorManifest) -> ConnectorDescriptor:
+def _descriptor_from_pack(pack: RegisteredPack) -> ConnectorDescriptor:
+    manifest = pack.manifest
     return ConnectorDescriptor(
         id=manifest.id,
         label=manifest.label,
@@ -91,15 +75,51 @@ def _descriptor_from_manifest(manifest: ConnectorManifest) -> ConnectorDescripto
         capabilities=tuple(c for c in manifest.capabilities if c in _ROW_CAPABILITIES),
         requires_cli=manifest.requires_cli,
         description=manifest.description,
+        source=pack.source,
         manifest=manifest,
     )
 
 
-KNOWN_CONNECTORS: tuple[ConnectorDescriptor, ...] = tuple(
-    _descriptor_from_manifest(pack.MANIFEST) for pack in ALL_PACKS
-)
+# ───────────────────── Module-level registry state ────────────────────
+#
+# Populated at import time and refreshable via `reload_registry`.
+# The web API + the dry-run harness + the fixture runner all
+# read these globals; tests that exercise user-pack discovery
+# call `reload_registry(user_packs_dir=tmp_path)` to swap them.
 
-KNOWN_CONNECTOR_IDS: frozenset[str] = frozenset(c.id for c in KNOWN_CONNECTORS)
+_DISCOVERY: DiscoveryResult = DiscoveryResult()
+KNOWN_CONNECTORS: tuple[ConnectorDescriptor, ...] = ()
+KNOWN_CONNECTOR_IDS: frozenset[str] = frozenset()
+
+
+def _apply_discovery(result: DiscoveryResult) -> None:
+    global _DISCOVERY, KNOWN_CONNECTORS, KNOWN_CONNECTOR_IDS
+    _DISCOVERY = result
+    KNOWN_CONNECTORS = tuple(_descriptor_from_pack(p) for p in result.packs)
+    KNOWN_CONNECTOR_IDS = frozenset(c.id for c in KNOWN_CONNECTORS)
+
+
+def reload_registry(
+    user_packs_dir: Optional[Path] = None,
+) -> DiscoveryResult:
+    """Recompute the registry. Returns the resulting
+    `DiscoveryResult` for callers that want to inspect errors.
+
+    Tests use this to swap in a tmp_path-scoped user-pack dir.
+    Production code calls it implicitly at module import; a
+    runtime restart re-discovers any new files dropped into
+    `~/.holdspeak/connector_packs/`.
+    """
+    result = build_registry(user_packs_dir=user_packs_dir)
+    _apply_discovery(result)
+    return result
+
+
+def discovery_errors() -> tuple:
+    """Return the discovery errors from the most recent registry
+    load. Doctor + the API surface these so a malformed user
+    pack is visible without grepping logs."""
+    return _DISCOVERY.errors
 
 
 def get_descriptor(connector_id: str) -> Optional[ConnectorDescriptor]:
@@ -110,14 +130,11 @@ def get_descriptor(connector_id: str) -> Optional[ConnectorDescriptor]:
 
 
 def enrichment_descriptors() -> tuple[ConnectorDescriptor, ...]:
-    """Subset of the registry that drives the activity-enrichment surface.
-
-    The browser's Connectors panel and the
-    `/api/activity/enrichment/connectors` endpoint care about
-    connectors that *enrich* an existing ledger (cli_enrichment,
-    candidate_inference). Records-ingesters such as the Firefox
-    companion are part of the registry but live behind a
-    different ingestion surface; this helper filters them out so
-    the enrichment surface stays focused.
-    """
+    """Subset of the registry that drives the activity-enrichment
+    surface. Records-ingesters (firefox_ext) live in the registry
+    but not on this surface."""
     return tuple(c for c in KNOWN_CONNECTORS if c.kind in ENRICHMENT_KINDS)
+
+
+# Initial load at module-import time.
+reload_registry()
