@@ -31,7 +31,7 @@ def test_all_packs_export_a_validated_manifest():
     via `validate_manifest`. This test asserts the imports
     survived (no ConnectorManifestError) and the manifests are
     instances of the immutable dataclass."""
-    assert len(ALL_PACKS) == 4
+    assert len(ALL_PACKS) == 5
     for pack in ALL_PACKS:
         assert isinstance(pack.MANIFEST, ConnectorManifest)
         # Round-trip: the payload validates again, so any loader
@@ -186,20 +186,18 @@ def test_calendar_pack_recognized_domains_match_extractor():
 
 def test_registry_is_derived_from_all_packs():
     """`activity_connectors.KNOWN_CONNECTORS` is now sourced from
-    `connector_packs.ALL_PACKS`. The registry must contain
-    exactly one descriptor per pack, and the ids must match the
-    four expected first-party connectors."""
+    `connector_packs.ALL_PACKS`. After HS-13-07 the first-party
+    set is the four producers (firefox_ext, gh, jira,
+    calendar_activity) plus the meeting_context pipeline pack."""
     from holdspeak.activity_connectors import KNOWN_CONNECTORS
 
-    assert len(KNOWN_CONNECTORS) == 4
+    assert len(KNOWN_CONNECTORS) == 5
     assert {c.id for c in KNOWN_CONNECTORS} == {
         "firefox_ext",
         "gh",
         "jira",
         "calendar_activity",
+        "meeting_context",
     }
-    # Each descriptor carries its source manifest, so callers
-    # needing permissions / version / source_boundary do not have
-    # to look up the pack module separately.
     for descriptor in KNOWN_CONNECTORS:
         assert descriptor.manifest.id == descriptor.id

@@ -1,6 +1,6 @@
 # Phase 13 - Connector Runtime + Pipelines + Meeting Context
 
-**Last updated:** 2026-05-02 (HS-13-06 done — pipeline manifest + dependency-graph runner).
+**Last updated:** 2026-05-02 (HS-13-07 done — meeting-context pipeline pack).
 
 ## Goal
 
@@ -63,7 +63,7 @@ top of it) means phases 14+ build on solid ground.
 | HS-13-04 | Local-user pack discovery | done | [story-04-user-pack-discovery.md](./story-04-user-pack-discovery.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-13-05 | Pack run history table + UI | done (API+DB; UI deferred) | [story-05-run-history.md](./story-05-run-history.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-13-06 | Pipeline manifest + dependency-graph runner | done | [story-06-pipeline-runner.md](./story-06-pipeline-runner.md) | [evidence-story-06.md](./evidence-story-06.md) |
-| HS-13-07 | Meeting-context pipeline pack | backlog | [story-07-meeting-context-pack.md](./story-07-meeting-context-pack.md) | pending |
+| HS-13-07 | Meeting-context pipeline pack | done | [story-07-meeting-context-pack.md](./story-07-meeting-context-pack.md) | [evidence-story-07.md](./evidence-story-07.md) |
 | HS-13-08 | Pre-meeting briefing surface on / | backlog | [story-08-prebriefing-surface.md](./story-08-prebriefing-surface.md) | pending |
 | HS-13-09 | Cross-meeting summary on /history | backlog | [story-09-history-project-summary.md](./story-09-history-project-summary.md) | pending |
 | HS-13-10 | Phase exit + DoD | backlog | [story-10-dod.md](./story-10-dod.md) | pending |
@@ -89,22 +89,26 @@ a `source` field; doctor surfaces every discovered pack.
 HS-13-05 ships `connector_runs` and run-history API; UI panel
 deferred to phase 14.
 
-HS-13-06 opens the B-arc. `kind: pipeline` is now a real
-manifest kind with a typed `consumes: tuple[ConsumesEntry,
-...]` field; the validator enforces the kind/consumes/permissions
-contract per-manifest, and `build_registry` runs cross-pack
-validation rejecting unknown upstream ids
-(`unknown_consumed_pack`) and dependency cycles
-(`pipeline_cycle`). New `PipelineRunner` in
-`connector_runtime.py` plans a topological order, executes
-each step sequentially, skips upstreams whose latest run is
-fresh-and-successful, and records each step in
-`connector_runs`. gh / jira / calendar packs grew uniform
-`run(db, *, limit=...)` entry points so any pipeline can
-dispatch them.
+HS-13-06 opens the B-arc with `kind: pipeline` + the
+`PipelineRunner`.
 
-Next: HS-13-07 — meeting-context pipeline pack (B-arc payoff;
-unblocks the C-arc).
+HS-13-07 ships the first first-party pipeline:
+`holdspeak/connector_packs/meeting_context.py` consumes gh +
+jira annotations and calendar candidates, fuses them per
+project, and writes one deterministic markdown briefing per
+active project to `activity_annotations` with
+`source_connector_id = "meeting_context"`. Re-running the
+pipeline updates each project's briefing in place — there are
+never duplicate briefings. The synthesizer is a pure function
+over duck-typed inputs so a phase-14 LLM swap-in keeps the
+same shape. The `connector_packs` registry now ships five
+first-party packs (the producers + the pipeline). New
+`GET /api/activity/annotations` endpoint (filter by
+connector_id / type / record_id) makes the briefing queryable
+for HS-13-08's UI work.
+
+Next: HS-13-08 — surface the briefing on `/`. -09 adds the
+cross-meeting `/history` view. -10 closes the phase.
 
 ## Source Design
 

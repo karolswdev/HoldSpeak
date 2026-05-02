@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-13-06, HS-11-04, HS-11-05
 - **Unblocks:** HS-13-08 (pre-meeting briefing surface)
 - **Owner:** unassigned

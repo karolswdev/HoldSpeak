@@ -979,6 +979,46 @@ def test_list_connector_runs_unknown_connector_returns_404(
     assert response.status_code == 404
 
 
+def test_list_activity_annotations_filters_by_connector(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+) -> None:
+    """HS-13-07: the meeting_context briefing is queryable
+    via the new GET annotations endpoint, scoped by connector
+    id so a UI can render exactly the rows it cares about."""
+    record = activity_db.upsert_activity_record(
+        source_browser="safari",
+        url="https://github.com/o/r/issues/1",
+        title="Issue 1",
+        domain="github.com",
+        last_seen_at=datetime(2026, 5, 1, 9, 0),
+        entity_type="github_issue",
+        entity_id="o/r#1",
+    )
+    activity_db.create_activity_annotation(
+        activity_record_id=record.id,
+        source_connector_id="gh",
+        annotation_type="github_issue",
+        title="local enriched",
+    )
+    activity_db.create_activity_annotation(
+        source_connector_id="meeting_context",
+        annotation_type="meeting_context_briefing",
+        title="HoldSpeak — meeting context",
+        value={"project_id": "holdspeak", "markdown": "# x\n- y"},
+    )
+
+    response = test_client.get(
+        "/api/activity/annotations?source_connector_id=meeting_context"
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["annotations"]) == 1
+    only = body["annotations"][0]
+    assert only["source_connector_id"] == "meeting_context"
+    assert only["value"]["project_id"] == "holdspeak"
+
+
 def test_put_connector_settings_rejects_keys_on_empty_schema(
     test_client: TestClient,
 ) -> None:

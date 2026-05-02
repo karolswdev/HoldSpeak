@@ -16,9 +16,21 @@ a thin wrapper over the pack manifests).
 
 from __future__ import annotations
 
-from . import calendar_activity, firefox_ext, github_cli, jira_cli
+from . import (
+    calendar_activity,
+    firefox_ext,
+    github_cli,
+    jira_cli,
+    meeting_context,
+)
 
-ALL_PACKS = (firefox_ext, github_cli, jira_cli, calendar_activity)
+ALL_PACKS = (
+    firefox_ext,
+    github_cli,
+    jira_cli,
+    calendar_activity,
+    meeting_context,
+)
 
 __all__ = [
     "ALL_PACKS",
@@ -26,4 +38,5 @@ __all__ = [
     "firefox_ext",
     "github_cli",
     "jira_cli",
+    "meeting_context",
 ]

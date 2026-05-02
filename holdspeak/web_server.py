@@ -1531,6 +1531,52 @@ class MeetingWebServer:
                 log.error(f"Failed to clear activity enrichment candidates: {e}")
                 return JSONResponse({"error": str(e)}, status_code=500)
 
+        @app.get("/api/activity/annotations")
+        async def api_list_activity_annotations(
+            source_connector_id: Optional[str] = None,
+            annotation_type: Optional[str] = None,
+            activity_record_id: Optional[int] = None,
+            limit: int = 100,
+        ) -> Any:
+            """HS-13-07: read-only listing for the
+            `meeting_context_briefing` annotations (and any other
+            connector annotations a power user wants to inspect)."""
+            from .db import get_database
+
+            try:
+                clean_limit = max(1, min(int(limit), 500))
+            except (TypeError, ValueError):
+                clean_limit = 100
+            try:
+                db = get_database()
+                annotations = db.list_activity_annotations(
+                    source_connector_id=source_connector_id,
+                    annotation_type=annotation_type,
+                    activity_record_id=activity_record_id,
+                    limit=clean_limit,
+                )
+                return JSONResponse(
+                    {
+                        "annotations": [
+                            {
+                                "id": ann.id,
+                                "activity_record_id": ann.activity_record_id,
+                                "source_connector_id": ann.source_connector_id,
+                                "annotation_type": ann.annotation_type,
+                                "title": ann.title,
+                                "value": ann.value,
+                                "confidence": ann.confidence,
+                                "created_at": ann.created_at.isoformat(),
+                                "updated_at": ann.updated_at.isoformat(),
+                            }
+                            for ann in annotations
+                        ],
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to list activity annotations: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
         @app.get("/api/activity/enrichment/connectors/{connector_id}/runs")
         async def api_list_activity_enrichment_runs(
             connector_id: str,
