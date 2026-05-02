@@ -1,6 +1,6 @@
 # Phase 13 - Connector Runtime + Pipelines + Meeting Context
 
-**Last updated:** 2026-05-02 (HS-13-05 done — pack run history table + UI).
+**Last updated:** 2026-05-02 (HS-13-06 done — pipeline manifest + dependency-graph runner).
 
 ## Goal
 
@@ -62,7 +62,7 @@ top of it) means phases 14+ build on solid ground.
 | HS-13-03 | Pack-declared settings + defaults | done | [story-03-pack-settings.md](./story-03-pack-settings.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-13-04 | Local-user pack discovery | done | [story-04-user-pack-discovery.md](./story-04-user-pack-discovery.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-13-05 | Pack run history table + UI | done (API+DB; UI deferred) | [story-05-run-history.md](./story-05-run-history.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-13-06 | Pipeline manifest + dependency-graph runner | backlog | [story-06-pipeline-runner.md](./story-06-pipeline-runner.md) | pending |
+| HS-13-06 | Pipeline manifest + dependency-graph runner | done | [story-06-pipeline-runner.md](./story-06-pipeline-runner.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-13-07 | Meeting-context pipeline pack | backlog | [story-07-meeting-context-pack.md](./story-07-meeting-context-pack.md) | pending |
 | HS-13-08 | Pre-meeting briefing surface on / | backlog | [story-08-prebriefing-surface.md](./story-08-prebriefing-surface.md) | pending |
 | HS-13-09 | Cross-meeting summary on /history | backlog | [story-09-history-project-summary.md](./story-09-history-project-summary.md) | pending |
@@ -86,20 +86,25 @@ endpoints + PUT validation read through the schema.
 HS-13-04 ships local-user pack discovery; descriptors carry
 a `source` field; doctor surfaces every discovered pack.
 
-HS-13-05 ships `connector_runs` (schema bump 17 → 18) plus
-`db.record_connector_run` / `list_connector_runs` /
-`delete_connector_runs` helpers. gh + jira runners and the
-extension-event ingester record one row per invocation,
-success or failure, with timestamps, byte counts, and
-per-capability counters. New endpoint
-`GET /api/activity/enrichment/connectors/{id}/runs`. The
-DELETE annotations / candidates surfaces also drop run rows
-for that pack — run history is part of the pack's output, not
-a global log. The /activity Connectors panel UI is deferred
-to phase 14 — the API + DB substrate is in place; pipelines
-(HS-13-06) can already read run history.
+HS-13-05 ships `connector_runs` and run-history API; UI panel
+deferred to phase 14.
 
-Next: -06 unblocks the B-arc; -07 unblocks the C-arc.
+HS-13-06 opens the B-arc. `kind: pipeline` is now a real
+manifest kind with a typed `consumes: tuple[ConsumesEntry,
+...]` field; the validator enforces the kind/consumes/permissions
+contract per-manifest, and `build_registry` runs cross-pack
+validation rejecting unknown upstream ids
+(`unknown_consumed_pack`) and dependency cycles
+(`pipeline_cycle`). New `PipelineRunner` in
+`connector_runtime.py` plans a topological order, executes
+each step sequentially, skips upstreams whose latest run is
+fresh-and-successful, and records each step in
+`connector_runs`. gh / jira / calendar packs grew uniform
+`run(db, *, limit=...)` entry points so any pipeline can
+dispatch them.
+
+Next: HS-13-07 — meeting-context pipeline pack (B-arc payoff;
+unblocks the C-arc).
 
 ## Source Design
 

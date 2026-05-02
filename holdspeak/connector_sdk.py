@@ -34,6 +34,7 @@ KNOWN_KINDS: frozenset[str] = frozenset(
         "candidate_inference", # calendar_activity: derives candidates from records
         "extension_events",    # firefox_ext: loopback POST from a browser extension
         "history_import",      # browser-history readers (Safari/Firefox/Chrome)
+        "pipeline",            # HS-13-06: consumes other packs' output
     }
 )
 
@@ -52,6 +53,8 @@ KNOWN_CAPABILITIES: frozenset[str] = frozenset(
 KNOWN_PERMISSIONS: frozenset[str] = frozenset(
     {
         "read:activity_records",
+        "read:activity_annotations",          # HS-13-06: pipelines consume annotations
+        "read:activity_meeting_candidates",   # HS-13-06: pipelines consume candidates
         "write:activity_records",
         "write:activity_annotations",
         "write:activity_meeting_candidates",
@@ -61,6 +64,23 @@ KNOWN_PERMISSIONS: frozenset[str] = frozenset(
         "network:outbound",   # open *any* outbound socket — high-trust
     }
 )
+
+# Output kinds a producer pack may expose for pipeline
+# consumption. Mirrors the row-producing slice of
+# `KNOWN_CAPABILITIES`. A `ConsumesEntry` references one of
+# these per upstream pack the pipeline reads from.
+PIPELINE_OUTPUT_KINDS: frozenset[str] = frozenset(
+    {"records", "annotations", "candidates"}
+)
+
+# Map output_kind → the read-permission a pipeline needs to
+# consume rows of that kind. The validator enforces this at
+# manifest load time.
+_OUTPUT_KIND_TO_READ_PERMISSION: dict[str, str] = {
+    "records": "read:activity_records",
+    "annotations": "read:activity_annotations",
+    "candidates": "read:activity_meeting_candidates",
+}
 
 NETWORK_PERMISSIONS: frozenset[str] = frozenset({"network:outbound", "loopback:http"})
 
@@ -115,6 +135,23 @@ class SettingDescriptor:
 
 
 @dataclass(frozen=True)
+class ConsumesEntry:
+    """One pipeline upstream — the (pack, output_kind) the pipeline reads.
+
+    HS-13-06. A pipeline pack declares one of these per upstream
+    it depends on. The validator pairs each entry's `output_kind`
+    with the matching `read:*` permission so the runtime can
+    verify the pipeline is allowed to read that surface.
+    """
+
+    pack_id: str
+    output_kind: str
+
+    def to_payload(self) -> dict[str, Any]:
+        return {"pack_id": self.pack_id, "output_kind": self.output_kind}
+
+
+@dataclass(frozen=True)
 class ConnectorManifest:
     """Static description of one connector pack."""
 
@@ -130,6 +167,8 @@ class ConnectorManifest:
     source_boundary: str = ""
     dry_run: bool = True
     settings_schema: tuple[SettingDescriptor, ...] = field(default_factory=tuple)
+    consumes: tuple[ConsumesEntry, ...] = field(default_factory=tuple)
+    pipeline_freshness_seconds: int = 300
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -145,6 +184,8 @@ class ConnectorManifest:
             "source_boundary": self.source_boundary,
             "dry_run": self.dry_run,
             "settings_schema": [s.to_payload() for s in self.settings_schema],
+            "consumes": [c.to_payload() for c in self.consumes],
+            "pipeline_freshness_seconds": self.pipeline_freshness_seconds,
         }
 
     def setting_keys(self) -> frozenset[str]:
@@ -374,6 +415,65 @@ def validate_manifest(raw: Mapping[str, Any]) -> ConnectorManifest:
         dry_run = dry_run_value
 
     settings_schema = _validate_settings_schema(raw.get("settings_schema", []), errors)
+    consumes = _validate_consumes(raw.get("consumes", []), errors)
+    freshness_raw = raw.get("pipeline_freshness_seconds", 300)
+    if isinstance(freshness_raw, bool) or not isinstance(freshness_raw, int):
+        errors.append(
+            ManifestError(
+                "pipeline_freshness_seconds",
+                "must_be_int",
+                "pipeline_freshness_seconds, when present, must be a non-negative int",
+            )
+        )
+        freshness = 300
+    elif freshness_raw < 0:
+        errors.append(
+            ManifestError(
+                "pipeline_freshness_seconds",
+                "must_be_non_negative",
+                "pipeline_freshness_seconds must be ≥ 0",
+            )
+        )
+        freshness = 300
+    else:
+        freshness = int(freshness_raw)
+
+    # Cross-field rules for `kind: pipeline` vs everything else.
+    if kind == "pipeline":
+        if not consumes:
+            errors.append(
+                ManifestError(
+                    "consumes",
+                    "pipeline_requires_consumes",
+                    "kind=pipeline must declare at least one `consumes` entry",
+                )
+            )
+        else:
+            needed_perms = {
+                _OUTPUT_KIND_TO_READ_PERMISSION[c.output_kind]
+                for c in consumes
+                if c.output_kind in _OUTPUT_KIND_TO_READ_PERMISSION
+            }
+            missing = sorted(needed_perms - set(permissions))
+            if missing:
+                errors.append(
+                    ManifestError(
+                        "permissions",
+                        "pipeline_missing_read_permission",
+                        f"pipeline pack consumes the listed kinds but its "
+                        f"permissions do not include {missing}",
+                    )
+                )
+    else:
+        if consumes:
+            errors.append(
+                ManifestError(
+                    "consumes",
+                    "consumes_only_on_pipeline",
+                    f"only kind=pipeline may declare `consumes`; got "
+                    f"kind={kind!r}",
+                )
+            )
 
     if errors:
         raise ConnectorManifestError(errors)
@@ -391,7 +491,67 @@ def validate_manifest(raw: Mapping[str, Any]) -> ConnectorManifest:
         source_boundary=source_boundary.strip(),
         dry_run=dry_run,
         settings_schema=settings_schema,
+        consumes=consumes,
+        pipeline_freshness_seconds=freshness,
     )
+
+
+def _validate_consumes(
+    raw: Any, errors: list[ManifestError]
+) -> tuple[ConsumesEntry, ...]:
+    if not isinstance(raw, list):
+        errors.append(
+            ManifestError(
+                "consumes",
+                "must_be_list",
+                "consumes, when present, must be a list of "
+                "{pack_id, output_kind} objects",
+            )
+        )
+        return ()
+    out: list[ConsumesEntry] = []
+    seen: set[tuple[str, str]] = set()
+    for index, entry in enumerate(raw):
+        prefix = f"consumes[{index}]"
+        if not isinstance(entry, Mapping):
+            errors.append(
+                ManifestError(prefix, "must_be_object", "each entry must be an object")
+            )
+            continue
+        pack_id = entry.get("pack_id")
+        if not isinstance(pack_id, str) or not _ID_RE.match(pack_id):
+            errors.append(
+                ManifestError(
+                    f"{prefix}.pack_id",
+                    "id_format",
+                    "pack_id must match ^[a-z][a-z0-9_]{0,31}$",
+                )
+            )
+            continue
+        output_kind = entry.get("output_kind")
+        if output_kind not in PIPELINE_OUTPUT_KINDS:
+            errors.append(
+                ManifestError(
+                    f"{prefix}.output_kind",
+                    "unknown_output_kind",
+                    f"output_kind must be one of {sorted(PIPELINE_OUTPUT_KINDS)}",
+                )
+            )
+            continue
+        key = (pack_id, output_kind)
+        if key in seen:
+            errors.append(
+                ManifestError(
+                    prefix,
+                    "duplicate_consumes_entry",
+                    f"({pack_id}, {output_kind}) appears more than once "
+                    "in consumes",
+                )
+            )
+            continue
+        seen.add(key)
+        out.append(ConsumesEntry(pack_id=pack_id, output_kind=output_kind))
+    return tuple(out)
 
 
 _SETTING_KEY_RE = re.compile(r"^[a-z][a-z0-9_]{0,31}$")

@@ -11,7 +11,7 @@ rationale. Mutating verbs (`issue create`, `issue assign`,
 
 from __future__ import annotations
 
-from typing import Iterable
+from typing import Any, Iterable, Optional
 
 from ..activity_jira import CONNECTOR_ID
 from ..connector_sdk import ConnectorManifest, validate_manifest
@@ -29,6 +29,25 @@ ALLOWED_SUBCOMMANDS: frozenset[tuple[str, str]] = frozenset(
 DEFAULT_TIMEOUT_SECONDS: float = 5.0
 DEFAULT_MAX_BYTES: int = 65536
 DEFAULT_LIMIT: int = 25
+
+
+def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
+    """Pipeline-runner entry point. HS-13-06.
+
+    Executes one batch of `jira issue view` enrichment over the
+    local activity ledger.
+    """
+    from ..activity_jira import (
+        SUPPORTED_ENTITY_TYPES,
+        run_jira_cli_enrichment,
+    )
+
+    capped = max(1, min(int(limit if limit is not None else DEFAULT_LIMIT), 200))
+    records = []
+    for entity_type in SUPPORTED_ENTITY_TYPES:
+        records.extend(db.list_activity_records(entity_type=entity_type, limit=capped))
+    results = run_jira_cli_enrichment(db, records, limit=capped)
+    return {"connector_id": CONNECTOR_ID, "result_count": len(results)}
 
 
 def is_command_allowed(command: Iterable[str]) -> bool:

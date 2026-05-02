@@ -175,5 +175,255 @@ class PermissionGate:
 __all__ = [
     "PermissionDenied",
     "PermissionGate",
+    "PipelineRunner",
+    "PipelineRunResult",
+    "PipelineStepResult",
     "SubprocessRunner",
 ]
+
+
+# ─────────────────────── Pipeline runner ────────────────────────
+#
+# HS-13-06. A pipeline pack (`kind: pipeline`) declares the
+# upstream packs it consumes via `manifest.consumes`. The
+# runner walks that declaration into a topological order and
+# executes each step sequentially.
+#
+# Each upstream pack is either:
+#   - skipped because its most recent run is "fresh" (a
+#     successful `connector_runs` row within
+#     `pipeline_freshness_seconds`),
+#   - re-run by calling its module's `run(db, **kwargs)`
+#     callable if one exists,
+#   - reported as a step error if neither path is available.
+#
+# Failure of any step aborts the pipeline. The runner is
+# deliberately simple: no retries, no parallelism, no
+# back-pressure. Phase 14+ may complicate this if real
+# workflows demand it.
+
+import logging
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .connector_pack_loader import RegisteredPack
+    from .db import MeetingDatabase
+
+_runner_log = logging.getLogger(__name__)
+
+
+class UnknownPipelineError(ValueError):
+    """Raised when `PipelineRunner` is asked to run an unknown id."""
+
+
+class NotAPipelineError(ValueError):
+    """Raised when `PipelineRunner` is asked to run a non-pipeline pack."""
+
+
+@dataclass(frozen=True)
+class PipelineStepResult:
+    """One step in a pipeline's execution.
+
+    `status` is one of:
+      - `"skipped_fresh"` — upstream had a recent successful run.
+      - `"ran"` — runner invoked `pack.run(db)` and it succeeded.
+      - `"failed"` — `pack.run(db)` raised or returned an error;
+        `error` carries the message.
+      - `"missing_runner"` — the pack does not expose a `run`
+        callable AND has no fresh successful run; the pipeline
+        cannot proceed past it.
+    """
+
+    pack_id: str
+    status: str
+    started_at: Optional[datetime] = None
+    finished_at: Optional[datetime] = None
+    error: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class PipelineRunResult:
+    """Outcome of one `PipelineRunner.run(target)` invocation.
+
+    `target` is the pipeline id; `steps` lists every step in
+    execution order, ending with the target itself.
+    `succeeded` is true iff every step ran or was skipped clean.
+    """
+
+    target: str
+    steps: tuple[PipelineStepResult, ...]
+    succeeded: bool
+
+    def to_payload(self) -> dict[str, Any]:
+        return {
+            "target": self.target,
+            "succeeded": self.succeeded,
+            "steps": [
+                {
+                    "pack_id": s.pack_id,
+                    "status": s.status,
+                    "started_at": s.started_at.isoformat() if s.started_at else None,
+                    "finished_at": s.finished_at.isoformat() if s.finished_at else None,
+                    "error": s.error,
+                }
+                for s in self.steps
+            ],
+        }
+
+
+class PipelineRunner:
+    """Topological runner over a tuple of `RegisteredPack`s.
+
+    `now()` is injectable so the freshness-skip behaviour can be
+    tested without time travel.
+    """
+
+    def __init__(
+        self,
+        db: "MeetingDatabase",
+        *,
+        registry: Optional[Iterable["RegisteredPack"]] = None,
+        now: Optional[Callable[[], datetime]] = None,
+    ) -> None:
+        from .activity_connectors import _DISCOVERY  # local import to avoid cycle
+
+        packs = tuple(registry) if registry is not None else _DISCOVERY.packs
+        self._registry = packs
+        self._by_id = {p.manifest.id: p for p in packs}
+        self._db = db
+        self._now = now or datetime.now
+
+    # ────────────────────────── Plan ────────────────────────────
+
+    def plan(self, target_id: str) -> list[str]:
+        """Return the topological order of `target_id`'s
+        dependency graph; the target appears last."""
+        if target_id not in self._by_id:
+            raise UnknownPipelineError(target_id)
+        target = self._by_id[target_id]
+        if target.manifest.kind != "pipeline":
+            raise NotAPipelineError(target_id)
+
+        order: list[str] = []
+        visited: set[str] = set()
+
+        def visit(node_id: str, stack: tuple[str, ...]) -> None:
+            if node_id in visited:
+                return
+            if node_id in stack:
+                # Should not be reachable: pipeline graph cycles
+                # are rejected at registry build time. Defensive.
+                raise NotAPipelineError(
+                    f"pipeline cycle through {node_id!r}: "
+                    f"{' → '.join(stack + (node_id,))}"
+                )
+            pack = self._by_id.get(node_id)
+            if pack is None:
+                # Unknown upstreams are also rejected at registry
+                # build; defensive.
+                visited.add(node_id)
+                order.append(node_id)
+                return
+            for entry in pack.manifest.consumes:
+                visit(entry.pack_id, stack + (node_id,))
+            visited.add(node_id)
+            order.append(node_id)
+
+        visit(target_id, ())
+        return order
+
+    # ───────────────────────── Run ──────────────────────────────
+
+    def run(self, target_id: str) -> PipelineRunResult:
+        order = self.plan(target_id)
+        steps: list[PipelineStepResult] = []
+        succeeded = True
+        for node_id in order:
+            step = self._execute_step(node_id, target_id)
+            steps.append(step)
+            if step.status in {"failed", "missing_runner"}:
+                succeeded = False
+                break
+        return PipelineRunResult(
+            target=target_id, steps=tuple(steps), succeeded=succeeded
+        )
+
+    # ───────────────────── Step dispatch ────────────────────────
+
+    def _execute_step(self, pack_id: str, target_id: str) -> PipelineStepResult:
+        pack = self._by_id.get(pack_id)
+        if pack is None:
+            return PipelineStepResult(
+                pack_id=pack_id,
+                status="missing_runner",
+                error=f"pack {pack_id!r} is not registered",
+            )
+
+        # The pipeline target itself never short-circuits on
+        # freshness — invoking the pipeline is the whole point of
+        # the call.
+        if pack_id != target_id and self._is_fresh(pack):
+            return PipelineStepResult(pack_id=pack_id, status="skipped_fresh")
+
+        run_callable = getattr(pack.module, "run", None)
+        if run_callable is None:
+            return PipelineStepResult(
+                pack_id=pack_id,
+                status="missing_runner",
+                error=(
+                    f"pack {pack_id!r} has no recent successful run "
+                    "and exposes no `run(db)` callable"
+                ),
+            )
+
+        started = self._now()
+        try:
+            run_callable(self._db)
+        except Exception as exc:  # noqa: BLE001 — surface to caller
+            finished = self._now()
+            self._db.record_connector_run(
+                connector_id=pack_id,
+                started_at=started,
+                finished_at=finished,
+                succeeded=False,
+                error=f"pipeline {target_id!r} step failed: {exc}",
+            )
+            return PipelineStepResult(
+                pack_id=pack_id,
+                status="failed",
+                started_at=started,
+                finished_at=finished,
+                error=str(exc),
+            )
+        finished = self._now()
+        return PipelineStepResult(
+            pack_id=pack_id,
+            status="ran",
+            started_at=started,
+            finished_at=finished,
+        )
+
+    # ─────────────────────── Freshness ──────────────────────────
+
+    def _is_fresh(self, pack: "RegisteredPack") -> bool:
+        """A pack is fresh if its most recent run succeeded
+        within the freshness window. The window is read from the
+        *target* pipeline's manifest in `run()`; here we reach
+        for the pack's own freshness if it's a pipeline (so a
+        pipeline upstream of another pipeline carries its own
+        cadence) or fall back to 300s."""
+        window_seconds = (
+            pack.manifest.pipeline_freshness_seconds
+            if pack.manifest.kind == "pipeline"
+            else 300
+        )
+        runs = self._db.list_connector_runs(connector_id=pack.manifest.id, limit=1)
+        if not runs:
+            return False
+        latest = runs[0]
+        if not latest.succeeded:
+            return False
+        cutoff = self._now() - timedelta(seconds=window_seconds)
+        return latest.finished_at >= cutoff

@@ -279,6 +279,12 @@ def build_registry(
     `validate_manifest` and don't collide with a first-party id
     are merged in; everything else lands in the result's
     `errors` tuple so doctor / `/activity` can render it.
+
+    HS-13-06: also runs cross-pack validation on pipeline packs.
+    A pipeline that references an unknown upstream id, or one
+    that participates in a dependency cycle, is rejected here
+    rather than at module-import time (the validator can't see
+    other manifests).
     """
     first_party_packs: list[RegisteredPack] = []
     first_party_ids: set[str] = set()
@@ -295,15 +301,113 @@ def build_registry(
         first_party_ids.add(manifest.id)
 
     resolved_dir = _resolve_user_pack_dir(user_packs_dir)
-    user_packs, errors = discover_user_packs(
+    user_packs, user_errors = discover_user_packs(
         resolved_dir,
         forbidden_ids=frozenset(first_party_ids),
     )
 
+    all_packs = tuple(first_party_packs) + tuple(user_packs)
+    surviving_packs, pipeline_errors = _validate_pipeline_graph(all_packs)
+
     return DiscoveryResult(
-        packs=tuple(first_party_packs) + tuple(user_packs),
-        errors=errors,
+        packs=surviving_packs,
+        errors=tuple(user_errors) + tuple(pipeline_errors),
     )
+
+
+def _validate_pipeline_graph(
+    packs: tuple[RegisteredPack, ...],
+) -> tuple[tuple[RegisteredPack, ...], tuple[DiscoveryError, ...]]:
+    """Cross-pack validation: unknown consumes ids + dependency cycles."""
+    by_id: dict[str, RegisteredPack] = {p.manifest.id: p for p in packs}
+    errors: list[DiscoveryError] = []
+    rejected_ids: set[str] = set()
+
+    # 1. Reject pipeline packs whose `consumes` references an
+    #    unknown id.
+    for pack in packs:
+        if pack.manifest.kind != "pipeline":
+            continue
+        for entry in pack.manifest.consumes:
+            if entry.pack_id not in by_id:
+                errors.append(
+                    DiscoveryError(
+                        file_path=pack.file_path,
+                        pack_id=pack.manifest.id,
+                        code="unknown_consumed_pack",
+                        message=(
+                            f"pipeline {pack.manifest.id!r} consumes "
+                            f"{entry.pack_id!r} which is not registered"
+                        ),
+                    )
+                )
+                rejected_ids.add(pack.manifest.id)
+                break
+
+    # 2. Reject pipeline packs that participate in a cycle. We
+    #    only follow edges *between pipelines* — a pipeline
+    #    consuming an enrichment pack ends the chain.
+    pipeline_graph: dict[str, list[str]] = {}
+    for pack in packs:
+        if pack.manifest.id in rejected_ids:
+            continue
+        if pack.manifest.kind != "pipeline":
+            continue
+        edges = []
+        for entry in pack.manifest.consumes:
+            upstream = by_id.get(entry.pack_id)
+            if upstream is not None and upstream.manifest.kind == "pipeline":
+                edges.append(entry.pack_id)
+        pipeline_graph[pack.manifest.id] = edges
+
+    cycle_ids = _find_cycle_ids(pipeline_graph)
+    for cycle_id in cycle_ids:
+        if cycle_id in rejected_ids:
+            continue
+        offending = by_id[cycle_id]
+        errors.append(
+            DiscoveryError(
+                file_path=offending.file_path,
+                pack_id=cycle_id,
+                code="pipeline_cycle",
+                message=(
+                    f"pipeline {cycle_id!r} participates in a dependency "
+                    "cycle; pipeline rejected"
+                ),
+            )
+        )
+        rejected_ids.add(cycle_id)
+
+    surviving = tuple(p for p in packs if p.manifest.id not in rejected_ids)
+    return surviving, tuple(errors)
+
+
+def _find_cycle_ids(graph: dict[str, list[str]]) -> set[str]:
+    """Return the ids of every node that is part of any cycle."""
+    color: dict[str, int] = {node: 0 for node in graph}  # 0=white, 1=gray, 2=black
+    in_cycle: set[str] = set()
+    stack: list[str] = []
+
+    def visit(node: str) -> None:
+        color[node] = 1
+        stack.append(node)
+        for neighbour in graph.get(node, []):
+            if neighbour not in color:
+                continue
+            if color[neighbour] == 1:
+                # Found a back-edge — every node from `neighbour`
+                # onward in the stack is part of the cycle.
+                cycle_start = stack.index(neighbour)
+                in_cycle.update(stack[cycle_start:])
+            elif color[neighbour] == 0:
+                visit(neighbour)
+        stack.pop()
+        color[node] = 2
+
+    for node in list(graph):
+        if color[node] == 0:
+            visit(node)
+    return in_cycle
 
 
 __all__ = [

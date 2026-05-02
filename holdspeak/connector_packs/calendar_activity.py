@@ -16,12 +16,59 @@ calendar / video-call domains and propose meeting candidates.
 
 from __future__ import annotations
 
-from ..activity_candidates import CALENDAR_CONNECTOR_ID, CALENDAR_DOMAINS
+from datetime import datetime
+from typing import Any, Optional
+
+from ..activity_candidates import (
+    CALENDAR_CONNECTOR_ID,
+    CALENDAR_DOMAINS,
+    preview_calendar_meeting_candidates,
+)
 from ..connector_sdk import ConnectorManifest, validate_manifest
 
 DEFAULT_LIMIT: int = 50
 
 RECOGNIZED_DOMAINS: frozenset[str] = CALENDAR_DOMAINS
+
+
+def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
+    """Pipeline-runner entry point. HS-13-06.
+
+    Walks the local activity ledger for calendar / video-call
+    domains and persists each derived preview as an
+    `activity_meeting_candidates` row. Pure read-and-derive
+    over local rows — no network, no CLI.
+    """
+    capped = max(1, min(int(limit if limit is not None else DEFAULT_LIMIT), 200))
+    started_at = datetime.now()
+    records = db.list_activity_records(limit=max(capped * 4, 50))
+    previews = preview_calendar_meeting_candidates(records, limit=capped)
+    persisted = 0
+    output_bytes = 0
+    for preview in previews:
+        db.create_activity_meeting_candidate(
+            source_connector_id=CALENDAR_CONNECTOR_ID,
+            source_activity_record_id=preview.source_activity_record_id,
+            title=preview.title,
+            starts_at=preview.starts_at,
+            ends_at=preview.ends_at,
+            meeting_url=preview.meeting_url,
+            confidence=preview.confidence,
+        )
+        persisted += 1
+        output_bytes += len(preview.title.encode("utf-8")) + len(
+            (preview.meeting_url or "").encode("utf-8")
+        )
+    finished_at = datetime.now()
+    db.record_connector_run(
+        connector_id=CALENDAR_CONNECTOR_ID,
+        started_at=started_at,
+        finished_at=finished_at,
+        succeeded=True,
+        output_bytes=output_bytes,
+        candidate_count=persisted,
+    )
+    return {"connector_id": CALENDAR_CONNECTOR_ID, "candidate_count": persisted}
 
 MANIFEST: ConnectorManifest = validate_manifest(
     {
