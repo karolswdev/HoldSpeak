@@ -24,7 +24,7 @@ VALID_ACTIVITY_MEETING_CANDIDATE_STATUSES = frozenset(
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 17
+SCHEMA_VERSION = 18
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -467,6 +467,25 @@ ON activity_meeting_candidates(source_connector_id, created_at DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_activity_meeting_candidates_dedupe
 ON activity_meeting_candidates(dedupe_key)
 WHERE dedupe_key != '';
+
+-- HS-13-05: per-pack run history. Replaces the single-row
+-- last_run_at / last_error on activity_enrichment_connectors as
+-- the source of truth for connector behaviour over time.
+CREATE TABLE IF NOT EXISTS connector_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    connector_id TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    finished_at TEXT NOT NULL,
+    succeeded INTEGER NOT NULL DEFAULT 0,
+    error TEXT,
+    output_bytes INTEGER NOT NULL DEFAULT 0,
+    annotation_count INTEGER NOT NULL DEFAULT 0,
+    candidate_count INTEGER NOT NULL DEFAULT 0,
+    command_count INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_connector_runs_connector_started
+ON connector_runs(connector_id, started_at DESC);
 """
 
 
@@ -718,6 +737,49 @@ class ActivityEnrichmentConnectorState:
     last_error: Optional[str]
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass(frozen=True)
+class ConnectorRun:
+    """One persisted invocation of a connector pack.
+
+    HS-13-05. Each run row captures the start/finish timestamps,
+    the success / error flag, the byte count and per-capability
+    counters (annotations / candidates / commands). Rows are
+    deleted alongside the connector's other output when the
+    operator clicks "Clear annotations" / "Clear candidates" —
+    run history is part of the pack's output, not a global log.
+    """
+
+    id: int
+    connector_id: str
+    started_at: datetime
+    finished_at: datetime
+    succeeded: bool
+    error: Optional[str]
+    output_bytes: int
+    annotation_count: int
+    candidate_count: int
+    command_count: int
+
+    def duration_ms(self) -> int:
+        delta = self.finished_at - self.started_at
+        return max(0, int(delta.total_seconds() * 1000))
+
+    def to_payload(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "connector_id": self.connector_id,
+            "started_at": self.started_at.isoformat(),
+            "finished_at": self.finished_at.isoformat(),
+            "succeeded": self.succeeded,
+            "error": self.error,
+            "output_bytes": self.output_bytes,
+            "annotation_count": self.annotation_count,
+            "candidate_count": self.candidate_count,
+            "command_count": self.command_count,
+            "duration_ms": self.duration_ms(),
+        }
 
 
 @dataclass
@@ -4738,6 +4800,118 @@ class MeetingDatabase:
             settings=state.settings if state else {},
             last_run_at=last_run_at or datetime.now(),
             last_error=last_error if last_error is not None else "",
+        )
+
+    def record_connector_run(
+        self,
+        *,
+        connector_id: str,
+        started_at: datetime,
+        finished_at: datetime,
+        succeeded: bool,
+        error: Optional[str] = None,
+        output_bytes: int = 0,
+        annotation_count: int = 0,
+        candidate_count: int = 0,
+        command_count: int = 0,
+    ) -> ConnectorRun:
+        """Persist one row to `connector_runs`. HS-13-05.
+
+        Every code path that exercises a pack — gh / jira CLI
+        runs, calendar previews on enable, extension event
+        ingestion — calls this at completion (success *or*
+        failure). The single-row `last_run_at` / `last_error`
+        on `activity_enrichment_connectors` remains the
+        "what happened most recently" fast-path; this table
+        is the over-time signal.
+        """
+        clean_id = str(connector_id or "").strip()
+        if not clean_id:
+            raise ValueError("connector_id is required")
+        with self._connection() as conn:
+            cursor = conn.execute(
+                """
+                INSERT INTO connector_runs (
+                    connector_id, started_at, finished_at,
+                    succeeded, error, output_bytes,
+                    annotation_count, candidate_count, command_count
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    clean_id,
+                    started_at.isoformat(),
+                    finished_at.isoformat(),
+                    1 if succeeded else 0,
+                    (error or None),
+                    int(output_bytes),
+                    int(annotation_count),
+                    int(candidate_count),
+                    int(command_count),
+                ),
+            )
+            row_id = int(cursor.lastrowid or 0)
+        return ConnectorRun(
+            id=row_id,
+            connector_id=clean_id,
+            started_at=started_at,
+            finished_at=finished_at,
+            succeeded=bool(succeeded),
+            error=(error or None),
+            output_bytes=int(output_bytes),
+            annotation_count=int(annotation_count),
+            candidate_count=int(candidate_count),
+            command_count=int(command_count),
+        )
+
+    def list_connector_runs(
+        self,
+        *,
+        connector_id: str,
+        limit: int = 10,
+    ) -> list[ConnectorRun]:
+        """Return the N most recent runs for one connector."""
+        clean_id = str(connector_id or "").strip()
+        capped = max(1, min(int(limit), 200))
+        with self._connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT id, connector_id, started_at, finished_at,
+                       succeeded, error, output_bytes,
+                       annotation_count, candidate_count, command_count
+                FROM connector_runs
+                WHERE connector_id = ?
+                ORDER BY started_at DESC, id DESC
+                LIMIT ?
+                """,
+                (clean_id, capped),
+            ).fetchall()
+        return [self._row_to_connector_run(row) for row in rows]
+
+    def delete_connector_runs(self, *, connector_id: str) -> int:
+        """Drop every run row for one connector. Returns the row
+        count deleted. Called by the per-pack "Clear annotations" /
+        "Clear candidates" surfaces — run history is part of the
+        connector's output."""
+        clean_id = str(connector_id or "").strip()
+        with self._connection() as conn:
+            cursor = conn.execute(
+                "DELETE FROM connector_runs WHERE connector_id = ?",
+                (clean_id,),
+            )
+            return int(cursor.rowcount or 0)
+
+    def _row_to_connector_run(self, row: Any) -> ConnectorRun:
+        return ConnectorRun(
+            id=int(row[0]),
+            connector_id=str(row[1]),
+            started_at=datetime.fromisoformat(str(row[2])),
+            finished_at=datetime.fromisoformat(str(row[3])),
+            succeeded=bool(row[4]),
+            error=(str(row[5]) if row[5] is not None else None),
+            output_bytes=int(row[6] or 0),
+            annotation_count=int(row[7] or 0),
+            candidate_count=int(row[8] or 0),
+            command_count=int(row[9] or 0),
         )
 
     def create_activity_annotation(

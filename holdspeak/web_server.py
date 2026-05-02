@@ -1479,7 +1479,18 @@ class MeetingWebServer:
 
                 db = get_database()
                 deleted = db.delete_activity_annotations(source_connector_id=connector_id)
-                return JSONResponse({"deleted": int(deleted), "connector_id": connector_id})
+                # HS-13-05: run history is part of the pack's
+                # output; clearing annotations clears the matching
+                # run rows so the user sees a fresh slate after a
+                # reset.
+                runs_deleted = db.delete_connector_runs(connector_id=connector_id)
+                return JSONResponse(
+                    {
+                        "deleted": int(deleted),
+                        "connector_id": connector_id,
+                        "runs_deleted": int(runs_deleted),
+                    }
+                )
             except Exception as e:
                 log.error(f"Failed to clear activity enrichment annotations: {e}")
                 return JSONResponse({"error": str(e)}, status_code=500)
@@ -1508,9 +1519,50 @@ class MeetingWebServer:
 
                 db = get_database()
                 deleted = db.delete_activity_meeting_candidates(source_connector_id=connector_id)
-                return JSONResponse({"deleted": int(deleted), "connector_id": connector_id})
+                runs_deleted = db.delete_connector_runs(connector_id=connector_id)
+                return JSONResponse(
+                    {
+                        "deleted": int(deleted),
+                        "connector_id": connector_id,
+                        "runs_deleted": int(runs_deleted),
+                    }
+                )
             except Exception as e:
                 log.error(f"Failed to clear activity enrichment candidates: {e}")
+                return JSONResponse({"error": str(e)}, status_code=500)
+
+        @app.get("/api/activity/enrichment/connectors/{connector_id}/runs")
+        async def api_list_activity_enrichment_runs(
+            connector_id: str,
+            limit: int = 10,
+        ) -> Any:
+            """HS-13-05: per-connector run history."""
+            from .activity_connectors import get_descriptor
+            from .db import get_database
+
+            descriptor = get_descriptor(connector_id)
+            if descriptor is None:
+                return JSONResponse(
+                    {"error": f"Unknown activity enrichment connector: {connector_id}"},
+                    status_code=404,
+                )
+            try:
+                clean_limit = max(1, min(int(limit), 200))
+            except (TypeError, ValueError):
+                clean_limit = 10
+            try:
+                db = get_database()
+                runs = db.list_connector_runs(
+                    connector_id=connector_id, limit=clean_limit
+                )
+                return JSONResponse(
+                    {
+                        "connector_id": connector_id,
+                        "runs": [run.to_payload() for run in runs],
+                    }
+                )
+            except Exception as e:
+                log.error(f"Failed to list connector runs: {e}")
                 return JSONResponse({"error": str(e)}, status_code=500)
 
         @app.get("/api/activity/enrichment/github/preview")

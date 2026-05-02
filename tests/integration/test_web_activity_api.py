@@ -575,7 +575,11 @@ def test_clear_connector_annotations_deletes_only_that_connectors_output(
     response = test_client.delete("/api/activity/enrichment/connectors/gh/annotations")
     assert response.status_code == 200
     payload = response.json()
-    assert payload == {"deleted": 1, "connector_id": "gh"}
+    assert payload["deleted"] == 1
+    assert payload["connector_id"] == "gh"
+    # HS-13-05: clear surfaces also report runs_deleted; this
+    # connector had no run history so the count is zero.
+    assert payload["runs_deleted"] == 0
 
     assert activity_db.list_activity_annotations(source_connector_id="gh") == []
     remaining = activity_db.list_activity_annotations(source_connector_id="jira")
@@ -839,6 +843,140 @@ def test_put_connector_settings_rejects_unknown_key(test_client: TestClient) -> 
     body = response.json()
     assert "hidden_token" in body["error"]
     assert "timeout_seconds" in body["error"]
+
+
+def test_github_run_records_a_connector_run_row(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """HS-13-05: a successful gh enrichment writes one
+    `connector_runs` row with succeeded=true, populated counts,
+    and the run shows up via the new GET runs endpoint."""
+    activity_db.upsert_activity_record(
+        source_browser="safari",
+        url="https://github.com/anthropic/holdspeak/issues/99",
+        title="Issue 99",
+        domain="github.com",
+        last_seen_at=datetime(2026, 4, 28, 9, 0),
+        entity_type="github_issue",
+        entity_id="anthropic/holdspeak#99",
+    )
+
+    from holdspeak.activity_github import (
+        GithubCliCommandPlan,
+        GithubCliRunResult,
+    )
+
+    def fake_run(db, records, **kwargs):
+        from datetime import datetime as _dt
+
+        started = _dt.now()
+        finished = _dt.now()
+        record = next(iter(records))
+        annotation = db.create_activity_annotation(
+            activity_record_id=record.id,
+            source_connector_id="gh",
+            annotation_type="github_issue",
+            title="Issue 99 enriched",
+        )
+        db.record_connector_run(
+            connector_id="gh",
+            started_at=started,
+            finished_at=finished,
+            succeeded=True,
+            output_bytes=128,
+            annotation_count=1,
+            command_count=1,
+        )
+        plan = GithubCliCommandPlan(
+            activity_record_id=record.id,
+            entity_type="github_issue",
+            entity_id="anthropic/holdspeak#99",
+            repo="anthropic/holdspeak",
+            number=99,
+            command=("gh", "issue", "view", "99"),
+            annotation_type="github_issue",
+        )
+        return [GithubCliRunResult(plan=plan, annotation=annotation)]
+
+    monkeypatch.setattr("holdspeak.activity_github.run_github_cli_enrichment", fake_run)
+
+    enable = test_client.put(
+        "/api/activity/enrichment/connectors/gh",
+        json={"enabled": True, "settings": {}},
+    )
+    assert enable.status_code == 200
+    run_response = test_client.post(
+        "/api/activity/enrichment/github/run", json={"limit": 1}
+    )
+    assert run_response.status_code == 200
+
+    runs_response = test_client.get(
+        "/api/activity/enrichment/connectors/gh/runs"
+    )
+    assert runs_response.status_code == 200
+    payload = runs_response.json()
+    assert payload["connector_id"] == "gh"
+    assert len(payload["runs"]) == 1
+    assert payload["runs"][0]["succeeded"] is True
+    assert payload["runs"][0]["annotation_count"] == 1
+    assert payload["runs"][0]["output_bytes"] == 128
+
+
+def test_clear_annotations_also_clears_run_history(
+    test_client: TestClient,
+    activity_db: MeetingDatabase,
+) -> None:
+    """HS-13-05: clearing a connector's annotations also drops
+    its run rows — run history is part of the pack's output."""
+    base = datetime(2026, 5, 1, 12, 0, 0)
+    activity_db.record_connector_run(
+        connector_id="gh",
+        started_at=base,
+        finished_at=base,
+        succeeded=True,
+    )
+    activity_db.record_connector_run(
+        connector_id="gh",
+        started_at=base,
+        finished_at=base,
+        succeeded=False,
+        error="boom",
+    )
+    record = activity_db.upsert_activity_record(
+        source_browser="safari",
+        url="https://github.com/o/r/issues/1",
+        title="x",
+        domain="github.com",
+        last_seen_at=base,
+        entity_type="github_issue",
+        entity_id="o/r#1",
+    )
+    activity_db.create_activity_annotation(
+        activity_record_id=record.id,
+        source_connector_id="gh",
+        annotation_type="github_issue",
+        title="annotated",
+    )
+
+    response = test_client.delete(
+        "/api/activity/enrichment/connectors/gh/annotations"
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["deleted"] == 1
+    assert body["runs_deleted"] == 2
+    assert activity_db.list_connector_runs(connector_id="gh") == []
+
+
+def test_list_connector_runs_unknown_connector_returns_404(
+    test_client: TestClient,
+) -> None:
+    response = test_client.get(
+        "/api/activity/enrichment/connectors/nope/runs"
+    )
+    assert response.status_code == 404
 
 
 def test_put_connector_settings_rejects_keys_on_empty_schema(

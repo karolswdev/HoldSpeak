@@ -116,6 +116,8 @@ def run_jira_cli_enrichment(
     from .connector_runtime import PermissionDenied, PermissionGate
 
     gate = PermissionGate(jira_cli_pack.MANIFEST)
+    started_at = datetime.now()
+    output_bytes = 0
     results: list[JiraCliRunResult] = []
     for plan in plans:
         try:
@@ -128,10 +130,19 @@ def run_jira_cli_enrichment(
                 check=False,
             )
         except PermissionDenied as exc:
+            now = datetime.now()
             db.record_activity_enrichment_run(
                 connector_id=CONNECTOR_ID,
-                last_run_at=datetime.now(),
+                last_run_at=now,
                 last_error=str(exc),
+            )
+            db.record_connector_run(
+                connector_id=CONNECTOR_ID,
+                started_at=started_at,
+                finished_at=now,
+                succeeded=False,
+                error=str(exc),
+                command_count=len(plans),
             )
             raise
         except subprocess.TimeoutExpired:
@@ -149,6 +160,7 @@ def run_jira_cli_enrichment(
             continue
 
         stdout = str(completed.stdout or "")
+        output_bytes += len(stdout.encode("utf-8"))
         if len(stdout.encode("utf-8")) > max(1, int(max_bytes)):
             results.append(JiraCliRunResult(plan=plan, error="jira output exceeded max_bytes"))
             continue
@@ -176,10 +188,25 @@ def run_jira_cli_enrichment(
         results.append(JiraCliRunResult(plan=plan, annotation=annotation))
 
     failures = [result.error for result in results if result.error]
+    finished_at = datetime.now()
+    error_summary = (
+        f"{len(failures)} jira command(s) failed" if failures else ""
+    )
     db.record_activity_enrichment_run(
         connector_id=CONNECTOR_ID,
-        last_run_at=datetime.now(),
-        last_error=f"{len(failures)} jira command(s) failed" if failures else "",
+        last_run_at=finished_at,
+        last_error=error_summary,
+    )
+    annotation_count = sum(1 for r in results if r.annotation is not None)
+    db.record_connector_run(
+        connector_id=CONNECTOR_ID,
+        started_at=started_at,
+        finished_at=finished_at,
+        succeeded=not failures,
+        error=error_summary or None,
+        output_bytes=output_bytes,
+        annotation_count=annotation_count,
+        command_count=len(plans),
     )
     return results
 

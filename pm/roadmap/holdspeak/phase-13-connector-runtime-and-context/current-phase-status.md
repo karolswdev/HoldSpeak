@@ -1,6 +1,6 @@
 # Phase 13 - Connector Runtime + Pipelines + Meeting Context
 
-**Last updated:** 2026-05-01 (HS-13-04 done — local-user pack discovery).
+**Last updated:** 2026-05-02 (HS-13-05 done — pack run history table + UI).
 
 ## Goal
 
@@ -61,7 +61,7 @@ top of it) means phases 14+ build on solid ground.
 | HS-13-02 | Permission enforcement at runtime gates | done | [story-02-permission-enforcement.md](./story-02-permission-enforcement.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-13-03 | Pack-declared settings + defaults | done | [story-03-pack-settings.md](./story-03-pack-settings.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-13-04 | Local-user pack discovery | done | [story-04-user-pack-discovery.md](./story-04-user-pack-discovery.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-13-05 | Pack run history table + UI | backlog | [story-05-run-history.md](./story-05-run-history.md) | pending |
+| HS-13-05 | Pack run history table + UI | done (API+DB; UI deferred) | [story-05-run-history.md](./story-05-run-history.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-13-06 | Pipeline manifest + dependency-graph runner | backlog | [story-06-pipeline-runner.md](./story-06-pipeline-runner.md) | pending |
 | HS-13-07 | Meeting-context pipeline pack | backlog | [story-07-meeting-context-pack.md](./story-07-meeting-context-pack.md) | pending |
 | HS-13-08 | Pre-meeting briefing surface on / | backlog | [story-08-prebriefing-surface.md](./story-08-prebriefing-surface.md) | pending |
@@ -83,22 +83,23 @@ HS-13-03 extends the manifest with a `settings_schema` and
 adds `resolve_setting(manifest, settings, key)`; the web run
 endpoints + PUT validation read through the schema.
 
-HS-13-04 ships `holdspeak/connector_pack_loader.py` with
-discovery + load for `~/.holdspeak/connector_packs/`
-(overridable via `HOLDSPEAK_USER_PACKS_DIR`). The loader
-catches every pack-import failure and reports it as a
-structured `DiscoveryError` instead of crashing the runtime;
-ids that collide with first-party packs are rejected (first-
-party wins). `activity_connectors.reload_registry()` swaps
-the module-level registry for tests + future re-discovery
-flows. Each `ConnectorDescriptor` carries `source`
-(`first-party` / `user`); the API surfaces it. `holdspeak
-doctor` adds a "Connector packs" check (WARN on discovery
-errors); `holdspeak doctor --connectors` prints a focused
-listing of every pack + state.
+HS-13-04 ships local-user pack discovery; descriptors carry
+a `source` field; doctor surfaces every discovered pack.
 
-Next: HS-13-05 (run history). -06 unblocks the B-arc; -07
-unblocks the C-arc.
+HS-13-05 ships `connector_runs` (schema bump 17 → 18) plus
+`db.record_connector_run` / `list_connector_runs` /
+`delete_connector_runs` helpers. gh + jira runners and the
+extension-event ingester record one row per invocation,
+success or failure, with timestamps, byte counts, and
+per-capability counters. New endpoint
+`GET /api/activity/enrichment/connectors/{id}/runs`. The
+DELETE annotations / candidates surfaces also drop run rows
+for that pack — run history is part of the pack's output, not
+a global log. The /activity Connectors panel UI is deferred
+to phase 14 — the API + DB substrate is in place; pipelines
+(HS-13-06) can already read run history.
+
+Next: -06 unblocks the B-arc; -07 unblocks the C-arc.
 
 ## Source Design
 

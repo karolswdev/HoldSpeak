@@ -190,8 +190,10 @@ def ingest_extension_events(
     raw_events: Iterable[Any],
 ) -> IngestResult:
     """Validate, normalize, and upsert a batch of extension events."""
+    started_at = datetime.now()
     accepted: list[int] = []
     rejected: list[dict[str, Any]] = []
+    output_bytes = 0
 
     for index, raw in enumerate(raw_events):
         event, reason = parse_extension_event(raw)
@@ -216,10 +218,33 @@ def ingest_extension_events(
             entity_id=entity_id,
         )
         accepted.append(record.id)
+        output_bytes += len(event.url.encode("utf-8")) + len(
+            (event.title or "").encode("utf-8")
+        )
 
     project_rule_updates = 0
     if accepted:
         project_rule_updates = db.apply_activity_project_rules()
+
+    finished_at = datetime.now()
+    error_text = (
+        f"{len(rejected)} event(s) rejected" if rejected and not accepted else None
+    )
+    db.record_connector_run(
+        connector_id=EXTENSION_SOURCE_BROWSER,
+        started_at=started_at,
+        finished_at=finished_at,
+        # The ingester is "successful" if at least one event was
+        # accepted *or* the batch was simply empty. A batch where
+        # every event was rejected is logged as a failure so a
+        # broken extension shows up in run history.
+        succeeded=bool(accepted) or not rejected,
+        error=error_text,
+        output_bytes=output_bytes,
+        annotation_count=0,
+        candidate_count=0,
+        command_count=len(accepted) + len(rejected),
+    )
 
     return IngestResult(
         accepted=tuple(accepted),
