@@ -313,6 +313,134 @@ That's a complete connector. Drop a fixture and you're done.
 
 ---
 
+## Phase 13 additions — runtime gates, pipelines, user packs, run history
+
+Phase 11 shipped the contract; phase 13 turns it on. The four
+surfaces below are what changed in the runtime — read these
+before authoring a pack against the current main.
+
+### `kind: pipeline` — packs that consume other packs
+
+A pipeline pack reads other packs' rows and writes one of its
+own. The first first-party pipeline is `meeting_context`
+(`holdspeak/connector_packs/meeting_context.py`); read it as
+the canonical example.
+
+Manifest delta vs. a regular pack:
+
+| Field | Required for pipelines | Notes |
+|---|---|---|
+| `kind` | `"pipeline"` | Added to `KNOWN_KINDS`. |
+| `consumes` | yes — at least one entry | List of `{pack_id, output_kind}` upstreams. `output_kind` is one of `records` / `annotations` / `candidates`. |
+| `pipeline_freshness_seconds` | optional | Skip an upstream's re-run if its last successful `connector_runs` row is within this window. |
+| `permissions` | must include the read-permission for every consumed `output_kind` | E.g. consuming `annotations` requires `read:activity_annotations`. The validator enforces this; missing reads fail with `pipeline_missing_read_permission`. |
+
+`consumes` is rejected on non-pipeline packs and required on
+pipeline packs — the validator emits
+`pipeline_requires_consumes` / `consumes_only_on_pipeline` so
+the failure mode is unambiguous.
+
+The `PipelineRunner` (`holdspeak.connector_runtime.PipelineRunner`)
+walks `consumes` into a topological order and executes each
+upstream as either:
+
+- `skipped_fresh` — last successful `connector_runs` row is
+  within `pipeline_freshness_seconds`,
+- `ran` — runner invoked the pack's module-level `run(db)`
+  callable,
+- `failed` — the runner raised; pipeline aborts,
+- `missing_runner` — pack has no `run(db)` and no fresh row;
+  pipeline aborts.
+
+Failure of any step aborts the pipeline; there are no retries
+and no parallelism.
+
+### Permission enforcement at runtime gates
+
+`PermissionGate` (`holdspeak.connector_runtime`) is the
+in-process enforcement layer for the four operationally-gated
+permissions:
+
+| Operation | Gated permission |
+|---|---|
+| `run_subprocess` | `shell:exec` |
+| `open_outbound_socket` | `network:outbound` |
+| `accept_loopback_event` | `loopback:http` |
+| `read_file` | `fs:read` |
+
+If a pack invokes a gate without the matching permission on
+its manifest, the gate raises `PermissionDenied` carrying the
+connector id, the operation, the missing permission, and the
+manifest's full declared permission set. The runtime catches
+the exception, marks the run failed, and writes a
+`connector_runs` row with the operator-readable error string.
+
+This is *honest* enforcement, not a sandbox: a pack can still
+import `subprocess` directly and bypass the gate. The point is
+that an honest pack with mis-declared permissions fails loud
+in tests and at runtime, and the manifest stays a single
+truthful surface for "what does this pack actually need."
+
+### Local-user pack discovery
+
+User packs drop into `~/.holdspeak/connector_packs/`. The
+discovery rules:
+
+- One `.py` file per pack; the file must export
+  `MANIFEST: ConnectorManifest`. `validate_manifest` is re-run
+  on import so a malformed user pack surfaces a structured
+  `DiscoveryError` instead of crashing the runtime.
+- A user pack id that collides with a first-party pack is
+  rejected (`id_collision_user_pack`); first-party always
+  wins.
+- A user pack id that collides with another user pack is
+  rejected for the duplicate (the first one wins).
+- Tests that exercise discovery override the directory via
+  `HOLDSPEAK_USER_PACKS_DIR` or pass `user_packs_dir=tmp_path`
+  to `discover_user_packs` / `reload_registry`.
+
+Each registered pack carries a `source` field
+(`"first-party"` / `"user"`) that the API and doctor surface
+verbatim. Discovery is *not* sandboxing — code under the
+user's home dir is by definition code the user trusts.
+
+### Pack run history (`connector_runs`)
+
+Every pack invocation — preview is exempt; enrich runs and
+pipeline-step runs are not — writes one row to
+`connector_runs`:
+
+```sql
+CREATE TABLE connector_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    connector_id TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    finished_at TEXT NOT NULL,
+    succeeded INTEGER NOT NULL DEFAULT 0,
+    error TEXT,
+    output_bytes INTEGER NOT NULL DEFAULT 0,
+    annotation_count INTEGER NOT NULL DEFAULT 0,
+    candidate_count INTEGER NOT NULL DEFAULT 0,
+    command_count INTEGER NOT NULL DEFAULT 0
+);
+```
+
+The DB API is `MeetingDatabase.record_connector_run(...)`,
+`list_connector_runs(connector_id=..., limit=...)`, and
+`delete_connector_runs(connector_id=...)` (called when a pack
+is removed). The web surface is
+`GET /api/activity/enrichment/connectors/{id}/runs`; the
+dashboard renders the latest row inline next to each
+connector. UI for the full per-pack timeline is deferred to
+phase 14.
+
+`connector_runs` is also what `PipelineRunner` consults for
+its freshness skip — the row's `started_at` plus the
+upstream's `pipeline_freshness_seconds` decides whether a
+step short-circuits.
+
+---
+
 ## Out of scope
 
 This story does not cover:

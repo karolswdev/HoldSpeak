@@ -1,6 +1,6 @@
 # Phase 13 - Connector Runtime + Pipelines + Meeting Context
 
-**Last updated:** 2026-05-02 (HS-13-09 done — cross-meeting summary on /history).
+**Last updated:** 2026-05-04 (HS-13-10 done — phase exit; phase 13 closed).
 
 ## Goal
 
@@ -66,7 +66,7 @@ top of it) means phases 14+ build on solid ground.
 | HS-13-07 | Meeting-context pipeline pack | done | [story-07-meeting-context-pack.md](./story-07-meeting-context-pack.md) | [evidence-story-07.md](./evidence-story-07.md) |
 | HS-13-08 | Pre-meeting briefing surface on / | done | [story-08-prebriefing-surface.md](./story-08-prebriefing-surface.md) | [evidence-story-08.md](./evidence-story-08.md) |
 | HS-13-09 | Cross-meeting summary on /history | done | [story-09-history-project-summary.md](./story-09-history-project-summary.md) | [evidence-story-09.md](./evidence-story-09.md) |
-| HS-13-10 | Phase exit + DoD | backlog | [story-10-dod.md](./story-10-dod.md) | pending |
+| HS-13-10 | Phase exit + DoD | done | [story-10-dod.md](./story-10-dod.md) | [evidence-story-10.md](./evidence-story-10.md) |
 
 ## Where We Are
 
@@ -113,7 +113,20 @@ concatenated into both the dashboard and history factories
 via the existing `?raw` loader pattern, so there is one
 definition.
 
-Next: HS-13-10 closes the phase (DoD).
+HS-13-10 closes the phase: `docs/CONNECTOR_DEVELOPMENT.md`
+gains a "Phase 13 additions" section covering the pipeline
+kind, the runtime permission gates, local-user pack
+discovery, and the `connector_runs` history surface; the
+parent README is bumped; the regression sweep
+(`uv run pytest -q --ignore=tests/e2e/test_metal.py`) is
+green at 1406 passed / 13 skipped after the time-bomb
+fixture in `test_run_pipeline_endpoint_executes_meeting_context`
+was switched off a hardcoded `2026-05-02 11:00:00` and onto
+`datetime.now()`. Designer-handoff screenshots are deferred
+to a manual user pass against the running web app — see
+`evidence-story-10.md` for that handoff. Phase 13 is closed;
+phase 14 picks up the deferred connectors-panel run-history
+view and per-project pipeline-run args.
 
 ## Source Design
 

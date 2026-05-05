@@ -1121,7 +1121,7 @@ def test_run_pipeline_endpoint_executes_meeting_context(
         title="Wire runtime",
         value={"entity_id": "anthropic/holdspeak#7"},
     )
-    base = datetime(2026, 5, 2, 11, 0, 0)
+    base = datetime.now()
     for upstream in ("gh", "jira", "calendar_activity"):
         activity_db.record_connector_run(
             connector_id=upstream,

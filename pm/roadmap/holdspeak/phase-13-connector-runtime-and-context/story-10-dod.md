@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-13-01 through HS-13-09
 - **Unblocks:** stable connector-runtime + meeting-context baseline
 - **Owner:** unassigned
@@ -35,20 +35,22 @@ ecosystem — not three loosely-related arcs.
 
 ## Acceptance Criteria
 
-- [ ] Every shipped story has a matching
+- [x] Every shipped story has a matching
   `evidence-story-{n}.md` file in the phase folder.
-- [ ] `current-phase-status.md` story table fully updated.
-- [ ] `pm/roadmap/holdspeak/README.md` "Last updated"
+- [x] `current-phase-status.md` story table fully updated.
+- [x] `pm/roadmap/holdspeak/README.md` "Last updated"
   bumped, phase 13 flipped to `done`.
-- [ ] `docs/CONNECTOR_DEVELOPMENT.md` documents the
+- [x] `docs/CONNECTOR_DEVELOPMENT.md` documents the
   pipeline kind, the permission gates, the user-pack
   discovery path, and the run-history surface.
 - [ ] `designer-handoff/screenshots/` includes shots that
   reflect the new dashboard pre-briefing panel + the
-  project briefing timeline on `/history`.
-- [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py`
+  project briefing timeline on `/history`. *(Deferred to
+  the user — manual browser capture against the running
+  web app; see `evidence-story-10.md` "Out of scope".)*
+- [x] `uv run pytest -q --ignore=tests/e2e/test_metal.py`
   green.
-- [ ] `npm run build` clean.
+- [x] `npm run build` clean.
 
 ## Test Plan
 
