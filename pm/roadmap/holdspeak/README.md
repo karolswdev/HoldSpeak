@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-04 (HS-13-10 done — phase 13 closed).
-**Current phase:** [phase-13-connector-runtime-and-context](./phase-13-connector-runtime-and-context/) — turn the connector framework on (substrate), chain packs (pipelines), use the chain for pre-meeting + cross-meeting context.
-**Status:** done.
+**Last updated:** 2026-05-07 (phase 14 opened — AIPI-Lite remote audio ingest substrate scaffolded; no stories shipped yet).
+**Current phase:** [phase-14-aipi-lite-devices](./phase-14-aipi-lite-devices/current-phase-status.md) — extract an audio-source protocol, light up `/api/devices/audio` WebSocket, make per-device speaker labels first-class so AIPI-Lite (and other compatible devices) can feed both the voice-typing and meeting paths from across the LAN.
+**Status:** in-progress.
 
 ## Vision
 
@@ -50,6 +50,8 @@ canon, canon wins.
 | 11 | Local connector ecosystem: reusable manifests, fixtures, first-party connector packs, and developer docs | done | [phase-11-local-connector-ecosystem](./phase-11-local-connector-ecosystem/) |
 | 12 | Workbench voice: replatform tokens + components on a Workbench-evoking palette + pixel font; dashboard polish; designer handoff refresh | done | [phase-12-workbench-voice](./phase-12-workbench-voice/) |
 | 13 | Connector runtime + pipelines + meeting context: turn the framework on, chain packs, surface pre-meeting briefings + cross-meeting summaries | done | [phase-13-connector-runtime-and-context](./phase-13-connector-runtime-and-context/) |
+| 14 | AIPI-Lite devices: remote audio ingest substrate — `AudioSource` Protocol, `RemoteAudioRecorder`, `/api/devices/audio` WebSocket, per-device speaker labels in transcripts; same-LAN scope (cross-network is phase 15) | in-progress | [phase-14-aipi-lite-devices](./phase-14-aipi-lite-devices/) |
+| 15 | Out-and-about: cross-network reach for AIPI-Lite — tunneling (Tailscale / Cloudflare Tunnel / WireGuard candidate evaluation), TLS, per-device PSKs, paired with the AIPI-Lite firmware's portable WiFi (multi-SSID + captive portal + Improv-WiFi) on the device-side roadmap | not-started | (folder created at phase open) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
