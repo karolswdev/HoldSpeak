@@ -11,6 +11,7 @@ from typing import Optional
 
 from .audio import AudioRecorder
 from .config import Config
+from .device_audio import DeviceRegistry
 from .hotkey import HotkeyListener
 from .logging_config import get_logger
 from .meeting_session import MeetingSession
@@ -67,6 +68,7 @@ def run_web_runtime(
     transcriber: Optional[Transcriber] = None
     server: Optional[MeetingWebServer] = None
     meeting_session: Optional[MeetingSession] = None
+    device_registry = DeviceRegistry()
     transcription_lock = threading.Lock()
     text_processor = TextProcessor()
     from .activity_context import ActivityContextProvider
@@ -1015,6 +1017,7 @@ def run_web_runtime(
             on_edit_action_item=_on_edit_action_item,
             on_settings_applied=_apply_updated_config,
             project_detector=project_detector,
+            device_registry=device_registry,
             host="127.0.0.1",
         )
         runtime_url = server.start()

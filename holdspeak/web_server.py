@@ -16,10 +16,13 @@ from copy import deepcopy
 from pathlib import Path
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, TYPE_CHECKING
 from urllib.parse import urlparse
 
 from .logging_config import get_logger
+
+if TYPE_CHECKING:
+    from .device_audio import DeviceRegistry
 
 log = get_logger("web_server")
 _HTTP_HEADER_NAME_RE = re.compile(r"^[A-Za-z0-9-]+$")
@@ -442,6 +445,7 @@ class MeetingWebServer:
         on_settings_applied: Optional[Callable[[Any], None]] = None,
         on_dictation_config_changed: Optional[Callable[[], None]] = None,
         project_detector: Optional[Any] = None,
+        device_registry: Optional["DeviceRegistry"] = None,
         host: str = "127.0.0.1",
     ) -> None:
         if _IMPORT_ERROR is not None:
@@ -470,6 +474,10 @@ class MeetingWebServer:
         self.on_settings_applied = on_settings_applied
         self.on_dictation_config_changed = on_dictation_config_changed
         self._project_detector = project_detector
+        if device_registry is None:
+            from .device_audio import DeviceRegistry as _DeviceRegistry
+            device_registry = _DeviceRegistry()
+        self.device_registry: "DeviceRegistry" = device_registry
         self.host = host
 
         self.port: Optional[int] = None
@@ -570,6 +578,7 @@ class MeetingWebServer:
 
     def _create_app(self) -> Any:
         app = FastAPI()
+        app.state.device_registry = self.device_registry
 
         @app.on_event("startup")
         async def _startup() -> None:

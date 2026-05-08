@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 14
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-14-01
 - **Unblocks:** HS-14-03, HS-14-04
 - **Owner:** unassigned
@@ -44,15 +44,15 @@ more than the storage.
 
 ## Acceptance Criteria
 
-- [ ] `DeviceDescriptor` and `DeviceRegistry` exist in
+- [x] `DeviceDescriptor` and `DeviceRegistry` exist in
   `holdspeak/device_audio.py`.
-- [ ] `register()` rejects a duplicate active label with a typed
+- [x] `register()` rejects a duplicate active label with a typed
   exception that downstream callers can map to a 409 Conflict.
-- [ ] `unregister()` is idempotent — calling it on an unknown id
+- [x] `unregister()` is idempotent — calling it on an unknown id
   is a no-op (logged at info, not raised).
-- [ ] A `RemoteAudioRecorder` is created on register and torn
+- [x] A `RemoteAudioRecorder` is created on register and torn
   down on unregister.
-- [ ] `tests/unit/test_device_registry.py` ≥ 5 cases green:
+- [x] `tests/unit/test_device_registry.py` ≥ 5 cases green:
   register-then-get, double-register-different-label,
   duplicate-label-fails, unregister-removes-recorder,
   idempotent-unregister.

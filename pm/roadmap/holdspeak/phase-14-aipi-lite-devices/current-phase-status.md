@@ -1,6 +1,6 @@
 # Phase 14 - AIPI-Lite Devices: Remote Audio Ingest Substrate
 
-**Last updated:** 2026-05-07 (HS-14-01 shipped — `AudioSource` Protocol + `RemoteAudioRecorder` substrate landed).
+**Last updated:** 2026-05-07 (HS-14-02 shipped — `DeviceRegistry` + `DeviceDescriptor` landed and wired into the web runtime).
 
 ## Goal
 
@@ -115,7 +115,7 @@ tunnel/relay layer without redesigning the protocol.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-14-01 | AudioSource Protocol + RemoteAudioRecorder | done | [story-01-audio-source-protocol.md](./story-01-audio-source-protocol.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-14-02 | DeviceRegistry + device descriptor model | backlog | [story-02-device-registry.md](./story-02-device-registry.md) | — |
+| HS-14-02 | DeviceRegistry + device descriptor model | done | [story-02-device-registry.md](./story-02-device-registry.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-14-03 | PSK auth + handshake protocol | backlog | [story-03-auth-handshake.md](./story-03-auth-handshake.md) | — |
 | HS-14-04 | `/api/devices/audio` WebSocket + backpressure | backlog | [story-04-audio-ingest-websocket.md](./story-04-audio-ingest-websocket.md) | — |
 | HS-14-05 | Voice-typing path consumes remote audio | backlog | [story-05-voice-typing-remote.md](./story-05-voice-typing-remote.md) | — |
@@ -125,16 +125,28 @@ tunnel/relay layer without redesigning the protocol.
 
 ## Where we are
 
-HS-14-01 shipped 2026-05-07: `AudioSource` Protocol added to
-`holdspeak/audio.py` (runtime-checkable, structural typing —
-`AudioRecorder` conforms without inheritance), and a sibling
-`holdspeak/device_audio.py:RemoteAudioRecorder` consumes int16 LE
-PCM pushed via `push(bytes)` and returns 16 kHz mono float32 from
-`stop_recording()`. Bounded internal buffer with drop-oldest +
-logged warning is in place as a holding pattern for the richer
-backpressure policy in HS-14-04. Test coverage: 22 new unit cases
-across `test_remote_audio_recorder.py` and the
-`test_audio_source_contract.py` shape contract.
+HS-14-01 + HS-14-02 shipped 2026-05-07. The substrate now has:
+
+- `holdspeak/audio.py:AudioSource` — runtime-checkable Protocol
+  over `start_recording` / `stop_recording`. `AudioRecorder`
+  conforms structurally with no inheritance change.
+- `holdspeak/device_audio.py:RemoteAudioRecorder` — pushed-PCM
+  source with bounded internal buffer + drop-oldest + structured
+  warning log on overflow.
+- `holdspeak/device_audio.py:DeviceRegistry` + `DeviceDescriptor`
+  — thread-safe in-memory registry with `register` / `unregister`
+  / `get` / `active` / `touch` / `recorder_for`. Label uniqueness
+  enforced via typed `DuplicateLabelError`. Same-id re-register
+  raises (`DeviceRegistryError`); unregister of an unknown id is
+  a no-op (logged at info). `register` rejects blank id/label.
+- `MeetingWebServer` accepts an optional `device_registry` and
+  exposes it via `app.state.device_registry`; `run_web_runtime`
+  creates the singleton and passes it in.
+
+Test coverage: 36 new unit cases across
+`test_remote_audio_recorder.py`, `test_audio_source_contract.py`,
+and `test_device_registry.py`. Regression sweep on
+audio + controller + web_runtime is 76/76 green.
 
 The companion AIPI-Lite repo (`/home/karol/dev/esp32/AIPI-Lite-Voice-Bridge`,
 branch `mine`) already has a working ESP32-S3 firmware + Python bridge that
@@ -143,9 +155,7 @@ turns that integration around so HoldSpeak (not the bridge's standalone
 LLM/TTS) becomes the consumer of the device audio. Cross-repo coordination
 notes live in each story under "Notes / open questions".
 
-Pickup: HS-14-02 (DeviceRegistry + descriptor model) is next; the
-`AudioSource` substrate is in place for any downstream story to
-plug into.
+Pickup: HS-14-03 (PSK auth + handshake protocol) is next.
 
 ## Active risks
 
