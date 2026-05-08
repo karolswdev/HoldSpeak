@@ -11,7 +11,7 @@ from typing import Optional
 
 from .audio import AudioRecorder
 from .config import Config
-from .device_audio import DeviceRegistry
+from .device_audio import DeviceRegistry, ensure_device_psk
 from .hotkey import HotkeyListener
 from .logging_config import get_logger
 from .meeting_session import MeetingSession
@@ -1018,6 +1018,7 @@ def run_web_runtime(
             on_settings_applied=_apply_updated_config,
             project_detector=project_detector,
             device_registry=device_registry,
+            device_psk_provider=lambda: ensure_device_psk(config),
             host="127.0.0.1",
         )
         runtime_url = server.start()

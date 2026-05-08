@@ -22,6 +22,8 @@ from urllib.parse import urlparse
 from .logging_config import get_logger
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from .device_audio import DeviceRegistry
 
 log = get_logger("web_server")
@@ -446,6 +448,8 @@ class MeetingWebServer:
         on_dictation_config_changed: Optional[Callable[[], None]] = None,
         project_detector: Optional[Any] = None,
         device_registry: Optional["DeviceRegistry"] = None,
+        device_psk_provider: Optional[Callable[[], str]] = None,
+        on_device_audio_chunk: Optional[Callable[[str, "np.ndarray"], None]] = None,
         host: str = "127.0.0.1",
     ) -> None:
         if _IMPORT_ERROR is not None:
@@ -478,6 +482,18 @@ class MeetingWebServer:
             from .device_audio import DeviceRegistry as _DeviceRegistry
             device_registry = _DeviceRegistry()
         self.device_registry: "DeviceRegistry" = device_registry
+        if device_psk_provider is None:
+            from .config import Config as _Config
+            from .device_audio import ensure_device_psk as _ensure_device_psk
+
+            def _default_psk_provider() -> str:
+                return _ensure_device_psk(_Config.load())
+
+            device_psk_provider = _default_psk_provider
+        self.device_psk_provider: Callable[[], str] = device_psk_provider
+        self.on_device_audio_chunk: Optional[Callable[[str, "np.ndarray"], None]] = (
+            on_device_audio_chunk
+        )
         self.host = host
 
         self.port: Optional[int] = None
@@ -579,6 +595,15 @@ class MeetingWebServer:
     def _create_app(self) -> Any:
         app = FastAPI()
         app.state.device_registry = self.device_registry
+
+        from .device_audio_ws import register_device_audio_routes
+
+        register_device_audio_routes(
+            app,
+            device_registry=self.device_registry,
+            get_psk=self.device_psk_provider,
+            on_chunk=self.on_device_audio_chunk,
+        )
 
         @app.on_event("startup")
         async def _startup() -> None:

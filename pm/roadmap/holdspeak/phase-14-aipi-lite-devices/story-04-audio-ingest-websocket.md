@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 14
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-14-01, HS-14-02, HS-14-03
 - **Unblocks:** HS-14-05, HS-14-06, HS-14-07
 - **Owner:** unassigned
@@ -61,20 +61,20 @@ emit a structured warning (`device.queue.overflow` with `device_id`,
 
 ## Acceptance Criteria
 
-- [ ] `WebSocket /api/devices/audio` endpoint exists in the
+- [x] `WebSocket /api/devices/audio` endpoint exists in the
   FastAPI app.
-- [ ] Bad handshake closes with code 4001; bad PSK with 4003;
+- [x] Bad handshake closes with code 4001; bad PSK with 4003;
   duplicate label with 4009.
-- [ ] After successful handshake, the device id appears in
+- [x] After successful handshake, the device id appears in
   `registry.active()`.
-- [ ] Binary frames during a recording are buffered and emerge
+- [x] Binary frames during a recording are buffered and emerge
   in `stop_recording()`'s ndarray.
-- [ ] Queue overflow drops oldest, logs once per overflow event
+- [x] Queue overflow drops oldest, logs once per overflow event
   (not per dropped frame), updates `descriptor.queue_depth`.
-- [ ] Client disconnect — clean or rude — unregisters the device
+- [x] Client disconnect — clean or rude — unregisters the device
   cleanly (no leaked recorder).
-- [ ] `tests/integration/test_device_audio_ingest.py` is green.
-- [ ] No regression in existing FastAPI route tests.
+- [x] `tests/integration/test_device_audio_ingest.py` is green.
+- [x] No regression in existing FastAPI route tests.
 
 ## Test Plan
 

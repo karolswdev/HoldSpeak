@@ -1,6 +1,6 @@
 # Phase 14 - AIPI-Lite Devices: Remote Audio Ingest Substrate
 
-**Last updated:** 2026-05-07 (HS-14-03 shipped — PSK auth + `DeviceHandshake` Pydantic model + `holdspeak device-psk show|rotate` CLI landed).
+**Last updated:** 2026-05-07 (HS-14-04 shipped — `/api/devices/audio` WebSocket route is live with end-to-end PCM round-trip + backpressure + disconnect cleanup).
 
 ## Goal
 
@@ -117,7 +117,7 @@ tunnel/relay layer without redesigning the protocol.
 | HS-14-01 | AudioSource Protocol + RemoteAudioRecorder | done | [story-01-audio-source-protocol.md](./story-01-audio-source-protocol.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-14-02 | DeviceRegistry + device descriptor model | done | [story-02-device-registry.md](./story-02-device-registry.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-14-03 | PSK auth + handshake protocol | done | [story-03-auth-handshake.md](./story-03-auth-handshake.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-14-04 | `/api/devices/audio` WebSocket + backpressure | backlog | [story-04-audio-ingest-websocket.md](./story-04-audio-ingest-websocket.md) | — |
+| HS-14-04 | `/api/devices/audio` WebSocket + backpressure | done | [story-04-audio-ingest-websocket.md](./story-04-audio-ingest-websocket.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-14-05 | Voice-typing path consumes remote audio | backlog | [story-05-voice-typing-remote.md](./story-05-voice-typing-remote.md) | — |
 | HS-14-06 | Meeting path accepts device streams + per-segment device_id | backlog | [story-06-meeting-device-streams.md](./story-06-meeting-device-streams.md) | — |
 | HS-14-07 | Server → device status push-back protocol | backlog | [story-07-status-pushback.md](./story-07-status-pushback.md) | — |
@@ -168,9 +168,35 @@ turns that integration around so HoldSpeak (not the bridge's standalone
 LLM/TTS) becomes the consumer of the device audio. Cross-repo coordination
 notes live in each story under "Notes / open questions".
 
-Pickup: HS-14-04 (`/api/devices/audio` WebSocket + backpressure)
-is next — every protocol piece it needs (handshake schema, PSK
-compare, close codes, registry, recorders) is now in place.
+**HS-14-04 (2026-05-07):** `/api/devices/audio` WebSocket route is
+live. New module `holdspeak/device_audio_ws.py` exposes
+`register_device_audio_routes(app, *, device_registry, get_psk,
+on_chunk)`; `MeetingWebServer` calls it during `_create_app` and
+accepts `device_psk_provider` + `on_device_audio_chunk` kwargs.
+Handshake → PSK verify → `registry.register()` → `hello-ack`;
+dispatch loop honours `start` / `stop` / `heartbeat` JSON control
+frames and binary PCM frames. Stop-frame audio is fanned out to a
+caller-supplied `on_chunk(device_id, ndarray)` consumer (HS-14-05
+/ HS-14-06 will plug the voice-typing and meeting paths in).
+Client disconnect (clean or rude) drops in-flight audio, stops
+the recorder, and unregisters the device. `RemoteAudioRecorder`
+gained a `device_id` kwarg + `buffered_bytes` property; overflow
+logs once per burst as `device.queue.overflow` with `device_id` +
+`dropped_bytes`. `DeviceRegistry.active()` now refreshes
+`queue_depth` from each live recorder.
+
+Test coverage: 14 new integration cases in
+`tests/integration/test_device_audio_ingest.py` (handshake
+success, 4001 bad-handshake/missing-field/extra-field, 4003 bad
+PSK, 4009 duplicate label, push-then-stop ndarray emission,
+heartbeat last_seen refresh, clean disconnect, mid-recording
+disconnect drops audio, overflow drops oldest with single log,
+`active()` reflects live queue depth, PSK rotation takes effect
+on reconnect). 218/218 green on the sweep across audio + device +
+controller + web_runtime + config + intel_streaming.
+
+Pickup: HS-14-05 (voice-typing path consumes remote audio) is
+next; the `on_chunk` hook is the integration point.
 
 ## Active risks
 

@@ -81,6 +81,7 @@ class RemoteAudioRecorder:
         sample_rate: int = 16_000,
         wire_sample_rate: int = 16_000,
         max_buffer_seconds: float = 2.0,
+        device_id: Optional[str] = None,
     ) -> None:
         if sample_rate <= 0 or wire_sample_rate <= 0:
             raise ValueError("sample rates must be positive")
@@ -90,6 +91,7 @@ class RemoteAudioRecorder:
         self.sample_rate = int(sample_rate)
         self.wire_sample_rate = int(wire_sample_rate)
         self.max_buffer_seconds = float(max_buffer_seconds)
+        self.device_id = device_id
 
         self._lock = threading.Lock()
         self._frames: deque[np.ndarray] = deque()
@@ -100,6 +102,12 @@ class RemoteAudioRecorder:
     def is_recording(self) -> bool:
         with self._lock:
             return self._recording
+
+    @property
+    def buffered_bytes(self) -> int:
+        """Current pushed-buffer depth in bytes (int16 LE = 2 bytes/sample)."""
+        with self._lock:
+            return self._buffered_samples * 2
 
     def start_recording(self) -> None:
         with self._lock:
@@ -174,10 +182,19 @@ class RemoteAudioRecorder:
             dropped_samples += int(oldest.size)
 
         if dropped_samples:
+            # Single warning per overflow burst (the loop drains in
+            # one shot before logging) — not one per dropped frame.
+            message = (
+                "device.queue.overflow"
+                if self.device_id is not None
+                else "remote_audio_buffer_overflow"
+            )
             log.warning(
-                "remote_audio_buffer_overflow",
+                message,
                 extra={
+                    "device_id": self.device_id,
                     "dropped_samples": dropped_samples,
+                    "dropped_bytes": dropped_samples * 2,
                     "cap_samples": cap_samples,
                     "buffered_samples": self._buffered_samples,
                     "max_buffer_seconds": self.max_buffer_seconds,
@@ -248,7 +265,7 @@ class DeviceRegistry:
                 connected_at=now,
                 last_seen=now,
             )
-            recorder = RemoteAudioRecorder()
+            recorder = RemoteAudioRecorder(device_id=device_id)
             self._descriptors[device_id] = descriptor
             self._recorders[device_id] = recorder
 
@@ -288,8 +305,20 @@ class DeviceRegistry:
             return replace(descriptor)
 
     def active(self) -> list[DeviceDescriptor]:
+        """Return a snapshot of every registered device.
+
+        ``queue_depth`` is refreshed from the live recorder's
+        current pushed-buffer depth on each call so callers
+        (``/api/runtime/status`` in HS-14-07) get an accurate
+        view without having to manually tick the registry.
+        """
         with self._lock:
-            return [replace(d) for d in self._descriptors.values()]
+            snapshot: list[DeviceDescriptor] = []
+            for descriptor in self._descriptors.values():
+                recorder = self._recorders.get(descriptor.id)
+                depth = recorder.buffered_bytes if recorder is not None else 0
+                snapshot.append(replace(descriptor, queue_depth=depth))
+            return snapshot
 
     def touch(self, device_id: str) -> None:
         """Update ``last_seen`` for a registered device.

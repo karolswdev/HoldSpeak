@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-07 (HS-14-03 shipped — PSK auth + `DeviceHandshake` Pydantic model + `holdspeak device-psk show|rotate` CLI landed).
+**Last updated:** 2026-05-07 (HS-14-04 shipped — `/api/devices/audio` WebSocket route is live with end-to-end PCM round-trip + backpressure + disconnect cleanup).
 **Current phase:** [phase-14-aipi-lite-devices](./phase-14-aipi-lite-devices/current-phase-status.md) — extract an audio-source protocol, light up `/api/devices/audio` WebSocket, make per-device speaker labels first-class so AIPI-Lite (and other compatible devices) can feed both the voice-typing and meeting paths from across the LAN.
 **Status:** in-progress.
 
