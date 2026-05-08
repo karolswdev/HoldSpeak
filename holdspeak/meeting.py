@@ -11,9 +11,12 @@ import sys
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Callable, Optional
+from typing import Callable, Optional, TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from .audio import AudioSource
 
 try:
     import sounddevice as sd
@@ -170,6 +173,14 @@ class MeetingRecorder:
         self._recording = False
         self._start_time: Optional[float] = None
         self._buffer = DualStreamBuffer()
+        # Phase 14: registered AIPI-Lite-class device streams.
+        # Each maps device_id → (source, label, last_drain_monotonic).
+        # The recorder doesn't capture device audio itself; the
+        # WebSocket route pushes PCM into the source, and the
+        # session's transcription loop polls ``get_pending_device_chunks``.
+        self._device_sources: dict[str, "AudioSource"] = {}
+        self._device_labels: dict[str, str] = {}
+        self._device_last_drain: dict[str, float] = {}
 
         # Streams
         self._mic_stream: Optional[sd.InputStream] = None
@@ -375,6 +386,82 @@ class MeetingRecorder:
             Tuple of (mic_chunks, system_chunks).
         """
         return self._buffer.get_chunks_since(since)
+
+    # ------------------------------------------------------------------
+    # Phase 14: device stream coordination (HS-14-06)
+    # ------------------------------------------------------------------
+    def register_device_stream(
+        self,
+        device_id: str,
+        source: "AudioSource",
+        *,
+        label: str,
+    ) -> None:
+        """Register a remote audio source as an additional meeting stream.
+
+        Audio actually arrives on this source via
+        :meth:`holdspeak.device_audio.RemoteAudioRecorder.push` from
+        the WebSocket dispatcher; the recorder polls it on the same
+        cadence as the local mic / system buffers.
+        """
+        with self._lock:
+            self._device_sources[device_id] = source
+            self._device_labels[device_id] = label
+            self._device_last_drain[device_id] = (
+                self._start_time if self._start_time is not None else time.time()
+            )
+
+    def unregister_device_stream(self, device_id: str) -> None:
+        with self._lock:
+            self._device_sources.pop(device_id, None)
+            self._device_labels.pop(device_id, None)
+            self._device_last_drain.pop(device_id, None)
+
+    def device_label(self, device_id: str) -> Optional[str]:
+        with self._lock:
+            return self._device_labels.get(device_id)
+
+    def registered_device_ids(self) -> list[str]:
+        with self._lock:
+            return list(self._device_sources.keys())
+
+    def get_pending_device_chunks(self) -> dict[str, list[AudioChunk]]:
+        """Drain every registered device source.
+
+        Returns ``{device_id: [AudioChunk]}``. Each device produces
+        at most one chunk per call (the concatenation of everything
+        that has been pushed since the last drain). The chunk's
+        ``timestamp`` is the meeting-relative time at which the
+        previous drain ended; ``duration`` is the audio length.
+        """
+        result: dict[str, list[AudioChunk]] = {}
+        now = time.time()
+        with self._lock:
+            for device_id, source in list(self._device_sources.items()):
+                drain = getattr(source, "drain", None)
+                if drain is None:
+                    continue
+                try:
+                    audio = drain()
+                except Exception as exc:  # pragma: no cover - defensive
+                    log.error(f"Device {device_id!r} drain failed: {exc}")
+                    continue
+                if audio.size == 0:
+                    self._device_last_drain[device_id] = now
+                    continue
+                duration = audio.size / float(self.sample_rate)
+                start_meeting = self._start_time if self._start_time is not None else now
+                last_drain = self._device_last_drain.get(device_id, start_meeting)
+                timestamp = max(0.0, last_drain - start_meeting)
+                chunk = AudioChunk(
+                    audio=audio,
+                    timestamp=timestamp,
+                    source=device_id,
+                    duration=duration,
+                )
+                result[device_id] = [chunk]
+                self._device_last_drain[device_id] = now
+        return result
 
     def _start_mic_stream(self) -> None:
         """Start the microphone input stream."""

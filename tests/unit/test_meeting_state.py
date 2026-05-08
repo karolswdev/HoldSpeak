@@ -97,6 +97,7 @@ class TestTranscriptSegment:
             "start_time": 0.0,
             "end_time": 5.2,
             "is_bookmarked": False,
+            "device_id": None,
         }
 
     def test_to_dict_with_bookmark(self) -> None:
@@ -365,6 +366,50 @@ class TestMeetingState:
         )
         result = state.to_dict()
         assert result["web_url"] == "http://localhost:8765"
+
+    def test_devices_round_trip_through_to_dict(self) -> None:
+        """state.devices serializes each DeviceDescriptor to a JSON-safe dict."""
+        from datetime import datetime
+
+        from holdspeak.device_audio import DeviceDescriptor
+        from holdspeak.meeting_session import MeetingState
+
+        connected_at = datetime(2026, 5, 7, 12, 0, 0)
+        last_seen = datetime(2026, 5, 7, 12, 5, 0)
+        descriptor = DeviceDescriptor(
+            id="aipi-1",
+            label="Karol",
+            connected_at=connected_at,
+            last_seen=last_seen,
+            queue_depth=128,
+        )
+
+        state = MeetingState(
+            id="meeting-with-devices",
+            started_at=datetime(2026, 5, 7, 12, 0, 0),
+            devices=[descriptor],
+        )
+        result = state.to_dict()
+
+        assert "devices" in result
+        assert result["devices"] == [
+            {
+                "id": "aipi-1",
+                "label": "Karol",
+                "connected_at": connected_at.isoformat(),
+                "last_seen": last_seen.isoformat(),
+                "queue_depth": 128,
+            }
+        ]
+
+    def test_devices_default_empty_list(self) -> None:
+        from datetime import datetime
+
+        from holdspeak.meeting_session import MeetingState
+
+        state = MeetingState(id="m", started_at=datetime.now())
+        result = state.to_dict()
+        assert result["devices"] == []
 
 
 class TestIntelSnapshot:

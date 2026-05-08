@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 14
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-14-04
 - **Unblocks:** HS-14-08
 - **Owner:** unassigned
@@ -55,21 +55,21 @@ speaker** at a meeting → speaker attribution falls out for free
 
 ## Acceptance Criteria
 
-- [ ] `MeetingState.devices` field exists and round-trips
+- [x] `MeetingState.devices` field exists and round-trips
   through `to_dict()`.
-- [ ] `MeetingRecorder` accepts ≥ 1 device stream alongside
+- [x] `MeetingRecorder` accepts ≥ 1 device stream alongside
   local mic + system audio.
-- [ ] `TranscriptSegment.device_id` is nullable; legacy paths
+- [x] `TranscriptSegment.device_id` is nullable; legacy paths
   preserve `None`.
-- [ ] `POST /api/meeting/start {devices: [...]}` registers the
+- [x] `POST /api/meeting/start {devices: [...]}` registers the
   devices into the active session; an unknown device id
   returns 404.
-- [ ] Meeting export Markdown shows the speaker label per
+- [x] Meeting export Markdown shows the speaker label per
   segment, JSON includes `device_id`.
-- [ ] `tests/integration/test_device_meeting_session.py` green
+- [x] `tests/integration/test_device_meeting_session.py` green
   with one local + one device source producing distinct
   speaker-labeled segments.
-- [ ] Existing meeting tests stay green.
+- [x] Existing meeting tests stay green.
 
 ## Test Plan
 

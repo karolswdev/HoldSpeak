@@ -162,9 +162,38 @@ class RemoteAudioRecorder:
             wire_rate = self.wire_sample_rate
             target_rate = self.sample_rate
 
+        return self._frames_to_audio(frames, wire_rate, target_rate)
+
+    def drain(self) -> np.ndarray:
+        """Return all currently-buffered audio without stopping the recording.
+
+        The internal buffer is cleared after the snapshot, so subsequent
+        ``push()`` calls accumulate fresh audio. Used by the meeting
+        path (HS-14-06) to incrementally consume audio while the
+        recording stays open.
+
+        Returns an empty float32 array when no audio is buffered or
+        the recorder is not currently recording.
+        """
+        with self._lock:
+            if not self._recording:
+                return np.empty((0,), dtype=np.float32)
+            frames = list(self._frames)
+            self._frames.clear()
+            self._buffered_samples = 0
+            wire_rate = self.wire_sample_rate
+            target_rate = self.sample_rate
+
+        return self._frames_to_audio(frames, wire_rate, target_rate)
+
+    @staticmethod
+    def _frames_to_audio(
+        frames: list[np.ndarray],
+        wire_rate: int,
+        target_rate: int,
+    ) -> np.ndarray:
         if not frames:
             return np.empty((0,), dtype=np.float32)
-
         audio = np.concatenate(frames).astype(np.float32, copy=False)
         if wire_rate != target_rate:
             audio = _linear_resample_mono(audio, wire_rate, target_rate)

@@ -35,7 +35,7 @@ from .plugins.signals import extract_intent_signals
 from .text_processor import TextProcessor
 from .transcribe import Transcriber
 from .typer import TextTyper
-from .web_server import MeetingWebServer
+from .web_server import MeetingWebServer, _UnknownDeviceError
 
 log = get_logger("web_runtime")
 
@@ -258,10 +258,24 @@ def run_web_runtime(
         if recorder is not None:
             recorder.device = config.meeting.mic_device
 
-    def _start_meeting() -> dict[str, object]:
+    def _start_meeting(*, devices: Optional[list[str]] = None) -> dict[str, object]:
         nonlocal meeting_session, transcriber, pending_title, pending_tags, preview_window_seq
         if _active_meeting_session() is not None:
             raise RuntimeError("Meeting already active")
+
+        # Validate every requested device id is currently registered
+        # *before* spinning up a session — surfaces 404 to the caller
+        # without leaving an empty meeting on disk.
+        device_pairs: list[tuple[object, object]] = []  # (descriptor, source)
+        if devices:
+            for device_id in devices:
+                descriptor = device_registry.get(device_id)
+                if descriptor is None:
+                    raise _UnknownDeviceError(device_id)
+                source = device_registry.recorder_for(device_id)
+                if source is None:
+                    raise _UnknownDeviceError(device_id)
+                device_pairs.append((descriptor, source))
 
         if transcriber is None or getattr(transcriber, "model_name", None) != config.model.name:
             transcriber = Transcriber(model_name=config.model.name)
@@ -305,6 +319,15 @@ def run_web_runtime(
             state = session.state or state
         if runtime_url:
             state.web_url = runtime_url
+
+        for descriptor, source in device_pairs:
+            try:
+                session.attach_device(descriptor, source)  # type: ignore[arg-type]
+            except Exception as exc:
+                log.error(f"Failed to attach device {getattr(descriptor, 'id', '?')}: {exc}")
+                # Best effort: continue with whatever attached successfully.
+                # The descriptors that *did* attach remain on state.devices.
+                continue
 
         with meeting_lock:
             meeting_session = session
@@ -1024,11 +1047,21 @@ def run_web_runtime(
         """Begin a device-driven voice-typing session.
 
         Returns ``False`` (so the WS dispatcher emits a
-        ``session_busy`` error frame) when the local hotkey or
-        another device already owns the session, or when a meeting
-        is in progress.
+        ``session_busy`` error frame) when:
+        - a meeting is active and this device is *not* attached
+          to it (meeting holds the audio floor);
+        - the local hotkey or another device already owns the
+          voice session.
+
+        When this device *is* attached to the active meeting, the
+        meeting already started its recorder — return ``True``
+        without claiming the voice session so the WS keeps pumping
+        binary frames into the meeting's drain path.
         """
-        if _active_meeting_session() is not None:
+        active_meeting = _active_meeting_session()
+        if active_meeting is not None:
+            if active_meeting.is_device_attached(device_id):
+                return True
             return False
         owner = f"device:{device_id}"
         try:
@@ -1044,6 +1077,10 @@ def run_web_runtime(
     def _on_device_voice_stop(
         device_id: str, source: AudioSource
     ) -> Optional[np.ndarray]:
+        active_meeting = _active_meeting_session()
+        if active_meeting is not None and active_meeting.is_device_attached(device_id):
+            # The meeting owns this device's audio routing.
+            return None
         owner = f"device:{device_id}"
         try:
             audio = voice_session.end(owner=owner)

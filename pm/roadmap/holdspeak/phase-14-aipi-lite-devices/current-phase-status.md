@@ -1,6 +1,6 @@
 # Phase 14 - AIPI-Lite Devices: Remote Audio Ingest Substrate
 
-**Last updated:** 2026-05-07 (HS-14-05 shipped — voice-typing path consumes remote audio; web runtime arbitrates hotkey + device sessions through a shared `VoiceTypingSession`).
+**Last updated:** 2026-05-07 (HS-14-06 shipped — meeting path accepts device streams; per-segment `device_id` + `MeetingState.devices` round-trip through to_dict; `POST /api/meeting/start {devices: [...]}` attaches at session start).
 
 ## Goal
 
@@ -119,7 +119,7 @@ tunnel/relay layer without redesigning the protocol.
 | HS-14-03 | PSK auth + handshake protocol | done | [story-03-auth-handshake.md](./story-03-auth-handshake.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-14-04 | `/api/devices/audio` WebSocket + backpressure | done | [story-04-audio-ingest-websocket.md](./story-04-audio-ingest-websocket.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-14-05 | Voice-typing path consumes remote audio | done | [story-05-voice-typing-remote.md](./story-05-voice-typing-remote.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-14-06 | Meeting path accepts device streams + per-segment device_id | backlog | [story-06-meeting-device-streams.md](./story-06-meeting-device-streams.md) | — |
+| HS-14-06 | Meeting path accepts device streams + per-segment device_id | done | [story-06-meeting-device-streams.md](./story-06-meeting-device-streams.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-14-07 | Server → device status push-back protocol | backlog | [story-07-status-pushback.md](./story-07-status-pushback.md) | — |
 | HS-14-08 | Phase exit + DoD + protocol docs + cross-network deferral | backlog | [story-08-dod.md](./story-08-dod.md) | — |
 
@@ -241,6 +241,62 @@ web_runtime + config + intel_streaming sweep.
 Pickup: HS-14-06 (meeting path accepts device streams +
 per-segment `device_id`) is next; HS-14-07 (server → device
 status push) and HS-14-08 (DoD) close the phase.
+
+**HS-14-06 (2026-05-07):** Meeting path now accepts device
+streams. `TranscriptSegment.device_id: Optional[str] = None`
+flows through `to_dict`; legacy mic + system segments preserve
+`None`. `MeetingState.devices: list[DeviceDescriptor]` (with a
+JSON-safe shim that handles datetime → ISO conversion) is
+captured at attach time and round-trips through `to_dict`.
+
+`RemoteAudioRecorder.drain()` returns and clears the buffer
+without stopping the recording; the meeting drains pushed PCM
+on the same cadence as the mic / system streams.
+`MeetingRecorder` gained `register_device_stream` /
+`unregister_device_stream` / `device_label` /
+`registered_device_ids` / `get_pending_device_chunks`. The
+recorder doesn't capture device audio itself — the WS route
+pushes via `RemoteAudioRecorder.push` and the meeting polls.
+
+`MeetingSession` gained `attach_device(descriptor, source)` /
+`detach_device(device_id)` / `is_device_attached(device_id)`.
+`_transcribe_chunks` accepts a `device_chunks: dict[str,
+list[AudioChunk]]` kwarg and emits per-device `TranscriptSegment`s
+with `device_id` set and `speaker` resolved to the device's
+registered label. The transcription loop and the final-flush
+path both drain device streams so audio captured between the
+last poll and meeting stop still surfaces in the transcript.
+
+`POST /api/meeting/start` accepts an optional Pydantic body
+`{devices: [device_id...]}`. `web_runtime._start_meeting`
+validates each id against `device_registry.get(...)` *before*
+spinning up the session; an unknown id raises
+`_UnknownDeviceError`, which the route maps to 404 with the
+offending `device_id` in the JSON body. After the session
+starts, attach loops over the validated descriptors.
+
+Voice handlers (HS-14-05) now respect meeting attachment:
+when a meeting is active, `_on_device_voice_start` returns
+`True` (no-op) for an attached device — the meeting already
+owns the recorder lifecycle — and returns `False` (yields
+`session_busy` to the device) for any non-attached device.
+`_on_device_voice_stop` is a no-op for attached devices for
+the same reason. Meetings own audio routing; voice typing
+holds the floor only when no meeting is active.
+
+Test coverage: 4 new unit cases on `RemoteAudioRecorder.drain`,
+2 round-trip cases on `MeetingState.devices`, 1
+`device_id`-on-segment case, and 7 integration cases in
+`tests/integration/test_device_meeting_session.py` (attach
+records descriptor + starts source; device chunks become
+labeled segments via `_transcribe_chunks`; legacy mic
+segments keep `device_id=None`; detach stops + unregisters;
+`POST /api/meeting/start` passes `devices` to `on_start`;
+unknown id → 404 with the id in the body; legacy no-body
+call still works). 319/319 green on the full sweep.
+
+Pickup: HS-14-07 (server → device status push) is next;
+HS-14-08 closes the phase.
 
 ## Active risks
 

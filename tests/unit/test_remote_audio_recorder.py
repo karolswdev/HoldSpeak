@@ -159,3 +159,52 @@ class TestRemoteAudioRecorder:
             RemoteAudioRecorder(wire_sample_rate=-1)
         with pytest.raises(ValueError):
             RemoteAudioRecorder(max_buffer_seconds=0)
+
+
+class TestRemoteAudioRecorderDrain:
+    """``drain()`` returns the buffer without stopping (HS-14-06)."""
+
+    def test_drain_returns_buffered_audio_and_clears(self) -> None:
+        rec = RemoteAudioRecorder()
+        rec.start_recording()
+        rec.push(_int16_le(np.full(800, 0.25, dtype=np.float32)))
+
+        first = rec.drain()
+        assert first.dtype == np.float32
+        assert first.shape == (800,)
+
+        # Buffer is empty; a follow-up drain returns nothing.
+        second = rec.drain()
+        assert second.size == 0
+
+        # Recording is still active; another push then drain still works.
+        rec.push(_int16_le(np.full(400, -0.5, dtype=np.float32)))
+        third = rec.drain()
+        assert third.shape == (400,)
+
+        rec.stop_recording()
+
+    def test_drain_when_not_recording_returns_empty(self) -> None:
+        rec = RemoteAudioRecorder()
+        out = rec.drain()
+        assert out.dtype == np.float32
+        assert out.size == 0
+
+    def test_drain_does_not_lose_recording_state(self) -> None:
+        rec = RemoteAudioRecorder()
+        rec.start_recording()
+        rec.drain()
+        # Push after drain is still accepted.
+        rec.push(_int16_le(np.full(200, 0.1, dtype=np.float32)))
+        out = rec.stop_recording()
+        assert out.shape == (200,)
+
+    def test_drain_resamples_when_wire_rate_differs(self) -> None:
+        rec = RemoteAudioRecorder(wire_sample_rate=8_000)
+        rec.start_recording()
+        rec.push(_int16_le(np.full(8000, 0.25, dtype=np.float32)))
+        out = rec.drain()
+        assert out.dtype == np.float32
+        # 1s at 8 kHz wire → ~16 000 samples at the 16 kHz target.
+        assert abs(out.size - 16_000) <= 1
+        rec.stop_recording()

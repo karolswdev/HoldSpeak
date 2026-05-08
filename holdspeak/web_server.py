@@ -175,6 +175,30 @@ class _IntentOverrideRequest(BaseModel):
 class _IntentPreviewRequest(BaseModel):
     profile: Optional[str] = None
     threshold: Optional[float] = None
+
+
+class _MeetingStartRequest(BaseModel):
+    """Optional body for ``POST /api/meeting/start`` (HS-14-06).
+
+    ``devices`` is an optional list of currently-registered
+    AIPI-Lite-class device ids that should contribute audio to the
+    meeting. Default empty → legacy local-mic + system-audio only.
+    """
+
+    devices: Optional[list[str]] = None
+
+
+class _UnknownDeviceError(LookupError):
+    """Raised by ``on_start`` when a requested device id is not registered.
+
+    The route maps this to a 404 with the offending ``device_id``
+    surfaced in the JSON body so the caller can correct its
+    request without polling the registry.
+    """
+
+    def __init__(self, device_id: str) -> None:
+        super().__init__(f"Unknown device id: {device_id!r}")
+        self.device_id = device_id
     intent_scores: Optional[dict[str, float]] = None
     override_intents: Optional[list[str]] = None
     previous_intents: Optional[list[str]] = None
@@ -822,15 +846,24 @@ class MeetingWebServer:
             return JSONResponse({"success": True})
 
         @app.post("/api/meeting/start")
-        async def api_meeting_start() -> Any:
+        async def api_meeting_start(
+            payload: Optional[_MeetingStartRequest] = None,
+        ) -> Any:
             if self.on_start is None:
                 return JSONResponse(
                     {"success": False, "error": "Meeting start control not supported"},
                     status_code=501,
                 )
 
+            devices = list(payload.devices) if payload and payload.devices else []
+
             try:
-                result = self.on_start()
+                result = self.on_start(devices=devices) if devices else self.on_start()
+            except _UnknownDeviceError as exc:
+                return JSONResponse(
+                    {"success": False, "error": str(exc), "device_id": exc.device_id},
+                    status_code=404,
+                )
             except Exception as e:
                 log.error(f"on_start failed: {e}")
                 return JSONResponse({"success": False, "error": str(e)}, status_code=500)
