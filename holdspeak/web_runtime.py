@@ -9,10 +9,14 @@ import webbrowser
 from datetime import datetime
 from typing import Optional
 
+import numpy as np
+
 from .audio import AudioRecorder
 from .config import Config
+from .audio import AudioSource
 from .device_audio import DeviceRegistry, ensure_device_psk
 from .hotkey import HotkeyListener
+from .voice_typing import VoiceTypingSession
 from .logging_config import get_logger
 from .meeting_session import MeetingSession
 from .plugins.router import (
@@ -69,6 +73,7 @@ def run_web_runtime(
     server: Optional[MeetingWebServer] = None
     meeting_session: Optional[MeetingSession] = None
     device_registry = DeviceRegistry()
+    voice_session = VoiceTypingSession()
     transcription_lock = threading.Lock()
     text_processor = TextProcessor()
     from .activity_context import ActivityContextProvider
@@ -931,72 +936,129 @@ def run_web_runtime(
             return None
         return session.edit_action_item(item_id, task=task, owner=owner, due=due)
 
+    def _transcribe_and_type(audio: np.ndarray) -> None:
+        """Run transcription, text processing, and typing for a captured chunk.
+
+        Shared between the local hotkey path and the device-driven
+        voice-typing path (HS-14-05). Always flips voice state back
+        to ``idle`` in its ``finally``.
+        """
+        nonlocal transcriber
+        with transcription_lock:
+            try:
+                if transcriber is None or getattr(transcriber, "model_name", None) != config.model.name:
+                    transcriber = Transcriber(model_name=config.model.name)
+                text = transcriber.transcribe(audio)
+                if not text:
+                    return
+                text = text_processor.process(text)
+                with state_lock:
+                    runtime_status["last_transcription"] = text
+                    runtime_status["last_error"] = ""
+                print(f"-> {text}")
+                if typer is not None:
+                    try:
+                        typer.type_text(text)
+                    except Exception as exc:
+                        with state_lock:
+                            runtime_status["last_error"] = f"Typing failed: {exc}"
+                            runtime_status["text_injection_enabled"] = False
+                            runtime_status["text_injection_error"] = f"{type(exc).__name__}: {exc}"
+                        log.warning(f"Typing failed in web mode: {exc}")
+            except Exception as exc:
+                with state_lock:
+                    runtime_status["last_error"] = f"Transcription failed: {exc}"
+                log.error(f"Transcription failed in web mode: {exc}")
+            finally:
+                _set_voice_state("idle")
+
+    def _kick_off_transcribe(audio: np.ndarray) -> None:
+        if len(audio) < 1600:
+            _set_voice_state("idle")
+            return
+        _set_voice_state("transcribing")
+        threading.Thread(
+            target=lambda: _transcribe_and_type(audio),
+            daemon=True,
+        ).start()
+
     def _on_hotkey_press() -> None:
         if runtime_stop_event.is_set():
             return
         if _active_meeting_session() is not None:
             return
-        _set_voice_state("recording")
+        if recorder is None:
+            return
         try:
-            assert recorder is not None
-            recorder.start_recording()
+            accepted = voice_session.begin(recorder, owner="hotkey")
         except Exception as exc:
             with state_lock:
                 runtime_status["last_error"] = f"Recording failed: {exc}"
             _set_voice_state("idle")
             log.error(f"Recording failed in web mode: {exc}")
+            return
+        if not accepted:
+            log.info("hotkey_press_ignored_session_active")
+            return
+        _set_voice_state("recording")
 
     def _on_hotkey_release() -> None:
         if _active_meeting_session() is not None:
             _set_voice_state("idle")
             return
         try:
-            assert recorder is not None
-            audio = recorder.stop_recording()
+            audio = voice_session.end(owner="hotkey")
         except Exception as exc:
             with state_lock:
                 runtime_status["last_error"] = f"Recording error: {exc}"
             _set_voice_state("idle")
             log.error(f"Recording error in web mode: {exc}")
             return
-
-        if len(audio) < 1600:
+        if audio is None:
             _set_voice_state("idle")
             return
 
-        _set_voice_state("transcribing")
+        _kick_off_transcribe(audio)
 
-        def _transcribe_and_type() -> None:
-            nonlocal transcriber
-            with transcription_lock:
-                try:
-                    if transcriber is None or getattr(transcriber, "model_name", None) != config.model.name:
-                        transcriber = Transcriber(model_name=config.model.name)
-                    text = transcriber.transcribe(audio)
-                    if not text:
-                        return
-                    text = text_processor.process(text)
-                    with state_lock:
-                        runtime_status["last_transcription"] = text
-                        runtime_status["last_error"] = ""
-                    print(f"-> {text}")
-                    if typer is not None:
-                        try:
-                            typer.type_text(text)
-                        except Exception as exc:
-                            with state_lock:
-                                runtime_status["last_error"] = f"Typing failed: {exc}"
-                                runtime_status["text_injection_enabled"] = False
-                                runtime_status["text_injection_error"] = f"{type(exc).__name__}: {exc}"
-                            log.warning(f"Typing failed in web mode: {exc}")
-                except Exception as exc:
-                    with state_lock:
-                        runtime_status["last_error"] = f"Transcription failed: {exc}"
-                    log.error(f"Transcription failed in web mode: {exc}")
-                finally:
-                    _set_voice_state("idle")
+    def _on_device_voice_start(device_id: str, source: AudioSource) -> bool:
+        """Begin a device-driven voice-typing session.
 
-        threading.Thread(target=_transcribe_and_type, daemon=True).start()
+        Returns ``False`` (so the WS dispatcher emits a
+        ``session_busy`` error frame) when the local hotkey or
+        another device already owns the session, or when a meeting
+        is in progress.
+        """
+        if _active_meeting_session() is not None:
+            return False
+        owner = f"device:{device_id}"
+        try:
+            accepted = voice_session.begin(source, owner=owner)
+        except Exception as exc:
+            log.error(f"Device voice-typing start failed: {exc}")
+            return False
+        if not accepted:
+            return False
+        _set_voice_state("recording")
+        return True
+
+    def _on_device_voice_stop(
+        device_id: str, source: AudioSource
+    ) -> Optional[np.ndarray]:
+        owner = f"device:{device_id}"
+        try:
+            audio = voice_session.end(owner=owner)
+        except Exception as exc:
+            log.error(f"Device voice-typing stop failed: {exc}")
+            _set_voice_state("idle")
+            return None
+        if audio is None:
+            _set_voice_state("idle")
+            return None
+        _kick_off_transcribe(audio)
+        return audio
+
+    def _on_device_voice_cancel(device_id: str) -> None:
+        voice_session.cancel(owner=f"device:{device_id}")
 
     try:
         server = MeetingWebServer(
@@ -1019,6 +1081,9 @@ def run_web_runtime(
             project_detector=project_detector,
             device_registry=device_registry,
             device_psk_provider=lambda: ensure_device_psk(config),
+            on_device_voice_start=_on_device_voice_start,
+            on_device_voice_stop=_on_device_voice_stop,
+            on_device_voice_cancel=_on_device_voice_cancel,
             host="127.0.0.1",
         )
         runtime_url = server.start()

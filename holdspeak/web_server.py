@@ -24,6 +24,7 @@ from .logging_config import get_logger
 if TYPE_CHECKING:
     import numpy as np
 
+    from .audio import AudioSource
     from .device_audio import DeviceRegistry
 
 log = get_logger("web_server")
@@ -450,6 +451,11 @@ class MeetingWebServer:
         device_registry: Optional["DeviceRegistry"] = None,
         device_psk_provider: Optional[Callable[[], str]] = None,
         on_device_audio_chunk: Optional[Callable[[str, "np.ndarray"], None]] = None,
+        on_device_voice_start: Optional[Callable[[str, "AudioSource"], bool]] = None,
+        on_device_voice_stop: Optional[
+            Callable[[str, "AudioSource"], Optional["np.ndarray"]]
+        ] = None,
+        on_device_voice_cancel: Optional[Callable[[str], None]] = None,
         host: str = "127.0.0.1",
     ) -> None:
         if _IMPORT_ERROR is not None:
@@ -494,6 +500,13 @@ class MeetingWebServer:
         self.on_device_audio_chunk: Optional[Callable[[str, "np.ndarray"], None]] = (
             on_device_audio_chunk
         )
+        self.on_device_voice_start: Optional[
+            Callable[[str, "AudioSource"], bool]
+        ] = on_device_voice_start
+        self.on_device_voice_stop: Optional[
+            Callable[[str, "AudioSource"], Optional["np.ndarray"]]
+        ] = on_device_voice_stop
+        self.on_device_voice_cancel: Optional[Callable[[str], None]] = on_device_voice_cancel
         self.host = host
 
         self.port: Optional[int] = None
@@ -603,6 +616,9 @@ class MeetingWebServer:
             device_registry=self.device_registry,
             get_psk=self.device_psk_provider,
             on_chunk=self.on_device_audio_chunk,
+            on_voice_start=self.on_device_voice_start,
+            on_voice_stop=self.on_device_voice_stop,
+            on_voice_cancel=self.on_device_voice_cancel,
         )
 
         @app.on_event("startup")

@@ -1,6 +1,6 @@
 # Phase 14 - AIPI-Lite Devices: Remote Audio Ingest Substrate
 
-**Last updated:** 2026-05-07 (HS-14-04 shipped — `/api/devices/audio` WebSocket route is live with end-to-end PCM round-trip + backpressure + disconnect cleanup).
+**Last updated:** 2026-05-07 (HS-14-05 shipped — voice-typing path consumes remote audio; web runtime arbitrates hotkey + device sessions through a shared `VoiceTypingSession`).
 
 ## Goal
 
@@ -118,7 +118,7 @@ tunnel/relay layer without redesigning the protocol.
 | HS-14-02 | DeviceRegistry + device descriptor model | done | [story-02-device-registry.md](./story-02-device-registry.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-14-03 | PSK auth + handshake protocol | done | [story-03-auth-handshake.md](./story-03-auth-handshake.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-14-04 | `/api/devices/audio` WebSocket + backpressure | done | [story-04-audio-ingest-websocket.md](./story-04-audio-ingest-websocket.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-14-05 | Voice-typing path consumes remote audio | backlog | [story-05-voice-typing-remote.md](./story-05-voice-typing-remote.md) | — |
+| HS-14-05 | Voice-typing path consumes remote audio | done | [story-05-voice-typing-remote.md](./story-05-voice-typing-remote.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-14-06 | Meeting path accepts device streams + per-segment device_id | backlog | [story-06-meeting-device-streams.md](./story-06-meeting-device-streams.md) | — |
 | HS-14-07 | Server → device status push-back protocol | backlog | [story-07-status-pushback.md](./story-07-status-pushback.md) | — |
 | HS-14-08 | Phase exit + DoD + protocol docs + cross-network deferral | backlog | [story-08-dod.md](./story-08-dod.md) | — |
@@ -197,6 +197,50 @@ controller + web_runtime + config + intel_streaming.
 
 Pickup: HS-14-05 (voice-typing path consumes remote audio) is
 next; the `on_chunk` hook is the integration point.
+
+**HS-14-05 (2026-05-07):** Voice-typing path now consumes remote
+audio. New module `holdspeak/voice_typing.py` with
+`VoiceTypingSession` — a one-at-a-time arbiter shared between
+the local hotkey and any registered device. `begin(source,
+owner)` starts the source under lock; concurrent claims return
+`False` (silent for the hotkey, surfaced to the device as a
+`{"type": "error", "code": "session_busy", ...}` frame).
+`end(owner)` stops the source and returns the captured ndarray;
+`cancel(owner)` is the disconnect-cleanup path.
+
+`device_audio_ws.register_device_audio_routes` gained
+`on_voice_start` / `on_voice_stop` / `on_voice_cancel`
+handlers. When set, the WS dispatcher delegates start/stop
+semantics to them (instead of the legacy direct
+`recorder.start_recording()` / `recorder.stop_recording()` +
+`on_chunk` path used by HS-14-04 tests). On disconnect, the
+teardown runs `on_voice_cancel(device_id)` first so a session
+this device owned is dropped before the recorder is torn down.
+
+`MeetingWebServer` forwards three new constructor kwargs.
+`run_web_runtime` constructs a single shared `VoiceTypingSession`
+and wires:
+- the local hotkey → `voice_session.begin(local_recorder,
+  owner="hotkey")`,
+- the device WS → `voice_session.begin(device_recorder,
+  owner=f"device:{device_id}")`,
+- shared transcribe+type extracted into `_transcribe_and_type`
+  so both paths land in the same Whisper / `text_processor` /
+  `TextTyper` pipeline.
+
+Test coverage: 11 unit cases on `VoiceTypingSession` (begin /
+end / mismatched owner / no-active-session / failed-source /
+cancel / blank-owner / concurrent-begins-serialize) +
+4 integration cases on the WS path (full pipeline end-to-end
+with fake STT and mock typer; concurrent device receives
+`session_busy`; mid-session disconnect cancels cleanly; legacy
+`on_chunk` path still works when voice handlers are absent).
+232/232 green on the audio + device + voice + controller +
+web_runtime + config + intel_streaming sweep.
+
+Pickup: HS-14-06 (meeting path accepts device streams +
+per-segment `device_id`) is next; HS-14-07 (server → device
+status push) and HS-14-08 (DoD) close the phase.
 
 ## Active risks
 

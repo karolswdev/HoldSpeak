@@ -21,6 +21,7 @@ from typing import Any, Callable, Optional
 import numpy as np
 from fastapi import WebSocket, WebSocketDisconnect
 
+from .audio import AudioSource
 from .device_audio import (
     DeviceRegistry,
     DuplicateLabelError,
@@ -38,6 +39,18 @@ log = get_logger("device_audio_ws")
 
 PskProvider = Callable[[], str]
 ChunkConsumer = Callable[[str, np.ndarray], None]
+# Voice-typing handlers (HS-14-05). When set, the dispatcher
+# delegates start/stop semantics to these instead of calling
+# ``recorder.start_recording`` / ``recorder.stop_recording``
+# directly. ``start`` returns ``False`` to signal the device that
+# another session is active; ``stop`` returns the captured audio
+# (or ``None`` if the session was never owned by this device).
+VoiceStartHandler = Callable[[str, AudioSource], bool]
+VoiceStopHandler = Callable[[str, AudioSource], Optional[np.ndarray]]
+# Called from the disconnect-cleanup path so the runtime can drop
+# any session this device still owns. Receives the device id only;
+# the source has already been removed from the registry.
+VoiceCancelHandler = Callable[[str], None]
 
 
 def register_device_audio_routes(
@@ -46,6 +59,9 @@ def register_device_audio_routes(
     device_registry: DeviceRegistry,
     get_psk: PskProvider,
     on_chunk: Optional[ChunkConsumer] = None,
+    on_voice_start: Optional[VoiceStartHandler] = None,
+    on_voice_stop: Optional[VoiceStopHandler] = None,
+    on_voice_cancel: Optional[VoiceCancelHandler] = None,
 ) -> None:
     """Mount ``WebSocket /api/devices/audio`` on ``app``.
 
@@ -58,8 +74,24 @@ def register_device_audio_routes(
             the runtime.
         on_chunk: Optional consumer invoked with
             ``(device_id, audio_ndarray)`` whenever a ``stop``
-            control frame produces audio. HS-14-05 / HS-14-06 wire
-            the voice-typing and meeting consumers here.
+            control frame produces audio. Used by integration
+            tests that need raw access to the audio. When voice
+            handlers are wired (HS-14-05 / HS-14-06), audio
+            ownership moves to those handlers and ``on_chunk``
+            is **not** invoked from the stop path.
+        on_voice_start: Optional handler called on each ``start``
+            control frame. Returns ``True`` when the device's
+            voice-typing session was accepted; ``False`` when
+            another session is already active (the WS dispatcher
+            sends a ``session_busy`` error frame back). When
+            unset, the dispatcher falls back to calling
+            ``recorder.start_recording()`` directly.
+        on_voice_stop: Optional handler called on each ``stop``
+            control frame; returns the captured audio (or
+            ``None``). When set, owns the audio — ``on_chunk`` is
+            not invoked. When unset, the dispatcher falls back to
+            calling ``recorder.stop_recording()`` and forwarding
+            the result to ``on_chunk``.
     """
 
     @app.websocket("/api/devices/audio")
@@ -69,6 +101,9 @@ def register_device_audio_routes(
             device_registry=device_registry,
             get_psk=get_psk,
             on_chunk=on_chunk,
+            on_voice_start=on_voice_start,
+            on_voice_stop=on_voice_stop,
+            on_voice_cancel=on_voice_cancel,
         )
 
 
@@ -78,6 +113,9 @@ async def _serve_device_audio(
     device_registry: DeviceRegistry,
     get_psk: PskProvider,
     on_chunk: Optional[ChunkConsumer],
+    on_voice_start: Optional[VoiceStartHandler] = None,
+    on_voice_stop: Optional[VoiceStopHandler] = None,
+    on_voice_cancel: Optional[VoiceCancelHandler] = None,
 ) -> None:
     """Drive the lifecycle of a single device-audio WebSocket connection."""
 
@@ -116,6 +154,8 @@ async def _serve_device_audio(
             device_registry=device_registry,
             device_id=device_id,
             on_chunk=on_chunk,
+            on_voice_start=on_voice_start,
+            on_voice_stop=on_voice_stop,
         )
     except WebSocketDisconnect:
         pass
@@ -125,7 +165,7 @@ async def _serve_device_audio(
             extra={"device_id": device_id},
         )
     finally:
-        _teardown(device_registry, device_id)
+        _teardown(device_registry, device_id, on_voice_cancel=on_voice_cancel)
 
 
 async def _do_handshake(
@@ -170,6 +210,8 @@ async def _dispatch_loop(
     device_registry: DeviceRegistry,
     device_id: str,
     on_chunk: Optional[ChunkConsumer],
+    on_voice_start: Optional[VoiceStartHandler] = None,
+    on_voice_stop: Optional[VoiceStopHandler] = None,
 ) -> None:
     """Read frames until the peer disconnects or sends a malformed control."""
 
@@ -186,12 +228,15 @@ async def _dispatch_loop(
             return
 
         if "text" in msg and msg["text"] is not None:
-            _handle_control(
+            await _handle_control(
+                websocket,
                 msg["text"],
                 device_registry=device_registry,
                 device_id=device_id,
                 recorder=recorder,
                 on_chunk=on_chunk,
+                on_voice_start=on_voice_start,
+                on_voice_stop=on_voice_stop,
             )
             continue
 
@@ -208,13 +253,16 @@ async def _dispatch_loop(
         )
 
 
-def _handle_control(
+async def _handle_control(
+    websocket: WebSocket,
     raw: str,
     *,
     device_registry: DeviceRegistry,
     device_id: str,
-    recorder: Any,
+    recorder: AudioSource,
     on_chunk: Optional[ChunkConsumer],
+    on_voice_start: Optional[VoiceStartHandler],
+    on_voice_stop: Optional[VoiceStopHandler],
 ) -> None:
     try:
         control = json.loads(raw)
@@ -235,19 +283,56 @@ def _handle_control(
     ctrl_type = control.get("type")
 
     if ctrl_type == "start":
-        if not recorder.is_recording:
+        if on_voice_start is not None:
             try:
-                recorder.start_recording()
+                accepted = on_voice_start(device_id, recorder)
             except Exception:
                 log.exception(
-                    "device_audio_start_failed",
+                    "device_audio_voice_start_failed",
                     extra={"device_id": device_id},
                 )
                 return
+            if not accepted:
+                try:
+                    await websocket.send_json(
+                        {
+                            "type": "error",
+                            "code": "session_busy",
+                            "reason": "another voice-typing session is already active",
+                        }
+                    )
+                except Exception:
+                    pass
+                return
+        else:
+            if not recorder.is_recording:
+                try:
+                    recorder.start_recording()
+                except Exception:
+                    log.exception(
+                        "device_audio_start_failed",
+                        extra={"device_id": device_id},
+                    )
+                    return
         device_registry.touch(device_id)
         return
 
     if ctrl_type == "stop":
+        if on_voice_stop is not None:
+            try:
+                audio = on_voice_stop(device_id, recorder)
+            except Exception:
+                log.exception(
+                    "device_audio_voice_stop_failed",
+                    extra={"device_id": device_id},
+                )
+                return
+            device_registry.touch(device_id)
+            # Voice handler owns the audio; ``on_chunk`` is not
+            # invoked from this path.
+            _ = audio
+            return
+
         if not recorder.is_recording:
             device_registry.touch(device_id)
             return
@@ -280,9 +365,22 @@ def _handle_control(
     )
 
 
-def _teardown(device_registry: DeviceRegistry, device_id: Optional[str]) -> None:
+def _teardown(
+    device_registry: DeviceRegistry,
+    device_id: Optional[str],
+    *,
+    on_voice_cancel: Optional[VoiceCancelHandler] = None,
+) -> None:
     if device_id is None:
         return
+    if on_voice_cancel is not None:
+        try:
+            on_voice_cancel(device_id)
+        except Exception:
+            log.exception(
+                "device_audio_voice_cancel_failed",
+                extra={"device_id": device_id},
+            )
     recorder = device_registry.recorder_for(device_id)
     if recorder is not None and getattr(recorder, "is_recording", False):
         try:

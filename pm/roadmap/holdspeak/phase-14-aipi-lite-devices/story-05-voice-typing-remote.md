@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 14
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-14-04
 - **Unblocks:** HS-14-08
 - **Owner:** unassigned
@@ -49,17 +49,17 @@ existing controller stays mostly unchanged.
 
 ## Acceptance Criteria
 
-- [ ] Controller no longer instantiates `AudioRecorder`
+- [x] Controller no longer instantiates `AudioRecorder`
   directly; accepts an `AudioSource` via factory.
-- [ ] `AudioRecorder` continues to be the default for
+- [x] `AudioRecorder` continues to be the default for
   hotkey-driven sessions; behavior unchanged.
-- [ ] Device-initiated `start` → recorder starts;
+- [x] Device-initiated `start` → recorder starts;
   device-initiated `stop` → recorder stops, transcript flows
   through the same downstream pipeline.
-- [ ] Concurrent device session attempt while a hotkey or
+- [x] Concurrent device session attempt while a hotkey or
   device session is active is rejected (typed error to the
   device; no impact on the active session).
-- [ ] `tests/integration/test_voice_typing_via_device.py`
+- [x] `tests/integration/test_voice_typing_via_device.py`
   green; existing voice-typing tests stay green.
 
 ## Test Plan
