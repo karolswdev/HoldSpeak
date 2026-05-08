@@ -21,16 +21,23 @@ counters, ``/api/runtime/status`` integration) lands in HS-14-04.
 
 from __future__ import annotations
 
+import hmac
+import secrets
 import threading
 from collections import deque
 from dataclasses import dataclass, replace
 from datetime import datetime
-from typing import Optional
+from pathlib import Path
+from typing import Any, Literal, Optional, TYPE_CHECKING
 
 import numpy as np
+from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 
 from .audio import AudioSource, _linear_resample_mono
 from .logging_config import get_logger
+
+if TYPE_CHECKING:
+    from .config import Config
 
 log = get_logger("audio.remote")
 registry_log = get_logger("audio.devices")
@@ -307,11 +314,168 @@ class DeviceRegistry:
             return self._recorders.get(device_id)
 
 
+# ---------------------------------------------------------------------------
+# Device handshake protocol (HS-14-03)
+# ---------------------------------------------------------------------------
+#
+# A device opens the audio ingest WebSocket, sends a single JSON
+# ``DeviceHandshake`` frame as its first message, and only then is
+# allowed to push binary PCM. The route (HS-14-04) maps the
+# exceptions raised here onto WebSocket close codes from the 4xxx
+# application range; constants live here so the route does not
+# duplicate them.
+
+DEVICE_HANDSHAKE_VERSION = 1
+
+WS_CLOSE_INVALID_HANDSHAKE = 4001
+WS_CLOSE_PSK_MISMATCH = 4003
+WS_CLOSE_DUPLICATE_LABEL = 4009
+
+
+class HandshakeError(DeviceRegistryError):
+    """Base class for handshake-time auth/protocol errors."""
+
+    code: int = WS_CLOSE_INVALID_HANDSHAKE
+
+
+class InvalidHandshakeError(HandshakeError):
+    """Raised when the handshake payload is missing fields, malformed, or has unknown extras."""
+
+    code: int = WS_CLOSE_INVALID_HANDSHAKE
+
+
+class PskMismatchError(HandshakeError):
+    """Raised when the device's PSK does not match the configured value."""
+
+    code: int = WS_CLOSE_PSK_MISMATCH
+
+
+# ``DuplicateLabelError`` is raised by ``DeviceRegistry.register`` and
+# carries no ``code`` of its own. The route maps it to
+# ``WS_CLOSE_DUPLICATE_LABEL`` (4009) at the call site.
+
+
+class DeviceHandshake(BaseModel):
+    """First-message handshake the device sends on the audio ingest WebSocket.
+
+    Strict by design — unknown fields are rejected. The PSK is *not*
+    compared here; route-level code calls :func:`verify_psk` with
+    the configured value.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    type: Literal["hello"]
+    device_id: str
+    label: str
+    psk: str
+    version: int
+
+    @field_validator("device_id", "label", "psk")
+    @classmethod
+    def _non_empty(cls, value: str) -> str:
+        if not value:
+            raise ValueError("must not be empty")
+        return value
+
+
+def parse_handshake(payload: Any) -> DeviceHandshake:
+    """Validate and parse a handshake payload (a decoded JSON object).
+
+    Raises:
+        InvalidHandshakeError: if the payload is not a mapping, is
+            missing required fields, has unknown fields, or contains
+            invalid types.
+    """
+    if not isinstance(payload, dict):
+        raise InvalidHandshakeError(
+            f"handshake payload must be a JSON object, got {type(payload).__name__}"
+        )
+    try:
+        return DeviceHandshake.model_validate(payload)
+    except ValidationError as exc:
+        raise InvalidHandshakeError(str(exc)) from exc
+
+
+def verify_psk(provided: str, expected: str) -> bool:
+    """Constant-time comparison between the device-supplied PSK and the configured one.
+
+    Returns ``False`` (without invoking ``hmac.compare_digest``) when
+    either input is empty so a freshly-installed instance with no
+    PSK on disk cannot be authenticated by sending an empty string.
+    """
+    if not provided or not expected:
+        return False
+    return hmac.compare_digest(
+        provided.encode("utf-8"), expected.encode("utf-8")
+    )
+
+
+# ---------------------------------------------------------------------------
+# PSK lifecycle helpers
+# ---------------------------------------------------------------------------
+
+
+def generate_device_psk() -> str:
+    """Return a fresh, cryptographically random URL-safe base64 PSK (32 chars)."""
+    # token_urlsafe(24) yields ~32 chars (no padding). Comfortably
+    # above the ≥24 char floor in the spec; the underlying entropy
+    # is 24 bytes (192 bits).
+    return secrets.token_urlsafe(24)
+
+
+def ensure_device_psk(
+    config: "Config",
+    *,
+    save_path: Optional[Path] = None,
+) -> str:
+    """Return the device PSK, generating + persisting it on first use.
+
+    Mutates ``config.device.psk`` and saves the config file when the
+    PSK was empty. A non-empty PSK is returned unchanged without
+    touching disk.
+    """
+    if config.device.psk:
+        return config.device.psk
+    config.device.psk = generate_device_psk()
+    config.save(save_path)
+    return config.device.psk
+
+
+def rotate_device_psk(
+    config: "Config",
+    *,
+    save_path: Optional[Path] = None,
+) -> str:
+    """Generate a fresh PSK, persist it, and return it.
+
+    Currently-connected devices stay connected for their lifetime —
+    revocation lands when HS-14-04 wires the route and re-auths on
+    every reconnect.
+    """
+    config.device.psk = generate_device_psk()
+    config.save(save_path)
+    return config.device.psk
+
+
 __all__ = [
+    "DEVICE_HANDSHAKE_VERSION",
     "DeviceDescriptor",
+    "DeviceHandshake",
     "DeviceRegistry",
     "DeviceRegistryError",
     "DuplicateLabelError",
+    "HandshakeError",
+    "InvalidHandshakeError",
+    "PskMismatchError",
     "RemoteAudioRecorder",
     "RemoteAudioRecorderError",
+    "WS_CLOSE_DUPLICATE_LABEL",
+    "WS_CLOSE_INVALID_HANDSHAKE",
+    "WS_CLOSE_PSK_MISMATCH",
+    "ensure_device_psk",
+    "generate_device_psk",
+    "parse_handshake",
+    "rotate_device_psk",
+    "verify_psk",
 ]

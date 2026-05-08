@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 14
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-14-02
 - **Unblocks:** HS-14-04
 - **Owner:** unassigned
@@ -49,16 +49,16 @@ error codes); HS-14-04 wires it into the actual route.
 
 ## Acceptance Criteria
 
-- [ ] PSK is generated on first launch and stored in the existing
+- [x] PSK is generated on first launch and stored in the existing
   settings store; `holdspeak device-psk show` prints it.
-- [ ] `holdspeak device-psk rotate` regenerates and persists.
-- [ ] `DeviceHandshake` model validates required fields and
+- [x] `holdspeak device-psk rotate` regenerates and persists.
+- [x] `DeviceHandshake` model validates required fields and
   rejects extra fields strictly.
-- [ ] PSK comparison uses `hmac.compare_digest`.
-- [ ] Close codes 4001 / 4003 / 4009 are constants in
+- [x] PSK comparison uses `hmac.compare_digest`.
+- [x] Close codes 4001 / 4003 / 4009 are constants in
   `holdspeak/device_audio.py` and referenced (not duplicated)
   by HS-14-04.
-- [ ] `tests/unit/test_device_handshake.py` ≥ 4 cases green.
+- [x] `tests/unit/test_device_handshake.py` ≥ 4 cases green.
 
 ## Test Plan
 

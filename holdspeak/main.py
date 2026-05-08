@@ -18,6 +18,7 @@ from .transcribe import Transcriber
 from .typer import TextTyper
 from .text_processor import TextProcessor
 from .commands.actions import run_actions_command
+from .commands.device import run_device_psk_command
 from .commands.dictation import (
     _build_argparse_subparsers as _build_dictation_subparsers,
     normalize_args as _normalize_dictation_args,
@@ -276,6 +277,21 @@ Logs are written to: {LOG_FILE}
     )
     _build_dictation_subparsers(dictation_parser)
 
+    # device-psk subcommand (HS-14-03)
+    device_psk_parser = subparsers.add_parser(
+        "device-psk",
+        help="Show or rotate the AIPI-Lite shared PSK",
+    )
+    psk_subparsers = device_psk_parser.add_subparsers(dest="psk_action")
+    psk_subparsers.add_parser(
+        "show",
+        help="Print the current device PSK (generating one on first run)",
+    )
+    psk_subparsers.add_parser(
+        "rotate",
+        help="Generate a fresh device PSK and persist it",
+    )
+
     # Doctor subcommand
     doctor_parser = subparsers.add_parser(
         "doctor",
@@ -347,6 +363,10 @@ Logs are written to: {LOG_FILE}
     # Handle dictation subcommand (DIR-01 CLI surface)
     if args.command == "dictation":
         raise SystemExit(run_dictation_command(_normalize_dictation_args(args)))
+
+    # Handle device-psk subcommand (HS-14-03)
+    if args.command == "device-psk":
+        raise SystemExit(run_device_psk_command(args))
 
     # Handle doctor subcommand
     if args.command == "doctor":

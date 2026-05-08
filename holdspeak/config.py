@@ -177,6 +177,19 @@ class DictationConfig:
 
 
 @dataclass
+class DeviceConfig:
+    """Remote-audio-device config (AIPI-Lite & compatible clients).
+
+    The PSK is generated lazily on first use by
+    :func:`holdspeak.device_audio.ensure_device_psk` so existing
+    installs that never touch the device path don't get their
+    config rewritten on upgrade.
+    """
+
+    psk: str = ""
+
+
+@dataclass
 class Config:
     """Main configuration container."""
     hotkey: HotkeyConfig = field(default_factory=HotkeyConfig)
@@ -184,6 +197,7 @@ class Config:
     ui: UIConfig = field(default_factory=UIConfig)
     meeting: MeetingConfig = field(default_factory=MeetingConfig)
     dictation: DictationConfig = field(default_factory=DictationConfig)
+    device: DeviceConfig = field(default_factory=DeviceConfig)
 
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "Config":
@@ -213,6 +227,7 @@ class Config:
                 ui=UIConfig(**data.get("ui", {})),
                 meeting=MeetingConfig(**data.get("meeting", {})),
                 dictation=dictation,
+                device=DeviceConfig(**data.get("device", {})),
             )
         except Exception:
             # Fall back to defaults on any error

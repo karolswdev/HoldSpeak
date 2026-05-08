@@ -1,6 +1,6 @@
 # Phase 14 - AIPI-Lite Devices: Remote Audio Ingest Substrate
 
-**Last updated:** 2026-05-07 (HS-14-02 shipped — `DeviceRegistry` + `DeviceDescriptor` landed and wired into the web runtime).
+**Last updated:** 2026-05-07 (HS-14-03 shipped — PSK auth + `DeviceHandshake` Pydantic model + `holdspeak device-psk show|rotate` CLI landed).
 
 ## Goal
 
@@ -116,7 +116,7 @@ tunnel/relay layer without redesigning the protocol.
 |---|---|---|---|---|
 | HS-14-01 | AudioSource Protocol + RemoteAudioRecorder | done | [story-01-audio-source-protocol.md](./story-01-audio-source-protocol.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-14-02 | DeviceRegistry + device descriptor model | done | [story-02-device-registry.md](./story-02-device-registry.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-14-03 | PSK auth + handshake protocol | backlog | [story-03-auth-handshake.md](./story-03-auth-handshake.md) | — |
+| HS-14-03 | PSK auth + handshake protocol | done | [story-03-auth-handshake.md](./story-03-auth-handshake.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-14-04 | `/api/devices/audio` WebSocket + backpressure | backlog | [story-04-audio-ingest-websocket.md](./story-04-audio-ingest-websocket.md) | — |
 | HS-14-05 | Voice-typing path consumes remote audio | backlog | [story-05-voice-typing-remote.md](./story-05-voice-typing-remote.md) | — |
 | HS-14-06 | Meeting path accepts device streams + per-segment device_id | backlog | [story-06-meeting-device-streams.md](./story-06-meeting-device-streams.md) | — |
@@ -125,7 +125,8 @@ tunnel/relay layer without redesigning the protocol.
 
 ## Where we are
 
-HS-14-01 + HS-14-02 shipped 2026-05-07. The substrate now has:
+HS-14-01 + HS-14-02 + HS-14-03 shipped 2026-05-07. The substrate
+now has:
 
 - `holdspeak/audio.py:AudioSource` — runtime-checkable Protocol
   over `start_recording` / `stop_recording`. `AudioRecorder`
@@ -134,19 +135,31 @@ HS-14-01 + HS-14-02 shipped 2026-05-07. The substrate now has:
   source with bounded internal buffer + drop-oldest + structured
   warning log on overflow.
 - `holdspeak/device_audio.py:DeviceRegistry` + `DeviceDescriptor`
-  — thread-safe in-memory registry with `register` / `unregister`
-  / `get` / `active` / `touch` / `recorder_for`. Label uniqueness
-  enforced via typed `DuplicateLabelError`. Same-id re-register
-  raises (`DeviceRegistryError`); unregister of an unknown id is
-  a no-op (logged at info). `register` rejects blank id/label.
+  — thread-safe in-memory registry; label uniqueness enforced via
+  typed `DuplicateLabelError`; idempotent unregister; copy-on-read.
 - `MeetingWebServer` accepts an optional `device_registry` and
   exposes it via `app.state.device_registry`; `run_web_runtime`
   creates the singleton and passes it in.
+- `holdspeak/device_audio.py` handshake protocol —
+  `DeviceHandshake` Pydantic model (strict / `extra=forbid`),
+  `parse_handshake`, `verify_psk` (constant-time via
+  `hmac.compare_digest`), and the WebSocket close-code
+  constants `WS_CLOSE_INVALID_HANDSHAKE` (4001),
+  `WS_CLOSE_PSK_MISMATCH` (4003), `WS_CLOSE_DUPLICATE_LABEL`
+  (4009). Typed `InvalidHandshakeError` / `PskMismatchError`
+  exceptions carry the close code so HS-14-04 can map cleanly
+  without re-deriving the policy.
+- `holdspeak/config.py:DeviceConfig` — new top-level
+  `Config.device.psk: str`. Generated lazily on first use by
+  `ensure_device_psk`; `rotate_device_psk` regenerates +
+  persists.
+- `holdspeak device-psk show` / `rotate` CLI subcommand.
 
-Test coverage: 36 new unit cases across
+Test coverage: 61 new unit cases across
 `test_remote_audio_recorder.py`, `test_audio_source_contract.py`,
-and `test_device_registry.py`. Regression sweep on
-audio + controller + web_runtime is 76/76 green.
+`test_device_registry.py`, and `test_device_handshake.py`.
+Regression sweep on audio + controller + web_runtime + config is
+162/162 green.
 
 The companion AIPI-Lite repo (`/home/karol/dev/esp32/AIPI-Lite-Voice-Bridge`,
 branch `mine`) already has a working ESP32-S3 firmware + Python bridge that
@@ -155,7 +168,9 @@ turns that integration around so HoldSpeak (not the bridge's standalone
 LLM/TTS) becomes the consumer of the device audio. Cross-repo coordination
 notes live in each story under "Notes / open questions".
 
-Pickup: HS-14-03 (PSK auth + handshake protocol) is next.
+Pickup: HS-14-04 (`/api/devices/audio` WebSocket + backpressure)
+is next — every protocol piece it needs (handshake schema, PSK
+compare, close codes, registry, recorders) is now in place.
 
 ## Active risks
 
