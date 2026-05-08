@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-07 (phase 14 closed — `AudioSource` substrate + `/api/devices/audio` WebSocket + voice-typing + meeting + status push are live; cross-network reach deferred to phase 15).
+**Last updated:** 2026-05-08 (phase 16 scaffolded — first real synthesizer `mermaid_architecture`; phase 15 cross-network still the next planned phase).
 **Current phase:** [phase-15-out-and-about](./phase-15-out-and-about/) — cross-network reach for AIPI-Lite (Tailscale / Cloudflare Tunnel / WireGuard candidate evaluation, TLS, per-device PSKs, paired with the AIPI-Lite firmware's portable WiFi work).
 **Status:** not-started.
 
@@ -52,6 +52,7 @@ canon, canon wins.
 | 13 | Connector runtime + pipelines + meeting context: turn the framework on, chain packs, surface pre-meeting briefings + cross-meeting summaries | done | [phase-13-connector-runtime-and-context](./phase-13-connector-runtime-and-context/) |
 | 14 | AIPI-Lite devices: remote audio ingest substrate — `AudioSource` Protocol, `RemoteAudioRecorder`, `/api/devices/audio` WebSocket, per-device speaker labels in transcripts; same-LAN scope (cross-network is phase 15) | done | [phase-14-aipi-lite-devices](./phase-14-aipi-lite-devices/) |
 | 15 | Out-and-about: cross-network reach for AIPI-Lite — tunneling (Tailscale / Cloudflare Tunnel / WireGuard candidate evaluation), TLS, per-device PSKs, paired with the AIPI-Lite firmware's portable WiFi (multi-SSID + captive portal + Improv-WiFi) on the device-side roadmap | not-started | [phase-15-out-and-about](./phase-15-out-and-about/) |
+| 16 | First real synthesizer: replace `mermaid_architecture`'s `DeterministicPlugin` stub with a real LLM-backed plugin, wire the LLM capability gate, render `mermaid` artifacts as inline SVG in the web view, reality-check the plugin RFC | not-started | [phase-16-first-real-plugin](./phase-16-first-real-plugin/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
