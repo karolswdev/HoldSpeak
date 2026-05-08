@@ -1,6 +1,6 @@
 # Phase 14 - AIPI-Lite Devices: Remote Audio Ingest Substrate
 
-**Last updated:** 2026-05-07 (HS-14-06 shipped — meeting path accepts device streams; per-segment `device_id` + `MeetingState.devices` round-trip through to_dict; `POST /api/meeting/start {devices: [...]}` attaches at session start).
+**Last updated:** 2026-05-07 (HS-14-07 shipped — server → device status push-back live; long_press inbound → meeting bookmark).
 
 ## Goal
 
@@ -120,7 +120,7 @@ tunnel/relay layer without redesigning the protocol.
 | HS-14-04 | `/api/devices/audio` WebSocket + backpressure | done | [story-04-audio-ingest-websocket.md](./story-04-audio-ingest-websocket.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-14-05 | Voice-typing path consumes remote audio | done | [story-05-voice-typing-remote.md](./story-05-voice-typing-remote.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-14-06 | Meeting path accepts device streams + per-segment device_id | done | [story-06-meeting-device-streams.md](./story-06-meeting-device-streams.md) | [evidence-story-06.md](./evidence-story-06.md) |
-| HS-14-07 | Server → device status push-back protocol | backlog | [story-07-status-pushback.md](./story-07-status-pushback.md) | — |
+| HS-14-07 | Server → device status push-back protocol | done | [story-07-status-pushback.md](./story-07-status-pushback.md) | [evidence-story-07.md](./evidence-story-07.md) |
 | HS-14-08 | Phase exit + DoD + protocol docs + cross-network deferral | backlog | [story-08-dod.md](./story-08-dod.md) | — |
 
 ## Where we are
@@ -297,6 +297,51 @@ call still works). 319/319 green on the full sweep.
 
 Pickup: HS-14-07 (server → device status push) is next;
 HS-14-08 closes the phase.
+
+**HS-14-07 (2026-05-07):** Server → device status push and
+device → server events. New module
+`holdspeak/device_status.py:DeviceStatusEmitter` — thread-safe
+registry of per-device sender callables with optional
+``{label}`` substitution against the `DeviceRegistry`.
+`device_audio_ws._serve_device_audio` runs an async writer
+task per connection; status sends from any thread go through
+``loop.call_soon_threadsafe`` onto an asyncio queue and out
+as ``{type: "status", text, ttl_ms}`` JSON frames.
+Disconnect cleanup unregisters the emitter, drains the queue,
+and cancels the writer.
+
+Inbound ``{type: "event", name, at}`` frames dispatch through
+a new ``EventHandler`` callback. ``MeetingWebServer`` forwards
+both via `device_status_emitter` + `on_device_event`
+constructor kwargs (with a default in-process emitter so
+existing tests keep working). `run_web_runtime` creates the
+shared emitter, threads it into the server, and emits at the
+canonical sites: ``Listening...`` on device voice-start,
+``Thinking...`` + transcript snippet on stop (the
+transcript-complete callback piggybacks on
+``_transcribe_and_type``'s new ``on_complete`` hook),
+``Recording 00:00`` on meeting start (broadcast to attached
+devices), ``Bookmark @ 47s`` on bookmark, ``Saving meeting...``
+on stop. Inbound ``long_press`` on an attached device fires
+``MeetingSession.add_bookmark`` and broadcasts the bookmark
+status back.
+
+Test coverage: 8 unit cases on `DeviceStatusEmitter`
+(send-without-registered / register+send / unregister drops
+sender / send swallows raises / broadcast counts / label
+substitution / fallback to device_id / `active_device_ids`)
+plus 7 integration cases covering outbound (handshake →
+emitter.send → device receives the JSON; label + ttl
+round-trip; full Listening → Thinking → snippet sequence
+through the WS) and inbound events (dispatch with `at`,
+without `at`, and event-without-name ignored), plus
+disconnect-unregisters. 334/334 green on the full sweep.
+
+Manual hardware verification (acceptance bullet 5) is
+deferred to HS-14-08's DoD pass — recorded in the story file.
+
+Pickup: HS-14-08 closes the phase (DoD + protocol docs +
+cross-network deferral note).
 
 ## Active risks
 

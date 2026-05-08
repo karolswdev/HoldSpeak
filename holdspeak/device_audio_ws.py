@@ -15,8 +15,9 @@ backpressure, and audio decoding all live in
 
 from __future__ import annotations
 
+import asyncio
 import json
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, TYPE_CHECKING
 
 import numpy as np
 from fastapi import WebSocket, WebSocketDisconnect
@@ -35,6 +36,9 @@ from .device_audio import (
 )
 from .logging_config import get_logger
 
+if TYPE_CHECKING:
+    from .device_status import DeviceStatusEmitter
+
 log = get_logger("device_audio_ws")
 
 PskProvider = Callable[[], str]
@@ -51,6 +55,11 @@ VoiceStopHandler = Callable[[str, AudioSource], Optional[np.ndarray]]
 # any session this device still owns. Receives the device id only;
 # the source has already been removed from the registry.
 VoiceCancelHandler = Callable[[str], None]
+# HS-14-07 — inbound device → server event channel. ``at`` is the
+# device-side timestamp the firmware tagged the event with (any
+# numeric type or ``None``); the runtime uses it as a bookmark
+# anchor when ``name == "long_press"``.
+EventHandler = Callable[[str, str, Optional[float]], None]
 
 
 def register_device_audio_routes(
@@ -62,6 +71,8 @@ def register_device_audio_routes(
     on_voice_start: Optional[VoiceStartHandler] = None,
     on_voice_stop: Optional[VoiceStopHandler] = None,
     on_voice_cancel: Optional[VoiceCancelHandler] = None,
+    status_emitter: Optional["DeviceStatusEmitter"] = None,
+    on_event: Optional[EventHandler] = None,
 ) -> None:
     """Mount ``WebSocket /api/devices/audio`` on ``app``.
 
@@ -104,6 +115,8 @@ def register_device_audio_routes(
             on_voice_start=on_voice_start,
             on_voice_stop=on_voice_stop,
             on_voice_cancel=on_voice_cancel,
+            status_emitter=status_emitter,
+            on_event=on_event,
         )
 
 
@@ -116,6 +129,8 @@ async def _serve_device_audio(
     on_voice_start: Optional[VoiceStartHandler] = None,
     on_voice_stop: Optional[VoiceStopHandler] = None,
     on_voice_cancel: Optional[VoiceCancelHandler] = None,
+    status_emitter: Optional["DeviceStatusEmitter"] = None,
+    on_event: Optional[EventHandler] = None,
 ) -> None:
     """Drive the lifecycle of a single device-audio WebSocket connection."""
 
@@ -148,6 +163,26 @@ async def _serve_device_audio(
 
     log.info("device_audio_connected", extra={"device_id": device_id})
 
+    # Outbound writer task — drains the per-connection asyncio queue
+    # and sends each message over the WebSocket. The queue accepts a
+    # ``None`` sentinel to break the writer cleanly on disconnect.
+    out_queue: "asyncio.Queue[Optional[dict]]" = asyncio.Queue()
+    loop = asyncio.get_running_loop()
+    if status_emitter is not None:
+        def _enqueue_status(text: str, ttl_ms: int) -> None:
+            msg = {"type": "status", "text": str(text), "ttl_ms": int(ttl_ms)}
+            try:
+                loop.call_soon_threadsafe(out_queue.put_nowait, msg)
+            except RuntimeError:
+                # Loop is shutting down; drop the message.
+                pass
+
+        status_emitter.register(device_id, _enqueue_status)
+
+    writer_task: Optional[asyncio.Task[None]] = asyncio.create_task(
+        _writer_loop(websocket, out_queue, device_id=device_id)
+    )
+
     try:
         await _dispatch_loop(
             websocket,
@@ -156,6 +191,7 @@ async def _serve_device_audio(
             on_chunk=on_chunk,
             on_voice_start=on_voice_start,
             on_voice_stop=on_voice_stop,
+            on_event=on_event,
         )
     except WebSocketDisconnect:
         pass
@@ -165,7 +201,39 @@ async def _serve_device_audio(
             extra={"device_id": device_id},
         )
     finally:
+        if status_emitter is not None:
+            status_emitter.unregister(device_id)
+        await out_queue.put(None)
+        try:
+            await asyncio.wait_for(writer_task, timeout=1.0)
+        except (asyncio.TimeoutError, asyncio.CancelledError):
+            writer_task.cancel()
         _teardown(device_registry, device_id, on_voice_cancel=on_voice_cancel)
+
+
+async def _writer_loop(
+    websocket: WebSocket,
+    queue: "asyncio.Queue[Optional[dict]]",
+    *,
+    device_id: str,
+) -> None:
+    """Pull messages from ``queue`` and write them as JSON frames.
+
+    Exits on the ``None`` sentinel or on any send error. Errors do
+    not bubble — the read loop will detect the disconnect.
+    """
+    while True:
+        msg = await queue.get()
+        if msg is None:
+            return
+        try:
+            await websocket.send_json(msg)
+        except Exception:
+            log.info(
+                "device_audio_status_send_failed",
+                extra={"device_id": device_id},
+            )
+            return
 
 
 async def _do_handshake(
@@ -212,6 +280,7 @@ async def _dispatch_loop(
     on_chunk: Optional[ChunkConsumer],
     on_voice_start: Optional[VoiceStartHandler] = None,
     on_voice_stop: Optional[VoiceStopHandler] = None,
+    on_event: Optional[EventHandler] = None,
 ) -> None:
     """Read frames until the peer disconnects or sends a malformed control."""
 
@@ -237,6 +306,7 @@ async def _dispatch_loop(
                 on_chunk=on_chunk,
                 on_voice_start=on_voice_start,
                 on_voice_stop=on_voice_stop,
+                on_event=on_event,
             )
             continue
 
@@ -263,6 +333,7 @@ async def _handle_control(
     on_chunk: Optional[ChunkConsumer],
     on_voice_start: Optional[VoiceStartHandler],
     on_voice_stop: Optional[VoiceStopHandler],
+    on_event: Optional[EventHandler] = None,
 ) -> None:
     try:
         control = json.loads(raw)
@@ -357,6 +428,31 @@ async def _handle_control(
 
     if ctrl_type == "heartbeat":
         device_registry.touch(device_id)
+        return
+
+    if ctrl_type == "event":
+        name = control.get("name")
+        if not isinstance(name, str) or not name:
+            log.warning(
+                "device_audio_event_missing_name",
+                extra={"device_id": device_id},
+            )
+            return
+        raw_at = control.get("at")
+        at: Optional[float]
+        if isinstance(raw_at, (int, float)):
+            at = float(raw_at)
+        else:
+            at = None
+        device_registry.touch(device_id)
+        if on_event is not None:
+            try:
+                on_event(device_id, name, at)
+            except Exception:
+                log.exception(
+                    "device_audio_event_handler_failed",
+                    extra={"device_id": device_id, "event_name": name},
+                )
         return
 
     log.warning(

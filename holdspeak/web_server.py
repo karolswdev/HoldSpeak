@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 
     from .audio import AudioSource
     from .device_audio import DeviceRegistry
+    from .device_status import DeviceStatusEmitter
 
 log = get_logger("web_server")
 _HTTP_HEADER_NAME_RE = re.compile(r"^[A-Za-z0-9-]+$")
@@ -480,6 +481,8 @@ class MeetingWebServer:
             Callable[[str, "AudioSource"], Optional["np.ndarray"]]
         ] = None,
         on_device_voice_cancel: Optional[Callable[[str], None]] = None,
+        device_status_emitter: Optional["DeviceStatusEmitter"] = None,
+        on_device_event: Optional[Callable[[str, str, Optional[float]], None]] = None,
         host: str = "127.0.0.1",
     ) -> None:
         if _IMPORT_ERROR is not None:
@@ -531,6 +534,13 @@ class MeetingWebServer:
             Callable[[str, "AudioSource"], Optional["np.ndarray"]]
         ] = on_device_voice_stop
         self.on_device_voice_cancel: Optional[Callable[[str], None]] = on_device_voice_cancel
+        if device_status_emitter is None:
+            from .device_status import DeviceStatusEmitter as _DeviceStatusEmitter
+            device_status_emitter = _DeviceStatusEmitter(label_lookup=device_registry)
+        self.device_status_emitter: "DeviceStatusEmitter" = device_status_emitter
+        self.on_device_event: Optional[Callable[[str, str, Optional[float]], None]] = (
+            on_device_event
+        )
         self.host = host
 
         self.port: Optional[int] = None
@@ -643,6 +653,8 @@ class MeetingWebServer:
             on_voice_start=self.on_device_voice_start,
             on_voice_stop=self.on_device_voice_stop,
             on_voice_cancel=self.on_device_voice_cancel,
+            status_emitter=self.device_status_emitter,
+            on_event=self.on_device_event,
         )
 
         @app.on_event("startup")

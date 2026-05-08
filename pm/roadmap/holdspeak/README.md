@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-07 (HS-14-06 shipped — meeting path accepts device streams; per-segment `device_id` + `MeetingState.devices` round-trip through to_dict; `POST /api/meeting/start {devices: [...]}` attaches at session start).
+**Last updated:** 2026-05-07 (HS-14-07 shipped — server → device status push-back live; long_press inbound → meeting bookmark).
 **Current phase:** [phase-14-aipi-lite-devices](./phase-14-aipi-lite-devices/current-phase-status.md) — extract an audio-source protocol, light up `/api/devices/audio` WebSocket, make per-device speaker labels first-class so AIPI-Lite (and other compatible devices) can feed both the voice-typing and meeting paths from across the LAN.
 **Status:** in-progress.
 

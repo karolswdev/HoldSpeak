@@ -220,6 +220,7 @@ def test_runtime_meeting_control_callbacks_are_wired(monkeypatch: pytest.MonkeyP
             self._active = True
             self.title = None
             self.tags: list[str] = []
+            self.devices: list[object] = []
 
         def to_dict(self) -> dict[str, object]:
             return {

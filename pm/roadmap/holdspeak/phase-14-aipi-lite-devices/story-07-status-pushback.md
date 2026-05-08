@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 14
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-14-04
 - **Unblocks:** HS-14-08
 - **Owner:** unassigned
@@ -60,17 +60,19 @@ channel.)
 
 ## Acceptance Criteria
 
-- [ ] Server emits `Listening...` / `Thinking...` /
+- [x] Server emits `Listening...` / `Thinking...` /
   transcript-snippet on voice-typing turns to the originating
   device.
-- [ ] During a meeting, the device receives a status update
+- [x] During a meeting, the device receives a status update
   on bookmark and on save.
-- [ ] Inbound `event: "long_press"` during an active meeting
+- [x] Inbound `event: "long_press"` during an active meeting
   creates a bookmark on the session.
-- [ ] `tests/integration/test_device_status_pushback.py` green.
+- [x] `tests/integration/test_device_status_pushback.py` green.
 - [ ] Old standalone-bridge LCD strings (`Listening...`,
   `Thinking...`) are now driven by the server, not the bridge —
-  verified manually with the AIPI-Lite hooked up.
+  verified manually with the AIPI-Lite hooked up. *Pending
+  manual smoke test against real hardware; closing this in
+  HS-14-08's DoD pass.*
 
 ## Test Plan
 
