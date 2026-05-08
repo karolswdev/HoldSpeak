@@ -1,6 +1,6 @@
 # Phase 14 - AIPI-Lite Devices: Remote Audio Ingest Substrate
 
-**Last updated:** 2026-05-07 (phase opened — scaffold only, no stories shipped yet).
+**Last updated:** 2026-05-07 (HS-14-01 shipped — `AudioSource` Protocol + `RemoteAudioRecorder` substrate landed).
 
 ## Goal
 
@@ -114,7 +114,7 @@ tunnel/relay layer without redesigning the protocol.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-14-01 | AudioSource Protocol + RemoteAudioRecorder | backlog | [story-01-audio-source-protocol.md](./story-01-audio-source-protocol.md) | — |
+| HS-14-01 | AudioSource Protocol + RemoteAudioRecorder | done | [story-01-audio-source-protocol.md](./story-01-audio-source-protocol.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-14-02 | DeviceRegistry + device descriptor model | backlog | [story-02-device-registry.md](./story-02-device-registry.md) | — |
 | HS-14-03 | PSK auth + handshake protocol | backlog | [story-03-auth-handshake.md](./story-03-auth-handshake.md) | — |
 | HS-14-04 | `/api/devices/audio` WebSocket + backpressure | backlog | [story-04-audio-ingest-websocket.md](./story-04-audio-ingest-websocket.md) | — |
@@ -125,18 +125,27 @@ tunnel/relay layer without redesigning the protocol.
 
 ## Where we are
 
-Phase scaffolded 2026-05-07. No stories have started yet. Phase 13 closed
-2026-05-04; this is the first phase opened against the AIPI-Lite line of
-work. The companion AIPI-Lite repo (`/home/karol/dev/esp32/AIPI-Lite-Voice-Bridge`,
+HS-14-01 shipped 2026-05-07: `AudioSource` Protocol added to
+`holdspeak/audio.py` (runtime-checkable, structural typing —
+`AudioRecorder` conforms without inheritance), and a sibling
+`holdspeak/device_audio.py:RemoteAudioRecorder` consumes int16 LE
+PCM pushed via `push(bytes)` and returns 16 kHz mono float32 from
+`stop_recording()`. Bounded internal buffer with drop-oldest +
+logged warning is in place as a holding pattern for the richer
+backpressure policy in HS-14-04. Test coverage: 22 new unit cases
+across `test_remote_audio_recorder.py` and the
+`test_audio_source_contract.py` shape contract.
+
+The companion AIPI-Lite repo (`/home/karol/dev/esp32/AIPI-Lite-Voice-Bridge`,
 branch `mine`) already has a working ESP32-S3 firmware + Python bridge that
 runs an end-to-end voice loop against a local Qwen3.5-9B server; this phase
 turns that integration around so HoldSpeak (not the bridge's standalone
 LLM/TTS) becomes the consumer of the device audio. Cross-repo coordination
 notes live in each story under "Notes / open questions".
 
-Pickup: HS-14-01 is the substrate-opening story; nothing else can land
-without the `AudioSource` Protocol because every downstream story interacts
-with the abstraction.
+Pickup: HS-14-02 (DeviceRegistry + descriptor model) is next; the
+`AudioSource` substrate is in place for any downstream story to
+plug into.
 
 ## Active risks
 

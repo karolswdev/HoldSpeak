@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 14
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-13-10
 - **Unblocks:** HS-14-02, HS-14-04, HS-14-05, HS-14-06
 - **Owner:** unassigned
@@ -56,20 +56,20 @@ shape constrains every downstream story.
 
 ## Acceptance Criteria
 
-- [ ] `holdspeak/audio.py` defines `AudioSource` Protocol with
+- [x] `holdspeak/audio.py` defines `AudioSource` Protocol with
   `start_recording()` and `stop_recording() -> np.ndarray`.
-- [ ] `AudioRecorder` continues to pass all existing tests
+- [x] `AudioRecorder` continues to pass all existing tests
   unchanged.
-- [ ] `holdspeak/device_audio.py:RemoteAudioRecorder` implements
+- [x] `holdspeak/device_audio.py:RemoteAudioRecorder` implements
   `AudioSource` and accepts pushed PCM via `push(bytes)`.
-- [ ] `tests/unit/test_remote_audio_recorder.py` ≥ 6 cases green:
+- [x] `tests/unit/test_remote_audio_recorder.py` ≥ 6 cases green:
   start/stop round-trip; push-then-stop returns concatenation;
   buffer overflow drops oldest with logged warning; stop without
   start raises; bytes after stop are ignored; resample path
   produces 16k float32 when on-wire rate differs.
-- [ ] `tests/unit/test_audio_source_contract.py` runs the shape
+- [x] `tests/unit/test_audio_source_contract.py` runs the shape
   contract against both implementations.
-- [ ] No regression in existing audio tests:
+- [x] No regression in existing audio tests:
   `uv run pytest tests/unit/test_audio_*.py` green.
 
 ## Test Plan

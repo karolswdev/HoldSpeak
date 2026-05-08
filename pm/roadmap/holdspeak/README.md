@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-07 (phase 14 opened — AIPI-Lite remote audio ingest substrate scaffolded; no stories shipped yet).
+**Last updated:** 2026-05-07 (HS-14-01 shipped — `AudioSource` Protocol + `RemoteAudioRecorder` substrate landed).
 **Current phase:** [phase-14-aipi-lite-devices](./phase-14-aipi-lite-devices/current-phase-status.md) — extract an audio-source protocol, light up `/api/devices/audio` WebSocket, make per-device speaker labels first-class so AIPI-Lite (and other compatible devices) can feed both the voice-typing and meeting paths from across the LAN.
 **Status:** in-progress.
 
