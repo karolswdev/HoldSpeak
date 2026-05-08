@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 14
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-14-01, HS-14-02, HS-14-03, HS-14-04, HS-14-05, HS-14-06, HS-14-07
 - **Unblocks:** phase 15
 - **Owner:** unassigned
@@ -46,16 +46,18 @@ work.
 
 ## Acceptance Criteria
 
-- [ ] `docs/DEVICE_PROTOCOL.md` exists and includes a working
+- [x] `docs/DEVICE_PROTOCOL.md` exists and includes a working
   example.
-- [ ] All HS-14-01..07 stories show `Status: done` in their
+- [x] All HS-14-01..07 stories show `Status: done` in their
   story files with paired `evidence-story-{n}.md` files.
-- [ ] `final-summary.md` exists, follows the template, and
+- [x] `final-summary.md` exists, follows the template, and
   records the cross-network deferral with the trigger.
-- [ ] Regression sweep
+- [x] Regression sweep
   `uv run pytest -q --ignore=tests/e2e/test_metal.py` green at
-  ≥ phase-13 baseline.
-- [ ] `pm/roadmap/holdspeak/README.md` reflects phase 14 done
+  ≥ phase-13 baseline. **1520 passed / 5 skipped** vs. the
+  1406 / 13 baseline; 2 pre-existing pre-phase-14 failures
+  documented in evidence.
+- [x] `pm/roadmap/holdspeak/README.md` reflects phase 14 done
   + phase 15 not-started.
 
 ## Test Plan

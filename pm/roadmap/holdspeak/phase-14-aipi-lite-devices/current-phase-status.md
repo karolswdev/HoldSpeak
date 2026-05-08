@@ -1,6 +1,8 @@
 # Phase 14 - AIPI-Lite Devices: Remote Audio Ingest Substrate
 
-**Last updated:** 2026-05-07 (HS-14-07 shipped — server → device status push-back live; long_press inbound → meeting bookmark).
+**Phase closed:** 2026-05-07. See [final-summary.md](./final-summary.md). This file is now frozen per PMO contract §6.
+
+**Last updated:** 2026-05-07 (HS-14-08 shipped — phase closed; protocol doc + final summary published).
 
 ## Goal
 
@@ -121,7 +123,7 @@ tunnel/relay layer without redesigning the protocol.
 | HS-14-05 | Voice-typing path consumes remote audio | done | [story-05-voice-typing-remote.md](./story-05-voice-typing-remote.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-14-06 | Meeting path accepts device streams + per-segment device_id | done | [story-06-meeting-device-streams.md](./story-06-meeting-device-streams.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-14-07 | Server → device status push-back protocol | done | [story-07-status-pushback.md](./story-07-status-pushback.md) | [evidence-story-07.md](./evidence-story-07.md) |
-| HS-14-08 | Phase exit + DoD + protocol docs + cross-network deferral | backlog | [story-08-dod.md](./story-08-dod.md) | — |
+| HS-14-08 | Phase exit + DoD + protocol docs + cross-network deferral | done | [story-08-dod.md](./story-08-dod.md) | [evidence-story-08.md](./evidence-story-08.md) |
 
 ## Where we are
 
