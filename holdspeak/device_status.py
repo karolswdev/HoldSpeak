@@ -123,4 +123,59 @@ class DeviceStatusEmitter:
         return text.replace("{label}", label)
 
 
-__all__ = ["DeviceStatusEmitter", "StatusSender"]
+# HS-17-08: width budget for status text on the AIPI-Lite LCD's
+# bottom row. Empirical (Montserrat 10 + the device's display).
+LCD_TEXT_MAX_CHARS = 30
+
+
+def truncate_for_lcd(text: str, max_len: int = LCD_TEXT_MAX_CHARS) -> str:
+    """Truncate `text` to `max_len` chars + `…` if needed.
+
+    Stable cross-call: ASCII fast-path, single-pass length check, no
+    splitting. Used by per-segment / intel / action-item pushback so
+    long meeting strings don't overflow the LCD's single line.
+    """
+    if text is None:
+        return ""
+    if len(text) <= max_len:
+        return text
+    if max_len <= 1:
+        return "…"
+    return text[: max_len - 1] + "…"
+
+
+def push_segment_to_devices(
+    emitter: "DeviceStatusEmitter",
+    attached_ids: Iterable[str],
+    segment,
+    *,
+    ttl_ms: int = 3000,
+) -> int:
+    """Push a finalized transcript segment to all attached devices.
+
+    HS-17-08: turns the AIPI-Lite LCD into a live confirmation channel
+    during meetings — every finalized utterance flashes briefly on
+    the device. Returns the count of successful sends (matches
+    `DeviceStatusEmitter.broadcast`'s contract). No-op + returns 0
+    if `attached_ids` is empty.
+
+    `segment` is duck-typed — we read `.speaker` (optional) and
+    `.text`. Built so the caller doesn't have to think about
+    TranscriptSegment vs. a future SegmentDict.
+    """
+    ids = [d for d in attached_ids if d]
+    if not ids:
+        return 0
+    speaker = getattr(segment, "speaker", None) or "?"
+    text = getattr(segment, "text", "") or ""
+    payload = truncate_for_lcd(f"{speaker}: {text}")
+    return emitter.broadcast(ids, payload, ttl_ms=ttl_ms)
+
+
+__all__ = [
+    "DeviceStatusEmitter",
+    "StatusSender",
+    "LCD_TEXT_MAX_CHARS",
+    "truncate_for_lcd",
+    "push_segment_to_devices",
+]

@@ -17,7 +17,7 @@ from .config import Config
 from .audio import AudioSource
 from .device_audio import DeviceRegistry, ensure_device_psk
 from .device_recording_tick import RecordingTicker
-from .device_status import DeviceStatusEmitter
+from .device_status import DeviceStatusEmitter, push_segment_to_devices
 from .hotkey import HotkeyListener
 from .voice_typing import VoiceTypingSession
 from .logging_config import get_logger
@@ -294,6 +294,16 @@ def run_web_runtime(
                 server.broadcast("segment", segment.to_dict())
             except Exception as exc:
                 log.debug(f"Failed to broadcast segment: {exc}")
+        # HS-17-08: push each finalized segment to attached AIPI-Lite
+        # devices as a 3s flash so the LCD reflects what's being
+        # transcribed in real time. No-op when no devices attached.
+        try:
+            active = _active_meeting_session()
+            if active is not None and active.state is not None:
+                attached_ids = [d.id for d in active.state.devices]
+                push_segment_to_devices(device_status, attached_ids, segment)
+        except Exception as exc:
+            log.debug(f"Failed to push segment to device LCD: {exc}")
 
     def _on_meeting_intel(intel) -> None:
         if server is not None:

@@ -242,6 +242,7 @@ typing failed (e.g., Wayland blocked synthetic typing).
 |---|---|---|
 | Meeting starts with this device attached | `Recording 00:00` | 0 |
 | **Periodic tick during meeting (HS-17-05, every 5 s)** | `Recording MM:SS` | 0 |
+| **Finalized transcript segment (HS-17-08)** | `<speaker>: <text>` (truncated to 30 chars + `…`) | 3000 |
 | Bookmark added (web button or `long_press` event) | `Bookmark @ <seconds>s` | 2500 |
 | Meeting stop initiated | `Saving meeting...` | 0 |
 
