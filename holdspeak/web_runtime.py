@@ -107,11 +107,58 @@ def run_web_runtime(
         "voice_state": "idle",
         "last_transcription": "",
         "last_error": "",
+        "transcription_model": config.model.name,
+        "transcription_warm_on_start": bool(getattr(config.model, "warm_on_start", True)),
+        "transcription_status": "not_loaded",
+        "transcription_error": "",
         "global_hotkey_available": False,
         "global_hotkey_error": "",
         "text_injection_enabled": text_injection_enabled,
         "text_injection_error": "" if text_injection_enabled else "TextTyper unavailable",
     }
+
+    def _transcription_warm_on_start_enabled() -> bool:
+        return bool(getattr(config.model, "warm_on_start", True))
+
+    def _set_transcription_status(status: str, *, error: str = "") -> None:
+        with state_lock:
+            runtime_status["transcription_model"] = config.model.name
+            runtime_status["transcription_warm_on_start"] = _transcription_warm_on_start_enabled()
+            runtime_status["transcription_status"] = status
+            runtime_status["transcription_error"] = error
+
+    def _ensure_transcriber_loaded() -> Transcriber:
+        nonlocal transcriber
+        if transcriber is None or getattr(transcriber, "model_name", None) != config.model.name:
+            _set_transcription_status("loading")
+            try:
+                transcriber = Transcriber(model_name=config.model.name)
+            except Exception as exc:
+                _set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")
+                raise
+        _set_transcription_status("loaded")
+        return transcriber
+
+    def _warm_transcriber_in_background() -> None:
+        if not _transcription_warm_on_start_enabled():
+            return
+
+        def _warm() -> None:
+            with transcription_lock:
+                try:
+                    _ensure_transcriber_loaded()
+                except Exception as exc:
+                    _set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")
+                    with state_lock:
+                        runtime_status["last_error"] = f"Transcription warmup failed: {exc}"
+                    log.error(f"Transcription warmup failed: {exc}", exc_info=True)
+
+        _set_transcription_status("warming")
+        threading.Thread(
+            target=_warm,
+            name="HoldSpeakTranscriptionWarmup",
+            daemon=True,
+        ).start()
 
     def _active_meeting_session() -> Optional[MeetingSession]:
         with meeting_lock:
@@ -249,9 +296,19 @@ def run_web_runtime(
 
     def _apply_updated_config(updated_config: Config) -> None:
         nonlocal config, transcriber
+        previous_model = config.model.name
         config = updated_config
-        if transcriber is not None and getattr(transcriber, "model_name", None) != config.model.name:
+        model_changed = transcriber is not None and getattr(transcriber, "model_name", None) != config.model.name
+        if model_changed:
             transcriber = None
+        if previous_model != config.model.name or model_changed:
+            _set_transcription_status("not_loaded")
+        else:
+            _set_transcription_status(
+                "loaded" if transcriber is not None else "not_loaded",
+                error="",
+            )
+        _warm_transcriber_in_background()
         if hotkey_listener is not None:
             try:
                 hotkey_listener.hotkey = config.hotkey.key
@@ -280,7 +337,7 @@ def run_web_runtime(
                 device_pairs.append((descriptor, source))
 
         if transcriber is None or getattr(transcriber, "model_name", None) != config.model.name:
-            transcriber = Transcriber(model_name=config.model.name)
+            transcriber = _ensure_transcriber_loaded()
 
         session = MeetingSession(
             transcriber=transcriber,
@@ -520,6 +577,7 @@ def run_web_runtime(
         meeting = _meeting_summary_from_state(state)
         with state_lock:
             last_meeting = dict(last_meeting_snapshot) if isinstance(last_meeting_snapshot, dict) else None
+            runtime_snapshot = dict(runtime_status)
         return {
             "status": "ok",
             "mode": "web",
@@ -528,7 +586,13 @@ def run_web_runtime(
             "meeting_id": state.get("id") if meeting_active else None,
             "meeting": meeting,
             "last_meeting": last_meeting,
-            "voice_state": runtime.get("voice_state", "idle"),
+            "voice_state": runtime.get("voice_state", runtime_snapshot.get("voice_state", "idle")),
+            "transcription": {
+                "model": runtime_snapshot.get("transcription_model", config.model.name),
+                "warm_on_start": runtime_snapshot.get("transcription_warm_on_start", False),
+                "status": runtime_snapshot.get("transcription_status", "not_loaded"),
+                "error": runtime_snapshot.get("transcription_error", ""),
+            },
             "mir": _mir_controls_payload(),
             "state": state,
         }
@@ -998,13 +1062,10 @@ def run_web_runtime(
         invoked outside the typing try-block — typing failures
         still surface the transcript to the device.
         """
-        nonlocal transcriber
         completed_text: Optional[str] = None
         with transcription_lock:
             try:
-                if transcriber is None or getattr(transcriber, "model_name", None) != config.model.name:
-                    transcriber = Transcriber(model_name=config.model.name)
-                text = transcriber.transcribe(audio)
+                text = _ensure_transcriber_loaded().transcribe(audio)
                 if not text:
                     return
                 text = text_processor.process(text)
@@ -1217,6 +1278,7 @@ def run_web_runtime(
         daemon=True,
     )
     plugin_queue_thread.start()
+    _warm_transcriber_in_background()
 
     try:
         recorder = AudioRecorder(

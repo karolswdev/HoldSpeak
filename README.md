@@ -4,6 +4,8 @@ Voice typing for macOS and Linux - hold a hotkey, speak, release.
 
 **Local-first. Private by default. Cloud optional. Fast.**
 
+New to HoldSpeak? Start with the [User Guide](docs/USER_GUIDE.md) for the product overview, daily workflows, privacy model, and setup path.
+
 ## Features
 
 - **Voice Typing**: Hold your configured hotkey, speak, release
@@ -96,7 +98,7 @@ CMAKE_ARGS="-DGGML_METAL=on" uv pip install llama-cpp-python
 
 ### Optional: Dictation LLM Backend
 
-The DIR-01 dictation pipeline routes utterances against a user-defined block taxonomy and enriches them with project-KB context. It ships two backends; pick one based on platform.
+The DIR-01 dictation pipeline routes utterances against a user-defined block taxonomy and enriches them with project-KB context. It supports local in-process backends and OpenAI-compatible endpoints; pick one based on platform and latency needs.
 
 **Apple Silicon (primary on the reference Mac):**
 
@@ -121,6 +123,31 @@ huggingface-cli download bartowski/Qwen2.5-3B-Instruct-GGUF \
   Qwen2.5-3B-Instruct-Q4_K_M.gguf --local-dir ~/Models/gguf --local-dir-use-symlinks False
 ```
 
+**OpenAI-compatible endpoint (local server or hosted API):**
+
+```bash
+uv pip install -e '.[dictation-openai]'
+```
+
+Then point HoldSpeak at any `/v1/chat/completions` compatible server, for example LM Studio, Ollama's OpenAI bridge, vLLM, llama.cpp server, LiteLLM, or OpenAI:
+
+```json
+{
+  "dictation": {
+    "pipeline": { "enabled": true },
+    "runtime": {
+      "backend": "openai_compatible",
+      "openai_compatible_base_url": "http://127.0.0.1:8000/v1",
+      "openai_compatible_model": "qwen2.5-7b-instruct",
+      "openai_compatible_api_key_env": "OPENAI_API_KEY",
+      "openai_compatible_timeout_seconds": 8
+    }
+  }
+}
+```
+
+For local llama.cpp server, LM Studio, Ollama's OpenAI bridge, vLLM, and LiteLLM, use the server's `/v1` base URL and model name. HoldSpeak reads the API key from the named environment variable and never stores the key in `.hs/` project context. If the endpoint times out, returns malformed output, or cannot rewrite safely, dictation falls back to the original transcript instead of blocking typing.
+
 After install, opt the dictation pipeline in via `~/.config/holdspeak/config.json`:
 
 ```json
@@ -132,7 +159,7 @@ After install, opt the dictation pipeline in via `~/.config/holdspeak/config.jso
 }
 ```
 
-`backend: "auto"` resolves to `mlx` on `darwin/arm64` when `mlx-lm` is importable, else `llama_cpp`. Override with `"mlx"` or `"llama_cpp"` to force a backend.
+`backend: "auto"` resolves to `mlx` on `darwin/arm64` when `mlx-lm` is importable, else `llama_cpp`. Override with `"mlx"`, `"llama_cpp"`, or `"openai_compatible"` to force a backend.
 
 Verify with:
 
@@ -332,7 +359,8 @@ Config file: `~/.config/holdspeak/config.json`
     "display": "Right Option"
   },
   "model": {
-    "name": "base"
+    "name": "base",
+    "warm_on_start": true
   },
   "meeting": {
     "system_audio_device": null,
@@ -362,6 +390,76 @@ Config file: `~/.config/holdspeak/config.json`
   }
 }
 ```
+
+## Project-Aware Dictation
+
+HoldSpeak can use repo-local context when dictating into coding-agent tools.
+Add a `.hs/` directory at the project root:
+
+```text
+.hs/
+  instructions.md  # how HoldSpeak should rewrite/inject prompts for this repo
+  context.md       # architecture, important paths, setup notes
+  memory.md        # durable user-approved facts
+  workflows.md     # test/build/review commands
+  issues.md        # active local scratchpad
+  terms.md         # project vocabulary and preferred spellings
+  targets.md       # per-target style notes for Codex, Claude, terminal, browser, etc.
+  ignore           # paths/topics HoldSpeak should not inject
+```
+
+Flat compatibility files are also read automatically when present:
+`.hs_context`, `.hs_issues`, `.hs_memory`, `.hs_instructions`,
+`.hs_workflows`, `.hs_terms`, `.hs_targets`, and `.hs_ignore`. These flat
+files are read-only inputs; the web UI writes only the canonical `.hs/`
+layout after user action. If both forms exist, `.hs/<name>.md` wins. HoldSpeak
+skips binary files, very large files, and obvious secret-looking content
+instead of injecting them.
+
+Claude Code and Codex hooks can report high-confidence session `cwd` directly
+to HoldSpeak, which is more reliable than guessing from the active terminal.
+Generate hook config with:
+
+```bash
+holdspeak agent-hook templates --agent claude
+holdspeak agent-hook templates --agent codex
+```
+
+The generated hooks call `holdspeak agent-hook ingest --agent ...` silently.
+When possible, the template emits the absolute path to the current
+`holdspeak` executable. If it falls back to plain `holdspeak`, install it in a
+globally visible PATH via `uv tool`, `pipx`, a system package, or a stable
+symlink before enabling the hook.
+HoldSpeak stores recent agent sessions locally in
+`~/.config/holdspeak/agent_sessions.json`; dictation project detection prefers
+that recent hook-reported cwd when no explicit project path is supplied.
+
+Assistant-message capture is available but opt-in because it stores bounded
+conversation text locally. Generate capture-enabled hooks only after reviewing
+the privacy tradeoff:
+
+```bash
+holdspeak agent-hook templates --agent claude --capture-messages
+holdspeak agent-hook templates --agent codex --capture-messages
+```
+
+When enabled, `Stop` hooks read the latest assistant text from the transcript
+JSONL, retain at most 4 KB, mark likely questions as `awaiting_response`, and
+clear that text on the next submitted user prompt.
+
+The Dictation page also includes a **Project Context** tab for maintaining
+these `.hs/` files without leaving the web UI. If assistant-message capture is
+enabled, the same page shows a project-scoped banner when Claude or Codex is
+waiting for your reply; **Clear** removes the captured assistant text from the
+local session registry. The **Agent Hooks** tab shows recent Claude/Codex hook
+status and copy-ready hook templates, including the optional
+`--capture-messages` variant. The **Runtime** tab has an opt-in
+`project-rewriter` stage. When enabled, HoldSpeak asks the configured
+local/OpenAI-compatible dictation runtime to rewrite the dictated text using
+the repo-local `.hs/` context, the detected target profile, and any captured
+awaiting agent question before normal block/template enrichment. If the runtime
+is unavailable or the repo has no `.hs/` context, the stage preserves the
+original text and records a warning instead of blocking dictation.
 
 ## Architecture
 

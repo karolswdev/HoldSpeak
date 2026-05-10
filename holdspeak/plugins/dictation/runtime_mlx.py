@@ -146,6 +146,36 @@ class MlxRuntime:
                 f"mlx produced non-JSON despite outlines schema: {text!r}"
             ) from exc
 
+    def rewrite(
+        self,
+        prompt: str,
+        *,
+        max_tokens: int = 512,
+        temperature: float = 0.15,
+    ) -> str:
+        """Generate unconstrained rewritten text for the project rewriter stage."""
+
+        self.load()
+        assert self._loaded is not None
+        try:
+            from mlx_lm import generate  # type: ignore[import-not-found]
+        except Exception as exc:  # pragma: no cover - install-dependent
+            raise RuntimeUnavailableError(
+                "mlx-lm generate is unavailable. "
+                "Install with: uv pip install holdspeak[dictation-mlx]"
+            ) from exc
+        model, tokenizer = self._loaded
+        self._maybe_evict()
+        text = generate(
+            model,
+            tokenizer,
+            prompt=prompt,
+            max_tokens=max_tokens,
+            temp=temperature,
+        )
+        self._last_used = time.monotonic()
+        return str(text)
+
     def _maybe_evict(self) -> None:
         if self.eviction_idle_seconds <= 0 or self._last_used == 0.0:
             return

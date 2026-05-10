@@ -23,6 +23,7 @@ class HotkeyConfig:
 class ModelConfig:
     """Whisper model configuration."""
     name: str = "base"
+    warm_on_start: bool = True
     # Available: tiny, base, small, medium, large
 
 
@@ -131,9 +132,13 @@ class MeetingConfig:
 class LLMRuntimeConfig:
     """DIR-01 dictation LLM runtime config (spec §9.4)."""
 
-    backend: str = "auto"  # "auto" | "mlx" | "llama_cpp"
+    backend: str = "auto"  # "auto" | "mlx" | "llama_cpp" | "openai_compatible"
     mlx_model: str = "~/Models/mlx/Qwen3-8B-MLX-4bit"
     llama_cpp_model_path: str = "~/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf"
+    openai_compatible_model: str = "qwen2.5-7b-instruct"
+    openai_compatible_base_url: str = "http://127.0.0.1:8000/v1"
+    openai_compatible_api_key_env: str = "OPENAI_API_KEY"
+    openai_compatible_timeout_seconds: float = 8.0
     n_ctx: int = 2048
     n_threads: Optional[int] = None
     n_gpu_layers: int = -1
@@ -141,7 +146,7 @@ class LLMRuntimeConfig:
     eviction_idle_seconds: int = 0
 
 
-_KNOWN_DICTATION_STAGES = ("intent-router", "kb-enricher")
+_KNOWN_DICTATION_STAGES = ("intent-router", "project-rewriter", "kb-enricher")
 
 
 class DictationConfigError(ValueError):
@@ -153,7 +158,7 @@ class DictationPipelineConfig:
     """DIR-01 dictation pipeline config (spec §9.4). OFF by default."""
 
     enabled: bool = False
-    stages: list[str] = field(default_factory=lambda: list(_KNOWN_DICTATION_STAGES))
+    stages: list[str] = field(default_factory=lambda: ["intent-router", "kb-enricher"])
     max_total_latency_ms: int = 600
 
     def __post_init__(self) -> None:

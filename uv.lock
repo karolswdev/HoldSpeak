@@ -771,6 +771,7 @@ dependencies = [
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pynput" },
     { name = "pyperclip" },
+    { name = "pyyaml" },
     { name = "sounddevice" },
     { name = "textual" },
     { name = "uvicorn", extra = ["standard"] },
@@ -795,6 +796,9 @@ dictation-llama = [
 dictation-mlx = [
     { name = "mlx-lm", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
     { name = "outlines", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
+]
+dictation-openai = [
+    { name = "openai" },
 ]
 linux = [
     { name = "faster-whisper" },
@@ -827,6 +831,7 @@ requires-dist = [
     { name = "mlx-lm", marker = "platform_machine == 'arm64' and sys_platform == 'darwin' and extra == 'dictation-mlx'", specifier = ">=0.19" },
     { name = "mlx-whisper", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'", specifier = ">=0.4.0" },
     { name = "numpy", specifier = ">=1.24.0" },
+    { name = "openai", marker = "extra == 'dictation-openai'", specifier = ">=1.0.0" },
     { name = "openai", marker = "extra == 'meeting'", specifier = ">=1.0.0" },
     { name = "outlines", marker = "platform_machine == 'arm64' and sys_platform == 'darwin' and extra == 'dictation-mlx'", specifier = ">=0.1.0" },
     { name = "playwright", marker = "extra == 'dev'", specifier = ">=1.40.0" },
@@ -842,6 +847,7 @@ requires-dist = [
     { name = "pytest-mock", marker = "extra == 'test'", specifier = ">=3.12" },
     { name = "pytest-timeout", marker = "extra == 'dev'", specifier = ">=2.2" },
     { name = "pytest-timeout", marker = "extra == 'test'", specifier = ">=2.2" },
+    { name = "pyyaml", specifier = ">=6.0" },
     { name = "resemblyzer", marker = "extra == 'meeting'", specifier = ">=0.1.3" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
     { name = "rumps", marker = "sys_platform == 'darwin' and extra == 'menubar'", specifier = ">=0.4.0" },
@@ -850,7 +856,7 @@ requires-dist = [
     { name = "textual", specifier = ">=0.50.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.20.0" },
 ]
-provides-extras = ["linux", "test", "menubar", "meeting", "dictation-llama", "dictation-mlx", "dev"]
+provides-extras = ["linux", "test", "menubar", "meeting", "dictation-llama", "dictation-mlx", "dictation-openai", "dev"]
 
 [[package]]
 name = "httpcore"

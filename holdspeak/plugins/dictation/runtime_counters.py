@@ -223,6 +223,44 @@ class CountingRuntime:
                 raise LLMRuntimeDisabledError(reason)
         return result
 
+    def rewrite(
+        self,
+        prompt: str,
+        *,
+        max_tokens: int = 512,
+        temperature: float = 0.15,
+    ) -> str:
+        if self._disabled:
+            raise LLMRuntimeDisabledError(self._disabled_reason or "runtime disabled for session")
+        rewrite = getattr(self._inner, "rewrite", None)
+        if not callable(rewrite):
+            raise RuntimeError(f"runtime backend {self._inner.backend!r} does not support rewrite")
+
+        is_cold_start = not self._cold_start_done
+        start = time.perf_counter()
+        result = rewrite(prompt, max_tokens=max_tokens, temperature=temperature)
+        elapsed_ms = (time.perf_counter() - start) * 1000.0
+        if is_cold_start:
+            self._cold_start_done = True
+            cap = self._cold_start_cap_ms
+            if cap is not None and elapsed_ms > cap:
+                reason = (
+                    f"cold-start exceeded cap: {elapsed_ms:.0f}ms > {cap}ms; "
+                    "LLM stage disabled for this session"
+                )
+                self._disabled = True
+                self._disabled_reason = reason
+                _set_session_disabled(reason)
+                log.warning(
+                    "dictation cold-start cap breached during rewrite: backend=%s "
+                    "elapsed_ms=%.0f cap_ms=%d; LLM stage disabled for session (DIR-R-003)",
+                    self._inner.backend,
+                    elapsed_ms,
+                    cap,
+                )
+                raise LLMRuntimeDisabledError(reason)
+        return str(result)
+
 
 def note_constrained_retry() -> None:
     """Advance `constrained_retries` from a backend that re-attempts under tightened constraints.

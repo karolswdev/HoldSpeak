@@ -139,6 +139,26 @@ class LlamaCppRuntime:
                 f"llama_cpp produced non-JSON despite GBNF: {text!r}"
             ) from exc
 
+    def rewrite(
+        self,
+        prompt: str,
+        *,
+        max_tokens: int = 512,
+        temperature: float = 0.15,
+    ) -> str:
+        """Generate unconstrained rewritten text for the project rewriter stage."""
+
+        self.load()
+        assert self._llm is not None
+        self._maybe_evict()
+        completion = self._llm.create_completion(
+            prompt=prompt,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+        self._last_used = time.monotonic()
+        return _extract_completion_text(completion)
+
     def _maybe_evict(self) -> None:
         if self.eviction_idle_seconds <= 0 or self._last_used == 0.0:
             return

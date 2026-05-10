@@ -63,8 +63,8 @@ def test_activity_page_serves_browser_surface(test_client: TestClient) -> None:
 
     # Bundled JS still calls the existing /api/activity endpoints, plus
     # the new HS-9-12 connector endpoints.
-    match = re.search(r'src="(/_built/_astro/hoisted\.[^"]+\.js)"', body)
-    assert match, "expected hoisted activity JS chunk reference"
+    match = re.search(r'src="(/_built/_astro/[^"]+\.js)"', body)
+    assert match, "expected activity JS chunk reference"
     js = test_client.get(match.group(1)).text
     assert "/api/activity/status" in js
     assert "/api/activity/meeting-candidates/preview" in js

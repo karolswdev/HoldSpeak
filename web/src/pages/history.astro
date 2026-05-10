@@ -703,6 +703,13 @@ import AppLayout from "../layouts/AppLayout.astro";
                         <option value="large">large</option>
                       </select>
                     </div>
+                    <div class="field checkbox-field">
+                      <label>
+                        <input type="checkbox" x-model="settings.model.warm_on_start" />
+                        Warm Whisper on web startup
+                      </label>
+                      <small>Preloads transcription for bridge and local typing so the first utterance is not slow.</small>
+                    </div>
                     <div class="field">
                       <label>Mic label</label>
                       <input class="input" type="text" x-model="settings.meeting.mic_label" />
@@ -1384,6 +1391,17 @@ import AppLayout from "../layouts/AppLayout.astro";
     font-size: var(--font-size-xs);
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing-loose);
+  }
+  .field.checkbox-field label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  .field.checkbox-field small {
+    color: var(--text-subtle);
+    line-height: 1.4;
   }
 
   /* === Speaker list / segment ============================ */

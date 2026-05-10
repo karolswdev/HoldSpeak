@@ -26,8 +26,9 @@ from holdspeak.web_server import MeetingWebServer
 class _StubRuntime:
     backend = "stub"
 
-    def __init__(self, block_id: str | None = None) -> None:
+    def __init__(self, block_id: str | None = None, rewrite_text: str | None = None) -> None:
         self.block_id = block_id
+        self.rewrite_text = rewrite_text
 
     def load(self) -> None:
         pass
@@ -43,6 +44,10 @@ class _StubRuntime:
             "confidence": 0.95 if block_id is not None else 0.0,
             "extras": {},
         }
+
+    def rewrite(self, prompt, *, max_tokens=512, temperature=0.15):
+        _ = prompt, max_tokens, temperature
+        return self.rewrite_text or "rewritten text"
 
 
 @pytest.fixture
@@ -185,6 +190,47 @@ def test_dry_run_project_root_override_selects_project_without_relaunch(
     assert body["final_text"].endswith("Stack: rust")
 
 
+def test_dry_run_project_rewriter_uses_hs_context_when_enabled(
+    test_client: TestClient,
+    settings_path: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = True
+    cfg.dictation.pipeline.stages = ["project-rewriter", "kb-enricher"]
+    cfg.save(path=settings_path)
+    root = tmp_path / "target"
+    (root / ".hs").mkdir(parents=True)
+    (root / ".hs" / "instructions.md").write_text(
+        "Rewrite dictation as concise coding-agent tasks.",
+        encoding="utf-8",
+    )
+    (root / "pyproject.toml").write_text('[project]\nname = "target-proj"\n', encoding="utf-8")
+    monkeypatch.chdir(root)
+    monkeypatch.setattr(
+        assembly_module,
+        "build_runtime",
+        lambda **_kwargs: _StubRuntime(rewrite_text="Implement the project-aware rewrite stage."),
+    )
+
+    response = test_client.post(
+        "/api/dictation/dry-run",
+        json={
+            "utterance": "can you do the rewrite thing",
+            "target": {"app_name": "WezTerm", "window_title": "codex - HoldSpeak"},
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["target"]["id"] == "codex_cli"
+    assert [stage["stage_id"] for stage in body["stages"]] == ["project-rewriter", "kb-enricher"]
+    assert body["stages"][0]["metadata"]["reason"] == "rewritten"
+    assert body["stages"][0]["metadata"]["target_profile"]["id"] == "codex_cli"
+    assert body["final_text"] == "Implement the project-aware rewrite stage."
+
+
 def test_dry_run_no_project_still_runs_pipeline(
     test_client: TestClient,
     settings_path: Path,
@@ -301,8 +347,8 @@ def test_dictation_page_includes_dry_run_section() -> None:
     # in the bundled JS chunk, not inline HTML.
     import re
 
-    match = re.search(r'src="(/_built/_astro/hoisted\.[^"]+\.js)"', body)
-    assert match, "expected hoisted dictation JS chunk reference"
+    match = re.search(r'src="(/_built/_astro/[^"]+\.js)"', body)
+    assert match, "expected dictation JS chunk reference"
     js = client.get(match.group(1)).text
     assert "/api/dictation/dry-run" in js
     assert "renderDryRun" in js

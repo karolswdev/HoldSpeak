@@ -18,6 +18,10 @@ from .transcribe import Transcriber
 from .typer import TextTyper
 from .text_processor import TextProcessor
 from .commands.actions import run_actions_command
+from .commands.agent_hook import (
+    build_argparse_subparsers as _build_agent_hook_subparsers,
+    run_agent_hook_command,
+)
 from .commands.device import run_device_psk_command
 from .commands.dictation import (
     _build_argparse_subparsers as _build_dictation_subparsers,
@@ -48,6 +52,8 @@ Examples:
   holdspeak meeting      # Start in meeting mode (capture mic + system audio)
   holdspeak meeting --setup  # Check system audio setup
   holdspeak doctor       # Verify runtime deps and setup
+  holdspeak agent-hook templates --agent claude
+                        # Print Claude/Codex hook templates for context capture
   holdspeak intel        # Inspect or process deferred meeting intelligence
   holdspeak intel --route-dry-run <MEETING_ID> --profile architect
                         # Simulate MIR route for a saved meeting
@@ -277,6 +283,13 @@ Logs are written to: {LOG_FILE}
     )
     _build_dictation_subparsers(dictation_parser)
 
+    # Agent hook subcommand
+    agent_hook_parser = subparsers.add_parser(
+        "agent-hook",
+        help="Ingest Claude/Codex hook events for project-aware dictation",
+    )
+    _build_agent_hook_subparsers(agent_hook_parser)
+
     # device-psk subcommand (HS-14-03)
     device_psk_parser = subparsers.add_parser(
         "device-psk",
@@ -363,6 +376,10 @@ Logs are written to: {LOG_FILE}
     # Handle dictation subcommand (DIR-01 CLI surface)
     if args.command == "dictation":
         raise SystemExit(run_dictation_command(_normalize_dictation_args(args)))
+
+    # Handle agent-hook subcommand
+    if args.command == "agent-hook":
+        raise SystemExit(run_agent_hook_command(args))
 
     # Handle device-psk subcommand (HS-14-03)
     if args.command == "device-psk":

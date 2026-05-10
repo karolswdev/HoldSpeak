@@ -116,6 +116,37 @@ def test_happy_path_returns_intent_tag():
     assert result.metadata["taxonomy_size"] == 2
 
 
+def test_prompt_builder_includes_hs_project_context():
+    rt = _FakeRuntime(
+        returns=[
+            {
+                "matched": True,
+                "block_id": "ai_prompt_buildout",
+                "confidence": 0.87,
+                "extras": {},
+            }
+        ]
+    )
+    router = IntentRouter(rt, _blocks())
+    utt = Utterance(
+        raw_text="please implement this",
+        audio_duration_s=1.0,
+        transcribed_at=datetime(2026, 4, 25, tzinfo=timezone.utc),
+        project={
+            "name": "holdspeak",
+            "hs": {
+                "prompt_context": "## .hs/instructions.md\nFormat as a coding-agent task."
+            },
+        },
+    )
+
+    router.run(utt, prior=[])
+
+    assert len(rt.calls) == 1
+    assert "Project context from repo-local .hs files" in rt.calls[0]["prompt"]
+    assert "Format as a coding-agent task." in rt.calls[0]["prompt"]
+
+
 def test_no_match_response_is_normalized():
     rt = _FakeRuntime(
         returns=[

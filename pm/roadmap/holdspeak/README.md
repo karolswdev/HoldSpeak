@@ -1,23 +1,23 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-10 (phase 16 HS-16-01 shipped — `MermaidArchitecturePlugin` is the first real, LLM-backed synthesizer on the plugin substrate; HS-16-02..05 still pending; phase 15 cross-network still the next planned phase).
-**Current phase:** [phase-15-out-and-about](./phase-15-out-and-about/) — cross-network reach for AIPI-Lite (Tailscale / Cloudflare Tunnel / WireGuard candidate evaluation, TLS, per-device PSKs, paired with the AIPI-Lite firmware's portable WiFi work).
-**Status:** not-started.
+**Last updated:** 2026-05-10 (HS-18 intelligent typing copilot phase closed with final summary and broad regression evidence).
+**Current phase:** none active. Last closed phase: [phase-18-intelligent-typing-copilot](./phase-18-intelligent-typing-copilot/) — project-aware local intelligent typing: target profiles, Claude/Codex hook context, optional external-agent summarization, `.hs` project conventions, OpenAI-compatible runtimes, and web cockpit support.
+**Status:** phase 18 complete; next phase pending.
 
 ## Vision
 
 HoldSpeak is a local, private, hold-to-talk voice typing tool for macOS
 and Linux. The current product is a working voice typer with a web
 runtime, meeting mode, transcription via MLX-Whisper / faster-whisper,
-and a deferred meeting-intel pipeline.
+deferred meeting intelligence, and an emerging intelligent-typing layer
+for project-aware local writing.
 
 This roadmap exists because the project is graduating from "useful
-script" to a real product with a plugin architecture. The next chapter
-is a **pluggable transcript pipeline**: utterances flow through ordered,
-user-configurable stages between Whisper and the keyboard. The first
-concrete stage is an on-device LLM intent router that classifies the
-utterance against a user-defined block taxonomy and triggers grounded
-context injection from project knowledge bases.
+script" to a real product. The current chapter is **local intelligent
+typing**: utterances can flow through ordered, user-configurable stages
+between Whisper and the keyboard, optionally using target-profile
+detection, project context, agent hooks, and OpenAI-compatible local or
+LAN LLM endpoints before text is injected.
 
 ## Source canon
 
@@ -25,6 +25,7 @@ Phase content must be grounded in these. If a phase disagrees with
 canon, canon wins.
 
 - `README.md` — public install + usage surface.
+- `docs/USER_GUIDE.md` — user-facing product workflows.
 - `docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` — parent RFC for the plugin system.
 - `docs/PLAN_PHASE_MULTI_INTENT_ROUTING.md` — sibling phase: meeting-side multi-intent routing (MIR-01).
 - `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` — DIR-01 spec for the dictation pipeline.
@@ -52,7 +53,9 @@ canon, canon wins.
 | 13 | Connector runtime + pipelines + meeting context: turn the framework on, chain packs, surface pre-meeting briefings + cross-meeting summaries | done | [phase-13-connector-runtime-and-context](./phase-13-connector-runtime-and-context/) |
 | 14 | AIPI-Lite devices: remote audio ingest substrate — `AudioSource` Protocol, `RemoteAudioRecorder`, `/api/devices/audio` WebSocket, per-device speaker labels in transcripts; same-LAN scope (cross-network is phase 15) | done | [phase-14-aipi-lite-devices](./phase-14-aipi-lite-devices/) |
 | 15 | Out-and-about: cross-network reach for AIPI-Lite — tunneling (Tailscale / Cloudflare Tunnel / WireGuard candidate evaluation), TLS, per-device PSKs, paired with the AIPI-Lite firmware's portable WiFi (multi-SSID + captive portal + Improv-WiFi) on the device-side roadmap | not-started | [phase-15-out-and-about](./phase-15-out-and-about/) |
-| 16 | First real synthesizer: replace `mermaid_architecture`'s `DeterministicPlugin` stub with a real LLM-backed plugin, wire the LLM capability gate, render `mermaid` artifacts as inline SVG in the web view, reality-check the plugin RFC | not-started | [phase-16-first-real-plugin](./phase-16-first-real-plugin/) |
+| 16 | First real synthesizer: replace `mermaid_architecture`'s `DeterministicPlugin` stub with a real LLM-backed plugin, wire the LLM capability gate, render `mermaid` artifacts as inline SVG in the web view, reality-check the plugin RFC | in-progress | [phase-16-first-real-plugin](./phase-16-first-real-plugin/) |
+| 17 | Device Initiative: device → server upstream frames (`device_health` + `query` w/ `last_segment` case) lighting up AIPI-Lite phase 4's `blocked` bridge stories; minimal web UI rendering for device health. Sibling to HS-14, paired with AIPI-4 in the AIPI-Lite roadmap. | not-started | [phase-17-device-initiative](./phase-17-device-initiative/) |
+| 18 | Intelligent Typing Copilot: project-aware local intelligent typing with target profiles, Claude/Codex hooks, optional external-agent summarization, `.hs` context conventions, OpenAI-compatible runtimes, and web cockpit support | done | [phase-18-intelligent-typing-copilot](./phase-18-intelligent-typing-copilot/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

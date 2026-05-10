@@ -29,9 +29,10 @@ def test_runtime_guidance_auto_offers_backend_commands() -> None:
     )
 
     commands = [item["command"] for item in guidance["commands"]]
-    assert len(commands) == 2
+    assert len(commands) == 3
     assert any("dictation-mlx" in command for command in commands)
     assert any("dictation-llama" in command for command in commands)
+    assert any("dictation-openai" in command for command in commands)
     assert guidance["command_bundle"] == "\n".join(commands)
     assert guidance["links"] == [
         {"label": "Dictation runtime setup", "target": "/docs/dictation-runtime"}
@@ -41,6 +42,7 @@ def test_runtime_guidance_auto_offers_backend_commands() -> None:
 def test_runtime_docs_target_uses_backend_anchors() -> None:
     assert runtime_docs_target("mlx") == "/docs/dictation-runtime#mlx"
     assert runtime_docs_target("llama_cpp") == "/docs/dictation-runtime#llama-cpp"
+    assert runtime_docs_target("openai_compatible") == "/docs/dictation-runtime#openai-compatible"
     assert runtime_docs_target("auto") == "/docs/dictation-runtime"
 
 

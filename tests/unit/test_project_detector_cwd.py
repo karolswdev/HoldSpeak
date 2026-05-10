@@ -32,6 +32,24 @@ def test_holdspeak_anchor_beats_git_at_same_level(tmp_path: Path, monkeypatch: p
     assert ctx["root"] == str(root.resolve())
 
 
+def test_hs_anchor_beats_legacy_holdspeak_and_loads_context(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    root = _mk(tmp_path / "proj")
+    hs = _mk(root / ".hs")
+    _mk(root / ".holdspeak")
+    (hs / "instructions.md").write_text("Rewrite as a Codex task.", encoding="utf-8")
+    (hs / "context.md").write_text("Project architecture lives in holdspeak/.", encoding="utf-8")
+
+    ctx = detect_project_for_cwd(root)
+
+    assert ctx is not None
+    assert ctx["anchor"] == "holdspeak"
+    assert ctx["hs"]["instructions"] == "Rewrite as a Codex task."
+    assert "## .hs/context.md" in ctx["hs"]["prompt_context"]
+
+
 def test_git_anchor_beats_pyproject_at_same_level(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("HOME", str(tmp_path))
     root = _mk(tmp_path / "proj")

@@ -1,0 +1,2 @@
+{"role":"user","content":"Work on the dictation stage."}
+{"role":"assistant","content":[{"type":"text","text":"The tests pass. Should I run the full suite now?"}]}

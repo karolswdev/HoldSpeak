@@ -124,8 +124,8 @@ def test_dictation_page_route_serves_html() -> None:
 
     import re
 
-    match = re.search(r'src="(/_built/_astro/hoisted\.[^"]+\.js)"', body)
-    assert match, "expected hoisted dictation JS chunk reference"
+    match = re.search(r'src="(/_built/_astro/[^"]+\.js)"', body)
+    assert match, "expected dictation JS chunk reference"
     js = client.get(match.group(1)).text
     for endpoint in (
         "/api/dictation/blocks",

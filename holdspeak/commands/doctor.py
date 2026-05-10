@@ -582,6 +582,17 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
             fix=doctor_runtime_install_fix(requested),
         )
 
+    if resolved == "openai_compatible":
+        return DoctorCheck(
+            name="LLM runtime",
+            status="PASS",
+            detail=(
+                f"resolved={resolved} ({reason}); endpoint="
+                f"{cfg.runtime.openai_compatible_base_url}; "
+                f"model={cfg.runtime.openai_compatible_model}"
+            ),
+        )
+
     target = (
         Path(cfg.runtime.mlx_model).expanduser()
         if resolved == "mlx"
@@ -655,7 +666,7 @@ def _check_dictation_constraint_compile(config: Config) -> DoctorCheck:
     try:
         block_set = loaded.to_block_set()
         schema = StructuredOutputSchema.from_block_set(block_set)
-        if resolved == "mlx":
+        if resolved in {"mlx", "openai_compatible"}:
             to_outlines(schema)
         else:
             to_gbnf(schema)

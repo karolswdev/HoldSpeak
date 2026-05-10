@@ -135,6 +135,12 @@ if [[ -z "$HOLDSPEAK_PIP_SPEC" ]]; then
   HOLDSPEAK_PIP_SPEC="holdspeak${EXTRAS} @ ${SOURCE}"
 fi
 
+if [[ "${HOLDSPEAK_SKIP_WEB_BUILD:-0}" != "1" ]] && [[ "$HOLDSPEAK_PIP_SPEC" == *"git+https://github.com/karolswdev/HoldSpeak.git"* ]]; then
+  if ! command -v npm >/dev/null 2>&1; then
+    err "npm is required to build the bundled web UI from the git source install. Install Node.js/npm, use a prebuilt wheel, or set HOLDSPEAK_SKIP_WEB_BUILD=1 only if the package already contains holdspeak/static/_built."
+  fi
+fi
+
 log "Installing $HOLDSPEAK_PIP_SPEC"
 "$VENV_DIR/bin/pip" install "$HOLDSPEAK_PIP_SPEC"
 
