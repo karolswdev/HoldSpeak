@@ -47,6 +47,12 @@ This phase is the **sibling of HS-14** (audio + status substrate) rather than a 
 | HS-17-04 | DoD: protocol-doc consolidation + final-summary + phase exit | backlog | [story-04-dod.md](./story-04-dod.md) | — |
 | HS-17-05 | Periodic Recording-tick status emitter (HS-14-07 spec drift, surfaced live 2026-05-10) | done | [story-05-recording-tick-emitter.md](./story-05-recording-tick-emitter.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-17-06 | Meeting title in device status (alternates with Recording-tick payload) | backlog | [story-06-meeting-title-in-status.md](./story-06-meeting-title-in-status.md) | — |
+| HS-17-07 | Meeting intel pushback to device LCD (topic/actions/summary rotation post-meeting) | backlog | [story-07-intel-pushback.md](./story-07-intel-pushback.md) | — |
+| HS-17-08 | Per-segment transcript pushback (live confirmation channel during meetings) | backlog | [story-08-per-segment-transcript-pushback.md](./story-08-per-segment-transcript-pushback.md) | — |
+| HS-17-09 | MIR-01 realtime action items → LCD flash | backlog | [story-09-realtime-action-items.md](./story-09-realtime-action-items.md) | — |
+| HS-17-10 | Multi-device join/drop events → LCD flash | backlog | [story-10-multi-device-join-drop-events.md](./story-10-multi-device-join-drop-events.md) | — |
+| HS-17-11 | Handshake / version startup flash | backlog | [story-11-handshake-version-flash.md](./story-11-handshake-version-flash.md) | — |
+| HS-17-12 | Bookmark count in Recording-tick payload | backlog | [story-12-bookmark-count-in-tick.md](./story-12-bookmark-count-in-tick.md) | — |
 
 (Status values: `backlog`, `ready`, `in-progress`, `blocked`, `done`, `cancelled`.)
 
