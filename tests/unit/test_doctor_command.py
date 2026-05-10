@@ -216,6 +216,24 @@ def test_dictation_runtime_check_pass_when_model_available(monkeypatch, tmp_path
     assert "llama_cpp" in result.detail
 
 
+def test_dictation_runtime_check_pass_for_openai_compatible(monkeypatch) -> None:
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = True
+    cfg.dictation.runtime.backend = "openai_compatible"
+    cfg.dictation.runtime.openai_compatible_base_url = "http://127.0.0.1:8000/v1"
+    cfg.dictation.runtime.openai_compatible_model = "qwen-local"
+    monkeypatch.setattr(
+        "holdspeak.plugins.dictation.runtime.resolve_backend",
+        lambda requested, **_kw: ("openai_compatible", "stubbed"),
+    )
+
+    result = doctor._check_dictation_runtime(cfg)
+
+    assert result.status == "PASS"
+    assert "openai_compatible" in result.detail
+    assert "qwen-local" in result.detail
+
+
 def test_project_context_check_pass_when_pipeline_disabled() -> None:
     cfg = Config()  # default: dictation pipeline disabled
     result = doctor._check_dictation_project_context(cfg)

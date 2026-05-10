@@ -111,6 +111,16 @@ def test_readiness_ready_with_project_blocks_kb_and_model(
     assert body["blocks"]["resolved"]["count"] == 1
     assert body["project_kb"]["keys"] == ["stack"]
     assert body["runtime"]["status"] == "available"
+    assert body["target"]["id"] in {
+        "claude_code",
+        "codex_cli",
+        "terminal_shell",
+        "browser",
+        "editor",
+        "chat",
+        "unknown",
+    }
+    assert set(body["agent_hooks"]) == {"claude", "codex"}
     assert body["warnings"] == []
 
 
@@ -268,8 +278,8 @@ def test_dictation_page_includes_readiness_panel() -> None:
     # in the bundled chunk after the rebuild.
     import re
 
-    match = re.search(r'src="(/_built/_astro/hoisted\.[^"]+\.js)"', body)
-    assert match, "expected hoisted dictation JS chunk reference"
+    match = re.search(r'src="(/_built/_astro/[^"]+\.js)"', body)
+    assert match, "expected dictation JS chunk reference"
     js = client.get(match.group(1)).text
     assert "/api/dictation/readiness" in js
     assert "data-ready-template-id" in js
@@ -277,6 +287,7 @@ def test_dictation_page_includes_readiness_panel() -> None:
     assert "data-ready-runtime-action" in js
     assert "renderRuntimeGuidance" in js
     assert "data-copy-command" in js
+    assert "Claude/Codex hook context freshness" in js
     assert "Copy all setup commands" in js
 
 

@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 import json
+import os
 import re
 import socket
 import threading
@@ -16,10 +17,43 @@ from copy import deepcopy
 from pathlib import Path
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, TYPE_CHECKING
 from urllib.parse import urlparse
 
 from .logging_config import get_logger
+from .web_requests import (
+    _ActionItemEditRequest,
+    _ActionItemReviewRequest,
+    _ActionItemUpdateRequest,
+    _ActivityCliEnrichmentRunRequest,
+    _ActivityDomainRuleRequest,
+    _ActivityEnrichmentConnectorRequest,
+    _ActivityExtensionEventsRequest,
+    _ActivityMeetingCandidateRequest,
+    _ActivityMeetingCandidateStatusRequest,
+    _ActivityProjectRuleRequest,
+    _ActivitySettingsRequest,
+    _BookmarkRequest,
+    _GlobalActionItemEditRequest,
+    _GlobalActionItemReviewRequest,
+    _GlobalActionItemUpdateRequest,
+    _IntelProcessRequest,
+    _IntentOverrideRequest,
+    _IntentPreviewRequest,
+    _IntentProfileRequest,
+    _MeetingStartRequest,
+    _PluginJobProcessRequest,
+    _SpeakerUpdateRequest,
+    _StopRequest,
+    _UpdateMeetingRequest,
+)
+
+if TYPE_CHECKING:
+    import numpy as np
+
+    from .audio import AudioSource
+    from .device_audio import DeviceRegistry
+    from .device_status import DeviceStatusEmitter
 
 log = get_logger("web_server")
 _HTTP_HEADER_NAME_RE = re.compile(r"^[A-Za-z0-9-]+$")
@@ -36,7 +70,6 @@ try:
     from fastapi import FastAPI, WebSocket, WebSocketDisconnect
     from fastapi.responses import HTMLResponse, JSONResponse, Response
     from fastapi.staticfiles import StaticFiles
-    from pydantic import BaseModel
 except Exception as e:  # pragma: no cover - optional dependency at runtime
     uvicorn = None  # type: ignore[assignment]
     FastAPI = None  # type: ignore[assignment]
@@ -45,7 +78,6 @@ except Exception as e:  # pragma: no cover - optional dependency at runtime
     HTMLResponse = None  # type: ignore[assignment]
     JSONResponse = None  # type: ignore[assignment]
     Response = None  # type: ignore[assignment]
-    BaseModel = object  # type: ignore[assignment]
     _IMPORT_ERROR: Optional[Exception] = e
 else:
     _IMPORT_ERROR = None
@@ -131,128 +163,17 @@ class BroadcastMessage:
         return {"type": self.type, "data": self.data}
 
 
-class _BookmarkRequest(BaseModel):
-    label: str = ""
+class _UnknownDeviceError(LookupError):
+    """Raised by ``on_start`` when a requested device id is not registered.
 
+    The route maps this to a 404 with the offending ``device_id``
+    surfaced in the JSON body so the caller can correct its
+    request without polling the registry.
+    """
 
-class _StopRequest(BaseModel):
-    reason: Optional[str] = None
-
-
-class _ActionItemUpdateRequest(BaseModel):
-    status: str  # "done", "pending", or "dismissed"
-
-
-class _ActionItemReviewRequest(BaseModel):
-    review_state: str  # "pending" or "accepted"
-
-
-class _ActionItemEditRequest(BaseModel):
-    task: str
-    owner: Optional[str] = None
-    due: Optional[str] = None
-
-
-class _UpdateMeetingRequest(BaseModel):
-    title: Optional[str] = None
-    tags: Optional[list[str]] = None
-
-
-class _IntentProfileRequest(BaseModel):
-    profile: str
-
-
-class _IntentOverrideRequest(BaseModel):
-    intents: Optional[list[str]] = None
-
-
-class _IntentPreviewRequest(BaseModel):
-    profile: Optional[str] = None
-    threshold: Optional[float] = None
-    intent_scores: Optional[dict[str, float]] = None
-    override_intents: Optional[list[str]] = None
-    previous_intents: Optional[list[str]] = None
-    tags: Optional[list[str]] = None
-    transcript: Optional[str] = None
-
-
-class _GlobalActionItemUpdateRequest(BaseModel):
-    status: str
-
-
-class _GlobalActionItemReviewRequest(BaseModel):
-    review_state: str
-
-
-class _GlobalActionItemEditRequest(BaseModel):
-    task: str
-    owner: Optional[str] = None
-    due: Optional[str] = None
-
-
-class _SpeakerUpdateRequest(BaseModel):
-    name: Optional[str] = None
-    avatar: Optional[str] = None
-
-
-class _IntelProcessRequest(BaseModel):
-    max_jobs: Optional[int] = None
-    mode: Optional[str] = None
-
-
-class _PluginJobProcessRequest(BaseModel):
-    max_jobs: Optional[int] = None
-    mode: Optional[str] = None
-
-
-class _ActivitySettingsRequest(BaseModel):
-    enabled: Optional[bool] = None
-    retention_days: Optional[int] = None
-
-
-class _ActivityDomainRuleRequest(BaseModel):
-    domain: str
-    action: str = "exclude"
-
-
-class _ActivityProjectRuleRequest(BaseModel):
-    project_id: Optional[str] = None
-    name: Optional[str] = None
-    enabled: Optional[bool] = None
-    priority: Optional[int] = None
-    match_type: Optional[str] = None
-    pattern: Optional[str] = None
-    entity_type: Optional[str] = None
-
-
-class _ActivityMeetingCandidateRequest(BaseModel):
-    source_connector_id: Optional[str] = None
-    source_activity_record_id: Optional[int] = None
-    title: Optional[str] = None
-    starts_at: Optional[str] = None
-    ends_at: Optional[str] = None
-    meeting_url: Optional[str] = None
-    confidence: Optional[float] = None
-    status: Optional[str] = None
-
-
-class _ActivityMeetingCandidateStatusRequest(BaseModel):
-    status: str
-
-
-class _ActivityEnrichmentConnectorRequest(BaseModel):
-    enabled: Optional[bool] = None
-    settings: Optional[dict[str, Any]] = None
-
-
-class _ActivityExtensionEventsRequest(BaseModel):
-    events: list[dict[str, Any]]
-
-
-class _ActivityCliEnrichmentRunRequest(BaseModel):
-    limit: Optional[int] = None
-    timeout_seconds: Optional[float] = None
-    max_bytes: Optional[int] = None
+    def __init__(self, device_id: str) -> None:
+        super().__init__(f"Unknown device id: {device_id!r}")
+        self.device_id = device_id
 
 
 def _model_fields_set(model: Any) -> set[str]:
@@ -442,6 +363,16 @@ class MeetingWebServer:
         on_settings_applied: Optional[Callable[[Any], None]] = None,
         on_dictation_config_changed: Optional[Callable[[], None]] = None,
         project_detector: Optional[Any] = None,
+        device_registry: Optional["DeviceRegistry"] = None,
+        device_psk_provider: Optional[Callable[[], str]] = None,
+        on_device_audio_chunk: Optional[Callable[[str, "np.ndarray"], None]] = None,
+        on_device_voice_start: Optional[Callable[[str, "AudioSource"], bool]] = None,
+        on_device_voice_stop: Optional[
+            Callable[[str, "AudioSource"], Optional["np.ndarray"]]
+        ] = None,
+        on_device_voice_cancel: Optional[Callable[[str], None]] = None,
+        device_status_emitter: Optional["DeviceStatusEmitter"] = None,
+        on_device_event: Optional[Callable[[str, str, Optional[float]], None]] = None,
         host: str = "127.0.0.1",
     ) -> None:
         if _IMPORT_ERROR is not None:
@@ -470,6 +401,36 @@ class MeetingWebServer:
         self.on_settings_applied = on_settings_applied
         self.on_dictation_config_changed = on_dictation_config_changed
         self._project_detector = project_detector
+        if device_registry is None:
+            from .device_audio import DeviceRegistry as _DeviceRegistry
+            device_registry = _DeviceRegistry()
+        self.device_registry: "DeviceRegistry" = device_registry
+        if device_psk_provider is None:
+            from .config import Config as _Config
+            from .device_audio import ensure_device_psk as _ensure_device_psk
+
+            def _default_psk_provider() -> str:
+                return _ensure_device_psk(_Config.load())
+
+            device_psk_provider = _default_psk_provider
+        self.device_psk_provider: Callable[[], str] = device_psk_provider
+        self.on_device_audio_chunk: Optional[Callable[[str, "np.ndarray"], None]] = (
+            on_device_audio_chunk
+        )
+        self.on_device_voice_start: Optional[
+            Callable[[str, "AudioSource"], bool]
+        ] = on_device_voice_start
+        self.on_device_voice_stop: Optional[
+            Callable[[str, "AudioSource"], Optional["np.ndarray"]]
+        ] = on_device_voice_stop
+        self.on_device_voice_cancel: Optional[Callable[[str], None]] = on_device_voice_cancel
+        if device_status_emitter is None:
+            from .device_status import DeviceStatusEmitter as _DeviceStatusEmitter
+            device_status_emitter = _DeviceStatusEmitter(label_lookup=device_registry)
+        self.device_status_emitter: "DeviceStatusEmitter" = device_status_emitter
+        self.on_device_event: Optional[Callable[[str, str, Optional[float]], None]] = (
+            on_device_event
+        )
         self.host = host
 
         self.port: Optional[int] = None
@@ -570,6 +531,21 @@ class MeetingWebServer:
 
     def _create_app(self) -> Any:
         app = FastAPI()
+        app.state.device_registry = self.device_registry
+
+        from .device_audio_ws import register_device_audio_routes
+
+        register_device_audio_routes(
+            app,
+            device_registry=self.device_registry,
+            get_psk=self.device_psk_provider,
+            on_chunk=self.on_device_audio_chunk,
+            on_voice_start=self.on_device_voice_start,
+            on_voice_stop=self.on_device_voice_stop,
+            on_voice_cancel=self.on_device_voice_cancel,
+            status_emitter=self.device_status_emitter,
+            on_event=self.on_device_event,
+        )
 
         @app.on_event("startup")
         async def _startup() -> None:
@@ -772,15 +748,24 @@ class MeetingWebServer:
             return JSONResponse({"success": True})
 
         @app.post("/api/meeting/start")
-        async def api_meeting_start() -> Any:
+        async def api_meeting_start(
+            payload: Optional[_MeetingStartRequest] = None,
+        ) -> Any:
             if self.on_start is None:
                 return JSONResponse(
                     {"success": False, "error": "Meeting start control not supported"},
                     status_code=501,
                 )
 
+            devices = list(payload.devices) if payload and payload.devices else []
+
             try:
-                result = self.on_start()
+                result = self.on_start(devices=devices) if devices else self.on_start()
+            except _UnknownDeviceError as exc:
+                return JSONResponse(
+                    {"success": False, "error": str(exc), "device_id": exc.device_id},
+                    status_code=404,
+                )
             except Exception as e:
                 log.error(f"on_start failed: {e}")
                 return JSONResponse({"success": False, "error": str(e)}, status_code=500)
@@ -2202,6 +2187,9 @@ class MeetingWebServer:
                         status_code=400,
                     )
                 model_data["name"] = model_name
+                model_data["warm_on_start"] = bool(
+                    model_data.get("warm_on_start", current.model.warm_on_start)
+                )
 
                 # --- UIConfig validation ---
                 theme = str(ui_data.get("theme", current.ui.theme)).strip().lower()
@@ -2430,6 +2418,15 @@ class MeetingWebServer:
                 pipeline_data["enabled"] = bool(pipeline_data.get(
                     "enabled", current.dictation.pipeline.enabled
                 ))
+                raw_stages = pipeline_data.get("stages", current.dictation.pipeline.stages)
+                if not isinstance(raw_stages, list) or not all(
+                    isinstance(stage, str) for stage in raw_stages
+                ):
+                    return JSONResponse(
+                        {"success": False, "error": "dictation.pipeline.stages must be a list of strings"},
+                        status_code=400,
+                    )
+                pipeline_data["stages"] = list(raw_stages)
                 try:
                     max_lat = int(pipeline_data.get(
                         "max_total_latency_ms",
@@ -2450,7 +2447,7 @@ class MeetingWebServer:
                 backend = str(runtime_data.get(
                     "backend", current.dictation.runtime.backend
                 )).strip().lower()
-                if backend not in {"auto", "mlx", "llama_cpp"}:
+                if backend not in {"auto", "mlx", "llama_cpp", "openai_compatible"}:
                     return JSONResponse(
                         {"success": False, "error": f"Invalid dictation backend: {backend!r}"},
                         status_code=400,
@@ -2462,6 +2459,48 @@ class MeetingWebServer:
                 runtime_data["llama_cpp_model_path"] = str(runtime_data.get(
                     "llama_cpp_model_path", current.dictation.runtime.llama_cpp_model_path
                 )).strip() or current.dictation.runtime.llama_cpp_model_path
+                runtime_data["openai_compatible_model"] = str(runtime_data.get(
+                    "openai_compatible_model", current.dictation.runtime.openai_compatible_model
+                )).strip() or current.dictation.runtime.openai_compatible_model
+                runtime_data["openai_compatible_base_url"] = str(runtime_data.get(
+                    "openai_compatible_base_url", current.dictation.runtime.openai_compatible_base_url
+                )).strip() or current.dictation.runtime.openai_compatible_base_url
+                try:
+                    _validate_cloud_base_url(runtime_data["openai_compatible_base_url"])
+                except ValueError:
+                    return JSONResponse(
+                        {
+                            "success": False,
+                            "error": "dictation.runtime.openai_compatible_base_url must start with http:// or https://",
+                        },
+                        status_code=400,
+                    )
+                runtime_data["openai_compatible_api_key_env"] = str(runtime_data.get(
+                    "openai_compatible_api_key_env",
+                    current.dictation.runtime.openai_compatible_api_key_env,
+                )).strip()
+                try:
+                    timeout_seconds = float(runtime_data.get(
+                        "openai_compatible_timeout_seconds",
+                        current.dictation.runtime.openai_compatible_timeout_seconds,
+                    ))
+                except (TypeError, ValueError):
+                    return JSONResponse(
+                        {
+                            "success": False,
+                            "error": "dictation.runtime.openai_compatible_timeout_seconds must be a number",
+                        },
+                        status_code=400,
+                    )
+                if timeout_seconds <= 0:
+                    return JSONResponse(
+                        {
+                            "success": False,
+                            "error": "dictation.runtime.openai_compatible_timeout_seconds must be > 0",
+                        },
+                        status_code=400,
+                    )
+                runtime_data["openai_compatible_timeout_seconds"] = timeout_seconds
                 runtime_data["warm_on_start"] = bool(runtime_data.get(
                     "warm_on_start", current.dictation.runtime.warm_on_start
                 ))
@@ -3815,6 +3854,259 @@ class MeetingWebServer:
                 }
             )
 
+        @app.get("/api/dictation/agent-context")
+        async def api_dictation_agent_context(project_root: Optional[str] = None) -> Any:
+            """Return the latest captured agent question for the selected project."""
+            from .agent_context import get_recent_awaiting_agent_session
+
+            project: dict[str, Any] | None = None
+            project_error: str | None = None
+            try:
+                project = _resolve_project_context(project_root)
+            except ValueError as exc:
+                if project_root:
+                    return JSONResponse({"error": str(exc)}, status_code=400)
+                project_error = str(exc)
+
+            session = (
+                get_recent_awaiting_agent_session(project_root=project["root"], max_age_seconds=120)
+                if project
+                else None
+            )
+            return JSONResponse(
+                {
+                    "project": project,
+                    "project_error": project_error,
+                    "session": session.to_dict() if session else None,
+                    "awaiting_response": bool(session and session.awaiting_response),
+                    "max_age_seconds": 120,
+                }
+            )
+
+        @app.get("/api/dictation/agent-hooks")
+        async def api_dictation_agent_hooks(capture_messages: bool = True) -> Any:
+            """Return copy-ready Claude/Codex hook templates and recent status."""
+            from .agent_context import (
+                AGENT_CONTEXT_FILE,
+                claude_hook_template,
+                codex_hook_template,
+                get_recent_agent_session,
+            )
+            from .agent_summarizer import summarizer_provider_statuses
+
+            templates = {
+                "claude": claude_hook_template(capture_messages=capture_messages),
+                "codex": codex_hook_template(capture_messages=capture_messages),
+            }
+            agents: dict[str, dict[str, Any]] = {}
+            for agent, template in templates.items():
+                latest = get_recent_agent_session(agent=agent, max_age_seconds=7 * 24 * 60 * 60)
+                agents[agent] = {
+                    "latest_session": latest.to_dict() if latest else None,
+                    "template": template,
+                    "template_json": json.dumps(template, indent=2, sort_keys=True),
+                }
+            return JSONResponse(
+                {
+                    "capture_messages": capture_messages,
+                    "registry_path": str(AGENT_CONTEXT_FILE),
+                    "destinations": {
+                        "claude": "~/.claude/settings.json or project .claude/settings.json",
+                        "codex": "~/.codex/hooks.json or project .codex/hooks.json",
+                    },
+                    "summarizers": summarizer_provider_statuses(),
+                    "agents": agents,
+                }
+            )
+
+        @app.post("/api/dictation/agent-context/clear")
+        async def api_dictation_agent_context_clear(
+            payload: Optional[dict[str, Any]] = None,
+            project_root: Optional[str] = None,
+        ) -> Any:
+            """Clear the captured assistant text shown by the Dictation page."""
+            from .agent_context import clear_agent_session_response
+
+            body = payload if isinstance(payload, dict) else {}
+            body_project_root = body.get("project_root")
+            effective_project_root = project_root or (body_project_root if isinstance(body_project_root, str) else None)
+            try:
+                project = _resolve_project_context(effective_project_root)
+            except ValueError as exc:
+                if effective_project_root:
+                    return JSONResponse({"error": str(exc)}, status_code=400)
+                project = None
+
+            session = clear_agent_session_response(
+                agent=body.get("agent") if isinstance(body.get("agent"), str) else None,
+                session_id=body.get("session_id") if isinstance(body.get("session_id"), str) else None,
+                project_root=project["root"] if project else None,
+                max_age_seconds=120,
+            )
+            return JSONResponse(
+                {
+                    "cleared": session is not None,
+                    "session": session.to_dict() if session else None,
+                }
+            )
+
+        @app.post("/api/dictation/agent-context/summarize")
+        async def api_dictation_agent_context_summarize(
+            payload: Optional[dict[str, Any]] = None,
+            project_root: Optional[str] = None,
+        ) -> Any:
+            """Generate and persist a bounded external-agent context summary."""
+            from .agent_context import (
+                get_recent_awaiting_agent_session,
+                set_agent_session_summary,
+            )
+            from .agent_summarizer import summarize_agent_session
+
+            body = payload if isinstance(payload, dict) else {}
+            provider = str(body.get("provider") or "").strip().lower()
+            if provider not in {"codex", "claude"}:
+                return JSONResponse(
+                    {"error": "provider must be one of: codex, claude"},
+                    status_code=400,
+                )
+            body_project_root = body.get("project_root")
+            effective_project_root = project_root or (body_project_root if isinstance(body_project_root, str) else None)
+            try:
+                project = _resolve_project_context(effective_project_root)
+            except ValueError as exc:
+                if effective_project_root:
+                    return JSONResponse({"error": str(exc)}, status_code=400)
+                project = None
+
+            session = get_recent_awaiting_agent_session(
+                project_root=project["root"] if project else None,
+                agent=body.get("agent") if isinstance(body.get("agent"), str) else None,
+                max_age_seconds=120,
+            )
+            if session is None:
+                return JSONResponse(
+                    {"error": "no recent captured agent message is awaiting a response"},
+                    status_code=404,
+                )
+            try:
+                summary = summarize_agent_session(
+                    session,
+                    provider=provider,  # type: ignore[arg-type]
+                    timeout_seconds=float(body.get("timeout_seconds") or 20.0),
+                )
+            except FileNotFoundError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=404)
+            except Exception as exc:
+                return JSONResponse({"error": str(exc)}, status_code=502)
+
+            updated = set_agent_session_summary(
+                agent=session.agent,
+                session_id=session.session_id,
+                summary=summary.to_dict(),
+            )
+            return JSONResponse(
+                {
+                    "summary": summary.to_dict(),
+                    "session": updated.to_dict() if updated else None,
+                }
+            )
+
+        def _project_hs_payload(project: dict[str, Any]) -> dict[str, Any]:
+            from .agent_context import (
+                DEFAULT_CONTEXT_HARD_FILE_MAX_BYTES,
+                HS_CONTEXT_FILES,
+                load_hs_project_context,
+            )
+
+            root = Path(project["root"])
+            hs_dir = root / ".hs"
+            loaded = load_hs_project_context(
+                root,
+                max_bytes=DEFAULT_CONTEXT_HARD_FILE_MAX_BYTES * 8,
+                per_file_max_bytes=DEFAULT_CONTEXT_HARD_FILE_MAX_BYTES,
+            )
+            loaded_files = loaded.get("files") if isinstance(loaded.get("files"), dict) else {}
+            files: dict[str, dict[str, Any]] = {}
+            for name in (*HS_CONTEXT_FILES, "ignore"):
+                path = hs_dir / name
+                loaded_entry = loaded_files.get(name) if isinstance(loaded_files, dict) else None
+                entry = loaded_entry if isinstance(loaded_entry, dict) else {}
+                files[name] = {
+                    "path": str(path),
+                    "exists": path.is_file(),
+                    "actual_path": str(entry.get("path") or path),
+                    "content": str(entry.get("content") or ""),
+                    "source": str(entry.get("source") or "directory"),
+                    "read_only": bool(entry.get("read_only")),
+                    "truncated": bool(entry.get("truncated")),
+                }
+            return {
+                "detected": dict(project),
+                "context_dir": str(hs_dir),
+                "exists": bool(loaded.get("exists")),
+                "context_dir_exists": hs_dir.is_dir(),
+                "files": files,
+                "flat_files": loaded.get("flat_files") if isinstance(loaded.get("flat_files"), dict) else {},
+                "skipped": loaded.get("skipped") if isinstance(loaded.get("skipped"), list) else [],
+                "warnings": loaded.get("warnings") if isinstance(loaded.get("warnings"), list) else [],
+                "write_policy": loaded.get("write_policy") if isinstance(loaded.get("write_policy"), dict) else {},
+            }
+
+        def _write_project_hs_files(root: Path, files: dict[str, Any]) -> None:
+            from .agent_context import HS_CONTEXT_FILES
+
+            allowed = set(HS_CONTEXT_FILES) | {"ignore"}
+            unknown = sorted(set(files) - allowed)
+            if unknown:
+                raise ValueError(f"unknown .hs file(s): {unknown}; allowed: {sorted(allowed)}")
+            hs_dir = root / ".hs"
+            hs_dir.mkdir(parents=True, exist_ok=True)
+            for name, raw_content in files.items():
+                if not isinstance(raw_content, str):
+                    raise ValueError(f".hs/{name} content must be a string")
+                if len(raw_content.encode("utf-8")) > 128_000:
+                    raise ValueError(f".hs/{name} is too large; max is 128KB")
+                path = hs_dir / name
+                tmp = path.with_suffix(path.suffix + ".tmp")
+                tmp.write_text(raw_content, encoding="utf-8")
+                os.replace(tmp, path)
+
+        @app.get("/api/dictation/project-hs")
+        async def api_dictation_project_hs_get(project_root: Optional[str] = None) -> Any:
+            try:
+                project = _resolve_project_context(project_root)
+            except ValueError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=400 if project_root else 404)
+            return JSONResponse(_project_hs_payload(project))
+
+        @app.put("/api/dictation/project-hs")
+        async def api_dictation_project_hs_put(
+            payload: dict[str, Any],
+            project_root: Optional[str] = None,
+        ) -> Any:
+            files = payload.get("files") if isinstance(payload, dict) else None
+            if not isinstance(files, dict):
+                return JSONResponse(
+                    {"error": "request body must be {'files': {<filename>: <content>, ...}}"},
+                    status_code=400,
+                )
+            try:
+                project = _resolve_project_context(project_root)
+            except ValueError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=400 if project_root else 404)
+            root = Path(project["root"])
+            try:
+                _write_project_hs_files(root, files)
+            except ValueError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=400)
+            redetected = _resolve_project_context(project_root)
+            if self.on_dictation_config_changed is not None:
+                try:
+                    self.on_dictation_config_changed()
+                except Exception as exc:
+                    log.error(f"on_dictation_config_changed failed: {exc}")
+            return JSONResponse(_project_hs_payload(redetected))
+
         def _read_blocks_document(path: Path) -> tuple[dict[str, Any], bool]:
             """Read `path` as a raw YAML mapping; return empty default if missing."""
             import yaml
@@ -3968,11 +4260,13 @@ class MeetingWebServer:
         def _run_dictation_dry_run_text(
             text: str,
             project_root_override: Optional[str],
+            target_hints: Optional[dict[str, Any]] = None,
         ) -> dict[str, Any]:
             """Execute the browser dry-run path for already-validated text."""
             from .config import Config
             from .plugins.dictation.assembly import build_pipeline
             from .plugins.dictation.contracts import Utterance
+            from .target_profile import collect_active_target_hints, detect_target_profile
 
             cfg = Config.load().dictation
             try:
@@ -4000,16 +4294,19 @@ class MeetingWebServer:
                 project_root=project_root,
                 global_blocks_path=_GLOBAL_BLOCKS_PATH,
             )
+            target_profile = detect_target_profile(target_hints or collect_active_target_hints())
             run = result.pipeline.run(
                 Utterance(
                     raw_text=text,
                     audio_duration_s=0.0,
                     transcribed_at=datetime.now(),
                     project=project,
+                    activity={"target": target_profile.to_dict()},
                 )
             )
             return {
                 "project": dict(project) if project else None,
+                "target": target_profile.to_dict(),
                 "runtime_status": result.runtime_status,
                 "runtime_detail": result.runtime_detail,
                 "blocks_count": len(result.blocks.blocks),
@@ -4115,6 +4412,28 @@ class MeetingWebServer:
                     "session": get_session_status(),
                 }
 
+            if resolved_backend == "openai_compatible":
+                from .plugins.dictation.guidance import runtime_guidance
+
+                return {
+                    "status": "available",
+                    "requested_backend": cfg.runtime.backend,
+                    "resolved_backend": resolved_backend,
+                    "detail": (
+                        f"endpoint={cfg.runtime.openai_compatible_base_url}; "
+                        f"model={cfg.runtime.openai_compatible_model}"
+                    ),
+                    "model_path": None,
+                    "model_exists": True,
+                    "guidance": runtime_guidance(
+                        kind="endpoint_config",
+                        requested_backend=cfg.runtime.backend,
+                        resolved_backend=resolved_backend,
+                    ),
+                    "counters": get_counters(),
+                    "session": get_session_status(),
+                }
+
             model_path = Path(
                 cfg.runtime.mlx_model
                 if resolved_backend == "mlx"
@@ -4146,8 +4465,10 @@ class MeetingWebServer:
         @app.get("/api/dictation/readiness")
         async def api_dictation_readiness(project_root: Optional[str] = None) -> Any:
             """Return one browser-facing readiness snapshot for dictation setup."""
+            from .agent_context import get_recent_agent_session
             from .config import Config
             from .plugins.dictation.project_kb import ProjectKBError, kb_path_for, read_project_kb
+            from .target_profile import detect_active_target_profile, detect_target_profile
 
             cfg = Config.load().dictation
             warnings: list[dict[str, Any]] = []
@@ -4201,6 +4522,17 @@ class MeetingWebServer:
                     kb_payload["error"] = str(exc)
 
             runtime_payload = _runtime_readiness(cfg)
+            try:
+                target_payload = detect_active_target_profile().to_dict()
+            except Exception:
+                target_payload = detect_target_profile({}).to_dict()
+            agent_hooks_payload: dict[str, Any] = {}
+            for agent in ("claude", "codex"):
+                latest = get_recent_agent_session(agent=agent, max_age_seconds=7 * 24 * 60 * 60)
+                agent_hooks_payload[agent] = {
+                    "fresh": latest is not None,
+                    "latest_session": latest.to_dict() if latest else None,
+                }
 
             if not cfg.pipeline.enabled:
                 warnings.append({
@@ -4292,6 +4624,8 @@ class MeetingWebServer:
                     },
                     "project_kb": kb_payload,
                     "runtime": runtime_payload,
+                    "target": target_payload,
+                    "agent_hooks": agent_hooks_payload,
                     "warnings": warnings,
                 }
             )
@@ -4762,9 +5096,18 @@ class MeetingWebServer:
                     },
                     status_code=400,
                 )
+            target_hints = payload.get("target") if isinstance(payload, dict) else None
+            if target_hints is not None and not isinstance(target_hints, dict):
+                return JSONResponse(
+                    {
+                        "error": "target must be an object when provided",
+                        "detail": {"target": "optional object of app/window/process hints"},
+                    },
+                    status_code=400,
+                )
 
             try:
-                return JSONResponse(_run_dictation_dry_run_text(text, project_root_override))
+                return JSONResponse(_run_dictation_dry_run_text(text, project_root_override, target_hints))
             except ValueError as exc:
                 return JSONResponse({"error": str(exc)}, status_code=400)
             except Exception as exc:

@@ -46,6 +46,9 @@ dictation-mlx = [
     "mlx-lm>=0.19; sys_platform == 'darwin' and platform_machine == 'arm64'",
     "outlines>=0.1.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
 ]
+dictation-openai = [
+    "openai>=1.0.0",
+]
 dev = [
     "playwright>=1.40.0",
     "pytest>=8.0",
@@ -80,6 +83,28 @@ filterwarnings = [
     "ignore::PendingDeprecationWarning",
 ]
 addopts = ["--strict-markers", "-ra"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/README.md",
+    "/hatch_build.py",
+    "/holdspeak",
+    "/pyproject.toml",
+    "/scripts",
+    "/web",
+]
+exclude = [
+    "/holdspeak/**/__pycache__",
+    "/web/.astro",
+    "/web/dist",
+    "/web/node_modules",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["holdspeak"]
+artifacts = [
+    "holdspeak/static/_built/**",
+]
 
 [tool.coverage.run]
 source = ["holdspeak"]

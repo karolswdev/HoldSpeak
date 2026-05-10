@@ -286,7 +286,7 @@ class TestDashboardEndpoint:
         import re
 
         html = test_client.get("/").text
-        match = re.search(r'src="(/_built/_astro/hoisted\.[^"]+\.js)"', html)
+        match = re.search(r'src="(/_built/_astro/[^"]+\.js)"', html)
         if not match:
             return ""
         js = test_client.get(match.group(1)).text
@@ -306,7 +306,7 @@ class TestDashboardEndpoint:
         assert "Deferred plugin jobs" in html
         # API endpoints live in the bundled runtime JS.
         js = self._bundled_runtime_js(test_client)
-        assert js, "expected /_built/_astro/hoisted.*.js to be referenced from /"
+        assert js, "expected bundled /_built/_astro/*.js to be referenced from /"
         assert "/api/runtime/status" in js
         assert "/api/meeting/start" in js
         assert "/api/meeting/stop" in js
@@ -334,7 +334,7 @@ class TestDashboardEndpoint:
         """The runtime-status payload is still preferred at bootstrap.
         The factory function lives in the bundled chunk (HS-10-06)."""
         js = self._bundled_runtime_js(test_client)
-        assert js, "expected /_built/_astro/hoisted.*.js to be referenced from /"
+        assert js, "expected bundled /_built/_astro/*.js to be referenced from /"
         assert "fetchRuntimeStatus" in js
         assert "fetchInitialState" in js
 
@@ -1279,8 +1279,8 @@ class TestHistoryUiSmoke:
             assert ui_string in html
 
         # JS handler identifiers + endpoint strings in the bundled chunk.
-        match = re.search(r'src="(/_built/_astro/hoisted\.[^"]+\.js)"', html)
-        assert match, "expected hoisted history JS chunk reference"
+        match = re.search(r'src="(/_built/_astro/[^"]+\.js)"', html)
+        assert match, "expected history JS chunk reference"
         js = test_client.get(match.group(1)).text
         for marker in (
             "saveSettings",
@@ -1338,6 +1338,10 @@ class TestSettingsApiEndpoints:
         assert get_response.json()["meeting"]["intel_provider"] in {"local", "cloud", "auto"}
 
         payload = {
+            "model": {
+                "name": "small",
+                "warm_on_start": False,
+            },
             "meeting": {
                 "intel_provider": "cloud",
                 "intel_cloud_model": "gpt-5-mini",
@@ -1354,6 +1358,8 @@ class TestSettingsApiEndpoints:
         assert put_response.status_code == 200
         data = put_response.json()
         assert data["success"] is True
+        assert data["settings"]["model"]["name"] == "small"
+        assert data["settings"]["model"]["warm_on_start"] is False
         assert data["settings"]["meeting"]["intel_provider"] == "cloud"
         assert data["settings"]["meeting"]["intel_cloud_base_url"] == "https://api.openai.com/v1"
         assert data["settings"]["meeting"]["intel_queue_poll_seconds"] == 30
@@ -1363,6 +1369,8 @@ class TestSettingsApiEndpoints:
         on_settings_applied.assert_called_once()
 
         persisted = Config.load(path=tmp_path / "config.json")
+        assert persisted.model.name == "small"
+        assert persisted.model.warm_on_start is False
         assert persisted.meeting.intel_provider == "cloud"
         assert persisted.meeting.intel_cloud_base_url == "https://api.openai.com/v1"
         assert persisted.meeting.intel_queue_poll_seconds == 30

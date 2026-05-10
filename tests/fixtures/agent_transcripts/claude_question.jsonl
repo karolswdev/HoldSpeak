@@ -1,0 +1,2 @@
+{"type":"user","message":{"role":"user","content":[{"type":"text","text":"Please clean this up."}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"I found an obsolete file. Should I delete `tmp/old.py`?"}]}}

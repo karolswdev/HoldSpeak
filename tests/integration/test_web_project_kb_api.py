@@ -14,6 +14,9 @@ import pytest
 import yaml
 from fastapi.testclient import TestClient
 
+from holdspeak import agent_context as agent_context_module
+from holdspeak.agent_context import ingest_agent_hook_event
+from holdspeak.agent_summarizer import AgentSummary
 from holdspeak.plugins.dictation import project_root as project_root_module
 from holdspeak.web_server import MeetingWebServer
 
@@ -268,6 +271,263 @@ class TestDeleteProjectKB:
         assert response.status_code == 404
 
 
+# ── Project .hs context ─────────────────────────────────────────────────
+
+
+class TestProjectHSContext:
+    def test_get_returns_all_project_context_files(
+        self, test_client: TestClient, project_root_dir: Path
+    ) -> None:
+        hs = project_root_dir / ".hs"
+        hs.mkdir()
+        (hs / "instructions.md").write_text("Rewrite as agent prompt.", encoding="utf-8")
+
+        response = test_client.get("/api/dictation/project-hs")
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["detected"]["name"] == "proj"
+        assert body["context_dir"].endswith("/.hs")
+        assert body["files"]["instructions.md"]["content"] == "Rewrite as agent prompt."
+        assert "context.md" in body["files"]
+        assert "targets.md" in body["files"]
+        assert "ignore" in body["files"]
+
+    def test_get_surfaces_flat_read_only_context_and_skip_warnings(
+        self, test_client: TestClient, project_root_dir: Path
+    ) -> None:
+        (project_root_dir / ".hs_context").write_text("Flat repo context.", encoding="utf-8")
+        (project_root_dir / ".hs_memory").write_bytes(b"abc\x00def")
+
+        response = test_client.get("/api/dictation/project-hs")
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["exists"] is True
+        assert body["context_dir_exists"] is False
+        assert body["files"]["context.md"]["content"] == "Flat repo context."
+        assert body["files"]["context.md"]["source"] == "flat"
+        assert body["files"]["context.md"]["read_only"] is True
+        assert body["files"]["context.md"]["exists"] is False
+        assert body["flat_files"][".hs_context"]["canonical_name"] == "context.md"
+        assert body["skipped"][0]["reason"] == "binary"
+        assert "Skipped .hs_memory: binary" in body["warnings"]
+        assert body["write_policy"]["automatic_writes"] is False
+
+    def test_put_writes_selected_hs_files_and_invalidates_cache(
+        self, test_client: TestClient, project_root_dir: Path, cache_invalidator: MagicMock
+    ) -> None:
+        response = test_client.put(
+            "/api/dictation/project-hs",
+            json={"files": {"instructions.md": "Use concise Codex tasks.", "ignore": ".env\n"}},
+        )
+
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["exists"] is True
+        assert body["files"]["instructions.md"]["content"] == "Use concise Codex tasks."
+        assert (project_root_dir / ".hs" / "instructions.md").read_text() == "Use concise Codex tasks."
+        assert (project_root_dir / ".hs" / "ignore").read_text() == ".env\n"
+        cache_invalidator.assert_called_once()
+
+    def test_put_creates_canonical_copy_without_modifying_flat_file(
+        self, test_client: TestClient, project_root_dir: Path, cache_invalidator: MagicMock
+    ) -> None:
+        flat = project_root_dir / ".hs_context"
+        flat.write_text("Flat context stays unchanged.", encoding="utf-8")
+
+        response = test_client.put(
+            "/api/dictation/project-hs",
+            json={"files": {"context.md": "Canonical editable context."}},
+        )
+
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert flat.read_text(encoding="utf-8") == "Flat context stays unchanged."
+        assert (project_root_dir / ".hs" / "context.md").read_text() == "Canonical editable context."
+        assert body["files"]["context.md"]["content"] == "Canonical editable context."
+        assert body["files"]["context.md"]["source"] == "directory"
+        assert body["files"]["context.md"]["read_only"] is False
+        cache_invalidator.assert_called_once()
+
+    def test_put_rejects_unknown_hs_file(
+        self, test_client: TestClient, project_root_dir: Path
+    ) -> None:
+        response = test_client.put(
+            "/api/dictation/project-hs",
+            json={"files": {"secret.txt": "nope"}},
+        )
+
+        assert response.status_code == 400
+        assert "unknown .hs file" in response.json()["error"]
+
+
+# ── Agent context banner API ──────────────────────────────────────────
+
+
+class TestDictationAgentContext:
+    def test_agent_hooks_returns_templates_and_recent_status(
+        self,
+        test_client: TestClient,
+        project_root_dir: Path,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        state_path = tmp_path / "agent_sessions.json"
+        monkeypatch.setattr(agent_context_module, "AGENT_CONTEXT_FILE", state_path)
+        ingest_agent_hook_event(
+            agent="codex",
+            payload={
+                "session_id": "codex-1",
+                "hook_event_name": "SessionStart",
+                "cwd": str(project_root_dir),
+            },
+            state_path=state_path,
+            capture_messages=True,
+        )
+
+        response = test_client.get("/api/dictation/agent-hooks?capture_messages=true")
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["capture_messages"] is True
+        assert body["registry_path"] == str(state_path)
+        assert "--capture-messages" in body["agents"]["claude"]["template_json"]
+        assert "--capture-messages" in body["agents"]["codex"]["template_json"]
+        assert body["agents"]["codex"]["latest_session"]["session_id"] == "codex-1"
+        assert body["summarizers"]["codex"]["command_display"] == "codex exec --sandbox read-only --ephemeral -"
+        assert body["summarizers"]["claude"]["safe_default"] is True
+
+    def test_get_returns_project_scoped_awaiting_agent_session(
+        self,
+        test_client: TestClient,
+        project_root_dir: Path,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        state_path = tmp_path / "agent_sessions.json"
+        monkeypatch.setattr(agent_context_module, "AGENT_CONTEXT_FILE", state_path)
+        transcript = tmp_path / "codex.jsonl"
+        transcript.write_text(
+            '{"role":"assistant","content":"Should I update the docs next?"}\n',
+            encoding="utf-8",
+        )
+        ingest_agent_hook_event(
+            agent="codex",
+            payload={
+                "session_id": "codex-1",
+                "hook_event_name": "Stop",
+                "cwd": str(project_root_dir),
+                "transcript_path": str(transcript),
+            },
+            state_path=state_path,
+            capture_messages=True,
+        )
+
+        response = test_client.get("/api/dictation/agent-context")
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["awaiting_response"] is True
+        assert body["session"]["agent"] == "codex"
+        assert body["session"]["last_assistant_text"] == "Should I update the docs next?"
+
+    def test_clear_removes_captured_text(
+        self,
+        test_client: TestClient,
+        project_root_dir: Path,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        state_path = tmp_path / "agent_sessions.json"
+        monkeypatch.setattr(agent_context_module, "AGENT_CONTEXT_FILE", state_path)
+        transcript = tmp_path / "claude.jsonl"
+        transcript.write_text(
+            '{"role":"assistant","content":"Proceed with the refactor?"}\n',
+            encoding="utf-8",
+        )
+        ingest_agent_hook_event(
+            agent="claude",
+            payload={
+                "session_id": "claude-1",
+                "hook_event_name": "Stop",
+                "cwd": str(project_root_dir),
+                "transcript_path": str(transcript),
+            },
+            state_path=state_path,
+            capture_messages=True,
+        )
+
+        clear_response = test_client.post(
+            "/api/dictation/agent-context/clear",
+            json={"agent": "claude", "session_id": "claude-1"},
+        )
+        get_response = test_client.get("/api/dictation/agent-context")
+
+        assert clear_response.status_code == 200
+        assert clear_response.json()["cleared"] is True
+        assert clear_response.json()["session"]["awaiting_response"] is False
+        assert get_response.status_code == 200
+        assert get_response.json()["session"] is None
+
+    def test_summarize_generates_and_persists_agent_summary(
+        self,
+        test_client: TestClient,
+        project_root_dir: Path,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        state_path = tmp_path / "agent_sessions.json"
+        monkeypatch.setattr(agent_context_module, "AGENT_CONTEXT_FILE", state_path)
+        transcript = tmp_path / "codex.jsonl"
+        transcript.write_text(
+            '{"role":"assistant","content":"Should I add the summarizer endpoint?"}\n',
+            encoding="utf-8",
+        )
+        ingest_agent_hook_event(
+            agent="codex",
+            payload={
+                "session_id": "codex-1",
+                "hook_event_name": "Stop",
+                "cwd": str(project_root_dir),
+                "transcript_path": str(transcript),
+            },
+            state_path=state_path,
+            capture_messages=True,
+        )
+
+        def fake_summarize(session, *, provider, timeout_seconds=20.0):
+            assert session.session_id == "codex-1"
+            assert provider == "codex"
+            return AgentSummary(
+                provider="codex",
+                summary="Codex is asking whether to add the summarizer endpoint.",
+                generated_at="2026-05-10T00:00:00Z",
+                source_agent="codex",
+                source_session_id="codex-1",
+                command=("codex", "exec"),
+                cwd=str(project_root_dir),
+            )
+
+        monkeypatch.setattr(
+            "holdspeak.agent_summarizer.summarize_agent_session",
+            fake_summarize,
+        )
+
+        response = test_client.post(
+            "/api/dictation/agent-context/summarize",
+            json={"provider": "codex"},
+        )
+        get_response = test_client.get("/api/dictation/agent-context")
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["summary"]["summary"] == "Codex is asking whether to add the summarizer endpoint."
+        assert body["session"]["summary"]["provider"] == "codex"
+        assert get_response.status_code == 200
+        assert get_response.json()["session"]["summary"]["summary"] == body["summary"]["summary"]
+
+
 # ── Round-trip ────────────────────────────────────────────────────────
 
 
@@ -284,15 +544,25 @@ def test_dictation_page_includes_project_kb_section() -> None:
     body = response.text
     # HS-10-09: KB tab label + button id remain in server-rendered HTML.
     assert "Project KB" in body
+    assert "Project Context" in body
+    assert "Agent Hooks" in body
+    assert "External agent summary" in body
+    assert "agent-summary-provider-status" in body
     assert "kb-btn-starter" in body
+    assert "agent-context-banner" in body
+    assert "hooks-agent-list" in body
     # KB endpoint strings live in the bundled JS chunk now.
     import re
 
-    match = re.search(r'src="(/_built/_astro/hoisted\.[^"]+\.js)"', body)
-    assert match, "expected hoisted dictation JS chunk reference"
+    match = re.search(r'src="(/_built/_astro/[^"]+\.js)"', body)
+    assert match, "expected dictation JS chunk reference"
     js = client.get(match.group(1)).text
     assert "/api/dictation/project-kb" in js
     assert "/api/dictation/project-kb/starter" in js
+    assert "/api/dictation/project-hs" in js
+    assert "/api/dictation/agent-context" in js
+    assert "/api/dictation/agent-context/summarize" in js
+    assert "/api/dictation/agent-hooks" in js
 
 
 def test_round_trip_put_then_get(test_client: TestClient, project_root_dir: Path) -> None:

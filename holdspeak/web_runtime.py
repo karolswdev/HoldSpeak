@@ -7,11 +7,17 @@ import signal
 import threading
 import webbrowser
 from datetime import datetime
-from typing import Optional
+from typing import Callable, Optional
+
+import numpy as np
 
 from .audio import AudioRecorder
 from .config import Config
+from .audio import AudioSource
+from .device_audio import DeviceRegistry, ensure_device_psk
+from .device_status import DeviceStatusEmitter
 from .hotkey import HotkeyListener
+from .voice_typing import VoiceTypingSession
 from .logging_config import get_logger
 from .meeting_session import MeetingSession
 from .plugins.router import (
@@ -30,7 +36,7 @@ from .plugins.signals import extract_intent_signals
 from .text_processor import TextProcessor
 from .transcribe import Transcriber
 from .typer import TextTyper
-from .web_server import MeetingWebServer
+from .web_server import MeetingWebServer, _UnknownDeviceError
 
 log = get_logger("web_runtime")
 
@@ -67,6 +73,9 @@ def run_web_runtime(
     transcriber: Optional[Transcriber] = None
     server: Optional[MeetingWebServer] = None
     meeting_session: Optional[MeetingSession] = None
+    device_registry = DeviceRegistry()
+    device_status = DeviceStatusEmitter(label_lookup=device_registry)
+    voice_session = VoiceTypingSession()
     transcription_lock = threading.Lock()
     text_processor = TextProcessor()
     from .activity_context import ActivityContextProvider
@@ -98,11 +107,58 @@ def run_web_runtime(
         "voice_state": "idle",
         "last_transcription": "",
         "last_error": "",
+        "transcription_model": config.model.name,
+        "transcription_warm_on_start": bool(getattr(config.model, "warm_on_start", True)),
+        "transcription_status": "not_loaded",
+        "transcription_error": "",
         "global_hotkey_available": False,
         "global_hotkey_error": "",
         "text_injection_enabled": text_injection_enabled,
         "text_injection_error": "" if text_injection_enabled else "TextTyper unavailable",
     }
+
+    def _transcription_warm_on_start_enabled() -> bool:
+        return bool(getattr(config.model, "warm_on_start", True))
+
+    def _set_transcription_status(status: str, *, error: str = "") -> None:
+        with state_lock:
+            runtime_status["transcription_model"] = config.model.name
+            runtime_status["transcription_warm_on_start"] = _transcription_warm_on_start_enabled()
+            runtime_status["transcription_status"] = status
+            runtime_status["transcription_error"] = error
+
+    def _ensure_transcriber_loaded() -> Transcriber:
+        nonlocal transcriber
+        if transcriber is None or getattr(transcriber, "model_name", None) != config.model.name:
+            _set_transcription_status("loading")
+            try:
+                transcriber = Transcriber(model_name=config.model.name)
+            except Exception as exc:
+                _set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")
+                raise
+        _set_transcription_status("loaded")
+        return transcriber
+
+    def _warm_transcriber_in_background() -> None:
+        if not _transcription_warm_on_start_enabled():
+            return
+
+        def _warm() -> None:
+            with transcription_lock:
+                try:
+                    _ensure_transcriber_loaded()
+                except Exception as exc:
+                    _set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")
+                    with state_lock:
+                        runtime_status["last_error"] = f"Transcription warmup failed: {exc}"
+                    log.error(f"Transcription warmup failed: {exc}", exc_info=True)
+
+        _set_transcription_status("warming")
+        threading.Thread(
+            target=_warm,
+            name="HoldSpeakTranscriptionWarmup",
+            daemon=True,
+        ).start()
 
     def _active_meeting_session() -> Optional[MeetingSession]:
         with meeting_lock:
@@ -240,9 +296,19 @@ def run_web_runtime(
 
     def _apply_updated_config(updated_config: Config) -> None:
         nonlocal config, transcriber
+        previous_model = config.model.name
         config = updated_config
-        if transcriber is not None and getattr(transcriber, "model_name", None) != config.model.name:
+        model_changed = transcriber is not None and getattr(transcriber, "model_name", None) != config.model.name
+        if model_changed:
             transcriber = None
+        if previous_model != config.model.name or model_changed:
+            _set_transcription_status("not_loaded")
+        else:
+            _set_transcription_status(
+                "loaded" if transcriber is not None else "not_loaded",
+                error="",
+            )
+        _warm_transcriber_in_background()
         if hotkey_listener is not None:
             try:
                 hotkey_listener.hotkey = config.hotkey.key
@@ -251,13 +317,27 @@ def run_web_runtime(
         if recorder is not None:
             recorder.device = config.meeting.mic_device
 
-    def _start_meeting() -> dict[str, object]:
+    def _start_meeting(*, devices: Optional[list[str]] = None) -> dict[str, object]:
         nonlocal meeting_session, transcriber, pending_title, pending_tags, preview_window_seq
         if _active_meeting_session() is not None:
             raise RuntimeError("Meeting already active")
 
+        # Validate every requested device id is currently registered
+        # *before* spinning up a session — surfaces 404 to the caller
+        # without leaving an empty meeting on disk.
+        device_pairs: list[tuple[object, object]] = []  # (descriptor, source)
+        if devices:
+            for device_id in devices:
+                descriptor = device_registry.get(device_id)
+                if descriptor is None:
+                    raise _UnknownDeviceError(device_id)
+                source = device_registry.recorder_for(device_id)
+                if source is None:
+                    raise _UnknownDeviceError(device_id)
+                device_pairs.append((descriptor, source))
+
         if transcriber is None or getattr(transcriber, "model_name", None) != config.model.name:
-            transcriber = Transcriber(model_name=config.model.name)
+            transcriber = _ensure_transcriber_loaded()
 
         session = MeetingSession(
             transcriber=transcriber,
@@ -299,8 +379,26 @@ def run_web_runtime(
         if runtime_url:
             state.web_url = runtime_url
 
+        attached_ids: list[str] = []
+        for descriptor, source in device_pairs:
+            try:
+                session.attach_device(descriptor, source)  # type: ignore[arg-type]
+                attached_ids.append(getattr(descriptor, "id", ""))
+            except Exception as exc:
+                log.error(f"Failed to attach device {getattr(descriptor, 'id', '?')}: {exc}")
+                # Best effort: continue with whatever attached successfully.
+                # The descriptors that *did* attach remain on state.devices.
+                continue
+
         with meeting_lock:
             meeting_session = session
+
+        if attached_ids:
+            device_status.broadcast(
+                [d for d in attached_ids if d],
+                "Recording 00:00",
+                ttl_ms=0,
+            )
         with state_lock:
             pending_intent_windows.clear()
             pending_plugin_runs.clear()
@@ -319,6 +417,13 @@ def run_web_runtime(
                 runtime_stop_event.set()
                 return {"status": "stopping_runtime"}
             raise RuntimeError("No active meeting")
+
+        # HS-14-07: notify any attached devices that we are about to
+        # stop and persist. Captured *before* ``session.stop`` flips
+        # the state and clears the device list.
+        attached_ids = [d.id for d in session.state.devices] if session.state else []
+        if attached_ids:
+            device_status.broadcast(attached_ids, "Saving meeting...", ttl_ms=0)
 
         final_state = session.stop()
         final_state_payload = final_state.to_dict()
@@ -472,6 +577,7 @@ def run_web_runtime(
         meeting = _meeting_summary_from_state(state)
         with state_lock:
             last_meeting = dict(last_meeting_snapshot) if isinstance(last_meeting_snapshot, dict) else None
+            runtime_snapshot = dict(runtime_status)
         return {
             "status": "ok",
             "mode": "web",
@@ -480,7 +586,13 @@ def run_web_runtime(
             "meeting_id": state.get("id") if meeting_active else None,
             "meeting": meeting,
             "last_meeting": last_meeting,
-            "voice_state": runtime.get("voice_state", "idle"),
+            "voice_state": runtime.get("voice_state", runtime_snapshot.get("voice_state", "idle")),
+            "transcription": {
+                "model": runtime_snapshot.get("transcription_model", config.model.name),
+                "warm_on_start": runtime_snapshot.get("transcription_warm_on_start", False),
+                "status": runtime_snapshot.get("transcription_status", "not_loaded"),
+                "error": runtime_snapshot.get("transcription_error", ""),
+            },
             "mir": _mir_controls_payload(),
             "state": state,
         }
@@ -490,6 +602,13 @@ def run_web_runtime(
         if session is not None:
             bookmark = session.add_bookmark(label=label, auto_label=not bool(label))
             if bookmark is not None:
+                attached_ids = [d.id for d in session.state.devices] if session.state else []
+                if attached_ids:
+                    device_status.broadcast(
+                        attached_ids,
+                        f"Bookmark @ {bookmark.timestamp:.0f}s",
+                        ttl_ms=2500,
+                    )
                 return bookmark.to_dict()
             raise RuntimeError("No active meeting")
 
@@ -929,72 +1048,193 @@ def run_web_runtime(
             return None
         return session.edit_action_item(item_id, task=task, owner=owner, due=due)
 
+    def _transcribe_and_type(
+        audio: np.ndarray,
+        *,
+        on_complete: Optional[Callable[[str], None]] = None,
+    ) -> None:
+        """Run transcription, text processing, and typing for a captured chunk.
+
+        Shared between the local hotkey path and the device-driven
+        voice-typing path (HS-14-05). Always flips voice state back
+        to ``idle`` in its ``finally``. ``on_complete`` (HS-14-07)
+        receives the typed text on success and is intentionally
+        invoked outside the typing try-block — typing failures
+        still surface the transcript to the device.
+        """
+        completed_text: Optional[str] = None
+        with transcription_lock:
+            try:
+                text = _ensure_transcriber_loaded().transcribe(audio)
+                if not text:
+                    return
+                text = text_processor.process(text)
+                completed_text = text
+                with state_lock:
+                    runtime_status["last_transcription"] = text
+                    runtime_status["last_error"] = ""
+                print(f"-> {text}")
+                if typer is not None:
+                    try:
+                        typer.type_text(text)
+                    except Exception as exc:
+                        with state_lock:
+                            runtime_status["last_error"] = f"Typing failed: {exc}"
+                            runtime_status["text_injection_enabled"] = False
+                            runtime_status["text_injection_error"] = f"{type(exc).__name__}: {exc}"
+                        log.warning(f"Typing failed in web mode: {exc}")
+            except Exception as exc:
+                with state_lock:
+                    runtime_status["last_error"] = f"Transcription failed: {exc}"
+                log.error(f"Transcription failed in web mode: {exc}")
+            finally:
+                _set_voice_state("idle")
+        if on_complete is not None and completed_text is not None:
+            try:
+                on_complete(completed_text)
+            except Exception as exc:
+                log.warning(f"on_complete hook raised: {exc}")
+
+    def _kick_off_transcribe(
+        audio: np.ndarray,
+        *,
+        on_complete: Optional[Callable[[str], None]] = None,
+    ) -> None:
+        if len(audio) < 1600:
+            _set_voice_state("idle")
+            return
+        _set_voice_state("transcribing")
+        threading.Thread(
+            target=lambda: _transcribe_and_type(audio, on_complete=on_complete),
+            daemon=True,
+        ).start()
+
     def _on_hotkey_press() -> None:
         if runtime_stop_event.is_set():
             return
         if _active_meeting_session() is not None:
             return
-        _set_voice_state("recording")
+        if recorder is None:
+            return
         try:
-            assert recorder is not None
-            recorder.start_recording()
+            accepted = voice_session.begin(recorder, owner="hotkey")
         except Exception as exc:
             with state_lock:
                 runtime_status["last_error"] = f"Recording failed: {exc}"
             _set_voice_state("idle")
             log.error(f"Recording failed in web mode: {exc}")
+            return
+        if not accepted:
+            log.info("hotkey_press_ignored_session_active")
+            return
+        _set_voice_state("recording")
 
     def _on_hotkey_release() -> None:
         if _active_meeting_session() is not None:
             _set_voice_state("idle")
             return
         try:
-            assert recorder is not None
-            audio = recorder.stop_recording()
+            audio = voice_session.end(owner="hotkey")
         except Exception as exc:
             with state_lock:
                 runtime_status["last_error"] = f"Recording error: {exc}"
             _set_voice_state("idle")
             log.error(f"Recording error in web mode: {exc}")
             return
-
-        if len(audio) < 1600:
+        if audio is None:
             _set_voice_state("idle")
             return
 
-        _set_voice_state("transcribing")
+        _kick_off_transcribe(audio)
 
-        def _transcribe_and_type() -> None:
-            nonlocal transcriber
-            with transcription_lock:
-                try:
-                    if transcriber is None or getattr(transcriber, "model_name", None) != config.model.name:
-                        transcriber = Transcriber(model_name=config.model.name)
-                    text = transcriber.transcribe(audio)
-                    if not text:
-                        return
-                    text = text_processor.process(text)
-                    with state_lock:
-                        runtime_status["last_transcription"] = text
-                        runtime_status["last_error"] = ""
-                    print(f"-> {text}")
-                    if typer is not None:
-                        try:
-                            typer.type_text(text)
-                        except Exception as exc:
-                            with state_lock:
-                                runtime_status["last_error"] = f"Typing failed: {exc}"
-                                runtime_status["text_injection_enabled"] = False
-                                runtime_status["text_injection_error"] = f"{type(exc).__name__}: {exc}"
-                            log.warning(f"Typing failed in web mode: {exc}")
-                except Exception as exc:
-                    with state_lock:
-                        runtime_status["last_error"] = f"Transcription failed: {exc}"
-                    log.error(f"Transcription failed in web mode: {exc}")
-                finally:
-                    _set_voice_state("idle")
+    def _on_device_voice_start(device_id: str, source: AudioSource) -> bool:
+        """Begin a device-driven voice-typing session.
 
-        threading.Thread(target=_transcribe_and_type, daemon=True).start()
+        Returns ``False`` (so the WS dispatcher emits a
+        ``session_busy`` error frame) when:
+        - a meeting is active and this device is *not* attached
+          to it (meeting holds the audio floor);
+        - the local hotkey or another device already owns the
+          voice session.
+
+        When this device *is* attached to the active meeting, the
+        meeting already started its recorder — return ``True``
+        without claiming the voice session so the WS keeps pumping
+        binary frames into the meeting's drain path.
+        """
+        active_meeting = _active_meeting_session()
+        if active_meeting is not None:
+            if active_meeting.is_device_attached(device_id):
+                return True
+            return False
+        owner = f"device:{device_id}"
+        try:
+            accepted = voice_session.begin(source, owner=owner)
+        except Exception as exc:
+            log.error(f"Device voice-typing start failed: {exc}")
+            return False
+        if not accepted:
+            return False
+        _set_voice_state("recording")
+        device_status.send(device_id, "Listening...")
+        return True
+
+    def _on_device_voice_stop(
+        device_id: str, source: AudioSource
+    ) -> Optional[np.ndarray]:
+        active_meeting = _active_meeting_session()
+        if active_meeting is not None and active_meeting.is_device_attached(device_id):
+            # The meeting owns this device's audio routing.
+            return None
+        owner = f"device:{device_id}"
+        try:
+            audio = voice_session.end(owner=owner)
+        except Exception as exc:
+            log.error(f"Device voice-typing stop failed: {exc}")
+            _set_voice_state("idle")
+            return None
+        if audio is None:
+            _set_voice_state("idle")
+            return None
+
+        device_status.send(device_id, "Thinking...")
+
+        def _device_transcript_complete(text: str) -> None:
+            snippet = (text or "").strip()[:80]
+            device_status.send(device_id, snippet, ttl_ms=4000)
+
+        _kick_off_transcribe(audio, on_complete=_device_transcript_complete)
+        return audio
+
+    def _on_device_voice_cancel(device_id: str) -> None:
+        voice_session.cancel(owner=f"device:{device_id}")
+
+    def _on_device_event(device_id: str, name: str, at: Optional[float]) -> None:
+        """Inbound device event from the WS (HS-14-07).
+
+        Currently the only honored event is ``long_press`` during an
+        active meeting where this device is attached → fires a
+        bookmark on the session and broadcasts ``Bookmark @ ...`` to
+        every device participating in the meeting.
+        """
+        if name != "long_press":
+            log.info(
+                "device_event_ignored",
+                extra={"device_id": device_id, "event_name": name},
+            )
+            return
+        active = _active_meeting_session()
+        if active is None or not active.is_device_attached(device_id):
+            return
+        bookmark = active.add_bookmark(label="", auto_label=True)
+        if bookmark is None:
+            return
+        attached_ids = [d.id for d in active.state.devices] if active.state else []
+        device_status.broadcast(
+            attached_ids,
+            f"Bookmark @ {bookmark.timestamp:.0f}s",
+            ttl_ms=2500,
+        )
 
     try:
         server = MeetingWebServer(
@@ -1015,6 +1255,13 @@ def run_web_runtime(
             on_edit_action_item=_on_edit_action_item,
             on_settings_applied=_apply_updated_config,
             project_detector=project_detector,
+            device_registry=device_registry,
+            device_psk_provider=lambda: ensure_device_psk(config),
+            on_device_voice_start=_on_device_voice_start,
+            on_device_voice_stop=_on_device_voice_stop,
+            on_device_voice_cancel=_on_device_voice_cancel,
+            device_status_emitter=device_status,
+            on_device_event=_on_device_event,
             host="127.0.0.1",
         )
         runtime_url = server.start()
@@ -1031,6 +1278,7 @@ def run_web_runtime(
         daemon=True,
     )
     plugin_queue_thread.start()
+    _warm_transcriber_in_background()
 
     try:
         recorder = AudioRecorder(

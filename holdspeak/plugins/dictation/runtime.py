@@ -2,8 +2,9 @@
 
 Spec: `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §7. Two concrete
 backends share a single `LLMRuntime` Protocol; stage code MUST NOT
-import either backend directly. Backend resolution is governed by
-`dictation.runtime.backend: auto | mlx | llama_cpp` (default `auto`).
+import any concrete backend directly. Backend resolution is governed by
+`dictation.runtime.backend: auto | mlx | llama_cpp | openai_compatible`
+(default `auto`).
 
 `auto` resolves to:
   - `mlx` on darwin/arm64 when `mlx_lm` is importable;
@@ -23,7 +24,7 @@ from typing import Any, Protocol, runtime_checkable
 
 from holdspeak.plugins.dictation.grammars import StructuredOutputSchema
 
-VALID_BACKENDS = ("auto", "mlx", "llama_cpp")
+VALID_BACKENDS = ("auto", "mlx", "llama_cpp", "openai_compatible")
 
 
 class RuntimeUnavailableError(RuntimeError):
@@ -68,8 +69,9 @@ def resolve_backend(
     on_arm64: Callable[[], bool] | None = None,
     mlx_importable: Callable[[], bool] | None = None,
     llama_cpp_importable: Callable[[], bool] | None = None,
+    openai_importable: Callable[[], bool] | None = None,
 ) -> tuple[str, str]:
-    """Resolve `auto | mlx | llama_cpp` → concrete backend + reason.
+    """Resolve configured backend → concrete backend + reason.
 
     Explicit backends never fall back: if requested is unavailable,
     `RuntimeUnavailableError` is raised.
@@ -85,6 +87,7 @@ def resolve_backend(
     arm64 = on_arm64 or _on_apple_silicon
     mlx_ok = mlx_importable or (lambda: _module_importable("mlx_lm"))
     llama_ok = llama_cpp_importable or (lambda: _module_importable("llama_cpp"))
+    openai_ok = openai_importable or (lambda: _module_importable("openai"))
 
     if requested == "mlx":
         if not arm64():
@@ -107,6 +110,14 @@ def resolve_backend(
             )
         return "llama_cpp", "explicit"
 
+    if requested == "openai_compatible":
+        if not openai_ok():
+            raise RuntimeUnavailableError(
+                "Backend 'openai_compatible' requires the 'openai' package. "
+                "Install with: uv pip install holdspeak[dictation-openai]"
+            )
+        return "openai_compatible", "explicit"
+
     # auto
     if arm64() and mlx_ok():
         return "mlx", "auto: darwin/arm64 with mlx_lm importable"
@@ -115,7 +126,8 @@ def resolve_backend(
     raise RuntimeUnavailableError(
         "No dictation runtime backend is available. Install either "
         "holdspeak[dictation-mlx] (darwin/arm64) or "
-        "holdspeak[dictation-llama] (cross-platform)."
+        "holdspeak[dictation-llama] (cross-platform), or configure "
+        "dictation.runtime.backend='openai_compatible' with an OpenAI-compatible endpoint."
     )
 
 
@@ -124,6 +136,10 @@ def build_runtime(
     backend: str = "auto",
     mlx_model: str = "~/Models/mlx/Qwen3-8B-MLX-4bit",
     llama_cpp_model_path: str = "~/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf",
+    openai_compatible_model: str = "qwen2.5-7b-instruct",
+    openai_compatible_base_url: str = "http://127.0.0.1:8000/v1",
+    openai_compatible_api_key_env: str = "OPENAI_API_KEY",
+    openai_compatible_timeout_seconds: float = 8.0,
     n_ctx: int = 2048,
     n_threads: int | None = None,
     n_gpu_layers: int = -1,
@@ -134,6 +150,7 @@ def build_runtime(
     on_arm64: Callable[[], bool] | None = None,
     mlx_importable: Callable[[], bool] | None = None,
     llama_cpp_importable: Callable[[], bool] | None = None,
+    openai_importable: Callable[[], bool] | None = None,
     factories: dict[str, Callable[..., LLMRuntime]] | None = None,
 ) -> LLMRuntime:
     """Resolve the backend and instantiate the corresponding runtime.
@@ -147,6 +164,7 @@ def build_runtime(
         on_arm64=on_arm64,
         mlx_importable=mlx_importable,
         llama_cpp_importable=llama_cpp_importable,
+        openai_importable=openai_importable,
     )
 
     factories = factories if factories is not None else _default_factories()
@@ -157,7 +175,7 @@ def build_runtime(
             warm_on_start=warm_on_start,
             eviction_idle_seconds=eviction_idle_seconds,
         )
-    else:
+    elif resolved == "llama_cpp":
         inner = factories["llama_cpp"](
             model_path=llama_cpp_model_path,
             n_ctx=n_ctx,
@@ -165,6 +183,14 @@ def build_runtime(
             n_gpu_layers=n_gpu_layers,
             warm_on_start=warm_on_start,
             eviction_idle_seconds=eviction_idle_seconds,
+        )
+    else:
+        inner = factories["openai_compatible"](
+            model=openai_compatible_model,
+            base_url=openai_compatible_base_url,
+            api_key_env=openai_compatible_api_key_env,
+            timeout_seconds=openai_compatible_timeout_seconds,
+            warm_on_start=warm_on_start,
         )
 
     # DIR-O-002 + DIR-R-003: wrap with counter-instrumenting +
@@ -188,4 +214,15 @@ def _default_factories() -> dict[str, Callable[..., LLMRuntime]]:
 
         return LlamaCppRuntime(**kwargs)
 
-    return {"mlx": _mlx_factory, "llama_cpp": _llama_factory}
+    def _openai_factory(**kwargs: Any) -> LLMRuntime:
+        from holdspeak.plugins.dictation.runtime_openai_compatible import (
+            OpenAICompatibleRuntime,
+        )
+
+        return OpenAICompatibleRuntime(**kwargs)
+
+    return {
+        "mlx": _mlx_factory,
+        "llama_cpp": _llama_factory,
+        "openai_compatible": _openai_factory,
+    }

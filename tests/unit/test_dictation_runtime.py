@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any
+from urllib.request import Request, urlopen
 
 import pytest
 
@@ -108,6 +111,23 @@ def test_explicit_llama_cpp_without_lib_raises():
         )
 
 
+def test_explicit_openai_compatible_without_lib_raises():
+    with pytest.raises(RuntimeUnavailableError, match="openai"):
+        resolve_backend(
+            "openai_compatible",
+            openai_importable=lambda: False,
+        )
+
+
+def test_explicit_openai_compatible_resolves_when_client_available():
+    backend, reason = resolve_backend(
+        "openai_compatible",
+        openai_importable=lambda: True,
+    )
+    assert backend == "openai_compatible"
+    assert reason == "explicit"
+
+
 def test_explicit_backends_never_fall_back():
     """If the user pins mlx and it's unavailable, do not silently use llama_cpp."""
     with pytest.raises(RuntimeUnavailableError):
@@ -163,6 +183,7 @@ def _factories() -> dict[str, Any]:
     return {
         "mlx": lambda **kw: _FakeRuntime(backend="mlx", **kw),
         "llama_cpp": lambda **kw: _FakeRuntime(backend="llama_cpp", **kw),
+        "openai_compatible": lambda **kw: _FakeRuntime(backend="openai_compatible", **kw),
     }
 
 
@@ -201,6 +222,349 @@ def test_build_runtime_passes_llama_kwargs():
     assert rt.kwargs["model_path"] == "/tmp/x.gguf"
     assert rt.kwargs["n_ctx"] == 4096
     assert rt.kwargs["n_gpu_layers"] == 20
+
+
+def test_build_runtime_passes_openai_compatible_kwargs():
+    rt = build_runtime(
+        backend="openai_compatible",
+        openai_compatible_model="qwen-local",
+        openai_compatible_base_url="http://127.0.0.1:1234/v1",
+        openai_compatible_api_key_env="LOCAL_LLM_KEY",
+        openai_compatible_timeout_seconds=3.5,
+        openai_importable=lambda: True,
+        factories=_factories(),
+    )
+    assert rt.backend == "openai_compatible"
+    assert rt.kwargs["model"] == "qwen-local"
+    assert rt.kwargs["base_url"] == "http://127.0.0.1:1234/v1"
+    assert rt.kwargs["api_key_env"] == "LOCAL_LLM_KEY"
+    assert rt.kwargs["timeout_seconds"] == 3.5
+
+
+# ---------------------------------------------------------------------------
+# OpenAICompatibleRuntime — classify round-trip with a mocked client
+# ---------------------------------------------------------------------------
+
+
+class _FakeOpenAICompletions:
+    def __init__(self, payload: dict[str, Any] | str) -> None:
+        self.payload = payload
+        self.calls: list[dict[str, Any]] = []
+
+    def create(self, **kwargs: Any) -> dict[str, Any]:
+        self.calls.append(kwargs)
+        content = self.payload if isinstance(self.payload, str) else json.dumps(self.payload)
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "content": content,
+                    }
+                }
+            ]
+        }
+
+
+class _FakeOpenAIClient:
+    def __init__(self, *, payload: dict[str, Any], **kwargs: Any) -> None:
+        self.kwargs = kwargs
+        self.completions = _FakeOpenAICompletions(payload)
+        self.chat = type("_Chat", (), {"completions": self.completions})()
+
+
+class _FakeBadRequestError(Exception):
+    pass
+
+
+class _TimeoutCompletions:
+    def create(self, **kwargs: Any) -> dict[str, Any]:
+        _ = kwargs
+        raise TimeoutError("fake endpoint timeout")
+
+
+class _TimeoutClient:
+    def __init__(self, **kwargs: Any) -> None:
+        self.kwargs = kwargs
+        self.chat = type("_Chat", (), {"completions": _TimeoutCompletions()})()
+
+
+class _ResponseFormatRejectingCompletions:
+    def __init__(self, payload: dict[str, Any]) -> None:
+        self.payload = payload
+        self.calls: list[dict[str, Any]] = []
+
+    def create(self, **kwargs: Any) -> dict[str, Any]:
+        self.calls.append(kwargs)
+        if "response_format" in kwargs:
+            raise _FakeBadRequestError("unsupported response_format")
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "content": json.dumps(self.payload),
+                    }
+                }
+            ]
+        }
+
+
+def test_openai_compatible_runtime_classify_returns_parsed_json():
+    from holdspeak.plugins.dictation.runtime_openai_compatible import (
+        OpenAICompatibleRuntime,
+    )
+
+    fake_client: _FakeOpenAIClient | None = None
+
+    def client_factory(**kwargs: Any) -> _FakeOpenAIClient:
+        nonlocal fake_client
+        fake_client = _FakeOpenAIClient(
+            payload={
+                "matched": True,
+                "block_id": "ai_prompt_buildout",
+                "confidence": 0.91,
+                "extras": {"stage": "buildout"},
+            },
+            **kwargs,
+        )
+        return fake_client
+
+    rt = OpenAICompatibleRuntime(
+        model="qwen-local",
+        base_url="http://127.0.0.1:1234/v1",
+        api_key_env="",
+        client_factory=client_factory,
+    )
+    result = rt.classify("classify this", _schema())
+    assert result["block_id"] == "ai_prompt_buildout"
+    assert result["extras"] == {"stage": "buildout"}
+    assert fake_client is not None
+    assert fake_client.kwargs["base_url"] == "http://127.0.0.1:1234/v1"
+    call = fake_client.completions.calls[0]
+    assert call["model"] == "qwen-local"
+    assert call["response_format"] == {"type": "json_object"}
+
+
+def test_openai_compatible_runtime_rejects_out_of_schema_output():
+    from holdspeak.plugins.dictation.runtime_openai_compatible import (
+        OpenAICompatibleRuntime,
+    )
+
+    def client_factory(**kwargs: Any) -> _FakeOpenAIClient:
+        _ = kwargs
+        return _FakeOpenAIClient(
+            payload={
+                "matched": True,
+                "block_id": "not_a_real_block",
+                "confidence": 0.91,
+                "extras": {},
+            }
+        )
+
+    rt = OpenAICompatibleRuntime(
+        model="qwen-local",
+        base_url="http://127.0.0.1:1234/v1",
+        api_key_env="",
+        client_factory=client_factory,
+    )
+    with pytest.raises(RuntimeError, match="block_id"):
+        rt.classify("classify this", _schema())
+
+
+def test_openai_compatible_runtime_rejects_malformed_json_response():
+    from holdspeak.plugins.dictation.runtime_openai_compatible import (
+        OpenAICompatibleRuntime,
+    )
+
+    def client_factory(**kwargs: Any) -> _FakeOpenAIClient:
+        _ = kwargs
+        return _FakeOpenAIClient(payload="this is not json")
+
+    rt = OpenAICompatibleRuntime(
+        model="qwen-local",
+        base_url="http://127.0.0.1:1234/v1",
+        api_key_env="",
+        client_factory=client_factory,
+    )
+
+    with pytest.raises(json.JSONDecodeError):
+        rt.classify("classify this", _schema())
+
+
+def test_openai_compatible_runtime_retries_when_response_format_rejected():
+    from holdspeak.plugins.dictation.runtime_openai_compatible import (
+        OpenAICompatibleRuntime,
+    )
+
+    completions = _ResponseFormatRejectingCompletions(
+        {
+            "matched": True,
+            "block_id": "ai_prompt_buildout",
+            "confidence": 0.91,
+            "extras": {"stage": "buildout"},
+        }
+    )
+
+    class _Client:
+        def __init__(self, **kwargs: Any) -> None:
+            self.kwargs = kwargs
+            self.chat = type("_Chat", (), {"completions": completions})()
+
+    rt = OpenAICompatibleRuntime(
+        model="qwen-local",
+        base_url="http://127.0.0.1:1234/v1",
+        api_key_env="",
+        client_factory=_Client,
+    )
+
+    result = rt.classify("classify this", _schema())
+
+    assert result["block_id"] == "ai_prompt_buildout"
+    assert len(completions.calls) == 2
+    assert "response_format" in completions.calls[0]
+    assert "response_format" not in completions.calls[1]
+
+
+def test_openai_compatible_runtime_rewrite_returns_message_text():
+    from holdspeak.plugins.dictation.runtime_openai_compatible import (
+        OpenAICompatibleRuntime,
+    )
+
+    fake_client: _FakeOpenAIClient | None = None
+
+    def client_factory(**kwargs: Any) -> _FakeOpenAIClient:
+        nonlocal fake_client
+        fake_client = _FakeOpenAIClient(payload="Rewrite this as a Codex task.", **kwargs)
+        return fake_client
+
+    rt = OpenAICompatibleRuntime(
+        model="qwen-local",
+        base_url="http://127.0.0.1:1234/v1",
+        api_key_env="",
+        client_factory=client_factory,
+    )
+
+    result = rt.rewrite("rewrite this")
+
+    assert result == "Rewrite this as a Codex task."
+    assert fake_client is not None
+    call = fake_client.completions.calls[0]
+    assert call["model"] == "qwen-local"
+    assert "response_format" not in call
+
+
+def test_openai_compatible_runtime_rewrite_wraps_timeout():
+    from holdspeak.plugins.dictation.runtime_openai_compatible import (
+        OpenAICompatibleRuntime,
+    )
+
+    rt = OpenAICompatibleRuntime(
+        model="qwen-local",
+        base_url="http://127.0.0.1:1234/v1",
+        api_key_env="",
+        client_factory=_TimeoutClient,
+    )
+
+    with pytest.raises(RuntimeError, match="timeout"):
+        rt.rewrite("rewrite this")
+
+
+def test_openai_compatible_runtime_classify_against_fake_chat_server(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from holdspeak.plugins.dictation.runtime_openai_compatible import (
+        OpenAICompatibleRuntime,
+    )
+
+    seen: list[dict[str, Any]] = []
+
+    class _Handler(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:  # noqa: N802 - stdlib handler API
+            raw = self.rfile.read(int(self.headers.get("content-length") or "0"))
+            seen.append(
+                {
+                    "path": self.path,
+                    "authorization": self.headers.get("authorization"),
+                    "body": json.loads(raw.decode("utf-8")),
+                }
+            )
+            content = json.dumps(
+                {
+                    "matched": True,
+                    "block_id": "ai_prompt_buildout",
+                    "confidence": 0.94,
+                    "extras": {"stage": "refinement"},
+                }
+            )
+            payload = json.dumps({"choices": [{"message": {"content": content}}]}).encode(
+                "utf-8"
+            )
+            self.send_response(200)
+            self.send_header("content-type", "application/json")
+            self.send_header("content-length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+
+        def log_message(self, fmt: str, *args: Any) -> None:
+            _ = (fmt, args)
+
+    class _HttpCompletions:
+        def __init__(self, *, base_url: str, api_key: str, timeout: float) -> None:
+            self.base_url = base_url.rstrip("/")
+            self.api_key = api_key
+            self.timeout = timeout
+
+        def create(self, **kwargs: Any) -> dict[str, Any]:
+            request = Request(
+                f"{self.base_url}/chat/completions",
+                data=json.dumps(kwargs).encode("utf-8"),
+                headers={
+                    "content-type": "application/json",
+                    "authorization": f"Bearer {self.api_key}",
+                },
+                method="POST",
+            )
+            with urlopen(request, timeout=self.timeout) as response:  # noqa: S310 - localhost test server
+                return json.loads(response.read().decode("utf-8"))
+
+    class _HttpClient:
+        def __init__(self, **kwargs: Any) -> None:
+            self.chat = type(
+                "_Chat",
+                (),
+                {
+                    "completions": _HttpCompletions(
+                        base_url=kwargs["base_url"],
+                        api_key=kwargs["api_key"],
+                        timeout=kwargs["timeout"],
+                    )
+                },
+            )()
+
+    server = HTTPServer(("127.0.0.1", 0), _Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    monkeypatch.setenv("LOCAL_LLM_KEY", "test-key")
+    try:
+        rt = OpenAICompatibleRuntime(
+            model="qwen-local",
+            base_url=f"http://127.0.0.1:{server.server_port}/v1",
+            api_key_env="LOCAL_LLM_KEY",
+            timeout_seconds=2,
+            client_factory=_HttpClient,
+        )
+
+        result = rt.classify("classify this", _schema())
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+    assert result["block_id"] == "ai_prompt_buildout"
+    assert result["extras"] == {"stage": "refinement"}
+    assert seen[0]["path"] == "/v1/chat/completions"
+    assert seen[0]["authorization"] == "Bearer test-key"
+    assert seen[0]["body"]["model"] == "qwen-local"
+    assert seen[0]["body"]["response_format"] == {"type": "json_object"}
 
 
 # ---------------------------------------------------------------------------
@@ -275,6 +639,26 @@ def test_llama_cpp_runtime_missing_model_raises():
 
     with pytest.raises(RuntimeUnavailableError, match="not found"):
         rt.load()
+
+
+def test_llama_cpp_runtime_rewrite_returns_completion_text(tmp_path):
+    from holdspeak.plugins.dictation.runtime_llama_cpp import LlamaCppRuntime
+
+    model_file = tmp_path / "fake.gguf"
+    model_file.write_bytes(b"\x00")
+    llama = _FakeLlama()
+    llama.next_text = "Rewrite this as a clean task."
+
+    rt = LlamaCppRuntime(
+        model_path=str(model_file),
+        llama_factory=lambda **_kwargs: llama,
+    )
+    rt._gbnf_factory = _FakeLlamaGrammar  # type: ignore[assignment]
+
+    result = rt.rewrite("rewrite this")
+
+    assert result == "Rewrite this as a clean task."
+    assert "grammar" not in llama.calls[0]
 
 
 def test_llama_cpp_runtime_info_reports_backend():

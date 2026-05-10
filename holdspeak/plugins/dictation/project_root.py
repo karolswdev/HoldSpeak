@@ -1,4 +1,4 @@
-"""Cwd-based project-root detection for the dictation pipeline.
+"""Project-root detection for the dictation pipeline.
 
 DIR-01 §6.4 declares `Utterance.project: ProjectContext | None  # from
 project_detector` and §8.1 says per-project block overrides are
@@ -6,8 +6,10 @@ project_detector` and §8.1 says per-project block overrides are
 `holdspeak/plugins/project_detector.py` is a transcript→KB keyword
 scorer, not a cwd-walking project-root finder. This module fills
 that gap: a pure function that walks from cwd up to the user's
-home and anchors on the first `.holdspeak/`, `.git/`, or recognized
-language manifest it finds.
+home and anchors on the first `.hs/`, `.holdspeak/`, `.git/`, or
+recognized language manifest it finds. When no cwd is supplied, recent
+Claude/Codex hook state is preferred over `Path.cwd()` because the
+agent-reported cwd is a stronger signal than HoldSpeak's own process cwd.
 
 Output is a `ProjectContext` dict (intentionally untyped per the
 contract in `holdspeak/plugins/dictation/contracts.py`) carrying at
@@ -23,10 +25,11 @@ from typing import Any
 
 from holdspeak.plugins.dictation.contracts import ProjectContext
 
-# Priority within a single directory: `.holdspeak/` is the strongest
+# Priority within a single directory: `.hs/` / `.holdspeak/` are the strongest
 # signal (explicit project opt-in via DIR-01 §8.1 override blocks),
 # then `.git/`, then language manifests.
 _ANCHOR_PRIORITY: tuple[tuple[str, str], ...] = (
+    (".hs", "holdspeak"),
     (".holdspeak", "holdspeak"),
     (".git", "git"),
     ("pyproject.toml", "pyproject.toml"),
@@ -35,7 +38,11 @@ _ANCHOR_PRIORITY: tuple[tuple[str, str], ...] = (
 )
 
 
-def detect_project_for_cwd(start: Path | None = None) -> ProjectContext | None:
+def detect_project_for_cwd(
+    start: Path | None = None,
+    *,
+    prefer_agent_session: bool = True,
+) -> ProjectContext | None:
     """Walk from `start` (default `Path.cwd()`) toward `$HOME`/root.
 
     Returns the first ancestor (inclusive of `start`) that contains a
@@ -43,6 +50,16 @@ def detect_project_for_cwd(start: Path | None = None) -> ProjectContext | None:
     walk hits `$HOME` or the filesystem root. `$HOME` itself is never
     treated as a project root.
     """
+    if start is None and prefer_agent_session:
+        try:
+            from holdspeak.agent_context import get_recent_agent_session
+        except ImportError:
+            recent = None
+        else:
+            recent = get_recent_agent_session()
+        if recent is not None and recent.cwd:
+            start = Path(recent.cwd)
+
     cur = (start if start is not None else Path.cwd()).resolve()
     home = Path.home().resolve()
 
@@ -74,6 +91,9 @@ def _build_context(root: Path, anchor: str) -> ProjectContext:
     kb = _load_optional_kb(root)
     if kb is not None:
         ctx["kb"] = kb
+    hs = _load_optional_hs_context(root)
+    if hs is not None:
+        ctx["hs"] = hs
     return ctx
 
 
@@ -135,3 +155,12 @@ def _load_optional_kb(root: Path) -> dict[str, Any] | None:
         return read_project_kb(root)
     except ProjectKBError:
         return None
+
+
+def _load_optional_hs_context(root: Path) -> dict[str, Any] | None:
+    try:
+        from holdspeak.agent_context import compact_hs_project_context, load_hs_project_context
+    except ImportError:
+        return None
+
+    return compact_hs_project_context(load_hs_project_context(root))

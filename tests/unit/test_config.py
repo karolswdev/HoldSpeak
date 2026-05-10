@@ -76,11 +76,13 @@ class TestModelConfig:
         """Default model name is 'base'."""
         config = ModelConfig()
         assert config.name == "base"
+        assert config.warm_on_start is True
 
     def test_custom_model_name(self):
         """ModelConfig accepts custom model names."""
-        config = ModelConfig(name="large")
+        config = ModelConfig(name="large", warm_on_start=False)
         assert config.name == "large"
+        assert config.warm_on_start is False
 
     @pytest.mark.parametrize(
         "model_name",
@@ -209,6 +211,7 @@ class TestConfig:
     def test_default_model_values(self, default_config):
         """Default config has correct model defaults."""
         assert default_config.model.name == "base"
+        assert default_config.model.warm_on_start is True
 
     def test_default_ui_values(self, default_config):
         """Default config has correct UI defaults."""
@@ -230,6 +233,7 @@ class TestConfig:
         result = default_config.to_dict()
         assert result["hotkey"]["key"] == "alt_r"
         assert result["model"]["name"] == "base"
+        assert result["model"]["warm_on_start"] is True
         assert result["ui"]["theme"] == "dark"
         assert result["meeting"]["mic_label"] == "Me"
 
@@ -286,6 +290,7 @@ class TestConfigSave:
 
         assert data["hotkey"]["key"] == "f5"
         assert data["model"]["name"] == "large"
+        assert data["model"]["warm_on_start"] is True
         assert data["ui"]["theme"] == "monokai"
         assert data["meeting"]["mic_label"] == "Speaker"
 
@@ -317,7 +322,7 @@ class TestConfigLoad:
         path = tmp_path / "valid.json"
         data = {
             "hotkey": {"key": "ctrl_l", "display": "\u2303L"},
-            "model": {"name": "small"},
+            "model": {"name": "small", "warm_on_start": False},
             "ui": {"show_audio_meter": False, "history_lines": 15, "theme": "light"},
             "meeting": {"mic_label": "Host"},
         }
@@ -327,6 +332,7 @@ class TestConfigLoad:
         config = Config.load(path)
         assert config.hotkey.key == "ctrl_l"
         assert config.model.name == "small"
+        assert config.model.warm_on_start is False
         assert config.ui.show_audio_meter is False
         assert config.meeting.mic_label == "Host"
 
@@ -402,6 +408,7 @@ class TestConfigLoad:
         config = Config.load(path2)
         assert config.hotkey.key == "alt_l"
         assert config.model.name == "tiny"
+        assert config.model.warm_on_start is True
 
 
 # ============================================================
@@ -422,6 +429,7 @@ class TestConfigRoundTrip:
         assert loaded.hotkey.key == original.hotkey.key
         assert loaded.hotkey.display == original.hotkey.display
         assert loaded.model.name == original.model.name
+        assert loaded.model.warm_on_start == original.model.warm_on_start
         assert loaded.ui.show_audio_meter == original.ui.show_audio_meter
         assert loaded.ui.history_lines == original.ui.history_lines
         assert loaded.ui.theme == original.ui.theme
@@ -448,6 +456,7 @@ class TestConfigRoundTrip:
 
         assert loaded.hotkey.key == "caps_lock"
         assert loaded.model.name == "medium"
+        assert loaded.model.warm_on_start is True
         assert loaded.ui.theme == "dracula"
         assert loaded.ui.history_lines == 50
         assert loaded.meeting.system_audio_device == "BlackHole 2ch"
@@ -595,8 +604,8 @@ class TestDictationPipelineValidation:
     def test_known_stages_accepted(self):
         from holdspeak.config import DictationPipelineConfig
 
-        cfg = DictationPipelineConfig(stages=["kb-enricher"])
-        assert cfg.stages == ["kb-enricher"]
+        cfg = DictationPipelineConfig(stages=["intent-router", "project-rewriter", "kb-enricher"])
+        assert cfg.stages == ["intent-router", "project-rewriter", "kb-enricher"]
 
     def test_unknown_stage_id_rejected(self):
         from holdspeak.config import DictationConfigError, DictationPipelineConfig
@@ -604,4 +613,5 @@ class TestDictationPipelineValidation:
         with pytest.raises(DictationConfigError) as exc:
             DictationPipelineConfig(stages=["intent-router", "made-up"])
         assert "made-up" in str(exc.value)
+        assert "project-rewriter" in str(exc.value)
         assert "kb-enricher" in str(exc.value)  # surfaces the canonical list

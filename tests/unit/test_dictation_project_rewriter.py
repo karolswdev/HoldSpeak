@@ -1,0 +1,197 @@
+"""Tests for the opt-in project-aware dictation rewrite stage."""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import Any
+
+from holdspeak.plugins.dictation.builtin.project_rewriter import ProjectRewriter
+from holdspeak.plugins.dictation.contracts import StageResult, Utterance
+
+
+def _utt(text: str = "can you fix the cli thing") -> Utterance:
+    return Utterance(
+        raw_text=text,
+        audio_duration_s=1.0,
+        transcribed_at=datetime(2026, 5, 10, tzinfo=timezone.utc),
+        project={
+            "name": "HoldSpeak",
+            "hs": {
+                "instructions": "Format dictation as concise coding-agent tasks.",
+                "prompt_context": "## .hs/instructions.md\nFormat dictation as concise coding-agent tasks.",
+                "context_dir": "/repo/.hs",
+            },
+        },
+        activity={
+            "target": {
+                "id": "codex_cli",
+                "label": "Codex CLI",
+                "confidence": 0.92,
+                "source": "hints",
+            }
+        },
+    )
+
+
+class _RewriteRuntime:
+    backend = "fake"
+
+    def __init__(self, text: str = "Fix the CLI issue concisely.") -> None:
+        self.text = text
+        self.calls: list[dict[str, Any]] = []
+
+    def rewrite(self, prompt: str, *, max_tokens: int = 512, temperature: float = 0.15) -> str:
+        self.calls.append(
+            {"prompt": prompt, "max_tokens": max_tokens, "temperature": temperature}
+        )
+        return self.text
+
+
+class _FailingRewriteRuntime:
+    backend = "fake"
+
+    def rewrite(self, prompt: str, *, max_tokens: int = 512, temperature: float = 0.15) -> str:
+        _ = (prompt, max_tokens, temperature)
+        raise TimeoutError("endpoint timed out")
+
+
+def test_project_rewriter_uses_hs_context_and_returns_rewritten_text() -> None:
+    runtime = _RewriteRuntime()
+    stage = ProjectRewriter(runtime)
+
+    result = stage.run(_utt(), prior=[])
+
+    assert result.text == "Fix the CLI issue concisely."
+    assert result.metadata["reason"] == "rewritten"
+    assert result.metadata["changed"] is True
+    assert result.metadata["target_profile"]["id"] == "codex_cli"
+    assert runtime.calls
+    assert ".hs/instructions.md" in runtime.calls[0]["prompt"]
+    assert "Target profile: codex_cli (Codex CLI)" in runtime.calls[0]["prompt"]
+    assert "acceptance criteria" in runtime.calls[0]["prompt"]
+    assert "can you fix the cli thing" in runtime.calls[0]["prompt"]
+
+
+def test_project_rewriter_threads_latest_prior_text() -> None:
+    runtime = _RewriteRuntime("Implement the bridge fix.")
+    stage = ProjectRewriter(runtime)
+    prior = [
+        StageResult(
+            stage_id="pre",
+            text="please implement the bridge fix",
+            intent=None,
+            elapsed_ms=0.0,
+        )
+    ]
+
+    result = stage.run(_utt(), prior=prior)
+
+    assert result.text == "Implement the bridge fix."
+    assert "please implement the bridge fix" in runtime.calls[0]["prompt"]
+
+
+def test_project_rewriter_includes_recent_agent_question() -> None:
+    runtime = _RewriteRuntime("Yes, please delete `tmp/old.py`.")
+    stage = ProjectRewriter(runtime)
+    utt = _utt("yeah do that")
+    activity = dict(utt.activity)
+    activity["agent"] = {
+        "agent": "claude",
+        "cwd": "/repo",
+        "awaiting_response": True,
+        "last_assistant_text": "Should I delete `tmp/old.py`?",
+    }
+    utt = Utterance(
+        raw_text=utt.raw_text,
+        audio_duration_s=utt.audio_duration_s,
+        transcribed_at=utt.transcribed_at,
+        project=utt.project,
+        activity=activity,
+    )
+
+    result = stage.run(utt, prior=[])
+
+    assert result.text == "Yes, please delete `tmp/old.py`."
+    assert "Recent agent message awaiting user response" in runtime.calls[0]["prompt"]
+    assert "Should I delete `tmp/old.py`?" in runtime.calls[0]["prompt"]
+
+
+def test_project_rewriter_prefers_agent_summary_over_raw_question() -> None:
+    runtime = _RewriteRuntime("Continue the summarizer bridge implementation.")
+    stage = ProjectRewriter(runtime)
+    utt = _utt("keep going")
+    activity = dict(utt.activity)
+    activity["agent"] = {
+        "agent": "codex",
+        "cwd": "/repo",
+        "awaiting_response": True,
+        "last_assistant_text": "Should I implement the summarizer bridge?",
+        "summary": {
+            "provider": "codex",
+            "generated_at": "2026-05-10T00:00:00Z",
+            "summary": "Codex is waiting for confirmation to implement the external-agent summarizer bridge.",
+        },
+    }
+    utt = Utterance(
+        raw_text=utt.raw_text,
+        audio_duration_s=utt.audio_duration_s,
+        transcribed_at=utt.transcribed_at,
+        project=utt.project,
+        activity=activity,
+    )
+
+    result = stage.run(utt, prior=[])
+
+    assert result.text == "Continue the summarizer bridge implementation."
+    assert "Recent agent context summary" in runtime.calls[0]["prompt"]
+    assert "external-agent summarizer bridge" in runtime.calls[0]["prompt"]
+    assert "Recent agent message awaiting user response" not in runtime.calls[0]["prompt"]
+
+
+def test_project_rewriter_noops_without_hs_context() -> None:
+    runtime = _RewriteRuntime()
+    stage = ProjectRewriter(runtime)
+    utt = Utterance(
+        raw_text="plain",
+        audio_duration_s=1.0,
+        transcribed_at=datetime(2026, 5, 10, tzinfo=timezone.utc),
+        project={"name": "NoHS"},
+    )
+
+    result = stage.run(utt, prior=[])
+
+    assert result.text == "plain"
+    assert result.metadata["reason"] == "no_hs_context"
+    assert runtime.calls == []
+
+
+def test_project_rewriter_preserves_text_for_empty_runtime_output() -> None:
+    runtime = _RewriteRuntime("```text\n\n```")
+    stage = ProjectRewriter(runtime)
+
+    result = stage.run(_utt("keep this"), prior=[])
+
+    assert result.text == "keep this"
+    assert result.metadata["reason"] == "empty_rewrite"
+    assert result.warnings
+
+
+def test_project_rewriter_preserves_text_when_rewrite_is_too_long() -> None:
+    runtime = _RewriteRuntime("x" * 10_000)
+    stage = ProjectRewriter(runtime)
+
+    result = stage.run(_utt("short request"), prior=[])
+
+    assert result.text == "short request"
+    assert result.metadata["reason"] == "rewrite_too_long"
+    assert result.warnings == ["runtime rewrite exceeded length budget; preserving input"]
+
+
+def test_project_rewriter_preserves_text_when_runtime_fails() -> None:
+    stage = ProjectRewriter(_FailingRewriteRuntime())
+
+    result = stage.run(_utt("ship the endpoint fallback"), prior=[])
+
+    assert result.text == "ship the endpoint fallback"
+    assert result.metadata["reason"] == "rewrite_failed"
+    assert result.warnings == ["runtime rewrite failed; preserving input (TimeoutError)"]

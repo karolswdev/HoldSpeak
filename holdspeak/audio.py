@@ -8,7 +8,7 @@ background PortAudio callback until `stop_recording()` is called.
 from __future__ import annotations
 
 import threading
-from typing import Callable, Optional
+from typing import Callable, Optional, Protocol, runtime_checkable
 
 import numpy as np
 
@@ -19,6 +19,23 @@ except Exception as exc:  # pragma: no cover
     _SD_IMPORT_ERROR: Optional[BaseException] = exc
 else:  # pragma: no cover
     _SD_IMPORT_ERROR = None
+
+
+@runtime_checkable
+class AudioSource(Protocol):
+    """An audio source that captures one record-stop interaction.
+
+    Conforming types support the start/stop pair used by the
+    voice-typing path and (in phase 14+) the meeting path. The
+    return shape is fixed by the rest of HoldSpeak: mono float32
+    at 16 kHz. ``AudioRecorder`` is the local-microphone source;
+    ``RemoteAudioRecorder`` (in ``holdspeak.device_audio``) is the
+    network-pushed source.
+    """
+
+    def start_recording(self) -> None: ...
+
+    def stop_recording(self) -> np.ndarray: ...
 
 
 class AudioRecorderError(RuntimeError):

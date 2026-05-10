@@ -29,6 +29,9 @@ class _FakeRecorder:
         )
         return [chunk], []
 
+    def get_pending_device_chunks(self) -> dict[str, list[AudioChunk]]:
+        return {}
+
 
 def test_stop_completes_without_deadlock_during_final_transcription_and_intel() -> None:
     """stop() should not hold the session lock across finalization work."""

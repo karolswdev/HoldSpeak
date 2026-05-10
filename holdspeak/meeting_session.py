@@ -13,7 +13,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, TYPE_CHECKING
 import json
 
 import numpy as np
@@ -21,6 +21,10 @@ import numpy as np
 from .meeting import MeetingRecorder, concatenate_chunks, AudioChunk
 from .transcribe import Transcriber
 from .logging_config import get_logger
+
+if TYPE_CHECKING:
+    from .audio import AudioSource
+    from .device_audio import DeviceDescriptor
 
 # Optional imports for intel and web server
 try:
@@ -75,6 +79,11 @@ class TranscriptSegment:
     end_time: float
     is_bookmarked: bool = False
     speaker_id: Optional[str] = None  # Link to speaker identity (None for "Me")
+    # Phase 14: id of the AIPI-Lite-class device that produced this
+    # segment, or ``None`` for the legacy local-mic + system-audio
+    # paths. ``speaker`` resolves to the device's registered label
+    # at meeting-attach time.
+    device_id: Optional[str] = None
 
     @property
     def duration(self) -> float:
@@ -88,6 +97,7 @@ class TranscriptSegment:
             "start_time": self.start_time,
             "end_time": self.end_time,
             "is_bookmarked": self.is_bookmarked,
+            "device_id": self.device_id,
         }
 
     def format_timestamp(self) -> str:
@@ -161,6 +171,10 @@ class MeetingState:
     mic_label: str = "Me"
     remote_label: str = "Remote"
     web_url: Optional[str] = None  # URL of web dashboard
+    # Phase 14: registered AIPI-Lite devices contributing audio to
+    # this meeting. Captured at attach time; ``DeviceDescriptor.id``
+    # is what surfaces on each ``TranscriptSegment.device_id``.
+    devices: list = field(default_factory=list)  # list[DeviceDescriptor]
 
     @property
     def is_active(self) -> bool:
@@ -230,7 +244,35 @@ class MeetingState:
             "mic_label": self.mic_label,
             "remote_label": self.remote_label,
             "web_url": self.web_url,
+            "devices": [_device_descriptor_to_dict(d) for d in self.devices],
         }
+
+
+def _device_descriptor_to_dict(descriptor: object) -> dict:
+    """Serialize a ``DeviceDescriptor`` to JSON-safe dict.
+
+    Lives at module scope (not on the descriptor class) to keep
+    the ``device_audio`` module free of meeting-side concerns.
+    """
+    return {
+        "id": getattr(descriptor, "id", None),
+        "label": getattr(descriptor, "label", None),
+        "connected_at": _iso_or_none(getattr(descriptor, "connected_at", None)),
+        "last_seen": _iso_or_none(getattr(descriptor, "last_seen", None)),
+        "queue_depth": int(getattr(descriptor, "queue_depth", 0) or 0),
+    }
+
+
+def _iso_or_none(value: object) -> Optional[str]:
+    if value is None:
+        return None
+    isoformat = getattr(value, "isoformat", None)
+    if callable(isoformat):
+        try:
+            return isoformat()
+        except Exception:
+            return None
+    return None
 
 
 class MeetingSession:
@@ -398,6 +440,80 @@ class MeetingSession:
         if self._recorder is None:
             return False
         return self._recorder.has_system_audio
+
+    # ------------------------------------------------------------------
+    # Phase 14: device-stream attachment (HS-14-06)
+    # ------------------------------------------------------------------
+    def attach_device(
+        self,
+        descriptor: "DeviceDescriptor",
+        source: "AudioSource",
+    ) -> None:
+        """Attach a registered device's audio source to the active meeting.
+
+        ``source`` is started immediately so subsequent
+        ``RemoteAudioRecorder.push`` calls (driven by the WebSocket
+        route) accumulate audio for this meeting. The device's
+        descriptor is appended to ``state.devices`` for round-trip
+        through ``to_dict``.
+        """
+        with self._lock:
+            if self._state is None or not self._state.is_active:
+                raise RuntimeError("No active meeting to attach a device to")
+            if self._recorder is None:
+                raise RuntimeError("Meeting recorder is not available")
+            self._state.devices.append(descriptor)
+
+        try:
+            source.start_recording()
+        except Exception:
+            # Roll back the descriptor append so a failed start
+            # doesn't leave a phantom device on the state.
+            with self._lock:
+                if self._state is not None and self._state.devices:
+                    if self._state.devices[-1] is descriptor:
+                        self._state.devices.pop()
+            raise
+
+        self._recorder.register_device_stream(
+            descriptor.id, source, label=descriptor.label
+        )
+        log.info(
+            "meeting_device_attached",
+            extra={"device_id": descriptor.id, "label": descriptor.label},
+        )
+
+    def detach_device(self, device_id: str) -> None:
+        """Drop a previously-attached device from the active meeting.
+
+        Stops the device's recorder (any audio still buffered is
+        discarded — the audio for the in-flight drain interval is
+        already captured by the most recent ``get_pending_device_chunks``
+        call) and removes it from the recorder's registration list.
+        The descriptor stays on ``state.devices`` so the saved
+        meeting still records who participated.
+        """
+        if self._recorder is None:
+            return
+
+        source = self._recorder._device_sources.get(device_id)  # type: ignore[attr-defined]
+        if source is not None:
+            try:
+                if getattr(source, "is_recording", False):
+                    source.stop_recording()
+            except Exception:
+                pass
+
+        self._recorder.unregister_device_stream(device_id)
+        log.info(
+            "meeting_device_detached",
+            extra={"device_id": device_id},
+        )
+
+    def is_device_attached(self, device_id: str) -> bool:
+        if self._recorder is None:
+            return False
+        return device_id in self._recorder.registered_device_ids()
 
     def _set_intel_status_locked(
         self,
@@ -650,7 +766,13 @@ class MeetingSession:
         if recorder is not None:
             try:
                 mic_chunks, system_chunks = recorder.stop()
-                self._transcribe_chunks(mic_chunks, system_chunks, final=True)
+                device_chunks = recorder.get_pending_device_chunks()
+                self._transcribe_chunks(
+                    mic_chunks,
+                    system_chunks,
+                    final=True,
+                    device_chunks=device_chunks,
+                )
             except Exception as e:
                 log.error(f"Error stopping recorder: {e}")
 
@@ -1079,9 +1201,12 @@ class MeetingSession:
                 mic_chunks, system_chunks = self._recorder.get_pending_chunks(
                     since=self._last_transcribe_time
                 )
+                device_chunks = self._recorder.get_pending_device_chunks()
 
-            if mic_chunks or system_chunks:
-                self._transcribe_chunks(mic_chunks, system_chunks)
+            if mic_chunks or system_chunks or device_chunks:
+                self._transcribe_chunks(
+                    mic_chunks, system_chunks, device_chunks=device_chunks
+                )
 
         log.debug("Transcription loop ended")
 
@@ -1090,10 +1215,13 @@ class MeetingSession:
         mic_chunks: list[AudioChunk],
         system_chunks: list[AudioChunk],
         final: bool = False,
+        *,
+        device_chunks: Optional[dict[str, list[AudioChunk]]] = None,
     ) -> None:
         """Transcribe audio chunks and add to segments."""
         current_time = time.time()
         new_segments: list[TranscriptSegment] = []
+        device_chunks = device_chunks or {}
 
         # Process mic chunks
         if mic_chunks:
@@ -1176,6 +1304,51 @@ class MeetingSession:
                         log.debug(f"System segment: {segment}")
                 except Exception as e:
                     log.error(f"System transcription error: {e}")
+
+        # Process device chunks (HS-14-06): each registered device's
+        # audio is transcribed independently, with the device's
+        # registered label as the speaker and its id stamped onto
+        # every produced segment.
+        for device_id, chunks in device_chunks.items():
+            if not chunks:
+                continue
+            audio = concatenate_chunks(chunks)
+            duration = len(audio) / 16000
+            if duration < self.MIN_CHUNK_DURATION:
+                continue
+
+            label = self.mic_label
+            if self._recorder is not None:
+                resolved_label = self._recorder.device_label(device_id)
+                if resolved_label:
+                    label = resolved_label
+
+            start_time = chunks[0].timestamp
+            end_time = chunks[-1].end_time
+            try:
+                text = self.transcriber.transcribe(audio)
+            except Exception as e:
+                log.error(f"Device {device_id!r} transcription error: {e}")
+                continue
+
+            if text and text.strip():
+                segment = TranscriptSegment(
+                    text=text.strip(),
+                    speaker=label,
+                    start_time=start_time,
+                    end_time=end_time,
+                    device_id=device_id,
+                )
+                with self._lock:
+                    if self._state:
+                        self._state.segments.append(segment)
+                new_segments.append(segment)
+                if self.on_segment:
+                    try:
+                        self.on_segment(segment)
+                    except Exception as e:
+                        log.error(f"on_segment callback error: {e}")
+                log.debug(f"Device segment ({device_id}): {segment}")
 
         # Broadcast new segments via web server
         if new_segments and self._web_server is not None:

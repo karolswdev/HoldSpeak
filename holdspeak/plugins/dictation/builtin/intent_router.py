@@ -44,6 +44,19 @@ def _default_prompt_builder(blocks: LoadedBlocks, utt: Utterance) -> str:
         if b.match.extras_schema:
             for key, values in b.match.extras_schema.items():
                 lines.append(f"    extras.{key} ∈ {{{', '.join(values)}}}")
+    project = utt.project or {}
+    hs = project.get("hs") if isinstance(project, dict) else None
+    hs_prompt_context = ""
+    if isinstance(hs, dict):
+        hs_prompt_context = str(hs.get("prompt_context") or "").strip()
+    if hs_prompt_context:
+        lines.extend(
+            [
+                "",
+                "Project context from repo-local .hs files:",
+                hs_prompt_context,
+            ]
+        )
     lines.append("")
     lines.append(f'Utterance: "{utt.raw_text}"')
     lines.append("")

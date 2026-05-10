@@ -25,6 +25,8 @@ import CommandPreview from "../components/CommandPreview.astro";
       <button id="section-readiness" data-section="readiness" type="button" role="tab">Readiness</button>
       <button id="section-blocks" data-section="blocks" class="active" type="button" role="tab">Blocks</button>
       <button id="section-kb" data-section="kb" type="button" role="tab">Project KB</button>
+      <button id="section-hs" data-section="hs" type="button" role="tab">Project Context</button>
+      <button id="section-hooks" data-section="hooks" type="button" role="tab">Agent Hooks</button>
       <button id="section-runtime" data-section="runtime" type="button" role="tab">Runtime</button>
       <button id="section-dry-run" data-section="dry-run" type="button" role="tab">Dry-run</button>
     </div>
@@ -43,6 +45,14 @@ import CommandPreview from "../components/CommandPreview.astro";
         <option value="">Recent roots</option>
       </select>
       <span id="project-root-status" class="project-root-status"></span>
+    </div>
+
+    <div id="agent-context-banner" class="meta-banner agent-context-banner" hidden>
+      <div>
+        <strong id="agent-context-title">Agent waiting</strong>
+        <span id="agent-context-text"></span>
+      </div>
+      <button class="btn" id="agent-context-clear" type="button">Clear</button>
     </div>
 
     <!-- ============= Readiness ============= -->
@@ -120,15 +130,21 @@ import CommandPreview from "../components/CommandPreview.astro";
         <section class="panel">
           <header class="panel-header"><h3>Pipeline + runtime</h3></header>
           <label class="check-label"><input type="checkbox" id="rt-enabled" /> Enable dictation pipeline</label>
+          <label class="check-label"><input type="checkbox" id="rt-stage-rewriter" /> Enable project-aware rewrite stage (<code>.hs/</code>)</label>
           <label>Backend
             <select id="rt-backend">
               <option value="auto">auto (prefer MLX)</option>
               <option value="mlx">mlx</option>
               <option value="llama_cpp">llama_cpp</option>
+              <option value="openai_compatible">OpenAI-compatible endpoint</option>
             </select>
           </label>
           <label>MLX model path <input type="text" id="rt-mlx-model" /></label>
           <label>llama_cpp GGUF path <input type="text" id="rt-llama-path" /></label>
+          <label>OpenAI-compatible model <input type="text" id="rt-openai-model" /></label>
+          <label>OpenAI-compatible base URL <input type="text" id="rt-openai-base-url" /></label>
+          <label>OpenAI-compatible API key env <input type="text" id="rt-openai-api-key-env" /></label>
+          <label>OpenAI-compatible timeout seconds <input type="number" id="rt-openai-timeout" min="1" step="0.5" /></label>
           <label class="check-label"><input type="checkbox" id="rt-warm" /> warm_on_start (load model at launch)</label>
           <label>max_total_latency_ms
             <input type="range" id="rt-latency" min="100" max="5000" step="50" />
@@ -214,6 +230,88 @@ import CommandPreview from "../components/CommandPreview.astro";
           <button class="btn" id="kb-btn-reset" type="button">Reset</button>
           <button class="btn danger" id="kb-btn-delete" type="button">Delete file</button>
         </div>
+      </section>
+    </section>
+
+    <!-- ============= Project Context ============= -->
+    <section id="view-hs" class="view" hidden>
+      <h2>Project context</h2>
+      <p class="lede">
+        Edit repo-local <code>.hs/</code> files used by project-aware dictation.
+        These files guide prompt rewrites, context injection, memory, workflows,
+        active issues, vocabulary, and ignore rules. Legacy <code>.hs_*</code>
+        files are shown as read-only compatibility inputs; saving creates or
+        updates the canonical <code>.hs/</code> copy.
+      </p>
+      <div id="hs-meta-banner" class="meta-banner">Loading…</div>
+      <div class="grid">
+        <section class="panel">
+          <header class="panel-header"><h3>Files</h3></header>
+          <div id="hs-file-list" class="block-list"></div>
+        </section>
+        <section class="panel">
+          <header class="panel-header"><h3 id="hs-editor-title">Select a .hs file</h3></header>
+          <p id="hs-editor-help" class="rt-counter-note"></p>
+          <textarea id="hs-editor" placeholder="Select a .hs file to edit"></textarea>
+          <div id="hs-msg"></div>
+          <div class="actions">
+            <button class="btn primary" id="hs-btn-save" type="button">Save</button>
+            <button class="btn" id="hs-btn-reset" type="button">Reset</button>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ============= Agent Hooks ============= -->
+    <section id="view-hooks" class="view" hidden>
+      <h2>Agent hooks</h2>
+      <p class="lede">
+        Inspect Claude/Codex hook status and copy the HoldSpeak hook templates.
+        The browser does not write agent settings files directly; paste the
+        template into the target tool's hook settings after review.
+      </p>
+      <div id="hooks-meta-banner" class="meta-banner">Loading…</div>
+      <section class="panel">
+        <header class="panel-header">
+          <h3>External agent summary</h3>
+        </header>
+        <p class="lede">
+          Compress the latest captured Claude/Codex question into compact
+          context for intelligent typing. HoldSpeak uses safe read-only /
+          no-tools defaults and only runs this when you click the button.
+        </p>
+        <div class="row">
+          <label>
+            Provider
+            <select id="agent-summary-provider">
+              <option value="codex">Codex CLI</option>
+              <option value="claude">Claude Code</option>
+            </select>
+          </label>
+          <label>
+            Timeout seconds
+            <input id="agent-summary-timeout" type="number" min="1" max="60" value="20" />
+          </label>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="agent-summary-run" type="button">Summarize latest agent context</button>
+          <button class="btn" id="agent-summary-refresh" type="button">Refresh captured context</button>
+        </div>
+        <div id="agent-summary-provider-status" class="hook-status">Provider status loads with hook status.</div>
+        <div id="agent-summary-status" class="preview">No summary generated yet.</div>
+      </section>
+      <section class="panel">
+        <header class="panel-header">
+          <h3>Hook templates</h3>
+          <div class="panel-toolbar">
+            <label class="check-label hooks-capture-label">
+              <input type="checkbox" id="hooks-capture-messages" checked />
+              Include assistant-message capture
+            </label>
+            <button id="hooks-btn-refresh" class="btn" type="button">Refresh</button>
+          </div>
+        </header>
+        <div id="hooks-agent-list" class="hooks-agent-list"></div>
       </section>
     </section>
   </main>
@@ -339,6 +437,63 @@ import CommandPreview from "../components/CommandPreview.astro";
   .project-root-status {
     flex: 1 1 100%;
     color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+  }
+  .agent-context-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-3);
+    border-color: var(--accent);
+    background:
+      linear-gradient(90deg, var(--accent-soft), transparent 60%),
+      var(--wb-white);
+  }
+  .agent-context-banner[hidden] { display: none; }
+  .agent-context-banner > div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  #agent-context-text {
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+  }
+  .hooks-capture-label {
+    color: var(--wb-white);
+    font-size: var(--font-size-xs);
+  }
+  .hooks-agent-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+  @media (max-width: 900px) {
+    .hooks-agent-list { grid-template-columns: 1fr; }
+  }
+  .hook-card {
+    border: 1px solid var(--wb-black);
+    padding: var(--space-3);
+    background: var(--canvas);
+  }
+  .hook-card h3 {
+    margin: 0 0 var(--space-2);
+  }
+  .hook-status {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    word-break: break-word;
+  }
+  .hook-template {
+    max-height: 16rem;
+    overflow: auto;
+    white-space: pre;
+    background: var(--wb-white);
+    border: 1px solid var(--line);
+    padding: var(--space-2);
     font-family: var(--font-mono);
     font-size: var(--font-size-xs);
   }

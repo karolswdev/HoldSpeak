@@ -23,6 +23,7 @@ from holdspeak.config import DictationConfig
 from holdspeak.plugins.dictation.blocks import LoadedBlocks, resolve_blocks
 from holdspeak.plugins.dictation.builtin.intent_router import IntentRouter
 from holdspeak.plugins.dictation.builtin.kb_enricher import KbEnricher
+from holdspeak.plugins.dictation.builtin.project_rewriter import ProjectRewriter
 from holdspeak.plugins.dictation.pipeline import DictationPipeline, PipelineRun
 from holdspeak.plugins.dictation.runtime import (
     LLMRuntime,
@@ -68,9 +69,15 @@ def build_pipeline(
     llm_enabled = runtime is not None
 
     stages: list[Any] = []
-    if runtime is not None:
-        stages.append(IntentRouter(runtime, blocks))
-    stages.append(KbEnricher(blocks))
+    for stage_id in cfg.pipeline.stages:
+        if stage_id == "intent-router":
+            if runtime is not None:
+                stages.append(IntentRouter(runtime, blocks))
+        elif stage_id == "project-rewriter":
+            if runtime is not None:
+                stages.append(ProjectRewriter(runtime))
+        elif stage_id == "kb-enricher":
+            stages.append(KbEnricher(blocks))
 
     pipeline = DictationPipeline(
         stages,
@@ -98,6 +105,10 @@ def _try_build_runtime(
             backend=cfg.runtime.backend,
             mlx_model=cfg.runtime.mlx_model,
             llama_cpp_model_path=cfg.runtime.llama_cpp_model_path,
+            openai_compatible_model=cfg.runtime.openai_compatible_model,
+            openai_compatible_base_url=cfg.runtime.openai_compatible_base_url,
+            openai_compatible_api_key_env=cfg.runtime.openai_compatible_api_key_env,
+            openai_compatible_timeout_seconds=cfg.runtime.openai_compatible_timeout_seconds,
             n_ctx=cfg.runtime.n_ctx,
             n_threads=cfg.runtime.n_threads,
             n_gpu_layers=cfg.runtime.n_gpu_layers,

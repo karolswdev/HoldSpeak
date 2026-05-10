@@ -250,6 +250,24 @@ def test_nested_project_kb_placeholder_resolves():
     assert result.text == "python+react"
 
 
+def test_nested_project_hs_placeholder_resolves():
+    enricher = KbEnricher(
+        _make_blocks(
+            template="{project.hs.instructions}\n{raw_text}",
+            mode=InjectMode.REPLACE,
+        )
+    )
+    utt = _utt(
+        "please fix the bridge",
+        project={
+            "name": "holdspeak",
+            "hs": {"instructions": "Format as a concise coding-agent task."},
+        },
+    )
+    result = enricher.run(utt, prior=[_intent_result(_matched_tag(), text=utt.raw_text)])
+    assert result.text == "Format as a concise coding-agent task.\nplease fix the bridge"
+
+
 # ---------------------------------------------------------------------------
 # DIR-F-007: unresolved placeholders never get typed
 # ---------------------------------------------------------------------------

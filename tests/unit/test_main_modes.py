@@ -23,6 +23,7 @@ def test_main_defaults_to_web_mode(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(main_module, "run_history_command", lambda _args: (_ for _ in ()).throw(AssertionError("unexpected history")))
     monkeypatch.setattr(main_module, "run_actions_command", lambda _args: (_ for _ in ()).throw(AssertionError("unexpected actions")))
     monkeypatch.setattr(main_module, "run_intel_command", lambda _args: (_ for _ in ()).throw(AssertionError("unexpected intel")))
+    monkeypatch.setattr(main_module, "run_agent_hook_command", lambda _args: (_ for _ in ()).throw(AssertionError("unexpected agent-hook")))
     monkeypatch.setattr(main_module, "run_doctor_command", lambda _args: (_ for _ in ()).throw(AssertionError("unexpected doctor")))
     monkeypatch.setattr("sys.argv", ["holdspeak"])
 
@@ -96,6 +97,17 @@ def test_doctor_subcommand_still_exits_with_command_return_code(monkeypatch: pyt
         main_module.main()
 
     assert exc.value.code == 7
+
+
+def test_agent_hook_subcommand_exits_with_command_return_code(monkeypatch: pytest.MonkeyPatch) -> None:
+    _patch_logging(monkeypatch)
+    monkeypatch.setattr(main_module, "run_agent_hook_command", lambda _args: 9)
+    monkeypatch.setattr("sys.argv", ["holdspeak", "agent-hook", "templates", "--agent", "claude"])
+
+    with pytest.raises(SystemExit) as exc:
+        main_module.main()
+
+    assert exc.value.code == 9
 
 
 def test_meeting_subcommand_is_unchanged(monkeypatch: pytest.MonkeyPatch) -> None:

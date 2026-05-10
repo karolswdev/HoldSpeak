@@ -8,9 +8,9 @@ import pytest
 import holdspeak.web_runtime as web_runtime
 
 
-def _config(*, auto_open: bool = True) -> SimpleNamespace:
+def _config(*, auto_open: bool = True, warm_on_start: bool = False) -> SimpleNamespace:
     return SimpleNamespace(
-        model=SimpleNamespace(name="base"),
+        model=SimpleNamespace(name="base", warm_on_start=warm_on_start),
         hotkey=SimpleNamespace(key="alt_r", display="Right Option"),
         meeting=SimpleNamespace(
             mic_device=None,
@@ -143,6 +143,69 @@ def test_run_web_runtime_no_open_skips_browser(monkeypatch: pytest.MonkeyPatch) 
     assert browser_urls == []
 
 
+def test_run_web_runtime_warms_transcriber_on_start(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(web_runtime.Config, "load", lambda: _config(auto_open=False, warm_on_start=True))
+
+    loaded = threading.Event()
+    server_instances: list[object] = []
+
+    class FakeServer:
+        def __init__(self, **kwargs):
+            self.on_get_status = kwargs["on_get_status"]
+            server_instances.append(self)
+
+        def start(self) -> str:
+            return "http://127.0.0.1:9996"
+
+        def stop(self) -> None:
+            return None
+
+    class FakeAudioRecorder:
+        def __init__(self, **kwargs):
+            _ = kwargs
+
+    class FakeHotkeyListener:
+        def __init__(self, **kwargs):
+            _ = kwargs
+
+        def start(self) -> None:
+            return None
+
+        def stop(self) -> None:
+            return None
+
+    class FakeTranscriber:
+        def __init__(self, model_name: str):
+            self.model_name = model_name
+            loaded.set()
+
+        def transcribe(self, _audio):
+            return "hello world"
+
+    monkeypatch.setattr(web_runtime, "MeetingWebServer", FakeServer)
+    monkeypatch.setattr(web_runtime, "AudioRecorder", FakeAudioRecorder)
+    monkeypatch.setattr(web_runtime, "HotkeyListener", FakeHotkeyListener)
+    monkeypatch.setattr(web_runtime, "Transcriber", FakeTranscriber)
+
+    stop_event = threading.Event()
+    stop_event.set()
+
+    web_runtime.run_web_runtime(
+        no_open=True,
+        stop_event=stop_event,
+        register_signal_handlers=False,
+    )
+
+    assert loaded.wait(1.0)
+    status = server_instances[0].on_get_status()
+    assert status["transcription"] == {
+        "model": "base",
+        "warm_on_start": True,
+        "status": "loaded",
+        "error": "",
+    }
+
+
 def test_run_web_runtime_fails_with_actionable_exit(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(web_runtime.Config, "load", lambda: _config(auto_open=False))
 
@@ -220,6 +283,7 @@ def test_runtime_meeting_control_callbacks_are_wired(monkeypatch: pytest.MonkeyP
             self._active = True
             self.title = None
             self.tags: list[str] = []
+            self.devices: list[object] = []
 
         def to_dict(self) -> dict[str, object]:
             return {
@@ -347,7 +411,13 @@ def test_runtime_meeting_control_callbacks_are_wired(monkeypatch: pytest.MonkeyP
             assert "plugin_chain" in route
             assert isinstance(route["plugin_runs"], list)
             assert route["plugin_runs"]
-            assert all(run["status"] in {"success", "deduped"} for run in route["plugin_runs"])
+            # `blocked` is a legitimate outcome for plugins whose
+            # required capabilities (e.g. `llm` on `mermaid_architecture`
+            # since HS-16-01) are not enabled in this test host.
+            assert all(
+                run["status"] in {"success", "deduped", "blocked"}
+                for run in route["plugin_runs"]
+            )
 
             cleared_controls = set_intent_override_cb([])
             assert cleared_controls["override_intents"] == []

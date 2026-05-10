@@ -258,14 +258,24 @@ class HoldSpeakController:
 
         try:
             from holdspeak.activity_context import build_activity_context
+            from holdspeak.agent_context import get_recent_agent_session
             from holdspeak.plugins.dictation.contracts import Utterance
+            from holdspeak.target_profile import detect_active_target_profile
+
+            activity = build_activity_context(limit=20, refresh=False).to_dict()
+            activity["target"] = detect_active_target_profile().to_dict()
+            recent_agent = get_recent_agent_session(max_age_seconds=120)
+            if recent_agent is not None and recent_agent.awaiting_response:
+                project_root = self._dictation_project.get("root") if self._dictation_project else None
+                if not project_root or recent_agent.repo_root == project_root:
+                    activity["agent"] = recent_agent.to_dict()
 
             utt = Utterance(
                 raw_text=text,
                 audio_duration_s=audio_duration_s,
                 transcribed_at=transcribed_at,
                 project=self._dictation_project,
-                activity=build_activity_context(limit=20, refresh=False).to_dict(),
+                activity=activity,
             )
             run = pipeline.run(utt)
             return run.final_text

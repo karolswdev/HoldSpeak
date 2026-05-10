@@ -35,6 +35,8 @@ def runtime_install_command(
         return 'CMAKE_ARGS="-DGGML_METAL=on" uv pip install -e \'.[dictation-llama]\''
     if backend == "llama_cpp":
         return "uv pip install -e '.[dictation-llama]'"
+    if backend == "openai_compatible":
+        return "uv pip install -e '.[dictation-openai]'"
     return "uv pip install -e '.[dictation-mlx]'"
 
 
@@ -63,6 +65,8 @@ def runtime_docs_target(backend: str) -> str:
         return "/docs/dictation-runtime#mlx"
     if backend == "llama_cpp":
         return "/docs/dictation-runtime#llama-cpp"
+    if backend == "openai_compatible":
+        return "/docs/dictation-runtime#openai-compatible"
     return "/docs/dictation-runtime"
 
 
@@ -83,6 +87,30 @@ def runtime_guidance(
             "target": runtime_docs_target(backend),
         }
     ]
+
+    if kind == "endpoint_config":
+        return {
+            "kind": kind,
+            "backend": backend,
+            "title": "Configure an OpenAI-compatible endpoint",
+            "summary": (
+                "The dictation pipeline can use any local or remote server that "
+                "implements /v1/chat/completions."
+            ),
+            "model_path": None,
+            "next_step": (
+                "Set dictation.runtime.openai_compatible_base_url and "
+                "dictation.runtime.openai_compatible_model, then refresh readiness."
+            ),
+            "commands": [
+                {
+                    "label": "Install OpenAI client extra",
+                    "command": runtime_install_command("openai_compatible"),
+                }
+            ],
+            "command_bundle": runtime_install_command("openai_compatible"),
+            "links": links,
+        }
 
     if kind == "missing_model" and model_path is not None:
         expanded_model_path = model_path.expanduser()
@@ -125,6 +153,10 @@ def runtime_guidance(
             "label": "Install llama_cpp extra",
             "command": runtime_install_command("llama_cpp", system=system, machine=machine),
         })
+        commands.append({
+            "label": "Install OpenAI-compatible extra",
+            "command": runtime_install_command("openai_compatible", system=system, machine=machine),
+        })
     else:
         commands.append({
             "label": f"Install {requested_backend} extra",
@@ -166,6 +198,8 @@ def doctor_runtime_install_fix(
         return f"Install the MLX dictation backend: {commands[0]}"
     if requested_backend == "llama_cpp":
         return f"Install the llama_cpp dictation backend: {commands[0]}"
+    if requested_backend == "openai_compatible":
+        return f"Install the OpenAI-compatible dictation backend: {commands[0]}"
     return "Install one dictation backend: " + " OR ".join(commands)
 
 

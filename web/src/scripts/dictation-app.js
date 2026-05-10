@@ -11,6 +11,8 @@ const state = {
   projectRootOverride: localStorage.getItem("holdspeak.projectRootOverride") || "",
   recentProjectRoots: loadRecentProjectRoots(),
   activeSection: "blocks",
+  agentSession: null,
+  hooks: null,
 };
 
 const PLACEHOLDER_RE = /\{([^{}]*)\}/g;
@@ -355,12 +357,35 @@ function escapeAttr(s) { return escapeHtml(s); }
 
 // ── Project KB editor ───────────────────────────────────────────────
 const kbState = { detected: null, kbPath: null, lastLoaded: null, rows: [] };
+const HS_FILE_META = [
+  ["instructions.md", "How HoldSpeak rewrites/injects prompts for this repo."],
+  ["context.md", "Architecture, important paths, setup notes, and constraints."],
+  ["memory.md", "Durable user-approved facts HoldSpeak may reuse."],
+  ["workflows.md", "Common test, build, review, and deploy workflows."],
+  ["issues.md", "Active scratchpad for current problems and decisions."],
+  ["terms.md", "Project vocabulary, acronyms, and preferred spellings."],
+  ["targets.md", "Per-target style notes for Codex, Claude, terminal, browser, editor, and chat."],
+  ["ignore", "Paths, topics, or data HoldSpeak should not inject."],
+];
+const hsState = {
+  detected: null,
+  contextDir: null,
+  contextDirExists: false,
+  files: {},
+  flatFiles: {},
+  skipped: [],
+  warnings: [],
+  writePolicy: {},
+  selected: "instructions.md",
+};
 
 function activateSection(name) {
   state.activeSection = name;
   document.getElementById("view-readiness").style.display = name === "readiness" ? "" : "none";
   document.getElementById("view-blocks").style.display = name === "blocks" ? "" : "none";
   document.getElementById("view-kb").style.display = name === "kb" ? "" : "none";
+  document.getElementById("view-hs").style.display = name === "hs" ? "" : "none";
+  document.getElementById("view-hooks").style.display = name === "hooks" ? "" : "none";
   document.getElementById("view-runtime").style.display = name === "runtime" ? "" : "none";
   document.getElementById("view-dry-run").style.display = name === "dry-run" ? "" : "none";
   document.querySelectorAll('.scope-row button[data-section]').forEach((b) =>
@@ -368,6 +393,8 @@ function activateSection(name) {
   );
   if (name === "readiness") loadReadiness();
   if (name === "kb") loadKB();
+  if (name === "hs") loadHSContext();
+  if (name === "hooks") loadAgentHooks();
   if (name === "runtime") loadRuntime();
 }
 
@@ -403,6 +430,11 @@ function renderReadiness(data) {
   const blocks = data.blocks || {};
   const kb = data.project_kb || {};
   const runtime = data.runtime || {};
+  const target = data.target || {};
+  const agentHooks = data.agent_hooks || {};
+  const freshHooks = Object.entries(agentHooks)
+    .filter(([_agent, entry]) => entry && entry.fresh)
+    .map(([agent]) => agent);
   const config = data.config || {};
   document.getElementById("ready-cards").innerHTML = [
     readinessCard(
@@ -410,6 +442,12 @@ function renderReadiness(data) {
       config.pipeline_enabled ? "enabled" : "disabled",
       config.pipeline_enabled ? "ok" : "warn",
       `${config.max_total_latency_ms || "?"} ms target`
+    ),
+    readinessCard(
+      "Target",
+      target.label || "Unknown",
+      target.id && target.id !== "unknown" ? "ok" : "warn",
+      `${target.source || "none"} · ${Math.round(Number(target.confidence || 0) * 100)}% confidence`
     ),
     readinessCard(
       "Blocks",
@@ -428,6 +466,12 @@ function renderReadiness(data) {
       runtime.status || "unknown",
       runtime.status === "available" ? "ok" : (runtime.status === "disabled" ? "warn" : "error"),
       runtime.resolved_backend || runtime.requested_backend || "not resolved"
+    ),
+    readinessCard(
+      "Agent hooks",
+      freshHooks.length ? `${freshHooks.join(" + ")} fresh` : "no recent hooks",
+      freshHooks.length ? "ok" : "warn",
+      "Claude/Codex hook context freshness"
     ),
   ].join("");
 
@@ -666,6 +710,141 @@ async function kbDelete() {
   }
 }
 
+// ── Project .hs context editor ───────────────────────────────────────
+async function loadHSContext() {
+  const banner = document.getElementById("hs-meta-banner");
+  banner.classList.remove("warn", "error");
+  banner.textContent = "Loading…";
+  try {
+    const data = await api("GET", `/api/dictation/project-hs${projectRootParam("?")}`);
+    hsState.detected = data.detected;
+    hsState.contextDir = data.context_dir;
+    hsState.contextDirExists = !!data.context_dir_exists;
+    hsState.files = data.files || {};
+    hsState.flatFiles = data.flat_files || {};
+    hsState.skipped = data.skipped || [];
+    hsState.warnings = data.warnings || [];
+    hsState.writePolicy = data.write_policy || {};
+    if (!hsState.files[hsState.selected]) hsState.selected = "instructions.md";
+    renderHSMeta(data);
+    renderHSFileList();
+    renderHSEditor();
+  } catch (e) {
+    banner.classList.add(e.status === 404 ? "warn" : "error");
+    banner.textContent = e.message;
+    document.getElementById("hs-file-list").innerHTML = "";
+    document.getElementById("hs-editor").value = "";
+  }
+}
+
+function renderHSMeta(data) {
+  const banner = document.getElementById("hs-meta-banner");
+  const d = data.detected;
+  if (!d) {
+    banner.classList.add("warn");
+    banner.textContent = "No project detected.";
+    return;
+  }
+  const parts = [
+    `project: <strong>${escapeHtml(d.name)}</strong> (${escapeHtml(d.anchor)})`,
+    `root: ${escapeHtml(d.root)}`,
+    `path: ${escapeHtml(data.context_dir)}`,
+  ];
+  const flatCount = Object.keys(data.flat_files || {}).length;
+  if (flatCount) parts.push(`flat compatibility files: <strong>${flatCount}</strong>`);
+  if (!data.context_dir_exists) {
+    parts.push(`<em style="color:var(--warn);">.hs/ does not exist yet — first save creates the editable directory</em>`);
+  }
+  const policy = data.write_policy || {};
+  const warnings = (data.warnings || []).length
+    ? `<div class="error-box">${(data.warnings || []).map(escapeHtml).join("<br>")}</div>`
+    : "";
+  const policyText = policy.flat
+    ? `<div class="rt-counter-note">${escapeHtml(policy.canonical || "")} ${escapeHtml(policy.flat || "")}</div>`
+    : "";
+  banner.innerHTML = `${parts.join("  ·  ")}${policyText}${warnings}`;
+}
+
+function renderHSFileList() {
+  const host = document.getElementById("hs-file-list");
+  host.innerHTML = HS_FILE_META.map(([name, help]) => {
+    const file = hsState.files[name] || {};
+    const source = file.source === "flat"
+      ? '<span class="pill">flat read-only</span>'
+      : file.exists
+        ? '<span class="pill">saved</span>'
+        : '<span class="pill">new</span>';
+    const truncation = file.truncated ? '<span class="pill">truncated</span>' : "";
+    return `
+      <div class="block-card${name === hsState.selected ? " selected" : ""}" data-hs-file="${escapeAttr(name)}">
+        <div><span class="block-id">.hs/${escapeHtml(name)}</span>${source}${truncation}</div>
+        <div class="block-desc">${escapeHtml(help)}</div>
+      </div>
+    `;
+  }).join("");
+  host.querySelectorAll("[data-hs-file]").forEach((el) => {
+    el.addEventListener("click", () => {
+      hsState.selected = el.dataset.hsFile;
+      renderHSFileList();
+      renderHSEditor();
+    });
+  });
+}
+
+function renderHSEditor() {
+  const selected = hsState.selected || "instructions.md";
+  const meta = HS_FILE_META.find(([name]) => name === selected) || [selected, ""];
+  const file = hsState.files[selected] || { content: "" };
+  const save = document.getElementById("hs-btn-save");
+  const sourceNote = file.source === "flat"
+    ? ` Loaded from read-only ${file.actual_path || file.path || "flat .hs_* file"}. Saving creates editable .hs/${selected}; it does not modify the flat file.`
+    : file.exists
+      ? ` Editing ${file.path || `.hs/${selected}`}.`
+      : " New canonical file; first save creates it.";
+  const truncationNote = file.truncated
+    ? " This file was truncated for safety, so saving is disabled to avoid losing content."
+    : "";
+  document.getElementById("hs-editor-title").textContent = `.hs/${selected}`;
+  document.getElementById("hs-editor-help").textContent = `${meta[1] || ""}${sourceNote}${truncationNote}`;
+  document.getElementById("hs-editor").value = file.content || "";
+  if (save) {
+    save.disabled = !!file.truncated;
+    save.textContent = file.source === "flat" ? "Create editable .hs copy" : "Save";
+  }
+  document.getElementById("hs-msg").innerHTML = "";
+}
+
+async function saveHSContext() {
+  const msg = document.getElementById("hs-msg");
+  msg.innerHTML = "";
+  const selected = hsState.selected || "instructions.md";
+  const content = document.getElementById("hs-editor").value;
+  try {
+    const data = await api("PUT", `/api/dictation/project-hs${projectRootParam("?")}`, {
+      files: { [selected]: content },
+    });
+    hsState.detected = data.detected;
+    hsState.contextDir = data.context_dir;
+    hsState.contextDirExists = !!data.context_dir_exists;
+    hsState.files = data.files || {};
+    hsState.flatFiles = data.flat_files || {};
+    hsState.skipped = data.skipped || [];
+    hsState.warnings = data.warnings || [];
+    hsState.writePolicy = data.write_policy || {};
+    msg.innerHTML = `<div class="ok-box">Saved .hs/${escapeHtml(selected)}. Flat compatibility files were not modified.</div>`;
+    renderHSMeta(data);
+    renderHSFileList();
+    renderHSEditor();
+    if (state.activeSection === "readiness") loadReadiness();
+  } catch (e) {
+    msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function resetHSContext() {
+  renderHSEditor();
+}
+
 // ── Runtime config editor ───────────────────────────────────────────
 const rtState = { last: null };
 
@@ -701,9 +880,15 @@ function renderRuntime(data, readiness = null) {
     `cold-start cap: <strong>${(pipeline.max_total_latency_ms || 0) * 5} ms</strong>`;
 
   document.getElementById("rt-enabled").checked = !!pipeline.enabled;
+  document.getElementById("rt-stage-rewriter").checked =
+    Array.isArray(pipeline.stages) && pipeline.stages.includes("project-rewriter");
   document.getElementById("rt-backend").value = runtime.backend || "auto";
   document.getElementById("rt-mlx-model").value = runtime.mlx_model || "";
   document.getElementById("rt-llama-path").value = runtime.llama_cpp_model_path || "";
+  document.getElementById("rt-openai-model").value = runtime.openai_compatible_model || "";
+  document.getElementById("rt-openai-base-url").value = runtime.openai_compatible_base_url || "";
+  document.getElementById("rt-openai-api-key-env").value = runtime.openai_compatible_api_key_env || "";
+  document.getElementById("rt-openai-timeout").value = runtime.openai_compatible_timeout_seconds || 8;
   document.getElementById("rt-warm").checked = !!runtime.warm_on_start;
   const slider = document.getElementById("rt-latency");
   slider.value = pipeline.max_total_latency_ms || 600;
@@ -748,12 +933,21 @@ async function saveRuntime(options = {}) {
     dictation: {
       pipeline: {
         enabled: document.getElementById("rt-enabled").checked,
+        stages: [
+          "intent-router",
+          ...(document.getElementById("rt-stage-rewriter").checked ? ["project-rewriter"] : []),
+          "kb-enricher",
+        ],
         max_total_latency_ms: Number(document.getElementById("rt-latency").value),
       },
       runtime: {
         backend: document.getElementById("rt-backend").value,
         mlx_model: document.getElementById("rt-mlx-model").value.trim(),
         llama_cpp_model_path: document.getElementById("rt-llama-path").value.trim(),
+        openai_compatible_model: document.getElementById("rt-openai-model").value.trim(),
+        openai_compatible_base_url: document.getElementById("rt-openai-base-url").value.trim(),
+        openai_compatible_api_key_env: document.getElementById("rt-openai-api-key-env").value.trim(),
+        openai_compatible_timeout_seconds: Number(document.getElementById("rt-openai-timeout").value),
         warm_on_start: document.getElementById("rt-warm").checked,
       },
     },
@@ -906,6 +1100,172 @@ function clearDryRun() {
   document.getElementById("dry-trace").innerHTML = "";
 }
 
+async function loadAgentContext() {
+  const banner = document.getElementById("agent-context-banner");
+  if (!banner) return;
+  try {
+    const data = await api("GET", `/api/dictation/agent-context${projectRootParam("?")}`);
+    renderAgentContext(data);
+  } catch (_e) {
+    state.agentSession = null;
+    banner.hidden = true;
+  }
+}
+
+function renderAgentContext(data) {
+  const banner = document.getElementById("agent-context-banner");
+  const title = document.getElementById("agent-context-title");
+  const text = document.getElementById("agent-context-text");
+  if (!banner || !title || !text) return;
+
+  const session = data && data.session;
+  if (!session || !session.awaiting_response || !session.last_assistant_text) {
+    state.agentSession = null;
+    banner.hidden = true;
+    return;
+  }
+
+  state.agentSession = session;
+  const label = [session.agent, session.project_name || basename(session.repo_root), session.cwd]
+    .filter(Boolean)
+    .join(" · ");
+  const assistantText = String(session.last_assistant_text || "");
+  const preview = assistantText.length > 320 ? `${assistantText.slice(0, 320)}…` : assistantText;
+  const summary = session.summary && session.summary.summary ? String(session.summary.summary) : "";
+  const summaryPreview = summary
+    ? `<br><strong>Summary:</strong> ${escapeHtml(summary.length > 240 ? `${summary.slice(0, 240)}…` : summary)}`
+    : "";
+  title.textContent = `${session.agent || "Agent"} is waiting for your reply`;
+  text.innerHTML = `${escapeHtml(label)}<br>${escapeHtml(preview)}${summaryPreview}`;
+  banner.hidden = false;
+}
+
+async function clearAgentContext() {
+  if (!state.agentSession) return;
+  const button = document.getElementById("agent-context-clear");
+  if (button) button.disabled = true;
+  try {
+    await api("POST", "/api/dictation/agent-context/clear", {
+      agent: state.agentSession.agent,
+      session_id: state.agentSession.session_id,
+      project_root: state.projectRootOverride.trim() || state.agentSession.repo_root || "",
+    });
+    state.agentSession = null;
+    renderAgentContext({ session: null });
+  } catch (_e) {
+    await loadAgentContext();
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+async function summarizeAgentContext() {
+  const button = document.getElementById("agent-summary-run");
+  const status = document.getElementById("agent-summary-status");
+  const provider = document.getElementById("agent-summary-provider").value;
+  const timeout = Number(document.getElementById("agent-summary-timeout").value || 20);
+  if (!button || !status) return;
+  button.disabled = true;
+  status.classList.remove("error", "warn");
+  status.textContent = "Summarizing captured agent context…";
+  try {
+    const payload = {
+      provider,
+      timeout_seconds: Math.max(1, Math.min(60, timeout || 20)),
+      project_root: state.projectRootOverride.trim(),
+    };
+    if (state.agentSession) {
+      payload.agent = state.agentSession.agent;
+    }
+    const data = await api("POST", "/api/dictation/agent-context/summarize", payload);
+    state.agentSession = data.session || state.agentSession;
+    const summary = data.summary || {};
+    status.textContent = summary.summary
+      ? `${summary.provider || provider}: ${summary.summary}`
+      : "Summary generated.";
+    await loadAgentContext();
+    if (state.activeSection === "hooks") await loadAgentHooks();
+  } catch (e) {
+    status.classList.add("error");
+    status.textContent = e.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function loadAgentHooks() {
+  const banner = document.getElementById("hooks-meta-banner");
+  const list = document.getElementById("hooks-agent-list");
+  if (!banner || !list) return;
+  const capture = document.getElementById("hooks-capture-messages").checked;
+  banner.classList.remove("warn", "error");
+  banner.textContent = "Loading…";
+  list.innerHTML = "";
+  try {
+    const data = await api("GET", `/api/dictation/agent-hooks?capture_messages=${capture ? "true" : "false"}`);
+    state.hooks = data;
+    renderAgentHooks(data);
+  } catch (e) {
+    banner.classList.add("error");
+    banner.textContent = e.message;
+  }
+}
+
+function renderAgentHooks(data) {
+  const banner = document.getElementById("hooks-meta-banner");
+  const list = document.getElementById("hooks-agent-list");
+  const summaryProviderStatus = document.getElementById("agent-summary-provider-status");
+  const capture = !!data.capture_messages;
+  banner.classList.remove("warn", "error");
+  banner.innerHTML =
+    `registry: <strong>${escapeHtml(data.registry_path || "—")}</strong>` +
+    `  ·  assistant capture: <strong>${capture ? "included" : "not included"}</strong>`;
+  if (summaryProviderStatus) {
+    const summarizers = data.summarizers || {};
+    summaryProviderStatus.innerHTML = ["codex", "claude"].map((provider) => {
+      const status = summarizers[provider] || {};
+      const state = status.available ? "available" : "not installed";
+      const safety = status.safe_default ? "safe default" : `unsafe: ${status.safe_default_error || "blocked"}`;
+      const command = status.command_display || provider;
+      return `<span class="hook-status-item"><strong>${escapeHtml(provider)}</strong>: ${escapeHtml(state)} · ${escapeHtml(safety)}<br><code>${escapeHtml(command)}</code></span>`;
+    }).join("<br>");
+  }
+
+  const agents = data.agents || {};
+  list.innerHTML = ["claude", "codex"].map((agent) => {
+    const entry = agents[agent] || {};
+    const latest = entry.latest_session;
+    const destination = (data.destinations || {})[agent] || "";
+    const status = latest
+      ? [
+          `latest: ${latest.updated_at || "unknown"}`,
+          `cwd: ${latest.cwd || "—"}`,
+          `capture: ${latest.capture_messages ? "enabled" : "disabled"}`,
+          latest.awaiting_response ? "awaiting response" : "",
+        ].filter(Boolean).join(" · ")
+      : "No hook events recorded yet.";
+    return `
+      <article class="hook-card">
+        <h3>${escapeHtml(agent)}</h3>
+        <p class="hook-status">Destination: ${escapeHtml(destination)}</p>
+        <p class="hook-status">${escapeHtml(status)}</p>
+        <div class="actions">
+          <button class="btn primary" data-copy-command="${escapeAttr(entry.template_json || "")}">Copy template</button>
+        </div>
+        <pre class="hook-template"><code>${escapeHtml(entry.template_json || "{}")}</code></pre>
+      </article>
+    `;
+  }).join("");
+  wireCopyCommandButtons(list);
+}
+
+function basename(path) {
+  const text = String(path || "").replace(/\/+$/, "");
+  if (!text) return "";
+  const parts = text.split("/");
+  return parts[parts.length - 1] || text;
+}
+
 function projectRootParam(prefix) {
   const value = state.projectRootOverride.trim();
   return value ? `${prefix}project_root=${encodeURIComponent(value)}` : "";
@@ -1009,9 +1369,12 @@ async function useRecentProjectRoot() {
 }
 
 function refreshProjectScopedView() {
+  loadAgentContext();
   if (state.activeSection === "readiness") loadReadiness();
   if (state.activeSection === "blocks" && state.scope === "project") loadScope("project");
   if (state.activeSection === "kb") loadKB();
+  if (state.activeSection === "hs") loadHSContext();
+  if (state.activeSection === "hooks") loadAgentHooks();
   if (state.activeSection === "dry-run") clearDryRun();
 }
 
@@ -1029,6 +1392,8 @@ document.getElementById("kb-btn-starter").addEventListener("click", createStarte
 document.getElementById("kb-btn-save").addEventListener("click", kbSave);
 document.getElementById("kb-btn-reset").addEventListener("click", kbReset);
 document.getElementById("kb-btn-delete").addEventListener("click", kbDelete);
+document.getElementById("hs-btn-save").addEventListener("click", saveHSContext);
+document.getElementById("hs-btn-reset").addEventListener("click", resetHSContext);
 document.getElementById("rt-btn-save").addEventListener("click", saveRuntime);
 document.getElementById("rt-btn-reset").addEventListener("click", () => rtState.last && renderRuntime(rtState.last));
 document.getElementById("rt-btn-refresh").addEventListener("click", loadRuntime);
@@ -1037,8 +1402,15 @@ document.getElementById("dry-btn-clear").addEventListener("click", clearDryRun);
 document.getElementById("project-root-apply").addEventListener("click", applyProjectRootOverride);
 document.getElementById("project-root-clear").addEventListener("click", clearProjectRootOverride);
 document.getElementById("project-root-recent").addEventListener("change", useRecentProjectRoot);
+document.getElementById("agent-context-clear").addEventListener("click", clearAgentContext);
+document.getElementById("agent-summary-run").addEventListener("click", summarizeAgentContext);
+document.getElementById("agent-summary-refresh").addEventListener("click", loadAgentContext);
+document.getElementById("hooks-btn-refresh").addEventListener("click", loadAgentHooks);
+document.getElementById("hooks-capture-messages").addEventListener("change", loadAgentHooks);
 document.getElementById("ready-btn-refresh").addEventListener("click", loadReadiness);
 renderRecentProjectRoots();
 loadDetectedProjectContext();
+loadAgentContext();
 loadStarterTemplates();
 loadScope("global");
+window.setInterval(loadAgentContext, 10000);

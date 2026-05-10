@@ -96,11 +96,19 @@ class TestSettingsPutPersistsDictation:
     ) -> None:
         payload = {
             "dictation": {
-                "pipeline": {"enabled": True, "max_total_latency_ms": 800},
+                "pipeline": {
+                    "enabled": True,
+                    "stages": ["intent-router", "project-rewriter", "kb-enricher"],
+                    "max_total_latency_ms": 800,
+                },
                 "runtime": {
                     "backend": "mlx",
                     "mlx_model": "~/Models/mlx/Qwen3-8B-MLX-4bit",
                     "llama_cpp_model_path": "~/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf",
+                    "openai_compatible_model": "qwen-local",
+                    "openai_compatible_base_url": "http://127.0.0.1:8000/v1",
+                    "openai_compatible_api_key_env": "LOCAL_LLM_KEY",
+                    "openai_compatible_timeout_seconds": 4.5,
                     "warm_on_start": True,
                 },
             }
@@ -111,15 +119,25 @@ class TestSettingsPutPersistsDictation:
         assert data["success"] is True
         out = data["settings"]["dictation"]
         assert out["pipeline"]["enabled"] is True
+        assert out["pipeline"]["stages"] == ["intent-router", "project-rewriter", "kb-enricher"]
         assert out["pipeline"]["max_total_latency_ms"] == 800
         assert out["runtime"]["backend"] == "mlx"
+        assert out["runtime"]["openai_compatible_model"] == "qwen-local"
+        assert out["runtime"]["openai_compatible_base_url"] == "http://127.0.0.1:8000/v1"
+        assert out["runtime"]["openai_compatible_api_key_env"] == "LOCAL_LLM_KEY"
+        assert out["runtime"]["openai_compatible_timeout_seconds"] == 4.5
         assert out["runtime"]["warm_on_start"] is True
         on_settings_applied.assert_called_once()
 
         persisted = Config.load(path=settings_path)
         assert persisted.dictation.pipeline.enabled is True
+        assert persisted.dictation.pipeline.stages == ["intent-router", "project-rewriter", "kb-enricher"]
         assert persisted.dictation.pipeline.max_total_latency_ms == 800
         assert persisted.dictation.runtime.backend == "mlx"
+        assert persisted.dictation.runtime.openai_compatible_model == "qwen-local"
+        assert persisted.dictation.runtime.openai_compatible_base_url == "http://127.0.0.1:8000/v1"
+        assert persisted.dictation.runtime.openai_compatible_api_key_env == "LOCAL_LLM_KEY"
+        assert persisted.dictation.runtime.openai_compatible_timeout_seconds == 4.5
         assert persisted.dictation.runtime.warm_on_start is True
 
     def test_put_omitting_dictation_preserves_existing(

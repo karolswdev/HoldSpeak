@@ -18,9 +18,9 @@ import Pill from "../../components/Pill.astro";
       <p class="kicker">Dictation</p>
       <h1>Dictation runtime setup</h1>
       <p class="lede">
-        The dictation pipeline uses a local LLM runtime for block
-        classification and Project KB enrichment. Pick one backend
-        and place the matching model at the configured path.
+        The dictation pipeline uses an LLM runtime for block
+        classification and Project KB enrichment. Pick a local model
+        backend or point HoldSpeak at an OpenAI-compatible endpoint.
       </p>
     </header>
 
@@ -37,6 +37,30 @@ huggingface-cli download mlx-community/Qwen3-8B-MLX-4bit --local-dir ~/Models/ml
       </CommandPreview>
       <p class="default-path">
         Default model path: <code>~/Models/mlx/Qwen3-8B-MLX-4bit</code>
+      </p>
+    </section>
+
+    <section class="panel" id="openai-compatible">
+      <header class="panel-head">
+        <h2>OpenAI-compatible endpoint</h2>
+        <Pill tone="info">local server or hosted API</Pill>
+      </header>
+      <p>
+        Use <code>openai_compatible</code> for LM Studio, Ollama's
+        OpenAI bridge, vLLM, llama.cpp server, LiteLLM, or hosted
+        OpenAI-compatible APIs.
+      </p>
+      <CommandPreview command={`uv pip install -e '.[dictation-openai]'\n\n# Example config slice:\n# \"dictation\": {\n#   \"pipeline\": { \"enabled\": true },\n#   \"runtime\": {\n#     \"backend\": \"openai_compatible\",\n#     \"openai_compatible_base_url\": \"http://127.0.0.1:8000/v1\",\n#     \"openai_compatible_model\": \"qwen2.5-7b-instruct\",\n#     \"openai_compatible_api_key_env\": \"OPENAI_API_KEY\",\n#     \"openai_compatible_timeout_seconds\": 8\n#   }\n# }`}>
+        <Fragment slot="caption">Install + configure endpoint.</Fragment>
+      </CommandPreview>
+      <p class="default-path">
+        No GGUF/MLX file is required in HoldSpeak; the endpoint owns
+        model loading and serving.
+      </p>
+      <p class="note">
+        Set <code>openai_compatible_timeout_seconds</code> to cap rewrite latency.
+        If the endpoint times out or returns malformed output, HoldSpeak preserves
+        the original transcript and reports the failure in dry-run/readiness output.
       </p>
     </section>
 

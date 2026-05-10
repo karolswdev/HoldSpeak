@@ -12,6 +12,7 @@ Skip in CI with: pytest -m "not metal"
 from __future__ import annotations
 
 import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -23,8 +24,9 @@ import pytest
 # Skip entire module if not on macOS
 pytestmark = [
     pytest.mark.metal,
+    pytest.mark.requires_macos,
     pytest.mark.skipif(
-        not Path("/usr/bin/say").exists(),
+        sys.platform != "darwin" or not Path("/usr/bin/say").exists(),
         reason="Metal tests require macOS",
     ),
 ]
