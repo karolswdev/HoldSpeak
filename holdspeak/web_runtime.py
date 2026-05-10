@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import signal
 import threading
+import time
 import webbrowser
 from datetime import datetime
 from typing import Callable, Optional
@@ -15,6 +16,7 @@ from .audio import AudioRecorder
 from .config import Config
 from .audio import AudioSource
 from .device_audio import DeviceRegistry, ensure_device_psk
+from .device_recording_tick import RecordingTicker
 from .device_status import DeviceStatusEmitter
 from .hotkey import HotkeyListener
 from .voice_typing import VoiceTypingSession
@@ -75,6 +77,13 @@ def run_web_runtime(
     meeting_session: Optional[MeetingSession] = None
     device_registry = DeviceRegistry()
     device_status = DeviceStatusEmitter(label_lookup=device_registry)
+    # HS-17-05: periodic Recording-tick emitter for attached devices.
+    # Started in `_start_meeting`, stopped in `_stop_active_meeting`.
+    recording_ticker = RecordingTicker(
+        status_sender=lambda ids, text: device_status.broadcast(
+            ids, text, ttl_ms=0
+        ),
+    )
     voice_session = VoiceTypingSession()
     transcription_lock = threading.Lock()
     text_processor = TextProcessor()
@@ -394,10 +403,19 @@ def run_web_runtime(
             meeting_session = session
 
         if attached_ids:
+            attached_for_status = [d for d in attached_ids if d]
             device_status.broadcast(
-                [d for d in attached_ids if d],
+                attached_for_status,
                 "Recording 00:00",
                 ttl_ms=0,
+            )
+            # HS-17-05: schedule the periodic Recording-tick. The 0:00
+            # paint above is done synchronously; subsequent ticks fire
+            # every 5 s on a daemon thread that exits cleanly on
+            # `_stop_active_meeting`.
+            recording_ticker.start(
+                started_at_monotonic=time.monotonic(),
+                device_ids=attached_for_status,
             )
         with state_lock:
             pending_intent_windows.clear()
@@ -422,6 +440,10 @@ def run_web_runtime(
         # stop and persist. Captured *before* ``session.stop`` flips
         # the state and clears the device list.
         attached_ids = [d.id for d in session.state.devices] if session.state else []
+        # HS-17-05: stop the Recording-tick *before* the
+        # `Saving meeting...` broadcast so a stale tick can't land
+        # after the user has been told the meeting is saving.
+        recording_ticker.stop()
         if attached_ids:
             device_status.broadcast(attached_ids, "Saving meeting...", ttl_ms=0)
 

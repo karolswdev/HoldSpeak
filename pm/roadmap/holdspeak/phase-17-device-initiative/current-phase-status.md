@@ -45,6 +45,8 @@ This phase is the **sibling of HS-14** (audio + status substrate) rather than a 
 | HS-17-02 | `query` frame + `last_segment` case: schema, handler, lookup logic | backlog | [story-02-query-last-segment.md](./story-02-query-last-segment.md) | — |
 | HS-17-03 | Web UI: device-health rendering in meeting view + device list | backlog | [story-03-device-health-ui.md](./story-03-device-health-ui.md) | — |
 | HS-17-04 | DoD: protocol-doc consolidation + final-summary + phase exit | backlog | [story-04-dod.md](./story-04-dod.md) | — |
+| HS-17-05 | Periodic Recording-tick status emitter (HS-14-07 spec drift, surfaced live 2026-05-10) | done | [story-05-recording-tick-emitter.md](./story-05-recording-tick-emitter.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-17-06 | Meeting title in device status (alternates with Recording-tick payload) | backlog | [story-06-meeting-title-in-status.md](./story-06-meeting-title-in-status.md) | — |
 
 (Status values: `backlog`, `ready`, `in-progress`, `blocked`, `done`, `cancelled`.)
 

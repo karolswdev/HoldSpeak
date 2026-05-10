@@ -241,12 +241,17 @@ typing failed (e.g., Wayland blocked synthetic typing).
 | trigger | text | ttl_ms |
 |---|---|---|
 | Meeting starts with this device attached | `Recording 00:00` | 0 |
+| **Periodic tick during meeting (HS-17-05, every 5 s)** | `Recording MM:SS` | 0 |
 | Bookmark added (web button or `long_press` event) | `Bookmark @ <seconds>s` | 2500 |
 | Meeting stop initiated | `Saving meeting...` | 0 |
 
-Per-minute "Recording MM:SS" ticks are not emitted in phase
-14; bookmark and save events keep the device LCD fresh
-during a meeting.
+The periodic Recording-tick (HS-17-05, 2026-05-10) fires every
+5 seconds while a meeting has at least one attached device. Format
+`Recording MM:SS`, sticky (`ttl_ms: 0`) so it overwrites the previous
+sticky activity until the next tick. The ticker stops cleanly on
+meeting stop (the `Saving meeting...` frame is the last status seen
+by the device). Cap: MM clamps to `99` at 100+ minute meetings —
+cosmetic concession to LCD width.
 
 ### 6.3 Errors during a session
 
