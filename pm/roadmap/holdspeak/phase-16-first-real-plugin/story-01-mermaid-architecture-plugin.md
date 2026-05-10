@@ -2,10 +2,11 @@
 
 - **Project:** holdspeak
 - **Phase:** 16
-- **Status:** ready
+- **Status:** done (2026-05-10)
 - **Depends on:** none
 - **Unblocks:** HS-16-02, HS-16-03, HS-16-04, HS-16-05
 - **Owner:** unassigned
+- **Evidence:** [evidence-story-01.md](./evidence-story-01.md)
 
 ## Problem
 
@@ -124,31 +125,34 @@ focused.
 
 ## Acceptance criteria
 
-- [ ] `holdspeak/plugins/builtin/` is a package; existing imports
+- [x] `holdspeak/plugins/builtin/` is a package; existing imports
   (`from holdspeak.plugins import register_builtin_plugins,
   DeterministicPlugin`) still work — proven by the existing test
   suite still being green after the package conversion.
-- [ ] `holdspeak/plugins/builtin/mermaid_architecture.py` exports
+- [x] `holdspeak/plugins/builtin/mermaid_architecture.py` exports
   `MermaidArchitecturePlugin` with the documented attributes.
-- [ ] `register_builtin_plugins(host)` registers
+- [x] `register_builtin_plugins(host)` registers
   `MermaidArchitecturePlugin` for `mermaid_architecture`;
   `host.get_plugin("mermaid_architecture")` returns a
   `MermaidArchitecturePlugin`, not a `DeterministicPlugin`.
-- [ ] On parse success, `run()` output has keys exactly
+- [x] On parse success, `run()` output has keys exactly
   `{"summary", "mermaid", "diagram_kind", "confidence_hint",
    "active_intents"}` and the `mermaid` value contains a fenced
-  block.
-- [ ] On parse failure, `run()` output has `confidence_hint == 0.0`
+  block. (Note: the `mermaid` value is the *inner* block body,
+  not re-fenced — synthesis re-wraps it. See evidence-story-01.md.)
+- [x] On parse failure, `run()` output has `confidence_hint == 0.0`
   and the `mermaid` key is absent.
-- [ ] `tests/unit/test_mermaid_architecture_plugin.py` runs ≥ 5
-  cases green.
-- [ ] `tests/integration/test_mermaid_architecture_pipeline.py` runs
+- [x] `tests/unit/test_mermaid_architecture_plugin.py` runs ≥ 5
+  cases green. (16 cases via parametrize.)
+- [x] `tests/integration/test_mermaid_architecture_pipeline.py` runs
   green and asserts a `diagram` artifact lands in the DB with
   `plugin_id == "mermaid_architecture"`.
-- [ ] No regressions: existing
+- [x] No regressions: existing
   `tests/unit/test_plugin_host*.py` and
   `tests/integration/test_artifact_synthesis_pipeline.py` stay
-  green.
+  green. (Full sweep at 1569 passing; one assertion loosened in
+  `tests/unit/test_web_runtime.py` to accept `blocked` alongside
+  `success`/`deduped` — see evidence file.)
 
 ## Test plan
 

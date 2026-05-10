@@ -1,11 +1,23 @@
-"""Deterministic built-in MIR plugins used by the runtime host."""
+"""Built-in MIR plugins shipped with the runtime host.
+
+The package keeps the deterministic-stub `DeterministicPlugin` and the
+generic `register_builtin_plugins` registrar that existed when this was
+a single module, alongside real plugin implementations (one per
+submodule). Phase 16 ships `mermaid_architecture` as the first real
+LLM-backed synthesizer; the remaining plugin IDs continue to register
+as `DeterministicPlugin` stubs until their own stories land.
+"""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
 
-from .host import PluginHost
+from ..host import PluginHost
+from .mermaid_architecture import (
+    MermaidArchitecturePlugin,
+    _extract_mermaid_block,
+)
 
 
 def _snippet(text: str, *, limit: int = 140) -> str:
@@ -60,10 +72,26 @@ _BUILTIN_PLUGIN_DEFS: tuple[tuple[str, str], ...] = (
 
 
 def register_builtin_plugins(host: PluginHost) -> list[str]:
-    """Register deterministic built-in plugins onto the provided host."""
+    """Register built-in plugins onto the provided host.
+
+    `mermaid_architecture` registers as the real
+    `MermaidArchitecturePlugin` (phase 16); every other entry registers
+    as a `DeterministicPlugin` stub until its dedicated phase ships.
+    """
     registered: list[str] = []
     for plugin_id, kind in _BUILTIN_PLUGIN_DEFS:
-        host.register(DeterministicPlugin(id=plugin_id, kind=kind))
+        if plugin_id == "mermaid_architecture":
+            host.register(MermaidArchitecturePlugin())
+        else:
+            host.register(DeterministicPlugin(id=plugin_id, kind=kind))
         registered.append(plugin_id)
     return registered
 
+
+__all__ = [
+    "DeterministicPlugin",
+    "MermaidArchitecturePlugin",
+    "_BUILTIN_PLUGIN_DEFS",
+    "_extract_mermaid_block",
+    "register_builtin_plugins",
+]

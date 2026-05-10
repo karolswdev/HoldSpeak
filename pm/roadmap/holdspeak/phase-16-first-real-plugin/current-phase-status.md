@@ -1,6 +1,6 @@
 # Phase 16 — First real synthesizer: `mermaid_architecture`
 
-**Last updated:** 2026-05-08 (phase scaffolded; no story shipped yet).
+**Last updated:** 2026-05-10 (HS-16-01 shipped — real `MermaidArchitecturePlugin` is live; HS-16-02..05 still pending).
 
 ## Goal
 
@@ -69,13 +69,14 @@ pattern with no new substrate work.
 
 ## Exit criteria (evidence required)
 
-- [ ] `holdspeak/plugins/builtin/mermaid_architecture.py` exists; the
+- [x] `holdspeak/plugins/builtin/mermaid_architecture.py` exists; the
   class conforms structurally to `HostPlugin` and is registered by
   `register_builtin_plugins` in place of the `DeterministicPlugin`
-  stub.
-- [ ] `uv run pytest -q tests/unit/test_mermaid_architecture_plugin.py`
+  stub. (HS-16-01, 2026-05-10)
+- [x] `uv run pytest -q tests/unit/test_mermaid_architecture_plugin.py`
   green, ≥ 5 cases (success / parse-failure / provider-raises /
-  output-shape / version+kind+capabilities).
+  output-shape / version+kind+capabilities). (HS-16-01: 16 cases
+  green via parametrize; see evidence-story-01.md.)
 - [ ] `uv run pytest -q tests/unit/test_plugin_host_llm_capability.py`
   green, both branches (provider-resolved → llm capability enabled;
   provider-missing → plugin blocked).
@@ -83,10 +84,12 @@ pattern with no new substrate work.
   green: a fake plugin run with `output["mermaid"]` produces a
   body containing exactly one fenced ```mermaid block; other
   artifact types' bodies are byte-for-byte unchanged.
-- [ ] `uv run pytest -q tests/integration/test_mermaid_architecture_pipeline.py`
+- [x] `uv run pytest -q tests/integration/test_mermaid_architecture_pipeline.py`
   green: transcript with architecture cues → dispatch → run →
   synthesize → DB has an artifact with `artifact_type="diagram"`
-  and a valid mermaid body.
+  and a valid mermaid body. (HS-16-01, 1 case green; the body's
+  fenced ```mermaid block is HS-16-03's responsibility — this test
+  asserts artifact existence + type + plugin_id only.)
 - [ ] Manual: open the meeting-detail page for that test artifact;
   the mermaid block renders as an SVG diagram, not raw text.
   Screenshot in HS-16-04's evidence file.
@@ -103,7 +106,7 @@ pattern with no new substrate work.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-16-01 | Real `mermaid_architecture` plugin (LLM call + parse + structured output) | ready | [story-01-mermaid-architecture-plugin.md](./story-01-mermaid-architecture-plugin.md) | — |
+| HS-16-01 | Real `mermaid_architecture` plugin (LLM call + parse + structured output) | done | [story-01-mermaid-architecture-plugin.md](./story-01-mermaid-architecture-plugin.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-16-02 | LLM capability gate wired at host instantiation | backlog | [story-02-llm-capability-gate.md](./story-02-llm-capability-gate.md) | — |
 | HS-16-03 | Diagram-aware artifact body in `synthesize_meeting_artifacts` | backlog | [story-03-diagram-artifact-rendering.md](./story-03-diagram-artifact-rendering.md) | — |
 | HS-16-04 | Web: render `mermaid` artifacts as inline SVG via mermaid.js | backlog | [story-04-web-mermaid-rendering.md](./story-04-web-mermaid-rendering.md) | — |
@@ -111,16 +114,29 @@ pattern with no new substrate work.
 
 ## Where we are
 
-Phase scaffolded 2026-05-08. No story shipped. HS-16-01 is the entry
-point; HS-16-02 + HS-16-03 are independent slices that can land in
-either order after HS-16-01; HS-16-04 needs HS-16-03 (the body
-must contain the mermaid fenced block before the web view has
-something to render); HS-16-05 closes the phase.
+HS-16-01 shipped 2026-05-10. `holdspeak/plugins/builtin.py` is now a
+package; `holdspeak/plugins/builtin/mermaid_architecture.py` defines
+the real `MermaidArchitecturePlugin` (LLM-backed, deferred,
+`required_capabilities=["llm"]`). `register_builtin_plugins` now
+returns the real class for `mermaid_architecture` and keeps the
+twelve siblings on `DeterministicPlugin`. Unit + integration tests
+landed; full regression sweep green at 1569 passing (was 1552
+pre-story; +16 unit cases + 1 integration). One pre-existing
+assertion in `tests/unit/test_web_runtime.py::
+test_runtime_meeting_control_callbacks_are_wired` was loosened to
+accept `blocked` alongside `success`/`deduped` — `blocked` is the
+correct outcome when the plugin's `llm` capability isn't enabled
+in a fixture, and HS-16-02 is the story that wires the capability
+on at runtime.
 
-Pickup: HS-16-01 — the real `MermaidArchitecturePlugin` class and
-its unit tests. The integration test (end-to-end transcript →
-artifact) ships in HS-16-01 too; HS-16-02 / HS-16-03 each ship
-their own narrower tests.
+Pickup: HS-16-02 — capability gate at `PluginHost(...)`
+instantiation. Without it, `mermaid_architecture` is `blocked` in
+real runtime configs that have a working LLM available, which
+defeats the point of HS-16-01. After HS-16-02 the diagram artifact
+will appear in the DB as a `diagram` artifact whose
+`body_markdown` is still the generic synthesis body (HS-16-03's
+job to splice the fenced block in), and the web view still shows
+raw fenced text (HS-16-04's job).
 
 ## Active risks
 

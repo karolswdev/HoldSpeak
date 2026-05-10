@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-08 (phase 16 scaffolded — first real synthesizer `mermaid_architecture`; phase 15 cross-network still the next planned phase).
+**Last updated:** 2026-05-10 (phase 16 HS-16-01 shipped — `MermaidArchitecturePlugin` is the first real, LLM-backed synthesizer on the plugin substrate; HS-16-02..05 still pending; phase 15 cross-network still the next planned phase).
 **Current phase:** [phase-15-out-and-about](./phase-15-out-and-about/) — cross-network reach for AIPI-Lite (Tailscale / Cloudflare Tunnel / WireGuard candidate evaluation, TLS, per-device PSKs, paired with the AIPI-Lite firmware's portable WiFi work).
 **Status:** not-started.
 
