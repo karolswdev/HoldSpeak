@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 17
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-14-07 (device-status substrate); HS-17-05 (Recording-tick + status-emitter pattern)
 - **Unblocks:** —
 - **Owner:** unassigned
