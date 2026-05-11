@@ -7,9 +7,88 @@ import pytest
 from holdspeak.device_status import (
     DeviceStatusEmitter,
     LCD_TEXT_MAX_CHARS,
+    is_likely_hallucination,
+    is_pure_silence,
     push_segment_to_devices,
     truncate_for_lcd,
 )
+
+
+# ---------- is_likely_hallucination (HS-17-13) ----------
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        # Empty / whitespace.
+        "",
+        "   ",
+        "\n\t",
+        # All-punctuation (Whisper's silence outputs).
+        "...",
+        "....",
+        "…",
+        "….....",
+        ",,,",
+        "—",
+        ". . .",
+        # Single-word artifacts (case-insensitive, trailing-punct stripped).
+        "you",
+        "You",
+        "you.",
+        "You!",
+        "uh",
+        "um",
+        "the",
+        "The.",
+        # Repeated same word.
+        "you you",
+        "you you you",
+        "the the the",
+        "You you you",
+        # Famous Whisper YouTube hallucinations.
+        "Thanks for watching",
+        "thanks for watching",
+        "Thanks for watching!",
+        "Subscribe to my channel",
+        "Please subscribe",
+        "Like and subscribe!",
+    ],
+)
+def test_is_likely_hallucination_filters_artifacts(text):
+    assert is_likely_hallucination(text) is True, f"failed to filter {text!r}"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        # Real content — even short common words shouldn't be filtered.
+        "Hello",
+        "Hello everyone",
+        "Yeah",
+        "Yes",
+        "No",
+        "OK",
+        "Okay",
+        "Thanks",
+        "Thank you",  # short but real
+        "Bye",
+        "Goodbye",
+        # Long sentences that happen to start with filterable words.
+        "You are right about that",
+        "The meeting starts at noon",
+        "Um, can we discuss the timeline?",
+        # Real meeting phrases.
+        "Are we opening up here?",
+        "What's going on?",
+        "Let me know when you're ready.",
+        # Other words containing "you" as substring.
+        "young",
+        "yours",
+    ],
+)
+def test_is_likely_hallucination_keeps_real_content(text):
+    assert is_likely_hallucination(text) is False, f"falsely filtered {text!r}"
 
 
 # ---------- truncate_for_lcd ----------
@@ -37,9 +116,11 @@ def test_truncate_for_lcd_handles_none():
     assert truncate_for_lcd(None) == ""
 
 
-def test_truncate_for_lcd_default_max_is_30():
-    assert LCD_TEXT_MAX_CHARS == 30
-    assert truncate_for_lcd("a" * 31) == "a" * 29 + "…"
+def test_truncate_for_lcd_default_is_lcd_max():
+    # HS-17-15 / AIPI-4-12: bumped to 150 once the middle widget grew
+    # multi-line.
+    assert LCD_TEXT_MAX_CHARS == 150
+    assert truncate_for_lcd("a" * (LCD_TEXT_MAX_CHARS + 1)) == "a" * (LCD_TEXT_MAX_CHARS - 1) + "…"
 
 
 # ---------- push_segment_to_devices ----------
@@ -77,7 +158,9 @@ def test_push_segment_pushes_speaker_text_with_default_ttl():
 
 def test_push_segment_truncates_long_text():
     em = _RecordingEmitter()
-    seg = _Segment(speaker="Karol", text="x" * 100)
+    # HS-17-15: LCD_TEXT_MAX_CHARS = 150 now; use a payload that
+    # clearly overflows even with the larger ceiling.
+    seg = _Segment(speaker="Karol", text="x" * (LCD_TEXT_MAX_CHARS * 2))
 
     push_segment_to_devices(em, ["aipi-1"], seg)
 
@@ -97,16 +180,117 @@ def test_push_segment_handles_missing_speaker():
     assert payload == "?: hello"
 
 
-def test_push_segment_handles_empty_text():
-    """Empty transcript text is a no-op-ish line; still emit so users
-    see *something* happened."""
+def test_push_segment_filters_empty_text():
+    """HS-17-13: empty transcript text is filtered out (hallucination
+    bucket). HS-17-14: pure silence (empty, whitespace, only-punct)
+    skips entirely — no LCD ack. Durable transcript still gets it."""
     em = _RecordingEmitter()
     seg = _Segment(speaker="Karol", text="")
+
+    count = push_segment_to_devices(em, ["aipi-1"], seg)
+
+    assert count == 0
+    assert em.calls == []
+
+
+# ---------- is_pure_silence (HS-17-14) ----------
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "",
+        "   ",
+        "\n\t",
+        "...",
+        "….....",
+        ",,,",
+        "—",
+        ". . .",
+    ],
+)
+def test_is_pure_silence_true_for_empty_and_punct(text):
+    assert is_pure_silence(text) is True, f"failed for {text!r}"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "you",
+        "You.",
+        "you you you",
+        "Thanks for watching",
+        "Hello",
+        "Real meeting content",
+    ],
+)
+def test_is_pure_silence_false_for_word_content(text):
+    assert is_pure_silence(text) is False, f"falsely silent for {text!r}"
+
+
+# ---------- push_segment_to_devices: HS-17-14 ack behavior ----------
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "you",
+        "You",
+        "You.",
+        "the",
+        "you you you",
+        "Thanks for watching",
+        "Subscribe to my channel",
+    ],
+)
+def test_push_segment_acks_word_level_hallucinations(text):
+    """HS-17-14: word-level hallucinations (Whisper heard *something*
+    but produced unparseable artifacts) push a `{speaker}: …` marker
+    so the device's middle slot updates and the user knows they were
+    heard. Without the ack, persist-until-replaced leaves stale text
+    on screen."""
+    em = _RecordingEmitter()
+    seg = _Segment(speaker="Karol", text=text)
+
+    count = push_segment_to_devices(em, ["aipi-1"], seg)
+
+    assert count == 1
+    [(ids, payload, ttl)] = em.calls
+    assert ids == ["aipi-1"]
+    assert payload == "Karol: …"
+    assert ttl == 3000
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "",
+        "   ",
+        "...",
+        "….....",
+        ",,,",
+    ],
+)
+def test_push_segment_skips_pure_silence(text):
+    """HS-17-14: empty / whitespace / only-punctuation segments do
+    NOT push an ack — there was no audio worth acknowledging."""
+    em = _RecordingEmitter()
+    seg = _Segment(speaker="Karol", text=text)
+
+    count = push_segment_to_devices(em, ["aipi-1"], seg)
+
+    assert count == 0
+    assert em.calls == []
+
+
+def test_push_segment_ack_uses_unknown_speaker_when_missing():
+    em = _RecordingEmitter()
+    seg = _Segment(speaker=None, text="you you you")
 
     push_segment_to_devices(em, ["aipi-1"], seg)
 
     [(_, payload, _)] = em.calls
-    assert payload == "Karol: "
+    assert payload == "?: …"
 
 
 def test_push_segment_no_attached_devices_noop():

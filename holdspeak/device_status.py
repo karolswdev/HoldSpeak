@@ -22,6 +22,7 @@ label (resolved via the supplied ``DeviceRegistry``).
 
 from __future__ import annotations
 
+import re
 import threading
 from typing import Callable, Iterable, Optional, Protocol
 
@@ -123,9 +124,115 @@ class DeviceStatusEmitter:
         return text.replace("{label}", label)
 
 
-# HS-17-08: width budget for status text on the AIPI-Lite LCD's
-# bottom row. Empirical (Montserrat 10 + the device's display).
-LCD_TEXT_MAX_CHARS = 30
+# HS-17-08: width budget for status text on the AIPI-Lite LCD.
+# HS-17-15 / AIPI-4-12: bumped from 30 to 150 once the device-side
+# middle widget grew to multi-line word-wrap (~7 lines × ~22 chars
+# of Montserrat 10). The bottom widget uses SCROLL_CIRCULAR, so
+# long text marquee-scrolls there instead of getting clipped.
+# Short payloads still render single-line on both widgets — this
+# is a ceiling, not a target.
+LCD_TEXT_MAX_CHARS = 150
+
+
+# HS-17-13: known Whisper hallucination patterns. Filtered out of the
+# device LCD pushback path so noise doesn't compete with real content.
+# Whisper produces these from silence/noise, especially with auto-
+# language detection on short clips. The durable meeting transcript
+# stores them unchanged — this list only applies to LCD pushback.
+
+# Single words (case-insensitive after strip). Deliberately narrow:
+# real meeting words like "hello", "yeah", "yes", "no", "ok", "thanks"
+# are KEPT — false-positive cost is too high. These are only the
+# clearest Whisper artifacts.
+_HALLUCINATION_WORDS: frozenset[str] = frozenset(
+    {
+        "you",
+        "uh",
+        "um",
+        "the",
+    }
+)
+
+# Short phrases (lowercase, trailing punctuation stripped). The
+# classic Whisper YouTube-training-data hallucinations.
+_HALLUCINATION_PHRASES: frozenset[str] = frozenset(
+    {
+        "thanks for watching",
+        "subscribe to my channel",
+        "please subscribe",
+        "like and subscribe",
+        "thanks for watching subscribe",
+    }
+)
+
+# Matches text that's nothing but whitespace + punctuation (any common
+# Western punctuation, dots, ellipsis chars, dashes, etc.). Whisper
+# outputs literal `...` strings from silence; this catches those.
+_ONLY_PUNCT_RE = re.compile(r"^[\s.,!?…\-—_'\"`/\\:;]*$")
+
+
+def is_pure_silence(text: str) -> bool:
+    """Return True for text that represents no captured audio content.
+
+    HS-17-14: distinguishes between *no audio* (empty / whitespace /
+    only-punctuation) and *audio that produced unparseable words*
+    (single-word artifacts, repeated patterns). Pure-silence
+    segments get no LCD ack; word-level hallucinations get a
+    `{speaker}: …` marker so the user knows the system did hear
+    them but couldn't transcribe anything useful.
+    """
+    if not text:
+        return True
+    stripped = text.strip()
+    if not stripped:
+        return True
+    if _ONLY_PUNCT_RE.match(stripped):
+        return True
+    return False
+
+
+def is_likely_hallucination(text: str) -> bool:
+    """Return True for transcripts that are likely Whisper hallucinations.
+
+    HS-17-13: applied to LCD pushback in `push_segment_to_devices`;
+    durable meeting transcript is unaffected.
+
+    Filters:
+    - Empty / whitespace-only.
+    - All-punctuation (e.g., `...`, `…`).
+    - Single-word artifacts (`you`, `yeah`, `thanks`, etc.) — case-
+      insensitive, trailing punctuation stripped.
+    - Repeated single-word patterns (`you you you`, `the the the`).
+    - Known short-phrase hallucinations (`thank you`, `thanks for watching`,
+      `subscribe to my channel`, etc.).
+
+    Returns False for real meeting content — anything longer or richer
+    than the patterns above. The filter errs on the side of letting
+    content through.
+    """
+    if not text:
+        return True
+    stripped = text.strip()
+    if not stripped:
+        return True
+    if _ONLY_PUNCT_RE.match(stripped):
+        return True
+    # Normalise: lowercase, drop trailing punctuation that Whisper
+    # tends to add for sentence-end politeness.
+    normalised = stripped.lower().rstrip(".,!?…")
+    if not normalised:
+        return True
+    # Single-word artifacts.
+    words = normalised.split()
+    if len(words) == 1 and words[0] in _HALLUCINATION_WORDS:
+        return True
+    # Repeated single-word: "you you you", "the the".
+    if len(words) >= 2 and len(set(words)) == 1:
+        return True
+    # Short-phrase hallucinations.
+    if normalised in _HALLUCINATION_PHRASES:
+        return True
+    return False
 
 
 def truncate_for_lcd(text: str, max_len: int = LCD_TEXT_MAX_CHARS) -> str:
@@ -166,8 +273,27 @@ def push_segment_to_devices(
     ids = [d for d in attached_ids if d]
     if not ids:
         return 0
-    speaker = getattr(segment, "speaker", None) or "?"
     text = getattr(segment, "text", "") or ""
+    speaker = getattr(segment, "speaker", None) or "?"
+    # HS-17-13: filter known Whisper hallucinations out of LCD pushback.
+    # HS-17-14: split filtered cases — pure silence skips entirely;
+    # word-level hallucinations still push a `{speaker}: …` marker so
+    # the device's middle slot updates and the user gets feedback that
+    # audio was heard (just unparseable). The durable transcript is
+    # unaffected either way.
+    if is_likely_hallucination(text):
+        if is_pure_silence(text):
+            log.debug(
+                "device_status_segment_filtered",
+                extra={"speaker": speaker, "text_preview": text[:60]},
+            )
+            return 0
+        log.debug(
+            "device_status_segment_filtered_acked",
+            extra={"speaker": speaker, "text_preview": text[:60]},
+        )
+        payload = truncate_for_lcd(f"{speaker}: …")
+        return emitter.broadcast(ids, payload, ttl_ms=ttl_ms)
     payload = truncate_for_lcd(f"{speaker}: {text}")
     return emitter.broadcast(ids, payload, ttl_ms=ttl_ms)
 
@@ -178,4 +304,6 @@ __all__ = [
     "LCD_TEXT_MAX_CHARS",
     "truncate_for_lcd",
     "push_segment_to_devices",
+    "is_likely_hallucination",
+    "is_pure_silence",
 ]

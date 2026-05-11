@@ -1208,7 +1208,10 @@ def run_web_runtime(
         if not accepted:
             return False
         _set_voice_state("recording")
-        device_status.send(device_id, "Listening...")
+        # AIPI-4-13: TX state lives in the device's firmware-side
+        # tx_label glyph (top-right, ↑ during right-button hold).
+        # No "Listening..." pushback — would clobber the bottom
+        # widget's persistent meeting/idle text.
         return True
 
     def _on_device_voice_stop(
@@ -1229,10 +1232,13 @@ def run_web_runtime(
             _set_voice_state("idle")
             return None
 
-        device_status.send(device_id, "Thinking...")
+        # AIPI-4-13: no "Thinking..." pushback to bottom — the absent
+        # tx_label arrow after release already signals "we're done
+        # capturing, processing now". Transcript snippet lands in
+        # the middle slot below.
 
         def _device_transcript_complete(text: str) -> None:
-            snippet = (text or "").strip()[:80]
+            snippet = (text or "").strip()[:150]
             device_status.send(device_id, snippet, ttl_ms=4000)
 
         _kick_off_transcribe(audio, on_complete=_device_transcript_complete)
@@ -1268,6 +1274,46 @@ def run_web_runtime(
             ttl_ms=2500,
         )
 
+    def _on_device_health(descriptor: object) -> None:
+        active = _active_meeting_session()
+        if active is None:
+            return
+        updater = getattr(active, "update_device_descriptor", None)
+        if callable(updater):
+            updater(descriptor)
+        if server is not None:
+            try:
+                from .meeting_session import _device_descriptor_to_dict
+
+                server.broadcast("device_health", _device_descriptor_to_dict(descriptor))
+            except Exception as exc:
+                log.debug(f"Failed to broadcast device health: {exc}")
+
+    def _on_device_query(
+        device_id: str,
+        name: str,
+        at: Optional[float],
+    ) -> Optional[dict[str, object]]:
+        if name != "last_segment":
+            log.info(
+                "device_query_ignored",
+                extra={"device_id": device_id, "query_name": name, "at": at},
+            )
+            return {"text": f"Unknown query: {name}"[:500], "ttl_ms": 3000}
+        active = _active_meeting_session()
+        if active is None or active.state is None:
+            return {"text": "No transcript yet", "ttl_ms": 5000}
+        for segment in reversed(active.state.segments):
+            if getattr(segment, "device_id", None) != device_id:
+                continue
+            speaker = getattr(segment, "speaker", None) or "?"
+            text = getattr(segment, "text", "") or ""
+            return {
+                "text": f"{speaker}: {text}"[:500],
+                "ttl_ms": 5000,
+            }
+        return {"text": "No transcript yet", "ttl_ms": 5000}
+
     try:
         server = MeetingWebServer(
             on_bookmark=_on_bookmark,
@@ -1294,6 +1340,8 @@ def run_web_runtime(
             on_device_voice_cancel=_on_device_voice_cancel,
             device_status_emitter=device_status,
             on_device_event=_on_device_event,
+            on_device_health=_on_device_health,
+            on_device_query=_on_device_query,
             host="127.0.0.1",
         )
         runtime_url = server.start()

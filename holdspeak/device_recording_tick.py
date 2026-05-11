@@ -55,7 +55,14 @@ class RecordingTicker:
     individual ticks are delayed.
     """
 
-    DEFAULT_TICK_INTERVAL_S = 5.0
+    # AIPI-4-11 lands a dedicated middle LCD zone so flashes no longer
+    # fight the Recording-tick for the bottom slot. Once flashes have
+    # their own home, the tick can run much faster without overwriting
+    # transient content. Bumped 5s → 1s on 2026-05-10 so the recording
+    # timer feels live ("Recording 02:34" → "Recording 02:35" each
+    # second). Cost is negligible: ~1 mA average from the extra
+    # status frames on top of the always-on WiFi baseline (~80 mA).
+    DEFAULT_TICK_INTERVAL_S = 1.0
 
     def __init__(
         self,
