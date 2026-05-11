@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+import threading
+
 import pytest
 
 from holdspeak.device_status import (
     DeviceStatusEmitter,
     LCD_TEXT_MAX_CHARS,
+    build_intel_pages,
     is_likely_hallucination,
     is_pure_silence,
+    push_intel_to_devices,
     push_segment_to_devices,
     truncate_for_lcd,
 )
@@ -352,3 +356,162 @@ def test_push_segment_works_with_real_emitter():
 
     assert count == 1
     assert received == [("Karol: real test", 3000)]
+
+
+# ---------- push_intel_to_devices (HS-17-07) ----------
+
+
+class _Intel:
+    """Minimal duck for IntelSnapshot / IntelResult."""
+
+    def __init__(
+        self,
+        *,
+        topics: list[str] | None = None,
+        action_items: list | None = None,
+        summary: str = "",
+    ) -> None:
+        self.topics = topics or []
+        self.action_items = action_items or []
+        self.summary = summary
+
+
+class _Action:
+    def __init__(self, *, task: str = "", owner: str = "") -> None:
+        self.task = task
+        self.owner = owner
+
+
+def test_build_intel_pages_full_payload():
+    """One page per non-empty section."""
+    intel = _Intel(
+        topics=["Auth refactor", "Q4 planning", "Latency"],
+        action_items=[
+            _Action(task="schema doc", owner="Karol"),
+            _Action(task="latency tests by Fri", owner="Tom"),
+        ],
+        summary="Team aligned on auth rewrite.",
+    )
+
+    pages = build_intel_pages(intel)
+
+    assert pages == [
+        "Topics:\n- Auth refactor\n- Q4 planning\n- Latency",
+        "Actions:\n- Karol: schema doc\n- Tom: latency tests by Fri",
+        "Summary:\nTeam aligned on auth rewrite.",
+    ]
+
+
+def test_build_intel_pages_skips_empty_sections():
+    intel = _Intel(topics=[], action_items=[], summary="Only a summary.")
+
+    pages = build_intel_pages(intel)
+
+    assert pages == ["Summary:\nOnly a summary."]
+
+
+def test_build_intel_pages_handles_dict_action_items():
+    """meeting_session.IntelSnapshot allows ActionItem or dict shape."""
+    intel = _Intel(
+        action_items=[
+            {"task": "ship feature", "owner": "Karol"},
+            {"task": "review PR"},
+        ],
+    )
+
+    pages = build_intel_pages(intel)
+
+    assert pages == [
+        "Actions:\n- Karol: ship feature\n- review PR",
+    ]
+
+
+def test_build_intel_pages_caps_topics_and_actions():
+    intel = _Intel(
+        topics=[f"t{i}" for i in range(10)],
+        action_items=[_Action(task=f"a{i}") for i in range(10)],
+    )
+
+    pages = build_intel_pages(intel)
+
+    topics_page, actions_page = pages
+    assert "- t0" in topics_page and "- t4" in topics_page
+    assert "- t5" not in topics_page
+    assert "- a0" in actions_page and "- a4" in actions_page
+    assert "- a5" not in actions_page
+
+
+def test_build_intel_pages_truncates_runaway_summary():
+    intel = _Intel(summary="x" * (LCD_TEXT_MAX_CHARS * 2))
+
+    pages = build_intel_pages(intel)
+
+    [page] = pages
+    assert len(page) == LCD_TEXT_MAX_CHARS
+    assert page.endswith("…")
+
+
+def test_build_intel_pages_returns_empty_when_nothing():
+    pages = build_intel_pages(_Intel())
+
+    assert pages == []
+
+
+def test_push_intel_to_devices_schedules_pages():
+    """push returns the page count; the emit happens on a daemon
+    thread. With page_dwell_s=0 the thread races through immediately
+    so we can join + assert."""
+    em = _RecordingEmitter()
+    intel = _Intel(
+        topics=["t1"],
+        action_items=[_Action(task="a1")],
+        summary="s",
+    )
+
+    count = push_intel_to_devices(em, ["aipi-1"], intel, page_dwell_s=0)
+
+    # Page count returned synchronously.
+    assert count == 3
+    # Let the daemon thread finish its broadcasts.
+    for thread in threading.enumerate():
+        if thread.name == "IntelLcdPager":
+            thread.join(timeout=1.0)
+    assert len(em.calls) == 3
+    pages = [payload for _, payload, _ in em.calls]
+    assert pages[0].startswith("Topics:")
+    assert pages[1].startswith("Actions:")
+    assert pages[2].startswith("Summary:")
+    # ttl tracks page_dwell_s — here 0.
+    assert all(ttl == 0 for _, _, ttl in em.calls)
+
+
+def test_push_intel_returns_zero_with_no_attached_devices():
+    em = _RecordingEmitter()
+    intel = _Intel(summary="X")
+
+    count = push_intel_to_devices(em, [], intel)
+
+    assert count == 0
+    assert em.calls == []
+
+
+def test_push_intel_returns_zero_when_nothing_to_show():
+    em = _RecordingEmitter()
+    intel = _Intel()
+
+    count = push_intel_to_devices(em, ["aipi-1"], intel, page_dwell_s=0)
+
+    assert count == 0
+    assert em.calls == []
+
+
+def test_push_intel_filters_falsy_ids():
+    em = _RecordingEmitter()
+    intel = _Intel(summary="hello")
+
+    push_intel_to_devices(em, ["aipi-1", None, "", "aipi-green"], intel, page_dwell_s=0)
+    for thread in threading.enumerate():
+        if thread.name == "IntelLcdPager":
+            thread.join(timeout=1.0)
+
+    assert all(ids == ["aipi-1", "aipi-green"] for ids, _, _ in em.calls)

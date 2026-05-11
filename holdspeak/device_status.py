@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import re
 import threading
+import time
 from typing import Callable, Iterable, Optional, Protocol
 
 from .logging_config import get_logger
@@ -298,12 +299,113 @@ def push_segment_to_devices(
     return emitter.broadcast(ids, payload, ttl_ms=ttl_ms)
 
 
+def build_intel_pages(intel) -> list[str]:
+    """Split a meeting-intel snapshot into LCD-sized pages.
+
+    HS-17-07: one page per non-empty section (Topics → Actions →
+    Summary). Each page is small enough to fit in AIPI-4-12's middle
+    widget without overflowing the bottom edge. Caller emits the
+    pages on a timer (see :func:`push_intel_to_devices`) so the user
+    can read each section before the next replaces it.
+
+    ``intel`` is duck-typed for ``topics``/``action_items``/``summary``
+    so both :class:`IntelSnapshot` (meeting_session) and
+    :class:`IntelResult` (intel.py) work without an import dance.
+    Each page is truncated to ``LCD_TEXT_MAX_CHARS`` so a runaway
+    summary can't bust the widget; the durable intel record is
+    unaffected.
+    """
+    pages: list[str] = []
+
+    topics = getattr(intel, "topics", None) or []
+    topic_strs = [str(t).strip() for t in topics[:5] if str(t).strip()]
+    if topic_strs:
+        pages.append(truncate_for_lcd("Topics:\n" + "\n".join(f"- {t}" for t in topic_strs)))
+
+    action_items = getattr(intel, "action_items", None) or []
+    action_strs: list[str] = []
+    for item in action_items[:5]:
+        if isinstance(item, dict):
+            task = (item.get("task") or "").strip()
+            owner = (item.get("owner") or "").strip()
+        else:
+            task = (getattr(item, "task", None) or "").strip()
+            owner = (getattr(item, "owner", None) or "").strip()
+        if not task:
+            continue
+        action_strs.append(f"{owner}: {task}" if owner else task)
+    if action_strs:
+        pages.append(truncate_for_lcd("Actions:\n" + "\n".join(f"- {a}" for a in action_strs)))
+
+    summary = (getattr(intel, "summary", None) or "").strip()
+    if summary:
+        pages.append(truncate_for_lcd("Summary:\n" + summary))
+
+    return pages
+
+
+def push_intel_to_devices(
+    emitter: "DeviceStatusEmitter",
+    attached_ids: Iterable[str],
+    intel,
+    *,
+    page_dwell_s: float = 4.0,
+) -> int:
+    """Push meeting intel as a paged rotation to attached devices.
+
+    HS-17-07: builds one page per section (Topics → Actions →
+    Summary) via :func:`build_intel_pages`, then emits them on a
+    background daemon thread with ``page_dwell_s`` seconds between
+    pages. Each page lands on the device's middle slot (ttl_ms set
+    to ``page_dwell_s * 1000``); AIPI-4-11 v2's persist-until-replaced
+    behaviour keeps the last page on screen indefinitely after the
+    rotation completes.
+
+    Returns the **page count scheduled**, not the broadcast tally
+    (those happen later on the pager thread). Returns 0 when there
+    are no attached devices or nothing presentable in the intel.
+    """
+    ids = [d for d in attached_ids if d]
+    if not ids:
+        return 0
+    pages = build_intel_pages(intel)
+    if not pages:
+        return 0
+
+    ttl_ms = max(0, int(page_dwell_s * 1000))
+
+    def _emit() -> None:
+        for index, page in enumerate(pages):
+            try:
+                emitter.broadcast(ids, page, ttl_ms=ttl_ms)
+            except Exception:
+                log.exception(
+                    "intel_pager_broadcast_failed",
+                    extra={"page_index": index},
+                )
+                return
+            # No sleep after the last page — let it persist via
+            # AIPI-4-11 v2 until something else (a new flash, the
+            # Recording-tick, etc.) replaces it.
+            if index < len(pages) - 1:
+                time.sleep(page_dwell_s)
+
+    threading.Thread(
+        target=_emit,
+        name="IntelLcdPager",
+        daemon=True,
+    ).start()
+    return len(pages)
+
+
 __all__ = [
     "DeviceStatusEmitter",
     "StatusSender",
     "LCD_TEXT_MAX_CHARS",
     "truncate_for_lcd",
     "push_segment_to_devices",
+    "push_intel_to_devices",
+    "build_intel_pages",
     "is_likely_hallucination",
     "is_pure_silence",
 ]

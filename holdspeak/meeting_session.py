@@ -260,6 +260,9 @@ def _device_descriptor_to_dict(descriptor: object) -> dict:
         "connected_at": _iso_or_none(getattr(descriptor, "connected_at", None)),
         "last_seen": _iso_or_none(getattr(descriptor, "last_seen", None)),
         "queue_depth": int(getattr(descriptor, "queue_depth", 0) or 0),
+        "battery_pct": getattr(descriptor, "battery_pct", None),
+        "rssi_dbm": getattr(descriptor, "rssi_dbm", None),
+        "last_health_at": getattr(descriptor, "last_health_at", None),
     }
 
 
@@ -398,6 +401,14 @@ class MeetingSession:
         self._transcribe_thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
         self._last_transcribe_time = 0.0
+        # AIPI-4-15 / HS-17 overlap windows: per-stream tail audio kept
+        # between transcription passes so a sentence that spans a 10 s
+        # boundary doesn't get cut at the boundary. Keyed by stream id
+        # ("mic", "system", "device:<id>"). Trade-off: occasional duplicate
+        # words at boundary, accepted in exchange for continuous-sentence
+        # transcripts.
+        self._overlap_tail_seconds: float = 1.5
+        self._stream_tails: dict[str, "np.ndarray"] = {}
 
         # Intel components
         self._intel: Optional["MeetingIntel"] = None
@@ -514,6 +525,17 @@ class MeetingSession:
         if self._recorder is None:
             return False
         return device_id in self._recorder.registered_device_ids()
+
+    def update_device_descriptor(self, descriptor: "DeviceDescriptor") -> bool:
+        """Refresh the attached-device descriptor stored on active state."""
+        with self._lock:
+            if self._state is None:
+                return False
+            for index, existing in enumerate(self._state.devices):
+                if getattr(existing, "id", None) == descriptor.id:
+                    self._state.devices[index] = descriptor
+                    return True
+        return False
 
     def _set_intel_status_locked(
         self,
@@ -1210,6 +1232,29 @@ class MeetingSession:
 
         log.debug("Transcription loop ended")
 
+    def _apply_overlap(self, stream_id: str, audio: "np.ndarray", final: bool) -> "np.ndarray":
+        """Prepend the previous pass's tail and stash a fresh tail for next.
+
+        AIPI-4-15 / HS-17 overlap windows. Returns the audio to feed
+        to Whisper (previous tail + current chunk). Updates the tail
+        store with the last ``self._overlap_tail_seconds`` of the
+        combined audio so next pass can re-prepend. On the final pass
+        the tail is cleared — no next pass to feed.
+        """
+        import numpy as _np
+
+        tail = self._stream_tails.get(stream_id)
+        if tail is not None and tail.size > 0:
+            audio = _np.concatenate([tail, audio])
+        if final:
+            self._stream_tails.pop(stream_id, None)
+        else:
+            tail_samples = int(self._overlap_tail_seconds * 16000)
+            self._stream_tails[stream_id] = (
+                audio[-tail_samples:].copy() if audio.size > tail_samples else audio.copy()
+            )
+        return audio
+
     def _transcribe_chunks(
         self,
         mic_chunks: list[AudioChunk],
@@ -1226,6 +1271,7 @@ class MeetingSession:
         # Process mic chunks
         if mic_chunks:
             mic_audio = concatenate_chunks(mic_chunks)
+            mic_audio = self._apply_overlap("mic", mic_audio, final)
             duration = len(mic_audio) / 16000
 
             if duration >= self.MIN_CHUNK_DURATION:
@@ -1267,6 +1313,7 @@ class MeetingSession:
         # Process system chunks
         if system_chunks:
             system_audio = concatenate_chunks(system_chunks)
+            system_audio = self._apply_overlap("system", system_audio, final)
             duration = len(system_audio) / 16000
 
             if duration >= self.MIN_CHUNK_DURATION:
@@ -1313,6 +1360,7 @@ class MeetingSession:
             if not chunks:
                 continue
             audio = concatenate_chunks(chunks)
+            audio = self._apply_overlap(f"device:{device_id}", audio, final)
             duration = len(audio) / 16000
             if duration < self.MIN_CHUNK_DURATION:
                 continue

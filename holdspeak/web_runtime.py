@@ -17,7 +17,12 @@ from .config import Config
 from .audio import AudioSource
 from .device_audio import DeviceRegistry, ensure_device_psk
 from .device_recording_tick import RecordingTicker
-from .device_status import DeviceStatusEmitter, push_segment_to_devices
+from .device_meeting_stats import CYCLE_ORDER, pick_next_view
+from .device_status import (
+    DeviceStatusEmitter,
+    push_intel_to_devices,
+    push_segment_to_devices,
+)
 from .hotkey import HotkeyListener
 from .voice_typing import VoiceTypingSession
 from .logging_config import get_logger
@@ -312,6 +317,16 @@ def run_web_runtime(
             except Exception as exc:
                 log.debug(f"Failed to broadcast intel_complete: {exc}")
         _broadcast_intel_status()
+        # HS-17-07: push the intel summary to attached AIPI-Lite LCDs
+        # so the user gets visible feedback when intel finishes (topics,
+        # actions, summary — all landed in the middle slot).
+        try:
+            active = _active_meeting_session()
+            if active is not None and active.state is not None:
+                attached_ids = [d.id for d in active.state.devices]
+                push_intel_to_devices(device_status, attached_ids, intel)
+        except Exception as exc:
+            log.debug(f"Failed to push intel to device LCD: {exc}")
 
     def _apply_updated_config(updated_config: Config) -> None:
         nonlocal config, transcriber
@@ -454,6 +469,9 @@ def run_web_runtime(
         # `Saving meeting...` broadcast so a stale tick can't land
         # after the user has been told the meeting is saving.
         recording_ticker.stop()
+        # AIPI-4-14: reset per-device cycle indexes so the next meeting
+        # starts the double-tap rotation back at view 0.
+        device_stats_cycle.clear()
         if attached_ids:
             device_status.broadcast(attached_ids, "Saving meeting...", ttl_ms=0)
 
@@ -1247,31 +1265,63 @@ def run_web_runtime(
     def _on_device_voice_cancel(device_id: str) -> None:
         voice_session.cancel(owner=f"device:{device_id}")
 
-    def _on_device_event(device_id: str, name: str, at: Optional[float]) -> None:
-        """Inbound device event from the WS (HS-14-07).
+    # AIPI-4-14: per-device cycle index for the meeting-stats double-tap
+    # rotation. ``-1`` means "advance to view 0 on the next double-tap".
+    # Reset whenever a meeting ends so each new meeting starts at view 0.
+    device_stats_cycle: dict[str, int] = {}
 
-        Currently the only honored event is ``long_press`` during an
-        active meeting where this device is attached → fires a
-        bookmark on the session and broadcasts ``Bookmark @ ...`` to
-        every device participating in the meeting.
+    def _on_device_event(device_id: str, name: str, at: Optional[float]) -> None:
+        """Inbound device event from the WS.
+
+        - ``long_press`` (HS-14-07): bookmark gesture in an active
+          meeting where this device is attached.
+        - ``double_left_click`` (AIPI-4-14): cycle through meeting-stat
+          views (Numbers → Speakers → Intel) on the device's middle
+          slot.
         """
-        if name != "long_press":
-            log.info(
-                "device_event_ignored",
-                extra={"device_id": device_id, "event_name": name},
+        if name == "long_press":
+            active = _active_meeting_session()
+            if active is None or not active.is_device_attached(device_id):
+                return
+            bookmark = active.add_bookmark(label="", auto_label=True)
+            if bookmark is None:
+                return
+            attached_ids = [d.id for d in active.state.devices] if active.state else []
+            device_status.broadcast(
+                attached_ids,
+                f"Bookmark @ {bookmark.timestamp:.0f}s",
+                ttl_ms=2500,
             )
             return
-        active = _active_meeting_session()
-        if active is None or not active.is_device_attached(device_id):
+
+        if name == "double_left_click":
+            active = _active_meeting_session()
+            if active is None or active.state is None:
+                log.info(
+                    "device_event_double_tap_ignored",
+                    extra={"device_id": device_id, "reason": "no_active_meeting"},
+                )
+                return
+            if not active.is_device_attached(device_id):
+                log.info(
+                    "device_event_double_tap_ignored",
+                    extra={"device_id": device_id, "reason": "device_not_attached"},
+                )
+                return
+            current = device_stats_cycle.get(device_id, -1)
+            next_index, view_id, formatter = pick_next_view(current)
+            device_stats_cycle[device_id] = next_index
+            payload = formatter(active.state)
+            device_status.send(device_id, payload, ttl_ms=4000)
+            log.info(
+                "device_event_double_tap_cycled",
+                extra={"device_id": device_id, "view": view_id, "index": next_index},
+            )
             return
-        bookmark = active.add_bookmark(label="", auto_label=True)
-        if bookmark is None:
-            return
-        attached_ids = [d.id for d in active.state.devices] if active.state else []
-        device_status.broadcast(
-            attached_ids,
-            f"Bookmark @ {bookmark.timestamp:.0f}s",
-            ttl_ms=2500,
+
+        log.info(
+            "device_event_ignored",
+            extra={"device_id": device_id, "event_name": name},
         )
 
     def _on_device_health(descriptor: object) -> None:
