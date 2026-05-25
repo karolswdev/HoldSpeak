@@ -50,3 +50,17 @@ web/node_modules/
 web/dist/
 web/.astro/
 holdspeak/static/_built/
+
+# AIPI-Lite local firmware/bridge runtime state
+aipi-lite/bridge.env
+aipi-lite/secrets.yaml
+aipi-lite/.esphome/
+aipi-lite/.venv/
+aipi-lite/__pycache__/
+aipi-lite/**/__pycache__/
+aipi-lite/.pytest_cache/
+aipi-lite/.ruff_cache/
+aipi-lite/.coverage
+aipi-lite/htmlcov/
+aipi-lite/*.log
+aipi-lite/debug_mic.wav

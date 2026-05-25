@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-24 (Phase 20 closed: AIPI companion v1 shipped).
-**Current phase:** planning next.
-**Status:** planning.
+**Last updated:** 2026-05-24 (HS-21-01 closed: AIPI-Lite imported as first-class source).
+**Current phase:** [phase-21-aipi-lite-first-class](./phase-21-aipi-lite-first-class/) — bring AIPI-Lite firmware and bridge work into the HoldSpeak checkout.
+**Status:** in-progress.
 
 ## Vision
 
@@ -31,6 +31,7 @@ canon, canon wins.
 - `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` — DIR-01 spec for the dictation pipeline.
 - `docs/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md` — web-first runtime migration.
 - `docs/PLAN_ACTIVITY_ASSISTED_ENRICHMENT.md` — local activity assisted enrichment design.
+- `aipi-lite/` — first-class AIPI-Lite firmware, bridge, docs, tests, and imported device-side roadmap.
 - `pyproject.toml` — package contract; the source of truth for installable extras.
 
 ## Phase index
@@ -58,6 +59,7 @@ canon, canon wins.
 | 18 | Intelligent Typing Copilot: project-aware local intelligent typing with target profiles, Claude/Codex hooks, optional external-agent summarization, `.hs` context conventions, OpenAI-compatible runtimes, and web cockpit support | done | [phase-18-intelligent-typing-copilot](./phase-18-intelligent-typing-copilot/) |
 | 19 | Intelligent Typing Daily-Use Hardening: safe `.hs/.../*.md` project-doc suggestions, telemetry, target-profile overrides, and real endpoint dogfooding | done | [phase-19-intelligent-typing-hardening](./phase-19-intelligent-typing-hardening/) |
 | 20 | AIPI Companion: same-LAN physical companion UX for agent-waiting status, voice replies, gestures, and debug visibility | done | [phase-20-aipi-companion](./phase-20-aipi-companion/) |
+| 21 | AIPI-Lite First-Class Integration: import firmware and bridge source into HoldSpeak and define the unified developer workflow | in-progress | [phase-21-aipi-lite-first-class](./phase-21-aipi-lite-first-class/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

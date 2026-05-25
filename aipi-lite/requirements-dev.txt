@@ -1,0 +1,6 @@
+# Dev / test deps. Install with `pip install -r requirements-dev.txt`
+# (which also pulls in runtime deps via the `-r requirements.txt` line).
+-r requirements.txt
+pytest==9.0.3
+pytest-asyncio==1.3.0
+ruff==0.15.12

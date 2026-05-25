@@ -1,0 +1,46 @@
+# Ruff config for the AIPI-Lite ↔ HoldSpeak bridge.
+# Run with: `.venv/bin/ruff check .` or `.venv/bin/ruff check --fix .`
+# CI checks: `ruff check .` (fail on findings).
+
+# Match the project's existing comment width — the codebase prefers
+# narrower lines for readability of structlog kwargs and docstrings.
+line-length = 99
+target-version = "py310"
+
+# Tests + venv don't need linting.
+exclude = [
+    ".venv",
+    ".esphome",
+    "build",
+    "dist",
+]
+
+[lint]
+# Conservative starter set — pyflakes (F), pycodestyle errors (E),
+# import order (I), bugbear (B), comprehensions (C4), modernise (UP),
+# implicit string concat (ISC). Skipping pep8-naming + docstring
+# checks for now — too noisy on the existing codebase.
+select = ["E", "F", "I", "B", "C4", "UP", "ISC"]
+ignore = [
+    # Long lines in module-level docstrings + protocol comments.
+    "E501",
+    # Implicit string concatenation in stderr writes is intentional
+    # and more readable than f-string with backslashes.
+    "ISC001",
+]
+
+[lint.per-file-ignores]
+# Tests have asyncio fixtures and re-import patterns that ruff
+# objects to but are conventional for pytest-asyncio.
+"tests/*" = ["B017"]
+# The package __init__ is a re-export facade — every name imported
+# is by definition "unused" within the file. F401 is the wrong rule
+# to apply here.
+"bridge/__init__.py" = ["F401"]
+
+[format]
+# Don't run formatter automatically — the codebase has hand-tuned
+# multi-line layouts (especially in structlog calls + docstrings)
+# that black-style auto-formatting would flatten unhelpfully.
+# `ruff check` only.
+quote-style = "double"

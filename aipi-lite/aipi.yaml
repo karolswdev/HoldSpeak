@@ -1,0 +1,569 @@
+# Per-device hostname via substitution. Default `aipi` matches the
+# primary device's mDNS name (`aipi.local`); override for additional
+# devices on the same LAN to avoid mDNS collisions:
+#   esphome run aipi.yaml --device /dev/ttyACM0 -s device_name=aipi-green
+substitutions:
+  device_name: aipi
+
+esphome:
+  name: ${device_name}
+  friendly_name: AiPi
+  on_boot:
+    - priority: 800
+      then:
+        - switch.turn_on: board_power
+        - script.execute: refresh_mode_label
+        - lambda: |-
+            ESP_LOGI("aipi", "Boot: continuous_mode=%s", id(continuous_mode) ? "ON" : "OFF");
+        # If we booted in continuous mode (persisted from a previous session),
+        # start voice_assistant so the mic stream resumes on its own. Wait for
+        # WiFi/API to come up first.
+        - if:
+            condition:
+              lambda: 'return id(continuous_mode);'
+            then:
+              - wait_until:
+                  condition:
+                    api.connected:
+                  timeout: 30s
+              - delay: 500ms
+              - voice_assistant.start:
+              - lambda: 'ESP_LOGI("aipi", "Boot: voice_assistant.start fired (continuous mode)");'
+
+    # AIPI-1-05: hold-during-boot factory reset. Runs at priority 700 so the
+    # left_button binary_sensor is set up. Only blocks boot if the button
+    # is actually being held — otherwise no-op.
+    - priority: 700
+      then:
+        - if:
+            condition:
+              binary_sensor.is_on: left_button
+            then:
+              - logger.log: "AIPI-1-05: left button held at boot — 5s factory-reset window"
+              - delay: 5s
+              - if:
+                  condition:
+                    binary_sensor.is_on: left_button
+                  then:
+                    - script.execute: factory_reset_wifi
+                  else:
+                    - logger.log: "AIPI-1-05: button released before 5s — factory reset cancelled"
+
+# Mode state: false = hold-to-talk (default), true = continuous always-listening.
+# Toggled by triple-press of the right button. Persisted in flash.
+globals:
+  - id: continuous_mode
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+
+esp32:
+  variant: esp32s3
+  framework:
+    type: esp-idf
+  flash_size: 16MB
+
+# --- MEMORY MANAGEMENT ---
+psram:
+  mode: octal
+
+api:
+  reboot_timeout: 0s
+  services:
+    # Bridge → bottom label ("activity" line). Carries the HoldSpeak
+    # status text + an ASCII state symbol from bridge.py's symbol map.
+    - service: update_screen
+      variables:
+        msg: string
+      then:
+        - lvgl.label.update:
+            id: ai_response_label
+            text: !lambda 'return msg.c_str();'
+
+    # Bridge → top-right label ("link" indicator). Bridge pushes one of
+    # `[--]` / `[..]` / `[OK]` on every WS state transition. Mode label
+    # (top-left) is firmware-owned and untouched here.
+    - service: update_link
+      variables:
+        msg: string
+      then:
+        - lvgl.label.update:
+            id: link_label
+            text: !lambda 'return msg.c_str();'
+
+    # AIPI-4-11: bridge → middle label (transient flashes). Bridge
+    # paints per-segment transcripts, bookmark confirmations, error
+    # flashes here so they don't compete with the persistent
+    # Recording-tick in the bottom label. Bridge clears (passes empty
+    # string) after each flash's TTL expires.
+    - service: update_middle
+      variables:
+        msg: string
+      then:
+        - lvgl.label.update:
+            id: lcd_middle_label
+            text: !lambda 'return msg.c_str();'
+
+    # Forces a mode toggle from the API side — escape hatch if multi_click
+    # detection ever fails. Invoke from the bridge or curl with no args.
+    - service: force_toggle_mode
+      then:
+        - script.execute: toggle_mode
+
+    # AIPI-4-07: remote gesture simulation. Publishes ON to the
+    # `left_button_sim` template binary_sensor for `duration_ms` then
+    # OFF — the bridge subscribes to its state edges alongside the
+    # real `left_button` and runs the same short-vs-long classifier.
+    # Lets hardware verification of bridge-side gestures (AIPI-4-01
+    # bookmark, etc.) fire from anywhere on the LAN.
+    # Invoke via `python -m bridge --press left-short` (100 ms, fires
+    # the bookmark gesture inside a meeting) or `--press left-long`
+    # (6000 ms, exercises the long-press path the bridge itself
+    # ignores — AP-mode-entry is owned by the firmware-side `on_click`
+    # on the real `left_button` and doesn't depend on this service).
+    - service: simulate_left_press
+      variables:
+        duration_ms: int
+      then:
+        - binary_sensor.template.publish:
+            id: left_button_sim
+            state: ON
+        - delay: !lambda 'return duration_ms;'
+        - binary_sensor.template.publish:
+            id: left_button_sim
+            state: OFF
+
+    # AIPI-4-07: remote voice-typing trigger. Calls the firmware's
+    # `voice_assistant.start` / `voice_assistant.stop` actions
+    # directly, with `duration_ms` of capture in between. Tests the
+    # full audio path (firmware → UDP → bridge → HoldSpeak) without
+    # needing a meeting in HoldSpeak.
+    - service: simulate_voice_typing
+      variables:
+        duration_ms: int
+      then:
+        - voice_assistant.start:
+        - delay: !lambda 'return duration_ms;'
+        - voice_assistant.stop:
+
+# OTA via the esphome platform — required for `esphome upload` to push
+# updates over the network. Without this block ESPHome 2026.4 only
+# auto-injects `web_server` OTA, which doesn't support the API-based
+# upload path. After this flash lands, future updates can be OTA from
+# anywhere on the LAN; first flash is USB-only because the *running*
+# firmware needs an `esphome` OTA endpoint to receive updates.
+ota:
+  - platform: esphome
+
+logger:
+  level: VERY_VERBOSE
+
+wifi:
+  id: wifi_id
+  # Try known networks in order. AIPI-1-01: portable provisioning — adding
+  # a phone hotspot lets the device follow the user out of the home LAN.
+  networks:
+    - ssid: !secret wifi_ssid_home
+      password: !secret wifi_password_home
+    - ssid: !secret wifi_ssid_phone
+      password: !secret wifi_password_phone
+  # If neither known network responds, fall back to the device's own AP so
+  # the user can reprovision from a phone via the captive portal.
+  ap:
+    ssid: "AiPi-Setup"
+    password: !secret wifi_ap_password
+  # Refresh the LCD mode label whenever the connection state flips so the
+  # user sees "Setup-AP" while the AP is active and the normal mode label
+  # once we're back on a station.
+  on_connect:
+    - script.execute: refresh_mode_label
+  on_disconnect:
+    - script.execute: refresh_mode_label
+
+# AIPI-1-02: serves the Wi-Fi setup page when the device is in AP mode.
+captive_portal:
+
+# AIPI-1-03: BLE provisioning via the official Improv-WiFi mobile app.
+# authorizer: none — single-user product; no in-device confirmation step.
+esp32_improv:
+  authorizer: none
+
+# AIPI-1-04: Improv-WiFi over USB serial as the "I'm completely stuck"
+# recovery path when BLE + captive portal are both unavailable.
+improv_serial:
+
+i2c:
+  sda: GPIO5
+  scl: GPIO4
+  id: i2c_es8311
+  scan: true
+
+spi:
+  clk_pin: GPIO16
+  mosi_pin: GPIO17
+
+display:
+  - platform: mipi_spi
+    id: aipi_display
+    model: ST7735
+    cs_pin: GPIO15
+    dc_pin: GPIO7
+    reset_pin: GPIO18
+    dimensions:
+      width: 128
+      height: 128
+
+lvgl:
+  id: my_lvgl
+  displays: aipi_display
+  rotation: 90
+  default_font: montserrat_10
+  widgets:
+    # Bottom: activity line. Bridge pushes `<HoldSpeak status>  <symbol>`
+    # via the `update_screen` API service. AIPI-4-11: holds the
+    # persistent meeting state (`Recording MM:SS`, Ready, etc.) —
+    # NEVER painted by transient flashes anymore.
+    # AIPI-4-12: SCROLL_CIRCULAR so future longer payloads (meeting
+    # title, bookmark counts, intel snippets) marquee-scroll instead
+    # of getting truncated. Short text (`Recording 00:00`) renders
+    # static as before.
+    - label:
+        id: ai_response_label
+        text: "Ready"
+        align: BOTTOM_MID
+        y: -5
+        width: 124
+        text_align: CENTER
+        long_mode: SCROLL_CIRCULAR
+    # AIPI-4-12: middle zone spans the dead vertical space between the
+    # top row (mode + link) and the bottom row (activity tick). With
+    # height=85 + WRAP + unscii_8 (LVGL builtin pixel-perfect bitmap)
+    # we get ~10 lines × ~20 chars — crisp at 8 px on the ST7735 in
+    # exchange for the monospace width. unscii_8 is text-only (no FA
+    # glyphs), which is fine: the middle only shows transcript text.
+    # mode/link/activity keep montserrat_10 so FA symbols still render.
+    - label:
+        id: lcd_middle_label
+        text: ""
+        align: TOP_MID
+        y: 20
+        width: 124
+        height: 85
+        text_align: LEFT
+        text_font: montserrat_8
+        long_mode: WRAP
+    # Top-left: mode label. Firmware-owned; painted by `refresh_mode_label`.
+    # Short strings (HOLD / CONT / AP / RST) so the link label fits to
+    # the right.
+    - label:
+        id: mode_label
+        text: "HOLD"
+        align: TOP_LEFT
+        x: 4
+        y: 4
+        width: 60
+        text_align: LEFT
+        long_mode: CLIP
+    # Top-right: link state. Bridge-owned; painted by the `update_link`
+    # API service. Default `[--]` matches "bridge process not running"
+    # so a user looking at a freshly-booted device can tell the LCD
+    # is alive but the bridge isn't. AIPI-4-13: narrowed from width 60
+    # to 16 so the new tx_label can sit immediately to its left.
+    - label:
+        id: link_label
+        text: "[--]"
+        align: TOP_RIGHT
+        x: -4
+        y: 4
+        width: 16
+        text_align: RIGHT
+        long_mode: CLIP
+    # AIPI-4-13: TX indicator. Painted by firmware (right-button hold)
+    # rather than overwriting the bottom activity slot. Empty when idle;
+    # LV_SYMBOL_UP () while voice_assistant is capturing. Sits
+    # immediately to the left of link_label so the top-right reads as
+    # a tight glyph strip: [↑] [WiFi].
+    - label:
+        id: tx_label
+        text: ""
+        align: TOP_RIGHT
+        x: -22
+        y: 4
+        width: 16
+        text_align: RIGHT
+        long_mode: CLIP
+
+# ES8311 is kept (mic-only) so the analog MIC1 path is initialised with the
+# expected gain. The chip is also a DAC, but the bridge.py thin-forwarder
+# architecture (HoldSpeak owns transcription + typing; nothing plays back
+# on the device) means no `speaker:` / `media_player:` is wired up.
+# To re-introduce device-side audio output (e.g. a future "HoldSpeak speaks
+# back" story), see docs/DEVICE_AUDIO_OUTPUT.md — the EMI dance, ES8311
+# deep-mute path, octal PSRAM requirement, and exact paste-back YAML are
+# documented there so the workarounds don't have to be rediscovered.
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    address: 0x18
+    # use_microphone enables the chip's PDM digital mic path, which we don't have.
+    # The analog MIC1 path is enabled by default (REG14=0x1A in es8311.cpp).
+    mic_gain: 42DB
+
+i2s_audio:
+  - id: i2s_bus
+    i2s_lrclk_pin: GPIO12
+    i2s_bclk_pin: GPIO14
+    i2s_mclk_pin: GPIO6
+
+microphone:
+  - platform: i2s_audio
+    id: i2s_mic
+    i2s_audio_id: i2s_bus
+    i2s_din_pin: GPIO13
+    adc_type: external
+    pdm: false
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    # ES8311 in mono drops audio on the LEFT slot; RIGHT (the new default) is
+    # always zero — that's what was giving us -inf dBFS.
+    channel: left
+
+voice_assistant:
+  id: va
+  microphone: i2s_mic
+  on_end:
+    # Continuous mode is self-sustaining: when the bridge ends a turn (RUN_END),
+    # the assistant goes idle. Re-arm it so the mic stream resumes for the
+    # next utterance. The 200 ms delay keeps things stable; in text-only mode
+    # there's no speaker activity to wait on.
+    - if:
+        condition:
+          lambda: 'return id(continuous_mode);'
+        then:
+          - delay: 200ms
+          - voice_assistant.start:
+
+switch:
+  - platform: gpio
+    pin: GPIO10
+    id: board_power
+    name: "Board Power Control"
+    restore_mode: ALWAYS_ON
+    internal: true
+
+  # GPIO9 controls the speaker amplifier's enable pin. The thin-forwarder
+  # architecture never plays audio back, so the amp is held LOW for the
+  # whole boot — that also doubles as the EMI workaround the original
+  # design needed (a powered amp bleeds into the analog mic).
+  # Marked `internal: true` so it doesn't surface to Home Assistant. To
+  # re-enable playback, see docs/DEVICE_AUDIO_OUTPUT.md §4 — flip back
+  # to ALWAYS_ON and restore `prepare_speaker` / `restore_mic`.
+  - platform: gpio
+    pin: GPIO09
+    id: speaker_enable
+    name: "Speaker Amplifier"
+    restore_mode: ALWAYS_OFF
+    internal: true
+
+output:
+  - platform: ledc
+    pin: GPIO3
+    id: backlight_pwm
+    frequency: 1000Hz
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Display Backlight"
+    id: lcd_backlight
+    restore_mode: RESTORE_DEFAULT_ON
+
+binary_sensor:
+  # AIPI-1-05: left button on GPIO1 (confirmed 2026-05-07). 50 ms
+  # debounce filters out the switch bounce. Long-press 3-5 s flags
+  # AP-mode intent; hold-during-boot ≥5 s factory-resets WiFi creds.
+  - platform: gpio
+    pin:
+      number: GPIO1
+      mode: { input: true, pullup: true }
+    id: left_button
+    name: "Left Button"
+    filters:
+      - invert:
+      # AIPI-4-14: 20 ms (was 50 ms) so fast double-taps don't eat
+      # the intermediate release inside the debounce window. 20 ms
+      # still rejects mechanical contact bounce.
+      - delayed_on: 20ms
+      - delayed_off: 20ms
+    on_click:
+      # 3-5 second hold → enter AP-mode for reprovisioning.
+      min_length: 3000ms
+      max_length: 5000ms
+      then:
+        - script.execute: enter_ap_mode
+    on_multi_click:
+      # AIPI-4-14: native firmware double-tap detection. Pulses
+      # `left_double_tap_event` for the bridge to pick up as the
+      # cycle-meeting-stats gesture. Bridge-side classification of
+      # press/release timing was unreliable on fast taps because the
+      # OFF debounce ate the intermediate release; firmware on_multi_click
+      # tracks clicks directly via timing rules and is robust.
+      - timing:
+          - ON for at most 0.4s
+          - OFF for at most 0.4s
+          - ON for at most 0.4s
+        then:
+          - binary_sensor.template.publish:
+              id: left_double_tap_event
+              state: ON
+          - delay: 30ms
+          - binary_sensor.template.publish:
+              id: left_double_tap_event
+              state: OFF
+
+  # AIPI-4-07: simulated left-button binary_sensor for remote gesture
+  # verification. Bridge subscribes to its state changes alongside
+  # the real `left_button` and treats them identically (same
+  # classifier, same `_fire_bookmark_attempt` path). Driven by the
+  # `simulate_left_press` API service above. Gets no GPIO, no
+  # auto-publish — fully API-controlled.
+  - platform: template
+    id: left_button_sim
+    # Display name and API object_id are both `left_button_sim` (no
+    # parens/spaces) — ESPHome derives object_id from name by replacing
+    # non-alphanumeric chars with `_`, so a friendly name like
+    # "Left Button (sim)" became `left_button__sim_` and the bridge's
+    # object_id filter (`left_button_sim`) silently missed it.
+    name: "left_button_sim"
+    # Don't auto-publish OFF on boot — bridge only cares about edges
+    # driven by the simulate_left_press service.
+    trigger_on_initial_state: false
+
+  # AIPI-4-14: native firmware double-tap signal for left_button. Pulsed
+  # by the on_multi_click pattern above; bridge subscribes to its rising
+  # edges and fires `event.double_left_click` upstream. Robust against
+  # the OFF-debounce-eats-the-release problem the bridge-side classifier
+  # has on fast taps.
+  - platform: template
+    id: left_double_tap_event
+    name: "left_double_tap_event"
+    trigger_on_initial_state: false
+
+  - platform: gpio
+    pin: GPIO42
+    id: right_button
+    name: "Right Button"
+    filters:
+      - invert:
+      # AIPI-4-15: hold-to-talk must not bounce into rapid
+      # voice_assistant.start/stop cycles. Live logs showed several
+      # sub-500 ms runs before the real capture window, which drops the
+      # beginning of speech. Match the proven left-button debounce.
+      - delayed_on: 20ms
+      - delayed_off: 20ms
+    on_press:
+      then:
+        # In continuous mode the assistant is already running; on_press is a no-op
+        # (multi_click handler may still toggle the mode if 3 taps land).
+        - if:
+            condition:
+              lambda: 'return id(continuous_mode);'
+            then: []
+            else:
+              # AIPI-4-13: TX state now lives in tx_label (top-right
+              # glyph strip). The activity slot (ai_response_label)
+              # keeps showing HoldSpeak's `Recording M:SS` / `Ready`
+              # so meeting state isn't clobbered by voice-typing.
+              # LV_SYMBOL_UP = .
+              - lvgl.label.update:
+                  id: tx_label
+                  text: ""
+              - voice_assistant.start:
+    on_release:
+      then:
+        - if:
+            condition:
+              lambda: 'return id(continuous_mode);'
+            then: []
+            else:
+              # AIPI-4-13: clear the TX arrow on release; do not touch
+              # ai_response_label.
+              - lvgl.label.update:
+                  id: tx_label
+                  text: ""
+              - voice_assistant.stop:
+    on_multi_click:
+      # 3 taps within ~3s → toggle continuous mode. Generous timing — humans
+      # are not metronomes; previous 0.35s/tap limit kept failing.
+      - timing:
+          - ON for at most 0.7s
+          - OFF for at most 0.5s
+          - ON for at most 0.7s
+          - OFF for at most 0.5s
+          - ON for at most 0.7s
+          - OFF for at least 0.3s
+        then:
+          - script.execute: toggle_mode
+
+script:
+  - id: toggle_mode
+    then:
+      - lambda: 'id(continuous_mode) = !id(continuous_mode);'
+      - script.execute: refresh_mode_label
+      - if:
+          condition:
+            lambda: 'return id(continuous_mode);'
+          then:
+            # Switching INTO continuous: kick off voice_assistant indefinitely.
+            - voice_assistant.start:
+          else:
+            # Switching OUT of continuous: stop the running assistant.
+            - voice_assistant.stop:
+
+  # AIPI-1-05: long-press left button while connected → enter AP-mode for
+  # reprovisioning without wiping stored creds. There's no public
+  # "go to AP now" method on WiFiComponent (setup_ap_config_ is protected),
+  # so the supported path is shortening ap_timeout dynamically and cycling
+  # wifi off/on — the loop fallback at wifi_component.cpp:840-852 then
+  # switches into AP within ~1s. Note: the device does NOT auto-return to
+  # STA; the user reprovisions via captive portal (which saves new creds)
+  # or power-cycles. Documented in docs/PROVISIONING.md (AIPI-1-06).
+  - id: enter_ap_mode
+    then:
+      - logger.log: "AIPI-1-05: AP-mode requested via left-button long-press"
+      - lvgl.label.update:
+          id: mode_label
+          text: "AP"
+      - lambda: 'id(wifi_id).set_ap_timeout(1000);'
+      - wifi.disable:
+      - delay: 200ms
+      - wifi.enable:
+
+  # AIPI-1-05: hold left button during boot (≥ 5s) → wipe NVS-stored WiFi
+  # creds and reboot. YAML-defined networks: list is unaffected (lives in
+  # the firmware, not NVS); only credentials saved at runtime by the
+  # captive portal / Improv-WiFi flow get cleared. clear_sta() is RAM-only
+  # and misleading; save_wifi_sta("", "") is the canonical NVS wipe path.
+  - id: factory_reset_wifi
+    then:
+      - logger.log: "AIPI-1-05: factory reset — clearing NVS WiFi creds, rebooting"
+      - lvgl.label.update:
+          id: mode_label
+          text: "RST"
+      - lambda: 'id(wifi_id).save_wifi_sta("", "");'
+      - delay: 500ms
+      - lambda: 'App.safe_reboot();'
+
+  - id: refresh_mode_label
+    then:
+      - if:
+          condition:
+            wifi.connected:
+          then:
+            - lvgl.label.update:
+                id: mode_label
+                text: !lambda 'return std::string(id(continuous_mode) ? "CONT" : "HOLD");'
+          else:
+            - lvgl.label.update:
+                id: mode_label
+                text: "AP"
