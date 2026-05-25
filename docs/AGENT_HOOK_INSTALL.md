@@ -195,6 +195,31 @@ Expected response when no fresh question is captured:
 {"type": "status", "text": "No agent waiting", "ttl_ms": 3000}
 ```
 
+## Voice Reply Requirements
+
+For AIPI voice replies to be rewritten as Codex/Claude responses, enable the
+dictation pipeline:
+
+```json
+{
+  "dictation": {
+    "pipeline": {
+      "enabled": true,
+      "stages": ["project-rewriter"],
+      "target_profile_override": "auto"
+    }
+  }
+}
+```
+
+When a fresh captured Codex question is waiting, device-originated voice
+typing forces the `codex_cli` target profile for that utterance. When a fresh
+Claude question is waiting, it forces `claude_code`. This does not mutate your
+global target override.
+
+If the dictation pipeline is disabled or unavailable, AIPI voice typing still
+uses the existing raw transcript insertion path.
+
 ## Add Project Context
 
 Project context is optional but recommended. In each repo, create:

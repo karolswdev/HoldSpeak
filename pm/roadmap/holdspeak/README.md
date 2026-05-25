@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-24 (HS-20 opened; HS-20-01 ships AIPI companion agent-waiting query surface).
+**Last updated:** 2026-05-24 (HS-20-02 closed: AIPI voice replies route through waiting-agent target context).
 **Current phase:** [phase-20-aipi-companion](./phase-20-aipi-companion/) — make AIPI-Lite a same-LAN physical companion for HoldSpeak's local agent and meeting workflows.
 **Status:** in-progress.
 

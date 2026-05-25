@@ -3,12 +3,19 @@ from __future__ import annotations
 import threading
 from types import SimpleNamespace
 
+import numpy as np
 import pytest
 
+from holdspeak.agent_context import AgentSession
 import holdspeak.web_runtime as web_runtime
 
 
-def _config(*, auto_open: bool = True, warm_on_start: bool = False) -> SimpleNamespace:
+def _config(
+    *,
+    auto_open: bool = True,
+    warm_on_start: bool = False,
+    dictation_enabled: bool = False,
+) -> SimpleNamespace:
     return SimpleNamespace(
         model=SimpleNamespace(name="base", warm_on_start=warm_on_start),
         hotkey=SimpleNamespace(key="alt_r", display="Right Option"),
@@ -32,6 +39,15 @@ def _config(*, auto_open: bool = True, warm_on_start: bool = False) -> SimpleNam
             web_auto_open=auto_open,
             mir_enabled=True,
             mir_profile="balanced",
+        ),
+        dictation=SimpleNamespace(
+            pipeline=SimpleNamespace(
+                enabled=dictation_enabled,
+                stages=["project-rewriter"],
+                max_total_latency_ms=600,
+                target_profile_override="auto",
+            ),
+            runtime=SimpleNamespace(),
         ),
     )
 
@@ -507,3 +523,123 @@ def test_runtime_meeting_control_callbacks_are_wired(monkeypatch: pytest.MonkeyP
     assert len(saved_windows) == 2
     assert len(saved_runs) >= 2
     assert len(saved_artifacts) >= 1
+
+
+def test_device_voice_reply_uses_waiting_agent_target_profile(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    monkeypatch.setattr(
+        web_runtime.Config,
+        "load",
+        lambda: _config(auto_open=False, dictation_enabled=True),
+    )
+
+    typed: list[str] = []
+    pipeline_calls: list[object] = []
+    completed = threading.Event()
+    agent_session = AgentSession(
+        agent="codex",
+        session_id="abc",
+        cwd=str(repo),
+        updated_at="2026-05-24T00:00:00Z",
+        hook_event_name="Stop",
+        repo_root=str(repo),
+        repo_anchor="git",
+        project_name="repo",
+        last_assistant_text="Should I run the focused tests?",
+        awaiting_response=True,
+    )
+
+    class FakeServer:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        def start(self) -> str:
+            source = FakeSource()
+            assert self.kwargs["on_device_voice_start"]("aipi-1", source) is True
+            self.kwargs["on_device_voice_stop"]("aipi-1", source)
+            assert completed.wait(timeout=2.0)
+            return "http://127.0.0.1:9995"
+
+        def stop(self) -> None:
+            return None
+
+    class FakeSource:
+        def start_recording(self) -> None:
+            return None
+
+        def stop_recording(self):
+            return np.ones(2000, dtype=np.float32)
+
+    class FakeAudioRecorder:
+        def __init__(self, **kwargs):
+            _ = kwargs
+
+    class FakeHotkeyListener:
+        def __init__(self, **kwargs):
+            _ = kwargs
+
+        def start(self) -> None:
+            return None
+
+        def stop(self) -> None:
+            return None
+
+    class FakeTranscriber:
+        def __init__(self, model_name: str):
+            self.model_name = model_name
+
+        def transcribe(self, _audio):
+            return "yes run focused tests first"
+
+    class FakeTextTyper:
+        def type_text(self, text: str) -> None:
+            typed.append(text)
+            completed.set()
+
+    class FakePipeline:
+        def run(self, utt):
+            pipeline_calls.append(utt)
+            return SimpleNamespace(final_text="Run the focused tests first.")
+
+    class FakeBuildResult:
+        runtime_status = "loaded"
+        pipeline = FakePipeline()
+
+    monkeypatch.setattr(web_runtime, "MeetingWebServer", FakeServer)
+    monkeypatch.setattr(web_runtime, "AudioRecorder", FakeAudioRecorder)
+    monkeypatch.setattr(web_runtime, "HotkeyListener", FakeHotkeyListener)
+    monkeypatch.setattr(web_runtime, "Transcriber", FakeTranscriber)
+    monkeypatch.setattr(web_runtime, "TextTyper", FakeTextTyper)
+
+    import holdspeak.agent_context as agent_context
+    import holdspeak.plugins.dictation.assembly as assembly
+
+    monkeypatch.setattr(
+        agent_context,
+        "get_recent_awaiting_agent_session",
+        lambda **_kwargs: agent_session,
+    )
+    monkeypatch.setattr(assembly, "build_pipeline", lambda *_args, **_kwargs: FakeBuildResult())
+
+    stop_event = threading.Event()
+    stop_event.set()
+
+    web_runtime.run_web_runtime(
+        no_open=True,
+        stop_event=stop_event,
+        register_signal_handlers=False,
+    )
+
+    assert typed == ["Run the focused tests first."]
+    assert len(pipeline_calls) == 1
+    utt = pipeline_calls[0]
+    assert utt.raw_text == "yes run focused tests first"
+    assert utt.project["root"] == str(repo)
+    assert utt.activity["target"]["id"] == "codex_cli"
+    assert utt.activity["target"]["source"] == "override"
+    assert utt.activity["agent"]["session_id"] == "abc"

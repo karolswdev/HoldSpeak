@@ -8,7 +8,8 @@ import threading
 import time
 import webbrowser
 from datetime import datetime
-from typing import Callable, Optional
+from pathlib import Path
+from typing import Any, Callable, Optional
 
 import numpy as np
 
@@ -1102,6 +1103,7 @@ def run_web_runtime(
         audio: np.ndarray,
         *,
         on_complete: Optional[Callable[[str], None]] = None,
+        agent_reply_session: Any | None = None,
     ) -> None:
         """Run transcription, text processing, and typing for a captured chunk.
 
@@ -1119,6 +1121,12 @@ def run_web_runtime(
                 if not text:
                     return
                 text = text_processor.process(text)
+                text = _maybe_run_dictation_pipeline(
+                    text,
+                    audio_duration_s=len(audio) / 16000.0,
+                    transcribed_at=datetime.now(),
+                    agent_reply_session=agent_reply_session,
+                )
                 completed_text = text
                 with state_lock:
                     runtime_status["last_transcription"] = text
@@ -1149,15 +1157,79 @@ def run_web_runtime(
         audio: np.ndarray,
         *,
         on_complete: Optional[Callable[[str], None]] = None,
+        agent_reply_session: Any | None = None,
     ) -> None:
         if len(audio) < 1600:
             _set_voice_state("idle")
             return
         _set_voice_state("transcribing")
         threading.Thread(
-            target=lambda: _transcribe_and_type(audio, on_complete=on_complete),
+            target=lambda: _transcribe_and_type(
+                audio,
+                on_complete=on_complete,
+                agent_reply_session=agent_reply_session,
+            ),
             daemon=True,
         ).start()
+
+    def _maybe_run_dictation_pipeline(
+        text: str,
+        *,
+        audio_duration_s: float,
+        transcribed_at: datetime,
+        agent_reply_session: Any | None = None,
+    ) -> str:
+        dictation_cfg = getattr(config, "dictation", None)
+        pipeline_cfg = getattr(dictation_cfg, "pipeline", None)
+        if dictation_cfg is None or pipeline_cfg is None or not bool(getattr(pipeline_cfg, "enabled", False)):
+            return text
+
+        try:
+            from holdspeak.activity_context import build_activity_context
+            from holdspeak.agent_context import get_recent_agent_session
+            from holdspeak.agent_device import target_profile_override_for_agent
+            from holdspeak.plugins.dictation.assembly import build_pipeline
+            from holdspeak.plugins.dictation.contracts import Utterance
+            from holdspeak.plugins.dictation.project_root import detect_project_for_cwd
+            from holdspeak.target_profile import detect_active_target_profile
+
+            if agent_reply_session is not None and getattr(agent_reply_session, "cwd", None):
+                project = detect_project_for_cwd(
+                    Path(str(agent_reply_session.cwd)),
+                    prefer_agent_session=False,
+                )
+            else:
+                project = detect_project_for_cwd()
+            project_root = Path(project["root"]) if project else None
+            result = build_pipeline(dictation_cfg, project_root=project_root)
+            if result.runtime_status != "loaded":
+                return text
+
+            target_override = (
+                target_profile_override_for_agent(agent_reply_session)
+                or getattr(pipeline_cfg, "target_profile_override", "auto")
+            )
+            activity = build_activity_context(limit=20, refresh=False).to_dict()
+            activity["target"] = detect_active_target_profile(target_override).to_dict()
+            recent_agent = agent_reply_session or get_recent_agent_session(max_age_seconds=120)
+            if recent_agent is not None and bool(getattr(recent_agent, "awaiting_response", False)):
+                agent_project_root = getattr(recent_agent, "repo_root", None)
+                if not project_root or not agent_project_root or str(project_root) == str(agent_project_root):
+                    activity["agent"] = recent_agent.to_dict()
+
+            run = result.pipeline.run(
+                Utterance(
+                    raw_text=text,
+                    audio_duration_s=audio_duration_s,
+                    transcribed_at=transcribed_at,
+                    project=project,
+                    activity=activity,
+                )
+            )
+            return run.final_text
+        except Exception as exc:
+            log.warning(f"Web dictation pipeline raised; falling back to processed text: {exc}")
+            return text
 
     def _on_hotkey_press() -> None:
         if runtime_stop_event.is_set():
@@ -1255,11 +1327,19 @@ def run_web_runtime(
         # capturing, processing now". Transcript snippet lands in
         # the middle slot below.
 
+        from .agent_context import get_recent_awaiting_agent_session
+
+        agent_reply_session = get_recent_awaiting_agent_session(max_age_seconds=120)
+
         def _device_transcript_complete(text: str) -> None:
             snippet = (text or "").strip()[:150]
             device_status.send(device_id, snippet, ttl_ms=4000)
 
-        _kick_off_transcribe(audio, on_complete=_device_transcript_complete)
+        _kick_off_transcribe(
+            audio,
+            on_complete=_device_transcript_complete,
+            agent_reply_session=agent_reply_session,
+        )
         return audio
 
     def _on_device_voice_cancel(device_id: str) -> None:

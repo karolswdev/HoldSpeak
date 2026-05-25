@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from holdspeak.agent_context import AgentSession
-from holdspeak.agent_device import build_agent_query_response
+from holdspeak.agent_device import build_agent_query_response, target_profile_override_for_agent
 
 
 def _session(**overrides) -> AgentSession:
@@ -57,3 +57,10 @@ def test_agent_query_truncates_long_lcd_text() -> None:
     )
 
     assert response == {"text": "xxxxxxxxxxx…", "ttl_ms": 7000}
+
+
+def test_target_profile_override_for_agent_session() -> None:
+    assert target_profile_override_for_agent(_session(agent="codex")) == "codex_cli"
+    assert target_profile_override_for_agent(_session(agent="claude")) == "claude_code"
+    assert target_profile_override_for_agent(_session(agent="other")) is None
+    assert target_profile_override_for_agent(None) is None

@@ -45,6 +45,19 @@ def build_agent_query_response(
     }
 
 
+def target_profile_override_for_agent(session: AgentSession | None) -> str | None:
+    """Return the dictation target override for a captured agent session."""
+
+    if session is None:
+        return None
+    normalized = str(session.agent or "").strip().lower()
+    if normalized == "codex":
+        return "codex_cli"
+    if normalized == "claude":
+        return "claude_code"
+    return None
+
+
 def _agent_label(agent: str) -> str:
     normalized = str(agent or "").strip().lower()
     if normalized == "codex":

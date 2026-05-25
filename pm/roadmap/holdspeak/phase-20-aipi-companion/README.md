@@ -7,7 +7,8 @@ Phase 20 turns AIPI-Lite from a remote microphone/LCD into a same-LAN physical c
 ## Where to look first
 
 - `current-phase-status.md` — goal, scope, story table, risks, and pickup order.
-- `story-01-agent-waiting-query.md` — current first slice: device query access to captured agent-waiting state.
+- `story-02-aipi-voice-reply.md` — closed voice-reply routing through waiting-agent target context.
+- `story-01-agent-waiting-query.md` — closed first slice: device query access to captured agent-waiting state.
 - `holdspeak/agent_context.py` — local Claude/Codex hook registry.
 - `holdspeak/agent_device.py` — device-facing summaries of captured agent state.
 - `holdspeak/web_runtime.py` — runtime query handler that bridges device queries to agent state.
