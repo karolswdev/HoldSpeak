@@ -50,6 +50,18 @@ class _StubRuntime:
         return self.rewrite_text or "rewritten text"
 
 
+class _SequenceRewriteRuntime(_StubRuntime):
+    def __init__(self, rewrites: list[str]) -> None:
+        super().__init__()
+        self.rewrites = list(rewrites)
+
+    def rewrite(self, prompt, *, max_tokens=512, temperature=0.15):
+        _ = prompt, max_tokens, temperature
+        if len(self.rewrites) > 1:
+            return self.rewrites.pop(0)
+        return self.rewrites[0] if self.rewrites else "rewritten text"
+
+
 @pytest.fixture
 def settings_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     target = tmp_path / "config.json"
@@ -190,6 +202,38 @@ def test_dry_run_project_root_override_selects_project_without_relaunch(
     assert body["final_text"].endswith("Stack: rust")
 
 
+def test_dry_run_uses_persisted_target_profile_override(
+    test_client: TestClient,
+    settings_path: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = True
+    cfg.dictation.pipeline.target_profile_override = "chat"
+    cfg.save(path=settings_path)
+    root = _seed_project(tmp_path, monkeypatch)
+    _write_blocks(root / ".holdspeak" / "blocks.yaml", template="\n\nMatched: {raw_text}")
+    monkeypatch.setattr(
+        assembly_module,
+        "build_runtime",
+        lambda **_kwargs: _StubRuntime("task_note"),
+    )
+
+    response = test_client.post(
+        "/api/dictation/dry-run",
+        json={
+            "utterance": "capture this",
+            "target": {"app_name": "WezTerm", "window_title": "codex - HoldSpeak"},
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["target"]["id"] == "chat"
+    assert body["target"]["source"] == "override"
+
+
 def test_dry_run_project_rewriter_uses_hs_context_when_enabled(
     test_client: TestClient,
     settings_path: Path,
@@ -228,7 +272,64 @@ def test_dry_run_project_rewriter_uses_hs_context_when_enabled(
     assert [stage["stage_id"] for stage in body["stages"]] == ["project-rewriter", "kb-enricher"]
     assert body["stages"][0]["metadata"]["reason"] == "rewritten"
     assert body["stages"][0]["metadata"]["target_profile"]["id"] == "codex_cli"
+    assert body["stages"][0]["telemetry"]["status"] == "ok"
+    assert body["stages"][0]["telemetry"]["reason"] == "rewritten"
+    assert body["telemetry"]["latency"]["max_total_latency_ms"] == cfg.dictation.pipeline.max_total_latency_ms
     assert body["final_text"] == "Implement the project-aware rewrite stage."
+
+
+def test_dry_run_stores_latest_project_doc_suggestion_and_dismisses(
+    test_client: TestClient,
+    settings_path: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = True
+    cfg.dictation.pipeline.stages = ["project-rewriter", "kb-enricher"]
+    cfg.save(path=settings_path)
+    root = tmp_path / "target"
+    (root / ".hs").mkdir(parents=True)
+    (root / ".hs" / "instructions.md").write_text("Rewrite as coding-agent tasks.", encoding="utf-8")
+    (root / "pyproject.toml").write_text('[project]\nname = "target-proj"\n', encoding="utf-8")
+    monkeypatch.chdir(root)
+    monkeypatch.setattr(
+        assembly_module,
+        "build_runtime",
+        lambda **_kwargs: _SequenceRewriteRuntime(
+            [
+                "Document the retry worker handoff.",
+                '{"target_path": ".hs/handoffs/retry-worker-next-run.md", '
+                '"rationale": "Keeps the implementation handoff narrow.", '
+                '"content": "Retry worker handoffs should mention the next scheduled run."}',
+            ]
+        ),
+    )
+
+    response = test_client.post(
+        "/api/dictation/dry-run",
+        json={
+            "utterance": "capture the retry worker handoff",
+            "target": {"app_name": "WezTerm", "window_title": "codex - HoldSpeak"},
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    suggestion = response.json()["stages"][0]["metadata"]["project_doc_suggestion"]
+    assert suggestion["target_path"] == ".hs/handoffs/retry-worker-next-run.md"
+
+    latest = test_client.get("/api/dictation/project-doc-suggestion")
+    assert latest.status_code == 200, latest.text
+    assert latest.json()["suggestion"] == suggestion
+
+    dismissed = test_client.post("/api/dictation/project-doc-suggestion/dismiss")
+    assert dismissed.status_code == 200, dismissed.text
+    assert dismissed.json()["dismissed"] is True
+    assert not (root / ".hs" / "handoffs" / "retry-worker-next-run.md").exists()
+
+    cleared = test_client.get("/api/dictation/project-doc-suggestion")
+    assert cleared.status_code == 200, cleared.text
+    assert cleared.json()["suggestion"] is None
 
 
 def test_dry_run_no_project_still_runs_pipeline(
@@ -279,6 +380,9 @@ def test_dry_run_llm_unavailable_surfaces_runtime_status(
     body = response.json()
     assert body["runtime_status"] == "unavailable"
     assert "no model configured" in body["runtime_detail"]
+    assert body["telemetry"]["status"] == "fallback"
+    assert body["telemetry"]["fallbacks"][0]["stage_id"] == "runtime"
+    assert body["telemetry"]["fallbacks"][0]["category"] == "runtime_unavailable"
     assert body["stages"][0]["stage_id"] == "kb-enricher"
     assert body["final_text"] == "task note"
 
@@ -297,6 +401,8 @@ def test_dry_run_pipeline_disabled_returns_empty_trace(
     assert body["stages"] == []
     assert body["final_text"] == "keep me"
     assert body["warnings"] == ["dictation pipeline disabled"]
+    assert body["telemetry"]["status"] == "fallback"
+    assert body["telemetry"]["fallbacks"][0]["category"] == "runtime_disabled"
 
 
 @pytest.mark.parametrize("payload", [{}, {"utterance": ""}, {"utterance": "   "}, {"utterance": 42}])
@@ -351,5 +457,6 @@ def test_dictation_page_includes_dry_run_section() -> None:
     assert match, "expected dictation JS chunk reference"
     js = client.get(match.group(1)).text
     assert "/api/dictation/dry-run" in js
+    assert "/api/dictation/project-doc-suggestion" in js
     assert "renderDryRun" in js
     assert "renderDryStage" in js

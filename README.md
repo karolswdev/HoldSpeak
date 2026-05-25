@@ -4,7 +4,11 @@ Voice typing for macOS and Linux - hold a hotkey, speak, release.
 
 **Local-first. Private by default. Cloud optional. Fast.**
 
-New to HoldSpeak? Start with the [User Guide](docs/USER_GUIDE.md) for the product overview, daily workflows, privacy model, and setup path.
+New to HoldSpeak?
+
+- Start with [Getting Started](docs/GETTING_STARTED.md) for install, diagnostics, first launch, and basic voice typing.
+- Use [Intelligent Typing Setup](docs/INTELLIGENT_TYPING_GUIDE.md) for project-aware dictation, `.hs/` context, target overrides, OpenAI-compatible endpoints, and Claude/Codex hooks.
+- Keep [User Guide](docs/USER_GUIDE.md) open as the product map and workflow reference.
 
 ## Features
 

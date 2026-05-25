@@ -6,7 +6,7 @@ the device's LCD shows live meeting progress. HS-14-07 originally
 spec'd "Recording 00:00 updated each minute" but the periodic emitter
 was never wired; live verification 2026-05-10 against AIPI-Lite
 hardware confirmed only one Recording frame fired per meeting. This
-module fills that gap and tightens the cadence to 5 s.
+module fills that gap. The current default cadence is 1 s.
 
 Threaded (daemon) rather than asyncio-based because
 :class:`DeviceStatusEmitter` is already thread-safe and the meeting

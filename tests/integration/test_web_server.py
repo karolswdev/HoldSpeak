@@ -318,6 +318,31 @@ class TestDashboardEndpoint:
         assert "/api/plugin-jobs/summary" in js
         assert "/api/plugin-jobs/process" in js
 
+    def test_dashboard_includes_device_health_surface(self, test_client):
+        """HS-17-03: dashboard exposes the attached-device health panel.
+
+        Alpine fills values in the browser, so this checks both the
+        server-rendered shell and bundled runtime helpers that drive
+        battery/RSSI visibility and stale-state rendering.
+        """
+        response = test_client.get("/")
+        assert response.status_code == 200
+        html = response.text
+        assert "Devices" in html
+        assert "deviceBatteryLabel(device)" in html
+        assert "deviceRssiLabel(device)" in html
+        assert "deviceHealthStale(device)" in html
+
+        js = self._bundled_runtime_js(test_client)
+        assert js, "expected bundled /_built/_astro/*.js to be referenced from /"
+        assert "devices: []" in js
+        assert "upsertDevice" in js
+        assert "hasDeviceHealth" in js
+        assert "deviceBatteryLabel" in js
+        assert "deviceRssiLabel" in js
+        assert "deviceHealthStale" in js
+        assert "device_health" in js
+
     def test_dashboard_includes_idle_mode_guidance_markers(self, test_client):
         """The rebuilt runtime renders copy that distinguishes idle vs.
         live state. The exact wording was simplified in HS-10-06; what
@@ -348,6 +373,58 @@ class TestHealthEndpoint:
         response = test_client.get("/health")
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
+
+
+@pytest.mark.integration
+class TestDeviceHealthEndpoint:
+    """HS-17-01/03: browser-readable device-health snapshot."""
+
+    def test_devices_health_returns_current_registry_snapshot(self):
+        from holdspeak.device_audio import DeviceRegistry
+
+        registry = DeviceRegistry()
+        registry.register("aipi-1", "Karol")
+        registry.update_health("aipi-1", battery_pct=79, rssi_dbm=-62, at=1234)
+        server = MeetingWebServer(
+            on_bookmark=lambda _label: None,
+            on_stop=lambda: None,
+            get_state=lambda: {},
+            device_registry=registry,
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        response = client.get("/api/devices/health")
+
+        assert response.status_code == 200
+        [device] = response.json()["devices"]
+        assert device["id"] == "aipi-1"
+        assert device["label"] == "Karol"
+        assert device["battery_pct"] == 79
+        assert device["rssi_dbm"] == -62
+        assert device["last_health_at"] == 1234
+
+    def test_devices_health_hides_unknown_values_as_null(self):
+        from holdspeak.device_audio import DeviceRegistry
+
+        registry = DeviceRegistry()
+        registry.register("aipi-1", "Karol")
+        server = MeetingWebServer(
+            on_bookmark=lambda _label: None,
+            on_stop=lambda: None,
+            get_state=lambda: {},
+            device_registry=registry,
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        response = client.get("/api/devices/health")
+
+        assert response.status_code == 200
+        [device] = response.json()["devices"]
+        assert device["battery_pct"] is None
+        assert device["rssi_dbm"] is None
+        assert device["last_health_at"] is None
 
 
 @pytest.mark.integration

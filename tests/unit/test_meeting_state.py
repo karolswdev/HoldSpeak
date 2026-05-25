@@ -382,6 +382,9 @@ class TestMeetingState:
             connected_at=connected_at,
             last_seen=last_seen,
             queue_depth=128,
+            battery_pct=87,
+            rssi_dbm=-61,
+            last_health_at=12345,
         )
 
         state = MeetingState(
@@ -399,6 +402,9 @@ class TestMeetingState:
                 "connected_at": connected_at.isoformat(),
                 "last_seen": last_seen.isoformat(),
                 "queue_depth": 128,
+                "battery_pct": 87,
+                "rssi_dbm": -61,
+                "last_health_at": 12345,
             }
         ]
 

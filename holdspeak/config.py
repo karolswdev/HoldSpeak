@@ -147,6 +147,15 @@ class LLMRuntimeConfig:
 
 
 _KNOWN_DICTATION_STAGES = ("intent-router", "project-rewriter", "kb-enricher")
+_KNOWN_TARGET_PROFILE_OVERRIDES = {
+    "auto",
+    "claude_code",
+    "codex_cli",
+    "terminal_shell",
+    "browser",
+    "editor",
+    "chat",
+}
 
 
 class DictationConfigError(ValueError):
@@ -160,6 +169,7 @@ class DictationPipelineConfig:
     enabled: bool = False
     stages: list[str] = field(default_factory=lambda: ["intent-router", "kb-enricher"])
     max_total_latency_ms: int = 600
+    target_profile_override: str = "auto"
 
     def __post_init__(self) -> None:
         # DIR-C-002: reject unknown stage IDs at config load time so
@@ -170,6 +180,12 @@ class DictationPipelineConfig:
             raise DictationConfigError(
                 f"unknown dictation stage id(s): {unknown}; "
                 f"known stages are {list(_KNOWN_DICTATION_STAGES)}"
+            )
+        self.target_profile_override = str(self.target_profile_override or "auto").strip().lower()
+        if self.target_profile_override not in _KNOWN_TARGET_PROFILE_OVERRIDES:
+            raise DictationConfigError(
+                f"unknown target_profile_override {self.target_profile_override!r}; "
+                f"known values are {sorted(_KNOWN_TARGET_PROFILE_OVERRIDES)}"
             )
 
 

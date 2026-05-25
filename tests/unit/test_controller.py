@@ -502,6 +502,24 @@ def test_dictation_enabled_runs_pipeline_and_types_final_text(monkeypatch) -> No
     assert extra["total_elapsed_ms"] == 13.0
 
 
+def test_dictation_pipeline_uses_target_profile_override(monkeypatch) -> None:
+    controller = _make_controller(monkeypatch, pipeline_enabled=True)
+    controller.app.config.dictation.pipeline.target_profile_override = "browser"
+    run_result = _FakePipelineRun(final_text="ENRICHED")
+    fake_pipeline = _FakeDictationPipeline(run_result)
+    monkeypatch.setattr(controller, "_build_dictation_pipeline", lambda: fake_pipeline)
+
+    out = controller._maybe_run_dictation_pipeline(
+        "raw text",
+        audio_duration_s=1.0,
+        transcribed_at=datetime.now(),
+    )
+
+    assert out == "ENRICHED"
+    assert fake_pipeline.calls[0].activity["target"]["id"] == "browser"
+    assert fake_pipeline.calls[0].activity["target"]["source"] == "override"
+
+
 def test_dictation_pipeline_build_failure_falls_back_to_processed_text(monkeypatch) -> None:
     controller = _make_controller(monkeypatch, pipeline_enabled=True)
 

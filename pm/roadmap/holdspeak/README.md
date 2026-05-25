@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-10 (HS-18 intelligent typing copilot phase closed with final summary and broad regression evidence).
-**Current phase:** none active. Last closed phase: [phase-18-intelligent-typing-copilot](./phase-18-intelligent-typing-copilot/) — project-aware local intelligent typing: target profiles, Claude/Codex hook context, optional external-agent summarization, `.hs` project conventions, OpenAI-compatible runtimes, and web cockpit support.
-**Status:** phase 18 complete; next phase pending.
+**Last updated:** 2026-05-24 (HS-19 intelligent typing daily-use hardening closed with real endpoint dogfood and broad regression evidence).
+**Current phase:** none active. Last closed phase: [phase-19-intelligent-typing-hardening](./phase-19-intelligent-typing-hardening/) — safe project-doc suggestions, telemetry, target-profile overrides, and real endpoint dogfooding.
+**Status:** phase 19 complete; next phase pending.
 
 ## Vision
 
@@ -54,8 +54,9 @@ canon, canon wins.
 | 14 | AIPI-Lite devices: remote audio ingest substrate — `AudioSource` Protocol, `RemoteAudioRecorder`, `/api/devices/audio` WebSocket, per-device speaker labels in transcripts; same-LAN scope (cross-network is phase 15) | done | [phase-14-aipi-lite-devices](./phase-14-aipi-lite-devices/) |
 | 15 | Out-and-about: cross-network reach for AIPI-Lite — tunneling (Tailscale / Cloudflare Tunnel / WireGuard candidate evaluation), TLS, per-device PSKs, paired with the AIPI-Lite firmware's portable WiFi (multi-SSID + captive portal + Improv-WiFi) on the device-side roadmap | not-started | [phase-15-out-and-about](./phase-15-out-and-about/) |
 | 16 | First real synthesizer: replace `mermaid_architecture`'s `DeterministicPlugin` stub with a real LLM-backed plugin, wire the LLM capability gate, render `mermaid` artifacts as inline SVG in the web view, reality-check the plugin RFC | in-progress | [phase-16-first-real-plugin](./phase-16-first-real-plugin/) |
-| 17 | Device Initiative: device → server upstream frames (`device_health` + `query` w/ `last_segment` case) lighting up AIPI-Lite phase 4's `blocked` bridge stories; minimal web UI rendering for device health. Sibling to HS-14, paired with AIPI-4 in the AIPI-Lite roadmap. | not-started | [phase-17-device-initiative](./phase-17-device-initiative/) |
+| 17 | Device Initiative: device → server upstream frames (`device_health` + `query` w/ `last_segment` case) lighting up AIPI-Lite phase 4's `blocked` bridge stories; minimal web UI rendering for device health. Sibling to HS-14, paired with AIPI-4 in the AIPI-Lite roadmap. | done | [phase-17-device-initiative](./phase-17-device-initiative/) |
 | 18 | Intelligent Typing Copilot: project-aware local intelligent typing with target profiles, Claude/Codex hooks, optional external-agent summarization, `.hs` context conventions, OpenAI-compatible runtimes, and web cockpit support | done | [phase-18-intelligent-typing-copilot](./phase-18-intelligent-typing-copilot/) |
+| 19 | Intelligent Typing Daily-Use Hardening: safe `.hs/.../*.md` project-doc suggestions, telemetry, target-profile overrides, and real endpoint dogfooding | done | [phase-19-intelligent-typing-hardening](./phase-19-intelligent-typing-hardening/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

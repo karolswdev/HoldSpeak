@@ -362,6 +362,68 @@ class TestProjectHSContext:
         assert "unknown .hs file" in response.json()["error"]
 
 
+class TestProjectDocSuggestionAPI:
+    def test_apply_writes_validated_suggestion_path(
+        self, test_client: TestClient, project_root_dir: Path, cache_invalidator: MagicMock
+    ) -> None:
+        response = test_client.post(
+            "/api/dictation/project-doc-suggestion/apply",
+            json={
+                "suggestion": {
+                    "target_path": ".hs/memory/retry-worker-handoff.md",
+                    "rationale": "Preserves a narrow implementation note.",
+                    "content": "The retry worker should expose its next scheduled run.",
+                }
+            },
+        )
+
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["applied"] is True
+        assert body["suggestion"]["target_path"] == ".hs/memory/retry-worker-handoff.md"
+        assert (
+            project_root_dir / ".hs" / "memory" / "retry-worker-handoff.md"
+        ).read_text(encoding="utf-8") == "The retry worker should expose its next scheduled run."
+        cache_invalidator.assert_called_once()
+
+    def test_apply_rejects_unsafe_suggestion_path(
+        self, test_client: TestClient, project_root_dir: Path, cache_invalidator: MagicMock
+    ) -> None:
+        response = test_client.post(
+            "/api/dictation/project-doc-suggestion/apply",
+            json={
+                "suggestion": {
+                    "target_path": "README.md",
+                    "rationale": "Too broad.",
+                    "content": "Do not write this.",
+                }
+            },
+        )
+
+        assert response.status_code == 400
+        assert "target_path" in response.json()["error"]
+        assert not (project_root_dir / "README.md").exists()
+        cache_invalidator.assert_not_called()
+
+    def test_apply_rejects_secret_like_suggestion(
+        self, test_client: TestClient, project_root_dir: Path
+    ) -> None:
+        response = test_client.post(
+            "/api/dictation/project-doc-suggestion/apply",
+            json={
+                "suggestion": {
+                    "target_path": ".hs/memory/local-token.md",
+                    "rationale": "Preserve token.",
+                    "content": "access_token=abc12345678901234567890",
+                }
+            },
+        )
+
+        assert response.status_code == 400
+        assert "secret" in response.json()["error"]
+        assert not (project_root_dir / ".hs" / "memory" / "local-token.md").exists()
+
+
 # ── Agent context banner API ──────────────────────────────────────────
 
 

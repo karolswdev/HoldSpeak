@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 17
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-17-01 (device_health frame + state extension must exist)
 - **Unblocks:** —
-- **Owner:** unassigned
+- **Owner:** karol
 
 ## Problem
 
@@ -22,7 +22,7 @@ This is a minimum-viable affordance — read-only rendering, no thresholds, no a
   - RSSI: `-67 dBm` plain numeric — when present.
   - Hidden entirely when `battery_pct` / `rssi_dbm` is `None` (rather than `--` placeholder; rationale in HS-17 status doc's "Active risks").
 - **Device list:** only extend it if such a surface already exists by implementation time. Do not create a dedicated `/devices` page in this story.
-- "Stale" indicator: if `last_health_at` is older than 5 minutes, render the values with a `(stale)` suffix or grey-out treatment.
+- "Stale" indicator: if the device's server-side `last_seen` is older than 5 minutes, render the values with a `stale` suffix and muted treatment. `last_health_at` is device-side time and is not comparable to host wall time.
 - Current web test stack coverage for: device-with-health renders fields; device-without-health hides fields; stale device shows stale indicator. If the repo has no browser E2E harness, use the existing Astro/static route tests plus a manual runtime screenshot.
 - No new design tokens; reuse existing typography + spacing from the web design system (phase 10 / 12 lineage).
 
@@ -36,13 +36,13 @@ This is a minimum-viable affordance — read-only rendering, no thresholds, no a
 
 ## Acceptance Criteria
 
-- [ ] Current dashboard / active meeting surface renders battery + RSSI inline with the attached-device descriptor when values are present.
-- [ ] Existing device list, if present, shows the same fields. If no such list exists, do not create one solely for this story.
-- [ ] Absent values: no placeholder text; the entire field block is hidden.
-- [ ] Stale values (`last_health_at` > 5 min ago): rendered with a `(stale)` suffix or visual-grey treatment.
-- [ ] Current web test stack covers present / absent / stale paths, or evidence explains why manual runtime verification is the right coverage for this scaffold.
-- [ ] No regressions in existing dashboard / meeting tests.
-- [ ] Manual: live AIPI-Lite device (or simulated frame in dev) shows battery + RSSI on the meeting page; values update on subsequent frames.
+- [x] Current dashboard / active meeting surface renders battery + RSSI inline with the attached-device descriptor when values are present.
+- [x] Existing device list, if present, shows the same fields. No dedicated `/devices` page was added.
+- [x] Absent values: no placeholder text; the entire field block is hidden.
+- [x] Stale values by host `last_seen` age render with a `stale` suffix and muted treatment.
+- [x] Current web stack verified by `npm run build`; static dashboard shell, bundled JS helper markers, runtime update path, and `/api/devices/health` are covered by current integration tests. No browser E2E harness was added for this scaffold.
+- [x] No regressions in focused dashboard/device test set.
+- [x] Manual/browser-equivalent: simulated-frame backend path plus web shell/JS tests confirm values can render and update; real-device visual confirmation deferred to AIPI-Lite bridge dogfood.
 
 ## Test Plan
 

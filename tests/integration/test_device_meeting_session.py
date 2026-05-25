@@ -141,6 +141,36 @@ class TestDeviceMeetingSession:
         assert session.is_device_attached("aipi-1") is True
         assert any(d.id == "aipi-1" for d in session.state.devices)
 
+    def test_update_device_descriptor_refreshes_health_snapshot(self) -> None:
+        session = MeetingSession(transcriber=_FakeTranscriber())
+        session._state = MeetingState(id="m1", started_at=datetime.now())
+        session._recorder = _StubMeetingRecorder()  # type: ignore[assignment]
+
+        descriptor = DeviceDescriptor(
+            id="aipi-1",
+            label="Karol",
+            connected_at=datetime.now(),
+            last_seen=datetime.now(),
+        )
+        source = _FakeRemoteSource()
+        session.attach_device(descriptor, source)  # type: ignore[arg-type]
+
+        refreshed = DeviceDescriptor(
+            id="aipi-1",
+            label="Karol",
+            connected_at=descriptor.connected_at,
+            last_seen=datetime.now(),
+            battery_pct=73,
+            rssi_dbm=-59,
+            last_health_at=42,
+        )
+
+        assert session.update_device_descriptor(refreshed) is True
+        [payload] = session.state.to_dict()["devices"]
+        assert payload["battery_pct"] == 73
+        assert payload["rssi_dbm"] == -59
+        assert payload["last_health_at"] == 42
+
     def test_device_chunks_become_labeled_segments(self) -> None:
         transcriber = _FakeTranscriber()
         session = MeetingSession(transcriber=transcriber)

@@ -74,6 +74,7 @@
           intentControlSaving: false,
           entries: [],
           segments: [],
+          devices: [],
           intel: { topics: [], action_items: [], summary: "" },
           pluginJobs: [],
           pluginJobSummary: null,
@@ -321,6 +322,11 @@
             }
             if (state?.mir && typeof state.mir === "object") {
               this.applyIntentControls(state.mir);
+            }
+            if (Array.isArray(state?.devices)) {
+              this.devices = state.devices;
+            } else if (replaceTimeline) {
+              this.devices = [];
             }
 
             if (!replaceTimeline) return;
@@ -650,6 +656,10 @@
               }
               return;
             }
+            if (type === "device_health") {
+              this.upsertDevice(data || {});
+              return;
+            }
             if (type === "intent_controls_updated") {
               if (data && typeof data === "object") {
                 this.applyIntentControls(data);
@@ -704,6 +714,45 @@
             if (this.entries.length > MAX_ENTRIES) this.entries.splice(0, this.entries.length - MAX_ENTRIES);
             this.toast(`Saved bookmark: ${label}`);
             this.$nextTick(() => this.scrollTranscriptToBottom());
+          },
+
+          upsertDevice(device) {
+            if (!device || typeof device !== "object") return;
+            const id = String(device.id || "").trim();
+            if (!id) return;
+            const idx = this.devices.findIndex((item) => String(item?.id || "") === id);
+            if (idx >= 0) {
+              this.devices[idx] = { ...this.devices[idx], ...device };
+            } else {
+              this.devices.push(device);
+            }
+          },
+
+          hasDeviceHealth(device) {
+            return device?.battery_pct !== null
+              && typeof device?.battery_pct !== "undefined"
+              || device?.rssi_dbm !== null
+              && typeof device?.rssi_dbm !== "undefined";
+          },
+
+          deviceBatteryLabel(device) {
+            if (device?.battery_pct === null || typeof device?.battery_pct === "undefined") return "";
+            const pct = Number(device.battery_pct);
+            if (!Number.isFinite(pct)) return "";
+            return `${Math.round(pct)}%`;
+          },
+
+          deviceRssiLabel(device) {
+            if (device?.rssi_dbm === null || typeof device?.rssi_dbm === "undefined") return "";
+            const rssi = Number(device.rssi_dbm);
+            if (!Number.isFinite(rssi)) return "";
+            return `${Math.round(rssi)} dBm`;
+          },
+
+          deviceHealthStale(device) {
+            const lastSeen = device?.last_seen ? new Date(device.last_seen) : null;
+            if (!lastSeen || Number.isNaN(lastSeen.getTime())) return false;
+            return Date.now() - lastSeen.getTime() > 5 * 60 * 1000;
           },
 
           updateIntel(data) {

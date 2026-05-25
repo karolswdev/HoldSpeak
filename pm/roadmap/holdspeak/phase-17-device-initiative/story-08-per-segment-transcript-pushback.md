@@ -18,7 +18,7 @@ This is the killer feature surfaced 2026-05-10 alongside HS-17-07: turn the devi
 ### In
 
 - New emitter: on `MeetingSession.add_segment(...)` (or wherever finalized segments land), push a `status` frame to all attached devices: `{type: status, text: <truncated segment text>, ttl_ms: 3000}`.
-- Truncation at 30 chars + `…` (matches HS-17-06 / AIPI-4-06 LCD width budget).
+- Server-side payload ceiling currently 150 chars + `…` after AIPI-side LCD layout work moved transcript flashes into a larger scroll/wrap region. The original 30-char bottom-row budget is preserved in the historical evidence below.
 - **Throttling:** segments fire faster than 5s during fast speech. The `ttl_ms: 3000` flash naturally truncates display time, and a new segment cancels the previous flash's revert (existing `_paint_activity` state machine in `bridge/holdspeak.py`). No further throttling needed at server side — let the device's revert mechanic do the work.
 - Sticky baseline stays the `Recording MM:SS` tick from HS-17-05 — segments are flashes that revert to it.
 - Speaker attribution: include the speaker label (or `{label}` placeholder per `DeviceStatusEmitter._render`) when available: `Karol: hello world`. Truncate the COMBINED string to 30 chars.
@@ -35,7 +35,7 @@ This is the killer feature surfaced 2026-05-10 alongside HS-17-07: turn the devi
 ## Acceptance Criteria
 
 - [x] `web_runtime.py:_on_meeting_segment` extended with a per-segment LCD push via the new `push_segment_to_devices` helper. No changes to `meeting_session.py` (the segment loop already calls `on_segment` for every finalized segment across all three transcription paths — mic, system, device-audio — so the single hook in `web_runtime` catches all).
-- [x] Truncation at 30 chars + `…` via new `truncate_for_lcd(text, max_len=30)` in `device_status.py`. Reusable by HS-17-07 + HS-17-09 + HS-17-12 etc.
+- [x] Truncation via new `truncate_for_lcd(text, max_len=LCD_TEXT_MAX_CHARS)` in `device_status.py`. Current default ceiling is 150 chars; reusable by HS-17-07 + HS-17-09 + HS-17-12 etc.
 - [x] Speaker label resolved via `segment.speaker` (TranscriptSegment field — `mic_label` / `remote_label` / device's resolved label per the meeting_session code). Falls back to `"?"` when speaker is None/empty.
 - [x] Unit tests: 19 cases in `tests/unit/test_device_status_helpers.py` covering `truncate_for_lcd` (parametrized over edges: empty, exact-max, exceed, short-max, max=0 fallback, None) + `push_segment_to_devices` (default ttl, truncation, missing speaker, empty text, no-devices no-op, falsy-id filter, multi-device, custom ttl, real-emitter integration). Suite regression on device-related tests: 66/66 passing.
 - [x] `docs/DEVICE_PROTOCOL.md` updated with the per-segment row + cadence note.

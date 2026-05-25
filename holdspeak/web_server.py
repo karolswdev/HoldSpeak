@@ -373,6 +373,8 @@ class MeetingWebServer:
         on_device_voice_cancel: Optional[Callable[[str], None]] = None,
         device_status_emitter: Optional["DeviceStatusEmitter"] = None,
         on_device_event: Optional[Callable[[str, str, Optional[float]], None]] = None,
+        on_device_health: Optional[Callable[[Any], None]] = None,
+        on_device_query: Optional[Callable[[str, str, Optional[float]], Optional[dict[str, Any]]]] = None,
         host: str = "127.0.0.1",
     ) -> None:
         if _IMPORT_ERROR is not None:
@@ -431,6 +433,8 @@ class MeetingWebServer:
         self.on_device_event: Optional[Callable[[str, str, Optional[float]], None]] = (
             on_device_event
         )
+        self.on_device_health = on_device_health
+        self.on_device_query = on_device_query
         self.host = host
 
         self.port: Optional[int] = None
@@ -545,6 +549,8 @@ class MeetingWebServer:
             on_voice_cancel=self.on_device_voice_cancel,
             status_emitter=self.device_status_emitter,
             on_event=self.on_device_event,
+            on_device_health=self.on_device_health,
+            on_device_query=self.on_device_query,
         )
 
         @app.on_event("startup")
@@ -598,6 +604,16 @@ class MeetingWebServer:
         @app.get("/health")
         async def health() -> Any:
             return JSONResponse({"status": "ok"})
+
+        @app.get("/api/devices/health")
+        async def api_devices_health() -> Any:
+            from .meeting_session import _device_descriptor_to_dict
+
+            devices = [
+                _device_descriptor_to_dict(descriptor)
+                for descriptor in self.device_registry.active()
+            ]
+            return JSONResponse({"devices": devices})
 
         @app.get("/api/state")
         async def api_state() -> Any:
@@ -2443,6 +2459,31 @@ class MeetingWebServer:
                         status_code=400,
                     )
                 pipeline_data["max_total_latency_ms"] = max_lat
+                target_override = str(pipeline_data.get(
+                    "target_profile_override",
+                    current.dictation.pipeline.target_profile_override,
+                )).strip().lower() or "auto"
+                allowed_target_overrides = {
+                    "auto",
+                    "claude_code",
+                    "codex_cli",
+                    "terminal_shell",
+                    "browser",
+                    "editor",
+                    "chat",
+                }
+                if target_override not in allowed_target_overrides:
+                    return JSONResponse(
+                        {
+                            "success": False,
+                            "error": (
+                                "dictation.pipeline.target_profile_override must be one of: "
+                                + ", ".join(sorted(allowed_target_overrides))
+                            ),
+                        },
+                        status_code=400,
+                    )
+                pipeline_data["target_profile_override"] = target_override
 
                 backend = str(runtime_data.get(
                     "backend", current.dictation.runtime.backend
@@ -4011,6 +4052,64 @@ class MeetingWebServer:
                 }
             )
 
+        project_doc_suggestions: dict[str, dict[str, str]] = {}
+
+        def _project_suggestion_key(project: dict[str, Any]) -> str:
+            return str(Path(project["root"]).resolve())
+
+        def _extract_project_doc_suggestion(stages: list[dict[str, Any]]) -> dict[str, str] | None:
+            from .project_doc_suggestions import validate_project_doc_suggestion_payload
+
+            for stage in stages:
+                metadata = stage.get("metadata") if isinstance(stage, dict) else None
+                raw = metadata.get("project_doc_suggestion") if isinstance(metadata, dict) else None
+                if not isinstance(raw, dict):
+                    continue
+                try:
+                    return validate_project_doc_suggestion_payload(
+                        target_path=str(raw.get("target_path") or ""),
+                        rationale=str(raw.get("rationale") or ""),
+                        content=str(raw.get("content") or ""),
+                    ).to_dict()
+                except ValueError:
+                    continue
+            return None
+
+        def _store_project_doc_suggestion(
+            project: dict[str, Any] | None,
+            stages: list[dict[str, Any]],
+        ) -> None:
+            if not project:
+                return
+            suggestion = _extract_project_doc_suggestion(stages)
+            if suggestion is not None:
+                project_doc_suggestions[_project_suggestion_key(project)] = suggestion
+            else:
+                project_doc_suggestions.pop(_project_suggestion_key(project), None)
+
+        def _validate_project_doc_suggestion_body(payload: dict[str, Any]) -> Any:
+            from .project_doc_suggestions import validate_project_doc_suggestion_payload
+
+            raw = payload.get("suggestion") if isinstance(payload.get("suggestion"), dict) else payload
+            if not isinstance(raw, dict):
+                raise ValueError("request body must include a suggestion object")
+            return validate_project_doc_suggestion_payload(
+                target_path=str(raw.get("target_path") or ""),
+                rationale=str(raw.get("rationale") or ""),
+                content=str(raw.get("content") or ""),
+            )
+
+        def _write_project_doc_suggestion(root: Path, suggestion: Any) -> Path:
+            target = (root / suggestion.target_path).resolve()
+            resolved_root = root.resolve()
+            if resolved_root not in target.parents:
+                raise ValueError("target_path must stay inside the project root")
+            target.parent.mkdir(parents=True, exist_ok=True)
+            tmp = target.with_suffix(target.suffix + ".tmp")
+            tmp.write_text(suggestion.content, encoding="utf-8")
+            os.replace(tmp, target)
+            return target
+
         def _project_hs_payload(project: dict[str, Any]) -> dict[str, Any]:
             from .agent_context import (
                 DEFAULT_CONTEXT_HARD_FILE_MAX_BYTES,
@@ -4106,6 +4205,67 @@ class MeetingWebServer:
                 except Exception as exc:
                     log.error(f"on_dictation_config_changed failed: {exc}")
             return JSONResponse(_project_hs_payload(redetected))
+
+        @app.get("/api/dictation/project-doc-suggestion")
+        async def api_dictation_project_doc_suggestion_get(
+            project_root: Optional[str] = None,
+        ) -> Any:
+            try:
+                project = _resolve_project_context(project_root)
+            except ValueError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=400 if project_root else 404)
+            return JSONResponse(
+                {
+                    "detected": dict(project),
+                    "suggestion": project_doc_suggestions.get(_project_suggestion_key(project)),
+                }
+            )
+
+        @app.post("/api/dictation/project-doc-suggestion/apply")
+        async def api_dictation_project_doc_suggestion_apply(
+            payload: dict[str, Any],
+            project_root: Optional[str] = None,
+        ) -> Any:
+            try:
+                project = _resolve_project_context(project_root)
+            except ValueError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=400 if project_root else 404)
+            try:
+                suggestion = _validate_project_doc_suggestion_body(payload if isinstance(payload, dict) else {})
+                target = _write_project_doc_suggestion(Path(project["root"]), suggestion)
+            except ValueError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=400)
+            project_doc_suggestions.pop(_project_suggestion_key(project), None)
+            if self.on_dictation_config_changed is not None:
+                try:
+                    self.on_dictation_config_changed()
+                except Exception as exc:
+                    log.error(f"on_dictation_config_changed failed: {exc}")
+            return JSONResponse(
+                {
+                    "detected": dict(project),
+                    "applied": True,
+                    "path": str(target),
+                    "suggestion": suggestion.to_dict(),
+                }
+            )
+
+        @app.post("/api/dictation/project-doc-suggestion/dismiss")
+        async def api_dictation_project_doc_suggestion_dismiss(
+            project_root: Optional[str] = None,
+        ) -> Any:
+            try:
+                project = _resolve_project_context(project_root)
+            except ValueError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=400 if project_root else 404)
+            removed = project_doc_suggestions.pop(_project_suggestion_key(project), None)
+            return JSONResponse(
+                {
+                    "detected": dict(project),
+                    "dismissed": removed is not None,
+                    "suggestion": None,
+                }
+            )
 
         def _read_blocks_document(path: Path) -> tuple[dict[str, Any], bool]:
             """Read `path` as a raw YAML mapping; return empty default if missing."""
@@ -4248,7 +4408,9 @@ class MeetingWebServer:
             }
 
         def _serialize_stage_result(result: Any) -> dict[str, Any]:
-            return {
+            from .dictation_telemetry import summarize_stage
+
+            payload = {
                 "stage_id": str(getattr(result, "stage_id", "")),
                 "elapsed_ms": float(getattr(result, "elapsed_ms", 0.0)),
                 "intent": _serialize_intent(getattr(result, "intent", None)),
@@ -4256,6 +4418,8 @@ class MeetingWebServer:
                 "metadata": dict(getattr(result, "metadata", {}) or {}),
                 "text": str(getattr(result, "text", "")),
             }
+            payload["telemetry"] = summarize_stage(payload)
+            return payload
 
         def _run_dictation_dry_run_text(
             text: str,
@@ -4264,9 +4428,10 @@ class MeetingWebServer:
         ) -> dict[str, Any]:
             """Execute the browser dry-run path for already-validated text."""
             from .config import Config
+            from .dictation_telemetry import summarize_dry_run
             from .plugins.dictation.assembly import build_pipeline
             from .plugins.dictation.contracts import Utterance
-            from .target_profile import collect_active_target_hints, detect_target_profile
+            from .target_profile import collect_active_target_hints, detect_target_profile_with_override
 
             cfg = Config.load().dictation
             try:
@@ -4278,6 +4443,7 @@ class MeetingWebServer:
             project_root = Path(project["root"]) if project else None
 
             if not cfg.pipeline.enabled:
+                warnings = ["dictation pipeline disabled"]
                 return {
                     "project": dict(project) if project else None,
                     "runtime_status": "disabled",
@@ -4286,7 +4452,15 @@ class MeetingWebServer:
                     "stages": [],
                     "final_text": text,
                     "total_elapsed_ms": 0.0,
-                    "warnings": ["dictation pipeline disabled"],
+                    "warnings": warnings,
+                    "telemetry": summarize_dry_run(
+                        runtime_status="disabled",
+                        runtime_detail="dictation pipeline disabled (opt-in)",
+                        stages=[],
+                        warnings=warnings,
+                        total_elapsed_ms=0.0,
+                        max_total_latency_ms=cfg.pipeline.max_total_latency_ms,
+                    ),
                 }
 
             result = build_pipeline(
@@ -4294,7 +4468,10 @@ class MeetingWebServer:
                 project_root=project_root,
                 global_blocks_path=_GLOBAL_BLOCKS_PATH,
             )
-            target_profile = detect_target_profile(target_hints or collect_active_target_hints())
+            target_profile = detect_target_profile_with_override(
+                target_hints or collect_active_target_hints(),
+                cfg.pipeline.target_profile_override,
+            )
             run = result.pipeline.run(
                 Utterance(
                     raw_text=text,
@@ -4304,16 +4481,27 @@ class MeetingWebServer:
                     activity={"target": target_profile.to_dict()},
                 )
             )
+            stages = [_serialize_stage_result(sr) for sr in run.stage_results]
+            _store_project_doc_suggestion(project, stages)
+            warnings = list(run.warnings)
             return {
                 "project": dict(project) if project else None,
                 "target": target_profile.to_dict(),
                 "runtime_status": result.runtime_status,
                 "runtime_detail": result.runtime_detail,
                 "blocks_count": len(result.blocks.blocks),
-                "stages": [_serialize_stage_result(sr) for sr in run.stage_results],
+                "stages": stages,
                 "final_text": run.final_text,
                 "total_elapsed_ms": float(run.total_elapsed_ms),
-                "warnings": list(run.warnings),
+                "warnings": warnings,
+                "telemetry": summarize_dry_run(
+                    runtime_status=result.runtime_status,
+                    runtime_detail=result.runtime_detail,
+                    stages=stages,
+                    warnings=warnings,
+                    total_elapsed_ms=float(run.total_elapsed_ms),
+                    max_total_latency_ms=cfg.pipeline.max_total_latency_ms,
+                ),
             }
 
         def _unique_block_id(base_id: str, document: dict[str, Any]) -> str:
@@ -4377,11 +4565,12 @@ class MeetingWebServer:
             )
 
         def _runtime_readiness(cfg: Any) -> dict[str, Any]:
+            from .dictation_telemetry import summarize_readiness_telemetry
             from .plugins.dictation import runtime as runtime_module
             from .plugins.dictation.runtime_counters import get_counters, get_session_status
 
             if not cfg.pipeline.enabled:
-                return {
+                payload = {
                     "status": "disabled",
                     "requested_backend": cfg.runtime.backend,
                     "resolved_backend": None,
@@ -4391,13 +4580,18 @@ class MeetingWebServer:
                     "counters": get_counters(),
                     "session": get_session_status(),
                 }
+                payload["telemetry"] = summarize_readiness_telemetry(
+                    runtime_payload=payload,
+                    max_total_latency_ms=cfg.pipeline.max_total_latency_ms,
+                )
+                return payload
 
             try:
                 resolved_backend, reason = runtime_module.resolve_backend(cfg.runtime.backend)
             except runtime_module.RuntimeUnavailableError as exc:
                 from .plugins.dictation.guidance import runtime_guidance
 
-                return {
+                payload = {
                     "status": "unavailable",
                     "requested_backend": cfg.runtime.backend,
                     "resolved_backend": None,
@@ -4411,11 +4605,16 @@ class MeetingWebServer:
                     "counters": get_counters(),
                     "session": get_session_status(),
                 }
+                payload["telemetry"] = summarize_readiness_telemetry(
+                    runtime_payload=payload,
+                    max_total_latency_ms=cfg.pipeline.max_total_latency_ms,
+                )
+                return payload
 
             if resolved_backend == "openai_compatible":
                 from .plugins.dictation.guidance import runtime_guidance
 
-                return {
+                payload = {
                     "status": "available",
                     "requested_backend": cfg.runtime.backend,
                     "resolved_backend": resolved_backend,
@@ -4433,6 +4632,11 @@ class MeetingWebServer:
                     "counters": get_counters(),
                     "session": get_session_status(),
                 }
+                payload["telemetry"] = summarize_readiness_telemetry(
+                    runtime_payload=payload,
+                    max_total_latency_ms=cfg.pipeline.max_total_latency_ms,
+                )
+                return payload
 
             model_path = Path(
                 cfg.runtime.mlx_model
@@ -4450,7 +4654,7 @@ class MeetingWebServer:
                     resolved_backend=resolved_backend,
                     model_path=model_path,
                 )
-            return {
+            payload = {
                 "status": "available" if model_exists else "missing_model",
                 "requested_backend": cfg.runtime.backend,
                 "resolved_backend": resolved_backend,
@@ -4461,6 +4665,11 @@ class MeetingWebServer:
                 "counters": get_counters(),
                 "session": get_session_status(),
             }
+            payload["telemetry"] = summarize_readiness_telemetry(
+                runtime_payload=payload,
+                max_total_latency_ms=cfg.pipeline.max_total_latency_ms,
+            )
+            return payload
 
         @app.get("/api/dictation/readiness")
         async def api_dictation_readiness(project_root: Optional[str] = None) -> Any:
@@ -4468,7 +4677,7 @@ class MeetingWebServer:
             from .agent_context import get_recent_agent_session
             from .config import Config
             from .plugins.dictation.project_kb import ProjectKBError, kb_path_for, read_project_kb
-            from .target_profile import detect_active_target_profile, detect_target_profile
+            from .target_profile import detect_active_target_profile, detect_target_profile_with_override
 
             cfg = Config.load().dictation
             warnings: list[dict[str, Any]] = []
@@ -4523,9 +4732,14 @@ class MeetingWebServer:
 
             runtime_payload = _runtime_readiness(cfg)
             try:
-                target_payload = detect_active_target_profile().to_dict()
+                target_payload = detect_active_target_profile(
+                    cfg.pipeline.target_profile_override
+                ).to_dict()
             except Exception:
-                target_payload = detect_target_profile({}).to_dict()
+                target_payload = detect_target_profile_with_override(
+                    {},
+                    cfg.pipeline.target_profile_override,
+                ).to_dict()
             agent_hooks_payload: dict[str, Any] = {}
             for agent in ("claude", "codex"):
                 latest = get_recent_agent_session(agent=agent, max_age_seconds=7 * 24 * 60 * 60)
@@ -4624,6 +4838,7 @@ class MeetingWebServer:
                     },
                     "project_kb": kb_payload,
                     "runtime": runtime_payload,
+                    "telemetry": runtime_payload.get("telemetry"),
                     "target": target_payload,
                     "agent_hooks": agent_hooks_payload,
                     "warnings": warnings,

@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
-from holdspeak.target_profile import detect_target_profile
+import pytest
+
+from holdspeak.target_profile import (
+    detect_target_profile,
+    detect_target_profile_with_override,
+    normalize_target_profile_override,
+)
 
 
 def test_detects_codex_cli_from_terminal_title() -> None:
@@ -60,3 +66,29 @@ def test_unknown_when_no_hints() -> None:
 
     assert profile.id == "unknown"
     assert profile.confidence == 0.0
+
+
+def test_manual_override_wins_over_hints() -> None:
+    profile = detect_target_profile_with_override(
+        {"app_name": "Firefox", "window_title": "Issue comment"},
+        "codex_cli",
+    )
+
+    assert profile.id == "codex_cli"
+    assert profile.source == "override"
+    assert profile.confidence == 1.0
+
+
+def test_auto_override_uses_detection() -> None:
+    profile = detect_target_profile_with_override(
+        {"app_name": "Firefox", "window_title": "Issue comment"},
+        "auto",
+    )
+
+    assert profile.id == "browser"
+    assert profile.source == "hints"
+
+
+def test_rejects_unknown_manual_override() -> None:
+    with pytest.raises(ValueError, match="target_profile_override"):
+        normalize_target_profile_override("spreadsheet")

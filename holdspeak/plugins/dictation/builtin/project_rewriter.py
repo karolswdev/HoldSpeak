@@ -13,6 +13,7 @@ import time
 from collections.abc import Callable
 from typing import Any
 
+from holdspeak.project_doc_suggestions import ProjectDocSuggestion, suggest_project_doc_update
 from holdspeak.plugins.dictation.contracts import StageResult, Utterance
 
 _CODE_FENCE_RE = re.compile(r"^\s*```(?:text|markdown|md)?\s*(.*?)\s*```\s*$", re.DOTALL)
@@ -93,11 +94,13 @@ class ProjectRewriter:
         *,
         max_tokens: int = 512,
         temperature: float = 0.15,
+        suggest_project_docs: bool = True,
         prompt_builder: Callable[[Utterance, str, str], str] | None = None,
     ) -> None:
         self._runtime = runtime
         self._max_tokens = max_tokens
         self._temperature = temperature
+        self._suggest_project_docs = suggest_project_docs
         self._prompt_builder = prompt_builder or _default_prompt_builder
 
     def run(self, utt: Utterance, prior: list[StageResult]) -> StageResult:
@@ -149,17 +152,25 @@ class ProjectRewriter:
                 utt=utt,
                 warnings=["runtime rewrite exceeded length budget; preserving input"],
             )
+        suggestion, suggestion_status = self._suggestion_for(utt, rewritten, hs_context)
+        output_text = (
+            f"{rewritten}\n\n---\n{suggestion.to_injected_markdown()}"
+            if suggestion is not None
+            else rewritten
+        )
         return StageResult(
             stage_id=self.id,
-            text=rewritten,
+            text=output_text,
             intent=None,
             elapsed_ms=(time.perf_counter() - start) * 1000.0,
             warnings=[],
             metadata={
                 "reason": "rewritten",
-                "changed": rewritten != text,
+                "changed": output_text != text,
                 "context_dir": _context_dir(utt),
                 "target_profile": _target_profile(utt),
+                "project_doc_suggestion": suggestion.to_dict() if suggestion else None,
+                "project_doc_suggestion_status": suggestion_status,
             },
         )
 
@@ -183,8 +194,33 @@ class ProjectRewriter:
                 "changed": False,
                 "context_dir": "",
                 "target_profile": _target_profile(utt),
+                "project_doc_suggestion": None,
+                "project_doc_suggestion_status": "not_applicable",
             },
         )
+
+    def _suggestion_for(
+        self,
+        utt: Utterance,
+        rewritten: str,
+        hs_context: str,
+    ) -> tuple[ProjectDocSuggestion | None, str]:
+        if not self._suggest_project_docs:
+            return None, "disabled"
+        target = _target_profile(utt)
+        if target.get("id") not in {"codex_cli", "claude_code"}:
+            return None, "skipped_target"
+        project = utt.project or {}
+        project_name = str(project.get("name") or "current project") if isinstance(project, dict) else "current project"
+        suggestion = suggest_project_doc_update(
+            self._runtime,
+            source_text=rewritten,
+            project_name=project_name,
+            target_profile=target,
+            hs_context=hs_context,
+            agent_context=_agent_summary_context(utt) or _agent_reply_context(utt),
+        )
+        return suggestion, "suggested" if suggestion is not None else "no_suggestion"
 
 
 def _context_dir(utt: Utterance) -> str:

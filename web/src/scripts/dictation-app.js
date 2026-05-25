@@ -376,6 +376,7 @@ const hsState = {
   skipped: [],
   warnings: [],
   writePolicy: {},
+  suggestion: null,
   selected: "instructions.md",
 };
 
@@ -430,6 +431,10 @@ function renderReadiness(data) {
   const blocks = data.blocks || {};
   const kb = data.project_kb || {};
   const runtime = data.runtime || {};
+  const telemetry = data.telemetry || runtime.telemetry || {};
+  const telemetryCounters = telemetry.counters || runtime.counters || {};
+  const telemetryLatency = telemetry.latency || {};
+  const telemetryFallbacks = telemetry.fallbacks || [];
   const target = data.target || {};
   const agentHooks = data.agent_hooks || {};
   const freshHooks = Object.entries(agentHooks)
@@ -466,6 +471,12 @@ function renderReadiness(data) {
       runtime.status || "unknown",
       runtime.status === "available" ? "ok" : (runtime.status === "disabled" ? "warn" : "error"),
       runtime.resolved_backend || runtime.requested_backend || "not resolved"
+    ),
+    readinessCard(
+      "Telemetry",
+      telemetryFallbacks.length ? `${telemetryFallbacks.length} fallback` : `${telemetryCounters.classify_calls ?? 0} classify calls`,
+      telemetryFallbacks.length ? "warn" : "ok",
+      `budget ${telemetryLatency.max_total_latency_ms || config.max_total_latency_ms || "?"} ms · successes ${telemetryCounters.classify_successes ?? 0}`
     ),
     readinessCard(
       "Agent hooks",
@@ -729,11 +740,14 @@ async function loadHSContext() {
     renderHSMeta(data);
     renderHSFileList();
     renderHSEditor();
+    await loadProjectDocSuggestion();
   } catch (e) {
     banner.classList.add(e.status === 404 ? "warn" : "error");
     banner.textContent = e.message;
     document.getElementById("hs-file-list").innerHTML = "";
     document.getElementById("hs-editor").value = "";
+    hsState.suggestion = null;
+    renderProjectDocSuggestion();
   }
 }
 
@@ -759,6 +773,8 @@ function renderHSMeta(data) {
   const warnings = (data.warnings || []).length
     ? `<div class="error-box">${(data.warnings || []).map(escapeHtml).join("<br>")}</div>`
     : "";
+  const telemetry = data.telemetry || {};
+  const telemetryHtml = renderDryTelemetry(telemetry);
   const policyText = policy.flat
     ? `<div class="rt-counter-note">${escapeHtml(policy.canonical || "")} ${escapeHtml(policy.flat || "")}</div>`
     : "";
@@ -845,6 +861,73 @@ function resetHSContext() {
   renderHSEditor();
 }
 
+async function loadProjectDocSuggestion() {
+  try {
+    const data = await api("GET", `/api/dictation/project-doc-suggestion${projectRootParam("?")}`);
+    hsState.suggestion = data.suggestion || null;
+  } catch (_e) {
+    hsState.suggestion = null;
+  }
+  renderProjectDocSuggestion();
+}
+
+function renderProjectDocSuggestion() {
+  const panel = document.getElementById("hs-suggestion-panel");
+  if (!panel) return;
+  const suggestion = hsState.suggestion;
+  panel.hidden = !suggestion;
+  const msg = document.getElementById("hs-suggestion-msg");
+  if (msg) msg.innerHTML = "";
+  if (!suggestion) return;
+  document.getElementById("hs-suggestion-path").value = suggestion.target_path || "";
+  document.getElementById("hs-suggestion-rationale").textContent =
+    suggestion.rationale ? `Rationale: ${suggestion.rationale}` : "Rationale unavailable.";
+  document.getElementById("hs-suggestion-content").value = suggestion.content || "";
+}
+
+function extractProjectDocSuggestion(data) {
+  const stages = data && Array.isArray(data.stages) ? data.stages : [];
+  for (const stage of stages) {
+    const suggestion = stage && stage.metadata && stage.metadata.project_doc_suggestion;
+    if (suggestion && typeof suggestion === "object") return suggestion;
+  }
+  return null;
+}
+
+async function applyProjectDocSuggestion() {
+  const msg = document.getElementById("hs-suggestion-msg");
+  msg.innerHTML = "";
+  const suggestion = {
+    target_path: document.getElementById("hs-suggestion-path").value.trim(),
+    rationale: (hsState.suggestion && hsState.suggestion.rationale) || "Accepted from HoldSpeak suggestion review.",
+    content: document.getElementById("hs-suggestion-content").value,
+  };
+  try {
+    const data = await api("POST", `/api/dictation/project-doc-suggestion/apply${projectRootParam("?")}`, {
+      suggestion,
+    });
+    hsState.suggestion = null;
+    renderProjectDocSuggestion();
+    await loadHSContext();
+    document.getElementById("hs-msg").innerHTML =
+      `<div class="ok-box">Applied ${escapeHtml(data.suggestion.target_path)}.</div>`;
+  } catch (e) {
+    msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function dismissProjectDocSuggestion() {
+  const msg = document.getElementById("hs-suggestion-msg");
+  msg.innerHTML = "";
+  try {
+    await api("POST", `/api/dictation/project-doc-suggestion/dismiss${projectRootParam("?")}`);
+    hsState.suggestion = null;
+    renderProjectDocSuggestion();
+  } catch (e) {
+    msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+  }
+}
+
 // ── Runtime config editor ───────────────────────────────────────────
 const rtState = { last: null };
 
@@ -876,12 +959,14 @@ function renderRuntime(data, readiness = null) {
 
   document.getElementById("rt-meta-banner").innerHTML =
     `pipeline: <strong>${pipeline.enabled ? "enabled" : "disabled"}</strong>  ·  ` +
+    `target: <strong>${escapeHtml(pipeline.target_profile_override || "auto")}</strong>  ·  ` +
     `backend: <strong>${escapeHtml(runtime.backend || "auto")}</strong>  ·  ` +
     `cold-start cap: <strong>${(pipeline.max_total_latency_ms || 0) * 5} ms</strong>`;
 
   document.getElementById("rt-enabled").checked = !!pipeline.enabled;
   document.getElementById("rt-stage-rewriter").checked =
     Array.isArray(pipeline.stages) && pipeline.stages.includes("project-rewriter");
+  document.getElementById("rt-target-profile").value = pipeline.target_profile_override || "auto";
   document.getElementById("rt-backend").value = runtime.backend || "auto";
   document.getElementById("rt-mlx-model").value = runtime.mlx_model || "";
   document.getElementById("rt-llama-path").value = runtime.llama_cpp_model_path || "";
@@ -939,6 +1024,7 @@ async function saveRuntime(options = {}) {
           "kb-enricher",
         ],
         max_total_latency_ms: Number(document.getElementById("rt-latency").value),
+        target_profile_override: document.getElementById("rt-target-profile").value,
       },
       runtime: {
         backend: document.getElementById("rt-backend").value,
@@ -996,6 +1082,14 @@ function renderDryRun(data) {
   const meta = document.getElementById("dry-meta");
   const finalHost = document.getElementById("dry-final");
   const trace = document.getElementById("dry-trace");
+  const suggestion = extractProjectDocSuggestion(data);
+  if (suggestion) {
+    hsState.suggestion = suggestion;
+    renderProjectDocSuggestion();
+  } else if (data && data.project) {
+    hsState.suggestion = null;
+    renderProjectDocSuggestion();
+  }
   meta.classList.remove("warn", "error");
   if (data.runtime_status !== "loaded") meta.classList.add(data.runtime_status === "disabled" ? "warn" : "error");
   const project = data.project
@@ -1035,6 +1129,7 @@ function renderDryRun(data) {
         </button>
       </div>
     </figure>
+    ${telemetryHtml}
     ${warnings}
   `;
 
@@ -1054,6 +1149,24 @@ function escapeAttr(value) {
     .replace(/>/g, "&gt;");
 }
 
+function renderDryTelemetry(telemetry) {
+  if (!telemetry || !telemetry.status) return "";
+  const latency = telemetry.latency || {};
+  const fallbacks = telemetry.fallbacks || [];
+  const fallbackText = fallbacks.length
+    ? fallbacks.map((f) => `${f.stage_id || "runtime"}: ${f.category || f.reason}`).join(" · ")
+    : "none";
+  return `
+    <div class="meta-banner ${telemetry.status === "ok" ? "" : "warn"}">
+      <strong>Telemetry:</strong>
+      ${escapeHtml(telemetry.summary || telemetry.status)}
+      · total ${Number(latency.total_elapsed_ms || 0).toFixed(2)} ms
+      ${latency.max_total_latency_ms ? ` / budget ${Number(latency.max_total_latency_ms).toFixed(0)} ms` : ""}
+      · fallback ${escapeHtml(fallbackText)}
+    </div>
+  `;
+}
+
 function renderDryStage(stage) {
   const intent = stage.intent
     ? `matched=${stage.intent.matched} block=${escapeHtml(stage.intent.block_id || "—")} confidence=${Number(stage.intent.confidence || 0).toFixed(2)}`
@@ -1063,6 +1176,10 @@ function renderDryStage(stage) {
     : "";
   const metadata = stage.metadata && Object.keys(stage.metadata).length
     ? `<pre class="trace-metadata">${escapeHtml(JSON.stringify(stage.metadata, null, 2))}</pre>`
+    : "";
+  const telemetry = stage.telemetry || {};
+  const telemetryLine = telemetry.reason
+    ? `<p class="trace-intent">status=${escapeHtml(telemetry.status || "unknown")} reason=${escapeHtml(telemetry.reason)}${telemetry.fallback ? ` fallback=${escapeHtml(telemetry.fallback_category || "yes")}` : ""}</p>`
     : "";
   // Stage text rendered through CommandPreview. Stages with warnings
   // surface in danger tone so failure points are scannable down the
@@ -1077,6 +1194,7 @@ function renderDryStage(stage) {
         <span class="trace-stage-elapsed">${Number(stage.elapsed_ms || 0).toFixed(2)} ms</span>
       </header>
       <p class="trace-intent">${intent}</p>
+      ${telemetryLine}
       ${warnings}
       ${metadata}
       <figure class="cmd cmd--${tone}" aria-label="Stage ${escapeAttr(stage.stage_id)} output">
@@ -1394,9 +1512,14 @@ document.getElementById("kb-btn-reset").addEventListener("click", kbReset);
 document.getElementById("kb-btn-delete").addEventListener("click", kbDelete);
 document.getElementById("hs-btn-save").addEventListener("click", saveHSContext);
 document.getElementById("hs-btn-reset").addEventListener("click", resetHSContext);
+document.getElementById("hs-suggestion-apply").addEventListener("click", applyProjectDocSuggestion);
+document.getElementById("hs-suggestion-dismiss").addEventListener("click", dismissProjectDocSuggestion);
 document.getElementById("rt-btn-save").addEventListener("click", saveRuntime);
 document.getElementById("rt-btn-reset").addEventListener("click", () => rtState.last && renderRuntime(rtState.last));
 document.getElementById("rt-btn-refresh").addEventListener("click", loadRuntime);
+document.getElementById("rt-target-auto").addEventListener("click", () => {
+  document.getElementById("rt-target-profile").value = "auto";
+});
 document.getElementById("dry-btn-run").addEventListener("click", runDryRun);
 document.getElementById("dry-btn-clear").addEventListener("click", clearDryRun);
 document.getElementById("project-root-apply").addEventListener("click", applyProjectRootOverride);

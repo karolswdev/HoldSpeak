@@ -13,14 +13,14 @@ HS-14-07 spec'd `"Recording 00:00 updated each minute"` as one of the canonical 
 
 Symptom: AIPI-Lite LCD shows `Recording 00:00` for the entire meeting duration, never updating. User can't tell from the device whether they're 30s or 30min into a meeting — UX-confusing.
 
-User feedback 2026-05-10: "Shouldn't we refresh the recording status every 5 seconds? Or would that overload something about our process?" Analysis: 5s cadence = 12 calls/min, each ~10-50ms LAN roundtrip via cached service handle = trivially within budget. **5s is safe.**
+User feedback 2026-05-10: "Shouldn't we refresh the recording status every 5 seconds? Or would that overload something about our process?" Analysis: 5s cadence = 12 calls/min, each ~10-50ms LAN roundtrip via cached service handle = trivially within budget. **5s is safe.** Follow-up device UX work later moved the default to 1s after LCD flash content got its own device-side zone.
 
 ## Scope
 
 ### In
 
 - Implement (or fix) the periodic Recording-tick emitter in HoldSpeak's status-push code path (`holdspeak/device_audio_ws.py` or wherever the per-meeting-event status pushes are wired).
-- **Cadence: every 5 seconds** (tighter than HS-14-07's original spec). Gives user a usable feel for meeting flow without overloading the API.
+- **Cadence: current default every 1 second** (initially shipped at 5 seconds; tightened after AIPI-side LCD layout changes). Gives user a usable live timer without overloading the API.
 - Format: `Recording M:SS` (e.g., `Recording 02:16`) to fit the LCD's ~24-char width.
 - Ticker starts when a meeting starts with attached device(s); stops on meeting stop (handed off to HS-14-07's existing `Saving meeting...` status).
 - Update `docs/DEVICE_PROTOCOL.md` to reflect the 5s cadence (was "each minute").
@@ -33,7 +33,7 @@ User feedback 2026-05-10: "Shouldn't we refresh the recording status every 5 sec
 
 ## Acceptance Criteria
 
-- [x] Periodic Recording-tick fires every 5 seconds during an active meeting with at least one attached device — `holdspeak/device_recording_tick.py` (`RecordingTicker` class with daemon thread, `next_tick_at += interval` cadence alignment so it doesn't drift).
+- [x] Periodic Recording-tick fires on the configured interval during an active meeting with at least one attached device — `holdspeak/device_recording_tick.py` (`RecordingTicker` class with daemon thread, `next_tick_at += interval` cadence alignment so it doesn't drift). Current default is 1s.
 - [x] Each tick is a status frame with `type: "status", text: "Recording MM:SS", ttl_ms: 0` — verified live, format `Recording 00:05`, `Recording 00:10`, `Recording 00:15`.
 - [x] Ticker stops cleanly on meeting stop — `recording_ticker.stop()` called in `_stop_active_meeting` before the `Saving meeting...` broadcast.
 - [x] Unit tests: 19 cases in `tests/unit/test_device_recording_tick.py` covering format helper (parametrized over 11 elapsed values), lifecycle (start with no devices, stop before start), periodic firing, stop signalling, restart-after-stop, replace-while-running, sender-exception-survival, cadence-alignment-no-drift.
