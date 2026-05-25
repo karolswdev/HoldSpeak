@@ -1,12 +1,14 @@
 # Phase 20 — AIPI Companion
 
-**Status:** in-progress (opened 2026-05-24).
+**Status:** done (opened 2026-05-24, closed 2026-05-24).
 
 Phase 20 turns AIPI-Lite from a remote microphone/LCD into a same-LAN physical companion for HoldSpeak's local work loop. The first product target is coding-agent assistance: Claude/Codex hooks tell HoldSpeak when an agent is waiting, and AIPI can display that state and help the user answer by voice.
 
 ## Where to look first
 
 - `current-phase-status.md` — goal, scope, story table, risks, and pickup order.
+- `final-summary.md` — closed-phase summary and companion UX handoff.
+- `story-03-companion-debug-surface.md` — closed debug surface: `/api/companion/status`.
 - `story-02-aipi-voice-reply.md` — closed voice-reply routing through waiting-agent target context.
 - `story-01-agent-waiting-query.md` — closed first slice: device query access to captured agent-waiting state.
 - `holdspeak/agent_context.py` — local Claude/Codex hook registry.

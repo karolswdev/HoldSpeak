@@ -1,6 +1,6 @@
 # Phase 20 — AIPI Companion
 
-**Last updated:** 2026-05-24 (HS-20-03 closed: companion debug/status surface).
+**Phase closed:** 2026-05-24. See [final-summary.md](./final-summary.md). This file is now frozen per PMO contract §6.
 
 ## Goal
 
@@ -27,7 +27,7 @@ Make AIPI-Lite a physical companion for HoldSpeak's local agent and meeting work
 - [x] AIPI can query whether Claude/Codex is waiting and display the latest captured question.
 - [x] AIPI can initiate a voice reply path that targets the active Claude/Codex profile.
 - [x] HoldSpeak exposes enough debug state to diagnose hook/device companion setup.
-- [ ] Broad focused regression is green at phase close; evidence files capture commands and results.
+- [x] Broad focused regression is green at phase close; evidence files capture commands and results.
 
 ## Story status
 
@@ -36,11 +36,11 @@ Make AIPI-Lite a physical companion for HoldSpeak's local agent and meeting work
 | HS-20-01 | Agent waiting query surface | done | [story-01-agent-waiting-query.md](./story-01-agent-waiting-query.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-20-02 | AIPI voice reply to waiting agent | done | [story-02-aipi-voice-reply.md](./story-02-aipi-voice-reply.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-20-03 | Companion debug surface | done | [story-03-companion-debug-surface.md](./story-03-companion-debug-surface.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-20-04 | Phase exit and companion UX handoff | backlog | — | — |
+| HS-20-04 | Phase exit and companion UX handoff | done | [story-04-phase-exit-companion-ux-handoff.md](./story-04-phase-exit-companion-ux-handoff.md) | [evidence-story-04.md](./evidence-story-04.md) |
 
 ## Where we are
 
-HS-20-01 through HS-20-03 are closed. HoldSpeak now exposes `query:agent_status` and `query:agent_question`, routes device-originated voice typing through waiting-agent target context, and provides `/api/companion/status` for diagnosing device, hook, dictation, and text-insertion readiness. Current pickup moves to HS-20-04: phase exit and companion UX handoff.
+Phase 20 is closed. HoldSpeak now exposes `query:agent_status` and `query:agent_question`, routes device-originated voice typing through waiting-agent target context, and provides `/api/companion/status` for diagnosing device, hook, dictation, and text-insertion readiness. See [final-summary.md](./final-summary.md) for the companion UX handoff.
 
 ## Active risks
 

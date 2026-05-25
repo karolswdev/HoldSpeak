@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-24 (HS-20-02 closed: AIPI voice replies route through waiting-agent target context).
-**Current phase:** [phase-20-aipi-companion](./phase-20-aipi-companion/) — make AIPI-Lite a same-LAN physical companion for HoldSpeak's local agent and meeting workflows.
-**Status:** in-progress.
+**Last updated:** 2026-05-24 (Phase 20 closed: AIPI companion v1 shipped).
+**Current phase:** planning next.
+**Status:** planning.
 
 ## Vision
 
@@ -57,7 +57,7 @@ canon, canon wins.
 | 17 | Device Initiative: device → server upstream frames (`device_health` + `query` w/ `last_segment` case) lighting up AIPI-Lite phase 4's `blocked` bridge stories; minimal web UI rendering for device health. Sibling to HS-14, paired with AIPI-4 in the AIPI-Lite roadmap. | done | [phase-17-device-initiative](./phase-17-device-initiative/) |
 | 18 | Intelligent Typing Copilot: project-aware local intelligent typing with target profiles, Claude/Codex hooks, optional external-agent summarization, `.hs` context conventions, OpenAI-compatible runtimes, and web cockpit support | done | [phase-18-intelligent-typing-copilot](./phase-18-intelligent-typing-copilot/) |
 | 19 | Intelligent Typing Daily-Use Hardening: safe `.hs/.../*.md` project-doc suggestions, telemetry, target-profile overrides, and real endpoint dogfooding | done | [phase-19-intelligent-typing-hardening](./phase-19-intelligent-typing-hardening/) |
-| 20 | AIPI Companion: same-LAN physical companion UX for agent-waiting status, voice replies, gestures, and debug visibility | in-progress | [phase-20-aipi-companion](./phase-20-aipi-companion/) |
+| 20 | AIPI Companion: same-LAN physical companion UX for agent-waiting status, voice replies, gestures, and debug visibility | done | [phase-20-aipi-companion](./phase-20-aipi-companion/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
