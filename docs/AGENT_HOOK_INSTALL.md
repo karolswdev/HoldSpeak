@@ -220,6 +220,45 @@ global target override.
 If the dictation pipeline is disabled or unavailable, AIPI voice typing still
 uses the existing raw transcript insertion path.
 
+## Verify Companion Readiness
+
+With HoldSpeak running, open:
+
+```text
+/api/companion/status
+```
+
+Expected ready shape:
+
+```json
+{
+  "ready_for_agent_reply": true,
+  "blockers": [],
+  "devices": {
+    "count": 1,
+    "query_names": ["agent_question", "agent_status"]
+  },
+  "agent": {
+    "awaiting_response": true
+  },
+  "dictation": {
+    "pipeline_enabled": true
+  },
+  "runtime": {
+    "text_injection_enabled": true
+  }
+}
+```
+
+If setup is incomplete, `ready_for_agent_reply` is `false` and `blockers`
+names the missing piece. Common blockers:
+
+- `no_device_connected`
+- `no_agent_waiting`
+- `dictation_pipeline_disabled`
+- `text_injection_unavailable`
+- `text_injection_status_unknown`
+
 ## Add Project Context
 
 Project context is optional but recommended. In each repo, create:

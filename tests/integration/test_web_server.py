@@ -428,6 +428,120 @@ class TestDeviceHealthEndpoint:
 
 
 @pytest.mark.integration
+class TestCompanionStatusEndpoint:
+    """HS-20-03: companion setup/debug snapshot."""
+
+    def test_companion_status_reports_ready_agent_reply_components(
+        self,
+        monkeypatch,
+        mock_callbacks,
+    ):
+        import holdspeak.agent_context as agent_context_module
+        from holdspeak.agent_context import AgentSession
+        from holdspeak.config import Config
+        from holdspeak.device_audio import DeviceRegistry
+
+        cfg = Config()
+        cfg.dictation.pipeline.enabled = True
+        cfg.dictation.pipeline.stages = ["project-rewriter"]
+        monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg))
+
+        session = AgentSession(
+            agent="codex",
+            session_id="codex-1",
+            cwd="/tmp/HoldSpeak",
+            repo_root="/tmp/HoldSpeak",
+            project_name="HoldSpeak",
+            updated_at="2026-05-24T12:00:00Z",
+            hook_event_name="Stop",
+            last_assistant_text="Should I run the focused tests now?",
+            awaiting_response=True,
+            capture_messages=True,
+        )
+        monkeypatch.setattr(
+            agent_context_module,
+            "get_recent_awaiting_agent_session",
+            lambda **_kwargs: session,
+        )
+
+        registry = DeviceRegistry()
+        registry.register("aipi-1", "Karol")
+        server = MeetingWebServer(
+            on_bookmark=mock_callbacks["on_bookmark"],
+            on_stop=mock_callbacks["on_stop"],
+            get_state=mock_callbacks["get_state"],
+            on_get_status=MagicMock(
+                return_value={
+                    "voice_state": "idle",
+                    "text_injection_enabled": True,
+                    "text_injection_error": None,
+                }
+            ),
+            device_registry=registry,
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        response = client.get("/api/companion/status")
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["ready_for_agent_reply"] is True
+        assert payload["blockers"] == []
+        assert payload["checks"] == {
+            "device_connected": True,
+            "agent_waiting": True,
+            "dictation_pipeline_enabled": True,
+            "text_injection_enabled": True,
+        }
+        assert payload["devices"]["count"] == 1
+        assert payload["devices"]["query_names"] == ["agent_question", "agent_status"]
+        assert payload["agent"]["session"]["agent"] == "codex"
+        assert payload["dictation"]["stages"] == ["project-rewriter"]
+        assert payload["runtime"]["voice_state"] == "idle"
+
+    def test_companion_status_reports_setup_blockers(self, monkeypatch, mock_callbacks):
+        import holdspeak.agent_context as agent_context_module
+        from holdspeak.config import Config
+
+        cfg = Config()
+        monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg))
+        monkeypatch.setattr(
+            agent_context_module,
+            "get_recent_awaiting_agent_session",
+            lambda **_kwargs: None,
+        )
+        server = MeetingWebServer(
+            on_bookmark=mock_callbacks["on_bookmark"],
+            on_stop=mock_callbacks["on_stop"],
+            get_state=mock_callbacks["get_state"],
+            on_get_status=MagicMock(
+                return_value={
+                    "voice_state": "idle",
+                    "text_injection_enabled": False,
+                    "text_injection_error": "backend unavailable",
+                }
+            ),
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        response = client.get("/api/companion/status")
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["ready_for_agent_reply"] is False
+        assert set(payload["blockers"]) == {
+            "no_device_connected",
+            "no_agent_waiting",
+            "dictation_pipeline_disabled",
+            "text_injection_unavailable",
+        }
+        assert payload["runtime"]["text_injection_enabled"] is False
+        assert payload["runtime"]["text_injection_error"] == "backend unavailable"
+
+
+@pytest.mark.integration
 class TestApiStateEndpoint:
     """Tests for GET /api/state endpoint."""
 

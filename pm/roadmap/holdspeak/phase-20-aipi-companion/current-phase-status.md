@@ -1,6 +1,6 @@
 # Phase 20 — AIPI Companion
 
-**Last updated:** 2026-05-24 (HS-20-02 closed: AIPI voice reply uses waiting-agent target context).
+**Last updated:** 2026-05-24 (HS-20-03 closed: companion debug/status surface).
 
 ## Goal
 
@@ -26,7 +26,7 @@ Make AIPI-Lite a physical companion for HoldSpeak's local agent and meeting work
 
 - [x] AIPI can query whether Claude/Codex is waiting and display the latest captured question.
 - [x] AIPI can initiate a voice reply path that targets the active Claude/Codex profile.
-- [ ] HoldSpeak exposes enough debug state to diagnose hook/device companion setup.
+- [x] HoldSpeak exposes enough debug state to diagnose hook/device companion setup.
 - [ ] Broad focused regression is green at phase close; evidence files capture commands and results.
 
 ## Story status
@@ -35,12 +35,12 @@ Make AIPI-Lite a physical companion for HoldSpeak's local agent and meeting work
 |---|---|---|---|---|
 | HS-20-01 | Agent waiting query surface | done | [story-01-agent-waiting-query.md](./story-01-agent-waiting-query.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-20-02 | AIPI voice reply to waiting agent | done | [story-02-aipi-voice-reply.md](./story-02-aipi-voice-reply.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-20-03 | Companion debug surface | backlog | — | — |
+| HS-20-03 | Companion debug surface | done | [story-03-companion-debug-surface.md](./story-03-companion-debug-surface.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-20-04 | Phase exit and companion UX handoff | backlog | — | — |
 
 ## Where we are
 
-HS-20-01 and HS-20-02 are closed. HoldSpeak now exposes `query:agent_status` and `query:agent_question`, and device-originated voice typing captures route through the dictation pipeline with `codex_cli` / `claude_code` target context when a fresh captured agent question is waiting. Current pickup moves to HS-20-03: companion debug surface.
+HS-20-01 through HS-20-03 are closed. HoldSpeak now exposes `query:agent_status` and `query:agent_question`, routes device-originated voice typing through waiting-agent target context, and provides `/api/companion/status` for diagnosing device, hook, dictation, and text-insertion readiness. Current pickup moves to HS-20-04: phase exit and companion UX handoff.
 
 ## Active risks
 

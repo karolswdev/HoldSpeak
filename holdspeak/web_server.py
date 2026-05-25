@@ -644,6 +644,140 @@ class MeetingWebServer:
 
             return JSONResponse(_normalize_runtime_status_payload({}, state))
 
+        @app.get("/api/companion/status")
+        async def api_companion_status() -> Any:
+            """Return one debug snapshot for the AIPI agent companion loop."""
+            from .agent_context import get_recent_awaiting_agent_session
+            from .agent_device import AGENT_QUERY_NAMES
+            from .config import Config
+            from .meeting_session import _device_descriptor_to_dict
+
+            try:
+                state = self.get_state() or {}
+            except Exception as e:
+                log.error(f"get_state failed: {e}")
+                state = {}
+
+            runtime_error: str | None = None
+            if self.on_get_status is not None:
+                try:
+                    raw_payload = self.on_get_status()
+                    if isinstance(raw_payload, dict):
+                        runtime_payload = _normalize_runtime_status_payload(raw_payload, state)
+                    else:
+                        runtime_payload = _normalize_runtime_status_payload(
+                            {"runtime_status": raw_payload},
+                            state,
+                        )
+                except Exception as e:
+                    log.error(f"on_get_status failed: {e}")
+                    runtime_error = str(e)
+                    runtime_payload = _normalize_runtime_status_payload({}, state)
+            else:
+                runtime_payload = _normalize_runtime_status_payload({}, state)
+
+            devices = [
+                _device_descriptor_to_dict(descriptor)
+                for descriptor in self.device_registry.active()
+            ]
+            device_connected = bool(devices)
+
+            agent_error: str | None = None
+            try:
+                session = get_recent_awaiting_agent_session(max_age_seconds=120)
+            except Exception as e:
+                log.error(f"agent companion status failed: {e}")
+                agent_error = str(e)
+                session = None
+            agent_waiting = bool(session and session.awaiting_response)
+
+            dictation_error: str | None = None
+            try:
+                dictation_cfg = Config.load().dictation
+                pipeline_enabled = bool(dictation_cfg.pipeline.enabled)
+                pipeline_stages = list(dictation_cfg.pipeline.stages)
+                target_profile_override = dictation_cfg.pipeline.target_profile_override
+                runtime_backend = dictation_cfg.runtime.backend
+            except Exception as e:
+                log.error(f"dictation config load failed: {e}")
+                dictation_error = str(e)
+                pipeline_enabled = False
+                pipeline_stages = []
+                target_profile_override = None
+                runtime_backend = None
+
+            text_injection_known = "text_injection_enabled" in runtime_payload
+            text_injection_enabled = (
+                bool(runtime_payload.get("text_injection_enabled"))
+                if text_injection_known
+                else None
+            )
+
+            blockers: list[str] = []
+            if not device_connected:
+                blockers.append("no_device_connected")
+            if not agent_waiting:
+                blockers.append("no_agent_waiting")
+            if not pipeline_enabled:
+                blockers.append("dictation_pipeline_disabled")
+            if text_injection_enabled is False:
+                blockers.append("text_injection_unavailable")
+            elif text_injection_enabled is None:
+                blockers.append("text_injection_status_unknown")
+            if agent_error:
+                blockers.append("agent_status_unavailable")
+            if dictation_error:
+                blockers.append("dictation_config_unavailable")
+            if runtime_error:
+                blockers.append("runtime_status_unavailable")
+
+            return JSONResponse(
+                {
+                    "status": "ok",
+                    "ready_for_agent_reply": not blockers,
+                    "blockers": blockers,
+                    "checks": {
+                        "device_connected": device_connected,
+                        "agent_waiting": agent_waiting,
+                        "dictation_pipeline_enabled": pipeline_enabled,
+                        "text_injection_enabled": text_injection_enabled,
+                    },
+                    "devices": {
+                        "connected": device_connected,
+                        "count": len(devices),
+                        "items": devices,
+                        "query_names": sorted(AGENT_QUERY_NAMES),
+                    },
+                    "agent": {
+                        "awaiting_response": agent_waiting,
+                        "session": session.to_dict() if session else None,
+                        "max_age_seconds": 120,
+                        "error": agent_error,
+                    },
+                    "dictation": {
+                        "pipeline_enabled": pipeline_enabled,
+                        "stages": pipeline_stages,
+                        "target_profile_override": target_profile_override,
+                        "runtime_backend": runtime_backend,
+                        "error": dictation_error,
+                    },
+                    "runtime": {
+                        "status": runtime_payload.get("status"),
+                        "mode": runtime_payload.get("mode"),
+                        "meeting_active": runtime_payload.get("meeting_active"),
+                        "meeting_id": runtime_payload.get("meeting_id"),
+                        "voice_state": runtime_payload.get("voice_state"),
+                        "text_injection_enabled": text_injection_enabled,
+                        "text_injection_error": runtime_payload.get("text_injection_error"),
+                        "error": runtime_error,
+                    },
+                    "companion": {
+                        "query_names": sorted(AGENT_QUERY_NAMES),
+                        "voice_reply_max_age_seconds": 120,
+                    },
+                }
+            )
+
         @app.get("/api/intents/control")
         async def api_get_intent_controls() -> Any:
             if self.on_get_intent_controls is None:
