@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-24 (Phase 21 closed: AIPI-Lite unified workflow ready).
-**Current phase:** planning next.
-**Status:** planning.
+**Last updated:** 2026-05-24 (Phase 22 opened: AI PI companion UX).
+**Current phase:** [phase-22-ai-pi-companion-ux](./phase-22-ai-pi-companion-ux/) — make AI PI a deliberate physical companion UX for HoldSpeak.
+**Status:** in-progress.
 
 ## Vision
 
@@ -60,6 +60,7 @@ canon, canon wins.
 | 19 | Intelligent Typing Daily-Use Hardening: safe `.hs/.../*.md` project-doc suggestions, telemetry, target-profile overrides, and real endpoint dogfooding | done | [phase-19-intelligent-typing-hardening](./phase-19-intelligent-typing-hardening/) |
 | 20 | AIPI Companion: same-LAN physical companion UX for agent-waiting status, voice replies, gestures, and debug visibility | done | [phase-20-aipi-companion](./phase-20-aipi-companion/) |
 | 21 | AIPI-Lite First-Class Integration: import firmware and bridge source into HoldSpeak and define the unified developer workflow | done | [phase-21-aipi-lite-first-class](./phase-21-aipi-lite-first-class/) |
+| 22 | AI PI Companion UX: state model, gestures, LCD cadence, bridge display wiring, and live hardware dogfood | in-progress | [phase-22-ai-pi-companion-ux](./phase-22-ai-pi-companion-ux/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
