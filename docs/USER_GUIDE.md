@@ -248,6 +248,9 @@ Terminal: preserve command syntax exactly.
 
 Operating systems do not reliably expose the current working directory of a terminal app. Agent hooks solve that by letting Claude Code or Codex report their own `cwd`, session id, transcript path, and tool state to HoldSpeak.
 
+For the full install and verification flow, see
+[Claude/Codex Agent Hook Install](AGENT_HOOK_INSTALL.md).
+
 Open:
 
 ```text

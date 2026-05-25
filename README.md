@@ -422,6 +422,8 @@ instead of injecting them.
 
 Claude Code and Codex hooks can report high-confidence session `cwd` directly
 to HoldSpeak, which is more reliable than guessing from the active terminal.
+For a reproducible install and verification path, see
+[Claude/Codex Agent Hook Install](docs/AGENT_HOOK_INSTALL.md).
 Generate hook config with:
 
 ```bash

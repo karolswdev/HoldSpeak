@@ -220,6 +220,9 @@ Agent hooks let Claude Code and Codex tell HoldSpeak their current `cwd`,
 session id, transcript path, and recent assistant state. This is how HoldSpeak
 can know which project an LLM CLI is working in.
 
+Use [Claude/Codex Agent Hook Install](AGENT_HOOK_INSTALL.md) for the full
+machine-level install, verification, capture-mode, and AIPI companion checks.
+
 Open:
 
 ```text
