@@ -1,10 +1,10 @@
 # systemd unit for the AIPI-Lite ↔ HoldSpeak bridge.
 #
 # This unit ships defaulted to the rootless install pattern — every path
-# uses `%h` (the running user's home) and `User=` is omitted, so a
-# vanilla copy works for any user as long as the repo lives at
-# ~/AIPI-Lite-Voice-Bridge with a venv at ./.venv. Adjust BRIDGE_DIR
-# below if your checkout is somewhere else.
+# uses `%h` (the running user's home) and `User=` is omitted. The unified
+# HoldSpeak checkout path is assumed to be ~/dev/HoldSpeak with the AIPI venv
+# at aipi-lite/.venv. Adjust WorkingDirectory/ExecStart if your checkout lives
+# somewhere else.
 #
 # === Rootless install (recommended) ===
 #   mkdir -p ~/.config/systemd/user
@@ -35,9 +35,9 @@ Wants=network-online.target
 Type=simple
 # Rootless default: %h expands to the user's home. For system-wide,
 # replace with an absolute path (and set `User=`).
-WorkingDirectory=%h/AIPI-Lite-Voice-Bridge
+WorkingDirectory=%h/dev/HoldSpeak/aipi-lite
 
-ExecStart=%h/AIPI-Lite-Voice-Bridge/.venv/bin/python3 -m bridge
+ExecStart=%h/dev/HoldSpeak/aipi-lite/.venv/bin/python3 -m bridge
 
 # No `ExecStartPre=--check` — the bridge's own reconnect loop handles
 # HoldSpeak transient outages fine, and a strict pre-check makes
@@ -61,7 +61,7 @@ TimeoutStopSec=10s
 # bridge.env, nothing else.
 NoNewPrivileges=true
 ProtectSystem=strict
-ReadWritePaths=%h/AIPI-Lite-Voice-Bridge
+ReadWritePaths=%h/dev/HoldSpeak/aipi-lite
 PrivateTmp=true
 
 [Install]

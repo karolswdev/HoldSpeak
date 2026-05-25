@@ -51,7 +51,16 @@ here — that doc is canonical.
 
 ## 3. First-time setup
 
-1. **Clone + venv:**
+1. **Create the AIPI venv from the unified HoldSpeak checkout:**
+
+   ```bash
+   scripts/aipi_setup.sh
+   ```
+
+   This creates `aipi-lite/.venv` and installs
+   `aipi-lite/requirements-dev.txt`.
+
+   If you are running from a legacy standalone checkout instead:
 
    ```bash
    git clone https://github.com/karolswdev/AIPI-Lite-Voice-Bridge.git
@@ -75,8 +84,8 @@ here — that doc is canonical.
 3. **Configure the bridge:**
 
    ```bash
-   cp bridge.env.example bridge.env
-   # edit bridge.env: fill HOLDSPEAK_PORT and HOLDSPEAK_PSK
+   cp aipi-lite/bridge.env.example aipi-lite/bridge.env
+   # edit aipi-lite/bridge.env: fill HOLDSPEAK_PORT and HOLDSPEAK_PSK
    ```
 
    Required fields: `HOLDSPEAK_PORT`, `HOLDSPEAK_PSK`.
@@ -86,7 +95,7 @@ here — that doc is canonical.
 4. **Smoke-test both endpoints:**
 
    ```bash
-   .venv/bin/python3 -m bridge --check
+   scripts/aipi_bridge.sh --check
    ```
 
    - **Exit 0**: device + HoldSpeak handshakes both succeeded.
@@ -96,7 +105,7 @@ here — that doc is canonical.
 5. **Run for real:**
 
    ```bash
-   .venv/bin/python3 -m bridge
+   scripts/aipi_bridge.sh
    ```
 
    The bridge logs JSON events via `structlog` to stdout. Keep

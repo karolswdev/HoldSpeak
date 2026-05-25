@@ -59,6 +59,27 @@ beyond a HoldSpeak instance.
 
 ## Quick start
 
+From the unified HoldSpeak checkout:
+
+```bash
+scripts/aipi_setup.sh
+
+# Configure: at minimum HOLDSPEAK_PORT and HOLDSPEAK_PSK.
+cp aipi-lite/bridge.env.example aipi-lite/bridge.env
+$EDITOR aipi-lite/bridge.env
+
+# Smoke-test both endpoints.
+scripts/aipi_bridge.sh --check
+
+# Run for real.
+scripts/aipi_bridge.sh
+```
+
+For the full unified workflow, see
+[`docs/AIPI_LITE_DEV_WORKFLOW.md`](../docs/AIPI_LITE_DEV_WORKFLOW.md).
+
+Legacy standalone checkout flow:
+
 ```bash
 git clone https://github.com/karolswdev/AIPI-Lite-Voice-Bridge.git
 cd AIPI-Lite-Voice-Bridge

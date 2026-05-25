@@ -9,7 +9,7 @@ New to HoldSpeak?
 - Start with [Getting Started](docs/GETTING_STARTED.md) for install, diagnostics, first launch, and basic voice typing.
 - Use [Intelligent Typing Setup](docs/INTELLIGENT_TYPING_GUIDE.md) for project-aware dictation, `.hs/` context, target overrides, OpenAI-compatible endpoints, and Claude/Codex hooks.
 - Keep [User Guide](docs/USER_GUIDE.md) open as the product map and workflow reference.
-- AIPI-Lite firmware and the Python bridge now live in [aipi-lite/](aipi-lite/) as part of this checkout.
+- AIPI-Lite firmware and the Python bridge live in [aipi-lite/](aipi-lite/). Use [AIPI-Lite Developer Workflow](docs/AIPI_LITE_DEV_WORKFLOW.md) to test, flash, and run the bridge from this checkout.
 
 ## Features
 

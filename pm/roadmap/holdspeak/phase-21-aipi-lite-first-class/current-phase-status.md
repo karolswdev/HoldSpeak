@@ -1,6 +1,6 @@
 # Phase 21 — AIPI-Lite First-Class Integration
 
-**Last updated:** 2026-05-24 (HS-21-01 closed: AIPI-Lite tree imported under `aipi-lite/`).
+**Phase closed:** 2026-05-24. See [final-summary.md](./final-summary.md). This file is now frozen per PMO contract §6.
 
 ## Goal
 
@@ -28,22 +28,21 @@ bridge, protocol, and companion UX work can be developed and reviewed together.
 - [x] AIPI-Lite firmware and bridge source exist under `aipi-lite/`.
 - [x] `aipi-lite/secrets.yaml` and `aipi-lite/bridge.env` are ignored by Git.
 - [x] Import provenance is documented.
-- [ ] Follow-up developer workflow is defined: run tests, flash firmware, and operate bridge from the unified checkout.
+- [x] Follow-up developer workflow is defined: run tests, flash firmware, and operate bridge from the unified checkout.
 
 ## Story status
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-21-01 | Import AIPI-Lite tree | done | [story-01-import-aipi-lite-tree.md](./story-01-import-aipi-lite-tree.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-21-02 | Unified AIPI developer workflow | backlog | — | — |
+| HS-21-02 | Unified AIPI developer workflow | done | [story-02-unified-aipi-developer-workflow.md](./story-02-unified-aipi-developer-workflow.md) | [evidence-story-02.md](./evidence-story-02.md) |
 
 ## Where we are
 
-The AIPI-Lite working tree has been imported under `aipi-lite/`, including the
-current firmware, bridge, tests, docs, roadmap, and local uncommitted source
-changes from the prior sibling checkout. Local config files remain available on
-disk but ignored. Next pickup is HS-21-02: define and validate the unified
-developer workflow.
+Phase 21 is closed. AIPI-Lite now lives under `aipi-lite/`, local config files
+remain available on disk but ignored, and root scripts define setup, test,
+bridge, and firmware workflows. See [final-summary.md](./final-summary.md) for
+the Phase 22 handoff.
 
 ## Active risks
 
