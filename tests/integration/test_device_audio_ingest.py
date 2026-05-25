@@ -459,6 +459,40 @@ class TestDeviceActiveFrames:
             "ttl_ms": 5000,
         }
 
+    def test_query_agent_status_replies_with_status_frame(
+        self,
+        device_registry: DeviceRegistry,
+    ) -> None:
+        def on_query(device_id: str, name: str, at: Optional[float]) -> Optional[dict]:
+            assert device_id == "aipi-1"
+            assert name == "agent_status"
+            assert at == 45.0
+            return {"text": "Codex waiting: Run tests?", "ttl_ms": 7000}
+
+        server = MeetingWebServer(
+            on_bookmark=lambda _label: None,
+            on_stop=lambda: None,
+            get_state=lambda: {},
+            device_registry=device_registry,
+            device_psk_provider=lambda: _DEFAULT_PSK,
+            on_device_query=on_query,
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        with client.websocket_connect("/api/devices/audio") as ws:
+            _send_handshake(ws)
+            ws.receive_json()
+
+            ws.send_text(json.dumps({"type": "query", "name": "agent_status", "at": 45}))
+            status = ws.receive_json()
+
+        assert status == {
+            "type": "status",
+            "text": "Codex waiting: Run tests?",
+            "ttl_ms": 7000,
+        }
+
 
 @pytest.mark.integration
 class TestDeviceAudioPskRotation:

@@ -177,12 +177,14 @@ Each device object includes `battery_pct`, `rssi_dbm`, and
 {"type": "query", "name": "last_segment", "at": 1235}
 ```
 
-Requests server state for display on the device. Phase 17
-ships one query name:
+Requests server state for display on the device. Supported query
+names:
 
 | name | response |
 |---|---|
 | `last_segment` | most recent finalized active-meeting segment from this device, as a regular `status` frame with `ttl_ms: 5000` |
+| `agent_status` | most recent Claude/Codex hook-captured agent question, prefixed with agent/project context, as a regular `status` frame with `ttl_ms: 7000`; returns `No agent waiting` when none is fresh |
+| `agent_question` | most recent Claude/Codex hook-captured agent question without the status prefix, as a regular `status` frame with `ttl_ms: 7000`; returns `No agent waiting` when none is fresh |
 
 If there is no active meeting segment from this device, the
 server replies:

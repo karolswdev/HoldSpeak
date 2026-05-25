@@ -1344,6 +1344,15 @@ def run_web_runtime(
         name: str,
         at: Optional[float],
     ) -> Optional[dict[str, object]]:
+        from .agent_context import get_recent_awaiting_agent_session
+        from .agent_device import AGENT_QUERY_NAMES, build_agent_query_response
+
+        if name in AGENT_QUERY_NAMES:
+            session = get_recent_awaiting_agent_session(max_age_seconds=120)
+            response = build_agent_query_response(name, session)
+            if response is not None:
+                return response
+
         if name != "last_segment":
             log.info(
                 "device_query_ignored",

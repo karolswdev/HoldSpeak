@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-24 (HS-19 intelligent typing daily-use hardening closed with real endpoint dogfood and broad regression evidence).
-**Current phase:** none active. Last closed phase: [phase-19-intelligent-typing-hardening](./phase-19-intelligent-typing-hardening/) — safe project-doc suggestions, telemetry, target-profile overrides, and real endpoint dogfooding.
-**Status:** phase 19 complete; next phase pending.
+**Last updated:** 2026-05-24 (HS-20 opened; HS-20-01 ships AIPI companion agent-waiting query surface).
+**Current phase:** [phase-20-aipi-companion](./phase-20-aipi-companion/) — make AIPI-Lite a same-LAN physical companion for HoldSpeak's local agent and meeting workflows.
+**Status:** in-progress.
 
 ## Vision
 
@@ -57,6 +57,7 @@ canon, canon wins.
 | 17 | Device Initiative: device → server upstream frames (`device_health` + `query` w/ `last_segment` case) lighting up AIPI-Lite phase 4's `blocked` bridge stories; minimal web UI rendering for device health. Sibling to HS-14, paired with AIPI-4 in the AIPI-Lite roadmap. | done | [phase-17-device-initiative](./phase-17-device-initiative/) |
 | 18 | Intelligent Typing Copilot: project-aware local intelligent typing with target profiles, Claude/Codex hooks, optional external-agent summarization, `.hs` context conventions, OpenAI-compatible runtimes, and web cockpit support | done | [phase-18-intelligent-typing-copilot](./phase-18-intelligent-typing-copilot/) |
 | 19 | Intelligent Typing Daily-Use Hardening: safe `.hs/.../*.md` project-doc suggestions, telemetry, target-profile overrides, and real endpoint dogfooding | done | [phase-19-intelligent-typing-hardening](./phase-19-intelligent-typing-hardening/) |
+| 20 | AIPI Companion: same-LAN physical companion UX for agent-waiting status, voice replies, gestures, and debug visibility | in-progress | [phase-20-aipi-companion](./phase-20-aipi-companion/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
