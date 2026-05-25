@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from typing import Callable, List, Optional, Tuple
 
 import numpy as np
@@ -308,6 +309,189 @@ class TestDeviceAudioStreaming:
             assert descriptors["aipi-1"].queue_depth >= 1600
 
             ws.close()
+
+
+@pytest.mark.integration
+class TestDeviceActiveFrames:
+    def test_device_health_updates_registry_and_health_api(
+        self,
+        client: TestClient,
+        device_registry: DeviceRegistry,
+    ) -> None:
+        with client.websocket_connect("/api/devices/audio") as ws:
+            _send_handshake(ws)
+            ws.receive_json()
+
+            ws.send_text(
+                json.dumps(
+                    {
+                        "type": "device_health",
+                        "battery_pct": 84,
+                        "rssi_dbm": -57,
+                        "at": 1234,
+                    }
+                )
+            )
+
+            descriptor = None
+            for _ in range(20):
+                descriptor = device_registry.get("aipi-1")
+                if descriptor is not None and descriptor.battery_pct == 84:
+                    break
+                time.sleep(0.01)
+            assert descriptor is not None
+            assert descriptor.battery_pct == 84
+            assert descriptor.rssi_dbm == -57
+            assert descriptor.last_health_at == 1234
+
+            response = client.get("/api/devices/health")
+            assert response.status_code == 200, response.text
+            [device] = response.json()["devices"]
+            assert device["id"] == "aipi-1"
+            assert device["battery_pct"] == 84
+            assert device["rssi_dbm"] == -57
+            assert device["last_health_at"] == 1234
+
+    def test_device_health_callback_receives_refreshed_descriptor(
+        self,
+        device_registry: DeviceRegistry,
+    ) -> None:
+        seen: list[tuple[int | None, int | None, int | None]] = []
+        server = MeetingWebServer(
+            on_bookmark=lambda _label: None,
+            on_stop=lambda: None,
+            get_state=lambda: {},
+            device_registry=device_registry,
+            device_psk_provider=lambda: _DEFAULT_PSK,
+            on_device_health=lambda d: seen.append((d.battery_pct, d.rssi_dbm, d.last_health_at)),
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        with client.websocket_connect("/api/devices/audio") as ws:
+            _send_handshake(ws)
+            ws.receive_json()
+            ws.send_text(
+                json.dumps(
+                    {
+                        "type": "device_health",
+                        "battery_pct": 66,
+                        "rssi_dbm": -70,
+                        "at": 999,
+                    }
+                )
+            )
+
+            for _ in range(20):
+                if seen:
+                    break
+                time.sleep(0.01)
+
+        assert seen == [(66, -70, 999)]
+
+    def test_invalid_device_health_frame_is_dropped_and_socket_stays_open(
+        self,
+        device_registry: DeviceRegistry,
+    ) -> None:
+        server = MeetingWebServer(
+            on_bookmark=lambda _label: None,
+            on_stop=lambda: None,
+            get_state=lambda: {},
+            device_registry=device_registry,
+            device_psk_provider=lambda: _DEFAULT_PSK,
+            on_device_query=lambda _device_id, _name, _at: {"text": "still open", "ttl_ms": 1000},
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        with client.websocket_connect("/api/devices/audio") as ws:
+            _send_handshake(ws)
+            ws.receive_json()
+
+            ws.send_text(
+                json.dumps(
+                    {
+                        "type": "device_health",
+                        "battery_pct": 101,
+                        "rssi_dbm": -57,
+                        "at": 1234,
+                    }
+                )
+            )
+            ws.send_text(json.dumps({"type": "query", "name": "last_segment", "at": 1235}))
+            assert ws.receive_json()["text"] == "still open"
+
+            descriptor = device_registry.get("aipi-1")
+            assert descriptor is not None
+            assert descriptor.battery_pct is None
+
+    def test_query_last_segment_replies_with_status_frame(
+        self,
+        device_registry: DeviceRegistry,
+    ) -> None:
+        def on_query(device_id: str, name: str, at: Optional[float]) -> Optional[dict]:
+            assert device_id == "aipi-1"
+            assert name == "last_segment"
+            assert at == 44.0
+            return {"text": "Karol: shipped health", "ttl_ms": 5000}
+
+        server = MeetingWebServer(
+            on_bookmark=lambda _label: None,
+            on_stop=lambda: None,
+            get_state=lambda: {},
+            device_registry=device_registry,
+            device_psk_provider=lambda: _DEFAULT_PSK,
+            on_device_query=on_query,
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        with client.websocket_connect("/api/devices/audio") as ws:
+            _send_handshake(ws)
+            ws.receive_json()
+
+            ws.send_text(json.dumps({"type": "query", "name": "last_segment", "at": 44}))
+            status = ws.receive_json()
+
+        assert status == {
+            "type": "status",
+            "text": "Karol: shipped health",
+            "ttl_ms": 5000,
+        }
+
+    def test_query_agent_status_replies_with_status_frame(
+        self,
+        device_registry: DeviceRegistry,
+    ) -> None:
+        def on_query(device_id: str, name: str, at: Optional[float]) -> Optional[dict]:
+            assert device_id == "aipi-1"
+            assert name == "agent_status"
+            assert at == 45.0
+            return {"text": "Codex waiting: Run tests?", "ttl_ms": 7000}
+
+        server = MeetingWebServer(
+            on_bookmark=lambda _label: None,
+            on_stop=lambda: None,
+            get_state=lambda: {},
+            device_registry=device_registry,
+            device_psk_provider=lambda: _DEFAULT_PSK,
+            on_device_query=on_query,
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        with client.websocket_connect("/api/devices/audio") as ws:
+            _send_handshake(ws)
+            ws.receive_json()
+
+            ws.send_text(json.dumps({"type": "query", "name": "agent_status", "at": 45}))
+            status = ws.receive_json()
+
+        assert status == {
+            "type": "status",
+            "text": "Codex waiting: Run tests?",
+            "ttl_ms": 7000,
+        }
 
 
 @pytest.mark.integration

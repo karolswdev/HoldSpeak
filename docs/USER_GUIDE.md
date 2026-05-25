@@ -7,6 +7,17 @@ HoldSpeak is a local-first voice workspace. It has two main jobs:
 
 HoldSpeak is private by default. Audio capture, transcription, project context, and session metadata are stored locally unless you explicitly configure a cloud or OpenAI-compatible endpoint.
 
+## Start Here
+
+Use these guides depending on what you are setting up:
+
+| Goal | Guide |
+| --- | --- |
+| Install HoldSpeak and get basic voice typing working | [Getting Started](GETTING_STARTED.md) |
+| Configure project-aware intelligent typing | [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md) |
+| Record and review meetings | [Meeting Mode Guide](MEETING_MODE_GUIDE.md) |
+| Configure local/LAN dictation models | `/docs/dictation-runtime` in the local web UI |
+
 ## Product Map
 
 | Area | What it does | Where to use it |
@@ -124,6 +135,7 @@ Enable:
 
 - `Enable dictation pipeline`
 - Optional: `Enable project-aware rewrite stage (.hs/)`
+- Optional: set `Target profile override` when active-window detection is wrong.
 
 Pick a runtime backend:
 
@@ -138,6 +150,8 @@ You can also validate from the CLI:
 holdspeak dictation runtime status
 holdspeak dictation dry-run "ask codex to inspect the failing test"
 ```
+
+For a full step-by-step setup, see [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md).
 
 ### OpenAI-Compatible Endpoints
 
@@ -233,6 +247,9 @@ Terminal: preserve command syntax exactly.
 ## Agent Hooks For Claude And Codex
 
 Operating systems do not reliably expose the current working directory of a terminal app. Agent hooks solve that by letting Claude Code or Codex report their own `cwd`, session id, transcript path, and tool state to HoldSpeak.
+
+For the full install and verification flow, see
+[Claude/Codex Agent Hook Install](AGENT_HOOK_INSTALL.md).
 
 Open:
 
@@ -391,6 +408,8 @@ Common issues:
 ## Related Docs
 
 - [README](../README.md): install, platform notes, configuration reference.
+- [Getting Started](GETTING_STARTED.md): first-run setup and basic voice typing.
+- [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md): dictation pipeline, project context, target override, OpenAI-compatible endpoints, and agent hooks.
 - [Dictation runtime setup](../web/src/pages/docs/dictation-runtime.astro): source for the web runtime setup page.
 - [Meeting Mode Guide](MEETING_MODE_GUIDE.md): meeting-specific setup and troubleshooting.
 - [Firefox Extension Guide](FIREFOX_EXTENSION_GUIDE.md): local companion extension install.

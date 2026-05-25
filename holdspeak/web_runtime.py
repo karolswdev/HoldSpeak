@@ -5,9 +5,11 @@ from __future__ import annotations
 import hashlib
 import signal
 import threading
+import time
 import webbrowser
 from datetime import datetime
-from typing import Callable, Optional
+from pathlib import Path
+from typing import Any, Callable, Optional
 
 import numpy as np
 
@@ -15,7 +17,13 @@ from .audio import AudioRecorder
 from .config import Config
 from .audio import AudioSource
 from .device_audio import DeviceRegistry, ensure_device_psk
-from .device_status import DeviceStatusEmitter
+from .device_recording_tick import RecordingTicker
+from .device_meeting_stats import CYCLE_ORDER, pick_next_view
+from .device_status import (
+    DeviceStatusEmitter,
+    push_intel_to_devices,
+    push_segment_to_devices,
+)
 from .hotkey import HotkeyListener
 from .voice_typing import VoiceTypingSession
 from .logging_config import get_logger
@@ -75,6 +83,13 @@ def run_web_runtime(
     meeting_session: Optional[MeetingSession] = None
     device_registry = DeviceRegistry()
     device_status = DeviceStatusEmitter(label_lookup=device_registry)
+    # HS-17-05: periodic Recording-tick emitter for attached devices.
+    # Started in `_start_meeting`, stopped in `_stop_active_meeting`.
+    recording_ticker = RecordingTicker(
+        status_sender=lambda ids, text: device_status.broadcast(
+            ids, text, ttl_ms=0
+        ),
+    )
     voice_session = VoiceTypingSession()
     transcription_lock = threading.Lock()
     text_processor = TextProcessor()
@@ -285,6 +300,16 @@ def run_web_runtime(
                 server.broadcast("segment", segment.to_dict())
             except Exception as exc:
                 log.debug(f"Failed to broadcast segment: {exc}")
+        # HS-17-08: push each finalized segment to attached AIPI-Lite
+        # devices as a 3s flash so the LCD reflects what's being
+        # transcribed in real time. No-op when no devices attached.
+        try:
+            active = _active_meeting_session()
+            if active is not None and active.state is not None:
+                attached_ids = [d.id for d in active.state.devices]
+                push_segment_to_devices(device_status, attached_ids, segment)
+        except Exception as exc:
+            log.debug(f"Failed to push segment to device LCD: {exc}")
 
     def _on_meeting_intel(intel) -> None:
         if server is not None:
@@ -293,6 +318,16 @@ def run_web_runtime(
             except Exception as exc:
                 log.debug(f"Failed to broadcast intel_complete: {exc}")
         _broadcast_intel_status()
+        # HS-17-07: push the intel summary to attached AIPI-Lite LCDs
+        # so the user gets visible feedback when intel finishes (topics,
+        # actions, summary — all landed in the middle slot).
+        try:
+            active = _active_meeting_session()
+            if active is not None and active.state is not None:
+                attached_ids = [d.id for d in active.state.devices]
+                push_intel_to_devices(device_status, attached_ids, intel)
+        except Exception as exc:
+            log.debug(f"Failed to push intel to device LCD: {exc}")
 
     def _apply_updated_config(updated_config: Config) -> None:
         nonlocal config, transcriber
@@ -394,10 +429,19 @@ def run_web_runtime(
             meeting_session = session
 
         if attached_ids:
+            attached_for_status = [d for d in attached_ids if d]
             device_status.broadcast(
-                [d for d in attached_ids if d],
+                attached_for_status,
                 "Recording 00:00",
                 ttl_ms=0,
+            )
+            # HS-17-05: schedule the periodic Recording-tick. The 0:00
+            # paint above is done synchronously; subsequent ticks fire
+            # every 5 s on a daemon thread that exits cleanly on
+            # `_stop_active_meeting`.
+            recording_ticker.start(
+                started_at_monotonic=time.monotonic(),
+                device_ids=attached_for_status,
             )
         with state_lock:
             pending_intent_windows.clear()
@@ -422,6 +466,13 @@ def run_web_runtime(
         # stop and persist. Captured *before* ``session.stop`` flips
         # the state and clears the device list.
         attached_ids = [d.id for d in session.state.devices] if session.state else []
+        # HS-17-05: stop the Recording-tick *before* the
+        # `Saving meeting...` broadcast so a stale tick can't land
+        # after the user has been told the meeting is saving.
+        recording_ticker.stop()
+        # AIPI-4-14: reset per-device cycle indexes so the next meeting
+        # starts the double-tap rotation back at view 0.
+        device_stats_cycle.clear()
         if attached_ids:
             device_status.broadcast(attached_ids, "Saving meeting...", ttl_ms=0)
 
@@ -1052,6 +1103,7 @@ def run_web_runtime(
         audio: np.ndarray,
         *,
         on_complete: Optional[Callable[[str], None]] = None,
+        agent_reply_session: Any | None = None,
     ) -> None:
         """Run transcription, text processing, and typing for a captured chunk.
 
@@ -1069,6 +1121,12 @@ def run_web_runtime(
                 if not text:
                     return
                 text = text_processor.process(text)
+                text = _maybe_run_dictation_pipeline(
+                    text,
+                    audio_duration_s=len(audio) / 16000.0,
+                    transcribed_at=datetime.now(),
+                    agent_reply_session=agent_reply_session,
+                )
                 completed_text = text
                 with state_lock:
                     runtime_status["last_transcription"] = text
@@ -1099,15 +1157,79 @@ def run_web_runtime(
         audio: np.ndarray,
         *,
         on_complete: Optional[Callable[[str], None]] = None,
+        agent_reply_session: Any | None = None,
     ) -> None:
         if len(audio) < 1600:
             _set_voice_state("idle")
             return
         _set_voice_state("transcribing")
         threading.Thread(
-            target=lambda: _transcribe_and_type(audio, on_complete=on_complete),
+            target=lambda: _transcribe_and_type(
+                audio,
+                on_complete=on_complete,
+                agent_reply_session=agent_reply_session,
+            ),
             daemon=True,
         ).start()
+
+    def _maybe_run_dictation_pipeline(
+        text: str,
+        *,
+        audio_duration_s: float,
+        transcribed_at: datetime,
+        agent_reply_session: Any | None = None,
+    ) -> str:
+        dictation_cfg = getattr(config, "dictation", None)
+        pipeline_cfg = getattr(dictation_cfg, "pipeline", None)
+        if dictation_cfg is None or pipeline_cfg is None or not bool(getattr(pipeline_cfg, "enabled", False)):
+            return text
+
+        try:
+            from holdspeak.activity_context import build_activity_context
+            from holdspeak.agent_context import get_recent_agent_session
+            from holdspeak.agent_device import target_profile_override_for_agent
+            from holdspeak.plugins.dictation.assembly import build_pipeline
+            from holdspeak.plugins.dictation.contracts import Utterance
+            from holdspeak.plugins.dictation.project_root import detect_project_for_cwd
+            from holdspeak.target_profile import detect_active_target_profile
+
+            if agent_reply_session is not None and getattr(agent_reply_session, "cwd", None):
+                project = detect_project_for_cwd(
+                    Path(str(agent_reply_session.cwd)),
+                    prefer_agent_session=False,
+                )
+            else:
+                project = detect_project_for_cwd()
+            project_root = Path(project["root"]) if project else None
+            result = build_pipeline(dictation_cfg, project_root=project_root)
+            if result.runtime_status != "loaded":
+                return text
+
+            target_override = (
+                target_profile_override_for_agent(agent_reply_session)
+                or getattr(pipeline_cfg, "target_profile_override", "auto")
+            )
+            activity = build_activity_context(limit=20, refresh=False).to_dict()
+            activity["target"] = detect_active_target_profile(target_override).to_dict()
+            recent_agent = agent_reply_session or get_recent_agent_session(max_age_seconds=120)
+            if recent_agent is not None and bool(getattr(recent_agent, "awaiting_response", False)):
+                agent_project_root = getattr(recent_agent, "repo_root", None)
+                if not project_root or not agent_project_root or str(project_root) == str(agent_project_root):
+                    activity["agent"] = recent_agent.to_dict()
+
+            run = result.pipeline.run(
+                Utterance(
+                    raw_text=text,
+                    audio_duration_s=audio_duration_s,
+                    transcribed_at=transcribed_at,
+                    project=project,
+                    activity=activity,
+                )
+            )
+            return run.final_text
+        except Exception as exc:
+            log.warning(f"Web dictation pipeline raised; falling back to processed text: {exc}")
+            return text
 
     def _on_hotkey_press() -> None:
         if runtime_stop_event.is_set():
@@ -1176,7 +1298,10 @@ def run_web_runtime(
         if not accepted:
             return False
         _set_voice_state("recording")
-        device_status.send(device_id, "Listening...")
+        # AIPI-4-13: TX state lives in the device's firmware-side
+        # tx_label glyph (top-right, ↑ during right-button hold).
+        # No "Listening..." pushback — would clobber the bottom
+        # widget's persistent meeting/idle text.
         return True
 
     def _on_device_voice_stop(
@@ -1197,44 +1322,136 @@ def run_web_runtime(
             _set_voice_state("idle")
             return None
 
-        device_status.send(device_id, "Thinking...")
+        # AIPI-4-13: no "Thinking..." pushback to bottom — the absent
+        # tx_label arrow after release already signals "we're done
+        # capturing, processing now". Transcript snippet lands in
+        # the middle slot below.
+
+        from .agent_context import get_recent_awaiting_agent_session
+
+        agent_reply_session = get_recent_awaiting_agent_session(max_age_seconds=120)
 
         def _device_transcript_complete(text: str) -> None:
-            snippet = (text or "").strip()[:80]
+            snippet = (text or "").strip()[:150]
             device_status.send(device_id, snippet, ttl_ms=4000)
 
-        _kick_off_transcribe(audio, on_complete=_device_transcript_complete)
+        _kick_off_transcribe(
+            audio,
+            on_complete=_device_transcript_complete,
+            agent_reply_session=agent_reply_session,
+        )
         return audio
 
     def _on_device_voice_cancel(device_id: str) -> None:
         voice_session.cancel(owner=f"device:{device_id}")
 
-    def _on_device_event(device_id: str, name: str, at: Optional[float]) -> None:
-        """Inbound device event from the WS (HS-14-07).
+    # AIPI-4-14: per-device cycle index for the meeting-stats double-tap
+    # rotation. ``-1`` means "advance to view 0 on the next double-tap".
+    # Reset whenever a meeting ends so each new meeting starts at view 0.
+    device_stats_cycle: dict[str, int] = {}
 
-        Currently the only honored event is ``long_press`` during an
-        active meeting where this device is attached → fires a
-        bookmark on the session and broadcasts ``Bookmark @ ...`` to
-        every device participating in the meeting.
+    def _on_device_event(device_id: str, name: str, at: Optional[float]) -> None:
+        """Inbound device event from the WS.
+
+        - ``long_press`` (HS-14-07): bookmark gesture in an active
+          meeting where this device is attached.
+        - ``double_left_click`` (AIPI-4-14): cycle through meeting-stat
+          views (Numbers → Speakers → Intel) on the device's middle
+          slot.
         """
-        if name != "long_press":
-            log.info(
-                "device_event_ignored",
-                extra={"device_id": device_id, "event_name": name},
+        if name == "long_press":
+            active = _active_meeting_session()
+            if active is None or not active.is_device_attached(device_id):
+                return
+            bookmark = active.add_bookmark(label="", auto_label=True)
+            if bookmark is None:
+                return
+            attached_ids = [d.id for d in active.state.devices] if active.state else []
+            device_status.broadcast(
+                attached_ids,
+                f"Bookmark @ {bookmark.timestamp:.0f}s",
+                ttl_ms=2500,
             )
             return
-        active = _active_meeting_session()
-        if active is None or not active.is_device_attached(device_id):
+
+        if name == "double_left_click":
+            active = _active_meeting_session()
+            if active is None or active.state is None:
+                log.info(
+                    "device_event_double_tap_ignored",
+                    extra={"device_id": device_id, "reason": "no_active_meeting"},
+                )
+                return
+            if not active.is_device_attached(device_id):
+                log.info(
+                    "device_event_double_tap_ignored",
+                    extra={"device_id": device_id, "reason": "device_not_attached"},
+                )
+                return
+            current = device_stats_cycle.get(device_id, -1)
+            next_index, view_id, formatter = pick_next_view(current)
+            device_stats_cycle[device_id] = next_index
+            payload = formatter(active.state)
+            device_status.send(device_id, payload, ttl_ms=4000)
+            log.info(
+                "device_event_double_tap_cycled",
+                extra={"device_id": device_id, "view": view_id, "index": next_index},
+            )
             return
-        bookmark = active.add_bookmark(label="", auto_label=True)
-        if bookmark is None:
-            return
-        attached_ids = [d.id for d in active.state.devices] if active.state else []
-        device_status.broadcast(
-            attached_ids,
-            f"Bookmark @ {bookmark.timestamp:.0f}s",
-            ttl_ms=2500,
+
+        log.info(
+            "device_event_ignored",
+            extra={"device_id": device_id, "event_name": name},
         )
+
+    def _on_device_health(descriptor: object) -> None:
+        active = _active_meeting_session()
+        if active is None:
+            return
+        updater = getattr(active, "update_device_descriptor", None)
+        if callable(updater):
+            updater(descriptor)
+        if server is not None:
+            try:
+                from .meeting_session import _device_descriptor_to_dict
+
+                server.broadcast("device_health", _device_descriptor_to_dict(descriptor))
+            except Exception as exc:
+                log.debug(f"Failed to broadcast device health: {exc}")
+
+    def _on_device_query(
+        device_id: str,
+        name: str,
+        at: Optional[float],
+    ) -> Optional[dict[str, object]]:
+        from .agent_context import get_recent_awaiting_agent_session
+        from .agent_device import AGENT_QUERY_NAMES, build_agent_query_response
+
+        if name in AGENT_QUERY_NAMES:
+            session = get_recent_awaiting_agent_session(max_age_seconds=120)
+            response = build_agent_query_response(name, session)
+            if response is not None:
+                return response
+
+        if name != "last_segment":
+            log.info(
+                "device_query_ignored",
+                extra={"device_id": device_id, "query_name": name, "at": at},
+            )
+            return {"text": f"Unknown query: {name}"[:500], "ttl_ms": 3000}
+        active = _active_meeting_session()
+        if active is None or active.state is None:
+            return {"text": "No transcript yet", "ttl_ms": 5000}
+        for segment in reversed(active.state.segments):
+            if getattr(segment, "device_id", None) != device_id:
+                continue
+            speaker = getattr(segment, "speaker", None) or "?"
+            text = getattr(segment, "text", "") or ""
+            return {
+                "text": f"{speaker}: {text}"[:500],
+                "ttl_ms": 5000,
+            }
+        return {"text": "No transcript yet", "ttl_ms": 5000}
 
     try:
         server = MeetingWebServer(
@@ -1262,6 +1479,8 @@ def run_web_runtime(
             on_device_voice_cancel=_on_device_voice_cancel,
             device_status_emitter=device_status,
             on_device_event=_on_device_event,
+            on_device_health=_on_device_health,
+            on_device_query=_on_device_query,
             host="127.0.0.1",
         )
         runtime_url = server.start()

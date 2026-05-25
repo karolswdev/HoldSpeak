@@ -1,0 +1,13 @@
+secrets.yaml
+bridge.env
+.esphome/
+.venv/
+__pycache__/
+*.pyc
+debug_mic.wav
+.env
+*.log
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/

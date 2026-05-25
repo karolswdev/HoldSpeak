@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import Any, Literal, Optional, TYPE_CHECKING
 
 import numpy as np
-from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from .audio import AudioSource, _linear_resample_mono
 from .logging_config import get_logger
@@ -70,6 +70,9 @@ class DeviceDescriptor:
     connected_at: datetime
     last_seen: datetime
     queue_depth: int = 0
+    battery_pct: Optional[int] = None
+    rssi_dbm: Optional[int] = None
+    last_health_at: Optional[int] = None
 
 
 class RemoteAudioRecorder:
@@ -366,6 +369,36 @@ class DeviceRegistry:
                 return
             descriptor.last_seen = now
 
+    def update_health(
+        self,
+        device_id: str,
+        *,
+        battery_pct: int,
+        rssi_dbm: int,
+        at: int,
+    ) -> Optional[DeviceDescriptor]:
+        """Store the latest device-reported health snapshot.
+
+        Phase 17 keeps this intentionally in-memory: it is live device
+        status, not a historical battery/RSSI time series.
+        """
+        now = datetime.now()
+        with self._lock:
+            descriptor = self._descriptors.get(device_id)
+            if descriptor is None:
+                registry_log.debug(
+                    "device_health_unknown",
+                    extra={"device_id": device_id},
+                )
+                return None
+            descriptor.last_seen = now
+            descriptor.battery_pct = int(battery_pct)
+            descriptor.rssi_dbm = int(rssi_dbm)
+            descriptor.last_health_at = int(at)
+            recorder = self._recorders.get(device_id)
+            depth = recorder.buffered_bytes if recorder is not None else 0
+            return replace(descriptor, queue_depth=depth)
+
     def recorder_for(self, device_id: str) -> Optional[AudioSource]:
         """Return the device's :class:`RemoteAudioRecorder`, or ``None`` if unknown."""
         with self._lock:
@@ -432,6 +465,34 @@ class DeviceHandshake(BaseModel):
     @field_validator("device_id", "label", "psk")
     @classmethod
     def _non_empty(cls, value: str) -> str:
+        if not value:
+            raise ValueError("must not be empty")
+        return value
+
+
+class DeviceHealthFrame(BaseModel):
+    """Device-reported battery/RSSI snapshot sent after handshake."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["device_health"]
+    battery_pct: int = Field(ge=0, le=100)
+    rssi_dbm: int = Field(ge=-120, le=0)
+    at: int
+
+
+class DeviceQueryFrame(BaseModel):
+    """Device-originated state query sent after handshake."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    type: Literal["query"]
+    name: str
+    at: int
+
+    @field_validator("name")
+    @classmethod
+    def _name_non_empty(cls, value: str) -> str:
         if not value:
             raise ValueError("must not be empty")
         return value
@@ -520,6 +581,8 @@ __all__ = [
     "DEVICE_HANDSHAKE_VERSION",
     "DeviceDescriptor",
     "DeviceHandshake",
+    "DeviceHealthFrame",
+    "DeviceQueryFrame",
     "DeviceRegistry",
     "DeviceRegistryError",
     "DuplicateLabelError",

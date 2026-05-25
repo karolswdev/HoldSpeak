@@ -4,7 +4,12 @@ Voice typing for macOS and Linux - hold a hotkey, speak, release.
 
 **Local-first. Private by default. Cloud optional. Fast.**
 
-New to HoldSpeak? Start with the [User Guide](docs/USER_GUIDE.md) for the product overview, daily workflows, privacy model, and setup path.
+New to HoldSpeak?
+
+- Start with [Getting Started](docs/GETTING_STARTED.md) for install, diagnostics, first launch, and basic voice typing.
+- Use [Intelligent Typing Setup](docs/INTELLIGENT_TYPING_GUIDE.md) for project-aware dictation, `.hs/` context, target overrides, OpenAI-compatible endpoints, and Claude/Codex hooks.
+- Keep [User Guide](docs/USER_GUIDE.md) open as the product map and workflow reference.
+- AIPI-Lite firmware and the Python bridge now live in [aipi-lite/](aipi-lite/) as part of this checkout.
 
 ## Features
 
@@ -418,6 +423,8 @@ instead of injecting them.
 
 Claude Code and Codex hooks can report high-confidence session `cwd` directly
 to HoldSpeak, which is more reliable than guessing from the active terminal.
+For a reproducible install and verification path, see
+[Claude/Codex Agent Hook Install](docs/AGENT_HOOK_INSTALL.md).
 Generate hook config with:
 
 ```bash

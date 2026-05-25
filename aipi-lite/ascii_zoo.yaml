@@ -1,0 +1,535 @@
+# ASCII Zoo v2 — playful demo firmware for the second AIPI-Lite
+# (/dev/ttyACM1, MAC 10:51:DB:8F:76:98).
+#
+# Three-zone LCD layout:
+#   Top    (unscii_16): animal name in big chunky font
+#   Middle (unscii_8) : ASCII art portrait
+#   Bottom (unscii_16): animal sound in big chunky font
+#
+# Spoken-word sound: 15 short phrases pre-generated locally with
+# espeak-ng (16 kHz mono int16 WAV) live in `zoo_sounds/` and are
+# baked into firmware as `audio_file`s. The `speaker` -> `media_player`
+# stack plays them on the ES8311 DAC -> on-board amp.
+#
+# WiFi is back: same SSID list as aipi.yaml (read from secrets.yaml)
+# so future flashes can go OTA without USB.
+#
+# Hardware quirks honoured (see docs/DEVICE_AUDIO_OUTPUT.md):
+#   - psram mode: octal (DMA headroom for media_player)
+#   - speaker_enable (GPIO9) held ALWAYS_ON (no mic on this build,
+#     so the EMI dance is not needed — no mic to corrupt)
+#   - audio_dac es8311 at 0x18, mic_gain omitted (no mic)
+#
+# Flash with:
+#   esphome run ascii_zoo.yaml --device /dev/ttyACM1
+# Back to production AIPI firmware:
+#   esphome run aipi.yaml --device /dev/ttyACM1
+
+substitutions:
+  device_name: ascii-zoo
+
+esphome:
+  name: ${device_name}
+  friendly_name: ASCII Zoo
+  on_boot:
+    - priority: 800
+      then:
+        - switch.turn_on: board_power
+        - switch.turn_on: speaker_enable
+    # Low-priority block runs after components (incl. media_player) are
+    # set up. `volume_initial` only applies on the very first boot —
+    # subsequent boots restore the last-saved volume from NVS, so to
+    # actually enforce a quieter level on every boot we set it
+    # explicitly here. Then fire the first animal.
+    - priority: -100
+      then:
+        - media_player.volume_set:
+            id: zoo_media_player
+            volume: 0.35
+        - script.execute: show_animal
+
+esp32:
+  variant: esp32s3
+  framework:
+    type: esp-idf
+  flash_size: 16MB
+
+psram:
+  mode: octal
+
+logger:
+  level: INFO
+
+api:
+  reboot_timeout: 0s
+
+ota:
+  - platform: esphome
+
+wifi:
+  networks:
+    - ssid: !secret wifi_ssid_home
+      password: !secret wifi_password_home
+    - ssid: !secret wifi_ssid_phone
+      password: !secret wifi_password_phone
+  ap:
+    ssid: "AsciiZoo-Setup"
+    password: !secret wifi_ap_password
+
+captive_portal:
+
+globals:
+  - id: animal_idx
+    type: uint8_t
+    initial_value: '0'
+
+# --- I2C / I2S / DAC / Speaker stack ---
+
+i2c:
+  sda: GPIO5
+  scl: GPIO4
+  id: i2c_es8311
+  scan: false
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    address: 0x18
+
+i2s_audio:
+  - id: i2s_bus
+    i2s_lrclk_pin: GPIO12
+    i2s_bclk_pin: GPIO14
+    i2s_mclk_pin: GPIO6
+
+speaker:
+  - platform: i2s_audio
+    id: speaker_id
+    i2s_audio_id: i2s_bus
+    i2s_dout_pin: GPIO11
+    dac_type: external
+    mclk_multiple: 256
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    channel: mono
+    audio_dac: es8311_dac
+
+media_player:
+  - platform: speaker
+    id: zoo_media_player
+    buffer_size: 8192
+    volume_min: 0.0
+    volume_max: 0.7
+    volume_initial: 0.35
+    announcement_pipeline:
+      speaker: speaker_id
+      num_channels: 1
+      format: WAV
+      sample_rate: 16000
+    files:
+      - id: cow_sound
+        file: zoo_sounds/cow.wav
+      - id: cat_sound
+        file: zoo_sounds/cat.wav
+      - id: dog_sound
+        file: zoo_sounds/dog.wav
+      - id: owl_sound
+        file: zoo_sounds/owl.wav
+      - id: frog_sound
+        file: zoo_sounds/frog.wav
+      - id: duck_sound
+        file: zoo_sounds/duck.wav
+      - id: sheep_sound
+        file: zoo_sounds/sheep.wav
+      - id: pig_sound
+        file: zoo_sounds/pig.wav
+      - id: horse_sound
+        file: zoo_sounds/horse.wav
+      - id: rooster_sound
+        file: zoo_sounds/rooster.wav
+      - id: lion_sound
+        file: zoo_sounds/lion.wav
+      - id: monkey_sound
+        file: zoo_sounds/monkey.wav
+      - id: snake_sound
+        file: zoo_sounds/snake.wav
+      - id: bee_sound
+        file: zoo_sounds/bee.wav
+      - id: mouse_sound
+        file: zoo_sounds/mouse.wav
+
+# --- Display + LVGL ---
+
+spi:
+  clk_pin: GPIO16
+  mosi_pin: GPIO17
+
+display:
+  - platform: mipi_spi
+    id: lcd
+    model: ST7735
+    cs_pin: GPIO15
+    dc_pin: GPIO7
+    reset_pin: GPIO18
+    dimensions:
+      width: 128
+      height: 128
+
+# Three-zone layout designed for a 128x128 surface (rotation 90):
+#   - name_label  top,    unscii_16, ~8 cols big chunky text
+#   - art_label   middle, unscii_8,  ~16 cols x ~10 rows of ASCII art
+#   - sound_label bottom, unscii_16, ~8 cols big chunky text
+# Long names/sounds scroll horizontally (SCROLL_CIRCULAR) so longer
+# words like ROOSTER / DOODLE-DOO! aren't truncated.
+lvgl:
+  id: my_lvgl
+  displays: lcd
+  rotation: 90
+  default_font: unscii_8
+  widgets:
+    - label:
+        id: name_label
+        text: "ZOO"
+        align: TOP_MID
+        y: 2
+        width: 128
+        text_align: CENTER
+        text_font: unscii_16
+        long_mode: SCROLL_CIRCULAR
+    - label:
+        id: art_label
+        text: ""
+        align: CENTER
+        y: 0
+        width: 128
+        height: 80
+        text_align: CENTER
+        text_font: unscii_8
+        long_mode: WRAP
+    - label:
+        id: sound_label
+        text: ""
+        align: BOTTOM_MID
+        y: -2
+        width: 128
+        text_align: CENTER
+        text_font: unscii_16
+        long_mode: SCROLL_CIRCULAR
+
+# --- Power / backlight ---
+
+switch:
+  - platform: gpio
+    pin: GPIO10
+    id: board_power
+    restore_mode: ALWAYS_ON
+    internal: true
+  - platform: gpio
+    pin: GPIO9
+    id: speaker_enable
+    restore_mode: ALWAYS_ON
+    internal: true
+
+output:
+  - platform: ledc
+    pin: GPIO3
+    id: backlight_pwm
+    frequency: 1000Hz
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    id: lcd_backlight
+    restore_mode: ALWAYS_ON
+
+# --- Buttons ---
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO1
+      mode: { input: true, pullup: true }
+    id: left_button
+    filters:
+      - invert:
+      - delayed_on: 20ms
+      - delayed_off: 20ms
+    on_press:
+      then:
+        - lambda: |-
+            uint8_t n = id(animal_idx);
+            id(animal_idx) = (n == 0) ? 14 : n - 1;
+        - script.execute: show_animal
+
+  - platform: gpio
+    pin: GPIO42
+    id: right_button
+    filters:
+      - invert:
+      - delayed_on: 20ms
+      - delayed_off: 20ms
+    on_press:
+      then:
+        - lambda: |-
+            id(animal_idx) = (id(animal_idx) + 1) % 15;
+        - script.execute: show_animal
+
+# Auto-cycle: 7 s gives the spoken phrase time to finish before the
+# next animal lands. Button presses still preempt and advance.
+interval:
+  - interval: 7s
+    then:
+      - lambda: |-
+          id(animal_idx) = (id(animal_idx) + 1) % 15;
+      - script.execute: show_animal
+
+# --- The main animation script ---
+
+# `show_animal`:
+#   1. Repaints name_label, art_label, sound_label from a lookup
+#      keyed on `animal_idx`.
+#   2. Plays the matching pre-baked WAV via the announcement pipeline.
+#
+# The play action requires a literal audio_file ID (cv.use_id —
+# lambdas aren't accepted there), so a 15-case `choose:` block routes
+# the correct file. Mode: announcement (default false; we set true so
+# it goes through announcement_pipeline, which is the only pipeline
+# we configured).
+script:
+  - id: show_animal
+    then:
+      - lvgl.label.update:
+          id: name_label
+          text: !lambda |-
+            static const char* const names[15] = {
+              "COW", "CAT", "DOG", "OWL", "FROG",
+              "DUCK", "SHEEP", "PIG", "HORSE", "ROOSTER",
+              "LION", "MONKEY", "SNAKE", "BEE", "MOUSE"
+            };
+            return std::string(names[id(animal_idx)]);
+
+      - lvgl.label.update:
+          id: art_label
+          text: !lambda |-
+            switch (id(animal_idx)) {
+              case 0: return std::string(  // cow
+                "   ^___^\n"
+                "  ( o o )\n"
+                "  (  v  )\n"
+                "   \\___/\n"
+                "    | |\n"
+                "    | |");
+              case 1: return std::string(  // cat
+                "  /\\___/\\\n"
+                " (  o.o  )\n"
+                "  >  ^  <\n"
+                "  /     \\\n"
+                "  \\_____/");
+              case 2: return std::string(  // dog
+                "    __\n"
+                "   /  \\__\n"
+                "  ( o  o )\n"
+                "   \\_vv_/\n"
+                "    |  |\n"
+                "    \\__/");
+              case 3: return std::string(  // owl
+                "   ,___,\n"
+                "  ( O.O )\n"
+                "  /)___(\\\n"
+                "   \" \" \"");
+              case 4: return std::string(  // frog
+                "   @ . . @\n"
+                "  ( ----- )\n"
+                "  ( >___< )\n"
+                "   -\"\"\"-");
+              case 5: return std::string(  // duck
+                "      __\n"
+                "   __( o)>\n"
+                "   \\___)\n"
+                "      ~~~~~");
+              case 6: return std::string(  // sheep
+                "    ____\n"
+                "  (( o o ))\n"
+                "    \\__/\n"
+                "   /|||||\\\n"
+                "    || ||");
+              case 7: return std::string(  // pig
+                "    ,__,\n"
+                "   ( oo )\n"
+                "  /( -- )\\\n"
+                "   |    |\n"
+                "   ^^  ^^");
+              case 8: return std::string(  // horse
+                "   ,~~.\n"
+                "  ( oo )-,\n"
+                "   \\__/  \\\n"
+                "   ||    |\n"
+                "   ||    |");
+              case 9: return std::string(  // rooster
+                "     ___\n"
+                "    /,o \\>\n"
+                "    \\_  \\\n"
+                "     /||\\\n"
+                "    // \\\\");
+              case 10: return std::string(  // lion
+                "    .---.\n"
+                "   /(O O)\\\n"
+                "  ( | v | )\n"
+                "   \\ \\_/ /\n"
+                "    `===`");
+              case 11: return std::string(  // monkey
+                "   .---.\n"
+                "  ( o o )\n"
+                "   \\_v_/\n"
+                "   /|U|\\\n"
+                "    | |");
+              case 12: return std::string(  // snake
+                "      __\n"
+                "  ___/o \\\n"
+                " /   ,,, \\\n"
+                " \\___/^^^/\n"
+                "     ~~~~");
+              case 13: return std::string(  // bee
+                "    ,---,\n"
+                "   ( =Y= )\n"
+                "  ~( /-\\ )~\n"
+                "    `~|~'\n"
+                "     bzz");
+              case 14: return std::string(  // mouse
+                "    ()()\n"
+                "   ( o.o)\n"
+                "   ( \" \")\n"
+                "    `-~-'");
+              default: return std::string("?");
+            }
+
+      - lvgl.label.update:
+          id: sound_label
+          text: !lambda |-
+            static const char* const sounds[15] = {
+              "MOO!", "MEOW!", "WOOF!", "HOOT!", "RIBBIT!",
+              "QUACK!", "BAA!", "OINK!", "NEIGH!", "COCK-A-DOODLE-DOO!",
+              "ROAR!", "OOH OOH AH AH!", "HISS!", "BUZZ!", "SQUEAK!"
+            };
+            return std::string(sounds[id(animal_idx)]);
+
+      - if:
+          condition:
+            lambda: 'return id(animal_idx) == 0;'
+          then:
+            - media_player.speaker.play_on_device_media_file:
+                id: zoo_media_player
+                media_file: cow_sound
+                announcement: true
+      - if:
+          condition:
+            lambda: 'return id(animal_idx) == 1;'
+          then:
+            - media_player.speaker.play_on_device_media_file:
+                id: zoo_media_player
+                media_file: cat_sound
+                announcement: true
+      - if:
+          condition:
+            lambda: 'return id(animal_idx) == 2;'
+          then:
+            - media_player.speaker.play_on_device_media_file:
+                id: zoo_media_player
+                media_file: dog_sound
+                announcement: true
+      - if:
+          condition:
+            lambda: 'return id(animal_idx) == 3;'
+          then:
+            - media_player.speaker.play_on_device_media_file:
+                id: zoo_media_player
+                media_file: owl_sound
+                announcement: true
+      - if:
+          condition:
+            lambda: 'return id(animal_idx) == 4;'
+          then:
+            - media_player.speaker.play_on_device_media_file:
+                id: zoo_media_player
+                media_file: frog_sound
+                announcement: true
+      - if:
+          condition:
+            lambda: 'return id(animal_idx) == 5;'
+          then:
+            - media_player.speaker.play_on_device_media_file:
+                id: zoo_media_player
+                media_file: duck_sound
+                announcement: true
+      - if:
+          condition:
+            lambda: 'return id(animal_idx) == 6;'
+          then:
+            - media_player.speaker.play_on_device_media_file:
+                id: zoo_media_player
+                media_file: sheep_sound
+                announcement: true
+      - if:
+          condition:
+            lambda: 'return id(animal_idx) == 7;'
+          then:
+            - media_player.speaker.play_on_device_media_file:
+                id: zoo_media_player
+                media_file: pig_sound
+                announcement: true
+      - if:
+          condition:
+            lambda: 'return id(animal_idx) == 8;'
+          then:
+            - media_player.speaker.play_on_device_media_file:
+                id: zoo_media_player
+                media_file: horse_sound
+                announcement: true
+      - if:
+          condition:
+            lambda: 'return id(animal_idx) == 9;'
+          then:
+            - media_player.speaker.play_on_device_media_file:
+                id: zoo_media_player
+                media_file: rooster_sound
+                announcement: true
+      - if:
+          condition:
+            lambda: 'return id(animal_idx) == 10;'
+          then:
+            - media_player.speaker.play_on_device_media_file:
+                id: zoo_media_player
+                media_file: lion_sound
+                announcement: true
+      - if:
+          condition:
+            lambda: 'return id(animal_idx) == 11;'
+          then:
+            - media_player.speaker.play_on_device_media_file:
+                id: zoo_media_player
+                media_file: monkey_sound
+                announcement: true
+      - if:
+          condition:
+            lambda: 'return id(animal_idx) == 12;'
+          then:
+            - media_player.speaker.play_on_device_media_file:
+                id: zoo_media_player
+                media_file: snake_sound
+                announcement: true
+      - if:
+          condition:
+            lambda: 'return id(animal_idx) == 13;'
+          then:
+            - media_player.speaker.play_on_device_media_file:
+                id: zoo_media_player
+                media_file: bee_sound
+                announcement: true
+      - if:
+          condition:
+            lambda: 'return id(animal_idx) == 14;'
+          then:
+            - media_player.speaker.play_on_device_media_file:
+                id: zoo_media_player
+                media_file: mouse_sound
+                announcement: true

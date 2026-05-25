@@ -1,0 +1,13 @@
+# Runtime deps for bridge.py. Pinned to known-good versions —
+# `aioesphomeapi` in particular has rough edges around `subscribe_voice_assistant`
+# callback signatures and `ReconnectLogic` between minor releases, and the
+# AIPI-Lite firmware lives in this same repo, so a free-for-all upgrade can
+# silently break the audio path. Bump deliberately and re-run the test
+# suite + a real-hardware smoke when you do.
+#
+# Test deps live in `requirements-dev.txt`.
+aioesphomeapi==44.23.0
+pydantic==2.13.4
+pydantic-settings==2.14.0
+structlog==25.5.0
+websockets==16.0

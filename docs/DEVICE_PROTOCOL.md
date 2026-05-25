@@ -142,7 +142,68 @@ Other names are accepted, logged, and ignored (the protocol
 ferries them but only `long_press` has a binding in v1).
 Frames missing `name` are dropped with a warning log.
 
-### 3.5 Unknown control types
+### 3.5 `device_health`
+
+```json
+{"type": "device_health", "battery_pct": 84, "rssi_dbm": -57, "at": 1234}
+```
+
+Reports the device's last-known battery and WiFi health.
+The server stores the latest valid value in the in-memory
+device registry and projects the same values onto active
+meeting device descriptors when the device is attached.
+
+| field | type | required | rules |
+|---|---|---|---|
+| `type` | `"device_health"` | yes | exact literal |
+| `battery_pct` | int | yes | `0..100`; invalid values are dropped, not clamped |
+| `rssi_dbm` | int | yes | `-120..0`; invalid values are dropped, not clamped |
+| `at` | int | yes | device-side timestamp |
+
+The WebSocket stays open when a health frame is malformed;
+HoldSpeak logs and drops only that frame. Current values are
+available from:
+
+```text
+GET /api/devices/health
+```
+
+Each device object includes `battery_pct`, `rssi_dbm`, and
+`last_health_at` when the device has sent a health frame.
+
+### 3.6 `query`
+
+```json
+{"type": "query", "name": "last_segment", "at": 1235}
+```
+
+Requests server state for display on the device. Supported query
+names:
+
+| name | response |
+|---|---|
+| `last_segment` | most recent finalized active-meeting segment from this device, as a regular `status` frame with `ttl_ms: 5000` |
+| `agent_status` | most recent Claude/Codex hook-captured agent question, prefixed with agent/project context, as a regular `status` frame with `ttl_ms: 7000`; returns `No agent waiting` when none is fresh |
+| `agent_question` | most recent Claude/Codex hook-captured agent question without the status prefix, as a regular `status` frame with `ttl_ms: 7000`; returns `No agent waiting` when none is fresh |
+
+If there is no active meeting segment from this device, the
+server replies:
+
+```json
+{"type": "status", "text": "No transcript yet", "ttl_ms": 5000}
+```
+
+Unknown names receive a visible status response from the web
+runtime:
+
+```json
+{"type": "status", "text": "Unknown query: current_topic", "ttl_ms": 3000}
+```
+
+Malformed query frames are logged and dropped; the WebSocket
+stays open.
+
+### 3.7 Unknown control types
 
 Logged and dropped. The server does **not** close the
 connection; a misbehaving client doesn't kill its own audio
@@ -241,12 +302,24 @@ typing failed (e.g., Wayland blocked synthetic typing).
 | trigger | text | ttl_ms |
 |---|---|---|
 | Meeting starts with this device attached | `Recording 00:00` | 0 |
+| **Periodic tick during meeting (HS-17-05, currently every 1 s)** | `Recording MM:SS` | 0 |
+| **Finalized transcript segment (HS-17-08 / HS-17-13)** | `<speaker>: <text>` (bounded to the server LCD payload ceiling) | 3000 |
 | Bookmark added (web button or `long_press` event) | `Bookmark @ <seconds>s` | 2500 |
 | Meeting stop initiated | `Saving meeting...` | 0 |
 
-Per-minute "Recording MM:SS" ticks are not emitted in phase
-14; bookmark and save events keep the device LCD fresh
-during a meeting.
+The periodic Recording-tick (HS-17-05, 2026-05-10) fires every
+1 second while a meeting has at least one attached device. Format
+`Recording MM:SS`, sticky (`ttl_ms: 0`) so it overwrites the previous
+sticky activity until the next tick. The ticker stops cleanly on
+meeting stop (the `Saving meeting...` frame is the last status seen
+by the device). Cap: MM clamps to `99` at 100+ minute meetings —
+cosmetic concession to LCD width.
+
+Transcript pushback filters the clearest Whisper silence/noise
+hallucinations before painting the device LCD (`...`, all-punctuation
+strings, repeated single-word artifacts, and known short phrases such
+as `thanks for watching`). The durable meeting transcript is not
+filtered by this display-only rule.
 
 ### 6.3 Errors during a session
 

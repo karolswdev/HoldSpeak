@@ -111,6 +111,11 @@ def test_readiness_ready_with_project_blocks_kb_and_model(
     assert body["blocks"]["resolved"]["count"] == 1
     assert body["project_kb"]["keys"] == ["stack"]
     assert body["runtime"]["status"] == "available"
+    assert body["telemetry"]["status"] == "ok"
+    assert body["telemetry"]["counters"]["classify_calls"] >= 0
+    assert body["telemetry"]["latency"]["max_total_latency_ms"] == float(
+        body["config"]["max_total_latency_ms"]
+    )
     assert body["target"]["id"] in {
         "claude_code",
         "codex_cli",
@@ -122,6 +127,36 @@ def test_readiness_ready_with_project_blocks_kb_and_model(
     }
     assert set(body["agent_hooks"]) == {"claude", "codex"}
     assert body["warnings"] == []
+
+
+def test_readiness_reflects_target_profile_override(
+    test_client: TestClient,
+    settings_path: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model_path = tmp_path / "model.gguf"
+    model_path.write_text("stub", encoding="utf-8")
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = True
+    cfg.dictation.pipeline.target_profile_override = "claude_code"
+    cfg.dictation.runtime.backend = "llama_cpp"
+    cfg.dictation.runtime.llama_cpp_model_path = str(model_path)
+    cfg.save(path=settings_path)
+    root = tmp_path / "project"
+    _write_project(root)
+    monkeypatch.setattr(
+        runtime_module,
+        "resolve_backend",
+        lambda requested: ("llama_cpp", "test backend"),
+    )
+
+    response = test_client.get(f"/api/dictation/readiness?project_root={root}")
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["target"]["id"] == "claude_code"
+    assert body["target"]["source"] == "override"
 
 
 def test_readiness_disabled_no_project_reports_next_actions(
@@ -139,6 +174,8 @@ def test_readiness_disabled_no_project_reports_next_actions(
     body = response.json()
     assert body["ready"] is False
     assert body["runtime"]["status"] == "disabled"
+    assert body["telemetry"]["status"] == "fallback"
+    assert body["telemetry"]["fallbacks"][0]["category"] == "runtime_disabled"
     codes = {warning["code"] for warning in body["warnings"]}
     assert {"pipeline_disabled", "no_project", "no_blocks"} <= codes
     pipeline = next(w for w in body["warnings"] if w["code"] == "pipeline_disabled")
@@ -221,6 +258,7 @@ def test_readiness_runtime_unavailable_includes_install_guidance(
     assert response.status_code == 200
     body = response.json()
     warning = next(w for w in body["warnings"] if w["code"] == "runtime_unavailable")
+    assert body["telemetry"]["fallbacks"][0]["category"] == "runtime_unavailable"
     guidance = warning["guidance"]
     assert guidance["kind"] == "unavailable"
     assert guidance["backend"] == "llama_cpp"

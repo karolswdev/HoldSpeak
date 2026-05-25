@@ -1,6 +1,6 @@
 # Phase 17 — Device Initiative
 
-**Last updated:** 2026-05-10 (scaffold tightened after PMO evaluation — not the current HoldSpeak product priority).
+**Phase closed:** 2026-05-10. See [final-summary.md](./final-summary.md). This file is now frozen per PMO contract §6.
 
 ## Goal
 
@@ -29,32 +29,50 @@ This phase is the **sibling of HS-14** (audio + status substrate) rather than a 
 
 ## Exit criteria (evidence required)
 
-- [ ] `holdspeak/device_audio_ws.py` accepts `device_health` frames; updates the device registry / attached meeting descriptors; integration test `tests/integration/test_device_health_pushback.py` green.
-- [ ] `holdspeak/device_audio_ws.py` accepts `query` frames with `name="last_segment"`; replies with a `status` frame; integration test `tests/integration/test_device_query_last_segment.py` green.
-- [ ] `docs/DEVICE_PROTOCOL.md` lists both new frame schemas; section "Frame types" updated with examples + field semantics.
-- [ ] Web UI: dashboard / meeting device surfaces show battery + RSSI when present, hide when None — verified in the current web test stack or by manual runtime evidence.
-- [ ] All HS-17-01..04 stories show `Status: done` with paired `evidence-story-{n}.md` files.
-- [ ] `final-summary.md` records what shipped + the handoff to AIPI-Lite phase 4 (unblocking AIPI-4-05 / AIPI-4-06).
-- [ ] HoldSpeak `README.md` phase index flips HS-17 → `done`.
+- [x] `holdspeak/device_audio_ws.py` accepts `device_health` frames; updates the device registry / attached meeting descriptors; integration coverage is in `tests/integration/test_device_audio_ingest.py`.
+- [x] `holdspeak/device_audio_ws.py` accepts `query` frames with `name="last_segment"`; replies with a `status` frame; integration coverage is in `tests/integration/test_device_audio_ingest.py`.
+- [x] `docs/DEVICE_PROTOCOL.md` lists both new frame schemas; section "Frame types" updated with examples + field semantics.
+- [x] Web UI: dashboard / meeting device surfaces show battery + RSSI when present, hide when None — verified by current web test stack and build.
+- [x] All HS-17-01..04 stories show `Status: done` with paired `evidence-story-{n}.md` files.
+- [x] `final-summary.md` records what shipped + the handoff to AIPI-Lite phase 4 (unblocking AIPI-4-05 / AIPI-4-06).
+- [x] HoldSpeak `README.md` phase index flips HS-17 → `done`.
 
 ## Story status
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-17-01 | `device_health` frame: schema, handler, state extension, protocol doc | backlog | [story-01-device-health-frame.md](./story-01-device-health-frame.md) | — |
-| HS-17-02 | `query` frame + `last_segment` case: schema, handler, lookup logic | backlog | [story-02-query-last-segment.md](./story-02-query-last-segment.md) | — |
-| HS-17-03 | Web UI: device-health rendering in meeting view + device list | backlog | [story-03-device-health-ui.md](./story-03-device-health-ui.md) | — |
-| HS-17-04 | DoD: protocol-doc consolidation + final-summary + phase exit | backlog | [story-04-dod.md](./story-04-dod.md) | — |
+| HS-17-01 | `device_health` frame: schema, handler, state extension, protocol doc | done | [story-01-device-health-frame.md](./story-01-device-health-frame.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-17-02 | `query` frame + `last_segment` case: schema, handler, lookup logic | done | [story-02-query-last-segment.md](./story-02-query-last-segment.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-17-03 | Web UI: device-health rendering in meeting view + device list | done | [story-03-device-health-ui.md](./story-03-device-health-ui.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-17-04 | DoD: protocol-doc consolidation + final-summary + phase exit | done | [story-04-dod.md](./story-04-dod.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-17-05 | Periodic Recording-tick status emitter (HS-14-07 spec drift, surfaced live 2026-05-10) | done | [story-05-recording-tick-emitter.md](./story-05-recording-tick-emitter.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-17-06 | Meeting title in device status (alternates with Recording-tick payload) | backlog | [story-06-meeting-title-in-status.md](./story-06-meeting-title-in-status.md) | — |
+| HS-17-07 | Meeting intel pushback to device LCD (topic/actions/summary rotation post-meeting) | done | [story-07-intel-pushback.md](./story-07-intel-pushback.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-17-08 | Per-segment transcript pushback (live confirmation channel during meetings) | done | [story-08-per-segment-transcript-pushback.md](./story-08-per-segment-transcript-pushback.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-17-09 | MIR-01 realtime action items → LCD flash | backlog | [story-09-realtime-action-items.md](./story-09-realtime-action-items.md) | — |
+| HS-17-10 | Multi-device join/drop events → LCD flash | backlog | [story-10-multi-device-join-drop-events.md](./story-10-multi-device-join-drop-events.md) | — |
+| HS-17-11 | Handshake / version startup flash | backlog | [story-11-handshake-version-flash.md](./story-11-handshake-version-flash.md) | — |
+| HS-17-12 | Bookmark count in Recording-tick payload | backlog | [story-12-bookmark-count-in-tick.md](./story-12-bookmark-count-in-tick.md) | — |
+| HS-17-13 | Transcript noise filter for device LCD pushback | done | [story-13-transcript-noise-filter.md](./story-13-transcript-noise-filter.md) | [evidence-story-13](./evidence-story-13.md) |
+| HS-17-14 | "Heard but filtered" ack marker for word-level Whisper hallucinations | done | [story-14-filter-ack-marker.md](./story-14-filter-ack-marker.md) | [evidence-story-14](./evidence-story-14.md) |
+| HS-17-15 | LCD char limit bump (30 → 150) for the wider AIPI-4-12 middle widget | done | [story-15-lcd-char-limit-bump.md](./story-15-lcd-char-limit-bump.md) | [evidence-story-15](./evidence-story-15.md) |
+| HS-17-16 | Overlap windows on `MeetingSession` transcription passes (sister of AIPI-4-15) | done | [story-16-overlap-windows.md](./story-16-overlap-windows.md) | [evidence-story-16](./evidence-story-16.md) |
 
 (Status values: `backlog`, `ready`, `in-progress`, `blocked`, `done`, `cancelled`.)
 
 ## Where we are
 
-Phase opened 2026-05-10 to scaffold the HoldSpeak-side half of AIPI-Lite phase 4. Pickup order: **HS-17-01** (device_health) first because it has the simpler state model + no transcript-lookup design surface; **HS-17-02** (query) second because the "what's the last segment" question opens decisions; **HS-17-03** (UI) third (visible payoff once both substrates are in place); **HS-17-04** (DoD) closes.
+Phase 17 is closed for the substrate stories (HS-17-01..04). HoldSpeak accepts `device_health` frames, exposes live battery/RSSI state, answers `query:last_segment` over the existing status-frame path, renders attached-device health in the dashboard, and documents the AIPI-Lite phase 4 unblock contract.
 
-This phase is **scaffolded ahead of demand** — AIPI-Lite phase 4's bridge-side stories (AIPI-4-05 / AIPI-4-06) are themselves backlog. Pickup priority for this phase tracks the AIPI-Lite roadmap; no urgency until the device-side stories start moving.
+**LCD enrichment 2026-05-10 update.** A live AIPI-Lite hardware tuning session (paired with AIPI-Lite phase 4) closed five more stories beyond the substrate:
 
-This is **not the current HoldSpeak product phase**. The active product push is project-aware local intelligent typing, captured in [phase 18](../phase-18-intelligent-typing-copilot/). Do not pull HS-17 unless the user explicitly prioritizes AIPI-Lite hardware / active-device work.
+- **HS-17-07** — Meeting intel pushback. Paged-rotation design (Topics → Actions → Summary, 4 s dwell per page on a daemon thread). Lives in `device_status.build_intel_pages` + `push_intel_to_devices`; wired to `_on_meeting_intel` in `web_runtime`. Demoed live via probe push; pending live verification with a real intel-completion event once a non-llama-cpp provider is available.
+- **HS-17-13** — Whisper hallucination filter (already shipped earlier in session).
+- **HS-17-14** — "Heard but filtered" ack: word-level hallucinations (real audio, garbage transcription) now push `{speaker}: …` to the LCD so the user gets feedback that they were heard. Pure silence still skips.
+- **HS-17-15** — `LCD_TEXT_MAX_CHARS` bumped 30 → 150 to match AIPI-4-12's wider middle widget.
+- **HS-17-16** — Overlap windows on `MeetingSession._transcribe_chunks`: each pass prepends the last 1.5 s of the previous pass's audio so sentences spanning a 10 s `TRANSCRIBE_INTERVAL` boundary don't get cut mid-thought. Sister story to AIPI-4-15 (filed on the AIPI-Lite side too because the user-visible UX problem surfaced via the device LCD).
+
+Backlog remaining: **HS-17-06** (meeting title in status), **HS-17-09** (realtime action items → LCD), **HS-17-10** (multi-device join/drop events → LCD), **HS-17-11** (handshake/version startup flash), **HS-17-12** (bookmark count in Recording-tick).
 
 ## Active risks
 

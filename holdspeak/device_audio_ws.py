@@ -24,6 +24,8 @@ from fastapi import WebSocket, WebSocketDisconnect
 
 from .audio import AudioSource
 from .device_audio import (
+    DeviceHealthFrame,
+    DeviceQueryFrame,
     DeviceRegistry,
     DuplicateLabelError,
     HandshakeError,
@@ -37,6 +39,7 @@ from .device_audio import (
 from .logging_config import get_logger
 
 if TYPE_CHECKING:
+    from .device_audio import DeviceDescriptor
     from .device_status import DeviceStatusEmitter
 
 log = get_logger("device_audio_ws")
@@ -60,6 +63,8 @@ VoiceCancelHandler = Callable[[str], None]
 # numeric type or ``None``); the runtime uses it as a bookmark
 # anchor when ``name == "long_press"``.
 EventHandler = Callable[[str, str, Optional[float]], None]
+DeviceHealthHandler = Callable[["DeviceDescriptor"], None]
+DeviceQueryHandler = Callable[[str, str, Optional[float]], Optional[dict[str, Any]]]
 
 
 def register_device_audio_routes(
@@ -73,6 +78,8 @@ def register_device_audio_routes(
     on_voice_cancel: Optional[VoiceCancelHandler] = None,
     status_emitter: Optional["DeviceStatusEmitter"] = None,
     on_event: Optional[EventHandler] = None,
+    on_device_health: Optional[DeviceHealthHandler] = None,
+    on_device_query: Optional[DeviceQueryHandler] = None,
 ) -> None:
     """Mount ``WebSocket /api/devices/audio`` on ``app``.
 
@@ -117,6 +124,8 @@ def register_device_audio_routes(
             on_voice_cancel=on_voice_cancel,
             status_emitter=status_emitter,
             on_event=on_event,
+            on_device_health=on_device_health,
+            on_device_query=on_device_query,
         )
 
 
@@ -131,6 +140,8 @@ async def _serve_device_audio(
     on_voice_cancel: Optional[VoiceCancelHandler] = None,
     status_emitter: Optional["DeviceStatusEmitter"] = None,
     on_event: Optional[EventHandler] = None,
+    on_device_health: Optional[DeviceHealthHandler] = None,
+    on_device_query: Optional[DeviceQueryHandler] = None,
 ) -> None:
     """Drive the lifecycle of a single device-audio WebSocket connection."""
 
@@ -192,6 +203,8 @@ async def _serve_device_audio(
             on_voice_start=on_voice_start,
             on_voice_stop=on_voice_stop,
             on_event=on_event,
+            on_device_health=on_device_health,
+            on_device_query=on_device_query,
         )
     except WebSocketDisconnect:
         pass
@@ -281,6 +294,8 @@ async def _dispatch_loop(
     on_voice_start: Optional[VoiceStartHandler] = None,
     on_voice_stop: Optional[VoiceStopHandler] = None,
     on_event: Optional[EventHandler] = None,
+    on_device_health: Optional[DeviceHealthHandler] = None,
+    on_device_query: Optional[DeviceQueryHandler] = None,
 ) -> None:
     """Read frames until the peer disconnects or sends a malformed control."""
 
@@ -307,6 +322,8 @@ async def _dispatch_loop(
                 on_voice_start=on_voice_start,
                 on_voice_stop=on_voice_stop,
                 on_event=on_event,
+                on_device_health=on_device_health,
+                on_device_query=on_device_query,
             )
             continue
 
@@ -334,6 +351,8 @@ async def _handle_control(
     on_voice_start: Optional[VoiceStartHandler],
     on_voice_stop: Optional[VoiceStopHandler],
     on_event: Optional[EventHandler] = None,
+    on_device_health: Optional[DeviceHealthHandler] = None,
+    on_device_query: Optional[DeviceQueryHandler] = None,
 ) -> None:
     try:
         control = json.loads(raw)
@@ -428,6 +447,69 @@ async def _handle_control(
 
     if ctrl_type == "heartbeat":
         device_registry.touch(device_id)
+        return
+
+    if ctrl_type == "device_health":
+        try:
+            frame = DeviceHealthFrame.model_validate(control)
+        except Exception as exc:
+            log.warning(
+                "device_audio_bad_health_frame",
+                extra={"device_id": device_id, "reason": str(exc)},
+            )
+            return
+        descriptor = device_registry.update_health(
+            device_id,
+            battery_pct=frame.battery_pct,
+            rssi_dbm=frame.rssi_dbm,
+            at=frame.at,
+        )
+        if descriptor is not None and on_device_health is not None:
+            try:
+                on_device_health(descriptor)
+            except Exception:
+                log.exception(
+                    "device_audio_health_handler_failed",
+                    extra={"device_id": device_id},
+                )
+        return
+
+    if ctrl_type == "query":
+        try:
+            frame = DeviceQueryFrame.model_validate(control)
+        except Exception as exc:
+            log.warning(
+                "device_audio_bad_query_frame",
+                extra={"device_id": device_id, "reason": str(exc)},
+            )
+            return
+        at = float(frame.at)
+        device_registry.touch(device_id)
+        if on_device_query is None:
+            return
+        try:
+            response = on_device_query(device_id, frame.name, at)
+        except Exception:
+            log.exception(
+                "device_audio_query_handler_failed",
+                extra={"device_id": device_id, "query_name": frame.name},
+            )
+            return
+        if not response:
+            return
+        try:
+            await websocket.send_json(
+                {
+                    "type": "status",
+                    "text": str(response.get("text") or ""),
+                    "ttl_ms": int(response.get("ttl_ms") or 0),
+                }
+            )
+        except Exception:
+            log.info(
+                "device_audio_query_response_send_failed",
+                extra={"device_id": device_id, "query_name": frame.name},
+            )
         return
 
     if ctrl_type == "event":

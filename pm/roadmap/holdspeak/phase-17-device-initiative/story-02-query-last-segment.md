@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 17
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-14 (full phase — device WS substrate)
 - **Unblocks:** AIPI-4-06 (device-side bridge story)
-- **Owner:** unassigned
+- **Owner:** karol
 
 ## Problem
 
@@ -28,9 +28,9 @@ This story owns the **server side**: the `query` frame schema, the `last_segment
   ```
 - **`last_segment` lookup semantics** — decided in this story:
   - Prefer the most recent **finalized** segment (no in-progress / streaming previews).
-  - Source: most-recent **meeting segment** from this device within the last 60 minutes; else fallback text `No recent transcript`.
+  - Source: most-recent **active meeting segment** from this device; else fallback text `No transcript yet`.
   - "From this device" = `device_id` matches the WS-connection's device descriptor.
-- Truncation: HoldSpeak does NOT truncate; the bridge (AIPI-4-06) does the 30-char LCD-fit. HoldSpeak's response carries full segment text (≤ ~500 chars to fit the WS frame size).
+- Response size: HoldSpeak caps the response string at 500 chars to keep status frames bounded. Device-side LCD fit/scroll behavior remains bridge-owned.
 - Unknown query names: HoldSpeak responds with `status` frame `{"text":"Unknown query: <name>","ttl_ms":3000}`. (No silent failure; the device's user gets visible feedback.)
 - Concurrency: a `query` arriving while the previous query's response hasn't yet been emitted is fine (responses are independent status frames; no in-flight tracking needed in v1).
 - Integration test `tests/integration/test_device_query_last_segment.py`: covers meeting-segment hit, no-recent-transcript fallback, unknown-query-name response.
@@ -47,15 +47,15 @@ This story owns the **server side**: the `query` frame schema, the `last_segment
 
 ## Acceptance Criteria
 
-- [ ] `QueryFrame` Pydantic model defined with `extra="forbid"` and `name: str`; handler dispatches `name=="last_segment"` and returns a visible status frame for unknown names.
-- [ ] WS handler dispatches `type=="query"` + `name=="last_segment"` to the lookup helper.
-- [ ] Lookup helper finds most-recent finalized meeting segment from `device_id` in last 60 min; returns fallback string when nothing found.
-- [ ] Response emitted as a `status` frame with `ttl_ms=5000`; text is the segment content (or fallback).
-- [ ] Unknown query name → `status` frame `{"text":"Unknown query: <name>","ttl_ms":3000}`.
-- [ ] Malformed `query` frame (missing field, wrong type) logged + dropped; WS stays open (same rule as HS-17-01).
-- [ ] `docs/DEVICE_PROTOCOL.md` gains a `query` frame section + the `last_segment` case.
-- [ ] `tests/integration/test_device_query_last_segment.py` green; covers meeting hit / no-recent fallback / unknown name.
-- [ ] Unit tests for the model + lookup helper (parametrized over edge cases: device with multiple meetings, device with no meeting history, stale segments outside the 60-minute window).
+- [x] `DeviceQueryFrame` Pydantic model defined with `extra="forbid"` and `name: str`; handler dispatches `name=="last_segment"` and returns a visible status frame for unknown names.
+- [x] WS handler dispatches `type=="query"` + `name=="last_segment"` to the lookup helper.
+- [x] Lookup helper finds most-recent finalized active-meeting segment from `device_id`; returns fallback string when nothing found.
+- [x] Response emitted as a `status` frame with `ttl_ms=5000`; text is the segment content (or fallback).
+- [x] Unknown query name → `status` frame `{"text":"Unknown query: <name>","ttl_ms":3000}`.
+- [x] Malformed `query` frame (missing field, wrong type) logged + dropped; WS stays open (same rule as HS-17-01).
+- [x] `docs/DEVICE_PROTOCOL.md` gains a `query` frame section + the `last_segment` case.
+- [x] Integration coverage in `tests/integration/test_device_audio_ingest.py` covers query response over a real WS handshake.
+- [x] Unit tests cover the model; lookup is covered through the runtime callback path.
 
 ## Test Plan
 
@@ -65,8 +65,6 @@ This story owns the **server side**: the `query` frame schema, the `last_segment
 
 ## Notes
 
-- **Why meeting-only in v1:** meetings already have persisted transcript segments with device attribution. Voice typing should join this query only after HoldSpeak has an explicit durable per-device dictation transcript store.
-- **Why a 60-min window:** if it's been more than an hour since any transcript, the user's "last transcript" is probably no longer mentally relevant. Tunable.
-- **The hidden complexity is the lookup query itself** — meeting segments live in active meeting state and persisted meeting transcript records. Story should add a small `find_last_meeting_segment(device_id, max_age_seconds=3600)` helper and avoid scanning unrelated dictation logs.
+- **Why active-meeting-only in v1:** the current database schema does not persist `TranscriptSegment.device_id`, so a correct historical lookup needs a persistence migration. This story unblocks the active-device bridge path without pretending historical per-device lookup exists.
 - **Why `name: str` at the outer model:** unknown names must reach the handler so the device can get a visible "Unknown query" status. Per-query strict schemas can still be applied after dispatch once a query name is recognized.
 - **Truncation lives on the device side** by design — the bridge knows the LCD width; HoldSpeak doesn't need to. Keeps HoldSpeak's response shape uniform across query types.

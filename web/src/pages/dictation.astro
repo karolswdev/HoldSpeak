@@ -131,6 +131,18 @@ import CommandPreview from "../components/CommandPreview.astro";
           <header class="panel-header"><h3>Pipeline + runtime</h3></header>
           <label class="check-label"><input type="checkbox" id="rt-enabled" /> Enable dictation pipeline</label>
           <label class="check-label"><input type="checkbox" id="rt-stage-rewriter" /> Enable project-aware rewrite stage (<code>.hs/</code>)</label>
+          <label>Target profile override
+            <select id="rt-target-profile">
+              <option value="auto">Auto-detect target</option>
+              <option value="codex_cli">Codex CLI</option>
+              <option value="claude_code">Claude Code</option>
+              <option value="terminal_shell">Terminal shell</option>
+              <option value="browser">Browser</option>
+              <option value="editor">Editor</option>
+              <option value="chat">Chat</option>
+            </select>
+          </label>
+          <button class="btn" id="rt-target-auto" type="button">Reset target to auto</button>
           <label>Backend
             <select id="rt-backend">
               <option value="auto">auto (prefer MLX)</option>
@@ -244,6 +256,30 @@ import CommandPreview from "../components/CommandPreview.astro";
         updates the canonical <code>.hs/</code> copy.
       </p>
       <div id="hs-meta-banner" class="meta-banner">Loading…</div>
+      <section class="panel hs-suggestion-panel" id="hs-suggestion-panel" hidden>
+        <header class="panel-header">
+          <h3>Suggested project doc update</h3>
+        </header>
+        <p class="rt-counter-note">
+          Local intelligence can propose one narrow project-memory file after
+          a dry-run. Review and edit before applying; HoldSpeak never writes
+          these suggestions silently.
+        </p>
+        <label>
+          Target path
+          <input id="hs-suggestion-path" type="text" placeholder=".hs/memory/specific-slug.md" />
+        </label>
+        <p id="hs-suggestion-rationale" class="rt-counter-note"></p>
+        <label>
+          Suggested content
+          <textarea id="hs-suggestion-content" placeholder="No suggestion loaded."></textarea>
+        </label>
+        <div id="hs-suggestion-msg"></div>
+        <div class="actions">
+          <button class="btn primary" id="hs-suggestion-apply" type="button">Apply to .hs</button>
+          <button class="btn" id="hs-suggestion-dismiss" type="button">Dismiss</button>
+        </div>
+      </section>
       <div class="grid">
         <section class="panel">
           <header class="panel-header"><h3>Files</h3></header>

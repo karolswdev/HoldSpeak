@@ -100,6 +100,7 @@ class TestSettingsPutPersistsDictation:
                     "enabled": True,
                     "stages": ["intent-router", "project-rewriter", "kb-enricher"],
                     "max_total_latency_ms": 800,
+                    "target_profile_override": "codex_cli",
                 },
                 "runtime": {
                     "backend": "mlx",
@@ -121,6 +122,7 @@ class TestSettingsPutPersistsDictation:
         assert out["pipeline"]["enabled"] is True
         assert out["pipeline"]["stages"] == ["intent-router", "project-rewriter", "kb-enricher"]
         assert out["pipeline"]["max_total_latency_ms"] == 800
+        assert out["pipeline"]["target_profile_override"] == "codex_cli"
         assert out["runtime"]["backend"] == "mlx"
         assert out["runtime"]["openai_compatible_model"] == "qwen-local"
         assert out["runtime"]["openai_compatible_base_url"] == "http://127.0.0.1:8000/v1"
@@ -133,6 +135,7 @@ class TestSettingsPutPersistsDictation:
         assert persisted.dictation.pipeline.enabled is True
         assert persisted.dictation.pipeline.stages == ["intent-router", "project-rewriter", "kb-enricher"]
         assert persisted.dictation.pipeline.max_total_latency_ms == 800
+        assert persisted.dictation.pipeline.target_profile_override == "codex_cli"
         assert persisted.dictation.runtime.backend == "mlx"
         assert persisted.dictation.runtime.openai_compatible_model == "qwen-local"
         assert persisted.dictation.runtime.openai_compatible_base_url == "http://127.0.0.1:8000/v1"
@@ -232,6 +235,17 @@ class TestSettingsPutValidatesDictation:
         assert response.status_code == 400
         assert "bogus-stage" in response.json()["error"]
 
+    def test_unknown_target_profile_override_400(
+        self, test_client: TestClient, settings_path: Path
+    ) -> None:
+        response = test_client.put(
+            "/api/settings",
+            json={"dictation": {"pipeline": {"target_profile_override": "spreadsheet"}}},
+        )
+
+        assert response.status_code == 400
+        assert "target_profile_override" in response.json()["error"]
+
 
 # ── Page surface ──────────────────────────────────────────────────────
 
@@ -250,3 +264,4 @@ def test_dictation_page_includes_runtime_section() -> None:
     # HS-10-09: heading switched to sentence case in the rebuild.
     assert "Dictation runtime" in body
     assert "cold-start cap" in body
+    assert "Target profile override" in body

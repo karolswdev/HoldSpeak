@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 17
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-14 (full phase — device WS substrate)
 - **Unblocks:** HS-17-03, AIPI-4-05 (device-side bridge stories)
-- **Owner:** unassigned
+- **Owner:** karol
 
 ## Problem
 
@@ -37,15 +37,15 @@ The AIPI-Lite device knows its battery percentage and WiFi RSSI but has no way t
 
 ## Acceptance Criteria
 
-- [ ] `DeviceHealth` Pydantic model defined with `extra="forbid"`; `battery_pct: int = Field(ge=0, le=100)`; `rssi_dbm: int = Field(ge=-120, le=0)`; `at: int`.
-- [ ] WS handler in `holdspeak/device_audio_ws.py` dispatches `type=="device_health"` to the device-state setter.
-- [ ] Device registry descriptor extended with `battery_pct`, `rssi_dbm`, `last_health_at`; active meeting device snapshots expose those values when attached.
-- [ ] Existing JSON serializations (meeting view, API responses) include the new fields when present, omit/null when absent.
-- [ ] `GET /api/devices/health` or the existing runtime status API returns the new fields.
-- [ ] Invalid frames (out-of-range values, missing required fields, extra fields) are logged + dropped; WS stays open.
-- [ ] `docs/DEVICE_PROTOCOL.md` gains a `device_health` section.
-- [ ] `tests/integration/test_device_health_pushback.py` green; covers valid frame, out-of-range frame, missing field, malformed JSON.
-- [ ] Unit tests for `DeviceHealth` round-trip + validation (parametrized).
+- [x] `DeviceHealthFrame` Pydantic model defined with `extra="forbid"`; `battery_pct: int = Field(ge=0, le=100)`; `rssi_dbm: int = Field(ge=-120, le=0)`; `at: int`.
+- [x] WS handler in `holdspeak/device_audio_ws.py` dispatches `type=="device_health"` to the device-state setter.
+- [x] Device registry descriptor extended with `battery_pct`, `rssi_dbm`, `last_health_at`; active meeting device snapshots expose those values when attached.
+- [x] Existing JSON serializations (meeting view, API responses) include the new fields when present, null when absent.
+- [x] `GET /api/devices/health` returns the new fields.
+- [x] Invalid frames (out-of-range values, missing required fields, extra fields) are logged + dropped; WS stays open.
+- [x] `docs/DEVICE_PROTOCOL.md` gains a `device_health` section.
+- [x] Integration coverage in `tests/integration/test_device_audio_ingest.py` covers valid frame, health API projection, callback projection, and invalid-frame survival.
+- [x] Unit tests for `DeviceHealthFrame` round-trip + validation.
 
 ## Test Plan
 

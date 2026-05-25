@@ -178,11 +178,12 @@ class IntentRouter:
             warnings.append("classify retries exhausted; returning no-match")
 
         elapsed = (time.perf_counter() - start) * 1000.0
+        reason = "classify_failed" if warnings else ("matched" if intent.matched else "no_match")
         return StageResult(
             stage_id=self.id,
             text=utt.raw_text,
             intent=intent,
             elapsed_ms=elapsed,
             warnings=warnings,
-            metadata={"taxonomy_size": len(valid_ids)},
+            metadata={"taxonomy_size": len(valid_ids), "reason": reason},
         )

@@ -1,0 +1,71 @@
+# systemd unit for the AIPI-Lite ↔ HoldSpeak bridge.
+#
+# This unit ships defaulted to the rootless install pattern — every path
+# uses `%h` (the running user's home) and `User=` is omitted, so a
+# vanilla copy works for any user as long as the repo lives at
+# ~/AIPI-Lite-Voice-Bridge with a venv at ./.venv. Adjust BRIDGE_DIR
+# below if your checkout is somewhere else.
+#
+# === Rootless install (recommended) ===
+#   mkdir -p ~/.config/systemd/user
+#   cp scripts/aipi-bridge.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now aipi-bridge
+#   journalctl --user -u aipi-bridge -f
+#
+# === System-wide install ===
+# `%h` is unavailable in system services, so the path needs to be
+# absolute. Edit `WorkingDirectory=` and the two `ExecStart` paths to
+# the real location, set `User=` to the account that owns bridge.env,
+# then:
+#   sudo cp scripts/aipi-bridge.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now aipi-bridge
+#   journalctl -u aipi-bridge -f
+
+[Unit]
+Description=AIPI-Lite ↔ HoldSpeak bridge
+Documentation=https://github.com/karolswdev/AIPI-Lite-Voice-Bridge
+# Both endpoints come up via the network — order is best-effort, the
+# bridge's own reconnect loop handles whichever isn't ready yet.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Rootless default: %h expands to the user's home. For system-wide,
+# replace with an absolute path (and set `User=`).
+WorkingDirectory=%h/AIPI-Lite-Voice-Bridge
+
+ExecStart=%h/AIPI-Lite-Voice-Bridge/.venv/bin/python3 -m bridge
+
+# No `ExecStartPre=--check` — the bridge's own reconnect loop handles
+# HoldSpeak transient outages fine, and a strict pre-check makes
+# startup brittle on a reboot where systemd-resolved or HoldSpeak
+# isn't up yet. Use `python3 -m bridge --check` manually as a one-shot
+# diagnostic instead.
+
+# Bridge reads bridge.env via pydantic-settings; no EnvironmentFile= needed.
+
+# Restart on crash; back off so we don't tightly retry a bug.
+Restart=on-failure
+RestartSec=5s
+StartLimitIntervalSec=60s
+StartLimitBurst=5
+
+# Forward SIGTERM cleanly; the bridge handles it in <2s.
+KillSignal=SIGTERM
+TimeoutStopSec=10s
+
+# Conservative sandboxing — the bridge needs network + reads
+# bridge.env, nothing else.
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=%h/AIPI-Lite-Voice-Bridge
+PrivateTmp=true
+
+[Install]
+# Rootless: `WantedBy=default.target` is the user-session equivalent
+# of multi-user.target. The system-wide install (when you swap %h for
+# absolute paths) should change this back to `multi-user.target`.
+WantedBy=default.target

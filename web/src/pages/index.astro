@@ -235,6 +235,28 @@ import HoldMark from "../components/HoldMark.astro";
           </div>
         </section>
 
+        <!-- Devices -->
+        <section class="panel panel--dense" x-show="devices.length > 0" x-cloak>
+          <header class="panel-header"><div class="panel-title">Devices</div></header>
+          <div class="panel-body">
+            <ul class="device-list">
+              <template x-for="device in devices" :key="device.id">
+                <li class="device-item">
+                  <div class="device-main">
+                    <span class="device-label" x-text="device.label || device.id"></span>
+                    <span class="device-id mono" x-text="device.id"></span>
+                  </div>
+                  <div class="device-health" x-show="hasDeviceHealth(device)" x-cloak :class="{ 'is-stale': deviceHealthStale(device) }">
+                    <span class="meta-chip mono" x-show="deviceBatteryLabel(device)" x-cloak x-text="deviceBatteryLabel(device)"></span>
+                    <span class="meta-chip mono" x-show="deviceRssiLabel(device)" x-cloak x-text="deviceRssiLabel(device)"></span>
+                    <span class="rail-faint" x-show="deviceHealthStale(device)" x-cloak>stale</span>
+                  </div>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </section>
+
         <!-- Topics -->
         <section class="panel panel--dense">
           <header class="panel-header"><div class="panel-title">Topics</div></header>
@@ -762,6 +784,46 @@ import HoldMark from "../components/HoldMark.astro";
     background: var(--canvas); border: 1px solid var(--line);
     color: var(--text-muted); font-size: var(--font-size-xs);
     font-family: var(--font-mono);
+  }
+  .device-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .device-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+  }
+  .device-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2);
+  }
+  .device-label {
+    color: var(--text);
+    font-weight: 500;
+  }
+  .device-id {
+    color: var(--text-faint);
+    font-size: var(--font-size-xs);
+  }
+  .device-health {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1);
+  }
+  .device-health.is-stale {
+    opacity: 0.7;
   }
   .summary-text {
     margin: 0; color: var(--text);

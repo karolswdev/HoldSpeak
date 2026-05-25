@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 17
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-17-01, HS-17-02, HS-17-03
 - **Unblocks:** AIPI-Lite phase 4 close (AIPI-4-05 / AIPI-4-06 become unblocked once HS-17 ships)
-- **Owner:** unassigned
+- **Owner:** karol
 
 ## Problem
 
@@ -42,14 +42,14 @@ Close phase 17: consolidate `docs/DEVICE_PROTOCOL.md`'s phase-17 additions, writ
 
 ## Acceptance Criteria
 
-- [ ] `docs/DEVICE_PROTOCOL.md` lists both new frame types in the "Frame types" section, with schema + example + semantics.
-- [ ] `evidence-story-{01,02,03}.md` files exist for each of the substrate + UI stories.
-- [ ] `final-summary.md` written per `roadmap-builder.md` §2.5 — every required section present; handoff section explicitly names AIPI-4-05 / AIPI-4-06 as now-unblocked.
-- [ ] Parent README phase index row 17 → `done`; `Last updated` bumped.
-- [ ] `current-phase-status.md` frozen with a "phase closed" notice at the top + a pointer to `final-summary.md`.
-- [ ] AIPI-Lite unblock signal documented clearly: AIPI-4-05 + AIPI-4-06 may be flipped `blocked` → `backlog` in the AIPI-Lite repo once that repo is touched. If the AIPI-Lite repo is available in the same working session, coordinate a separate PMO-compliant edit there; do not make it a HoldSpeak acceptance gate.
-- [ ] `pytest -q` (or HoldSpeak's documented test command) reports no regressions; full integration suite green.
-- [ ] PMO contract certification clean (`.tmp/CONTRACT.md` boxes all `[x]`).
+- [x] `docs/DEVICE_PROTOCOL.md` lists both new frame types in the "Frame types" section, with schema + example + semantics.
+- [x] `evidence-story-{01,02,03}.md` files exist for each of the substrate + UI stories.
+- [x] `final-summary.md` written per `roadmap-builder.md` §2.5 — every required section present; handoff section explicitly names AIPI-4-05 / AIPI-4-06 as now-unblocked.
+- [x] Parent README phase index row 17 -> `done`; `Last updated` bumped.
+- [x] `current-phase-status.md` frozen with a "phase closed" notice at the top + a pointer to `final-summary.md`.
+- [x] AIPI-Lite unblock signal documented clearly: AIPI-4-05 + AIPI-4-06 may be flipped `blocked` -> `backlog` in the AIPI-Lite repo once that repo is touched.
+- [x] `pytest -q` reports no regressions; full suite green.
+- [x] PMO contract certification clean (`.tmp/CONTRACT.md` boxes all `[x]`).
 
 ## Test Plan
 

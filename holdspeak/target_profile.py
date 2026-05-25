@@ -23,6 +23,15 @@ KNOWN_TARGET_PROFILES = {
     "chat",
     "unknown",
 }
+TARGET_PROFILE_OVERRIDE_OPTIONS = {
+    "auto",
+    "claude_code",
+    "codex_cli",
+    "terminal_shell",
+    "browser",
+    "editor",
+    "chat",
+}
 
 
 @dataclass(frozen=True)
@@ -84,6 +93,36 @@ def detect_target_profile(hints: Mapping[str, Any] | None = None) -> TargetProfi
     return _profile("unknown", 0.0, "hints" if raw else "none", raw, details={})
 
 
+def normalize_target_profile_override(value: Any) -> str:
+    """Normalize a persisted manual target profile override."""
+
+    cleaned = _clean(value or "auto")
+    if cleaned not in TARGET_PROFILE_OVERRIDE_OPTIONS:
+        raise ValueError(
+            "target_profile_override must be one of: "
+            + ", ".join(sorted(TARGET_PROFILE_OVERRIDE_OPTIONS))
+        )
+    return cleaned
+
+
+def detect_target_profile_with_override(
+    hints: Mapping[str, Any] | None = None,
+    override: Any = "auto",
+) -> TargetProfile:
+    """Classify hints unless a persisted manual override is active."""
+
+    normalized = normalize_target_profile_override(override)
+    if normalized == "auto":
+        return detect_target_profile(hints)
+    return _profile(
+        normalized,
+        1.0,
+        "override",
+        dict(hints or {}),
+        details={"matched": "manual_override"},
+    )
+
+
 def collect_active_target_hints() -> dict[str, Any]:
     """Best-effort active-window hints; returns `{}` when unavailable."""
 
@@ -98,8 +137,8 @@ def collect_active_target_hints() -> dict[str, Any]:
     return {}
 
 
-def detect_active_target_profile() -> TargetProfile:
-    return detect_target_profile(collect_active_target_hints())
+def detect_active_target_profile(override: Any = "auto") -> TargetProfile:
+    return detect_target_profile_with_override(collect_active_target_hints(), override)
 
 
 def _profile(

@@ -263,7 +263,9 @@ class HoldSpeakController:
             from holdspeak.target_profile import detect_active_target_profile
 
             activity = build_activity_context(limit=20, refresh=False).to_dict()
-            activity["target"] = detect_active_target_profile().to_dict()
+            activity["target"] = detect_active_target_profile(
+                cfg.pipeline.target_profile_override
+            ).to_dict()
             recent_agent = get_recent_agent_session(max_age_seconds=120)
             if recent_agent is not None and recent_agent.awaiting_response:
                 project_root = self._dictation_project.get("root") if self._dictation_project else None

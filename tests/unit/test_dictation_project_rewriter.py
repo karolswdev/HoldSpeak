@@ -47,6 +47,20 @@ class _RewriteRuntime:
         return self.text
 
 
+class _SequenceRewriteRuntime:
+    backend = "fake"
+
+    def __init__(self, responses: list[str]) -> None:
+        self.responses = list(responses)
+        self.calls: list[dict[str, Any]] = []
+
+    def rewrite(self, prompt: str, *, max_tokens: int = 512, temperature: float = 0.15) -> str:
+        self.calls.append(
+            {"prompt": prompt, "max_tokens": max_tokens, "temperature": temperature}
+        )
+        return self.responses.pop(0)
+
+
 class _FailingRewriteRuntime:
     backend = "fake"
 
@@ -195,3 +209,56 @@ def test_project_rewriter_preserves_text_when_runtime_fails() -> None:
     assert result.text == "ship the endpoint fallback"
     assert result.metadata["reason"] == "rewrite_failed"
     assert result.warnings == ["runtime rewrite failed; preserving input (TimeoutError)"]
+
+
+def test_project_rewriter_appends_project_doc_suggestion_for_coding_agents() -> None:
+    runtime = _SequenceRewriteRuntime(
+        [
+            "Document the flat-file compatibility rule.",
+            (
+                '{"target_path": ".hs/memory/project-context-flat-files.md", '
+                '"rationale": "Preserves a reusable HoldSpeak convention.", '
+                '"content": "Flat .hs_* files are read-only compatibility inputs; canonical edits go into .hs/."}'
+            ),
+        ]
+    )
+    stage = ProjectRewriter(runtime)
+
+    result = stage.run(_utt("remember flat files are read only"), prior=[])
+
+    assert result.text.startswith("Document the flat-file compatibility rule.")
+    assert "Context preservation suggestion:" in result.text
+    assert ".hs/memory/project-context-flat-files.md" in result.text
+    assert result.metadata["project_doc_suggestion"] == {
+        "target_path": ".hs/memory/project-context-flat-files.md",
+        "rationale": "Preserves a reusable HoldSpeak convention.",
+        "content": "Flat .hs_* files are read-only compatibility inputs; canonical edits go into .hs/.",
+    }
+    assert len(runtime.calls) == 2
+    assert "Allowed target directories" in runtime.calls[1]["prompt"]
+
+
+def test_project_rewriter_skips_project_doc_suggestion_for_non_agent_targets() -> None:
+    runtime = _SequenceRewriteRuntime(["Polished browser prose."])
+    stage = ProjectRewriter(runtime)
+    utt = _utt("remember this")
+    activity = dict(utt.activity)
+    activity["target"] = {
+        "id": "browser",
+        "label": "Browser",
+        "confidence": 0.78,
+        "source": "hints",
+    }
+    utt = Utterance(
+        raw_text=utt.raw_text,
+        audio_duration_s=utt.audio_duration_s,
+        transcribed_at=utt.transcribed_at,
+        project=utt.project,
+        activity=activity,
+    )
+
+    result = stage.run(utt, prior=[])
+
+    assert result.text == "Polished browser prose."
+    assert result.metadata["project_doc_suggestion"] is None
+    assert len(runtime.calls) == 1
