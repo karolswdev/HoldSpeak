@@ -110,6 +110,19 @@ async def test_dispatch_status_flash_paints_middle_persist():
 
 
 @pytest.mark.asyncio
+async def test_dispatch_status_flash_notifies_middle_hold():
+    holds: list[int] = []
+    leg, _link, _activity, middle = _make_leg()
+    leg.on_middle_flash = holds.append
+
+    leg._dispatch({"type": "status", "text": "Absolutely should!", "ttl_ms": 4000})
+    await _drain_pending(leg)
+
+    assert holds == [4000]
+    assert middle == ["Absolutely should!"]
+
+
+@pytest.mark.asyncio
 async def test_dispatch_session_busy_paints_busy_with_symbol():
     leg, _link, activity, _middle = _make_leg()
     leg._dispatch(

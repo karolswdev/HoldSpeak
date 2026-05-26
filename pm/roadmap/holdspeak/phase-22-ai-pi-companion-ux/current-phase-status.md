@@ -1,6 +1,6 @@
 # Phase 22 — AI PI Companion UX
 
-**Last updated:** 2026-05-24 (phase opened; current pickup is HS-22-01 companion state model).
+**Last updated:** 2026-05-25 (closed; Phase 23 planning opened for companion UX polish).
 
 ## Goal
 
@@ -20,6 +20,7 @@ voice without guessing what the device is doing.
 - Bridge behavior for `/api/companion/status`, agent query names, and display
   updates.
 - Live hardware dogfood with a real Claude/Codex waiting-response loop.
+- tmux-pane reply delivery when hooks run inside tmux.
 
 ### Out
 
@@ -31,31 +32,31 @@ voice without guessing what the device is doing.
 
 ## Exit criteria
 
-- [ ] A companion state model is documented and implemented across bridge/display behavior.
-- [ ] The button/gesture contract is documented and covered by bridge tests.
-- [ ] AI PI can visibly show a waiting Claude/Codex question and clear stale state predictably.
-- [ ] AI PI can initiate a voice reply to a waiting agent through the shipped HoldSpeak companion path.
-- [ ] Live hardware dogfood records at least one real Claude/Codex answer flow.
-- [ ] Phase closeout records what became product-ready and what remains experimental.
+- [x] A companion state model is documented and implemented across bridge/display behavior.
+- [x] The button/gesture contract is documented and covered by bridge tests.
+- [x] AI PI can visibly show a waiting Claude/Codex question and clear stale state predictably.
+- [x] AI PI can initiate a voice reply to a waiting agent through the shipped HoldSpeak companion path.
+- [x] Live hardware dogfood records at least one real Claude/Codex answer flow.
+- [x] Phase closeout records what became product-ready and what remains experimental.
 
 ## Story status
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-22-01 | Companion state model and LCD priority contract | backlog | [story-01-companion-state-model.md](./story-01-companion-state-model.md) | — |
-| HS-22-02 | Gesture contract for agent and meeting actions | backlog | — | — |
-| HS-22-03 | Bridge companion polling and display wiring | backlog | — | — |
-| HS-22-04 | Agent voice-reply hardware dogfood | backlog | — | — |
-| HS-22-05 | Phase exit and product handoff | backlog | — | — |
+| HS-22-01 | Companion state model and LCD priority contract | done | [story-01-companion-state-model.md](./story-01-companion-state-model.md) | [evidence-story-01.md](./evidence-story-01.md) |
+| HS-22-02 | Gesture contract for agent and meeting actions | done | [story-02-gesture-contract.md](./story-02-gesture-contract.md) | [evidence-story-02.md](./evidence-story-02.md) |
+| HS-22-03 | Bridge companion polling and display wiring | done | [story-03-bridge-companion-polling.md](./story-03-bridge-companion-polling.md) | [evidence-story-03.md](./evidence-story-03.md) |
+| HS-22-04 | Agent voice-reply hardware dogfood | done | [story-04-agent-voice-reply-dogfood.md](./story-04-agent-voice-reply-dogfood.md) | [evidence-story-04.md](./evidence-story-04.md) |
+| HS-22-05 | tmux agent reply transport | done | [story-05-tmux-agent-reply-transport.md](./story-05-tmux-agent-reply-transport.md) | [evidence-story-05.md](./evidence-story-05.md) |
+| HS-22-06 | Phase exit and product handoff | done | [story-06-phase-exit-and-product-handoff.md](./story-06-phase-exit-and-product-handoff.md) | [evidence-story-06.md](./evidence-story-06.md) |
 
 ## Where we are
 
-Phase 20 shipped the HoldSpeak-side companion contract. Phase 21 brought the
-AIPI-Lite firmware and bridge into this repo and defined the unified developer
-workflow. Phase 22 starts by defining the actual physical companion UX contract
-before changing firmware or bridge behavior.
+Phase 22 is closed. It shipped the AI PI companion state model, gesture
+contract, bridge display wiring, live hardware dogfood, and tmux-pane reply
+delivery for terminal agents.
 
-Current pickup: HS-22-01, the companion state model and LCD priority contract.
+Current pickup: Phase 23 companion UX polish.
 
 ## Active risks
 
@@ -71,9 +72,15 @@ Current pickup: HS-22-01, the companion state model and LCD priority contract.
 - 2026-05-24 — **Product-first phase.** Phase 22 starts with state/gesture/LCD UX before adding more substrate.
 - 2026-05-24 — **No autonomous replies.** Device actions may initiate user speech capture, but replies remain user-driven.
 - 2026-05-24 — **Use shipped server contract first.** Prefer `/api/companion/status` plus existing device `query` / `status` before adding new wire frames.
+- 2026-05-24 — **Partial dogfood is real signal.** Agent capture, AI PI
+  display, physical capture, audio ingress, and transcription work. The next
+  blocker is insertion back into Claude from a GUI-capable runtime.
+- 2026-05-24 — **tmux over GUI focus.** GUI typing proves the loop, but tmux
+  pane targeting is the practical local transport for terminal agents.
 
 ## Decisions deferred
 
-- Whether the final reply gesture is press-and-hold, double-tap, or a left/right combination.
-- Whether the bridge should poll companion status or HoldSpeak should push agent-waiting state.
+- How long Claude/Codex prompts should marquee or window across AI PI.
+- How to label and browse multiple simultaneous Claude/Codex sessions.
+- Whether the bridge should continue polling companion status or HoldSpeak should push agent-waiting state.
 - Whether a browser companion panel is needed alongside the physical device.

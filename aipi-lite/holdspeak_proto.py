@@ -103,7 +103,7 @@ class QueryFrame(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     type: Literal["query"] = "query"
-    name: Literal["last_segment"]
+    name: Literal["last_segment", "agent_question", "agent_next"]
     at: int
 
 

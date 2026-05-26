@@ -38,6 +38,7 @@ def _make_settings() -> Settings:
 def _make_device_leg(
     *,
     is_in_meeting=None,
+    is_agent_waiting=None,
     paint_bookmark_flash=None,
 ) -> DeviceLeg:
     leg = DeviceLeg(
@@ -46,6 +47,7 @@ def _make_device_leg(
         audio_queue=asyncio.Queue(maxsize=10),
         control_queue=asyncio.Queue(maxsize=10),
         is_in_meeting=is_in_meeting,
+        is_agent_waiting=is_agent_waiting,
         paint_bookmark_flash=paint_bookmark_flash,
     )
     leg.client = MagicMock()
@@ -532,6 +534,22 @@ async def test_single_tap_outside_meeting_emits_last_segment_query():
 
 
 @pytest.mark.asyncio
+async def test_single_tap_outside_meeting_with_agent_waiting_shows_question():
+    leg = _make_device_leg(
+        is_in_meeting=MagicMock(return_value=False),
+        is_agent_waiting=MagicMock(return_value=True),
+    )
+    leg._left_button_press_at_ms = int(time.time() * 1000) - 50
+
+    leg._handle_left_button_state(pressed=False)
+
+    await _drain_pending(leg)
+    payload = leg.control_queue.get_nowait()
+    assert '"type":"query"' in payload
+    assert '"name":"agent_question"' in payload
+
+
+@pytest.mark.asyncio
 async def test_single_tap_with_unwired_meeting_state_suppresses():
     """If the HoldSpeak leg is not wired yet, do not guess whether the
     tap should be bookmark or query."""
@@ -558,6 +576,25 @@ async def test_double_tap_outside_meeting_suppressed():
 
     await _drain_pending(leg)
     assert leg.control_queue.empty()
+
+
+@pytest.mark.asyncio
+async def test_double_tap_outside_meeting_with_agent_waiting_cycles_target():
+    leg = _make_device_leg(
+        is_in_meeting=MagicMock(return_value=False),
+        is_agent_waiting=MagicMock(return_value=True),
+    )
+    now_ms = int(time.time() * 1000)
+
+    leg._left_button_press_at_ms = now_ms - 50
+    leg._handle_left_button_state(pressed=False)
+    leg._left_button_press_at_ms = now_ms - 30
+    leg._handle_left_button_state(pressed=False)
+
+    await _drain_pending(leg)
+    payload = leg.control_queue.get_nowait()
+    assert '"type":"query"' in payload
+    assert '"name":"agent_next"' in payload
 
 
 @pytest.mark.asyncio

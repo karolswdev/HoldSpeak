@@ -32,6 +32,7 @@ from bridge.audio import (
     read_wav_pcm,
     synth_sine_pcm,
 )
+from bridge.companion_status import CompanionStatusPoller
 from bridge.device import DeviceLeg
 from bridge.holdspeak import HoldSpeakLeg
 from bridge.logging_setup import configure_logging
@@ -83,6 +84,7 @@ async def _run(settings: Settings) -> None:
     async def _on_middle(rendered: str) -> None:
         await device.update_middle(rendered)
 
+    companion = CompanionStatusPoller(settings, log, on_middle_update=_on_middle)
     holdspeak = HoldSpeakLeg(
         settings,
         log,
@@ -91,12 +93,14 @@ async def _run(settings: Settings) -> None:
         on_link_update=_on_link,
         on_activity_update=_on_activity,
         on_middle_update=_on_middle,
+        on_middle_flash=companion.hold_middle_for,
     )
     # Bookmark-gesture wiring (AIPI-4-01). Both legs exist now, so
     # close the cycle: device queries hs for "in meeting?" and asks
     # hs to paint the bookmark flash on emission. Late-bound so the
     # leg dependency graph stays acyclic at construction time.
     device.is_in_meeting = holdspeak.is_in_meeting
+    device.is_agent_waiting = companion.is_agent_waiting
     device.paint_bookmark_flash = holdspeak.paint_bookmark_flash
     # Link-race fix (AIPI-4-08) + activity-race fix (AIPI-4-10): when
     # the device leg finishes caching LCD service handles, ask hs to
@@ -106,6 +110,7 @@ async def _run(settings: Settings) -> None:
     # the firmware boot-default and the activity slot showing ASCII
     # `Ready` instead of the bridge's intended `Ready  <LV_SYMBOL_OK>`.
     async def _on_device_ready() -> None:
+        companion.force_repaint()
         await holdspeak.republish_link_state()
         await holdspeak.republish_sticky_activity()
 
@@ -126,6 +131,10 @@ async def _run(settings: Settings) -> None:
         reconnect_with_backoff(holdspeak.session, name="holdspeak", log=log),
         name="holdspeak_loop",
     )
+    companion_task = asyncio.create_task(
+        companion.run(),
+        name="companion_status_loop",
+    )
     await device.start()
     log.info("loop.ready")
 
@@ -134,6 +143,7 @@ async def _run(settings: Settings) -> None:
     finally:
         log.info("shutdown.begin")
         holdspeak_task.cancel()
+        companion_task.cancel()
         try:
             await device.stop()
         except Exception as exc:
@@ -144,6 +154,12 @@ async def _run(settings: Settings) -> None:
             pass
         except Exception as exc:
             log.warning("shutdown.holdspeak.error", error=str(exc))
+        try:
+            await companion_task
+        except asyncio.CancelledError:
+            pass
+        except Exception as exc:
+            log.warning("shutdown.companion.error", error=str(exc))
         log.info("shutdown.complete")
 
 

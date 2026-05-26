@@ -58,6 +58,11 @@ class Settings(BaseSettings):
     #   AUDIO_MONITOR_CMD='aplay -q -f S16_LE -r 16000 -c 1 -t raw -'
     audio_monitor_cmd: str | None = None
 
+    # Poll cadence for HoldSpeak's `/api/companion/status`. The poller owns
+    # agent-attention paint in the LCD middle zone; 2 s is fast enough for a
+    # physical companion without creating noisy local HTTP traffic.
+    companion_poll_interval_s: float = 2.0
+
     log_level: str = "INFO"
 
     @model_validator(mode="after")

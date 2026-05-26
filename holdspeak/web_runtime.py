@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import signal
 import threading
 import time
@@ -47,6 +48,21 @@ from .typer import TextTyper
 from .web_server import MeetingWebServer, _UnknownDeviceError
 
 log = get_logger("web_runtime")
+
+
+def _configured_web_port_from_env() -> int | None:
+    raw = os.environ.get("HOLDSPEAK_WEB_PORT")
+    if raw is None or not raw.strip():
+        return None
+    try:
+        port = int(raw)
+    except ValueError:
+        log.warning(f"Ignoring invalid HOLDSPEAK_WEB_PORT={raw!r}")
+        return None
+    if port <= 0 or port > 65535:
+        log.warning(f"Ignoring out-of-range HOLDSPEAK_WEB_PORT={raw!r}")
+        return None
+    return port
 
 
 def run_web_runtime(
@@ -638,6 +654,8 @@ def run_web_runtime(
             "meeting": meeting,
             "last_meeting": last_meeting,
             "voice_state": runtime.get("voice_state", runtime_snapshot.get("voice_state", "idle")),
+            "text_injection_enabled": runtime_snapshot.get("text_injection_enabled"),
+            "text_injection_error": runtime_snapshot.get("text_injection_error", ""),
             "transcription": {
                 "model": runtime_snapshot.get("transcription_model", config.model.name),
                 "warm_on_start": runtime_snapshot.get("transcription_warm_on_start", False),
@@ -1132,9 +1150,15 @@ def run_web_runtime(
                     runtime_status["last_transcription"] = text
                     runtime_status["last_error"] = ""
                 print(f"-> {text}")
-                if typer is not None:
+                delivered = _try_tmux_agent_reply(text, agent_reply_session)
+                if not delivered and typer is not None:
                     try:
-                        typer.type_text(text)
+                        paste_target_profile = _paste_target_profile(agent_reply_session)
+                        typer.type_text(
+                            text,
+                            target_profile=paste_target_profile,
+                            submit=agent_reply_session is not None,
+                        )
                     except Exception as exc:
                         with state_lock:
                             runtime_status["last_error"] = f"Typing failed: {exc}"
@@ -1231,6 +1255,44 @@ def run_web_runtime(
             log.warning(f"Web dictation pipeline raised; falling back to processed text: {exc}")
             return text
 
+    def _paste_target_profile(agent_reply_session: Any | None) -> str | None:
+        if agent_reply_session is None:
+            return None
+        try:
+            from holdspeak.agent_device import target_profile_override_for_agent
+
+            return target_profile_override_for_agent(agent_reply_session)
+        except Exception:
+            return None
+
+    def _try_tmux_agent_reply(text: str, agent_reply_session: Any | None) -> bool:
+        pane = _agent_tmux_pane(agent_reply_session)
+        if not pane:
+            return False
+        try:
+            from holdspeak.tmux_transport import send_text_to_pane
+
+            send_text_to_pane(pane=pane, text=text, submit=True)
+            return True
+        except Exception as exc:
+            with state_lock:
+                runtime_status["last_error"] = f"tmux reply failed; fell back to typing: {exc}"
+            log.warning(f"tmux reply failed; falling back to text injection: {exc}")
+            return False
+
+    def _agent_tmux_pane(agent_reply_session: Any | None) -> str | None:
+        if agent_reply_session is None:
+            return None
+        pane = getattr(agent_reply_session, "tmux_pane", None)
+        return str(pane).strip() if pane else None
+
+    def _agent_reply_deliverable(agent_reply_session: Any | None) -> bool:
+        if agent_reply_session is None:
+            return True
+        if _agent_tmux_pane(agent_reply_session):
+            return True
+        return typer is not None
+
     def _on_hotkey_press() -> None:
         if runtime_stop_event.is_set():
             return
@@ -1288,6 +1350,18 @@ def run_web_runtime(
         if active_meeting is not None:
             if active_meeting.is_device_attached(device_id):
                 return True
+            return False
+        from .agent_context import get_recent_awaiting_agent_session
+
+        agent_reply_session = get_recent_awaiting_agent_session(max_age_seconds=120)
+        if not _agent_reply_deliverable(agent_reply_session):
+            with state_lock:
+                runtime_status["last_error"] = "Agent reply target unavailable"
+            device_status.send(device_id, "No reply target", ttl_ms=3000)
+            log.info(
+                "device_voice_start_rejected_no_agent_reply_target",
+                extra={"device_id": device_id},
+            )
             return False
         owner = f"device:{device_id}"
         try:
@@ -1424,12 +1498,24 @@ def run_web_runtime(
         name: str,
         at: Optional[float],
     ) -> Optional[dict[str, object]]:
-        from .agent_context import get_recent_awaiting_agent_session
-        from .agent_device import AGENT_QUERY_NAMES, build_agent_query_response
+        from .agent_context import (
+            get_recent_awaiting_agent_session,
+            select_next_awaiting_agent_session,
+        )
+        from .agent_device import (
+            AGENT_NEXT_QUERY,
+            AGENT_QUERY_NAMES,
+            build_agent_query_response,
+        )
 
         if name in AGENT_QUERY_NAMES:
-            session = get_recent_awaiting_agent_session(max_age_seconds=120)
-            response = build_agent_query_response(name, session)
+            if name == AGENT_NEXT_QUERY:
+                session = select_next_awaiting_agent_session(max_age_seconds=120)
+                response_name = "agent_status"
+            else:
+                session = get_recent_awaiting_agent_session(max_age_seconds=120)
+                response_name = name
+            response = build_agent_query_response(response_name, session)
             if response is not None:
                 return response
 
@@ -1482,6 +1568,7 @@ def run_web_runtime(
             on_device_health=_on_device_health,
             on_device_query=_on_device_query,
             host="127.0.0.1",
+            port=_configured_web_port_from_env(),
         )
         runtime_url = server.start()
     except Exception as exc:

@@ -463,6 +463,11 @@ class TestCompanionStatusEndpoint:
             "get_recent_awaiting_agent_session",
             lambda **_kwargs: session,
         )
+        monkeypatch.setattr(
+            agent_context_module,
+            "list_recent_awaiting_agent_sessions",
+            lambda **_kwargs: [session],
+        )
 
         registry = DeviceRegistry()
         registry.register("aipi-1", "Karol")
@@ -493,12 +498,105 @@ class TestCompanionStatusEndpoint:
             "agent_waiting": True,
             "dictation_pipeline_enabled": True,
             "text_injection_enabled": True,
+            "tmux_reply_available": False,
+            "target_confidence": "medium",
         }
         assert payload["devices"]["count"] == 1
-        assert payload["devices"]["query_names"] == ["agent_question", "agent_status"]
+        assert payload["devices"]["query_names"] == [
+            "agent_next",
+            "agent_question",
+            "agent_status",
+        ]
         assert payload["agent"]["session"]["agent"] == "codex"
+        assert payload["agent"]["identity"]["compact_label"] == (
+            "Codex | HoldSpeak | no tmux"
+        )
+        assert payload["agent"]["identity"]["target_transport"] == "text_injection"
+        assert payload["agent"]["sessions"]["count"] == 1
+        assert payload["agent"]["sessions"]["selected_index"] == 0
+        assert payload["agent"]["sessions"]["items"][0]["identity"]["compact_label"] == (
+            "Codex | HoldSpeak | no tmux"
+        )
+        assert payload["agent"]["sessions"]["items"][0]["selected"] is True
         assert payload["dictation"]["stages"] == ["project-rewriter"]
+        assert payload["runtime"]["target_transport"] == "text_injection"
         assert payload["runtime"]["voice_state"] == "idle"
+
+    def test_companion_status_accepts_tmux_reply_without_text_injection(
+        self,
+        monkeypatch,
+        mock_callbacks,
+    ):
+        import holdspeak.agent_context as agent_context_module
+        from holdspeak.agent_context import AgentSession
+        from holdspeak.config import Config
+        from holdspeak.device_audio import DeviceRegistry
+
+        cfg = Config()
+        cfg.dictation.pipeline.enabled = True
+        monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg))
+
+        session = AgentSession(
+            agent="claude",
+            session_id="claude-1",
+            cwd="/tmp/HoldSpeak",
+            updated_at="2026-05-24T12:00:00Z",
+            hook_event_name="Stop",
+            last_assistant_text="Proceed?",
+            awaiting_response=True,
+            capture_messages=True,
+            tmux_pane="%42",
+            tmux_session="work",
+            tmux_window="2",
+            tmux_pane_index="1",
+        )
+        monkeypatch.setattr(
+            agent_context_module,
+            "get_recent_awaiting_agent_session",
+            lambda **_kwargs: session,
+        )
+        monkeypatch.setattr(
+            agent_context_module,
+            "list_recent_awaiting_agent_sessions",
+            lambda **_kwargs: [session],
+        )
+
+        registry = DeviceRegistry()
+        registry.register("aipi-1", "Karol")
+        server = MeetingWebServer(
+            on_bookmark=mock_callbacks["on_bookmark"],
+            on_stop=mock_callbacks["on_stop"],
+            get_state=mock_callbacks["get_state"],
+            on_get_status=MagicMock(
+                return_value={
+                    "voice_state": "idle",
+                    "text_injection_enabled": False,
+                    "text_injection_error": "TextTyper unavailable",
+                }
+            ),
+            device_registry=registry,
+            host="127.0.0.1",
+        )
+        client = TestClient(server.app)
+
+        response = client.get("/api/companion/status")
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["ready_for_agent_reply"] is True
+        assert payload["blockers"] == []
+        assert payload["checks"]["tmux_reply_available"] is True
+        assert payload["checks"]["target_confidence"] == "high"
+        assert payload["agent"]["identity"]["compact_label"] == (
+            "Claude | HoldSpeak | work:2.1"
+        )
+        assert payload["agent"]["identity"]["target_transport"] == "tmux"
+        assert payload["agent"]["sessions"]["count"] == 1
+        assert payload["agent"]["sessions"]["items"][0]["identity"]["target_transport"] == (
+            "tmux"
+        )
+        assert payload["runtime"]["text_injection_enabled"] is False
+        assert payload["runtime"]["target_transport"] == "tmux"
 
     def test_companion_status_reports_setup_blockers(self, monkeypatch, mock_callbacks):
         import holdspeak.agent_context as agent_context_module
@@ -510,6 +608,11 @@ class TestCompanionStatusEndpoint:
             agent_context_module,
             "get_recent_awaiting_agent_session",
             lambda **_kwargs: None,
+        )
+        monkeypatch.setattr(
+            agent_context_module,
+            "list_recent_awaiting_agent_sessions",
+            lambda **_kwargs: [],
         )
         server = MeetingWebServer(
             on_bookmark=mock_callbacks["on_bookmark"],
@@ -539,6 +642,9 @@ class TestCompanionStatusEndpoint:
         }
         assert payload["runtime"]["text_injection_enabled"] is False
         assert payload["runtime"]["text_injection_error"] == "backend unavailable"
+        assert payload["checks"]["target_confidence"] is None
+        assert payload["agent"]["identity"] is None
+        assert payload["agent"]["sessions"]["count"] == 0
 
 
 @pytest.mark.integration

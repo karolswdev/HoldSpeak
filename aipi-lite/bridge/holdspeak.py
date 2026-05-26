@@ -67,6 +67,7 @@ class HoldSpeakLeg:
         on_link_update: Callable[[str], Awaitable[None]] | None = None,
         on_activity_update: Callable[[str], Awaitable[None]] | None = None,
         on_middle_update: Callable[[str], Awaitable[None]] | None = None,
+        on_middle_flash: Callable[[int], None] | None = None,
     ) -> None:
         self.settings = settings
         self.log = log.bind(leg="holdspeak")
@@ -83,6 +84,7 @@ class HoldSpeakLeg:
         # error) route here instead of overwriting the bottom activity
         # slot's persistent state (Recording-tick, Ready, etc.).
         self.on_middle_update = on_middle_update
+        self.on_middle_flash = on_middle_flash
         self._url = (
             f"ws://{settings.holdspeak_host}:{settings.holdspeak_port}/api/devices/audio"
         )
@@ -554,6 +556,16 @@ class HoldSpeakLeg:
         # like the LCD was fidgeting; persist-until-replaced lets the
         # user read the segment naturally and reuses the middle slot
         # as a "last said" context cue.
+        if self.on_middle_flash is not None:
+            try:
+                self.on_middle_flash(ttl_ms)
+            except Exception as exc:
+                self.log.warning(
+                    "middle_flash.handler.error",
+                    error=type(exc).__name__,
+                    error_msg=str(exc)[:200],
+                    ttl_ms=ttl_ms,
+                )
         await self._call_middle(rendered)
 
     def is_in_meeting(self) -> bool:

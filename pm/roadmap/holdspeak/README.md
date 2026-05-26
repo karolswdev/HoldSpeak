@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-24 (Phase 22 opened: AI PI companion UX).
-**Current phase:** [phase-22-ai-pi-companion-ux](./phase-22-ai-pi-companion-ux/) — make AI PI a deliberate physical companion UX for HoldSpeak.
-**Status:** in-progress.
+**Last updated:** 2026-05-26 (Phase 24 opened: AI PI companion productization).
+**Current phase:** [phase-24-ai-pi-companion-productization](./phase-24-ai-pi-companion-productization/) — make AI PI easier to supervise, recover, and operate during real agent work.
+**Status:** planning.
 
 ## Vision
 
@@ -60,7 +60,9 @@ canon, canon wins.
 | 19 | Intelligent Typing Daily-Use Hardening: safe `.hs/.../*.md` project-doc suggestions, telemetry, target-profile overrides, and real endpoint dogfooding | done | [phase-19-intelligent-typing-hardening](./phase-19-intelligent-typing-hardening/) |
 | 20 | AIPI Companion: same-LAN physical companion UX for agent-waiting status, voice replies, gestures, and debug visibility | done | [phase-20-aipi-companion](./phase-20-aipi-companion/) |
 | 21 | AIPI-Lite First-Class Integration: import firmware and bridge source into HoldSpeak and define the unified developer workflow | done | [phase-21-aipi-lite-first-class](./phase-21-aipi-lite-first-class/) |
-| 22 | AI PI Companion UX: state model, gestures, LCD cadence, bridge display wiring, and live hardware dogfood | in-progress | [phase-22-ai-pi-companion-ux](./phase-22-ai-pi-companion-ux/) |
+| 22 | AI PI Companion UX: state model, gestures, LCD cadence, bridge display wiring, and live hardware dogfood | done | [phase-22-ai-pi-companion-ux](./phase-22-ai-pi-companion-ux/) |
+| 23 | AI PI Companion UX Polish: long-prompt display, multi-session identity, preview/browse, and target confidence | done | [phase-23-ai-pi-companion-ux-polish](./phase-23-ai-pi-companion-ux-polish/) |
+| 24 | AI PI Companion Productization: web companion overview, stale-session controls, confidence affordances, and display update cadence | planning | [phase-24-ai-pi-companion-productization](./phase-24-ai-pi-companion-productization/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

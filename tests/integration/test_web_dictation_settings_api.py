@@ -15,7 +15,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import holdspeak.config as config_module
-from holdspeak.config import Config
+from holdspeak.config import Config, DeviceConfig
 from holdspeak.plugins.dictation import runtime_counters
 from holdspeak.web_server import MeetingWebServer
 
@@ -186,6 +186,23 @@ class TestSettingsPutPersistsDictation:
         assert persisted.dictation.pipeline.enabled is True
         assert persisted.dictation.runtime.backend == "llama_cpp"
         on_settings_applied.assert_called_once()
+
+    def test_partial_put_preserves_device_config(
+        self, test_client: TestClient, settings_path: Path
+    ) -> None:
+        cfg = Config()
+        cfg.device = DeviceConfig(psk="dogfood-psk")
+        cfg.save(path=settings_path)
+
+        response = test_client.put(
+            "/api/settings",
+            json={"dictation": {"pipeline": {"enabled": True}}},
+        )
+
+        assert response.status_code == 200, response.text
+        assert response.json()["settings"]["device"]["psk"] == "dogfood-psk"
+        persisted = Config.load(path=settings_path)
+        assert persisted.device.psk == "dogfood-psk"
 
     def test_put_drops_runtime_status_if_echoed_back(
         self, test_client: TestClient, settings_path: Path

@@ -15,6 +15,7 @@ import os
 import re
 import shlex
 import shutil
+import subprocess
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
@@ -88,6 +89,11 @@ class AgentSession:
     last_assistant_text: Optional[str] = None
     last_assistant_text_at: Optional[str] = None
     summary: Optional[dict[str, Any]] = None
+    tmux_pane: Optional[str] = None
+    tmux_session: Optional[str] = None
+    tmux_window: Optional[str] = None
+    tmux_pane_index: Optional[str] = None
+    tmux_pane_current_path: Optional[str] = None
     awaiting_response: bool = False
     capture_messages: bool = False
     created_at: Optional[str] = None
@@ -111,6 +117,11 @@ class AgentSession:
             last_assistant_text=_optional_str(raw.get("last_assistant_text")),
             last_assistant_text_at=_optional_str(raw.get("last_assistant_text_at")),
             summary=dict(raw["summary"]) if isinstance(raw.get("summary"), dict) else None,
+            tmux_pane=_optional_str(raw.get("tmux_pane")),
+            tmux_session=_optional_str(raw.get("tmux_session")),
+            tmux_window=_optional_str(raw.get("tmux_window")),
+            tmux_pane_index=_optional_str(raw.get("tmux_pane_index")),
+            tmux_pane_current_path=_optional_str(raw.get("tmux_pane_current_path")),
             awaiting_response=bool(raw.get("awaiting_response")),
             capture_messages=bool(raw.get("capture_messages")),
             created_at=_optional_str(raw.get("created_at")),
@@ -134,6 +145,11 @@ class AgentSession:
             "last_assistant_text": self.last_assistant_text,
             "last_assistant_text_at": self.last_assistant_text_at,
             "summary": dict(self.summary) if isinstance(self.summary, dict) else None,
+            "tmux_pane": self.tmux_pane,
+            "tmux_session": self.tmux_session,
+            "tmux_window": self.tmux_window,
+            "tmux_pane_index": self.tmux_pane_index,
+            "tmux_pane_current_path": self.tmux_pane_current_path,
             "awaiting_response": self.awaiting_response,
             "capture_messages": self.capture_messages,
             "created_at": self.created_at,
@@ -148,6 +164,7 @@ def ingest_agent_hook_event(
     state_path: Path | None = None,
     now: datetime | None = None,
     capture_messages: bool = False,
+    env: Mapping[str, str] | None = None,
 ) -> AgentSession:
     """Record one Claude/Codex hook event and return the normalized session."""
 
@@ -179,6 +196,7 @@ def ingest_agent_hook_event(
             normalized_agent,
             Path(str(payload.get("transcript_path") or "")).expanduser(),
         )
+    tmux_context = detect_tmux_context(payload, env=env)
 
     with _state_lock(state_file):
         state = _read_state(state_file)
@@ -220,6 +238,11 @@ def ingest_agent_hook_event(
             last_assistant_text=last_assistant_text,
             last_assistant_text_at=last_assistant_text_at,
             summary=summary,
+            tmux_pane=tmux_context.get("tmux_pane") or _optional_str(previous.get("tmux_pane")),
+            tmux_session=tmux_context.get("tmux_session") or _optional_str(previous.get("tmux_session")),
+            tmux_window=tmux_context.get("tmux_window") or _optional_str(previous.get("tmux_window")),
+            tmux_pane_index=tmux_context.get("tmux_pane_index") or _optional_str(previous.get("tmux_pane_index")),
+            tmux_pane_current_path=tmux_context.get("tmux_pane_current_path") or _optional_str(previous.get("tmux_pane_current_path")),
             awaiting_response=awaiting_response,
             capture_messages=effective_capture_messages,
             created_at=_optional_str(previous.get("created_at")) or timestamp,
@@ -231,6 +254,30 @@ def ingest_agent_hook_event(
         _write_state(state_file, state)
 
     return session
+
+
+def detect_tmux_context(
+    payload: Mapping[str, Any] | None = None,
+    *,
+    env: Mapping[str, str] | None = None,
+) -> dict[str, str]:
+    """Return tmux pane metadata visible to an agent hook process."""
+
+    raw = dict(payload or {})
+    source_env = env if env is not None else os.environ
+    pane = _optional_str(raw.get("tmux_pane")) or _optional_str(source_env.get("TMUX_PANE"))
+    if not pane:
+        return {}
+    context = {"tmux_pane": pane}
+    display = _read_tmux_display(pane, env=source_env)
+    if display:
+        context.update(display)
+    else:
+        for key in ("tmux_session", "tmux_window", "tmux_pane_index", "tmux_pane_current_path"):
+            value = _optional_str(raw.get(key))
+            if value:
+                context[key] = value
+    return context
 
 
 def get_recent_agent_session(
@@ -263,10 +310,135 @@ def get_recent_awaiting_agent_session(
 ) -> AgentSession | None:
     """Return the newest captured agent question awaiting a user response."""
 
+    selected = get_selected_awaiting_agent_session(
+        project_root=project_root,
+        agent=agent,
+        state_path=state_path,
+        max_age_seconds=max_age_seconds,
+    )
+    if selected is not None:
+        return selected
+    candidates = list_recent_awaiting_agent_sessions(
+        project_root=project_root,
+        agent=agent,
+        state_path=state_path,
+        max_age_seconds=max_age_seconds,
+        limit=1,
+    )
+    return candidates[0] if candidates else None
+
+
+def get_selected_awaiting_agent_session(
+    *,
+    project_root: str | Path | None = None,
+    agent: str | None = None,
+    state_path: Path | None = None,
+    max_age_seconds: int = DEFAULT_RECENT_MAX_AGE_SECONDS,
+) -> AgentSession | None:
+    """Return the user-selected awaiting session if it is still valid."""
+
+    state = _read_state(state_path or AGENT_CONTEXT_FILE)
+    selected_key = _selected_response_key(state)
+    if selected_key is None:
+        return None
+    for session in list_recent_awaiting_agent_sessions(
+        project_root=project_root,
+        agent=agent,
+        state_path=state_path,
+        max_age_seconds=max_age_seconds,
+    ):
+        if _session_key(session.agent, session.session_id) == selected_key:
+            return session
+    return None
+
+
+def select_next_awaiting_agent_session(
+    *,
+    project_root: str | Path | None = None,
+    agent: str | None = None,
+    state_path: Path | None = None,
+    max_age_seconds: int = DEFAULT_RECENT_MAX_AGE_SECONDS,
+    now: datetime | None = None,
+) -> AgentSession | None:
+    """Advance the selected awaiting session and return the new target."""
+
+    state_file = state_path or AGENT_CONTEXT_FILE
+    timestamp = _format_timestamp(now or datetime.now(timezone.utc))
+    with _state_lock(state_file):
+        state = _read_state(state_file)
+        sessions = _recent_awaiting_sessions_from_state(
+            state,
+            project_root=project_root,
+            agent=agent,
+            max_age_seconds=max_age_seconds,
+            now=now or datetime.now(timezone.utc),
+        )
+        if not sessions:
+            state.pop("selected_agent_response", None)
+            state["version"] = STATE_VERSION
+            _write_state(state_file, state)
+            return None
+
+        selected_key = _selected_response_key(state)
+        selected_index = 0
+        if selected_key is not None:
+            for index, session in enumerate(sessions):
+                if _session_key(session.agent, session.session_id) == selected_key:
+                    selected_index = index
+                    break
+        next_index = (selected_index + 1) % len(sessions)
+        selected = sessions[next_index]
+        state["selected_agent_response"] = {
+            "agent": selected.agent,
+            "session_id": selected.session_id,
+            "selected_at": timestamp,
+        }
+        state["version"] = STATE_VERSION
+        _write_state(state_file, state)
+        return selected
+
+
+def list_recent_awaiting_agent_sessions(
+    *,
+    project_root: str | Path | None = None,
+    agent: str | None = None,
+    state_path: Path | None = None,
+    max_age_seconds: int = DEFAULT_RECENT_MAX_AGE_SECONDS,
+    limit: int | None = None,
+) -> list[AgentSession]:
+    """Return recent captured agent questions awaiting user responses."""
+
+    return _recent_awaiting_sessions_from_state(
+        _read_state(state_path or AGENT_CONTEXT_FILE),
+        project_root=project_root,
+        agent=agent,
+        max_age_seconds=max_age_seconds,
+        limit=limit,
+        now=datetime.now(timezone.utc),
+    )
+
+
+def _recent_awaiting_sessions_from_state(
+    state: Mapping[str, Any],
+    *,
+    project_root: str | Path | None,
+    agent: str | None,
+    max_age_seconds: int,
+    limit: int | None = None,
+    now: datetime,
+) -> list[AgentSession]:
     normalized_project_root = _normalize_project_root(project_root)
-    now = datetime.now(timezone.utc)
+    normalized_agent = agent.strip().lower() if isinstance(agent, str) and agent.strip() else None
+    raw_sessions = state.get("sessions")
+    if not isinstance(raw_sessions, dict):
+        return []
     candidates: list[AgentSession] = []
-    for session in list_agent_sessions(state_path=state_path, agent=agent):
+    for raw in raw_sessions.values():
+        if not isinstance(raw, dict):
+            continue
+        session = AgentSession.from_mapping(raw)
+        if normalized_agent and session.agent != normalized_agent:
+            continue
         if not session.awaiting_response or not session.last_assistant_text:
             continue
         if normalized_project_root and session.repo_root != normalized_project_root:
@@ -275,9 +447,15 @@ def get_recent_awaiting_agent_session(
         if updated is None or (now - updated).total_seconds() > max_age_seconds:
             continue
         candidates.append(session)
-    if not candidates:
-        return None
-    return max(candidates, key=lambda item: _parse_timestamp(item.updated_at) or datetime.min.replace(tzinfo=timezone.utc))
+    candidates = sorted(
+        candidates,
+        key=lambda item: _parse_timestamp(item.updated_at)
+        or datetime.min.replace(tzinfo=timezone.utc),
+        reverse=True,
+    )
+    if limit is not None:
+        candidates = candidates[: max(0, limit)]
+    return candidates
 
 
 def clear_agent_session_response(
@@ -479,6 +657,12 @@ def _is_assistant_record(obj: Mapping[str, Any]) -> bool:
     record_type = str(obj.get("type") or "").lower()
     if record_type == "assistant":
         return True
+    payload = obj.get("payload")
+    if isinstance(payload, Mapping):
+        if _is_assistant_record(payload):
+            return True
+        if record_type == "event_msg" and str(payload.get("type") or "").lower() == "agent_message":
+            return True
     message = obj.get("message")
     if isinstance(message, Mapping):
         return str(message.get("role") or "").lower() == "assistant"
@@ -493,6 +677,16 @@ def _extract_text_from_record(obj: Mapping[str, Any]) -> str:
         candidates.append(obj.get("text"))
     if "output_text" in obj:
         candidates.append(obj.get("output_text"))
+    payload = obj.get("payload")
+    if isinstance(payload, Mapping):
+        candidates.extend(
+            [
+                payload.get("content"),
+                payload.get("text"),
+                payload.get("output_text"),
+                payload.get("message"),
+            ]
+        )
     message = obj.get("message")
     if isinstance(message, Mapping):
         candidates.extend([message.get("content"), message.get("text"), message.get("output_text")])
@@ -798,6 +992,17 @@ def _session_key(agent: str, session_id: str) -> str:
     return f"{agent}:{session_id}"
 
 
+def _selected_response_key(state: Mapping[str, Any]) -> str | None:
+    selected = state.get("selected_agent_response")
+    if not isinstance(selected, Mapping):
+        return None
+    agent = _optional_str(selected.get("agent"))
+    session_id = _optional_str(selected.get("session_id"))
+    if not agent or not session_id:
+        return None
+    return _session_key(agent, session_id)
+
+
 def _optional_str(value: Any) -> Optional[str]:
     if value is None:
         return None
@@ -812,6 +1017,42 @@ def _bounded_optional_str(value: Any, max_chars: int) -> Optional[str]:
     if len(text) > max_chars:
         return text[-max_chars:]
     return text
+
+
+def _read_tmux_display(pane: str, *, env: Mapping[str, str]) -> dict[str, str]:
+    if shutil.which("tmux") is None:
+        return {}
+    tmux_env = os.environ.copy()
+    tmux_env.update({str(key): str(value) for key, value in env.items()})
+    try:
+        completed = subprocess.run(
+            [
+                "tmux",
+                "display-message",
+                "-p",
+                "-t",
+                pane,
+                "#{session_name}\t#{window_index}\t#{pane_index}\t#{pane_current_path}",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=0.5,
+            check=False,
+            env=tmux_env,
+        )
+    except Exception:
+        return {}
+    if completed.returncode != 0:
+        return {}
+    parts = completed.stdout.rstrip("\n").split("\t")
+    if len(parts) < 4:
+        return {}
+    return {
+        "tmux_session": parts[0],
+        "tmux_window": parts[1],
+        "tmux_pane_index": parts[2],
+        "tmux_pane_current_path": parts[3],
+    }
 
 
 def _normalize_project_root(project_root: str | Path | None) -> str | None:

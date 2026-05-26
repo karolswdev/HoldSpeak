@@ -51,3 +51,9 @@ def test_settings_accepts_audio_monitor_command():
     )
 
     assert s.audio_monitor_cmd.startswith("aplay")
+
+
+def test_settings_accepts_companion_poll_interval():
+    s = Settings(_env_file=None, **_kwargs(companion_poll_interval_s=0.75))  # type: ignore[arg-type]
+
+    assert s.companion_poll_interval_s == 0.75

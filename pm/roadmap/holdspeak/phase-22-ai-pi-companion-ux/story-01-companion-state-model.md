@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 22
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-20 companion server contract, HS-21 unified AIPI workflow
 - **Unblocks:** HS-22-02, HS-22-03
 - **Owner:** unassigned
@@ -41,10 +41,10 @@ link state, and errors can compete for the same tiny LCD.
 
 ## Acceptance Criteria
 
-- [ ] State model table exists with owner, trigger, display, and clear condition.
-- [ ] LCD priority rules cover meeting, agent, reply, transcript, link, and error states.
-- [ ] The contract explicitly handles stale captured agent questions.
-- [ ] Follow-up stories can implement bridge polling/display without redesigning state names.
+- [x] State model table exists with owner, trigger, display, and clear condition.
+- [x] LCD priority rules cover meeting, agent, reply, transcript, link, and error states.
+- [x] The contract explicitly handles stale captured agent questions.
+- [x] Follow-up stories can implement bridge polling/display without redesigning state names.
 
 ## Test Plan
 
@@ -56,3 +56,6 @@ link state, and errors can compete for the same tiny LCD.
 
 - This is intentionally the first Phase 22 story. We should not wire gestures
   until the display priority model is explicit.
+- Contract draft: [companion-state-model.md](./companion-state-model.md).
+- Bridge-side pure model: `aipi-lite/bridge/companion_state.py`.
+- Evidence: [evidence-story-01.md](./evidence-story-01.md).

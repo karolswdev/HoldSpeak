@@ -100,12 +100,24 @@ when `--capture-messages` is enabled.
    holdspeak agent-hook templates --agent codex --capture-messages
    ```
 
-2. Open Codex's hook/settings configuration.
+2. Write the generated `hooks` object to `~/.codex/hooks.json`.
 
-3. Paste the generated `codex` object into the hooks section expected by
-   Codex.
+3. Enable hooks and point Codex at that file in `~/.codex/config.toml`.
 
-4. Restart or reload Codex if required by your Codex version.
+   ```toml
+   [features]
+   hooks = true
+
+   [hooks]
+   path = "/home/you/.codex/hooks.json"
+   ```
+
+   Use the absolute path for your machine; do not use `~` in the TOML value.
+
+4. Start Codex, open `/hooks`, and trust each HoldSpeak hook after reviewing
+   the command path.
+
+5. Restart or reload Codex if required by your Codex version.
 
 The generated Codex hooks listen for:
 
@@ -117,6 +129,13 @@ The generated Codex hooks listen for:
 
 `Stop` is the event that lets HoldSpeak capture the latest assistant question
 when `--capture-messages` is enabled.
+
+For AI PI bridge work, keep the HoldSpeak web runtime on the same port the
+bridge is configured to use:
+
+```bash
+HOLDSPEAK_WEB_PORT=34999 holdspeak web --no-open
+```
 
 ## Verify Hook Ingestion
 
@@ -219,6 +238,21 @@ global target override.
 
 If the dictation pipeline is disabled or unavailable, AIPI voice typing still
 uses the existing raw transcript insertion path.
+
+### tmux Reply Delivery
+
+When Claude/Codex runs inside tmux, the hook command inherits `TMUX_PANE`.
+HoldSpeak records that pane on the agent session. AIPI voice replies then prefer
+tmux delivery over GUI focus:
+
+```text
+tmux send-keys -t <captured-pane> -l <reply text>
+tmux send-keys -t <captured-pane> Enter
+```
+
+This means Claude/Codex does not need to be in the focused GUI terminal. If the
+hook did not capture a pane, or tmux delivery fails, HoldSpeak falls back to the
+normal text insertion path.
 
 ## Verify Companion Readiness
 

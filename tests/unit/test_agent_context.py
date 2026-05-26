@@ -11,13 +11,16 @@ from holdspeak.agent_context import (
     clear_agent_session_response,
     codex_hook_template,
     detect_repo_root,
+    detect_tmux_context,
     extract_last_assistant_text,
     get_recent_awaiting_agent_session,
     get_recent_agent_session,
     ingest_agent_hook_event,
     load_hs_project_context,
     looks_like_agent_question,
+    list_recent_awaiting_agent_sessions,
     render_hs_context_for_prompt,
+    select_next_awaiting_agent_session,
     set_agent_session_summary,
 )
 from holdspeak.commands.agent_hook import run_agent_hook_command
@@ -78,6 +81,77 @@ def test_cwd_changed_prefers_new_cwd(tmp_path: Path) -> None:
     assert session.repo_root == str(repo)
 
 
+def test_ingest_agent_hook_event_records_tmux_pane_from_env(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    state = tmp_path / "state.json"
+
+    session = ingest_agent_hook_event(
+        agent="claude",
+        payload={
+            "session_id": "abc",
+            "hook_event_name": "SessionStart",
+            "cwd": str(repo),
+        },
+        state_path=state,
+        env={"TMUX": "/tmp/tmux-1000/default,1,0", "TMUX_PANE": "%42"},
+    )
+
+    assert session.tmux_pane == "%42"
+    assert session.to_dict()["tmux_pane"] == "%42"
+
+
+def test_ingest_agent_hook_event_preserves_previous_tmux_pane(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    state = tmp_path / "state.json"
+    payload = {
+        "session_id": "abc",
+        "hook_event_name": "SessionStart",
+        "cwd": str(repo),
+    }
+
+    ingest_agent_hook_event(
+        agent="claude",
+        payload=payload,
+        state_path=state,
+        env={"TMUX_PANE": "%42"},
+    )
+    session = ingest_agent_hook_event(
+        agent="claude",
+        payload={**payload, "hook_event_name": "Stop"},
+        state_path=state,
+        env={},
+    )
+
+    assert session.tmux_pane == "%42"
+
+
+def test_detect_tmux_context_prefers_payload_metadata(monkeypatch) -> None:
+    monkeypatch.setattr("holdspeak.agent_context.shutil.which", lambda _name: None)
+
+    context = detect_tmux_context(
+        {
+            "tmux_pane": "%7",
+            "tmux_session": "work",
+            "tmux_window": "2",
+            "tmux_pane_index": "1",
+            "tmux_pane_current_path": "/repo",
+        },
+        env={},
+    )
+
+    assert context == {
+        "tmux_pane": "%7",
+        "tmux_session": "work",
+        "tmux_window": "2",
+        "tmux_pane_index": "1",
+        "tmux_pane_current_path": "/repo",
+    }
+
+
 def test_extract_last_assistant_text_from_claude_fixture() -> None:
     path = Path("tests/fixtures/agent_transcripts/claude_question.jsonl")
 
@@ -101,6 +175,35 @@ def test_extract_last_assistant_text_from_codex_fixture() -> None:
     text = extract_last_assistant_text("codex", path)
 
     assert text == "The tests pass. Should I run the full suite now?"
+
+
+def test_extract_last_assistant_text_from_codex_response_item(tmp_path: Path) -> None:
+    transcript = tmp_path / "codex-response-item.jsonl"
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "response_item",
+                "payload": {
+                    "type": "message",
+                    "role": "assistant",
+                    "content": [
+                        {
+                            "type": "output_text",
+                            "text": "Should I update the Codex hook docs now?",
+                        }
+                    ],
+                    "phase": "final_answer",
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    text = extract_last_assistant_text("codex", transcript)
+
+    assert text == "Should I update the Codex hook docs now?"
+    assert looks_like_agent_question(text or "") is True
 
 
 def test_ingest_capture_messages_is_explicit_and_bounded(tmp_path: Path) -> None:
@@ -253,6 +356,109 @@ def test_recent_awaiting_session_is_project_scoped(tmp_path: Path) -> None:
     assert session is not None
     assert session.session_id == "a"
     assert session.last_assistant_text == "Should I update A?"
+
+
+def test_list_recent_awaiting_sessions_orders_newest_first(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    state = tmp_path / "state.json"
+    for session_id, text, minute in (
+        ("older", "Should I update older?", 1),
+        ("newer", "Should I update newer?", 2),
+    ):
+        transcript = tmp_path / f"{session_id}.jsonl"
+        transcript.write_text(
+            json.dumps({"role": "assistant", "content": text}) + "\n",
+            encoding="utf-8",
+        )
+        ingest_agent_hook_event(
+            agent="codex",
+            payload={
+                "session_id": session_id,
+                "hook_event_name": "Stop",
+                "cwd": str(repo),
+                "transcript_path": str(transcript),
+            },
+            state_path=state,
+            now=datetime(2026, 5, 10, 0, minute, tzinfo=timezone.utc),
+            capture_messages=True,
+        )
+
+    sessions = list_recent_awaiting_agent_sessions(
+        state_path=state,
+        max_age_seconds=10**9,
+    )
+    limited = list_recent_awaiting_agent_sessions(
+        state_path=state,
+        max_age_seconds=10**9,
+        limit=1,
+    )
+
+    assert [session.session_id for session in sessions] == ["newer", "older"]
+    assert [session.session_id for session in limited] == ["newer"]
+
+
+def test_selected_awaiting_session_cycles_reply_target(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    state = tmp_path / "state.json"
+    for session_id, text, minute in (
+        ("older", "Should I update older?", 1),
+        ("newer", "Should I update newer?", 2),
+    ):
+        transcript = tmp_path / f"{session_id}.jsonl"
+        transcript.write_text(
+            json.dumps({"role": "assistant", "content": text}) + "\n",
+            encoding="utf-8",
+        )
+        ingest_agent_hook_event(
+            agent="codex",
+            payload={
+                "session_id": session_id,
+                "hook_event_name": "Stop",
+                "cwd": str(repo),
+                "transcript_path": str(transcript),
+            },
+            state_path=state,
+            now=datetime(2026, 5, 10, 0, minute, tzinfo=timezone.utc),
+            capture_messages=True,
+        )
+
+    first = get_recent_awaiting_agent_session(
+        state_path=state,
+        max_age_seconds=10**9,
+    )
+    second = select_next_awaiting_agent_session(
+        state_path=state,
+        max_age_seconds=10**9,
+        now=datetime(2026, 5, 10, 0, 3, tzinfo=timezone.utc),
+    )
+    selected = get_recent_awaiting_agent_session(
+        state_path=state,
+        max_age_seconds=10**9,
+    )
+
+    assert first is not None
+    assert first.session_id == "newer"
+    assert second is not None
+    assert second.session_id == "older"
+    assert selected is not None
+    assert selected.session_id == "older"
+
+    wrapped = select_next_awaiting_agent_session(
+        state_path=state,
+        max_age_seconds=10**9,
+        now=datetime(2026, 5, 10, 0, 4, tzinfo=timezone.utc),
+    )
+
+    assert wrapped is not None
+    assert wrapped.session_id == "newer"
+    assert get_recent_awaiting_agent_session(
+        state_path=state,
+        max_age_seconds=10**9,
+    ).session_id == "newer"
 
 
 def test_clear_agent_session_response_clears_specific_capture(tmp_path: Path) -> None:

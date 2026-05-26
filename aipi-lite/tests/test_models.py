@@ -210,6 +210,13 @@ def test_query_frame_round_trip():
     assert parsed.type == "query"
 
 
+@pytest.mark.parametrize("name", ["agent_question", "agent_next"])
+def test_query_frame_accepts_agent_companion_names(name):
+    query = QueryFrame(name=name, at=1235)
+
+    assert query.name == name
+
+
 def test_query_frame_rejects_unknown_name():
     with pytest.raises(ValidationError):
         QueryFrame.model_validate(

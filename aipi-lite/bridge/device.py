@@ -57,6 +57,7 @@ class DeviceLeg:
         audio_queue: asyncio.Queue[bytes],
         control_queue: asyncio.Queue[str],
         is_in_meeting: Callable[[], bool] | None = None,
+        is_agent_waiting: Callable[[], bool] | None = None,
         paint_bookmark_flash: Callable[[], Awaitable[None]] | None = None,
         on_device_ready: Callable[[], Awaitable[None]] | None = None,
     ) -> None:
@@ -71,6 +72,7 @@ class DeviceLeg:
         # Both callbacks default to None so unit tests + the legacy
         # `_run` path work without bookmark wiring.
         self.is_in_meeting = is_in_meeting
+        self.is_agent_waiting = is_agent_waiting
         self.paint_bookmark_flash = paint_bookmark_flash
         # AIPI-4-08: called from `_on_connect` after `_cache_lcd_services`
         # + `_cache_button_entities` complete. Lets HoldSpeakLeg re-fire
@@ -440,6 +442,13 @@ class DeviceLeg:
         if self.is_in_meeting():
             await self._fire_bookmark_attempt()
             return
+        if self.is_agent_waiting is not None and self.is_agent_waiting():
+            self._enqueue_control(
+                QueryFrame(name="agent_question", at=int(time.time() * 1000)),
+                kind="query",
+            )
+            self.log.info("query.agent_question.emitted")
+            return
         self._enqueue_control(
             QueryFrame(name="last_segment", at=int(time.time() * 1000)),
             kind="query",
@@ -453,24 +462,33 @@ class DeviceLeg:
         t.add_done_callback(self._pending_tasks.discard)
 
     async def _fire_double_tap_event(self) -> None:
-        """Emit `double_left_click` upstream if we're in a meeting.
-
-        Gated by `is_in_meeting` like the bookmark gesture. Outside a
-        meeting the event is suppressed — cycling meeting-stat views
-        outside a meeting has no meaning.
-        """
-        if self.is_in_meeting is None or not self.is_in_meeting():
+        """Emit meeting cycle or agent-target cycle for a double tap."""
+        if self.is_in_meeting is None:
             self.log.info(
                 "event.suppressed",
                 gesture="double_left_click",
-                reason="not_in_meeting",
+                reason="meeting_state_unavailable",
             )
             return
-        self._enqueue_control(
-            EventFrame(name="double_left_click", at=time.time()),
-            kind="event",
+        if self.is_in_meeting():
+            self._enqueue_control(
+                EventFrame(name="double_left_click", at=time.time()),
+                kind="event",
+            )
+            self.log.info("event.double_left_click.emitted")
+            return
+        if self.is_agent_waiting is not None and self.is_agent_waiting():
+            self._enqueue_control(
+                QueryFrame(name="agent_next", at=int(time.time() * 1000)),
+                kind="query",
+            )
+            self.log.info("query.agent_next.emitted")
+            return
+        self.log.info(
+            "event.suppressed",
+            gesture="double_left_click",
+            reason="not_in_meeting",
         )
-        self.log.info("event.double_left_click.emitted")
 
     def _spawn_bookmark_attempt(self) -> None:
         """Fire-and-forget the bookmark attempt with strong-ref tracking.

@@ -61,7 +61,7 @@ def test_run_web_runtime_starts_and_stops_services(monkeypatch: pytest.MonkeyPat
 
     class FakeServer:
         def __init__(self, **kwargs):
-            _ = kwargs
+            self.on_get_status = kwargs["on_get_status"]
             self.started = False
             self.stopped = False
             server_instances.append(self)
@@ -88,7 +88,7 @@ def test_run_web_runtime_starts_and_stops_services(monkeypatch: pytest.MonkeyPat
             listener_events.append("stop")
 
     class FakeTextTyper:
-        def type_text(self, _text: str) -> None:
+        def type_text(self, _text: str, **_kwargs) -> None:
             return None
 
     monkeypatch.setattr(web_runtime, "MeetingWebServer", FakeServer)
@@ -111,6 +111,9 @@ def test_run_web_runtime_starts_and_stops_services(monkeypatch: pytest.MonkeyPat
     assert server_instances[0].stopped is True
     assert listener_events == ["start", "stop"]
     assert browser_urls == ["http://127.0.0.1:9999"]
+    status = server_instances[0].on_get_status()
+    assert status["text_injection_enabled"] is True
+    assert status["text_injection_error"] == ""
 
 
 def test_run_web_runtime_no_open_skips_browser(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -157,6 +160,16 @@ def test_run_web_runtime_no_open_skips_browser(monkeypatch: pytest.MonkeyPatch) 
     )
 
     assert browser_urls == []
+
+
+def test_configured_web_port_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("HOLDSPEAK_WEB_PORT", "34999")
+
+    assert web_runtime._configured_web_port_from_env() == 34999
+
+    monkeypatch.setenv("HOLDSPEAK_WEB_PORT", "not-a-port")
+
+    assert web_runtime._configured_web_port_from_env() is None
 
 
 def test_run_web_runtime_warms_transcriber_on_start(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -502,7 +515,7 @@ def test_runtime_meeting_control_callbacks_are_wired(monkeypatch: pytest.MonkeyP
             return "hello world"
 
     class FakeTextTyper:
-        def type_text(self, _text: str) -> None:
+        def type_text(self, _text: str, **_kwargs) -> None:
             return None
 
     monkeypatch.setattr(web_runtime, "MeetingSession", FakeMeetingSession)
@@ -597,8 +610,8 @@ def test_device_voice_reply_uses_waiting_agent_target_profile(
             return "yes run focused tests first"
 
     class FakeTextTyper:
-        def type_text(self, text: str) -> None:
-            typed.append(text)
+        def type_text(self, text: str, **kwargs) -> None:
+            typed.append((text, kwargs.get("target_profile"), kwargs.get("submit")))
             completed.set()
 
     class FakePipeline:
@@ -635,7 +648,7 @@ def test_device_voice_reply_uses_waiting_agent_target_profile(
         register_signal_handlers=False,
     )
 
-    assert typed == ["Run the focused tests first."]
+    assert typed == [("Run the focused tests first.", "codex_cli", True)]
     assert len(pipeline_calls) == 1
     utt = pipeline_calls[0]
     assert utt.raw_text == "yes run focused tests first"
@@ -643,3 +656,207 @@ def test_device_voice_reply_uses_waiting_agent_target_profile(
     assert utt.activity["target"]["id"] == "codex_cli"
     assert utt.activity["target"]["source"] == "override"
     assert utt.activity["agent"]["session_id"] == "abc"
+
+
+def test_device_voice_reply_prefers_tmux_pane_over_gui_typing(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    monkeypatch.setattr(
+        web_runtime.Config,
+        "load",
+        lambda: _config(auto_open=False, dictation_enabled=False),
+    )
+
+    typed: list[str] = []
+    tmux_calls: list[tuple[str, str, bool]] = []
+    completed = threading.Event()
+    agent_session = AgentSession(
+        agent="claude",
+        session_id="abc",
+        cwd=str(repo),
+        updated_at="2026-05-24T00:00:00Z",
+        hook_event_name="Stop",
+        repo_root=str(repo),
+        repo_anchor="git",
+        project_name="repo",
+        last_assistant_text="Proceed?",
+        awaiting_response=True,
+        tmux_pane="%42",
+    )
+
+    class FakeServer:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        def start(self) -> str:
+            source = FakeSource()
+            assert self.kwargs["on_device_voice_start"]("aipi-1", source) is True
+            self.kwargs["on_device_voice_stop"]("aipi-1", source)
+            assert completed.wait(timeout=2.0)
+            return "http://127.0.0.1:9996"
+
+        def stop(self) -> None:
+            return None
+
+    class FakeSource:
+        def start_recording(self) -> None:
+            return None
+
+        def stop_recording(self):
+            return np.ones(2000, dtype=np.float32)
+
+    class FakeAudioRecorder:
+        def __init__(self, **kwargs):
+            _ = kwargs
+
+    class FakeHotkeyListener:
+        def __init__(self, **kwargs):
+            _ = kwargs
+
+        def start(self) -> None:
+            return None
+
+        def stop(self) -> None:
+            return None
+
+    class FakeTranscriber:
+        def __init__(self, model_name: str):
+            self.model_name = model_name
+
+        def transcribe(self, _audio):
+            return "yes proceed"
+
+    class FakeTextTyper:
+        def type_text(self, text: str, **_kwargs) -> None:
+            typed.append(text)
+            completed.set()
+
+    def fake_send_text_to_pane(*, pane: str, text: str, submit: bool = True):
+        tmux_calls.append((pane, text, submit))
+        completed.set()
+
+    monkeypatch.setattr(web_runtime, "MeetingWebServer", FakeServer)
+    monkeypatch.setattr(web_runtime, "AudioRecorder", FakeAudioRecorder)
+    monkeypatch.setattr(web_runtime, "HotkeyListener", FakeHotkeyListener)
+    monkeypatch.setattr(web_runtime, "Transcriber", FakeTranscriber)
+    monkeypatch.setattr(web_runtime, "TextTyper", FakeTextTyper)
+
+    import holdspeak.agent_context as agent_context
+    import holdspeak.tmux_transport as tmux_transport
+
+    monkeypatch.setattr(
+        agent_context,
+        "get_recent_awaiting_agent_session",
+        lambda **_kwargs: agent_session,
+    )
+    monkeypatch.setattr(tmux_transport, "send_text_to_pane", fake_send_text_to_pane)
+
+    stop_event = threading.Event()
+    stop_event.set()
+
+    web_runtime.run_web_runtime(
+        no_open=True,
+        stop_event=stop_event,
+        register_signal_handlers=False,
+    )
+
+    assert tmux_calls == [("%42", "yes proceed", True)]
+    assert typed == []
+
+
+def test_device_voice_reply_rejects_undeliverable_agent_target(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    monkeypatch.setattr(
+        web_runtime.Config,
+        "load",
+        lambda: _config(auto_open=False, dictation_enabled=False),
+    )
+
+    agent_session = AgentSession(
+        agent="codex",
+        session_id="abc",
+        cwd=str(repo),
+        updated_at="2026-05-24T00:00:00Z",
+        hook_event_name="Stop",
+        repo_root=str(repo),
+        repo_anchor="git",
+        project_name="repo",
+        last_assistant_text="Proceed?",
+        awaiting_response=True,
+    )
+
+    class FakeServer:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        def start(self) -> str:
+            source = FakeSource()
+            assert self.kwargs["on_device_voice_start"]("aipi-1", source) is False
+            return "http://127.0.0.1:9997"
+
+        def stop(self) -> None:
+            return None
+
+    class FakeSource:
+        def start_recording(self) -> None:
+            raise AssertionError("undeliverable agent target should not record")
+
+        def stop_recording(self):
+            raise AssertionError("undeliverable agent target should not stop")
+
+    class FakeAudioRecorder:
+        def __init__(self, **kwargs):
+            _ = kwargs
+
+    class FakeHotkeyListener:
+        def __init__(self, **kwargs):
+            _ = kwargs
+
+        def start(self) -> None:
+            return None
+
+        def stop(self) -> None:
+            return None
+
+    class FakeTranscriber:
+        def __init__(self, model_name: str):
+            self.model_name = model_name
+
+        def transcribe(self, _audio):
+            raise AssertionError("undeliverable agent target should not transcribe")
+
+    class BrokenTextTyper:
+        def __init__(self):
+            raise RuntimeError("TextTyper unavailable")
+
+    monkeypatch.setattr(web_runtime, "MeetingWebServer", FakeServer)
+    monkeypatch.setattr(web_runtime, "AudioRecorder", FakeAudioRecorder)
+    monkeypatch.setattr(web_runtime, "HotkeyListener", FakeHotkeyListener)
+    monkeypatch.setattr(web_runtime, "Transcriber", FakeTranscriber)
+    monkeypatch.setattr(web_runtime, "TextTyper", BrokenTextTyper)
+
+    import holdspeak.agent_context as agent_context
+
+    monkeypatch.setattr(
+        agent_context,
+        "get_recent_awaiting_agent_session",
+        lambda **_kwargs: agent_session,
+    )
+
+    stop_event = threading.Event()
+    stop_event.set()
+
+    web_runtime.run_web_runtime(
+        no_open=True,
+        stop_event=stop_event,
+        register_signal_handlers=False,
+    )

@@ -44,11 +44,21 @@ class TextTyper:
         self._original_clipboard: str | None = None
         self._paste_modifier = Key.cmd if sys.platform == "darwin" else Key.ctrl
 
-    def type_text(self, text: str) -> None:
+    def type_text(
+        self,
+        text: str,
+        *,
+        target_profile: str | None = None,
+        submit: bool = False,
+    ) -> None:
         """Type/paste text into the active application.
 
         Args:
             text: The text to type
+            target_profile: Optional delivery target hint. On Linux, terminal
+                targets such as Claude Code and Codex usually paste with
+                Ctrl+Shift+V instead of Ctrl+V.
+            submit: If True, press Enter after inserting text.
         """
         if not text or not text.strip():
             return
@@ -56,11 +66,13 @@ class TextTyper:
         text = text.strip()
 
         if self.use_clipboard:
-            self._paste_text(text)
+            self._paste_text(text, target_profile=target_profile)
         else:
             self._type_text_slowly(text)
+        if submit:
+            self._press_enter()
 
-    def _paste_text(self, text: str) -> None:
+    def _paste_text(self, text: str, *, target_profile: str | None = None) -> None:
         """Paste text using clipboard + platform shortcut."""
         # Save original clipboard
         try:
@@ -74,11 +86,15 @@ class TextTyper:
         # Small delay to ensure clipboard is set
         time.sleep(0.05)
 
-        # Simulate Cmd+V (macOS) / Ctrl+V (Linux)
-        self._keyboard.press(self._paste_modifier)
+        # Simulate Cmd+V (macOS), Ctrl+V for generic Linux text fields, and
+        # Ctrl+Shift+V for Linux terminal targets.
+        modifiers = self._paste_modifiers(target_profile)
+        for modifier in modifiers:
+            self._keyboard.press(modifier)
         self._keyboard.press('v')
         self._keyboard.release('v')
-        self._keyboard.release(self._paste_modifier)
+        for modifier in reversed(modifiers):
+            self._keyboard.release(modifier)
 
         # Restore original clipboard after a delay
         if self._original_clipboard is not None:
@@ -93,6 +109,25 @@ class TextTyper:
         for char in text:
             self._keyboard.type(char)
             time.sleep(0.01)  # Small delay between characters
+
+    def _press_enter(self) -> None:
+        self._keyboard.press(Key.enter)
+        self._keyboard.release(Key.enter)
+
+    def _paste_modifiers(self, target_profile: str | None) -> tuple[object, ...]:
+        if sys.platform == "darwin":
+            return (Key.cmd,)
+        if _is_terminal_target(target_profile):
+            return (Key.ctrl, Key.shift)
+        return (self._paste_modifier,)
+
+
+def _is_terminal_target(target_profile: str | None) -> bool:
+    return str(target_profile or "").strip().lower() in {
+        "claude_code",
+        "codex_cli",
+        "terminal_shell",
+    }
 
 
 def type_with_applescript(text: str) -> None:

@@ -376,6 +376,7 @@ class MeetingWebServer:
         on_device_health: Optional[Callable[[Any], None]] = None,
         on_device_query: Optional[Callable[[str, str, Optional[float]], Optional[dict[str, Any]]]] = None,
         host: str = "127.0.0.1",
+        port: Optional[int] = None,
     ) -> None:
         if _IMPORT_ERROR is not None:
             raise RuntimeError(
@@ -436,6 +437,7 @@ class MeetingWebServer:
         self.on_device_health = on_device_health
         self.on_device_query = on_device_query
         self.host = host
+        self._configured_port = port
 
         self.port: Optional[int] = None
         self._server: Optional[Any] = None
@@ -461,7 +463,7 @@ class MeetingWebServer:
                 raise RuntimeError("Server thread is running but URL is unknown")
             return self.url
 
-        self.port = _find_free_port(self.host)
+        self.port = self._configured_port or _find_free_port(self.host)
         config = uvicorn.Config(
             self.app,
             host=self.host,
@@ -647,8 +649,11 @@ class MeetingWebServer:
         @app.get("/api/companion/status")
         async def api_companion_status() -> Any:
             """Return one debug snapshot for the AIPI agent companion loop."""
-            from .agent_context import get_recent_awaiting_agent_session
-            from .agent_device import AGENT_QUERY_NAMES
+            from .agent_context import (
+                get_recent_awaiting_agent_session,
+                list_recent_awaiting_agent_sessions,
+            )
+            from .agent_device import AGENT_QUERY_NAMES, build_agent_identity_payload
             from .config import Config
             from .meeting_session import _device_descriptor_to_dict
 
@@ -685,11 +690,21 @@ class MeetingWebServer:
             agent_error: str | None = None
             try:
                 session = get_recent_awaiting_agent_session(max_age_seconds=120)
+                agent_sessions = list_recent_awaiting_agent_sessions(
+                    max_age_seconds=120,
+                    limit=8,
+                )
             except Exception as e:
                 log.error(f"agent companion status failed: {e}")
                 agent_error = str(e)
                 session = None
+                agent_sessions = []
             agent_waiting = bool(session and session.awaiting_response)
+            tmux_reply_available = bool(
+                session
+                and session.awaiting_response
+                and getattr(session, "tmux_pane", None)
+            )
 
             dictation_error: str | None = None
             try:
@@ -712,6 +727,36 @@ class MeetingWebServer:
                 if text_injection_known
                 else None
             )
+            agent_identity = build_agent_identity_payload(
+                session,
+                text_injection_enabled=text_injection_enabled,
+            )
+            if session is not None and not any(
+                item.agent == session.agent and item.session_id == session.session_id
+                for item in agent_sessions
+            ):
+                agent_sessions.insert(0, session)
+            selected_agent_key = (
+                (session.agent, session.session_id) if session is not None else None
+            )
+            agent_session_items = []
+            selected_index: int | None = None
+            for index, item in enumerate(agent_sessions):
+                item_key = (item.agent, item.session_id)
+                selected = item_key == selected_agent_key
+                if selected:
+                    selected_index = index
+                agent_session_items.append(
+                    {
+                        "index": index,
+                        "selected": selected,
+                        "session": item.to_dict(),
+                        "identity": build_agent_identity_payload(
+                            item,
+                            text_injection_enabled=text_injection_enabled,
+                        ),
+                    }
+                )
 
             blockers: list[str] = []
             if not device_connected:
@@ -720,9 +765,9 @@ class MeetingWebServer:
                 blockers.append("no_agent_waiting")
             if not pipeline_enabled:
                 blockers.append("dictation_pipeline_disabled")
-            if text_injection_enabled is False:
+            if text_injection_enabled is False and not tmux_reply_available:
                 blockers.append("text_injection_unavailable")
-            elif text_injection_enabled is None:
+            elif text_injection_enabled is None and not tmux_reply_available:
                 blockers.append("text_injection_status_unknown")
             if agent_error:
                 blockers.append("agent_status_unavailable")
@@ -741,6 +786,10 @@ class MeetingWebServer:
                         "agent_waiting": agent_waiting,
                         "dictation_pipeline_enabled": pipeline_enabled,
                         "text_injection_enabled": text_injection_enabled,
+                        "tmux_reply_available": tmux_reply_available,
+                        "target_confidence": (
+                            agent_identity["target_confidence"] if agent_identity else None
+                        ),
                     },
                     "devices": {
                         "connected": device_connected,
@@ -751,6 +800,12 @@ class MeetingWebServer:
                     "agent": {
                         "awaiting_response": agent_waiting,
                         "session": session.to_dict() if session else None,
+                        "identity": agent_identity,
+                        "sessions": {
+                            "count": len(agent_session_items),
+                            "selected_index": selected_index,
+                            "items": agent_session_items,
+                        },
                         "max_age_seconds": 120,
                         "error": agent_error,
                     },
@@ -769,6 +824,10 @@ class MeetingWebServer:
                         "voice_state": runtime_payload.get("voice_state"),
                         "text_injection_enabled": text_injection_enabled,
                         "text_injection_error": runtime_payload.get("text_injection_error"),
+                        "tmux_reply_available": tmux_reply_available,
+                        "target_transport": (
+                            agent_identity["target_transport"] if agent_identity else None
+                        ),
                         "error": runtime_error,
                     },
                     "companion": {
@@ -2300,6 +2359,7 @@ class MeetingWebServer:
             try:
                 from .config import (
                     Config,
+                    DeviceConfig,
                     DictationConfig,
                     DictationConfigError,
                     DictationPipelineConfig,
@@ -2320,6 +2380,7 @@ class MeetingWebServer:
                 model_data = merged.get("model", {})
                 ui_data = merged.get("ui", {})
                 meeting_data = merged.get("meeting", {})
+                device_data = merged.get("device", {})
 
                 hotkey_key = str(hotkey_data.get("key", current.hotkey.key))
                 if hotkey_key not in KEY_MAP:
@@ -2702,6 +2763,7 @@ class MeetingWebServer:
                     ui=UIConfig(**ui_data),
                     meeting=MeetingConfig(**meeting_data),
                     dictation=dictation_cfg,
+                    device=DeviceConfig(**device_data),
                 )
                 updated.save()
 

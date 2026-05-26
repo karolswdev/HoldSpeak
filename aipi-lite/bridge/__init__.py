@@ -34,6 +34,35 @@ from bridge.cli import (
     _send_test_audio,
     main,
 )
+from bridge.companion_gestures import (
+    REMOTE_GESTURES,
+    CompanionAction,
+    CompanionGesture,
+    GestureDecision,
+    GestureOwner,
+    resolve_gesture,
+)
+from bridge.companion_state import (
+    AGENT_STALE_AFTER_S,
+    STALE_CLEAR_FLASH_MS,
+    STATE_CONTRACTS,
+    CompanionOwner,
+    CompanionSignals,
+    CompanionState,
+    LcdLifetime,
+    LcdPlan,
+    StateContract,
+    ZonePaint,
+    build_lcd_plan,
+    is_agent_stale,
+)
+from bridge.companion_status import (
+    AGENT_QUESTION_LCD_MAX_CHARS,
+    COMPANION_HTTP_TIMEOUT_S,
+    CompanionStatusPoller,
+    companion_signals_from_status,
+    fetch_companion_status,
+)
 from bridge.device import DeviceLeg
 from bridge.holdspeak import HoldSpeakLeg
 from bridge.lcd import (
@@ -68,6 +97,32 @@ __all__ = [
     "load_settings",
     "main",
     "reconnect_with_backoff",
+    # Companion state model
+    "AGENT_STALE_AFTER_S",
+    "STALE_CLEAR_FLASH_MS",
+    "CompanionOwner",
+    "CompanionSignals",
+    "CompanionState",
+    "LcdLifetime",
+    "LcdPlan",
+    "STATE_CONTRACTS",
+    "StateContract",
+    "ZonePaint",
+    "build_lcd_plan",
+    "is_agent_stale",
+    # Companion gesture model
+    "REMOTE_GESTURES",
+    "CompanionAction",
+    "CompanionGesture",
+    "GestureDecision",
+    "GestureOwner",
+    "resolve_gesture",
+    # Companion status polling
+    "AGENT_QUESTION_LCD_MAX_CHARS",
+    "COMPANION_HTTP_TIMEOUT_S",
+    "CompanionStatusPoller",
+    "companion_signals_from_status",
+    "fetch_companion_status",
     # Audio constants + helpers
     "AUDIO_QUEUE_MAXSIZE",
     "BYTES_PER_SAMPLE",
