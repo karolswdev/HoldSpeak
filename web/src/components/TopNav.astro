@@ -19,7 +19,7 @@
 import Pill from "./Pill.astro";
 import AppMark from "./AppMark.astro";
 
-type Route = "runtime" | "activity" | "history" | "dictation";
+type Route = "runtime" | "activity" | "history" | "dictation" | "companion";
 
 interface Props {
   current?: Route;
@@ -32,6 +32,7 @@ const routes: { slug: Route; label: string; href: string }[] = [
   { slug: "activity", label: "Activity", href: "/activity" },
   { slug: "history", label: "History", href: "/history" },
   { slug: "dictation", label: "Dictation", href: "/dictation" },
+  { slug: "companion", label: "Companion", href: "/companion" },
 ];
 ---
 

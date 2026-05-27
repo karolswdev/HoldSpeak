@@ -1,6 +1,6 @@
 # Phase 24 — AI PI Companion Productization
 
-**Last updated:** 2026-05-26 (phase opened; planning active).
+**Last updated:** 2026-05-26 (HS-24-01 closed; HS-24-02 next).
 
 ## Goal
 
@@ -31,7 +31,7 @@ logs.
 
 ## Exit criteria
 
-- [ ] The user can see all waiting agent sessions in a browser companion view.
+- [x] The user can see all waiting agent sessions in a browser companion view.
 - [ ] The user can select, dismiss, or pin a waiting session without editing
       state files.
 - [ ] AI PI makes low-confidence or unavailable targets obvious before capture.
@@ -44,7 +44,7 @@ logs.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-24-01 | Web companion session overview | backlog | — | — |
+| HS-24-01 | AI PI Companion surface: read-only session overview | done | [story-01-ai-pi-companion-surface-overview.md](./story-01-ai-pi-companion-surface-overview.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-24-02 | Session lifecycle controls | backlog | — | — |
 | HS-24-03 | Confidence and unavailable-target display affordances | backlog | — | — |
 | HS-24-04 | Push/repaint cadence decision | backlog | — | — |
@@ -52,7 +52,7 @@ logs.
 
 ## Where we are
 
-Phase 24 is open in planning. Phase 23 closed with a working physical companion
+Phase 24 is active. Phase 23 closed with a working physical companion
 loop: AI PI can show long questions, distinguish waiting sessions, cycle the
 selected target, reject unavailable reply paths, deliver tmux replies, and hold
 status flashes long enough to be readable.
@@ -60,6 +60,12 @@ status flashes long enough to be readable.
 The next product risk is operability. The JSON status and device display are
 now truthful, but the user still needs a richer surface for overview and
 recovery when several sessions are waiting or stale.
+
+HS-24-01 is closed. The existing HoldSpeak web portal now has a read-only AI PI
+Companion surface at `/companion`, backed by `/api/companion/status`.
+
+Next work is HS-24-02: add lifecycle controls for selecting, dismissing,
+pinning, and clearing stale sessions without editing state files.
 
 ## Product problems to solve
 
@@ -73,7 +79,7 @@ recovery when several sessions are waiting or stale.
 
 ## Pickup order
 
-1. HS-24-01: build the read-only web companion session overview.
+1. HS-24-01: build the read-only AI PI Companion surface inside the web portal.
 2. HS-24-02: add lifecycle controls for selection, dismissal, pinning, and stale sessions.
 3. HS-24-03: tighten physical display language for confidence and unavailable targets.
 4. HS-24-04: decide and implement display update cadence improvements.

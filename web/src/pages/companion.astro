@@ -1,0 +1,385 @@
+---
+// HS-24-01: AI PI Companion surface.
+//
+// Read-only portal surface for the same companion state consumed by the
+// physical AI PI bridge. Controls come later; this page first makes the
+// selected target, waiting sessions, and reply readiness inspectable.
+
+import AppLayout from "../layouts/AppLayout.astro";
+---
+
+<AppLayout title="HoldSpeak Companion" current="companion">
+  <div class="companion" x-data="CompanionApp()" x-init="init()">
+    <header class="page-head">
+      <div>
+        <p class="eyebrow">AI PI Companion</p>
+        <h1>Agent sessions</h1>
+        <p class="lead">
+          Read-only overview of what AI PI can see: waiting agents, selected
+          reply target, delivery confidence, and runtime readiness.
+        </p>
+      </div>
+      <div class="head-actions">
+        <span class="status-chip" :class="readinessTone()" x-text="readinessLabel()">Loading</span>
+        <button type="button" class="btn" @click="refresh()" :disabled="loading">
+          <span x-text="loading ? 'Refreshing' : 'Refresh'">Refresh</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="summary-grid" aria-label="Companion readiness">
+      <article class="summary-card">
+        <span class="label">AI PI</span>
+        <strong x-text="status?.devices?.connected ? `${status.devices.count} connected` : 'Not connected'">Loading</strong>
+        <p x-text="status?.devices?.query_names?.length ? `Queries: ${status.devices.query_names.join(', ')}` : 'Waiting for bridge/device status.'"></p>
+      </article>
+      <article class="summary-card">
+        <span class="label">Runtime</span>
+        <strong x-text="status?.runtime?.voice_state || 'unknown'">unknown</strong>
+        <p x-text="status?.runtime?.meeting_active ? `Meeting ${status.runtime.meeting_id || 'active'}` : 'Meeting idle'"></p>
+      </article>
+      <article class="summary-card">
+        <span class="label">Waiting</span>
+        <strong x-text="`${sessions().length} sessions`">0 sessions</strong>
+        <p x-text="status?.agent?.awaiting_response ? 'Selected target is waiting for an answer.' : 'No selected waiting target.'"></p>
+      </article>
+      <article class="summary-card">
+        <span class="label">Last refresh</span>
+        <strong x-text="updatedLabel()">not refreshed</strong>
+        <p x-text="error || 'Polling /api/companion/status every 3 seconds.'"></p>
+      </article>
+    </section>
+
+    <section class="selected-panel">
+      <div class="section-head">
+        <div>
+          <h2>Selected reply target</h2>
+          <p>The session AI PI will answer if right-hold capture starts now.</p>
+        </div>
+      </div>
+
+      <template x-if="selectedSession()">
+        <article class="session-card selected">
+          <div class="session-top">
+            <div>
+              <h3 x-text="compactLabel(selectedSession())">Selected session</h3>
+              <p class="meta" x-text="sessionAge(selectedSession())">unknown age</p>
+            </div>
+            <span class="status-chip" :class="confidenceTone(selectedSession().identity)" x-text="confidenceLabel(selectedSession().identity)">unknown</span>
+          </div>
+          <p class="question" x-text="question(selectedSession())"></p>
+          <p class="reason" x-text="selectedSession().identity?.confidence_reason || 'No confidence detail reported.'"></p>
+        </article>
+      </template>
+
+      <template x-if="!selectedSession()">
+        <div class="empty">
+          <h3>No selected waiting session</h3>
+          <p>When Claude or Codex asks a replyable question, it will appear here.</p>
+        </div>
+      </template>
+    </section>
+
+    <section class="session-section">
+      <div class="section-head">
+        <div>
+          <h2>Waiting sessions</h2>
+          <p>Newest-first list from the companion status snapshot. Controls land in HS-24-02.</p>
+        </div>
+      </div>
+
+      <div class="session-list" x-show="sessions().length > 0" x-cloak>
+        <template x-for="item in sessions()" :key="`${item.session.agent}:${item.session.session_id}`">
+          <article class="session-card" :class="{ selected: item.selected }">
+            <div class="session-top">
+              <div>
+                <h3 x-text="compactLabel(item)">Session</h3>
+                <p class="meta">
+                  <span x-text="item.selected ? 'Selected' : `#${item.index + 1}`"></span>
+                  <span> · </span>
+                  <span x-text="sessionAge(item)"></span>
+                </p>
+              </div>
+              <span class="status-chip" :class="confidenceTone(item.identity)" x-text="confidenceLabel(item.identity)">unknown</span>
+            </div>
+            <p class="question" x-text="question(item)"></p>
+            <p class="reason" x-text="item.identity?.confidence_reason || 'No confidence detail reported.'"></p>
+          </article>
+        </template>
+      </div>
+
+      <div class="empty" x-show="!loading && sessions().length === 0" x-cloak>
+        <h3>No waiting sessions</h3>
+        <p>Agent hooks are installed, but no current Claude/Codex session is awaiting a spoken answer.</p>
+      </div>
+    </section>
+
+    <section class="blocker-panel">
+      <div class="section-head">
+        <div>
+          <h2>Readiness blockers</h2>
+          <p>Reasons AI PI should not start a reply capture right now.</p>
+        </div>
+      </div>
+      <div class="blocker-list" x-show="status?.blockers?.length" x-cloak>
+        <template x-for="blocker in status.blockers" :key="blocker">
+          <span class="blocker" x-text="blockerLabel(blocker)"></span>
+        </template>
+      </div>
+      <div class="empty compact" x-show="status && (!status.blockers || status.blockers.length === 0)" x-cloak>
+        <p>No blockers reported.</p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    import Alpine from "alpinejs";
+    import factorySource from "../scripts/companion-app.js?raw";
+
+    const fn = new Function(factorySource + "; return CompanionApp;");
+    window.CompanionApp = fn();
+    window.Alpine = Alpine;
+    Alpine.start();
+  </script>
+</AppLayout>
+
+<style>
+  .companion {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    padding: var(--space-5);
+    color: var(--text);
+  }
+
+  .page-head,
+  .section-head,
+  .session-top,
+  .head-actions {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .page-head {
+    color: var(--wb-white);
+  }
+
+  .eyebrow,
+  .label {
+    margin: 0 0 var(--space-1);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose);
+  }
+
+  .eyebrow,
+  .lead {
+    color: var(--on-desktop-muted);
+  }
+
+  h1,
+  h2,
+  h3,
+  p {
+    margin: 0;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-3xl);
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--wb-white);
+  }
+
+  h2 {
+    font-size: var(--font-size-xl);
+  }
+
+  h3 {
+    font-size: var(--font-size-lg);
+  }
+
+  .lead {
+    max-width: 54rem;
+    margin-top: var(--space-2);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .btn,
+  .status-chip,
+  .blocker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    line-height: 1.2;
+    min-height: 2rem;
+    padding: var(--space-2) var(--space-3);
+    white-space: nowrap;
+  }
+
+  .btn {
+    background: var(--canvas);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .btn:disabled {
+    background: var(--disabled-bg);
+    color: var(--disabled-fg);
+    cursor: wait;
+  }
+
+  .status-chip.ready {
+    background: var(--success-soft);
+    color: var(--success-strong);
+  }
+
+  .status-chip.warn {
+    background: var(--warn-soft);
+    color: var(--warn-strong);
+  }
+
+  .status-chip.blocked {
+    background: var(--danger-soft);
+    color: var(--danger-strong);
+  }
+
+  .status-chip.idle,
+  .status-chip.neutral {
+    background: var(--canvas);
+    color: var(--text-muted);
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  .summary-card,
+  .selected-panel,
+  .session-section,
+  .blocker-panel,
+  .session-card,
+  .empty {
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+  }
+
+  .summary-card {
+    min-height: 8rem;
+    padding: var(--space-4);
+  }
+
+  .summary-card strong {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-xl);
+  }
+
+  .summary-card p,
+  .section-head p,
+  .meta,
+  .reason,
+  .empty p {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .selected-panel,
+  .session-section,
+  .blocker-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .session-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  .session-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .session-card.selected {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .question {
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  .reason {
+    border-top: 1px solid var(--line);
+    padding-top: var(--space-2);
+  }
+
+  .blocker-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .blocker {
+    background: var(--danger-soft);
+    color: var(--danger-strong);
+  }
+
+  .empty {
+    padding: var(--space-4);
+  }
+
+  .empty.compact {
+    padding: var(--space-3);
+  }
+
+  @media (max-width: 1000px) {
+    .summary-grid,
+    .session-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 680px) {
+    .companion {
+      padding: var(--space-3);
+      gap: var(--space-3);
+    }
+
+    .page-head,
+    .section-head,
+    .session-top {
+      flex-direction: column;
+    }
+
+    .head-actions {
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .summary-grid,
+    .session-list {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

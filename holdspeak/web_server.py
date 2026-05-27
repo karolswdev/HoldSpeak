@@ -1216,6 +1216,29 @@ class MeetingWebServer:
                 )
             return HTMLResponse(html)
 
+        @app.get("/companion")
+        async def companion_dashboard() -> Any:
+            """Serve the AI PI companion surface (HS-24-01)."""
+            page = (
+                Path(__file__).resolve().parent
+                / "static"
+                / "_built"
+                / "companion"
+                / "index.html"
+            )
+            try:
+                html = page.read_text(encoding="utf-8")
+            except Exception as e:
+                log.error(f"Failed to read built companion page: {e}")
+                html = (
+                    "<!doctype html><html><head><meta charset='utf-8'/>"
+                    "<title>HoldSpeak Companion</title></head>"
+                    "<body><h1>AI PI Companion</h1>"
+                    "<p>Companion UI not built. Run <code>npm run build</code> "
+                    "in <code>web/</code>.</p></body></html>"
+                )
+            return HTMLResponse(html)
+
         @app.get("/docs/dictation-runtime")
         async def dictation_runtime_docs() -> Any:
             """Serve local dictation runtime setup guidance (HS-10-09:

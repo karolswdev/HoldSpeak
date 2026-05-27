@@ -1,8 +1,8 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-26 (Phase 24 opened: AI PI companion productization).
+**Last updated:** 2026-05-26 (Phase 24 active: HS-24-01 closed, HS-24-02 next).
 **Current phase:** [phase-24-ai-pi-companion-productization](./phase-24-ai-pi-companion-productization/) — make AI PI easier to supervise, recover, and operate during real agent work.
-**Status:** planning.
+**Status:** in-progress.
 
 ## Vision
 
@@ -62,7 +62,7 @@ canon, canon wins.
 | 21 | AIPI-Lite First-Class Integration: import firmware and bridge source into HoldSpeak and define the unified developer workflow | done | [phase-21-aipi-lite-first-class](./phase-21-aipi-lite-first-class/) |
 | 22 | AI PI Companion UX: state model, gestures, LCD cadence, bridge display wiring, and live hardware dogfood | done | [phase-22-ai-pi-companion-ux](./phase-22-ai-pi-companion-ux/) |
 | 23 | AI PI Companion UX Polish: long-prompt display, multi-session identity, preview/browse, and target confidence | done | [phase-23-ai-pi-companion-ux-polish](./phase-23-ai-pi-companion-ux-polish/) |
-| 24 | AI PI Companion Productization: web companion overview, stale-session controls, confidence affordances, and display update cadence | planning | [phase-24-ai-pi-companion-productization](./phase-24-ai-pi-companion-productization/) |
+| 24 | AI PI Companion Productization: web companion overview, stale-session controls, confidence affordances, and display update cadence | in-progress | [phase-24-ai-pi-companion-productization](./phase-24-ai-pi-companion-productization/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
