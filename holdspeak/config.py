@@ -24,6 +24,7 @@ class ModelConfig:
     """Whisper model configuration."""
     name: str = "base"
     warm_on_start: bool = True
+    backend: str = "auto"  # "auto" | "mlx" | "faster-whisper"
     # Available: tiny, base, small, medium, large
 
 

@@ -289,9 +289,14 @@ the device can show them on its LCD:
 
 | trigger | text | ttl_ms |
 |---|---|---|
-| `start` accepted, voice session begun | `Listening...` | 0 |
-| `stop` produced ≥ 0.1 s of audio, transcription kicked off | `Thinking...` | 0 |
-| Transcription completed | `<first 80 chars of transcript>` | 4000 |
+| `start` accepted, voice session begun | *(no pushback — TX arrow glyph in firmware top-right indicates recording)* | — |
+| `stop` produced ≥ 0.1 s of audio, transcription kicked off | *(no pushback — absence of TX arrow signals processing)* | — |
+| Transcription completed | `<first 150 chars of transcript>` | 4000 |
+
+AIPI-4-13 (2026-05): `Listening...` and `Thinking...` pushbacks were
+removed because they clobbered the bottom widget's persistent
+meeting/idle text. The device's firmware-side TX label glyph (top-right
+`↑` during right-button hold) now carries that state signal instead.
 
 Note: the transcript snippet fires *outside* the local-typing
 try-block, so the device sees the snippet even if local

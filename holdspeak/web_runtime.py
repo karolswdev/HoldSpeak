@@ -163,7 +163,7 @@ def run_web_runtime(
         if transcriber is None or getattr(transcriber, "model_name", None) != config.model.name:
             _set_transcription_status("loading")
             try:
-                transcriber = Transcriber(model_name=config.model.name)
+                transcriber = Transcriber(model_name=config.model.name, backend=config.model.backend)
             except Exception as exc:
                 _set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")
                 raise

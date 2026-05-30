@@ -109,6 +109,13 @@ Config file shape:
 HoldSpeak reads the API key from the named environment variable. Do not put API
 keys in `.hs/` files.
 
+> **Extended thinking disabled by default.** HoldSpeak sets `thinking: false` on
+> every call to an OpenAI-compatible endpoint. This prevents extended-thinking
+> inference mode from activating on models that support it (e.g., Claude 3.7+
+> Sonnet), which would add significant latency and token cost to short
+> dictation rewrites. If your endpoint does not support the `extra_body` field
+> this parameter is silently ignored.
+
 Known-good local dogfood profile from HS-19 closeout:
 
 ```json
@@ -324,7 +331,7 @@ For daily coding-agent dictation, use:
   "dictation": {
     "pipeline": {
       "enabled": true,
-      "stages": ["intent-router", "project-rewriter", "kb-enricher"],
+      "stages": ["intent-router", "kb-enricher"],
       "max_total_latency_ms": 600,
       "target_profile_override": "auto"
     },
@@ -347,3 +354,11 @@ holdspeak doctor
 holdspeak dictation runtime status
 holdspeak dictation dry-run "ask codex to summarize what changed and suggest a next test"
 ```
+
+> **Optional: add `project-rewriter` stage.** The default stage list
+> (`intent-router`, `kb-enricher`) classifies your utterance and injects
+> project KB context without invoking the LLM for rewriting. Add
+> `"project-rewriter"` to the `stages` array to also ask the runtime to rewrite
+> rough speech using `.hs/` context before enrichment. This adds one extra LLM
+> round-trip; only enable it when an OpenAI-compatible runtime is configured and
+> you have populated `.hs/instructions.md`.

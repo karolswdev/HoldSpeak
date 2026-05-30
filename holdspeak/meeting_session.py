@@ -789,12 +789,20 @@ class MeetingSession:
             try:
                 mic_chunks, system_chunks = recorder.stop()
                 device_chunks = recorder.get_pending_device_chunks()
-                self._transcribe_chunks(
-                    mic_chunks,
-                    system_chunks,
-                    final=True,
-                    device_chunks=device_chunks,
-                )
+                # recorder.stop() returns ALL chunks from t=0. Filter to only
+                # audio not yet processed by the transcription loop, using the
+                # watermark it maintains. Without this, every stop re-transcribes
+                # the entire recording, causing the "Stopping..." hang.
+                cutoff = self._last_transcribe_time
+                mic_chunks = [c for c in mic_chunks if c.timestamp >= cutoff]
+                system_chunks = [c for c in system_chunks if c.timestamp >= cutoff]
+                if mic_chunks or system_chunks or device_chunks:
+                    self._transcribe_chunks(
+                        mic_chunks,
+                        system_chunks,
+                        final=True,
+                        device_chunks=device_chunks,
+                    )
             except Exception as e:
                 log.error(f"Error stopping recorder: {e}")
 

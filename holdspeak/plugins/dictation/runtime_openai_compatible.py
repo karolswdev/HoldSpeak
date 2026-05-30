@@ -118,6 +118,7 @@ class OpenAICompatibleRuntime:
                 temperature=temperature,
                 max_tokens=max_tokens,
                 response_format={"type": "json_object"},
+                extra_body={"thinking": False},
             )
         except Exception as exc:
             if not _response_format_unsupported(exc):
@@ -131,6 +132,7 @@ class OpenAICompatibleRuntime:
                     messages=messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
+                    extra_body={"thinking": False},
                 )
             except Exception as retry_exc:
                 log.error(
@@ -173,6 +175,7 @@ class OpenAICompatibleRuntime:
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
+                extra_body={"thinking": False},
             )
         except Exception as exc:
             log.error("OpenAI-compatible dictation rewrite failed: %s", exc, exc_info=True)

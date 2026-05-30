@@ -51,7 +51,7 @@ DEFAULT_INTEL_MODEL_PATH = "~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf"
 DEFAULT_INTEL_PROVIDER = "local"
 DEFAULT_INTEL_CLOUD_MODEL = "gpt-5-mini"
 DEFAULT_INTEL_CLOUD_API_KEY_ENV = "OPENAI_API_KEY"
-DEFAULT_INTEL_CLOUD_TIMEOUT_SECONDS = 20.0
+DEFAULT_INTEL_CLOUD_TIMEOUT_SECONDS = 180.0
 VALID_INTEL_PROVIDERS = frozenset({"local", "cloud", "auto"})
 
 
@@ -464,7 +464,7 @@ class MeetingIntel:
         n_threads: Optional[int] = None,
         n_gpu_layers: int = -1,  # -1 = offload all layers to GPU (Metal on Apple Silicon)
         temperature: float = 0.2,
-        max_tokens: int = 800,
+        max_tokens: int = 3000,
     ) -> None:
         self.provider = _normalize_provider(provider)
         self.model_path = model_path
@@ -596,6 +596,7 @@ class MeetingIntel:
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
+            "extra_body": {"thinking": False},
         }
         if self.cloud_reasoning_effort:
             base_kwargs["reasoning_effort"] = self.cloud_reasoning_effort

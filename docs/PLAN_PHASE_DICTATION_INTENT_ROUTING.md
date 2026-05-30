@@ -242,7 +242,11 @@ In both cases:
 2. JSON-mode + post-hoc retry is **explicitly rejected** as a fallback. If the constraint fails to compile for the active backend, the dictation runtime MUST refuse to start and `holdspeak doctor` MUST surface the error.
 3. The compiler MUST produce semantically equivalent constraints across backends — the same `blocks.yaml` MUST yield outputs from the same value set regardless of which runtime served them.
 
-### 7.4 Forward Compatibility
+### 7.4 Extended Thinking Policy
+
+All calls through the `openai_compatible` runtime set `extra_body={"thinking": false}` on every request. This prevents extended-thinking inference from activating on capable endpoints (e.g., Claude 3.7+ Sonnet via an OpenAI-compatible proxy), which would add substantial latency and token cost to short-form dictation rewrites. The local `mlx` and `llama_cpp` backends are unaffected (they do not support this field). Endpoints that do not recognise `extra_body` ignore the field silently. This is not user-configurable in DIR-01.
+
+### 7.5 Forward Compatibility
 
 The runtime Protocol (`classify(prompt, schema) → dict`) is backend-agnostic. Adding a remote backend (cloud LLM with provider tool-schema) or a new local stack (vLLM, ollama) is a localized change: a new `runtime_<name>.py` plus a new branch in the schema compiler. Stage code does not change. This extension is **not** a DIR-01 deliverable.
 
