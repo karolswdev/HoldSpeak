@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-31 (Phase 25: HS-25-01/02/03/04 shipped — egress invariant + posture, web auth + bind guard, SECURITY.md, LLM runtime thread-safety; Phase 15 auth-unblocked).
+**Last updated:** 2026-05-31 (Phase 25: HS-25-01..05 shipped — egress invariant + posture, web auth + bind guard, SECURITY.md, LLM runtime thread-safety, transcription timeout; Phase 15 auth-unblocked).
 **Current phase:** [phase-25-trust-and-hardening](./phase-25-trust-and-hardening/) — close the trust/correctness/security gaps that block external use and gate Phase 15.
 **Status:** in-progress.
 

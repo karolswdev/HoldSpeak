@@ -26,6 +26,11 @@ class ModelConfig:
     warm_on_start: bool = True
     backend: str = "auto"  # "auto" | "mlx" | "faster-whisper"
     # Available: tiny, base, small, medium, large
+    # HS-25-05: hard ceiling (seconds) on a single transcription so a hung model
+    # can't freeze the pipeline. Generous by default to never clip a legitimate
+    # long utterance; <= 0 disables. On timeout the utterance is abandoned and
+    # the pipeline returns to idle for the next one.
+    transcribe_timeout_seconds: float = 120.0
 
 
 @dataclass

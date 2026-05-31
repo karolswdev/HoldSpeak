@@ -117,7 +117,11 @@ class HoldSpeakController:
     def _ensure_transcriber(self) -> Transcriber:
         model_name = self.app.config.model.name
         if self._transcriber is None or self._transcriber_model != model_name:
-            self._transcriber = Transcriber(model_name=model_name, backend=self.app.config.model.backend)
+            self._transcriber = Transcriber(
+                model_name=model_name,
+                backend=self.app.config.model.backend,
+                timeout_seconds=self.app.config.model.transcribe_timeout_seconds,
+            )
             self._transcriber_model = model_name
         return self._transcriber
 

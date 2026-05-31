@@ -1,6 +1,6 @@
 # Phase 25 — Trust & Hardening
 
-**Last updated:** 2026-05-31 (HS-25-01/02/03/04 done; HS-25-05/06 remain).
+**Last updated:** 2026-05-31 (HS-25-01/02/03/04/05 done; HS-25-06 remains, then closeout).
 
 ## Goal
 
@@ -73,7 +73,7 @@ hanging or racing.
 | HS-25-02 | Web-runtime auth token + non-loopback bind guard | done | [story-02-web-runtime-auth.md](./story-02-web-runtime-auth.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-25-03 | Threat model + encryption-at-rest stance doc | done | [story-03-threat-model-doc.md](./story-03-threat-model-doc.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-25-04 | LLM runtime thread-safety made explicit | done | [story-04-llm-runtime-thread-safety.md](./story-04-llm-runtime-thread-safety.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-25-05 | Whisper transcription timeout | backlog | [story-05-transcription-timeout.md](./story-05-transcription-timeout.md) | — |
+| HS-25-05 | Whisper transcription timeout | done | [story-05-transcription-timeout.md](./story-05-transcription-timeout.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-25-06 | Runtime-lifecycle knob audit (eviction, cloud_store) | backlog | [story-06-runtime-lifecycle-audit.md](./story-06-runtime-lifecycle-audit.md) | — |
 | HS-25-07 | Trust hardening dogfood + closeout | backlog | [story-07-trust-dogfood-closeout.md](./story-07-trust-dogfood-closeout.md) | — |
 | HS-25-08 | Web egress-posture badge (split from HS-25-01) | backlog | [story-08-web-egress-badge.md](./story-08-web-egress-badge.md) | — |
@@ -132,9 +132,14 @@ the non-thread-safe MLX/llama.cpp adapters are single-flight intrinsically rathe
 than by the controller's external lock. Concurrency test proves
 `max_in_flight == 1`.
 
-Next: HS-25-05 (transcription timeout — bound `Transcriber.transcribe` so a hung
-model can't freeze the pipeline), then HS-25-06 (runtime-knob audit: eviction +
-`intel_cloud_store`).
+HS-25-05 is **done**: `Transcriber.transcribe` runs the backend on a daemon
+worker bounded by `ModelConfig.transcribe_timeout_seconds` (default 120s; `<= 0`
+disables); on timeout it raises `TranscriberTimeoutError`, which the controller's
+existing handler turns into notify + return-to-idle. No lock is stranded.
+
+Next: HS-25-06 (runtime-knob audit — verify `eviction_idle_seconds` actually
+fires or remove it; confirm `intel_cloud_store` takes effect or document it as
+advisory), then HS-25-07 closeout (HS-25-08 web badge can trail).
 
 ## Product problems to solve
 

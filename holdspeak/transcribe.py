@@ -10,6 +10,7 @@ import importlib
 import importlib.util
 import platform
 import sys
+import threading
 from pathlib import Path
 from typing import Optional, Protocol
 
@@ -22,6 +23,14 @@ log = get_logger("transcribe")
 
 class TranscriberError(RuntimeError):
     """Raised when model loading or transcription fails."""
+
+
+class TranscriberTimeoutError(TranscriberError):
+    """Raised when transcription exceeds the configured timeout (HS-25-05).
+
+    A subclass of TranscriberError so existing transcription error handling
+    (notify + return to idle) catches it without special-casing.
+    """
 
 
 class _TranscriberImpl(Protocol):
@@ -305,9 +314,13 @@ class Transcriber:
         device: Optional[str] = None,
         compute_type: Optional[str] = None,
         backend: str = "auto",
+        timeout_seconds: float = 0.0,
     ) -> None:
         resolved = _resolve_backend(backend)
         self.backend = resolved
+        # HS-25-05: hard ceiling so a hung model can't freeze the pipeline
+        # forever. <= 0 disables the timeout (calls run inline, as before).
+        self.timeout_seconds = float(timeout_seconds)
 
         if resolved == "mlx":
             self._impl: _TranscriberImpl = _MlxTranscriber(
@@ -327,4 +340,32 @@ class Transcriber:
         self.compute_type = self._impl.compute_type
 
     def transcribe(self, audio_array: np.ndarray) -> str:
-        return self._impl.transcribe(audio_array)
+        if self.timeout_seconds <= 0:
+            return self._impl.transcribe(audio_array)
+
+        # Run the (possibly native, uninterruptible) backend on a daemon worker
+        # and bound the wait. On timeout we abandon the worker — it cannot be
+        # force-killed, but as a daemon it won't block process exit, and the
+        # caller's locks release as this raises. Best-effort by design.
+        outcome: dict[str, object] = {}
+
+        def _run() -> None:
+            try:
+                outcome["text"] = self._impl.transcribe(audio_array)
+            except BaseException as exc:  # noqa: BLE001 - propagated to caller
+                outcome["error"] = exc
+
+        worker = threading.Thread(
+            target=_run, name="HoldSpeakTranscribeTimeout", daemon=True
+        )
+        worker.start()
+        worker.join(self.timeout_seconds)
+
+        if worker.is_alive():
+            raise TranscriberTimeoutError(
+                f"Transcription exceeded {self.timeout_seconds:.0f}s and was "
+                "abandoned (the model may be hung). The next utterance will retry."
+            )
+        if "error" in outcome:
+            raise outcome["error"]  # type: ignore[misc]
+        return str(outcome.get("text", ""))

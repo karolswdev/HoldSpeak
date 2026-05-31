@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 25
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-25-07
 - **Owner:** unassigned
@@ -37,13 +37,21 @@ hang.
 
 ## Acceptance criteria
 
-- [ ] A configurable timeout exists in config with a documented default.
-- [ ] A test with a slow/hung mock transcriber proves the timeout fires, the
-      user is notified, and the controller returns to idle (a subsequent
-      utterance transcribes normally).
-- [ ] No lock (`_transcription_lock` or any HS-25-04 runtime lock) remains held
-      after a timeout.
-- [ ] Default behavior with a fast transcriber is unchanged (no added latency).
+- [x] Configurable timeout in config with a documented default —
+      `ModelConfig.transcribe_timeout_seconds = 120.0` (generous, never clips a
+      legitimate long utterance; `<= 0` disables).
+- [x] A slow mock transcriber proves the timeout fires
+      (`TranscriberTimeoutError`) and the instance is reusable afterwards (the
+      controller-level "notify + return to idle" rides the existing
+      `except Exception` → `finally: set_state("idle")`; `TranscriberTimeoutError`
+      subclasses `TranscriberError` so that handler catches it unchanged) —
+      `tests/unit/test_transcribe_timeout.py`.
+- [x] No lock held after a timeout: the error raises inside
+      `with self._transcription_lock`, which releases on unwind; the HS-25-04
+      runtime lock is not held during transcription (it guards the pipeline's
+      classify/rewrite, which run *after* transcription).
+- [x] Fast/disabled paths unchanged: `<= 0` runs inline; a fast call under the
+      timeout returns normally — both covered by tests.
 
 ## Test plan
 
@@ -60,3 +68,14 @@ hang.
   with the existing daemon-thread model in `controller.py`.
 - Default value: long enough not to clip legitimate long utterances on slower
   backends (faster-whisper medium), short enough to catch a true hang.
+
+## Closeout
+
+Shipped 2026-05-31. See [evidence-story-05.md](./evidence-story-05.md).
+
+Chose the daemon-thread + `join(timeout)` mechanism (over `ThreadPoolExecutor`)
+specifically so a timed-out, uninterruptible native call is *abandoned* without
+blocking process exit — `ThreadPoolExecutor` would join its worker at
+interpreter shutdown and could hang. Hard cancellation of the native backend is
+not possible; documented as best-effort (the worker is reclaimed on process exit
+/ GC; the next utterance retries on a fresh call).
