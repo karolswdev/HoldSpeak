@@ -1,6 +1,6 @@
 # Phase 25 — Trust & Hardening
 
-**Last updated:** 2026-05-31 (HS-25-01 + HS-25-02 done: egress invariant + posture, and web auth token + bind guard; HS-25-03/04/05/06 remain).
+**Last updated:** 2026-05-31 (HS-25-01/02/03 done: egress invariant + posture, web auth + bind guard, threat-model doc; HS-25-04/05/06 remain).
 
 ## Goal
 
@@ -71,7 +71,7 @@ hanging or racing.
 |---|---|---|---|---|
 | HS-25-01 | Loud cloud-path consent — no silent transcript egress | done | [story-01-loud-cloud-consent.md](./story-01-loud-cloud-consent.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-25-02 | Web-runtime auth token + non-loopback bind guard | done | [story-02-web-runtime-auth.md](./story-02-web-runtime-auth.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-25-03 | Threat model + encryption-at-rest stance doc | backlog | [story-03-threat-model-doc.md](./story-03-threat-model-doc.md) | — |
+| HS-25-03 | Threat model + encryption-at-rest stance doc | done | [story-03-threat-model-doc.md](./story-03-threat-model-doc.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-25-04 | LLM runtime thread-safety made explicit | backlog | [story-04-llm-runtime-thread-safety.md](./story-04-llm-runtime-thread-safety.md) | — |
 | HS-25-05 | Whisper transcription timeout | backlog | [story-05-transcription-timeout.md](./story-05-transcription-timeout.md) | — |
 | HS-25-06 | Runtime-lifecycle knob audit (eviction, cloud_store) | backlog | [story-06-runtime-lifecycle-audit.md](./story-06-runtime-lifecycle-audit.md) | — |
@@ -121,9 +121,14 @@ default and activates the instant Phase 15 introduces a non-loopback host — so
 on the story (off-loopback `/ws` gating; browser token injection) — neither is
 reachable while host is loopback-only.
 
-Next: HS-25-03 (threat-model + encryption-at-rest doc — can run as a
-docs/decision story), then HS-25-04 (LLM runtime thread-safety) and HS-25-05
-(transcription timeout).
+HS-25-03 is **done**: `docs/SECURITY.md` records data classes, trust boundaries,
+egress points, and the encryption-at-rest decision (document the stance, defer
+implementation, recommend full-disk encryption; revisit if multi-user/server).
+Linked from README + roadmap canon.
+
+Next: HS-25-04 (LLM runtime thread-safety — make the implicit `_transcription_lock`
+serialization explicit at the runtime layer), then HS-25-05 (transcription
+timeout) and HS-25-06 (runtime-knob audit).
 
 ## Product problems to solve
 

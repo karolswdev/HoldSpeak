@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-31 (Phase 25: HS-25-01 + HS-25-02 shipped — intel egress invariant + posture, web auth token + bind guard; Phase 15 auth-unblocked).
+**Last updated:** 2026-05-31 (Phase 25: HS-25-01/02/03 shipped — egress invariant + posture, web auth + bind guard, threat-model/SECURITY.md; Phase 15 auth-unblocked).
 **Current phase:** [phase-25-trust-and-hardening](./phase-25-trust-and-hardening/) — close the trust/correctness/security gaps that block external use and gate Phase 15.
 **Status:** in-progress.
 
@@ -25,6 +25,7 @@ Phase content must be grounded in these. If a phase disagrees with
 canon, canon wins.
 
 - `README.md` — public install + usage surface.
+- `docs/SECURITY.md` — security & privacy posture: data classes, trust boundaries, egress points, encryption-at-rest stance (HS-25-03).
 - `docs/USER_GUIDE.md` — user-facing product workflows.
 - `docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` — parent RFC for the plugin system.
 - `docs/PLAN_PHASE_MULTI_INTENT_ROUTING.md` — sibling phase: meeting-side multi-intent routing (MIR-01).

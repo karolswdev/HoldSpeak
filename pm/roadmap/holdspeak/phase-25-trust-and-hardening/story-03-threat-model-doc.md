@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 25
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-25-01
 - **Unblocks:** HS-25-07
 - **Owner:** unassigned
@@ -44,15 +44,17 @@ on paper.
 
 ## Acceptance criteria
 
-- [ ] `docs/SECURITY.md` exists and enumerates data classes, storage posture,
-      trust boundaries, and egress points.
-- [ ] The encryption-at-rest decision is recorded with rationale + residual risk
-      + revisit trigger.
-- [ ] `README.md` links to `docs/SECURITY.md`.
-- [ ] `pm/roadmap/holdspeak/README.md` source-canon list includes
+- [x] `docs/SECURITY.md` exists and enumerates data classes, storage posture,
+      trust boundaries, and egress points (§§1–6).
+- [x] The encryption-at-rest decision is recorded with rationale + residual risk
+      + revisit trigger (§2 — document-the-stance; recommend full-disk encryption).
+- [x] `README.md` links to `docs/SECURITY.md` ("Where to go next" table).
+- [x] `pm/roadmap/holdspeak/README.md` source-canon list includes
       `docs/SECURITY.md`.
-- [ ] Claims in the doc match code (egress points cross-checked against
-      `intel.py`/`intel_queue.py`, `activity_history.py`, `device_audio.py`).
+- [x] Claims cross-checked against code: egress sites verified
+      (`intel.py` OpenAI client, `intel_queue.py:345` webhook, connector
+      subprocesses, `device_audio.py` PSK); `activity_history.py` confirmed to
+      make no network calls; DB/config paths from `db.py`/`config.py`.
 
 ## Test plan
 
@@ -69,3 +71,13 @@ on paper.
 - Default stance (per phase decision-deferred): document the
   filesystem-permission posture and defer implementation unless the model
   demands it. The author may override.
+
+## Closeout
+
+Shipped 2026-05-31. See [evidence-story-03.md](./evidence-story-03.md).
+
+Encryption-at-rest decision: **document the stance, defer implementation** (per
+the recorded default; user steered "proceed on the default"). `SECURITY.md`
+recommends full-disk encryption and records the revisit trigger (multi-user /
+server / third-party-data). App-level DB encryption (e.g. SQLCipher), if ever
+wanted, is a new story — not a reopen of this one.

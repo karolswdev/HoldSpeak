@@ -54,6 +54,7 @@ For local installs from this checkout: `uv pip install -e .`
 | Use meeting mode and configure AI intelligence | [Meeting Mode Guide](docs/MEETING_MODE_GUIDE.md) |
 | Wire up the AIPI-Lite companion device | [AIPI-Lite Developer Workflow](docs/AIPI_LITE_DEV_WORKFLOW.md) |
 | Install Claude / Codex agent hooks | [Agent Hook Install](docs/AGENT_HOOK_INSTALL.md) |
+| Understand what's stored and what can leave my machine | [Security & Privacy](docs/SECURITY.md) |
 
 ## Configuration
 
