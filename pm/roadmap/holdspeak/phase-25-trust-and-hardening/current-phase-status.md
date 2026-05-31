@@ -1,6 +1,6 @@
 # Phase 25 — Trust & Hardening
 
-**Last updated:** 2026-05-31 (HS-25-01/02/03/04/05 done; HS-25-06 remains, then closeout).
+**Last updated:** 2026-05-31 (HS-25-01..06 done; HS-25-07 closeout + HS-25-08 web badge remain).
 
 ## Goal
 
@@ -74,7 +74,7 @@ hanging or racing.
 | HS-25-03 | Threat model + encryption-at-rest stance doc | done | [story-03-threat-model-doc.md](./story-03-threat-model-doc.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-25-04 | LLM runtime thread-safety made explicit | done | [story-04-llm-runtime-thread-safety.md](./story-04-llm-runtime-thread-safety.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-25-05 | Whisper transcription timeout | done | [story-05-transcription-timeout.md](./story-05-transcription-timeout.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-25-06 | Runtime-lifecycle knob audit (eviction, cloud_store) | backlog | [story-06-runtime-lifecycle-audit.md](./story-06-runtime-lifecycle-audit.md) | — |
+| HS-25-06 | Runtime-lifecycle knob audit (eviction, cloud_store) | done | [story-06-runtime-lifecycle-audit.md](./story-06-runtime-lifecycle-audit.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-25-07 | Trust hardening dogfood + closeout | backlog | [story-07-trust-dogfood-closeout.md](./story-07-trust-dogfood-closeout.md) | — |
 | HS-25-08 | Web egress-posture badge (split from HS-25-01) | backlog | [story-08-web-egress-badge.md](./story-08-web-egress-badge.md) | — |
 
@@ -132,14 +132,19 @@ the non-thread-safe MLX/llama.cpp adapters are single-flight intrinsically rathe
 than by the controller's external lock. Concurrency test proves
 `max_in_flight == 1`.
 
-HS-25-05 is **done**: `Transcriber.transcribe` runs the backend on a daemon
-worker bounded by `ModelConfig.transcribe_timeout_seconds` (default 120s; `<= 0`
-disables); on timeout it raises `TranscriberTimeoutError`, which the controller's
-existing handler turns into notify + return-to-idle. No lock is stranded.
+HS-25-06 is **done**: audit found both knobs real (not dead). `eviction_idle_seconds`
+genuinely unloads the model (config→assembly→adapter→`_maybe_evict`);
+`intel_cloud_store` is forwarded as `store=True` and now documented as advisory
+(endpoint-dependent). Both pinned by `tests/unit/test_runtime_knob_audit.py`.
 
-Next: HS-25-06 (runtime-knob audit — verify `eviction_idle_seconds` actually
-fires or remove it; confirm `intel_cloud_store` takes effect or document it as
-advisory), then HS-25-07 closeout (HS-25-08 web badge can trail).
+**All six engineering/security stories (HS-25-01..06) are done.** Remaining:
+- **HS-25-07** — phase closeout + dogfood. The three dogfood scenarios
+  (misconfigured-local-model shows no egress; web token gate; transcription
+  timeout recovery) want a **live/manual** run — needs the user (or a hardware
+  session). Code-level proof already exists in each story's tests.
+- **HS-25-08** — web egress badge: needs an Astro `web/` edit + `_built` rebuild
+  (large bundle churn); also a chance to clear the stale-`_built` pre-existing
+  failures.
 
 ## Product problems to solve
 

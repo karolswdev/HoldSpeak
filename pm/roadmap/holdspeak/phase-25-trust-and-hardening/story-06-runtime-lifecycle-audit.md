@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 25
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-25-07
 - **Owner:** unassigned
@@ -42,13 +42,18 @@ removal must follow verification, not assumption (the eviction code is real).
 
 ## Acceptance criteria
 
-- [ ] `eviction_idle_seconds` is either covered by a test proving eviction
-      fires, or removed (knob + `runtime*.py` plumbing) with a rationale.
-- [ ] `intel_cloud_store` is either proven to take effect, or documented as
-      advisory (with `doctor`/docs noting the dependency on endpoint support).
-- [ ] No remaining config knob in the audited set silently no-ops without the
-      user being told.
-- [ ] Findings recorded in `evidence-story-06.md`.
+- [x] `eviction_idle_seconds` **kept** (it is real, not dead): config field
+      (`config.py:156`) → `assembly.py:116` → adapter; `_maybe_evict` unloads the
+      model. Proven by `tests/unit/test_runtime_knob_audit.py` (fires when idle,
+      not within window, never when disabled).
+- [x] `intel_cloud_store` **kept**: proven to be forwarded as `store=True` when
+      enabled (and omitted when off) — same test file — and documented as
+      **advisory** (endpoint must honor OpenAI's `store`) in
+      `docs/MEETING_MODE_GUIDE.md`.
+- [x] No audited knob silently no-ops without the user being told (eviction
+      works; `cloud_store` forwarding is real + its endpoint-dependence is
+      documented).
+- [x] Findings recorded in `evidence-story-06.md`.
 
 ## Test plan
 
@@ -64,3 +69,12 @@ removal must follow verification, not assumption (the eviction code is real).
   stub — confirm it is genuinely unreachable before removing anything.
 - If `store` can't be verified against the default endpoint, advisory-documenting
   is acceptable; silently leaving it is not.
+
+## Closeout
+
+Shipped 2026-05-31. See [evidence-story-06.md](./evidence-story-06.md).
+
+Audit outcome: **both knobs are real and working** — the pre-phase suspicion that
+they might be no-ops was wrong. Nothing removed (per the look-before-deleting
+discipline); behavior pinned by tests, and `intel_cloud_store`'s
+endpoint-dependence is now documented so the user is never misled.

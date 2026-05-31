@@ -179,6 +179,11 @@ Use this during or after meetings for cross-session management:
   - `intel_cloud_model`
   - `intel_cloud_api_key_env`
   - `intel_cloud_base_url` (OpenAI-compatible endpoint override)
+  - `intel_cloud_store` — when `true`, HoldSpeak sends OpenAI's `store` flag with
+    each request. **Advisory:** this only takes effect if your endpoint honors
+    the `store` parameter (OpenAI does; many OpenAI-compatible servers ignore
+    unknown fields). HoldSpeak forwards the flag but cannot guarantee the remote
+    acts on it — verify with your provider if retention matters.
 
 ### Multiple Clients
 
