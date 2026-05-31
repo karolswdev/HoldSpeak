@@ -1,6 +1,6 @@
 # Phase 25 — Trust & Hardening
 
-**Last updated:** 2026-05-31 (HS-25-01 done: egress invariant locked + posture surfaced; HS-25-08 split for the web badge; HS-25-02 next).
+**Last updated:** 2026-05-31 (HS-25-01 + HS-25-02 done: egress invariant + posture, and web auth token + bind guard; HS-25-03/04/05/06 remain).
 
 ## Goal
 
@@ -70,7 +70,7 @@ hanging or racing.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-25-01 | Loud cloud-path consent — no silent transcript egress | done | [story-01-loud-cloud-consent.md](./story-01-loud-cloud-consent.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-25-02 | Web-runtime auth token + non-loopback bind guard | backlog | [story-02-web-runtime-auth.md](./story-02-web-runtime-auth.md) | — |
+| HS-25-02 | Web-runtime auth token + non-loopback bind guard | done | [story-02-web-runtime-auth.md](./story-02-web-runtime-auth.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-25-03 | Threat model + encryption-at-rest stance doc | backlog | [story-03-threat-model-doc.md](./story-03-threat-model-doc.md) | — |
 | HS-25-04 | LLM runtime thread-safety made explicit | backlog | [story-04-llm-runtime-thread-safety.md](./story-04-llm-runtime-thread-safety.md) | — |
 | HS-25-05 | Whisper transcription timeout | backlog | [story-05-transcription-timeout.md](./story-05-transcription-timeout.md) | — |
@@ -112,8 +112,18 @@ cases needing a Safari fixture absent from this checkout. The `_built` staleness
 overlaps HS-25-08 (rebuild) and Phase 26 (web work); worth a dedicated cleanup if
 it persists.
 
-Next: HS-25-02 (the Phase 15 unblocker — web-runtime auth + bind guard).
-HS-25-03 can run in parallel as a docs/decision story.
+HS-25-02 is **done**: `holdspeak/web_auth.py` adds the token primitives;
+`web_server.py` enforces a token gate **only off-loopback** (loopback stays open
+— user decision) plus a bind guard that refuses a non-loopback bind without a
+token; `doctor` reports the posture. The gate is dormant at today's `127.0.0.1`
+default and activates the instant Phase 15 introduces a non-loopback host — so
+**Phase 15 is now unblocked on the auth front**. Two small follow-ups are noted
+on the story (off-loopback `/ws` gating; browser token injection) — neither is
+reachable while host is loopback-only.
+
+Next: HS-25-03 (threat-model + encryption-at-rest doc — can run as a
+docs/decision story), then HS-25-04 (LLM runtime thread-safety) and HS-25-05
+(transcription timeout).
 
 ## Product problems to solve
 

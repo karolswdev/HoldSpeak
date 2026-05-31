@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-31 (Phase 25 HS-25-01 shipped — intel egress invariant + posture surfacing; Phase 16 also reconciled to paused).
+**Last updated:** 2026-05-31 (Phase 25: HS-25-01 + HS-25-02 shipped — intel egress invariant + posture, web auth token + bind guard; Phase 15 auth-unblocked).
 **Current phase:** [phase-25-trust-and-hardening](./phase-25-trust-and-hardening/) — close the trust/correctness/security gaps that block external use and gate Phase 15.
 **Status:** in-progress.
 

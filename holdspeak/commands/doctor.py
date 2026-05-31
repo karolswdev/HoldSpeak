@@ -399,6 +399,28 @@ def _check_meeting_intel_egress(config: Config) -> DoctorCheck:
     )
 
 
+def _check_web_auth(config: Config) -> DoctorCheck:
+    """Report how the web runtime is bound and whether an auth token is set."""
+    token_set = bool(getattr(config.meeting, "web_auth_token", "") or "")
+    # The runtime binds 127.0.0.1 today; the token activates the moment a
+    # non-loopback bind is introduced (Phase 15). Surface both facts plainly.
+    detail = (
+        "Web runtime binds loopback (open to this machine). "
+        f"Auth token is {'set' if token_set else 'not set'} — "
+        "required automatically if a non-loopback bind is ever configured."
+    )
+    return DoctorCheck(
+        name="Web runtime auth",
+        status="PASS",
+        detail=detail,
+        fix=(
+            None
+            if token_set
+            else "A token is generated on first web launch; no action needed."
+        ),
+    )
+
+
 def _check_meeting_intel_cloud_preflight(config: Config, *, timeout_seconds: float = 4.0) -> DoctorCheck:
     meeting = config.meeting
     if not meeting.intel_enabled:
@@ -891,6 +913,7 @@ def collect_doctor_checks() -> list[DoctorCheck]:
         _check_microphone(),
         _check_transcription_backend(),
         _check_web_runtime(),
+        _check_web_auth(config),
         _check_meeting_intel_runtime(config),
         _check_meeting_intel_egress(config),
         _check_meeting_intel_cloud_preflight(config),

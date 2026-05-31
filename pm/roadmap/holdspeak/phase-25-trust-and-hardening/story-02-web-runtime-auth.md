@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 25
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-25-07, (Phase 15)
 - **Owner:** unassigned
@@ -40,15 +40,20 @@ safeguard. An auth gate must land before cross-network reach, not after.
 
 ## Acceptance criteria
 
-- [ ] Requests to data/mutation endpoints without a valid token return `401`
-      when a token is configured; `/health` and static assets remain open.
-- [ ] Token comparison uses `hmac.compare_digest`; no token value is logged.
-- [ ] Default localhost launch still works end-to-end for the bundled web client
-      (token auto-generated + auto-applied) with no manual step.
-- [ ] Binding a non-loopback host without a token is refused with an actionable
-      error; binding with a token emits an exposure warning.
-- [ ] `holdspeak doctor` reports whether the runtime is authenticated and how it
-      is bound.
+- [x] Requests to data/mutation endpoints without a valid token return `401`
+      **when bound off-loopback**; `/health`, `/api/devices/audio`, and `/_built`
+      static assets stay open — `_web_auth_gate` middleware in `web_server.py`,
+      covered by `tests/integration/test_web_auth_gate.py`.
+- [x] Token comparison uses `hmac.compare_digest`; no token value is logged —
+      `web_auth.verify_web_token`.
+- [x] Default localhost launch is unchanged (loopback is open by the chosen
+      policy; token is auto-generated + persisted via `ensure_web_token` so it is
+      ready when a non-loopback bind appears). No manual step.
+- [x] Binding a non-loopback host without a token is refused with an actionable
+      error (`nonloopback_bind_blocked` → `RuntimeError` in `start()`); binding
+      off-loopback with a token emits an exposure warning (`log.warning`).
+- [x] `holdspeak doctor` reports auth + bind posture — `_check_web_auth`
+      ("Web runtime auth").
 
 ## Test plan
 
@@ -68,3 +73,27 @@ safeguard. An auth gate must land before cross-network reach, not after.
   handshake; this story does not change it.
 - Confirm whether any route currently assumes anonymous access from the Astro
   frontend before gating reads.
+
+## Decision recorded
+
+Auth is **enforced only off-loopback** (user decision 2026-05-31). Loopback binds
+stay fully open — zero local friction, matching the long-standing "localhost is
+trusted" model. The token is required to bind *and* on every request only when
+the host is non-loopback. Token accepted via `X-HoldSpeak-Token`,
+`Authorization: Bearer`, or `?token=` (the last lets browser navigation work over
+a tunnel). `host` is hardcoded `127.0.0.1` today, so the gate is **dormant at the
+default and activates the moment Phase 15 introduces a non-loopback bind**.
+
+## Out of scope / follow-ups
+
+- **`/ws` WebSocket token check off-loopback** — Starlette HTTP middleware does
+  not cover WebSocket upgrades; the broadcast WS (duration ticks, low
+  sensitivity) is not yet token-gated. Address when Phase 15 makes off-loopback
+  real.
+- **Browser token injection** — a polished off-loopback browser session needs the
+  served JS to thread `?token=` into API calls; pairs with HS-25-08. Not needed
+  while host is loopback-only.
+
+## Closeout
+
+Shipped 2026-05-31. See [evidence-story-02.md](./evidence-story-02.md).

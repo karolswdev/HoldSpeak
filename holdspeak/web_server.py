@@ -67,7 +67,7 @@ _GLOBAL_BLOCKS_PATH = Path.home() / ".config" / "holdspeak" / "blocks.yaml"
 
 try:
     import uvicorn
-    from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+    from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
     from fastapi.responses import HTMLResponse, JSONResponse, Response
     from fastapi.staticfiles import StaticFiles
 except Exception as e:  # pragma: no cover - optional dependency at runtime
@@ -377,6 +377,7 @@ class MeetingWebServer:
         on_device_query: Optional[Callable[[str, str, Optional[float]], Optional[dict[str, Any]]]] = None,
         host: str = "127.0.0.1",
         port: Optional[int] = None,
+        auth_token: str = "",
     ) -> None:
         if _IMPORT_ERROR is not None:
             raise RuntimeError(
@@ -437,6 +438,7 @@ class MeetingWebServer:
         self.on_device_health = on_device_health
         self.on_device_query = on_device_query
         self.host = host
+        self.auth_token = auth_token
         self._configured_port = port
 
         self.port: Optional[int] = None
@@ -462,6 +464,19 @@ class MeetingWebServer:
             if self.url is None:
                 raise RuntimeError("Server thread is running but URL is unknown")
             return self.url
+
+        # HS-25-02: refuse to expose an unauthenticated runtime off-loopback.
+        from . import web_auth
+
+        blocked, reason = web_auth.nonloopback_bind_blocked(self.host, self.auth_token)
+        if blocked:
+            raise RuntimeError(reason)
+        if not web_auth.is_loopback_host(self.host):
+            log.warning(
+                "Binding non-loopback host %r: the web runtime is reachable beyond "
+                "this machine and requires the auth token on every request.",
+                self.host,
+            )
 
         self.port = self._configured_port or _find_free_port(self.host)
         config = uvicorn.Config(
@@ -536,8 +551,36 @@ class MeetingWebServer:
             self._started.set()
 
     def _create_app(self) -> Any:
+        from . import web_auth
+
         app = FastAPI()
         app.state.device_registry = self.device_registry
+
+        # HS-25-02: token gate, enforced ONLY when bound off-loopback. Loopback
+        # binds stay fully open (the long-standing "localhost is trusted" model).
+        # The device-audio WebSocket keeps its own PSK handshake and is exempt;
+        # /health stays open for liveness probes.
+        _auth_exempt_paths = {"/health", "/api/devices/audio"}
+
+        @app.middleware("http")
+        async def _web_auth_gate(request: Request, call_next: Any) -> Any:
+            if not web_auth.is_loopback_host(self.host):
+                path = request.url.path
+                # Static assets carry no secrets and the browser must load them
+                # to even render a token prompt, so they stay open off-loopback.
+                is_static = path.startswith("/_built")
+                if path not in _auth_exempt_paths and not is_static:
+                    token = web_auth.extract_request_token(
+                        authorization=request.headers.get("authorization"),
+                        header_token=request.headers.get("x-holdspeak-token"),
+                        query_token=request.query_params.get("token"),
+                    )
+                    if not web_auth.verify_web_token(token, self.auth_token):
+                        return JSONResponse(
+                            {"success": False, "error": "Unauthorized"},
+                            status_code=401,
+                        )
+            return await call_next(request)
 
         from .device_audio_ws import register_device_audio_routes
 

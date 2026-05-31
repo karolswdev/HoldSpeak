@@ -18,6 +18,7 @@ from .audio import AudioRecorder
 from .config import Config
 from .audio import AudioSource
 from .device_audio import DeviceRegistry, ensure_device_psk
+from .web_auth import ensure_web_token
 from .device_recording_tick import RecordingTicker
 from .device_meeting_stats import CYCLE_ORDER, pick_next_view
 from .device_status import (
@@ -1594,6 +1595,9 @@ def run_web_runtime(
             on_device_query=_on_device_query,
             host="127.0.0.1",
             port=_configured_web_port_from_env(),
+            # HS-25-02: token exists/persists now so it is ready the moment a
+            # non-loopback bind is introduced (Phase 15); dormant on loopback.
+            auth_token=ensure_web_token(config),
         )
         runtime_url = server.start()
     except Exception as exc:

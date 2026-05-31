@@ -73,6 +73,10 @@ class MeetingConfig:
     # Web dashboard
     web_enabled: bool = True
     web_auto_open: bool = False  # Auto-open browser on meeting start
+    # Web-runtime auth token (HS-25-02). Empty = unset. Required only when the
+    # runtime binds a non-loopback host; generated lazily by
+    # holdspeak.web_auth.ensure_web_token. Loopback stays open regardless.
+    web_auth_token: str = ""
     mir_enabled: bool = True  # Enable multi-intent routing controls in web runtime
     mir_profile: str = "balanced"  # balanced, architect, delivery, product, incident
 

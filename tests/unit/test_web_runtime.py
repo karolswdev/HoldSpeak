@@ -37,6 +37,7 @@ def _config(
             diarize_mic=False,
             cross_meeting_recognition=True,
             web_auto_open=auto_open,
+            web_auth_token="test-web-token",
             mir_enabled=True,
             mir_profile="balanced",
         ),
