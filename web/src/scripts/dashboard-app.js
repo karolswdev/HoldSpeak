@@ -76,6 +76,8 @@
           segments: [],
           devices: [],
           intel: { topics: [], action_items: [], summary: "" },
+          // HS-25-08: meeting-intel egress posture from /api/runtime/status.
+          intelEgress: null,
           pluginJobs: [],
           pluginJobSummary: null,
           pluginJobStatusFilter: "all",
@@ -145,6 +147,15 @@
 
           connectionTone() {
             return `status-${this.connectionState}`;
+          },
+
+          // HS-25-08: glanceable egress posture for the runtime header.
+          egressLabel() {
+            const e = this.intelEgress;
+            if (!e) return "";
+            if (!e.enabled) return "🔒 Intel off";
+            if (!e.can_transmit_offmachine) return "🔒 Local only";
+            return e.provider === "auto" ? "☁︎ Auto → cloud" : "☁︎ Cloud";
           },
 
           activeActionItems() {
@@ -375,6 +386,9 @@
               }
               if (payload?.mir && typeof payload.mir === "object") {
                 this.applyIntentControls(payload.mir);
+              }
+              if (payload?.intel_egress && typeof payload.intel_egress === "object") {
+                this.intelEgress = payload.intel_egress;
               }
               if (payload?.state && typeof payload.state === "object") {
                 this.applyState(payload.state, { replaceTimeline: true });

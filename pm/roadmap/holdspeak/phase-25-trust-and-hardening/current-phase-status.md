@@ -1,6 +1,6 @@
 # Phase 25 — Trust & Hardening
 
-**Last updated:** 2026-05-31 (HS-25-01..06 done; HS-25-07 closeout + HS-25-08 web badge remain).
+**Last updated:** 2026-05-31 (HS-25-01..06 + HS-25-08 done; only HS-25-07 manual-dogfood closeout remains).
 
 ## Goal
 
@@ -76,7 +76,7 @@ hanging or racing.
 | HS-25-05 | Whisper transcription timeout | done | [story-05-transcription-timeout.md](./story-05-transcription-timeout.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-25-06 | Runtime-lifecycle knob audit (eviction, cloud_store) | done | [story-06-runtime-lifecycle-audit.md](./story-06-runtime-lifecycle-audit.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-25-07 | Trust hardening dogfood + closeout | backlog | [story-07-trust-dogfood-closeout.md](./story-07-trust-dogfood-closeout.md) | — |
-| HS-25-08 | Web egress-posture badge (split from HS-25-01) | backlog | [story-08-web-egress-badge.md](./story-08-web-egress-badge.md) | — |
+| HS-25-08 | Web egress-posture badge (split from HS-25-01) | done | [story-08-web-egress-badge.md](./story-08-web-egress-badge.md) | [evidence-story-08.md](./evidence-story-08.md) |
 
 ## Where we are
 
@@ -137,14 +137,24 @@ genuinely unloads the model (config→assembly→adapter→`_maybe_evict`);
 `intel_cloud_store` is forwarded as `store=True` and now documented as advisory
 (endpoint-dependent). Both pinned by `tests/unit/test_runtime_knob_audit.py`.
 
-**All six engineering/security stories (HS-25-01..06) are done.** Remaining:
-- **HS-25-07** — phase closeout + dogfood. The three dogfood scenarios
-  (misconfigured-local-model shows no egress; web token gate; transcription
-  timeout recovery) want a **live/manual** run — needs the user (or a hardware
-  session). Code-level proof already exists in each story's tests.
-- **HS-25-08** — web egress badge: needs an Astro `web/` edit + `_built` rebuild
-  (large bundle churn); also a chance to clear the stale-`_built` pre-existing
-  failures.
+**HS-25-01..06 and HS-25-08 are done** (7 of 8 stories). HS-25-08 shipped the web
+egress badge and rebuilt `_built`, which **cleared 6 of the 9 pre-existing
+failures** (all the stale-bundle page tests). Suite is now **3 failed / 1871
+passed**.
+
+**Correction on the remaining 3 failures:** they are *not* a "missing Safari
+fixture" (an earlier mischaracterization). `test_activity_history` self-creates
+its fixture with a **fixed** `visit_time` (~2026-04-29); the importer prunes
+records past the 30-day retention default at import, so now that today is past
+that date + 30d the record is pruned immediately (`imported_count==1`, 0
+retained). A **time-bomb in test data**, pre-existing on `main`, unrelated to
+Phase 25. Filed as a follow-up (trivial: use a recent/relative timestamp).
+
+Remaining: **HS-25-07** — closeout + the 3 live dogfood scenarios
+(misconfigured-local-model shows no egress; web token gate; transcription timeout
+recovery). These want a **manual/hardware** run by the user; code-level proof
+already exists in each story's tests. Once dogfooded, write `final-summary.md`
+and close the phase.
 
 ## Product problems to solve
 

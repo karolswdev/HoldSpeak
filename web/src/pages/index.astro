@@ -101,6 +101,12 @@ import HoldMark from "../components/HoldMark.astro";
             <span class="stat-label">Open actions</span>
             <span class="stat-value mono" x-text="activeActionItems().filter(i => i.status !== 'done').length"></span>
           </div>
+          {/* HS-25-08: meeting-intel egress posture — whether transcripts can
+              leave the machine. Full sentence in the title tooltip. */}
+          <div class="stat" x-show="intelEgress" x-cloak>
+            <span class="stat-label">Privacy</span>
+            <span class="stat-value" :title="intelEgress?.egress" x-text="egressLabel()"></span>
+          </div>
         </div>
       </div>
     </section>

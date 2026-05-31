@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 25
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-25-01
 - **Unblocks:** HS-25-07
 - **Owner:** unassigned
@@ -35,10 +35,14 @@ plus a `_built/` rebuild, a different blast radius from the backend trust work.
 
 ## Acceptance criteria
 
-- [ ] The dashboard shows the egress posture from `intel_egress` without logs.
-- [ ] The badge is visually distinct when transcripts can leave the machine.
-- [ ] `_built/` is rebuilt and committed; the page-content test for the badge
-      passes.
+- [x] The dashboard shows the egress posture from `intel_egress` without logs —
+      a "Privacy" stat bound to `egressLabel()` (`web/src/pages/index.astro` +
+      `web/src/scripts/dashboard-app.js`).
+- [x] The badge is visually distinct when transcripts can leave: `🔒 Local only`
+      / `🔒 Intel off` vs `☁︎ Cloud` / `☁︎ Auto → cloud`, full sentence in the
+      `title` tooltip.
+- [x] `_built/` rebuilt (`npm run build`) and committed; page-content test
+      `test_dashboard_includes_egress_posture_badge` passes.
 
 ## Test plan
 
@@ -51,3 +55,17 @@ plus a `_built/` rebuild, a different blast radius from the backend trust work.
 - Coordinate the `_built/` rebuild with the pre-existing stale-`_built` page
   tests (see HS-25-01 evidence "pre-existing failures"); this story may
   incidentally refresh built assets — keep that intentional and noted.
+
+## Closeout
+
+Shipped 2026-05-31. See [evidence-story-08.md](./evidence-story-08.md).
+
+The rebuild cleared **6 of the 9** pre-existing failures (all the stale-`_built`
+page-content tests). Correction to the earlier characterization: the remaining
+**3** `test_activity_history` failures are **not** a "missing Safari fixture" —
+the test self-creates its fixture, but with a **fixed** `visit_time` (~2026-04-29
+macOS epoch). The importer prunes records older than the 30-day retention default
+at import; now that real time is past that date + 30d (today 2026-05-31), the
+record is pruned immediately (`imported_count==1` but 0 retained). A time-bomb in
+test data, pre-existing on `main`, unrelated to Phase 25. Filed as a follow-up
+(see evidence); trivial fix = use a recent/relative timestamp or freeze time.

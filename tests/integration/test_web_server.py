@@ -338,6 +338,24 @@ class TestDashboardEndpoint:
         assert "devices: []" in js
         assert "upsertDevice" in js
         assert "hasDeviceHealth" in js
+
+    def test_dashboard_includes_egress_posture_badge(self, test_client):
+        """HS-25-08: dashboard shows the meeting-intel egress posture badge.
+
+        The badge is driven by `intel_egress` from /api/runtime/status; Alpine
+        fills it in the browser, so we check the server-rendered shell + the
+        bundled helper that produces the glanceable label.
+        """
+        response = test_client.get("/")
+        assert response.status_code == 200
+        html = response.text
+        assert "Privacy" in html
+        assert "egressLabel()" in html
+
+        js = self._bundled_runtime_js(test_client)
+        assert js, "expected bundled /_built/_astro/*.js to be referenced from /"
+        assert "intelEgress" in js
+        assert "egressLabel" in js
         assert "deviceBatteryLabel" in js
         assert "deviceRssiLabel" in js
         assert "deviceHealthStale" in js
