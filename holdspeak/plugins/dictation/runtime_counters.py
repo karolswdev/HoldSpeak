@@ -34,6 +34,7 @@ needs to know about counters or the cold-start cap.
 
 from __future__ import annotations
 
+import functools
 import logging
 import threading
 import time
@@ -119,6 +120,24 @@ def _set_session_disabled(reason: str) -> None:
         _SESSION_DISABLED_REASON = reason
 
 
+def _serialized(method):
+    """Serialize a runtime method on the instance's call lock (HS-25-04).
+
+    The concrete adapters (MLX, llama.cpp) are NOT thread-safe — MLX holds
+    global device state and a llama.cpp context can be corrupted by concurrent
+    decoding. `build_runtime` always wraps adapters in `CountingRuntime`, so
+    guarding here makes single-flight inference a property of the runtime itself
+    rather than an implicit guarantee of whatever thread happens to call it.
+    """
+
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        with self._call_lock:
+            return method(self, *args, **kwargs)
+
+    return wrapper
+
+
 class CountingRuntime:
     """Counter-instrumenting wrapper around any `LLMRuntime`.
 
@@ -126,6 +145,12 @@ class CountingRuntime:
     successful `load()` advances `model_loads`; every `classify()`
     call advances `classify_calls`; an exception out of `classify()`
     (re-raised) advances `classify_failures`.
+
+    Thread-safety (HS-25-04): `load`, `classify`, and `rewrite` are serialized
+    on a per-instance lock so the non-thread-safe inner adapter is only ever
+    driven by one thread at a time. Callers no longer have to rely on an
+    external lock (the controller's transcription lock) for correctness;
+    concurrent calls block rather than corrupt backend state.
     """
 
     def __init__(
@@ -137,6 +162,9 @@ class CountingRuntime:
     ) -> None:
         self._inner = inner
         self._loaded = False
+        # HS-25-04: serialize inference across threads (RLock so a future
+        # nested call on the same thread can't self-deadlock).
+        self._call_lock = threading.RLock()
         # DIR-R-003: cold-start hard-cap state.
         self._warm_on_start = warm_on_start
         self._cold_start_cap_ms = cold_start_cap_ms
@@ -156,6 +184,7 @@ class CountingRuntime:
     def disabled_reason(self) -> str | None:
         return self._disabled_reason
 
+    @_serialized
     def load(self) -> None:
         was_loaded = self._loaded
         self._inner.load()
@@ -173,6 +202,7 @@ class CountingRuntime:
         # attribute is *not* on `CountingRuntime` itself.
         return getattr(self._inner, name)
 
+    @_serialized
     def classify(
         self,
         prompt: str,
@@ -223,6 +253,7 @@ class CountingRuntime:
                 raise LLMRuntimeDisabledError(reason)
         return result
 
+    @_serialized
     def rewrite(
         self,
         prompt: str,

@@ -26,7 +26,12 @@ log = get_logger("dictation.runtime.mlx")
 
 
 class MlxRuntime:
-    """`LLMRuntime` over `mlx-lm` with `outlines`-driven JSON-schema decoding."""
+    """`LLMRuntime` over `mlx-lm` with `outlines`-driven JSON-schema decoding.
+
+    NOT thread-safe (MLX holds global device state). Production code reaches this
+    only through `CountingRuntime`, which serializes `load`/`classify`/`rewrite`
+    on a per-instance lock (HS-25-04). Drive it from a single thread otherwise.
+    """
 
     backend = "mlx"
 

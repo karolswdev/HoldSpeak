@@ -157,6 +157,11 @@ class HoldSpeakController:
         self.app.set_audio_level(0.0)
 
         def transcribe_and_type():
+            # Serializes transcription + the dictation pipeline per utterance.
+            # The LLM runtime is ALSO self-serializing as of HS-25-04
+            # (CountingRuntime holds its own call lock), so runtime correctness
+            # no longer depends on this lock — it's defense in depth, not the
+            # sole guarantee.
             with self._transcription_lock:
                 try:
                     transcriber = self._ensure_transcriber()

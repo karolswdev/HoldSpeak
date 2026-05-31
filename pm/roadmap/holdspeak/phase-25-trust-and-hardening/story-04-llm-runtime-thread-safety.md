@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 25
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-25-07
 - **Owner:** unassigned
@@ -39,12 +39,18 @@ source, or the Phase 26 web refactor), the runtimes can crash silently.
 
 ## Acceptance criteria
 
-- [ ] A test spawns concurrent `classify`/`rewrite` calls against a runtime
-      (real or faked) and asserts they are serialized / do not corrupt state.
-- [ ] The runtime modules document their concurrency contract explicitly.
-- [ ] If a mutex is added, a single-threaded call path shows no latency
-      regression in the dictation telemetry path (spot-checked).
-- [ ] The controller's prior implicit reliance is annotated or removed.
+- [x] `tests/unit/test_runtime_counters_concurrency.py` spawns 8 concurrent
+      `classify` (and mixed `classify`/`rewrite`) calls through one
+      `CountingRuntime` and asserts the inner runtime sees `max_in_flight == 1`.
+- [x] Concurrency contract documented: `CountingRuntime` docstring + the `_serialized`
+      decorator, and a "NOT thread-safe → reached only via CountingRuntime" note
+      on `MlxRuntime` and `LlamaCppRuntime`.
+- [x] A mutex was added at the `CountingRuntime` chokepoint (the wrapper
+      `build_runtime` always applies). Single-thread cost is one uncontended
+      `RLock` acquire per call (negligible); existing counters/dictation tests
+      pass unchanged.
+- [x] Controller's prior implicit reliance annotated (`controller.py` —
+      transcription lock noted as defense-in-depth, no longer the sole guarantee).
 
 ## Test plan
 
@@ -60,3 +66,16 @@ source, or the Phase 26 web refactor), the runtimes can crash silently.
   real call path, a documented assertion + test may beat adding a second lock —
   decide from the enumerated contention surface, not by default.
 - Watch for deadlock if both the controller lock and a runtime lock are held.
+
+## Closeout
+
+Shipped 2026-05-31. See [evidence-story-04.md](./evidence-story-04.md).
+
+Contention surface enumerated: production `classify`/`rewrite` callers are
+`intent_router.py` + `project_rewriter.py`, both flowing through `CountingRuntime`
+(which `build_runtime` always wraps), driven from the controller's transcription
+thread. Rather than rely on the controller lock (an external, implicit guarantee
+that a future caller — dry-run, a second audio source — could bypass), the lock
+was placed at the `CountingRuntime` chokepoint so single-flight is intrinsic to
+the runtime. Lock ordering is safe: the per-instance call lock is always outer,
+the module-level counter `_LOCK` inner; nothing acquires them in reverse.

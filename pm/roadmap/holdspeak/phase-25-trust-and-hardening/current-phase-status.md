@@ -1,6 +1,6 @@
 # Phase 25 — Trust & Hardening
 
-**Last updated:** 2026-05-31 (HS-25-01/02/03 done: egress invariant + posture, web auth + bind guard, threat-model doc; HS-25-04/05/06 remain).
+**Last updated:** 2026-05-31 (HS-25-01/02/03/04 done; HS-25-05/06 remain).
 
 ## Goal
 
@@ -72,7 +72,7 @@ hanging or racing.
 | HS-25-01 | Loud cloud-path consent — no silent transcript egress | done | [story-01-loud-cloud-consent.md](./story-01-loud-cloud-consent.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-25-02 | Web-runtime auth token + non-loopback bind guard | done | [story-02-web-runtime-auth.md](./story-02-web-runtime-auth.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-25-03 | Threat model + encryption-at-rest stance doc | done | [story-03-threat-model-doc.md](./story-03-threat-model-doc.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-25-04 | LLM runtime thread-safety made explicit | backlog | [story-04-llm-runtime-thread-safety.md](./story-04-llm-runtime-thread-safety.md) | — |
+| HS-25-04 | LLM runtime thread-safety made explicit | done | [story-04-llm-runtime-thread-safety.md](./story-04-llm-runtime-thread-safety.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-25-05 | Whisper transcription timeout | backlog | [story-05-transcription-timeout.md](./story-05-transcription-timeout.md) | — |
 | HS-25-06 | Runtime-lifecycle knob audit (eviction, cloud_store) | backlog | [story-06-runtime-lifecycle-audit.md](./story-06-runtime-lifecycle-audit.md) | — |
 | HS-25-07 | Trust hardening dogfood + closeout | backlog | [story-07-trust-dogfood-closeout.md](./story-07-trust-dogfood-closeout.md) | — |
@@ -126,9 +126,15 @@ egress points, and the encryption-at-rest decision (document the stance, defer
 implementation, recommend full-disk encryption; revisit if multi-user/server).
 Linked from README + roadmap canon.
 
-Next: HS-25-04 (LLM runtime thread-safety — make the implicit `_transcription_lock`
-serialization explicit at the runtime layer), then HS-25-05 (transcription
-timeout) and HS-25-06 (runtime-knob audit).
+HS-25-04 is **done**: `CountingRuntime` (the wrapper `build_runtime` always
+applies) now serializes `load`/`classify`/`rewrite` on a per-instance `RLock`, so
+the non-thread-safe MLX/llama.cpp adapters are single-flight intrinsically rather
+than by the controller's external lock. Concurrency test proves
+`max_in_flight == 1`.
+
+Next: HS-25-05 (transcription timeout — bound `Transcriber.transcribe` so a hung
+model can't freeze the pipeline), then HS-25-06 (runtime-knob audit: eviction +
+`intel_cloud_store`).
 
 ## Product problems to solve
 

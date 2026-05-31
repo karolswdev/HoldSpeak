@@ -23,7 +23,13 @@ log = get_logger("dictation.runtime.llama_cpp")
 
 
 class LlamaCppRuntime:
-    """`LLMRuntime` over `llama-cpp-python`."""
+    """`LLMRuntime` over `llama-cpp-python`.
+
+    NOT thread-safe (a llama.cpp context can be corrupted by concurrent
+    decoding). Production code reaches this only through `CountingRuntime`,
+    which serializes `load`/`classify`/`rewrite` on a per-instance lock
+    (HS-25-04). Drive it from a single thread otherwise.
+    """
 
     backend = "llama_cpp"
 
