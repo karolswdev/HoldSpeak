@@ -1,6 +1,6 @@
 # Phase 16 — First real synthesizer: `mermaid_architecture`
 
-**Status:** in-progress (HS-16-01 shipped 2026-05-10; HS-16-02..05 remain backlog).
+**Status:** paused 2026-05-31 (HS-16-01 shipped 2026-05-10; HS-16-02..05 remain backlog). Paused to reflect reality — work moved on to phases 17–24 with only 1/5 stories shipped, so the headline feature (diagrams visible end-to-end) is not yet wired. Resume to land HS-16-02 (LLM capability gate) onward; sequence to be decided relative to phases 25/26.
 
 This phase is the first time HoldSpeak's plugin substrate produces a
 real, LLM-backed analysis artifact. The host, router, deferred queue,

@@ -114,6 +114,12 @@ def test_run_web_runtime_starts_and_stops_services(monkeypatch: pytest.MonkeyPat
     status = server_instances[0].on_get_status()
     assert status["text_injection_enabled"] is True
     assert status["text_injection_error"] == ""
+    # HS-25-01: the runtime status payload surfaces the egress posture so the
+    # web client can show whether transcripts can leave the machine.
+    egress = status["intel_egress"]
+    assert egress["provider"] == "local"
+    assert egress["can_transmit_offmachine"] is False
+    assert isinstance(egress["egress"], str) and egress["egress"]
 
 
 def test_run_web_runtime_no_open_skips_browser(monkeypatch: pytest.MonkeyPatch) -> None:

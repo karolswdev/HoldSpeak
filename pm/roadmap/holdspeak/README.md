@@ -1,7 +1,7 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-26 (Phase 24 active: HS-24-01 closed, HS-24-02 next).
-**Current phase:** [phase-24-ai-pi-companion-productization](./phase-24-ai-pi-companion-productization/) — make AI PI easier to supervise, recover, and operate during real agent work.
+**Last updated:** 2026-05-31 (Phase 25 HS-25-01 shipped — intel egress invariant + posture surfacing; Phase 16 also reconciled to paused).
+**Current phase:** [phase-25-trust-and-hardening](./phase-25-trust-and-hardening/) — close the trust/correctness/security gaps that block external use and gate Phase 15.
 **Status:** in-progress.
 
 ## Vision
@@ -54,7 +54,7 @@ canon, canon wins.
 | 13 | Connector runtime + pipelines + meeting context: turn the framework on, chain packs, surface pre-meeting briefings + cross-meeting summaries | done | [phase-13-connector-runtime-and-context](./phase-13-connector-runtime-and-context/) |
 | 14 | AIPI-Lite devices: remote audio ingest substrate — `AudioSource` Protocol, `RemoteAudioRecorder`, `/api/devices/audio` WebSocket, per-device speaker labels in transcripts; same-LAN scope (cross-network is phase 15) | done | [phase-14-aipi-lite-devices](./phase-14-aipi-lite-devices/) |
 | 15 | Out-and-about: cross-network reach for AIPI-Lite — tunneling (Tailscale / Cloudflare Tunnel / WireGuard candidate evaluation), TLS, per-device PSKs, paired with the AIPI-Lite firmware's portable WiFi (multi-SSID + captive portal + Improv-WiFi) on the device-side roadmap | not-started | [phase-15-out-and-about](./phase-15-out-and-about/) |
-| 16 | First real synthesizer: replace `mermaid_architecture`'s `DeterministicPlugin` stub with a real LLM-backed plugin, wire the LLM capability gate, render `mermaid` artifacts as inline SVG in the web view, reality-check the plugin RFC | in-progress | [phase-16-first-real-plugin](./phase-16-first-real-plugin/) |
+| 16 | First real synthesizer: replace `mermaid_architecture`'s `DeterministicPlugin` stub with a real LLM-backed plugin, wire the LLM capability gate, render `mermaid` artifacts as inline SVG in the web view, reality-check the plugin RFC | paused | [phase-16-first-real-plugin](./phase-16-first-real-plugin/) |
 | 17 | Device Initiative: device → server upstream frames (`device_health` + `query` w/ `last_segment` case) lighting up AIPI-Lite phase 4's `blocked` bridge stories; minimal web UI rendering for device health. Sibling to HS-14, paired with AIPI-4 in the AIPI-Lite roadmap. | done | [phase-17-device-initiative](./phase-17-device-initiative/) |
 | 18 | Intelligent Typing Copilot: project-aware local intelligent typing with target profiles, Claude/Codex hooks, optional external-agent summarization, `.hs` context conventions, OpenAI-compatible runtimes, and web cockpit support | done | [phase-18-intelligent-typing-copilot](./phase-18-intelligent-typing-copilot/) |
 | 19 | Intelligent Typing Daily-Use Hardening: safe `.hs/.../*.md` project-doc suggestions, telemetry, target-profile overrides, and real endpoint dogfooding | done | [phase-19-intelligent-typing-hardening](./phase-19-intelligent-typing-hardening/) |
@@ -62,9 +62,14 @@ canon, canon wins.
 | 21 | AIPI-Lite First-Class Integration: import firmware and bridge source into HoldSpeak and define the unified developer workflow | done | [phase-21-aipi-lite-first-class](./phase-21-aipi-lite-first-class/) |
 | 22 | AI PI Companion UX: state model, gestures, LCD cadence, bridge display wiring, and live hardware dogfood | done | [phase-22-ai-pi-companion-ux](./phase-22-ai-pi-companion-ux/) |
 | 23 | AI PI Companion UX Polish: long-prompt display, multi-session identity, preview/browse, and target confidence | done | [phase-23-ai-pi-companion-ux-polish](./phase-23-ai-pi-companion-ux-polish/) |
-| 24 | AI PI Companion Productization: web companion overview, stale-session controls, confidence affordances, and display update cadence | in-progress | [phase-24-ai-pi-companion-productization](./phase-24-ai-pi-companion-productization/) |
+| 24 | AI PI Companion Productization: web companion overview, stale-session controls, confidence affordances, and display update cadence | paused | [phase-24-ai-pi-companion-productization](./phase-24-ai-pi-companion-productization/) |
+| 25 | Trust & Hardening: no silent cloud egress, web-runtime auth + bind guard, threat-model/encryption-at-rest doc, LLM-runtime thread-safety, transcription timeout, config-knob audit. Prerequisite to Phase 15. | in-progress | [phase-25-trust-and-hardening](./phase-25-trust-and-hardening/) |
+| 26 | Web Runtime Decomposition: break the `web_server.py` monolith into route modules + a shared context, behavior-preserving. Fast-follow to Phase 25. | planning | [phase-26-web-runtime-decomposition](./phase-26-web-runtime-decomposition/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
+
+Phase 15 (cross-network reach) is gated on Phase 25 landing the web-runtime
+auth + bind guard.
 
 ## Operating cadence
 

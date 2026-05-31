@@ -193,6 +193,24 @@ HoldSpeak supports three intelligence modes:
 - `cloud`: uses your configured OpenAI-compatible endpoint + API key env var
 - `auto`: local-first, then cloud fallback
 
+### Where your transcripts go (egress posture)
+
+Transcripts leave your machine **only** when you choose a mode that uses the
+cloud. The boundary is explicit, not accidental:
+
+- `local` (the default): transcripts **never** leave the machine. If no local
+  model is available, intelligence fails closed or queues locally — it does
+  **not** silently fall back to the cloud.
+- `cloud`: transcripts are sent to your configured cloud endpoint. This is your
+  choice and fully supported.
+- `auto`: local-first, but **will send transcripts to the cloud** when no local
+  model is available. Choosing `auto` is opting into that fallback.
+
+`holdspeak doctor` prints a "Meeting intelligence egress" line stating the active
+posture, and the web runtime status exposes it (`intel_egress`) so the dashboard
+can show it without reading logs. If you ever want to be certain nothing leaves
+the machine, set `meeting.intel_provider` to `local`.
+
 If no compatible runtime is currently available and deferred mode is enabled, HoldSpeak queues intelligence and fills in topics/actions/summaries later.
 Deferred queue retries use exponential backoff automatically (up to a capped delay and max attempts) so short homelab outages recover without tight retry loops.
 

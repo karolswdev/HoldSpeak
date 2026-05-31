@@ -228,6 +228,30 @@ def resolve_intel_provider(
     )
 
 
+def intel_egress_posture(provider: str = DEFAULT_INTEL_PROVIDER) -> tuple[bool, str]:
+    """Describe whether the configured provider can send transcripts off-machine.
+
+    This is a *static* description of intent from config — it answers "can this
+    setting transmit a transcript to the cloud?", not "is a model loaded right
+    now?". It is the single source of truth for the egress posture surfaced in
+    ``holdspeak doctor`` and the web runtime status (HS-25-01).
+
+    Returns ``(can_transmit_offmachine, human_description)``.
+    """
+    normalized = _normalize_provider(provider)
+    if normalized == "local":
+        return False, "Local only — transcripts never leave this machine."
+    if normalized == "cloud":
+        return True, "Cloud — transcripts are sent to the configured cloud endpoint."
+    # auto = local-first, but will fall back to the cloud when no local model is
+    # available, so the configuration *can* transmit off-machine.
+    return (
+        True,
+        "Auto — local first, but falls back to sending transcripts to the cloud "
+        "when no local model is available.",
+    )
+
+
 def get_intel_runtime_status(
     model_path: str = DEFAULT_INTEL_MODEL_PATH,
     *,

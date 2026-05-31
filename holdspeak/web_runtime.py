@@ -662,8 +662,33 @@ def run_web_runtime(
                 "status": runtime_snapshot.get("transcription_status", "not_loaded"),
                 "error": runtime_snapshot.get("transcription_error", ""),
             },
+            "intel_egress": _intel_egress_payload(),
             "mir": _mir_controls_payload(),
             "state": state,
+        }
+
+    def _intel_egress_payload() -> dict[str, object]:
+        """Egress posture for the web intel-status surface (HS-25-01).
+
+        Lets the UI state plainly whether transcripts can leave the machine
+        without anyone reading logs.
+        """
+        from .intel import intel_egress_posture
+
+        meeting = config.meeting
+        if not meeting.intel_enabled:
+            return {
+                "enabled": False,
+                "provider": meeting.intel_provider,
+                "can_transmit_offmachine": False,
+                "egress": "Disabled — no transcript leaves this machine.",
+            }
+        can_transmit, description = intel_egress_posture(meeting.intel_provider)
+        return {
+            "enabled": True,
+            "provider": meeting.intel_provider,
+            "can_transmit_offmachine": can_transmit,
+            "egress": description,
         }
 
     def _on_bookmark(label: str) -> dict[str, object]:

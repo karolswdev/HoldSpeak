@@ -52,7 +52,12 @@ logs.
 
 ## Where we are
 
-Phase 24 is active. Phase 23 closed with a working physical companion
+**Paused 2026-05-31** to prioritize Phase 25 (Trust & Hardening), which closes
+the trust/security gaps that gate external use and Phase 15. HS-24-01 is the
+last shipped work; HS-24-02 remains the next story when this phase resumes after
+Phase 25 closes.
+
+Phase 23 closed with a working physical companion
 loop: AI PI can show long questions, distinguish waiting sessions, cycle the
 selected target, reject unavailable reply paths, deliver tmux replies, and hold
 status flashes long enough to be readable.

@@ -22,7 +22,7 @@ from pathlib import Path
 from ..audio_devices import check_blackhole_setup, get_default_input_device
 from ..config import CONFIG_FILE, Config
 from ..hotkey import HotkeyListener
-from ..intel import get_intel_runtime_status
+from ..intel import get_intel_runtime_status, intel_egress_posture
 from ..transcribe import TranscriberError, _resolve_backend
 from ..typer import TextTyper
 
@@ -365,6 +365,37 @@ def _describe_preflight_network_error(host: str, reason: object) -> tuple[str, s
     return (
         f"Unable to reach `{host}`: {reason}",
         "Verify endpoint address, network routing, and service availability.",
+    )
+
+
+def _check_meeting_intel_egress(config: Config) -> DoctorCheck:
+    """Surface, plainly, whether the active config can send transcripts off-machine."""
+    meeting = config.meeting
+    if not meeting.intel_enabled:
+        return DoctorCheck(
+            name="Meeting intelligence egress",
+            status="PASS",
+            detail="Disabled — no transcript leaves this machine.",
+        )
+
+    can_transmit, description = intel_egress_posture(meeting.intel_provider)
+    if not can_transmit:
+        return DoctorCheck(
+            name="Meeting intelligence egress",
+            status="PASS",
+            detail=description,
+        )
+
+    # Cloud is a legitimate, user-chosen option; we surface it loudly so it is
+    # never a surprise, but it is not a failure.
+    return DoctorCheck(
+        name="Meeting intelligence egress",
+        status="WARN",
+        detail=f"provider=`{meeting.intel_provider}`: {description}",
+        fix=(
+            "This is expected if you chose cloud intentionally. To keep all "
+            "transcripts local, set meeting.intel_provider to 'local'."
+        ),
     )
 
 
@@ -861,6 +892,7 @@ def collect_doctor_checks() -> list[DoctorCheck]:
         _check_transcription_backend(),
         _check_web_runtime(),
         _check_meeting_intel_runtime(config),
+        _check_meeting_intel_egress(config),
         _check_meeting_intel_cloud_preflight(config),
         _check_dictation_project_context(config),
         _check_dictation_runtime(config),

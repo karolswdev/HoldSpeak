@@ -114,6 +114,14 @@ pattern with no new substrate work.
 
 ## Where we are
 
+**Paused 2026-05-31.** Only HS-16-01 of 5 stories shipped; work then moved on to
+phases 17–24, leaving this phase open in name only. Critically, without HS-16-02
+the `mermaid_architecture` plugin is `blocked` even where an LLM is available, so
+the user-visible feature (a rendered diagram) does not yet work end-to-end. The
+index was corrected from `in-progress` to `paused` to stop implying two phases
+were active at once. Resume after Phase 25/26 or interleave by explicit decision;
+the pickup below is unchanged.
+
 HS-16-01 shipped 2026-05-10. `holdspeak/plugins/builtin.py` is now a
 package; `holdspeak/plugins/builtin/mermaid_architecture.py` defines
 the real `MermaidArchitecturePlugin` (LLM-backed, deferred,

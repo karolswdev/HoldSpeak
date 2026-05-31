@@ -1,6 +1,6 @@
 # Phase 24 — AI PI Companion Productization
 
-**Status:** in-progress (opened 2026-05-26; HS-24-01 closed, HS-24-02 next).
+**Status:** paused 2026-05-31 (opened 2026-05-26; HS-24-01 closed, HS-24-02 next). Paused to prioritize Phase 25 (Trust & Hardening); resume after Phase 25 closes.
 
 Phase 24 turns the working AI PI companion loop into a more operable product
 surface. Phase 22 proved the physical reply loop, and Phase 23 made that loop
