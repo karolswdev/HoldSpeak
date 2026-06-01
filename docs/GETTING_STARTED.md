@@ -1,5 +1,9 @@
 # HoldSpeak Getting Started
 
+<p align="center">
+  <img src="assets/pixellab/hold-to-talk-microphone.png" alt="Pixel art microphone with hold-to-talk waves" width="128">
+</p>
+
 This guide gets HoldSpeak installed, running, and typing into another app.
 Use it first; then move to the intelligent-typing guide when basic voice
 typing works.

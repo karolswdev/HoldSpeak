@@ -30,6 +30,13 @@ Use these guides depending on what you are setting up:
 | Meeting intelligence | Produces transcript, topics, summaries, actions, artifacts | Dashboard and `/history` |
 | Runtime setup | Configures local MLX, llama.cpp, or OpenAI-compatible endpoints | `/dictation` -> Runtime, `/docs/dictation-runtime` |
 
+## Workflow At A Glance
+
+| Speak | Review | Refine |
+| --- | --- | --- |
+| ![Pixel art microphone with hold-to-talk waves](assets/pixellab/hold-to-talk-microphone.png) | ![Pixel art meeting notebook with action items](assets/pixellab/meeting-intelligence-notebook.png) | ![Pixel art code editor connected to local context](assets/pixellab/project-aware-typing.png) |
+| Hold the configured hotkey and dictate into the focused app. | Capture meetings, search transcripts, and curate action items. | Let project context and agent state improve dictated prompts. |
+
 ## Install And Start
 
 Install from this checkout:

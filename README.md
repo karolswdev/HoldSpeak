@@ -10,6 +10,19 @@ Voice input for macOS and Linux — hold a key, speak, release. Local-first and 
 
 **Intelligent dictation** — project-aware pipeline that routes utterances through intent classification, project KB enrichment, and LLM rewriting before text lands in the destination app. Adapts output for Codex, Claude, terminal, browser, or editor.
 
+## Workflow Map
+
+<p align="center">
+  <img src="docs/assets/pixellab/hold-to-talk-microphone.png" alt="Pixel art microphone with hold-to-talk waves" width="120">
+  <img src="docs/assets/pixellab/meeting-intelligence-notebook.png" alt="Pixel art meeting notebook with action items" width="120">
+  <img src="docs/assets/pixellab/project-aware-typing.png" alt="Pixel art code editor connected to local context" width="120">
+</p>
+
+| Voice typing | Meeting intelligence | Project-aware typing |
+| --- | --- | --- |
+| ![Pixel art microphone with hold-to-talk waves](docs/assets/pixellab/hold-to-talk-microphone.png) | ![Pixel art meeting notebook with action items](docs/assets/pixellab/meeting-intelligence-notebook.png) | ![Pixel art code editor connected to local context](docs/assets/pixellab/project-aware-typing.png) |
+| Hold the hotkey, speak, release, and insert text into the active app. | Capture meetings, review transcripts, accept actions, and export local handoffs. | Use `.hs/` project context and agent hooks to shape rough speech into useful prompts. |
+
 ## Platform support
 
 | Capability | macOS 14+ (Apple Silicon) | Linux X11 | Linux Wayland |
