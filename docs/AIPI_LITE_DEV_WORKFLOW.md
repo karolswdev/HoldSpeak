@@ -1,5 +1,9 @@
 # AIPI-Lite Developer Workflow
 
+<p align="center">
+  <img src="../aipi-lite/AIPI-LIte.jpg" alt="AIPI-Lite companion device" width="560">
+</p>
+
 This is the unified-checkout workflow for the AIPI-Lite firmware and bridge.
 The source lives in `aipi-lite/`; helper scripts live at repo root in
 `scripts/`.

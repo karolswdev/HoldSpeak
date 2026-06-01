@@ -4,7 +4,7 @@ Voice input for macOS and Linux — hold a key, speak, release. Local-first and 
 
 ## What it does
 
-**Voice typing** — hold your configured hotkey, speak, release. Text appears in any app. Punctuation commands (`"period"`, `"comma"`, etc.) and clipboard insertion (`"clipboard"`) work out of the box.
+**Voice typing** — hold your configured hotkey, speak, release. Text appears in any app. Punctuation commands (`"period"`, `"comma"`, etc.) work out of the box. When you say `"clipboard"` inside a dictated phrase, HoldSpeak replaces that word with the current clipboard text.
 
 **Meeting mode** — dual-stream capture (mic + system audio), live transcript with speaker labels, AI-extracted topics and action items, web dashboard, deferred intel queue for homelab/cloud models.
 
@@ -12,16 +12,20 @@ Voice input for macOS and Linux — hold a key, speak, release. Local-first and 
 
 ## Workflow Map
 
-<p align="center">
-  <img src="docs/assets/pixellab/hold-to-talk-microphone.png" alt="Pixel art microphone with hold-to-talk waves" width="120">
-  <img src="docs/assets/pixellab/meeting-intelligence-notebook.png" alt="Pixel art meeting notebook with action items" width="120">
-  <img src="docs/assets/pixellab/project-aware-typing.png" alt="Pixel art code editor connected to local context" width="120">
-</p>
-
 | Voice typing | Meeting intelligence | Project-aware typing |
 | --- | --- | --- |
 | ![Pixel art microphone with hold-to-talk waves](docs/assets/pixellab/hold-to-talk-microphone.png) | ![Pixel art meeting notebook with action items](docs/assets/pixellab/meeting-intelligence-notebook.png) | ![Pixel art code editor connected to local context](docs/assets/pixellab/project-aware-typing.png) |
 | Hold the hotkey, speak, release, and insert text into the active app. | Capture meetings, review transcripts, accept actions, and export local handoffs. | Use `.hs/` project context and agent hooks to shape rough speech into useful prompts. |
+
+## AIPI-Lite Companion
+
+<p align="center">
+  <img src="aipi-lite/AIPI-LIte.jpg" alt="AIPI-Lite companion device" width="520">
+</p>
+
+The optional AIPI-Lite companion is the dedicated hardware path for capture
+controls and status feedback. Firmware, bridge setup, and verification live in
+[AIPI-Lite Developer Workflow](docs/AIPI_LITE_DEV_WORKFLOW.md).
 
 ## Platform support
 

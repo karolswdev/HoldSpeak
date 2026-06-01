@@ -104,7 +104,22 @@ becomes:
 Hello, can you review this?
 ```
 
-## 6. Set Up A Project Root
+## 6. Use Clipboard Insertion
+
+Say `clipboard` inside a dictated phrase when you want HoldSpeak to splice in
+the current clipboard text. The word `clipboard` is removed from the output and
+replaced with the clipboard contents.
+
+Example:
+
+```text
+Taking a look at this clipboard could you refactor it?
+```
+
+If the clipboard contains a code block, that code is inserted into the same
+dictated request before HoldSpeak types or pastes it.
+
+## 7. Set Up A Project Root
 
 Open:
 
@@ -124,7 +139,7 @@ Good project markers include:
 - `.holdspeak/`
 - `.hs/`
 
-## 7. Enable Intelligent Typing Later
+## 8. Enable Intelligent Typing Later
 
 Do not enable the dictation LLM pipeline until basic typing is working.
 When ready, continue with:

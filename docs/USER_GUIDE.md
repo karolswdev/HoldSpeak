@@ -105,18 +105,31 @@ Hello, can you review this?
 
 ### Clipboard Token
 
-Say `clipboard` to insert the current clipboard text into the dictated output.
+Say `clipboard` anywhere in a dictated phrase to insert the current clipboard
+text at that position. HoldSpeak treats `clipboard` as a replacement token, so
+the word itself is removed and the actual clipboard contents are inserted into
+the output that gets typed or pasted.
 
 Example:
 
 ```text
-open clipboard and summarize it
+Taking a look at this clipboard could you refactor it?
 ```
 
-If the clipboard contains `README.md`, HoldSpeak inserts:
+If the clipboard contains:
+
+```python
+def total(items):
+    return sum(items)
+```
+
+HoldSpeak inserts:
 
 ```text
-open README.md and summarize it
+Taking a look at this
+def total(items):
+    return sum(items)
+could you refactor it?
 ```
 
 ## Intelligent Typing For Coding Assistants
