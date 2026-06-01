@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 26
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-26-01
 - **Unblocks:** HS-26-07
-- **Owner:** unassigned
+- **Owner:** Claude (agent)
 
 ## Problem
 
@@ -32,10 +32,10 @@ assembler.
 
 ## Acceptance criteria
 
-- [ ] All remaining domain routes are served from modules; `_create_app()` no
+- [x] All remaining domain routes are served from modules; `_create_app()` no
       longer contains inline route handler bodies.
-- [ ] Existing device/companion/project/settings/WS tests pass unchanged.
-- [ ] Route-inventory diff shows identical paths/methods for the moved set.
+- [x] Existing device/companion/project/settings/WS tests pass unchanged.
+- [x] Route-inventory diff shows identical paths/methods for the moved set.
 
 ## Test plan
 
@@ -47,3 +47,10 @@ assembler.
 
 - The device-audio WebSocket (`device_audio_ws.py`) already lives outside the
   monolith; confirm it stays wired and unchanged.
+- **Resolved:** device-audio WS stays registered in `_create_app`, unchanged.
+- **Shipped as 3 modules**: `pages.py` (7 HTML routes), `system.py` (6: device-
+  health, runtime/companion status, settings, `/ws`), `projects.py` (13). 6
+  module-level helpers relocated. `web_server.py` **1817 → 532** (original 5658,
+  −91%); `_create_app` is now a thin assembler (middleware + lifespan + mounts +
+  `include_router` only). Relocation bug (page `__file__` path) caught by the full
+  suite and fixed via `_HOLDSPEAK_DIR`. See `evidence-story-05.md`.

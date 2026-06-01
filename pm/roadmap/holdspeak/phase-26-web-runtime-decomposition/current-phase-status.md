@@ -1,6 +1,6 @@
 # Phase 26 — Web Runtime Decomposition
 
-**Last updated:** 2026-05-31 (HS-26-04 done — 38 activity/connector/plugin-job routes moved to `routes/activity.py`; web_server.py 3133→1817; HS-26-05 next).
+**Last updated:** 2026-05-31 (HS-26-05 done — last 26 routes moved to `routes/{pages,system,projects}.py`; web_server.py 1817→532, now a thin assembler (5658→532, −91%); HS-26-06 next).
 
 ## Goal
 
@@ -50,7 +50,7 @@ auth and bind work that lands in Phase 25.
 | HS-26-02 | Extract meeting / speaker / intel routes | done | [story-02-meeting-routes.md](./story-02-meeting-routes.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-26-03 | Extract dictation / agent-hook routes | done | [story-03-dictation-routes.md](./story-03-dictation-routes.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-26-04 | Extract activity / connector / plugin-job routes | done | [story-04-activity-routes.md](./story-04-activity-routes.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-26-05 | Extract device / companion / project routes | backlog | [story-05-device-project-routes.md](./story-05-device-project-routes.md) | — |
+| HS-26-05 | Extract device / companion / project routes | done | [story-05-device-project-routes.md](./story-05-device-project-routes.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-26-06 | Collapse callback wiring + sync-DB-in-async audit | backlog | [story-06-collapse-callbacks.md](./story-06-collapse-callbacks.md) | — |
 | HS-26-07 | Decomposition closeout (size + regression evidence) | backlog | [story-07-decomposition-closeout.md](./story-07-decomposition-closeout.md) | — |
 
@@ -109,10 +109,21 @@ Route-inventory diff identical; full suite green (1879); ruff clean.
 `/api/projects/{project_id}/briefings` left inline (it is a `/api/projects/*`
 path → HS-26-05).
 
-Next: **HS-26-05** — migrate device / companion / project routes (and the inline
-briefings route, `/api/settings`, the dashboard/page routes). Each story is a
-behavior-preserving migration gated by the existing web suite + a route-inventory
-check.
+**HS-26-05 is done:** the last 26 inline routes moved into 3 cohesive modules —
+`routes/pages.py` (7 HTML pages), `routes/system.py` (device-health, runtime +
+companion status, settings, `/ws`), `routes/projects.py` (project CRUD + briefings
++ associations, 13). 6 module-level helpers relocated; `WebContext` grew its final
+6 accessors. **`web_server.py` is now a thin assembler: 532 lines** (from the
+original 5658, **−91%**) — only middleware, lifespan, the StaticFiles mount, the
+device-audio WS registration, and `include_router` wiring; **no inline route
+handlers**. A relocation path bug (page `__file__` resolution) was caught by the
+full suite and fixed. Route-inventory diff identical (122 routes); full suite
+green (1879); ruff clean.
+
+Next: **HS-26-06** — collapse the `MeetingWebServer` constructor callback bag into
+`WebContext` and re-home the two still-shared helpers (`_meeting_callback_payload`,
+`_parse_iso_datetime`) so `meetings.py` + `activity.py` stop importing from
+`web_server`. Then **HS-26-07** closeout.
 
 ## Pickup order
 

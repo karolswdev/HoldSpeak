@@ -57,3 +57,14 @@ class WebContext:
     # The activity-intelligence reads close over no server state; the meeting-
     # candidate-start route reuses on_start / on_update_meeting (HS-26-02).
     on_process_plugin_jobs: Optional[Callable[..., Any]] = None
+
+    # HS-26-05: the residual system / page / project surface. These expose the
+    # last few server internals the seam needs — the device registry, the
+    # project detector, the WebSocket manager, the runtime-status + settings
+    # callbacks, and the duration formatter (a server method).
+    device_registry: Optional[Any] = None
+    project_detector: Optional[Any] = None
+    ws: Optional[Any] = None
+    on_get_status: Optional[Callable[[], Any]] = None
+    on_settings_applied: Optional[Callable[[Any], None]] = None
+    current_formatted_duration: Optional[Callable[[], Optional[str]]] = None
