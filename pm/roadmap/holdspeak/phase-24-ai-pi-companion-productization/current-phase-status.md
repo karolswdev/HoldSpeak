@@ -1,6 +1,6 @@
 # Phase 24 — AI PI Companion Productization
 
-**Last updated:** 2026-06-01 (HS-24-02 **done** — `/companion` is now operable: select / dismiss / pin / clear-stale via 4 new `POST /api/companion/*` routes + new `agent_context` state functions; stale + pinned markers in the status payload; full suite green). Phase resumed; 2/5 stories shipped. See "Where we are" below.
+**Last updated:** 2026-06-01 (HS-24-06 **done** — public companion docs now explain the portable ESPHome device, meeting capture/status, Claude/Codex waiting notifications, spoken replies, controlled-network remote use, and include PixelLab transparent artwork + hardware links). Phase resumed; 3/6 stories shipped. See "Where we are" below.
 
 ## Goal
 
@@ -49,6 +49,7 @@ logs.
 | HS-24-03 | Confidence and unavailable-target display affordances | backlog | — | — |
 | HS-24-04 | Push/repaint cadence decision | backlog | — | — |
 | HS-24-05 | Productization dogfood and closeout | backlog | — | — |
+| HS-24-06 | Companion public docs and PixelLab artwork | done | [story-06-companion-public-docs-and-artwork.md](./story-06-companion-public-docs-and-artwork.md) | [evidence-story-06.md](./evidence-story-06.md) |
 
 ## Resume guide (2026-06-01)
 
@@ -85,12 +86,19 @@ the next agent:
 **Resumed 2026-06-01.** Was paused 2026-05-31 to prioritize Phase 25 (Trust &
 Hardening). Phase 25 (functionally; HS-25-07 hardware dogfood still open) and
 Phase 26 (Web Runtime Decomposition, fully) have since progressed/closed.
-**HS-24-02 is now shipped (2/5):** `/companion` moved from read-only to operable
+**HS-24-02 is now shipped:** `/companion` moved from read-only to operable
 — select / dismiss / pin / clear-stale waiting sessions from the browser, mutating
 the same selected-target state the physical device reads. The remaining stories
 (HS-24-03/04/05) are **hardware-gated** (physical AI PI on-site) and stall the same
 way HS-25-07 does while the author is remote; scaffold + tackle them when hardware
 is in hand.
+
+**HS-24-06 also shipped (docs/productization, 3/6):** the public docs now show
+transparent PixelLab companion artwork, explain AIPI-Lite as a portable
+ESPHome-based meeting and coding-agent companion, clarify the agent-waiting /
+spoken-reply loop, document controlled-network remote use, and link to official
+hardware purchase pages. This story was added after the doc commits landed so
+the PMO trail matches the shipped public narrative work.
 
 Phase 23 closed with a working physical companion
 loop: AI PI can show long questions, distinguish waiting sessions, cycle the
@@ -101,13 +109,17 @@ The next product risk is operability. The JSON status and device display are
 now truthful, but the user still needs a richer surface for overview and
 recovery when several sessions are waiting or stale.
 
-HS-24-01 and HS-24-02 are closed. The HoldSpeak web portal `/companion` surface
+HS-24-01, HS-24-02, and HS-24-06 are closed. The HoldSpeak web portal `/companion` surface
 now both shows and **controls** the companion state: it is backed by
 `/api/companion/status` (now with per-session `stale`/`pinned`/`age_seconds`
 markers) and four control routes — `POST /api/companion/{select,dismiss,pin,clear-stale}`
 — calling the new `agent_context` state functions directly.
 
-Next work is HS-24-03 (physical display affordances for confidence / unavailable
+The public docs now explain that the physical AI PI can notify the user when
+Claude/Codex is waiting and can route a spoken reply into the selected coding
+session when the bridge is reachable over a user-controlled network path.
+
+Next product work remains HS-24-03 (physical display affordances for confidence / unavailable
 targets), which is hardware-gated. Scaffold HS-24-03/04/05 when the physical AI PI
 is on hand.
 
@@ -128,6 +140,7 @@ is on hand.
 3. HS-24-03: tighten physical display language for confidence and unavailable targets.
 4. HS-24-04: decide and implement display update cadence improvements.
 5. HS-24-05: dogfood the full productized loop and close the phase.
+6. HS-24-06: public docs and PixelLab artwork for the companion narrative. **Done 2026-06-01.**
 
 ## Decisions carried forward
 
