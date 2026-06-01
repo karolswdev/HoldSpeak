@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 26
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-26-01
 - **Unblocks:** HS-26-07
-- **Owner:** unassigned
+- **Owner:** Claude (agent)
 
 ## Problem
 
@@ -28,9 +28,9 @@ cluster ready to move behind the HS-26-01 seam.
 
 ## Acceptance criteria
 
-- [ ] Listed routes are served from the new module; none remain inline.
-- [ ] Existing dictation/intent web tests pass unchanged.
-- [ ] Route-inventory diff shows identical paths/methods for the moved set.
+- [x] Listed routes are served from the new module; none remain inline.
+- [x] Existing dictation/intent web tests pass unchanged.
+- [x] Route-inventory diff shows identical paths/methods for the moved set.
 
 ## Test plan
 
@@ -42,3 +42,12 @@ cluster ready to move behind the HS-26-01 seam.
 
 - Confirm whether intent-control routes belong with dictation or meetings; keep
   with dictation unless tests suggest otherwise.
+- **Resolved:** intent-control routes shipped **with dictation** (one cohesive
+  pipeline cluster); tests pass there unchanged.
+- **Shipped as one module** (`routes/dictation.py`, 1608 lines, 26 routes + all
+  private helpers). The cluster's helpers (`_resolve_project_context`,
+  block-config IO, dry-run, the `project_doc_suggestions` per-app dict) are used
+  by no other domain and moved with it. `web_server.py` 4691 → 3133 (−1558).
+- **WebContext param is `web_ctx`, not `ctx`** — project-kb handlers use a local
+  `ctx` project dict; the rename avoids the shadow. `_GLOBAL_BLOCKS_PATH` is read
+  through the `web_server` module for monkeypatch parity. See `evidence-story-03.md`.

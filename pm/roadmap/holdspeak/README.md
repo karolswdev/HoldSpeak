@@ -4,7 +4,7 @@
 > pick up (Phase 26 / HS-26-02), and the repo conventions that bite (PMO commit
 > gate, write-once evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-05-31 (Phase 26: HS-26-02 done — 25 meeting/speaker/intel routes extracted to `routes/meetings.py`, web_server.py 5658→4691; Phase 25 7/8 done + green, HS-25-07 blocked on hardware dogfood).
+**Last updated:** 2026-05-31 (Phase 26: HS-26-03 done — 26 dictation/agent-hook/intent routes extracted to `routes/dictation.py`, web_server.py 5658→3133 cumulative; Phase 25 7/8 done + green, HS-25-07 blocked on hardware dogfood).
 **Current phase:** [phase-26-web-runtime-decomposition](./phase-26-web-runtime-decomposition/) — break the `web_server.py` monolith into route modules. (Phase 25 stays open, blocked only on HS-25-07's in-person dogfood.)
 **Status:** in-progress.
 

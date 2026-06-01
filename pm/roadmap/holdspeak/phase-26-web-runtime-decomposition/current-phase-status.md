@@ -1,6 +1,6 @@
 # Phase 26 — Web Runtime Decomposition
 
-**Last updated:** 2026-05-31 (HS-26-02 done — 25 meeting/speaker/intel routes moved to `routes/meetings.py`; web_server.py 5658→4691; HS-26-03 next).
+**Last updated:** 2026-05-31 (HS-26-03 done — 26 dictation/agent-hook/intent routes moved to `routes/dictation.py`; web_server.py 4691→3133; HS-26-04 next).
 
 ## Goal
 
@@ -48,7 +48,7 @@ auth and bind work that lands in Phase 25.
 |---|---|---|---|---|
 | HS-26-01 | Router seam + shared web context (pilot: health/state) | done | [story-01-router-seam.md](./story-01-router-seam.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-26-02 | Extract meeting / speaker / intel routes | done | [story-02-meeting-routes.md](./story-02-meeting-routes.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-26-03 | Extract dictation / agent-hook routes | backlog | [story-03-dictation-routes.md](./story-03-dictation-routes.md) | — |
+| HS-26-03 | Extract dictation / agent-hook routes | done | [story-03-dictation-routes.md](./story-03-dictation-routes.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-26-04 | Extract activity / connector / plugin-job routes | backlog | [story-04-activity-routes.md](./story-04-activity-routes.md) | — |
 | HS-26-05 | Extract device / companion / project routes | backlog | [story-05-device-project-routes.md](./story-05-device-project-routes.md) | — |
 | HS-26-06 | Collapse callback wiring + sync-DB-in-async audit | backlog | [story-06-collapse-callbacks.md](./story-06-collapse-callbacks.md) | — |
@@ -73,9 +73,19 @@ now-unused request-model imports were trimmed. Route-inventory diff identical;
 full suite green (1879); ruff clean. `broadcast` is late-bound to preserve the
 prior `self.broadcast` dynamic dispatch (a test spies via reassignment).
 
-Next: **HS-26-03** — migrate dictation / agent-hook routes onto the same seam.
-Each story is a behavior-preserving migration gated by the existing web suite +
-a route-inventory check.
+**HS-26-03 is done:** the dictation-pipeline cluster — **26 routes** (4 intent-
+control + 22 dictation) plus all its private helpers (project detection,
+block-config IO, dry-run, the per-app `project_doc_suggestions` dict, readiness)
+— now lives in `holdspeak/web/routes/dictation.py` (`build_dictation_router`),
+moved verbatim. `WebContext` grew 5 accessors. `web_server.py` dropped **4691 →
+3133 lines** (−1558; cumulative **5658 → 3133**). The full suite caught a real
+shadow bug (a local `ctx` project dict vs. the context param) — fixed by naming
+the param `web_ctx`. Route-inventory diff identical; full suite green (1879);
+ruff clean.
+
+Next: **HS-26-04** — migrate activity / connector / plugin-job routes onto the
+same seam. Each story is a behavior-preserving migration gated by the existing
+web suite + a route-inventory check.
 
 ## Pickup order
 

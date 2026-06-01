@@ -42,3 +42,13 @@ class WebContext:
     on_update_meeting: Optional[Callable[..., Any]] = None
     on_set_title: Optional[Callable[[str], None]] = None
     on_set_tags: Optional[Callable[[list[str]], None]] = None
+
+    # HS-26-03: intent-control + dictation-pipeline callbacks for the dictation
+    # routes. The dictation handlers' many private helpers (project detection,
+    # block-config IO, dry-run) close over no server state — they need nothing
+    # here beyond `on_dictation_config_changed`.
+    on_get_intent_controls: Optional[Callable[[], Any]] = None
+    on_set_intent_profile: Optional[Callable[[str], Any]] = None
+    on_set_intent_override: Optional[Callable[[Optional[list[str]]], Any]] = None
+    on_route_preview: Optional[Callable[..., Any]] = None
+    on_dictation_config_changed: Optional[Callable[[], None]] = None

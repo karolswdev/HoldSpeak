@@ -10,6 +10,7 @@ invariant that matters is that `web_server` imports the routes lazily (inside
 """
 
 from .core import build_core_router
+from .dictation import build_dictation_router
 from .meetings import build_meetings_router
 
-__all__ = ["build_core_router", "build_meetings_router"]
+__all__ = ["build_core_router", "build_dictation_router", "build_meetings_router"]
