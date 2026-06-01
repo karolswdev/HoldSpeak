@@ -51,13 +51,14 @@ object IDs and prompts recorded for provenance.
   - remote-capable only when the user controls the network path
 - Add official product and Amazon purchase links.
 - Record PixelLab object IDs and prompts in `docs/assets/pixellab/README.md`.
+- Add a lightweight animated GIF for the intelligence pipeline once PixelLab's
+  animation path is confirmed.
 
 ### Out
 
 - Firmware or bridge behavior changes.
 - New `/companion` API behavior.
 - Cross-network tunneling implementation.
-- Animated GIF generation for the intelligence pipeline.
 - New plugin-runtime functionality.
 
 ## Acceptance Criteria
@@ -69,6 +70,7 @@ object IDs and prompts recorded for provenance.
 - [x] Public docs explain the agent-waiting / spoken-reply AIPI use case.
 - [x] Hardware links are present and current as of 2026-06-01.
 - [x] PixelLab provenance is recorded for all generated assets.
+- [x] Intelligence pipeline animation is present and referenced from docs.
 - [x] Evidence records the commits and local verification commands.
 
 ## Closeout
@@ -79,5 +81,12 @@ Implemented across four commits on 2026-06-01:
 - `010a3ea` — docs artwork cleanup and clipboard token clarification
 - `a7fe78b` — transparent AIPI companion artwork
 - `a720af0` — AIPI agent companion use case and hardware links
+- `857fd7b` — PMO story/evidence backfill for the companion docs work
+
+Follow-up animation work landed after the PMO backfill:
+
+- PixelLab object `bd59bb26-866f-484e-835a-dcfe3ee36d6d`
+- PixelLab animation group `321a41bb-08d1-4004-80d0-479b999fa8c4`
+- Local GIF output `docs/assets/pixellab/intelligence-pipeline-loop.gif`
 
 See [evidence-story-06.md](./evidence-story-06.md).

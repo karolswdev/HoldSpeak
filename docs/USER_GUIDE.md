@@ -38,6 +38,10 @@ Use these guides depending on what you are setting up:
 | ![Pixel art microphone with hold-to-talk waves](assets/pixellab/hold-to-talk-microphone.png) | ![Pixel art meeting notebook with action items](assets/pixellab/meeting-intelligence-notebook.png) | ![Pixel art code editor connected to local context](assets/pixellab/project-aware-typing.png) |
 | Hold the configured hotkey and dictate into the focused app. | Capture meetings, search transcripts, and curate action items. | Let project context and agent state improve dictated prompts. |
 
+<p align="center">
+  <img src="assets/pixellab/intelligence-pipeline-loop.gif" alt="Animated pixel art showing microphone audio becoming transcript lines, action items, and a summary card" width="260">
+</p>
+
 ## Install And Start
 
 Install from this checkout:

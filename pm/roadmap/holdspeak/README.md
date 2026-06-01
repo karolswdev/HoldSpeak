@@ -4,7 +4,7 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-06-01 (Phase 29 **CLOSED, 5/5** — the plugin rollout is complete: **fourteen real plugins, zero stubs**, each producing a structured artifact rendered in `/history`; the public README documents the system and the RFC reality-status table is all ✅. Suite green at 2062 passed, 14 skipped. Merged in HS-24-06 from `origin/main`: Phase 24 is now 3/6).
+**Last updated:** 2026-06-01 (Phase 29 **CLOSED, 5/5** — the plugin rollout is complete: **fourteen real plugins, zero stubs**, each producing a structured artifact rendered in `/history`; the public README documents the system and the RFC reality-status table is all ✅. Suite green at 2062 passed, 14 skipped. Merged in HS-24-06 from `origin/main`: Phase 24 is now 3/6, and HS-24-06 includes the intelligence-pipeline GIF).
 **Current phase:** [phase-25-trust-and-hardening](./phase-25-trust-and-hardening/current-phase-status.md) — in-progress (HS-25-01..06 + 08 done; HS-25-07 hardware-blocked, author remote). Other open tracks: **Phase 24** (companion, 3/6; HS-24-01/02/06 done, HS-24-03/04/05 hardware-gated); **Phase 15** (out-and-about, `not-started`, gated on Phase 25). Next plugin work is the **frontier** (authoring guide / packs / actuators), not stubs — see Phase 29's `final-summary.md` §Handoff.
 **Status:** Plugin rollout complete (Phases 16 → 27 → 28 → 29; 14 real plugins). Remaining open work is largely hardware-gated (Phases 24, 25 HS-25-07).
 
