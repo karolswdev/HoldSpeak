@@ -1,7 +1,7 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-31 (Phase 25: HS-25-01..06 + HS-25-08 done (7/8), suite green; HS-25-07 blocked on hardware dogfood (author remote/abroad); Phase 15 auth-unblocked).
-**Current phase:** [phase-25-trust-and-hardening](./phase-25-trust-and-hardening/) — close the trust/correctness/security gaps that block external use and gate Phase 15.
+**Last updated:** 2026-05-31 (Phase 26 opened — HS-26-01 done: router seam + WebContext; Phase 25 7/8 done + green, HS-25-07 blocked on hardware dogfood).
+**Current phase:** [phase-26-web-runtime-decomposition](./phase-26-web-runtime-decomposition/) — break the `web_server.py` monolith into route modules. (Phase 25 stays open, blocked only on HS-25-07's in-person dogfood.)
 **Status:** in-progress.
 
 ## Vision
@@ -65,7 +65,7 @@ canon, canon wins.
 | 23 | AI PI Companion UX Polish: long-prompt display, multi-session identity, preview/browse, and target confidence | done | [phase-23-ai-pi-companion-ux-polish](./phase-23-ai-pi-companion-ux-polish/) |
 | 24 | AI PI Companion Productization: web companion overview, stale-session controls, confidence affordances, and display update cadence | paused | [phase-24-ai-pi-companion-productization](./phase-24-ai-pi-companion-productization/) |
 | 25 | Trust & Hardening: no silent cloud egress, web-runtime auth + bind guard, threat-model/encryption-at-rest doc, LLM-runtime thread-safety, transcription timeout, config-knob audit. Prerequisite to Phase 15. | in-progress | [phase-25-trust-and-hardening](./phase-25-trust-and-hardening/) |
-| 26 | Web Runtime Decomposition: break the `web_server.py` monolith into route modules + a shared context, behavior-preserving. Fast-follow to Phase 25. | planning | [phase-26-web-runtime-decomposition](./phase-26-web-runtime-decomposition/) |
+| 26 | Web Runtime Decomposition: break the `web_server.py` monolith into route modules + a shared context, behavior-preserving. Fast-follow to Phase 25. | in-progress | [phase-26-web-runtime-decomposition](./phase-26-web-runtime-decomposition/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

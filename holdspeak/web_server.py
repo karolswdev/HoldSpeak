@@ -598,6 +598,14 @@ class MeetingWebServer:
             on_device_query=self.on_device_query,
         )
 
+        # Phase 26 (HS-26-01): route modules read from a shared WebContext
+        # instead of closing over `self`. Pilot: /health + /api/state.
+        from .web.context import WebContext
+        from .web.routes import build_core_router
+
+        web_ctx = WebContext(get_state=self.get_state)
+        app.include_router(build_core_router(web_ctx))
+
         @app.on_event("startup")
         async def _startup() -> None:
             self._loop = asyncio.get_running_loop()
@@ -646,10 +654,6 @@ class MeetingWebServer:
                 )
             return HTMLResponse(html)
 
-        @app.get("/health")
-        async def health() -> Any:
-            return JSONResponse({"status": "ok"})
-
         @app.get("/api/devices/health")
         async def api_devices_health() -> Any:
             from .meeting_session import _device_descriptor_to_dict
@@ -659,15 +663,6 @@ class MeetingWebServer:
                 for descriptor in self.device_registry.active()
             ]
             return JSONResponse({"devices": devices})
-
-        @app.get("/api/state")
-        async def api_state() -> Any:
-            try:
-                state = self.get_state() or {}
-            except Exception as e:
-                log.error(f"get_state failed: {e}")
-                state = {}
-            return JSONResponse(state)
 
         @app.get("/api/runtime/status")
         async def api_runtime_status() -> Any:

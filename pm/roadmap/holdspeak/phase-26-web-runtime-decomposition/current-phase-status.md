@@ -1,6 +1,6 @@
 # Phase 26 — Web Runtime Decomposition
 
-**Last updated:** 2026-05-31 (phase scaffolded as Phase 25 fast-follow; all stories backlog).
+**Last updated:** 2026-05-31 (HS-26-01 done — router seam + WebContext; HS-26-02 next).
 
 ## Goal
 
@@ -46,7 +46,7 @@ auth and bind work that lands in Phase 25.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-26-01 | Router seam + shared web context (pilot: health/state) | backlog | [story-01-router-seam.md](./story-01-router-seam.md) | — |
+| HS-26-01 | Router seam + shared web context (pilot: health/state) | done | [story-01-router-seam.md](./story-01-router-seam.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-26-02 | Extract meeting / speaker / intel routes | backlog | [story-02-meeting-routes.md](./story-02-meeting-routes.md) | — |
 | HS-26-03 | Extract dictation / agent-hook routes | backlog | [story-03-dictation-routes.md](./story-03-dictation-routes.md) | — |
 | HS-26-04 | Extract activity / connector / plugin-job routes | backlog | [story-04-activity-routes.md](./story-04-activity-routes.md) | — |
@@ -56,10 +56,18 @@ auth and bind work that lands in Phase 25.
 
 ## Where we are
 
-Scaffolded 2026-05-31 as the explicit fast-follow to Phase 25. Not started; runs
-after Phase 25 closes so the auth/bind changes (HS-25-02) land in the monolith
-once and the refactor moves the stabilized surface. Each story is a
-behavior-preserving migration with the web test suite as the regression gate.
+Opened 2026-05-31. Phase 25's auth/bind changes (HS-25-02) are already in the
+monolith, so the refactor moves a stabilized surface.
+
+**HS-26-01 is done:** the seam exists — `holdspeak/web/routes/` package +
+`holdspeak/web/context.py` (`WebContext`), with `/health` + `/api/state` migrated
+off `_create_app` via `build_core_router` + `app.include_router`. App-level auth
+middleware still applies to router routes. Full suite green (1875), no import
+cycle (test-pinned). Pattern documented in the module docstrings.
+
+Next: **HS-26-02** — migrate meeting / speaker / intel routes onto this seam
+(add the accessors they need to `WebContext`). Each story is a behavior-preserving
+migration gated by the existing web suite + a route-inventory check.
 
 ## Pickup order
 

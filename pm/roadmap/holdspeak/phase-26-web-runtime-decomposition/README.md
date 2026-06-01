@@ -1,6 +1,6 @@
 # Phase 26 — Web Runtime Decomposition
 
-**Status:** planning (scaffolded 2026-05-31 as the Phase 25 fast-follow; not started; all stories backlog).
+**Status:** in-progress (opened 2026-05-31; HS-26-01 first).
 
 Phase 26 breaks the `web_server.py` monolith (5,620 lines, ~125 routes inline in
 one `_create_app()`, 40+ constructor callbacks) into cohesive route modules and
