@@ -4,9 +4,9 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-06-01 (Phase 27 **3/5** — HS-27-03 shipped: net-new `decision_capture` plugin (decisions + open questions) on the default base chain, with a structured `/history` render; the spoken e2e now exercises all three real plugins (diagram + action items + decisions) and screenshots them. Three real plugins now. Suite green at 1926 passed).
-**Current phase:** [phase-27-ubiquitous-plugins-and-e2e](./phase-27-ubiquitous-plugins-and-e2e/current-phase-status.md) — in-progress (3/5; HS-27-01/02/03 done). Next: HS-27-04 (`requirements_extractor`), HS-27-05 (close). Software-only. Other open tracks: **Phase 15** (out-and-about, `not-started`); **Phase 24** (companion, 2/5, HS-24-03/04/05 hardware-gated); **Phase 25** open (HS-25-07 hardware dogfood). NB: "Phase 17" in the index is an unrelated done phase — the plugin-rollout follow-on is **27**.
-**Status:** Phase 27 active (HS-27-03 delivered; next HS-27-04 requirements_extractor).
+**Last updated:** 2026-06-01 (Phase 27 **4/5** — HS-27-04 shipped: `requirements_extractor` flipped from stub to a real LLM plugin (functional / non-functional / constraint / acceptance classification) with a grouped-by-type structured `/history` render; no routing ripple. The spoken e2e now exercises all four real plugins (diagram + action items + decisions + requirements) and screenshots them. Four real plugins now. Suite green at 1939 passed).
+**Current phase:** [phase-27-ubiquitous-plugins-and-e2e](./phase-27-ubiquitous-plugins-and-e2e/current-phase-status.md) — in-progress (4/5; HS-27-01/02/03/04 done). Next: HS-27-05 (close — RFC reality-status refresh + final-summary). Software-only. Other open tracks: **Phase 15** (out-and-about, `not-started`); **Phase 24** (companion, 2/5, HS-24-03/04/05 hardware-gated); **Phase 25** open (HS-25-07 hardware dogfood). NB: "Phase 17" in the index is an unrelated done phase — the plugin-rollout follow-on is **27**.
+**Status:** Phase 27 active (HS-27-04 delivered; next HS-27-05 phase exit).
 
 ## Vision
 
@@ -70,7 +70,7 @@ canon, canon wins.
 | 24 | AI PI Companion Productization: web companion overview, stale-session controls, confidence affordances, and display update cadence | in-progress (2/5) | [phase-24-ai-pi-companion-productization](./phase-24-ai-pi-companion-productization/) |
 | 25 | Trust & Hardening: no silent cloud egress, web-runtime auth + bind guard, threat-model/encryption-at-rest doc, LLM-runtime thread-safety, transcription timeout, config-knob audit. Prerequisite to Phase 15. | in-progress | [phase-25-trust-and-hardening](./phase-25-trust-and-hardening/) |
 | 26 | Web Runtime Decomposition: break the `web_server.py` monolith into route modules + a shared context, behavior-preserving. Fast-follow to Phase 25. | done | [phase-26-web-runtime-decomposition](./phase-26-web-runtime-decomposition/) |
-| 27 | Ubiquitous plugins + spoken-meeting e2e: flip the highest-value stub plugins to real (`action_owner_enforcer`, decisions/open-questions, requirements) re-using the Phase-16 pattern, and add a real `say`→Whisper→MIR→plugins→web spoken-meeting end-to-end harness with screenshots. Continuation of Phase 16. | in-progress (3/5) | [phase-27-ubiquitous-plugins-and-e2e](./phase-27-ubiquitous-plugins-and-e2e/) |
+| 27 | Ubiquitous plugins + spoken-meeting e2e: flip the highest-value stub plugins to real (`action_owner_enforcer`, decisions/open-questions, requirements) re-using the Phase-16 pattern, and add a real `say`→Whisper→MIR→plugins→web spoken-meeting end-to-end harness with screenshots. Continuation of Phase 16. | in-progress (4/5) | [phase-27-ubiquitous-plugins-and-e2e](./phase-27-ubiquitous-plugins-and-e2e/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

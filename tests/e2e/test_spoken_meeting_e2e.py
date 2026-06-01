@@ -45,17 +45,42 @@ if not os.environ.get("HOLDSPEAK_SPOKEN_E2E"):
 
 EVIDENCE_DIR = "pm/roadmap/holdspeak/phase-27-ubiquitous-plugins-and-e2e/evidence"
 
-# A scripted two-speaker meeting: architecture talk (→ mermaid_architecture) +
-# action items with/without owners (→ action_owner_enforcer).
+# A *natural* product conversation — nobody reads out a requirements list. The
+# need is implied, clarified back and forth, and decisions/owners emerge in
+# passing. The plugins have to infer the rest:
+#   - the spoken architecture (inbox → classifier → dashboard + store) → mermaid_architecture
+#   - "fast", "works on phones", "ship this quarter" → requirements_extractor
+#   - "start with a status page, not email" → decision_capture (+ open questions)
+#   - "I'll sketch the ingestion this week", "someone needs to confirm…" → action_owner_enforcer
 SCRIPT: list[tuple[str, str, str]] = [
-    ("Me", "Alex",
-     "Let's finalize the architecture. The API gateway routes to the auth "
-     "service and the billing service, which share a Postgres database. "
-     "Notifications go through a Redis queue."),
-    ("Remote", "Samantha",
-     "Sounds good. For action items: Karol will draft the OAuth flow by Friday. "
-     "Someone still needs to book the offsite venue. And Maria will review the "
-     "migration plan."),
+    ("Priya", "Samantha",
+     "So the thing customers keep complaining about is that after they send us "
+     "feedback, they never hear anything back. It just disappears into a black "
+     "hole. I'd really love for us to close that loop somehow."),
+    ("Alex", "Alex",
+     "Okay. When you say close the loop, do you mean we email them back, or more "
+     "like a place where they can check what happened to it?"),
+    ("Priya", "Samantha",
+     "Honestly both eventually, but let's start with somewhere they can see the "
+     "status. Their feedback comes in through the support inbox today, and it "
+     "would be great if it just got sorted automatically so the right team picks "
+     "it up."),
+    ("Alex", "Alex",
+     "Got it. So we'd pull from the support inbox, run it through some kind of "
+     "classifier to tag it, and then surface everything on a dashboard the teams "
+     "watch. We'll need somewhere to keep all of it as well. One thing I'd push "
+     "on though, it has to feel instant. Nobody refreshes a slow page, so the "
+     "dashboard really needs to come up in under a second."),
+    ("Dana", "Daniel",
+     "Agreed on speed. And it has to work on phones, half the team only ever "
+     "checks this from their mobile. Can we get something rough in front of real "
+     "users by the end of the month? We did say we'd ship a first cut this "
+     "quarter no matter what."),
+    ("Alex", "Alex",
+     "That's doable. I'll sketch out the ingestion piece this week. We still "
+     "haven't figured out who owns the classifier model, that's not decided yet. "
+     "And someone needs to confirm we're even allowed to store the raw feedback "
+     "text, that might be a privacy question."),
 ]
 
 
@@ -138,11 +163,11 @@ def test_spoken_meeting_end_to_end(tmp_path):
     meeting_id = "e2e-spoken"
     context = {
         "transcript": transcript,
-        "project_name": "Spoken E2E",
-        "active_intents": ["architecture", "delivery"],
+        "project_name": "Customer Feedback Loop",
+        "active_intents": ["architecture", "delivery", "product"],
     }
     for window, plugin_id in enumerate(
-        ("mermaid_architecture", "action_owner_enforcer", "decision_capture")
+        ("mermaid_architecture", "action_owner_enforcer", "decision_capture", "requirements_extractor")
     ):
         host.execute(
             plugin_id,
@@ -158,13 +183,16 @@ def test_spoken_meeting_end_to_end(tmp_path):
             break
         results.append(result)
     by_id = {r.plugin_id: r for r in results}
-    for pid in ("mermaid_architecture", "action_owner_enforcer", "decision_capture"):
+    for pid in (
+        "mermaid_architecture", "action_owner_enforcer", "decision_capture", "requirements_extractor"
+    ):
         assert by_id[pid].status == "success", by_id[pid].error
     # The plugins must have produced real content (not their failure shape).
     assert by_id["mermaid_architecture"].output.get("mermaid"), "no mermaid block produced"
     assert by_id["action_owner_enforcer"].output.get("action_items"), "no action items produced"
     decision_out = by_id["decision_capture"].output
     assert decision_out.get("decisions") or decision_out.get("open_questions"), "no decisions produced"
+    assert by_id["requirements_extractor"].output.get("requirements"), "no requirements produced"
 
     # --- 4. persist meeting + transcript + artifacts into a temp DB --------
     reset_database()
@@ -173,7 +201,7 @@ def test_spoken_meeting_end_to_end(tmp_path):
         MeetingState(
             id=meeting_id,
             started_at=datetime.now(),  # naive — matches the codebase duration math
-            title="Spoken E2E Meeting",
+            title="Customer Feedback Loop — Kickoff",
             segments=segments,
         )
     )
@@ -191,6 +219,7 @@ def test_spoken_meeting_end_to_end(tmp_path):
     assert by_type.get("action_items") and by_type["action_items"].structured_json.get("action_items")
     decisions_sj = by_type.get("decisions") and by_type["decisions"].structured_json
     assert decisions_sj and (decisions_sj.get("decisions") or decisions_sj.get("open_questions"))
+    assert by_type.get("requirements") and by_type["requirements"].structured_json.get("requirements")
     print(f"[e2e] artifacts: {sorted(by_type)}")
 
     # --- 5. serve + 6. Playwright screenshot -------------------------------
@@ -214,6 +243,7 @@ def test_spoken_meeting_end_to_end(tmp_path):
             page.wait_for_selector(".mermaid-artifact svg", timeout=15000)
             page.wait_for_selector(".action-item-list .action-item", timeout=15000)
             page.wait_for_selector(".decisions-artifact .decision-list li", timeout=15000)
+            page.wait_for_selector(".requirement-list .requirement-item", timeout=15000)
             # transcript panel populated from the persisted segments
             page.wait_for_selector(".transcript-list .segment", timeout=15000)
             shot = os.path.join(EVIDENCE_DIR, "spoken_meeting_artifacts.png")
@@ -221,6 +251,7 @@ def test_spoken_meeting_end_to_end(tmp_path):
             assert page.locator(".mermaid-artifact svg").count() >= 1
             assert page.locator(".action-item-list .action-item").count() >= 1
             assert page.locator(".decisions-artifact .decision-list li").count() >= 1
+            assert page.locator(".requirement-list .requirement-item").count() >= 1
             browser.close()
         print(f"[e2e] screenshot saved: {shot}")
     finally:

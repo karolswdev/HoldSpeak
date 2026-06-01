@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 27
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-27-01
 - **Unblocks:** HS-27-05
 - **Owner:** unassigned
@@ -36,11 +36,11 @@ companion to `action_owner_enforcer`.
 
 ## Acceptance criteria
 
-- [ ] Real `run()` returns the validated `requirements` payload; failure +
+- [x] Real `run()` returns the validated `requirements` payload; failure +
       capability-blocked paths covered.
-- [ ] `register_builtin_plugins` returns the real class for
+- [x] `register_builtin_plugins` returns the real class for
       `requirements_extractor`; others unaffected.
-- [ ] Tests green; full sweep green.
+- [x] Tests green; full sweep green.
 
 ## Test plan
 

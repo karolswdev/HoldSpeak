@@ -62,6 +62,39 @@ def _decision_body(
     return "\n\n".join(parts)
 
 
+_REQUIREMENT_TYPE_LABELS: dict[str, str] = {
+    "functional": "Functional",
+    "non_functional": "Non-functional",
+    "constraint": "Constraints",
+    "acceptance": "Acceptance criteria",
+}
+
+
+def _requirements_body(requirements: list[dict[str, Any]] | None) -> str:
+    """Render requirements grouped by type as markdown sections (HS-27-04)."""
+    if not requirements:
+        return ""
+    grouped: dict[str, list[str]] = {}
+    for item in requirements:
+        text = _clean_text(item.get("text"))
+        if not text:
+            continue
+        req_type = str(item.get("type") or "functional").strip().lower() or "functional"
+        grouped.setdefault(req_type, []).append(text)
+    parts: list[str] = []
+    # Stable order: known types first (in label order), then any stragglers.
+    ordered = list(_REQUIREMENT_TYPE_LABELS) + [t for t in grouped if t not in _REQUIREMENT_TYPE_LABELS]
+    for req_type in ordered:
+        texts = grouped.get(req_type)
+        if not texts:
+            continue
+        label = _REQUIREMENT_TYPE_LABELS.get(req_type, req_type.replace("_", " ").title())
+        lines = [f"**{label}**"]
+        lines.extend(f"- {text}" for text in texts)
+        parts.append("\n".join(lines))
+    return "\n\n".join(parts)
+
+
 def _coerce_float(value: object, default: float = 0.0) -> float:
     try:
         return float(value)
@@ -214,6 +247,7 @@ def synthesize_meeting_artifacts(
         #    the plugin validates syntax, synthesis does not).
         #  - HS-27-01: "action_items" embeds an ownership-gap checklist.
         #  - HS-27-03: "decisions" embeds decisions + open questions.
+        #  - HS-27-04: "requirements" embeds requirements grouped by type.
         mermaid_value = ""
         if artifact_type == "diagram":
             raw_mermaid = canonical.output.get("mermaid")
@@ -225,6 +259,12 @@ def synthesize_meeting_artifacts(
             raw_items = canonical.output.get("action_items")
             if isinstance(raw_items, list) and raw_items:
                 action_items = [item for item in raw_items if isinstance(item, dict)] or None
+
+        requirements: list[dict[str, Any]] | None = None
+        if artifact_type == "requirements":
+            raw_reqs = canonical.output.get("requirements")
+            if isinstance(raw_reqs, list) and raw_reqs:
+                requirements = [item for item in raw_reqs if isinstance(item, dict)] or None
 
         decisions: list[dict[str, Any]] | None = None
         open_questions: list[str] | None = None
@@ -258,6 +298,13 @@ def synthesize_meeting_artifacts(
                 f"{_decision_body(decisions, open_questions)}\n\n"
                 f"{source_lines}"
             )
+        elif requirements:
+            body_markdown = (
+                f"### {title}\n\n"
+                f"{summary}\n\n"
+                f"{_requirements_body(requirements)}\n\n"
+                f"{source_lines}"
+            )
         else:
             body_markdown = (
                 f"### {title}\n\n"
@@ -282,6 +329,8 @@ def synthesize_meeting_artifacts(
             structured_json["decisions"] = decisions
         if open_questions:
             structured_json["open_questions"] = open_questions
+        if requirements:
+            structured_json["requirements"] = requirements
 
         artifacts.append(
             ArtifactDraft(

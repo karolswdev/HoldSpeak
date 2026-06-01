@@ -821,6 +821,24 @@ function historyApp() {
       return this.decisionsFor(artifact).length > 0 || this.openQuestionsFor(artifact).length > 0;
     },
 
+    // HS-27-04: requirements render, classified by type.
+    requirementsFor(artifact) {
+      if (artifact?.artifact_type !== "requirements") return [];
+      const items = artifact?.structured_json?.requirements;
+      return Array.isArray(items) ? items : [];
+    },
+
+    requirementTypeLabel(type) {
+      return (
+        {
+          functional: "Functional",
+          non_functional: "Non-functional",
+          constraint: "Constraint",
+          acceptance: "Acceptance",
+        }[type] || "Requirement"
+      );
+    },
+
     // HS-16-04: render a diagram artifact's Mermaid (from structured_json) as
     // inline SVG. mermaid.js is loaded lazily via window.__loadMermaid (a code
     // -split chunk wired in history.astro), so non-diagram views never pay the

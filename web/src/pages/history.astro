@@ -982,8 +982,18 @@ import AppLayout from "../layouts/AppLayout.astro";
                           </template>
                         </div>
                       </template>
+                      <template x-if="requirementsFor(artifact).length">
+                        <ul class="requirement-list">
+                          <template x-for="(r, ri) in requirementsFor(artifact)" :key="`r${ri}`">
+                            <li class="requirement-item">
+                              <span class="req-type" :class="r.type" x-text="requirementTypeLabel(r.type)"></span>
+                              <span class="req-text" x-text="r.text"></span>
+                            </li>
+                          </template>
+                        </ul>
+                      </template>
                       <p class="meta-line"
-                         x-show="artifact.body_markdown && !isDiagram(artifact) && !actionItemsFor(artifact).length && !hasDecisions(artifact)"
+                         x-show="artifact.body_markdown && !isDiagram(artifact) && !actionItemsFor(artifact).length && !hasDecisions(artifact) && !requirementsFor(artifact).length"
                          x-cloak x-text="artifact.body_markdown"></p>
                     </div>
                   </template>
@@ -1465,6 +1475,31 @@ import AppLayout from "../layouts/AppLayout.astro";
   }
   .decision-list .rationale {
     color: var(--text-muted);
+  }
+
+  /* HS-27-04: requirements render, classified by type. */
+  .requirement-list {
+    list-style: none;
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: var(--font-size-sm);
+  }
+  .requirement-item {
+    display: flex;
+    gap: var(--space-2);
+    align-items: baseline;
+  }
+  .requirement-item .req-type {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose, 0.05em);
+    color: var(--text-muted);
+    min-width: 7rem;
   }
 
   /* HS-16-04: rendered Mermaid diagram artifact. */

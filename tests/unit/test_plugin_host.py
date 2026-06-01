@@ -125,8 +125,10 @@ def test_builtin_plugins_register_and_execute() -> None:
     assert "requirements_extractor" in registered
     assert "incident_timeline" in registered
 
+    # `incident_timeline` is still a DeterministicPlugin stub (no capabilities),
+    # so it executes inline; `requirements_extractor` is now a real LLM plugin.
     result = host.execute(
-        "requirements_extractor",
+        "incident_timeline",
         context={
             "transcript": "Architecture proposal with trade-offs and dependencies.",
             "active_intents": ["architecture"],
@@ -137,7 +139,7 @@ def test_builtin_plugins_register_and_execute() -> None:
     )
     assert result.status == "success"
     assert result.output is not None
-    assert result.output["plugin_id"] == "requirements_extractor"
+    assert result.output["plugin_id"] == "incident_timeline"
     assert result.output["token_count"] > 0
 
 

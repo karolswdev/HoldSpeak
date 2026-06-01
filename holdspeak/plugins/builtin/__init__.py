@@ -26,12 +26,17 @@ from .mermaid_architecture import (
     MermaidArchitecturePlugin,
     _extract_mermaid_block,
 )
+from .requirements_extractor import (
+    RequirementsExtractorPlugin,
+    _extract_requirements,
+)
 
 # Real plugin classes keyed by ID; every other ID falls back to the stub.
 _REAL_PLUGINS = {
     "mermaid_architecture": MermaidArchitecturePlugin,
     "action_owner_enforcer": ActionOwnerEnforcerPlugin,
     "decision_capture": DecisionCapturePlugin,
+    "requirements_extractor": RequirementsExtractorPlugin,
 }
 
 
@@ -110,9 +115,11 @@ __all__ = [
     "DecisionCapturePlugin",
     "DeterministicPlugin",
     "MermaidArchitecturePlugin",
+    "RequirementsExtractorPlugin",
     "_BUILTIN_PLUGIN_DEFS",
     "_extract_action_items",
     "_extract_decisions",
     "_extract_mermaid_block",
+    "_extract_requirements",
     "register_builtin_plugins",
 ]

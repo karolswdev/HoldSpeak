@@ -130,6 +130,40 @@ def test_decisions_artifact_embeds_decisions_and_questions() -> None:
     assert artifact.structured_json["open_questions"] == ["Who owns the migration?"]
 
 
+def test_requirements_artifact_embeds_grouped_body() -> None:
+    # HS-27-04: requirements_extractor output → a grouped body + structured key.
+    runs = [
+        _run(
+            "requirements_extractor",
+            {
+                "summary": "3 requirement(s) (2 functional, 1 non-functional).",
+                "confidence_hint": 1.0,
+                "active_intents": ["product"],
+                "requirements": [
+                    {"text": "Users can export reports as PDF", "type": "functional"},
+                    {"text": "Page loads within 200ms", "type": "non_functional"},
+                    {"text": "Support SSO login", "type": "functional"},
+                ],
+            },
+        )
+    ]
+    artifacts = synthesize_meeting_artifacts(meeting_id="m-1", plugin_runs=runs)
+    assert len(artifacts) == 1
+    artifact = artifacts[0]
+    assert artifact.artifact_type == "requirements"
+
+    body = artifact.body_markdown
+    assert "**Functional**" in body
+    assert "- Users can export reports as PDF" in body
+    assert "- Support SSO login" in body
+    assert "**Non-functional**" in body
+    assert "- Page loads within 200ms" in body
+    # Functional group renders before the non-functional group.
+    assert body.index("**Functional**") < body.index("**Non-functional**")
+    assert "```mermaid" not in body
+    assert artifact.structured_json["requirements"][0]["text"] == "Users can export reports as PDF"
+
+
 def test_non_diagram_artifact_body_is_byte_for_byte_legacy() -> None:
     # A non-diagram plugin run: even if (pathologically) it carried a "mermaid"
     # key, the body must match the exact legacy template.
