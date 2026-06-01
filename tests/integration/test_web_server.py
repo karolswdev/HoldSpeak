@@ -678,6 +678,156 @@ class TestCompanionStatusEndpoint:
 
 
 @pytest.mark.integration
+class TestCompanionControlEndpoints:
+    """HS-24-02: select / dismiss / pin / clear-stale companion controls."""
+
+    @pytest.fixture
+    def companion(self, tmp_path, monkeypatch, test_client):
+        import json
+        from datetime import timezone
+
+        import holdspeak.agent_context as agent_context_module
+
+        state = tmp_path / "agent_sessions.json"
+        monkeypatch.setattr(agent_context_module, "AGENT_CONTEXT_FILE", state)
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / ".git").mkdir()
+
+        def ingest(session_id, text, *, agent="codex", now=None):
+            transcript = tmp_path / f"{agent}-{session_id}.jsonl"
+            transcript.write_text(
+                json.dumps({"role": "assistant", "content": text}) + "\n",
+                encoding="utf-8",
+            )
+            agent_context_module.ingest_agent_hook_event(
+                agent=agent,
+                payload={
+                    "session_id": session_id,
+                    "hook_event_name": "Stop",
+                    "cwd": str(repo),
+                    "transcript_path": str(transcript),
+                },
+                state_path=state,
+                now=now,
+                capture_messages=True,
+            )
+
+        return SimpleNamespace(
+            client=test_client,
+            state=state,
+            ingest=ingest,
+            module=agent_context_module,
+            old=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        )
+
+    def _status_items(self, client):
+        payload = client.get("/api/companion/status").json()
+        return payload["agent"]["sessions"]["items"]
+
+    def test_select_sets_active_target(self, companion):
+        companion.ingest("older", "Older?")
+        companion.ingest("newer", "Newer?")
+
+        response = companion.client.post(
+            "/api/companion/select",
+            json={"agent": "codex", "session_id": "older"},
+        )
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+        assert response.json()["session"]["session_id"] == "older"
+
+        selected = [item for item in self._status_items(companion.client) if item["selected"]]
+        assert len(selected) == 1
+        assert selected[0]["session"]["session_id"] == "older"
+
+    def test_dismiss_removes_session_from_waiting(self, companion):
+        companion.ingest("abc", "Proceed?", agent="claude")
+        assert len(self._status_items(companion.client)) == 1
+
+        response = companion.client.post(
+            "/api/companion/dismiss",
+            json={"agent": "claude", "session_id": "abc"},
+        )
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+        assert self._status_items(companion.client) == []
+
+    def test_pin_marks_session_and_exempts_from_clear_stale(self, companion):
+        companion.ingest("stale", "Stale?")
+        companion.ingest("kept", "Kept?")
+
+        pin = companion.client.post(
+            "/api/companion/pin",
+            json={"agent": "codex", "session_id": "kept", "pinned": True},
+        )
+        assert pin.status_code == 200
+        assert pin.json()["session"]["pinned"] is True
+
+        kept = next(
+            item
+            for item in self._status_items(companion.client)
+            if item["session"]["session_id"] == "kept"
+        )
+        assert kept["pinned"] is True
+        assert kept["stale"] is False
+
+        # Force everything stale, then clear: only the unpinned session goes.
+        for session_id in ("stale", "kept"):
+            companion.ingest(session_id, "again?", now=companion.old)
+        companion.client.post(
+            "/api/companion/pin",
+            json={"agent": "codex", "session_id": "kept", "pinned": True},
+        )
+        clear = companion.client.post("/api/companion/clear-stale", json={})
+        assert clear.status_code == 200
+        assert clear.json() == {"success": True, "cleared": 1, "max_age_seconds": 120}
+
+        remaining = {
+            item.session_id
+            for item in companion.module.list_recent_awaiting_agent_sessions(
+                state_path=companion.state, max_age_seconds=10**9
+            )
+        }
+        assert remaining == {"kept"}
+
+    def test_unpin_via_pin_false(self, companion):
+        companion.ingest("abc", "Proceed?")
+        companion.client.post(
+            "/api/companion/pin", json={"agent": "codex", "session_id": "abc", "pinned": True}
+        )
+        response = companion.client.post(
+            "/api/companion/pin",
+            json={"agent": "codex", "session_id": "abc", "pinned": False},
+        )
+        assert response.status_code == 200
+        assert response.json()["session"]["pinned"] is False
+
+    def test_select_unknown_session_returns_404(self, companion):
+        response = companion.client.post(
+            "/api/companion/select",
+            json={"agent": "codex", "session_id": "ghost"},
+        )
+        assert response.status_code == 404
+        assert response.json()["error"] == "unknown_session"
+
+    def test_missing_fields_return_400(self, companion):
+        assert companion.client.post("/api/companion/select", json={}).status_code == 400
+        assert (
+            companion.client.post(
+                "/api/companion/pin", json={"agent": "codex"}
+            ).status_code
+            == 400
+        )
+        assert (
+            companion.client.post(
+                "/api/companion/clear-stale", json={"max_age_seconds": "soon"}
+            ).status_code
+            == 400
+        )
+
+
+@pytest.mark.integration
 class TestApiStateEndpoint:
     """Tests for GET /api/state endpoint."""
 
@@ -1674,7 +1824,7 @@ class TestCompanionUiSmoke:
             "Selected reply target",
             "Waiting sessions",
             "Readiness blockers",
-            "Controls land in HS-24-02",
+            "Clear stale",
         ):
             assert marker in html
 
@@ -1685,6 +1835,10 @@ class TestCompanionUiSmoke:
         js = test_client.get(match.group(1)).text
         for marker in (
             "/api/companion/status",
+            "/api/companion/select",
+            "/api/companion/dismiss",
+            "/api/companion/pin",
+            "/api/companion/clear-stale",
             "ready_for_agent_reply",
             "target_confidence",
             "text_injection_unavailable",

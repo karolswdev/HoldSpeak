@@ -1,6 +1,6 @@
 # Phase 24 — AI PI Companion Productization
 
-**Last updated:** 2026-06-01 (HS-24-02 story scaffolded as a handover; phase still `paused` but **ready to resume at HS-24-02**). See "Resume guide (2026-06-01)" below.
+**Last updated:** 2026-06-01 (HS-24-02 **done** — `/companion` is now operable: select / dismiss / pin / clear-stale via 4 new `POST /api/companion/*` routes + new `agent_context` state functions; stale + pinned markers in the status payload; full suite green). Phase resumed; 2/5 stories shipped. See "Where we are" below.
 
 ## Goal
 
@@ -32,7 +32,7 @@ logs.
 ## Exit criteria
 
 - [x] The user can see all waiting agent sessions in a browser companion view.
-- [ ] The user can select, dismiss, or pin a waiting session without editing
+- [x] The user can select, dismiss, or pin a waiting session without editing
       state files.
 - [ ] AI PI makes low-confidence or unavailable targets obvious before capture.
 - [ ] Display update cadence is documented and dogfooded without premature
@@ -45,7 +45,7 @@ logs.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-24-01 | AI PI Companion surface: read-only session overview | done | [story-01-ai-pi-companion-surface-overview.md](./story-01-ai-pi-companion-surface-overview.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-24-02 | Session lifecycle controls | backlog | [story-02-session-lifecycle-controls.md](./story-02-session-lifecycle-controls.md) | — |
+| HS-24-02 | Session lifecycle controls | done | [story-02-session-lifecycle-controls.md](./story-02-session-lifecycle-controls.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-24-03 | Confidence and unavailable-target display affordances | backlog | — | — |
 | HS-24-04 | Push/repaint cadence decision | backlog | — | — |
 | HS-24-05 | Productization dogfood and closeout | backlog | — | — |
@@ -82,11 +82,15 @@ the next agent:
 
 ## Where we are
 
-**Paused 2026-05-31** to prioritize Phase 25 (Trust & Hardening). **Both Phase 25
-(functionally; HS-25-07 hardware dogfood still open) and Phase 26 (Web Runtime
-Decomposition, fully) have since progressed/closed** — see the Resume guide above.
-HS-24-01 is the last shipped work; **HS-24-02 is the scaffolded, recommended resume
-point.**
+**Resumed 2026-06-01.** Was paused 2026-05-31 to prioritize Phase 25 (Trust &
+Hardening). Phase 25 (functionally; HS-25-07 hardware dogfood still open) and
+Phase 26 (Web Runtime Decomposition, fully) have since progressed/closed.
+**HS-24-02 is now shipped (2/5):** `/companion` moved from read-only to operable
+— select / dismiss / pin / clear-stale waiting sessions from the browser, mutating
+the same selected-target state the physical device reads. The remaining stories
+(HS-24-03/04/05) are **hardware-gated** (physical AI PI on-site) and stall the same
+way HS-25-07 does while the author is remote; scaffold + tackle them when hardware
+is in hand.
 
 Phase 23 closed with a working physical companion
 loop: AI PI can show long questions, distinguish waiting sessions, cycle the
@@ -97,11 +101,15 @@ The next product risk is operability. The JSON status and device display are
 now truthful, but the user still needs a richer surface for overview and
 recovery when several sessions are waiting or stale.
 
-HS-24-01 is closed. The existing HoldSpeak web portal now has a read-only AI PI
-Companion surface at `/companion`, backed by `/api/companion/status`.
+HS-24-01 and HS-24-02 are closed. The HoldSpeak web portal `/companion` surface
+now both shows and **controls** the companion state: it is backed by
+`/api/companion/status` (now with per-session `stale`/`pinned`/`age_seconds`
+markers) and four control routes — `POST /api/companion/{select,dismiss,pin,clear-stale}`
+— calling the new `agent_context` state functions directly.
 
-Next work is HS-24-02: add lifecycle controls for selecting, dismissing,
-pinning, and clearing stale sessions without editing state files.
+Next work is HS-24-03 (physical display affordances for confidence / unavailable
+targets), which is hardware-gated. Scaffold HS-24-03/04/05 when the physical AI PI
+is on hand.
 
 ## Product problems to solve
 

@@ -5,10 +5,84 @@ function CompanionApp() {
     status: null,
     updatedAt: null,
     refreshTimer: null,
+    busyKey: "",
 
     init() {
       this.refresh();
       this.refreshTimer = setInterval(() => this.refresh(), 3000);
+    },
+
+    sessionKey(item) {
+      return `${item?.session?.agent}:${item?.session?.session_id}`;
+    },
+
+    isBusy(item) {
+      return this.busyKey === this.sessionKey(item);
+    },
+
+    isPinned(item) {
+      return Boolean(item?.pinned ?? item?.session?.pinned);
+    },
+
+    isStale(item) {
+      return Boolean(item?.stale);
+    },
+
+    staleThreshold() {
+      return this.status?.agent?.stale_threshold_seconds ?? 120;
+    },
+
+    async control(path, body, item) {
+      this.busyKey = item ? this.sessionKey(item) : "__global__";
+      try {
+        const response = await fetch(path, {
+          method: "POST",
+          headers: { "content-type": "application/json", accept: "application/json" },
+          body: JSON.stringify(body || {}),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || payload.detail || `HTTP ${response.status}`);
+        }
+        this.error = "";
+        await this.refresh();
+        return payload;
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : String(err || "Action failed");
+        return null;
+      } finally {
+        this.busyKey = "";
+      }
+    },
+
+    select(item) {
+      return this.control("/api/companion/select", {
+        agent: item?.session?.agent,
+        session_id: item?.session?.session_id,
+      }, item);
+    },
+
+    dismiss(item) {
+      return this.control("/api/companion/dismiss", {
+        agent: item?.session?.agent,
+        session_id: item?.session?.session_id,
+      }, item);
+    },
+
+    togglePin(item) {
+      return this.control("/api/companion/pin", {
+        agent: item?.session?.agent,
+        session_id: item?.session?.session_id,
+        pinned: !this.isPinned(item),
+      }, item);
+    },
+
+    clearStale() {
+      return this.control("/api/companion/clear-stale", {}, null);
+    },
+
+    staleCount() {
+      return this.sessions().filter((item) => this.isStale(item)).length;
     },
 
     async refresh() {

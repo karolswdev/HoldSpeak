@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 24
-- **Status:** backlog (ready to pick up — this is the recommended resume point)
+- **Status:** done
 - **Depends on:** HS-24-01 (read-only `/companion` surface)
 - **Unblocks:** HS-24-03, HS-24-05
 - **Owner:** unassigned
@@ -97,16 +97,16 @@ demand — page-content tests that assert on bundled strings need a fresh build.
 
 ## Acceptance criteria
 
-- [ ] From `/companion`, the user can select / dismiss / pin / clear-stale a
+- [x] From `/companion`, the user can select / dismiss / pin / clear-stale a
       waiting session without touching state files; the change is reflected in the
       same selected-target state the physical device reads.
-- [ ] `/api/companion/status` marks stale sessions; pinned sessions are exempt
+- [x] `/api/companion/status` marks stale sessions; pinned sessions are exempt
       from stale-clear and auto-cycle.
-- [ ] New `agent_context` functions covered by unit tests over a tmp state file.
-- [ ] New endpoints covered by integration tests (TestClient) over a tmp state
+- [x] New `agent_context` functions covered by unit tests over a tmp state file.
+- [x] New endpoints covered by integration tests (TestClient) over a tmp state
       file — select/dismiss/pin/clear-stale mutate state and return expected JSON.
-- [ ] Route-inventory diff: only the **new** companion routes added; nothing else
-      changes. Full suite green.
+- [x] Route-inventory diff: only the **new** companion routes added (4 POST
+      `/api/companion/*`); nothing else changes. Full suite green.
 
 ## Test plan
 

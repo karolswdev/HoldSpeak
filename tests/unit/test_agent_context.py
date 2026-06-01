@@ -9,6 +9,7 @@ from types import SimpleNamespace
 from holdspeak.agent_context import (
     claude_hook_template,
     clear_agent_session_response,
+    clear_stale_agent_sessions,
     codex_hook_template,
     detect_repo_root,
     detect_tmux_context,
@@ -19,7 +20,9 @@ from holdspeak.agent_context import (
     load_hs_project_context,
     looks_like_agent_question,
     list_recent_awaiting_agent_sessions,
+    pin_agent_session,
     render_hs_context_for_prompt,
+    select_awaiting_agent_session,
     select_next_awaiting_agent_session,
     set_agent_session_summary,
 )
@@ -494,6 +497,123 @@ def test_clear_agent_session_response_clears_specific_capture(tmp_path: Path) ->
     assert cleared.awaiting_response is False
     assert latest is not None
     assert latest.hook_event_name == "ManualClear"
+
+
+def _ingest_awaiting(
+    state: Path,
+    repo: Path,
+    *,
+    agent: str,
+    session_id: str,
+    text: str,
+    minute: int,
+) -> None:
+    transcript = state.parent / f"{agent}-{session_id}.jsonl"
+    transcript.write_text(
+        json.dumps({"role": "assistant", "content": text}) + "\n",
+        encoding="utf-8",
+    )
+    ingest_agent_hook_event(
+        agent=agent,
+        payload={
+            "session_id": session_id,
+            "hook_event_name": "Stop",
+            "cwd": str(repo),
+            "transcript_path": str(transcript),
+        },
+        state_path=state,
+        now=datetime(2026, 5, 10, 0, minute, tzinfo=timezone.utc),
+        capture_messages=True,
+    )
+
+
+def test_select_awaiting_agent_session_sets_specific_target(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    state = tmp_path / "state.json"
+    _ingest_awaiting(state, repo, agent="codex", session_id="older", text="Older?", minute=1)
+    _ingest_awaiting(state, repo, agent="codex", session_id="newer", text="Newer?", minute=2)
+
+    # Default target is newest; selecting "older" overrides that directly.
+    selected = select_awaiting_agent_session("codex", "older", state_path=state)
+    assert selected is not None
+    assert selected.session_id == "older"
+
+    active = get_recent_awaiting_agent_session(state_path=state, max_age_seconds=10**9)
+    assert active is not None
+    assert active.session_id == "older"
+
+    # Unknown sessions are rejected.
+    assert select_awaiting_agent_session("codex", "ghost", state_path=state) is None
+
+
+def test_pin_agent_session_keeps_target_and_survives_age(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    state = tmp_path / "state.json"
+    _ingest_awaiting(state, repo, agent="claude", session_id="pin-me", text="Proceed?", minute=0)
+
+    pinned = pin_agent_session("claude", "pin-me", True, state_path=state)
+    assert pinned is not None
+    assert pinned.pinned is True
+
+    # Pinning selects it, and it survives well past the recency window.
+    far_future = datetime(2026, 5, 10, 1, 0, tzinfo=timezone.utc)  # +60 min
+    listed = list_recent_awaiting_agent_sessions(state_path=state, max_age_seconds=120)
+    assert [item.session_id for item in listed] == ["pin-me"]
+    selected = get_recent_awaiting_agent_session(state_path=state, max_age_seconds=120)
+    assert selected is not None and selected.session_id == "pin-me"
+
+    # Unpinning lets it age out again.
+    unpinned = pin_agent_session("claude", "pin-me", False, state_path=state)
+    assert unpinned is not None and unpinned.pinned is False
+    aged = select_next_awaiting_agent_session(
+        state_path=state, max_age_seconds=120, now=far_future
+    )
+    assert aged is None  # nothing within 120s once unpinned
+
+
+def test_select_next_refuses_to_cycle_off_pin(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    state = tmp_path / "state.json"
+    _ingest_awaiting(state, repo, agent="codex", session_id="a", text="A?", minute=1)
+    _ingest_awaiting(state, repo, agent="codex", session_id="b", text="B?", minute=2)
+
+    pin_agent_session("codex", "a", True, state_path=state)
+    nxt = select_next_awaiting_agent_session(
+        state_path=state,
+        max_age_seconds=10**9,
+        now=datetime(2026, 5, 10, 0, 5, tzinfo=timezone.utc),
+    )
+    assert nxt is not None
+    assert nxt.session_id == "a"  # refused to advance off the pin
+
+
+def test_clear_stale_agent_sessions_skips_pinned(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    state = tmp_path / "state.json"
+    _ingest_awaiting(state, repo, agent="codex", session_id="stale", text="Stale?", minute=0)
+    _ingest_awaiting(state, repo, agent="codex", session_id="kept", text="Kept?", minute=0)
+    pin_agent_session("codex", "kept", True, state_path=state)
+
+    # Both are ancient relative to `now`; only the non-pinned one clears.
+    cleared = clear_stale_agent_sessions(
+        max_age_seconds=120,
+        state_path=state,
+        now=datetime(2026, 5, 10, 1, 0, tzinfo=timezone.utc),
+    )
+    assert cleared == 1
+    remaining = {
+        item.session_id
+        for item in list_recent_awaiting_agent_sessions(state_path=state, max_age_seconds=10**9)
+    }
+    assert remaining == {"kept"}
 
 
 def test_set_agent_session_summary_persists_derived_context(tmp_path: Path) -> None:

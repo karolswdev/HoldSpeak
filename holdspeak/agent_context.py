@@ -28,6 +28,7 @@ SUPPORTED_AGENTS = {"claude", "codex"}
 STATE_VERSION = 1
 MAX_SESSIONS = 200
 DEFAULT_RECENT_MAX_AGE_SECONDS = 30 * 60
+DEFAULT_STALE_AGENT_SESSION_SECONDS = 120
 DEFAULT_ASSISTANT_CAPTURE_MAX_CHARS = 4_096
 DEFAULT_PROMPT_CAPTURE_MAX_CHARS = 4_096
 
@@ -98,6 +99,7 @@ class AgentSession:
     capture_messages: bool = False
     created_at: Optional[str] = None
     event_count: int = 1
+    pinned: bool = False
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any]) -> "AgentSession":
@@ -126,6 +128,7 @@ class AgentSession:
             capture_messages=bool(raw.get("capture_messages")),
             created_at=_optional_str(raw.get("created_at")),
             event_count=int(raw.get("event_count") or 1),
+            pinned=bool(raw.get("pinned")),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -154,6 +157,7 @@ class AgentSession:
             "capture_messages": self.capture_messages,
             "created_at": self.created_at,
             "event_count": self.event_count,
+            "pinned": self.pinned,
         }
 
 
@@ -247,6 +251,7 @@ def ingest_agent_hook_event(
             capture_messages=effective_capture_messages,
             created_at=_optional_str(previous.get("created_at")) or timestamp,
             event_count=event_count,
+            pinned=bool(previous.get("pinned")),
         )
         sessions[key] = session.to_dict()
         state["version"] = STATE_VERSION
@@ -385,6 +390,10 @@ def select_next_awaiting_agent_session(
             for index, session in enumerate(sessions):
                 if _session_key(session.agent, session.session_id) == selected_key:
                     selected_index = index
+                    # A pinned selection is sticky: refuse to auto-cycle away
+                    # from it. The user must unpin (or select another) to move.
+                    if session.pinned:
+                        return session
                     break
         next_index = (selected_index + 1) % len(sessions)
         selected = sessions[next_index]
@@ -444,7 +453,9 @@ def _recent_awaiting_sessions_from_state(
         if normalized_project_root and session.repo_root != normalized_project_root:
             continue
         updated = _parse_timestamp(session.updated_at)
-        if updated is None or (now - updated).total_seconds() > max_age_seconds:
+        # Pinned sessions stay visible regardless of age — pin is the user's
+        # explicit "keep this as the target" signal (exempt from stale aging).
+        if not session.pinned and (updated is None or (now - updated).total_seconds() > max_age_seconds):
             continue
         candidates.append(session)
     candidates = sorted(
@@ -530,6 +541,143 @@ def clear_agent_session_response(
         state["version"] = STATE_VERSION
         _write_state(state_file, state)
         return cleared
+
+
+def select_awaiting_agent_session(
+    agent: str,
+    session_id: str,
+    *,
+    state_path: Path | None = None,
+    now: datetime | None = None,
+) -> AgentSession | None:
+    """Set the selected reply target to a specific session.
+
+    Unlike `select_next_awaiting_agent_session` (which cycles), this pins the
+    selected-response key to one named session so the web companion can choose
+    a target directly. Returns the selected session, or None if it is unknown.
+    """
+
+    normalized_agent = agent.strip().lower() if isinstance(agent, str) else ""
+    normalized_session_id = session_id.strip() if isinstance(session_id, str) else ""
+    if not normalized_agent or not normalized_session_id:
+        raise ValueError("agent and session_id are required")
+
+    state_file = state_path or AGENT_CONTEXT_FILE
+    key = _session_key(normalized_agent, normalized_session_id)
+    timestamp = _format_timestamp(now or datetime.now(timezone.utc))
+    with _state_lock(state_file):
+        state = _read_state(state_file)
+        raw_sessions = state.get("sessions")
+        if not isinstance(raw_sessions, dict):
+            return None
+        raw = raw_sessions.get(key)
+        if not isinstance(raw, dict):
+            return None
+        state["selected_agent_response"] = {
+            "agent": normalized_agent,
+            "session_id": normalized_session_id,
+            "selected_at": timestamp,
+        }
+        state["version"] = STATE_VERSION
+        _write_state(state_file, state)
+        return AgentSession.from_mapping(raw)
+
+
+def pin_agent_session(
+    agent: str,
+    session_id: str,
+    pinned: bool = True,
+    *,
+    state_path: Path | None = None,
+    now: datetime | None = None,
+) -> AgentSession | None:
+    """Pin (or unpin) a session as the sticky reply target.
+
+    A pinned session stays selected, is exempt from stale pruning + the recency
+    cutoff, and `select_next_awaiting_agent_session` refuses to cycle away from
+    it. Pinning also selects the session. Returns the updated session, or None
+    if it is unknown.
+    """
+
+    normalized_agent = agent.strip().lower() if isinstance(agent, str) else ""
+    normalized_session_id = session_id.strip() if isinstance(session_id, str) else ""
+    if not normalized_agent or not normalized_session_id:
+        raise ValueError("agent and session_id are required")
+
+    state_file = state_path or AGENT_CONTEXT_FILE
+    key = _session_key(normalized_agent, normalized_session_id)
+    timestamp = _format_timestamp(now or datetime.now(timezone.utc))
+    with _state_lock(state_file):
+        state = _read_state(state_file)
+        raw_sessions = state.get("sessions")
+        if not isinstance(raw_sessions, dict):
+            return None
+        raw = raw_sessions.get(key)
+        if not isinstance(raw, dict):
+            return None
+        # Keep updated_at honest (do not refresh age on pin) so the badge still
+        # reflects when the agent actually last spoke.
+        updated = replace(AgentSession.from_mapping(raw), pinned=bool(pinned))
+        raw_sessions[key] = updated.to_dict()
+        if pinned:
+            state["selected_agent_response"] = {
+                "agent": normalized_agent,
+                "session_id": normalized_session_id,
+                "selected_at": timestamp,
+            }
+        state["version"] = STATE_VERSION
+        _write_state(state_file, state)
+        return updated
+
+
+def clear_stale_agent_sessions(
+    *,
+    max_age_seconds: int = DEFAULT_STALE_AGENT_SESSION_SECONDS,
+    state_path: Path | None = None,
+    now: datetime | None = None,
+) -> int:
+    """Clear captured responses for non-pinned awaiting sessions older than the
+    threshold. Returns the number of sessions cleared.
+
+    Non-destructive (mirrors `clear_agent_session_response`): the session record
+    survives but its captured question/response and `awaiting_response` flag are
+    cleared, so it drops out of the waiting list. Pinned sessions are skipped.
+    """
+
+    state_file = state_path or AGENT_CONTEXT_FILE
+    cutoff_now = now or datetime.now(timezone.utc)
+    timestamp = _format_timestamp(cutoff_now)
+    cleared = 0
+    with _state_lock(state_file):
+        state = _read_state(state_file)
+        raw_sessions = state.get("sessions")
+        if not isinstance(raw_sessions, dict):
+            return 0
+        for key, raw in list(raw_sessions.items()):
+            if not isinstance(key, str) or not isinstance(raw, dict):
+                continue
+            session = AgentSession.from_mapping(raw)
+            if session.pinned:
+                continue
+            if not session.awaiting_response and not session.last_assistant_text:
+                continue
+            updated = _parse_timestamp(session.updated_at)
+            if updated is not None and (cutoff_now - updated).total_seconds() <= max_age_seconds:
+                continue
+            raw_sessions[key] = replace(
+                session,
+                updated_at=timestamp,
+                hook_event_name="ManualClear",
+                last_assistant_text=None,
+                last_assistant_text_at=None,
+                summary=None,
+                awaiting_response=False,
+            ).to_dict()
+            cleared += 1
+        if cleared:
+            state["version"] = STATE_VERSION
+            _write_state(state_file, state)
+    return cleared
 
 
 def set_agent_session_summary(

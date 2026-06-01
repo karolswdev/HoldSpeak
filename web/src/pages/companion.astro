@@ -15,8 +15,9 @@ import AppLayout from "../layouts/AppLayout.astro";
         <p class="eyebrow">AI PI Companion</p>
         <h1>Agent sessions</h1>
         <p class="lead">
-          Read-only overview of what AI PI can see: waiting agents, selected
-          reply target, delivery confidence, and runtime readiness.
+          Overview and controls for what AI PI can see: select, pin, dismiss, or
+          clear stale waiting agents, and inspect the selected reply target,
+          delivery confidence, and runtime readiness.
         </p>
       </div>
       <div class="head-actions">
@@ -84,13 +85,23 @@ import AppLayout from "../layouts/AppLayout.astro";
       <div class="section-head">
         <div>
           <h2>Waiting sessions</h2>
-          <p>Newest-first list from the companion status snapshot. Controls land in HS-24-02.</p>
+          <p>Newest-first list from the companion status snapshot. Select, pin, or dismiss any session.</p>
         </div>
+        <button
+          type="button"
+          class="btn"
+          @click="clearStale()"
+          x-show="staleCount() > 0"
+          :disabled="busyKey === '__global__'"
+          x-cloak
+        >
+          <span x-text="`Clear stale (${staleCount()})`">Clear stale</span>
+        </button>
       </div>
 
       <div class="session-list" x-show="sessions().length > 0" x-cloak>
         <template x-for="item in sessions()" :key="`${item.session.agent}:${item.session.session_id}`">
-          <article class="session-card" :class="{ selected: item.selected }">
+          <article class="session-card" :class="{ selected: item.selected, stale: isStale(item), pinned: isPinned(item) }">
             <div class="session-top">
               <div>
                 <h3 x-text="compactLabel(item)">Session</h3>
@@ -100,10 +111,23 @@ import AppLayout from "../layouts/AppLayout.astro";
                   <span x-text="sessionAge(item)"></span>
                 </p>
               </div>
-              <span class="status-chip" :class="confidenceTone(item.identity)" x-text="confidenceLabel(item.identity)">unknown</span>
+              <div class="chip-stack">
+                <span class="status-chip warn" x-show="isStale(item)" x-cloak>Stale</span>
+                <span class="status-chip ready" x-show="isPinned(item)" x-cloak>Pinned</span>
+                <span class="status-chip" :class="confidenceTone(item.identity)" x-text="confidenceLabel(item.identity)">unknown</span>
+              </div>
             </div>
             <p class="question" x-text="question(item)"></p>
             <p class="reason" x-text="item.identity?.confidence_reason || 'No confidence detail reported.'"></p>
+            <div class="session-actions">
+              <button type="button" class="btn" @click="select(item)" :disabled="isBusy(item) || item.selected">
+                <span x-text="item.selected ? 'Selected' : 'Select'">Select</span>
+              </button>
+              <button type="button" class="btn" @click="togglePin(item)" :disabled="isBusy(item)">
+                <span x-text="isPinned(item) ? 'Unpin' : 'Pin'">Pin</span>
+              </button>
+              <button type="button" class="btn" @click="dismiss(item)" :disabled="isBusy(item)">Dismiss</button>
+            </div>
           </article>
         </template>
       </div>
@@ -321,6 +345,25 @@ import AppLayout from "../layouts/AppLayout.astro";
   .session-card.selected {
     border-color: var(--accent);
     background: var(--accent-soft);
+  }
+
+  .session-card.stale {
+    border-color: var(--warn-strong);
+  }
+
+  .chip-stack {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-2);
+  }
+
+  .session-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    border-top: 1px solid var(--line);
+    padding-top: var(--space-3);
   }
 
   .question {

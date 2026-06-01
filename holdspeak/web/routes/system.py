@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import re
 from copy import deepcopy
+from datetime import datetime, timezone
 from typing import Any, Optional
 from urllib.parse import urlparse
 
@@ -25,6 +26,25 @@ log = get_logger("web.routes.system")
 
 # Validates outbound webhook header names on the settings PUT path.
 _HTTP_HEADER_NAME_RE = re.compile(r"^[A-Za-z0-9-]+$")
+
+# The active reply target stays fresh (matches the device path in web_runtime),
+# but the companion overview shows a wider window so the user can see — and
+# recover from — sessions that have gone stale.
+_COMPANION_TARGET_MAX_AGE_SECONDS = 120
+_COMPANION_OVERVIEW_MAX_AGE_SECONDS = 30 * 60
+
+
+def _session_age_seconds(stamp: Optional[str], now: datetime) -> Optional[int]:
+    """Seconds since an ISO-8601 session timestamp, or None if unparseable."""
+    if not isinstance(stamp, str) or not stamp.strip():
+        return None
+    try:
+        parsed = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return max(0, int((now - parsed).total_seconds()))
 
 
 def _meeting_active_from_state(state: dict[str, Any]) -> bool:
@@ -129,6 +149,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
     async def api_companion_status() -> Any:
         """Return one debug snapshot for the AIPI agent companion loop."""
         from ...agent_context import (
+            DEFAULT_STALE_AGENT_SESSION_SECONDS,
             get_recent_awaiting_agent_session,
             list_recent_awaiting_agent_sessions,
         )
@@ -168,9 +189,11 @@ def build_system_router(ctx: WebContext) -> APIRouter:
 
         agent_error: str | None = None
         try:
-            session = get_recent_awaiting_agent_session(max_age_seconds=120)
+            session = get_recent_awaiting_agent_session(
+                max_age_seconds=_COMPANION_TARGET_MAX_AGE_SECONDS
+            )
             agent_sessions = list_recent_awaiting_agent_sessions(
-                max_age_seconds=120,
+                max_age_seconds=_COMPANION_OVERVIEW_MAX_AGE_SECONDS,
                 limit=8,
             )
         except Exception as e:
@@ -220,15 +243,26 @@ def build_system_router(ctx: WebContext) -> APIRouter:
         )
         agent_session_items = []
         selected_index: int | None = None
+        status_now = datetime.now(timezone.utc)
         for index, item in enumerate(agent_sessions):
             item_key = (item.agent, item.session_id)
             selected = item_key == selected_agent_key
             if selected:
                 selected_index = index
+            age_seconds = _session_age_seconds(item.updated_at, status_now)
+            # Pinned sessions are intentionally kept; never badge them stale.
+            stale = (
+                not item.pinned
+                and age_seconds is not None
+                and age_seconds > DEFAULT_STALE_AGENT_SESSION_SECONDS
+            )
             agent_session_items.append(
                 {
                     "index": index,
                     "selected": selected,
+                    "pinned": item.pinned,
+                    "stale": stale,
+                    "age_seconds": age_seconds,
                     "session": item.to_dict(),
                     "identity": build_agent_identity_payload(
                         item,
@@ -285,7 +319,9 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                         "selected_index": selected_index,
                         "items": agent_session_items,
                     },
-                    "max_age_seconds": 120,
+                    "max_age_seconds": _COMPANION_TARGET_MAX_AGE_SECONDS,
+                    "overview_max_age_seconds": _COMPANION_OVERVIEW_MAX_AGE_SECONDS,
+                    "stale_threshold_seconds": DEFAULT_STALE_AGENT_SESSION_SECONDS,
                     "error": agent_error,
                 },
                 "dictation": {
@@ -311,9 +347,95 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                 },
                 "companion": {
                     "query_names": sorted(AGENT_QUERY_NAMES),
-                    "voice_reply_max_age_seconds": 120,
+                    "voice_reply_max_age_seconds": _COMPANION_TARGET_MAX_AGE_SECONDS,
+                    "stale_threshold_seconds": DEFAULT_STALE_AGENT_SESSION_SECONDS,
                 },
             }
+        )
+
+    def _companion_agent_target(payload: Optional[dict[str, Any]]) -> tuple[str, str] | JSONResponse:
+        """Pull a required (agent, session_id) pair from a control-route body."""
+        body = payload if isinstance(payload, dict) else {}
+        agent = body.get("agent")
+        session_id = body.get("session_id")
+        if not isinstance(agent, str) or not agent.strip():
+            return JSONResponse({"error": "agent is required"}, status_code=400)
+        if not isinstance(session_id, str) or not session_id.strip():
+            return JSONResponse({"error": "session_id is required"}, status_code=400)
+        return agent, session_id
+
+    @router.post("/api/companion/select")
+    async def api_companion_select(payload: Optional[dict[str, Any]] = None) -> Any:
+        """Select a specific waiting session as AI PI's active reply target."""
+        from ...agent_context import select_awaiting_agent_session
+
+        target = _companion_agent_target(payload)
+        if isinstance(target, JSONResponse):
+            return target
+        agent, session_id = target
+        session = select_awaiting_agent_session(agent, session_id)
+        if session is None:
+            return JSONResponse(
+                {"success": False, "error": "unknown_session", "session": None},
+                status_code=404,
+            )
+        return JSONResponse({"success": True, "session": session.to_dict()})
+
+    @router.post("/api/companion/dismiss")
+    async def api_companion_dismiss(payload: Optional[dict[str, Any]] = None) -> Any:
+        """Clear a waiting session's captured response (non-destructive)."""
+        from ...agent_context import clear_agent_session_response
+
+        target = _companion_agent_target(payload)
+        if isinstance(target, JSONResponse):
+            return target
+        agent, session_id = target
+        session = clear_agent_session_response(agent=agent, session_id=session_id)
+        return JSONResponse(
+            {
+                "success": session is not None,
+                "session": session.to_dict() if session else None,
+            }
+        )
+
+    @router.post("/api/companion/pin")
+    async def api_companion_pin(payload: Optional[dict[str, Any]] = None) -> Any:
+        """Pin or unpin a waiting session as the sticky reply target."""
+        from ...agent_context import pin_agent_session
+
+        target = _companion_agent_target(payload)
+        if isinstance(target, JSONResponse):
+            return target
+        agent, session_id = target
+        body = payload if isinstance(payload, dict) else {}
+        pinned = bool(body.get("pinned", True))
+        session = pin_agent_session(agent, session_id, pinned)
+        if session is None:
+            return JSONResponse(
+                {"success": False, "error": "unknown_session", "session": None},
+                status_code=404,
+            )
+        return JSONResponse({"success": True, "session": session.to_dict()})
+
+    @router.post("/api/companion/clear-stale")
+    async def api_companion_clear_stale(payload: Optional[dict[str, Any]] = None) -> Any:
+        """Clear all non-pinned waiting sessions older than the threshold."""
+        from ...agent_context import (
+            DEFAULT_STALE_AGENT_SESSION_SECONDS,
+            clear_stale_agent_sessions,
+        )
+
+        body = payload if isinstance(payload, dict) else {}
+        raw_age = body.get("max_age_seconds")
+        try:
+            max_age_seconds = int(raw_age) if raw_age is not None else DEFAULT_STALE_AGENT_SESSION_SECONDS
+        except (TypeError, ValueError):
+            return JSONResponse({"error": "max_age_seconds must be an integer"}, status_code=400)
+        if max_age_seconds < 0:
+            return JSONResponse({"error": "max_age_seconds must be >= 0"}, status_code=400)
+        cleared = clear_stale_agent_sessions(max_age_seconds=max_age_seconds)
+        return JSONResponse(
+            {"success": True, "cleared": cleared, "max_age_seconds": max_age_seconds}
         )
 
     @router.get("/api/settings")
