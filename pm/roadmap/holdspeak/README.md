@@ -4,9 +4,9 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-06-01 (Phase 16 **DONE (5/5)** — first real LLM-backed plugin shipped end-to-end: transcript → `mermaid_architecture` → `diagram` artifact → inline SVG in `/history`. Closeout (HS-16-05): RFC reality-checked (13 plugins shipped/stub + Appendix A), calibration recorded (Q6 100% / Q4 0% / cloud untested), `final-summary.md` written. Suite green at 1902 passed).
-**Current phase:** none active — Phase 16 just closed. Next candidates: **Phase 15** (out-and-about, `not-started`, software-only, auth-unblocked by HS-25-02) is the lowest non-done phase; or continue **Phase 24** (companion productization, 2/5, HS-24-03/04/05 hardware-gated); or **Phase 17** (flip the remaining 12 plugin stubs to real, re-using the phase-16 pattern). Phase 25 stays formally open, blocked only on HS-25-07's in-person dogfood.
-**Status:** between phases (Phase 16 delivered; transcript→LLM→artifact→rendered-diagram path live).
+**Last updated:** 2026-06-01 (Phase 16 closed; **Phase 27 scaffolded** — ubiquitous plugins (`action_owner_enforcer`, decisions/open-questions) + a real spoken-meeting e2e harness (`say`→Whisper→MIR→plugins→web screenshots), continuing Phase 16. Suite green at 1902 passed).
+**Current phase:** [phase-27-ubiquitous-plugins-and-e2e](./phase-27-ubiquitous-plugins-and-e2e/current-phase-status.md) — `not-started`, scaffolded (5 stories). Software-only. Other open tracks: **Phase 15** (out-and-about, `not-started`, software-only); **Phase 24** (companion productization, 2/5, HS-24-03/04/05 hardware-gated); **Phase 25** open (HS-25-07 hardware dogfood). NB: "Phase 17" in the index is an unrelated done phase — the plugin-rollout follow-on is **27**.
+**Status:** Phase 27 scaffolded, not started.
 
 ## Vision
 
@@ -70,6 +70,7 @@ canon, canon wins.
 | 24 | AI PI Companion Productization: web companion overview, stale-session controls, confidence affordances, and display update cadence | in-progress (2/5) | [phase-24-ai-pi-companion-productization](./phase-24-ai-pi-companion-productization/) |
 | 25 | Trust & Hardening: no silent cloud egress, web-runtime auth + bind guard, threat-model/encryption-at-rest doc, LLM-runtime thread-safety, transcription timeout, config-knob audit. Prerequisite to Phase 15. | in-progress | [phase-25-trust-and-hardening](./phase-25-trust-and-hardening/) |
 | 26 | Web Runtime Decomposition: break the `web_server.py` monolith into route modules + a shared context, behavior-preserving. Fast-follow to Phase 25. | done | [phase-26-web-runtime-decomposition](./phase-26-web-runtime-decomposition/) |
+| 27 | Ubiquitous plugins + spoken-meeting e2e: flip the highest-value stub plugins to real (`action_owner_enforcer`, decisions/open-questions, requirements) re-using the Phase-16 pattern, and add a real `say`→Whisper→MIR→plugins→web spoken-meeting end-to-end harness with screenshots. Continuation of Phase 16. | not-started | [phase-27-ubiquitous-plugins-and-e2e](./phase-27-ubiquitous-plugins-and-e2e/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

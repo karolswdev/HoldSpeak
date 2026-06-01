@@ -286,9 +286,11 @@ stories. "Shipped" is defined in Appendix A.
 | `runbook_delta` | ⚠️ stub | diff of runbook changes implied by the meeting |
 | `decision_announcement_drafter` | ⚠️ stub | decision announcement draft |
 
-Phase 17+ flips the remaining twelve to real, re-using the `mermaid_architecture`
-pattern (LLM call → parse/validate → structured output → synthesis body → web
-render) proven in phase 16.
+A follow-on plugin-rollout phase (HoldSpeak **Phase 27** — phase 17 was already
+taken by an unrelated effort) flips the remaining twelve to real, re-using the
+`mermaid_architecture` pattern (LLM call → parse/validate → structured output →
+synthesis body → web render) proven in phase 16, leading with the most ubiquitous
+plugins (`action_owner_enforcer`, decisions/open-questions) rather than niche ones.
 
 ## Routing Policy (v1)
 
