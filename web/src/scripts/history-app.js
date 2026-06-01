@@ -783,6 +783,43 @@ function historyApp() {
       return renderBriefingMarkdown(md);
     },
 
+    // HS-16-04: render a diagram artifact's Mermaid (from structured_json) as
+    // inline SVG. mermaid.js is loaded lazily via window.__loadMermaid (a code
+    // -split chunk wired in history.astro), so non-diagram views never pay the
+    // bundle cost. On any render failure we fall back to the raw source plus a
+    // small warning rather than throwing or blanking the card. securityLevel
+    // 'strict' (mermaid 11 default) disables HTML in labels.
+    async renderMermaid(el, code) {
+      if (!el || !code || typeof window.__loadMermaid !== "function") return;
+      try {
+        const mermaid = await window.__loadMermaid();
+        if (!window.__mermaidInited) {
+          // suppressErrorRendering: don't let mermaid inject its "syntax error"
+          // bomb SVG into the DOM on failure — we own the fallback below.
+          mermaid.initialize({
+            startOnLoad: false,
+            securityLevel: "strict",
+            suppressErrorRendering: true,
+            theme: "dark",
+          });
+          window.__mermaidInited = true;
+        }
+        this._mermaidSeq = (this._mermaidSeq || 0) + 1;
+        const { svg } = await mermaid.render(`hs-mermaid-${this._mermaidSeq}`, code);
+        el.innerHTML = svg;
+      } catch (err) {
+        console.error("Mermaid render failed:", err);
+        el.replaceChildren();
+        const warn = document.createElement("div");
+        warn.className = "mermaid-render-error";
+        warn.textContent = "Diagram could not be rendered — showing source.";
+        const pre = document.createElement("pre");
+        pre.className = "mermaid-source";
+        pre.textContent = code;
+        el.append(warn, pre);
+      }
+    },
+
     async runProjectBriefing() {
       if (!this.selectedProject) return;
       if (this.briefingRunInProgress) return;

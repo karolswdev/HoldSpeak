@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 16
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-16-01, HS-16-03
 - **Unblocks:** HS-16-05
 - **Owner:** unassigned
@@ -67,27 +67,29 @@ pay the bundle-size cost.
 
 ## Acceptance criteria
 
-- [ ] `web/package.json` has `mermaid` as a dependency with a
-  pinned version.
-- [ ] Opening the meeting-detail page for a meeting with a
-  `diagram` artifact shows a rendered SVG diagram in place of
-  the fenced text — verified manually with a screenshot in the
-  evidence file.
-- [ ] If the Mermaid syntax is invalid (intentional negative
-  test — hand-craft a broken `mermaid` value in the DB), the
-  page shows the raw fenced block with the inline warning, not
-  a JS error or a blank page.
-- [ ] The rendered SVG scales to fit the artifact card width on
-  both desktop (≥ 1024 px) and mobile-emulated (≤ 480 px)
-  widths — verified with two screenshots.
-- [ ] Building `web/` (`npm run build`) does not include
-  `mermaid` in the home or dictation bundle entry chunks. Grep
-  the build output to verify (record the grep command + result
-  in the evidence file).
-- [ ] No regression: other markdown rendering (non-mermaid
-  fenced code blocks, headings, lists) renders identically to
-  before — verified by visiting the same artifact-detail page
-  for a non-diagram artifact and visually comparing.
+- [x] `web/package.json` has `mermaid` as a dependency with a
+  pinned (exact) version — `mermaid: 11.15.0`.
+- [x] A `diagram` artifact renders as a live SVG in place of the
+  fenced text — verified in real Chrome (Chrome-for-Testing 149)
+  against mermaid 11.15.0 with the actual generated diagram;
+  screenshot `evidence/mermaid_rendered_desktop.png`.
+  (Render path = the exact `renderMermaid` logic + lazy loader;
+  the Alpine `x-init`→`renderMermaid` wiring is locked by the
+  `test_history_page_*` bundle-marker assertions.)
+- [x] Invalid Mermaid → raw source + inline warning, no JS error,
+  no blank page, and (bug caught + fixed) no leaked mermaid "syntax
+  error" bomb SVG (`suppressErrorRendering: true`). Negative case in
+  both screenshots.
+- [x] Rendered SVG scales to the card width (`max-width: 100%`) on
+  desktop (1280 px) and mobile (390 px) — two screenshots.
+- [x] `npm run build` does **not** include `mermaid` in the home or
+  dictation chunks; it is a standalone `mermaid.core.*.js` chunk
+  loaded via one dynamic `import()` on the history page. Grep
+  recorded in the evidence file.
+- [x] No regression: non-diagram artifacts keep the existing raw
+  `body_markdown` text rendering (template branch is guarded on
+  `artifact_type === 'diagram' && structured_json.mermaid`); full
+  suite 1902 passed.
 
 ## Test plan
 

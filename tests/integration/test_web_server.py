@@ -1768,6 +1768,8 @@ class TestHistoryUiSmoke:
             "selectedMeetingArtifacts",  # x-show binding on the artifacts panel.
             "setActionReviewState",  # @click binding on Accept/Mark needs review.
             "downloadSelectedMeetingExport",  # @click binding on export buttons.
+            "mermaid-artifact",  # HS-16-04: diagram-artifact render container.
+            "renderMermaid",  # HS-16-04: x-init hook on the diagram container.
         ):
             assert ui_string in html
 
@@ -1784,6 +1786,7 @@ class TestHistoryUiSmoke:
             "retryPluginJob",
             "cancelPluginJob",
             "actionReviewFilter",
+            "renderMermaid",  # HS-16-04: diagram render method in the bundle.
         ):
             assert marker in js, f"missing JS marker: {marker}"
         for endpoint in (

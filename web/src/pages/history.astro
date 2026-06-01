@@ -938,7 +938,12 @@ import AppLayout from "../layouts/AppLayout.astro";
                         <span class="pill" x-text="formatDate(artifact.created_at)"></span>
                         <span class="pill" x-show="artifact.sources?.length" x-cloak x-text="`${artifact.sources.length} sources`"></span>
                       </div>
-                      <p class="meta-line" x-show="artifact.body_markdown" x-cloak x-text="artifact.body_markdown"></p>
+                      <template x-if="artifact.artifact_type === 'diagram' && artifact.structured_json && artifact.structured_json.mermaid">
+                        <div class="mermaid-artifact" x-init="renderMermaid($el, artifact.structured_json.mermaid)"></div>
+                      </template>
+                      <p class="meta-line"
+                         x-show="artifact.body_markdown && !(artifact.artifact_type === 'diagram' && artifact.structured_json && artifact.structured_json.mermaid)"
+                         x-cloak x-text="artifact.body_markdown"></p>
                     </div>
                   </template>
                 </div>
@@ -965,6 +970,12 @@ import AppLayout from "../layouts/AppLayout.astro";
       sharedSource + "\n" + factorySource + "; return historyApp;"
     );
     window.historyApp = fn();
+
+    // HS-16-04: lazy mermaid loader. The dynamic import() lives in this real
+    // module so the bundler code-splits mermaid.js into its own chunk, fetched
+    // only when a diagram artifact is actually rendered (renderMermaid). The
+    // raw-string historyApp can't carry a resolvable bare import itself.
+    window.__loadMermaid = () => import("mermaid").then((m) => m.default ?? m);
 
     if (!window.Alpine) {
       window.Alpine = Alpine;
@@ -1355,6 +1366,29 @@ import AppLayout from "../layouts/AppLayout.astro";
   }
   .meta-inline { margin-left: var(--space-3); }
   .mono { font-family: var(--font-mono); color: var(--text-faint); }
+
+  /* HS-16-04: rendered Mermaid diagram artifact. */
+  .mermaid-artifact {
+    margin-top: var(--space-2);
+    overflow-x: auto;
+  }
+  .mermaid-artifact :global(svg) {
+    max-width: 100%;
+    height: auto;
+  }
+  .mermaid-render-error {
+    color: var(--warn-strong, #b45309);
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--space-2);
+  }
+  .mermaid-source {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin: 0;
+  }
 
   .action-controls {
     display: flex;

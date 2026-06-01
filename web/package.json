@@ -18,6 +18,7 @@
     "open-props": "^1.7.13"
   },
   "dependencies": {
-    "alpinejs": "^3.15.12"
+    "alpinejs": "^3.15.12",
+    "mermaid": "11.15.0"
   }
 }

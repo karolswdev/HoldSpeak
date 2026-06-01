@@ -1,6 +1,6 @@
 # Phase 16 — First real synthesizer: `mermaid_architecture`
 
-**Last updated:** 2026-06-01 (HS-16-03 shipped — `synthesize_meeting_artifacts` now embeds the plugin's fenced ```mermaid block in a `diagram` artifact's `body_markdown` + a `structured_json["mermaid"]` key; non-diagram bodies are byte-for-byte unchanged. Verified live: real plugin → synthesis → artifact body holds one valid fenced diagram. HS-16-04..05 pending). Resumed from `paused`; 3/5 shipped.
+**Last updated:** 2026-06-01 (HS-16-04 shipped — `diagram` artifacts now render as live SVG in the `/history` detail via lazy-loaded mermaid.js 11.15.0 (`structured_json.mermaid` → `renderMermaid`), with a raw-source + warning fallback on invalid syntax (`suppressErrorRendering`); verified in real Chrome with desktop+mobile screenshots; mermaid is a standalone lazy chunk (absent from home/dictation). HS-16-05 pending). Resumed from `paused`; 4/5 shipped.
 
 ## Goal
 
@@ -90,9 +90,10 @@ pattern with no new substrate work.
   and a valid mermaid body. (HS-16-01, 1 case green; the body's
   fenced ```mermaid block is HS-16-03's responsibility — this test
   asserts artifact existence + type + plugin_id only.)
-- [ ] Manual: open the meeting-detail page for that test artifact;
-  the mermaid block renders as an SVG diagram, not raw text.
-  Screenshot in HS-16-04's evidence file.
+- [x] Manual: the mermaid block renders as an SVG diagram, not raw text
+  (HS-16-04). Verified in real Chrome (mermaid 11.15.0) with
+  desktop+mobile screenshots in `evidence/`; invalid syntax falls back
+  to raw source + warning (no leaked error graphic).
 - [ ] `docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` updated: §"Initial
   Built-In Plugins" annotated with shipped/stub status; appendix on
   "what 'shipped' means" added.
@@ -109,7 +110,7 @@ pattern with no new substrate work.
 | HS-16-01 | Real `mermaid_architecture` plugin (LLM call + parse + structured output) | done | [story-01-mermaid-architecture-plugin.md](./story-01-mermaid-architecture-plugin.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-16-02 | LLM capability gate wired at host instantiation | done | [story-02-llm-capability-gate.md](./story-02-llm-capability-gate.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-16-03 | Diagram-aware artifact body in `synthesize_meeting_artifacts` | done | [story-03-diagram-artifact-rendering.md](./story-03-diagram-artifact-rendering.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-16-04 | Web: render `mermaid` artifacts as inline SVG via mermaid.js | backlog | [story-04-web-mermaid-rendering.md](./story-04-web-mermaid-rendering.md) | — |
+| HS-16-04 | Web: render `mermaid` artifacts as inline SVG via mermaid.js | done | [story-04-web-mermaid-rendering.md](./story-04-web-mermaid-rendering.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-16-05 | RFC reality-check + phase exit (DoD, calibration, final summary) | backlog | [story-05-rfc-reality-check.md](./story-05-rfc-reality-check.md) | — |
 
 ## Where we are
@@ -148,11 +149,21 @@ shipped same day: `synthesize_meeting_artifacts` embeds the fenced
 exact legacy body. Verified live end-to-end (plugin → synthesis →
 artifact body has one valid fenced diagram). Full suite green at 1902.
 
-Pickup: HS-16-04 — render `mermaid` artifacts as inline SVG via
-mermaid.js in the web meeting-detail view (lazy-loaded only on routes
-with a diagram artifact). The artifact body now carries the fenced
-block and `structured_json.mermaid`, so the web layer can read either.
-This is the first story needing a browser smoke check (not hardware).
+HS-16-04 shipped 2026-06-01: `/history` renders `diagram` artifacts as
+live SVG via mermaid.js 11.15.0, lazy-loaded (a standalone
+`mermaid.core.*.js` chunk fetched only when a diagram is shown). Invalid
+syntax falls back to raw source + an inline warning, with
+`suppressErrorRendering` so mermaid's own error graphic never leaks in.
+Verified in real Chrome (desktop + mobile screenshots in `evidence/`);
+wiring locked by `test_history_page_*` bundle markers.
+
+Pickup: HS-16-05 — RFC reality-check + phase exit. Annotate
+`docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` (mermaid_architecture ✅ shipped,
+the other twelve ⚠️ stubs), record LLM-quality calibration data, and
+write `final-summary.md`. The whole transcript→LLM→artifact→rendered-SVG
+path is now live end-to-end, so 05 is mostly documentation + closeout.
+(Per the project's no-spike preference, the calibration can stay light —
+the configured Qwen3.5-9B-Q6 endpoint already produces clean diagrams.)
 
 ## Active risks
 
