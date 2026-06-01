@@ -131,6 +131,35 @@ def _resolve_cloud_api_key(api_key_env: Optional[str]) -> Optional[str]:
     return None
 
 
+# Self-hosted OpenAI-compatible servers (llama.cpp, LM Studio, Ollama, vLLM)
+# ignore the API key, but the OpenAI SDK rejects an empty one. When a custom
+# base_url is configured we therefore treat the key as optional and fall back
+# to this placeholder so the client can still connect.
+SELF_HOSTED_CLOUD_API_KEY_PLACEHOLDER = "sk-no-key-required"
+
+
+def _is_self_hosted_base_url(base_url: Optional[str]) -> bool:
+    """True when a custom (non-default) cloud base URL is configured."""
+    return bool(base_url and base_url.strip())
+
+
+def _effective_cloud_api_key(
+    api_key_env: Optional[str], base_url: Optional[str]
+) -> Optional[str]:
+    """Resolve the key to hand the OpenAI client.
+
+    Returns the env key when set. For a self-hosted endpoint (any custom
+    ``base_url``) with no key, returns a placeholder so the SDK can connect.
+    Returns ``None`` only when talking to the default OpenAI API with no key.
+    """
+    key = _resolve_cloud_api_key(api_key_env)
+    if key:
+        return key
+    if _is_self_hosted_base_url(base_url):
+        return SELF_HOSTED_CLOUD_API_KEY_PLACEHOLDER
+    return None
+
+
 def _validate_base_url(base_url: Optional[str]) -> Optional[str]:
     if not base_url:
         return None
@@ -174,7 +203,9 @@ def get_cloud_intel_runtime_status(
     if base_url_error is not None:
         return False, base_url_error
 
-    if not _resolve_cloud_api_key(cloud_api_key_env):
+    # A custom base_url means a self-hosted server that ignores the key, so
+    # only the default OpenAI endpoint actually requires one.
+    if not _effective_cloud_api_key(cloud_api_key_env, cloud_base_url):
         return False, f"Missing API key in ${cloud_api_key_env}"
 
     return True, None
@@ -525,7 +556,7 @@ class MeetingIntel:
                 "openai package is not available. Install dependencies first."
             ) from _OPENAI_IMPORT_ERROR
 
-        api_key = _resolve_cloud_api_key(self.cloud_api_key_env)
+        api_key = _effective_cloud_api_key(self.cloud_api_key_env, self.cloud_base_url)
         if not api_key:
             raise MeetingIntelError(f"Missing API key in ${self.cloud_api_key_env}")
 

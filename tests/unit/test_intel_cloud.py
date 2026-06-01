@@ -36,6 +36,59 @@ def test_get_cloud_runtime_status_requires_api_key(monkeypatch) -> None:
     assert "OPENAI_API_KEY" in reason
 
 
+def test_get_cloud_runtime_status_allows_self_hosted_base_url_without_key(monkeypatch) -> None:
+    # llama.cpp / LM Studio / Ollama ignore the key; a custom base_url should
+    # resolve even with no OPENAI_API_KEY set.
+    monkeypatch.setattr(intel_module, "OpenAI", object)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    ok, reason = get_cloud_intel_runtime_status(
+        cloud_model="Qwen3.5-9B-UD-Q6_K_XL.gguf",
+        cloud_api_key_env="OPENAI_API_KEY",
+        cloud_base_url="http://192.168.1.43:8080/v1",
+    )
+
+    assert ok is True
+    assert reason is None
+
+
+def test_meeting_intel_self_hosted_uses_placeholder_key(monkeypatch) -> None:
+    class _FakeCompletions:
+        def create(self, **kwargs):
+            return SimpleNamespace(
+                choices=[
+                    SimpleNamespace(
+                        message=SimpleNamespace(
+                            content='{"topics":[],"action_items":[],"summary":"ok"}'
+                        )
+                    )
+                ]
+            )
+
+    class _FakeOpenAI:
+        instances: list[dict] = []
+
+        def __init__(self, **kwargs):
+            self.__class__.instances.append(kwargs)
+            self.chat = SimpleNamespace(completions=_FakeCompletions())
+
+    monkeypatch.setattr(intel_module, "OpenAI", _FakeOpenAI)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    intel = MeetingIntel(
+        provider="cloud",
+        cloud_model="Qwen3.5-9B-UD-Q6_K_XL.gguf",
+        cloud_api_key_env="OPENAI_API_KEY",
+        cloud_base_url="http://192.168.1.43:8080/v1",
+    )
+    result = intel.analyze("[00:00:00] Me: ship it", stream=False)
+
+    assert result.summary == "ok"
+    assert _FakeOpenAI.instances
+    assert _FakeOpenAI.instances[0]["api_key"] == intel_module.SELF_HOSTED_CLOUD_API_KEY_PLACEHOLDER
+    assert _FakeOpenAI.instances[0]["base_url"] == "http://192.168.1.43:8080/v1"
+
+
 def test_get_cloud_runtime_status_rejects_invalid_base_url(monkeypatch) -> None:
     monkeypatch.setattr(intel_module, "OpenAI", object)
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
