@@ -1,6 +1,6 @@
 # Phase 27 — Ubiquitous plugins + spoken-meeting e2e
 
-**Last updated:** 2026-06-01 (HS-27-02 shipped — real spoken-meeting e2e (`say` → Whisper → real `.43` plugins → temp DB → `MeetingWebServer` → **Playwright** screenshots), opt-in + skip-guarded. It surfaced two real gaps, now fixed: plugins ignored the configured provider (→ `build_configured_meeting_intel`, commit `fe9c0e8`) and action-items rendered as a raw-markdown blob (→ a structured checklist render in `/history` with friendly gap labels). Phase **in-progress, 2/5**).
+**Last updated:** 2026-06-01 (HS-27-03 shipped — net-new `decision_capture` plugin (decisions + open questions), wired into the **balanced** base chain so it fires on every default meeting; `artifact_type="decisions"` with a structured `/history` render (Decisions / Open questions). The spoken e2e now exercises all three plugins and screenshots them. Phase **in-progress, 3/5**).
 
 > Lineage note: Phase 16 (`first-real-plugin`) proved the LLM-backed plugin
 > pattern end-to-end with `mermaid_architecture`. Its docs refer to "phase 17" as
@@ -73,7 +73,7 @@ The substrate is already proven (Phase 16); this phase is about **breadth**
 |---|---|---|---|---|
 | HS-27-01 | `action_owner_enforcer` — real run (ubiquity champion) | done | [story-01-action-owner-enforcer.md](./story-01-action-owner-enforcer.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-27-02 | Spoken-meeting e2e harness (`say` → pipeline → screenshots) | done | [story-02-spoken-meeting-e2e.md](./story-02-spoken-meeting-e2e.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-27-03 | `decision_capture` — decisions + open questions (net-new, ubiquitous) | backlog | [story-03-decision-capture.md](./story-03-decision-capture.md) | — |
+| HS-27-03 | `decision_capture` — decisions + open questions (net-new, ubiquitous) | done | [story-03-decision-capture.md](./story-03-decision-capture.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-27-04 | `requirements_extractor` — real run | backlog | [story-04-requirements-extractor.md](./story-04-requirements-extractor.md) | — |
 | HS-27-05 | RFC reality-check refresh + phase exit | backlog | [story-05-phase-exit.md](./story-05-phase-exit.md) | — |
 
@@ -92,12 +92,16 @@ action-item checklist screenshot). It earned its keep immediately — it caught 
 configured-provider wiring gap and the raw-markdown action-items rendering, both
 now fixed.
 
-Pickup: **HS-27-03** (`decision_capture` — decisions + open questions, the
-ubiquitous net-new plugin) then **HS-27-04** (`requirements_extractor`) — both
-shipping this phase per Karol's decision — then **HS-27-05** (close). New
-text-output plugins should add a structured web render like action-items got
-(the raw-markdown `body_markdown` path is not acceptable UX); the e2e can grow to
-cover them too.
+**HS-27-03 shipped:** `decision_capture` is live on the balanced base chain with
+a structured Decisions / Open-questions render; the spoken e2e now demonstrates
+three real plugins together (diagram + action items + decisions).
+
+Pickup: **HS-27-04** (`requirements_extractor` — flip the existing stub, with its
+own structured render) then **HS-27-05** (close). Pattern is now well-trodden:
+real plugin → register in `_REAL_PLUGINS` → `_ARTIFACT_TYPE_BY_PLUGIN` →
+structured synthesis body + `structured_json` → structured web render → unit +
+synthesis tests → extend the e2e. New text-output plugins must ship a structured
+render (never the raw-markdown `body_markdown` path).
 
 ## Active risks
 

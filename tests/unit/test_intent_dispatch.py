@@ -97,6 +97,7 @@ _BALANCED_DELIVERY_CHAIN = (
     "project_detector",
     "requirements_extractor",
     "action_owner_enforcer",
+    "decision_capture",  # HS-27-03: rides the balanced base chain
     "milestone_planner",
     "dependency_mapper",
 )
@@ -150,12 +151,13 @@ def test_dispatch_window_isolates_plugin_failure_mir_r_004() -> None:
 
 def test_dispatch_windows_preserves_window_order_with_typed_records() -> None:
     # Use a no-active-intents score so the chain stays at the balanced base
-    # (project_detector + requirements_extractor + action_owner_enforcer = 3 plugins),
-    # keeping the test assertion-shape readable.
+    # (project_detector + requirements_extractor + action_owner_enforcer +
+    # decision_capture = 4 plugins), keeping the test assertion-shape readable.
     host, stubs = _build_host_with(
         "project_detector",
         "requirements_extractor",
         "action_owner_enforcer",
+        "decision_capture",
     )
 
     w1 = _window("m1:w0001", "Some unrelated text one.")
@@ -171,11 +173,11 @@ def test_dispatch_windows_preserves_window_order_with_typed_records() -> None:
 
     runs = dispatch_windows(host, pairs, profile="balanced")
 
-    # 3 plugins per window × 3 windows = 9 records, in document order.
+    # 4 plugins per window × 3 windows = 12 records, in document order.
     assert [r.window_id for r in runs] == [
-        "m1:w0001", "m1:w0001", "m1:w0001",
-        "m1:w0002", "m1:w0002", "m1:w0002",
-        "m1:w0003", "m1:w0003", "m1:w0003",
+        "m1:w0001", "m1:w0001", "m1:w0001", "m1:w0001",
+        "m1:w0002", "m1:w0002", "m1:w0002", "m1:w0002",
+        "m1:w0003", "m1:w0003", "m1:w0003", "m1:w0003",
     ]
     assert all(r.status == "success" for r in runs)
     # Each plugin executed exactly once per distinct (window_id, transcript_hash).

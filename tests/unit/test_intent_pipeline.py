@@ -82,6 +82,7 @@ def _balanced_host() -> PluginHost:
         "stakeholder_update_drafter",
         "decision_announcement_drafter",
         "runbook_delta",
+        "decision_capture",
     ):
         host.register(StubPlugin(pid))
     return host

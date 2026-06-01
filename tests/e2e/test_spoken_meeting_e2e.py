@@ -141,7 +141,9 @@ def test_spoken_meeting_end_to_end(tmp_path):
         "project_name": "Spoken E2E",
         "active_intents": ["architecture", "delivery"],
     }
-    for window, plugin_id in enumerate(("mermaid_architecture", "action_owner_enforcer")):
+    for window, plugin_id in enumerate(
+        ("mermaid_architecture", "action_owner_enforcer", "decision_capture")
+    ):
         host.execute(
             plugin_id,
             context=context,
@@ -156,11 +158,13 @@ def test_spoken_meeting_end_to_end(tmp_path):
             break
         results.append(result)
     by_id = {r.plugin_id: r for r in results}
-    assert by_id["mermaid_architecture"].status == "success", by_id["mermaid_architecture"].error
-    assert by_id["action_owner_enforcer"].status == "success", by_id["action_owner_enforcer"].error
+    for pid in ("mermaid_architecture", "action_owner_enforcer", "decision_capture"):
+        assert by_id[pid].status == "success", by_id[pid].error
     # The plugins must have produced real content (not their failure shape).
     assert by_id["mermaid_architecture"].output.get("mermaid"), "no mermaid block produced"
     assert by_id["action_owner_enforcer"].output.get("action_items"), "no action items produced"
+    decision_out = by_id["decision_capture"].output
+    assert decision_out.get("decisions") or decision_out.get("open_questions"), "no decisions produced"
 
     # --- 4. persist meeting + transcript + artifacts into a temp DB --------
     reset_database()
@@ -185,6 +189,8 @@ def test_spoken_meeting_end_to_end(tmp_path):
     by_type = {d.artifact_type: d for d in drafts}
     assert by_type.get("diagram") and by_type["diagram"].structured_json.get("mermaid")
     assert by_type.get("action_items") and by_type["action_items"].structured_json.get("action_items")
+    decisions_sj = by_type.get("decisions") and by_type["decisions"].structured_json
+    assert decisions_sj and (decisions_sj.get("decisions") or decisions_sj.get("open_questions"))
     print(f"[e2e] artifacts: {sorted(by_type)}")
 
     # --- 5. serve + 6. Playwright screenshot -------------------------------
@@ -207,12 +213,14 @@ def test_spoken_meeting_end_to_end(tmp_path):
             page.locator("button.meeting-card").first.click()
             page.wait_for_selector(".mermaid-artifact svg", timeout=15000)
             page.wait_for_selector(".action-item-list .action-item", timeout=15000)
+            page.wait_for_selector(".decisions-artifact .decision-list li", timeout=15000)
             # transcript panel populated from the persisted segments
             page.wait_for_selector(".transcript-list .segment", timeout=15000)
             shot = os.path.join(EVIDENCE_DIR, "spoken_meeting_artifacts.png")
             page.screenshot(path=shot, full_page=True)
             assert page.locator(".mermaid-artifact svg").count() >= 1
             assert page.locator(".action-item-list .action-item").count() >= 1
+            assert page.locator(".decisions-artifact .decision-list li").count() >= 1
             browser.close()
         print(f"[e2e] screenshot saved: {shot}")
     finally:

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 27
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-27-01 (pattern for a text artifact + new-plugin registration)
 - **Unblocks:** HS-27-05
 - **Owner:** unassigned
@@ -42,12 +42,17 @@ artifact type, not just a stub flip.
 
 ## Acceptance criteria
 
-- [ ] New `decision_capture` plugin registered + artifact type mapped; real
-      `run()` returns the validated decisions/open-questions payload.
-- [ ] Routed onto the common meeting intent chains (fires broadly, not niche).
-- [ ] Parse-failure + capability-blocked paths covered; non-`decisions` bodies
-      byte-for-byte unchanged if a custom body is added.
-- [ ] Tests green; full sweep green.
+- [x] New `decision_capture` plugin registered (`_BUILTIN_PLUGIN_DEFS` +
+      `_REAL_PLUGINS`) + `artifact_type="decisions"` mapped; real `run()` returns
+      the validated decisions/open-questions payload.
+- [x] Routed onto the **balanced** (default) base chain → fires on every
+      balanced meeting regardless of intent. (Other profiles can opt in later.)
+- [x] Parse-failure + empty + capability-blocked paths covered; non-`decisions`
+      bodies byte-for-byte unchanged (regression test still green).
+- [x] Structured web render (Decisions / Open questions) in `/history`, not a
+      raw-markdown dump — the lesson from HS-27-02.
+- [x] Tests green; full sweep 1926 passed. Verified live in the spoken e2e
+      (decisions + open questions extracted + rendered).
 
 ## Test plan
 

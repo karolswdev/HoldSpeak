@@ -805,6 +805,22 @@ function historyApp() {
       );
     },
 
+    decisionsFor(artifact) {
+      if (artifact?.artifact_type !== "decisions") return [];
+      const items = artifact?.structured_json?.decisions;
+      return Array.isArray(items) ? items : [];
+    },
+
+    openQuestionsFor(artifact) {
+      if (artifact?.artifact_type !== "decisions") return [];
+      const items = artifact?.structured_json?.open_questions;
+      return Array.isArray(items) ? items : [];
+    },
+
+    hasDecisions(artifact) {
+      return this.decisionsFor(artifact).length > 0 || this.openQuestionsFor(artifact).length > 0;
+    },
+
     // HS-16-04: render a diagram artifact's Mermaid (from structured_json) as
     // inline SVG. mermaid.js is loaded lazily via window.__loadMermaid (a code
     // -split chunk wired in history.astro), so non-diagram views never pay the

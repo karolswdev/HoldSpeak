@@ -65,6 +65,7 @@ def _full_host() -> tuple[PluginHost, dict[str, _StubPlugin]]:
         "stakeholder_update_drafter",
         "decision_announcement_drafter",
         "runbook_delta",
+        "decision_capture",
     ):
         stub = _StubPlugin(pid)
         stubs[pid] = stub

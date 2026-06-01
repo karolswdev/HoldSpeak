@@ -14,6 +14,7 @@ _ARTIFACT_TYPE_BY_PLUGIN: dict[str, str] = {
     "requirements_extractor": "requirements",
     "action_owner_enforcer": "action_items",
     "mermaid_architecture": "diagram",
+    "decision_capture": "decisions",
     "adr_drafter": "adr",
     "milestone_planner": "milestone_plan",
     "dependency_mapper": "dependency_map",
@@ -40,6 +41,25 @@ def _action_item_line(item: dict[str, Any]) -> str:
     gap = item.get("gap")
     flag = f"  ⚠️ {gap.replace('_', ' ')}" if isinstance(gap, str) and gap else ""
     return f"- [ ] {task} — owner: {owner} · due: {due}{flag}"
+
+
+def _decision_body(
+    decisions: list[dict[str, Any]] | None, open_questions: list[str] | None
+) -> str:
+    """Render decisions + open questions as markdown sections (HS-27-03)."""
+    parts: list[str] = []
+    if decisions:
+        lines = ["**Decisions**"]
+        for item in decisions:
+            decision = _clean_text(item.get("decision")) or "(unspecified)"
+            rationale = _clean_text(item.get("rationale"))
+            lines.append(f"- {decision}" + (f" — {rationale}" if rationale else ""))
+        parts.append("\n".join(lines))
+    if open_questions:
+        lines = ["**Open questions**"]
+        lines.extend(f"- {_clean_text(q)}" for q in open_questions if _clean_text(q))
+        parts.append("\n".join(lines))
+    return "\n\n".join(parts)
 
 
 def _coerce_float(value: object, default: float = 0.0) -> float:
@@ -193,6 +213,7 @@ def synthesize_meeting_artifacts(
         #  - HS-16-03: "diagram" embeds the plugin's Mermaid block (verbatim;
         #    the plugin validates syntax, synthesis does not).
         #  - HS-27-01: "action_items" embeds an ownership-gap checklist.
+        #  - HS-27-03: "decisions" embeds decisions + open questions.
         mermaid_value = ""
         if artifact_type == "diagram":
             raw_mermaid = canonical.output.get("mermaid")
@@ -204,6 +225,16 @@ def synthesize_meeting_artifacts(
             raw_items = canonical.output.get("action_items")
             if isinstance(raw_items, list) and raw_items:
                 action_items = [item for item in raw_items if isinstance(item, dict)] or None
+
+        decisions: list[dict[str, Any]] | None = None
+        open_questions: list[str] | None = None
+        if artifact_type == "decisions":
+            raw_decisions = canonical.output.get("decisions")
+            if isinstance(raw_decisions, list) and raw_decisions:
+                decisions = [item for item in raw_decisions if isinstance(item, dict)] or None
+            raw_questions = canonical.output.get("open_questions")
+            if isinstance(raw_questions, list) and raw_questions:
+                open_questions = [str(q).strip() for q in raw_questions if str(q).strip()] or None
 
         if mermaid_value:
             body_markdown = (
@@ -218,6 +249,13 @@ def synthesize_meeting_artifacts(
                 f"### {title}\n\n"
                 f"{summary}\n\n"
                 f"{checklist}\n\n"
+                f"{source_lines}"
+            )
+        elif decisions or open_questions:
+            body_markdown = (
+                f"### {title}\n\n"
+                f"{summary}\n\n"
+                f"{_decision_body(decisions, open_questions)}\n\n"
                 f"{source_lines}"
             )
         else:
@@ -240,6 +278,10 @@ def synthesize_meeting_artifacts(
             structured_json["mermaid"] = mermaid_value
         if action_items:
             structured_json["action_items"] = action_items
+        if decisions:
+            structured_json["decisions"] = decisions
+        if open_questions:
+            structured_json["open_questions"] = open_questions
 
         artifacts.append(
             ArtifactDraft(

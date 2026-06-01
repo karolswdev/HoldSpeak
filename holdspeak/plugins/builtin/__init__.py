@@ -18,6 +18,10 @@ from .action_owner_enforcer import (
     ActionOwnerEnforcerPlugin,
     _extract_action_items,
 )
+from .decision_capture import (
+    DecisionCapturePlugin,
+    _extract_decisions,
+)
 from .mermaid_architecture import (
     MermaidArchitecturePlugin,
     _extract_mermaid_block,
@@ -27,6 +31,7 @@ from .mermaid_architecture import (
 _REAL_PLUGINS = {
     "mermaid_architecture": MermaidArchitecturePlugin,
     "action_owner_enforcer": ActionOwnerEnforcerPlugin,
+    "decision_capture": DecisionCapturePlugin,
 }
 
 
@@ -78,6 +83,7 @@ _BUILTIN_PLUGIN_DEFS: tuple[tuple[str, str], ...] = (
     ("stakeholder_update_drafter", "artifact_generator"),
     ("runbook_delta", "artifact_generator"),
     ("decision_announcement_drafter", "artifact_generator"),
+    ("decision_capture", "synthesizer"),  # HS-27-03: net-new, ubiquitous
 )
 
 
@@ -101,10 +107,12 @@ def register_builtin_plugins(host: PluginHost) -> list[str]:
 
 __all__ = [
     "ActionOwnerEnforcerPlugin",
+    "DecisionCapturePlugin",
     "DeterministicPlugin",
     "MermaidArchitecturePlugin",
     "_BUILTIN_PLUGIN_DEFS",
     "_extract_action_items",
+    "_extract_decisions",
     "_extract_mermaid_block",
     "register_builtin_plugins",
 ]

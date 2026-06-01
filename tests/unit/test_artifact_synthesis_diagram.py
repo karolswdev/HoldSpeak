@@ -102,6 +102,34 @@ def test_action_items_artifact_embeds_checklist_body() -> None:
     assert artifact.structured_json["action_items"][1]["gap"] == "missing_both"
 
 
+def test_decisions_artifact_embeds_decisions_and_questions() -> None:
+    # HS-27-03: decision_capture output → a decisions/open-questions body + keys.
+    runs = [
+        _run(
+            "decision_capture",
+            {
+                "summary": "1 decision(s); 1 open question(s).",
+                "confidence_hint": 1.0,
+                "active_intents": ["delivery"],
+                "decisions": [{"decision": "Adopt the API gateway", "rationale": "Central auth"}],
+                "open_questions": ["Who owns the migration?"],
+            },
+        )
+    ]
+    artifacts = synthesize_meeting_artifacts(meeting_id="m-1", plugin_runs=runs)
+    assert len(artifacts) == 1
+    artifact = artifacts[0]
+    assert artifact.artifact_type == "decisions"
+
+    body = artifact.body_markdown
+    assert "**Decisions**" in body
+    assert "- Adopt the API gateway — Central auth" in body
+    assert "**Open questions**" in body
+    assert "- Who owns the migration?" in body
+    assert artifact.structured_json["decisions"][0]["decision"] == "Adopt the API gateway"
+    assert artifact.structured_json["open_questions"] == ["Who owns the migration?"]
+
+
 def test_non_diagram_artifact_body_is_byte_for_byte_legacy() -> None:
     # A non-diagram plugin run: even if (pathologically) it carried a "mermaid"
     # key, the body must match the exact legacy template.

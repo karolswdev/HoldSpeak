@@ -955,8 +955,35 @@ import AppLayout from "../layouts/AppLayout.astro";
                           </template>
                         </ul>
                       </template>
+                      <template x-if="hasDecisions(artifact)">
+                        <div class="decisions-artifact">
+                          <template x-if="decisionsFor(artifact).length">
+                            <div>
+                              <p class="subhead">Decisions</p>
+                              <ul class="decision-list">
+                                <template x-for="(d, di) in decisionsFor(artifact)" :key="`d${di}`">
+                                  <li>
+                                    <span x-text="d.decision"></span>
+                                    <span class="rationale" x-show="d.rationale" x-cloak x-text="` — ${d.rationale}`"></span>
+                                  </li>
+                                </template>
+                              </ul>
+                            </div>
+                          </template>
+                          <template x-if="openQuestionsFor(artifact).length">
+                            <div>
+                              <p class="subhead">Open questions</p>
+                              <ul class="decision-list">
+                                <template x-for="(q, qi) in openQuestionsFor(artifact)" :key="`q${qi}`">
+                                  <li x-text="q"></li>
+                                </template>
+                              </ul>
+                            </div>
+                          </template>
+                        </div>
+                      </template>
                       <p class="meta-line"
-                         x-show="artifact.body_markdown && !isDiagram(artifact) && !actionItemsFor(artifact).length"
+                         x-show="artifact.body_markdown && !isDiagram(artifact) && !actionItemsFor(artifact).length && !hasDecisions(artifact)"
                          x-cloak x-text="artifact.body_markdown"></p>
                     </div>
                   </template>
@@ -1410,6 +1437,34 @@ import AppLayout from "../layouts/AppLayout.astro";
   .pill.warn {
     color: var(--warn-strong, #b45309);
     border-color: var(--warn-strong, #b45309);
+  }
+
+  /* HS-27-03: decisions + open-questions render. */
+  .decisions-artifact {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+  }
+  .decisions-artifact .subhead {
+    margin: 0 0 var(--space-1);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose, 0.05em);
+    color: var(--text-muted);
+  }
+  .decision-list {
+    list-style: disc;
+    margin: 0;
+    padding-left: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: var(--font-size-sm);
+  }
+  .decision-list .rationale {
+    color: var(--text-muted);
   }
 
   /* HS-16-04: rendered Mermaid diagram artifact. */

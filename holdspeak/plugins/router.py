@@ -21,7 +21,10 @@ DEFAULT_INTENT_THRESHOLD = 0.6
 DEFAULT_HYSTERESIS = 0.05
 
 PROFILE_PLUGIN_BASE_CHAINS: dict[str, list[str]] = {
-    "balanced": ["requirements_extractor", "action_owner_enforcer"],
+    # HS-27-03: decision_capture rides the default profile's base chain so the
+    # ubiquitous "decisions + open questions" plugin fires on every balanced
+    # meeting regardless of detected intent.
+    "balanced": ["requirements_extractor", "action_owner_enforcer", "decision_capture"],
     "architect": ["requirements_extractor", "mermaid_architecture", "adr_drafter"],
     "delivery": ["action_owner_enforcer", "milestone_planner", "dependency_mapper"],
     "product": ["scope_guard", "customer_signal_extractor"],
