@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 26
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-26-01
 - **Unblocks:** HS-26-07
-- **Owner:** unassigned
+- **Owner:** Claude (agent)
 
 ## Problem
 
@@ -30,10 +30,10 @@ seam from HS-26-01 in place, move them verbatim into a dedicated module.
 
 ## Acceptance criteria
 
-- [ ] Listed routes are served from the new module; none remain inline in
+- [x] Listed routes are served from the new module; none remain inline in
       `_create_app()`.
-- [ ] Existing web tests for meetings/speakers/intel pass unchanged.
-- [ ] Route-inventory diff shows identical paths/methods for the moved set.
+- [x] Existing web tests for meetings/speakers/intel pass unchanged.
+- [x] Route-inventory diff shows identical paths/methods for the moved set.
 
 ## Test plan
 
@@ -45,3 +45,10 @@ seam from HS-26-01 in place, move them verbatim into a dedicated module.
 
 - If `routes/meetings.py` gets unwieldy, split speaker/intel into their own
   modules — record the split in this story's notes.
+- **Shipped as one module** (`routes/meetings.py`, 1020 lines, 25 routes). Kept
+  whole rather than pre-splitting: it is a single verbatim move and the cluster
+  is cohesive. Revisit a speaker/intel sub-split at HS-26-07 if navigation suffers.
+- **`broadcast` is late-bound** in the wiring (a thunk delegating to
+  `self.broadcast`) to preserve the original `self.broadcast` dynamic dispatch — a
+  test reassigns `server.broadcast` post-construction. The `on_*` callbacks are
+  snapshotted (never reassigned). See `evidence-story-02.md` §Deviations.

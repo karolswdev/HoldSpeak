@@ -11,7 +11,7 @@ with the live status docs, the status docs win.
 
 - **Branch:** `main`, clean, **`main == origin/main`** at `e5b1136` (everything is pushed).
 - **Test suite:** green — `uv run pytest -q --ignore=tests/e2e/test_metal.py` → **1875 passed, 0 failed, 13 skipped**.
-- **Active phase:** **Phase 26 — Web Runtime Decomposition** (`in-progress`, 1/7 done). **Next story: HS-26-02.**
+- **Active phase:** **Phase 26 — Web Runtime Decomposition** (`in-progress`, 2/7 done). **Next story: HS-26-03.** (HS-26-02 shipped the meeting/speaker/intel cluster → `routes/meetings.py`; web_server.py 5658→4691. The TL;DR below still describes the HS-26-02 pickup — follow the same pattern for HS-26-03 dictation routes.)
 - **Phase 25 — Trust & Hardening:** 7/8 done, functionally complete, **formally open** — only `HS-25-07` remains and it is **`blocked`** (needs in-person hardware dogfood; see §4).
 - Phases **16** and **24** are `paused` (pre-existing work, not this session's; see §6).
 

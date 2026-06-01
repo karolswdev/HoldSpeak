@@ -1,6 +1,6 @@
 # Phase 26 — Web Runtime Decomposition
 
-**Last updated:** 2026-05-31 (HS-26-01 done — router seam + WebContext; HS-26-02 next).
+**Last updated:** 2026-05-31 (HS-26-02 done — 25 meeting/speaker/intel routes moved to `routes/meetings.py`; web_server.py 5658→4691; HS-26-03 next).
 
 ## Goal
 
@@ -47,7 +47,7 @@ auth and bind work that lands in Phase 25.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-26-01 | Router seam + shared web context (pilot: health/state) | done | [story-01-router-seam.md](./story-01-router-seam.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-26-02 | Extract meeting / speaker / intel routes | backlog | [story-02-meeting-routes.md](./story-02-meeting-routes.md) | — |
+| HS-26-02 | Extract meeting / speaker / intel routes | done | [story-02-meeting-routes.md](./story-02-meeting-routes.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-26-03 | Extract dictation / agent-hook routes | backlog | [story-03-dictation-routes.md](./story-03-dictation-routes.md) | — |
 | HS-26-04 | Extract activity / connector / plugin-job routes | backlog | [story-04-activity-routes.md](./story-04-activity-routes.md) | — |
 | HS-26-05 | Extract device / companion / project routes | backlog | [story-05-device-project-routes.md](./story-05-device-project-routes.md) | — |
@@ -62,12 +62,20 @@ monolith, so the refactor moves a stabilized surface.
 **HS-26-01 is done:** the seam exists — `holdspeak/web/routes/` package +
 `holdspeak/web/context.py` (`WebContext`), with `/health` + `/api/state` migrated
 off `_create_app` via `build_core_router` + `app.include_router`. App-level auth
-middleware still applies to router routes. Full suite green (1875), no import
-cycle (test-pinned). Pattern documented in the module docstrings.
+middleware still applies to router routes. No import cycle (test-pinned). Pattern
+documented in the module docstrings.
 
-Next: **HS-26-02** — migrate meeting / speaker / intel routes onto this seam
-(add the accessors they need to `WebContext`). Each story is a behavior-preserving
-migration gated by the existing web suite + a route-inventory check.
+**HS-26-02 is done:** the meeting / speaker / intel cluster — **25 routes** — now
+lives in `holdspeak/web/routes/meetings.py` (`build_meetings_router`), moved
+verbatim and reading from `WebContext` (grown by 11 lifecycle/action-item
+accessors). `web_server.py` dropped from **5658 → 4691 lines** (−967); the 12
+now-unused request-model imports were trimmed. Route-inventory diff identical;
+full suite green (1879); ruff clean. `broadcast` is late-bound to preserve the
+prior `self.broadcast` dynamic dispatch (a test spies via reassignment).
+
+Next: **HS-26-03** — migrate dictation / agent-hook routes onto the same seam.
+Each story is a behavior-preserving migration gated by the existing web suite +
+a route-inventory check.
 
 ## Pickup order
 
