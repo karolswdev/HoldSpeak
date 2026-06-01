@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 27
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-16-01..05 (the proven plugin pattern + capability gate)
 - **Unblocks:** HS-27-02 (gives the e2e a second real plugin to show), HS-27-05
 - **Owner:** unassigned
@@ -59,16 +59,18 @@ applies that pattern to a **text/checklist** artifact instead of a diagram.
 
 ## Acceptance criteria
 
-- [ ] `register_builtin_plugins` returns a real `ActionOwnerEnforcerPlugin` for
-      `action_owner_enforcer`; the other eleven stay `DeterministicPlugin`.
-- [ ] Real `run()` calls the LLM and returns the structured `action_items`
-      payload; malformed model output yields a clean low-confidence failure (no
-      crash), exactly like mermaid's parse-failure path.
-- [ ] Capability-blocked: with no `"llm"` capability the host returns
-      `status="blocked"` (already enforced; covered by a test).
-- [ ] If a checklist synthesis body is added, non-`action_items` artifact bodies
-      are byte-for-byte unchanged (regression-locked).
-- [ ] Unit + integration tests green; full sweep green.
+- [x] `register_builtin_plugins` returns a real `ActionOwnerEnforcerPlugin` for
+      `action_owner_enforcer` (via `_REAL_PLUGINS` map); the other eleven stay
+      `DeterministicPlugin`.
+- [x] Real `run()` calls the LLM and returns the structured `action_items`
+      payload; malformed output / empty list / no transcript yield a clean
+      low-confidence failure (no crash), like mermaid's parse-failure path.
+- [x] Capability-blocked: with no `"llm"` capability the host returns
+      `status="blocked"` (test `test_host_blocks_without_llm_capability`).
+- [x] Checklist synthesis body added; non-`action_items` bodies byte-for-byte
+      unchanged (regression-locked test still green).
+- [x] Unit + integration tests green; full sweep 1914 passed. Verified live
+      against `.43` Q6 (4 items, gaps flagged) — see `evidence-story-01.md`.
 
 ## Test plan
 

@@ -1,6 +1,6 @@
 # Phase 27 — Ubiquitous plugins + spoken-meeting e2e
 
-**Last updated:** 2026-06-01 (scaffolded). Status: **not-started** (all stories backlog).
+**Last updated:** 2026-06-01 (HS-27-01 shipped — real `action_owner_enforcer` plugin: LLM → action items with owner/due **gap** flags, a checklist synthesis body, verified live against `.43` Q6. Phase **in-progress, 1/5**).
 
 > Lineage note: Phase 16 (`first-real-plugin`) proved the LLM-backed plugin
 > pattern end-to-end with `mermaid_architecture`. Its docs refer to "phase 17" as
@@ -51,9 +51,10 @@ The substrate is already proven (Phase 16); this phase is about **breadth**
 
 ## Exit criteria (evidence required)
 
-- [ ] At least the ubiquity champion (`action_owner_enforcer`) ships a real,
+- [x] At least the ubiquity champion (`action_owner_enforcer`) ships a real,
       non-stub `run()` meeting all four Appendix-A bars (real downstream,
       structured payload, synthesis-rendered, tests for success/failure/blocked).
+      (HS-27-01 — `evidence-story-01.md`.)
 - [ ] A spoken-meeting e2e harness exists and runs against real endpoints: it
       synthesizes audio with `say`, transcribes it, runs the real plugin chain,
       persists artifacts, and captures at least one web screenshot showing a
@@ -70,7 +71,7 @@ The substrate is already proven (Phase 16); this phase is about **breadth**
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-27-01 | `action_owner_enforcer` — real run (ubiquity champion) | backlog | [story-01-action-owner-enforcer.md](./story-01-action-owner-enforcer.md) | — |
+| HS-27-01 | `action_owner_enforcer` — real run (ubiquity champion) | done | [story-01-action-owner-enforcer.md](./story-01-action-owner-enforcer.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-27-02 | Spoken-meeting e2e harness (`say` → pipeline → screenshots) | backlog | [story-02-spoken-meeting-e2e.md](./story-02-spoken-meeting-e2e.md) | — |
 | HS-27-03 | `decision_capture` — decisions + open questions (net-new, ubiquitous) | backlog | [story-03-decision-capture.md](./story-03-decision-capture.md) | — |
 | HS-27-04 | `requirements_extractor` — real run | backlog | [story-04-requirements-extractor.md](./story-04-requirements-extractor.md) | — |
@@ -78,16 +79,18 @@ The substrate is already proven (Phase 16); this phase is about **breadth**
 
 ## Where we are
 
-**Scaffolded 2026-06-01**, not started. Phase 16 just closed: the
-transcript→LLM→artifact→rendered-SVG path is live for one real plugin
-(`mermaid_architecture`) against the `.43` Q6 endpoint. This phase broadens to the
-*ubiquitous* plugins and adds the spoken e2e that demonstrates the whole stack.
+**In-progress, 1/5.** Scaffolded 2026-06-01; **HS-27-01 shipped same day** — the
+real `action_owner_enforcer` plugin (the ubiquity champion) is live: LLM →
+validated action items with owner/due **gap** flags → a checklist synthesis body,
+verified live against `.43` Q6 (4 items extracted, gaps flagged). The Phase-16
+pattern generalized cleanly to a non-diagram text artifact, and the registrar now
+uses a `_REAL_PLUGINS` map (two real plugins, eleven stubs).
 
-Pickup order: **HS-27-01** (action_owner_enforcer — proves the pattern
-generalizes to a text/checklist artifact, on the most universal meeting output),
-then **HS-27-02** (the e2e harness, which then demonstrates mermaid + action
-items together), then **HS-27-03 / HS-27-04** (more ubiquitous plugins), then
-**HS-27-05** (close).
+Pickup: **HS-27-02** — the spoken-meeting e2e harness (`say` → Whisper → MIR →
+plugins → web → screenshots), which will now demonstrate **both**
+`mermaid_architecture` and `action_owner_enforcer` together on real endpoints.
+Then **HS-27-03** (`decision_capture`) and **HS-27-04** (`requirements_extractor`)
+— both shipping this phase per Karol's decision — then **HS-27-05** (close).
 
 ## Active risks
 
@@ -105,16 +108,13 @@ items together), then **HS-27-03 / HS-27-04** (more ubiquitous plugins), then
   visual demo is still carried by `mermaid_architecture` via the e2e. — author: Karol + agent.
 - 2026-06-01 — **Real spoken e2e on real endpoints**, opt-in + structural
   assertions, doubling as a living demo (screenshots). — author: Karol + agent.
+- 2026-06-01 — **Ship both plugins this phase:** `decision_capture` (HS-27-03)
+  **and** `requirements_extractor` (HS-27-04). `decision_capture` first
+  (ubiquity). — author: Karol.
+- 2026-06-01 — **The e2e is a pytest test** (opt-in marker), not just a demo
+  script. Script fallback only if it genuinely can't be made structurally
+  reliable. — author: Karol.
 
 ## Decisions deferred
 
-- **HS-27-03 vs HS-27-04 ordering, and whether both ship this phase.**
-  `decision_capture` (decisions + open questions) is the most ubiquitous *net-new*
-  plugin (needs a new `_BUILTIN_PLUGIN_DEFS` entry + artifact type);
-  `requirements_extractor` is a lower-risk existing stub. Default: do
-  `decision_capture` first (higher ubiquity), `requirements_extractor` if budget
-  remains. Trigger to revisit: after HS-27-01/02 land and we see real per-plugin
-  parse quality on `.43`.
-- **Whether the e2e becomes a pytest test or a standalone demo script.** Default:
-  pytest with an opt-in marker; fall back to a script if it can't be made
-  structurally reliable.
+- (none open — see "Decisions made".)

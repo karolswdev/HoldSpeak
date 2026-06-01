@@ -32,6 +32,16 @@ def _clean_text(value: object) -> str:
     return " ".join(str(value or "").strip().split())
 
 
+def _action_item_line(item: dict[str, Any]) -> str:
+    """Render one action item as a markdown checklist line (HS-27-01)."""
+    task = _clean_text(item.get("task")) or "(unspecified task)"
+    owner = _clean_text(item.get("owner")) or "—"
+    due = _clean_text(item.get("due")) or "—"
+    gap = item.get("gap")
+    flag = f"  ⚠️ {gap.replace('_', ' ')}" if isinstance(gap, str) and gap else ""
+    return f"- [ ] {task} — owner: {owner} · due: {due}{flag}"
+
+
 def _coerce_float(value: object, default: float = 0.0) -> float:
     try:
         return float(value)
@@ -176,23 +186,38 @@ def synthesize_meeting_artifacts(
             f"- Source plugin runs: {', '.join(unique_run_ids) if unique_run_ids else 'none'}"
         )
 
-        # HS-16-03: a "diagram" artifact carries the plugin's Mermaid block, so
-        # the web layer (HS-16-04) can render the diagram instead of a paragraph
-        # about it. The value is inserted verbatim (the plugin validates syntax;
-        # synthesis does not). TODO: when more artifact types need custom bodies
-        # (the follow-on phase that flips the other 12 plugins to real), extract
+        # Custom artifact bodies per type, so the web layer has something
+        # rendering-ready. Both are strict branches; the default body is
+        # byte-for-byte unchanged. TODO: once a third custom body lands, extract
         # a per-artifact-type renderer registry instead of branching here.
+        #  - HS-16-03: "diagram" embeds the plugin's Mermaid block (verbatim;
+        #    the plugin validates syntax, synthesis does not).
+        #  - HS-27-01: "action_items" embeds an ownership-gap checklist.
         mermaid_value = ""
         if artifact_type == "diagram":
             raw_mermaid = canonical.output.get("mermaid")
             if isinstance(raw_mermaid, str) and raw_mermaid.strip():
                 mermaid_value = raw_mermaid.strip()
 
+        action_items: list[dict[str, Any]] | None = None
+        if artifact_type == "action_items":
+            raw_items = canonical.output.get("action_items")
+            if isinstance(raw_items, list) and raw_items:
+                action_items = [item for item in raw_items if isinstance(item, dict)] or None
+
         if mermaid_value:
             body_markdown = (
                 f"### {title}\n\n"
                 f"{summary}\n\n"
                 f"```mermaid\n{mermaid_value}\n```\n\n"
+                f"{source_lines}"
+            )
+        elif action_items:
+            checklist = "\n".join(_action_item_line(item) for item in action_items)
+            body_markdown = (
+                f"### {title}\n\n"
+                f"{summary}\n\n"
+                f"{checklist}\n\n"
                 f"{source_lines}"
             )
         else:
@@ -213,6 +238,8 @@ def synthesize_meeting_artifacts(
         }
         if mermaid_value:
             structured_json["mermaid"] = mermaid_value
+        if action_items:
+            structured_json["action_items"] = action_items
 
         artifacts.append(
             ArtifactDraft(

@@ -14,10 +14,20 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..host import PluginHost
+from .action_owner_enforcer import (
+    ActionOwnerEnforcerPlugin,
+    _extract_action_items,
+)
 from .mermaid_architecture import (
     MermaidArchitecturePlugin,
     _extract_mermaid_block,
 )
+
+# Real plugin classes keyed by ID; every other ID falls back to the stub.
+_REAL_PLUGINS = {
+    "mermaid_architecture": MermaidArchitecturePlugin,
+    "action_owner_enforcer": ActionOwnerEnforcerPlugin,
+}
 
 
 def _snippet(text: str, *, limit: int = 140) -> str:
@@ -74,14 +84,15 @@ _BUILTIN_PLUGIN_DEFS: tuple[tuple[str, str], ...] = (
 def register_builtin_plugins(host: PluginHost) -> list[str]:
     """Register built-in plugins onto the provided host.
 
-    `mermaid_architecture` registers as the real
-    `MermaidArchitecturePlugin` (phase 16); every other entry registers
-    as a `DeterministicPlugin` stub until its dedicated phase ships.
+    Plugin IDs in `_REAL_PLUGINS` register as their real class; every other
+    entry registers as a `DeterministicPlugin` stub until its dedicated phase
+    ships.
     """
     registered: list[str] = []
     for plugin_id, kind in _BUILTIN_PLUGIN_DEFS:
-        if plugin_id == "mermaid_architecture":
-            host.register(MermaidArchitecturePlugin())
+        real_cls = _REAL_PLUGINS.get(plugin_id)
+        if real_cls is not None:
+            host.register(real_cls())
         else:
             host.register(DeterministicPlugin(id=plugin_id, kind=kind))
         registered.append(plugin_id)
@@ -89,9 +100,11 @@ def register_builtin_plugins(host: PluginHost) -> list[str]:
 
 
 __all__ = [
+    "ActionOwnerEnforcerPlugin",
     "DeterministicPlugin",
     "MermaidArchitecturePlugin",
     "_BUILTIN_PLUGIN_DEFS",
+    "_extract_action_items",
     "_extract_mermaid_block",
     "register_builtin_plugins",
 ]

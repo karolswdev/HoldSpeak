@@ -74,6 +74,34 @@ def test_diagram_artifact_without_mermaid_uses_legacy_body() -> None:
     assert "mermaid" not in artifact.structured_json
 
 
+def test_action_items_artifact_embeds_checklist_body() -> None:
+    # HS-27-01: action_owner_enforcer output → a checklist body + structured key.
+    runs = [
+        _run(
+            "action_owner_enforcer",
+            {
+                "summary": "2 action item(s); 1 missing an owner or due date.",
+                "confidence_hint": 1.0,
+                "active_intents": ["delivery"],
+                "action_items": [
+                    {"task": "Draft OAuth flow", "owner": "Karol", "due": "Friday", "gap": None},
+                    {"task": "Book venue", "owner": None, "due": None, "gap": "missing_both"},
+                ],
+            },
+        )
+    ]
+    artifacts = synthesize_meeting_artifacts(meeting_id="m-1", plugin_runs=runs)
+    assert len(artifacts) == 1
+    artifact = artifacts[0]
+    assert artifact.artifact_type == "action_items"
+
+    body = artifact.body_markdown
+    assert "- [ ] Draft OAuth flow — owner: Karol · due: Friday" in body
+    assert "- [ ] Book venue — owner: — · due: —  ⚠️ missing both" in body
+    assert "```mermaid" not in body
+    assert artifact.structured_json["action_items"][1]["gap"] == "missing_both"
+
+
 def test_non_diagram_artifact_body_is_byte_for_byte_legacy() -> None:
     # A non-diagram plugin run: even if (pathologically) it carried a "mermaid"
     # key, the body must match the exact legacy template.
