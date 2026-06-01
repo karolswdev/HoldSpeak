@@ -85,6 +85,44 @@ For local installs from this checkout: `uv pip install -e .`
 | Install Claude / Codex agent hooks | [Agent Hook Install](docs/AGENT_HOOK_INSTALL.md) |
 | Understand what's stored and what can leave my machine | [Security & Privacy](docs/SECURITY.md) |
 
+## Meeting intelligence plugins
+
+When you record or save a meeting, HoldSpeak can turn the transcript into
+structured, reviewable artifacts. A saved meeting flows through **multi-intent
+routing (MIR)** — the transcript is scored for intent (architecture, delivery,
+product, incident, comms), a plugin chain is selected for the active profile, and
+each plugin calls your configured **OpenAI-compatible LLM** to produce a typed
+artifact. Artifacts are persisted and rendered **read-only** in the web UI at
+`/history` (diagrams as inline SVG; everything else as structured lists/tables).
+
+Plugins run on **saved/recorded meetings**, not live, and are gated on an `llm`
+capability — with no LLM endpoint configured they're skipped, not failed. Nothing
+leaves your machine beyond the LLM endpoint you point at (local or LAN is fine).
+
+HoldSpeak ships **14 built-in plugins**, all producing real LLM-backed artifacts:
+
+| Plugin | Produces | Fires on (profile / intent) |
+|---|---|---|
+| `mermaid_architecture` | Architecture diagram (Mermaid → SVG) | architecture |
+| `adr_drafter` | Architecture Decision Records | architecture |
+| `requirements_extractor` | Requirements (functional / non-functional / constraint / acceptance) | architecture, default |
+| `action_owner_enforcer` | Action items with owner/due-date gap flags | delivery, default |
+| `milestone_planner` | Milestone plan (targets, deliverables, dependencies) | delivery |
+| `dependency_mapper` | Dependency map (directed edges) | delivery |
+| `decision_capture` | Decisions + open questions | default (every meeting) |
+| `scope_guard` | Scope review (in-scope / out-of-scope / scope-creep) | product |
+| `customer_signal_extractor` | Customer signals (request / pain / praise / churn-risk) | product |
+| `incident_timeline` | Ordered incident timeline | incident |
+| `runbook_delta` | Runbook changes (added / modified / removed) | incident |
+| `risk_heatmap` | Risk register (impact / likelihood / mitigation / owner) | incident |
+| `stakeholder_update_drafter` | Stakeholder update (headline + highlights / risks / next steps) | comms |
+| `decision_announcement_drafter` | Decision announcements (title / audience / message) | comms |
+
+The architecture, contracts, and how to think about authoring more plugins live in
+the plugin RFC: [`docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md`](docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md).
+For configuring meeting intelligence (endpoints, routing), see the
+[Meeting Mode Guide](docs/MEETING_MODE_GUIDE.md).
+
 ## Configuration
 
 Config file: `~/.config/holdspeak/config.json`

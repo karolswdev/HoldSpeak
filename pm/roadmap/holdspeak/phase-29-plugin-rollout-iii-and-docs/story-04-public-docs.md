@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 29
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-29-01, HS-29-02, HS-29-03 (so the docs describe what shipped)
 - **Unblocks:** HS-29-05
 - **Owner:** unassigned
@@ -38,11 +38,11 @@ tell users what HoldSpeak actually produces from a meeting.
 
 ## Acceptance criteria
 
-- [ ] `README.md` has a plugin section: how-it-works paragraph + the fourteen-row
+- [x] `README.md` has a plugin section: how-it-works paragraph + the fourteen-row
       table (ID / artifact / profile) + RFC pointer.
-- [ ] The list matches the code (fourteen real plugins; names/artifact types
+- [x] The list matches the code (fourteen real plugins; names/artifact types
       verified against `builtin/__init__.py` + `synthesis.py`).
-- [ ] No stale claims (no "coming soon" for already-shipped plugins).
+- [x] No stale claims (no "coming soon" for already-shipped plugins).
 
 ## Test plan
 

@@ -4,9 +4,9 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-06-01 (Phase 29 **3/5** — HS-29-03 shipped: the two comms stubs flipped to real (`stakeholder_update_drafter`, `decision_announcement_drafter`). **Fourteen real plugins now — ZERO stubs**; the plugin rollout is functionally complete. Verified live on `.43` Q6. Suite green at 2062 passed, 14 skipped).
-**Current phase:** [phase-29-plugin-rollout-iii-and-docs](./phase-29-plugin-rollout-iii-and-docs/current-phase-status.md) — in-progress (3/5; HS-29-01/02/03 done). Next: HS-29-04 (public README plugin docs), 05 (close). Software-only. Other open tracks: **Phase 25** (trust & hardening; HS-25-07 hardware-blocked); **Phase 24** (companion, 2/5; HS-24-03/04/05 hardware-gated); **Phase 15** (out-and-about, `not-started`, gated on Phase 25).
-**Status:** Phase 29 active (HS-29-03 delivered; next HS-29-04 public docs).
+**Last updated:** 2026-06-01 (Phase 29 **4/5** — HS-29-04 shipped: the public `README.md` now documents the meeting-intelligence plugin system (how-it-works + a 14-row plugin/artifact/profile table + RFC pointer). 14 real plugins, zero stubs. Suite green at 2062 passed, 14 skipped).
+**Current phase:** [phase-29-plugin-rollout-iii-and-docs](./phase-29-plugin-rollout-iii-and-docs/current-phase-status.md) — in-progress (4/5; HS-29-01..04 done). Next: HS-29-05 (close — RFC table → 14 ✅ + final-summary). Software-only. Other open tracks: **Phase 25** (trust & hardening; HS-25-07 hardware-blocked); **Phase 24** (companion, 2/5; HS-24-03/04/05 hardware-gated); **Phase 15** (out-and-about, `not-started`, gated on Phase 25).
+**Status:** Phase 29 active (HS-29-04 delivered; next HS-29-05 phase exit).
 
 ## Vision
 
@@ -72,7 +72,7 @@ canon, canon wins.
 | 26 | Web Runtime Decomposition: break the `web_server.py` monolith into route modules + a shared context, behavior-preserving. Fast-follow to Phase 25. | done | [phase-26-web-runtime-decomposition](./phase-26-web-runtime-decomposition/) |
 | 27 | Ubiquitous plugins + spoken-meeting e2e: flip the highest-value stub plugins to real (`action_owner_enforcer`, decisions/open-questions, requirements) re-using the Phase-16 pattern, and add a real `say`→Whisper→MIR→plugins→web spoken-meeting end-to-end harness with screenshots. Continuation of Phase 16. | done | [phase-27-ubiquitous-plugins-and-e2e](./phase-27-ubiquitous-plugins-and-e2e/) |
 | 28 | Plugin rollout II: round out the core meeting types — a behavior-preserving synthesis renderer-registry refactor, then flip `adr_drafter` (architecture), `milestone_planner` (delivery), and `risk_heatmap` (risk register) to real, each with a structured web render + spoken-e2e coverage. Continuation of Phase 27. | done | [phase-28-plugin-rollout-ii](./phase-28-plugin-rollout-ii/) |
-| 29 | Complete the plugin rollout + public docs: flip the last seven stubs (delivery/product, incident, comms) to real → fourteen real plugins / zero stubs, and document the plugin system on the public README. Continuation of Phase 28. | in-progress (3/5) | [phase-29-plugin-rollout-iii-and-docs](./phase-29-plugin-rollout-iii-and-docs/) |
+| 29 | Complete the plugin rollout + public docs: flip the last seven stubs (delivery/product, incident, comms) to real → fourteen real plugins / zero stubs, and document the plugin system on the public README. Continuation of Phase 28. | in-progress (4/5) | [phase-29-plugin-rollout-iii-and-docs](./phase-29-plugin-rollout-iii-and-docs/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
