@@ -1,6 +1,10 @@
 # Phase 28 — Plugin rollout II: round out the core meeting types
 
-**Last updated:** 2026-06-01 (HS-28-04 shipped — `risk_heatmap` flipped to a real LLM plugin: builds a risk register (risk / impact / likelihood / mitigation / owner; levels enum-coerced) → `risk_register` artifact with a structured `/history` table (colour-coded level pills). No routing ripple. Verified live on `.43` Q6; the spoken e2e now exercises **seven** real plugins. Phase **in-progress, 4/5** — only HS-28-05 (close) remains).
+**Last updated:** 2026-06-01 (HS-28-05 shipped — **phase closed, 5/5**. RFC reality-status table refreshed (seven plugins ✅, seven ⚠️); `final-summary.md` written. Phase 28 delivered the renderer-registry refactor + three real plugins (`adr_drafter`, `milestone_planner`, `risk_heatmap`); **seven real plugins now**, all proven by the opt-in spoken e2e on live `.43` Q6. Full sweep green at 1978 passed, 14 skipped).
+
+> **Phase status: DONE (5/5). This document is frozen.** See `final-summary.md`
+> for the close-out (goal assessment, exit-criteria re-run, per-plugin parse
+> quality, lessons, and the handoff of the remaining seven stubs).
 
 > Lineage note: Phases 16 + 27 proved and generalized the LLM-backed plugin
 > pattern (transcript → LLM → parse/validate → structured output → synthesis body
@@ -75,17 +79,17 @@ After this phase: **seven real plugins, seven stubs.**
 | HS-28-02 | `adr_drafter` — real run (ADRs) | done | [story-02-adr-drafter.md](./story-02-adr-drafter.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-28-03 | `milestone_planner` — real run (delivery) | done | [story-03-milestone-planner.md](./story-03-milestone-planner.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-28-04 | `risk_heatmap` — real run (risk register) | done | [story-04-risk-heatmap.md](./story-04-risk-heatmap.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-28-05 | RFC reality-check refresh + phase exit | backlog | [story-05-phase-exit.md](./story-05-phase-exit.md) | — |
+| HS-28-05 | RFC reality-check refresh + phase exit | done | [story-05-phase-exit.md](./story-05-phase-exit.md) | [evidence-story-05.md](./evidence-story-05.md) |
 
 ## Where we are
 
-**In-progress, 4/5.** Scaffolded 2026-06-01 directly after Phase 27 closed.
+**Done, 5/5.** Scaffolded 2026-06-01 directly after Phase 27 closed.
 **HS-28-01** shipped the synthesis renderer registry (behavior-preserving).
 **HS-28-02/03/04** flipped `adr_drafter` (ADRs), `milestone_planner` (delivery
 plan), and `risk_heatmap` (risk register) to real, each with a structured
-`/history` render. **Seven real plugins now**; the spoken e2e exercises all seven
-and its screenshot captures the whole modal. Only the phase exit remains. The
-pattern is fully trodden (see
+`/history` render. **HS-28-05** closed the phase (RFC refresh + final-summary).
+**Seven real plugins now**; the spoken e2e exercises all seven and its screenshot
+captures the whole modal. The pattern is fully trodden (see
 Phase 27's `final-summary.md` §Handoff): real plugin → `_REAL_PLUGINS` →
 `_ARTIFACT_TYPE_BY_PLUGIN` (the three IDs already map to `adr` / `milestone_plan`
 / `risk_register`) → register a renderer + `structured_json` → structured web
@@ -96,7 +100,8 @@ none are in the `balanced` base chain — so flipping them to real is no routing
 ripple (already routed); only a *net-new* ID added to a base chain ripples the
 dispatch tests.
 
-Pickup: **HS-28-05** (close — RFC reality-status refresh + final-summary).
+Next plugin-rollout phase (the remaining seven stubs) is unscaffolded — see
+`final-summary.md` §Handoff.
 
 ## Active risks
 
