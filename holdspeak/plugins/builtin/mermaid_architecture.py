@@ -97,7 +97,7 @@ def _has_min_structure(block_body: str, kind: str) -> bool:
     if kind in ("flowchart", "graph"):
         if not re.search(r"--+>?|==+>?|-\.->", block_body):
             return False
-        non_kind_lines = [l for l in block_body.splitlines() if l.strip()][1:]
+        non_kind_lines = [ln for ln in block_body.splitlines() if ln.strip()][1:]
         ids: set[str] = set()
         for line in non_kind_lines:
             for tok in re.findall(r"\b[A-Za-z][\w]*\b", line):
@@ -208,9 +208,9 @@ class MermaidArchitecturePlugin:
         if self._intel_call_override is not None:
             return self._intel_call_override(messages)
         if self._cached_provider is None:
-            from ...intel import MeetingIntel  # lazy import: optional deps
+            from ...intel import build_configured_meeting_intel  # lazy import: optional deps
 
-            self._cached_provider = MeetingIntel()
+            self._cached_provider = build_configured_meeting_intel()
         return self._cached_provider._chat_completion_text(
             messages,
             temperature=0.2,

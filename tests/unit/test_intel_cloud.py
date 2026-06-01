@@ -36,6 +36,30 @@ def test_get_cloud_runtime_status_requires_api_key(monkeypatch) -> None:
     assert "OPENAI_API_KEY" in reason
 
 
+def test_build_configured_meeting_intel_reads_config(monkeypatch) -> None:
+    # Plugins must honour the user's configured endpoint, not MeetingIntel()
+    # bare module defaults (the gap the spoken e2e surfaced, HS-27-02).
+    from holdspeak.intel import build_configured_meeting_intel
+
+    cfg = SimpleNamespace(
+        meeting=SimpleNamespace(
+            intel_provider="cloud",
+            intel_cloud_model="Qwen3.5-9B-UD-Q6_K_XL.gguf",
+            intel_cloud_api_key_env="OPENAI_API_KEY",
+            intel_cloud_base_url="http://192.168.1.43:8080/v1",
+            intel_cloud_reasoning_effort=None,
+            intel_cloud_store=False,
+            intel_realtime_model=None,
+        )
+    )
+    monkeypatch.setattr("holdspeak.config.Config.load", classmethod(lambda cls, path=None: cfg))
+
+    intel = build_configured_meeting_intel()
+    assert intel.provider == "cloud"
+    assert intel.cloud_base_url == "http://192.168.1.43:8080/v1"
+    assert intel.cloud_model == "Qwen3.5-9B-UD-Q6_K_XL.gguf"
+
+
 def test_get_cloud_runtime_status_allows_self_hosted_base_url_without_key(monkeypatch) -> None:
     # llama.cpp / LM Studio / Ollama ignore the key; a custom base_url should
     # resolve even with no OPENAI_API_KEY set.

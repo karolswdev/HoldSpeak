@@ -287,6 +287,31 @@ def resolve_llm_capability(meeting_config: Any) -> bool:
         return False
 
 
+def build_configured_meeting_intel() -> "MeetingIntel":
+    """Construct a `MeetingIntel` from the user's saved meeting config.
+
+    Built-in plugins (`mermaid_architecture`, `action_owner_enforcer`, …) call
+    this for their default intel provider so they honour the configured endpoint
+    (e.g. a self-hosted `.43` cloud base URL) instead of the bare `MeetingIntel()`
+    module defaults — which would otherwise ignore the user's provider entirely.
+    """
+    from .config import Config
+
+    meeting = Config.load().meeting
+    kwargs: dict[str, Any] = {
+        "provider": getattr(meeting, "intel_provider", DEFAULT_INTEL_PROVIDER),
+        "cloud_model": getattr(meeting, "intel_cloud_model", DEFAULT_INTEL_CLOUD_MODEL),
+        "cloud_api_key_env": getattr(meeting, "intel_cloud_api_key_env", DEFAULT_INTEL_CLOUD_API_KEY_ENV),
+        "cloud_base_url": getattr(meeting, "intel_cloud_base_url", None),
+        "cloud_reasoning_effort": getattr(meeting, "intel_cloud_reasoning_effort", None),
+        "cloud_store": bool(getattr(meeting, "intel_cloud_store", False)),
+    }
+    model_path = getattr(meeting, "intel_realtime_model", None)
+    if model_path:
+        kwargs["model_path"] = model_path
+    return MeetingIntel(**kwargs)
+
+
 def intel_egress_posture(provider: str = DEFAULT_INTEL_PROVIDER) -> tuple[bool, str]:
     """Describe whether the configured provider can send transcripts off-machine.
 
