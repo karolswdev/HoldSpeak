@@ -992,8 +992,23 @@ import AppLayout from "../layouts/AppLayout.astro";
                           </template>
                         </ul>
                       </template>
+                      <template x-if="adrsFor(artifact).length">
+                        <div class="adr-artifact">
+                          <template x-for="(adr, ai) in adrsFor(artifact)" :key="`adr${ai}`">
+                            <div class="adr-record">
+                              <div class="adr-head">
+                                <span class="adr-title" x-text="adr.title"></span>
+                                <span class="status-pill" :class="adr.status" x-text="adr.status"></span>
+                              </div>
+                              <p class="adr-line" x-show="adr.context" x-cloak><span class="adr-label">Context</span> <span x-text="adr.context"></span></p>
+                              <p class="adr-line" x-show="adr.decision" x-cloak><span class="adr-label">Decision</span> <span x-text="adr.decision"></span></p>
+                              <p class="adr-line" x-show="adr.consequences" x-cloak><span class="adr-label">Consequences</span> <span x-text="adr.consequences"></span></p>
+                            </div>
+                          </template>
+                        </div>
+                      </template>
                       <p class="meta-line"
-                         x-show="artifact.body_markdown && !isDiagram(artifact) && !actionItemsFor(artifact).length && !hasDecisions(artifact) && !requirementsFor(artifact).length"
+                         x-show="artifact.body_markdown && !isDiagram(artifact) && !actionItemsFor(artifact).length && !hasDecisions(artifact) && !requirementsFor(artifact).length && !adrsFor(artifact).length"
                          x-cloak x-text="artifact.body_markdown"></p>
                     </div>
                   </template>
@@ -1500,6 +1515,40 @@ import AppLayout from "../layouts/AppLayout.astro";
     letter-spacing: var(--letter-spacing-loose, 0.05em);
     color: var(--text-muted);
     min-width: 7rem;
+  }
+
+  /* HS-28-02: Architecture Decision Records render. */
+  .adr-artifact {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+  }
+  .adr-record {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .adr-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+  .adr-head .adr-title {
+    font-weight: var(--font-weight-bold, 600);
+  }
+  .adr-line {
+    margin: 0;
+    font-size: var(--font-size-sm);
+  }
+  .adr-line .adr-label {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose, 0.05em);
+    color: var(--text-muted);
+    margin-right: var(--space-1);
   }
 
   /* HS-16-04: rendered Mermaid diagram artifact. */

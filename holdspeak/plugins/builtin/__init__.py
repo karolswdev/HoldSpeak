@@ -18,6 +18,10 @@ from .action_owner_enforcer import (
     ActionOwnerEnforcerPlugin,
     _extract_action_items,
 )
+from .adr_drafter import (
+    AdrDrafterPlugin,
+    _extract_adrs,
+)
 from .decision_capture import (
     DecisionCapturePlugin,
     _extract_decisions,
@@ -37,6 +41,7 @@ _REAL_PLUGINS = {
     "action_owner_enforcer": ActionOwnerEnforcerPlugin,
     "decision_capture": DecisionCapturePlugin,
     "requirements_extractor": RequirementsExtractorPlugin,
+    "adr_drafter": AdrDrafterPlugin,
 }
 
 
@@ -112,12 +117,14 @@ def register_builtin_plugins(host: PluginHost) -> list[str]:
 
 __all__ = [
     "ActionOwnerEnforcerPlugin",
+    "AdrDrafterPlugin",
     "DecisionCapturePlugin",
     "DeterministicPlugin",
     "MermaidArchitecturePlugin",
     "RequirementsExtractorPlugin",
     "_BUILTIN_PLUGIN_DEFS",
     "_extract_action_items",
+    "_extract_adrs",
     "_extract_decisions",
     "_extract_mermaid_block",
     "_extract_requirements",

@@ -43,7 +43,9 @@ if not os.environ.get("HOLDSPEAK_SPOKEN_E2E"):
         allow_module_level=True,
     )
 
-EVIDENCE_DIR = "pm/roadmap/holdspeak/phase-27-ubiquitous-plugins-and-e2e/evidence"
+# The spoken e2e is a living demo; its screenshot lands in the active plugin
+# phase's evidence dir (Phase 28 — it now exercises the Phase-28 plugins too).
+EVIDENCE_DIR = "pm/roadmap/holdspeak/phase-28-plugin-rollout-ii/evidence"
 
 # A *natural* product conversation — nobody reads out a requirements list. The
 # need is implied, clarified back and forth, and decisions/owners emerge in
@@ -167,7 +169,10 @@ def test_spoken_meeting_end_to_end(tmp_path):
         "active_intents": ["architecture", "delivery", "product"],
     }
     for window, plugin_id in enumerate(
-        ("mermaid_architecture", "action_owner_enforcer", "decision_capture", "requirements_extractor")
+        (
+            "mermaid_architecture", "action_owner_enforcer", "decision_capture",
+            "requirements_extractor", "adr_drafter",
+        )
     ):
         host.execute(
             plugin_id,
@@ -184,7 +189,8 @@ def test_spoken_meeting_end_to_end(tmp_path):
         results.append(result)
     by_id = {r.plugin_id: r for r in results}
     for pid in (
-        "mermaid_architecture", "action_owner_enforcer", "decision_capture", "requirements_extractor"
+        "mermaid_architecture", "action_owner_enforcer", "decision_capture",
+        "requirements_extractor", "adr_drafter",
     ):
         assert by_id[pid].status == "success", by_id[pid].error
     # The plugins must have produced real content (not their failure shape).
@@ -193,6 +199,7 @@ def test_spoken_meeting_end_to_end(tmp_path):
     decision_out = by_id["decision_capture"].output
     assert decision_out.get("decisions") or decision_out.get("open_questions"), "no decisions produced"
     assert by_id["requirements_extractor"].output.get("requirements"), "no requirements produced"
+    assert by_id["adr_drafter"].output.get("adrs"), "no ADRs produced"
 
     # --- 4. persist meeting + transcript + artifacts into a temp DB --------
     reset_database()
@@ -220,6 +227,7 @@ def test_spoken_meeting_end_to_end(tmp_path):
     decisions_sj = by_type.get("decisions") and by_type["decisions"].structured_json
     assert decisions_sj and (decisions_sj.get("decisions") or decisions_sj.get("open_questions"))
     assert by_type.get("requirements") and by_type["requirements"].structured_json.get("requirements")
+    assert by_type.get("adr") and by_type["adr"].structured_json.get("adrs")
     print(f"[e2e] artifacts: {sorted(by_type)}")
 
     # --- 5. serve + 6. Playwright screenshot -------------------------------
@@ -244,14 +252,27 @@ def test_spoken_meeting_end_to_end(tmp_path):
             page.wait_for_selector(".action-item-list .action-item", timeout=15000)
             page.wait_for_selector(".decisions-artifact .decision-list li", timeout=15000)
             page.wait_for_selector(".requirement-list .requirement-item", timeout=15000)
+            page.wait_for_selector(".adr-artifact .adr-record", timeout=15000)
             # transcript panel populated from the persisted segments
             page.wait_for_selector(".transcript-list .segment", timeout=15000)
+            # The meeting-detail modal is a fixed overlay that scrolls internally
+            # (`.modal-body` overflow-y:auto), so a plain full_page screenshot
+            # caps at the fold. Grow the viewport to the modal's content height so
+            # everything (transcript + all five artifacts) fits on one screen,
+            # then screenshot the viewport.
+            content_height = page.evaluate(
+                "() => { const b = document.querySelector('.modal-body');"
+                " return b ? Math.ceil(b.scrollHeight) : 1400; }"
+            )
+            page.set_viewport_size({"width": 1280, "height": min(int(content_height) + 220, 8000)})
+            page.wait_for_timeout(400)  # let the modal reflow to the taller viewport
             shot = os.path.join(EVIDENCE_DIR, "spoken_meeting_artifacts.png")
-            page.screenshot(path=shot, full_page=True)
+            page.screenshot(path=shot)
             assert page.locator(".mermaid-artifact svg").count() >= 1
             assert page.locator(".action-item-list .action-item").count() >= 1
             assert page.locator(".decisions-artifact .decision-list li").count() >= 1
             assert page.locator(".requirement-list .requirement-item").count() >= 1
+            assert page.locator(".adr-artifact .adr-record").count() >= 1
             browser.close()
         print(f"[e2e] screenshot saved: {shot}")
     finally:

@@ -95,6 +95,23 @@ def _requirements_body(requirements: list[dict[str, Any]] | None) -> str:
     return "\n\n".join(parts)
 
 
+def _adr_body(adrs: list[dict[str, Any]] | None) -> str:
+    """Render Architecture Decision Records as markdown sections (HS-28-02)."""
+    if not adrs:
+        return ""
+    parts: list[str] = []
+    for adr in adrs:
+        title = _clean_text(adr.get("title")) or "(untitled decision)"
+        status = _clean_text(adr.get("status")) or "proposed"
+        lines = [f"**{title}** — _{status}_"]
+        for label, key in (("Context", "context"), ("Decision", "decision"), ("Consequences", "consequences")):
+            value = _clean_text(adr.get(key))
+            if value:
+                lines.append(f"- {label}: {value}")
+        parts.append("\n".join(lines))
+    return "\n\n".join(parts)
+
+
 # --- Per-artifact-type body renderers (HS-28-01) ---------------------------
 #
 # Each renderer takes the canonical plugin output and returns either
@@ -174,11 +191,23 @@ def _render_requirements(ctx: _RenderContext) -> _Rendered:
     return _requirements_body(requirements), {"requirements": requirements}
 
 
+def _render_adrs(ctx: _RenderContext) -> _Rendered:
+    # HS-28-02: Architecture Decision Records.
+    raw_adrs = ctx.output.get("adrs")
+    if not (isinstance(raw_adrs, list) and raw_adrs):
+        return None
+    adrs = [item for item in raw_adrs if isinstance(item, dict)]
+    if not adrs:
+        return None
+    return _adr_body(adrs), {"adrs": adrs}
+
+
 _ARTIFACT_RENDERERS: dict[str, Callable[[_RenderContext], _Rendered]] = {
     "diagram": _render_diagram,
     "action_items": _render_action_items,
     "decisions": _render_decisions,
     "requirements": _render_requirements,
+    "adr": _render_adrs,
 }
 
 

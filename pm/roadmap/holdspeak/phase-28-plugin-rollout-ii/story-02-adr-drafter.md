@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 28
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-28-01 (registry)
 - **Unblocks:** HS-28-05
 - **Owner:** unassigned
@@ -41,12 +41,12 @@ the decision, status, and consequences.
 
 ## Acceptance criteria
 
-- [ ] Real `run()` returns the validated `adrs` payload; failure + capability-
+- [x] Real `run()` returns the validated `adrs` payload; failure + capability-
       blocked paths covered.
-- [ ] `register_builtin_plugins` returns the real class for `adr_drafter`; others
+- [x] `register_builtin_plugins` returns the real class for `adr_drafter`; others
       unaffected. (No routing ripple — already on the architect/architecture chains.)
-- [ ] `adr` artifacts render structured in `/history` (status pill + sections).
-- [ ] Tests green; full sweep green; verified live on `.43` Q6.
+- [x] `adr` artifacts render structured in `/history` (status pill + sections).
+- [x] Tests green; full sweep green (1953 passed); verified live on `.43` Q6.
 
 ## Test plan
 

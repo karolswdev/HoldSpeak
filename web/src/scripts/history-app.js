@@ -839,6 +839,13 @@ function historyApp() {
       );
     },
 
+    // HS-28-02: Architecture Decision Records render.
+    adrsFor(artifact) {
+      if (artifact?.artifact_type !== "adr") return [];
+      const items = artifact?.structured_json?.adrs;
+      return Array.isArray(items) ? items : [];
+    },
+
     // HS-16-04: render a diagram artifact's Mermaid (from structured_json) as
     // inline SVG. mermaid.js is loaded lazily via window.__loadMermaid (a code
     // -split chunk wired in history.astro), so non-diagram views never pay the

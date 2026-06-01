@@ -164,6 +164,41 @@ def test_requirements_artifact_embeds_grouped_body() -> None:
     assert artifact.structured_json["requirements"][0]["text"] == "Users can export reports as PDF"
 
 
+def test_adr_artifact_embeds_records_body() -> None:
+    # HS-28-02: adr_drafter output → an ADR body + structured key.
+    runs = [
+        _run(
+            "adr_drafter",
+            {
+                "summary": "1 ADR(s); 1 accepted.",
+                "confidence_hint": 1.0,
+                "active_intents": ["architecture"],
+                "adrs": [
+                    {
+                        "title": "Use Postgres for billing",
+                        "status": "accepted",
+                        "context": "Need transactional integrity",
+                        "decision": "Adopt Postgres over DynamoDB",
+                        "consequences": "Run a managed Postgres",
+                    }
+                ],
+            },
+        )
+    ]
+    artifacts = synthesize_meeting_artifacts(meeting_id="m-1", plugin_runs=runs)
+    assert len(artifacts) == 1
+    artifact = artifacts[0]
+    assert artifact.artifact_type == "adr"
+
+    body = artifact.body_markdown
+    assert "**Use Postgres for billing** — _accepted_" in body
+    assert "- Context: Need transactional integrity" in body
+    assert "- Decision: Adopt Postgres over DynamoDB" in body
+    assert "- Consequences: Run a managed Postgres" in body
+    assert "```mermaid" not in body
+    assert artifact.structured_json["adrs"][0]["status"] == "accepted"
+
+
 def test_non_diagram_artifact_body_is_byte_for_byte_legacy() -> None:
     # A non-diagram plugin run: even if (pathologically) it carried a "mermaid"
     # key, the body must match the exact legacy template.
