@@ -24,26 +24,33 @@ with the live status docs, the status docs win.
 4. Fixed a pre-existing time-bomb test; merged Phase 25 to `main`; pushed to origin.
 5. Opened **Phase 26**, shipped **HS-26-01** (the router seam), pushed.
 
-## 3. Pick up here → choose the next phase
+## 3. Pick up here → Phase 24 / HS-24-02 (recommended, fully scaffolded)
 
-Phase 26 is delivered and there is **no active phase**. Pick one (all are
-PMO-gated, one commit per story, same cadence as the rest of this roadmap):
+Phase 26 is delivered and there is no active phase. **The recommended next pickup
+is HS-24-02 — and it is already scaffolded for you** so you can execute it well:
 
-- **Resume Phase 24 — AI PI Companion Productization** (`paused`, 1/5 shipped).
-  The web runtime is now navigable (Phase 26), which was the implicit blocker for
-  comfortably extending the companion surface. Its routes live in
-  `holdspeak/web/routes/system.py` (`/api/companion/status`) +
-  `holdspeak/web/routes/pages.py` (`/companion`). Read
-  `phase-24-ai-pi-companion-productization/current-phase-status.md`.
-- **Resume Phase 16 — First Real Plugin** (`paused`, 1/5 shipped). The
-  `mermaid_architecture` plugin still has a `DeterministicPlugin` stub and the LLM
-  capability gate (HS-16-02) never landed; the diagram feature is not wired
-  end-to-end.
-- **Start Phase 15 — Out-and-About** (`not-started`). Now auth-unblocked by
-  HS-25-02 (the web runtime refuses non-loopback binds without a token).
-- **Unblock Phase 25 — HS-25-07** when hardware is available (§4): run the 3
-  dogfood scenarios, write `evidence-story-07.md` + `final-summary.md`, close the
-  phase. Code-level proof already exists in the story tests.
+> **▶ Phase 24 — AI PI Companion Productization → HS-24-02 (Session Lifecycle
+> Controls).** Full, grounded story:
+> `phase-24-ai-pi-companion-productization/story-02-session-lifecycle-controls.md`.
+> A **resume guide** (web seam, hardware split, the direct-`agent_context` pattern,
+> the Astro-frontend + build note, test approach) is at the top of that phase's
+> `current-phase-status.md` ("Resume guide (2026-06-01)"). Read both first.
+
+Why this one: it's the highest-value operability win (turn the read-only
+`/companion` surface into something you can actually *operate* — select / dismiss /
+pin / clear-stale waiting agent sessions), it's **software-only** (no physical AI PI
+needed, unlike HS-24-03/04/05), and it rides the clean Phase 26 web seam. Key
+gotcha already de-risked in the story: companion control routes call
+`agent_context` functions **directly** (like the dictation routes do), so **no
+`WebContext`/constructor change is needed**.
+
+Alternatives (if you'd rather not do 24):
+- **Phase 16 — First Real Plugin** (`paused`, 1/5). `mermaid_architecture` still has
+  a `DeterministicPlugin` stub; the LLM capability gate (HS-16-02) never landed.
+- **Phase 15 — Out-and-About** (`not-started`). Auth-unblocked by HS-25-02.
+- **Phase 25 — HS-25-07** when hardware is on hand (§4): the 3 dogfood scenarios →
+  `evidence-story-07.md` + `final-summary.md` → close the phase. (Note: Phase 24's
+  HS-24-03/04/05 are gated on the *same* hardware access.)
 
 **Working on the web runtime now?** It's clean: route modules under
 `holdspeak/web/routes/` each expose `build_*_router(ctx: WebContext)`; they import

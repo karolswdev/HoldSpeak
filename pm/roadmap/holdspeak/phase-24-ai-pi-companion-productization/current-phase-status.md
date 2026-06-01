@@ -1,6 +1,6 @@
 # Phase 24 — AI PI Companion Productization
 
-**Last updated:** 2026-05-26 (HS-24-01 closed; HS-24-02 next).
+**Last updated:** 2026-06-01 (HS-24-02 story scaffolded as a handover; phase still `paused` but **ready to resume at HS-24-02**). See "Resume guide (2026-06-01)" below.
 
 ## Goal
 
@@ -45,17 +45,48 @@ logs.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-24-01 | AI PI Companion surface: read-only session overview | done | [story-01-ai-pi-companion-surface-overview.md](./story-01-ai-pi-companion-surface-overview.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-24-02 | Session lifecycle controls | backlog | — | — |
+| HS-24-02 | Session lifecycle controls | backlog | [story-02-session-lifecycle-controls.md](./story-02-session-lifecycle-controls.md) | — |
 | HS-24-03 | Confidence and unavailable-target display affordances | backlog | — | — |
 | HS-24-04 | Push/repaint cadence decision | backlog | — | — |
 | HS-24-05 | Productization dogfood and closeout | backlog | — | — |
 
+## Resume guide (2026-06-01)
+
+**Phase 25 and Phase 26 have since closed**, so the prerequisites that paused this
+phase are cleared, and the web runtime is now clean and navigable. A handover for
+the next agent:
+
+- **Start at HS-24-02 — Session Lifecycle Controls.** Its story is now fully
+  scaffolded with a grounded implementation map:
+  [story-02-session-lifecycle-controls.md](./story-02-session-lifecycle-controls.md).
+- **HS-24-02 is software-only** (web controls + `agent_context` state functions) —
+  it does **not** need the physical AI PI, so it is buildable/testable headless and
+  is the right pick while hardware dogfood is out of reach.
+- **Hardware split — important for sequencing:** HS-24-03 (physical display
+  affordances), HS-24-04 (push/repaint cadence), and HS-24-05 (live dogfood) all
+  want the physical AI PI on-site. While the author is remote, those stall the same
+  way HS-25-07 does. Do HS-24-02 now; scaffold + tackle 03–05 when hardware is in
+  hand. Scaffold those story files at that point (they aren't written yet).
+- **Web seam (post-Phase-26):** companion routes live in
+  `holdspeak/web/routes/system.py` (`/api/companion/status`) +
+  `holdspeak/web/routes/pages.py` (`/companion`). New companion control endpoints
+  go in `system.py` and may call `agent_context` functions **directly** (the
+  dictation routes already do this for `clear_agent_session_response`) — **no
+  `WebContext`/constructor change needed**. Construct test servers via
+  `MeetingWebServer(WebRuntimeCallbacks(...))` (constructor collapsed in HS-26-06).
+- **Frontend:** `/companion` is Astro-built (`web/` → `static/_built/companion/`);
+  adding buttons means editing `web/` and `(cd web && npm run build)`. `_built/` is
+  gitignored.
+- **Gate:** run the **full** suite (`uv run pytest -q --ignore=tests/e2e/test_metal.py`),
+  not a narrow `-k` — Phase 26 showed narrow filters miss real bugs.
+
 ## Where we are
 
-**Paused 2026-05-31** to prioritize Phase 25 (Trust & Hardening), which closes
-the trust/security gaps that gate external use and Phase 15. HS-24-01 is the
-last shipped work; HS-24-02 remains the next story when this phase resumes after
-Phase 25 closes.
+**Paused 2026-05-31** to prioritize Phase 25 (Trust & Hardening). **Both Phase 25
+(functionally; HS-25-07 hardware dogfood still open) and Phase 26 (Web Runtime
+Decomposition, fully) have since progressed/closed** — see the Resume guide above.
+HS-24-01 is the last shipped work; **HS-24-02 is the scaffolded, recommended resume
+point.**
 
 Phase 23 closed with a working physical companion
 loop: AI PI can show long questions, distinguish waiting sessions, cycle the
