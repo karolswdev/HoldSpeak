@@ -1,8 +1,13 @@
 # AIPI-Lite Developer Workflow
 
 <p align="center">
-  <img src="../aipi-lite/AIPI-LIte.jpg" alt="AIPI-Lite companion device" width="560">
+  <img src="assets/pixellab/aipi-lite-companion.png" alt="Pixel art AIPI-Lite companion device" width="280">
 </p>
+
+The AIPI-Lite companion is a portable ESPHome-based device for meeting capture
+controls and status feedback. Put it on Wi-Fi, including a phone hotspot when
+needed, and HoldSpeak can use the bridge for real-time meeting transcription
+and intelligence.
 
 This is the unified-checkout workflow for the AIPI-Lite firmware and bridge.
 The source lives in `aipi-lite/`; helper scripts live at repo root in

@@ -20,12 +20,14 @@ Voice input for macOS and Linux — hold a key, speak, release. Local-first and 
 ## AIPI-Lite Companion
 
 <p align="center">
-  <img src="aipi-lite/AIPI-LIte.jpg" alt="AIPI-Lite companion device" width="520">
+  <img src="docs/assets/pixellab/aipi-lite-companion.png" alt="Pixel art AIPI-Lite companion device" width="260">
 </p>
 
-The optional AIPI-Lite companion is the dedicated hardware path for capture
-controls and status feedback. Firmware, bridge setup, and verification live in
-[AIPI-Lite Developer Workflow](docs/AIPI_LITE_DEV_WORKFLOW.md).
+The optional AIPI-Lite companion is a portable ESPHome-based device you can
+carry between rooms. Put it on Wi-Fi, including a phone hotspot when needed,
+and it can provide meeting capture controls and status feedback while
+HoldSpeak handles real-time transcription and intelligence. Firmware, bridge
+setup, and verification live in [AIPI-Lite Developer Workflow](docs/AIPI_LITE_DEV_WORKFLOW.md).
 
 ## Platform support
 
