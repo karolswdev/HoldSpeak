@@ -15,7 +15,6 @@ import yaml
 from fastapi.testclient import TestClient
 
 import holdspeak.config as config_module
-from holdspeak import web_server as web_server_module
 from holdspeak.config import Config
 from holdspeak.plugins.dictation import assembly as assembly_module
 from holdspeak.plugins.dictation import project_root as project_root_module
@@ -68,7 +67,7 @@ def _seed_global(path: Path, *blocks: dict) -> None:
 @pytest.fixture
 def global_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     target = tmp_path / "config" / "holdspeak" / "blocks.yaml"
-    monkeypatch.setattr(web_server_module, "_GLOBAL_BLOCKS_PATH", target)
+    monkeypatch.setattr(assembly_module, "DEFAULT_GLOBAL_BLOCKS_PATH", target)
     return target
 
 

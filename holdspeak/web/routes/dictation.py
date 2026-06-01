@@ -4,13 +4,13 @@ The dictation pipeline cluster moved off `MeetingWebServer._create_app`: intent
 controls (`/api/intents/*`), agent-context + agent-hook routes, the `.hs` /
 project-doc-suggestion routes, block-config CRUD, project-KB routes, and the
 dry-run endpoint. Handlers + their private helpers move verbatim; only the
-closure target changes (`self.` -> `web_ctx.`) and the package-relative imports gain
+closure target changes (`self.` -> `ctx.`) and the package-relative imports gain
 one dot (this module sits one package deeper than `web_server`).
 
-`_GLOBAL_BLOCKS_PATH` is read through the `web_server` module object
-(`_self_module._GLOBAL_BLOCKS_PATH`) rather than a bound value so tests that
-`monkeypatch.setattr(web_server, "_GLOBAL_BLOCKS_PATH", ...)` keep working — the
-prior inline code resolved it the same dynamic way.
+The global blocks path comes from the canonical
+`plugins.dictation.assembly.DEFAULT_GLOBAL_BLOCKS_PATH` — the same constant the
+dictation CLI + doctor read — imported lazily inside the helpers so tests that
+`monkeypatch.setattr(assembly, "DEFAULT_GLOBAL_BLOCKS_PATH", ...)` still apply.
 """
 
 from __future__ import annotations
@@ -36,12 +36,12 @@ from ..context import WebContext
 log = get_logger("web.routes.dictation")
 
 
-def build_dictation_router(web_ctx: WebContext) -> APIRouter:
+def build_dictation_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     @router.get("/api/intents/control")
     async def api_get_intent_controls() -> Any:
-        if web_ctx.on_get_intent_controls is None:
+        if ctx.on_get_intent_controls is None:
             return JSONResponse(
                 {
                     "enabled": False,
@@ -52,7 +52,7 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
                 }
             )
         try:
-            payload = web_ctx.on_get_intent_controls()
+            payload = ctx.on_get_intent_controls()
         except Exception as e:
             log.error(f"on_get_intent_controls failed: {e}")
             return JSONResponse({"success": False, "error": str(e)}, status_code=500)
@@ -60,47 +60,47 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
 
     @router.put("/api/intents/profile")
     async def api_set_intent_profile(payload: _IntentProfileRequest) -> Any:
-        if web_ctx.on_set_intent_profile is None:
+        if ctx.on_set_intent_profile is None:
             return JSONResponse(
                 {"success": False, "error": "Intent profile updates not supported"},
                 status_code=501,
             )
         try:
-            result = web_ctx.on_set_intent_profile(payload.profile)
+            result = ctx.on_set_intent_profile(payload.profile)
         except Exception as e:
             log.error(f"on_set_intent_profile failed: {e}")
             return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
         if isinstance(result, dict):
-            web_ctx.broadcast("intent_controls_updated", result)
+            ctx.broadcast("intent_controls_updated", result)
         return JSONResponse({"success": True, "controls": result})
 
     @router.put("/api/intents/override")
     async def api_set_intent_override(payload: _IntentOverrideRequest) -> Any:
-        if web_ctx.on_set_intent_override is None:
+        if ctx.on_set_intent_override is None:
             return JSONResponse(
                 {"success": False, "error": "Intent override updates not supported"},
                 status_code=501,
             )
         try:
-            result = web_ctx.on_set_intent_override(payload.intents)
+            result = ctx.on_set_intent_override(payload.intents)
         except Exception as e:
             log.error(f"on_set_intent_override failed: {e}")
             return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
         if isinstance(result, dict):
-            web_ctx.broadcast("intent_controls_updated", result)
+            ctx.broadcast("intent_controls_updated", result)
         return JSONResponse({"success": True, "controls": result})
 
     @router.post("/api/intents/preview")
     async def api_preview_intent_route(payload: Optional[_IntentPreviewRequest] = None) -> Any:
-        if web_ctx.on_route_preview is None:
+        if ctx.on_route_preview is None:
             return JSONResponse(
                 {"success": False, "error": "Intent route preview not supported"},
                 status_code=501,
             )
         try:
-            result = web_ctx.on_route_preview(
+            result = ctx.on_route_preview(
                 profile=payload.profile if payload is not None else None,
                 threshold=payload.threshold if payload is not None else None,
                 intent_scores=payload.intent_scores if payload is not None else None,
@@ -121,18 +121,18 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
         from ...plugins.dictation.project_root import detect_project_for_cwd
 
         if project_root is None or not str(project_root).strip():
-            ctx = detect_project_for_cwd()
-            if ctx is None:
+            project = detect_project_for_cwd()
+            if project is None:
                 raise ValueError("no project detected for current working directory")
-            return dict(ctx)
+            return dict(project)
 
         root = Path(str(project_root)).expanduser().resolve()
         if not root.exists() or not root.is_dir():
             raise ValueError(f"project_root must be an existing directory: {root}")
 
-        ctx = detect_project_for_cwd(root)
-        if ctx is not None:
-            return dict(ctx)
+        project = detect_project_for_cwd(root)
+        if project is not None:
+            return dict(project)
         return {"name": root.name, "root": str(root), "anchor": "manual"}
 
     def _resolve_blocks_target(
@@ -143,13 +143,13 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
 
         Raises `ValueError` with a user-facing message on bad input.
         """
-        from ... import web_server as _self_module
+        from ...plugins.dictation.assembly import DEFAULT_GLOBAL_BLOCKS_PATH
 
         if scope == "global":
-            return _self_module._GLOBAL_BLOCKS_PATH, None
+            return DEFAULT_GLOBAL_BLOCKS_PATH, None
         if scope == "project":
-            ctx = _resolve_project_context(project_root)
-            return Path(ctx["root"]) / ".holdspeak" / "blocks.yaml", dict(ctx)
+            project = _resolve_project_context(project_root)
+            return Path(project["root"]) / ".holdspeak" / "blocks.yaml", dict(project)
         raise ValueError(f"scope must be 'global' or 'project', got {scope!r}")
 
     @router.get("/api/dictation/project-context")
@@ -474,9 +474,9 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         redetected = _resolve_project_context(project_root)
-        if web_ctx.on_dictation_config_changed is not None:
+        if ctx.on_dictation_config_changed is not None:
             try:
-                web_ctx.on_dictation_config_changed()
+                ctx.on_dictation_config_changed()
             except Exception as exc:
                 log.error(f"on_dictation_config_changed failed: {exc}")
         return JSONResponse(_project_hs_payload(redetected))
@@ -511,9 +511,9 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         project_doc_suggestions.pop(_project_suggestion_key(project), None)
-        if web_ctx.on_dictation_config_changed is not None:
+        if ctx.on_dictation_config_changed is not None:
             try:
-                web_ctx.on_dictation_config_changed()
+                ctx.on_dictation_config_changed()
             except Exception as exc:
                 log.error(f"on_dictation_config_changed failed: {exc}")
         return JSONResponse(
@@ -704,8 +704,7 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
         """Execute the browser dry-run path for already-validated text."""
         from ...config import Config
         from ...dictation_telemetry import summarize_dry_run
-        from ... import web_server as _self_module
-        from ...plugins.dictation.assembly import build_pipeline
+        from ...plugins.dictation.assembly import DEFAULT_GLOBAL_BLOCKS_PATH, build_pipeline
         from ...plugins.dictation.contracts import Utterance
         from ...target_profile import collect_active_target_hints, detect_target_profile_with_override
 
@@ -742,7 +741,7 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
         result = build_pipeline(
             cfg,
             project_root=project_root,
-            global_blocks_path=_self_module._GLOBAL_BLOCKS_PATH,
+            global_blocks_path=DEFAULT_GLOBAL_BLOCKS_PATH,
         )
         target_profile = detect_target_profile_with_override(
             target_hints or collect_active_target_hints(),
@@ -1193,9 +1192,9 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
             save_blocks_yaml(path, document)
         except BlockConfigError as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
-        if web_ctx.on_dictation_config_changed is not None:
+        if ctx.on_dictation_config_changed is not None:
             try:
-                web_ctx.on_dictation_config_changed()
+                ctx.on_dictation_config_changed()
             except Exception as exc:
                 log.error(f"on_dictation_config_changed failed: {exc}")
         return JSONResponse(
@@ -1262,9 +1261,9 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
             save_blocks_yaml(path, document)
         except BlockConfigError as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
-        if web_ctx.on_dictation_config_changed is not None:
+        if ctx.on_dictation_config_changed is not None:
             try:
-                web_ctx.on_dictation_config_changed()
+                ctx.on_dictation_config_changed()
             except Exception as exc:
                 log.error(f"on_dictation_config_changed failed: {exc}")
         response_payload = {
@@ -1351,9 +1350,9 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
             save_blocks_yaml(path, document)
         except BlockConfigError as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
-        if web_ctx.on_dictation_config_changed is not None:
+        if ctx.on_dictation_config_changed is not None:
             try:
-                web_ctx.on_dictation_config_changed()
+                ctx.on_dictation_config_changed()
             except Exception as exc:
                 log.error(f"on_dictation_config_changed failed: {exc}")
         return JSONResponse(
@@ -1399,9 +1398,9 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
             # 422 to the caller — they should DELETE-then-recreate or use
             # a "deactivate" toggle (out of scope for v1).
             return JSONResponse({"error": str(exc)}, status_code=422)
-        if web_ctx.on_dictation_config_changed is not None:
+        if ctx.on_dictation_config_changed is not None:
             try:
-                web_ctx.on_dictation_config_changed()
+                ctx.on_dictation_config_changed()
             except Exception as exc:
                 log.error(f"on_dictation_config_changed failed: {exc}")
         return JSONResponse(
@@ -1415,7 +1414,7 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
         from ...plugins.dictation.project_kb import ProjectKBError, read_project_kb
 
         try:
-            ctx = _resolve_project_context(project_root)
+            project = _resolve_project_context(project_root)
         except ValueError as exc:
             if project_root:
                 return JSONResponse({"error": str(exc)}, status_code=400)
@@ -1425,13 +1424,13 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
                 "kb_path": None,
                 "message": f"no project root detected from cwd={Path.cwd()}",
             })
-        root = Path(ctx["root"])
+        root = Path(project["root"])
         try:
             kb = read_project_kb(root)
         except ProjectKBError as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
         return JSONResponse({
-            "detected": dict(ctx),
+            "detected": dict(project),
             "kb": kb,
             "kb_path": str(root / ".holdspeak" / "project.yaml"),
         })
@@ -1455,20 +1454,20 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
                 status_code=400,
             )
         try:
-            ctx = _resolve_project_context(project_root)
+            project = _resolve_project_context(project_root)
         except ValueError as exc:
             return JSONResponse(
                 {"error": str(exc)},
                 status_code=400 if project_root else 404,
             )
-        root = Path(ctx["root"])
+        root = Path(project["root"])
         try:
             write_project_kb(root, kb)
         except ProjectKBError as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
-        if web_ctx.on_dictation_config_changed is not None:
+        if ctx.on_dictation_config_changed is not None:
             try:
-                web_ctx.on_dictation_config_changed()
+                ctx.on_dictation_config_changed()
             except Exception as exc:
                 log.error(f"on_dictation_config_changed failed: {exc}")
         try:
@@ -1477,7 +1476,7 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": str(exc)}, status_code=500)
         # Re-detect so the caller sees the upgraded anchor signal
         # when this PUT just created `<root>/.holdspeak/`.
-        redetected = _resolve_project_context(project_root) if project_root else ctx
+        redetected = _resolve_project_context(project_root) if project_root else project
         return JSONResponse({
             "detected": dict(redetected),
             "kb": fresh_kb,
@@ -1494,13 +1493,13 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
         )
 
         try:
-            ctx = _resolve_project_context(project_root)
+            project = _resolve_project_context(project_root)
         except ValueError as exc:
             return JSONResponse(
                 {"error": str(exc)},
                 status_code=400 if project_root else 404,
             )
-        root = Path(ctx["root"])
+        root = Path(project["root"])
         path = kb_path_for(root)
         if path.exists():
             return JSONResponse(
@@ -1511,16 +1510,16 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
             write_project_kb(root, _STARTER_PROJECT_KB)
         except ProjectKBError as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
-        if web_ctx.on_dictation_config_changed is not None:
+        if ctx.on_dictation_config_changed is not None:
             try:
-                web_ctx.on_dictation_config_changed()
+                ctx.on_dictation_config_changed()
             except Exception as exc:
                 log.error(f"on_dictation_config_changed failed: {exc}")
         try:
             fresh_kb = read_project_kb(root)
         except ProjectKBError as exc:
             return JSONResponse({"error": str(exc)}, status_code=500)
-        redetected = _resolve_project_context(project_root) if project_root else ctx
+        redetected = _resolve_project_context(project_root) if project_root else project
         return JSONResponse(
             {
                 "detected": dict(redetected),
@@ -1536,25 +1535,25 @@ def build_dictation_router(web_ctx: WebContext) -> APIRouter:
         from ...plugins.dictation.project_kb import delete_project_kb
 
         try:
-            ctx = _resolve_project_context(project_root)
+            project = _resolve_project_context(project_root)
         except ValueError as exc:
             return JSONResponse(
                 {"error": str(exc)},
                 status_code=400 if project_root else 404,
             )
-        root = Path(ctx["root"])
+        root = Path(project["root"])
         removed = delete_project_kb(root)
         if not removed:
             return JSONResponse(
                 {"error": f"no project.yaml at {root / '.holdspeak' / 'project.yaml'}"},
                 status_code=404,
             )
-        if web_ctx.on_dictation_config_changed is not None:
+        if ctx.on_dictation_config_changed is not None:
             try:
-                web_ctx.on_dictation_config_changed()
+                ctx.on_dictation_config_changed()
             except Exception as exc:
                 log.error(f"on_dictation_config_changed failed: {exc}")
-        return JSONResponse({"detected": dict(ctx), "kb": None, "kb_path": None})
+        return JSONResponse({"detected": dict(project), "kb": None, "kb_path": None})
 
     # ── Dictation dry-run endpoint (WFS-CFG-005) ───────────────────────
 

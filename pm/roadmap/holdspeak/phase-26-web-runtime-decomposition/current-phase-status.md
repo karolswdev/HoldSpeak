@@ -78,10 +78,25 @@ control + 22 dictation) plus all its private helpers (project detection,
 block-config IO, dry-run, the per-app `project_doc_suggestions` dict, readiness)
 — now lives in `holdspeak/web/routes/dictation.py` (`build_dictation_router`),
 moved verbatim. `WebContext` grew 5 accessors. `web_server.py` dropped **4691 →
-3133 lines** (−1558; cumulative **5658 → 3133**). The full suite caught a real
-shadow bug (a local `ctx` project dict vs. the context param) — fixed by naming
-the param `web_ctx`. Route-inventory diff identical; full suite green (1879);
-ruff clean.
+3133 lines** (−1558; cumulative **5658 → 3133**). Route-inventory diff identical;
+full suite green (1879); ruff clean.
+
+**HS-26-03 follow-up (post-merge cleanup, behavior-preserving):** the two
+deviations called out in `evidence-story-03.md` were addressed properly rather
+than left as workarounds — superseding that file's §Deviations notes:
+1. **`_GLOBAL_BLOCKS_PATH` duplication removed.** `web_server.py` held a third
+   copy of `~/.config/holdspeak/blocks.yaml` (also in `controller.py` and the
+   canonical `plugins.dictation.assembly.DEFAULT_GLOBAL_BLOCKS_PATH`). After the
+   dictation move it was dead in `web_server`, so it was deleted; `dictation.py`
+   now reads the canonical `assembly.DEFAULT_GLOBAL_BLOCKS_PATH` (lazy import, so
+   the monkeypatch tests still apply) — the route module no longer reaches into
+   the monolith. The 3 web tests now patch `assembly.DEFAULT_GLOBAL_BLOCKS_PATH`.
+   (`controller.py`'s separate copy is out of Phase 26's web scope — left as-is.)
+2. **`web_ctx` → `ctx`.** The param-rename workaround was replaced by renaming the
+   shadowing local (a project-context dict) `ctx` → `project`, so the WebContext
+   param is the conventional `ctx`, matching `core.py` / `meetings.py`.
+
+   Full suite still green (1879); route-inventory still identical; ruff clean.
 
 Next: **HS-26-04** — migrate activity / connector / plugin-job routes onto the
 same seam. Each story is a behavior-preserving migration gated by the existing

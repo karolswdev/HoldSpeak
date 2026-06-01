@@ -46,9 +46,6 @@ _DASHBOARD_HTML_PATH = (
     Path(__file__).resolve().parent / "static" / "_built" / "index.html"
 )
 
-# WFS-CFG-001: global dictation blocks file. Tests monkeypatch this constant.
-_GLOBAL_BLOCKS_PATH = Path.home() / ".config" / "holdspeak" / "blocks.yaml"
-
 try:
     import uvicorn
     from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
