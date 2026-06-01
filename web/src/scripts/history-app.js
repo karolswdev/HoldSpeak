@@ -853,6 +853,13 @@ function historyApp() {
       return Array.isArray(items) ? items : [];
     },
 
+    // HS-28-04: risk register render.
+    risksFor(artifact) {
+      if (artifact?.artifact_type !== "risk_register") return [];
+      const items = artifact?.structured_json?.risks;
+      return Array.isArray(items) ? items : [];
+    },
+
     // HS-16-04: render a diagram artifact's Mermaid (from structured_json) as
     // inline SVG. mermaid.js is loaded lazily via window.__loadMermaid (a code
     // -split chunk wired in history.astro), so non-diagram views never pay the

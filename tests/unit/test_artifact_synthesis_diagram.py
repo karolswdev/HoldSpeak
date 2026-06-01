@@ -232,6 +232,39 @@ def test_milestone_artifact_embeds_plan_body() -> None:
     assert artifact.structured_json["milestones"][0]["name"] == "Beta launch"
 
 
+def test_risk_register_artifact_embeds_table_body() -> None:
+    # HS-28-04: risk_heatmap output → a risk-register table body + structured key.
+    runs = [
+        _run(
+            "risk_heatmap",
+            {
+                "summary": "1 risk(s); 1 high-impact.",
+                "confidence_hint": 1.0,
+                "active_intents": ["incident"],
+                "risks": [
+                    {
+                        "risk": "Migration could lose data",
+                        "impact": "high",
+                        "likelihood": "low",
+                        "mitigation": "Dry-run + backup",
+                        "owner": "Maria",
+                    }
+                ],
+            },
+        )
+    ]
+    artifacts = synthesize_meeting_artifacts(meeting_id="m-1", plugin_runs=runs)
+    assert len(artifacts) == 1
+    artifact = artifacts[0]
+    assert artifact.artifact_type == "risk_register"
+
+    body = artifact.body_markdown
+    assert "| Risk | Impact | Likelihood | Mitigation | Owner |" in body
+    assert "| Migration could lose data | high | low | Dry-run + backup | Maria |" in body
+    assert "```mermaid" not in body
+    assert artifact.structured_json["risks"][0]["impact"] == "high"
+
+
 def test_non_diagram_artifact_body_is_byte_for_byte_legacy() -> None:
     # A non-diagram plugin run: even if (pathologically) it carried a "mermaid"
     # key, the body must match the exact legacy template.

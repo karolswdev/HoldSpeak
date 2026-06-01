@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 28
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-28-01 (registry)
 - **Unblocks:** HS-28-05
 - **Owner:** unassigned
@@ -40,12 +40,12 @@ run captures each as a register row: impact, likelihood, mitigation, owner.
 
 ## Acceptance criteria
 
-- [ ] Real `run()` returns the validated `risks` payload; failure + capability-
+- [x] Real `run()` returns the validated `risks` payload; failure + capability-
       blocked paths covered.
-- [ ] `register_builtin_plugins` returns the real class for `risk_heatmap`; others
+- [x] `register_builtin_plugins` returns the real class for `risk_heatmap`; others
       unaffected. (No routing ripple — already on the incident chain.)
-- [ ] `risk_register` artifacts render structured in `/history`.
-- [ ] Tests green; full sweep green; verified live on `.43` Q6.
+- [x] `risk_register` artifacts render structured in `/history` (table + level pills).
+- [x] Tests green; full sweep green (1978 passed); verified live on `.43` Q6.
 
 ## Test plan
 

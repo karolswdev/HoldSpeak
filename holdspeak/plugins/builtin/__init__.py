@@ -38,6 +38,10 @@ from .requirements_extractor import (
     RequirementsExtractorPlugin,
     _extract_requirements,
 )
+from .risk_heatmap import (
+    RiskHeatmapPlugin,
+    _extract_risks,
+)
 
 # Real plugin classes keyed by ID; every other ID falls back to the stub.
 _REAL_PLUGINS = {
@@ -47,6 +51,7 @@ _REAL_PLUGINS = {
     "requirements_extractor": RequirementsExtractorPlugin,
     "adr_drafter": AdrDrafterPlugin,
     "milestone_planner": MilestonePlannerPlugin,
+    "risk_heatmap": RiskHeatmapPlugin,
 }
 
 
@@ -128,6 +133,7 @@ __all__ = [
     "MermaidArchitecturePlugin",
     "MilestonePlannerPlugin",
     "RequirementsExtractorPlugin",
+    "RiskHeatmapPlugin",
     "_BUILTIN_PLUGIN_DEFS",
     "_extract_action_items",
     "_extract_adrs",
@@ -135,5 +141,6 @@ __all__ = [
     "_extract_mermaid_block",
     "_extract_milestones",
     "_extract_requirements",
+    "_extract_risks",
     "register_builtin_plugins",
 ]

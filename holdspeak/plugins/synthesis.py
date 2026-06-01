@@ -95,6 +95,21 @@ def _requirements_body(requirements: list[dict[str, Any]] | None) -> str:
     return "\n\n".join(parts)
 
 
+def _risk_body(risks: list[dict[str, Any]] | None) -> str:
+    """Render a risk register as a markdown table (HS-28-04)."""
+    if not risks:
+        return ""
+    lines = ["| Risk | Impact | Likelihood | Mitigation | Owner |", "|---|---|---|---|---|"]
+    for risk in risks:
+        name = _clean_text(risk.get("risk")) or "(unspecified)"
+        impact = _clean_text(risk.get("impact")) or "—"
+        likelihood = _clean_text(risk.get("likelihood")) or "—"
+        mitigation = _clean_text(risk.get("mitigation")) or "—"
+        owner = _clean_text(risk.get("owner")) or "—"
+        lines.append(f"| {name} | {impact} | {likelihood} | {mitigation} | {owner} |")
+    return "\n".join(lines)
+
+
 def _milestone_body(milestones: list[dict[str, Any]] | None) -> str:
     """Render a milestone plan as markdown sections (HS-28-03)."""
     if not milestones:
@@ -232,6 +247,17 @@ def _render_milestones(ctx: _RenderContext) -> _Rendered:
     return _milestone_body(milestones), {"milestones": milestones}
 
 
+def _render_risks(ctx: _RenderContext) -> _Rendered:
+    # HS-28-04: risk register.
+    raw_risks = ctx.output.get("risks")
+    if not (isinstance(raw_risks, list) and raw_risks):
+        return None
+    risks = [item for item in raw_risks if isinstance(item, dict)]
+    if not risks:
+        return None
+    return _risk_body(risks), {"risks": risks}
+
+
 _ARTIFACT_RENDERERS: dict[str, Callable[[_RenderContext], _Rendered]] = {
     "diagram": _render_diagram,
     "action_items": _render_action_items,
@@ -239,6 +265,7 @@ _ARTIFACT_RENDERERS: dict[str, Callable[[_RenderContext], _Rendered]] = {
     "requirements": _render_requirements,
     "adr": _render_adrs,
     "milestone_plan": _render_milestones,
+    "risk_register": _render_risks,
 }
 
 

@@ -1021,8 +1021,26 @@ import AppLayout from "../layouts/AppLayout.astro";
                           </template>
                         </div>
                       </template>
+                      <template x-if="risksFor(artifact).length">
+                        <table class="risk-table">
+                          <thead>
+                            <tr><th>Risk</th><th>Impact</th><th>Likelihood</th><th>Mitigation</th><th>Owner</th></tr>
+                          </thead>
+                          <tbody>
+                            <template x-for="(r, ri) in risksFor(artifact)" :key="`risk${ri}`">
+                              <tr>
+                                <td x-text="r.risk"></td>
+                                <td><span class="level-pill" :class="`level-${r.impact}`" x-text="r.impact"></span></td>
+                                <td><span class="level-pill" :class="`level-${r.likelihood}`" x-text="r.likelihood"></span></td>
+                                <td x-text="r.mitigation || '—'"></td>
+                                <td x-text="r.owner || '—'"></td>
+                              </tr>
+                            </template>
+                          </tbody>
+                        </table>
+                      </template>
                       <p class="meta-line"
-                         x-show="artifact.body_markdown && !isDiagram(artifact) && !actionItemsFor(artifact).length && !hasDecisions(artifact) && !requirementsFor(artifact).length && !adrsFor(artifact).length && !milestonesFor(artifact).length"
+                         x-show="artifact.body_markdown && !isDiagram(artifact) && !actionItemsFor(artifact).length && !hasDecisions(artifact) && !requirementsFor(artifact).length && !adrsFor(artifact).length && !milestonesFor(artifact).length && !risksFor(artifact).length"
                          x-cloak x-text="artifact.body_markdown"></p>
                     </div>
                   </template>
@@ -1597,6 +1615,48 @@ import AppLayout from "../layouts/AppLayout.astro";
     letter-spacing: var(--letter-spacing-loose, 0.05em);
     color: var(--text-muted);
     margin-right: var(--space-1);
+  }
+
+  /* HS-28-04: risk register table. */
+  .risk-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--space-2);
+    font-size: var(--font-size-sm);
+  }
+  .risk-table th,
+  .risk-table td {
+    text-align: left;
+    padding: var(--space-1) var(--space-2);
+    border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+    vertical-align: top;
+  }
+  .risk-table th {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose, 0.05em);
+    color: var(--text-muted);
+  }
+  .level-pill {
+    display: inline-block;
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-sm, 3px);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+  }
+  .level-pill.level-high {
+    background: var(--color-danger-soft, rgba(220, 80, 80, 0.18));
+    color: var(--color-danger, #e06666);
+  }
+  .level-pill.level-medium {
+    background: var(--color-warning-soft, rgba(220, 170, 80, 0.18));
+    color: var(--color-warning, #e0b066);
+  }
+  .level-pill.level-low {
+    background: var(--color-success-soft, rgba(110, 180, 110, 0.16));
+    color: var(--color-success, #7bb37b);
   }
 
   /* HS-16-04: rendered Mermaid diagram artifact. */
