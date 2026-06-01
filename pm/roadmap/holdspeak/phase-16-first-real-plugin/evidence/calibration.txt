@@ -1,0 +1,12 @@
+
+=== local-Q6 (.43:8080, Qwen3.5-9B-UD-Q6_K_XL) ===
+  [heavy] valid=3/3 (100%)  avg_runtime=3.57s  avg_confidence=1.00
+  [mixed] valid=3/3 (100%)  avg_runtime=1.01s  avg_confidence=1.00
+  [low  ] valid=3/3 (100%)  avg_runtime=1.58s  avg_confidence=1.00
+
+=== local-Q4 (127.0.0.1:8081, Qwen3.5-9B-Q4_K_M) ===
+  [heavy] valid=0/3 (0%)  avg_runtime=27.83s  avg_confidence=0.00
+  [mixed] valid=0/3 (0%)  avg_runtime=29.68s  avg_confidence=0.00
+  [low  ] valid=0/3 (0%)  avg_runtime=30.47s  avg_confidence=0.00
+
+=== cloud (real OpenAI / gpt-5-mini): NOT TESTED — no API key on this remote machine ===

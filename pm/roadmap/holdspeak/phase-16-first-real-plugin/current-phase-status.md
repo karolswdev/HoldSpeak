@@ -1,6 +1,8 @@
 # Phase 16 — First real synthesizer: `mermaid_architecture`
 
-**Last updated:** 2026-06-01 (HS-16-04 shipped — `diagram` artifacts now render as live SVG in the `/history` detail via lazy-loaded mermaid.js 11.15.0 (`structured_json.mermaid` → `renderMermaid`), with a raw-source + warning fallback on invalid syntax (`suppressErrorRendering`); verified in real Chrome with desktop+mobile screenshots; mermaid is a standalone lazy chunk (absent from home/dictation). HS-16-05 pending). Resumed from `paused`; 4/5 shipped.
+**Phase closed:** 2026-06-01. See [final-summary.md](./final-summary.md). This file is frozen per PMO §3 — do not edit after this commit.
+
+**Last updated:** 2026-06-01 (HS-16-05 shipped — phase exit: RFC reality-check (`docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` annotated, all 13 plugins shipped/stub, Appendix A added), calibration pass (Q6 100% / Q4 0% / cloud untested), and `final-summary.md`. **Phase 16 done, 5/5.**)
 
 ## Goal
 
@@ -99,9 +101,10 @@ pattern with no new substrate work.
   "what 'shipped' means" added.
 - [ ] No regressions: `uv run pytest -q --ignore=tests/e2e/test_metal.py`
   green at ≥ phase-14 baseline.
-- [ ] `final-summary.md` records the LLM-quality calibration data
-  (which models were tested, parse-failure rate observed) so phase
-  17 has a baseline.
+- [x] `final-summary.md` records the LLM-quality calibration data
+  (HS-16-05): Q6 endpoint 100% parse-success across 3 transcripts; the
+  Q4 reasoning-build endpoint 0% (content-extraction mismatch); cloud
+  untested (no key). Baseline + the reasoning-content caveat handed to phase 17.
 
 ## Story status
 
@@ -111,7 +114,7 @@ pattern with no new substrate work.
 | HS-16-02 | LLM capability gate wired at host instantiation | done | [story-02-llm-capability-gate.md](./story-02-llm-capability-gate.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-16-03 | Diagram-aware artifact body in `synthesize_meeting_artifacts` | done | [story-03-diagram-artifact-rendering.md](./story-03-diagram-artifact-rendering.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-16-04 | Web: render `mermaid` artifacts as inline SVG via mermaid.js | done | [story-04-web-mermaid-rendering.md](./story-04-web-mermaid-rendering.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-16-05 | RFC reality-check + phase exit (DoD, calibration, final summary) | backlog | [story-05-rfc-reality-check.md](./story-05-rfc-reality-check.md) | — |
+| HS-16-05 | RFC reality-check + phase exit (DoD, calibration, final summary) | done | [story-05-rfc-reality-check.md](./story-05-rfc-reality-check.md) | [final-summary.md](./final-summary.md) |
 
 ## Where we are
 

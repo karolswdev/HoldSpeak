@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 16
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-16-01, HS-16-02, HS-16-03, HS-16-04
 - **Unblocks:** none (phase exit)
 - **Owner:** unassigned
@@ -98,21 +98,20 @@ is real. This story closes the phase by:
 
 ## Acceptance criteria
 
-- [ ] `docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` annotates all
-  thirteen built-in plugins with shipped/stub status and
-  contains the new "Appendix A".
-- [ ] `final-summary.md` exists in the phase folder; conforms to
-  the §2.5 template; contains the calibration table with at
-  least one configuration row populated.
-- [ ] `pm/roadmap/holdspeak/README.md` "Last updated" reflects
+- [x] `docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` annotates all
+  thirteen built-in plugins with shipped/stub status (reality-status
+  table) and contains the new "Appendix A".
+- [x] `final-summary.md` exists in the phase folder; conforms to
+  the §2.5 template; contains the calibration table (two local
+  configs populated; cloud documented as untested).
+- [x] `pm/roadmap/holdspeak/README.md` "Last updated" reflects
   this commit's date; phase 16's row reads `done`.
-- [ ] `current-phase-status.md` has a closing line and is no
+- [x] `current-phase-status.md` has a closing line and is no
   longer edited after this commit.
-- [ ] Every exit-criterion in
-  `current-phase-status.md` is checked or has an explicit
-  "deferred to phase X, reason: ..." note.
-- [ ] No regressions: full sweep
-  `uv run pytest -q --ignore=tests/e2e/test_metal.py` green.
+- [x] Every exit-criterion in `current-phase-status.md` is checked
+  (see `final-summary.md` exit-criteria re-run).
+- [x] No regressions: full sweep
+  `uv run pytest -q --ignore=tests/e2e/test_metal.py` green (1902 passed).
 
 ## Test plan
 

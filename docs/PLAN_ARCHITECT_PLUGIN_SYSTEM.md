@@ -247,20 +247,48 @@ class PluginResult:
 
 ## Initial Built-In Plugins (Phase 1)
 
-1. `requirements_extractor`
+1. `requirements_extractor` — ⚠️ **stub** (`DeterministicPlugin`)
 - Produces: functional/non-functional requirements, constraints, acceptance criteria.
 
-2. `mermaid_architecture`
+2. `mermaid_architecture` — ✅ **shipped** (phase 16, HoldSpeak HS-16-01..04)
 - Produces: component/context/dataflow diagrams from transcript + metadata.
 
-3. `adr_drafter`
+3. `adr_drafter` — ⚠️ **stub** (`DeterministicPlugin`)
 - Produces: ADR draft with options considered, tradeoffs, decision status.
 
-4. `risk_register`
+4. `risk_register` — ⚠️ **stub** (registered as `risk_heatmap`, `DeterministicPlugin`)
 - Produces: top risks, impact/probability, mitigations, owners.
 
-5. `action_owner_enforcer`
+5. `action_owner_enforcer` — ⚠️ **stub** (`DeterministicPlugin`)
 - Produces: unresolved ownership and due-date checklist.
+
+### Reality status (updated 2026-06-01, phase 16 close)
+
+The registrar `register_builtin_plugins` (`holdspeak/plugins/builtin/__init__.py`,
+`_BUILTIN_PLUGIN_DEFS`) wires **thirteen** plugin IDs into the routing/queue
+substrate. As of phase 16 close, **exactly one has a real `run()`**; the rest are
+`DeterministicPlugin` stubs (they echo a transcript snippet) pending their own
+stories. "Shipped" is defined in Appendix A.
+
+| Plugin ID | Status | Real `run()` should produce |
+|---|---|---|
+| `mermaid_architecture` | ✅ shipped (phase 16) | LLM-generated Mermaid diagram → `diagram` artifact, rendered as SVG in `/history` |
+| `requirements_extractor` | ⚠️ stub | functional/non-functional requirements, constraints, acceptance criteria |
+| `action_owner_enforcer` | ⚠️ stub | unresolved action ownership + due-date checklist |
+| `adr_drafter` | ⚠️ stub | ADR draft: options, tradeoffs, decision status |
+| `milestone_planner` | ⚠️ stub | milestone plan with dates/dependencies |
+| `dependency_mapper` | ⚠️ stub | inter-team / inter-component dependency map |
+| `scope_guard` | ⚠️ stub | scope-creep review against the agreed scope |
+| `customer_signal_extractor` | ⚠️ stub | customer signals / asks / sentiment |
+| `incident_timeline` | ⚠️ stub | ordered incident timeline from the transcript |
+| `risk_heatmap` | ⚠️ stub | risk register: impact/probability/mitigations/owners |
+| `stakeholder_update_drafter` | ⚠️ stub | stakeholder update draft |
+| `runbook_delta` | ⚠️ stub | diff of runbook changes implied by the meeting |
+| `decision_announcement_drafter` | ⚠️ stub | decision announcement draft |
+
+Phase 17+ flips the remaining twelve to real, re-using the `mermaid_architecture`
+pattern (LLM call → parse/validate → structured output → synthesis body → web
+render) proven in phase 16.
 
 ## Routing Policy (v1)
 
@@ -432,3 +460,25 @@ Web-first runtime migration is specified in:
 4. Wire saved-meeting action to execute selected pack profile.
 
 This delivers immediate cross-role value while keeping implementation risk low.
+
+## Appendix A — What "shipped" means in this RFC
+
+This RFC historically listed plugins as if they existed when only their
+registration ID and routing wiring did. To stop that drift, a plugin counts as
+**shipped** (✅) only when it:
+
+1. implements the `HostPlugin` Protocol with a **non-stub `run()`** (not the
+   `DeterministicPlugin` transcript echo);
+2. calls a **real downstream** (LLM / database / external API) wherever the RFC
+   implies one;
+3. returns a **structured payload the synthesis layer knows how to render** into
+   an artifact; and
+4. ships with **unit + integration tests** covering success, failure, and
+   capability-blocked paths.
+
+Anything not meeting all four bars is a **stub** (⚠️). Phase 16's
+`mermaid_architecture` is the first plugin to meet all four: it calls a real LLM
+via `resolve_intel_provider`, parses/validates a Mermaid block, emits a `diagram`
+artifact whose body the synthesis layer renders, is gated by the `"llm"`
+capability, and is covered by unit + integration tests plus a real-browser SVG
+render check. See `pm/roadmap/holdspeak/phase-16-first-real-plugin/`.
