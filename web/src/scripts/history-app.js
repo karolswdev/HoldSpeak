@@ -899,6 +899,29 @@ function historyApp() {
       return Array.isArray(items) ? items : [];
     },
 
+    // HS-29-03: stakeholder update / decision announcements.
+    stakeholderUpdateFor(artifact) {
+      if (artifact?.artifact_type !== "stakeholder_update") return null;
+      const u = artifact?.structured_json?.update;
+      return u && typeof u === "object" ? u : null;
+    },
+
+    stakeholderSections(artifact) {
+      const u = this.stakeholderUpdateFor(artifact);
+      if (!u) return [];
+      return [
+        { label: "Highlights", items: u.highlights || [] },
+        { label: "Risks", items: u.risks || [] },
+        { label: "Next steps", items: u.next_steps || [] },
+      ].filter((s) => Array.isArray(s.items) && s.items.length > 0);
+    },
+
+    announcementsFor(artifact) {
+      if (artifact?.artifact_type !== "decision_announcement") return [];
+      const items = artifact?.structured_json?.announcements;
+      return Array.isArray(items) ? items : [];
+    },
+
     // True when any structured renderer applies — used to suppress the raw
     // body_markdown fallback. Grows as artifact types are added.
     hasStructuredRender(artifact) {
@@ -914,7 +937,9 @@ function historyApp() {
         this.scopeFindingsFor(artifact).length > 0 ||
         this.customerSignalsFor(artifact).length > 0 ||
         this.incidentEventsFor(artifact).length > 0 ||
-        this.runbookChangesFor(artifact).length > 0
+        this.runbookChangesFor(artifact).length > 0 ||
+        !!this.stakeholderUpdateFor(artifact) ||
+        this.announcementsFor(artifact).length > 0
       );
     },
 

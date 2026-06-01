@@ -384,6 +384,58 @@ def test_runbook_delta_artifact_embeds_grouped_body() -> None:
     assert artifact.structured_json["changes"][0]["type"] == "added"
 
 
+def test_stakeholder_update_artifact_embeds_sections_body() -> None:
+    # HS-29-03: stakeholder_update_drafter output → headline + sections body.
+    runs = [
+        _run(
+            "stakeholder_update_drafter",
+            {
+                "summary": "Feedback loop kicks off",
+                "confidence_hint": 1.0,
+                "active_intents": ["comms"],
+                "update": {
+                    "headline": "Feedback loop kicks off",
+                    "highlights": ["Scoped MVP"],
+                    "risks": ["Owner undecided"],
+                    "next_steps": ["Sketch ingestion"],
+                },
+            },
+        )
+    ]
+    artifacts = synthesize_meeting_artifacts(meeting_id="m-1", plugin_runs=runs)
+    artifact = artifacts[0]
+    assert artifact.artifact_type == "stakeholder_update"
+    body = artifact.body_markdown
+    assert "**Feedback loop kicks off**" in body
+    assert "**Highlights**" in body and "- Scoped MVP" in body
+    assert "**Risks**" in body and "**Next steps**" in body
+    assert artifact.structured_json["update"]["headline"] == "Feedback loop kicks off"
+
+
+def test_decision_announcement_artifact_embeds_body() -> None:
+    # HS-29-03: decision_announcement_drafter output → announcement sections.
+    runs = [
+        _run(
+            "decision_announcement_drafter",
+            {
+                "summary": "1 decision announcement(s) drafted.",
+                "confidence_hint": 1.0,
+                "active_intents": ["comms"],
+                "announcements": [
+                    {"title": "Adopting Postgres", "audience": "Engineering", "message": "We chose Postgres."}
+                ],
+            },
+        )
+    ]
+    artifacts = synthesize_meeting_artifacts(meeting_id="m-1", plugin_runs=runs)
+    artifact = artifacts[0]
+    assert artifact.artifact_type == "decision_announcement"
+    body = artifact.body_markdown
+    assert "**Adopting Postgres** — _Engineering_" in body
+    assert "We chose Postgres." in body
+    assert artifact.structured_json["announcements"][0]["title"] == "Adopting Postgres"
+
+
 def test_non_diagram_artifact_body_is_byte_for_byte_legacy() -> None:
     # A non-diagram plugin run: even if (pathologically) it carried a "mermaid"
     # key, the body must match the exact legacy template.

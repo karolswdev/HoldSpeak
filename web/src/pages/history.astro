@@ -1094,6 +1094,34 @@ import AppLayout from "../layouts/AppLayout.astro";
                           </template>
                         </ul>
                       </template>
+                      <template x-if="stakeholderUpdateFor(artifact)">
+                        <div class="stakeholder-update">
+                          <p class="su-headline" x-show="stakeholderUpdateFor(artifact).headline" x-cloak x-text="stakeholderUpdateFor(artifact).headline"></p>
+                          <template x-for="(sec, sx) in stakeholderSections(artifact)" :key="`su${sx}`">
+                            <div class="su-section">
+                              <p class="subhead" x-text="sec.label"></p>
+                              <ul class="su-list">
+                                <template x-for="(it, ix) in sec.items" :key="`sui${sx}-${ix}`">
+                                  <li x-text="it"></li>
+                                </template>
+                              </ul>
+                            </div>
+                          </template>
+                        </div>
+                      </template>
+                      <template x-if="announcementsFor(artifact).length">
+                        <div class="announcement-artifact">
+                          <template x-for="(a, ax) in announcementsFor(artifact)" :key="`ann${ax}`">
+                            <div class="announcement">
+                              <div class="ann-head">
+                                <span class="ann-title" x-text="a.title"></span>
+                                <span class="pill" x-show="a.audience" x-cloak x-text="a.audience"></span>
+                              </div>
+                              <p class="ann-message" x-show="a.message" x-cloak x-text="a.message"></p>
+                            </div>
+                          </template>
+                        </div>
+                      </template>
                       <p class="meta-line"
                          x-show="artifact.body_markdown && !hasStructuredRender(artifact)"
                          x-cloak x-text="artifact.body_markdown"></p>
@@ -1823,6 +1851,55 @@ import AppLayout from "../layouts/AppLayout.astro";
   }
   .runbook-detail {
     color: var(--text-muted);
+  }
+
+  /* HS-29-03: stakeholder update / decision announcements. */
+  .stakeholder-update,
+  .announcement-artifact {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+  }
+  .su-headline {
+    margin: 0;
+    font-weight: var(--font-weight-bold, 600);
+  }
+  .su-section .subhead,
+  .announcement .ann-title {
+    margin: 0 0 var(--space-1);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose, 0.05em);
+    color: var(--text-muted);
+  }
+  .su-list {
+    list-style: disc;
+    margin: 0;
+    padding-left: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: var(--font-size-sm);
+  }
+  .announcement .ann-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+  .announcement .ann-title {
+    color: var(--text-default, inherit);
+    text-transform: none;
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold, 600);
+  }
+  .announcement .ann-message {
+    margin: var(--space-1) 0 0;
+    font-size: var(--font-size-sm);
+    white-space: pre-wrap;
   }
 
   /* HS-16-04: rendered Mermaid diagram artifact. */

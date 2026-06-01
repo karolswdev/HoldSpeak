@@ -148,10 +148,10 @@ def test_register_builtin_plugins_uses_real_class() -> None:
     assert isinstance(plugin, MermaidArchitecturePlugin)
     assert not isinstance(plugin, DeterministicPlugin)
 
-    # Sibling stubs are still DeterministicPlugin (the comms drafters, not yet
-    # flipped to real — they go real in HS-29-03).
+    # As of HS-29-03 every built-in is real — no DeterministicPlugin stubs remain.
     sibling = host.get_plugin("stakeholder_update_drafter")
-    assert isinstance(sibling, DeterministicPlugin)
+    assert sibling is not None
+    assert not isinstance(sibling, DeterministicPlugin)
 
 
 @pytest.mark.parametrize(

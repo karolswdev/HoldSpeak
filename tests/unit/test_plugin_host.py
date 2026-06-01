@@ -123,26 +123,23 @@ def test_builtin_plugins_register_and_execute() -> None:
     host = PluginHost(default_timeout_seconds=0.5)
     registered = register_builtin_plugins(host)
     assert "requirements_extractor" in registered
-    assert "stakeholder_update_drafter" in registered
+    assert "decision_announcement_drafter" in registered
 
-    # `stakeholder_update_drafter` is still a DeterministicPlugin stub (no
-    # capabilities), so it executes inline; `requirements_extractor` is real.
-    # (Until HS-29-03 flips the last two comms stubs, after which this test moves
-    # to assert no stub remains.)
+    # Every built-in is a real LLM plugin now (zero `DeterministicPlugin` stubs as
+    # of HS-29-03), so executing one without the "llm" capability is *blocked*
+    # rather than echoing a transcript snippet.
     result = host.execute(
-        "stakeholder_update_drafter",
+        "requirements_extractor",
         context={
             "transcript": "Architecture proposal with trade-offs and dependencies.",
-            "active_intents": ["comms"],
+            "active_intents": ["architecture"],
         },
         meeting_id="m-1",
         window_id="w-1",
         transcript_hash="hash-1",
     )
-    assert result.status == "success"
-    assert result.output is not None
-    assert result.output["plugin_id"] == "stakeholder_update_drafter"
-    assert result.output["token_count"] > 0
+    assert result.status == "blocked"
+    assert result.error == "Missing capabilities: llm"
 
 
 def test_plugin_host_defers_heavy_plugins_through_queue() -> None:

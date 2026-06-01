@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 29
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-28-01 (renderer registry)
 - **Unblocks:** HS-29-05
 - **Owner:** unassigned
@@ -36,13 +36,14 @@ shareable comms. Flipping both makes **zero stubs remain**.
 
 ## Acceptance criteria
 
-- [ ] Two real `run()`s return validated payloads; failure + capability-blocked
+- [x] Two real `run()`s return validated payloads; failure + capability-blocked
       covered. `stakeholder_update` succeeds when it has a headline or any non-empty
       section; `decision_announcement` when ≥1 announcement.
-- [ ] `register_builtin_plugins` returns the real classes; **no
-      `DeterministicPlugin` remains** for any of the fourteen IDs.
-- [ ] Both artifact types render structured in `/history`.
-- [ ] Tests green; full sweep green; each verified live on `.43` Q6.
+- [x] `register_builtin_plugins` returns the real classes; **no
+      `DeterministicPlugin` remains** for any of the fourteen IDs
+      (`test_no_deterministic_stub_remains`).
+- [x] Both artifact types render structured in `/history`.
+- [x] Tests green; full sweep green (2062 passed); each verified live on `.43` Q6.
 
 ## Test plan
 

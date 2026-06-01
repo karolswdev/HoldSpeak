@@ -26,6 +26,10 @@ from .customer_signal_extractor import (
     CustomerSignalExtractorPlugin,
     _extract_signals,
 )
+from .decision_announcement_drafter import (
+    DecisionAnnouncementDrafterPlugin,
+    _extract_announcements,
+)
 from .dependency_mapper import (
     DependencyMapperPlugin,
     _extract_dependencies,
@@ -62,6 +66,10 @@ from .scope_guard import (
     ScopeGuardPlugin,
     _extract_findings,
 )
+from .stakeholder_update_drafter import (
+    StakeholderUpdateDrafterPlugin,
+    _extract_update,
+)
 
 # Real plugin classes keyed by ID; every other ID falls back to the stub.
 _REAL_PLUGINS = {
@@ -77,6 +85,8 @@ _REAL_PLUGINS = {
     "customer_signal_extractor": CustomerSignalExtractorPlugin,
     "incident_timeline": IncidentTimelinePlugin,
     "runbook_delta": RunbookDeltaPlugin,
+    "stakeholder_update_drafter": StakeholderUpdateDrafterPlugin,
+    "decision_announcement_drafter": DecisionAnnouncementDrafterPlugin,
 }
 
 
@@ -154,6 +164,7 @@ __all__ = [
     "ActionOwnerEnforcerPlugin",
     "AdrDrafterPlugin",
     "CustomerSignalExtractorPlugin",
+    "DecisionAnnouncementDrafterPlugin",
     "DecisionCapturePlugin",
     "DependencyMapperPlugin",
     "DeterministicPlugin",
@@ -164,9 +175,11 @@ __all__ = [
     "RiskHeatmapPlugin",
     "RunbookDeltaPlugin",
     "ScopeGuardPlugin",
+    "StakeholderUpdateDrafterPlugin",
     "_BUILTIN_PLUGIN_DEFS",
     "_extract_action_items",
     "_extract_adrs",
+    "_extract_announcements",
     "_extract_changes",
     "_extract_decisions",
     "_extract_dependencies",
@@ -177,5 +190,6 @@ __all__ = [
     "_extract_requirements",
     "_extract_risks",
     "_extract_signals",
+    "_extract_update",
     "register_builtin_plugins",
 ]

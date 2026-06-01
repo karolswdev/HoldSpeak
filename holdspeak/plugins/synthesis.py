@@ -247,6 +247,40 @@ def _runbook_delta_body(changes: list[dict[str, Any]] | None) -> str:
     return "\n\n".join(parts)
 
 
+_STAKEHOLDER_SECTIONS = (("highlights", "Highlights"), ("risks", "Risks"), ("next_steps", "Next steps"))
+
+
+def _stakeholder_update_body(update: dict[str, Any] | None) -> str:
+    """Render a stakeholder update (headline + sections) as markdown (HS-29-03)."""
+    if not update:
+        return ""
+    parts: list[str] = []
+    headline = _clean_text(update.get("headline"))
+    if headline:
+        parts.append(f"**{headline}**")
+    for key, label in _STAKEHOLDER_SECTIONS:
+        values = update.get(key)
+        if isinstance(values, list) and values:
+            lines = [f"**{label}**"]
+            lines.extend(f"- {_clean_text(v)}" for v in values if _clean_text(v))
+            parts.append("\n".join(lines))
+    return "\n\n".join(parts)
+
+
+def _decision_announcement_body(announcements: list[dict[str, Any]] | None) -> str:
+    """Render decision announcements as markdown sections (HS-29-03)."""
+    if not announcements:
+        return ""
+    parts: list[str] = []
+    for ann in announcements:
+        title = _clean_text(ann.get("title")) or "(untitled)"
+        audience = _clean_text(ann.get("audience"))
+        message = _clean_text(ann.get("message"))
+        head = f"**{title}**" + (f" — _{audience}_" if audience else "")
+        parts.append(head + (f"\n{message}" if message else ""))
+    return "\n\n".join(parts)
+
+
 # --- Per-artifact-type body renderers (HS-28-01) ---------------------------
 #
 # Each renderer takes the canonical plugin output and returns either
@@ -414,6 +448,33 @@ def _render_runbook_delta(ctx: _RenderContext) -> _Rendered:
     return _runbook_delta_body(changes), {"changes": changes}
 
 
+def _render_stakeholder_update(ctx: _RenderContext) -> _Rendered:
+    # HS-29-03: stakeholder update.
+    update = ctx.output.get("update")
+    if not isinstance(update, dict):
+        return None
+    has_content = bool(
+        _clean_text(update.get("headline"))
+        or (isinstance(update.get("highlights"), list) and update.get("highlights"))
+        or (isinstance(update.get("risks"), list) and update.get("risks"))
+        or (isinstance(update.get("next_steps"), list) and update.get("next_steps"))
+    )
+    if not has_content:
+        return None
+    return _stakeholder_update_body(update), {"update": update}
+
+
+def _render_decision_announcement(ctx: _RenderContext) -> _Rendered:
+    # HS-29-03: decision announcements.
+    raw = ctx.output.get("announcements")
+    if not (isinstance(raw, list) and raw):
+        return None
+    announcements = [item for item in raw if isinstance(item, dict)]
+    if not announcements:
+        return None
+    return _decision_announcement_body(announcements), {"announcements": announcements}
+
+
 _ARTIFACT_RENDERERS: dict[str, Callable[[_RenderContext], _Rendered]] = {
     "diagram": _render_diagram,
     "action_items": _render_action_items,
@@ -427,6 +488,8 @@ _ARTIFACT_RENDERERS: dict[str, Callable[[_RenderContext], _Rendered]] = {
     "customer_signals": _render_customer_signals,
     "incident_timeline": _render_incident_timeline,
     "runbook_delta": _render_runbook_delta,
+    "stakeholder_update": _render_stakeholder_update,
+    "decision_announcement": _render_decision_announcement,
 }
 
 
