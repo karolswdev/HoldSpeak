@@ -30,6 +30,10 @@ from .mermaid_architecture import (
     MermaidArchitecturePlugin,
     _extract_mermaid_block,
 )
+from .milestone_planner import (
+    MilestonePlannerPlugin,
+    _extract_milestones,
+)
 from .requirements_extractor import (
     RequirementsExtractorPlugin,
     _extract_requirements,
@@ -42,6 +46,7 @@ _REAL_PLUGINS = {
     "decision_capture": DecisionCapturePlugin,
     "requirements_extractor": RequirementsExtractorPlugin,
     "adr_drafter": AdrDrafterPlugin,
+    "milestone_planner": MilestonePlannerPlugin,
 }
 
 
@@ -121,12 +126,14 @@ __all__ = [
     "DecisionCapturePlugin",
     "DeterministicPlugin",
     "MermaidArchitecturePlugin",
+    "MilestonePlannerPlugin",
     "RequirementsExtractorPlugin",
     "_BUILTIN_PLUGIN_DEFS",
     "_extract_action_items",
     "_extract_adrs",
     "_extract_decisions",
     "_extract_mermaid_block",
+    "_extract_milestones",
     "_extract_requirements",
     "register_builtin_plugins",
 ]

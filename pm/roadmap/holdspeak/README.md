@@ -4,9 +4,9 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-06-01 (Phase 28 **2/5** — HS-28-02 shipped: `adr_drafter` flipped to a real LLM plugin (ADRs: title/status/context/decision/consequences) → `adr` artifact with a structured `/history` render. **Five real plugins now.** The spoken e2e exercises all five and its screenshot now captures the full meeting-detail modal. Suite green at 1953 passed, 14 skipped).
-**Current phase:** [phase-28-plugin-rollout-ii](./phase-28-plugin-rollout-ii/current-phase-status.md) — in-progress (2/5; HS-28-01/02 done). Next: HS-28-03/04 (milestone/risk plugins), HS-28-05 (close). Software-only. Other open tracks: **Phase 25** (trust & hardening; HS-25-07 hardware-blocked); **Phase 24** (companion, 2/5; HS-24-03/04/05 hardware-gated); **Phase 15** (out-and-about, `not-started`, gated on Phase 25).
-**Status:** Phase 28 active (HS-28-02 delivered; next HS-28-03 milestone_planner).
+**Last updated:** 2026-06-01 (Phase 28 **3/5** — HS-28-03 shipped: `milestone_planner` flipped to a real LLM plugin (delivery milestone plan: name/target/deliverables/dependencies) → `milestone_plan` artifact with a structured `/history` render. **Six real plugins now.** The spoken e2e exercises all six. Suite green at 1965 passed, 14 skipped).
+**Current phase:** [phase-28-plugin-rollout-ii](./phase-28-plugin-rollout-ii/current-phase-status.md) — in-progress (3/5; HS-28-01/02/03 done). Next: HS-28-04 (risk_heatmap), HS-28-05 (close). Software-only. Other open tracks: **Phase 25** (trust & hardening; HS-25-07 hardware-blocked); **Phase 24** (companion, 2/5; HS-24-03/04/05 hardware-gated); **Phase 15** (out-and-about, `not-started`, gated on Phase 25).
+**Status:** Phase 28 active (HS-28-03 delivered; next HS-28-04 risk_heatmap).
 
 ## Vision
 
@@ -71,7 +71,7 @@ canon, canon wins.
 | 25 | Trust & Hardening: no silent cloud egress, web-runtime auth + bind guard, threat-model/encryption-at-rest doc, LLM-runtime thread-safety, transcription timeout, config-knob audit. Prerequisite to Phase 15. | in-progress | [phase-25-trust-and-hardening](./phase-25-trust-and-hardening/) |
 | 26 | Web Runtime Decomposition: break the `web_server.py` monolith into route modules + a shared context, behavior-preserving. Fast-follow to Phase 25. | done | [phase-26-web-runtime-decomposition](./phase-26-web-runtime-decomposition/) |
 | 27 | Ubiquitous plugins + spoken-meeting e2e: flip the highest-value stub plugins to real (`action_owner_enforcer`, decisions/open-questions, requirements) re-using the Phase-16 pattern, and add a real `say`→Whisper→MIR→plugins→web spoken-meeting end-to-end harness with screenshots. Continuation of Phase 16. | done | [phase-27-ubiquitous-plugins-and-e2e](./phase-27-ubiquitous-plugins-and-e2e/) |
-| 28 | Plugin rollout II: round out the core meeting types — a behavior-preserving synthesis renderer-registry refactor, then flip `adr_drafter` (architecture), `milestone_planner` (delivery), and `risk_heatmap` (risk register) to real, each with a structured web render + spoken-e2e coverage. Continuation of Phase 27. | in-progress (2/5) | [phase-28-plugin-rollout-ii](./phase-28-plugin-rollout-ii/) |
+| 28 | Plugin rollout II: round out the core meeting types — a behavior-preserving synthesis renderer-registry refactor, then flip `adr_drafter` (architecture), `milestone_planner` (delivery), and `risk_heatmap` (risk register) to real, each with a structured web render + spoken-e2e coverage. Continuation of Phase 27. | in-progress (3/5) | [phase-28-plugin-rollout-ii](./phase-28-plugin-rollout-ii/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

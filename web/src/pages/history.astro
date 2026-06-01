@@ -1007,8 +1007,22 @@ import AppLayout from "../layouts/AppLayout.astro";
                           </template>
                         </div>
                       </template>
+                      <template x-if="milestonesFor(artifact).length">
+                        <div class="milestone-artifact">
+                          <template x-for="(m, mi) in milestonesFor(artifact)" :key="`ms${mi}`">
+                            <div class="milestone-record">
+                              <div class="milestone-head">
+                                <span class="milestone-name" x-text="m.name"></span>
+                                <span class="pill" x-show="m.target" x-cloak x-text="m.target"></span>
+                              </div>
+                              <p class="milestone-line" x-show="m.deliverables?.length" x-cloak><span class="milestone-label">Deliverables</span> <span x-text="(m.deliverables || []).join(', ')"></span></p>
+                              <p class="milestone-line" x-show="m.dependencies?.length" x-cloak><span class="milestone-label">Dependencies</span> <span x-text="(m.dependencies || []).join(', ')"></span></p>
+                            </div>
+                          </template>
+                        </div>
+                      </template>
                       <p class="meta-line"
-                         x-show="artifact.body_markdown && !isDiagram(artifact) && !actionItemsFor(artifact).length && !hasDecisions(artifact) && !requirementsFor(artifact).length && !adrsFor(artifact).length"
+                         x-show="artifact.body_markdown && !isDiagram(artifact) && !actionItemsFor(artifact).length && !hasDecisions(artifact) && !requirementsFor(artifact).length && !adrsFor(artifact).length && !milestonesFor(artifact).length"
                          x-cloak x-text="artifact.body_markdown"></p>
                     </div>
                   </template>
@@ -1543,6 +1557,40 @@ import AppLayout from "../layouts/AppLayout.astro";
     font-size: var(--font-size-sm);
   }
   .adr-line .adr-label {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose, 0.05em);
+    color: var(--text-muted);
+    margin-right: var(--space-1);
+  }
+
+  /* HS-28-03: milestone plan render. */
+  .milestone-artifact {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+  }
+  .milestone-record {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .milestone-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+  .milestone-head .milestone-name {
+    font-weight: var(--font-weight-bold, 600);
+  }
+  .milestone-line {
+    margin: 0;
+    font-size: var(--font-size-sm);
+  }
+  .milestone-line .milestone-label {
     font-family: var(--font-mono);
     font-size: var(--font-size-xs);
     text-transform: uppercase;

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 28
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-28-01 (registry)
 - **Unblocks:** HS-28-05
 - **Owner:** unassigned
@@ -38,12 +38,12 @@ plan.
 
 ## Acceptance criteria
 
-- [ ] Real `run()` returns the validated `milestones` payload; failure +
+- [x] Real `run()` returns the validated `milestones` payload; failure +
       capability-blocked paths covered.
-- [ ] `register_builtin_plugins` returns the real class for `milestone_planner`;
+- [x] `register_builtin_plugins` returns the real class for `milestone_planner`;
       others unaffected. (No routing ripple — already on the delivery chains.)
-- [ ] `milestone_plan` artifacts render structured in `/history`.
-- [ ] Tests green; full sweep green; verified live on `.43` Q6.
+- [x] `milestone_plan` artifacts render structured in `/history`.
+- [x] Tests green; full sweep green (1965 passed); verified live on `.43` Q6.
 
 ## Test plan
 

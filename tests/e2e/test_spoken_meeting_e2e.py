@@ -171,7 +171,7 @@ def test_spoken_meeting_end_to_end(tmp_path):
     for window, plugin_id in enumerate(
         (
             "mermaid_architecture", "action_owner_enforcer", "decision_capture",
-            "requirements_extractor", "adr_drafter",
+            "requirements_extractor", "adr_drafter", "milestone_planner",
         )
     ):
         host.execute(
@@ -190,7 +190,7 @@ def test_spoken_meeting_end_to_end(tmp_path):
     by_id = {r.plugin_id: r for r in results}
     for pid in (
         "mermaid_architecture", "action_owner_enforcer", "decision_capture",
-        "requirements_extractor", "adr_drafter",
+        "requirements_extractor", "adr_drafter", "milestone_planner",
     ):
         assert by_id[pid].status == "success", by_id[pid].error
     # The plugins must have produced real content (not their failure shape).
@@ -200,6 +200,7 @@ def test_spoken_meeting_end_to_end(tmp_path):
     assert decision_out.get("decisions") or decision_out.get("open_questions"), "no decisions produced"
     assert by_id["requirements_extractor"].output.get("requirements"), "no requirements produced"
     assert by_id["adr_drafter"].output.get("adrs"), "no ADRs produced"
+    assert by_id["milestone_planner"].output.get("milestones"), "no milestones produced"
 
     # --- 4. persist meeting + transcript + artifacts into a temp DB --------
     reset_database()
@@ -228,6 +229,7 @@ def test_spoken_meeting_end_to_end(tmp_path):
     assert decisions_sj and (decisions_sj.get("decisions") or decisions_sj.get("open_questions"))
     assert by_type.get("requirements") and by_type["requirements"].structured_json.get("requirements")
     assert by_type.get("adr") and by_type["adr"].structured_json.get("adrs")
+    assert by_type.get("milestone_plan") and by_type["milestone_plan"].structured_json.get("milestones")
     print(f"[e2e] artifacts: {sorted(by_type)}")
 
     # --- 5. serve + 6. Playwright screenshot -------------------------------
@@ -253,6 +255,7 @@ def test_spoken_meeting_end_to_end(tmp_path):
             page.wait_for_selector(".decisions-artifact .decision-list li", timeout=15000)
             page.wait_for_selector(".requirement-list .requirement-item", timeout=15000)
             page.wait_for_selector(".adr-artifact .adr-record", timeout=15000)
+            page.wait_for_selector(".milestone-artifact .milestone-record", timeout=15000)
             # transcript panel populated from the persisted segments
             page.wait_for_selector(".transcript-list .segment", timeout=15000)
             # The meeting-detail modal is a fixed overlay that scrolls internally
@@ -273,6 +276,7 @@ def test_spoken_meeting_end_to_end(tmp_path):
             assert page.locator(".decisions-artifact .decision-list li").count() >= 1
             assert page.locator(".requirement-list .requirement-item").count() >= 1
             assert page.locator(".adr-artifact .adr-record").count() >= 1
+            assert page.locator(".milestone-artifact .milestone-record").count() >= 1
             browser.close()
         print(f"[e2e] screenshot saved: {shot}")
     finally:

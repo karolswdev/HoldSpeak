@@ -95,6 +95,25 @@ def _requirements_body(requirements: list[dict[str, Any]] | None) -> str:
     return "\n\n".join(parts)
 
 
+def _milestone_body(milestones: list[dict[str, Any]] | None) -> str:
+    """Render a milestone plan as markdown sections (HS-28-03)."""
+    if not milestones:
+        return ""
+    parts: list[str] = []
+    for milestone in milestones:
+        name = _clean_text(milestone.get("name")) or "(unnamed milestone)"
+        target = _clean_text(milestone.get("target"))
+        lines = [f"**{name}**" + (f" — {target}" if target else "")]
+        deliverables = milestone.get("deliverables")
+        if isinstance(deliverables, list) and deliverables:
+            lines.append("- Deliverables: " + ", ".join(_clean_text(d) for d in deliverables if _clean_text(d)))
+        dependencies = milestone.get("dependencies")
+        if isinstance(dependencies, list) and dependencies:
+            lines.append("- Dependencies: " + ", ".join(_clean_text(d) for d in dependencies if _clean_text(d)))
+        parts.append("\n".join(lines))
+    return "\n\n".join(parts)
+
+
 def _adr_body(adrs: list[dict[str, Any]] | None) -> str:
     """Render Architecture Decision Records as markdown sections (HS-28-02)."""
     if not adrs:
@@ -202,12 +221,24 @@ def _render_adrs(ctx: _RenderContext) -> _Rendered:
     return _adr_body(adrs), {"adrs": adrs}
 
 
+def _render_milestones(ctx: _RenderContext) -> _Rendered:
+    # HS-28-03: delivery milestone plan.
+    raw_milestones = ctx.output.get("milestones")
+    if not (isinstance(raw_milestones, list) and raw_milestones):
+        return None
+    milestones = [item for item in raw_milestones if isinstance(item, dict)]
+    if not milestones:
+        return None
+    return _milestone_body(milestones), {"milestones": milestones}
+
+
 _ARTIFACT_RENDERERS: dict[str, Callable[[_RenderContext], _Rendered]] = {
     "diagram": _render_diagram,
     "action_items": _render_action_items,
     "decisions": _render_decisions,
     "requirements": _render_requirements,
     "adr": _render_adrs,
+    "milestone_plan": _render_milestones,
 }
 
 
