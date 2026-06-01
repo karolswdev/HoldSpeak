@@ -26,8 +26,18 @@ Voice input for macOS and Linux — hold a key, speak, release. Local-first and 
 The optional AIPI-Lite companion is a portable ESPHome-based device you can
 carry between rooms. Put it on Wi-Fi, including a phone hotspot when needed,
 and it can provide meeting capture controls and status feedback while
-HoldSpeak handles real-time transcription and intelligence. Firmware, bridge
-setup, and verification live in [AIPI-Lite Developer Workflow](docs/AIPI_LITE_DEV_WORKFLOW.md).
+HoldSpeak handles real-time transcription and intelligence.
+
+It also works as a coding-agent companion. With Claude/Codex hooks enabled,
+HoldSpeak can notify the device when an agent is waiting for your answer; you
+can speak the reply through AIPI-Lite and have HoldSpeak route it back into the
+active coding session. For remote use, the device and bridge still need a
+network path you control, such as home Wi-Fi, hotspot, VPN, or another private
+tunnel.
+
+Buy hardware from the [official AIPI Lite product page](https://aipi.com/products/aipi-lite)
+or the [Amazon listing](https://www.amazon.com/dp/B0FQNNVV36). Firmware,
+bridge setup, and verification live in [AIPI-Lite Developer Workflow](docs/AIPI_LITE_DEV_WORKFLOW.md).
 
 ## Platform support
 

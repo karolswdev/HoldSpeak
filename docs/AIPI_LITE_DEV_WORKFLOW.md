@@ -4,10 +4,21 @@
   <img src="assets/pixellab/aipi-lite-companion.png" alt="Pixel art AIPI-Lite companion device" width="280">
 </p>
 
-The AIPI-Lite companion is a portable ESPHome-based device for meeting capture
-controls and status feedback. Put it on Wi-Fi, including a phone hotspot when
-needed, and HoldSpeak can use the bridge for real-time meeting transcription
-and intelligence.
+The AIPI-Lite companion is a portable ESPHome-based device for meeting capture,
+coding-agent replies, and status feedback. Put it on Wi-Fi, including a phone
+hotspot when needed, and HoldSpeak can use the bridge for real-time meeting
+transcription and intelligence.
+
+With Claude/Codex hooks enabled, HoldSpeak can show when an agent is waiting
+for your answer. AIPI-Lite can surface that prompt state, cycle waiting
+sessions, and let you speak the reply back into the selected coding session.
+Remote control works when the device can reach your HoldSpeak bridge over a
+network path you control, such as home Wi-Fi, hotspot, VPN, or a private tunnel.
+
+Hardware links:
+
+- [Official AIPI Lite product page](https://aipi.com/products/aipi-lite)
+- [Amazon listing](https://www.amazon.com/dp/B0FQNNVV36)
 
 This is the unified-checkout workflow for the AIPI-Lite firmware and bridge.
 The source lives in `aipi-lite/`; helper scripts live at repo root in
