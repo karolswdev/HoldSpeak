@@ -1,6 +1,6 @@
 # Phase 26 — Web Runtime Decomposition
 
-**Last updated:** 2026-05-31 (HS-26-03 done — 26 dictation/agent-hook/intent routes moved to `routes/dictation.py`; web_server.py 4691→3133; HS-26-04 next).
+**Last updated:** 2026-05-31 (HS-26-04 done — 38 activity/connector/plugin-job routes moved to `routes/activity.py`; web_server.py 3133→1817; HS-26-05 next).
 
 ## Goal
 
@@ -49,7 +49,7 @@ auth and bind work that lands in Phase 25.
 | HS-26-01 | Router seam + shared web context (pilot: health/state) | done | [story-01-router-seam.md](./story-01-router-seam.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-26-02 | Extract meeting / speaker / intel routes | done | [story-02-meeting-routes.md](./story-02-meeting-routes.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-26-03 | Extract dictation / agent-hook routes | done | [story-03-dictation-routes.md](./story-03-dictation-routes.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-26-04 | Extract activity / connector / plugin-job routes | backlog | [story-04-activity-routes.md](./story-04-activity-routes.md) | — |
+| HS-26-04 | Extract activity / connector / plugin-job routes | done | [story-04-activity-routes.md](./story-04-activity-routes.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-26-05 | Extract device / companion / project routes | backlog | [story-05-device-project-routes.md](./story-05-device-project-routes.md) | — |
 | HS-26-06 | Collapse callback wiring + sync-DB-in-async audit | backlog | [story-06-collapse-callbacks.md](./story-06-collapse-callbacks.md) | — |
 | HS-26-07 | Decomposition closeout (size + regression evidence) | backlog | [story-07-decomposition-closeout.md](./story-07-decomposition-closeout.md) | — |
@@ -98,9 +98,21 @@ than left as workarounds — superseding that file's §Deviations notes:
 
    Full suite still green (1879); route-inventory still identical; ruff clean.
 
-Next: **HS-26-04** — migrate activity / connector / plugin-job routes onto the
-same seam. Each story is a behavior-preserving migration gated by the existing
-web suite + a route-inventory check.
+**HS-26-04 is done:** the activity-intelligence cluster — **38 routes** (activity
+status/records/rules, enrichment connectors incl. GitHub/Jira, meeting
+candidates, plugin-job queue) — now lives in `holdspeak/web/routes/activity.py`
+(`build_activity_router`). 6 activity-only helpers were **relocated** into it (out
+of `web_server`); `_meeting_callback_payload` + `_parse_iso_datetime` stay shared
+(imported). `WebContext` grew 1 accessor (`on_process_plugin_jobs`). `web_server.py`
+dropped **3133 → 1817 lines** (−1316; cumulative **5658 → 1817**, −68%).
+Route-inventory diff identical; full suite green (1879); ruff clean.
+`/api/projects/{project_id}/briefings` left inline (it is a `/api/projects/*`
+path → HS-26-05).
+
+Next: **HS-26-05** — migrate device / companion / project routes (and the inline
+briefings route, `/api/settings`, the dashboard/page routes). Each story is a
+behavior-preserving migration gated by the existing web suite + a route-inventory
+check.
 
 ## Pickup order
 

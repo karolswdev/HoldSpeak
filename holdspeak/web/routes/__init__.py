@@ -9,8 +9,14 @@ invariant that matters is that `web_server` imports the routes lazily (inside
 `_create_app`), so this stays acyclic. `WebContext` imports no route module.
 """
 
+from .activity import build_activity_router
 from .core import build_core_router
 from .dictation import build_dictation_router
 from .meetings import build_meetings_router
 
-__all__ = ["build_core_router", "build_dictation_router", "build_meetings_router"]
+__all__ = [
+    "build_activity_router",
+    "build_core_router",
+    "build_dictation_router",
+    "build_meetings_router",
+]

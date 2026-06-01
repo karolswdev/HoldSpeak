@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 26
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-26-01
 - **Unblocks:** HS-26-07
-- **Owner:** unassigned
+- **Owner:** Claude (agent)
 
 ## Problem
 
@@ -28,9 +28,9 @@ behind the HS-26-01 seam.
 
 ## Acceptance criteria
 
-- [ ] Listed routes are served from the new module; none remain inline.
-- [ ] Existing activity/connector/plugin-job web tests pass unchanged.
-- [ ] Route-inventory diff shows identical paths/methods for the moved set.
+- [x] Listed routes are served from the new module; none remain inline.
+- [x] Existing activity/connector/plugin-job web tests pass unchanged.
+- [x] Route-inventory diff shows identical paths/methods for the moved set.
 
 ## Test plan
 
@@ -42,3 +42,12 @@ behind the HS-26-01 seam.
 
 - Connector enable/disable mutates config; confirm it reads the same shared
   context path the other mutation routes use.
+- **Resolved:** activity reads close over no server state; only the meeting-
+  candidate-start route needs callbacks (`on_start`/`on_update_meeting`/`broadcast`,
+  all existing) + the new `on_process_plugin_jobs` for the plugin-job queue.
+- **Shipped as one module** (`routes/activity.py`, 1351 lines, 38 routes). 6
+  activity-only helpers were **relocated** into it (out of `web_server`);
+  `_meeting_callback_payload` + `_parse_iso_datetime` are shared, so imported from
+  `web_server` (HS-26-06 re-homes). `web_server.py` 3130 → 1817 (cumulative 5658 →
+  1817). `/api/projects/{project_id}/briefings` left inline for HS-26-05 (it is a
+  `/api/projects/*` path). See `evidence-story-04.md`.

@@ -52,3 +52,8 @@ class WebContext:
     on_set_intent_override: Optional[Callable[[Optional[list[str]]], Any]] = None
     on_route_preview: Optional[Callable[..., Any]] = None
     on_dictation_config_changed: Optional[Callable[[], None]] = None
+
+    # HS-26-04: deferred plugin-job queue processing for the activity routes.
+    # The activity-intelligence reads close over no server state; the meeting-
+    # candidate-start route reuses on_start / on_update_meeting (HS-26-02).
+    on_process_plugin_jobs: Optional[Callable[..., Any]] = None
