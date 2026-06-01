@@ -20,7 +20,7 @@ from .audio import AudioSource
 from .device_audio import DeviceRegistry, ensure_device_psk
 from .web_auth import ensure_web_token
 from .device_recording_tick import RecordingTicker
-from .device_meeting_stats import CYCLE_ORDER, pick_next_view
+from .device_meeting_stats import pick_next_view
 from .device_status import (
     DeviceStatusEmitter,
     push_intel_to_devices,
@@ -46,7 +46,8 @@ from .plugins.signals import extract_intent_signals
 from .text_processor import TextProcessor
 from .transcribe import Transcriber
 from .typer import TextTyper
-from .web_server import MeetingWebServer, _UnknownDeviceError
+from .web.runtime_support import _UnknownDeviceError
+from .web_server import MeetingWebServer, WebRuntimeCallbacks
 
 log = get_logger("web_runtime")
 
@@ -1567,32 +1568,34 @@ def run_web_runtime(
 
     try:
         server = MeetingWebServer(
-            on_bookmark=_on_bookmark,
-            on_stop=_on_stop,
-            on_start=_start_meeting,
-            on_meeting_stop=_on_meeting_stop,
-            on_get_status=_get_runtime_status,
-            on_update_meeting=_on_update_meeting,
-            on_get_intent_controls=_on_get_intent_controls,
-            on_set_intent_profile=_on_set_intent_profile,
-            on_set_intent_override=_on_set_intent_override,
-            on_route_preview=_on_route_preview,
-            on_process_plugin_jobs=_on_process_plugin_jobs,
-            get_state=_get_state,
-            on_update_action_item=_on_update_action_item,
-            on_update_action_item_review=_on_update_action_item_review,
-            on_edit_action_item=_on_edit_action_item,
-            on_settings_applied=_apply_updated_config,
-            project_detector=project_detector,
-            device_registry=device_registry,
-            device_psk_provider=lambda: ensure_device_psk(config),
-            on_device_voice_start=_on_device_voice_start,
-            on_device_voice_stop=_on_device_voice_stop,
-            on_device_voice_cancel=_on_device_voice_cancel,
-            device_status_emitter=device_status,
-            on_device_event=_on_device_event,
-            on_device_health=_on_device_health,
-            on_device_query=_on_device_query,
+            WebRuntimeCallbacks(
+                on_bookmark=_on_bookmark,
+                on_stop=_on_stop,
+                on_start=_start_meeting,
+                on_meeting_stop=_on_meeting_stop,
+                on_get_status=_get_runtime_status,
+                on_update_meeting=_on_update_meeting,
+                on_get_intent_controls=_on_get_intent_controls,
+                on_set_intent_profile=_on_set_intent_profile,
+                on_set_intent_override=_on_set_intent_override,
+                on_route_preview=_on_route_preview,
+                on_process_plugin_jobs=_on_process_plugin_jobs,
+                get_state=_get_state,
+                on_update_action_item=_on_update_action_item,
+                on_update_action_item_review=_on_update_action_item_review,
+                on_edit_action_item=_on_edit_action_item,
+                on_settings_applied=_apply_updated_config,
+                project_detector=project_detector,
+                device_registry=device_registry,
+                device_psk_provider=lambda: ensure_device_psk(config),
+                on_device_voice_start=_on_device_voice_start,
+                on_device_voice_stop=_on_device_voice_stop,
+                on_device_voice_cancel=_on_device_voice_cancel,
+                device_status_emitter=device_status,
+                on_device_event=_on_device_event,
+                on_device_health=_on_device_health,
+                on_device_query=_on_device_query,
+            ),
             host="127.0.0.1",
             port=_configured_web_port_from_env(),
             # HS-25-02: token exists/persists now so it is ready the moment a

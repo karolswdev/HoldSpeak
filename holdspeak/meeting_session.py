@@ -43,7 +43,7 @@ except ImportError:
     resolve_intel_provider = None  # type: ignore
 
 try:
-    from .web_server import MeetingWebServer
+    from .web_server import MeetingWebServer, WebRuntimeCallbacks
 except ImportError:
     MeetingWebServer = None  # type: ignore
 
@@ -693,15 +693,17 @@ class MeetingSession:
             if self.web_enabled and MeetingWebServer is not None:
                 try:
                     self._web_server = MeetingWebServer(
-                        on_bookmark=self.add_bookmark,
-                        on_stop=self.stop,
-                        get_state=self._get_state_dict,
-                        on_update_action_item=self.update_action_item,
-                        on_update_action_item_review=self.update_action_item_review,
-                        on_edit_action_item=self.edit_action_item,
-                        on_set_title=self.set_title,
-                        on_set_tags=self.set_tags,
-                        on_settings_applied=self.on_settings_applied,
+                        WebRuntimeCallbacks(
+                            on_bookmark=self.add_bookmark,
+                            on_stop=self.stop,
+                            get_state=self._get_state_dict,
+                            on_update_action_item=self.update_action_item,
+                            on_update_action_item_review=self.update_action_item_review,
+                            on_edit_action_item=self.edit_action_item,
+                            on_set_title=self.set_title,
+                            on_set_tags=self.set_tags,
+                            on_settings_applied=self.on_settings_applied,
+                        )
                     )
                     url = self._web_server.start()
                     self._state.web_url = url

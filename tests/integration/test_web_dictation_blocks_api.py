@@ -18,7 +18,7 @@ import holdspeak.config as config_module
 from holdspeak.config import Config
 from holdspeak.plugins.dictation import assembly as assembly_module
 from holdspeak.plugins.dictation import project_root as project_root_module
-from holdspeak.web_server import MeetingWebServer
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
 class _StubRuntime:
@@ -103,10 +103,12 @@ def cache_invalidator() -> MagicMock:
 def test_dictation_page_route_serves_html() -> None:
     """`/dictation` returns the static editor page with the expected anchors."""
     server = MeetingWebServer(
-        on_bookmark=MagicMock(),
-        on_stop=MagicMock(),
-        get_state=MagicMock(return_value={}),
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=MagicMock(),
+                     on_stop=MagicMock(),
+                     get_state=MagicMock(return_value={}),
+                 )
+             )
     client = TestClient(server.app)
     response = client.get("/dictation")
     assert response.status_code == 200
@@ -140,11 +142,13 @@ def test_dictation_page_route_serves_html() -> None:
 @pytest.fixture
 def test_client(cache_invalidator: MagicMock) -> TestClient:
     server = MeetingWebServer(
-        on_bookmark=MagicMock(),
-        on_stop=MagicMock(),
-        get_state=MagicMock(return_value={}),
-        on_dictation_config_changed=cache_invalidator,
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=MagicMock(),
+                     on_stop=MagicMock(),
+                     get_state=MagicMock(return_value={}),
+                     on_dictation_config_changed=cache_invalidator,
+                 )
+             )
     return TestClient(server.app)
 
 

@@ -22,7 +22,7 @@ from holdspeak.device_audio import (
     WS_CLOSE_INVALID_HANDSHAKE,
     WS_CLOSE_PSK_MISMATCH,
 )
-from holdspeak.web_server import MeetingWebServer
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
 _DEFAULT_PSK = "test-psk-secret-1234567890"
@@ -55,14 +55,16 @@ def chunk_sink() -> Tuple[List[Tuple[str, np.ndarray]], Callable[[str, np.ndarra
 def web_server(device_registry: DeviceRegistry, chunk_sink) -> MeetingWebServer:
     _, on_chunk = chunk_sink
     server = MeetingWebServer(
-        on_bookmark=lambda _label: None,
-        on_stop=lambda: None,
-        get_state=lambda: {},
-        device_registry=device_registry,
-        device_psk_provider=lambda: _DEFAULT_PSK,
-        on_device_audio_chunk=on_chunk,
-        host="127.0.0.1",
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=lambda _label: None,
+                     on_stop=lambda: None,
+                     get_state=lambda: {},
+                     device_registry=device_registry,
+                     device_psk_provider=lambda: _DEFAULT_PSK,
+                     on_device_audio_chunk=on_chunk,
+                 ),
+                 host="127.0.0.1",
+             )
     return server
 
 
@@ -358,14 +360,16 @@ class TestDeviceActiveFrames:
     ) -> None:
         seen: list[tuple[int | None, int | None, int | None]] = []
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-            device_registry=device_registry,
-            device_psk_provider=lambda: _DEFAULT_PSK,
-            on_device_health=lambda d: seen.append((d.battery_pct, d.rssi_dbm, d.last_health_at)),
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         get_state=lambda: {},
+                         device_registry=device_registry,
+                         device_psk_provider=lambda: _DEFAULT_PSK,
+                         on_device_health=lambda d: seen.append((d.battery_pct, d.rssi_dbm, d.last_health_at)),
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         with client.websocket_connect("/api/devices/audio") as ws:
@@ -394,14 +398,16 @@ class TestDeviceActiveFrames:
         device_registry: DeviceRegistry,
     ) -> None:
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-            device_registry=device_registry,
-            device_psk_provider=lambda: _DEFAULT_PSK,
-            on_device_query=lambda _device_id, _name, _at: {"text": "still open", "ttl_ms": 1000},
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         get_state=lambda: {},
+                         device_registry=device_registry,
+                         device_psk_provider=lambda: _DEFAULT_PSK,
+                         on_device_query=lambda _device_id, _name, _at: {"text": "still open", "ttl_ms": 1000},
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         with client.websocket_connect("/api/devices/audio") as ws:
@@ -436,14 +442,16 @@ class TestDeviceActiveFrames:
             return {"text": "Karol: shipped health", "ttl_ms": 5000}
 
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-            device_registry=device_registry,
-            device_psk_provider=lambda: _DEFAULT_PSK,
-            on_device_query=on_query,
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         get_state=lambda: {},
+                         device_registry=device_registry,
+                         device_psk_provider=lambda: _DEFAULT_PSK,
+                         on_device_query=on_query,
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         with client.websocket_connect("/api/devices/audio") as ws:
@@ -470,14 +478,16 @@ class TestDeviceActiveFrames:
             return {"text": "Codex waiting: Run tests?", "ttl_ms": 7000}
 
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-            device_registry=device_registry,
-            device_psk_provider=lambda: _DEFAULT_PSK,
-            on_device_query=on_query,
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         get_state=lambda: {},
+                         device_registry=device_registry,
+                         device_psk_provider=lambda: _DEFAULT_PSK,
+                         on_device_query=on_query,
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         with client.websocket_connect("/api/devices/audio") as ws:
@@ -501,14 +511,16 @@ class TestDeviceAudioPskRotation:
         chunks: List[Tuple[str, np.ndarray]] = []
 
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-            device_registry=device_registry,
-            device_psk_provider=lambda: psk_box["value"],
-            on_device_audio_chunk=lambda d, a: chunks.append((d, a)),
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         get_state=lambda: {},
+                         device_registry=device_registry,
+                         device_psk_provider=lambda: psk_box["value"],
+                         on_device_audio_chunk=lambda d, a: chunks.append((d, a)),
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         # First connection: PSK matches.

@@ -61,7 +61,9 @@ def test_run_web_runtime_starts_and_stops_services(monkeypatch: pytest.MonkeyPat
     listener_events: list[str] = []
 
     class FakeServer:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             self.on_get_status = kwargs["on_get_status"]
             self.started = False
             self.stopped = False
@@ -75,11 +77,15 @@ def test_run_web_runtime_starts_and_stops_services(monkeypatch: pytest.MonkeyPat
             self.stopped = True
 
     class FakeAudioRecorder:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
 
     class FakeHotkeyListener:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
 
         def start(self) -> None:
@@ -129,7 +135,9 @@ def test_run_web_runtime_no_open_skips_browser(monkeypatch: pytest.MonkeyPatch) 
     browser_urls: list[str] = []
 
     class FakeServer:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
 
         def start(self) -> str:
@@ -139,11 +147,15 @@ def test_run_web_runtime_no_open_skips_browser(monkeypatch: pytest.MonkeyPatch) 
             return None
 
     class FakeAudioRecorder:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
 
     class FakeHotkeyListener:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
 
         def start(self) -> None:
@@ -186,7 +198,9 @@ def test_run_web_runtime_warms_transcriber_on_start(monkeypatch: pytest.MonkeyPa
     server_instances: list[object] = []
 
     class FakeServer:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             self.on_get_status = kwargs["on_get_status"]
             server_instances.append(self)
 
@@ -197,11 +211,15 @@ def test_run_web_runtime_warms_transcriber_on_start(monkeypatch: pytest.MonkeyPa
             return None
 
     class FakeAudioRecorder:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
 
     class FakeHotkeyListener:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
 
         def start(self) -> None:
@@ -246,7 +264,9 @@ def test_run_web_runtime_fails_with_actionable_exit(monkeypatch: pytest.MonkeyPa
     monkeypatch.setattr(web_runtime.Config, "load", lambda: _config(auto_open=False))
 
     class FailingServer:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
 
         def start(self) -> str:
@@ -340,7 +360,9 @@ def test_runtime_meeting_control_callbacks_are_wired(monkeypatch: pytest.MonkeyP
             }
 
     class FakeMeetingSession:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
             self._state = FakeState()
             self._active = False
@@ -379,7 +401,9 @@ def test_runtime_meeting_control_callbacks_are_wired(monkeypatch: pytest.MonkeyP
             self._state.tags = [str(tag).strip().lower() for tag in tags if str(tag).strip()]
 
     class FakeServer:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             captured_callbacks.update(kwargs)
             self.events: list[tuple[str, object]] = []
 
@@ -501,11 +525,15 @@ def test_runtime_meeting_control_callbacks_are_wired(monkeypatch: pytest.MonkeyP
             return None
 
     class FakeAudioRecorder:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
 
     class FakeHotkeyListener:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
 
         def start(self) -> None:
@@ -575,7 +603,9 @@ def test_device_voice_reply_uses_waiting_agent_target_profile(
     )
 
     class FakeServer:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             self.kwargs = kwargs
 
         def start(self) -> str:
@@ -596,11 +626,15 @@ def test_device_voice_reply_uses_waiting_agent_target_profile(
             return np.ones(2000, dtype=np.float32)
 
     class FakeAudioRecorder:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
 
     class FakeHotkeyListener:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
 
         def start(self) -> None:
@@ -696,7 +730,9 @@ def test_device_voice_reply_prefers_tmux_pane_over_gui_typing(
     )
 
     class FakeServer:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             self.kwargs = kwargs
 
         def start(self) -> str:
@@ -717,11 +753,15 @@ def test_device_voice_reply_prefers_tmux_pane_over_gui_typing(
             return np.ones(2000, dtype=np.float32)
 
     class FakeAudioRecorder:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
 
     class FakeHotkeyListener:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
 
         def start(self) -> None:
@@ -802,7 +842,9 @@ def test_device_voice_reply_rejects_undeliverable_agent_target(
     )
 
     class FakeServer:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             self.kwargs = kwargs
 
         def start(self) -> str:
@@ -821,11 +863,15 @@ def test_device_voice_reply_rejects_undeliverable_agent_target(
             raise AssertionError("undeliverable agent target should not stop")
 
     class FakeAudioRecorder:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
 
     class FakeHotkeyListener:
-        def __init__(self, **kwargs):
+        def __init__(self, callbacks=None, **kwargs):
+            if callbacks is not None:
+                kwargs = {**vars(callbacks), **kwargs}
             _ = kwargs
 
         def start(self) -> None:

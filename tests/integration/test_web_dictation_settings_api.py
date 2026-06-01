@@ -17,7 +17,7 @@ from fastapi.testclient import TestClient
 import holdspeak.config as config_module
 from holdspeak.config import Config, DeviceConfig
 from holdspeak.plugins.dictation import runtime_counters
-from holdspeak.web_server import MeetingWebServer
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
 @pytest.fixture
@@ -40,11 +40,13 @@ def on_settings_applied() -> MagicMock:
 @pytest.fixture
 def test_client(on_settings_applied: MagicMock) -> TestClient:
     server = MeetingWebServer(
-        on_bookmark=MagicMock(),
-        on_stop=MagicMock(),
-        get_state=MagicMock(return_value={}),
-        on_settings_applied=on_settings_applied,
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=MagicMock(),
+                     on_stop=MagicMock(),
+                     get_state=MagicMock(return_value={}),
+                     on_settings_applied=on_settings_applied,
+                 )
+             )
     return TestClient(server.app)
 
 
@@ -269,10 +271,12 @@ class TestSettingsPutValidatesDictation:
 
 def test_dictation_page_includes_runtime_section() -> None:
     server = MeetingWebServer(
-        on_bookmark=MagicMock(),
-        on_stop=MagicMock(),
-        get_state=MagicMock(return_value={}),
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=MagicMock(),
+                     on_stop=MagicMock(),
+                     get_state=MagicMock(return_value={}),
+                 )
+             )
     client = TestClient(server.app)
     response = client.get("/dictation")
     assert response.status_code == 200

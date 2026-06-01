@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 26
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-26-02, HS-26-03, HS-26-04, HS-26-05
 - **Unblocks:** HS-26-07
-- **Owner:** unassigned
+- **Owner:** Claude (agent)
 
 ## Problem
 
@@ -34,12 +34,15 @@ which can block the event loop / WS broadcast cadence under load.
 
 ## Acceptance criteria
 
-- [ ] Constructor callback count is materially reduced; remaining params
-      justified.
-- [ ] Route modules read from the shared context, not injected callbacks.
-- [ ] Sync-DB-in-async audit recorded; any offload is covered by a test or a
-      documented rationale.
-- [ ] Existing web tests pass unchanged.
+- [x] Constructor callback count is materially reduced; remaining params
+      justified. (30 → 4 via `WebRuntimeCallbacks` bundle.)
+- [x] Route modules read from the shared context, not injected callbacks. (And
+      now import nothing from `web_server` — shared helpers re-homed to
+      `web/runtime_support`.)
+- [x] Sync-DB-in-async audit recorded; any offload is covered by a test or a
+      documented rationale. (See `audit-sync-db-async.md` — no offload, with
+      documented rationale + re-visit trigger.)
+- [x] Existing web tests pass unchanged. (Full suite green, 1879.)
 
 ## Test plan
 
@@ -52,3 +55,9 @@ which can block the event loop / WS broadcast cadence under load.
 
 - Keep this story behavior-preserving like the rest; the win is structure, not
   new features.
+- **Scope decision (user):** the literal AC1 (collapse the constructor) was kept
+  over the lighter "keep constructor, document it" option — `WebRuntimeCallbacks`
+  bundle + codemod of all 69 construction sites. The `__init__` re-explodes the
+  bundle onto `self.*` so `_create_app` / device-WS wiring stay untouched.
+- The 3 cross-cutting helpers were re-homed to `web/runtime_support` so no
+  `routes/*` module imports `web_server`. See `evidence-story-06.md`.

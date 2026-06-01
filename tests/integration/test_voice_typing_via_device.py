@@ -19,7 +19,6 @@ import pytest
 pytest.importorskip("fastapi")
 
 from fastapi.testclient import TestClient
-from starlette.websockets import WebSocketDisconnect
 
 from holdspeak.audio import AudioSource
 from holdspeak.device_audio import (
@@ -27,7 +26,7 @@ from holdspeak.device_audio import (
     DeviceRegistry,
 )
 from holdspeak.voice_typing import VoiceTypingSession
-from holdspeak.web_server import MeetingWebServer
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
 _DEFAULT_PSK = "test-psk-secret"
@@ -122,16 +121,18 @@ def web_server(
         voice_session.cancel(owner=f"device:{device_id}")
 
     server = MeetingWebServer(
-        on_bookmark=lambda _label: None,
-        on_stop=lambda: None,
-        get_state=lambda: {},
-        device_registry=device_registry,
-        device_psk_provider=lambda: _DEFAULT_PSK,
-        on_device_voice_start=on_voice_start,
-        on_device_voice_stop=on_voice_stop,
-        on_device_voice_cancel=on_voice_cancel,
-        host="127.0.0.1",
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=lambda _label: None,
+                     on_stop=lambda: None,
+                     get_state=lambda: {},
+                     device_registry=device_registry,
+                     device_psk_provider=lambda: _DEFAULT_PSK,
+                     on_device_voice_start=on_voice_start,
+                     on_device_voice_stop=on_voice_stop,
+                     on_device_voice_cancel=on_voice_cancel,
+                 ),
+                 host="127.0.0.1",
+             )
     return server, transcribed_event
 
 
@@ -232,14 +233,16 @@ class TestVoiceTypingViaDevice:
         chunks: List[Tuple[str, np.ndarray]] = []
 
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-            device_registry=device_registry,
-            device_psk_provider=lambda: _DEFAULT_PSK,
-            on_device_audio_chunk=lambda d, a: chunks.append((d, a)),
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         get_state=lambda: {},
+                         device_registry=device_registry,
+                         device_psk_provider=lambda: _DEFAULT_PSK,
+                         on_device_audio_chunk=lambda d, a: chunks.append((d, a)),
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         with client.websocket_connect("/api/devices/audio") as ws:

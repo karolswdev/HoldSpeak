@@ -12,7 +12,7 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-from holdspeak.web_server import MeetingWebServer
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
 def _callbacks():
@@ -25,7 +25,7 @@ def _callbacks():
 
 def test_loopback_runtime_is_open_no_token_required():
     cb = _callbacks()
-    server = MeetingWebServer(host="127.0.0.1", auth_token="", **cb)
+    server = MeetingWebServer(WebRuntimeCallbacks(**cb), host="127.0.0.1", auth_token="")
     client = TestClient(server.app)
     # Loopback: open exactly as before, even with no token configured.
     assert client.get("/health").status_code == 200
@@ -34,7 +34,7 @@ def test_loopback_runtime_is_open_no_token_required():
 
 def test_nonloopback_runtime_requires_token():
     cb = _callbacks()
-    server = MeetingWebServer(host="0.0.0.0", auth_token="s3cret", **cb)
+    server = MeetingWebServer(WebRuntimeCallbacks(**cb), host="0.0.0.0", auth_token="s3cret")
     client = TestClient(server.app)
 
     # No token → 401 on data routes.
@@ -60,7 +60,7 @@ def test_nonloopback_runtime_requires_token():
 
 def test_nonloopback_bind_without_token_is_refused():
     cb = _callbacks()
-    server = MeetingWebServer(host="0.0.0.0", auth_token="", **cb)
+    server = MeetingWebServer(WebRuntimeCallbacks(**cb), host="0.0.0.0", auth_token="")
     # The app constructs fine, but start() must refuse to expose it unauthenticated.
     with pytest.raises(RuntimeError, match="without an auth token"):
         server.start()

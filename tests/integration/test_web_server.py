@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from copy import deepcopy
-import asyncio
 from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import MagicMock, AsyncMock
@@ -19,6 +18,7 @@ from fastapi.testclient import TestClient
 pytestmark = [pytest.mark.requires_meeting]
 
 from holdspeak.web_server import (
+    WebRuntimeCallbacks,
     MeetingWebServer,
     WebSocketManager,
     BroadcastMessage,
@@ -249,11 +249,13 @@ def mock_callbacks():
 def web_server(mock_callbacks):
     """Create MeetingWebServer instance."""
     server = MeetingWebServer(
-        on_bookmark=mock_callbacks["on_bookmark"],
-        on_stop=mock_callbacks["on_stop"],
-        get_state=mock_callbacks["get_state"],
-        host="127.0.0.1",
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=mock_callbacks["on_bookmark"],
+                     on_stop=mock_callbacks["on_stop"],
+                     get_state=mock_callbacks["get_state"],
+                 ),
+                 host="127.0.0.1",
+             )
     return server
 
 
@@ -404,12 +406,14 @@ class TestDeviceHealthEndpoint:
         registry.register("aipi-1", "Karol")
         registry.update_health("aipi-1", battery_pct=79, rssi_dbm=-62, at=1234)
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-            device_registry=registry,
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         get_state=lambda: {},
+                         device_registry=registry,
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         response = client.get("/api/devices/health")
@@ -428,12 +432,14 @@ class TestDeviceHealthEndpoint:
         registry = DeviceRegistry()
         registry.register("aipi-1", "Karol")
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-            device_registry=registry,
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         get_state=lambda: {},
+                         device_registry=registry,
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         response = client.get("/api/devices/health")
@@ -490,19 +496,21 @@ class TestCompanionStatusEndpoint:
         registry = DeviceRegistry()
         registry.register("aipi-1", "Karol")
         server = MeetingWebServer(
-            on_bookmark=mock_callbacks["on_bookmark"],
-            on_stop=mock_callbacks["on_stop"],
-            get_state=mock_callbacks["get_state"],
-            on_get_status=MagicMock(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                         on_get_status=MagicMock(
                 return_value={
                     "voice_state": "idle",
                     "text_injection_enabled": True,
                     "text_injection_error": None,
                 }
             ),
-            device_registry=registry,
-            host="127.0.0.1",
-        )
+                         device_registry=registry,
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         response = client.get("/api/companion/status")
@@ -582,19 +590,21 @@ class TestCompanionStatusEndpoint:
         registry = DeviceRegistry()
         registry.register("aipi-1", "Karol")
         server = MeetingWebServer(
-            on_bookmark=mock_callbacks["on_bookmark"],
-            on_stop=mock_callbacks["on_stop"],
-            get_state=mock_callbacks["get_state"],
-            on_get_status=MagicMock(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                         on_get_status=MagicMock(
                 return_value={
                     "voice_state": "idle",
                     "text_injection_enabled": False,
                     "text_injection_error": "TextTyper unavailable",
                 }
             ),
-            device_registry=registry,
-            host="127.0.0.1",
-        )
+                         device_registry=registry,
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         response = client.get("/api/companion/status")
@@ -633,18 +643,20 @@ class TestCompanionStatusEndpoint:
             lambda **_kwargs: [],
         )
         server = MeetingWebServer(
-            on_bookmark=mock_callbacks["on_bookmark"],
-            on_stop=mock_callbacks["on_stop"],
-            get_state=mock_callbacks["get_state"],
-            on_get_status=MagicMock(
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                         on_get_status=MagicMock(
                 return_value={
                     "voice_state": "idle",
                     "text_injection_enabled": False,
                     "text_injection_error": "backend unavailable",
                 }
             ),
-            host="127.0.0.1",
-        )
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         response = client.get("/api/companion/status")
@@ -774,11 +786,13 @@ class TestRuntimeControlEndpoints:
             "meeting_active": False,
         }
         server = MeetingWebServer(
-            on_bookmark=mock_callbacks["on_bookmark"],
-            on_stop=mock_callbacks["on_stop"],
-            get_state=MagicMock(return_value=state),
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=MagicMock(return_value=state),
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         response = client.get("/api/runtime/status")
@@ -791,12 +805,14 @@ class TestRuntimeControlEndpoints:
     def test_runtime_status_normalizes_callback_payload(self, mock_callbacks):
         state = {"id": "runtime", "meeting_active": False, "segments": [], "bookmarks": []}
         server = MeetingWebServer(
-            on_bookmark=mock_callbacks["on_bookmark"],
-            on_stop=mock_callbacks["on_stop"],
-            get_state=MagicMock(return_value=state),
-            on_get_status=MagicMock(return_value={"voice_state": "idle"}),
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=MagicMock(return_value=state),
+                         on_get_status=MagicMock(return_value={"voice_state": "idle"}),
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         response = client.get("/api/runtime/status")
@@ -823,12 +839,14 @@ class TestRuntimeControlEndpoints:
     def test_meeting_stop_prefers_on_meeting_stop_callback(self, mock_callbacks):
         on_meeting_stop = MagicMock(return_value={"status": "meeting_stopped"})
         server = MeetingWebServer(
-            on_bookmark=mock_callbacks["on_bookmark"],
-            on_stop=mock_callbacks["on_stop"],
-            on_meeting_stop=on_meeting_stop,
-            get_state=mock_callbacks["get_state"],
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         on_meeting_stop=on_meeting_stop,
+                         get_state=mock_callbacks["get_state"],
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         response = client.post("/api/meeting/stop")
@@ -896,15 +914,17 @@ class TestIntentRoutingControlEndpoints:
             return route
 
         server = MeetingWebServer(
-            on_bookmark=mock_callbacks["on_bookmark"],
-            on_stop=mock_callbacks["on_stop"],
-            get_state=mock_callbacks["get_state"],
-            on_get_intent_controls=_get_controls,
-            on_set_intent_profile=_set_profile,
-            on_set_intent_override=_set_override,
-            on_route_preview=_preview_route,
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                         on_get_intent_controls=_get_controls,
+                         on_set_intent_profile=_set_profile,
+                         on_set_intent_override=_set_override,
+                         on_route_preview=_preview_route,
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         initial = client.get("/api/intents/control")
@@ -1350,12 +1370,14 @@ class TestMeetingMetadataEndpoints:
             }
         )
         server = MeetingWebServer(
-            on_bookmark=mock_callbacks["on_bookmark"],
-            on_stop=mock_callbacks["on_stop"],
-            on_update_meeting=on_update_meeting,
-            get_state=mock_callbacks["get_state"],
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         on_update_meeting=on_update_meeting,
+                         get_state=mock_callbacks["get_state"],
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         response = client.patch("/api/meeting", json={"title": "Planning Sync", "tags": ["ops", "planning"]})
@@ -1378,13 +1400,15 @@ class TestMeetingMetadataEndpoints:
             }
         )
         server = MeetingWebServer(
-            on_bookmark=mock_callbacks["on_bookmark"],
-            on_stop=mock_callbacks["on_stop"],
-            get_state=get_state,
-            on_set_title=on_set_title,
-            on_set_tags=on_set_tags,
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=get_state,
+                         on_set_title=on_set_title,
+                         on_set_tags=on_set_tags,
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         response = client.patch("/api/meeting", json={"title": "Retro", "tags": ["team"]})
@@ -1484,14 +1508,16 @@ class TestDashboardLifecycleStateTransitions:
             }
 
         server = MeetingWebServer(
-            on_bookmark=MagicMock(return_value={"timestamp": 0.0, "label": "bookmark"}),
-            on_stop=_on_meeting_stop,
-            on_meeting_stop=_on_meeting_stop,
-            on_start=_on_start,
-            on_get_status=_on_get_status,
-            get_state=_get_state,
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=MagicMock(return_value={"timestamp": 0.0, "label": "bookmark"}),
+                         on_stop=_on_meeting_stop,
+                         on_meeting_stop=_on_meeting_stop,
+                         on_start=_on_start,
+                         on_get_status=_on_get_status,
+                         get_state=_get_state,
+                     ),
+                     host="127.0.0.1",
+                 )
         broadcast_events: list[tuple[str, object]] = []
         server.broadcast = lambda message_type, data: broadcast_events.append(
             (message_type, deepcopy(data))
@@ -1549,11 +1575,13 @@ class TestDashboardLifecycleStateTransitions:
 
     def test_websocket_supports_ping_pong_keepalive(self):
         server = MeetingWebServer(
-            on_bookmark=MagicMock(return_value={"timestamp": 0.0, "label": "bookmark"}),
-            on_stop=MagicMock(return_value={"status": "stopped"}),
-            get_state=lambda: {},
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=MagicMock(return_value={"timestamp": 0.0, "label": "bookmark"}),
+                         on_stop=MagicMock(return_value={"status": "stopped"}),
+                         get_state=lambda: {},
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         with client.websocket_connect("/ws") as websocket:
@@ -1676,11 +1704,13 @@ class TestSettingsApiEndpoints:
         monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
         on_settings_applied = MagicMock()
         server = MeetingWebServer(
-            on_bookmark=mock_callbacks["on_bookmark"],
-            on_stop=mock_callbacks["on_stop"],
-            get_state=mock_callbacks["get_state"],
-            on_settings_applied=on_settings_applied,
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                         on_settings_applied=on_settings_applied,
+                     )
+                 )
         client = TestClient(server.app)
 
         get_response = client.get("/api/settings")
@@ -2303,12 +2333,14 @@ class TestPluginRunQueueApiEndpoints:
             }
 
         server = MeetingWebServer(
-            on_bookmark=mock_callbacks["on_bookmark"],
-            on_stop=mock_callbacks["on_stop"],
-            get_state=mock_callbacks["get_state"],
-            on_process_plugin_jobs=_on_process_plugin_jobs,
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                         on_process_plugin_jobs=_on_process_plugin_jobs,
+                     ),
+                     host="127.0.0.1",
+                 )
         server.broadcast = lambda message_type, data: broadcasts.append((message_type, deepcopy(data)))
         client = TestClient(server.app)
 
@@ -2372,10 +2404,12 @@ class TestMeetingWebServerLifecycle:
     def test_start_returns_url(self, mock_callbacks):
         """start() should return the server URL."""
         server = MeetingWebServer(
-            on_bookmark=mock_callbacks["on_bookmark"],
-            on_stop=mock_callbacks["on_stop"],
-            get_state=mock_callbacks["get_state"],
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                     )
+                 )
         try:
             url = server.start()
             assert url.startswith("http://127.0.0.1:")
@@ -2386,10 +2420,12 @@ class TestMeetingWebServerLifecycle:
     def test_stop_clears_state(self, mock_callbacks):
         """stop() should clear server state."""
         server = MeetingWebServer(
-            on_bookmark=mock_callbacks["on_bookmark"],
-            on_stop=mock_callbacks["on_stop"],
-            get_state=mock_callbacks["get_state"],
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                     )
+                 )
         server.start()
         server.stop()
 
@@ -2399,10 +2435,12 @@ class TestMeetingWebServerLifecycle:
     def test_double_stop_safe(self, mock_callbacks):
         """Calling stop() multiple times should be safe."""
         server = MeetingWebServer(
-            on_bookmark=mock_callbacks["on_bookmark"],
-            on_stop=mock_callbacks["on_stop"],
-            get_state=mock_callbacks["get_state"],
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks["on_bookmark"],
+                         on_stop=mock_callbacks["on_stop"],
+                         get_state=mock_callbacks["get_state"],
+                     )
+                 )
         server.start()
         server.stop()
         server.stop()  # Should not raise

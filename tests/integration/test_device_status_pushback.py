@@ -16,7 +16,7 @@ from holdspeak.audio import AudioSource
 from holdspeak.device_audio import DEVICE_HANDSHAKE_VERSION, DeviceRegistry
 from holdspeak.device_status import DeviceStatusEmitter
 from holdspeak.voice_typing import VoiceTypingSession
-from holdspeak.web_server import MeetingWebServer
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
 _DEFAULT_PSK = "status-test-psk"
@@ -62,17 +62,19 @@ class TestDeviceStatusOutbound:
         registry = DeviceRegistry()
         emitter = DeviceStatusEmitter(label_lookup=registry)
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-            device_registry=registry,
-            device_psk_provider=lambda: _DEFAULT_PSK,
-            device_status_emitter=emitter,
-            on_device_voice_start=on_voice_start,
-            on_device_voice_stop=on_voice_stop,
-            on_device_event=on_event,
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         get_state=lambda: {},
+                         device_registry=registry,
+                         device_psk_provider=lambda: _DEFAULT_PSK,
+                         device_status_emitter=emitter,
+                         on_device_voice_start=on_voice_start,
+                         on_device_voice_stop=on_voice_stop,
+                         on_device_event=on_event,
+                     ),
+                     host="127.0.0.1",
+                 )
         return server, emitter, registry
 
     def test_emit_after_handshake_reaches_device(self) -> None:
@@ -132,16 +134,18 @@ class TestDeviceStatusOutbound:
             return audio
 
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-            device_registry=registry,
-            device_psk_provider=lambda: _DEFAULT_PSK,
-            device_status_emitter=emitter,
-            on_device_voice_start=on_voice_start,
-            on_device_voice_stop=on_voice_stop,
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         get_state=lambda: {},
+                         device_registry=registry,
+                         device_psk_provider=lambda: _DEFAULT_PSK,
+                         device_status_emitter=emitter,
+                         on_device_voice_start=on_voice_start,
+                         on_device_voice_stop=on_voice_stop,
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         with client.websocket_connect("/api/devices/audio") as ws:
@@ -177,14 +181,16 @@ class TestDeviceEventInbound:
 
         registry = DeviceRegistry()
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-            device_registry=registry,
-            device_psk_provider=lambda: _DEFAULT_PSK,
-            on_device_event=on_event,
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         get_state=lambda: {},
+                         device_registry=registry,
+                         device_psk_provider=lambda: _DEFAULT_PSK,
+                         on_device_event=on_event,
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         with client.websocket_connect("/api/devices/audio") as ws:
@@ -209,14 +215,16 @@ class TestDeviceEventInbound:
 
         registry = DeviceRegistry()
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-            device_registry=registry,
-            device_psk_provider=lambda: _DEFAULT_PSK,
-            on_device_event=on_event,
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         get_state=lambda: {},
+                         device_registry=registry,
+                         device_psk_provider=lambda: _DEFAULT_PSK,
+                         on_device_event=on_event,
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         with client.websocket_connect("/api/devices/audio") as ws:
@@ -236,14 +244,16 @@ class TestDeviceEventInbound:
 
         registry = DeviceRegistry()
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-            device_registry=registry,
-            device_psk_provider=lambda: _DEFAULT_PSK,
-            on_device_event=on_event,
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         get_state=lambda: {},
+                         device_registry=registry,
+                         device_psk_provider=lambda: _DEFAULT_PSK,
+                         on_device_event=on_event,
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         with client.websocket_connect("/api/devices/audio") as ws:
@@ -262,14 +272,16 @@ class TestStatusEmitterDisconnectCleanup:
         registry = DeviceRegistry()
         emitter = DeviceStatusEmitter(label_lookup=registry)
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-            device_registry=registry,
-            device_psk_provider=lambda: _DEFAULT_PSK,
-            device_status_emitter=emitter,
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         get_state=lambda: {},
+                         device_registry=registry,
+                         device_psk_provider=lambda: _DEFAULT_PSK,
+                         device_status_emitter=emitter,
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         with client.websocket_connect("/api/devices/audio") as ws:

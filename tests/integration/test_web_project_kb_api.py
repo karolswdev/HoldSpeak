@@ -18,7 +18,7 @@ from holdspeak import agent_context as agent_context_module
 from holdspeak.agent_context import ingest_agent_hook_event
 from holdspeak.agent_summarizer import AgentSummary
 from holdspeak.plugins.dictation import project_root as project_root_module
-from holdspeak.web_server import MeetingWebServer
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
 @pytest.fixture
@@ -46,11 +46,13 @@ def cache_invalidator() -> MagicMock:
 @pytest.fixture
 def test_client(cache_invalidator: MagicMock) -> TestClient:
     server = MeetingWebServer(
-        on_bookmark=MagicMock(),
-        on_stop=MagicMock(),
-        get_state=MagicMock(return_value={}),
-        on_dictation_config_changed=cache_invalidator,
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=MagicMock(),
+                     on_stop=MagicMock(),
+                     get_state=MagicMock(return_value={}),
+                     on_dictation_config_changed=cache_invalidator,
+                 )
+             )
     return TestClient(server.app)
 
 
@@ -596,10 +598,12 @@ class TestDictationAgentContext:
 def test_dictation_page_includes_project_kb_section() -> None:
     """The `/dictation` page must surface the KB editor (HS-4-03)."""
     server = MeetingWebServer(
-        on_bookmark=MagicMock(),
-        on_stop=MagicMock(),
-        get_state=MagicMock(return_value={}),
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=MagicMock(),
+                     on_stop=MagicMock(),
+                     get_state=MagicMock(return_value={}),
+                 )
+             )
     client = TestClient(server.app)
     response = client.get("/dictation")
     assert response.status_code == 200

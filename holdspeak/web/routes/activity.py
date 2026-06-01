@@ -7,11 +7,11 @@ meeting candidates, and the deferred plugin-job queue. Handlers move verbatim;
 only the closure target changes (`self.` -> `ctx.`).
 
 The activity payload helpers and `_meeting_payload_id` are used only by these
-routes, so they were relocated here (out of `web_server`). `_meeting_callback_payload`
-(shared with `routes/meetings.py`) and `_parse_iso_datetime` (still used by
-`web_server` itself) are imported from `web_server` — HS-26-06 re-homes them.
-`/api/projects/{project_id}/briefings` is a `/api/projects/*` path and stays
-inline for HS-26-05.
+routes, so they live here. `_meeting_callback_payload` (shared with
+`routes/meetings.py`) and `_parse_iso_datetime` (also used by `web_server`) come
+from the neutral `web/runtime_support` module — no route module imports
+`web_server` (HS-26-06). `/api/projects/{project_id}/briefings` is a
+`/api/projects/*` path and stays inline for HS-26-05.
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ from ...web_requests import (
     _ActivitySettingsRequest,
     _PluginJobProcessRequest,
 )
-from ...web_server import _meeting_callback_payload, _parse_iso_datetime
+from ..runtime_support import _meeting_callback_payload, _parse_iso_datetime
 from ..context import WebContext
 
 log = get_logger("web.routes.activity")

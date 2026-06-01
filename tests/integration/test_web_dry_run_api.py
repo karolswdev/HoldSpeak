@@ -19,7 +19,7 @@ import holdspeak.config as config_module
 from holdspeak.config import Config
 from holdspeak.plugins.dictation import assembly as assembly_module
 from holdspeak.plugins.dictation.runtime import RuntimeUnavailableError
-from holdspeak.web_server import MeetingWebServer
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
 class _StubRuntime:
@@ -78,10 +78,12 @@ def global_blocks_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 @pytest.fixture
 def test_client(settings_path: Path, global_blocks_path: Path) -> TestClient:
     server = MeetingWebServer(
-        on_bookmark=MagicMock(),
-        on_stop=MagicMock(),
-        get_state=MagicMock(return_value={}),
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=MagicMock(),
+                     on_stop=MagicMock(),
+                     get_state=MagicMock(return_value={}),
+                 )
+             )
     return TestClient(server.app)
 
 
@@ -435,10 +437,12 @@ def test_dry_run_rejects_non_string_project_root(
 
 def test_dictation_page_includes_dry_run_section() -> None:
     server = MeetingWebServer(
-        on_bookmark=MagicMock(),
-        on_stop=MagicMock(),
-        get_state=MagicMock(return_value={}),
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=MagicMock(),
+                     on_stop=MagicMock(),
+                     get_state=MagicMock(return_value={}),
+                 )
+             )
     client = TestClient(server.app)
     response = client.get("/dictation")
     assert response.status_code == 200

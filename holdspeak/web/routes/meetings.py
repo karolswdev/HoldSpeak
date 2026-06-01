@@ -34,7 +34,7 @@ from ...web_requests import (
     _StopRequest,
     _UpdateMeetingRequest,
 )
-from ...web_server import _UnknownDeviceError, _meeting_callback_payload
+from ..runtime_support import _UnknownDeviceError, _meeting_callback_payload
 from ..context import WebContext
 
 log = get_logger("web.routes.meetings")

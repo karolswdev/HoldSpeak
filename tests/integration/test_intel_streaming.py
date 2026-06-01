@@ -10,13 +10,9 @@ Tests for:
 
 from __future__ import annotations
 
-import asyncio
-import json
-import threading
-import time
 from datetime import datetime
-from typing import Any, Iterator, Optional, Union
-from unittest.mock import MagicMock, AsyncMock, patch, PropertyMock
+from typing import Iterator, Optional, Union
+from unittest.mock import MagicMock, AsyncMock, patch
 
 import pytest
 
@@ -33,9 +29,9 @@ from holdspeak.meeting_session import (
     MeetingSession,
     MeetingState,
     IntelSnapshot,
-    TranscriptSegment,
 )
 from holdspeak.web_server import (
+    WebRuntimeCallbacks,
     MeetingWebServer,
     WebSocketManager,
     BroadcastMessage,
@@ -175,14 +171,16 @@ def mock_callbacks_with_action_items():
 def web_server_with_action_items(mock_callbacks_with_action_items):
     """Create MeetingWebServer with action item support."""
     server = MeetingWebServer(
-        on_bookmark=mock_callbacks_with_action_items["on_bookmark"],
-        on_stop=mock_callbacks_with_action_items["on_stop"],
-        get_state=mock_callbacks_with_action_items["get_state"],
-        on_update_action_item=mock_callbacks_with_action_items["on_update_action_item"],
-        on_update_action_item_review=mock_callbacks_with_action_items["on_update_action_item_review"],
-        on_edit_action_item=mock_callbacks_with_action_items["on_edit_action_item"],
-        host="127.0.0.1",
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=mock_callbacks_with_action_items["on_bookmark"],
+                     on_stop=mock_callbacks_with_action_items["on_stop"],
+                     get_state=mock_callbacks_with_action_items["get_state"],
+                     on_update_action_item=mock_callbacks_with_action_items["on_update_action_item"],
+                     on_update_action_item_review=mock_callbacks_with_action_items["on_update_action_item_review"],
+                     on_edit_action_item=mock_callbacks_with_action_items["on_edit_action_item"],
+                 ),
+                 host="127.0.0.1",
+             )
     return server
 
 
@@ -378,11 +376,13 @@ class TestActionItemPatchEndpoint:
         """PATCH without handler should return 501."""
         # Create server without action item handler
         server = MeetingWebServer(
-            on_bookmark=MagicMock(),
-            on_stop=MagicMock(),
-            get_state=MagicMock(return_value={}),
-            on_update_action_item=None,
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=MagicMock(),
+                         on_stop=MagicMock(),
+                         get_state=MagicMock(return_value={}),
+                         on_update_action_item=None,
+                     )
+                 )
         client = TestClient(server.app)
 
         response = client.patch(
@@ -401,11 +401,13 @@ class TestActionItemPatchEndpoint:
         )
 
         server = MeetingWebServer(
-            on_bookmark=mock_callbacks_with_action_items["on_bookmark"],
-            on_stop=mock_callbacks_with_action_items["on_stop"],
-            get_state=mock_callbacks_with_action_items["get_state"],
-            on_update_action_item=mock_callbacks_with_action_items["on_update_action_item"],
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=mock_callbacks_with_action_items["on_bookmark"],
+                         on_stop=mock_callbacks_with_action_items["on_stop"],
+                         get_state=mock_callbacks_with_action_items["get_state"],
+                         on_update_action_item=mock_callbacks_with_action_items["on_update_action_item"],
+                     )
+                 )
         client = TestClient(server.app)
 
         response = client.patch(
@@ -455,13 +457,15 @@ class TestActionItemPatchEndpoint:
 
     def test_patch_action_item_review_without_handler_returns_501(self):
         server = MeetingWebServer(
-            on_bookmark=MagicMock(),
-            on_stop=MagicMock(),
-            get_state=MagicMock(return_value={}),
-            on_update_action_item=MagicMock(return_value={}),
-            on_update_action_item_review=None,
-            on_edit_action_item=MagicMock(return_value={}),
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=MagicMock(),
+                         on_stop=MagicMock(),
+                         get_state=MagicMock(return_value={}),
+                         on_update_action_item=MagicMock(return_value={}),
+                         on_update_action_item_review=None,
+                         on_edit_action_item=MagicMock(return_value={}),
+                     )
+                 )
         client = TestClient(server.app)
         response = client.patch(
             "/api/action-items/item-001/review",
@@ -471,13 +475,15 @@ class TestActionItemPatchEndpoint:
 
     def test_patch_action_item_edit_without_handler_returns_501(self):
         server = MeetingWebServer(
-            on_bookmark=MagicMock(),
-            on_stop=MagicMock(),
-            get_state=MagicMock(return_value={}),
-            on_update_action_item=MagicMock(return_value={}),
-            on_update_action_item_review=MagicMock(return_value={}),
-            on_edit_action_item=None,
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=MagicMock(),
+                         on_stop=MagicMock(),
+                         get_state=MagicMock(return_value={}),
+                         on_update_action_item=MagicMock(return_value={}),
+                         on_update_action_item_review=MagicMock(return_value={}),
+                         on_edit_action_item=None,
+                     )
+                 )
         client = TestClient(server.app)
         response = client.patch(
             "/api/action-items/item-001/edit",

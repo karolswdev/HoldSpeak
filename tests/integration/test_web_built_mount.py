@@ -16,7 +16,7 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-from holdspeak.web_server import MeetingWebServer
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 pytestmark = [pytest.mark.requires_meeting]
 
@@ -31,10 +31,12 @@ _GALLERY_INDEX = _BUILT_ROOT / "design" / "components" / "index.html"
 @pytest.fixture
 def test_client() -> TestClient:
     server = MeetingWebServer(
-        on_bookmark=MagicMock(),
-        on_stop=MagicMock(),
-        get_state=MagicMock(return_value={}),
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=MagicMock(),
+                     on_stop=MagicMock(),
+                     get_state=MagicMock(return_value={}),
+                 )
+             )
     return TestClient(server.app)
 
 

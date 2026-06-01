@@ -16,6 +16,7 @@ from datetime import datetime
 from typing import Any, Callable, Optional, TYPE_CHECKING
 
 from .logging_config import get_logger
+from .web.runtime_support import _parse_iso_datetime
 
 if TYPE_CHECKING:
     import numpy as np
@@ -62,15 +63,6 @@ def _format_duration(total_seconds: float) -> str:
     return f"{mins:02d}:{secs:02d}"
 
 
-def _parse_iso_datetime(value: Any) -> Optional[datetime]:
-    if not isinstance(value, str) or not value:
-        return None
-    try:
-        return datetime.fromisoformat(value)
-    except Exception:
-        return None
-
-
 @dataclass(frozen=True)
 class BroadcastMessage:
     type: str
@@ -78,30 +70,6 @@ class BroadcastMessage:
 
     def to_dict(self) -> dict[str, Any]:
         return {"type": self.type, "data": self.data}
-
-
-class _UnknownDeviceError(LookupError):
-    """Raised by ``on_start`` when a requested device id is not registered.
-
-    The route maps this to a 404 with the offending ``device_id``
-    surfaced in the JSON body so the caller can correct its
-    request without polling the registry.
-    """
-
-    def __init__(self, device_id: str) -> None:
-        super().__init__(f"Unknown device id: {device_id!r}")
-        self.device_id = device_id
-
-
-def _meeting_callback_payload(result: Any) -> Any:
-    if hasattr(result, "to_dict"):
-        try:
-            return result.to_dict()
-        except Exception:
-            return None
-    if isinstance(result, dict):
-        return result
-    return None
 
 
 class WebSocketManager:
@@ -148,44 +116,61 @@ class WebSocketManager:
                 pass
 
 
+@dataclass
+class WebRuntimeCallbacks:
+    """The behaviors + collaborators the web runtime injects into the server.
+
+    HS-26-06: collapses what were ~30 individual ``MeetingWebServer`` constructor
+    kwargs into one bundle. Field names match the historical kwargs, so callers
+    read the same — they just wrap them in ``WebRuntimeCallbacks(...)``.
+    ``MeetingWebServer.__init__`` now takes this plus only the scalar bind config
+    (host / port / auth_token). The routes already read these via ``WebContext``;
+    this bundle is the single seam through which the runtime supplies them.
+    """
+
+    on_bookmark: Callable[[str], Any]
+    on_stop: Callable[[], Any]
+    get_state: Callable[[], dict[str, Any]]
+    on_start: Optional[Callable[[], Any]] = None
+    on_meeting_stop: Optional[Callable[[], Any]] = None
+    on_get_status: Optional[Callable[[], Any]] = None
+    on_update_meeting: Optional[Callable[..., Any]] = None
+    on_get_intent_controls: Optional[Callable[[], Any]] = None
+    on_set_intent_profile: Optional[Callable[[str], Any]] = None
+    on_set_intent_override: Optional[Callable[[Optional[list[str]]], Any]] = None
+    on_route_preview: Optional[Callable[..., Any]] = None
+    on_process_plugin_jobs: Optional[Callable[..., Any]] = None
+    on_update_action_item: Optional[Callable[[str, str], Any]] = None
+    on_update_action_item_review: Optional[Callable[[str, str], Any]] = None
+    on_edit_action_item: Optional[Callable[..., Any]] = None
+    on_set_title: Optional[Callable[[str], None]] = None
+    on_set_tags: Optional[Callable[[list[str]], None]] = None
+    on_settings_applied: Optional[Callable[[Any], None]] = None
+    on_dictation_config_changed: Optional[Callable[[], None]] = None
+    project_detector: Optional[Any] = None
+    device_registry: Optional["DeviceRegistry"] = None
+    device_psk_provider: Optional[Callable[[], str]] = None
+    on_device_audio_chunk: Optional[Callable[[str, "np.ndarray"], None]] = None
+    on_device_voice_start: Optional[Callable[[str, "AudioSource"], bool]] = None
+    on_device_voice_stop: Optional[
+        Callable[[str, "AudioSource"], Optional["np.ndarray"]]
+    ] = None
+    on_device_voice_cancel: Optional[Callable[[str], None]] = None
+    device_status_emitter: Optional["DeviceStatusEmitter"] = None
+    on_device_event: Optional[Callable[[str, str, Optional[float]], None]] = None
+    on_device_health: Optional[Callable[[Any], None]] = None
+    on_device_query: Optional[
+        Callable[[str, str, Optional[float]], Optional[dict[str, Any]]]
+    ] = None
+
+
 class MeetingWebServer:
     """FastAPI-based web dashboard server for a meeting."""
 
     def __init__(
         self,
+        callbacks: "WebRuntimeCallbacks",
         *,
-        on_bookmark: Callable[[str], Any],
-        on_stop: Callable[[], Any],
-        get_state: Callable[[], dict[str, Any]],
-        on_start: Optional[Callable[[], Any]] = None,
-        on_meeting_stop: Optional[Callable[[], Any]] = None,
-        on_get_status: Optional[Callable[[], Any]] = None,
-        on_update_meeting: Optional[Callable[..., Any]] = None,
-        on_get_intent_controls: Optional[Callable[[], Any]] = None,
-        on_set_intent_profile: Optional[Callable[[str], Any]] = None,
-        on_set_intent_override: Optional[Callable[[Optional[list[str]]], Any]] = None,
-        on_route_preview: Optional[Callable[..., Any]] = None,
-        on_process_plugin_jobs: Optional[Callable[..., Any]] = None,
-        on_update_action_item: Optional[Callable[[str, str], Any]] = None,
-        on_update_action_item_review: Optional[Callable[[str, str], Any]] = None,
-        on_edit_action_item: Optional[Callable[..., Any]] = None,
-        on_set_title: Optional[Callable[[str], None]] = None,
-        on_set_tags: Optional[Callable[[list[str]], None]] = None,
-        on_settings_applied: Optional[Callable[[Any], None]] = None,
-        on_dictation_config_changed: Optional[Callable[[], None]] = None,
-        project_detector: Optional[Any] = None,
-        device_registry: Optional["DeviceRegistry"] = None,
-        device_psk_provider: Optional[Callable[[], str]] = None,
-        on_device_audio_chunk: Optional[Callable[[str, "np.ndarray"], None]] = None,
-        on_device_voice_start: Optional[Callable[[str, "AudioSource"], bool]] = None,
-        on_device_voice_stop: Optional[
-            Callable[[str, "AudioSource"], Optional["np.ndarray"]]
-        ] = None,
-        on_device_voice_cancel: Optional[Callable[[str], None]] = None,
-        device_status_emitter: Optional["DeviceStatusEmitter"] = None,
-        on_device_event: Optional[Callable[[str, str, Optional[float]], None]] = None,
-        on_device_health: Optional[Callable[[Any], None]] = None,
-        on_device_query: Optional[Callable[[str, str, Optional[float]], Optional[dict[str, Any]]]] = None,
         host: str = "127.0.0.1",
         port: Optional[int] = None,
         auth_token: str = "",
@@ -196,30 +181,35 @@ class MeetingWebServer:
                 "Install dependencies: `pip install fastapi uvicorn`."
             ) from _IMPORT_ERROR
 
-        self.on_bookmark = on_bookmark
-        self.on_stop = on_stop
-        self.on_meeting_stop = on_meeting_stop
-        self.get_state = get_state
-        self.on_start = on_start
-        self.on_get_status = on_get_status
-        self.on_update_meeting = on_update_meeting
-        self.on_get_intent_controls = on_get_intent_controls
-        self.on_set_intent_profile = on_set_intent_profile
-        self.on_set_intent_override = on_set_intent_override
-        self.on_route_preview = on_route_preview
-        self.on_process_plugin_jobs = on_process_plugin_jobs
-        self.on_update_action_item = on_update_action_item
-        self.on_update_action_item_review = on_update_action_item_review
-        self.on_edit_action_item = on_edit_action_item
-        self.on_set_title = on_set_title
-        self.on_set_tags = on_set_tags
-        self.on_settings_applied = on_settings_applied
-        self.on_dictation_config_changed = on_dictation_config_changed
-        self._project_detector = project_detector
+        # HS-26-06: explode the bundle onto attributes so the rest of the class
+        # (and `_create_app`'s WebContext build) reads `self.on_*` unchanged.
+        self._callbacks = callbacks
+        self.on_bookmark = callbacks.on_bookmark
+        self.on_stop = callbacks.on_stop
+        self.on_meeting_stop = callbacks.on_meeting_stop
+        self.get_state = callbacks.get_state
+        self.on_start = callbacks.on_start
+        self.on_get_status = callbacks.on_get_status
+        self.on_update_meeting = callbacks.on_update_meeting
+        self.on_get_intent_controls = callbacks.on_get_intent_controls
+        self.on_set_intent_profile = callbacks.on_set_intent_profile
+        self.on_set_intent_override = callbacks.on_set_intent_override
+        self.on_route_preview = callbacks.on_route_preview
+        self.on_process_plugin_jobs = callbacks.on_process_plugin_jobs
+        self.on_update_action_item = callbacks.on_update_action_item
+        self.on_update_action_item_review = callbacks.on_update_action_item_review
+        self.on_edit_action_item = callbacks.on_edit_action_item
+        self.on_set_title = callbacks.on_set_title
+        self.on_set_tags = callbacks.on_set_tags
+        self.on_settings_applied = callbacks.on_settings_applied
+        self.on_dictation_config_changed = callbacks.on_dictation_config_changed
+        self._project_detector = callbacks.project_detector
+        device_registry = callbacks.device_registry
         if device_registry is None:
             from .device_audio import DeviceRegistry as _DeviceRegistry
             device_registry = _DeviceRegistry()
         self.device_registry: "DeviceRegistry" = device_registry
+        device_psk_provider = callbacks.device_psk_provider
         if device_psk_provider is None:
             from .config import Config as _Config
             from .device_audio import ensure_device_psk as _ensure_device_psk
@@ -230,24 +220,25 @@ class MeetingWebServer:
             device_psk_provider = _default_psk_provider
         self.device_psk_provider: Callable[[], str] = device_psk_provider
         self.on_device_audio_chunk: Optional[Callable[[str, "np.ndarray"], None]] = (
-            on_device_audio_chunk
+            callbacks.on_device_audio_chunk
         )
         self.on_device_voice_start: Optional[
             Callable[[str, "AudioSource"], bool]
-        ] = on_device_voice_start
+        ] = callbacks.on_device_voice_start
         self.on_device_voice_stop: Optional[
             Callable[[str, "AudioSource"], Optional["np.ndarray"]]
-        ] = on_device_voice_stop
-        self.on_device_voice_cancel: Optional[Callable[[str], None]] = on_device_voice_cancel
+        ] = callbacks.on_device_voice_stop
+        self.on_device_voice_cancel: Optional[Callable[[str], None]] = callbacks.on_device_voice_cancel
+        device_status_emitter = callbacks.device_status_emitter
         if device_status_emitter is None:
             from .device_status import DeviceStatusEmitter as _DeviceStatusEmitter
             device_status_emitter = _DeviceStatusEmitter(label_lookup=device_registry)
         self.device_status_emitter: "DeviceStatusEmitter" = device_status_emitter
         self.on_device_event: Optional[Callable[[str, str, Optional[float]], None]] = (
-            on_device_event
+            callbacks.on_device_event
         )
-        self.on_device_health = on_device_health
-        self.on_device_query = on_device_query
+        self.on_device_health = callbacks.on_device_health
+        self.on_device_query = callbacks.on_device_query
         self.host = host
         self.auth_token = auth_token
         self._configured_port = port

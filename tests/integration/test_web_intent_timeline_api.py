@@ -25,7 +25,7 @@ pytestmark = [pytest.mark.requires_meeting]
 
 from holdspeak.db import MeetingDatabase, get_database, reset_database
 from holdspeak.meeting_session import MeetingState
-from holdspeak.web_server import MeetingWebServer
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
 @pytest.fixture
@@ -123,11 +123,13 @@ def seeded_meeting(db: MeetingDatabase):
 @pytest.fixture
 def server() -> MeetingWebServer:
     return MeetingWebServer(
-        on_bookmark=lambda *_args, **_kwargs: None,
-        on_stop=lambda *_args, **_kwargs: None,
-        get_state=lambda: None,
-        host="127.0.0.1",
-    )
+               WebRuntimeCallbacks(
+                   on_bookmark=lambda *_args, **_kwargs: None,
+                   on_stop=lambda *_args, **_kwargs: None,
+                   get_state=lambda: None,
+               ),
+               host="127.0.0.1",
+           )
 
 
 @pytest.fixture

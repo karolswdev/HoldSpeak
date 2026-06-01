@@ -13,7 +13,7 @@ import holdspeak.config as config_module
 from holdspeak.config import Config
 from holdspeak.plugins.dictation import assembly as assembly_module
 from holdspeak.plugins.dictation import runtime as runtime_module
-from holdspeak.web_server import MeetingWebServer
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
 @pytest.fixture
@@ -33,10 +33,12 @@ def global_blocks_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 @pytest.fixture
 def test_client(settings_path: Path, global_blocks_path: Path) -> TestClient:
     server = MeetingWebServer(
-        on_bookmark=MagicMock(),
-        on_stop=MagicMock(),
-        get_state=MagicMock(return_value={}),
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=MagicMock(),
+                     on_stop=MagicMock(),
+                     get_state=MagicMock(return_value={}),
+                 )
+             )
     return TestClient(server.app)
 
 
@@ -296,10 +298,12 @@ def test_readiness_rejects_bad_project_root(test_client: TestClient, settings_pa
 
 def test_dictation_page_includes_readiness_panel() -> None:
     server = MeetingWebServer(
-        on_bookmark=MagicMock(),
-        on_stop=MagicMock(),
-        get_state=MagicMock(return_value={}),
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=MagicMock(),
+                     on_stop=MagicMock(),
+                     get_state=MagicMock(return_value={}),
+                 )
+             )
     client = TestClient(server.app)
 
     response = client.get("/dictation")
@@ -331,10 +335,12 @@ def test_dictation_page_includes_readiness_panel() -> None:
 
 def test_dictation_runtime_docs_route_serves_setup_page() -> None:
     server = MeetingWebServer(
-        on_bookmark=MagicMock(),
-        on_stop=MagicMock(),
-        get_state=MagicMock(return_value={}),
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=MagicMock(),
+                     on_stop=MagicMock(),
+                     get_state=MagicMock(return_value={}),
+                 )
+             )
     client = TestClient(server.app)
 
     response = client.get("/docs/dictation-runtime")

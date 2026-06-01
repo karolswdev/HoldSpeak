@@ -22,18 +22,20 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-from holdspeak.web_server import MeetingWebServer
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
 @pytest.fixture
 def web_server() -> MeetingWebServer:
     """Minimal idle-runtime web server: no callbacks beyond the no-op shape."""
     return MeetingWebServer(
-        on_bookmark=MagicMock(return_value={"timestamp": 0.0, "label": "noop"}),
-        on_stop=MagicMock(return_value={"status": "stopped"}),
-        get_state=MagicMock(return_value={"id": None, "started_at": None, "duration": 0, "bookmarks": []}),
-        host="127.0.0.1",
-    )
+               WebRuntimeCallbacks(
+                   on_bookmark=MagicMock(return_value={"timestamp": 0.0, "label": "noop"}),
+                   on_stop=MagicMock(return_value={"status": "stopped"}),
+                   get_state=MagicMock(return_value={"id": None, "started_at": None, "duration": 0, "bookmarks": []}),
+               ),
+               host="127.0.0.1",
+           )
 
 
 @pytest.fixture
@@ -44,21 +46,25 @@ def test_client(web_server: MeetingWebServer) -> TestClient:
 def test_wfs_r_004_default_host_is_loopback() -> None:
     """WFS-R-004: bind address defaults to `127.0.0.1` unless explicitly configured."""
     server = MeetingWebServer(
-        on_bookmark=MagicMock(),
-        on_stop=MagicMock(),
-        get_state=MagicMock(return_value={}),
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=MagicMock(),
+                     on_stop=MagicMock(),
+                     get_state=MagicMock(return_value={}),
+                 )
+             )
     assert server.host == "127.0.0.1"
 
 
 def test_wfs_r_004_explicit_host_override_honored() -> None:
     """WFS-R-004: an explicit non-loopback host is preserved (no silent rebinding)."""
     server = MeetingWebServer(
-        on_bookmark=MagicMock(),
-        on_stop=MagicMock(),
-        get_state=MagicMock(return_value={}),
-        host="0.0.0.0",
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=MagicMock(),
+                     on_stop=MagicMock(),
+                     get_state=MagicMock(return_value={}),
+                 ),
+                 host="0.0.0.0",
+             )
     assert server.host == "0.0.0.0"
 
 

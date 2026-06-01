@@ -1,6 +1,6 @@
 # Phase 26 — Web Runtime Decomposition
 
-**Last updated:** 2026-05-31 (HS-26-05 done — last 26 routes moved to `routes/{pages,system,projects}.py`; web_server.py 1817→532, now a thin assembler (5658→532, −91%); HS-26-06 next).
+**Last updated:** 2026-06-01 (HS-26-06 done — `MeetingWebServer` constructor 30→4 params via `WebRuntimeCallbacks`; route modules fully decoupled from `web_server` (shared helpers → `web/runtime_support`); sync-DB-in-async audit recorded. Only HS-26-07 closeout remains).
 
 ## Goal
 
@@ -51,7 +51,7 @@ auth and bind work that lands in Phase 25.
 | HS-26-03 | Extract dictation / agent-hook routes | done | [story-03-dictation-routes.md](./story-03-dictation-routes.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-26-04 | Extract activity / connector / plugin-job routes | done | [story-04-activity-routes.md](./story-04-activity-routes.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-26-05 | Extract device / companion / project routes | done | [story-05-device-project-routes.md](./story-05-device-project-routes.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-26-06 | Collapse callback wiring + sync-DB-in-async audit | backlog | [story-06-collapse-callbacks.md](./story-06-collapse-callbacks.md) | — |
+| HS-26-06 | Collapse callback wiring + sync-DB-in-async audit | done | [story-06-collapse-callbacks.md](./story-06-collapse-callbacks.md) | [evidence-story-06.md](./evidence-story-06.md) · [audit](./audit-sync-db-async.md) |
 | HS-26-07 | Decomposition closeout (size + regression evidence) | backlog | [story-07-decomposition-closeout.md](./story-07-decomposition-closeout.md) | — |
 
 ## Where we are
@@ -120,10 +120,19 @@ handlers**. A relocation path bug (page `__file__` resolution) was caught by the
 full suite and fixed. Route-inventory diff identical (122 routes); full suite
 green (1879); ruff clean.
 
-Next: **HS-26-06** — collapse the `MeetingWebServer` constructor callback bag into
-`WebContext` and re-home the two still-shared helpers (`_meeting_callback_payload`,
-`_parse_iso_datetime`) so `meetings.py` + `activity.py` stop importing from
-`web_server`. Then **HS-26-07** closeout.
+**HS-26-06 is done:** `MeetingWebServer.__init__` collapsed from **~30 kwargs to
+4** (`callbacks: WebRuntimeCallbacks`, `*`, host/port/auth_token) — all 69
+construction sites updated via an AST codemod. The 3 cross-cutting helpers
+(`_UnknownDeviceError`, `_meeting_callback_payload`, `_parse_iso_datetime`) were
+re-homed to `holdspeak/web/runtime_support.py`, so **no `routes/*` module imports
+`web_server`**. The sync-DB-in-async audit is recorded (`audit-sync-db-async.md`):
+~174 sync SQLite calls across ~118 async handlers, none on the broadcast path →
+**document, no offload** (with a documented re-visit trigger). Route-inventory diff
+identical (122); full suite green (1879); ruff clean.
+
+Next: **HS-26-07** — decomposition closeout: confirm the phase exit criteria,
+record final size + route-inventory evidence, write `final-summary.md`, close the
+phase.
 
 ## Pickup order
 

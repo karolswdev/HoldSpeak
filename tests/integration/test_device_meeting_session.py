@@ -26,9 +26,8 @@ from holdspeak.meeting import AudioChunk
 from holdspeak.meeting_session import (
     MeetingSession,
     MeetingState,
-    TranscriptSegment,
 )
-from holdspeak.web_server import MeetingWebServer
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
 class _FakeTranscriber:
@@ -258,14 +257,16 @@ class TestMeetingStartDevicesApi:
         registry.register("aipi-1", "Karol")
 
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            on_start=fake_on_start,
-            get_state=lambda: {},
-            device_registry=registry,
-            device_psk_provider=lambda: "",
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         on_start=fake_on_start,
+                         get_state=lambda: {},
+                         device_registry=registry,
+                         device_psk_provider=lambda: "",
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         response = client.post("/api/meeting/start", json={"devices": ["aipi-1"]})
@@ -275,7 +276,7 @@ class TestMeetingStartDevicesApi:
         assert captured["devices"] == ["aipi-1"]
 
     def test_meeting_start_unknown_device_returns_404(self) -> None:
-        from holdspeak.web_server import _UnknownDeviceError
+        from holdspeak.web.runtime_support import _UnknownDeviceError
 
         def fake_on_start(*, devices: Optional[list[str]] = None) -> dict[str, object]:
             assert devices is not None
@@ -284,14 +285,16 @@ class TestMeetingStartDevicesApi:
             return {"id": "m1", "started_at": datetime.now().isoformat()}
 
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            on_start=fake_on_start,
-            get_state=lambda: {},
-            device_registry=DeviceRegistry(),
-            device_psk_provider=lambda: "",
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         on_start=fake_on_start,
+                         get_state=lambda: {},
+                         device_registry=DeviceRegistry(),
+                         device_psk_provider=lambda: "",
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         response = client.post("/api/meeting/start", json={"devices": ["ghost"]})
@@ -308,14 +311,16 @@ class TestMeetingStartDevicesApi:
             return {"id": "legacy", "started_at": datetime.now().isoformat()}
 
         server = MeetingWebServer(
-            on_bookmark=lambda _label: None,
-            on_stop=lambda: None,
-            on_start=fake_on_start,
-            get_state=lambda: {},
-            device_registry=DeviceRegistry(),
-            device_psk_provider=lambda: "",
-            host="127.0.0.1",
-        )
+                     WebRuntimeCallbacks(
+                         on_bookmark=lambda _label: None,
+                         on_stop=lambda: None,
+                         on_start=fake_on_start,
+                         get_state=lambda: {},
+                         device_registry=DeviceRegistry(),
+                         device_psk_provider=lambda: "",
+                     ),
+                     host="127.0.0.1",
+                 )
         client = TestClient(server.app)
 
         response = client.post("/api/meeting/start")

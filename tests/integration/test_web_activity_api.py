@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 
 from holdspeak import db as db_module
 from holdspeak.db import MeetingDatabase, reset_database
-from holdspeak.web_server import MeetingWebServer
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 pytestmark = [pytest.mark.requires_meeting]
 
@@ -30,10 +30,12 @@ def activity_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> MeetingDatab
 @pytest.fixture
 def test_client(activity_db: MeetingDatabase) -> TestClient:
     server = MeetingWebServer(
-        on_bookmark=MagicMock(),
-        on_stop=MagicMock(),
-        get_state=MagicMock(return_value={}),
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=MagicMock(),
+                     on_stop=MagicMock(),
+                     get_state=MagicMock(return_value={}),
+                 )
+             )
     return TestClient(server.app)
 
 
@@ -286,12 +288,14 @@ def test_activity_meeting_candidate_manual_start_marks_started(
         return_value={"id": "meeting-1", "title": "Customer sync meeting", "meeting_active": True}
     )
     server = MeetingWebServer(
-        on_bookmark=MagicMock(),
-        on_stop=MagicMock(),
-        on_start=on_start,
-        on_update_meeting=on_update_meeting,
-        get_state=MagicMock(return_value={}),
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=MagicMock(),
+                     on_stop=MagicMock(),
+                     on_start=on_start,
+                     on_update_meeting=on_update_meeting,
+                     get_state=MagicMock(return_value={}),
+                 )
+             )
     broadcast_events: list[tuple[str, object]] = []
     server.broadcast = lambda message_type, data: broadcast_events.append((message_type, data))
     client = TestClient(server.app)

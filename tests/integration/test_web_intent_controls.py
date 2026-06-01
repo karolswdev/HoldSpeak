@@ -18,16 +18,18 @@ from fastapi.testclient import TestClient
 
 pytestmark = [pytest.mark.requires_meeting]
 
-from holdspeak.web_server import MeetingWebServer
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
 def _bare_server() -> MeetingWebServer:
     return MeetingWebServer(
-        on_bookmark=lambda *_a, **_kw: None,
-        on_stop=lambda *_a, **_kw: None,
-        get_state=lambda: None,
-        host="127.0.0.1",
-    )
+               WebRuntimeCallbacks(
+                   on_bookmark=lambda *_a, **_kw: None,
+                   on_stop=lambda *_a, **_kw: None,
+                   get_state=lambda: None,
+               ),
+               host="127.0.0.1",
+           )
 
 
 @pytest.fixture
@@ -88,12 +90,14 @@ def test_intent_controls_get_invokes_callback_and_returns_payload() -> None:
         }
 
     server = MeetingWebServer(
-        on_bookmark=lambda *_a, **_kw: None,
-        on_stop=lambda *_a, **_kw: None,
-        get_state=lambda: None,
-        on_get_intent_controls=on_get,
-        host="127.0.0.1",
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=lambda *_a, **_kw: None,
+                     on_stop=lambda *_a, **_kw: None,
+                     get_state=lambda: None,
+                     on_get_intent_controls=on_get,
+                 ),
+                 host="127.0.0.1",
+             )
     client = TestClient(server.app)
 
     response = client.get("/api/intents/control")
@@ -114,12 +118,14 @@ def test_intent_profile_put_invokes_callback_with_profile_string() -> None:
         return {"profile": profile, "available_profiles": ["balanced", "architect"]}
 
     server = MeetingWebServer(
-        on_bookmark=lambda *_a, **_kw: None,
-        on_stop=lambda *_a, **_kw: None,
-        get_state=lambda: None,
-        on_set_intent_profile=on_set,
-        host="127.0.0.1",
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=lambda *_a, **_kw: None,
+                     on_stop=lambda *_a, **_kw: None,
+                     get_state=lambda: None,
+                     on_set_intent_profile=on_set,
+                 ),
+                 host="127.0.0.1",
+             )
     client = TestClient(server.app)
 
     response = client.put("/api/intents/profile", json={"profile": "architect"})
@@ -139,12 +145,14 @@ def test_intent_override_put_invokes_callback_with_intent_list() -> None:
         return {"override_intents": intents or []}
 
     server = MeetingWebServer(
-        on_bookmark=lambda *_a, **_kw: None,
-        on_stop=lambda *_a, **_kw: None,
-        get_state=lambda: None,
-        on_set_intent_override=on_set,
-        host="127.0.0.1",
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=lambda *_a, **_kw: None,
+                     on_stop=lambda *_a, **_kw: None,
+                     get_state=lambda: None,
+                     on_set_intent_override=on_set,
+                 ),
+                 host="127.0.0.1",
+             )
     client = TestClient(server.app)
 
     response = client.put(
@@ -169,12 +177,14 @@ def test_intent_preview_post_invokes_route_preview_callback() -> None:
         }
 
     server = MeetingWebServer(
-        on_bookmark=lambda *_a, **_kw: None,
-        on_stop=lambda *_a, **_kw: None,
-        get_state=lambda: None,
-        on_route_preview=on_preview,
-        host="127.0.0.1",
-    )
+                 WebRuntimeCallbacks(
+                     on_bookmark=lambda *_a, **_kw: None,
+                     on_stop=lambda *_a, **_kw: None,
+                     get_state=lambda: None,
+                     on_route_preview=on_preview,
+                 ),
+                 host="127.0.0.1",
+             )
     client = TestClient(server.app)
 
     response = client.post(

@@ -3,10 +3,11 @@
 Each module exposes a `build_*_router(ctx: WebContext) -> APIRouter` factory that
 `MeetingWebServer._create_app` mounts via `app.include_router(...)`. Routers read
 all server state from the shared `WebContext` — never the `MeetingWebServer`
-instance. During the migration a router may still import server-agnostic, module-
-level helpers from `web_server` (e.g. `_meeting_callback_payload`); the load-order
-invariant that matters is that `web_server` imports the routes lazily (inside
-`_create_app`), so this stays acyclic. `WebContext` imports no route module.
+instance. As of HS-26-06 **no route module imports `web_server`**: single-domain
+helpers live in their route module, and the few cross-cutting, server-agnostic
+helpers (`_meeting_callback_payload`, `_parse_iso_datetime`, `_UnknownDeviceError`)
+live in the neutral `web/runtime_support` module. `WebContext` imports no route
+module.
 """
 
 from .activity import build_activity_router
