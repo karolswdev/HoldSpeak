@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 27
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-27-01..04 (whichever shipped)
 - **Unblocks:** none (phase exit)
 - **Owner:** unassigned
@@ -37,12 +37,12 @@ its `final-summary.md`. Mirrors HS-16-05.
 
 ## Acceptance criteria
 
-- [ ] RFC reality-status table reflects what actually shipped this phase.
-- [ ] `final-summary.md` exists, conforms to §2.5, references the e2e evidence.
-- [ ] `current-phase-status.md` frozen; README phase-27 row → done + Current
+- [x] RFC reality-status table reflects what actually shipped this phase.
+- [x] `final-summary.md` exists, conforms to §2.5, references the e2e evidence.
+- [x] `current-phase-status.md` frozen; README phase-27 row → done + Current
       phase repointed.
-- [ ] Every Phase-27 exit-criterion checked or marked deferred-with-reason.
-- [ ] Full sweep green; the spoken e2e remains opt-in/excluded.
+- [x] Every Phase-27 exit-criterion checked or marked deferred-with-reason.
+- [x] Full sweep green; the spoken e2e remains opt-in/excluded.
 
 ## Test plan
 

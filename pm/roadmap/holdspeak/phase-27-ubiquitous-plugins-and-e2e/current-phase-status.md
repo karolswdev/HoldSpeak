@@ -1,6 +1,10 @@
 # Phase 27 — Ubiquitous plugins + spoken-meeting e2e
 
-**Last updated:** 2026-06-01 (HS-27-04 shipped — `requirements_extractor` flipped from stub to a real LLM plugin: extracts + classifies requirements into functional / non-functional / constraint / acceptance, with a grouped-by-type structured `/history` render. No routing ripple (already in the balanced + architect base chains). The spoken e2e now exercises **all four** real plugins and screenshots them. Verified live on `.43` Q6. Phase **in-progress, 4/5**).
+**Last updated:** 2026-06-01 (HS-27-05 shipped — **phase closed, 5/5**. RFC reality-status table refreshed (four plugins ✅, ten ⚠️); `final-summary.md` written. Four real ubiquitous plugins (`mermaid_architecture`, `action_owner_enforcer`, `decision_capture`, `requirements_extractor`) flow end-to-end, proven by the opt-in spoken-meeting e2e on live `.43` Q6. Full sweep green at 1939 passed, 14 skipped).
+
+> **Phase status: DONE (5/5). This document is frozen.** See `final-summary.md`
+> for the close-out (goal assessment, exit-criteria re-run, parse-quality handoff,
+> lessons, and the handoff of the remaining ten stubs to a later rollout phase).
 
 > Lineage note: Phase 16 (`first-real-plugin`) proved the LLM-backed plugin
 > pattern end-to-end with `mermaid_architecture`. Its docs refer to "phase 17" as
@@ -60,12 +64,13 @@ The substrate is already proven (Phase 16); this phase is about **breadth**
       persists artifacts, and captures at least one web screenshot showing a
       rendered artifact. Opt-in (skips cleanly when `say` / `.43` / Playwright
       absent). (HS-27-02 — `evidence-story-02.md`; screenshot in `evidence/`.)
-- [ ] Every plugin flipped to real this phase is annotated ✅ in the RFC
-      reality-status table; the rest stay ⚠️.
-- [ ] No regressions: full sweep `uv run pytest -q --ignore=tests/e2e/test_metal.py`
-      green; the new e2e is excluded from the default sweep (own marker).
-- [ ] `final-summary.md` records which plugins shipped, the e2e posture, and the
-      handoff for the next plugin-rollout phase.
+- [x] Every plugin flipped to real this phase is annotated ✅ in the RFC
+      reality-status table; the rest stay ⚠️. (HS-27-05.)
+- [x] No regressions: full sweep `uv run pytest -q --ignore=tests/e2e/test_metal.py`
+      green (1939 passed, 14 skipped); the new e2e is excluded from the default
+      sweep (own marker).
+- [x] `final-summary.md` records which plugins shipped, the e2e posture, and the
+      handoff for the next plugin-rollout phase. (HS-27-05.)
 
 ## Story status
 
@@ -75,11 +80,11 @@ The substrate is already proven (Phase 16); this phase is about **breadth**
 | HS-27-02 | Spoken-meeting e2e harness (`say` → pipeline → screenshots) | done | [story-02-spoken-meeting-e2e.md](./story-02-spoken-meeting-e2e.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-27-03 | `decision_capture` — decisions + open questions (net-new, ubiquitous) | done | [story-03-decision-capture.md](./story-03-decision-capture.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-27-04 | `requirements_extractor` — real run | done | [story-04-requirements-extractor.md](./story-04-requirements-extractor.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-27-05 | RFC reality-check refresh + phase exit | backlog | [story-05-phase-exit.md](./story-05-phase-exit.md) | — |
+| HS-27-05 | RFC reality-check refresh + phase exit | done | [story-05-phase-exit.md](./story-05-phase-exit.md) | [evidence-story-05.md](./evidence-story-05.md) |
 
 ## Where we are
 
-**In-progress, 4/5.** Scaffolded 2026-06-01; **HS-27-01 shipped same day** — the
+**Done, 5/5.** Scaffolded 2026-06-01; **HS-27-01 shipped same day** — the
 real `action_owner_enforcer` plugin (the ubiquity champion) is live: LLM →
 validated action items with owner/due **gap** flags → a checklist synthesis body,
 verified live against `.43` Q6 (4 items extracted, gaps flagged). The Phase-16
@@ -104,8 +109,10 @@ base chains as a stub). Verified live on `.43` Q6 and via the spoken e2e, which
 now demonstrates **four** real plugins together (diagram + action items +
 decisions + requirements). **Four real plugins now, ten stubs.**
 
-Pickup: **HS-27-05** (close the phase) — refresh the RFC reality-status table
-(flip the four plugins shipped this phase to ✅) + write `final-summary.md`.
+**HS-27-05 shipped — phase closed (5/5).** RFC reality-status table refreshed
+(four ✅, ten ⚠️), `final-summary.md` written, this document frozen. The remaining
+ten stubs are handed to a later plugin-rollout phase with a fully trodden pattern
+(see `final-summary.md` §Handoff).
 
 ## Active risks
 

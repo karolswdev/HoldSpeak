@@ -262,19 +262,21 @@ class PluginResult:
 5. `action_owner_enforcer` — ⚠️ **stub** (`DeterministicPlugin`)
 - Produces: unresolved ownership and due-date checklist.
 
-### Reality status (updated 2026-06-01, phase 16 close)
+### Reality status (updated 2026-06-01, phase 27 close)
 
 The registrar `register_builtin_plugins` (`holdspeak/plugins/builtin/__init__.py`,
-`_BUILTIN_PLUGIN_DEFS`) wires **thirteen** plugin IDs into the routing/queue
-substrate. As of phase 16 close, **exactly one has a real `run()`**; the rest are
-`DeterministicPlugin` stubs (they echo a transcript snippet) pending their own
-stories. "Shipped" is defined in Appendix A.
+`_BUILTIN_PLUGIN_DEFS`) wires **fourteen** plugin IDs into the routing/queue
+substrate. As of phase 27 close, **four have a real `run()`** (the three
+ubiquitous plugins flipped this phase + `mermaid_architecture` from phase 16); the
+remaining ten are `DeterministicPlugin` stubs (they echo a transcript snippet)
+pending their own stories. "Shipped" is defined in Appendix A.
 
 | Plugin ID | Status | Real `run()` should produce |
 |---|---|---|
 | `mermaid_architecture` | ✅ shipped (phase 16) | LLM-generated Mermaid diagram → `diagram` artifact, rendered as SVG in `/history` |
-| `requirements_extractor` | ⚠️ stub | functional/non-functional requirements, constraints, acceptance criteria |
-| `action_owner_enforcer` | ⚠️ stub | unresolved action ownership + due-date checklist |
+| `action_owner_enforcer` | ✅ shipped (phase 27, HS-27-01) | action items with owner/due **gap** flags → `action_items` checklist artifact |
+| `decision_capture` | ✅ shipped (phase 27, HS-27-03) | decisions + open questions → `decisions` artifact (net-new; rides the balanced base chain) |
+| `requirements_extractor` | ✅ shipped (phase 27, HS-27-04) | requirements classified functional/non_functional/constraint/acceptance → `requirements` artifact |
 | `adr_drafter` | ⚠️ stub | ADR draft: options, tradeoffs, decision status |
 | `milestone_planner` | ⚠️ stub | milestone plan with dates/dependencies |
 | `dependency_mapper` | ⚠️ stub | inter-team / inter-component dependency map |
@@ -286,11 +288,15 @@ stories. "Shipped" is defined in Appendix A.
 | `runbook_delta` | ⚠️ stub | diff of runbook changes implied by the meeting |
 | `decision_announcement_drafter` | ⚠️ stub | decision announcement draft |
 
-A follow-on plugin-rollout phase (HoldSpeak **Phase 27** — phase 17 was already
-taken by an unrelated effort) flips the remaining twelve to real, re-using the
-`mermaid_architecture` pattern (LLM call → parse/validate → structured output →
-synthesis body → web render) proven in phase 16, leading with the most ubiquitous
-plugins (`action_owner_enforcer`, decisions/open-questions) rather than niche ones.
+Phase 27 (the plugin-rollout follow-on — phase 17 was already taken by an
+unrelated effort) flipped the three most ubiquitous plugins to real and added a
+real spoken-meeting e2e harness (`say` → Whisper → MIR → plugins → web →
+Playwright screenshots) that exercises all four real plugins on the live `.43` Q6
+endpoint. All four use the `mermaid_architecture` pattern (LLM call →
+parse/validate → structured output → synthesis body → structured web render). A
+**later** plugin-rollout phase flips the remaining ten stubs
+(adr/milestone/dependency/scope/customer-signal/incident/risk/stakeholder/runbook/
+decision-announcement), re-using the same pattern.
 
 ## Routing Policy (v1)
 
