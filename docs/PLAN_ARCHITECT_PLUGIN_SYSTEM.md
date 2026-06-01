@@ -262,17 +262,16 @@ class PluginResult:
 5. `action_owner_enforcer` — ⚠️ **stub** (`DeterministicPlugin`)
 - Produces: unresolved ownership and due-date checklist.
 
-### Reality status (updated 2026-06-01, phase 28 close)
+### Reality status (updated 2026-06-01, phase 29 close — rollout complete)
 
 The registrar `register_builtin_plugins` (`holdspeak/plugins/builtin/__init__.py`,
 `_BUILTIN_PLUGIN_DEFS`) wires **fourteen** plugin IDs into the routing/queue
-substrate. As of phase 28 close, **seven have a real `run()`** (`mermaid_architecture`
-from phase 16; `action_owner_enforcer` / `decision_capture` / `requirements_extractor`
-from phase 27; `adr_drafter` / `milestone_planner` / `risk_heatmap` from phase 28);
-the remaining seven are `DeterministicPlugin` stubs (they echo a transcript
-snippet) pending their own stories. "Shipped" is defined in Appendix A.
+substrate. As of phase 29 close, **all fourteen have a real `run()` — zero
+`DeterministicPlugin` stubs remain** (enforced by
+`tests/unit/test_decision_announcement_drafter_plugin.py::test_no_deterministic_stub_remains`).
+"Shipped" is defined in Appendix A.
 
-| Plugin ID | Status | Real `run()` should produce |
+| Plugin ID | Status | Real `run()` produces |
 |---|---|---|
 | `mermaid_architecture` | ✅ shipped (phase 16) | LLM-generated Mermaid diagram → `diagram` artifact, rendered as SVG in `/history` |
 | `action_owner_enforcer` | ✅ shipped (phase 27, HS-27-01) | action items with owner/due **gap** flags → `action_items` checklist artifact |
@@ -281,24 +280,25 @@ snippet) pending their own stories. "Shipped" is defined in Appendix A.
 | `adr_drafter` | ✅ shipped (phase 28, HS-28-02) | ADRs (title/status/context/decision/consequences) → `adr` artifact |
 | `milestone_planner` | ✅ shipped (phase 28, HS-28-03) | milestone plan (name/target/deliverables/dependencies) → `milestone_plan` artifact |
 | `risk_heatmap` | ✅ shipped (phase 28, HS-28-04) | risk register (risk/impact/likelihood/mitigation/owner) → `risk_register` artifact (table) |
-| `dependency_mapper` | ⚠️ stub | inter-team / inter-component dependency map |
-| `scope_guard` | ⚠️ stub | scope-creep review against the agreed scope |
-| `customer_signal_extractor` | ⚠️ stub | customer signals / asks / sentiment |
-| `incident_timeline` | ⚠️ stub | ordered incident timeline from the transcript |
-| `stakeholder_update_drafter` | ⚠️ stub | stakeholder update draft |
-| `runbook_delta` | ⚠️ stub | diff of runbook changes implied by the meeting |
-| `decision_announcement_drafter` | ⚠️ stub | decision announcement draft |
+| `dependency_mapper` | ✅ shipped (phase 29, HS-29-01) | dependency map (from→to edges) → `dependency_map` artifact |
+| `scope_guard` | ✅ shipped (phase 29, HS-29-01) | scope review (in_scope/out_of_scope/scope_creep) → `scope_review` artifact |
+| `customer_signal_extractor` | ✅ shipped (phase 29, HS-29-01) | customer signals (request/pain/praise/churn_risk) → `customer_signals` artifact |
+| `incident_timeline` | ✅ shipped (phase 29, HS-29-02) | ordered incident timeline → `incident_timeline` artifact |
+| `runbook_delta` | ✅ shipped (phase 29, HS-29-02) | runbook changes (added/modified/removed) → `runbook_delta` artifact |
+| `stakeholder_update_drafter` | ✅ shipped (phase 29, HS-29-03) | stakeholder update (headline + highlights/risks/next-steps) → `stakeholder_update` artifact |
+| `decision_announcement_drafter` | ✅ shipped (phase 29, HS-29-03) | decision announcements (title/audience/message) → `decision_announcement` artifact |
 
-Phases 27 + 28 (the plugin-rollout follow-on — phase 17 was already taken by an
-unrelated effort) flipped six plugins to real and built a real spoken-meeting e2e
-harness (`say` → Whisper → MIR → plugins → web → Playwright screenshots) that
-exercises all seven real plugins on the live `.43` Q6 endpoint. All use the
-`mermaid_architecture` pattern (LLM call → parse/validate → structured output →
-synthesis body → structured web render); phase 28 first extracted a per-type
-renderer registry (`synthesis._ARTIFACT_RENDERERS`) so new bodies are drop-ins. A
-**later** plugin-rollout phase flips the remaining seven stubs (dependency/scope/
-customer-signal/incident/stakeholder/runbook/decision-announcement), re-using the
-same pattern.
+Phases 27 → 28 → 29 (the plugin-rollout follow-on — phase 17 was already taken by
+an unrelated effort) flipped all thirteen remaining stubs to real and built a real
+spoken-meeting e2e harness (`say` → Whisper → MIR → plugins → web → Playwright
+screenshots) exercising ten of the plugins on the live `.43` Q6 endpoint (the
+incident/comms plugins are verified by direct live checks against tailored
+transcripts). All use the `mermaid_architecture` pattern (LLM call →
+parse/validate → structured output → synthesis body → structured web render);
+phase 28 extracted a per-type renderer registry (`synthesis._ARTIFACT_RENDERERS`)
+so each body is a drop-in. **The built-in rollout is complete.** The next frontier
+is not stubs — it is plugin *authoring* (a public how-to-write-a-plugin guide),
+plugin *packs*, and the (RFC-disabled) *actuator* story.
 
 ## Routing Policy (v1)
 

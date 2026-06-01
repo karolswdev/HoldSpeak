@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 29
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-29-01..04
 - **Unblocks:** none (phase exit)
 - **Owner:** unassigned
@@ -34,12 +34,12 @@ HS-16-05 / HS-27-05 / HS-28-05.
 
 ## Acceptance criteria
 
-- [ ] RFC reality-status table: fourteen ✅, zero ⚠️.
-- [ ] `final-summary.md` exists, conforms to §2.5.
-- [ ] `current-phase-status.md` frozen; README phase-29 row → done + Current phase
+- [x] RFC reality-status table: fourteen ✅, zero ⚠️.
+- [x] `final-summary.md` exists, conforms to §2.5.
+- [x] `current-phase-status.md` frozen; README phase-29 row → done + Current phase
       repointed.
-- [ ] Every Phase-29 exit-criterion checked or deferred-with-reason.
-- [ ] Full sweep green; the spoken e2e remains opt-in/excluded.
+- [x] Every Phase-29 exit-criterion checked or deferred-with-reason.
+- [x] Full sweep green (2062 passed, 14 skipped); the spoken e2e remains opt-in/excluded.
 
 ## Test plan
 

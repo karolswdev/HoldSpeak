@@ -1,6 +1,10 @@
 # Phase 29 — Complete the plugin rollout + public docs
 
-**Last updated:** 2026-06-01 (HS-29-04 shipped — the public `README.md` now documents the meeting-intelligence plugin system: how-it-works (MIR → chain → LLM → artifacts → `/history`) + a 14-row plugin/artifact/profile table (cross-checked against `_REAL_PLUGINS` / `_ARTIFACT_TYPE_BY_PLUGIN` / `router.py`) + an RFC pointer. Phase **in-progress, 4/5** — only the exit remains).
+**Last updated:** 2026-06-01 (HS-29-05 shipped — **phase closed, 5/5; plugin rollout complete.** RFC reality-status table → **fourteen ✅, zero ⚠️**; `final-summary.md` written. All registered MIR plugins are real, each with a structured `/history` render; the public README documents the system. Full sweep green at 2062 passed, 14 skipped).
+
+> **Phase status: DONE (5/5). This document is frozen.** See `final-summary.md`
+> for the close-out — the plugin rollout (Phases 16 → 27 → 28 → 29) is complete;
+> the next frontier is plugin authoring / packs / actuators, not stubs.
 
 > Lineage note: Phases 16 → 27 → 28 proved, generalized, and scaled the
 > LLM-backed plugin pattern (transcript → LLM → parse/validate → structured output
@@ -73,7 +77,7 @@ plugins" section so users know what the product actually produces.
 | HS-29-02 | Incident plugins (incident_timeline, runbook_delta) | done | [story-02-incident-plugins.md](./story-02-incident-plugins.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-29-03 | Comms plugins (stakeholder_update_drafter, decision_announcement_drafter) | done | [story-03-comms-plugins.md](./story-03-comms-plugins.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-29-04 | Public README + plugin docs | done | [story-04-public-docs.md](./story-04-public-docs.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-29-05 | RFC reality-check refresh + phase exit | backlog | [story-05-phase-exit.md](./story-05-phase-exit.md) | — |
+| HS-29-05 | RFC reality-check refresh + phase exit | done | [story-05-phase-exit.md](./story-05-phase-exit.md) | [evidence-story-05.md](./evidence-story-05.md) |
 
 ## Where we are
 
@@ -94,10 +98,10 @@ comms), so flipping stub→real ripples no dispatch test.
 `decision_announcement_drafter` (comms). **Fourteen real plugins, zero stubs** —
 the rollout is functionally complete; `test_no_deterministic_stub_remains` locks it.
 
-**HS-29-04 shipped** — the public README documents the plugin system (14-row
-table + how-it-works + RFC pointer).
-
-Pickup: **HS-29-05** (close — RFC table → 14 ✅ / 0 ⚠️ + `final-summary.md`).
+**HS-29-04/05 shipped** — the public README documents the plugin system; the RFC
+table is 14 ✅ / 0 ⚠️; `final-summary.md` is written and this doc is frozen. **The
+plugin rollout is complete.** Next frontier (a later phase): plugin authoring
+guide, packs, actuators — see `final-summary.md` §Handoff.
 
 ## Active risks
 
