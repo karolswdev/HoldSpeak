@@ -1,6 +1,6 @@
 # HoldSpeak — Agent Handover
 
-**Written:** 2026-05-31. **Author of this handover:** Claude (prior session).
+**Written:** 2026-06-01. **Author:** Claude (Opus 4.8 session).
 **Read this first**, then `pm/roadmap/holdspeak/README.md` and the active phase's
 `current-phase-status.md`. This is a pickup snapshot, not canon — if it disagrees
 with the live status docs, the status docs win.
@@ -9,132 +9,133 @@ with the live status docs, the status docs win.
 
 ## 1. TL;DR — where things stand
 
-- **Branch:** `main`, clean, **`main == origin/main`** (everything is pushed; latest is the HS-26-07 closeout commit).
-- **Test suite:** green — `uv run pytest -q --ignore=tests/e2e/test_metal.py` → **1879 passed, 0 failed, 13 skipped**.
-- **Phase 26 — Web Runtime Decomposition: DONE (7/7).** `web_server.py` 5658 → 523 lines (−91%); 7 cohesive route modules under `holdspeak/web/routes/` + `WebContext` (`web/context.py`) + shared helpers (`web/runtime_support.py`); `MeetingWebServer(callbacks: WebRuntimeCallbacks, *, host, port, auth_token)` (was ~30 kwargs); all 122 routes unchanged. See the phase's `final-summary.md`. **No active phase right now** — see §3 for what to pick up.
-- **Phase 25 — Trust & Hardening:** 7/8 done, functionally complete, **formally open** — only `HS-25-07` remains and it is **`blocked`** (needs in-person hardware dogfood; see §4).
-- Phases **16** and **24** are `paused` (see §6); **Phase 15** (out-and-about) is `not-started` but auth-unblocked by HS-25-02.
-- **Stray lint (not yours):** a pre-existing `current_time` F841 in `meeting_session.py:1277` predates Phase 26 — don't attribute it to recent work.
+- **Branch:** `main`, clean, **`main == origin/main`** (everything pushed; HEAD = `d26f071`).
+- **Test suite:** green — `uv run pytest -q --ignore=tests/e2e/test_metal.py` → **1926 passed, 14 skipped**. (One of the 14 skips is the new opt-in spoken e2e — see §5.)
+- **Phase 16 — First Real Plugin: DONE (5/5).** The whole transcript→LLM→artifact→rendered path is live for `mermaid_architecture`. See its `final-summary.md`.
+- **Phase 27 — Ubiquitous plugins + spoken e2e: IN-PROGRESS (3/5).** `action_owner_enforcer` (HS-27-01), the spoken e2e harness (HS-27-02), and `decision_capture` (HS-27-03) shipped. **Pick up at HS-27-04** (see §3).
+- **Three real LLM-backed plugins now ship** (mermaid_architecture, action_owner_enforcer, decision_capture); the other 11 `_BUILTIN_PLUGIN_DEFS` entries are still `DeterministicPlugin` stubs.
+- Phases **24** (companion, 2/5) and **25** (HS-25-07) are **hardware-gated** (need the physical AI PI / a real mic). **Phase 15** (out-and-about) is `not-started`, software-only.
 
-## 2. What happened this session (the narrative)
+## 2. What happened this session
 
-1. Did a full-system analysis of HoldSpeak (a sprawling solo-built voice tool: voice typing, meeting mode, dictation pipeline, activity intelligence, web runtime, AIPI-Lite hardware companion).
-2. Scaffolded **Phase 25 (Trust & Hardening)** and **Phase 26 (Web Runtime Decomposition)**; reconciled stale phase states (16, 24 → `paused`).
-3. Shipped **Phase 25 HS-25-01..06 + HS-25-08** (7 stories), each a PMO-gated commit with evidence.
-4. Fixed a pre-existing time-bomb test; merged Phase 25 to `main`; pushed to origin.
-5. Opened **Phase 26**, shipped **HS-26-01** (the router seam), pushed.
+A long build session, all on `main`, all PMO-gated + pushed:
+1. **HS-24-02** — companion lifecycle controls (select/dismiss/pin/clear-stale on `/companion`). [`a1c3948`]
+2. **intel self-hosted key fix** — a custom `intel_cloud_base_url` no longer requires `$OPENAI_API_KEY`. [`7f03008`]
+3. **Phase 16 closed (HS-16-02..05)** — LLM capability gate, diagram artifact body, inline-SVG web render (mermaid.js), RFC reality-check + calibration + final-summary.
+4. **Phase 27 scaffolded** (`987106d`) then **HS-27-01/02/03 shipped** + a second intel fix (`fe9c0e8`, see §6).
 
-## 3. Pick up here → Phase 24 / HS-24-02 (recommended, fully scaffolded)
+## 3. Pick up here → HS-27-04 (`requirements_extractor`)
 
-Phase 26 is delivered and there is no active phase. **The recommended next pickup
-is HS-24-02 — and it is already scaffolded for you** so you can execute it well:
+> **▶ Phase 27 → HS-27-04 — flip the `requirements_extractor` stub to real**, with
+> its own structured web render. Story:
+> `phase-27-ubiquitous-plugins-and-e2e/story-04-requirements-extractor.md`.
+> Then **HS-27-05** closes the phase (incl. the RFC reality-status refresh).
 
-> **▶ Phase 24 — AI PI Companion Productization → HS-24-02 (Session Lifecycle
-> Controls).** Full, grounded story:
-> `phase-24-ai-pi-companion-productization/story-02-session-lifecycle-controls.md`.
-> A **resume guide** (web seam, hardware split, the direct-`agent_context` pattern,
-> the Astro-frontend + build note, test approach) is at the top of that phase's
-> `current-phase-status.md` ("Resume guide (2026-06-01)"). Read both first.
+**The pattern is now well-trodden — copy it.** For a new/flipped plugin:
+1. New plugin class in `holdspeak/plugins/builtin/<id>.py` — mirror
+   `action_owner_enforcer.py` / `decision_capture.py` (strict prompt → single
+   fenced ```json → a `_extract_*` parser → success/failure shape; deferred;
+   `required_capabilities=["llm"]`; default `_call_intel` uses
+   `build_configured_meeting_intel()`).
+2. Register in `builtin/__init__.py`: add to `_REAL_PLUGINS` (and add a
+   `_BUILTIN_PLUGIN_DEFS` entry only if net-new — `requirements_extractor`
+   already has one).
+3. `synthesis.py`: it already maps `requirements_extractor → "requirements"`; add
+   a strict body branch + `structured_json["requirements"]` (keep other bodies
+   byte-for-byte unchanged).
+4. **Structured web render** in `web/src/pages/history.astro` +
+   `web/src/scripts/history-app.js` (a `requirementsFor(artifact)` helper + an
+   `x-for` list). **Do NOT lean on the raw `body_markdown` plain-text path** —
+   that was the HS-27-02 mistake (see §6). Then `(cd web && npm run build)`.
+5. Tests: a plugin unit suite (mirror `test_decision_capture_plugin.py`) + a
+   synthesis body case in `test_artifact_synthesis_diagram.py`.
+6. **If you route it into a base chain, expect a routing ripple** (see §5) — update
+   `test_intent_dispatch.py` + the two full-pipeline tests' stub unions.
+7. Extend the spoken e2e (`tests/e2e/test_spoken_meeting_e2e.py`) to run it + a
+   Playwright wait/assert, and re-shoot the screenshot.
 
-Why this one: it's the highest-value operability win (turn the read-only
-`/companion` surface into something you can actually *operate* — select / dismiss /
-pin / clear-stale waiting agent sessions), it's **software-only** (no physical AI PI
-needed, unlike HS-24-03/04/05), and it rides the clean Phase 26 web seam. Key
-gotcha already de-risked in the story: companion control routes call
-`agent_context` functions **directly** (like the dictation routes do), so **no
-`WebContext`/constructor change is needed**.
+## 4. The plugin pipeline (how it actually works now)
 
-Alternatives (if you'd rather not do 24):
-- **Phase 16 — First Real Plugin** (`paused`, 1/5). `mermaid_architecture` still has
-  a `DeterministicPlugin` stub; the LLM capability gate (HS-16-02) never landed.
-- **Phase 15 — Out-and-About** (`not-started`). Auth-unblocked by HS-25-02.
-- **Phase 25 — HS-25-07** when hardware is on hand (§4): the 3 dogfood scenarios →
-  `evidence-story-07.md` + `final-summary.md` → close the phase. (Note: Phase 24's
-  HS-24-03/04/05 are gated on the *same* hardware access.)
-
-**Working on the web runtime now?** It's clean: route modules under
-`holdspeak/web/routes/` each expose `build_*_router(ctx: WebContext)`; they import
-**nothing** from `web_server`. To add a route, add a handler to the right module
-(or a new `routes/<domain>.py` + `include_router` in `_create_app`), read state via
-`ctx`, and grow `WebContext`/`WebRuntimeCallbacks` if a new server collaborator is
-needed. Conventions: context param is `ctx` (name shadowing locals `project`);
-relocate single-domain helpers into the module, put cross-cutting ones in
-`web/runtime_support.py`; re-anchor `Path(__file__)` to the package dir if you move
-a module; **run the full suite as the gate** (a narrow `-k` missed real bugs three
-times this phase). See `phase-26-web-runtime-decomposition/final-summary.md`.
-
-## 4. Phase 25's one open item — HS-25-07 (BLOCKED)
-
-Everything in Phase 25 is shipped and tested **except** the closeout dogfood,
-which needs **real hardware** (mic / local display / a real non-loopback bind).
-**The author is currently remote (abroad, RDP) and cannot run it.** Do **not**
-fabricate dogfood evidence. When hardware access returns, run the 3 scenarios and
-record `evidence-story-07.md`, then write `final-summary.md` and close the phase:
-1. Misconfigured local intel model + `intel_provider="local"` → confirm no
-   transcript egress (`holdspeak doctor` shows "Local only").
-2. Bind a non-loopback host → confirm it refuses without a token / 401s
-   unauthenticated requests.
-3. Force a slow/hung transcription → confirm it abandons and the next utterance works.
-
-Code-level proof for all three already exists in the story tests.
+- **Registrar:** `holdspeak/plugins/builtin/__init__.py` — `_REAL_PLUGINS` maps
+  IDs to real classes; everything else is a `DeterministicPlugin` stub.
+- **Provider:** plugins call `intel.build_configured_meeting_intel()` → reads
+  `Config.load().meeting` → talks to the configured endpoint (the self-hosted
+  **`.43:8080` Qwen3.5-9B-Q6**). The `"llm"` capability is gated on at the
+  `PluginHost` site in `web_runtime.py` via `resolve_llm_capability` (HS-16-02).
+- **Routing:** `holdspeak/plugins/router.py` — `PROFILE_PLUGIN_BASE_CHAINS`
+  (per-profile, intent-independent) + `_INTENT_PLUGIN_CHAIN`. `decision_capture`
+  rides the `balanced` (default) base chain.
+- **Synthesis → artifacts:** `holdspeak/plugins/synthesis.py`
+  (`synthesize_meeting_artifacts` / `synthesize_and_persist`) — per-type body
+  branches (`diagram`, `action_items`, `decisions`) + `structured_json`.
+- **Web render:** `/history` meeting-detail modal renders `diagram` as SVG,
+  `action_items` + `decisions` as structured lists, everything else as
+  `body_markdown` text.
 
 ## 5. Conventions & gotchas you MUST honor (this repo bites otherwise)
 
 - **PMO pre-commit gate.** Every commit needs a fresh `.tmp/CONTRACT.md` with **≥7
-  `[x]` checkboxes** (template in `pm/roadmap/PMO-CONTRACT.md`). The hook deletes
-  it on success. A story flipping to `done` **must** ship its
-  `evidence-story-{n}.md` in the **same** commit, and **only one** story may flip
-  to `done` per commit (else `.tmp/BUNDLE-OK.md`).
-- **Evidence files are write-once.** The hook **rejects editing an
-  `evidence-story-*.md` without a matching story `done`-flip in the same commit**
-  ("orphan evidence"). If you need to correct shipped evidence, put the correction
-  in the *mutable* `current-phase-status.md` instead (I had to do exactly this).
-- **NO `Co-Authored-By` trailer.** Repo contract rule #5 forbids unrequested
-  trailers — this **overrides** the default Claude Code commit-trailer habit.
-- **Agents may not use `--no-verify`.** Only the human may, in emergencies.
-- **Full-suite command excludes the metal test:**
-  `uv run pytest -q --ignore=tests/e2e/test_metal.py` (it hangs without a mic).
-- **`holdspeak/static/_built/` is gitignored** — built on demand by
-  `hatch_build.py` / `npm run build` (in `web/`). It is **not** committed. If
-  page-content tests fail locally on stale HTML, run `(cd web && npm run build)`.
-- **Operating cadence:** every shipping commit updates, together: the story
-  header status, the phase `current-phase-status.md` (story row + "Where we are"),
-  the project `README.md` "Last updated", and any canon doc the story touches.
-- **Tests must actually run** (read the output) before flipping `done` — type-check
-  is not validation. This repo is greenfield-ish (`v0.2.0` is forward-looking; no
-  real users) — skip backwards-compat ceremony.
-- **Keep `origin` current:** the author asked that work be pushed up; push `main`
-  after shipping.
+  `[x]`** (template in `pm/roadmap/PMO-CONTRACT.md`). A story flipping to `done`
+  ships its `evidence-story-{n}.md` in the **same** commit; **one** `done`-flip
+  per commit. Phase-exit stories still need an `evidence-story-{n}.md` (the hook
+  enforces it) **in addition to** `final-summary.md`.
+- **NO `Co-Authored-By` trailer.** Repo rule #5 — overrides the default habit.
+- **Agents may not use `--no-verify`.**
+- **Full-suite gate:** `uv run pytest -q --ignore=tests/e2e/test_metal.py`. Run the
+  **whole** suite — narrow `-k` filters miss real bugs.
+- **Routing ripple:** adding a plugin to a base chain changes the dispatched chain,
+  which breaks `tests/unit/test_intent_dispatch.py` (chain constant + window
+  counts) and the two full-pipeline tests (`test_intent_pipeline.py`,
+  `test_multi_intent_routing.py` — they register the *union* of plugin IDs as
+  stubs). Update those stub lists + counts; don't silence.
+- **LAN endpoint + sandbox:** intel runs on `.43:8080` (LAN). **Sandboxed Bash
+  can't reach the LAN** → use `dangerouslyDisableSandbox: true` for any command
+  that hits `.43` (or runs the spoken e2e / a real plugin call). See memory
+  `reference-lan-llm-endpoint`.
+- **The spoken e2e is opt-in:** `HOLDSPEAK_SPOKEN_E2E=1 uv run pytest -q -m
+  spoken_e2e -s`. It module-skips otherwise (so the default sweep never runs it),
+  and skips cleanly if `say` / scipy / Playwright+Chromium / `.43` / Whisper are
+  absent. **Playwright is a transient install** (`uv pip install playwright &&
+  playwright install chromium`) — NOT declared in `pyproject.toml` yet (open
+  question in story-02; consider a dev/e2e extra). Chromium lives in
+  `~/.cache/...`; a fresh clone must reinstall.
+- **`holdspeak/static/_built/` is gitignored** — `(cd web && npm run build)` after
+  editing anything under `web/`. Page-content tests read the built JS.
+- **Operating cadence:** every shipping commit updates the story header, the phase
+  `current-phase-status.md` (row + Last-updated + "Where we are"), the project
+  `README.md` (phase row + Last-updated + Current-phase), and any canon doc the
+  story touches.
 
-## 6. Corrections of record (don't re-trust stale claims)
+## 6. Two real bugs the work surfaced this session (don't reintroduce)
 
-Two things in earlier docs/analysis were verified wrong this session — fixed in
-the live status docs, but flagged here so you don't repeat them:
-- **"Silent cloud egress" was NOT a live bug.** `intel_provider="local"` (the
-  default) is structurally local-only (`resolve_intel_provider`); the value
-  delivered (HS-25-01) was *locking that invariant* with a test, not a fix.
-- **The 3 `test_activity_history` failures were NOT a "missing Safari fixture."**
-  The test self-creates its fixture; the failures were a **retention time-bomb**
-  (a fixed fixture `visit_time` pruned by the 30-day retention default once
-  wall-clock passed it). Fixed in `278ef0e`.
-- **`_built` is gitignored** (not a "stale committed bundle") — see §5.
+- **Plugins ignored the configured provider.** `register_builtin_plugins` built a
+  bare `MeetingIntel()` (module defaults), so in the *real runtime* the plugins
+  never used the `.43` config and silently returned their failure shape. Fixed by
+  `build_configured_meeting_intel()` (`fe9c0e8`). **Lesson:** test the real wiring,
+  not just an injected `intel_call` override — the spoken e2e is what caught this.
+- **Text artifacts rendered as a raw-markdown blob.** `/history` dumped
+  `body_markdown` via a plain-text binding, so `action_items` showed as collapsed
+  `### … - [ ] … ⚠️ missing both`. Fixed with a structured render. **Lesson:**
+  any new text-output plugin ships a structured web render; never the raw
+  `body_markdown` path. (Also: `MeetingState.started_at` must be a **naive**
+  datetime — the codebase's duration math uses `datetime.now()`.)
 
-## 7. Paused phases (context, not your job unless asked)
+## 7. Decisions of record (from this session)
 
-- **Phase 16 — first real plugin** (`mermaid_architecture`): 1/5 stories shipped
-  then abandoned; the diagram feature is NOT wired end-to-end (HS-16-02 capability
-  gate never landed). Paused.
-- **Phase 24 — AI PI companion productization:** 1/5 shipped; paused to prioritize
-  Phase 25. Resume after 25 closes.
-- **Phase 15 — out-and-about (cross-network):** `not-started`. **Now auth-unblocked**
-  by HS-25-02 (the web runtime refuses non-loopback binds without a token).
+- **Intel runs on `.43` Q6; the localhost `:8081` Q4 reasoning-leak is a
+  non-issue** — don't build `reasoning_content` fallback extraction (memory
+  `project-intel-use-43-q6`).
+- **Phase 27 ships both `decision_capture` and `requirements_extractor`**; the
+  spoken e2e is a **pytest test** (Playwright), not just a script.
+- **"Phase 17" is taken** (`phase-17-device-initiative`, done) — the
+  plugin-rollout follow-on to Phase 16 is **Phase 27**.
 
 ## 8. Useful entry points
 
-- Roadmap: `pm/roadmap/holdspeak/README.md` (phase index + cadence).
-- Methodology / rules: `pm/roadmap/roadmap-builder.md`, `pm/roadmap/PMO-CONTRACT.md`.
-- Phase 26 work: `holdspeak/web_server.py`, `holdspeak/web/` (the new seam),
-  `holdspeak/web_runtime.py`, `tests/integration/test_web_server.py`.
-- Security posture (from HS-25-03): `docs/SECURITY.md`.
-- Test commands: `uv run pytest -q --ignore=tests/e2e/test_metal.py` (full),
-  `uv run pytest -q tests/ -k doctor` (doctor).
+- Roadmap: `pm/roadmap/holdspeak/README.md` (phase index + Current-phase).
+- Active phase: `phase-27-ubiquitous-plugins-and-e2e/` (status + 5 story files).
+- Plugin reference impls: `holdspeak/plugins/builtin/{mermaid_architecture,action_owner_enforcer,decision_capture}.py`.
+- Synthesis + render: `holdspeak/plugins/synthesis.py`, `web/src/pages/history.astro`, `web/src/scripts/history-app.js`.
+- The spoken e2e (living demo): `tests/e2e/test_spoken_meeting_e2e.py`; latest screenshot `phase-27-…/evidence/spoken_meeting_artifacts.png`.
+- Parent RFC (reality-status table + Appendix A): `docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md`.
+- Test commands: full `uv run pytest -q --ignore=tests/e2e/test_metal.py`; spoken e2e `HOLDSPEAK_SPOKEN_E2E=1 uv run pytest -q -m spoken_e2e -s`.
