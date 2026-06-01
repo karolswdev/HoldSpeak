@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 16
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-16-01
 - **Unblocks:** HS-16-04, HS-16-05
 - **Owner:** unassigned
@@ -96,21 +96,21 @@ something to render.
 
 ## Acceptance criteria
 
-- [ ] When a plugin run has
+- [x] When a plugin run has
   `artifact_type=="diagram"` AND `output["mermaid"]` is set, the
   resulting `ArtifactDraft.body_markdown` contains exactly one
   fenced ```mermaid block.
-- [ ] When `output["mermaid"]` is absent, `body_markdown` is
+- [x] When `output["mermaid"]` is absent, `body_markdown` is
   identical to the pre-change output for the same input.
-- [ ] `structured_json["mermaid"]` is present iff
+- [x] `structured_json["mermaid"]` is present iff
   `output["mermaid"]` was present in the canonical run.
-- [ ] `tests/unit/test_artifact_synthesis_diagram.py` runs ≥ 3
-  cases green.
-- [ ] No regression: existing
+- [x] `tests/unit/test_artifact_synthesis_diagram.py` runs ≥ 3
+  cases green. (3 cases.)
+- [x] No regression: existing
   `tests/unit/test_artifact_synthesis*.py` and
   `tests/integration/test_artifact_synthesis_pipeline.py` stay
-  green; in particular, non-diagram artifact bodies are
-  byte-for-byte identical.
+  green; non-diagram bodies byte-for-byte identical (asserted). Full
+  suite 1902 passed.
 
 ## Test plan
 

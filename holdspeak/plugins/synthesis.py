@@ -171,12 +171,48 @@ def synthesize_meeting_artifacts(
 
         artifact_key = f"{clean_meeting_id}|{plugin_id}|{payload_hash}"
         artifact_id = "art-" + hashlib.sha256(artifact_key.encode("utf-8")).hexdigest()[:20]
-        body_markdown = (
-            f"### {title}\n\n"
-            f"{summary}\n\n"
+        source_lines = (
             f"- Source windows: {', '.join(unique_window_ids) if unique_window_ids else 'none'}\n"
             f"- Source plugin runs: {', '.join(unique_run_ids) if unique_run_ids else 'none'}"
         )
+
+        # HS-16-03: a "diagram" artifact carries the plugin's Mermaid block, so
+        # the web layer (HS-16-04) can render the diagram instead of a paragraph
+        # about it. The value is inserted verbatim (the plugin validates syntax;
+        # synthesis does not). TODO: when more artifact types need custom bodies
+        # (the follow-on phase that flips the other 12 plugins to real), extract
+        # a per-artifact-type renderer registry instead of branching here.
+        mermaid_value = ""
+        if artifact_type == "diagram":
+            raw_mermaid = canonical.output.get("mermaid")
+            if isinstance(raw_mermaid, str) and raw_mermaid.strip():
+                mermaid_value = raw_mermaid.strip()
+
+        if mermaid_value:
+            body_markdown = (
+                f"### {title}\n\n"
+                f"{summary}\n\n"
+                f"```mermaid\n{mermaid_value}\n```\n\n"
+                f"{source_lines}"
+            )
+        else:
+            body_markdown = (
+                f"### {title}\n\n"
+                f"{summary}\n\n"
+                f"{source_lines}"
+            )
+
+        structured_json: dict[str, Any] = {
+            "summary": summary,
+            "plugin_id": plugin_id,
+            "plugin_run_ids": unique_run_ids,
+            "window_ids": unique_window_ids,
+            "active_intents": merged_intents,
+            "run_count": len(runs),
+            "dedupe_hash": payload_hash,
+        }
+        if mermaid_value:
+            structured_json["mermaid"] = mermaid_value
 
         artifacts.append(
             ArtifactDraft(
@@ -185,15 +221,7 @@ def synthesize_meeting_artifacts(
                 artifact_type=artifact_type,
                 title=title,
                 body_markdown=body_markdown,
-                structured_json={
-                    "summary": summary,
-                    "plugin_id": plugin_id,
-                    "plugin_run_ids": unique_run_ids,
-                    "window_ids": unique_window_ids,
-                    "active_intents": merged_intents,
-                    "run_count": len(runs),
-                    "dedupe_hash": payload_hash,
-                },
+                structured_json=structured_json,
                 confidence=round(confidence, 4),
                 status=status,
                 plugin_id=plugin_id,

@@ -1,6 +1,6 @@
 # Phase 16 — First real synthesizer: `mermaid_architecture`
 
-**Last updated:** 2026-06-01 (HS-16-02 shipped — the `"llm"` capability gate is wired at the runtime `PluginHost` site, so `mermaid_architecture` is unblocked when an intel provider resolves; verified live against a self-hosted Qwen3.5-9B-Q6 endpoint, producing a valid Mermaid diagram. HS-16-03..05 pending). Resumed from `paused`; 2/5 shipped.
+**Last updated:** 2026-06-01 (HS-16-03 shipped — `synthesize_meeting_artifacts` now embeds the plugin's fenced ```mermaid block in a `diagram` artifact's `body_markdown` + a `structured_json["mermaid"]` key; non-diagram bodies are byte-for-byte unchanged. Verified live: real plugin → synthesis → artifact body holds one valid fenced diagram. HS-16-04..05 pending). Resumed from `paused`; 3/5 shipped.
 
 ## Goal
 
@@ -80,10 +80,10 @@ pattern with no new substrate work.
 - [x] `uv run pytest -q tests/unit/test_plugin_host_llm_capability.py`
   green, both branches (provider-resolved → llm capability enabled;
   provider-missing → plugin blocked). (HS-16-02, 8 cases green.)
-- [ ] `uv run pytest -q tests/unit/test_artifact_synthesis_diagram.py`
+- [x] `uv run pytest -q tests/unit/test_artifact_synthesis_diagram.py`
   green: a fake plugin run with `output["mermaid"]` produces a
   body containing exactly one fenced ```mermaid block; other
-  artifact types' bodies are byte-for-byte unchanged.
+  artifact types' bodies are byte-for-byte unchanged. (HS-16-03, 3 cases.)
 - [x] `uv run pytest -q tests/integration/test_mermaid_architecture_pipeline.py`
   green: transcript with architecture cues → dispatch → run →
   synthesize → DB has an artifact with `artifact_type="diagram"`
@@ -108,7 +108,7 @@ pattern with no new substrate work.
 |---|---|---|---|---|
 | HS-16-01 | Real `mermaid_architecture` plugin (LLM call + parse + structured output) | done | [story-01-mermaid-architecture-plugin.md](./story-01-mermaid-architecture-plugin.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-16-02 | LLM capability gate wired at host instantiation | done | [story-02-llm-capability-gate.md](./story-02-llm-capability-gate.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-16-03 | Diagram-aware artifact body in `synthesize_meeting_artifacts` | backlog | [story-03-diagram-artifact-rendering.md](./story-03-diagram-artifact-rendering.md) | — |
+| HS-16-03 | Diagram-aware artifact body in `synthesize_meeting_artifacts` | done | [story-03-diagram-artifact-rendering.md](./story-03-diagram-artifact-rendering.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-16-04 | Web: render `mermaid` artifacts as inline SVG via mermaid.js | backlog | [story-04-web-mermaid-rendering.md](./story-04-web-mermaid-rendering.md) | — |
 | HS-16-05 | RFC reality-check + phase exit (DoD, calibration, final summary) | backlog | [story-05-rfc-reality-check.md](./story-05-rfc-reality-check.md) | — |
 
@@ -141,19 +141,18 @@ in a fixture, and HS-16-02 is the story that wires the capability
 on at runtime.
 
 HS-16-02 shipped 2026-06-01: `resolve_llm_capability(config.meeting)`
-gates the `"llm"` capability at the runtime `PluginHost` site, the
-status payload reports `llm_capability_enabled`, and the doctor's
-metrics-only `PluginHost()` is documented as exempt. Full suite green
-at 1899 passing.
+gates the `"llm"` capability at the runtime `PluginHost` site. HS-16-03
+shipped same day: `synthesize_meeting_artifacts` embeds the fenced
+```mermaid block into a `diagram` artifact's `body_markdown` and adds a
+`structured_json["mermaid"]` key; all other artifact types keep their
+exact legacy body. Verified live end-to-end (plugin → synthesis →
+artifact body has one valid fenced diagram). Full suite green at 1902.
 
-Pickup: HS-16-03 — diagram-aware artifact body in
-`synthesize_meeting_artifacts`. The plugin now runs and returns
-`output["mermaid"]`, but the persisted artifact's `body_markdown` is
-still the generic synthesis body; HS-16-03 splices the fenced
-```mermaid block in. The web view then still shows raw fenced text
-until HS-16-04 renders it as SVG. (Verified the LLM emits a clean,
-parseable Mermaid flowchart, so HS-16-03's parse/splice has good
-input to work with.)
+Pickup: HS-16-04 — render `mermaid` artifacts as inline SVG via
+mermaid.js in the web meeting-detail view (lazy-loaded only on routes
+with a diagram artifact). The artifact body now carries the fenced
+block and `structured_json.mermaid`, so the web layer can read either.
+This is the first story needing a browser smoke check (not hardware).
 
 ## Active risks
 
