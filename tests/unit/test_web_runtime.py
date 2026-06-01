@@ -121,6 +121,10 @@ def test_run_web_runtime_starts_and_stops_services(monkeypatch: pytest.MonkeyPat
     status = server_instances[0].on_get_status()
     assert status["text_injection_enabled"] is True
     assert status["text_injection_error"] == ""
+    # HS-16-02: the runtime status payload reports whether LLM-backed plugins
+    # are enabled. The fixture leaves intel disabled, so the gate is off.
+    assert isinstance(status["llm_capability_enabled"], bool)
+    assert status["llm_capability_enabled"] is False
     # HS-25-01: the runtime status payload surfaces the egress posture so the
     # web client can show whether transcripts can leave the machine.
     egress = status["intel_egress"]

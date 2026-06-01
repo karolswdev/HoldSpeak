@@ -4,9 +4,9 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-06-01 (Phase 24 **resumed** — HS-24-02 shipped: `/companion` is now operable (select / dismiss / pin / clear-stale) via 4 new `POST /api/companion/*` routes + new `agent_context` state functions; suite green at 1889 passed. Phase 26 done; Phase 25 7/8 done, HS-25-07 blocked on hardware dogfood).
-**Current phase:** **Phase 24** — AI PI companion productization (2/5; HS-24-02 done). Remaining HS-24-03/04/05 are hardware-gated (physical AI PI on-site), so they stall while the author is remote. Software-only alternatives: **Phase 16** (first real plugin) or **Phase 15** (out-and-about, auth-unblocked by HS-25-02). Phase 25 stays formally open, blocked only on HS-25-07's in-person dogfood.
-**Status:** Phase 24 active (HS-24-02 delivered; 03/04/05 hardware-gated).
+**Last updated:** 2026-06-01 (Phase 16 **resumed** — HS-16-02 shipped: the `"llm"` capability gate is wired at the runtime `PluginHost` site, unblocking `mermaid_architecture` when an intel provider resolves; verified live against a self-hosted Qwen3.5-9B-Q6 endpoint producing a valid diagram; suite green at 1899 passed. Phase 24 HS-24-02 also shipped this session; Phase 26 done; Phase 25 7/8 done).
+**Current phase:** **Phase 16** — first real plugin (2/5; HS-16-02 done; software-only, the active track while Phase 24's remainder is hardware-gated). **Phase 24** (companion productization) is 2/5 with HS-24-03/04/05 hardware-gated (physical AI PI on-site). Phase 25 stays formally open, blocked only on HS-25-07's in-person dogfood. Other software-only option: **Phase 15** (out-and-about, auth-unblocked by HS-25-02).
+**Status:** Phase 16 active (HS-16-02 delivered; next HS-16-03 diagram body). Phase 24 paused on hardware.
 
 ## Vision
 
@@ -59,7 +59,7 @@ canon, canon wins.
 | 13 | Connector runtime + pipelines + meeting context: turn the framework on, chain packs, surface pre-meeting briefings + cross-meeting summaries | done | [phase-13-connector-runtime-and-context](./phase-13-connector-runtime-and-context/) |
 | 14 | AIPI-Lite devices: remote audio ingest substrate — `AudioSource` Protocol, `RemoteAudioRecorder`, `/api/devices/audio` WebSocket, per-device speaker labels in transcripts; same-LAN scope (cross-network is phase 15) | done | [phase-14-aipi-lite-devices](./phase-14-aipi-lite-devices/) |
 | 15 | Out-and-about: cross-network reach for AIPI-Lite — tunneling (Tailscale / Cloudflare Tunnel / WireGuard candidate evaluation), TLS, per-device PSKs, paired with the AIPI-Lite firmware's portable WiFi (multi-SSID + captive portal + Improv-WiFi) on the device-side roadmap | not-started | [phase-15-out-and-about](./phase-15-out-and-about/) |
-| 16 | First real synthesizer: replace `mermaid_architecture`'s `DeterministicPlugin` stub with a real LLM-backed plugin, wire the LLM capability gate, render `mermaid` artifacts as inline SVG in the web view, reality-check the plugin RFC | paused | [phase-16-first-real-plugin](./phase-16-first-real-plugin/) |
+| 16 | First real synthesizer: replace `mermaid_architecture`'s `DeterministicPlugin` stub with a real LLM-backed plugin, wire the LLM capability gate, render `mermaid` artifacts as inline SVG in the web view, reality-check the plugin RFC | in-progress (2/5) | [phase-16-first-real-plugin](./phase-16-first-real-plugin/) |
 | 17 | Device Initiative: device → server upstream frames (`device_health` + `query` w/ `last_segment` case) lighting up AIPI-Lite phase 4's `blocked` bridge stories; minimal web UI rendering for device health. Sibling to HS-14, paired with AIPI-4 in the AIPI-Lite roadmap. | done | [phase-17-device-initiative](./phase-17-device-initiative/) |
 | 18 | Intelligent Typing Copilot: project-aware local intelligent typing with target profiles, Claude/Codex hooks, optional external-agent summarization, `.hs` context conventions, OpenAI-compatible runtimes, and web cockpit support | done | [phase-18-intelligent-typing-copilot](./phase-18-intelligent-typing-copilot/) |
 | 19 | Intelligent Typing Daily-Use Hardening: safe `.hs/.../*.md` project-doc suggestions, telemetry, target-profile overrides, and real endpoint dogfooding | done | [phase-19-intelligent-typing-hardening](./phase-19-intelligent-typing-hardening/) |

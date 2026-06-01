@@ -113,7 +113,18 @@ def run_web_runtime(
     text_processor = TextProcessor()
     from .activity_context import ActivityContextProvider
 
-    plugin_host = PluginHost(default_timeout_seconds=0.35)
+    # HS-16-02: enable the "llm" plugin capability iff a meeting-intel provider
+    # resolves. Without this, LLM-backed plugins (e.g. mermaid_architecture)
+    # always block; resolution failure is non-fatal — they just stay blocked.
+    from .intel import resolve_llm_capability
+
+    llm_capability_enabled = resolve_llm_capability(config.meeting)
+    log.info(f"intel.llm_capability enabled={llm_capability_enabled}")
+
+    plugin_host = PluginHost(
+        default_timeout_seconds=0.35,
+        enabled_capabilities={"llm"} if llm_capability_enabled else None,
+    )
     plugin_host.register_context_provider(ActivityContextProvider(refresh=True, refresh_once=True))
     register_builtin_plugins(plugin_host)
 
@@ -658,6 +669,7 @@ def run_web_runtime(
             "voice_state": runtime.get("voice_state", runtime_snapshot.get("voice_state", "idle")),
             "text_injection_enabled": runtime_snapshot.get("text_injection_enabled"),
             "text_injection_error": runtime_snapshot.get("text_injection_error", ""),
+            "llm_capability_enabled": llm_capability_enabled,
             "transcription": {
                 "model": runtime_snapshot.get("transcription_model", config.model.name),
                 "warm_on_start": runtime_snapshot.get("transcription_warm_on_start", False),

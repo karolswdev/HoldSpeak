@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 16
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-16-01
 - **Unblocks:** HS-16-05
 - **Owner:** unassigned
@@ -81,18 +81,20 @@ intel-provider resolution, and adds `"llm"` to
 
 ## Acceptance criteria
 
-- [ ] Every `PluginHost(...)` instantiation site adds `"llm"` to
+- [x] Every `PluginHost(...)` instantiation site adds `"llm"` to
   `enabled_capabilities` iff `resolve_intel_provider(...)`
-  returns a usable provider.
-- [ ] When the provider can't resolve, host construction does not
+  returns a usable provider. (The runtime host in `web_runtime.py`;
+  the metrics-only throwaway in `doctor.py` never executes a plugin
+  and is documented as exempt.)
+- [x] When the provider can't resolve, host construction does not
   raise — the host is built without the capability.
-- [ ] `GET /api/runtime/status` includes `llm_capability_enabled:
+  (`resolve_llm_capability` swallows resolution errors → `False`.)
+- [x] `GET /api/runtime/status` includes `llm_capability_enabled:
   bool`.
-- [ ] `tests/unit/test_plugin_host_llm_capability.py` runs ≥ 2
-  cases green.
-- [ ] No regression: existing intel-runtime tests
-  (`tests/integration/test_intel_runtime*.py` if present, plus
-  `tests/unit/test_plugin_host*.py`) stay green.
+- [x] `tests/unit/test_plugin_host_llm_capability.py` runs ≥ 2
+  cases green. (8 cases: 4 resolution + 4 host-gate.)
+- [x] No regression: existing intel-runtime tests plus
+  `tests/unit/test_plugin_host*.py` stay green; full suite 1899 passed.
 
 ## Test plan
 

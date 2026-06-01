@@ -19,7 +19,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from .logging_config import get_logger
 
@@ -257,6 +257,34 @@ def resolve_intel_provider(
         "Local intel unavailable"
         f" ({local_reason}); cloud intel unavailable ({cloud_reason})",
     )
+
+
+def resolve_llm_capability(meeting_config: Any) -> bool:
+    """Whether the ``"llm"`` plugin capability should be enabled.
+
+    True iff meeting intelligence is enabled in config *and* an intel provider
+    resolves (HS-16-02). The check is cheap — `resolve_intel_provider` only
+    inspects config + file existence, it does not warm a model. Any failure
+    (including a malformed config) is non-fatal and yields ``False`` so the host
+    is still constructed; LLM-backed plugins then cleanly block at execute time.
+    """
+    try:
+        if not bool(getattr(meeting_config, "intel_enabled", False)):
+            return False
+        provider = getattr(meeting_config, "intel_provider", None) or DEFAULT_INTEL_PROVIDER
+        kwargs: dict[str, Any] = {
+            "cloud_model": getattr(meeting_config, "intel_cloud_model", None) or DEFAULT_INTEL_CLOUD_MODEL,
+            "cloud_api_key_env": getattr(meeting_config, "intel_cloud_api_key_env", None)
+            or DEFAULT_INTEL_CLOUD_API_KEY_ENV,
+            "cloud_base_url": getattr(meeting_config, "intel_cloud_base_url", None),
+        }
+        model_path = getattr(meeting_config, "intel_realtime_model", None)
+        if model_path:
+            kwargs["model_path"] = model_path
+        resolved, _reason = resolve_intel_provider(provider, **kwargs)
+        return resolved is not None
+    except Exception:
+        return False
 
 
 def intel_egress_posture(provider: str = DEFAULT_INTEL_PROVIDER) -> tuple[bool, str]:

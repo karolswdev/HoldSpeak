@@ -1,6 +1,6 @@
 # Phase 16 — First real synthesizer: `mermaid_architecture`
 
-**Last updated:** 2026-05-10 (HS-16-01 shipped — real `MermaidArchitecturePlugin` is live; HS-16-02..05 still pending).
+**Last updated:** 2026-06-01 (HS-16-02 shipped — the `"llm"` capability gate is wired at the runtime `PluginHost` site, so `mermaid_architecture` is unblocked when an intel provider resolves; verified live against a self-hosted Qwen3.5-9B-Q6 endpoint, producing a valid Mermaid diagram. HS-16-03..05 pending). Resumed from `paused`; 2/5 shipped.
 
 ## Goal
 
@@ -77,9 +77,9 @@ pattern with no new substrate work.
   green, ≥ 5 cases (success / parse-failure / provider-raises /
   output-shape / version+kind+capabilities). (HS-16-01: 16 cases
   green via parametrize; see evidence-story-01.md.)
-- [ ] `uv run pytest -q tests/unit/test_plugin_host_llm_capability.py`
+- [x] `uv run pytest -q tests/unit/test_plugin_host_llm_capability.py`
   green, both branches (provider-resolved → llm capability enabled;
-  provider-missing → plugin blocked).
+  provider-missing → plugin blocked). (HS-16-02, 8 cases green.)
 - [ ] `uv run pytest -q tests/unit/test_artifact_synthesis_diagram.py`
   green: a fake plugin run with `output["mermaid"]` produces a
   body containing exactly one fenced ```mermaid block; other
@@ -107,20 +107,23 @@ pattern with no new substrate work.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-16-01 | Real `mermaid_architecture` plugin (LLM call + parse + structured output) | done | [story-01-mermaid-architecture-plugin.md](./story-01-mermaid-architecture-plugin.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-16-02 | LLM capability gate wired at host instantiation | backlog | [story-02-llm-capability-gate.md](./story-02-llm-capability-gate.md) | — |
+| HS-16-02 | LLM capability gate wired at host instantiation | done | [story-02-llm-capability-gate.md](./story-02-llm-capability-gate.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-16-03 | Diagram-aware artifact body in `synthesize_meeting_artifacts` | backlog | [story-03-diagram-artifact-rendering.md](./story-03-diagram-artifact-rendering.md) | — |
 | HS-16-04 | Web: render `mermaid` artifacts as inline SVG via mermaid.js | backlog | [story-04-web-mermaid-rendering.md](./story-04-web-mermaid-rendering.md) | — |
 | HS-16-05 | RFC reality-check + phase exit (DoD, calibration, final summary) | backlog | [story-05-rfc-reality-check.md](./story-05-rfc-reality-check.md) | — |
 
 ## Where we are
 
-**Paused 2026-05-31.** Only HS-16-01 of 5 stories shipped; work then moved on to
-phases 17–24, leaving this phase open in name only. Critically, without HS-16-02
-the `mermaid_architecture` plugin is `blocked` even where an LLM is available, so
-the user-visible feature (a rendered diagram) does not yet work end-to-end. The
-index was corrected from `in-progress` to `paused` to stop implying two phases
-were active at once. Resume after Phase 25/26 or interleave by explicit decision;
-the pickup below is unchanged.
+**Resumed 2026-06-01.** Was paused 2026-05-31 after only HS-16-01 shipped, while
+work moved to phases 17–26. Resumed because Phase 24's remaining stories are
+hardware-gated and this is software-only. **HS-16-02 now shipped (2/5):** the
+`"llm"` capability gate is wired at the runtime `PluginHost` site
+(`web_runtime.py`) via `resolve_llm_capability(config.meeting)`, so
+`mermaid_architecture` is no longer `blocked` when an intel provider resolves.
+`/api/runtime/status` now reports `llm_capability_enabled: bool`. A self-hosted
+Qwen3.5-9B-Q6 endpoint is configured (`192.168.1.43:8080`) and was used to verify
+the unblocked plugin produces a valid Mermaid diagram end-to-end — which also
+de-risks HS-16-03/04 (the LLM emits clean, parseable Mermaid).
 
 HS-16-01 shipped 2026-05-10. `holdspeak/plugins/builtin.py` is now a
 package; `holdspeak/plugins/builtin/mermaid_architecture.py` defines
@@ -137,14 +140,20 @@ correct outcome when the plugin's `llm` capability isn't enabled
 in a fixture, and HS-16-02 is the story that wires the capability
 on at runtime.
 
-Pickup: HS-16-02 — capability gate at `PluginHost(...)`
-instantiation. Without it, `mermaid_architecture` is `blocked` in
-real runtime configs that have a working LLM available, which
-defeats the point of HS-16-01. After HS-16-02 the diagram artifact
-will appear in the DB as a `diagram` artifact whose
-`body_markdown` is still the generic synthesis body (HS-16-03's
-job to splice the fenced block in), and the web view still shows
-raw fenced text (HS-16-04's job).
+HS-16-02 shipped 2026-06-01: `resolve_llm_capability(config.meeting)`
+gates the `"llm"` capability at the runtime `PluginHost` site, the
+status payload reports `llm_capability_enabled`, and the doctor's
+metrics-only `PluginHost()` is documented as exempt. Full suite green
+at 1899 passing.
+
+Pickup: HS-16-03 — diagram-aware artifact body in
+`synthesize_meeting_artifacts`. The plugin now runs and returns
+`output["mermaid"]`, but the persisted artifact's `body_markdown` is
+still the generic synthesis body; HS-16-03 splices the fenced
+```mermaid block in. The web view then still shows raw fenced text
+until HS-16-04 renders it as SVG. (Verified the LLM emits a clean,
+parseable Mermaid flowchart, so HS-16-03's parse/splice has good
+input to work with.)
 
 ## Active risks
 

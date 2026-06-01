@@ -842,6 +842,8 @@ def _check_mir_telemetry() -> DoctorCheck:
         from ..plugins.router import get_router_counters
 
         router_counters = get_router_counters()
+        # Throwaway host purely to read the metrics-schema shape — it never
+        # executes a plugin, so it needs no capability wiring (HS-16-02).
         host_metrics = PluginHost().get_metrics()
     except Exception as exc:
         return DoctorCheck(
