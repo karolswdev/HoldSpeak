@@ -1,6 +1,10 @@
 # Phase 26 — Web Runtime Decomposition
 
-**Last updated:** 2026-06-01 (HS-26-06 done — `MeetingWebServer` constructor 30→4 params via `WebRuntimeCallbacks`; route modules fully decoupled from `web_server` (shared helpers → `web/runtime_support`); sync-DB-in-async audit recorded. Only HS-26-07 closeout remains).
+**Status: DONE (frozen 2026-06-01).** 7/7 stories shipped. See
+[`final-summary.md`](./final-summary.md). `web_server.py` 5658 → 523 lines (−90.8%);
+122 routes unchanged; full suite green (1879). This file is frozen — no further edits.
+
+**Last updated:** 2026-06-01 (HS-26-07 closeout — phase complete; `final-summary.md` written).
 
 ## Goal
 
@@ -52,7 +56,7 @@ auth and bind work that lands in Phase 25.
 | HS-26-04 | Extract activity / connector / plugin-job routes | done | [story-04-activity-routes.md](./story-04-activity-routes.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-26-05 | Extract device / companion / project routes | done | [story-05-device-project-routes.md](./story-05-device-project-routes.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-26-06 | Collapse callback wiring + sync-DB-in-async audit | done | [story-06-collapse-callbacks.md](./story-06-collapse-callbacks.md) | [evidence-story-06.md](./evidence-story-06.md) · [audit](./audit-sync-db-async.md) |
-| HS-26-07 | Decomposition closeout (size + regression evidence) | backlog | [story-07-decomposition-closeout.md](./story-07-decomposition-closeout.md) | — |
+| HS-26-07 | Decomposition closeout (size + regression evidence) | done | [story-07-decomposition-closeout.md](./story-07-decomposition-closeout.md) | [evidence-story-07.md](./evidence-story-07.md) · [final-summary.md](./final-summary.md) |
 
 ## Where we are
 

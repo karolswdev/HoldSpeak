@@ -1,12 +1,12 @@
 # HoldSpeak — Roadmap
 
 > **New here? Read [`HANDOVER.md`](./HANDOVER.md) first** — current state, where to
-> pick up (Phase 26 / HS-26-02), and the repo conventions that bite (PMO commit
-> gate, write-once evidence, no `Co-Authored-By`, metal-test exclusion).
+> pick up, and the repo conventions that bite (PMO commit gate, write-once
+> evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-06-01 (Phase 26: HS-26-06 done — `MeetingWebServer` constructor 30→4 params (`WebRuntimeCallbacks`), route modules fully decoupled from `web_server`, sync-DB audit; only HS-26-07 closeout remains; Phase 25 7/8 done + green, HS-25-07 blocked on hardware dogfood).
-**Current phase:** [phase-26-web-runtime-decomposition](./phase-26-web-runtime-decomposition/) — break the `web_server.py` monolith into route modules. (Phase 25 stays open, blocked only on HS-25-07's in-person dogfood.)
-**Status:** in-progress.
+**Last updated:** 2026-06-01 (Phase 26 **done** — web_server.py 5658→523 (−91%), 7 cohesive route modules, constructor 30→4 params, all 122 routes unchanged, suite green; see its `final-summary.md`. Phase 25 7/8 done + green, HS-25-07 blocked on hardware dogfood).
+**Current phase:** none active — Phase 26 just closed. Next candidates: resume paused **Phase 24** (AI PI companion productization) or **Phase 16** (first real plugin); **Phase 15** (out-and-about) is auth-unblocked by HS-25-02. Phase 25 stays formally open, blocked only on HS-25-07's in-person dogfood.
+**Status:** between phases (Phase 26 delivered).
 
 ## Vision
 
@@ -69,7 +69,7 @@ canon, canon wins.
 | 23 | AI PI Companion UX Polish: long-prompt display, multi-session identity, preview/browse, and target confidence | done | [phase-23-ai-pi-companion-ux-polish](./phase-23-ai-pi-companion-ux-polish/) |
 | 24 | AI PI Companion Productization: web companion overview, stale-session controls, confidence affordances, and display update cadence | paused | [phase-24-ai-pi-companion-productization](./phase-24-ai-pi-companion-productization/) |
 | 25 | Trust & Hardening: no silent cloud egress, web-runtime auth + bind guard, threat-model/encryption-at-rest doc, LLM-runtime thread-safety, transcription timeout, config-knob audit. Prerequisite to Phase 15. | in-progress | [phase-25-trust-and-hardening](./phase-25-trust-and-hardening/) |
-| 26 | Web Runtime Decomposition: break the `web_server.py` monolith into route modules + a shared context, behavior-preserving. Fast-follow to Phase 25. | in-progress | [phase-26-web-runtime-decomposition](./phase-26-web-runtime-decomposition/) |
+| 26 | Web Runtime Decomposition: break the `web_server.py` monolith into route modules + a shared context, behavior-preserving. Fast-follow to Phase 25. | done | [phase-26-web-runtime-decomposition](./phase-26-web-runtime-decomposition/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

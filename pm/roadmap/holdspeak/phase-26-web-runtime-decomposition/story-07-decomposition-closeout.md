@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 26
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-26-01, HS-26-02, HS-26-03, HS-26-04, HS-26-05, HS-26-06
 - **Unblocks:** none
-- **Owner:** unassigned
+- **Owner:** Claude (agent)
 
 ## Problem
 
@@ -29,10 +29,10 @@ surface is unchanged, and the suite is green — then writes the phase summary.
 
 ## Acceptance criteria
 
-- [ ] Before/after `web_server.py` line count recorded; it is a thin assembler.
-- [ ] Route-inventory diff shows zero path/method changes across the phase.
-- [ ] Full suite output captured and green (or failures named with follow-ups).
-- [ ] `final-summary.md` written; `current-phase-status.md` frozen; project
+- [x] Before/after `web_server.py` line count recorded (5658 → 523); it is a thin assembler.
+- [x] Route-inventory diff shows zero path/method changes across the phase (122 routes).
+- [x] Full suite output captured and green (1879 passed, 13 skipped).
+- [x] `final-summary.md` written; `current-phase-status.md` frozen; project
       README updated.
 
 ## Test plan

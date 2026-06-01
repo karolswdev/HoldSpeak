@@ -9,11 +9,12 @@ with the live status docs, the status docs win.
 
 ## 1. TL;DR — where things stand
 
-- **Branch:** `main`, clean, **`main == origin/main`** at `e5b1136` (everything is pushed).
-- **Test suite:** green — `uv run pytest -q --ignore=tests/e2e/test_metal.py` → **1875 passed, 0 failed, 13 skipped**.
-- **Active phase:** **Phase 26 — Web Runtime Decomposition** (`in-progress`, 6/7 done). **Next story: HS-26-07** — decomposition closeout: confirm the phase exit criteria, record final size + route-inventory evidence, write `final-summary.md`, flip the phase to `done`. All route domains are extracted (`routes/{core,meetings,dictation,activity,pages,system,projects}.py`) and import **nothing** from `web_server`; cross-cutting helpers live in `holdspeak/web/runtime_support.py`. **`web_server.py` is a thin assembler (~523 lines, was 5658).** `MeetingWebServer(callbacks: WebRuntimeCallbacks, *, host, port, auth_token)` — the 30-kwarg bag is gone. Sync-DB-in-async audit is in `audit-sync-db-async.md` (no offload, documented). Conventions honored throughout: WebContext param is **`ctx`** (shadowing locals are `project`); relocate single-domain helpers, import only shared ones; watch `Path(__file__)` after moving a module; run the **full** suite as the gate. **Note for HS-26-07:** one pre-existing `current_time` F841 lint in `meeting_session.py:1277` is unrelated to this phase (don't attribute it).
+- **Branch:** `main`, clean, **`main == origin/main`** (everything is pushed; latest is the HS-26-07 closeout commit).
+- **Test suite:** green — `uv run pytest -q --ignore=tests/e2e/test_metal.py` → **1879 passed, 0 failed, 13 skipped**.
+- **Phase 26 — Web Runtime Decomposition: DONE (7/7).** `web_server.py` 5658 → 523 lines (−91%); 7 cohesive route modules under `holdspeak/web/routes/` + `WebContext` (`web/context.py`) + shared helpers (`web/runtime_support.py`); `MeetingWebServer(callbacks: WebRuntimeCallbacks, *, host, port, auth_token)` (was ~30 kwargs); all 122 routes unchanged. See the phase's `final-summary.md`. **No active phase right now** — see §3 for what to pick up.
 - **Phase 25 — Trust & Hardening:** 7/8 done, functionally complete, **formally open** — only `HS-25-07` remains and it is **`blocked`** (needs in-person hardware dogfood; see §4).
-- Phases **16** and **24** are `paused` (pre-existing work, not this session's; see §6).
+- Phases **16** and **24** are `paused` (see §6); **Phase 15** (out-and-about) is `not-started` but auth-unblocked by HS-25-02.
+- **Stray lint (not yours):** a pre-existing `current_time` F841 in `meeting_session.py:1277` predates Phase 26 — don't attribute it to recent work.
 
 ## 2. What happened this session (the narrative)
 
@@ -23,39 +24,37 @@ with the live status docs, the status docs win.
 4. Fixed a pre-existing time-bomb test; merged Phase 25 to `main`; pushed to origin.
 5. Opened **Phase 26**, shipped **HS-26-01** (the router seam), pushed.
 
-## 3. Pick up here → HS-26-02
+## 3. Pick up here → choose the next phase
 
-Phase 26 breaks the **5.6k-line `holdspeak/web_server.py`** monolith (≈125 routes
-inline in one `_create_app`, 40+ constructor callbacks) into route modules,
-**behavior-preserving at every step**.
+Phase 26 is delivered and there is **no active phase**. Pick one (all are
+PMO-gated, one commit per story, same cadence as the rest of this roadmap):
 
-**The seam is built (HS-26-01) — follow its pattern exactly:**
-- `holdspeak/web/context.py` — `WebContext` dataclass: shared accessors routes
-  read instead of closing over the `MeetingWebServer` instance. **Grow it one
-  field per migrated concern.** It imports no route module (no cycle).
-- `holdspeak/web/routes/core.py` — reference router: `build_core_router(ctx) ->
-  APIRouter`. `/health` + `/api/state` live here now.
-- `holdspeak/web_server.py::_create_app` mounts routers via
-  `app.include_router(build_*_router(web_ctx))` (search for the `# Phase 26
-  (HS-26-01)` comment to see where).
+- **Resume Phase 24 — AI PI Companion Productization** (`paused`, 1/5 shipped).
+  The web runtime is now navigable (Phase 26), which was the implicit blocker for
+  comfortably extending the companion surface. Its routes live in
+  `holdspeak/web/routes/system.py` (`/api/companion/status`) +
+  `holdspeak/web/routes/pages.py` (`/companion`). Read
+  `phase-24-ai-pi-companion-productization/current-phase-status.md`.
+- **Resume Phase 16 — First Real Plugin** (`paused`, 1/5 shipped). The
+  `mermaid_architecture` plugin still has a `DeterministicPlugin` stub and the LLM
+  capability gate (HS-16-02) never landed; the diagram feature is not wired
+  end-to-end.
+- **Start Phase 15 — Out-and-About** (`not-started`). Now auth-unblocked by
+  HS-25-02 (the web runtime refuses non-loopback binds without a token).
+- **Unblock Phase 25 — HS-25-07** when hardware is available (§4): run the 3
+  dogfood scenarios, write `evidence-story-07.md` + `final-summary.md`, close the
+  phase. Code-level proof already exists in the story tests.
 
-**HS-26-02 = migrate the meeting / speaker / intel route cluster** (the largest):
-1. Read `story-02-meeting-routes.md` for the exact route list.
-2. Create `holdspeak/web/routes/meetings.py` with `build_meetings_router(ctx)`.
-3. Add the accessors those handlers need to `WebContext` (today the inline
-   handlers close over `self.on_*` callbacks + `self.get_state` etc. — move the
-   ones this cluster needs onto `WebContext`).
-4. Move the handlers **verbatim** (don't "improve" them — that's not this phase).
-5. Mount via `include_router`; delete the inline versions from `_create_app`.
-6. Gate: the existing web suite must pass unchanged + the route inventory
-   (paths/methods) must be identical. A quick inventory diff:
-   `python -c "from holdspeak.web_server import MeetingWebServer; ..."` listing
-   `app.routes` before/after — or just rely on the integration tests, which
-   already exercise these paths.
-
-Then HS-26-03 (dictation), 04 (activity), 05 (device/project), 06 (collapse the
-callback bag into `WebContext`), 07 (closeout: line-count + route-inventory
-evidence). Each is one PMO-gated commit.
+**Working on the web runtime now?** It's clean: route modules under
+`holdspeak/web/routes/` each expose `build_*_router(ctx: WebContext)`; they import
+**nothing** from `web_server`. To add a route, add a handler to the right module
+(or a new `routes/<domain>.py` + `include_router` in `_create_app`), read state via
+`ctx`, and grow `WebContext`/`WebRuntimeCallbacks` if a new server collaborator is
+needed. Conventions: context param is `ctx` (name shadowing locals `project`);
+relocate single-domain helpers into the module, put cross-cutting ones in
+`web/runtime_support.py`; re-anchor `Path(__file__)` to the package dir if you move
+a module; **run the full suite as the gate** (a narrow `-k` missed real bugs three
+times this phase). See `phase-26-web-runtime-decomposition/final-summary.md`.
 
 ## 4. Phase 25's one open item — HS-25-07 (BLOCKED)
 
