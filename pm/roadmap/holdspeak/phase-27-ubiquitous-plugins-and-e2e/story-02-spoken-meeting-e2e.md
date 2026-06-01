@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 27
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-16-04 (web SVG render), HS-27-01 (a second real plugin to show)
 - **Unblocks:** HS-27-05
 - **Owner:** unassigned
@@ -19,7 +19,8 @@ architecture diagram + an action-item report, and capture screenshots.
 The pieces already exist: `say` (`/usr/bin/say`) synthesizes audio;
 `tests/e2e/test_meeting_transcription.py` already loads a wav into `Transcriber`;
 `synthesize_and_persist` writes artifacts; `MeetingWebServer` serves `/history`;
-Chrome-for-Testing (puppeteer) was installed in HS-16-04 for screenshots.
+browser screenshots are already proven feasible (HS-16-04 captured the rendered
+mermaid SVG in a headless browser).
 
 ## Scope
 
@@ -37,13 +38,21 @@ Chrome-for-Testing (puppeteer) was installed in HS-16-04 for screenshots.
   4. **Persist** via `synthesize_and_persist` into a temp SQLite DB.
   5. **Render + screenshot**: serve `MeetingWebServer` over that DB, drive
      `/history` → open the meeting → screenshot the artifacts (rendered mermaid
-     SVG + the action-item report). Save under
+     SVG + the action-item report) with **Playwright (Python)**. Save under
      `pm/roadmap/holdspeak/phase-27-ubiquitous-plugins-and-e2e/evidence/`.
+- Browser automation = **Playwright (Python)**, not Puppeteer: the e2e is a
+  pytest test, so a Python-native driver keeps the whole harness in one language
+  (no Node subprocess glue), and Playwright's auto-waiting handles "wait for
+  Alpine to load artifacts + mermaid to finish rendering the SVG" without
+  `sleep`-and-hope — directly mitigating the flakiness risk below. Dev-only dep
+  (`playwright` + `playwright install chromium`); import-gated so it skips when
+  absent. (Puppeteer in HS-16-04 was a throwaway dev screenshot, `--no-save`,
+  never a committed dependency.)
 - Reliability + opt-in:
   - Own pytest marker (e.g. `@pytest.mark.spoken_e2e`), **excluded from the
     default sweep** (like `test_metal.py`). Document the run command.
   - **Skip cleanly** when prerequisites are absent: `say` missing, `.43`
-    unreachable, Chrome not installed, or Whisper model unavailable.
+    unreachable, Playwright/Chromium not installed, or Whisper model unavailable.
   - **Structural assertions, not exact text** (real LLM is non-deterministic):
     a `diagram` artifact exists with a parseable mermaid block; an `action_items`
     artifact exists; ≥1 flagged ownership gap. Exact wording is never asserted.
@@ -59,14 +68,18 @@ Chrome-for-Testing (puppeteer) was installed in HS-16-04 for screenshots.
 
 ## Acceptance criteria
 
-- [ ] The harness runs end to end on real endpoints and produces ≥1 web
-      screenshot of a rendered artifact (committed under the phase `evidence/`).
-- [ ] It asserts *structure*: diagram artifact with valid mermaid block + an
-      action-item artifact with ≥1 ownership-gap flag.
-- [ ] It is excluded from `uv run pytest -q --ignore=tests/e2e/test_metal.py`
-      and **skips cleanly** (not fails) when `say` / `.43` / Chrome / Whisper are
-      unavailable.
-- [ ] Run command + prerequisites documented (in the test docstring + evidence).
+- [x] The harness runs end to end on real endpoints and produces a web
+      screenshot (`evidence/spoken_meeting_artifacts.png`) showing the transcript,
+      the rendered mermaid SVG, and the action-item checklist.
+- [x] It asserts *structure*: a `diagram` artifact whose mermaid renders to an
+      `<svg>`, an `action_items` artifact rendering ≥1 checklist row, and a
+      populated transcript. Exact wording never asserted.
+- [x] Opt-in via `HOLDSPEAK_SPOKEN_E2E=1` (module-skips otherwise, so the default
+      sweep never runs it), and **skips cleanly** when `say` / `.43` /
+      Playwright+Chromium / Whisper are unavailable.
+- [x] Run command + prerequisites documented (test docstring + evidence). Also
+      drove a UX fix: action-items now render as a structured checklist (not raw
+      markdown) with friendly gap labels — see `evidence-story-02.md`.
 
 ## Test plan
 
@@ -82,10 +95,9 @@ Chrome-for-Testing (puppeteer) was installed in HS-16-04 for screenshots.
   is too lossy to reliably trigger intents, feed a hand-authored transcript
   straight into the routing step for the *assertion* path, and keep the
   `say`→Whisper leg for the *demo screenshot*. Documented fallback, not a failure.
-- Puppeteer / Chrome-for-Testing lives at `~/.cache/puppeteer`; it was installed
-  `--no-save` in HS-16-04. Decide whether the harness installs it on demand or
-  documents it as a prerequisite (prefer: skip-if-absent + a one-line install
-  hint, no churn to `package.json`).
+- Playwright (Python) install: `uv pip install playwright && playwright install
+  chromium` (or add to a dev/e2e extra in `pyproject.toml`). Prefer skip-if-absent
+  + a one-line install hint in the skip reason over forcing the dep on everyone.
 - Sandbox note: hitting `.43` (LAN) needs `dangerouslyDisableSandbox` for any
   agent-run invocation (see memory `reference-lan-llm-endpoint`).
 - Keep the scripted meeting in-repo (a short `.txt` / Python constant) so the

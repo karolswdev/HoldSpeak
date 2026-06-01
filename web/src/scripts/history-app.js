@@ -783,6 +783,28 @@ function historyApp() {
       return renderBriefingMarkdown(md);
     },
 
+    // HS-27-02: structured renderers for artifact bodies so the detail view
+    // shows a real diagram / checklist instead of dumping raw markdown text.
+    isDiagram(artifact) {
+      return artifact?.artifact_type === "diagram" && !!artifact?.structured_json?.mermaid;
+    },
+
+    actionItemsFor(artifact) {
+      if (artifact?.artifact_type !== "action_items") return [];
+      const items = artifact?.structured_json?.action_items;
+      return Array.isArray(items) ? items : [];
+    },
+
+    actionGapLabel(gap) {
+      return (
+        {
+          missing_owner: "No owner",
+          missing_due: "No due date",
+          missing_both: "No owner or due date",
+        }[gap] || ""
+      );
+    },
+
     // HS-16-04: render a diagram artifact's Mermaid (from structured_json) as
     // inline SVG. mermaid.js is loaded lazily via window.__loadMermaid (a code
     // -split chunk wired in history.astro), so non-diagram views never pay the

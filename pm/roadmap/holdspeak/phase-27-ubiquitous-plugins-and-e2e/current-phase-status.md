@@ -1,6 +1,6 @@
 # Phase 27 — Ubiquitous plugins + spoken-meeting e2e
 
-**Last updated:** 2026-06-01 (HS-27-01 shipped — real `action_owner_enforcer` plugin: LLM → action items with owner/due **gap** flags, a checklist synthesis body, verified live against `.43` Q6. Phase **in-progress, 1/5**).
+**Last updated:** 2026-06-01 (HS-27-02 shipped — real spoken-meeting e2e (`say` → Whisper → real `.43` plugins → temp DB → `MeetingWebServer` → **Playwright** screenshots), opt-in + skip-guarded. It surfaced two real gaps, now fixed: plugins ignored the configured provider (→ `build_configured_meeting_intel`, commit `fe9c0e8`) and action-items rendered as a raw-markdown blob (→ a structured checklist render in `/history` with friendly gap labels). Phase **in-progress, 2/5**).
 
 > Lineage note: Phase 16 (`first-real-plugin`) proved the LLM-backed plugin
 > pattern end-to-end with `mermaid_architecture`. Its docs refer to "phase 17" as
@@ -29,7 +29,7 @@ The substrate is already proven (Phase 16); this phase is about **breadth**
   synthesis body → web render). Lead with the ones that fire on almost every
   meeting.
 - A spoken-meeting e2e harness: `say` → wav → `Transcriber` → MIR → `PluginHost`
-  → `synthesize_and_persist` → web → Puppeteer screenshots. Real endpoints
+  → `synthesize_and_persist` → web → Playwright (Python) screenshots. Real endpoints
   (local Whisper + `.43` Q6 LLM), opt-in (slow), structural assertions.
 - Web rendering for any new artifact *shapes* the new plugins introduce (text /
   checklist bodies render via the existing markdown path; only diagrams need the
@@ -55,11 +55,11 @@ The substrate is already proven (Phase 16); this phase is about **breadth**
       non-stub `run()` meeting all four Appendix-A bars (real downstream,
       structured payload, synthesis-rendered, tests for success/failure/blocked).
       (HS-27-01 — `evidence-story-01.md`.)
-- [ ] A spoken-meeting e2e harness exists and runs against real endpoints: it
+- [x] A spoken-meeting e2e harness exists and runs against real endpoints: it
       synthesizes audio with `say`, transcribes it, runs the real plugin chain,
       persists artifacts, and captures at least one web screenshot showing a
-      rendered artifact. Opt-in (skips cleanly when `say` / `.43` / Chrome
-      absent).
+      rendered artifact. Opt-in (skips cleanly when `say` / `.43` / Playwright
+      absent). (HS-27-02 — `evidence-story-02.md`; screenshot in `evidence/`.)
 - [ ] Every plugin flipped to real this phase is annotated ✅ in the RFC
       reality-status table; the rest stay ⚠️.
 - [ ] No regressions: full sweep `uv run pytest -q --ignore=tests/e2e/test_metal.py`
@@ -72,7 +72,7 @@ The substrate is already proven (Phase 16); this phase is about **breadth**
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-27-01 | `action_owner_enforcer` — real run (ubiquity champion) | done | [story-01-action-owner-enforcer.md](./story-01-action-owner-enforcer.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-27-02 | Spoken-meeting e2e harness (`say` → pipeline → screenshots) | backlog | [story-02-spoken-meeting-e2e.md](./story-02-spoken-meeting-e2e.md) | — |
+| HS-27-02 | Spoken-meeting e2e harness (`say` → pipeline → screenshots) | done | [story-02-spoken-meeting-e2e.md](./story-02-spoken-meeting-e2e.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-27-03 | `decision_capture` — decisions + open questions (net-new, ubiquitous) | backlog | [story-03-decision-capture.md](./story-03-decision-capture.md) | — |
 | HS-27-04 | `requirements_extractor` — real run | backlog | [story-04-requirements-extractor.md](./story-04-requirements-extractor.md) | — |
 | HS-27-05 | RFC reality-check refresh + phase exit | backlog | [story-05-phase-exit.md](./story-05-phase-exit.md) | — |
@@ -86,11 +86,18 @@ verified live against `.43` Q6 (4 items extracted, gaps flagged). The Phase-16
 pattern generalized cleanly to a non-diagram text artifact, and the registrar now
 uses a `_REAL_PLUGINS` map (two real plugins, eleven stubs).
 
-Pickup: **HS-27-02** — the spoken-meeting e2e harness (`say` → Whisper → MIR →
-plugins → web → screenshots), which will now demonstrate **both**
-`mermaid_architecture` and `action_owner_enforcer` together on real endpoints.
-Then **HS-27-03** (`decision_capture`) and **HS-27-04** (`requirements_extractor`)
-— both shipping this phase per Karol's decision — then **HS-27-05** (close).
+**HS-27-02 shipped:** the spoken e2e demonstrates `mermaid_architecture` +
+`action_owner_enforcer` together on real endpoints (transcript + rendered SVG +
+action-item checklist screenshot). It earned its keep immediately — it caught the
+configured-provider wiring gap and the raw-markdown action-items rendering, both
+now fixed.
+
+Pickup: **HS-27-03** (`decision_capture` — decisions + open questions, the
+ubiquitous net-new plugin) then **HS-27-04** (`requirements_extractor`) — both
+shipping this phase per Karol's decision — then **HS-27-05** (close). New
+text-output plugins should add a structured web render like action-items got
+(the raw-markdown `body_markdown` path is not acceptable UX); the e2e can grow to
+cover them too.
 
 ## Active risks
 

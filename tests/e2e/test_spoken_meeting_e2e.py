@@ -1,0 +1,220 @@
+"""HS-27-02 — spoken-meeting end-to-end harness (opt-in).
+
+A *real* end-to-end on real endpoints — no mocks:
+
+    say (multi-voice) -> per-line wav -> Whisper (Transcriber) -> transcript
+    segments -> PluginHost (real .43 LLM, deferred queue drained) ->
+    synthesize_and_persist -> temp SQLite DB (meeting + transcript + artifacts)
+    -> MeetingWebServer -> Playwright drives /history -> screenshots the
+    transcript, the rendered mermaid SVG, and the action-item checklist.
+
+It is **opt-in** and excluded from the default sweep: it requires
+`HOLDSPEAK_SPOKEN_E2E=1` *and* every external piece to be present (macOS `say`,
+faster-whisper, a reachable intel endpoint, Playwright+Chromium). Any missing
+piece skips the test cleanly rather than failing.
+
+Run it:
+
+    HOLDSPEAK_SPOKEN_E2E=1 uv run pytest -q -m spoken_e2e -s
+
+Assertions are **structural** (the real LLM is non-deterministic): the meeting
+has a transcript, a `diagram` artifact with a parseable mermaid block renders an
+`<svg>`, and an `action_items` artifact renders a checklist. Exact wording is
+never asserted.
+"""
+
+from __future__ import annotations
+
+import os
+import shutil
+import socket
+import subprocess
+from datetime import datetime
+from types import SimpleNamespace
+from urllib.parse import urlparse
+
+import pytest
+
+pytestmark = [pytest.mark.spoken_e2e, pytest.mark.slow]
+
+if not os.environ.get("HOLDSPEAK_SPOKEN_E2E"):
+    pytest.skip(
+        "opt-in: set HOLDSPEAK_SPOKEN_E2E=1 to run the spoken-meeting e2e",
+        allow_module_level=True,
+    )
+
+EVIDENCE_DIR = "pm/roadmap/holdspeak/phase-27-ubiquitous-plugins-and-e2e/evidence"
+
+# A scripted two-speaker meeting: architecture talk (→ mermaid_architecture) +
+# action items with/without owners (→ action_owner_enforcer).
+SCRIPT: list[tuple[str, str, str]] = [
+    ("Me", "Alex",
+     "Let's finalize the architecture. The API gateway routes to the auth "
+     "service and the billing service, which share a Postgres database. "
+     "Notifications go through a Redis queue."),
+    ("Remote", "Samantha",
+     "Sounds good. For action items: Karol will draft the OAuth flow by Friday. "
+     "Someone still needs to book the offsite venue. And Maria will review the "
+     "migration plan."),
+]
+
+
+def _skip_unless(condition: bool, reason: str) -> None:
+    if not condition:
+        pytest.skip(reason)
+
+
+def _endpoint_reachable() -> tuple[bool, str]:
+    from holdspeak.config import Config
+
+    base = Config.load().meeting.intel_cloud_base_url or ""
+    parsed = urlparse(base)
+    host, port = parsed.hostname, parsed.port or (443 if parsed.scheme == "https" else 80)
+    if not host:
+        return False, "no intel_cloud_base_url configured"
+    try:
+        with socket.create_connection((host, port), timeout=2.0):
+            return True, base
+    except OSError as exc:
+        return False, f"intel endpoint {base} unreachable: {exc}"
+
+
+def _say_to_wav(line: str, voice: str, out_path) -> None:
+    subprocess.run(
+        ["say", "-v", voice, "--data-format=LEI16@16000", "-o", str(out_path), line],
+        check=True,
+    )
+
+
+def _free_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+def test_spoken_meeting_end_to_end(tmp_path):
+    # --- prerequisites (skip cleanly if any are missing) -------------------
+    _skip_unless(shutil.which("say") is not None, "macOS `say` not available")
+    wavfile = pytest.importorskip("scipy.io.wavfile", reason="scipy required")
+    np = pytest.importorskip("numpy")
+    try:
+        from playwright.sync_api import sync_playwright
+    except Exception:
+        pytest.skip("playwright not installed (uv pip install playwright && playwright install chromium)")
+    reachable, detail = _endpoint_reachable()
+    _skip_unless(reachable, detail)
+
+    from holdspeak.db import get_database, reset_database
+    from holdspeak.meeting_session import MeetingState, TranscriptSegment
+    from holdspeak.plugins.builtin import register_builtin_plugins
+    from holdspeak.plugins.host import PluginHost
+    from holdspeak.plugins.synthesis import synthesize_and_persist
+    from holdspeak.transcribe import Transcriber
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    # --- 1. say -> per-line wav -> 2. Whisper -> transcript segments -------
+    transcriber = Transcriber(model_name="base")
+    segments: list[TranscriptSegment] = []
+    cursor = 0.0
+    for idx, (label, voice, line) in enumerate(SCRIPT):
+        wav_path = tmp_path / f"line_{idx}.wav"
+        _say_to_wav(line, voice, wav_path)
+        sr, audio = wavfile.read(wav_path)
+        if audio.dtype == np.int16:
+            audio = audio.astype(np.float32) / 32768.0
+        duration = len(audio) / sr
+        text = transcriber.transcribe(audio.astype("float32")).strip()
+        segments.append(
+            TranscriptSegment(text=text, speaker=label, start_time=cursor, end_time=cursor + duration)
+        )
+        cursor += duration
+    transcript = " ".join(seg.text for seg in segments).strip()
+    assert len(transcript) > 60, f"transcript too short: {transcript!r}"
+    print(f"\n[e2e] transcript: {transcript}")
+
+    # --- 3. real plugin chain (deferred queue drained, real .43 LLM) -------
+    host = PluginHost(default_timeout_seconds=30.0, enabled_capabilities={"llm"})
+    register_builtin_plugins(host)
+    meeting_id = "e2e-spoken"
+    context = {
+        "transcript": transcript,
+        "project_name": "Spoken E2E",
+        "active_intents": ["architecture", "delivery"],
+    }
+    for window, plugin_id in enumerate(("mermaid_architecture", "action_owner_enforcer")):
+        host.execute(
+            plugin_id,
+            context=context,
+            meeting_id=meeting_id,
+            window_id=f"{meeting_id}:w{window}",
+            transcript_hash=f"h{window}",
+        )
+    results = []
+    while True:
+        result = host.process_next_deferred_run(timeout_seconds=30.0)
+        if result is None:
+            break
+        results.append(result)
+    by_id = {r.plugin_id: r for r in results}
+    assert by_id["mermaid_architecture"].status == "success", by_id["mermaid_architecture"].error
+    assert by_id["action_owner_enforcer"].status == "success", by_id["action_owner_enforcer"].error
+    # The plugins must have produced real content (not their failure shape).
+    assert by_id["mermaid_architecture"].output.get("mermaid"), "no mermaid block produced"
+    assert by_id["action_owner_enforcer"].output.get("action_items"), "no action items produced"
+
+    # --- 4. persist meeting + transcript + artifacts into a temp DB --------
+    reset_database()
+    db = get_database(tmp_path / "e2e.db")
+    db.save_meeting(
+        MeetingState(
+            id=meeting_id,
+            started_at=datetime.now(),  # naive — matches the codebase duration math
+            title="Spoken E2E Meeting",
+            segments=segments,
+        )
+    )
+    runs = [
+        SimpleNamespace(
+            id=f"run-{i}", meeting_id=meeting_id, window_id=f"{meeting_id}:w{i}",
+            plugin_id=r.plugin_id, plugin_version=r.plugin_version, status="success",
+            output=r.output, created_at=f"2026-06-01T12:0{i}:00",
+        )
+        for i, r in enumerate(results)
+    ]
+    drafts, _ = synthesize_and_persist(db, meeting_id, plugin_runs=runs)
+    by_type = {d.artifact_type: d for d in drafts}
+    assert by_type.get("diagram") and by_type["diagram"].structured_json.get("mermaid")
+    assert by_type.get("action_items") and by_type["action_items"].structured_json.get("action_items")
+    print(f"[e2e] artifacts: {sorted(by_type)}")
+
+    # --- 5. serve + 6. Playwright screenshot -------------------------------
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(
+            on_bookmark=lambda *a, **k: {},
+            on_stop=lambda *a, **k: {},
+            get_state=lambda: {"id": meeting_id, "meeting_active": False},
+        ),
+        host="127.0.0.1",
+        port=_free_port(),
+    )
+    url = server.start()
+    try:
+        os.makedirs(EVIDENCE_DIR, exist_ok=True)
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={"width": 1280, "height": 1500})
+            page.goto(f"{url}/history", wait_until="networkidle")
+            page.locator("button.meeting-card").first.click()
+            page.wait_for_selector(".mermaid-artifact svg", timeout=15000)
+            page.wait_for_selector(".action-item-list .action-item", timeout=15000)
+            # transcript panel populated from the persisted segments
+            page.wait_for_selector(".transcript-list .segment", timeout=15000)
+            shot = os.path.join(EVIDENCE_DIR, "spoken_meeting_artifacts.png")
+            page.screenshot(path=shot, full_page=True)
+            assert page.locator(".mermaid-artifact svg").count() >= 1
+            assert page.locator(".action-item-list .action-item").count() >= 1
+            browser.close()
+        print(f"[e2e] screenshot saved: {shot}")
+    finally:
+        server.stop()
+        reset_database()

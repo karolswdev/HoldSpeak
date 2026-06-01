@@ -77,6 +77,7 @@ markers = [
     "integration: integration test",
     "e2e: end-to-end test",
     "metal: hardware tests requiring real mic/model/keyboard (local only)",
+    "spoken_e2e: opt-in spoken-meeting e2e (say + Whisper + .43 LLM + Playwright; set HOLDSPEAK_SPOKEN_E2E=1)",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",
