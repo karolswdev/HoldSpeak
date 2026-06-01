@@ -206,6 +206,47 @@ def _customer_signal_body(signals: list[dict[str, Any]] | None) -> str:
     return "\n".join(lines)
 
 
+def _incident_timeline_body(events: list[dict[str, Any]] | None) -> str:
+    """Render an incident timeline as an ordered markdown list (HS-29-02)."""
+    if not events:
+        return ""
+    lines: list[str] = []
+    for event in events:
+        text = _clean_text(event.get("event"))
+        if not text:
+            continue
+        time = _clean_text(event.get("time"))
+        lines.append(f"- {time} — {text}" if time else f"- {text}")
+    return "\n".join(lines)
+
+
+_RUNBOOK_TYPE_LABELS = {"added": "Added", "modified": "Modified", "removed": "Removed"}
+
+
+def _runbook_delta_body(changes: list[dict[str, Any]] | None) -> str:
+    """Render runbook deltas grouped by change type (HS-29-02)."""
+    if not changes:
+        return ""
+    grouped: dict[str, list[str]] = {}
+    for change in changes:
+        text = _clean_text(change.get("change"))
+        if not text:
+            continue
+        ctype = str(change.get("type") or "modified").strip().lower() or "modified"
+        detail = _clean_text(change.get("detail"))
+        grouped.setdefault(ctype, []).append(text + (f" — {detail}" if detail else ""))
+    parts: list[str] = []
+    ordered = list(_RUNBOOK_TYPE_LABELS) + [t for t in grouped if t not in _RUNBOOK_TYPE_LABELS]
+    for ctype in ordered:
+        items = grouped.get(ctype)
+        if not items:
+            continue
+        lines = [f"**{_RUNBOOK_TYPE_LABELS.get(ctype, ctype.title())}**"]
+        lines.extend(f"- {item}" for item in items)
+        parts.append("\n".join(lines))
+    return "\n\n".join(parts)
+
+
 # --- Per-artifact-type body renderers (HS-28-01) ---------------------------
 #
 # Each renderer takes the canonical plugin output and returns either
@@ -351,6 +392,28 @@ def _render_customer_signals(ctx: _RenderContext) -> _Rendered:
     return _customer_signal_body(signals), {"signals": signals}
 
 
+def _render_incident_timeline(ctx: _RenderContext) -> _Rendered:
+    # HS-29-02: incident timeline.
+    raw = ctx.output.get("events")
+    if not (isinstance(raw, list) and raw):
+        return None
+    events = [item for item in raw if isinstance(item, dict)]
+    if not events:
+        return None
+    return _incident_timeline_body(events), {"events": events}
+
+
+def _render_runbook_delta(ctx: _RenderContext) -> _Rendered:
+    # HS-29-02: runbook delta.
+    raw = ctx.output.get("changes")
+    if not (isinstance(raw, list) and raw):
+        return None
+    changes = [item for item in raw if isinstance(item, dict)]
+    if not changes:
+        return None
+    return _runbook_delta_body(changes), {"changes": changes}
+
+
 _ARTIFACT_RENDERERS: dict[str, Callable[[_RenderContext], _Rendered]] = {
     "diagram": _render_diagram,
     "action_items": _render_action_items,
@@ -362,6 +425,8 @@ _ARTIFACT_RENDERERS: dict[str, Callable[[_RenderContext], _Rendered]] = {
     "dependency_map": _render_dependencies,
     "scope_review": _render_scope,
     "customer_signals": _render_customer_signals,
+    "incident_timeline": _render_incident_timeline,
+    "runbook_delta": _render_runbook_delta,
 }
 
 

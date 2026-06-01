@@ -886,6 +886,19 @@ function historyApp() {
       return Array.isArray(items) ? items : [];
     },
 
+    // HS-29-02: incident timeline / runbook delta.
+    incidentEventsFor(artifact) {
+      if (artifact?.artifact_type !== "incident_timeline") return [];
+      const items = artifact?.structured_json?.events;
+      return Array.isArray(items) ? items : [];
+    },
+
+    runbookChangesFor(artifact) {
+      if (artifact?.artifact_type !== "runbook_delta") return [];
+      const items = artifact?.structured_json?.changes;
+      return Array.isArray(items) ? items : [];
+    },
+
     // True when any structured renderer applies — used to suppress the raw
     // body_markdown fallback. Grows as artifact types are added.
     hasStructuredRender(artifact) {
@@ -899,7 +912,9 @@ function historyApp() {
         this.risksFor(artifact).length > 0 ||
         this.dependenciesFor(artifact).length > 0 ||
         this.scopeFindingsFor(artifact).length > 0 ||
-        this.customerSignalsFor(artifact).length > 0
+        this.customerSignalsFor(artifact).length > 0 ||
+        this.incidentEventsFor(artifact).length > 0 ||
+        this.runbookChangesFor(artifact).length > 0
       );
     },
 

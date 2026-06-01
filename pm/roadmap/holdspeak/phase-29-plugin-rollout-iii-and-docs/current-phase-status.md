@@ -1,6 +1,6 @@
 # Phase 29 — Complete the plugin rollout + public docs
 
-**Last updated:** 2026-06-01 (HS-29-01 shipped — three delivery/product stubs flipped to real: `dependency_mapper` (`dependency_map`), `scope_guard` (`scope_review`), `customer_signal_extractor` (`customer_signals`), each with a structured `/history` render. **Ten real plugins now, four stubs.** No routing ripple. Verified live on `.43` Q6; the spoken e2e exercises ten plugins. Phase **in-progress, 1/5**).
+**Last updated:** 2026-06-01 (HS-29-02 shipped — two incident stubs flipped to real: `incident_timeline` (ordered timeline) and `runbook_delta` (added/modified/removed), each with a structured `/history` render. **Twelve real plugins now, two stubs** (the comms drafters). No routing ripple. Verified live on `.43` Q6 (incident retro transcript). Phase **in-progress, 2/5**).
 
 > Lineage note: Phases 16 → 27 → 28 proved, generalized, and scaled the
 > LLM-backed plugin pattern (transcript → LLM → parse/validate → structured output
@@ -68,7 +68,7 @@ plugins" section so users know what the product actually produces.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-29-01 | Delivery & product plugins (dependency_mapper, scope_guard, customer_signal_extractor) | done | [story-01-delivery-product-plugins.md](./story-01-delivery-product-plugins.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-29-02 | Incident plugins (incident_timeline, runbook_delta) | backlog | [story-02-incident-plugins.md](./story-02-incident-plugins.md) | — |
+| HS-29-02 | Incident plugins (incident_timeline, runbook_delta) | done | [story-02-incident-plugins.md](./story-02-incident-plugins.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-29-03 | Comms plugins (stakeholder_update_drafter, decision_announcement_drafter) | backlog | [story-03-comms-plugins.md](./story-03-comms-plugins.md) | — |
 | HS-29-04 | Public README + plugin docs | backlog | [story-04-public-docs.md](./story-04-public-docs.md) | — |
 | HS-29-05 | RFC reality-check refresh + phase exit | backlog | [story-05-phase-exit.md](./story-05-phase-exit.md) | — |
@@ -87,10 +87,10 @@ product, `incident_timeline`/`runbook_delta` on incident, the two drafters on
 comms), so flipping stub→real ripples no dispatch test.
 
 **HS-29-01 shipped** — `dependency_mapper`, `scope_guard`,
-`customer_signal_extractor` are real (ten real plugins now, four stubs); the
-spoken e2e exercises ten plugins.
+`customer_signal_extractor` are real. **HS-29-02 shipped** — `incident_timeline`,
+`runbook_delta` are real (twelve real plugins now, two stubs — the comms drafters).
 
-Pickup: **HS-29-02** (incident), then 03 (comms), 04 (docs), 05 (close).
+Pickup: **HS-29-03** (comms → zero stubs), then 04 (docs), 05 (close).
 
 ## Active risks
 

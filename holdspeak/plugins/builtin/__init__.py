@@ -30,6 +30,10 @@ from .dependency_mapper import (
     DependencyMapperPlugin,
     _extract_dependencies,
 )
+from .incident_timeline import (
+    IncidentTimelinePlugin,
+    _extract_events,
+)
 from .decision_capture import (
     DecisionCapturePlugin,
     _extract_decisions,
@@ -50,6 +54,10 @@ from .risk_heatmap import (
     RiskHeatmapPlugin,
     _extract_risks,
 )
+from .runbook_delta import (
+    RunbookDeltaPlugin,
+    _extract_changes,
+)
 from .scope_guard import (
     ScopeGuardPlugin,
     _extract_findings,
@@ -67,6 +75,8 @@ _REAL_PLUGINS = {
     "dependency_mapper": DependencyMapperPlugin,
     "scope_guard": ScopeGuardPlugin,
     "customer_signal_extractor": CustomerSignalExtractorPlugin,
+    "incident_timeline": IncidentTimelinePlugin,
+    "runbook_delta": RunbookDeltaPlugin,
 }
 
 
@@ -147,16 +157,20 @@ __all__ = [
     "DecisionCapturePlugin",
     "DependencyMapperPlugin",
     "DeterministicPlugin",
+    "IncidentTimelinePlugin",
     "MermaidArchitecturePlugin",
     "MilestonePlannerPlugin",
     "RequirementsExtractorPlugin",
     "RiskHeatmapPlugin",
+    "RunbookDeltaPlugin",
     "ScopeGuardPlugin",
     "_BUILTIN_PLUGIN_DEFS",
     "_extract_action_items",
     "_extract_adrs",
+    "_extract_changes",
     "_extract_decisions",
     "_extract_dependencies",
+    "_extract_events",
     "_extract_findings",
     "_extract_mermaid_block",
     "_extract_milestones",

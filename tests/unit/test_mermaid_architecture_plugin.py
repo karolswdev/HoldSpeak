@@ -148,9 +148,9 @@ def test_register_builtin_plugins_uses_real_class() -> None:
     assert isinstance(plugin, MermaidArchitecturePlugin)
     assert not isinstance(plugin, DeterministicPlugin)
 
-    # Sibling stubs are still DeterministicPlugin (the long-tail plugins not yet
-    # flipped to real — `requirements_extractor` went real in HS-27-04).
-    sibling = host.get_plugin("incident_timeline")
+    # Sibling stubs are still DeterministicPlugin (the comms drafters, not yet
+    # flipped to real — they go real in HS-29-03).
+    sibling = host.get_plugin("stakeholder_update_drafter")
     assert isinstance(sibling, DeterministicPlugin)
 
 

@@ -123,15 +123,17 @@ def test_builtin_plugins_register_and_execute() -> None:
     host = PluginHost(default_timeout_seconds=0.5)
     registered = register_builtin_plugins(host)
     assert "requirements_extractor" in registered
-    assert "incident_timeline" in registered
+    assert "stakeholder_update_drafter" in registered
 
-    # `incident_timeline` is still a DeterministicPlugin stub (no capabilities),
-    # so it executes inline; `requirements_extractor` is now a real LLM plugin.
+    # `stakeholder_update_drafter` is still a DeterministicPlugin stub (no
+    # capabilities), so it executes inline; `requirements_extractor` is real.
+    # (Until HS-29-03 flips the last two comms stubs, after which this test moves
+    # to assert no stub remains.)
     result = host.execute(
-        "incident_timeline",
+        "stakeholder_update_drafter",
         context={
             "transcript": "Architecture proposal with trade-offs and dependencies.",
-            "active_intents": ["architecture"],
+            "active_intents": ["comms"],
         },
         meeting_id="m-1",
         window_id="w-1",
@@ -139,7 +141,7 @@ def test_builtin_plugins_register_and_execute() -> None:
     )
     assert result.status == "success"
     assert result.output is not None
-    assert result.output["plugin_id"] == "incident_timeline"
+    assert result.output["plugin_id"] == "stakeholder_update_drafter"
     assert result.output["token_count"] > 0
 
 

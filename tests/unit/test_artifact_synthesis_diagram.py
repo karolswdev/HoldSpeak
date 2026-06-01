@@ -332,6 +332,58 @@ def test_customer_signals_artifact_embeds_list_body() -> None:
     assert artifact.structured_json["signals"][0]["type"] == "pain"
 
 
+def test_incident_timeline_artifact_embeds_ordered_body() -> None:
+    # HS-29-02: incident_timeline output → an ordered timeline body + structured key.
+    runs = [
+        _run(
+            "incident_timeline",
+            {
+                "summary": "2 timeline event(s).",
+                "confidence_hint": 1.0,
+                "active_intents": ["incident"],
+                "events": [
+                    {"time": "09:02", "event": "Alerts fired"},
+                    {"time": None, "event": "Recovery confirmed"},
+                ],
+            },
+        )
+    ]
+    artifacts = synthesize_meeting_artifacts(meeting_id="m-1", plugin_runs=runs)
+    artifact = artifacts[0]
+    assert artifact.artifact_type == "incident_timeline"
+    body = artifact.body_markdown
+    assert "- 09:02 — Alerts fired" in body
+    assert "- Recovery confirmed" in body
+    assert artifact.structured_json["events"][0]["time"] == "09:02"
+
+
+def test_runbook_delta_artifact_embeds_grouped_body() -> None:
+    # HS-29-02: runbook_delta output → a grouped change body + structured key.
+    runs = [
+        _run(
+            "runbook_delta",
+            {
+                "summary": "2 runbook change(s).",
+                "confidence_hint": 1.0,
+                "active_intents": ["incident"],
+                "changes": [
+                    {"change": "Flush CDN cache", "type": "added", "detail": "step 7"},
+                    {"change": "Manual DB toggle", "type": "removed", "detail": None},
+                ],
+            },
+        )
+    ]
+    artifacts = synthesize_meeting_artifacts(meeting_id="m-1", plugin_runs=runs)
+    artifact = artifacts[0]
+    assert artifact.artifact_type == "runbook_delta"
+    body = artifact.body_markdown
+    assert "**Added**" in body
+    assert "- Flush CDN cache — step 7" in body
+    assert "**Removed**" in body
+    assert "- Manual DB toggle" in body
+    assert artifact.structured_json["changes"][0]["type"] == "added"
+
+
 def test_non_diagram_artifact_body_is_byte_for_byte_legacy() -> None:
     # A non-diagram plugin run: even if (pathologically) it carried a "mermaid"
     # key, the body must match the exact legacy template.

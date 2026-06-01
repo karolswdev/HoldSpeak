@@ -1073,6 +1073,27 @@ import AppLayout from "../layouts/AppLayout.astro";
                           </template>
                         </ul>
                       </template>
+                      <template x-if="incidentEventsFor(artifact).length">
+                        <ol class="incident-timeline">
+                          <template x-for="(e, ei) in incidentEventsFor(artifact)" :key="`evt${ei}`">
+                            <li>
+                              <span class="evt-time" x-show="e.time" x-cloak x-text="e.time"></span>
+                              <span class="evt-text" x-text="e.event"></span>
+                            </li>
+                          </template>
+                        </ol>
+                      </template>
+                      <template x-if="runbookChangesFor(artifact).length">
+                        <ul class="runbook-list">
+                          <template x-for="(c, ci) in runbookChangesFor(artifact)" :key="`rbk${ci}`">
+                            <li class="runbook-change">
+                              <span class="runbook-type" :class="c.type" x-text="c.type"></span>
+                              <span class="runbook-text" x-text="c.change"></span>
+                              <span class="runbook-detail" x-show="c.detail" x-cloak x-text="` — ${c.detail}`"></span>
+                            </li>
+                          </template>
+                        </ul>
+                      </template>
                       <p class="meta-line"
                          x-show="artifact.body_markdown && !hasStructuredRender(artifact)"
                          x-cloak x-text="artifact.body_markdown"></p>
@@ -1746,6 +1767,61 @@ import AppLayout from "../layouts/AppLayout.astro";
     color: var(--color-success, #7bb37b);
   }
   .signal-type.request {
+    color: var(--text-muted);
+  }
+
+  /* HS-29-02: incident timeline / runbook delta. */
+  .incident-timeline {
+    margin: var(--space-2) 0 0;
+    padding-left: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: var(--font-size-sm);
+  }
+  .incident-timeline .evt-time {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin-right: var(--space-1);
+  }
+  .runbook-list {
+    list-style: none;
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: var(--font-size-sm);
+  }
+  .runbook-change {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-2);
+    align-items: baseline;
+  }
+  .runbook-type {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose, 0.05em);
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-sm, 3px);
+  }
+  .runbook-type.added {
+    background: var(--color-success-soft, rgba(110, 180, 110, 0.16));
+    color: var(--color-success, #7bb37b);
+  }
+  .runbook-type.removed {
+    background: var(--color-danger-soft, rgba(220, 80, 80, 0.18));
+    color: var(--color-danger, #e06666);
+  }
+  .runbook-type.modified {
+    background: var(--color-warning-soft, rgba(220, 170, 80, 0.18));
+    color: var(--color-warning, #e0b066);
+  }
+  .runbook-detail {
     color: var(--text-muted);
   }
 
