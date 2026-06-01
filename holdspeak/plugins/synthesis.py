@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
-from typing import Any, Iterable, Optional
+from typing import Any, Callable, Iterable, Optional
 
 from ..artifacts import ArtifactDraft, ArtifactSourceRef, artifact_status_from_confidence
 from .contracts import ArtifactLineage
@@ -93,6 +93,93 @@ def _requirements_body(requirements: list[dict[str, Any]] | None) -> str:
         lines.extend(f"- {text}" for text in texts)
         parts.append("\n".join(lines))
     return "\n\n".join(parts)
+
+
+# --- Per-artifact-type body renderers (HS-28-01) ---------------------------
+#
+# Each renderer takes the canonical plugin output and returns either
+# `(inner_block, extra_structured_json_keys)` for a custom artifact body, or
+# `None` to fall back to the default body (and add no extra structured keys).
+# `_compose_body` wraps the inner block in the shared `### title / summary /
+# block / source` template so every body — custom or default — is identical to
+# the pre-registry hand-branched output (byte-for-byte; see
+# `test_artifact_synthesis_diagram.py`). To add a new artifact body, write a
+# renderer and register it in `_ARTIFACT_RENDERERS` — no dispatch edits.
+
+
+@dataclass(frozen=True)
+class _RenderContext:
+    output: dict[str, Any]
+
+
+_Rendered = Optional[tuple[str, dict[str, Any]]]
+
+
+def _compose_body(*, title: str, summary: str, source_lines: str, block: Optional[str]) -> str:
+    if block:
+        return f"### {title}\n\n{summary}\n\n{block}\n\n{source_lines}"
+    return f"### {title}\n\n{summary}\n\n{source_lines}"
+
+
+def _render_diagram(ctx: _RenderContext) -> _Rendered:
+    # HS-16-03: embed the plugin's Mermaid block verbatim (the plugin validates
+    # syntax; synthesis does not).
+    raw = ctx.output.get("mermaid")
+    if not (isinstance(raw, str) and raw.strip()):
+        return None
+    mermaid = raw.strip()
+    return f"```mermaid\n{mermaid}\n```", {"mermaid": mermaid}
+
+
+def _render_action_items(ctx: _RenderContext) -> _Rendered:
+    # HS-27-01: an ownership-gap checklist.
+    raw_items = ctx.output.get("action_items")
+    if not (isinstance(raw_items, list) and raw_items):
+        return None
+    items = [item for item in raw_items if isinstance(item, dict)]
+    if not items:
+        return None
+    block = "\n".join(_action_item_line(item) for item in items)
+    return block, {"action_items": items}
+
+
+def _render_decisions(ctx: _RenderContext) -> _Rendered:
+    # HS-27-03: decisions + open questions.
+    raw_decisions = ctx.output.get("decisions")
+    decisions: list[dict[str, Any]] | None = None
+    if isinstance(raw_decisions, list) and raw_decisions:
+        decisions = [item for item in raw_decisions if isinstance(item, dict)] or None
+    raw_questions = ctx.output.get("open_questions")
+    open_questions: list[str] | None = None
+    if isinstance(raw_questions, list) and raw_questions:
+        open_questions = [str(q).strip() for q in raw_questions if str(q).strip()] or None
+    if not (decisions or open_questions):
+        return None
+    extra: dict[str, Any] = {}
+    if decisions:
+        extra["decisions"] = decisions
+    if open_questions:
+        extra["open_questions"] = open_questions
+    return _decision_body(decisions, open_questions), extra
+
+
+def _render_requirements(ctx: _RenderContext) -> _Rendered:
+    # HS-27-04: requirements grouped by type.
+    raw_reqs = ctx.output.get("requirements")
+    if not (isinstance(raw_reqs, list) and raw_reqs):
+        return None
+    requirements = [item for item in raw_reqs if isinstance(item, dict)]
+    if not requirements:
+        return None
+    return _requirements_body(requirements), {"requirements": requirements}
+
+
+_ARTIFACT_RENDERERS: dict[str, Callable[[_RenderContext], _Rendered]] = {
+    "diagram": _render_diagram,
+    "action_items": _render_action_items,
+    "decisions": _render_decisions,
+    "requirements": _render_requirements,
+}
 
 
 def _coerce_float(value: object, default: float = 0.0) -> float:
@@ -239,78 +326,18 @@ def synthesize_meeting_artifacts(
             f"- Source plugin runs: {', '.join(unique_run_ids) if unique_run_ids else 'none'}"
         )
 
-        # Custom artifact bodies per type, so the web layer has something
-        # rendering-ready. Both are strict branches; the default body is
-        # byte-for-byte unchanged. TODO: once a third custom body lands, extract
-        # a per-artifact-type renderer registry instead of branching here.
-        #  - HS-16-03: "diagram" embeds the plugin's Mermaid block (verbatim;
-        #    the plugin validates syntax, synthesis does not).
-        #  - HS-27-01: "action_items" embeds an ownership-gap checklist.
-        #  - HS-27-03: "decisions" embeds decisions + open questions.
-        #  - HS-27-04: "requirements" embeds requirements grouped by type.
-        mermaid_value = ""
-        if artifact_type == "diagram":
-            raw_mermaid = canonical.output.get("mermaid")
-            if isinstance(raw_mermaid, str) and raw_mermaid.strip():
-                mermaid_value = raw_mermaid.strip()
+        # Per-artifact-type body via the renderer registry (HS-28-01). The
+        # renderer returns a custom inner block + extra structured_json keys, or
+        # None to fall back to the default body. The default body is byte-for-byte
+        # the legacy template; see `_ARTIFACT_RENDERERS` / `_compose_body` above.
+        renderer = _ARTIFACT_RENDERERS.get(artifact_type)
+        rendered = renderer(_RenderContext(output=canonical.output)) if renderer else None
+        block = rendered[0] if rendered is not None else None
+        extra_structured = rendered[1] if rendered is not None else {}
 
-        action_items: list[dict[str, Any]] | None = None
-        if artifact_type == "action_items":
-            raw_items = canonical.output.get("action_items")
-            if isinstance(raw_items, list) and raw_items:
-                action_items = [item for item in raw_items if isinstance(item, dict)] or None
-
-        requirements: list[dict[str, Any]] | None = None
-        if artifact_type == "requirements":
-            raw_reqs = canonical.output.get("requirements")
-            if isinstance(raw_reqs, list) and raw_reqs:
-                requirements = [item for item in raw_reqs if isinstance(item, dict)] or None
-
-        decisions: list[dict[str, Any]] | None = None
-        open_questions: list[str] | None = None
-        if artifact_type == "decisions":
-            raw_decisions = canonical.output.get("decisions")
-            if isinstance(raw_decisions, list) and raw_decisions:
-                decisions = [item for item in raw_decisions if isinstance(item, dict)] or None
-            raw_questions = canonical.output.get("open_questions")
-            if isinstance(raw_questions, list) and raw_questions:
-                open_questions = [str(q).strip() for q in raw_questions if str(q).strip()] or None
-
-        if mermaid_value:
-            body_markdown = (
-                f"### {title}\n\n"
-                f"{summary}\n\n"
-                f"```mermaid\n{mermaid_value}\n```\n\n"
-                f"{source_lines}"
-            )
-        elif action_items:
-            checklist = "\n".join(_action_item_line(item) for item in action_items)
-            body_markdown = (
-                f"### {title}\n\n"
-                f"{summary}\n\n"
-                f"{checklist}\n\n"
-                f"{source_lines}"
-            )
-        elif decisions or open_questions:
-            body_markdown = (
-                f"### {title}\n\n"
-                f"{summary}\n\n"
-                f"{_decision_body(decisions, open_questions)}\n\n"
-                f"{source_lines}"
-            )
-        elif requirements:
-            body_markdown = (
-                f"### {title}\n\n"
-                f"{summary}\n\n"
-                f"{_requirements_body(requirements)}\n\n"
-                f"{source_lines}"
-            )
-        else:
-            body_markdown = (
-                f"### {title}\n\n"
-                f"{summary}\n\n"
-                f"{source_lines}"
-            )
+        body_markdown = _compose_body(
+            title=title, summary=summary, source_lines=source_lines, block=block
+        )
 
         structured_json: dict[str, Any] = {
             "summary": summary,
@@ -321,16 +348,7 @@ def synthesize_meeting_artifacts(
             "run_count": len(runs),
             "dedupe_hash": payload_hash,
         }
-        if mermaid_value:
-            structured_json["mermaid"] = mermaid_value
-        if action_items:
-            structured_json["action_items"] = action_items
-        if decisions:
-            structured_json["decisions"] = decisions
-        if open_questions:
-            structured_json["open_questions"] = open_questions
-        if requirements:
-            structured_json["requirements"] = requirements
+        structured_json.update(extra_structured)
 
         artifacts.append(
             ArtifactDraft(

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 28
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-27-04 (the fourth custom body — the trigger to refactor)
 - **Unblocks:** HS-28-02, HS-28-03, HS-28-04
 - **Owner:** unassigned
@@ -44,13 +44,13 @@ plugs in by registering a renderer instead of extending two parallel chains.
 
 ## Acceptance criteria
 
-- [ ] A renderer registry exists; the dispatch chain is replaced by a registry
+- [x] A renderer registry exists; the dispatch chain is replaced by a registry
       lookup + default fallback.
-- [ ] Every existing synthesis test passes **unchanged** — especially the
+- [x] Every existing synthesis test passes **unchanged** — especially the
       byte-for-byte guards (`test_artifact_synthesis_diagram.py`): diagram,
       action_items, decisions, requirements, and the legacy default body are all
       identical to before.
-- [ ] Full sweep green.
+- [x] Full sweep green (1939 passed, 14 skipped).
 
 ## Test plan
 

@@ -1,6 +1,6 @@
 # Phase 28 — Plugin rollout II: round out the core meeting types
 
-**Last updated:** 2026-06-01 (scaffolded). Phase **planning, 0/5**.
+**Last updated:** 2026-06-01 (HS-28-01 shipped — synthesis per-type **renderer registry** replaces the hand-branched body chain, behavior-preserving: the byte-for-byte synthesis tests pass unchanged. Adding a new artifact body is now register-a-renderer. Phase **in-progress, 1/5**).
 
 > Lineage note: Phases 16 + 27 proved and generalized the LLM-backed plugin
 > pattern (transcript → LLM → parse/validate → structured output → synthesis body
@@ -52,8 +52,9 @@ After this phase: **seven real plugins, seven stubs.**
 
 ## Exit criteria (evidence required)
 
-- [ ] Synthesis renderer registry lands behavior-preserving: every pre-existing
+- [x] Synthesis renderer registry lands behavior-preserving: every pre-existing
       artifact body is byte-for-byte unchanged (regression-locked tests green).
+      (HS-28-01 — `evidence-story-01.md`.)
 - [ ] `adr_drafter`, `milestone_planner`, `risk_heatmap` each ship a real,
       non-stub `run()` meeting all four Appendix-A bars (real LLM, structured
       payload, synthesis-rendered, tests for success/failure/blocked).
@@ -69,7 +70,7 @@ After this phase: **seven real plugins, seven stubs.**
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-28-01 | Synthesis per-type renderer registry (behavior-preserving) | backlog | [story-01-renderer-registry.md](./story-01-renderer-registry.md) | — |
+| HS-28-01 | Synthesis per-type renderer registry (behavior-preserving) | done | [story-01-renderer-registry.md](./story-01-renderer-registry.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-28-02 | `adr_drafter` — real run (ADRs) | backlog | [story-02-adr-drafter.md](./story-02-adr-drafter.md) | — |
 | HS-28-03 | `milestone_planner` — real run (delivery) | backlog | [story-03-milestone-planner.md](./story-03-milestone-planner.md) | — |
 | HS-28-04 | `risk_heatmap` — real run (risk register) | backlog | [story-04-risk-heatmap.md](./story-04-risk-heatmap.md) | — |
@@ -77,18 +78,22 @@ After this phase: **seven real plugins, seven stubs.**
 
 ## Where we are
 
-**Planning, 0/5.** Scaffolded 2026-06-01 directly after Phase 27 closed. The
-pattern is fully trodden (see Phase 27's `final-summary.md` §Handoff): real plugin
-→ `_REAL_PLUGINS` → `_ARTIFACT_TYPE_BY_PLUGIN` (these three IDs already map to
-`adr` / `milestone_plan` / `risk_register`) → registry body + `structured_json` →
-structured web render → unit + synthesis tests → extend the spoken e2e. **Routing
-note:** `milestone_planner` + `dependency_mapper` ride the `delivery` chains and
-`adr_drafter` the `architect`/`architecture` chains, but none are in the
-`balanced` base chain — so flipping them to real is no routing ripple (already
-routed); only a *net-new* ID added to a base chain ripples the dispatch tests.
+**In-progress, 1/5.** Scaffolded 2026-06-01 directly after Phase 27 closed.
+**HS-28-01 shipped same day** — the synthesis renderer registry replaced the
+hand-branched body chain (behavior-preserving; byte-for-byte tests unchanged), so
+the three new bodies now plug in as renderers. The pattern is fully trodden (see
+Phase 27's `final-summary.md` §Handoff): real plugin → `_REAL_PLUGINS` →
+`_ARTIFACT_TYPE_BY_PLUGIN` (the three IDs already map to `adr` / `milestone_plan`
+/ `risk_register`) → register a renderer + `structured_json` → structured web
+render → unit + synthesis tests → extend the spoken e2e. **Routing note:**
+`milestone_planner` rides the `delivery` chains, `adr_drafter` the
+`architect`/`architecture` chains, and `risk_heatmap` the `incident` chain, but
+none are in the `balanced` base chain — so flipping them to real is no routing
+ripple (already routed); only a *net-new* ID added to a base chain ripples the
+dispatch tests.
 
-Pickup: **HS-28-01** (renderer registry — do this first so the three new bodies
-plug in cleanly), then HS-28-02/03/04 (the plugins), then HS-28-05 (close).
+Pickup: **HS-28-02** (`adr_drafter`), then HS-28-03/04 (milestone/risk), then
+HS-28-05 (close).
 
 ## Active risks
 
