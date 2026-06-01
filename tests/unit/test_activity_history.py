@@ -138,6 +138,9 @@ def test_import_safari_history_fixture_persists_activity_and_checkpoint(tmp_path
     history_path = tmp_path / "History.db"
     _create_safari_history(history_path)
     db = MeetingDatabase(tmp_path / "holdspeak.db")
+    # The fixture uses fixed past timestamps; keep retention generous so the
+    # default 30-day prune doesn't drop them as wall-clock time advances.
+    db.update_activity_privacy_settings(retention_days=3650)
 
     result = import_safari_history(
         BrowserHistorySource("safari", "default", history_path),
@@ -171,6 +174,7 @@ def test_import_safari_history_applies_project_mapping_rules(tmp_path):
     history_path = tmp_path / "History.db"
     _create_safari_history(history_path)
     db = MeetingDatabase(tmp_path / "holdspeak.db")
+    db.update_activity_privacy_settings(retention_days=3650)
     db.create_project(project_id="holdspeak", name="HoldSpeak")
     db.create_activity_project_rule(
         project_id="holdspeak",
@@ -221,6 +225,7 @@ def test_import_browser_history_uses_checkpoints_to_skip_reimport_churn(tmp_path
     history_path = tmp_path / "History.db"
     _create_safari_history(history_path)
     db = MeetingDatabase(tmp_path / "holdspeak.db")
+    db.update_activity_privacy_settings(retention_days=3650)
     source = BrowserHistorySource("safari", "default", history_path)
 
     first_result = import_browser_history(db=db, sources=[source])[0]

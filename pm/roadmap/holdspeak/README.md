@@ -1,6 +1,6 @@
 # HoldSpeak — Roadmap
 
-**Last updated:** 2026-05-31 (Phase 25: HS-25-01..06 + HS-25-08 shipped (7/8); web rebuild cleared 6 stale-bundle test failures; only HS-25-07 manual-dogfood closeout remains; Phase 15 auth-unblocked).
+**Last updated:** 2026-05-31 (Phase 25: HS-25-01..06 + HS-25-08 done (7/8), suite green; HS-25-07 blocked on hardware dogfood (author remote/abroad); Phase 15 auth-unblocked).
 **Current phase:** [phase-25-trust-and-hardening](./phase-25-trust-and-hardening/) — close the trust/correctness/security gaps that block external use and gate Phase 15.
 **Status:** in-progress.
 

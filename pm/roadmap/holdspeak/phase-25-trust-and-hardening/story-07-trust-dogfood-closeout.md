@@ -2,10 +2,15 @@
 
 - **Project:** holdspeak
 - **Phase:** 25
-- **Status:** backlog
+- **Status:** blocked
 - **Depends on:** HS-25-01, HS-25-02, HS-25-03, HS-25-04, HS-25-05, HS-25-06
 - **Unblocks:** Phase 15
 - **Owner:** unassigned
+- **Blocked on:** hardware access for the 3 live dogfood scenarios. As of
+  2026-05-31 the author is remote (abroad, RDP into the dev machine) with no
+  local mic/display, so dogfood cannot run. All six prerequisite stories are done
+  and the suite is green; this is the only thing keeping the phase open. Unblock
+  by running the scenarios in person (see Scope) and recording `evidence-story-07.md`.
 
 ## Problem
 

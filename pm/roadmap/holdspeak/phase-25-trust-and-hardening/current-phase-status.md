@@ -1,6 +1,6 @@
 # Phase 25 — Trust & Hardening
 
-**Last updated:** 2026-05-31 (HS-25-01..06 + HS-25-08 done; only HS-25-07 manual-dogfood closeout remains).
+**Last updated:** 2026-05-31 (HS-25-01..06 + HS-25-08 done; suite green; HS-25-07 BLOCKED on hardware dogfood — author remote/abroad).
 
 ## Goal
 
@@ -75,7 +75,7 @@ hanging or racing.
 | HS-25-04 | LLM runtime thread-safety made explicit | done | [story-04-llm-runtime-thread-safety.md](./story-04-llm-runtime-thread-safety.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-25-05 | Whisper transcription timeout | done | [story-05-transcription-timeout.md](./story-05-transcription-timeout.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-25-06 | Runtime-lifecycle knob audit (eviction, cloud_store) | done | [story-06-runtime-lifecycle-audit.md](./story-06-runtime-lifecycle-audit.md) | [evidence-story-06.md](./evidence-story-06.md) |
-| HS-25-07 | Trust hardening dogfood + closeout | backlog | [story-07-trust-dogfood-closeout.md](./story-07-trust-dogfood-closeout.md) | — |
+| HS-25-07 | Trust hardening dogfood + closeout | blocked | [story-07-trust-dogfood-closeout.md](./story-07-trust-dogfood-closeout.md) | — |
 | HS-25-08 | Web egress-posture badge (split from HS-25-01) | done | [story-08-web-egress-badge.md](./story-08-web-egress-badge.md) | [evidence-story-08.md](./evidence-story-08.md) |
 
 ## Where we are
@@ -104,13 +104,18 @@ HS-25-01 is **done**: `tests/unit/test_intel_egress_invariant.py` locks the
 invariant, `doctor` + `/api/runtime/status` (`intel_egress`) + the meeting guide
 surface the posture. The web dashboard badge was split to **HS-25-08**.
 
-**Repo finding (surfaced during HS-25-01):** the full suite has **9 pre-existing
-failures on `main`**, confirmed unrelated to this work (reproduced on `HEAD` with
-changes stashed). Six are page-content tests against a **stale committed
-`holdspeak/static/_built/`** Astro bundle; three are `test_activity_history`
-cases needing a Safari fixture absent from this checkout. The `_built` staleness
-overlaps HS-25-08 (rebuild) and Phase 26 (web work); worth a dedicated cleanup if
-it persists.
+**Repo finding (surfaced during HS-25-01), now fully resolved:** the suite had
+**9 failures on `main`**, all unrelated to the trust work (reproduced on `HEAD`
+with changes stashed). Root causes — corrected from earlier guesses:
+- **6** were a **stale local `holdspeak/static/_built/`** (the dir is *gitignored*
+  / built on demand by `hatch_build.py`, not committed). `npm run build` in
+  HS-25-08 refreshed it.
+- **3** were a **time-bomb in `test_activity_history` test data** (a fixed
+  fixture `visit_time` pruned by the 30-day retention default once wall-clock
+  passed it) — *not* a "missing Safari fixture." Fixed by setting generous
+  retention before import.
+
+Suite is now **green (1875 passed, 13 skipped)**.
 
 HS-25-02 is **done**: `holdspeak/web_auth.py` adds the token primitives;
 `web_server.py` enforces a token gate **only off-loopback** (loopback stays open
@@ -137,24 +142,20 @@ genuinely unloads the model (config→assembly→adapter→`_maybe_evict`);
 `intel_cloud_store` is forwarded as `store=True` and now documented as advisory
 (endpoint-dependent). Both pinned by `tests/unit/test_runtime_knob_audit.py`.
 
-**HS-25-01..06 and HS-25-08 are done** (7 of 8 stories). HS-25-08 shipped the web
-egress badge and rebuilt `_built`, which **cleared 6 of the 9 pre-existing
-failures** (all the stale-bundle page tests). Suite is now **3 failed / 1871
-passed**.
+**HS-25-01..06 and HS-25-08 are done** (7 of 8 stories) and the suite is fully
+green. All code-level trust/hardening work is complete and tested.
 
-**Correction on the remaining 3 failures:** they are *not* a "missing Safari
-fixture" (an earlier mischaracterization). `test_activity_history` self-creates
-its fixture with a **fixed** `visit_time` (~2026-04-29); the importer prunes
-records past the 30-day retention default at import, so now that today is past
-that date + 30d the record is pruned immediately (`imported_count==1`, 0
-retained). A **time-bomb in test data**, pre-existing on `main`, unrelated to
-Phase 25. Filed as a follow-up (trivial: use a recent/relative timestamp).
+**HS-25-07 is BLOCKED, not just pending.** Its closeout requires 3 *live*
+dogfood scenarios (misconfigured-local-model shows no egress; web token gate on a
+real non-loopback bind; transcription-timeout recovery) on real hardware. The
+author is currently remote (abroad, RDP into this machine) with no mic / local
+display, so the dogfood cannot be performed now. Code-level proof for all three
+already exists in the story tests; what's missing is purely the in-person
+observation. When hardware access returns: run the three scenarios, record them
+in `evidence-story-07.md`, write `final-summary.md`, and flip the phase to done.
 
-Remaining: **HS-25-07** — closeout + the 3 live dogfood scenarios
-(misconfigured-local-model shows no egress; web token gate; transcription timeout
-recovery). These want a **manual/hardware** run by the user; code-level proof
-already exists in each story's tests. Once dogfooded, write `final-summary.md`
-and close the phase.
+Net: Phase 25 is **functionally complete** (every defensive change shipped +
+tested); it stays formally open only on the hardware-dependent dogfood.
 
 ## Product problems to solve
 
