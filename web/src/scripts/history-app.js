@@ -860,6 +860,49 @@ function historyApp() {
       return Array.isArray(items) ? items : [];
     },
 
+    // HS-29-01: dependency map / scope review / customer signals.
+    dependenciesFor(artifact) {
+      if (artifact?.artifact_type !== "dependency_map") return [];
+      const items = artifact?.structured_json?.dependencies;
+      return Array.isArray(items) ? items : [];
+    },
+
+    scopeFindingsFor(artifact) {
+      if (artifact?.artifact_type !== "scope_review") return [];
+      const items = artifact?.structured_json?.findings;
+      return Array.isArray(items) ? items : [];
+    },
+
+    scopeVerdictLabel(verdict) {
+      return (
+        { in_scope: "In scope", out_of_scope: "Out of scope", scope_creep: "Scope creep" }[verdict] ||
+        "In scope"
+      );
+    },
+
+    customerSignalsFor(artifact) {
+      if (artifact?.artifact_type !== "customer_signals") return [];
+      const items = artifact?.structured_json?.signals;
+      return Array.isArray(items) ? items : [];
+    },
+
+    // True when any structured renderer applies — used to suppress the raw
+    // body_markdown fallback. Grows as artifact types are added.
+    hasStructuredRender(artifact) {
+      return (
+        this.isDiagram(artifact) ||
+        this.actionItemsFor(artifact).length > 0 ||
+        this.hasDecisions(artifact) ||
+        this.requirementsFor(artifact).length > 0 ||
+        this.adrsFor(artifact).length > 0 ||
+        this.milestonesFor(artifact).length > 0 ||
+        this.risksFor(artifact).length > 0 ||
+        this.dependenciesFor(artifact).length > 0 ||
+        this.scopeFindingsFor(artifact).length > 0 ||
+        this.customerSignalsFor(artifact).length > 0
+      );
+    },
+
     // HS-16-04: render a diagram artifact's Mermaid (from structured_json) as
     // inline SVG. mermaid.js is loaded lazily via window.__loadMermaid (a code
     // -split chunk wired in history.astro), so non-diagram views never pay the

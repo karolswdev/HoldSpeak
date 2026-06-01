@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 29
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-28-01 (renderer registry)
 - **Unblocks:** HS-29-05
 - **Owner:** unassigned
@@ -40,12 +40,12 @@ atomic chunk.
 
 ## Acceptance criteria
 
-- [ ] Three real `run()`s return validated payloads; failure + capability-blocked
+- [x] Three real `run()`s return validated payloads; failure + capability-blocked
       covered. Enums coerced with safe fallbacks.
-- [ ] `register_builtin_plugins` returns the real classes; others unaffected. (No
+- [x] `register_builtin_plugins` returns the real classes; others unaffected. (No
       routing ripple — already on delivery/product chains.)
-- [ ] All three artifact types render structured in `/history`.
-- [ ] Tests green; full sweep green; each verified live on `.43` Q6.
+- [x] All three artifact types render structured in `/history`.
+- [x] Tests green; full sweep green (2015 passed); each verified live on `.43` Q6.
 
 ## Test plan
 

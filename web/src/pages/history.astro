@@ -1039,8 +1039,42 @@ import AppLayout from "../layouts/AppLayout.astro";
                           </tbody>
                         </table>
                       </template>
+                      <template x-if="dependenciesFor(artifact).length">
+                        <ul class="dependency-list">
+                          <template x-for="(d, di) in dependenciesFor(artifact)" :key="`dep${di}`">
+                            <li>
+                              <span class="dep-from" x-text="d.from"></span>
+                              <span class="dep-arrow">→</span>
+                              <span class="dep-to" x-text="d.to"></span>
+                              <span class="dep-note" x-show="d.note" x-cloak x-text="` — ${d.note}`"></span>
+                            </li>
+                          </template>
+                        </ul>
+                      </template>
+                      <template x-if="scopeFindingsFor(artifact).length">
+                        <ul class="scope-list">
+                          <template x-for="(f, fi) in scopeFindingsFor(artifact)" :key="`scope${fi}`">
+                            <li class="scope-finding">
+                              <span class="scope-verdict" :class="f.verdict" x-text="scopeVerdictLabel(f.verdict)"></span>
+                              <span class="scope-item" x-text="f.item"></span>
+                              <span class="scope-rationale" x-show="f.rationale" x-cloak x-text="` — ${f.rationale}`"></span>
+                            </li>
+                          </template>
+                        </ul>
+                      </template>
+                      <template x-if="customerSignalsFor(artifact).length">
+                        <ul class="signal-list">
+                          <template x-for="(s, si) in customerSignalsFor(artifact)" :key="`sig${si}`">
+                            <li class="signal-item">
+                              <span class="signal-type" :class="s.type" x-text="(s.type || '').replace('_',' ')"></span>
+                              <span class="signal-text" x-text="s.signal"></span>
+                              <span class="signal-quote" x-show="s.quote" x-cloak x-text="` “${s.quote}”`"></span>
+                            </li>
+                          </template>
+                        </ul>
+                      </template>
                       <p class="meta-line"
-                         x-show="artifact.body_markdown && !isDiagram(artifact) && !actionItemsFor(artifact).length && !hasDecisions(artifact) && !requirementsFor(artifact).length && !adrsFor(artifact).length && !milestonesFor(artifact).length && !risksFor(artifact).length"
+                         x-show="artifact.body_markdown && !hasStructuredRender(artifact)"
                          x-cloak x-text="artifact.body_markdown"></p>
                     </div>
                   </template>
@@ -1657,6 +1691,62 @@ import AppLayout from "../layouts/AppLayout.astro";
   .level-pill.level-low {
     background: var(--color-success-soft, rgba(110, 180, 110, 0.16));
     color: var(--color-success, #7bb37b);
+  }
+
+  /* HS-29-01: dependency map / scope review / customer signals. */
+  .dependency-list,
+  .scope-list,
+  .signal-list {
+    list-style: none;
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: var(--font-size-sm);
+  }
+  .dependency-list .dep-arrow {
+    color: var(--text-muted);
+    margin: 0 var(--space-1);
+  }
+  .dependency-list .dep-note,
+  .scope-rationale,
+  .signal-quote {
+    color: var(--text-muted);
+  }
+  .scope-finding,
+  .signal-item {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-2);
+    align-items: baseline;
+  }
+  .scope-verdict,
+  .signal-type {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose, 0.05em);
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-sm, 3px);
+  }
+  .scope-verdict.scope_creep,
+  .signal-type.churn_risk,
+  .signal-type.pain {
+    background: var(--color-warning-soft, rgba(220, 170, 80, 0.18));
+    color: var(--color-warning, #e0b066);
+  }
+  .scope-verdict.out_of_scope {
+    color: var(--text-muted);
+  }
+  .scope-verdict.in_scope,
+  .signal-type.praise {
+    background: var(--color-success-soft, rgba(110, 180, 110, 0.16));
+    color: var(--color-success, #7bb37b);
+  }
+  .signal-type.request {
+    color: var(--text-muted);
   }
 
   /* HS-16-04: rendered Mermaid diagram artifact. */

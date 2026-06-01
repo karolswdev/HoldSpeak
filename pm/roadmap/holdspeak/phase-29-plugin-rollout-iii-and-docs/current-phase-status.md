@@ -1,6 +1,6 @@
 # Phase 29 — Complete the plugin rollout + public docs
 
-**Last updated:** 2026-06-01 (scaffolded). Phase **planning, 0/5**.
+**Last updated:** 2026-06-01 (HS-29-01 shipped — three delivery/product stubs flipped to real: `dependency_mapper` (`dependency_map`), `scope_guard` (`scope_review`), `customer_signal_extractor` (`customer_signals`), each with a structured `/history` render. **Ten real plugins now, four stubs.** No routing ripple. Verified live on `.43` Q6; the spoken e2e exercises ten plugins. Phase **in-progress, 1/5**).
 
 > Lineage note: Phases 16 → 27 → 28 proved, generalized, and scaled the
 > LLM-backed plugin pattern (transcript → LLM → parse/validate → structured output
@@ -67,7 +67,7 @@ plugins" section so users know what the product actually produces.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-29-01 | Delivery & product plugins (dependency_mapper, scope_guard, customer_signal_extractor) | backlog | [story-01-delivery-product-plugins.md](./story-01-delivery-product-plugins.md) | — |
+| HS-29-01 | Delivery & product plugins (dependency_mapper, scope_guard, customer_signal_extractor) | done | [story-01-delivery-product-plugins.md](./story-01-delivery-product-plugins.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-29-02 | Incident plugins (incident_timeline, runbook_delta) | backlog | [story-02-incident-plugins.md](./story-02-incident-plugins.md) | — |
 | HS-29-03 | Comms plugins (stakeholder_update_drafter, decision_announcement_drafter) | backlog | [story-03-comms-plugins.md](./story-03-comms-plugins.md) | — |
 | HS-29-04 | Public README + plugin docs | backlog | [story-04-public-docs.md](./story-04-public-docs.md) | — |
@@ -86,8 +86,11 @@ chains (`dependency_mapper`/`scope_guard`/`customer_signal_extractor` on deliver
 product, `incident_timeline`/`runbook_delta` on incident, the two drafters on
 comms), so flipping stub→real ripples no dispatch test.
 
-Pickup: **HS-29-01** (delivery & product), then 02 (incident), 03 (comms), 04
-(docs), 05 (close).
+**HS-29-01 shipped** — `dependency_mapper`, `scope_guard`,
+`customer_signal_extractor` are real (ten real plugins now, four stubs); the
+spoken e2e exercises ten plugins.
+
+Pickup: **HS-29-02** (incident), then 03 (comms), 04 (docs), 05 (close).
 
 ## Active risks
 

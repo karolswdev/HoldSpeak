@@ -146,6 +146,66 @@ def _adr_body(adrs: list[dict[str, Any]] | None) -> str:
     return "\n\n".join(parts)
 
 
+def _dependency_body(deps: list[dict[str, Any]] | None) -> str:
+    """Render dependency edges as a markdown list (HS-29-01)."""
+    if not deps:
+        return ""
+    lines: list[str] = []
+    for dep in deps:
+        src = _clean_text(dep.get("from")) or "(?)"
+        dst = _clean_text(dep.get("to")) or "(?)"
+        note = _clean_text(dep.get("note"))
+        lines.append(f"- {src} → {dst}" + (f" — {note}" if note else ""))
+    return "\n".join(lines)
+
+
+_SCOPE_VERDICT_LABELS = {
+    "in_scope": "In scope",
+    "out_of_scope": "Out of scope",
+    "scope_creep": "Scope creep",
+}
+
+
+def _scope_body(findings: list[dict[str, Any]] | None) -> str:
+    """Render scope findings grouped by verdict (HS-29-01)."""
+    if not findings:
+        return ""
+    grouped: dict[str, list[str]] = {}
+    for finding in findings:
+        item = _clean_text(finding.get("item"))
+        if not item:
+            continue
+        verdict = str(finding.get("verdict") or "in_scope").strip().lower() or "in_scope"
+        rationale = _clean_text(finding.get("rationale"))
+        grouped.setdefault(verdict, []).append(item + (f" — {rationale}" if rationale else ""))
+    parts: list[str] = []
+    ordered = list(_SCOPE_VERDICT_LABELS) + [v for v in grouped if v not in _SCOPE_VERDICT_LABELS]
+    for verdict in ordered:
+        items = grouped.get(verdict)
+        if not items:
+            continue
+        label = _SCOPE_VERDICT_LABELS.get(verdict, verdict.replace("_", " ").title())
+        lines = [f"**{label}**"]
+        lines.extend(f"- {item}" for item in items)
+        parts.append("\n".join(lines))
+    return "\n\n".join(parts)
+
+
+def _customer_signal_body(signals: list[dict[str, Any]] | None) -> str:
+    """Render customer signals as a markdown list (HS-29-01)."""
+    if not signals:
+        return ""
+    lines: list[str] = []
+    for sig in signals:
+        text = _clean_text(sig.get("signal"))
+        if not text:
+            continue
+        sig_type = _clean_text(sig.get("type")).replace("_", " ") or "signal"
+        quote = _clean_text(sig.get("quote"))
+        lines.append(f"- _{sig_type}_: {text}" + (f' — "{quote}"' if quote else ""))
+    return "\n".join(lines)
+
+
 # --- Per-artifact-type body renderers (HS-28-01) ---------------------------
 #
 # Each renderer takes the canonical plugin output and returns either
@@ -258,6 +318,39 @@ def _render_risks(ctx: _RenderContext) -> _Rendered:
     return _risk_body(risks), {"risks": risks}
 
 
+def _render_dependencies(ctx: _RenderContext) -> _Rendered:
+    # HS-29-01: dependency map.
+    raw = ctx.output.get("dependencies")
+    if not (isinstance(raw, list) and raw):
+        return None
+    deps = [item for item in raw if isinstance(item, dict)]
+    if not deps:
+        return None
+    return _dependency_body(deps), {"dependencies": deps}
+
+
+def _render_scope(ctx: _RenderContext) -> _Rendered:
+    # HS-29-01: scope review.
+    raw = ctx.output.get("findings")
+    if not (isinstance(raw, list) and raw):
+        return None
+    findings = [item for item in raw if isinstance(item, dict)]
+    if not findings:
+        return None
+    return _scope_body(findings), {"findings": findings}
+
+
+def _render_customer_signals(ctx: _RenderContext) -> _Rendered:
+    # HS-29-01: customer signals.
+    raw = ctx.output.get("signals")
+    if not (isinstance(raw, list) and raw):
+        return None
+    signals = [item for item in raw if isinstance(item, dict)]
+    if not signals:
+        return None
+    return _customer_signal_body(signals), {"signals": signals}
+
+
 _ARTIFACT_RENDERERS: dict[str, Callable[[_RenderContext], _Rendered]] = {
     "diagram": _render_diagram,
     "action_items": _render_action_items,
@@ -266,6 +359,9 @@ _ARTIFACT_RENDERERS: dict[str, Callable[[_RenderContext], _Rendered]] = {
     "adr": _render_adrs,
     "milestone_plan": _render_milestones,
     "risk_register": _render_risks,
+    "dependency_map": _render_dependencies,
+    "scope_review": _render_scope,
+    "customer_signals": _render_customer_signals,
 }
 
 

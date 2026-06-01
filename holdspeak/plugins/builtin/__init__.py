@@ -22,6 +22,14 @@ from .adr_drafter import (
     AdrDrafterPlugin,
     _extract_adrs,
 )
+from .customer_signal_extractor import (
+    CustomerSignalExtractorPlugin,
+    _extract_signals,
+)
+from .dependency_mapper import (
+    DependencyMapperPlugin,
+    _extract_dependencies,
+)
 from .decision_capture import (
     DecisionCapturePlugin,
     _extract_decisions,
@@ -42,6 +50,10 @@ from .risk_heatmap import (
     RiskHeatmapPlugin,
     _extract_risks,
 )
+from .scope_guard import (
+    ScopeGuardPlugin,
+    _extract_findings,
+)
 
 # Real plugin classes keyed by ID; every other ID falls back to the stub.
 _REAL_PLUGINS = {
@@ -52,6 +64,9 @@ _REAL_PLUGINS = {
     "adr_drafter": AdrDrafterPlugin,
     "milestone_planner": MilestonePlannerPlugin,
     "risk_heatmap": RiskHeatmapPlugin,
+    "dependency_mapper": DependencyMapperPlugin,
+    "scope_guard": ScopeGuardPlugin,
+    "customer_signal_extractor": CustomerSignalExtractorPlugin,
 }
 
 
@@ -128,19 +143,25 @@ def register_builtin_plugins(host: PluginHost) -> list[str]:
 __all__ = [
     "ActionOwnerEnforcerPlugin",
     "AdrDrafterPlugin",
+    "CustomerSignalExtractorPlugin",
     "DecisionCapturePlugin",
+    "DependencyMapperPlugin",
     "DeterministicPlugin",
     "MermaidArchitecturePlugin",
     "MilestonePlannerPlugin",
     "RequirementsExtractorPlugin",
     "RiskHeatmapPlugin",
+    "ScopeGuardPlugin",
     "_BUILTIN_PLUGIN_DEFS",
     "_extract_action_items",
     "_extract_adrs",
     "_extract_decisions",
+    "_extract_dependencies",
+    "_extract_findings",
     "_extract_mermaid_block",
     "_extract_milestones",
     "_extract_requirements",
     "_extract_risks",
+    "_extract_signals",
     "register_builtin_plugins",
 ]

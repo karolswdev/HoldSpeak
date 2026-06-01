@@ -265,6 +265,73 @@ def test_risk_register_artifact_embeds_table_body() -> None:
     assert artifact.structured_json["risks"][0]["impact"] == "high"
 
 
+def test_dependency_map_artifact_embeds_edge_body() -> None:
+    # HS-29-01: dependency_mapper output → an edge-list body + structured key.
+    runs = [
+        _run(
+            "dependency_mapper",
+            {
+                "summary": "1 dependency edge(s) mapped.",
+                "confidence_hint": 1.0,
+                "active_intents": ["delivery"],
+                "dependencies": [{"from": "Billing", "to": "API freeze", "note": "contract locked"}],
+            },
+        )
+    ]
+    artifacts = synthesize_meeting_artifacts(meeting_id="m-1", plugin_runs=runs)
+    artifact = artifacts[0]
+    assert artifact.artifact_type == "dependency_map"
+    assert "- Billing → API freeze — contract locked" in artifact.body_markdown
+    assert artifact.structured_json["dependencies"][0]["to"] == "API freeze"
+
+
+def test_scope_review_artifact_embeds_grouped_body() -> None:
+    # HS-29-01: scope_guard output → a grouped scope body + structured key.
+    runs = [
+        _run(
+            "scope_guard",
+            {
+                "summary": "2 scope finding(s); 1 flagged as scope creep.",
+                "confidence_hint": 1.0,
+                "active_intents": ["product"],
+                "findings": [
+                    {"item": "PDF export", "verdict": "in_scope", "rationale": "agreed"},
+                    {"item": "Live chat", "verdict": "scope_creep", "rationale": "new ask"},
+                ],
+            },
+        )
+    ]
+    artifacts = synthesize_meeting_artifacts(meeting_id="m-1", plugin_runs=runs)
+    artifact = artifacts[0]
+    assert artifact.artifact_type == "scope_review"
+    body = artifact.body_markdown
+    assert "**In scope**" in body
+    assert "- PDF export — agreed" in body
+    assert "**Scope creep**" in body
+    assert "- Live chat — new ask" in body
+    assert artifact.structured_json["findings"][1]["verdict"] == "scope_creep"
+
+
+def test_customer_signals_artifact_embeds_list_body() -> None:
+    # HS-29-01: customer_signal_extractor output → a signals body + structured key.
+    runs = [
+        _run(
+            "customer_signal_extractor",
+            {
+                "summary": "1 customer signal(s) (1 pain).",
+                "confidence_hint": 1.0,
+                "active_intents": ["product"],
+                "signals": [{"signal": "Dashboard too slow", "type": "pain", "quote": "it crawls"}],
+            },
+        )
+    ]
+    artifacts = synthesize_meeting_artifacts(meeting_id="m-1", plugin_runs=runs)
+    artifact = artifacts[0]
+    assert artifact.artifact_type == "customer_signals"
+    assert '- _pain_: Dashboard too slow — "it crawls"' in artifact.body_markdown
+    assert artifact.structured_json["signals"][0]["type"] == "pain"
+
+
 def test_non_diagram_artifact_body_is_byte_for_byte_legacy() -> None:
     # A non-diagram plugin run: even if (pathologically) it carried a "mermaid"
     # key, the body must match the exact legacy template.
