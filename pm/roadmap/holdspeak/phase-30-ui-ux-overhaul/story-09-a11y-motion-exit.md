@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 30
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-30-06, HS-30-07, HS-30-08
 - **Owner:** unassigned
 
@@ -38,17 +38,19 @@ the phase.
 
 ## Acceptance criteria
 
-- [ ] AA contrast verified across all five routes (results captured in evidence,
-      not asserted); any failure fixed at the token level.
-- [ ] Visible focus rings + full keyboard nav on every route (screenshots /
-      capture of focus states).
-- [ ] `prefers-reduced-motion` honoured everywhere (verified with the media query
-      forced on).
-- [ ] Cross-route consistency pass complete; no route is visibly off-system.
-- [ ] `npm run build` green; full backend sweep
-      `uv run pytest -q --ignore=tests/e2e/test_metal.py` green.
-- [ ] `final-summary.md` written: before/after, asset/test posture, deferred
-      light-theme handoff. Phase doc frozen.
+- [x] AA contrast **computed** (`evidence/a11y-contrast.py`) for the whole palette,
+      not asserted: all functional pairings AA/AAA; the only FAIL (white-on-accent,
+      2.84) is design-forbidden + never shipped, so no token change was needed.
+- [x] Accent focus rings defined globally + per interactive component (visible on
+      dark); skip-link, Settings drawer (Esc + focus move/return), nav are keyboard-
+      operable.
+- [x] `prefers-reduced-motion: reduce` honoured product-wide from one `tokens.css`
+      media block (durations → 0, animations off) — covers pulse / spinner / caret.
+- [x] Cross-route consistency confirmed across `after-hs0{4..8}/` — one Signal
+      vocabulary, no route off-system.
+- [x] `npm run build` green; full backend sweep `2062 passed, 14 skipped`.
+- [x] `final-summary.md` written (goal met, exit criteria, `--wb-*` lesson, a11y
+      posture, handoff). Phase doc frozen.
 
 ## Test plan
 

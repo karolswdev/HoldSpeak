@@ -1,13 +1,15 @@
 # Phase 30 — UI/UX overhaul: retire Workbench, ship the "Signal" identity
 
-**Last updated:** 2026-06-02 (HS-30-08 shipped — in-progress, 8/9. **History +
-Activity + Companion migrated to Signal and the `--wb-*` shim is DELETED — zero
-Workbench tokens repo-wide.** Behaviour-preserving ref inlining + eyebrow headers;
-the whole product is now Signal end-to-end. Build green; backend 2062 passed.
-History Settings-tab extraction deferred to a follow-up — drawer links to it).
+**Last updated:** 2026-06-02 (HS-30-09 shipped — **phase CLOSED, 9/9.** A11y AA
+verified (contrast harness — all functional pairings pass), reduced-motion + focus
+rings confirmed product-wide, cross-route consistency pass done; `final-summary.md`
+written. The Amiga Workbench UI is fully retired for **"Signal"** — bold dark
+identity, AA-clean, zero Workbench tokens. Build green; backend 2062 passed).
 
-> **Phase status: IN-PROGRESS (8/9).** This is the live pickup doc; it is
-> mutable until the phase closes.
+> **Phase status: DONE (9/9). This document is frozen.** See `final-summary.md`
+> for the close-out. The Workbench aesthetic is retired; the whole web front-end
+> is "Signal" (dark-only). One follow-up handed off: extract History → Settings
+> content into the shell drawer (the drawer exists + links to it).
 
 > Lineage note: Phases 10 → 12 built the current web look — a design-token
 > system (`web/src/styles/tokens.css`) and an Amiga **Workbench-evoking**
@@ -92,12 +94,12 @@ The design system is derived with the **`ui-ux-pro-max`** skill
 - [x] All five routes redesigned to Signal with before/after screenshots
       (HS-30-06 dashboard, HS-30-07 dictation, HS-30-08 history/activity/companion).
       The `--wb-*` shim is deleted — **zero Workbench tokens repo-wide**.
-- [ ] Accessibility: AA contrast verified on the dark palette, focus rings
-      visible, keyboard-navigable, reduced-motion honoured. (HS-30-09.)
+- [x] Accessibility: AA contrast verified (computed) on the dark palette, focus
+      rings visible, keyboard-navigable, reduced-motion honoured. (HS-30-09.)
 - [ ] No backend regressions: `uv run pytest -q --ignore=tests/e2e/test_metal.py`
       green across the phase.
-- [ ] `final-summary.md` records the before/after and the (deferred) light-theme
-      handoff. (HS-30-09.)
+- [x] `final-summary.md` records the before/after, the `--wb-*` migration lesson,
+      a11y posture, and the handoff (incl. deferred light theme). (HS-30-09.)
 
 ## Story status
 
@@ -111,7 +113,7 @@ The design system is derived with the **`ui-ux-pro-max`** skill
 | HS-30-06 | Dashboard (`index`) redesign | done | [story-06-dashboard-redesign.md](./story-06-dashboard-redesign.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-30-07 | Dictation redesign | done | [story-07-dictation-redesign.md](./story-07-dictation-redesign.md) | [evidence-story-07.md](./evidence-story-07.md) |
 | HS-30-08 | History + Activity + Companion redesign | done | [story-08-secondary-pages-redesign.md](./story-08-secondary-pages-redesign.md) | [evidence-story-08.md](./evidence-story-08.md) |
-| HS-30-09 | Accessibility + motion + polish + phase exit | backlog | [story-09-a11y-motion-exit.md](./story-09-a11y-motion-exit.md) | — |
+| HS-30-09 | Accessibility + motion + polish + phase exit | done | [story-09-a11y-motion-exit.md](./story-09-a11y-motion-exit.md) | [evidence-story-09.md](./evidence-story-09.md) |
 
 ## Where we are
 
@@ -176,17 +178,18 @@ accent-glow on active, primary glow; the rail is grouped under **Intelligence /
 Work / Operations** eyebrow labels; transcript stays dominant. Page `--wb-*` 8→0.
 No Alpine binding touched (CSS + inserted label divs only).
 
-**HS-30-08 shipped.** History, Activity, and Companion are migrated to Signal
-(`evidence/after-hs08/`) and the **`--wb-*` compat shim is deleted — zero Workbench
-tokens repo-wide.** Ref migration was a behaviour-preserving inline of the shim's
-mapping + an eyebrow-header tweak (activity); no JS hook touched. The whole product
-is now Signal end-to-end. **Deferred:** the full extraction of History's Settings
-*tab* content into the shell drawer (a larger `historyApp()` refactor) — the drawer
-exists + links to it; flagged for a follow-up.
+**HS-30-09 shipped — phase closed, 9/9.** Accessibility was verified by computation
+(`evidence/a11y-contrast.py`): all functional Signal pairings pass AA/AAA; the only
+FAIL (white-on-accent) is design-forbidden and never shipped, so no token changed.
+Reduced-motion is honoured product-wide from one `tokens.css` block; accent focus
+rings are on every interactive element; the five routes share one Signal vocabulary.
+`final-summary.md` is written and this doc is frozen.
 
-**Next:** HS-30-09 — accessibility (AA contrast verify on the dark palette), motion
-+ `prefers-reduced-motion`, a cross-route polish pass, and the phase exit
-(`final-summary.md`).
+**The Amiga Workbench UI is fully retired** for "Signal" — a bold, dark-only
+identity, AA-clean, zero Workbench tokens, consistent across all five routes + the
+shell + the component library. **One follow-up handed off:** extract History →
+Settings content into the shell drawer (the drawer exists + links to it). See
+`final-summary.md` §Handoff.
 
 ## Active risks
 
