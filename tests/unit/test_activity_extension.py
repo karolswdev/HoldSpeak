@@ -12,13 +12,13 @@ from holdspeak.activity_extension import (
     ingest_extension_events,
     parse_extension_event,
 )
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 
 
 @pytest.fixture
 def test_db(tmp_path):
     reset_database()
-    database = MeetingDatabase(tmp_path / "holdspeak.db")
+    database = Database(tmp_path / "holdspeak.db")
     yield database
     reset_database()
 

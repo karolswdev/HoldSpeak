@@ -1,10 +1,11 @@
 # Phase 31 — Database Decomposition
 
-**Status:** in-progress (opened 2026-06-02). 2/5 stories shipped.
+**Status:** in-progress (opened 2026-06-02). 3/5 stories shipped.
 
-**Last updated:** 2026-06-02 (HS-31-02 done — `IntelRepository` extracted (deferred-intel
-queue); `MeetingDatabase` shed all intel-queue methods; core.py 5481→3934. Suite green at
-2062. HS-31-03 next.).
+**Last updated:** 2026-06-02 (HS-31-03 done — last three repos extracted (plugins/projects/
+activity); the god-class is gone: `core.py` is a 1224-line container (from 5481, −78%) and
+`MeetingDatabase` was renamed to `Database` (zero refs in code). Suite green at 2062.
+HS-31-04 (migration squash) next.).
 
 ## Goal
 
@@ -83,7 +84,7 @@ the *call shape* and the migration history are free to change.
 |---|---|---|---|---|
 | HS-31-01 | Repository seam + `MeetingRepository` (pilot pattern) | done | [story-01-meeting-repository.md](./story-01-meeting-repository.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-31-02 | `IntelRepository` extract | done | [story-02-intel-repository.md](./story-02-intel-repository.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-31-03 | `ActivityRepository` + `PluginArtifactRepository` + `ProjectRepository` | not-started | [story-03-activity-plugin-repos.md](./story-03-activity-plugin-repos.md) | — |
+| HS-31-03 | `ActivityRepository` + `PluginArtifactRepository` + `ProjectRepository` + delete god-class | done | [story-03-activity-plugin-repos.md](./story-03-activity-plugin-repos.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-31-04 | Migration-ladder extraction + dedup | not-started | [story-04-migration-framework.md](./story-04-migration-framework.md) | — |
 | HS-31-05 | Decomposition closeout (size + schema-parity evidence) | not-started | [story-05-decomposition-closeout.md](./story-05-decomposition-closeout.md) | — |
 
@@ -112,9 +113,17 @@ container as `self._db`, so `requeue` calls `self._db.meetings.get_meeting(...)`
 production + 32 test call sites moved to `db.intel.*`; 7 fake doubles got an `intel`
 self-property. Suite green at 2062; ruff-clean.
 
-Next: **HS-31-03** — extract `ActivityRepository` + `PluginArtifactRepository` +
-`ProjectRepository`, then **delete** the `MeetingDatabase` god-class. Projects↦action-items/
-artifacts cross-domain calls will reuse the `self._db` back-reference.
+**HS-31-03 is done.** The last three domains are extracted — `PluginArtifactRepository`
+(`plugins.py`, 814), `ProjectRepository` (`projects.py`, 463), `ActivityRepository`
+(`activity.py`, 1553) — via AST extraction (scattered helpers) with a coverage assertion.
+`core.py` is now a **1224-line container** (from 5481, −78%): connection, schema, the
+singleton, nothing else. The god-class was then **renamed `MeetingDatabase → Database`**
+(145 refs across 41 files; zero in code, no alias). The one inter-repo call (activity→project)
+uses `self._db.projects`. ~469 call sites moved; 11 fakes got repo self-properties. Suite
+green at 2062; ruff-clean.
+
+Next: **HS-31-04** — squash the 18-version migration ladder in `core.py:_apply_schema` to
+one canonical schema + reset `SCHEMA_VERSION` to 1. **HS-31-05** — closeout.
 
 ## Pickup order
 

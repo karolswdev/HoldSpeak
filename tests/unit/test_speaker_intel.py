@@ -324,10 +324,10 @@ class TestSpeakerDiarizerWithDatabase:
 
     def test_save_speakers(self, temp_db_path, mock_encoder):
         """Test saving speakers to database."""
-        from holdspeak.db import MeetingDatabase, reset_database
+        from holdspeak.db import Database, reset_database
 
         try:
-            db = MeetingDatabase(temp_db_path)
+            db = Database(temp_db_path)
 
             # Create diarizer with database
             diarizer = SpeakerDiarizer(db=db, enable_cross_meeting=True)
@@ -353,10 +353,10 @@ class TestSpeakerDiarizerWithDatabase:
 
     def test_cross_meeting_recognition(self, temp_db_path, mock_encoder):
         """Test recognizing speakers across meetings."""
-        from holdspeak.db import MeetingDatabase, reset_database
+        from holdspeak.db import Database, reset_database
 
         try:
-            db = MeetingDatabase(temp_db_path)
+            db = Database(temp_db_path)
 
             # Fixed embedding for this "person"
             fixed_embedding = np.random.randn(256).astype(np.float32)

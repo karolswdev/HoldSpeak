@@ -5,11 +5,11 @@ from __future__ import annotations
 from datetime import datetime
 
 from holdspeak.activity_candidates import preview_calendar_meeting_candidates
-from holdspeak.db import MeetingDatabase
+from holdspeak.db import Database
 
 
 def test_preview_calendar_meeting_candidates_uses_local_activity_records(tmp_path):
-    db = MeetingDatabase(tmp_path / "holdspeak.db")
+    db = Database(tmp_path / "holdspeak.db")
     outlook = db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://outlook.office.com/calendar/item/123",
@@ -35,7 +35,7 @@ def test_preview_calendar_meeting_candidates_uses_local_activity_records(tmp_pat
 
 
 def test_preview_calendar_meeting_candidates_falls_back_to_domain_titles(tmp_path):
-    db = MeetingDatabase(tmp_path / "holdspeak.db")
+    db = Database(tmp_path / "holdspeak.db")
     record = db.activity.upsert_activity_record(
         source_browser="firefox",
         url="https://meet.google.com/abc-defg-hij",
@@ -50,7 +50,7 @@ def test_preview_calendar_meeting_candidates_falls_back_to_domain_titles(tmp_pat
 
 
 def test_preview_calendar_meeting_candidates_extracts_visible_time_hints(tmp_path):
-    db = MeetingDatabase(tmp_path / "holdspeak.db")
+    db = Database(tmp_path / "holdspeak.db")
     record = db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://outlook.office.com/calendar/item/123",

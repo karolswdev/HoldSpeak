@@ -8,13 +8,13 @@ import subprocess
 import pytest
 
 from holdspeak.activity_jira import preview_jira_cli_enrichment, run_jira_cli_enrichment
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 
 
 @pytest.fixture
 def test_db(tmp_path):
     reset_database()
-    database = MeetingDatabase(tmp_path / "holdspeak.db")
+    database = Database(tmp_path / "holdspeak.db")
     yield database
     reset_database()
 

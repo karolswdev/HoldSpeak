@@ -11,7 +11,7 @@ from types import SimpleNamespace
 import pytest
 
 from holdspeak.artifacts import ArtifactDraft, ArtifactSourceRef
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import MeetingState
 from holdspeak.plugins.contracts import ArtifactLineage
 from holdspeak.plugins.synthesis import (
@@ -31,7 +31,7 @@ def temp_db_path():
 
 @pytest.fixture
 def db(temp_db_path):
-    return MeetingDatabase(temp_db_path)
+    return Database(temp_db_path)
 
 
 @pytest.fixture

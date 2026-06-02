@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Optional
 
-from ..db import MeetingDatabase, PluginRunJob
+from ..db import Database, PluginRunJob
 from ..logging_config import get_logger
 from .host import PluginHost
 
@@ -30,7 +30,7 @@ def compute_retry_delay_seconds(
 
 def _record_job_result(
     *,
-    db: MeetingDatabase,
+    db: Database,
     job: PluginRunJob,
     status: str,
     plugin_version: str,
@@ -57,7 +57,7 @@ def _record_job_result(
 def process_next_plugin_run_job(
     *,
     host: PluginHost,
-    db: MeetingDatabase,
+    db: Database,
     include_scheduled: bool = False,
     retry_base_seconds: int = RETRY_BASE_SECONDS,
     retry_max_seconds: int = RETRY_MAX_SECONDS,
@@ -156,7 +156,7 @@ def process_next_plugin_run_job(
 def drain_plugin_run_queue(
     *,
     host: PluginHost,
-    db: MeetingDatabase,
+    db: Database,
     max_jobs: Optional[int] = None,
     include_scheduled: bool = False,
     retry_base_seconds: int = RETRY_BASE_SECONDS,

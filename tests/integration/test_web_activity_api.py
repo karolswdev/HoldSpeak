@@ -11,26 +11,26 @@ import pytest
 from fastapi.testclient import TestClient
 
 # DEFAULT_DB_PATH now lives in holdspeak.db.core (Phase 31 split); patch it there
-# so MeetingDatabase.__init__ / get_database see the override.
+# so Database.__init__ / get_database see the override.
 from holdspeak.db import core as db_module
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 pytestmark = [pytest.mark.requires_meeting]
 
 
 @pytest.fixture
-def activity_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> MeetingDatabase:
+def activity_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Database:
     reset_database()
     db_path = tmp_path / "holdspeak.db"
     monkeypatch.setattr(db_module, "DEFAULT_DB_PATH", db_path)
-    database = MeetingDatabase(db_path)
+    database = Database(db_path)
     yield database
     reset_database()
 
 
 @pytest.fixture
-def test_client(activity_db: MeetingDatabase) -> TestClient:
+def test_client(activity_db: Database) -> TestClient:
     server = MeetingWebServer(
                  WebRuntimeCallbacks(
                      on_bookmark=MagicMock(),
@@ -88,7 +88,7 @@ def test_activity_status_reports_default_enabled_state(test_client: TestClient) 
 
 def test_activity_records_endpoint_returns_serialized_records(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     activity_db.activity.upsert_activity_record(
         source_browser="safari",
@@ -122,7 +122,7 @@ def test_activity_settings_can_pause_ingestion(test_client: TestClient) -> None:
 
 def test_activity_domain_exclusion_and_clear_controls(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     activity_db.activity.upsert_activity_record(
         source_browser="firefox",
@@ -151,7 +151,7 @@ def test_activity_domain_exclusion_and_clear_controls(
 
 def test_activity_project_rule_api_previews_and_applies_mappings(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     activity_db.projects.create_project(project_id="holdspeak", name="HoldSpeak")
     activity_db.activity.upsert_activity_record(
@@ -215,7 +215,7 @@ def test_activity_project_rule_api_previews_and_applies_mappings(
 
 def test_activity_meeting_candidate_api_previews_persists_and_updates(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     record = activity_db.activity.upsert_activity_record(
         source_browser="safari",
@@ -277,7 +277,7 @@ def test_activity_meeting_candidate_api_previews_persists_and_updates(
 
 
 def test_activity_meeting_candidate_manual_start_marks_started(
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     candidate = activity_db.activity.create_activity_meeting_candidate(
         source_connector_id="calendar_activity",
@@ -329,7 +329,7 @@ def test_activity_meeting_candidate_manual_start_marks_started(
 
 def test_activity_meeting_candidate_manual_start_requires_runtime_start_support(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     candidate = activity_db.activity.create_activity_meeting_candidate(
         source_connector_id="calendar_activity",
@@ -348,7 +348,7 @@ def test_activity_meeting_candidate_manual_start_requires_runtime_start_support(
 
 def test_github_enrichment_preview_is_visible_and_disabled_by_default(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     record = activity_db.activity.upsert_activity_record(
         source_browser="safari",
@@ -378,7 +378,7 @@ def test_github_enrichment_preview_is_visible_and_disabled_by_default(
 
 def test_github_enrichment_run_requires_explicit_enablement(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     activity_db.activity.upsert_activity_record(
@@ -435,7 +435,7 @@ def test_github_enrichment_run_requires_explicit_enablement(
 
 def test_jira_enrichment_preview_is_visible_and_disabled_by_default(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     record = activity_db.activity.upsert_activity_record(
         source_browser="safari",
@@ -470,7 +470,7 @@ def test_jira_enrichment_preview_is_visible_and_disabled_by_default(
 
 def test_jira_enrichment_run_requires_explicit_enablement(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     activity_db.activity.upsert_activity_record(
@@ -552,7 +552,7 @@ def test_connector_list_includes_calendar_with_capabilities(
 
 def test_clear_connector_annotations_deletes_only_that_connectors_output(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     """HS-9-12: clearing annotations is scoped to the connector
     that produced them; other connectors' annotations stay put."""
@@ -594,7 +594,7 @@ def test_clear_connector_annotations_deletes_only_that_connectors_output(
 
 def test_clear_connector_candidates_deletes_only_that_connectors_output(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     """HS-9-12: calendar_activity candidates can be cleared via the
     connector-scoped DELETE endpoint."""
@@ -624,7 +624,7 @@ def test_clear_connector_unknown_connector_returns_404(test_client: TestClient) 
 
 def test_extension_events_endpoint_creates_records(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     """HS-9-03: posting events to the loopback endpoint upserts
     activity records under source_browser=firefox_ext."""
@@ -652,7 +652,7 @@ def test_extension_events_endpoint_creates_records(
 
 def test_extension_events_rejects_sensitive_fields(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     """HS-9-03: events shipping page-body / cookies / form data
     are rejected. The DB stays empty."""
@@ -694,7 +694,7 @@ def test_extension_events_rejects_sensitive_fields(
 
 def test_extension_events_applies_project_rules(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     """HS-9-03: extension records pick up the same project mapping
     as imported history records."""
@@ -727,7 +727,7 @@ def test_extension_events_applies_project_rules(
 
 def test_connector_dry_run_returns_uniform_shape_per_connector(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     """HS-9-13: every connector returns the same dry-run payload shape."""
     activity_db.activity.upsert_activity_record(
@@ -765,7 +765,7 @@ def test_connector_dry_run_returns_uniform_shape_per_connector(
 
 def test_connector_dry_run_does_not_mutate_db(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     """HS-9-13: dry-run is mutation-free — the DB row counts for
     annotations and candidates are unchanged after dry-running every
@@ -853,7 +853,7 @@ def test_put_connector_settings_rejects_unknown_key(test_client: TestClient) -> 
 
 def test_github_run_records_a_connector_run_row(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """HS-13-05: a successful gh enrichment writes one
@@ -932,7 +932,7 @@ def test_github_run_records_a_connector_run_row(
 
 def test_clear_annotations_also_clears_run_history(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     """HS-13-05: clearing a connector's annotations also drops
     its run rows — run history is part of the pack's output."""
@@ -987,7 +987,7 @@ def test_list_connector_runs_unknown_connector_returns_404(
 
 def test_project_briefings_endpoint_returns_timeline_newest_first(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     """HS-13-09: GET /api/projects/{id}/briefings walks
     meeting_context annotations matching `value.project_id`,
@@ -1037,7 +1037,7 @@ def test_project_briefings_endpoint_unknown_project_returns_404(
 
 def test_project_briefings_endpoint_empty_when_no_runs(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     activity_db.projects.create_project(
         project_id="quiet", name="Quiet project", keywords=["quiet"]
@@ -1062,7 +1062,7 @@ def test_briefing_endpoint_returns_null_when_no_annotation(
 
 def test_briefing_endpoint_returns_latest_briefing_and_run(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     """A fresh `meeting_context_briefing` annotation + a
     matching run row both come back; the briefing carries its
@@ -1101,7 +1101,7 @@ def test_briefing_endpoint_returns_latest_briefing_and_run(
 
 def test_run_pipeline_endpoint_executes_meeting_context(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     """POST /api/activity/enrichment/pipelines/meeting_context/run
     drives the pipeline end-to-end. Upstreams are seeded as
@@ -1173,7 +1173,7 @@ def test_run_pipeline_endpoint_rejects_unknown_id(
 
 def test_list_activity_annotations_filters_by_connector(
     test_client: TestClient,
-    activity_db: MeetingDatabase,
+    activity_db: Database,
 ) -> None:
     """HS-13-07: the meeting_context briefing is queryable
     via the new GET annotations endpoint, scoped by connector

@@ -23,7 +23,7 @@ from fastapi.testclient import TestClient
 
 pytestmark = [pytest.mark.requires_meeting]
 
-from holdspeak.db import MeetingDatabase, get_database, reset_database
+from holdspeak.db import Database, get_database, reset_database
 from holdspeak.meeting_session import MeetingState
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
@@ -44,7 +44,7 @@ def db(temp_db_dir):
 
 
 @pytest.fixture
-def seeded_meeting(db: MeetingDatabase):
+def seeded_meeting(db: Database):
     state = MeetingState(
         id="m-api",
         started_at=datetime(2026, 4, 25, 10, 0, 0),

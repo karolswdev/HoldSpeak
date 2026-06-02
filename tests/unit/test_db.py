@@ -8,7 +8,7 @@ import tempfile
 import shutil
 
 from holdspeak.db import (
-    MeetingDatabase,
+    Database,
     MeetingSummary,
     ActionItemSummary,
     IntelJob,
@@ -45,7 +45,7 @@ def temp_db_path():
 @pytest.fixture
 def db(temp_db_path):
     """Create a test database instance."""
-    return MeetingDatabase(temp_db_path)
+    return Database(temp_db_path)
 
 
 @pytest.fixture
@@ -79,8 +79,8 @@ def sample_meeting():
     )
 
 
-class TestMeetingDatabase:
-    """Tests for MeetingDatabase class."""
+class TestDatabase:
+    """Tests for Database class."""
 
     def test_init_creates_schema(self, db, temp_db_path):
         """Test that database initialization creates the schema."""
@@ -1602,7 +1602,7 @@ class TestDatabaseShape:
         public method defined in both the container and a repository (HS-31-01 guards
         against a botched move leaving a copy behind)."""
         db_dir = project_root / "holdspeak" / "db"
-        target_classes = {"MeetingDatabase", "MeetingRepository"}
+        target_classes = {"Database", "MeetingRepository"}
 
         methods: dict[str, list[str]] = {}
         for py in sorted(db_dir.glob("*.py")):

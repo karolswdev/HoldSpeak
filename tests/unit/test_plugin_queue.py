@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from holdspeak.db import MeetingDatabase
+from holdspeak.db import Database
 from holdspeak.meeting_session import MeetingState
 from holdspeak.plugins.host import PluginHost
 from holdspeak.plugins.queue import drain_plugin_run_queue, process_next_plugin_run_job
@@ -26,11 +26,11 @@ class _FailPlugin:
         raise RuntimeError("boom")
 
 
-def _db(tmp_path: Path) -> MeetingDatabase:
-    return MeetingDatabase(tmp_path / "holdspeak.db")
+def _db(tmp_path: Path) -> Database:
+    return Database(tmp_path / "holdspeak.db")
 
 
-def _save_meeting(db: MeetingDatabase, meeting_id: str) -> None:
+def _save_meeting(db: Database, meeting_id: str) -> None:
     db.meetings.save_meeting(
         MeetingState(
             id=meeting_id,

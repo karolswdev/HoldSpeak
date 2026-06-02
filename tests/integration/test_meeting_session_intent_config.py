@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from holdspeak.config import MeetingConfig
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import (
     MeetingSession,
     MeetingState,
@@ -43,7 +43,7 @@ def temp_db_path():
 
 @pytest.fixture
 def db(temp_db_path):
-    return MeetingDatabase(temp_db_path)
+    return Database(temp_db_path)
 
 
 def _full_host() -> PluginHost:
@@ -68,7 +68,7 @@ def _full_host() -> PluginHost:
     return host
 
 
-def _seed_active_state(session: MeetingSession, db: MeetingDatabase) -> MeetingState:
+def _seed_active_state(session: MeetingSession, db: Database) -> MeetingState:
     state = MeetingState(
         id="m-cfg",
         started_at=datetime(2026, 4, 26, 10, 0, 0),
@@ -94,7 +94,7 @@ def _seed_active_state(session: MeetingSession, db: MeetingDatabase) -> MeetingS
 
 
 def _build_session_from_config(
-    cfg: MeetingConfig, *, host: PluginHost, db: MeetingDatabase
+    cfg: MeetingConfig, *, host: PluginHost, db: Database
 ) -> MeetingSession:
     """Same wiring a future top-level entry point would do (HS-2-09 callers)."""
     return MeetingSession(

@@ -11,7 +11,7 @@ from holdspeak.connector_runtime import PipelineRunner
 from holdspeak.db import (
     ActivityAnnotation,
     ActivityMeetingCandidate,
-    MeetingDatabase,
+    Database,
     reset_database,
 )
 
@@ -19,7 +19,7 @@ from holdspeak.db import (
 @pytest.fixture
 def db(tmp_path):
     reset_database()
-    database = MeetingDatabase(tmp_path / "holdspeak.db")
+    database = Database(tmp_path / "holdspeak.db")
     yield database
     reset_database()
 
@@ -158,7 +158,7 @@ def test_synthesizer_is_deterministic():
 # ──────────────────────── End-to-end run ──────────────────────────
 
 
-def _seed_project(db: MeetingDatabase, project_id: str, name: str) -> None:
+def _seed_project(db: Database, project_id: str, name: str) -> None:
     db.projects.create_project(
         project_id=project_id,
         name=name,
@@ -166,7 +166,7 @@ def _seed_project(db: MeetingDatabase, project_id: str, name: str) -> None:
     )
 
 
-def _seed_records_and_upstreams(db: MeetingDatabase, project_id: str) -> int:
+def _seed_records_and_upstreams(db: Database, project_id: str) -> int:
     record = db.activity.upsert_activity_record(
         source_browser="safari",
         url=f"https://github.com/anthropic/{project_id}/pull/7",

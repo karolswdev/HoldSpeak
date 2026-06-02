@@ -6,13 +6,13 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 
 
 @pytest.fixture
 def db(tmp_path):
     reset_database()
-    database = MeetingDatabase(tmp_path / "holdspeak.db")
+    database = Database(tmp_path / "holdspeak.db")
     yield database
     reset_database()
 

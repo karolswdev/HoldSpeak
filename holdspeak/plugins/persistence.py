@@ -1,6 +1,6 @@
 """Typed persistence adapters for MIR contracts (HS-2-05 / spec §9.5).
 
-The underlying `MeetingDatabase` already implements the full MIR-D-001..D-006
+The underlying `Database` already implements the full MIR-D-001..D-006
 surface (intent_windows + intent_window_scores tables, plugin_runs table,
 artifacts + artifact_sources tables, schema versioning, idempotent
 `CREATE TABLE IF NOT EXISTS` migrations). This module wraps each writer with
@@ -20,12 +20,12 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from ..db import MeetingDatabase
+from ..db import Database
 from .contracts import ArtifactLineage, IntentScore, IntentWindow, PluginRun
 
 
 def record_intent_window(
-    db: MeetingDatabase,
+    db: Database,
     window: IntentWindow,
     score: IntentScore,
     *,
@@ -59,7 +59,7 @@ def record_intent_window(
 
 
 def record_plugin_run(
-    db: MeetingDatabase,
+    db: Database,
     run: PluginRun,
     *,
     output: Optional[dict[str, Any]] = None,
@@ -85,14 +85,14 @@ def record_plugin_run(
     )
 
 
-def record_plugin_runs(db: MeetingDatabase, runs: list[PluginRun]) -> None:
+def record_plugin_runs(db: Database, runs: list[PluginRun]) -> None:
     """Convenience: persist a batch of `PluginRun` records in order."""
     for run in runs:
         record_plugin_run(db, run)
 
 
 def record_artifact_with_lineage(
-    db: MeetingDatabase,
+    db: Database,
     *,
     artifact_id: str,
     meeting_id: str,

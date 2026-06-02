@@ -1,7 +1,7 @@
 """MeetingRepository — meetings, transcripts, speakers, bookmarks, action items.
 
 Extracted verbatim from the db.py monolith in Phase 31 (HS-31-01). Constructed
-by the MeetingDatabase container, sharing its connection.
+by the Database container, sharing its connection.
 """
 from __future__ import annotations
 

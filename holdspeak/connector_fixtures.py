@@ -60,7 +60,7 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping, Optional
 
 from .activity_connector_preview import dry_run
-from .db import MeetingDatabase
+from .db import Database
 
 FIXTURES_DIR = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "connectors"
 
@@ -230,7 +230,7 @@ class FixtureRunResult:
         }
 
 
-def _seed_records(db: MeetingDatabase, seeds: Iterable[ActivityRecordSeed]) -> None:
+def _seed_records(db: Database, seeds: Iterable[ActivityRecordSeed]) -> None:
     for seed in seeds:
         last_seen = (
             datetime.fromisoformat(seed.last_seen_at.replace("Z", "+00:00"))
@@ -249,7 +249,7 @@ def _seed_records(db: MeetingDatabase, seeds: Iterable[ActivityRecordSeed]) -> N
         )
 
 
-def run_fixture(db: MeetingDatabase, fixture: ConnectorFixture) -> FixtureRunResult:
+def run_fixture(db: Database, fixture: ConnectorFixture) -> FixtureRunResult:
     """Seed the fixture's records, dry-run, assert no mutation, return result."""
     _seed_records(db, fixture.activity_records)
 

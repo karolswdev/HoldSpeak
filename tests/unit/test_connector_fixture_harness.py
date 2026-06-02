@@ -25,7 +25,7 @@ from holdspeak.connector_fixtures import (
     load_fixture,
     run_fixture,
 )
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 
 FIXTURE_FILES = sorted(FIXTURES_DIR.glob("*.json"))
 
@@ -33,7 +33,7 @@ FIXTURE_FILES = sorted(FIXTURES_DIR.glob("*.json"))
 @pytest.fixture
 def test_db(tmp_path):
     reset_database()
-    database = MeetingDatabase(tmp_path / "holdspeak.db")
+    database = Database(tmp_path / "holdspeak.db")
     yield database
     reset_database()
 

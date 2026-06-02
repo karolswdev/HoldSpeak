@@ -10,18 +10,18 @@ from holdspeak.activity_connector_preview import (
     UnknownConnectorError,
     dry_run,
 )
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 
 
 @pytest.fixture
 def test_db(tmp_path):
     reset_database()
-    database = MeetingDatabase(tmp_path / "holdspeak.db")
+    database = Database(tmp_path / "holdspeak.db")
     yield database
     reset_database()
 
 
-def _seed_github_pr(db: MeetingDatabase) -> None:
+def _seed_github_pr(db: Database) -> None:
     db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/anthropic/holdspeak/pull/42",
@@ -33,7 +33,7 @@ def _seed_github_pr(db: MeetingDatabase) -> None:
     )
 
 
-def _seed_calendar_event(db: MeetingDatabase) -> None:
+def _seed_calendar_event(db: Database) -> None:
     db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://calendar.google.com/calendar/u/0/r/eventedit/abc?starts=2026-05-01T10:00",

@@ -24,7 +24,7 @@ from holdspeak.connector_sdk import (
     ConsumesEntry,
     validate_manifest,
 )
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 
 
 # ──────────────────────── Manifest validation ────────────────────────
@@ -219,7 +219,7 @@ def test_acyclic_pipeline_chain_survives():
 @pytest.fixture
 def db(tmp_path):
     reset_database()
-    database = MeetingDatabase(tmp_path / "holdspeak.db")
+    database = Database(tmp_path / "holdspeak.db")
     yield database
     reset_database()
 

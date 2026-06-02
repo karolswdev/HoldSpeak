@@ -38,7 +38,7 @@ from .activity_jira import (
     SUPPORTED_ENTITY_TYPES as JIRA_SUPPORTED_ENTITY_TYPES,
     preview_jira_cli_enrichment,
 )
-from .db import MeetingDatabase
+from .db import Database
 
 DEFAULT_LIMIT = 25
 MAX_LIMIT = 100
@@ -95,7 +95,7 @@ class UnknownConnectorError(ValueError):
 
 
 def dry_run(
-    db: MeetingDatabase,
+    db: Database,
     connector_id: str,
     *,
     limit: int = DEFAULT_LIMIT,

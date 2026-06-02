@@ -17,7 +17,7 @@ import numpy as np
 from .logging_config import get_logger
 
 if TYPE_CHECKING:
-    from .db import MeetingDatabase
+    from .db import Database
 
 log = get_logger("speaker_intel")
 
@@ -150,7 +150,7 @@ class SpeakerDiarizer:
 
     def __init__(
         self,
-        db: Optional["MeetingDatabase"] = None,
+        db: Optional["Database"] = None,
         enable_cross_meeting: bool = True,
         similarity_threshold: Optional[float] = None,
     ):

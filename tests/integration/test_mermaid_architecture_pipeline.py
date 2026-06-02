@@ -7,7 +7,7 @@ Verifies that, given a meeting with architecture-flavoured transcript:
      `run()` (with our stub intel call) and produces the success-shape
      output,
   3. `synthesize_and_persist` lifts that run into a `diagram` artifact
-     persisted into the `MeetingDatabase`.
+     persisted into the `Database`.
 
 The synthesis body shape itself is HS-16-03's concern; here we just
 assert the artifact exists with the right `artifact_type` and
@@ -23,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import MeetingState, TranscriptSegment
 from holdspeak.plugins.builtin import MermaidArchitecturePlugin
 from holdspeak.plugins.host import PluginHost
@@ -48,7 +48,7 @@ def temp_db():
     temp_dir = tempfile.mkdtemp()
     db_path = Path(temp_dir) / "mermaid_arch.db"
     try:
-        yield MeetingDatabase(db_path)
+        yield Database(db_path)
     finally:
         reset_database()
         shutil.rmtree(temp_dir, ignore_errors=True)

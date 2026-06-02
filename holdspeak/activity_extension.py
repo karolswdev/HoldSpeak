@@ -28,7 +28,7 @@ from typing import Any, Iterable, Optional
 from urllib.parse import urlsplit
 
 from .activity_entities import extract_activity_entity
-from .db import ActivityRecord, MeetingDatabase
+from .db import ActivityRecord, Database
 
 EXTENSION_SOURCE_BROWSER = "firefox_ext"
 ALLOWED_SCHEMES = frozenset({"http", "https"})
@@ -186,7 +186,7 @@ def parse_extension_event(raw: Any) -> tuple[Optional[ParsedExtensionEvent], Opt
 
 
 def ingest_extension_events(
-    db: MeetingDatabase,
+    db: Database,
     raw_events: Iterable[Any],
 ) -> IngestResult:
     """Validate, normalize, and upsert a batch of extension events."""

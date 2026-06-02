@@ -14,7 +14,7 @@ from urllib.parse import urlsplit
 
 from .activity_entities import extract_activity_entity
 from .activity_mapping import ActivityMappingRecord, project_id_for_record
-from .db import MeetingDatabase, get_database
+from .db import Database, get_database
 from .logging_config import get_logger
 
 log = get_logger("activity_history")
@@ -93,7 +93,7 @@ def discover_browser_history_sources(home: Optional[Path] = None) -> list[Browse
 
 def import_browser_history(
     *,
-    db: Optional[MeetingDatabase] = None,
+    db: Optional[Database] = None,
     home: Optional[Path] = None,
     sources: Optional[Iterable[BrowserHistorySource]] = None,
 ) -> list[BrowserHistoryImportResult]:
@@ -136,7 +136,7 @@ def import_browser_history(
 def import_safari_history(
     source: BrowserHistorySource,
     *,
-    db: Optional[MeetingDatabase] = None,
+    db: Optional[Database] = None,
 ) -> BrowserHistoryImportResult:
     """Import Safari History.db metadata into the activity ledger."""
     database = db or get_database()
@@ -151,7 +151,7 @@ def import_safari_history(
 def import_firefox_history(
     source: BrowserHistorySource,
     *,
-    db: Optional[MeetingDatabase] = None,
+    db: Optional[Database] = None,
 ) -> BrowserHistoryImportResult:
     """Import Firefox places.sqlite metadata into the activity ledger."""
     database = db or get_database()
@@ -166,7 +166,7 @@ def import_firefox_history(
 def _import_history_source(
     *,
     source: BrowserHistorySource,
-    db: MeetingDatabase,
+    db: Database,
     reader,
     timestamp_converter,
 ) -> BrowserHistoryImportResult:

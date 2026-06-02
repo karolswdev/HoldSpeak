@@ -209,7 +209,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .connector_pack_loader import RegisteredPack
-    from .db import MeetingDatabase
+    from .db import Database
 
 _runner_log = logging.getLogger(__name__)
 
@@ -282,7 +282,7 @@ class PipelineRunner:
 
     def __init__(
         self,
-        db: "MeetingDatabase",
+        db: "Database",
         *,
         registry: Optional[Iterable["RegisteredPack"]] = None,
         now: Optional[Callable[[], datetime]] = None,

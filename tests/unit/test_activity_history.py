@@ -14,7 +14,7 @@ from holdspeak.activity_history import (
     import_firefox_history,
     import_safari_history,
 )
-from holdspeak.db import MeetingDatabase
+from holdspeak.db import Database
 
 
 def _create_safari_history(path: Path) -> None:
@@ -137,7 +137,7 @@ def test_copy_sqlite_snapshot_includes_wal_and_shm_companions(tmp_path):
 def test_import_safari_history_fixture_persists_activity_and_checkpoint(tmp_path):
     history_path = tmp_path / "History.db"
     _create_safari_history(history_path)
-    db = MeetingDatabase(tmp_path / "holdspeak.db")
+    db = Database(tmp_path / "holdspeak.db")
     # The fixture uses fixed past timestamps; keep retention generous so the
     # default 30-day prune doesn't drop them as wall-clock time advances.
     db.activity.update_activity_privacy_settings(retention_days=3650)
@@ -173,7 +173,7 @@ def test_import_safari_history_fixture_persists_activity_and_checkpoint(tmp_path
 def test_import_safari_history_applies_project_mapping_rules(tmp_path):
     history_path = tmp_path / "History.db"
     _create_safari_history(history_path)
-    db = MeetingDatabase(tmp_path / "holdspeak.db")
+    db = Database(tmp_path / "holdspeak.db")
     db.activity.update_activity_privacy_settings(retention_days=3650)
     db.projects.create_project(project_id="holdspeak", name="HoldSpeak")
     db.activity.create_activity_project_rule(
@@ -198,7 +198,7 @@ def test_import_safari_history_applies_project_mapping_rules(tmp_path):
 def test_import_firefox_history_fixture_persists_activity_and_checkpoint(tmp_path):
     places_path = tmp_path / "places.sqlite"
     _create_firefox_history(places_path)
-    db = MeetingDatabase(tmp_path / "holdspeak.db")
+    db = Database(tmp_path / "holdspeak.db")
     db.activity.update_activity_privacy_settings(retention_days=3650)
 
     result = import_firefox_history(
@@ -224,7 +224,7 @@ def test_import_firefox_history_fixture_persists_activity_and_checkpoint(tmp_pat
 def test_import_browser_history_uses_checkpoints_to_skip_reimport_churn(tmp_path):
     history_path = tmp_path / "History.db"
     _create_safari_history(history_path)
-    db = MeetingDatabase(tmp_path / "holdspeak.db")
+    db = Database(tmp_path / "holdspeak.db")
     db.activity.update_activity_privacy_settings(retention_days=3650)
     source = BrowserHistorySource("safari", "default", history_path)
 
@@ -240,7 +240,7 @@ def test_import_browser_history_uses_checkpoints_to_skip_reimport_churn(tmp_path
 def test_import_browser_history_respects_global_pause(tmp_path):
     history_path = tmp_path / "History.db"
     _create_safari_history(history_path)
-    db = MeetingDatabase(tmp_path / "holdspeak.db")
+    db = Database(tmp_path / "holdspeak.db")
     db.activity.update_activity_privacy_settings(enabled=False)
 
     result = import_safari_history(
@@ -256,7 +256,7 @@ def test_import_browser_history_respects_global_pause(tmp_path):
 def test_import_browser_history_respects_excluded_domains(tmp_path):
     history_path = tmp_path / "History.db"
     _create_safari_history(history_path)
-    db = MeetingDatabase(tmp_path / "holdspeak.db")
+    db = Database(tmp_path / "holdspeak.db")
     db.activity.upsert_activity_domain_rule(domain="example.atlassian.net", action="exclude")
 
     result = import_safari_history(

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import MeetingState, TranscriptSegment
 from holdspeak.plugins.host import PluginHost
 from holdspeak.plugins.pipeline import MIRPipelineResult, process_meeting_state
@@ -37,7 +37,7 @@ def temp_db_path():
 
 @pytest.fixture
 def db(temp_db_path):
-    return MeetingDatabase(temp_db_path)
+    return Database(temp_db_path)
 
 
 @pytest.fixture

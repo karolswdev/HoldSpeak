@@ -1,7 +1,7 @@
 """Data models for the HoldSpeak persistence layer.
 
 Extracted verbatim from db.py in Phase 31 (HS-31-01) so repositories and the
-MeetingDatabase container share them without import cycles.
+Database container share them without import cycles.
 """
 from __future__ import annotations
 

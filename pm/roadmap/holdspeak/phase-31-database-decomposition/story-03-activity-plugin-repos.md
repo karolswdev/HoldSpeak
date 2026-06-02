@@ -1,6 +1,8 @@
 # HS-31-03 — `ActivityRepository` + `PluginArtifactRepository` + `ProjectRepository` + delete the god-class
 
-**Status:** not-started.
+- **Project:** holdspeak
+- **Phase:** 31
+- **Status:** done (2026-06-02). Evidence: [evidence-story-03.md](./evidence-story-03.md).
 
 ## Goal
 
@@ -32,6 +34,6 @@ references it. Three repositories, SQL moved verbatim, call sites updated to the
 
 ## Done when
 
-- [ ] All three repos extracted; call sites use the `db.*` container.
-- [ ] `MeetingDatabase` is deleted; no remaining references anywhere.
-- [ ] Full suite green; ruff clean.
+- [x] All three repos extracted; call sites use the `db.*` container.
+- [x] `MeetingDatabase` is deleted (renamed to `Database`); no remaining references in code.
+- [x] Full suite green (2062); ruff clean.

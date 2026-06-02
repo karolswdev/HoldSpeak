@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import (
     MeetingSession,
     MeetingState,
@@ -50,7 +50,7 @@ def temp_db_path():
 
 @pytest.fixture
 def db(temp_db_path):
-    return MeetingDatabase(temp_db_path)
+    return Database(temp_db_path)
 
 
 def _full_host() -> PluginHost:
@@ -75,7 +75,7 @@ def _full_host() -> PluginHost:
     return host
 
 
-def _seed_active_state(session: MeetingSession, db: MeetingDatabase | None = None) -> MeetingState:
+def _seed_active_state(session: MeetingSession, db: Database | None = None) -> MeetingState:
     state = MeetingState(
         id="m-stop-path",
         started_at=datetime(2026, 4, 25, 10, 0, 0),

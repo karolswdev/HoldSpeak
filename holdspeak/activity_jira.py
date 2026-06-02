@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Callable, Iterable, Optional
 
-from .db import ActivityAnnotation, ActivityRecord, MeetingDatabase
+from .db import ActivityAnnotation, ActivityRecord, Database
 
 CONNECTOR_ID = "jira"
 SUPPORTED_ENTITY_TYPES = frozenset({"jira_ticket"})
@@ -95,7 +95,7 @@ def preview_jira_cli_enrichment(
 
 
 def run_jira_cli_enrichment(
-    db: MeetingDatabase,
+    db: Database,
     records: Iterable[ActivityRecord],
     *,
     jira_path: Optional[str] = None,

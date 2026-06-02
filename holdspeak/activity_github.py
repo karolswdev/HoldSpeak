@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Callable, Iterable, Optional
 
-from .db import ActivityAnnotation, ActivityRecord, MeetingDatabase
+from .db import ActivityAnnotation, ActivityRecord, Database
 
 CONNECTOR_ID = "gh"
 SUPPORTED_ENTITY_TYPES = frozenset({"github_pull_request", "github_issue"})
@@ -103,7 +103,7 @@ def preview_github_cli_enrichment(
 
 
 def run_github_cli_enrichment(
-    db: MeetingDatabase,
+    db: Database,
     records: Iterable[ActivityRecord],
     *,
     gh_path: Optional[str] = None,

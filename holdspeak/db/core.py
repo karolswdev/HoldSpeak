@@ -487,7 +487,7 @@ ON connector_runs(connector_id, started_at DESC);
 
 
 
-class MeetingDatabase:
+class Database:
     """SQLite database manager for meeting persistence."""
 
     def __init__(self, db_path: Optional[Path] = None):
@@ -1207,14 +1207,14 @@ class MeetingDatabase:
 
 
 # Singleton instance
-_db: Optional[MeetingDatabase] = None
+_db: Optional[Database] = None
 
 
-def get_database(db_path: Optional[Path] = None) -> MeetingDatabase:
+def get_database(db_path: Optional[Path] = None) -> Database:
     """Get or create the database singleton."""
     global _db
     if _db is None:
-        _db = MeetingDatabase(db_path)
+        _db = Database(db_path)
     return _db
 
 
