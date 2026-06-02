@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HoldSpeak — Signal preview (HS-30-02)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+  :root{
+    --bg:#0E0F13; --surface-1:#15171D; --surface-2:#1C1F27; --surface-3:#242833;
+    --surface-hover:rgba(255,255,255,.04); --surface-active:rgba(255,255,255,.07);
+    --text:#F2F3F5; --text-muted:#9BA2B0; --text-faint:#767E8D; --text-on-accent:#0E0F13;
+    --accent:#FF6B35; --accent-hover:#FF7D4D; --accent-press:#EC5A28;
+    --accent-tint:rgba(255,107,53,.12); --accent-glow:rgba(255,107,53,.28);
+    --ok:#34D399; --warn:#FBBF24; --danger:#F87171; --danger-fill:#DC2626; --info:#56C7F5;
+    --border-subtle:rgba(255,255,255,.08); --border:rgba(255,255,255,.12); --border-strong:rgba(255,255,255,.20);
+    --elev-1:0 1px 2px rgba(0,0,0,.40), inset 0 1px 0 rgba(255,255,255,.04);
+    --elev-2:0 8px 24px rgba(0,0,0,.50);
+    --glow-accent:0 0 0 1px rgba(255,107,53,.40), 0 4px 18px var(--accent-glow);
+    --radius-sm:6px; --radius-md:10px; --radius-lg:14px; --radius-pill:999px;
+    --font-display:"Space Grotesk",sans-serif; --font-ui:"Inter",sans-serif; --font-mono:"JetBrains Mono",monospace;
+    --ease:cubic-bezier(.16,1,.3,1);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size:14px;line-height:1.5;
+       -webkit-font-smoothing:antialiased}
+  .eyebrow{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
+  .mono{font-family:var(--font-mono);font-weight:500}
+  h1,h2,h3{font-family:var(--font-display);margin:0}
+
+  /* nav */
+  .nav{display:flex;align-items:center;gap:28px;padding:14px 28px;border-bottom:1px solid var(--border-subtle);
+       background:linear-gradient(180deg,#16181F, var(--bg));position:sticky;top:0}
+  .brand{font-family:var(--font-display);font-weight:700;font-size:17px;letter-spacing:-.01em;display:flex;gap:9px;align-items:center}
+  .brand .mark{width:22px;height:22px;border-radius:6px;background:var(--accent);box-shadow:var(--glow-accent);
+       display:grid;place-items:center;color:var(--text-on-accent);font-weight:700;font-size:12px}
+  .navgroup{display:flex;gap:18px;align-items:center}
+  .navgroup .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint)}
+  .navlink{color:var(--text-muted);text-decoration:none;font-weight:500;font-size:13px;padding:6px 2px}
+  .navlink.active{color:var(--text);font-weight:600;position:relative}
+  .navlink.active::after{content:"";position:absolute;left:0;right:0;bottom:-15px;height:2px;background:var(--accent);border-radius:2px}
+  .spacer{flex:1}
+  .cluster{display:flex;gap:10px;align-items:center}
+  .chip{display:inline-flex;gap:7px;align-items:center;padding:5px 11px;border-radius:var(--radius-pill);
+        border:1px solid var(--border);background:var(--surface-1);font-size:12px;color:var(--text-muted)}
+  .dot{width:7px;height:7px;border-radius:50%}
+  .dot.live{background:var(--accent);box-shadow:0 0 0 0 var(--accent-glow);animation:pulse 1.6s var(--ease) infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 var(--accent-glow)}70%{box-shadow:0 0 0 7px rgba(255,107,53,0)}100%{box-shadow:0 0 0 0 rgba(255,107,53,0)}}
+  .icobtn{width:32px;height:32px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-1);
+          color:var(--text-muted);display:grid;place-items:center;font-size:14px}
+
+  .wrap{max-width:1320px;margin:0 auto;padding:28px}
+  .grid{display:grid;grid-template-columns:1.7fr 1fr;gap:20px}
+
+  .panel{background:var(--surface-1);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);box-shadow:var(--elev-1);overflow:hidden}
+  .panel-h{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border-subtle)}
+  .panel-b{padding:18px}
+
+  /* hero */
+  .hero{display:flex;gap:24px;align-items:flex-end;justify-content:space-between;margin-bottom:20px}
+  .hero h1{font-size:26px;font-weight:600;letter-spacing:-.01em;margin-top:8px}
+  .hero p{color:var(--text-muted);margin:6px 0 0;max-width:46ch}
+  .stats{display:flex;gap:26px;margin-top:16px}
+  .stat .k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint)}
+  .stat .v{font-family:var(--font-mono);font-weight:500;font-size:18px;margin-top:3px}
+
+  /* buttons */
+  .btn{font-family:var(--font-ui);font-weight:600;font-size:14px;border-radius:var(--radius-md);padding:11px 18px;border:1px solid transparent;
+       cursor:pointer;transition:transform var(--ease) .12s, background var(--ease) .12s}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:var(--text-on-accent);box-shadow:var(--glow-accent)}
+  .btn-primary:hover{background:var(--accent-hover)}
+  .btn-secondary{background:var(--surface-2);color:var(--text);border-color:var(--border)}
+  .btn-ghost{background:transparent;color:var(--text-muted);border-color:var(--border-subtle)}
+  .btn-danger{background:var(--danger-fill);color:#fff}
+  .btn-disabled{background:var(--surface-1);color:var(--text-faint);border-color:var(--border-subtle);cursor:not-allowed}
+  .btn.focus{outline:none;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+
+  /* pills */
+  .pill{display:inline-flex;gap:6px;align-items:center;padding:4px 10px;border-radius:var(--radius-pill);font-size:12px;font-weight:500;
+        border:1px solid var(--border-subtle);background:var(--surface-2);color:var(--text-muted)}
+  .pill.ok{color:var(--ok);border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.08)}
+  .pill.warn{color:var(--warn);border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.08)}
+  .pill.danger{color:var(--danger);border-color:rgba(248,113,113,.3);background:rgba(248,113,113,.08)}
+  .pill.info{color:var(--info);border-color:rgba(86,199,245,.3);background:rgba(86,199,245,.08)}
+
+  /* transcript */
+  .seg{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border-subtle)}
+  .seg:last-child{border-bottom:0}
+  .spk{flex:none;padding:3px 9px;border-radius:var(--radius-sm);background:var(--accent-tint);color:var(--accent);font-size:12px;font-weight:600;height:fit-content}
+  .ts{font-family:var(--font-mono);font-size:12px;color:var(--text-faint);flex:none;width:52px}
+  .seg p{margin:0;color:var(--text)}
+
+  .field{display:block;width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);
+         color:var(--text);font-family:var(--font-ui);font-size:14px;padding:10px 12px}
+  .field.focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+
+  .swatches{display:flex;gap:0;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border-subtle)}
+  .sw{flex:1;height:56px;display:flex;align-items:flex-end;padding:6px;font-size:10px;font-family:var(--font-mono);color:#0008}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .section-label{margin:26px 0 12px;color:var(--text-faint)}
+  .ai{display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--border-subtle)}
+  .ai:last-child{border:0}
+  .ck{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border-strong);flex:none;margin-top:2px}
+</style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="brand"><span class="mark">H</span>HoldSpeak</div>
+    <div class="navgroup"><span class="lbl">Live</span><a class="navlink active" href="#">Runtime</a></div>
+    <div class="navgroup"><span class="lbl">Review</span><a class="navlink" href="#">History</a><a class="navlink" href="#">Activity</a></div>
+    <div class="navgroup"><span class="lbl">Configure</span><a class="navlink" href="#">Dictation</a><a class="navlink" href="#">Companion</a></div>
+    <div class="spacer"></div>
+    <div class="cluster">
+      <span class="chip"><span class="dot live"></span> live</span>
+      <span class="chip"><span class="dot" style="background:var(--ok)"></span> local-only</span>
+      <span class="icobtn">⌘</span>
+      <span class="icobtn">⚙</span>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <span class="eyebrow">Live · Runtime</span>
+        <h1>Sprint planning — design overhaul</h1>
+        <p>Real-time transcript, live meeting intelligence, and export — audio, transcript and intel stay on this machine.</p>
+        <div class="stats">
+          <div class="stat"><div class="k">Connection</div><div class="v" style="color:var(--ok)">Live</div></div>
+          <div class="stat"><div class="k">Duration</div><div class="v">12:04</div></div>
+          <div class="stat"><div class="k">Segments</div><div class="v">86</div></div>
+          <div class="stat"><div class="k">Open actions</div><div class="v" style="color:var(--accent)">3</div></div>
+        </div>
+      </div>
+      <button class="btn btn-danger">Stop meeting</button>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-h"><span class="eyebrow">Transcript stream</span><a class="navlink" href="#" style="color:var(--accent)">Jump to latest</a></div>
+        <div class="panel-b">
+          <div class="seg"><span class="spk">Karol</span><span class="ts">11:58</span><p>Let's retire the Workbench look entirely — the pixel font and blue desktop have to go.</p></div>
+          <div class="seg"><span class="spk">Mira</span><span class="ts">12:01</span><p>Agreed. Dark, one accent, real depth. I'll own the token rewrite.</p></div>
+          <div class="seg"><span class="spk">Karol</span><span class="ts">12:03</span><p>And lift Settings out of History — it's buried as the sixth tab.</p></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-h"><span class="eyebrow">Live intelligence</span><span class="pill info"><span class="dot" style="background:var(--info)"></span> analyzing</span></div>
+        <div class="panel-b">
+          <div class="row" style="margin-bottom:14px">
+            <span class="pill ok">● on track</span><span class="pill warn">● 2 risks</span><span class="pill info">● 4 topics</span>
+          </div>
+          <span class="eyebrow">Action items</span>
+          <div class="ai"><span class="ck"></span><div><div>Rewrite tokens.css to Signal</div><div class="mono" style="font-size:12px;color:var(--text-faint)">owner: Mira · due Fri</div></div></div>
+          <div class="ai"><span class="ck"></span><div><div>Move Settings to a global drawer</div><div class="mono" style="font-size:12px;color:var(--text-faint)">owner: Karol · due Mon</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label eyebrow">Components · the system at work</div>
+    <div class="panel"><div class="panel-b">
+      <div class="row" style="margin-bottom:18px">
+        <button class="btn btn-primary">Start meeting</button>
+        <button class="btn btn-secondary">Export</button>
+        <button class="btn btn-ghost">Bookmark</button>
+        <button class="btn btn-danger">Delete</button>
+        <button class="btn btn-disabled" disabled>Disabled</button>
+        <button class="btn btn-secondary focus">Focused (ring)</button>
+      </div>
+      <div class="row" style="margin-bottom:18px">
+        <span class="pill ok">✓ completed</span><span class="pill warn">⚠ stale</span>
+        <span class="pill danger">✕ failed</span><span class="pill info">◷ running</span><span class="pill">neutral</span>
+      </div>
+      <div class="row" style="gap:16px;margin-bottom:18px">
+        <input class="field" style="max-width:280px" placeholder="Default field — type here" />
+        <input class="field focus" style="max-width:280px" value="Focused field" />
+      </div>
+      <div class="swatches">
+        <div class="sw" style="background:var(--bg);color:#fff8">#0E0F13 bg</div>
+        <div class="sw" style="background:var(--surface-1);color:#fff8">surface-1</div>
+        <div class="sw" style="background:var(--surface-2);color:#fff8">surface-2</div>
+        <div class="sw" style="background:var(--surface-3);color:#fff8">surface-3</div>
+        <div class="sw" style="background:var(--accent)">#FF6B35 accent</div>
+        <div class="sw" style="background:var(--ok)">ok</div>
+        <div class="sw" style="background:var(--warn)">warn</div>
+        <div class="sw" style="background:var(--danger-fill);color:#fff">danger</div>
+        <div class="sw" style="background:var(--info)">info</div>
+      </div>
+    </div></div>
+  </div>
+</body>
+</html>

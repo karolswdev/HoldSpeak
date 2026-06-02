@@ -64,3 +64,7 @@ aipi-lite/.coverage
 aipi-lite/htmlcov/
 aipi-lite/*.log
 aipi-lite/debug_mic.wav
+
+# Local Claude Code state + vendored design tooling (ui-ux-pro-max skill).
+# Kept local on purpose — not part of the product repo.
+.claude/

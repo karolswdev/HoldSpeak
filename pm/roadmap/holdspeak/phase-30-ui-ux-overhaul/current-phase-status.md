@@ -1,10 +1,11 @@
 # Phase 30 — UI/UX overhaul: retire Workbench, ship the "Signal" identity
 
-**Last updated:** 2026-06-01 (HS-30-01 shipped — in-progress, 1/9. UX audit + IA
-spec landed: 12 named problems, a grouped-nav IA, Settings lifted out of History,
-and "before" screenshots of all five routes. Dark-only confirmed by Karol).
+**Last updated:** 2026-06-01 (HS-30-02 shipped — in-progress, 2/9. "Signal" design
+language **signed off by Karol** against a rendered preview: near-black surface
+ramp, signature orange accent, Space Grotesk/Inter/JetBrains Mono, real depth +
+one brand pulse, full AA contrast table + token-name map. HS-30-03 unblocked).
 
-> **Phase status: IN-PROGRESS (1/9).** This is the live pickup doc; it is
+> **Phase status: IN-PROGRESS (2/9).** This is the live pickup doc; it is
 > mutable until the phase closes.
 
 > Lineage note: Phases 10 → 12 built the current web look — a design-token
@@ -77,8 +78,9 @@ The design system is derived with the **`ui-ux-pro-max`** skill
 
 - [x] UX audit + IA spec exist and name concrete problems + the new IA per route.
       (HS-30-01 — `evidence/ux-audit.md`, `evidence/ia-spec.md`.)
-- [ ] "Signal" design-language doc exists, is skill-derived, and is signed off
-      before HS-30-03 lands. (HS-30-02.)
+- [x] "Signal" design-language doc exists, is skill-derived, and is signed off
+      before HS-30-03 lands. (HS-30-02 — `evidence/design-language-signal.md` +
+      `evidence/signal-preview.png`; Karol approved 2026-06-01.)
 - [ ] `tokens.css` + `global.css` contain **zero Workbench tokens** (no `--wb-*`,
       no VT323, no saturated-blue desktop); the design galleries render the new
       foundation; `npm run build` green. (HS-30-03.)
@@ -99,7 +101,7 @@ The design system is derived with the **`ui-ux-pro-max`** skill
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-30-01 | UX audit + IA redesign | done | [story-01-ux-audit-and-ia.md](./story-01-ux-audit-and-ia.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-30-02 | "Signal" design language + skill-derived system + sign-off | backlog | [story-02-design-language-signal.md](./story-02-design-language-signal.md) | — |
+| HS-30-02 | "Signal" design language + skill-derived system + sign-off | done | [story-02-design-language-signal.md](./story-02-design-language-signal.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-30-03 | Foundation: tokens + global CSS + fonts + design galleries | backlog | [story-03-foundation-tokens.md](./story-03-foundation-tokens.md) | — |
 | HS-30-04 | Navigation + layout shell | backlog | [story-04-nav-and-layout-shell.md](./story-04-nav-and-layout-shell.md) | — |
 | HS-30-05 | Component library re-skin | backlog | [story-05-component-library.md](./story-05-component-library.md) | — |
@@ -134,9 +136,20 @@ header/panel/rail/empty-loading-error system, and per-route layout intentions �
 all **without adding routes**. "Before" screenshots of all five routes +
 the component gallery are in `evidence/before/`.
 
-**Next:** HS-30-02 — derive the "Signal" design language with the skill (palette
-ramps, type scale, depth, shape, motion) and get Karol's **sign-off**. That is the
-hard gate: no token in HS-30-03 ships until the design language is approved.
+**HS-30-02 shipped.** "Signal" is fully specified in
+`evidence/design-language-signal.md` and **signed off by Karol** against a rendered
+mock (`evidence/signal-preview.png`, built from `signal-preview.html`): neutral
+near-black surface ramp, off-white text, signature orange `#FF6B35` (reserved for
+primary/live/focus), dark-tuned status, the Space Grotesk/Inter/JetBrains Mono
+tri-stack with an uppercase-tracked eyebrow replacing the VT323 title-strip, real
+depth + radius + one brand pulse, a full AA contrast table, and a token-name map.
+Hard rule: never white-on-orange — the orange fill carries dark ink.
+
+**Next:** HS-30-03 — rewrite `web/src/styles/tokens.css` + `global.css` to the §9
+token map, swap fonts (add Space Grotesk + Inter via `@fontsource`, drop VT323 +
+Sora), update the `/design/check` + `/design/components` galleries, sweep out every
+`--wb-*` / `VT323` / `Sora` reference under `web/`, and rebuild green (+ backend
+sweep green, since the served `_built` output changes).
 
 ## Active risks
 

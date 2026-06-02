@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 30
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-30-01
 - **Unblocks:** HS-30-03
 - **Owner:** unassigned
@@ -48,14 +48,14 @@ approved, so HS-30-03 onward is mechanical application, not invention.
 
 ## Acceptance criteria
 
-- [ ] `evidence/design-language-signal.md` exists and specifies palette,
+- [x] `evidence/design-language-signal.md` exists and specifies palette,
       typography, depth, shape, motion, and density as concrete, buildable values.
-- [ ] The system is **skill-derived**: the `ui-ux-pro-max` output it's based on is
+- [x] The system is **skill-derived**: the `ui-ux-pro-max` output it's based on is
       captured in evidence (not just asserted).
-- [ ] Every text/affordance colour pairing lists its intended AA contrast target
-      (verified for real in HS-30-09).
-- [ ] A token-name map is included so HS-30-03 is a mechanical translation.
-- [ ] **Signed off by Karol** (record the sign-off in the doc) before HS-30-03.
+- [x] Every text/affordance colour pairing lists its intended AA contrast target
+      (verified for real in HS-30-09) — see §10.
+- [x] A token-name map is included so HS-30-03 is a mechanical translation — §9.
+- [x] **Signed off by Karol** (recorded in the doc, 2026-06-01) before HS-30-03.
 
 ## Test plan
 
