@@ -1457,7 +1457,7 @@ class MeetingSession:
             from .db import get_database
 
             db = get_database()
-            db.save_meeting(state)
+            db.meetings.save_meeting(state)
             database_saved = True
             if (
                 self.intel_enabled

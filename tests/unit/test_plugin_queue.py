@@ -31,7 +31,7 @@ def _db(tmp_path: Path) -> MeetingDatabase:
 
 
 def _save_meeting(db: MeetingDatabase, meeting_id: str) -> None:
-    db.save_meeting(
+    db.meetings.save_meeting(
         MeetingState(
             id=meeting_id,
             started_at=datetime(2026, 3, 29, 10, 0, 0),

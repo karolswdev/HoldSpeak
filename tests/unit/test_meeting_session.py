@@ -112,6 +112,7 @@ def test_save_reports_success_when_both_db_and_json_succeed(tmp_path: Path) -> N
     )
 
     class _FakeDatabase:
+        meetings = property(lambda self: self)
         def __init__(self) -> None:
             self.saved = []
 
@@ -158,6 +159,7 @@ def test_save_enqueues_deferred_intel_job_when_meeting_status_is_queued(tmp_path
     )
 
     class _FakeDatabase:
+        meetings = property(lambda self: self)
         def __init__(self) -> None:
             self.saved: list[str] = []
             self.enqueued: list[tuple[str, str, str | None]] = []

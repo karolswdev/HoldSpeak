@@ -48,7 +48,7 @@ def saved_meeting(db):
         title="HS-2-05 typed-persistence smoke",
         tags=["test"],
     )
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
     return state
 
 

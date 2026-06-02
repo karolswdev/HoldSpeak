@@ -40,6 +40,7 @@ def test_run_intel_command_lists_jobs(monkeypatch, capsys) -> None:
     ]
 
     class FakeDB:
+        meetings = property(lambda self: self)
         def list_intel_jobs(self, *, status=None, limit=20):
             assert status == "all"
             assert limit == 20
@@ -124,6 +125,7 @@ def test_run_intel_command_retry_failed_requeues_jobs(monkeypatch, capsys) -> No
     requeued: list[str] = []
 
     class FakeDB:
+        meetings = property(lambda self: self)
         def list_intel_jobs(self, *, status=None, limit=20):
             assert status == "failed"
             assert limit == 20
@@ -206,6 +208,7 @@ def test_run_intel_command_route_dry_run_emits_route_json(monkeypatch, capsys) -
     )
 
     class FakeDB:
+        meetings = property(lambda self: self)
         def get_meeting(self, meeting_id: str):
             assert meeting_id == "meeting-42"
             return meeting
@@ -285,6 +288,7 @@ def test_run_intel_command_reroute_persists_intent_window(monkeypatch, capsys) -
     )
 
     class FakeDB:
+        meetings = property(lambda self: self)
         def get_meeting(self, meeting_id: str):
             assert meeting_id == "meeting-77"
             return meeting

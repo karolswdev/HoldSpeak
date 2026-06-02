@@ -51,7 +51,7 @@ def seeded_meeting(db: MeetingDatabase):
         ended_at=datetime(2026, 4, 25, 11, 0, 0),
         title="API timeline test",
     )
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
 
     db.record_intent_window(
         meeting_id="m-api",

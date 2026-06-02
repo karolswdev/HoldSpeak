@@ -104,7 +104,7 @@ def _host_with_one_failing(failing_id: str) -> tuple[PluginHost, dict[str, objec
 @pytest.mark.integration
 def test_failing_plugin_does_not_block_chain_siblings_mir_r_004(db) -> None:
     state = _meeting_state()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
     host, plugins = _host_with_one_failing("requirements_extractor")
 
     result = process_meeting_state(
@@ -136,7 +136,7 @@ def test_failing_plugin_does_not_block_chain_siblings_mir_r_004(db) -> None:
 @pytest.mark.integration
 def test_failing_plugin_runs_persisted_with_error_status(db) -> None:
     state = _meeting_state()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
     host, _plugins = _host_with_one_failing("action_owner_enforcer")
 
     process_meeting_state(state, host, profile="balanced", threshold=0.4, db=db)
@@ -158,7 +158,7 @@ def test_failing_plugin_runs_persisted_with_error_status(db) -> None:
 def test_pipeline_keeps_running_when_every_other_plugin_explodes(db) -> None:
     """Multiple plugins failing simultaneously still don't block the pipeline."""
     state = _meeting_state()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
 
     host = PluginHost(default_timeout_seconds=1.0)
     chain_ids = [

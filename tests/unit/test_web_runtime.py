@@ -304,6 +304,7 @@ def test_runtime_meeting_control_callbacks_are_wired(monkeypatch: pytest.MonkeyP
     monkeypatch.setattr(web_runtime, "drain_plugin_run_queue", _fake_drain_plugin_run_queue)
 
     class FakeDb:
+        meetings = property(lambda self: self)
         def record_intent_window(self, **kwargs):
             saved_windows.append(dict(kwargs))
 

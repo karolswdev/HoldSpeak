@@ -88,7 +88,7 @@ def _seed_active_state(session: MeetingSession, db: MeetingDatabase) -> MeetingS
             ),
         ],
     )
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
     session._state = state  # type: ignore[attr-defined]
     return state
 
@@ -184,7 +184,7 @@ def test_window_step_seconds_change_window_count(db) -> None:
         title="short windows",
         segments=long_session._state.segments,  # type: ignore[attr-defined]
     )
-    db.save_meeting(short_state)
+    db.meetings.save_meeting(short_state)
     short_session = MeetingSession(
         transcriber=_NoOpTranscriber(),  # type: ignore[arg-type]
         mir_routing_enabled=cfg_short.intent_router_enabled,

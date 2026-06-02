@@ -106,7 +106,7 @@ def _state_with_arc() -> MeetingState:
 @pytest.mark.integration
 def test_pipeline_end_to_end_persists_typed_outputs(db) -> None:
     state = _state_with_arc()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
     host, _stubs = _full_host()
 
     result = process_meeting_state(
@@ -131,7 +131,7 @@ def test_pipeline_end_to_end_persists_typed_outputs(db) -> None:
 @pytest.mark.integration
 def test_pipeline_rerun_dedupes_via_host_idempotency_cache(db) -> None:
     state = _state_with_arc()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
     host, stubs = _full_host()
 
     first = process_meeting_state(state, host, profile="balanced", threshold=0.4, db=db)
@@ -149,7 +149,7 @@ def test_pipeline_rerun_dedupes_via_host_idempotency_cache(db) -> None:
 @pytest.mark.integration
 def test_pipeline_emits_transitions_across_intent_arc(db) -> None:
     state = _state_with_arc()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
     host, _stubs = _full_host()
 
     result = process_meeting_state(state, host, profile="balanced", threshold=0.4, db=db)

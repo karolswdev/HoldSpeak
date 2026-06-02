@@ -104,7 +104,7 @@ def _state_with_arc() -> MeetingState:
 @pytest.mark.integration
 def test_process_meeting_state_synthesizes_when_flag_set(db) -> None:
     state = _state_with_arc()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
 
     result = process_meeting_state(
         state,
@@ -132,7 +132,7 @@ def test_process_meeting_state_synthesizes_when_flag_set(db) -> None:
 @pytest.mark.integration
 def test_process_meeting_state_synthesize_off_by_default(db) -> None:
     state = _state_with_arc()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
 
     result = process_meeting_state(
         state,
@@ -153,7 +153,7 @@ def test_process_meeting_state_synthesize_off_by_default(db) -> None:
 @pytest.mark.integration
 def test_synthesis_dedupes_identical_outputs_across_overlapping_windows(db) -> None:
     state = _state_with_arc()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
 
     result = process_meeting_state(
         state,

@@ -18,10 +18,10 @@ def list_saved_meetings(
     """List saved meeting summaries for TUI views."""
     db = db_module.get_database()
     try:
-        return db.list_meetings(limit=limit, offset=offset, date_from=date_from)
+        return db.meetings.list_meetings(limit=limit, offset=offset, date_from=date_from)
     except TypeError:
         # Some tests use lightweight DB stubs that predate the offset parameter.
-        return db.list_meetings(limit=limit, date_from=date_from)
+        return db.meetings.list_meetings(limit=limit, date_from=date_from)
 
 
 def search_saved_meetings(
@@ -29,28 +29,28 @@ def search_saved_meetings(
 ) -> list[MeetingSummary]:
     """Search saved meetings by transcript content and return matching summaries."""
     db = db_module.get_database()
-    results = db.search_transcripts(search_query, limit=limit)
+    results = db.meetings.search_transcripts(search_query, limit=limit)
     meeting_ids = list(dict.fromkeys(r[0] for r in results))
-    all_meetings = db.list_meetings(limit=limit, date_from=date_from)
+    all_meetings = db.meetings.list_meetings(limit=limit, date_from=date_from)
     return [meeting for meeting in all_meetings if meeting.id in meeting_ids]
 
 
 def get_saved_meeting(meeting_id: str) -> Optional[MeetingState]:
     """Load a saved meeting by id."""
     db = db_module.get_database()
-    return db.get_meeting(meeting_id)
+    return db.meetings.get_meeting(meeting_id)
 
 
 def update_saved_meeting_metadata(meeting_id: str, title: str, tags: list[str]) -> bool:
     """Update metadata for a saved meeting."""
     db = db_module.get_database()
-    return db.update_meeting_metadata(meeting_id, title, tags)
+    return db.meetings.update_meeting_metadata(meeting_id, title, tags)
 
 
 def delete_saved_meeting(meeting_id: str) -> bool:
     """Delete a saved meeting."""
     db = db_module.get_database()
-    return db.delete_meeting(meeting_id)
+    return db.meetings.delete_meeting(meeting_id)
 
 
 def export_saved_meeting_markdown(

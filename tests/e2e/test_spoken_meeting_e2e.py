@@ -213,7 +213,7 @@ def test_spoken_meeting_end_to_end(tmp_path):
     # --- 4. persist meeting + transcript + artifacts into a temp DB --------
     reset_database()
     db = get_database(tmp_path / "e2e.db")
-    db.save_meeting(
+    db.meetings.save_meeting(
         MeetingState(
             id=meeting_id,
             started_at=datetime.now(),  # naive — matches the codebase duration math

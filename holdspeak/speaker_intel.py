@@ -328,7 +328,7 @@ class SpeakerDiarizer:
             return
 
         try:
-            speakers = self.db.get_all_speakers()
+            speakers = self.db.meetings.get_all_speakers()
             self._known_speakers = {s.id: s for s in speakers}
             self._known_speakers_loaded = True
             log.info(f"Loaded {len(self._known_speakers)} known speakers from database")
@@ -349,7 +349,7 @@ class SpeakerDiarizer:
             saved_count = 0
             for speaker in self._session_speakers.values():
                 try:
-                    self.db.save_speaker(speaker)
+                    self.db.meetings.save_speaker(speaker)
                     saved_count += 1
                 except Exception as e:
                     log.error(f"Failed to save speaker {speaker.id}: {e}")
@@ -375,7 +375,7 @@ class SpeakerDiarizer:
 
                 if self.db is not None:
                     try:
-                        self.db.update_speaker_name(speaker_id, new_name)
+                        self.db.meetings.update_speaker_name(speaker_id, new_name)
                     except Exception as e:
                         log.error(f"Failed to persist speaker rename: {e}")
 

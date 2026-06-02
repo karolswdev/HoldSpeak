@@ -77,7 +77,7 @@ def test_mermaid_architecture_plugin_lands_diagram_artifact(temp_db) -> None:
             ),
         ],
     )
-    temp_db.save_meeting(state)
+    temp_db.meetings.save_meeting(state)
 
     transcript = state.segments[0].text
 

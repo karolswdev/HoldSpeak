@@ -86,14 +86,14 @@ class TestMeetingDatabase:
         """Test that database initialization creates the schema."""
         assert temp_db_path.exists()
         # Verify tables exist by attempting queries
-        meetings = db.list_meetings()
+        meetings = db.meetings.list_meetings()
         assert meetings == []
 
     def test_save_and_get_meeting(self, db, sample_meeting):
         """Test saving and retrieving a meeting."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        retrieved = db.get_meeting(sample_meeting.id)
+        retrieved = db.meetings.get_meeting(sample_meeting.id)
         assert retrieved is not None
         assert retrieved.id == sample_meeting.id
         assert retrieved.title == sample_meeting.title
@@ -120,9 +120,9 @@ class TestMeetingDatabase:
             summary="A friendly conversation about wellbeing.",
         )
 
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        retrieved = db.get_meeting(sample_meeting.id)
+        retrieved = db.meetings.get_meeting(sample_meeting.id)
         assert retrieved.intel is not None
         assert len(retrieved.intel.topics) == 2
         assert len(retrieved.intel.action_items) == 1
@@ -130,13 +130,13 @@ class TestMeetingDatabase:
 
     def test_get_nonexistent_meeting(self, db):
         """Test getting a meeting that doesn't exist."""
-        result = db.get_meeting("nonexistent")
+        result = db.meetings.get_meeting("nonexistent")
         assert result is None
 
     def test_list_meetings(self, db, sample_meeting):
         """Test listing meetings."""
         # Save multiple meetings
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         meeting2 = MeetingState(
             id="test456",
@@ -146,9 +146,9 @@ class TestMeetingDatabase:
             mic_label="Me",
             remote_label="Remote",
         )
-        db.save_meeting(meeting2)
+        db.meetings.save_meeting(meeting2)
 
-        meetings = db.list_meetings()
+        meetings = db.meetings.list_meetings()
         assert len(meetings) == 2
         # Should be sorted by date descending
         assert meetings[0].id == "test456"
@@ -156,7 +156,7 @@ class TestMeetingDatabase:
 
     def test_list_meetings_with_limit(self, db, sample_meeting):
         """Test listing meetings with limit."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         meeting2 = MeetingState(
             id="test456",
@@ -164,14 +164,14 @@ class TestMeetingDatabase:
             mic_label="Me",
             remote_label="Remote",
         )
-        db.save_meeting(meeting2)
+        db.meetings.save_meeting(meeting2)
 
-        meetings = db.list_meetings(limit=1)
+        meetings = db.meetings.list_meetings(limit=1)
         assert len(meetings) == 1
 
     def test_list_meetings_date_filter(self, db, sample_meeting):
         """Test filtering meetings by date range."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         meeting2 = MeetingState(
             id="test456",
@@ -179,10 +179,10 @@ class TestMeetingDatabase:
             mic_label="Me",
             remote_label="Remote",
         )
-        db.save_meeting(meeting2)
+        db.meetings.save_meeting(meeting2)
 
         # Filter to January only
-        meetings = db.list_meetings(
+        meetings = db.meetings.list_meetings(
             date_from=datetime(2024, 1, 1),
             date_to=datetime(2024, 1, 31),
         )
@@ -191,26 +191,26 @@ class TestMeetingDatabase:
 
     def test_delete_meeting(self, db, sample_meeting):
         """Test deleting a meeting."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        result = db.delete_meeting(sample_meeting.id)
+        result = db.meetings.delete_meeting(sample_meeting.id)
         assert result is True
 
         # Should be gone
-        retrieved = db.get_meeting(sample_meeting.id)
+        retrieved = db.meetings.get_meeting(sample_meeting.id)
         assert retrieved is None
 
     def test_delete_nonexistent_meeting(self, db):
         """Test deleting a meeting that doesn't exist."""
-        result = db.delete_meeting("nonexistent")
+        result = db.meetings.delete_meeting("nonexistent")
         assert result is False
 
     def test_get_meeting_count(self, db, sample_meeting):
         """Test counting meetings."""
-        assert db.get_meeting_count() == 0
+        assert db.meetings.get_meeting_count() == 0
 
-        db.save_meeting(sample_meeting)
-        assert db.get_meeting_count() == 1
+        db.meetings.save_meeting(sample_meeting)
+        assert db.meetings.get_meeting_count() == 1
 
         meeting2 = MeetingState(
             id="test456",
@@ -218,8 +218,8 @@ class TestMeetingDatabase:
             mic_label="Me",
             remote_label="Remote",
         )
-        db.save_meeting(meeting2)
-        assert db.get_meeting_count() == 2
+        db.meetings.save_meeting(meeting2)
+        assert db.meetings.get_meeting_count() == 2
 
 
 class TestActionItems:
@@ -247,17 +247,17 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         # Pending only
-        items = db.list_action_items(include_completed=False)
+        items = db.meetings.list_action_items(include_completed=False)
         assert len(items) == 1
         assert items[0].task == "Task one"
         assert items[0].review_state == "pending"
         assert items[0].reviewed_at is None
 
         # All items
-        items = db.list_action_items(include_completed=True)
+        items = db.meetings.list_action_items(include_completed=True)
         assert len(items) == 2
 
     def test_list_action_items_by_owner(self, db, sample_meeting):
@@ -282,9 +282,9 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        items = db.list_action_items(include_completed=True, owner="Me")
+        items = db.meetings.list_action_items(include_completed=True, owner="Me")
         assert len(items) == 1
         assert items[0].task == "My task"
 
@@ -303,14 +303,14 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         # Update to done
-        result = db.update_action_item_status("action1", "done")
+        result = db.meetings.update_action_item_status("action1", "done")
         assert result is True
 
         # Verify
-        items = db.list_action_items(include_completed=True)
+        items = db.meetings.list_action_items(include_completed=True)
         assert items[0].status == "done"
         assert items[0].completed_at is not None
 
@@ -329,12 +329,12 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        result = db.update_action_item_status("action1", "dismissed")
+        result = db.meetings.update_action_item_status("action1", "dismissed")
         assert result is True
 
-        items = db.list_action_items(include_completed=True)
+        items = db.meetings.list_action_items(include_completed=True)
         assert items[0].status == "dismissed"
         assert items[0].completed_at is not None
 
@@ -354,18 +354,18 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        result = db.update_action_item_status("action1", "pending")
+        result = db.meetings.update_action_item_status("action1", "pending")
         assert result is True
 
-        items = db.list_action_items(include_completed=True)
+        items = db.meetings.list_action_items(include_completed=True)
         assert items[0].status == "pending"
         assert items[0].completed_at is None
 
     def test_update_nonexistent_action_item(self, db):
         """Test updating an action item that doesn't exist."""
-        result = db.update_action_item_status("nonexistent", "done")
+        result = db.meetings.update_action_item_status("nonexistent", "done")
         assert result is False
 
     def test_update_action_item_status_rejects_invalid_status(self, db, sample_meeting):
@@ -383,10 +383,10 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         with pytest.raises(ValueError, match="Invalid action item status"):
-            db.update_action_item_status("action1", "archived")
+            db.meetings.update_action_item_status("action1", "archived")
 
     def test_update_action_item_review_state(self, db, sample_meeting):
         """Action items can be explicitly accepted during intel review."""
@@ -403,10 +403,10 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        assert db.update_action_item_review_state("action1", "accepted")
-        item = db.get_action_item("action1")
+        assert db.meetings.update_action_item_review_state("action1", "accepted")
+        item = db.meetings.get_action_item("action1")
         assert item is not None
         assert item.review_state == "accepted"
         assert item.reviewed_at is not None
@@ -425,10 +425,10 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         with pytest.raises(ValueError, match="Invalid action item review_state"):
-            db.update_action_item_review_state("action1", "approved")
+            db.meetings.update_action_item_review_state("action1", "approved")
 
     def test_edit_action_item_auto_accepts(self, db, sample_meeting):
         """Editing an intel item should count as accepting it."""
@@ -445,16 +445,16 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        assert db.edit_action_item(
+        assert db.meetings.edit_action_item(
             "action1",
             task="Edited task",
             owner="Remote",
             due="Friday",
         )
 
-        item = db.get_action_item("action1")
+        item = db.meetings.get_action_item("action1")
         assert item is not None
         assert item.task == "Edited task"
         assert item.owner == "Remote"
@@ -476,10 +476,10 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         with pytest.raises(ValueError, match="cannot be empty"):
-            db.edit_action_item("action1", task="   ", owner=None, due=None)
+            db.meetings.edit_action_item("action1", task="   ", owner=None, due=None)
 
     def test_save_meeting_preserves_review_state_across_resave(self, db, sample_meeting):
         """A later extraction should not reset accepted review state to pending."""
@@ -496,9 +496,9 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
-        assert db.update_action_item_review_state("action1", "accepted")
-        accepted = db.get_action_item("action1")
+        db.meetings.save_meeting(sample_meeting)
+        assert db.meetings.update_action_item_review_state("action1", "accepted")
+        accepted = db.meetings.get_action_item("action1")
         assert accepted is not None
         accepted_reviewed_at = accepted.reviewed_at
         assert accepted_reviewed_at is not None
@@ -517,9 +517,9 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        resaved = db.get_action_item("action1")
+        resaved = db.meetings.get_action_item("action1")
         assert resaved is not None
         assert resaved.review_state == "accepted"
         assert resaved.reviewed_at == accepted_reviewed_at
@@ -539,12 +539,12 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        result = db.update_action_item_status("action1", "done")
+        result = db.meetings.update_action_item_status("action1", "done")
         assert result is True
 
-        completed_item = db.list_action_items(include_completed=True)[0]
+        completed_item = db.meetings.list_action_items(include_completed=True)[0]
         original_completed_at = completed_item.completed_at
         assert original_completed_at is not None
 
@@ -562,9 +562,9 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        resaved_item = db.list_action_items(include_completed=True)[0]
+        resaved_item = db.meetings.list_action_items(include_completed=True)[0]
         assert resaved_item.status == "done"
         assert resaved_item.completed_at == original_completed_at
 
@@ -585,7 +585,7 @@ class TestActionItems:
         )
 
         with pytest.raises(ValueError, match="Invalid action item status"):
-            db.save_meeting(sample_meeting)
+            db.meetings.save_meeting(sample_meeting)
 
 
 class TestTranscriptSearch:
@@ -593,10 +593,10 @@ class TestTranscriptSearch:
 
     def test_search_transcripts(self, db, sample_meeting):
         """Test searching transcripts."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         # Search for "hello"
-        results = db.search_transcripts("hello")
+        results = db.meetings.search_transcripts("hello")
         assert len(results) == 1
         meeting_id, segment = results[0]
         assert meeting_id == "test123"
@@ -604,9 +604,9 @@ class TestTranscriptSearch:
 
     def test_search_transcripts_no_results(self, db, sample_meeting):
         """Test search with no results."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        results = db.search_transcripts("nonexistent phrase")
+        results = db.meetings.search_transcripts("nonexistent phrase")
         assert len(results) == 0
 
     def test_search_transcripts_multiple_results(self, db, sample_meeting):
@@ -620,9 +620,9 @@ class TestTranscriptSearch:
                 end_time=13.0,
             )
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        results = db.search_transcripts("hello")
+        results = db.meetings.search_transcripts("hello")
         assert len(results) == 2
 
 
@@ -631,9 +631,9 @@ class TestMeetingSummary:
 
     def test_meeting_summary_in_list(self, db, sample_meeting):
         """Test that list_meetings returns proper MeetingSummary objects."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        meetings = db.list_meetings()
+        meetings = db.meetings.list_meetings()
         assert len(meetings) == 1
 
         summary = meetings[0]
@@ -649,7 +649,7 @@ class TestUpsert:
 
     def test_save_meeting_updates_existing(self, db, sample_meeting):
         """Test that saving a meeting again updates it."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         # Modify and save again
         sample_meeting.title = "Updated Title"
@@ -661,13 +661,13 @@ class TestUpsert:
                 end_time=23.0,
             )
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         # Should still be one meeting
-        assert db.get_meeting_count() == 1
+        assert db.meetings.get_meeting_count() == 1
 
         # Should have updated data
-        retrieved = db.get_meeting(sample_meeting.id)
+        retrieved = db.meetings.get_meeting(sample_meeting.id)
         assert retrieved.title == "Updated Title"
         assert len(retrieved.segments) == 3
 
@@ -1106,7 +1106,7 @@ class TestDeferredIntelQueue:
         sample_meeting.intel_status = "queued"
         sample_meeting.intel_status_detail = "Queued for later processing."
         sample_meeting.intel_requested_at = datetime.now()
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         transcript_hash = sample_meeting.transcript_hash()
         db.enqueue_intel_job(sample_meeting.id, transcript_hash=transcript_hash)
@@ -1119,7 +1119,7 @@ class TestDeferredIntelQueue:
 
     def test_complete_intel_job_removes_queue_entry(self, db, sample_meeting):
         """Completed jobs should be removed from the queue."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
 
         claimed = db.claim_next_intel_job()
@@ -1130,21 +1130,21 @@ class TestDeferredIntelQueue:
 
     def test_fail_intel_job_updates_meeting_status(self, db, sample_meeting):
         """Failed jobs should surface as meeting intel errors."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
 
         claimed = db.claim_next_intel_job()
         assert claimed is not None
 
         db.fail_intel_job(sample_meeting.id, "Deferred intel failed")
-        updated = db.get_meeting(sample_meeting.id)
+        updated = db.meetings.get_meeting(sample_meeting.id)
         assert updated is not None
         assert updated.intel_status == "error"
         assert updated.intel_status_detail == "Deferred intel failed"
 
     def test_list_intel_jobs_includes_meeting_context(self, db, sample_meeting):
         """Queued jobs should include meeting metadata for CLI display."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
 
         jobs = db.list_intel_jobs()
@@ -1156,7 +1156,7 @@ class TestDeferredIntelQueue:
 
     def test_requeue_intel_job_refreshes_failed_job(self, db, sample_meeting):
         """Failed jobs should be requeueable for manual retry."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
         db.claim_next_intel_job()
         db.fail_intel_job(sample_meeting.id, "Deferred intel failed")
@@ -1171,7 +1171,7 @@ class TestDeferredIntelQueue:
 
     def test_claim_next_intel_job_skips_future_scheduled_jobs(self, db, sample_meeting):
         """Claim should ignore queued jobs that are not due yet."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
 
         future = datetime.now() + timedelta(minutes=5)
@@ -1188,7 +1188,7 @@ class TestDeferredIntelQueue:
 
     def test_retry_intel_job_requeues_and_updates_meeting_status(self, db, sample_meeting):
         """retry_intel_job should keep job queued with retry details."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
         claimed = db.claim_next_intel_job()
         assert claimed is not None
@@ -1209,14 +1209,14 @@ class TestDeferredIntelQueue:
         assert queued[0].last_error == "Deferred intel failed: timeout"
         assert queued[0].requested_at >= retry_at.replace(microsecond=0)
 
-        meeting = db.get_meeting(sample_meeting.id)
+        meeting = db.meetings.get_meeting(sample_meeting.id)
         assert meeting is not None
         assert meeting.intel_status == "queued"
         assert "Retrying at" in (meeting.intel_status_detail or "")
 
     def test_get_intel_queue_summary_reports_aggregate_telemetry(self, db, sample_meeting):
         """Queue summary should report due/scheduled/retry telemetry accurately."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
 
         summary = db.get_intel_queue_summary()
@@ -1246,7 +1246,7 @@ class TestDeferredIntelQueue:
 
     def test_intel_job_attempt_history_round_trips(self, db, sample_meeting):
         """Attempt history should persist and return latest-first order."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         now = datetime.now()
         db.record_intel_job_attempt(
             sample_meeting.id,
@@ -1275,7 +1275,7 @@ class TestMirPersistence:
     """Tests for MIR intent-window and plugin-run persistence."""
 
     def test_record_and_list_intent_windows(self, db, sample_meeting):
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         db.record_intent_window(
             meeting_id=sample_meeting.id,
@@ -1335,7 +1335,7 @@ class TestMirPersistence:
         assert row.metadata["source"] == "refresh"
 
     def test_record_and_list_plugin_runs(self, db, sample_meeting):
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         window_id = f"{sample_meeting.id}:w0001"
 
         db.record_intent_window(
@@ -1410,7 +1410,7 @@ class TestMirPersistence:
         assert len(filtered) == 2
 
     def test_record_and_list_artifacts_with_lineage(self, db, sample_meeting):
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         db.record_artifact(
             artifact_id="art-1",
@@ -1461,7 +1461,7 @@ class TestMirPersistence:
         assert ("plugin_run", "12") in refs
 
     def test_plugin_run_job_queue_lifecycle(self, db, sample_meeting):
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         idempotency_key = "queue-key-1"
 
         inserted = db.enqueue_plugin_run_job(
@@ -1516,7 +1516,7 @@ class TestMirPersistence:
         assert db.get_plugin_run_job(claimed_again.id) is None
 
     def test_plugin_run_job_fail_status(self, db, sample_meeting):
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         db.enqueue_plugin_run_job(
             meeting_id=sample_meeting.id,
             window_id=f"{sample_meeting.id}:w0002",
@@ -1537,7 +1537,7 @@ class TestMirPersistence:
         assert failed[0].last_error == "Timed out repeatedly"
 
     def test_plugin_run_job_summary_reports_queue_telemetry(self, db, sample_meeting):
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         for idx in range(1, 5):
             db.enqueue_plugin_run_job(
                 meeting_id=sample_meeting.id,
@@ -1571,7 +1571,7 @@ class TestMirPersistence:
         assert summary.next_retry_at is not None
 
     def test_claim_next_plugin_run_job_can_include_scheduled(self, db, sample_meeting):
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         db.enqueue_plugin_run_job(
             meeting_id=sample_meeting.id,
             window_id=f"{sample_meeting.id}:w-scheduled",
@@ -1598,20 +1598,20 @@ class TestDatabaseShape:
     """Tests for structural invariants in the DB layer."""
 
     def test_meeting_database_has_no_duplicate_method_definitions(self, project_root: Path):
-        """Public DB methods should have one canonical implementation each."""
-        db_path = project_root / "holdspeak" / "db.py"
-        module = ast.parse(db_path.read_text())
+        """Public DB methods should have one canonical implementation each — and no
+        public method defined in both the container and a repository (HS-31-01 guards
+        against a botched move leaving a copy behind)."""
+        db_dir = project_root / "holdspeak" / "db"
+        target_classes = {"MeetingDatabase", "MeetingRepository"}
 
-        methods: dict[str, list[int]] = {}
-        for node in module.body:
-            if isinstance(node, ast.ClassDef) and node.name == "MeetingDatabase":
-                for item in node.body:
-                    if isinstance(item, ast.FunctionDef):
-                        methods.setdefault(item.name, []).append(item.lineno)
+        methods: dict[str, list[str]] = {}
+        for py in sorted(db_dir.glob("*.py")):
+            module = ast.parse(py.read_text())
+            for node in module.body:
+                if isinstance(node, ast.ClassDef) and node.name in target_classes:
+                    for item in node.body:
+                        if isinstance(item, ast.FunctionDef) and not item.name.startswith("_"):
+                            methods.setdefault(item.name, []).append(f"{py.name}:{item.lineno}")
 
-        duplicates = {
-            name: lines
-            for name, lines in methods.items()
-            if len(lines) > 1 and not name.startswith("_")
-        }
+        duplicates = {name: locs for name, locs in methods.items() if len(locs) > 1}
         assert duplicates == {}

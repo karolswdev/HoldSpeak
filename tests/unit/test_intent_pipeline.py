@@ -48,7 +48,7 @@ def saved_meeting(db):
         ended_at=datetime(2026, 4, 25, 11, 0, 0),
         title="Pipeline test",
     )
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
     return state
 
 

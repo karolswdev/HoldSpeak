@@ -12,7 +12,7 @@ def run_actions_command(args) -> None:
     db = get_database()
 
     if args.done:
-        success = db.update_action_item_status(args.done, "done")
+        success = db.meetings.update_action_item_status(args.done, "done")
         if success:
             print(f"Marked as done: {args.done}")
         else:
@@ -21,7 +21,7 @@ def run_actions_command(args) -> None:
         return
 
     if args.dismiss:
-        success = db.update_action_item_status(args.dismiss, "dismissed")
+        success = db.meetings.update_action_item_status(args.dismiss, "dismissed")
         if success:
             print(f"Dismissed: {args.dismiss}")
         else:
@@ -29,7 +29,7 @@ def run_actions_command(args) -> None:
             sys.exit(1)
         return
 
-    items = db.list_action_items(
+    items = db.meetings.list_action_items(
         include_completed=args.all,
         owner=args.owner,
         meeting_id=args.meeting,

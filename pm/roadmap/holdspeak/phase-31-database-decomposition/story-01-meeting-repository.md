@@ -1,6 +1,8 @@
 # HS-31-01 — Repository seam + `MeetingRepository` (pilot pattern)
 
-**Status:** not-started.
+- **Project:** holdspeak
+- **Phase:** 31
+- **Status:** done (2026-06-02). Evidence: [evidence-story-01.md](./evidence-story-01.md).
 
 ## Goal
 
@@ -34,7 +36,7 @@ in HS-31-03 once empty).
 
 ## Done when
 
-- [ ] `holdspeak/db/` package exists with `Database` container + `BaseRepository` + conn helper.
-- [ ] Meetings cluster lives in `MeetingRepository`; call sites use `db.meetings.*`.
-- [ ] Those methods removed from `MeetingDatabase`; full suite green; ruff clean.
-- [ ] Pattern documented in the package + `MeetingRepository` docstrings.
+- [x] `holdspeak/db/` package exists with `Database` container + `BaseRepository` + conn helper.
+- [x] Meetings cluster lives in `MeetingRepository`; call sites use `db.meetings.*`.
+- [x] Those methods removed from `MeetingDatabase`; full suite green (2062); ruff clean.
+- [x] Pattern documented in the package + `MeetingRepository` docstrings.

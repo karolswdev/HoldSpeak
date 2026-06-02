@@ -68,7 +68,7 @@ def process_next_plugin_run_job(
     if job is None:
         return False
 
-    meeting = db.get_meeting(job.meeting_id)
+    meeting = db.meetings.get_meeting(job.meeting_id)
     if meeting is None:
         delay_seconds = compute_retry_delay_seconds(
             job.attempts,

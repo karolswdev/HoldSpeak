@@ -1105,6 +1105,7 @@ class TestMirHistoryApiEndpoints:
         now = datetime(2026, 3, 29, 18, 0, 0)
 
         class FakeDb:
+            meetings = property(lambda self: self)
             def get_meeting(self, meeting_id):
                 if meeting_id != "m-001":
                     return None
@@ -1170,6 +1171,7 @@ class TestMirHistoryApiEndpoints:
         now = datetime(2026, 3, 29, 18, 0, 0)
 
         class FakeDb:
+            meetings = property(lambda self: self)
             def get_meeting(self, meeting_id):
                 if meeting_id != "m-001":
                     return None
@@ -1239,6 +1241,7 @@ class TestMirHistoryApiEndpoints:
         now = datetime(2026, 3, 29, 18, 0, 0)
 
         class FakeDb:
+            meetings = property(lambda self: self)
             def get_meeting(self, meeting_id):
                 if meeting_id != "m-001":
                     return None
@@ -1319,6 +1322,7 @@ class TestMirHistoryApiEndpoints:
         )
 
         class FakeDb:
+            meetings = property(lambda self: self)
             def get_meeting(self, meeting_id):
                 return meeting if meeting_id == "m-export" else None
 
@@ -1370,6 +1374,7 @@ class TestMirHistoryApiEndpoints:
 
     def test_legacy_meeting_without_mir_history_rows_remains_loadable(self, monkeypatch, test_client):
         class FakeDb:
+            meetings = property(lambda self: self)
             def get_meeting(self, meeting_id):
                 if meeting_id != "m-legacy":
                     return None
@@ -1426,6 +1431,7 @@ class TestMirHistoryApiEndpoints:
         )
 
         class FakeDb:
+            meetings = property(lambda self: self)
             def get_meeting(self, meeting_id):
                 if meeting_id != "m-reroute":
                     return None
@@ -1978,6 +1984,7 @@ class TestSpeakerApiEndpoints:
 
     def test_speaker_endpoints(self, monkeypatch, test_client):
         class FakeDb:
+            meetings = property(lambda self: self)
             def __init__(self):
                 self._speakers = {
                     "spk-1": SimpleNamespace(id="spk-1", name="Alice", avatar="👩", sample_count=4),
@@ -2072,6 +2079,7 @@ class TestGlobalActionItemsApiEndpoints:
         now = datetime(2025, 1, 12, 9, 0, 0)
 
         class FakeDb:
+            meetings = property(lambda self: self)
             def __init__(self):
                 self._items = {
                     "a-1": SimpleNamespace(
@@ -2184,6 +2192,7 @@ class TestGlobalActionItemsApiEndpoints:
 
     def test_action_item_review_and_edit_validation(self, monkeypatch, test_client):
         class FakeDb:
+            meetings = property(lambda self: self)
             def update_action_item_review_state(self, item_id, review_state):
                 _ = item_id, review_state
                 return False
@@ -2218,6 +2227,7 @@ class TestIntelQueueApiEndpoints:
 
     def test_intel_jobs_list_retry_and_process(self, monkeypatch, test_client):
         class FakeDb:
+            meetings = property(lambda self: self)
             def list_intel_jobs(self, *, status="all", limit=20):
                 _ = status, limit
                 return [

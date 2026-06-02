@@ -1,8 +1,9 @@
 # Phase 31 — Database Decomposition
 
-**Status:** in-progress (opened 2026-06-02). 0/5 stories shipped.
+**Status:** in-progress (opened 2026-06-02). 1/5 stories shipped.
 
-**Last updated:** 2026-06-02 (phase opened; HS-31-01 next).
+**Last updated:** 2026-06-02 (HS-31-01 done — `db.py` is now a package, meetings domain
+extracted to `MeetingRepository`; suite green at 2062. HS-31-02 next.).
 
 ## Goal
 
@@ -79,7 +80,7 @@ the *call shape* and the migration history are free to change.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-31-01 | Repository seam + `MeetingRepository` (pilot pattern) | not-started | [story-01-meeting-repository.md](./story-01-meeting-repository.md) | — |
+| HS-31-01 | Repository seam + `MeetingRepository` (pilot pattern) | done | [story-01-meeting-repository.md](./story-01-meeting-repository.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-31-02 | `IntelRepository` extract | not-started | [story-02-intel-repository.md](./story-02-intel-repository.md) | — |
 | HS-31-03 | `ActivityRepository` + `PluginArtifactRepository` + `ProjectRepository` | not-started | [story-03-activity-plugin-repos.md](./story-03-activity-plugin-repos.md) | — |
 | HS-31-04 | Migration-ladder extraction + dedup | not-started | [story-04-migration-framework.md](./story-04-migration-framework.md) | — |
@@ -90,8 +91,20 @@ the *call shape* and the migration history are free to change.
 Opened 2026-06-02 as a fast-follow once the engineering review flagged `db.py`
 as the single largest structural liability in the repo. Phase 26 already proved
 the playbook on `web_server.py` (5,658 → 523 lines, behavior-preserving); this
-phase reuses it. HS-31-01 establishes the seam on the meetings domain — the
-biggest and most central cluster — and every later story follows that pattern.
+phase reuses it.
+
+**HS-31-01 is done.** `holdspeak/db.py` is now the `holdspeak/db/` package:
+`models.py` (18 dataclasses + constants), `base.py` (`BaseRepository` + shared
+`_json_*`), `meetings.py` (`MeetingRepository` — meetings/segments/speakers/topics/
+bookmarks/action-items + intel snapshots, moved verbatim), and `core.py` (the
+`MeetingDatabase` container, 5481 → 4311 lines, still holding the un-migrated
+domains). 53 production + 112 test call sites moved to `db.meetings.*`; the
+god-class no longer has the moved methods (test-pinned). `__init__.py` re-exports
+the full public surface, so `from holdspeak.db import X` is unchanged. Suite green
+at 2062; the package is ruff-clean. The seam every later story copies now exists.
+
+Next: **HS-31-02** — extract `IntelRepository` (intel *jobs/attempts queue* only;
+snapshots already live with meetings, see Decisions).
 
 ## Pickup order
 
@@ -122,11 +135,15 @@ biggest and most central cluster — and every later story follows that pattern.
   **squash** the migration ladder to one canonical schema rather than preserve an
   upgrade path — user.
 
-## Decisions deferred
+- 2026-06-02 (HS-31-01) — **Package layout resolved:** `holdspeak/db/` with
+  `models.py` (shared dataclasses, kills the import cycle for all repos), `base.py`,
+  one module per domain, and `core.py` as the container. `__init__.py` re-exports
+  the full public surface so no caller import changes.
+- 2026-06-02 (HS-31-01) — **`intel_snapshots` belongs to `MeetingRepository`,** not
+  `IntelRepository`: it is embedded in `MeetingState` save/load, not queue state. So
+  HS-31-02's `IntelRepository` scope narrows to the jobs/attempts queue.
 
-- Package layout: `holdspeak/db/` package (container in `__init__`, repos as
-  submodules) vs. a flat module — trigger: HS-31-01 — default: `holdspeak/db/`
-  package; `Database` container exposes `.meetings` / `.intel` / … attributes.
+## Decisions deferred
 - Exact dev-DB rebuild handling (drop & recreate vs. export-then-recreate) —
   trigger: HS-31-04 — default: whatever is least effort; the data is the author's
   own and reproducible.

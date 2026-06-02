@@ -10,7 +10,9 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-from holdspeak import db as db_module
+# DEFAULT_DB_PATH now lives in holdspeak.db.core (Phase 31 split); patch it there
+# so MeetingDatabase.__init__ / get_database see the override.
+from holdspeak.db import core as db_module
 from holdspeak.db import MeetingDatabase, reset_database
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 

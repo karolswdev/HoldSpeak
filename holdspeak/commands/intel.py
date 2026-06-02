@@ -168,7 +168,7 @@ def _run_mir_route_command(
         print(override_error, file=sys.stderr)
         return 2
 
-    meeting = db.get_meeting(meeting_id)
+    meeting = db.meetings.get_meeting(meeting_id)
     if meeting is None:
         print(f"Meeting not found: {meeting_id}", file=sys.stderr)
         return 1

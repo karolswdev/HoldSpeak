@@ -344,7 +344,7 @@ class TestSpeakerDiarizerWithDatabase:
             diarizer.save_speakers()
 
             # Verify speaker was saved to database
-            saved_speakers = db.get_all_speakers()
+            saved_speakers = db.meetings.get_all_speakers()
             assert len(saved_speakers) == 1
             assert saved_speakers[0].id == speaker_id
             assert saved_speakers[0].name == "Speaker 1"

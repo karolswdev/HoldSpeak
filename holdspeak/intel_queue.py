@@ -131,7 +131,7 @@ def process_next_intel_job(
     if job is None:
         return False
 
-    meeting = db.get_meeting(job.meeting_id)
+    meeting = db.meetings.get_meeting(job.meeting_id)
     if meeting is None:
         db.fail_intel_job(job.meeting_id, "Meeting not found for deferred intelligence job.")
         return True
@@ -184,7 +184,7 @@ def process_next_intel_job(
         meeting.intel_status = "ready"
         meeting.intel_status_detail = "Deferred meeting intelligence processed successfully."
         meeting.intel_completed_at = datetime.now()
-        db.save_meeting(meeting)
+        db.meetings.save_meeting(meeting)
         db.record_intel_job_attempt(
             job.meeting_id,
             attempt=int(job.attempts),

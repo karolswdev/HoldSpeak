@@ -97,7 +97,7 @@ def _seed_active_state(session: MeetingSession, db: MeetingDatabase | None = Non
     )
     if db is not None:
         # The meeting must exist before MIR persistence can FK-link windows / plugin runs to it.
-        db.save_meeting(state)
+        db.meetings.save_meeting(state)
     # MeetingSession.stop() requires `_state.is_active` (ended_at is None).
     session._state = state  # type: ignore[attr-defined]
     return state
