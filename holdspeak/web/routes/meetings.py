@@ -879,7 +879,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             from ...config import Config
 
             db = get_database()
-            jobs = db.list_intel_jobs(status=status, limit=limit)
+            jobs = db.intel.list_intel_jobs(status=status, limit=limit)
             retry_max_attempts = max(1, int(Config.load().meeting.intel_retry_max_attempts))
             now = datetime.now()
             bounded_history_limit = max(1, min(int(history_limit), 20))
@@ -921,7 +921,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                                     "retry_at": event.retry_at.isoformat() if event.retry_at else None,
                                     "created_at": event.created_at.isoformat(),
                                 }
-                                for event in db.list_intel_job_attempts(
+                                for event in db.intel.list_intel_job_attempts(
                                     job.meeting_id,
                                     limit=bounded_history_limit,
                                 )
@@ -942,7 +942,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            summary = db.get_intel_queue_summary()
+            summary = db.intel.get_intel_queue_summary()
             return JSONResponse(
                 {
                     "total_jobs": summary.total_jobs,
@@ -1009,7 +1009,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            ok = db.requeue_intel_job(meeting_id, reason="Manual retry requested from web UI.")
+            ok = db.intel.requeue_intel_job(meeting_id, reason="Manual retry requested from web UI.")
             if not ok:
                 return JSONResponse({"success": False, "error": "Meeting not found or transcript is empty"}, status_code=404)
             return JSONResponse({"success": True})

@@ -159,6 +159,7 @@ def test_save_enqueues_deferred_intel_job_when_meeting_status_is_queued(tmp_path
     )
 
     class _FakeDatabase:
+        intel = property(lambda self: self)
         meetings = property(lambda self: self)
         def __init__(self) -> None:
             self.saved: list[str] = []

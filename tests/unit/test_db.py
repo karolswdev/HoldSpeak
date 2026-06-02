@@ -1109,9 +1109,9 @@ class TestDeferredIntelQueue:
         db.meetings.save_meeting(sample_meeting)
 
         transcript_hash = sample_meeting.transcript_hash()
-        db.enqueue_intel_job(sample_meeting.id, transcript_hash=transcript_hash)
+        db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=transcript_hash)
 
-        claimed = db.claim_next_intel_job()
+        claimed = db.intel.claim_next_intel_job()
         assert isinstance(claimed, IntelJob)
         assert claimed.meeting_id == sample_meeting.id
         assert claimed.status == "running"
@@ -1120,23 +1120,23 @@ class TestDeferredIntelQueue:
     def test_complete_intel_job_removes_queue_entry(self, db, sample_meeting):
         """Completed jobs should be removed from the queue."""
         db.meetings.save_meeting(sample_meeting)
-        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+        db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
 
-        claimed = db.claim_next_intel_job()
+        claimed = db.intel.claim_next_intel_job()
         assert claimed is not None
 
-        db.complete_intel_job(sample_meeting.id)
-        assert db.claim_next_intel_job() is None
+        db.intel.complete_intel_job(sample_meeting.id)
+        assert db.intel.claim_next_intel_job() is None
 
     def test_fail_intel_job_updates_meeting_status(self, db, sample_meeting):
         """Failed jobs should surface as meeting intel errors."""
         db.meetings.save_meeting(sample_meeting)
-        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+        db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
 
-        claimed = db.claim_next_intel_job()
+        claimed = db.intel.claim_next_intel_job()
         assert claimed is not None
 
-        db.fail_intel_job(sample_meeting.id, "Deferred intel failed")
+        db.intel.fail_intel_job(sample_meeting.id, "Deferred intel failed")
         updated = db.meetings.get_meeting(sample_meeting.id)
         assert updated is not None
         assert updated.intel_status == "error"
@@ -1145,9 +1145,9 @@ class TestDeferredIntelQueue:
     def test_list_intel_jobs_includes_meeting_context(self, db, sample_meeting):
         """Queued jobs should include meeting metadata for CLI display."""
         db.meetings.save_meeting(sample_meeting)
-        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+        db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
 
-        jobs = db.list_intel_jobs()
+        jobs = db.intel.list_intel_jobs()
         assert len(jobs) == 1
         job = jobs[0]
         assert job.meeting_id == sample_meeting.id
@@ -1157,13 +1157,13 @@ class TestDeferredIntelQueue:
     def test_requeue_intel_job_refreshes_failed_job(self, db, sample_meeting):
         """Failed jobs should be requeueable for manual retry."""
         db.meetings.save_meeting(sample_meeting)
-        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
-        db.claim_next_intel_job()
-        db.fail_intel_job(sample_meeting.id, "Deferred intel failed")
+        db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+        db.intel.claim_next_intel_job()
+        db.intel.fail_intel_job(sample_meeting.id, "Deferred intel failed")
 
-        assert db.requeue_intel_job(sample_meeting.id, reason="Manual retry requested.")
+        assert db.intel.requeue_intel_job(sample_meeting.id, reason="Manual retry requested.")
 
-        jobs = db.list_intel_jobs(status="queued")
+        jobs = db.intel.list_intel_jobs(status="queued")
         assert len(jobs) == 1
         assert jobs[0].meeting_id == sample_meeting.id
         assert jobs[0].status == "queued"
@@ -1172,10 +1172,10 @@ class TestDeferredIntelQueue:
     def test_claim_next_intel_job_skips_future_scheduled_jobs(self, db, sample_meeting):
         """Claim should ignore queued jobs that are not due yet."""
         db.meetings.save_meeting(sample_meeting)
-        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+        db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
 
         future = datetime.now() + timedelta(minutes=5)
-        db.retry_intel_job(
+        db.intel.retry_intel_job(
             sample_meeting.id,
             "Deferred intel failed: temporary network issue",
             retry_at=future,
@@ -1183,18 +1183,18 @@ class TestDeferredIntelQueue:
             max_attempts=6,
         )
 
-        assert db.claim_next_intel_job() is None
-        assert db.claim_next_intel_job(include_scheduled=True) is not None
+        assert db.intel.claim_next_intel_job() is None
+        assert db.intel.claim_next_intel_job(include_scheduled=True) is not None
 
     def test_retry_intel_job_requeues_and_updates_meeting_status(self, db, sample_meeting):
         """retry_intel_job should keep job queued with retry details."""
         db.meetings.save_meeting(sample_meeting)
-        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
-        claimed = db.claim_next_intel_job()
+        db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+        claimed = db.intel.claim_next_intel_job()
         assert claimed is not None
 
         retry_at = datetime.now() + timedelta(seconds=30)
-        db.retry_intel_job(
+        db.intel.retry_intel_job(
             sample_meeting.id,
             "Deferred intel failed: timeout",
             retry_at=retry_at,
@@ -1202,7 +1202,7 @@ class TestDeferredIntelQueue:
             max_attempts=6,
         )
 
-        queued = db.list_intel_jobs(status="queued")
+        queued = db.intel.list_intel_jobs(status="queued")
         assert len(queued) == 1
         assert queued[0].meeting_id == sample_meeting.id
         assert queued[0].status == "queued"
@@ -1217,19 +1217,19 @@ class TestDeferredIntelQueue:
     def test_get_intel_queue_summary_reports_aggregate_telemetry(self, db, sample_meeting):
         """Queue summary should report due/scheduled/retry telemetry accurately."""
         db.meetings.save_meeting(sample_meeting)
-        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+        db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
 
-        summary = db.get_intel_queue_summary()
+        summary = db.intel.get_intel_queue_summary()
         assert summary.total_jobs == 1
         assert summary.queued_jobs == 1
         assert summary.queued_due_jobs == 1
         assert summary.scheduled_retry_jobs == 0
         assert summary.next_retry_at is None
 
-        claimed = db.claim_next_intel_job()
+        claimed = db.intel.claim_next_intel_job()
         assert claimed is not None
         retry_at = datetime.now() + timedelta(minutes=2)
-        db.retry_intel_job(
+        db.intel.retry_intel_job(
             sample_meeting.id,
             "Deferred intel failed: timeout",
             retry_at=retry_at,
@@ -1237,7 +1237,7 @@ class TestDeferredIntelQueue:
             max_attempts=6,
         )
 
-        scheduled = db.get_intel_queue_summary()
+        scheduled = db.intel.get_intel_queue_summary()
         assert scheduled.total_jobs == 1
         assert scheduled.queued_jobs == 1
         assert scheduled.queued_due_jobs == 0
@@ -1248,14 +1248,14 @@ class TestDeferredIntelQueue:
         """Attempt history should persist and return latest-first order."""
         db.meetings.save_meeting(sample_meeting)
         now = datetime.now()
-        db.record_intel_job_attempt(
+        db.intel.record_intel_job_attempt(
             sample_meeting.id,
             attempt=1,
             outcome="scheduled_retry",
             error="timeout",
             retry_at=now + timedelta(seconds=30),
         )
-        db.record_intel_job_attempt(
+        db.intel.record_intel_job_attempt(
             sample_meeting.id,
             attempt=2,
             outcome="terminal_failure",
@@ -1263,7 +1263,7 @@ class TestDeferredIntelQueue:
             retry_at=None,
         )
 
-        attempts = db.list_intel_job_attempts(sample_meeting.id, limit=5)
+        attempts = db.intel.list_intel_job_attempts(sample_meeting.id, limit=5)
         assert len(attempts) == 2
         assert attempts[0].attempt == 2
         assert attempts[0].outcome == "terminal_failure"

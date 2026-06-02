@@ -2223,10 +2223,12 @@ class TestGlobalActionItemsApiEndpoints:
 
 @pytest.mark.integration
 class TestIntelQueueApiEndpoints:
+    intel = property(lambda self: self)
     """Tests for deferred intel queue endpoints."""
 
     def test_intel_jobs_list_retry_and_process(self, monkeypatch, test_client):
         class FakeDb:
+            intel = property(lambda self: self)
             meetings = property(lambda self: self)
             def list_intel_jobs(self, *, status="all", limit=20):
                 _ = status, limit

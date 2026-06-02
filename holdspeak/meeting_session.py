@@ -1465,7 +1465,7 @@ class MeetingSession:
                 and state.intel_status == "queued"
                 and state.segments
             ):
-                db.enqueue_intel_job(
+                db.intel.enqueue_intel_job(
                     state.id,
                     transcript_hash=state.transcript_hash(),
                     reason=state.intel_status_detail,

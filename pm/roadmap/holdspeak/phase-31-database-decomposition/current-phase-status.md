@@ -1,9 +1,10 @@
 # Phase 31 — Database Decomposition
 
-**Status:** in-progress (opened 2026-06-02). 1/5 stories shipped.
+**Status:** in-progress (opened 2026-06-02). 2/5 stories shipped.
 
-**Last updated:** 2026-06-02 (HS-31-01 done — `db.py` is now a package, meetings domain
-extracted to `MeetingRepository`; suite green at 2062. HS-31-02 next.).
+**Last updated:** 2026-06-02 (HS-31-02 done — `IntelRepository` extracted (deferred-intel
+queue); `MeetingDatabase` shed all intel-queue methods; core.py 5481→3934. Suite green at
+2062. HS-31-03 next.).
 
 ## Goal
 
@@ -81,7 +82,7 @@ the *call shape* and the migration history are free to change.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-31-01 | Repository seam + `MeetingRepository` (pilot pattern) | done | [story-01-meeting-repository.md](./story-01-meeting-repository.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-31-02 | `IntelRepository` extract | not-started | [story-02-intel-repository.md](./story-02-intel-repository.md) | — |
+| HS-31-02 | `IntelRepository` extract | done | [story-02-intel-repository.md](./story-02-intel-repository.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-31-03 | `ActivityRepository` + `PluginArtifactRepository` + `ProjectRepository` | not-started | [story-03-activity-plugin-repos.md](./story-03-activity-plugin-repos.md) | — |
 | HS-31-04 | Migration-ladder extraction + dedup | not-started | [story-04-migration-framework.md](./story-04-migration-framework.md) | — |
 | HS-31-05 | Decomposition closeout (size + schema-parity evidence) | not-started | [story-05-decomposition-closeout.md](./story-05-decomposition-closeout.md) | — |
@@ -103,8 +104,17 @@ god-class no longer has the moved methods (test-pinned). `__init__.py` re-export
 the full public surface, so `from holdspeak.db import X` is unchanged. Suite green
 at 2062; the package is ruff-clean. The seam every later story copies now exists.
 
-Next: **HS-31-02** — extract `IntelRepository` (intel *jobs/attempts queue* only;
-snapshots already live with meetings, see Decisions).
+**HS-31-02 is done.** `IntelRepository` (`holdspeak/db/intel.py`, 394 lines) owns the
+deferred-intel queue: the 11 `*_intel_job*` / `update_meeting_intel_status` methods moved
+verbatim; `core.py` dropped to 3934. The one cross-domain call (`requeue_intel_job` →
+`get_meeting`) established the **container back-reference** pattern: repos receive the
+container as `self._db`, so `requeue` calls `self._db.meetings.get_meeting(...)`. 19
+production + 32 test call sites moved to `db.intel.*`; 7 fake doubles got an `intel`
+self-property. Suite green at 2062; ruff-clean.
+
+Next: **HS-31-03** — extract `ActivityRepository` + `PluginArtifactRepository` +
+`ProjectRepository`, then **delete** the `MeetingDatabase` god-class. Projects↦action-items/
+artifacts cross-domain calls will reuse the `self._db` back-reference.
 
 ## Pickup order
 
@@ -142,6 +152,10 @@ snapshots already live with meetings, see Decisions).
 - 2026-06-02 (HS-31-01) — **`intel_snapshots` belongs to `MeetingRepository`,** not
   `IntelRepository`: it is embedded in `MeetingState` save/load, not queue state. So
   HS-31-02's `IntelRepository` scope narrows to the jobs/attempts queue.
+- 2026-06-02 (HS-31-02) — **Container back-reference for cross-domain calls.** Repos are
+  constructed `Repo(self._connection, self)` and reach siblings via `self._db.<repo>`.
+  Chosen over threading specific sibling repos per constructor — simpler as cross-domain
+  calls multiply in HS-31-03. Coupling is repo→container (the composition root), acceptable.
 
 ## Decisions deferred
 - Exact dev-DB rebuild handling (drop & recreate vs. export-then-recreate) —

@@ -13,8 +13,12 @@ class BaseRepository:
     repository shares.
     """
 
-    def __init__(self, connection):
+    def __init__(self, connection, container=None):
         self._connection = connection
+        # Back-reference to the owning container, for the rare cross-domain
+        # operation that needs a sibling repository (e.g. intel requeue reading
+        # a meeting): `self._db.<sibling>.<method>(...)`.
+        self._db = container
 
     def _json_dumps(self, value: object, *, fallback: str) -> str:
         try:

@@ -82,6 +82,7 @@ def test_retry_or_fail_job_requeues_before_max_attempts() -> None:
     calls = {"retry": [], "fail": [], "history": []}
 
     class _FakeDb:
+        intel = property(lambda self: self)
         def retry_intel_job(self, meeting_id, error, *, retry_at, attempt, max_attempts):
             calls["retry"].append((meeting_id, error, retry_at, attempt, max_attempts))
 
@@ -106,6 +107,7 @@ def test_retry_or_fail_job_marks_failed_after_max_attempts() -> None:
     calls = {"retry": [], "fail": [], "history": []}
 
     class _FakeDb:
+        intel = property(lambda self: self)
         def retry_intel_job(self, meeting_id, error, *, retry_at, attempt, max_attempts):
             calls["retry"].append((meeting_id, error, retry_at, attempt, max_attempts))
 

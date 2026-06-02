@@ -40,6 +40,7 @@ def test_run_intel_command_lists_jobs(monkeypatch, capsys) -> None:
     ]
 
     class FakeDB:
+        intel = property(lambda self: self)
         meetings = property(lambda self: self)
         def list_intel_jobs(self, *, status=None, limit=20):
             assert status == "all"
@@ -125,6 +126,7 @@ def test_run_intel_command_retry_failed_requeues_jobs(monkeypatch, capsys) -> No
     requeued: list[str] = []
 
     class FakeDB:
+        intel = property(lambda self: self)
         meetings = property(lambda self: self)
         def list_intel_jobs(self, *, status=None, limit=20):
             assert status == "failed"
