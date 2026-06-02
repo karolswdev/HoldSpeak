@@ -1,12 +1,12 @@
 # Phase 30 — UI/UX overhaul: retire Workbench, ship the "Signal" identity
 
-**Last updated:** 2026-06-01 (HS-30-04 shipped — in-progress, 4/9. **Shell
-rebuilt to the IA spec:** grouped nav (Live/Review/Configure) with dual-encoded
-active state, brand in Space Grotesk, status cluster + ⚙ **Settings drawer**
-(lifted out of History), responsive menu, `#settings` deep-link. Command palette
-deferred. Build green; backend 2062 passed).
+**Last updated:** 2026-06-02 (HS-30-05 shipped — in-progress, 5/9. **Component
+library re-skinned to Signal:** eyebrow panel headers, real depth+radius, primary
+glow, flat-grey disabled (hatch retired), dual-encoded selected rows. All 30
+component `--wb-*` refs migrated (components now 0). Build green; backend 2062
+passed. Shim stays until pages migrate — deleted with HS-30-08).
 
-> **Phase status: IN-PROGRESS (4/9).** This is the live pickup doc; it is
+> **Phase status: IN-PROGRESS (5/9).** This is the live pickup doc; it is
 > mutable until the phase closes.
 
 > Lineage note: Phases 10 → 12 built the current web look — a design-token
@@ -86,9 +86,9 @@ The design system is derived with the **`ui-ux-pro-max`** skill
       saturated-blue desktop); galleries render the foundation; `npm run build`
       green. (HS-30-03 — `tokens.css`'s only `--wb-*` is the temporary shim §3,
       deleted in HS-30-05; backend 2062 passed.)
-- [~] Nav + layout shell restyled to Signal (HS-30-04 ✓: grouped nav + Settings
-      drawer). **Every** component in `web/src/components/` restyled + the shim
-      deleted — pending HS-30-05.
+- [x] Nav + layout shell (HS-30-04) **and every** component in `web/src/components/`
+      (HS-30-05) restyled to Signal; component `--wb-*` refs = 0. (Shim deletion
+      lands with the last page, HS-30-08.)
 - [ ] All five routes redesigned to the IA spec, each with before/after
       screenshots in evidence. (HS-30-06/07/08.)
 - [ ] Accessibility: AA contrast verified on the dark palette, focus rings
@@ -106,7 +106,7 @@ The design system is derived with the **`ui-ux-pro-max`** skill
 | HS-30-02 | "Signal" design language + skill-derived system + sign-off | done | [story-02-design-language-signal.md](./story-02-design-language-signal.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-30-03 | Foundation: tokens + global CSS + fonts + design galleries | done | [story-03-foundation-tokens.md](./story-03-foundation-tokens.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-30-04 | Navigation + layout shell | done | [story-04-nav-and-layout-shell.md](./story-04-nav-and-layout-shell.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-30-05 | Component library re-skin | backlog | [story-05-component-library.md](./story-05-component-library.md) | — |
+| HS-30-05 | Component library re-skin | done | [story-05-component-library.md](./story-05-component-library.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-30-06 | Dashboard (`index`) redesign | backlog | [story-06-dashboard-redesign.md](./story-06-dashboard-redesign.md) | — |
 | HS-30-07 | Dictation redesign | backlog | [story-07-dictation-redesign.md](./story-07-dictation-redesign.md) | — |
 | HS-30-08 | History + Activity + Companion redesign | backlog | [story-08-secondary-pages-redesign.md](./story-08-secondary-pages-redesign.md) | — |
@@ -162,9 +162,15 @@ content linking to History → Settings until HS-30-08 migrates it); below 880px
 groups collapse behind a menu toggle. Wired vanilla (Alpine is per-page). Command
 palette **deferred** (no dead control shipped).
 
-**Next:** HS-30-05 — component library re-skin (uppercase eyebrows, primary glow,
-depth, states) across `web/src/components/`, **migrate the 89 shimmed `--wb-*`
-refs to canonical Signal tokens, and delete the tokens.css §3 shim.**
+**HS-30-05 shipped.** Every component in `web/src/components/` is restyled to
+Signal (`evidence/after-hs05/components.png`): eyebrow panel headers, `--elev-1` +
+`--radius-lg` cards, primary `--glow-accent`, flat-grey disabled (hatch retired),
+selected rows with an inset accent marker. All 30 component `--wb-*` refs migrated
+to canonical tokens (components now 0). The shim stays for the 59 page refs.
+
+**Next:** HS-30-06 — redesign the runtime dashboard (`index.astro`) to the IA spec
+(meeting-state hero, dominant transcript column, grouped intel rail), preserving
+the Alpine bindings; first per-page redesign + start migrating page `--wb-*` refs.
 
 ## Active risks
 

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 30
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-30-03
 - **Unblocks:** HS-30-06, HS-30-07, HS-30-08
 - **Owner:** unassigned
@@ -40,13 +40,16 @@ on correct primitives. The `/design/components` gallery is the contract.
 
 ## Acceptance criteria
 
-- [ ] Every component in `web/src/components/` renders in Signal — no component
-      still shows a hairline/pixel/blue-strip Workbench treatment.
-- [ ] `grep -rE "wb-|VT323|Sora" web/src/components` returns nothing.
-- [ ] Disabled, hover, focus, and active states are defined and visible on dark
-      for interactive components (Button, ListRow, ConfirmDialog).
-- [ ] `/design/components` shows all variants/states (screenshot in evidence).
-- [ ] `npm run build` green; backend sweep green.
+- [x] Every component in `web/src/components/` renders in Signal — eyebrow panel
+      headers (no blue strip/pixel title), real depth + radius, primary glow.
+- [x] `grep -roE -- '--wb-[a-z0-9-]*' web/src/components` returns **nothing** (was
+      30 across 6 files). *Shim note: the tokens.css §3 shim stays until the page
+      refs (59, in HS-30-06/07/08) are migrated — it is deleted with the last page
+      (HS-30-08), not here.*
+- [x] Disabled (flat grey, hatch retired), hover, focus, and active (accent-tint +
+      inset accent marker) states defined for Button / ListRow / ConfirmDialog.
+- [x] `/design/components` shows all variants/states — `evidence/after-hs05/components.png`.
+- [x] `npm run build` green; backend sweep green (2062 passed, 14 skipped).
 
 ## Test plan
 

@@ -125,13 +125,14 @@ const wrapperClass = ["cmd", `cmd--${tone}`, extraClass].filter(Boolean).join(" 
    * scans cleanly. */
   .cmd-frame {
     position: relative;
-    background: var(--wb-gray-7);
-    border: 1px solid var(--wb-black);
+    background: var(--bg);
+    border: 1px solid var(--border);
     border-left-width: 4px;
+    border-radius: var(--radius-md);
     overflow: hidden;
   }
 
-  .cmd--neutral .cmd-frame { border-left-color: var(--wb-blue); }
+  .cmd--neutral .cmd-frame { border-left-color: var(--info); }
   .cmd--warn .cmd-frame    { border-left-color: var(--warn); }
   .cmd--danger .cmd-frame  { border-left-color: var(--danger); }
 
@@ -162,7 +163,7 @@ const wrapperClass = ["cmd", `cmd--${tone}`, extraClass].filter(Boolean).join(" 
     right: var(--space-2);
     appearance: none;
     background: var(--surface-2);
-    border: 1px solid var(--wb-black);
+    border: 1px solid var(--border);
     color: var(--text);
     font-family: var(--font-ui);
     font-size: var(--font-size-xs);
@@ -181,7 +182,7 @@ const wrapperClass = ["cmd", `cmd--${tone}`, extraClass].filter(Boolean).join(" 
 
   .cmd-copy.is-copied {
     background: var(--success);
-    color: var(--wb-white);
+    color: var(--text);
     border-color: var(--success-strong);
   }
 

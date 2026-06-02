@@ -178,32 +178,34 @@
    * "lifted off the desktop" cue but is rendered hard rather
    * than soft to match the discrete Workbench feel. */
   .confirm-dialog {
-    border: 1px solid var(--wb-black);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
     background: var(--surface-2);
     color: var(--text);
     padding: 0;
-    box-shadow: 4px 4px 0 0 rgba(0, 0, 0, 0.45);
+    box-shadow: var(--elev-3);
     max-width: min(34rem, calc(100vw - 2 * var(--space-5)));
     width: 100%;
+    overflow: hidden;
   }
 
   .confirm-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.55);
+    background: var(--canvas-overlay);
   }
 
   .confirm-dialog__header {
-    background: var(--wb-blue);
-    color: var(--wb-white);
-    border-bottom: 1px solid var(--wb-black);
-    padding: var(--space-2) var(--space-4);
+    background: var(--surface-3);
+    color: var(--text);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: var(--space-3) var(--space-4);
   }
 
   .confirm-dialog__header .confirm-dialog__title {
     font-family: var(--font-display);
     font-size: var(--font-size-lg);
-    font-weight: 400;
-    color: var(--wb-white);
-    letter-spacing: 0.04em;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
     line-height: 1.2;
     margin: 0;
   }
@@ -276,8 +278,9 @@
     color: var(--text-muted);
     font-size: var(--font-size-sm);
     line-height: var(--line-height-relaxed, 1.5);
-    background: var(--local-soft);
-    border: 1px solid var(--wb-blue);
+    background: var(--info-soft);
+    border: 1px solid var(--info);
+    border-radius: var(--radius-sm);
     padding: var(--space-2) var(--space-3);
   }
 
@@ -292,9 +295,10 @@
     font-weight: 400;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--wb-white);
-    background: var(--wb-blue);
-    border: 1px solid var(--wb-blue);
+    color: var(--info);
+    background: var(--info-soft);
+    border: 1px solid var(--info);
+    border-radius: var(--radius-sm);
     padding: 0 var(--space-2);
     line-height: 1.5;
   }
