@@ -26,7 +26,18 @@ npm install           # one-time
 npm run dev           # local Astro dev server with hot reload
 npm run build         # produces ../holdspeak/static/_built/
 npm run preview       # serve the built output for inspection
+npm run shots         # build + screenshot every route → web/.shots/<timestamp>/
 ```
+
+### Screenshots (`npm run shots`)
+
+`npm run shots` builds the site, serves it with `astro preview`, drives a
+headless browser (Puppeteer) over every route plus the Settings drawer and a
+mobile width, writes PNGs to a timestamped folder under `web/.shots/`, then
+shuts the server down — one command, no manual browser needed. Output is
+gitignored; open the printed folder to review. Add a route by editing the
+`ROUTES` table in `scripts/shoot.mjs`. The same harness runs on web-touching
+PRs (`.github/workflows/screenshots.yml`) and uploads the PNGs as an artifact.
 
 After `npm run build`, the HoldSpeak runtime serves the built design-check
 page at:

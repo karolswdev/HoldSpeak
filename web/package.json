@@ -8,14 +8,16 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "shots": "astro build && node scripts/shoot.mjs"
   },
   "devDependencies": {
     "@fontsource/inter": "^5.2.8",
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@fontsource/space-grotesk": "^5.2.8",
     "astro": "^6.3.1",
-    "open-props": "^1.7.13"
+    "open-props": "^1.7.13",
+    "puppeteer": "^25.1.0"
   },
   "dependencies": {
     "alpinejs": "^3.15.12",
