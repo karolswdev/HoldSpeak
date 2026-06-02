@@ -1,6 +1,8 @@
 # HS-31-05 — Decomposition closeout (size + schema-parity evidence)
 
-**Status:** not-started.
+- **Project:** holdspeak
+- **Phase:** 31
+- **Status:** done (2026-06-02). See [final-summary.md](./final-summary.md).
 
 ## Goal
 
@@ -21,6 +23,6 @@ Confirm the phase exit criteria, record the final evidence, and close the phase.
 
 ## Done when
 
-- [ ] All Phase 31 exit criteria checked with evidence.
-- [ ] Final size + god-class-deleted + fresh-build schema-parity numbers recorded.
-- [ ] `final-summary.md` written; phase marked done in status doc + README.
+- [x] All Phase 31 exit criteria checked with evidence.
+- [x] Final size + god-class-deleted + fresh-build schema-parity numbers recorded.
+- [x] `final-summary.md` written; phase marked done in status doc + README.

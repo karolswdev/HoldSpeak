@@ -1,11 +1,11 @@
 # Phase 31 — Database Decomposition
 
-**Status:** in-progress (opened 2026-06-02). 4/5 stories shipped.
+**Status: DONE (frozen 2026-06-02).** 5/5 stories shipped. See
+[`final-summary.md`](./final-summary.md). `db.py` 5481 → a `Database` container + 5
+repositories (package total 5190); god-class deleted; migration ladder squashed
+(`SCHEMA_VERSION` 18→1, schema parity proven). Suite green at 2063. This file is frozen.
 
-**Last updated:** 2026-06-02 (HS-31-04 done — 18-version migration ladder squashed to one
-canonical schema; `SCHEMA_VERSION` reset to 1; `core.py` 1224→666; fresh-build `sqlite_master`
-proven identical to the pre-squash v18 schema (snapshot test committed); dev DB dropped &
-recreated. Suite green at 2063. HS-31-05 closeout next.).
+**Last updated:** 2026-06-02 (HS-31-05 closeout — phase complete; `final-summary.md` written).
 
 ## Goal
 
@@ -86,7 +86,7 @@ the *call shape* and the migration history are free to change.
 | HS-31-02 | `IntelRepository` extract | done | [story-02-intel-repository.md](./story-02-intel-repository.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-31-03 | `ActivityRepository` + `PluginArtifactRepository` + `ProjectRepository` + delete god-class | done | [story-03-activity-plugin-repos.md](./story-03-activity-plugin-repos.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-31-04 | Squash the migration ladder | done | [story-04-migration-framework.md](./story-04-migration-framework.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-31-05 | Decomposition closeout (size + schema-parity evidence) | not-started | [story-05-decomposition-closeout.md](./story-05-decomposition-closeout.md) | — |
+| HS-31-05 | Decomposition closeout (size + schema-parity evidence) | done | [story-05-decomposition-closeout.md](./story-05-decomposition-closeout.md) | [evidence-story-05.md](./evidence-story-05.md) · [final-summary.md](./final-summary.md) |
 
 ## Where we are
 
