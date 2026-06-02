@@ -17,6 +17,15 @@ Voice input for macOS and Linux — hold a key, speak, release. Local-first and 
 | ![Pixel art microphone with hold-to-talk waves](docs/assets/pixellab/hold-to-talk-microphone.png) | ![Pixel art meeting notebook with action items](docs/assets/pixellab/meeting-intelligence-notebook.png) | ![Pixel art code editor connected to local context](docs/assets/pixellab/project-aware-typing.png) |
 | Hold the hotkey, speak, release, and insert text into the active app. | Capture meetings, review transcripts, accept actions, and export local handoffs. | Use `.hs/` project context and agent hooks to shape rough speech into useful prompts. |
 
+## Intelligence Pipeline
+
+<p align="center">
+  <img src="docs/assets/pixellab/intelligence-pipeline-loop.gif" alt="Animated pixel art showing microphone audio becoming transcript lines, action items, and a summary card" width="260">
+</p>
+
+HoldSpeak turns captured speech into transcript context, reviewable actions,
+summaries, and coding-agent prompts while keeping local-first controls visible.
+
 ## AIPI-Lite Companion
 
 <p align="center">

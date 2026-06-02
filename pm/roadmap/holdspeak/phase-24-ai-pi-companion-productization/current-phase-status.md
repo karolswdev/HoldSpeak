@@ -1,6 +1,6 @@
 # Phase 24 — AI PI Companion Productization
 
-**Last updated:** 2026-06-01 (HS-24-06 **done** — public companion docs now explain the portable ESPHome device, meeting capture/status, Claude/Codex waiting notifications, spoken replies, controlled-network remote use, and include PixelLab transparent artwork + hardware links). Phase resumed; 3/6 stories shipped. See "Where we are" below.
+**Last updated:** 2026-06-01 (HS-24-06 **done** — public companion docs now explain the portable ESPHome device, meeting capture/status, Claude/Codex waiting notifications, spoken replies, controlled-network remote use, and include PixelLab transparent artwork, an intelligence-pipeline GIF, and hardware links). Phase resumed; 3/6 stories shipped. See "Where we are" below.
 
 ## Goal
 
@@ -94,7 +94,7 @@ way HS-25-07 does while the author is remote; scaffold + tackle them when hardwa
 is in hand.
 
 **HS-24-06 also shipped (docs/productization, 3/6):** the public docs now show
-transparent PixelLab companion artwork, explain AIPI-Lite as a portable
+transparent PixelLab companion artwork and an intelligence-pipeline GIF, explain AIPI-Lite as a portable
 ESPHome-based meeting and coding-agent companion, clarify the agent-waiting /
 spoken-reply loop, document controlled-network remote use, and link to official
 hardware purchase pages. This story was added after the doc commits landed so
