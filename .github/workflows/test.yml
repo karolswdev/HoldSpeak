@@ -28,15 +28,12 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
-        run: |
-          # Unit tests should be runnable on Linux without macOS-only deps
-          # and without pulling heavy e2e tooling like Playwright.
-          uv pip install -e ".[test]" --system
-
       - name: Run unit tests with coverage
         run: |
-          uv run pytest tests/unit/ -q --cov=holdspeak --cov-report=xml --cov-report=term-missing
+          # `uv run --extra test` syncs the project venv *with* the test extra
+          # (pytest et al.) and runs in that same venv — no separate --system
+          # install that uv run would otherwise ignore.
+          uv run --extra test pytest tests/unit/ -q --cov=holdspeak --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -71,14 +68,12 @@ jobs:
           # Install PortAudio for sounddevice
           brew install portaudio
 
-      - name: Install dependencies
-        run: |
-          # Integration suite should be explicit and lightweight.
-          uv pip install -e ".[test]" --system
-
       - name: Run integration tests with coverage
         run: |
-          uv run python -m pytest tests/integration/ -v --cov=holdspeak --cov-report=xml --cov-report=term-missing
+          # `uv run --extra test` resolves main + test deps into the venv it
+          # executes in, so pytest is present (the old --system install went to
+          # a different interpreter that uv run never used).
+          uv run --extra test python -m pytest tests/integration/ -v --cov=holdspeak --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -113,14 +108,11 @@ jobs:
           # Install PortAudio for sounddevice
           brew install portaudio
 
-      - name: Install dependencies
-        run: |
-          # E2E job runs mock-based tests (excluding metal hardware tests).
-          uv pip install -e ".[test]" --system
-
       - name: Run E2E tests with coverage
         run: |
-          uv run python -m pytest tests/e2e/ -v -m "e2e and not metal" --cov=holdspeak --cov-report=xml --cov-report=term-missing
+          # Mock-based e2e (excluding metal hardware tests). `uv run --extra test`
+          # runs in the venv it just synced the test extra into.
+          uv run --extra test python -m pytest tests/e2e/ -v -m "e2e and not metal" --cov=holdspeak --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
