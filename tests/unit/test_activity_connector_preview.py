@@ -22,7 +22,7 @@ def test_db(tmp_path):
 
 
 def _seed_github_pr(db: MeetingDatabase) -> None:
-    db.upsert_activity_record(
+    db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/anthropic/holdspeak/pull/42",
         title="PR 42",
@@ -34,7 +34,7 @@ def _seed_github_pr(db: MeetingDatabase) -> None:
 
 
 def _seed_calendar_event(db: MeetingDatabase) -> None:
-    db.upsert_activity_record(
+    db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://calendar.google.com/calendar/u/0/r/eventedit/abc?starts=2026-05-01T10:00",
         title="2026-05-01 10:00-11:00 Architecture sync",
@@ -103,15 +103,15 @@ def test_dry_run_does_not_mutate_db(test_db):
     _seed_github_pr(test_db)
     _seed_calendar_event(test_db)
 
-    annotations_before = list(test_db.list_activity_annotations(limit=1000))
-    candidates_before = list(test_db.list_activity_meeting_candidates())
+    annotations_before = list(test_db.activity.list_activity_annotations(limit=1000))
+    candidates_before = list(test_db.activity.list_activity_meeting_candidates())
 
     dry_run(test_db, "gh")
     dry_run(test_db, "jira")
     dry_run(test_db, "calendar_activity")
 
-    annotations_after = list(test_db.list_activity_annotations(limit=1000))
-    candidates_after = list(test_db.list_activity_meeting_candidates())
+    annotations_after = list(test_db.activity.list_activity_annotations(limit=1000))
+    candidates_after = list(test_db.activity.list_activity_meeting_candidates())
 
     assert [a.id for a in annotations_after] == [a.id for a in annotations_before]
     assert [c.id for c in candidates_after] == [c.id for c in candidates_before]

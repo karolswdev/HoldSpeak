@@ -171,7 +171,7 @@ def _import_history_source(
     timestamp_converter,
 ) -> BrowserHistoryImportResult:
     source_hash = source.source_path_hash
-    privacy = db.get_activity_privacy_settings()
+    privacy = db.activity.get_activity_privacy_settings()
     if not privacy["enabled"]:
         return BrowserHistoryImportResult(
             source_browser=source.source_browser,
@@ -181,7 +181,7 @@ def _import_history_source(
             checkpoint_raw=None,
             enabled=False,
         )
-    checkpoint = db.get_activity_import_checkpoint(
+    checkpoint = db.activity.get_activity_import_checkpoint(
         source_browser=source.source_browser,
         source_profile=source.source_profile,
         source_path_hash=source_hash,
@@ -189,7 +189,7 @@ def _import_history_source(
     since_raw = checkpoint.last_visit_raw if checkpoint else None
     imported = 0
     max_raw = since_raw
-    project_rules = db.list_activity_project_rules(include_disabled=False)
+    project_rules = db.activity.list_activity_project_rules(include_disabled=False)
 
     try:
         with tempfile.TemporaryDirectory(prefix="holdspeak-history-") as tmp:
@@ -200,7 +200,7 @@ def _import_history_source(
                     continue
                 max_raw = _max_raw_timestamp(max_raw, row["last_visit_raw"])
                 domain = _domain_from_url(str(row["url"]))
-                if db.is_activity_domain_excluded(domain):
+                if db.activity.is_activity_domain_excluded(domain):
                     continue
                 entity = extract_activity_entity(str(row["url"]), title=str(row["title"] or ""))
                 first_seen = timestamp_converter(row["first_visit_raw"])
@@ -208,7 +208,7 @@ def _import_history_source(
                 project_id = project_id_for_record(
                     ActivityMappingRecord(
                         source_browser=source.source_browser,
-                        normalized_url=db._normalize_activity_url(row["url"]),
+                        normalized_url=db.activity._normalize_activity_url(row["url"]),
                         title=row["title"],
                         domain=domain,
                         entity_type=entity.entity_type,
@@ -216,7 +216,7 @@ def _import_history_source(
                     ),
                     project_rules,
                 )
-                db.upsert_activity_record(
+                db.activity.upsert_activity_record(
                     source_browser=source.source_browser,
                     source_profile=source.source_profile,
                     source_path_hash=source_hash,
@@ -234,11 +234,11 @@ def _import_history_source(
                 imported += 1
 
         retention_days = int(privacy.get("retention_days") or 30)
-        db.delete_activity_records(
+        db.activity.delete_activity_records(
             older_than=datetime.now() - timedelta(days=retention_days)
         )
 
-        db.set_activity_import_checkpoint(
+        db.activity.set_activity_import_checkpoint(
             source_browser=source.source_browser,
             source_profile=source.source_profile,
             source_path_hash=source_hash,
@@ -255,7 +255,7 @@ def _import_history_source(
         )
     except Exception as exc:
         log.warning("Failed to import %s history: %s", source.source_browser, exc)
-        db.set_activity_import_checkpoint(
+        db.activity.set_activity_import_checkpoint(
             source_browser=source.source_browser,
             source_profile=source.source_profile,
             source_path_hash=source_hash,

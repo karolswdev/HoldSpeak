@@ -383,7 +383,7 @@ class PipelineRunner:
             run_callable(self._db)
         except Exception as exc:  # noqa: BLE001 — surface to caller
             finished = self._now()
-            self._db.record_connector_run(
+            self._db.activity.record_connector_run(
                 connector_id=pack_id,
                 started_at=started,
                 finished_at=finished,
@@ -419,7 +419,7 @@ class PipelineRunner:
             if pack.manifest.kind == "pipeline"
             else 300
         )
-        runs = self._db.list_connector_runs(connector_id=pack.manifest.id, limit=1)
+        runs = self._db.activity.list_connector_runs(connector_id=pack.manifest.id, limit=1)
         if not runs:
             return False
         latest = runs[0]

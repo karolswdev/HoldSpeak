@@ -21,7 +21,7 @@ def test_record_and_list_run_round_trip(db):
     started = datetime(2026, 5, 1, 12, 0, 0)
     finished = started + timedelta(milliseconds=320)
 
-    run = db.record_connector_run(
+    run = db.activity.record_connector_run(
         connector_id="gh",
         started_at=started,
         finished_at=finished,
@@ -34,7 +34,7 @@ def test_record_and_list_run_round_trip(db):
     assert run.id > 0
     assert run.duration_ms() == 320
 
-    runs = db.list_connector_runs(connector_id="gh")
+    runs = db.activity.list_connector_runs(connector_id="gh")
     assert len(runs) == 1
     assert runs[0].connector_id == "gh"
     assert runs[0].succeeded is True
@@ -45,7 +45,7 @@ def test_record_and_list_run_round_trip(db):
 def test_failed_run_records_error_text(db):
     started = datetime(2026, 5, 1, 12, 0, 0)
     finished = started + timedelta(milliseconds=15)
-    db.record_connector_run(
+    db.activity.record_connector_run(
         connector_id="jira",
         started_at=started,
         finished_at=finished,
@@ -55,7 +55,7 @@ def test_failed_run_records_error_text(db):
         command_count=2,
     )
 
-    [run] = db.list_connector_runs(connector_id="jira")
+    [run] = db.activity.list_connector_runs(connector_id="jira")
     assert run.succeeded is False
     assert run.error == "2 jira command(s) failed"
 
@@ -63,57 +63,57 @@ def test_failed_run_records_error_text(db):
 def test_list_returns_runs_in_descending_time_order(db):
     base = datetime(2026, 5, 1, 12, 0, 0)
     for offset in (0, 5, 10):
-        db.record_connector_run(
+        db.activity.record_connector_run(
             connector_id="gh",
             started_at=base + timedelta(seconds=offset),
             finished_at=base + timedelta(seconds=offset, milliseconds=10),
             succeeded=True,
         )
 
-    runs = db.list_connector_runs(connector_id="gh", limit=5)
+    runs = db.activity.list_connector_runs(connector_id="gh", limit=5)
     starts = [r.started_at for r in runs]
     assert starts == sorted(starts, reverse=True)
 
 
 def test_list_is_scoped_to_connector(db):
     base = datetime(2026, 5, 1, 12, 0, 0)
-    db.record_connector_run(
+    db.activity.record_connector_run(
         connector_id="gh",
         started_at=base,
         finished_at=base + timedelta(milliseconds=1),
         succeeded=True,
     )
-    db.record_connector_run(
+    db.activity.record_connector_run(
         connector_id="jira",
         started_at=base,
         finished_at=base + timedelta(milliseconds=1),
         succeeded=True,
     )
 
-    assert len(db.list_connector_runs(connector_id="gh")) == 1
-    assert len(db.list_connector_runs(connector_id="jira")) == 1
-    assert len(db.list_connector_runs(connector_id="calendar_activity")) == 0
+    assert len(db.activity.list_connector_runs(connector_id="gh")) == 1
+    assert len(db.activity.list_connector_runs(connector_id="jira")) == 1
+    assert len(db.activity.list_connector_runs(connector_id="calendar_activity")) == 0
 
 
 def test_delete_connector_runs_is_pack_scoped(db):
     base = datetime(2026, 5, 1, 12, 0, 0)
     for cid in ("gh", "gh", "jira"):
-        db.record_connector_run(
+        db.activity.record_connector_run(
             connector_id=cid,
             started_at=base,
             finished_at=base + timedelta(milliseconds=1),
             succeeded=True,
         )
-    deleted = db.delete_connector_runs(connector_id="gh")
+    deleted = db.activity.delete_connector_runs(connector_id="gh")
     assert deleted == 2
-    assert db.list_connector_runs(connector_id="gh") == []
-    assert len(db.list_connector_runs(connector_id="jira")) == 1
+    assert db.activity.list_connector_runs(connector_id="gh") == []
+    assert len(db.activity.list_connector_runs(connector_id="jira")) == 1
 
 
 def test_run_payload_round_trip(db):
     started = datetime(2026, 5, 1, 12, 0, 0)
     finished = started + timedelta(milliseconds=42)
-    run = db.record_connector_run(
+    run = db.activity.record_connector_run(
         connector_id="gh",
         started_at=started,
         finished_at=finished,
@@ -133,7 +133,7 @@ def test_run_payload_round_trip(db):
 
 def test_record_connector_run_requires_connector_id(db):
     with pytest.raises(ValueError):
-        db.record_connector_run(
+        db.activity.record_connector_run(
             connector_id="",
             started_at=datetime.now(),
             finished_at=datetime.now(),

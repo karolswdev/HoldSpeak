@@ -53,7 +53,7 @@ def seeded_meeting(db: MeetingDatabase):
     )
     db.meetings.save_meeting(state)
 
-    db.record_intent_window(
+    db.plugins.record_intent_window(
         meeting_id="m-api",
         window_id="m-api:w0001",
         start_seconds=0.0,
@@ -65,7 +65,7 @@ def seeded_meeting(db: MeetingDatabase):
         active_intents=["architecture"],
         intent_scores={"architecture": 0.83, "delivery": 0.10},
     )
-    db.record_intent_window(
+    db.plugins.record_intent_window(
         meeting_id="m-api",
         window_id="m-api:w0002",
         start_seconds=30.0,
@@ -78,7 +78,7 @@ def seeded_meeting(db: MeetingDatabase):
         intent_scores={"architecture": 0.71, "delivery": 0.78},
     )
 
-    db.record_plugin_run(
+    db.plugins.record_plugin_run(
         meeting_id="m-api",
         window_id="m-api:w0001",
         plugin_id="requirements_extractor",
@@ -88,7 +88,7 @@ def seeded_meeting(db: MeetingDatabase):
         duration_ms=12.5,
         output={"summary": "Define API contract", "confidence_hint": 0.85},
     )
-    db.record_plugin_run(
+    db.plugins.record_plugin_run(
         meeting_id="m-api",
         window_id="m-api:w0002",
         plugin_id="requirements_extractor",
@@ -99,7 +99,7 @@ def seeded_meeting(db: MeetingDatabase):
         output={"summary": "Define API contract", "confidence_hint": 0.85},
     )
 
-    db.record_artifact(
+    db.plugins.record_artifact(
         artifact_id="art-001",
         meeting_id="m-api",
         artifact_type="requirements",

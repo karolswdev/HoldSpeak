@@ -473,7 +473,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                     {"error": "Meeting not found"}, status_code=404
                 )
 
-            artifacts = db.list_artifacts(meeting_id, limit=200)
+            artifacts = db.plugins.list_artifacts(meeting_id, limit=200)
             content = render_meeting_export(
                 meeting,
                 export_format,  # type: ignore[arg-type]
@@ -515,7 +515,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                     status_code=404,
                 )
 
-            windows = db.list_intent_windows(meeting_id, limit=limit)
+            windows = db.plugins.list_intent_windows(meeting_id, limit=limit)
             transitions = detect_intent_transitions(
                 [(window.window_id, list(window.active_intents)) for window in windows]
             )
@@ -567,7 +567,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                     status_code=404,
                 )
 
-            runs = db.list_plugin_runs(meeting_id, window_id=window_id, limit=limit)
+            runs = db.plugins.list_plugin_runs(meeting_id, window_id=window_id, limit=limit)
             return JSONResponse(
                 {
                     "meeting_id": meeting_id,
@@ -613,7 +613,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                     status_code=404,
                 )
 
-            artifacts = db.list_artifacts(meeting_id, limit=limit)
+            artifacts = db.plugins.list_artifacts(meeting_id, limit=limit)
             return JSONResponse(
                 {
                     "meeting_id": meeting_id,

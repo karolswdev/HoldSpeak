@@ -290,6 +290,7 @@ def test_run_intel_command_reroute_persists_intent_window(monkeypatch, capsys) -
     )
 
     class FakeDB:
+        plugins = property(lambda self: self)
         meetings = property(lambda self: self)
         def get_meeting(self, meeting_id: str):
             assert meeting_id == "meeting-77"

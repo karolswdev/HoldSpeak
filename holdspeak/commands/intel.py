@@ -291,7 +291,7 @@ def _persist_cli_reroute(
     transcript_hash = _meeting_transcript_hash(meeting, transcript=transcript)
     now_iso = datetime.now().isoformat()
 
-    db.record_intent_window(
+    db.plugins.record_intent_window(
         meeting_id=meeting_id,
         window_id=window_id,
         start_seconds=0.0,

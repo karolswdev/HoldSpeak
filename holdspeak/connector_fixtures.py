@@ -237,7 +237,7 @@ def _seed_records(db: MeetingDatabase, seeds: Iterable[ActivityRecordSeed]) -> N
             if seed.last_seen_at
             else None
         )
-        db.upsert_activity_record(
+        db.activity.upsert_activity_record(
             source_browser=seed.source_browser,
             source_profile=seed.source_profile,
             url=seed.url,
@@ -253,14 +253,14 @@ def run_fixture(db: MeetingDatabase, fixture: ConnectorFixture) -> FixtureRunRes
     """Seed the fixture's records, dry-run, assert no mutation, return result."""
     _seed_records(db, fixture.activity_records)
 
-    annotations_before = len(db.list_activity_annotations(limit=5000))
-    candidates_before = len(db.list_activity_meeting_candidates(limit=5000))
+    annotations_before = len(db.activity.list_activity_annotations(limit=5000))
+    candidates_before = len(db.activity.list_activity_meeting_candidates(limit=5000))
 
     result = dry_run(db, fixture.connector, limit=fixture.limit)
     payload = result.to_payload()
 
-    annotations_after = len(db.list_activity_annotations(limit=5000))
-    candidates_after = len(db.list_activity_meeting_candidates(limit=5000))
+    annotations_after = len(db.activity.list_activity_annotations(limit=5000))
+    candidates_after = len(db.activity.list_activity_meeting_candidates(limit=5000))
 
     failures: list[str] = []
     expect = fixture.expect

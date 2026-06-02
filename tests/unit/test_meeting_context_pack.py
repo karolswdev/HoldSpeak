@@ -159,7 +159,7 @@ def test_synthesizer_is_deterministic():
 
 
 def _seed_project(db: MeetingDatabase, project_id: str, name: str) -> None:
-    db.create_project(
+    db.projects.create_project(
         project_id=project_id,
         name=name,
         keywords=[name.lower()],
@@ -167,7 +167,7 @@ def _seed_project(db: MeetingDatabase, project_id: str, name: str) -> None:
 
 
 def _seed_records_and_upstreams(db: MeetingDatabase, project_id: str) -> int:
-    record = db.upsert_activity_record(
+    record = db.activity.upsert_activity_record(
         source_browser="safari",
         url=f"https://github.com/anthropic/{project_id}/pull/7",
         title=f"PR 7 in {project_id}",
@@ -176,22 +176,22 @@ def _seed_records_and_upstreams(db: MeetingDatabase, project_id: str) -> int:
         entity_type="github_pull_request",
         entity_id=f"anthropic/{project_id}#7",
     )
-    db.assign_activity_record_project(record.id, project_id)
-    db.create_activity_annotation(
+    db.activity.assign_activity_record_project(record.id, project_id)
+    db.activity.create_activity_annotation(
         activity_record_id=record.id,
         source_connector_id="gh",
         annotation_type="github_pr",
         title="Wire new runtime",
         value={"entity_id": f"anthropic/{project_id}#7", "gh": {"state": "OPEN"}},
     )
-    db.create_activity_annotation(
+    db.activity.create_activity_annotation(
         activity_record_id=record.id,
         source_connector_id="jira",
         annotation_type="jira_ticket",
         title="Plan briefing",
         value={"issue_key": "HS-200"},
     )
-    db.create_activity_meeting_candidate(
+    db.activity.create_activity_meeting_candidate(
         source_connector_id="calendar_activity",
         source_activity_record_id=record.id,
         title="Architecture sync",
@@ -206,7 +206,7 @@ def test_run_writes_one_briefing_per_active_project(db):
 
     meeting_context.run(db)
 
-    annotations = db.list_activity_annotations(
+    annotations = db.activity.list_activity_annotations(
         source_connector_id="meeting_context"
     )
     assert len(annotations) == 1
@@ -227,7 +227,7 @@ def test_run_with_empty_upstream_still_writes_briefing(db):
     # Project exists but no records / annotations / candidates.
     meeting_context.run(db)
 
-    annotations = db.list_activity_annotations(
+    annotations = db.activity.list_activity_annotations(
         source_connector_id="meeting_context"
     )
     assert len(annotations) == 1
@@ -245,7 +245,7 @@ def test_re_running_with_no_upstream_changes_does_not_duplicate(db):
 
     meeting_context.run(db)
     meeting_context.run(db)
-    rows = db.list_activity_annotations(source_connector_id="meeting_context")
+    rows = db.activity.list_activity_annotations(source_connector_id="meeting_context")
     assert len(rows) == 1
     assert rows[0].value["project_id"] == "holdspeak"
 
@@ -261,7 +261,7 @@ def test_re_running_with_changed_upstream_appends_new_snapshot(db):
 
     # Upstream changes: a new gh annotation lands on the same
     # record, which the synthesizer will pick up next run.
-    db.create_activity_annotation(
+    db.activity.create_activity_annotation(
         activity_record_id=record_id,
         source_connector_id="gh",
         annotation_type="github_pr",
@@ -271,7 +271,7 @@ def test_re_running_with_changed_upstream_appends_new_snapshot(db):
 
     meeting_context.run(db)
 
-    rows = db.list_activity_annotations(source_connector_id="meeting_context")
+    rows = db.activity.list_activity_annotations(source_connector_id="meeting_context")
     assert len(rows) == 2
     # Newest first per the listing's ORDER BY.
     assert "Second wave" in rows[0].value["markdown"]
@@ -280,7 +280,7 @@ def test_re_running_with_changed_upstream_appends_new_snapshot(db):
 def test_run_records_a_connector_run_row(db):
     _seed_project(db, "holdspeak", "HoldSpeak")
     meeting_context.run(db)
-    runs = db.list_connector_runs(connector_id="meeting_context")
+    runs = db.activity.list_connector_runs(connector_id="meeting_context")
     assert len(runs) == 1
     assert runs[0].succeeded is True
     assert runs[0].annotation_count == 1
@@ -298,7 +298,7 @@ def test_pipeline_runner_dispatches_meeting_context_with_fresh_upstreams(db):
 
     now = datetime(2026, 5, 2, 12, 0, 0)
     for upstream in ("gh", "jira", "calendar_activity"):
-        db.record_connector_run(
+        db.activity.record_connector_run(
             connector_id=upstream,
             started_at=now - timedelta(seconds=30),
             finished_at=now - timedelta(seconds=20),
@@ -316,7 +316,7 @@ def test_pipeline_runner_dispatches_meeting_context_with_fresh_upstreams(db):
     assert statuses["meeting_context"] == "ran"
 
     # The pipeline produced its annotation.
-    annotations = db.list_activity_annotations(
+    annotations = db.activity.list_activity_annotations(
         source_connector_id="meeting_context"
     )
     assert len(annotations) == 1
@@ -331,7 +331,7 @@ def test_pipeline_run_history_carries_pipeline_row(db):
 
     now = datetime(2026, 5, 2, 12, 0, 0)
     for upstream in ("gh", "jira", "calendar_activity"):
-        db.record_connector_run(
+        db.activity.record_connector_run(
             connector_id=upstream,
             started_at=now - timedelta(seconds=30),
             finished_at=now - timedelta(seconds=20),
@@ -341,6 +341,6 @@ def test_pipeline_run_history_carries_pipeline_row(db):
     runner = PipelineRunner(db, now=lambda: now)
     runner.run("meeting_context")
 
-    pipe_runs = db.list_connector_runs(connector_id="meeting_context")
+    pipe_runs = db.activity.list_connector_runs(connector_id="meeting_context")
     assert len(pipe_runs) == 1
     assert pipe_runs[0].succeeded is True

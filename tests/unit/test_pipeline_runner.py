@@ -305,7 +305,7 @@ def test_run_executes_each_step_and_records_runs(db):
         def _run(database, **_kwargs):
             fired.append(name)
             now = datetime(2026, 5, 2, 12, 0, 0)
-            database.record_connector_run(
+            database.activity.record_connector_run(
                 connector_id=name,
                 started_at=now,
                 finished_at=now,
@@ -329,8 +329,8 @@ def test_run_executes_each_step_and_records_runs(db):
     assert fired == ["up", "pipe"]
     # Each pack records its own row at completion — the runner's
     # contract is "do not double-record on success".
-    assert len(db.list_connector_runs(connector_id="up")) == 1
-    assert len(db.list_connector_runs(connector_id="pipe")) == 1
+    assert len(db.activity.list_connector_runs(connector_id="up")) == 1
+    assert len(db.activity.list_connector_runs(connector_id="pipe")) == 1
 
 
 def test_run_skips_fresh_upstream(db):
@@ -354,7 +354,7 @@ def test_run_skips_fresh_upstream(db):
     # Seed a recent successful run for the upstream so the
     # pipeline runner sees it as fresh.
     now = datetime(2026, 5, 2, 10, 0, 0)
-    db.record_connector_run(
+    db.activity.record_connector_run(
         connector_id="up_fresh",
         started_at=now - timedelta(seconds=10),
         finished_at=now - timedelta(seconds=5),
@@ -373,7 +373,7 @@ def test_run_skips_fresh_upstream(db):
     # Upstream run was NOT invoked.
     assert "up_fresh" not in fired
     # Upstream's existing run row is intact; no new one added.
-    assert len(db.list_connector_runs(connector_id="up_fresh")) == 1
+    assert len(db.activity.list_connector_runs(connector_id="up_fresh")) == 1
 
 
 def test_run_does_not_skip_target_on_freshness(db):
@@ -394,7 +394,7 @@ def test_run_does_not_skip_target_on_freshness(db):
         freshness=300,
     )
     now = datetime(2026, 5, 2, 10, 0, 0)
-    db.record_connector_run(
+    db.activity.record_connector_run(
         connector_id="pipe2",
         started_at=now - timedelta(seconds=5),
         finished_at=now - timedelta(seconds=4),
@@ -427,7 +427,7 @@ def test_run_aborts_on_failed_step(db):
     assert result.steps[0].status == "failed"
     assert "upstream blew up" in (result.steps[0].error or "")
     # The failure is also recorded in connector_runs.
-    [row] = db.list_connector_runs(connector_id="up_bad")
+    [row] = db.activity.list_connector_runs(connector_id="up_bad")
     assert row.succeeded is False
 
 

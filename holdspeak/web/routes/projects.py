@@ -41,12 +41,12 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             clean_limit = 50
         try:
             db = get_database()
-            if db.get_project(project_id) is None:
+            if db.projects.get_project(project_id) is None:
                 return JSONResponse(
                     {"error": f"Unknown project: {project_id}"},
                     status_code=404,
                 )
-            annotations = db.list_activity_annotations(
+            annotations = db.activity.list_activity_annotations(
                 source_connector_id="meeting_context",
                 annotation_type="meeting_context_briefing",
                 limit=max(clean_limit * 4, 100),
@@ -80,7 +80,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
             db = get_database()
-            projects = db.list_projects(include_archived=include_archived)
+            projects = db.projects.list_projects(include_archived=include_archived)
             return JSONResponse({
                 "projects": [
                     {
@@ -128,7 +128,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
                     {"success": False, "error": "detection_threshold must be between 0 and 1"},
                     status_code=400,
                 )
-            db.create_project(
+            db.projects.create_project(
                 project_id=project_id,
                 name=name,
                 description=str(payload.get("description") or ""),
@@ -140,9 +140,9 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             # Reload detector
             if ctx.project_detector is not None:
                 ctx.project_detector.reload_projects(
-                    db.get_all_projects_for_detector()
+                    db.projects.get_all_projects_for_detector()
                 )
-            project = db.get_project(project_id)
+            project = db.projects.get_project(project_id)
             return JSONResponse({
                 "success": True,
                 "project": {
@@ -168,7 +168,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
             db = get_database()
-            project = db.get_project(project_id)
+            project = db.projects.get_project(project_id)
             if not project:
                 return JSONResponse({"error": "Project not found"}, status_code=404)
             return JSONResponse({
@@ -193,7 +193,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
             db = get_database()
-            existing = db.get_project(project_id)
+            existing = db.projects.get_project(project_id)
             if not existing:
                 return JSONResponse(
                     {"success": False, "error": "Project not found"},
@@ -231,13 +231,13 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
                     )
                 update_fields["detection_threshold"] = threshold
             if update_fields:
-                db.update_project(project_id, **update_fields)
+                db.projects.update_project(project_id, **update_fields)
             # Reload detector
             if ctx.project_detector is not None:
                 ctx.project_detector.reload_projects(
-                    db.get_all_projects_for_detector()
+                    db.projects.get_all_projects_for_detector()
                 )
-            updated = db.get_project(project_id)
+            updated = db.projects.get_project(project_id)
             return JSONResponse({
                 "success": True,
                 "project": {
@@ -263,16 +263,16 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
             db = get_database()
-            existing = db.get_project(project_id)
+            existing = db.projects.get_project(project_id)
             if not existing:
                 return JSONResponse(
                     {"success": False, "error": "Project not found"},
                     status_code=404,
                 )
-            db.update_project(project_id, is_archived=True)
+            db.projects.update_project(project_id, is_archived=True)
             if ctx.project_detector is not None:
                 ctx.project_detector.reload_projects(
-                    db.get_all_projects_for_detector()
+                    db.projects.get_all_projects_for_detector()
                 )
             return JSONResponse({"success": True})
         except Exception as e:
@@ -286,7 +286,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
             db = get_database()
-            meetings = db.get_project_meetings(project_id, limit=limit, offset=offset)
+            meetings = db.projects.get_project_meetings(project_id, limit=limit, offset=offset)
             return JSONResponse({"meetings": meetings})
         except Exception as e:
             log.error(f"Failed to get project meetings: {e}")
@@ -297,7 +297,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
             db = get_database()
-            db.associate_meeting_project(
+            db.projects.associate_meeting_project(
                 meeting_id=meeting_id,
                 project_id=project_id,
                 source="manual",
@@ -313,7 +313,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
             db = get_database()
-            db.disassociate_meeting_project(
+            db.projects.disassociate_meeting_project(
                 meeting_id=meeting_id,
                 project_id=project_id,
             )
@@ -327,7 +327,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
             db = get_database()
-            projects = db.get_meeting_projects(meeting_id)
+            projects = db.projects.get_meeting_projects(meeting_id)
             return JSONResponse({"projects": projects})
         except Exception as e:
             log.error(f"Failed to get meeting projects: {e}")
@@ -338,7 +338,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
             db = get_database()
-            summary = db.get_project_summary(project_id)
+            summary = db.projects.get_project_summary(project_id)
             return JSONResponse(summary)
         except Exception as e:
             log.error(f"Failed to get project summary: {e}")
@@ -349,7 +349,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
             db = get_database()
-            items = db.get_project_action_items(project_id)
+            items = db.projects.get_project_action_items(project_id)
             return JSONResponse({
                 "action_items": [
                     {
@@ -379,7 +379,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
             db = get_database()
-            artifacts = db.get_project_artifacts(project_id)
+            artifacts = db.projects.get_project_artifacts(project_id)
             return JSONResponse({
                 "artifacts": [
                     {

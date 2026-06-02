@@ -98,7 +98,7 @@ def test_to_artifact_lineage_empty_sources_yields_empty_lists() -> None:
 
 def test_synthesize_and_persist_writes_artifacts_with_lineage(db, saved_meeting) -> None:
     # Seed window + plugin_runs the synthesizer can chew on.
-    db.record_intent_window(
+    db.plugins.record_intent_window(
         meeting_id="m-synth",
         window_id="m-synth:w0001",
         start_seconds=0.0,
@@ -106,7 +106,7 @@ def test_synthesize_and_persist_writes_artifacts_with_lineage(db, saved_meeting)
         transcript_hash="h1",
         intent_scores={"architecture": 0.9},
     )
-    db.record_intent_window(
+    db.plugins.record_intent_window(
         meeting_id="m-synth",
         window_id="m-synth:w0002",
         start_seconds=30.0,
@@ -114,7 +114,7 @@ def test_synthesize_and_persist_writes_artifacts_with_lineage(db, saved_meeting)
         transcript_hash="h2",
         intent_scores={"architecture": 0.85},
     )
-    db.record_plugin_run(
+    db.plugins.record_plugin_run(
         meeting_id="m-synth",
         window_id="m-synth:w0001",
         plugin_id="requirements_extractor",
@@ -124,7 +124,7 @@ def test_synthesize_and_persist_writes_artifacts_with_lineage(db, saved_meeting)
         duration_ms=10.0,
         output={"summary": "Define API contract.", "confidence_hint": 0.85},
     )
-    db.record_plugin_run(
+    db.plugins.record_plugin_run(
         meeting_id="m-synth",
         window_id="m-synth:w0002",
         plugin_id="requirements_extractor",
@@ -146,7 +146,7 @@ def test_synthesize_and_persist_writes_artifacts_with_lineage(db, saved_meeting)
     assert len(lineage.plugin_run_keys) == 2
 
     # Persistence round-trip: artifact is on disk with the right source rows.
-    persisted = db.list_artifacts("m-synth")
+    persisted = db.plugins.list_artifacts("m-synth")
     assert len(persisted) == 1
     art = persisted[0]
     assert art.id == drafts[0].artifact_id
@@ -159,7 +159,7 @@ def test_synthesize_and_persist_empty_meeting_returns_empty_pair(db, saved_meeti
     drafts, lineages = synthesize_and_persist(db, "m-synth")
     assert drafts == []
     assert lineages == []
-    assert db.list_artifacts("m-synth") == []
+    assert db.plugins.list_artifacts("m-synth") == []
 
 
 def test_synthesize_and_persist_accepts_explicit_plugin_runs_iterable(db, saved_meeting) -> None:

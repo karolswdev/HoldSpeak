@@ -122,8 +122,8 @@ def test_meeting_session_stop_runs_mir_pipeline_when_enabled(db) -> None:
     assert final_state.ended_at is not None  # stop() set ended_at
 
     # MIR persisted intent windows + plugin runs for the meeting.
-    persisted_windows = db.list_intent_windows("m-stop-path")
-    persisted_runs = db.list_plugin_runs("m-stop-path")
+    persisted_windows = db.plugins.list_intent_windows("m-stop-path")
+    persisted_runs = db.plugins.list_plugin_runs("m-stop-path")
     assert len(persisted_windows) >= 1
     assert len(persisted_runs) >= 1
 
@@ -147,8 +147,8 @@ def test_meeting_session_stop_is_byte_identical_when_mir_disabled(db) -> None:
     session.stop()
 
     # No MIR persistence happened.
-    assert db.list_intent_windows("m-stop-path") == []
-    assert db.list_plugin_runs("m-stop-path") == []
+    assert db.plugins.list_intent_windows("m-stop-path") == []
+    assert db.plugins.list_plugin_runs("m-stop-path") == []
     assert session._mir_last_result is None  # type: ignore[attr-defined]
 
 

@@ -135,9 +135,9 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
         from ...db import get_database
 
         db = get_database()
-        settings = db.get_activity_privacy_settings()
-        rules = db.list_activity_domain_rules()
-        checkpoints = db.list_activity_import_checkpoints()
+        settings = db.activity.get_activity_privacy_settings()
+        rules = db.activity.list_activity_domain_rules()
+        checkpoints = db.activity.list_activity_import_checkpoints()
         checkpoint_payload = [
             {
                 "source_browser": checkpoint.source_browser,
@@ -165,7 +165,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             "sources": discovered,
             "checkpoints": checkpoint_payload,
             "domain_rules": rules,
-            "record_count": len(db.list_activity_records(limit=5000)),
+            "record_count": len(db.activity.list_activity_records(limit=5000)),
         }
 
     @router.get("/api/activity/status")
@@ -242,7 +242,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            settings = db.update_activity_privacy_settings(
+            settings = db.activity.update_activity_privacy_settings(
                 enabled=payload.enabled,
                 retention_days=payload.retention_days,
             )
@@ -257,7 +257,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            rule = db.upsert_activity_domain_rule(
+            rule = db.activity.upsert_activity_domain_rule(
                 domain=payload.domain,
                 action=payload.action,
             )
@@ -274,7 +274,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            deleted = db.delete_activity_domain_rule(domain)
+            deleted = db.activity.delete_activity_domain_rule(domain)
             return JSONResponse({"deleted": deleted, "status": _activity_status_payload()})
         except Exception as e:
             log.error(f"Failed to delete activity domain rule: {e}")
@@ -286,7 +286,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            rules = db.list_activity_project_rules(include_disabled=include_disabled)
+            rules = db.activity.list_activity_project_rules(include_disabled=include_disabled)
             return JSONResponse({"rules": [_activity_project_rule_payload(rule) for rule in rules]})
         except Exception as e:
             log.error(f"Failed to list activity project rules: {e}")
@@ -298,7 +298,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            rule = db.create_activity_project_rule(
+            rule = db.activity.create_activity_project_rule(
                 project_id=payload.project_id or "",
                 name=payload.name or "",
                 match_type=payload.match_type or "",
@@ -336,7 +336,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             ):
                 if key in present:
                     fields[key] = getattr(payload, key)
-            rule = db.update_activity_project_rule(rule_id, **fields)
+            rule = db.activity.update_activity_project_rule(rule_id, **fields)
             if rule is None:
                 return JSONResponse({"error": "activity project rule not found"}, status_code=404)
             return JSONResponse({"rule": _activity_project_rule_payload(rule)})
@@ -352,7 +352,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            return JSONResponse({"deleted": db.delete_activity_project_rule(rule_id)})
+            return JSONResponse({"deleted": db.activity.delete_activity_project_rule(rule_id)})
         except Exception as e:
             log.error(f"Failed to delete activity project rule: {e}")
             return JSONResponse({"error": str(e)}, status_code=500)
@@ -363,7 +363,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            matches = db.preview_activity_project_rule(
+            matches = db.activity.preview_activity_project_rule(
                 project_id=payload.project_id or "",
                 match_type=payload.match_type or "",
                 pattern=payload.pattern or "",
@@ -388,7 +388,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            updated = db.apply_activity_project_rules(limit=limit)
+            updated = db.activity.apply_activity_project_rules(limit=limit)
             return JSONResponse({"updated": updated})
         except Exception as e:
             log.error(f"Failed to apply activity project rules: {e}")
@@ -405,9 +405,9 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             db = get_database()
             connectors = []
             for descriptor in enrichment_descriptors():
-                state = db.get_activity_enrichment_connector(descriptor.id)
+                state = db.activity.get_activity_enrichment_connector(descriptor.id)
                 if state is None:
-                    state = db.upsert_activity_enrichment_connector(connector_id=descriptor.id)
+                    state = db.activity.upsert_activity_enrichment_connector(connector_id=descriptor.id)
                 payload = _activity_enrichment_connector_payload(state)
                 payload["label"] = descriptor.label
                 payload["kind"] = descriptor.kind
@@ -465,7 +465,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            connector = db.upsert_activity_enrichment_connector(
+            connector = db.activity.upsert_activity_enrichment_connector(
                 connector_id=connector_id,
                 enabled=payload.enabled,
                 settings=payload.settings,
@@ -560,12 +560,12 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            deleted = db.delete_activity_annotations(source_connector_id=connector_id)
+            deleted = db.activity.delete_activity_annotations(source_connector_id=connector_id)
             # HS-13-05: run history is part of the pack's
             # output; clearing annotations clears the matching
             # run rows so the user sees a fresh slate after a
             # reset.
-            runs_deleted = db.delete_connector_runs(connector_id=connector_id)
+            runs_deleted = db.activity.delete_connector_runs(connector_id=connector_id)
             return JSONResponse(
                 {
                     "deleted": int(deleted),
@@ -600,8 +600,8 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            deleted = db.delete_activity_meeting_candidates(source_connector_id=connector_id)
-            runs_deleted = db.delete_connector_runs(connector_id=connector_id)
+            deleted = db.activity.delete_activity_meeting_candidates(source_connector_id=connector_id)
+            runs_deleted = db.activity.delete_connector_runs(connector_id=connector_id)
             return JSONResponse(
                 {
                     "deleted": int(deleted),
@@ -631,7 +631,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             clean_limit = 100
         try:
             db = get_database()
-            annotations = db.list_activity_annotations(
+            annotations = db.activity.list_activity_annotations(
                 source_connector_id=source_connector_id,
                 annotation_type=annotation_type,
                 activity_record_id=activity_record_id,
@@ -679,13 +679,13 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
 
         try:
             db = get_database()
-            annotations = db.list_activity_annotations(
+            annotations = db.activity.list_activity_annotations(
                 source_connector_id="meeting_context",
                 annotation_type="meeting_context_briefing",
                 limit=20,
             )
             briefing = annotations[0] if annotations else None
-            runs = db.list_connector_runs(
+            runs = db.activity.list_connector_runs(
                 connector_id="meeting_context", limit=1
             )
             last_run = runs[0] if runs else None
@@ -774,7 +774,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             clean_limit = 10
         try:
             db = get_database()
-            runs = db.list_connector_runs(
+            runs = db.activity.list_connector_runs(
                 connector_id=connector_id, limit=clean_limit
             )
             return JSONResponse(
@@ -794,10 +794,10 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            connector = db.get_activity_enrichment_connector(CONNECTOR_ID)
+            connector = db.activity.get_activity_enrichment_connector(CONNECTOR_ID)
             if connector is None:
-                connector = db.upsert_activity_enrichment_connector(connector_id=CONNECTOR_ID)
-            records = db.list_activity_records(limit=max(1, min(int(limit), 500)))
+                connector = db.activity.upsert_activity_enrichment_connector(connector_id=CONNECTOR_ID)
+            records = db.activity.list_activity_records(limit=max(1, min(int(limit), 500)))
             preview = preview_github_cli_enrichment(records, limit=limit)
             return JSONResponse(
                 {
@@ -818,9 +818,9 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            connector = db.get_activity_enrichment_connector(CONNECTOR_ID)
+            connector = db.activity.get_activity_enrichment_connector(CONNECTOR_ID)
             if connector is None:
-                connector = db.upsert_activity_enrichment_connector(connector_id=CONNECTOR_ID)
+                connector = db.activity.upsert_activity_enrichment_connector(connector_id=CONNECTOR_ID)
             if not connector.enabled:
                 return JSONResponse(
                     {
@@ -854,11 +854,11 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                     github_cli_pack.MANIFEST, settings, "max_bytes"
                 )
             )
-            records = db.list_activity_records(
+            records = db.activity.list_activity_records(
                 entity_type="github_pull_request",
                 limit=max(1, min(int(limit), 500)),
             )
-            issue_records = db.list_activity_records(
+            issue_records = db.activity.list_activity_records(
                 entity_type="github_issue",
                 limit=max(1, min(int(limit), 500)),
             )
@@ -869,7 +869,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                 timeout_seconds=max(0.1, float(timeout_seconds)),
                 max_bytes=max(1024, min(int(max_bytes), 1048576)),
             )
-            connector = db.get_activity_enrichment_connector(CONNECTOR_ID) or connector
+            connector = db.activity.get_activity_enrichment_connector(CONNECTOR_ID) or connector
             return JSONResponse(
                 {
                     "success": True,
@@ -891,10 +891,10 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            connector = db.get_activity_enrichment_connector(CONNECTOR_ID)
+            connector = db.activity.get_activity_enrichment_connector(CONNECTOR_ID)
             if connector is None:
-                connector = db.upsert_activity_enrichment_connector(connector_id=CONNECTOR_ID)
-            records = db.list_activity_records(entity_type="jira_ticket", limit=max(1, min(int(limit), 500)))
+                connector = db.activity.upsert_activity_enrichment_connector(connector_id=CONNECTOR_ID)
+            records = db.activity.list_activity_records(entity_type="jira_ticket", limit=max(1, min(int(limit), 500)))
             preview = preview_jira_cli_enrichment(records, limit=limit)
             return JSONResponse(
                 {
@@ -915,9 +915,9 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            connector = db.get_activity_enrichment_connector(CONNECTOR_ID)
+            connector = db.activity.get_activity_enrichment_connector(CONNECTOR_ID)
             if connector is None:
-                connector = db.upsert_activity_enrichment_connector(connector_id=CONNECTOR_ID)
+                connector = db.activity.upsert_activity_enrichment_connector(connector_id=CONNECTOR_ID)
             if not connector.enabled:
                 return JSONResponse(
                     {
@@ -951,7 +951,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                     jira_cli_pack.MANIFEST, settings, "max_bytes"
                 )
             )
-            records = db.list_activity_records(
+            records = db.activity.list_activity_records(
                 entity_type="jira_ticket",
                 limit=max(1, min(int(limit), 500)),
             )
@@ -962,7 +962,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                 timeout_seconds=max(0.1, float(timeout_seconds)),
                 max_bytes=max(1024, min(int(max_bytes), 1048576)),
             )
-            connector = db.get_activity_enrichment_connector(CONNECTOR_ID) or connector
+            connector = db.activity.get_activity_enrichment_connector(CONNECTOR_ID) or connector
             return JSONResponse(
                 {
                     "success": True,
@@ -984,7 +984,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            records = db.list_activity_records(limit=max(1, min(int(limit), 500)))
+            records = db.activity.list_activity_records(limit=max(1, min(int(limit), 500)))
             previews = preview_calendar_meeting_candidates(records, limit=limit)
             return JSONResponse(
                 {
@@ -1006,7 +1006,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            candidates = db.list_activity_meeting_candidates(
+            candidates = db.activity.list_activity_meeting_candidates(
                 source_connector_id=source_connector_id,
                 status=status,
                 limit=limit,
@@ -1031,7 +1031,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            candidate = db.create_activity_meeting_candidate(
+            candidate = db.activity.create_activity_meeting_candidate(
                 source_connector_id=payload.source_connector_id or "calendar_activity",
                 source_activity_record_id=payload.source_activity_record_id,
                 title=payload.title or "",
@@ -1057,7 +1057,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            candidate = db.update_activity_meeting_candidate_status(
+            candidate = db.activity.update_activity_meeting_candidate_status(
                 candidate_id,
                 payload.status,
             )
@@ -1082,7 +1082,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            candidate = db.get_activity_meeting_candidate(candidate_id)
+            candidate = db.activity.get_activity_meeting_candidate(candidate_id)
             if candidate is None:
                 return JSONResponse({"error": "activity meeting candidate not found"}, status_code=404)
 
@@ -1101,7 +1101,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                     log.error(f"Failed to apply candidate title to started meeting: {e}")
 
             meeting_id = _meeting_payload_id(meeting_data)
-            candidate = db.mark_activity_meeting_candidate_started(
+            candidate = db.activity.mark_activity_meeting_candidate_started(
                 candidate.id,
                 meeting_id=meeting_id,
             )
@@ -1141,7 +1141,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            deleted = db.delete_activity_meeting_candidates(
+            deleted = db.activity.delete_activity_meeting_candidates(
                 source_connector_id=source_connector_id,
                 status=status,
             )
@@ -1161,7 +1161,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            deleted = db.delete_activity_records(domain=domain, project_id=project_id)
+            deleted = db.activity.delete_activity_records(domain=domain, project_id=project_id)
             return JSONResponse({"deleted": deleted, "status": _activity_status_payload()})
         except Exception as e:
             log.error(f"Failed to delete activity records: {e}")
@@ -1178,7 +1178,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            jobs = db.list_plugin_run_jobs(status=status, meeting_id=meeting_id, limit=limit)
+            jobs = db.plugins.list_plugin_run_jobs(status=status, meeting_id=meeting_id, limit=limit)
             now = datetime.now()
             return JSONResponse(
                 {
@@ -1226,7 +1226,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            summary = db.get_plugin_run_job_summary()
+            summary = db.plugins.get_plugin_run_job_summary()
             return JSONResponse(
                 {
                     "total_jobs": summary.total_jobs,
@@ -1287,7 +1287,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            job = db.get_plugin_run_job(job_id) if hasattr(db, "get_plugin_run_job") else None
+            job = db.plugins.get_plugin_run_job(job_id) if hasattr(db.plugins, "get_plugin_run_job") else None
             if job is None:
                 return JSONResponse({"success": False, "error": "Plugin job not found"}, status_code=404)
             if str(job.status).strip().lower() == "running":
@@ -1296,12 +1296,12 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                     status_code=409,
                 )
 
-            db.retry_plugin_run_job(
+            db.plugins.retry_plugin_run_job(
                 int(job_id),
                 error="Manual retry requested from web UI.",
                 retry_at=datetime.now(),
             )
-            updated = db.get_plugin_run_job(job_id) if hasattr(db, "get_plugin_run_job") else None
+            updated = db.plugins.get_plugin_run_job(job_id) if hasattr(db.plugins, "get_plugin_run_job") else None
             return JSONResponse(
                 {
                     "success": True,
@@ -1334,7 +1334,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            job = db.get_plugin_run_job(job_id) if hasattr(db, "get_plugin_run_job") else None
+            job = db.plugins.get_plugin_run_job(job_id) if hasattr(db.plugins, "get_plugin_run_job") else None
             if job is None:
                 return JSONResponse({"success": False, "error": "Plugin job not found"}, status_code=404)
             if str(job.status).strip().lower() == "running":
@@ -1342,7 +1342,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                     {"success": False, "error": "Cannot cancel a running plugin job"},
                     status_code=409,
                 )
-            db.complete_plugin_run_job(job_id)
+            db.plugins.complete_plugin_run_job(job_id)
             return JSONResponse({"success": True})
         except Exception as e:
             log.error(f"Failed to cancel deferred plugin job {job_id}: {e}")

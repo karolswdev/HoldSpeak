@@ -120,8 +120,8 @@ def test_disabled_router_config_keeps_pipeline_off(db) -> None:
     session.stop()
 
     # Pipeline did not run — no MIR persistence, no parked result.
-    assert db.list_intent_windows("m-cfg") == []
-    assert db.list_plugin_runs("m-cfg") == []
+    assert db.plugins.list_intent_windows("m-cfg") == []
+    assert db.plugins.list_plugin_runs("m-cfg") == []
     assert session._mir_last_result is None  # type: ignore[attr-defined]
 
 
@@ -144,7 +144,7 @@ def test_enabled_router_config_drives_pipeline_with_tuned_threshold(db) -> None:
 
     session.stop()
 
-    persisted_windows = db.list_intent_windows("m-cfg")
+    persisted_windows = db.plugins.list_intent_windows("m-cfg")
     assert len(persisted_windows) >= 1
     # Profile from config flowed through to persisted rows.
     assert all(w.profile == "architect" for w in persisted_windows)
@@ -175,7 +175,7 @@ def test_window_step_seconds_change_window_count(db) -> None:
     long_session = _build_session_from_config(cfg_long, host=_full_host(), db=db)
     _seed_active_state(long_session, db)
     long_session.stop()
-    long_count = len(db.list_intent_windows("m-cfg"))
+    long_count = len(db.plugins.list_intent_windows("m-cfg"))
 
     # Reset DB rows for the second pass against a fresh meeting id.
     short_state = MeetingState(
@@ -198,7 +198,7 @@ def test_window_step_seconds_change_window_count(db) -> None:
     )
     short_session._state = short_state  # type: ignore[attr-defined]
     short_session.stop()
-    short_count = len(db.list_intent_windows("m-cfg-short"))
+    short_count = len(db.plugins.list_intent_windows("m-cfg-short"))
 
     # Smaller step → more windows. The exact ratio depends on segment
     # spacing, so just assert the qualitative direction.

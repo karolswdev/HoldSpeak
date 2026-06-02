@@ -40,7 +40,7 @@ def _record_job_result(
     error: Optional[str],
     deduped: bool,
 ) -> None:
-    db.record_plugin_run(
+    db.plugins.record_plugin_run(
         meeting_id=job.meeting_id,
         window_id=job.window_id,
         plugin_id=job.plugin_id,
@@ -64,7 +64,7 @@ def process_next_plugin_run_job(
     retry_max_attempts: int = RETRY_MAX_ATTEMPTS,
 ) -> bool:
     """Process one deferred MIR plugin-run queue item."""
-    job = db.claim_next_plugin_run_job(include_scheduled=include_scheduled)
+    job = db.plugins.claim_next_plugin_run_job(include_scheduled=include_scheduled)
     if job is None:
         return False
 
@@ -76,7 +76,7 @@ def process_next_plugin_run_job(
             max_seconds=retry_max_seconds,
         )
         retry_at = datetime.now() + timedelta(seconds=delay_seconds)
-        db.retry_plugin_run_job(
+        db.plugins.retry_plugin_run_job(
             job.id,
             error="Meeting not yet persisted; deferred plugin run will retry.",
             retry_at=retry_at,
@@ -104,7 +104,7 @@ def process_next_plugin_run_job(
             error=result.error,
             deduped=result.deduped,
         )
-        db.complete_plugin_run_job(job.id)
+        db.plugins.complete_plugin_run_job(job.id)
         return True
 
     if result.status in {"error", "timeout"}:
@@ -120,7 +120,7 @@ def process_next_plugin_run_job(
                 error=result.error,
                 deduped=result.deduped,
             )
-            db.fail_plugin_run_job(
+            db.plugins.fail_plugin_run_job(
                 job.id,
                 error=result.error or f"Deferred plugin run {result.status}",
             )
@@ -132,7 +132,7 @@ def process_next_plugin_run_job(
             max_seconds=retry_max_seconds,
         )
         retry_at = datetime.now() + timedelta(seconds=delay_seconds)
-        db.retry_plugin_run_job(
+        db.plugins.retry_plugin_run_job(
             job.id,
             error=result.error or f"Deferred plugin run {result.status}",
             retry_at=retry_at,
@@ -146,7 +146,7 @@ def process_next_plugin_run_job(
         )
         return True
 
-    db.fail_plugin_run_job(
+    db.plugins.fail_plugin_run_job(
         job.id,
         error=f"Unhandled deferred plugin status: {result.status}",
     )

@@ -208,7 +208,7 @@ def ingest_extension_events(
             entity_type = entity_type or entity.entity_type
             entity_id = entity_id or entity.entity_id
 
-        record: ActivityRecord = db.upsert_activity_record(
+        record: ActivityRecord = db.activity.upsert_activity_record(
             source_browser=EXTENSION_SOURCE_BROWSER,
             source_profile=event.source_profile,
             url=event.url,
@@ -224,13 +224,13 @@ def ingest_extension_events(
 
     project_rule_updates = 0
     if accepted:
-        project_rule_updates = db.apply_activity_project_rules()
+        project_rule_updates = db.activity.apply_activity_project_rules()
 
     finished_at = datetime.now()
     error_text = (
         f"{len(rejected)} event(s) rejected" if rejected and not accepted else None
     )
-    db.record_connector_run(
+    db.activity.record_connector_run(
         connector_id=EXTENSION_SOURCE_BROWSER,
         started_at=started_at,
         finished_at=finished_at,

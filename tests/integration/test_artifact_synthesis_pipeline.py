@@ -125,7 +125,7 @@ def test_process_meeting_state_synthesizes_when_flag_set(db) -> None:
         assert art.artifact_id in by_id
 
     # Persistence: every drafted artifact is on disk.
-    persisted = db.list_artifacts("m-synth-pipe")
+    persisted = db.plugins.list_artifacts("m-synth-pipe")
     assert {a.id for a in persisted} == {a.artifact_id for a in result.artifacts}
 
 
@@ -146,8 +146,8 @@ def test_process_meeting_state_synthesize_off_by_default(db) -> None:
     assert result.artifacts == []
     assert result.artifact_lineages == []
     # Plugin runs still persisted; just no synthesis.
-    assert db.list_artifacts("m-synth-pipe") == []
-    assert len(db.list_plugin_runs("m-synth-pipe")) >= 1
+    assert db.plugins.list_artifacts("m-synth-pipe") == []
+    assert len(db.plugins.list_plugin_runs("m-synth-pipe")) >= 1
 
 
 @pytest.mark.integration

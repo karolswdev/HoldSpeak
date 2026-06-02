@@ -131,12 +131,12 @@ def run_jira_cli_enrichment(
             )
         except PermissionDenied as exc:
             now = datetime.now()
-            db.record_activity_enrichment_run(
+            db.activity.record_activity_enrichment_run(
                 connector_id=CONNECTOR_ID,
                 last_run_at=now,
                 last_error=str(exc),
             )
-            db.record_connector_run(
+            db.activity.record_connector_run(
                 connector_id=CONNECTOR_ID,
                 started_at=started_at,
                 finished_at=now,
@@ -167,12 +167,12 @@ def run_jira_cli_enrichment(
 
         parsed = _parse_jira_output(stdout)
         title = _jira_title(plan.issue_key, parsed)
-        db.delete_activity_annotations(
+        db.activity.delete_activity_annotations(
             activity_record_id=plan.activity_record_id,
             source_connector_id=CONNECTOR_ID,
             annotation_type=plan.annotation_type,
         )
-        annotation = db.create_activity_annotation(
+        annotation = db.activity.create_activity_annotation(
             activity_record_id=plan.activity_record_id,
             source_connector_id=CONNECTOR_ID,
             annotation_type=plan.annotation_type,
@@ -192,13 +192,13 @@ def run_jira_cli_enrichment(
     error_summary = (
         f"{len(failures)} jira command(s) failed" if failures else ""
     )
-    db.record_activity_enrichment_run(
+    db.activity.record_activity_enrichment_run(
         connector_id=CONNECTOR_ID,
         last_run_at=finished_at,
         last_error=error_summary,
     )
     annotation_count = sum(1 for r in results if r.annotation is not None)
-    db.record_connector_run(
+    db.activity.record_connector_run(
         connector_id=CONNECTOR_ID,
         started_at=started_at,
         finished_at=finished_at,

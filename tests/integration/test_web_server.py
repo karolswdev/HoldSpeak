@@ -1099,12 +1099,14 @@ class TestIntentRoutingControlEndpoints:
 
 @pytest.mark.integration
 class TestMirHistoryApiEndpoints:
+    plugins = property(lambda self: self)
     """Tests for persisted MIR timeline and plugin-run meeting APIs."""
 
     def test_meeting_intent_timeline_endpoint(self, monkeypatch, test_client):
         now = datetime(2026, 3, 29, 18, 0, 0)
 
         class FakeDb:
+            plugins = property(lambda self: self)
             meetings = property(lambda self: self)
             def get_meeting(self, meeting_id):
                 if meeting_id != "m-001":
@@ -1171,6 +1173,7 @@ class TestMirHistoryApiEndpoints:
         now = datetime(2026, 3, 29, 18, 0, 0)
 
         class FakeDb:
+            plugins = property(lambda self: self)
             meetings = property(lambda self: self)
             def get_meeting(self, meeting_id):
                 if meeting_id != "m-001":
@@ -1241,6 +1244,7 @@ class TestMirHistoryApiEndpoints:
         now = datetime(2026, 3, 29, 18, 0, 0)
 
         class FakeDb:
+            plugins = property(lambda self: self)
             meetings = property(lambda self: self)
             def get_meeting(self, meeting_id):
                 if meeting_id != "m-001":
@@ -1322,6 +1326,7 @@ class TestMirHistoryApiEndpoints:
         )
 
         class FakeDb:
+            plugins = property(lambda self: self)
             meetings = property(lambda self: self)
             def get_meeting(self, meeting_id):
                 return meeting if meeting_id == "m-export" else None
@@ -1374,6 +1379,7 @@ class TestMirHistoryApiEndpoints:
 
     def test_legacy_meeting_without_mir_history_rows_remains_loadable(self, monkeypatch, test_client):
         class FakeDb:
+            plugins = property(lambda self: self)
             meetings = property(lambda self: self)
             def get_meeting(self, meeting_id):
                 if meeting_id != "m-legacy":
@@ -1431,6 +1437,7 @@ class TestMirHistoryApiEndpoints:
         )
 
         class FakeDb:
+            plugins = property(lambda self: self)
             meetings = property(lambda self: self)
             def get_meeting(self, meeting_id):
                 if meeting_id != "m-reroute":
@@ -2320,12 +2327,14 @@ class TestIntelQueueApiEndpoints:
 
 @pytest.mark.integration
 class TestPluginRunQueueApiEndpoints:
+    plugins = property(lambda self: self)
     """Tests for deferred MIR plugin-run queue endpoints."""
 
     def test_plugin_jobs_list_retry_and_cancel(self, monkeypatch, test_client):
         now = datetime(2026, 3, 29, 20, 0, 0)
 
         class FakeDb:
+            plugins = property(lambda self: self)
             def __init__(self):
                 self.jobs = {
                     1: SimpleNamespace(
@@ -2451,7 +2460,7 @@ class TestPluginRunQueueApiEndpoints:
         cancel_response = test_client.post("/api/plugin-jobs/1/cancel")
         assert cancel_response.status_code == 200
         assert cancel_response.json()["success"] is True
-        assert fake_db.get_plugin_run_job(1) is None
+        assert fake_db.plugins.get_plugin_run_job(1) is None
 
         retry_running = test_client.post("/api/plugin-jobs/3/retry-now")
         assert retry_running.status_code == 409

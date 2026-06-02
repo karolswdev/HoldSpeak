@@ -157,9 +157,9 @@ def test_process_meeting_state_persists_when_db_supplied(db, saved_meeting) -> N
     result = process_meeting_state(state, _balanced_host(), db=db, threshold=0.4)
 
     assert result.errors == []
-    persisted_windows = db.list_intent_windows("m-pipeline")
+    persisted_windows = db.plugins.list_intent_windows("m-pipeline")
     assert len(persisted_windows) == len(result.windows)
-    persisted_runs = db.list_plugin_runs("m-pipeline")
+    persisted_runs = db.plugins.list_plugin_runs("m-pipeline")
     assert len(persisted_runs) == len(result.runs)
 
 

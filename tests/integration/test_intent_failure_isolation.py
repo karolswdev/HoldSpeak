@@ -141,7 +141,7 @@ def test_failing_plugin_runs_persisted_with_error_status(db) -> None:
 
     process_meeting_state(state, host, profile="balanced", threshold=0.4, db=db)
 
-    persisted = db.list_plugin_runs("m-fail-iso")
+    persisted = db.plugins.list_plugin_runs("m-fail-iso")
     by_id = {r.plugin_id: r for r in persisted}
 
     # Failing plugin is on disk with status='error' and a populated error message.

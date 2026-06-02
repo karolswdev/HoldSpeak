@@ -41,7 +41,7 @@ def record_intent_window(
             f"IntentScore.window_id={score.window_id!r} does not match "
             f"IntentWindow.window_id={window.window_id!r}"
         )
-    db.record_intent_window(
+    db.plugins.record_intent_window(
         meeting_id=window.meeting_id,
         window_id=window.window_id,
         start_seconds=window.start_seconds,
@@ -71,7 +71,7 @@ def record_plugin_run(
     The explicit `output` kwarg overrides `run.output` when both are set
     (callers that captured richer output post-dispatch should pass it in).
     """
-    db.record_plugin_run(
+    db.plugins.record_plugin_run(
         meeting_id=run.meeting_id,
         window_id=run.window_id,
         plugin_id=run.plugin_id,
@@ -123,7 +123,7 @@ def record_artifact_with_lineage(
     for plugin_run_key in lineage.plugin_run_keys:
         sources.append(("plugin_run", plugin_run_key))
 
-    db.record_artifact(
+    db.plugins.record_artifact(
         artifact_id=artifact_id,
         meeting_id=meeting_id,
         artifact_type=artifact_type,

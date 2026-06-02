@@ -122,8 +122,8 @@ def test_pipeline_end_to_end_persists_typed_outputs(db) -> None:
     assert len(result.scores) == len(result.windows)
     assert len(result.runs) >= len(result.windows)
 
-    persisted_windows = db.list_intent_windows("m-routing-int")
-    persisted_runs = db.list_plugin_runs("m-routing-int")
+    persisted_windows = db.plugins.list_intent_windows("m-routing-int")
+    persisted_runs = db.plugins.list_plugin_runs("m-routing-int")
     assert {w.window_id for w in persisted_windows} == {w.window_id for w in result.windows}
     assert len(persisted_runs) == len(result.runs)
 

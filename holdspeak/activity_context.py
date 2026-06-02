@@ -108,7 +108,7 @@ def build_activity_context(
             refresh_errors.append(f"{type(exc).__name__}: {exc}")
             log.warning("Activity context refresh failed: %s", exc)
 
-    records = database.list_activity_records(
+    records = database.activity.list_activity_records(
         project_id=project_id,
         limit=max(1, min(int(limit), 200)),
     )

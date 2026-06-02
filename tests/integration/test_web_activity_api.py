@@ -90,7 +90,7 @@ def test_activity_records_endpoint_returns_serialized_records(
     test_client: TestClient,
     activity_db: MeetingDatabase,
 ) -> None:
-    activity_db.upsert_activity_record(
+    activity_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/openai/codex/pull/99",
         title="PR 99",
@@ -124,7 +124,7 @@ def test_activity_domain_exclusion_and_clear_controls(
     test_client: TestClient,
     activity_db: MeetingDatabase,
 ) -> None:
-    activity_db.upsert_activity_record(
+    activity_db.activity.upsert_activity_record(
         source_browser="firefox",
         url="https://miro.com/app/board/uXjVTest/",
         domain="miro.com",
@@ -142,7 +142,7 @@ def test_activity_domain_exclusion_and_clear_controls(
     clear_response = test_client.delete("/api/activity/records?domain=miro.com")
     assert clear_response.status_code == 200
     assert clear_response.json()["deleted"] == 1
-    assert activity_db.list_activity_records() == []
+    assert activity_db.activity.list_activity_records() == []
 
     delete_rule_response = test_client.delete("/api/activity/domains/miro.com")
     assert delete_rule_response.status_code == 200
@@ -153,8 +153,8 @@ def test_activity_project_rule_api_previews_and_applies_mappings(
     test_client: TestClient,
     activity_db: MeetingDatabase,
 ) -> None:
-    activity_db.create_project(project_id="holdspeak", name="HoldSpeak")
-    activity_db.upsert_activity_record(
+    activity_db.projects.create_project(project_id="holdspeak", name="HoldSpeak")
+    activity_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://example.atlassian.net/browse/HS-123",
         title="HS-123 mapping",
@@ -217,7 +217,7 @@ def test_activity_meeting_candidate_api_previews_persists_and_updates(
     test_client: TestClient,
     activity_db: MeetingDatabase,
 ) -> None:
-    record = activity_db.upsert_activity_record(
+    record = activity_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://outlook.office.com/calendar/item/customer-sync",
         title="Customer sync meeting",
@@ -279,7 +279,7 @@ def test_activity_meeting_candidate_api_previews_persists_and_updates(
 def test_activity_meeting_candidate_manual_start_marks_started(
     activity_db: MeetingDatabase,
 ) -> None:
-    candidate = activity_db.create_activity_meeting_candidate(
+    candidate = activity_db.activity.create_activity_meeting_candidate(
         source_connector_id="calendar_activity",
         title="Customer sync meeting",
         meeting_url="https://teams.microsoft.com/l/meetup-join/customer-sync",
@@ -302,7 +302,7 @@ def test_activity_meeting_candidate_manual_start_marks_started(
     server.broadcast = lambda message_type, data: broadcast_events.append((message_type, data))
     client = TestClient(server.app)
 
-    before_start = activity_db.get_activity_meeting_candidate(candidate.id)
+    before_start = activity_db.activity.get_activity_meeting_candidate(candidate.id)
     assert before_start is not None
     assert before_start.status == "candidate"
     assert before_start.started_meeting_id is None
@@ -321,7 +321,7 @@ def test_activity_meeting_candidate_manual_start_marks_started(
     assert broadcast_events[0][0] == "meeting_started"
     assert broadcast_events[0][1]["activity_meeting_candidate_id"] == candidate.id
 
-    persisted = activity_db.get_activity_meeting_candidate(candidate.id)
+    persisted = activity_db.activity.get_activity_meeting_candidate(candidate.id)
     assert persisted is not None
     assert persisted.status == "started"
     assert persisted.started_meeting_id == "meeting-1"
@@ -331,7 +331,7 @@ def test_activity_meeting_candidate_manual_start_requires_runtime_start_support(
     test_client: TestClient,
     activity_db: MeetingDatabase,
 ) -> None:
-    candidate = activity_db.create_activity_meeting_candidate(
+    candidate = activity_db.activity.create_activity_meeting_candidate(
         source_connector_id="calendar_activity",
         title="Customer sync meeting",
     )
@@ -340,7 +340,7 @@ def test_activity_meeting_candidate_manual_start_requires_runtime_start_support(
 
     assert response.status_code == 501
     assert response.json()["success"] is False
-    persisted = activity_db.get_activity_meeting_candidate(candidate.id)
+    persisted = activity_db.activity.get_activity_meeting_candidate(candidate.id)
     assert persisted is not None
     assert persisted.status == "candidate"
     assert persisted.started_meeting_id is None
@@ -350,7 +350,7 @@ def test_github_enrichment_preview_is_visible_and_disabled_by_default(
     test_client: TestClient,
     activity_db: MeetingDatabase,
 ) -> None:
-    record = activity_db.upsert_activity_record(
+    record = activity_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/openai/codex/pull/42",
         title="PR 42",
@@ -373,7 +373,7 @@ def test_github_enrichment_preview_is_visible_and_disabled_by_default(
     run_response = test_client.post("/api/activity/enrichment/github/run", json={})
     assert run_response.status_code == 403
     assert run_response.json()["success"] is False
-    assert activity_db.list_activity_annotations(source_connector_id="gh") == []
+    assert activity_db.activity.list_activity_annotations(source_connector_id="gh") == []
 
 
 def test_github_enrichment_run_requires_explicit_enablement(
@@ -381,7 +381,7 @@ def test_github_enrichment_run_requires_explicit_enablement(
     activity_db: MeetingDatabase,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    activity_db.upsert_activity_record(
+    activity_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/openai/codex/issues/99",
         title="Issue 99",
@@ -392,7 +392,7 @@ def test_github_enrichment_run_requires_explicit_enablement(
 
     def fake_run(db, records, **kwargs):
         record = list(records)[0]
-        annotation = db.create_activity_annotation(
+        annotation = db.activity.create_activity_annotation(
             activity_record_id=record.id,
             source_connector_id="gh",
             annotation_type="github_issue",
@@ -428,7 +428,7 @@ def test_github_enrichment_run_requires_explicit_enablement(
     assert payload["success"] is True
     assert payload["count"] == 1
     assert payload["results"][0]["annotation"]["title"] == "Issue 99 enriched"
-    annotations = activity_db.list_activity_annotations(source_connector_id="gh")
+    annotations = activity_db.activity.list_activity_annotations(source_connector_id="gh")
     assert len(annotations) == 1
     assert annotations[0].annotation_type == "github_issue"
 
@@ -437,7 +437,7 @@ def test_jira_enrichment_preview_is_visible_and_disabled_by_default(
     test_client: TestClient,
     activity_db: MeetingDatabase,
 ) -> None:
-    record = activity_db.upsert_activity_record(
+    record = activity_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://example.atlassian.net/browse/HS-123",
         title="HS-123 activity mapping",
@@ -465,7 +465,7 @@ def test_jira_enrichment_preview_is_visible_and_disabled_by_default(
     run_response = test_client.post("/api/activity/enrichment/jira/run", json={})
     assert run_response.status_code == 403
     assert run_response.json()["success"] is False
-    assert activity_db.list_activity_annotations(source_connector_id="jira") == []
+    assert activity_db.activity.list_activity_annotations(source_connector_id="jira") == []
 
 
 def test_jira_enrichment_run_requires_explicit_enablement(
@@ -473,7 +473,7 @@ def test_jira_enrichment_run_requires_explicit_enablement(
     activity_db: MeetingDatabase,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    activity_db.upsert_activity_record(
+    activity_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://example.atlassian.net/browse/HS-123",
         title="HS-123 activity mapping",
@@ -484,7 +484,7 @@ def test_jira_enrichment_run_requires_explicit_enablement(
 
     def fake_run(db, records, **kwargs):
         record = list(records)[0]
-        annotation = db.create_activity_annotation(
+        annotation = db.activity.create_activity_annotation(
             activity_record_id=record.id,
             source_connector_id="jira",
             annotation_type="jira_ticket",
@@ -520,7 +520,7 @@ def test_jira_enrichment_run_requires_explicit_enablement(
     assert payload["success"] is True
     assert payload["count"] == 1
     assert payload["results"][0]["annotation"]["title"] == "HS-123 enriched"
-    annotations = activity_db.list_activity_annotations(source_connector_id="jira")
+    annotations = activity_db.activity.list_activity_annotations(source_connector_id="jira")
     assert len(annotations) == 1
     assert annotations[0].annotation_type == "jira_ticket"
 
@@ -556,7 +556,7 @@ def test_clear_connector_annotations_deletes_only_that_connectors_output(
 ) -> None:
     """HS-9-12: clearing annotations is scoped to the connector
     that produced them; other connectors' annotations stay put."""
-    record = activity_db.upsert_activity_record(
+    record = activity_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/anthropic/holdspeak/issues/99",
         title="Issue 99",
@@ -565,13 +565,13 @@ def test_clear_connector_annotations_deletes_only_that_connectors_output(
         entity_type="github_issue",
         entity_id="anthropic/holdspeak#99",
     )
-    activity_db.create_activity_annotation(
+    activity_db.activity.create_activity_annotation(
         activity_record_id=record.id,
         source_connector_id="gh",
         annotation_type="github_issue",
         title="Issue 99 enriched",
     )
-    activity_db.create_activity_annotation(
+    activity_db.activity.create_activity_annotation(
         activity_record_id=record.id,
         source_connector_id="jira",
         annotation_type="jira_ticket",
@@ -587,8 +587,8 @@ def test_clear_connector_annotations_deletes_only_that_connectors_output(
     # connector had no run history so the count is zero.
     assert payload["runs_deleted"] == 0
 
-    assert activity_db.list_activity_annotations(source_connector_id="gh") == []
-    remaining = activity_db.list_activity_annotations(source_connector_id="jira")
+    assert activity_db.activity.list_activity_annotations(source_connector_id="gh") == []
+    remaining = activity_db.activity.list_activity_annotations(source_connector_id="jira")
     assert len(remaining) == 1
 
 
@@ -598,7 +598,7 @@ def test_clear_connector_candidates_deletes_only_that_connectors_output(
 ) -> None:
     """HS-9-12: calendar_activity candidates can be cleared via the
     connector-scoped DELETE endpoint."""
-    activity_db.create_activity_meeting_candidate(
+    activity_db.activity.create_activity_meeting_candidate(
         source_connector_id="calendar_activity",
         title="Architecture sync",
     )
@@ -611,7 +611,7 @@ def test_clear_connector_candidates_deletes_only_that_connectors_output(
     assert payload["deleted"] == 1
     assert payload["connector_id"] == "calendar_activity"
 
-    assert activity_db.list_activity_meeting_candidates() == []
+    assert activity_db.activity.list_activity_meeting_candidates() == []
 
 
 def test_clear_connector_unknown_connector_returns_404(test_client: TestClient) -> None:
@@ -645,7 +645,7 @@ def test_extension_events_endpoint_creates_records(
     assert len(payload["accepted"]) == 1
     assert payload["rejected"] == []
 
-    records = activity_db.list_activity_records(source_browser="firefox_ext")
+    records = activity_db.activity.list_activity_records(source_browser="firefox_ext")
     assert len(records) == 1
     assert records[0].entity_type == "github_pull_request"
 
@@ -689,7 +689,7 @@ def test_extension_events_rejects_sensitive_fields(
     assert rejected_reasons[1].startswith("forbidden_field:")
     assert "private_browsing_blocked" in rejected_reasons
 
-    assert activity_db.list_activity_records(source_browser="firefox_ext") == []
+    assert activity_db.activity.list_activity_records(source_browser="firefox_ext") == []
 
 
 def test_extension_events_applies_project_rules(
@@ -698,8 +698,8 @@ def test_extension_events_applies_project_rules(
 ) -> None:
     """HS-9-03: extension records pick up the same project mapping
     as imported history records."""
-    activity_db.create_project(project_id="holdspeak", name="HoldSpeak")
-    activity_db.create_activity_project_rule(
+    activity_db.projects.create_project(project_id="holdspeak", name="HoldSpeak")
+    activity_db.activity.create_activity_project_rule(
         project_id="holdspeak",
         match_type="domain",
         pattern="github.com",
@@ -721,7 +721,7 @@ def test_extension_events_applies_project_rules(
     assert response.status_code == 200
     payload = response.json()
     assert payload["project_rule_updates"] >= 1
-    records = activity_db.list_activity_records(source_browser="firefox_ext")
+    records = activity_db.activity.list_activity_records(source_browser="firefox_ext")
     assert records[0].project_id == "holdspeak"
 
 
@@ -730,7 +730,7 @@ def test_connector_dry_run_returns_uniform_shape_per_connector(
     activity_db: MeetingDatabase,
 ) -> None:
     """HS-9-13: every connector returns the same dry-run payload shape."""
-    activity_db.upsert_activity_record(
+    activity_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/anthropic/holdspeak/pull/7",
         title="PR 7",
@@ -770,7 +770,7 @@ def test_connector_dry_run_does_not_mutate_db(
     """HS-9-13: dry-run is mutation-free — the DB row counts for
     annotations and candidates are unchanged after dry-running every
     connector."""
-    activity_db.upsert_activity_record(
+    activity_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/anthropic/holdspeak/pull/7",
         title="PR 7",
@@ -779,7 +779,7 @@ def test_connector_dry_run_does_not_mutate_db(
         entity_type="github_pull_request",
         entity_id="anthropic/holdspeak#7",
     )
-    activity_db.upsert_activity_record(
+    activity_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://calendar.google.com/calendar/u/0/r/eventedit/abc?starts=2026-05-01T10:00",
         title="2026-05-01 10:00-11:00 Architecture sync",
@@ -787,8 +787,8 @@ def test_connector_dry_run_does_not_mutate_db(
         last_seen_at=datetime(2026, 4, 28, 9, 0),
     )
 
-    annotations_before = activity_db.list_activity_annotations(limit=1000)
-    candidates_before = activity_db.list_activity_meeting_candidates()
+    annotations_before = activity_db.activity.list_activity_annotations(limit=1000)
+    candidates_before = activity_db.activity.list_activity_meeting_candidates()
 
     for connector_id in ("gh", "jira", "calendar_activity"):
         response = test_client.get(
@@ -796,8 +796,8 @@ def test_connector_dry_run_does_not_mutate_db(
         )
         assert response.status_code == 200
 
-    annotations_after = activity_db.list_activity_annotations(limit=1000)
-    candidates_after = activity_db.list_activity_meeting_candidates()
+    annotations_after = activity_db.activity.list_activity_annotations(limit=1000)
+    candidates_after = activity_db.activity.list_activity_meeting_candidates()
     assert [a.id for a in annotations_after] == [a.id for a in annotations_before]
     assert [c.id for c in candidates_after] == [c.id for c in candidates_before]
 
@@ -859,7 +859,7 @@ def test_github_run_records_a_connector_run_row(
     """HS-13-05: a successful gh enrichment writes one
     `connector_runs` row with succeeded=true, populated counts,
     and the run shows up via the new GET runs endpoint."""
-    activity_db.upsert_activity_record(
+    activity_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/anthropic/holdspeak/issues/99",
         title="Issue 99",
@@ -880,13 +880,13 @@ def test_github_run_records_a_connector_run_row(
         started = _dt.now()
         finished = _dt.now()
         record = next(iter(records))
-        annotation = db.create_activity_annotation(
+        annotation = db.activity.create_activity_annotation(
             activity_record_id=record.id,
             source_connector_id="gh",
             annotation_type="github_issue",
             title="Issue 99 enriched",
         )
-        db.record_connector_run(
+        db.activity.record_connector_run(
             connector_id="gh",
             started_at=started,
             finished_at=finished,
@@ -937,20 +937,20 @@ def test_clear_annotations_also_clears_run_history(
     """HS-13-05: clearing a connector's annotations also drops
     its run rows — run history is part of the pack's output."""
     base = datetime(2026, 5, 1, 12, 0, 0)
-    activity_db.record_connector_run(
+    activity_db.activity.record_connector_run(
         connector_id="gh",
         started_at=base,
         finished_at=base,
         succeeded=True,
     )
-    activity_db.record_connector_run(
+    activity_db.activity.record_connector_run(
         connector_id="gh",
         started_at=base,
         finished_at=base,
         succeeded=False,
         error="boom",
     )
-    record = activity_db.upsert_activity_record(
+    record = activity_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/o/r/issues/1",
         title="x",
@@ -959,7 +959,7 @@ def test_clear_annotations_also_clears_run_history(
         entity_type="github_issue",
         entity_id="o/r#1",
     )
-    activity_db.create_activity_annotation(
+    activity_db.activity.create_activity_annotation(
         activity_record_id=record.id,
         source_connector_id="gh",
         annotation_type="github_issue",
@@ -973,7 +973,7 @@ def test_clear_annotations_also_clears_run_history(
     body = response.json()
     assert body["deleted"] == 1
     assert body["runs_deleted"] == 2
-    assert activity_db.list_connector_runs(connector_id="gh") == []
+    assert activity_db.activity.list_connector_runs(connector_id="gh") == []
 
 
 def test_list_connector_runs_unknown_connector_returns_404(
@@ -992,27 +992,27 @@ def test_project_briefings_endpoint_returns_timeline_newest_first(
     """HS-13-09: GET /api/projects/{id}/briefings walks
     meeting_context annotations matching `value.project_id`,
     newest first."""
-    activity_db.create_project(
+    activity_db.projects.create_project(
         project_id="holdspeak", name="HoldSpeak", keywords=["holdspeak"]
     )
-    activity_db.create_project(
+    activity_db.projects.create_project(
         project_id="other", name="Other", keywords=["other"]
     )
     # Two snapshots for holdspeak (different content), one for
     # the other project. The endpoint scopes by project_id.
-    activity_db.create_activity_annotation(
+    activity_db.activity.create_activity_annotation(
         source_connector_id="meeting_context",
         annotation_type="meeting_context_briefing",
         title="HoldSpeak — meeting context",
         value={"project_id": "holdspeak", "markdown": "# v1"},
     )
-    activity_db.create_activity_annotation(
+    activity_db.activity.create_activity_annotation(
         source_connector_id="meeting_context",
         annotation_type="meeting_context_briefing",
         title="HoldSpeak — meeting context",
         value={"project_id": "holdspeak", "markdown": "# v2"},
     )
-    activity_db.create_activity_annotation(
+    activity_db.activity.create_activity_annotation(
         source_connector_id="meeting_context",
         annotation_type="meeting_context_briefing",
         title="Other — meeting context",
@@ -1039,7 +1039,7 @@ def test_project_briefings_endpoint_empty_when_no_runs(
     test_client: TestClient,
     activity_db: MeetingDatabase,
 ) -> None:
-    activity_db.create_project(
+    activity_db.projects.create_project(
         project_id="quiet", name="Quiet project", keywords=["quiet"]
     )
     response = test_client.get("/api/projects/quiet/briefings")
@@ -1067,7 +1067,7 @@ def test_briefing_endpoint_returns_latest_briefing_and_run(
     """A fresh `meeting_context_briefing` annotation + a
     matching run row both come back; the briefing carries its
     value payload (including `markdown`)."""
-    activity_db.create_activity_annotation(
+    activity_db.activity.create_activity_annotation(
         source_connector_id="meeting_context",
         annotation_type="meeting_context_briefing",
         title="HoldSpeak — meeting context",
@@ -1081,7 +1081,7 @@ def test_briefing_endpoint_returns_latest_briefing_and_run(
         },
     )
     base = datetime(2026, 5, 2, 12, 0, 0)
-    activity_db.record_connector_run(
+    activity_db.activity.record_connector_run(
         connector_id="meeting_context",
         started_at=base,
         finished_at=base,
@@ -1107,10 +1107,10 @@ def test_run_pipeline_endpoint_executes_meeting_context(
     drives the pipeline end-to-end. Upstreams are seeded as
     fresh so the runner skips them; the pipeline writes its
     annotation."""
-    activity_db.create_project(
+    activity_db.projects.create_project(
         project_id="holdspeak", name="HoldSpeak", keywords=["holdspeak"]
     )
-    record = activity_db.upsert_activity_record(
+    record = activity_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/anthropic/holdspeak/pull/7",
         title="PR 7",
@@ -1119,8 +1119,8 @@ def test_run_pipeline_endpoint_executes_meeting_context(
         entity_type="github_pull_request",
         entity_id="anthropic/holdspeak#7",
     )
-    activity_db.assign_activity_record_project(record.id, "holdspeak")
-    activity_db.create_activity_annotation(
+    activity_db.activity.assign_activity_record_project(record.id, "holdspeak")
+    activity_db.activity.create_activity_annotation(
         activity_record_id=record.id,
         source_connector_id="gh",
         annotation_type="github_pr",
@@ -1129,7 +1129,7 @@ def test_run_pipeline_endpoint_executes_meeting_context(
     )
     base = datetime.now()
     for upstream in ("gh", "jira", "calendar_activity"):
-        activity_db.record_connector_run(
+        activity_db.activity.record_connector_run(
             connector_id=upstream,
             started_at=base,
             finished_at=base,
@@ -1178,7 +1178,7 @@ def test_list_activity_annotations_filters_by_connector(
     """HS-13-07: the meeting_context briefing is queryable
     via the new GET annotations endpoint, scoped by connector
     id so a UI can render exactly the rows it cares about."""
-    record = activity_db.upsert_activity_record(
+    record = activity_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/o/r/issues/1",
         title="Issue 1",
@@ -1187,13 +1187,13 @@ def test_list_activity_annotations_filters_by_connector(
         entity_type="github_issue",
         entity_id="o/r#1",
     )
-    activity_db.create_activity_annotation(
+    activity_db.activity.create_activity_annotation(
         activity_record_id=record.id,
         source_connector_id="gh",
         annotation_type="github_issue",
         title="local enriched",
     )
-    activity_db.create_activity_annotation(
+    activity_db.activity.create_activity_annotation(
         source_connector_id="meeting_context",
         annotation_type="meeting_context_briefing",
         title="HoldSpeak — meeting context",

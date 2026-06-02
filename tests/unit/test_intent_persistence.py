@@ -102,7 +102,7 @@ def test_record_intent_window_round_trips_typed_score(db, saved_meeting) -> None
         transcript_hash="hash-abc",
     )
 
-    persisted = db.list_intent_windows("m1")
+    persisted = db.plugins.list_intent_windows("m1")
     assert len(persisted) == 1
     row = persisted[0]
     assert row.window_id == "m1:w0001"
@@ -126,7 +126,7 @@ def test_record_plugin_run_round_trips_typed_record(db, saved_meeting) -> None:
 
     record_plugin_run(db, _plugin_run("requirements_extractor", status="success"))
 
-    runs = db.list_plugin_runs("m1")
+    runs = db.plugins.list_plugin_runs("m1")
     assert len(runs) == 1
     assert runs[0].plugin_id == "requirements_extractor"
     assert runs[0].status == "success"
@@ -139,7 +139,7 @@ def test_record_plugin_run_marks_deduped_status_with_dedup_flag(db, saved_meetin
     record_intent_window(db, _window(), _score(), transcript_hash="hash-abc")
     record_plugin_run(db, _plugin_run(status="deduped"))
 
-    runs = db.list_plugin_runs("m1")
+    runs = db.plugins.list_plugin_runs("m1")
     assert runs[0].status == "deduped"
     assert runs[0].deduped is True
 
@@ -154,7 +154,7 @@ def test_record_plugin_runs_persists_batch_in_order(db, saved_meeting) -> None:
     ]
     record_plugin_runs(db, runs)
 
-    persisted = db.list_plugin_runs("m1")
+    persisted = db.plugins.list_plugin_runs("m1")
     assert {r.plugin_id for r in persisted} == {
         "requirements_extractor",
         "action_owner_enforcer",
@@ -190,7 +190,7 @@ def test_record_artifact_with_lineage_packs_window_and_plugin_run_sources(
         status="needs_review",
     )
 
-    artifacts = db.list_artifacts("m1")
+    artifacts = db.plugins.list_artifacts("m1")
     assert len(artifacts) == 1
     art = artifacts[0]
     assert art.id == "art-001"
@@ -231,6 +231,6 @@ def test_back_compat_meeting_without_intent_data_loads_clean_mir_d_006(
     db, saved_meeting
 ) -> None:
     # No intent windows or plugin runs persisted for this meeting.
-    assert db.list_intent_windows("m1") == []
-    assert db.list_plugin_runs("m1") == []
-    assert db.list_artifacts("m1") == []
+    assert db.plugins.list_intent_windows("m1") == []
+    assert db.plugins.list_plugin_runs("m1") == []
+    assert db.plugins.list_artifacts("m1") == []
