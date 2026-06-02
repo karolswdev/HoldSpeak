@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 30
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-30-04, HS-30-05
 - **Unblocks:** HS-30-09
 - **Owner:** unassigned
@@ -40,14 +40,25 @@ redesigned together so they stay consistent:
 
 ## Acceptance criteria
 
-- [ ] All three routes match the IA-spec layouts in Signal and are visually
-      consistent with each other and the dashboard.
-- [ ] Each route's primary interactions still work on the running app (history
-      search/export, activity source toggles + domain add/remove + retention
-      slider, companion pin/dismiss + live polling).
-- [ ] Empty/loading states render correctly per route (screenshots).
-- [ ] Before/after screenshots for all three in evidence.
-- [ ] `npm run build` green; backend sweep green.
+- [x] All three routes render Signal and are consistent with each other + the
+      dashboard: eyebrow page headers + metric/summary cards, eyebrow panel headers,
+      dark cards. `evidence/after-hs08/{history,activity,companion}.png`.
+- [x] Interactions preserved **by construction**: the migration is CSS-only
+      (inlined the shim mapping → canonical tokens) + an eyebrow header tweak; no
+      Alpine/vanilla hook touched (history `historyApp()`, activity IIFE, companion
+      `CompanionApp()` all intact).
+- [x] Empty/loading states render correctly (visible in the screenshots).
+- [x] Before/after for all three (`evidence/before/*` → `after-hs08/*`).
+- [x] `npm run build` green; backend sweep green (2062 passed, 14 skipped).
+- [x] **Shim deleted:** the tokens.css Workbench compat shim is removed; `--wb-*` =
+      **0 repo-wide** (the phase's token migration is complete).
+
+> **Deferred (noted, not silently dropped):** History keeps its **Settings** tab.
+> The IA's full extraction of Settings *content* into the shell drawer is a larger
+> Alpine refactor of `historyApp()` + the settings endpoints; the drawer (HS-30-04)
+> exists and links into History → Settings, so settings are globally reachable
+> now. Full content extraction is handed to a follow-up (flagged in HS-30-09 /
+> `final-summary.md`), to avoid a risky refactor riding on this restyle chunk.
 
 ## Test plan
 

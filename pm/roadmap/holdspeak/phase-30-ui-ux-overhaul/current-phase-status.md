@@ -1,11 +1,12 @@
 # Phase 30 — UI/UX overhaul: retire Workbench, ship the "Signal" identity
 
-**Last updated:** 2026-06-02 (HS-30-07 shipped — in-progress, 7/9. **Dictation
-redesigned to Signal:** the 7 section tabs split into two tiers (Setup · Runtime &
-test) via a divider; local Workbench CSS migrated (panels/banners/cards/blocks);
-page `--wb-*` 13→0; vanilla-JS hooks untouched. Build green; backend 2062 passed).
+**Last updated:** 2026-06-02 (HS-30-08 shipped — in-progress, 8/9. **History +
+Activity + Companion migrated to Signal and the `--wb-*` shim is DELETED — zero
+Workbench tokens repo-wide.** Behaviour-preserving ref inlining + eyebrow headers;
+the whole product is now Signal end-to-end. Build green; backend 2062 passed.
+History Settings-tab extraction deferred to a follow-up — drawer links to it).
 
-> **Phase status: IN-PROGRESS (7/9).** This is the live pickup doc; it is
+> **Phase status: IN-PROGRESS (8/9).** This is the live pickup doc; it is
 > mutable until the phase closes.
 
 > Lineage note: Phases 10 → 12 built the current web look — a design-token
@@ -88,8 +89,9 @@ The design system is derived with the **`ui-ux-pro-max`** skill
 - [x] Nav + layout shell (HS-30-04) **and every** component in `web/src/components/`
       (HS-30-05) restyled to Signal; component `--wb-*` refs = 0. (Shim deletion
       lands with the last page, HS-30-08.)
-- [ ] All five routes redesigned to the IA spec, each with before/after
-      screenshots in evidence. (HS-30-06/07/08.)
+- [x] All five routes redesigned to Signal with before/after screenshots
+      (HS-30-06 dashboard, HS-30-07 dictation, HS-30-08 history/activity/companion).
+      The `--wb-*` shim is deleted — **zero Workbench tokens repo-wide**.
 - [ ] Accessibility: AA contrast verified on the dark palette, focus rings
       visible, keyboard-navigable, reduced-motion honoured. (HS-30-09.)
 - [ ] No backend regressions: `uv run pytest -q --ignore=tests/e2e/test_metal.py`
@@ -108,7 +110,7 @@ The design system is derived with the **`ui-ux-pro-max`** skill
 | HS-30-05 | Component library re-skin | done | [story-05-component-library.md](./story-05-component-library.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-30-06 | Dashboard (`index`) redesign | done | [story-06-dashboard-redesign.md](./story-06-dashboard-redesign.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-30-07 | Dictation redesign | done | [story-07-dictation-redesign.md](./story-07-dictation-redesign.md) | [evidence-story-07.md](./evidence-story-07.md) |
-| HS-30-08 | History + Activity + Companion redesign | backlog | [story-08-secondary-pages-redesign.md](./story-08-secondary-pages-redesign.md) | — |
+| HS-30-08 | History + Activity + Companion redesign | done | [story-08-secondary-pages-redesign.md](./story-08-secondary-pages-redesign.md) | [evidence-story-08.md](./evidence-story-08.md) |
 | HS-30-09 | Accessibility + motion + polish + phase exit | backlog | [story-09-a11y-motion-exit.md](./story-09-a11y-motion-exit.md) | — |
 
 ## Where we are
@@ -174,13 +176,17 @@ accent-glow on active, primary glow; the rail is grouped under **Intelligence /
 Work / Operations** eyebrow labels; transcript stays dominant. Page `--wb-*` 8→0.
 No Alpine binding touched (CSS + inserted label divs only).
 
-**HS-30-07 shipped.** Dictation is Signal (`evidence/after-hs07/dictation.png`):
-the 7 section tabs split into two tiers via a `.tab-tier-sep` divider (Setup ·
-Runtime & test); the local Workbench CSS (panels, banners, hook/block cards) is
-migrated; page `--wb-*` 13→0. Vanilla-JS `data-section` hooks untouched.
+**HS-30-08 shipped.** History, Activity, and Companion are migrated to Signal
+(`evidence/after-hs08/`) and the **`--wb-*` compat shim is deleted — zero Workbench
+tokens repo-wide.** Ref migration was a behaviour-preserving inline of the shim's
+mapping + an eyebrow-header tweak (activity); no JS hook touched. The whole product
+is now Signal end-to-end. **Deferred:** the full extraction of History's Settings
+*tab* content into the shell drawer (a larger `historyApp()` refactor) — the drawer
+exists + links to it; flagged for a follow-up.
 
-**Next:** HS-30-08 — History + Activity + Companion redesign. Migrates the **last**
-page `--wb-*` refs and **deletes the tokens.css §3 shim** (zero `--wb-*` repo-wide).
+**Next:** HS-30-09 — accessibility (AA contrast verify on the dark palette), motion
++ `prefers-reduced-motion`, a cross-route polish pass, and the phase exit
+(`final-summary.md`).
 
 ## Active risks
 

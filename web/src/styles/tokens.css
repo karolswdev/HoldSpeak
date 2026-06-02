@@ -17,11 +17,11 @@
  *      status / --field / --selected / --radius-N / --elev-N ...) kept
  *      and REPOINTED at Signal so existing component CSS flips to dark
  *      without edits.
- *   3. A TEMPORARY --wb-* compat shim (mapped to Signal). The component
- *      tree still has ~100 direct --wb-* references; the shim flips them
- *      to Signal now. HS-30-05 migrates those refs to canonical names
- *      and DELETES section 3. Until then a handful of sites are flagged
- *      in evidence-story-03.md.
+ *   3. Scale — type / spacing / radius / elevation / motion / focus.
+ *
+ * The Workbench palette anchors are fully retired: zero legacy anchors
+ * remain anywhere in web/src (completed HS-30-08). Every component and
+ * page reads canonical Signal tokens or the semantic aliases.
  *
  * Light theme is deferred (dark-only this phase); tokens are authored
  * so a light variant is a later additive layer.
@@ -141,48 +141,11 @@
   --local: var(--info);
   --local-soft: var(--info-soft);
 
-  /* ============================================================
-   * 3. TEMPORARY --wb-* COMPAT SHIM  ← HS-30-05 DELETES THIS BLOCK
-   *    Maps the legacy Workbench anchors onto Signal so the ~100
-   *    remaining direct refs flip to dark. Dual-role anchors are
-   *    mapped to their dominant role (white=text 25:16, black=border
-   *    37:1); the few minority sites are listed in evidence-story-03.
-   * ============================================================ */
-  --wb-white: var(--text);
-  --wb-black: var(--border);
-  --wb-blue: var(--surface-2);
-  --wb-blue-deep: var(--surface-3);
-  --wb-blue-strong: var(--surface-3);
-  --wb-blue-mid: var(--surface-3);
-  --wb-blue-soft: var(--surface-2);
-  --wb-blue-tint: var(--accent-tint);
-  --wb-orange: var(--accent);
-  --wb-orange-deep: var(--accent-press);
-  --wb-orange-strong: var(--accent-press);
-  --wb-orange-mid: var(--accent-hover);
-  --wb-orange-soft: var(--accent-tint);
-  --wb-gray-1: var(--text);
-  --wb-gray-2: var(--text-muted);
-  --wb-gray-3: var(--text-faint);
-  --wb-gray-4: var(--border);
-  --wb-gray-5: var(--surface-2);
-  --wb-gray-6: var(--surface-2);
-  --wb-gray-7: var(--surface-1);
-  --wb-green: var(--ok);
-  --wb-green-deep: var(--ok-strong);
-  --wb-green-tint: var(--ok-soft);
-  --wb-amber: var(--warn-signal);
-  --wb-amber-deep: var(--warn-strong);
-  --wb-amber-tint: var(--warn-soft);
-  --wb-red: var(--danger-signal);
-  --wb-red-deep: var(--danger-fill);
-  --wb-red-tint: var(--danger-soft);
-  --wb-purple: var(--info);
-  --wb-purple-deep: var(--info-strong);
-  --wb-purple-tint: var(--info-soft);
+  /* The temporary Workbench compat shim (HS-30-03) is GONE: every
+   * component and page now reads canonical Signal tokens. */
 
   /* ============================================================
-   * 4. SCALE — type, spacing, radius, elevation, motion
+   * 3. SCALE — type, spacing, radius, elevation, motion
    * ============================================================ */
 
   /* Type scale (unchanged names; Inter/Space Grotesk-tuned). */
