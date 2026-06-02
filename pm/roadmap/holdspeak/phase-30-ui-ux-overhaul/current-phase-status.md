@@ -1,12 +1,11 @@
 # Phase 30 — UI/UX overhaul: retire Workbench, ship the "Signal" identity
 
-**Last updated:** 2026-06-02 (HS-30-06 shipped — in-progress, 6/9. **Runtime
-dashboard redesigned to the IA spec:** dominant transcript + a rail grouped under
-Intelligence/Work/Operations eyebrow labels; local Workbench CSS migrated to
-Signal (panels, hero glow, buttons); page `--wb-*` 8→0; Alpine bindings untouched.
-Build green; backend 2062 passed).
+**Last updated:** 2026-06-02 (HS-30-07 shipped — in-progress, 7/9. **Dictation
+redesigned to Signal:** the 7 section tabs split into two tiers (Setup · Runtime &
+test) via a divider; local Workbench CSS migrated (panels/banners/cards/blocks);
+page `--wb-*` 13→0; vanilla-JS hooks untouched. Build green; backend 2062 passed).
 
-> **Phase status: IN-PROGRESS (6/9).** This is the live pickup doc; it is
+> **Phase status: IN-PROGRESS (7/9).** This is the live pickup doc; it is
 > mutable until the phase closes.
 
 > Lineage note: Phases 10 → 12 built the current web look — a design-token
@@ -108,7 +107,7 @@ The design system is derived with the **`ui-ux-pro-max`** skill
 | HS-30-04 | Navigation + layout shell | done | [story-04-nav-and-layout-shell.md](./story-04-nav-and-layout-shell.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-30-05 | Component library re-skin | done | [story-05-component-library.md](./story-05-component-library.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-30-06 | Dashboard (`index`) redesign | done | [story-06-dashboard-redesign.md](./story-06-dashboard-redesign.md) | [evidence-story-06.md](./evidence-story-06.md) |
-| HS-30-07 | Dictation redesign | backlog | [story-07-dictation-redesign.md](./story-07-dictation-redesign.md) | — |
+| HS-30-07 | Dictation redesign | done | [story-07-dictation-redesign.md](./story-07-dictation-redesign.md) | [evidence-story-07.md](./evidence-story-07.md) |
 | HS-30-08 | History + Activity + Companion redesign | backlog | [story-08-secondary-pages-redesign.md](./story-08-secondary-pages-redesign.md) | — |
 | HS-30-09 | Accessibility + motion + polish + phase exit | backlog | [story-09-a11y-motion-exit.md](./story-09-a11y-motion-exit.md) | — |
 
@@ -175,8 +174,13 @@ accent-glow on active, primary glow; the rail is grouped under **Intelligence /
 Work / Operations** eyebrow labels; transcript stays dominant. Page `--wb-*` 8→0.
 No Alpine binding touched (CSS + inserted label divs only).
 
-**Next:** HS-30-07 — dictation page (`dictation.astro`, ~875 lines): the 7 tabs →
-two tiers (Setup / Runtime & test), Signal forms + dry-run trace, migrate its refs.
+**HS-30-07 shipped.** Dictation is Signal (`evidence/after-hs07/dictation.png`):
+the 7 section tabs split into two tiers via a `.tab-tier-sep` divider (Setup ·
+Runtime & test); the local Workbench CSS (panels, banners, hook/block cards) is
+migrated; page `--wb-*` 13→0. Vanilla-JS `data-section` hooks untouched.
+
+**Next:** HS-30-08 — History + Activity + Companion redesign. Migrates the **last**
+page `--wb-*` refs and **deletes the tokens.css §3 shim** (zero `--wb-*` repo-wide).
 
 ## Active risks
 

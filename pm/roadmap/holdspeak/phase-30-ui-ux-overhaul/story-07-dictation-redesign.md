@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 30
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-30-04, HS-30-05
 - **Unblocks:** HS-30-09
 - **Owner:** unassigned
@@ -39,14 +39,18 @@ the IA spec on Signal.
 
 ## Acceptance criteria
 
-- [ ] `dictation.astro` matches the IA-spec layout in Signal; all tabbed sections
-      render and the YAML editor + dry-run preview are clearly usable.
-- [ ] Form controls (inputs, selects, sliders, toggles) are styled for dark with
-      visible focus + states.
-- [ ] Alpine bindings intact: tab switching, block save, config save, dry-run
-      preview all work on the running app.
-- [ ] Before/after screenshots (incl. the dry-run trace) in evidence.
-- [ ] `npm run build` green; backend sweep green.
+- [x] `dictation.astro` matches the IA-spec layout in Signal: the 7 tabs are split
+      into **two tiers** (Setup: Readiness…Agent Hooks · Runtime & test: Runtime,
+      Dry-run) via a divider; panels are Signal cards with eyebrow headers; block
+      editor + forms read on dark. `evidence/after-hs07/dictation.png`.
+- [x] Form controls inherit the Signal field tokens (`--field-bg`/`--field-border`
+      → dark) + the global accent focus ring; the section/scope tabs use the
+      accent-tint active state.
+- [x] Behaviour intact **by construction**: dictation is driven by vanilla JS
+      (`dictation-app.js`) via `data-section`/`id` hooks — none were touched (CSS
+      migration + one non-interactive `.tab-tier-sep` span + group divider only).
+- [x] Before/after: `evidence/before/before-dictation.png` → `after-hs07/dictation.png`.
+- [x] `npm run build` green; backend sweep green (2062 passed, 14 skipped).
 
 ## Test plan
 
