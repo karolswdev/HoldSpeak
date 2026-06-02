@@ -39,7 +39,7 @@ Use these guides depending on what you are setting up:
 | Hold the configured hotkey and dictate into the focused app. | Capture meetings, search transcripts, and curate action items. | Let project context and agent state improve dictated prompts. |
 
 <p align="center">
-  <img src="assets/pixellab/intelligence-pipeline-loop.gif" alt="Animated pixel art showing microphone audio becoming transcript lines, action items, and a summary card" width="260">
+  <img src="assets/pixellab/operator-working-loop.gif" alt="Animated pixel art operator working at a terminal while companion and task cards update" width="280">
 </p>
 
 ## Install And Start

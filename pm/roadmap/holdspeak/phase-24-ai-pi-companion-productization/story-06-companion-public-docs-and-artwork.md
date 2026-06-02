@@ -83,10 +83,12 @@ Implemented across four commits on 2026-06-01:
 - `a720af0` — AIPI agent companion use case and hardware links
 - `857fd7b` — PMO story/evidence backfill for the companion docs work
 
-Follow-up animation work landed after the PMO backfill:
+The first intelligence-pipeline GIF was removed after review because it did not
+meet the desired visual bar. It was replaced with a character-driven PixelLab
+animation:
 
-- PixelLab object `bd59bb26-866f-484e-835a-dcfe3ee36d6d`
-- PixelLab animation group `321a41bb-08d1-4004-80d0-479b999fa8c4`
-- Local GIF output `docs/assets/pixellab/intelligence-pipeline-loop.gif`
+- PixelLab object `4f082922-434b-49ef-9a1a-ced16274765f`
+- PixelLab animation group `ee5f9031-47d1-45d1-929f-54c5ae13bc9b`
+- Local GIF output `docs/assets/pixellab/operator-working-loop.gif`
 
 See [evidence-story-06.md](./evidence-story-06.md).

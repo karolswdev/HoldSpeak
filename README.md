@@ -20,11 +20,11 @@ Voice input for macOS and Linux — hold a key, speak, release. Local-first and 
 ## Intelligence Pipeline
 
 <p align="center">
-  <img src="docs/assets/pixellab/intelligence-pipeline-loop.gif" alt="Animated pixel art showing microphone audio becoming transcript lines, action items, and a summary card" width="260">
+  <img src="docs/assets/pixellab/operator-working-loop.gif" alt="Animated pixel art operator working at a terminal while companion and task cards update" width="280">
 </p>
 
-HoldSpeak turns captured speech into transcript context, reviewable actions,
-summaries, and coding-agent prompts while keeping local-first controls visible.
+HoldSpeak turns speech into transcript context, reviewable actions, summaries,
+and coding-agent replies while the local runtime stays in control.
 
 ## AIPI-Lite Companion
 
