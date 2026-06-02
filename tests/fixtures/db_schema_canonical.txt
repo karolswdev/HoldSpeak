@@ -1,0 +1,388 @@
+index idx_action_items_meeting: CREATE INDEX idx_action_items_meeting ON action_items(meeting_id)
+index idx_action_items_owner: CREATE INDEX idx_action_items_owner ON action_items(owner)
+index idx_action_items_status: CREATE INDEX idx_action_items_status ON action_items(status)
+index idx_activity_annotations_connector: CREATE INDEX idx_activity_annotations_connector
+ON activity_annotations(source_connector_id, created_at DESC)
+index idx_activity_annotations_record: CREATE INDEX idx_activity_annotations_record
+ON activity_annotations(activity_record_id, annotation_type)
+index idx_activity_meeting_candidates_connector: CREATE INDEX idx_activity_meeting_candidates_connector
+ON activity_meeting_candidates(source_connector_id, created_at DESC)
+index idx_activity_meeting_candidates_dedupe: CREATE UNIQUE INDEX idx_activity_meeting_candidates_dedupe
+ON activity_meeting_candidates(dedupe_key)
+WHERE dedupe_key != ''
+index idx_activity_meeting_candidates_time: CREATE INDEX idx_activity_meeting_candidates_time
+ON activity_meeting_candidates(starts_at, status)
+index idx_activity_project_rules_enabled: CREATE INDEX idx_activity_project_rules_enabled
+ON activity_project_rules(enabled, priority DESC, created_at ASC)
+index idx_activity_project_rules_project: CREATE INDEX idx_activity_project_rules_project
+ON activity_project_rules(project_id, priority DESC)
+index idx_activity_records_domain: CREATE INDEX idx_activity_records_domain
+ON activity_records(domain, last_seen_at DESC)
+index idx_activity_records_last_seen: CREATE INDEX idx_activity_records_last_seen
+ON activity_records(last_seen_at DESC)
+index idx_activity_records_project: CREATE INDEX idx_activity_records_project
+ON activity_records(project_id, last_seen_at DESC)
+index idx_activity_records_source_entity: CREATE UNIQUE INDEX idx_activity_records_source_entity
+ON activity_records(source_browser, source_profile, entity_type, entity_id)
+WHERE entity_type IS NOT NULL AND entity_id IS NOT NULL
+index idx_activity_records_source_url: CREATE UNIQUE INDEX idx_activity_records_source_url
+ON activity_records(source_browser, source_profile, normalized_url)
+index idx_artifact_sources_ref: CREATE INDEX idx_artifact_sources_ref ON artifact_sources(source_type, source_ref)
+index idx_artifacts_meeting: CREATE INDEX idx_artifacts_meeting ON artifacts(meeting_id, created_at DESC)
+index idx_artifacts_type: CREATE INDEX idx_artifacts_type ON artifacts(artifact_type, created_at DESC)
+index idx_bookmarks_meeting: CREATE INDEX idx_bookmarks_meeting ON bookmarks(meeting_id)
+index idx_connector_runs_connector_started: CREATE INDEX idx_connector_runs_connector_started
+ON connector_runs(connector_id, started_at DESC)
+index idx_intel_job_attempts_meeting: CREATE INDEX idx_intel_job_attempts_meeting ON intel_job_attempts(meeting_id, created_at DESC)
+index idx_intel_jobs_status: CREATE INDEX idx_intel_jobs_status ON intel_jobs(status, requested_at)
+index idx_intent_window_scores_meeting: CREATE INDEX idx_intent_window_scores_meeting ON intent_window_scores(meeting_id, window_id)
+index idx_intent_windows_meeting: CREATE INDEX idx_intent_windows_meeting ON intent_windows(meeting_id, start_seconds, created_at)
+index idx_meeting_projects_meeting: CREATE INDEX idx_meeting_projects_meeting ON meeting_projects(meeting_id)
+index idx_meeting_projects_project: CREATE INDEX idx_meeting_projects_project ON meeting_projects(project_id, detected_at DESC)
+index idx_meetings_date: CREATE INDEX idx_meetings_date ON meetings(started_at)
+index idx_plugin_run_jobs_meeting: CREATE INDEX idx_plugin_run_jobs_meeting ON plugin_run_jobs(meeting_id, requested_at)
+index idx_plugin_run_jobs_status: CREATE INDEX idx_plugin_run_jobs_status ON plugin_run_jobs(status, requested_at)
+index idx_plugin_runs_idempotency: CREATE UNIQUE INDEX idx_plugin_runs_idempotency ON plugin_runs(idempotency_key)
+index idx_plugin_runs_meeting: CREATE INDEX idx_plugin_runs_meeting ON plugin_runs(meeting_id, created_at DESC)
+index idx_plugin_runs_status: CREATE INDEX idx_plugin_runs_status ON plugin_runs(status, created_at DESC)
+index idx_plugin_runs_window: CREATE INDEX idx_plugin_runs_window ON plugin_runs(meeting_id, window_id, created_at DESC)
+index idx_project_detection_log_meeting: CREATE INDEX idx_project_detection_log_meeting ON project_detection_log(meeting_id, created_at DESC)
+index idx_project_detection_log_project: CREATE INDEX idx_project_detection_log_project ON project_detection_log(project_id, created_at DESC)
+index idx_projects_archived: CREATE INDEX idx_projects_archived ON projects(is_archived, name)
+index idx_segments_meeting: CREATE INDEX idx_segments_meeting ON segments(meeting_id)
+index idx_segments_speaker: CREATE INDEX idx_segments_speaker ON segments(speaker)
+index idx_segments_speaker_id: CREATE INDEX idx_segments_speaker_id ON segments(speaker_id)
+index idx_segments_time: CREATE INDEX idx_segments_time ON segments(meeting_id, start_time)
+index idx_speakers_name: CREATE INDEX idx_speakers_name ON speakers(name)
+index idx_topics_meeting: CREATE INDEX idx_topics_meeting ON topics(meeting_id)
+table action_items: CREATE TABLE action_items (
+    id TEXT PRIMARY KEY,
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    task TEXT NOT NULL,
+    owner TEXT,
+    due TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    review_state TEXT NOT NULL DEFAULT 'pending',
+    reviewed_at TEXT,
+    source_timestamp REAL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    completed_at TEXT
+)
+table activity_annotations: CREATE TABLE activity_annotations (
+    id TEXT PRIMARY KEY,
+    activity_record_id INTEGER REFERENCES activity_records(id) ON DELETE CASCADE,
+    source_connector_id TEXT NOT NULL,
+    annotation_type TEXT NOT NULL,
+    title TEXT NOT NULL DEFAULT '',
+    value_json TEXT NOT NULL DEFAULT '{}',
+    confidence REAL NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table activity_domain_rules: CREATE TABLE activity_domain_rules (
+    domain TEXT PRIMARY KEY,
+    action TEXT NOT NULL DEFAULT 'exclude',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table activity_enrichment_connectors: CREATE TABLE activity_enrichment_connectors (
+    id TEXT PRIMARY KEY,
+    enabled INTEGER NOT NULL DEFAULT 0,
+    settings_json TEXT NOT NULL DEFAULT '{}',
+    last_run_at TEXT,
+    last_error TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table activity_import_checkpoints: CREATE TABLE activity_import_checkpoints (
+    source_browser TEXT NOT NULL,
+    source_profile TEXT NOT NULL DEFAULT '',
+    source_path_hash TEXT NOT NULL DEFAULT '',
+    last_visit_raw TEXT,
+    last_imported_at TEXT,
+    last_error TEXT,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (source_browser, source_profile, source_path_hash)
+)
+table activity_meeting_candidates: CREATE TABLE activity_meeting_candidates (
+    id TEXT PRIMARY KEY,
+    source_connector_id TEXT NOT NULL,
+    source_activity_record_id INTEGER REFERENCES activity_records(id) ON DELETE SET NULL,
+    dedupe_key TEXT NOT NULL DEFAULT '',
+    title TEXT NOT NULL,
+    starts_at TEXT,
+    ends_at TEXT,
+    meeting_url TEXT,
+    started_meeting_id TEXT,
+    confidence REAL NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'candidate',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table activity_privacy_settings: CREATE TABLE activity_privacy_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    enabled INTEGER NOT NULL DEFAULT 1,
+    retention_days INTEGER NOT NULL DEFAULT 30,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table activity_project_rules: CREATE TABLE activity_project_rules (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    name TEXT NOT NULL DEFAULT '',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    priority INTEGER NOT NULL DEFAULT 100,
+    match_type TEXT NOT NULL,
+    pattern TEXT NOT NULL,
+    entity_type TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table activity_records: CREATE TABLE activity_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source_browser TEXT NOT NULL,
+    source_profile TEXT NOT NULL DEFAULT '',
+    source_path_hash TEXT NOT NULL DEFAULT '',
+    url TEXT NOT NULL,
+    normalized_url TEXT NOT NULL,
+    title TEXT,
+    domain TEXT NOT NULL DEFAULT '',
+    visit_count INTEGER NOT NULL DEFAULT 0,
+    first_seen_at TEXT,
+    last_seen_at TEXT,
+    last_visit_raw TEXT,
+    entity_type TEXT,
+    entity_id TEXT,
+    project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table artifact_sources: CREATE TABLE artifact_sources (
+    artifact_id TEXT NOT NULL REFERENCES artifacts(id) ON DELETE CASCADE,
+    source_type TEXT NOT NULL,
+    source_ref TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (artifact_id, source_type, source_ref)
+)
+table artifacts: CREATE TABLE artifacts (
+    id TEXT PRIMARY KEY,
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    artifact_type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    body_markdown TEXT NOT NULL DEFAULT '',
+    structured_json TEXT NOT NULL DEFAULT '{}',
+    confidence REAL NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'draft',
+    plugin_id TEXT NOT NULL DEFAULT 'unknown',
+    plugin_version TEXT NOT NULL DEFAULT 'unknown',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table bookmarks: CREATE TABLE bookmarks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    timestamp REAL NOT NULL,
+    label TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table connector_runs: CREATE TABLE connector_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    connector_id TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    finished_at TEXT NOT NULL,
+    succeeded INTEGER NOT NULL DEFAULT 0,
+    error TEXT,
+    output_bytes INTEGER NOT NULL DEFAULT 0,
+    annotation_count INTEGER NOT NULL DEFAULT 0,
+    candidate_count INTEGER NOT NULL DEFAULT 0,
+    command_count INTEGER NOT NULL DEFAULT 0
+)
+table intel_job_attempts: CREATE TABLE intel_job_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    attempt INTEGER NOT NULL,
+    outcome TEXT NOT NULL, -- scheduled_retry | terminal_failure | success
+    error TEXT,
+    retry_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table intel_jobs: CREATE TABLE intel_jobs (
+    meeting_id TEXT PRIMARY KEY REFERENCES meetings(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'queued',
+    transcript_hash TEXT NOT NULL,
+    requested_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    attempts INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT
+)
+table intel_snapshots: CREATE TABLE intel_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    timestamp REAL NOT NULL,
+    summary TEXT NOT NULL DEFAULT '',
+    raw_response TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table intent_window_scores: CREATE TABLE intent_window_scores (
+    meeting_id TEXT NOT NULL,
+    window_id TEXT NOT NULL,
+    intent_label TEXT NOT NULL,
+    score REAL NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (meeting_id, window_id, intent_label),
+    FOREIGN KEY (meeting_id, window_id) REFERENCES intent_windows(meeting_id, window_id) ON DELETE CASCADE
+)
+table intent_windows: CREATE TABLE intent_windows (
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    window_id TEXT NOT NULL,
+    start_seconds REAL NOT NULL DEFAULT 0,
+    end_seconds REAL NOT NULL DEFAULT 0,
+    transcript_hash TEXT NOT NULL DEFAULT '',
+    transcript_excerpt TEXT NOT NULL DEFAULT '',
+    profile TEXT NOT NULL DEFAULT 'balanced',
+    threshold REAL NOT NULL DEFAULT 0.6,
+    active_intents_json TEXT NOT NULL DEFAULT '[]',
+    override_intents_json TEXT NOT NULL DEFAULT '[]',
+    tags_json TEXT NOT NULL DEFAULT '[]',
+    metadata_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (meeting_id, window_id)
+)
+table meeting_projects: CREATE TABLE meeting_projects (
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    source TEXT NOT NULL DEFAULT 'auto',
+    confidence REAL NOT NULL DEFAULT 0.0,
+    detected_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (meeting_id, project_id)
+)
+table meeting_tags: CREATE TABLE meeting_tags (
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    tag TEXT NOT NULL,
+    PRIMARY KEY (meeting_id, tag)
+)
+table meetings: CREATE TABLE meetings (
+    id TEXT PRIMARY KEY,
+    started_at TEXT NOT NULL,
+    ended_at TEXT,
+    title TEXT,
+    duration_seconds REAL,
+    intel_status TEXT NOT NULL DEFAULT 'disabled',
+    intel_status_detail TEXT,
+    intel_requested_at TEXT,
+    intel_completed_at TEXT,
+    mic_label TEXT NOT NULL DEFAULT 'Me',
+    remote_label TEXT NOT NULL DEFAULT 'Remote',
+    web_url TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table plugin_run_jobs: CREATE TABLE plugin_run_jobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    meeting_id TEXT NOT NULL,
+    window_id TEXT NOT NULL,
+    plugin_id TEXT NOT NULL,
+    plugin_version TEXT NOT NULL DEFAULT 'unknown',
+    transcript_hash TEXT NOT NULL DEFAULT '',
+    idempotency_key TEXT NOT NULL UNIQUE,
+    context_json TEXT NOT NULL DEFAULT '{}',
+    status TEXT NOT NULL DEFAULT 'queued',
+    requested_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    attempts INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT
+)
+table plugin_runs: CREATE TABLE plugin_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    window_id TEXT NOT NULL,
+    plugin_id TEXT NOT NULL,
+    plugin_version TEXT NOT NULL DEFAULT 'unknown',
+    status TEXT NOT NULL,
+    idempotency_key TEXT,
+    duration_ms REAL NOT NULL DEFAULT 0,
+    output_json TEXT,
+    error TEXT,
+    deduped INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table project_detection_log: CREATE TABLE project_detection_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    window_id TEXT NOT NULL,
+    score REAL NOT NULL,
+    keyword_hits_json TEXT NOT NULL DEFAULT '[]',
+    member_hits_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table projects: CREATE TABLE projects (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    keywords_json TEXT NOT NULL DEFAULT '[]',
+    team_members_json TEXT NOT NULL DEFAULT '[]',
+    context_json TEXT NOT NULL DEFAULT '{}',
+    detection_threshold REAL NOT NULL DEFAULT 0.4,
+    is_archived INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table schema_version: CREATE TABLE schema_version (
+    version INTEGER PRIMARY KEY,
+    applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table segments: CREATE TABLE segments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    text TEXT NOT NULL,
+    speaker TEXT NOT NULL,
+    speaker_id TEXT REFERENCES speakers(id),
+    start_time REAL NOT NULL,
+    end_time REAL NOT NULL,
+    is_bookmarked INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table segments_fts: CREATE VIRTUAL TABLE segments_fts USING fts5(
+    text,
+    speaker,
+    content=segments,
+    content_rowid=id
+)
+table segments_fts_config: CREATE TABLE 'segments_fts_config'(k PRIMARY KEY, v) WITHOUT ROWID
+table segments_fts_data: CREATE TABLE 'segments_fts_data'(id INTEGER PRIMARY KEY, block BLOB)
+table segments_fts_docsize: CREATE TABLE 'segments_fts_docsize'(id INTEGER PRIMARY KEY, sz BLOB)
+table segments_fts_idx: CREATE TABLE 'segments_fts_idx'(segid, term, pgno, PRIMARY KEY(segid, term)) WITHOUT ROWID
+table speakers: CREATE TABLE speakers (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT 'Unknown',
+    avatar TEXT,
+    embedding BLOB NOT NULL,
+    sample_count INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table topics: CREATE TABLE topics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    topic TEXT NOT NULL,
+    extracted_at REAL NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+trigger segments_ad: CREATE TRIGGER segments_ad AFTER DELETE ON segments BEGIN
+    INSERT INTO segments_fts(segments_fts, rowid, text, speaker)
+    VALUES('delete', OLD.id, OLD.text, OLD.speaker);
+END
+trigger segments_ai: CREATE TRIGGER segments_ai AFTER INSERT ON segments BEGIN
+    INSERT INTO segments_fts(rowid, text, speaker)
+    VALUES (NEW.id, NEW.text, NEW.speaker);
+END
+trigger segments_au: CREATE TRIGGER segments_au AFTER UPDATE ON segments BEGIN
+    INSERT INTO segments_fts(segments_fts, rowid, text, speaker)
+    VALUES('delete', OLD.id, OLD.text, OLD.speaker);
+    INSERT INTO segments_fts(rowid, text, speaker)
+    VALUES (NEW.id, NEW.text, NEW.speaker);
+END

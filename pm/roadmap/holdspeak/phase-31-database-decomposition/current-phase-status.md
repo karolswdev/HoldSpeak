@@ -1,11 +1,11 @@
 # Phase 31 — Database Decomposition
 
-**Status:** in-progress (opened 2026-06-02). 3/5 stories shipped.
+**Status:** in-progress (opened 2026-06-02). 4/5 stories shipped.
 
-**Last updated:** 2026-06-02 (HS-31-03 done — last three repos extracted (plugins/projects/
-activity); the god-class is gone: `core.py` is a 1224-line container (from 5481, −78%) and
-`MeetingDatabase` was renamed to `Database` (zero refs in code). Suite green at 2062.
-HS-31-04 (migration squash) next.).
+**Last updated:** 2026-06-02 (HS-31-04 done — 18-version migration ladder squashed to one
+canonical schema; `SCHEMA_VERSION` reset to 1; `core.py` 1224→666; fresh-build `sqlite_master`
+proven identical to the pre-squash v18 schema (snapshot test committed); dev DB dropped &
+recreated. Suite green at 2063. HS-31-05 closeout next.).
 
 ## Goal
 
@@ -85,7 +85,7 @@ the *call shape* and the migration history are free to change.
 | HS-31-01 | Repository seam + `MeetingRepository` (pilot pattern) | done | [story-01-meeting-repository.md](./story-01-meeting-repository.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-31-02 | `IntelRepository` extract | done | [story-02-intel-repository.md](./story-02-intel-repository.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-31-03 | `ActivityRepository` + `PluginArtifactRepository` + `ProjectRepository` + delete god-class | done | [story-03-activity-plugin-repos.md](./story-03-activity-plugin-repos.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-31-04 | Migration-ladder extraction + dedup | not-started | [story-04-migration-framework.md](./story-04-migration-framework.md) | — |
+| HS-31-04 | Squash the migration ladder | done | [story-04-migration-framework.md](./story-04-migration-framework.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-31-05 | Decomposition closeout (size + schema-parity evidence) | not-started | [story-05-decomposition-closeout.md](./story-05-decomposition-closeout.md) | — |
 
 ## Where we are
@@ -122,8 +122,14 @@ singleton, nothing else. The god-class was then **renamed `MeetingDatabase → D
 uses `self._db.projects`. ~469 call sites moved; 11 fakes got repo self-properties. Suite
 green at 2062; ruff-clean.
 
-Next: **HS-31-04** — squash the 18-version migration ladder in `core.py:_apply_schema` to
-one canonical schema + reset `SCHEMA_VERSION` to 1. **HS-31-05** — closeout.
+**HS-31-04 is done.** The 18-version migration ladder (~558 lines of dead-for-fresh-builds
+code in `_apply_schema`) is deleted; the schema is built from the single canonical `SCHEMA_SQL`.
+`SCHEMA_VERSION` reset 18→1; `core.py` 1224→666. A fresh build's `sqlite_master` is byte-identical
+to the pre-squash v18 schema (79 objects) — pinned by `tests/fixtures/db_schema_canonical.txt` +
+`test_fresh_schema_matches_canonical_snapshot`. Duplicate `CREATE TABLE`s (only in the ladder)
+are gone. Dev DB dropped & recreated at v1. Suite green at 2063.
+
+Next: **HS-31-05** — closeout: confirm exit criteria, final size/parity evidence, `final-summary.md`.
 
 ## Pickup order
 

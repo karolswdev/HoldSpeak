@@ -1,6 +1,8 @@
 # HS-31-04 — Squash the migration ladder
 
-**Status:** not-started.
+- **Project:** holdspeak
+- **Phase:** 31
+- **Status:** done (2026-06-02). Evidence: [evidence-story-04.md](./evidence-story-04.md).
 
 ## Goal
 
@@ -31,7 +33,7 @@ schema in one shot. `SCHEMA_VERSION` resets to 1.
 
 ## Done when
 
-- [ ] `_apply_schema()`'s 18-branch ladder is gone; one canonical schema builder remains.
-- [ ] Each table created exactly once; no duplicate `CREATE TABLE`.
-- [ ] Fresh-build `sqlite_master` matches the pre-refactor v18 schema; `SCHEMA_VERSION` = 1.
-- [ ] Dev DB rebuilt (noted in evidence); schema-snapshot test committed; full suite green.
+- [x] `_apply_schema()`'s 18-branch ladder is gone; one canonical schema builder remains.
+- [x] Each table created exactly once; no duplicate `CREATE TABLE`.
+- [x] Fresh-build `sqlite_master` matches the pre-refactor v18 schema; `SCHEMA_VERSION` = 1.
+- [x] Dev DB rebuilt (drop & recreate); schema-snapshot test committed; full suite green (2063).
