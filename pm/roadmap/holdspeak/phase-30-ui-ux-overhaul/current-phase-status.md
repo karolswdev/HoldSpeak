@@ -1,13 +1,12 @@
 # Phase 30 — UI/UX overhaul: retire Workbench, ship the "Signal" identity
 
-**Last updated:** 2026-06-01 (HS-30-03 shipped — in-progress, 3/9. **Signal
-foundation is live: the whole product now renders dark.** `tokens.css` +
-`global.css` rewritten to Signal, fonts swapped to Space Grotesk/Inter/JetBrains
-Mono (VT323+Sora gone), real radius+depth+motion; build green; backend 2062
-passed. A temporary `--wb-*` shim flips the 89 component refs for now — HS-30-05
-migrates + deletes it).
+**Last updated:** 2026-06-01 (HS-30-04 shipped — in-progress, 4/9. **Shell
+rebuilt to the IA spec:** grouped nav (Live/Review/Configure) with dual-encoded
+active state, brand in Space Grotesk, status cluster + ⚙ **Settings drawer**
+(lifted out of History), responsive menu, `#settings` deep-link. Command palette
+deferred. Build green; backend 2062 passed).
 
-> **Phase status: IN-PROGRESS (3/9).** This is the live pickup doc; it is
+> **Phase status: IN-PROGRESS (4/9).** This is the live pickup doc; it is
 > mutable until the phase closes.
 
 > Lineage note: Phases 10 → 12 built the current web look — a design-token
@@ -87,9 +86,9 @@ The design system is derived with the **`ui-ux-pro-max`** skill
       saturated-blue desktop); galleries render the foundation; `npm run build`
       green. (HS-30-03 — `tokens.css`'s only `--wb-*` is the temporary shim §3,
       deleted in HS-30-05; backend 2062 passed.)
-- [ ] Nav + layout shell and **every** component in `web/src/components/` are
-      restyled to Signal — no component still renders the old hairline/pixel look.
-      (HS-30-04/05.)
+- [~] Nav + layout shell restyled to Signal (HS-30-04 ✓: grouped nav + Settings
+      drawer). **Every** component in `web/src/components/` restyled + the shim
+      deleted — pending HS-30-05.
 - [ ] All five routes redesigned to the IA spec, each with before/after
       screenshots in evidence. (HS-30-06/07/08.)
 - [ ] Accessibility: AA contrast verified on the dark palette, focus rings
@@ -106,7 +105,7 @@ The design system is derived with the **`ui-ux-pro-max`** skill
 | HS-30-01 | UX audit + IA redesign | done | [story-01-ux-audit-and-ia.md](./story-01-ux-audit-and-ia.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-30-02 | "Signal" design language + skill-derived system + sign-off | done | [story-02-design-language-signal.md](./story-02-design-language-signal.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-30-03 | Foundation: tokens + global CSS + fonts + design galleries | done | [story-03-foundation-tokens.md](./story-03-foundation-tokens.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-30-04 | Navigation + layout shell | backlog | [story-04-nav-and-layout-shell.md](./story-04-nav-and-layout-shell.md) | — |
+| HS-30-04 | Navigation + layout shell | done | [story-04-nav-and-layout-shell.md](./story-04-nav-and-layout-shell.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-30-05 | Component library re-skin | backlog | [story-05-component-library.md](./story-05-component-library.md) | — |
 | HS-30-06 | Dashboard (`index`) redesign | backlog | [story-06-dashboard-redesign.md](./story-06-dashboard-redesign.md) | — |
 | HS-30-07 | Dictation redesign | backlog | [story-07-dictation-redesign.md](./story-07-dictation-redesign.md) | — |
@@ -153,10 +152,19 @@ the foundation flips them via a **temporary `--wb-*`→Signal shim** (tokens.css
 plus a bounded fix retargeting 16 `--wb-white` backgrounds + 2 `#f5f5f5` footers to
 `--surface-2` so the result is clean dark, not light boxes.
 
-**Next:** HS-30-04 — rebuild the nav + layout shell (`AppLayout`/`TopNav`) to the
-IA spec: grouped nav (Live/Review/Configure), the global status cluster, and the
-Settings drawer. First structural-redesign chunk on top of the Signal foundation.
-(HS-30-05 then migrates the 89 shimmed `--wb-*` refs + deletes shim §3.)
+**HS-30-04 shipped.** The shell is rebuilt to the IA spec (`evidence/after-hs04/`):
+`TopNav` is a grouped nav (Live | Runtime · Review | History, Activity · Configure
+| Dictation, Companion) with a dual-encoded active state (accent-tint fill +
+weight + accent underbar + `aria-current`); the brand is Space Grotesk with a
+glowing mark; the tail holds the status slot + a **⚙ Settings drawer** (lifted out
+of History per IA §2 — slide-over, accessible, `#settings` deep-link, interim
+content linking to History → Settings until HS-30-08 migrates it); below 880px the
+groups collapse behind a menu toggle. Wired vanilla (Alpine is per-page). Command
+palette **deferred** (no dead control shipped).
+
+**Next:** HS-30-05 — component library re-skin (uppercase eyebrows, primary glow,
+depth, states) across `web/src/components/`, **migrate the 89 shimmed `--wb-*`
+refs to canonical Signal tokens, and delete the tokens.css §3 shim.**
 
 ## Active risks
 
@@ -193,8 +201,13 @@ Settings drawer. First structural-redesign chunk on top of the Signal foundation
   refs and deletes §3. Still greenfield — a two-story transition aid, not shipped-
   user compat. — author: agent (HS-30-03 discovery).
 
+- 2026-06-01 — **Command palette deferred** (HS-30-04): the IA reserved a `⌘`
+  slot; shipping a non-functional control is worse than none, so no ⌘ button
+  ships. The concept stays reserved; revisit once the page surfaces stabilize. —
+  author: agent (HS-30-04 decision).
+
 ## Decisions deferred
 
-- An optional **command palette / quick-switcher** in the nav shell — the IA
-  reserves the slot; decide implement-vs-cut in HS-30-04. Default if no decision:
-  ship without a palette and record it.
+- A **command palette / quick-switcher** — reserved concept; revisit after the
+  page redesigns (HS-30-06/07/08) settle the surface inventory. Default if never
+  picked up: ship without one.

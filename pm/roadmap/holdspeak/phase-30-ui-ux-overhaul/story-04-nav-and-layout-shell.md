@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 30
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-30-01, HS-30-03
 - **Unblocks:** HS-30-06, HS-30-07, HS-30-08
 - **Owner:** unassigned
@@ -35,13 +35,19 @@ routes share one confident, consistent frame before each page is redesigned.
 
 ## Acceptance criteria
 
-- [ ] `AppLayout.astro` + `TopNav.astro` render the IA-spec shell in Signal; all
-      five routes inherit it consistently (screenshots of the shell on ≥2 routes).
-- [ ] Active-route state is correct and visible on every route.
-- [ ] Responsive: the shell holds at small / medium / large widths (screenshots).
-- [ ] The command-palette decision is recorded (implemented per IA, or deferred
-      with reason).
-- [ ] `npm run build` green; backend sweep green.
+- [x] `AppLayout.astro` + `TopNav.astro` render the IA-spec shell in Signal:
+      grouped nav (Live/Review/Configure with dividers), brand → Runtime, status
+      slot (default local-only) + ⚙ Settings, all routes inherit it. Screenshots:
+      `evidence/after-hs04/`.
+- [x] Active-route state is **dual-encoded** (accent-tint fill + weight + accent
+      underbar + `aria-current`) — not colour-only (skill `ux`/*Color Only*).
+- [x] Responsive: groups collapse behind a menu toggle below 880px; verified at
+      desktop (1440) + mobile (560). The Settings drawer slides over a dimmed
+      backdrop; `#settings` deep-link opens it.
+- [x] **Command-palette decision: deferred.** No dead ⌘ control shipped (better
+      than a non-functional affordance); the IA reserves the concept. Revisit once
+      the surfaces stabilize (recorded in current-phase-status).
+- [x] `npm run build` green; backend sweep green (2062 passed, 14 skipped).
 
 ## Test plan
 
