@@ -1,6 +1,6 @@
 """Typed persistence adapters for MIR contracts (HS-2-05 / spec §9.5).
 
-The underlying `MeetingDatabase` already implements the full MIR-D-001..D-006
+The underlying `Database` already implements the full MIR-D-001..D-006
 surface (intent_windows + intent_window_scores tables, plugin_runs table,
 artifacts + artifact_sources tables, schema versioning, idempotent
 `CREATE TABLE IF NOT EXISTS` migrations). This module wraps each writer with
@@ -20,12 +20,12 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from ..db import MeetingDatabase
+from ..db import Database
 from .contracts import ArtifactLineage, IntentScore, IntentWindow, PluginRun
 
 
 def record_intent_window(
-    db: MeetingDatabase,
+    db: Database,
     window: IntentWindow,
     score: IntentScore,
     *,
@@ -41,7 +41,7 @@ def record_intent_window(
             f"IntentScore.window_id={score.window_id!r} does not match "
             f"IntentWindow.window_id={window.window_id!r}"
         )
-    db.record_intent_window(
+    db.plugins.record_intent_window(
         meeting_id=window.meeting_id,
         window_id=window.window_id,
         start_seconds=window.start_seconds,
@@ -59,7 +59,7 @@ def record_intent_window(
 
 
 def record_plugin_run(
-    db: MeetingDatabase,
+    db: Database,
     run: PluginRun,
     *,
     output: Optional[dict[str, Any]] = None,
@@ -71,7 +71,7 @@ def record_plugin_run(
     The explicit `output` kwarg overrides `run.output` when both are set
     (callers that captured richer output post-dispatch should pass it in).
     """
-    db.record_plugin_run(
+    db.plugins.record_plugin_run(
         meeting_id=run.meeting_id,
         window_id=run.window_id,
         plugin_id=run.plugin_id,
@@ -85,14 +85,14 @@ def record_plugin_run(
     )
 
 
-def record_plugin_runs(db: MeetingDatabase, runs: list[PluginRun]) -> None:
+def record_plugin_runs(db: Database, runs: list[PluginRun]) -> None:
     """Convenience: persist a batch of `PluginRun` records in order."""
     for run in runs:
         record_plugin_run(db, run)
 
 
 def record_artifact_with_lineage(
-    db: MeetingDatabase,
+    db: Database,
     *,
     artifact_id: str,
     meeting_id: str,
@@ -123,7 +123,7 @@ def record_artifact_with_lineage(
     for plugin_run_key in lineage.plugin_run_keys:
         sources.append(("plugin_run", plugin_run_key))
 
-    db.record_artifact(
+    db.plugins.record_artifact(
         artifact_id=artifact_id,
         meeting_id=meeting_id,
         artifact_type=artifact_type,

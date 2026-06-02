@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import MeetingState, TranscriptSegment
 from holdspeak.plugins.host import PluginHost
 from holdspeak.plugins.pipeline import process_meeting_state
@@ -56,7 +56,7 @@ def temp_db_path():
 
 @pytest.fixture
 def db(temp_db_path):
-    return MeetingDatabase(temp_db_path)
+    return Database(temp_db_path)
 
 
 def _meeting_state() -> MeetingState:
@@ -104,7 +104,7 @@ def _host_with_one_failing(failing_id: str) -> tuple[PluginHost, dict[str, objec
 @pytest.mark.integration
 def test_failing_plugin_does_not_block_chain_siblings_mir_r_004(db) -> None:
     state = _meeting_state()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
     host, plugins = _host_with_one_failing("requirements_extractor")
 
     result = process_meeting_state(
@@ -136,12 +136,12 @@ def test_failing_plugin_does_not_block_chain_siblings_mir_r_004(db) -> None:
 @pytest.mark.integration
 def test_failing_plugin_runs_persisted_with_error_status(db) -> None:
     state = _meeting_state()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
     host, _plugins = _host_with_one_failing("action_owner_enforcer")
 
     process_meeting_state(state, host, profile="balanced", threshold=0.4, db=db)
 
-    persisted = db.list_plugin_runs("m-fail-iso")
+    persisted = db.plugins.list_plugin_runs("m-fail-iso")
     by_id = {r.plugin_id: r for r in persisted}
 
     # Failing plugin is on disk with status='error' and a populated error message.
@@ -158,7 +158,7 @@ def test_failing_plugin_runs_persisted_with_error_status(db) -> None:
 def test_pipeline_keeps_running_when_every_other_plugin_explodes(db) -> None:
     """Multiple plugins failing simultaneously still don't block the pipeline."""
     state = _meeting_state()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
 
     host = PluginHost(default_timeout_seconds=1.0)
     chain_ids = [

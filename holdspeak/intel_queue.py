@@ -46,14 +46,14 @@ def _retry_or_fail_job(
 ) -> None:
     """Requeue a failed job with backoff, or mark it terminal after max attempts."""
     if int(job.attempts) >= int(max_attempts):
-        db.record_intel_job_attempt(
+        db.intel.record_intel_job_attempt(
             job.meeting_id,
             attempt=int(job.attempts),
             outcome="terminal_failure",
             error=error,
             retry_at=None,
         )
-        db.fail_intel_job(
+        db.intel.fail_intel_job(
             job.meeting_id,
             f"Deferred intel failed after {job.attempts} attempt(s): {error}",
         )
@@ -65,14 +65,14 @@ def _retry_or_fail_job(
         max_seconds=max_delay_seconds,
     )
     retry_at = datetime.now() + timedelta(seconds=delay)
-    db.retry_intel_job(
+    db.intel.retry_intel_job(
         job.meeting_id,
         error,
         retry_at=retry_at,
         attempt=int(job.attempts),
         max_attempts=int(max_attempts),
     )
-    db.record_intel_job_attempt(
+    db.intel.record_intel_job_attempt(
         job.meeting_id,
         attempt=int(job.attempts),
         outcome="scheduled_retry",
@@ -127,22 +127,22 @@ def process_next_intel_job(
         return False
 
     db = get_database()
-    job = db.claim_next_intel_job(include_scheduled=include_scheduled)
+    job = db.intel.claim_next_intel_job(include_scheduled=include_scheduled)
     if job is None:
         return False
 
-    meeting = db.get_meeting(job.meeting_id)
+    meeting = db.meetings.get_meeting(job.meeting_id)
     if meeting is None:
-        db.fail_intel_job(job.meeting_id, "Meeting not found for deferred intelligence job.")
+        db.intel.fail_intel_job(job.meeting_id, "Meeting not found for deferred intelligence job.")
         return True
 
     if not meeting.segments:
-        db.fail_intel_job(job.meeting_id, "Meeting has no transcript to analyze.")
+        db.intel.fail_intel_job(job.meeting_id, "Meeting has no transcript to analyze.")
         return True
 
     current_hash = meeting.transcript_hash()
     if current_hash != job.transcript_hash:
-        db.enqueue_intel_job(
+        db.intel.enqueue_intel_job(
             job.meeting_id,
             transcript_hash=current_hash,
             reason="Transcript changed; refreshing queued intelligence job.",
@@ -184,15 +184,15 @@ def process_next_intel_job(
         meeting.intel_status = "ready"
         meeting.intel_status_detail = "Deferred meeting intelligence processed successfully."
         meeting.intel_completed_at = datetime.now()
-        db.save_meeting(meeting)
-        db.record_intel_job_attempt(
+        db.meetings.save_meeting(meeting)
+        db.intel.record_intel_job_attempt(
             job.meeting_id,
             attempt=int(job.attempts),
             outcome="success",
             error=None,
             retry_at=None,
         )
-        db.complete_intel_job(job.meeting_id)
+        db.intel.complete_intel_job(job.meeting_id)
         log.info(f"Deferred intel completed for meeting {job.meeting_id}")
     except Exception as exc:
         _retry_or_fail_job(

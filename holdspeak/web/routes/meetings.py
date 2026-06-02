@@ -281,17 +281,17 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
 
             if search:
                 # Search transcripts
-                results = db.search_transcripts(search, limit=limit)
+                results = db.meetings.search_transcripts(search, limit=limit)
                 # Group by meeting
                 meeting_ids = list(dict.fromkeys([r[0] for r in results]))
-                meetings = [db.get_meeting(mid) for mid in meeting_ids[:limit]]
+                meetings = [db.meetings.get_meeting(mid) for mid in meeting_ids[:limit]]
                 meetings = [m for m in meetings if m is not None]
                 return JSONResponse({
                     "meetings": [m.to_dict() for m in meetings],
                     "total": len(meetings),
                 })
 
-            meetings = db.list_meetings(limit=limit, offset=offset)
+            meetings = db.meetings.list_meetings(limit=limit, offset=offset)
             return JSONResponse({
                 "meetings": [
                     {
@@ -308,7 +308,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                     }
                     for m in meetings
                 ],
-                "total": db.get_meeting_count(),
+                "total": db.meetings.get_meeting_count(),
             })
         except Exception as e:
             log.error(f"Failed to list meetings: {e}")
@@ -323,10 +323,10 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            speakers = db.get_all_speakers()
+            speakers = db.meetings.get_all_speakers()
             payload: list[dict[str, Any]] = []
             for speaker in speakers:
-                stats = db.get_speaker_stats(speaker.id)
+                stats = db.meetings.get_speaker_stats(speaker.id)
                 payload.append(
                     {
                         "id": speaker.id,
@@ -354,12 +354,12 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            speaker = db.get_speaker(speaker_id)
+            speaker = db.meetings.get_speaker(speaker_id)
             if speaker is None:
                 return JSONResponse({"error": "Speaker not found"}, status_code=404)
 
-            stats = db.get_speaker_stats(speaker_id)
-            groups = db.get_speaker_segments(speaker_id, limit=limit)
+            stats = db.meetings.get_speaker_stats(speaker_id)
+            groups = db.meetings.get_speaker_segments(speaker_id, limit=limit)
             for group in groups:
                 if isinstance(group.get("meeting_date"), datetime):
                     group["meeting_date"] = group["meeting_date"].isoformat()
@@ -399,18 +399,18 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                 name = payload.name.strip()
                 if not name:
                     return JSONResponse({"success": False, "error": "Speaker name cannot be empty"}, status_code=400)
-                updated = db.update_speaker_name(speaker_id, name) or updated
+                updated = db.meetings.update_speaker_name(speaker_id, name) or updated
 
             if payload.avatar is not None:
                 avatar = payload.avatar.strip()
                 if not avatar:
                     return JSONResponse({"success": False, "error": "Speaker avatar cannot be empty"}, status_code=400)
-                updated = db.update_speaker_avatar(speaker_id, avatar) or updated
+                updated = db.meetings.update_speaker_avatar(speaker_id, avatar) or updated
 
             if not updated:
                 return JSONResponse({"success": False, "error": "Speaker not found"}, status_code=404)
 
-            speaker = db.get_speaker(speaker_id)
+            speaker = db.meetings.get_speaker(speaker_id)
             if speaker is None:
                 return JSONResponse({"success": False, "error": "Speaker not found"}, status_code=404)
 
@@ -435,7 +435,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
             db = get_database()
-            meeting = db.get_meeting(meeting_id)
+            meeting = db.meetings.get_meeting(meeting_id)
             if meeting is None:
                 return JSONResponse(
                     {"error": "Meeting not found"}, status_code=404
@@ -467,13 +467,13 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             from ...meeting_exports import render_meeting_export
 
             db = get_database()
-            meeting = db.get_meeting(meeting_id)
+            meeting = db.meetings.get_meeting(meeting_id)
             if meeting is None:
                 return JSONResponse(
                     {"error": "Meeting not found"}, status_code=404
                 )
 
-            artifacts = db.list_artifacts(meeting_id, limit=200)
+            artifacts = db.plugins.list_artifacts(meeting_id, limit=200)
             content = render_meeting_export(
                 meeting,
                 export_format,  # type: ignore[arg-type]
@@ -508,14 +508,14 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             from ...intent_timeline import detect_intent_transitions
 
             db = get_database()
-            meeting = db.get_meeting(meeting_id)
+            meeting = db.meetings.get_meeting(meeting_id)
             if meeting is None:
                 return JSONResponse(
                     {"error": "Meeting not found"},
                     status_code=404,
                 )
 
-            windows = db.list_intent_windows(meeting_id, limit=limit)
+            windows = db.plugins.list_intent_windows(meeting_id, limit=limit)
             transitions = detect_intent_transitions(
                 [(window.window_id, list(window.active_intents)) for window in windows]
             )
@@ -560,14 +560,14 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            meeting = db.get_meeting(meeting_id)
+            meeting = db.meetings.get_meeting(meeting_id)
             if meeting is None:
                 return JSONResponse(
                     {"error": "Meeting not found"},
                     status_code=404,
                 )
 
-            runs = db.list_plugin_runs(meeting_id, window_id=window_id, limit=limit)
+            runs = db.plugins.list_plugin_runs(meeting_id, window_id=window_id, limit=limit)
             return JSONResponse(
                 {
                     "meeting_id": meeting_id,
@@ -606,14 +606,14 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            meeting = db.get_meeting(meeting_id)
+            meeting = db.meetings.get_meeting(meeting_id)
             if meeting is None:
                 return JSONResponse(
                     {"error": "Meeting not found"},
                     status_code=404,
                 )
 
-            artifacts = db.list_artifacts(meeting_id, limit=limit)
+            artifacts = db.plugins.list_artifacts(meeting_id, limit=limit)
             return JSONResponse(
                 {
                     "meeting_id": meeting_id,
@@ -651,7 +651,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
             db = get_database()
-            items = db.list_action_items(
+            items = db.meetings.list_action_items(
                 include_completed=include_completed,
                 owner=owner,
                 meeting_id=meeting_id,
@@ -697,13 +697,13 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
             db = get_database()
-            success = db.update_action_item_status(item_id, status)
+            success = db.meetings.update_action_item_status(item_id, status)
             if not success:
                 return JSONResponse(
                     {"success": False, "error": "Action item not found"},
                     status_code=404,
                 )
-            updated = db.get_action_item(item_id) if hasattr(db, "get_action_item") else None
+            updated = db.meetings.get_action_item(item_id) if hasattr(db.meetings, "get_action_item") else None
             return JSONResponse(
                 {
                     "success": True,
@@ -757,13 +757,13 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
             db = get_database()
-            success = db.update_action_item_review_state(item_id, review_state)
+            success = db.meetings.update_action_item_review_state(item_id, review_state)
             if not success:
                 return JSONResponse(
                     {"success": False, "error": "Action item not found"},
                     status_code=404,
                 )
-            updated = db.get_action_item(item_id) if hasattr(db, "get_action_item") else None
+            updated = db.meetings.get_action_item(item_id) if hasattr(db.meetings, "get_action_item") else None
             return JSONResponse(
                 {
                     "success": True,
@@ -817,7 +817,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
             db = get_database()
-            success = db.edit_action_item(
+            success = db.meetings.edit_action_item(
                 item_id,
                 task=task,
                 owner=owner,
@@ -828,7 +828,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                     {"success": False, "error": "Action item not found"},
                     status_code=404,
                 )
-            updated = db.get_action_item(item_id) if hasattr(db, "get_action_item") else None
+            updated = db.meetings.get_action_item(item_id) if hasattr(db.meetings, "get_action_item") else None
             return JSONResponse(
                 {
                     "success": True,
@@ -879,7 +879,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             from ...config import Config
 
             db = get_database()
-            jobs = db.list_intel_jobs(status=status, limit=limit)
+            jobs = db.intel.list_intel_jobs(status=status, limit=limit)
             retry_max_attempts = max(1, int(Config.load().meeting.intel_retry_max_attempts))
             now = datetime.now()
             bounded_history_limit = max(1, min(int(history_limit), 20))
@@ -921,7 +921,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                                     "retry_at": event.retry_at.isoformat() if event.retry_at else None,
                                     "created_at": event.created_at.isoformat(),
                                 }
-                                for event in db.list_intel_job_attempts(
+                                for event in db.intel.list_intel_job_attempts(
                                     job.meeting_id,
                                     limit=bounded_history_limit,
                                 )
@@ -942,7 +942,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            summary = db.get_intel_queue_summary()
+            summary = db.intel.get_intel_queue_summary()
             return JSONResponse(
                 {
                     "total_jobs": summary.total_jobs,
@@ -1009,7 +1009,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
 
             db = get_database()
-            ok = db.requeue_intel_job(meeting_id, reason="Manual retry requested from web UI.")
+            ok = db.intel.requeue_intel_job(meeting_id, reason="Manual retry requested from web UI.")
             if not ok:
                 return JSONResponse({"success": False, "error": "Meeting not found or transcript is empty"}, status_code=404)
             return JSONResponse({"success": True})

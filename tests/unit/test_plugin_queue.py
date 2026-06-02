@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from holdspeak.db import MeetingDatabase
+from holdspeak.db import Database
 from holdspeak.meeting_session import MeetingState
 from holdspeak.plugins.host import PluginHost
 from holdspeak.plugins.queue import drain_plugin_run_queue, process_next_plugin_run_job
@@ -26,12 +26,12 @@ class _FailPlugin:
         raise RuntimeError("boom")
 
 
-def _db(tmp_path: Path) -> MeetingDatabase:
-    return MeetingDatabase(tmp_path / "holdspeak.db")
+def _db(tmp_path: Path) -> Database:
+    return Database(tmp_path / "holdspeak.db")
 
 
-def _save_meeting(db: MeetingDatabase, meeting_id: str) -> None:
-    db.save_meeting(
+def _save_meeting(db: Database, meeting_id: str) -> None:
+    db.meetings.save_meeting(
         MeetingState(
             id=meeting_id,
             started_at=datetime(2026, 3, 29, 10, 0, 0),
@@ -46,7 +46,7 @@ def test_process_next_plugin_run_job_success(tmp_path: Path) -> None:
     db = _db(tmp_path)
     _save_meeting(db, "m-1")
 
-    db.enqueue_plugin_run_job(
+    db.plugins.enqueue_plugin_run_job(
         meeting_id="m-1",
         window_id="m-1:w-1",
         plugin_id="success",
@@ -61,8 +61,8 @@ def test_process_next_plugin_run_job_success(tmp_path: Path) -> None:
     processed = process_next_plugin_run_job(host=host, db=db)
     assert processed is True
 
-    assert db.list_plugin_run_jobs(status="all") == []
-    runs = db.list_plugin_runs("m-1")
+    assert db.plugins.list_plugin_run_jobs(status="all") == []
+    runs = db.plugins.list_plugin_runs("m-1")
     assert len(runs) == 1
     assert runs[0].plugin_id == "success"
     assert runs[0].status == "success"
@@ -71,7 +71,7 @@ def test_process_next_plugin_run_job_success(tmp_path: Path) -> None:
 
 def test_process_next_plugin_run_job_retries_when_meeting_missing(tmp_path: Path) -> None:
     db = _db(tmp_path)
-    db.enqueue_plugin_run_job(
+    db.plugins.enqueue_plugin_run_job(
         meeting_id="missing-meeting",
         window_id="missing-meeting:w-1",
         plugin_id="success",
@@ -86,7 +86,7 @@ def test_process_next_plugin_run_job_retries_when_meeting_missing(tmp_path: Path
     processed = process_next_plugin_run_job(host=host, db=db)
     assert processed is True
 
-    queued = db.list_plugin_run_jobs(status="queued")
+    queued = db.plugins.list_plugin_run_jobs(status="queued")
     assert len(queued) == 1
     assert queued[0].attempts == 1
     assert queued[0].last_error is not None
@@ -97,7 +97,7 @@ def test_process_next_plugin_run_job_terminal_failure_marks_failed(tmp_path: Pat
     db = _db(tmp_path)
     _save_meeting(db, "m-2")
 
-    db.enqueue_plugin_run_job(
+    db.plugins.enqueue_plugin_run_job(
         meeting_id="m-2",
         window_id="m-2:w-1",
         plugin_id="failing",
@@ -112,12 +112,12 @@ def test_process_next_plugin_run_job_terminal_failure_marks_failed(tmp_path: Pat
     processed = process_next_plugin_run_job(host=host, db=db, retry_max_attempts=1)
     assert processed is True
 
-    failed = db.list_plugin_run_jobs(status="failed")
+    failed = db.plugins.list_plugin_run_jobs(status="failed")
     assert len(failed) == 1
     assert failed[0].attempts == 1
     assert failed[0].last_error is not None
 
-    runs = db.list_plugin_runs("m-2")
+    runs = db.plugins.list_plugin_runs("m-2")
     assert len(runs) == 1
     assert runs[0].plugin_id == "failing"
     assert runs[0].status == "error"
@@ -128,7 +128,7 @@ def test_process_next_plugin_run_job_include_scheduled_enables_retry_now_mode(tm
     db = _db(tmp_path)
     _save_meeting(db, "m-3")
 
-    db.enqueue_plugin_run_job(
+    db.plugins.enqueue_plugin_run_job(
         meeting_id="m-3",
         window_id="m-3:w-1",
         plugin_id="success",
@@ -137,9 +137,9 @@ def test_process_next_plugin_run_job_include_scheduled_enables_retry_now_mode(tm
         idempotency_key="k-3",
         context={"active_intents": ["incident"]},
     )
-    queued = db.list_plugin_run_jobs(status="queued")
+    queued = db.plugins.list_plugin_run_jobs(status="queued")
     assert len(queued) == 1
-    db.retry_plugin_run_job(
+    db.plugins.retry_plugin_run_job(
         queued[0].id,
         error="retry later",
         retry_at=datetime.now().replace(microsecond=0).replace(second=0) + timedelta(minutes=15),
@@ -151,7 +151,7 @@ def test_process_next_plugin_run_job_include_scheduled_enables_retry_now_mode(tm
     assert process_next_plugin_run_job(host=host, db=db) is False
     assert process_next_plugin_run_job(host=host, db=db, include_scheduled=True) is True
 
-    runs = db.list_plugin_runs("m-3")
+    runs = db.plugins.list_plugin_runs("m-3")
     assert len(runs) == 1
     assert runs[0].status == "success"
 
@@ -161,7 +161,7 @@ def test_drain_plugin_run_queue_include_scheduled_drains_future_jobs(tmp_path: P
     _save_meeting(db, "m-4")
 
     for idx in range(2):
-        db.enqueue_plugin_run_job(
+        db.plugins.enqueue_plugin_run_job(
             meeting_id="m-4",
             window_id=f"m-4:w-{idx}",
             plugin_id="success",
@@ -171,10 +171,10 @@ def test_drain_plugin_run_queue_include_scheduled_drains_future_jobs(tmp_path: P
             context={"active_intents": ["delivery"]},
         )
 
-    queued = db.list_plugin_run_jobs(status="queued")
+    queued = db.plugins.list_plugin_run_jobs(status="queued")
     assert len(queued) == 2
     for job in queued:
-        db.retry_plugin_run_job(
+        db.plugins.retry_plugin_run_job(
             job.id,
             error="scheduled retry",
             retry_at=datetime.now().replace(microsecond=0).replace(second=0) + timedelta(minutes=30),
@@ -185,4 +185,4 @@ def test_drain_plugin_run_queue_include_scheduled_drains_future_jobs(tmp_path: P
 
     assert drain_plugin_run_queue(host=host, db=db, include_scheduled=False) == 0
     assert drain_plugin_run_queue(host=host, db=db, include_scheduled=True) == 2
-    assert db.list_plugin_run_jobs(status="all") == []
+    assert db.plugins.list_plugin_run_jobs(status="all") == []

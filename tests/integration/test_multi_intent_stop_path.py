@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import (
     MeetingSession,
     MeetingState,
@@ -50,7 +50,7 @@ def temp_db_path():
 
 @pytest.fixture
 def db(temp_db_path):
-    return MeetingDatabase(temp_db_path)
+    return Database(temp_db_path)
 
 
 def _full_host() -> PluginHost:
@@ -75,7 +75,7 @@ def _full_host() -> PluginHost:
     return host
 
 
-def _seed_active_state(session: MeetingSession, db: MeetingDatabase | None = None) -> MeetingState:
+def _seed_active_state(session: MeetingSession, db: Database | None = None) -> MeetingState:
     state = MeetingState(
         id="m-stop-path",
         started_at=datetime(2026, 4, 25, 10, 0, 0),
@@ -97,7 +97,7 @@ def _seed_active_state(session: MeetingSession, db: MeetingDatabase | None = Non
     )
     if db is not None:
         # The meeting must exist before MIR persistence can FK-link windows / plugin runs to it.
-        db.save_meeting(state)
+        db.meetings.save_meeting(state)
     # MeetingSession.stop() requires `_state.is_active` (ended_at is None).
     session._state = state  # type: ignore[attr-defined]
     return state
@@ -122,8 +122,8 @@ def test_meeting_session_stop_runs_mir_pipeline_when_enabled(db) -> None:
     assert final_state.ended_at is not None  # stop() set ended_at
 
     # MIR persisted intent windows + plugin runs for the meeting.
-    persisted_windows = db.list_intent_windows("m-stop-path")
-    persisted_runs = db.list_plugin_runs("m-stop-path")
+    persisted_windows = db.plugins.list_intent_windows("m-stop-path")
+    persisted_runs = db.plugins.list_plugin_runs("m-stop-path")
     assert len(persisted_windows) >= 1
     assert len(persisted_runs) >= 1
 
@@ -147,8 +147,8 @@ def test_meeting_session_stop_is_byte_identical_when_mir_disabled(db) -> None:
     session.stop()
 
     # No MIR persistence happened.
-    assert db.list_intent_windows("m-stop-path") == []
-    assert db.list_plugin_runs("m-stop-path") == []
+    assert db.plugins.list_intent_windows("m-stop-path") == []
+    assert db.plugins.list_plugin_runs("m-stop-path") == []
     assert session._mir_last_result is None  # type: ignore[attr-defined]
 
 

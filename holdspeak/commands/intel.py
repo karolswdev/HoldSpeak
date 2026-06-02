@@ -52,7 +52,7 @@ def run_intel_command(args) -> int:
         )
 
     if args.retry:
-        ok = db.requeue_intel_job(
+        ok = db.intel.requeue_intel_job(
             args.retry,
             reason="Manual retry requested from CLI.",
         )
@@ -63,14 +63,14 @@ def run_intel_command(args) -> int:
         return 0
 
     if args.retry_failed:
-        failed_jobs = db.list_intel_jobs(status="failed", limit=args.limit)
+        failed_jobs = db.intel.list_intel_jobs(status="failed", limit=args.limit)
         if not failed_jobs:
             print("No failed deferred-intel jobs found.")
             return 0
 
         requeued = 0
         for job in failed_jobs:
-            if db.requeue_intel_job(job.meeting_id, reason="Manual retry requested from CLI."):
+            if db.intel.requeue_intel_job(job.meeting_id, reason="Manual retry requested from CLI."):
                 requeued += 1
 
         print(f"Requeued {requeued} failed deferred-intel job(s).")
@@ -124,7 +124,7 @@ def run_intel_command(args) -> int:
         print(f"Processed {processed} deferred-intel job(s).")
         return 0
 
-    jobs = db.list_intel_jobs(status=args.status, limit=args.limit)
+    jobs = db.intel.list_intel_jobs(status=args.status, limit=args.limit)
     _print_runtime_status(
         model_path,
         provider=provider,
@@ -168,7 +168,7 @@ def _run_mir_route_command(
         print(override_error, file=sys.stderr)
         return 2
 
-    meeting = db.get_meeting(meeting_id)
+    meeting = db.meetings.get_meeting(meeting_id)
     if meeting is None:
         print(f"Meeting not found: {meeting_id}", file=sys.stderr)
         return 1
@@ -291,7 +291,7 @@ def _persist_cli_reroute(
     transcript_hash = _meeting_transcript_hash(meeting, transcript=transcript)
     now_iso = datetime.now().isoformat()
 
-    db.record_intent_window(
+    db.plugins.record_intent_window(
         meeting_id=meeting_id,
         window_id=window_id,
         start_seconds=0.0,

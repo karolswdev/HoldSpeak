@@ -583,7 +583,7 @@ def run_web_runtime(
                 queued_run = plugin_host.pop_next_deferred_run()
                 if queued_run is None:
                     break
-                db.enqueue_plugin_run_job(
+                db.plugins.enqueue_plugin_run_job(
                     meeting_id=queued_run.meeting_id,
                     window_id=queued_run.window_id,
                     plugin_id=queued_run.plugin_id,
@@ -917,10 +917,10 @@ def run_web_runtime(
 
             db = get_database()
             for record in windows_to_save:
-                db.record_intent_window(**record)
+                db.plugins.record_intent_window(**record)
                 saved_windows += 1
             for record in runs_to_save:
-                db.record_plugin_run(**record)
+                db.plugins.record_plugin_run(**record)
                 saved_runs += 1
         except Exception as exc:
             save_error = str(exc)
@@ -942,14 +942,14 @@ def run_web_runtime(
             from .plugins.synthesis import synthesize_meeting_artifacts
 
             db = get_database()
-            runs = db.list_plugin_runs(clean_meeting_id, limit=5000)
+            runs = db.plugins.list_plugin_runs(clean_meeting_id, limit=5000)
             artifacts = synthesize_meeting_artifacts(
                 meeting_id=clean_meeting_id,
                 plugin_runs=runs,
                 max_artifacts=500,
             )
             for artifact in artifacts:
-                db.record_artifact(
+                db.plugins.record_artifact(
                     artifact_id=artifact.artifact_id,
                     meeting_id=artifact.meeting_id,
                     artifact_type=artifact.artifact_type,
@@ -977,7 +977,7 @@ def run_web_runtime(
         try:
             from .db import get_database
             db = get_database()
-            runs = db.list_plugin_runs(clean_meeting_id, limit=5000)
+            runs = db.plugins.list_plugin_runs(clean_meeting_id, limit=5000)
 
             # Filter to successful project_detector runs
             detector_runs = [
@@ -1006,7 +1006,7 @@ def run_web_runtime(
                             "threshold": threshold,
                         }
                     # Log each window detection
-                    db.log_project_detection(
+                    db.projects.log_project_detection(
                         meeting_id=clean_meeting_id,
                         project_id=pid,
                         window_id=run.window_id,
@@ -1021,7 +1021,7 @@ def run_web_runtime(
                 max_score = float(data["max_score"])
                 threshold = float(data["threshold"])
                 if max_score >= threshold:
-                    db.associate_meeting_project(
+                    db.projects.associate_meeting_project(
                         meeting_id=clean_meeting_id,
                         project_id=pid,
                         source="auto",

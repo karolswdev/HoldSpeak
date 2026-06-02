@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from holdspeak.activity_context import ActivityContextProvider, build_activity_context
-from holdspeak.db import MeetingDatabase
+from holdspeak.db import Database
 from holdspeak.plugins.host import PluginHost
 
 
@@ -22,8 +22,8 @@ class _CapturePlugin:
 
 
 def test_build_activity_context_serializes_recent_records(tmp_path):
-    db = MeetingDatabase(tmp_path / "holdspeak.db")
-    db.upsert_activity_record(
+    db = Database(tmp_path / "holdspeak.db")
+    db.activity.upsert_activity_record(
         source_browser="safari",
         source_profile="default",
         url="https://example.atlassian.net/browse/HS-805",
@@ -45,12 +45,12 @@ def test_build_activity_context_serializes_recent_records(tmp_path):
 
 
 def test_activity_context_provider_can_refresh_once(tmp_path):
-    db = MeetingDatabase(tmp_path / "holdspeak.db")
+    db = Database(tmp_path / "holdspeak.db")
     calls = []
 
     def importer(**kwargs):
         calls.append(kwargs)
-        kwargs["db"].upsert_activity_record(
+        kwargs["db"].activity.upsert_activity_record(
             source_browser="firefox",
             url="https://miro.com/app/board/uXjVContext/",
             title="Context board",
@@ -71,8 +71,8 @@ def test_activity_context_provider_can_refresh_once(tmp_path):
 
 
 def test_plugin_host_injects_activity_context_for_any_plugin(tmp_path):
-    db = MeetingDatabase(tmp_path / "holdspeak.db")
-    db.upsert_activity_record(
+    db = Database(tmp_path / "holdspeak.db")
+    db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/openai/codex/pull/12",
         title="PR 12",

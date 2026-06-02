@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Optional
 
-from ..db import MeetingDatabase, PluginRunJob
+from ..db import Database, PluginRunJob
 from ..logging_config import get_logger
 from .host import PluginHost
 
@@ -30,7 +30,7 @@ def compute_retry_delay_seconds(
 
 def _record_job_result(
     *,
-    db: MeetingDatabase,
+    db: Database,
     job: PluginRunJob,
     status: str,
     plugin_version: str,
@@ -40,7 +40,7 @@ def _record_job_result(
     error: Optional[str],
     deduped: bool,
 ) -> None:
-    db.record_plugin_run(
+    db.plugins.record_plugin_run(
         meeting_id=job.meeting_id,
         window_id=job.window_id,
         plugin_id=job.plugin_id,
@@ -57,18 +57,18 @@ def _record_job_result(
 def process_next_plugin_run_job(
     *,
     host: PluginHost,
-    db: MeetingDatabase,
+    db: Database,
     include_scheduled: bool = False,
     retry_base_seconds: int = RETRY_BASE_SECONDS,
     retry_max_seconds: int = RETRY_MAX_SECONDS,
     retry_max_attempts: int = RETRY_MAX_ATTEMPTS,
 ) -> bool:
     """Process one deferred MIR plugin-run queue item."""
-    job = db.claim_next_plugin_run_job(include_scheduled=include_scheduled)
+    job = db.plugins.claim_next_plugin_run_job(include_scheduled=include_scheduled)
     if job is None:
         return False
 
-    meeting = db.get_meeting(job.meeting_id)
+    meeting = db.meetings.get_meeting(job.meeting_id)
     if meeting is None:
         delay_seconds = compute_retry_delay_seconds(
             job.attempts,
@@ -76,7 +76,7 @@ def process_next_plugin_run_job(
             max_seconds=retry_max_seconds,
         )
         retry_at = datetime.now() + timedelta(seconds=delay_seconds)
-        db.retry_plugin_run_job(
+        db.plugins.retry_plugin_run_job(
             job.id,
             error="Meeting not yet persisted; deferred plugin run will retry.",
             retry_at=retry_at,
@@ -104,7 +104,7 @@ def process_next_plugin_run_job(
             error=result.error,
             deduped=result.deduped,
         )
-        db.complete_plugin_run_job(job.id)
+        db.plugins.complete_plugin_run_job(job.id)
         return True
 
     if result.status in {"error", "timeout"}:
@@ -120,7 +120,7 @@ def process_next_plugin_run_job(
                 error=result.error,
                 deduped=result.deduped,
             )
-            db.fail_plugin_run_job(
+            db.plugins.fail_plugin_run_job(
                 job.id,
                 error=result.error or f"Deferred plugin run {result.status}",
             )
@@ -132,7 +132,7 @@ def process_next_plugin_run_job(
             max_seconds=retry_max_seconds,
         )
         retry_at = datetime.now() + timedelta(seconds=delay_seconds)
-        db.retry_plugin_run_job(
+        db.plugins.retry_plugin_run_job(
             job.id,
             error=result.error or f"Deferred plugin run {result.status}",
             retry_at=retry_at,
@@ -146,7 +146,7 @@ def process_next_plugin_run_job(
         )
         return True
 
-    db.fail_plugin_run_job(
+    db.plugins.fail_plugin_run_job(
         job.id,
         error=f"Unhandled deferred plugin status: {result.status}",
     )
@@ -156,7 +156,7 @@ def process_next_plugin_run_job(
 def drain_plugin_run_queue(
     *,
     host: PluginHost,
-    db: MeetingDatabase,
+    db: Database,
     max_jobs: Optional[int] = None,
     include_scheduled: bool = False,
     retry_base_seconds: int = RETRY_BASE_SECONDS,

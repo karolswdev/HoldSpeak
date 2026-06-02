@@ -8,7 +8,7 @@ import tempfile
 import shutil
 
 from holdspeak.db import (
-    MeetingDatabase,
+    Database,
     MeetingSummary,
     ActionItemSummary,
     IntelJob,
@@ -45,7 +45,7 @@ def temp_db_path():
 @pytest.fixture
 def db(temp_db_path):
     """Create a test database instance."""
-    return MeetingDatabase(temp_db_path)
+    return Database(temp_db_path)
 
 
 @pytest.fixture
@@ -79,21 +79,21 @@ def sample_meeting():
     )
 
 
-class TestMeetingDatabase:
-    """Tests for MeetingDatabase class."""
+class TestDatabase:
+    """Tests for Database class."""
 
     def test_init_creates_schema(self, db, temp_db_path):
         """Test that database initialization creates the schema."""
         assert temp_db_path.exists()
         # Verify tables exist by attempting queries
-        meetings = db.list_meetings()
+        meetings = db.meetings.list_meetings()
         assert meetings == []
 
     def test_save_and_get_meeting(self, db, sample_meeting):
         """Test saving and retrieving a meeting."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        retrieved = db.get_meeting(sample_meeting.id)
+        retrieved = db.meetings.get_meeting(sample_meeting.id)
         assert retrieved is not None
         assert retrieved.id == sample_meeting.id
         assert retrieved.title == sample_meeting.title
@@ -120,9 +120,9 @@ class TestMeetingDatabase:
             summary="A friendly conversation about wellbeing.",
         )
 
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        retrieved = db.get_meeting(sample_meeting.id)
+        retrieved = db.meetings.get_meeting(sample_meeting.id)
         assert retrieved.intel is not None
         assert len(retrieved.intel.topics) == 2
         assert len(retrieved.intel.action_items) == 1
@@ -130,13 +130,13 @@ class TestMeetingDatabase:
 
     def test_get_nonexistent_meeting(self, db):
         """Test getting a meeting that doesn't exist."""
-        result = db.get_meeting("nonexistent")
+        result = db.meetings.get_meeting("nonexistent")
         assert result is None
 
     def test_list_meetings(self, db, sample_meeting):
         """Test listing meetings."""
         # Save multiple meetings
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         meeting2 = MeetingState(
             id="test456",
@@ -146,9 +146,9 @@ class TestMeetingDatabase:
             mic_label="Me",
             remote_label="Remote",
         )
-        db.save_meeting(meeting2)
+        db.meetings.save_meeting(meeting2)
 
-        meetings = db.list_meetings()
+        meetings = db.meetings.list_meetings()
         assert len(meetings) == 2
         # Should be sorted by date descending
         assert meetings[0].id == "test456"
@@ -156,7 +156,7 @@ class TestMeetingDatabase:
 
     def test_list_meetings_with_limit(self, db, sample_meeting):
         """Test listing meetings with limit."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         meeting2 = MeetingState(
             id="test456",
@@ -164,14 +164,14 @@ class TestMeetingDatabase:
             mic_label="Me",
             remote_label="Remote",
         )
-        db.save_meeting(meeting2)
+        db.meetings.save_meeting(meeting2)
 
-        meetings = db.list_meetings(limit=1)
+        meetings = db.meetings.list_meetings(limit=1)
         assert len(meetings) == 1
 
     def test_list_meetings_date_filter(self, db, sample_meeting):
         """Test filtering meetings by date range."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         meeting2 = MeetingState(
             id="test456",
@@ -179,10 +179,10 @@ class TestMeetingDatabase:
             mic_label="Me",
             remote_label="Remote",
         )
-        db.save_meeting(meeting2)
+        db.meetings.save_meeting(meeting2)
 
         # Filter to January only
-        meetings = db.list_meetings(
+        meetings = db.meetings.list_meetings(
             date_from=datetime(2024, 1, 1),
             date_to=datetime(2024, 1, 31),
         )
@@ -191,26 +191,26 @@ class TestMeetingDatabase:
 
     def test_delete_meeting(self, db, sample_meeting):
         """Test deleting a meeting."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        result = db.delete_meeting(sample_meeting.id)
+        result = db.meetings.delete_meeting(sample_meeting.id)
         assert result is True
 
         # Should be gone
-        retrieved = db.get_meeting(sample_meeting.id)
+        retrieved = db.meetings.get_meeting(sample_meeting.id)
         assert retrieved is None
 
     def test_delete_nonexistent_meeting(self, db):
         """Test deleting a meeting that doesn't exist."""
-        result = db.delete_meeting("nonexistent")
+        result = db.meetings.delete_meeting("nonexistent")
         assert result is False
 
     def test_get_meeting_count(self, db, sample_meeting):
         """Test counting meetings."""
-        assert db.get_meeting_count() == 0
+        assert db.meetings.get_meeting_count() == 0
 
-        db.save_meeting(sample_meeting)
-        assert db.get_meeting_count() == 1
+        db.meetings.save_meeting(sample_meeting)
+        assert db.meetings.get_meeting_count() == 1
 
         meeting2 = MeetingState(
             id="test456",
@@ -218,8 +218,8 @@ class TestMeetingDatabase:
             mic_label="Me",
             remote_label="Remote",
         )
-        db.save_meeting(meeting2)
-        assert db.get_meeting_count() == 2
+        db.meetings.save_meeting(meeting2)
+        assert db.meetings.get_meeting_count() == 2
 
 
 class TestActionItems:
@@ -247,17 +247,17 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         # Pending only
-        items = db.list_action_items(include_completed=False)
+        items = db.meetings.list_action_items(include_completed=False)
         assert len(items) == 1
         assert items[0].task == "Task one"
         assert items[0].review_state == "pending"
         assert items[0].reviewed_at is None
 
         # All items
-        items = db.list_action_items(include_completed=True)
+        items = db.meetings.list_action_items(include_completed=True)
         assert len(items) == 2
 
     def test_list_action_items_by_owner(self, db, sample_meeting):
@@ -282,9 +282,9 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        items = db.list_action_items(include_completed=True, owner="Me")
+        items = db.meetings.list_action_items(include_completed=True, owner="Me")
         assert len(items) == 1
         assert items[0].task == "My task"
 
@@ -303,14 +303,14 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         # Update to done
-        result = db.update_action_item_status("action1", "done")
+        result = db.meetings.update_action_item_status("action1", "done")
         assert result is True
 
         # Verify
-        items = db.list_action_items(include_completed=True)
+        items = db.meetings.list_action_items(include_completed=True)
         assert items[0].status == "done"
         assert items[0].completed_at is not None
 
@@ -329,12 +329,12 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        result = db.update_action_item_status("action1", "dismissed")
+        result = db.meetings.update_action_item_status("action1", "dismissed")
         assert result is True
 
-        items = db.list_action_items(include_completed=True)
+        items = db.meetings.list_action_items(include_completed=True)
         assert items[0].status == "dismissed"
         assert items[0].completed_at is not None
 
@@ -354,18 +354,18 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        result = db.update_action_item_status("action1", "pending")
+        result = db.meetings.update_action_item_status("action1", "pending")
         assert result is True
 
-        items = db.list_action_items(include_completed=True)
+        items = db.meetings.list_action_items(include_completed=True)
         assert items[0].status == "pending"
         assert items[0].completed_at is None
 
     def test_update_nonexistent_action_item(self, db):
         """Test updating an action item that doesn't exist."""
-        result = db.update_action_item_status("nonexistent", "done")
+        result = db.meetings.update_action_item_status("nonexistent", "done")
         assert result is False
 
     def test_update_action_item_status_rejects_invalid_status(self, db, sample_meeting):
@@ -383,10 +383,10 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         with pytest.raises(ValueError, match="Invalid action item status"):
-            db.update_action_item_status("action1", "archived")
+            db.meetings.update_action_item_status("action1", "archived")
 
     def test_update_action_item_review_state(self, db, sample_meeting):
         """Action items can be explicitly accepted during intel review."""
@@ -403,10 +403,10 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        assert db.update_action_item_review_state("action1", "accepted")
-        item = db.get_action_item("action1")
+        assert db.meetings.update_action_item_review_state("action1", "accepted")
+        item = db.meetings.get_action_item("action1")
         assert item is not None
         assert item.review_state == "accepted"
         assert item.reviewed_at is not None
@@ -425,10 +425,10 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         with pytest.raises(ValueError, match="Invalid action item review_state"):
-            db.update_action_item_review_state("action1", "approved")
+            db.meetings.update_action_item_review_state("action1", "approved")
 
     def test_edit_action_item_auto_accepts(self, db, sample_meeting):
         """Editing an intel item should count as accepting it."""
@@ -445,16 +445,16 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        assert db.edit_action_item(
+        assert db.meetings.edit_action_item(
             "action1",
             task="Edited task",
             owner="Remote",
             due="Friday",
         )
 
-        item = db.get_action_item("action1")
+        item = db.meetings.get_action_item("action1")
         assert item is not None
         assert item.task == "Edited task"
         assert item.owner == "Remote"
@@ -476,10 +476,10 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         with pytest.raises(ValueError, match="cannot be empty"):
-            db.edit_action_item("action1", task="   ", owner=None, due=None)
+            db.meetings.edit_action_item("action1", task="   ", owner=None, due=None)
 
     def test_save_meeting_preserves_review_state_across_resave(self, db, sample_meeting):
         """A later extraction should not reset accepted review state to pending."""
@@ -496,9 +496,9 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
-        assert db.update_action_item_review_state("action1", "accepted")
-        accepted = db.get_action_item("action1")
+        db.meetings.save_meeting(sample_meeting)
+        assert db.meetings.update_action_item_review_state("action1", "accepted")
+        accepted = db.meetings.get_action_item("action1")
         assert accepted is not None
         accepted_reviewed_at = accepted.reviewed_at
         assert accepted_reviewed_at is not None
@@ -517,9 +517,9 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        resaved = db.get_action_item("action1")
+        resaved = db.meetings.get_action_item("action1")
         assert resaved is not None
         assert resaved.review_state == "accepted"
         assert resaved.reviewed_at == accepted_reviewed_at
@@ -539,12 +539,12 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        result = db.update_action_item_status("action1", "done")
+        result = db.meetings.update_action_item_status("action1", "done")
         assert result is True
 
-        completed_item = db.list_action_items(include_completed=True)[0]
+        completed_item = db.meetings.list_action_items(include_completed=True)[0]
         original_completed_at = completed_item.completed_at
         assert original_completed_at is not None
 
@@ -562,9 +562,9 @@ class TestActionItems:
                 },
             ],
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        resaved_item = db.list_action_items(include_completed=True)[0]
+        resaved_item = db.meetings.list_action_items(include_completed=True)[0]
         assert resaved_item.status == "done"
         assert resaved_item.completed_at == original_completed_at
 
@@ -585,7 +585,7 @@ class TestActionItems:
         )
 
         with pytest.raises(ValueError, match="Invalid action item status"):
-            db.save_meeting(sample_meeting)
+            db.meetings.save_meeting(sample_meeting)
 
 
 class TestTranscriptSearch:
@@ -593,10 +593,10 @@ class TestTranscriptSearch:
 
     def test_search_transcripts(self, db, sample_meeting):
         """Test searching transcripts."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         # Search for "hello"
-        results = db.search_transcripts("hello")
+        results = db.meetings.search_transcripts("hello")
         assert len(results) == 1
         meeting_id, segment = results[0]
         assert meeting_id == "test123"
@@ -604,9 +604,9 @@ class TestTranscriptSearch:
 
     def test_search_transcripts_no_results(self, db, sample_meeting):
         """Test search with no results."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        results = db.search_transcripts("nonexistent phrase")
+        results = db.meetings.search_transcripts("nonexistent phrase")
         assert len(results) == 0
 
     def test_search_transcripts_multiple_results(self, db, sample_meeting):
@@ -620,9 +620,9 @@ class TestTranscriptSearch:
                 end_time=13.0,
             )
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        results = db.search_transcripts("hello")
+        results = db.meetings.search_transcripts("hello")
         assert len(results) == 2
 
 
@@ -631,9 +631,9 @@ class TestMeetingSummary:
 
     def test_meeting_summary_in_list(self, db, sample_meeting):
         """Test that list_meetings returns proper MeetingSummary objects."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        meetings = db.list_meetings()
+        meetings = db.meetings.list_meetings()
         assert len(meetings) == 1
 
         summary = meetings[0]
@@ -649,7 +649,7 @@ class TestUpsert:
 
     def test_save_meeting_updates_existing(self, db, sample_meeting):
         """Test that saving a meeting again updates it."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         # Modify and save again
         sample_meeting.title = "Updated Title"
@@ -661,13 +661,13 @@ class TestUpsert:
                 end_time=23.0,
             )
         )
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         # Should still be one meeting
-        assert db.get_meeting_count() == 1
+        assert db.meetings.get_meeting_count() == 1
 
         # Should have updated data
-        retrieved = db.get_meeting(sample_meeting.id)
+        retrieved = db.meetings.get_meeting(sample_meeting.id)
         assert retrieved.title == "Updated Title"
         assert len(retrieved.segments) == 3
 
@@ -678,7 +678,7 @@ class TestActivityLedgerPersistence:
     def test_upsert_activity_record_persists_locally(self, db):
         seen = datetime(2026, 4, 26, 9, 30, 0)
 
-        record = db.upsert_activity_record(
+        record = db.activity.upsert_activity_record(
             source_browser="Safari",
             source_profile="default",
             source_path_hash="hash-safari",
@@ -700,7 +700,7 @@ class TestActivityLedgerPersistence:
         assert record.last_visit_raw == "799320600.0"
         assert record.last_seen_at == seen
 
-        listed = db.list_activity_records(source_browser="safari")
+        listed = db.activity.list_activity_records(source_browser="safari")
         assert len(listed) == 1
         assert listed[0].id == record.id
 
@@ -708,7 +708,7 @@ class TestActivityLedgerPersistence:
         first = datetime(2026, 4, 26, 9, 0, 0)
         last = datetime(2026, 4, 26, 11, 0, 0)
 
-        created = db.upsert_activity_record(
+        created = db.activity.upsert_activity_record(
             source_browser="firefox",
             source_profile="work",
             url="https://miro.com/app/board/uXjVMiro123/?utm_source=email",
@@ -718,7 +718,7 @@ class TestActivityLedgerPersistence:
             last_seen_at=last,
             last_visit_raw="1745665200000000",
         )
-        merged = db.upsert_activity_record(
+        merged = db.activity.upsert_activity_record(
             source_browser="firefox",
             source_profile="work",
             url="https://miro.com/app/board/uXjVMiro123?utm_source=email",
@@ -734,13 +734,13 @@ class TestActivityLedgerPersistence:
         assert merged.visit_count == 5
         assert merged.first_seen_at == first
         assert merged.last_seen_at == last
-        assert db.list_activity_records(source_browser="firefox", source_profile="work") == [merged]
+        assert db.activity.list_activity_records(source_browser="firefox", source_profile="work") == [merged]
 
     def test_duplicate_activity_records_merge_by_entity(self, db):
         first = datetime(2026, 4, 26, 9, 0, 0)
         second = datetime(2026, 4, 26, 10, 0, 0)
 
-        created = db.upsert_activity_record(
+        created = db.activity.upsert_activity_record(
             source_browser="safari",
             url="https://github.com/acme/app/pull/42",
             title="PR 42",
@@ -749,7 +749,7 @@ class TestActivityLedgerPersistence:
             entity_type="github_pull_request",
             entity_id="acme/app#42",
         )
-        merged = db.upsert_activity_record(
+        merged = db.activity.upsert_activity_record(
             source_browser="safari",
             url="https://github.com/acme/app/pull/42/files",
             title="PR 42 files",
@@ -763,12 +763,12 @@ class TestActivityLedgerPersistence:
         assert merged.normalized_url == "https://github.com/acme/app/pull/42/files"
         assert merged.first_seen_at == first
         assert merged.last_seen_at == second
-        assert len(db.list_activity_records(entity_type="github_pull_request")) == 1
+        assert len(db.activity.list_activity_records(entity_type="github_pull_request")) == 1
 
     def test_activity_import_checkpoint_round_trips_per_source_profile(self, db):
         imported_at = datetime(2026, 4, 26, 12, 0, 0)
 
-        checkpoint = db.set_activity_import_checkpoint(
+        checkpoint = db.activity.set_activity_import_checkpoint(
             source_browser="Safari",
             source_profile="default",
             source_path_hash="path-hash",
@@ -785,7 +785,7 @@ class TestActivityLedgerPersistence:
         assert checkpoint.last_imported_at == imported_at
         assert checkpoint.enabled is True
 
-        db.set_activity_import_checkpoint(
+        db.activity.set_activity_import_checkpoint(
             source_browser="safari",
             source_profile="default",
             source_path_hash="path-hash",
@@ -794,7 +794,7 @@ class TestActivityLedgerPersistence:
             last_error="temporary lock",
             enabled=False,
         )
-        updated = db.get_activity_import_checkpoint(
+        updated = db.activity.get_activity_import_checkpoint(
             source_browser="safari",
             source_profile="default",
             source_path_hash="path-hash",
@@ -807,33 +807,33 @@ class TestActivityLedgerPersistence:
     def test_delete_activity_records_supports_retention_filters(self, db):
         old = datetime(2026, 4, 1, 9, 0, 0)
         recent = datetime(2026, 4, 26, 9, 0, 0)
-        db.upsert_activity_record(
+        db.activity.upsert_activity_record(
             source_browser="safari",
             url="https://old.example.com/ticket",
             domain="old.example.com",
             last_seen_at=old,
         )
-        db.upsert_activity_record(
+        db.activity.upsert_activity_record(
             source_browser="safari",
             url="https://recent.example.com/ticket",
             domain="recent.example.com",
             last_seen_at=recent,
         )
 
-        deleted = db.delete_activity_records(older_than=datetime(2026, 4, 10))
+        deleted = db.activity.delete_activity_records(older_than=datetime(2026, 4, 10))
 
         assert deleted == 1
-        remaining = db.list_activity_records()
+        remaining = db.activity.list_activity_records()
         assert len(remaining) == 1
         assert remaining[0].domain == "recent.example.com"
 
     def test_activity_privacy_settings_default_enabled_and_updateable(self, db):
-        settings = db.get_activity_privacy_settings()
+        settings = db.activity.get_activity_privacy_settings()
         assert settings["enabled"] is True
         assert settings["paused"] is False
         assert settings["retention_days"] == 30
 
-        updated = db.update_activity_privacy_settings(
+        updated = db.activity.update_activity_privacy_settings(
             enabled=False,
             retention_days=14,
         )
@@ -843,21 +843,21 @@ class TestActivityLedgerPersistence:
         assert updated["retention_days"] == 14
 
     def test_activity_domain_rules_match_subdomains(self, db):
-        rule = db.upsert_activity_domain_rule(domain="Example.COM", action="exclude")
+        rule = db.activity.upsert_activity_domain_rule(domain="Example.COM", action="exclude")
 
         assert rule["domain"] == "example.com"
-        assert db.is_activity_domain_excluded("example.com") is True
-        assert db.is_activity_domain_excluded("docs.example.com") is True
-        assert db.is_activity_domain_excluded("other.com") is False
+        assert db.activity.is_activity_domain_excluded("example.com") is True
+        assert db.activity.is_activity_domain_excluded("docs.example.com") is True
+        assert db.activity.is_activity_domain_excluded("other.com") is False
 
-        assert db.delete_activity_domain_rule("example.com") is True
-        assert db.is_activity_domain_excluded("example.com") is False
+        assert db.activity.delete_activity_domain_rule("example.com") is True
+        assert db.activity.is_activity_domain_excluded("example.com") is False
 
     def test_activity_project_rules_preview_and_apply_records(self, db):
-        db.create_project(project_id="holdspeak", name="HoldSpeak")
-        db.create_project(project_id="other", name="Other")
+        db.projects.create_project(project_id="holdspeak", name="HoldSpeak")
+        db.projects.create_project(project_id="other", name="Other")
         first_seen = datetime(2026, 4, 26, 9, 0, 0)
-        db.upsert_activity_record(
+        db.activity.upsert_activity_record(
             source_browser="safari",
             url="https://example.atlassian.net/browse/HS-123",
             title="HS-123 activity mapping",
@@ -866,7 +866,7 @@ class TestActivityLedgerPersistence:
             entity_type="jira_ticket",
             entity_id="HS-123",
         )
-        db.upsert_activity_record(
+        db.activity.upsert_activity_record(
             source_browser="safari",
             url="https://example.atlassian.net/browse/OTHER-1",
             title="OTHER-1 activity mapping",
@@ -876,14 +876,14 @@ class TestActivityLedgerPersistence:
             entity_id="OTHER-1",
         )
 
-        low_priority = db.create_activity_project_rule(
+        low_priority = db.activity.create_activity_project_rule(
             project_id="other",
             name="All Jira",
             match_type="entity_type",
             pattern="jira_ticket",
             priority=100,
         )
-        high_priority = db.create_activity_project_rule(
+        high_priority = db.activity.create_activity_project_rule(
             project_id="holdspeak",
             name="HoldSpeak tickets",
             match_type="entity_id_prefix",
@@ -894,8 +894,8 @@ class TestActivityLedgerPersistence:
 
         assert isinstance(high_priority, ActivityProjectRule)
         assert high_priority.project_name == "HoldSpeak"
-        assert db.list_activity_project_rules() == [high_priority, low_priority]
-        preview = db.preview_activity_project_rule(
+        assert db.activity.list_activity_project_rules() == [high_priority, low_priority]
+        preview = db.activity.preview_activity_project_rule(
             project_id="holdspeak",
             match_type="entity_id_prefix",
             pattern="HS-",
@@ -903,22 +903,22 @@ class TestActivityLedgerPersistence:
         )
         assert [record.entity_id for record in preview] == ["HS-123"]
 
-        assert db.apply_activity_project_rules() == 2
-        records = db.list_activity_records(limit=10)
+        assert db.activity.apply_activity_project_rules() == 2
+        records = db.activity.list_activity_records(limit=10)
         assert {record.entity_id: record.project_id for record in records} == {
             "HS-123": "holdspeak",
             "OTHER-1": "other",
         }
 
     def test_activity_project_rules_update_disable_and_delete(self, db):
-        db.create_project(project_id="holdspeak", name="HoldSpeak")
-        rule = db.create_activity_project_rule(
+        db.projects.create_project(project_id="holdspeak", name="HoldSpeak")
+        rule = db.activity.create_activity_project_rule(
             project_id="holdspeak",
             match_type="domain",
             pattern="Example.COM",
         )
 
-        updated = db.update_activity_project_rule(
+        updated = db.activity.update_activity_project_rule(
             rule.id,
             name="Example",
             enabled=False,
@@ -929,15 +929,15 @@ class TestActivityLedgerPersistence:
         assert updated.name == "Example"
         assert updated.enabled is False
         assert updated.priority == 300
-        assert db.list_activity_project_rules() == []
-        assert db.list_activity_project_rules(include_disabled=True) == [updated]
-        assert db.delete_activity_project_rule(rule.id) is True
-        assert db.list_activity_project_rules(include_disabled=True) == []
+        assert db.activity.list_activity_project_rules() == []
+        assert db.activity.list_activity_project_rules(include_disabled=True) == [updated]
+        assert db.activity.delete_activity_project_rule(rule.id) is True
+        assert db.activity.list_activity_project_rules(include_disabled=True) == []
 
     def test_activity_enrichment_connector_state_round_trips(self, db):
         run_at = datetime(2026, 4, 27, 10, 30, 0)
 
-        state = db.upsert_activity_enrichment_connector(
+        state = db.activity.upsert_activity_enrichment_connector(
             connector_id="gh",
             enabled=True,
             settings={"timeout_seconds": 4, "max_bytes": 2048},
@@ -950,7 +950,7 @@ class TestActivityLedgerPersistence:
         assert state.settings == {"timeout_seconds": 4, "max_bytes": 2048}
         assert state.last_error == "not run yet"
 
-        updated = db.record_activity_enrichment_run(
+        updated = db.activity.record_activity_enrichment_run(
             connector_id="gh",
             last_run_at=run_at,
         )
@@ -959,10 +959,10 @@ class TestActivityLedgerPersistence:
         assert updated.settings == {"timeout_seconds": 4, "max_bytes": 2048}
         assert updated.last_run_at == run_at
         assert updated.last_error is None
-        assert db.list_activity_enrichment_connectors() == [updated]
+        assert db.activity.list_activity_enrichment_connectors() == [updated]
 
     def test_activity_annotations_attach_to_records_and_delete_by_connector(self, db):
-        record = db.upsert_activity_record(
+        record = db.activity.upsert_activity_record(
             source_browser="safari",
             url="https://github.com/openai/codex/pull/42",
             title="PR 42",
@@ -971,7 +971,7 @@ class TestActivityLedgerPersistence:
             entity_id="openai/codex#42",
         )
 
-        annotation = db.create_activity_annotation(
+        annotation = db.activity.create_activity_annotation(
             activity_record_id=record.id,
             source_connector_id="gh",
             annotation_type="github_pr",
@@ -986,15 +986,15 @@ class TestActivityLedgerPersistence:
         assert annotation.annotation_type == "github_pr"
         assert annotation.value == {"state": "OPEN", "labels": ["activity"]}
         assert annotation.confidence == 1.0
-        assert db.list_activity_annotations(activity_record_id=record.id) == [annotation]
-        assert db.list_activity_annotations(source_connector_id="gh") == [annotation]
+        assert db.activity.list_activity_annotations(activity_record_id=record.id) == [annotation]
+        assert db.activity.list_activity_annotations(source_connector_id="gh") == [annotation]
 
-        assert db.delete_activity_annotations(source_connector_id="gh") == 1
-        assert db.list_activity_annotations(source_connector_id="gh") == []
+        assert db.activity.delete_activity_annotations(source_connector_id="gh") == 1
+        assert db.activity.list_activity_annotations(source_connector_id="gh") == []
 
     def test_activity_annotations_validate_record_reference(self, db):
         with pytest.raises(ValueError, match="activity record not found"):
-            db.create_activity_annotation(
+            db.activity.create_activity_annotation(
                 activity_record_id=999,
                 source_connector_id="gh",
                 annotation_type="github_pr",
@@ -1003,14 +1003,14 @@ class TestActivityLedgerPersistence:
     def test_activity_meeting_candidates_round_trip_and_status_update(self, db):
         starts_at = datetime(2026, 4, 27, 15, 0, 0)
         ends_at = datetime(2026, 4, 27, 15, 30, 0)
-        record = db.upsert_activity_record(
+        record = db.activity.upsert_activity_record(
             source_browser="safari",
             url="https://outlook.office.com/calendar/item/123",
             title="Customer sync",
             domain="outlook.office.com",
         )
 
-        candidate = db.create_activity_meeting_candidate(
+        candidate = db.activity.create_activity_meeting_candidate(
             source_connector_id="calendar_activity",
             source_activity_record_id=record.id,
             title="Customer sync",
@@ -1029,59 +1029,59 @@ class TestActivityLedgerPersistence:
         assert candidate.meeting_url == record.url
         assert candidate.confidence == 0.8
         assert candidate.status == "candidate"
-        assert db.list_activity_meeting_candidates(status="candidate") == [candidate]
+        assert db.activity.list_activity_meeting_candidates(status="candidate") == [candidate]
 
-        updated = db.update_activity_meeting_candidate_status(candidate.id, "armed")
+        updated = db.activity.update_activity_meeting_candidate_status(candidate.id, "armed")
         assert updated is not None
         assert updated.status == "armed"
-        assert db.list_activity_meeting_candidates(status="armed") == [updated]
-        assert db.get_activity_meeting_candidate(candidate.id) == updated
+        assert db.activity.list_activity_meeting_candidates(status="armed") == [updated]
+        assert db.activity.get_activity_meeting_candidate(candidate.id) == updated
 
-        started = db.mark_activity_meeting_candidate_started(
+        started = db.activity.mark_activity_meeting_candidate_started(
             candidate.id,
             meeting_id="meeting-123",
         )
         assert started is not None
         assert started.status == "started"
         assert started.started_meeting_id == "meeting-123"
-        assert db.list_activity_meeting_candidates(status="started") == [started]
+        assert db.activity.list_activity_meeting_candidates(status="started") == [started]
 
-        assert db.delete_activity_meeting_candidates(source_connector_id="calendar_activity") == 1
-        assert db.list_activity_meeting_candidates(source_connector_id="calendar_activity") == []
+        assert db.activity.delete_activity_meeting_candidates(source_connector_id="calendar_activity") == 1
+        assert db.activity.list_activity_meeting_candidates(source_connector_id="calendar_activity") == []
 
     def test_activity_meeting_candidates_validate_status_and_record_reference(self, db):
         with pytest.raises(ValueError, match="activity record not found"):
-            db.create_activity_meeting_candidate(
+            db.activity.create_activity_meeting_candidate(
                 source_connector_id="calendar_activity",
                 source_activity_record_id=999,
                 title="Missing source",
             )
 
         with pytest.raises(ValueError, match="candidate status"):
-            db.create_activity_meeting_candidate(
+            db.activity.create_activity_meeting_candidate(
                 source_connector_id="calendar_activity",
                 title="Bad status",
                 status="auto_record",
             )
 
     def test_activity_meeting_candidates_dedupe_repeated_saves(self, db):
-        record = db.upsert_activity_record(
+        record = db.activity.upsert_activity_record(
             source_browser="safari",
             url="https://outlook.office.com/calendar/item/123",
             title="Customer sync",
             domain="outlook.office.com",
         )
 
-        first = db.create_activity_meeting_candidate(
+        first = db.activity.create_activity_meeting_candidate(
             source_connector_id="calendar_activity",
             source_activity_record_id=record.id,
             title="Customer sync",
             meeting_url=record.url,
             confidence=0.55,
         )
-        armed = db.update_activity_meeting_candidate_status(first.id, "armed")
+        armed = db.activity.update_activity_meeting_candidate_status(first.id, "armed")
         assert armed is not None
-        second = db.create_activity_meeting_candidate(
+        second = db.activity.create_activity_meeting_candidate(
             source_connector_id="calendar_activity",
             source_activity_record_id=record.id,
             title="Customer sync updated",
@@ -1095,7 +1095,7 @@ class TestActivityLedgerPersistence:
         assert second.starts_at == datetime(2026, 4, 27, 15, 0, 0)
         assert second.confidence == 0.8
         assert second.status == "armed"
-        assert db.list_activity_meeting_candidates() == [second]
+        assert db.activity.list_activity_meeting_candidates() == [second]
 
 
 class TestDeferredIntelQueue:
@@ -1106,12 +1106,12 @@ class TestDeferredIntelQueue:
         sample_meeting.intel_status = "queued"
         sample_meeting.intel_status_detail = "Queued for later processing."
         sample_meeting.intel_requested_at = datetime.now()
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
         transcript_hash = sample_meeting.transcript_hash()
-        db.enqueue_intel_job(sample_meeting.id, transcript_hash=transcript_hash)
+        db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=transcript_hash)
 
-        claimed = db.claim_next_intel_job()
+        claimed = db.intel.claim_next_intel_job()
         assert isinstance(claimed, IntelJob)
         assert claimed.meeting_id == sample_meeting.id
         assert claimed.status == "running"
@@ -1119,35 +1119,35 @@ class TestDeferredIntelQueue:
 
     def test_complete_intel_job_removes_queue_entry(self, db, sample_meeting):
         """Completed jobs should be removed from the queue."""
-        db.save_meeting(sample_meeting)
-        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+        db.meetings.save_meeting(sample_meeting)
+        db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
 
-        claimed = db.claim_next_intel_job()
+        claimed = db.intel.claim_next_intel_job()
         assert claimed is not None
 
-        db.complete_intel_job(sample_meeting.id)
-        assert db.claim_next_intel_job() is None
+        db.intel.complete_intel_job(sample_meeting.id)
+        assert db.intel.claim_next_intel_job() is None
 
     def test_fail_intel_job_updates_meeting_status(self, db, sample_meeting):
         """Failed jobs should surface as meeting intel errors."""
-        db.save_meeting(sample_meeting)
-        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+        db.meetings.save_meeting(sample_meeting)
+        db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
 
-        claimed = db.claim_next_intel_job()
+        claimed = db.intel.claim_next_intel_job()
         assert claimed is not None
 
-        db.fail_intel_job(sample_meeting.id, "Deferred intel failed")
-        updated = db.get_meeting(sample_meeting.id)
+        db.intel.fail_intel_job(sample_meeting.id, "Deferred intel failed")
+        updated = db.meetings.get_meeting(sample_meeting.id)
         assert updated is not None
         assert updated.intel_status == "error"
         assert updated.intel_status_detail == "Deferred intel failed"
 
     def test_list_intel_jobs_includes_meeting_context(self, db, sample_meeting):
         """Queued jobs should include meeting metadata for CLI display."""
-        db.save_meeting(sample_meeting)
-        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+        db.meetings.save_meeting(sample_meeting)
+        db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
 
-        jobs = db.list_intel_jobs()
+        jobs = db.intel.list_intel_jobs()
         assert len(jobs) == 1
         job = jobs[0]
         assert job.meeting_id == sample_meeting.id
@@ -1156,14 +1156,14 @@ class TestDeferredIntelQueue:
 
     def test_requeue_intel_job_refreshes_failed_job(self, db, sample_meeting):
         """Failed jobs should be requeueable for manual retry."""
-        db.save_meeting(sample_meeting)
-        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
-        db.claim_next_intel_job()
-        db.fail_intel_job(sample_meeting.id, "Deferred intel failed")
+        db.meetings.save_meeting(sample_meeting)
+        db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+        db.intel.claim_next_intel_job()
+        db.intel.fail_intel_job(sample_meeting.id, "Deferred intel failed")
 
-        assert db.requeue_intel_job(sample_meeting.id, reason="Manual retry requested.")
+        assert db.intel.requeue_intel_job(sample_meeting.id, reason="Manual retry requested.")
 
-        jobs = db.list_intel_jobs(status="queued")
+        jobs = db.intel.list_intel_jobs(status="queued")
         assert len(jobs) == 1
         assert jobs[0].meeting_id == sample_meeting.id
         assert jobs[0].status == "queued"
@@ -1171,11 +1171,11 @@ class TestDeferredIntelQueue:
 
     def test_claim_next_intel_job_skips_future_scheduled_jobs(self, db, sample_meeting):
         """Claim should ignore queued jobs that are not due yet."""
-        db.save_meeting(sample_meeting)
-        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+        db.meetings.save_meeting(sample_meeting)
+        db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
 
         future = datetime.now() + timedelta(minutes=5)
-        db.retry_intel_job(
+        db.intel.retry_intel_job(
             sample_meeting.id,
             "Deferred intel failed: temporary network issue",
             retry_at=future,
@@ -1183,18 +1183,18 @@ class TestDeferredIntelQueue:
             max_attempts=6,
         )
 
-        assert db.claim_next_intel_job() is None
-        assert db.claim_next_intel_job(include_scheduled=True) is not None
+        assert db.intel.claim_next_intel_job() is None
+        assert db.intel.claim_next_intel_job(include_scheduled=True) is not None
 
     def test_retry_intel_job_requeues_and_updates_meeting_status(self, db, sample_meeting):
         """retry_intel_job should keep job queued with retry details."""
-        db.save_meeting(sample_meeting)
-        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
-        claimed = db.claim_next_intel_job()
+        db.meetings.save_meeting(sample_meeting)
+        db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+        claimed = db.intel.claim_next_intel_job()
         assert claimed is not None
 
         retry_at = datetime.now() + timedelta(seconds=30)
-        db.retry_intel_job(
+        db.intel.retry_intel_job(
             sample_meeting.id,
             "Deferred intel failed: timeout",
             retry_at=retry_at,
@@ -1202,34 +1202,34 @@ class TestDeferredIntelQueue:
             max_attempts=6,
         )
 
-        queued = db.list_intel_jobs(status="queued")
+        queued = db.intel.list_intel_jobs(status="queued")
         assert len(queued) == 1
         assert queued[0].meeting_id == sample_meeting.id
         assert queued[0].status == "queued"
         assert queued[0].last_error == "Deferred intel failed: timeout"
         assert queued[0].requested_at >= retry_at.replace(microsecond=0)
 
-        meeting = db.get_meeting(sample_meeting.id)
+        meeting = db.meetings.get_meeting(sample_meeting.id)
         assert meeting is not None
         assert meeting.intel_status == "queued"
         assert "Retrying at" in (meeting.intel_status_detail or "")
 
     def test_get_intel_queue_summary_reports_aggregate_telemetry(self, db, sample_meeting):
         """Queue summary should report due/scheduled/retry telemetry accurately."""
-        db.save_meeting(sample_meeting)
-        db.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
+        db.meetings.save_meeting(sample_meeting)
+        db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
 
-        summary = db.get_intel_queue_summary()
+        summary = db.intel.get_intel_queue_summary()
         assert summary.total_jobs == 1
         assert summary.queued_jobs == 1
         assert summary.queued_due_jobs == 1
         assert summary.scheduled_retry_jobs == 0
         assert summary.next_retry_at is None
 
-        claimed = db.claim_next_intel_job()
+        claimed = db.intel.claim_next_intel_job()
         assert claimed is not None
         retry_at = datetime.now() + timedelta(minutes=2)
-        db.retry_intel_job(
+        db.intel.retry_intel_job(
             sample_meeting.id,
             "Deferred intel failed: timeout",
             retry_at=retry_at,
@@ -1237,7 +1237,7 @@ class TestDeferredIntelQueue:
             max_attempts=6,
         )
 
-        scheduled = db.get_intel_queue_summary()
+        scheduled = db.intel.get_intel_queue_summary()
         assert scheduled.total_jobs == 1
         assert scheduled.queued_jobs == 1
         assert scheduled.queued_due_jobs == 0
@@ -1246,16 +1246,16 @@ class TestDeferredIntelQueue:
 
     def test_intel_job_attempt_history_round_trips(self, db, sample_meeting):
         """Attempt history should persist and return latest-first order."""
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         now = datetime.now()
-        db.record_intel_job_attempt(
+        db.intel.record_intel_job_attempt(
             sample_meeting.id,
             attempt=1,
             outcome="scheduled_retry",
             error="timeout",
             retry_at=now + timedelta(seconds=30),
         )
-        db.record_intel_job_attempt(
+        db.intel.record_intel_job_attempt(
             sample_meeting.id,
             attempt=2,
             outcome="terminal_failure",
@@ -1263,7 +1263,7 @@ class TestDeferredIntelQueue:
             retry_at=None,
         )
 
-        attempts = db.list_intel_job_attempts(sample_meeting.id, limit=5)
+        attempts = db.intel.list_intel_job_attempts(sample_meeting.id, limit=5)
         assert len(attempts) == 2
         assert attempts[0].attempt == 2
         assert attempts[0].outcome == "terminal_failure"
@@ -1275,9 +1275,9 @@ class TestMirPersistence:
     """Tests for MIR intent-window and plugin-run persistence."""
 
     def test_record_and_list_intent_windows(self, db, sample_meeting):
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        db.record_intent_window(
+        db.plugins.record_intent_window(
             meeting_id=sample_meeting.id,
             window_id=f"{sample_meeting.id}:w0001",
             start_seconds=0.0,
@@ -1293,7 +1293,7 @@ class TestMirPersistence:
             metadata={"source": "test"},
         )
 
-        windows = db.list_intent_windows(sample_meeting.id)
+        windows = db.plugins.list_intent_windows(sample_meeting.id)
         assert len(windows) == 1
         window = windows[0]
         assert isinstance(window, IntentWindowSummary)
@@ -1305,7 +1305,7 @@ class TestMirPersistence:
         assert window.metadata["source"] == "test"
 
         # Upsert same window id should refresh values instead of duplicating rows.
-        db.record_intent_window(
+        db.plugins.record_intent_window(
             meeting_id=sample_meeting.id,
             window_id=f"{sample_meeting.id}:w0001",
             start_seconds=30.0,
@@ -1321,7 +1321,7 @@ class TestMirPersistence:
             metadata={"source": "refresh"},
         )
 
-        refreshed = db.list_intent_windows(sample_meeting.id)
+        refreshed = db.plugins.list_intent_windows(sample_meeting.id)
         assert len(refreshed) == 1
         row = refreshed[0]
         assert row.start_seconds == pytest.approx(30.0)
@@ -1335,10 +1335,10 @@ class TestMirPersistence:
         assert row.metadata["source"] == "refresh"
 
     def test_record_and_list_plugin_runs(self, db, sample_meeting):
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         window_id = f"{sample_meeting.id}:w0001"
 
-        db.record_intent_window(
+        db.plugins.record_intent_window(
             meeting_id=sample_meeting.id,
             window_id=window_id,
             start_seconds=0.0,
@@ -1347,7 +1347,7 @@ class TestMirPersistence:
             intent_scores={"architecture": 0.9},
         )
 
-        db.record_plugin_run(
+        db.plugins.record_plugin_run(
             meeting_id=sample_meeting.id,
             window_id=window_id,
             plugin_id="requirements_extractor",
@@ -1361,7 +1361,7 @@ class TestMirPersistence:
         )
 
         # Same idempotency key should upsert, not duplicate.
-        db.record_plugin_run(
+        db.plugins.record_plugin_run(
             meeting_id=sample_meeting.id,
             window_id=window_id,
             plugin_id="requirements_extractor",
@@ -1374,7 +1374,7 @@ class TestMirPersistence:
             deduped=True,
         )
 
-        db.record_plugin_run(
+        db.plugins.record_plugin_run(
             meeting_id=sample_meeting.id,
             window_id=window_id,
             plugin_id="risk_heatmap",
@@ -1387,7 +1387,7 @@ class TestMirPersistence:
             deduped=False,
         )
 
-        runs = db.list_plugin_runs(sample_meeting.id)
+        runs = db.plugins.list_plugin_runs(sample_meeting.id)
         assert len(runs) == 2
         assert all(isinstance(run, PluginRunSummary) for run in runs)
 
@@ -1406,13 +1406,13 @@ class TestMirPersistence:
         assert second.deduped is True
         assert second.output == {"items": 3}
 
-        filtered = db.list_plugin_runs(sample_meeting.id, window_id=window_id)
+        filtered = db.plugins.list_plugin_runs(sample_meeting.id, window_id=window_id)
         assert len(filtered) == 2
 
     def test_record_and_list_artifacts_with_lineage(self, db, sample_meeting):
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
 
-        db.record_artifact(
+        db.plugins.record_artifact(
             artifact_id="art-1",
             meeting_id=sample_meeting.id,
             artifact_type="requirements",
@@ -1430,7 +1430,7 @@ class TestMirPersistence:
         )
 
         # Upsert should replace body + sources without duplicating record.
-        db.record_artifact(
+        db.plugins.record_artifact(
             artifact_id="art-1",
             meeting_id=sample_meeting.id,
             artifact_type="requirements",
@@ -1447,7 +1447,7 @@ class TestMirPersistence:
             ],
         )
 
-        artifacts = db.list_artifacts(sample_meeting.id)
+        artifacts = db.plugins.list_artifacts(sample_meeting.id)
         assert len(artifacts) == 1
         artifact = artifacts[0]
         assert isinstance(artifact, ArtifactSummary)
@@ -1461,10 +1461,10 @@ class TestMirPersistence:
         assert ("plugin_run", "12") in refs
 
     def test_plugin_run_job_queue_lifecycle(self, db, sample_meeting):
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         idempotency_key = "queue-key-1"
 
-        inserted = db.enqueue_plugin_run_job(
+        inserted = db.plugins.enqueue_plugin_run_job(
             meeting_id=sample_meeting.id,
             window_id=f"{sample_meeting.id}:w0001",
             plugin_id="risk_heatmap",
@@ -1475,7 +1475,7 @@ class TestMirPersistence:
         )
         assert inserted is True
 
-        inserted_again = db.enqueue_plugin_run_job(
+        inserted_again = db.plugins.enqueue_plugin_run_job(
             meeting_id=sample_meeting.id,
             window_id=f"{sample_meeting.id}:w0001",
             plugin_id="risk_heatmap",
@@ -1486,38 +1486,38 @@ class TestMirPersistence:
         )
         assert inserted_again is False
 
-        queued = db.list_plugin_run_jobs(status="queued")
+        queued = db.plugins.list_plugin_run_jobs(status="queued")
         assert len(queued) == 1
         assert queued[0].idempotency_key == idempotency_key
-        loaded = db.get_plugin_run_job(queued[0].id)
+        loaded = db.plugins.get_plugin_run_job(queued[0].id)
         assert loaded is not None
         assert loaded.id == queued[0].id
         assert loaded.status == "queued"
 
-        claimed = db.claim_next_plugin_run_job()
+        claimed = db.plugins.claim_next_plugin_run_job()
         assert claimed is not None
         assert claimed.idempotency_key == idempotency_key
         assert claimed.status == "running"
         assert claimed.attempts == 1
 
-        db.retry_plugin_run_job(
+        db.plugins.retry_plugin_run_job(
             claimed.id,
             error="Transient failure",
             retry_at=datetime.now() - timedelta(seconds=1),
         )
-        claimed_again = db.claim_next_plugin_run_job()
+        claimed_again = db.plugins.claim_next_plugin_run_job()
         assert claimed_again is not None
         assert claimed_again.id == claimed.id
         assert claimed_again.attempts == 2
         assert claimed_again.status == "running"
 
-        db.complete_plugin_run_job(claimed_again.id)
-        assert db.list_plugin_run_jobs(status="all") == []
-        assert db.get_plugin_run_job(claimed_again.id) is None
+        db.plugins.complete_plugin_run_job(claimed_again.id)
+        assert db.plugins.list_plugin_run_jobs(status="all") == []
+        assert db.plugins.get_plugin_run_job(claimed_again.id) is None
 
     def test_plugin_run_job_fail_status(self, db, sample_meeting):
-        db.save_meeting(sample_meeting)
-        db.enqueue_plugin_run_job(
+        db.meetings.save_meeting(sample_meeting)
+        db.plugins.enqueue_plugin_run_job(
             meeting_id=sample_meeting.id,
             window_id=f"{sample_meeting.id}:w0002",
             plugin_id="incident_timeline",
@@ -1526,20 +1526,20 @@ class TestMirPersistence:
             idempotency_key="queue-key-fail",
             context={"active_intents": ["incident"]},
         )
-        claimed = db.claim_next_plugin_run_job()
+        claimed = db.plugins.claim_next_plugin_run_job()
         assert claimed is not None
-        db.fail_plugin_run_job(claimed.id, error="Timed out repeatedly")
+        db.plugins.fail_plugin_run_job(claimed.id, error="Timed out repeatedly")
 
-        failed = db.list_plugin_run_jobs(status="failed")
+        failed = db.plugins.list_plugin_run_jobs(status="failed")
         assert len(failed) == 1
         assert failed[0].id == claimed.id
         assert failed[0].status == "failed"
         assert failed[0].last_error == "Timed out repeatedly"
 
     def test_plugin_run_job_summary_reports_queue_telemetry(self, db, sample_meeting):
-        db.save_meeting(sample_meeting)
+        db.meetings.save_meeting(sample_meeting)
         for idx in range(1, 5):
-            db.enqueue_plugin_run_job(
+            db.plugins.enqueue_plugin_run_job(
                 meeting_id=sample_meeting.id,
                 window_id=f"{sample_meeting.id}:w{idx:04d}",
                 plugin_id=f"plugin-{idx}",
@@ -1549,19 +1549,19 @@ class TestMirPersistence:
                 context={"active_intents": ["incident"]},
             )
 
-        running = db.claim_next_plugin_run_job()
+        running = db.plugins.claim_next_plugin_run_job()
         assert running is not None
-        failed = db.claim_next_plugin_run_job()
+        failed = db.plugins.claim_next_plugin_run_job()
         assert failed is not None
-        db.fail_plugin_run_job(failed.id, error="Permanent failure")
+        db.plugins.fail_plugin_run_job(failed.id, error="Permanent failure")
 
-        queued = db.list_plugin_run_jobs(status="queued")
+        queued = db.plugins.list_plugin_run_jobs(status="queued")
         assert len(queued) == 2
         scheduled = queued[0]
         retry_at = datetime.now() + timedelta(minutes=5)
-        db.retry_plugin_run_job(scheduled.id, error="Retry later", retry_at=retry_at)
+        db.plugins.retry_plugin_run_job(scheduled.id, error="Retry later", retry_at=retry_at)
 
-        summary = db.get_plugin_run_job_summary()
+        summary = db.plugins.get_plugin_run_job_summary()
         assert summary.total_jobs == 4
         assert summary.queued_jobs == 2
         assert summary.running_jobs == 1
@@ -1571,8 +1571,8 @@ class TestMirPersistence:
         assert summary.next_retry_at is not None
 
     def test_claim_next_plugin_run_job_can_include_scheduled(self, db, sample_meeting):
-        db.save_meeting(sample_meeting)
-        db.enqueue_plugin_run_job(
+        db.meetings.save_meeting(sample_meeting)
+        db.plugins.enqueue_plugin_run_job(
             meeting_id=sample_meeting.id,
             window_id=f"{sample_meeting.id}:w-scheduled",
             plugin_id="incident_timeline",
@@ -1582,13 +1582,13 @@ class TestMirPersistence:
             context={"active_intents": ["incident"]},
         )
 
-        queued = db.list_plugin_run_jobs(status="queued")
+        queued = db.plugins.list_plugin_run_jobs(status="queued")
         assert len(queued) == 1
         retry_at = datetime.now() + timedelta(minutes=10)
-        db.retry_plugin_run_job(queued[0].id, error="retry later", retry_at=retry_at)
+        db.plugins.retry_plugin_run_job(queued[0].id, error="retry later", retry_at=retry_at)
 
-        assert db.claim_next_plugin_run_job() is None
-        claimed = db.claim_next_plugin_run_job(include_scheduled=True)
+        assert db.plugins.claim_next_plugin_run_job() is None
+        claimed = db.plugins.claim_next_plugin_run_job(include_scheduled=True)
         assert claimed is not None
         assert claimed.id == queued[0].id
         assert claimed.status == "running"
@@ -1598,20 +1598,49 @@ class TestDatabaseShape:
     """Tests for structural invariants in the DB layer."""
 
     def test_meeting_database_has_no_duplicate_method_definitions(self, project_root: Path):
-        """Public DB methods should have one canonical implementation each."""
-        db_path = project_root / "holdspeak" / "db.py"
-        module = ast.parse(db_path.read_text())
+        """Public DB methods should have one canonical implementation each — and no
+        public method defined in both the container and a repository (HS-31-01 guards
+        against a botched move leaving a copy behind)."""
+        db_dir = project_root / "holdspeak" / "db"
+        target_classes = {"Database", "MeetingRepository"}
 
-        methods: dict[str, list[int]] = {}
-        for node in module.body:
-            if isinstance(node, ast.ClassDef) and node.name == "MeetingDatabase":
-                for item in node.body:
-                    if isinstance(item, ast.FunctionDef):
-                        methods.setdefault(item.name, []).append(item.lineno)
+        methods: dict[str, list[str]] = {}
+        for py in sorted(db_dir.glob("*.py")):
+            module = ast.parse(py.read_text())
+            for node in module.body:
+                if isinstance(node, ast.ClassDef) and node.name in target_classes:
+                    for item in node.body:
+                        if isinstance(item, ast.FunctionDef) and not item.name.startswith("_"):
+                            methods.setdefault(item.name, []).append(f"{py.name}:{item.lineno}")
 
-        duplicates = {
-            name: lines
-            for name, lines in methods.items()
-            if len(lines) > 1 and not name.startswith("_")
-        }
+        duplicates = {name: locs for name, locs in methods.items() if len(locs) > 1}
         assert duplicates == {}
+
+    def test_fresh_schema_matches_canonical_snapshot(self, tmp_path, project_root: Path):
+        """HS-31-04: the migration ladder was squashed to one canonical schema.
+        A fresh build must match the committed snapshot exactly — any intended
+        schema change must update tests/fixtures/db_schema_canonical.txt in the
+        same commit, keeping the schema honest without a version ladder."""
+        import re
+        import sqlite3
+        from holdspeak.db import Database
+
+        Database(tmp_path / "schema_check.db")
+        conn = sqlite3.connect(str(tmp_path / "schema_check.db"))
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT type, name, sql FROM sqlite_master "
+            "WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name"
+        ).fetchall()
+        actual = "\n".join(
+            f"{r['type']} {r['name']}: {re.sub(r'\\s+', ' ', (r['sql'] or '').strip())}"
+            for r in rows
+        ) + "\n"
+        conn.close()
+
+        snapshot = project_root / "tests" / "fixtures" / "db_schema_canonical.txt"
+        expected = snapshot.read_text()
+        assert actual == expected, (
+            "Fresh DB schema diverged from the canonical snapshot. If this change is "
+            f"intended, regenerate {snapshot.relative_to(project_root)}."
+        )

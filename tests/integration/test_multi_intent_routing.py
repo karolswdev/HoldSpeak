@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import MeetingState, TranscriptSegment
 from holdspeak.plugins.host import PluginHost
 from holdspeak.plugins.pipeline import process_meeting_state
@@ -44,7 +44,7 @@ def temp_db_path():
 
 @pytest.fixture
 def db(temp_db_path):
-    return MeetingDatabase(temp_db_path)
+    return Database(temp_db_path)
 
 
 def _full_host() -> tuple[PluginHost, dict[str, _StubPlugin]]:
@@ -106,7 +106,7 @@ def _state_with_arc() -> MeetingState:
 @pytest.mark.integration
 def test_pipeline_end_to_end_persists_typed_outputs(db) -> None:
     state = _state_with_arc()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
     host, _stubs = _full_host()
 
     result = process_meeting_state(
@@ -122,8 +122,8 @@ def test_pipeline_end_to_end_persists_typed_outputs(db) -> None:
     assert len(result.scores) == len(result.windows)
     assert len(result.runs) >= len(result.windows)
 
-    persisted_windows = db.list_intent_windows("m-routing-int")
-    persisted_runs = db.list_plugin_runs("m-routing-int")
+    persisted_windows = db.plugins.list_intent_windows("m-routing-int")
+    persisted_runs = db.plugins.list_plugin_runs("m-routing-int")
     assert {w.window_id for w in persisted_windows} == {w.window_id for w in result.windows}
     assert len(persisted_runs) == len(result.runs)
 
@@ -131,7 +131,7 @@ def test_pipeline_end_to_end_persists_typed_outputs(db) -> None:
 @pytest.mark.integration
 def test_pipeline_rerun_dedupes_via_host_idempotency_cache(db) -> None:
     state = _state_with_arc()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
     host, stubs = _full_host()
 
     first = process_meeting_state(state, host, profile="balanced", threshold=0.4, db=db)
@@ -149,7 +149,7 @@ def test_pipeline_rerun_dedupes_via_host_idempotency_cache(db) -> None:
 @pytest.mark.integration
 def test_pipeline_emits_transitions_across_intent_arc(db) -> None:
     state = _state_with_arc()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
     host, _stubs = _full_host()
 
     result = process_meeting_state(state, host, profile="balanced", threshold=0.4, db=db)

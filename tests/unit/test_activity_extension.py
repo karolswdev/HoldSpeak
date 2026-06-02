@@ -12,13 +12,13 @@ from holdspeak.activity_extension import (
     ingest_extension_events,
     parse_extension_event,
 )
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 
 
 @pytest.fixture
 def test_db(tmp_path):
     reset_database()
-    database = MeetingDatabase(tmp_path / "holdspeak.db")
+    database = Database(tmp_path / "holdspeak.db")
     yield database
     reset_database()
 
@@ -100,7 +100,7 @@ def test_ingest_creates_record_under_extension_source(test_db):
     result = ingest_extension_events(test_db, [_good_event()])
     assert len(result.accepted) == 1
     assert result.rejected == ()
-    records = test_db.list_activity_records(source_browser=EXTENSION_SOURCE_BROWSER)
+    records = test_db.activity.list_activity_records(source_browser=EXTENSION_SOURCE_BROWSER)
     assert len(records) == 1
     record = records[0]
     assert record.url == "https://github.com/anthropic/holdspeak/pull/7"
@@ -129,12 +129,12 @@ def test_ingest_rejects_forbidden_fields_per_event(test_db):
 
 def test_ingest_does_not_persist_record_for_rejected_event(test_db):
     """Rejection means no row is upserted at all."""
-    before = len(test_db.list_activity_records(limit=100))
+    before = len(test_db.activity.list_activity_records(limit=100))
     result = ingest_extension_events(
         test_db,
         [_good_event(url="https://example.com/x", cookies="s=1")],
     )
-    after = len(test_db.list_activity_records(limit=100))
+    after = len(test_db.activity.list_activity_records(limit=100))
     assert result.accepted == ()
     assert after == before
 
@@ -144,8 +144,8 @@ def test_ingest_applies_project_rules(test_db):
     extension's events get the same project mapping as imported
     history records."""
     project_id = "holdspeak"
-    test_db.create_project(project_id=project_id, name="HoldSpeak")
-    test_db.create_activity_project_rule(
+    test_db.projects.create_project(project_id=project_id, name="HoldSpeak")
+    test_db.activity.create_activity_project_rule(
         project_id=project_id,
         match_type="domain",
         pattern="github.com",
@@ -156,7 +156,7 @@ def test_ingest_applies_project_rules(test_db):
         [_good_event(url="https://github.com/anthropic/holdspeak/pull/8")],
     )
     assert len(result.accepted) == 1
-    records = test_db.list_activity_records(source_browser=EXTENSION_SOURCE_BROWSER)
+    records = test_db.activity.list_activity_records(source_browser=EXTENSION_SOURCE_BROWSER)
     assert len(records) == 1
     assert records[0].project_id == project_id
     assert result.project_rule_updates >= 1

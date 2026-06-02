@@ -38,7 +38,7 @@ from .activity_jira import (
     SUPPORTED_ENTITY_TYPES as JIRA_SUPPORTED_ENTITY_TYPES,
     preview_jira_cli_enrichment,
 )
-from .db import MeetingDatabase
+from .db import Database
 
 DEFAULT_LIMIT = 25
 MAX_LIMIT = 100
@@ -95,7 +95,7 @@ class UnknownConnectorError(ValueError):
 
 
 def dry_run(
-    db: MeetingDatabase,
+    db: Database,
     connector_id: str,
     *,
     limit: int = DEFAULT_LIMIT,
@@ -113,7 +113,7 @@ def dry_run(
         raise UnknownConnectorError(connector_id)
 
     capped_limit = max(1, min(int(limit), MAX_LIMIT))
-    state = db.get_activity_enrichment_connector(descriptor.id)
+    state = db.activity.get_activity_enrichment_connector(descriptor.id)
     enabled = bool(state.enabled) if state is not None else False
 
     cli_required = descriptor.requires_cli
@@ -141,7 +141,7 @@ def dry_run(
         records = []
         for entity_type in GH_SUPPORTED_ENTITY_TYPES:
             records.extend(
-                db.list_activity_records(entity_type=entity_type, limit=capped_limit)
+                db.activity.list_activity_records(entity_type=entity_type, limit=capped_limit)
             )
         records = records[:capped_limit]
         if not records:
@@ -167,7 +167,7 @@ def dry_run(
         records = []
         for entity_type in JIRA_SUPPORTED_ENTITY_TYPES:
             records.extend(
-                db.list_activity_records(entity_type=entity_type, limit=capped_limit)
+                db.activity.list_activity_records(entity_type=entity_type, limit=capped_limit)
             )
         records = records[:capped_limit]
         if not records:
@@ -190,7 +190,7 @@ def dry_run(
             )
 
     elif descriptor.id == CALENDAR_CONNECTOR_ID:
-        records = db.list_activity_records(limit=max(capped_limit * 4, 50))
+        records = db.activity.list_activity_records(limit=max(capped_limit * 4, 50))
         previews = preview_calendar_meeting_candidates(records, limit=capped_limit)
         if not previews:
             warnings.append(

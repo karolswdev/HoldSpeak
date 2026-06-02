@@ -41,12 +41,12 @@ def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
     """
     capped = max(1, min(int(limit if limit is not None else DEFAULT_LIMIT), 200))
     started_at = datetime.now()
-    records = db.list_activity_records(limit=max(capped * 4, 50))
+    records = db.activity.list_activity_records(limit=max(capped * 4, 50))
     previews = preview_calendar_meeting_candidates(records, limit=capped)
     persisted = 0
     output_bytes = 0
     for preview in previews:
-        db.create_activity_meeting_candidate(
+        db.activity.create_activity_meeting_candidate(
             source_connector_id=CALENDAR_CONNECTOR_ID,
             source_activity_record_id=preview.source_activity_record_id,
             title=preview.title,
@@ -60,7 +60,7 @@ def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
             (preview.meeting_url or "").encode("utf-8")
         )
     finished_at = datetime.now()
-    db.record_connector_run(
+    db.activity.record_connector_run(
         connector_id=CALENDAR_CONNECTOR_ID,
         started_at=started_at,
         finished_at=finished_at,

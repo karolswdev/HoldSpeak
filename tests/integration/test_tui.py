@@ -26,6 +26,7 @@ from holdspeak.tui.utils import clamp01
 
 
 class FakeMeetingsDb:
+    meetings = property(lambda self: self)
     """In-memory DB stub for meetings pane integration tests."""
 
     def __init__(self, meetings, details, search_index):

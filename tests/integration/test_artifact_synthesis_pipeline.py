@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import MeetingState, TranscriptSegment
 from holdspeak.plugins.host import PluginHost
 from holdspeak.plugins.pipeline import process_meeting_state
@@ -53,7 +53,7 @@ def temp_db_path():
 
 @pytest.fixture
 def db(temp_db_path):
-    return MeetingDatabase(temp_db_path)
+    return Database(temp_db_path)
 
 
 def _full_host() -> PluginHost:
@@ -104,7 +104,7 @@ def _state_with_arc() -> MeetingState:
 @pytest.mark.integration
 def test_process_meeting_state_synthesizes_when_flag_set(db) -> None:
     state = _state_with_arc()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
 
     result = process_meeting_state(
         state,
@@ -125,14 +125,14 @@ def test_process_meeting_state_synthesizes_when_flag_set(db) -> None:
         assert art.artifact_id in by_id
 
     # Persistence: every drafted artifact is on disk.
-    persisted = db.list_artifacts("m-synth-pipe")
+    persisted = db.plugins.list_artifacts("m-synth-pipe")
     assert {a.id for a in persisted} == {a.artifact_id for a in result.artifacts}
 
 
 @pytest.mark.integration
 def test_process_meeting_state_synthesize_off_by_default(db) -> None:
     state = _state_with_arc()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
 
     result = process_meeting_state(
         state,
@@ -146,14 +146,14 @@ def test_process_meeting_state_synthesize_off_by_default(db) -> None:
     assert result.artifacts == []
     assert result.artifact_lineages == []
     # Plugin runs still persisted; just no synthesis.
-    assert db.list_artifacts("m-synth-pipe") == []
-    assert len(db.list_plugin_runs("m-synth-pipe")) >= 1
+    assert db.plugins.list_artifacts("m-synth-pipe") == []
+    assert len(db.plugins.list_plugin_runs("m-synth-pipe")) >= 1
 
 
 @pytest.mark.integration
 def test_synthesis_dedupes_identical_outputs_across_overlapping_windows(db) -> None:
     state = _state_with_arc()
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
 
     result = process_meeting_state(
         state,

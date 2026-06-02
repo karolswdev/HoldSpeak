@@ -29,8 +29,8 @@ from .synthesis import synthesize_and_persist
 # scope would land us mid-init of `intent_timeline`.
 
 
-class _MeetingDatabaseLike(Protocol):
-    """Subset of `MeetingDatabase` used by `MIRPipeline`."""
+class _DatabaseLike(Protocol):
+    """Subset of `Database` used by `MIRPipeline`."""
 
     def record_intent_window(self, **kwargs: Any) -> None: ...
     def record_plugin_run(self, **kwargs: Any) -> None: ...
@@ -74,7 +74,7 @@ def process_meeting_state(
     hysteresis: float = 0.05,
     window_seconds: float = 90.0,
     step_seconds: float = 30.0,
-    db: Optional[_MeetingDatabaseLike] = None,
+    db: Optional[_DatabaseLike] = None,
     timeout_seconds: Optional[float] = None,
     defer_heavy: bool = True,
     synthesize: bool = False,

@@ -8,19 +8,19 @@ import subprocess
 import pytest
 
 from holdspeak.activity_github import preview_github_cli_enrichment, run_github_cli_enrichment
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 
 
 @pytest.fixture
 def test_db(tmp_path):
     reset_database()
-    database = MeetingDatabase(tmp_path / "holdspeak.db")
+    database = Database(tmp_path / "holdspeak.db")
     yield database
     reset_database()
 
 
 def test_preview_github_cli_enrichment_plans_read_only_commands(test_db):
-    pr = test_db.upsert_activity_record(
+    pr = test_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/openai/codex/pull/42",
         title="PR 42",
@@ -28,7 +28,7 @@ def test_preview_github_cli_enrichment_plans_read_only_commands(test_db):
         entity_type="github_pull_request",
         entity_id="openai/codex#42",
     )
-    test_db.upsert_activity_record(
+    test_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://example.com/",
         title="Example",
@@ -38,7 +38,7 @@ def test_preview_github_cli_enrichment_plans_read_only_commands(test_db):
     )
 
     preview = preview_github_cli_enrichment(
-        test_db.list_activity_records(limit=10),
+        test_db.activity.list_activity_records(limit=10),
         gh_path="/usr/local/bin/gh",
     )
 
@@ -56,7 +56,7 @@ def test_preview_github_cli_enrichment_plans_read_only_commands(test_db):
 
 
 def test_run_github_cli_enrichment_writes_annotations(test_db):
-    record = test_db.upsert_activity_record(
+    record = test_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/openai/codex/issues/99",
         title="Issue 99",
@@ -95,7 +95,7 @@ def test_run_github_cli_enrichment_writes_annotations(test_db):
     assert len(results) == 1
     assert results[0].error is None
     assert calls[0][:4] == ["/usr/local/bin/gh", "issue", "view", "99"]
-    annotations = test_db.list_activity_annotations(
+    annotations = test_db.activity.list_activity_annotations(
         activity_record_id=record.id,
         source_connector_id="gh",
         annotation_type="github_issue",
@@ -107,7 +107,7 @@ def test_run_github_cli_enrichment_writes_annotations(test_db):
 
 
 def test_run_github_cli_enrichment_caps_output(test_db):
-    record = test_db.upsert_activity_record(
+    record = test_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/openai/codex/pull/42",
         title="PR 42",
@@ -128,7 +128,7 @@ def test_run_github_cli_enrichment_caps_output(test_db):
     )
 
     assert results[0].error == "gh output exceeded max_bytes"
-    assert test_db.list_activity_annotations(source_connector_id="gh") == []
+    assert test_db.activity.list_activity_annotations(source_connector_id="gh") == []
 
 
 def test_run_github_cli_enrichment_persists_permission_denied(test_db, monkeypatch):
@@ -159,7 +159,7 @@ def test_run_github_cli_enrichment_persists_permission_denied(test_db, monkeypat
 
     monkeypatch.setattr(gh_pack, "MANIFEST", narrowed)
 
-    record = test_db.upsert_activity_record(
+    record = test_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/o/r/pull/1",
         title="PR 1",
@@ -179,7 +179,7 @@ def test_run_github_cli_enrichment_persists_permission_denied(test_db, monkeypat
             run_command=fake_run,
         )
 
-    state = test_db.get_activity_enrichment_connector("gh")
+    state = test_db.activity.get_activity_enrichment_connector("gh")
     assert state is not None
     assert "shell:exec" in (state.last_error or "")
     assert "gh" in (state.last_error or "")

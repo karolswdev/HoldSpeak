@@ -7,7 +7,7 @@ Verifies that, given a meeting with architecture-flavoured transcript:
      `run()` (with our stub intel call) and produces the success-shape
      output,
   3. `synthesize_and_persist` lifts that run into a `diagram` artifact
-     persisted into the `MeetingDatabase`.
+     persisted into the `Database`.
 
 The synthesis body shape itself is HS-16-03's concern; here we just
 assert the artifact exists with the right `artifact_type` and
@@ -23,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import MeetingState, TranscriptSegment
 from holdspeak.plugins.builtin import MermaidArchitecturePlugin
 from holdspeak.plugins.host import PluginHost
@@ -48,7 +48,7 @@ def temp_db():
     temp_dir = tempfile.mkdtemp()
     db_path = Path(temp_dir) / "mermaid_arch.db"
     try:
-        yield MeetingDatabase(db_path)
+        yield Database(db_path)
     finally:
         reset_database()
         shutil.rmtree(temp_dir, ignore_errors=True)
@@ -77,7 +77,7 @@ def test_mermaid_architecture_plugin_lands_diagram_artifact(temp_db) -> None:
             ),
         ],
     )
-    temp_db.save_meeting(state)
+    temp_db.meetings.save_meeting(state)
 
     transcript = state.segments[0].text
 
@@ -105,7 +105,7 @@ def test_mermaid_architecture_plugin_lands_diagram_artifact(temp_db) -> None:
     assert executed.output["confidence_hint"] == 1.0
 
     # Step 3 — persist the run, then synthesize + persist the artifact.
-    temp_db.record_plugin_run(
+    temp_db.plugins.record_plugin_run(
         meeting_id="m-mermaid-it",
         window_id="w-1",
         plugin_id="mermaid_architecture",
@@ -130,6 +130,6 @@ def test_mermaid_architecture_plugin_lands_diagram_artifact(temp_db) -> None:
     assert lineages[0].artifact_id == diagram.artifact_id
 
     # Persisted in the DB.
-    persisted = temp_db.list_artifacts("m-mermaid-it")
+    persisted = temp_db.plugins.list_artifacts("m-mermaid-it")
     assert {a.id for a in persisted} == {diagram.artifact_id}
     assert {a.artifact_type for a in persisted} == {"diagram"}

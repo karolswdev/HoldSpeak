@@ -18,7 +18,7 @@ def run_history_command(args) -> None:
     db = get_database()
 
     if args.search:
-        results = db.search_transcripts(args.search, limit=args.limit)
+        results = db.meetings.search_transcripts(args.search, limit=args.limit)
         if not results:
             print(f"No matches found for: {args.search}")
             return
@@ -45,7 +45,7 @@ def run_history_command(args) -> None:
             sys.exit(1)
 
     if args.meeting_id:
-        meeting = db.get_meeting(args.meeting_id)
+        meeting = db.meetings.get_meeting(args.meeting_id)
         if not meeting:
             print(f"Meeting not found: {args.meeting_id}", file=sys.stderr)
             sys.exit(1)
@@ -62,7 +62,7 @@ def run_history_command(args) -> None:
         display_meeting_detail(meeting, verbose=args.verbose)
         return
 
-    meetings = db.list_meetings(
+    meetings = db.meetings.list_meetings(
         limit=args.limit,
         date_from=date_from,
         date_to=date_to,

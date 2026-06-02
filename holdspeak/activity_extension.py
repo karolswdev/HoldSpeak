@@ -28,7 +28,7 @@ from typing import Any, Iterable, Optional
 from urllib.parse import urlsplit
 
 from .activity_entities import extract_activity_entity
-from .db import ActivityRecord, MeetingDatabase
+from .db import ActivityRecord, Database
 
 EXTENSION_SOURCE_BROWSER = "firefox_ext"
 ALLOWED_SCHEMES = frozenset({"http", "https"})
@@ -186,7 +186,7 @@ def parse_extension_event(raw: Any) -> tuple[Optional[ParsedExtensionEvent], Opt
 
 
 def ingest_extension_events(
-    db: MeetingDatabase,
+    db: Database,
     raw_events: Iterable[Any],
 ) -> IngestResult:
     """Validate, normalize, and upsert a batch of extension events."""
@@ -208,7 +208,7 @@ def ingest_extension_events(
             entity_type = entity_type or entity.entity_type
             entity_id = entity_id or entity.entity_id
 
-        record: ActivityRecord = db.upsert_activity_record(
+        record: ActivityRecord = db.activity.upsert_activity_record(
             source_browser=EXTENSION_SOURCE_BROWSER,
             source_profile=event.source_profile,
             url=event.url,
@@ -224,13 +224,13 @@ def ingest_extension_events(
 
     project_rule_updates = 0
     if accepted:
-        project_rule_updates = db.apply_activity_project_rules()
+        project_rule_updates = db.activity.apply_activity_project_rules()
 
     finished_at = datetime.now()
     error_text = (
         f"{len(rejected)} event(s) rejected" if rejected and not accepted else None
     )
-    db.record_connector_run(
+    db.activity.record_connector_run(
         connector_id=EXTENSION_SOURCE_BROWSER,
         started_at=started_at,
         finished_at=finished_at,

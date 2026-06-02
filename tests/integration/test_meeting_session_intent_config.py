@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from holdspeak.config import MeetingConfig
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import (
     MeetingSession,
     MeetingState,
@@ -43,7 +43,7 @@ def temp_db_path():
 
 @pytest.fixture
 def db(temp_db_path):
-    return MeetingDatabase(temp_db_path)
+    return Database(temp_db_path)
 
 
 def _full_host() -> PluginHost:
@@ -68,7 +68,7 @@ def _full_host() -> PluginHost:
     return host
 
 
-def _seed_active_state(session: MeetingSession, db: MeetingDatabase) -> MeetingState:
+def _seed_active_state(session: MeetingSession, db: Database) -> MeetingState:
     state = MeetingState(
         id="m-cfg",
         started_at=datetime(2026, 4, 26, 10, 0, 0),
@@ -88,13 +88,13 @@ def _seed_active_state(session: MeetingSession, db: MeetingDatabase) -> MeetingS
             ),
         ],
     )
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
     session._state = state  # type: ignore[attr-defined]
     return state
 
 
 def _build_session_from_config(
-    cfg: MeetingConfig, *, host: PluginHost, db: MeetingDatabase
+    cfg: MeetingConfig, *, host: PluginHost, db: Database
 ) -> MeetingSession:
     """Same wiring a future top-level entry point would do (HS-2-09 callers)."""
     return MeetingSession(
@@ -120,8 +120,8 @@ def test_disabled_router_config_keeps_pipeline_off(db) -> None:
     session.stop()
 
     # Pipeline did not run — no MIR persistence, no parked result.
-    assert db.list_intent_windows("m-cfg") == []
-    assert db.list_plugin_runs("m-cfg") == []
+    assert db.plugins.list_intent_windows("m-cfg") == []
+    assert db.plugins.list_plugin_runs("m-cfg") == []
     assert session._mir_last_result is None  # type: ignore[attr-defined]
 
 
@@ -144,7 +144,7 @@ def test_enabled_router_config_drives_pipeline_with_tuned_threshold(db) -> None:
 
     session.stop()
 
-    persisted_windows = db.list_intent_windows("m-cfg")
+    persisted_windows = db.plugins.list_intent_windows("m-cfg")
     assert len(persisted_windows) >= 1
     # Profile from config flowed through to persisted rows.
     assert all(w.profile == "architect" for w in persisted_windows)
@@ -175,7 +175,7 @@ def test_window_step_seconds_change_window_count(db) -> None:
     long_session = _build_session_from_config(cfg_long, host=_full_host(), db=db)
     _seed_active_state(long_session, db)
     long_session.stop()
-    long_count = len(db.list_intent_windows("m-cfg"))
+    long_count = len(db.plugins.list_intent_windows("m-cfg"))
 
     # Reset DB rows for the second pass against a fresh meeting id.
     short_state = MeetingState(
@@ -184,7 +184,7 @@ def test_window_step_seconds_change_window_count(db) -> None:
         title="short windows",
         segments=long_session._state.segments,  # type: ignore[attr-defined]
     )
-    db.save_meeting(short_state)
+    db.meetings.save_meeting(short_state)
     short_session = MeetingSession(
         transcriber=_NoOpTranscriber(),  # type: ignore[arg-type]
         mir_routing_enabled=cfg_short.intent_router_enabled,
@@ -198,7 +198,7 @@ def test_window_step_seconds_change_window_count(db) -> None:
     )
     short_session._state = short_state  # type: ignore[attr-defined]
     short_session.stop()
-    short_count = len(db.list_intent_windows("m-cfg-short"))
+    short_count = len(db.plugins.list_intent_windows("m-cfg-short"))
 
     # Smaller step → more windows. The exact ratio depends on segment
     # spacing, so just assert the qualitative direction.

@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Callable, Iterable, Optional
 
-from .db import ActivityAnnotation, ActivityRecord, MeetingDatabase
+from .db import ActivityAnnotation, ActivityRecord, Database
 
 CONNECTOR_ID = "gh"
 SUPPORTED_ENTITY_TYPES = frozenset({"github_pull_request", "github_issue"})
@@ -103,7 +103,7 @@ def preview_github_cli_enrichment(
 
 
 def run_github_cli_enrichment(
-    db: MeetingDatabase,
+    db: Database,
     records: Iterable[ActivityRecord],
     *,
     gh_path: Optional[str] = None,
@@ -139,12 +139,12 @@ def run_github_cli_enrichment(
             )
         except PermissionDenied as exc:
             now = datetime.now()
-            db.record_activity_enrichment_run(
+            db.activity.record_activity_enrichment_run(
                 connector_id=CONNECTOR_ID,
                 last_run_at=now,
                 last_error=str(exc),
             )
-            db.record_connector_run(
+            db.activity.record_connector_run(
                 connector_id=CONNECTOR_ID,
                 started_at=started_at,
                 finished_at=now,
@@ -180,12 +180,12 @@ def run_github_cli_enrichment(
             continue
 
         title = str(data.get("title") or plan.entity_id).strip()
-        db.delete_activity_annotations(
+        db.activity.delete_activity_annotations(
             activity_record_id=plan.activity_record_id,
             source_connector_id=CONNECTOR_ID,
             annotation_type=plan.annotation_type,
         )
-        annotation = db.create_activity_annotation(
+        annotation = db.activity.create_activity_annotation(
             activity_record_id=plan.activity_record_id,
             source_connector_id=CONNECTOR_ID,
             annotation_type=plan.annotation_type,
@@ -206,13 +206,13 @@ def run_github_cli_enrichment(
     error_summary = (
         f"{len(failures)} gh command(s) failed" if failures else ""
     )
-    db.record_activity_enrichment_run(
+    db.activity.record_activity_enrichment_run(
         connector_id=CONNECTOR_ID,
         last_run_at=finished_at,
         last_error=error_summary,
     )
     annotation_count = sum(1 for r in results if r.annotation is not None)
-    db.record_connector_run(
+    db.activity.record_connector_run(
         connector_id=CONNECTOR_ID,
         started_at=started_at,
         finished_at=finished_at,

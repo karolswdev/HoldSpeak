@@ -8,19 +8,19 @@ import subprocess
 import pytest
 
 from holdspeak.activity_jira import preview_jira_cli_enrichment, run_jira_cli_enrichment
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 
 
 @pytest.fixture
 def test_db(tmp_path):
     reset_database()
-    database = MeetingDatabase(tmp_path / "holdspeak.db")
+    database = Database(tmp_path / "holdspeak.db")
     yield database
     reset_database()
 
 
 def test_preview_jira_cli_enrichment_plans_read_only_commands(test_db):
-    ticket = test_db.upsert_activity_record(
+    ticket = test_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://example.atlassian.net/browse/HS-123",
         title="HS-123 activity mapping",
@@ -28,7 +28,7 @@ def test_preview_jira_cli_enrichment_plans_read_only_commands(test_db):
         entity_type="jira_ticket",
         entity_id="HS-123",
     )
-    test_db.upsert_activity_record(
+    test_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://github.com/openai/codex/pull/42",
         title="PR 42",
@@ -38,7 +38,7 @@ def test_preview_jira_cli_enrichment_plans_read_only_commands(test_db):
     )
 
     preview = preview_jira_cli_enrichment(
-        test_db.list_activity_records(limit=10),
+        test_db.activity.list_activity_records(limit=10),
         jira_path="/usr/local/bin/jira",
     )
 
@@ -53,7 +53,7 @@ def test_preview_jira_cli_enrichment_plans_read_only_commands(test_db):
 
 
 def test_run_jira_cli_enrichment_writes_json_annotations(test_db):
-    record = test_db.upsert_activity_record(
+    record = test_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://example.atlassian.net/browse/HS-123",
         title="HS-123 activity mapping",
@@ -92,7 +92,7 @@ def test_run_jira_cli_enrichment_writes_json_annotations(test_db):
     assert len(results) == 1
     assert results[0].error is None
     assert calls[0] == ["/usr/local/bin/jira", "issue", "view", "HS-123", "--plain"]
-    annotations = test_db.list_activity_annotations(
+    annotations = test_db.activity.list_activity_annotations(
         activity_record_id=record.id,
         source_connector_id="jira",
         annotation_type="jira_ticket",
@@ -104,7 +104,7 @@ def test_run_jira_cli_enrichment_writes_json_annotations(test_db):
 
 
 def test_run_jira_cli_enrichment_accepts_capped_raw_output(test_db):
-    record = test_db.upsert_activity_record(
+    record = test_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://example.atlassian.net/browse/HS-124",
         title="HS-124 activity mapping",
@@ -125,13 +125,13 @@ def test_run_jira_cli_enrichment_accepts_capped_raw_output(test_db):
     )
 
     assert results[0].error is None
-    annotations = test_db.list_activity_annotations(source_connector_id="jira")
+    annotations = test_db.activity.list_activity_annotations(source_connector_id="jira")
     assert annotations[0].title == "HS-124"
     assert annotations[0].value["jira"]["raw"] == "HS-124 Done\nStatus: Done"
 
 
 def test_run_jira_cli_enrichment_caps_output(test_db):
-    record = test_db.upsert_activity_record(
+    record = test_db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://example.atlassian.net/browse/HS-125",
         title="HS-125 activity mapping",
@@ -152,4 +152,4 @@ def test_run_jira_cli_enrichment_caps_output(test_db):
     )
 
     assert results[0].error == "jira output exceeded max_bytes"
-    assert test_db.list_activity_annotations(source_connector_id="jira") == []
+    assert test_db.activity.list_activity_annotations(source_connector_id="jira") == []

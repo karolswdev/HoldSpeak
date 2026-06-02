@@ -10,7 +10,7 @@ from threading import Lock
 from typing import Any, Optional
 
 from .activity_history import import_browser_history
-from .db import ActivityRecord, MeetingDatabase, get_database
+from .db import ActivityRecord, Database, get_database
 from .logging_config import get_logger
 
 log = get_logger("activity_context")
@@ -48,7 +48,7 @@ class ActivityContextProvider:
     def __init__(
         self,
         *,
-        db: MeetingDatabase | None = None,
+        db: Database | None = None,
         limit: int = 20,
         refresh: bool = False,
         refresh_once: bool = True,
@@ -85,7 +85,7 @@ class ActivityContextProvider:
 
 def build_activity_context(
     *,
-    db: MeetingDatabase | None = None,
+    db: Database | None = None,
     project_id: Optional[str] = None,
     limit: int = 20,
     refresh: bool = False,
@@ -108,7 +108,7 @@ def build_activity_context(
             refresh_errors.append(f"{type(exc).__name__}: {exc}")
             log.warning("Activity context refresh failed: %s", exc)
 
-    records = database.list_activity_records(
+    records = database.activity.list_activity_records(
         project_id=project_id,
         limit=max(1, min(int(limit), 200)),
     )

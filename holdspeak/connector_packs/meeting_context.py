@@ -189,11 +189,11 @@ def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
 
     # Scan window: the last successful pipeline run (capped at
     # the lookback default), or `now - DEFAULT_LOOKBACK_HOURS`.
-    state = db.get_activity_enrichment_connector(CONNECTOR_ID)
+    state = db.activity.get_activity_enrichment_connector(CONNECTOR_ID)
     settings = state.settings if state and state.settings else {}
     lookback_hours = int(settings.get("lookback_hours", DEFAULT_LOOKBACK_HOURS))
     fallback_since = started_at - timedelta(hours=max(1, lookback_hours))
-    last_runs = db.list_connector_runs(connector_id=CONNECTOR_ID, limit=1)
+    last_runs = db.activity.list_connector_runs(connector_id=CONNECTOR_ID, limit=1)
     if last_runs and last_runs[0].succeeded:
         since = max(last_runs[0].finished_at, fallback_since)
     else:
@@ -202,13 +202,13 @@ def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
     # Fetch upstream output once. gh + jira annotations are
     # filtered after we know which records belong to which
     # project; calendar candidates apply globally.
-    gh_anns = db.list_activity_annotations(source_connector_id="gh", limit=capped)
-    jira_anns = db.list_activity_annotations(source_connector_id="jira", limit=capped)
-    calendar_cands = db.list_activity_meeting_candidates(
+    gh_anns = db.activity.list_activity_annotations(source_connector_id="gh", limit=capped)
+    jira_anns = db.activity.list_activity_annotations(source_connector_id="jira", limit=capped)
+    calendar_cands = db.activity.list_activity_meeting_candidates(
         source_connector_id="calendar_activity", limit=capped
     )
 
-    projects = [p for p in db.list_projects() if not p.is_archived]
+    projects = [p for p in db.projects.list_projects() if not p.is_archived]
 
     # HS-13-09: keep history. A run only writes a new
     # annotation per project when the synthesized markdown
@@ -218,7 +218,7 @@ def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
     # snapshot for the /history timeline to walk.
     existing_by_project = {
         a.value.get("project_id"): a
-        for a in db.list_activity_annotations(
+        for a in db.activity.list_activity_annotations(
             source_connector_id=CONNECTOR_ID,
             annotation_type=ANNOTATION_TYPE,
             limit=1000,
@@ -235,7 +235,7 @@ def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
         # narrow time window would mask new annotations on
         # older records (gh / jira can enrich existing PRs/
         # tickets long after they were first visited).
-        records = db.list_activity_records(
+        records = db.activity.list_activity_records(
             project_id=project.id,
             limit=capped,
         )
@@ -262,7 +262,7 @@ def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
                 # project, so no new annotation row.
                 continue
 
-        db.create_activity_annotation(
+        db.activity.create_activity_annotation(
             source_connector_id=CONNECTOR_ID,
             annotation_type=ANNOTATION_TYPE,
             title=f"{project.name or project.id} — meeting context",
@@ -280,14 +280,14 @@ def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
         created += 1
 
     finished_at = datetime.now()
-    db.record_connector_run(
+    db.activity.record_connector_run(
         connector_id=CONNECTOR_ID,
         started_at=started_at,
         finished_at=finished_at,
         succeeded=True,
         annotation_count=created,
     )
-    db.record_activity_enrichment_run(
+    db.activity.record_activity_enrichment_run(
         connector_id=CONNECTOR_ID,
         last_run_at=finished_at,
         last_error="",

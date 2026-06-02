@@ -755,8 +755,8 @@ class Clear(Protocol):
 
     Each call clears exactly the rows authored by this connector
     via `source_connector_id = self.manifest.id`. Connectors
-    delegating to `db.delete_activity_annotations(...)` /
-    `db.delete_activity_meeting_candidates(...)` get this for free.
+    delegating to `db.activity.delete_activity_annotations(...)` /
+    `db.activity.delete_activity_meeting_candidates(...)` get this for free.
     """
 
     def clear(self, db: Any, *, capability: str) -> int: ...

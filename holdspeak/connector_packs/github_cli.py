@@ -62,7 +62,7 @@ def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
     capped = max(1, min(int(limit if limit is not None else DEFAULT_LIMIT), 200))
     records = []
     for entity_type in SUPPORTED_ENTITY_TYPES:
-        records.extend(db.list_activity_records(entity_type=entity_type, limit=capped))
+        records.extend(db.activity.list_activity_records(entity_type=entity_type, limit=capped))
     results = run_github_cli_enrichment(db, records, limit=capped)
     return {"connector_id": CONNECTOR_ID, "result_count": len(results)}
 

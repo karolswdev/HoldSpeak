@@ -5,26 +5,26 @@ from __future__ import annotations
 from datetime import datetime
 
 from holdspeak.activity_candidates import preview_calendar_meeting_candidates
-from holdspeak.db import MeetingDatabase
+from holdspeak.db import Database
 
 
 def test_preview_calendar_meeting_candidates_uses_local_activity_records(tmp_path):
-    db = MeetingDatabase(tmp_path / "holdspeak.db")
-    outlook = db.upsert_activity_record(
+    db = Database(tmp_path / "holdspeak.db")
+    outlook = db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://outlook.office.com/calendar/item/123",
         title="Customer planning meeting",
         domain="outlook.office.com",
         last_seen_at=datetime(2026, 4, 27, 9, 0, 0),
     )
-    db.upsert_activity_record(
+    db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://example.com/not-calendar",
         title="Regular page",
         domain="example.com",
     )
 
-    previews = preview_calendar_meeting_candidates(db.list_activity_records(limit=10))
+    previews = preview_calendar_meeting_candidates(db.activity.list_activity_records(limit=10))
 
     assert len(previews) == 1
     assert previews[0].title == "Customer planning meeting"
@@ -35,8 +35,8 @@ def test_preview_calendar_meeting_candidates_uses_local_activity_records(tmp_pat
 
 
 def test_preview_calendar_meeting_candidates_falls_back_to_domain_titles(tmp_path):
-    db = MeetingDatabase(tmp_path / "holdspeak.db")
-    record = db.upsert_activity_record(
+    db = Database(tmp_path / "holdspeak.db")
+    record = db.activity.upsert_activity_record(
         source_browser="firefox",
         url="https://meet.google.com/abc-defg-hij",
         title=None,
@@ -50,8 +50,8 @@ def test_preview_calendar_meeting_candidates_falls_back_to_domain_titles(tmp_pat
 
 
 def test_preview_calendar_meeting_candidates_extracts_visible_time_hints(tmp_path):
-    db = MeetingDatabase(tmp_path / "holdspeak.db")
-    record = db.upsert_activity_record(
+    db = Database(tmp_path / "holdspeak.db")
+    record = db.activity.upsert_activity_record(
         source_browser="safari",
         url="https://outlook.office.com/calendar/item/123",
         title="Customer sync 2026-04-27 15:00-15:30",

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from holdspeak.db import MeetingDatabase, reset_database
+from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import MeetingState, TranscriptSegment
 from holdspeak.plugins.host import PluginHost
 from holdspeak.plugins.pipeline import MIRPipelineResult, process_meeting_state
@@ -37,7 +37,7 @@ def temp_db_path():
 
 @pytest.fixture
 def db(temp_db_path):
-    return MeetingDatabase(temp_db_path)
+    return Database(temp_db_path)
 
 
 @pytest.fixture
@@ -48,7 +48,7 @@ def saved_meeting(db):
         ended_at=datetime(2026, 4, 25, 11, 0, 0),
         title="Pipeline test",
     )
-    db.save_meeting(state)
+    db.meetings.save_meeting(state)
     return state
 
 
@@ -157,9 +157,9 @@ def test_process_meeting_state_persists_when_db_supplied(db, saved_meeting) -> N
     result = process_meeting_state(state, _balanced_host(), db=db, threshold=0.4)
 
     assert result.errors == []
-    persisted_windows = db.list_intent_windows("m-pipeline")
+    persisted_windows = db.plugins.list_intent_windows("m-pipeline")
     assert len(persisted_windows) == len(result.windows)
-    persisted_runs = db.list_plugin_runs("m-pipeline")
+    persisted_runs = db.plugins.list_plugin_runs("m-pipeline")
     assert len(persisted_runs) == len(result.runs)
 
 

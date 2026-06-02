@@ -706,7 +706,7 @@ def synthesize_and_persist(
 ) -> tuple[list[ArtifactDraft], list[ArtifactLineage]]:
     """Synthesize artifacts from a meeting's plugin runs and persist them (MIR-F-010, MIR-F-011).
 
-    When `plugin_runs` is omitted, falls back to `db.list_plugin_runs(meeting_id)`
+    When `plugin_runs` is omitted, falls back to `db.plugins.list_plugin_runs(meeting_id)`
     so the caller doesn't have to re-marshal what's already on disk. Each
     drafted artifact is persisted via `db.record_artifact` with its
     `(source_type, source_ref)` lineage rows; the matching typed
@@ -718,7 +718,7 @@ def synthesize_and_persist(
         return ([], [])
 
     if plugin_runs is None:
-        plugin_runs = db.list_plugin_runs(clean_meeting_id)
+        plugin_runs = db.plugins.list_plugin_runs(clean_meeting_id)
 
     drafts = synthesize_meeting_artifacts(
         meeting_id=clean_meeting_id,
@@ -731,7 +731,7 @@ def synthesize_and_persist(
         lineage = to_artifact_lineage(draft)
         lineages.append(lineage)
         sources = [(src.source_type, src.source_ref) for src in draft.sources]
-        db.record_artifact(
+        db.plugins.record_artifact(
             artifact_id=draft.artifact_id,
             meeting_id=draft.meeting_id,
             artifact_type=draft.artifact_type,

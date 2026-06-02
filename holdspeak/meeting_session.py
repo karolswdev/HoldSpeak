@@ -1457,7 +1457,7 @@ class MeetingSession:
             from .db import get_database
 
             db = get_database()
-            db.save_meeting(state)
+            db.meetings.save_meeting(state)
             database_saved = True
             if (
                 self.intel_enabled
@@ -1465,7 +1465,7 @@ class MeetingSession:
                 and state.intel_status == "queued"
                 and state.segments
             ):
-                db.enqueue_intel_job(
+                db.intel.enqueue_intel_job(
                     state.id,
                     transcript_hash=state.transcript_hash(),
                     reason=state.intel_status_detail,
