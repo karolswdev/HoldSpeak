@@ -220,6 +220,7 @@ import HoldMark from "../components/HoldMark.astro";
 
       <!-- Side rail -->
       <aside class="rail">
+        <div class="rail-group-label">Intelligence</div>
         <!-- Live intel -->
         <section class="panel panel--dense" x-show="intelStreaming" x-cloak>
           <header class="panel-header">
@@ -289,6 +290,7 @@ import HoldMark from "../components/HoldMark.astro";
           </div>
         </section>
 
+        <div class="rail-group-label">Work</div>
         <!-- Action items -->
         <section class="panel panel--dense">
           <header class="panel-header">
@@ -332,6 +334,7 @@ import HoldMark from "../components/HoldMark.astro";
           </div>
         </section>
 
+        <div class="rail-group-label">Operations</div>
         <!-- Plugin jobs -->
         <section class="panel panel--dense">
           <header class="panel-header"><div class="panel-title">Deferred plugin jobs</div></header>
@@ -499,13 +502,16 @@ import HoldMark from "../components/HoldMark.astro";
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
     gap: var(--space-4);
-    padding: var(--space-4);
-    background: var(--canvas-raised);
-    border: 1px solid var(--wb-black);
+    padding: var(--space-5);
+    background: var(--surface-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--elev-1);
     transition:
-      border-color var(--duration-medium) var(--ease-standard);
+      border-color var(--duration-medium) var(--ease-standard),
+      box-shadow var(--duration-medium) var(--ease-standard);
   }
-  .hero.state-active { border-color: var(--accent); }
+  .hero.state-active { border-color: var(--accent); box-shadow: var(--glow-accent); }
   .hero.state-stopping { border-color: var(--warn); }
 
   .hero-id { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
@@ -608,14 +614,14 @@ import HoldMark from "../components/HoldMark.astro";
   .btn:disabled { cursor: not-allowed; opacity: 0.55; }
   .btn--sm { padding: var(--space-2) var(--space-3); font-size: var(--font-size-sm); }
   .btn--hero { width: 100%; padding: var(--space-4) var(--space-5); font-size: var(--font-size-lg); }
-  .btn--primary { background: var(--accent); color: var(--accent-on); border-color: var(--accent); }
-  .btn--primary:not(:disabled):hover { background: var(--accent-strong); border-color: var(--accent-strong); }
-  .btn--secondary { background: var(--canvas-raised); color: var(--text); border-color: var(--line-strong); }
-  .btn--secondary:not(:disabled):hover { border-color: var(--line-emphasis); background: var(--canvas-elevated); }
-  .btn--danger { background: var(--danger); color: var(--canvas); border-color: var(--danger); }
+  .btn--primary { background: var(--accent); color: var(--accent-on); border-color: var(--accent); box-shadow: var(--glow-accent); }
+  .btn--primary:not(:disabled):hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn--secondary { background: var(--surface-2); color: var(--text); border-color: var(--border); }
+  .btn--secondary:not(:disabled):hover { border-color: var(--border-strong); background: var(--surface-3); }
+  .btn--danger { background: var(--danger-fill); color: #fff; border-color: var(--danger-fill); }
   .btn--danger:not(:disabled):hover { background: var(--danger-strong); border-color: var(--danger-strong); }
   .btn--ghost { background: transparent; color: var(--text-muted); border-color: transparent; }
-  .btn--ghost:not(:disabled):hover { color: var(--text); background: var(--accent-soft); }
+  .btn--ghost:not(:disabled):hover { color: var(--text); background: var(--surface-hover); }
   .btn-spinner {
     width: var(--space-3); height: var(--space-3); border-radius: 50%;
     border: 2px solid currentColor; border-right-color: transparent;
@@ -641,44 +647,62 @@ import HoldMark from "../components/HoldMark.astro";
   .pill--danger { color: var(--danger); background: var(--danger-soft); border-color: transparent; }
   .pill--local { color: var(--local); background: var(--local-soft); border-color: transparent; }
 
-  /* === Panels (mirrors components/Panel.astro — Workbench
-   * window treatment: hard black border, no shadow, blue
-   * title strip with white VT323 caption). */
+  /* === Panels (mirrors components/Panel.astro — Signal: raised
+   * dark surface, real depth + radius, uppercase-eyebrow title). */
   .panel {
-    background: var(--canvas-raised);
-    border: 1px solid var(--wb-black);
+    background: var(--surface-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--elev-1);
     overflow: hidden;
   }
   .panel-header {
     display: flex; align-items: center; justify-content: space-between;
     gap: var(--space-3);
-    background: var(--wb-blue);
-    color: var(--wb-white);
-    border-bottom: 1px solid var(--wb-black);
-    padding: var(--space-2) var(--space-4);
+    background: var(--surface-2);
+    color: var(--text);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: var(--space-3) var(--space-4);
   }
-  .panel--dense .panel-header { padding: var(--space-1) var(--space-3); }
+  .panel--dense .panel-header { padding: var(--space-2) var(--space-3); }
   .panel-title {
-    font-family: var(--font-display);
-    font-size: var(--font-size-lg);
-    font-weight: 400;
-    color: var(--wb-white);
-    letter-spacing: 0.04em;
-    line-height: 1.2;
+    font-family: var(--font-ui);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: var(--letter-spacing-eyebrow);
+    text-transform: uppercase;
+    line-height: 1.3;
   }
   .panel-toolbar { display: flex; align-items: center; gap: var(--space-2); }
-  .panel-toolbar .btn--ghost { color: var(--wb-white); }
   .panel-body { padding: var(--space-4); }
   .panel--dense .panel-body { padding: var(--space-3); }
-  .panel-footer { border-top: 1px solid var(--wb-black); color: var(--text-muted); font-size: var(--font-size-sm); background: var(--surface-2); }
+  .panel-footer { border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: var(--font-size-sm); background: var(--surface-2); }
   .panel--comfortable .panel-footer { padding: var(--space-2) var(--space-4); }
 
   /* === Board ============================================= */
   .board {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
     gap: var(--space-5);
     align-items: start;
+  }
+
+  /* Rail group labels (eyebrow) — group the panels into Intelligence
+   * / Work / Operations per the IA spec; the rail stays subordinate
+   * to the dominant transcript column. */
+  .rail-group-label {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    text-transform: uppercase;
+    color: var(--text-faint);
+    padding: 0 var(--space-1);
+  }
+  .rail-group-label:not(:first-child) {
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-subtle);
   }
 
   /* === Transcript ======================================== */

@@ -1,12 +1,12 @@
 # Phase 30 — UI/UX overhaul: retire Workbench, ship the "Signal" identity
 
-**Last updated:** 2026-06-02 (HS-30-05 shipped — in-progress, 5/9. **Component
-library re-skinned to Signal:** eyebrow panel headers, real depth+radius, primary
-glow, flat-grey disabled (hatch retired), dual-encoded selected rows. All 30
-component `--wb-*` refs migrated (components now 0). Build green; backend 2062
-passed. Shim stays until pages migrate — deleted with HS-30-08).
+**Last updated:** 2026-06-02 (HS-30-06 shipped — in-progress, 6/9. **Runtime
+dashboard redesigned to the IA spec:** dominant transcript + a rail grouped under
+Intelligence/Work/Operations eyebrow labels; local Workbench CSS migrated to
+Signal (panels, hero glow, buttons); page `--wb-*` 8→0; Alpine bindings untouched.
+Build green; backend 2062 passed).
 
-> **Phase status: IN-PROGRESS (5/9).** This is the live pickup doc; it is
+> **Phase status: IN-PROGRESS (6/9).** This is the live pickup doc; it is
 > mutable until the phase closes.
 
 > Lineage note: Phases 10 → 12 built the current web look — a design-token
@@ -107,7 +107,7 @@ The design system is derived with the **`ui-ux-pro-max`** skill
 | HS-30-03 | Foundation: tokens + global CSS + fonts + design galleries | done | [story-03-foundation-tokens.md](./story-03-foundation-tokens.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-30-04 | Navigation + layout shell | done | [story-04-nav-and-layout-shell.md](./story-04-nav-and-layout-shell.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-30-05 | Component library re-skin | done | [story-05-component-library.md](./story-05-component-library.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-30-06 | Dashboard (`index`) redesign | backlog | [story-06-dashboard-redesign.md](./story-06-dashboard-redesign.md) | — |
+| HS-30-06 | Dashboard (`index`) redesign | done | [story-06-dashboard-redesign.md](./story-06-dashboard-redesign.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-30-07 | Dictation redesign | backlog | [story-07-dictation-redesign.md](./story-07-dictation-redesign.md) | — |
 | HS-30-08 | History + Activity + Companion redesign | backlog | [story-08-secondary-pages-redesign.md](./story-08-secondary-pages-redesign.md) | — |
 | HS-30-09 | Accessibility + motion + polish + phase exit | backlog | [story-09-a11y-motion-exit.md](./story-09-a11y-motion-exit.md) | — |
@@ -168,9 +168,15 @@ Signal (`evidence/after-hs05/components.png`): eyebrow panel headers, `--elev-1`
 selected rows with an inset accent marker. All 30 component `--wb-*` refs migrated
 to canonical tokens (components now 0). The shim stays for the 59 page refs.
 
-**Next:** HS-30-06 — redesign the runtime dashboard (`index.astro`) to the IA spec
-(meeting-state hero, dominant transcript column, grouped intel rail), preserving
-the Alpine bindings; first per-page redesign + start migrating page `--wb-*` refs.
+**HS-30-06 shipped.** The runtime dashboard is redesigned to the IA spec
+(`evidence/after-hs06/dashboard.png`): the page's local Workbench CSS (panels,
+hero, buttons, pills) is migrated to Signal — raised cards, eyebrow headers, hero
+accent-glow on active, primary glow; the rail is grouped under **Intelligence /
+Work / Operations** eyebrow labels; transcript stays dominant. Page `--wb-*` 8→0.
+No Alpine binding touched (CSS + inserted label divs only).
+
+**Next:** HS-30-07 — dictation page (`dictation.astro`, ~875 lines): the 7 tabs →
+two tiers (Setup / Runtime & test), Signal forms + dry-run trace, migrate its refs.
 
 ## Active risks
 

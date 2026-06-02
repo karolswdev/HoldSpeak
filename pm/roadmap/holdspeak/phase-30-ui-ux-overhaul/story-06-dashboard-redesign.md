@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 30
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-30-04, HS-30-05
 - **Unblocks:** HS-30-09
 - **Owner:** unassigned
@@ -39,13 +39,20 @@ Redesign it to the IA spec on the Signal foundation.
 
 ## Acceptance criteria
 
-- [ ] `index.astro` matches the IA-spec dashboard layout in Signal; the live
-      transcript and the intel rail read as one designed surface.
-- [ ] All idle / active / stopping states render correctly (screenshots of each).
-- [ ] Alpine bindings intact: live transcript append, copy-on-click, export,
-      bookmark + metadata modals all still work (verified on the running app).
-- [ ] Before/after screenshots in evidence.
-- [ ] `npm run build` green; backend sweep green.
+- [x] `index.astro` matches the IA-spec dashboard layout in Signal: dominant
+      transcript column + an intel rail grouped under **Intelligence / Work /
+      Operations** eyebrow labels — one designed surface, not 8 mismatched boxes.
+- [~] Idle state verified on the running build (`evidence/after-hs06/dashboard.png`).
+      active/stopping are driven by the **unchanged** `:class` binding + the
+      updated state CSS (`state-active` → accent border + glow; `state-stopping` →
+      warn border); not separately screenshotted — no live-meeting backend in this
+      env (full state walk is part of HS-30-09's manual pass).
+- [x] Alpine bindings intact **by construction**: no `x-*` attribute was touched —
+      the redesign is CSS migration (local panel/hero/btn CSS → Signal) + inserted
+      non-Alpine rail group-label divs. The page mounts and Alpine evaluates (idle
+      render confirms).
+- [x] Before/after: `evidence/before/before-runtime.png` → `evidence/after-hs06/dashboard.png`.
+- [x] `npm run build` green; backend sweep green (2062 passed, 14 skipped).
 
 ## Test plan
 
