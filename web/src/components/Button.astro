@@ -64,7 +64,7 @@ const classes = [
     line-height: 1;
     letter-spacing: var(--letter-spacing-loose);
     border: 1px solid transparent;
-    border-radius: var(--radius-2);
+    border-radius: var(--radius-md);
     cursor: pointer;
     user-select: none;
     transition:
@@ -79,37 +79,18 @@ const classes = [
     outline-offset: var(--focus-outline-offset);
   }
 
-  /* HS-12-02 (slice 3): disabled gadgets get the proper
-   * Workbench grey ramp — slate-on-pale with a subtle
-   * diagonal hatch. Slice 2's "variant colour + hatch" was
-   * confusing because a disabled Primary still read as a wash
-   * of orange. Now disabled is unambiguously gray. */
+  /* HS-30-05 "Signal": disabled is an unambiguous flat grey state —
+   * the Workbench diagonal hatch is retired (design-language §7). */
   .btn:disabled {
     cursor: not-allowed;
-    position: relative;
     background: var(--disabled-bg) !important;
     color: var(--disabled-fg) !important;
     border-color: var(--disabled-border) !important;
-  }
-  .btn:disabled::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background-image: repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 3px,
-      rgba(0, 0, 0, 0.08) 3px,
-      rgba(0, 0, 0, 0.08) 4px
-    );
+    box-shadow: none !important;
   }
   .btn[aria-busy="true"] {
     cursor: progress;
     opacity: 0.85;
-  }
-  .btn[aria-busy="true"]:not(:disabled)::after {
-    content: none;
   }
 
   .btn:not(:disabled):active {
@@ -137,11 +118,12 @@ const classes = [
     background: var(--accent);
     color: var(--accent-on);
     border-color: var(--accent);
+    box-shadow: var(--glow-accent);
   }
 
   .btn--primary:not(:disabled):hover {
-    background: var(--accent-strong);
-    border-color: var(--accent-strong);
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
   }
 
   .btn--secondary {
@@ -156,9 +138,9 @@ const classes = [
   }
 
   .btn--danger {
-    background: var(--danger);
-    color: var(--canvas);
-    border-color: var(--danger);
+    background: var(--danger-fill);
+    color: #fff;
+    border-color: var(--danger-fill);
   }
 
   .btn--danger:not(:disabled):hover {

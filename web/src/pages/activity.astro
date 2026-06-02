@@ -235,33 +235,34 @@ import CommandPreview from "../components/CommandPreview.astro";
   .pill--warn { color: var(--warn); background: var(--warn-soft); border-color: transparent; }
   .pill--danger { color: var(--danger); background: var(--danger-soft); border-color: transparent; }
 
-  /* === Panels === */
-  /* HS-12-02: Workbench window treatment — blue title strip,
-   * white VT323 caption, hard black border, no shadow. */
+  /* === Panels (Signal: raised card, eyebrow header) === */
   .panel {
-    background: var(--canvas-raised);
-    border: 1px solid var(--wb-black);
+    background: var(--surface-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--elev-1);
     overflow: hidden;
   }
   .panel-header {
     display: flex; align-items: center; justify-content: space-between;
     gap: var(--space-3);
-    padding: var(--space-2) var(--space-4);
-    background: var(--wb-blue);
-    color: var(--wb-white);
-    border-bottom: 1px solid var(--wb-black);
+    padding: var(--space-3) var(--space-4);
+    background: var(--surface-2);
+    color: var(--text);
+    border-bottom: 1px solid var(--border-subtle);
   }
   .panel-title {
-    font-family: var(--font-display);
-    font-size: var(--font-size-lg);
-    font-weight: 400;
-    color: var(--wb-white);
-    letter-spacing: 0.04em;
-    line-height: 1.2;
+    font-family: var(--font-ui);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: var(--letter-spacing-eyebrow);
+    text-transform: uppercase;
+    line-height: 1.3;
   }
   .panel-body { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
   .panel-toolbar { display: flex; align-items: center; gap: var(--space-2); }
-  .panel-toolbar .btn--ghost { color: var(--wb-white); }
+  .panel-toolbar .btn--ghost { color: var(--text); }
 
   /* === Form / row primitives (JS-emitted contracts) === */
   .row {
@@ -311,7 +312,7 @@ import CommandPreview from "../components/CommandPreview.astro";
   .input:focus-visible {
     outline: none;
     border-color: var(--field-focus-border);
-    background: var(--wb-white);
+    background: var(--surface-2);
   }
 
   .button-row {
@@ -327,14 +328,14 @@ import CommandPreview from "../components/CommandPreview.astro";
     font-family: var(--font-ui); font-weight: 500;
     font-size: var(--font-size-sm); line-height: 1;
     letter-spacing: var(--letter-spacing-loose);
-    background: var(--wb-white);
-    border: 1px solid var(--wb-black);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
     color: var(--text);
     cursor: pointer;
     transition: background var(--duration-short) var(--ease-standard),
                 color var(--duration-short) var(--ease-standard);
   }
-  .btn:hover:not(:disabled) { background: var(--wb-gray-6); }
+  .btn:hover:not(:disabled) { background: var(--surface-2); }
   .btn:focus-visible {
     outline: var(--focus-outline-width) solid var(--accent);
     outline-offset: var(--focus-outline-offset);
@@ -346,15 +347,15 @@ import CommandPreview from "../components/CommandPreview.astro";
     cursor: not-allowed;
   }
   .btn--primary, .btn.primary {
-    background: var(--accent); color: var(--accent-on); border-color: var(--wb-black);
+    background: var(--accent); color: var(--accent-on); border-color: var(--border);
   }
   .btn--primary:not(:disabled):hover, .btn.primary:not(:disabled):hover {
     background: var(--accent-strong);
   }
   .btn--secondary {
-    background: var(--wb-white); color: var(--text); border-color: var(--wb-black);
+    background: var(--surface-2); color: var(--text); border-color: var(--border);
   }
-  .btn--secondary:not(:disabled):hover { background: var(--wb-gray-6); }
+  .btn--secondary:not(:disabled):hover { background: var(--surface-2); }
   .btn--ghost {
     background: transparent; color: inherit; border-color: transparent;
   }
@@ -362,9 +363,9 @@ import CommandPreview from "../components/CommandPreview.astro";
   /* Destructive: clearly red, full chrome (not ghost-soft) so the
    * action reads as the destructive thing it is. */
   .btn.danger, .btn--ghost.danger {
-    color: var(--wb-white);
+    color: var(--text);
     background: var(--danger);
-    border-color: var(--wb-black);
+    border-color: var(--border);
   }
   .btn.danger:not(:disabled):hover,
   .btn--ghost.danger:not(:disabled):hover {
@@ -401,13 +402,13 @@ import CommandPreview from "../components/CommandPreview.astro";
    * border to the danger ramp so a glance picks it out. */
   .connector-card {
     padding: var(--space-3);
-    background: var(--wb-white);
-    border: 1px solid var(--wb-black);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
   }
-  .connector-card.is-disabled { background: var(--wb-gray-7); }
+  .connector-card.is-disabled { background: var(--surface-1); }
   .connector-card.has-error {
     border-top: 3px solid var(--danger);
   }

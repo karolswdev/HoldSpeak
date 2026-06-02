@@ -73,11 +73,9 @@ const hasActions = Astro.slots.has("actions");
       border-color var(--duration-short) var(--ease-standard);
   }
 
-  /* HS-12-02 (slice 6): consecutive rows share a hard black
-   * separator. The Workbench list grammar uses thin black
-   * dividers, not soft hairlines. */
+  /* Consecutive rows share a subtle divider. */
   .list-row + .list-row {
-    border-top: 1px solid var(--wb-black);
+    border-top: 1px solid var(--border-subtle);
   }
 
   .list-row-text {
@@ -119,10 +117,9 @@ const hasActions = Astro.slots.has("actions");
     cursor: pointer;
   }
 
-  /* Hover lights to a pale blue tint; selected uses the
-   * Workbench inverse-bar idiom (blue fill, white text). */
+  /* Hover lifts subtly; selected uses the accent-tint fill. */
   .list-row--interactive:hover:not(.is-selected) {
-    background: var(--wb-blue-tint);
+    background: var(--surface-hover);
   }
 
   .list-row--interactive:focus-visible {
@@ -133,6 +130,7 @@ const hasActions = Astro.slots.has("actions");
   .list-row.is-selected {
     background: var(--selected-bg);
     color: var(--selected-fg);
+    box-shadow: inset 3px 0 0 var(--accent);
   }
   .list-row.is-selected .list-row-primary,
   .list-row.is-selected .list-row-secondary,

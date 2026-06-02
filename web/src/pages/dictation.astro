@@ -27,6 +27,7 @@ import CommandPreview from "../components/CommandPreview.astro";
       <button id="section-kb" data-section="kb" type="button" role="tab">Project KB</button>
       <button id="section-hs" data-section="hs" type="button" role="tab">Project Context</button>
       <button id="section-hooks" data-section="hooks" type="button" role="tab">Agent Hooks</button>
+      <span class="tab-tier-sep" aria-hidden="true" title="Runtime &amp; test"></span>
       <button id="section-runtime" data-section="runtime" type="button" role="tab">Runtime</button>
       <button id="section-dry-run" data-section="dry-run" type="button" role="tab">Dry-run</button>
     </div>
@@ -412,7 +413,16 @@ import CommandPreview from "../components/CommandPreview.astro";
   .scope-row {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: var(--space-1);
+  }
+  /* HS-30-07: divides the section tabs into two tiers — Setup
+   * (Readiness…Agent Hooks) and Runtime & test (Runtime, Dry-run). */
+  .tab-tier-sep {
+    align-self: stretch;
+    width: 1px;
+    margin: var(--space-1) var(--space-2);
+    background: var(--border);
   }
   .scope-row button {
     appearance: none;
@@ -444,8 +454,9 @@ import CommandPreview from "../components/CommandPreview.astro";
    * / .error variants swap the border colour to the matching
    * status ramp. */
   .meta-banner {
-    background: var(--wb-white);
-    border: 1px solid var(--wb-black);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     padding: var(--space-2) var(--space-3);
     font-size: var(--font-size-sm);
     color: var(--text);
@@ -483,8 +494,8 @@ import CommandPreview from "../components/CommandPreview.astro";
     gap: var(--space-3);
     border-color: var(--accent);
     background:
-      linear-gradient(90deg, var(--accent-soft), transparent 60%),
-      var(--wb-white);
+      linear-gradient(90deg, var(--accent-tint), transparent 60%),
+      var(--surface-2);
   }
   .agent-context-banner[hidden] { display: none; }
   .agent-context-banner > div {
@@ -498,7 +509,7 @@ import CommandPreview from "../components/CommandPreview.astro";
     overflow-wrap: anywhere;
   }
   .hooks-capture-label {
-    color: var(--wb-white);
+    color: var(--text);
     font-size: var(--font-size-xs);
   }
   .hooks-agent-list {
@@ -510,9 +521,10 @@ import CommandPreview from "../components/CommandPreview.astro";
     .hooks-agent-list { grid-template-columns: 1fr; }
   }
   .hook-card {
-    border: 1px solid var(--wb-black);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
     padding: var(--space-3);
-    background: var(--canvas);
+    background: var(--surface-1);
   }
   .hook-card h3 {
     margin: 0 0 var(--space-2);
@@ -527,7 +539,7 @@ import CommandPreview from "../components/CommandPreview.astro";
     max-height: 16rem;
     overflow: auto;
     white-space: pre;
-    background: var(--wb-white);
+    background: var(--surface-2);
     border: 1px solid var(--line);
     padding: var(--space-2);
     font-family: var(--font-mono);
@@ -549,32 +561,36 @@ import CommandPreview from "../components/CommandPreview.astro";
    * we use a negative margin on `.panel-header` to push the
    * blue title strip out to the panel edges. */
   .panel {
-    background: var(--wb-white);
-    border: 1px solid var(--wb-black);
+    background: var(--surface-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--elev-1);
     padding: var(--space-3);
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
+    overflow: hidden;
   }
   .panel-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-2);
-    background: var(--wb-blue);
-    color: var(--wb-white);
-    border-bottom: 1px solid var(--wb-black);
-    padding: var(--space-2) var(--space-3);
+    background: var(--surface-2);
+    color: var(--text);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: var(--space-3);
     margin: calc(var(--space-3) * -1) calc(var(--space-3) * -1) 0;
   }
   .panel-header h3 {
     margin: 0;
-    color: var(--wb-white);
-    font-family: var(--font-display);
-    font-size: var(--font-size-lg);
-    font-weight: 400;
-    letter-spacing: 0.04em;
-    line-height: 1.2;
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    text-transform: uppercase;
+    line-height: 1.3;
   }
   /* Sub-headings inside panel bodies (e.g. "Starter templates")
    * read as black-on-white labels, not as title strips. */
@@ -589,11 +605,11 @@ import CommandPreview from "../components/CommandPreview.astro";
     gap: var(--space-2);
     flex-wrap: wrap;
   }
-  .panel-toolbar .btn--ghost { color: var(--wb-white); }
+  .panel-toolbar .btn--ghost { color: var(--text-muted); }
   .panel-divider {
     margin-top: var(--space-3);
     padding-top: var(--space-3);
-    border-top: 1px solid var(--wb-black);
+    border-top: 1px solid var(--border-subtle);
   }
   .subhead {
     font-size: var(--font-size-sm);
@@ -607,14 +623,15 @@ import CommandPreview from "../components/CommandPreview.astro";
   /* === Block list ======================================== */
   .block-list { display: flex; flex-direction: column; gap: var(--space-1); }
   .block-card {
-    border: 1px solid var(--wb-black);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
     padding: var(--space-2) var(--space-3);
-    background: var(--wb-white);
+    background: var(--surface-2);
     cursor: pointer;
     transition: background var(--duration-short) var(--ease-standard),
                 color var(--duration-short) var(--ease-standard);
   }
-  .block-card:hover:not(.selected) { background: var(--wb-blue-tint); }
+  .block-card:hover:not(.selected) { background: var(--surface-hover); }
   .block-card.selected {
     background: var(--selected-bg);
     color: var(--selected-fg);

@@ -36,16 +36,17 @@ const hasAction = Astro.slots.has("action");
     color: var(--text-muted);
   }
 
-  /* HS-12-02 (slice 6): icon sits in a Workbench-style inset
-   * tile — pale grey-7 fill, hard black border. */
+  /* HS-30-05 "Signal": the icon sits in a raised tile with an accent
+   * glyph — a calm focal point, not a hard inset. */
   .empty-icon {
     width: var(--space-7);
     height: var(--space-7);
     display: grid;
     place-items: center;
-    color: var(--text-muted);
-    background: var(--wb-gray-7);
-    border: 1px solid var(--wb-black);
+    color: var(--accent);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
   }
 
   .empty-title {
@@ -53,8 +54,8 @@ const hasAction = Astro.slots.has("action");
     color: var(--text);
     font-family: var(--font-display);
     font-size: var(--font-size-xl);
-    font-weight: 400;
-    letter-spacing: 0.02em;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 
   .empty-description {

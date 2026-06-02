@@ -8,20 +8,20 @@
 
 @import "./tokens.css";
 
-/* HS-12-02: split UI font into a body face (Sora) and a Workbench
- * display face (VT323). Sora handles body copy, list rows, form
- * controls — anything that needs to be readable as prose. VT323
- * is reserved for *symbolic* Workbench moments: the TopNav, page
- * titles, the brand mark. JetBrains Mono stays for code/data.
- *
- * The brief is "evoke Workbench, not emulate". Limiting VT323 to
- * topnav-and-titles keeps the symbol without making the whole
- * frontend read as a museum reproduction.
+/* HS-30-03 "Signal" type system. Three faces:
+ *   --font-display  Space Grotesk (600/700) — geometric, technical
+ *                   character for titles, hero, brand.
+ *   --font-ui       Inter (400/500/600) — all body, UI, controls.
+ *   --font-mono     JetBrains Mono (400/500) — data, stats, code.
+ * The uppercase-tracked eyebrow (see components) carries the
+ * "technical" cue the old pixel title-strip used to — without pixels.
  */
-@import "@fontsource/sora/400.css";
-@import "@fontsource/sora/500.css";
-@import "@fontsource/sora/600.css";
-@import "@fontsource/vt323/400.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/space-grotesk/500.css";
+@import "@fontsource/space-grotesk/600.css";
+@import "@fontsource/space-grotesk/700.css";
 @import "@fontsource/jetbrains-mono/400.css";
 @import "@fontsource/jetbrains-mono/500.css";
 
@@ -36,30 +36,24 @@ body {
   min-height: 100%;
 }
 
-/* HS-12-01: body is the Workbench desktop — saturated blue
- * background, white text. Content surfaces (panels, dialogs,
- * cmd frames) render on top as white surfaces; their existing
- * scoped CSS already references `--text` (black by default,
- * which is correct against white) and `--text-muted` (#555).
+/* HS-30-03: body is the Signal canvas — near-black, off-white text.
+ * Content surfaces (panels, dialogs, cmd frames) render on top as
+ * raised dark surfaces via `--canvas*` / `--surface-*`. Elements that
+ * sit directly on the canvas (TopNav, gallery h1, page lead) inherit
+ * `--text` (off-white) — correct on the dark canvas.
  *
- * The body itself uses an explicit `color: var(--wb-white)` so
- * elements that sit *on* the desktop (gallery h1, page lead,
- * TopNav siblings) inherit white text via standard CSS
- * inheritance — no token rebinding gymnastics needed.
- *
- * The body also declares `--gallery-text-muted: rgba(255,255,255,0.78)`
- * which gallery-style pages can opt into when their muted copy
- * sits on the desktop. Components that live inside panels keep
- * using `--text-muted` and read black-on-white.
+ * `--on-desktop-muted` is the muted step for copy sitting directly on
+ * the canvas; it now points at the standard muted token (both read on
+ * the dark canvas, so no light/dark split is needed any more).
  */
 body {
   margin: 0;
   font-family: var(--font-ui);
   font-size: var(--font-size-md);
   line-height: var(--line-height-normal);
-  color: var(--wb-white);
-  background: var(--wb-blue);
-  --on-desktop-muted: rgba(255, 255, 255, 0.78);
+  color: var(--text);
+  background: var(--bg);
+  --on-desktop-muted: var(--text-muted);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;

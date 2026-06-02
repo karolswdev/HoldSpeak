@@ -1,23 +1,24 @@
 ---
-// HS-10-04 TopNav.
+// HS-30-04 TopNav — "Signal" shell.
 //
-// Single utilitarian nav rendered by AppLayout. Left: brand mark
-// (text wordmark for now; HS-10-05 replaces the glyph with the real
-// SVG mark). Center: 4 route links. Right: local-only pill slot +
-// optional overflow slot.
+// IA spec §1 (phase-30 evidence/ia-spec.md): the flat 5-link strip is
+// replaced by a grouped model that signals what each surface is *for*:
+//   Live      → Runtime          (the only real-time surface)
+//   Review    → History, Activity
+//   Configure → Dictation, Companion
 //
-// `current` matches one of the route slugs and applies aria-current
-// + the visual selected state. Pass `current={undefined}` for
-// dev-only pages (the gallery, the design-check) — nothing is then
-// announced as current.
+// Right cluster: a status slot (default LocalPill) + a Settings (⚙)
+// button that opens the global Settings drawer (wired in AppLayout via
+// the [data-settings-open] hook — vanilla, since Alpine loads per-page).
 //
-// Narrow-viewport behavior: the whole nav uses `flex-wrap`; brand
-// stays first, links wrap to a second line at small widths. No
-// horizontal scroll. The route has only four destinations, so a
-// hamburger overlay would be overkill.
+// Active route is DUAL-encoded (not colour-only, per skill ux/Color
+// Only): accent-tint fill + weight + an accent underbar + aria-current.
+//
+// Responsive: below the nav breakpoint the groups collapse behind a
+// menu toggle ([data-nav-toggle]); no flex-wrap pile-up.
 
-import Pill from "./Pill.astro";
 import AppMark from "./AppMark.astro";
+import LocalPill from "./LocalPill.astro";
 
 type Route = "runtime" | "activity" | "history" | "dictation" | "companion";
 
@@ -27,12 +28,22 @@ interface Props {
 
 const { current } = Astro.props;
 
-const routes: { slug: Route; label: string; href: string }[] = [
-  { slug: "runtime", label: "Runtime", href: "/" },
-  { slug: "activity", label: "Activity", href: "/activity" },
-  { slug: "history", label: "History", href: "/history" },
-  { slug: "dictation", label: "Dictation", href: "/dictation" },
-  { slug: "companion", label: "Companion", href: "/companion" },
+const groups: { label: string; routes: { slug: Route; label: string; href: string }[] }[] = [
+  { label: "Live", routes: [{ slug: "runtime", label: "Runtime", href: "/" }] },
+  {
+    label: "Review",
+    routes: [
+      { slug: "history", label: "History", href: "/history" },
+      { slug: "activity", label: "Activity", href: "/activity" },
+    ],
+  },
+  {
+    label: "Configure",
+    routes: [
+      { slug: "dictation", label: "Dictation", href: "/dictation" },
+      { slug: "companion", label: "Companion", href: "/companion" },
+    ],
+  },
 ];
 ---
 
@@ -40,27 +51,61 @@ const routes: { slug: Route; label: string; href: string }[] = [
   <a href="#main" class="topnav-skip">Skip to content</a>
 
   <a href="/" class="topnav-brand" aria-label="HoldSpeak — Runtime">
-    <AppMark size={24} class="topnav-mark" />
+    <AppMark size={22} class="topnav-mark" />
     <span class="topnav-wordmark">HoldSpeak</span>
   </a>
 
-  <nav class="topnav-routes" aria-label="Primary">
-    {routes.map((r) => (
-      <a
-        href={r.href}
-        class:list={["topnav-link", current === r.slug && "is-current"]}
-        aria-current={current === r.slug ? "page" : undefined}
-      >
-        {r.label}
-      </a>
+  <button
+    type="button"
+    class="topnav-toggle"
+    data-nav-toggle
+    aria-expanded="false"
+    aria-controls="topnav-nav"
+    aria-label="Toggle navigation"
+  >
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <path d="M4 7h16M4 12h16M4 17h16" />
+    </svg>
+  </button>
+
+  <nav class="topnav-nav" id="topnav-nav" aria-label="Primary">
+    {groups.map((g) => (
+      <div class="topnav-group">
+        <span class="topnav-group-label">{g.label}</span>
+        <div class="topnav-group-links">
+          {g.routes.map((r) => (
+            <a
+              href={r.href}
+              class:list={["topnav-link", current === r.slug && "is-current"]}
+              aria-current={current === r.slug ? "page" : undefined}
+            >
+              {r.label}
+            </a>
+          ))}
+        </div>
+      </div>
     ))}
   </nav>
 
   <div class="topnav-tail">
     <slot name="status">
-      <Pill tone="local" dot>local-only</Pill>
+      <LocalPill />
     </slot>
     <slot name="overflow" />
+    <button
+      type="button"
+      class="topnav-icon"
+      data-settings-open
+      aria-haspopup="dialog"
+      aria-controls="settings-drawer"
+      aria-label="Settings"
+      title="Settings"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+    </button>
   </div>
 </header>
 
@@ -70,18 +115,11 @@ const routes: { slug: Route; label: string; href: string }[] = [
     top: 0;
     z-index: var(--z-sticky);
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-3) var(--space-5);
+    gap: var(--space-5);
     padding: var(--space-3) var(--space-5);
-    background: var(--canvas);
-    border-bottom: 1px solid var(--line);
-    /* HS-12-02: TopNav is a Workbench *moment* — pixel display
-     * font here, normal Sora everywhere else. The size bump
-     * compensates for VT323 reading denser at the same px size. */
-    font-family: var(--font-display);
-    font-size: var(--font-size-lg);
-    letter-spacing: 0.04em;
+    background: linear-gradient(180deg, var(--surface-1), var(--bg));
+    border-bottom: 1px solid var(--border-subtle);
   }
 
   .topnav-skip {
@@ -89,17 +127,16 @@ const routes: { slug: Route; label: string; href: string }[] = [
     top: var(--space-2);
     left: var(--space-2);
     padding: var(--space-2) var(--space-3);
-    background: var(--canvas-elevated);
+    background: var(--surface-2);
     color: var(--text);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
     font-size: var(--font-size-sm);
     text-decoration: none;
     transform: translateY(-200%);
     transition: transform var(--duration-short) var(--ease-standard);
     z-index: var(--z-overlay);
   }
-
   .topnav-skip:focus-visible {
     transform: translateY(0);
     outline: var(--focus-outline-width) solid var(--accent);
@@ -112,91 +149,185 @@ const routes: { slug: Route; label: string; href: string }[] = [
     gap: var(--space-2);
     color: var(--text);
     text-decoration: none;
-    font-weight: 600;
-    letter-spacing: var(--letter-spacing-tight);
-    font-size: var(--font-size-md);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.0625rem;
+    letter-spacing: -0.01em;
+    flex-shrink: 0;
   }
-
   .topnav-brand:focus-visible {
     outline: var(--focus-outline-width) solid var(--accent);
     outline-offset: var(--focus-outline-offset);
-    border-radius: var(--radius-1);
+    border-radius: var(--radius-xs);
   }
-
   .topnav-mark {
     color: var(--accent);
     flex-shrink: 0;
+    filter: drop-shadow(0 0 6px var(--accent-glow));
   }
 
-  .topnav-wordmark {
-    color: var(--text);
-  }
-
-  .topnav-routes {
+  /* Nav groups */
+  .topnav-nav {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-5);
+    flex: 1 1 auto;
+  }
+  .topnav-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .topnav-group + .topnav-group {
+    padding-left: var(--space-5);
+    border-left: 1px solid var(--border-subtle);
+  }
+  .topnav-group-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    text-transform: uppercase;
+    color: var(--text-faint);
+    user-select: none;
+  }
+  .topnav-group-links {
+    display: flex;
     align-items: center;
     gap: var(--space-1);
-    flex: 1 1 auto;
-    margin: 0;
   }
 
   .topnav-link {
+    position: relative;
     padding: var(--space-2) var(--space-3);
     color: var(--text-muted);
     text-decoration: none;
+    font-family: var(--font-ui);
     font-size: var(--font-size-sm);
     font-weight: 500;
-    border-radius: var(--radius-2);
+    border-radius: var(--radius-sm);
     transition:
       color var(--duration-short) var(--ease-standard),
       background var(--duration-short) var(--ease-standard);
   }
-
   .topnav-link:hover {
     color: var(--text);
-    background: var(--accent-soft);
+    background: var(--surface-hover);
   }
-
   .topnav-link:focus-visible {
     outline: var(--focus-outline-width) solid var(--accent);
     outline-offset: var(--focus-outline-offset);
   }
-
+  /* Active: dual-encoded — accent-tint fill + weight + accent underbar. */
   .topnav-link.is-current {
     color: var(--text);
-    background: transparent;
-    text-decoration: underline;
-    text-decoration-color: var(--accent);
-    text-decoration-thickness: 2px;
-    text-underline-offset: 6px;
+    font-weight: 600;
+    background: var(--accent-tint);
   }
-
-  .topnav-link.is-current:hover {
-    background: transparent;
+  .topnav-link.is-current::after {
+    content: "";
+    position: absolute;
+    left: var(--space-3);
+    right: var(--space-3);
+    bottom: 2px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--accent);
   }
 
   .topnav-tail {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
+    gap: var(--space-3);
     margin-left: auto;
+    flex-shrink: 0;
   }
 
-  @media (max-width: 640px) {
+  .topnav-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    color: var(--text-muted);
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition:
+      color var(--duration-short) var(--ease-standard),
+      border-color var(--duration-short) var(--ease-standard),
+      background var(--duration-short) var(--ease-standard);
+  }
+  .topnav-icon:hover {
+    color: var(--text);
+    border-color: var(--border-strong);
+    background: var(--surface-2);
+  }
+  .topnav-icon:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  /* Mobile menu toggle — hidden on desktop. */
+  .topnav-toggle {
+    display: none;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    color: var(--text-muted);
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+  .topnav-toggle:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  @media (max-width: 880px) {
     .topnav {
-      gap: var(--space-2);
-      padding: var(--space-3);
+      flex-wrap: wrap;
+      gap: var(--space-3);
     }
-
-    .topnav-routes {
-      order: 3;
-      flex-basis: 100%;
-      justify-content: flex-start;
-    }
-
-    .topnav-tail {
+    .topnav-toggle {
+      display: inline-grid;
+      order: 2;
       margin-left: auto;
+    }
+    .topnav-tail {
+      order: 3;
+    }
+    .topnav-nav {
+      order: 4;
+      flex-basis: 100%;
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--space-2);
+      display: none;
+      padding-top: var(--space-2);
+      border-top: 1px solid var(--border-subtle);
+    }
+    .topnav[data-open] .topnav-nav {
+      display: flex;
+    }
+    .topnav-group {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-1);
+    }
+    .topnav-group + .topnav-group {
+      padding-left: 0;
+      border-left: 0;
+      padding-top: var(--space-2);
+      border-top: 1px solid var(--border-subtle);
+    }
+    .topnav-group-links {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+    }
+    .topnav-link {
+      width: 100%;
     }
   }
 </style>
