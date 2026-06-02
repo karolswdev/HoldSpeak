@@ -1,11 +1,13 @@
 # Phase 30 — UI/UX overhaul: retire Workbench, ship the "Signal" identity
 
-**Last updated:** 2026-06-01 (HS-30-02 shipped — in-progress, 2/9. "Signal" design
-language **signed off by Karol** against a rendered preview: near-black surface
-ramp, signature orange accent, Space Grotesk/Inter/JetBrains Mono, real depth +
-one brand pulse, full AA contrast table + token-name map. HS-30-03 unblocked).
+**Last updated:** 2026-06-01 (HS-30-03 shipped — in-progress, 3/9. **Signal
+foundation is live: the whole product now renders dark.** `tokens.css` +
+`global.css` rewritten to Signal, fonts swapped to Space Grotesk/Inter/JetBrains
+Mono (VT323+Sora gone), real radius+depth+motion; build green; backend 2062
+passed. A temporary `--wb-*` shim flips the 89 component refs for now — HS-30-05
+migrates + deletes it).
 
-> **Phase status: IN-PROGRESS (2/9).** This is the live pickup doc; it is
+> **Phase status: IN-PROGRESS (3/9).** This is the live pickup doc; it is
 > mutable until the phase closes.
 
 > Lineage note: Phases 10 → 12 built the current web look — a design-token
@@ -81,9 +83,10 @@ The design system is derived with the **`ui-ux-pro-max`** skill
 - [x] "Signal" design-language doc exists, is skill-derived, and is signed off
       before HS-30-03 lands. (HS-30-02 — `evidence/design-language-signal.md` +
       `evidence/signal-preview.png`; Karol approved 2026-06-01.)
-- [ ] `tokens.css` + `global.css` contain **zero Workbench tokens** (no `--wb-*`,
-      no VT323, no saturated-blue desktop); the design galleries render the new
-      foundation; `npm run build` green. (HS-30-03.)
+- [x] `tokens.css` + `global.css` carry the Signal system (no VT323/Sora, no
+      saturated-blue desktop); galleries render the foundation; `npm run build`
+      green. (HS-30-03 — `tokens.css`'s only `--wb-*` is the temporary shim §3,
+      deleted in HS-30-05; backend 2062 passed.)
 - [ ] Nav + layout shell and **every** component in `web/src/components/` are
       restyled to Signal — no component still renders the old hairline/pixel look.
       (HS-30-04/05.)
@@ -102,7 +105,7 @@ The design system is derived with the **`ui-ux-pro-max`** skill
 |---|---|---|---|---|
 | HS-30-01 | UX audit + IA redesign | done | [story-01-ux-audit-and-ia.md](./story-01-ux-audit-and-ia.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-30-02 | "Signal" design language + skill-derived system + sign-off | done | [story-02-design-language-signal.md](./story-02-design-language-signal.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-30-03 | Foundation: tokens + global CSS + fonts + design galleries | backlog | [story-03-foundation-tokens.md](./story-03-foundation-tokens.md) | — |
+| HS-30-03 | Foundation: tokens + global CSS + fonts + design galleries | done | [story-03-foundation-tokens.md](./story-03-foundation-tokens.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-30-04 | Navigation + layout shell | backlog | [story-04-nav-and-layout-shell.md](./story-04-nav-and-layout-shell.md) | — |
 | HS-30-05 | Component library re-skin | backlog | [story-05-component-library.md](./story-05-component-library.md) | — |
 | HS-30-06 | Dashboard (`index`) redesign | backlog | [story-06-dashboard-redesign.md](./story-06-dashboard-redesign.md) | — |
@@ -136,20 +139,24 @@ header/panel/rail/empty-loading-error system, and per-route layout intentions �
 all **without adding routes**. "Before" screenshots of all five routes +
 the component gallery are in `evidence/before/`.
 
-**HS-30-02 shipped.** "Signal" is fully specified in
-`evidence/design-language-signal.md` and **signed off by Karol** against a rendered
-mock (`evidence/signal-preview.png`, built from `signal-preview.html`): neutral
-near-black surface ramp, off-white text, signature orange `#FF6B35` (reserved for
-primary/live/focus), dark-tuned status, the Space Grotesk/Inter/JetBrains Mono
-tri-stack with an uppercase-tracked eyebrow replacing the VT323 title-strip, real
-depth + radius + one brand pulse, a full AA contrast table, and a token-name map.
-Hard rule: never white-on-orange — the orange fill carries dark ink.
+**HS-30-02 shipped.** "Signal" is fully specified + signed off (see
+`evidence/design-language-signal.md`, `evidence/signal-preview.png`).
 
-**Next:** HS-30-03 — rewrite `web/src/styles/tokens.css` + `global.css` to the §9
-token map, swap fonts (add Space Grotesk + Inter via `@fontsource`, drop VT323 +
-Sora), update the `/design/check` + `/design/components` galleries, sweep out every
-`--wb-*` / `VT323` / `Sora` reference under `web/`, and rebuild green (+ backend
-sweep green, since the served `_built` output changes).
+**HS-30-03 shipped — the Signal foundation is live and the whole product renders
+dark.** `tokens.css` rewritten to the §9 map (canonical Signal tokens + legacy
+semantic aliases repointed + real radius/depth/motion); `global.css` → dark canvas
++ off-white text; fonts swapped to Space Grotesk/Inter/JetBrains Mono (VT323+Sora
+removed); galleries render Signal; build green; backend **2062 passed, 14 skipped**.
+Verified on the running build (`evidence/after-hs03/`). **Discovery:** 108 component
+refs hardcode `--wb-*` context-dependently, so a single clean swap was impossible —
+the foundation flips them via a **temporary `--wb-*`→Signal shim** (tokens.css §3),
+plus a bounded fix retargeting 16 `--wb-white` backgrounds + 2 `#f5f5f5` footers to
+`--surface-2` so the result is clean dark, not light boxes.
+
+**Next:** HS-30-04 — rebuild the nav + layout shell (`AppLayout`/`TopNav`) to the
+IA spec: grouped nav (Live/Review/Configure), the global status cluster, and the
+Settings drawer. First structural-redesign chunk on top of the Signal foundation.
+(HS-30-05 then migrates the 89 shimmed `--wb-*` refs + deletes shim §3.)
 
 ## Active risks
 
@@ -180,6 +187,11 @@ sweep green, since the served `_built` output changes).
 - 2026-06-01 — **Lift global Settings out of History** into a shell-level Settings
   drawer (not a new route), per the IA spec — fixes the worst discoverability
   failure without growing the route set. — author: agent (HS-30-01 finding).
+- 2026-06-01 — **Temporary `--wb-*`→Signal shim in tokens.css §3** (HS-30-03):
+  108 component refs hardcode `--wb-*` context-dependently, so a clean one-shot
+  removal was impossible. The shim flips them to dark now; HS-30-05 migrates the
+  refs and deletes §3. Still greenfield — a two-story transition aid, not shipped-
+  user compat. — author: agent (HS-30-03 discovery).
 
 ## Decisions deferred
 
