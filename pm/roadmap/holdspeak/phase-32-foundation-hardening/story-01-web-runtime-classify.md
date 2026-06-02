@@ -1,6 +1,6 @@
 # HS-32-01 — Class-ify `web_runtime.py` (`WebRuntime`)
 
-**Status:** not-started.
+- **Status:** done (2026-06-02). Evidence: [evidence-story-01.md](./evidence-story-01.md).
 
 ## Goal
 
@@ -26,7 +26,13 @@ instance attributes and whose lifecycle is methods, matching the clean
 
 ## Done when
 
-- [ ] Runtime orchestration lives on a `WebRuntime` class; no module-level
+- [x] Runtime orchestration lives on a `WebRuntime` class; no module-level
       `nonlocal`-threaded god-function remains.
-- [ ] Entry point (`run_web_runtime` / `main.py` wiring) unchanged externally.
-- [ ] Full suite green; ruff clean.
+- [x] Entry point (`run_web_runtime` / `main.py` wiring) unchanged externally.
+- [x] Full suite green; ruff clean.
+
+## Evidence
+
+[evidence-story-01.md](./evidence-story-01.md). Suite green at **2063 passed,
+14 skipped** (baseline-identical); `web_runtime.py` ruff-clean; 10 `nonlocal`
+vars → `self.*`; `run_web_runtime()` is a thin `WebRuntime(...).run()` shim.

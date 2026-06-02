@@ -1,8 +1,9 @@
 # Phase 32 — Foundation Hardening & Doc Truth
 
-**Status:** in-progress (opened 2026-06-02). 0/6 stories shipped.
+**Status:** in-progress (opened 2026-06-02). 1/6 stories shipped.
 
-**Last updated:** 2026-06-02 (phase opened; runs after Phase 31; HS-32-01 next).
+**Last updated:** 2026-06-02 (HS-32-01 shipped: `run_web_runtime()` god-function
+→ `WebRuntime` class, behavior-preserving; suite green 2063/14. HS-32-02 next).
 
 ## Goal
 
@@ -53,8 +54,9 @@ archiving them.
 
 ## Exit criteria (evidence required)
 
-- [ ] `web_runtime.py`'s orchestration is a `WebRuntime` class (no module-level
+- [x] `web_runtime.py`'s orchestration is a `WebRuntime` class (no module-level
       `nonlocal`-threaded god-function); behavior unchanged, web suite green.
+      **(HS-32-01, 2026-06-02.)**
 - [ ] `MeetingSession` no longer references a web server; it emits, the runtime
       observes — proven by a test constructing a `MeetingSession` with no web
       server and exercising broadcast-triggering paths.
@@ -72,7 +74,7 @@ archiving them.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-32-01 | Class-ify `web_runtime.py` (`WebRuntime`) | not-started | [story-01-web-runtime-classify.md](./story-01-web-runtime-classify.md) | — |
+| HS-32-01 | Class-ify `web_runtime.py` (`WebRuntime`) | done | [story-01-web-runtime-classify.md](./story-01-web-runtime-classify.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-32-02 | Invert meeting→web-server coupling | not-started | [story-02-meeting-web-inversion.md](./story-02-meeting-web-inversion.md) | — |
 | HS-32-03 | Converge audio ownership | not-started | [story-03-audio-ownership.md](./story-03-audio-ownership.md) | — |
 | HS-32-04 | CI end-to-end smoke test (core path) | not-started | [story-04-ci-e2e-smoke.md](./story-04-ci-e2e-smoke.md) | — |
@@ -87,11 +89,19 @@ Phase 26 decomposed `web_server.py` but left `web_runtime.py` and the meeting→
 inversion standing. This phase finishes that and closes the test-trust and
 doc-truth gaps in the same pass.
 
+**HS-32-01 shipped (2026-06-02):** the 1,702-line `run_web_runtime()`
+god-function (10 `nonlocal` vars, ~55 closures) is now a `WebRuntime` class —
+state on `self`, closures as methods, `run()` owning the lifecycle, and a
+4-line `run_web_runtime()` shim preserving the entry point. Behavior-preserving;
+suite green at 2063/14, `web_runtime.py` ruff-clean. The class is now the
+substrate HS-32-02 (meeting→web inversion) builds the observer onto. **Next:
+HS-32-02.**
+
 ## Pickup order
 
-1. HS-32-01 — class-ify the runtime first; it is the substrate the inversion and
-   audio-ownership stories build on.
-2. HS-32-02 — invert meeting→web once `WebRuntime` can hold the observer.
+1. ~~HS-32-01 — class-ify the runtime first; it is the substrate the inversion
+   and audio-ownership stories build on.~~ **DONE (2026-06-02).**
+2. HS-32-02 — invert meeting→web once `WebRuntime` can hold the observer. **◀ next.**
 3. HS-32-03 — converge audio ownership.
 4. HS-32-04 — the CI smoke test (independent; can land any time but most valuable early).
 5. HS-32-05 — the error helper (mechanical, low risk).
