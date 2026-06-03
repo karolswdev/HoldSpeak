@@ -1,6 +1,6 @@
 # HS-33-02 — Apache-2.0 LICENSE + `pyproject` metadata
 
-**Status:** not-started.
+- **Status:** done (2026-06-03). Evidence: [evidence-story-02.md](./evidence-story-02.md).
 
 ## Goal
 
@@ -35,7 +35,7 @@ project URLs, or keywords.
 
 ## Done when
 
-- [ ] `LICENSE` (Apache-2.0) at repo root.
-- [ ] `pyproject` carries license / authors / classifiers / urls / keywords;
+- [x] `LICENSE` (Apache-2.0) at repo root.
+- [x] `pyproject` carries license / authors / classifiers / urls / keywords;
       builds cleanly with the metadata.
-- [ ] Full suite green.
+- [x] Full suite green.

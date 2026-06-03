@@ -1,9 +1,9 @@
 # Phase 33 — Documentation & Open-Source Readiness
 
-**Status:** in-progress (opened 2026-06-03). 1/6 stories shipped.
+**Status:** in-progress (opened 2026-06-03). 2/6 stories shipped.
 
-**Last updated:** 2026-06-03 (HS-33-01 shipped — model framing de-prescribed,
-defaults bumped to the Qwen3.5 family, `docs/MODELS.md` added).
+**Last updated:** 2026-06-03 (HS-33-02 shipped — Apache-2.0 `LICENSE` + full
+`pyproject` metadata; builds clean, verified in the wheel METADATA).
 
 ## Goal
 
@@ -66,8 +66,8 @@ this makes the project *presentable and adoptable*.
       models are current (Qwen3.5 family); `docs/MODELS.md` documents the
       bring-your-own contract; the intel `cloud` provider is clearly "OpenAI-
       compatible endpoint." (HS-33-01) ✅
-- [ ] An **Apache-2.0 `LICENSE`** exists; `pyproject` carries `license`,
-      `authors`, `classifiers`, `urls`, `keywords`. (HS-33-02)
+- [x] An **Apache-2.0 `LICENSE`** exists; `pyproject` carries `license`,
+      `authors`, `classifiers`, `urls`, `keywords`. (HS-33-02) ✅
 - [ ] `docs/` cleanly separates user-facing from internal/historical, with a
       `docs/README.md` index; no broken links. (HS-33-03)
 - [ ] README is OSS-grade (badges, honest status, quickstart, license/docs
@@ -83,7 +83,7 @@ this makes the project *presentable and adoptable*.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-33-01 | Model framing + `MODELS.md` | done | [story-01-model-framing.md](./story-01-model-framing.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-33-02 | Apache-2.0 LICENSE + `pyproject` metadata | not-started | [story-02-license-pyproject.md](./story-02-license-pyproject.md) | — |
+| HS-33-02 | Apache-2.0 LICENSE + `pyproject` metadata | done | [story-02-license-pyproject.md](./story-02-license-pyproject.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-33-03 | `docs/` reorganization + index | not-started | [story-03-docs-reorg.md](./story-03-docs-reorg.md) | — |
 | HS-33-04 | README + getting-started OSS pass + CHANGELOG | not-started | [story-04-readme-oss-pass.md](./story-04-readme-oss-pass.md) | — |
 | HS-33-05 | Visual assets (pixellab MCP) | not-started | [story-05-visual-assets.md](./story-05-visual-assets.md) | — |
@@ -110,14 +110,22 @@ Apple · any OpenAI-compatible endpoint) and clarified the intel `cloud` provide
 optional). Rebuilt the web bundle so the served docs page matches. Suite green at
 1953/15; touched files ruff-clean.
 
-**Next: HS-33-02** (Apache-2.0 LICENSE + `pyproject` metadata). **HS-33-05**
-(assets) runs with the pixellab MCP connected.
+**HS-33-02 shipped** (2026-06-03): added the Apache-2.0 `LICENSE` (user decision)
+and a complete `[project]` metadata block — `license = "Apache-2.0"` (SPDX) +
+`license-files`, `authors`, 11 `keywords`, 13 `classifiers` (Python 3.10–3.13,
+macOS/Linux, speech/utilities topics, Beta), and `[project.urls]`
+(Homepage/Repository/Issues/Documentation → `github.com/karolswdev/HoldSpeak`).
+`uv build` succeeds; verified `Metadata-Version: 2.4` + `License-Expression` +
+`License-File` in the built wheel.
+
+**Next: HS-33-03** (`docs/` reorg + index — do before the README pass so links
+settle). **HS-33-05** (assets) runs with the pixellab MCP connected.
 
 ## Pickup order
 
 1. HS-33-01 — model framing + `MODELS.md`. **✅ done (2026-06-03).**
-2. HS-33-02 — Apache-2.0 LICENSE + `pyproject` metadata. **◀ next.**
-3. HS-33-03 — `docs/` reorg + index (do before the README pass so links settle).
+2. HS-33-02 — Apache-2.0 LICENSE + `pyproject` metadata. **✅ done (2026-06-03).**
+3. HS-33-03 — `docs/` reorg + index (do before the README pass so links settle). **◀ next.**
 4. HS-33-04 — README + getting-started OSS pass + CHANGELOG.
 5. HS-33-05 — visual assets via the pixellab MCP.
 6. HS-33-06 — closeout + final-summary.
