@@ -1,6 +1,6 @@
 # HoldSpeak — Agent Handover
 
-**Written:** 2026-06-02. **Author:** Claude (Opus 4.8 session).
+**Written:** 2026-06-03. **Author:** Claude (Opus 4.8 session).
 **Read this first**, then `pm/roadmap/holdspeak/README.md` and the active phase's
 `current-phase-status.md`. This is a pickup snapshot, not canon — if it disagrees
 with the live status docs, the status docs win.
@@ -12,11 +12,9 @@ with the live status docs, the status docs win.
 - **Phase 31 (db decomposition): MERGED** to `main` (was PR #7). `holdspeak/db.py`
   (5,481-line god-object) → the `holdspeak/db/` package: a thin `Database`
   container + 5 repositories, migration ladder squashed to one canonical schema.
-- **Phase 32 — Foundation Hardening & Doc Truth: DONE (7/7).** Shipped this
-  session (HS-32-01/02/07/03/04/05/06 + a follow-up db fix). The work sits on a
-  **stacked local branch** `phase-32/hs-32-01-web-runtime-classify` (7 story
-  commits + the fix), **unpushed** — open a PR off it (or push & merge).
-  Highlights: `web_runtime.py` → a `WebRuntime` class; `MeetingSession` is
+- **Phase 32 — Foundation Hardening & Doc Truth: DONE (7/7), MERGED** to `main`
+  via PR #8 (all CI green, incl. the new real-Whisper smoke test on the macOS
+  runner). Highlights: `web_runtime.py` → a `WebRuntime` class; `MeetingSession` is
   web-free (emits via `on_broadcast`); **the TUI *and* the macOS menubar were
   retired** (web runtime is now the *sole* interactive runtime — `tui/`,
   `controller.py`, `menubar.py`, the `tui`/`menubar` CLI, `--no-tui`, and the
@@ -49,26 +47,28 @@ with the live status docs, the status docs win.
 
 ## 3. Pick up here
 
-**Phase 32 is complete and unpushed.** Push `phase-32/hs-32-01-web-runtime-classify`
-and open a PR to `main` (the stack is 7 story commits + a db fix). Then pick the
-next phase — Phase 32's `final-summary.md` records the exit state; the
-hardware-gated phases (24/25/15) still need the physical device / a real mic and a
-local (non-remote) author.
+**▶ Phase 33 — Documentation & Open-Source Readiness is OPEN (0/6), on local branch
+`phase-33/hs-33-01-model-framing`.** Start with **HS-33-01 — model framing +
+`MODELS.md`** (de-prescribe the aging model strings, bump examples to Qwen3.5,
+clarify the intel `cloud` provider as "any OpenAI-compatible endpoint"; **GGUF
+stays** — it's the current local format). No external dependency. Then HS-33-02
+(Apache-2.0 LICENSE + `pyproject` metadata) → 03 (`docs/` reorg + index) → 04
+(README OSS pass + CHANGELOG/CONTRIBUTING) → **05 (visual assets via the pixellab
+MCP)** → 06 (closeout). Full plan + per-story specs:
+`phase-33-documentation-oss-readiness/current-phase-status.md`.
+
+> **▶ pixellab MCP:** HS-33-05 generates the refreshed pixel-art set (logo/mark +
+> GitHub social/OG card + spot art) via the **pixellab MCP** — connected in the
+> working session. Record each asset's object ID + prompt in
+> `docs/assets/pixellab/README.md` (the existing set already does this).
 
 > **▶ Note for a remote (no-hardware) session:** the real-audio capture paths
 > (`metal`) can't run here; the HS-32-04 smoke test covers real transcription on a
 > committed WAV instead. Anything touching the AI-PI or a live mic stays gated.
 
-Phase 32 order (see its `current-phase-status.md`): 01 class-ify web_runtime →
-02 invert the meeting→web-server coupling (`meeting_session.py` reaches *up* into
-the web layer) → 03 converge the three audio-ownership models → 04 **the ungated
-CI core-path smoke test** (the biggest test-trust gap — hotkey→text is only tested
-behind `metal`/`spoken_e2e`, which never run in CI) → 05 route error-handler helper
-→ 06 stale non-PMO doc sweep + drift guard.
-
-**Branch/stack note:** the Phase-31 work is stacked branches under PR #7. Once #7
-merges, branch Phase 32 fresh off `main`. If #7 isn't merged yet, either wait or
-stack on it.
+> **Historical:** Phases 31 (db decomposition) and 32 (foundation hardening +
+> TUI/menubar retirement) are both **merged to `main`** (PRs #7 and #8). Their
+> `final-summary.md` files record the exit state.
 
 ## 4. The persistence layer (Phase 31 — how it's shaped now)
 
