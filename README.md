@@ -1,6 +1,15 @@
 # HoldSpeak
 
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Tests](https://github.com/karolswdev/HoldSpeak/actions/workflows/test.yml/badge.svg)](https://github.com/karolswdev/HoldSpeak/actions/workflows/test.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![Platform: macOS | Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg)](#platform-support)
+
 Voice input for macOS and Linux — hold a key, speak, release. Local-first and private by default, with optional cloud intelligence when you want it. Works standalone as a voice typing tool or wired into meeting mode, AI agents, and the AIPI-Lite companion device.
+
+> **Status: early / pre-release.** HoldSpeak is mature in features but not yet
+> published to PyPI — install from source (below). APIs, config, and defaults may
+> still change. Feedback and contributions welcome.
 
 ## What it does
 
@@ -60,19 +69,31 @@ bridge setup, and verification live in [AIPI-Lite Developer Workflow](docs/AIPI_
 
 Wayland sessions often block global hooks and synthetic typing. HoldSpeak falls back to clipboard paste for injection.
 
-## Install
+## Quickstart
+
+HoldSpeak installs from source (it isn't on PyPI yet). The one-liner clones via
+the install script; `doctor` checks your setup, then `holdspeak` launches the web
+runtime:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/scripts/install.sh | bash
-holdspeak doctor
-holdspeak
+holdspeak doctor   # verify mic permissions + backends
+holdspeak          # launch the web runtime
+```
+
+Or from a clone (using [`uv`](https://docs.astral.sh/uv/)):
+
+```bash
+git clone https://github.com/karolswdev/HoldSpeak.git && cd HoldSpeak
+uv pip install -e .
+holdspeak doctor && holdspeak
 ```
 
 Optional extras (install only what you need):
 
 ```bash
 # Meeting mode with AI intelligence
-curl ... | bash -s -- --with-meeting
+curl -fsSL https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/scripts/install.sh | bash -s -- --with-meeting
 
 # Intelligent dictation — pick one backend
 uv pip install -e '.[dictation-mlx]'      # Apple Silicon (MLX)
@@ -80,13 +101,17 @@ uv pip install -e '.[dictation-llama]'    # Cross-platform (GGUF)
 uv pip install -e '.[dictation-openai]'   # OpenAI-compatible endpoint
 ```
 
-For local installs from this checkout: `uv pip install -e .`
+The dictation/meeting LLM is **bring-your-own** — GGUF in-process, MLX on Apple
+Silicon, or any OpenAI-compatible endpoint. See [`docs/MODELS.md`](docs/MODELS.md)
+for the contract and current model suggestions.
 
 ## Where to go next
 
 | I want to… | Read this |
 |---|---|
+| Browse all the docs | [Documentation index](docs/README.md) |
 | Get it running and verify my setup | [Getting Started](docs/GETTING_STARTED.md) |
+| Choose / configure a model | [Models — bring your own](docs/MODELS.md) |
 | Set up project-aware dictation for Codex / Claude | [Intelligent Typing Setup](docs/INTELLIGENT_TYPING_GUIDE.md) |
 | Use meeting mode and configure AI intelligence | [Meeting Mode Guide](docs/MEETING_MODE_GUIDE.md) |
 | Wire up the AIPI-Lite companion device | [AIPI-Lite Developer Workflow](docs/AIPI_LITE_DEV_WORKFLOW.md) |
@@ -146,6 +171,12 @@ Config file: `~/.config/holdspeak/config.json`
 
 Full configuration reference (meeting intel, dictation pipeline, cloud endpoints, MIR routing) is in the relevant guide docs above.
 
+## Contributing
+
+Contributions are welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup
+(`uv`, the git hooks, the test command) and the commit-contract workflow. Recent
+changes are tracked in [`CHANGELOG.md`](CHANGELOG.md).
+
 ## License
 
-MIT
+Licensed under the **Apache License 2.0** — see [`LICENSE`](LICENSE).

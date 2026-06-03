@@ -1,6 +1,6 @@
 # HS-33-04 — README + getting-started OSS pass + CHANGELOG
 
-**Status:** not-started.
+- **Status:** done (2026-06-03). Evidence: [evidence-story-04.md](./evidence-story-04.md).
 
 ## Goal
 
@@ -36,7 +36,7 @@ when it isn't (the "v0.2.0 released" line is forward-looking).
 
 ## Done when
 
-- [ ] README is OSS-grade: badges, honest pre-release status, working quickstart,
+- [x] README is OSS-grade: badges, honest pre-release status, working quickstart,
       license/docs/contributing links.
-- [ ] `CHANGELOG.md` + a minimal `CONTRIBUTING.md` exist and are accurate.
-- [ ] No broken README links; full suite green.
+- [x] `CHANGELOG.md` + a minimal `CONTRIBUTING.md` exist and are accurate.
+- [x] No broken README links; full suite green.
