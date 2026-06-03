@@ -1,6 +1,6 @@
 # HS-34-04 — Decompose `intel.py` → `intel/` package
 
-- **Status:** not-started.
+- **Status:** done (2026-06-03). Evidence: [evidence-story-04.md](./evidence-story-04.md).
 
 ## Goal
 
@@ -47,7 +47,7 @@ so every `from holdspeak.intel import X` caller is unchanged.
 
 ## Done when
 
-- [ ] `intel.py` → an `intel/` package (models / providers / parsing / engine).
-- [ ] `__init__` re-exports the full public surface; no caller or test import
+- [x] `intel.py` → an `intel/` package (models / providers / parsing / engine).
+- [x] `__init__` re-exports the full public surface; no caller or test import
       changed; egress-invariant + intel suite green.
-- [ ] Full suite green; package ruff-clean.
+- [x] Full suite green; package ruff-clean.

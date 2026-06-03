@@ -1,9 +1,9 @@
 # Phase 34 — Structural Decomposition II
 
-**Status:** in-progress (opened 2026-06-03). 3/5 stories shipped.
+**Status:** in-progress (opened 2026-06-03). 4/5 stories shipped.
 
-**Last updated:** 2026-06-03 (HS-34-03 shipped — `agent_context.py` → an
-`agent_context/` package, full re-export, monkeypatch targets preserved; suite green 1958/15).
+**Last updated:** 2026-06-03 (HS-34-04 shipped — `intel.py` → an `intel/` package,
+full re-export, OpenAI/Llama patch targets preserved via the package; suite green 1962/15).
 
 ## Goal
 
@@ -55,8 +55,8 @@ modules. No new features; every import path and every HTTP route stays identical
       identical; `build_activity_router` import unchanged. (HS-34-02) ✅
 - [x] `agent_context.py` is an `agent_context/` package with a full re-export
       `__init__`; no caller import changed. (HS-34-03) ✅
-- [ ] `intel.py` is an `intel/` package with a full re-export `__init__`; no caller
-      import changed. (HS-34-04)
+- [x] `intel.py` is an `intel/` package with a full re-export `__init__`; no caller
+      import changed. (HS-34-04) ✅
 - [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green throughout; the
       app route table is asserted unchanged; every touched tree ruff-clean.
 
@@ -67,7 +67,7 @@ modules. No new features; every import path and every HTTP route stays identical
 | HS-34-01 | Split `web/routes/dictation.py` → `routes/dictation/` | done | [story-01-dictation-routes-split.md](./story-01-dictation-routes-split.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-34-02 | Split `web/routes/activity.py` → `routes/activity/` | done | [story-02-activity-routes-split.md](./story-02-activity-routes-split.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-34-03 | Decompose `agent_context.py` → package | done | [story-03-agent-context-package.md](./story-03-agent-context-package.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-34-04 | Decompose `intel.py` → package | not-started | [story-04-intel-package.md](./story-04-intel-package.md) | — |
+| HS-34-04 | Decompose `intel.py` → package | done | [story-04-intel-package.md](./story-04-intel-package.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-34-05 | Phase closeout + final-summary | not-started | [story-05-closeout.md](./story-05-closeout.md) | — |
 
 ## Where we are
@@ -84,8 +84,8 @@ non-hardware-gated.
 1. HS-34-01 — `routes/dictation/` split. **✅ done (2026-06-03).**
 2. HS-34-02 — `routes/activity/` split (same pattern; bigger handler count). **✅ done (2026-06-03).**
 3. HS-34-03 — `agent_context/` package (proven Phase-31 re-export pattern). **✅ done (2026-06-03).**
-4. HS-34-04 — `intel/` package (same pattern). **◀ next.**
-5. HS-34-05 — closeout + final-summary.
+4. HS-34-04 — `intel/` package (same pattern). **✅ done (2026-06-03).**
+5. HS-34-05 — closeout + final-summary. **◀ next (last story).**
 
 The two route splits share a **route-table invariant** check (the app's full route
 list, paths+methods, must be identical before/after); the two module-package splits
@@ -117,6 +117,16 @@ preserved with tests unchanged: `AGENT_CONTEXT_FILE` is read through the package
 re-exposed for the tmux `shutil.which` patch. Committed
 `test_agent_context_package.py` guards the surface + frozen dataclasses. Suite green
 1958/15; package ruff + F821 clean.
+
+**HS-34-04 shipped** (2026-06-03): `intel.py` (1,066L) → an `intel/` package
+(`models` ← `parsing`/`providers` ← `engine`; `build_configured_meeting_intel`
+imports the engine lazily to break the cycle) with a full re-export `__init__`. The
+optional-dependency import head (`OpenAI`/`Llama`) stays in `__init__` (the patch
+target); `providers`/`engine` read them via `_intel_pkg`, and the one intra-package
+caller of `resolve_intel_provider` is package-routed too — so the egress-invariant +
+cloud + plugin-host patches all reach their targets with **tests unchanged**.
+Committed `test_intel_package.py` (incl. an engine-reads-OpenAI-via-package check).
+Suite green 1962/15; package ruff + F821 clean.
 
 ## Active risks
 
