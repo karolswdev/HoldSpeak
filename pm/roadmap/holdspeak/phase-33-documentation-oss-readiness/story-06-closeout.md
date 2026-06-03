@@ -1,6 +1,6 @@
 # HS-33-06 — Phase closeout + final-summary
 
-**Status:** not-started.
+- **Status:** done (2026-06-03). Evidence: [evidence-story-06.md](./evidence-story-06.md).
 
 ## Goal
 
@@ -27,7 +27,7 @@ are true and navigable, and write the phase `final-summary.md`.
 
 ## Done when
 
-- [ ] No broken links; drift guard + doc-truth green.
-- [ ] OSS checklist satisfied (LICENSE / metadata / README / docs / assets /
+- [x] No broken links; drift guard + doc-truth green.
+- [x] OSS checklist satisfied (LICENSE / metadata / README / docs / assets /
       CHANGELOG / CONTRIBUTING).
-- [ ] `final-summary.md` written; project README phase row = `done`; full suite green.
+- [x] `final-summary.md` written; project README phase row = `done`; full suite green.

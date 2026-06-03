@@ -47,20 +47,25 @@ with the live status docs, the status docs win.
 
 ## 3. Pick up here
 
-**▶ Phase 33 — Documentation & Open-Source Readiness is OPEN (0/6), on local branch
-`phase-33/hs-33-01-model-framing`.** Start with **HS-33-01 — model framing +
-`MODELS.md`** (de-prescribe the aging model strings, bump examples to Qwen3.5,
-clarify the intel `cloud` provider as "any OpenAI-compatible endpoint"; **GGUF
-stays** — it's the current local format). No external dependency. Then HS-33-02
-(Apache-2.0 LICENSE + `pyproject` metadata) → 03 (`docs/` reorg + index) → 04
-(README OSS pass + CHANGELOG/CONTRIBUTING) → **05 (visual assets via the pixellab
-MCP)** → 06 (closeout). Full plan + per-story specs:
-`phase-33-documentation-oss-readiness/current-phase-status.md`.
+**▶ Phase 33 — Documentation & Open-Source Readiness is CLOSED ✅ (6/6), on local
+branch `phase-33/hs-33-01-model-framing` (6 story commits) — unpushed. Open a PR to
+`main`.** It shipped: de-prescribed model framing + `docs/MODELS.md` (HS-33-01);
+**Apache-2.0 `LICENSE`** + full `pyproject` metadata (HS-33-02); `docs/` reorg into
+user-facing vs `docs/internal/` + a `docs/README.md` index + a doc link-check
+(HS-33-03); an OSS-grade README pass + `CHANGELOG.md` + `CONTRIBUTING.md`
+(HS-33-04); a brand mark + 1280×640 social/OG card via the pixellab MCP (HS-33-05);
+and the closeout (HS-33-06). See
+`phase-33-documentation-oss-readiness/final-summary.md`.
 
-> **▶ pixellab MCP:** HS-33-05 generates the refreshed pixel-art set (logo/mark +
-> GitHub social/OG card + spot art) via the **pixellab MCP** — connected in the
-> working session. Record each asset's object ID + prompt in
-> `docs/assets/pixellab/README.md` (the existing set already does this).
+> **▶ Manual follow-up (not a repo file):** set
+> `docs/assets/pixellab/social-card.png` as the repo's GitHub social preview
+> (*Settings → Social preview*). Cutting an actual release (tag + PyPI) is a
+> deliberate future follow-up — Phase 33 made the positioning *honest*, not
+> *published*.
+
+> **▶ pixellab MCP** (for future asset work): record each asset's object ID +
+> prompt in `docs/assets/pixellab/README.md`; derived (composed) assets like the
+> social card are reproduced via `docs/assets/pixellab/compose_og_card.py`.
 
 > **▶ Note for a remote (no-hardware) session:** the real-audio capture paths
 > (`metal`) can't run here; the HS-32-04 smoke test covers real transcription on a
