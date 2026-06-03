@@ -1,164 +1,36 @@
-"""Agent-session context registry for local coding assistants.
-
-Claude Code and Codex hooks can report high-confidence session state
-(`cwd`, `session_id`, transcript path, prompt text) that the OS cannot
-reliably infer from an active terminal window. This module stores that
-state in HoldSpeak's local config directory so the dictation pipeline can
-prefer agent-reported project context over process/window guessing.
-"""
+"""Agent-session registry + state IO + assistant-text extraction (HS-34-03)."""
 
 from __future__ import annotations
 
 import contextlib
 import json
 import os
-import re
-import shlex
-import shutil
-import subprocess
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator, Mapping, Optional
 
-from .config import CONFIG_DIR
+import holdspeak.agent_context as _agent_context_pkg
 
-AGENT_CONTEXT_FILE = CONFIG_DIR / "agent_sessions.json"
-SUPPORTED_AGENTS = {"claude", "codex"}
-STATE_VERSION = 1
-MAX_SESSIONS = 200
-DEFAULT_RECENT_MAX_AGE_SECONDS = 30 * 60
-DEFAULT_STALE_AGENT_SESSION_SECONDS = 120
-DEFAULT_ASSISTANT_CAPTURE_MAX_CHARS = 4_096
-DEFAULT_PROMPT_CAPTURE_MAX_CHARS = 4_096
-
-HS_CONTEXT_DIR = ".hs"
-HS_CONTEXT_FILES: tuple[str, ...] = (
-    "instructions.md",
-    "context.md",
-    "memory.md",
-    "workflows.md",
-    "issues.md",
-    "terms.md",
-    "targets.md",
-)
-HS_CONTEXT_FILE_KEYS: dict[str, str] = {
-    "instructions.md": "instructions",
-    "context.md": "context",
-    "memory.md": "memory",
-    "workflows.md": "workflows",
-    "issues.md": "issues",
-    "terms.md": "terms",
-    "targets.md": "targets",
-}
-HS_FLAT_CONTEXT_FILES: dict[str, str] = {
-    ".hs_instructions": "instructions.md",
-    ".hs_context": "context.md",
-    ".hs_memory": "memory.md",
-    ".hs_workflows": "workflows.md",
-    ".hs_issues": "issues.md",
-    ".hs_terms": "terms.md",
-    ".hs_targets": "targets.md",
-    ".hs_ignore": "ignore",
-}
-HS_IGNORE_FILE = "ignore"
-DEFAULT_CONTEXT_MAX_BYTES = 64_000
-DEFAULT_CONTEXT_PER_FILE_MAX_BYTES = 16_000
-DEFAULT_CONTEXT_HARD_FILE_MAX_BYTES = 128_000
-_SECRET_CONTEXT_RE = re.compile(
-    r"(api[_-]?key|secret[_-]?key|access[_-]?token|bearer\s+[a-z0-9._~+/-]{16,}|sk-[a-z0-9]{16,})",
-    re.IGNORECASE,
+from ._common import _format_timestamp, _optional_str, _parse_timestamp
+from .hooks import detect_tmux_context
+from .hs_context import _normalize_project_root, detect_repo_root
+from .models import (
+    AgentSession,
+    DEFAULT_ASSISTANT_CAPTURE_MAX_CHARS,
+    DEFAULT_PROMPT_CAPTURE_MAX_CHARS,
+    DEFAULT_RECENT_MAX_AGE_SECONDS,
+    DEFAULT_STALE_AGENT_SESSION_SECONDS,
+    MAX_SESSIONS,
+    STATE_VERSION,
+    SUPPORTED_AGENTS,
 )
 
 
-@dataclass(frozen=True)
-class AgentSession:
-    """Latest known state for one Claude/Codex session."""
-
-    agent: str
-    session_id: str
-    cwd: str
-    updated_at: str
-    hook_event_name: str
-    repo_root: Optional[str] = None
-    repo_anchor: Optional[str] = None
-    project_name: Optional[str] = None
-    transcript_path: Optional[str] = None
-    model: Optional[str] = None
-    last_prompt: Optional[str] = None
-    last_tool_name: Optional[str] = None
-    last_assistant_text: Optional[str] = None
-    last_assistant_text_at: Optional[str] = None
-    summary: Optional[dict[str, Any]] = None
-    tmux_pane: Optional[str] = None
-    tmux_session: Optional[str] = None
-    tmux_window: Optional[str] = None
-    tmux_pane_index: Optional[str] = None
-    tmux_pane_current_path: Optional[str] = None
-    awaiting_response: bool = False
-    capture_messages: bool = False
-    created_at: Optional[str] = None
-    event_count: int = 1
-    pinned: bool = False
-
-    @classmethod
-    def from_mapping(cls, raw: Mapping[str, Any]) -> "AgentSession":
-        return cls(
-            agent=str(raw.get("agent") or ""),
-            session_id=str(raw.get("session_id") or ""),
-            cwd=str(raw.get("cwd") or ""),
-            updated_at=str(raw.get("updated_at") or ""),
-            hook_event_name=str(raw.get("hook_event_name") or ""),
-            repo_root=_optional_str(raw.get("repo_root")),
-            repo_anchor=_optional_str(raw.get("repo_anchor")),
-            project_name=_optional_str(raw.get("project_name")),
-            transcript_path=_optional_str(raw.get("transcript_path")),
-            model=_optional_str(raw.get("model")),
-            last_prompt=_optional_str(raw.get("last_prompt")),
-            last_tool_name=_optional_str(raw.get("last_tool_name")),
-            last_assistant_text=_optional_str(raw.get("last_assistant_text")),
-            last_assistant_text_at=_optional_str(raw.get("last_assistant_text_at")),
-            summary=dict(raw["summary"]) if isinstance(raw.get("summary"), dict) else None,
-            tmux_pane=_optional_str(raw.get("tmux_pane")),
-            tmux_session=_optional_str(raw.get("tmux_session")),
-            tmux_window=_optional_str(raw.get("tmux_window")),
-            tmux_pane_index=_optional_str(raw.get("tmux_pane_index")),
-            tmux_pane_current_path=_optional_str(raw.get("tmux_pane_current_path")),
-            awaiting_response=bool(raw.get("awaiting_response")),
-            capture_messages=bool(raw.get("capture_messages")),
-            created_at=_optional_str(raw.get("created_at")),
-            event_count=int(raw.get("event_count") or 1),
-            pinned=bool(raw.get("pinned")),
-        )
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "agent": self.agent,
-            "session_id": self.session_id,
-            "cwd": self.cwd,
-            "updated_at": self.updated_at,
-            "hook_event_name": self.hook_event_name,
-            "repo_root": self.repo_root,
-            "repo_anchor": self.repo_anchor,
-            "project_name": self.project_name,
-            "transcript_path": self.transcript_path,
-            "model": self.model,
-            "last_prompt": self.last_prompt,
-            "last_tool_name": self.last_tool_name,
-            "last_assistant_text": self.last_assistant_text,
-            "last_assistant_text_at": self.last_assistant_text_at,
-            "summary": dict(self.summary) if isinstance(self.summary, dict) else None,
-            "tmux_pane": self.tmux_pane,
-            "tmux_session": self.tmux_session,
-            "tmux_window": self.tmux_window,
-            "tmux_pane_index": self.tmux_pane_index,
-            "tmux_pane_current_path": self.tmux_pane_current_path,
-            "awaiting_response": self.awaiting_response,
-            "capture_messages": self.capture_messages,
-            "created_at": self.created_at,
-            "event_count": self.event_count,
-            "pinned": self.pinned,
-        }
+def _default_state_file() -> Path:
+    """Resolve the default state file via the package so tests that
+    monkeypatch `holdspeak.agent_context.AGENT_CONTEXT_FILE` are honored."""
+    return _agent_context_pkg.AGENT_CONTEXT_FILE
 
 
 def ingest_agent_hook_event(
@@ -192,7 +64,7 @@ def ingest_agent_hook_event(
     timestamp = _format_timestamp(now or datetime.now(timezone.utc))
     hook_event_name = str(payload.get("hook_event_name") or "").strip() or "unknown"
     repo = detect_repo_root(cwd_path)
-    state_file = state_path or AGENT_CONTEXT_FILE
+    state_file = state_path or _default_state_file()
     key = _session_key(normalized_agent, session_id)
     assistant_text: str | None = None
     if capture_messages and hook_event_name in {"Stop", "SubagentStop"}:
@@ -261,30 +133,6 @@ def ingest_agent_hook_event(
     return session
 
 
-def detect_tmux_context(
-    payload: Mapping[str, Any] | None = None,
-    *,
-    env: Mapping[str, str] | None = None,
-) -> dict[str, str]:
-    """Return tmux pane metadata visible to an agent hook process."""
-
-    raw = dict(payload or {})
-    source_env = env if env is not None else os.environ
-    pane = _optional_str(raw.get("tmux_pane")) or _optional_str(source_env.get("TMUX_PANE"))
-    if not pane:
-        return {}
-    context = {"tmux_pane": pane}
-    display = _read_tmux_display(pane, env=source_env)
-    if display:
-        context.update(display)
-    else:
-        for key in ("tmux_session", "tmux_window", "tmux_pane_index", "tmux_pane_current_path"):
-            value = _optional_str(raw.get(key))
-            if value:
-                context[key] = value
-    return context
-
-
 def get_recent_agent_session(
     *,
     agent: str | None = None,
@@ -342,7 +190,7 @@ def get_selected_awaiting_agent_session(
 ) -> AgentSession | None:
     """Return the user-selected awaiting session if it is still valid."""
 
-    state = _read_state(state_path or AGENT_CONTEXT_FILE)
+    state = _read_state(state_path or _default_state_file())
     selected_key = _selected_response_key(state)
     if selected_key is None:
         return None
@@ -367,7 +215,7 @@ def select_next_awaiting_agent_session(
 ) -> AgentSession | None:
     """Advance the selected awaiting session and return the new target."""
 
-    state_file = state_path or AGENT_CONTEXT_FILE
+    state_file = state_path or _default_state_file()
     timestamp = _format_timestamp(now or datetime.now(timezone.utc))
     with _state_lock(state_file):
         state = _read_state(state_file)
@@ -418,7 +266,7 @@ def list_recent_awaiting_agent_sessions(
     """Return recent captured agent questions awaiting user responses."""
 
     return _recent_awaiting_sessions_from_state(
-        _read_state(state_path or AGENT_CONTEXT_FILE),
+        _read_state(state_path or _default_state_file()),
         project_root=project_root,
         agent=agent,
         max_age_seconds=max_age_seconds,
@@ -480,7 +328,7 @@ def clear_agent_session_response(
 ) -> AgentSession | None:
     """Clear captured assistant text for a specific or recent awaiting session."""
 
-    state_file = state_path or AGENT_CONTEXT_FILE
+    state_file = state_path or _default_state_file()
     normalized_agent = agent.strip().lower() if isinstance(agent, str) and agent.strip() else None
     normalized_session_id = session_id.strip() if isinstance(session_id, str) and session_id.strip() else None
     normalized_project_root = _normalize_project_root(project_root)
@@ -562,7 +410,7 @@ def select_awaiting_agent_session(
     if not normalized_agent or not normalized_session_id:
         raise ValueError("agent and session_id are required")
 
-    state_file = state_path or AGENT_CONTEXT_FILE
+    state_file = state_path or _default_state_file()
     key = _session_key(normalized_agent, normalized_session_id)
     timestamp = _format_timestamp(now or datetime.now(timezone.utc))
     with _state_lock(state_file):
@@ -604,7 +452,7 @@ def pin_agent_session(
     if not normalized_agent or not normalized_session_id:
         raise ValueError("agent and session_id are required")
 
-    state_file = state_path or AGENT_CONTEXT_FILE
+    state_file = state_path or _default_state_file()
     key = _session_key(normalized_agent, normalized_session_id)
     timestamp = _format_timestamp(now or datetime.now(timezone.utc))
     with _state_lock(state_file):
@@ -644,7 +492,7 @@ def clear_stale_agent_sessions(
     cleared, so it drops out of the waiting list. Pinned sessions are skipped.
     """
 
-    state_file = state_path or AGENT_CONTEXT_FILE
+    state_file = state_path or _default_state_file()
     cutoff_now = now or datetime.now(timezone.utc)
     timestamp = _format_timestamp(cutoff_now)
     cleared = 0
@@ -697,7 +545,7 @@ def set_agent_session_summary(
     if normalized_agent not in SUPPORTED_AGENTS:
         raise ValueError(f"agent must be one of: {', '.join(sorted(SUPPORTED_AGENTS))}")
 
-    state_file = state_path or AGENT_CONTEXT_FILE
+    state_file = state_path or _default_state_file()
     key = _session_key(normalized_agent, normalized_session_id)
     timestamp = _format_timestamp(now or datetime.now(timezone.utc))
     with _state_lock(state_file):
@@ -726,7 +574,7 @@ def list_agent_sessions(
     state_path: Path | None = None,
     agent: str | None = None,
 ) -> list[AgentSession]:
-    state = _read_state(state_path or AGENT_CONTEXT_FILE)
+    state = _read_state(state_path or _default_state_file())
     raw_sessions = state.get("sessions")
     if not isinstance(raw_sessions, dict):
         return []
@@ -861,272 +709,6 @@ def _extract_text_parts(value: Any) -> list[str]:
     return []
 
 
-@dataclass(frozen=True)
-class RepoRoot:
-    root: Path
-    anchor: str
-    project_name: str
-
-
-def detect_repo_root(start: Path) -> RepoRoot | None:
-    """Walk upward and detect a repo/project root for agent hook state."""
-
-    cur = start if start.is_dir() else start.parent
-    try:
-        cur = cur.resolve()
-    except OSError:
-        cur = cur.absolute()
-    home = Path.home().resolve()
-
-    while True:
-        for marker, anchor in (
-            (".hs", "holdspeak"),
-            (".hs_context", "holdspeak-flat"),
-            (".git", "git"),
-            (".holdspeak", "holdspeak-legacy"),
-        ):
-            if (cur / marker).exists():
-                return RepoRoot(root=cur, anchor=anchor, project_name=_derive_project_name(cur))
-        if cur == home:
-            return None
-        parent = cur.parent
-        if parent == cur:
-            return None
-        cur = parent
-
-
-def load_hs_project_context(
-    project_root: Path,
-    *,
-    max_bytes: int = DEFAULT_CONTEXT_MAX_BYTES,
-    per_file_max_bytes: int = DEFAULT_CONTEXT_PER_FILE_MAX_BYTES,
-) -> dict[str, Any]:
-    """Load repo-local HoldSpeak context using a small fixed convention."""
-
-    root = project_root.expanduser()
-    hs_dir = root / HS_CONTEXT_DIR
-    payload: dict[str, Any] = {
-        "root": str(root),
-        "context_dir": str(hs_dir),
-        "exists": hs_dir.is_dir() or any((root / name).is_file() for name in HS_FLAT_CONTEXT_FILES),
-        "files": {},
-        "ignore": [],
-        "flat_files": {},
-        "skipped": [],
-        "warnings": [],
-        "write_policy": {
-            "canonical": ".hs/ files are editable from the web UI after user action.",
-            "flat": ".hs_* files are read-only compatibility inputs; migrate edits into .hs/.",
-            "automatic_writes": False,
-        },
-        "truncated": False,
-    }
-    if not payload["exists"]:
-        return payload
-
-    remaining = max(0, max_bytes)
-    files: dict[str, dict[str, Any]] = {}
-    flat_files: dict[str, dict[str, Any]] = {}
-
-    for flat_name, canonical_name in HS_FLAT_CONTEXT_FILES.items():
-        path = root / flat_name
-        if not path.is_file():
-            continue
-        result = _read_context_entry(
-            path,
-            min(remaining, 16_000 if canonical_name == "ignore" else per_file_max_bytes),
-            source="flat",
-        )
-        if result.get("skipped"):
-            payload["skipped"].append(result)
-            payload["warnings"].append(f"Skipped {flat_name}: {result.get('reason')}")
-            continue
-        content = str(result.get("content") or "")
-        remaining = max(0, remaining - len(content.encode("utf-8")))
-        flat_files[flat_name] = {
-            "path": str(path),
-            "canonical_name": canonical_name,
-            "content": content,
-            "truncated": bool(result.get("truncated")),
-            "read_only": True,
-        }
-        if canonical_name == "ignore":
-            payload["ignore"] = _parse_ignore_lines(content)
-            if canonical_name not in files:
-                files[canonical_name] = {
-                    "path": str(path),
-                    "content": content,
-                    "truncated": bool(result.get("truncated")),
-                    "source": "flat",
-                    "read_only": True,
-                }
-        elif canonical_name not in files:
-            files[canonical_name] = {
-                "path": str(path),
-                "content": content,
-                "truncated": bool(result.get("truncated")),
-                "source": "flat",
-                "read_only": True,
-            }
-        if result.get("truncated"):
-            payload["truncated"] = True
-
-    for name in HS_CONTEXT_FILES:
-        path = hs_dir / name
-        if not path.is_file():
-            continue
-        # Avoid letting one large file starve later canonical files. The
-        # global budget still caps total prompt material.
-        result = _read_context_entry(path, min(remaining, per_file_max_bytes), source="directory")
-        if result.get("skipped"):
-            payload["skipped"].append(result)
-            payload["warnings"].append(f"Skipped .hs/{name}: {result.get('reason')}")
-            continue
-        content = str(result.get("content") or "")
-        remaining = max(0, remaining - len(content.encode("utf-8")))
-        files[name] = {
-            "path": str(path),
-            "content": content,
-            "truncated": bool(result.get("truncated")),
-            "source": "directory",
-            "read_only": False,
-        }
-        if result.get("truncated"):
-            payload["truncated"] = True
-    payload["files"] = files
-    payload["flat_files"] = flat_files
-
-    ignore_path = hs_dir / HS_IGNORE_FILE
-    if ignore_path.is_file():
-        result = _read_context_entry(ignore_path, min(remaining, 16_000), source="directory")
-        if result.get("skipped"):
-            payload["skipped"].append(result)
-            payload["warnings"].append(f"Skipped .hs/{HS_IGNORE_FILE}: {result.get('reason')}")
-        else:
-            content = str(result.get("content") or "")
-            payload["ignore"] = _parse_ignore_lines(content)
-            files[HS_IGNORE_FILE] = {
-                "path": str(ignore_path),
-                "content": content,
-                "truncated": bool(result.get("truncated")),
-                "source": "directory",
-                "read_only": False,
-            }
-        if result.get("truncated"):
-            payload["truncated"] = True
-
-    return payload
-
-
-def compact_hs_project_context(context: Mapping[str, Any]) -> dict[str, Any] | None:
-    """Return a template-friendly `.hs/` context mapping for `ProjectContext`."""
-
-    if not context.get("exists"):
-        return None
-    compact: dict[str, Any] = {}
-    files = context.get("files")
-    if isinstance(files, dict):
-        for filename, key in HS_CONTEXT_FILE_KEYS.items():
-            entry = files.get(filename)
-            if not isinstance(entry, dict):
-                continue
-            content = str(entry.get("content") or "").strip()
-            if content:
-                compact[key] = content
-    ignore = context.get("ignore")
-    if isinstance(ignore, list):
-        compact["ignore"] = [str(item) for item in ignore if str(item).strip()]
-    rendered = render_hs_context_for_prompt(context).strip()
-    if rendered:
-        compact["prompt_context"] = rendered
-    compact["context_dir"] = str(context.get("context_dir") or "")
-    compact["truncated"] = bool(context.get("truncated"))
-    return compact
-
-
-def render_hs_context_for_prompt(context: Mapping[str, Any]) -> str:
-    """Render loaded `.hs/` context as compact prompt material."""
-
-    if not context.get("exists"):
-        return ""
-    parts: list[str] = []
-    files = context.get("files")
-    if isinstance(files, dict):
-        for name in HS_CONTEXT_FILES:
-            entry = files.get(name)
-            if not isinstance(entry, dict):
-                continue
-            content = str(entry.get("content") or "").strip()
-            if not content:
-                continue
-            parts.append(f"## .hs/{name}\n{content}")
-    ignore = context.get("ignore")
-    if isinstance(ignore, list) and ignore:
-        parts.append("## .hs/ignore\n" + "\n".join(f"- {item}" for item in ignore))
-    return "\n\n".join(parts)
-
-
-def claude_hook_template(*, capture_messages: bool = False) -> dict[str, Any]:
-    command = _agent_hook_command("claude", capture_messages=capture_messages)
-    return {
-        "hooks": {
-            "SessionStart": [
-                {
-                    "matcher": "startup|resume|clear|compact",
-                    "hooks": [{"type": "command", "command": command, "timeout": 5}],
-                }
-            ],
-            "CwdChanged": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
-            ],
-            "UserPromptSubmit": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
-            ],
-            "Stop": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
-            ],
-        }
-    }
-
-
-def codex_hook_template(*, capture_messages: bool = False) -> dict[str, Any]:
-    command = _agent_hook_command("codex", capture_messages=capture_messages)
-    return {
-        "hooks": {
-            "SessionStart": [
-                {
-                    "matcher": "startup|resume|clear",
-                    "hooks": [{"type": "command", "command": command, "timeout": 5}],
-                }
-            ],
-            "UserPromptSubmit": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
-            ],
-            "PreToolUse": [
-                {
-                    "matcher": "Bash|apply_patch|Edit|Write",
-                    "hooks": [{"type": "command", "command": command, "timeout": 5}],
-                }
-            ],
-            "PostToolUse": [
-                {
-                    "matcher": "Bash|apply_patch|Edit|Write",
-                    "hooks": [{"type": "command", "command": command, "timeout": 5}],
-                }
-            ],
-            "Stop": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
-            ],
-        }
-    }
-
-
-def _agent_hook_command(agent: str, *, capture_messages: bool = False) -> str:
-    executable = shutil.which("holdspeak") or "holdspeak"
-    capture = " --capture-messages" if capture_messages else ""
-    return f"{shlex.quote(executable)} agent-hook ingest --agent {agent}{capture}"
-
-
 def _payload_cwd(payload: Mapping[str, Any]) -> str:
     if str(payload.get("hook_event_name") or "") == "CwdChanged":
         new_cwd = payload.get("new_cwd")
@@ -1151,13 +733,6 @@ def _selected_response_key(state: Mapping[str, Any]) -> str | None:
     return _session_key(agent, session_id)
 
 
-def _optional_str(value: Any) -> Optional[str]:
-    if value is None:
-        return None
-    text = str(value).strip()
-    return text or None
-
-
 def _bounded_optional_str(value: Any, max_chars: int) -> Optional[str]:
     text = _optional_str(value)
     if text is None:
@@ -1165,68 +740,6 @@ def _bounded_optional_str(value: Any, max_chars: int) -> Optional[str]:
     if len(text) > max_chars:
         return text[-max_chars:]
     return text
-
-
-def _read_tmux_display(pane: str, *, env: Mapping[str, str]) -> dict[str, str]:
-    if shutil.which("tmux") is None:
-        return {}
-    tmux_env = os.environ.copy()
-    tmux_env.update({str(key): str(value) for key, value in env.items()})
-    try:
-        completed = subprocess.run(
-            [
-                "tmux",
-                "display-message",
-                "-p",
-                "-t",
-                pane,
-                "#{session_name}\t#{window_index}\t#{pane_index}\t#{pane_current_path}",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=0.5,
-            check=False,
-            env=tmux_env,
-        )
-    except Exception:
-        return {}
-    if completed.returncode != 0:
-        return {}
-    parts = completed.stdout.rstrip("\n").split("\t")
-    if len(parts) < 4:
-        return {}
-    return {
-        "tmux_session": parts[0],
-        "tmux_window": parts[1],
-        "tmux_pane_index": parts[2],
-        "tmux_pane_current_path": parts[3],
-    }
-
-
-def _normalize_project_root(project_root: str | Path | None) -> str | None:
-    if project_root is None:
-        return None
-    raw = str(project_root).strip()
-    if not raw:
-        return None
-    path = Path(raw).expanduser()
-    try:
-        return str(path.resolve())
-    except OSError:
-        return str(path.absolute())
-
-
-def _format_timestamp(value: datetime) -> str:
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
-
-
-def _parse_timestamp(value: str) -> datetime | None:
-    try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError:
-        return None
 
 
 def _read_state(path: Path) -> dict[str, Any]:
@@ -1276,106 +789,3 @@ def _prune_sessions(state: dict[str, Any], *, max_sessions: int) -> None:
         reverse=True,
     )
     state["sessions"] = dict(ordered[:max_sessions])
-
-
-def _derive_project_name(root: Path) -> str:
-    pyproject = root / "pyproject.toml"
-    if pyproject.is_file():
-        name = _read_toml_name(pyproject, ("project", "name"))
-        if name:
-            return name
-    package_json = root / "package.json"
-    if package_json.is_file():
-        try:
-            raw = json.loads(package_json.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            raw = None
-        if isinstance(raw, dict) and isinstance(raw.get("name"), str) and raw["name"].strip():
-            return raw["name"].strip()
-    return root.name
-
-
-def _read_toml_name(path: Path, dotted: tuple[str, ...]) -> str | None:
-    try:
-        import tomllib
-    except ImportError:  # pragma: no cover
-        return None
-    try:
-        with path.open("rb") as handle:
-            data: Any = tomllib.load(handle)
-    except (OSError, tomllib.TOMLDecodeError):
-        return None
-    cursor: Any = data
-    for key in dotted:
-        if not isinstance(cursor, dict):
-            return None
-        cursor = cursor.get(key)
-    return cursor.strip() if isinstance(cursor, str) and cursor.strip() else None
-
-
-def _read_text_budget(path: Path, budget: int) -> tuple[str, bool]:
-    if budget <= 0:
-        return "", True
-    try:
-        raw = path.read_bytes()
-    except OSError:
-        return "", False
-    truncated = len(raw) > budget
-    if truncated:
-        raw = raw[:budget]
-    return raw.decode("utf-8", errors="replace"), truncated
-
-
-def _read_context_entry(path: Path, budget: int, *, source: str) -> dict[str, Any]:
-    try:
-        raw = path.read_bytes()
-    except OSError as exc:
-        return {
-            "path": str(path),
-            "source": source,
-            "skipped": True,
-            "reason": f"read_error:{exc.__class__.__name__}",
-        }
-    if len(raw) > DEFAULT_CONTEXT_HARD_FILE_MAX_BYTES:
-        return {
-            "path": str(path),
-            "source": source,
-            "skipped": True,
-            "reason": "too_large",
-            "size_bytes": len(raw),
-            "max_bytes": DEFAULT_CONTEXT_HARD_FILE_MAX_BYTES,
-        }
-    if b"\x00" in raw:
-        return {
-            "path": str(path),
-            "source": source,
-            "skipped": True,
-            "reason": "binary",
-            "size_bytes": len(raw),
-        }
-    truncated = len(raw) > budget
-    if truncated:
-        raw = raw[: max(0, budget)]
-    content = raw.decode("utf-8", errors="replace")
-    if _SECRET_CONTEXT_RE.search(content):
-        return {
-            "path": str(path),
-            "source": source,
-            "skipped": True,
-            "reason": "possible_secret",
-            "size_bytes": len(raw),
-        }
-    return {
-        "path": str(path),
-        "source": source,
-        "content": content,
-        "truncated": truncated,
-    }
-
-
-def _parse_ignore_lines(text: str) -> list[str]:
-    return [
-        line.strip()
-        for line in text.splitlines()
-        if line.strip() and not line.lstrip().startswith("#")
-    ]

@@ -47,15 +47,21 @@ with the live status docs, the status docs win.
 
 ## 3. Pick up here
 
-**▶ Phase 33 — Documentation & Open-Source Readiness is CLOSED ✅ (6/6), on local
-branch `phase-33/hs-33-01-model-framing` (6 story commits) — unpushed. Open a PR to
-`main`.** It shipped: de-prescribed model framing + `docs/MODELS.md` (HS-33-01);
-**Apache-2.0 `LICENSE`** + full `pyproject` metadata (HS-33-02); `docs/` reorg into
-user-facing vs `docs/internal/` + a `docs/README.md` index + a doc link-check
-(HS-33-03); an OSS-grade README pass + `CHANGELOG.md` + `CONTRIBUTING.md`
-(HS-33-04); a brand mark + 1280×640 social/OG card via the pixellab MCP (HS-33-05);
-and the closeout (HS-33-06). See
-`phase-33-documentation-oss-readiness/final-summary.md`.
+**▶ Phase 34 — Structural Decomposition II is CLOSED ✅ (5/5), on local branch
+`phase-34/hs-34-01-dictation-routes-split` (open + 5 story commits). Push & open a
+PR to `main`.** The twin of Phases 26/31/32: the four files that dominated the tree
+(5,373 lines) are now four packages — `web/routes/dictation/` (HS-34-01),
+`web/routes/activity/` (HS-34-02), `agent_context/` (HS-34-03), `intel/`
+(HS-34-04) — behavior-preserving (route tables byte-identical; full re-exports; all
+monkeypatch targets honored with tests unchanged via package-routed reads). Suite
+green 1966/15. See `phase-34-structural-decomposition-ii/final-summary.md`. **The
+decomposition lineage (26 → 31 → 32 → 34) is now complete for every god-object the
+reviews flagged.**
+
+> **▶ Earlier:** Phase 33 (Documentation & OSS readiness) is **CLOSED (6/6) and
+> merged to `main` via PR #9** — Apache-2.0 LICENSE, `docs/MODELS.md`, `docs/`
+> reorg + index, OSS README + CHANGELOG/CONTRIBUTING, brand mark + social card.
+> See `phase-33-documentation-oss-readiness/final-summary.md`.
 
 > **▶ Manual follow-up (not a repo file):** set
 > `docs/assets/pixellab/social-card.png` as the repo's GitHub social preview
