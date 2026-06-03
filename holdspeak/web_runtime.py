@@ -155,7 +155,7 @@ class WebRuntime:
             from .db import get_database as _get_db_for_projects
 
             self.project_detector.reload_projects(
-                _get_db_for_projects().get_all_projects_for_detector()
+                _get_db_for_projects().projects.get_all_projects_for_detector()
             )
         except Exception as _proj_init_err:
             log.warning(f"Could not load projects for detector at startup: {_proj_init_err}")

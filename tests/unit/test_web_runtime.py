@@ -185,6 +185,61 @@ def test_run_web_runtime_no_open_skips_browser(monkeypatch: pytest.MonkeyPatch) 
     assert browser_urls == []
 
 
+def test_runtime_loads_projects_for_detector_via_projects_repo(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Regression: the project detector loads its projects through
+    ``db.projects.get_all_projects_for_detector()`` — the Phase-31 split moved
+    that method off the ``Database`` container, and the startup call (in
+    ``WebRuntime.__init__``) is wrapped in a try/except, so calling the wrong
+    receiver silently degraded the detector to zero projects."""
+    monkeypatch.setattr(web_runtime.Config, "load", lambda: _config(auto_open=False))
+
+    sentinel = [{"id": "proj-1", "name": "Demo", "keywords": []}]
+    reloaded: list[object] = []
+
+    class FakeProjectsRepo:
+        def get_all_projects_for_detector(self):
+            return sentinel
+
+    class FakeDb:
+        # Only the container method would be `db.get_all_projects_for_detector`;
+        # leaving it off means the *wrong* call raises AttributeError (which the
+        # try/except would swallow -> reloaded stays empty -> test fails).
+        projects = property(lambda self: FakeProjectsRepo())
+
+    class FakeDetector:
+        id = "project_detector"
+
+        def __init__(self, *args, **kwargs) -> None:
+            pass
+
+        def reload_projects(self, projects) -> None:
+            reloaded.append(projects)
+
+        def run(self, context):  # satisfies PluginHost.register
+            return None
+
+    class FakeTextTyper:
+        def type_text(self, _text: str, **_kwargs) -> None:
+            return None
+
+    import holdspeak.db as db_module
+
+    monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+    monkeypatch.setattr(web_runtime, "ProjectDetectorPlugin", FakeDetector)
+    monkeypatch.setattr(web_runtime, "TextTyper", FakeTextTyper)
+
+    # Construct the runtime (no run()) — __init__ performs the detector load.
+    web_runtime.WebRuntime(
+        no_open=True,
+        stop_event=threading.Event(),
+        register_signal_handlers=False,
+    )
+
+    assert reloaded == [sentinel]
+
+
 def test_configured_web_port_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("HOLDSPEAK_WEB_PORT", "34999")
 
