@@ -1,9 +1,9 @@
 # Phase 34 — Structural Decomposition II
 
-**Status:** in-progress (opened 2026-06-03). 1/5 stories shipped.
+**Status:** in-progress (opened 2026-06-03). 2/5 stories shipped.
 
-**Last updated:** 2026-06-03 (HS-34-01 shipped — `web/routes/dictation.py` → a
-`routes/dictation/` sub-package; route table byte-identical, suite green 1954/15).
+**Last updated:** 2026-06-03 (HS-34-02 shipped — `web/routes/activity.py` → a
+`routes/activity/` sub-package; route table byte-identical, suite green 1956/15).
 
 ## Goal
 
@@ -51,8 +51,8 @@ modules. No new features; every import path and every HTTP route stays identical
 - [x] `web/routes/dictation.py` is a `routes/dictation/` sub-package; the route
       table is byte-identical (same paths/methods); `build_dictation_router` import
       unchanged. (HS-34-01) ✅
-- [ ] `web/routes/activity.py` is a `routes/activity/` sub-package; route table
-      identical; `build_activity_router` import unchanged. (HS-34-02)
+- [x] `web/routes/activity.py` is a `routes/activity/` sub-package; route table
+      identical; `build_activity_router` import unchanged. (HS-34-02) ✅
 - [ ] `agent_context.py` is an `agent_context/` package with a full re-export
       `__init__`; no caller import changed. (HS-34-03)
 - [ ] `intel.py` is an `intel/` package with a full re-export `__init__`; no caller
@@ -65,7 +65,7 @@ modules. No new features; every import path and every HTTP route stays identical
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-34-01 | Split `web/routes/dictation.py` → `routes/dictation/` | done | [story-01-dictation-routes-split.md](./story-01-dictation-routes-split.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-34-02 | Split `web/routes/activity.py` → `routes/activity/` | not-started | [story-02-activity-routes-split.md](./story-02-activity-routes-split.md) | — |
+| HS-34-02 | Split `web/routes/activity.py` → `routes/activity/` | done | [story-02-activity-routes-split.md](./story-02-activity-routes-split.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-34-03 | Decompose `agent_context.py` → package | not-started | [story-03-agent-context-package.md](./story-03-agent-context-package.md) | — |
 | HS-34-04 | Decompose `intel.py` → package | not-started | [story-04-intel-package.md](./story-04-intel-package.md) | — |
 | HS-34-05 | Phase closeout + final-summary | not-started | [story-05-closeout.md](./story-05-closeout.md) | — |
@@ -82,8 +82,8 @@ non-hardware-gated.
 ## Pickup order
 
 1. HS-34-01 — `routes/dictation/` split. **✅ done (2026-06-03).**
-2. HS-34-02 — `routes/activity/` split (same pattern; bigger handler count). **◀ next.**
-3. HS-34-03 — `agent_context/` package (proven Phase-31 re-export pattern).
+2. HS-34-02 — `routes/activity/` split (same pattern; bigger handler count). **✅ done (2026-06-03).**
+3. HS-34-03 — `agent_context/` package (proven Phase-31 re-export pattern). **◀ next.**
 4. HS-34-04 — `intel/` package (same pattern).
 5. HS-34-05 — closeout + final-summary.
 
@@ -99,6 +99,14 @@ project-doc-suggestion store is threaded explicitly to the three groups that tou
 it. Route table byte-identical (26 routes, hash unchanged); committed
 `test_dictation_routes_split.py` locks it (the phase's shared invariant). Suite
 green 1954/15; package ruff + F821 clean.
+
+**HS-34-02 shipped** (2026-06-03): `web/routes/activity.py` (1,319L / 38 handlers)
+→ a `routes/activity/` sub-package (ledger / rules / enrichment / candidates /
+plugin_jobs), composed behind a stable `build_activity_router(ctx)`. Simpler than
+the dictation split — every payload shaper is single-group, so no shared state to
+thread. Route table byte-identical (38 routes, hash `d4332051064ff059` unchanged);
+committed `test_activity_routes_split.py` locks it. Suite green 1956/15; package
+ruff + F821 clean.
 
 ## Active risks
 

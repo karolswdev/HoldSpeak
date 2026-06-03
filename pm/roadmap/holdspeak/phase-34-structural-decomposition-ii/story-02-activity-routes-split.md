@@ -1,6 +1,6 @@
 # HS-34-02 — Split `web/routes/activity.py` → `routes/activity/` sub-package
 
-- **Status:** not-started.
+- **Status:** done (2026-06-03). Evidence: [evidence-story-02.md](./evidence-story-02.md).
 
 ## Goal
 
@@ -35,7 +35,7 @@ concerns. Split it into a `routes/activity/` sub-package, behind a stable
 
 ## Done when
 
-- [ ] `web/routes/activity.py` → a `routes/activity/` sub-package; handlers grouped
+- [x] `web/routes/activity.py` → a `routes/activity/` sub-package; handlers grouped
       by domain (ledger / rules / enrichment / candidates / plugin-jobs).
-- [ ] `build_activity_router(ctx)` import unchanged; `routes/__init__.py` untouched.
-- [ ] Route table byte-identical; full suite green; package ruff-clean.
+- [x] `build_activity_router(ctx)` import unchanged; `routes/__init__.py` untouched.
+- [x] Route table byte-identical; full suite green; package ruff-clean.
