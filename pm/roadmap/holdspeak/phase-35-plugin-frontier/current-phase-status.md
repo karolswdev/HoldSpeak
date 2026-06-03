@@ -1,8 +1,10 @@
 # Phase 35 — Plugin Frontier
 
-**Status:** in-progress (opened 2026-06-03). 0/5 stories shipped.
+**Status:** in-progress (opened 2026-06-03). 1/5 stories shipped.
 
-**Last updated:** 2026-06-03 (phase opened; HS-35-01 public authoring guide first).
+**Last updated:** 2026-06-03 (HS-35-01 shipped — `docs/PLUGIN_AUTHORING.md`
+written + wired into `docs/README.md` and the README plugin section; HS-35-02
+plugin packs next).
 
 ## Goal
 
@@ -70,7 +72,7 @@ unchanged; the new machinery sits around them.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-35-01 | Public plugin-authoring guide (`docs/PLUGIN_AUTHORING.md`) | not-started | [story-01-plugin-authoring-guide.md](./story-01-plugin-authoring-guide.md) | — |
+| HS-35-01 | Public plugin-authoring guide (`docs/PLUGIN_AUTHORING.md`) | done | [story-01-plugin-authoring-guide.md](./story-01-plugin-authoring-guide.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-35-02 | Plugin pack manifest + discovery loader | not-started | [story-02-plugin-packs.md](./story-02-plugin-packs.md) | — |
 | HS-35-03 | Per-project plugin enable/disable | not-started | [story-03-per-project-enable-disable.md](./story-03-per-project-enable-disable.md) | — |
 | HS-35-04 | Spoken-e2e breadth: incident retro | not-started | [story-04-spoken-e2e-incident.md](./story-04-spoken-e2e-incident.md) | — |
@@ -83,6 +85,21 @@ lineage (26 → 31 → 32 → 34) is complete and the project is OSS-adoptable (
 so the highest-leverage next move is to let the community **extend** the plugin
 system. The connector-pack system (`connector_pack_loader.py` + `connector_sdk.py`)
 is the proven precedent to mirror for plugin packs.
+
+**HS-35-01 shipped (2026-06-03):** `docs/PLUGIN_AUTHORING.md` — the public
+authoring guide, mirroring `docs/CONNECTOR_DEVELOPMENT.md`. Covers the `HostPlugin`
+protocol (`id`/`version`/`kind`/`execution_mode`/`required_capabilities` + the
+`run(context) -> dict` signature and the context dict), the reference run pattern
+(JSON-only prompt → `build_configured_meeting_intel()._chat_completion_text` →
+parse/validate → success/failure shapes with `confidence_hint`), the `llm`
+capability gate (`resolve_llm_capability` → `enabled_capabilities` → `blocked`
+skip), registering a synthesis renderer (`_ARTIFACT_TYPE_BY_PLUGIN` +
+`_ARTIFACT_RENDERERS`), joining a chain (`PROFILE_PLUGIN_BASE_CHAINS` /
+`_INTENT_PLUGIN_CHAIN` + the routing-ripple warning), the testing pattern (the
+`intel_call` injection seam + the capability-gate test), and the "shipped" bar.
+Wired into `docs/README.md` (reference index) and the README "Meeting intelligence
+plugins" section. Doc drift-guard + link-check green; full suite 1966 passed /
+15 skipped. Next: HS-35-02 (plugin-pack manifest + discovery loader).
 
 ## Pickup order
 

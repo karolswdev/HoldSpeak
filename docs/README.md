@@ -25,6 +25,9 @@ intelligent-typing layer. This folder is the documentation index.
 
 - **[Agent Hook Install](./AGENT_HOOK_INSTALL.md)** — wiring Claude/Codex agent
   hooks into the intelligent-typing layer.
+- **[Plugin Authoring](./PLUGIN_AUTHORING.md)** — writing a meeting-intel
+  plugin (the `HostPlugin` contract, prompt → LLM → structured output,
+  rendering, and chains).
 - **[Connector Development](./CONNECTOR_DEVELOPMENT.md)** — building local
   activity connectors.
 - **[Firefox Extension Guide](./FIREFOX_EXTENSION_GUIDE.md)** — the browser

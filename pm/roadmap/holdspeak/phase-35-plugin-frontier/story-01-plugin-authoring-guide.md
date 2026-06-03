@@ -1,6 +1,6 @@
 # HS-35-01 — Public plugin-authoring guide (`docs/PLUGIN_AUTHORING.md`)
 
-- **Status:** not-started.
+- **Status:** done (2026-06-03). Evidence: [evidence-story-01.md](./evidence-story-01.md).
 
 ## Goal
 
@@ -40,7 +40,7 @@ write a plugin — the doc Phase 29 explicitly deferred.
 
 ## Done when
 
-- [ ] `docs/PLUGIN_AUTHORING.md` documents the full contract + workflow (the 6
+- [x] `docs/PLUGIN_AUTHORING.md` documents the full contract + workflow (the 6
       points above), accurate against the current code.
-- [ ] Linked from `docs/README.md` + the README plugin section; link-check green.
-- [ ] Full suite green.
+- [x] Linked from `docs/README.md` + the README plugin section; link-check green.
+- [x] Full suite green.
