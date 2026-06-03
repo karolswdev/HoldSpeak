@@ -1,6 +1,6 @@
 # HS-34-03 — Decompose `agent_context.py` → `agent_context/` package
 
-- **Status:** not-started.
+- **Status:** done (2026-06-03). Evidence: [evidence-story-03.md](./evidence-story-03.md).
 
 ## Goal
 
@@ -45,8 +45,8 @@ re-export `__init__`, mirroring the Phase-31 db split — so every
 
 ## Done when
 
-- [ ] `agent_context.py` → an `agent_context/` package (models / sessions /
+- [x] `agent_context.py` → an `agent_context/` package (models / sessions /
       hs-context / hooks).
-- [ ] `__init__` re-exports the full public surface; no caller or test import
+- [x] `__init__` re-exports the full public surface; no caller or test import
       changed; monkeypatch targets resolve.
-- [ ] Full suite green; package ruff-clean.
+- [x] Full suite green; package ruff-clean.
