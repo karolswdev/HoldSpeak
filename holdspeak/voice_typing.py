@@ -27,12 +27,17 @@ log = get_logger("voice_typing.session")
 
 
 class VoiceTypingSession:
-    """One-at-a-time voice typing arbiter.
+    """One-at-a-time audio-floor arbiter.
 
-    Hotkey-driven and device-driven callers share a single
-    instance. The instance owns the lifecycle of whatever
-    :class:`AudioSource` is passed to :meth:`begin`; ``begin``
-    starts the source and ``end`` stops it.
+    The single owner model for all capture in the web runtime: the
+    hotkey and device voice-typing paths claim the floor via
+    :meth:`begin` (which also owns the :class:`AudioSource` lifecycle
+    — ``begin`` starts it, ``end`` stops it), while a meeting — which
+    drives its own multi-stream recorder and can't use the
+    single-source begin/end model — claims it via :meth:`acquire` /
+    :meth:`release`. All three share one lock, so a meeting and a
+    voice-typing session can never hold the mic at once; first to
+    acquire wins until it releases.
     """
 
     def __init__(self) -> None:
@@ -49,6 +54,52 @@ class VoiceTypingSession:
     def active_owner(self) -> Optional[str]:
         with self._lock:
             return self._owner
+
+    def acquire(self, owner: str) -> bool:
+        """Claim the audio floor *without* binding an :class:`AudioSource`.
+
+        For owners that drive their own capture (e.g. a meeting's
+        multi-stream ``MeetingRecorder`` capturing mic + system + devices
+        concurrently, which doesn't fit the single-source ``begin``/``end``
+        hold-to-record model). The claim shares the same one-at-a-time lock
+        as :meth:`begin`, so once a meeting holds the floor the hotkey and
+        device voice-typing paths — which ``begin`` through this same
+        instance — are rejected, and vice versa. One owner model, defined
+        precedence: first to hold the floor keeps it until they release.
+
+        Returns ``True`` if the caller now owns the floor; ``False`` if
+        another owner already holds it (silent, like :meth:`begin`).
+        """
+        if not owner:
+            raise ValueError("owner must be non-empty")
+
+        with self._lock:
+            if self._owner is not None:
+                log.info(
+                    "audio_floor_acquire_rejected",
+                    extra={"owner": owner, "active_owner": self._owner},
+                )
+                return False
+            self._owner = owner
+            self._source = None
+
+        log.info("audio_floor_acquire", extra={"owner": owner})
+        return True
+
+    def release(self, owner: str) -> None:
+        """Release a floor claimed via :meth:`acquire`.
+
+        No-op when ``owner`` does not match the active owner (so it is safe
+        to call unconditionally on any meeting-end path). Does not stop a
+        source — :meth:`acquire` never bound one.
+        """
+        with self._lock:
+            if self._owner != owner:
+                return
+            self._owner = None
+            self._source = None
+
+        log.info("audio_floor_release", extra={"owner": owner})
 
     def begin(self, source: AudioSource, *, owner: str) -> bool:
         """Try to claim the session and start ``source``.

@@ -52,6 +52,12 @@ from .web_server import MeetingWebServer, WebRuntimeCallbacks
 
 log = get_logger("web_runtime")
 
+# HS-32-03: the owner string a meeting uses to hold the shared
+# ``VoiceTypingSession`` audio floor. One arbiter for hotkey / device /
+# meeting capture; while a meeting holds this, hotkey/device ``begin()``
+# is rejected, and a meeting can't start while either holds the floor.
+_MEETING_AUDIO_OWNER = "meeting"
+
 
 def _configured_web_port_from_env() -> int | None:
     raw = os.environ.get("HOLDSPEAK_WEB_PORT")
@@ -449,59 +455,73 @@ class WebRuntime:
         if self.transcriber is None or getattr(self.transcriber, "model_name", None) != self.config.model.name:
             self.transcriber = self._ensure_transcriber_loaded()
 
-        session = MeetingSession(
-            transcriber=self.transcriber,
-            mic_label=self.config.meeting.mic_label,
-            remote_label=self.config.meeting.remote_label,
-            mic_device=self.config.meeting.mic_device,
-            system_device=self.config.meeting.system_audio_device,
-            on_segment=self._on_meeting_segment,
-            on_mic_level=lambda _level: None,
-            on_system_level=lambda _level: None,
-            on_intel=self._on_meeting_intel,
-            on_settings_applied=self._apply_updated_config,
-            on_broadcast=self._on_meeting_broadcast,
-            intel_enabled=self.config.meeting.intel_enabled,
-            intel_model_path=self.config.meeting.intel_realtime_model,
-            intel_provider=self.config.meeting.intel_provider,
-            intel_cloud_model=self.config.meeting.intel_cloud_model,
-            intel_cloud_api_key_env=self.config.meeting.intel_cloud_api_key_env,
-            intel_cloud_base_url=self.config.meeting.intel_cloud_base_url,
-            intel_cloud_reasoning_effort=self.config.meeting.intel_cloud_reasoning_effort,
-            intel_cloud_store=self.config.meeting.intel_cloud_store,
-            intel_deferred_enabled=self.config.meeting.intel_deferred_enabled,
-            diarization_enabled=self.config.meeting.diarization_enabled,
-            diarize_mic=self.config.meeting.diarize_mic,
-            cross_meeting_recognition=self.config.meeting.cross_meeting_recognition,
-        )
-        state = session.start()
-        with self.state_lock:
-            title_override = self.pending_title
-            tags_override = list(self.pending_tags) if self.pending_tags is not None else None
-            self.pending_title = None
-            self.pending_tags = None
-        if title_override is not None:
-            session.set_title(title_override)
-            state = session.state or state
-        if tags_override is not None:
-            session.set_tags(tags_override)
-            state = session.state or state
-        if self.runtime_url:
-            state.web_url = self.runtime_url
+        # HS-32-03: claim the shared audio floor before opening any recorder, so
+        # a hotkey/device voice-typing session can't already hold the mic (and so
+        # one can't grab it while the meeting runs). Released in
+        # `_stop_active_meeting` / shutdown; released here if start-up fails
+        # before the meeting is registered.
+        if not self.voice_session.acquire(_MEETING_AUDIO_OWNER):
+            raise RuntimeError(
+                f"Cannot start meeting: audio floor held by {self.voice_session.active_owner!r}"
+            )
+        try:
+            session = MeetingSession(
+                transcriber=self.transcriber,
+                mic_label=self.config.meeting.mic_label,
+                remote_label=self.config.meeting.remote_label,
+                mic_device=self.config.meeting.mic_device,
+                system_device=self.config.meeting.system_audio_device,
+                on_segment=self._on_meeting_segment,
+                on_mic_level=lambda _level: None,
+                on_system_level=lambda _level: None,
+                on_intel=self._on_meeting_intel,
+                on_settings_applied=self._apply_updated_config,
+                on_broadcast=self._on_meeting_broadcast,
+                intel_enabled=self.config.meeting.intel_enabled,
+                intel_model_path=self.config.meeting.intel_realtime_model,
+                intel_provider=self.config.meeting.intel_provider,
+                intel_cloud_model=self.config.meeting.intel_cloud_model,
+                intel_cloud_api_key_env=self.config.meeting.intel_cloud_api_key_env,
+                intel_cloud_base_url=self.config.meeting.intel_cloud_base_url,
+                intel_cloud_reasoning_effort=self.config.meeting.intel_cloud_reasoning_effort,
+                intel_cloud_store=self.config.meeting.intel_cloud_store,
+                intel_deferred_enabled=self.config.meeting.intel_deferred_enabled,
+                diarization_enabled=self.config.meeting.diarization_enabled,
+                diarize_mic=self.config.meeting.diarize_mic,
+                cross_meeting_recognition=self.config.meeting.cross_meeting_recognition,
+            )
+            state = session.start()
+            with self.state_lock:
+                title_override = self.pending_title
+                tags_override = list(self.pending_tags) if self.pending_tags is not None else None
+                self.pending_title = None
+                self.pending_tags = None
+            if title_override is not None:
+                session.set_title(title_override)
+                state = session.state or state
+            if tags_override is not None:
+                session.set_tags(tags_override)
+                state = session.state or state
+            if self.runtime_url:
+                state.web_url = self.runtime_url
 
-        attached_ids: list[str] = []
-        for descriptor, source in device_pairs:
-            try:
-                session.attach_device(descriptor, source)  # type: ignore[arg-type]
-                attached_ids.append(getattr(descriptor, "id", ""))
-            except Exception as exc:
-                log.error(f"Failed to attach device {getattr(descriptor, 'id', '?')}: {exc}")
-                # Best effort: continue with whatever attached successfully.
-                # The descriptors that *did* attach remain on state.devices.
-                continue
+            attached_ids: list[str] = []
+            for descriptor, source in device_pairs:
+                try:
+                    session.attach_device(descriptor, source)  # type: ignore[arg-type]
+                    attached_ids.append(getattr(descriptor, "id", ""))
+                except Exception as exc:
+                    log.error(f"Failed to attach device {getattr(descriptor, 'id', '?')}: {exc}")
+                    # Best effort: continue with whatever attached successfully.
+                    # The descriptors that *did* attach remain on state.devices.
+                    continue
 
-        with self.meeting_lock:
-            self.meeting_session = session
+            with self.meeting_lock:
+                self.meeting_session = session
+        except Exception:
+            # Roll back the floor claim if the meeting never came up.
+            self.voice_session.release(_MEETING_AUDIO_OWNER)
+            raise
 
         if attached_ids:
             attached_for_status = [d for d in attached_ids if d]
@@ -551,6 +571,10 @@ class WebRuntime:
             self.device_status.broadcast(attached_ids, "Saving meeting...", ttl_ms=0)
 
         final_state = session.stop()
+        # HS-32-03: the meeting's recorder is now closed — release the shared
+        # audio floor immediately (before the slower save/intel work, none of
+        # which touches the mic) so hotkey/device voice typing can resume.
+        self.voice_session.release(_MEETING_AUDIO_OWNER)
         final_state_payload = final_state.to_dict()
         meeting_id = str(final_state_payload.get("id") or "")
         with self.state_lock:
@@ -1383,10 +1407,11 @@ class WebRuntime:
     def _on_hotkey_press(self) -> None:
         if self.runtime_stop_event.is_set():
             return
-        if self._active_meeting_session() is not None:
-            return
         if self.recorder is None:
             return
+        # HS-32-03: no explicit "is a meeting active?" check — the shared
+        # `voice_session` arbiter is the single owner model. While a meeting
+        # holds the floor (owner="meeting"), `begin()` returns False here.
         try:
             accepted = self.voice_session.begin(self.recorder, owner="hotkey")
         except Exception as exc:
@@ -1401,9 +1426,8 @@ class WebRuntime:
         self._set_voice_state("recording")
 
     def _on_hotkey_release(self) -> None:
-        if self._active_meeting_session() is not None:
-            self._set_voice_state("idle")
-            return
+        # No meeting check: `end("hotkey")` returns None when the hotkey
+        # doesn't own the floor (e.g. a meeting holds it), so this is a no-op.
         try:
             audio = self.voice_session.end(owner="hotkey")
         except Exception as exc:
@@ -1734,6 +1758,8 @@ class WebRuntime:
             if active is not None:
                 try:
                     final_state = active.stop()
+                    # HS-32-03: meeting recorder closed — release the audio floor.
+                    self.voice_session.release(_MEETING_AUDIO_OWNER)
                     active.save()
                     if getattr(final_state, "id", None):
                         meeting_id = str(final_state.id)

@@ -1,11 +1,11 @@
 # Phase 32 — Foundation Hardening & Doc Truth
 
-**Status:** in-progress (opened 2026-06-02). 3/7 stories shipped.
+**Status:** in-progress (opened 2026-06-02). 4/7 stories shipped.
 
-**Last updated:** 2026-06-02 (HS-32-07 shipped: **TUI + menubar runtimes
-retired** — web is the sole interactive runtime; ~13k lines removed across code,
-tests, deps, docs; suite green 1939/14. Resuming HS-32-03 next — now
-`WebRuntime`-only).
+**Last updated:** 2026-06-02 (HS-32-03 shipped: **one audio-ownership model** —
+meeting holds the shared `VoiceTypingSession` floor via new `acquire`/`release`;
+hotkey/device `begin()` arbitrate through it; concurrency test proves mutual
+exclusion; suite green 1946/14. HS-32-04 next).
 
 ## Goal
 
@@ -68,8 +68,9 @@ archiving them.
       observes — proven by a test constructing a `MeetingSession` with no web
       server and exercising broadcast-triggering paths. **(HS-32-02, 2026-06-02;
       embedded server dropped per user decision.)**
-- [ ] One audio-ownership model: hotkey / device / meeting all acquire through the
+- [x] One audio-ownership model: hotkey / device / meeting all acquire through the
       `VoiceTypingSession` owner contract; a concurrency test shows mutual exclusion.
+      **(HS-32-03, 2026-06-02; meeting holds the floor via `acquire`/`release`.)**
 - [ ] A CI job runs the core hotkey→text smoke test on every push and asserts on
       the produced text; it is **not** gated behind `metal`/`spoken_e2e`.
 - [ ] The route error-handling duplication is removed via a single helper, with a
@@ -88,7 +89,7 @@ archiving them.
 |---|---|---|---|---|
 | HS-32-01 | Class-ify `web_runtime.py` (`WebRuntime`) | done | [story-01-web-runtime-classify.md](./story-01-web-runtime-classify.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-32-02 | Invert meeting→web-server coupling | done | [story-02-meeting-web-inversion.md](./story-02-meeting-web-inversion.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-32-03 | Converge audio ownership | not-started | [story-03-audio-ownership.md](./story-03-audio-ownership.md) | — |
+| HS-32-03 | Converge audio ownership | done | [story-03-audio-ownership.md](./story-03-audio-ownership.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-32-04 | CI end-to-end smoke test (core path) | not-started | [story-04-ci-e2e-smoke.md](./story-04-ci-e2e-smoke.md) | — |
 | HS-32-05 | Route error-handling helper | not-started | [story-05-route-error-helper.md](./story-05-route-error-helper.md) | — |
 | HS-32-06 | Stale non-PMO doc sweep + drift guard | not-started | [story-06-doc-truth-sweep.md](./story-06-doc-truth-sweep.md) | — |
@@ -128,7 +129,18 @@ the dead TUI/menubar docs (+ live-doc updates). The **web runtime is now the sol
 interactive runtime**. Sequenced before HS-32-03 (also user choice) so the
 audio-ownership convergence has a single home — with the TUI gone,
 hotkey/device/meeting capture all live only in `WebRuntime`. Suite green at
-1939/14. **Next: resume HS-32-03 — now `WebRuntime`-only, no TUI caveat.**
+1939/14.
+
+**HS-32-03 shipped (2026-06-02):** one audio-ownership model. `VoiceTypingSession`
+gained source-less `acquire`/`release`; the meeting now holds the **shared** floor
+(claimed in `_start_meeting`, released right after `session.stop()` + on shutdown),
+so hotkey/device `begin()` is rejected mid-meeting and a meeting can't start while
+either records (first-to-hold-wins precedence). The redundant
+`_active_meeting_session()` guards in the hotkey path were **removed** — the
+arbiter is the single decision point; the device path keeps its meeting-attached
+*frame-routing*. New `TestAudioFloorArbitration` (7 tests incl. a 10-thread
+concurrency mutual-exclusion test). Suite green at 1946/14. Real-audio paths stay
+`metal`-gated (not runnable remotely). **Next: HS-32-04.**
 
 ## Pickup order
 
@@ -138,8 +150,8 @@ hotkey/device/meeting capture all live only in `WebRuntime`. Suite green at
    **DONE (2026-06-02).**
 3. ~~HS-32-07 — retire the TUI + menubar (inserted by user directive) so the
    audio convergence has one home.~~ **DONE (2026-06-02).**
-4. HS-32-03 — converge audio ownership (now `WebRuntime`-only). **◀ next.**
-5. HS-32-04 — the CI smoke test (independent; can land any time but most valuable early).
+4. ~~HS-32-03 — converge audio ownership (now `WebRuntime`-only).~~ **DONE (2026-06-02).**
+5. HS-32-04 — the CI smoke test (independent; can land any time but most valuable early). **◀ next.**
 6. HS-32-05 — the error helper (mechanical, low risk).
 7. HS-32-06 — doc-truth sweep + guard; last so the docs describe the post-phase reality.
 
@@ -149,7 +161,7 @@ hotkey/device/meeting capture all live only in `WebRuntime`. Suite green at
 |---|---|---|---|
 | Class-ifying the runtime changes startup/shutdown ordering | Medium | Move state to instance attrs verbatim; preserve call order; web suite as gate | A lifecycle/web test fails or ordering visibly changes |
 | The meeting→web inversion drops a broadcast that tests didn't cover | Medium | Add the headless-`MeetingSession` test *first*, then invert under it | A broadcast that fired before no longer fires |
-| Audio-ownership convergence breaks a real capture path (meeting bypass exists for a reason) | Medium | Understand why meeting bypasses `VoiceTypingSession` before redesigning; the single model may *change* meeting capture, but every real path must still acquire | A real-audio path can no longer acquire the recorder at all |
+| ~~Audio-ownership convergence breaks a real capture path~~ **(HS-32-03: RESOLVED — the meeting capture mechanism is unchanged; only a logical floor-acquire gate was added around it, so no real path regresses. Real-audio paths stay `metal`-gated.)** | Medium | Kept `MeetingRecorder` as-is; added `acquire`/`release` gate; arbiter unit + concurrency tests | A real-audio path can no longer acquire the recorder at all |
 | The CI smoke test is flaky (model size, runner speed) | Medium | Use the smallest viable model + a fixed synthesized WAV + generous tolerance on text match; assert substring, not exact | The job fails intermittently on unchanged code |
 
 ## Decisions made (this phase)

@@ -147,3 +147,88 @@ class TestVoiceTypingSession:
         assert sum(1 for a in accepts if a) == 1
         # Exactly one source was started.
         assert sum(s.start_calls for s in sources) == 1
+
+
+class TestAudioFloorArbitration:
+    """HS-32-03: meeting (`acquire`/`release`) and voice typing (`begin`/`end`)
+    share one floor — the single owner model for hotkey / device / meeting."""
+
+    def test_acquire_claims_floor_and_blocks_begin(self) -> None:
+        session = VoiceTypingSession()
+
+        # A meeting claims the floor (no source — it drives its own recorder).
+        assert session.acquire("meeting") is True
+        assert session.active_owner == "meeting"
+
+        # The hotkey can't grab the mic while the meeting holds the floor.
+        source = _FakeSource()
+        assert session.begin(source, owner="hotkey") is False
+        assert source.start_calls == 0
+        assert session.active_owner == "meeting"
+
+    def test_begin_blocks_a_meeting_acquire(self) -> None:
+        session = VoiceTypingSession()
+        source = _FakeSource()
+
+        # The hotkey is recording...
+        assert session.begin(source, owner="hotkey") is True
+        # ...so a meeting cannot acquire the floor (defined precedence:
+        # first to hold it wins).
+        assert session.acquire("meeting") is False
+        assert session.active_owner == "hotkey"
+
+    def test_release_frees_floor_for_begin(self) -> None:
+        session = VoiceTypingSession()
+        assert session.acquire("meeting") is True
+
+        session.release("meeting")
+        assert session.is_active is False
+
+        source = _FakeSource()
+        assert session.begin(source, owner="hotkey") is True
+        assert source.start_calls == 1
+
+    def test_release_is_noop_on_owner_mismatch(self) -> None:
+        session = VoiceTypingSession()
+        assert session.acquire("meeting") is True
+
+        # A stray hotkey release must not free the meeting's floor.
+        session.release("hotkey")
+        assert session.active_owner == "meeting"
+        assert session.begin(_FakeSource(), owner="hotkey") is False
+
+    def test_acquire_does_not_start_or_stop_a_source(self) -> None:
+        session = VoiceTypingSession()
+        # acquire/release are source-less; end() on the floor returns None.
+        assert session.acquire("meeting") is True
+        assert session.end(owner="meeting") is None  # no source bound
+
+    def test_acquire_rejects_blank_owner(self) -> None:
+        session = VoiceTypingSession()
+        with pytest.raises(ValueError):
+            session.acquire("")
+
+    def test_meeting_floor_excludes_all_concurrent_begins(self) -> None:
+        """With a meeting holding the floor, no racing hotkey/device begin wins."""
+        session = VoiceTypingSession()
+        assert session.acquire("meeting") is True
+
+        sources = [_FakeSource() for _ in range(10)]
+        accepts: list[bool] = []
+        accepts_lock = threading.Lock()
+
+        def _attempt(idx: int) -> None:
+            ok = session.begin(sources[idx], owner=f"device:{idx}")
+            with accepts_lock:
+                accepts.append(ok)
+
+        threads = [threading.Thread(target=_attempt, args=(i,)) for i in range(10)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        # The meeting keeps the floor; every begin is rejected, no source starts.
+        assert not any(accepts)
+        assert sum(s.start_calls for s in sources) == 0
+        assert session.active_owner == "meeting"
