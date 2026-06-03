@@ -106,8 +106,8 @@ class TestSettingsPutPersistsDictation:
                 },
                 "runtime": {
                     "backend": "mlx",
-                    "mlx_model": "~/Models/mlx/Qwen3-8B-MLX-4bit",
-                    "llama_cpp_model_path": "~/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf",
+                    "mlx_model": "~/Models/mlx/Qwen3.5-8B-MLX-4bit",
+                    "llama_cpp_model_path": "~/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf",
                     "openai_compatible_model": "qwen-local",
                     "openai_compatible_base_url": "http://127.0.0.1:8000/v1",
                     "openai_compatible_api_key_env": "LOCAL_LLM_KEY",

@@ -1,8 +1,12 @@
-"""Meeting intelligence extraction for local and cloud providers.
+"""Meeting intelligence extraction for local and OpenAI-compatible providers.
 
 `MeetingIntel` can run using:
-- local GGUF models via llama-cpp-python
-- OpenAI chat models in the cloud
+- local in-process GGUF models via llama-cpp-python (provider "local")
+- any OpenAI-compatible chat endpoint (provider "cloud"): a self-hosted LAN
+  server, Ollama, vLLM, llama.cpp-server, or a real cloud API. Point it with
+  `intel_cloud_base_url`; the API key is optional for keyless self-hosted
+  endpoints. (The name "cloud" is historical — it just means "the endpoint
+  provider," local or remote.) See docs/MODELS.md.
 
 The model is prompted to return JSON-only output for reliable parsing.
 """
@@ -47,7 +51,8 @@ else:  # pragma: no cover
     _OPENAI_IMPORT_ERROR = None
 
 
-DEFAULT_INTEL_MODEL_PATH = "~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf"
+# Suggested default — bring your own GGUF (see docs/MODELS.md).
+DEFAULT_INTEL_MODEL_PATH = "~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf"
 DEFAULT_INTEL_PROVIDER = "local"
 DEFAULT_INTEL_CLOUD_MODEL = "gpt-5-mini"
 DEFAULT_INTEL_CLOUD_API_KEY_ENV = "OPENAI_API_KEY"

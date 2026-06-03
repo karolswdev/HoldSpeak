@@ -23,7 +23,7 @@ pytestmark = pytest.mark.requires_llama_cpp
 
 
 DEFAULT_MODEL = Path(
-    "~/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf"
+    "~/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf"
 ).expanduser()
 
 

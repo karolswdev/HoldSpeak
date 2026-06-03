@@ -69,7 +69,7 @@ def test_doctor_model_fix_reuses_download_command(tmp_path: Path) -> None:
 
     assert "huggingface-cli download" in fix
     assert str(target.parent) in fix
-    assert "Qwen2.5-3B-Instruct-Q4_K_M.gguf" in fix
+    assert "Qwen3.5-4B-Instruct-Q4_K_M.gguf" in fix
 
 
 def test_doctor_install_fix_reuses_runtime_guidance() -> None:

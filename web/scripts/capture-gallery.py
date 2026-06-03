@@ -117,7 +117,7 @@ def main() -> None:
                               mic_label: 'Mic', remote_label: 'Remote',
                               export_format: 'markdown', intel_provider: 'local',
                               mir_profile: 'balanced',
-                              intel_realtime_model: '/Users/karol/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf',
+                              intel_realtime_model: '/Users/karol/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf',
                               intel_summary_model: '',
                               mic_device: '', system_audio_device: '',
                               auto_export: true, mir_enabled: true,

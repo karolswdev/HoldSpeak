@@ -21,6 +21,8 @@ import Pill from "../../components/Pill.astro";
         The dictation pipeline uses an LLM runtime for block
         classification and Project KB enrichment. Pick a local model
         backend or point HoldSpeak at an OpenAI-compatible endpoint.
+        The model names below are <em>suggestions</em>, not requirements
+        — bring your own (see <code>docs/MODELS.md</code>).
       </p>
     </header>
 
@@ -29,14 +31,18 @@ import Pill from "../../components/Pill.astro";
         <h2>Apple Silicon</h2>
         <Pill tone="info">recommended on M-series</Pill>
       </header>
-      <p>Use MLX on Apple Silicon when available.</p>
+      <p>
+        Use MLX on Apple Silicon when available. The model below is a
+        <em>suggestion</em> — any MLX chat model works; bring your own.
+      </p>
       <CommandPreview command={`uv pip install -e '.[dictation-mlx]'
 
-huggingface-cli download mlx-community/Qwen3-8B-MLX-4bit --local-dir ~/Models/mlx/Qwen3-8B-MLX-4bit`}>
-        <Fragment slot="caption">Install + download.</Fragment>
+# Example — swap for any current MLX chat model:
+huggingface-cli download mlx-community/Qwen3.5-8B-MLX-4bit --local-dir ~/Models/mlx/Qwen3.5-8B-MLX-4bit`}>
+        <Fragment slot="caption">Install + download (example model).</Fragment>
       </CommandPreview>
       <p class="default-path">
-        Default model path: <code>~/Models/mlx/Qwen3-8B-MLX-4bit</code>
+        Default model path: <code>~/Models/mlx/Qwen3.5-8B-MLX-4bit</code>
       </p>
     </section>
 
@@ -50,7 +56,7 @@ huggingface-cli download mlx-community/Qwen3-8B-MLX-4bit --local-dir ~/Models/ml
         OpenAI bridge, vLLM, llama.cpp server, LiteLLM, or hosted
         OpenAI-compatible APIs.
       </p>
-      <CommandPreview command={`uv pip install -e '.[dictation-openai]'\n\n# Example config slice:\n# \"dictation\": {\n#   \"pipeline\": { \"enabled\": true },\n#   \"runtime\": {\n#     \"backend\": \"openai_compatible\",\n#     \"openai_compatible_base_url\": \"http://127.0.0.1:8000/v1\",\n#     \"openai_compatible_model\": \"qwen2.5-7b-instruct\",\n#     \"openai_compatible_api_key_env\": \"OPENAI_API_KEY\",\n#     \"openai_compatible_timeout_seconds\": 8\n#   }\n# }`}>
+      <CommandPreview command={`uv pip install -e '.[dictation-openai]'\n\n# Example config slice:\n# \"dictation\": {\n#   \"pipeline\": { \"enabled\": true },\n#   \"runtime\": {\n#     \"backend\": \"openai_compatible\",\n#     \"openai_compatible_base_url\": \"http://127.0.0.1:8000/v1\",\n#     \"openai_compatible_model\": \"qwen3.5-8b-instruct\",\n#     \"openai_compatible_api_key_env\": \"OPENAI_API_KEY\",\n#     \"openai_compatible_timeout_seconds\": 8\n#   }\n# }`}>
         <Fragment slot="caption">Install + configure endpoint.</Fragment>
       </CommandPreview>
       <p class="default-path">
@@ -71,17 +77,19 @@ huggingface-cli download mlx-community/Qwen3-8B-MLX-4bit --local-dir ~/Models/ml
       </header>
       <p>
         Use <code>llama_cpp</code> on Linux x86_64, or as a macOS
-        fallback. On macOS arm64, build with Metal flags.
+        fallback. On macOS arm64, build with Metal flags. The model
+        below is a <em>suggestion</em> — any GGUF chat model works.
       </p>
       <CommandPreview command={`CMAKE_ARGS="-DGGML_METAL=on" uv pip install -e '.[dictation-llama]'
 
 mkdir -p ~/Models/gguf
-huggingface-cli download bartowski/Qwen2.5-3B-Instruct-GGUF \\
-  Qwen2.5-3B-Instruct-Q4_K_M.gguf --local-dir ~/Models/gguf --local-dir-use-symlinks False`}>
-        <Fragment slot="caption">Install + download.</Fragment>
+# Example — swap for any current GGUF chat model:
+huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF \\
+  Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir ~/Models/gguf --local-dir-use-symlinks False`}>
+        <Fragment slot="caption">Install + download (example model).</Fragment>
       </CommandPreview>
       <p class="default-path">
-        Default model path: <code>~/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf</code>
+        Default model path: <code>~/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf</code>
       </p>
     </section>
 

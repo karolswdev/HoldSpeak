@@ -1,8 +1,9 @@
 # Phase 33 — Documentation & Open-Source Readiness
 
-**Status:** in-progress (opened 2026-06-03). 0/6 stories shipped.
+**Status:** in-progress (opened 2026-06-03). 1/6 stories shipped.
 
-**Last updated:** 2026-06-03 (phase opened; HS-33-01 model framing first).
+**Last updated:** 2026-06-03 (HS-33-01 shipped — model framing de-prescribed,
+defaults bumped to the Qwen3.5 family, `docs/MODELS.md` added).
 
 ## Goal
 
@@ -61,10 +62,10 @@ this makes the project *presentable and adoptable*.
 
 ## Exit criteria (evidence required)
 
-- [ ] User-facing model strings **suggest**, don't prescribe; example/default
+- [x] User-facing model strings **suggest**, don't prescribe; example/default
       models are current (Qwen3.5 family); `docs/MODELS.md` documents the
       bring-your-own contract; the intel `cloud` provider is clearly "OpenAI-
-      compatible endpoint." (HS-33-01)
+      compatible endpoint." (HS-33-01) ✅
 - [ ] An **Apache-2.0 `LICENSE`** exists; `pyproject` carries `license`,
       `authors`, `classifiers`, `urls`, `keywords`. (HS-33-02)
 - [ ] `docs/` cleanly separates user-facing from internal/historical, with a
@@ -81,7 +82,7 @@ this makes the project *presentable and adoptable*.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-33-01 | Model framing + `MODELS.md` | not-started | [story-01-model-framing.md](./story-01-model-framing.md) | — |
+| HS-33-01 | Model framing + `MODELS.md` | done | [story-01-model-framing.md](./story-01-model-framing.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-33-02 | Apache-2.0 LICENSE + `pyproject` metadata | not-started | [story-02-license-pyproject.md](./story-02-license-pyproject.md) | — |
 | HS-33-03 | `docs/` reorganization + index | not-started | [story-03-docs-reorg.md](./story-03-docs-reorg.md) | — |
 | HS-33-04 | README + getting-started OSS pass + CHANGELOG | not-started | [story-04-readme-oss-pass.md](./story-04-readme-oss-pass.md) | — |
@@ -99,13 +100,23 @@ Qwen3.5-9B. Research (2026-06-03) confirmed Qwen is at **3.5** (Feb 2026) / **3.
 and fine. From there the broader OSS gap was obvious: no LICENSE, stub metadata,
 a `docs/` folder a newcomer can't navigate, and assets worth refreshing.
 
-**HS-33-01 first** (model framing) — no external dependency. **HS-33-05** (assets)
-runs with the pixellab MCP connected.
+**HS-33-01 shipped** (2026-06-03): de-prescribed the user-facing model strings
+(missing-model errors, doctor/guidance fixes, the web dictation-runtime docs page);
+bumped the example/default models to the **Qwen3.5** family (dictation
+`llama_cpp`/`mlx`/`openai_compatible`, intel realtime + `DEFAULT_INTEL_MODEL_PATH`);
+added **`docs/MODELS.md`** (the bring-your-own contract — GGUF in-process · MLX on
+Apple · any OpenAI-compatible endpoint) and clarified the intel `cloud` provider as
+"any OpenAI-compatible endpoint" (it already honors `intel_cloud_base_url`, key
+optional). Rebuilt the web bundle so the served docs page matches. Suite green at
+1953/15; touched files ruff-clean.
+
+**Next: HS-33-02** (Apache-2.0 LICENSE + `pyproject` metadata). **HS-33-05**
+(assets) runs with the pixellab MCP connected.
 
 ## Pickup order
 
-1. HS-33-01 — model framing + `MODELS.md`. **◀ first** (no deps).
-2. HS-33-02 — Apache-2.0 LICENSE + `pyproject` metadata.
+1. HS-33-01 — model framing + `MODELS.md`. **✅ done (2026-06-03).**
+2. HS-33-02 — Apache-2.0 LICENSE + `pyproject` metadata. **◀ next.**
 3. HS-33-03 — `docs/` reorg + index (do before the README pass so links settle).
 4. HS-33-04 — README + getting-started OSS pass + CHANGELOG.
 5. HS-33-05 — visual assets via the pixellab MCP.

@@ -56,8 +56,13 @@ class MeetingConfig:
 
     # Intel (LLM-powered analysis)
     intel_enabled: bool = True
-    intel_provider: str = "local"  # local, cloud, auto (local-first then cloud fallback)
-    intel_realtime_model: str = "~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf"
+    # intel_provider: "local" (in-process GGUF) | "cloud" (any OpenAI-compatible
+    # endpoint — self-hosted LAN, Ollama, vLLM, llama.cpp-server, or a real cloud
+    # API; set intel_cloud_base_url) | "auto" (local-first, then the endpoint).
+    intel_provider: str = "local"
+    # Suggested default — bring your own GGUF (see docs/MODELS.md). Names are a
+    # moving target; this points at a current small/mid instruct model.
+    intel_realtime_model: str = "~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf"
     intel_summary_model: Optional[str] = None  # Falls back to realtime if None
     intel_deferred_enabled: bool = True  # Queue intel when no suitable local model is available
     intel_queue_poll_seconds: int = 120  # Background retry interval for deferred intel jobs
@@ -142,9 +147,11 @@ class LLMRuntimeConfig:
     """DIR-01 dictation LLM runtime config (spec §9.4)."""
 
     backend: str = "auto"  # "auto" | "mlx" | "llama_cpp" | "openai_compatible"
-    mlx_model: str = "~/Models/mlx/Qwen3-8B-MLX-4bit"
-    llama_cpp_model_path: str = "~/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf"
-    openai_compatible_model: str = "qwen2.5-7b-instruct"
+    # Suggested defaults — bring your own model (see docs/MODELS.md). These point
+    # at current small instruct models; swap for whatever you run locally.
+    mlx_model: str = "~/Models/mlx/Qwen3.5-8B-MLX-4bit"
+    llama_cpp_model_path: str = "~/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf"
+    openai_compatible_model: str = "qwen3.5-8b-instruct"
     openai_compatible_base_url: str = "http://127.0.0.1:8000/v1"
     openai_compatible_api_key_env: str = "OPENAI_API_KEY"
     openai_compatible_timeout_seconds: float = 8.0

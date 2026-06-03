@@ -352,4 +352,4 @@ def test_dictation_runtime_docs_route_serves_setup_page() -> None:
     assert 'id="llama-cpp"' in body
     assert "dictation-mlx" in body
     assert "dictation-llama" in body
-    assert "Qwen2.5-3B-Instruct-Q4_K_M.gguf" in body
+    assert "Qwen3.5-4B-Instruct-Q4_K_M.gguf" in body

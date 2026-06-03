@@ -134,9 +134,9 @@ def resolve_backend(
 def build_runtime(
     *,
     backend: str = "auto",
-    mlx_model: str = "~/Models/mlx/Qwen3-8B-MLX-4bit",
-    llama_cpp_model_path: str = "~/Models/gguf/Qwen2.5-3B-Instruct-Q4_K_M.gguf",
-    openai_compatible_model: str = "qwen2.5-7b-instruct",
+    mlx_model: str = "~/Models/mlx/Qwen3.5-8B-MLX-4bit",
+    llama_cpp_model_path: str = "~/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf",
+    openai_compatible_model: str = "qwen3.5-8b-instruct",
     openai_compatible_base_url: str = "http://127.0.0.1:8000/v1",
     openai_compatible_api_key_env: str = "OPENAI_API_KEY",
     openai_compatible_timeout_seconds: float = 8.0,

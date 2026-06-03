@@ -85,7 +85,9 @@ class LlamaCppRuntime:
         if not path.exists():
             raise RuntimeUnavailableError(
                 f"GGUF model not found: {path}. "
-                "Download Qwen2.5-3B-Instruct-Q4_K_M.gguf into ~/Models/gguf/."
+                "Point this at any GGUF chat model (e.g. a current small instruct "
+                "model like Qwen3.5-4B-Instruct) under ~/Models/gguf/, or use an "
+                "OpenAI-compatible endpoint. See docs/MODELS.md."
             )
         kwargs: dict[str, Any] = {
             "model_path": str(path),

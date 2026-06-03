@@ -1,6 +1,6 @@
 # HS-33-01 — Model framing + `MODELS.md`
 
-**Status:** not-started.
+- **Status:** done (2026-06-03). Evidence: [evidence-story-01.md](./evidence-story-01.md).
 
 ## Goal
 
@@ -46,9 +46,9 @@ only the model *names* and the *prescription* are the problem.
 
 ## Done when
 
-- [ ] No user-facing string tells the user to download one specific model;
+- [x] No user-facing string tells the user to download one specific model;
       they're framed as suggestions, with the OpenAI-compatible escape hatch.
-- [ ] Example/default model names are current (Qwen3.5 family).
-- [ ] `docs/MODELS.md` exists and documents the bring-your-own contract; intel
+- [x] Example/default model names are current (Qwen3.5 family).
+- [x] `docs/MODELS.md` exists and documents the bring-your-own contract; intel
       `cloud` is clearly "OpenAI-compatible endpoint."
-- [ ] Full suite green; ruff clean.
+- [x] Full suite green; ruff clean.

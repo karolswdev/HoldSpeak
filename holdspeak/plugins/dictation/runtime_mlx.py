@@ -38,7 +38,7 @@ class MlxRuntime:
     def __init__(
         self,
         *,
-        model: str = "~/Models/mlx/Qwen3-8B-MLX-4bit",
+        model: str = "~/Models/mlx/Qwen3.5-8B-MLX-4bit",
         warm_on_start: bool = False,
         eviction_idle_seconds: int = 0,
         # Test seams.
@@ -99,7 +99,9 @@ class MlxRuntime:
         if str(self.model).startswith(("/", "~", ".")) and not path.exists():
             raise RuntimeUnavailableError(
                 f"MLX model snapshot not found: {path}. "
-                "Download Qwen3-8B-MLX-4bit into ~/Models/mlx/."
+                "Point this at any MLX chat model (e.g. a current Qwen3.5 MLX "
+                "build) under ~/Models/mlx/, or set an HF repo id. See "
+                "docs/MODELS.md."
             )
         # mlx_lm.load accepts either a local snapshot dir or an HF repo
         # id. If the configured value looks like a filesystem path,
