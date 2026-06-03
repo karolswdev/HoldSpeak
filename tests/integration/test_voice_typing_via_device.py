@@ -4,7 +4,7 @@ Wires the WS route's voice-typing handlers to a
 ``VoiceTypingSession`` plus a fake STT and a mock typer, then
 exercises the path end-to-end through a FastAPI ``TestClient``.
 The actual web-runtime integration is covered indirectly — this
-test isolates the wiring change from the hotkey/menubar plumbing.
+test isolates the wiring change from the hotkey plumbing.
 """
 
 from __future__ import annotations

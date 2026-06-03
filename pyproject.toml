@@ -10,7 +10,6 @@ dependencies = [
     "numpy>=1.24.0",
     "pynput>=1.7.6",
     "pyperclip>=1.8.2",
-    "textual>=0.50.0",
     # Web runtime is the default `holdspeak` command, so its deps live in core.
     # `uvicorn[standard]` pulls in websockets/uvloop/httptools/watchfiles.
     "fastapi>=0.100.0",
@@ -30,9 +29,6 @@ test = [
     "pytest-mock>=3.12",
     "pytest-timeout>=2.2",
     "httpx>=0.26",
-]
-menubar = [
-    "rumps>=0.4.0; sys_platform == \"darwin\"",
 ]
 meeting = [
     "llama-cpp-python>=0.2.0",

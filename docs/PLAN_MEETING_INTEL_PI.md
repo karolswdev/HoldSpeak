@@ -1,5 +1,10 @@
 # PI Plan: Meeting Intelligence & Web Dashboard
 
+> **Historical plan (note added 2026-06-02, HS-32-06):** the original increment
+> plan. "Epic 4: TUI Integration" and any `web_enabled`/TUI references below are
+> historical — the TUI was **retired in HS-32-07** (web runtime is the sole
+> interactive runtime) and `config.meeting.web_enabled` was removed.
+
 **Program Increment:** Meeting Mode v2.0
 **Duration:** 2-3 weeks estimated
 **Goal:** Real-time meeting intelligence with modern web dashboard

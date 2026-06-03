@@ -604,7 +604,6 @@ class TestMeetingSessionIntelIntegration:
         session = MeetingSession(
             transcriber=mock_transcriber,
             intel_enabled=False,
-            web_enabled=False,
         )
 
         # Create mock state with intel
@@ -631,7 +630,6 @@ class TestMeetingSessionIntelIntegration:
         session = MeetingSession(
             transcriber=mock_transcriber,
             intel_enabled=False,
-            web_enabled=False,
         )
 
         action_item = ActionItem(task="Test task", id="test-id-001")
@@ -657,7 +655,6 @@ class TestMeetingSessionIntelIntegration:
         session = MeetingSession(
             transcriber=mock_transcriber,
             intel_enabled=False,
-            web_enabled=False,
         )
 
         action_item = ActionItem(task="Test task", id="test-id-001")
@@ -681,7 +678,6 @@ class TestMeetingSessionIntelIntegration:
         session = MeetingSession(
             transcriber=mock_transcriber,
             intel_enabled=False,
-            web_enabled=False,
         )
 
         session._state = MeetingState(
@@ -701,7 +697,6 @@ class TestMeetingSessionIntelIntegration:
         session = MeetingSession(
             transcriber=mock_transcriber,
             intel_enabled=False,
-            web_enabled=False,
         )
 
         session._state = MeetingState(
@@ -718,7 +713,6 @@ class TestMeetingSessionIntelIntegration:
         session = MeetingSession(
             transcriber=mock_transcriber,
             intel_enabled=False,
-            web_enabled=False,
         )
         session._state = None
 
@@ -729,7 +723,6 @@ class TestMeetingSessionIntelIntegration:
         session = MeetingSession(
             transcriber=mock_transcriber,
             intel_enabled=False,
-            web_enabled=False,
         )
         action_item = ActionItem(task="Test task", id="test-id-001")
         session._state = MeetingState(
@@ -750,7 +743,6 @@ class TestMeetingSessionIntelIntegration:
         session = MeetingSession(
             transcriber=mock_transcriber,
             intel_enabled=False,
-            web_enabled=False,
         )
         action_item = ActionItem(task="Test task", owner="Me", id="test-id-001")
         session._state = MeetingState(
@@ -790,7 +782,6 @@ class TestStreamingInterruption:
         session = MeetingSession(
             transcriber=mock_transcriber,
             intel_enabled=False,
-            web_enabled=False,
         )
 
         # Simulate starting analysis
@@ -809,7 +800,6 @@ class TestStreamingInterruption:
         session = MeetingSession(
             transcriber=mock_transcriber,
             intel_enabled=False,
-            web_enabled=False,
         )
 
         # First analysis starts

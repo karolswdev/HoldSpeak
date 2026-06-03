@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import os
 import signal
+import sys
 import threading
 import time
 import webbrowser
@@ -51,6 +52,12 @@ from .web_server import MeetingWebServer, WebRuntimeCallbacks
 
 log = get_logger("web_runtime")
 
+# HS-32-03: the owner string a meeting uses to hold the shared
+# ``VoiceTypingSession`` audio floor. One arbiter for hotkey / device /
+# meeting capture; while a meeting holds this, hotkey/device ``begin()``
+# is rejected, and a meeting can't start while either holds the floor.
+_MEETING_AUDIO_OWNER = "meeting"
+
 
 def _configured_web_port_from_env() -> int | None:
     raw = os.environ.get("HOLDSPEAK_WEB_PORT")
@@ -67,160 +74,181 @@ def _configured_web_port_from_env() -> int | None:
     return port
 
 
-def run_web_runtime(
-    *,
-    no_open: bool = False,
-    stop_event: Optional[threading.Event] = None,
-    register_signal_handlers: bool = True,
-) -> None:
-    """Start HoldSpeak web runtime and keep it alive until stop."""
-    import sys
+class WebRuntime:
+    """Web-first runtime: owns the web server, hotkey/device capture, the
+    meeting session, and the MIR plugin pipeline.
 
-    config = Config.load()
-    runtime_started_at = datetime.now()
-    runtime_stop_event = stop_event or threading.Event()
-    state_lock = threading.Lock()
-    meeting_lock = threading.Lock()
-    bookmarks: list[dict[str, object]] = []
-    pending_title: Optional[str] = None
-    pending_tags: Optional[list[str]] = None
-    last_meeting_snapshot: Optional[dict[str, object]] = None
-    pending_intent_windows: list[dict[str, object]] = []
-    pending_plugin_runs: list[dict[str, object]] = []
-    preview_window_seq = 0
-    mir_enabled = bool(getattr(config.meeting, "mir_enabled", False))
-    mir_profile = normalize_profile(getattr(config.meeting, "mir_profile", None))
-    mir_override_intents: list[str] = []
-    last_route_preview: Optional[dict[str, object]] = None
-    runtime_url: Optional[str] = None
+    State that the old ``run_web_runtime()`` god-function threaded through
+    ``nonlocal`` variables now lives on instance attributes; the inline
+    closures are methods. ``run()`` performs startup, the keep-alive loop,
+    and shutdown. This is the sole interactive runtime.
+    """
 
-    hotkey_listener: Optional[HotkeyListener] = None
-    recorder: Optional[AudioRecorder] = None
-    transcriber: Optional[Transcriber] = None
-    server: Optional[MeetingWebServer] = None
-    meeting_session: Optional[MeetingSession] = None
-    device_registry = DeviceRegistry()
-    device_status = DeviceStatusEmitter(label_lookup=device_registry)
-    # HS-17-05: periodic Recording-tick emitter for attached devices.
-    # Started in `_start_meeting`, stopped in `_stop_active_meeting`.
-    recording_ticker = RecordingTicker(
-        status_sender=lambda ids, text: device_status.broadcast(
-            ids, text, ttl_ms=0
-        ),
-    )
-    voice_session = VoiceTypingSession()
-    transcription_lock = threading.Lock()
-    text_processor = TextProcessor()
-    from .activity_context import ActivityContextProvider
+    def __init__(
+        self,
+        *,
+        no_open: bool = False,
+        stop_event: Optional[threading.Event] = None,
+        register_signal_handlers: bool = True,
+    ) -> None:
+        self.no_open = no_open
+        self.register_signal_handlers = register_signal_handlers
 
-    # HS-16-02: enable the "llm" plugin capability iff a meeting-intel provider
-    # resolves. Without this, LLM-backed plugins (e.g. mermaid_architecture)
-    # always block; resolution failure is non-fatal — they just stay blocked.
-    from .intel import resolve_llm_capability
+        self.config = Config.load()
+        self.runtime_started_at = datetime.now()
+        self.runtime_stop_event = stop_event or threading.Event()
+        self.state_lock = threading.Lock()
+        self.meeting_lock = threading.Lock()
+        self.bookmarks: list[dict[str, object]] = []
+        self.pending_title: Optional[str] = None
+        self.pending_tags: Optional[list[str]] = None
+        self.last_meeting_snapshot: Optional[dict[str, object]] = None
+        self.pending_intent_windows: list[dict[str, object]] = []
+        self.pending_plugin_runs: list[dict[str, object]] = []
+        self.preview_window_seq = 0
+        self.mir_enabled = bool(getattr(self.config.meeting, "mir_enabled", False))
+        self.mir_profile = normalize_profile(getattr(self.config.meeting, "mir_profile", None))
+        self.mir_override_intents: list[str] = []
+        self.last_route_preview: Optional[dict[str, object]] = None
+        self.runtime_url: Optional[str] = None
 
-    llm_capability_enabled = resolve_llm_capability(config.meeting)
-    log.info(f"intel.llm_capability enabled={llm_capability_enabled}")
+        self.hotkey_listener: Optional[HotkeyListener] = None
+        self.recorder: Optional[AudioRecorder] = None
+        self.transcriber: Optional[Transcriber] = None
+        self.server: Optional[MeetingWebServer] = None
+        self.meeting_session: Optional[MeetingSession] = None
+        self.device_registry = DeviceRegistry()
+        self.device_status = DeviceStatusEmitter(label_lookup=self.device_registry)
+        # HS-17-05: periodic Recording-tick emitter for attached devices.
+        # Started in `_start_meeting`, stopped in `_stop_active_meeting`.
+        self.recording_ticker = RecordingTicker(
+            status_sender=lambda ids, text: self.device_status.broadcast(
+                ids, text, ttl_ms=0
+            ),
+        )
+        self.voice_session = VoiceTypingSession()
+        self.transcription_lock = threading.Lock()
+        self.text_processor = TextProcessor()
+        from .activity_context import ActivityContextProvider
 
-    plugin_host = PluginHost(
-        default_timeout_seconds=0.35,
-        enabled_capabilities={"llm"} if llm_capability_enabled else None,
-    )
-    plugin_host.register_context_provider(ActivityContextProvider(refresh=True, refresh_once=True))
-    register_builtin_plugins(plugin_host)
+        # HS-16-02: enable the "llm" plugin capability iff a meeting-intel
+        # provider resolves. Without this, LLM-backed plugins (e.g.
+        # mermaid_architecture) always block; resolution failure is non-fatal
+        # — they just stay blocked.
+        from .intel import resolve_llm_capability
 
-    # Project knowledge-base detector (runs first in every chain)
-    project_detector = ProjectDetectorPlugin()
-    try:
-        from .db import get_database as _get_db_for_projects
-        project_detector.reload_projects(_get_db_for_projects().get_all_projects_for_detector())
-    except Exception as _proj_init_err:
-        log.warning(f"Could not load projects for detector at startup: {_proj_init_err}")
-    plugin_host.register(project_detector)
+        self.llm_capability_enabled = resolve_llm_capability(self.config.meeting)
+        log.info(f"intel.llm_capability enabled={self.llm_capability_enabled}")
 
-    plugin_queue_thread: Optional[threading.Thread] = None
+        self.plugin_host = PluginHost(
+            default_timeout_seconds=0.35,
+            enabled_capabilities={"llm"} if self.llm_capability_enabled else None,
+        )
+        self.plugin_host.register_context_provider(
+            ActivityContextProvider(refresh=True, refresh_once=True)
+        )
+        register_builtin_plugins(self.plugin_host)
 
-    try:
-        typer: Optional[TextTyper] = TextTyper()
-        text_injection_enabled = True
-    except Exception as exc:
-        typer = None
-        text_injection_enabled = False
-        log.warning(f"Text injection unavailable in web mode: {exc}")
+        # Project knowledge-base detector (runs first in every chain)
+        self.project_detector = ProjectDetectorPlugin()
+        try:
+            from .db import get_database as _get_db_for_projects
 
-    runtime_status: dict[str, object] = {
-        "voice_state": "idle",
-        "last_transcription": "",
-        "last_error": "",
-        "transcription_model": config.model.name,
-        "transcription_warm_on_start": bool(getattr(config.model, "warm_on_start", True)),
-        "transcription_status": "not_loaded",
-        "transcription_error": "",
-        "global_hotkey_available": False,
-        "global_hotkey_error": "",
-        "text_injection_enabled": text_injection_enabled,
-        "text_injection_error": "" if text_injection_enabled else "TextTyper unavailable",
-    }
+            self.project_detector.reload_projects(
+                _get_db_for_projects().projects.get_all_projects_for_detector()
+            )
+        except Exception as _proj_init_err:
+            log.warning(f"Could not load projects for detector at startup: {_proj_init_err}")
+        self.plugin_host.register(self.project_detector)
 
-    def _transcription_warm_on_start_enabled() -> bool:
-        return bool(getattr(config.model, "warm_on_start", True))
+        self.plugin_queue_thread: Optional[threading.Thread] = None
 
-    def _set_transcription_status(status: str, *, error: str = "") -> None:
-        with state_lock:
-            runtime_status["transcription_model"] = config.model.name
-            runtime_status["transcription_warm_on_start"] = _transcription_warm_on_start_enabled()
-            runtime_status["transcription_status"] = status
-            runtime_status["transcription_error"] = error
+        try:
+            self.typer: Optional[TextTyper] = TextTyper()
+            self.text_injection_enabled = True
+        except Exception as exc:
+            self.typer = None
+            self.text_injection_enabled = False
+            log.warning(f"Text injection unavailable in web mode: {exc}")
 
-    def _ensure_transcriber_loaded() -> Transcriber:
-        nonlocal transcriber
-        if transcriber is None or getattr(transcriber, "model_name", None) != config.model.name:
-            _set_transcription_status("loading")
+        self.runtime_status: dict[str, object] = {
+            "voice_state": "idle",
+            "last_transcription": "",
+            "last_error": "",
+            "transcription_model": self.config.model.name,
+            "transcription_warm_on_start": bool(getattr(self.config.model, "warm_on_start", True)),
+            "transcription_status": "not_loaded",
+            "transcription_error": "",
+            "global_hotkey_available": False,
+            "global_hotkey_error": "",
+            "text_injection_enabled": self.text_injection_enabled,
+            "text_injection_error": "" if self.text_injection_enabled else "TextTyper unavailable",
+        }
+
+        # AIPI-4-14: per-device cycle index for the meeting-stats double-tap
+        # rotation. ``-1`` means "advance to view 0 on the next double-tap".
+        # Reset whenever a meeting ends so each new meeting starts at view 0.
+        self.device_stats_cycle: dict[str, int] = {}
+
+    def _transcription_warm_on_start_enabled(self) -> bool:
+        return bool(getattr(self.config.model, "warm_on_start", True))
+
+    def _set_transcription_status(self, status: str, *, error: str = "") -> None:
+        with self.state_lock:
+            self.runtime_status["transcription_model"] = self.config.model.name
+            self.runtime_status["transcription_warm_on_start"] = self._transcription_warm_on_start_enabled()
+            self.runtime_status["transcription_status"] = status
+            self.runtime_status["transcription_error"] = error
+
+    def _ensure_transcriber_loaded(self) -> Transcriber:
+        if self.transcriber is None or getattr(self.transcriber, "model_name", None) != self.config.model.name:
+            self._set_transcription_status("loading")
             try:
-                transcriber = Transcriber(model_name=config.model.name, backend=config.model.backend)
+                self.transcriber = Transcriber(model_name=self.config.model.name, backend=self.config.model.backend)
             except Exception as exc:
-                _set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")
+                self._set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")
                 raise
-        _set_transcription_status("loaded")
-        return transcriber
+        self._set_transcription_status("loaded")
+        return self.transcriber
 
-    def _warm_transcriber_in_background() -> None:
-        if not _transcription_warm_on_start_enabled():
+    def _warm_transcriber_in_background(self) -> None:
+        if not self._transcription_warm_on_start_enabled():
             return
 
         def _warm() -> None:
-            with transcription_lock:
+            with self.transcription_lock:
                 try:
-                    _ensure_transcriber_loaded()
+                    self._ensure_transcriber_loaded()
                 except Exception as exc:
-                    _set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")
-                    with state_lock:
-                        runtime_status["last_error"] = f"Transcription warmup failed: {exc}"
+                    self._set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")
+                    with self.state_lock:
+                        self.runtime_status["last_error"] = f"Transcription warmup failed: {exc}"
                     log.error(f"Transcription warmup failed: {exc}", exc_info=True)
 
-        _set_transcription_status("warming")
+        self._set_transcription_status("warming")
         threading.Thread(
             target=_warm,
             name="HoldSpeakTranscriptionWarmup",
             daemon=True,
         ).start()
 
-    def _active_meeting_session() -> Optional[MeetingSession]:
-        with meeting_lock:
-            session = meeting_session
+    def _active_meeting_session(self) -> Optional[MeetingSession]:
+        with self.meeting_lock:
+            session = self.meeting_session
         if session is None or not session.is_active:
             return None
         return session
 
-    def _set_voice_state(value: str) -> None:
-        with state_lock:
-            runtime_status["voice_state"] = value
+    def _set_voice_state(self, value: str) -> None:
+        with self.state_lock:
+            self.runtime_status["voice_state"] = value
 
-    def _normalize_tags(tags: Optional[list[str]]) -> list[str]:
+    def _normalize_tags(self, tags: Optional[list[str]]) -> list[str]:
         if not isinstance(tags, list):
             return []
         return [str(tag).strip().lower() for tag in tags if str(tag).strip()]
 
-    def _meeting_summary_from_state(state: dict[str, object]) -> Optional[dict[str, object]]:
+    def _meeting_summary_from_state(self, state: dict[str, object]) -> Optional[dict[str, object]]:
         if not bool(state.get("meeting_active")):
             return None
         meeting_id = state.get("id")
@@ -236,31 +264,31 @@ def run_web_runtime(
             "formatted_duration": state.get("formatted_duration"),
         }
 
-    def _mir_controls_payload() -> dict[str, object]:
-        with state_lock:
+    def _mir_controls_payload(self) -> dict[str, object]:
+        with self.state_lock:
             return {
-                "enabled": bool(mir_enabled),
-                "profile": str(mir_profile),
+                "enabled": bool(self.mir_enabled),
+                "profile": str(self.mir_profile),
                 "available_profiles": available_profiles(),
                 "supported_intents": list(SUPPORTED_INTENTS),
-                "override_intents": list(mir_override_intents),
-                "last_preview": dict(last_route_preview) if isinstance(last_route_preview, dict) else None,
+                "override_intents": list(self.mir_override_intents),
+                "last_preview": dict(self.last_route_preview) if isinstance(self.last_route_preview, dict) else None,
                 "threshold": float(DEFAULT_INTENT_THRESHOLD),
             }
 
-    def _runtime_idle_state() -> dict[str, object]:
-        runtime_uptime = max(0.0, (datetime.now() - runtime_started_at).total_seconds())
-        with state_lock:
-            idle_title = pending_title or ""
-            idle_tags = list(pending_tags) if pending_tags is not None else []
-            runtime_snapshot = dict(runtime_status)
+    def _runtime_idle_state(self) -> dict[str, object]:
+        runtime_uptime = max(0.0, (datetime.now() - self.runtime_started_at).total_seconds())
+        with self.state_lock:
+            idle_title = self.pending_title or ""
+            idle_tags = list(self.pending_tags) if self.pending_tags is not None else []
+            runtime_snapshot = dict(self.runtime_status)
             mir_snapshot = {
-                "enabled": bool(mir_enabled),
-                "profile": str(mir_profile),
+                "enabled": bool(self.mir_enabled),
+                "profile": str(self.mir_profile),
                 "available_profiles": available_profiles(),
                 "supported_intents": list(SUPPORTED_INTENTS),
-                "override_intents": list(mir_override_intents),
-                "last_preview": dict(last_route_preview) if isinstance(last_route_preview, dict) else None,
+                "override_intents": list(self.mir_override_intents),
+                "last_preview": dict(self.last_route_preview) if isinstance(self.last_route_preview, dict) else None,
                 "threshold": float(DEFAULT_INTENT_THRESHOLD),
             }
 
@@ -275,10 +303,10 @@ def run_web_runtime(
             "formatted_duration": "00:00",
             "title": idle_title,
             "tags": idle_tags,
-            "web_url": runtime_url,
-            "runtime_started_at": runtime_started_at.isoformat(),
+            "web_url": self.runtime_url,
+            "runtime_started_at": self.runtime_started_at.isoformat(),
             "runtime_uptime": runtime_uptime,
-            "bookmarks": list(bookmarks),
+            "bookmarks": list(self.bookmarks),
             "segments": [],
             "topics": [],
             "action_items": [],
@@ -293,97 +321,121 @@ def run_web_runtime(
             "runtime": runtime_snapshot,
         }
 
-    def _get_state() -> dict[str, object]:
-        session = _active_meeting_session()
+    def _get_state(self) -> dict[str, object]:
+        session = self._active_meeting_session()
         if session is None:
-            return _runtime_idle_state()
+            return self._runtime_idle_state()
 
         state = session.state
         if state is None:
-            return _runtime_idle_state()
+            return self._runtime_idle_state()
 
         payload = state.to_dict()
         payload["mode"] = "web"
         payload["meeting_active"] = session.is_active
         payload["meeting_id"] = payload.get("id")
-        payload["runtime_started_at"] = runtime_started_at.isoformat()
-        payload["runtime_uptime"] = max(0.0, (datetime.now() - runtime_started_at).total_seconds())
-        if runtime_url and not payload.get("web_url"):
-            payload["web_url"] = runtime_url
-        with state_lock:
-            payload["runtime"] = dict(runtime_status)
-        payload["mir"] = _mir_controls_payload()
+        payload["runtime_started_at"] = self.runtime_started_at.isoformat()
+        payload["runtime_uptime"] = max(0.0, (datetime.now() - self.runtime_started_at).total_seconds())
+        if self.runtime_url and not payload.get("web_url"):
+            payload["web_url"] = self.runtime_url
+        with self.state_lock:
+            payload["runtime"] = dict(self.runtime_status)
+        payload["mir"] = self._mir_controls_payload()
         return payload
 
-    def _broadcast_intel_status() -> None:
-        if server is None:
+    def _broadcast_intel_status(self) -> None:
+        if self.server is None:
             return
-        state = _get_state()
+        state = self._get_state()
         intel_status = state.get("intel_status")
         if intel_status is not None:
-            server.broadcast("intel_status", intel_status)
+            self.server.broadcast("intel_status", intel_status)
 
-    def _on_meeting_segment(segment) -> None:
-        if server is not None:
+    def _on_meeting_segment(self, segment) -> None:
+        if self.server is not None:
             try:
-                server.broadcast("segment", segment.to_dict())
+                self.server.broadcast("segment", segment.to_dict())
             except Exception as exc:
                 log.debug(f"Failed to broadcast segment: {exc}")
         # HS-17-08: push each finalized segment to attached AIPI-Lite
         # devices as a 3s flash so the LCD reflects what's being
         # transcribed in real time. No-op when no devices attached.
         try:
-            active = _active_meeting_session()
+            active = self._active_meeting_session()
             if active is not None and active.state is not None:
                 attached_ids = [d.id for d in active.state.devices]
-                push_segment_to_devices(device_status, attached_ids, segment)
+                push_segment_to_devices(self.device_status, attached_ids, segment)
         except Exception as exc:
             log.debug(f"Failed to push segment to device LCD: {exc}")
 
-    def _on_meeting_intel(intel) -> None:
-        if server is not None:
+    def _on_meeting_intel(self, intel) -> None:
+        if self.server is not None:
             try:
-                server.broadcast("intel_complete", intel.to_dict())
+                self.server.broadcast("intel_complete", intel.to_dict())
             except Exception as exc:
                 log.debug(f"Failed to broadcast intel_complete: {exc}")
-        _broadcast_intel_status()
+        self._broadcast_intel_status()
         # HS-17-07: push the intel summary to attached AIPI-Lite LCDs
         # so the user gets visible feedback when intel finishes (topics,
         # actions, summary — all landed in the middle slot).
         try:
-            active = _active_meeting_session()
+            active = self._active_meeting_session()
             if active is not None and active.state is not None:
                 attached_ids = [d.id for d in active.state.devices]
-                push_intel_to_devices(device_status, attached_ids, intel)
+                push_intel_to_devices(self.device_status, attached_ids, intel)
         except Exception as exc:
             log.debug(f"Failed to push intel to device LCD: {exc}")
 
-    def _apply_updated_config(updated_config: Config) -> None:
-        nonlocal config, transcriber
-        previous_model = config.model.name
-        config = updated_config
-        model_changed = transcriber is not None and getattr(transcriber, "model_name", None) != config.model.name
+    # Events the meeting session emits that have a *dedicated* runtime path
+    # already (`_on_meeting_segment` / `_on_meeting_intel` broadcast these,
+    # and also drive the device LCDs). Forwarding them again from the generic
+    # `on_broadcast` seam would double-broadcast, so they are filtered out.
+    _BROADCAST_VIA_DEDICATED_HANDLER = frozenset({"segment", "intel_complete", "intel_status"})
+
+    def _on_meeting_broadcast(self, message_type: str, data: object) -> None:
+        """Observe live events `MeetingSession` emits (HS-32-02 inversion).
+
+        The session no longer reaches into a web server; it emits, and the
+        runtime forwards to its broadcast channel. ``segment`` /
+        ``intel_complete`` / ``intel_status`` already flow via the dedicated
+        ``on_segment`` / ``on_intel`` handlers, so only ``intel_token`` and
+        ``meeting_updated`` — previously delivered solely to the now-removed
+        embedded per-meeting server, and dead in the flagship runtime — are
+        forwarded here.
+        """
+        if self.server is None:
+            return
+        if message_type in self._BROADCAST_VIA_DEDICATED_HANDLER:
+            return
+        try:
+            self.server.broadcast(message_type, data)
+        except Exception as exc:
+            log.debug(f"Failed to forward meeting broadcast {message_type!r}: {exc}")
+
+    def _apply_updated_config(self, updated_config: Config) -> None:
+        previous_model = self.config.model.name
+        self.config = updated_config
+        model_changed = self.transcriber is not None and getattr(self.transcriber, "model_name", None) != self.config.model.name
         if model_changed:
-            transcriber = None
-        if previous_model != config.model.name or model_changed:
-            _set_transcription_status("not_loaded")
+            self.transcriber = None
+        if previous_model != self.config.model.name or model_changed:
+            self._set_transcription_status("not_loaded")
         else:
-            _set_transcription_status(
-                "loaded" if transcriber is not None else "not_loaded",
+            self._set_transcription_status(
+                "loaded" if self.transcriber is not None else "not_loaded",
                 error="",
             )
-        _warm_transcriber_in_background()
-        if hotkey_listener is not None:
+        self._warm_transcriber_in_background()
+        if self.hotkey_listener is not None:
             try:
-                hotkey_listener.hotkey = config.hotkey.key
+                self.hotkey_listener.hotkey = self.config.hotkey.key
             except Exception as exc:
                 log.debug(f"Failed to apply runtime hotkey update: {exc}")
-        if recorder is not None:
-            recorder.device = config.meeting.mic_device
+        if self.recorder is not None:
+            self.recorder.device = self.config.meeting.mic_device
 
-    def _start_meeting(*, devices: Optional[list[str]] = None) -> dict[str, object]:
-        nonlocal meeting_session, transcriber, pending_title, pending_tags, preview_window_seq
-        if _active_meeting_session() is not None:
+    def _start_meeting(self, *, devices: Optional[list[str]] = None) -> dict[str, object]:
+        if self._active_meeting_session() is not None:
             raise RuntimeError("Meeting already active")
 
         # Validate every requested device id is currently registered
@@ -392,74 +444,88 @@ def run_web_runtime(
         device_pairs: list[tuple[object, object]] = []  # (descriptor, source)
         if devices:
             for device_id in devices:
-                descriptor = device_registry.get(device_id)
+                descriptor = self.device_registry.get(device_id)
                 if descriptor is None:
                     raise _UnknownDeviceError(device_id)
-                source = device_registry.recorder_for(device_id)
+                source = self.device_registry.recorder_for(device_id)
                 if source is None:
                     raise _UnknownDeviceError(device_id)
                 device_pairs.append((descriptor, source))
 
-        if transcriber is None or getattr(transcriber, "model_name", None) != config.model.name:
-            transcriber = _ensure_transcriber_loaded()
+        if self.transcriber is None or getattr(self.transcriber, "model_name", None) != self.config.model.name:
+            self.transcriber = self._ensure_transcriber_loaded()
 
-        session = MeetingSession(
-            transcriber=transcriber,
-            mic_label=config.meeting.mic_label,
-            remote_label=config.meeting.remote_label,
-            mic_device=config.meeting.mic_device,
-            system_device=config.meeting.system_audio_device,
-            on_segment=_on_meeting_segment,
-            on_mic_level=lambda _level: None,
-            on_system_level=lambda _level: None,
-            on_intel=_on_meeting_intel,
-            on_settings_applied=_apply_updated_config,
-            intel_enabled=config.meeting.intel_enabled,
-            intel_model_path=config.meeting.intel_realtime_model,
-            intel_provider=config.meeting.intel_provider,
-            intel_cloud_model=config.meeting.intel_cloud_model,
-            intel_cloud_api_key_env=config.meeting.intel_cloud_api_key_env,
-            intel_cloud_base_url=config.meeting.intel_cloud_base_url,
-            intel_cloud_reasoning_effort=config.meeting.intel_cloud_reasoning_effort,
-            intel_cloud_store=config.meeting.intel_cloud_store,
-            intel_deferred_enabled=config.meeting.intel_deferred_enabled,
-            web_enabled=False,
-            diarization_enabled=config.meeting.diarization_enabled,
-            diarize_mic=config.meeting.diarize_mic,
-            cross_meeting_recognition=config.meeting.cross_meeting_recognition,
-        )
-        state = session.start()
-        with state_lock:
-            title_override = pending_title
-            tags_override = list(pending_tags) if pending_tags is not None else None
-            pending_title = None
-            pending_tags = None
-        if title_override is not None:
-            session.set_title(title_override)
-            state = session.state or state
-        if tags_override is not None:
-            session.set_tags(tags_override)
-            state = session.state or state
-        if runtime_url:
-            state.web_url = runtime_url
+        # HS-32-03: claim the shared audio floor before opening any recorder, so
+        # a hotkey/device voice-typing session can't already hold the mic (and so
+        # one can't grab it while the meeting runs). Released in
+        # `_stop_active_meeting` / shutdown; released here if start-up fails
+        # before the meeting is registered.
+        if not self.voice_session.acquire(_MEETING_AUDIO_OWNER):
+            raise RuntimeError(
+                f"Cannot start meeting: audio floor held by {self.voice_session.active_owner!r}"
+            )
+        try:
+            session = MeetingSession(
+                transcriber=self.transcriber,
+                mic_label=self.config.meeting.mic_label,
+                remote_label=self.config.meeting.remote_label,
+                mic_device=self.config.meeting.mic_device,
+                system_device=self.config.meeting.system_audio_device,
+                on_segment=self._on_meeting_segment,
+                on_mic_level=lambda _level: None,
+                on_system_level=lambda _level: None,
+                on_intel=self._on_meeting_intel,
+                on_settings_applied=self._apply_updated_config,
+                on_broadcast=self._on_meeting_broadcast,
+                intel_enabled=self.config.meeting.intel_enabled,
+                intel_model_path=self.config.meeting.intel_realtime_model,
+                intel_provider=self.config.meeting.intel_provider,
+                intel_cloud_model=self.config.meeting.intel_cloud_model,
+                intel_cloud_api_key_env=self.config.meeting.intel_cloud_api_key_env,
+                intel_cloud_base_url=self.config.meeting.intel_cloud_base_url,
+                intel_cloud_reasoning_effort=self.config.meeting.intel_cloud_reasoning_effort,
+                intel_cloud_store=self.config.meeting.intel_cloud_store,
+                intel_deferred_enabled=self.config.meeting.intel_deferred_enabled,
+                diarization_enabled=self.config.meeting.diarization_enabled,
+                diarize_mic=self.config.meeting.diarize_mic,
+                cross_meeting_recognition=self.config.meeting.cross_meeting_recognition,
+            )
+            state = session.start()
+            with self.state_lock:
+                title_override = self.pending_title
+                tags_override = list(self.pending_tags) if self.pending_tags is not None else None
+                self.pending_title = None
+                self.pending_tags = None
+            if title_override is not None:
+                session.set_title(title_override)
+                state = session.state or state
+            if tags_override is not None:
+                session.set_tags(tags_override)
+                state = session.state or state
+            if self.runtime_url:
+                state.web_url = self.runtime_url
 
-        attached_ids: list[str] = []
-        for descriptor, source in device_pairs:
-            try:
-                session.attach_device(descriptor, source)  # type: ignore[arg-type]
-                attached_ids.append(getattr(descriptor, "id", ""))
-            except Exception as exc:
-                log.error(f"Failed to attach device {getattr(descriptor, 'id', '?')}: {exc}")
-                # Best effort: continue with whatever attached successfully.
-                # The descriptors that *did* attach remain on state.devices.
-                continue
+            attached_ids: list[str] = []
+            for descriptor, source in device_pairs:
+                try:
+                    session.attach_device(descriptor, source)  # type: ignore[arg-type]
+                    attached_ids.append(getattr(descriptor, "id", ""))
+                except Exception as exc:
+                    log.error(f"Failed to attach device {getattr(descriptor, 'id', '?')}: {exc}")
+                    # Best effort: continue with whatever attached successfully.
+                    # The descriptors that *did* attach remain on state.devices.
+                    continue
 
-        with meeting_lock:
-            meeting_session = session
+            with self.meeting_lock:
+                self.meeting_session = session
+        except Exception:
+            # Roll back the floor claim if the meeting never came up.
+            self.voice_session.release(_MEETING_AUDIO_OWNER)
+            raise
 
         if attached_ids:
             attached_for_status = [d for d in attached_ids if d]
-            device_status.broadcast(
+            self.device_status.broadcast(
                 attached_for_status,
                 "Recording 00:00",
                 ttl_ms=0,
@@ -468,26 +534,25 @@ def run_web_runtime(
             # paint above is done synchronously; subsequent ticks fire
             # every 5 s on a daemon thread that exits cleanly on
             # `_stop_active_meeting`.
-            recording_ticker.start(
+            self.recording_ticker.start(
                 started_at_monotonic=time.monotonic(),
                 device_ids=attached_for_status,
             )
-        with state_lock:
-            pending_intent_windows.clear()
-            pending_plugin_runs.clear()
-            preview_window_seq = 0
-        with state_lock:
-            runtime_status["last_error"] = ""
+        with self.state_lock:
+            self.pending_intent_windows.clear()
+            self.pending_plugin_runs.clear()
+            self.preview_window_seq = 0
+        with self.state_lock:
+            self.runtime_status["last_error"] = ""
 
-        _broadcast_intel_status()
+        self._broadcast_intel_status()
         return state.to_dict()
 
-    def _stop_active_meeting(*, allow_runtime_fallback: bool) -> dict[str, object]:
-        nonlocal meeting_session, last_meeting_snapshot
-        session = _active_meeting_session()
+    def _stop_active_meeting(self, *, allow_runtime_fallback: bool) -> dict[str, object]:
+        session = self._active_meeting_session()
         if session is None:
             if allow_runtime_fallback:
-                runtime_stop_event.set()
+                self.runtime_stop_event.set()
                 return {"status": "stopping_runtime"}
             raise RuntimeError("No active meeting")
 
@@ -498,18 +563,22 @@ def run_web_runtime(
         # HS-17-05: stop the Recording-tick *before* the
         # `Saving meeting...` broadcast so a stale tick can't land
         # after the user has been told the meeting is saving.
-        recording_ticker.stop()
+        self.recording_ticker.stop()
         # AIPI-4-14: reset per-device cycle indexes so the next meeting
         # starts the double-tap rotation back at view 0.
-        device_stats_cycle.clear()
+        self.device_stats_cycle.clear()
         if attached_ids:
-            device_status.broadcast(attached_ids, "Saving meeting...", ttl_ms=0)
+            self.device_status.broadcast(attached_ids, "Saving meeting...", ttl_ms=0)
 
         final_state = session.stop()
+        # HS-32-03: the meeting's recorder is now closed — release the shared
+        # audio floor immediately (before the slower save/intel work, none of
+        # which touches the mic) so hotkey/device voice typing can resume.
+        self.voice_session.release(_MEETING_AUDIO_OWNER)
         final_state_payload = final_state.to_dict()
         meeting_id = str(final_state_payload.get("id") or "")
-        with state_lock:
-            last_meeting_snapshot = dict(final_state_payload)
+        with self.state_lock:
+            self.last_meeting_snapshot = dict(final_state_payload)
         save_error: Optional[str] = None
         save_payload = {
             "database_saved": False,
@@ -524,7 +593,7 @@ def run_web_runtime(
         }
         queue_flush_error: Optional[str] = None
         try:
-            queue_flush = _flush_deferred_plugin_runs_to_db()
+            queue_flush = self._flush_deferred_plugin_runs_to_db()
             queue_flush_error = str(queue_flush.get("error") or "") or None
             save_result = session.save()
             save_payload = {
@@ -543,26 +612,26 @@ def run_web_runtime(
                 "deferred_queue_error": queue_flush_error,
             }
             if meeting_id:
-                mir_history = _persist_pending_mir_history(meeting_id)
+                mir_history = self._persist_pending_mir_history(meeting_id)
                 save_payload["intent_windows_saved"] = int(mir_history.get("intent_windows_saved") or 0)
                 save_payload["plugin_runs_saved"] = int(mir_history.get("plugin_runs_saved") or 0)
                 save_payload["mir_save_error"] = mir_history.get("error")
-                artifacts_result = _synthesize_and_persist_artifacts(meeting_id)
+                artifacts_result = self._synthesize_and_persist_artifacts(meeting_id)
                 save_payload["artifacts_saved"] = int(artifacts_result.get("artifacts_saved") or 0)
                 save_payload["artifact_synthesis_error"] = artifacts_result.get("error")
-                project_result = _associate_meeting_with_projects(meeting_id)
+                project_result = self._associate_meeting_with_projects(meeting_id)
                 save_payload["projects_associated"] = int(project_result.get("projects_associated") or 0)
                 save_payload["project_association_error"] = project_result.get("error")
         except Exception as exc:
             save_error = str(exc)
             log.error(f"Failed to save meeting from web runtime: {exc}")
 
-        with meeting_lock:
-            if meeting_session is session:
-                meeting_session = None
+        with self.meeting_lock:
+            if self.meeting_session is session:
+                self.meeting_session = None
 
-        with state_lock:
-            runtime_status["last_error"] = save_error or ""
+        with self.state_lock:
+            self.runtime_status["last_error"] = save_error or ""
 
         return {
             "status": "stopped",
@@ -571,7 +640,7 @@ def run_web_runtime(
             "save_error": save_error,
         }
 
-    def _flush_deferred_plugin_runs_to_db() -> dict[str, object]:
+    def _flush_deferred_plugin_runs_to_db(self) -> dict[str, object]:
         """Persist host-deferred heavy plugin jobs into DB queue storage."""
         queued_jobs = 0
         flush_error: Optional[str] = None
@@ -580,7 +649,7 @@ def run_web_runtime(
 
             db = get_database()
             while True:
-                queued_run = plugin_host.pop_next_deferred_run()
+                queued_run = self.plugin_host.pop_next_deferred_run()
                 if queued_run is None:
                     break
                 db.plugins.enqueue_plugin_run_job(
@@ -599,16 +668,16 @@ def run_web_runtime(
 
         return {"queued_jobs": queued_jobs, "error": flush_error}
 
-    def _process_deferred_plugin_queue_once(*, include_scheduled: bool = False) -> bool:
+    def _process_deferred_plugin_queue_once(self, *, include_scheduled: bool = False) -> bool:
         """Run one deferred MIR queue job if available."""
-        if _active_meeting_session() is not None:
+        if self._active_meeting_session() is not None:
             return False
         try:
             from .db import get_database
 
             db = get_database()
             return process_next_plugin_run_job(
-                host=plugin_host,
+                host=self.plugin_host,
                 db=db,
                 include_scheduled=include_scheduled,
             )
@@ -617,19 +686,20 @@ def run_web_runtime(
             return False
 
     def _process_deferred_plugin_queue(
+        self,
         *,
         max_jobs: Optional[int] = None,
         include_scheduled: bool = False,
     ) -> dict[str, object]:
         """Drain deferred MIR queue through runtime-owned plugin host."""
-        if _active_meeting_session() is not None:
+        if self._active_meeting_session() is not None:
             return {"processed": 0, "skipped_active_meeting": True}
         try:
             from .db import get_database
 
             db = get_database()
             processed = drain_plugin_run_queue(
-                host=plugin_host,
+                host=self.plugin_host,
                 db=db,
                 max_jobs=max_jobs,
                 include_scheduled=include_scheduled,
@@ -643,25 +713,25 @@ def run_web_runtime(
                 "error": str(exc),
             }
 
-    def _deferred_plugin_queue_loop() -> None:
-        while not runtime_stop_event.is_set():
-            processed = _process_deferred_plugin_queue_once()
+    def _deferred_plugin_queue_loop(self) -> None:
+        while not self.runtime_stop_event.is_set():
+            processed = self._process_deferred_plugin_queue_once()
             if processed:
                 continue
-            runtime_stop_event.wait(0.6)
+            self.runtime_stop_event.wait(0.6)
 
-    def _get_runtime_status() -> dict[str, object]:
-        state = _get_state()
+    def _get_runtime_status(self) -> dict[str, object]:
+        state = self._get_state()
         runtime = state.get("runtime") if isinstance(state.get("runtime"), dict) else {}
         meeting_active = bool(state.get("meeting_active"))
-        meeting = _meeting_summary_from_state(state)
-        with state_lock:
-            last_meeting = dict(last_meeting_snapshot) if isinstance(last_meeting_snapshot, dict) else None
-            runtime_snapshot = dict(runtime_status)
+        meeting = self._meeting_summary_from_state(state)
+        with self.state_lock:
+            last_meeting = dict(self.last_meeting_snapshot) if isinstance(self.last_meeting_snapshot, dict) else None
+            runtime_snapshot = dict(self.runtime_status)
         return {
             "status": "ok",
             "mode": "web",
-            "url": runtime_url,
+            "url": self.runtime_url,
             "meeting_active": meeting_active,
             "meeting_id": state.get("id") if meeting_active else None,
             "meeting": meeting,
@@ -669,19 +739,19 @@ def run_web_runtime(
             "voice_state": runtime.get("voice_state", runtime_snapshot.get("voice_state", "idle")),
             "text_injection_enabled": runtime_snapshot.get("text_injection_enabled"),
             "text_injection_error": runtime_snapshot.get("text_injection_error", ""),
-            "llm_capability_enabled": llm_capability_enabled,
+            "llm_capability_enabled": self.llm_capability_enabled,
             "transcription": {
-                "model": runtime_snapshot.get("transcription_model", config.model.name),
+                "model": runtime_snapshot.get("transcription_model", self.config.model.name),
                 "warm_on_start": runtime_snapshot.get("transcription_warm_on_start", False),
                 "status": runtime_snapshot.get("transcription_status", "not_loaded"),
                 "error": runtime_snapshot.get("transcription_error", ""),
             },
-            "intel_egress": _intel_egress_payload(),
-            "mir": _mir_controls_payload(),
+            "intel_egress": self._intel_egress_payload(),
+            "mir": self._mir_controls_payload(),
             "state": state,
         }
 
-    def _intel_egress_payload() -> dict[str, object]:
+    def _intel_egress_payload(self) -> dict[str, object]:
         """Egress posture for the web intel-status surface (HS-25-01).
 
         Lets the UI state plainly whether transcripts can leave the machine
@@ -689,7 +759,7 @@ def run_web_runtime(
         """
         from .intel import intel_egress_posture
 
-        meeting = config.meeting
+        meeting = self.config.meeting
         if not meeting.intel_enabled:
             return {
                 "enabled": False,
@@ -705,14 +775,14 @@ def run_web_runtime(
             "egress": description,
         }
 
-    def _on_bookmark(label: str) -> dict[str, object]:
-        session = _active_meeting_session()
+    def _on_bookmark(self, label: str) -> dict[str, object]:
+        session = self._active_meeting_session()
         if session is not None:
             bookmark = session.add_bookmark(label=label, auto_label=not bool(label))
             if bookmark is not None:
                 attached_ids = [d.id for d in session.state.devices] if session.state else []
                 if attached_ids:
-                    device_status.broadcast(
+                    self.device_status.broadcast(
                         attached_ids,
                         f"Bookmark @ {bookmark.timestamp:.0f}s",
                         ttl_ms=2500,
@@ -721,23 +791,22 @@ def run_web_runtime(
             raise RuntimeError("No active meeting")
 
         entry = {
-            "timestamp": max(0.0, (datetime.now() - runtime_started_at).total_seconds()),
+            "timestamp": max(0.0, (datetime.now() - self.runtime_started_at).total_seconds()),
             "label": label or "",
         }
-        with state_lock:
-            bookmarks.append(entry)
+        with self.state_lock:
+            self.bookmarks.append(entry)
         return entry
 
-    def _on_stop() -> dict[str, object]:
-        return _stop_active_meeting(allow_runtime_fallback=True)
+    def _on_stop(self) -> dict[str, object]:
+        return self._stop_active_meeting(allow_runtime_fallback=True)
 
-    def _on_meeting_stop() -> dict[str, object]:
-        return _stop_active_meeting(allow_runtime_fallback=False)
+    def _on_meeting_stop(self) -> dict[str, object]:
+        return self._stop_active_meeting(allow_runtime_fallback=False)
 
-    def _on_update_meeting(*, title: Optional[str], tags: Optional[list[str]]) -> dict[str, object]:
-        nonlocal pending_title, pending_tags
-        session = _active_meeting_session()
-        clean_tags = _normalize_tags(tags) if tags is not None else None
+    def _on_update_meeting(self, *, title: Optional[str], tags: Optional[list[str]]) -> dict[str, object]:
+        session = self._active_meeting_session()
+        clean_tags = self._normalize_tags(tags) if tags is not None else None
 
         if session is not None:
             if title is not None:
@@ -745,22 +814,23 @@ def run_web_runtime(
             if clean_tags is not None:
                 session.set_tags(clean_tags)
             state = session.state
-            return state.to_dict() if state is not None else _runtime_idle_state()
+            return state.to_dict() if state is not None else self._runtime_idle_state()
 
-        with state_lock:
+        with self.state_lock:
             if title is not None:
-                pending_title = str(title).strip()
+                self.pending_title = str(title).strip()
             if clean_tags is not None:
-                pending_tags = clean_tags
-        return _runtime_idle_state()
+                self.pending_tags = clean_tags
+        return self._runtime_idle_state()
 
     def _on_process_plugin_jobs(
+        self,
         *,
         max_jobs: Optional[int],
         include_scheduled: bool,
     ) -> dict[str, object]:
-        queue_flush = _flush_deferred_plugin_runs_to_db()
-        queue_result = _process_deferred_plugin_queue(
+        queue_flush = self._flush_deferred_plugin_runs_to_db()
+        queue_result = self._process_deferred_plugin_queue(
             max_jobs=max_jobs,
             include_scheduled=include_scheduled,
         )
@@ -772,10 +842,11 @@ def run_web_runtime(
             "error": queue_result.get("error"),
         }
 
-    def _infer_intent_scores(*, transcript: Optional[str], tags: Optional[list[str]]) -> dict[str, float]:
+    def _infer_intent_scores(self, *, transcript: Optional[str], tags: Optional[list[str]]) -> dict[str, float]:
         return extract_intent_signals(transcript, tags=tags)
 
     def _derive_preview_transcript_hash(
+        self,
         *,
         transcript: Optional[str],
         intent_scores: Optional[dict[str, object]],
@@ -787,12 +858,12 @@ def run_web_runtime(
         return hashlib.sha256(score_blob.encode("utf-8")).hexdigest(), ""
 
     def _build_active_preview_window_context(
+        self,
         *,
         transcript: Optional[str],
         route_payload: dict[str, object],
     ) -> Optional[dict[str, object]]:
-        nonlocal preview_window_seq
-        session = _active_meeting_session()
+        session = self._active_meeting_session()
         if session is None:
             return None
 
@@ -804,8 +875,8 @@ def run_web_runtime(
         if not meeting_id:
             return None
 
-        preview_window_seq += 1
-        transcript_hash, transcript_excerpt = _derive_preview_transcript_hash(
+        self.preview_window_seq += 1
+        transcript_hash, transcript_excerpt = self._derive_preview_transcript_hash(
             transcript=transcript,
             intent_scores=route_payload.get("intent_scores") if isinstance(route_payload.get("intent_scores"), dict) else None,
         )
@@ -814,7 +885,7 @@ def run_web_runtime(
         start_seconds = max(0.0, end_seconds - 90.0)
         return {
             "meeting_id": meeting_id,
-            "window_id": f"{meeting_id}:preview-{preview_window_seq:04d}",
+            "window_id": f"{meeting_id}:preview-{self.preview_window_seq:04d}",
             "start_seconds": start_seconds,
             "end_seconds": end_seconds,
             "transcript_hash": transcript_hash,
@@ -822,6 +893,7 @@ def run_web_runtime(
         }
 
     def _record_route_preview_history(
+        self,
         *,
         route_payload: dict[str, object],
         tags: Optional[list[str]],
@@ -839,8 +911,8 @@ def run_web_runtime(
         intent_scores = route_payload.get("intent_scores") if isinstance(route_payload.get("intent_scores"), dict) else {}
         clean_tags = [str(tag).strip().lower() for tag in (tags or []) if str(tag).strip()]
 
-        with state_lock:
-            pending_intent_windows.append(
+        with self.state_lock:
+            self.pending_intent_windows.append(
                 {
                     "meeting_id": meeting_id,
                     "window_id": window_id,
@@ -870,7 +942,7 @@ def run_web_runtime(
                 if not plugin_id:
                     continue
                 run_transcript_hash = str(run.get("transcript_hash") or transcript_hash)
-                pending_plugin_runs.append(
+                self.pending_plugin_runs.append(
                     {
                         "meeting_id": meeting_id,
                         "window_id": window_id,
@@ -891,15 +963,15 @@ def run_web_runtime(
                     }
                 )
 
-    def _persist_pending_mir_history(meeting_id: str) -> dict[str, object]:
-        with state_lock:
-            windows_to_save = [dict(item) for item in pending_intent_windows if str(item.get("meeting_id")) == meeting_id]
-            runs_to_save = [dict(item) for item in pending_plugin_runs if str(item.get("meeting_id")) == meeting_id]
-            pending_intent_windows[:] = [
-                item for item in pending_intent_windows if str(item.get("meeting_id")) != meeting_id
+    def _persist_pending_mir_history(self, meeting_id: str) -> dict[str, object]:
+        with self.state_lock:
+            windows_to_save = [dict(item) for item in self.pending_intent_windows if str(item.get("meeting_id")) == meeting_id]
+            runs_to_save = [dict(item) for item in self.pending_plugin_runs if str(item.get("meeting_id")) == meeting_id]
+            self.pending_intent_windows[:] = [
+                item for item in self.pending_intent_windows if str(item.get("meeting_id")) != meeting_id
             ]
-            pending_plugin_runs[:] = [
-                item for item in pending_plugin_runs if str(item.get("meeting_id")) != meeting_id
+            self.pending_plugin_runs[:] = [
+                item for item in self.pending_plugin_runs if str(item.get("meeting_id")) != meeting_id
             ]
 
         saved_windows = 0
@@ -932,7 +1004,7 @@ def run_web_runtime(
             "error": save_error,
         }
 
-    def _synthesize_and_persist_artifacts(meeting_id: str) -> dict[str, object]:
+    def _synthesize_and_persist_artifacts(self, meeting_id: str) -> dict[str, object]:
         clean_meeting_id = str(meeting_id).strip()
         if not clean_meeting_id:
             return {"artifacts_saved": 0, "error": None}
@@ -968,7 +1040,7 @@ def run_web_runtime(
             log.error(f"Failed to synthesize artifacts for meeting {clean_meeting_id}: {message}")
             return {"artifacts_saved": 0, "error": message}
 
-    def _associate_meeting_with_projects(meeting_id: str) -> dict[str, object]:
+    def _associate_meeting_with_projects(self, meeting_id: str) -> dict[str, object]:
         """Auto-associate a meeting with projects based on project_detector plugin runs."""
         clean_meeting_id = str(meeting_id).strip()
         if not clean_meeting_id:
@@ -1035,22 +1107,21 @@ def run_web_runtime(
             log.error(f"Failed to associate meeting {clean_meeting_id} with projects: {message}")
             return {"projects_associated": 0, "error": message}
 
-    def _on_get_intent_controls() -> dict[str, object]:
-        return _mir_controls_payload()
+    def _on_get_intent_controls(self) -> dict[str, object]:
+        return self._mir_controls_payload()
 
-    def _on_set_intent_profile(profile: str) -> dict[str, object]:
-        nonlocal mir_profile
-        with state_lock:
-            mir_profile = normalize_profile(profile)
-        return _mir_controls_payload()
+    def _on_set_intent_profile(self, profile: str) -> dict[str, object]:
+        with self.state_lock:
+            self.mir_profile = normalize_profile(profile)
+        return self._mir_controls_payload()
 
-    def _on_set_intent_override(intents: Optional[list[str]]) -> dict[str, object]:
-        nonlocal mir_override_intents
-        with state_lock:
-            mir_override_intents = normalize_override_intents(intents)
-        return _mir_controls_payload()
+    def _on_set_intent_override(self, intents: Optional[list[str]]) -> dict[str, object]:
+        with self.state_lock:
+            self.mir_override_intents = normalize_override_intents(intents)
+        return self._mir_controls_payload()
 
     def _on_route_preview(
+        self,
         *,
         profile: Optional[str] = None,
         threshold: Optional[float] = None,
@@ -1060,13 +1131,11 @@ def run_web_runtime(
         tags: Optional[list[str]] = None,
         transcript: Optional[str] = None,
     ) -> dict[str, object]:
-        nonlocal last_route_preview
-
-        controls = _mir_controls_payload()
+        controls = self._mir_controls_payload()
         profile_value = normalize_profile(profile or str(controls.get("profile") or ""))
         threshold_value = DEFAULT_INTENT_THRESHOLD if threshold is None else float(threshold)
 
-        inferred_scores = _infer_intent_scores(transcript=transcript, tags=tags)
+        inferred_scores = self._infer_intent_scores(transcript=transcript, tags=tags)
         provided_scores = intent_scores if isinstance(intent_scores, dict) else {}
         effective_scores = dict(inferred_scores)
         effective_scores.update(provided_scores)
@@ -1085,11 +1154,11 @@ def run_web_runtime(
         )
         route_payload = route.to_dict()
         route_payload["mir_enabled"] = bool(controls.get("enabled"))
-        window_context = _build_active_preview_window_context(
+        window_context = self._build_active_preview_window_context(
             transcript=transcript,
             route_payload=route_payload,
         )
-        transcript_hash, _ = _derive_preview_transcript_hash(
+        transcript_hash, _ = self._derive_preview_transcript_hash(
             transcript=transcript,
             intent_scores=route_payload.get("intent_scores") if isinstance(route_payload.get("intent_scores"), dict) else None,
         )
@@ -1112,7 +1181,7 @@ def run_web_runtime(
             "profile": route_payload.get("profile"),
             "threshold": route_payload.get("threshold"),
         }
-        run_results = plugin_host.execute_chain(
+        run_results = self.plugin_host.execute_chain(
             list(route_payload.get("plugin_chain") or []),
             context=execution_context,
             meeting_id=execution_meeting_id,
@@ -1120,43 +1189,44 @@ def run_web_runtime(
             transcript_hash=transcript_hash,
         )
         route_payload["plugin_runs"] = [result.to_dict() for result in run_results]
-        queue_flush = _flush_deferred_plugin_runs_to_db()
+        queue_flush = self._flush_deferred_plugin_runs_to_db()
         route_payload["deferred_queue_jobs"] = int(queue_flush.get("queued_jobs") or 0)
         if queue_flush.get("error"):
             route_payload["deferred_queue_error"] = str(queue_flush["error"])
 
         if isinstance(window_context, dict):
-            _record_route_preview_history(
+            self._record_route_preview_history(
                 route_payload=route_payload,
                 tags=tags,
                 window_context=window_context,
                 plugin_runs=route_payload["plugin_runs"],  # type: ignore[arg-type]
             )
 
-        with state_lock:
-            last_route_preview = dict(route_payload)
+        with self.state_lock:
+            self.last_route_preview = dict(route_payload)
 
         return route_payload
 
-    def _on_update_action_item(item_id: str, status: str):
-        session = _active_meeting_session()
+    def _on_update_action_item(self, item_id: str, status: str):
+        session = self._active_meeting_session()
         if session is None:
             return None
         return session.update_action_item(item_id, status)
 
-    def _on_update_action_item_review(item_id: str, review_state: str):
-        session = _active_meeting_session()
+    def _on_update_action_item_review(self, item_id: str, review_state: str):
+        session = self._active_meeting_session()
         if session is None:
             return None
         return session.update_action_item_review(item_id, review_state)
 
-    def _on_edit_action_item(item_id: str, *, task: str, owner: Optional[str], due: Optional[str]):
-        session = _active_meeting_session()
+    def _on_edit_action_item(self, item_id: str, *, task: str, owner: Optional[str], due: Optional[str]):
+        session = self._active_meeting_session()
         if session is None:
             return None
         return session.edit_action_item(item_id, task=task, owner=owner, due=due)
 
     def _transcribe_and_type(
+        self,
         audio: np.ndarray,
         *,
         on_complete: Optional[Callable[[str], None]] = None,
@@ -1172,44 +1242,44 @@ def run_web_runtime(
         still surface the transcript to the device.
         """
         completed_text: Optional[str] = None
-        with transcription_lock:
+        with self.transcription_lock:
             try:
-                text = _ensure_transcriber_loaded().transcribe(audio)
+                text = self._ensure_transcriber_loaded().transcribe(audio)
                 if not text:
                     return
-                text = text_processor.process(text)
-                text = _maybe_run_dictation_pipeline(
+                text = self.text_processor.process(text)
+                text = self._maybe_run_dictation_pipeline(
                     text,
                     audio_duration_s=len(audio) / 16000.0,
                     transcribed_at=datetime.now(),
                     agent_reply_session=agent_reply_session,
                 )
                 completed_text = text
-                with state_lock:
-                    runtime_status["last_transcription"] = text
-                    runtime_status["last_error"] = ""
+                with self.state_lock:
+                    self.runtime_status["last_transcription"] = text
+                    self.runtime_status["last_error"] = ""
                 print(f"-> {text}")
-                delivered = _try_tmux_agent_reply(text, agent_reply_session)
-                if not delivered and typer is not None:
+                delivered = self._try_tmux_agent_reply(text, agent_reply_session)
+                if not delivered and self.typer is not None:
                     try:
-                        paste_target_profile = _paste_target_profile(agent_reply_session)
-                        typer.type_text(
+                        paste_target_profile = self._paste_target_profile(agent_reply_session)
+                        self.typer.type_text(
                             text,
                             target_profile=paste_target_profile,
                             submit=agent_reply_session is not None,
                         )
                     except Exception as exc:
-                        with state_lock:
-                            runtime_status["last_error"] = f"Typing failed: {exc}"
-                            runtime_status["text_injection_enabled"] = False
-                            runtime_status["text_injection_error"] = f"{type(exc).__name__}: {exc}"
+                        with self.state_lock:
+                            self.runtime_status["last_error"] = f"Typing failed: {exc}"
+                            self.runtime_status["text_injection_enabled"] = False
+                            self.runtime_status["text_injection_error"] = f"{type(exc).__name__}: {exc}"
                         log.warning(f"Typing failed in web mode: {exc}")
             except Exception as exc:
-                with state_lock:
-                    runtime_status["last_error"] = f"Transcription failed: {exc}"
+                with self.state_lock:
+                    self.runtime_status["last_error"] = f"Transcription failed: {exc}"
                 log.error(f"Transcription failed in web mode: {exc}")
             finally:
-                _set_voice_state("idle")
+                self._set_voice_state("idle")
         if on_complete is not None and completed_text is not None:
             try:
                 on_complete(completed_text)
@@ -1217,17 +1287,18 @@ def run_web_runtime(
                 log.warning(f"on_complete hook raised: {exc}")
 
     def _kick_off_transcribe(
+        self,
         audio: np.ndarray,
         *,
         on_complete: Optional[Callable[[str], None]] = None,
         agent_reply_session: Any | None = None,
     ) -> None:
         if len(audio) < 1600:
-            _set_voice_state("idle")
+            self._set_voice_state("idle")
             return
-        _set_voice_state("transcribing")
+        self._set_voice_state("transcribing")
         threading.Thread(
-            target=lambda: _transcribe_and_type(
+            target=lambda: self._transcribe_and_type(
                 audio,
                 on_complete=on_complete,
                 agent_reply_session=agent_reply_session,
@@ -1236,13 +1307,14 @@ def run_web_runtime(
         ).start()
 
     def _maybe_run_dictation_pipeline(
+        self,
         text: str,
         *,
         audio_duration_s: float,
         transcribed_at: datetime,
         agent_reply_session: Any | None = None,
     ) -> str:
-        dictation_cfg = getattr(config, "dictation", None)
+        dictation_cfg = getattr(self.config, "dictation", None)
         pipeline_cfg = getattr(dictation_cfg, "pipeline", None)
         if dictation_cfg is None or pipeline_cfg is None or not bool(getattr(pipeline_cfg, "enabled", False)):
             return text
@@ -1294,7 +1366,7 @@ def run_web_runtime(
             log.warning(f"Web dictation pipeline raised; falling back to processed text: {exc}")
             return text
 
-    def _paste_target_profile(agent_reply_session: Any | None) -> str | None:
+    def _paste_target_profile(self, agent_reply_session: Any | None) -> str | None:
         if agent_reply_session is None:
             return None
         try:
@@ -1304,8 +1376,8 @@ def run_web_runtime(
         except Exception:
             return None
 
-    def _try_tmux_agent_reply(text: str, agent_reply_session: Any | None) -> bool:
-        pane = _agent_tmux_pane(agent_reply_session)
+    def _try_tmux_agent_reply(self, text: str, agent_reply_session: Any | None) -> bool:
+        pane = self._agent_tmux_pane(agent_reply_session)
         if not pane:
             return False
         try:
@@ -1314,63 +1386,63 @@ def run_web_runtime(
             send_text_to_pane(pane=pane, text=text, submit=True)
             return True
         except Exception as exc:
-            with state_lock:
-                runtime_status["last_error"] = f"tmux reply failed; fell back to typing: {exc}"
+            with self.state_lock:
+                self.runtime_status["last_error"] = f"tmux reply failed; fell back to typing: {exc}"
             log.warning(f"tmux reply failed; falling back to text injection: {exc}")
             return False
 
-    def _agent_tmux_pane(agent_reply_session: Any | None) -> str | None:
+    def _agent_tmux_pane(self, agent_reply_session: Any | None) -> str | None:
         if agent_reply_session is None:
             return None
         pane = getattr(agent_reply_session, "tmux_pane", None)
         return str(pane).strip() if pane else None
 
-    def _agent_reply_deliverable(agent_reply_session: Any | None) -> bool:
+    def _agent_reply_deliverable(self, agent_reply_session: Any | None) -> bool:
         if agent_reply_session is None:
             return True
-        if _agent_tmux_pane(agent_reply_session):
+        if self._agent_tmux_pane(agent_reply_session):
             return True
-        return typer is not None
+        return self.typer is not None
 
-    def _on_hotkey_press() -> None:
-        if runtime_stop_event.is_set():
+    def _on_hotkey_press(self) -> None:
+        if self.runtime_stop_event.is_set():
             return
-        if _active_meeting_session() is not None:
+        if self.recorder is None:
             return
-        if recorder is None:
-            return
+        # HS-32-03: no explicit "is a meeting active?" check — the shared
+        # `voice_session` arbiter is the single owner model. While a meeting
+        # holds the floor (owner="meeting"), `begin()` returns False here.
         try:
-            accepted = voice_session.begin(recorder, owner="hotkey")
+            accepted = self.voice_session.begin(self.recorder, owner="hotkey")
         except Exception as exc:
-            with state_lock:
-                runtime_status["last_error"] = f"Recording failed: {exc}"
-            _set_voice_state("idle")
+            with self.state_lock:
+                self.runtime_status["last_error"] = f"Recording failed: {exc}"
+            self._set_voice_state("idle")
             log.error(f"Recording failed in web mode: {exc}")
             return
         if not accepted:
             log.info("hotkey_press_ignored_session_active")
             return
-        _set_voice_state("recording")
+        self._set_voice_state("recording")
 
-    def _on_hotkey_release() -> None:
-        if _active_meeting_session() is not None:
-            _set_voice_state("idle")
-            return
+    def _on_hotkey_release(self) -> None:
+        # No meeting check: `end("hotkey")` returns None when the hotkey
+        # doesn't own the floor (e.g. a meeting holds it), so this is a no-op.
         try:
-            audio = voice_session.end(owner="hotkey")
+            audio = self.voice_session.end(owner="hotkey")
         except Exception as exc:
-            with state_lock:
-                runtime_status["last_error"] = f"Recording error: {exc}"
-            _set_voice_state("idle")
+            with self.state_lock:
+                self.runtime_status["last_error"] = f"Recording error: {exc}"
+            self._set_voice_state("idle")
             log.error(f"Recording error in web mode: {exc}")
             return
         if audio is None:
-            _set_voice_state("idle")
+            self._set_voice_state("idle")
             return
 
-        _kick_off_transcribe(audio)
+        self._kick_off_transcribe(audio)
 
-    def _on_device_voice_start(device_id: str, source: AudioSource) -> bool:
+    def _on_device_voice_start(self, device_id: str, source: AudioSource) -> bool:
         """Begin a device-driven voice-typing session.
 
         Returns ``False`` (so the WS dispatcher emits a
@@ -1385,7 +1457,7 @@ def run_web_runtime(
         without claiming the voice session so the WS keeps pumping
         binary frames into the meeting's drain path.
         """
-        active_meeting = _active_meeting_session()
+        active_meeting = self._active_meeting_session()
         if active_meeting is not None:
             if active_meeting.is_device_attached(device_id):
                 return True
@@ -1393,10 +1465,10 @@ def run_web_runtime(
         from .agent_context import get_recent_awaiting_agent_session
 
         agent_reply_session = get_recent_awaiting_agent_session(max_age_seconds=120)
-        if not _agent_reply_deliverable(agent_reply_session):
-            with state_lock:
-                runtime_status["last_error"] = "Agent reply target unavailable"
-            device_status.send(device_id, "No reply target", ttl_ms=3000)
+        if not self._agent_reply_deliverable(agent_reply_session):
+            with self.state_lock:
+                self.runtime_status["last_error"] = "Agent reply target unavailable"
+            self.device_status.send(device_id, "No reply target", ttl_ms=3000)
             log.info(
                 "device_voice_start_rejected_no_agent_reply_target",
                 extra={"device_id": device_id},
@@ -1404,13 +1476,13 @@ def run_web_runtime(
             return False
         owner = f"device:{device_id}"
         try:
-            accepted = voice_session.begin(source, owner=owner)
+            accepted = self.voice_session.begin(source, owner=owner)
         except Exception as exc:
             log.error(f"Device voice-typing start failed: {exc}")
             return False
         if not accepted:
             return False
-        _set_voice_state("recording")
+        self._set_voice_state("recording")
         # AIPI-4-13: TX state lives in the device's firmware-side
         # tx_label glyph (top-right, ↑ during right-button hold).
         # No "Listening..." pushback — would clobber the bottom
@@ -1418,21 +1490,21 @@ def run_web_runtime(
         return True
 
     def _on_device_voice_stop(
-        device_id: str, source: AudioSource
+        self, device_id: str, source: AudioSource
     ) -> Optional[np.ndarray]:
-        active_meeting = _active_meeting_session()
+        active_meeting = self._active_meeting_session()
         if active_meeting is not None and active_meeting.is_device_attached(device_id):
             # The meeting owns this device's audio routing.
             return None
         owner = f"device:{device_id}"
         try:
-            audio = voice_session.end(owner=owner)
+            audio = self.voice_session.end(owner=owner)
         except Exception as exc:
             log.error(f"Device voice-typing stop failed: {exc}")
-            _set_voice_state("idle")
+            self._set_voice_state("idle")
             return None
         if audio is None:
-            _set_voice_state("idle")
+            self._set_voice_state("idle")
             return None
 
         # AIPI-4-13: no "Thinking..." pushback to bottom — the absent
@@ -1446,24 +1518,19 @@ def run_web_runtime(
 
         def _device_transcript_complete(text: str) -> None:
             snippet = (text or "").strip()[:150]
-            device_status.send(device_id, snippet, ttl_ms=4000)
+            self.device_status.send(device_id, snippet, ttl_ms=4000)
 
-        _kick_off_transcribe(
+        self._kick_off_transcribe(
             audio,
             on_complete=_device_transcript_complete,
             agent_reply_session=agent_reply_session,
         )
         return audio
 
-    def _on_device_voice_cancel(device_id: str) -> None:
-        voice_session.cancel(owner=f"device:{device_id}")
+    def _on_device_voice_cancel(self, device_id: str) -> None:
+        self.voice_session.cancel(owner=f"device:{device_id}")
 
-    # AIPI-4-14: per-device cycle index for the meeting-stats double-tap
-    # rotation. ``-1`` means "advance to view 0 on the next double-tap".
-    # Reset whenever a meeting ends so each new meeting starts at view 0.
-    device_stats_cycle: dict[str, int] = {}
-
-    def _on_device_event(device_id: str, name: str, at: Optional[float]) -> None:
+    def _on_device_event(self, device_id: str, name: str, at: Optional[float]) -> None:
         """Inbound device event from the WS.
 
         - ``long_press`` (HS-14-07): bookmark gesture in an active
@@ -1473,14 +1540,14 @@ def run_web_runtime(
           slot.
         """
         if name == "long_press":
-            active = _active_meeting_session()
+            active = self._active_meeting_session()
             if active is None or not active.is_device_attached(device_id):
                 return
             bookmark = active.add_bookmark(label="", auto_label=True)
             if bookmark is None:
                 return
             attached_ids = [d.id for d in active.state.devices] if active.state else []
-            device_status.broadcast(
+            self.device_status.broadcast(
                 attached_ids,
                 f"Bookmark @ {bookmark.timestamp:.0f}s",
                 ttl_ms=2500,
@@ -1488,7 +1555,7 @@ def run_web_runtime(
             return
 
         if name == "double_left_click":
-            active = _active_meeting_session()
+            active = self._active_meeting_session()
             if active is None or active.state is None:
                 log.info(
                     "device_event_double_tap_ignored",
@@ -1501,11 +1568,11 @@ def run_web_runtime(
                     extra={"device_id": device_id, "reason": "device_not_attached"},
                 )
                 return
-            current = device_stats_cycle.get(device_id, -1)
+            current = self.device_stats_cycle.get(device_id, -1)
             next_index, view_id, formatter = pick_next_view(current)
-            device_stats_cycle[device_id] = next_index
+            self.device_stats_cycle[device_id] = next_index
             payload = formatter(active.state)
-            device_status.send(device_id, payload, ttl_ms=4000)
+            self.device_status.send(device_id, payload, ttl_ms=4000)
             log.info(
                 "device_event_double_tap_cycled",
                 extra={"device_id": device_id, "view": view_id, "index": next_index},
@@ -1517,22 +1584,23 @@ def run_web_runtime(
             extra={"device_id": device_id, "event_name": name},
         )
 
-    def _on_device_health(descriptor: object) -> None:
-        active = _active_meeting_session()
+    def _on_device_health(self, descriptor: object) -> None:
+        active = self._active_meeting_session()
         if active is None:
             return
         updater = getattr(active, "update_device_descriptor", None)
         if callable(updater):
             updater(descriptor)
-        if server is not None:
+        if self.server is not None:
             try:
                 from .meeting_session import _device_descriptor_to_dict
 
-                server.broadcast("device_health", _device_descriptor_to_dict(descriptor))
+                self.server.broadcast("device_health", _device_descriptor_to_dict(descriptor))
             except Exception as exc:
                 log.debug(f"Failed to broadcast device health: {exc}")
 
     def _on_device_query(
+        self,
         device_id: str,
         name: str,
         at: Optional[float],
@@ -1564,7 +1632,7 @@ def run_web_runtime(
                 extra={"device_id": device_id, "query_name": name, "at": at},
             )
             return {"text": f"Unknown query: {name}"[:500], "ttl_ms": 3000}
-        active = _active_meeting_session()
+        active = self._active_meeting_session()
         if active is None or active.state is None:
             return {"text": "No transcript yet", "ttl_ms": 5000}
         for segment in reversed(active.state.segments):
@@ -1578,125 +1646,146 @@ def run_web_runtime(
             }
         return {"text": "No transcript yet", "ttl_ms": 5000}
 
-    try:
-        server = MeetingWebServer(
-            WebRuntimeCallbacks(
-                on_bookmark=_on_bookmark,
-                on_stop=_on_stop,
-                on_start=_start_meeting,
-                on_meeting_stop=_on_meeting_stop,
-                on_get_status=_get_runtime_status,
-                on_update_meeting=_on_update_meeting,
-                on_get_intent_controls=_on_get_intent_controls,
-                on_set_intent_profile=_on_set_intent_profile,
-                on_set_intent_override=_on_set_intent_override,
-                on_route_preview=_on_route_preview,
-                on_process_plugin_jobs=_on_process_plugin_jobs,
-                get_state=_get_state,
-                on_update_action_item=_on_update_action_item,
-                on_update_action_item_review=_on_update_action_item_review,
-                on_edit_action_item=_on_edit_action_item,
-                on_settings_applied=_apply_updated_config,
-                project_detector=project_detector,
-                device_registry=device_registry,
-                device_psk_provider=lambda: ensure_device_psk(config),
-                on_device_voice_start=_on_device_voice_start,
-                on_device_voice_stop=_on_device_voice_stop,
-                on_device_voice_cancel=_on_device_voice_cancel,
-                device_status_emitter=device_status,
-                on_device_event=_on_device_event,
-                on_device_health=_on_device_health,
-                on_device_query=_on_device_query,
-            ),
-            host="127.0.0.1",
-            port=_configured_web_port_from_env(),
-            # HS-25-02: token exists/persists now so it is ready the moment a
-            # non-loopback bind is introduced (Phase 15); dormant on loopback.
-            auth_token=ensure_web_token(config),
-        )
-        runtime_url = server.start()
-    except Exception as exc:
-        print(f"Failed to start HoldSpeak web mode: {exc}", file=sys.stderr)
-        print("Install optional web dependencies with: uv pip install -e '.[meeting]'", file=sys.stderr)
-        print("Fallback option: run `holdspeak tui`.", file=sys.stderr)
-        log.error(f"Failed to start web mode: {exc}", exc_info=True)
-        raise SystemExit(1) from exc
-
-    plugin_queue_thread = threading.Thread(
-        target=_deferred_plugin_queue_loop,
-        name="HoldSpeakMirPluginQueue",
-        daemon=True,
-    )
-    plugin_queue_thread.start()
-    _warm_transcriber_in_background()
-
-    try:
-        recorder = AudioRecorder(
-            device=config.meeting.mic_device,
-            on_level=lambda _level: None,
-        )
-        hotkey_listener = HotkeyListener(
-            on_press=_on_hotkey_press,
-            on_release=_on_hotkey_release,
-            hotkey=config.hotkey.key,
-        )
-        hotkey_listener.start()
-        with state_lock:
-            runtime_status["global_hotkey_available"] = True
-            runtime_status["global_hotkey_error"] = ""
-    except Exception as exc:
-        hotkey_listener = None
-        recorder = None
-        with state_lock:
-            runtime_status["global_hotkey_available"] = False
-            runtime_status["global_hotkey_error"] = f"{type(exc).__name__}: {exc}"
-            runtime_status["last_error"] = f"Global hotkey unavailable: {exc}"
-        log.warning(f"Global hotkey unavailable in web mode: {exc}")
-
-    log.info(f"HoldSpeak web runtime active at {runtime_url}")
-    print(f"HoldSpeak web runtime is running at: {runtime_url}")
-    print(f"History and settings are available at: {runtime_url}/history")
-    if hotkey_listener is not None:
-        print(f"Voice typing hotkey is active: hold {config.hotkey.display}, speak, release.")
-    else:
-        print("Voice typing hotkey unavailable in web mode; check permissions or use `holdspeak tui` focused hold-to-talk.")
-    if not no_open and config.meeting.web_auto_open:
-        webbrowser.open(runtime_url)
-        print("Opened web dashboard in your default browser.")
-    elif no_open:
-        print("Headless mode active (`--no-open`): browser auto-open disabled.")
-    else:
-        print("Browser auto-open is disabled in config (`meeting.web_auto_open=false`).")
-    print("Press Ctrl+C to stop.")
-
-    def _signal_handler(sig, frame) -> None:
+    def _signal_handler(self, sig, frame) -> None:
         _ = sig, frame
-        runtime_stop_event.set()
+        self.runtime_stop_event.set()
 
-    if register_signal_handlers:
-        signal.signal(signal.SIGINT, _signal_handler)
-        if hasattr(signal, "SIGTERM"):
-            signal.signal(signal.SIGTERM, _signal_handler)
+    def run(self) -> None:
+        """Start the web server + capture stack and keep it alive until stop."""
+        try:
+            self.server = MeetingWebServer(
+                WebRuntimeCallbacks(
+                    on_bookmark=self._on_bookmark,
+                    on_stop=self._on_stop,
+                    on_start=self._start_meeting,
+                    on_meeting_stop=self._on_meeting_stop,
+                    on_get_status=self._get_runtime_status,
+                    on_update_meeting=self._on_update_meeting,
+                    on_get_intent_controls=self._on_get_intent_controls,
+                    on_set_intent_profile=self._on_set_intent_profile,
+                    on_set_intent_override=self._on_set_intent_override,
+                    on_route_preview=self._on_route_preview,
+                    on_process_plugin_jobs=self._on_process_plugin_jobs,
+                    get_state=self._get_state,
+                    on_update_action_item=self._on_update_action_item,
+                    on_update_action_item_review=self._on_update_action_item_review,
+                    on_edit_action_item=self._on_edit_action_item,
+                    on_settings_applied=self._apply_updated_config,
+                    project_detector=self.project_detector,
+                    device_registry=self.device_registry,
+                    device_psk_provider=lambda: ensure_device_psk(self.config),
+                    on_device_voice_start=self._on_device_voice_start,
+                    on_device_voice_stop=self._on_device_voice_stop,
+                    on_device_voice_cancel=self._on_device_voice_cancel,
+                    device_status_emitter=self.device_status,
+                    on_device_event=self._on_device_event,
+                    on_device_health=self._on_device_health,
+                    on_device_query=self._on_device_query,
+                ),
+                host="127.0.0.1",
+                port=_configured_web_port_from_env(),
+                # HS-25-02: token exists/persists now so it is ready the moment a
+                # non-loopback bind is introduced (Phase 15); dormant on loopback.
+                auth_token=ensure_web_token(self.config),
+            )
+            self.runtime_url = self.server.start()
+        except Exception as exc:
+            print(f"Failed to start HoldSpeak web mode: {exc}", file=sys.stderr)
+            print("Install optional web dependencies with: uv pip install -e '.[meeting]'", file=sys.stderr)
+            log.error(f"Failed to start web mode: {exc}", exc_info=True)
+            raise SystemExit(1) from exc
 
-    try:
-        while not runtime_stop_event.wait(0.2):
-            pass
-    finally:
-        _flush_deferred_plugin_runs_to_db()
-        if hotkey_listener is not None:
-            hotkey_listener.stop()
-        active = _active_meeting_session()
-        if active is not None:
-            try:
-                final_state = active.stop()
-                active.save()
-                if getattr(final_state, "id", None):
-                    meeting_id = str(final_state.id)
-                    _persist_pending_mir_history(meeting_id)
-                    _synthesize_and_persist_artifacts(meeting_id)
-            except Exception as exc:
-                log.error(f"Failed to finalize active meeting during shutdown: {exc}")
-        if server is not None:
-            server.stop()
-        if plugin_queue_thread is not None:
-            plugin_queue_thread.join(timeout=2.0)
+        self.plugin_queue_thread = threading.Thread(
+            target=self._deferred_plugin_queue_loop,
+            name="HoldSpeakMirPluginQueue",
+            daemon=True,
+        )
+        self.plugin_queue_thread.start()
+        self._warm_transcriber_in_background()
+
+        try:
+            self.recorder = AudioRecorder(
+                device=self.config.meeting.mic_device,
+                on_level=lambda _level: None,
+            )
+            self.hotkey_listener = HotkeyListener(
+                on_press=self._on_hotkey_press,
+                on_release=self._on_hotkey_release,
+                hotkey=self.config.hotkey.key,
+            )
+            self.hotkey_listener.start()
+            with self.state_lock:
+                self.runtime_status["global_hotkey_available"] = True
+                self.runtime_status["global_hotkey_error"] = ""
+        except Exception as exc:
+            self.hotkey_listener = None
+            self.recorder = None
+            with self.state_lock:
+                self.runtime_status["global_hotkey_available"] = False
+                self.runtime_status["global_hotkey_error"] = f"{type(exc).__name__}: {exc}"
+                self.runtime_status["last_error"] = f"Global hotkey unavailable: {exc}"
+            log.warning(f"Global hotkey unavailable in web mode: {exc}")
+
+        log.info(f"HoldSpeak web runtime active at {self.runtime_url}")
+        print(f"HoldSpeak web runtime is running at: {self.runtime_url}")
+        print(f"History and settings are available at: {self.runtime_url}/history")
+        if self.hotkey_listener is not None:
+            print(f"Voice typing hotkey is active: hold {self.config.hotkey.display}, speak, release.")
+        else:
+            print("Voice typing hotkey unavailable; grant Accessibility/Input Monitoring permission and restart.")
+        if not self.no_open and self.config.meeting.web_auto_open:
+            webbrowser.open(self.runtime_url)
+            print("Opened web dashboard in your default browser.")
+        elif self.no_open:
+            print("Headless mode active (`--no-open`): browser auto-open disabled.")
+        else:
+            print("Browser auto-open is disabled in config (`meeting.web_auto_open=false`).")
+        print("Press Ctrl+C to stop.")
+
+        if self.register_signal_handlers:
+            signal.signal(signal.SIGINT, self._signal_handler)
+            if hasattr(signal, "SIGTERM"):
+                signal.signal(signal.SIGTERM, self._signal_handler)
+
+        try:
+            while not self.runtime_stop_event.wait(0.2):
+                pass
+        finally:
+            self._flush_deferred_plugin_runs_to_db()
+            if self.hotkey_listener is not None:
+                self.hotkey_listener.stop()
+            active = self._active_meeting_session()
+            if active is not None:
+                try:
+                    final_state = active.stop()
+                    # HS-32-03: meeting recorder closed — release the audio floor.
+                    self.voice_session.release(_MEETING_AUDIO_OWNER)
+                    active.save()
+                    if getattr(final_state, "id", None):
+                        meeting_id = str(final_state.id)
+                        self._persist_pending_mir_history(meeting_id)
+                        self._synthesize_and_persist_artifacts(meeting_id)
+                except Exception as exc:
+                    log.error(f"Failed to finalize active meeting during shutdown: {exc}")
+            if self.server is not None:
+                self.server.stop()
+            if self.plugin_queue_thread is not None:
+                self.plugin_queue_thread.join(timeout=2.0)
+
+
+def run_web_runtime(
+    *,
+    no_open: bool = False,
+    stop_event: Optional[threading.Event] = None,
+    register_signal_handlers: bool = True,
+) -> None:
+    """Start HoldSpeak web runtime and keep it alive until stop.
+
+    Thin shim over :class:`WebRuntime` so the entry point (and the web/runtime
+    test suite) call exactly as before.
+    """
+    WebRuntime(
+        no_open=no_open,
+        stop_event=stop_event,
+        register_signal_handlers=register_signal_handlers,
+    ).run()

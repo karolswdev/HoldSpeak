@@ -73,6 +73,64 @@ def test_stop_completes_without_deadlock_during_final_transcription_and_intel() 
     assert intel_calls == [(True, "[00:00:00] Me: final transcript")]
 
 
+def test_meeting_session_is_web_free_and_emits_via_on_broadcast() -> None:
+    """HS-32-02: the session owns no web server; it emits live events through
+    the injected ``on_broadcast`` callback (which a runtime observes)."""
+    events: list[tuple[str, object]] = []
+
+    def _spy(message_type: str, data: object) -> None:
+        # Snapshot at emit time: payloads reference live state, and a real
+        # observer (server.broadcast) serializes synchronously on receipt.
+        snapshot = dict(data) if isinstance(data, dict) else data
+        if isinstance(snapshot, dict) and isinstance(snapshot.get("tags"), list):
+            snapshot["tags"] = list(snapshot["tags"])
+        events.append((message_type, snapshot))
+
+    session = MeetingSession(transcriber=_FakeTranscriber(), on_broadcast=_spy)
+    session._state = MeetingState(id="m1", started_at=datetime.now())
+
+    # The inversion is structural: no embedded web server, no web knob.
+    assert not hasattr(session, "_web_server")
+    assert not hasattr(session, "web_enabled")
+
+    session.set_title("Planning Sync")
+    session.add_tag("Ops")
+    session.set_tags(["delivery", "qa"])
+
+    assert events == [
+        ("meeting_updated", {"title": "Planning Sync", "tags": []}),
+        ("meeting_updated", {"title": "Planning Sync", "tags": ["ops"]}),
+        ("meeting_updated", {"title": "Planning Sync", "tags": ["delivery", "qa"]}),
+    ]
+
+
+def test_title_and_tag_edits_are_safe_without_an_observer() -> None:
+    """Default (no ``on_broadcast``): the emit is a silent no-op and the
+    title/tag paths still mutate state — a meeting runs with no web server."""
+    session = MeetingSession(transcriber=_FakeTranscriber())
+    session._state = MeetingState(id="m2", started_at=datetime.now())
+
+    session.set_title("Solo")
+    session.set_tags(["x"])
+
+    assert session.get_title() == "Solo"
+    assert session.get_tags() == ["x"]
+
+
+def test_on_broadcast_callback_exception_does_not_break_the_session() -> None:
+    """A misbehaving observer must not propagate into meeting bookkeeping."""
+
+    def _boom(message_type: str, data: object) -> None:
+        raise RuntimeError("observer exploded")
+
+    session = MeetingSession(transcriber=_FakeTranscriber(), on_broadcast=_boom)
+    session._state = MeetingState(id="m3", started_at=datetime.now())
+
+    # Must not raise even though the callback does.
+    session.set_title("Resilient")
+    assert session.get_title() == "Resilient"
+
+
 def test_save_reports_partial_failure_when_db_write_fails(tmp_path: Path) -> None:
     """save() should surface DB failure even when JSON persistence succeeds."""
     session = MeetingSession(transcriber=_FakeTranscriber())

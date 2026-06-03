@@ -17,9 +17,7 @@ def test_main_defaults_to_web_mode(monkeypatch: pytest.MonkeyPatch) -> None:
     verbose_calls = _patch_logging(monkeypatch)
     web_calls: list[bool] = []
     monkeypatch.setattr(main_module, "_run_web_mode", lambda *, no_open=False: web_calls.append(bool(no_open)))
-    monkeypatch.setattr(main_module, "_run_tui_mode", lambda: (_ for _ in ()).throw(AssertionError("unexpected tui mode")))
     monkeypatch.setattr(main_module, "_run_meeting_mode", lambda _args: (_ for _ in ()).throw(AssertionError("unexpected meeting mode")))
-    monkeypatch.setattr(main_module, "_emit_no_tui_deprecation", lambda: (_ for _ in ()).throw(AssertionError("unexpected deprecation")))
     monkeypatch.setattr(main_module, "run_history_command", lambda _args: (_ for _ in ()).throw(AssertionError("unexpected history")))
     monkeypatch.setattr(main_module, "run_actions_command", lambda _args: (_ for _ in ()).throw(AssertionError("unexpected actions")))
     monkeypatch.setattr(main_module, "run_intel_command", lambda _args: (_ for _ in ()).throw(AssertionError("unexpected intel")))
@@ -45,47 +43,18 @@ def test_main_web_subcommand_supports_no_open(monkeypatch: pytest.MonkeyPatch) -
     assert verbose_calls == [False]
 
 
-def test_main_tui_subcommand_routes_to_tui_mode(monkeypatch: pytest.MonkeyPatch) -> None:
-    _patch_logging(monkeypatch)
-    tui_calls: list[bool] = []
-    monkeypatch.setattr(main_module, "_run_tui_mode", lambda: tui_calls.append(True))
-    monkeypatch.setattr(main_module, "_run_web_mode", lambda *, no_open=False: (_ for _ in ()).throw(AssertionError("unexpected web mode")))
-    monkeypatch.setattr("sys.argv", ["holdspeak", "tui"])
-
-    main_module.main()
-
-    assert tui_calls == [True]
-
-
-def test_no_tui_is_deprecated_and_aliases_to_web_headless(
+def test_unknown_tui_subcommand_is_rejected(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """The retired `tui` subcommand no longer parses (HS-32-07)."""
     _patch_logging(monkeypatch)
-    web_calls: list[bool] = []
-    monkeypatch.setattr(main_module, "_run_web_mode", lambda *, no_open=False: web_calls.append(bool(no_open)))
-    warnings: list[str] = []
-    monkeypatch.setattr(main_module.log, "warning", lambda message: warnings.append(str(message)))
-    monkeypatch.setattr("sys.argv", ["holdspeak", "--no-tui"])
+    monkeypatch.setattr("sys.argv", ["holdspeak", "tui"])
 
-    main_module.main()
+    with pytest.raises(SystemExit) as exc:
+        main_module.main()
 
-    captured = capsys.readouterr()
-    assert web_calls == [True]
-    assert "DEPRECATION" in captured.err
-    assert "holdspeak web --no-open" in captured.err
-    assert warnings and "deprecated" in warnings[0].lower()
-
-
-def test_no_tui_flag_aliases_to_no_open_for_explicit_web(monkeypatch: pytest.MonkeyPatch) -> None:
-    _patch_logging(monkeypatch)
-    web_calls: list[bool] = []
-    monkeypatch.setattr(main_module, "_run_web_mode", lambda *, no_open=False: web_calls.append(bool(no_open)))
-    monkeypatch.setattr(main_module.log, "warning", lambda _message: None)
-    monkeypatch.setattr("sys.argv", ["holdspeak", "--no-tui", "web"])
-
-    main_module.main()
-
-    assert web_calls == [True]
+    # argparse exits 2 on an unrecognized subcommand.
+    assert exc.value.code == 2
 
 
 def test_doctor_subcommand_still_exits_with_command_return_code(monkeypatch: pytest.MonkeyPatch) -> None:

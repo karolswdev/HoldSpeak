@@ -19,8 +19,11 @@ existing call sites (`_UnknownDeviceError`, `_meeting_callback_payload`,
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import Any, Optional
+
+from fastapi.responses import JSONResponse
 
 
 class UnknownDeviceError(LookupError):
@@ -56,7 +59,21 @@ def parse_iso_datetime(value: Any) -> Optional[datetime]:
         return None
 
 
+def error_500(exc: Exception, logger: logging.Logger, detail: str) -> JSONResponse:
+    """The one place the web routes' generic 500 response is shaped (HS-32-05).
+
+    Replaces the ~48 duplicated ``log.error(f"<detail>: {e}"); return
+    JSONResponse({"error": str(e)}, status_code=500)`` blocks across the route
+    modules. Behavior-preserving: same log line, same response body + status.
+    ``detail`` is the already-formatted message (the caller keeps any f-string
+    interpolation), so this reproduces the original ``log.error`` exactly.
+    """
+    logger.error(f"{detail}: {exc}")
+    return JSONResponse({"error": str(exc)}, status_code=500)
+
+
 # Backwards-friendly aliases so call sites keep their underscore-prefixed names.
 _UnknownDeviceError = UnknownDeviceError
 _meeting_callback_payload = meeting_callback_payload
 _parse_iso_datetime = parse_iso_datetime
+_error_500 = error_500

@@ -34,7 +34,7 @@ from ...web_requests import (
     _ActivitySettingsRequest,
     _PluginJobProcessRequest,
 )
-from ..runtime_support import _meeting_callback_payload, _parse_iso_datetime
+from ..runtime_support import _meeting_callback_payload, _parse_iso_datetime, error_500
 from ..context import WebContext
 
 log = get_logger("web.routes.activity")
@@ -173,8 +173,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
         try:
             return JSONResponse(_activity_status_payload())
         except Exception as e:
-            log.error(f"Failed to read activity status: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to read activity status")
 
     @router.get("/api/activity/records")
     async def api_activity_records(
@@ -204,8 +203,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             bundle["records"] = records
             return JSONResponse(bundle)
         except Exception as e:
-            log.error(f"Failed to read activity records: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to read activity records")
 
     @router.post("/api/activity/refresh")
     async def api_activity_refresh() -> Any:
@@ -233,8 +231,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to refresh activity: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to refresh activity")
 
     @router.put("/api/activity/settings")
     async def api_activity_settings(payload: _ActivitySettingsRequest) -> Any:
@@ -248,8 +245,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             )
             return JSONResponse({"settings": settings, "status": _activity_status_payload()})
         except Exception as e:
-            log.error(f"Failed to update activity settings: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to update activity settings")
 
     @router.post("/api/activity/domains")
     async def api_activity_domain_rule(payload: _ActivityDomainRuleRequest) -> Any:
@@ -265,8 +261,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
         except ValueError as e:
             return JSONResponse({"error": str(e)}, status_code=400)
         except Exception as e:
-            log.error(f"Failed to update activity domain rule: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to update activity domain rule")
 
     @router.delete("/api/activity/domains/{domain}")
     async def api_delete_activity_domain_rule(domain: str) -> Any:
@@ -277,8 +272,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             deleted = db.activity.delete_activity_domain_rule(domain)
             return JSONResponse({"deleted": deleted, "status": _activity_status_payload()})
         except Exception as e:
-            log.error(f"Failed to delete activity domain rule: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to delete activity domain rule")
 
     @router.get("/api/activity/project-rules")
     async def api_activity_project_rules(include_disabled: bool = True) -> Any:
@@ -289,8 +283,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             rules = db.activity.list_activity_project_rules(include_disabled=include_disabled)
             return JSONResponse({"rules": [_activity_project_rule_payload(rule) for rule in rules]})
         except Exception as e:
-            log.error(f"Failed to list activity project rules: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to list activity project rules")
 
     @router.post("/api/activity/project-rules")
     async def api_create_activity_project_rule(payload: _ActivityProjectRuleRequest) -> Any:
@@ -311,8 +304,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
         except ValueError as e:
             return JSONResponse({"error": str(e)}, status_code=400)
         except Exception as e:
-            log.error(f"Failed to create activity project rule: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to create activity project rule")
 
     @router.put("/api/activity/project-rules/{rule_id}")
     async def api_update_activity_project_rule(
@@ -343,8 +335,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
         except ValueError as e:
             return JSONResponse({"error": str(e)}, status_code=400)
         except Exception as e:
-            log.error(f"Failed to update activity project rule: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to update activity project rule")
 
     @router.delete("/api/activity/project-rules/{rule_id}")
     async def api_delete_activity_project_rule(rule_id: str) -> Any:
@@ -354,8 +345,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             db = get_database()
             return JSONResponse({"deleted": db.activity.delete_activity_project_rule(rule_id)})
         except Exception as e:
-            log.error(f"Failed to delete activity project rule: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to delete activity project rule")
 
     @router.post("/api/activity/project-rules/preview")
     async def api_preview_activity_project_rule(payload: _ActivityProjectRuleRequest) -> Any:
@@ -379,8 +369,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
         except ValueError as e:
             return JSONResponse({"error": str(e)}, status_code=400)
         except Exception as e:
-            log.error(f"Failed to preview activity project rule: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to preview activity project rule")
 
     @router.post("/api/activity/project-rules/apply")
     async def api_apply_activity_project_rules(limit: Optional[int] = None) -> Any:
@@ -391,8 +380,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             updated = db.activity.apply_activity_project_rules(limit=limit)
             return JSONResponse({"updated": updated})
         except Exception as e:
-            log.error(f"Failed to apply activity project rules: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to apply activity project rules")
 
     @router.get("/api/activity/enrichment/connectors")
     async def api_list_activity_enrichment_connectors() -> Any:
@@ -430,8 +418,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to list activity enrichment connectors: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to list activity enrichment connectors")
 
     @router.put("/api/activity/enrichment/connectors/{connector_id}")
     async def api_update_activity_enrichment_connector(
@@ -474,8 +461,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
         except ValueError as e:
             return JSONResponse({"error": str(e)}, status_code=400)
         except Exception as e:
-            log.error(f"Failed to update activity enrichment connector: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to update activity enrichment connector")
 
     @router.post("/api/activity/extension/events")
     async def api_ingest_activity_extension_events(
@@ -508,8 +494,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             result = ingest_extension_events(db, payload.events)
             return JSONResponse(result.to_payload())
         except Exception as e:
-            log.error(f"Failed to ingest activity extension events: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to ingest activity extension events")
 
     @router.get("/api/activity/enrichment/connectors/{connector_id}/dry-run")
     async def api_connector_dry_run(connector_id: str, limit: int = 25) -> Any:
@@ -534,8 +519,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                 status_code=404,
             )
         except Exception as e:
-            log.error(f"Failed to dry-run activity enrichment connector: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to dry-run activity enrichment connector")
 
     @router.delete("/api/activity/enrichment/connectors/{connector_id}/annotations")
     async def api_clear_activity_enrichment_annotations(connector_id: str) -> Any:
@@ -574,8 +558,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to clear activity enrichment annotations: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to clear activity enrichment annotations")
 
     @router.delete("/api/activity/enrichment/connectors/{connector_id}/candidates")
     async def api_clear_activity_enrichment_candidates(connector_id: str) -> Any:
@@ -610,8 +593,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to clear activity enrichment candidates: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to clear activity enrichment candidates")
 
     @router.get("/api/activity/annotations")
     async def api_list_activity_annotations(
@@ -656,8 +638,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to list activity annotations: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to list activity annotations")
 
     @router.get("/api/activity/briefing")
     async def api_activity_briefing() -> Any:
@@ -704,8 +685,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             }
             return JSONResponse(payload)
         except Exception as e:
-            log.error(f"Failed to fetch activity briefing: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to fetch activity briefing")
 
     @router.post("/api/activity/enrichment/pipelines/{pipeline_id}/run")
     async def api_run_pipeline(pipeline_id: str) -> Any:
@@ -750,8 +730,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                 return JSONResponse({"error": str(exc)}, status_code=404)
             return JSONResponse({"result": result.to_payload()})
         except Exception as e:
-            log.error(f"Failed to run pipeline {pipeline_id}: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, f"Failed to run pipeline {pipeline_id}")
 
     @router.get("/api/activity/enrichment/connectors/{connector_id}/runs")
     async def api_list_activity_enrichment_runs(
@@ -784,8 +763,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to list connector runs: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to list connector runs")
 
     @router.get("/api/activity/enrichment/github/preview")
     async def api_preview_github_activity_enrichment(limit: int = 50) -> Any:
@@ -806,8 +784,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to preview GitHub activity enrichment: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to preview GitHub activity enrichment")
 
     @router.post("/api/activity/enrichment/github/run")
     async def api_run_github_activity_enrichment(
@@ -903,8 +880,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to preview Jira activity enrichment: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to preview Jira activity enrichment")
 
     @router.post("/api/activity/enrichment/jira/run")
     async def api_run_jira_activity_enrichment(
@@ -993,8 +969,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to preview activity meeting candidates: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to preview activity meeting candidates")
 
     @router.get("/api/activity/meeting-candidates")
     async def api_activity_meeting_candidates(
@@ -1020,8 +995,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
         except ValueError as e:
             return JSONResponse({"error": str(e)}, status_code=400)
         except Exception as e:
-            log.error(f"Failed to list activity meeting candidates: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to list activity meeting candidates")
 
     @router.post("/api/activity/meeting-candidates")
     async def api_create_activity_meeting_candidate(
@@ -1045,8 +1019,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
         except ValueError as e:
             return JSONResponse({"error": str(e)}, status_code=400)
         except Exception as e:
-            log.error(f"Failed to create activity meeting candidate: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to create activity meeting candidate")
 
     @router.put("/api/activity/meeting-candidates/{candidate_id}/status")
     async def api_update_activity_meeting_candidate_status(
@@ -1067,8 +1040,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
         except ValueError as e:
             return JSONResponse({"error": str(e)}, status_code=400)
         except Exception as e:
-            log.error(f"Failed to update activity meeting candidate: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to update activity meeting candidate")
 
     @router.post("/api/activity/meeting-candidates/{candidate_id}/start")
     async def api_start_activity_meeting_candidate(candidate_id: str) -> Any:
@@ -1149,8 +1121,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
         except ValueError as e:
             return JSONResponse({"error": str(e)}, status_code=400)
         except Exception as e:
-            log.error(f"Failed to delete activity meeting candidates: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to delete activity meeting candidates")
 
     @router.delete("/api/activity/records")
     async def api_delete_activity_records(
@@ -1164,8 +1135,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
             deleted = db.activity.delete_activity_records(domain=domain, project_id=project_id)
             return JSONResponse({"deleted": deleted, "status": _activity_status_payload()})
         except Exception as e:
-            log.error(f"Failed to delete activity records: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to delete activity records")
 
     @router.get("/api/plugin-jobs")
     async def api_list_plugin_jobs(
@@ -1216,8 +1186,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to list deferred plugin jobs: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to list deferred plugin jobs")
 
     @router.get("/api/plugin-jobs/summary")
     async def api_plugin_jobs_summary() -> Any:
@@ -1241,8 +1210,7 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to load deferred plugin-job summary: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to load deferred plugin-job summary")
 
     @router.post("/api/plugin-jobs/process")
     async def api_process_plugin_jobs(payload: Optional[_PluginJobProcessRequest] = None) -> Any:

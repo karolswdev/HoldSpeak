@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import pytest
-from pathlib import Path
 
 from holdspeak.config import (
     Config,
@@ -158,7 +157,6 @@ class TestMeetingConfig:
         assert config.intel_cloud_model == "gpt-5-mini"
         assert config.intel_cloud_api_key_env == "OPENAI_API_KEY"
         assert config.intel_cloud_base_url is None
-        assert config.web_enabled is True
         assert config.web_auto_open is False
         assert config.mir_enabled is True
         assert config.mir_profile == "balanced"
@@ -483,7 +481,6 @@ class TestConfigRoundTrip:
                 intel_cloud_model="gpt-5.4",
                 intel_cloud_api_key_env="ALT_OPENAI_KEY",
                 intel_cloud_base_url="https://api.example.com/v1",
-                web_enabled=False,
                 web_auto_open=True,
             )
         )
@@ -502,7 +499,6 @@ class TestConfigRoundTrip:
         assert loaded.meeting.intel_cloud_model == "gpt-5.4"
         assert loaded.meeting.intel_cloud_api_key_env == "ALT_OPENAI_KEY"
         assert loaded.meeting.intel_cloud_base_url == "https://api.example.com/v1"
-        assert loaded.meeting.web_enabled is False
         assert loaded.meeting.web_auto_open is True
 
 

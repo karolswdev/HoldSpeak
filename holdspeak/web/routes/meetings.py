@@ -34,7 +34,7 @@ from ...web_requests import (
     _StopRequest,
     _UpdateMeetingRequest,
 )
-from ..runtime_support import _UnknownDeviceError, _meeting_callback_payload
+from ..runtime_support import _UnknownDeviceError, _meeting_callback_payload, error_500
 from ..context import WebContext
 
 log = get_logger("web.routes.meetings")
@@ -344,8 +344,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             payload.sort(key=lambda s: (s.get("last_seen") or "", s.get("sample_count") or 0), reverse=True)
             return JSONResponse({"speakers": payload, "total": len(payload)})
         except Exception as e:
-            log.error(f"Failed to list speakers: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to list speakers")
 
     @router.get("/api/speakers/{speaker_id}")
     async def api_get_speaker(speaker_id: str, limit: int = 500) -> Any:
@@ -383,8 +382,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to get speaker: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to get speaker")
 
     @router.patch("/api/speakers/{speaker_id}")
     async def api_update_speaker(speaker_id: str, payload: _SpeakerUpdateRequest) -> Any:
@@ -546,8 +544,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to load meeting intent timeline: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to load meeting intent timeline")
 
     @router.get("/api/meetings/{meeting_id}/plugin-runs")
     async def api_get_meeting_plugin_runs(
@@ -593,8 +590,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to load meeting plugin runs: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to load meeting plugin runs")
 
     @router.get("/api/meetings/{meeting_id}/artifacts")
     async def api_get_meeting_artifacts(
@@ -638,8 +634,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to load meeting artifacts: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to load meeting artifacts")
 
     @router.get("/api/all-action-items")
     async def api_list_all_action_items(
@@ -932,8 +927,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to list intel jobs: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to list intel jobs")
 
     @router.get("/api/intel/summary")
     async def api_intel_queue_summary() -> Any:
@@ -957,8 +951,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                 }
             )
         except Exception as e:
-            log.error(f"Failed to load intel queue summary: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to load intel queue summary")
 
     @router.post("/api/intel/process")
     async def api_process_intel_jobs(payload: Optional[_IntelProcessRequest] = None) -> Any:

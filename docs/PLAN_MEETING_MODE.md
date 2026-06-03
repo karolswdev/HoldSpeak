@@ -1,5 +1,11 @@
 # Meeting Mode - Implementation Plan
 
+> **Historical plan (note added 2026-06-02, HS-32-06):** the original design plan.
+> Meeting mode shipped via the **web runtime**; the "Meeting Mode TUI" /
+> `holdspeak/tui.py` sections below describe a terminal UI **retired in HS-32-07**
+> (the web runtime is now the sole interactive runtime). Read them as historical
+> design context, not current behavior.
+
 ## Overview
 Add a "meeting mode" to HoldSpeak that captures **both microphone input AND system audio output**, enabling full meeting transcription with speaker differentiation.
 

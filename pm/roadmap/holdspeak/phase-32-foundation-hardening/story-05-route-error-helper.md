@@ -1,6 +1,6 @@
 # HS-32-05 — Route error-handling helper
 
-**Status:** not-started.
+- **Status:** done (2026-06-02). Evidence: [evidence-story-05.md](./evidence-story-05.md).
 
 ## Goal
 
@@ -27,6 +27,15 @@ of handlers. Extract one helper.
 
 ## Done when
 
-- [ ] One error-handling helper exists and is applied across the duplicated blocks.
-- [ ] Error response shape/status codes unchanged; route error tests green.
-- [ ] Handler-count reduction recorded; full suite green; ruff clean.
+- [x] One error-handling helper exists and is applied across the duplicated blocks.
+- [x] Error response shape/status codes unchanged; route error tests green.
+- [x] Handler-count reduction recorded; full suite green; ruff clean.
+
+## Evidence
+
+[evidence-story-05.md](./evidence-story-05.md). `error_500(exc, logger, detail)`
+in `runtime_support.py` replaces the canonical `log.error + JSONResponse(500)`
+block at **48 sites** (activity 32 / projects 8 / meetings 7 / system 1) →
+−48 handler lines. Behavior byte-identical. **Chose a helper function over the
+deferred "decorator" default** because handlers have nested try/except + specific
+non-500 handling a whole-handler decorator would swallow. Suite green **1952/14**.

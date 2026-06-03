@@ -1,6 +1,6 @@
 # HS-32-04 — CI end-to-end smoke test (core path)
 
-**Status:** not-started.
+- **Status:** done (2026-06-02). Evidence: [evidence-story-04.md](./evidence-story-04.md).
 
 ## Goal
 
@@ -30,6 +30,15 @@ asserts on the **actual produced text**.
 
 ## Done when
 
-- [ ] A CI job runs the core hotkey→text smoke test on every push, ungated.
-- [ ] It asserts on produced text and fails when the path is broken (shown).
-- [ ] Runs without a mic; fast and deterministic; documented in the workflow.
+- [x] A CI job runs the core hotkey→text smoke test on every push, ungated.
+- [x] It asserts on produced text and fails when the path is broken (shown).
+- [x] Runs without a mic; fast and deterministic; documented in the workflow.
+
+## Evidence
+
+[evidence-story-04.md](./evidence-story-04.md). Checked-in 16 kHz WAV (generated
+once via `say`, ~93 KB) → real `Transcriber("tiny")` → `TextProcessor` →
+capturing typer → substring assert ("quick brown fox" / "lazy dog"). Runs ungated
+on the macOS integration CI job (mlx-whisper core dep) every push; skips where no
+backend. **2 passed in 1.24s** locally; mutation check (silence → empty
+transcript → red) shown. Suite green **1948/14**.

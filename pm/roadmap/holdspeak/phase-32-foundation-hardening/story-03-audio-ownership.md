@@ -1,6 +1,6 @@
 # HS-32-03 — Converge audio ownership
 
-**Status:** not-started.
+- **Status:** done (2026-06-02). Evidence: [evidence-story-03.md](./evidence-story-03.md).
 
 ## Goal
 
@@ -30,6 +30,16 @@ mic" is possible and untested.
 
 ## Done when
 
-- [ ] One ownership model arbitrates hotkey / device / meeting capture.
-- [ ] A concurrency test demonstrates mutual exclusion / defined precedence.
-- [ ] No working capture path regresses; full suite green; ruff clean.
+- [x] One ownership model arbitrates hotkey / device / meeting capture.
+- [x] A concurrency test demonstrates mutual exclusion / defined precedence.
+- [x] No working capture path regresses; full suite green; ruff clean.
+
+## Evidence
+
+[evidence-story-03.md](./evidence-story-03.md). `VoiceTypingSession` gained
+source-less `acquire`/`release`; the meeting holds the shared floor (rejecting
+hotkey/device `begin()` and being rejected while they record); redundant hotkey
+meeting-guards removed — the arbiter is the single decision point. New
+`TestAudioFloorArbitration` (7 tests incl. a concurrency mutual-exclusion test).
+Suite green **1946/14**. Real-audio paths stay `metal`-gated (not runnable
+remotely).
