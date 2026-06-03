@@ -452,14 +452,23 @@ win a collision.
 
 > **Chain hints are declarative today.** A pack registers on the host so
 > it can execute by id, and its `profiles`/`intents` record where it
-> *wants* to fire — but wiring those hints into the live router chains
-> (and per-project enable/disable) is the next story. Until then a pack
-> plugin runs when invoked by id; the built-in routing chains above are
-> unchanged.
+> *wants* to fire — but wiring those hints into the live router chains is
+> still pending. Until then a pack plugin runs when invoked by id; the
+> built-in routing chains above are unchanged.
 
 The committed example at
 [`tests/fixtures/plugin_packs/example_user_pack.py`](../tests/fixtures/plugin_packs/example_user_pack.py)
 is a complete, working pack.
+
+### Disabling a plugin per project
+
+A team can suppress specific plugins without code: list their ids in
+`MeetingConfig.disabled_plugins` (the `meeting.disabled_plugins` config
+key). At dispatch a disabled id is recorded as a `skipped` run — distinct
+from a capability-`blocked` or a failed run — and never invoked. The
+*built* chain is unchanged (the skip is in the *executed* set), so this is
+a runtime suppression, not a routing change. An empty list (the default)
+runs every chain-selected plugin, exactly as before.
 
 ---
 

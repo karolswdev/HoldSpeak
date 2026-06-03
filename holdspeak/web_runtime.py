@@ -508,6 +508,9 @@ class WebRuntime:
                 diarization_enabled=self.config.meeting.diarization_enabled,
                 diarize_mic=self.config.meeting.diarize_mic,
                 cross_meeting_recognition=self.config.meeting.cross_meeting_recognition,
+                mir_disabled_plugins=list(
+                    getattr(self.config.meeting, "disabled_plugins", []) or []
+                ),
             )
             state = session.start()
             with self.state_lock:

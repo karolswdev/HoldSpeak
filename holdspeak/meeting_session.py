@@ -322,6 +322,7 @@ class MeetingSession:
         mir_score_threshold: float = 0.6,
         mir_hysteresis: float = 0.05,
         mir_synthesize: bool = False,
+        mir_disabled_plugins: Optional[list[str]] = None,
     ) -> None:
         """Initialize meeting session.
 
@@ -393,6 +394,8 @@ class MeetingSession:
         self._mir_score_threshold = float(mir_score_threshold)
         self._mir_hysteresis = float(mir_hysteresis)
         self._mir_synthesize = bool(mir_synthesize)
+        # HS-35-03: per-project plugin enable/disable, threaded into dispatch.
+        self._mir_disabled_plugins = list(mir_disabled_plugins or [])
 
         self._state: Optional[MeetingState] = None
         self._recorder: Optional[MeetingRecorder] = None
@@ -848,6 +851,7 @@ class MeetingSession:
                     step_seconds=self._mir_step_seconds,
                     db=self._mir_db,
                     synthesize=self._mir_synthesize,
+                    disabled_plugins=self._mir_disabled_plugins,
                 )
                 log.info(
                     "MIR routing finalized: "

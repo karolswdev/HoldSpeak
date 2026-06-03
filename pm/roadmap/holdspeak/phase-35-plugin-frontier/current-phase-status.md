@@ -1,11 +1,11 @@
 # Phase 35 — Plugin Frontier
 
-**Status:** in-progress (opened 2026-06-03). 2/5 stories shipped.
+**Status:** in-progress (opened 2026-06-03). 3/5 stories shipped.
 
-**Last updated:** 2026-06-03 (HS-35-02 shipped — `plugin_sdk.py` (`PluginManifest`
-+ `validate_manifest`) + `plugin_pack_loader.py` (first-party + user-pack discovery,
-host registration), wired into `WebRuntime`; chain hints declared but live routing
-deferred to HS-35-03; HS-35-03 per-project enable/disable next).
+**Last updated:** 2026-06-03 (HS-35-03 shipped — per-project plugin enable/disable:
+`MeetingConfig.disabled_plugins` + a dispatch gate that records disabled plugins as
+`skipped` (built chain unchanged; `router.py` untouched); HS-35-04 incident-retro
+spoken-e2e next).
 
 ## Goal
 
@@ -75,7 +75,7 @@ unchanged; the new machinery sits around them.
 |---|---|---|---|---|
 | HS-35-01 | Public plugin-authoring guide (`docs/PLUGIN_AUTHORING.md`) | done | [story-01-plugin-authoring-guide.md](./story-01-plugin-authoring-guide.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-35-02 | Plugin pack manifest + discovery loader | done | [story-02-plugin-packs.md](./story-02-plugin-packs.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-35-03 | Per-project plugin enable/disable | not-started | [story-03-per-project-enable-disable.md](./story-03-per-project-enable-disable.md) | — |
+| HS-35-03 | Per-project plugin enable/disable | done | [story-03-per-project-enable-disable.md](./story-03-per-project-enable-disable.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-35-04 | Spoken-e2e breadth: incident retro | not-started | [story-04-spoken-e2e-incident.md](./story-04-spoken-e2e-incident.md) | — |
 | HS-35-05 | Phase closeout + final-summary | not-started | [story-05-closeout.md](./story-05-closeout.md) | — |
 
@@ -123,6 +123,24 @@ deferred to HS-35-03 — `router.py` untouched, so the 14 built-ins' routing is
 byte-identical (`test_intent_dispatch.py` unchanged). `docs/PLUGIN_AUTHORING.md`
 gained the promised "Plugin packs" section. Full suite 1995 passed / 15 skipped;
 new modules ruff + F821 clean. Next: HS-35-03 (per-project enable/disable).
+
+**HS-35-03 shipped (2026-06-03):** per-project plugin enable/disable. A flat config
+knob `MeetingConfig.disabled_plugins: list[str]` (normalized + validated in
+`__post_init__`; unknown ids are a no-op) and a **dispatch gate** in
+`plugins/dispatch.py` — `dispatch_window` drops disabled ids from the *executed* set
+and records each as a new `skipped` `PluginRun` status (distinct from
+capability-`blocked` and ran-and-failed `error`; synthesis ignores it). `router.py`
+is **untouched** so the *built* chain (`RouteDecision.plugin_chain`) and
+`test_intent_dispatch.py` are unchanged. The knob threads
+`dispatch_window`/`dispatch_windows` → `process_meeting_state` → `MeetingSession`
+(ctor + `stop()`) → `WebRuntime` (passes `config.meeting.disabled_plugins`); `skipped`
+persists via `record_plugin_run` and surfaces on `GET /api/meetings/{id}/plugin-runs`
+(no new route). New `test_plugin_disable.py` (12 tests): the pure
+`partition_chain`/`normalize_disabled_plugins` helpers, skip-not-execute at dispatch,
+unknown-id no-op, default byte-identical, and config validation. Default (empty list)
+behavior is byte-identical. Full suite 2007 passed / 15 skipped; authored files ruff
+clean. `docs/PLUGIN_AUTHORING.md` gained a "Disabling a plugin per project" note.
+Next: HS-35-04 (incident-retro spoken-e2e scenario).
 
 ## Pickup order
 

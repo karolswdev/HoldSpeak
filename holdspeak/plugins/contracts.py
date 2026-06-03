@@ -6,7 +6,11 @@ from dataclasses import dataclass, field
 from typing import Any
 
 PLUGIN_RUN_STATUSES: frozenset[str] = frozenset(
-    {"success", "error", "timeout", "deduped", "blocked", "queued"}
+    # `skipped` (HS-35-03) = the chain selected this plugin but a per-project
+    # config knob (`MeetingConfig.disabled_plugins`) suppressed it at dispatch.
+    # Distinct from `blocked` (capability/actuator gate) and `error` (it ran
+    # and failed): a skipped plugin was never invoked.
+    {"success", "error", "timeout", "deduped", "blocked", "queued", "skipped"}
 )
 
 
