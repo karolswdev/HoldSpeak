@@ -1,6 +1,6 @@
 # HS-33-05 — Visual assets (pixellab MCP)
 
-**Status:** not-started.
+- **Status:** done (2026-06-03). Evidence: [evidence-story-05.md](./evidence-story-05.md).
 
 ## Goal
 
@@ -67,9 +67,9 @@ adds the pieces a great OSS repo needs.
 
 ## Done when
 
-- [ ] A coherent prime-time asset set exists (logo/mark + social/OG card at
+- [x] A coherent prime-time asset set exists (logo/mark + social/OG card at
       minimum), harmonized with "Signal."
-- [ ] Wired into the README/docs; favicon/social placed where the site/repo use
+- [x] Wired into the README/docs; favicon/social placed where the site/repo use
       them.
-- [ ] Every new asset's pixellab object/animation ID + prompt recorded in
+- [x] Every new asset's pixellab object/animation ID + prompt recorded in
       `docs/assets/pixellab/README.md`.

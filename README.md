@@ -1,5 +1,9 @@
 # HoldSpeak
 
+<p align="center">
+  <img src="docs/assets/pixellab/holdspeak-mark.png" alt="HoldSpeak logo — a held key with rising soundwaves" width="120">
+</p>
+
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Tests](https://github.com/karolswdev/HoldSpeak/actions/workflows/test.yml/badge.svg)](https://github.com/karolswdev/HoldSpeak/actions/workflows/test.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)

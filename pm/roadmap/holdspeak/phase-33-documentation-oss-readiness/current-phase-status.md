@@ -1,9 +1,9 @@
 # Phase 33 — Documentation & Open-Source Readiness
 
-**Status:** in-progress (opened 2026-06-03). 4/6 stories shipped.
+**Status:** in-progress (opened 2026-06-03). 5/6 stories shipped.
 
-**Last updated:** 2026-06-03 (HS-33-04 shipped — OSS-grade README pass: badges,
-honest pre-release status, quickstart, + `CHANGELOG.md` and `CONTRIBUTING.md`).
+**Last updated:** 2026-06-03 (HS-33-05 shipped — brand mark + social/OG card via
+the pixellab MCP, on the Signal palette; wired into README + apple-touch-icon).
 
 ## Goal
 
@@ -72,9 +72,9 @@ this makes the project *presentable and adoptable*.
       `docs/README.md` index; no broken links. (HS-33-03) ✅
 - [x] README is OSS-grade (badges, honest status, quickstart, license/docs
       links); `CHANGELOG.md` + a minimal `CONTRIBUTING.md` exist. (HS-33-04) ✅
-- [ ] The visual-asset set is coherent and prime-time; wired into README/docs;
+- [x] The visual-asset set is coherent and prime-time; wired into README/docs;
       generation provenance (prompts/IDs) recorded like the existing
-      `docs/assets/pixellab/README.md`. (HS-33-05)
+      `docs/assets/pixellab/README.md`. (HS-33-05) ✅
 - [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green throughout (this
       is mostly docs, but the model-default + any link-check tests must pass).
 
@@ -86,7 +86,7 @@ this makes the project *presentable and adoptable*.
 | HS-33-02 | Apache-2.0 LICENSE + `pyproject` metadata | done | [story-02-license-pyproject.md](./story-02-license-pyproject.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-33-03 | `docs/` reorganization + index | done | [story-03-docs-reorg.md](./story-03-docs-reorg.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-33-04 | README + getting-started OSS pass + CHANGELOG | done | [story-04-readme-oss-pass.md](./story-04-readme-oss-pass.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-33-05 | Visual assets (pixellab MCP) | not-started | [story-05-visual-assets.md](./story-05-visual-assets.md) | — |
+| HS-33-05 | Visual assets (pixellab MCP) | done | [story-05-visual-assets.md](./story-05-visual-assets.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-33-06 | Phase closeout + final-summary | not-started | [story-06-closeout.md](./story-06-closeout.md) | — |
 
 ## Where we are
@@ -136,8 +136,16 @@ corrected to Apache-2.0. New `CHANGELOG.md` (Keep a Changelog, honest "everythin
 Unreleased") + minimal `CONTRIBUTING.md` (uv setup, hooks, test command, commit
 contract). All README links verified; suite green 1954/15.
 
-**Next: HS-33-05** (visual assets via the pixellab MCP) — needs the MCP connected
-+ consumes generation credits. **Then HS-33-06** (closeout + final-summary).
+**HS-33-05 shipped** (2026-06-03): generated the HoldSpeak **brand mark** (held-key
++ rising soundwaves, orange `#FF6B35`, PixelLab obj
+`52e0db41-4789-45b3-9136-1ee3e4e7838d`) and composed a **1280×640 social/OG card**
++ a 256px app icon + a refreshed 180px `apple-touch-icon` (PixelLab makes ≤400px
+sprites, so the card is composed from the mark + workflow icons on the Signal
+palette via committed `compose_og_card.py`). Audited the existing spot-art set —
+coherent, no regen. Wired the mark into the README header; provenance recorded.
+Manual follow-up: set `social-card.png` in the repo's *Settings → Social preview*.
+
+**Next: HS-33-06** (phase closeout + final-summary) — the last story.
 
 ## Pickup order
 
@@ -145,8 +153,8 @@ contract). All README links verified; suite green 1954/15.
 2. HS-33-02 — Apache-2.0 LICENSE + `pyproject` metadata. **✅ done (2026-06-03).**
 3. HS-33-03 — `docs/` reorg + index (do before the README pass so links settle). **✅ done (2026-06-03).**
 4. HS-33-04 — README + getting-started OSS pass + CHANGELOG. **✅ done (2026-06-03).**
-5. HS-33-05 — visual assets via the pixellab MCP. **◀ next (needs the MCP + credits).**
-6. HS-33-06 — closeout + final-summary.
+5. HS-33-05 — visual assets via the pixellab MCP. **✅ done (2026-06-03).**
+6. HS-33-06 — closeout + final-summary. **◀ next (last story).**
 
 ## Active risks
 
