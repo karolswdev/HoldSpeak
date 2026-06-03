@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from .audio import AudioSource
     from .device_audio import DeviceDescriptor
 
-# Optional imports for intel and web server
+# Optional imports for intel
 try:
     from .intel import (
         MeetingIntel,
@@ -41,11 +41,6 @@ except ImportError:
     ActionItem = None  # type: ignore
     get_intel_runtime_status = None  # type: ignore
     resolve_intel_provider = None  # type: ignore
-
-try:
-    from .web_server import MeetingWebServer, WebRuntimeCallbacks
-except ImportError:
-    MeetingWebServer = None  # type: ignore
 
 try:
     from .speaker_intel import SpeakerDiarizer
@@ -305,6 +300,7 @@ class MeetingSession:
         on_system_level: Optional[Callable[[float], None]] = None,
         on_intel: Optional[Callable[[IntelSnapshot], None]] = None,
         on_settings_applied: Optional[Callable[[Any], None]] = None,
+        on_broadcast: Optional[Callable[[str, Any], None]] = None,
         intel_enabled: bool = False,
         intel_model_path: Optional[str] = None,
         intel_provider: str = "local",
@@ -314,7 +310,6 @@ class MeetingSession:
         intel_cloud_reasoning_effort: Optional[str] = None,
         intel_cloud_store: bool = False,
         intel_deferred_enabled: bool = True,
-        web_enabled: bool = False,
         diarization_enabled: bool = False,
         diarize_mic: bool = False,
         cross_meeting_recognition: bool = True,
@@ -341,6 +336,11 @@ class MeetingSession:
             on_system_level: Callback for system level updates.
             on_intel: Callback when new intel snapshot is generated.
             on_settings_applied: Callback invoked when settings are saved via web UI.
+            on_broadcast: Callback ``(message_type, data)`` the session emits live
+                meeting events through (segments, intel tokens/completion, status,
+                title/tag updates). Default ``None`` (no-op): the session has no
+                knowledge of any web server — an observer (e.g. ``WebRuntime``)
+                wires this to its own broadcast channel.
             intel_enabled: Enable LLM-powered meeting intelligence.
             intel_model_path: Path to GGUF model for intel (None for default).
             intel_provider: Meeting intel provider mode (local/cloud/auto).
@@ -349,7 +349,6 @@ class MeetingSession:
             intel_cloud_base_url: Optional OpenAI-compatible base URL.
             intel_cloud_reasoning_effort: Reserved for future cloud tuning.
             intel_cloud_store: Whether cloud requests may be stored server-side.
-            web_enabled: Enable per-meeting web dashboard.
             diarization_enabled: Enable speaker diarization for system audio.
             diarize_mic: Also diarize mic input (for on-site meetings).
             cross_meeting_recognition: Recognize speakers across meetings.
@@ -364,6 +363,7 @@ class MeetingSession:
         self.on_system_level = on_system_level
         self.on_intel = on_intel
         self.on_settings_applied = on_settings_applied
+        self.on_broadcast = on_broadcast
         self.intel_enabled = intel_enabled and MeetingIntel is not None
         self.intel_model_path = intel_model_path
         self.intel_provider = intel_provider
@@ -373,7 +373,6 @@ class MeetingSession:
         self.intel_cloud_reasoning_effort = intel_cloud_reasoning_effort
         self.intel_cloud_store = intel_cloud_store
         self.intel_deferred_enabled = intel_deferred_enabled
-        self.web_enabled = web_enabled and MeetingWebServer is not None
         self.diarization_enabled = diarization_enabled and SpeakerDiarizer is not None
         self.diarize_mic = diarize_mic and SpeakerDiarizer is not None
         self.cross_meeting_recognition = cross_meeting_recognition
@@ -417,13 +416,25 @@ class MeetingSession:
         self._current_analysis_id: Optional[str] = None  # For handling interruptions
         self._deferred_intel_reason: Optional[str] = None
 
-        # Web server
-        self._web_server: Optional["MeetingWebServer"] = None
-
         # Speaker diarization
         self._diarizer: Optional["SpeakerDiarizer"] = None
 
-        log.info(f"MeetingSession initialized (intel={self.intel_enabled}, web={self.web_enabled}, diarization={self.diarization_enabled})")
+        log.info(f"MeetingSession initialized (intel={self.intel_enabled}, diarization={self.diarization_enabled})")
+
+    def _emit_broadcast(self, message_type: str, data: Any) -> None:
+        """Emit a live meeting event to the observer's broadcast channel.
+
+        Inversion of control: the session knows nothing about a web server.
+        It emits; whoever supplied ``on_broadcast`` (e.g. ``WebRuntime``)
+        decides what to do with the event. No-op when no callback is wired.
+        """
+        callback = self.on_broadcast
+        if callback is None:
+            return
+        try:
+            callback(message_type, data)
+        except Exception as exc:
+            log.debug(f"on_broadcast callback raised for {message_type!r}: {exc}")
 
     @property
     def is_active(self) -> bool:
@@ -573,13 +584,9 @@ class MeetingSession:
                 completed_at=completed_at,
             )
             state = self._state
-            web_server = self._web_server
 
-        if state is not None and web_server is not None:
-            try:
-                web_server.broadcast("intel_status", state.to_dict().get("intel_status", {}))
-            except Exception as exc:
-                log.debug(f"Failed to broadcast intel_status: {exc}")
+        if state is not None:
+            self._emit_broadcast("intel_status", state.to_dict().get("intel_status", {}))
 
     def start(self) -> MeetingState:
         """Start a new meeting session.
@@ -689,29 +696,6 @@ class MeetingSession:
                         self._state.intel_status = "error"
                         self._state.intel_status_detail = runtime_error or "Meeting intelligence unavailable."
 
-            # Initialize web server if enabled
-            if self.web_enabled and MeetingWebServer is not None:
-                try:
-                    self._web_server = MeetingWebServer(
-                        WebRuntimeCallbacks(
-                            on_bookmark=self.add_bookmark,
-                            on_stop=self.stop,
-                            get_state=self._get_state_dict,
-                            on_update_action_item=self.update_action_item,
-                            on_update_action_item_review=self.update_action_item_review,
-                            on_edit_action_item=self.edit_action_item,
-                            on_set_title=self.set_title,
-                            on_set_tags=self.set_tags,
-                            on_settings_applied=self.on_settings_applied,
-                        )
-                    )
-                    url = self._web_server.start()
-                    self._state.web_url = url
-                    log.info(f"Meeting web server started: {url}")
-                except Exception as e:
-                    log.error(f"Failed to start web server: {e}")
-                    self._web_server = None
-
             # Initialize speaker diarization if enabled (for system audio or mic)
             if (self.diarization_enabled or self.diarize_mic) and SpeakerDiarizer is not None:
                 try:
@@ -811,7 +795,6 @@ class MeetingSession:
         with self._lock:
             state = self._state
             intel = self._intel
-            web_server = self._web_server
             diarizer = self._diarizer
 
         assert state is not None
@@ -837,14 +820,6 @@ class MeetingSession:
                     log.info(f"Auto-generated meeting title: {title}")
             except Exception as e:
                 log.error(f"Auto-title generation failed: {e}")
-
-        # Stop web server outside the lock because shutdown can block while the
-        # server loop is draining websocket clients.
-        if web_server is not None:
-            try:
-                web_server.stop()
-            except Exception as e:
-                log.error(f"Error stopping web server: {e}")
 
         # Save speaker embeddings outside the lock because it performs DB I/O.
         if diarizer is not None:
@@ -885,8 +860,6 @@ class MeetingSession:
 
         with self._lock:
             # Save speaker embeddings for cross-meeting recognition
-            if self._web_server is web_server:
-                self._web_server = None
             if self._diarizer is diarizer:
                 self._diarizer = None
 
@@ -1111,11 +1084,10 @@ class MeetingSession:
             if self._state:
                 self._state.title = title.strip() or None
                 log.info(f"Meeting title set: {self._state.title}")
-                if self._web_server:
-                    self._web_server.broadcast("meeting_updated", {
-                        "title": self._state.title,
-                        "tags": self._state.tags,
-                    })
+                self._emit_broadcast("meeting_updated", {
+                    "title": self._state.title,
+                    "tags": self._state.tags,
+                })
 
     def get_title(self) -> Optional[str]:
         """Get current meeting title."""
@@ -1139,11 +1111,10 @@ class MeetingSession:
                 if clean_tag not in self._state.tags:
                     self._state.tags.append(clean_tag)
                     log.info(f"Tag added: {clean_tag}")
-                    if self._web_server:
-                        self._web_server.broadcast("meeting_updated", {
-                            "title": self._state.title,
-                            "tags": self._state.tags,
-                        })
+                    self._emit_broadcast("meeting_updated", {
+                        "title": self._state.title,
+                        "tags": self._state.tags,
+                    })
                     return True
         return False
 
@@ -1162,11 +1133,10 @@ class MeetingSession:
                 if clean_tag in self._state.tags:
                     self._state.tags.remove(clean_tag)
                     log.info(f"Tag removed: {clean_tag}")
-                    if self._web_server:
-                        self._web_server.broadcast("meeting_updated", {
-                            "title": self._state.title,
-                            "tags": self._state.tags,
-                        })
+                    self._emit_broadcast("meeting_updated", {
+                        "title": self._state.title,
+                        "tags": self._state.tags,
+                    })
                     return True
         return False
 
@@ -1180,11 +1150,10 @@ class MeetingSession:
             if self._state:
                 self._state.tags = [t.strip().lower() for t in tags if t.strip()]
                 log.info(f"Tags set: {self._state.tags}")
-                if self._web_server:
-                    self._web_server.broadcast("meeting_updated", {
-                        "title": self._state.title,
-                        "tags": self._state.tags,
-                    })
+                self._emit_broadcast("meeting_updated", {
+                    "title": self._state.title,
+                    "tags": self._state.tags,
+                })
 
     def get_tags(self) -> list[str]:
         """Get current meeting tags."""
@@ -1408,13 +1377,9 @@ class MeetingSession:
                         log.error(f"on_segment callback error: {e}")
                 log.debug(f"Device segment ({device_id}): {segment}")
 
-        # Broadcast new segments via web server
-        if new_segments and self._web_server is not None:
-            for segment in new_segments:
-                try:
-                    self._web_server.broadcast("segment", segment.to_dict())
-                except Exception as e:
-                    log.error(f"Failed to broadcast segment: {e}")
+        # Emit new segments to the observer's broadcast channel
+        for segment in new_segments:
+            self._emit_broadcast("segment", segment.to_dict())
 
         # Update last transcribe time
         if mic_chunks or system_chunks:
@@ -1548,12 +1513,8 @@ class MeetingSession:
                     return
 
                 if isinstance(chunk, str):
-                    # Stream token to dashboard
-                    if self._web_server is not None:
-                        try:
-                            self._web_server.broadcast("intel_token", chunk)
-                        except Exception as e:
-                            log.debug(f"Failed to broadcast intel token: {e}")
+                    # Stream token to any observer (web dashboard)
+                    self._emit_broadcast("intel_token", chunk)
                 else:
                     # Final IntelResult
                     result = chunk
@@ -1589,16 +1550,12 @@ class MeetingSession:
                             )
                             self._state.intel_completed_at = datetime.now()
 
-                    # Broadcast completion via web server
-                    if self._web_server is not None:
-                        try:
-                            self._web_server.broadcast("intel_complete", snapshot.to_dict())
-                            self._web_server.broadcast(
-                                "intel_status",
-                                self._get_state_dict().get("intel_status", {}),
-                            )
-                        except Exception as e:
-                            log.error(f"Failed to broadcast intel_complete: {e}")
+                    # Emit completion to any observer (web dashboard)
+                    self._emit_broadcast("intel_complete", snapshot.to_dict())
+                    self._emit_broadcast(
+                        "intel_status",
+                        self._get_state_dict().get("intel_status", {}),
+                    )
 
                     # Callback
                     if self.on_intel:

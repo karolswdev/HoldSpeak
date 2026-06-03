@@ -380,6 +380,32 @@ class WebRuntime:
         except Exception as exc:
             log.debug(f"Failed to push intel to device LCD: {exc}")
 
+    # Events the meeting session emits that have a *dedicated* runtime path
+    # already (`_on_meeting_segment` / `_on_meeting_intel` broadcast these,
+    # and also drive the device LCDs). Forwarding them again from the generic
+    # `on_broadcast` seam would double-broadcast, so they are filtered out.
+    _BROADCAST_VIA_DEDICATED_HANDLER = frozenset({"segment", "intel_complete", "intel_status"})
+
+    def _on_meeting_broadcast(self, message_type: str, data: object) -> None:
+        """Observe live events `MeetingSession` emits (HS-32-02 inversion).
+
+        The session no longer reaches into a web server; it emits, and the
+        runtime forwards to its broadcast channel. ``segment`` /
+        ``intel_complete`` / ``intel_status`` already flow via the dedicated
+        ``on_segment`` / ``on_intel`` handlers, so only ``intel_token`` and
+        ``meeting_updated`` — previously delivered solely to the now-removed
+        embedded per-meeting server, and dead in the flagship runtime — are
+        forwarded here.
+        """
+        if self.server is None:
+            return
+        if message_type in self._BROADCAST_VIA_DEDICATED_HANDLER:
+            return
+        try:
+            self.server.broadcast(message_type, data)
+        except Exception as exc:
+            log.debug(f"Failed to forward meeting broadcast {message_type!r}: {exc}")
+
     def _apply_updated_config(self, updated_config: Config) -> None:
         previous_model = self.config.model.name
         self.config = updated_config
@@ -434,6 +460,7 @@ class WebRuntime:
             on_system_level=lambda _level: None,
             on_intel=self._on_meeting_intel,
             on_settings_applied=self._apply_updated_config,
+            on_broadcast=self._on_meeting_broadcast,
             intel_enabled=self.config.meeting.intel_enabled,
             intel_model_path=self.config.meeting.intel_realtime_model,
             intel_provider=self.config.meeting.intel_provider,
@@ -443,7 +470,6 @@ class WebRuntime:
             intel_cloud_reasoning_effort=self.config.meeting.intel_cloud_reasoning_effort,
             intel_cloud_store=self.config.meeting.intel_cloud_store,
             intel_deferred_enabled=self.config.meeting.intel_deferred_enabled,
-            web_enabled=False,
             diarization_enabled=self.config.meeting.diarization_enabled,
             diarize_mic=self.config.meeting.diarize_mic,
             cross_meeting_recognition=self.config.meeting.cross_meeting_recognition,

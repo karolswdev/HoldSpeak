@@ -1,9 +1,10 @@
 # Phase 32 — Foundation Hardening & Doc Truth
 
-**Status:** in-progress (opened 2026-06-02). 1/6 stories shipped.
+**Status:** in-progress (opened 2026-06-02). 2/6 stories shipped.
 
-**Last updated:** 2026-06-02 (HS-32-01 shipped: `run_web_runtime()` god-function
-→ `WebRuntime` class, behavior-preserving; suite green 2063/14. HS-32-02 next).
+**Last updated:** 2026-06-02 (HS-32-02 shipped: `MeetingSession` is web-free —
+emits via `on_broadcast`, `WebRuntime` observes; embedded per-meeting server
+**dropped** per user decision; suite green 2066/14. HS-32-03 next).
 
 ## Goal
 
@@ -57,9 +58,10 @@ archiving them.
 - [x] `web_runtime.py`'s orchestration is a `WebRuntime` class (no module-level
       `nonlocal`-threaded god-function); behavior unchanged, web suite green.
       **(HS-32-01, 2026-06-02.)**
-- [ ] `MeetingSession` no longer references a web server; it emits, the runtime
+- [x] `MeetingSession` no longer references a web server; it emits, the runtime
       observes — proven by a test constructing a `MeetingSession` with no web
-      server and exercising broadcast-triggering paths.
+      server and exercising broadcast-triggering paths. **(HS-32-02, 2026-06-02;
+      embedded server dropped per user decision.)**
 - [ ] One audio-ownership model: hotkey / device / meeting all acquire through the
       `VoiceTypingSession` owner contract; a concurrency test shows mutual exclusion.
 - [ ] A CI job runs the core hotkey→text smoke test on every push and asserts on
@@ -75,7 +77,7 @@ archiving them.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-32-01 | Class-ify `web_runtime.py` (`WebRuntime`) | done | [story-01-web-runtime-classify.md](./story-01-web-runtime-classify.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-32-02 | Invert meeting→web-server coupling | not-started | [story-02-meeting-web-inversion.md](./story-02-meeting-web-inversion.md) | — |
+| HS-32-02 | Invert meeting→web-server coupling | done | [story-02-meeting-web-inversion.md](./story-02-meeting-web-inversion.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-32-03 | Converge audio ownership | not-started | [story-03-audio-ownership.md](./story-03-audio-ownership.md) | — |
 | HS-32-04 | CI end-to-end smoke test (core path) | not-started | [story-04-ci-e2e-smoke.md](./story-04-ci-e2e-smoke.md) | — |
 | HS-32-05 | Route error-handling helper | not-started | [story-05-route-error-helper.md](./story-05-route-error-helper.md) | — |
@@ -94,15 +96,26 @@ god-function (10 `nonlocal` vars, ~55 closures) is now a `WebRuntime` class —
 state on `self`, closures as methods, `run()` owning the lifecycle, and a
 4-line `run_web_runtime()` shim preserving the entry point. Behavior-preserving;
 suite green at 2063/14, `web_runtime.py` ruff-clean. The class is now the
-substrate HS-32-02 (meeting→web inversion) builds the observer onto. **Next:
-HS-32-02.**
+substrate HS-32-02 (meeting→web inversion) builds the observer onto.
+
+**HS-32-02 shipped (2026-06-02):** `MeetingSession` is now web-free — it no
+longer imports, owns, starts, stops, or broadcasts to a `MeetingWebServer`. It
+**emits** live events (`segment`/`intel_status`/`intel_token`/`intel_complete`/
+`meeting_updated`) through an injected `on_broadcast` callback (default no-op);
+`WebRuntime` observes via `_on_meeting_broadcast`, forwarding the two events
+(`intel_token`, `meeting_updated`) that were previously delivered only to the
+embedded server and dead in the flagship runtime. Per **user decision**, the
+embedded per-meeting web server was **dropped** (not relocated to TUI/menubar);
+`config.meeting.web_enabled` is now vestigial (flagged for HS-32-06). Suite green
+at 2066/14 (+3 headless tests). **Next: HS-32-03.**
 
 ## Pickup order
 
 1. ~~HS-32-01 — class-ify the runtime first; it is the substrate the inversion
    and audio-ownership stories build on.~~ **DONE (2026-06-02).**
-2. HS-32-02 — invert meeting→web once `WebRuntime` can hold the observer. **◀ next.**
-3. HS-32-03 — converge audio ownership.
+2. ~~HS-32-02 — invert meeting→web once `WebRuntime` can hold the observer.~~
+   **DONE (2026-06-02).**
+3. HS-32-03 — converge audio ownership. **◀ next.**
 4. HS-32-04 — the CI smoke test (independent; can land any time but most valuable early).
 5. HS-32-05 — the error helper (mechanical, low risk).
 6. HS-32-06 — doc-truth sweep + guard; last so the docs describe the post-phase reality.
@@ -122,6 +135,11 @@ HS-32-02.**
   cleanup commit — keep the change evidenced like everything else — user.
 - 2026-06-02 — Scope is non-PMO docs only; the PMO historical record is kept
   verbatim by design — user.
+- 2026-06-02 — **HS-32-02: drop the embedded per-meeting web server** rather than
+  relocate its lifecycle into `controller.py`/`menubar.py`. Greenfield/aggressive;
+  the flagship `WebRuntime` is the single dashboard owner. Consequence:
+  `config.meeting.web_enabled` + its Settings toggle are now vestigial → flagged
+  for HS-32-06 — user.
 
 ## Decisions deferred
 

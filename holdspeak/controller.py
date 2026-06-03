@@ -491,7 +491,6 @@ class HoldSpeakController:
             intel_cloud_reasoning_effort=config.meeting.intel_cloud_reasoning_effort,
             intel_cloud_store=config.meeting.intel_cloud_store,
             intel_deferred_enabled=config.meeting.intel_deferred_enabled,
-            web_enabled=config.meeting.web_enabled,
             diarization_enabled=config.meeting.diarization_enabled,
             diarize_mic=config.meeting.diarize_mic,
             cross_meeting_recognition=config.meeting.cross_meeting_recognition,

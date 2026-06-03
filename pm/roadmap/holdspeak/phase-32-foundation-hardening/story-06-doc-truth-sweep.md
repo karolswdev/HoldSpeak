@@ -22,6 +22,11 @@ that claim *current* state and are wrong:
 - `README.md` positioning — the lede still pitches "voice typing"; reconcile with
   what shipped (a local-first transcription-and-intelligence runtime) without
   overclaiming.
+- **Vestigial `config.meeting.web_enabled` (added by HS-32-02).** Dropping the
+  embedded per-meeting web server left this config field + its Settings checkbox
+  (`tui/screens/settings.py`) controlling nothing. Remove the dead field, the
+  toggle, and reconcile `test_config.py`'s `web_enabled` assertions — or document
+  why it stays. *(Code drift, not just docs, but the same truth-in-state concern.)*
 
 ## Scope
 

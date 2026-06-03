@@ -449,7 +449,6 @@ class HoldSpeakMenuBar(rumps.App):
                     intel_cloud_base_url=self.config.meeting.intel_cloud_base_url,
                     intel_cloud_reasoning_effort=self.config.meeting.intel_cloud_reasoning_effort,
                     intel_cloud_store=self.config.meeting.intel_cloud_store,
-                    web_enabled=self.config.meeting.web_enabled,
                 )
 
                 state = self._meeting_session.start()

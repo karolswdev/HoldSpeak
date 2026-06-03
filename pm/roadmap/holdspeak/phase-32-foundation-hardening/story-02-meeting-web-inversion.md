@@ -1,6 +1,6 @@
 # HS-32-02 — Invert meeting→web-server coupling
 
-**Status:** not-started.
+- **Status:** done (2026-06-02). Evidence: [evidence-story-02.md](./evidence-story-02.md).
 
 ## Goal
 
@@ -26,6 +26,14 @@ server. Replace it with an emit/callback the `WebRuntime` observes, mirroring ho
 
 ## Done when
 
-- [ ] `MeetingSession` no longer imports or references a web server.
-- [ ] Broadcasts flow via an injected callback; web wiring lives in `WebRuntime`.
-- [ ] Headless-`MeetingSession` test added and green; full suite green; ruff clean.
+- [x] `MeetingSession` no longer imports or references a web server.
+- [x] Broadcasts flow via an injected callback; web wiring lives in `WebRuntime`.
+- [x] Headless-`MeetingSession` test added and green; full suite green; ruff clean.
+
+## Evidence
+
+[evidence-story-02.md](./evidence-story-02.md). Embedded per-meeting web server
+**dropped** (user decision); `MeetingSession` emits via `on_broadcast` (default
+no-op), `WebRuntime` forwards `intel_token`/`meeting_updated`. Suite green at
+**2066 passed, 14 skipped** (+3 new tests). Note: `config.meeting.web_enabled`
+is now vestigial — flagged for HS-32-06.
