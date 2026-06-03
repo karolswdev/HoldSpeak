@@ -47,21 +47,29 @@ with the live status docs, the status docs win.
 
 ## 3. Pick up here
 
-**▶ Phase 34 — Structural Decomposition II is CLOSED ✅ (5/5), on local branch
-`phase-34/hs-34-01-dictation-routes-split` (open + 5 story commits). Push & open a
-PR to `main`.** The twin of Phases 26/31/32: the four files that dominated the tree
-(5,373 lines) are now four packages — `web/routes/dictation/` (HS-34-01),
-`web/routes/activity/` (HS-34-02), `agent_context/` (HS-34-03), `intel/`
-(HS-34-04) — behavior-preserving (route tables byte-identical; full re-exports; all
-monkeypatch targets honored with tests unchanged via package-routed reads). Suite
-green 1966/15. See `phase-34-structural-decomposition-ii/final-summary.md`. **The
-decomposition lineage (26 → 31 → 32 → 34) is now complete for every god-object the
-reviews flagged.**
+**▶ Phase 35 — Plugin Frontier is OPEN (0/5), on local branch
+`phase-35/hs-35-01-plugin-authoring-guide`.** Make the meeting-intel plugin system
+**extensible by others** (Phase 29's handed-off "next frontier"). Start with
+**HS-35-01 — `docs/PLUGIN_AUTHORING.md`** (public authoring guide; mirror
+`docs/CONNECTOR_DEVELOPMENT.md`). Then HS-35-02 (plugin-pack manifest + discovery
+loader, mirroring `connector_pack_loader.py`/`connector_sdk.py`) → HS-35-03
+(per-project enable/disable at dispatch) → HS-35-04 (incident-retro spoken-e2e
+scenario) → HS-35-05 (closeout). Full plan:
+`phase-35-plugin-frontier/current-phase-status.md`. **The 14 built-ins stay
+behavior-identical** (packs/enable layer *around* them); **actuators are deferred to
+Phase 36** (the host's dormant `allow_actuators` gate + RFC open-question #5).
 
-> **▶ Earlier:** Phase 33 (Documentation & OSS readiness) is **CLOSED (6/6) and
-> merged to `main` via PR #9** — Apache-2.0 LICENSE, `docs/MODELS.md`, `docs/`
-> reorg + index, OSS README + CHANGELOG/CONTRIBUTING, brand mark + social card.
-> See `phase-33-documentation-oss-readiness/final-summary.md`.
+> **▶ Routing ripple (HANDOVER §5):** adding/suppressing a plugin in a chain touches
+> `tests/unit/test_intent_dispatch.py` (chain constants + window counts) +
+> `test_intent_pipeline.py` / `test_multi_intent_routing.py` — update in lockstep,
+> don't silence. The connector-pack system is the precedent to mirror.
+
+> **▶ Earlier (both merged to `main`):** Phase 33 (Documentation & OSS readiness,
+> PR #9) — Apache-2.0 LICENSE, `docs/MODELS.md`, `docs/` reorg, OSS README +
+> CHANGELOG/CONTRIBUTING, brand mark + social card. Phase 34 (Structural
+> Decomposition II, PR #10) — the four god-files (5,373 lines) → four packages
+> (`routes/dictation/`, `routes/activity/`, `agent_context/`, `intel/`),
+> behavior-preserving. The decomposition lineage (26 → 31 → 32 → 34) is complete.
 
 > **▶ Manual follow-up (not a repo file):** set
 > `docs/assets/pixellab/social-card.png` as the repo's GitHub social preview
