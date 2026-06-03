@@ -1,6 +1,6 @@
 # HS-35-02 — Plugin pack manifest + discovery loader
 
-- **Status:** not-started.
+- **Status:** done (2026-06-03). Evidence: [evidence-story-02.md](./evidence-story-02.md).
 
 ## Goal
 
@@ -42,8 +42,22 @@ the built-in set without editing core.
 
 ## Done when
 
-- [ ] `PluginManifest` + `plugin_pack_loader` exist; first-party + user-pack
+- [x] `PluginManifest` + `plugin_pack_loader` exist; first-party + user-pack
       discovery works; bad packs surface as errors, not crashes.
-- [ ] A fixture user pack loads + registers with the host; the 14 built-ins are
+- [x] A fixture user pack loads + registers with the host; the 14 built-ins are
       unchanged (registration + routing identical).
-- [ ] Full suite green; new modules ruff-clean.
+- [x] Full suite green; new modules ruff-clean.
+
+## Notes
+
+- **Scope decision (agent, delegated posture):** chain hints (`profiles`/`intents`)
+  are declared + validated on the manifest, but live wiring into the router/dispatch
+  chain is **deferred to HS-35-03** ("the router/dispatch honors it" — per-project
+  enable/disable). This keeps `router.py` untouched so the 14 built-ins' routing is
+  provably byte-identical (no `test_intent_dispatch.py` churn), matching the status
+  doc's risk-table mitigation. A pack plugin registers on the host and dispatches by
+  id today; HS-35-03 consumes the hints.
+- The 14 built-ins stay **hardcoded** (the deferred default in the status doc);
+  `holdspeak/plugin_packs/ALL_PACKS` is empty — packs *augment* the registry.
+- `docs/PLUGIN_AUTHORING.md` gained the promised "Plugin packs" section (the HS-35-01
+  forward note is now fulfilled, not stale).

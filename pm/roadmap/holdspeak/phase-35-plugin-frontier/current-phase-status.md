@@ -1,10 +1,11 @@
 # Phase 35 — Plugin Frontier
 
-**Status:** in-progress (opened 2026-06-03). 1/5 stories shipped.
+**Status:** in-progress (opened 2026-06-03). 2/5 stories shipped.
 
-**Last updated:** 2026-06-03 (HS-35-01 shipped — `docs/PLUGIN_AUTHORING.md`
-written + wired into `docs/README.md` and the README plugin section; HS-35-02
-plugin packs next).
+**Last updated:** 2026-06-03 (HS-35-02 shipped — `plugin_sdk.py` (`PluginManifest`
++ `validate_manifest`) + `plugin_pack_loader.py` (first-party + user-pack discovery,
+host registration), wired into `WebRuntime`; chain hints declared but live routing
+deferred to HS-35-03; HS-35-03 per-project enable/disable next).
 
 ## Goal
 
@@ -73,7 +74,7 @@ unchanged; the new machinery sits around them.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-35-01 | Public plugin-authoring guide (`docs/PLUGIN_AUTHORING.md`) | done | [story-01-plugin-authoring-guide.md](./story-01-plugin-authoring-guide.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-35-02 | Plugin pack manifest + discovery loader | not-started | [story-02-plugin-packs.md](./story-02-plugin-packs.md) | — |
+| HS-35-02 | Plugin pack manifest + discovery loader | done | [story-02-plugin-packs.md](./story-02-plugin-packs.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-35-03 | Per-project plugin enable/disable | not-started | [story-03-per-project-enable-disable.md](./story-03-per-project-enable-disable.md) | — |
 | HS-35-04 | Spoken-e2e breadth: incident retro | not-started | [story-04-spoken-e2e-incident.md](./story-04-spoken-e2e-incident.md) | — |
 | HS-35-05 | Phase closeout + final-summary | not-started | [story-05-closeout.md](./story-05-closeout.md) | — |
@@ -100,6 +101,28 @@ skip), registering a synthesis renderer (`_ARTIFACT_TYPE_BY_PLUGIN` +
 Wired into `docs/README.md` (reference index) and the README "Meeting intelligence
 plugins" section. Doc drift-guard + link-check green; full suite 1966 passed /
 15 skipped. Next: HS-35-02 (plugin-pack manifest + discovery loader).
+
+**HS-35-02 shipped (2026-06-03):** the plugin-pack system, mirroring the
+connector-pack precedent. `holdspeak/plugin_sdk.py` — `PluginManifest`
+(`id`/`label`/`version`/`kind`/`required_capabilities`/`description`/
+`execution_mode` + `profiles`/`intents` chain hints) + `validate_manifest` (collects
+every error as a stable-`code` `ManifestError`; `actuator` kind rejected — deferred).
+`holdspeak/plugin_pack_loader.py` — `discover_user_packs` (loads `.py` packs from
+`~/.holdspeak/plugin_packs/`, env-overridable via `HOLDSPEAK_USER_PLUGIN_PACKS_DIR`,
+requiring `MANIFEST` + a `create_plugin()` factory), `build_registry` (first-party +
+user; first-party/built-in ids win collisions), and `register_discovered_plugins` /
+`load_and_register_plugin_packs` (register pack plugins on the host with structured
+`DiscoveryError`s — never crashes). `holdspeak/plugin_packs/` is the first-party slot
+(empty `ALL_PACKS` — built-ins stay hardcoded). `WebRuntime` discovers + registers
+packs after the built-ins, fully defensively. A committed fixture pack
+(`tests/fixtures/plugin_packs/example_user_pack.py`) proves load → register →
+dispatch; `test_plugin_sdk.py` + `test_plugin_pack_loader.py` cover validation,
+discovery, malformed packs, collisions, and the built-ins-unchanged regression.
+**Scope decision:** chain hints are declared/validated but live router wiring is
+deferred to HS-35-03 — `router.py` untouched, so the 14 built-ins' routing is
+byte-identical (`test_intent_dispatch.py` unchanged). `docs/PLUGIN_AUTHORING.md`
+gained the promised "Plugin packs" section. Full suite 1995 passed / 15 skipped;
+new modules ruff + F821 clean. Next: HS-35-03 (per-project enable/disable).
 
 ## Pickup order
 

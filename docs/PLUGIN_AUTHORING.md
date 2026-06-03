@@ -391,11 +391,75 @@ which walks a table of `(plugin_id, kind)` pairs and calls
    constructed and registered.
 3. Wire its renderer (above) and its chain membership (above).
 
-> A **pack** mechanism for shipping plugins outside the built-in tree
-> (first-party packs + local user packs, mirroring the connector-pack
-> loader) is the next step in this phase; until it lands, first-party
-> registration is the supported path. This guide will gain a "Plugin
-> packs" section when that ships.
+Editing core is the path for a **first-party** plugin. To ship a plugin
+*without* editing core, package it as a **plugin pack** (below).
+
+---
+
+## Plugin packs
+
+A pack lets a plugin ship outside the built-in tree — discovered and
+registered at startup, mirroring the connector-pack system. The contract
+is a manifest plus a factory; the loader is
+[`holdspeak/plugin_pack_loader.py`](../holdspeak/plugin_pack_loader.py)
+and the manifest SDK is
+[`holdspeak/plugin_sdk.py`](../holdspeak/plugin_sdk.py).
+
+A pack is a single `.py` file that exports two names:
+
+```python
+from holdspeak.plugin_sdk import validate_manifest
+
+MANIFEST = validate_manifest({
+    "id": "my_plugin",            # ^[a-z][a-z0-9_]{0,31}$, unique
+    "label": "My Plugin",
+    "version": "0.1.0",           # MAJOR.MINOR.PATCH
+    "kind": "synthesizer",        # synthesizer|validator|artifact_generator|signals|detector
+    "required_capabilities": ["llm"],   # optional; gates execution
+    "execution_mode": "deferred",        # inline (default) | deferred
+    "intents": ["incident"],             # chain hints (see note below)
+    "profiles": ["balanced"],
+})
+
+class MyPlugin:
+    id = "my_plugin"
+    version = "0.1.0"
+    kind = "synthesizer"
+    required_capabilities = ["llm"]
+    def run(self, context): ...
+
+def create_plugin():            # zero-arg factory → a HostPlugin instance
+    return MyPlugin()
+```
+
+`validate_manifest` collects **every** problem before raising
+`PluginManifestError` (each is a `ManifestError` with a stable `code` —
+`id_format`, `version_format`, `unknown_kind`, `unknown_capability`,
+`invalid_execution_mode`, `unknown_profile`, `unknown_intent`), so you fix
+all issues in one pass. Note `actuator` is **not** a valid `kind` yet —
+actuators are deferred to a later phase.
+
+**Discovery.** Drop the file into `~/.holdspeak/plugin_packs/`
+(override with `HOLDSPEAK_USER_PLUGIN_PACKS_DIR`). At startup the loader
+imports each `.py` file, re-validates its `MANIFEST`, checks for a callable
+`create_plugin`, and registers the produced plugin on the host alongside
+the built-ins. Discovery is honest, not sandboxed — a file under your home
+dir is code you trust — but it **never crashes the runtime**: a bad pack
+(import error, missing manifest/factory, invalid manifest, id colliding
+with a built-in or another pack, id/manifest mismatch) is surfaced as a
+structured `DiscoveryError` and skipped. First-party/built-in ids always
+win a collision.
+
+> **Chain hints are declarative today.** A pack registers on the host so
+> it can execute by id, and its `profiles`/`intents` record where it
+> *wants* to fire — but wiring those hints into the live router chains
+> (and per-project enable/disable) is the next story. Until then a pack
+> plugin runs when invoked by id; the built-in routing chains above are
+> unchanged.
+
+The committed example at
+[`tests/fixtures/plugin_packs/example_user_pack.py`](../tests/fixtures/plugin_packs/example_user_pack.py)
+is a complete, working pack.
 
 ---
 
