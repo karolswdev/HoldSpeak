@@ -88,6 +88,15 @@ jobs:
           # `uv run --extra test` resolves main + test deps into the venv it
           # executes in, so pytest is present (the old --system install went to
           # a different interpreter that uv run never used).
+          #
+          # HS-32-04: this job is where the ungated core-path smoke test
+          # (tests/integration/test_core_path_smoke.py) runs for real — macOS
+          # arm64 has `mlx-whisper` as a core dep, so the test drives a fixed
+          # checked-in WAV through real Whisper ("tiny", downloaded on first
+          # use) -> text -> the injection seam, asserting on the produced text.
+          # It skips on backends-absent environments (e.g. the Linux unit job)
+          # rather than being gated behind the never-in-CI metal/spoken_e2e
+          # markers.
           uv run --extra test python -m pytest tests/integration/ -v --cov=holdspeak --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov

@@ -1,11 +1,11 @@
 # Phase 32 — Foundation Hardening & Doc Truth
 
-**Status:** in-progress (opened 2026-06-02). 4/7 stories shipped.
+**Status:** in-progress (opened 2026-06-02). 5/7 stories shipped.
 
-**Last updated:** 2026-06-02 (HS-32-03 shipped: **one audio-ownership model** —
-meeting holds the shared `VoiceTypingSession` floor via new `acquire`/`release`;
-hotkey/device `begin()` arbitrate through it; concurrency test proves mutual
-exclusion; suite green 1946/14. HS-32-04 next).
+**Last updated:** 2026-06-02 (HS-32-04 shipped: **ungated CI core-path smoke
+test** — a committed `say`-generated WAV → real Whisper `tiny` → injection seam,
+asserting on produced text; runs on the macOS integration job every push; mutation
+check shown; suite green 1948/14. HS-32-05 next).
 
 ## Goal
 
@@ -71,8 +71,10 @@ archiving them.
 - [x] One audio-ownership model: hotkey / device / meeting all acquire through the
       `VoiceTypingSession` owner contract; a concurrency test shows mutual exclusion.
       **(HS-32-03, 2026-06-02; meeting holds the floor via `acquire`/`release`.)**
-- [ ] A CI job runs the core hotkey→text smoke test on every push and asserts on
+- [x] A CI job runs the core hotkey→text smoke test on every push and asserts on
       the produced text; it is **not** gated behind `metal`/`spoken_e2e`.
+      **(HS-32-04, 2026-06-02; macOS integration job, real Whisper `tiny` on a
+      committed WAV; mutation check shown.)**
 - [ ] The route error-handling duplication is removed via a single helper, with a
       before/after handler count recorded.
 - [ ] `HANDOVER.md`, the `PLAN_*.md` status headers, and README positioning state
@@ -90,7 +92,7 @@ archiving them.
 | HS-32-01 | Class-ify `web_runtime.py` (`WebRuntime`) | done | [story-01-web-runtime-classify.md](./story-01-web-runtime-classify.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-32-02 | Invert meeting→web-server coupling | done | [story-02-meeting-web-inversion.md](./story-02-meeting-web-inversion.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-32-03 | Converge audio ownership | done | [story-03-audio-ownership.md](./story-03-audio-ownership.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-32-04 | CI end-to-end smoke test (core path) | not-started | [story-04-ci-e2e-smoke.md](./story-04-ci-e2e-smoke.md) | — |
+| HS-32-04 | CI end-to-end smoke test (core path) | done | [story-04-ci-e2e-smoke.md](./story-04-ci-e2e-smoke.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-32-05 | Route error-handling helper | not-started | [story-05-route-error-helper.md](./story-05-route-error-helper.md) | — |
 | HS-32-06 | Stale non-PMO doc sweep + drift guard | not-started | [story-06-doc-truth-sweep.md](./story-06-doc-truth-sweep.md) | — |
 | HS-32-07 | Retire the TUI + menubar runtimes | done | [story-07-retire-tui-menubar.md](./story-07-retire-tui-menubar.md) | [evidence-story-07.md](./evidence-story-07.md) |
@@ -140,7 +142,21 @@ either records (first-to-hold-wins precedence). The redundant
 arbiter is the single decision point; the device path keeps its meeting-attached
 *frame-routing*. New `TestAudioFloorArbitration` (7 tests incl. a 10-thread
 concurrency mutual-exclusion test). Suite green at 1946/14. Real-audio paths stay
-`metal`-gated (not runnable remotely). **Next: HS-32-04.**
+`metal`-gated (not runnable remotely).
+
+**HS-32-04 shipped (2026-06-02):** the ungated CI core-path smoke test. A
+committed 16 kHz WAV (generated once via `say` — *"the quick brown fox…"*) is run
+through the **real** `Transcriber("tiny")` → `TextProcessor` → a capturing typer
+(injection seam), asserting the produced text contains the phrase. It runs on the
+**macOS integration job** (mlx-whisper is a core dep) on **every push** — off the
+never-in-CI `metal`/`spoken_e2e` markers — and skips where no backend is
+installed. Verified locally (2 passed, real mlx `tiny`); the mutation check
+(silence → empty transcript → red) is shown in evidence. Suite green at 1948/14.
+*Discovered:* a latent Phase-31 db-decomposition miss —
+`web_runtime.py` calls `get_all_projects_for_detector()` on the `Database`
+container (it moved to `db.projects`), so the project detector silently loads
+nothing at startup; **fixed in a follow-up commit** (separate from the story).
+**Next: HS-32-05.**
 
 ## Pickup order
 
@@ -151,8 +167,8 @@ concurrency mutual-exclusion test). Suite green at 1946/14. Real-audio paths sta
 3. ~~HS-32-07 — retire the TUI + menubar (inserted by user directive) so the
    audio convergence has one home.~~ **DONE (2026-06-02).**
 4. ~~HS-32-03 — converge audio ownership (now `WebRuntime`-only).~~ **DONE (2026-06-02).**
-5. HS-32-04 — the CI smoke test (independent; can land any time but most valuable early). **◀ next.**
-6. HS-32-05 — the error helper (mechanical, low risk).
+5. ~~HS-32-04 — the CI smoke test (independent; most valuable early).~~ **DONE (2026-06-02).**
+6. HS-32-05 — the error helper (mechanical, low risk). **◀ next.**
 7. HS-32-06 — doc-truth sweep + guard; last so the docs describe the post-phase reality.
 
 ## Active risks
@@ -162,7 +178,7 @@ concurrency mutual-exclusion test). Suite green at 1946/14. Real-audio paths sta
 | Class-ifying the runtime changes startup/shutdown ordering | Medium | Move state to instance attrs verbatim; preserve call order; web suite as gate | A lifecycle/web test fails or ordering visibly changes |
 | The meeting→web inversion drops a broadcast that tests didn't cover | Medium | Add the headless-`MeetingSession` test *first*, then invert under it | A broadcast that fired before no longer fires |
 | ~~Audio-ownership convergence breaks a real capture path~~ **(HS-32-03: RESOLVED — the meeting capture mechanism is unchanged; only a logical floor-acquire gate was added around it, so no real path regresses. Real-audio paths stay `metal`-gated.)** | Medium | Kept `MeetingRecorder` as-is; added `acquire`/`release` gate; arbiter unit + concurrency tests | A real-audio path can no longer acquire the recorder at all |
-| The CI smoke test is flaky (model size, runner speed) | Medium | Use the smallest viable model + a fixed synthesized WAV + generous tolerance on text match; assert substring, not exact | The job fails intermittently on unchanged code |
+| ~~The CI smoke test is flaky~~ **(HS-32-04: addressed — `tiny` model (deterministic greedy decode) + a fixed committed WAV + tolerant substring assertion; runs in 1.24s locally. The only network dependency is the one-time `whisper-tiny-mlx` download on the macOS job.)** | Medium | smallest model + fixed WAV + substring tolerance | The job fails intermittently on unchanged code |
 
 ## Decisions made (this phase)
 
@@ -180,10 +196,14 @@ concurrency mutual-exclusion test). Suite green at 1946/14. Real-audio paths sta
   **before** HS-32-03 so the audio convergence has one home. Includes updating all
   relevant docs. The CLI subcommands (`meeting`/`history`/`intel`/…) stay — user.
 
+## Decisions made (continued)
+
+- 2026-06-02 — **HS-32-04: smoke model = `tiny`** + a **checked-in** `say`-generated
+  WAV (both, not either/or — the `tiny` model transcribes the committed fixture).
+  Substring assertion with tolerance. (Resolves the deferred "which Whisper model"
+  question.)
+
 ## Decisions deferred
 
-- Which Whisper model the CI smoke test uses (tiny vs. a checked-in fixture) —
-  trigger: HS-32-04 — default: smallest model that reliably transcribes a fixed
-  short phrase; substring assertion with tolerance.
 - Whether the error helper is a decorator or FastAPI exception handler — trigger:
   HS-32-05 — default: a decorator, so per-route opt-in stays explicit.
