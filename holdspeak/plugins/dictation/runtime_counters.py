@@ -1,6 +1,6 @@
 """DIR-O-002 runtime counters + DIR-R-003 cold-start cap for the dictation LLM runtime.
 
-Spec: `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §9.6 + §9.7.
+Spec: `docs/internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §9.6 + §9.7.
 The LLM runtime layer reports four counters and enforces a
 session-scoped cold-start hard-cap:
 

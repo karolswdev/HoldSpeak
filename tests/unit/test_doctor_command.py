@@ -199,7 +199,7 @@ def test_dictation_runtime_check_warn_when_model_missing(monkeypatch, tmp_path) 
     assert "model missing" in result.detail
     assert result.fix and "huggingface-cli download" in result.fix
     assert str(tmp_path) in result.fix
-    assert "Qwen2.5-3B-Instruct-Q4_K_M.gguf" in result.fix
+    assert "Qwen3.5-4B-Instruct-Q4_K_M.gguf" in result.fix
 
 
 def test_dictation_runtime_check_pass_when_model_available(monkeypatch, tmp_path) -> None:

@@ -41,19 +41,24 @@ def runtime_install_command(
 
 
 def runtime_model_download_command(backend: str, model_path: Path) -> Optional[str]:
-    """Return the default model download command for a concrete backend."""
+    """Return an example model-download command for a concrete backend.
+
+    The named model is a *suggestion* (a current small instruct model), not a
+    requirement — any GGUF/MLX chat model works, or use an OpenAI-compatible
+    endpoint. See docs/MODELS.md.
+    """
     expanded = model_path.expanduser()
     if backend == "mlx":
         return (
-            "huggingface-cli download mlx-community/Qwen3-8B-MLX-4bit "
+            "huggingface-cli download mlx-community/Qwen3.5-8B-MLX-4bit "
             f"--local-dir {_quote_path(expanded)}"
         )
     if backend == "llama_cpp":
         parent = expanded.parent
         return (
             f"mkdir -p {_quote_path(parent)} && "
-            "huggingface-cli download bartowski/Qwen2.5-3B-Instruct-GGUF "
-            "Qwen2.5-3B-Instruct-Q4_K_M.gguf "
+            "huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF "
+            "Qwen3.5-4B-Instruct-Q4_K_M.gguf "
             f"--local-dir {_quote_path(parent)} --local-dir-use-symlinks False"
         )
     return None
@@ -122,7 +127,7 @@ def runtime_guidance(
         ]
         download = runtime_model_download_command(backend, expanded_model_path)
         if download is not None:
-            commands.append({"label": "Download default model", "command": download})
+            commands.append({"label": "Download a suggested model", "command": download})
         command_bundle = "\n".join(item["command"] for item in commands)
         return {
             "kind": kind,
@@ -215,13 +220,16 @@ def doctor_model_fix(backend: str, target: Path) -> str:
         (
             item["command"]
             for item in guidance["commands"]
-            if item["label"] == "Download default model"
+            if item["label"] == "Download a suggested model"
         ),
         None,
     )
     model_name = (
-        "Qwen3-8B-MLX-4bit"
+        "Qwen3.5-8B-MLX-4bit"
         if backend == "mlx"
-        else "Qwen2.5-3B-Instruct-Q4_K_M.gguf"
+        else "Qwen3.5-4B-Instruct-Q4_K_M.gguf"
     )
-    return f"Create the model directory and download {model_name}: {download}"
+    return (
+        "Create the model directory and download a model "
+        f"(e.g. {model_name}): {download}"
+    )

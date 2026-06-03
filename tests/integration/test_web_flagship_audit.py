@@ -1,6 +1,6 @@
 """HS-4-01 audit — verify-by-test that the existing web-flagship surfaces hold.
 
-Most WFS-* requirements (§5.1–§5.4 of `docs/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md`)
+Most WFS-* requirements (§5.1–§5.4 of `docs/internal/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md`)
 are already covered by:
 
   - `tests/unit/test_main_modes.py` — WFS-C-001 (default web), the retired `tui` subcommand now rejected (HS-32-07), `holdspeak doctor` exit code passthrough.

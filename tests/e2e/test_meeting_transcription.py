@@ -264,8 +264,8 @@ INTEL_MODELS = [
     ("Llama-3.1-8B", "~/Models/gguf/Meta-Llama-3.1-8B-Instruct-Q6_K.gguf"),
     ("Phi-3-Medium", "~/Models/gguf/Phi-3-medium-128k-instruct-Q6_K.gguf"),
     ("Gemma-2-27B", "~/Models/gguf/gemma-2-27b-it-Q4_K_M.gguf"),
-    # Fallback - always available, ~30s
-    ("Mistral-7B", "~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf"),
+    # Fallback - the suggested default (see docs/MODELS.md), ~30s
+    ("Qwen3.5-9B", "~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf"),
     # Very large (may OOM):
     # ("Llama-3.1-70B", "~/Models/gguf/Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf"),
 ]

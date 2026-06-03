@@ -4,6 +4,39 @@ version = "0.2.1"
 description = "Voice typing for macOS and Linux - hold a hotkey, speak, release. Local & private."
 readme = "README.md"
 requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [
+    { name = "karolswdev", email = "karolsane@gmail.com" },
+]
+keywords = [
+    "voice-typing",
+    "dictation",
+    "speech-to-text",
+    "whisper",
+    "transcription",
+    "meeting",
+    "local-first",
+    "privacy",
+    "llm",
+    "macos",
+    "linux",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Utilities",
+]
 dependencies = [
     "mlx-whisper>=0.4.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
     "sounddevice>=0.4.6",
@@ -83,6 +116,7 @@ addopts = ["--strict-markers", "-ra"]
 
 [tool.hatch.build.targets.sdist]
 include = [
+    "/LICENSE",
     "/README.md",
     "/hatch_build.py",
     "/holdspeak",
@@ -116,6 +150,12 @@ exclude_lines = [
     "@abstractmethod",
 ]
 show_missing = true
+
+[project.urls]
+Homepage = "https://github.com/karolswdev/HoldSpeak"
+Repository = "https://github.com/karolswdev/HoldSpeak"
+Issues = "https://github.com/karolswdev/HoldSpeak/issues"
+Documentation = "https://github.com/karolswdev/HoldSpeak/tree/main/docs"
 
 [project.scripts]
 holdspeak = "holdspeak.main:main"

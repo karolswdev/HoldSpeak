@@ -50,9 +50,9 @@ All entry criteria MUST be true before implementation starts.
 
 1. Baseline test suite passes on branch tip.
 2. Existing deferred-intel functionality remains operational.
-3. `docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` exists and is treated as parent RFC.
+3. `docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` exists and is treated as parent RFC.
 4. Operator has write access to repository and can run `uv run pytest`.
-5. Web-first runtime migration plan exists in `docs/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md`.
+5. Web-first runtime migration plan exists in `docs/internal/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md`.
 
 ## 5. Architecture Delta
 

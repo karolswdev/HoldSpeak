@@ -16,7 +16,7 @@ The current typing pipeline (`holdspeak/controller.py:136-180`) treats every tra
 2. Augment the utterance with project-specific grounding before it lands in the destination application.
 3. Compose user-defined transformations as a chain without forking the controller.
 
-The existing plugin work in `docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` and `docs/PLAN_PHASE_MULTI_INTENT_ROUTING.md` (MIR-01) targets the **meeting analysis** path with deterministic lexical signal routing producing reviewable artifacts. DIR-01 is the **dictation/typing-side** sibling: live, latency-bound, LLM-driven, transformative (not artifact-producing).
+The existing plugin work in `docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` and `docs/internal/PLAN_PHASE_MULTI_INTENT_ROUTING.md` (MIR-01) targets the **meeting analysis** path with deterministic lexical signal routing producing reviewable artifacts. DIR-01 is the **dictation/typing-side** sibling: live, latency-bound, LLM-driven, transformative (not artifact-producing).
 
 ### 1.3 Success Criteria (Phase-Level)
 
@@ -60,8 +60,8 @@ Primary: Apple Silicon (M-series), Metal-accelerated, running the `mlx` backend.
 
 ## 4. Relationship to Existing Plans
 
-1. **Parent RFC:** `docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` defines the `Plugin` protocol, `ContextEnvelope`, plugin kinds, and capability model. DIR-01 extends that taxonomy with a new `transducer` kind and reuses the host execution semantics.
-2. **Sibling phase:** `docs/PLAN_PHASE_MULTI_INTENT_ROUTING.md` (MIR-01) covers meeting-side multi-intent routing on rolling windows with deterministic lexical signals. DIR-01 is the live single-utterance counterpart with LLM-based classification. Implementations MUST share `holdspeak/plugins/contracts.py` types where they overlap.
+1. **Parent RFC:** `docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` defines the `Plugin` protocol, `ContextEnvelope`, plugin kinds, and capability model. DIR-01 extends that taxonomy with a new `transducer` kind and reuses the host execution semantics.
+2. **Sibling phase:** `docs/internal/PLAN_PHASE_MULTI_INTENT_ROUTING.md` (MIR-01) covers meeting-side multi-intent routing on rolling windows with deterministic lexical signals. DIR-01 is the live single-utterance counterpart with LLM-based classification. Implementations MUST share `holdspeak/plugins/contracts.py` types where they overlap.
 3. **Project KB integration:** Project knowledge bases shipped in commit `0b05af6` and surfaced through `holdspeak/plugins/project_detector.py` are the lookup target for the `kb-enricher` stage. DIR-01 does not modify the KB schema; it only reads.
 
 ## 5. Entry Criteria

@@ -1,6 +1,6 @@
 """DIR-01 dictation pipeline executor (HS-1-03).
 
-Spec: `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §6.1, §6.2, §9.1,
+Spec: `docs/internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §6.1, §6.2, §9.1,
 §9.7. Single in-process, synchronous, ordered execution of
 `Transducer` stages between `TextProcessor.process` and
 `TextTyper.type_text`. Failures short-circuit to the original

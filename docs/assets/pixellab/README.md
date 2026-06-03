@@ -1,7 +1,29 @@
 # PixelLab Documentation Assets
 
-These PNG assets were generated with the PixelLab MCP on 2026-06-01 for
-HoldSpeak documentation spot art.
+These assets were generated with the PixelLab MCP for HoldSpeak documentation
+spot art and brand identity. Style anchor: the "Signal" web identity (dark-first,
+signature orange `#FF6B35`). To regenerate any sprite, re-run its prompt against
+the PixelLab MCP; for the *derived* card/icons (below) re-run
+[`compose_og_card.py`](./compose_og_card.py) after the mark is regenerated.
+
+## Brand identity (HS-33-05, 2026-06-03)
+
+| File | PixelLab object ID | Prompt |
+| --- | --- | --- |
+| `holdspeak-mark.png` (128×128) | `52e0db41-4789-45b3-9136-1ee3e4e7838d` | App brand mark: a single glowing keyboard key being held/pressed down, with three rising curved soundwave arcs emanating from its top-right, signature warm orange (#FF6B35) key and waves, crisp clean modern pixel art logo for a local-first voice typing app, bold readable silhouette at small sizes, single color outline, transparent background. (view: side) |
+
+**Derived from the mark** (composed by `compose_og_card.py`, not direct PixelLab
+output — PixelLab makes ≤400px sprites, not wide banners):
+
+| File | Derived from | Purpose |
+| --- | --- | --- |
+| `social-card.png` (1280×640) | `holdspeak-mark.png` + the workflow trio + Signal palette | GitHub social/OG preview card. **Manual step:** set it in repo *Settings → Social preview*. |
+| `holdspeak-icon-256.png` (256×256) | `holdspeak-mark.png` | Square padded app icon. |
+| `../../../web/public/apple-touch-icon.png` (180×180) | `holdspeak-mark.png` | Site apple-touch-icon (brand refresh). |
+
+## Documentation spot art (2026-06-01)
+
+These PNG assets were generated with the PixelLab MCP on 2026-06-01.
 
 | File | PixelLab object ID | Prompt |
 | --- | --- | --- |

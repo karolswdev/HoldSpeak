@@ -44,9 +44,15 @@ holdspeak
 - **BlackHole 2ch** - Virtual audio device to capture remote participants
 
 ### For Meeting Intelligence (AI)
-- **GGUF model** - Local LLM for extracting topics, action items, and summaries
-- Recommended: Qwen2.5-32B or Mistral-7B
-- Optional cloud mode: `OPENAI_API_KEY` (or your configured env var) when using `intel_provider: "cloud"` or fallback mode `auto`
+- **GGUF model** - Local LLM for extracting topics, action items, and summaries.
+  Bring your own — any GGUF chat model works (see [MODELS.md](./MODELS.md)). A
+  current small/mid instruct model (e.g. a Qwen3.5 build) is a good default;
+  larger models give better intel at the cost of speed.
+- Optional endpoint mode: `intel_provider: "cloud"` (or `auto` fallback) points
+  at **any OpenAI-compatible endpoint** — a self-hosted LAN server, Ollama, vLLM,
+  llama.cpp-server, or a real cloud API. Set `intel_cloud_base_url`; the API key
+  (`OPENAI_API_KEY` or your configured env var) is optional for keyless
+  self-hosted endpoints.
 
 ### For Web Interfaces
 - **FastAPI + Uvicorn** - Web server dependencies
@@ -291,28 +297,29 @@ Review: pending (needs review)
 
 ### Model Requirements
 
-Intelligence requires a GGUF model. Recommended options:
+Intelligence requires a GGUF model — **bring your own** (any GGUF chat model
+works; see [MODELS.md](./MODELS.md) for the full contract). Model names are a
+moving target, so treat the table below as a rough *shape* guide, not a
+prescription: a small model is fast and fine; a larger model gives sharper intel.
 
-| Model | Size | Speed | Quality |
-|-------|------|-------|---------|
-| Mistral-7B Q6_K | 5.5GB | ~30s | Good |
-| Qwen2.5-32B Q4_K_M | 18GB | ~8s (GPU) | Excellent |
-| Llama-3.1-8B Q6_K | 6.5GB | ~5s | Good |
+| Tier | Approx size | Speed | Quality |
+|------|-------------|-------|---------|
+| Small instruct (~4–9B) Q4–Q6 | ~3–8GB | fast | Good |
+| Mid instruct (~14–32B) Q4_K_M | ~10–20GB | ~8s (GPU) | Excellent |
 
 ### Installing a Model
 
-Download GGUF models from HuggingFace:
+Download any GGUF chat model from HuggingFace. For example, a current small/mid
+instruct model:
 
 ```bash
-# Using hf CLI
-hf download bartowski/Meta-Llama-3.1-8B-Instruct-GGUF \
+# Using the hf CLI — swap the repo/file for whatever model you want:
+hf download bartowski/Qwen3.5-9B-Instruct-GGUF \
   --include "*Q6_K.gguf" \
   --local-dir ~/Models/gguf/
-
-# Or direct download
-curl -L -o ~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf \
-  "https://huggingface.co/bartowski/Mistral-7B-Instruct-v0.3-GGUF/resolve/main/Mistral-7B-Instruct-v0.3-Q6_K.gguf"
 ```
+
+Then point `intel_realtime_model` at the downloaded file.
 
 ### GPU Acceleration
 
@@ -339,7 +346,7 @@ Configuration file: `~/.config/holdspeak/config.json`
     "export_format": "markdown",
     "intel_enabled": true,
     "intel_provider": "local",
-    "intel_realtime_model": "~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf",
+    "intel_realtime_model": "~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf",
     "intel_queue_poll_seconds": 120,
     "intel_retry_base_seconds": 30,
     "intel_retry_max_seconds": 900,
@@ -375,8 +382,8 @@ Configuration file: `~/.config/holdspeak/config.json`
 | `auto_export` | bool | false | Automatically export when meeting ends |
 | `export_format` | string | "markdown" | Export format: txt, markdown, json, srt |
 | `intel_enabled` | bool | true | Enable AI intelligence extraction |
-| `intel_provider` | string | "local" | Intel mode: `local`, `cloud`, or `auto` (local-first, cloud fallback) |
-| `intel_realtime_model` | string | (Mistral path) | Path to GGUF model for real-time intel |
+| `intel_provider` | string | "local" | Intel mode: `local` (in-process GGUF), `cloud` (any OpenAI-compatible endpoint), or `auto` (local-first, endpoint fallback) |
+| `intel_realtime_model` | string | (suggested GGUF path) | Path to a GGUF model for real-time intel — bring your own |
 | `intel_queue_poll_seconds` | int | 120 | Interval for deferred-intel background worker polling |
 | `intel_retry_base_seconds` | int | 30 | Initial deferred-intel retry delay after a failed run |
 | `intel_retry_max_seconds` | int | 900 | Maximum deferred-intel retry delay cap |
@@ -525,7 +532,7 @@ Send `"ping"` text message, receive `"pong"` response.
 ### Intel extraction is slow
 
 1. Check GPU is being used: Look for "Metal" in logs
-2. Use a smaller model (Mistral-7B instead of Qwen-32B)
+2. Use a smaller model (a ~4–9B instruct model instead of a 32B)
 3. Ensure `n_gpu_layers=-1` is set (default)
 
 ### Web dashboard not loading

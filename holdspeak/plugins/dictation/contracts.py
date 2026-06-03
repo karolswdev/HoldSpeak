@@ -1,6 +1,6 @@
 """Typed contracts for the DIR-01 dictation pipeline.
 
-Defined in `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §6.4. Stage
+Defined in `docs/internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §6.4. Stage
 code consumes/produces these types; the pipeline executor (HS-1-03)
 chains stages by passing `Utterance` + the prior `StageResult`s into
 each `Transducer.run`.

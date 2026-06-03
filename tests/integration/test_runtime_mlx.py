@@ -1,4 +1,4 @@
-"""Integration: end-to-end classify against a real Qwen3-8B-MLX-4bit.
+"""Integration: end-to-end classify against a real Qwen3.5 MLX build.
 
 Skipped cleanly when `mlx-lm` / `outlines` are not installed or the
 snapshot is not present. Per spec §13 risk #7, models are downloaded
@@ -22,7 +22,7 @@ from holdspeak.plugins.dictation.grammars import (
 pytestmark = pytest.mark.requires_mlx
 
 
-DEFAULT_MODEL = Path("~/Models/mlx/Qwen3-8B-MLX-4bit").expanduser()
+DEFAULT_MODEL = Path("~/Models/mlx/Qwen3.5-8B-MLX-4bit").expanduser()
 
 
 def _have_stack() -> bool:

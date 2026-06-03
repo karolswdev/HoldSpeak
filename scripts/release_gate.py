@@ -39,8 +39,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--checklist",
         type=Path,
-        default=Path("docs/RELEASE_HARDENING_CHECKLIST.md"),
-        help="Path to checklist markdown file (default: docs/RELEASE_HARDENING_CHECKLIST.md)",
+        default=Path("docs/internal/RELEASE_HARDENING_CHECKLIST.md"),
+        help="Path to checklist markdown file (default: docs/internal/RELEASE_HARDENING_CHECKLIST.md)",
     )
     args = parser.parse_args(argv)
 

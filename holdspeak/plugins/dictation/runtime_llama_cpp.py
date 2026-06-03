@@ -1,6 +1,6 @@
 """`llama-cpp-python` backend for the DIR-01 dictation router.
 
-Spec: `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §7.1, §7.3.
+Spec: `docs/internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §7.1, §7.3.
 Constrained decoding via GBNF (`grammar=` on `Llama.create_completion`).
 The loader-failure handling pattern mirrors `holdspeak/intel.py`.
 """
@@ -85,7 +85,9 @@ class LlamaCppRuntime:
         if not path.exists():
             raise RuntimeUnavailableError(
                 f"GGUF model not found: {path}. "
-                "Download Qwen2.5-3B-Instruct-Q4_K_M.gguf into ~/Models/gguf/."
+                "Point this at any GGUF chat model (e.g. a current small instruct "
+                "model like Qwen3.5-4B-Instruct) under ~/Models/gguf/, or use an "
+                "OpenAI-compatible endpoint. See docs/MODELS.md."
             )
         kwargs: dict[str, Any] = {
             "model_path": str(path),

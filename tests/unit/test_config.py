@@ -144,7 +144,7 @@ class TestMeetingConfig:
         assert config.export_format == "markdown"
         assert config.intel_enabled is True
         assert config.intel_provider == "local"
-        assert config.intel_realtime_model == "~/Models/gguf/Mistral-7B-Instruct-v0.3-Q6_K.gguf"
+        assert config.intel_realtime_model == "~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf"
         assert config.intel_summary_model is None
         assert config.intel_retry_base_seconds == 30
         assert config.intel_retry_max_seconds == 900

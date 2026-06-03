@@ -8,7 +8,7 @@ Ship and maintain HoldSpeak as a reliable dual-platform app with:
 - CI and test gates that prevent platform regressions.
 
 Execution board:
-- `docs/CROSS_PLATFORM_TASK_BOARD.md`
+- `docs/internal/CROSS_PLATFORM_TASK_BOARD.md`
 
 ---
 

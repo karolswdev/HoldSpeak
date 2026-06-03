@@ -1,6 +1,6 @@
 """Block-config YAML loader for the DIR-01 dictation pipeline (HS-1-05).
 
-Spec: `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §8 + §9.2 + §9.8.
+Spec: `docs/internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §8 + §9.2 + §9.8.
 
 YAML shape (§8.2)::
 
