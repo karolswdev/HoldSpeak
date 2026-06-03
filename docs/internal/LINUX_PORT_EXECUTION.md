@@ -1,6 +1,6 @@
 ## HoldSpeak Linux Port: execution coordination
 
-This document coordinates parallel work on Linux support. It complements `docs/LINUX_PORT_PLAN.md` (research/strategy) with concrete, parallelizable tasks, deliverables, and a definition of done.
+This document coordinates parallel work on Linux support. It complements `docs/internal/LINUX_PORT_PLAN.md` (research/strategy) with concrete, parallelizable tasks, deliverables, and a definition of done.
 
 ### Scope / definition of done (baseline)
 

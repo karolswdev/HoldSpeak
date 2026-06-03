@@ -3,10 +3,10 @@
 ### Execution coordination (parallel work)
 
 For a concrete, parallelizable task breakdown (workstreams, definition of done, and Linux host verification checklist), see:
-- `docs/LINUX_PORT_EXECUTION.md`
+- `docs/internal/LINUX_PORT_EXECUTION.md`
 
 For the broader macOS + Linux execution plan (milestones, acceptance gates, and cross-platform DoD), see:
-- `docs/CROSS_PLATFORM_ROADMAP.md`
+- `docs/internal/CROSS_PLATFORM_ROADMAP.md`
 
 ### Executive summary (what blocks Linux today)
 

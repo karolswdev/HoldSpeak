@@ -1,6 +1,6 @@
 """`llama-cpp-python` backend for the DIR-01 dictation router.
 
-Spec: `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §7.1, §7.3.
+Spec: `docs/internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §7.1, §7.3.
 Constrained decoding via GBNF (`grammar=` on `Llama.create_completion`).
 The loader-failure handling pattern mirrors `holdspeak/intel.py`.
 """

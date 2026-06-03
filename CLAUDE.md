@@ -49,10 +49,10 @@ These are the docs phases must be grounded in. If any phase document
 disagrees with one of these, canon wins:
 
 - `README.md` — public install + usage surface.
-- `docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` — parent plugin RFC.
-- `docs/PLAN_PHASE_MULTI_INTENT_ROUTING.md` — meeting-side multi-intent routing (MIR-01).
-- `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` — dictation pipeline (DIR-01).
-- `docs/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md` — web-first runtime migration.
+- `docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` — parent plugin RFC.
+- `docs/internal/PLAN_PHASE_MULTI_INTENT_ROUTING.md` — meeting-side multi-intent routing (MIR-01).
+- `docs/internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` — dictation pipeline (DIR-01).
+- `docs/internal/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md` — web-first runtime migration.
 - `pyproject.toml` — package contract.
 
 ## Test commands

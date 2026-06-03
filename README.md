@@ -127,7 +127,7 @@ HoldSpeak ships **14 built-in plugins**, all producing real LLM-backed artifacts
 | `decision_announcement_drafter` | Decision announcements (title / audience / message) | comms |
 
 The architecture, contracts, and how to think about authoring more plugins live in
-the plugin RFC: [`docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md`](docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md).
+the plugin RFC: [`docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md`](docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md).
 For configuring meeting intelligence (endpoints, routing), see the
 [Meeting Mode Guide](docs/MEETING_MODE_GUIDE.md).
 

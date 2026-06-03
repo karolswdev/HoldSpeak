@@ -1,9 +1,9 @@
 # Phase 33 — Documentation & Open-Source Readiness
 
-**Status:** in-progress (opened 2026-06-03). 2/6 stories shipped.
+**Status:** in-progress (opened 2026-06-03). 3/6 stories shipped.
 
-**Last updated:** 2026-06-03 (HS-33-02 shipped — Apache-2.0 `LICENSE` + full
-`pyproject` metadata; builds clean, verified in the wheel METADATA).
+**Last updated:** 2026-06-03 (HS-33-03 shipped — `docs/` split into user-facing
+vs `docs/internal/`, a `docs/README.md` index, live links repointed + a link-check).
 
 ## Goal
 
@@ -68,8 +68,8 @@ this makes the project *presentable and adoptable*.
       compatible endpoint." (HS-33-01) ✅
 - [x] An **Apache-2.0 `LICENSE`** exists; `pyproject` carries `license`,
       `authors`, `classifiers`, `urls`, `keywords`. (HS-33-02) ✅
-- [ ] `docs/` cleanly separates user-facing from internal/historical, with a
-      `docs/README.md` index; no broken links. (HS-33-03)
+- [x] `docs/` cleanly separates user-facing from internal/historical, with a
+      `docs/README.md` index; no broken links. (HS-33-03) ✅
 - [ ] README is OSS-grade (badges, honest status, quickstart, license/docs
       links); `CHANGELOG.md` + a minimal `CONTRIBUTING.md` exist. (HS-33-04)
 - [ ] The visual-asset set is coherent and prime-time; wired into README/docs;
@@ -84,7 +84,7 @@ this makes the project *presentable and adoptable*.
 |---|---|---|---|---|
 | HS-33-01 | Model framing + `MODELS.md` | done | [story-01-model-framing.md](./story-01-model-framing.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-33-02 | Apache-2.0 LICENSE + `pyproject` metadata | done | [story-02-license-pyproject.md](./story-02-license-pyproject.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-33-03 | `docs/` reorganization + index | not-started | [story-03-docs-reorg.md](./story-03-docs-reorg.md) | — |
+| HS-33-03 | `docs/` reorganization + index | done | [story-03-docs-reorg.md](./story-03-docs-reorg.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-33-04 | README + getting-started OSS pass + CHANGELOG | not-started | [story-04-readme-oss-pass.md](./story-04-readme-oss-pass.md) | — |
 | HS-33-05 | Visual assets (pixellab MCP) | not-started | [story-05-visual-assets.md](./story-05-visual-assets.md) | — |
 | HS-33-06 | Phase closeout + final-summary | not-started | [story-06-closeout.md](./story-06-closeout.md) | — |
@@ -118,15 +118,25 @@ macOS/Linux, speech/utilities topics, Beta), and `[project.urls]`
 `uv build` succeeds; verified `Metadata-Version: 2.4` + `License-Expression` +
 `License-File` in the built wheel.
 
-**Next: HS-33-03** (`docs/` reorg + index — do before the README pass so links
-settle). **HS-33-05** (assets) runs with the pixellab MCP connected.
+**HS-33-03 shipped** (2026-06-03): `git mv`'d 13 internal/historical docs into
+`docs/internal/` (the `PLAN_*` specs + `CROSS_PLATFORM_*` / `LINUX_PORT_*` /
+`RELEASE_HARDENING_CHECKLIST`), leaving 11 user-facing guides in `docs/`; added a
+`docs/README.md` index (Start-here user journey + reference + an `internal/`
+pointer); repointed every **live** inbound link (CLAUDE.md + the live roadmap
+README source-canon, root README, ~12 source docstrings, `release_gate.py`, the
+flagship-audit test, internal cross-refs); and added a link-check
+(`test_no_live_doc_has_a_dangling_relative_link`). Frozen history (`docs/evidence/`
++ `pm/` phase folders) left verbatim. Suite green 1953/15.
+
+**Next: HS-33-04** (README + getting-started OSS pass + CHANGELOG/CONTRIBUTING).
+**HS-33-05** (assets) runs with the pixellab MCP connected.
 
 ## Pickup order
 
 1. HS-33-01 — model framing + `MODELS.md`. **✅ done (2026-06-03).**
 2. HS-33-02 — Apache-2.0 LICENSE + `pyproject` metadata. **✅ done (2026-06-03).**
-3. HS-33-03 — `docs/` reorg + index (do before the README pass so links settle). **◀ next.**
-4. HS-33-04 — README + getting-started OSS pass + CHANGELOG.
+3. HS-33-03 — `docs/` reorg + index (do before the README pass so links settle). **✅ done (2026-06-03).**
+4. HS-33-04 — README + getting-started OSS pass + CHANGELOG. **◀ next.**
 5. HS-33-05 — visual assets via the pixellab MCP.
 6. HS-33-06 — closeout + final-summary.
 
@@ -150,8 +160,7 @@ settle). **HS-33-05** (assets) runs with the pixellab MCP connected.
 
 ## Decisions deferred
 
-- Exact `docs/internal/` layout (one folder vs. archive vs. `docs/dev/`) —
-  trigger: HS-33-03 — default: a single `docs/internal/` for plans + a
-  `docs/README.md` index.
+- ~~Exact `docs/internal/` layout~~ — **resolved in HS-33-03**: a single
+  `docs/internal/` for plans + a `docs/README.md` index (the default).
 - Whether to cut an actual release (tag + PyPI) — trigger: post-phase — default:
   positioning made honest now; release is a separate follow-up.

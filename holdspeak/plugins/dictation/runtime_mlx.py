@@ -1,6 +1,6 @@
 """`mlx-lm` backend for the DIR-01 dictation router.
 
-Spec: `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §7.1, §7.3.
+Spec: `docs/internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §7.1, §7.3.
 Constrained decoding via the `outlines` 1.x JSON-schema generator
 over `mlx-lm` (`outlines.from_mlxlm` + `Generator(model,
 output_type=JsonSchema(...))`). `outlines` is a localized

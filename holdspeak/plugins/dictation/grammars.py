@@ -1,6 +1,6 @@
 """Schema compiler for the DIR-01 intent router (HS-1-04).
 
-Spec: `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §7.3. The router
+Spec: `docs/internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §7.3. The router
 emits structured JSON conforming to::
 
     {"matched": bool,

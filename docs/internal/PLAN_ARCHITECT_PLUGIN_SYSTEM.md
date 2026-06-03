@@ -385,9 +385,9 @@ Add artifact tables (or equivalent persistence shape):
 ## Rollout Plan
 
 Execution-grade details for dynamic topic shifts and multi-intent routing are specified in:
-`docs/PLAN_PHASE_MULTI_INTENT_ROUTING.md`
+`docs/internal/PLAN_PHASE_MULTI_INTENT_ROUTING.md`
 Web-first runtime migration is specified in:
-`docs/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md`
+`docs/internal/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md`
 
 ### Interface Priority (Normative)
 

@@ -1,6 +1,6 @@
 """Pluggable LLM runtime for the DIR-01 dictation router (HS-1-04).
 
-Spec: `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §7. Two concrete
+Spec: `docs/internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §7. Two concrete
 backends share a single `LLMRuntime` Protocol; stage code MUST NOT
 import any concrete backend directly. Backend resolution is governed by
 `dictation.runtime.backend: auto | mlx | llama_cpp | openai_compatible`

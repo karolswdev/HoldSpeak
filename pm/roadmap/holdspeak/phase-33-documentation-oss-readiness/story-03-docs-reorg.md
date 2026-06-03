@@ -1,6 +1,6 @@
 # HS-33-03 — `docs/` reorganization + index
 
-**Status:** not-started.
+- **Status:** done (2026-06-03). Evidence: [evidence-story-03.md](./evidence-story-03.md).
 
 ## Goal
 
@@ -37,8 +37,8 @@ an index that surfaces the user journey.
 
 ## Done when
 
-- [ ] User-facing vs internal/historical docs are separated; `docs/internal/`
+- [x] User-facing vs internal/historical docs are separated; `docs/internal/`
       holds the plans (history preserved via `git mv`).
-- [ ] `docs/README.md` index surfaces the user journey.
-- [ ] No broken inbound links (incl. CLAUDE.md / roadmap source-canon refs);
+- [x] `docs/README.md` index surfaces the user journey.
+- [x] No broken inbound links (incl. CLAUDE.md / roadmap source-canon refs);
       full suite green.

@@ -1,6 +1,6 @@
 """`holdspeak dictation` CLI subcommand (HS-1-08).
 
-Spec: `docs/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §6.2 #8 + §9.3
+Spec: `docs/internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` §6.2 #8 + §9.3
 (`DIR-A-001`) + §9.1 (`DIR-F-010`). Five subcommands:
 
   - `dry-run "<text>"` — execute the full pipeline against a

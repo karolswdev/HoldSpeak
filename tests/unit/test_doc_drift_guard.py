@@ -48,3 +48,34 @@ def test_drift_guard_actually_scans_docs() -> None:
     docs = _live_docs()
     assert len(docs) > 5
     assert any(p.name == "PLAN_ARCHITECT_PLUGIN_SYSTEM.md" for p in docs)
+
+
+# HS-33-03: a lightweight link-check so the `docs/` reorg (and future moves)
+# can't silently leave a dangling relative link. Scope is the same live-docs
+# set; the PMO corpus + evidence snapshots are frozen history and excluded.
+_MD_LINK = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
+
+
+def test_no_live_doc_has_a_dangling_relative_link() -> None:
+    offenders: list[str] = []
+    for path in _live_docs():
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            for target in _MD_LINK.findall(line):
+                target = target.strip()
+                # Skip external, anchor-only, and non-doc targets.
+                if target.startswith(("http://", "https://", "mailto:", "#", "<")):
+                    continue
+                # Drop any #fragment / ?query suffix.
+                rel = target.split("#", 1)[0].split("?", 1)[0]
+                if not rel:
+                    continue
+                resolved = (path.parent / rel).resolve()
+                if not resolved.exists():
+                    offenders.append(
+                        f"{path.relative_to(_REPO)}:{lineno}: -> {target}"
+                    )
+
+    assert not offenders, (
+        "A live doc links a path that does not exist (dangling relative link). "
+        "Fix the path or the move:\n  " + "\n  ".join(offenders)
+    )
