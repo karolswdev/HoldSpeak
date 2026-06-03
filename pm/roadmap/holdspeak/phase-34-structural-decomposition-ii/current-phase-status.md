@@ -1,9 +1,10 @@
 # Phase 34 — Structural Decomposition II
 
-**Status:** in-progress (opened 2026-06-03). 4/5 stories shipped.
+**Status:** CLOSED ✅ (2026-06-03). 5/5 stories shipped — see
+[final-summary.md](./final-summary.md).
 
-**Last updated:** 2026-06-03 (HS-34-04 shipped — `intel.py` → an `intel/` package,
-full re-export, OpenAI/Llama patch targets preserved via the package; suite green 1962/15).
+**Last updated:** 2026-06-03 (HS-34-05 closeout — route-table invariants re-verified,
+all four trees ruff-clean, `final-summary.md` written; phase CLOSED 5/5).
 
 ## Goal
 
@@ -57,8 +58,8 @@ modules. No new features; every import path and every HTTP route stays identical
       `__init__`; no caller import changed. (HS-34-03) ✅
 - [x] `intel.py` is an `intel/` package with a full re-export `__init__`; no caller
       import changed. (HS-34-04) ✅
-- [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green throughout; the
-      app route table is asserted unchanged; every touched tree ruff-clean.
+- [x] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green throughout; the
+      app route table is asserted unchanged; every touched tree ruff-clean. ✅ 1966/15
 
 ## Story status
 
@@ -68,7 +69,7 @@ modules. No new features; every import path and every HTTP route stays identical
 | HS-34-02 | Split `web/routes/activity.py` → `routes/activity/` | done | [story-02-activity-routes-split.md](./story-02-activity-routes-split.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-34-03 | Decompose `agent_context.py` → package | done | [story-03-agent-context-package.md](./story-03-agent-context-package.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-34-04 | Decompose `intel.py` → package | done | [story-04-intel-package.md](./story-04-intel-package.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-34-05 | Phase closeout + final-summary | not-started | [story-05-closeout.md](./story-05-closeout.md) | — |
+| HS-34-05 | Phase closeout + final-summary | done | [story-05-closeout.md](./story-05-closeout.md) | [evidence-story-05.md](./evidence-story-05.md) |
 
 ## Where we are
 
@@ -85,7 +86,7 @@ non-hardware-gated.
 2. HS-34-02 — `routes/activity/` split (same pattern; bigger handler count). **✅ done (2026-06-03).**
 3. HS-34-03 — `agent_context/` package (proven Phase-31 re-export pattern). **✅ done (2026-06-03).**
 4. HS-34-04 — `intel/` package (same pattern). **✅ done (2026-06-03).**
-5. HS-34-05 — closeout + final-summary. **◀ next (last story).**
+5. HS-34-05 — closeout + final-summary. **✅ done (2026-06-03) — PHASE CLOSED.**
 
 The two route splits share a **route-table invariant** check (the app's full route
 list, paths+methods, must be identical before/after); the two module-package splits

@@ -1,6 +1,6 @@
 # HS-34-05 — Phase closeout + final-summary
 
-- **Status:** not-started.
+- **Status:** done (2026-06-03). Evidence: [evidence-story-05.md](./evidence-story-05.md).
 
 ## Goal
 
@@ -29,7 +29,7 @@ phase `final-summary.md`.
 
 ## Done when
 
-- [ ] Route table unchanged vs. the pre-phase baseline; all four packages
+- [x] Route table unchanged vs. the pre-phase baseline; all four packages
       ruff-clean; full suite green.
-- [ ] `final-summary.md` written; project README phase row = `done`; HANDOVER
+- [x] `final-summary.md` written; project README phase row = `done`; HANDOVER
       pickup pointer refreshed.
