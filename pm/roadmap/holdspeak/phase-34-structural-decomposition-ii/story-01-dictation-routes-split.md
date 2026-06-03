@@ -1,6 +1,6 @@
 # HS-34-01 — Split `web/routes/dictation.py` → `routes/dictation/` sub-package
 
-- **Status:** not-started.
+- **Status:** done (2026-06-03). Evidence: [evidence-story-01.md](./evidence-story-01.md).
 
 ## Goal
 
@@ -40,7 +40,7 @@ factory holding ~26 handlers across six unrelated concerns. Split it into a
 
 ## Done when
 
-- [ ] `web/routes/dictation.py` → a `routes/dictation/` sub-package; handlers grouped
+- [x] `web/routes/dictation.py` → a `routes/dictation/` sub-package; handlers grouped
       by domain.
-- [ ] `build_dictation_router(ctx)` import unchanged; `routes/__init__.py` untouched.
-- [ ] Route table byte-identical; full suite green; package ruff-clean.
+- [x] `build_dictation_router(ctx)` import unchanged; `routes/__init__.py` untouched.
+- [x] Route table byte-identical; full suite green; package ruff-clean.
