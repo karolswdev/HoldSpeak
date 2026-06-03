@@ -1,11 +1,11 @@
 # Phase 32 — Foundation Hardening & Doc Truth
 
-**Status:** in-progress (opened 2026-06-02). 5/7 stories shipped.
+**Status:** in-progress (opened 2026-06-02). 6/7 stories shipped.
 
-**Last updated:** 2026-06-02 (HS-32-04 shipped: **ungated CI core-path smoke
-test** — a committed `say`-generated WAV → real Whisper `tiny` → injection seam,
-asserting on produced text; runs on the macOS integration job every push; mutation
-check shown; suite green 1948/14. HS-32-05 next).
+**Last updated:** 2026-06-02 (HS-32-05 shipped: **one route 500-response helper**
+(`error_500`) replaces the canonical `log.error + JSONResponse(500)` block at 48
+sites; behavior byte-identical; suite green 1952/14. **Only HS-32-06 (doc-truth
+sweep) remains.**)
 
 ## Goal
 
@@ -75,8 +75,9 @@ archiving them.
       the produced text; it is **not** gated behind `metal`/`spoken_e2e`.
       **(HS-32-04, 2026-06-02; macOS integration job, real Whisper `tiny` on a
       committed WAV; mutation check shown.)**
-- [ ] The route error-handling duplication is removed via a single helper, with a
-      before/after handler count recorded.
+- [x] The route error-handling duplication is removed via a single helper, with a
+      before/after handler count recorded. **(HS-32-05, 2026-06-02; `error_500`
+      at 48 sites; chose a helper fn over a decorator — see decisions.)**
 - [ ] `HANDOVER.md`, the `PLAN_*.md` status headers, and README positioning state
       only true things; the stub-count guard is committed.
 - [x] **The TUI + menubar runtimes are removed** (`tui/`, `controller.py`,
@@ -93,7 +94,7 @@ archiving them.
 | HS-32-02 | Invert meeting→web-server coupling | done | [story-02-meeting-web-inversion.md](./story-02-meeting-web-inversion.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-32-03 | Converge audio ownership | done | [story-03-audio-ownership.md](./story-03-audio-ownership.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-32-04 | CI end-to-end smoke test (core path) | done | [story-04-ci-e2e-smoke.md](./story-04-ci-e2e-smoke.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-32-05 | Route error-handling helper | not-started | [story-05-route-error-helper.md](./story-05-route-error-helper.md) | — |
+| HS-32-05 | Route error-handling helper | done | [story-05-route-error-helper.md](./story-05-route-error-helper.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-32-06 | Stale non-PMO doc sweep + drift guard | not-started | [story-06-doc-truth-sweep.md](./story-06-doc-truth-sweep.md) | — |
 | HS-32-07 | Retire the TUI + menubar runtimes | done | [story-07-retire-tui-menubar.md](./story-07-retire-tui-menubar.md) | [evidence-story-07.md](./evidence-story-07.md) |
 
@@ -156,7 +157,19 @@ installed. Verified locally (2 passed, real mlx `tiny`); the mutation check
 `web_runtime.py` calls `get_all_projects_for_detector()` on the `Database`
 container (it moved to `db.projects`), so the project detector silently loads
 nothing at startup; **fixed in a follow-up commit** (separate from the story).
-**Next: HS-32-05.**
+
+**HS-32-05 shipped (2026-06-02):** one route 500-response helper. `error_500(exc,
+logger, detail)` in `runtime_support.py` replaces the canonical `log.error(f"…:
+{e}"); return JSONResponse({"error": str(e)}, status_code=500)` block at **48**
+call sites (activity 32 / projects 8 / meetings 7 / system 1) — a change to the
+error contract is now a one-line edit. Behavior byte-identical (verified). Chose
+a **helper function over the deferred "decorator" default**: handlers have nested
+try/except + specific non-500 handling that a whole-handler `except Exception`
+decorator would swallow. Applied via a reviewed codemod (exactly the 48 expected
+sites). Suite green at 1952/14. **Next: HS-32-06 (the last story) — doc-truth
+sweep + drift guard, which now also reconciles the deferred PLAN TUI mentions,
+the vestigial `web_enabled`, and is the natural home to record/clean anything
+left.**
 
 ## Pickup order
 
@@ -168,7 +181,7 @@ nothing at startup; **fixed in a follow-up commit** (separate from the story).
    audio convergence has one home.~~ **DONE (2026-06-02).**
 4. ~~HS-32-03 — converge audio ownership (now `WebRuntime`-only).~~ **DONE (2026-06-02).**
 5. ~~HS-32-04 — the CI smoke test (independent; most valuable early).~~ **DONE (2026-06-02).**
-6. HS-32-05 — the error helper (mechanical, low risk). **◀ next.**
+6. ~~HS-32-05 — the error helper (mechanical, low risk).~~ **DONE (2026-06-02).**
 7. HS-32-06 — doc-truth sweep + guard; last so the docs describe the post-phase reality.
 
 ## Active risks
@@ -202,8 +215,14 @@ nothing at startup; **fixed in a follow-up commit** (separate from the story).
   WAV (both, not either/or — the `tiny` model transcribes the committed fixture).
   Substring assertion with tolerance. (Resolves the deferred "which Whisper model"
   question.)
+- 2026-06-02 — **HS-32-05: a helper *function* (`error_500`), not a decorator.**
+  The deferred default was a decorator, but the route handlers have nested
+  try/except + specific non-500 handling that a whole-handler `except Exception`
+  decorator would swallow (violating "leave specific handling as-is"). The helper
+  dedups the canonical 500 construction at each `except` instead — explicit
+  per-route, behavior-preserving, low-risk. (Resolves the deferred "decorator vs
+  exception handler" question — neither; a called helper.)
 
 ## Decisions deferred
 
-- Whether the error helper is a decorator or FastAPI exception handler — trigger:
-  HS-32-05 — default: a decorator, so per-route opt-in stays explicit.
+- *(none open — all phase decisions resolved.)*

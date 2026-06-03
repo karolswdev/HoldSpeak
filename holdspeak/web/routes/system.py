@@ -21,6 +21,7 @@ from fastapi.responses import JSONResponse
 
 from ...logging_config import get_logger
 from ..context import WebContext
+from ..runtime_support import error_500
 
 log = get_logger("web.routes.system")
 
@@ -455,8 +456,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
             }
             return JSONResponse(payload)
         except Exception as e:
-            log.error(f"Failed to load settings: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to load settings")
 
     @router.put("/api/settings")
     async def api_update_settings(payload: dict[str, Any]) -> Any:

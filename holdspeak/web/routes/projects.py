@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 
 from ...logging_config import get_logger
 from ..context import WebContext
+from ..runtime_support import error_500
 
 log = get_logger("web.routes.projects")
 
@@ -72,8 +73,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
                 {"project_id": project_id, "briefings": rows}
             )
         except Exception as e:
-            log.error(f"Failed to list project briefings: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to list project briefings")
 
     @router.get("/api/projects")
     async def api_list_projects(include_archived: bool = False) -> Any:
@@ -100,8 +100,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
                 ]
             })
         except Exception as e:
-            log.error(f"Failed to list projects: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to list projects")
 
     @router.post("/api/projects")
     async def api_create_project(payload: dict[str, Any]) -> Any:
@@ -185,8 +184,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
                 "updated_at": project.updated_at.isoformat(),
             })
         except Exception as e:
-            log.error(f"Failed to get project: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to get project")
 
     @router.patch("/api/projects/{project_id}")
     async def api_update_project(project_id: str, payload: dict[str, Any]) -> Any:
@@ -289,8 +287,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             meetings = db.projects.get_project_meetings(project_id, limit=limit, offset=offset)
             return JSONResponse({"meetings": meetings})
         except Exception as e:
-            log.error(f"Failed to get project meetings: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to get project meetings")
 
     @router.post("/api/projects/{project_id}/meetings/{meeting_id}")
     async def api_associate_meeting(project_id: str, meeting_id: str) -> Any:
@@ -330,8 +327,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             projects = db.projects.get_meeting_projects(meeting_id)
             return JSONResponse({"projects": projects})
         except Exception as e:
-            log.error(f"Failed to get meeting projects: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to get meeting projects")
 
     @router.get("/api/projects/{project_id}/summary")
     async def api_project_summary(project_id: str) -> Any:
@@ -341,8 +337,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             summary = db.projects.get_project_summary(project_id)
             return JSONResponse(summary)
         except Exception as e:
-            log.error(f"Failed to get project summary: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to get project summary")
 
     @router.get("/api/projects/{project_id}/action-items")
     async def api_project_action_items(project_id: str) -> Any:
@@ -371,8 +366,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
                 ]
             })
         except Exception as e:
-            log.error(f"Failed to get project action items: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to get project action items")
 
     @router.get("/api/projects/{project_id}/artifacts")
     async def api_project_artifacts(project_id: str) -> Any:
@@ -397,7 +391,6 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
                 ]
             })
         except Exception as e:
-            log.error(f"Failed to get project artifacts: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
+            return error_500(e, log, "Failed to get project artifacts")
 
     return router
