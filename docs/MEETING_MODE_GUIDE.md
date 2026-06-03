@@ -28,10 +28,7 @@ holdspeak meeting --setup
 # 3. Start HoldSpeak web runtime (default command)
 holdspeak
 
-# 4. Start TUI mode for meeting controls in this phase
-holdspeak tui
-
-# 5. Press 'm' to start a meeting
+# 4. Start a meeting from the dashboard ("Start meeting") or POST /api/meeting/start
 ```
 
 ---
@@ -107,24 +104,23 @@ holdspeak
 # Explicit web runtime
 holdspeak web
 
-# Explicit TUI mode
-holdspeak tui
+# Headless web service (no browser auto-open)
+holdspeak web --no-open
 ```
 
-`holdspeak --no-tui` is deprecated and currently maps to `holdspeak web --no-open`.
-Voice typing hotkey capture is available in both `web` and `tui` runtimes.
+The web runtime is the sole interactive runtime; voice-typing hotkey capture
+runs inside it.
 
 ### Starting a Meeting
 
-From web runtime, use dashboard controls:
+From the web runtime, use the dashboard controls (the **Start meeting** button)
+or the API directly:
 - `POST /api/meeting/start` to begin a meeting
 - `POST /api/meeting/stop` to stop and persist meeting output
 
-TUI still supports meeting toggling as a compatibility path (`holdspeak tui`, then press `m`).
-
 When a meeting starts:
 1. Recording begins on both mic and system audio
-2. A live dashboard URL appears (e.g., `http://127.0.0.1:8234`)
+2. The dashboard reflects the active meeting (the runtime URL is printed at startup, e.g. `http://127.0.0.1:8234`)
 3. Transcription happens automatically every ~10 seconds
 4. AI intelligence runs every few segments (if enabled)
 
@@ -132,21 +128,10 @@ At any time, you can also open:
 - `http://127.0.0.1:<port>/history` for archive search and cross-meeting workflows
 - `http://127.0.0.1:<port>/settings` for browser-based configuration
 
-![TUI Meeting Cockpit](screenshots/tui_meeting.svg)
-
-### TUI Controls
-
-| Key | Action |
-|-----|--------|
-| `m` | Toggle meeting on/off |
-| `b` | Add bookmark at current time |
-| `t` | Show full transcript |
-| `i` | Show intelligence summary |
-| `u` | Copy dashboard URL |
-
 ### Stopping a Meeting
 
-Press `m` again to stop. The meeting data is preserved until you start a new one.
+Use the dashboard **Stop meeting** control (or `POST /api/meeting/stop`). The
+meeting data is persisted on stop.
 
 ---
 
@@ -548,7 +533,7 @@ Send `"ping"` text message, receive `"pong"` response.
 ### Web dashboard not loading
 
 1. Check FastAPI is installed: `uv pip install fastapi uvicorn`
-2. Verify URL in TUI is accessible
+2. Verify the runtime URL printed at startup is accessible
 3. Check firewall isn't blocking localhost
 4. Try `/history` directly on the same port to confirm server health
 
@@ -589,15 +574,14 @@ Send `"ping"` text message, receive `"pong"` response.
 ```bash
 # Before the meeting
 holdspeak meeting --setup    # Verify audio setup
-holdspeak                    # Start HoldSpeak
+holdspeak                    # Start HoldSpeak (web runtime)
 
-# During the meeting (TUI)
-m                            # Start meeting
-# Open dashboard URL in browser
-b                            # Add bookmark when something important happens
+# During the meeting (web dashboard)
+# Click "Start meeting" (or POST /api/meeting/start)
+# Add bookmarks from the dashboard when something important happens
 
 # After the meeting
-m                            # Stop meeting
+# Click "Stop meeting" (or POST /api/meeting/stop)
 # Export from dashboard, /history local handoff downloads, or auto_export
 ```
 

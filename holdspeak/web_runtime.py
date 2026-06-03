@@ -75,7 +75,7 @@ class WebRuntime:
     State that the old ``run_web_runtime()`` god-function threaded through
     ``nonlocal`` variables now lives on instance attributes; the inline
     closures are methods. ``run()`` performs startup, the keep-alive loop,
-    and shutdown, mirroring the TUI ``HoldSpeakController`` shape.
+    and shutdown. This is the sole interactive runtime.
     """
 
     def __init__(
@@ -1668,7 +1668,6 @@ class WebRuntime:
         except Exception as exc:
             print(f"Failed to start HoldSpeak web mode: {exc}", file=sys.stderr)
             print("Install optional web dependencies with: uv pip install -e '.[meeting]'", file=sys.stderr)
-            print("Fallback option: run `holdspeak tui`.", file=sys.stderr)
             log.error(f"Failed to start web mode: {exc}", exc_info=True)
             raise SystemExit(1) from exc
 
@@ -1709,7 +1708,7 @@ class WebRuntime:
         if self.hotkey_listener is not None:
             print(f"Voice typing hotkey is active: hold {self.config.hotkey.display}, speak, release.")
         else:
-            print("Voice typing hotkey unavailable in web mode; check permissions or use `holdspeak tui` focused hold-to-talk.")
+            print("Voice typing hotkey unavailable; grant Accessibility/Input Monitoring permission and restart.")
         if not self.no_open and self.config.meeting.web_auto_open:
             webbrowser.open(self.runtime_url)
             print("Opened web dashboard in your default browser.")

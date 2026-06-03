@@ -3,7 +3,7 @@
 Most WFS-* requirements (§5.1–§5.4 of `docs/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md`)
 are already covered by:
 
-  - `tests/unit/test_main_modes.py` — WFS-C-001 (default web), WFS-C-002 (`tui` subcommand), WFS-C-003 (`--no-tui` deprecation), `holdspeak doctor` exit code passthrough.
+  - `tests/unit/test_main_modes.py` — WFS-C-001 (default web), the retired `tui` subcommand now rejected (HS-32-07), `holdspeak doctor` exit code passthrough.
   - `tests/integration/test_web_server.py` — TestRuntimeControlEndpoints (`/api/meeting/start|stop`), TestSettingsApiEndpoints (`/api/settings`), TestHistoryUiSmoke (`/history`, `/settings`), Dashboard idle-mode guidance.
 
 This file targets the small set of WFS-* requirements that *aren't*

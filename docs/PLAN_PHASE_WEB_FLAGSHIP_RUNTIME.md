@@ -1,5 +1,12 @@
 # Phase WFS-01: Web Flagship Runtime and UX Migration
 
+> **Superseded note (HS-32-07, 2026-06-02):** the TUI and the macOS menu-bar
+> runtimes have since been **retired** — the web runtime is now the *sole*
+> interactive runtime. Requirements below that retain the TUI as a fallback
+> (e.g. `WFS-C-002` `holdspeak tui`, `WFS-C-003` `--no-tui` deprecation) are
+> historical and no longer hold; `holdspeak tui`/`menubar` and `--no-tui` are
+> gone. The remaining `PLAN_*.md` TUI mentions are reconciled in HS-32-06.
+
 ## 1. Phase Charter
 
 ### 1.1 Objective

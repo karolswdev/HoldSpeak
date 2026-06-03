@@ -26,7 +26,7 @@ Use these guides depending on what you are setting up:
 | Dictation pipeline | Routes and rewrites dictated text with local rules and optional LLM stages | `/dictation`, `holdspeak dictation ...` |
 | Project context | Keeps repo-local `.hs/` files that guide intelligent rewrites | `/dictation` -> Project Context |
 | Agent hooks | Lets Claude Code and Codex report current cwd/session state to HoldSpeak | `/dictation` -> Agent Hooks |
-| Meeting mode | Captures microphone plus optional system audio | Dashboard, TUI, meeting commands |
+| Meeting mode | Captures microphone plus optional system audio | Dashboard, `holdspeak meeting` command |
 | Meeting intelligence | Produces transcript, topics, summaries, actions, artifacts | Dashboard and `/history` |
 | AIPI-Lite companion | Portable ESPHome device for meeting controls, status, and spoken replies to waiting Claude/Codex sessions | [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md), `/companion` |
 | Runtime setup | Configures local MLX, llama.cpp, or OpenAI-compatible endpoints | `/dictation` -> Runtime, `/docs/dictation-runtime` |

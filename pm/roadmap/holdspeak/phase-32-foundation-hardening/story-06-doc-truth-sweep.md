@@ -19,6 +19,12 @@ that claim *current* state and are wrong:
   `holdspeak/menubar.py`, a `menubar` extra, README ✅). Correct the status claims.
 - `docs/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` — reconcile any remaining "⚠️ stub"
   per-plugin lines against the zero-stubs reality.
+- **Retired-TUI/menubar PLAN mentions (left by HS-32-07).** `PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md`
+  got a superseded banner, but its `WFS-C-002`/`WFS-C-003` body + passing TUI/menubar
+  mentions in `PLAN_MEETING_MODE.md`, `PLAN_MEETING_INTEL_PI.md`,
+  `PLAN_ARCHITECT_PLUGIN_SYSTEM.md`, `PLAN_PHASE_MULTI_INTENT_ROUTING.md`,
+  `RELEASE_HARDENING_CHECKLIST.md` still describe the removed runtimes. Reconcile
+  (or delete the dead sections) here. The TUI is gone as of HS-32-07.
 - `README.md` positioning — the lede still pitches "voice typing"; reconcile with
   what shipped (a local-first transcription-and-intelligence runtime) without
   overclaiming.

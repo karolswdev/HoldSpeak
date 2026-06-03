@@ -43,12 +43,12 @@ def test_transcription_timeout_raises_and_recovers():
     with pytest.raises(TranscriberTimeoutError) as excinfo:
         t.transcribe(np.zeros(16000, dtype=np.float32))
     assert "abandoned" in str(excinfo.value)
-    # TranscriberTimeoutError must be a TranscriberError so the controller's
+    # TranscriberTimeoutError must be a TranscriberError so the runtime's
     # existing handler catches it (notify + return to idle).
     assert isinstance(excinfo.value, TranscriberError)
 
     # The Transcriber instance is reusable — a subsequent fast call works,
-    # mirroring the controller returning to idle for the next utterance.
+    # mirroring the runtime returning to idle for the next utterance.
     fast = _SlowImpl(delay=0.0)
     t._impl = fast
     assert t.transcribe(np.zeros(16000, dtype=np.float32)) == "done"

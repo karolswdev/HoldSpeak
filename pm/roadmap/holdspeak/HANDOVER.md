@@ -44,10 +44,13 @@ with the live status docs, the status docs win.
 
 **First: merge PR #7** (Phase 31) to `main`. Then start **Phase 32**.
 
-> **▶ Phase 32 → HS-32-01 — class-ify `web_runtime.py`.** The 1,702-line
-> `run_web_runtime()` god-function (9+ `nonlocal` vars) becomes a `WebRuntime`
-> class, matching the clean `controller.py` (TUI) path. Behavior-preserving.
-> Story: `phase-32-foundation-hardening/story-01-web-runtime-classify.md`.
+> **▶ Phase 32 → HS-32-03 — converge audio ownership** (next). HS-32-01
+> (`WebRuntime` class), HS-32-02 (`MeetingSession` web-free, emits via
+> `on_broadcast`), and HS-32-07 (**TUI + menubar retired** — web is the sole
+> interactive runtime; `tui/`/`controller.py`/`menubar.py` deleted) are **done**.
+> With the TUI gone, HS-32-03 routes hotkey/device/meeting capture through the
+> one `VoiceTypingSession` arbiter in `WebRuntime` (the only home left). See
+> `phase-32-foundation-hardening/current-phase-status.md` for live status.
 
 Phase 32 order (see its `current-phase-status.md`): 01 class-ify web_runtime →
 02 invert the meeting→web-server coupling (`meeting_session.py` reaches *up* into

@@ -57,9 +57,8 @@ bridge setup, and verification live in [AIPI-Lite Developer Workflow](docs/AIPI_
 | Cross-app typing | ✅ | ✅ | ⚠️ Best effort |
 | Meeting mode | ✅ | ✅ | ✅ |
 | System audio capture | ✅ BlackHole | ✅ Pulse/PipeWire | ✅ Pulse/PipeWire |
-| Menu bar mode | ✅ | ❌ | ❌ |
 
-Wayland sessions often block global hooks and synthetic typing. HoldSpeak falls back to focused hold-to-talk + clipboard paste.
+Wayland sessions often block global hooks and synthetic typing. HoldSpeak falls back to clipboard paste for injection.
 
 ## Install
 

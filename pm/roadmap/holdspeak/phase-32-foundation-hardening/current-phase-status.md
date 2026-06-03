@@ -1,10 +1,11 @@
 # Phase 32 — Foundation Hardening & Doc Truth
 
-**Status:** in-progress (opened 2026-06-02). 2/6 stories shipped.
+**Status:** in-progress (opened 2026-06-02). 3/7 stories shipped.
 
-**Last updated:** 2026-06-02 (HS-32-02 shipped: `MeetingSession` is web-free —
-emits via `on_broadcast`, `WebRuntime` observes; embedded per-meeting server
-**dropped** per user decision; suite green 2066/14. HS-32-03 next).
+**Last updated:** 2026-06-02 (HS-32-07 shipped: **TUI + menubar runtimes
+retired** — web is the sole interactive runtime; ~13k lines removed across code,
+tests, deps, docs; suite green 1939/14. Resuming HS-32-03 next — now
+`WebRuntime`-only).
 
 ## Goal
 
@@ -37,6 +38,11 @@ one honesty fix (reconcile non-PMO docs that assert false current state).
 - Reconcile non-PMO docs with reality: **delete** dead `PLAN_*.md` docs/sections
   (non-existent branches, shipped-differently features), fix `HANDOVER.md` + README
   positioning; add a lightweight guard so the worst drift (stub counts) can't rot again.
+- **(Added 2026-06-02, user directive) Retire the TUI + menubar runtimes** —
+  delete `holdspeak/tui/` + `controller.py` + `menubar.py`, their CLI subcommands,
+  the `--no-tui` alias, and the `textual`/`rumps` deps; the web runtime becomes
+  the sole interactive runtime. Update all relevant docs. Sequenced first so the
+  audio-ownership convergence (HS-32-03) has a single home.
 
 **Posture: greenfield/aggressive** — one user (the author), destructive changes
 fine. The refactors (HS-32-01/02) preserve behavior because that's what a refactor
@@ -70,6 +76,10 @@ archiving them.
       before/after handler count recorded.
 - [ ] `HANDOVER.md`, the `PLAN_*.md` status headers, and README positioning state
       only true things; the stub-count guard is committed.
+- [x] **The TUI + menubar runtimes are removed** (`tui/`, `controller.py`,
+      `menubar.py`, their subcommands, `--no-tui`, and `textual`/`rumps` deps);
+      the web runtime is the sole interactive runtime; live docs updated.
+      **(HS-32-07, 2026-06-02; user directive.)**
 - [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green throughout.
 
 ## Story status
@@ -82,6 +92,7 @@ archiving them.
 | HS-32-04 | CI end-to-end smoke test (core path) | not-started | [story-04-ci-e2e-smoke.md](./story-04-ci-e2e-smoke.md) | — |
 | HS-32-05 | Route error-handling helper | not-started | [story-05-route-error-helper.md](./story-05-route-error-helper.md) | — |
 | HS-32-06 | Stale non-PMO doc sweep + drift guard | not-started | [story-06-doc-truth-sweep.md](./story-06-doc-truth-sweep.md) | — |
+| HS-32-07 | Retire the TUI + menubar runtimes | done | [story-07-retire-tui-menubar.md](./story-07-retire-tui-menubar.md) | [evidence-story-07.md](./evidence-story-07.md) |
 
 ## Where we are
 
@@ -107,7 +118,17 @@ longer imports, owns, starts, stops, or broadcasts to a `MeetingWebServer`. It
 embedded server and dead in the flagship runtime. Per **user decision**, the
 embedded per-meeting web server was **dropped** (not relocated to TUI/menubar);
 `config.meeting.web_enabled` is now vestigial (flagged for HS-32-06). Suite green
-at 2066/14 (+3 headless tests). **Next: HS-32-03.**
+at 2066/14 (+3 headless tests).
+
+**HS-32-07 shipped (2026-06-02) — user directive, "kill the TUI":** the Textual
+TUI (`tui/` + `controller.py`) and the macOS menu-bar app (`menubar.py`) are
+**deleted** — ~13k lines removed across code, the `tui`/`menubar` subcommands,
+the `--no-tui` alias, the `textual`/`rumps` deps, the TUI/menubar-only tests, and
+the dead TUI/menubar docs (+ live-doc updates). The **web runtime is now the sole
+interactive runtime**. Sequenced before HS-32-03 (also user choice) so the
+audio-ownership convergence has a single home — with the TUI gone,
+hotkey/device/meeting capture all live only in `WebRuntime`. Suite green at
+1939/14. **Next: resume HS-32-03 — now `WebRuntime`-only, no TUI caveat.**
 
 ## Pickup order
 
@@ -115,10 +136,12 @@ at 2066/14 (+3 headless tests). **Next: HS-32-03.**
    and audio-ownership stories build on.~~ **DONE (2026-06-02).**
 2. ~~HS-32-02 — invert meeting→web once `WebRuntime` can hold the observer.~~
    **DONE (2026-06-02).**
-3. HS-32-03 — converge audio ownership. **◀ next.**
-4. HS-32-04 — the CI smoke test (independent; can land any time but most valuable early).
-5. HS-32-05 — the error helper (mechanical, low risk).
-6. HS-32-06 — doc-truth sweep + guard; last so the docs describe the post-phase reality.
+3. ~~HS-32-07 — retire the TUI + menubar (inserted by user directive) so the
+   audio convergence has one home.~~ **DONE (2026-06-02).**
+4. HS-32-03 — converge audio ownership (now `WebRuntime`-only). **◀ next.**
+5. HS-32-04 — the CI smoke test (independent; can land any time but most valuable early).
+6. HS-32-05 — the error helper (mechanical, low risk).
+7. HS-32-06 — doc-truth sweep + guard; last so the docs describe the post-phase reality.
 
 ## Active risks
 
@@ -140,6 +163,10 @@ at 2066/14 (+3 headless tests). **Next: HS-32-03.**
   the flagship `WebRuntime` is the single dashboard owner. Consequence:
   `config.meeting.web_enabled` + its Settings toggle are now vestigial → flagged
   for HS-32-06 — user.
+- 2026-06-02 — **Retire the TUI *and* the menubar (new story HS-32-07), web is the
+  sole interactive runtime.** Full removal (delete, don't deprecate); sequenced
+  **before** HS-32-03 so the audio convergence has one home. Includes updating all
+  relevant docs. The CLI subcommands (`meeting`/`history`/`intel`/…) stay — user.
 
 ## Decisions deferred
 
