@@ -356,7 +356,6 @@ Configuration file: `~/.config/holdspeak/config.json`
     "intel_cloud_store": false,
     "intel_summary_model": null,
     "intel_deferred_enabled": true,
-    "web_enabled": true,
     "web_auto_open": false,
     "diarization_enabled": false,
     "diarize_mic": false,
@@ -395,7 +394,6 @@ Configuration file: `~/.config/holdspeak/config.json`
 | `intel_cloud_store` | bool | false | Allow provider-side storage for cloud requests |
 | `intel_summary_model` | string | null | Path to larger model for end-of-meeting summary. Falls back to realtime model if null. |
 | `intel_deferred_enabled` | bool | true | Queue meeting intel for later if no compatible local model is currently available |
-| `web_enabled` | bool | true | Enable web dashboard server |
 | `web_auto_open` | bool | false | Auto-open browser when meeting starts |
 | `diarization_enabled` | bool | false | Enable speaker diarization for system audio |
 | `diarize_mic` | bool | false | Enable diarization for microphone stream |

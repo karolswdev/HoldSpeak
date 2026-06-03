@@ -76,7 +76,6 @@ class MeetingConfig:
     intel_cloud_store: bool = False
 
     # Web dashboard
-    web_enabled: bool = True
     web_auto_open: bool = False  # Auto-open browser on meeting start
     # Web-runtime auth token (HS-25-02). Empty = unset. Required only when the
     # runtime binds a non-loopback host; generated lazily by

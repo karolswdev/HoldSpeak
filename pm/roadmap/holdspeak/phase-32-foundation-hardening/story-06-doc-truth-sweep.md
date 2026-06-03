@@ -1,6 +1,6 @@
 # HS-32-06 — Stale non-PMO doc sweep + drift guard
 
-**Status:** not-started.
+- **Status:** done (2026-06-02). Evidence: [evidence-story-06.md](./evidence-story-06.md). Phase-exit: [final-summary.md](./final-summary.md).
 
 ## Goal
 
@@ -56,8 +56,16 @@ that claim *current* state and are wrong:
 
 ## Done when
 
-- [ ] Dead PLAN docs/sections (non-existent branches, shipped-differently features)
-      are **deleted**; surviving docs (HANDOVER pointer, README positioning) state
-      only true things.
-- [ ] A drift guard is committed and green.
-- [ ] Full suite green.
+- [x] Dead PLAN docs/sections (non-existent branches, shipped-differently features)
+      are **deleted/reconciled**; surviving docs (HANDOVER pointer, README positioning)
+      state only true things.
+- [x] A drift guard is committed and green.
+- [x] Full suite green.
+
+## Evidence
+
+[evidence-story-06.md](./evidence-story-06.md) + [final-summary.md](./final-summary.md).
+Fixed the false `DeterministicPlugin` stub claims + a dead branch header + TUI
+mentions; removed the vestigial `config.meeting.web_enabled`; refreshed
+`HANDOVER.md`; committed `tests/unit/test_doc_drift_guard.py` (verified it catches
+reintroduced stub-rot). Suite green **1954/14**. **Phase 32 CLOSED (7/7).**

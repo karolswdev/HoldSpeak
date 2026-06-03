@@ -1,11 +1,12 @@
 # Phase 32 — Foundation Hardening & Doc Truth
 
-**Status:** in-progress (opened 2026-06-02). 6/7 stories shipped.
+**Status:** CLOSED ✅ — 7/7 stories shipped (closed 2026-06-02). See
+[final-summary.md](./final-summary.md).
 
-**Last updated:** 2026-06-02 (HS-32-05 shipped: **one route 500-response helper**
-(`error_500`) replaces the canonical `log.error + JSONResponse(500)` block at 48
-sites; behavior byte-identical; suite green 1952/14. **Only HS-32-06 (doc-truth
-sweep) remains.**)
+**Last updated:** 2026-06-02 (HS-32-06 shipped — **phase closed**: doc-truth
+sweep (false stub claims, dead branch header, TUI mentions, vestigial
+`web_enabled`) + a committed doc-drift guard; `HANDOVER.md` refreshed; suite green
+1954/14.)
 
 ## Goal
 
@@ -78,13 +79,15 @@ archiving them.
 - [x] The route error-handling duplication is removed via a single helper, with a
       before/after handler count recorded. **(HS-32-05, 2026-06-02; `error_500`
       at 48 sites; chose a helper fn over a decorator — see decisions.)**
-- [ ] `HANDOVER.md`, the `PLAN_*.md` status headers, and README positioning state
-      only true things; the stub-count guard is committed.
+- [x] `HANDOVER.md`, the `PLAN_*.md` status headers, and README positioning state
+      only true things; the stub-count guard is committed. **(HS-32-06, 2026-06-02;
+      `test_doc_drift_guard.py` + the stub-claim/branch-header/`web_enabled` fixes.)**
 - [x] **The TUI + menubar runtimes are removed** (`tui/`, `controller.py`,
       `menubar.py`, their subcommands, `--no-tui`, and `textual`/`rumps` deps);
       the web runtime is the sole interactive runtime; live docs updated.
       **(HS-32-07, 2026-06-02; user directive.)**
-- [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green throughout.
+- [x] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green throughout.
+      **(Green at every story; closed at 1954 passed / 14 skipped.)**
 
 ## Story status
 
@@ -95,7 +98,7 @@ archiving them.
 | HS-32-03 | Converge audio ownership | done | [story-03-audio-ownership.md](./story-03-audio-ownership.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-32-04 | CI end-to-end smoke test (core path) | done | [story-04-ci-e2e-smoke.md](./story-04-ci-e2e-smoke.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-32-05 | Route error-handling helper | done | [story-05-route-error-helper.md](./story-05-route-error-helper.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-32-06 | Stale non-PMO doc sweep + drift guard | not-started | [story-06-doc-truth-sweep.md](./story-06-doc-truth-sweep.md) | — |
+| HS-32-06 | Stale non-PMO doc sweep + drift guard | done | [story-06-doc-truth-sweep.md](./story-06-doc-truth-sweep.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-32-07 | Retire the TUI + menubar runtimes | done | [story-07-retire-tui-menubar.md](./story-07-retire-tui-menubar.md) | [evidence-story-07.md](./evidence-story-07.md) |
 
 ## Where we are
@@ -166,10 +169,18 @@ error contract is now a one-line edit. Behavior byte-identical (verified). Chose
 a **helper function over the deferred "decorator" default**: handlers have nested
 try/except + specific non-500 handling that a whole-handler `except Exception`
 decorator would swallow. Applied via a reviewed codemod (exactly the 48 expected
-sites). Suite green at 1952/14. **Next: HS-32-06 (the last story) — doc-truth
-sweep + drift guard, which now also reconciles the deferred PLAN TUI mentions,
-the vestigial `web_enabled`, and is the natural home to record/clean anything
-left.**
+sites). Suite green at 1952/14.
+
+**HS-32-06 shipped (2026-06-02) — PHASE CLOSED (7/7):** the doc-truth sweep +
+drift guard. Fixed the false `DeterministicPlugin` "stub" markers in
+`PLAN_ARCHITECT_PLUGIN_SYSTEM.md` (the worst rot), a dead `Branch:` header in
+`PLAN_INTEL_STREAMING.md`, and retired-TUI mentions (banners on the two TUI-heavy
+plans); removed the vestigial `config.meeting.web_enabled` (field + test_config +
+the live `MEETING_MODE_GUIDE` example/table + a screenshot mock); refreshed the
+stale `HANDOVER.md` TL;DR; and committed `tests/unit/test_doc_drift_guard.py`
+(verified it catches reintroduced stub-rot). Suite green at 1954/14. See
+[final-summary.md](./final-summary.md). **The whole phase is a stacked local
+branch — push & open a PR to `main`.**
 
 ## Pickup order
 
@@ -182,7 +193,8 @@ left.**
 4. ~~HS-32-03 — converge audio ownership (now `WebRuntime`-only).~~ **DONE (2026-06-02).**
 5. ~~HS-32-04 — the CI smoke test (independent; most valuable early).~~ **DONE (2026-06-02).**
 6. ~~HS-32-05 — the error helper (mechanical, low risk).~~ **DONE (2026-06-02).**
-7. HS-32-06 — doc-truth sweep + guard; last so the docs describe the post-phase reality.
+7. ~~HS-32-06 — doc-truth sweep + guard; last so the docs describe the post-phase
+   reality.~~ **DONE (2026-06-02). PHASE CLOSED (7/7).**
 
 ## Active risks
 

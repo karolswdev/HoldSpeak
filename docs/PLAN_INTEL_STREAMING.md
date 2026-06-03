@@ -2,7 +2,7 @@
 
 **Goal:** Enhance meeting intelligence with streaming display, better action item management, and meeting persistence.
 
-**Branch:** `feature/intel-streaming`
+**Status (2026-06-02):** ✅ **shipped** — streaming intel, action-item management, and meeting persistence are in the product. This document is the original design plan; the `feature/intel-streaming` branch it referenced was merged and deleted long ago.
 
 ---
 

@@ -9,48 +9,55 @@ with the live status docs, the status docs win.
 
 ## 1. TL;DR — where things stand
 
-- **Open PR:** **#7** (`phase-31/hs-31-01-meeting-repository` → `main`) — the full
-  Phase 31 chain (db decomposition), 7 commits, **not yet merged**. Active local
-  branch is the top of that stack (`phase-31/hs-31-05-closeout`).
+- **Phase 31 (db decomposition): MERGED** to `main` (was PR #7). `holdspeak/db.py`
+  (5,481-line god-object) → the `holdspeak/db/` package: a thin `Database`
+  container + 5 repositories, migration ladder squashed to one canonical schema.
+- **Phase 32 — Foundation Hardening & Doc Truth: DONE (7/7).** Shipped this
+  session (HS-32-01/02/07/03/04/05/06 + a follow-up db fix). The work sits on a
+  **stacked local branch** `phase-32/hs-32-01-web-runtime-classify` (7 story
+  commits + the fix), **unpushed** — open a PR off it (or push & merge).
+  Highlights: `web_runtime.py` → a `WebRuntime` class; `MeetingSession` is
+  web-free (emits via `on_broadcast`); **the TUI *and* the macOS menubar were
+  retired** (web runtime is now the *sole* interactive runtime — `tui/`,
+  `controller.py`, `menubar.py`, the `tui`/`menubar` CLI, `--no-tui`, and the
+  `textual`/`rumps` deps all gone; ~13k lines removed); one audio-ownership model
+  (meeting holds the shared `VoiceTypingSession` floor); an **ungated CI
+  core-path smoke test** (real Whisper `tiny` on a committed WAV, macOS job, every
+  push); one route 500-helper (`error_500`, 48 sites); and the doc-truth sweep +
+  drift guard.
 - **Test suite:** green — `uv run pytest -q --ignore=tests/e2e/test_metal.py` →
-  **2063 passed, 14 skipped**.
-- **Phase 31 — Database Decomposition: DONE (5/5).** `holdspeak/db.py` (5,481-line
-  god-object) → the `holdspeak/db/` package: a thin `Database` container + 5
-  repositories. The migration ladder is squashed to one canonical schema. See its
-  `final-summary.md`. **This is on PR #7, awaiting merge.**
-- **Phase 32 — Foundation Hardening & Doc Truth: IN-PROGRESS (0/6), opened, not
-  started.** This is the next work. See §3.
+  **~1954 passed, 14 skipped** (count grew/shrank across the phase; see the latest
+  story evidence for the exact number).
 - **Plugins: 14 real, ZERO stubs** — locked by
-  `tests/unit/test_decision_announcement_drafter_plugin.py::test_no_deterministic_stub_remains`.
-  (If you see an older doc claiming "N stubs remain," it is stale — that's exactly
-  the rot HS-32-06 cleans up.)
+  `tests/unit/test_decision_announcement_drafter_plugin.py::test_no_deterministic_stub_remains`,
+  and now also guarded at the doc level by `tests/unit/test_doc_drift_guard.py`
+  (no live doc may claim a `DeterministicPlugin` stub).
 - **Hardware-gated, untouched:** Phase 24 (companion, 3/6), Phase 25 (HS-25-07
   dogfood), Phase 15 (out-and-about, not-started). All need the physical AI-PI / a
   real mic; the author is remote.
 
 ## 2. What happened recently
 
-- **Phase 30 — UI/UX overhaul: DONE (9/9).** Amiga Workbench retired for "Signal"
-  (bold dark identity). All five web routes + shell + components redesigned.
-- **Phase 31 — Database Decomposition: DONE (5/5)** (this session, PR #7):
-  - HS-31-01 `MeetingRepository` + package seam; HS-31-02 `IntelRepository`;
-    HS-31-03 `PluginArtifactRepository` + `ProjectRepository` + `ActivityRepository`
-    and **retired the `MeetingDatabase` god-class → `Database`** (zero refs in code);
-    HS-31-04 **squashed the 18-version migration ladder** to one canonical schema
-    (`SCHEMA_VERSION` 18→1, parity proven); HS-31-05 closeout.
-  - The author's dev DB was **dropped & recreated** at v1 (greenfield).
+- **Phase 30 — UI/UX overhaul: DONE (9/9).** Amiga Workbench retired for "Signal".
+- **Phase 31 — Database Decomposition: DONE (5/5), merged.** `db.py` → `db/`
+  package (`Database` container + 5 repos); 18-version migration ladder squashed
+  to one canonical schema; the `MeetingDatabase` god-class retired → `Database`.
+- **Phase 32 — Foundation Hardening & Doc Truth: DONE (7/7), this session.** See §1.
+  Notable user decisions: drop the embedded per-meeting web server (HS-32-02); kill
+  the TUI **and** the menubar (HS-32-07); a helper *function* over a decorator for
+  the route 500s (HS-32-05).
 
 ## 3. Pick up here
 
-**First: merge PR #7** (Phase 31) to `main`. Then start **Phase 32**.
+**Phase 32 is complete and unpushed.** Push `phase-32/hs-32-01-web-runtime-classify`
+and open a PR to `main` (the stack is 7 story commits + a db fix). Then pick the
+next phase — Phase 32's `final-summary.md` records the exit state; the
+hardware-gated phases (24/25/15) still need the physical device / a real mic and a
+local (non-remote) author.
 
-> **▶ Phase 32 → HS-32-03 — converge audio ownership** (next). HS-32-01
-> (`WebRuntime` class), HS-32-02 (`MeetingSession` web-free, emits via
-> `on_broadcast`), and HS-32-07 (**TUI + menubar retired** — web is the sole
-> interactive runtime; `tui/`/`controller.py`/`menubar.py` deleted) are **done**.
-> With the TUI gone, HS-32-03 routes hotkey/device/meeting capture through the
-> one `VoiceTypingSession` arbiter in `WebRuntime` (the only home left). See
-> `phase-32-foundation-hardening/current-phase-status.md` for live status.
+> **▶ Note for a remote (no-hardware) session:** the real-audio capture paths
+> (`metal`) can't run here; the HS-32-04 smoke test covers real transcription on a
+> committed WAV instead. Anything touching the AI-PI or a live mic stays gated.
 
 Phase 32 order (see its `current-phase-status.md`): 01 class-ify web_runtime →
 02 invert the meeting→web-server coupling (`meeting_session.py` reaches *up* into

@@ -136,7 +136,7 @@ def main() -> None:
                               intel_retry_failure_webhook_header_value: '',
                               similarity_threshold: 0.7,
                               intel_enabled: true, intel_deferred_enabled: true,
-                              intel_cloud_store: false, web_enabled: true,
+                              intel_cloud_store: false,
                               web_auto_open: false, diarization_enabled: false,
                               diarize_mic: false, cross_meeting_recognition: false,
                             },

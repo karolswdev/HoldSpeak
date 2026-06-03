@@ -247,19 +247,19 @@ class PluginResult:
 
 ## Initial Built-In Plugins (Phase 1)
 
-1. `requirements_extractor` — ⚠️ **stub** (`DeterministicPlugin`)
+1. `requirements_extractor` — ✅ **shipped** (real `run()`; phase 29 rollout)
 - Produces: functional/non-functional requirements, constraints, acceptance criteria.
 
 2. `mermaid_architecture` — ✅ **shipped** (phase 16, HoldSpeak HS-16-01..04)
 - Produces: component/context/dataflow diagrams from transcript + metadata.
 
-3. `adr_drafter` — ⚠️ **stub** (`DeterministicPlugin`)
+3. `adr_drafter` — ✅ **shipped** (real `run()`; phase 29 rollout)
 - Produces: ADR draft with options considered, tradeoffs, decision status.
 
-4. `risk_register` — ⚠️ **stub** (registered as `risk_heatmap`, `DeterministicPlugin`)
+4. `risk_register` — ✅ **shipped** (registered as `risk_heatmap`; real `run()`; phase 29 rollout)
 - Produces: top risks, impact/probability, mitigations, owners.
 
-5. `action_owner_enforcer` — ⚠️ **stub** (`DeterministicPlugin`)
+5. `action_owner_enforcer` — ✅ **shipped** (real `run()`; phase 29 rollout)
 - Produces: unresolved ownership and due-date checklist.
 
 ### Reality status (updated 2026-06-01, phase 29 close — rollout complete)
