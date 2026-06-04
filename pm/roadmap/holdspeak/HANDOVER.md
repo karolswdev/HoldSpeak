@@ -47,33 +47,41 @@ with the live status docs, the status docs win.
 
 ## 3. Pick up here
 
-**▶ Phase 36 — Meeting Intelligence & Experience is OPEN (0/6), on local branch
-`phase-36/hs-36-01-artifact-card-shell`** (folder slug `phase-36-meeting-artifact-experience`
-predates a same-day scope expansion). On direct user feedback, two tracks:
+**▶ Phase 36 — Meeting Intelligence & Experience: CLOSED ✅ (6/6), on local branch
+`phase-36/hs-36-01-artifact-card-shell`** — **open a PR to `main`** (CI green → merge,
+per the merge-via-PR cadence). Full record:
+`phase-36-meeting-artifact-experience/final-summary.md`. Both tracks landed:
 
-- **Experience (HS-36-01→03):** the artifact rendering is basic, has no copy affordance,
-  and overflows horizontally. Make it a first-class deliverable — Signal **"elevated"
-  artifact cards**, **copy-as-Markdown** (reuse `CommandPreview.astro`), **overflow-safe**
-  wide artifacts (the risk table first). UI lives in `web/src/pages/history.astro`
-  (~856–1136) + its CSS; rebuild the bundle (`cd web && npm run build`) before
-  verifying — `holdspeak/static/_built/` is **gitignored** (built at install from
-  `web/src`), so commit the **source**, never `_built`.
-- **Intelligence (HS-36-04→05):** fix the routing weakness where a brief intent in a
-  digression is **diluted below the 0.6 threshold and silently lost** (MIR-01 =
-  fixed-90s windows + lexical keywords; see `intent_timeline.build_intent_windows`,
-  `plugins/signals.extract_intent_signals`, `plugins/router.select_active_intents`,
-  `plugins/dispatch`, `plugins/pipeline.process_meeting_state`). HS-36-04 adds a
-  **dynamic/messy multi-topic spoken-e2e** driving the *real* routing path + captures a
-  **BEFORE** screenshot; HS-36-05 implements **segment-aware per-segment intent probing**
-  (LLM-assisted via `intel.build_configured_meeting_intel`, with the lexical scorer as a
-  deterministic fallback; union-aggregate) + captures the **AFTER**.
+- **Experience (HS-36-01→03):** Signal **elevated artifact cards** (type-colored accent
+  edge + header + collapse + overflow-safe body; the risk-table overflow fixed via
+  `.table-scroll`), **copy-as-Markdown** per artifact + "Copy all" (pure per-type
+  serializers in `history-app.js`, reusing the `CommandPreview` clipboard pattern), and a
+  **per-type body polish** pass (the bodies referenced non-existent `--color-*` tokens →
+  off-palette fallbacks; all migrated to real Signal tokens; incident **timeline rail**,
+  typed badges, sub-cards, markers). UI in `web/src/pages/history.astro` +
+  `web/src/scripts/history-app.js`; `holdspeak/static/_built/` is **gitignored** — commit
+  `web/src` only, never `_built`.
+- **Intelligence (HS-36-04→05):** the routing weakness (a brief intent diluted below the
+  0.6 threshold and silently lost) is fixed by an additive, gated **segment probe**
+  (`plugins/segment_probe.py`, merged element-wise `max` into `scoring.score_window`,
+  off by default via `intent_segment_probe_enabled`; the lexical scorer is the
+  deterministic fallback). Default path (`segment_probe=None`) is byte-identical → the
+  routing tests are unchanged.
 
-**Headline deliverable:** a **before/after** of the same messy meeting (old routing
-sparse → new routing rich), presented at closeout (HS-36-06). Start with **HS-36-01**
-(most visible win). Full plan: `phase-36-meeting-artifact-experience/current-phase-status.md`.
-**Update in lockstep, don't silence:** the spoken-e2e artifact selectors
-(`.risk-table tbody tr`, `.incident-timeline li`, …) AND the routing tests
-(`test_intent_router` / `test_intent_dispatch` / `test_multi_intent_routing`).
+**Headline deliverable (delivered):** the **before/after** of the same messy meeting,
+re-captured in the new cards on real `.43` — **7 → 13 artifact types** (incident+comms
+fished out per segment): `phase-36-.../evidence/dynamic_meeting_before.png` vs `_after.png`.
+**The routing-ripple + selector-lockstep rules still apply** to future plugin work: the
+spoken-e2e artifact selectors (`.risk-table tbody tr`, `.incident-timeline li`, …) AND
+`test_intent_router` / `test_intent_dispatch` / `test_multi_intent_routing` move in
+lockstep — don't silence.
+
+**▶ Phase 37 — Actuators is the teed-up successor** (renumbered from 36 when the UX phase
+took the 36 slot): the host's `actuator` kind stays **blocked** today; Phase 35 built its
+groundwork (authoring guide + pack manifest + discovery loader; `plugin_sdk.validate_manifest`
+rejects `actuator` as deferred). Phase 37 adds preview → human approval → external side
+effect (RFC open question #5; intersects the Phase-25 egress posture). Scaffold a
+`phase-37-actuators/` folder + stories when starting.
 
 **Phase 35 — Plugin Frontier: CLOSED ✅ (5/5), merged via PR #11.** The plugin system
 is externalizable end-to-end: public `docs/PLUGIN_AUTHORING.md`, a plugin-pack manifest

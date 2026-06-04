@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 36
-- **Status:** not-started
+- **Status:** done
 - **Depends on:** HS-36-01, HS-36-02, HS-36-03, HS-36-04, HS-36-05
 - **Unblocks:** none
 - **Owner:** unassigned
@@ -37,14 +37,15 @@ intent extraction) — the bundle is rebuilt, the spoken-e2e passes, and the
 
 ## Acceptance criteria
 
-- [ ] Bundle rebuilt from the final source (gitignored — not committed); `_built` is not
-      staged; the served app reflects the source.
-- [ ] **BEFORE and AFTER screenshots** of the same messy meeting committed to
-      `evidence/`; the AFTER shows materially more of the genuinely-present intents
-      surfaced (and the new cards). The diff is described in `final-summary.md`.
-- [ ] Spoken-e2e (incident-retro + dynamic) re-run for real; all artifact selectors pass.
-- [ ] Full suite green.
-- [ ] `final-summary.md` written; README phase row `done`; HANDOVER refreshed (Phase 37
+- [x] Bundle rebuilt from the final source (gitignored — not committed; `git ls-files
+      holdspeak/static/_built/` → 0); the served app reflects the source.
+- [x] **BEFORE and AFTER screenshots** of the same messy meeting committed to
+      `evidence/`, re-captured in the new polished cards; AFTER surfaces 13 types vs the
+      BEFORE's 7 (incident/comms fished out). Diff described in `final-summary.md`.
+- [x] Spoken-e2e (incident-retro + dynamic before/after) re-run for real on `.43`
+      (3 passed in 245.99s); all artifact selectors pass inside the new card body.
+- [x] Full suite green (2020 passed / 15 skipped).
+- [x] `final-summary.md` written; README phase row `done`; HANDOVER refreshed (Phase 37
       — Actuators teed up).
 
 ## Test plan

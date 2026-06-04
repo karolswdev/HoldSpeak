@@ -6,9 +6,20 @@
 > surfaces. Title broadened to "Meeting Intelligence & Experience"; slug kept to avoid
 > link churn.
 
-**Status:** in-progress (opened 2026-06-04). 5/6 stories shipped.
+**Status:** CLOSED ✅ (opened + closed 2026-06-04). 6/6 stories shipped. See
+[final-summary.md](./final-summary.md).
 
-**Last updated:** 2026-06-04 (**HS-36-03 shipped — per-artifact-type body polish.** A
+**Last updated:** 2026-06-04 (**HS-36-06 — Phase 36 CLOSED ✅ (6/6).** Closeout: re-ran
+the spoken-e2e on real `.43` to re-capture the headline **before/after in the new
+polished cards** — same messy meeting, **BEFORE** `['architecture','product']` / 7
+artifact types (23 cards) vs **AFTER** `['architecture','comms','delivery','incident',
+'product']` / **13** types (51 cards), incident+comms fished out per segment
+(`evidence/dynamic_meeting_before.png` vs `_after.png`). Dynamic before/after +
+incident-retro `3 passed in 245.99s`; all artifact selectors resolve inside the new card
+body. Bundle rebuilt (gitignored `_built` — 0 files tracked); suite 2020/15; routing
+invariants byte-identical. `final-summary.md` written; README phase row → done; HANDOVER
+refreshed (Phase 37 — Actuators teed up). Earlier: **HS-36-03 shipped — per-artifact-type
+body polish.** A
 Signal pass over **every** artifact body inside the card shell (CSS-only in
 `history.astro`, no markup/selector change). Root cause of the flatness fixed: the
 HS-27–29 bodies referenced **non-existent** tokens (`--color-danger-soft`,
@@ -173,7 +184,7 @@ showcases the new presentation.
 | HS-36-03 | Per-artifact-type body polish | done | [story-03-per-type-body-polish.md](./story-03-per-type-body-polish.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-36-04 | Dynamic, digression-heavy multi-topic spoken-e2e | done | [story-04-dynamic-meeting-e2e.md](./story-04-dynamic-meeting-e2e.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-36-05 | Segment-aware intent extraction (fish out intent per segment) | done | [story-05-segment-intent-extraction.md](./story-05-segment-intent-extraction.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-36-06 | Phase closeout + final-summary | not-started | [story-06-closeout.md](./story-06-closeout.md) | — |
+| HS-36-06 | Phase closeout + final-summary | done | [story-06-closeout.md](./story-06-closeout.md) | [evidence-story-06.md](./evidence-story-06.md) |
 
 ## Where we are
 
@@ -214,10 +225,12 @@ core.
    intents out; AFTER captured — 7 → 13 artifact types).
 6. HS-36-06 — closeout + final-summary.
 
-Intelligence track (04 → 05) is **complete**; the experience track (**HS-36-01** elevated
-cards + overflow, **HS-36-02** copy-as-Markdown, **HS-36-03** per-type body polish) is
-**done**. **◀ next: HS-36-06** — the closeout (re-captures the before/after in the new
-cards + `final-summary.md`); it's the only story left.
+**Phase CLOSED ✅ (6/6).** Both tracks landed: intelligence (**HS-36-04** dynamic e2e →
+**HS-36-05** segment-aware extraction) and experience (**HS-36-01** elevated cards +
+overflow → **HS-36-02** copy-as-Markdown → **HS-36-03** per-type polish), joined at the
+**HS-36-06** closeout — which re-captured the before/after (7 → 13 artifact types) in the
+new polished cards on real `.43`. Next: open a PR to `main`; **Phase 37 — Actuators** is
+the teed-up successor.
 
 The two tracks are parallel: **experience** (01 → 02 → 03) and **intelligence**
 (04 → 05). Either can go first; the closeout (06) needs both. HS-36-01 leads since it's
