@@ -1,9 +1,22 @@
 # Phase 38 — Actuators II
 
-**Status:** in-progress (2/6 stories — HS-38-01, HS-38-02 done). Scaffolded 2026-06-04,
-immediately after Phase 37 — Actuators closed + merged via PR #14.
+**Status:** in-progress (3/6 stories — HS-38-01, HS-38-02, HS-38-03 done). Scaffolded
+2026-06-04, immediately after Phase 37 — Actuators closed + merged via PR #14.
 
-**Last updated:** 2026-06-04 (**HS-38-02 done** — the GitHub write connector, the first real
+**Last updated:** 2026-06-04 (**HS-38-03 done** — the webhook write connector, the
+`network:outbound` reference. `holdspeak/plugins/builtin/webhook_post_actuator.py`:
+`WebhookPostActuator` proposes an HTTP POST `{url, body}` (url from `context["webhook_url"]`),
+and `build_webhook_connector(allowed_hosts=…, client=…)` POSTs **only to an allow-listed
+host** via `build_gated_connector` (`network:outbound` through
+`PermissionGate.open_outbound_socket`); an off-list host is refused before egress (client
+never invoked), a non-2xx / transport error → `failed` + audit, the status is returned. The
+host allow-list is the **resolved HS-38-01 deferral**: `MeetingConfig.webhook_allowed_hosts`
+(default-empty ⇒ nothing posts). Both gate kinds are now proven on the framework
+(`shell:exec` + `network:outbound`). 13 new tests (full loop with an injected client — no
+real HTTP); full suite **2117 passed, 15 skipped**; ruff + F821 clean. ◀ next: HS-38-04 live
+in-meeting proposals.)
+
+**Earlier 2026-06-04** (**HS-38-02 done** — the GitHub write connector, the first real
 write on the HS-38-01 framework. `holdspeak/plugins/builtin/github_issue_actuator.py`:
 `GithubIssueActuator` proposes a GitHub issue for the first unowned action item (payload
 `repo`/`title`/`body`), and `build_github_issue_connector(runner=…)` runs **`gh issue create`
@@ -135,12 +148,22 @@ Every new connector adds a *narrower* gate (its permission manifest), never a lo
 |---|---|---|---|---|
 | HS-38-01 | Gated write-connector framework + permission manifest | done | [story-01-write-connector-framework.md](./story-01-write-connector-framework.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-38-02 | GitHub write connector (`gh issue create`) | done | [story-02-github-connector.md](./story-02-github-connector.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-38-03 | Webhook write connector (HTTP POST, allow-listed host) | not-started | [story-03-webhook-connector.md](./story-03-webhook-connector.md) | — |
+| HS-38-03 | Webhook write connector (HTTP POST, allow-listed host) | done | [story-03-webhook-connector.md](./story-03-webhook-connector.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-38-04 | Live in-meeting proposals + broadcast | not-started | [story-04-live-proposals.md](./story-04-live-proposals.md) | — |
 | HS-38-05 | Actuators II documentation | not-started | [story-05-documentation.md](./story-05-documentation.md) | — |
 | HS-38-06 | Closeout + final-summary | not-started | [story-06-closeout.md](./story-06-closeout.md) | — |
 
 ## Where we are
+
+**HS-38-03 done 2026-06-04** — the `network:outbound` reference connector is in.
+`holdspeak/plugins/builtin/webhook_post_actuator.py` ships `WebhookPostActuator` (proposes an
+HTTP POST `{url, body}`; pure `run()`) and `build_webhook_connector` (built on HS-38-01:
+manifest allow-listed to the **config host allow-list**, `network:outbound` through
+`PermissionGate.open_outbound_socket`; an off-list host is refused before egress, a non-2xx /
+transport error → `failed` + audit, the status returned). The HS-38-01 host-granularity
+deferral is **resolved**: `MeetingConfig.webhook_allowed_hosts` (default-empty ⇒ nothing
+posts). Both gate kinds are now proven on the framework. **Next: HS-38-04** — live in-meeting
+proposals (broadcast `actuator_proposed` + a live approve/reject panel).
 
 **HS-38-02 done 2026-06-04** — the `shell:exec` reference connector is in.
 `holdspeak/plugins/builtin/github_issue_actuator.py` ships `GithubIssueActuator` (proposes a
@@ -185,8 +208,8 @@ done — the seams all exist:
 1. ~~**HS-38-01** — gated write-connector framework + permission manifest. The safety seam
    every connector depends on.~~ **done 2026-06-04.**
 2. ~~HS-38-02 — GitHub write connector (`shell:exec` reference).~~ **done 2026-06-04.**
-3. HS-38-03 — webhook write connector (`network:outbound` reference). **◀ next**
-4. HS-38-04 — live in-meeting proposals + broadcast.
+3. ~~HS-38-03 — webhook write connector (`network:outbound` reference).~~ **done 2026-06-04.**
+4. HS-38-04 — live in-meeting proposals + broadcast. **◀ next**
 5. HS-38-05 — Actuators II documentation.
 6. HS-38-06 — closeout + final-summary.
 
@@ -217,9 +240,9 @@ runners/clients).
 
 ## Decisions deferred
 
-- **Webhook host allow-listing granularity** — a fixed config host vs a per-proposal host
-  vetted against an allow-list — trigger: HS-38-03 — default: a config allow-list of hosts;
-  a proposal's target host must be a member.
+- ~~**Webhook host allow-listing granularity**~~ — **resolved HS-38-03 (2026-06-04):** a
+  config allow-list of hosts (`MeetingConfig.webhook_allowed_hosts`, default-empty); a
+  proposal's target host must be a member, vetted by the connector manifest before egress.
 - **Where live actuators generate** — reuse finalization-time dispatch vs a live dispatch
   tick — trigger: HS-38-04 design — default: surface proposals as soon as they're produced
   by the existing dispatch path; a dedicated live-dispatch cadence is a follow-up if needed.

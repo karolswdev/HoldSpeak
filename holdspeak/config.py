@@ -145,6 +145,11 @@ class MeetingConfig:
     # required — see the proposal lifecycle.)
     allow_actuators: bool = False
     allowed_actuators: list[str] = field(default_factory=list)
+    # HS-38-03: the webhook write connector's host allow-list (the resolved
+    # granularity for the HS-38-01 deferral). A webhook actuator may POST only to
+    # a host on this list; a proposal whose target host is not a member is refused
+    # before egress. Default-empty ⇒ nothing posts, even with actuators enabled.
+    webhook_allowed_hosts: list[str] = field(default_factory=list)
 
     # Speaker diarization
     diarization_enabled: bool = False  # Identify multiple speakers in system audio
@@ -216,6 +221,25 @@ class MeetingConfig:
                 seen_act.add(aid)
                 normalized_act.append(aid)
         self.allowed_actuators = normalized_act
+
+        # HS-38-03: the webhook host allow-list — normalized like the others, but
+        # lowercased (DNS hostnames are case-insensitive). Default-empty refuses
+        # every host, so a misconfigured webhook actuator posts nowhere.
+        if not isinstance(self.webhook_allowed_hosts, list) or not all(
+            isinstance(h, str) for h in self.webhook_allowed_hosts
+        ):
+            raise ValueError(
+                f"webhook_allowed_hosts must be a list of host strings, "
+                f"got {self.webhook_allowed_hosts!r}"
+            )
+        seen_host: set[str] = set()
+        normalized_hosts: list[str] = []
+        for raw in self.webhook_allowed_hosts:
+            host = raw.strip().lower()
+            if host and host not in seen_host:
+                seen_host.add(host)
+                normalized_hosts.append(host)
+        self.webhook_allowed_hosts = normalized_hosts
 
     def intent_hysteresis(self) -> float:
         """Convert `intent_hysteresis_windows` (int) to the float gap value

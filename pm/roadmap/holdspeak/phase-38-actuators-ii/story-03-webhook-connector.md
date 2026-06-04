@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 38
-- **Status:** not-started
+- **Status:** done
 - **Depends on:** HS-38-01
 - **Unblocks:** HS-38-05
 - **Owner:** unassigned
@@ -34,12 +34,12 @@ as it handles subprocess egress.
 
 ## Acceptance criteria
 
-- [ ] The connector POSTs only to an **allow-listed host**; an off-list host is refused
+- [x] The connector POSTs only to an **allow-listed host**; an off-list host is refused
       **before** egress (the HTTP client is never invoked).
-- [ ] Full loop (opt-in, injected client): approve → execute → `executed` + the response
+- [x] Full loop (opt-in, injected client): approve → execute → `executed` + the response
       status in the result + audit; a non-2xx → `failed` + audit.
-- [ ] The host allow-list is config-driven (decided here) and default-empty ⇒ nothing posts.
-- [ ] Default suite makes no real HTTP call; suite green; module ruff + F821 clean.
+- [x] The host allow-list is config-driven (decided here) and default-empty ⇒ nothing posts.
+- [x] Default suite makes no real HTTP call; suite green; module ruff + F821 clean.
 
 ## Test plan
 
