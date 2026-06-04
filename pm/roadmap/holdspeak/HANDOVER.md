@@ -47,10 +47,28 @@ with the live status docs, the status docs win.
 
 ## 3. Pick up here
 
-**▶ Phase 36 — Meeting Intelligence & Experience: CLOSED ✅ (6/6), on local branch
-`phase-36/hs-36-01-artifact-card-shell`** — **open a PR to `main`** (CI green → merge,
-per the merge-via-PR cadence). Full record:
-`phase-36-meeting-artifact-experience/final-summary.md`. Both tracks landed:
+**▶ Phase 37 — Actuators: CLOSED ✅ (7/7), on local branch
+`phase-37/hs-37-01-actuator-contract`** — **open a PR to `main`** (CI green → merge, per
+the merge-via-PR cadence). Full record: `phase-37-actuators/final-summary.md`. The plugin
+system's **third kind** is on, behind one invariant: *no external side effect without an
+explicit, audited, per-action human approval; executed == previewed.* An actuator
+**proposes** (`ActuatorProposal` from `run()`, status `proposed`); a human **approves**
+(the meeting-detail "Proposed actions" cards / `POST …/proposals/{id}/decision`); a
+**guarded executor** (`plugins/actuator_executor.py`) acts only on an `approved` proposal
+through status + policy gate (`MeetingConfig.allow_actuators` + `allowed_actuators`,
+default-safe) + **payload parity** (TOCTOU) + an **injected connector** (never a socket in
+the executor) + an **audit** row. Persistence: `db.actuators` (`actuator_proposals` /
+`actuator_proposal_audit`). Reference: `followup_ticket_actuator` + `build_outbox_connector`
+(a local-file side effect; gh/jira are read-only by Phase-25 policy, so a future
+write-permitted connector is the path). **Default suite + routing byte-identical** — no
+actuator is registered (`register_followup_actuator` is opt-in, not in
+`register_builtin_plugins`) or in any chain. **Next frontier (none committed):** more
+connectors (write-permitted gh/jira/webhook), live in-meeting proposals, chained/per-role
+governance.
+
+**▶ Earlier — Phase 36 — Meeting Intelligence & Experience: CLOSED ✅ (6/6), merged via
+PR #13.** Full record: `phase-36-meeting-artifact-experience/final-summary.md`. Both tracks
+landed:
 
 - **Experience (HS-36-01→03):** Signal **elevated artifact cards** (type-colored accent
   edge + header + collapse + overflow-safe body; the risk-table overflow fixed via
@@ -75,13 +93,6 @@ fished out per segment): `phase-36-.../evidence/dynamic_meeting_before.png` vs `
 spoken-e2e artifact selectors (`.risk-table tbody tr`, `.incident-timeline li`, …) AND
 `test_intent_router` / `test_intent_dispatch` / `test_multi_intent_routing` move in
 lockstep — don't silence.
-
-**▶ Phase 37 — Actuators is the teed-up successor** (renumbered from 36 when the UX phase
-took the 36 slot): the host's `actuator` kind stays **blocked** today; Phase 35 built its
-groundwork (authoring guide + pack manifest + discovery loader; `plugin_sdk.validate_manifest`
-rejects `actuator` as deferred). Phase 37 adds preview → human approval → external side
-effect (RFC open question #5; intersects the Phase-25 egress posture). Scaffold a
-`phase-37-actuators/` folder + stories when starting.
 
 **Phase 35 — Plugin Frontier: CLOSED ✅ (5/5), merged via PR #11.** The plugin system
 is externalizable end-to-end: public `docs/PLUGIN_AUTHORING.md`, a plugin-pack manifest

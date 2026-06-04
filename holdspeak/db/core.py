@@ -13,6 +13,7 @@ from .intel import IntelRepository
 from .plugins import PluginArtifactRepository
 from .projects import ProjectRepository
 from .activity import ActivityRepository
+from .actuators import ActuatorRepository
 
 log = get_logger("db")
 
@@ -291,6 +292,50 @@ CREATE INDEX IF NOT EXISTS idx_artifacts_meeting ON artifacts(meeting_id, create
 CREATE INDEX IF NOT EXISTS idx_artifacts_type ON artifacts(artifact_type, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_artifact_sources_ref ON artifact_sources(source_type, source_ref);
 
+-- Phase 37 (HS-37-02): actuator proposals — a proposed external side effect
+-- awaiting human approval. Lifecycle: proposed -> approved -> executed |
+-- rejected | failed (a failed proposal may be re-approved for retry).
+-- `payload_json` is the parity source-of-truth the guarded executor checks
+-- before acting (HS-37-04); every transition is recorded in
+-- actuator_proposal_audit so "no silent egress" is provable after the fact.
+CREATE TABLE IF NOT EXISTS actuator_proposals (
+    id TEXT PRIMARY KEY,
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    window_id TEXT NOT NULL DEFAULT '',
+    plugin_id TEXT NOT NULL,
+    plugin_version TEXT NOT NULL DEFAULT 'unknown',
+    idempotency_key TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL DEFAULT 'proposed',
+    target TEXT NOT NULL,
+    action TEXT NOT NULL,
+    preview TEXT NOT NULL,
+    payload_json TEXT NOT NULL DEFAULT '{}',
+    reversible INTEGER NOT NULL DEFAULT 0,
+    required_capabilities_json TEXT NOT NULL DEFAULT '[]',
+    decided_by TEXT,
+    result_json TEXT,
+    error TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    decided_at TEXT,
+    executed_at TEXT,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Per-transition audit trail for actuator proposals.
+CREATE TABLE IF NOT EXISTS actuator_proposal_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    proposal_id TEXT NOT NULL REFERENCES actuator_proposals(id) ON DELETE CASCADE,
+    actor TEXT NOT NULL DEFAULT 'system',
+    from_status TEXT,
+    to_status TEXT NOT NULL,
+    detail TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_actuator_proposals_meeting ON actuator_proposals(meeting_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_actuator_proposals_status ON actuator_proposals(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_actuator_proposal_audit_proposal ON actuator_proposal_audit(proposal_id, created_at);
+
 -- Project knowledge bases
 CREATE TABLE IF NOT EXISTS projects (
     id TEXT PRIMARY KEY,
@@ -498,6 +543,7 @@ class Database:
         self.plugins = PluginArtifactRepository(self._connection, self)
         self.projects = ProjectRepository(self._connection, self)
         self.activity = ActivityRepository(self._connection, self)
+        self.actuators = ActuatorRepository(self._connection, self)
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:

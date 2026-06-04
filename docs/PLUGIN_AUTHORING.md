@@ -107,13 +107,14 @@ is a hint for rendering. The built-ins use these values:
 | `artifact_generator` | A diagram or formatted document | `mermaid_architecture`, `adr_drafter`, `stakeholder_update_drafter` |
 | `validator` | Flags gaps or issues | `action_owner_enforcer`, `scope_guard` |
 | `signals` | Extracted signals/intelligence | `customer_signal_extractor` |
-| `actuator` | **Blocked by default** — performs an external side effect | _none shipped_ |
+| `actuator` | Proposes an external side effect (approval-gated) | `followup_ticket_actuator` |
 
-**Actuators are gated off.** A plugin whose `kind` is `actuator` is
-refused at dispatch with status `blocked` unless the host is built with
-`allow_actuators=True` (it never is in production today). The approval
-flow that would make actuators safe is deferred to a future phase; do
-not author an `actuator` expecting it to run.
+**Actuators propose; they never act on their own.** A plugin whose
+`kind` is `actuator` returns an `ActuatorProposal` from `run()` — a
+*description* of a side effect — which the host records (status
+`proposed`); the effect only happens after an explicit human **approval**
+and the governance gate, performed by a separate guarded executor. This
+is its own topic — see [Actuators](#actuators) below before authoring one.
 
 ### Execution mode
 
@@ -436,8 +437,9 @@ def create_plugin():            # zero-arg factory → a HostPlugin instance
 `PluginManifestError` (each is a `ManifestError` with a stable `code` —
 `id_format`, `version_format`, `unknown_kind`, `unknown_capability`,
 `invalid_execution_mode`, `unknown_profile`, `unknown_intent`), so you fix
-all issues in one pass. Note `actuator` is **not** a valid `kind` yet —
-actuators are deferred to a later phase.
+all issues in one pass. `actuator` **is** a valid `kind` (see
+[Actuators](#actuators)); a manifest may declare one, but executing its
+proposals is approval- and gate-controlled.
 
 **Discovery.** Drop the file into `~/.holdspeak/plugin_packs/`
 (override with `HOLDSPEAK_USER_PLUGIN_PACKS_DIR`). At startup the loader
@@ -546,6 +548,149 @@ All 14 built-ins clear this bar today.
 
 ---
 
+## Actuators
+
+An **actuator** is the plugin system's third kind. Where an
+`artifact_generator` emits read-only structured data, an actuator
+proposes an **external side effect** — file a ticket, post a message,
+open a PR comment. Because that *leaves the machine*, actuators are built
+around one invariant:
+
+> **No external side effect occurs without an explicit, audited,
+> per-action human approval — and what executes is exactly what was
+> previewed.**
+
+The contract enforces that invariant by splitting "decide what to do"
+from "do it":
+
+```
+ actuator.run()        human          guarded executor
+ ─────────────►  proposal  ──────►  approve  ──────►  execute  ──► audit
+   (proposes)    (persisted)      (HS approval UI)   (connector)
+```
+
+### What an actuator returns: `ActuatorProposal`
+
+An actuator's `run(context)` returns a dict that parses into an
+[`ActuatorProposal`](../holdspeak/plugins/actuators.py) — a *description*
+of the side effect, never the effect itself:
+
+| Field | Meaning |
+|---|---|
+| `target` | The system the effect lands on (`github` / `jira` / `outbox` / …). |
+| `action` | The verb (`create_issue`, `write_followup_ticket`, …). |
+| `preview` | A human-readable description of exactly what will happen. |
+| `payload` | The machine representation of the effect — the **parity source of truth**. |
+| `reversible` | Whether the effect can be undone (shown to the approver). |
+| `required_capabilities` | Capabilities the *execution* needs. |
+
+`run()` **must not reach out** — building the proposal is all it does. If
+there's nothing to propose, raise; the host records a plain `error` (no
+half-formed proposal, no side effect).
+
+### Lifecycle + the gates
+
+A proposal moves through a strict lifecycle, every transition audited:
+
+```
+proposed ──► approved ──► executed
+   │            │     └──► failed ──► approved  (retry)
+   └──► rejected (terminal)
+```
+
+Three independent gates stand between a proposal and a side effect:
+
+1. **Capability (`actuator`)** — to even *propose*, the host must have
+   `actuator` in `enabled_capabilities`. It's off by default, so a
+   registered actuator is `blocked` until an operator opts in.
+2. **Human approval** — execution acts only on an `approved` proposal.
+   Approve/reject happens in the meeting UI (or
+   `POST /api/meetings/{id}/proposals/{pid}/decision`); approving records
+   `decided_by` + an audit entry and performs **no** side effect.
+3. **Governance (`MeetingConfig`)** — `allow_actuators` is the master
+   switch (default `False`); `allowed_actuators` is a per-project
+   allow-list of actuator ids. **Default-safe:** off + empty ⇒ no
+   external side effect ever runs, even for an approved proposal.
+
+### The guarded executor
+
+[`ActuatorExecutor`](../holdspeak/plugins/actuator_executor.py) is the one
+place a side effect happens. `execute(proposal_id)` runs an `approved`
+proposal through the full stack: status check → policy gate → **payload
+parity** (a hash mismatch between what was approved and the stored payload
+aborts to `failed` with no outbound call — a TOCTOU guard) → egress via an
+**injected connector** (the executor never opens a socket itself) →
+`executed`/`failed`, recorded with the payload hash in the audit trail. A
+connector error → `failed` (retryable via `failed → approved`).
+
+The connector is supplied by *you* and is where egress policy lives —
+route it through the existing connector surface (`connector_runtime`) so it
+honors the Phase-25 provider gate; do not invent a new outbound path.
+
+### Worked example: `followup_ticket_actuator`
+
+The reference actuator
+([`followup_ticket_actuator.py`](../holdspeak/plugins/builtin/followup_ticket_actuator.py))
+proposes a follow-up ticket for the first action item without an owner:
+
+```python
+class FollowupTicketActuator:
+    id = "followup_ticket_actuator"
+    version = "0.1.0"
+    kind = "actuator"
+    required_capabilities = ["actuator"]   # off by default → opt-in
+
+    def run(self, context):
+        unowned = _first_unowned(context.get("action_items") or [])
+        if unowned is None:
+            raise ValueError("no unowned action item to follow up on")
+        task = unowned["task"]
+        return {
+            "target": "outbox",
+            "action": "write_followup_ticket",
+            "preview": f"Draft a follow-up ticket for “{task}”",
+            "payload": {"filename": f"followup-{slug(task)}.md", "body": ...},
+            "reversible": True,
+            "required_capabilities": ["actuator"],
+        }
+```
+
+Its connector (`build_outbox_connector`) performs the side effect — here a
+local **outbox** Markdown file (a real, reversible, network-free artifact).
+Wiring the loop:
+
+```python
+host = PluginHost(enabled_capabilities={"actuator"})
+register_followup_actuator(host)                       # opt-in, NOT in register_builtin_plugins
+
+result = host.execute("followup_ticket_actuator", context=ctx, ...)   # → status "proposed"
+record_actuator_proposal(db, run_from(result))         # persist
+
+# ... a human approves in the UI ...
+db.actuators.transition_proposal(pid, to_status="approved", actor="karol")
+
+executor = ActuatorExecutor(
+    db,
+    connector=build_outbox_connector(outbox_dir),
+    allow_actuators=True,                              # master switch
+    allowed_actuator_ids=["followup_ticket_actuator"], # allow-list
+)
+executor.execute(pid)                                  # → "executed" + audit; the file is written
+```
+
+### Registering + testing
+
+Register actuators **explicitly and opt-in** — `register_followup_actuator`
+is *not* part of `register_builtin_plugins`, so the default plugin set and
+routing chains stay unchanged. Test the loop end-to-end against a stub or
+local connector (no real egress): assert the proposal is faithful, that
+executing **before** approval / with the gate off / when not allow-listed
+performs **no** side effect, and that approve → execute writes the audited
+terminal state. See
+[`test_actuator_reference.py`](../tests/unit/test_actuator_reference.py).
+
+---
+
 ## Built-in reference implementations
 
 The cleanest references, in order of how much they'll teach you:
@@ -555,6 +700,7 @@ The cleanest references, in order of how much they'll teach you:
 | `decision_capture` | [`decision_capture.py`](../holdspeak/plugins/builtin/decision_capture.py) | The canonical end-to-end pattern: prompt → intel → parse → structured output, deferred, `llm`-gated. |
 | `mermaid_architecture` | [`mermaid_architecture.py`](../holdspeak/plugins/builtin/mermaid_architecture.py) | An `artifact_generator` that produces a diagram (Mermaid → SVG). |
 | `action_owner_enforcer` | [`action_owner_enforcer.py`](../holdspeak/plugins/builtin/action_owner_enforcer.py) | A `validator` that flags gaps rather than synthesizing prose. |
+| `followup_ticket_actuator` | [`followup_ticket_actuator.py`](../holdspeak/plugins/builtin/followup_ticket_actuator.py) | The reference `actuator` — proposes a side effect; see [Actuators](#actuators). |
 
 The full set of 14 lives under
 [`holdspeak/plugins/builtin/`](../holdspeak/plugins/builtin/); the
@@ -567,10 +713,6 @@ renderers for all of them are in
 
 This contract deliberately does **not** cover:
 
-- **Actuators** — plugins that perform external side effects. The
-  `actuator` kind is blocked by default and needs a preview →
-  human-approval → side-effect flow before it can be enabled. Deferred
-  to a later phase.
 - **Remote/third-party distribution** — there is no marketplace and no
   loader for packages pulled from the internet. Plugin packs (when they
   land) load from a local directory only, matching the connector-pack

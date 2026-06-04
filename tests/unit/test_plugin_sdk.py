@@ -97,11 +97,20 @@ def test_unknown_kind() -> None:
     assert any(e.code == "unknown_kind" for e in exc_info.value.errors)
 
 
-def test_actuator_kind_is_rejected_this_phase() -> None:
-    # Actuators are deferred to a later phase — the manifest can't declare one.
-    with pytest.raises(PluginManifestError) as exc_info:
-        validate_manifest(_good(kind="actuator"))
-    assert any(e.code == "unknown_kind" for e in exc_info.value.errors)
+def test_actuator_kind_is_accepted() -> None:
+    # HS-37-01: the actuator kind is unblocked — a manifest may declare one
+    # (proposing is allowed; executing a proposal is approval-gated).
+    manifest = validate_manifest(_good(kind="actuator"))
+    assert manifest.kind == "actuator"
+
+
+def test_actuator_capability_is_accepted() -> None:
+    # HS-37-01: actuators opt in via the `actuator` capability (off by
+    # default, so a registered actuator is capability-blocked until enabled).
+    manifest = validate_manifest(
+        _good(kind="actuator", required_capabilities=["actuator"])
+    )
+    assert "actuator" in manifest.required_capabilities
 
 
 def test_unknown_capability() -> None:

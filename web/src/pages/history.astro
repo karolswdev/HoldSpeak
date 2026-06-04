@@ -1154,6 +1154,51 @@ import AppLayout from "../layouts/AppLayout.astro";
                   </template>
                 </div>
               </div>
+
+              <!-- HS-37-03: actuator proposals — preview → approve/reject.
+                   Viewing never acts; approval is required before anything runs. -->
+              <div class="detail-card" x-show="selectedMeetingProposals.length" x-cloak>
+                <h4>Proposed actions</h4>
+                <p class="proposal-note">Actuator proposals — review the preview, then approve or reject. Viewing never triggers the action; nothing runs without your approval.</p>
+                <div class="artifact-stack">
+                  <template x-for="p in selectedMeetingProposals" :key="p.id">
+                    <div class="artifact-card proposal-card" :class="`accent-${proposalAccent(p)}`" x-data="{ open: true, copyState: 'idle' }">
+                      <div class="artifact-card__header">
+                        <span class="artifact-card__icon" aria-hidden="true" x-text="proposalIcon(p)"></span>
+                        <div class="artifact-card__heading">
+                          <p class="artifact-card__title" x-text="`${p.action} → ${p.target}`"></p>
+                          <div class="artifact-card__meta">
+                            <span class="status-pill" :class="`proposal-${p.status}`" x-text="proposalStatusLabel(p.status)"></span>
+                            <span class="pill" x-text="p.reversible ? 'reversible' : 'irreversible'"></span>
+                            <span class="pill" x-show="p.decided_by" x-cloak x-text="`by ${p.decided_by}`"></span>
+                          </div>
+                        </div>
+                        <div class="artifact-card__actions">
+                          <button type="button" class="artifact-card__copy"
+                                  :class="{ 'is-copied': copyState === 'done' }"
+                                  title="Copy the preview + payload"
+                                  @click="copyState = (await copyProposal(p)) ? 'done' : 'fail'; setTimeout(() => copyState = 'idle', 1400)"
+                                  x-text="copyState === 'done' ? 'Copied' : copyState === 'fail' ? 'Press ⌘C' : 'Copy'"></button>
+                          <button type="button" class="artifact-card__toggle"
+                                  :aria-expanded="open ? 'true' : 'false'"
+                                  :title="open ? 'Collapse' : 'Expand'"
+                                  @click="open = !open" x-text="open ? '−' : '+'"></button>
+                        </div>
+                      </div>
+                      <div class="artifact-card__body" x-show="open" x-cloak>
+                        <pre class="proposal-preview"><code x-text="proposalPreviewText(p)"></code></pre>
+                        <div class="proposal-actions" x-show="p.status === 'proposed'" x-cloak>
+                          <button type="button" class="btn primary" @click="decideProposal(p, 'approved')">Approve</button>
+                          <button type="button" class="btn" @click="decideProposal(p, 'rejected')">Reject</button>
+                          <span class="proposal-guard">Nothing runs without your approval — this only records your decision.</span>
+                        </div>
+                        <p class="proposal-decided" x-show="p.status !== 'proposed'" x-cloak
+                           x-text="proposalStatusLabel(p.status) + (p.decided_by ? ` · ${p.decided_by}` : '')"></p>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2283,6 +2328,58 @@ import AppLayout from "../layouts/AppLayout.astro";
     color: var(--text-muted);
     margin: 0;
   }
+
+  /* HS-37-03: actuator-proposal approval surface. The card reuses the
+   * `.artifact-card` shell + accent; these are the proposal-specific bits. */
+  .proposal-note {
+    margin: 0 0 var(--space-3);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-relaxed);
+  }
+  .proposal-preview {
+    margin: 0;
+    padding: var(--space-3);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    color: var(--text);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    overflow-x: hidden;
+  }
+  .proposal-preview code { font-family: inherit; color: inherit; }
+  .proposal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .proposal-guard {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    flex: 1 1 12rem;
+  }
+  .proposal-decided {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose, 0.05em);
+    color: var(--text-muted);
+  }
+  /* Typed status pill per proposal lifecycle state. */
+  .status-pill.proposal-proposed { background: var(--warn-soft); color: var(--warn-signal); }
+  .status-pill.proposal-approved { background: var(--info-soft); color: var(--info); }
+  .status-pill.proposal-executed { background: var(--ok-soft); color: var(--ok); }
+  .status-pill.proposal-failed   { background: var(--danger-soft); color: var(--danger-signal); }
+  .status-pill.proposal-rejected { background: var(--surface-3); color: var(--text-muted); }
+  /* A decided/terminal proposal reads quieter than a pending one. */
+  .proposal-card.accent-default { opacity: 0.85; }
 
   .action-controls {
     display: flex;

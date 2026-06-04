@@ -91,6 +91,31 @@ def record_plugin_runs(db: Database, runs: list[PluginRun]) -> None:
         record_plugin_run(db, run)
 
 
+def record_actuator_proposal(db: Database, run: PluginRun) -> None:
+    """Persist the actuator proposal carried by a `proposed` plugin run (HS-37-02).
+
+    An actuator's `run.output` is the `ActuatorProposal` payload (HS-37-01);
+    this records it as a durable proposal awaiting human approval. Idempotent
+    on the run's idempotency key — overlapping windows do not duplicate. No
+    side effect is performed; execution is HS-37-04.
+    """
+    output = run.output if isinstance(run.output, dict) else {}
+    payload = output.get("payload")
+    db.actuators.record_proposal(
+        meeting_id=run.meeting_id,
+        window_id=run.window_id,
+        plugin_id=run.plugin_id,
+        plugin_version=run.plugin_version,
+        idempotency_key=run.idempotency_key,
+        target=str(output.get("target", "")),
+        action=str(output.get("action", "")),
+        preview=str(output.get("preview", "")),
+        payload=payload if isinstance(payload, dict) else {},
+        reversible=bool(output.get("reversible", False)),
+        required_capabilities=list(output.get("required_capabilities") or []),
+    )
+
+
 def record_artifact_with_lineage(
     db: Database,
     *,

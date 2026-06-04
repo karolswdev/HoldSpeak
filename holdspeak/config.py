@@ -137,6 +137,15 @@ class MeetingConfig:
     # scoring on any probe failure.
     intent_segment_probe_enabled: bool = False
 
+    # HS-37-04: actuator execution policy (the governance gate). Actuators
+    # PROPOSE by default; *executing* an approved proposal needs BOTH the master
+    # switch on AND the actuator id on the per-project allow-list. Default-safe:
+    # allow_actuators=False and an empty allow-list mean no external side effect
+    # ever runs, even for an approved proposal. (Approval is always additionally
+    # required — see the proposal lifecycle.)
+    allow_actuators: bool = False
+    allowed_actuators: list[str] = field(default_factory=list)
+
     # Speaker diarization
     diarization_enabled: bool = False  # Identify multiple speakers in system audio
     diarize_mic: bool = False  # Also diarize mic input (for on-site meetings)
@@ -188,6 +197,25 @@ class MeetingConfig:
                 seen.add(pid)
                 normalized.append(pid)
         self.disabled_plugins = normalized
+
+        # HS-37-04: same shape as disabled_plugins — a list of actuator plugin
+        # ids explicitly cleared to execute on this project. Unknown ids are a
+        # harmless no-op (an actuator that isn't registered never runs).
+        if not isinstance(self.allowed_actuators, list) or not all(
+            isinstance(p, str) for p in self.allowed_actuators
+        ):
+            raise ValueError(
+                f"allowed_actuators must be a list of actuator-id strings, "
+                f"got {self.allowed_actuators!r}"
+            )
+        seen_act: set[str] = set()
+        normalized_act: list[str] = []
+        for raw in self.allowed_actuators:
+            aid = raw.strip()
+            if aid and aid not in seen_act:
+                seen_act.add(aid)
+                normalized_act.append(aid)
+        self.allowed_actuators = normalized_act
 
     def intent_hysteresis(self) -> float:
         """Convert `intent_hysteresis_windows` (int) to the float gap value

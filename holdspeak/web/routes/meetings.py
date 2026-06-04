@@ -30,6 +30,7 @@ from ...web_requests import (
     _GlobalActionItemUpdateRequest,
     _IntelProcessRequest,
     _MeetingStartRequest,
+    _ProposalDecisionRequest,
     _SpeakerUpdateRequest,
     _StopRequest,
     _UpdateMeetingRequest,
@@ -635,6 +636,99 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             )
         except Exception as e:
             return error_500(e, log, "Failed to load meeting artifacts")
+
+    def _proposal_to_dict(proposal: Any) -> dict[str, Any]:
+        return {
+            "id": proposal.id,
+            "meeting_id": proposal.meeting_id,
+            "window_id": proposal.window_id,
+            "plugin_id": proposal.plugin_id,
+            "plugin_version": proposal.plugin_version,
+            "status": proposal.status,
+            "target": proposal.target,
+            "action": proposal.action,
+            "preview": proposal.preview,
+            "payload": proposal.payload,
+            "reversible": proposal.reversible,
+            "required_capabilities": proposal.required_capabilities,
+            "decided_by": proposal.decided_by,
+            "result": proposal.result,
+            "error": proposal.error,
+            "created_at": proposal.created_at,
+            "decided_at": proposal.decided_at,
+            "executed_at": proposal.executed_at,
+        }
+
+    @router.get("/api/meetings/{meeting_id}/proposals")
+    async def api_get_meeting_proposals(
+        meeting_id: str,
+        status: Optional[str] = None,
+    ) -> Any:
+        """List actuator proposals for one meeting (HS-37-03).
+
+        A pure DB read — viewing a proposal performs **no** side effect.
+        """
+        try:
+            from ...db import get_database
+
+            db = get_database()
+            meeting = db.meetings.get_meeting(meeting_id)
+            if meeting is None:
+                return JSONResponse({"error": "Meeting not found"}, status_code=404)
+
+            proposals = db.actuators.list_proposals(meeting_id, status=status)
+            return JSONResponse(
+                {
+                    "meeting_id": meeting_id,
+                    "proposals": [_proposal_to_dict(p) for p in proposals],
+                }
+            )
+        except Exception as e:
+            return error_500(e, log, "Failed to load meeting proposals")
+
+    @router.post("/api/meetings/{meeting_id}/proposals/{proposal_id}/decision")
+    async def api_decide_meeting_proposal(
+        meeting_id: str,
+        proposal_id: str,
+        payload: _ProposalDecisionRequest,
+    ) -> Any:
+        """Approve or reject an actuator proposal (HS-37-03).
+
+        Approving only flips DB state to `approved` (+ `decided_by` + an audit
+        entry); it performs **no** side effect — execution is HS-37-04. Rejecting
+        is terminal. Illegal decisions (e.g. on an already-executed proposal)
+        return 400.
+        """
+        decision = str(payload.decision or "").strip().lower()
+        if decision not in ("approved", "rejected"):
+            return JSONResponse(
+                {"success": False, "error": f"Invalid decision: {decision!r}"},
+                status_code=400,
+            )
+        try:
+            from ...db import get_database
+
+            db = get_database()
+            existing = db.actuators.get_proposal(proposal_id)
+            if existing is None or existing.meeting_id != meeting_id:
+                return JSONResponse(
+                    {"success": False, "error": "Proposal not found"},
+                    status_code=404,
+                )
+            try:
+                updated = db.actuators.transition_proposal(
+                    proposal_id,
+                    to_status=decision,
+                    actor=(payload.decided_by or "web-user").strip() or "web-user",
+                )
+            except ValueError as ve:
+                # Illegal lifecycle transition (e.g. already executed/rejected).
+                return JSONResponse(
+                    {"success": False, "error": str(ve)}, status_code=400
+                )
+            return JSONResponse({"success": True, "proposal": _proposal_to_dict(updated)})
+        except Exception as e:
+            return error_500(e, log, "Failed to decide meeting proposal")
 
     @router.get("/api/all-action-items")
     async def api_list_all_action_items(

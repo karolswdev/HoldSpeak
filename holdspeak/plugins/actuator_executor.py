@@ -1,0 +1,170 @@
+"""Guarded actuator executor (Phase 37, HS-37-04).
+
+This is the one place an actuator's external side effect actually happens — so
+it is where the phase invariant is enforced in code:
+
+    No external side effect occurs without an explicit, audited, per-action
+    human approval — and what executes is exactly what was previewed.
+
+`ActuatorExecutor.execute(proposal_id)` acts on an **approved** proposal and,
+before any outbound call:
+
+  1. **status** — refuses anything that isn't `approved` (no execution).
+  2. **policy gate** — the master `allow_actuators` switch must be on, and (if a
+     per-project allow-list is supplied) the actuator id must be on it.
+  3. **payload parity** — the side effect is built from the proposal's stored
+     `payload` (the source of truth). When the approval layer passes the hash it
+     approved, a mismatch aborts to `failed` with **no** outbound call (TOCTOU
+     guard).
+  4. **egress** — routes through the injected `connector` (HS-37-05 supplies one
+     backed by the Phase-25-gated connector runtime; this module is
+     connector-agnostic and never opens a socket itself).
+  5. **audit** — every terminal transition (`executed`/`failed`) is recorded via
+     `ActuatorRepository.transition_proposal`, which writes an audit row carrying
+     the payload hash.
+
+Policy/status refusals raise and **do not change state** (enable the gate / fix
+the approval and retry); parity and connector failures transition the proposal to
+`failed` (retryable via `failed -> approved`).
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+from typing import Any, Callable, Iterable, Optional
+
+from ..logging_config import get_logger
+from .actuators import ActuatorProposal
+
+log = get_logger("plugins.actuator_executor")
+
+# A connector performs the side effect for a proposal and returns a result dict
+# (or raises). HS-37-05 supplies one backed by the connector runtime; tests pass
+# a stub. The executor itself never egresses.
+Connector = Callable[[Any], "dict[str, Any]"]
+
+
+class ActuatorExecutionError(RuntimeError):
+    """The proposal cannot be executed in its current state (not approved)."""
+
+
+class ActuatorPolicyError(PermissionError):
+    """Execution is refused by the governance gate (no state change)."""
+
+
+def payload_hash(payload: Optional[dict[str, Any]]) -> str:
+    """Stable hash of a proposal payload — the parity identity."""
+    canonical = json.dumps(payload or {}, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+class ActuatorExecutor:
+    """Executes approved actuator proposals under the full guard stack."""
+
+    def __init__(
+        self,
+        db: Any,
+        *,
+        connector: Connector,
+        allow_actuators: bool = False,
+        allowed_actuator_ids: Optional[Iterable[str]] = None,
+        actor: str = "executor",
+    ) -> None:
+        self._db = db
+        self._connector = connector
+        self._allow_actuators = bool(allow_actuators)
+        # None => no allow-list enforcement (the master gate is the only gate);
+        # a set (even empty) => the actuator id must be a member to execute.
+        self._allowed = (
+            {str(a).strip() for a in allowed_actuator_ids if str(a).strip()}
+            if allowed_actuator_ids is not None
+            else None
+        )
+        self._actor = str(actor).strip() or "executor"
+
+    def execute(self, proposal_id: str, *, approved_payload_hash: Optional[str] = None) -> Any:
+        """Execute an approved proposal; returns the updated proposal record.
+
+        Raises `KeyError` (unknown), `ActuatorExecutionError` (not approved), or
+        `ActuatorPolicyError` (gate/allow-list) **without** changing state. A
+        parity or connector failure transitions the proposal to `failed`.
+        """
+        proposal = self._db.actuators.get_proposal(proposal_id)
+        if proposal is None:
+            raise KeyError(f"unknown proposal: {proposal_id}")
+
+        # 1. status gate — only an approved proposal may execute.
+        if proposal.status != "approved":
+            raise ActuatorExecutionError(
+                f"proposal {proposal_id} is '{proposal.status}', not 'approved' — refusing to execute"
+            )
+
+        # 2. policy gate — no state change on refusal (operator can enable + retry).
+        if not self._allow_actuators:
+            raise ActuatorPolicyError(
+                "actuator execution is disabled (allow_actuators is off)"
+            )
+        if self._allowed is not None and proposal.plugin_id not in self._allowed:
+            raise ActuatorPolicyError(
+                f"actuator '{proposal.plugin_id}' is not on the project allow-list"
+            )
+
+        # 3. payload parity (TOCTOU) — what executes must equal what was approved.
+        current_hash = payload_hash(proposal.payload)
+        if approved_payload_hash is not None and approved_payload_hash != current_hash:
+            log.warning(
+                "actuator payload parity mismatch for %s (approved %s != current %s)",
+                proposal_id,
+                approved_payload_hash[:12],
+                current_hash[:12],
+            )
+            return self._db.actuators.transition_proposal(
+                proposal_id,
+                to_status="failed",
+                actor=self._actor,
+                detail=(
+                    f"payload parity mismatch (approved {approved_payload_hash[:12]} "
+                    f"!= current {current_hash[:12]})"
+                ),
+                error="payload parity check failed — execution aborted, no side effect performed",
+            )
+
+        # 4. egress via the injected connector (never a socket from here). The
+        #    side effect is built from the stored payload, not any caller input.
+        proposal_view = ActuatorProposal(
+            target=proposal.target,
+            action=proposal.action,
+            preview=proposal.preview,
+            payload=dict(proposal.payload),
+            reversible=proposal.reversible,
+            required_capabilities=tuple(proposal.required_capabilities),
+        )
+        try:
+            result = self._connector(proposal_view)
+        except Exception as exc:  # connector failure → failed (retryable) + audit
+            log.error("actuator connector failed for %s: %s", proposal_id, exc)
+            return self._db.actuators.transition_proposal(
+                proposal_id,
+                to_status="failed",
+                actor=self._actor,
+                detail=f"connector error; payload {current_hash[:12]}",
+                error=f"{type(exc).__name__}: {exc}",
+            )
+
+        # 5. success → executed + audit (result recorded; payload hash in detail).
+        return self._db.actuators.transition_proposal(
+            proposal_id,
+            to_status="executed",
+            actor=self._actor,
+            detail=f"executed via connector; payload {current_hash[:12]}",
+            result=result if isinstance(result, dict) else {"result": result},
+        )
+
+
+__all__ = [
+    "ActuatorExecutor",
+    "ActuatorExecutionError",
+    "ActuatorPolicyError",
+    "Connector",
+    "payload_hash",
+]
