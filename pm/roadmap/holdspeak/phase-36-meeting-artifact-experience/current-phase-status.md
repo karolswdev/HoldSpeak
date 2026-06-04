@@ -1,6 +1,6 @@
 # Phase 36 — Meeting Artifact Experience
 
-**Status:** in-progress (opened 2026-06-04). 0/4 stories shipped.
+**Status:** in-progress (opened 2026-06-04). 0/5 stories shipped.
 
 **Last updated:** 2026-06-04 (phase opened off Phase 35's close, on direct user
 feedback that the artifact rendering looks basic, has no copy affordance, and overflows
@@ -37,9 +37,16 @@ touching the plugin contract or artifact data.
   dependency map, scope review, customer signals, action items, mermaid) — typed
   status colors, iconography, spacing, density — so each reads as a designed block,
   not a flat dump.
-- **Closeout (HS-36-04).** Rebuild the bundle; verify/update the spoken-e2e selectors
-  in lockstep; capture before/after screenshots (incl. the incident-retro meeting);
-  `final-summary.md`.
+- **Dynamic, digression-heavy multi-topic spoken-e2e (HS-36-04).** A third spoken-e2e
+  scenario: one long, messy, human-sounding meeting (small talk, tangents,
+  interruptions, callbacks) spanning several intents, so several plugin chains fire and
+  a dense/varied artifact set results. Dual purpose — stress-tests pipeline signal
+  extraction against noise, *and* is the rich showcase fixture for the new cards.
+  Structural, noise-tolerant assertions (≥3 distinct artifact types; no exact-type/wording
+  pins). Opt-in like the others.
+- **Closeout (HS-36-05).** Rebuild the bundle; verify/update the spoken-e2e selectors
+  in lockstep; capture before/after screenshots (the dynamic meeting is the headline
+  showcase); `final-summary.md`.
 
 ### Out
 
@@ -59,11 +66,15 @@ touching the plugin contract or artifact data.
 - [ ] Each artifact has a working "Copy as Markdown" button (clipboard write +
       copied-state); the produced Markdown is well-formed per type. (HS-36-02)
 - [ ] Every artifact type's body got the Signal polish pass. (HS-36-03)
+- [ ] A third spoken-e2e (dynamic, digression-heavy, multi-topic) exists, is opt-in,
+      and verified once for real against `.43`; structural/noise-tolerant assertions
+      (≥3 distinct artifact types, no exact-type/wording pins). (HS-36-04)
 - [ ] `cd web && npm run build` succeeds and the rebuilt bundle is committed with each
       source change; `tests/e2e/test_spoken_meeting_e2e.py` selectors pass (preserved
       or updated in lockstep). (all)
 - [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green throughout; the
-      incident-retro spoken-e2e re-run for real shows the new look (screenshot). (HS-36-04)
+      dynamic-meeting spoken-e2e re-run for real shows the new look on a dense, varied
+      artifact set (screenshot). (HS-36-05)
 
 ## Story status
 
@@ -72,7 +83,8 @@ touching the plugin contract or artifact data.
 | HS-36-01 | Elevated artifact-card shell + overflow-safe layout | not-started | [story-01-artifact-card-shell.md](./story-01-artifact-card-shell.md) | — |
 | HS-36-02 | Copy-as-Markdown per artifact | not-started | [story-02-copy-as-markdown.md](./story-02-copy-as-markdown.md) | — |
 | HS-36-03 | Per-artifact-type body polish | not-started | [story-03-per-type-body-polish.md](./story-03-per-type-body-polish.md) | — |
-| HS-36-04 | Phase closeout + final-summary | not-started | [story-04-closeout.md](./story-04-closeout.md) | — |
+| HS-36-04 | Dynamic, digression-heavy multi-topic spoken-e2e | not-started | [story-04-dynamic-meeting-e2e.md](./story-04-dynamic-meeting-e2e.md) | — |
+| HS-36-05 | Phase closeout + final-summary | not-started | [story-05-closeout.md](./story-05-closeout.md) | — |
 
 ## Where we are
 
@@ -84,7 +96,11 @@ makes its *output* look the part. The recon is done: artifacts render in
 `CommandPreview.astro`, the risk-table overflow is a missing `overflow-x` container +
 unbounded cells, and the spoken-e2e pins several artifact selectors. Direction chosen
 by the user: **Elevated cards**. Numbering: this took the Phase 36 slot; **Actuators
-moved to Phase 37**. HS-36-01 (card shell + overflow fix) first — the most visible win.
+moved to Phase 37**. The user then asked to add a **dynamic, digression-heavy
+multi-topic spoken-e2e** (HS-36-04) — a messy, human-sounding meeting that stress-tests
+pipeline signal extraction *and* yields the dense/varied artifact set that best
+showcases the new cards (closeout bumped to HS-36-05). HS-36-01 (card shell + overflow
+fix) first — the most visible win.
 
 ## Pickup order
 
@@ -92,7 +108,9 @@ moved to Phase 37**. HS-36-01 (card shell + overflow fix) first — the most vis
    foundation + the most-complained-about overflow; highest visible impact).
 2. HS-36-02 — copy-as-Markdown (builds on the card header for the button slot).
 3. HS-36-03 — per-type body polish (fills in each artifact body within the new shell).
-4. HS-36-04 — closeout + final-summary.
+4. HS-36-04 — dynamic/messy multi-topic spoken-e2e (independent of 01–03; land it
+   before HS-36-05 since its rich output is the closeout showcase).
+5. HS-36-05 — closeout + final-summary.
 
 ## Active risks
 

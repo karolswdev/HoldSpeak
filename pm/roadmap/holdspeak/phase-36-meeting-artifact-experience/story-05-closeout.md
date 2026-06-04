@@ -1,9 +1,9 @@
-# HS-36-04 — Phase closeout + final-summary
+# HS-36-05 — Phase closeout + final-summary
 
 - **Project:** holdspeak
 - **Phase:** 36
 - **Status:** not-started
-- **Depends on:** HS-36-01, HS-36-02, HS-36-03
+- **Depends on:** HS-36-01, HS-36-02, HS-36-03, HS-36-04
 - **Unblocks:** none
 - **Owner:** unassigned
 
@@ -18,9 +18,11 @@ spoken-e2e still passes, and write the phase `final-summary.md`.
 - **In:**
   - Final `cd web && npm run build`; confirm `holdspeak/static/_built/` committed and
     consistent with source.
-  - Re-run the incident-retro spoken-e2e for real
-    (`HOLDSPEAK_SPOKEN_E2E=1 … test_spoken_incident_retro_end_to_end`) to capture the
-    **new** artifact look — before/after screenshots into this phase's `evidence/`.
+  - Re-run the spoken-e2e for real to capture the **new** artifact look — both the
+    incident-retro (`test_spoken_incident_retro_end_to_end`) and especially the new
+    **dynamic/messy meeting** (`test_spoken_dynamic_meeting_end_to_end`, HS-36-04),
+    which produces the densest, most varied artifact set — before/after screenshots into
+    this phase's `evidence/`.
   - Confirm all spoken-e2e artifact selectors pass (preserved or updated in lockstep —
     not silenced).
   - `uv run pytest -q --ignore=tests/e2e/test_metal.py` green.
