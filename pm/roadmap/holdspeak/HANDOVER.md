@@ -47,17 +47,29 @@ with the live status docs, the status docs win.
 
 ## 3. Pick up here
 
-**▶ Phase 35 — Plugin Frontier is OPEN (0/5), on local branch
-`phase-35/hs-35-01-plugin-authoring-guide`.** Make the meeting-intel plugin system
-**extensible by others** (Phase 29's handed-off "next frontier"). Start with
-**HS-35-01 — `docs/PLUGIN_AUTHORING.md`** (public authoring guide; mirror
-`docs/CONNECTOR_DEVELOPMENT.md`). Then HS-35-02 (plugin-pack manifest + discovery
-loader, mirroring `connector_pack_loader.py`/`connector_sdk.py`) → HS-35-03
-(per-project enable/disable at dispatch) → HS-35-04 (incident-retro spoken-e2e
-scenario) → HS-35-05 (closeout). Full plan:
-`phase-35-plugin-frontier/current-phase-status.md`. **The 14 built-ins stay
-behavior-identical** (packs/enable layer *around* them); **actuators are deferred to
-Phase 36** (the host's dormant `allow_actuators` gate + RFC open-question #5).
+**▶ Phase 36 — Actuators is the next phase to OPEN (not yet scaffolded).** Phase 35
+— Plugin Frontier is **CLOSED ✅ (5/5)** on local branch
+`phase-35/hs-35-01-plugin-authoring-guide` (5 story commits) — **open a PR to `main`**.
+The plugin system is now externalizable end-to-end: public `docs/PLUGIN_AUTHORING.md`,
+a plugin-pack manifest + discovery loader (`plugin_sdk.py` / `plugin_pack_loader.py`,
+first-party + `~/.holdspeak/plugin_packs/`), per-project enable/disable (a `skipped`
+dispatch gate; `router.py` untouched), and a second spoken-e2e (incident + comms,
+verified on `.43`). The 14 built-ins are behavior-identical. Full record:
+`phase-35-plugin-frontier/final-summary.md`.
+
+**Phase 36 — Actuators** is the teed-up successor: the host's `actuator` kind stays
+**blocked** today; this phase built its groundwork (the authoring + pack + manifest
+contract). Phase 36 adds preview → human approval → external side effect (RFC open
+question #5; intersects the Phase-25 egress posture). Scaffold a phase folder + stories
+when starting.
+
+> **▶ Carried follow-up (foundation-hardening, surfaced HS-35-04, NOT fixed):**
+> `Config.load()` parses each sub-config as `MeetingConfig(**data)` inside a broad
+> `except Exception: return cls()`, so a single unknown/legacy key (found live: the
+> HS-32-06-retired `meeting.web_enabled`) makes the **whole** config silently fall back
+> to defaults — a configured `.43` `intel_cloud_base_url` is ignored on every load with
+> no error. Recommend filtering unknown keys per sub-config (or log-and-drop) rather
+> than discarding everything. Not scheduled.
 
 > **▶ Routing ripple (HANDOVER §5):** adding/suppressing a plugin in a chain touches
 > `tests/unit/test_intent_dispatch.py` (chain constants + window counts) +

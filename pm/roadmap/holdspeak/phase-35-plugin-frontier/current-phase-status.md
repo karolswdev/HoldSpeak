@@ -1,13 +1,14 @@
 # Phase 35 — Plugin Frontier
 
-**Status:** in-progress (opened 2026-06-03). 4/5 stories shipped.
+**Status:** CLOSED ✅ (opened 2026-06-03, closed 2026-06-04). 5/5 stories shipped.
+See [final-summary.md](./final-summary.md).
 
-**Last updated:** 2026-06-04 (HS-35-04 shipped — a second opt-in spoken-e2e scenario
-(`test_spoken_incident_retro_end_to_end`) exercising the incident + comms chains
-(`incident_timeline`/`runbook_delta`/`risk_heatmap`/`stakeholder_update_drafter`/
-`decision_announcement_drafter`); verified for real against `.43` (1 passed in 24s,
-all five artifacts rendered — screenshot committed); default suite green 2007/15 with
-the module skipping cleanly. HS-35-05 closeout next).
+**Last updated:** 2026-06-04 (HS-35-05 — **Phase 35 CLOSED 5/5**. Closeout:
+routing invariants re-verified (`test_intent_dispatch`/`test_intent_router` 54 passed —
+the 14 built-ins unchanged; packs + the disable gate sit around them), doc drift-guard
++ link-check green, plugin-frontier modules ruff-clean, suite 2007/15. `final-summary.md`
+written; README phase row → done. Actuators teed up for Phase 36. Follow-up flagged: the
+`Config.load()` silent total-fallback on an unknown config key (foundation-hardening)).
 
 ## Goal
 
@@ -79,7 +80,7 @@ unchanged; the new machinery sits around them.
 | HS-35-02 | Plugin pack manifest + discovery loader | done | [story-02-plugin-packs.md](./story-02-plugin-packs.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-35-03 | Per-project plugin enable/disable | done | [story-03-per-project-enable-disable.md](./story-03-per-project-enable-disable.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-35-04 | Spoken-e2e breadth: incident retro | done | [story-04-spoken-e2e-incident.md](./story-04-spoken-e2e-incident.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-35-05 | Phase closeout + final-summary | not-started | [story-05-closeout.md](./story-05-closeout.md) | — |
+| HS-35-05 | Phase closeout + final-summary | done | [story-05-closeout.md](./story-05-closeout.md) | [evidence-story-05.md](./evidence-story-05.md) |
 
 ## Where we are
 

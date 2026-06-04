@@ -1,6 +1,6 @@
 # HS-35-05 — Phase closeout + final-summary
 
-- **Status:** not-started.
+- **Status:** done (2026-06-04). See [final-summary.md](./final-summary.md).
 
 ## Goal
 
@@ -28,6 +28,7 @@ working, incident/comms e2e covered) and write the phase `final-summary.md`.
 
 ## Done when
 
-- [ ] Built-in routing unchanged; pack + enable/disable + e2e all green; ruff-clean.
-- [ ] `final-summary.md` written; project README phase row = `done`; HANDOVER
+- [x] Built-in routing unchanged (`test_intent_dispatch`/`test_intent_router` 54
+      passed); pack + enable/disable + e2e all green; ruff-clean; suite 2007/15.
+- [x] `final-summary.md` written; project README phase row = `done`; HANDOVER
       refreshed (Phase 36 — Actuators teed up).
