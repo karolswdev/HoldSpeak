@@ -1,6 +1,6 @@
 # HS-35-04 — Spoken-e2e breadth: incident retro
 
-- **Status:** not-started.
+- **Status:** done (2026-06-04). Evidence: [evidence-story-04.md](./evidence-story-04.md).
 
 ## Goal
 
@@ -34,8 +34,10 @@ get real `say` → Whisper → MIR → plugins → web coverage.
 
 ## Done when
 
-- [ ] A second spoken-e2e scenario (incident retro) exercises the incident + comms
+- [x] A second spoken-e2e scenario (incident retro) exercises the incident + comms
       chains end-to-end; assertions confirm those plugins' artifacts.
-- [ ] Opt-in/skip behavior matches the existing scenario; full suite green without
-      the opt-in.
-- [ ] Verified once against the real `.43` LLM (evidence: run output / screenshots).
+- [x] Opt-in/skip behavior matches the existing scenario; full suite green without
+      the opt-in (2007 passed, 15 skipped).
+- [x] Verified once against the real `.43` LLM (evidence: run output + screenshot
+      `evidence/spoken_incident_artifacts.png`; 1 passed in 24.14s, all five
+      incident + comms artifacts rendered).

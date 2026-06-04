@@ -1,11 +1,13 @@
 # Phase 35 — Plugin Frontier
 
-**Status:** in-progress (opened 2026-06-03). 3/5 stories shipped.
+**Status:** in-progress (opened 2026-06-03). 4/5 stories shipped.
 
-**Last updated:** 2026-06-03 (HS-35-03 shipped — per-project plugin enable/disable:
-`MeetingConfig.disabled_plugins` + a dispatch gate that records disabled plugins as
-`skipped` (built chain unchanged; `router.py` untouched); HS-35-04 incident-retro
-spoken-e2e next).
+**Last updated:** 2026-06-04 (HS-35-04 shipped — a second opt-in spoken-e2e scenario
+(`test_spoken_incident_retro_end_to_end`) exercising the incident + comms chains
+(`incident_timeline`/`runbook_delta`/`risk_heatmap`/`stakeholder_update_drafter`/
+`decision_announcement_drafter`); verified for real against `.43` (1 passed in 24s,
+all five artifacts rendered — screenshot committed); default suite green 2007/15 with
+the module skipping cleanly. HS-35-05 closeout next).
 
 ## Goal
 
@@ -76,7 +78,7 @@ unchanged; the new machinery sits around them.
 | HS-35-01 | Public plugin-authoring guide (`docs/PLUGIN_AUTHORING.md`) | done | [story-01-plugin-authoring-guide.md](./story-01-plugin-authoring-guide.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-35-02 | Plugin pack manifest + discovery loader | done | [story-02-plugin-packs.md](./story-02-plugin-packs.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-35-03 | Per-project plugin enable/disable | done | [story-03-per-project-enable-disable.md](./story-03-per-project-enable-disable.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-35-04 | Spoken-e2e breadth: incident retro | not-started | [story-04-spoken-e2e-incident.md](./story-04-spoken-e2e-incident.md) | — |
+| HS-35-04 | Spoken-e2e breadth: incident retro | done | [story-04-spoken-e2e-incident.md](./story-04-spoken-e2e-incident.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-35-05 | Phase closeout + final-summary | not-started | [story-05-closeout.md](./story-05-closeout.md) | — |
 
 ## Where we are
@@ -141,6 +143,30 @@ unknown-id no-op, default byte-identical, and config validation. Default (empty 
 behavior is byte-identical. Full suite 2007 passed / 15 skipped; authored files ruff
 clean. `docs/PLUGIN_AUTHORING.md` gained a "Disabling a plugin per project" note.
 Next: HS-35-04 (incident-retro spoken-e2e scenario).
+
+**HS-35-04 shipped (2026-06-04):** a second opt-in spoken-meeting e2e —
+`test_spoken_incident_retro_end_to_end` in `tests/e2e/test_spoken_meeting_e2e.py`. The
+existing scenario covered balanced/architecture/delivery/product; this one drives a
+short incident postmortem (detection → 38-min impact → 2:05 deploy trigger → pool
+exhaustion → rollback → root cause → a runbook step → a holiday-traffic risk → a canary
+decision → a leadership note) through the **incident + comms** chains:
+`incident_timeline`, `runbook_delta`, `risk_heatmap`, `stakeholder_update_drafter`,
+`decision_announcement_drafter`. Same shape as the existing test — `say` → Whisper
+(`base`) → real `.43` PluginHost (deferred queue drained) → `synthesize_and_persist` →
+temp SQLite → `MeetingWebServer` → Playwright screenshots `/history`. Assertions are
+**structural** (real LLM): each plugin `success`; outputs carry
+`events`/`changes`/`risks`/`update`/`announcements`; artifacts persist under
+`incident_timeline`/`runbook_delta`/`risk_register`/`stakeholder_update`/
+`decision_announcement` and render their web selectors. Opt-in identically
+(`HOLDSPEAK_SPOKEN_E2E=1`; module-skips otherwise). **Verified for real against `.43`
+(Qwen3.5-9B-Q6):** 1 passed in 24.14s, all five artifacts rendered — committed
+screenshot `evidence/spoken_incident_artifacts.png` (1280×3094). Default suite green
+2007/15 (module skips cleanly); file ruff-clean. **Surfaced (out of scope, flagged for
+closeout):** the user's `~/.config/holdspeak/config.json` carried the HS-32-06-retired
+`meeting.web_enabled` key, and `Config.load()`'s broad `except: return cls()` made the
+*entire* config silently fall back to defaults (the `.43` cloud endpoint ignored on
+every load) — stale key removed to unblock; the silent total-fallback is a latent
+foundation bug worth a small hardening fix. Next: HS-35-05 (closeout + final-summary).
 
 ## Pickup order
 
