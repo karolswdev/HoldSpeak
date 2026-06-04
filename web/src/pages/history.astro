@@ -1582,16 +1582,20 @@ import AppLayout from "../layouts/AppLayout.astro";
     flex-direction: column;
     gap: var(--space-2);
   }
+  /* HS-36-03: action items read as ok-accented sub-cards within the shell. */
   .action-item {
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
     padding: var(--space-2) var(--space-3);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-1, 4px);
+    background: var(--surface-3);
+    border: 1px solid var(--border-subtle);
+    border-left: 2px solid var(--ok);
+    border-radius: var(--radius-sm);
   }
   .action-item .ai-task {
     font-size: var(--font-size-sm);
+    font-weight: 600;
     overflow-wrap: anywhere;
   }
   .action-item .ai-meta {
@@ -1620,13 +1624,25 @@ import AppLayout from "../layouts/AppLayout.astro";
     color: var(--text-muted);
   }
   .decision-list {
-    list-style: disc;
+    list-style: none;
     margin: 0;
     padding-left: var(--space-4);
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
+    gap: var(--space-2);
     font-size: var(--font-size-sm);
+  }
+  .decision-list li {
+    position: relative;
+    overflow-wrap: anywhere;
+  }
+  .decision-list li::before {
+    content: "▸";
+    position: absolute;
+    left: calc(-1 * var(--space-4) + 2px);
+    color: var(--accent);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
   }
   .decision-list .rationale {
     color: var(--text-muted);
@@ -1647,15 +1663,35 @@ import AppLayout from "../layouts/AppLayout.astro";
     gap: var(--space-2);
     align-items: baseline;
   }
+  /* HS-36-03: requirement type → typed Signal badge (not plain mono text). */
   .requirement-item .req-type {
     flex: none;
+    display: inline-block;
+    min-width: 6.5rem;
+    text-align: center;
     font-family: var(--font-mono);
     font-size: var(--font-size-xs);
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing-loose, 0.05em);
-    color: var(--text-muted);
-    min-width: 7rem;
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-sm);
+    color: var(--info);
+    background: var(--info-soft);
+    border: 1px solid var(--info);
   }
+  .requirement-item .req-type.functional {
+    color: var(--ok); background: var(--ok-soft); border-color: var(--ok);
+  }
+  .requirement-item .req-type.non_functional {
+    color: var(--info); background: var(--info-soft); border-color: var(--info);
+  }
+  .requirement-item .req-type.constraint {
+    color: var(--warn-signal); background: var(--warn-soft); border-color: var(--warn-signal);
+  }
+  .requirement-item .req-type.acceptance {
+    color: var(--accent); background: var(--accent-soft); border-color: var(--accent);
+  }
+  .requirement-item .req-text { overflow-wrap: anywhere; }
 
   /* HS-28-02: Architecture Decision Records render. */
   .adr-artifact {
@@ -1668,6 +1704,11 @@ import AppLayout from "../layouts/AppLayout.astro";
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    background: var(--surface-3);
+    border: 1px solid var(--border-subtle);
+    border-left: 2px solid var(--info);
+    border-radius: var(--radius-sm);
   }
   .adr-head {
     display: flex;
@@ -1676,7 +1717,7 @@ import AppLayout from "../layouts/AppLayout.astro";
     gap: var(--space-2);
   }
   .adr-head .adr-title {
-    font-weight: var(--font-weight-bold, 600);
+    font-weight: 600;
   }
   .adr-line {
     margin: 0;
@@ -1702,6 +1743,11 @@ import AppLayout from "../layouts/AppLayout.astro";
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    background: var(--surface-3);
+    border: 1px solid var(--border-subtle);
+    border-left: 2px solid var(--info);
+    border-radius: var(--radius-sm);
   }
   .milestone-head {
     display: flex;
@@ -1710,7 +1756,7 @@ import AppLayout from "../layouts/AppLayout.astro";
     gap: var(--space-2);
   }
   .milestone-head .milestone-name {
-    font-weight: var(--font-weight-bold, 600);
+    font-weight: 600;
   }
   .milestone-line {
     margin: 0;
@@ -1939,26 +1985,33 @@ import AppLayout from "../layouts/AppLayout.astro";
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing-loose, 0.05em);
     color: var(--text-muted);
+    border-bottom-color: var(--border);
   }
+  .risk-table tbody tr:hover { background: var(--surface-3); }
+  /* HS-36-03: severity pills on the Signal palette (was off-palette --color-*). */
   .level-pill {
     display: inline-block;
     padding: 0 var(--space-1);
-    border-radius: var(--radius-sm, 3px);
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
     font-family: var(--font-mono);
     font-size: var(--font-size-xs);
     text-transform: uppercase;
   }
   .level-pill.level-high {
-    background: var(--color-danger-soft, rgba(220, 80, 80, 0.18));
-    color: var(--color-danger, #e06666);
+    background: var(--danger-soft);
+    color: var(--danger-signal);
+    border-color: var(--danger-signal);
   }
   .level-pill.level-medium {
-    background: var(--color-warning-soft, rgba(220, 170, 80, 0.18));
-    color: var(--color-warning, #e0b066);
+    background: var(--warn-soft);
+    color: var(--warn-signal);
+    border-color: var(--warn-signal);
   }
   .level-pill.level-low {
-    background: var(--color-success-soft, rgba(110, 180, 110, 0.16));
-    color: var(--color-success, #7bb37b);
+    background: var(--ok-soft);
+    color: var(--ok);
+    border-color: var(--ok);
   }
 
   /* HS-29-01: dependency map / scope review / customer signals. */
@@ -1973,8 +2026,26 @@ import AppLayout from "../layouts/AppLayout.astro";
     gap: var(--space-1);
     font-size: var(--font-size-sm);
   }
+  /* HS-36-03: dependency nodes read as chips with an accented flow arrow. */
+  .dependency-list li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-1);
+  }
+  .dependency-list .dep-from,
+  .dependency-list .dep-to {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-sm);
+    background: var(--surface-3);
+    border: 1px solid var(--border-subtle);
+    overflow-wrap: anywhere;
+  }
   .dependency-list .dep-arrow {
-    color: var(--text-muted);
+    color: var(--accent);
+    font-weight: 600;
     margin: 0 var(--space-1);
   }
   .dependency-list .dep-note,
@@ -1982,6 +2053,7 @@ import AppLayout from "../layouts/AppLayout.astro";
   .signal-quote {
     color: var(--text-muted);
   }
+  .signal-quote { font-style: italic; }
   .scope-finding,
   .signal-item {
     display: flex;
@@ -1989,6 +2061,7 @@ import AppLayout from "../layouts/AppLayout.astro";
     gap: var(--space-1) var(--space-2);
     align-items: baseline;
   }
+  /* HS-36-03: scope/signal type chips → bordered Signal badges. */
   .scope-verdict,
   .signal-type {
     flex: none;
@@ -1997,41 +2070,83 @@ import AppLayout from "../layouts/AppLayout.astro";
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing-loose, 0.05em);
     padding: 0 var(--space-1);
-    border-radius: var(--radius-sm, 3px);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
   }
   .scope-verdict.scope_creep,
   .signal-type.churn_risk,
   .signal-type.pain {
-    background: var(--color-warning-soft, rgba(220, 170, 80, 0.18));
-    color: var(--color-warning, #e0b066);
+    background: var(--warn-soft);
+    color: var(--warn-signal);
+    border-color: var(--warn-signal);
   }
   .scope-verdict.out_of_scope {
+    background: var(--surface-3);
     color: var(--text-muted);
   }
   .scope-verdict.in_scope,
   .signal-type.praise {
-    background: var(--color-success-soft, rgba(110, 180, 110, 0.16));
-    color: var(--color-success, #7bb37b);
+    background: var(--ok-soft);
+    color: var(--ok);
+    border-color: var(--ok);
   }
   .signal-type.request {
-    color: var(--text-muted);
+    background: var(--info-soft);
+    color: var(--info);
+    border-color: var(--info);
   }
 
-  /* HS-29-02: incident timeline / runbook delta. */
+  /* HS-29-02 / HS-36-03: incident timeline as a real rail (vertical line +
+     node dots), not a bare ordered list. The <ol class="incident-timeline">
+     + <li> structure is preserved (asserted by the spoken-e2e). */
   .incident-timeline {
+    list-style: none;
     margin: var(--space-2) 0 0;
-    padding-left: var(--space-4);
+    padding: 0 0 0 var(--space-4);
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
+    gap: var(--space-3);
     font-size: var(--font-size-sm);
+  }
+  .incident-timeline::before {
+    content: "";
+    position: absolute;
+    top: 0.4rem;
+    bottom: 0.4rem;
+    left: var(--space-2);
+    width: 2px;
+    background: var(--danger-soft);
+  }
+  .incident-timeline li {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-1) var(--space-2);
+  }
+  .incident-timeline li::before {
+    content: "";
+    position: absolute;
+    left: calc(var(--space-2) - var(--space-4) - 3px);
+    top: 0.35rem;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--danger-signal);
+    border: 2px solid var(--surface-2);
+    box-shadow: 0 0 0 1px var(--danger-signal);
   }
   .incident-timeline .evt-time {
     font-family: var(--font-mono);
     font-size: var(--font-size-xs);
-    color: var(--text-muted);
-    margin-right: var(--space-1);
+    color: var(--danger-signal);
+    background: var(--danger-soft);
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-sm);
   }
+  .incident-timeline .evt-text { overflow-wrap: anywhere; }
   .runbook-list {
     list-style: none;
     margin: var(--space-2) 0 0;
@@ -2054,19 +2169,23 @@ import AppLayout from "../layouts/AppLayout.astro";
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing-loose, 0.05em);
     padding: 0 var(--space-1);
-    border-radius: var(--radius-sm, 3px);
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
   }
   .runbook-type.added {
-    background: var(--color-success-soft, rgba(110, 180, 110, 0.16));
-    color: var(--color-success, #7bb37b);
+    background: var(--ok-soft);
+    color: var(--ok);
+    border-color: var(--ok);
   }
   .runbook-type.removed {
-    background: var(--color-danger-soft, rgba(220, 80, 80, 0.18));
-    color: var(--color-danger, #e06666);
+    background: var(--danger-soft);
+    color: var(--danger-signal);
+    border-color: var(--danger-signal);
   }
   .runbook-type.modified {
-    background: var(--color-warning-soft, rgba(220, 170, 80, 0.18));
-    color: var(--color-warning, #e0b066);
+    background: var(--warn-soft);
+    color: var(--warn-signal);
+    border-color: var(--warn-signal);
   }
   .runbook-detail {
     color: var(--text-muted);
@@ -2082,7 +2201,9 @@ import AppLayout from "../layouts/AppLayout.astro";
   }
   .su-headline {
     margin: 0;
-    font-weight: var(--font-weight-bold, 600);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--accent);
   }
   .su-section .subhead,
   .announcement .ann-title {
@@ -2093,14 +2214,33 @@ import AppLayout from "../layouts/AppLayout.astro";
     letter-spacing: var(--letter-spacing-loose, 0.05em);
     color: var(--text-muted);
   }
+  /* HS-36-03: stakeholder sections get typed markers per label. */
   .su-list {
-    list-style: disc;
+    list-style: none;
     margin: 0;
     padding-left: var(--space-4);
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
     font-size: var(--font-size-sm);
+  }
+  .su-list li {
+    position: relative;
+    overflow-wrap: anywhere;
+  }
+  .su-list li::before {
+    content: "•";
+    position: absolute;
+    left: calc(-1 * var(--space-4) + 2px);
+    color: var(--accent);
+  }
+  /* HS-36-03: each announcement is an accent-edged comms sub-card. */
+  .announcement {
+    padding: var(--space-2) var(--space-3);
+    background: var(--surface-3);
+    border: 1px solid var(--border-subtle);
+    border-left: 2px solid var(--accent);
+    border-radius: var(--radius-sm);
   }
   .announcement .ann-head {
     display: flex;
@@ -2109,11 +2249,11 @@ import AppLayout from "../layouts/AppLayout.astro";
     gap: var(--space-2);
   }
   .announcement .ann-title {
-    color: var(--text-default, inherit);
+    color: var(--text);
     text-transform: none;
     font-family: inherit;
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-bold, 600);
+    font-weight: 600;
   }
   .announcement .ann-message {
     margin: var(--space-1) 0 0;

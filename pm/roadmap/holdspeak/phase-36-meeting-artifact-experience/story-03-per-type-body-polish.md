@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 36
-- **Status:** not-started
+- **Status:** done
 - **Depends on:** HS-36-01
 - **Unblocks:** none
 - **Owner:** unassigned
@@ -35,11 +35,16 @@ type.
 
 ## Acceptance criteria
 
-- [ ] Every listed artifact type's body has been restyled with Signal tokens (typed
-      colors, icons, spacing) — no remaining flat/default-looking body.
-- [ ] Asserted inner selectors still resolve (or e2e updated in lockstep).
-- [ ] Narrow-viewport behavior holds (no overflow regressions).
-- [ ] `cd web && npm run build` + committed; suite green.
+- [x] Every listed artifact type's body has been restyled with Signal tokens (typed
+      colors, icons, spacing) — no remaining flat/default-looking body. (All
+      off-palette `--color-*`/`--font-weight-bold`/`--text-default` tokens migrated;
+      timeline rail, typed badges, sub-cards, markers added — rendered in
+      `evidence/artifact_bodies_polished.png`.)
+- [x] Asserted inner selectors still resolve (CSS-only pass, no markup change) —
+      spoken-e2e selectors preserved; suite green.
+- [x] Narrow-viewport behavior holds (no overflow regressions) — 420px viewport
+      `scrollWidth == clientWidth`; `evidence/artifact_bodies_narrow.png`.
+- [x] `cd web && npm run build` + committed; suite green (2020/15).
 
 ## Test plan
 

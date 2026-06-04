@@ -6,9 +6,24 @@
 > surfaces. Title broadened to "Meeting Intelligence & Experience"; slug kept to avoid
 > link churn.
 
-**Status:** in-progress (opened 2026-06-04). 4/6 stories shipped.
+**Status:** in-progress (opened 2026-06-04). 5/6 stories shipped.
 
-**Last updated:** 2026-06-04 (**HS-36-02 shipped — copy-as-Markdown.** Each elevated
+**Last updated:** 2026-06-04 (**HS-36-03 shipped — per-artifact-type body polish.** A
+Signal pass over **every** artifact body inside the card shell (CSS-only in
+`history.astro`, no markup/selector change). Root cause of the flatness fixed: the
+HS-27–29 bodies referenced **non-existent** tokens (`--color-danger-soft`,
+`--color-warning`, `--color-success*`, `--font-weight-bold`, `--text-default`) and
+rendered via off-palette `rgba/hex` fallbacks — all migrated to real Signal status
+tokens (`--danger-signal`/`--warn-signal`/`--ok` + `*-soft`). Plus designed bodies: the
+**incident timeline** is a real rail (vertical line + ringed node dots + red time chips),
+**requirements** got typed badges, **risk/runbook/scope/signal** chips are bordered
+typed badges, **decisions/stakeholder** got accent markers, and **action/adr/milestone/
+announcement** records are left-accented sub-cards; **dependency** is node chips + accent
+arrow. Verified by a Playwright render of all 13 types over the real tokens+CSS
+(`evidence/artifact_bodies_polished.png`) and a 420px no-overflow check
+(`evidence/artifact_bodies_narrow.png`, `scrollWidth == clientWidth`); suite 2020/15.
+Next: HS-36-06 closeout (re-captures the before/after in the new cards + final-summary).
+Earlier: **HS-36-02 shipped — copy-as-Markdown.** Each elevated
 card now has a **"Copy"** button (in the HS-36-01 header slot) and the Artifacts section
 has a **"Copy all"** control. Both serialize the artifact `structured_json` to clean
 Markdown from the *data* (so a collapsed card still copies) and write to the clipboard
@@ -155,7 +170,7 @@ showcases the new presentation.
 |---|---|---|---|---|
 | HS-36-01 | Elevated artifact-card shell + overflow-safe layout | done | [story-01-artifact-card-shell.md](./story-01-artifact-card-shell.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-36-02 | Copy-as-Markdown per artifact | done | [story-02-copy-as-markdown.md](./story-02-copy-as-markdown.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-36-03 | Per-artifact-type body polish | not-started | [story-03-per-type-body-polish.md](./story-03-per-type-body-polish.md) | — |
+| HS-36-03 | Per-artifact-type body polish | done | [story-03-per-type-body-polish.md](./story-03-per-type-body-polish.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-36-04 | Dynamic, digression-heavy multi-topic spoken-e2e | done | [story-04-dynamic-meeting-e2e.md](./story-04-dynamic-meeting-e2e.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-36-05 | Segment-aware intent extraction (fish out intent per segment) | done | [story-05-segment-intent-extraction.md](./story-05-segment-intent-extraction.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-36-06 | Phase closeout + final-summary | not-started | [story-06-closeout.md](./story-06-closeout.md) | — |
@@ -191,17 +206,18 @@ core.
    fix shipped; selectors preserved).
 2. HS-36-02 — copy-as-Markdown ✅ **done** (per-card Copy + Copy-all; pure per-type
    serializers; clipboard reuse of the `CommandPreview` pattern).
-3. HS-36-03 — per-type body polish (fills in each artifact body within the new shell). **◀ next**
+3. HS-36-03 — per-type body polish ✅ **done** (Signal-token migration + timeline rail,
+   typed badges, sub-cards, markers across all 13 types; selectors preserved).
 4. HS-36-04 — dynamic/messy multi-topic spoken-e2e ✅ **done** (BEFORE captured; the
    routing drops incident/risk/comms).
 5. HS-36-05 — segment-aware intent extraction ✅ **done** (probe fishes the dropped
    intents out; AFTER captured — 7 → 13 artifact types).
 6. HS-36-06 — closeout + final-summary.
 
-Intelligence track (04 → 05) is **complete**; on the experience track, **HS-36-01
-(elevated cards + overflow fix) and HS-36-02 (copy-as-Markdown) are done**. **◀ next:
-HS-36-03** (per-type body polish) → HS-36-06 closeout (which re-captures the before/after
-in the new cards).
+Intelligence track (04 → 05) is **complete**; the experience track (**HS-36-01** elevated
+cards + overflow, **HS-36-02** copy-as-Markdown, **HS-36-03** per-type body polish) is
+**done**. **◀ next: HS-36-06** — the closeout (re-captures the before/after in the new
+cards + `final-summary.md`); it's the only story left.
 
 The two tracks are parallel: **experience** (01 → 02 → 03) and **intelligence**
 (04 → 05). Either can go first; the closeout (06) needs both. HS-36-01 leads since it's
