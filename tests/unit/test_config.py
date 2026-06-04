@@ -379,34 +379,72 @@ class TestConfigLoad:
         assert config.hotkey.key == "alt_r"
 
     def test_load_with_extra_fields_ignores_unknown(self, tmp_path):
-        """load() ignores unknown fields in config file."""
+        """load() drops unknown keys \u2014 both unknown sections AND unknown
+        keys *within* a section \u2014 without discarding the rest of the config."""
         path = tmp_path / "extra.json"
         data = {
+            # an unknown key inside a section no longer breaks the whole load
             "hotkey": {"key": "alt_l", "display": "\u2325L", "unknown_field": "value"},
             "model": {"name": "tiny"},
             "ui": {},
             "meeting": {},
-            "unknown_section": {"foo": "bar"},
+            "unknown_section": {"foo": "bar"},  # unknown top-level section
         }
         with open(path, "w") as f:
             json.dump(data, f)
 
-        # Should not raise, unknown_section is ignored
-        # But hotkey unknown_field will cause TypeError
-        # Let's test with just unknown section
-        data2 = {
-            "hotkey": {"key": "alt_l", "display": "\u2325L"},
-            "model": {"name": "tiny"},
-            "unknown_section": {"foo": "bar"},
-        }
-        path2 = tmp_path / "extra2.json"
-        with open(path2, "w") as f:
-            json.dump(data2, f)
-
-        config = Config.load(path2)
+        config = Config.load(path)
+        # The known keys in the same section still load (no total fallback).
         assert config.hotkey.key == "alt_l"
+        assert config.hotkey.display == "\u2325L"
         assert config.model.name == "tiny"
         assert config.model.warm_on_start is True
+
+    def test_load_legacy_key_does_not_discard_whole_config(self, tmp_path):
+        """A retired/legacy key in one section must not nuke the user's config.
+
+        Regression for the wild case surfaced post-HS-32-06: the removed
+        ``meeting.web_enabled`` key tripped ``MeetingConfig(**data)`` and the old
+        broad ``except: return cls()`` silently discarded the *entire* config \u2014
+        so a configured ``intel_cloud_base_url`` was ignored on every load. The
+        legacy key must be dropped while every other configured value survives.
+        """
+        path = tmp_path / "legacy.json"
+        data = {
+            "meeting": {
+                "web_enabled": True,  # retired in HS-32-06 \u2014 must be ignored
+                "intel_provider": "cloud",
+                "intel_cloud_base_url": "http://192.168.1.43:8080/v1",
+                "intel_cloud_model": "Qwen3.5-9B-UD-Q6_K_XL.gguf",
+            },
+            "model": {"name": "small"},
+        }
+        with open(path, "w") as f:
+            json.dump(data, f)
+
+        config = Config.load(path)
+        # The configured cloud endpoint survives \u2014 not silently dropped to defaults.
+        assert config.meeting.intel_provider == "cloud"
+        assert config.meeting.intel_cloud_base_url == "http://192.168.1.43:8080/v1"
+        assert config.meeting.intel_cloud_model == "Qwen3.5-9B-UD-Q6_K_XL.gguf"
+        # The legacy key is not present on the dataclass.
+        assert not hasattr(config.meeting, "web_enabled")
+        # A sibling section is unaffected.
+        assert config.model.name == "small"
+
+    def test_load_unknown_key_logs_warning(self, tmp_path, caplog):
+        """Dropping an unknown key emits a warning (not a silent swallow)."""
+        path = tmp_path / "warn.json"
+        with open(path, "w") as f:
+            json.dump({"meeting": {"web_enabled": True, "mic_label": "Host"}}, f)
+
+        with caplog.at_level("WARNING", logger="holdspeak.config"):
+            config = Config.load(path)
+
+        assert config.meeting.mic_label == "Host"
+        assert any(
+            "web_enabled" in r.message and "meeting" in r.message for r in caplog.records
+        ), caplog.text
 
 
 # ============================================================

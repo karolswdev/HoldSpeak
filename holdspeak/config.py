@@ -3,13 +3,37 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field, asdict
+import logging
+from dataclasses import dataclass, field, asdict, fields
 from pathlib import Path
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 # Default config location
 CONFIG_DIR = Path.home() / ".config" / "holdspeak"
 CONFIG_FILE = CONFIG_DIR / "config.json"
+
+
+def _coerce(dc_type, data, *, section: str):
+    """Build a config dataclass from a dict, dropping unknown/legacy keys.
+
+    A stale or unknown key — e.g. a config option retired in a later version
+    (the HS-32-06-removed ``meeting.web_enabled`` was found in the wild) — must
+    **not** discard the user's whole config. Previously ``load()`` constructed
+    each sub-config as ``DcType(**data)`` inside a broad ``except: return
+    cls()``, so one unrecognized key made the *entire* config silently fall back
+    to defaults (a configured ``intel_cloud_base_url`` would be ignored on every
+    load with no error). Here unknown keys are dropped with a warning so the rest
+    of the section still loads.
+    """
+    known = {f.name for f in fields(dc_type)}
+    extra = sorted(k for k in data if k not in known)
+    if extra:
+        logger.warning(
+            "config: ignoring unknown key(s) in [%s]: %s", section, ", ".join(extra)
+        )
+    return dc_type(**{k: v for k, v in data.items() if k in known})
 
 
 @dataclass
@@ -277,20 +301,30 @@ class Config:
             pipeline_data = dictation_data.get("pipeline", {}) or {}
             runtime_data = dictation_data.get("runtime", {}) or {}
             dictation = DictationConfig(
-                pipeline=DictationPipelineConfig(**pipeline_data),
-                runtime=LLMRuntimeConfig(**runtime_data),
+                pipeline=_coerce(
+                    DictationPipelineConfig, pipeline_data, section="dictation.pipeline"
+                ),
+                runtime=_coerce(
+                    LLMRuntimeConfig, runtime_data, section="dictation.runtime"
+                ),
             )
 
             return cls(
-                hotkey=HotkeyConfig(**data.get("hotkey", {})),
-                model=ModelConfig(**data.get("model", {})),
-                ui=UIConfig(**data.get("ui", {})),
-                meeting=MeetingConfig(**data.get("meeting", {})),
+                hotkey=_coerce(HotkeyConfig, data.get("hotkey", {}) or {}, section="hotkey"),
+                model=_coerce(ModelConfig, data.get("model", {}) or {}, section="model"),
+                ui=_coerce(UIConfig, data.get("ui", {}) or {}, section="ui"),
+                meeting=_coerce(MeetingConfig, data.get("meeting", {}) or {}, section="meeting"),
                 dictation=dictation,
-                device=DeviceConfig(**data.get("device", {})),
+                device=_coerce(DeviceConfig, data.get("device", {}) or {}, section="device"),
             )
-        except Exception:
-            # Fall back to defaults on any error
+        except Exception as exc:
+            # Last-resort fallback for a genuinely broken config (bad JSON, wrong
+            # top-level type, or a value a sub-config's __post_init__ rejects).
+            # Unknown/legacy keys no longer reach here — _coerce drops them — so
+            # this should be rare; log it rather than swallowing silently.
+            logger.warning(
+                "config: failed to load %s (%s); using defaults", config_path, exc
+            )
             return cls()
 
     def save(self, path: Optional[Path] = None) -> None:
