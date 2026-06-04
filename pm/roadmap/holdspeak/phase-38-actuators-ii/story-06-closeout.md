@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 38
-- **Status:** not-started
+- **Status:** done
 - **Depends on:** HS-38-01, HS-38-02, HS-38-03, HS-38-04, HS-38-05
 - **Unblocks:** none
 - **Owner:** unassigned
@@ -34,14 +34,14 @@ permission-gated + still approval-gated + audited — capture the demo, and writ
 
 ## Acceptance criteria
 
-- [ ] Egress-posture review written: no write path egresses without approval + policy +
+- [x] Egress-posture review written: no write path egresses without approval + policy +
       parity + manifest/gate + audit; the negatives (refused op / off-list host / no
       approval ⇒ no egress) cited.
-- [ ] HS-38-05 docs verified; doc drift-guard + link-check green.
-- [ ] Demo (live panel + executed write proposal + audit) committed to `evidence/`.
-- [ ] Bundle rebuilt (gitignored — not committed); full suite green; routing tests green;
+- [x] HS-38-05 docs verified; doc drift-guard + link-check green.
+- [x] Demo (live panel + executed write proposal + audit) committed to `evidence/`.
+- [x] Bundle rebuilt (gitignored — not committed); full suite green; routing tests green;
       no real outbound call in CI.
-- [ ] `final-summary.md` written; README phase row `done`; HANDOVER refreshed.
+- [x] `final-summary.md` written; README phase row `done`; HANDOVER refreshed.
 
 ## Test plan
 

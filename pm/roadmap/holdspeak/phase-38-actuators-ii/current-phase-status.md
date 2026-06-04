@@ -1,9 +1,21 @@
 # Phase 38 — Actuators II
 
-**Status:** in-progress (5/6 stories — HS-38-01..05 done). Scaffolded 2026-06-04,
-immediately after Phase 37 — Actuators closed + merged via PR #14.
+**Status:** CLOSED ✅ (6/6 stories). Scaffolded 2026-06-04, closed 2026-06-04. See
+[`final-summary.md`](./final-summary.md). Branch `phase-38/hs-38-01-write-connector-framework`
+— push + open a PR to `main`.
 
-**Last updated:** 2026-06-04 (**HS-38-05 done** — Actuators II documentation, the dedicated
+**Last updated:** 2026-06-04 (**HS-38-06 — Phase 38 CLOSED ✅ (6/6)** — the closeout. The
+**extended egress-posture review** leads `final-summary.md`: no write path reaches an external
+system without a registered+capability-enabled actuator, an `approved` proposal, the
+`allow_actuators`+allow-list gate, payload parity, **the connector's permission manifest +
+`PermissionGate`**, and an audit row — the negatives (execute-before-approval / refused op /
+off-list host) proven to egress nothing. Demos committed: `evidence/actuator_write_loop.md`
+(propose→approve→execute→audit, exactly one `gh` call) + `evidence/live_pending_actions.png`
+(the live panel). Routing invariants green (**38**); actuator stack **91**; full suite
+**2123 passed, 15 skipped**; bundle rebuilt (gitignored — 0 tracked); doc-guards green.
+`final-summary.md` written; README → done; HANDOVER refreshed.)
+
+**Earlier 2026-06-04** (**HS-38-05 done** — Actuators II documentation, the dedicated
 docs story. `docs/PLUGIN_AUTHORING.md` gains a **Write connectors (the permission manifest)**
 subsection — `WriteConnectorManifest`, the gate-mapping table (`shell:exec`/`network:outbound`),
 `build_gated_connector`'s plan→allow-check→gate→interpret, and both reference connectors
@@ -173,9 +185,15 @@ Every new connector adds a *narrower* gate (its permission manifest), never a lo
 | HS-38-03 | Webhook write connector (HTTP POST, allow-listed host) | done | [story-03-webhook-connector.md](./story-03-webhook-connector.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-38-04 | Live in-meeting proposals + broadcast | done | [story-04-live-proposals.md](./story-04-live-proposals.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-38-05 | Actuators II documentation | done | [story-05-documentation.md](./story-05-documentation.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-38-06 | Closeout + final-summary | not-started | [story-06-closeout.md](./story-06-closeout.md) | — |
+| HS-38-06 | Closeout + final-summary | done | [story-06-closeout.md](./story-06-closeout.md) | [evidence-story-06.md](./evidence-story-06.md) |
 
 ## Where we are
+
+**Phase CLOSED 2026-06-04 (6/6).** Real write connectors (GitHub `gh issue create` +
+webhook POST) behind a per-connector permission manifest, and live in-meeting proposals —
+all behind the unchanged Phase-37 invariant (the manifest is a *narrower* gate, never a
+looser one). Egress-posture review + demos in `final-summary.md` / `evidence/`. Branch
+`phase-38/hs-38-01-write-connector-framework` — **push + open a PR to `main`**.
 
 **HS-38-05 done 2026-06-04** — the docs match the shipped surface.
 `docs/PLUGIN_AUTHORING.md` documents write connectors (the permission manifest + the gate
@@ -250,7 +268,7 @@ done — the seams all exist:
 3. ~~HS-38-03 — webhook write connector (`network:outbound` reference).~~ **done 2026-06-04.**
 4. ~~HS-38-04 — live in-meeting proposals + broadcast.~~ **done 2026-06-04.**
 5. ~~HS-38-05 — Actuators II documentation.~~ **done 2026-06-04.**
-6. HS-38-06 — closeout + final-summary. **◀ next**
+6. ~~HS-38-06 — closeout + final-summary.~~ **done 2026-06-04 — phase CLOSED.**
 
 01 → 02/03 is the connector half (01 is the framework; 02 and 03 are two concrete proofs,
 one per gate type — they can go in either order). 04 is the live-surface half (independent
