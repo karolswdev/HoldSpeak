@@ -47,24 +47,35 @@ with the live status docs, the status docs win.
 
 ## 3. Pick up here
 
-**▶ Phase 37 — Actuators: CLOSED ✅ (7/7), on local branch
-`phase-37/hs-37-01-actuator-contract`** — **open a PR to `main`** (CI green → merge, per
-the merge-via-PR cadence). Full record: `phase-37-actuators/final-summary.md`. The plugin
-system's **third kind** is on, behind one invariant: *no external side effect without an
-explicit, audited, per-action human approval; executed == previewed.* An actuator
-**proposes** (`ActuatorProposal` from `run()`, status `proposed`); a human **approves**
-(the meeting-detail "Proposed actions" cards / `POST …/proposals/{id}/decision`); a
-**guarded executor** (`plugins/actuator_executor.py`) acts only on an `approved` proposal
-through status + policy gate (`MeetingConfig.allow_actuators` + `allowed_actuators`,
-default-safe) + **payload parity** (TOCTOU) + an **injected connector** (never a socket in
-the executor) + an **audit** row. Persistence: `db.actuators` (`actuator_proposals` /
-`actuator_proposal_audit`). Reference: `followup_ticket_actuator` + `build_outbox_connector`
-(a local-file side effect; gh/jira are read-only by Phase-25 policy, so a future
-write-permitted connector is the path). **Default suite + routing byte-identical** — no
-actuator is registered (`register_followup_actuator` is opt-in, not in
-`register_builtin_plugins`) or in any chain. **Next frontier (none committed):** more
-connectors (write-permitted gh/jira/webhook), live in-meeting proposals, chained/per-role
-governance.
+**▶ Phase 38 — Actuators II: IN-PROGRESS (0/6), scaffolded, on local branch
+`phase-38/hs-38-01-write-connector-framework`.** Direction = user pick (over Release/
+First-Run, Dogfood/Reliability, UX-consolidation). Builds on Phase 37 to make actuators
+*useful* without weakening the invariant: **real write connectors** behind a per-connector
+**permission manifest**, and **live in-meeting proposals**. The seams all exist —
+`ActuatorExecutor(connector=…)` takes any `connector(proposal) -> dict`;
+`connector_runtime.PermissionGate` gates `run_subprocess` (`shell:exec`) +
+`open_outbound_socket` (`network:outbound`); `connector_sdk.ConnectorManifest` carries
+`permissions`/`requires_network`; live events go via `WebRuntime.server.broadcast(type,
+data)`. Six stories: **HS-38-01** write-connector framework + manifest (the safety seam)
+→ **02** GitHub (`gh issue create`) → **03** webhook (HTTP POST, allow-listed host) →
+**04** live proposals (broadcast + live approve/reject) → **05** documentation (dedicated
+docs story) → **06** closeout. Keep actuators **off + unregistered by default** (routing
+byte-identical) and the default suite free of any real outbound call (inject runners/
+clients). Plan: `phase-38-actuators-ii/current-phase-status.md`. **▶ Start at HS-38-01.**
+
+**▶ Phase 37 — Actuators: CLOSED ✅ (7/7), merged via PR #14.** Full record:
+`phase-37-actuators/final-summary.md`. The plugin system's **third kind** is on, behind
+one invariant: *no external side effect without an explicit, audited, per-action human
+approval; executed == previewed.* An actuator **proposes** (`ActuatorProposal` from
+`run()`, status `proposed`); a human **approves** (the meeting-detail "Proposed actions"
+cards / `POST …/proposals/{id}/decision`); a **guarded executor**
+(`plugins/actuator_executor.py`) acts only on an `approved` proposal through status +
+policy gate (`MeetingConfig.allow_actuators` + `allowed_actuators`, default-safe) +
+**payload parity** (TOCTOU) + an **injected connector** (never a socket in the executor) +
+an **audit** row. Persistence: `db.actuators` (`actuator_proposals` /
+`actuator_proposal_audit`). Reference: `followup_ticket_actuator` + `build_outbox_connector`.
+**Default suite + routing byte-identical** — no actuator is registered
+(`register_followup_actuator` is opt-in, not in `register_builtin_plugins`) or in any chain.
 
 **▶ Earlier — Phase 36 — Meeting Intelligence & Experience: CLOSED ✅ (6/6), merged via
 PR #13.** Full record: `phase-36-meeting-artifact-experience/final-summary.md`. Both tracks
