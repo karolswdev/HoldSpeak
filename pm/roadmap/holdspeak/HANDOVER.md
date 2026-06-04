@@ -47,29 +47,38 @@ with the live status docs, the status docs win.
 
 ## 3. Pick up here
 
-**▶ Phase 36 — Actuators is the next phase to OPEN (not yet scaffolded).** Phase 35
-— Plugin Frontier is **CLOSED ✅ (5/5)** on local branch
-`phase-35/hs-35-01-plugin-authoring-guide` (5 story commits) — **open a PR to `main`**.
-The plugin system is now externalizable end-to-end: public `docs/PLUGIN_AUTHORING.md`,
-a plugin-pack manifest + discovery loader (`plugin_sdk.py` / `plugin_pack_loader.py`,
-first-party + `~/.holdspeak/plugin_packs/`), per-project enable/disable (a `skipped`
-dispatch gate; `router.py` untouched), and a second spoken-e2e (incident + comms,
-verified on `.43`). The 14 built-ins are behavior-identical. Full record:
-`phase-35-plugin-frontier/final-summary.md`.
+**▶ Phase 36 — Meeting Artifact Experience is OPEN (0/4), on local branch
+`phase-36/hs-36-01-artifact-card-shell`.** A frontend/UX phase on direct user feedback
+that the meeting-artifact rendering looks basic, has no copy affordance, and overflows
+horizontally. Make the meeting-intelligence output a first-class **deliverable**:
+distinctive Signal **"elevated" artifact cards** (retire the basic chips), **copy-as-
+Markdown** per artifact, and **overflow-safe** wide artifacts (the risk table first).
+**Presentation only** — the plugin contract + artifact `structured_json` are unchanged.
+Start with **HS-36-01 — card shell + overflow fix** (`web/src/pages/history.astro`
+~856–1136 + its CSS; rebuild the bundle `cd web && npm run build` and commit
+`holdspeak/static/_built/` in the same commit). Then HS-36-02 (copy-as-Markdown, reuse
+`CommandPreview.astro`'s clipboard pattern) → HS-36-03 (per-type body polish) → HS-36-04
+(closeout). Full plan: `phase-36-meeting-artifact-experience/current-phase-status.md`.
+**Watch the spoken-e2e selectors** (`tests/e2e/test_spoken_meeting_e2e.py`:
+`.risk-table tbody tr`, `.incident-timeline li`, …) — preserve or update in lockstep.
 
-**Phase 36 — Actuators** is the teed-up successor: the host's `actuator` kind stays
-**blocked** today; this phase built its groundwork (the authoring + pack + manifest
-contract). Phase 36 adds preview → human approval → external side effect (RFC open
-question #5; intersects the Phase-25 egress posture). Scaffold a phase folder + stories
-when starting.
+**Phase 35 — Plugin Frontier: CLOSED ✅ (5/5), merged via PR #11.** The plugin system
+is externalizable end-to-end: public `docs/PLUGIN_AUTHORING.md`, a plugin-pack manifest
++ discovery loader (`plugin_sdk.py` / `plugin_pack_loader.py`, first-party +
+`~/.holdspeak/plugin_packs/`), per-project enable/disable (a `skipped` dispatch gate;
+`router.py` untouched), and a second spoken-e2e (incident + comms, verified on `.43`).
+Full record: `phase-35-plugin-frontier/final-summary.md`.
 
-> **▶ Carried follow-up (foundation-hardening, surfaced HS-35-04, NOT fixed):**
-> `Config.load()` parses each sub-config as `MeetingConfig(**data)` inside a broad
-> `except Exception: return cls()`, so a single unknown/legacy key (found live: the
-> HS-32-06-retired `meeting.web_enabled`) makes the **whole** config silently fall back
-> to defaults — a configured `.43` `intel_cloud_base_url` is ignored on every load with
-> no error. Recommend filtering unknown keys per sub-config (or log-and-drop) rather
-> than discarding everything. Not scheduled.
+**Phase 37 — Actuators** is the teed-up successor (renumbered from 36 when the artifact
+UX phase took the 36 slot): the host's `actuator` kind stays **blocked** today; Phase 35
+built its groundwork (the authoring + pack + manifest contract). Phase 37 adds preview →
+human approval → external side effect (RFC open question #5; intersects the Phase-25
+egress posture). Scaffold a phase folder + stories when starting.
+
+> **▶ Config hardening — DONE (merged PR #12):** `Config.load()` now filters unknown/
+> legacy keys per sub-config (the HS-32-06-retired `meeting.web_enabled` no longer nukes
+> the whole config) and logs the last-resort fallback instead of swallowing it. The
+> earlier "silently discards the whole config" hazard is resolved.
 
 > **▶ Routing ripple (HANDOVER §5):** adding/suppressing a plugin in a chain touches
 > `tests/unit/test_intent_dispatch.py` (chain constants + window counts) +
