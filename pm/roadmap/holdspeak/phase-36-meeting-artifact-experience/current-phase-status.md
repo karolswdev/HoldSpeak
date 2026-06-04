@@ -6,10 +6,18 @@
 > surfaces. Title broadened to "Meeting Intelligence & Experience"; slug kept to avoid
 > link churn.
 
-**Status:** in-progress (opened 2026-06-04). 2/6 stories shipped.
+**Status:** in-progress (opened 2026-06-04). 3/6 stories shipped.
 
-**Last updated:** 2026-06-04 (**HS-36-05 shipped — the intelligence fix landed and the
-before/after is captured.** A gated, additive **per-segment LLM intent probe**
+**Last updated:** 2026-06-04 (**HS-36-01 shipped — elevated artifact cards.** The flat
+`.segment` artifact rendering is replaced by Signal **artifact cards** (type-colored
+accent edge + icon + title + type chip + meta + collapse toggle + overflow-safe body),
+and the **risk-table overflow is fixed** (`.table-scroll`). Source committed; bundle
+rebuilt locally (it's a gitignored build product, not committed); selectors preserved
+(incident e2e green); suite 2020/15; new-look screenshot
+`evidence/artifact_cards_new_look.png`. Next: HS-36-02 (copy-as-Markdown) → HS-36-03
+(per-type polish) → HS-36-06 (closeout, re-captures the before/after in the new cards).
+Earlier: **HS-36-05** — the intelligence fix + before/after. A gated, additive
+**per-segment LLM intent probe**
 (`plugins/segment_probe.py`, merged max into `score_window`) fishes out
 brief/paraphrased intents the lexical scorer drops. On the *same* messy meeting via the
 *same* real routing path: **BEFORE** = `['architecture','product']` / 7 artifact types,
@@ -117,9 +125,10 @@ showcases the new presentation.
       below threshold now activates its chain and produces its artifact — proven by a
       regression test (deterministic path) + the messy-meeting e2e on real `.43`. The
       deterministic lexical fallback still works with the `llm` capability off. (HS-36-05)
-- [ ] `cd web && npm run build` succeeds and the rebuilt bundle is committed with each
-      source change; `tests/e2e/test_spoken_meeting_e2e.py` selectors pass (preserved
-      or updated in lockstep). (all)
+- [ ] `cd web && npm run build` succeeds and the source change reaches the rebuilt
+      bundle (the bundle is a **gitignored build product** — not committed; built at
+      install/package time); `tests/e2e/test_spoken_meeting_e2e.py` selectors pass
+      (preserved or updated in lockstep). (all)
 - [ ] **Before/after comparison captured:** two screenshots of the *same* messy meeting
       — `evidence/dynamic_meeting_before.png` (old routing, intents diluted away, sparse)
       and `_after.png` (segment-probe routing, the present intents fished out, rich cards)
@@ -133,7 +142,7 @@ showcases the new presentation.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-36-01 | Elevated artifact-card shell + overflow-safe layout | not-started | [story-01-artifact-card-shell.md](./story-01-artifact-card-shell.md) | — |
+| HS-36-01 | Elevated artifact-card shell + overflow-safe layout | done | [story-01-artifact-card-shell.md](./story-01-artifact-card-shell.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-36-02 | Copy-as-Markdown per artifact | not-started | [story-02-copy-as-markdown.md](./story-02-copy-as-markdown.md) | — |
 | HS-36-03 | Per-artifact-type body polish | not-started | [story-03-per-type-body-polish.md](./story-03-per-type-body-polish.md) | — |
 | HS-36-04 | Dynamic, digression-heavy multi-topic spoken-e2e | done | [story-04-dynamic-meeting-e2e.md](./story-04-dynamic-meeting-e2e.md) | [evidence-story-04.md](./evidence-story-04.md) |
@@ -167,9 +176,9 @@ core.
 
 ## Pickup order
 
-1. HS-36-01 — elevated card shell + overflow-safe layout. **◀ first** (the structural
-   foundation + the most-complained-about overflow; highest visible impact).
-2. HS-36-02 — copy-as-Markdown (builds on the card header for the button slot).
+1. HS-36-01 — elevated card shell + overflow-safe layout ✅ **done** (cards + overflow
+   fix shipped; selectors preserved).
+2. HS-36-02 — copy-as-Markdown (builds on the card header for the button slot). **◀ next**
 3. HS-36-03 — per-type body polish (fills in each artifact body within the new shell).
 4. HS-36-04 — dynamic/messy multi-topic spoken-e2e ✅ **done** (BEFORE captured; the
    routing drops incident/risk/comms).
@@ -177,9 +186,10 @@ core.
    intents out; AFTER captured — 7 → 13 artifact types).
 6. HS-36-06 — closeout + final-summary.
 
-Intelligence track (04 → 05) is **complete**; the experience track (01 → 02 → 03)
-remains. **◀ next: HS-36-01** (elevated artifact cards + overflow fix) — it'll also make
-the AFTER render in the new cards rather than the current flat ones.
+Intelligence track (04 → 05) is **complete**; on the experience track, **HS-36-01
+(elevated cards + overflow fix) is done**. **◀ next: HS-36-02** (copy-as-Markdown) →
+HS-36-03 (per-type body polish) → HS-36-06 closeout (which re-captures the before/after
+in the new cards).
 
 The two tracks are parallel: **experience** (01 → 02 → 03) and **intelligence**
 (04 → 05). Either can go first; the closeout (06) needs both. HS-36-01 leads since it's
@@ -208,7 +218,7 @@ clear target: fish those intents out per segment so the missing five types appea
 | Risk | Likelihood | Mitigation | Stop signal |
 |---|---|---|---|
 | Renaming artifact CSS classes breaks the spoken-e2e selectors | High (if careless) | Preserve the asserted class names (`.risk-table tbody tr`, `.incident-timeline li`, …) or update the e2e in the same commit; keep them as inner elements within the new card | An e2e `wait_for_selector` times out |
-| Forgetting to rebuild the bundle → source edits don't show | Medium | `cd web && npm run build` + commit `holdspeak/static/_built/` in the same commit as any source edit (phase rule) | The served app looks unchanged after an edit |
+| Forgetting to rebuild the bundle → source edits don't show | Medium | `cd web && npm run build` before verifying/screenshotting (the bundle is gitignored + built at install from `web/src`, so it won't auto-refresh); never commit `_built` | The served app / e2e looks unchanged after an edit |
 | Collapsible cards hide content from the e2e / from copy | Medium | Default artifact cards to expanded; copy reads from data, not the DOM | e2e can't see a collapsed body |
 | Scope creep into export-to-file / new artifact types | Medium | Clipboard Markdown only; no new artifact *types* / no artifact-schema changes | A PR adding a new artifact type or changing a plugin's output shape |
 | Routing fix (HS-36-05) regresses the existing chains / tests | High (expected churn) | Update `test_intent_router` / `test_intent_dispatch` / `test_multi_intent_routing` in lockstep — don't silence; keep the deterministic lexical path green; the segment path is additive + gated | A `-k`-filtered green hiding a real routing diff |

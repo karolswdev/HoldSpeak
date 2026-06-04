@@ -17,8 +17,9 @@ intent extraction) — the bundle is rebuilt, the spoken-e2e passes, and the
 ## Scope
 
 - **In:**
-  - Final `cd web && npm run build`; confirm `holdspeak/static/_built/` committed and
-    consistent with source.
+  - Final `cd web && npm run build` (so the served app/e2e reflect the latest source);
+    `holdspeak/static/_built/` is a **gitignored build product** — confirm it's NOT
+    staged/committed (only `web/src/**` source is).
   - **The headline before/after.** Present the two captured screenshots of the same
     messy meeting (HS-36-04): **BEFORE** the intelligence fix (old fixed-window/keyword
     routing — intents diluted away, sparse artifacts) and **AFTER** (segment-probe
@@ -36,7 +37,8 @@ intent extraction) — the bundle is rebuilt, the spoken-e2e passes, and the
 
 ## Acceptance criteria
 
-- [ ] Bundle rebuilt + committed; source/bundle consistent.
+- [ ] Bundle rebuilt from the final source (gitignored — not committed); `_built` is not
+      staged; the served app reflects the source.
 - [ ] **BEFORE and AFTER screenshots** of the same messy meeting committed to
       `evidence/`; the AFTER shows materially more of the genuinely-present intents
       surfaced (and the new cards). The diff is described in `final-summary.md`.

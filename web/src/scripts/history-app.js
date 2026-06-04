@@ -943,6 +943,51 @@ function historyApp() {
       );
     },
 
+    // HS-36-01: per-artifact-type presentation helpers for the elevated card —
+    // a glyph + a Signal accent group (drives the card's colored edge/chip) +
+    // a human label. Unknown types fall back to a neutral default.
+    artifactIcon(artifact) {
+      const map = {
+        incident_timeline: "🔥",
+        risk_register: "⚠️",
+        runbook_delta: "🧯",
+        decision_announcement: "📢",
+        stakeholder_update: "📣",
+        decisions: "🎯",
+        action_items: "✅",
+        requirements: "🧩",
+        adr: "🏛️",
+        milestone_plan: "🗓️",
+        dependency_map: "🔗",
+        scope_review: "🔎",
+        customer_signals: "💬",
+        diagram: "🗺️",
+      };
+      return map[artifact?.artifact_type] || "◆";
+    },
+    artifactAccent(artifact) {
+      const map = {
+        incident_timeline: "danger",
+        risk_register: "warn",
+        runbook_delta: "warn",
+        decision_announcement: "accent",
+        stakeholder_update: "accent",
+        decisions: "accent",
+        action_items: "ok",
+        requirements: "info",
+        adr: "info",
+        milestone_plan: "info",
+        dependency_map: "info",
+        scope_review: "info",
+        customer_signals: "ok",
+        diagram: "info",
+      };
+      return map[artifact?.artifact_type] || "default";
+    },
+    artifactTypeLabel(artifact) {
+      return String(artifact?.artifact_type || "").replace(/_/g, " ");
+    },
+
     // HS-16-04: render a diagram artifact's Mermaid (from structured_json) as
     // inline SVG. mermaid.js is loaded lazily via window.__loadMermaid (a code
     // -split chunk wired in history.astro), so non-diagram views never pay the

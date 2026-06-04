@@ -28,7 +28,7 @@ type.
     `milestone_plan`, `dependency_map`, `scope_review` (verdict colors),
     `customer_signals` (typed + quote), `action_items` (owner/due chips), `mermaid`.
   - Consistent empty/`—` states, consistent chip/badge styling from the token set.
-  - Rebuild + commit the bundle.
+  - Rebuild the bundle (`cd web && npm run build`) for verification — it is a gitignored build product (built at install/package time from `web/src`), NOT committed.
 - **Out:**
   - Card shell + overflow (HS-36-01) and copy (HS-36-02).
   - Changing artifact data or adding new types.

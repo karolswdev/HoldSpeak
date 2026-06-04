@@ -705,7 +705,7 @@ def test_spoken_dynamic_meeting_end_to_end(tmp_path):
             page.wait_for_selector(".modal", timeout=15000)
             page.wait_for_selector(".transcript-list .segment", timeout=15000)
             page.wait_for_timeout(700)  # let any artifact renderers settle
-            rendered_cards = page.locator(".detail-side .segment").count()
+            rendered_cards = page.locator(".detail-side .artifact-card").count()
             print(f"[e2e:dynamic] rendered artifact cards (BEFORE) = {rendered_cards}")
             content_height = page.evaluate(
                 "() => { const b = document.querySelector('.modal-body');"
@@ -851,7 +851,7 @@ def test_spoken_dynamic_meeting_after_probe_end_to_end(tmp_path):
             page.wait_for_selector(".modal", timeout=15000)
             page.wait_for_selector(".transcript-list .segment", timeout=15000)
             page.wait_for_timeout(700)
-            rendered_cards = page.locator(".detail-side .segment").count()
+            rendered_cards = page.locator(".detail-side .artifact-card").count()
             print(f"[e2e:dynamic:after] rendered artifact cards (AFTER) = {rendered_cards}")
             content_height = page.evaluate(
                 "() => { const b = document.querySelector('.modal-body');"

@@ -926,18 +926,28 @@ import AppLayout from "../layouts/AppLayout.astro";
 
               <div class="detail-card" x-show="selectedMeetingArtifacts.length" x-cloak>
                 <h4>Artifacts</h4>
-                <div class="grid">
+                <div class="artifact-stack">
                   <template x-for="artifact in selectedMeetingArtifacts" :key="artifact.id">
-                    <div class="segment">
-                      <div class="card-top">
-                        <p class="card-title" x-text="artifact.title"></p>
-                        <span class="status-pill" :class="artifact.status" x-text="artifact.artifact_type"></span>
+                    <div class="artifact-card" :class="`accent-${artifactAccent(artifact)}`" x-data="{ open: true }">
+                      <div class="artifact-card__header">
+                        <span class="artifact-card__icon" aria-hidden="true" x-text="artifactIcon(artifact)"></span>
+                        <div class="artifact-card__heading">
+                          <p class="artifact-card__title" x-text="artifact.title"></p>
+                          <div class="artifact-card__meta">
+                            <span class="artifact-chip" x-text="artifactTypeLabel(artifact)"></span>
+                            <span class="pill" x-text="`${(artifact.confidence * 100).toFixed(0)}% confidence`"></span>
+                            <span class="pill" x-text="formatDate(artifact.created_at)"></span>
+                            <span class="pill" x-show="artifact.sources?.length" x-cloak x-text="`${artifact.sources.length} sources`"></span>
+                          </div>
+                        </div>
+                        <div class="artifact-card__actions">
+                          <button type="button" class="artifact-card__toggle"
+                                  :aria-expanded="open ? 'true' : 'false'"
+                                  :title="open ? 'Collapse' : 'Expand'"
+                                  @click="open = !open" x-text="open ? '−' : '+'"></button>
+                        </div>
                       </div>
-                      <div class="pill-row">
-                        <span class="pill" x-text="`${(artifact.confidence * 100).toFixed(0)}% confidence`"></span>
-                        <span class="pill" x-text="formatDate(artifact.created_at)"></span>
-                        <span class="pill" x-show="artifact.sources?.length" x-cloak x-text="`${artifact.sources.length} sources`"></span>
-                      </div>
+                      <div class="artifact-card__body" x-show="open" x-cloak>
                       <template x-if="isDiagram(artifact)">
                         <div class="mermaid-artifact" x-init="renderMermaid($el, artifact.structured_json.mermaid)"></div>
                       </template>
@@ -1022,22 +1032,24 @@ import AppLayout from "../layouts/AppLayout.astro";
                         </div>
                       </template>
                       <template x-if="risksFor(artifact).length">
-                        <table class="risk-table">
-                          <thead>
-                            <tr><th>Risk</th><th>Impact</th><th>Likelihood</th><th>Mitigation</th><th>Owner</th></tr>
-                          </thead>
-                          <tbody>
-                            <template x-for="(r, ri) in risksFor(artifact)" :key="`risk${ri}`">
-                              <tr>
-                                <td x-text="r.risk"></td>
-                                <td><span class="level-pill" :class="`level-${r.impact}`" x-text="r.impact"></span></td>
-                                <td><span class="level-pill" :class="`level-${r.likelihood}`" x-text="r.likelihood"></span></td>
-                                <td x-text="r.mitigation || '—'"></td>
-                                <td x-text="r.owner || '—'"></td>
-                              </tr>
-                            </template>
-                          </tbody>
-                        </table>
+                        <div class="table-scroll">
+                          <table class="risk-table">
+                            <thead>
+                              <tr><th>Risk</th><th>Impact</th><th>Likelihood</th><th>Mitigation</th><th>Owner</th></tr>
+                            </thead>
+                            <tbody>
+                              <template x-for="(r, ri) in risksFor(artifact)" :key="`risk${ri}`">
+                                <tr>
+                                  <td x-text="r.risk"></td>
+                                  <td><span class="level-pill" :class="`level-${r.impact}`" x-text="r.impact"></span></td>
+                                  <td><span class="level-pill" :class="`level-${r.likelihood}`" x-text="r.likelihood"></span></td>
+                                  <td x-text="r.mitigation || '—'"></td>
+                                  <td x-text="r.owner || '—'"></td>
+                                </tr>
+                              </template>
+                            </tbody>
+                          </table>
+                        </div>
                       </template>
                       <template x-if="dependenciesFor(artifact).length">
                         <ul class="dependency-list">
@@ -1125,6 +1137,7 @@ import AppLayout from "../layouts/AppLayout.astro";
                       <p class="meta-line"
                          x-show="artifact.body_markdown && !hasStructuredRender(artifact)"
                          x-cloak x-text="artifact.body_markdown"></p>
+                      </div>
                     </div>
                   </template>
                 </div>
@@ -1701,12 +1714,136 @@ import AppLayout from "../layouts/AppLayout.astro";
   }
 
   /* HS-28-04: risk register table. */
+  /* HS-36-01: elevated artifact cards (Signal). Each meeting artifact is a card
+     with a type-colored accent edge, a header (icon + title + type chip + meta +
+     collapse toggle), and an overflow-safe body. The accent group is set by
+     `artifactAccent()` and exposed to the children via the --artifact-accent var. */
+  .artifact-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+  .artifact-card {
+    position: relative;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--elev-1);
+    overflow: hidden;
+    min-width: 0;
+    --artifact-accent: var(--border-strong);
+    transition: box-shadow var(--duration-short) var(--ease-standard),
+                border-color var(--duration-short) var(--ease-standard);
+  }
+  .artifact-card:hover { box-shadow: var(--elev-2); border-color: var(--border-strong); }
+  .artifact-card.accent-danger { --artifact-accent: var(--danger-signal); }
+  .artifact-card.accent-warn   { --artifact-accent: var(--warn-signal); }
+  .artifact-card.accent-accent { --artifact-accent: var(--accent); }
+  .artifact-card.accent-info   { --artifact-accent: var(--info); }
+  .artifact-card.accent-ok     { --artifact-accent: var(--ok); }
+  .artifact-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--artifact-accent);
+  }
+  .artifact-card__header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    padding-left: calc(var(--space-3) + 4px);
+  }
+  .artifact-card__icon {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: var(--radius-sm);
+    background: var(--surface-3);
+    border: 1px solid var(--border-subtle);
+    font-size: 1rem;
+    line-height: 1;
+  }
+  .artifact-card__heading { flex: 1 1 auto; min-width: 0; }
+  .artifact-card__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--text);
+    line-height: var(--line-height-tight);
+    overflow-wrap: anywhere;
+  }
+  .artifact-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    align-items: center;
+    margin-top: var(--space-2);
+  }
+  .artifact-chip {
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-pill);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose, 0.04em);
+    color: var(--artifact-accent);
+    background: var(--surface-3);
+    border: 1px solid var(--artifact-accent);
+  }
+  .artifact-card__actions {
+    flex: 0 0 auto;
+    display: flex;
+    gap: var(--space-1);
+    align-items: center;
+  }
+  .artifact-card__toggle {
+    appearance: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-3);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-md);
+    line-height: 1;
+  }
+  .artifact-card__toggle:hover { color: var(--text); border-color: var(--border-strong); }
+  .artifact-card__toggle:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: 1px;
+  }
+  .artifact-card__body {
+    padding: 0 var(--space-3) var(--space-3);
+    padding-left: calc(var(--space-3) + 4px);
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  /* Wide content (tables) scrolls within the card instead of forcing the modal
+     wider — fixes the risk-table horizontal overflow. */
+  .table-scroll {
+    overflow-x: auto;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .risk-table {
     width: 100%;
+    min-width: 540px;
     border-collapse: collapse;
     margin-top: var(--space-2);
     font-size: var(--font-size-sm);
   }
+  .risk-table td { overflow-wrap: anywhere; }
   .risk-table th,
   .risk-table td {
     text-align: left;

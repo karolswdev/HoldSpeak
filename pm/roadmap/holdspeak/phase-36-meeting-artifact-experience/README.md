@@ -81,6 +81,8 @@ The artifact CSS **selectors asserted by the spoken-e2e**
 …) must keep working — preserved or updated in lockstep (never silently broken). The
 routing unit/integration tests (`test_intent_router` / `test_intent_dispatch` /
 `test_multi_intent_routing`) are updated **in lockstep, not silenced**. The web bundle
-(`holdspeak/static/_built/`) is rebuilt (`cd web && npm run build`) in the same commit as
-any source edit. The `ui-ux-pro-max` design skill (vendored at
+(`holdspeak/static/_built/`) is **gitignored** (`.gitignore:55`) — a build product built
+from `web/src/**` at install (`scripts/install.sh`) / packaged into the wheel, **not**
+committed. Rebuild it (`cd web && npm run build`) before verifying/screenshotting so the
+served app reflects the source; commit only the source. The `ui-ux-pro-max` design skill (vendored at
 `.claude/skills/ui-ux-pro-max`) is the design aid, as in Phase 30.

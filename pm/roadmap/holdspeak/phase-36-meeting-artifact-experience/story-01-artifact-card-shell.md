@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 36
-- **Status:** not-started
+- **Status:** done (2026-06-04). Evidence: [evidence-story-01.md](./evidence-story-01.md).
 - **Depends on:** none
 - **Unblocks:** HS-36-02, HS-36-03
 - **Owner:** unassigned
@@ -31,7 +31,10 @@ the modal horizontally. This is the most-complained-about part of the meeting vi
     behavior so `.risk-table` and friends never push the modal wider.
   - Signal tokens only (`tokens.css`): surfaces, `--elev-*`, `--radius-*`, `--space-*`,
     status colors, motion.
-  - Rebuild the bundle (`cd web && npm run build`) and commit `holdspeak/static/_built/`.
+  - Rebuild the bundle (`cd web && npm run build`) for local verification. NOTE: the
+    bundle (`holdspeak/static/_built/`) is **gitignored** (`.gitignore:55`) — a build
+    product built from `web/src/**` at install (`scripts/install.sh`) / packaged into the
+    wheel; it is **not** committed. The committed change is the source.
 - **Out:**
   - The copy button's *behavior* (HS-36-02) — leave a header slot for it.
   - Deep per-type body restyling (HS-36-03) — this story is the shell + overflow fix;

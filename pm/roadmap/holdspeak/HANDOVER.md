@@ -55,7 +55,9 @@ predates a same-day scope expansion). On direct user feedback, two tracks:
   and overflows horizontally. Make it a first-class deliverable — Signal **"elevated"
   artifact cards**, **copy-as-Markdown** (reuse `CommandPreview.astro`), **overflow-safe**
   wide artifacts (the risk table first). UI lives in `web/src/pages/history.astro`
-  (~856–1136) + its CSS; rebuild + commit `holdspeak/static/_built/` per edit.
+  (~856–1136) + its CSS; rebuild the bundle (`cd web && npm run build`) before
+  verifying — `holdspeak/static/_built/` is **gitignored** (built at install from
+  `web/src`), so commit the **source**, never `_built`.
 - **Intelligence (HS-36-04→05):** fix the routing weakness where a brief intent in a
   digression is **diluted below the 0.6 threshold and silently lost** (MIR-01 =
   fixed-90s windows + lexical keywords; see `intent_timeline.build_intent_windows`,

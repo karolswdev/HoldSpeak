@@ -28,7 +28,7 @@ a facility to quickly copy the content into a markdown clipboard."*
     + a copied-state label/animation + graceful fallback when clipboard is blocked).
   - A **"Copy all"** affordance that concatenates every artifact's Markdown (with a
     meeting heading) for the whole meeting.
-  - Rebuild + commit the bundle.
+  - Rebuild the bundle (`cd web && npm run build`) for verification — it is a gitignored build product (built at install/package time from `web/src`), NOT committed.
 - **Out:**
   - File download / export (`.md`/`.json`) — deferred (clipboard only).
   - Copying the transcript (already its own surface) — artifacts only.
