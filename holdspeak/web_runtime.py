@@ -161,6 +161,25 @@ class WebRuntime:
             log.warning(f"Could not load projects for detector at startup: {_proj_init_err}")
         self.plugin_host.register(self.project_detector)
 
+        # HS-35-02: discover + register plugin packs (first-party + local user
+        # packs from ~/.holdspeak/plugin_packs/) alongside the built-ins. The
+        # 14 built-ins are unchanged; packs only augment the host registry.
+        # Discovery is fully defensive — a bad pack surfaces a logged error and
+        # never crashes startup.
+        try:
+            from .plugin_pack_loader import load_and_register_plugin_packs
+
+            builtin_ids = frozenset(self.plugin_host.list_plugins())
+            registered_packs, pack_errors = load_and_register_plugin_packs(
+                self.plugin_host, forbidden_ids=builtin_ids
+            )
+            for pack_error in pack_errors:
+                log.warning(f"plugin pack discovery: {pack_error}")
+            if registered_packs:
+                log.info(f"registered plugin packs: {registered_packs}")
+        except Exception as _pack_err:
+            log.warning(f"plugin pack discovery failed: {_pack_err}")
+
         self.plugin_queue_thread: Optional[threading.Thread] = None
 
         try:
@@ -489,6 +508,9 @@ class WebRuntime:
                 diarization_enabled=self.config.meeting.diarization_enabled,
                 diarize_mic=self.config.meeting.diarize_mic,
                 cross_meeting_recognition=self.config.meeting.cross_meeting_recognition,
+                mir_disabled_plugins=list(
+                    getattr(self.config.meeting, "disabled_plugins", []) or []
+                ),
             )
             state = session.start()
             with self.state_lock:

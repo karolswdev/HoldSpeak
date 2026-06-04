@@ -99,6 +99,11 @@ class MeetingConfig:
     intent_score_threshold: float = 0.6  # gate above which an intent is "active"
     intent_hysteresis_windows: int = 1   # damping windows; converted to float via intent_hysteresis()
     plugin_profile: str = "balanced"     # routing profile selecting the chain
+    # HS-35-03: per-project plugin enable/disable. Plugin ids listed here are
+    # dropped from the *executed* set at dispatch (recorded as `skipped`, not
+    # failed) while the *built* chain is unchanged. Empty (default) = today's
+    # behavior: every chain-selected plugin runs.
+    disabled_plugins: list[str] = field(default_factory=list)
 
     # Speaker diarization
     diarization_enabled: bool = False  # Identify multiple speakers in system audio
@@ -133,6 +138,24 @@ class MeetingConfig:
                 f"plugin_profile must be a non-empty string, "
                 f"got {self.plugin_profile!r}"
             )
+        if not isinstance(self.disabled_plugins, list) or not all(
+            isinstance(p, str) for p in self.disabled_plugins
+        ):
+            raise ValueError(
+                f"disabled_plugins must be a list of plugin-id strings, "
+                f"got {self.disabled_plugins!r}"
+            )
+        # Normalize in place: strip blanks, dedupe, preserve order. An unknown
+        # id is a harmless no-op at dispatch, so we don't validate against the
+        # plugin registry here.
+        seen: set[str] = set()
+        normalized: list[str] = []
+        for raw in self.disabled_plugins:
+            pid = raw.strip()
+            if pid and pid not in seen:
+                seen.add(pid)
+                normalized.append(pid)
+        self.disabled_plugins = normalized
 
     def intent_hysteresis(self) -> float:
         """Convert `intent_hysteresis_windows` (int) to the float gap value

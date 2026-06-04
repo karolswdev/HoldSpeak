@@ -79,6 +79,7 @@ def process_meeting_state(
     defer_heavy: bool = True,
     synthesize: bool = False,
     max_artifacts: int = 200,
+    disabled_plugins: Optional[list[str]] = None,
 ) -> MIRPipelineResult:
     """Run the MIR pipeline over a meeting state, in process, returning typed results.
 
@@ -149,6 +150,7 @@ def process_meeting_state(
                     profile=profile,
                     timeout_seconds=timeout_seconds,
                     defer_heavy=defer_heavy,
+                    disabled_plugins=disabled_plugins,
                 )
             )
         except Exception as exc:

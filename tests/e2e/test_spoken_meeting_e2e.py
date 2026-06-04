@@ -302,3 +302,207 @@ def test_spoken_meeting_end_to_end(tmp_path):
     finally:
         server.stop()
         reset_database()
+
+
+# HS-35-04: a second spoken scenario that exercises the **incident** + **comms**
+# plugin chains (the existing scenario covers balanced/architecture/delivery/
+# product but never the incident or comms profiles). The script is a short
+# incident postmortem — detection, impact, timeline, root cause, a runbook
+# change, a risk, a stakeholder note, and a decision to announce — so the
+# plugins have material to infer:
+#   - chronological events                            → incident_timeline
+#   - added/modified runbook steps                    → runbook_delta
+#   - cross-cutting risks                             → risk_heatmap
+#   - a shareable headline + highlights/risks/next   → stakeholder_update_drafter
+#   - decisions to announce, with audience            → decision_announcement_drafter
+INCIDENT_EVIDENCE_DIR = "pm/roadmap/holdspeak/phase-35-plugin-frontier/evidence"
+
+INCIDENT_SCRIPT: list[tuple[str, str, str]] = [
+    ("Priya", "Samantha",
+     "Okay, let's walk through last Tuesday. Checkout was hard down for "
+     "thirty eight minutes between two fifteen and two fifty three in the "
+     "afternoon. Pager went off at two seventeen after the synthetic check "
+     "from the edge probe failed three times in a row."),
+    ("Alex", "Alex",
+     "Right, and the trigger was the two oh five deploy of the payments "
+     "service. It exhausted the database connection pool almost immediately, "
+     "so every checkout request piled up waiting for a connection and timed "
+     "out. We rolled back at two forty one and the error rate dropped to "
+     "normal about ninety seconds later."),
+    ("Dana", "Daniel",
+     "So the root cause is really that we shipped a change that doubled the "
+     "per request connection count without resizing the pool. The runbook "
+     "today tells you to roll back, but it doesn't tell you to capture pool "
+     "metrics first, which is why we wasted ten minutes guessing. I want to "
+     "add a step before the rollback that dumps pool saturation to the "
+     "incident channel."),
+    ("Alex", "Alex",
+     "Agreed. And the bigger risk is that holiday traffic is two weeks out "
+     "and the queue capacity is sized for normal load, so a repeat under "
+     "peak would be much worse. We should treat that as a high priority "
+     "risk this week."),
+    ("Priya", "Samantha",
+     "Decision then. We're switching the payments service to canary deploys "
+     "starting next Monday, no more full rollouts. I'll send a note to the "
+     "engineering leadership channel today summarizing the impact, the "
+     "rollback time, and the canary decision so everyone hears it from us "
+     "first."),
+]
+
+
+def test_spoken_incident_retro_end_to_end(tmp_path):
+    """HS-35-04 — incident-retro spoken e2e (incident + comms chains).
+
+    Mirrors `test_spoken_meeting_end_to_end` but exercises a different chain:
+    `incident_timeline`, `runbook_delta`, `risk_heatmap`,
+    `stakeholder_update_drafter`, `decision_announcement_drafter`.
+    """
+    _skip_unless(shutil.which("say") is not None, "macOS `say` not available")
+    wavfile = pytest.importorskip("scipy.io.wavfile", reason="scipy required")
+    np = pytest.importorskip("numpy")
+    try:
+        from playwright.sync_api import sync_playwright
+    except Exception:
+        pytest.skip("playwright not installed (uv pip install playwright && playwright install chromium)")
+    reachable, detail = _endpoint_reachable()
+    _skip_unless(reachable, detail)
+
+    from holdspeak.db import get_database, reset_database
+    from holdspeak.meeting_session import MeetingState, TranscriptSegment
+    from holdspeak.plugins.builtin import register_builtin_plugins
+    from holdspeak.plugins.host import PluginHost
+    from holdspeak.plugins.synthesis import synthesize_and_persist
+    from holdspeak.transcribe import Transcriber
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    # --- 1. say -> per-line wav -> 2. Whisper -> transcript segments -------
+    transcriber = Transcriber(model_name="base")
+    segments: list[TranscriptSegment] = []
+    cursor = 0.0
+    for idx, (label, voice, line) in enumerate(INCIDENT_SCRIPT):
+        wav_path = tmp_path / f"incident_line_{idx}.wav"
+        _say_to_wav(line, voice, wav_path)
+        sr, audio = wavfile.read(wav_path)
+        if audio.dtype == np.int16:
+            audio = audio.astype(np.float32) / 32768.0
+        duration = len(audio) / sr
+        text = transcriber.transcribe(audio.astype("float32")).strip()
+        segments.append(
+            TranscriptSegment(text=text, speaker=label, start_time=cursor, end_time=cursor + duration)
+        )
+        cursor += duration
+    transcript = " ".join(seg.text for seg in segments).strip()
+    assert len(transcript) > 60, f"transcript too short: {transcript!r}"
+    print(f"\n[e2e:incident] transcript: {transcript}")
+
+    # --- 3. real incident + comms plugin chain -----------------------------
+    host = PluginHost(default_timeout_seconds=30.0, enabled_capabilities={"llm"})
+    register_builtin_plugins(host)
+    meeting_id = "e2e-spoken-incident"
+    context = {
+        "transcript": transcript,
+        "project_name": "Checkout Payments Incident",
+        "active_intents": ["incident", "comms"],
+    }
+    incident_chain = (
+        "incident_timeline",
+        "runbook_delta",
+        "risk_heatmap",
+        "stakeholder_update_drafter",
+        "decision_announcement_drafter",
+    )
+    for window, plugin_id in enumerate(incident_chain):
+        host.execute(
+            plugin_id,
+            context=context,
+            meeting_id=meeting_id,
+            window_id=f"{meeting_id}:w{window}",
+            transcript_hash=f"h{window}",
+        )
+    results = []
+    while True:
+        result = host.process_next_deferred_run(timeout_seconds=30.0)
+        if result is None:
+            break
+        results.append(result)
+    by_id = {r.plugin_id: r for r in results}
+    for pid in incident_chain:
+        assert by_id[pid].status == "success", by_id[pid].error
+    assert by_id["incident_timeline"].output.get("events"), "no incident events produced"
+    assert by_id["runbook_delta"].output.get("changes"), "no runbook changes produced"
+    assert by_id["risk_heatmap"].output.get("risks"), "no risks produced"
+    update = by_id["stakeholder_update_drafter"].output.get("update")
+    assert update and (update.get("headline") or update.get("highlights")), "no stakeholder update produced"
+    assert by_id["decision_announcement_drafter"].output.get("announcements"), "no announcements produced"
+
+    # --- 4. persist meeting + transcript + artifacts into a temp DB --------
+    reset_database()
+    db = get_database(tmp_path / "e2e_incident.db")
+    db.meetings.save_meeting(
+        MeetingState(
+            id=meeting_id,
+            started_at=datetime.now(),
+            title="Checkout Payments — Incident Retro",
+            segments=segments,
+        )
+    )
+    runs = [
+        SimpleNamespace(
+            id=f"run-{i}", meeting_id=meeting_id, window_id=f"{meeting_id}:w{i}",
+            plugin_id=r.plugin_id, plugin_version=r.plugin_version, status="success",
+            output=r.output, created_at=f"2026-06-03T14:0{i}:00",
+        )
+        for i, r in enumerate(results)
+    ]
+    drafts, _ = synthesize_and_persist(db, meeting_id, plugin_runs=runs)
+    by_type = {d.artifact_type: d for d in drafts}
+    assert by_type.get("incident_timeline") and by_type["incident_timeline"].structured_json.get("events")
+    assert by_type.get("runbook_delta") and by_type["runbook_delta"].structured_json.get("changes")
+    assert by_type.get("risk_register") and by_type["risk_register"].structured_json.get("risks")
+    su = by_type.get("stakeholder_update") and by_type["stakeholder_update"].structured_json.get("update")
+    assert su and (su.get("headline") or su.get("highlights"))
+    assert by_type.get("decision_announcement") and by_type["decision_announcement"].structured_json.get("announcements")
+    print(f"[e2e:incident] artifacts: {sorted(by_type)}")
+
+    # --- 5. serve + 6. Playwright screenshot -------------------------------
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(
+            on_bookmark=lambda *a, **k: {},
+            on_stop=lambda *a, **k: {},
+            get_state=lambda: {"id": meeting_id, "meeting_active": False},
+        ),
+        host="127.0.0.1",
+        port=_free_port(),
+    )
+    url = server.start()
+    try:
+        os.makedirs(INCIDENT_EVIDENCE_DIR, exist_ok=True)
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={"width": 1280, "height": 1500})
+            page.goto(f"{url}/history", wait_until="networkidle")
+            page.locator("button.meeting-card").first.click()
+            page.wait_for_selector(".incident-timeline li", timeout=15000)
+            page.wait_for_selector(".runbook-list .runbook-change", timeout=15000)
+            page.wait_for_selector(".risk-table tbody tr", timeout=15000)
+            page.wait_for_selector(".stakeholder-update", timeout=15000)
+            page.wait_for_selector(".announcement-artifact .announcement", timeout=15000)
+            page.wait_for_selector(".transcript-list .segment", timeout=15000)
+            content_height = page.evaluate(
+                "() => { const b = document.querySelector('.modal-body');"
+                " return b ? Math.ceil(b.scrollHeight) : 1400; }"
+            )
+            page.set_viewport_size({"width": 1280, "height": min(int(content_height) + 220, 8000)})
+            page.wait_for_timeout(400)
+            shot = os.path.join(INCIDENT_EVIDENCE_DIR, "spoken_incident_artifacts.png")
+            page.screenshot(path=shot)
+            assert page.locator(".incident-timeline li").count() >= 1
+            assert page.locator(".runbook-list .runbook-change").count() >= 1
+            assert page.locator(".risk-table tbody tr").count() >= 1
+            assert page.locator(".stakeholder-update").count() >= 1
+            assert page.locator(".announcement-artifact .announcement").count() >= 1
+            browser.close()
+        print(f"[e2e:incident] screenshot saved: {shot}")
+    finally:
+        server.stop()
+        reset_database()

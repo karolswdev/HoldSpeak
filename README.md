@@ -155,8 +155,11 @@ HoldSpeak ships **14 built-in plugins**, all producing real LLM-backed artifacts
 | `stakeholder_update_drafter` | Stakeholder update (headline + highlights / risks / next steps) | comms |
 | `decision_announcement_drafter` | Decision announcements (title / audience / message) | comms |
 
-The architecture, contracts, and how to think about authoring more plugins live in
-the plugin RFC: [`docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md`](docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md).
+Want to write your own? The [Plugin Authoring guide](docs/PLUGIN_AUTHORING.md)
+walks the full contract — the `HostPlugin` protocol, the prompt → LLM → parse →
+structured-output pattern, the `llm` capability gate, registering a renderer, and
+joining a chain. The design rationale lives in the plugin RFC:
+[`docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md`](docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md).
 For configuring meeting intelligence (endpoints, routing), see the
 [Meeting Mode Guide](docs/MEETING_MODE_GUIDE.md).
 

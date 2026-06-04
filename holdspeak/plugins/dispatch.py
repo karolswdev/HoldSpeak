@@ -24,6 +24,64 @@ def _transcript_hash(transcript: str) -> str:
     return hashlib.sha256(transcript.encode("utf-8")).hexdigest()
 
 
+def normalize_disabled_plugins(disabled: Iterable[str] | None) -> set[str]:
+    """Coerce a disabled-plugin spec into a clean set of ids.
+
+    Blanks are dropped; surrounding whitespace is stripped. Order is
+    irrelevant for membership testing, so a set is returned.
+    """
+    return {str(pid).strip() for pid in (disabled or []) if pid and str(pid).strip()}
+
+
+def partition_chain(
+    chain: Iterable[str],
+    disabled: Iterable[str] | None,
+) -> tuple[list[str], list[str]]:
+    """Split a *built* plugin chain into `(executed, skipped)`.
+
+    Order-preserving. An id in `disabled` that isn't in the chain is a
+    harmless no-op. The built chain itself is never mutated — this only
+    decides which ids the dispatcher actually invokes (HS-35-03).
+    """
+    blocked = normalize_disabled_plugins(disabled)
+    executed: list[str] = []
+    skipped: list[str] = []
+    for plugin_id in chain:
+        (skipped if plugin_id in blocked else executed).append(plugin_id)
+    return executed, skipped
+
+
+def _skipped_run(
+    host: PluginHost,
+    plugin_id: str,
+    *,
+    window: IntentWindow,
+    profile: str,
+    transcript_hash: str,
+) -> PluginRun:
+    """A zero-duration `skipped` record for a config-disabled plugin."""
+    plugin = host.get_plugin(plugin_id)
+    now = time.time()
+    return PluginRun(
+        plugin_id=plugin_id,
+        plugin_version=str(getattr(plugin, "version", "unknown")),
+        window_id=window.window_id,
+        meeting_id=window.meeting_id,
+        profile=profile,
+        status="skipped",
+        idempotency_key=build_idempotency_key(
+            meeting_id=window.meeting_id,
+            window_id=window.window_id,
+            plugin_id=plugin_id,
+            transcript_hash=transcript_hash,
+        ),
+        started_at=now,
+        finished_at=now,
+        duration_ms=0.0,
+        error="disabled for this project",
+    )
+
+
 def _to_plugin_run(
     result: PluginRunResult,
     *,
@@ -58,13 +116,18 @@ def dispatch_window(
     override_intents: list[str] | None = None,
     timeout_seconds: float | None = None,
     defer_heavy: bool = True,
+    disabled_plugins: Iterable[str] | None = None,
 ) -> list[PluginRun]:
     """Dispatch the route-derived plugin chain for one scored window.
 
-    Returns one `PluginRun` per plugin in the chain. Per-plugin failures are
-    surfaced as `status="error"` records; they do not abort sibling plugins
-    (MIR-R-004). `host.execute` already prevents duplicate work via its
-    idempotency cache (MIR-F-008).
+    Returns one `PluginRun` per plugin in the *built* chain. Per-plugin
+    failures are surfaced as `status="error"` records; they do not abort
+    sibling plugins (MIR-R-004). `host.execute` already prevents duplicate
+    work via its idempotency cache (MIR-F-008).
+
+    `disabled_plugins` (HS-35-03) suppresses specific plugin ids for this
+    project: a disabled id is recorded as a `skipped` run and never invoked.
+    The built chain is unchanged; only the executed set narrows.
     """
     decision = preview_route(
         profile=profile,
@@ -82,8 +145,21 @@ def dispatch_window(
         "transcript": window.transcript,
     }
 
+    blocked = normalize_disabled_plugins(disabled_plugins)
+
     runs: list[PluginRun] = []
     for plugin_id in decision.plugin_chain:
+        if plugin_id in blocked:
+            runs.append(
+                _skipped_run(
+                    host,
+                    plugin_id,
+                    window=window,
+                    profile=decision.profile,
+                    transcript_hash=th,
+                )
+            )
+            continue
         started_at = time.time()
         try:
             result = host.execute(
@@ -137,6 +213,7 @@ def dispatch_windows(
     profile: str,
     timeout_seconds: float | None = None,
     defer_heavy: bool = True,
+    disabled_plugins: Iterable[str] | None = None,
 ) -> list[PluginRun]:
     """Dispatch chains for a sequence of scored windows in document order.
 
@@ -154,6 +231,7 @@ def dispatch_windows(
                 profile=profile,
                 timeout_seconds=timeout_seconds,
                 defer_heavy=defer_heavy,
+                disabled_plugins=disabled_plugins,
             )
         )
     return out
