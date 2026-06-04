@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 37
-- **Status:** not-started
+- **Status:** done
 - **Depends on:** HS-37-01, HS-37-02, HS-37-03, HS-37-04, HS-37-05, HS-37-06
 - **Unblocks:** none
 - **Owner:** unassigned
@@ -34,12 +34,17 @@ the demo, and write the record. (The actuator documentation is its own story —
 
 ## Acceptance criteria
 
-- [ ] Egress-posture review written: no path egresses without approval + parity + audit;
-      the negative test (no approval ⇒ no action) is cited.
-- [ ] The HS-37-06 docs are verified present + accurate; doc drift-guard + link-check green.
-- [ ] e2e demo screenshot committed to `evidence/`.
-- [ ] Bundle rebuilt (gitignored — not committed); full suite green; routing tests green.
-- [ ] `final-summary.md` written; README phase row `done`; HANDOVER refreshed.
+- [x] Egress-posture review written in `final-summary.md` — the five conditions every side
+      effect requires; the negative (no approval / gate off / not allow-listed ⇒ no action)
+      cited from the reference-actuator tests.
+- [x] The HS-37-06 docs verified present + accurate; doc drift-guard + link-check green (3
+      passed); no live doc calls actuators deferred.
+- [x] e2e demo screenshot `evidence/actuator_lifecycle.png` (awaiting-approval → executed
+      with the audit trail → rejected) committed.
+- [x] Bundle rebuilt (gitignored — `git ls-files holdspeak/static/_built/` → 0); full suite
+      green (2080/15); routing tests green (18 passed).
+- [x] `final-summary.md` written; README phase row → `done` + Current-phase + Last-updated;
+      HANDOVER refreshed.
 
 ## Test plan
 

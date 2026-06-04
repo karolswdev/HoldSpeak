@@ -1,9 +1,18 @@
 # Phase 37 — Actuators
 
-**Status:** in-progress (opened 2026-06-04). 6/7 stories shipped.
+**Status:** CLOSED ✅ (opened + closed 2026-06-04). 7/7 stories shipped. See
+[final-summary.md](./final-summary.md).
 
-**Last updated:** 2026-06-04 (**HS-37-06 shipped — actuator documentation (the dedicated
-docs story).** All relevant project docs now match the shipped surface. `docs/
+**Last updated:** 2026-06-04 (**HS-37-07 — Phase 37 CLOSED ✅ (7/7).** The closeout: an
+**egress-posture review** (no path egresses without a registered+capability-enabled
+actuator, an `approved` proposal, the `allow_actuators`+allow-list gate, payload parity,
+and an audit row — the negative proven by the reference-actuator tests) leads
+`final-summary.md`. Demo `evidence/actuator_lifecycle.png` (awaiting-approval → executed
+with the audit trail → rejected). Full suite **2080/15**; the actuator stack **55** tests;
+routing invariants **18** (additive+gated, byte-identical default); doc-guards green;
+bundle rebuilt (gitignored `_built` — 0 tracked). README phase row → done; HANDOVER
+refreshed. **Open a PR to `main`.** Earlier: **HS-37-06 shipped — actuator documentation
+(the dedicated docs story).** All relevant project docs now match the shipped surface. `docs/
 PLUGIN_AUTHORING.md` gains a full **Actuators** section (the propose → approve → execute
 flow, the `ActuatorProposal` field table, the lifecycle + the three gates [capability /
 human approval / `MeetingConfig`], the `ActuatorExecutor` parity+audit, and a worked
@@ -205,7 +214,7 @@ default**; the default routing/dispatch path is byte-identical.
 | HS-37-04 | Guarded executor + audit + governance gate | done | [story-04-guarded-executor.md](./story-04-guarded-executor.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-37-05 | Reference actuator end-to-end | done | [story-05-reference-actuator.md](./story-05-reference-actuator.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-37-06 | Actuator documentation (project docs update) | done | [story-06-documentation.md](./story-06-documentation.md) | [evidence-story-06.md](./evidence-story-06.md) |
-| HS-37-07 | Closeout + final-summary | not-started | [story-07-closeout.md](./story-07-closeout.md) | — |
+| HS-37-07 | Closeout + final-summary | done | [story-07-closeout.md](./story-07-closeout.md) | [evidence-story-07.md](./evidence-story-07.md) |
 
 ## Where we are
 
@@ -247,9 +256,11 @@ recon is done. The seam already exists from Phase 35's groundwork:
    outbox connector; full loop with a real file side effect + the negatives; gated/opt-in).
 6. HS-37-06 — **actuator documentation** ✅ **done** (`PLUGIN_AUTHORING.md` Actuators
    section + README + doc-truth reconciliation; worked example on `followup_ticket_actuator`).
-7. HS-37-07 — closeout + final-summary. **◀ next (the last story)**
+7. HS-37-07 — closeout + final-summary ✅ **done** (egress-posture review + lifecycle demo
+   + `final-summary.md`).
 
-The arc is deliberately linear (each story consumes the prior), unlike Phase 36's two
+**Phase CLOSED ✅ (7/7).** Next: open a PR to `main`. The arc was deliberately linear
+(each story consumed the prior), unlike Phase 36's two
 parallel tracks: the safety invariant is only meaningful end-to-end, so the proposal
 shape → persistence → approval → guarded execution → reference actuator must stack in
 order; documentation (06) then captures the stable surface, and the closeout (07) is the

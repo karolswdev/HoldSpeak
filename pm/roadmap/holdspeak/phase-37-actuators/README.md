@@ -1,6 +1,6 @@
 # Phase 37 — Actuators
 
-**Status:** in-progress (6/7) — opened 2026-06-04. The live plan is
+**Status:** CLOSED ✅ (7/7) — opened + closed 2026-06-04. The live plan is
 [current-phase-status.md](./current-phase-status.md) (goal, scope, exit criteria, the
 6-story table, risks, decisions). This README is the framing note; the status doc is
 canon if they disagree.
