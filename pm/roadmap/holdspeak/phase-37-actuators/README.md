@@ -1,6 +1,6 @@
 # Phase 37 — Actuators
 
-**Status:** in-progress (3/6) — opened 2026-06-04. The live plan is
+**Status:** in-progress (4/7) — opened 2026-06-04. The live plan is
 [current-phase-status.md](./current-phase-status.md) (goal, scope, exit criteria, the
 6-story table, risks, decisions). This README is the framing note; the status doc is
 canon if they disagree.
@@ -18,7 +18,7 @@ phase rather than a tail of Phase 35.
 
 ## The plan (scaffolded)
 
-Six linear stories — each consumes the prior, because the safety invariant ("no external
+Seven linear stories — each consumes the prior, because the safety invariant ("no external
 side effect without an explicit, audited, per-action human approval; executed ==
 previewed") is only meaningful end-to-end:
 
@@ -30,7 +30,9 @@ previewed") is only meaningful end-to-end:
 4. **HS-37-04** — guarded executor + audit + governance gate (payload parity, policy,
    Phase-25-gated egress).
 5. **HS-37-05** — one reference actuator end-to-end (incl. "no approval ⇒ no action").
-6. **HS-37-06** — closeout + final-summary.
+6. **HS-37-06** — actuator documentation (project docs update; after 05 so the authoring
+   guide shows a real example).
+7. **HS-37-07** — closeout + final-summary.
 
 Grounded in `docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` (open question #5) + the
 Phase-25 egress posture. The seam already exists: `plugin_sdk.validate_manifest` rejects

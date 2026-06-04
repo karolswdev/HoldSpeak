@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 37
-- **Status:** not-started
+- **Status:** done
 - **Depends on:** HS-37-03
 - **Unblocks:** HS-37-05
 - **Owner:** unassigned
@@ -39,18 +39,20 @@ through the Phase-25-gated connector surface (no new outbound primitive).
 
 ## Acceptance criteria
 
-- [ ] Only an `approved` proposal executes; a `proposed`/`rejected`/`executed` proposal is
-      refused.
-- [ ] **Payload parity** is enforced: a tampered/changed payload between approve and
-      execute aborts to `failed`, no outbound call made.
-- [ ] The **policy gate** holds: `allow_actuators=False` or an actuator id not on the
-      project allow-list ⇒ no execution; an external actuator with no approval ⇒ no
-      execution.
-- [ ] Every terminal transition (`executed`/`failed`) writes an **audit entry**; a test
-      asserts the audit row exists for each.
-- [ ] Egress routes through the connector surface (honoring the Phase-25 gate); the
-      default suite uses a stub executor and makes **no real outbound call**.
-- [ ] Suite green; modules ruff + F821 clean.
+- [x] Only an `approved` proposal executes; a `proposed`/`rejected`/`executed` proposal
+      raises `ActuatorExecutionError` and makes no outbound call.
+- [x] **Payload parity** is enforced: a wrong `approved_payload_hash` aborts to `failed`
+      (+ audit), no connector call (`payload_hash` = sha256 of canonical payload).
+- [x] The **policy gate** holds: `allow_actuators=False` or an actuator id not on the
+      allow-list raises `ActuatorPolicyError` with **no state change** (enable + retry);
+      the not-approved guard already covers "no approval ⇒ no execution". The gate's home
+      is the new `MeetingConfig.allow_actuators` + `allowed_actuators` (default-safe).
+- [x] Every terminal transition (`executed`/`failed`) writes an **audit entry** (via
+      `transition_proposal`, carrying the payload hash in `detail`); tests assert each.
+- [x] Egress routes through an **injected connector** (HS-37-05 supplies the
+      Phase-25-gated one; this module never opens a socket); the default suite uses a spy
+      connector and makes **no real outbound call**.
+- [x] Suite green (2073/15); `actuator_executor.py` + `config.py` ruff + F821 clean.
 
 ## Test plan
 

@@ -1,9 +1,21 @@
 # Phase 37 — Actuators
 
-**Status:** in-progress (opened 2026-06-04). 3/6 stories shipped.
+**Status:** in-progress (opened 2026-06-04). 4/7 stories shipped.
 
-**Last updated:** 2026-06-04 (**HS-37-03 shipped — approval surface (preview →
-approve/reject, no execution).** The safety invariant made real to the user. API
+**Last updated:** 2026-06-04 (**HS-37-04 shipped — guarded executor + audit + governance
+gate.** The one place a side effect happens, so the one place the invariant is enforced:
+`holdspeak/plugins/actuator_executor.py` `ActuatorExecutor.execute(proposal_id)` runs an
+`approved` proposal through a guard stack — (1) status (only `approved`), (2) **policy
+gate** (`allow_actuators` master switch + an optional per-project allow-list; refusal
+raises with no state change), (3) **payload parity** (a wrong approved-hash aborts to
+`failed`, no outbound call — TOCTOU guard), (4) egress via an **injected** connector (this
+module never opens a socket; HS-37-05 supplies the Phase-25-gated one), (5) **audit**
+(`executed`/`failed` recorded via `transition_proposal`, payload hash in the audit
+detail). The gate's home is the new default-safe `MeetingConfig.allow_actuators` +
+`allowed_actuators`. 14 executor/config tests (status/policy/parity/connector-error/audit,
+all with a spy connector → no real outbound call); suite 2073/15; modules ruff+F821 clean.
+Next: HS-37-05 (reference actuator end-to-end). Earlier: **HS-37-03 shipped — approval
+surface (preview → approve/reject, no execution).** The safety invariant made real to the user. API
 (`web/routes/meetings.py`): `GET …/proposals` (a pure `db.actuators.list_proposals` read)
 + `POST …/proposals/{id}/decision` (`approved`|`rejected` → `transition_proposal`, records
 `decided_by` + audit; illegal transition → 400; unknown/other-meeting → 404) — it **never
@@ -162,7 +174,7 @@ default**; the default routing/dispatch path is byte-identical.
 | HS-37-01 | Actuator contract + unblock the kind (gated, proposal-only) | done | [story-01-actuator-contract.md](./story-01-actuator-contract.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-37-02 | Proposal persistence + lifecycle | done | [story-02-proposal-persistence.md](./story-02-proposal-persistence.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-37-03 | Approval surface — preview → approve/reject (no execution) | done | [story-03-approval-surface.md](./story-03-approval-surface.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-37-04 | Guarded executor + audit + governance gate | not-started | [story-04-guarded-executor.md](./story-04-guarded-executor.md) | — |
+| HS-37-04 | Guarded executor + audit + governance gate | done | [story-04-guarded-executor.md](./story-04-guarded-executor.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-37-05 | Reference actuator end-to-end | not-started | [story-05-reference-actuator.md](./story-05-reference-actuator.md) | — |
 | HS-37-06 | Actuator documentation (project docs update) | not-started | [story-06-documentation.md](./story-06-documentation.md) | — |
 | HS-37-07 | Closeout + final-summary | not-started | [story-07-closeout.md](./story-07-closeout.md) | — |
@@ -200,8 +212,10 @@ recon is done. The seam already exists from Phase 35's groundwork:
    `actuator_proposals`/`_audit` tables; lifecycle-enforced + idempotent + audited).
 3. HS-37-03 — approval UI ✅ **done** (proposals API + the Signal proposal cards with
    preview → Approve/Reject; no execution on view).
-4. HS-37-04 — guarded executor + audit + governance gate (needs an approved proposal). **◀ next**
-5. HS-37-05 — reference actuator end-to-end (exercises 01→04 with a real side effect).
+4. HS-37-04 — guarded executor + audit + governance gate ✅ **done** (`ActuatorExecutor`:
+   status + policy + payload-parity + injected-connector egress + audited terminal states;
+   `MeetingConfig.allow_actuators`/`allowed_actuators`).
+5. HS-37-05 — reference actuator end-to-end (exercises 01→04 with a real side effect). **◀ next**
 6. HS-37-06 — **actuator documentation** (project docs update; runs after 05 so the
    authoring guide shows a real example).
 7. HS-37-07 — closeout + final-summary.
@@ -244,9 +258,12 @@ record. (Documentation was promoted to its own story on direct user ask.)
 - **Proposal storage home** — a new `ActuatorRepository` vs folding into
   `PluginArtifactRepository` — trigger: HS-37-02 — default: a dedicated repo (clean
   lifecycle + audit surface), mirroring the `IntelRepository` queue precedent.
-- **Governance granularity** — per-action approval always vs per-project trust levels that
-  pre-authorize specific actuator ids — trigger: HS-37-04 — default: per-action approval
-  always; the per-project allow-list only controls *which actuators may be proposed*, never
-  removes the approval+audit step.
-- **Where the audit log lives** — a dedicated table vs the existing activity ledger —
-  trigger: HS-37-02/04 — default: a dedicated audit surface tied to the proposal row.
+- ~~**Governance granularity**~~ — **resolved in HS-37-04:** per-action approval *always*
+  (the `approved` status), with the `MeetingConfig.allow_actuators` master switch + the
+  `allowed_actuators` per-project allow-list as *additional* gates that never remove the
+  approval+audit step. (Prior deferred wording kept below for the record.)
+  ~~per-action approval always vs per-project trust levels that pre-authorize specific
+  actuator ids — trigger: HS-37-04 — default: per-action approval always.~~
+- ~~**Where the audit log lives**~~ — **resolved in HS-37-02:** a dedicated
+  `actuator_proposal_audit` table tied to the proposal row (CASCADE-scoped), not the
+  activity ledger.
