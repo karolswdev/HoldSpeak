@@ -1,9 +1,24 @@
 # Phase 37 — Actuators
 
-**Status:** in-progress (opened 2026-06-04). 4/7 stories shipped.
+**Status:** in-progress (opened 2026-06-04). 5/7 stories shipped.
 
-**Last updated:** 2026-06-04 (**HS-37-04 shipped — guarded executor + audit + governance
-gate.** The one place a side effect happens, so the one place the invariant is enforced:
+**Last updated:** 2026-06-04 (**HS-37-05 shipped — reference actuator end-to-end.** The
+first concrete actuator proves the whole loop. `holdspeak/plugins/builtin/
+followup_ticket_actuator.py`: `FollowupTicketActuator` (`kind=actuator`,
+`required_capabilities=["actuator"]`) whose `run()` finds the first **unowned** action item
+and proposes a follow-up ticket (faithful preview + Markdown payload; never reaches out) +
+`build_outbox_connector` (the executor's egress point — a local **outbox file** write,
+CI-safe) + `register_followup_actuator` (explicit/opt-in, **not** in
+`register_builtin_plugins`). **Design note:** the gh/jira CLI default was dropped — the
+existing `github_cli` pack is read-only by Phase-25 policy + real `gh issue create` needs
+creds/makes real tickets — so the reference side effect is a local outbox file (a real,
+observable, reversible artifact); gh/jira/webhook are future connectors on the same
+executor contract. 7 tests: faithful proposal, nothing-to-propose→error, capability-off→
+blocked, the **full loop** (propose→persist→refused-before-approval→approve→execute→a
+**real file on disk**→audit `[proposed,approved,executed]`), gate-off/not-allow-listed→no
+file, and `ACTUATOR_ID not in register_builtin_plugins`. Suite 2080/15; module ruff+F821
+clean. Next: HS-37-06 (actuator documentation). Earlier: **HS-37-04 shipped — guarded
+executor + audit + governance gate.** The one place a side effect happens, so the one place the invariant is enforced:
 `holdspeak/plugins/actuator_executor.py` `ActuatorExecutor.execute(proposal_id)` runs an
 `approved` proposal through a guard stack — (1) status (only `approved`), (2) **policy
 gate** (`allow_actuators` master switch + an optional per-project allow-list; refusal
@@ -175,7 +190,7 @@ default**; the default routing/dispatch path is byte-identical.
 | HS-37-02 | Proposal persistence + lifecycle | done | [story-02-proposal-persistence.md](./story-02-proposal-persistence.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-37-03 | Approval surface — preview → approve/reject (no execution) | done | [story-03-approval-surface.md](./story-03-approval-surface.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-37-04 | Guarded executor + audit + governance gate | done | [story-04-guarded-executor.md](./story-04-guarded-executor.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-37-05 | Reference actuator end-to-end | not-started | [story-05-reference-actuator.md](./story-05-reference-actuator.md) | — |
+| HS-37-05 | Reference actuator end-to-end | done | [story-05-reference-actuator.md](./story-05-reference-actuator.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-37-06 | Actuator documentation (project docs update) | not-started | [story-06-documentation.md](./story-06-documentation.md) | — |
 | HS-37-07 | Closeout + final-summary | not-started | [story-07-closeout.md](./story-07-closeout.md) | — |
 
@@ -215,9 +230,10 @@ recon is done. The seam already exists from Phase 35's groundwork:
 4. HS-37-04 — guarded executor + audit + governance gate ✅ **done** (`ActuatorExecutor`:
    status + policy + payload-parity + injected-connector egress + audited terminal states;
    `MeetingConfig.allow_actuators`/`allowed_actuators`).
-5. HS-37-05 — reference actuator end-to-end (exercises 01→04 with a real side effect). **◀ next**
+5. HS-37-05 — reference actuator end-to-end ✅ **done** (`followup_ticket_actuator` +
+   outbox connector; full loop with a real file side effect + the negatives; gated/opt-in).
 6. HS-37-06 — **actuator documentation** (project docs update; runs after 05 so the
-   authoring guide shows a real example).
+   authoring guide shows a real example). **◀ next**
 7. HS-37-07 — closeout + final-summary.
 
 The arc is deliberately linear (each story consumes the prior), unlike Phase 36's two
@@ -252,9 +268,11 @@ record. (Documentation was promoted to its own story on direct user ask.)
 
 ## Decisions deferred
 
-- **The reference actuator's concrete target** (a gh/jira connector follow-up vs a generic
-  outbound webhook) — trigger: HS-37-05 design — default: reuse an existing connector
-  (least new infra) over a new webhook primitive.
+- ~~**The reference actuator's concrete target**~~ — **resolved in HS-37-05:** a **local
+  outbox file write** (not the deferred gh/jira default). The existing `github_cli` pack is
+  read-only by Phase-25 policy and real `gh issue create` needs creds/makes real tickets;
+  a local outbox is a real, observable, reversible, CI-safe side effect. gh/jira/webhook are
+  future connectors on the same `ActuatorExecutor` contract.
 - **Proposal storage home** — a new `ActuatorRepository` vs folding into
   `PluginArtifactRepository` — trigger: HS-37-02 — default: a dedicated repo (clean
   lifecycle + audit surface), mirroring the `IntelRepository` queue precedent.

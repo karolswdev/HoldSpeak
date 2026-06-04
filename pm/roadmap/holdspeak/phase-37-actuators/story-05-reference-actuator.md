@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 37
-- **Status:** not-started
+- **Status:** done
 - **Depends on:** HS-37-04
 - **Unblocks:** HS-37-06
 - **Owner:** unassigned
@@ -35,14 +35,18 @@ runs without approval**.
 
 ## Acceptance criteria
 
-- [ ] The reference actuator proposes a faithful action (preview == payload meaning); it
-      surfaces in the approval UI.
-- [ ] End-to-end (opt-in): approve → execute → `executed` + audit entry; the side effect
-      is observable (e.g. the connector dry-run/real call recorded).
-- [ ] **Negative:** no approval (or gate off / not allow-listed) ⇒ no side effect, proposal
-      stays `proposed`/blocked; asserted explicitly.
-- [ ] Default suite + routing unaffected (actuator gated/unregistered by default).
-- [ ] Suite green; the new module ruff + F821 clean.
+- [x] The reference actuator (`followup_ticket_actuator`) proposes a faithful action — the
+      preview names the unowned task and the payload body carries it (parity of meaning);
+      it persists via `record_actuator_proposal`, so the HS-37-03 approval UI renders it.
+- [x] End-to-end: approve → execute → `executed` + the audit chain
+      `[proposed, approved, executed]`; the side effect is **observable** — a real file is
+      written to the temp outbox (`executed.result["path"]` exists on disk, absent before).
+- [x] **Negative:** execute before approval → `ActuatorExecutionError` (no file); gate off
+      / not allow-listed → `ActuatorPolicyError` (no file, stays `approved`); the `actuator`
+      capability off → the host `blocked`s proposing — all asserted.
+- [x] Default set + routing unaffected: the actuator is **not** in
+      `register_builtin_plugins` (asserted) and is capability-blocked unless enabled.
+- [x] Suite green (2080/15); `followup_ticket_actuator.py` ruff + F821 clean.
 
 ## Test plan
 
