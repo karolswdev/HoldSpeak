@@ -26,10 +26,12 @@ from typing import Any, Mapping, Optional
 
 # ──────────────────────────── Constants ─────────────────────────────
 
-# Plugin kinds the host understands today. These match the `kind` values
-# the 14 built-ins declare (see `plugins/builtin/__init__.py`). `actuator`
-# is intentionally absent — actuators stay blocked until Phase 36, so a
-# pack cannot yet declare one.
+# Plugin kinds the host understands. These match the `kind` values the
+# built-ins declare (see `plugins/builtin/__init__.py`). `actuator` is the
+# third kind, unblocked in Phase 37 (HS-37-01): an actuator proposes an
+# external side effect rather than emitting a read-only artifact. It is
+# *proposable* here; *executing* a proposal is gated behind explicit human
+# approval + the host `allow_actuators` flag (see `plugins/actuators.py`).
 KNOWN_PLUGIN_KINDS: frozenset[str] = frozenset(
     {
         "synthesizer",        # structured intermediate data (decisions, requirements, …)
@@ -37,14 +39,17 @@ KNOWN_PLUGIN_KINDS: frozenset[str] = frozenset(
         "artifact_generator", # a diagram or formatted document
         "signals",            # extracted customer/intelligence signals
         "detector",           # identifies associated projects/entities
+        "actuator",           # proposes an external side effect (Phase 37; approval-gated)
     }
 )
 
 # Host capabilities a plugin may require. The host gates execution on
 # these (a plugin requiring an un-enabled capability is *blocked*, not
-# failed). `llm` is the only one today — declared by every LLM-backed
-# plugin (see `PluginHost._missing_capabilities`).
-KNOWN_PLUGIN_CAPABILITIES: frozenset[str] = frozenset({"llm"})
+# failed). `llm` — declared by every LLM-backed plugin; `actuator` — the
+# opt-in for actuator plugins (off by default, so a registered actuator is
+# capability-blocked until an operator enables it). See
+# `PluginHost._missing_capabilities`.
+KNOWN_PLUGIN_CAPABILITIES: frozenset[str] = frozenset({"llm", "actuator"})
 
 # Valid execution modes. `inline` runs during window dispatch; `deferred`
 # queues the run for the background worker. Mirrors the host's
@@ -243,8 +248,7 @@ def validate_manifest(raw: Mapping[str, Any]) -> PluginManifest:
             ManifestError(
                 "kind",
                 "unknown_kind",
-                f"kind must be one of {sorted(KNOWN_PLUGIN_KINDS)} "
-                "(actuators are deferred to a later phase)",
+                f"kind must be one of {sorted(KNOWN_PLUGIN_KINDS)}",
             )
         )
 

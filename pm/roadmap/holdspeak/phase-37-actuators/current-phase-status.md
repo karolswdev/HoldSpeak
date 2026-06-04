@@ -1,9 +1,19 @@
 # Phase 37 — Actuators
 
-**Status:** not-started (scaffolded 2026-06-04; renumbered from Phase 36 when the
-meeting-artifact UX phase took the 36 slot). 0/6 stories.
+**Status:** in-progress (opened 2026-06-04). 1/6 stories shipped.
 
-**Last updated:** 2026-06-04 (phase **scaffolded** — plan + 6 stories laid out, grounded
+**Last updated:** 2026-06-04 (**HS-37-01 shipped — actuator contract + unblock the kind.**
+The plugin system's third kind is now *proposable*: a new `holdspeak/plugins/actuators.py`
+defines `ActuatorProposal` (target/action/preview/payload/reversible/required_capabilities)
+with `from_run_output` validation; `plugin_sdk` accepts `kind: actuator` + the `actuator`
+capability (the deferred rejection removed); and the host runs an actuator to produce a
+**`proposed`** result (the proposal on `output`) — **never an inline side effect** (a
+malformed proposal is a plain `error`). The safety model is set: proposing is safe + opts
+in via the off-by-default `actuator` capability, while `allow_actuators` is retained,
+reserved for gating *execution* (HS-37-04). Default path byte-identical (no actuator
+registered; routing tests green); suite 2040/15; modules ruff+F821 clean. Next: HS-37-02
+(proposal persistence + lifecycle). Earlier: phase **scaffolded** — plan + 6 stories
+grounded
 in `docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` (the parent RFC, open question #5) and
 the Phase-25 egress posture. The host already has the seam: `PluginHost(allow_actuators=
 False)` blocks any `actuator`-kind plugin (`status="blocked"`), and
@@ -114,7 +124,7 @@ default**; the default routing/dispatch path is byte-identical.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-37-01 | Actuator contract + unblock the kind (gated, proposal-only) | not-started | [story-01-actuator-contract.md](./story-01-actuator-contract.md) | — |
+| HS-37-01 | Actuator contract + unblock the kind (gated, proposal-only) | done | [story-01-actuator-contract.md](./story-01-actuator-contract.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-37-02 | Proposal persistence + lifecycle | not-started | [story-02-proposal-persistence.md](./story-02-proposal-persistence.md) | — |
 | HS-37-03 | Approval surface — preview → approve/reject (no execution) | not-started | [story-03-approval-surface.md](./story-03-approval-surface.md) | — |
 | HS-37-04 | Guarded executor + audit + governance gate | not-started | [story-04-guarded-executor.md](./story-04-guarded-executor.md) | — |
@@ -148,9 +158,9 @@ recon is done. The seam already exists from Phase 35's groundwork:
 
 ## Pickup order
 
-1. **HS-37-01** — actuator contract + unblock the kind (proposal-only, gated). The seam;
-   everything else builds on the proposal shape. **◀ start here**
-2. HS-37-02 — proposal persistence + lifecycle (needs the proposal shape).
+1. **HS-37-01** — actuator contract + unblock the kind (proposal-only, gated) ✅ **done**
+   (`ActuatorProposal` + the `proposed` host status; `actuator` kind/capability unblocked).
+2. HS-37-02 — proposal persistence + lifecycle (needs the proposal shape). **◀ next**
 3. HS-37-03 — approval UI (needs persisted proposals to render + decide).
 4. HS-37-04 — guarded executor + audit + governance gate (needs an approved proposal).
 5. HS-37-05 — reference actuator end-to-end (exercises 01→04 with a real side effect).

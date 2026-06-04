@@ -13,6 +13,7 @@ from threading import Lock
 from typing import Any, Protocol
 
 from ..logging_config import get_logger
+from .actuators import ActuatorProposal, ActuatorProposalError
 
 log = get_logger("plugins.host")
 
@@ -43,7 +44,7 @@ class PluginRunResult:
 
     plugin_id: str
     plugin_version: str
-    status: str  # success | error | timeout | deduped | blocked | queued
+    status: str  # success | proposed | error | timeout | deduped | blocked | queued
     idempotency_key: str
     duration_ms: float
     output: dict[str, Any] | None = None
@@ -123,6 +124,9 @@ class PluginHost:
         self._plugins: dict[str, HostPlugin] = {}
         self._default_timeout_seconds = max(0.01, float(default_timeout_seconds))
         self._idempotency_cache: dict[str, PluginRunResult] = {}
+        # Reserved for HS-37-04: gates *execution* of an approved actuator
+        # proposal. It does NOT gate *proposing* — an actuator always runs to
+        # build a proposal (status `proposed`), which performs no side effect.
         self._allow_actuators = bool(allow_actuators)
         self._enabled_capabilities = {
             str(cap).strip().lower()
@@ -137,6 +141,7 @@ class PluginHost:
         self._metrics: dict[str, int] = {
             "runs_total": 0,
             "success": 0,
+            "proposed": 0,
             "error": 0,
             "timeout": 0,
             "deduped": 0,
@@ -149,6 +154,7 @@ class PluginHost:
             return {
                 "runs_total": int(self._metrics["runs_total"]),
                 "success": int(self._metrics["success"]),
+                "proposed": int(self._metrics["proposed"]),
                 "error": int(self._metrics["error"]),
                 "timeout": int(self._metrics["timeout"]),
                 "deduped": int(self._metrics["deduped"]),
@@ -351,27 +357,13 @@ class PluginHost:
             context=context,
         )
 
-        if self._is_actuator_plugin(plugin) and not self._allow_actuators:
-            result = PluginRunResult(
-                plugin_id=plugin_id,
-                plugin_version=str(getattr(plugin, "version", "unknown")),
-                status="blocked",
-                idempotency_key=key,
-                duration_ms=0.0,
-                error="Actuator plugins are disabled by default",
-            )
-            self._increment_metric(result.status)
-            self._log_event(
-                event="mir_plugin_run_finish",
-                meeting_id=meeting_id,
-                window_id=window_id,
-                plugin_id=plugin_id,
-                intent_set=intent_set,
-                context=context,
-                status=result.status,
-                error=result.error,
-            )
-            return result
+        # HS-37-01: actuators PROPOSE; they do not act. Running an actuator
+        # to build a proposal is always safe (no side effect), so it is not
+        # gated here — the capability gate below is the per-plugin opt-in,
+        # and `self._allow_actuators` is reserved for gating the *execution*
+        # of an approved proposal (the guarded executor, HS-37-04). The
+        # actuator's output is interpreted as an `ActuatorProposal` in the
+        # run path and surfaced as a `proposed` result.
 
         missing_capabilities = self._missing_capabilities(plugin)
         if missing_capabilities:
@@ -486,16 +478,36 @@ class PluginHost:
         try:
             raw_output = future.result(timeout=run_timeout)
             duration_ms = (time.monotonic() - started_at) * 1000.0
-            output = raw_output if isinstance(raw_output, dict) else {"result": raw_output}
+            if self._is_actuator_plugin(plugin):
+                # HS-37-01: an actuator's run() returns an ActuatorProposal,
+                # not a side effect. The host records the proposal (status
+                # `proposed`); it never executes here. A malformed proposal
+                # is the actuator's fault → a normal `error`, no side effect.
+                try:
+                    proposal = ActuatorProposal.from_run_output(raw_output)
+                except ActuatorProposalError as exc:
+                    status = "error"
+                    output: dict[str, Any] | None = None
+                    error: str | None = f"Invalid actuator proposal: {exc}"
+                else:
+                    status = "proposed"
+                    output = proposal.to_payload()
+                    error = None
+            else:
+                status = "success"
+                output = raw_output if isinstance(raw_output, dict) else {"result": raw_output}
+                error = None
             result = PluginRunResult(
                 plugin_id=plugin_id,
                 plugin_version=str(getattr(plugin, "version", "unknown")),
-                status="success",
+                status=status,
                 idempotency_key=key,
                 duration_ms=duration_ms,
                 output=output,
+                error=error,
             )
-            self._idempotency_cache[key] = result
+            if status in ("success", "proposed"):
+                self._idempotency_cache[key] = result
             self._increment_metric(result.status)
             self._log_event(
                 event="mir_plugin_run_finish",

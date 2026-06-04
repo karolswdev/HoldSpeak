@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 37
-- **Status:** not-started
+- **Status:** done
 - **Depends on:** none (Phase 35 groundwork is in place)
 - **Unblocks:** HS-37-02, HS-37-03, HS-37-04, HS-37-05
 - **Owner:** unassigned
@@ -42,19 +42,22 @@ keeping execution firmly behind the gate.
 
 ## Acceptance criteria
 
-- [ ] `ActuatorProposal` exists with validation; `target`/`action`/`preview`/`payload`/
-      `reversible` are populated and the `payload` is the exact machine representation of
-      the proposed side effect.
-- [ ] `plugin_sdk.validate_manifest` accepts a `kind: actuator` manifest; the deferred
-      `unknown_kind` rejection for `actuator` is gone (a test that previously asserted the
-      rejection is updated in lockstep, not silenced).
-- [ ] The host runs a fixture actuator and returns a **proposal** (status `proposed`),
-      with **no side effect performed**; the `allow_actuators=False` default still blocks
-      *execution* (covered fully in HS-37-04).
-- [ ] With no actuator registered, the routing/dispatch path is byte-identical:
-      `test_intent_router` / `test_intent_dispatch` / `test_multi_intent_routing` unchanged
-      and green.
-- [ ] Suite green; new/changed modules ruff + F821 clean.
+- [x] `ActuatorProposal` exists with validation (`holdspeak/plugins/actuators.py`);
+      `target`/`action`/`preview`/`payload`/`reversible`/`required_capabilities` are
+      populated and `payload` is the exact machine representation, carried verbatim.
+- [x] `plugin_sdk.validate_manifest` accepts a `kind: actuator` manifest (+ the `actuator`
+      capability); the deferred `unknown_kind` rejection is gone — the old rejection test
+      (`test_actuator_kind_is_rejected_this_phase`) flipped to `test_actuator_kind_is_accepted`,
+      not silenced.
+- [x] The host runs a fixture actuator and returns a **proposal** (status `proposed`) with
+      **no side effect performed**; a malformed proposal is a plain `error`, never a silent
+      action; the `allow_actuators` flag is retained, reserved for *execution* gating
+      (HS-37-04).
+- [x] With no actuator registered, the routing/dispatch path is byte-identical —
+      `test_intent_router` / `test_intent_dispatch` / `test_intent_pipeline` green (18
+      passed); full suite 2040/15.
+- [x] Suite green; `actuators.py` / `host.py` / `plugin_sdk.py` + the touched tests ruff +
+      F821 clean.
 
 ## Test plan
 
