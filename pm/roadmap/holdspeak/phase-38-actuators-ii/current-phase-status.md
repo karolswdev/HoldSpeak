@@ -1,9 +1,20 @@
 # Phase 38 — Actuators II
 
-**Status:** in-progress (4/6 stories — HS-38-01..04 done). Scaffolded 2026-06-04,
+**Status:** in-progress (5/6 stories — HS-38-01..05 done). Scaffolded 2026-06-04,
 immediately after Phase 37 — Actuators closed + merged via PR #14.
 
-**Last updated:** 2026-06-04 (**HS-38-04 done** — live in-meeting proposals + broadcast. An
+**Last updated:** 2026-06-04 (**HS-38-05 done** — Actuators II documentation, the dedicated
+docs story. `docs/PLUGIN_AUTHORING.md` gains a **Write connectors (the permission manifest)**
+subsection — `WriteConnectorManifest`, the gate-mapping table (`shell:exec`/`network:outbound`),
+`build_gated_connector`'s plan→allow-check→gate→interpret, and both reference connectors
+(`gh issue create`, webhook POST) as worked examples — plus a **Live proposals** subsection
+(the read-only `actuator_proposed` broadcast + the live approve/reject panel). Stale
+"local-only / post-meeting-only" framing reconciled (executor connector paragraph → point at
+`build_gated_connector`; outbox = "the simplest connector"; reference table + README
+updated; webhook host allow-list documented). Doc drift-guard + link-check green; suite
+**2123 passed, 15 skipped** (docs-only, unchanged). ◀ next: HS-38-06 closeout.)
+
+**Earlier 2026-06-04** (**HS-38-04 done** — live in-meeting proposals + broadcast. An
 actuator proposal is surfaced live: `process_meeting_state` gained an `on_proposal` callback
 (best-effort), `MeetingSession._emit_actuator_proposal` emits a **read-only** `actuator_proposed`
 broadcast (id + lifecycle + preview only — never the egress `payload`), and `WebRuntime`
@@ -161,10 +172,17 @@ Every new connector adds a *narrower* gate (its permission manifest), never a lo
 | HS-38-02 | GitHub write connector (`gh issue create`) | done | [story-02-github-connector.md](./story-02-github-connector.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-38-03 | Webhook write connector (HTTP POST, allow-listed host) | done | [story-03-webhook-connector.md](./story-03-webhook-connector.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-38-04 | Live in-meeting proposals + broadcast | done | [story-04-live-proposals.md](./story-04-live-proposals.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-38-05 | Actuators II documentation | not-started | [story-05-documentation.md](./story-05-documentation.md) | — |
+| HS-38-05 | Actuators II documentation | done | [story-05-documentation.md](./story-05-documentation.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-38-06 | Closeout + final-summary | not-started | [story-06-closeout.md](./story-06-closeout.md) | — |
 
 ## Where we are
+
+**HS-38-05 done 2026-06-04** — the docs match the shipped surface.
+`docs/PLUGIN_AUTHORING.md` documents write connectors (the permission manifest + the gate
+mapping + both reference connectors as worked examples) and live proposals; the stale
+"local-only / post-meeting-only" framing is reconciled (README too). Doc drift-guard +
+link-check green. Everything functional is documented; only the closeout remains. **Next:
+HS-38-06** — egress-posture review across the write paths + demo + final-summary + README → done.
 
 **HS-38-04 done 2026-06-04** — live proposals are in. `process_meeting_state` gained an
 optional `on_proposal` callback (best-effort; default path byte-identical);
@@ -231,8 +249,8 @@ done — the seams all exist:
 2. ~~HS-38-02 — GitHub write connector (`shell:exec` reference).~~ **done 2026-06-04.**
 3. ~~HS-38-03 — webhook write connector (`network:outbound` reference).~~ **done 2026-06-04.**
 4. ~~HS-38-04 — live in-meeting proposals + broadcast.~~ **done 2026-06-04.**
-5. HS-38-05 — Actuators II documentation. **◀ next**
-6. HS-38-06 — closeout + final-summary.
+5. ~~HS-38-05 — Actuators II documentation.~~ **done 2026-06-04.**
+6. HS-38-06 — closeout + final-summary. **◀ next**
 
 01 → 02/03 is the connector half (01 is the framework; 02 and 03 are two concrete proofs,
 one per gate type — they can go in either order). 04 is the live-surface half (independent

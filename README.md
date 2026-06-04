@@ -159,10 +159,11 @@ Beyond read-only artifacts, plugins can also **propose actions**. An
 **actuator** is the plugin system's third kind: instead of an artifact it proposes
 an external side effect (file a ticket, post an update) that only happens after an
 explicit, audited, **per-action human approval** — and what runs is exactly what
-was previewed. Actuators are **off by default** (a per-project gate + allow-list);
-one reference actuator (`followup_ticket_actuator`) ships as the worked example.
-See the [Actuators](docs/PLUGIN_AUTHORING.md#actuators) section of the authoring
-guide.
+was previewed. Real **write connectors** (file a GitHub issue, POST to a webhook)
+run behind a per-connector **permission manifest** so a connector can only do what
+it declared, and proposals can be approved **live** during the meeting. Actuators
+are **off by default** (a per-project gate + allow-list). See the
+[Actuators](docs/PLUGIN_AUTHORING.md#actuators) section of the authoring guide.
 
 Want to write your own? The [Plugin Authoring guide](docs/PLUGIN_AUTHORING.md)
 walks the full contract — the `HostPlugin` protocol, the prompt → LLM → parse →

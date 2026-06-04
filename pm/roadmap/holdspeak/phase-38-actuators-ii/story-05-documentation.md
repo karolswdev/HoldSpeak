@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 38
-- **Status:** not-started
+- **Status:** done
 - **Depends on:** HS-38-01, HS-38-02, HS-38-03, HS-38-04
 - **Unblocks:** HS-38-06
 - **Owner:** unassigned
@@ -35,13 +35,13 @@ live-approval surface. (Dedicated docs story — the standing per-phase practice
 
 ## Acceptance criteria
 
-- [ ] `docs/PLUGIN_AUTHORING.md` documents write connectors (permission manifest + the gate
+- [x] `docs/PLUGIN_AUTHORING.md` documents write connectors (permission manifest + the gate
       mapping + both reference connectors as worked examples) and live proposals; matches
       the shipped surface (HS-38-01→04).
-- [ ] No live doc implies actuators are local-only / post-meeting-only; the config
+- [x] No live doc implies actuators are local-only / post-meeting-only; the config
       additions (webhook allow-list) are documented.
-- [ ] Doc drift-guard + live-doc link-check green; all new relative links resolve.
-- [ ] Suite green (incl. the doc-guard tests).
+- [x] Doc drift-guard + live-doc link-check green; all new relative links resolve.
+- [x] Suite green (incl. the doc-guard tests).
 
 ## Test plan
 
