@@ -104,10 +104,17 @@ default**; the default routing/dispatch path is byte-identical.
   **opt-in** integration/spoken test proving the full loop (preview shown → approve →
   executed → audited) **and** that nothing runs without approval. Default suite unaffected
   (gate off).
-- **Closeout (HS-37-06).** Egress-posture review (no path egresses without a recorded
-  approval + audit); extend `docs/PLUGIN_AUTHORING.md` with the actuator kind + the
-  approval/audit contract; capture an e2e demo; `final-summary.md`; README phase row →
-  done; HANDOVER refresh.
+- **Actuator documentation (HS-37-06).** Bring **all relevant project documentation** in
+  line with what shipped: a new **"Actuators"** section in `docs/PLUGIN_AUTHORING.md` (the
+  `ActuatorProposal` contract, the propose → approve → execute lifecycle, the capability +
+  gate + allow-list, the payload-parity + audit guarantees, a worked example from the
+  HS-37-05 reference actuator); an accurate mention in the public `README.md`; and a
+  **doc-truth reconciliation** so no *live* doc still calls actuators deferred/blocked.
+  Doc drift-guard + link-check stay green. (Dedicated story per user ask — docs are a
+  first-class deliverable, not a closeout footnote.)
+- **Closeout (HS-37-07).** Egress-posture review (no path egresses without a recorded
+  approval + audit); verify the HS-37-06 docs; capture an e2e demo; `final-summary.md`;
+  README phase row → done; HANDOVER refresh.
 
 ### Out
 
@@ -138,12 +145,15 @@ default**; the default routing/dispatch path is byte-identical.
 - [ ] One reference actuator is proven **end-to-end** (opt-in test): preview → approve →
       execute → audit, **and** a negative test that no action runs without approval.
       (HS-37-05)
-- [ ] `docs/PLUGIN_AUTHORING.md` documents the actuator kind + the proposal/approval/audit
-      contract; an e2e demo is captured; `final-summary.md` leads with the egress-safety
-      argument. (HS-37-06)
+- [ ] **All relevant project docs updated:** `docs/PLUGIN_AUTHORING.md` has an Actuators
+      section (contract + lifecycle + gate/allow-list + parity/audit + a worked example),
+      the public `README.md` mentions actuators accurately, and no *live* doc still calls
+      them deferred/blocked; doc drift-guard + link-check green. (HS-37-06)
+- [ ] An e2e demo is captured; `final-summary.md` leads with the egress-safety argument;
+      README phase row → done; HANDOVER refreshed. (HS-37-07)
 - [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green throughout; the routing
       unit/integration tests stay green (actuators are additive + gated, not a routing
-      change). (HS-37-06)
+      change). (HS-37-07)
 
 ## Story status
 
@@ -154,7 +164,8 @@ default**; the default routing/dispatch path is byte-identical.
 | HS-37-03 | Approval surface — preview → approve/reject (no execution) | done | [story-03-approval-surface.md](./story-03-approval-surface.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-37-04 | Guarded executor + audit + governance gate | not-started | [story-04-guarded-executor.md](./story-04-guarded-executor.md) | — |
 | HS-37-05 | Reference actuator end-to-end | not-started | [story-05-reference-actuator.md](./story-05-reference-actuator.md) | — |
-| HS-37-06 | Closeout + final-summary | not-started | [story-06-closeout.md](./story-06-closeout.md) | — |
+| HS-37-06 | Actuator documentation (project docs update) | not-started | [story-06-documentation.md](./story-06-documentation.md) | — |
+| HS-37-07 | Closeout + final-summary | not-started | [story-07-closeout.md](./story-07-closeout.md) | — |
 
 ## Where we are
 
@@ -191,11 +202,15 @@ recon is done. The seam already exists from Phase 35's groundwork:
    preview → Approve/Reject; no execution on view).
 4. HS-37-04 — guarded executor + audit + governance gate (needs an approved proposal). **◀ next**
 5. HS-37-05 — reference actuator end-to-end (exercises 01→04 with a real side effect).
-6. HS-37-06 — closeout + final-summary.
+6. HS-37-06 — **actuator documentation** (project docs update; runs after 05 so the
+   authoring guide shows a real example).
+7. HS-37-07 — closeout + final-summary.
 
 The arc is deliberately linear (each story consumes the prior), unlike Phase 36's two
 parallel tracks: the safety invariant is only meaningful end-to-end, so the proposal
-shape → persistence → approval → guarded execution must stack in order.
+shape → persistence → approval → guarded execution → reference actuator must stack in
+order; documentation (06) then captures the stable surface, and the closeout (07) is the
+record. (Documentation was promoted to its own story on direct user ask.)
 
 ## Active risks
 
@@ -216,6 +231,10 @@ shape → persistence → approval → guarded execution must stack in order.
 - 2026-06-04 — **The unit of work is a *proposal*, not an action.** An actuator never
   executes inline; it emits a proposal that a human must approve. (Design, grounded in RFC
   open question #5.)
+- 2026-06-04 — **Documentation is its own story (HS-37-06), not a closeout footnote**
+  (direct user ask). The project-docs update — authoring guide Actuators section + README
+  + doc-truth reconciliation — is a first-class deliverable; the closeout renumbered to
+  HS-37-07 and now *verifies* the docs rather than writing them.
 
 ## Decisions deferred
 

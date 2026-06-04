@@ -1,17 +1,17 @@
-# HS-37-06 — Closeout + final-summary
+# HS-37-07 — Closeout + final-summary
 
 - **Project:** holdspeak
 - **Phase:** 37
 - **Status:** not-started
-- **Depends on:** HS-37-01, HS-37-02, HS-37-03, HS-37-04, HS-37-05
+- **Depends on:** HS-37-01, HS-37-02, HS-37-03, HS-37-04, HS-37-05, HS-37-06
 - **Unblocks:** none
 - **Owner:** unassigned
 
 ## Problem
 
 Close Phase 37 cleanly: prove the safety invariant holds end-to-end (no external side
-effect without an explicit, audited, per-action approval; executed == previewed), document
-the actuator kind for plugin authors, capture the demo, and write the record.
+effect without an explicit, audited, per-action approval; executed == previewed), capture
+the demo, and write the record. (The actuator documentation is its own story — HS-37-06.)
 
 ## Scope
 
@@ -19,9 +19,9 @@ the actuator kind for plugin authors, capture the demo, and write the record.
   - **Egress-posture review:** walk every actuator path and confirm none egresses without
     (a) an `approved` proposal, (b) payload parity, and (c) an audit entry — a short
     written audit in `final-summary.md` (the phase's headline argument).
-  - Extend **`docs/PLUGIN_AUTHORING.md`** with the **actuator kind**: the `ActuatorProposal`
-    contract, the proposal→approval→execute lifecycle, the capability + gate, the policy
-    allow-list, and the audit guarantee. Link from `docs/README.md` if needed.
+  - **Verify the docs** shipped by HS-37-06 are accurate + green (drift-guard +
+    link-check) — the authoring/README/doc-truth update itself is HS-37-06's deliverable,
+    not the closeout's.
   - Final `cd web && npm run build`; confirm `holdspeak/static/_built/` is **not**
     staged/committed (gitignored build product).
   - Capture an **e2e demo** screenshot of the approval surface + an executed/audited
@@ -36,8 +36,7 @@ the actuator kind for plugin authors, capture the demo, and write the record.
 
 - [ ] Egress-posture review written: no path egresses without approval + parity + audit;
       the negative test (no approval ⇒ no action) is cited.
-- [ ] `docs/PLUGIN_AUTHORING.md` documents the actuator kind + the approval/audit contract;
-      doc drift-guard + link-check green.
+- [ ] The HS-37-06 docs are verified present + accurate; doc drift-guard + link-check green.
 - [ ] e2e demo screenshot committed to `evidence/`.
 - [ ] Bundle rebuilt (gitignored — not committed); full suite green; routing tests green.
 - [ ] `final-summary.md` written; README phase row `done`; HANDOVER refreshed.
