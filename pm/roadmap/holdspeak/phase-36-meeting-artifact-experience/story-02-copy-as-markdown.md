@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 36
-- **Status:** not-started
+- **Status:** done
 - **Depends on:** HS-36-01
 - **Unblocks:** none
 - **Owner:** unassigned
@@ -35,18 +35,18 @@ a facility to quickly copy the content into a markdown clipboard."*
 
 ## Acceptance criteria
 
-- [ ] Each artifact card has a "Copy" button that writes well-formed Markdown for that
+- [x] Each artifact card has a "Copy" button that writes well-formed Markdown for that
       type to the clipboard and shows a copied-state.
-- [ ] The Markdown is generated from the artifact data (works even if the card body is
+- [x] The Markdown is generated from the artifact data (works even if the card body is
       collapsed).
-- [ ] Tabular artifacts (risk register) copy as a Markdown table; timelines copy as an
+- [x] Tabular artifacts (risk register) copy as a Markdown table; timelines copy as an
       ordered list; sectioned artifacts (stakeholder update, decisions, requirements)
       copy with headings — spot-checked per type.
-- [ ] A "Copy all" control copies every artifact for the meeting under a meeting
+- [x] A "Copy all" control copies every artifact for the meeting under a meeting
       heading.
-- [ ] Clipboard-blocked path degrades gracefully (no crash; a fallback hint), matching
+- [x] Clipboard-blocked path degrades gracefully (no crash; a fallback hint), matching
       `CommandPreview`.
-- [ ] `cd web && npm run build` succeeds + committed; suite green.
+- [x] `cd web && npm run build` succeeds + committed; suite green.
 
 ## Test plan
 

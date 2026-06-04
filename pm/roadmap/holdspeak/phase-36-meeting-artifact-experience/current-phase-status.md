@@ -6,9 +6,20 @@
 > surfaces. Title broadened to "Meeting Intelligence & Experience"; slug kept to avoid
 > link churn.
 
-**Status:** in-progress (opened 2026-06-04). 3/6 stories shipped.
+**Status:** in-progress (opened 2026-06-04). 4/6 stories shipped.
 
-**Last updated:** 2026-06-04 (**HS-36-01 shipped — elevated artifact cards.** The flat
+**Last updated:** 2026-06-04 (**HS-36-02 shipped — copy-as-Markdown.** Each elevated
+card now has a **"Copy"** button (in the HS-36-01 header slot) and the Artifacts section
+has a **"Copy all"** control. Both serialize the artifact `structured_json` to clean
+Markdown from the *data* (so a collapsed card still copies) and write to the clipboard
+reusing the `CommandPreview` pattern (copied-state + graceful `Press ⌘C` fallback).
+Per-type serializers (`artifactMarkdown` / `allArtifactsMarkdown` in `history-app.js`):
+tabular → Markdown table with `|` escaped + empty cells `—`; timeline → ordered list;
+sectioned types → `###` headings; diagram → ```` ```mermaid ```` fence; fallback →
+`body_markdown`. Verified by a Node serializer harness over the real module (output in
+evidence), bundle rebuilt + helper present in `_built` (gitignored, not committed),
+selectors untouched, suite 2020/15. Next: HS-36-03 (per-type body polish) → HS-36-06
+closeout. Earlier: **HS-36-01 shipped — elevated artifact cards.** The flat
 `.segment` artifact rendering is replaced by Signal **artifact cards** (type-colored
 accent edge + icon + title + type chip + meta + collapse toggle + overflow-safe body),
 and the **risk-table overflow is fixed** (`.table-scroll`). Source committed; bundle
@@ -143,7 +154,7 @@ showcases the new presentation.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-36-01 | Elevated artifact-card shell + overflow-safe layout | done | [story-01-artifact-card-shell.md](./story-01-artifact-card-shell.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-36-02 | Copy-as-Markdown per artifact | not-started | [story-02-copy-as-markdown.md](./story-02-copy-as-markdown.md) | — |
+| HS-36-02 | Copy-as-Markdown per artifact | done | [story-02-copy-as-markdown.md](./story-02-copy-as-markdown.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-36-03 | Per-artifact-type body polish | not-started | [story-03-per-type-body-polish.md](./story-03-per-type-body-polish.md) | — |
 | HS-36-04 | Dynamic, digression-heavy multi-topic spoken-e2e | done | [story-04-dynamic-meeting-e2e.md](./story-04-dynamic-meeting-e2e.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-36-05 | Segment-aware intent extraction (fish out intent per segment) | done | [story-05-segment-intent-extraction.md](./story-05-segment-intent-extraction.md) | [evidence-story-05.md](./evidence-story-05.md) |
@@ -178,8 +189,9 @@ core.
 
 1. HS-36-01 — elevated card shell + overflow-safe layout ✅ **done** (cards + overflow
    fix shipped; selectors preserved).
-2. HS-36-02 — copy-as-Markdown (builds on the card header for the button slot). **◀ next**
-3. HS-36-03 — per-type body polish (fills in each artifact body within the new shell).
+2. HS-36-02 — copy-as-Markdown ✅ **done** (per-card Copy + Copy-all; pure per-type
+   serializers; clipboard reuse of the `CommandPreview` pattern).
+3. HS-36-03 — per-type body polish (fills in each artifact body within the new shell). **◀ next**
 4. HS-36-04 — dynamic/messy multi-topic spoken-e2e ✅ **done** (BEFORE captured; the
    routing drops incident/risk/comms).
 5. HS-36-05 — segment-aware intent extraction ✅ **done** (probe fishes the dropped
@@ -187,8 +199,8 @@ core.
 6. HS-36-06 — closeout + final-summary.
 
 Intelligence track (04 → 05) is **complete**; on the experience track, **HS-36-01
-(elevated cards + overflow fix) is done**. **◀ next: HS-36-02** (copy-as-Markdown) →
-HS-36-03 (per-type body polish) → HS-36-06 closeout (which re-captures the before/after
+(elevated cards + overflow fix) and HS-36-02 (copy-as-Markdown) are done**. **◀ next:
+HS-36-03** (per-type body polish) → HS-36-06 closeout (which re-captures the before/after
 in the new cards).
 
 The two tracks are parallel: **experience** (01 → 02 → 03) and **intelligence**

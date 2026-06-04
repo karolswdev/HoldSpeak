@@ -924,11 +924,18 @@ import AppLayout from "../layouts/AppLayout.astro";
                 </div>
               </div>
 
-              <div class="detail-card" x-show="selectedMeetingArtifacts.length" x-cloak>
-                <h4>Artifacts</h4>
+              <div class="detail-card" x-show="selectedMeetingArtifacts.length" x-cloak x-data="{ copyAllState: 'idle' }">
+                <div class="artifact-section-head">
+                  <h4>Artifacts</h4>
+                  <button type="button" class="artifact-copy-all"
+                          :class="{ 'is-copied': copyAllState === 'done' }"
+                          title="Copy all artifacts as Markdown"
+                          @click="copyAllState = (await copyMarkdown(allArtifactsMarkdown())) ? 'done' : 'fail'; setTimeout(() => copyAllState = 'idle', 1400)"
+                          x-text="copyAllState === 'done' ? 'Copied all' : copyAllState === 'fail' ? 'Press ⌘C' : 'Copy all'"></button>
+                </div>
                 <div class="artifact-stack">
                   <template x-for="artifact in selectedMeetingArtifacts" :key="artifact.id">
-                    <div class="artifact-card" :class="`accent-${artifactAccent(artifact)}`" x-data="{ open: true }">
+                    <div class="artifact-card" :class="`accent-${artifactAccent(artifact)}`" x-data="{ open: true, copyState: 'idle' }">
                       <div class="artifact-card__header">
                         <span class="artifact-card__icon" aria-hidden="true" x-text="artifactIcon(artifact)"></span>
                         <div class="artifact-card__heading">
@@ -941,6 +948,11 @@ import AppLayout from "../layouts/AppLayout.astro";
                           </div>
                         </div>
                         <div class="artifact-card__actions">
+                          <button type="button" class="artifact-card__copy"
+                                  :class="{ 'is-copied': copyState === 'done' }"
+                                  title="Copy as Markdown"
+                                  @click="copyState = (await copyMarkdown(artifactMarkdown(artifact))) ? 'done' : 'fail'; setTimeout(() => copyState = 'idle', 1400)"
+                                  x-text="copyState === 'done' ? 'Copied' : copyState === 'fail' ? 'Press ⌘C' : 'Copy'"></button>
                           <button type="button" class="artifact-card__toggle"
                                   :aria-expanded="open ? 'true' : 'false'"
                                   :title="open ? 'Collapse' : 'Expand'"
@@ -1817,6 +1829,76 @@ import AppLayout from "../layouts/AppLayout.astro";
   }
   .artifact-card__toggle:hover { color: var(--text); border-color: var(--border-strong); }
   .artifact-card__toggle:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  /* HS-36-02: per-artifact "Copy as Markdown" gadget — small Signal button in
+   * the card header actions, beside the collapse toggle. Mirrors the
+   * CommandPreview copy affordance (hover → accent, copied → success). */
+  .artifact-card__copy {
+    appearance: none;
+    height: 1.5rem;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-3);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-loose, 0.04em);
+    line-height: 1;
+    white-space: nowrap;
+    transition:
+      background var(--duration-short) var(--ease-standard),
+      color var(--duration-short) var(--ease-standard),
+      border-color var(--duration-short) var(--ease-standard);
+  }
+  .artifact-card__copy:hover { background: var(--accent); color: var(--accent-on); border-color: var(--accent); }
+  .artifact-card__copy.is-copied {
+    background: var(--success-soft, var(--surface-3));
+    color: var(--success);
+    border-color: var(--success);
+  }
+  .artifact-card__copy:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  /* HS-36-02: Artifacts section header — title + "Copy all" on one row. */
+  .artifact-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  .artifact-section-head h4 { margin: 0; }
+  .artifact-copy-all {
+    appearance: none;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-3);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-loose, 0.04em);
+    white-space: nowrap;
+    transition:
+      background var(--duration-short) var(--ease-standard),
+      color var(--duration-short) var(--ease-standard),
+      border-color var(--duration-short) var(--ease-standard);
+  }
+  .artifact-copy-all:hover { background: var(--accent); color: var(--accent-on); border-color: var(--accent); }
+  .artifact-copy-all.is-copied {
+    background: var(--success-soft, var(--surface-3));
+    color: var(--success);
+    border-color: var(--success);
+  }
+  .artifact-copy-all:focus-visible {
     outline: var(--focus-outline-width) solid var(--accent);
     outline-offset: 1px;
   }
