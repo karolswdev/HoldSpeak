@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 38
-- **Status:** not-started
+- **Status:** done
 - **Depends on:** HS-38-01
 - **Unblocks:** HS-38-05
 - **Owner:** unassigned
@@ -34,13 +34,13 @@ do exactly one thing and nothing else.
 
 ## Acceptance criteria
 
-- [ ] The connector runs `gh issue create` (and only that) through `PermissionGate`; the
+- [x] The connector runs `gh issue create` (and only that) through `PermissionGate`; the
       payload maps to `--repo`/`--title`/`--body`; the created issue ref is returned.
-- [ ] A non-allow-listed argv (e.g. `gh repo delete`) is refused **before** egress; the
+- [x] A non-allow-listed argv (e.g. `gh repo delete`) is refused **before** egress; the
       runner is never invoked (spy).
-- [ ] Full loop (opt-in, injected runner): approve → execute → `executed` + the issue ref
+- [x] Full loop (opt-in, injected runner): approve → execute → `executed` + the issue ref
       in the result + an audit row; gate off / unapproved ⇒ no `gh` call.
-- [ ] Default suite makes no real `gh` call; suite green; module ruff + F821 clean.
+- [x] Default suite makes no real `gh` call; suite green; module ruff + F821 clean.
 
 ## Test plan
 

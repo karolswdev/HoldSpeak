@@ -1,9 +1,20 @@
 # Phase 38 — Actuators II
 
-**Status:** in-progress (1/6 stories — HS-38-01 done). Scaffolded 2026-06-04, immediately
-after Phase 37 — Actuators closed + merged via PR #14.
+**Status:** in-progress (2/6 stories — HS-38-01, HS-38-02 done). Scaffolded 2026-06-04,
+immediately after Phase 37 — Actuators closed + merged via PR #14.
 
-**Last updated:** 2026-06-04 (**HS-38-01 done** — the gated write-connector framework +
+**Last updated:** 2026-06-04 (**HS-38-02 done** — the GitHub write connector, the first real
+write on the HS-38-01 framework. `holdspeak/plugins/builtin/github_issue_actuator.py`:
+`GithubIssueActuator` proposes a GitHub issue for the first unowned action item (payload
+`repo`/`title`/`body`), and `build_github_issue_connector(runner=…)` runs **`gh issue create`
+and only that** via `build_gated_connector` (`shell:exec` through `PermissionGate`,
+manifest-allow-listed); argv is built from the stored payload (no shell → no injection), a
+non-zero `gh` exit raises → `failed` + audit, the created issue URL is returned. Host-side
+gated connector (executor injects it), not a discovered pack; opt-in + off by default. 12
+new tests (full loop with an injected runner — no real `gh`); full suite **2104 passed, 15
+skipped**; ruff + F821 clean. ◀ next: HS-38-03 webhook connector.)
+
+**Earlier 2026-06-04** (**HS-38-01 done** — the gated write-connector framework +
 permission manifest. `holdspeak/plugins/gated_connector.py`: `WriteConnectorManifest`
 declares one egress permission (`shell:exec`/`network:outbound`) + a concrete allow-list
 (argv prefixes / hosts); `build_gated_connector(plan, interpret, …)` enforces
@@ -123,7 +134,7 @@ Every new connector adds a *narrower* gate (its permission manifest), never a lo
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-38-01 | Gated write-connector framework + permission manifest | done | [story-01-write-connector-framework.md](./story-01-write-connector-framework.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-38-02 | GitHub write connector (`gh issue create`) | not-started | [story-02-github-connector.md](./story-02-github-connector.md) | — |
+| HS-38-02 | GitHub write connector (`gh issue create`) | done | [story-02-github-connector.md](./story-02-github-connector.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-38-03 | Webhook write connector (HTTP POST, allow-listed host) | not-started | [story-03-webhook-connector.md](./story-03-webhook-connector.md) | — |
 | HS-38-04 | Live in-meeting proposals + broadcast | not-started | [story-04-live-proposals.md](./story-04-live-proposals.md) | — |
 | HS-38-05 | Actuators II documentation | not-started | [story-05-documentation.md](./story-05-documentation.md) | — |
@@ -131,14 +142,22 @@ Every new connector adds a *narrower* gate (its permission manifest), never a lo
 
 ## Where we are
 
-**HS-38-01 done 2026-06-04** — the safety seam is in. `holdspeak/plugins/gated_connector.py`
-ships `WriteConnectorManifest` (one egress permission + a concrete argv-prefix / host
-allow-list; an empty allow-list admits nothing), `GatedOperation` (a planned
-subprocess/outbound side effect), `ConnectorOperationRefused`, and `build_gated_connector`
-(**plan → allow-check → gate → interpret**; the allow-check refuses before the
-`PermissionGate` is touched). It reuses the Phase-13 `PermissionGate` (no second egress
-primitive) and the Phase-37 `ActuatorExecutor` is unchanged. **Next: HS-38-02** (the GitHub
-`gh issue create` connector — the `shell:exec` reference on this framework).
+**HS-38-02 done 2026-06-04** — the `shell:exec` reference connector is in.
+`holdspeak/plugins/builtin/github_issue_actuator.py` ships `GithubIssueActuator` (proposes a
+GitHub issue for the first unowned action item; payload `repo`/`title`/`body`; pure `run()`)
+and `build_github_issue_connector` (built on HS-38-01: manifest allow-listed to **`gh issue
+create` only**, `shell:exec` through `PermissionGate`, argv from the stored payload, a
+non-zero exit → `failed` + audit, the issue URL returned). It's a host-side gated connector
+(executor injects it, not a discovered pack), opt-in + off by default. **Next: HS-38-03** —
+the webhook connector (the `network:outbound` reference: HTTP POST to an allow-listed host).
+
+**HS-38-01 done 2026-06-04** — the safety seam. `holdspeak/plugins/gated_connector.py` ships
+`WriteConnectorManifest` (one egress permission + a concrete argv-prefix / host allow-list;
+an empty allow-list admits nothing), `GatedOperation` (a planned subprocess/outbound side
+effect), `ConnectorOperationRefused`, and `build_gated_connector` (**plan → allow-check →
+gate → interpret**; the allow-check refuses before the `PermissionGate` is touched). It
+reuses the Phase-13 `PermissionGate` (no second egress primitive) and the Phase-37
+`ActuatorExecutor` is unchanged.
 
 **Scaffolded 2026-06-04**, right after Phase 37 closed (merged via PR #14). The recon is
 done — the seams all exist:
@@ -165,8 +184,8 @@ done — the seams all exist:
 
 1. ~~**HS-38-01** — gated write-connector framework + permission manifest. The safety seam
    every connector depends on.~~ **done 2026-06-04.**
-2. HS-38-02 — GitHub write connector (`shell:exec` reference). **◀ next**
-3. HS-38-03 — webhook write connector (`network:outbound` reference).
+2. ~~HS-38-02 — GitHub write connector (`shell:exec` reference).~~ **done 2026-06-04.**
+3. HS-38-03 — webhook write connector (`network:outbound` reference). **◀ next**
 4. HS-38-04 — live in-meeting proposals + broadcast.
 5. HS-38-05 — Actuators II documentation.
 6. HS-38-06 — closeout + final-summary.
