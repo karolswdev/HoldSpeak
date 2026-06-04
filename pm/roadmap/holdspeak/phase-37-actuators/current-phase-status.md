@@ -1,8 +1,21 @@
 # Phase 37 — Actuators
 
-**Status:** in-progress (opened 2026-06-04). 5/7 stories shipped.
+**Status:** in-progress (opened 2026-06-04). 6/7 stories shipped.
 
-**Last updated:** 2026-06-04 (**HS-37-05 shipped — reference actuator end-to-end.** The
+**Last updated:** 2026-06-04 (**HS-37-06 shipped — actuator documentation (the dedicated
+docs story).** All relevant project docs now match the shipped surface. `docs/
+PLUGIN_AUTHORING.md` gains a full **Actuators** section (the propose → approve → execute
+flow, the `ActuatorProposal` field table, the lifecycle + the three gates [capability /
+human approval / `MeetingConfig`], the `ActuatorExecutor` parity+audit, and a worked
+example on `followup_ticket_actuator` with links to the real modules + the e2e test) and
+its four stale claims are reconciled (kind table, the "deferred to a future phase" note,
+"not a valid kind yet", the Out-of-scope bullet). The public `README.md` plugin section
+gains an actuators paragraph (third kind, approval-gated, off by default, the reference
+actuator, linked to the new section). Doc-truth scope: `docs/evidence/**` frozen; MIR-01's
+"disabled by default" left (still true — the master gate is off by default). Doc
+drift-guard + link-check green; all new relative links resolve; suite 2080/15 (docs-only).
+Next: HS-37-07 (closeout + final-summary). Earlier: **HS-37-05 shipped — reference actuator
+end-to-end.** The
 first concrete actuator proves the whole loop. `holdspeak/plugins/builtin/
 followup_ticket_actuator.py`: `FollowupTicketActuator` (`kind=actuator`,
 `required_capabilities=["actuator"]`) whose `run()` finds the first **unowned** action item
@@ -191,7 +204,7 @@ default**; the default routing/dispatch path is byte-identical.
 | HS-37-03 | Approval surface — preview → approve/reject (no execution) | done | [story-03-approval-surface.md](./story-03-approval-surface.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-37-04 | Guarded executor + audit + governance gate | done | [story-04-guarded-executor.md](./story-04-guarded-executor.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-37-05 | Reference actuator end-to-end | done | [story-05-reference-actuator.md](./story-05-reference-actuator.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-37-06 | Actuator documentation (project docs update) | not-started | [story-06-documentation.md](./story-06-documentation.md) | — |
+| HS-37-06 | Actuator documentation (project docs update) | done | [story-06-documentation.md](./story-06-documentation.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-37-07 | Closeout + final-summary | not-started | [story-07-closeout.md](./story-07-closeout.md) | — |
 
 ## Where we are
@@ -232,9 +245,9 @@ recon is done. The seam already exists from Phase 35's groundwork:
    `MeetingConfig.allow_actuators`/`allowed_actuators`).
 5. HS-37-05 — reference actuator end-to-end ✅ **done** (`followup_ticket_actuator` +
    outbox connector; full loop with a real file side effect + the negatives; gated/opt-in).
-6. HS-37-06 — **actuator documentation** (project docs update; runs after 05 so the
-   authoring guide shows a real example). **◀ next**
-7. HS-37-07 — closeout + final-summary.
+6. HS-37-06 — **actuator documentation** ✅ **done** (`PLUGIN_AUTHORING.md` Actuators
+   section + README + doc-truth reconciliation; worked example on `followup_ticket_actuator`).
+7. HS-37-07 — closeout + final-summary. **◀ next (the last story)**
 
 The arc is deliberately linear (each story consumes the prior), unlike Phase 36's two
 parallel tracks: the safety invariant is only meaningful end-to-end, so the proposal

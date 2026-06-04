@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 37
-- **Status:** not-started
+- **Status:** done
 - **Depends on:** HS-37-01, HS-37-02, HS-37-03, HS-37-04, HS-37-05
 - **Unblocks:** HS-37-07
 - **Owner:** unassigned
@@ -47,15 +47,20 @@ actuator (HS-37-05) so the authoring guide can show a **real, working example**.
 
 ## Acceptance criteria
 
-- [ ] `docs/PLUGIN_AUTHORING.md` has an **Actuators** section covering the contract,
-      lifecycle, capability/gate/allow-list, payload-parity + audit guarantees, and a
-      worked example; it matches the shipped surface (HS-37-01→05).
-- [ ] The public `README.md` mentions actuators accurately (approval-gated, off by
-      default, one reference actuator).
-- [ ] No **live** doc still claims actuators are deferred/blocked; the doc drift-guard +
-      live-doc link-check pass (any guarded phrase updated in lockstep, not silenced).
-- [ ] Suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py`), incl. the
-      doc-guard tests.
+- [x] `docs/PLUGIN_AUTHORING.md` has an **Actuators** section: the propose → approve →
+      execute diagram, the `ActuatorProposal` field table, the lifecycle + the three gates
+      (capability / human approval / `MeetingConfig`), the `ActuatorExecutor` (parity +
+      audit), and a worked example built on `followup_ticket_actuator` (+ the outbox
+      connector + the wiring) with links to the real modules + the e2e test.
+- [x] The public `README.md` plugin section gains an actuators paragraph (the third kind,
+      approval-gated, off by default, `followup_ticket_actuator` as the worked example,
+      linked to the new section).
+- [x] No **live** doc still claims actuators are deferred/blocked — the four stale
+      `PLUGIN_AUTHORING.md` claims (kind table "_none shipped_", "deferred to a future
+      phase", "not a valid kind yet", the Out-of-scope bullet) are reconciled. (The
+      `docs/evidence/**` + MIR-01 "disabled by default" lines are left: the former is
+      frozen history, the latter remains *true* — the master gate is off by default.)
+- [x] Doc drift-guard + live-doc link-check green; full suite green (2080/15).
 
 ## Test plan
 

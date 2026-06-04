@@ -155,10 +155,20 @@ HoldSpeak ships **14 built-in plugins**, all producing real LLM-backed artifacts
 | `stakeholder_update_drafter` | Stakeholder update (headline + highlights / risks / next steps) | comms |
 | `decision_announcement_drafter` | Decision announcements (title / audience / message) | comms |
 
+Beyond read-only artifacts, plugins can also **propose actions**. An
+**actuator** is the plugin system's third kind: instead of an artifact it proposes
+an external side effect (file a ticket, post an update) that only happens after an
+explicit, audited, **per-action human approval** — and what runs is exactly what
+was previewed. Actuators are **off by default** (a per-project gate + allow-list);
+one reference actuator (`followup_ticket_actuator`) ships as the worked example.
+See the [Actuators](docs/PLUGIN_AUTHORING.md#actuators) section of the authoring
+guide.
+
 Want to write your own? The [Plugin Authoring guide](docs/PLUGIN_AUTHORING.md)
 walks the full contract — the `HostPlugin` protocol, the prompt → LLM → parse →
-structured-output pattern, the `llm` capability gate, registering a renderer, and
-joining a chain. The design rationale lives in the plugin RFC:
+structured-output pattern, the `llm` capability gate, registering a renderer,
+joining a chain, and the actuator approval flow. The design rationale lives in the
+plugin RFC:
 [`docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md`](docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md).
 For configuring meeting intelligence (endpoints, routing), see the
 [Meeting Mode Guide](docs/MEETING_MODE_GUIDE.md).
