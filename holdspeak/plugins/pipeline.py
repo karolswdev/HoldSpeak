@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Optional, Protocol
+from typing import Any, Callable, Optional, Protocol
 
 from ..artifacts import ArtifactDraft
 from .contracts import ArtifactLineage, IntentScore, IntentTransition, IntentWindow, PluginRun
@@ -82,6 +82,7 @@ def process_meeting_state(
     max_artifacts: int = 200,
     disabled_plugins: Optional[list[str]] = None,
     segment_probe: Optional[SegmentProbe] = None,
+    on_proposal: Optional[Callable[[Any], None]] = None,
 ) -> MIRPipelineResult:
     """Run the MIR pipeline over a meeting state, in process, returning typed results.
 
@@ -179,7 +180,20 @@ def process_meeting_state(
                 # persist it as a durable proposal awaiting approval (no
                 # execution). Dormant until an actuator is dispatched (HS-37-05).
                 if run.status == "proposed":
-                    record_actuator_proposal(db, run)
+                    proposal = record_actuator_proposal(db, run)
+                    # HS-38-04: surface the new proposal live (the meeting session
+                    # turns this into an `actuator_proposed` broadcast). Best-effort:
+                    # a callback failure never aborts persistence. The callback gets
+                    # the full record; the broadcast layer decides what is safe to
+                    # put on the wire (never the egress payload).
+                    if on_proposal is not None and proposal is not None:
+                        try:
+                            on_proposal(proposal)
+                        except Exception as exc:
+                            errors.append(
+                                f"on_proposal[{run.window_id}/{run.plugin_id}]: "
+                                f"{type(exc).__name__}: {exc}"
+                            )
             except Exception as exc:
                 errors.append(
                     f"persist_run[{run.window_id}/{run.plugin_id}]: {type(exc).__name__}: {exc}"

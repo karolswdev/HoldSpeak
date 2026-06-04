@@ -91,17 +91,19 @@ def record_plugin_runs(db: Database, runs: list[PluginRun]) -> None:
         record_plugin_run(db, run)
 
 
-def record_actuator_proposal(db: Database, run: PluginRun) -> None:
+def record_actuator_proposal(db: Database, run: PluginRun) -> Any:
     """Persist the actuator proposal carried by a `proposed` plugin run (HS-37-02).
 
     An actuator's `run.output` is the `ActuatorProposal` payload (HS-37-01);
     this records it as a durable proposal awaiting human approval. Idempotent
     on the run's idempotency key — overlapping windows do not duplicate. No
-    side effect is performed; execution is HS-37-04.
+    side effect is performed; execution is HS-37-04. Returns the persisted
+    `ActuatorProposalRecord` so callers can surface it (e.g. the HS-38-04 live
+    `actuator_proposed` broadcast).
     """
     output = run.output if isinstance(run.output, dict) else {}
     payload = output.get("payload")
-    db.actuators.record_proposal(
+    return db.actuators.record_proposal(
         meeting_id=run.meeting_id,
         window_id=run.window_id,
         plugin_id=run.plugin_id,

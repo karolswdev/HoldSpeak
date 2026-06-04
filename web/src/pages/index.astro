@@ -242,6 +242,46 @@ import HoldMark from "../components/HoldMark.astro";
           </div>
         </section>
 
+        <!-- HS-38-04: live actuator proposals — surfaced as the pipeline produces
+             them, approve/reject on the spot. The broadcast carries no egress
+             payload; approving only records a decision (nothing runs without it). -->
+        <section class="panel panel--dense proposals-panel" x-show="pendingProposals.length" x-cloak>
+          <header class="panel-header">
+            <div class="panel-title">Pending actions</div>
+            <div class="panel-toolbar">
+              <span class="rail-faint" x-text="`${pendingProposals.length} awaiting`"></span>
+            </div>
+          </header>
+          <div class="panel-body">
+            <p class="rail-muted">An actuator proposed an external action. Review it, then approve or reject — approval only records your decision; nothing runs without it.</p>
+            <ul class="proposal-list">
+              <template x-for="p in pendingProposals" :key="p.id">
+                <li class="proposal-item" :class="`accent-${proposalAccent(p)}`">
+                  <div class="proposal-head">
+                    <span class="proposal-icon" aria-hidden="true" x-text="proposalIcon(p)"></span>
+                    <div class="proposal-headings">
+                      <p class="proposal-title" x-text="`${p.action} → ${p.target}`"></p>
+                      <div class="proposal-meta">
+                        <span class="meta-chip status" :class="`proposal-${p.status}`" x-text="proposalStatusLabel(p.status)"></span>
+                        <span class="meta-chip" x-text="p.reversible ? 'reversible' : 'irreversible'"></span>
+                        <span class="meta-chip" x-show="p.decided_by" x-cloak x-text="`by ${p.decided_by}`"></span>
+                      </div>
+                    </div>
+                  </div>
+                  <p class="proposal-preview-line" x-show="p.preview" x-cloak x-text="p.preview"></p>
+                  <div class="proposal-controls" x-show="p.status === 'proposed'" x-cloak>
+                    <button type="button" class="btn btn--sm proposal-approve" @click="decideLiveProposal(p, 'approved')">Approve</button>
+                    <button type="button" class="btn btn--secondary btn--sm" @click="decideLiveProposal(p, 'rejected')">Reject</button>
+                  </div>
+                  <p class="proposal-guard rail-faint" x-show="p.status === 'proposed'" x-cloak>Nothing runs without your approval — this only records your decision.</p>
+                  <p class="proposal-decided rail-faint" x-show="p.status !== 'proposed'" x-cloak
+                     x-text="proposalStatusLabel(p.status) + (p.decided_by ? ` · ${p.decided_by}` : '')"></p>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </section>
+
         <!-- Devices -->
         <section class="panel panel--dense" x-show="devices.length > 0" x-cloak>
           <header class="panel-header"><div class="panel-title">Devices</div></header>
@@ -1005,4 +1045,62 @@ import HoldMark from "../components/HoldMark.astro";
     font-size: var(--font-size-sm);
     margin: var(--space-2) 0 0;
   }
+
+  /* HS-38-04: live actuator-proposal panel. A "do this now?" surface — a left
+   * accent edge keyed to the lifecycle state, the human preview, and approve/
+   * reject. The broadcast never carries the egress payload. */
+  .proposals-panel { border-color: var(--warn); }
+  .proposal-list {
+    list-style: none;
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .proposal-item {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border-strong);
+    border-radius: var(--radius-md, 8px);
+    background: var(--surface-2);
+    padding: var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .proposal-item.accent-warn { border-left-color: var(--warn); }
+  .proposal-item.accent-info { border-left-color: var(--accent); }
+  .proposal-item.accent-ok { border-left-color: var(--success); }
+  .proposal-item.accent-danger { border-left-color: var(--danger); }
+  .proposal-item.accent-default { border-left-color: var(--border-strong); opacity: 0.85; }
+  .proposal-head { display: flex; align-items: flex-start; gap: var(--space-2); }
+  .proposal-icon { font-size: 1.1rem; line-height: 1.2; }
+  .proposal-headings { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+  .proposal-title {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text);
+    word-break: break-word;
+  }
+  .proposal-meta { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+  .meta-chip.status.proposal-proposed { color: var(--warn); border-color: transparent; background: var(--warn-soft); }
+  .meta-chip.status.proposal-approved { color: var(--accent); border-color: transparent; background: var(--accent-soft); }
+  .meta-chip.status.proposal-executed { color: var(--success); border-color: transparent; background: var(--success-soft); }
+  .meta-chip.status.proposal-failed { color: var(--danger); border-color: transparent; background: var(--danger-soft); }
+  .meta-chip.status.proposal-rejected { color: var(--text-muted); border-color: transparent; background: var(--surface-3); }
+  .proposal-preview-line {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    word-break: break-word;
+  }
+  .proposal-controls { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .proposal-approve {
+    background: var(--accent);
+    color: var(--accent-on);
+    border-color: var(--accent);
+    box-shadow: var(--glow-accent);
+  }
+  .proposal-approve:not(:disabled):hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .proposal-guard, .proposal-decided { margin: 0; }
 </style>

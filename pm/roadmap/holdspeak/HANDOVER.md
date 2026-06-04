@@ -47,24 +47,52 @@ with the live status docs, the status docs win.
 
 ## 3. Pick up here
 
-**▶ Phase 37 — Actuators: CLOSED ✅ (7/7), on local branch
-`phase-37/hs-37-01-actuator-contract`** — **open a PR to `main`** (CI green → merge, per
-the merge-via-PR cadence). Full record: `phase-37-actuators/final-summary.md`. The plugin
-system's **third kind** is on, behind one invariant: *no external side effect without an
-explicit, audited, per-action human approval; executed == previewed.* An actuator
-**proposes** (`ActuatorProposal` from `run()`, status `proposed`); a human **approves**
-(the meeting-detail "Proposed actions" cards / `POST …/proposals/{id}/decision`); a
-**guarded executor** (`plugins/actuator_executor.py`) acts only on an `approved` proposal
-through status + policy gate (`MeetingConfig.allow_actuators` + `allowed_actuators`,
-default-safe) + **payload parity** (TOCTOU) + an **injected connector** (never a socket in
-the executor) + an **audit** row. Persistence: `db.actuators` (`actuator_proposals` /
-`actuator_proposal_audit`). Reference: `followup_ticket_actuator` + `build_outbox_connector`
-(a local-file side effect; gh/jira are read-only by Phase-25 policy, so a future
-write-permitted connector is the path). **Default suite + routing byte-identical** — no
-actuator is registered (`register_followup_actuator` is opt-in, not in
-`register_builtin_plugins`) or in any chain. **Next frontier (none committed):** more
-connectors (write-permitted gh/jira/webhook), live in-meeting proposals, chained/per-role
-governance.
+**▶ Nothing in-flight — Phase 38 just CLOSED. Pick the next phase's direction.** The last
+six closed phases were a long decomposition/hardening + plugin/actuator arc (31→38). Open
+candidates the prior handovers floated, none committed: a **release/first-run** pass (cut an
+actual tag + PyPI; Phase 33 made positioning honest, not published — see §"Manual follow-up"),
+a **dogfood/reliability** pass, **UX consolidation**, or the **actuator next-frontier**
+(more connectors as discovered packs · a cross-meeting approval inbox · a mid-meeting
+live-dispatch cadence · per-role governance — see `phase-38-actuators-ii/final-summary.md`
+§Handoff). Still **hardware-gated** (author remote, no mic/AI-PI): Phase 24 (companion, 3/6),
+Phase 25 (HS-25-07 dogfood), Phase 15 (out-and-about). Scaffold a phase folder + stories when
+the direction is chosen.
+
+**▶ Phase 38 — Actuators II: CLOSED ✅ (6/6), on local branch
+`phase-38/hs-38-01-write-connector-framework` — push + open a PR to `main`.** Full record:
+`phase-38-actuators-ii/final-summary.md`. Made the proven-safe Phase-37 actuator mechanism
+*useful* without weakening the invariant: **real write connectors** behind a per-connector
+**permission manifest**, and **live in-meeting proposals**. **HS-38-01** the gated
+write-connector framework (`holdspeak/plugins/gated_connector.py`: `WriteConnectorManifest`
+declares one egress permission + a concrete argv-prefix / host allow-list; `build_gated_connector`
+enforces **plan → allow-check → gate → interpret**, refusing a non-declared op *before* the
+existing `connector_runtime.PermissionGate` — no second egress primitive; the Phase-37
+`ActuatorExecutor` unchanged) → **02** GitHub (`github_issue_actuator.py`: `gh issue create`
+and only that, `shell:exec`, argv from payload run without a shell ⇒ no injection) → **03**
+webhook (`webhook_post_actuator.py`: HTTP POST to an allow-listed host, `network:outbound`,
+`MeetingConfig.webhook_allowed_hosts` default-empty) → **04** live proposals
+(`process_meeting_state` `on_proposal` callback → `MeetingSession._emit_actuator_proposal`
+emits a **read-only** `actuator_proposed` broadcast [never the egress payload]; a Signal
+"Pending actions" dashboard panel approves/rejects via the Phase-37 decision endpoint — a
+surface, not a new execution path) → **05** docs (`docs/PLUGIN_AUTHORING.md` write connectors
++ live proposals) → **06** closeout. **Off + unregistered by default** (routing byte-identical,
+38 routing tests green); the default suite makes **no real outbound call** (injected runners/
+clients); the connectors are **host-side** (the executor injects them, not discovered packs).
+Suite **2123 passed, 15 skipped**.
+
+**▶ Phase 37 — Actuators: CLOSED ✅ (7/7), merged via PR #14.** Full record:
+`phase-37-actuators/final-summary.md`. The plugin system's **third kind** is on, behind
+one invariant: *no external side effect without an explicit, audited, per-action human
+approval; executed == previewed.* An actuator **proposes** (`ActuatorProposal` from
+`run()`, status `proposed`); a human **approves** (the meeting-detail "Proposed actions"
+cards / `POST …/proposals/{id}/decision`); a **guarded executor**
+(`plugins/actuator_executor.py`) acts only on an `approved` proposal through status +
+policy gate (`MeetingConfig.allow_actuators` + `allowed_actuators`, default-safe) +
+**payload parity** (TOCTOU) + an **injected connector** (never a socket in the executor) +
+an **audit** row. Persistence: `db.actuators` (`actuator_proposals` /
+`actuator_proposal_audit`). Reference: `followup_ticket_actuator` + `build_outbox_connector`.
+**Default suite + routing byte-identical** — no actuator is registered
+(`register_followup_actuator` is opt-in, not in `register_builtin_plugins`) or in any chain.
 
 **▶ Earlier — Phase 36 — Meeting Intelligence & Experience: CLOSED ✅ (6/6), merged via
 PR #13.** Full record: `phase-36-meeting-artifact-experience/final-summary.md`. Both tracks

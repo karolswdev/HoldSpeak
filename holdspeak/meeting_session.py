@@ -444,6 +444,37 @@ class MeetingSession:
         except Exception as exc:
             log.debug(f"on_broadcast callback raised for {message_type!r}: {exc}")
 
+    def _emit_actuator_proposal(self, proposal: Any) -> None:
+        """Broadcast a newly-persisted actuator proposal (HS-38-04).
+
+        Wired into the finalization-time MIR pipeline as `on_proposal`; the
+        dashboard shows it in a live "pending actions" panel and can approve/
+        reject on the spot (the existing decision endpoint — no execution here).
+
+        The broadcast payload is deliberately **read-only**: id + lifecycle +
+        the human-readable preview only. The machine `payload` (the egress
+        source-of-truth) is **never** put on the wire — a live client must not
+        receive anything that could itself trigger an effect on receipt.
+        """
+        try:
+            created = getattr(proposal, "created_at", None)
+            data = {
+                "id": getattr(proposal, "id", ""),
+                "meeting_id": getattr(proposal, "meeting_id", ""),
+                "plugin_id": getattr(proposal, "plugin_id", ""),
+                "status": getattr(proposal, "status", "proposed"),
+                "target": getattr(proposal, "target", ""),
+                "action": getattr(proposal, "action", ""),
+                "preview": getattr(proposal, "preview", ""),
+                "reversible": bool(getattr(proposal, "reversible", False)),
+                # ISO string — the broadcast bottoms out on json.dumps.
+                "created_at": created.isoformat() if hasattr(created, "isoformat") else created,
+            }
+        except Exception as exc:  # never let a bad record break finalization
+            log.debug(f"could not build actuator_proposed payload: {exc}")
+            return
+        self._emit_broadcast("actuator_proposed", data)
+
     @property
     def is_active(self) -> bool:
         """Check if meeting is currently active."""
@@ -858,6 +889,7 @@ class MeetingSession:
                     synthesize=self._mir_synthesize,
                     disabled_plugins=self._mir_disabled_plugins,
                     segment_probe=self._mir_segment_probe,
+                    on_proposal=self._emit_actuator_proposal,
                 )
                 log.info(
                     "MIR routing finalized: "

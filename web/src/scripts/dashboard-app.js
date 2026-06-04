@@ -86,6 +86,10 @@
           processingPluginJobs: false,
           intelBuffer: "",
           intelStreaming: false,
+          // HS-38-04: live actuator proposals surfaced as produced. Read-only
+          // descriptors (no egress payload); approve/reject hits the decision
+          // endpoint — nothing runs without approval.
+          pendingProposals: [],
           exportOpen: false,
           bookmarkModalOpen: false,
           bookmarkLabel: "",
@@ -683,7 +687,96 @@
             if (type === "plugin_jobs_processed") {
               this.loadPluginJobs();
               this.loadPluginJobSummary();
+              return;
             }
+            if (type === "actuator_proposed") {
+              this.addProposal(data || {});
+              return;
+            }
+          },
+
+          // HS-38-04: a live actuator proposal arrived. Dedupe by id (overlapping
+          // windows re-propose the same action under one idempotency key) and
+          // surface it in the pending-actions panel. Carries no egress payload.
+          addProposal(data) {
+            const id = data && data.id;
+            if (!id) return;
+            const idx = this.pendingProposals.findIndex((p) => p.id === id);
+            if (idx >= 0) {
+              this.pendingProposals.splice(idx, 1, { ...this.pendingProposals[idx], ...data });
+            } else {
+              this.pendingProposals.unshift(data);
+              this.toast("An action was proposed — review it under Pending actions.");
+            }
+          },
+
+          // Approve / reject a live proposal. Approving only records the decision
+          // (+ an audit entry) via the same endpoint the saved-meeting surface
+          // uses — it performs NO side effect; execution is the guarded executor's
+          // job. The decided row updates in place.
+          async decideLiveProposal(proposal, decision) {
+            if (!proposal?.id || !proposal?.meeting_id) return;
+            try {
+              const resp = await fetch(
+                `/api/meetings/${proposal.meeting_id}/proposals/${proposal.id}/decision`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ decision }),
+                },
+              );
+              const body = await resp.json();
+              if (!resp.ok || !body.success) {
+                throw new Error(body.error || `HTTP ${resp.status}`);
+              }
+              const updated = body.proposal;
+              const idx = this.pendingProposals.findIndex((p) => p.id === proposal.id);
+              if (idx >= 0 && updated) {
+                // Keep the read-only shape: never store the egress payload the
+                // decision response echoes back.
+                this.pendingProposals.splice(idx, 1, {
+                  ...this.pendingProposals[idx],
+                  status: updated.status,
+                  decided_by: updated.decided_by,
+                });
+              }
+              this.toast(
+                decision === "approved"
+                  ? "Proposal approved — recorded; nothing runs without it."
+                  : "Proposal rejected.",
+              );
+            } catch (error) {
+              this.toast(`Decision failed: ${error.message}`, true);
+            }
+          },
+
+          proposalStatusLabel(status) {
+            return (
+              {
+                proposed: "Awaiting approval",
+                approved: "Approved — pending execution",
+                executed: "Executed",
+                rejected: "Rejected",
+                failed: "Failed",
+              }[status] || String(status || "")
+            );
+          },
+
+          proposalAccent(proposal) {
+            return (
+              {
+                proposed: "warn",
+                approved: "info",
+                executed: "ok",
+                rejected: "default",
+                failed: "danger",
+              }[proposal?.status] || "default"
+            );
+          },
+
+          proposalIcon(proposal) {
+            const target = String(proposal?.target || "").toLowerCase();
+            return { github: "🐙", jira: "🧩", slack: "💬", webhook: "🔗" }[target] || "⚡";
           },
 
           timeLabel(value) {

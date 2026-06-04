@@ -623,9 +623,13 @@ aborts to `failed` with no outbound call — a TOCTOU guard) → egress via an
 `executed`/`failed`, recorded with the payload hash in the audit trail. A
 connector error → `failed` (retryable via `failed → approved`).
 
-The connector is supplied by *you* and is where egress policy lives —
-route it through the existing connector surface (`connector_runtime`) so it
-honors the Phase-25 provider gate; do not invent a new outbound path.
+The connector is supplied by *you* and is where egress policy lives. Don't
+invent a new outbound path — build it with
+[`build_gated_connector`](../holdspeak/plugins/gated_connector.py), which routes
+every call through the existing `connector_runtime.PermissionGate` behind a
+per-connector **permission manifest** (see [Write connectors](#write-connectors-the-permission-manifest)
+below). The Phase-37 `outbox` reference writes a local file; the Phase-38
+references reach real systems (GitHub, a webhook) under that manifest.
 
 ### Worked example: `followup_ticket_actuator`
 
@@ -656,8 +660,10 @@ class FollowupTicketActuator:
 ```
 
 Its connector (`build_outbox_connector`) performs the side effect — here a
-local **outbox** Markdown file (a real, reversible, network-free artifact).
-Wiring the loop:
+local **outbox** Markdown file (the simplest connector: a real, reversible,
+network-free artifact, safe to exercise in CI). Connectors that reach real
+systems are built the same way, behind a permission manifest — see
+[Write connectors](#write-connectors-the-permission-manifest) below. Wiring the loop:
 
 ```python
 host = PluginHost(enabled_capabilities={"actuator"})
@@ -678,15 +684,94 @@ executor = ActuatorExecutor(
 executor.execute(pid)                                  # → "executed" + audit; the file is written
 ```
 
+### Write connectors (the permission manifest)
+
+The outbox connector writes a local file. To reach a **real** system — file a
+GitHub issue, POST to a webhook — the connector must still be unable to do
+anything it didn't declare. That's what
+[`build_gated_connector`](../holdspeak/plugins/gated_connector.py) gives you: a
+*write* connector behind a per-connector **permission manifest**, layered
+**under** the approval + policy + parity gates (it only ever *narrows* what can
+reach the wire — it never replaces a gate above it).
+
+A [`WriteConnectorManifest`](../holdspeak/plugins/gated_connector.py) declares
+exactly two things:
+
+- the single `PermissionGate` permission the connector needs, and
+- the concrete operations it may perform.
+
+| Permission | Gate operation | Allow-list field | Example |
+|---|---|---|---|
+| `shell:exec` | `run_subprocess` | `allowed_argv_prefixes` | `gh issue create` |
+| `network:outbound` | `open_outbound_socket` | `allowed_hosts` | `hooks.slack.com` |
+
+An **empty allow-list admits nothing** — the safe default. `build_gated_connector`
+enforces, per proposal, in order: **plan → allow-check → gate → interpret**:
+
+```python
+connector = build_gated_connector(
+    manifest,
+    plan=plan,            # proposal → the one GatedOperation it would perform
+    interpret=interpret,  # the gate's raw result → the executor's result dict
+    runner=runner,        # injected for shell:exec (defaults to subprocess.run)
+    opener=opener,        # injected for network:outbound (defaults to a urllib POST)
+)
+```
+
+An operation the manifest doesn't admit raises `ConnectorOperationRefused`
+**before** the gate is ever touched — no egress, no partial work. The executor
+records it as `failed` + an audit row, like any connector failure.
+
+**Reference 1 — `gh issue create` (`shell:exec`).**
+[`github_issue_actuator.py`](../holdspeak/plugins/builtin/github_issue_actuator.py)
+proposes a GitHub issue (payload `repo`/`title`/`body`);
+`build_github_issue_connector` is allow-listed to `gh issue create` and nothing
+else. The argv is an explicit list run **without a shell**, so a payload value is
+only ever an *argument* — it can't change the subcommand or inject a second
+command. A non-zero `gh` exit raises → `failed` + audit; the created issue URL is
+the result. (Auth is your already-authenticated local `gh`; the connector manages
+no tokens.) Tests inject a fake runner — no real `gh`:
+[`test_github_issue_actuator.py`](../tests/unit/test_github_issue_actuator.py).
+
+**Reference 2 — webhook POST (`network:outbound`).**
+[`webhook_post_actuator.py`](../holdspeak/plugins/builtin/webhook_post_actuator.py)
+proposes an HTTP POST (payload `{url, body}`); `build_webhook_connector` POSTs
+**only to an allow-listed host** — `MeetingConfig.webhook_allowed_hosts` (default
+empty ⇒ nothing posts). An off-list host is refused before egress; a non-2xx /
+transport error → `failed` + audit; the status is the result. A Slack/Teams
+incoming webhook is simply a URL whose host you add to the allow-list — not a
+bespoke API integration. Tests inject a fake client — no real HTTP:
+[`test_webhook_post_actuator.py`](../tests/unit/test_webhook_post_actuator.py).
+
+Both reference connectors are **host-side** (the executor injects them; they are
+not discovered packs) and **off by default** — reached only after approval + the
+policy/parity gates + the manifest. jira/linear/etc. are the same pattern (a CLI
+or webhook connector + a manifest), not separate machinery.
+
+### Live proposals
+
+Proposals also surface **during** a meeting, not only when you reopen a saved one.
+When the pipeline produces a proposal, the `MeetingSession` emits a **read-only**
+`actuator_proposed` broadcast — `id` / `status` / `target` / `action` / `preview`
+/ `reversible` only; the machine `payload` is **never** put on the wire — and the
+live dashboard shows it in a **"Pending actions"** panel with Approve / Reject.
+Live approval reuses the *same* gated decision endpoint
+(`POST /api/meetings/{id}/proposals/{pid}/decision`): it records a decision (+
+audit) and performs **no** side effect — it's a surface, not a new way to act.
+Default off; nothing broadcasts unless an actuator is registered + the capability
+enabled. See
+[`test_live_proposals.py`](../tests/unit/test_live_proposals.py).
+
 ### Registering + testing
 
-Register actuators **explicitly and opt-in** — `register_followup_actuator`
-is *not* part of `register_builtin_plugins`, so the default plugin set and
-routing chains stay unchanged. Test the loop end-to-end against a stub or
-local connector (no real egress): assert the proposal is faithful, that
-executing **before** approval / with the gate off / when not allow-listed
-performs **no** side effect, and that approve → execute writes the audited
-terminal state. See
+Register actuators **explicitly and opt-in** — `register_followup_actuator` /
+`register_github_issue_actuator` / `register_webhook_post_actuator` are *not* part
+of `register_builtin_plugins`, so the default plugin set and routing chains stay
+unchanged. Test the loop end-to-end against a stub or injected connector (no real
+egress — inject the runner / HTTP client): assert the proposal is faithful, that
+executing **before** approval / with the gate off / when not allow-listed / for an
+operation the manifest doesn't admit performs **no** side effect, and that
+approve → execute writes the audited terminal state. See
 [`test_actuator_reference.py`](../tests/unit/test_actuator_reference.py).
 
 ---
@@ -700,7 +785,9 @@ The cleanest references, in order of how much they'll teach you:
 | `decision_capture` | [`decision_capture.py`](../holdspeak/plugins/builtin/decision_capture.py) | The canonical end-to-end pattern: prompt → intel → parse → structured output, deferred, `llm`-gated. |
 | `mermaid_architecture` | [`mermaid_architecture.py`](../holdspeak/plugins/builtin/mermaid_architecture.py) | An `artifact_generator` that produces a diagram (Mermaid → SVG). |
 | `action_owner_enforcer` | [`action_owner_enforcer.py`](../holdspeak/plugins/builtin/action_owner_enforcer.py) | A `validator` that flags gaps rather than synthesizing prose. |
-| `followup_ticket_actuator` | [`followup_ticket_actuator.py`](../holdspeak/plugins/builtin/followup_ticket_actuator.py) | The reference `actuator` — proposes a side effect; see [Actuators](#actuators). |
+| `followup_ticket_actuator` | [`followup_ticket_actuator.py`](../holdspeak/plugins/builtin/followup_ticket_actuator.py) | The reference `actuator` — proposes a side effect (local outbox file); see [Actuators](#actuators). |
+| `github_issue_actuator` | [`github_issue_actuator.py`](../holdspeak/plugins/builtin/github_issue_actuator.py) | A **write connector** — `gh issue create` behind a `shell:exec` permission manifest. |
+| `webhook_post_actuator` | [`webhook_post_actuator.py`](../holdspeak/plugins/builtin/webhook_post_actuator.py) | A **write connector** — HTTP POST to an allow-listed host (`network:outbound`). |
 
 The full set of 14 lives under
 [`holdspeak/plugins/builtin/`](../holdspeak/plugins/builtin/); the
