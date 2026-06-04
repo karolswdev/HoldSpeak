@@ -8,6 +8,7 @@ from .models import *  # noqa: F401,F403
 from .base import BaseRepository  # noqa: F401
 from .meetings import MeetingRepository  # noqa: F401
 from .intel import IntelRepository  # noqa: F401
+from .actuators import ActuatorRepository  # noqa: F401
 from .core import *  # noqa: F401,F403
 from .core import (  # noqa: F401  explicit: names import * may skip
     Database,

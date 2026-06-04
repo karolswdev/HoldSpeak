@@ -1,8 +1,20 @@
 # Phase 37 — Actuators
 
-**Status:** in-progress (opened 2026-06-04). 1/6 stories shipped.
+**Status:** in-progress (opened 2026-06-04). 2/6 stories shipped.
 
-**Last updated:** 2026-06-04 (**HS-37-01 shipped — actuator contract + unblock the kind.**
+**Last updated:** 2026-06-04 (**HS-37-02 shipped — proposal persistence + lifecycle.** A
+durable home for actuator proposals: a new `holdspeak/db/actuators.py` `ActuatorRepository`
+(joined to the `Database` container as `db.actuators`) with two tables —
+`actuator_proposals` (idempotent on `idempotency_key`; the `target`/`action`/`preview`/
+`payload`/`reversible` fields; `decided_by`/`decided_at`/`executed_at`) and
+`actuator_proposal_audit` (a row per transition). The lifecycle is an explicit
+`_LEGAL_TRANSITIONS` map — `proposed → {approved, rejected}`, `approved → {executed,
+failed}`, `failed → {approved}` (retry), `executed`/`rejected` terminal — illegal
+transitions raise. The pipeline persists a proposal for any `proposed` run (via
+`record_actuator_proposal`; dormant until an actuator is dispatched in HS-37-05); `proposed`
+added to `PLUGIN_RUN_STATUSES` in lockstep. Canonical schema snapshot regenerated (+2
+tables/+3 indexes); 13 new repo tests; suite 2052/15; db package ruff-clean. Next: HS-37-03
+(approval surface). Earlier: **HS-37-01 shipped — actuator contract + unblock the kind.**
 The plugin system's third kind is now *proposable*: a new `holdspeak/plugins/actuators.py`
 defines `ActuatorProposal` (target/action/preview/payload/reversible/required_capabilities)
 with `from_run_output` validation; `plugin_sdk` accepts `kind: actuator` + the `actuator`
@@ -125,7 +137,7 @@ default**; the default routing/dispatch path is byte-identical.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-37-01 | Actuator contract + unblock the kind (gated, proposal-only) | done | [story-01-actuator-contract.md](./story-01-actuator-contract.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-37-02 | Proposal persistence + lifecycle | not-started | [story-02-proposal-persistence.md](./story-02-proposal-persistence.md) | — |
+| HS-37-02 | Proposal persistence + lifecycle | done | [story-02-proposal-persistence.md](./story-02-proposal-persistence.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-37-03 | Approval surface — preview → approve/reject (no execution) | not-started | [story-03-approval-surface.md](./story-03-approval-surface.md) | — |
 | HS-37-04 | Guarded executor + audit + governance gate | not-started | [story-04-guarded-executor.md](./story-04-guarded-executor.md) | — |
 | HS-37-05 | Reference actuator end-to-end | not-started | [story-05-reference-actuator.md](./story-05-reference-actuator.md) | — |
@@ -160,8 +172,9 @@ recon is done. The seam already exists from Phase 35's groundwork:
 
 1. **HS-37-01** — actuator contract + unblock the kind (proposal-only, gated) ✅ **done**
    (`ActuatorProposal` + the `proposed` host status; `actuator` kind/capability unblocked).
-2. HS-37-02 — proposal persistence + lifecycle (needs the proposal shape). **◀ next**
-3. HS-37-03 — approval UI (needs persisted proposals to render + decide).
+2. HS-37-02 — proposal persistence + lifecycle ✅ **done** (`ActuatorRepository` +
+   `actuator_proposals`/`_audit` tables; lifecycle-enforced + idempotent + audited).
+3. HS-37-03 — approval UI (needs persisted proposals to render + decide). **◀ next**
 4. HS-37-04 — guarded executor + audit + governance gate (needs an approved proposal).
 5. HS-37-05 — reference actuator end-to-end (exercises 01→04 with a real side effect).
 6. HS-37-06 — closeout + final-summary.

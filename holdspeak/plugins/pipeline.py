@@ -18,7 +18,7 @@ from ..artifacts import ArtifactDraft
 from .contracts import ArtifactLineage, IntentScore, IntentTransition, IntentWindow, PluginRun
 from .dispatch import dispatch_window
 from .host import PluginHost
-from .persistence import record_intent_window, record_plugin_run
+from .persistence import record_actuator_proposal, record_intent_window, record_plugin_run
 from .scoring import iter_intent_transitions, score_window
 from .segment_probe import SegmentProbe
 from .synthesis import synthesize_and_persist
@@ -175,6 +175,11 @@ def process_meeting_state(
         for run in runs:
             try:
                 record_plugin_run(db, run)
+                # HS-37-02: a `proposed` run carries an actuator proposal —
+                # persist it as a durable proposal awaiting approval (no
+                # execution). Dormant until an actuator is dispatched (HS-37-05).
+                if run.status == "proposed":
+                    record_actuator_proposal(db, run)
             except Exception as exc:
                 errors.append(
                     f"persist_run[{run.window_id}/{run.plugin_id}]: {type(exc).__name__}: {exc}"

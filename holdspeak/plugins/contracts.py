@@ -10,7 +10,9 @@ PLUGIN_RUN_STATUSES: frozenset[str] = frozenset(
     # config knob (`MeetingConfig.disabled_plugins`) suppressed it at dispatch.
     # Distinct from `blocked` (capability/actuator gate) and `error` (it ran
     # and failed): a skipped plugin was never invoked.
-    {"success", "error", "timeout", "deduped", "blocked", "queued", "skipped"}
+    # `proposed` (HS-37-01) = an actuator ran and produced an ActuatorProposal;
+    # it performed no side effect (execution is approval-gated, HS-37-04).
+    {"success", "proposed", "error", "timeout", "deduped", "blocked", "queued", "skipped"}
 )
 
 

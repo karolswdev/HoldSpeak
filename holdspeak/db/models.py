@@ -15,6 +15,10 @@ VALID_ACTION_ITEM_REVIEW_STATES = frozenset({"pending", "accepted"})
 VALID_ACTIVITY_MEETING_CANDIDATE_STATUSES = frozenset(
     {"candidate", "armed", "dismissed", "started"}
 )
+# Phase 37 (HS-37-02): the actuator-proposal lifecycle.
+VALID_ACTUATOR_PROPOSAL_STATUSES = frozenset(
+    {"proposed", "approved", "executed", "rejected", "failed"}
+)
 
 
 @dataclass
@@ -342,4 +346,49 @@ class ActivityMeetingCandidate:
     status: str
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass
+class ActuatorProposalRecord:
+    """A proposed external side effect awaiting human approval (Phase 37).
+
+    `payload` is the exact machine representation of the side effect — the
+    parity source-of-truth the guarded executor (HS-37-04) checks before
+    acting. Timestamps are ISO strings. `status` is one of
+    `VALID_ACTUATOR_PROPOSAL_STATUSES`.
+    """
+
+    id: str
+    meeting_id: str
+    window_id: str
+    plugin_id: str
+    plugin_version: str
+    idempotency_key: str
+    status: str
+    target: str
+    action: str
+    preview: str
+    payload: dict[str, Any]
+    reversible: bool
+    required_capabilities: list[str]
+    decided_by: Optional[str]
+    result: Optional[dict[str, Any]]
+    error: Optional[str]
+    created_at: str
+    decided_at: Optional[str]
+    executed_at: Optional[str]
+    updated_at: str
+
+
+@dataclass
+class ActuatorProposalAuditEntry:
+    """One recorded status transition of an actuator proposal (Phase 37)."""
+
+    id: int
+    proposal_id: str
+    actor: str
+    from_status: Optional[str]
+    to_status: str
+    detail: Optional[str]
+    created_at: str
 

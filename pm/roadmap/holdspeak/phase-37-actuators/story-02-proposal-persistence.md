@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 37
-- **Status:** not-started
+- **Status:** done
 - **Depends on:** HS-37-01
 - **Unblocks:** HS-37-03, HS-37-04
 - **Owner:** unassigned
@@ -36,15 +36,18 @@ that make "no silent egress" provable after the fact.
 
 ## Acceptance criteria
 
-- [ ] Proposals persist + reload with all fields; the status ladder is enforced (illegal
-      transitions rejected, e.g. `executed` → `proposed`).
-- [ ] Idempotency: proposing the same action twice for the same meeting/window yields one
-      row.
-- [ ] Each status transition writes an **audit entry** (actor / from→to / timestamp /
-      result).
-- [ ] `TestDatabaseShape::test_fresh_schema_matches_canonical_snapshot` passes with the
-      snapshot regenerated in this commit.
-- [ ] Suite green; the db package stays ruff-clean.
+- [x] Proposals persist + reload with all fields (`ActuatorRepository.record_proposal` /
+      `get_proposal` / `list_proposals`); the status ladder is enforced via
+      `_LEGAL_TRANSITIONS` — illegal transitions (`executed → proposed`, `proposed →
+      executed`, …) raise `ValueError`.
+- [x] Idempotency: re-`record_proposal` with the same `idempotency_key` returns the same
+      row (UNIQUE + `ON CONFLICT DO NOTHING`), no duplicate, no extra opening audit entry.
+- [x] Each transition writes an **audit entry** (`actuator_proposal_audit`: actor /
+      from→to / detail / timestamp); the opening `→ proposed` is recorded on insert.
+- [x] `TestDatabaseShape::test_fresh_schema_matches_canonical_snapshot` passes —
+      `tests/fixtures/db_schema_canonical.txt` regenerated in this commit (422 objects;
+      the 2 tables + 3 indexes added).
+- [x] Full suite green (2052/15); `holdspeak/db/` ruff-clean.
 
 ## Test plan
 

@@ -27,6 +27,9 @@ ON activity_records(source_browser, source_profile, entity_type, entity_id)
 WHERE entity_type IS NOT NULL AND entity_id IS NOT NULL
 index idx_activity_records_source_url: CREATE UNIQUE INDEX idx_activity_records_source_url
 ON activity_records(source_browser, source_profile, normalized_url)
+index idx_actuator_proposal_audit_proposal: CREATE INDEX idx_actuator_proposal_audit_proposal ON actuator_proposal_audit(proposal_id, created_at)
+index idx_actuator_proposals_meeting: CREATE INDEX idx_actuator_proposals_meeting ON actuator_proposals(meeting_id, created_at DESC)
+index idx_actuator_proposals_status: CREATE INDEX idx_actuator_proposals_status ON actuator_proposals(status, created_at DESC)
 index idx_artifact_sources_ref: CREATE INDEX idx_artifact_sources_ref ON artifact_sources(source_type, source_ref)
 index idx_artifacts_meeting: CREATE INDEX idx_artifacts_meeting ON artifacts(meeting_id, created_at DESC)
 index idx_artifacts_type: CREATE INDEX idx_artifacts_type ON artifacts(artifact_type, created_at DESC)
@@ -156,6 +159,37 @@ table activity_records: CREATE TABLE activity_records (
     entity_id TEXT,
     project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table actuator_proposal_audit: CREATE TABLE actuator_proposal_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    proposal_id TEXT NOT NULL REFERENCES actuator_proposals(id) ON DELETE CASCADE,
+    actor TEXT NOT NULL DEFAULT 'system',
+    from_status TEXT,
+    to_status TEXT NOT NULL,
+    detail TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table actuator_proposals: CREATE TABLE actuator_proposals (
+    id TEXT PRIMARY KEY,
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    window_id TEXT NOT NULL DEFAULT '',
+    plugin_id TEXT NOT NULL,
+    plugin_version TEXT NOT NULL DEFAULT 'unknown',
+    idempotency_key TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL DEFAULT 'proposed',
+    target TEXT NOT NULL,
+    action TEXT NOT NULL,
+    preview TEXT NOT NULL,
+    payload_json TEXT NOT NULL DEFAULT '{}',
+    reversible INTEGER NOT NULL DEFAULT 0,
+    required_capabilities_json TEXT NOT NULL DEFAULT '[]',
+    decided_by TEXT,
+    result_json TEXT,
+    error TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    decided_at TEXT,
+    executed_at TEXT,
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 )
 table artifact_sources: CREATE TABLE artifact_sources (
