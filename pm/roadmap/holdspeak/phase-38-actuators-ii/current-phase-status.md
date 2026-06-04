@@ -1,9 +1,19 @@
 # Phase 38 — Actuators II
 
-**Status:** not-started (scaffolded 2026-06-04, immediately after Phase 37 — Actuators
-closed + merged via PR #14). 0/6 stories.
+**Status:** in-progress (1/6 stories — HS-38-01 done). Scaffolded 2026-06-04, immediately
+after Phase 37 — Actuators closed + merged via PR #14.
 
-**Last updated:** 2026-06-04 (phase **scaffolded** — plan + 6 stories. Direction chosen by
+**Last updated:** 2026-06-04 (**HS-38-01 done** — the gated write-connector framework +
+permission manifest. `holdspeak/plugins/gated_connector.py`: `WriteConnectorManifest`
+declares one egress permission (`shell:exec`/`network:outbound`) + a concrete allow-list
+(argv prefixes / hosts); `build_gated_connector(plan, interpret, …)` enforces
+**plan → allow-check → gate → interpret** per proposal — a refused op raises
+`ConnectorOperationRefused` *before* any egress, an admitted op routes through the existing
+`PermissionGate`. The `ActuatorExecutor` is unchanged; nothing is registered, so routing
+stays byte-identical and the default suite makes no real outbound call. 12 new tests; full
+suite **2092 passed, 15 skipped**; ruff + F821 clean. ◀ next: HS-38-02 GitHub connector.)
+
+**Earlier 2026-06-04** (phase **scaffolded** — plan + 6 stories. Direction chosen by
 the user: build on the proven-safe Phase-37 actuator machinery to make it actually useful —
 **real write-capable connectors** behind a per-connector permission manifest, and **live
 in-meeting proposals**. Grounded in the existing seams: the executor takes an injected
@@ -112,7 +122,7 @@ Every new connector adds a *narrower* gate (its permission manifest), never a lo
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-38-01 | Gated write-connector framework + permission manifest | not-started | [story-01-write-connector-framework.md](./story-01-write-connector-framework.md) | — |
+| HS-38-01 | Gated write-connector framework + permission manifest | done | [story-01-write-connector-framework.md](./story-01-write-connector-framework.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-38-02 | GitHub write connector (`gh issue create`) | not-started | [story-02-github-connector.md](./story-02-github-connector.md) | — |
 | HS-38-03 | Webhook write connector (HTTP POST, allow-listed host) | not-started | [story-03-webhook-connector.md](./story-03-webhook-connector.md) | — |
 | HS-38-04 | Live in-meeting proposals + broadcast | not-started | [story-04-live-proposals.md](./story-04-live-proposals.md) | — |
@@ -120,6 +130,15 @@ Every new connector adds a *narrower* gate (its permission manifest), never a lo
 | HS-38-06 | Closeout + final-summary | not-started | [story-06-closeout.md](./story-06-closeout.md) | — |
 
 ## Where we are
+
+**HS-38-01 done 2026-06-04** — the safety seam is in. `holdspeak/plugins/gated_connector.py`
+ships `WriteConnectorManifest` (one egress permission + a concrete argv-prefix / host
+allow-list; an empty allow-list admits nothing), `GatedOperation` (a planned
+subprocess/outbound side effect), `ConnectorOperationRefused`, and `build_gated_connector`
+(**plan → allow-check → gate → interpret**; the allow-check refuses before the
+`PermissionGate` is touched). It reuses the Phase-13 `PermissionGate` (no second egress
+primitive) and the Phase-37 `ActuatorExecutor` is unchanged. **Next: HS-38-02** (the GitHub
+`gh issue create` connector — the `shell:exec` reference on this framework).
 
 **Scaffolded 2026-06-04**, right after Phase 37 closed (merged via PR #14). The recon is
 done — the seams all exist:
@@ -144,9 +163,9 @@ done — the seams all exist:
 
 ## Pickup order
 
-1. **HS-38-01** — gated write-connector framework + permission manifest. The safety seam
-   every connector depends on. **◀ start here**
-2. HS-38-02 — GitHub write connector (`shell:exec` reference).
+1. ~~**HS-38-01** — gated write-connector framework + permission manifest. The safety seam
+   every connector depends on.~~ **done 2026-06-04.**
+2. HS-38-02 — GitHub write connector (`shell:exec` reference). **◀ next**
 3. HS-38-03 — webhook write connector (`network:outbound` reference).
 4. HS-38-04 — live in-meeting proposals + broadcast.
 5. HS-38-05 — Actuators II documentation.

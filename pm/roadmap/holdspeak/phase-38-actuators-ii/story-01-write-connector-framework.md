@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 38
-- **Status:** not-started
+- **Status:** done
 - **Depends on:** none (builds on the Phase-37 executor + the connector runtime)
 - **Unblocks:** HS-38-02, HS-38-03, HS-38-04
 - **Owner:** unassigned
@@ -37,14 +37,14 @@ existing `PermissionGate`, so a connector can never egress beyond what it declar
 
 ## Acceptance criteria
 
-- [ ] A connector declares a permission manifest (permission token + a concrete op
+- [x] A connector declares a permission manifest (permission token + a concrete op
       allow-list); `build_gated_connector` produces an executor-shaped `connector`.
-- [ ] An operation the manifest **does not** admit is refused **before** any egress (the
+- [x] An operation the manifest **does not** admit is refused **before** any egress (the
       `PermissionGate` op is never reached); asserted with a fake gate/runner spy.
-- [ ] A permitted op routes through `PermissionGate` (`run_subprocess` /
+- [x] A permitted op routes through `PermissionGate` (`run_subprocess` /
       `open_outbound_socket`) and returns a result dict; the executor records `executed`.
-- [ ] The default suite makes **no real outbound call** (fake gate/runner injected).
-- [ ] Suite green; new module ruff + F821 clean.
+- [x] The default suite makes **no real outbound call** (fake gate/runner injected).
+- [x] Suite green; new module ruff + F821 clean.
 
 ## Test plan
 
