@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 38
-- **Status:** not-started
+- **Status:** done
 - **Depends on:** none (uses the Phase-37 approval API; independent of the connectors)
 - **Unblocks:** HS-38-05
 - **Owner:** unassigned
@@ -35,13 +35,13 @@ gate (actuators off by default; nothing runs without approval).
 
 ## Acceptance criteria
 
-- [ ] A new actuator proposal during a live meeting **broadcasts** (`actuator_proposed`)
+- [x] A new actuator proposal during a live meeting **broadcasts** (`actuator_proposed`)
       and the live dashboard shows it in a pending-actions panel.
-- [ ] Approve / Reject from the live panel hits the decision endpoint, flips state + writes
+- [x] Approve / Reject from the live panel hits the decision endpoint, flips state + writes
       an audit entry, and performs **no** side effect on its own.
-- [ ] Default off; the broadcast carries no egress-capable payload; the saved-meeting
+- [x] Default off; the broadcast carries no egress-capable payload; the saved-meeting
       surface is unchanged.
-- [ ] `cd web && npm run build` succeeds (bundle gitignored, not committed); suite green.
+- [x] `cd web && npm run build` succeeds (bundle gitignored, not committed); suite green.
 
 ## Test plan
 

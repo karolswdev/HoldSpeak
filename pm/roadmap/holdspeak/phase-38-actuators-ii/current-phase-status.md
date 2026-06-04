@@ -1,9 +1,20 @@
 # Phase 38 — Actuators II
 
-**Status:** in-progress (3/6 stories — HS-38-01, HS-38-02, HS-38-03 done). Scaffolded
-2026-06-04, immediately after Phase 37 — Actuators closed + merged via PR #14.
+**Status:** in-progress (4/6 stories — HS-38-01..04 done). Scaffolded 2026-06-04,
+immediately after Phase 37 — Actuators closed + merged via PR #14.
 
-**Last updated:** 2026-06-04 (**HS-38-03 done** — the webhook write connector, the
+**Last updated:** 2026-06-04 (**HS-38-04 done** — live in-meeting proposals + broadcast. An
+actuator proposal is surfaced live: `process_meeting_state` gained an `on_proposal` callback
+(best-effort), `MeetingSession._emit_actuator_proposal` emits a **read-only** `actuator_proposed`
+broadcast (id + lifecycle + preview only — never the egress `payload`), and `WebRuntime`
+already forwards it. The dashboard (`index.astro` + `dashboard-app.js`) shows a Signal
+"Pending actions" panel with Approve/Reject reusing the Phase-37 decision endpoint — no new
+execution path; nothing runs without approval. `record_actuator_proposal` now returns the
+record. Default off + byte-identical (no actuator chained ⇒ no broadcast). 6 new backend
+tests; bundle rebuilt (gitignored); full suite **2123 passed, 15 skipped**; ruff clean. ◀
+next: HS-38-05 documentation.)
+
+**Earlier 2026-06-04** (**HS-38-03 done** — the webhook write connector, the
 `network:outbound` reference. `holdspeak/plugins/builtin/webhook_post_actuator.py`:
 `WebhookPostActuator` proposes an HTTP POST `{url, body}` (url from `context["webhook_url"]`),
 and `build_webhook_connector(allowed_hosts=…, client=…)` POSTs **only to an allow-listed
@@ -149,11 +160,21 @@ Every new connector adds a *narrower* gate (its permission manifest), never a lo
 | HS-38-01 | Gated write-connector framework + permission manifest | done | [story-01-write-connector-framework.md](./story-01-write-connector-framework.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-38-02 | GitHub write connector (`gh issue create`) | done | [story-02-github-connector.md](./story-02-github-connector.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-38-03 | Webhook write connector (HTTP POST, allow-listed host) | done | [story-03-webhook-connector.md](./story-03-webhook-connector.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-38-04 | Live in-meeting proposals + broadcast | not-started | [story-04-live-proposals.md](./story-04-live-proposals.md) | — |
+| HS-38-04 | Live in-meeting proposals + broadcast | done | [story-04-live-proposals.md](./story-04-live-proposals.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-38-05 | Actuators II documentation | not-started | [story-05-documentation.md](./story-05-documentation.md) | — |
 | HS-38-06 | Closeout + final-summary | not-started | [story-06-closeout.md](./story-06-closeout.md) | — |
 
 ## Where we are
+
+**HS-38-04 done 2026-06-04** — live proposals are in. `process_meeting_state` gained an
+optional `on_proposal` callback (best-effort; default path byte-identical);
+`MeetingSession._emit_actuator_proposal` emits a **read-only** `actuator_proposed` broadcast
+(id + lifecycle + preview — never the egress payload), auto-forwarded by `WebRuntime`. The
+dashboard shows a Signal "Pending actions" panel (`index.astro` + `dashboard-app.js`) with
+Approve/Reject reusing the Phase-37 decision endpoint — a surface, not a new execution path.
+The connectors (02/03) and the live surface (04) are both done; both default off. **Next:
+HS-38-05** — documentation (the dedicated docs story: write connectors + the permission
+manifest + live proposals).
 
 **HS-38-03 done 2026-06-04** — the `network:outbound` reference connector is in.
 `holdspeak/plugins/builtin/webhook_post_actuator.py` ships `WebhookPostActuator` (proposes an
@@ -209,8 +230,8 @@ done — the seams all exist:
    every connector depends on.~~ **done 2026-06-04.**
 2. ~~HS-38-02 — GitHub write connector (`shell:exec` reference).~~ **done 2026-06-04.**
 3. ~~HS-38-03 — webhook write connector (`network:outbound` reference).~~ **done 2026-06-04.**
-4. HS-38-04 — live in-meeting proposals + broadcast. **◀ next**
-5. HS-38-05 — Actuators II documentation.
+4. ~~HS-38-04 — live in-meeting proposals + broadcast.~~ **done 2026-06-04.**
+5. HS-38-05 — Actuators II documentation. **◀ next**
 6. HS-38-06 — closeout + final-summary.
 
 01 → 02/03 is the connector half (01 is the framework; 02 and 03 are two concrete proofs,
@@ -243,9 +264,11 @@ runners/clients).
 - ~~**Webhook host allow-listing granularity**~~ — **resolved HS-38-03 (2026-06-04):** a
   config allow-list of hosts (`MeetingConfig.webhook_allowed_hosts`, default-empty); a
   proposal's target host must be a member, vetted by the connector manifest before egress.
-- **Where live actuators generate** — reuse finalization-time dispatch vs a live dispatch
-  tick — trigger: HS-38-04 design — default: surface proposals as soon as they're produced
-  by the existing dispatch path; a dedicated live-dispatch cadence is a follow-up if needed.
+- ~~**Where live actuators generate**~~ — **resolved HS-38-04 (2026-06-04):** surface
+  proposals as the existing dispatch produces them (finalization-time MIR pipeline) via the
+  `on_proposal` → `actuator_proposed` broadcast seam; the dashboard is still connected at
+  `stop()`. A dedicated mid-meeting live-dispatch cadence remains a follow-up (reuses the
+  same seam) if finalization timing feels too late.
 - **Whether the GitHub write connector is its own pack vs a host-side connector** — trigger:
   HS-38-02 — default: a host-side gated connector (the executor injects it), mirroring the
   Phase-37 `build_outbox_connector`, not a discovered pack.
