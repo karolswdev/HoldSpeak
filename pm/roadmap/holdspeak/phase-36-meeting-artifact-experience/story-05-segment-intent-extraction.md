@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 36
-- **Status:** not-started
+- **Status:** done (2026-06-04). Evidence: [evidence-story-05.md](./evidence-story-05.md).
 - **Depends on:** HS-36-04 (the messy-meeting e2e is the repro/proof)
 - **Unblocks:** HS-36-06
 - **Owner:** unassigned

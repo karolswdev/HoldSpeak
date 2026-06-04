@@ -483,6 +483,20 @@ class WebRuntime:
             raise RuntimeError(
                 f"Cannot start meeting: audio floor held by {self.voice_session.active_owner!r}"
             )
+        # HS-36-05: build the LLM-assisted per-segment intent probe only when the
+        # config knob is on. Defensive: any failure to construct it (missing optional
+        # deps, unconfigured endpoint) leaves it None and routing falls back to the
+        # lexical path — meeting start must never break on this.
+        segment_probe = None
+        if getattr(self.config.meeting, "intent_segment_probe_enabled", False):
+            try:
+                from .plugins.segment_probe import build_segment_probe
+
+                segment_probe = build_segment_probe()
+            except Exception:
+                log.warning("segment intent probe unavailable; using lexical scoring", exc_info=True)
+                segment_probe = None
+
         try:
             session = MeetingSession(
                 transcriber=self.transcriber,
@@ -511,6 +525,7 @@ class WebRuntime:
                 mir_disabled_plugins=list(
                     getattr(self.config.meeting, "disabled_plugins", []) or []
                 ),
+                mir_segment_probe=segment_probe,
             )
             state = session.start()
             with self.state_lock:

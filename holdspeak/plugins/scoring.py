@@ -1,9 +1,17 @@
 """Typed multi-label scoring + transition helpers built on the existing
-deterministic signal extractor and router primitives. HS-2-03 / spec §9.3."""
+deterministic signal extractor and router primitives. HS-2-03 / spec §9.3.
+
+HS-36-05 adds an optional `probe`: an LLM-assisted per-segment intent probe
+(`segment_probe.SegmentProbe`) whose confidences are merged element-wise (max) with the
+deterministic lexical scores, so a brief/paraphrased intent the keyword scorer misses
+can still clear the threshold. With `probe=None` the result is byte-identical to the
+lexical-only path, so the existing router/dispatch/pipeline tests are unaffected.
+"""
 
 from __future__ import annotations
 
 from collections.abc import Iterable
+from typing import Optional
 
 from .contracts import IntentScore, IntentTransition, IntentWindow
 from .router import (
@@ -12,6 +20,7 @@ from .router import (
     normalize_intent_scores,
     select_active_intents,
 )
+from .segment_probe import SegmentProbe
 from .signals import extract_intent_signals
 
 
@@ -19,10 +28,28 @@ def score_window(
     window: IntentWindow,
     *,
     threshold: float = DEFAULT_INTENT_THRESHOLD,
+    probe: Optional[SegmentProbe] = None,
 ) -> IntentScore:
-    """Multi-label score one rolling window (MIR-F-001, MIR-F-002)."""
+    """Multi-label score one rolling window (MIR-F-001, MIR-F-002).
+
+    When `probe` is supplied, its per-intent confidences are merged (max) over the
+    lexical scores — the probe can only *raise* an intent, never suppress one. A probe
+    that raises or returns nothing leaves the lexical scores intact (graceful fallback).
+    """
     raw = extract_intent_signals(window.transcript, tags=list(window.tags))
     normalized = normalize_intent_scores(raw)
+    if probe is not None:
+        try:
+            probed = probe(window.transcript) or {}
+        except Exception:
+            probed = {}
+        for intent, conf in probed.items():
+            if intent in normalized:
+                try:
+                    bounded = min(1.0, max(0.0, float(conf)))
+                except Exception:
+                    continue
+                normalized[intent] = max(normalized[intent], bounded)
     clamped_threshold = min(1.0, max(0.0, float(threshold)))
     return IntentScore(
         window_id=window.window_id,
@@ -35,9 +62,10 @@ def score_windows(
     windows: Iterable[IntentWindow],
     *,
     threshold: float = DEFAULT_INTENT_THRESHOLD,
+    probe: Optional[SegmentProbe] = None,
 ) -> list[IntentScore]:
     """Score a sequence of windows in document order."""
-    return [score_window(window, threshold=threshold) for window in windows]
+    return [score_window(window, threshold=threshold, probe=probe) for window in windows]
 
 
 def iter_intent_transitions(

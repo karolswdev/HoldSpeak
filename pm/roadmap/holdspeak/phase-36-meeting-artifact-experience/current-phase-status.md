@@ -6,15 +6,18 @@
 > surfaces. Title broadened to "Meeting Intelligence & Experience"; slug kept to avoid
 > link churn.
 
-**Status:** in-progress (opened 2026-06-04). 1/6 stories shipped.
+**Status:** in-progress (opened 2026-06-04). 2/6 stories shipped.
 
-**Last updated:** 2026-06-04 (**HS-36-04 shipped** — the dynamic/messy multi-topic
-spoken-e2e, driving the *real* MIR routing path, verified on `.43`; it **captured the
-weakness live**: the routing activated only `['architecture', 'product']`, silently
-dropping the meeting's incident/risk/comms (7 artifact types, none of incident_timeline
-/ risk_register / runbook_delta / stakeholder_update / decision_announcement).
-`evidence/dynamic_meeting_before.png` is the BEFORE half of the headline. Next: HS-36-05
-fixes it + captures the AFTER. Default suite green 2007/15).
+**Last updated:** 2026-06-04 (**HS-36-05 shipped — the intelligence fix landed and the
+before/after is captured.** A gated, additive **per-segment LLM intent probe**
+(`plugins/segment_probe.py`, merged max into `score_window`) fishes out
+brief/paraphrased intents the lexical scorer drops. On the *same* messy meeting via the
+*same* real routing path: **BEFORE** = `['architecture','product']` / 7 artifact types,
+incident+comms lost; **AFTER** = `['architecture','comms','delivery','incident','product']`
+/ **13** types, with incident_timeline / runbook_delta / stakeholder_update /
+decision_announcement fished out. Default path byte-identical (routing tests unchanged);
+suite 2020/15; both screenshots in `evidence/`. Next: HS-36-01 (UI cards) + HS-36-06
+closeout).
 
 ## Goal
 
@@ -134,7 +137,7 @@ showcases the new presentation.
 | HS-36-02 | Copy-as-Markdown per artifact | not-started | [story-02-copy-as-markdown.md](./story-02-copy-as-markdown.md) | — |
 | HS-36-03 | Per-artifact-type body polish | not-started | [story-03-per-type-body-polish.md](./story-03-per-type-body-polish.md) | — |
 | HS-36-04 | Dynamic, digression-heavy multi-topic spoken-e2e | done | [story-04-dynamic-meeting-e2e.md](./story-04-dynamic-meeting-e2e.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-36-05 | Segment-aware intent extraction (fish out intent per segment) | not-started | [story-05-segment-intent-extraction.md](./story-05-segment-intent-extraction.md) | — |
+| HS-36-05 | Segment-aware intent extraction (fish out intent per segment) | done | [story-05-segment-intent-extraction.md](./story-05-segment-intent-extraction.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-36-06 | Phase closeout + final-summary | not-started | [story-06-closeout.md](./story-06-closeout.md) | — |
 
 ## Where we are
@@ -170,9 +173,13 @@ core.
 3. HS-36-03 — per-type body polish (fills in each artifact body within the new shell).
 4. HS-36-04 — dynamic/messy multi-topic spoken-e2e ✅ **done** (BEFORE captured; the
    routing drops incident/risk/comms).
-5. HS-36-05 — segment-aware intent extraction (the routing fix; **◀ next** — fish out
-   the dropped intents per segment; capture the AFTER).
+5. HS-36-05 — segment-aware intent extraction ✅ **done** (probe fishes the dropped
+   intents out; AFTER captured — 7 → 13 artifact types).
 6. HS-36-06 — closeout + final-summary.
+
+Intelligence track (04 → 05) is **complete**; the experience track (01 → 02 → 03)
+remains. **◀ next: HS-36-01** (elevated artifact cards + overflow fix) — it'll also make
+the AFTER render in the new cards rather than the current flat ones.
 
 The two tracks are parallel: **experience** (01 → 02 → 03) and **intelligence**
 (04 → 05). Either can go first; the closeout (06) needs both. HS-36-01 leads since it's

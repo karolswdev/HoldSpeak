@@ -20,6 +20,7 @@ from .dispatch import dispatch_window
 from .host import PluginHost
 from .persistence import record_intent_window, record_plugin_run
 from .scoring import iter_intent_transitions, score_window
+from .segment_probe import SegmentProbe
 from .synthesis import synthesize_and_persist
 
 # Note: `build_intent_windows` is imported lazily inside `process_meeting_state`
@@ -80,6 +81,7 @@ def process_meeting_state(
     synthesize: bool = False,
     max_artifacts: int = 200,
     disabled_plugins: Optional[list[str]] = None,
+    segment_probe: Optional[SegmentProbe] = None,
 ) -> MIRPipelineResult:
     """Run the MIR pipeline over a meeting state, in process, returning typed results.
 
@@ -119,11 +121,13 @@ def process_meeting_state(
     if not windows:
         return MIRPipelineResult()
 
-    # 2. Scoring.
+    # 2. Scoring. When a `segment_probe` is supplied (HS-36-05), each window's lexical
+    #    scores are augmented by an LLM probe so brief/paraphrased intents aren't
+    #    diluted away; with no probe this is byte-identical to the lexical path.
     scores: list[IntentScore] = []
     for window in windows:
         try:
-            scores.append(score_window(window, threshold=threshold))
+            scores.append(score_window(window, threshold=threshold, probe=segment_probe))
         except Exception as exc:
             errors.append(f"scoring[{window.window_id}]: {type(exc).__name__}: {exc}")
 

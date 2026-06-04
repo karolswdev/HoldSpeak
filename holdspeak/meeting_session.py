@@ -323,6 +323,7 @@ class MeetingSession:
         mir_hysteresis: float = 0.05,
         mir_synthesize: bool = False,
         mir_disabled_plugins: Optional[list[str]] = None,
+        mir_segment_probe: Optional[Any] = None,
     ) -> None:
         """Initialize meeting session.
 
@@ -396,6 +397,10 @@ class MeetingSession:
         self._mir_synthesize = bool(mir_synthesize)
         # HS-35-03: per-project plugin enable/disable, threaded into dispatch.
         self._mir_disabled_plugins = list(mir_disabled_plugins or [])
+        # HS-36-05: optional LLM-assisted per-segment intent probe. When supplied,
+        # each routing window's lexical scores are augmented so brief/paraphrased
+        # intents aren't diluted away. None = lexical-only (unchanged behavior).
+        self._mir_segment_probe = mir_segment_probe
 
         self._state: Optional[MeetingState] = None
         self._recorder: Optional[MeetingRecorder] = None
@@ -852,6 +857,7 @@ class MeetingSession:
                     db=self._mir_db,
                     synthesize=self._mir_synthesize,
                     disabled_plugins=self._mir_disabled_plugins,
+                    segment_probe=self._mir_segment_probe,
                 )
                 log.info(
                     "MIR routing finalized: "
@@ -1247,7 +1253,6 @@ class MeetingSession:
         device_chunks: Optional[dict[str, list[AudioChunk]]] = None,
     ) -> None:
         """Transcribe audio chunks and add to segments."""
-        current_time = time.time()
         new_segments: list[TranscriptSegment] = []
         device_chunks = device_chunks or {}
 

@@ -720,3 +720,149 @@ def test_spoken_dynamic_meeting_end_to_end(tmp_path):
     finally:
         server.stop()
         reset_database()
+
+
+# HS-36-05: the AFTER half of the headline. Same messy meeting, same real routing path,
+# but with the **segment-aware intent probe** enabled (an LLM reads each window and
+# flags the intents present, by meaning not keywords). The brief/paraphrased incident
+# and comms that the lexical scorer diluted away in HS-36-04 should now be fished out,
+# so their chains fire and their artifact types appear. Captures
+# `dynamic_meeting_after.png` for the before/after comparison.
+_INTENT_GATED_TYPES = {
+    "incident_timeline",
+    "risk_register",
+    "runbook_delta",
+    "stakeholder_update",
+    "decision_announcement",
+}
+
+
+def test_spoken_dynamic_meeting_after_probe_end_to_end(tmp_path):
+    """HS-36-05 — the AFTER: the same messy meeting with the segment probe enabled.
+
+    Asserts the probe *fishes out* at least one intent the lexical-only BEFORE
+    (HS-36-04) dropped — i.e. ≥1 of the incident/comms artifact types appears.
+    """
+    _skip_unless(shutil.which("say") is not None, "macOS `say` not available")
+    wavfile = pytest.importorskip("scipy.io.wavfile", reason="scipy required")
+    np = pytest.importorskip("numpy")
+    try:
+        from playwright.sync_api import sync_playwright
+    except Exception:
+        pytest.skip("playwright not installed (uv pip install playwright && playwright install chromium)")
+    reachable, detail = _endpoint_reachable()
+    _skip_unless(reachable, detail)
+
+    from holdspeak.db import get_database, reset_database
+    from holdspeak.meeting_session import MeetingState, TranscriptSegment
+    from holdspeak.plugins.builtin import register_builtin_plugins
+    from holdspeak.plugins.host import PluginHost
+    from holdspeak.plugins.pipeline import process_meeting_state
+    from holdspeak.plugins.router import select_active_intents
+    from holdspeak.plugins.segment_probe import build_segment_probe
+    from holdspeak.transcribe import Transcriber
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    # --- 1. say -> wav -> 2. Whisper -> timed segments (same script as HS-36-04) --
+    transcriber = Transcriber(model_name="base")
+    segments: list[TranscriptSegment] = []
+    cursor = 0.0
+    for idx, (label, voice, line) in enumerate(DYNAMIC_SCRIPT):
+        wav_path = tmp_path / f"dynafter_line_{idx}.wav"
+        _say_to_wav(line, voice, wav_path)
+        sr, audio = wavfile.read(wav_path)
+        if audio.dtype == np.int16:
+            audio = audio.astype(np.float32) / 32768.0
+        duration = len(audio) / sr
+        text = transcriber.transcribe(audio.astype("float32")).strip()
+        segments.append(
+            TranscriptSegment(text=text, speaker=label, start_time=cursor, end_time=cursor + duration)
+        )
+        cursor += duration
+    transcript = " ".join(seg.text for seg in segments).strip()
+    assert len(transcript) > 200, f"transcript too short: {transcript!r}"
+
+    # --- 3. REAL routing WITH the segment probe (the fix) -------------------------
+    host = PluginHost(default_timeout_seconds=30.0, enabled_capabilities={"llm"})
+    register_builtin_plugins(host)
+    meeting_id = "e2e-spoken-dynamic-after"
+    state = MeetingState(
+        id=meeting_id,
+        started_at=datetime.now(),
+        title="Dynamic Meeting (AFTER segment probe) — intents fished out per segment",
+        segments=segments,
+    )
+    reset_database()
+    db = get_database(tmp_path / "e2e_dynamic_after.db")
+    db.meetings.save_meeting(state)
+
+    segment_probe = build_segment_probe()  # real .43 intel
+    result = process_meeting_state(
+        state,
+        host,
+        profile="balanced",
+        db=db,
+        synthesize=True,
+        defer_heavy=False,
+        timeout_seconds=30.0,
+        segment_probe=segment_probe,
+    )
+    assert result.windows, f"no intent windows built; errors={result.errors}"
+    active_intents = sorted(
+        {
+            intent
+            for s in result.scores
+            for intent in select_active_intents(s.scores, threshold=s.threshold)
+        }
+    )
+    artifact_types = sorted({a.artifact_type for a in result.artifacts})
+    fished_out = sorted(set(artifact_types) & _INTENT_GATED_TYPES)
+    print(f"\n[e2e:dynamic:after] active_intents={active_intents}")
+    print(f"[e2e:dynamic:after] AFTER artifact_types={artifact_types} (count={len(artifact_types)})")
+    print(f"[e2e:dynamic:after] intent-gated types fished out = {fished_out}")
+    if result.errors:
+        print(f"[e2e:dynamic:after] non-fatal errors: {result.errors}")
+
+    # The point of the phase: the probe surfaces at least one intent-gated artifact
+    # type (incident / risk / comms) that the lexical-only BEFORE dropped.
+    assert fished_out, (
+        "segment probe did not surface any incident/comms artifact the lexical path "
+        f"dropped; active_intents={active_intents}, types={artifact_types}"
+    )
+
+    # --- 4. serve + 5. Playwright AFTER screenshot --------------------------------
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(
+            on_bookmark=lambda *a, **k: {},
+            on_stop=lambda *a, **k: {},
+            get_state=lambda: {"id": meeting_id, "meeting_active": False},
+        ),
+        host="127.0.0.1",
+        port=_free_port(),
+    )
+    url = server.start()
+    try:
+        os.makedirs(DYNAMIC_EVIDENCE_DIR, exist_ok=True)
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={"width": 1280, "height": 1500})
+            page.goto(f"{url}/history", wait_until="networkidle")
+            page.locator("button.meeting-card").first.click()
+            page.wait_for_selector(".modal", timeout=15000)
+            page.wait_for_selector(".transcript-list .segment", timeout=15000)
+            page.wait_for_timeout(700)
+            rendered_cards = page.locator(".detail-side .segment").count()
+            print(f"[e2e:dynamic:after] rendered artifact cards (AFTER) = {rendered_cards}")
+            content_height = page.evaluate(
+                "() => { const b = document.querySelector('.modal-body');"
+                " return b ? Math.ceil(b.scrollHeight) : 1400; }"
+            )
+            page.set_viewport_size({"width": 1280, "height": min(int(content_height) + 220, 8000)})
+            page.wait_for_timeout(400)
+            shot = os.path.join(DYNAMIC_EVIDENCE_DIR, "dynamic_meeting_after.png")
+            page.screenshot(path=shot)
+            browser.close()
+        print(f"[e2e:dynamic:after] AFTER screenshot saved: {shot}")
+    finally:
+        server.stop()
+        reset_database()
