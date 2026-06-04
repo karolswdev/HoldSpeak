@@ -943,6 +943,244 @@ function historyApp() {
       );
     },
 
+    // HS-36-01: per-artifact-type presentation helpers for the elevated card —
+    // a glyph + a Signal accent group (drives the card's colored edge/chip) +
+    // a human label. Unknown types fall back to a neutral default.
+    artifactIcon(artifact) {
+      const map = {
+        incident_timeline: "🔥",
+        risk_register: "⚠️",
+        runbook_delta: "🧯",
+        decision_announcement: "📢",
+        stakeholder_update: "📣",
+        decisions: "🎯",
+        action_items: "✅",
+        requirements: "🧩",
+        adr: "🏛️",
+        milestone_plan: "🗓️",
+        dependency_map: "🔗",
+        scope_review: "🔎",
+        customer_signals: "💬",
+        diagram: "🗺️",
+      };
+      return map[artifact?.artifact_type] || "◆";
+    },
+    artifactAccent(artifact) {
+      const map = {
+        incident_timeline: "danger",
+        risk_register: "warn",
+        runbook_delta: "warn",
+        decision_announcement: "accent",
+        stakeholder_update: "accent",
+        decisions: "accent",
+        action_items: "ok",
+        requirements: "info",
+        adr: "info",
+        milestone_plan: "info",
+        dependency_map: "info",
+        scope_review: "info",
+        customer_signals: "ok",
+        diagram: "info",
+      };
+      return map[artifact?.artifact_type] || "default";
+    },
+    artifactTypeLabel(artifact) {
+      return String(artifact?.artifact_type || "").replace(/_/g, " ");
+    },
+
+    // HS-36-02: serialize one artifact's structured_json to clean Markdown,
+    // driven by the same per-type accessors the card renders from (so a
+    // collapsed card still copies). Pure: artifact -> string. Tabular types
+    // (risk register) become Markdown tables with escaped cells; timelines
+    // become ordered lists; sectioned types get headings.
+    artifactMarkdown(artifact) {
+      // collapse newlines + escape table-breaking pipes for inline text
+      const inline = (s) =>
+        String(s ?? "").replace(/\r?\n+/g, " ").trim();
+      const cell = (s) => {
+        const v = inline(s).replace(/\|/g, "\\|");
+        return v.length ? v : "—";
+      };
+      const md = [];
+      const title = inline(artifact?.title) || this.artifactTypeLabel(artifact) || "Artifact";
+      md.push(`## ${title}`, "");
+      const typeLabel = this.artifactTypeLabel(artifact);
+      if (typeLabel) md.push(`**Type:** ${typeLabel}`, "");
+
+      if (this.isDiagram(artifact)) {
+        md.push("```mermaid", String(artifact.structured_json.mermaid || "").trim(), "```", "");
+      }
+
+      const ais = this.actionItemsFor(artifact);
+      if (ais.length) {
+        for (const ai of ais) {
+          const meta = [`owner: ${inline(ai.owner) || "—"}`, `due: ${inline(ai.due) || "—"}`];
+          const gap = this.actionGapLabel(ai.gap);
+          if (gap) meta.push(gap);
+          md.push(`- ${inline(ai.task)} _(${meta.join(", ")})_`);
+        }
+        md.push("");
+      }
+
+      if (this.hasDecisions(artifact)) {
+        const ds = this.decisionsFor(artifact);
+        if (ds.length) {
+          md.push("### Decisions");
+          for (const d of ds) {
+            md.push(`- ${inline(d.decision)}${d.rationale ? ` — ${inline(d.rationale)}` : ""}`);
+          }
+          md.push("");
+        }
+        const qs = this.openQuestionsFor(artifact);
+        if (qs.length) {
+          md.push("### Open questions");
+          for (const q of qs) md.push(`- ${inline(q)}`);
+          md.push("");
+        }
+      }
+
+      const reqs = this.requirementsFor(artifact);
+      if (reqs.length) {
+        for (const r of reqs) {
+          md.push(`- **${this.requirementTypeLabel(r.type)}** — ${inline(r.text)}`);
+        }
+        md.push("");
+      }
+
+      const adrs = this.adrsFor(artifact);
+      if (adrs.length) {
+        for (const adr of adrs) {
+          md.push(`### ${inline(adr.title)}${adr.status ? ` _(${inline(adr.status)})_` : ""}`);
+          if (adr.context) md.push(`- **Context:** ${inline(adr.context)}`);
+          if (adr.decision) md.push(`- **Decision:** ${inline(adr.decision)}`);
+          if (adr.consequences) md.push(`- **Consequences:** ${inline(adr.consequences)}`);
+          md.push("");
+        }
+      }
+
+      const milestones = this.milestonesFor(artifact);
+      if (milestones.length) {
+        for (const m of milestones) {
+          md.push(`### ${inline(m.name)}${m.target ? ` — ${inline(m.target)}` : ""}`);
+          if (Array.isArray(m.deliverables) && m.deliverables.length) {
+            md.push(`- **Deliverables:** ${m.deliverables.map(inline).join(", ")}`);
+          }
+          if (Array.isArray(m.dependencies) && m.dependencies.length) {
+            md.push(`- **Dependencies:** ${m.dependencies.map(inline).join(", ")}`);
+          }
+          md.push("");
+        }
+      }
+
+      const risks = this.risksFor(artifact);
+      if (risks.length) {
+        md.push("| Risk | Impact | Likelihood | Mitigation | Owner |");
+        md.push("| --- | --- | --- | --- | --- |");
+        for (const r of risks) {
+          md.push(
+            `| ${cell(r.risk)} | ${cell(r.impact)} | ${cell(r.likelihood)} | ${cell(r.mitigation)} | ${cell(r.owner)} |`,
+          );
+        }
+        md.push("");
+      }
+
+      const deps = this.dependenciesFor(artifact);
+      if (deps.length) {
+        for (const d of deps) {
+          md.push(`- ${inline(d.from)} → ${inline(d.to)}${d.note ? ` — ${inline(d.note)}` : ""}`);
+        }
+        md.push("");
+      }
+
+      const findings = this.scopeFindingsFor(artifact);
+      if (findings.length) {
+        for (const f of findings) {
+          md.push(
+            `- **${this.scopeVerdictLabel(f.verdict)}** — ${inline(f.item)}${f.rationale ? ` — ${inline(f.rationale)}` : ""}`,
+          );
+        }
+        md.push("");
+      }
+
+      const signals = this.customerSignalsFor(artifact);
+      if (signals.length) {
+        for (const s of signals) {
+          const kind = inline(s.type).replace(/_/g, " ");
+          md.push(
+            `- ${kind ? `**${kind}** — ` : ""}${inline(s.signal)}${s.quote ? ` — “${inline(s.quote)}”` : ""}`,
+          );
+        }
+        md.push("");
+      }
+
+      const events = this.incidentEventsFor(artifact);
+      if (events.length) {
+        events.forEach((e, i) => {
+          md.push(`${i + 1}. ${e.time ? `**${inline(e.time)}** — ` : ""}${inline(e.event)}`);
+        });
+        md.push("");
+      }
+
+      const changes = this.runbookChangesFor(artifact);
+      if (changes.length) {
+        for (const c of changes) {
+          md.push(
+            `- **${inline(c.type)}** — ${inline(c.change)}${c.detail ? ` — ${inline(c.detail)}` : ""}`,
+          );
+        }
+        md.push("");
+      }
+
+      const update = this.stakeholderUpdateFor(artifact);
+      if (update) {
+        if (update.headline) md.push(`**${inline(update.headline)}**`, "");
+        for (const sec of this.stakeholderSections(artifact)) {
+          md.push(`### ${sec.label}`);
+          for (const it of sec.items) md.push(`- ${inline(it)}`);
+          md.push("");
+        }
+      }
+
+      const anns = this.announcementsFor(artifact);
+      if (anns.length) {
+        for (const a of anns) {
+          md.push(`### ${inline(a.title)}${a.audience ? ` _(${inline(a.audience)})_` : ""}`);
+          if (a.message) md.push(inline(a.message));
+          md.push("");
+        }
+      }
+
+      // Fallback: no structured renderer matched — use the raw body markdown.
+      if (!this.hasStructuredRender(artifact) && artifact?.body_markdown) {
+        md.push(String(artifact.body_markdown).trim(), "");
+      }
+
+      return md.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
+    },
+
+    // HS-36-02: concatenate every artifact in the open meeting under a single
+    // meeting heading, for the "Copy all" affordance.
+    allArtifactsMarkdown() {
+      const title = this.selectedMeeting?.title || "Meeting";
+      const parts = [`# ${title} — Artifacts`, ""];
+      for (const a of this.selectedMeetingArtifacts || []) {
+        parts.push(this.artifactMarkdown(a), "");
+      }
+      return parts.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
+    },
+
+    // HS-36-02: write text to the clipboard, mirroring CommandPreview's
+    // pattern (async writeText + graceful failure). Returns true on success,
+    // false when the clipboard is blocked so the caller can hint "Press ⌘C".
+    async copyMarkdown(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+
     // HS-16-04: render a diagram artifact's Mermaid (from structured_json) as
     // inline SVG. mermaid.js is loaded lazily via window.__loadMermaid (a code
     // -split chunk wired in history.astro), so non-diagram views never pay the

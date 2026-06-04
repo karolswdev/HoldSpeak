@@ -47,29 +47,59 @@ with the live status docs, the status docs win.
 
 ## 3. Pick up here
 
-**▶ Phase 36 — Actuators is the next phase to OPEN (not yet scaffolded).** Phase 35
-— Plugin Frontier is **CLOSED ✅ (5/5)** on local branch
-`phase-35/hs-35-01-plugin-authoring-guide` (5 story commits) — **open a PR to `main`**.
-The plugin system is now externalizable end-to-end: public `docs/PLUGIN_AUTHORING.md`,
-a plugin-pack manifest + discovery loader (`plugin_sdk.py` / `plugin_pack_loader.py`,
-first-party + `~/.holdspeak/plugin_packs/`), per-project enable/disable (a `skipped`
-dispatch gate; `router.py` untouched), and a second spoken-e2e (incident + comms,
-verified on `.43`). The 14 built-ins are behavior-identical. Full record:
-`phase-35-plugin-frontier/final-summary.md`.
+**▶ Phase 36 — Meeting Intelligence & Experience: CLOSED ✅ (6/6), on local branch
+`phase-36/hs-36-01-artifact-card-shell`** — **open a PR to `main`** (CI green → merge,
+per the merge-via-PR cadence). Full record:
+`phase-36-meeting-artifact-experience/final-summary.md`. Both tracks landed:
 
-**Phase 36 — Actuators** is the teed-up successor: the host's `actuator` kind stays
-**blocked** today; this phase built its groundwork (the authoring + pack + manifest
-contract). Phase 36 adds preview → human approval → external side effect (RFC open
-question #5; intersects the Phase-25 egress posture). Scaffold a phase folder + stories
-when starting.
+- **Experience (HS-36-01→03):** Signal **elevated artifact cards** (type-colored accent
+  edge + header + collapse + overflow-safe body; the risk-table overflow fixed via
+  `.table-scroll`), **copy-as-Markdown** per artifact + "Copy all" (pure per-type
+  serializers in `history-app.js`, reusing the `CommandPreview` clipboard pattern), and a
+  **per-type body polish** pass (the bodies referenced non-existent `--color-*` tokens →
+  off-palette fallbacks; all migrated to real Signal tokens; incident **timeline rail**,
+  typed badges, sub-cards, markers). UI in `web/src/pages/history.astro` +
+  `web/src/scripts/history-app.js`; `holdspeak/static/_built/` is **gitignored** — commit
+  `web/src` only, never `_built`.
+- **Intelligence (HS-36-04→05):** the routing weakness (a brief intent diluted below the
+  0.6 threshold and silently lost) is fixed by an additive, gated **segment probe**
+  (`plugins/segment_probe.py`, merged element-wise `max` into `scoring.score_window`,
+  off by default via `intent_segment_probe_enabled`; the lexical scorer is the
+  deterministic fallback). Default path (`segment_probe=None`) is byte-identical → the
+  routing tests are unchanged.
 
-> **▶ Carried follow-up (foundation-hardening, surfaced HS-35-04, NOT fixed):**
-> `Config.load()` parses each sub-config as `MeetingConfig(**data)` inside a broad
-> `except Exception: return cls()`, so a single unknown/legacy key (found live: the
-> HS-32-06-retired `meeting.web_enabled`) makes the **whole** config silently fall back
-> to defaults — a configured `.43` `intel_cloud_base_url` is ignored on every load with
-> no error. Recommend filtering unknown keys per sub-config (or log-and-drop) rather
-> than discarding everything. Not scheduled.
+**Headline deliverable (delivered):** the **before/after** of the same messy meeting,
+re-captured in the new cards on real `.43` — **7 → 13 artifact types** (incident+comms
+fished out per segment): `phase-36-.../evidence/dynamic_meeting_before.png` vs `_after.png`.
+**The routing-ripple + selector-lockstep rules still apply** to future plugin work: the
+spoken-e2e artifact selectors (`.risk-table tbody tr`, `.incident-timeline li`, …) AND
+`test_intent_router` / `test_intent_dispatch` / `test_multi_intent_routing` move in
+lockstep — don't silence.
+
+**▶ Phase 37 — Actuators is the teed-up successor** (renumbered from 36 when the UX phase
+took the 36 slot): the host's `actuator` kind stays **blocked** today; Phase 35 built its
+groundwork (authoring guide + pack manifest + discovery loader; `plugin_sdk.validate_manifest`
+rejects `actuator` as deferred). Phase 37 adds preview → human approval → external side
+effect (RFC open question #5; intersects the Phase-25 egress posture). Scaffold a
+`phase-37-actuators/` folder + stories when starting.
+
+**Phase 35 — Plugin Frontier: CLOSED ✅ (5/5), merged via PR #11.** The plugin system
+is externalizable end-to-end: public `docs/PLUGIN_AUTHORING.md`, a plugin-pack manifest
++ discovery loader (`plugin_sdk.py` / `plugin_pack_loader.py`, first-party +
+`~/.holdspeak/plugin_packs/`), per-project enable/disable (a `skipped` dispatch gate;
+`router.py` untouched), and a second spoken-e2e (incident + comms, verified on `.43`).
+Full record: `phase-35-plugin-frontier/final-summary.md`.
+
+**Phase 37 — Actuators** is the teed-up successor (renumbered from 36 when the artifact
+UX phase took the 36 slot): the host's `actuator` kind stays **blocked** today; Phase 35
+built its groundwork (the authoring + pack + manifest contract). Phase 37 adds preview →
+human approval → external side effect (RFC open question #5; intersects the Phase-25
+egress posture). Scaffold a phase folder + stories when starting.
+
+> **▶ Config hardening — DONE (merged PR #12):** `Config.load()` now filters unknown/
+> legacy keys per sub-config (the HS-32-06-retired `meeting.web_enabled` no longer nukes
+> the whole config) and logs the last-resort fallback instead of swallowing it. The
+> earlier "silently discards the whole config" hazard is resolved.
 
 > **▶ Routing ripple (HANDOVER §5):** adding/suppressing a plugin in a chain touches
 > `tests/unit/test_intent_dispatch.py` (chain constants + window counts) +

@@ -128,6 +128,14 @@ class MeetingConfig:
     # failed) while the *built* chain is unchanged. Empty (default) = today's
     # behavior: every chain-selected plugin runs.
     disabled_plugins: list[str] = field(default_factory=list)
+    # HS-36-05: LLM-assisted per-segment intent probe. When on, each routing window's
+    # lexical intent scores are augmented (max) by an LLM probe of the window text, so
+    # brief/paraphrased intents (e.g. an incident described as "it fell over") aren't
+    # diluted below threshold and silently dropped. Off by default (opt-in, like the
+    # rest of MIR); sends the window transcript to the configured intel endpoint, so it
+    # honors the same provider/egress posture as the plugins. Falls back to lexical
+    # scoring on any probe failure.
+    intent_segment_probe_enabled: bool = False
 
     # Speaker diarization
     diarization_enabled: bool = False  # Identify multiple speakers in system audio
