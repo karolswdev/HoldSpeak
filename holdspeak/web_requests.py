@@ -28,6 +28,13 @@ class _ActionItemReviewRequest(BaseModel):
     review_state: str  # "pending" or "accepted"
 
 
+class _ProposalDecisionRequest(BaseModel):
+    # HS-37-03: a human approve/reject of an actuator proposal. Approving
+    # only flips DB state — execution is HS-37-04. `decided_by` records the actor.
+    decision: str  # "approved" or "rejected"
+    decided_by: Optional[str] = None
+
+
 class _ActionItemEditRequest(BaseModel):
     task: str
     owner: Optional[str] = None

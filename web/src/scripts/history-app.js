@@ -22,6 +22,7 @@ function historyApp() {
     speakerSearch: "",
     selectedMeeting: null,
     selectedMeetingArtifacts: [],
+    selectedMeetingProposals: [],
     selectedSpeakerId: "",
     selectedSpeaker: null,
     speakerDraft: { name: "", avatar: "" },
@@ -389,6 +390,7 @@ function historyApp() {
       try {
         this.tab = "meetings";
         this.selectedMeetingArtifacts = [];
+        this.selectedMeetingProposals = [];
         this.selectedMeeting = await this.apiJson(`/api/meetings/${id}`);
         try {
           const artifacts = await this.apiJson(`/api/meetings/${id}/artifacts`);
@@ -397,10 +399,94 @@ function historyApp() {
           console.error("Failed to load meeting artifacts:", artifactError);
           this.selectedMeetingArtifacts = [];
         }
+        // HS-37-03: load actuator proposals (read-only — viewing never acts).
+        try {
+          const proposals = await this.apiJson(`/api/meetings/${id}/proposals`);
+          this.selectedMeetingProposals = proposals.proposals || [];
+        } catch (proposalError) {
+          console.error("Failed to load meeting proposals:", proposalError);
+          this.selectedMeetingProposals = [];
+        }
       } catch (error) {
         console.error("Failed to load meeting:", error);
         this.flash(`Meeting detail failed: ${error.message}`, true);
       }
+    },
+
+    // HS-37-03: approve/reject an actuator proposal. Approving only flips DB
+    // state (records the decision + an audit entry) — it performs NO side
+    // effect; execution is HS-37-04. The decided row is updated in place.
+    async decideProposal(proposal, decision) {
+      if (!this.selectedMeeting?.id || !proposal?.id) return;
+      try {
+        const res = await this.apiJson(
+          `/api/meetings/${this.selectedMeeting.id}/proposals/${proposal.id}/decision`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ decision }),
+          },
+        );
+        const updated = res.proposal;
+        if (updated) {
+          this.selectedMeetingProposals = this.selectedMeetingProposals.map((p) =>
+            p.id === updated.id ? updated : p,
+          );
+        }
+        this.flash(
+          decision === "approved"
+            ? "Proposal approved — recorded; nothing runs without it."
+            : "Proposal rejected.",
+        );
+      } catch (error) {
+        console.error("Failed to decide proposal:", error);
+        this.flash(`Decision failed: ${error.message}`, true);
+      }
+    },
+
+    proposalStatusLabel(status) {
+      return (
+        {
+          proposed: "Awaiting approval",
+          approved: "Approved — pending execution",
+          executed: "Executed",
+          rejected: "Rejected",
+          failed: "Failed",
+        }[status] || String(status || "")
+      );
+    },
+
+    proposalAccent(proposal) {
+      return (
+        {
+          proposed: "warn",
+          approved: "info",
+          executed: "ok",
+          rejected: "default",
+          failed: "danger",
+        }[proposal?.status] || "default"
+      );
+    },
+
+    proposalIcon(proposal) {
+      const target = String(proposal?.target || "").toLowerCase();
+      return { github: "🐙", jira: "🧩", slack: "💬", webhook: "🔗" }[target] || "⚡";
+    },
+
+    // The reviewable preview: action → target, the human preview, then the
+    // exact machine payload — the source of truth a reviewer is approving.
+    proposalPreviewText(proposal) {
+      const lines = [`${proposal.action} → ${proposal.target}`];
+      if (proposal.preview) lines.push("", proposal.preview);
+      const payload = proposal.payload || {};
+      if (payload && Object.keys(payload).length) {
+        lines.push("", JSON.stringify(payload, null, 2));
+      }
+      return lines.join("\n");
+    },
+
+    async copyProposal(proposal) {
+      return await this.copyMarkdown(this.proposalPreviewText(proposal));
     },
 
     downloadSelectedMeetingExport(format) {

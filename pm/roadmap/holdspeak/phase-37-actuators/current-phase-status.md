@@ -1,8 +1,21 @@
 # Phase 37 — Actuators
 
-**Status:** in-progress (opened 2026-06-04). 2/6 stories shipped.
+**Status:** in-progress (opened 2026-06-04). 3/6 stories shipped.
 
-**Last updated:** 2026-06-04 (**HS-37-02 shipped — proposal persistence + lifecycle.** A
+**Last updated:** 2026-06-04 (**HS-37-03 shipped — approval surface (preview →
+approve/reject, no execution).** The safety invariant made real to the user. API
+(`web/routes/meetings.py`): `GET …/proposals` (a pure `db.actuators.list_proposals` read)
++ `POST …/proposals/{id}/decision` (`approved`|`rejected` → `transition_proposal`, records
+`decided_by` + audit; illegal transition → 400; unknown/other-meeting → 404) — it **never
+executes** (HS-37-04 owns that). UI (`history.astro` + `history-app.js`): a "Proposed
+actions" card stack in the meeting modal — each a Signal card with a typed status pill +
+reversibility, a `CommandPreview`-style **preview** of `action → target` + the human
+preview + the exact machine payload, and **Approve**/**Reject** controls (with the guard
+"nothing runs without your approval"); decided rows update in place, rejected is terminal/
+quieted. 7-case API test (list/approve+audit/reject-terminal/illegal-400/invalid-400/
+404s); screenshot `evidence/approval_surface.png`; bundle rebuilt; suite 2059/15. Next:
+HS-37-04 (guarded executor + audit + governance gate). Earlier: **HS-37-02 shipped —
+proposal persistence + lifecycle.** A
 durable home for actuator proposals: a new `holdspeak/db/actuators.py` `ActuatorRepository`
 (joined to the `Database` container as `db.actuators`) with two tables —
 `actuator_proposals` (idempotent on `idempotency_key`; the `target`/`action`/`preview`/
@@ -138,7 +151,7 @@ default**; the default routing/dispatch path is byte-identical.
 |---|---|---|---|---|
 | HS-37-01 | Actuator contract + unblock the kind (gated, proposal-only) | done | [story-01-actuator-contract.md](./story-01-actuator-contract.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-37-02 | Proposal persistence + lifecycle | done | [story-02-proposal-persistence.md](./story-02-proposal-persistence.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-37-03 | Approval surface — preview → approve/reject (no execution) | not-started | [story-03-approval-surface.md](./story-03-approval-surface.md) | — |
+| HS-37-03 | Approval surface — preview → approve/reject (no execution) | done | [story-03-approval-surface.md](./story-03-approval-surface.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-37-04 | Guarded executor + audit + governance gate | not-started | [story-04-guarded-executor.md](./story-04-guarded-executor.md) | — |
 | HS-37-05 | Reference actuator end-to-end | not-started | [story-05-reference-actuator.md](./story-05-reference-actuator.md) | — |
 | HS-37-06 | Closeout + final-summary | not-started | [story-06-closeout.md](./story-06-closeout.md) | — |
@@ -174,8 +187,9 @@ recon is done. The seam already exists from Phase 35's groundwork:
    (`ActuatorProposal` + the `proposed` host status; `actuator` kind/capability unblocked).
 2. HS-37-02 — proposal persistence + lifecycle ✅ **done** (`ActuatorRepository` +
    `actuator_proposals`/`_audit` tables; lifecycle-enforced + idempotent + audited).
-3. HS-37-03 — approval UI (needs persisted proposals to render + decide). **◀ next**
-4. HS-37-04 — guarded executor + audit + governance gate (needs an approved proposal).
+3. HS-37-03 — approval UI ✅ **done** (proposals API + the Signal proposal cards with
+   preview → Approve/Reject; no execution on view).
+4. HS-37-04 — guarded executor + audit + governance gate (needs an approved proposal). **◀ next**
 5. HS-37-05 — reference actuator end-to-end (exercises 01→04 with a real side effect).
 6. HS-37-06 — closeout + final-summary.
 

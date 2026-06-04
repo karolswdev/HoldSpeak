@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 37
-- **Status:** not-started
+- **Status:** done
 - **Depends on:** HS-37-02
 - **Unblocks:** HS-37-04
 - **Owner:** unassigned
@@ -34,15 +34,18 @@ clear **preview**, the **target** + **reversibility**, and an explicit **Approve
 
 ## Acceptance criteria
 
-- [ ] Proposals render in the meeting detail with the preview + target + reversibility;
-      **nothing egresses on load or render** (assert no executor/connector call on the
-      read path).
-- [ ] **Approve** sets `approved` (+ `decided_by` + audit); **Reject** sets `rejected`
-      (terminal); the UI reflects the decided state.
-- [ ] The decision endpoint rejects illegal transitions (e.g. deciding an already-executed
-      proposal) with a clean error.
-- [ ] `cd web && npm run build` succeeds; the bundle is the gitignored build product (not
-      committed); suite green.
+- [x] Proposals render in the meeting detail as Signal cards with the preview (action →
+      target + the human preview + the exact machine payload) + reversibility +
+      lifecycle status; **nothing egresses on load or render** — the list endpoint is a
+      pure `db.actuators.list_proposals` read and no executor exists yet (HS-37-04).
+      Screenshot `evidence/approval_surface.png` (pending / approved / rejected states).
+- [x] **Approve** sets `approved` (+ `decided_by` + audit entry); **Reject** sets
+      `rejected` (terminal, visually quieted); the decided row updates in place.
+- [x] The decision endpoint rejects illegal transitions (deciding an already-rejected/
+      executed proposal → 400) and an invalid decision value (`executed` via this path →
+      400); unknown / other-meeting proposal → 404.
+- [x] `cd web && npm run build` succeeds (the bundle is the gitignored build product —
+      not committed); full suite green (2059/15).
 
 ## Test plan
 
