@@ -6,12 +6,15 @@
 > surfaces. Title broadened to "Meeting Intelligence & Experience"; slug kept to avoid
 > link churn.
 
-**Status:** in-progress (opened 2026-06-04). 0/6 stories shipped.
+**Status:** in-progress (opened 2026-06-04). 1/6 stories shipped.
 
-**Last updated:** 2026-06-04 (phase opened on user feedback that artifact rendering is
-basic / no copy / overflows → "Elevated cards"; then **scope-expanded** at user
-direction to also fix the messy-meeting routing weakness via **segment-aware intent
-extraction** (HS-36-05). HS-36-01 first).
+**Last updated:** 2026-06-04 (**HS-36-04 shipped** — the dynamic/messy multi-topic
+spoken-e2e, driving the *real* MIR routing path, verified on `.43`; it **captured the
+weakness live**: the routing activated only `['architecture', 'product']`, silently
+dropping the meeting's incident/risk/comms (7 artifact types, none of incident_timeline
+/ risk_register / runbook_delta / stakeholder_update / decision_announcement).
+`evidence/dynamic_meeting_before.png` is the BEFORE half of the headline. Next: HS-36-05
+fixes it + captures the AFTER. Default suite green 2007/15).
 
 ## Goal
 
@@ -130,7 +133,7 @@ showcases the new presentation.
 | HS-36-01 | Elevated artifact-card shell + overflow-safe layout | not-started | [story-01-artifact-card-shell.md](./story-01-artifact-card-shell.md) | — |
 | HS-36-02 | Copy-as-Markdown per artifact | not-started | [story-02-copy-as-markdown.md](./story-02-copy-as-markdown.md) | — |
 | HS-36-03 | Per-artifact-type body polish | not-started | [story-03-per-type-body-polish.md](./story-03-per-type-body-polish.md) | — |
-| HS-36-04 | Dynamic, digression-heavy multi-topic spoken-e2e | not-started | [story-04-dynamic-meeting-e2e.md](./story-04-dynamic-meeting-e2e.md) | — |
+| HS-36-04 | Dynamic, digression-heavy multi-topic spoken-e2e | done | [story-04-dynamic-meeting-e2e.md](./story-04-dynamic-meeting-e2e.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-36-05 | Segment-aware intent extraction (fish out intent per segment) | not-started | [story-05-segment-intent-extraction.md](./story-05-segment-intent-extraction.md) | — |
 | HS-36-06 | Phase closeout + final-summary | not-started | [story-06-closeout.md](./story-06-closeout.md) | — |
 
@@ -165,9 +168,10 @@ core.
    foundation + the most-complained-about overflow; highest visible impact).
 2. HS-36-02 — copy-as-Markdown (builds on the card header for the button slot).
 3. HS-36-03 — per-type body polish (fills in each artifact body within the new shell).
-4. HS-36-04 — dynamic/messy multi-topic spoken-e2e (the repro/driver for the routing
-   fix; also the closeout showcase). Independent of 01–03.
-5. HS-36-05 — segment-aware intent extraction (the routing fix; driven by HS-36-04).
+4. HS-36-04 — dynamic/messy multi-topic spoken-e2e ✅ **done** (BEFORE captured; the
+   routing drops incident/risk/comms).
+5. HS-36-05 — segment-aware intent extraction (the routing fix; **◀ next** — fish out
+   the dropped intents per segment; capture the AFTER).
 6. HS-36-06 — closeout + final-summary.
 
 The two tracks are parallel: **experience** (01 → 02 → 03) and **intelligence**
@@ -179,6 +183,18 @@ meeting — HS-36-04 captures `evidence/dynamic_meeting_before.png` on the curre
 (intents diluted away → sparse), HS-36-05 captures `_after.png` on the new segment-probe
 routing (the genuinely-present intents fished out → rich cards). The diff is the phase's
 money shot; the closeout (HS-36-06) presents it with a quantified delta.
+
+**HS-36-04 shipped (2026-06-04).** The messy meeting runs through the real
+`process_meeting_state` routing on `.43` and **caught the weakness exactly as
+predicted**: across 5 windows it activated only `['architecture', 'product']` and
+silently dropped the meeting's clear **incident** (described as "fell over… rolled it
+back… bad deploy ate the connection pool" — none of which match the `incident`/`rollback`
+keywords), **risk**, and **comms** ("announcing…" scored ≈0.22, under 0.6). BEFORE =
+7 artifact types (action_items, adr, customer_signals, decisions, diagram, requirements,
+scope_review) with **no** incident_timeline / risk_register / runbook_delta /
+stakeholder_update / decision_announcement. `dynamic_meeting_before.png` captured;
+reproduced across two runs (deterministic baseline). The AFTER (HS-36-05) is now the
+clear target: fish those intents out per segment so the missing five types appear.
 
 ## Active risks
 

@@ -2,9 +2,9 @@
 
 - **Project:** holdspeak
 - **Phase:** 36
-- **Status:** not-started
+- **Status:** done (2026-06-04). Evidence: [evidence-story-04.md](./evidence-story-04.md).
 - **Depends on:** none (independent of the UI stories; pairs well with them)
-- **Unblocks:** HS-36-05 (its rich output is the closeout showcase)
+- **Unblocks:** HS-36-05 (the BEFORE baseline + repro for the routing fix)
 - **Owner:** unassigned
 
 ## Problem

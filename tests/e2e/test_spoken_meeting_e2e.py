@@ -506,3 +506,217 @@ def test_spoken_incident_retro_end_to_end(tmp_path):
     finally:
         server.stop()
         reset_database()
+
+
+# HS-36-04: a third spoken scenario — a long, *messy*, human-sounding meeting that
+# drifts across many topics with digressions, small talk, interruptions, and callbacks.
+# Unlike the two scenarios above (which execute a hardcoded chain over the whole
+# transcript), this one drives the **real MIR routing path**
+# (`process_meeting_state`: build_intent_windows -> score -> select_active_intents ->
+# dispatch per window). That's the point: only the real routing exhibits the
+# dilution weakness this phase (Phase 36) is about — a brief-but-clear intent buried
+# in a 90s window of chatter is diluted below the 0.6 threshold and silently dropped.
+#
+# This story (HS-36-04) captures the **BEFORE** baseline (current routing). HS-36-05
+# implements segment-aware per-segment intent probing and captures the **AFTER** on the
+# same script; the before/after is the phase's headline deliverable.
+#
+# Assertions are deliberately LOOSE/noise-tolerant (>=1 artifact, no fatal error, no
+# exact-type/wording pins): the job here is to *expose* what the old routing drops, not
+# to assert richness (that's HS-36-05's bar).
+DYNAMIC_EVIDENCE_DIR = (
+    "pm/roadmap/holdspeak/phase-36-meeting-artifact-experience/evidence"
+)
+
+# A genuinely messy meeting: real substance (a product decision, an architecture aside,
+# a prod incident, action items, a risk, a comms plan) is *buried* in small talk,
+# tangents, and "anyway, where were we" resets — exactly the shape that dilutes brief
+# intents below threshold under fixed 90s windowing.
+DYNAMIC_SCRIPT: list[tuple[str, str, str]] = [
+    ("Maya", "Samantha",
+     "Morning everyone. Ugh, is the coffee machine still broken? I swear it's been a "
+     "week. Anyway, how was everyone's weekend? Did you end up going hiking, Jon?"),
+    ("Jon", "Alex",
+     "Yeah, it rained the whole time so we just stayed in and watched movies. Okay, "
+     "okay, let's actually start. So the main thing I wanted to talk about is the "
+     "onboarding flow, customers keep telling us the first run is confusing."),
+    ("Devi", "Daniel",
+     "Right, the feedback has been pretty consistent. People don't understand what the "
+     "value is until like three screens in. I think the persona we care about here is "
+     "the busy first-time user who just wants the thing to work."),
+    ("Maya", "Samantha",
+     "Totally. Oh, before I forget, completely unrelated, did anyone see the game last "
+     "night? Wild ending. Sorry, sorry. Back to onboarding. What's the actual scope we "
+     "want for this quarter?"),
+    ("Jon", "Alex",
+     "I'd keep it tight. Just the welcome screen and a sample project. Oh and one quick "
+     "thing while it's in my head, the onboarding API call is slow, the latency on that "
+     "endpoint is like two seconds because the schema does a join it doesn't need. "
+     "We should look at that at some point."),
+    ("Devi", "Daniel",
+     "Noted. Anyway. So are we agreed we ship the welcome screen plus the sample "
+     "project, and we punt the template gallery to next quarter? I think that's the "
+     "call. Let's just go with that, option B basically."),
+    ("Maya", "Samantha",
+     "Works for me. I'll write up the onboarding spec and put it in the doc. Jon, can "
+     "you own getting the sample project content together? And someone needs to ping "
+     "infra about that endpoint, can you take that, Devi?"),
+    ("Devi", "Daniel",
+     "Sure, I'll ping infra. Oh, totally changing the subject, did you all see prod "
+     "fell over on Tuesday afternoon? Checkout was down for like half an hour. We "
+     "rolled it back. It was a bad deploy that ate the connection pool."),
+    ("Jon", "Alex",
+     "Yeah that was rough. Anyway lunch plans? I'm thinking tacos. Wait, no, we're "
+     "almost done. My one worry, honestly, is the holiday traffic in two weeks. If "
+     "onboarding spikes and that slow endpoint is still there, it could get ugly."),
+    ("Maya", "Samantha",
+     "Good point, let's keep an eye on that. Okay, last thing, I'll send a note to the "
+     "wider team announcing the onboarding changes and the timeline so everyone hears "
+     "it from us. Cool? Cool. Alright, I really need coffee now, someone fix that "
+     "machine."),
+]
+
+
+def test_spoken_dynamic_meeting_end_to_end(tmp_path):
+    """HS-36-04 — dynamic/messy multi-topic spoken e2e via the REAL routing path.
+
+    say (multi-voice messy meeting) -> Whisper -> MeetingState ->
+    process_meeting_state (build_intent_windows -> score -> select -> dispatch ->
+    synthesize) -> temp SQLite -> MeetingWebServer -> Playwright BEFORE screenshot.
+
+    Loose, noise-tolerant assertions: a long transcript, no fatal pipeline error, and
+    >=1 artifact. Records the produced intents + artifact types for the before/after.
+    """
+    _skip_unless(shutil.which("say") is not None, "macOS `say` not available")
+    wavfile = pytest.importorskip("scipy.io.wavfile", reason="scipy required")
+    np = pytest.importorskip("numpy")
+    try:
+        from playwright.sync_api import sync_playwright
+    except Exception:
+        pytest.skip("playwright not installed (uv pip install playwright && playwright install chromium)")
+    reachable, detail = _endpoint_reachable()
+    _skip_unless(reachable, detail)
+
+    from holdspeak.db import get_database, reset_database
+    from holdspeak.meeting_session import MeetingState, TranscriptSegment
+    from holdspeak.plugins.builtin import register_builtin_plugins
+    from holdspeak.plugins.host import PluginHost
+    from holdspeak.plugins.pipeline import process_meeting_state
+    from holdspeak.plugins.router import select_active_intents
+    from holdspeak.transcribe import Transcriber
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    # --- 1. say -> per-line wav -> 2. Whisper -> timed transcript segments --------
+    transcriber = Transcriber(model_name="base")
+    segments: list[TranscriptSegment] = []
+    cursor = 0.0
+    for idx, (label, voice, line) in enumerate(DYNAMIC_SCRIPT):
+        wav_path = tmp_path / f"dyn_line_{idx}.wav"
+        _say_to_wav(line, voice, wav_path)
+        sr, audio = wavfile.read(wav_path)
+        if audio.dtype == np.int16:
+            audio = audio.astype(np.float32) / 32768.0
+        duration = len(audio) / sr
+        text = transcriber.transcribe(audio.astype("float32")).strip()
+        segments.append(
+            TranscriptSegment(text=text, speaker=label, start_time=cursor, end_time=cursor + duration)
+        )
+        cursor += duration
+    transcript = " ".join(seg.text for seg in segments).strip()
+    assert len(transcript) > 200, f"transcript too short: {transcript!r}"
+    print(f"\n[e2e:dynamic] meeting spans {cursor:.0f}s across {len(segments)} segments")
+    print(f"[e2e:dynamic] transcript: {transcript}")
+
+    # --- 3. REAL MIR routing path (the dilution weakness lives here) --------------
+    host = PluginHost(default_timeout_seconds=30.0, enabled_capabilities={"llm"})
+    register_builtin_plugins(host)
+    meeting_id = "e2e-spoken-dynamic"
+
+    state = MeetingState(
+        id=meeting_id,
+        started_at=datetime.now(),
+        title="Dynamic Meeting — onboarding, an incident, and a lot of digressions",
+        segments=segments,
+    )
+    reset_database()
+    db = get_database(tmp_path / "e2e_dynamic.db")
+    db.meetings.save_meeting(state)
+
+    # defer_heavy=False runs the deferred LLM plugins inline so a single call produces
+    # persisted runs + synthesized artifacts. profile="balanced" is the product default;
+    # its base chain always runs, while incident/risk/comms only fire if their intent
+    # clears the threshold — so what the messy meeting *drops* is exactly visible.
+    result = process_meeting_state(
+        state,
+        host,
+        profile="balanced",
+        db=db,
+        synthesize=True,
+        defer_heavy=False,
+        timeout_seconds=30.0,
+    )
+
+    # Pipeline must not have fatally failed (windowing/scoring produced something).
+    assert result.windows, f"no intent windows built; errors={result.errors}"
+    fatal = [e for e in result.errors if e.startswith(("windowing", "state.id"))]
+    assert not fatal, f"fatal pipeline errors: {fatal}"
+
+    # What did the OLD routing actually surface? (the before/after record)
+    # Active intents = the union of per-window threshold-gated intents (the same
+    # router gate dispatch uses). With fixed-window lexical scoring, brief/paraphrased
+    # intents (incident, comms) are diluted below threshold and never appear here.
+    active_intents = sorted(
+        {
+            intent
+            for s in result.scores
+            for intent in select_active_intents(s.scores, threshold=s.threshold)
+        }
+    )
+    ran_plugins = sorted({r.plugin_id for r in result.runs if r.status == "success"})
+    artifact_types = sorted({a.artifact_type for a in result.artifacts})
+    print(f"[e2e:dynamic] windows={len(result.windows)} active_intents={active_intents}")
+    print(f"[e2e:dynamic] plugins_ran={ran_plugins}")
+    print(f"[e2e:dynamic] BEFORE artifact_types={artifact_types} (count={len(artifact_types)})")
+    if result.errors:
+        print(f"[e2e:dynamic] non-fatal errors: {result.errors}")
+
+    # Loose bar: the pipeline produced *something*. Richness is HS-36-05's bar.
+    assert result.artifacts, "expected at least one artifact from the balanced base chain"
+
+    # --- 4. serve + 5. Playwright BEFORE screenshot ------------------------------
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(
+            on_bookmark=lambda *a, **k: {},
+            on_stop=lambda *a, **k: {},
+            get_state=lambda: {"id": meeting_id, "meeting_active": False},
+        ),
+        host="127.0.0.1",
+        port=_free_port(),
+    )
+    url = server.start()
+    try:
+        os.makedirs(DYNAMIC_EVIDENCE_DIR, exist_ok=True)
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={"width": 1280, "height": 1500})
+            page.goto(f"{url}/history", wait_until="networkidle")
+            page.locator("button.meeting-card").first.click()
+            # The modal + transcript always render; artifacts may be sparse (the point).
+            page.wait_for_selector(".modal", timeout=15000)
+            page.wait_for_selector(".transcript-list .segment", timeout=15000)
+            page.wait_for_timeout(700)  # let any artifact renderers settle
+            rendered_cards = page.locator(".detail-side .segment").count()
+            print(f"[e2e:dynamic] rendered artifact cards (BEFORE) = {rendered_cards}")
+            content_height = page.evaluate(
+                "() => { const b = document.querySelector('.modal-body');"
+                " return b ? Math.ceil(b.scrollHeight) : 1400; }"
+            )
+            page.set_viewport_size({"width": 1280, "height": min(int(content_height) + 220, 8000)})
+            page.wait_for_timeout(400)
+            shot = os.path.join(DYNAMIC_EVIDENCE_DIR, "dynamic_meeting_before.png")
+            page.screenshot(path=shot)
+            browser.close()
+        print(f"[e2e:dynamic] BEFORE screenshot saved: {shot}")
+    finally:
+        server.stop()
+        reset_database()
