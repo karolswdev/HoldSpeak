@@ -47,20 +47,31 @@ with the live status docs, the status docs win.
 
 ## 3. Pick up here
 
-**▶ Phase 36 — Meeting Artifact Experience is OPEN (0/4), on local branch
-`phase-36/hs-36-01-artifact-card-shell`.** A frontend/UX phase on direct user feedback
-that the meeting-artifact rendering looks basic, has no copy affordance, and overflows
-horizontally. Make the meeting-intelligence output a first-class **deliverable**:
-distinctive Signal **"elevated" artifact cards** (retire the basic chips), **copy-as-
-Markdown** per artifact, and **overflow-safe** wide artifacts (the risk table first).
-**Presentation only** — the plugin contract + artifact `structured_json` are unchanged.
-Start with **HS-36-01 — card shell + overflow fix** (`web/src/pages/history.astro`
-~856–1136 + its CSS; rebuild the bundle `cd web && npm run build` and commit
-`holdspeak/static/_built/` in the same commit). Then HS-36-02 (copy-as-Markdown, reuse
-`CommandPreview.astro`'s clipboard pattern) → HS-36-03 (per-type body polish) → HS-36-04
-(closeout). Full plan: `phase-36-meeting-artifact-experience/current-phase-status.md`.
-**Watch the spoken-e2e selectors** (`tests/e2e/test_spoken_meeting_e2e.py`:
-`.risk-table tbody tr`, `.incident-timeline li`, …) — preserve or update in lockstep.
+**▶ Phase 36 — Meeting Intelligence & Experience is OPEN (0/6), on local branch
+`phase-36/hs-36-01-artifact-card-shell`** (folder slug `phase-36-meeting-artifact-experience`
+predates a same-day scope expansion). On direct user feedback, two tracks:
+
+- **Experience (HS-36-01→03):** the artifact rendering is basic, has no copy affordance,
+  and overflows horizontally. Make it a first-class deliverable — Signal **"elevated"
+  artifact cards**, **copy-as-Markdown** (reuse `CommandPreview.astro`), **overflow-safe**
+  wide artifacts (the risk table first). UI lives in `web/src/pages/history.astro`
+  (~856–1136) + its CSS; rebuild + commit `holdspeak/static/_built/` per edit.
+- **Intelligence (HS-36-04→05):** fix the routing weakness where a brief intent in a
+  digression is **diluted below the 0.6 threshold and silently lost** (MIR-01 =
+  fixed-90s windows + lexical keywords; see `intent_timeline.build_intent_windows`,
+  `plugins/signals.extract_intent_signals`, `plugins/router.select_active_intents`,
+  `plugins/dispatch`, `plugins/pipeline.process_meeting_state`). HS-36-04 adds a
+  **dynamic/messy multi-topic spoken-e2e** driving the *real* routing path + captures a
+  **BEFORE** screenshot; HS-36-05 implements **segment-aware per-segment intent probing**
+  (LLM-assisted via `intel.build_configured_meeting_intel`, with the lexical scorer as a
+  deterministic fallback; union-aggregate) + captures the **AFTER**.
+
+**Headline deliverable:** a **before/after** of the same messy meeting (old routing
+sparse → new routing rich), presented at closeout (HS-36-06). Start with **HS-36-01**
+(most visible win). Full plan: `phase-36-meeting-artifact-experience/current-phase-status.md`.
+**Update in lockstep, don't silence:** the spoken-e2e artifact selectors
+(`.risk-table tbody tr`, `.incident-timeline li`, …) AND the routing tests
+(`test_intent_router` / `test_intent_dispatch` / `test_multi_intent_routing`).
 
 **Phase 35 — Plugin Frontier: CLOSED ✅ (5/5), merged via PR #11.** The plugin system
 is externalizable end-to-end: public `docs/PLUGIN_AUTHORING.md`, a plugin-pack manifest

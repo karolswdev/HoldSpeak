@@ -1,20 +1,39 @@
-# Phase 36 — Meeting Artifact Experience
+# Phase 36 — Meeting Intelligence & Experience
 
-**Status:** in-progress (opened 2026-06-04). 0/5 stories shipped.
+> **Note:** the folder slug (`phase-36-meeting-artifact-experience`) predates a scope
+> expansion. Opened 2026-06-04 as an artifact-presentation phase; the same day the user
+> expanded it to also **fix the intent-extraction weakness** the messy-meeting e2e
+> surfaces. Title broadened to "Meeting Intelligence & Experience"; slug kept to avoid
+> link churn.
 
-**Last updated:** 2026-06-04 (phase opened off Phase 35's close, on direct user
-feedback that the artifact rendering looks basic, has no copy affordance, and overflows
-horizontally. Direction chosen: "Elevated cards". HS-36-01 first).
+**Status:** in-progress (opened 2026-06-04). 0/6 stories shipped.
+
+**Last updated:** 2026-06-04 (phase opened on user feedback that artifact rendering is
+basic / no copy / overflows → "Elevated cards"; then **scope-expanded** at user
+direction to also fix the messy-meeting routing weakness via **segment-aware intent
+extraction** (HS-36-05). HS-36-01 first).
 
 ## Goal
 
-Make the meeting-intelligence output a polished, first-class **deliverable** in the web
-history view. Today the fourteen artifact types render as basic chips + flat
-lists/tables inside a generic card, missed by the Phase-30 "Signal" pass; wide content
-(the risk table) overflows horizontally; and there is no way to lift an artifact's
-content out as Markdown. This phase fixes all three — distinctive Signal **artifact
-cards**, **copy-as-Markdown** per artifact, and **overflow-safe** rendering — without
-touching the plugin contract or artifact data.
+Make HoldSpeak's meeting intelligence actually deliver on **real, messy meetings** —
+end to end. Two halves:
+
+1. **Extraction (intelligence).** Today a long, digression-heavy meeting can *silently
+   lose* a real intent: the pipeline scores fixed 90s rolling windows with lexical
+   keyword matching, so a brief-but-clear signal (a risk mentioned once in a 20s aside
+   amid chatter) is diluted below the 0.6 activation threshold — the intent never
+   fires and its plugin never runs. Fix it by **segmenting the conversation and probing
+   each segment for intent** ("fishing out" the intent per segment), so a clearly-incident
+   segment activates the incident chain regardless of surrounding noise.
+2. **Experience (presentation).** The fourteen artifact types render as basic chips +
+   flat lists/tables inside a generic card (missed by the Phase-30 "Signal" pass), wide
+   content (the risk table) overflows horizontally, and there's no way to lift content
+   out as Markdown. Fix all three — Signal **artifact cards**, **copy-as-Markdown**,
+   **overflow-safe** rendering.
+
+The messy-meeting spoken-e2e (HS-36-04) is the thread that ties them together: it
+reproduces the extraction weakness *and* produces the dense, varied artifact set that
+showcases the new presentation.
 
 ## Scope
 
@@ -44,18 +63,36 @@ touching the plugin contract or artifact data.
   extraction against noise, *and* is the rich showcase fixture for the new cards.
   Structural, noise-tolerant assertions (≥3 distinct artifact types; no exact-type/wording
   pins). Opt-in like the others.
-- **Closeout (HS-36-05).** Rebuild the bundle; verify/update the spoken-e2e selectors
+- **Segment-aware intent extraction — the routing fix (HS-36-05).** Replace/augment
+  the fixed-90s-window + lexical-keyword scoring with **per-segment intent probing**:
+  segment the meeting into topic-coherent chunks and probe each for the intents it
+  exhibits, **LLM-assisted** (consistent with the plugin egress posture; the `.43`
+  endpoint), with the **existing lexical scorer kept as a deterministic fallback** when
+  the `llm` capability is unavailable. Aggregate the per-segment intents (union) so a
+  brief-but-clear intent isn't diluted away, and dispatch each plugin with its relevant
+  segment(s) as local context. Behind a config gate; deterministic path stays unit-tested;
+  the messy-meeting e2e (HS-36-04) proves the brief-intent-now-surfaces behavior on real
+  `.43`.
+- **Closeout (HS-36-06).** Rebuild the bundle; verify/update the spoken-e2e selectors
   in lockstep; capture before/after screenshots (the dynamic meeting is the headline
   showcase); `final-summary.md`.
 
 ### Out
 
-- **Any change to the plugin contract, artifact `structured_json` shapes, synthesis,
-  or the API.** This is presentation only.
-- **New artifact types or new renderers** for types that don't exist yet.
+- **New artifact *types* / renderers** for types that don't exist yet, or changes to a
+  plugin's *output* `structured_json` shape (the extraction fix changes *which* plugins
+  run + *what segment* they see, not the artifact schema).
 - **Export-to-file / download** beyond clipboard Markdown (a later idea; clipboard is
   the asked-for facility).
 - **A non-dark / light theme** for artifacts — Signal is dark-first.
+- **Reworking the lexical scorer's keyword lists** as the primary fix — the segment
+  probe supersedes keyword-threshold dilution; keywords stay only as the deterministic
+  fallback.
+
+> **Scope note (changed 2026-06-04):** the original "presentation only — no router /
+> plugin-dispatch changes" boundary is **lifted**. HS-36-05 deliberately changes how the
+> meeting is segmented and how intents are detected + dispatched. The *artifact data
+> shapes* are still unchanged.
 
 ## Exit criteria (evidence required)
 
@@ -69,12 +106,22 @@ touching the plugin contract or artifact data.
 - [ ] A third spoken-e2e (dynamic, digression-heavy, multi-topic) exists, is opt-in,
       and verified once for real against `.43`; structural/noise-tolerant assertions
       (≥3 distinct artifact types, no exact-type/wording pins). (HS-36-04)
+- [ ] Segment-aware intent extraction: a meeting is segmented + each segment probed for
+      intent; a brief-but-clear intent that the old fixed-window/keyword path diluted
+      below threshold now activates its chain and produces its artifact — proven by a
+      regression test (deterministic path) + the messy-meeting e2e on real `.43`. The
+      deterministic lexical fallback still works with the `llm` capability off. (HS-36-05)
 - [ ] `cd web && npm run build` succeeds and the rebuilt bundle is committed with each
       source change; `tests/e2e/test_spoken_meeting_e2e.py` selectors pass (preserved
       or updated in lockstep). (all)
-- [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green throughout; the
-      dynamic-meeting spoken-e2e re-run for real shows the new look on a dense, varied
-      artifact set (screenshot). (HS-36-05)
+- [ ] **Before/after comparison captured:** two screenshots of the *same* messy meeting
+      — `evidence/dynamic_meeting_before.png` (old routing, intents diluted away, sparse)
+      and `_after.png` (segment-probe routing, the present intents fished out, rich cards)
+      — with a quantified delta in `final-summary.md`. (HS-36-04 captures before; HS-36-05
+      after; HS-36-06 presents.)
+- [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green throughout; the routing
+      unit/integration tests updated in lockstep (not silenced); the dynamic-meeting
+      spoken-e2e re-run for real shows the new extraction + the new look. (HS-36-06)
 
 ## Story status
 
@@ -84,7 +131,8 @@ touching the plugin contract or artifact data.
 | HS-36-02 | Copy-as-Markdown per artifact | not-started | [story-02-copy-as-markdown.md](./story-02-copy-as-markdown.md) | — |
 | HS-36-03 | Per-artifact-type body polish | not-started | [story-03-per-type-body-polish.md](./story-03-per-type-body-polish.md) | — |
 | HS-36-04 | Dynamic, digression-heavy multi-topic spoken-e2e | not-started | [story-04-dynamic-meeting-e2e.md](./story-04-dynamic-meeting-e2e.md) | — |
-| HS-36-05 | Phase closeout + final-summary | not-started | [story-05-closeout.md](./story-05-closeout.md) | — |
+| HS-36-05 | Segment-aware intent extraction (fish out intent per segment) | not-started | [story-05-segment-intent-extraction.md](./story-05-segment-intent-extraction.md) | — |
+| HS-36-06 | Phase closeout + final-summary | not-started | [story-06-closeout.md](./story-06-closeout.md) | — |
 
 ## Where we are
 
@@ -97,10 +145,19 @@ makes its *output* look the part. The recon is done: artifacts render in
 unbounded cells, and the spoken-e2e pins several artifact selectors. Direction chosen
 by the user: **Elevated cards**. Numbering: this took the Phase 36 slot; **Actuators
 moved to Phase 37**. The user then asked to add a **dynamic, digression-heavy
-multi-topic spoken-e2e** (HS-36-04) — a messy, human-sounding meeting that stress-tests
-pipeline signal extraction *and* yields the dense/varied artifact set that best
-showcases the new cards (closeout bumped to HS-36-05). HS-36-01 (card shell + overflow
-fix) first — the most visible win.
+multi-topic spoken-e2e** (HS-36-04) — a messy, human-sounding meeting — *and* to have
+the phase **fix the routing weakness that meeting exposes**, not just test it. A second
+recon mapped MIR-01: fixed 90s rolling windows (`intent_timeline.build_intent_windows`)
++ lexical keyword scoring (`plugins/signals.extract_intent_signals`) + a 0.6 threshold
+(`plugins/router.select_active_intents`); plugins already get window-local context
+(`plugins/dispatch.dispatch_window`). The weakness: a brief signal-dense aside is
+diluted across its 90s window below threshold → the intent never activates → its plugin
+never runs (silent loss); keyword-only scoring also misses paraphrase. The fix
+(HS-36-05): **segment + probe each segment for intent** (LLM-assisted, lexical
+fallback) + aggregate the union. Closeout bumped to HS-36-06. Two tracks now —
+intelligence (04→05) and experience (01–03) — joined at the closeout. HS-36-01 (card
+shell + overflow fix) first as the most visible win; HS-36-04+05 are the intelligence
+core.
 
 ## Pickup order
 
@@ -108,9 +165,20 @@ fix) first — the most visible win.
    foundation + the most-complained-about overflow; highest visible impact).
 2. HS-36-02 — copy-as-Markdown (builds on the card header for the button slot).
 3. HS-36-03 — per-type body polish (fills in each artifact body within the new shell).
-4. HS-36-04 — dynamic/messy multi-topic spoken-e2e (independent of 01–03; land it
-   before HS-36-05 since its rich output is the closeout showcase).
-5. HS-36-05 — closeout + final-summary.
+4. HS-36-04 — dynamic/messy multi-topic spoken-e2e (the repro/driver for the routing
+   fix; also the closeout showcase). Independent of 01–03.
+5. HS-36-05 — segment-aware intent extraction (the routing fix; driven by HS-36-04).
+6. HS-36-06 — closeout + final-summary.
+
+The two tracks are parallel: **experience** (01 → 02 → 03) and **intelligence**
+(04 → 05). Either can go first; the closeout (06) needs both. HS-36-01 leads since it's
+the most visible win and unblocks the UI track.
+
+**Headline deliverable (user-requested):** a **before/after** of the *same* messy
+meeting — HS-36-04 captures `evidence/dynamic_meeting_before.png` on the current routing
+(intents diluted away → sparse), HS-36-05 captures `_after.png` on the new segment-probe
+routing (the genuinely-present intents fished out → rich cards). The diff is the phase's
+money shot; the closeout (HS-36-06) presents it with a quantified delta.
 
 ## Active risks
 
@@ -119,7 +187,10 @@ fix) first — the most visible win.
 | Renaming artifact CSS classes breaks the spoken-e2e selectors | High (if careless) | Preserve the asserted class names (`.risk-table tbody tr`, `.incident-timeline li`, …) or update the e2e in the same commit; keep them as inner elements within the new card | An e2e `wait_for_selector` times out |
 | Forgetting to rebuild the bundle → source edits don't show | Medium | `cd web && npm run build` + commit `holdspeak/static/_built/` in the same commit as any source edit (phase rule) | The served app looks unchanged after an edit |
 | Collapsible cards hide content from the e2e / from copy | Medium | Default artifact cards to expanded; copy reads from data, not the DOM | e2e can't see a collapsed body |
-| Scope creep into export-to-file / new artifact types | Medium | Clipboard Markdown only; presentation only — no data/plugin changes | A PR touching `plugins/` or `synthesis.py` shapes |
+| Scope creep into export-to-file / new artifact types | Medium | Clipboard Markdown only; no new artifact *types* / no artifact-schema changes | A PR adding a new artifact type or changing a plugin's output shape |
+| Routing fix (HS-36-05) regresses the existing chains / tests | High (expected churn) | Update `test_intent_router` / `test_intent_dispatch` / `test_multi_intent_routing` in lockstep — don't silence; keep the deterministic lexical path green; the segment path is additive + gated | A `-k`-filtered green hiding a real routing diff |
+| LLM segment-probe adds latency / nondeterminism / is unavailable | Medium | LLM path is gated on the `llm` capability with the lexical scorer as fallback; assertions on the LLM path are structural (like the spoken-e2e); it runs at meeting finalization, not realtime | The probe blocks finalization or flakes the suite |
+| Segment probe sends transcript to the LLM (egress) | Low | Same egress posture as the existing plugins (already send transcript to the configured endpoint); honors the Phase-25 provider gate; off when `llm` capability is off | A probe egressing where plugins wouldn't |
 
 ## Decisions made (this phase)
 
@@ -127,8 +198,15 @@ fix) first — the most visible win.
   user pick from previewed options.
 - 2026-06-04 — **Numbering: UI overhaul = Phase 36, Actuators → Phase 37** — user pick;
   the "teed-up Phase 36 — Actuators" references in HANDOVER/README updated accordingly.
-- 2026-06-04 — **Presentation only** — no change to the plugin contract, artifact data
-  shapes, or API; the 14 built-ins' output is unchanged (agent scope guard).
+- 2026-06-04 — **Scope expanded from presentation-only to also fix the intent-extraction
+  weakness** (HS-36-05) — user direction ("the phase should also fix that weakness …
+  divide the meeting into segments and probe them for intent"). The "no router changes"
+  guard is lifted; artifact *data shapes* stay unchanged.
+- 2026-06-04 — **Fix approach = segment-aware, LLM-assisted per-segment intent probing
+  with a deterministic lexical fallback** (agent design; user delegated "you know best
+  how to best address this"). Rationale: directly implements "fish out intent per
+  segment", robust to paraphrase + dilution, consistent with the existing plugin egress
+  posture; the lexical path stays for determinism/tests + offline.
 
 ## Decisions deferred
 
@@ -137,3 +215,7 @@ fix) first — the most visible win.
 - Whether artifact cards should be collapsible by default vs always-expanded —
   trigger: HS-36-01 — default: always-expanded (keeps e2e + copy simple), add a
   collapse toggle that defaults open.
+- Segmentation granularity + whether the LLM does segmentation *and* intent in one pass
+  vs. fixed/finer windows + an LLM intent probe per window — trigger: HS-36-05 design
+  spike — default: one LLM pass returning topic segments + their intents, with the
+  fixed-window path as the deterministic fallback.

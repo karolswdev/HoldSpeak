@@ -37,20 +37,28 @@ This story adds a third spoken-e2e: one long, dynamic, human-sounding meeting.
     passing ("I'll poke at that", "can someone ping infra"), a **risk** raised as an
     aside, a callback to an earlier thread, and a "anyway, where were we" reset — so the
     conversation spans **several intents** (and several plugin chains fire).
-  - Same harness as the existing scenarios: `say` (multi-voice) → per-line wav →
-    Whisper → transcript segments → real `.43` `PluginHost` (deferred queue drained) →
-    `synthesize_and_persist` → temp SQLite → `MeetingWebServer` → Playwright screenshot.
+  - **Drive the REAL MIR routing path**, not a hardcoded chain. Unlike the existing two
+    scenarios (which execute a fixed plugin list over the whole transcript), this one
+    routes through the actual pipeline — `say` → Whisper → transcript segments →
+    `process_meeting_state` (build_intent_windows → score → select_active_intents →
+    dispatch per window) → `synthesize_and_persist` → temp SQLite → `MeetingWebServer` →
+    Playwright. This is essential: only the real routing path exhibits the dilution
+    weakness, so it's what makes the before/after meaningful.
+  - **Capture the BEFORE screenshot.** With the *current* (pre-HS-36-05) routing, render
+    `/history` for this meeting and save `evidence/dynamic_meeting_before.png` — the
+    baseline showing intents diluted away / a sparse artifact set. (HS-36-05 captures the
+    AFTER on the same script.)
   - **Structural, noise-tolerant assertions** (the real LLM is non-deterministic and
     the input is intentionally messy): a long transcript is produced; the pipeline
-    completes without error; a **rich** artifact set results — assert **≥3 distinct
-    artifact types** are produced (don't pin exact types), and that real signal survived
-    the noise (e.g. at least one action item *or* decision *or* risk artifact present).
-    Never assert exact wording.
+    completes without error; **≥1 artifact** results. Deliberately **loose** — this
+    scenario's job is to *expose* how much the old routing drops, not to assert richness
+    (that's HS-36-05's bar). Record the produced intents/artifacts in the run output so
+    the before/after is quantifiable. Never assert exact wording or an exact type set.
   - Opt-in identical to the others (`HOLDSPEAK_SPOKEN_E2E=1`; module-skips otherwise).
 - **Out:**
-  - Changing the router/plugins to handle noise "better" — this is a *test*, not a
-    behavior change. If it reveals a real routing weakness, file a follow-up; don't
-    fix it inside this story.
+  - The routing *fix* — that's HS-36-05. This story builds the messy meeting + drives
+    the real routing + captures the BEFORE baseline. It may legitimately show a sparse /
+    intent-dropping result; that's the point.
   - Asserting a specific set of artifact types (that would make a deliberately
     non-deterministic test flaky).
 
@@ -58,13 +66,17 @@ This story adds a third spoken-e2e: one long, dynamic, human-sounding meeting.
 
 - [ ] A new opt-in spoken-e2e scenario with a long, digression-heavy, multi-topic,
       multi-speaker script exists in `tests/e2e/test_spoken_meeting_e2e.py`.
+- [ ] The scenario routes via the **real** `process_meeting_state` MIR path (windowing +
+      scoring + dispatch), not a hardcoded chain.
 - [ ] Assertions are structural + noise-tolerant: long transcript, no pipeline error,
-      **≥3 distinct artifact types**, and at least one "signal" artifact (action item /
-      decision / risk) — no exact-wording or exact-type-set assertions.
+      ≥1 artifact — no exact-wording or exact-type-set assertions (richness is HS-36-05's
+      bar, not this one's).
+- [ ] The **BEFORE** screenshot (`evidence/dynamic_meeting_before.png`) + the run's
+      produced intents/artifacts are captured against the current routing, for the
+      before/after comparison.
 - [ ] Opt-in/module-skip matches the existing scenarios; default suite green without
       the opt-in.
-- [ ] **Verified once for real against `.43`** — run output captured; the rich artifact
-      set is the showcase fixture for the closeout screenshot.
+- [ ] **Verified once for real against `.43`** — run output captured.
 
 ## Test plan
 
