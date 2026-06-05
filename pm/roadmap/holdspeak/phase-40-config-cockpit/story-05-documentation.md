@@ -2,10 +2,11 @@
 
 - **Project:** holdspeak
 - **Phase:** 40
-- **Status:** backlog
+- **Status:** done (2026-06-05)
 - **Depends on:** HS-40-01, HS-40-02, HS-40-03, HS-40-04
 - **Unblocks:** HS-40-06
 - **Owner:** unassigned
+- **Evidence:** [evidence-story-05.md](./evidence-story-05.md)
 
 ## Problem
 
@@ -30,12 +31,21 @@ users will still reach for the files.
 
 ## Acceptance criteria
 
-- [ ] The guides present the web cockpit as the primary setup path; the JSON
+- [x] The guides present the web cockpit as the primary setup path; the JSON
       config is framed as the advanced/headless alternative, not the default.
-- [ ] Persistent correction memory + the memory/telemetry UI are documented
+- [x] Persistent correction memory + the memory/telemetry UI are documented
       (storage, durability, curate/clear).
-- [ ] Screenshots embedded; doc drift-guard + link-check green.
-- [ ] Every documented control/field matches what actually shipped in 01–04.
+- [x] Screenshots embedded; doc drift-guard + link-check green.
+- [x] Every documented control/field matches what actually shipped in 01–04.
+
+## Outcome
+
+`INTELLIGENT_TYPING_GUIDE.md` §10 + `DICTATION_COPILOT.md` now lead with the
+cockpit (`/dictation → Runtime → Copilot depth` + the Memory tab), with the
+`config.json` block demoted to "Advanced". Both screenshots embedded under
+`docs/assets/cockpit/`. Fixed the now-false "correction memory is in-memory,
+never persisted" claim → DB-backed + persists across restarts. Doc-guards +
+link-check green. See [evidence-story-05.md](./evidence-story-05.md).
 
 ## Test plan
 

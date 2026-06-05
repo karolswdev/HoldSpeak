@@ -1,13 +1,13 @@
 # Phase 40 — Configuration Cockpit & Persistent Memory
 
-**Status:** IN PROGRESS (4/6 stories). Opened 2026-06-05. Direction chosen by the
+**Status:** IN PROGRESS (5/6 stories). Opened 2026-06-05. Direction chosen by the
 user: a **web-first** way to set up the whole copilot ("nobody wants to frig
 around with files and settings") + **persistent cross-session memory**.
 
-**Last updated:** 2026-06-05 (**HS-40-04 done** — a Signal **Memory** tab: curate
-persistent corrections (add/remove/clear + in-context toggle, new DELETE routes)
-+ a depth-telemetry panel (per-stage p50/p95 bars + guidance + multi-pass chips).
-Suite 2221/16. HS-40-01/02/03 also done.).
+**Last updated:** 2026-06-05 (**HS-40-05 done** — the guides now lead with the
+web cockpit (`config.json` demoted to "Advanced"); persistent memory + the
+memory/telemetry UI documented with screenshots; fixed the stale "never
+persisted" claim. Doc-guards green. HS-40-01–04 also done.).
 
 ## Goal
 
@@ -103,15 +103,15 @@ build` to verify, commit source only.
 | HS-40-02 | Persistent correction memory | done | [story-02-persistent-correction-memory.md](./story-02-persistent-correction-memory.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-40-03 | Copilot Setup cockpit (UI) | done | [story-03-copilot-setup-cockpit.md](./story-03-copilot-setup-cockpit.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-40-04 | Memory + telemetry UI | done | [story-04-memory-telemetry-ui.md](./story-04-memory-telemetry-ui.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-40-05 | Documentation | backlog | [story-05-documentation.md](./story-05-documentation.md) | — |
+| HS-40-05 | Documentation | done | [story-05-documentation.md](./story-05-documentation.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-40-06 | Closeout | backlog | [story-06-closeout.md](./story-06-closeout.md) | — |
 
 ## Where we are
 
-**HS-40-01 through HS-40-04 done (2026-06-05); HS-40-05 (docs) is next.** Phase
-opened right after Phase 39 merged (PR #16). The territory was mapped before
-scaffolding — see [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) for the full seam map.
-Headlines:
+**HS-40-01 through HS-40-05 done (2026-06-05); HS-40-06 (closeout) is next.**
+Phase opened right after Phase 39 merged (PR #16). The territory was mapped
+before scaffolding — see [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) for the full seam
+map. Headlines:
 
 - **Settings (HS-40-01) — done.** Re-verifying the seam showed the brief was
   stale: the four Phase-39 knobs **already** round-tripped + 4xx'd. `PUT
@@ -154,9 +154,9 @@ Headlines:
 
 **Pickup order:** HS-40-01 (backend foundation, unblocks the UI) ✅ → HS-40-02
 (persistence, independent, enables the memory UI) ✅ → HS-40-03 (cockpit UI, needs
-01) ✅ → HS-40-04 (memory/telemetry UI, needs 02) ✅ → HS-40-05 (docs) → HS-40-06
+01) ✅ → HS-40-04 (memory/telemetry UI, needs 02) ✅ → HS-40-05 (docs) ✅ → HS-40-06
 (closeout). 01 and 02 are independent and can go in either order / in parallel
-worktrees. **HS-40-01/02/03/04 done; HS-40-05 (docs) next.**
+worktrees. **HS-40-01–05 done; HS-40-06 (closeout) next.**
 
 ## Active risks
 
