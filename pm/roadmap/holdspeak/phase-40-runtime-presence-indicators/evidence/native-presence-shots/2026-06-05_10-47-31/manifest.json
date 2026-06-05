@@ -1,0 +1,124 @@
+{
+  "created_at": "2026-06-05T10:47:31",
+  "output_dir": "/private/tmp/holdspeak-gui-indicator/pm/roadmap/holdspeak/phase-40-runtime-presence-indicators/evidence/native-presence-shots/2026-06-05_10-47-31",
+  "capture_region": {
+    "x": 1044,
+    "y": 36,
+    "width": 452,
+    "height": 196
+  },
+  "requested_capture_mode": "auto",
+  "shots": [
+    {
+      "state": "idle",
+      "source": "runtime",
+      "label": "Ready",
+      "detail": "Waiting for activity.",
+      "event": "fixture_idle",
+      "visible": false,
+      "mode": "hidden",
+      "capture_method": "macos_screencapture",
+      "file": "01-idle-hidden.png"
+    },
+    {
+      "state": "listening",
+      "source": "hotkey",
+      "label": "Listening",
+      "detail": "Hotkey accepted.",
+      "event": "fixture_listening",
+      "visible": true,
+      "mode": "active",
+      "capture_method": "macos_screencapture",
+      "file": "02-listening-active.png"
+    },
+    {
+      "state": "recording",
+      "source": "hotkey",
+      "label": "Recording",
+      "detail": "Recording microphone input.",
+      "event": "fixture_recording",
+      "visible": true,
+      "mode": "active",
+      "capture_method": "macos_screencapture",
+      "file": "03-recording-active.png"
+    },
+    {
+      "state": "transcribing",
+      "source": "dictation",
+      "label": "Transcribing",
+      "detail": "Turning speech into text.",
+      "event": "fixture_transcribing",
+      "visible": true,
+      "mode": "active",
+      "capture_method": "macos_screencapture",
+      "file": "04-transcribing-active.png"
+    },
+    {
+      "state": "processing",
+      "source": "dictation",
+      "label": "Processing",
+      "detail": "Applying dictation pipeline.",
+      "event": "fixture_processing",
+      "visible": true,
+      "mode": "active",
+      "capture_method": "macos_screencapture",
+      "file": "05-processing-active.png"
+    },
+    {
+      "state": "typing",
+      "source": "dictation",
+      "label": "Typing",
+      "detail": "Typing into the target app.",
+      "event": "fixture_typing",
+      "visible": true,
+      "mode": "active",
+      "capture_method": "macos_screencapture",
+      "file": "06-typing-active.png"
+    },
+    {
+      "state": "complete",
+      "source": "dictation",
+      "label": "Complete",
+      "detail": "Typed successfully.",
+      "event": "fixture_complete",
+      "visible": true,
+      "mode": "linger",
+      "capture_method": "macos_screencapture",
+      "file": "07-complete-linger.png"
+    },
+    {
+      "state": "meeting_live",
+      "source": "meeting",
+      "label": "Meeting live",
+      "detail": "Segment captured.",
+      "event": "fixture_meeting_live",
+      "visible": true,
+      "mode": "linger",
+      "capture_method": "macos_screencapture",
+      "file": "08-meeting_live-linger.png"
+    },
+    {
+      "state": "saving",
+      "source": "meeting",
+      "label": "Saving",
+      "detail": "Saving meeting artifacts.",
+      "event": "fixture_saving",
+      "visible": true,
+      "mode": "active",
+      "capture_method": "macos_screencapture",
+      "file": "09-saving-active.png"
+    },
+    {
+      "state": "error",
+      "source": "runtime",
+      "label": "Needs attention",
+      "detail": "Fixture error.",
+      "event": "fixture_error",
+      "visible": true,
+      "mode": "linger",
+      "capture_method": "macos_screencapture",
+      "file": "10-error-linger.png"
+    }
+  ],
+  "contact_sheet": "contact-sheet.png"
+}

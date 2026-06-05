@@ -54,6 +54,15 @@ This starts the local web runtime on loopback (`127.0.0.1`). The browser UI is
 the main cockpit for dictation, meetings, history, runtime configuration, and
 project context.
 
+The runtime dashboard includes a presence indicator that shows what HoldSpeak
+is doing now: ready, recording, transcribing, processing, typing, meeting
+activity, saving, complete, or error. Optional desktop presence windows can be
+enabled with `HOLDSPEAK_DESKTOP_PRESENCE=1`; they are transient and appear only
+for activity, then hide after completion or errors.
+
+Desktop presence uses Python's Tk bindings. On Homebrew Python 3.13, install
+them with `brew install python-tk@3.13` if `import tkinter` fails.
+
 Useful routes:
 
 | Route | Purpose |
@@ -70,6 +79,10 @@ Useful routes:
 3. Hold the configured hotkey.
 4. Speak.
 5. Release the hotkey.
+
+During the cycle, the dashboard presence indicator moves through the same
+states the optional desktop window uses: recording, transcribing, processing,
+typing, then a short complete/error state before returning to hidden idle.
 
 Default hotkey:
 

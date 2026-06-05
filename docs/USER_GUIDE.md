@@ -64,6 +64,11 @@ holdspeak
 
 By default, the web server binds to loopback only (`127.0.0.1`). The browser UI is the primary cockpit for meetings, history, dictation setup, runtime setup, and project context.
 
+The runtime dashboard shows a presence indicator for current activity. It uses
+the same state contract as the optional desktop presence host, so the web page
+is the reference view for recording, transcribing, processing, typing, meeting,
+saving, complete, and error states.
+
 ## Voice Typing
 
 Use voice typing when you want direct text insertion into the active app.
@@ -80,6 +85,26 @@ Default hotkey:
 - Linux: Right Alt
 
 If global hotkeys or synthetic typing are blocked, especially on Wayland, keep HoldSpeak focused and use the focused hold-to-talk fallback.
+
+### Runtime Presence
+
+HoldSpeak can expose activity in two places:
+
+- The web dashboard always shows the current runtime presence state.
+- If `HOLDSPEAK_DESKTOP_PRESENCE=1` is set before starting `holdspeak`, the
+  runtime attempts to show native-like desktop presence windows on supported
+  desktop sessions.
+
+Desktop presence windows are transient. They appear for meaningful activity,
+update while work is happening, linger briefly for completion or errors, then
+hide. Idle means no desktop window is visible.
+
+The native-style window path requires Python Tk support. If the runtime logs
+that Tk is unavailable on Homebrew Python 3.13, install it with:
+
+```bash
+brew install python-tk@3.13
+```
 
 ### Punctuation
 

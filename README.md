@@ -85,6 +85,13 @@ holdspeak doctor   # verify mic permissions + backends
 holdspeak          # launch the web runtime
 ```
 
+The runtime dashboard shows a live presence indicator for recording,
+transcribing, processing, typing, meeting, saving, complete, and error states.
+Set `HOLDSPEAK_DESKTOP_PRESENCE=1` before `holdspeak` to opt into transient
+desktop presence windows where the local desktop session supports them. On
+Homebrew Python 3.13, native desktop presence requires
+`brew install python-tk@3.13`.
+
 Or from a clone (using [`uv`](https://docs.astral.sh/uv/)):
 
 ```bash
