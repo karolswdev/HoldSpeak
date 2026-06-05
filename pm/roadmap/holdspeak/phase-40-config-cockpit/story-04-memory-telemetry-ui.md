@@ -2,10 +2,11 @@
 
 - **Project:** holdspeak
 - **Phase:** 40
-- **Status:** backlog
+- **Status:** done (2026-06-05)
 - **Depends on:** HS-40-01, HS-40-02
 - **Unblocks:** none
 - **Owner:** unassigned
+- **Evidence:** [evidence-story-04.md](./evidence-story-04.md)
 
 ## Problem
 
@@ -35,14 +36,25 @@ worth showing — and curating.
 
 ## Acceptance criteria
 
-- [ ] The memory panel lists persistent corrections and can add/remove/clear
+- [x] The memory panel lists persistent corrections and can add/remove/clear
       them (a delete path exists on the API + UI); the enable/disable toggle is
       present.
-- [ ] The telemetry panel renders per-stage p50/p95 + budget guidance +
+- [x] The telemetry panel renders per-stage p50/p95 + budget guidance +
       multi-pass timings from `/api/dictation/readiness` `depth`.
-- [ ] Both panels are rich Signal (not flat tables); empty states are handled.
-- [ ] No secret content is shown (corrections are gist-only already).
-- [ ] Bundle rebuilt; no `_built/` staged; screenshots captured.
+- [x] Both panels are rich Signal (not flat tables); empty states are handled.
+- [x] No secret content is shown (corrections are gist-only already).
+- [x] Bundle rebuilt; no `_built/` staged; screenshots captured.
+
+## Outcome
+
+A new **Memory** tab with a curation panel (deletable correction cards + add
+form + Forget-all + an in-context `corrections_enabled` toggle) and a depth
+telemetry panel (per-stage p50/p95 bars, budget guidance, multi-pass chips,
+stat tiles). Added the missing `DELETE /api/dictation/corrections/{id}` +
+`DELETE /api/dictation/corrections` routes and `CorrectionStore.list_for_display`
+/`remove`/durable-`clear`; GET now carries the durable `id`+`created_at`.
+Playwright-verified (list/delete/telemetry render); screenshot in `evidence/`.
+Suite 2221/16. See [evidence-story-04.md](./evidence-story-04.md).
 
 ## Test plan
 

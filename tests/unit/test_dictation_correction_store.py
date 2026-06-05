@@ -165,3 +165,47 @@ def test_load_respects_cap_newest_first(repo):
     assert len(store) == 3
     values = [c.value for c in store.recent("intent")]  # newest-first
     assert values == ["block_4", "block_3", "block_2"]
+
+
+def test_list_for_display_carries_id_with_repo(repo):
+    store = CorrectionStore(repository=repo)
+    store.record("intent", "fix the cli thing", "code_exercise")
+    rows = store.list_for_display()
+    assert len(rows) == 1
+    assert rows[0]["id"] >= 1
+    assert rows[0]["key"] == "fix the cli thing"
+    assert "created_at" in rows[0]
+
+
+def test_list_for_display_no_repo_has_no_id():
+    store = CorrectionStore()
+    store.record("intent", "fix the cli thing", "code_exercise")
+    rows = store.list_for_display()
+    assert rows and "id" not in rows[0]
+    assert rows[0]["key"] == "fix the cli thing"
+
+
+def test_remove_deletes_from_ring_and_repo(repo):
+    store = CorrectionStore(repository=repo)
+    store.record("intent", "first one", "code_exercise")
+    store.record("target", "second one", "codex_cli")
+    target_id = store.list_for_display()[-1]["id"]  # oldest = "first one"
+    assert store.remove(target_id) is True
+    assert len(store) == 1
+    assert all(c.key != "first one" for c in store.recent())
+    assert repo.recent_corrections() and len(repo.recent_corrections()) == 1
+
+
+def test_remove_without_repo_is_noop():
+    store = CorrectionStore()
+    store.record("intent", "x marks", "code_exercise")
+    assert store.remove(1) is False
+    assert len(store) == 1
+
+
+def test_clear_empties_ring_and_repo(repo):
+    store = CorrectionStore(repository=repo)
+    store.record("intent", "remember me", "code_exercise")
+    store.clear()
+    assert len(store) == 0
+    assert repo.recent_corrections() == []

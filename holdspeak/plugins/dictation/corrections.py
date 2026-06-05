@@ -179,8 +179,63 @@ class CorrectionStore:
         return items
 
     def clear(self) -> None:
+        """Empty the ring — and the durable store too, when one is attached."""
         with self._lock:
             self._items.clear()
+            self._seq = 0
+        if self._repository is not None:
+            try:
+                self._repository.clear()
+            except Exception:  # pragma: no cover - durability must never raise
+                pass
+
+    def list_for_display(self) -> list[dict[str, object]]:
+        """Corrections for the memory UI, newest-first.
+
+        With a repository each row carries its durable `id` + `created_at` (so
+        the UI can curate it); with none it falls back to the in-memory ring
+        (no id — nothing to delete). The `key` field is the gist either way, so
+        the API shape is stable.
+        """
+        if self._repository is not None:
+            try:
+                return [
+                    {
+                        "id": r.id,
+                        "kind": r.kind,
+                        "key": r.gist,
+                        "value": r.value,
+                        "created_at": r.created_at,
+                    }
+                    for r in self._repository.recent_corrections()
+                ]
+            except Exception:  # pragma: no cover - durability must never raise
+                pass
+        return [c.to_dict() for c in self.recent()]
+
+    def remove(self, correction_id: object) -> bool:
+        """Delete one persistent correction by id; reloads the ring to match.
+
+        A no-op (returns False) when there is no repository — the in-memory ring
+        has no stable ids to address.
+        """
+        if self._repository is None:
+            return False
+        try:
+            removed = self._repository.delete_correction(int(correction_id))
+        except (TypeError, ValueError):
+            return False
+        if removed:
+            self._reload_ring()
+        return removed
+
+    def _reload_ring(self) -> None:
+        """Rebuild the in-memory ring from the durable store (after a delete)."""
+        with self._lock:
+            self._items.clear()
+            self._seq = 0
+        if self._repository is not None:
+            self._load_from_repository(self._repository)
 
     def __len__(self) -> int:
         with self._lock:

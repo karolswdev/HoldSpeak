@@ -142,3 +142,61 @@ def test_post_writes_through_to_db(persistent_db: Database, settings_path: Path)
     assert len(persisted) == 1
     assert persisted[0].kind == "target"
     assert persisted[0].value == "codex_cli"
+
+
+def test_get_items_carry_id_when_persistent(persistent_db: Database, settings_path: Path) -> None:
+    persistent_db.dictation_corrections.record_correction(
+        kind="intent", gist="fix the cli thing", value="code_exercise"
+    )
+    client = _persistent_client(persistent_db)
+    item = client.get("/api/dictation/corrections").json()["items"][0]
+    assert "id" in item and isinstance(item["id"], int)
+    assert "created_at" in item
+
+
+def test_delete_correction_by_id(persistent_db: Database, settings_path: Path) -> None:
+    rec = persistent_db.dictation_corrections.record_correction(
+        kind="intent", gist="fix the cli thing", value="code_exercise"
+    )
+    client = _persistent_client(persistent_db)
+    resp = client.request("DELETE", f"/api/dictation/corrections/{rec.id}")
+    assert resp.status_code == 200
+    assert resp.json() == {"removed": True, "size": 0}
+    # Gone from the durable store too.
+    assert persistent_db.dictation_corrections.recent_corrections() == []
+    # A second delete 404s.
+    again = client.request("DELETE", f"/api/dictation/corrections/{rec.id}")
+    assert again.status_code == 404
+
+
+def test_clear_all_corrections(persistent_db: Database, settings_path: Path) -> None:
+    persistent_db.dictation_corrections.record_correction(
+        kind="intent", gist="one", value="code_exercise"
+    )
+    persistent_db.dictation_corrections.record_correction(
+        kind="target", gist="two", value="codex_cli"
+    )
+    client = _persistent_client(persistent_db)
+    resp = client.request("DELETE", "/api/dictation/corrections")
+    assert resp.status_code == 200
+    assert resp.json() == {"cleared": True, "size": 0}
+    assert persistent_db.dictation_corrections.recent_corrections() == []
+    assert client.get("/api/dictation/corrections").json()["size"] == 0
+
+
+def test_delete_without_repo_404s(test_client: TestClient, settings_path: Path) -> None:
+    # An in-memory-only store has no ids to address — delete is a no-op 404.
+    resp = test_client.request("DELETE", "/api/dictation/corrections/1")
+    assert resp.status_code == 404
+
+
+def test_dictation_page_includes_memory_tab(test_client: TestClient) -> None:
+    """HS-40-04: the Memory tab + its curate/telemetry hosts are in the page."""
+    body = test_client.get("/dictation").text
+    assert 'data-section="memory"' in body
+    assert "What the copilot has learned" in body
+    assert 'id="mem-list"' in body          # the corrections list host
+    assert 'id="mem-add-form"' in body       # the add-correction form
+    assert 'id="mem-btn-clear"' in body      # forget-all
+    assert 'id="mem-corrections-enabled"' in body  # the in-context toggle
+    assert 'id="mem-depth"' in body          # the depth-telemetry host
