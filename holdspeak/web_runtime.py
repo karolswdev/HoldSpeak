@@ -135,9 +135,13 @@ class WebRuntime:
         self.transcriber: Optional[Transcriber] = None
         self.server: Optional[MeetingWebServer] = None
         self.meeting_session: Optional[MeetingSession] = None
-        # HS-41-03: the opt-in desktop presence host (None unless
-        # HOLDSPEAK_DESKTOP_PRESENCE=1 and a native renderer is available).
-        self.desktop_presence: Optional[DesktopPresenceHost] = build_desktop_presence_host()
+        # HS-41-03/04: the opt-in desktop presence host (None unless
+        # HOLDSPEAK_DESKTOP_PRESENCE=1 and a native renderer is available). The
+        # url_provider is read lazily (the macOS renderer loads <url>/presence on
+        # first show), so it resolves after the server has a port.
+        self.desktop_presence: Optional[DesktopPresenceHost] = build_desktop_presence_host(
+            url_provider=lambda: self.runtime_url
+        )
         self.device_registry = DeviceRegistry()
         self.device_status = DeviceStatusEmitter(label_lookup=self.device_registry)
         # HS-17-05: periodic Recording-tick emitter for attached devices.

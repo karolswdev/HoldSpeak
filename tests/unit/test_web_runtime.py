@@ -1097,7 +1097,7 @@ def test_runtime_activity_forwards_to_desktop_presence(monkeypatch: pytest.Monke
 
     desktop = FakeDesktopPresence()
     monkeypatch.setattr(web_runtime, "TextTyper", FakeTextTyper)
-    monkeypatch.setattr(web_runtime, "build_desktop_presence_host", lambda: desktop)
+    monkeypatch.setattr(web_runtime, "build_desktop_presence_host", lambda **_kw: desktop)
 
     runtime = web_runtime.WebRuntime(
         no_open=True,

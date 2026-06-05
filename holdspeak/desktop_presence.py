@@ -283,30 +283,44 @@ def detect_presence_platform(
     return {"os": "other", "wayland": False, "compositor": None, "overlay_capable": False}
 
 
-def _select_presence_renderer(platform: dict[str, object]) -> Optional[PresenceRenderer]:
+def _select_presence_renderer(
+    platform: dict[str, object],
+    url_provider: Optional[Callable[[], str]],
+) -> Optional[PresenceRenderer]:
     """Pick the best available native renderer for the platform, or None.
 
-    The concrete renderers land in HS-41-04 (macOS) and HS-41-05 (Linux); until
-    then this returns None on every platform, so `build_desktop_presence_host`
-    degrades to None (the web card remains the active surface).
+    macOS (HS-41-04): a non-activating ``NSPanel`` hosting a ``WKWebView`` of the
+    ``/presence`` HUD + an ``NSStatusItem`` glyph, when PyObjC/WebKit + a runtime
+    URL are available. Linux (HS-41-05) lands next. None on every other case, so
+    `build_desktop_presence_host` degrades to None and the web card remains the
+    active surface.
     """
-    _ = platform
+    if platform.get("os") == "macos" and url_provider is not None:
+        from .desktop_presence_cocoa import CocoaPresenceRenderer, cocoa_presence_available
+
+        if cocoa_presence_available():
+            return CocoaPresenceRenderer(url_provider)
     return None
 
 
 def build_desktop_presence_host(
     env: Optional[dict[str, str]] = None,
+    *,
+    url_provider: Optional[Callable[[], str]] = None,
 ) -> Optional[DesktopPresenceHost]:
     """Build the opt-in desktop host, or None (flag off / no native renderer).
 
-    Defensive: a renderer that fails to construct never stops the runtime — it
-    falls back to None and the web presence card stays the active surface.
+    `url_provider` is a lazy callable returning the runtime base URL (e.g.
+    ``http://127.0.0.1:PORT``); the macOS renderer reads it at first show to load
+    the ``/presence`` HUD. Defensive: a renderer that fails to construct never
+    stops the runtime — it falls back to None and the web presence card stays the
+    active surface.
     """
     if not desktop_presence_enabled(env):
         return None
     platform = detect_presence_platform(env)
     try:
-        renderer = _select_presence_renderer(platform)
+        renderer = _select_presence_renderer(platform, url_provider)
     except Exception as exc:  # pragma: no cover - presence must never block boot
         log.warning(f"Desktop presence renderer unavailable: {exc}")
         return None

@@ -147,7 +147,7 @@ def test_build_host_wraps_a_selected_renderer(monkeypatch: pytest.MonkeyPatch) -
     # When a renderer *is* available, the builder wraps it in a host.
     renderer = NullPresenceRenderer()
     monkeypatch.setattr(
-        "holdspeak.desktop_presence._select_presence_renderer", lambda _p: renderer
+        "holdspeak.desktop_presence._select_presence_renderer", lambda _p, _u: renderer
     )
     host = build_desktop_presence_host({"HOLDSPEAK_DESKTOP_PRESENCE": "1"})
     assert isinstance(host, DesktopPresenceHost)
@@ -155,11 +155,36 @@ def test_build_host_wraps_a_selected_renderer(monkeypatch: pytest.MonkeyPatch) -
 
 
 def test_build_host_falls_back_when_renderer_raises(monkeypatch: pytest.MonkeyPatch) -> None:
-    def boom(_p):
+    def boom(_p, _u):
         raise RuntimeError("no gui")
 
     monkeypatch.setattr("holdspeak.desktop_presence._select_presence_renderer", boom)
     assert build_desktop_presence_host({"HOLDSPEAK_DESKTOP_PRESENCE": "1"}) is None
+
+
+def test_select_macos_renderer_when_available(monkeypatch: pytest.MonkeyPatch) -> None:
+    # macOS + WebKit available + a URL provider → the Cocoa renderer is picked
+    # (constructed cheaply; the child process is spawned lazily on first show).
+    import holdspeak.desktop_presence as dp
+
+    monkeypatch.setattr("holdspeak.desktop_presence_cocoa.cocoa_presence_available", lambda: True)
+    picked = dp._select_presence_renderer({"os": "macos"}, lambda: "http://127.0.0.1:9")
+    from holdspeak.desktop_presence_cocoa import CocoaPresenceRenderer
+
+    assert isinstance(picked, CocoaPresenceRenderer)
+
+
+def test_select_macos_renderer_none_without_webkit(monkeypatch: pytest.MonkeyPatch) -> None:
+    import holdspeak.desktop_presence as dp
+
+    monkeypatch.setattr("holdspeak.desktop_presence_cocoa.cocoa_presence_available", lambda: False)
+    assert dp._select_presence_renderer({"os": "macos"}, lambda: "http://x") is None
+
+
+def test_select_renderer_none_without_url_provider() -> None:
+    import holdspeak.desktop_presence as dp
+
+    assert dp._select_presence_renderer({"os": "macos"}, None) is None
 
 
 # ── Platform probe ────────────────────────────────────────────────────

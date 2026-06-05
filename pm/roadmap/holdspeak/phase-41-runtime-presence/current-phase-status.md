@@ -1,15 +1,16 @@
 # Phase 41 — Runtime Presence Indicators
 
-**Status:** IN PROGRESS (3/7 stories). Opened 2026-06-05. Direction chosen by the
+**Status:** IN PROGRESS (4/7 stories). Opened 2026-06-05. Direction chosen by the
 user: **know what the copilot is doing on the desktop** while dictating —
 without the web dashboard being visible — via a rich, branded, native-feeling
 presence indicator on **both macOS and Linux**.
 
-**Last updated:** 2026-06-05 (**HS-41-03 done** — the `PresenceRenderer` Protocol
-+ `DesktopPresenceHost` (policy/linger) + Wayland-aware `detect_presence_platform`
-+ flag-gated host builder, re-wired into `web_runtime`; the `/presence` HUD page +
-framework-free WS driver render the Signal card live (the native-webview content).
-Still zero native deps; suite 2245/16. HS-41-01/02 also done.).
+**Last updated:** 2026-06-05 (**HS-41-04 done** — the macOS native renderer: a
+**non-activating `NSPanel`** hosting a **`WKWebView`** of `/presence` (native
+rounding/shadow, the Signal card) + an `NSStatusItem` glyph, focus-safe (proven
+frontmost-unchanged) + graceful fallback. Live native screenshots captured. Also
+fixed the broken Homebrew Python by moving the venv to uv-managed CPython 3.13.11.
+Suite 2251/16. HS-41-01/02/03 also done.).
 
 ## Goal
 
@@ -96,14 +97,14 @@ available tier; everything is gated by `HOLDSPEAK_DESKTOP_PRESENCE=1`.
 | HS-41-01 | Runtime activity contract + state mapping | done | [story-01-runtime-activity-contract.md](./story-01-runtime-activity-contract.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-41-02 | Web presence card (zero-dep surface) | done | [story-02-web-presence-card.md](./story-02-web-presence-card.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-41-03 | Renderer Protocol + host selection + `/presence` route | done | [story-03-renderer-seam.md](./story-03-renderer-seam.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-41-04 | macOS renderer (NSStatusItem + NSPanel webview) | backlog | [story-04-macos-renderer.md](./story-04-macos-renderer.md) | — |
+| HS-41-04 | macOS renderer (NSStatusItem + NSPanel webview) | done | [story-04-macos-renderer.md](./story-04-macos-renderer.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-41-05 | Linux renderer (notification + tray + overlay) | backlog | [story-05-linux-renderer.md](./story-05-linux-renderer.md) | — |
 | HS-41-06 | Documentation | backlog | [story-06-documentation.md](./story-06-documentation.md) | — |
 | HS-41-07 | Closeout | backlog | [story-07-closeout.md](./story-07-closeout.md) | — |
 
 ## Where we are
 
-**HS-41-01 → HS-41-03 done (2026-06-05).** Branched `phase-41-runtime-presence`
+**HS-41-01 → HS-41-04 done (2026-06-05).** Branched `phase-41-runtime-presence`
 off `main` (post Phase-40 merge). HS-41-01 ported the pure `runtime_activity`
 contract; HS-41-02 wired the full lifecycle into it + the WS broadcast + the
 dashboard presence card (zero deps). **HS-41-03** built the desktop seam:
@@ -114,9 +115,16 @@ GNOME/KDE-Wayland, True on macOS/X11/wlroots) + the flag-gated
 `build_desktop_presence_host` (None until a native renderer registers), re-wired
 into `web_runtime`. The **`/presence`** HUD page (chromeless, transparent,
 token-styled) + `presence-app.js` (framework-free WS driver) render the Signal
-card live — the exact content the native webview (HS-41-04/05) hosts. Still
-**zero native deps**; suite 2245/16. Next: **HS-41-04** (the macOS renderer —
-`NSStatusItem` glyph + non-activating `NSPanel` hosting the `/presence` webview).
+card live — the exact content the native webview hosts. **HS-41-04** built the
+**macOS** renderer: `CocoaPresenceRenderer` (PyObjC, the optional `presence`
+extra) drives a **non-activating `NSPanel`** hosting a **`WKWebView`** of
+`/presence` (native rounding/shadow — the Signal card) + an `NSStatusItem`
+glyph, in a lazy-started child process. **Focus-safe** (the smoke run proved the
+frontmost app is unchanged when the HUD shows) + graceful fallback when
+WebKit/GUI is absent; live native screenshots captured. (Also: fixed the broken
+Homebrew python@3.13 bottle by switching the venv to uv-managed CPython 3.13.11
+— `uv run` works again.) Suite 2251/16. Next: **HS-41-05** (the Linux renderer —
+notification + tray + overlay).
 
 ## Active risks
 
