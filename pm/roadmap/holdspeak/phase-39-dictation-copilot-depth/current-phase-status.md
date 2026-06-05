@@ -1,12 +1,21 @@
 # Phase 39 — Dictation Copilot Depth
 
-**Status:** IN PROGRESS (8/9 stories). Opened 2026-06-05. Direction chosen by
+**Status:** CLOSED ✅ (9/9 stories). See [`final-summary.md`](./final-summary.md).
+Branch `phase-39/hs-39-01-multi-pass-rewriting` — push + open a PR to `main`. Opened 2026-06-05. Direction chosen by
 the user (feature work over Release/First-Run and Growth; track "Dictation
 Copilot depth" over Actuators III and Artifact→action bridges). Phase grew
 7→9 stories mid-flight (HS-39-08 real-endpoint e2e; HS-39-09 all-features
 showcase + public doc — both user-requested).
 
-**Last updated:** 2026-06-05 (**HS-39-06 done** — the dedicated docs story.
+**Last updated:** 2026-06-05 (**HS-39-07 — Phase 39 CLOSED ✅ (9/9)** — the
+closeout. `final-summary.md` written; a real **before/after** on `.43`
+(Phase-18/19 single-pass vs Phase-39 multi-pass: the depth pass *tightens*
+1483→1430 chars) in `evidence/before_after.md`; invariant re-verified
+(pipeline-disabled byte-identical, default suite makes no real LLM/network
+call); full suite **2186 passed, 16 skipped**. README phase row → done. Branch
+`phase-39/hs-39-01-multi-pass-rewriting` — push + open a PR to `main`.)
+
+**Earlier 2026-06-05** (**HS-39-06 done** — the dedicated docs story.
 `docs/INTELLIGENT_TYPING_GUIDE.md` gained **§10 "Copilot Depth"** documenting
 every new knob (`rewrite_passes`, `corrections_enabled`,
 `target_detect_llm_enabled` / `_below`) with defaults + a JSON example + the
@@ -186,11 +195,13 @@ The DIR-01 invariant is unchanged and load-bearing throughout:
 - [x] Real spoken→enriched e2e over a `.hs` fixture project, gated/auto-skip,
       passing live against `.43`; beautiful before→after; committed capture.
       (HS-39-08) — [evidence-story-08](./evidence-story-08.md)
-- [ ] `.43` endpoint dogfood captured; before/after on a messy session
-      (reuses HS-39-08); `final-summary.md`; README → done. (HS-39-07)
-- [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green throughout;
-      with `dictation.pipeline.enabled=false` the typing path is byte-identical
-      to pre-Phase-39; no new default network/LLM call. (all)
+- [x] `.43` endpoint dogfood captured; before/after on a messy session;
+      `final-summary.md`; README → done. (HS-39-07) —
+      [final-summary](./final-summary.md) · [before_after](./evidence/before_after.md)
+- [x] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green throughout
+      (closed at **2186 passed, 16 skipped**); with `dictation.pipeline.enabled=false`
+      the typing path is byte-identical to pre-Phase-39; no new default
+      network/LLM call. (all)
 
 ## Story status
 
@@ -202,7 +213,7 @@ The DIR-01 invariant is unchanged and load-bearing throughout:
 | HS-39-04 | Project-doc suggestion quality gate | done | [story-04-suggestion-quality-gate.md](./story-04-suggestion-quality-gate.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-39-05 | Pipeline depth telemetry | done | [story-05-pipeline-depth-telemetry.md](./story-05-pipeline-depth-telemetry.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-39-06 | Documentation | done | [story-06-documentation.md](./story-06-documentation.md) | [evidence-story-06.md](./evidence-story-06.md) |
-| HS-39-07 | Closeout + final-summary | backlog | [story-07-closeout.md](./story-07-closeout.md) | — |
+| HS-39-07 | Closeout + final-summary | done | [story-07-closeout.md](./story-07-closeout.md) | [final-summary.md](./final-summary.md) |
 | HS-39-08 | Real spoken→enriched dictation e2e + demo | done | [story-08-spoken-dictation-e2e.md](./story-08-spoken-dictation-e2e.md) | [evidence-story-08.md](./evidence-story-08.md) |
 | HS-39-09 | Dictation copilot showcase (all features + public doc) | done | [story-09-dictation-copilot-showcase.md](./story-09-dictation-copilot-showcase.md) | [evidence-story-09.md](./evidence-story-09.md) |
 
