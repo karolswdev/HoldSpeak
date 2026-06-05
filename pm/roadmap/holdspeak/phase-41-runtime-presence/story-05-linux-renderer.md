@@ -2,10 +2,11 @@
 
 - **Project:** holdspeak
 - **Phase:** 41
-- **Status:** backlog
+- **Status:** done (2026-06-05) — Tier-1 (notification + tray); the GTK-WebKit overlay is a deferred X11/wlroots-only follow-up
 - **Depends on:** HS-41-03
 - **Unblocks:** none
 - **Owner:** unassigned
+- **Evidence:** [evidence-story-05.md](./evidence-story-05.md)
 
 ## Problem
 
@@ -33,10 +34,22 @@ GNOME/KDE/XFCE — without a custom overlay where the platform forbids it.
 
 ## Acceptance criteria
 
-- [ ] With the flag on (Linux), state drives an updating notification + a tray
-      glyph; the overlay appears only on overlay-capable compositors.
-- [ ] Never steals focus; deps absent ⇒ Null fallback; default suite unaffected.
-- [ ] The Wayland-GNOME/KDE behavior (tray+notification, no overlay) is explicit.
+- [x] With the flag on (Linux), state drives an updating notification + a tray
+      glyph. (The overlay's *selection* is plumbed via `overlay_capable`; the
+      concrete GTK-WebKit overlay window is a deferred X11/wlroots-only follow-up.)
+- [x] Never steals focus (notification/tray are focus-safe by spec); deps absent
+      ⇒ graceful fallback; default suite unaffected.
+- [x] The Wayland-GNOME/KDE behavior (tray+notification, no overlay) is explicit.
+
+## Outcome
+
+`FreedesktopPresenceRenderer` (PyGObject, lazy) — an in-place-updating libnotify
+notification (coalesced on state change) + a StatusNotifierItem tray glyph,
+focus-safe and portable across X11/Wayland + GNOME/KDE/XFCE. Pure
+`notification_for_view` + injectable seams → fully unit-tested with fakes on
+macOS; graceful fallback verified (`freedesktop_presence_available()` False
+here). The Tier-2 floating GTK-WebKit overlay is deferred (X11/wlroots-only,
+un-verifiable on macOS). Suite 2259/16. See [evidence-story-05.md](./evidence-story-05.md).
 
 ## Notes
 

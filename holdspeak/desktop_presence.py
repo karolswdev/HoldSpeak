@@ -300,6 +300,16 @@ def _select_presence_renderer(
 
         if cocoa_presence_available():
             return CocoaPresenceRenderer(url_provider)
+    if platform.get("os") == "linux" and url_provider is not None:
+        from .desktop_presence_freedesktop import (
+            FreedesktopPresenceRenderer,
+            freedesktop_presence_available,
+        )
+
+        if freedesktop_presence_available():
+            return FreedesktopPresenceRenderer(
+                url_provider, overlay_capable=bool(platform.get("overlay_capable"))
+            )
     return None
 
 

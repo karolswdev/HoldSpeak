@@ -85,6 +85,10 @@ dictation-openai = [
 presence = [
     "pyobjc-framework-Cocoa>=10.0; sys_platform == 'darwin'",
     "pyobjc-framework-WebKit>=10.0; sys_platform == 'darwin'",
+    # Linux (HS-41-05): notification (libnotify) + StatusNotifierItem tray via
+    # PyGObject. The libnotify/AppIndicator typelibs are system packages
+    # (e.g. gir1.2-notify-0.7, gir1.2-ayatanaappindicator3-0.1) — see the docs.
+    "PyGObject>=3.44; sys_platform == 'linux'",
 ]
 dev = [
     "playwright>=1.40.0",

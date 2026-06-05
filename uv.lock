@@ -808,6 +808,7 @@ meeting = [
     { name = "resemblyzer" },
 ]
 presence = [
+    { name = "pygobject", marker = "sys_platform == 'linux'" },
     { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin'" },
     { name = "pyobjc-framework-webkit", marker = "sys_platform == 'darwin'" },
 ]
@@ -835,6 +836,7 @@ requires-dist = [
     { name = "openai", marker = "extra == 'meeting'", specifier = ">=1.0.0" },
     { name = "outlines", marker = "platform_machine == 'arm64' and sys_platform == 'darwin' and extra == 'dictation-mlx'", specifier = ">=0.1.0" },
     { name = "playwright", marker = "extra == 'dev'", specifier = ">=1.40.0" },
+    { name = "pygobject", marker = "sys_platform == 'linux' and extra == 'presence'", specifier = ">=3.44" },
     { name = "pynput", specifier = ">=1.7.6" },
     { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin' and extra == 'presence'", specifier = ">=10.0" },
     { name = "pyobjc-framework-webkit", marker = "sys_platform == 'darwin' and extra == 'presence'", specifier = ">=10.0" },
@@ -2011,6 +2013,12 @@ wheels = [
 ]
 
 [[package]]
+name = "pycairo"
+version = "1.29.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/22/d9/1728840a22a4ef8a8f479b9156aa2943cd98c3907accd3849fb0d5f82bfd/pycairo-1.29.0.tar.gz", hash = "sha256:f3f7fde97325cae80224c09f12564ef58d0d0f655da0e3b040f5807bd5bd3142", size = 665871, upload-time = "2025-11-11T19:13:01.584Z" }
+
+[[package]]
 name = "pycparser"
 version = "2.23"
 source = { registry = "https://pypi.org/simple" }
@@ -2172,6 +2180,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/b0/77/a5b8c569bf593b014
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b", size = 1225217, upload-time = "2025-06-21T13:39:07.939Z" },
 ]
+
+[[package]]
+name = "pygobject"
+version = "3.56.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pycairo" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/da/61/978c5fbca34f10a90df362502fbb5a005637909e7b5a0e9212349ea9d010/pygobject-3.56.3.tar.gz", hash = "sha256:12760e4a0e3d04b6eb95e06f7a27e362c826d567ea613373a92c003b6c70d2d6", size = 1411853, upload-time = "2026-05-08T20:46:39.904Z" }
 
 [[package]]
 name = "pynput"
