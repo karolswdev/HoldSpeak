@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 39
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** none
 - **Owner:** unassigned
@@ -39,17 +39,27 @@ adds the quality gate.
 
 ## Acceptance criteria
 
-- [ ] A suggestion whose content is ~already present in the target `.hs/*.md`
-      is suppressed and the reason is recorded (not silently dropped).
-- [ ] A dismissed suggestion does not recur for a near-duplicate utterance in
-      the same session.
-- [ ] Consolidation mode folds N qualifying utterances into one suggested
-      update with combined rationale.
-- [ ] The suppression reason (already-covered | dismissed | below-quality) is
-      visible in the dry-run / suggestion response.
-- [ ] Existing path/length/secret validation is unchanged; a genuinely new
-      suggestion still surfaces (no false suppression on novel content).
-- [ ] No DB schema change; no auto-write of any `.hs` file.
+- [x] A suggestion whose content is ~already present in the target `.hs/*.md`
+      is suppressed with status `already_covered` (not silently dropped) —
+      `project_rewriter._existing_doc_text` + `suggestion_already_covered`;
+      `test_project_rewriter_dedup_suppresses_already_covered`.
+- [x] A dismissed suggestion does not recur for a near-duplicate utterance in
+      the same session — a session `dismissed_suggestion_signatures` set
+      (router-scoped); the dismiss route records the signature and
+      `_store_project_doc_suggestion` suppresses it (status `dismissed`);
+      `test_store_keeps_then_suppresses_dismissed`.
+- [x] Consolidation folds N suggestions into one with combined rationale +
+      de-duplicated content — `consolidate_suggestions`;
+      `test_consolidate_merges_several`. (Pure helper, tested; cross-utterance
+      UI accumulation is a follow-up — see Notes.)
+- [x] The suppression reason is visible: `already_covered` on the rewriter
+      stage's `project_doc_suggestion_status`; `dismissed` / `stored` /
+      `no_suggestion` as the dry-run's top-level `suggestion_status`.
+- [x] Existing path/length/secret validation unchanged; a genuinely new
+      suggestion still surfaces — `test_project_rewriter_surfaces_novel_suggestion`,
+      `test_already_covered_false_for_novel_content`.
+- [x] No DB schema change; no auto-write of any `.hs` file (apply stays
+      explicit).
 
 ## Test plan
 
@@ -69,6 +79,14 @@ adds the quality gate.
   dropped useful suggestion is the worse failure; see the risk table).
 - Consolidation interacts with HS-39-02's correction store conceptually but is
   independent code; keep them decoupled.
+- **Consolidation wiring deferred (recorded at ship):** `consolidate_suggestions`
+  is a pure, tested helper. The live suggestion store holds one suggestion per
+  project, so cross-utterance "accumulate N then fold" needs a list-shaped store
+  + a UI control — left as a follow-up (the helper is ready). The dedup +
+  recurrence suppressions are the high-value, fully-wired pieces.
+- The `already_covered` similarity threshold is conservative (0.85 Jaccard) to
+  prefer a false *surface* over a false *suppress* — dropping a genuinely new
+  note is the worse failure.
 - Canon: the suggestion target allow-list (`.hs/{memory,decisions,handoffs,
   workflows,issues}/slug.md`) and the no-silent-write rule are unchanged —
   this story only *filters* what gets proposed.

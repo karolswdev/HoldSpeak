@@ -90,14 +90,32 @@ def _store_project_doc_suggestion(
     project: dict[str, Any] | None,
     stages: list[dict[str, Any]],
     suggestions: dict[str, dict[str, str]],
-) -> None:
+    *,
+    dismissed_signatures: set[str] | None = None,
+) -> str:
+    """Store the dry-run's suggestion (or suppress it). Returns the outcome.
+
+    HS-39-04: a suggestion whose signature was previously dismissed in this
+    session is suppressed (``"dismissed"``) so it doesn't recur.
+    """
     if not project:
-        return
+        return "no_project"
+    key = _project_suggestion_key(project)
     suggestion = _extract_project_doc_suggestion(stages)
-    if suggestion is not None:
-        suggestions[_project_suggestion_key(project)] = suggestion
-    else:
-        suggestions.pop(_project_suggestion_key(project), None)
+    if suggestion is None:
+        suggestions.pop(key, None)
+        return "no_suggestion"
+    if dismissed_signatures is not None:
+        from ....project_doc_suggestions import suggestion_signature
+
+        sig = suggestion_signature(
+            str(suggestion.get("target_path") or ""), str(suggestion.get("content") or "")
+        )
+        if sig in dismissed_signatures:
+            suggestions.pop(key, None)
+            return "dismissed"
+    suggestions[key] = suggestion
+    return "stored"
 
 
 def _validate_project_doc_suggestion_body(payload: dict[str, Any]) -> Any:
@@ -407,6 +425,7 @@ def _run_dictation_dry_run_text(
     *,
     suggestions: dict[str, dict[str, str]],
     corrections: Any = None,
+    dismissed_signatures: set[str] | None = None,
 ) -> dict[str, Any]:
     """Execute the browser dry-run path for already-validated text."""
     from ....config import Config
@@ -489,11 +508,14 @@ def _run_dictation_dry_run_text(
         )
     )
     stages = [_serialize_stage_result(sr) for sr in run.stage_results]
-    _store_project_doc_suggestion(project, stages, suggestions)
+    suggestion_status = _store_project_doc_suggestion(
+        project, stages, suggestions, dismissed_signatures=dismissed_signatures
+    )
     warnings = list(run.warnings)
     return {
         "project": dict(project) if project else None,
         "target": target_profile.to_dict(),
+        "suggestion_status": suggestion_status,
         "runtime_status": result.runtime_status,
         "runtime_detail": result.runtime_detail,
         "blocks_count": len(result.blocks.blocks),

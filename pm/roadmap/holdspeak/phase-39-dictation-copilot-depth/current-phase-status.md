@@ -1,13 +1,22 @@
 # Phase 39 — Dictation Copilot Depth
 
-**Status:** IN PROGRESS (5/9 stories). Opened 2026-06-05. Direction chosen by
+**Status:** IN PROGRESS (6/9 stories). Opened 2026-06-05. Direction chosen by
 the user (feature work over Release/First-Run and Growth; track "Dictation
 Copilot depth" over Actuators III and Artifact→action bridges). Phase grew
 7→9 stories mid-flight (HS-39-08 real-endpoint e2e; HS-39-09 all-features
 showcase + public doc — both user-requested).
 
-**Last updated:** 2026-06-05 (**HS-39-09 done** (user request) — dictation
-copilot showcase. The demo now fires **all four** depth features in one real
+**Last updated:** 2026-06-05 (**HS-39-04 done** — project-doc suggestion
+quality gate. New pure helpers in `project_doc_suggestions.py`
+(`suggestion_signature`, `suggestion_already_covered`, `consolidate_suggestions`);
+the project-rewriter now **dedups** a suggestion against the existing target
+`.hs/*.md` (status `already_covered`), and a session `dismissed_suggestion_signatures`
+set makes a **dismissed** suggestion not recur (the dismiss route records it;
+the dry-run's `suggestion_status` surfaces it). Consolidation is a tested helper
+(UI wiring deferred). Conservative 0.85 dedup threshold (prefer false-surface
+over false-suppress); no DB, no auto-write. Suite **2177/16** (+10); ruff-clean.
+Next: HS-39-05 telemetry. **HS-39-09 done** (user request) — dictation copilot
+showcase. The demo now fires **all four** depth features in one real
 `.43` run (intent-router + correction nudge, kb-enricher injection, multi-pass
 rewrite, model-assisted target) with a "Features that fired" panel; the e2e
 asserts each (re-verified live, 18.77s). New public showcase
@@ -147,9 +156,10 @@ The DIR-01 invariant is unchanged and load-bearing throughout:
       target-profile fallback; manual override still wins; with the fallback
       off, detection is byte-identical. (HS-39-03) —
       [evidence-story-03](./evidence-story-03.md)
-- [ ] A proposed `.hs/*.md` update that ~duplicates the existing doc is
+- [x] A proposed `.hs/*.md` update that ~duplicates the existing doc is
       suppressed; a dismissed suggestion does not recur in the session;
-      consolidation can fold N utterances into one update. (HS-39-04)
+      consolidation can fold N utterances into one update. (HS-39-04) —
+      [evidence-story-04](./evidence-story-04.md)
 - [ ] `GET /api/dictation/readiness` reports per-stage p50/p95 + budget
       guidance + multi-pass + correction-store state. (HS-39-05)
 - [ ] `docs/INTELLIGENT_TYPING_GUIDE.md` documents every new knob; no live doc
@@ -170,7 +180,7 @@ The DIR-01 invariant is unchanged and load-bearing throughout:
 | HS-39-01 | Multi-pass rewriting | done | [story-01-multi-pass-rewriting.md](./story-01-multi-pass-rewriting.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-39-02 | Correction memory (session learning) | done | [story-02-correction-memory.md](./story-02-correction-memory.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-39-03 | Model-assisted target detection | done | [story-03-model-assisted-target-detection.md](./story-03-model-assisted-target-detection.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-39-04 | Project-doc suggestion quality gate | backlog | [story-04-suggestion-quality-gate.md](./story-04-suggestion-quality-gate.md) | — |
+| HS-39-04 | Project-doc suggestion quality gate | done | [story-04-suggestion-quality-gate.md](./story-04-suggestion-quality-gate.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-39-05 | Pipeline depth telemetry | backlog | [story-05-pipeline-depth-telemetry.md](./story-05-pipeline-depth-telemetry.md) | — |
 | HS-39-06 | Documentation | backlog | [story-06-documentation.md](./story-06-documentation.md) | — |
 | HS-39-07 | Closeout + final-summary | backlog | [story-07-closeout.md](./story-07-closeout.md) | — |
@@ -178,6 +188,17 @@ The DIR-01 invariant is unchanged and load-bearing throughout:
 | HS-39-09 | Dictation copilot showcase (all features + public doc) | done | [story-09-dictation-copilot-showcase.md](./story-09-dictation-copilot-showcase.md) | [evidence-story-09.md](./evidence-story-09.md) |
 
 ## Where we are
+
+**HS-39-04 done (2026-06-05) — suggestion quality gate.** The project-doc
+suggestion path stops re-proposing what's already written and stops resurfacing
+what you dismissed. New pure helpers (`suggestion_signature` /
+`suggestion_already_covered` / `consolidate_suggestions`) in
+`project_doc_suggestions.py`; the rewriter dedups against the existing target
+`.hs/*.md` (`already_covered`); a router-scoped `dismissed_suggestion_signatures`
+set + the dismiss route + `_store_project_doc_suggestion` suppress a dismissed
+near-dupe (`suggestion_status` surfaces the reason on the dry-run). Conservative
+0.85 Jaccard threshold; no DB/auto-write. 10 new tests; suite 2177/16.
+**Next: HS-39-05** (pipeline depth telemetry).
 
 **HS-39-09 done (2026-06-05) — the showcase + public doc.** On user request,
 the demo grew to fire **all four** depth features in one real run and a public

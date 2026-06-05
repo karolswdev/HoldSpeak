@@ -29,6 +29,7 @@ log = get_logger("web.routes.dictation")
 def build_pipeline_router(
     ctx: WebContext,
     project_doc_suggestions: dict[str, dict[str, str]],
+    dismissed_signatures: set[str] | None = None,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -253,6 +254,7 @@ def build_pipeline_router(
                     target_hints,
                     suggestions=project_doc_suggestions,
                     corrections=ctx.corrections,
+                    dismissed_signatures=dismissed_signatures,
                 )
             )
         except ValueError as exc:

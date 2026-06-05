@@ -245,3 +245,71 @@ def _looks_secret(text: str) -> bool:
 def looks_like_secret(text: str) -> bool:
     """Public secret-shape check, reused by the correction memory (HS-39-02)."""
     return _looks_secret(text)
+
+
+# --- HS-39-04: suggestion quality gate -------------------------------------
+
+_WORD_RE = re.compile(r"[a-z0-9]+")
+
+
+def _norm_tokens(text: str) -> set[str]:
+    return set(_WORD_RE.findall(str(text or "").lower()))
+
+
+def suggestion_signature(target_path: str, content: str) -> str:
+    """Stable signature of a suggestion for recurrence matching (near-dupes match)."""
+    import hashlib
+
+    toks = " ".join(sorted(_norm_tokens(content)))
+    key = f"{str(target_path or '').strip().lower()}|{toks}"
+    return hashlib.sha1(key.encode("utf-8")).hexdigest()[:16]
+
+
+def suggestion_already_covered(
+    content: str, existing_doc_text: str, *, threshold: float = 0.85
+) -> bool:
+    """True if the suggestion adds little over what the target doc already says.
+
+    Conservative on purpose — a *false surface* (re-proposing covered content) is
+    a smaller failure than a *false suppress* (dropping a genuinely new note), so
+    the threshold is high. An empty suggestion is "covered" (nothing to add); an
+    empty/absent doc is never "covered".
+    """
+    sug = _norm_tokens(content)
+    if not sug:
+        return True
+    doc = _norm_tokens(existing_doc_text)
+    if not doc:
+        return False
+    overlap = len(sug & doc) / len(sug)
+    return overlap >= threshold
+
+
+def consolidate_suggestions(
+    suggestions: list["ProjectDocSuggestion | None"],
+) -> "ProjectDocSuggestion | None":
+    """Fold several suggestions into one (HS-39-04 consolidation mode).
+
+    Targets the first suggestion's path, concatenates de-duplicated content
+    sections, and combines rationales. Length-bounded like a normal suggestion.
+    Returns None for an empty list, the lone item for a singleton.
+    """
+    valid = [s for s in suggestions if s is not None]
+    if not valid:
+        return None
+    if len(valid) == 1:
+        return valid[0]
+    target = valid[0].target_path
+    seen: set[str] = set()
+    parts: list[str] = []
+    for s in valid:
+        block = s.content.strip()
+        if block and block not in seen:
+            seen.add(block)
+            parts.append(block)
+    content = "\n\n".join(parts)[:_MAX_CONTENT_CHARS].rstrip()
+    rationale = _single_line(
+        f"Consolidated from {len(valid)} suggestions: "
+        + "; ".join(s.rationale for s in valid)
+    )[:_MAX_RATIONALE_CHARS].strip()
+    return ProjectDocSuggestion(target_path=target, rationale=rationale, content=content)

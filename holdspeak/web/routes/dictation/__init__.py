@@ -43,12 +43,19 @@ def build_dictation_router(ctx: WebContext) -> APIRouter:
     # Shared per-app store: dry-run / from-template detect suggestions, the
     # project-doc-suggestion routes read + clear them.
     project_doc_suggestions: dict[str, dict[str, str]] = {}
+    # HS-39-04: session set of dismissed-suggestion signatures so a dismissed
+    # suggestion doesn't re-surface for a near-duplicate utterance.
+    dismissed_suggestion_signatures: set[str] = set()
 
     router.include_router(build_intents_router(ctx))
     router.include_router(build_agent_router(ctx))
-    router.include_router(build_project_docs_router(ctx, project_doc_suggestions))
+    router.include_router(
+        build_project_docs_router(ctx, project_doc_suggestions, dismissed_suggestion_signatures)
+    )
     router.include_router(build_blocks_router(ctx, project_doc_suggestions))
     router.include_router(build_kb_router(ctx))
-    router.include_router(build_pipeline_router(ctx, project_doc_suggestions))
+    router.include_router(
+        build_pipeline_router(ctx, project_doc_suggestions, dismissed_suggestion_signatures)
+    )
 
     return router

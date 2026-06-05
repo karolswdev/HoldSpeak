@@ -373,3 +373,67 @@ def test_project_rewriter_refine_empty_keeps_best_draft() -> None:
     assert result.text == "Good draft."
     assert result.metadata["rewrite_passes_run"] == 1
     assert any("refine pass 2 empty_rewrite" in w for w in result.warnings)
+
+
+# --- HS-39-04: project-doc suggestion dedup vs existing doc -----------------
+
+
+def _utt_with_root(root, text: str = "remember flat files are read only") -> Utterance:
+    return Utterance(
+        raw_text=text,
+        audio_duration_s=1.0,
+        transcribed_at=datetime(2026, 5, 10, tzinfo=timezone.utc),
+        project={
+            "name": "HoldSpeak",
+            "root": str(root),
+            "hs": {
+                "prompt_context": "## .hs/instructions.md\nFormat dictation as concise coding-agent tasks.",
+                "context_dir": str(root / ".hs"),
+            },
+        },
+        activity={"target": {"id": "codex_cli", "label": "Codex CLI", "confidence": 0.92, "source": "hints"}},
+    )
+
+
+def test_project_rewriter_dedup_suppresses_already_covered(tmp_path) -> None:
+    doc = tmp_path / ".hs" / "memory" / "flat-files.md"
+    doc.parent.mkdir(parents=True)
+    doc.write_text("Flat hs files are read only compatibility inputs; canonical edits go into hs.")
+    runtime = _SequenceRewriteRuntime(
+        [
+            "Document the flat-file compatibility rule.",
+            (
+                '{"target_path": ".hs/memory/flat-files.md", '
+                '"rationale": "Preserves a reusable convention.", '
+                '"content": "Flat hs files are read only compatibility inputs"}'
+            ),
+        ]
+    )
+    stage = ProjectRewriter(runtime)
+
+    result = stage.run(_utt_with_root(tmp_path), prior=[])
+
+    assert result.metadata["project_doc_suggestion"] is None
+    assert result.metadata["project_doc_suggestion_status"] == "already_covered"
+    assert "Context preservation suggestion" not in result.text
+
+
+def test_project_rewriter_surfaces_novel_suggestion(tmp_path) -> None:
+    # No existing target doc → nothing to dedup against → the suggestion surfaces.
+    runtime = _SequenceRewriteRuntime(
+        [
+            "Document the idempotency rule.",
+            (
+                '{"target_path": ".hs/memory/idempotency.md", '
+                '"rationale": "Preserves a reusable convention.", '
+                '"content": "Charges must check the Idempotency-Key header against the '
+                'idempotency_keys table before posting a ledger entry."}'
+            ),
+        ]
+    )
+    stage = ProjectRewriter(runtime)
+
+    result = stage.run(_utt_with_root(tmp_path), prior=[])
+
+    assert result.metadata["project_doc_suggestion_status"] == "suggested"
+    assert "Context preservation suggestion" in result.text

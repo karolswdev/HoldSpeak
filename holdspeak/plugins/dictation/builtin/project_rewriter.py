@@ -11,9 +11,14 @@ from __future__ import annotations
 import re
 import time
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
-from holdspeak.project_doc_suggestions import ProjectDocSuggestion, suggest_project_doc_update
+from holdspeak.project_doc_suggestions import (
+    ProjectDocSuggestion,
+    suggest_project_doc_update,
+    suggestion_already_covered,
+)
 from holdspeak.plugins.dictation.contracts import StageResult, Utterance
 
 _CODE_FENCE_RE = re.compile(r"^\s*```(?:text|markdown|md)?\s*(.*?)\s*```\s*$", re.DOTALL)
@@ -323,7 +328,27 @@ class ProjectRewriter:
             hs_context=hs_context,
             agent_context=_agent_summary_context(utt) or _agent_reply_context(utt),
         )
-        return suggestion, "suggested" if suggestion is not None else "no_suggestion"
+        if suggestion is None:
+            return None, "no_suggestion"
+        # HS-39-04: don't re-propose what the target doc already says.
+        if suggestion_already_covered(suggestion.content, _existing_doc_text(utt, suggestion.target_path)):
+            return None, "already_covered"
+        return suggestion, "suggested"
+
+
+def _existing_doc_text(utt: Utterance, target_path: str) -> str:
+    """Current contents of the suggestion's target `.hs/*.md`, or '' if absent."""
+    project = utt.project or {}
+    root = project.get("root") if isinstance(project, dict) else None
+    if not root or not target_path:
+        return ""
+    try:
+        path = Path(str(root)) / target_path
+        if path.is_file():
+            return path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    return ""
 
 
 def _context_dir(utt: Utterance) -> str:
