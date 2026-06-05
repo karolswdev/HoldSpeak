@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 39
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** none
 - **Owner:** unassigned
@@ -41,19 +41,28 @@ is unsure.
 
 ## Acceptance criteria
 
-- [ ] `target_detect_llm_enabled` (default `false`) + `target_detect_llm_below`
-      threshold exist on the dictation config and validate.
-- [ ] With the flag off (default), target detection is **byte-identical** to
-      pre-story (asserted with a fake runtime present).
-- [ ] With the flag on and heuristic confidence below threshold, the LLM
-      classifier is consulted and its (enum-constrained) result is used.
-- [ ] With heuristic confidence at/above threshold, the LLM is **not** called
-      (no needless latency).
-- [ ] `target_profile_override` overrides both heuristic and LLM in all cases.
-- [ ] LLM failure/unavailability degrades to the heuristic result; the typing
-      path never errors on detection.
-- [ ] The decision source (heuristic | llm | override) + confidence appear in
-      the readiness / dry-run output.
+- [x] `target_detect_llm_enabled` (default `false`) + `target_detect_llm_below`
+      (default `0.8`, validated `[0.0, 1.0]`) exist on the dictation config. —
+      `config.py`, `test_target_detect_llm_defaults`,
+      `test_target_detect_llm_below_out_of_range_rejected`.
+- [x] With the flag off (default), detection is **byte-identical** (same object
+      returned even with a fake runtime present). —
+      `test_model_assisted_disabled_is_noop`.
+- [x] Flag on + heuristic confidence below threshold ⇒ the LLM is consulted and
+      its enum-validated result is used (source `llm`, confidence 0.7). —
+      `test_model_assisted_fires_below_threshold`.
+- [x] Heuristic confidence at/above threshold ⇒ the LLM is **not** called. —
+      `test_model_assisted_skips_at_or_above_threshold`.
+- [x] `target_profile_override` (and a user `correction`) outrank the LLM. —
+      `test_model_assisted_override_always_wins`,
+      `test_model_assisted_skips_user_correction`.
+- [x] LLM failure / no-runtime / unparseable output degrades to the heuristic;
+      detection never raises. — `test_model_assisted_degrades_on_runtime_error`,
+      `test_model_assisted_no_runtime_is_noop`,
+      `test_model_assisted_ignores_unparseable_choice`.
+- [x] The decision source (`heuristic`→`hints` | `llm` | `override` |
+      `correction`) + confidence are on `TargetProfile.to_dict()`, which the
+      dry-run returns as `target` (so a `llm`-sourced result is visible).
 
 ## Test plan
 
@@ -68,10 +77,17 @@ is unsure.
 
 ## Notes / open questions
 
-- Constrain the classification output to the profile enum (reuse the
-  `StructuredOutputSchema` / grammar machinery the intent router already uses,
-  or a minimal enum constraint) so the fallback can't emit a non-profile
-  string.
+- **Enum constraint — resolved at parse, not decode.** The runtime's
+  constrained `classify` is block/extras-shaped (coupled to `BlockSet`), so
+  reusing it for a target enum was awkward. The fallback uses the freeform
+  `rewrite` seam and **validates** the answer against the profile enum
+  (`_parse_target_choice`), degrading to the heuristic on anything invalid —
+  the model can never produce a non-profile result downstream. Decode-time
+  constraint via a generic enum schema is a possible later refinement.
+- **Ordering:** detect → `apply_target_correction` → `apply_model_assisted_target`.
+  A user correction (confidence 0.95, source `correction`) is therefore not
+  overridden by the model, and the model only fires on a genuinely
+  low-confidence heuristic.
 - Keep the prompt cheap (`max_tokens` small) — this fires on the *unsure* tail,
   not every utterance, but it's still on the live typing path.
 - Canon: §9.8 — the runtime must not make network calls beyond the configured

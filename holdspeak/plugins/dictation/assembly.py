@@ -44,6 +44,9 @@ class BuildResult:
     blocks: LoadedBlocks
     runtime_status: RuntimeStatus
     runtime_detail: str
+    # HS-39-03: the loaded runtime (or None) so callers can reuse it for
+    # model-assisted target detection outside the pipeline.
+    runtime: Optional[LLMRuntime] = None
 
 
 def build_pipeline(
@@ -105,6 +108,7 @@ def build_pipeline(
         blocks=blocks,
         runtime_status=runtime_status,
         runtime_detail=runtime_detail,
+        runtime=runtime,
     )
 
 

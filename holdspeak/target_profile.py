@@ -151,6 +151,96 @@ def apply_target_correction(
     return _profile(value, 0.95, "correction", {}, details={"matched": "correction"})
 
 
+# HS-39-03: the user-selectable profiles the LLM fallback may choose from
+# (the override set: excludes "auto" and the catch-all "unknown").
+_MODEL_TARGET_PROFILES = (
+    "claude_code",
+    "codex_cli",
+    "terminal_shell",
+    "browser",
+    "editor",
+    "chat",
+)
+
+
+def apply_model_assisted_target(
+    profile: TargetProfile,
+    *,
+    runtime: Any,
+    hints: Mapping[str, Any] | None = None,
+    text: str = "",
+    agent_context: str = "",
+    enabled: bool,
+    below_confidence: float,
+) -> TargetProfile:
+    """HS-39-03: re-classify a low-confidence heuristic via the LLM runtime.
+
+    Fires only when ``enabled``, the runtime can rewrite, the profile is not a
+    manual override or a user correction, and the heuristic confidence is below
+    ``below_confidence``. The model's answer is validated against the profile
+    enum; anything unparseable/invalid (or any runtime error) degrades back to
+    the heuristic — detection never raises on the typing path.
+    """
+    if not enabled or runtime is None:
+        return profile
+    # A manual override and an explicit user correction both outrank the model.
+    if profile.source in ("override", "correction"):
+        return profile
+    if profile.confidence >= below_confidence:
+        return profile
+    rewrite = getattr(runtime, "rewrite", None)
+    if not callable(rewrite):
+        return profile
+    try:
+        raw = rewrite(
+            _build_model_target_prompt(hints, text, agent_context),
+            max_tokens=16,
+            temperature=0.0,
+        )
+    except Exception:
+        return profile
+    choice = _parse_target_choice(str(raw))
+    if choice is None or choice == profile.id:
+        return profile
+    return _profile(choice, 0.7, "llm", dict(hints or {}), details={"matched": "llm"})
+
+
+def _build_model_target_prompt(
+    hints: Mapping[str, Any] | None,
+    text: str,
+    agent_context: str,
+) -> str:
+    raw = dict(hints or {})
+    app = _clean(raw.get("app") or raw.get("app_name") or raw.get("application"))
+    process = _clean(raw.get("process") or raw.get("process_name") or raw.get("command"))
+    title = _clean(raw.get("title") or raw.get("window_title"))
+    lines = [
+        "Classify where this dictated text is about to be inserted.",
+        f"Reply with exactly one of: {', '.join(_MODEL_TARGET_PROFILES)}.",
+        "Reply with the single id only — no punctuation, quotes, or explanation.",
+        "",
+        "Signals:",
+        f"- app: {app or 'unknown'}",
+        f"- process: {process or 'unknown'}",
+        f"- window title: {title or 'unknown'}",
+    ]
+    if agent_context:
+        lines += ["", "Recent agent context:", agent_context[:500]]
+    if text:
+        lines += ["", "Dictated text:", text[:500]]
+    return "\n".join(lines)
+
+
+def _parse_target_choice(raw: str) -> str | None:
+    low = " ".join(str(raw or "").strip().lower().split())
+    if low in _MODEL_TARGET_PROFILES:
+        return low
+    for pid in _MODEL_TARGET_PROFILES:
+        if pid in low:
+            return pid
+    return None
+
+
 def collect_active_target_hints() -> dict[str, Any]:
     """Best-effort active-window hints; returns `{}` when unavailable."""
 

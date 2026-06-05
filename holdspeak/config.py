@@ -302,6 +302,13 @@ class DictationPipelineConfig:
     # HS-39-02: consult the session correction store when routing. OFF by
     # default — with it off (or the store empty) routing is byte-identical.
     corrections_enabled: bool = False
+    # HS-39-03: model-assisted target detection. When ON, a heuristic result
+    # below `target_detect_llm_below` confidence is re-classified by the LLM
+    # runtime (enum-constrained, degrades to the heuristic on any failure).
+    # OFF by default ⇒ detection is byte-identical; a manual override always
+    # wins over both the heuristic and the LLM.
+    target_detect_llm_enabled: bool = False
+    target_detect_llm_below: float = 0.8
 
     def __post_init__(self) -> None:
         # DIR-C-002: reject unknown stage IDs at config load time so
@@ -319,6 +326,13 @@ class DictationPipelineConfig:
             raise DictationConfigError(
                 f"rewrite_passes must be between 1 and {_MAX_REWRITE_PASSES}; "
                 f"got {self.rewrite_passes!r}"
+            )
+        # HS-39-03: the model-assisted target threshold is a confidence in
+        # [0.0, 1.0].
+        if not (0.0 <= self.target_detect_llm_below <= 1.0):
+            raise DictationConfigError(
+                "target_detect_llm_below must be between 0.0 and 1.0; "
+                f"got {self.target_detect_llm_below!r}"
             )
         self.target_profile_override = str(self.target_profile_override or "auto").strip().lower()
         if self.target_profile_override not in _KNOWN_TARGET_PROFILE_OVERRIDES:

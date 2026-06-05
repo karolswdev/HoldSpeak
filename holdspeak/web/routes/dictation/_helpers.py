@@ -414,6 +414,7 @@ def _run_dictation_dry_run_text(
     from ....plugins.dictation.assembly import DEFAULT_GLOBAL_BLOCKS_PATH, build_pipeline
     from ....plugins.dictation.contracts import Utterance
     from ....target_profile import (
+        apply_model_assisted_target,
         apply_target_correction,
         collect_active_target_hints,
         detect_target_profile_with_override,
@@ -462,12 +463,21 @@ def _run_dictation_dry_run_text(
         global_blocks_path=DEFAULT_GLOBAL_BLOCKS_PATH,
         corrections=correction_snapshot,
     )
+    resolved_hints = target_hints or collect_active_target_hints()
     target_profile = detect_target_profile_with_override(
-        target_hints or collect_active_target_hints(),
+        resolved_hints,
         cfg.pipeline.target_profile_override,
     )
     target_profile = apply_target_correction(
         target_profile, text=text, corrections=correction_snapshot
+    )
+    target_profile = apply_model_assisted_target(
+        target_profile,
+        runtime=result.runtime,
+        hints=resolved_hints,
+        text=text,
+        enabled=bool(getattr(cfg.pipeline, "target_detect_llm_enabled", False)),
+        below_confidence=float(getattr(cfg.pipeline, "target_detect_llm_below", 0.8)),
     )
     run = result.pipeline.run(
         Utterance(

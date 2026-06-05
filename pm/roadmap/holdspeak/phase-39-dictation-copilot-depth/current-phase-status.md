@@ -1,10 +1,21 @@
 # Phase 39 — Dictation Copilot Depth
 
-**Status:** IN PROGRESS (2/7 stories). Opened 2026-06-05. Direction chosen by
+**Status:** IN PROGRESS (3/7 stories). Opened 2026-06-05. Direction chosen by
 the user (feature work over Release/First-Run and Growth; track "Dictation
 Copilot depth" over Actuators III and Artifact→action bridges).
 
-**Last updated:** 2026-06-05 (**HS-39-02 done** — correction memory (session
+**Last updated:** 2026-06-05 (**HS-39-03 done** — model-assisted target
+detection. `apply_model_assisted_target` re-classifies a low-confidence
+heuristic via the LLM `rewrite` seam (enum-validated at parse; degrades to the
+heuristic on any failure), behind default-off `target_detect_llm_enabled` +
+`target_detect_llm_below` (0.8). A manual override and a user correction both
+outrank it. `BuildResult.runtime` now exposes the loaded runtime; wired into
+the dry-run helper + the live path after the correction step. Flag-off ⇒
+detection byte-identical. Suite **2167 passed, 15 skipped** (+10); ruff-clean.
+Note: still all fakes — **no real `.43` run yet** (deferred to HS-39-07
+closeout). Next: HS-39-04 suggestion quality gate.)
+
+**Earlier 2026-06-05** (**HS-39-02 done** — correction memory (session
 learning). New `holdspeak/plugins/dictation/corrections.py` `CorrectionStore`
 (bounded ring, thread-safe, gist-only + secret-rejected), owned by
 `MeetingWebServer` and shared with the live `WebRuntime`. Capture/list routes
@@ -111,9 +122,10 @@ The DIR-01 invariant is unchanged and load-bearing throughout:
       corrections) leaves routing byte-identical; the store never persists
       secrets and adds no DB schema. (HS-39-02) —
       [evidence-story-02](./evidence-story-02.md)
-- [ ] Below-threshold heuristic confidence triggers the opt-in LLM
+- [x] Below-threshold heuristic confidence triggers the opt-in LLM
       target-profile fallback; manual override still wins; with the fallback
-      off, detection is byte-identical. (HS-39-03)
+      off, detection is byte-identical. (HS-39-03) —
+      [evidence-story-03](./evidence-story-03.md)
 - [ ] A proposed `.hs/*.md` update that ~duplicates the existing doc is
       suppressed; a dismissed suggestion does not recur in the session;
       consolidation can fold N utterances into one update. (HS-39-04)
@@ -133,13 +145,28 @@ The DIR-01 invariant is unchanged and load-bearing throughout:
 |---|---|---|---|---|
 | HS-39-01 | Multi-pass rewriting | done | [story-01-multi-pass-rewriting.md](./story-01-multi-pass-rewriting.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-39-02 | Correction memory (session learning) | done | [story-02-correction-memory.md](./story-02-correction-memory.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-39-03 | Model-assisted target detection | backlog | [story-03-model-assisted-target-detection.md](./story-03-model-assisted-target-detection.md) | — |
+| HS-39-03 | Model-assisted target detection | done | [story-03-model-assisted-target-detection.md](./story-03-model-assisted-target-detection.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-39-04 | Project-doc suggestion quality gate | backlog | [story-04-suggestion-quality-gate.md](./story-04-suggestion-quality-gate.md) | — |
 | HS-39-05 | Pipeline depth telemetry | backlog | [story-05-pipeline-depth-telemetry.md](./story-05-pipeline-depth-telemetry.md) | — |
 | HS-39-06 | Documentation | backlog | [story-06-documentation.md](./story-06-documentation.md) | — |
 | HS-39-07 | Closeout + final-summary | backlog | [story-07-closeout.md](./story-07-closeout.md) | — |
 
 ## Where we are
+
+**HS-39-03 done (2026-06-05).** Model-assisted target detection shipped.
+`target_profile.apply_model_assisted_target` re-classifies a sub-threshold
+heuristic via the runtime `rewrite` seam, enum-validated by
+`_parse_target_choice` (degrades to the heuristic on failure/no-runtime/
+invalid output → never raises). Gated behind default-off
+`target_detect_llm_enabled` + `target_detect_llm_below` (0.8, validated).
+Order is detect → correction → model-assisted, so a manual override (source
+`override`) and a user correction (source `correction`) both outrank the LLM.
+`BuildResult.runtime` now carries the loaded runtime; wired into the dry-run
+helper + the live `_maybe_run_dictation_pipeline`. 10 new tests (8 target + 2
+config); suite 2167/15. **Reality check:** everything is still exercised with
+injected fake runtimes — **no real `.43` endpoint run has happened yet**; the
+real dogfood is the HS-39-07 closeout. **Next: HS-39-04** suggestion quality
+gate.
 
 **HS-39-02 done (2026-06-05).** Correction memory (session learning) shipped.
 New `corrections.py` `CorrectionStore` (bounded ring, thread-safe, gist-only,

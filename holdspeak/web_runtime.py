@@ -1363,7 +1363,12 @@ class WebRuntime:
             from holdspeak.plugins.dictation.assembly import build_pipeline
             from holdspeak.plugins.dictation.contracts import Utterance
             from holdspeak.plugins.dictation.project_root import detect_project_for_cwd
-            from holdspeak.target_profile import apply_target_correction, detect_active_target_profile
+            from holdspeak.target_profile import (
+                apply_model_assisted_target,
+                apply_target_correction,
+                collect_active_target_hints,
+                detect_target_profile_with_override,
+            )
 
             if agent_reply_session is not None and getattr(agent_reply_session, "cwd", None):
                 project = detect_project_for_cwd(
@@ -1394,10 +1399,18 @@ class WebRuntime:
                 or getattr(pipeline_cfg, "target_profile_override", "auto")
             )
             activity = build_activity_context(limit=20, refresh=False).to_dict()
+            target_hints = collect_active_target_hints()
+            target_profile = detect_target_profile_with_override(target_hints, target_override)
             target_profile = apply_target_correction(
-                detect_active_target_profile(target_override),
+                target_profile, text=text, corrections=correction_snapshot
+            )
+            target_profile = apply_model_assisted_target(
+                target_profile,
+                runtime=getattr(result, "runtime", None),
+                hints=target_hints,
                 text=text,
-                corrections=correction_snapshot,
+                enabled=bool(getattr(pipeline_cfg, "target_detect_llm_enabled", False)),
+                below_confidence=float(getattr(pipeline_cfg, "target_detect_llm_below", 0.8)),
             )
             activity["target"] = target_profile.to_dict()
             recent_agent = agent_reply_session or get_recent_agent_session(max_age_seconds=120)
