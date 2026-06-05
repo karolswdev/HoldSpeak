@@ -437,3 +437,25 @@ def test_dictation_page_includes_runtime_section() -> None:
     assert "Dictation runtime" in body
     assert "cold-start cap" in body
     assert "Target profile override" in body
+
+
+def test_dictation_page_includes_copilot_depth_controls() -> None:
+    """HS-40-03: the cockpit exposes a control for every Phase-39 depth knob."""
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(
+            on_bookmark=MagicMock(),
+            on_stop=MagicMock(),
+            get_state=MagicMock(return_value={}),
+        )
+    )
+    client = TestClient(server.app)
+    body = client.get("/dictation").text
+    assert "Copilot depth" in body
+    # A control id for each of the four knobs (rewrite_passes is the segmented
+    # control's hidden value input).
+    assert 'id="rt-rewrite-passes"' in body
+    assert 'id="rt-corrections-enabled"' in body
+    assert 'id="rt-target-detect-llm-enabled"' in body
+    assert 'id="rt-target-detect-llm-below"' in body
+    # The "test this config in the dry-run" affordance.
+    assert 'id="rt-btn-test"' in body

@@ -2,10 +2,11 @@
 
 - **Project:** holdspeak
 - **Phase:** 40
-- **Status:** backlog
+- **Status:** done (2026-06-05)
 - **Depends on:** HS-40-01
 - **Unblocks:** none
 - **Owner:** unassigned
+- **Evidence:** [evidence-story-03.md](./evidence-story-03.md)
 
 ## Problem
 
@@ -42,15 +43,27 @@ UI** — rich, Signal-styled, readiness-driven, no file editing.
 
 ## Acceptance criteria
 
-- [ ] Every dictation/pipeline knob — including the four Phase-39 knobs — is
+- [x] Every dictation/pipeline knob — including the four Phase-39 knobs — is
       settable from the UI and round-trips (set in UI → `PUT` → reload shows it).
-- [ ] The UI is **rich Signal**, not flat: type-appropriate controls, states,
+- [x] The UI is **rich Signal**, not flat: type-appropriate controls, states,
       affordances/help text; passes the `feedback_high_ui_standards` bar.
-- [ ] Inline validation matches the API (rejects out-of-range before/at submit).
-- [ ] The cockpit is readiness-driven (surfaces missing config + next steps).
-- [ ] No JSON editing is required to fully configure the copilot.
-- [ ] Bundle rebuilt; `git status` shows **no** `holdspeak/static/_built/`
+- [x] Inline validation matches the API (rejects out-of-range before/at submit).
+- [x] The cockpit is readiness-driven (surfaces missing config + next steps).
+- [x] No JSON editing is required to fully configure the copilot.
+- [x] Bundle rebuilt; `git status` shows **no** `holdspeak/static/_built/`
       files staged; a screenshot of the cockpit is captured.
+
+## Outcome
+
+A rich Signal **Copilot depth** group on the runtime tab: a segmented
+rewrite-passes control (1–5, live badge + descriptor), real toggle switches for
+`corrections_enabled` + `target_detect_llm_enabled`, and a reveal-on-toggle
+`target_detect_llm_below` threshold slider — all wired to `/api/settings` with
+inline validation, a live depth summary in the meta banner, and a "Save & test
+in dry-run" affordance. **Also fixed a pre-existing `activateSection` bug** that
+left every non-default tab (runtime/readiness/KB/hooks/dry-run) blank. Full UI
+round-trip + on-disk persistence verified via Playwright; screenshots in
+`evidence/`. Suite 2211/16. See [evidence-story-03.md](./evidence-story-03.md).
 
 ## Test plan
 

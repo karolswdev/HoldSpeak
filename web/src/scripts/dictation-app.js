@@ -382,13 +382,28 @@ const hsState = {
 
 function activateSection(name) {
   state.activeSection = name;
-  document.getElementById("view-readiness").style.display = name === "readiness" ? "" : "none";
-  document.getElementById("view-blocks").style.display = name === "blocks" ? "" : "none";
-  document.getElementById("view-kb").style.display = name === "kb" ? "" : "none";
-  document.getElementById("view-hs").style.display = name === "hs" ? "" : "none";
-  document.getElementById("view-hooks").style.display = name === "hooks" ? "" : "none";
-  document.getElementById("view-runtime").style.display = name === "runtime" ? "" : "none";
-  document.getElementById("view-dry-run").style.display = name === "dry-run" ? "" : "none";
+  // HS-40-03: each `.view` carries the `hidden` attribute in markup, and
+  // `.view[hidden] { display: none }` outranks the base `.view { display: flex }`
+  // rule — so clearing the inline display alone leaves a switched-to tab blank
+  // (a pre-existing bug: every non-default tab rendered empty). Drive `hidden`
+  // itself: clear it on the active view (base rule shows it), set it on the
+  // rest. This is what makes runtime / readiness / KB / … actually render.
+  const views = {
+    readiness: "view-readiness",
+    blocks: "view-blocks",
+    kb: "view-kb",
+    hs: "view-hs",
+    hooks: "view-hooks",
+    runtime: "view-runtime",
+    "dry-run": "view-dry-run",
+  };
+  for (const [key, id] of Object.entries(views)) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    const active = key === name;
+    el.hidden = !active;
+    el.style.display = active ? "" : "none";
+  }
   document.querySelectorAll('.scope-row button[data-section]').forEach((b) =>
     b.classList.toggle("active", b.dataset.section === name)
   );
@@ -957,11 +972,15 @@ function renderRuntime(data, readiness = null) {
   const runtime = dictation.runtime || {};
   const status = data._runtime_status || { counters: {}, session: {} };
 
+  const passes = Number(pipeline.rewrite_passes ?? 1);
   document.getElementById("rt-meta-banner").innerHTML =
     `pipeline: <strong>${pipeline.enabled ? "enabled" : "disabled"}</strong>  ·  ` +
     `target: <strong>${escapeHtml(pipeline.target_profile_override || "auto")}</strong>  ·  ` +
     `backend: <strong>${escapeHtml(runtime.backend || "auto")}</strong>  ·  ` +
-    `cold-start cap: <strong>${(pipeline.max_total_latency_ms || 0) * 5} ms</strong>`;
+    `cold-start cap: <strong>${(pipeline.max_total_latency_ms || 0) * 5} ms</strong>  ·  ` +
+    `depth: <strong>${passes}× pass${passes === 1 ? "" : "es"}</strong>` +
+    `${pipeline.corrections_enabled ? " · <strong>learns</strong>" : ""}` +
+    `${pipeline.target_detect_llm_enabled ? " · <strong>infers target</strong>" : ""}`;
 
   document.getElementById("rt-enabled").checked = !!pipeline.enabled;
   document.getElementById("rt-stage-rewriter").checked =
@@ -979,6 +998,16 @@ function renderRuntime(data, readiness = null) {
   slider.value = pipeline.max_total_latency_ms || 600;
   slider.oninput = updateLatencyVis;
   updateLatencyVis();
+
+  // ── Copilot depth (HS-40-03) ──
+  setRewritePasses(passes);
+  document.getElementById("rt-corrections-enabled").checked = !!pipeline.corrections_enabled;
+  document.getElementById("rt-target-detect-llm-enabled").checked = !!pipeline.target_detect_llm_enabled;
+  const below = document.getElementById("rt-target-detect-llm-below");
+  below.value = pipeline.target_detect_llm_below ?? 0.8;
+  below.oninput = updateTargetBelowVis;
+  updateTargetBelowVis();
+  updateTargetDetectReveal();
 
   // Counters
   const counters = status.counters || {};
@@ -1011,9 +1040,57 @@ function updateLatencyVis() {
     `${v} ms  ·  cold-start cap: ${v * 5} ms (DIR-R-003)`;
 }
 
+// ── Copilot depth controls (HS-40-03) ──
+const REWRITE_PASS_DESC = {
+  1: "Single pass — fastest; byte-identical to a plain rewrite.",
+  2: "Two passes — one critique-and-refine after the draft.",
+  3: "Three passes — balanced refinement (recommended for project work).",
+  4: "Four passes — deeper polish; watch the latency budget.",
+  5: "Five passes — maximum refinement; most latency-budget gating.",
+};
+
+function setRewritePasses(n) {
+  const passes = Math.min(5, Math.max(1, Math.round(Number(n) || 1)));
+  document.getElementById("rt-rewrite-passes").value = String(passes);
+  document.getElementById("rt-rewrite-badge").textContent = `${passes}×`;
+  document.getElementById("rt-rewrite-desc").textContent =
+    REWRITE_PASS_DESC[passes] || "";
+  document.querySelectorAll("#rt-rewrite-seg .seg-btn").forEach((btn) =>
+    btn.setAttribute(
+      "aria-pressed",
+      btn.dataset.value === String(passes) ? "true" : "false"
+    )
+  );
+}
+
+function updateTargetBelowVis() {
+  const v = Number(document.getElementById("rt-target-detect-llm-below").value);
+  document.getElementById("rt-target-below-val").textContent = v.toFixed(2);
+}
+
+function updateTargetDetectReveal() {
+  const on = document.getElementById("rt-target-detect-llm-enabled").checked;
+  document.getElementById("rt-target-below-wrap").hidden = !on;
+}
+
 async function saveRuntime(options = {}) {
   const msg = document.getElementById("rt-msg");
   msg.innerHTML = "";
+
+  // Inline validation mirroring the API bounds (HS-40-01) so out-of-range is
+  // caught before submit. The segmented control + 0–1 slider already constrain
+  // input, but guard anyway for keyboard/programmatic edits.
+  const rewritePasses = Number(document.getElementById("rt-rewrite-passes").value);
+  const targetBelow = Number(document.getElementById("rt-target-detect-llm-below").value);
+  if (!Number.isInteger(rewritePasses) || rewritePasses < 1 || rewritePasses > 5) {
+    msg.innerHTML = `<div class="error-box">Rewrite passes must be a whole number between 1 and 5.</div>`;
+    return;
+  }
+  if (!(targetBelow >= 0 && targetBelow <= 1)) {
+    msg.innerHTML = `<div class="error-box">Infer-target threshold must be between 0.00 and 1.00.</div>`;
+    return;
+  }
+
   const payload = {
     dictation: {
       pipeline: {
@@ -1025,6 +1102,10 @@ async function saveRuntime(options = {}) {
         ],
         max_total_latency_ms: Number(document.getElementById("rt-latency").value),
         target_profile_override: document.getElementById("rt-target-profile").value,
+        rewrite_passes: rewritePasses,
+        corrections_enabled: document.getElementById("rt-corrections-enabled").checked,
+        target_detect_llm_enabled: document.getElementById("rt-target-detect-llm-enabled").checked,
+        target_detect_llm_below: targetBelow,
       },
       runtime: {
         backend: document.getElementById("rt-backend").value,
@@ -1045,6 +1126,14 @@ async function saveRuntime(options = {}) {
   } catch (e) {
     msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
   }
+}
+
+async function saveRuntimeAndTest() {
+  // Save the cockpit config, then jump to the dry-run so the user can try the
+  // exact config they just set (HS-40-03 "test this config" affordance).
+  await saveRuntime({ message: "Saved — opening dry-run so you can test this config." });
+  const errored = document.querySelector("#rt-msg .error-box");
+  if (!errored) activateSection("dry-run");
 }
 
 async function enablePipelineFromReadiness() {
@@ -1515,11 +1604,20 @@ document.getElementById("hs-btn-reset").addEventListener("click", resetHSContext
 document.getElementById("hs-suggestion-apply").addEventListener("click", applyProjectDocSuggestion);
 document.getElementById("hs-suggestion-dismiss").addEventListener("click", dismissProjectDocSuggestion);
 document.getElementById("rt-btn-save").addEventListener("click", saveRuntime);
+document.getElementById("rt-btn-test").addEventListener("click", saveRuntimeAndTest);
 document.getElementById("rt-btn-reset").addEventListener("click", () => rtState.last && renderRuntime(rtState.last));
 document.getElementById("rt-btn-refresh").addEventListener("click", loadRuntime);
 document.getElementById("rt-target-auto").addEventListener("click", () => {
   document.getElementById("rt-target-profile").value = "auto";
 });
+// Copilot depth controls (HS-40-03): segmented rewrite-passes + the
+// reveal-on-toggle threshold.
+document.querySelectorAll("#rt-rewrite-seg .seg-btn").forEach((btn) =>
+  btn.addEventListener("click", () => setRewritePasses(btn.dataset.value))
+);
+document
+  .getElementById("rt-target-detect-llm-enabled")
+  .addEventListener("change", updateTargetDetectReveal);
 document.getElementById("dry-btn-run").addEventListener("click", runDryRun);
 document.getElementById("dry-btn-clear").addEventListener("click", clearDryRun);
 document.getElementById("project-root-apply").addEventListener("click", applyProjectRootOverride);

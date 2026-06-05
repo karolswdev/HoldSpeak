@@ -1,13 +1,13 @@
 # Phase 40 — Configuration Cockpit & Persistent Memory
 
-**Status:** IN PROGRESS (2/6 stories). Opened 2026-06-05. Direction chosen by the
+**Status:** IN PROGRESS (3/6 stories). Opened 2026-06-05. Direction chosen by the
 user: a **web-first** way to set up the whole copilot ("nobody wants to frig
 around with files and settings") + **persistent cross-session memory**.
 
-**Last updated:** 2026-06-05 (**HS-40-02 done** — correction memory is now
-DB-backed: a `dictation_corrections` table + repo, the store loads/persists,
-survives a restart, schema snapshot regenerated; suite 2210/16. HS-40-01 also
-done.).
+**Last updated:** 2026-06-05 (**HS-40-03 done** — the Signal **Copilot depth**
+cockpit: segmented rewrite-passes + toggle switches + reveal-on-toggle threshold,
+wired to `/api/settings`, full UI round-trip verified; also fixed a pre-existing
+blank-tab bug. Suite 2211/16. HS-40-01/02 also done.).
 
 ## Goal
 
@@ -101,17 +101,17 @@ build` to verify, commit source only.
 |---|---|---|---|---|
 | HS-40-01 | Settings API: the missing knobs | done | [story-01-settings-api-knobs.md](./story-01-settings-api-knobs.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-40-02 | Persistent correction memory | done | [story-02-persistent-correction-memory.md](./story-02-persistent-correction-memory.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-40-03 | Copilot Setup cockpit (UI) | backlog | [story-03-copilot-setup-cockpit.md](./story-03-copilot-setup-cockpit.md) | — |
+| HS-40-03 | Copilot Setup cockpit (UI) | done | [story-03-copilot-setup-cockpit.md](./story-03-copilot-setup-cockpit.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-40-04 | Memory + telemetry UI | backlog | [story-04-memory-telemetry-ui.md](./story-04-memory-telemetry-ui.md) | — |
 | HS-40-05 | Documentation | backlog | [story-05-documentation.md](./story-05-documentation.md) | — |
 | HS-40-06 | Closeout | backlog | [story-06-closeout.md](./story-06-closeout.md) | — |
 
 ## Where we are
 
-**HS-40-01 + HS-40-02 done (2026-06-05); HS-40-03 (cockpit UI) is next.** Phase
-opened right after Phase 39 merged (PR #16). The territory was mapped before
-scaffolding — see [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) for the full seam map.
-Headlines:
+**HS-40-01 + HS-40-02 + HS-40-03 done (2026-06-05); HS-40-04 (memory + telemetry
+UI) is next.** Phase opened right after Phase 39 merged (PR #16). The territory
+was mapped before scaffolding — see [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) for the
+full seam map. Headlines:
 
 - **Settings (HS-40-01) — done.** Re-verifying the seam showed the brief was
   stale: the four Phase-39 knobs **already** round-tripped + 4xx'd. `PUT
@@ -133,17 +133,26 @@ Headlines:
   `WebRuntime`** (not `MeetingWebServer.__init__` — that uses the
   `get_database()` singleton and would force every server test onto the real
   DB); bare servers stay in-memory + byte-identical. Suite 2210/16.
-- **Cockpit UI (HS-40-03 / 04):** frontend is Astro at
-  `web/src/pages/dictation.astro` + `web/src/scripts/dictation-app.js`, built to
-  the **gitignored** `holdspeak/static/_built/`. The corrections + telemetry
-  data are already on the API (`/api/dictation/corrections`, the readiness
-  `depth` block). Use Signal tokens + the `ui-ux-pro-max` skill.
+- **Cockpit UI (HS-40-03) — done.** A Signal **Copilot depth** group on the
+  `/dictation` runtime tab: a segmented rewrite-passes control (1–5, live badge +
+  descriptor), real toggle switches for `corrections_enabled` +
+  `target_detect_llm_enabled`, and a reveal-on-toggle `target_detect_llm_below`
+  slider — wired to `/api/settings` with inline validation, a live depth summary
+  in the meta banner, and a "Save & test in dry-run" jump. **Also fixed a
+  pre-existing `activateSection` bug** that left every non-default tab
+  (runtime/readiness/KB/hooks/dry-run) blank (the `hidden` attr was never
+  cleared). Full UI round-trip + on-disk persistence verified via Playwright;
+  screenshots in `evidence/`. Bundle rebuilt; only `web/src` committed.
+- **Memory + telemetry UI (HS-40-04):** the corrections + telemetry data are
+  already on the API (`/api/dictation/corrections`, the readiness `depth`
+  block); a clear/delete corrections route still needs adding. Use Signal tokens
+  + the `ui-ux-pro-max` skill.
 
 **Pickup order:** HS-40-01 (backend foundation, unblocks the UI) ✅ → HS-40-02
 (persistence, independent, enables the memory UI) ✅ → HS-40-03 (cockpit UI, needs
-01) → HS-40-04 (memory/telemetry UI, needs 02) → HS-40-05 (docs) → HS-40-06
+01) ✅ → HS-40-04 (memory/telemetry UI, needs 02) → HS-40-05 (docs) → HS-40-06
 (closeout). 01 and 02 are independent and can go in either order / in parallel
-worktrees. **HS-40-01 + HS-40-02 done; HS-40-03 (cockpit UI) next.**
+worktrees. **HS-40-01/02/03 done; HS-40-04 (memory + telemetry UI) next.**
 
 ## Active risks
 
