@@ -64,6 +64,20 @@ import HoldMark from "../components/HoldMark.astro";
       </div>
 
       <div class="hero-action">
+        <div class="presence-card" :class="activityToneClass()" role="status" aria-live="polite">
+          <div class="presence-main">
+            <span class="presence-ring" :class="{ 'is-live': activityDotLive() }" aria-hidden="true"></span>
+            <div class="presence-copy">
+              <div class="presence-label" x-text="runtimeActivity.label"></div>
+              <div class="presence-detail" x-text="activityDetailLine()"></div>
+            </div>
+          </div>
+          <div class="presence-meta">
+            <span x-text="activitySourceLabel()"></span>
+            <span x-text="activityWindowLabel()"></span>
+          </div>
+        </div>
+
         <div class="action-stage" x-show="!meetingActive && !stopInProgress" x-cloak>
           <HoldMark size={72} ariaLabel="Hold to talk — runtime ready" />
           <p class="action-hint">
@@ -599,6 +613,78 @@ import HoldMark from "../components/HoldMark.astro";
   .tag-chip-faint { color: var(--text-faint); border-style: dashed; }
 
   .hero-action { display: flex; flex-direction: column; gap: var(--space-3); }
+
+  .presence-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-height: 92px;
+    padding: var(--space-3);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-3);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+  }
+  .presence-main {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: var(--space-3);
+    align-items: center;
+    min-width: 0;
+  }
+  .presence-ring {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    box-shadow: 0 0 0 6px color-mix(in srgb, currentColor 13%, transparent);
+    color: var(--text-faint);
+  }
+  .presence-ring.is-live {
+    animation: hs-pulse 1.6s var(--ease-standard) infinite;
+  }
+  .presence-copy { min-width: 0; }
+  .presence-label {
+    color: var(--text);
+    font-weight: 700;
+    font-size: var(--font-size-md);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .presence-detail {
+    margin-top: var(--space-1);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+    min-height: 2.6em;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .presence-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+  }
+  .presence-card.tone-recording .presence-ring { color: var(--accent); }
+  .presence-card.tone-working .presence-ring { color: var(--info); }
+  .presence-card.tone-complete .presence-ring { color: var(--success); }
+  .presence-card.tone-error {
+    border-color: var(--danger);
+    background: var(--danger-soft);
+  }
+  .presence-card.tone-error .presence-ring { color: var(--danger); }
+  .presence-card.tone-idle .presence-ring { color: var(--text-faint); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .presence-ring.is-live { animation: none; }
+  }
 
   .action-stage {
     display: flex; flex-direction: column; align-items: center;

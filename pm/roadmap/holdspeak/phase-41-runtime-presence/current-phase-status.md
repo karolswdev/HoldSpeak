@@ -1,13 +1,13 @@
 # Phase 41 — Runtime Presence Indicators
 
-**Status:** IN PROGRESS (1/7 stories). Opened 2026-06-05. Direction chosen by the
+**Status:** IN PROGRESS (2/7 stories). Opened 2026-06-05. Direction chosen by the
 user: **know what the copilot is doing on the desktop** while dictating —
 without the web dashboard being visible — via a rich, branded, native-feeling
 presence indicator on **both macOS and Linux**.
 
-**Last updated:** 2026-06-05 (**HS-41-01 done** — the platform-agnostic
-`runtime_activity` contract + tracker, salvaged from the codex spike and ported
-clean; suite green).
+**Last updated:** 2026-06-05 (**HS-41-02 done** — the lifecycle→activity mapping
+in `web_runtime` + the `runtime_activity` WS broadcast + a live Signal presence
+card on the dashboard; zero new deps; suite 2228/16. HS-41-01 also done.).
 
 ## Goal
 
@@ -92,7 +92,7 @@ available tier; everything is gated by `HOLDSPEAK_DESKTOP_PRESENCE=1`.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-41-01 | Runtime activity contract + state mapping | done | [story-01-runtime-activity-contract.md](./story-01-runtime-activity-contract.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-41-02 | Web presence card (zero-dep surface) | backlog | [story-02-web-presence-card.md](./story-02-web-presence-card.md) | — |
+| HS-41-02 | Web presence card (zero-dep surface) | done | [story-02-web-presence-card.md](./story-02-web-presence-card.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-41-03 | Renderer Protocol + host selection + `/presence` route | backlog | [story-03-renderer-seam.md](./story-03-renderer-seam.md) | — |
 | HS-41-04 | macOS renderer (NSStatusItem + NSPanel webview) | backlog | [story-04-macos-renderer.md](./story-04-macos-renderer.md) | — |
 | HS-41-05 | Linux renderer (notification + tray + overlay) | backlog | [story-05-linux-renderer.md](./story-05-linux-renderer.md) | — |
@@ -101,12 +101,15 @@ available tier; everything is gated by `HOLDSPEAK_DESKTOP_PRESENCE=1`.
 
 ## Where we are
 
-**HS-41-01 done (2026-06-05).** Branched `phase-41-runtime-presence` off `main`
-(post Phase-40 merge, suite 2221/16). Ported the pure `runtime_activity`
-contract from the codex spike (no Tk, no deps) + its tests. The
-event-mapping wiring into `web_runtime` + the websocket broadcast land with
-HS-41-02 (so the web card has data). Next: **HS-41-02** (the web presence card —
-the first visible win, zero new deps).
+**HS-41-01 + HS-41-02 done (2026-06-05).** Branched `phase-41-runtime-presence`
+off `main` (post Phase-40 merge). HS-41-01 ported the pure `runtime_activity`
+contract. HS-41-02 wired the full dictation + meeting lifecycle into the
+contract, broadcasts `runtime_activity` over the websocket, and renders a live
+**Signal presence card** on the dashboard — the first visible win, **zero new
+deps** (the desktop-host fan-out is deferred to HS-41-03; `_broadcast_runtime_activity`
+is web-only for now). Fixed an off-token drift in the salvaged card
+(`--line-height-snug` → `--line-height-normal`). Suite 2228/16. Next: **HS-41-03**
+(the `PresenceRenderer` Protocol + host + the `/presence` webview route).
 
 ## Active risks
 

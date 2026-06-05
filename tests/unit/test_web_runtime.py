@@ -974,3 +974,102 @@ def test_device_voice_reply_rejects_undeliverable_agent_target(
         stop_event=stop_event,
         register_signal_handlers=False,
     )
+
+
+# ── HS-41-02: runtime activity → web presence ──────────────────────────
+
+
+def test_runtime_activity_snapshot_and_broadcast(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(web_runtime.Config, "load", lambda: _config(auto_open=False))
+
+    class FakeTextTyper:
+        def type_text(self, _text: str, **_kwargs) -> None:
+            return None
+
+    class FakeServer:
+        def __init__(self) -> None:
+            self.messages: list[tuple[str, object]] = []
+
+        def broadcast(self, message_type: str, data: object) -> None:
+            self.messages.append((message_type, data))
+
+    monkeypatch.setattr(web_runtime, "TextTyper", FakeTextTyper)
+
+    runtime = web_runtime.WebRuntime(
+        no_open=True,
+        stop_event=threading.Event(),
+        register_signal_handlers=False,
+    )
+    server = FakeServer()
+    runtime.server = server  # type: ignore[assignment]
+
+    runtime._set_voice_state(
+        "recording",
+        source="hotkey",
+        detail="HoldSpeak is listening.",
+        last_event="dictation_recording_started",
+    )
+
+    status = runtime._get_runtime_status()
+    activity = status["activity"]
+    assert activity["state"] == "recording"
+    assert activity["source"] == "hotkey"
+    assert activity["detail"] == "HoldSpeak is listening."
+    assert activity["window"]["mode"] == "active"
+    assert status["state"]["activity"] == activity
+    assert server.messages[-1] == ("runtime_activity", activity)
+
+    # A voice-state change that opts out of activity update leaves the
+    # presence snapshot untouched.
+    runtime._set_voice_state("idle", update_activity=False)
+
+    status_after_idle = runtime._get_runtime_status()
+    assert status_after_idle["voice_state"] == "idle"
+    assert status_after_idle["activity"]["state"] == "recording"
+
+
+def test_meeting_broadcasts_map_to_runtime_activity(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(web_runtime.Config, "load", lambda: _config(auto_open=False))
+
+    class FakeTextTyper:
+        def type_text(self, _text: str, **_kwargs) -> None:
+            return None
+
+    class FakeServer:
+        def __init__(self) -> None:
+            self.messages: list[tuple[str, object]] = []
+
+        def broadcast(self, message_type: str, data: object) -> None:
+            self.messages.append((message_type, data))
+
+    monkeypatch.setattr(web_runtime, "TextTyper", FakeTextTyper)
+    runtime = web_runtime.WebRuntime(
+        no_open=True,
+        stop_event=threading.Event(),
+        register_signal_handlers=False,
+    )
+    server = FakeServer()
+    runtime.server = server  # type: ignore[assignment]
+
+    runtime._on_meeting_broadcast(
+        "actuator_proposed",
+        {"target": "github", "title": "File follow-up issue"},
+    )
+
+    activity = runtime._get_runtime_status()["activity"]
+    assert activity["state"] == "complete"
+    assert activity["label"] == "Action proposed"
+    assert activity["detail"] == "github: File follow-up issue"
+    assert activity["last_event"] == "actuator_proposed"
+    # The activity broadcast precedes the forwarded meeting broadcast.
+    assert server.messages[-2][0] == "runtime_activity"
+    assert server.messages[-1] == (
+        "actuator_proposed",
+        {"target": "github", "title": "File follow-up issue"},
+    )
+
+    runtime._on_meeting_broadcast("intel_token", "hello")
+
+    activity = runtime._get_runtime_status()["activity"]
+    assert activity["state"] == "processing"
+    assert activity["label"] == "Intel streaming"

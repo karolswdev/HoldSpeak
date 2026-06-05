@@ -2,10 +2,11 @@
 
 - **Project:** holdspeak
 - **Phase:** 41
-- **Status:** backlog
+- **Status:** done (2026-06-05)
 - **Depends on:** HS-41-01
 - **Unblocks:** HS-41-03
 - **Owner:** unassigned
+- **Evidence:** [evidence-story-02.md](./evidence-story-02.md)
 
 ## Problem
 
@@ -28,10 +29,20 @@ data source the desktop HUD webview will reuse.
 
 ## Acceptance criteria
 
-- [ ] Dictation/meeting lifecycle drives `runtime_activity` broadcasts; the
+- [x] Dictation/meeting lifecycle drives `runtime_activity` broadcasts; the
       dashboard card reflects state live.
-- [ ] Rich Signal (not flat); off-by-default behavior unchanged when no activity.
-- [ ] Bundle rebuilt; no `_built/` staged; screenshot captured.
+- [x] Rich Signal (not flat); off-by-default behavior unchanged when no activity.
+- [x] Bundle rebuilt; no `_built/` staged; screenshot captured.
+
+## Outcome
+
+`web_runtime` maps the full dictation + meeting lifecycle into the
+`runtime_activity` contract, snapshots it on `/api/state`, and broadcasts
+`runtime_activity` over the websocket; the dashboard renders a live Signal
+presence card (pulsing ring keyed to tone, label/detail, aria-live,
+reduced-motion guard). Zero new deps (desktop fan-out deferred to HS-41-03).
+Fixed an off-token drift (`--line-height-snug` → `--line-height-normal`). Suite
+2228/16. See [evidence-story-02.md](./evidence-story-02.md).
 
 ## Notes
 
