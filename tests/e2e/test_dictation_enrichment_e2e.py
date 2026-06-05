@@ -57,7 +57,7 @@ pytestmark = pytest.mark.skipif(
 def test_spoken_dictation_enriches_against_real_endpoint() -> None:
     result = run_enrichment(base_url=_BASE_URL, model=_MODEL, rewrite_passes=2)
 
-    # Show the gorgeous before/after under `pytest -s`.
+    # Show the gorgeous before/after + feature panel under `pytest -s`.
     print(render(result, color=sys.stdout.isatty()))
 
     assert result.runtime_status == "loaded"
@@ -65,15 +65,29 @@ def test_spoken_dictation_enriches_against_real_endpoint() -> None:
     assert result.hs_files, "no .hs context loaded from the demo fixture"
     assert "memory" in result.hs_files and "instructions" in result.hs_files
 
+    # --- every Phase-39 feature fired, end-to-end, against the real endpoint ---
+    # HS-39-01 multi-pass rewriting.
+    assert result.passes_run == 2, f"expected 2 rewrite passes, got {result.passes_run}"
+    assert len(result.pass_ms) == 2
+    # HS-39-02 correction memory nudged routing to the seeded block.
+    assert result.correction_nudge == result.seeded_correction_block
+    assert result.intent_block == result.seeded_correction_block
+    assert result.intent_corrected
+    # the kb-enricher injected for that nudged block.
+    assert result.kb_applied_block == result.seeded_correction_block
+    # HS-39-03 model-assisted target detection inferred a target from the words.
+    assert result.target_heuristic_conf < 0.8
+    assert result.model_assisted_fired, "model-assisted target detection did not fire"
+    assert result.target_final_source == "llm"
+
     # Enrichment happened and is substantially richer than the raw dictation.
     assert result.changed, "enriched text is identical to the spoken input"
-    assert len(result.enriched) > len(result.spoken) * 1.5
+    assert len(result.task) > len(result.spoken) * 1.5
 
-    low = result.enriched.lower()
-    # The task is on-topic …
-    assert "idempotency" in low
-    # … and grounded in project specifics drawn from `.hs/` (not generic prose).
-    grounding = ("ledger_entries", "idempotency_keys", "double-entry", "double entry",
-                 "src/ledgerline", "minor units", "acceptance criteria")
+    low = result.task.lower()
+    assert "idempotency" in low  # on-topic …
+    # … and grounded in project specifics drawn from `.hs/`/KB (not generic prose).
+    grounding = ("ledger_entries", "idempotency", "double-entry", "double entry",
+                 "src/ledgerline", "minor units", "append-only", "acceptance criteria")
     hits = [g for g in grounding if g in low]
     assert len(hits) >= 2, f"enriched task not grounded in project specifics; hits={hits}"

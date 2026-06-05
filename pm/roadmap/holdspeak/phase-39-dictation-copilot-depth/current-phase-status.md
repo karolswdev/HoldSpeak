@@ -1,12 +1,21 @@
 # Phase 39 — Dictation Copilot Depth
 
-**Status:** IN PROGRESS (4/8 stories). Opened 2026-06-05. Direction chosen by
+**Status:** IN PROGRESS (5/9 stories). Opened 2026-06-05. Direction chosen by
 the user (feature work over Release/First-Run and Growth; track "Dictation
 Copilot depth" over Actuators III and Artifact→action bridges). Phase grew
-7→8 stories mid-flight (HS-39-08, user-requested real-endpoint e2e).
+7→9 stories mid-flight (HS-39-08 real-endpoint e2e; HS-39-09 all-features
+showcase + public doc — both user-requested).
 
-**Last updated:** 2026-06-05 (**HS-39-08 done** — the first **real** `.43`
-validation of Phase 39. A `ledgerline` fixture project (`.hs/` context + code),
+**Last updated:** 2026-06-05 (**HS-39-09 done** (user request) — dictation
+copilot showcase. The demo now fires **all four** depth features in one real
+`.43` run (intent-router + correction nudge, kb-enricher injection, multi-pass
+rewrite, model-assisted target) with a "Features that fired" panel; the e2e
+asserts each (re-verified live, 18.77s). New public showcase
+**`docs/DICTATION_COPILOT.md`** — real before/after + a feature table + **two
+Mermaid diagrams** (pipeline flow + target-detection decision) + how to
+enable/run; linked from the docs index + the Intelligent Typing guide +
+root README. Doc-drift + link-check green. Phase grew 8→9. **HS-39-08 done** —
+the first **real** `.43` A `ledgerline` fixture project (`.hs/` context + code),
 `scripts/dictation_enrichment_demo.py` (`run_enrichment` + a Signal-styled
 before→after `render`), and a gated `tests/e2e/test_dictation_enrichment_e2e.py`
 (auto-skips with no endpoint; **passed against `.43` Qwen3.5-9B-Q6 in 15.07s**).
@@ -166,8 +175,23 @@ The DIR-01 invariant is unchanged and load-bearing throughout:
 | HS-39-06 | Documentation | backlog | [story-06-documentation.md](./story-06-documentation.md) | — |
 | HS-39-07 | Closeout + final-summary | backlog | [story-07-closeout.md](./story-07-closeout.md) | — |
 | HS-39-08 | Real spoken→enriched dictation e2e + demo | done | [story-08-spoken-dictation-e2e.md](./story-08-spoken-dictation-e2e.md) | [evidence-story-08.md](./evidence-story-08.md) |
+| HS-39-09 | Dictation copilot showcase (all features + public doc) | done | [story-09-dictation-copilot-showcase.md](./story-09-dictation-copilot-showcase.md) | [evidence-story-09.md](./evidence-story-09.md) |
 
 ## Where we are
+
+**HS-39-09 done (2026-06-05) — the showcase + public doc.** On user request,
+the demo grew to fire **all four** depth features in one real run and a public
+showcase doc was written. `scripts/dictation_enrichment_demo.py` now runs
+`intent-router` + `kb-enricher` + multi-pass `project-rewriter` with a seeded
+intent correction (②) and model-assisted target over an empty window signal
+(③); the render gained a "Features that fired" panel (incl. the honest case
+where the LLM classify fails and the correction rescues routing). The fixture
+gained `.holdspeak/blocks.yaml` + `project.yaml`. The e2e now asserts each
+feature fired — **re-verified live on `.43`, 18.77s**. New
+**`docs/DICTATION_COPILOT.md`**: real before/after + a feature table + **two
+Mermaid diagrams** + config + how to run, linked from the docs index, the
+Intelligent Typing guide, and the root README. Doc-drift + link-check green;
+hermetic suite 2167/16. **Next: HS-39-04** (suggestion quality gate).
 
 **HS-39-08 done (2026-06-05) — first real-endpoint proof.** On user request,
 the phase grew to include a real spoken→enriched e2e + demo. A `ledgerline`
@@ -301,6 +325,9 @@ the default suite free of any real LLM/network call (inject fake runtimes).
   not a hosted-CI test — a LAN/self-hosted LLM can't run in GitHub CI. It runs
   for real wherever the endpoint is reachable; CI skips it green. Mirrors the
   existing spoken-meeting e2e pattern.
+- 2026-06-05 (HS-39-09) — **Split the showcase into its own story** rather than
+  amending HS-39-08's shipped evidence — the PMO hook (rightly) blocks editing a
+  shipped story's evidence without a fresh done-flip. Phase grew 8→9.
 
 ## Decisions deferred
 

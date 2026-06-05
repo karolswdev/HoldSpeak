@@ -116,6 +116,7 @@ for the contract and current model suggestions.
 | Browse all the docs | [Documentation index](docs/README.md) |
 | Get it running and verify my setup | [Getting Started](docs/GETTING_STARTED.md) |
 | Choose / configure a model | [Models — bring your own](docs/MODELS.md) |
+| See the dictation copilot turn speech into a project-grounded task | [The Dictation Copilot](docs/DICTATION_COPILOT.md) |
 | Set up project-aware dictation for Codex / Claude | [Intelligent Typing Setup](docs/INTELLIGENT_TYPING_GUIDE.md) |
 | Use meeting mode and configure AI intelligence | [Meeting Mode Guide](docs/MEETING_MODE_GUIDE.md) |
 | Wire up the AIPI-Lite companion device | [AIPI-Lite Developer Workflow](docs/AIPI_LITE_DEV_WORKFLOW.md) |

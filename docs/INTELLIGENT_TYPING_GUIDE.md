@@ -7,6 +7,10 @@ an optional LLM rewrite stage before inserting text.
 Use this after basic voice typing works. If you are starting from zero, read
 [Getting Started](GETTING_STARTED.md) first.
 
+> Want to **see it in action** before configuring? [The Dictation
+> Copilot](./DICTATION_COPILOT.md) shows a real spoken→enriched run (and a
+> reproducible demo) where rough speech becomes a project-grounded coding task.
+
 ## What You Are Setting Up
 
 The intelligent-typing loop is:
