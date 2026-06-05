@@ -299,6 +299,9 @@ class DictationPipelineConfig:
     # latency-budget-gated and skipped before they would breach
     # `max_total_latency_ms`.
     rewrite_passes: int = 1
+    # HS-39-02: consult the session correction store when routing. OFF by
+    # default — with it off (or the store empty) routing is byte-identical.
+    corrections_enabled: bool = False
 
     def __post_init__(self) -> None:
         # DIR-C-002: reject unknown stage IDs at config load time so

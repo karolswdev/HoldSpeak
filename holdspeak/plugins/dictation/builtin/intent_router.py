@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from dataclasses import replace
 from typing import Any
 
 from holdspeak.logging_config import get_logger
@@ -19,12 +20,19 @@ from holdspeak.plugins.dictation.contracts import (
     StageResult,
     Utterance,
 )
+from holdspeak.plugins.dictation.corrections import Correction, best_match_in
 from holdspeak.plugins.dictation.grammars import (
     StructuredOutputSchema,
 )
 from holdspeak.plugins.dictation.runtime import LLMRuntime
 
 log = get_logger("dictation.stages.intent_router")
+
+# HS-39-02: a correction-nudged match clears typical block thresholds (the
+# global default is 0.6) so the user's prior correction actually fires the
+# enricher; the gist must be at least this similar to nudge.
+_NUDGE_CONFIDENCE = 0.85
+_NUDGE_SIMILARITY = 0.5
 
 
 def _default_prompt_builder(blocks: LoadedBlocks, utt: Utterance) -> str:
@@ -126,12 +134,16 @@ class IntentRouter:
         max_tokens: int = 128,
         temperature: float = 0.0,
         prompt_builder: Callable[[LoadedBlocks, Utterance], str] | None = None,
+        corrections: list[Correction] | None = None,
     ) -> None:
         self._runtime = runtime
         self._blocks = blocks
         self._max_tokens = max_tokens
         self._temperature = temperature
         self._prompt_builder = prompt_builder or _default_prompt_builder
+        # HS-39-02: a snapshot of session corrections. None/empty ⇒ the router
+        # behaves exactly as pre-Phase-39 (post-classify nudge is a no-op).
+        self._corrections = list(corrections) if corrections else None
 
     def run(self, utt: Utterance, prior: list[StageResult]) -> StageResult:
         start = time.perf_counter()
@@ -177,13 +189,53 @@ class IntentRouter:
             intent = _no_match()
             warnings.append("classify retries exhausted; returning no-match")
 
+        # HS-39-02: nudge toward a recent user correction for a similar
+        # utterance. Only reinforces or redirects to a *known* block; a no-op
+        # when no correction is configured or none is similar enough.
+        nudged_to: str | None = None
+        if self._corrections:
+            intent, nudged_to = self._apply_correction_nudge(intent, utt.raw_text, valid_ids)
+
         elapsed = (time.perf_counter() - start) * 1000.0
         reason = "classify_failed" if warnings else ("matched" if intent.matched else "no_match")
+        metadata: dict[str, Any] = {"taxonomy_size": len(valid_ids), "reason": reason}
+        if nudged_to is not None:
+            metadata["correction_nudge"] = nudged_to
         return StageResult(
             stage_id=self.id,
             text=utt.raw_text,
             intent=intent,
             elapsed_ms=elapsed,
             warnings=warnings,
-            metadata={"taxonomy_size": len(valid_ids), "reason": reason},
+            metadata=metadata,
         )
+
+    def _apply_correction_nudge(
+        self,
+        intent: IntentTag,
+        text: str,
+        valid_ids: tuple[str, ...],
+    ) -> tuple[IntentTag, str | None]:
+        match = best_match_in(
+            self._corrections, "intent", text, min_similarity=_NUDGE_SIMILARITY
+        )
+        if match is None or match.value not in valid_ids:
+            return intent, None
+        block_id = match.value
+        if intent.matched and intent.block_id == block_id:
+            # Reinforce: keep the model's pick, lift confidence to clear the
+            # block threshold so the user's prior correction actually fires.
+            boosted = min(1.0, max(intent.confidence, _NUDGE_CONFIDENCE))
+            return replace(
+                intent,
+                confidence=boosted,
+                extras={**intent.extras, "corrected": True},
+            ), block_id
+        # Redirect to the corrected block (the model missed or disagreed).
+        return IntentTag(
+            matched=True,
+            block_id=block_id,
+            confidence=_NUDGE_CONFIDENCE,
+            raw_label=intent.raw_label,
+            extras={**intent.extras, "corrected": True},
+        ), block_id

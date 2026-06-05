@@ -673,3 +673,13 @@ class TestDictationPipelineValidation:
         with pytest.raises(DictationConfigError) as exc:
             DictationPipelineConfig(rewrite_passes=6)
         assert "rewrite_passes" in str(exc.value)
+
+    def test_corrections_enabled_defaults_off(self):
+        from holdspeak.config import DictationPipelineConfig
+
+        assert DictationPipelineConfig().corrections_enabled is False
+
+    def test_corrections_enabled_round_trips(self):
+        from holdspeak.config import DictationPipelineConfig
+
+        assert DictationPipelineConfig(corrections_enabled=True).corrections_enabled is True

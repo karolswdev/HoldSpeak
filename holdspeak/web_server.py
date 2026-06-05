@@ -184,6 +184,11 @@ class MeetingWebServer:
         # HS-26-06: explode the bundle onto attributes so the rest of the class
         # (and `_create_app`'s WebContext build) reads `self.on_*` unchanged.
         self._callbacks = callbacks
+        # HS-39-02: one session-scoped dictation correction store, shared by the
+        # dictation routes (record/read) and the live runtime (consult).
+        from .plugins.dictation.corrections import CorrectionStore
+
+        self.dictation_corrections = CorrectionStore()
         self.on_bookmark = callbacks.on_bookmark
         self.on_stop = callbacks.on_stop
         self.on_meeting_stop = callbacks.on_meeting_stop
@@ -445,6 +450,7 @@ class MeetingWebServer:
             on_get_status=self.on_get_status,
             on_settings_applied=self.on_settings_applied,
             current_formatted_duration=self._current_formatted_duration,
+            corrections=self.dictation_corrections,
         )
         app.include_router(build_core_router(web_ctx))
         app.include_router(build_meetings_router(web_ctx))

@@ -1363,7 +1363,7 @@ class WebRuntime:
             from holdspeak.plugins.dictation.assembly import build_pipeline
             from holdspeak.plugins.dictation.contracts import Utterance
             from holdspeak.plugins.dictation.project_root import detect_project_for_cwd
-            from holdspeak.target_profile import detect_active_target_profile
+            from holdspeak.target_profile import apply_target_correction, detect_active_target_profile
 
             if agent_reply_session is not None and getattr(agent_reply_session, "cwd", None):
                 project = detect_project_for_cwd(
@@ -1373,7 +1373,19 @@ class WebRuntime:
             else:
                 project = detect_project_for_cwd()
             project_root = Path(project["root"]) if project else None
-            result = build_pipeline(dictation_cfg, project_root=project_root)
+
+            # HS-39-02: consult the session correction store (shared with the
+            # dictation routes via the server) when corrections are enabled.
+            corrections_store = getattr(self.server, "dictation_corrections", None)
+            correction_snapshot = (
+                corrections_store.snapshot()
+                if corrections_store is not None and bool(getattr(pipeline_cfg, "corrections_enabled", False))
+                else None
+            )
+
+            result = build_pipeline(
+                dictation_cfg, project_root=project_root, corrections=correction_snapshot
+            )
             if result.runtime_status != "loaded":
                 return text
 
@@ -1382,7 +1394,12 @@ class WebRuntime:
                 or getattr(pipeline_cfg, "target_profile_override", "auto")
             )
             activity = build_activity_context(limit=20, refresh=False).to_dict()
-            activity["target"] = detect_active_target_profile(target_override).to_dict()
+            target_profile = apply_target_correction(
+                detect_active_target_profile(target_override),
+                text=text,
+                corrections=correction_snapshot,
+            )
+            activity["target"] = target_profile.to_dict()
             recent_agent = agent_reply_session or get_recent_agent_session(max_age_seconds=120)
             if recent_agent is not None and bool(getattr(recent_agent, "awaiting_response", False)):
                 agent_project_root = getattr(recent_agent, "repo_root", None)

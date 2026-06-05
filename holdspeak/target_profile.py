@@ -123,6 +123,34 @@ def detect_target_profile_with_override(
     )
 
 
+def apply_target_correction(
+    profile: TargetProfile,
+    *,
+    text: str,
+    corrections: list[Any] | None,
+    min_similarity: float = 0.5,
+) -> TargetProfile:
+    """HS-39-02: bias detection toward a recent user target correction.
+
+    A no-op unless a session correction of kind ``target`` is similar enough to
+    ``text``. A **manual override always wins** (we never touch an
+    override-sourced profile), and we only redirect to a user-selectable
+    profile that differs from the current pick. Empty/absent corrections leave
+    the profile byte-identical.
+    """
+    if not corrections or profile.source == "override":
+        return profile
+    from holdspeak.plugins.dictation.corrections import best_match_in
+
+    match = best_match_in(corrections, "target", text, min_similarity=min_similarity)
+    if match is None:
+        return profile
+    value = match.value
+    if value not in TARGET_PROFILE_OVERRIDE_OPTIONS or value == profile.id:
+        return profile
+    return _profile(value, 0.95, "correction", {}, details={"matched": "correction"})
+
+
 def collect_active_target_hints() -> dict[str, Any]:
     """Best-effort active-window hints; returns `{}` when unavailable."""
 

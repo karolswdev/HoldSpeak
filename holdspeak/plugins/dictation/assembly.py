@@ -53,6 +53,7 @@ def build_pipeline(
     project_root: Path | None = None,
     global_blocks_path: Path | None = None,
     runtime_factory: Callable[..., LLMRuntime] | None = None,
+    corrections: list[Any] | None = None,
 ) -> BuildResult:
     """Resolve blocks + runtime, return a wired `DictationPipeline`.
 
@@ -68,11 +69,19 @@ def build_pipeline(
     runtime, runtime_status, runtime_detail = _try_build_runtime(cfg, runtime_factory)
     llm_enabled = runtime is not None
 
+    # HS-39-02: corrections only influence routing when the feature is on AND
+    # the store has entries; otherwise pass None so the router is byte-identical.
+    intent_corrections = (
+        corrections
+        if corrections and getattr(cfg.pipeline, "corrections_enabled", False)
+        else None
+    )
+
     stages: list[Any] = []
     for stage_id in cfg.pipeline.stages:
         if stage_id == "intent-router":
             if runtime is not None:
-                stages.append(IntentRouter(runtime, blocks))
+                stages.append(IntentRouter(runtime, blocks, corrections=intent_corrections))
         elif stage_id == "project-rewriter":
             if runtime is not None:
                 stages.append(

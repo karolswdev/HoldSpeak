@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 39
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-39-05
 - **Owner:** unassigned
@@ -44,20 +44,34 @@ the rolling-context can of worms.
 
 ## Acceptance criteria
 
-- [ ] A `CorrectionStore` exists, is bounded (configurable cap, default ~20),
-      thread-safe, and lives on `WebRuntime` (one per process/session).
-- [ ] A correction can be recorded via the dictation web surface and is
-      retrievable; storing past the cap evicts oldest (ring semantics).
-- [ ] With `corrections_enabled=false` (default) **or** an empty store, router
-      scores + target resolution are **byte-identical** to pre-story (asserted).
-- [ ] With a recorded intent correction, a subsequent similar utterance's
-      routing reflects the nudge (in-context hint and/or threshold), proven by
-      a unit test with a fake runtime.
-- [ ] With a recorded profile correction, target resolution prefers the
-      corrected profile for a matching context; manual override still wins.
-- [ ] Corrections are gist-only and pass the secret-rejection check; no raw
-      secret is ever stored.
-- [ ] No DB schema change; no persistence across process restart.
+- [x] A `CorrectionStore` exists, is bounded (configurable cap, default 20),
+      thread-safe, and is owned **once per process/session** —
+      `holdspeak/plugins/dictation/corrections.py`, instantiated on
+      `MeetingWebServer` and shared with the live `WebRuntime` via
+      `server.dictation_corrections` (see Deviation below). —
+      `test_dictation_correction_store.py` (incl. concurrent-record).
+- [x] A correction can be recorded via the dictation web surface and is
+      retrievable; storing past the cap evicts oldest (ring semantics). —
+      `POST/GET /api/dictation/corrections`,
+      `test_web_dictation_corrections_api.py`, `test_ring_evicts_oldest_past_cap`.
+- [x] With `corrections_enabled=false` (default) **or** an empty store, router
+      scores + target resolution are **byte-identical** to pre-story —
+      `assembly` passes `None` unless enabled+populated;
+      `test_no_corrections_is_byte_identical`,
+      `test_target_correction_noop_without_corrections`.
+- [x] With a recorded intent correction, a subsequent similar utterance's
+      routing reflects the nudge, proven with a fake runtime —
+      `test_correction_nudge_redirects_to_corrected_block`,
+      `test_correction_nudge_reinforces_same_block_confidence`.
+- [x] With a recorded profile correction, target resolution prefers the
+      corrected profile for a matching context; manual override still wins —
+      `test_target_correction_redirects_for_similar_context`,
+      `test_target_correction_never_overrides_manual_override`.
+- [x] Corrections are gist-only (single-line, ≤200 chars) and pass the
+      secret-rejection check (`looks_like_secret`); no raw secret is stored —
+      `test_record_rejects_secret_like_gist`, `test_record_silently_drops_secret`.
+- [x] No DB schema change; no persistence across process restart (in-process
+      ring only).
 
 ## Test plan
 
@@ -83,3 +97,22 @@ the rolling-context can of worms.
 - Canon: DIR-01 §3.2 marks rolling-context out of scope. This store is
   session-scoped and bounded, surfaced as hints — if it grows into stateful
   chaining, the spec wins; record the deviation here.
+
+## Deviations from plan (recorded at ship)
+
+- **Store hosted on `MeetingWebServer`, not literally on `WebRuntime`.** The
+  routes need it (they only see the server's `WebContext`) and the live runtime
+  reaches the *same* instance via `self.server.dictation_corrections`. Still
+  one store per process/session; the acceptance intent is met.
+- **Nudge is a deterministic post-classification step, not a prompt hint.** The
+  router's prompt is left **unchanged**; after the model classifies, a similar
+  intent correction reinforces (lifts confidence to clear the threshold) or
+  redirects to the corrected *known* block. This keeps "no match ⇒ byte-identical
+  to no-corrections" exact and the behavior unit-testable with a fake runtime.
+- **Both kinds key on the utterance gist.** A target correction matches on the
+  dictated text (the "context"), not a window/app signature — one matching
+  mechanism, simpler, and adequate for a session-scoped nudge. A hints-signature
+  key is a possible later refinement.
+- **Confidence floor `0.85`, similarity threshold `0.5`** (Jaccard token
+  overlap) — chosen to clear the 0.6 default block threshold while staying
+  conservative on what counts as "similar".

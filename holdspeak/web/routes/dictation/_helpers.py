@@ -406,15 +406,27 @@ def _run_dictation_dry_run_text(
     target_hints: Optional[dict[str, Any]] = None,
     *,
     suggestions: dict[str, dict[str, str]],
+    corrections: Any = None,
 ) -> dict[str, Any]:
     """Execute the browser dry-run path for already-validated text."""
     from ....config import Config
     from ....dictation_telemetry import summarize_dry_run
     from ....plugins.dictation.assembly import DEFAULT_GLOBAL_BLOCKS_PATH, build_pipeline
     from ....plugins.dictation.contracts import Utterance
-    from ....target_profile import collect_active_target_hints, detect_target_profile_with_override
+    from ....target_profile import (
+        apply_target_correction,
+        collect_active_target_hints,
+        detect_target_profile_with_override,
+    )
 
     cfg = Config.load().dictation
+    # HS-39-02: only consult corrections when the feature is on; a None snapshot
+    # keeps routing + target detection byte-identical.
+    correction_snapshot = (
+        corrections.snapshot()
+        if corrections is not None and getattr(cfg.pipeline, "corrections_enabled", False)
+        else None
+    )
     try:
         project = _resolve_project_context(project_root_override)
     except ValueError:
@@ -448,10 +460,14 @@ def _run_dictation_dry_run_text(
         cfg,
         project_root=project_root,
         global_blocks_path=DEFAULT_GLOBAL_BLOCKS_PATH,
+        corrections=correction_snapshot,
     )
     target_profile = detect_target_profile_with_override(
         target_hints or collect_active_target_hints(),
         cfg.pipeline.target_profile_override,
+    )
+    target_profile = apply_target_correction(
+        target_profile, text=text, corrections=correction_snapshot
     )
     run = result.pipeline.run(
         Utterance(

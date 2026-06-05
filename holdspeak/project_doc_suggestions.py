@@ -240,3 +240,8 @@ def _looks_secret(text: str) -> bool:
             flags=re.IGNORECASE,
         )
     )
+
+
+def looks_like_secret(text: str) -> bool:
+    """Public secret-shape check, reused by the correction memory (HS-39-02)."""
+    return _looks_secret(text)

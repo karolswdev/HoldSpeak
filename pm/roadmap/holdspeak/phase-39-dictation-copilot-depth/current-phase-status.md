@@ -1,10 +1,22 @@
 # Phase 39 — Dictation Copilot Depth
 
-**Status:** IN PROGRESS (1/7 stories). Opened 2026-06-05. Direction chosen by
+**Status:** IN PROGRESS (2/7 stories). Opened 2026-06-05. Direction chosen by
 the user (feature work over Release/First-Run and Growth; track "Dictation
 Copilot depth" over Actuators III and Artifact→action bridges).
 
-**Last updated:** 2026-06-05 (**HS-39-01 done** — multi-pass rewriting.
+**Last updated:** 2026-06-05 (**HS-39-02 done** — correction memory (session
+learning). New `holdspeak/plugins/dictation/corrections.py` `CorrectionStore`
+(bounded ring, thread-safe, gist-only + secret-rejected), owned by
+`MeetingWebServer` and shared with the live `WebRuntime`. Capture/list routes
+`POST/GET /api/dictation/corrections`. A deterministic post-classify nudge in
+`IntentRouter` reinforces/redirects toward a similar recent correction;
+`target_profile.apply_target_correction` biases detection (manual override
+always wins). Gated behind default-off `corrections_enabled` and threaded
+through `assembly.build_pipeline` + the dry-run helper + the live path; empty
+store or flag-off ⇒ byte-identical. Suite **2157 passed, 15 skipped** (+25);
+touched files ruff-clean. Next: HS-39-03 model-assisted target detection.)
+
+**Earlier 2026-06-05** (**HS-39-01 done** — multi-pass rewriting.
 `DictationPipelineConfig.rewrite_passes` (default 1, validated 1–5);
 `ProjectRewriter` runs a draft → critique → refine loop, latency-budget-gated
 against `max_total_latency_ms` (an extra pass is skipped before it would
@@ -95,9 +107,10 @@ The DIR-01 invariant is unchanged and load-bearing throughout:
       output is byte-identical to pre-Phase-39; an extra pass is skipped when
       it would breach `max_total_latency_ms`; dry-run shows each pass.
       (HS-39-01) — [evidence-story-01](./evidence-story-01.md)
-- [ ] A bounded correction store nudges the router prompt + threshold within a
-      session; default (no corrections) leaves routing byte-identical; the
-      store never persists secrets and adds no DB schema. (HS-39-02)
+- [x] A bounded correction store nudges routing within a session; default (no
+      corrections) leaves routing byte-identical; the store never persists
+      secrets and adds no DB schema. (HS-39-02) —
+      [evidence-story-02](./evidence-story-02.md)
 - [ ] Below-threshold heuristic confidence triggers the opt-in LLM
       target-profile fallback; manual override still wins; with the fallback
       off, detection is byte-identical. (HS-39-03)
@@ -119,7 +132,7 @@ The DIR-01 invariant is unchanged and load-bearing throughout:
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-39-01 | Multi-pass rewriting | done | [story-01-multi-pass-rewriting.md](./story-01-multi-pass-rewriting.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-39-02 | Correction memory (session learning) | backlog | [story-02-correction-memory.md](./story-02-correction-memory.md) | — |
+| HS-39-02 | Correction memory (session learning) | done | [story-02-correction-memory.md](./story-02-correction-memory.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-39-03 | Model-assisted target detection | backlog | [story-03-model-assisted-target-detection.md](./story-03-model-assisted-target-detection.md) | — |
 | HS-39-04 | Project-doc suggestion quality gate | backlog | [story-04-suggestion-quality-gate.md](./story-04-suggestion-quality-gate.md) | — |
 | HS-39-05 | Pipeline depth telemetry | backlog | [story-05-pipeline-depth-telemetry.md](./story-05-pipeline-depth-telemetry.md) | — |
@@ -127,6 +140,21 @@ The DIR-01 invariant is unchanged and load-bearing throughout:
 | HS-39-07 | Closeout + final-summary | backlog | [story-07-closeout.md](./story-07-closeout.md) | — |
 
 ## Where we are
+
+**HS-39-02 done (2026-06-05).** Correction memory (session learning) shipped.
+New `corrections.py` `CorrectionStore` (bounded ring, thread-safe, gist-only,
+secret-rejected via the new public `looks_like_secret`) is owned by
+`MeetingWebServer` and shared with the live `WebRuntime` (`server.dictation_corrections`),
+exposed on `WebContext.corrections`. `POST/GET /api/dictation/corrections`
+capture + list (route-table invariant updated 26→28). Consumption is a
+**deterministic post-classify nudge**: `IntentRouter` reinforces/redirects to a
+similar recent correction's *known* block (confidence floor 0.85, Jaccard
+similarity ≥ 0.5); `target_profile.apply_target_correction` biases detection
+(manual override always wins). All gated behind default-off `corrections_enabled`,
+threaded through `assembly.build_pipeline`, the dry-run helper, and the live
+`_maybe_run_dictation_pipeline`; empty/flag-off ⇒ byte-identical. 25 new tests
+(store/intent/target/config/route+dry-run); suite 2157/15. **Next: HS-39-03**
+model-assisted target detection.
 
 **HS-39-01 done (2026-06-05).** Multi-pass rewriting shipped. `rewrite_passes`
 (default 1, validated 1–5) on `DictationPipelineConfig`; `ProjectRewriter` now
@@ -201,6 +229,16 @@ the default suite free of any real LLM/network call (inject fake runtimes).
   gate.
 - 2026-06-05 (HS-39-01) — **`rewrite_passes` capped at 5** — a typo can't fan
   out into a runaway per-utterance LLM loop.
+- 2026-06-05 (HS-39-02) — **Correction nudge is a deterministic post-classify
+  step, not a prompt hint** — keeps "no similar correction ⇒ byte-identical"
+  exact and the nudge unit-testable with a fake runtime.
+- 2026-06-05 (HS-39-02) — **Store hosted on `MeetingWebServer`, shared with
+  `WebRuntime`** — the routes only see the server's `WebContext`; the live path
+  reaches the same instance via `self.server.dictation_corrections`. One store
+  per session; literal placement deviates from "on WebRuntime".
+- 2026-06-05 (HS-39-02) — **Target corrections key on the utterance gist**, not
+  a window/app signature — one matching mechanism; a hints-signature key is a
+  later refinement if dogfood shows it's needed.
 
 ## Decisions deferred
 
