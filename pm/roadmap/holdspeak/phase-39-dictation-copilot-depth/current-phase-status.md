@@ -1,10 +1,22 @@
 # Phase 39 — Dictation Copilot Depth
 
-**Status:** IN PROGRESS (3/7 stories). Opened 2026-06-05. Direction chosen by
+**Status:** IN PROGRESS (4/8 stories). Opened 2026-06-05. Direction chosen by
 the user (feature work over Release/First-Run and Growth; track "Dictation
-Copilot depth" over Actuators III and Artifact→action bridges).
+Copilot depth" over Actuators III and Artifact→action bridges). Phase grew
+7→8 stories mid-flight (HS-39-08, user-requested real-endpoint e2e).
 
-**Last updated:** 2026-06-05 (**HS-39-03 done** — model-assisted target
+**Last updated:** 2026-06-05 (**HS-39-08 done** — the first **real** `.43`
+validation of Phase 39. A `ledgerline` fixture project (`.hs/` context + code),
+`scripts/dictation_enrichment_demo.py` (`run_enrichment` + a Signal-styled
+before→after `render`), and a gated `tests/e2e/test_dictation_enrichment_e2e.py`
+(auto-skips with no endpoint; **passed against `.43` Qwen3.5-9B-Q6 in 15.07s**).
+Rough 446-char dictation → a ~2.4k-char project-grounded coding task citing
+`idempotency_keys` / `ledger_entries` / the double-entry invariant / real
+`src/ledgerline/**` paths, plus a `.hs/memory/*.md` suggestion. Capture in
+`evidence/dictation_enrichment_demo.txt`. Hermetic suite 2167/16; ruff-clean.
+Next: HS-39-04 suggestion quality gate.)
+
+**Earlier 2026-06-05** (**HS-39-03 done** — model-assisted target
 detection. `apply_model_assisted_target` re-classifies a low-confidence
 heuristic via the LLM `rewrite` seam (enum-validated at parse; degrades to the
 heuristic on any failure), behind default-off `target_detect_llm_enabled` +
@@ -133,8 +145,11 @@ The DIR-01 invariant is unchanged and load-bearing throughout:
       guidance + multi-pass + correction-store state. (HS-39-05)
 - [ ] `docs/INTELLIGENT_TYPING_GUIDE.md` documents every new knob; no live doc
       contradicts the shipped surface; doc-guards + link-check green. (HS-39-06)
-- [ ] `.43` endpoint dogfood captured; before/after on a messy session;
-      `final-summary.md`; README → done. (HS-39-07)
+- [x] Real spoken→enriched e2e over a `.hs` fixture project, gated/auto-skip,
+      passing live against `.43`; beautiful before→after; committed capture.
+      (HS-39-08) — [evidence-story-08](./evidence-story-08.md)
+- [ ] `.43` endpoint dogfood captured; before/after on a messy session
+      (reuses HS-39-08); `final-summary.md`; README → done. (HS-39-07)
 - [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green throughout;
       with `dictation.pipeline.enabled=false` the typing path is byte-identical
       to pre-Phase-39; no new default network/LLM call. (all)
@@ -150,8 +165,21 @@ The DIR-01 invariant is unchanged and load-bearing throughout:
 | HS-39-05 | Pipeline depth telemetry | backlog | [story-05-pipeline-depth-telemetry.md](./story-05-pipeline-depth-telemetry.md) | — |
 | HS-39-06 | Documentation | backlog | [story-06-documentation.md](./story-06-documentation.md) | — |
 | HS-39-07 | Closeout + final-summary | backlog | [story-07-closeout.md](./story-07-closeout.md) | — |
+| HS-39-08 | Real spoken→enriched dictation e2e + demo | done | [story-08-spoken-dictation-e2e.md](./story-08-spoken-dictation-e2e.md) | [evidence-story-08.md](./evidence-story-08.md) |
 
 ## Where we are
+
+**HS-39-08 done (2026-06-05) — first real-endpoint proof.** On user request,
+the phase grew to include a real spoken→enriched e2e + demo. A `ledgerline`
+fixture (`.hs/` context + `src/ledgerline/**` code), `scripts/dictation_enrichment_demo.py`,
+and a gated `tests/e2e/test_dictation_enrichment_e2e.py` that auto-skips with no
+endpoint and **passed live against `.43`** (Qwen3.5-9B-Q6, 15.07s): a 446-char
+ramble became a ~2.4k-char project-grounded coding task (real table/column
+names + the double-entry invariant + acceptance criteria) plus a `.hs/memory/*`
+suggestion. This is the **first time any Phase-39 code touched a real LLM** —
+HS-39-01/02/03 were all fakes — so it de-risks the closeout. Committed capture:
+`evidence/dictation_enrichment_demo.txt`. **Next: HS-39-04** (suggestion quality
+gate).
 
 **HS-39-03 done (2026-06-05).** Model-assisted target detection shipped.
 `target_profile.apply_model_assisted_target` re-classifies a sub-threshold
@@ -266,6 +294,13 @@ the default suite free of any real LLM/network call (inject fake runtimes).
 - 2026-06-05 (HS-39-02) — **Target corrections key on the utterance gist**, not
   a window/app signature — one matching mechanism; a hints-signature key is a
   later refinement if dogfood shows it's needed.
+- 2026-06-05 (HS-39-08) — **Add a real-endpoint e2e mid-phase** (user request)
+  rather than waiting for the HS-39-07 closeout — three features had stacked up
+  fakes-only; a real `.43` proof now de-risks the rest. Phase grew 7→8.
+- 2026-06-05 (HS-39-08) — **The e2e is opt-in/auto-skip** (env + reachability),
+  not a hosted-CI test — a LAN/self-hosted LLM can't run in GitHub CI. It runs
+  for real wherever the endpoint is reachable; CI skips it green. Mirrors the
+  existing spoken-meeting e2e pattern.
 
 ## Decisions deferred
 

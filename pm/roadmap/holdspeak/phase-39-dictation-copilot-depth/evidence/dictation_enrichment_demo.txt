@@ -1,0 +1,77 @@
+
+  HoldSpeak · Dictation Copilot   spoken → enriched
+  project ledgerline  ·  target codex_cli  ·  model Qwen3.5-9B-UD-Q6_K_XL.gguf
+  .hs context: instructions, context, memory, terms  ·  rewrite passes: 2
+
+┌─ SPOKEN  (raw dictation, what Whisper heard) ──────────────────────────────┐
+│ ok so um claude i need you to add idempotency to the charge endpoint       │
+│ because right now if the gateway retries we post the entry twice and the   │
+│ customer gets double charged which is really bad uh so use the idempotency │
+│ key header that the client sends and store it somewhere and if we see the  │
+│ same key again just return what we returned the first time dont post       │
+│ another entry and yeah make sure it still balances and write a test for    │
+│ the retry case                                                             │
+└────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼  project-aware multi-pass rewrite
+┌─ ENRICHED  (project-grounded coding-agent task) ───────────────────────────┐
+│ **Task:** Implement idempotency for the `POST /charges` endpoint in        │
+│ `src/ledgerline/api/charges.py`.                                           │
+│                                                                            │
+│ **Specification:**                                                         │
+│ 1.  **Extract Key:** Read the `Idempotency-Key` header from incoming       │
+│ requests.                                                                  │
+│ 2.  **Lookup & Replay:** Before posting, check if this key exists in the   │
+│ idempotency store (`idempotency_keys`).                                    │
+│     *   If found: Retrieve and return the previously stored response JSON  │
+│ immediately without creating new ledger entries.                           │
+│     *   If not found: Proceed with the standard charge flow.               │
+│ 3.  **Store Response:** Upon successful completion of a charge (including  │
+│ the double-entry posting in `src/ledgerline/ledger.py`), store the request │
+│ hash, key, and full response JSON in the idempotency store.                │
+│ 4.  **Invariant Preservation:** Ensure that replaying a request does not   │
+│ violate the double-entry invariant or alter existing ledger rows.          │
+│ Corrections must remain append-only.                                       │
+│                                                                            │
+│ **Acceptance Criteria:**                                                   │
+│ - [ ] A second request with the same `Idempotency-Key` returns the exact   │
+│ same response as the first request without creating new rows in            │
+│ `ledger_entries`.                                                          │
+│ - [ ] The ledger remains balanced (sum of debits equals sum of credits)    │
+│ after a retry scenario.                                                    │
+│ - [ ] Money values remain integer minor units (cents).                     │
+│ - [ ] A unit test exists covering the gateway retry scenario where a 5xx   │
+│ error triggers a replay, verifying no double-charging occurs.              │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ CONTEXT-PRESERVATION SUGGESTION (.hs/, awaiting your OK) ─────────────────┐
+│ .hs/memory/idempotency-retry.md                                            │
+│                                                                            │
+│ Captures the specific implementation contract for POST /charges            │
+│ idempotency to prevent double-charging during gateway retries.             │
+│                                                                            │
+│ # Idempotency Contract for POST /charges                                   │
+│                                                                            │
+│ **Location:** `src/ledgerline/api/charges.py`                              │
+│                                                                            │
+│ **Mechanism:**                                                             │
+│ 1.  **Extract:** Read `Idempotency-Key` header.                            │
+│ 2.  **Lookup:** Check `idempotency_keys(key, request_hash, response_json)` │
+│ before posting.                                                            │
+│ 3.  **Replay:** If found, return stored `response_json` immediately. Do    │
+│ NOT create new ledger entries.                                             │
+│ 4.  **Store:** On success (after double-entry posting in `ledger.py`),     │
+│ save `{key, request_hash, response_json}`.                                 │
+│                                                                            │
+│ **Invariants:**                                                            │
+│ - Replaying a key must never violate the double-entry invariant.           │
+│ - Ledger rows remain append-only; retries are no-ops if committed.         │
+│ - Money remains integer minor units (cents).                               │
+│                                                                            │
+│ **Test Requirement:**                                                      │
+│ Unit test for gateway 5xx retry scenario verifying no double-charging      │
+│ occurs.                                                                    │
+└────────────────────────────────────────────────────────────────────────────┘
+
+  446 chars → 2433 chars (+1987)  ·  13.0s  ·  reason=rewritten
+
