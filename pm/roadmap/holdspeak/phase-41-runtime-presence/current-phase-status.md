@@ -1,11 +1,15 @@
 # Phase 41 — Runtime Presence Indicators
 
-**Status:** IN PROGRESS (5/7 stories). Opened 2026-06-05. Direction chosen by the
+**Status:** IN PROGRESS (6/8 stories). Opened 2026-06-05 (grew 7→8 on user ask:
+un-defer the Linux floating overlay). Direction chosen by the
 user: **know what the copilot is doing on the desktop** while dictating —
 without the web dashboard being visible — via a rich, branded, native-feeling
 presence indicator on **both macOS and Linux**.
 
-**Last updated:** 2026-06-05 (**HS-41-05 done** — the Linux renderer:
+**Last updated:** 2026-06-05 (**HS-41-08 done** — the Linux **floating GTK-WebKit
+overlay** (the macOS HUD's twin), live-captured on `.43`/X11: the same Signal
+card in a GTK3 POPUP, served from the Mac over an SSH reverse tunnel. Suite
+2261/16. HS-41-05 done — the Linux renderer:
 `FreedesktopPresenceRenderer` = an in-place-updating libnotify notification
 (coalesced) + a StatusNotifierItem tray glyph, focus-safe + portable across
 X11/Wayland + GNOME/KDE/XFCE; logic fully unit-tested with fakes **and
@@ -101,12 +105,13 @@ available tier; everything is gated by `HOLDSPEAK_DESKTOP_PRESENCE=1`.
 | HS-41-03 | Renderer Protocol + host selection + `/presence` route | done | [story-03-renderer-seam.md](./story-03-renderer-seam.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-41-04 | macOS renderer (NSStatusItem + NSPanel webview) | done | [story-04-macos-renderer.md](./story-04-macos-renderer.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-41-05 | Linux renderer (notification + tray) | done | [story-05-linux-renderer.md](./story-05-linux-renderer.md) | [evidence-story-05.md](./evidence-story-05.md) |
+| HS-41-08 | Linux GTK-WebKit floating overlay | done | [story-08-linux-gtk-overlay.md](./story-08-linux-gtk-overlay.md) | [evidence-story-08.md](./evidence-story-08.md) |
 | HS-41-06 | Documentation | backlog | [story-06-documentation.md](./story-06-documentation.md) | — |
 | HS-41-07 | Closeout | backlog | [story-07-closeout.md](./story-07-closeout.md) | — |
 
 ## Where we are
 
-**HS-41-01 → HS-41-05 done (2026-06-05).** Branched `phase-41-runtime-presence`
+**HS-41-01 → HS-41-05 + HS-41-08 done (2026-06-05).** Branched `phase-41-runtime-presence`
 off `main` (post Phase-40 merge). HS-41-01 ported the pure `runtime_activity`
 contract; HS-41-02 wired the full lifecycle into it + the WS broadcast + the
 dashboard presence card (zero deps). **HS-41-03** built the desktop seam:
@@ -130,9 +135,14 @@ Homebrew python@3.13 bottle by switching the venv to uv-managed CPython 3.13.11
 (coalesced on state change) + a **StatusNotifierItem tray glyph** (PyGObject,
 lazy), focus-safe and portable across X11/Wayland + GNOME/KDE/XFCE. Logic fully
 unit-tested with fake seams; graceful fallback verified
-(`freedesktop_presence_available()` False on macOS). The Tier-2 floating
-GTK-WebKit overlay is a **deferred X11/wlroots-only follow-up** (un-verifiable on
-macOS; notification+tray is the everywhere native path). Suite 2259/16. Next:
+(`freedesktop_presence_available()` False on macOS) **and live-verified on
+`.43`/GNOME** (a real notification banner). **HS-41-08** un-deferred the Tier-2
+floating overlay (user ask): `desktop_presence_gtk.py` — a GTK3 POPUP
+(override-redirect/keep-above/non-focus/transparent/click-through) hosting a
+`WebKit2.WebView` of `/presence`, fork-child-driven, wired into the freedesktop
+renderer when `overlay_capable`. **Live-captured on `.43`/X11** — the same Signal
+card as the macOS HUD, served from the Mac over an SSH reverse tunnel. Both
+renderers + the overlay are now proven on real hardware. Suite 2261/16. Next:
 **HS-41-06** (documentation) → **HS-41-07** (closeout).
 
 ## Active risks

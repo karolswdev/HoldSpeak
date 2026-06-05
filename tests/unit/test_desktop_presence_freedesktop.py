@@ -139,3 +139,47 @@ def test_select_linux_renderer_none_without_libnotify(monkeypatch) -> None:
         lambda: False,
     )
     assert dp._select_presence_renderer({"os": "linux"}, lambda: "http://x") is None
+
+
+# ── HS-41-08: the floating overlay (Tier-2) ───────────────────────────
+
+
+class FakeOverlay:
+    def __init__(self) -> None:
+        self.shown = 0
+        self.hidden = 0
+        self.closed = 0
+
+    def show(self) -> None:
+        self.shown += 1
+
+    def hide(self) -> None:
+        self.hidden += 1
+
+    def close(self) -> None:
+        self.closed += 1
+
+
+def test_overlay_shown_alongside_notification_when_injected() -> None:
+    notifier, tray, overlay = FakeNotifier(), FakeTray(), FakeOverlay()
+    r = FreedesktopPresenceRenderer(
+        lambda: "http://x", overlay_capable=True, notifier=notifier, tray=tray, overlay=overlay
+    )
+    tracker = RuntimeActivityTracker()
+    r.show(tracker.update("recording", source="hotkey"))
+    assert overlay.shown == 1 and len(notifier.specs) == 1
+    r.hide()
+    assert overlay.hidden == 1
+    r.close()
+    assert overlay.closed == 1
+
+
+def test_overlay_not_used_when_not_overlay_capable() -> None:
+    # Even with WebKit2 imaginably available, a non-overlay-capable compositor
+    # (e.g. GNOME-Wayland) gets notification + tray only.
+    notifier, tray = FakeNotifier(), FakeTray()
+    r = FreedesktopPresenceRenderer(
+        lambda: "http://x", overlay_capable=False, notifier=notifier, tray=tray
+    )
+    r.show(RuntimeActivityTracker().update("recording", source="hotkey"))
+    assert r._overlay is None  # never built

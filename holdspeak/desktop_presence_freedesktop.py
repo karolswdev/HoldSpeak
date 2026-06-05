@@ -176,11 +176,13 @@ class FreedesktopPresenceRenderer:
         overlay_capable: bool = False,
         notifier: Optional[_Notifier] = None,
         tray: Optional[_Tray] = None,
+        overlay: Optional[Any] = None,
     ) -> None:
         self._url_provider = url_provider
         self._overlay_capable = bool(overlay_capable)
         self._notifier = notifier
         self._tray = tray
+        self._overlay = overlay
         self._started = notifier is not None or tray is not None
         self._unavailable = False
         self._last_state: Optional[str] = None
@@ -206,6 +208,17 @@ class FreedesktopPresenceRenderer:
             except Exception as exc:  # pragma: no cover - tray host dependent
                 log.info(f"Presence tray unavailable ({exc}); notification-only.")
                 self._tray = None
+        # Tier-2: a floating GTK-WebKit overlay of /presence, only where the
+        # compositor allows it (X11/wlroots) and WebKit2 is present.
+        if self._overlay is None and self._overlay_capable:
+            try:
+                from .desktop_presence_gtk import GtkOverlayRenderer, gtk_overlay_available
+
+                if gtk_overlay_available():
+                    self._overlay = GtkOverlayRenderer(self._url_provider)
+            except Exception as exc:  # pragma: no cover - Linux GUI dependent
+                log.info(f"Presence overlay unavailable ({exc}); notification + tray only.")
+                self._overlay = None
         self._started = True
         return True
 
@@ -215,6 +228,8 @@ class FreedesktopPresenceRenderer:
         view = build_presence_window_view(activity)
         if self._tray is not None:
             self._tray.set_state(view)
+        if self._overlay is not None:
+            self._overlay.show()
         # Coalesce: only (re)notify on a state change, not every event.
         if view.state != self._last_state:
             if self._notifier is not None:
@@ -230,6 +245,8 @@ class FreedesktopPresenceRenderer:
             return
         if self._tray is not None:
             self._tray.set_idle()
+        if self._overlay is not None:
+            self._overlay.hide()
         if self._notifier is not None:
             self._notifier.close()
         self._last_state = None
@@ -239,6 +256,8 @@ class FreedesktopPresenceRenderer:
             self._notifier.close()
         if self._tray is not None:
             self._tray.close()
+        if self._overlay is not None:
+            self._overlay.close()
 
 
 __all__ = [
