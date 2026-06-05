@@ -649,3 +649,51 @@ class TestDictationPipelineValidation:
         assert "made-up" in str(exc.value)
         assert "project-rewriter" in str(exc.value)
         assert "kb-enricher" in str(exc.value)  # surfaces the canonical list
+
+    def test_rewrite_passes_defaults_to_one(self):
+        from holdspeak.config import DictationPipelineConfig
+
+        assert DictationPipelineConfig().rewrite_passes == 1
+
+    def test_rewrite_passes_in_range_accepted(self):
+        from holdspeak.config import DictationPipelineConfig
+
+        assert DictationPipelineConfig(rewrite_passes=3).rewrite_passes == 3
+
+    def test_rewrite_passes_below_one_rejected(self):
+        from holdspeak.config import DictationConfigError, DictationPipelineConfig
+
+        with pytest.raises(DictationConfigError) as exc:
+            DictationPipelineConfig(rewrite_passes=0)
+        assert "rewrite_passes" in str(exc.value)
+
+    def test_rewrite_passes_above_cap_rejected(self):
+        from holdspeak.config import DictationConfigError, DictationPipelineConfig
+
+        with pytest.raises(DictationConfigError) as exc:
+            DictationPipelineConfig(rewrite_passes=6)
+        assert "rewrite_passes" in str(exc.value)
+
+    def test_corrections_enabled_defaults_off(self):
+        from holdspeak.config import DictationPipelineConfig
+
+        assert DictationPipelineConfig().corrections_enabled is False
+
+    def test_corrections_enabled_round_trips(self):
+        from holdspeak.config import DictationPipelineConfig
+
+        assert DictationPipelineConfig(corrections_enabled=True).corrections_enabled is True
+
+    def test_target_detect_llm_defaults(self):
+        from holdspeak.config import DictationPipelineConfig
+
+        cfg = DictationPipelineConfig()
+        assert cfg.target_detect_llm_enabled is False
+        assert cfg.target_detect_llm_below == 0.8
+
+    def test_target_detect_llm_below_out_of_range_rejected(self):
+        from holdspeak.config import DictationConfigError, DictationPipelineConfig
+
+        with pytest.raises(DictationConfigError) as exc:
+            DictationPipelineConfig(target_detect_llm_below=1.5)
+        assert "target_detect_llm_below" in str(exc.value)

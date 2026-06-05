@@ -31,6 +31,7 @@ log = get_logger("web.routes.dictation")
 def build_project_docs_router(
     ctx: WebContext,
     project_doc_suggestions: dict[str, dict[str, str]],
+    dismissed_signatures: set[str] | None = None,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -123,6 +124,16 @@ def build_project_docs_router(
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400 if project_root else 404)
         removed = project_doc_suggestions.pop(_project_suggestion_key(project), None)
+        # HS-39-04: remember the dismissal so a near-duplicate doesn't recur.
+        if removed is not None and dismissed_signatures is not None:
+            from ....project_doc_suggestions import suggestion_signature
+
+            dismissed_signatures.add(
+                suggestion_signature(
+                    str(removed.get("target_path") or ""),
+                    str(removed.get("content") or ""),
+                )
+            )
         return JSONResponse(
             {
                 "detected": dict(project),

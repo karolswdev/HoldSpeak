@@ -40,6 +40,9 @@ _EXPECTED_ROUTES = {
     ("/api/dictation/project-kb", "DELETE"),
     ("/api/dictation/readiness", "GET"),
     ("/api/dictation/dry-run", "POST"),
+    # HS-39-02: session correction memory capture + list.
+    ("/api/dictation/corrections", "GET"),
+    ("/api/dictation/corrections", "POST"),
 }
 
 
@@ -62,4 +65,4 @@ def test_dictation_route_table_is_unchanged_after_split() -> None:
 
 
 def test_dictation_route_count_is_stable() -> None:
-    assert len(_router_route_set()) == len(_EXPECTED_ROUTES) == 26
+    assert len(_router_route_set()) == len(_EXPECTED_ROUTES) == 28

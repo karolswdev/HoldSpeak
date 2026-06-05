@@ -1,0 +1,62 @@
+
+  HoldSpeak · Dictation Copilot   spoken → enriched   (all features)
+  project ledgerline  ·  model Qwen3.5-9B-UD-Q6_K_XL.gguf  ·  19.8s
+  .hs context: instructions, context, memory, terms
+
+  Features that fired this run
+  ① multi-pass rewrite      2 passes  (5202ms + 5615ms)
+  ② correction memory       seeded intent→agent_task_buildout;  router → agent_task_buildout@0.85 corrected ✓  ← classifier missed; rescued by your correction
+  ③ model-assisted target   window signal: none → heuristic unknown@0.00 (<0.80) → claude_code@0.70 src=llm  ✓ fired
+  ④ kb-enricher injection   block agent_task_buildout → injected project facts (stack/invariants/DoD)
+
+┌─ SPOKEN  (raw dictation, what Whisper heard) ──────────────────────────────┐
+│ ok so um claude i need you to add idempotency to the charge endpoint       │
+│ because right now if the gateway retries we post the entry twice and the   │
+│ customer gets double charged which is really bad uh so use the idempotency │
+│ key header that the client sends and store it somewhere and if we see the  │
+│ same key again just return what we returned the first time dont post       │
+│ another entry and yeah make sure it still balances and write a test for    │
+│ the retry case                                                             │
+└────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼  route · inject · multi-pass rewrite
+┌─ ENRICHED  (project-grounded coding-agent task) ───────────────────────────┐
+│ Implement idempotency for the `POST /charges` endpoint in                  │
+│ `src/ledgerline/api/charges.py` to prevent double-charging during gateway  │
+│ retries, strictly adhering to the append-only ledger invariant defined in  │
+│ `.hs/memory.md`.                                                           │
+│                                                                            │
+│ **Implementation Spec:**                                                   │
+│ 1.  **Extract Key:** Read the `Idempotency-Key` header from incoming       │
+│ requests.                                                                  │
+│ 2.  **Lookup:** Check if this key exists in the idempotency store          │
+│ (implementing logic for storing `key`, `request_hash`, and                 │
+│ `response_json`).                                                          │
+│ 3.  **Replay Logic:** If a match is found, return the previously stored    │
+│ response immediately without executing any ledger posting logic in         │
+│ `src/ledgerline/ledger.py`.                                                │
+│ 4.  **New Request:** If no match is found:                                 │
+│     *   Proceed with standard double-entry posting (debit customer, credit │
+│ revenue) using integer minor units.                                        │
+│     *   Store the resulting response JSON keyed by the provided            │
+│ `Idempotency-Key` to enable safe retries of 5xx errors.                    │
+│ 5.  **Invariant Check:** Ensure the logic strictly adheres to the append-  │
+│ only invariant: never UPDATE or DELETE rows in                             │
+│ `src/ledgerline/db/entries.py`; corrections must always be new reversing   │
+│ entries (this task focuses on preventing duplicate initial entries).       │
+│                                                                            │
+│ **Acceptance Criteria:**                                                   │
+│ - [ ] A request with a valid, previously used `Idempotency-Key` returns    │
+│ the exact same response as the first attempt without creating new ledger   │
+│ rows.                                                                      │
+│ - [ ] The double-entry invariant is maintained: every successful new       │
+│ charge posts two rows summing to zero (integer minor units).               │
+│ - [ ] No UPDATE or DELETE operations are performed on the `ledger_entries` │
+│ table.                                                                     │
+│ - [ ] A test case exists verifying that a simulated retry with an existing │
+│ idempotency key results in no new ledger entries and returns the cached    │
+│ response.                                                                  │
+└────────────────────────────────────────────────────────────────────────────┘
+
+  446 chars → 1719 chars (+1273)  ·  target claude_code  ·  passes 2
+

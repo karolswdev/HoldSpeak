@@ -7,6 +7,10 @@ an optional LLM rewrite stage before inserting text.
 Use this after basic voice typing works. If you are starting from zero, read
 [Getting Started](GETTING_STARTED.md) first.
 
+> Want to **see it in action** before configuring? [The Dictation
+> Copilot](./DICTATION_COPILOT.md) shows a real spoken→enriched run (and a
+> reproducible demo) where rough speech becomes a project-grounded coding task.
+
 ## What You Are Setting Up
 
 The intelligent-typing loop is:
@@ -300,7 +304,10 @@ Open:
 ```
 
 Review the suggested path, rationale, and content. You can edit the content
-before applying or dismiss the suggestion. Apply only writes validated paths
+before applying or dismiss the suggestion. A suggestion that mostly duplicates
+what the target file already says is **suppressed** before you ever see it, and
+a suggestion you **dismiss won't recur** for a near-duplicate utterance in the
+same session (see the quality gate in §10). Apply only writes validated paths
 under:
 
 ```text
@@ -321,6 +328,67 @@ under:
 | Codex/Claude cwd is missing | Hooks not installed/firing | Open Agent Hooks and copy templates again |
 | Suggestions are noisy | Context too broad or prompt too generic | Narrow `.hs/instructions.md` and `.hs/targets.md` |
 | Endpoint times out | Model/server too slow | Increase timeout or use a smaller/faster model |
+
+## 10. Copilot Depth (multi-pass, memory, model-assist, telemetry)
+
+These knobs make the copilot deeper and self-improving. **Every one is opt-in
+and off by default** — with them off, behavior is identical to the basic
+pipeline. See [The Dictation Copilot](./DICTATION_COPILOT.md) for a live demo of
+all of them firing at once. All knobs live under `dictation.pipeline`:
+
+| Knob | Default | What it does |
+| --- | --- | --- |
+| `rewrite_passes` | `1` | Number of project-rewriter passes (draft → critique → refine). `1` is single-pass. Range `1–5`. Extra passes are skipped if they would breach `max_total_latency_ms`. |
+| `corrections_enabled` | `false` | Consult the session **correction memory** when routing: a correction you made earlier nudges a similar later utterance. |
+| `target_detect_llm_enabled` | `false` | When window/app detection is unsure, ask the LLM to infer the **target profile** from your words. A manual override always wins. |
+| `target_detect_llm_below` | `0.8` | The heuristic-confidence threshold below which the LLM fallback fires. |
+
+```json
+{
+  "dictation": {
+    "pipeline": {
+      "enabled": true,
+      "stages": ["intent-router", "kb-enricher", "project-rewriter"],
+      "rewrite_passes": 2,
+      "corrections_enabled": true,
+      "target_detect_llm_enabled": true,
+      "target_detect_llm_below": 0.8
+    }
+  }
+}
+```
+
+**Multi-pass rewriting.** With `rewrite_passes > 1`, the project-rewriter drafts,
+then critiques and tightens its own draft. A failed or over-budget refine pass
+falls open to the best draft so far, so enabling it never makes output worse
+than single-pass.
+
+**Correction memory.** When a correction is recorded for the session
+(`POST /api/dictation/corrections` with `{kind, text, value}`, where `kind` is
+`intent` or `target`), a later similar utterance is nudged toward it. The store
+is **in-memory and session-scoped** — nothing is persisted to disk, gists are
+truncated, and secret-looking text is rejected. `GET /api/dictation/corrections`
+lists what's stored.
+
+**Model-assisted target detection.** On Wayland/terminal setups where the active
+window can't be read, the heuristic returns low confidence; with the fallback on,
+the LLM infers the target (`claude_code`, `codex_cli`, `browser`, …) from the
+utterance. A manual **Target profile override** still wins over both.
+
+**Suggestion quality gate.** The project-doc suggestion path no longer
+re-proposes what your target `.hs/*.md` already says (suppressed as
+`already_covered`), and a suggestion you dismissed won't recur for a near-duplicate
+utterance in the same session. The dry-run response carries a `suggestion_status`
+(`stored` / `already_covered` / `dismissed` / `no_suggestion`).
+
+**Depth telemetry.** `GET /api/dictation/readiness` returns a `depth` block over
+the session's recent runs:
+
+- `depth.stages` — per-stage **p50/p95** latency (ms) + run count;
+- `depth.guidance` — a hint when a stage's p95 reaches ≥ 66% of
+  `max_total_latency_ms` (consider a smaller/faster model);
+- `depth.rewrite_pass_ms` — the most recent multi-pass timings;
+- `depth.corrections` — `enabled` / `size` / recent correction gists.
 
 ## Good First Configuration
 

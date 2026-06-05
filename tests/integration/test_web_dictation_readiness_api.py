@@ -353,3 +353,17 @@ def test_dictation_runtime_docs_route_serves_setup_page() -> None:
     assert "dictation-mlx" in body
     assert "dictation-llama" in body
     assert "Qwen3.5-4B-Instruct-Q4_K_M.gguf" in body
+
+
+def test_readiness_includes_depth_telemetry_block(
+    test_client: TestClient, settings_path: Path
+) -> None:
+    """HS-39-05: readiness carries a valid `depth` block even on a fresh session."""
+    resp = test_client.get("/api/dictation/readiness")
+    assert resp.status_code == 200
+    depth = resp.json()["depth"]
+    assert depth["runs"] == 0          # no runs accumulated yet
+    assert depth["stages"] == {}       # empty buffer → nulls, not an error
+    assert depth["guidance"] == []
+    assert depth["corrections"] == {"enabled": False, "size": 0, "recent": []}
+    assert depth["budget_ms"] == 600   # DictationPipelineConfig default budget

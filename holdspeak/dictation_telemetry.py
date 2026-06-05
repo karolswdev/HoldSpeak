@@ -140,6 +140,54 @@ def summarize_readiness_telemetry(
     }
 
 
+def build_depth_readiness(
+    *,
+    stage_quantiles: Mapping[str, Mapping[str, Any]],
+    rewrite_pass_ms: list[float],
+    run_count: int,
+    budget_ms: int | float | None,
+    corrections_enabled: bool,
+    corrections_size: int,
+    corrections_recent: list[str],
+) -> dict[str, Any]:
+    """HS-39-05: assemble the readiness `depth` block (pure, testable).
+
+    Adds budget guidance for any stage whose p95 trends toward the latency
+    budget (>= 66%). Correction gists are passed through as-is (already
+    gist-only + secret-rejected at record time).
+    """
+    budget = float(budget_ms or 0.0)
+    guidance: list[dict[str, Any]] = []
+    if budget > 0:
+        for sid, q in stage_quantiles.items():
+            p95 = q.get("p95")
+            if isinstance(p95, (int, float)) and p95 >= budget * 0.66:
+                pct = round(p95 / budget * 100)
+                guidance.append(
+                    {
+                        "stage_id": sid,
+                        "p95_ms": float(p95),
+                        "budget_ms": budget,
+                        "message": (
+                            f"{sid} p95 {p95:.0f}ms is {pct}% of the {budget:.0f}ms budget"
+                            " — consider a smaller model or lower max_tokens"
+                        ),
+                    }
+                )
+    return {
+        "runs": int(run_count),
+        "stages": dict(stage_quantiles),
+        "rewrite_pass_ms": [float(x) for x in rewrite_pass_ms],
+        "budget_ms": budget or None,
+        "guidance": guidance,
+        "corrections": {
+            "enabled": bool(corrections_enabled),
+            "size": int(corrections_size),
+            "recent": list(corrections_recent),
+        },
+    }
+
+
 def _stage_reason(
     stage: Mapping[str, Any],
     metadata: Mapping[str, Any],

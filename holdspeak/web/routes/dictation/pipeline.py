@@ -29,6 +29,7 @@ log = get_logger("web.routes.dictation")
 def build_pipeline_router(
     ctx: WebContext,
     project_doc_suggestions: dict[str, dict[str, str]],
+    dismissed_signatures: set[str] | None = None,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -182,6 +183,26 @@ def build_pipeline_router(
             and runtime_payload["status"] == "available"
         )
 
+        # HS-39-05: depth telemetry — per-stage latency quantiles + budget
+        # guidance + multi-pass timings + correction-store state.
+        from ....dictation_telemetry import build_depth_readiness
+
+        telemetry_store = ctx.telemetry
+        corrections_store = ctx.corrections
+        depth_payload = build_depth_readiness(
+            stage_quantiles=telemetry_store.stage_quantiles() if telemetry_store is not None else {},
+            rewrite_pass_ms=telemetry_store.latest_rewrite_pass_ms() if telemetry_store is not None else [],
+            run_count=len(telemetry_store) if telemetry_store is not None else 0,
+            budget_ms=cfg.pipeline.max_total_latency_ms,
+            corrections_enabled=bool(getattr(cfg.pipeline, "corrections_enabled", False)),
+            corrections_size=len(corrections_store) if corrections_store is not None else 0,
+            corrections_recent=(
+                [c.key for c in corrections_store.recent(limit=5)]
+                if corrections_store is not None
+                else []
+            ),
+        )
+
         return JSONResponse(
             {
                 "ready": ready,
@@ -200,6 +221,7 @@ def build_pipeline_router(
                 "project_kb": kb_payload,
                 "runtime": runtime_payload,
                 "telemetry": runtime_payload.get("telemetry"),
+                "depth": depth_payload,
                 "target": target_payload,
                 "agent_hooks": agent_hooks_payload,
                 "warnings": warnings,
@@ -252,6 +274,9 @@ def build_pipeline_router(
                     project_root_override,
                     target_hints,
                     suggestions=project_doc_suggestions,
+                    corrections=ctx.corrections,
+                    dismissed_signatures=dismissed_signatures,
+                    telemetry=ctx.telemetry,
                 )
             )
         except ValueError as exc:
@@ -259,5 +284,42 @@ def build_pipeline_router(
         except Exception as exc:
             log.error(f"Dictation dry-run failed: {exc}")
             return JSONResponse({"error": str(exc)}, status_code=500)
+
+    @router.get("/api/dictation/corrections")
+    async def api_dictation_corrections_list() -> Any:
+        from ....config import Config
+        from ....plugins.dictation.corrections import CORRECTION_KINDS
+
+        store = ctx.corrections
+        cfg = Config.load().dictation
+        return JSONResponse(
+            {
+                "enabled": bool(getattr(cfg.pipeline, "corrections_enabled", False)),
+                "kinds": list(CORRECTION_KINDS),
+                "size": len(store) if store is not None else 0,
+                "items": [c.to_dict() for c in store.recent()] if store is not None else [],
+            }
+        )
+
+    @router.post("/api/dictation/corrections")
+    async def api_dictation_corrections_record(payload: dict[str, Any]) -> Any:
+        from ....plugins.dictation.corrections import CORRECTION_KINDS
+
+        store = ctx.corrections
+        if store is None:
+            return JSONResponse({"error": "correction store unavailable"}, status_code=503)
+        kind = payload.get("kind") if isinstance(payload, dict) else None
+        text = payload.get("text") if isinstance(payload, dict) else None
+        value = payload.get("value") if isinstance(payload, dict) else None
+        if kind not in CORRECTION_KINDS:
+            return JSONResponse(
+                {"error": f"kind must be one of {list(CORRECTION_KINDS)}"}, status_code=400
+            )
+        if not isinstance(text, str) or not text.strip():
+            return JSONResponse({"error": "text must be a non-empty string"}, status_code=400)
+        if not isinstance(value, str) or not value.strip():
+            return JSONResponse({"error": "value must be a non-empty string"}, status_code=400)
+        recorded = store.record(kind, text, value)
+        return JSONResponse({"recorded": bool(recorded), "size": len(store)})
 
     return router

@@ -1,0 +1,4 @@
+kb:
+  stack: "Python 3.11 · FastAPI · SQLite (system of record)"
+  invariants: "append-only ledger · double-entry sums to zero · money is integer minor units"
+  dod: "balanced postings + an idempotency test + no UPDATE/DELETE on ledger_entries"

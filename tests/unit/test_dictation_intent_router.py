@@ -297,3 +297,72 @@ def test_custom_prompt_builder_is_used():
 
     assert seen.get("called") is True
     assert rt.calls[0]["prompt"] == "CUSTOM::ping"
+
+
+# --- HS-39-02: correction-memory nudge -------------------------------------
+
+from holdspeak.plugins.dictation.corrections import Correction  # noqa: E402
+
+
+def _intent_correction(text: str, block_id: str, seq: int = 1) -> Correction:
+    return Correction(kind="intent", key=text, value=block_id, sequence=seq)
+
+
+def test_no_corrections_is_byte_identical():
+    rt = _FakeRuntime(returns=[{"matched": False, "block_id": None, "confidence": 0.0, "extras": {}}])
+    router = IntentRouter(rt, _blocks())  # corrections=None (default)
+    result = router.run(_utt("totally unrelated phrase"), prior=[])
+
+    assert result.intent.matched is False
+    assert "correction_nudge" not in result.metadata
+
+
+def test_correction_nudge_redirects_to_corrected_block():
+    rt = _FakeRuntime(returns=[{"matched": False, "block_id": None, "confidence": 0.0, "extras": {}}])
+    # User previously corrected this kind of utterance to documentation_exercise.
+    corrections = [_intent_correction("Claude build a function that", "documentation_exercise")]
+    router = IntentRouter(rt, _blocks(), corrections=corrections)
+
+    result = router.run(_utt("Claude, build a function that..."), prior=[])
+
+    assert result.intent.matched is True
+    assert result.intent.block_id == "documentation_exercise"
+    assert result.intent.confidence >= 0.6  # clears the default block threshold
+    assert result.intent.extras.get("corrected") is True
+    assert result.metadata["correction_nudge"] == "documentation_exercise"
+
+
+def test_correction_nudge_reinforces_same_block_confidence():
+    rt = _FakeRuntime(
+        returns=[{"matched": True, "block_id": "ai_prompt_buildout", "confidence": 0.4, "extras": {}}]
+    )
+    corrections = [_intent_correction("Claude, build a function that...", "ai_prompt_buildout")]
+    router = IntentRouter(rt, _blocks(), corrections=corrections)
+
+    result = router.run(_utt(), prior=[])
+
+    assert result.intent.block_id == "ai_prompt_buildout"
+    assert result.intent.confidence >= 0.85  # boosted from 0.4
+    assert result.intent.extras.get("corrected") is True
+
+
+def test_correction_nudge_noop_when_dissimilar():
+    rt = _FakeRuntime(returns=[{"matched": False, "block_id": None, "confidence": 0.0, "extras": {}}])
+    corrections = [_intent_correction("something about quarterly budget spreadsheets", "documentation_exercise")]
+    router = IntentRouter(rt, _blocks(), corrections=corrections)
+
+    result = router.run(_utt("Claude, build a function that..."), prior=[])
+
+    assert result.intent.matched is False
+    assert "correction_nudge" not in result.metadata
+
+
+def test_correction_nudge_ignores_unknown_block():
+    rt = _FakeRuntime(returns=[{"matched": False, "block_id": None, "confidence": 0.0, "extras": {}}])
+    corrections = [_intent_correction("Claude, build a function that...", "made_up_block")]
+    router = IntentRouter(rt, _blocks(), corrections=corrections)
+
+    result = router.run(_utt("Claude, build a function that..."), prior=[])
+
+    assert result.intent.matched is False
+    assert "correction_nudge" not in result.metadata

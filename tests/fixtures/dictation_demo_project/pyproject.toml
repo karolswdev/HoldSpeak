@@ -1,0 +1,5 @@
+[project]
+name = "ledgerline"
+version = "0.1.0"
+description = "Double-entry payment ledger (HoldSpeak dictation demo fixture)."
+requires-python = ">=3.10"

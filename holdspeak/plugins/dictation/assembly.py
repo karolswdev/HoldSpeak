@@ -44,6 +44,9 @@ class BuildResult:
     blocks: LoadedBlocks
     runtime_status: RuntimeStatus
     runtime_detail: str
+    # HS-39-03: the loaded runtime (or None) so callers can reuse it for
+    # model-assisted target detection outside the pipeline.
+    runtime: Optional[LLMRuntime] = None
 
 
 def build_pipeline(
@@ -53,6 +56,7 @@ def build_pipeline(
     project_root: Path | None = None,
     global_blocks_path: Path | None = None,
     runtime_factory: Callable[..., LLMRuntime] | None = None,
+    corrections: list[Any] | None = None,
 ) -> BuildResult:
     """Resolve blocks + runtime, return a wired `DictationPipeline`.
 
@@ -68,14 +72,28 @@ def build_pipeline(
     runtime, runtime_status, runtime_detail = _try_build_runtime(cfg, runtime_factory)
     llm_enabled = runtime is not None
 
+    # HS-39-02: corrections only influence routing when the feature is on AND
+    # the store has entries; otherwise pass None so the router is byte-identical.
+    intent_corrections = (
+        corrections
+        if corrections and getattr(cfg.pipeline, "corrections_enabled", False)
+        else None
+    )
+
     stages: list[Any] = []
     for stage_id in cfg.pipeline.stages:
         if stage_id == "intent-router":
             if runtime is not None:
-                stages.append(IntentRouter(runtime, blocks))
+                stages.append(IntentRouter(runtime, blocks, corrections=intent_corrections))
         elif stage_id == "project-rewriter":
             if runtime is not None:
-                stages.append(ProjectRewriter(runtime))
+                stages.append(
+                    ProjectRewriter(
+                        runtime,
+                        rewrite_passes=cfg.pipeline.rewrite_passes,
+                        latency_budget_ms=float(cfg.pipeline.max_total_latency_ms),
+                    )
+                )
         elif stage_id == "kb-enricher":
             stages.append(KbEnricher(blocks))
 
@@ -90,6 +108,7 @@ def build_pipeline(
         blocks=blocks,
         runtime_status=runtime_status,
         runtime_detail=runtime_detail,
+        runtime=runtime,
     )
 
 

@@ -270,6 +270,7 @@ class LLMRuntimeConfig:
 
 
 _KNOWN_DICTATION_STAGES = ("intent-router", "project-rewriter", "kb-enricher")
+_MAX_REWRITE_PASSES = 5
 _KNOWN_TARGET_PROFILE_OVERRIDES = {
     "auto",
     "claude_code",
@@ -293,6 +294,21 @@ class DictationPipelineConfig:
     stages: list[str] = field(default_factory=lambda: ["intent-router", "kb-enricher"])
     max_total_latency_ms: int = 600
     target_profile_override: str = "auto"
+    # HS-39-01: number of project-rewriter passes (draft → critique → refine).
+    # 1 = single-pass, byte-identical to pre-Phase-39. Extra passes are
+    # latency-budget-gated and skipped before they would breach
+    # `max_total_latency_ms`.
+    rewrite_passes: int = 1
+    # HS-39-02: consult the session correction store when routing. OFF by
+    # default — with it off (or the store empty) routing is byte-identical.
+    corrections_enabled: bool = False
+    # HS-39-03: model-assisted target detection. When ON, a heuristic result
+    # below `target_detect_llm_below` confidence is re-classified by the LLM
+    # runtime (enum-constrained, degrades to the heuristic on any failure).
+    # OFF by default ⇒ detection is byte-identical; a manual override always
+    # wins over both the heuristic and the LLM.
+    target_detect_llm_enabled: bool = False
+    target_detect_llm_below: float = 0.8
 
     def __post_init__(self) -> None:
         # DIR-C-002: reject unknown stage IDs at config load time so
@@ -303,6 +319,20 @@ class DictationPipelineConfig:
             raise DictationConfigError(
                 f"unknown dictation stage id(s): {unknown}; "
                 f"known stages are {list(_KNOWN_DICTATION_STAGES)}"
+            )
+        # HS-39-01: bound rewrite passes — at least one, with a sane upper
+        # cap so a typo can't fan out into a runaway per-utterance LLM loop.
+        if not (1 <= self.rewrite_passes <= _MAX_REWRITE_PASSES):
+            raise DictationConfigError(
+                f"rewrite_passes must be between 1 and {_MAX_REWRITE_PASSES}; "
+                f"got {self.rewrite_passes!r}"
+            )
+        # HS-39-03: the model-assisted target threshold is a confidence in
+        # [0.0, 1.0].
+        if not (0.0 <= self.target_detect_llm_below <= 1.0):
+            raise DictationConfigError(
+                "target_detect_llm_below must be between 0.0 and 1.0; "
+                f"got {self.target_detect_llm_below!r}"
             )
         self.target_profile_override = str(self.target_profile_override or "auto").strip().lower()
         if self.target_profile_override not in _KNOWN_TARGET_PROFILE_OVERRIDES:

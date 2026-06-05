@@ -68,3 +68,12 @@ class WebContext:
     on_get_status: Optional[Callable[[], Any]] = None
     on_settings_applied: Optional[Callable[[Any], None]] = None
     current_formatted_duration: Optional[Callable[[], Optional[str]]] = None
+
+    # HS-39-02: session dictation correction store (a `CorrectionStore`). The
+    # dictation routes record + read corrections through it; the live runtime
+    # shares the same instance via `server.dictation_corrections`.
+    corrections: Optional[Any] = None
+
+    # HS-39-05: session dictation telemetry store (a `DictationTelemetryStore`),
+    # fed via the pipeline `on_run` hook; readiness reads per-stage quantiles.
+    telemetry: Optional[Any] = None

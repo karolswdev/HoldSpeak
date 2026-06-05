@@ -1,0 +1,23 @@
+version: 1
+default_match_confidence: 0.6
+
+blocks:
+  - id: agent_task_buildout
+    description: "Dictating a task or prompt for a coding agent working in this repo."
+    match:
+      examples:
+        - "claude i need you to add a feature to the endpoint"
+        - "implement idempotency for the charge endpoint"
+        - "codex please refactor the ledger posting"
+      negative_examples:
+        - "what time is it"
+    inject:
+      mode: append
+      template: |
+        {raw_text}
+
+        ---
+        Project facts (auto-injected by HoldSpeak · block {intent.block_id}):
+        - Stack: {project.kb.stack}
+        - Invariants: {project.kb.invariants}
+        - Definition of done: {project.kb.dod}

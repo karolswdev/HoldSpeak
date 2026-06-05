@@ -18,6 +18,8 @@ intelligent-typing layer. This folder is the documentation index.
    MLX on Apple Silicon, or any OpenAI-compatible endpoint.
 5. **[Intelligent Typing Guide](./INTELLIGENT_TYPING_GUIDE.md)** — project-aware
    local rewriting, target profiles, and the dictation pipeline.
+   - **[The Dictation Copilot](./DICTATION_COPILOT.md)** — see it work: rough
+     speech → a project-grounded coding-agent task, with a reproducible demo.
 6. **[Security & Privacy](./SECURITY.md)** — what's stored, trust boundaries, and
    what can (and can't) leave your machine.
 
