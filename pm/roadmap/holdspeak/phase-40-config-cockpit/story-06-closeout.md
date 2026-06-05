@@ -2,10 +2,11 @@
 
 - **Project:** holdspeak
 - **Phase:** 40
-- **Status:** backlog
+- **Status:** done (2026-06-05)
 - **Depends on:** HS-40-01, HS-40-02, HS-40-03, HS-40-04, HS-40-05
 - **Unblocks:** none
 - **Owner:** unassigned
+- **Evidence:** [evidence-story-06.md](./evidence-story-06.md)
 
 ## Problem
 
@@ -32,14 +33,15 @@ tracking docs are reconciled.
 
 ## Acceptance criteria
 
-- [ ] An end-to-end UI-only setup is captured (configure → use → correct →
-      restart → correction persisted).
-- [ ] Demo screenshots committed (cockpit / memory / telemetry).
-- [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green at close; count
-      recorded; off-by-default byte-identity re-asserted; no `_built/` tracked.
-- [ ] `final-summary.md` exists (goal-met, exit criteria, stories, lessons,
-      Phase-41 handoff).
-- [ ] `current-phase-status.md` frozen; README phase row → done + pointer
+- [x] An end-to-end UI-only setup is captured (configure → use → correct →
+      restart → correction persisted) — `evidence/dogfood_post_restart.png` +
+      the transcript in [evidence-story-06](./evidence-story-06.md).
+- [x] Demo screenshots committed (cockpit / memory / telemetry / post-restart).
+- [x] Full suite green at close — **2221 passed, 16 skipped**; off-by-default
+      byte-identity re-asserted (25 routing/no-repo tests); no `_built/` tracked.
+- [x] `final-summary.md` exists (goal-met, exit criteria, stories, metrics,
+      lessons, Phase-41 handoff).
+- [x] `current-phase-status.md` frozen; README phase row → done + pointer
       advanced; HANDOVER refreshed; PR opened (merge when CI green).
 
 ## Test plan

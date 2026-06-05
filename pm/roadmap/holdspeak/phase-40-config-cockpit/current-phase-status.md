@@ -1,13 +1,13 @@
 # Phase 40 — Configuration Cockpit & Persistent Memory
 
-**Status:** IN PROGRESS (5/6 stories). Opened 2026-06-05. Direction chosen by the
-user: a **web-first** way to set up the whole copilot ("nobody wants to frig
-around with files and settings") + **persistent cross-session memory**.
+**Status:** CLOSED ✅ (6/6 stories). Opened + closed 2026-06-05. Direction chosen
+by the user: a **web-first** way to set up the whole copilot ("nobody wants to
+frig around with files and settings") + **persistent cross-session memory**.
 
-**Last updated:** 2026-06-05 (**HS-40-05 done** — the guides now lead with the
-web cockpit (`config.json` demoted to "Advanced"); persistent memory + the
-memory/telemetry UI documented with screenshots; fixed the stale "never
-persisted" claim. Doc-guards green. HS-40-01–04 also done.).
+**Last updated:** 2026-06-05 (**HS-40-06 — Phase CLOSED (6/6)** — UI-only dogfood
+proved config + a correction survive a restart; `final-summary.md` written;
+invariant re-verified; suite 2221/16. Branch
+`phase-40/hs-40-01-settings-api-knobs` — push + open a PR to `main`.).
 
 ## Goal
 
@@ -104,14 +104,15 @@ build` to verify, commit source only.
 | HS-40-03 | Copilot Setup cockpit (UI) | done | [story-03-copilot-setup-cockpit.md](./story-03-copilot-setup-cockpit.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-40-04 | Memory + telemetry UI | done | [story-04-memory-telemetry-ui.md](./story-04-memory-telemetry-ui.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-40-05 | Documentation | done | [story-05-documentation.md](./story-05-documentation.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-40-06 | Closeout | backlog | [story-06-closeout.md](./story-06-closeout.md) | — |
+| HS-40-06 | Closeout | done | [story-06-closeout.md](./story-06-closeout.md) | [evidence-story-06.md](./evidence-story-06.md) |
 
 ## Where we are
 
-**HS-40-01 through HS-40-05 done (2026-06-05); HS-40-06 (closeout) is next.**
-Phase opened right after Phase 39 merged (PR #16). The territory was mapped
-before scaffolding — see [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) for the full seam
-map. Headlines:
+**Phase CLOSED ✅ (6/6, 2026-06-05).** Opened right after Phase 39 merged (PR
+#16) and closed the same day. The whole dictation copilot is now configurable +
+curatable from the Web UI; a UI-only dogfood proved config + a correction
+survive a restart. See [`final-summary.md`](./final-summary.md). Branch
+`phase-40/hs-40-01-settings-api-knobs` — push + open a PR to `main`. Headlines:
 
 - **Settings (HS-40-01) — done.** Re-verifying the seam showed the brief was
   stale: the four Phase-39 knobs **already** round-tripped + 4xx'd. `PUT
@@ -155,8 +156,8 @@ map. Headlines:
 **Pickup order:** HS-40-01 (backend foundation, unblocks the UI) ✅ → HS-40-02
 (persistence, independent, enables the memory UI) ✅ → HS-40-03 (cockpit UI, needs
 01) ✅ → HS-40-04 (memory/telemetry UI, needs 02) ✅ → HS-40-05 (docs) ✅ → HS-40-06
-(closeout). 01 and 02 are independent and can go in either order / in parallel
-worktrees. **HS-40-01–05 done; HS-40-06 (closeout) next.**
+(closeout) ✅. 01 and 02 are independent and can go in either order / in parallel
+worktrees. **All six stories done — phase CLOSED.**
 
 ## Active risks
 
