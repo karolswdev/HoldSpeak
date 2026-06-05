@@ -8,9 +8,11 @@ presence indicator on **both macOS and Linux**.
 **Last updated:** 2026-06-05 (**HS-41-05 done** — the Linux renderer:
 `FreedesktopPresenceRenderer` = an in-place-updating libnotify notification
 (coalesced) + a StatusNotifierItem tray glyph, focus-safe + portable across
-X11/Wayland + GNOME/KDE/XFCE; logic fully unit-tested with fakes, graceful
-fallback verified. The Tier-2 floating GTK-WebKit overlay is a deferred
-X11/wlroots-only follow-up. Suite 2259/16. HS-41-01–04 also done.).
+X11/Wayland + GNOME/KDE/XFCE; logic fully unit-tested with fakes **and
+live-verified on real Ubuntu 24.04/GNOME (`.43`)** — the actual renderer showed a
+real notification banner. The Tier-2 floating GTK-WebKit overlay is a deferred
+follow-up (`.43` is X11 + has WebKit2, so it's buildable there). Suite 2259/16.
+HS-41-01–04 also done.).
 
 ## Goal
 

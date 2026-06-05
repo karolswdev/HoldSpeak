@@ -42,11 +42,18 @@ extra for a later pass (noted in the status doc).
 
 ## Verification artifacts
 
-> Built + logic-verified on macOS; the live Linux GUI (real notification + tray
-> on a desktop) needs a Linux box and is for closeout / a follow-up.
-
-- Availability on this host: `freedesktop_presence_available()` → **False**
-  (PyGObject absent on macOS) → the renderer is not selected → the web card
+- **LIVE on real Linux** (`.43` — Ubuntu 24.04.2 LTS, GNOME on X11): the actual
+  `FreedesktopPresenceRenderer` was run over SSH against the live `:0` session
+  (its system `python3` + gi). `freedesktop_presence_available()` → **True**
+  there; the renderer showed a real notification and built the tray
+  (`shown: transcribing | tray: yes` — `AppIndicator3` is present). Capture:
+  `evidence/linux_presence_notification.png` — a real GNOME banner from the
+  renderer: the HoldSpeak app icon (the transcribing → `emblem-synchronizing`
+  icon), **"HoldSpeak — Transcribing"**, *"Turning your speech into text…"*.
+  (GNOME's Do-Not-Disturb was briefly toggled to surface the banner, then
+  restored to its prior value; temp files cleaned up.)
+- Availability on the dev host (macOS): `freedesktop_presence_available()` →
+  **False** (PyGObject absent) → the renderer is not selected → the web card
   stays the surface. The graceful-degradation path is real here.
 - Unit (injected fake notifier/tray, no gi): `tests/unit/test_desktop_presence_freedesktop.py`
   — the field mapping (recording → mic icon/normal urgency/transient; error →
@@ -54,6 +61,10 @@ extra for a later pass (noted in the status doc).
   state → one notification, tray still refreshed), re-notify on state change,
   hide idles the tray + closes the notification, and the Linux selection /
   no-libnotify fallback.
+- **Best-effort tray** (a fix this surfaced): the AppIndicator typelib is missing
+  on stock GNOME without the extension, so `_ensure_started` builds the
+  notification (required) and the tray (best-effort → notification-only when the
+  typelib/host is absent) rather than failing the whole renderer.
 - Ruff (touched files) → `All checks passed!`.
 - Full suite: `uv run pytest -q --ignore=tests/e2e/test_metal.py` →
   `2259 passed, 16 skipped` (2251/16 at HS-41-04; +8). No GUI dep in the default
@@ -74,7 +85,7 @@ extra for a later pass (noted in the status doc).
 
 ## Deviations from plan
 
-- The Tier-2 GTK-WebKit overlay is deferred (X11/wlroots only; un-verifiable on
-  macOS) — the notification + tray is the everywhere, tested deliverable.
-- Live Linux capture is not possible on this host; the renderer logic is fully
-  unit-tested with fakes and the availability/fallback path is real-verified.
+- The Tier-2 GTK-WebKit overlay is deferred — but note `.43` is **X11** (and has
+  `WebKit2 4.1` + `Gtk3`), so the overlay *is* buildable there; it's teed up as a
+  fast follow-up rather than shipped untested. The notification + tray is the
+  everywhere-portable deliverable and is now **live-verified** on real GNOME.

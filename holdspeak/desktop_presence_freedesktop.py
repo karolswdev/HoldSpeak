@@ -190,15 +190,22 @@ class FreedesktopPresenceRenderer:
             return True
         if self._unavailable:
             return False
+        # The notification is the required core; the tray is best-effort (the
+        # AppIndicator typelib is missing on stock GNOME without the extension)
+        # — degrade to notification-only rather than fail the whole renderer.
         try:
             if self._notifier is None:
                 self._notifier = _LibnotifyNotifier()
-            if self._tray is None:
-                self._tray = _AppIndicatorTray()
         except Exception as exc:  # pragma: no cover - Linux GUI session dependent
             self._unavailable = True
             log.warning(f"Linux presence renderer unavailable ({exc}); using the web card.")
             return False
+        if self._tray is None:
+            try:
+                self._tray = _AppIndicatorTray()
+            except Exception as exc:  # pragma: no cover - tray host dependent
+                log.info(f"Presence tray unavailable ({exc}); notification-only.")
+                self._tray = None
         self._started = True
         return True
 

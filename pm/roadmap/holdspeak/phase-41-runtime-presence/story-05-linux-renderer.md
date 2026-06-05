@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 41
-- **Status:** done (2026-06-05) — Tier-1 (notification + tray); the GTK-WebKit overlay is a deferred X11/wlroots-only follow-up
+- **Status:** done (2026-06-05) — Tier-1 (notification + tray), **live-verified on real Ubuntu 24.04/GNOME (`.43`)**; the GTK-WebKit overlay is a deferred follow-up
 - **Depends on:** HS-41-03
 - **Unblocks:** none
 - **Owner:** unassigned
@@ -48,8 +48,11 @@ notification (coalesced on state change) + a StatusNotifierItem tray glyph,
 focus-safe and portable across X11/Wayland + GNOME/KDE/XFCE. Pure
 `notification_for_view` + injectable seams → fully unit-tested with fakes on
 macOS; graceful fallback verified (`freedesktop_presence_available()` False
-here). The Tier-2 floating GTK-WebKit overlay is deferred (X11/wlroots-only,
-un-verifiable on macOS). Suite 2259/16. See [evidence-story-05.md](./evidence-story-05.md).
+here) — **and the actual renderer was run live on a real Ubuntu 24.04/GNOME
+desktop (`.43`), showing a real notification banner** (the tray is best-effort:
+notification-only without the AppIndicator host). The Tier-2 floating GTK-WebKit
+overlay is deferred (`.43` is X11 + has WebKit2, so it's buildable there). Suite
+2259/16. See [evidence-story-05.md](./evidence-story-05.md).
 
 ## Notes
 
