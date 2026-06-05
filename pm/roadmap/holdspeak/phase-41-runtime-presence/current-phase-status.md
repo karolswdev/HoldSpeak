@@ -1,13 +1,15 @@
 # Phase 41 — Runtime Presence Indicators
 
-**Status:** IN PROGRESS (2/7 stories). Opened 2026-06-05. Direction chosen by the
+**Status:** IN PROGRESS (3/7 stories). Opened 2026-06-05. Direction chosen by the
 user: **know what the copilot is doing on the desktop** while dictating —
 without the web dashboard being visible — via a rich, branded, native-feeling
 presence indicator on **both macOS and Linux**.
 
-**Last updated:** 2026-06-05 (**HS-41-02 done** — the lifecycle→activity mapping
-in `web_runtime` + the `runtime_activity` WS broadcast + a live Signal presence
-card on the dashboard; zero new deps; suite 2228/16. HS-41-01 also done.).
+**Last updated:** 2026-06-05 (**HS-41-03 done** — the `PresenceRenderer` Protocol
++ `DesktopPresenceHost` (policy/linger) + Wayland-aware `detect_presence_platform`
++ flag-gated host builder, re-wired into `web_runtime`; the `/presence` HUD page +
+framework-free WS driver render the Signal card live (the native-webview content).
+Still zero native deps; suite 2245/16. HS-41-01/02 also done.).
 
 ## Goal
 
@@ -93,7 +95,7 @@ available tier; everything is gated by `HOLDSPEAK_DESKTOP_PRESENCE=1`.
 |---|---|---|---|---|
 | HS-41-01 | Runtime activity contract + state mapping | done | [story-01-runtime-activity-contract.md](./story-01-runtime-activity-contract.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-41-02 | Web presence card (zero-dep surface) | done | [story-02-web-presence-card.md](./story-02-web-presence-card.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-41-03 | Renderer Protocol + host selection + `/presence` route | backlog | [story-03-renderer-seam.md](./story-03-renderer-seam.md) | — |
+| HS-41-03 | Renderer Protocol + host selection + `/presence` route | done | [story-03-renderer-seam.md](./story-03-renderer-seam.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-41-04 | macOS renderer (NSStatusItem + NSPanel webview) | backlog | [story-04-macos-renderer.md](./story-04-macos-renderer.md) | — |
 | HS-41-05 | Linux renderer (notification + tray + overlay) | backlog | [story-05-linux-renderer.md](./story-05-linux-renderer.md) | — |
 | HS-41-06 | Documentation | backlog | [story-06-documentation.md](./story-06-documentation.md) | — |
@@ -101,15 +103,20 @@ available tier; everything is gated by `HOLDSPEAK_DESKTOP_PRESENCE=1`.
 
 ## Where we are
 
-**HS-41-01 + HS-41-02 done (2026-06-05).** Branched `phase-41-runtime-presence`
+**HS-41-01 → HS-41-03 done (2026-06-05).** Branched `phase-41-runtime-presence`
 off `main` (post Phase-40 merge). HS-41-01 ported the pure `runtime_activity`
-contract. HS-41-02 wired the full dictation + meeting lifecycle into the
-contract, broadcasts `runtime_activity` over the websocket, and renders a live
-**Signal presence card** on the dashboard — the first visible win, **zero new
-deps** (the desktop-host fan-out is deferred to HS-41-03; `_broadcast_runtime_activity`
-is web-only for now). Fixed an off-token drift in the salvaged card
-(`--line-height-snug` → `--line-height-normal`). Suite 2228/16. Next: **HS-41-03**
-(the `PresenceRenderer` Protocol + host + the `/presence` webview route).
+contract; HS-41-02 wired the full lifecycle into it + the WS broadcast + the
+dashboard presence card (zero deps). **HS-41-03** built the desktop seam:
+`PresenceRenderer` Protocol + `DesktopPresenceHost` (transient show/linger/hide)
++ `build_presence_window_view` (secret-redacted, renderer-ready) +
+**`detect_presence_platform`** (Wayland-aware — `overlay_capable` False on
+GNOME/KDE-Wayland, True on macOS/X11/wlroots) + the flag-gated
+`build_desktop_presence_host` (None until a native renderer registers), re-wired
+into `web_runtime`. The **`/presence`** HUD page (chromeless, transparent,
+token-styled) + `presence-app.js` (framework-free WS driver) render the Signal
+card live — the exact content the native webview (HS-41-04/05) hosts. Still
+**zero native deps**; suite 2245/16. Next: **HS-41-04** (the macOS renderer —
+`NSStatusItem` glyph + non-activating `NSPanel` hosting the `/presence` webview).
 
 ## Active risks
 

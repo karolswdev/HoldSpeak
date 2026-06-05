@@ -27,6 +27,7 @@ from .device_status import (
     push_intel_to_devices,
     push_segment_to_devices,
 )
+from .desktop_presence import DesktopPresenceHost, build_desktop_presence_host
 from .hotkey import HotkeyListener
 from .voice_typing import VoiceTypingSession
 from .logging_config import get_logger
@@ -134,6 +135,9 @@ class WebRuntime:
         self.transcriber: Optional[Transcriber] = None
         self.server: Optional[MeetingWebServer] = None
         self.meeting_session: Optional[MeetingSession] = None
+        # HS-41-03: the opt-in desktop presence host (None unless
+        # HOLDSPEAK_DESKTOP_PRESENCE=1 and a native renderer is available).
+        self.desktop_presence: Optional[DesktopPresenceHost] = build_desktop_presence_host()
         self.device_registry = DeviceRegistry()
         self.device_status = DeviceStatusEmitter(label_lookup=self.device_registry)
         # HS-17-05: periodic Recording-tick emitter for attached devices.
@@ -304,9 +308,14 @@ class WebRuntime:
         return session
 
     def _broadcast_runtime_activity(self, activity: dict[str, object]) -> None:
-        # HS-41-02: fan the activity snapshot out to web clients over the
-        # websocket. The desktop presence host (an additional fan-out target) is
-        # wired in HS-41-03 behind the opt-in flag — here it's web-only.
+        # Fan the activity snapshot out to: (1) the opt-in desktop presence host
+        # (HS-41-03 — None unless HOLDSPEAK_DESKTOP_PRESENCE=1 and a native
+        # renderer is available), and (2) web clients over the websocket.
+        if self.desktop_presence is not None:
+            try:
+                self.desktop_presence.handle_activity(activity)
+            except Exception as exc:
+                log.debug(f"Desktop presence update failed: {exc}")
         if self.server is None:
             return
         try:
@@ -2185,6 +2194,11 @@ class WebRuntime:
                     log.error(f"Failed to finalize active meeting during shutdown: {exc}")
             if self.server is not None:
                 self.server.stop()
+            if self.desktop_presence is not None:
+                try:
+                    self.desktop_presence.close()
+                except Exception as exc:
+                    log.debug(f"Desktop presence close failed: {exc}")
             if self.plugin_queue_thread is not None:
                 self.plugin_queue_thread.join(timeout=2.0)
 

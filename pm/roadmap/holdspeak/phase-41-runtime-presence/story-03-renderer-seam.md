@@ -2,10 +2,11 @@
 
 - **Project:** holdspeak
 - **Phase:** 41
-- **Status:** backlog
+- **Status:** done (2026-06-05)
 - **Depends on:** HS-41-01, HS-41-02
 - **Unblocks:** HS-41-04, HS-41-05
 - **Owner:** unassigned
+- **Evidence:** [evidence-story-03.md](./evidence-story-03.md)
 
 ## Problem
 
@@ -34,12 +35,23 @@ native renderer, and a content source for the webview HUD.
 
 ## Acceptance criteria
 
-- [ ] The Protocol + Null renderer + host + env probe exist; with the flag off,
+- [x] The Protocol + Null renderer + host + env probe exist; with the flag off,
       `build_desktop_presence_host()` returns None and nothing renders.
-- [ ] `/presence` serves the card and updates live over the websocket.
-- [ ] Default suite green with **no** GUI dep imported (Null path); off-by-default
+- [x] `/presence` serves the card and updates live over the websocket.
+- [x] Default suite green with **no** GUI dep imported (Null path); off-by-default
       byte-identical.
-- [ ] The focus invariant is encoded as a requirement for the native renderers.
+- [x] The focus invariant is encoded as a requirement for the native renderers.
+
+## Outcome
+
+`desktop_presence.py` ships the `PresenceRenderer` Protocol + Null +
+`DesktopPresenceHost` (transient show/linger/hide) + `build_presence_window_view`
+(secret-redacted, renderer-ready) + `detect_presence_platform` (the Wayland-aware
+env probe) + a flag-gated `build_desktop_presence_host` (None until a native
+renderer registers). Re-wired into `web_runtime` (fan-out + close). The
+**`/presence`** HUD page (chromeless, transparent, token-styled) + `presence-app.js`
+(framework-free WS driver) render the Signal card live — the content the native
+webview will host. Suite 2245/16. See [evidence-story-03.md](./evidence-story-03.md).
 
 ## Notes
 

@@ -23,3 +23,47 @@ def test_dashboard_handles_runtime_activity_messages() -> None:
     assert 'if (type === "runtime_activity")' in script_source
     assert "if (data && typeof data === \"object\") this.applyActivity(data)" in script_source
     assert "activityWindowLabel()" in script_source
+
+
+# ── HS-41-03: the /presence HUD page ──────────────────────────────────
+
+
+def test_presence_hud_page_is_standalone_and_token_styled() -> None:
+    page_source = (ROOT / "web/src/pages/presence.astro").read_text()
+    # Standalone HUD: no AppLayout chrome, transparent body, the card.
+    assert "<AppLayout" not in page_source
+    assert "import AppLayout" not in page_source
+    assert "background: transparent" in page_source
+    assert 'id="presence-card"' in page_source
+    assert 'role="status"' in page_source
+    assert 'aria-live="polite"' in page_source
+    assert "@media (prefers-reduced-motion: reduce)" in page_source
+
+
+def test_presence_hud_driver_consumes_runtime_activity() -> None:
+    script_source = (ROOT / "web/src/scripts/presence-app.js").read_text()
+    assert 'msg.type === "runtime_activity"' in script_source
+    assert "applyActivity(msg.data)" in script_source
+    assert "/api/state" in script_source          # seeds from current state
+    assert "/ws" in script_source                  # live websocket
+    assert "setTimeout(connect" in script_source   # auto-reconnect
+
+
+def test_presence_route_serves_the_hud() -> None:
+    from unittest.mock import MagicMock
+
+    from fastapi.testclient import TestClient
+
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(
+            on_bookmark=MagicMock(),
+            on_stop=MagicMock(),
+            get_state=MagicMock(return_value={}),
+        )
+    )
+    client = TestClient(server.app)
+    resp = client.get("/presence")
+    assert resp.status_code == 200
+    assert 'id="presence-card"' in resp.text

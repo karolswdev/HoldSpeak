@@ -1073,3 +1073,44 @@ def test_meeting_broadcasts_map_to_runtime_activity(monkeypatch: pytest.MonkeyPa
     activity = runtime._get_runtime_status()["activity"]
     assert activity["state"] == "processing"
     assert activity["label"] == "Intel streaming"
+
+
+def test_runtime_activity_forwards_to_desktop_presence(monkeypatch: pytest.MonkeyPatch) -> None:
+    # HS-41-03: when a desktop presence host is built, the activity snapshot
+    # fans out to it as well as the websocket.
+    monkeypatch.setattr(web_runtime.Config, "load", lambda: _config(auto_open=False))
+
+    class FakeTextTyper:
+        def type_text(self, _text: str, **_kwargs) -> None:
+            return None
+
+    class FakeDesktopPresence:
+        def __init__(self) -> None:
+            self.activities: list[dict[str, object]] = []
+            self.closed = False
+
+        def handle_activity(self, activity: dict[str, object]) -> None:
+            self.activities.append(activity)
+
+        def close(self) -> None:
+            self.closed = True
+
+    desktop = FakeDesktopPresence()
+    monkeypatch.setattr(web_runtime, "TextTyper", FakeTextTyper)
+    monkeypatch.setattr(web_runtime, "build_desktop_presence_host", lambda: desktop)
+
+    runtime = web_runtime.WebRuntime(
+        no_open=True,
+        stop_event=threading.Event(),
+        register_signal_handlers=False,
+    )
+
+    runtime._set_runtime_activity(
+        "recording",
+        source="hotkey",
+        detail="HoldSpeak is listening.",
+        last_event="dictation_recording_started",
+    )
+
+    assert desktop.activities[-1]["state"] == "recording"
+    assert desktop.activities[-1]["window"]["mode"] == "active"
