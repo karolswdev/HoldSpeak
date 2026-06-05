@@ -183,6 +183,26 @@ def build_pipeline_router(
             and runtime_payload["status"] == "available"
         )
 
+        # HS-39-05: depth telemetry — per-stage latency quantiles + budget
+        # guidance + multi-pass timings + correction-store state.
+        from ....dictation_telemetry import build_depth_readiness
+
+        telemetry_store = ctx.telemetry
+        corrections_store = ctx.corrections
+        depth_payload = build_depth_readiness(
+            stage_quantiles=telemetry_store.stage_quantiles() if telemetry_store is not None else {},
+            rewrite_pass_ms=telemetry_store.latest_rewrite_pass_ms() if telemetry_store is not None else [],
+            run_count=len(telemetry_store) if telemetry_store is not None else 0,
+            budget_ms=cfg.pipeline.max_total_latency_ms,
+            corrections_enabled=bool(getattr(cfg.pipeline, "corrections_enabled", False)),
+            corrections_size=len(corrections_store) if corrections_store is not None else 0,
+            corrections_recent=(
+                [c.key for c in corrections_store.recent(limit=5)]
+                if corrections_store is not None
+                else []
+            ),
+        )
+
         return JSONResponse(
             {
                 "ready": ready,
@@ -201,6 +221,7 @@ def build_pipeline_router(
                 "project_kb": kb_payload,
                 "runtime": runtime_payload,
                 "telemetry": runtime_payload.get("telemetry"),
+                "depth": depth_payload,
                 "target": target_payload,
                 "agent_hooks": agent_hooks_payload,
                 "warnings": warnings,
@@ -255,6 +276,7 @@ def build_pipeline_router(
                     suggestions=project_doc_suggestions,
                     corrections=ctx.corrections,
                     dismissed_signatures=dismissed_signatures,
+                    telemetry=ctx.telemetry,
                 )
             )
         except ValueError as exc:

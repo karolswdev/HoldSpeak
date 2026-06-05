@@ -189,6 +189,11 @@ class MeetingWebServer:
         from .plugins.dictation.corrections import CorrectionStore
 
         self.dictation_corrections = CorrectionStore()
+        # HS-39-05: one session-scoped dictation telemetry store, fed via the
+        # pipeline `on_run` hook from the dry-run + live paths.
+        from .plugins.dictation.telemetry_store import DictationTelemetryStore
+
+        self.dictation_telemetry = DictationTelemetryStore()
         self.on_bookmark = callbacks.on_bookmark
         self.on_stop = callbacks.on_stop
         self.on_meeting_stop = callbacks.on_meeting_stop
@@ -451,6 +456,7 @@ class MeetingWebServer:
             on_settings_applied=self.on_settings_applied,
             current_formatted_duration=self._current_formatted_duration,
             corrections=self.dictation_corrections,
+            telemetry=self.dictation_telemetry,
         )
         app.include_router(build_core_router(web_ctx))
         app.include_router(build_meetings_router(web_ctx))

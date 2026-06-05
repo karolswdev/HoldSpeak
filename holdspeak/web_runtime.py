@@ -1388,8 +1388,12 @@ class WebRuntime:
                 else None
             )
 
+            telemetry_store = getattr(self.server, "dictation_telemetry", None)
             result = build_pipeline(
-                dictation_cfg, project_root=project_root, corrections=correction_snapshot
+                dictation_cfg,
+                project_root=project_root,
+                corrections=correction_snapshot,
+                on_run=(telemetry_store.record_run if telemetry_store is not None else None),
             )
             if result.runtime_status != "loaded":
                 return text

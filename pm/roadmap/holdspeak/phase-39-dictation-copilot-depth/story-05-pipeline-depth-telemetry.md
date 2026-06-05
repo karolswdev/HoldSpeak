@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 39
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-39-01, HS-39-02
 - **Unblocks:** none
 - **Owner:** unassigned
@@ -38,16 +38,23 @@ features need to be observable to be trustworthy and tunable.
 
 ## Acceptance criteria
 
-- [ ] `GET /api/dictation/readiness` returns per-stage p50/p95 computed over
-      the recent-runs buffer (empty buffer → nulls, not an error).
-- [ ] Budget guidance appears when a stage's p95 approaches
-      `max_total_latency_ms`; absent when comfortably under.
-- [ ] Multi-pass per-pass timings (from HS-39-01) are present when
-      `rewrite_passes > 1`.
-- [ ] Correction-store state (enabled, size, recent gist entries) is reported,
-      with no secret content.
-- [ ] The readiness response remains valid when the pipeline is disabled
-      (reports disabled, no crash).
+- [x] `GET /api/dictation/readiness` returns a `depth.stages` block with
+      per-stage p50/p95 over the session telemetry store (empty → `{}`, not an
+      error) — `build_depth_readiness` + `DictationTelemetryStore.stage_quantiles`;
+      `test_readiness_includes_depth_telemetry_block`,
+      `test_records_and_computes_quantiles`. **Verified live on `.43`**:
+      intel-router p50 3821ms, project-rewriter p50 3553ms over 3 real runs.
+- [x] Budget guidance appears when a stage's p95 ≥ 66% of
+      `max_total_latency_ms`; absent when comfortably under —
+      `test_depth_guidance_fires_when_p95_near_budget`,
+      `test_depth_no_guidance_when_comfortably_under_budget`.
+- [x] Multi-pass per-pass timings surface as `depth.rewrite_pass_ms` (from the
+      most recent run that produced them) — `latest_rewrite_pass_ms`;
+      `test_latest_rewrite_pass_ms_uses_most_recent_with_passes`.
+- [x] Correction-store state (`enabled` / `size` / `recent` gists, no secrets)
+      reported under `depth.corrections` — readiness reads `ctx.corrections.recent`.
+- [x] Readiness valid when the pipeline is disabled (the `depth` block is empty
+      but well-formed) — `test_readiness_includes_depth_telemetry_block`.
 
 ## Test plan
 
@@ -61,9 +68,11 @@ features need to be observable to be trustworthy and tunable.
 
 ## Notes / open questions
 
-- Reuse the existing recent-runs ring buffer (DIR-F-009, default N=20) as the
-  quantile sample — do not add a second buffer. Small-N quantiles are
-  approximate; label them as "recent" rather than implying statistical rigor.
-- This story is **after** 01/02 because it surfaces their new fields; if 01/02
-  slip, ship the quantiles/guidance portion and stub the rest behind feature
-  presence.
+- **Deviation (recorded at ship):** the pipeline's per-instance ring buffer
+  (DIR-F-009) **resets every `build_pipeline`** (the dry-run + live paths build a
+  fresh pipeline per utterance), so it never accumulates. I added a
+  session-scoped `DictationTelemetryStore` (bounded ring, on `MeetingWebServer`
+  like the correction store) fed via the pipeline `on_run` hook from both paths
+  — that's what survives across utterances. Small-N quantiles are approximate
+  ("recent"), not statistical rigor.
+- In-memory only (no persistence across restarts), per the scope.

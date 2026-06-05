@@ -73,3 +73,7 @@ class WebContext:
     # dictation routes record + read corrections through it; the live runtime
     # shares the same instance via `server.dictation_corrections`.
     corrections: Optional[Any] = None
+
+    # HS-39-05: session dictation telemetry store (a `DictationTelemetryStore`),
+    # fed via the pipeline `on_run` hook; readiness reads per-stage quantiles.
+    telemetry: Optional[Any] = None

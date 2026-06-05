@@ -426,6 +426,7 @@ def _run_dictation_dry_run_text(
     suggestions: dict[str, dict[str, str]],
     corrections: Any = None,
     dismissed_signatures: set[str] | None = None,
+    telemetry: Any = None,
 ) -> dict[str, Any]:
     """Execute the browser dry-run path for already-validated text."""
     from ....config import Config
@@ -481,6 +482,7 @@ def _run_dictation_dry_run_text(
         project_root=project_root,
         global_blocks_path=DEFAULT_GLOBAL_BLOCKS_PATH,
         corrections=correction_snapshot,
+        on_run=(telemetry.record_run if telemetry is not None else None),
     )
     resolved_hints = target_hints or collect_active_target_hints()
     target_profile = detect_target_profile_with_override(

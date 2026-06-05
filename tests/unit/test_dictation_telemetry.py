@@ -74,3 +74,51 @@ def test_summarize_readiness_telemetry_exposes_session_counters() -> None:
     assert telemetry["status"] == "ok"
     assert telemetry["counters"]["classify_successes"] == 3
     assert telemetry["latency"]["cold_start_cap_ms"] == 1250.0
+
+
+# --- HS-39-05: depth readiness assembler -----------------------------------
+
+from holdspeak.dictation_telemetry import build_depth_readiness  # noqa: E402
+
+
+def test_depth_guidance_fires_when_p95_near_budget():
+    d = build_depth_readiness(
+        stage_quantiles={"intent-router": {"p50": 100, "p95": 500, "count": 5}},
+        rewrite_pass_ms=[100.0, 100.0],
+        run_count=5,
+        budget_ms=600,
+        corrections_enabled=True,
+        corrections_size=2,
+        corrections_recent=["fix the cli thing"],
+    )
+    assert d["runs"] == 5
+    assert d["rewrite_pass_ms"] == [100.0, 100.0]
+    assert d["corrections"] == {"enabled": True, "size": 2, "recent": ["fix the cli thing"]}
+    # 500 >= 600 * 0.66 (396) → guidance for intent-router.
+    assert any(g["stage_id"] == "intent-router" for g in d["guidance"])
+
+
+def test_depth_no_guidance_when_comfortably_under_budget():
+    d = build_depth_readiness(
+        stage_quantiles={"intent-router": {"p50": 50, "p95": 100, "count": 5}},
+        rewrite_pass_ms=[],
+        run_count=5,
+        budget_ms=600,
+        corrections_enabled=False,
+        corrections_size=0,
+        corrections_recent=[],
+    )
+    assert d["guidance"] == []
+
+
+def test_depth_empty_is_valid():
+    d = build_depth_readiness(
+        stage_quantiles={},
+        rewrite_pass_ms=[],
+        run_count=0,
+        budget_ms=600,
+        corrections_enabled=False,
+        corrections_size=0,
+        corrections_recent=[],
+    )
+    assert d["runs"] == 0 and d["stages"] == {} and d["guidance"] == []
