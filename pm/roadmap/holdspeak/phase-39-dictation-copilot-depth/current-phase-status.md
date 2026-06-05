@@ -1,12 +1,20 @@
 # Phase 39 — Dictation Copilot Depth
 
-**Status:** IN PROGRESS (7/9 stories). Opened 2026-06-05. Direction chosen by
+**Status:** IN PROGRESS (8/9 stories). Opened 2026-06-05. Direction chosen by
 the user (feature work over Release/First-Run and Growth; track "Dictation
 Copilot depth" over Actuators III and Artifact→action bridges). Phase grew
 7→9 stories mid-flight (HS-39-08 real-endpoint e2e; HS-39-09 all-features
 showcase + public doc — both user-requested).
 
-**Last updated:** 2026-06-05 (**HS-39-05 done** — pipeline depth telemetry. A
+**Last updated:** 2026-06-05 (**HS-39-06 done** — the dedicated docs story.
+`docs/INTELLIGENT_TYPING_GUIDE.md` gained **§10 "Copilot Depth"** documenting
+every new knob (`rewrite_passes`, `corrections_enabled`,
+`target_detect_llm_enabled` / `_below`) with defaults + a JSON example + the
+opt-in posture, plus the suggestion quality gate and the `depth` readiness
+block; §8 reconciled to note dedup + dismissal-no-recur. Knob names verified
+against `config.py`. Doc drift-guard + link-check green (docs-only; suite
+unchanged 2186/16). **Next: HS-39-07** closeout. **HS-39-05 done** — pipeline
+depth telemetry. A
 session `DictationTelemetryStore` (bounded ring on `MeetingWebServer`, fed via
 the pipeline `on_run` hook from the dry-run + live paths — the per-instance
 ring resets each build, so this is what accumulates) + a pure
@@ -172,8 +180,9 @@ The DIR-01 invariant is unchanged and load-bearing throughout:
 - [x] `GET /api/dictation/readiness` reports per-stage p50/p95 + budget
       guidance + multi-pass + correction-store state. (HS-39-05) —
       [evidence-story-05](./evidence-story-05.md)
-- [ ] `docs/INTELLIGENT_TYPING_GUIDE.md` documents every new knob; no live doc
+- [x] `docs/INTELLIGENT_TYPING_GUIDE.md` documents every new knob; no live doc
       contradicts the shipped surface; doc-guards + link-check green. (HS-39-06)
+      — [evidence-story-06](./evidence-story-06.md)
 - [x] Real spoken→enriched e2e over a `.hs` fixture project, gated/auto-skip,
       passing live against `.43`; beautiful before→after; committed capture.
       (HS-39-08) — [evidence-story-08](./evidence-story-08.md)
@@ -192,12 +201,20 @@ The DIR-01 invariant is unchanged and load-bearing throughout:
 | HS-39-03 | Model-assisted target detection | done | [story-03-model-assisted-target-detection.md](./story-03-model-assisted-target-detection.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-39-04 | Project-doc suggestion quality gate | done | [story-04-suggestion-quality-gate.md](./story-04-suggestion-quality-gate.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-39-05 | Pipeline depth telemetry | done | [story-05-pipeline-depth-telemetry.md](./story-05-pipeline-depth-telemetry.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-39-06 | Documentation | backlog | [story-06-documentation.md](./story-06-documentation.md) | — |
+| HS-39-06 | Documentation | done | [story-06-documentation.md](./story-06-documentation.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-39-07 | Closeout + final-summary | backlog | [story-07-closeout.md](./story-07-closeout.md) | — |
 | HS-39-08 | Real spoken→enriched dictation e2e + demo | done | [story-08-spoken-dictation-e2e.md](./story-08-spoken-dictation-e2e.md) | [evidence-story-08.md](./evidence-story-08.md) |
 | HS-39-09 | Dictation copilot showcase (all features + public doc) | done | [story-09-dictation-copilot-showcase.md](./story-09-dictation-copilot-showcase.md) | [evidence-story-09.md](./evidence-story-09.md) |
 
 ## Where we are
+
+**HS-39-06 done (2026-06-05) — docs.** The dedicated docs story:
+`docs/INTELLIGENT_TYPING_GUIDE.md` §10 "Copilot Depth" documents every new knob
+(defaults + JSON example + opt-in posture), the suggestion quality gate, and the
+`depth` readiness telemetry block; §8 reconciled for dedup/recurrence. Knob
+names checked against `config.py`. Doc drift-guard + link-check green.
+**Next: HS-39-07** — closeout (final-summary, re-verify the before/after, README
+→ done, PR to `main`).
 
 **HS-39-05 done (2026-06-05) — depth telemetry.** The new depth from this phase
 is now observable. A session `DictationTelemetryStore` (bounded ring on the

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 39
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-39-01, HS-39-02, HS-39-03, HS-39-04, HS-39-05
 - **Unblocks:** HS-39-07
 - **Owner:** unassigned
@@ -37,17 +37,22 @@ shipped surface.
 
 ## Acceptance criteria
 
-- [ ] `docs/INTELLIGENT_TYPING_GUIDE.md` documents every new config knob with
-      its default and an example, and explains the opt-in/off-by-default
-      posture.
-- [ ] No live doc still describes the rewriter as single-pass, the pipeline as
-      memoryless, or target detection as heuristic-only where Phase 39 changed
-      it.
-- [ ] Doc drift-guard test passes (`uv run pytest -q -k doc_drift` or the
-      project's guard test).
-- [ ] Live-doc link-check passes (the dangling-relative-link test).
-- [ ] Every documented knob name matches the actual config field shipped in
-      01–05 (no doc/code drift).
+- [x] `docs/INTELLIGENT_TYPING_GUIDE.md` §10 "Copilot Depth" documents every new
+      config knob (`rewrite_passes` / `corrections_enabled` /
+      `target_detect_llm_enabled` / `target_detect_llm_below`) with its default,
+      a JSON example, and the opt-in/off-by-default posture; plus the suggestion
+      quality gate and the `depth` readiness telemetry block.
+- [x] Stale framing reconciled: §8 now notes dedup + dismissal-no-recur; §10
+      describes multi-pass, session correction memory, and model-assisted target
+      detection (no "single-pass / memoryless / heuristic-only" claims remain
+      where Phase 39 changed it).
+- [x] Doc drift-guard passes — `uv run pytest -q -k "doc_drift or no_live_doc"`.
+- [x] Live-doc link-check passes (the dangling-relative-link test) — same run,
+      `4 passed`.
+- [x] Documented knob names match the shipped `DictationPipelineConfig` fields +
+      the `depth` block keys + the `suggestion_status` values + the corrections
+      route shape (verified against `config.py` / `dictation_telemetry.py` /
+      the routes).
 
 ## Test plan
 
