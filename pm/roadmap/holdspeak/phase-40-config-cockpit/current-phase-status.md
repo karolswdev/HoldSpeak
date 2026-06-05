@@ -1,0 +1,167 @@
+# Phase 40 — Configuration Cockpit & Persistent Memory
+
+**Status:** SCAFFOLDED (0/6 stories). Opened 2026-06-05. Direction chosen by the
+user: a **web-first** way to set up the whole copilot ("nobody wants to frig
+around with files and settings") + **persistent cross-session memory**.
+
+**Last updated:** 2026-06-05 (phase scaffolded — plan + 6 stories +
+[`AGENT-BRIEF.md`](./AGENT-BRIEF.md)).
+
+## Goal
+
+Phase 39 made the dictation copilot deep and self-improving — but every knob
+still lives in hand-edited JSON/YAML, and what it learns dies on restart.
+Phase 40 makes the whole thing **configurable, observable, and memorable from
+the Web UI**:
+
+1. **No more file editing.** Every dictation/copilot setting — including the
+   Phase-39 knobs (`rewrite_passes`, `corrections_enabled`,
+   `target_detect_llm_enabled` / `_below`) — is set from a Signal-styled,
+   readiness-driven cockpit. Toggles and sliders, inline validation, sensible
+   defaults. A new user never opens `config.json` or `blocks.yaml`.
+2. **Memory that survives restarts.** The dictation correction memory becomes
+   **persistent** (DB-backed) and gets a UI to view and curate what it has
+   learned. Depth telemetry (p50/p95 + budget guidance) is rendered richly.
+
+This is a UX + persistence phase. It does **not** change the dictation pipeline
+behavior (the Phase-39 invariant holds: off by default, byte-identical when
+disabled). It surfaces and persists what already exists.
+
+**The UI bar is high** (memory `feedback_high_ui_standards` +
+`project_phase30_ui_overhaul`): rich **Signal** design, the `ui-ux-pro-max`
+skill, affordances, no flat/basic controls. The web bundle is **gitignored**
+(memory `reference_web_bundle_gitignored`): edit `web/src`, `cd web && npm run
+build` to verify, commit source only.
+
+## Scope
+
+### In
+
+- **Settings API: the missing knobs (HS-40-01).** Expose the four Phase-39
+  pipeline knobs in `/api/settings` GET/PUT with validation + round-trip
+  persistence. Backend foundation for the cockpit UI.
+- **Persistent correction memory (HS-40-02).** A `dictation_corrections` table
+  + `DictationCorrectionRepository` in the `db/` package; the `CorrectionStore`
+  loads recent corrections on start and persists on record (the in-memory ring
+  is kept for nudge-speed). Cross-session history surfaced on the API.
+- **The Copilot Setup cockpit — UI (HS-40-03).** A Signal-styled,
+  readiness-driven configuration surface in the web UI for the runtime +
+  pipeline + the new knobs (toggles/sliders, inline validation), wired to
+  `/api/settings`. No file editing.
+- **Memory + telemetry UI (HS-40-04).** A panel to view/curate the (now
+  persistent) corrections and enable/disable the feature, plus a rich
+  depth-telemetry panel (per-stage p50/p95 + budget guidance from the readiness
+  `depth` block).
+- **Documentation (HS-40-05).** Dedicated docs story: update the user-facing
+  guides to lead with the web-UI setup ("do it all in the UI"); screenshots;
+  doc-guards green.
+- **Closeout (HS-40-06).** Real dogfood of the cockpit + persistence; demo
+  capture; `final-summary.md`; README → done; PR to `main`.
+
+### Out
+
+- **Rebuilding the existing blocks / project-KB editors** — they already work
+  (`/api/dictation/blocks`, `/api/dictation/project-kb` + the dictation page).
+  Link them into the cockpit; don't rebuild them.
+- **Non-dictation settings surfaces** — hotkey / meeting / model already have
+  web surfaces; this phase is the dictation/copilot cockpit.
+- **Changing the dictation pipeline behavior** — Phase 40 surfaces + persists;
+  it doesn't re-tune routing/rewriting. The Phase-39 invariant is unchanged.
+- **Cloud sync of memory / multi-device** — persistence is local SQLite only.
+- **Persisting telemetry across restarts** — in-memory is fine for the depth
+  panel; only *corrections* persist this phase (telemetry persistence is a
+  later candidate).
+
+## Exit criteria (evidence required)
+
+- [ ] The four Phase-39 knobs round-trip through `GET`/`PUT /api/settings` with
+      validation (out-of-range rejected); integration-tested. (HS-40-01)
+- [ ] Correction memory persists across a process restart (DB-backed); a fresh
+      `CorrectionStore` loads recent corrections; the canonical schema snapshot
+      is regenerated + proven; no behavior change when corrections are off.
+      (HS-40-02)
+- [ ] A Signal-styled cockpit sets every dictation/pipeline knob from the UI
+      (no JSON editing), readiness-driven, with inline validation; bundle
+      rebuilt; screenshot captured. (HS-40-03)
+- [ ] A UI panel lists/curates persistent corrections (add/remove/toggle) and
+      renders the depth telemetry (p50/p95 + guidance); screenshot. (HS-40-04)
+- [ ] The user guides lead with web-UI setup; no live doc says you must edit
+      JSON/YAML by hand; doc-guards + link-check green. (HS-40-05)
+- [ ] Closeout: dogfood + demo + `final-summary.md`; README → done; PR merged.
+      (HS-40-06)
+- [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green throughout;
+      the dictation pipeline behavior is unchanged (off-by-default invariant
+      holds); the web bundle is rebuilt but only `web/src` is committed. (all)
+
+## Story status
+
+| ID | Story | Status | Story file | Evidence |
+|---|---|---|---|---|
+| HS-40-01 | Settings API: the missing knobs | backlog | [story-01-settings-api-knobs.md](./story-01-settings-api-knobs.md) | — |
+| HS-40-02 | Persistent correction memory | backlog | [story-02-persistent-correction-memory.md](./story-02-persistent-correction-memory.md) | — |
+| HS-40-03 | Copilot Setup cockpit (UI) | backlog | [story-03-copilot-setup-cockpit.md](./story-03-copilot-setup-cockpit.md) | — |
+| HS-40-04 | Memory + telemetry UI | backlog | [story-04-memory-telemetry-ui.md](./story-04-memory-telemetry-ui.md) | — |
+| HS-40-05 | Documentation | backlog | [story-05-documentation.md](./story-05-documentation.md) | — |
+| HS-40-06 | Closeout | backlog | [story-06-closeout.md](./story-06-closeout.md) | — |
+
+## Where we are
+
+**Just scaffolded (2026-06-05), right after Phase 39 merged (PR #16).** The
+territory was mapped before scaffolding — see [`AGENT-BRIEF.md`](./AGENT-BRIEF.md)
+for the full seam map an executing agent needs. Headlines:
+
+- **Settings (HS-40-01):** `holdspeak/web/routes/system.py` `api_update_settings`
+  (PUT) validates + coerces pipeline fields but **omits the four Phase-39 knobs**,
+  so `_coerce` silently drops them. `GET /api/settings` returns
+  `Config.to_dict()` (the knobs are already in there as dataclass fields). The
+  fix is the PUT validation block + round-trip tests
+  (`tests/integration/test_web_dictation_settings_api.py`).
+- **Persistence (HS-40-02):** the `holdspeak/db/` package is a `Database`
+  container + per-domain repositories on one canonical `SCHEMA_SQL`
+  (`db/core.py`), `SCHEMA_VERSION = 1`. Add a `dictation_corrections` table +
+  `DictationCorrectionRepository` (mirror `db/actuators.py`), register on the
+  container, and **regenerate the committed schema snapshot** (there is a
+  snapshot test). `CorrectionStore`
+  (`holdspeak/plugins/dictation/corrections.py`) is the in-memory ring to wrap.
+- **Cockpit UI (HS-40-03 / 04):** frontend is Astro at
+  `web/src/pages/dictation.astro` + `web/src/scripts/dictation-app.js`, built to
+  the **gitignored** `holdspeak/static/_built/`. The corrections + telemetry
+  data are already on the API (`/api/dictation/corrections`, the readiness
+  `depth` block). Use Signal tokens + the `ui-ux-pro-max` skill.
+
+**Pickup order:** HS-40-01 (backend foundation, unblocks the UI) → HS-40-02
+(persistence, independent, enables the memory UI) → HS-40-03 (cockpit UI, needs
+01) → HS-40-04 (memory/telemetry UI, needs 02) → HS-40-05 (docs) → HS-40-06
+(closeout). 01 and 02 are independent and can go in either order / in parallel
+worktrees. **Not started.**
+
+## Active risks
+
+| Risk | Likelihood | Mitigation | Stop signal |
+|---|---|---|---|
+| Schema change breaks the canonical-snapshot test | High if forgotten | HS-40-02 must regenerate + commit the schema snapshot and prove a fresh build matches | The snapshot test fails / drifts |
+| UI ships flat/basic and misses the Signal bar | Medium | Use the `ui-ux-pro-max` skill + Signal tokens; rich affordances; screenshot review | A reviewer calls the UI flat/basic |
+| The committed web bundle leaks into a commit | Medium | `holdspeak/static/_built/` is gitignored; only `web/src` is committed; `git status` checked before commit | `_built/` files show up staged |
+| Persistence changes default behavior | Medium | Corrections stay off-by-default; persistence is additive; the in-memory ring path is byte-identical when the feature is off | Routing changes with corrections disabled |
+| Settings PUT drops/loses a field on round-trip | Medium | Round-trip integration test asserts every knob persists + reloads | A knob doesn't survive PUT→GET |
+
+## Decisions made (this phase)
+
+- 2026-06-05 — **Direction = Configuration Cockpit & Persistent Memory** — user
+  pick (web-first config + persistence) as Phase 40 after Phase 39 closed.
+- 2026-06-05 — **Persist *corrections* only this phase** (telemetry stays
+  in-memory) — corrections are the durable, user-meaningful state; telemetry is
+  ephemeral diagnostics.
+- 2026-06-05 — **Keep the in-memory ring + DB-back it** (not DB-only) — the ring
+  stays the fast nudge path; the DB is durability + history. Avoids a per-utterance
+  DB read on the live typing path.
+
+## Decisions deferred
+
+- **DB-backed vs file-backed persistence for corrections** — trigger: HS-40-02 —
+  default: the existing SQLite `db/` package (consistent with every other domain).
+- **Whether the cockpit is a new page vs an expanded `/dictation` section** —
+  trigger: HS-40-03 — default: expand the existing `/dictation` page (it already
+  has the readiness/runtime/blocks/KB sections) rather than a new route.
+- **Telemetry persistence** — trigger: real dogfood (HS-40-06) shows in-memory is
+  too forgetful — default: stays in-memory.
