@@ -19,6 +19,13 @@ from holdspeak.plugins.dictation.contracts import StageResult, Utterance
 _CODE_FENCE_RE = re.compile(r"^\s*```(?:text|markdown|md)?\s*(.*?)\s*```\s*$", re.DOTALL)
 _MAX_REWRITE_ABSOLUTE_CHARS = 8_000
 
+# Exact warning strings for a draft (pass 0) the runtime returned but we
+# can't use. Keyed by the `reason` recorded on the resulting no-op.
+_INVALID_DRAFT_WARNINGS = {
+    "empty_rewrite": "runtime returned an empty rewrite; preserving input",
+    "rewrite_too_long": "runtime rewrite exceeded length budget; preserving input",
+}
+
 
 def _latest_text(prior: list[StageResult], default: str) -> str:
     if prior:
@@ -81,6 +88,44 @@ def _default_prompt_builder(utt: Utterance, text: str, hs_context: str) -> str:
     )
 
 
+def _default_refine_prompt_builder(utt: Utterance, draft: str, hs_context: str) -> str:
+    """HS-39-01: ask the model to critique + tighten its own prior draft.
+
+    Used for passes 2..N of multi-pass rewriting. Deliberately narrower than
+    the draft prompt — it carries the project + target context but not the
+    agent-reply lines, keeping the model focused on improving the draft rather
+    than re-deriving it from scratch.
+    """
+    project = utt.project or {}
+    project_name = project.get("name") if isinstance(project, dict) else None
+    project_label = str(project_name or "current project")
+    target = _target_profile(utt)
+    target_id = target.get("id", "unknown")
+    target_label = target.get("label", "Unknown")
+    target_directive = _target_directive(str(target_id))
+    return "\n".join(
+        [
+            "Improve the draft rewrite below for direct insertion into the user's active app.",
+            f"Project: {project_label}",
+            f"Target profile: {target_id} ({target_label})",
+            f"Target guidance: {target_directive}",
+            "",
+            "Project context from repo-local .hs files:",
+            hs_context,
+            "",
+            "Rules:",
+            "- Tighten wording and fix errors while preserving the user's intent.",
+            "- Do not invent facts or add requests the user did not make.",
+            "- Keep the result adapted to the target profile.",
+            "- If the draft is already good, return it unchanged.",
+            "- Return only the improved text. No explanation, preface, or code fence.",
+            "",
+            "Current draft:",
+            draft,
+        ]
+    )
+
+
 class ProjectRewriter:
     """LLM-backed project-aware rewrite stage."""
 
@@ -96,15 +141,26 @@ class ProjectRewriter:
         temperature: float = 0.15,
         suggest_project_docs: bool = True,
         prompt_builder: Callable[[Utterance, str, str], str] | None = None,
+        rewrite_passes: int = 1,
+        refine_prompt_builder: Callable[[Utterance, str, str], str] | None = None,
+        latency_budget_ms: float | None = None,
+        clock: Callable[[], float] | None = None,
     ) -> None:
         self._runtime = runtime
         self._max_tokens = max_tokens
         self._temperature = temperature
         self._suggest_project_docs = suggest_project_docs
         self._prompt_builder = prompt_builder or _default_prompt_builder
+        # HS-39-01: multi-pass refinement. `rewrite_passes` >= 1; pass 0 is the
+        # draft, passes 1..N-1 critique + tighten the prior draft. The latency
+        # budget gates each extra pass; a None budget never skips.
+        self._rewrite_passes = max(1, int(rewrite_passes))
+        self._refine_prompt_builder = refine_prompt_builder or _default_refine_prompt_builder
+        self._latency_budget_ms = latency_budget_ms
+        self._clock = clock if clock is not None else time.perf_counter
 
     def run(self, utt: Utterance, prior: list[StageResult]) -> StageResult:
-        start = time.perf_counter()
+        start = self._clock()
         text = _latest_text(prior, utt.raw_text)
         hs_context = _hs_prompt_context(utt)
         if not hs_context:
@@ -120,38 +176,81 @@ class ProjectRewriter:
                 warnings=["runtime does not support project-aware rewrite"],
             )
 
-        prompt = self._prompt_builder(utt, text, hs_context)
-        try:
-            raw = rewrite(
-                prompt,
-                max_tokens=self._max_tokens,
-                temperature=self._temperature,
-            )
-        except Exception as exc:
-            return self._noop(
-                start,
-                text,
-                "rewrite_failed",
-                utt=utt,
-                warnings=[f"runtime rewrite failed; preserving input ({type(exc).__name__})"],
-            )
-        rewritten = _clean_rewrite_text(str(raw))
-        if not rewritten:
-            return self._noop(
-                start,
-                text,
-                "empty_rewrite",
-                utt=utt,
-                warnings=["runtime returned an empty rewrite; preserving input"],
-            )
-        if _rewrite_too_long(text, rewritten):
-            return self._noop(
-                start,
-                text,
-                "rewrite_too_long",
-                utt=utt,
-                warnings=["runtime rewrite exceeded length budget; preserving input"],
-            )
+        best: str | None = None
+        passes_run = 0
+        pass_ms: list[float] = []
+        warnings: list[str] = []
+        budget_skipped = False
+
+        for pass_index in range(self._rewrite_passes):
+            # Latency-budget gate, applied only to *extra* passes (>= 1) so the
+            # first draft is never skipped. Project the next pass at the cost of
+            # the last one; skip the remainder if it would breach the budget.
+            if pass_index >= 1 and self._latency_budget_ms is not None:
+                elapsed_ms = (self._clock() - start) * 1000.0
+                projected_ms = pass_ms[-1] if pass_ms else 0.0
+                if elapsed_ms + projected_ms > self._latency_budget_ms:
+                    budget_skipped = True
+                    warnings.append(
+                        f"skipped refine pass {pass_index + 1}/{self._rewrite_passes}: "
+                        f"would exceed {self._latency_budget_ms:.0f}ms budget"
+                    )
+                    break
+
+            if pass_index == 0:
+                prompt = self._prompt_builder(utt, text, hs_context)
+            else:
+                prompt = self._refine_prompt_builder(utt, best or text, hs_context)
+
+            pass_start = self._clock()
+            try:
+                raw = rewrite(
+                    prompt,
+                    max_tokens=self._max_tokens,
+                    temperature=self._temperature,
+                )
+            except Exception as exc:
+                if pass_index == 0:
+                    return self._noop(
+                        start,
+                        text,
+                        "rewrite_failed",
+                        utt=utt,
+                        warnings=[
+                            f"runtime rewrite failed; preserving input ({type(exc).__name__})"
+                        ],
+                    )
+                # Refine failure: fail open to the best draft so far so a blip
+                # on an extra pass never regresses below single-pass output.
+                warnings.append(
+                    f"refine pass {pass_index + 1} failed; keeping prior draft "
+                    f"({type(exc).__name__})"
+                )
+                break
+            pass_ms.append((self._clock() - pass_start) * 1000.0)
+
+            cleaned = _clean_rewrite_text(str(raw))
+            invalid_reason = _invalid_draft_reason(text, cleaned)
+            if invalid_reason is not None:
+                if pass_index == 0:
+                    return self._noop(
+                        start,
+                        text,
+                        invalid_reason,
+                        utt=utt,
+                        warnings=[_INVALID_DRAFT_WARNINGS[invalid_reason]],
+                    )
+                # A bad refine (empty / over budget) is discarded; keep best.
+                warnings.append(
+                    f"refine pass {pass_index + 1} {invalid_reason}; keeping prior draft"
+                )
+                break
+            best = cleaned
+            passes_run += 1
+
+        # `best` is guaranteed non-None: pass 0 either returned a no-op above or
+        # set `best`. Anything past pass 0 only ever improves or is discarded.
+        rewritten = best if best is not None else text
         suggestion, suggestion_status = self._suggestion_for(utt, rewritten, hs_context)
         output_text = (
             f"{rewritten}\n\n---\n{suggestion.to_injected_markdown()}"
@@ -162,8 +261,8 @@ class ProjectRewriter:
             stage_id=self.id,
             text=output_text,
             intent=None,
-            elapsed_ms=(time.perf_counter() - start) * 1000.0,
-            warnings=[],
+            elapsed_ms=(self._clock() - start) * 1000.0,
+            warnings=warnings,
             metadata={
                 "reason": "rewritten",
                 "changed": output_text != text,
@@ -171,6 +270,10 @@ class ProjectRewriter:
                 "target_profile": _target_profile(utt),
                 "project_doc_suggestion": suggestion.to_dict() if suggestion else None,
                 "project_doc_suggestion_status": suggestion_status,
+                "rewrite_passes_configured": self._rewrite_passes,
+                "rewrite_passes_run": passes_run,
+                "rewrite_pass_ms": [round(ms, 3) for ms in pass_ms],
+                "rewrite_budget_skipped": budget_skipped,
             },
         )
 
@@ -187,7 +290,7 @@ class ProjectRewriter:
             stage_id=self.id,
             text=text,
             intent=None,
-            elapsed_ms=(time.perf_counter() - start) * 1000.0,
+            elapsed_ms=(self._clock() - start) * 1000.0,
             warnings=warnings or [],
             metadata={
                 "reason": reason,
@@ -297,3 +400,17 @@ def _clean_rewrite_text(value: str) -> str:
 def _rewrite_too_long(original: str, rewritten: str) -> bool:
     budget = min(_MAX_REWRITE_ABSOLUTE_CHARS, max(len(original) * 4 + 200, 400))
     return len(rewritten) > budget
+
+
+def _invalid_draft_reason(original: str, cleaned: str) -> str | None:
+    """Why a cleaned rewrite can't be used, or None if it's good.
+
+    Shared by every pass: an empty or over-budget rewrite is rejected. On pass
+    0 the caller turns this into a no-op; on a refine pass it discards the draft
+    and keeps the best prior result.
+    """
+    if not cleaned:
+        return "empty_rewrite"
+    if _rewrite_too_long(original, cleaned):
+        return "rewrite_too_long"
+    return None

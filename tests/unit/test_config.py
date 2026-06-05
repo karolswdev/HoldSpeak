@@ -649,3 +649,27 @@ class TestDictationPipelineValidation:
         assert "made-up" in str(exc.value)
         assert "project-rewriter" in str(exc.value)
         assert "kb-enricher" in str(exc.value)  # surfaces the canonical list
+
+    def test_rewrite_passes_defaults_to_one(self):
+        from holdspeak.config import DictationPipelineConfig
+
+        assert DictationPipelineConfig().rewrite_passes == 1
+
+    def test_rewrite_passes_in_range_accepted(self):
+        from holdspeak.config import DictationPipelineConfig
+
+        assert DictationPipelineConfig(rewrite_passes=3).rewrite_passes == 3
+
+    def test_rewrite_passes_below_one_rejected(self):
+        from holdspeak.config import DictationConfigError, DictationPipelineConfig
+
+        with pytest.raises(DictationConfigError) as exc:
+            DictationPipelineConfig(rewrite_passes=0)
+        assert "rewrite_passes" in str(exc.value)
+
+    def test_rewrite_passes_above_cap_rejected(self):
+        from holdspeak.config import DictationConfigError, DictationPipelineConfig
+
+        with pytest.raises(DictationConfigError) as exc:
+            DictationPipelineConfig(rewrite_passes=6)
+        assert "rewrite_passes" in str(exc.value)

@@ -75,7 +75,13 @@ def build_pipeline(
                 stages.append(IntentRouter(runtime, blocks))
         elif stage_id == "project-rewriter":
             if runtime is not None:
-                stages.append(ProjectRewriter(runtime))
+                stages.append(
+                    ProjectRewriter(
+                        runtime,
+                        rewrite_passes=cfg.pipeline.rewrite_passes,
+                        latency_budget_ms=float(cfg.pipeline.max_total_latency_ms),
+                    )
+                )
         elif stage_id == "kb-enricher":
             stages.append(KbEnricher(blocks))
 
