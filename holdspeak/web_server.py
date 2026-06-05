@@ -174,6 +174,7 @@ class MeetingWebServer:
         host: str = "127.0.0.1",
         port: Optional[int] = None,
         auth_token: str = "",
+        dictation_corrections_repository: Optional[Any] = None,
     ) -> None:
         if _IMPORT_ERROR is not None:
             raise RuntimeError(
@@ -186,9 +187,15 @@ class MeetingWebServer:
         self._callbacks = callbacks
         # HS-39-02: one session-scoped dictation correction store, shared by the
         # dictation routes (record/read) and the live runtime (consult).
+        # HS-40-02: when the live runtime injects a repository the store is
+        # DB-backed (loads recent on construction, writes through on record);
+        # with none (the default — every test that builds a bare server) it's
+        # the Phase-39 in-process ring, byte-identical and touching no DB.
         from .plugins.dictation.corrections import CorrectionStore
 
-        self.dictation_corrections = CorrectionStore()
+        self.dictation_corrections = CorrectionStore(
+            repository=dictation_corrections_repository
+        )
         # HS-39-05: one session-scoped dictation telemetry store, fed via the
         # pipeline `on_run` hook from the dry-run + live paths.
         from .plugins.dictation.telemetry_store import DictationTelemetryStore

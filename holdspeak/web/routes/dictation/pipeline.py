@@ -297,7 +297,7 @@ def build_pipeline_router(
                 "enabled": bool(getattr(cfg.pipeline, "corrections_enabled", False)),
                 "kinds": list(CORRECTION_KINDS),
                 "size": len(store) if store is not None else 0,
-                "items": [c.to_dict() for c in store.recent()] if store is not None else [],
+                "items": store.list_for_display() if store is not None else [],
             }
         )
 
@@ -321,5 +321,24 @@ def build_pipeline_router(
             return JSONResponse({"error": "value must be a non-empty string"}, status_code=400)
         recorded = store.record(kind, text, value)
         return JSONResponse({"recorded": bool(recorded), "size": len(store)})
+
+    @router.delete("/api/dictation/corrections/{correction_id}")
+    async def api_dictation_corrections_delete(correction_id: int) -> Any:
+        """HS-40-04: remove one persistent correction by id (curate the memory)."""
+        store = ctx.corrections
+        if store is None:
+            return JSONResponse({"error": "correction store unavailable"}, status_code=503)
+        if store.remove(correction_id):
+            return JSONResponse({"removed": True, "size": len(store)})
+        return JSONResponse({"removed": False, "error": "correction not found"}, status_code=404)
+
+    @router.delete("/api/dictation/corrections")
+    async def api_dictation_corrections_clear() -> Any:
+        """HS-40-04: forget everything the copilot has learned (ring + durable)."""
+        store = ctx.corrections
+        if store is None:
+            return JSONResponse({"error": "correction store unavailable"}, status_code=503)
+        store.clear()
+        return JSONResponse({"cleared": True, "size": len(store)})
 
     return router

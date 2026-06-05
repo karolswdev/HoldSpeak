@@ -29,6 +29,7 @@ import CommandPreview from "../components/CommandPreview.astro";
       <button id="section-hooks" data-section="hooks" type="button" role="tab">Agent Hooks</button>
       <span class="tab-tier-sep" aria-hidden="true" title="Runtime &amp; test"></span>
       <button id="section-runtime" data-section="runtime" type="button" role="tab">Runtime</button>
+      <button id="section-memory" data-section="memory" type="button" role="tab">Memory</button>
       <button id="section-dry-run" data-section="dry-run" type="button" role="tab">Dry-run</button>
     </div>
 
@@ -163,9 +164,71 @@ import CommandPreview from "../components/CommandPreview.astro";
             <input type="range" id="rt-latency" min="100" max="5000" step="50" />
           </label>
           <div id="rt-latency-vis" class="rt-latency-vis"></div>
+
+          <!-- ===== Copilot depth (HS-40-03): the Phase-39 knobs ===== -->
+          <fieldset class="depth-group">
+            <legend class="depth-legend">
+              <span class="depth-legend-title">Copilot depth</span>
+              <span class="depth-legend-sub">Opt-in refinement — off by default. Nothing here changes how the copilot behaves until you turn it on.</span>
+            </legend>
+
+            <!-- rewrite_passes -->
+            <div class="depth-knob">
+              <div class="depth-knob-head">
+                <span class="depth-knob-title">Rewrite passes</span>
+                <span class="depth-knob-badge" id="rt-rewrite-badge">1×</span>
+              </div>
+              <p class="depth-knob-hint">Draft&nbsp;→&nbsp;critique&nbsp;→&nbsp;refine. Each extra pass tightens the rewrite; any pass that would breach your latency budget is skipped automatically.</p>
+              <div class="seg" id="rt-rewrite-seg" role="group" aria-label="Rewrite passes, 1 to 5">
+                <button type="button" class="seg-btn" data-value="1" aria-pressed="true">1</button>
+                <button type="button" class="seg-btn" data-value="2" aria-pressed="false">2</button>
+                <button type="button" class="seg-btn" data-value="3" aria-pressed="false">3</button>
+                <button type="button" class="seg-btn" data-value="4" aria-pressed="false">4</button>
+                <button type="button" class="seg-btn" data-value="5" aria-pressed="false">5</button>
+              </div>
+              <input type="hidden" id="rt-rewrite-passes" value="1" />
+              <p class="depth-knob-desc" id="rt-rewrite-desc">Single pass — fastest; byte-identical to a plain rewrite.</p>
+            </div>
+
+            <!-- corrections_enabled -->
+            <label class="depth-switch">
+              <span class="depth-switch-text">
+                <span class="depth-knob-title">Learn from my corrections</span>
+                <span class="depth-knob-hint">Correct a route once and similar utterances get nudged the same way — the memory now <strong>survives a restart</strong> (curate it in Memory).</span>
+              </span>
+              <span class="switch">
+                <input type="checkbox" id="rt-corrections-enabled" />
+                <span class="switch-track"><span class="switch-knob"></span></span>
+              </span>
+            </label>
+
+            <!-- target_detect_llm_enabled + _below -->
+            <div class="depth-knob depth-knob--group">
+              <label class="depth-switch">
+                <span class="depth-switch-text">
+                  <span class="depth-knob-title">Infer the target when unsure</span>
+                  <span class="depth-knob-hint">When heuristic target detection is low-confidence, ask the model to classify it. A manual override always wins.</span>
+                </span>
+                <span class="switch">
+                  <input type="checkbox" id="rt-target-detect-llm-enabled" />
+                  <span class="switch-track"><span class="switch-knob"></span></span>
+                </span>
+              </label>
+              <div class="depth-subknob" id="rt-target-below-wrap" hidden>
+                <div class="depth-knob-head">
+                  <span class="depth-knob-title">Ask the model below confidence</span>
+                  <span class="depth-knob-badge" id="rt-target-below-val">0.80</span>
+                </div>
+                <input type="range" id="rt-target-detect-llm-below" min="0" max="1" step="0.05" />
+                <p class="depth-knob-hint">Lower = trust the heuristic (rarely ask the model). Higher = ask more often.</p>
+              </div>
+            </div>
+          </fieldset>
+
           <div id="rt-msg"></div>
           <div class="actions">
             <button class="btn primary" id="rt-btn-save" type="button">Save</button>
+            <button class="btn" id="rt-btn-test" type="button">Save &amp; test in dry-run</button>
             <button class="btn" id="rt-btn-reset" type="button">Reset</button>
           </div>
         </section>
@@ -183,6 +246,74 @@ import CommandPreview from "../components/CommandPreview.astro";
             and constraint-rejected outputs;
             <code>constrained_retries</code> is the count of
             GBNF-grammar re-prompts.
+          </p>
+        </section>
+      </div>
+    </section>
+
+    <!-- ============= Memory + telemetry (HS-40-04) ============= -->
+    <section id="view-memory" class="view" hidden>
+      <h2>Copilot memory &amp; depth</h2>
+      <p class="lede">
+        What the copilot has <strong>learned</strong> (persists across restarts)
+        and how <strong>deep</strong> it's running this session. Curate the
+        memory here; tune the knobs in <strong>Runtime → Copilot depth</strong>.
+      </p>
+      <div id="mem-meta-banner" class="meta-banner">Loading…</div>
+      <div class="grid">
+        <!-- ===== What the copilot has learned ===== -->
+        <section class="panel">
+          <header class="panel-header">
+            <h3>What the copilot has learned</h3>
+            <button id="mem-btn-clear" class="btn danger" type="button">Forget all</button>
+          </header>
+
+          <label class="depth-switch mem-toggle">
+            <span class="depth-switch-text">
+              <span class="depth-knob-title">Use corrections when routing</span>
+              <span class="depth-knob-hint" id="mem-enabled-hint">When on, similar utterances are nudged toward what you corrected.</span>
+            </span>
+            <span class="switch">
+              <input type="checkbox" id="mem-corrections-enabled" />
+              <span class="switch-track"><span class="switch-knob"></span></span>
+            </span>
+          </label>
+
+          <form id="mem-add-form" class="mem-add">
+            <div class="row">
+              <label>Kind
+                <select id="mem-add-kind">
+                  <option value="intent">intent → block</option>
+                  <option value="target">target → profile</option>
+                </select>
+              </label>
+              <label>Corrected to
+                <input type="text" id="mem-add-value" placeholder="block id / target profile" />
+              </label>
+            </div>
+            <label>When I say (gist)
+              <input type="text" id="mem-add-text" placeholder="utterance this correction applies to" />
+            </label>
+            <div class="actions">
+              <button class="btn primary" id="mem-add-btn" type="submit">Remember this</button>
+            </div>
+            <div id="mem-add-msg"></div>
+          </form>
+
+          <div id="mem-list" class="mem-list"></div>
+        </section>
+
+        <!-- ===== Pipeline depth (this session) ===== -->
+        <section class="panel">
+          <header class="panel-header">
+            <h3>Pipeline depth · this session</h3>
+            <button id="mem-btn-refresh" class="btn" type="button">Refresh</button>
+          </header>
+          <div id="mem-depth" class="mem-depth"></div>
+          <p class="rt-counter-note">
+            Latency telemetry is in-memory and resets on every
+            <code>holdspeak</code> restart. Run a few
+            <strong>dry-runs</strong> (or dictate) to populate it.
           </p>
         </section>
       </div>
@@ -878,6 +1009,421 @@ import CommandPreview from "../components/CommandPreview.astro";
     color: var(--text-muted);
     font-size: var(--font-size-xs);
     margin-top: var(--space-3);
+  }
+
+  /* ===== Copilot depth (HS-40-03) ===== */
+  .depth-group {
+    margin: var(--space-3) 0 0;
+    padding: var(--space-4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-3);
+    background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
+    box-shadow: var(--elev-1);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .depth-legend {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .depth-legend-title {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .depth-legend-title::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .depth-legend-sub {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+  }
+  .depth-knob {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .depth-knob--group {
+    gap: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-subtle);
+  }
+  .depth-knob-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+  .depth-knob-title {
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text);
+  }
+  .depth-knob-badge {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-pill);
+    padding: 1px var(--space-2);
+    min-width: 2.4em;
+    text-align: center;
+  }
+  .depth-knob-hint {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+    margin: 0;
+  }
+  .depth-knob-desc {
+    color: var(--text);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-mono);
+    margin: 0;
+  }
+
+  /* Segmented control (rewrite passes) */
+  .seg {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--space-1);
+    padding: var(--space-1);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+  }
+  .seg-btn {
+    appearance: none;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    padding: var(--space-2) 0;
+    border-radius: var(--radius-1);
+    cursor: pointer;
+    transition: background var(--duration-short) var(--ease-standard),
+      color var(--duration-short) var(--ease-standard),
+      border-color var(--duration-short) var(--ease-standard);
+  }
+  .seg-btn:hover:not([aria-pressed="true"]) {
+    color: var(--text);
+    background: var(--canvas-raised);
+  }
+  .seg-btn[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-on);
+    box-shadow: var(--elev-1);
+  }
+  .seg-btn:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  /* Toggle switch */
+  .depth-switch {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    cursor: pointer;
+  }
+  .depth-switch-text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .switch {
+    position: relative;
+    flex: 0 0 auto;
+    margin-top: 2px;
+  }
+  .switch input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+  }
+  .switch-track {
+    display: block;
+    width: 40px;
+    height: 22px;
+    border-radius: var(--radius-pill);
+    background: var(--canvas);
+    border: 1px solid var(--line-strong);
+    transition: background var(--duration-short) var(--ease-standard),
+      border-color var(--duration-short) var(--ease-standard);
+  }
+  .switch-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-pill);
+    background: var(--text-muted);
+    transition: transform var(--duration-short) var(--ease-emphasized),
+      background var(--duration-short) var(--ease-standard);
+  }
+  .switch input:checked + .switch-track {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .switch input:checked + .switch-track .switch-knob {
+    transform: translateX(18px);
+    background: var(--accent-on);
+  }
+  .switch input:focus-visible + .switch-track {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .depth-subknob {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-radius: var(--radius-2);
+    background: var(--canvas);
+    border: 1px solid var(--border-subtle);
+    animation: depth-reveal var(--duration-medium) var(--ease-decelerate);
+  }
+  .depth-subknob[hidden] {
+    display: none;
+  }
+  @keyframes depth-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* ===== Memory + telemetry (HS-40-04) ===== */
+  .mem-toggle {
+    padding: var(--space-3);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-2);
+    background: var(--canvas);
+  }
+  .mem-add {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-2);
+  }
+  .mem-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .mem-empty {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    text-align: center;
+    padding: var(--space-5) var(--space-3);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-2);
+  }
+  .mem-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-2);
+    background: var(--surface-2);
+    box-shadow: var(--elev-1);
+    animation: depth-reveal var(--duration-short) var(--ease-decelerate);
+  }
+  .mem-item.kind-target {
+    border-left-color: var(--success);
+  }
+  .mem-item-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .mem-kind {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    color: var(--accent);
+  }
+  .mem-item.kind-target .mem-kind {
+    color: var(--success);
+  }
+  .mem-gist {
+    color: var(--text);
+    font-size: var(--font-size-sm);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mem-arrow {
+    color: var(--text-muted);
+  }
+  .mem-value {
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+  }
+  .mem-when {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+  .mem-del {
+    appearance: none;
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-1);
+    border: 1px solid var(--line);
+    background: var(--canvas-raised);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: var(--font-size-md);
+    line-height: 1;
+    transition: color var(--duration-short) var(--ease-standard),
+      border-color var(--duration-short) var(--ease-standard);
+  }
+  .mem-del:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+  }
+  .mem-del:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  /* Depth telemetry */
+  .mem-depth {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .depth-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .depth-stat {
+    flex: 1;
+    min-width: 5rem;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-2);
+    background: var(--canvas);
+  }
+  .depth-stat-num {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--text);
+  }
+  .depth-stat-label {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow);
+  }
+  .depth-stage {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .depth-stage-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+  .depth-stage-name {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    color: var(--text);
+  }
+  .depth-stage-nums {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+  }
+  .depth-track {
+    position: relative;
+    height: 8px;
+    border-radius: var(--radius-pill);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .depth-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    transition: width var(--duration-medium) var(--ease-decelerate);
+  }
+  .depth-fill.warn {
+    background: var(--danger);
+  }
+  .depth-guidance {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-2);
+    background: var(--danger-soft);
+    color: var(--danger);
+    font-size: var(--font-size-xs);
+  }
+  .depth-passes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+  .depth-pass-chip {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    padding: 1px var(--space-2);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--line);
+    background: var(--canvas);
+    color: var(--text-muted);
   }
 
   code {

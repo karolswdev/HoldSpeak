@@ -9,16 +9,18 @@ with the live status docs, the status docs win.
 
 ## 1. TL;DR — where things stand
 
-- **LATEST (2026-06-05): Phases 33–39 shipped since this doc was first written.**
+- **LATEST (2026-06-05): Phases 33–40 shipped since this doc was first written.**
   The bullets below are the Phase-31/32 era and are kept for history; for the
   current phase index + status, the roadmap **`README.md`** is the source of
-  truth. Most recent: **Phase 39 — Dictation Copilot Depth: CLOSED ✅ (9/9)** —
-  an opt-in, observable, self-improving dictation copilot (multi-pass rewriting ·
-  session correction memory · model-assisted target detection · suggestion
-  quality gate · depth telemetry), proven live against `.43`, with a public
-  showcase doc (`docs/DICTATION_COPILOT.md`). Branch
-  `phase-39/hs-39-01-multi-pass-rewriting` — push + open a PR to `main`. Suite
-  **2186 passed, 16 skipped**.
+  truth. Most recent: **Phase 40 — Configuration Cockpit & Persistent Memory:
+  CLOSED ✅ (6/6)** — the whole dictation copilot is now configurable + curatable
+  from the Web UI: every Phase-39 knob is a slider/toggle in `/dictation →
+  Runtime → Copilot depth`, correction memory is **DB-backed and survives a
+  restart**, and a **Memory** tab curates it + renders depth telemetry. Proven by
+  a UI-only dogfood across a restart. Branch
+  `phase-40/hs-40-01-settings-api-knobs` — push + open a PR to `main`. Suite
+  **2221 passed, 16 skipped**. (Prior: **Phase 39 — Dictation Copilot Depth:
+  CLOSED ✅ (9/9)** — the opt-in, self-improving copilot, merged via PR #16.)
 - **Phase 31 (db decomposition): MERGED** to `main` (was PR #7). `holdspeak/db.py`
   (5,481-line god-object) → the `holdspeak/db/` package: a thin `Database`
   container + 5 repositories, migration ladder squashed to one canonical schema.

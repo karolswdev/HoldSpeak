@@ -36,6 +36,8 @@ index idx_artifacts_type: CREATE INDEX idx_artifacts_type ON artifacts(artifact_
 index idx_bookmarks_meeting: CREATE INDEX idx_bookmarks_meeting ON bookmarks(meeting_id)
 index idx_connector_runs_connector_started: CREATE INDEX idx_connector_runs_connector_started
 ON connector_runs(connector_id, started_at DESC)
+index idx_dictation_corrections_recent: CREATE INDEX idx_dictation_corrections_recent
+ON dictation_corrections(created_at DESC, id DESC)
 index idx_intel_job_attempts_meeting: CREATE INDEX idx_intel_job_attempts_meeting ON intel_job_attempts(meeting_id, created_at DESC)
 index idx_intel_jobs_status: CREATE INDEX idx_intel_jobs_status ON intel_jobs(status, requested_at)
 index idx_intent_window_scores_meeting: CREATE INDEX idx_intent_window_scores_meeting ON intent_window_scores(meeting_id, window_id)
@@ -231,6 +233,13 @@ table connector_runs: CREATE TABLE connector_runs (
     annotation_count INTEGER NOT NULL DEFAULT 0,
     candidate_count INTEGER NOT NULL DEFAULT 0,
     command_count INTEGER NOT NULL DEFAULT 0
+)
+table dictation_corrections: CREATE TABLE dictation_corrections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind TEXT NOT NULL,
+    gist TEXT NOT NULL,
+    value TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
 )
 table intel_job_attempts: CREATE TABLE intel_job_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -120,7 +120,7 @@ so the task still landed in the right block.
 | # | Feature | What happened above | Turn it on with |
 |---|---------|---------------------|-----------------|
 | ① | **Multi-pass rewriting** | Drafted, then critiqued + tightened in a second pass (latency-budget-gated). | `rewrite_passes: 2` |
-| ② | **Correction memory** | A correction you made last session (`this kind of utterance → agent_task_buildout`) nudged routing. The LLM classifier actually *failed* on this turn — the correction **rescued** it. Session-scoped, in-memory, never persisted. | `corrections_enabled: true` |
+| ② | **Correction memory** | A correction you made last session (`this kind of utterance → agent_task_buildout`) nudged routing. The LLM classifier actually *failed* on this turn — the correction **rescued** it. **Persists across restarts** (DB-backed); curate it in `/dictation → Memory`. | `corrections_enabled: true` |
 | ③ | **Model-assisted target** | No window signal was available (the Wayland/terminal reality). The heuristic gave `unknown@0.00`; below the threshold, the LLM **inferred** `claude_code` from your words. A manual override always wins. | `target_detect_llm_enabled: true` |
 | ④ | **KB injection** | The matched block injected the project's stack / invariants / definition-of-done before the rewrite. | add a block with an `inject` template |
 
@@ -129,6 +129,30 @@ unreachable degrades to your plain transcript. The pipeline never makes your
 text un-typeable.
 
 ## Turn it on
+
+**Do it all in the web UI — no file editing.** Open the cockpit and flip the
+toggles:
+
+```
+/dictation -> Runtime         # pick a backend + endpoint, enable the pipeline
+/dictation -> Runtime -> Copilot depth   # rewrite passes, corrections, model-assist
+/dictation -> Memory          # see + curate what the copilot has learned
+```
+
+![The Copilot depth card — segmented rewrite passes, correction-memory and
+model-assist toggles, and a confidence threshold.](assets/cockpit/copilot-depth.png)
+
+Every feature above (①–④) is a slider or toggle in **Runtime → Copilot depth**;
+the round-trip persists through the settings API. See the
+[Intelligent Typing Setup guide](./INTELLIGENT_TYPING_GUIDE.md) for the full
+walk-through.
+
+Then add a project's [`.hs/` context](./INTELLIGENT_TYPING_GUIDE.md) (and,
+optionally, a `.holdspeak/blocks.yaml` taxonomy + `.holdspeak/project.yaml` KB)
+so the rewrite has facts to ground in.
+
+<details>
+<summary><strong>Advanced: the same config in <code>config.json</code></strong> (headless / scripted)</summary>
 
 Add a `dictation` block to `~/.config/holdspeak/config.json` (point the runtime
 at any local or LAN [OpenAI-compatible / GGUF / MLX endpoint](./MODELS.md)):
@@ -153,9 +177,7 @@ at any local or LAN [OpenAI-compatible / GGUF / MLX endpoint](./MODELS.md)):
 }
 ```
 
-Then add a project's [`.hs/` context](./INTELLIGENT_TYPING_GUIDE.md) (and,
-optionally, a `.holdspeak/blocks.yaml` taxonomy + `.holdspeak/project.yaml` KB)
-so the rewrite has facts to ground in.
+</details>
 
 ## Run the demo yourself
 

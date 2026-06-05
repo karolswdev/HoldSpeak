@@ -1,9 +1,19 @@
-"""HS-39-02: session correction-memory store tests."""
+"""HS-39-02: session correction-memory store tests.
+
+HS-40-02 adds the optional-persistence cases (load-on-construct, write-through,
+survive-a-restart, no-repo-byte-identical).
+"""
 
 from __future__ import annotations
 
+import shutil
+import tempfile
 import threading
+from pathlib import Path
 
+import pytest
+
+from holdspeak.db import Database, reset_database
 from holdspeak.plugins.dictation.corrections import (
     CorrectionStore,
     best_match_in,
@@ -90,3 +100,112 @@ def test_thread_safe_concurrent_records():
         t.join()
 
     assert len(store) == 800  # 8 workers * 100, no lost updates / corruption
+
+
+# ── HS-40-02: optional persistence ────────────────────────────────────
+
+
+@pytest.fixture
+def repo():
+    temp_dir = Path(tempfile.mkdtemp())
+    reset_database()
+    database = Database(temp_dir / "store.db")
+    yield database.dictation_corrections
+    reset_database()
+    shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+def test_record_writes_through_to_repository(repo):
+    store = CorrectionStore(repository=repo)
+    assert store.record("intent", "fix the cli thing", "code_exercise") is True
+    # In-memory ring updated…
+    assert len(store) == 1
+    # …and the durable repository persisted it.
+    persisted = repo.recent_corrections()
+    assert len(persisted) == 1
+    assert persisted[0].kind == "intent"
+    assert persisted[0].gist == "fix the cli thing"
+    assert persisted[0].value == "code_exercise"
+
+
+def test_secret_and_invalid_are_not_persisted(repo):
+    store = CorrectionStore(repository=repo)
+    assert store.record("intent", "my key is sk-abcdef0123456789abcd", "code_exercise") is False
+    assert store.record("bogus", "text", "value") is False
+    assert len(store) == 0
+    assert repo.recent_corrections() == []
+
+
+def test_store_loads_recent_on_construction(repo):
+    repo.record_correction(kind="intent", gist="seeded utterance", value="code_exercise")
+    repo.record_correction(kind="target", gist="route this", value="codex_cli")
+    store = CorrectionStore(repository=repo)
+    assert len(store) == 2
+    # Newest-first, and the gist round-tripped as `Correction.key`.
+    keys = [c.key for c in store.recent()]
+    assert "seeded utterance" in keys and "route this" in keys
+
+
+def test_survives_a_simulated_restart(repo):
+    """A fresh store over the same repo sees corrections the old store made."""
+    old = CorrectionStore(repository=repo)
+    old.record("intent", "remember the cli fix", "code_exercise")
+    # Simulate a process restart: a brand-new store, same durable repo.
+    restarted = CorrectionStore(repository=repo)
+    assert len(restarted) == 1
+    match = best_match_in(restarted.snapshot(), "intent", "remember the cli fix", min_similarity=0.5)
+    assert match is not None
+    assert match.value == "code_exercise"
+
+
+def test_load_respects_cap_newest_first(repo):
+    for i in range(5):
+        repo.record_correction(kind="intent", gist=f"utterance number {i}", value=f"block_{i}")
+    store = CorrectionStore(cap=3, repository=repo)
+    assert len(store) == 3
+    values = [c.value for c in store.recent("intent")]  # newest-first
+    assert values == ["block_4", "block_3", "block_2"]
+
+
+def test_list_for_display_carries_id_with_repo(repo):
+    store = CorrectionStore(repository=repo)
+    store.record("intent", "fix the cli thing", "code_exercise")
+    rows = store.list_for_display()
+    assert len(rows) == 1
+    assert rows[0]["id"] >= 1
+    assert rows[0]["key"] == "fix the cli thing"
+    assert "created_at" in rows[0]
+
+
+def test_list_for_display_no_repo_has_no_id():
+    store = CorrectionStore()
+    store.record("intent", "fix the cli thing", "code_exercise")
+    rows = store.list_for_display()
+    assert rows and "id" not in rows[0]
+    assert rows[0]["key"] == "fix the cli thing"
+
+
+def test_remove_deletes_from_ring_and_repo(repo):
+    store = CorrectionStore(repository=repo)
+    store.record("intent", "first one", "code_exercise")
+    store.record("target", "second one", "codex_cli")
+    target_id = store.list_for_display()[-1]["id"]  # oldest = "first one"
+    assert store.remove(target_id) is True
+    assert len(store) == 1
+    assert all(c.key != "first one" for c in store.recent())
+    assert repo.recent_corrections() and len(repo.recent_corrections()) == 1
+
+
+def test_remove_without_repo_is_noop():
+    store = CorrectionStore()
+    store.record("intent", "x marks", "code_exercise")
+    assert store.remove(1) is False
+    assert len(store) == 1
+
+
+def test_clear_empties_ring_and_repo(repo):
+    store = CorrectionStore(repository=repo)
+    store.record("intent", "remember me", "code_exercise")
+    store.clear()
+    assert len(store) == 0
+    assert repo.recent_corrections() == []

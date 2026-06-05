@@ -382,13 +382,29 @@ const hsState = {
 
 function activateSection(name) {
   state.activeSection = name;
-  document.getElementById("view-readiness").style.display = name === "readiness" ? "" : "none";
-  document.getElementById("view-blocks").style.display = name === "blocks" ? "" : "none";
-  document.getElementById("view-kb").style.display = name === "kb" ? "" : "none";
-  document.getElementById("view-hs").style.display = name === "hs" ? "" : "none";
-  document.getElementById("view-hooks").style.display = name === "hooks" ? "" : "none";
-  document.getElementById("view-runtime").style.display = name === "runtime" ? "" : "none";
-  document.getElementById("view-dry-run").style.display = name === "dry-run" ? "" : "none";
+  // HS-40-03: each `.view` carries the `hidden` attribute in markup, and
+  // `.view[hidden] { display: none }` outranks the base `.view { display: flex }`
+  // rule — so clearing the inline display alone leaves a switched-to tab blank
+  // (a pre-existing bug: every non-default tab rendered empty). Drive `hidden`
+  // itself: clear it on the active view (base rule shows it), set it on the
+  // rest. This is what makes runtime / readiness / KB / … actually render.
+  const views = {
+    readiness: "view-readiness",
+    blocks: "view-blocks",
+    kb: "view-kb",
+    hs: "view-hs",
+    hooks: "view-hooks",
+    runtime: "view-runtime",
+    memory: "view-memory",
+    "dry-run": "view-dry-run",
+  };
+  for (const [key, id] of Object.entries(views)) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    const active = key === name;
+    el.hidden = !active;
+    el.style.display = active ? "" : "none";
+  }
   document.querySelectorAll('.scope-row button[data-section]').forEach((b) =>
     b.classList.toggle("active", b.dataset.section === name)
   );
@@ -397,6 +413,7 @@ function activateSection(name) {
   if (name === "hs") loadHSContext();
   if (name === "hooks") loadAgentHooks();
   if (name === "runtime") loadRuntime();
+  if (name === "memory") loadMemory();
 }
 
 // ── Readiness snapshot ──────────────────────────────────────────────
@@ -957,11 +974,15 @@ function renderRuntime(data, readiness = null) {
   const runtime = dictation.runtime || {};
   const status = data._runtime_status || { counters: {}, session: {} };
 
+  const passes = Number(pipeline.rewrite_passes ?? 1);
   document.getElementById("rt-meta-banner").innerHTML =
     `pipeline: <strong>${pipeline.enabled ? "enabled" : "disabled"}</strong>  ·  ` +
     `target: <strong>${escapeHtml(pipeline.target_profile_override || "auto")}</strong>  ·  ` +
     `backend: <strong>${escapeHtml(runtime.backend || "auto")}</strong>  ·  ` +
-    `cold-start cap: <strong>${(pipeline.max_total_latency_ms || 0) * 5} ms</strong>`;
+    `cold-start cap: <strong>${(pipeline.max_total_latency_ms || 0) * 5} ms</strong>  ·  ` +
+    `depth: <strong>${passes}× pass${passes === 1 ? "" : "es"}</strong>` +
+    `${pipeline.corrections_enabled ? " · <strong>learns</strong>" : ""}` +
+    `${pipeline.target_detect_llm_enabled ? " · <strong>infers target</strong>" : ""}`;
 
   document.getElementById("rt-enabled").checked = !!pipeline.enabled;
   document.getElementById("rt-stage-rewriter").checked =
@@ -979,6 +1000,16 @@ function renderRuntime(data, readiness = null) {
   slider.value = pipeline.max_total_latency_ms || 600;
   slider.oninput = updateLatencyVis;
   updateLatencyVis();
+
+  // ── Copilot depth (HS-40-03) ──
+  setRewritePasses(passes);
+  document.getElementById("rt-corrections-enabled").checked = !!pipeline.corrections_enabled;
+  document.getElementById("rt-target-detect-llm-enabled").checked = !!pipeline.target_detect_llm_enabled;
+  const below = document.getElementById("rt-target-detect-llm-below");
+  below.value = pipeline.target_detect_llm_below ?? 0.8;
+  below.oninput = updateTargetBelowVis;
+  updateTargetBelowVis();
+  updateTargetDetectReveal();
 
   // Counters
   const counters = status.counters || {};
@@ -1011,9 +1042,57 @@ function updateLatencyVis() {
     `${v} ms  ·  cold-start cap: ${v * 5} ms (DIR-R-003)`;
 }
 
+// ── Copilot depth controls (HS-40-03) ──
+const REWRITE_PASS_DESC = {
+  1: "Single pass — fastest; byte-identical to a plain rewrite.",
+  2: "Two passes — one critique-and-refine after the draft.",
+  3: "Three passes — balanced refinement (recommended for project work).",
+  4: "Four passes — deeper polish; watch the latency budget.",
+  5: "Five passes — maximum refinement; most latency-budget gating.",
+};
+
+function setRewritePasses(n) {
+  const passes = Math.min(5, Math.max(1, Math.round(Number(n) || 1)));
+  document.getElementById("rt-rewrite-passes").value = String(passes);
+  document.getElementById("rt-rewrite-badge").textContent = `${passes}×`;
+  document.getElementById("rt-rewrite-desc").textContent =
+    REWRITE_PASS_DESC[passes] || "";
+  document.querySelectorAll("#rt-rewrite-seg .seg-btn").forEach((btn) =>
+    btn.setAttribute(
+      "aria-pressed",
+      btn.dataset.value === String(passes) ? "true" : "false"
+    )
+  );
+}
+
+function updateTargetBelowVis() {
+  const v = Number(document.getElementById("rt-target-detect-llm-below").value);
+  document.getElementById("rt-target-below-val").textContent = v.toFixed(2);
+}
+
+function updateTargetDetectReveal() {
+  const on = document.getElementById("rt-target-detect-llm-enabled").checked;
+  document.getElementById("rt-target-below-wrap").hidden = !on;
+}
+
 async function saveRuntime(options = {}) {
   const msg = document.getElementById("rt-msg");
   msg.innerHTML = "";
+
+  // Inline validation mirroring the API bounds (HS-40-01) so out-of-range is
+  // caught before submit. The segmented control + 0–1 slider already constrain
+  // input, but guard anyway for keyboard/programmatic edits.
+  const rewritePasses = Number(document.getElementById("rt-rewrite-passes").value);
+  const targetBelow = Number(document.getElementById("rt-target-detect-llm-below").value);
+  if (!Number.isInteger(rewritePasses) || rewritePasses < 1 || rewritePasses > 5) {
+    msg.innerHTML = `<div class="error-box">Rewrite passes must be a whole number between 1 and 5.</div>`;
+    return;
+  }
+  if (!(targetBelow >= 0 && targetBelow <= 1)) {
+    msg.innerHTML = `<div class="error-box">Infer-target threshold must be between 0.00 and 1.00.</div>`;
+    return;
+  }
+
   const payload = {
     dictation: {
       pipeline: {
@@ -1025,6 +1104,10 @@ async function saveRuntime(options = {}) {
         ],
         max_total_latency_ms: Number(document.getElementById("rt-latency").value),
         target_profile_override: document.getElementById("rt-target-profile").value,
+        rewrite_passes: rewritePasses,
+        corrections_enabled: document.getElementById("rt-corrections-enabled").checked,
+        target_detect_llm_enabled: document.getElementById("rt-target-detect-llm-enabled").checked,
+        target_detect_llm_below: targetBelow,
       },
       runtime: {
         backend: document.getElementById("rt-backend").value,
@@ -1047,11 +1130,206 @@ async function saveRuntime(options = {}) {
   }
 }
 
+async function saveRuntimeAndTest() {
+  // Save the cockpit config, then jump to the dry-run so the user can try the
+  // exact config they just set (HS-40-03 "test this config" affordance).
+  await saveRuntime({ message: "Saved — opening dry-run so you can test this config." });
+  const errored = document.querySelector("#rt-msg .error-box");
+  if (!errored) activateSection("dry-run");
+}
+
 async function enablePipelineFromReadiness() {
   activateSection("runtime");
   await loadRuntime();
   document.getElementById("rt-enabled").checked = true;
   await saveRuntime({ message: "Enabled. New utterances pick up the config on next pipeline rebuild." });
+}
+
+// ── Memory + telemetry (HS-40-04) ───────────────────────────────────
+async function loadMemory() {
+  const banner = document.getElementById("mem-meta-banner");
+  banner.classList.remove("warn", "error");
+  banner.textContent = "Loading…";
+  try {
+    const corrections = await api("GET", "/api/dictation/corrections");
+    renderMemoryCorrections(corrections);
+    let readiness = null;
+    try {
+      readiness = await api("GET", `/api/dictation/readiness${projectRootParam("?")}`);
+    } catch (_) {
+      readiness = null;
+    }
+    renderMemoryDepth(readiness?.depth || null);
+    const learned = corrections.size || 0;
+    banner.innerHTML =
+      `learning: <strong>${corrections.enabled ? "on" : "off"}</strong>  ·  ` +
+      `remembered: <strong>${learned}</strong>  ·  ` +
+      `depth runs this session: <strong>${(readiness?.depth?.runs) ?? 0}</strong>`;
+  } catch (e) {
+    banner.classList.add("error");
+    banner.textContent = e.message;
+  }
+}
+
+function renderMemoryCorrections(data) {
+  const toggle = document.getElementById("mem-corrections-enabled");
+  toggle.checked = !!data.enabled;
+  document.getElementById("mem-enabled-hint").textContent = data.enabled
+    ? "On — similar utterances are nudged toward what you corrected."
+    : "Off — corrections are remembered but not used while routing.";
+
+  const list = document.getElementById("mem-list");
+  const items = Array.isArray(data.items) ? data.items : [];
+  if (!items.length) {
+    list.innerHTML =
+      `<div class="mem-empty">Nothing learned yet. Correct a route from the live runtime, or add one above — it persists across restarts.</div>`;
+    return;
+  }
+  list.innerHTML = items
+    .map((it) => {
+      const target = it.kind === "target";
+      const when = it.created_at ? `<span class="mem-when">${escapeHtml(relativeTime(it.created_at))}</span>` : "";
+      const del = it.id != null
+        ? `<button class="mem-del" type="button" data-id="${escapeAttr(String(it.id))}" title="Forget this" aria-label="Forget this correction">×</button>`
+        : "";
+      return `<div class="mem-item ${target ? "kind-target" : "kind-intent"}">
+        <div class="mem-item-body">
+          <span class="mem-kind">${target ? "target → profile" : "intent → block"}</span>
+          <span class="mem-gist" title="${escapeAttr(it.key || "")}">${escapeHtml(it.key || "")}</span>
+        </div>
+        <span class="mem-arrow">→</span>
+        <span class="mem-value">${escapeHtml(it.value || "")}</span>
+        ${when}
+        ${del}
+      </div>`;
+    })
+    .join("");
+  list.querySelectorAll(".mem-del").forEach((btn) =>
+    btn.addEventListener("click", () => deleteCorrection(btn.dataset.id))
+  );
+}
+
+function renderMemoryDepth(depth) {
+  const host = document.getElementById("mem-depth");
+  if (!depth || !depth.runs) {
+    host.innerHTML =
+      `<div class="mem-empty">No pipeline runs recorded this session yet. Run a few dry-runs (or dictate) to see per-stage timings.</div>`;
+    return;
+  }
+  const budget = Number(depth.budget_ms) || 0;
+  const stages = depth.stages || {};
+  const stageRows = Object.keys(stages)
+    .map((sid) => {
+      const q = stages[sid] || {};
+      const p50 = Number(q.p50) || 0;
+      const p95 = Number(q.p95) || 0;
+      const pct = budget > 0 ? Math.min(100, Math.round((p95 / budget) * 100)) : 0;
+      const warn = budget > 0 && p95 >= budget * 0.66;
+      return `<div class="depth-stage">
+        <div class="depth-stage-head">
+          <span class="depth-stage-name">${escapeHtml(sid)}</span>
+          <span class="depth-stage-nums">p50 ${p50.toFixed(0)}ms · p95 ${p95.toFixed(0)}ms${
+            q.count != null ? ` · n=${q.count}` : ""
+          }</span>
+        </div>
+        <div class="depth-track" title="p95 is ${pct}% of the ${budget || "—"}ms budget">
+          <span class="depth-fill ${warn ? "warn" : ""}" style="width:${pct}%"></span>
+        </div>
+      </div>`;
+    })
+    .join("");
+
+  const guidance = (depth.guidance || [])
+    .map((g) => `<div class="depth-guidance">⚠ ${escapeHtml(g.message || "")}</div>`)
+    .join("");
+
+  const passes = Array.isArray(depth.rewrite_pass_ms) ? depth.rewrite_pass_ms : [];
+  const passChips = passes.length
+    ? `<div class="depth-passes">${passes
+        .map((ms, i) => `<span class="depth-pass-chip">pass ${i + 1}: ${Number(ms).toFixed(0)}ms</span>`)
+        .join("")}</div>`
+    : "";
+
+  const corr = depth.corrections || {};
+  host.innerHTML = `
+    <div class="depth-summary">
+      <div class="depth-stat"><div class="depth-stat-num">${depth.runs}</div><div class="depth-stat-label">runs</div></div>
+      <div class="depth-stat"><div class="depth-stat-num">${budget || "—"}</div><div class="depth-stat-label">budget ms</div></div>
+      <div class="depth-stat"><div class="depth-stat-num">${corr.size ?? 0}</div><div class="depth-stat-label">corrections</div></div>
+    </div>
+    ${stageRows}
+    ${passChips ? `<div><div class="depth-stat-label">last multi-pass rewrite</div>${passChips}</div>` : ""}
+    ${guidance}
+  `;
+}
+
+async function addCorrection(ev) {
+  if (ev) ev.preventDefault();
+  const msg = document.getElementById("mem-add-msg");
+  msg.innerHTML = "";
+  const kind = document.getElementById("mem-add-kind").value;
+  const text = document.getElementById("mem-add-text").value.trim();
+  const value = document.getElementById("mem-add-value").value.trim();
+  if (!text || !value) {
+    msg.innerHTML = `<div class="error-box">Both the gist and the corrected value are required.</div>`;
+    return;
+  }
+  try {
+    const res = await api("POST", "/api/dictation/corrections", { kind, text, value });
+    if (!res.recorded) {
+      msg.innerHTML = `<div class="error-box">Not stored — it looked secret-like or invalid (corrections are gist-only).</div>`;
+      return;
+    }
+    document.getElementById("mem-add-text").value = "";
+    document.getElementById("mem-add-value").value = "";
+    await loadMemory();
+  } catch (e) {
+    msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function deleteCorrection(id) {
+  try {
+    await api("DELETE", `/api/dictation/corrections/${encodeURIComponent(id)}`);
+    await loadMemory();
+  } catch (e) {
+    document.getElementById("mem-meta-banner").textContent = e.message;
+  }
+}
+
+async function clearAllCorrections() {
+  if (!confirm("Forget everything the copilot has learned? This can't be undone.")) return;
+  try {
+    await api("DELETE", "/api/dictation/corrections");
+    await loadMemory();
+  } catch (e) {
+    document.getElementById("mem-meta-banner").textContent = e.message;
+  }
+}
+
+async function toggleCorrectionsEnabled() {
+  const enabled = document.getElementById("mem-corrections-enabled").checked;
+  try {
+    await api("PUT", "/api/settings", {
+      dictation: { pipeline: { corrections_enabled: enabled } },
+    });
+    await loadMemory();
+  } catch (e) {
+    document.getElementById("mem-meta-banner").textContent = e.message;
+    await loadMemory();
+  }
+}
+
+function relativeTime(iso) {
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return "";
+  const secs = Math.max(0, Math.round((Date.now() - then) / 1000));
+  if (secs < 60) return "just now";
+  const mins = Math.round(secs / 60);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.round(hrs / 24)}d ago`;
 }
 
 // ── Dry-run preview ────────────────────────────────────────────────
@@ -1515,11 +1793,27 @@ document.getElementById("hs-btn-reset").addEventListener("click", resetHSContext
 document.getElementById("hs-suggestion-apply").addEventListener("click", applyProjectDocSuggestion);
 document.getElementById("hs-suggestion-dismiss").addEventListener("click", dismissProjectDocSuggestion);
 document.getElementById("rt-btn-save").addEventListener("click", saveRuntime);
+document.getElementById("rt-btn-test").addEventListener("click", saveRuntimeAndTest);
 document.getElementById("rt-btn-reset").addEventListener("click", () => rtState.last && renderRuntime(rtState.last));
 document.getElementById("rt-btn-refresh").addEventListener("click", loadRuntime);
 document.getElementById("rt-target-auto").addEventListener("click", () => {
   document.getElementById("rt-target-profile").value = "auto";
 });
+// Copilot depth controls (HS-40-03): segmented rewrite-passes + the
+// reveal-on-toggle threshold.
+document.querySelectorAll("#rt-rewrite-seg .seg-btn").forEach((btn) =>
+  btn.addEventListener("click", () => setRewritePasses(btn.dataset.value))
+);
+document
+  .getElementById("rt-target-detect-llm-enabled")
+  .addEventListener("change", updateTargetDetectReveal);
+// Memory + telemetry (HS-40-04).
+document.getElementById("mem-add-form").addEventListener("submit", addCorrection);
+document.getElementById("mem-btn-clear").addEventListener("click", clearAllCorrections);
+document.getElementById("mem-btn-refresh").addEventListener("click", loadMemory);
+document
+  .getElementById("mem-corrections-enabled")
+  .addEventListener("change", toggleCorrectionsEnabled);
 document.getElementById("dry-btn-run").addEventListener("click", runDryRun);
 document.getElementById("dry-btn-clear").addEventListener("click", clearDryRun);
 document.getElementById("project-root-apply").addEventListener("click", applyProjectRootOverride);

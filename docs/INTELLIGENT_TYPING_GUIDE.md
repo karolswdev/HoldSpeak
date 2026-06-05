@@ -334,14 +334,87 @@ under:
 These knobs make the copilot deeper and self-improving. **Every one is opt-in
 and off by default** — with them off, behavior is identical to the basic
 pipeline. See [The Dictation Copilot](./DICTATION_COPILOT.md) for a live demo of
-all of them firing at once. All knobs live under `dictation.pipeline`:
+all of them firing at once.
 
-| Knob | Default | What it does |
-| --- | --- | --- |
-| `rewrite_passes` | `1` | Number of project-rewriter passes (draft → critique → refine). `1` is single-pass. Range `1–5`. Extra passes are skipped if they would breach `max_total_latency_ms`. |
-| `corrections_enabled` | `false` | Consult the session **correction memory** when routing: a correction you made earlier nudges a similar later utterance. |
-| `target_detect_llm_enabled` | `false` | When window/app detection is unsure, ask the LLM to infer the **target profile** from your words. A manual override always wins. |
-| `target_detect_llm_below` | `0.8` | The heuristic-confidence threshold below which the LLM fallback fires. |
+### Set it in the UI — no file editing
+
+```
+/dictation -> Runtime -> Copilot depth
+```
+
+Everything below is a slider or a toggle in the **Copilot depth** card. There is
+no need to touch `config.json` — set it here and it round-trips through the
+settings API.
+
+![The Copilot depth card: a segmented rewrite-passes control, toggles for
+correction memory and model-assisted target detection, and a reveal-on-toggle
+confidence threshold.](assets/cockpit/copilot-depth.png)
+
+| Control (Runtime → Copilot depth) | Knob (`dictation.pipeline`) | Default | What it does |
+| --- | --- | --- | --- |
+| **Rewrite passes** (segmented 1–5) | `rewrite_passes` | `1` | Project-rewriter passes (draft → critique → refine). `1` is single-pass. Extra passes are skipped if they would breach `max_total_latency_ms`. |
+| **Learn from my corrections** (toggle) | `corrections_enabled` | `false` | Consult the **correction memory** when routing: a correction you made earlier nudges a similar later utterance. |
+| **Infer the target when unsure** (toggle) | `target_detect_llm_enabled` | `false` | When window/app detection is unsure, ask the LLM to infer the **target profile** from your words. A manual override always wins. |
+| **Ask the model below confidence** (slider) | `target_detect_llm_below` | `0.8` | The heuristic-confidence threshold below which the LLM fallback fires. |
+
+The **"Save & test in dry-run"** button saves the config and jumps straight to
+the dry-run so you can try the exact settings you just chose.
+
+**Multi-pass rewriting.** With `rewrite_passes > 1`, the project-rewriter drafts,
+then critiques and tightens its own draft. A failed or over-budget refine pass
+falls open to the best draft so far, so enabling it never makes output worse
+than single-pass.
+
+**Correction memory.** When a correction is recorded (from the live runtime, or
+added by hand in the Memory tab), a later similar utterance is nudged toward it.
+The memory is **DB-backed and persists across restarts** — corrections you make
+survive a relaunch (a bounded in-memory ring stays the fast nudge path; the
+SQLite store is durability). Corrections are gist-only: gists are truncated and
+secret-looking text is rejected before anything is stored. Curate it in the UI:
+
+```
+/dictation -> Memory
+```
+
+![The Memory tab: "What the copilot has learned" lists the persistent
+corrections with remove buttons and an add form; "Pipeline depth · this session"
+renders per-stage p50/p95 bars, budget guidance, and the multi-pass
+timings.](assets/cockpit/memory-panel.png)
+
+The **What the copilot has learned** panel lists every persistent correction
+(kind · gist · → corrected value · when) with a remove (`×`) on each, an **add**
+form, a **Forget all** button, and the `corrections_enabled` toggle in context.
+
+**Model-assisted target detection.** On Wayland/terminal setups where the active
+window can't be read, the heuristic returns low confidence; with the fallback on,
+the LLM infers the target (`claude_code`, `codex_cli`, `browser`, …) from the
+utterance. A manual **Target profile override** still wins over both.
+
+**Suggestion quality gate.** The project-doc suggestion path no longer
+re-proposes what your target `.hs/*.md` already says (suppressed as
+`already_covered`), and a suggestion you dismissed won't recur for a near-duplicate
+utterance in the same session. The dry-run response carries a `suggestion_status`
+(`stored` / `already_covered` / `dismissed` / `no_suggestion`).
+
+**Depth telemetry.** The **Pipeline depth · this session** panel in the Memory
+tab renders, over the session's recent runs:
+
+- per-stage **p50/p95** latency (ms) + run count, each with a bar against your
+  latency budget (it turns red at ≥ 66%);
+- **budget guidance** — a hint when a stage's p95 reaches ≥ 66% of
+  `max_total_latency_ms` (consider a smaller/faster model);
+- the most recent **multi-pass** rewrite timings as chips;
+- the correction-store size.
+
+Telemetry is in-memory and resets on restart (run a few dry-runs to populate
+it). The same data is on `GET /api/dictation/readiness` as the `depth` block
+(`depth.stages` / `depth.guidance` / `depth.rewrite_pass_ms` /
+`depth.corrections`) for headless use.
+
+### Advanced: the same knobs in `config.json`
+
+Prefer to edit the file (headless / scripted setups)? The same four knobs live
+under `dictation.pipeline`:
 
 ```json
 {
@@ -357,38 +430,6 @@ all of them firing at once. All knobs live under `dictation.pipeline`:
   }
 }
 ```
-
-**Multi-pass rewriting.** With `rewrite_passes > 1`, the project-rewriter drafts,
-then critiques and tightens its own draft. A failed or over-budget refine pass
-falls open to the best draft so far, so enabling it never makes output worse
-than single-pass.
-
-**Correction memory.** When a correction is recorded for the session
-(`POST /api/dictation/corrections` with `{kind, text, value}`, where `kind` is
-`intent` or `target`), a later similar utterance is nudged toward it. The store
-is **in-memory and session-scoped** — nothing is persisted to disk, gists are
-truncated, and secret-looking text is rejected. `GET /api/dictation/corrections`
-lists what's stored.
-
-**Model-assisted target detection.** On Wayland/terminal setups where the active
-window can't be read, the heuristic returns low confidence; with the fallback on,
-the LLM infers the target (`claude_code`, `codex_cli`, `browser`, …) from the
-utterance. A manual **Target profile override** still wins over both.
-
-**Suggestion quality gate.** The project-doc suggestion path no longer
-re-proposes what your target `.hs/*.md` already says (suppressed as
-`already_covered`), and a suggestion you dismissed won't recur for a near-duplicate
-utterance in the same session. The dry-run response carries a `suggestion_status`
-(`stored` / `already_covered` / `dismissed` / `no_suggestion`).
-
-**Depth telemetry.** `GET /api/dictation/readiness` returns a `depth` block over
-the session's recent runs:
-
-- `depth.stages` — per-stage **p50/p95** latency (ms) + run count;
-- `depth.guidance` — a hint when a stage's p95 reaches ≥ 66% of
-  `max_total_latency_ms` (consider a smaller/faster model);
-- `depth.rewrite_pass_ms` — the most recent multi-pass timings;
-- `depth.corrections` — `enabled` / `size` / recent correction gists.
 
 ## Good First Configuration
 

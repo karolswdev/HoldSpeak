@@ -8,6 +8,8 @@ runtime. Consumption (the routing nudge) is unit-tested on `IntentRouter` /
 
 from __future__ import annotations
 
+import shutil
+import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -15,6 +17,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import holdspeak.config as config_module
+from holdspeak.db import Database, reset_database
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
@@ -86,3 +89,114 @@ def test_record_silently_drops_secret(test_client: TestClient, settings_path: Pa
     assert resp.status_code == 200
     assert resp.json() == {"recorded": False, "size": 0}
     assert test_client.get("/api/dictation/corrections").json()["size"] == 0
+
+
+# ── HS-40-02: persistence wired into the server ───────────────────────
+
+
+@pytest.fixture
+def persistent_db():
+    temp_dir = Path(tempfile.mkdtemp())
+    reset_database()
+    database = Database(temp_dir / "corrections.db")
+    yield database
+    reset_database()
+    shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+def _persistent_client(database: Database) -> TestClient:
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(
+            on_bookmark=MagicMock(),
+            on_stop=MagicMock(),
+            get_state=MagicMock(return_value={}),
+        ),
+        dictation_corrections_repository=database.dictation_corrections,
+    )
+    return TestClient(server.app)
+
+
+def test_get_reflects_persisted_corrections(persistent_db: Database, settings_path: Path) -> None:
+    # A prior session persisted a correction…
+    persistent_db.dictation_corrections.record_correction(
+        kind="intent", gist="fix the cli thing", value="code_exercise"
+    )
+    # …a fresh server backed by the same repo surfaces it on GET.
+    client = _persistent_client(persistent_db)
+    body = client.get("/api/dictation/corrections").json()
+    assert body["size"] == 1
+    assert body["items"][0]["value"] == "code_exercise"
+    assert body["items"][0]["key"] == "fix the cli thing"
+
+
+def test_post_writes_through_to_db(persistent_db: Database, settings_path: Path) -> None:
+    client = _persistent_client(persistent_db)
+    resp = client.post(
+        "/api/dictation/corrections",
+        json={"kind": "target", "text": "route this to codex", "value": "codex_cli"},
+    )
+    assert resp.status_code == 200
+    assert resp.json() == {"recorded": True, "size": 1}
+    # The correction is durable: it's in the DB, visible to a fresh repo read.
+    persisted = persistent_db.dictation_corrections.recent_corrections()
+    assert len(persisted) == 1
+    assert persisted[0].kind == "target"
+    assert persisted[0].value == "codex_cli"
+
+
+def test_get_items_carry_id_when_persistent(persistent_db: Database, settings_path: Path) -> None:
+    persistent_db.dictation_corrections.record_correction(
+        kind="intent", gist="fix the cli thing", value="code_exercise"
+    )
+    client = _persistent_client(persistent_db)
+    item = client.get("/api/dictation/corrections").json()["items"][0]
+    assert "id" in item and isinstance(item["id"], int)
+    assert "created_at" in item
+
+
+def test_delete_correction_by_id(persistent_db: Database, settings_path: Path) -> None:
+    rec = persistent_db.dictation_corrections.record_correction(
+        kind="intent", gist="fix the cli thing", value="code_exercise"
+    )
+    client = _persistent_client(persistent_db)
+    resp = client.request("DELETE", f"/api/dictation/corrections/{rec.id}")
+    assert resp.status_code == 200
+    assert resp.json() == {"removed": True, "size": 0}
+    # Gone from the durable store too.
+    assert persistent_db.dictation_corrections.recent_corrections() == []
+    # A second delete 404s.
+    again = client.request("DELETE", f"/api/dictation/corrections/{rec.id}")
+    assert again.status_code == 404
+
+
+def test_clear_all_corrections(persistent_db: Database, settings_path: Path) -> None:
+    persistent_db.dictation_corrections.record_correction(
+        kind="intent", gist="one", value="code_exercise"
+    )
+    persistent_db.dictation_corrections.record_correction(
+        kind="target", gist="two", value="codex_cli"
+    )
+    client = _persistent_client(persistent_db)
+    resp = client.request("DELETE", "/api/dictation/corrections")
+    assert resp.status_code == 200
+    assert resp.json() == {"cleared": True, "size": 0}
+    assert persistent_db.dictation_corrections.recent_corrections() == []
+    assert client.get("/api/dictation/corrections").json()["size"] == 0
+
+
+def test_delete_without_repo_404s(test_client: TestClient, settings_path: Path) -> None:
+    # An in-memory-only store has no ids to address — delete is a no-op 404.
+    resp = test_client.request("DELETE", "/api/dictation/corrections/1")
+    assert resp.status_code == 404
+
+
+def test_dictation_page_includes_memory_tab(test_client: TestClient) -> None:
+    """HS-40-04: the Memory tab + its curate/telemetry hosts are in the page."""
+    body = test_client.get("/dictation").text
+    assert 'data-section="memory"' in body
+    assert "What the copilot has learned" in body
+    assert 'id="mem-list"' in body          # the corrections list host
+    assert 'id="mem-add-form"' in body       # the add-correction form
+    assert 'id="mem-btn-clear"' in body      # forget-all
+    assert 'id="mem-corrections-enabled"' in body  # the in-context toggle
+    assert 'id="mem-depth"' in body          # the depth-telemetry host
