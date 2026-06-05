@@ -6,11 +6,14 @@ dictation pipeline consults it (when `corrections_enabled`) so the same
 mistake, on a similar utterance, is nudged toward the user's correction within
 the session.
 
-Deliberately **not** persistent: the store dies with the process (no DB, no
-disk). This keeps the DIR-01 "stateless utterance" posture mostly intact —
-the only carried state is a small ring of explicit, user-initiated
-corrections — and avoids a secret-bearing on-disk store. Corrections are
-gist-only and pass the same secret check the project-doc suggestions use.
+The in-memory ring is the fast nudge path on the live typing loop. **Phase 40
+(HS-40-02)** made it optionally durable: pass a `repository`
+(`db.DictationCorrectionRepository`) and the store loads the recent set on
+construction and writes through on `record`, so routing learning survives a
+restart. With **no** repository it behaves exactly as it did in Phase 39 —
+in-process only, dying with the process. Either way corrections are gist-only
+and pass the same secret check the project-doc suggestions use, so a persisted
+row never carries a secret.
 """
 
 from __future__ import annotations
@@ -19,8 +22,12 @@ import re
 import threading
 from collections import deque
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Optional
 
 from holdspeak.project_doc_suggestions import looks_like_secret
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from holdspeak.db.corrections import DictationCorrectionRepository
 
 #: Kinds of correction the store accepts.
 CORRECTION_KINDS = ("intent", "target")
@@ -88,13 +95,52 @@ def best_match_in(
 
 
 class CorrectionStore:
-    """Bounded, thread-safe ring of recent corrections (one per session)."""
+    """Bounded, thread-safe ring of recent corrections (one per session).
 
-    def __init__(self, cap: int = DEFAULT_CAP) -> None:
+    Optionally durable: with a `repository` the store loads the recent set on
+    construction and writes through on `record` (HS-40-02). With none it is the
+    Phase-39 in-process ring, byte-identical.
+    """
+
+    def __init__(
+        self,
+        cap: int = DEFAULT_CAP,
+        *,
+        repository: "Optional[DictationCorrectionRepository]" = None,
+    ) -> None:
         self._cap = max(1, int(cap))
         self._items: deque[Correction] = deque(maxlen=self._cap)
         self._lock = threading.Lock()
         self._seq = 0
+        self._repository = repository
+        if repository is not None:
+            self._load_from_repository(repository)
+
+    def _load_from_repository(
+        self, repository: "DictationCorrectionRepository"
+    ) -> None:
+        """Hydrate the ring from the most recent persisted corrections.
+
+        Loads at most `cap` rows (newest-first), then replays them oldest-first
+        so `sequence` stays monotonic and `best_match_in`'s recency tie-break
+        matches insertion order. Defensive: a repository read failure leaves an
+        empty in-memory store rather than blocking startup.
+        """
+        try:
+            records = repository.recent_corrections(limit=self._cap)
+        except Exception:  # pragma: no cover - durability must never block boot
+            return
+        with self._lock:
+            for record in reversed(records):  # oldest-first
+                self._seq += 1
+                self._items.append(
+                    Correction(
+                        kind=record.kind,
+                        key=record.gist,
+                        value=record.value,
+                        sequence=self._seq,
+                    )
+                )
 
     def record(self, kind: str, key: str, value: str) -> bool:
         """Store a correction. Returns False (no-op) if invalid or secret-like."""
@@ -108,6 +154,14 @@ class CorrectionStore:
         with self._lock:
             self._seq += 1
             self._items.append(Correction(kind=kind, key=gist, value=value, sequence=self._seq))
+        # Write through to the durable store after the in-memory append (the
+        # ring is the nudge path; persistence is best-effort durability and must
+        # never fail a record the live path already accepted).
+        if self._repository is not None:
+            try:
+                self._repository.record_correction(kind=kind, gist=gist, value=value)
+            except Exception:  # pragma: no cover - durability must never block typing
+                pass
         return True
 
     def snapshot(self) -> list[Correction]:

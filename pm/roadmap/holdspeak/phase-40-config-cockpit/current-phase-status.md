@@ -1,12 +1,13 @@
 # Phase 40 — Configuration Cockpit & Persistent Memory
 
-**Status:** IN PROGRESS (1/6 stories). Opened 2026-06-05. Direction chosen by the
+**Status:** IN PROGRESS (2/6 stories). Opened 2026-06-05. Direction chosen by the
 user: a **web-first** way to set up the whole copilot ("nobody wants to frig
 around with files and settings") + **persistent cross-session memory**.
 
-**Last updated:** 2026-06-05 (**HS-40-01 done** — the four Phase-39 pipeline
-knobs round-trip + 4xx-on-bad through `/api/settings`, with clean type errors +
-12 new tests; suite 2198/16).
+**Last updated:** 2026-06-05 (**HS-40-02 done** — correction memory is now
+DB-backed: a `dictation_corrections` table + repo, the store loads/persists,
+survives a restart, schema snapshot regenerated; suite 2210/16. HS-40-01 also
+done.).
 
 ## Goal
 
@@ -99,7 +100,7 @@ build` to verify, commit source only.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-40-01 | Settings API: the missing knobs | done | [story-01-settings-api-knobs.md](./story-01-settings-api-knobs.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-40-02 | Persistent correction memory | backlog | [story-02-persistent-correction-memory.md](./story-02-persistent-correction-memory.md) | — |
+| HS-40-02 | Persistent correction memory | done | [story-02-persistent-correction-memory.md](./story-02-persistent-correction-memory.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-40-03 | Copilot Setup cockpit (UI) | backlog | [story-03-copilot-setup-cockpit.md](./story-03-copilot-setup-cockpit.md) | — |
 | HS-40-04 | Memory + telemetry UI | backlog | [story-04-memory-telemetry-ui.md](./story-04-memory-telemetry-ui.md) | — |
 | HS-40-05 | Documentation | backlog | [story-05-documentation.md](./story-05-documentation.md) | — |
@@ -107,9 +108,10 @@ build` to verify, commit source only.
 
 ## Where we are
 
-**HS-40-01 done (2026-06-05); HS-40-02 is next.** Phase opened right after
-Phase 39 merged (PR #16). The territory was mapped before scaffolding — see
-[`AGENT-BRIEF.md`](./AGENT-BRIEF.md) for the full seam map. Headlines:
+**HS-40-01 + HS-40-02 done (2026-06-05); HS-40-03 (cockpit UI) is next.** Phase
+opened right after Phase 39 merged (PR #16). The territory was mapped before
+scaffolding — see [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) for the full seam map.
+Headlines:
 
 - **Settings (HS-40-01) — done.** Re-verifying the seam showed the brief was
   stale: the four Phase-39 knobs **already** round-tripped + 4xx'd. `PUT
@@ -121,13 +123,16 @@ Phase 39 merged (PR #16). The territory was mapped before scaffolding — see
   non-numeric payloads (explicit `int()`/`float()` coercion mirroring the
   `max_total_latency_ms` block) + the missing test coverage (12 tests in
   `test_web_dictation_settings_api.py`). Suite 2198/16.
-- **Persistence (HS-40-02):** the `holdspeak/db/` package is a `Database`
-  container + per-domain repositories on one canonical `SCHEMA_SQL`
-  (`db/core.py`), `SCHEMA_VERSION = 1`. Add a `dictation_corrections` table +
-  `DictationCorrectionRepository` (mirror `db/actuators.py`), register on the
-  container, and **regenerate the committed schema snapshot** (there is a
-  snapshot test). `CorrectionStore`
-  (`holdspeak/plugins/dictation/corrections.py`) is the in-memory ring to wrap.
+- **Persistence (HS-40-02) — done.** Added the `dictation_corrections` table +
+  `idx_dictation_corrections_recent` to `SCHEMA_SQL` and a
+  `DictationCorrectionRepository` (`db/corrections.py`, mirroring
+  `db/actuators.py`) registered as `db.dictation_corrections`; **regenerated the
+  canonical schema snapshot**. `CorrectionStore` gained optional persistence
+  (`repository=…`): load-recent-on-construct + write-through-on-record, the
+  in-memory ring still the nudge path. The repo is wired by the **live
+  `WebRuntime`** (not `MeetingWebServer.__init__` — that uses the
+  `get_database()` singleton and would force every server test onto the real
+  DB); bare servers stay in-memory + byte-identical. Suite 2210/16.
 - **Cockpit UI (HS-40-03 / 04):** frontend is Astro at
   `web/src/pages/dictation.astro` + `web/src/scripts/dictation-app.js`, built to
   the **gitignored** `holdspeak/static/_built/`. The corrections + telemetry
@@ -135,10 +140,10 @@ Phase 39 merged (PR #16). The territory was mapped before scaffolding — see
   `depth` block). Use Signal tokens + the `ui-ux-pro-max` skill.
 
 **Pickup order:** HS-40-01 (backend foundation, unblocks the UI) ✅ → HS-40-02
-(persistence, independent, enables the memory UI) → HS-40-03 (cockpit UI, needs
+(persistence, independent, enables the memory UI) ✅ → HS-40-03 (cockpit UI, needs
 01) → HS-40-04 (memory/telemetry UI, needs 02) → HS-40-05 (docs) → HS-40-06
 (closeout). 01 and 02 are independent and can go in either order / in parallel
-worktrees. **HS-40-01 done; HS-40-02 next.**
+worktrees. **HS-40-01 + HS-40-02 done; HS-40-03 (cockpit UI) next.**
 
 ## Active risks
 

@@ -14,6 +14,7 @@ from .plugins import PluginArtifactRepository
 from .projects import ProjectRepository
 from .activity import ActivityRepository
 from .actuators import ActuatorRepository
+from .corrections import DictationCorrectionRepository
 
 log = get_logger("db")
 
@@ -528,6 +529,21 @@ CREATE TABLE IF NOT EXISTS connector_runs (
 
 CREATE INDEX IF NOT EXISTS idx_connector_runs_connector_started
 ON connector_runs(connector_id, started_at DESC);
+
+-- Phase 40 (HS-40-02): persistent dictation correction memory. The durable
+-- home for the in-process `CorrectionStore` ring — corrections written through
+-- on record and the recent set loaded back on a fresh store, so routing
+-- learning survives a restart. Gist-only + secret-rejected before insert.
+CREATE TABLE IF NOT EXISTS dictation_corrections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind TEXT NOT NULL,
+    gist TEXT NOT NULL,
+    value TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_dictation_corrections_recent
+ON dictation_corrections(created_at DESC, id DESC);
 """
 
 
@@ -544,6 +560,7 @@ class Database:
         self.projects = ProjectRepository(self._connection, self)
         self.activity = ActivityRepository(self._connection, self)
         self.actuators = ActuatorRepository(self._connection, self)
+        self.dictation_corrections = DictationCorrectionRepository(self._connection, self)
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:

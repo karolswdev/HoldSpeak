@@ -74,6 +74,22 @@ def _configured_web_port_from_env() -> int | None:
     return port
 
 
+def _dictation_corrections_repo():
+    """The durable correction repository, or None if the DB is unavailable.
+
+    HS-40-02: resolves the persistence repo for the live session correction
+    store. Defensive — a DB failure must not stop the web runtime from booting;
+    the store just falls back to in-memory.
+    """
+    try:
+        from .db import get_database
+
+        return get_database().dictation_corrections
+    except Exception as exc:  # pragma: no cover - durability must never block boot
+        log.warning(f"Dictation correction persistence unavailable: {exc}")
+        return None
+
+
 class WebRuntime:
     """Web-first runtime: owns the web server, hotkey/device capture, the
     meeting session, and the MIR plugin pipeline.
@@ -1758,6 +1774,11 @@ class WebRuntime:
                 # HS-25-02: token exists/persists now so it is ready the moment a
                 # non-loopback bind is introduced (Phase 15); dormant on loopback.
                 auth_token=ensure_web_token(self.config),
+                # HS-40-02: back the session correction store with the durable
+                # repository so routing learning survives a restart. Only the
+                # live runtime wires this; bare servers (tests/dry-run) stay
+                # in-memory and byte-identical.
+                dictation_corrections_repository=_dictation_corrections_repo(),
             )
             self.runtime_url = self.server.start()
         except Exception as exc:

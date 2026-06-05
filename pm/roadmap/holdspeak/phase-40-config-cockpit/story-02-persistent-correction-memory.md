@@ -2,10 +2,11 @@
 
 - **Project:** holdspeak
 - **Phase:** 40
-- **Status:** backlog
+- **Status:** done (2026-06-05)
 - **Depends on:** none
 - **Unblocks:** HS-40-04
 - **Owner:** unassigned
+- **Evidence:** [evidence-story-02.md](./evidence-story-02.md)
 
 ## Problem
 
@@ -39,18 +40,30 @@ nudge path on the live typing.
 
 ## Acceptance criteria
 
-- [ ] A `dictation_corrections` table + `DictationCorrectionRepository` exist;
+- [x] A `dictation_corrections` table + `DictationCorrectionRepository` exist;
       the repo round-trips a correction (record → fetch recent).
-- [ ] The canonical schema snapshot is regenerated and a fresh-build
+- [x] The canonical schema snapshot is regenerated and a fresh-build
       `sqlite_master` matches it (the snapshot test passes).
-- [ ] `CorrectionStore` with a repository **loads** recent corrections on
+- [x] `CorrectionStore` with a repository **loads** recent corrections on
       construction and **persists** on `record`; survives a simulated restart
       (new store + same repo sees the prior corrections).
-- [ ] `CorrectionStore` with **no** repository is byte-identical to pre-story
+- [x] `CorrectionStore` with **no** repository is byte-identical to pre-story
       (the existing `test_dictation_correction_store.py` passes unchanged).
-- [ ] Secrets/gist rules unchanged (still gist-only + secret-rejected before
+- [x] Secrets/gist rules unchanged (still gist-only + secret-rejected before
       persisting).
-- [ ] `GET /api/dictation/corrections` reflects persisted corrections.
+- [x] `GET /api/dictation/corrections` reflects persisted corrections.
+
+## Outcome
+
+A `dictation_corrections` table + `DictationCorrectionRepository`
+(`db.dictation_corrections`, mirroring `db/actuators.py`) + the canonical schema
+snapshot regenerated. `CorrectionStore` gained optional persistence
+(`repository=…`): load-recent-on-construct + write-through-on-record, the
+in-memory ring still the nudge path. The repo is injected by the **live
+`WebRuntime`** (not `MeetingWebServer.__init__`, which uses the `get_database()`
+singleton and would force every server test onto the real DB); bare servers stay
+in-memory + byte-identical. Suite 2210/16 (+12). See
+[evidence-story-02.md](./evidence-story-02.md).
 
 ## Test plan
 

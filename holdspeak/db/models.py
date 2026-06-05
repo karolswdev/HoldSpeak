@@ -392,3 +392,21 @@ class ActuatorProposalAuditEntry:
     detail: Optional[str]
     created_at: str
 
+
+@dataclass
+class DictationCorrectionRecord:
+    """A persisted dictation correction (Phase 40, HS-40-02).
+
+    The durable form of `plugins.dictation.corrections.Correction`: `kind` is
+    `"intent"`/`"target"`, `gist` is the bounded context gist the correction
+    applies to, `value` is the corrected block id / target profile. Gist-only +
+    secret-rejected at write time (the `CorrectionStore` enforces this before
+    persisting), so a stored row never carries a secret.
+    """
+
+    id: int
+    kind: str
+    gist: str
+    value: str
+    created_at: str
+
