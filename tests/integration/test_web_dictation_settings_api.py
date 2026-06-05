@@ -266,6 +266,157 @@ class TestSettingsPutValidatesDictation:
         assert "target_profile_override" in response.json()["error"]
 
 
+# ── HS-40-01: the four Phase-39 depth knobs ───────────────────────────
+
+
+class TestSettingsPipelineDepthKnobs:
+    """The cockpit (HS-40-03) wires controls to these — they must survive a
+    PUT→GET round-trip and reject out-of-range input with a clean 4xx."""
+
+    KNOB_KEYS = (
+        "rewrite_passes",
+        "corrections_enabled",
+        "target_detect_llm_enabled",
+        "target_detect_llm_below",
+    )
+
+    def test_get_includes_all_four_knobs(
+        self, test_client: TestClient, settings_path: Path
+    ) -> None:
+        pipeline = test_client.get("/api/settings").json()["dictation"]["pipeline"]
+        for key in self.KNOB_KEYS:
+            assert key in pipeline, f"GET /api/settings missing dictation.pipeline.{key}"
+        # Defaults (off-by-default invariant).
+        assert pipeline["rewrite_passes"] == 1
+        assert pipeline["corrections_enabled"] is False
+        assert pipeline["target_detect_llm_enabled"] is False
+        assert pipeline["target_detect_llm_below"] == 0.8
+
+    def test_put_round_trips_all_four_knobs(
+        self,
+        test_client: TestClient,
+        settings_path: Path,
+        on_settings_applied: MagicMock,
+    ) -> None:
+        payload = {
+            "dictation": {
+                "pipeline": {
+                    "rewrite_passes": 3,
+                    "corrections_enabled": True,
+                    "target_detect_llm_enabled": True,
+                    "target_detect_llm_below": 0.55,
+                }
+            }
+        }
+        response = test_client.put("/api/settings", json=payload)
+        assert response.status_code == 200, response.text
+        out = response.json()["settings"]["dictation"]["pipeline"]
+        assert out["rewrite_passes"] == 3
+        assert out["corrections_enabled"] is True
+        assert out["target_detect_llm_enabled"] is True
+        assert out["target_detect_llm_below"] == 0.55
+        on_settings_applied.assert_called_once()
+
+        # A fresh GET reflects the new values…
+        got = test_client.get("/api/settings").json()["dictation"]["pipeline"]
+        assert got["rewrite_passes"] == 3
+        assert got["corrections_enabled"] is True
+        assert got["target_detect_llm_enabled"] is True
+        assert got["target_detect_llm_below"] == 0.55
+        # …and they survive a reload from disk (true persistence).
+        persisted = Config.load(path=settings_path)
+        assert persisted.dictation.pipeline.rewrite_passes == 3
+        assert persisted.dictation.pipeline.corrections_enabled is True
+        assert persisted.dictation.pipeline.target_detect_llm_enabled is True
+        assert persisted.dictation.pipeline.target_detect_llm_below == 0.55
+
+    def test_partial_put_preserves_unsent_knobs(
+        self, test_client: TestClient, settings_path: Path
+    ) -> None:
+        # Seed all four to non-defaults.
+        seed = test_client.put(
+            "/api/settings",
+            json={
+                "dictation": {
+                    "pipeline": {
+                        "rewrite_passes": 4,
+                        "corrections_enabled": True,
+                        "target_detect_llm_enabled": True,
+                        "target_detect_llm_below": 0.42,
+                    }
+                }
+            },
+        )
+        assert seed.status_code == 200
+
+        # PUT only one knob — the other three must be preserved, not reset.
+        response = test_client.put(
+            "/api/settings",
+            json={"dictation": {"pipeline": {"rewrite_passes": 2}}},
+        )
+        assert response.status_code == 200, response.text
+        out = response.json()["settings"]["dictation"]["pipeline"]
+        assert out["rewrite_passes"] == 2
+        assert out["corrections_enabled"] is True
+        assert out["target_detect_llm_enabled"] is True
+        assert out["target_detect_llm_below"] == 0.42
+
+    @pytest.mark.parametrize("bad_passes", [0, 6, 99])
+    def test_rewrite_passes_out_of_range_400(
+        self, test_client: TestClient, settings_path: Path, bad_passes: int
+    ) -> None:
+        response = test_client.put(
+            "/api/settings",
+            json={"dictation": {"pipeline": {"rewrite_passes": bad_passes}}},
+        )
+        assert response.status_code == 400
+        assert "rewrite_passes" in response.json()["error"]
+
+    def test_rewrite_passes_non_integer_400(
+        self, test_client: TestClient, settings_path: Path
+    ) -> None:
+        response = test_client.put(
+            "/api/settings",
+            json={"dictation": {"pipeline": {"rewrite_passes": "three"}}},
+        )
+        assert response.status_code == 400
+        assert "rewrite_passes must be an integer" in response.json()["error"]
+
+    @pytest.mark.parametrize("bad_below", [-0.1, 1.5, 2.0])
+    def test_target_detect_below_out_of_range_400(
+        self, test_client: TestClient, settings_path: Path, bad_below: float
+    ) -> None:
+        response = test_client.put(
+            "/api/settings",
+            json={"dictation": {"pipeline": {"target_detect_llm_below": bad_below}}},
+        )
+        assert response.status_code == 400
+        assert "target_detect_llm_below" in response.json()["error"]
+
+    def test_target_detect_below_non_numeric_400(
+        self, test_client: TestClient, settings_path: Path
+    ) -> None:
+        response = test_client.put(
+            "/api/settings",
+            json={"dictation": {"pipeline": {"target_detect_llm_below": "high"}}},
+        )
+        assert response.status_code == 400
+        assert "target_detect_llm_below must be a number" in response.json()["error"]
+
+    def test_out_of_range_put_does_not_persist(
+        self, test_client: TestClient, settings_path: Path
+    ) -> None:
+        # A rejected PUT must leave the on-disk value untouched.
+        before = Config.load(path=settings_path).dictation.pipeline.rewrite_passes
+        rejected = test_client.put(
+            "/api/settings",
+            json={"dictation": {"pipeline": {"rewrite_passes": 9}}},
+        )
+        assert rejected.status_code == 400
+        after = Config.load(path=settings_path).dictation.pipeline.rewrite_passes
+        assert after == before
+
+
 # ── Page surface ──────────────────────────────────────────────────────
 
 

@@ -1,11 +1,12 @@
 # Phase 40 — Configuration Cockpit & Persistent Memory
 
-**Status:** SCAFFOLDED (0/6 stories). Opened 2026-06-05. Direction chosen by the
+**Status:** IN PROGRESS (1/6 stories). Opened 2026-06-05. Direction chosen by the
 user: a **web-first** way to set up the whole copilot ("nobody wants to frig
 around with files and settings") + **persistent cross-session memory**.
 
-**Last updated:** 2026-06-05 (phase scaffolded — plan + 6 stories +
-[`AGENT-BRIEF.md`](./AGENT-BRIEF.md)).
+**Last updated:** 2026-06-05 (**HS-40-01 done** — the four Phase-39 pipeline
+knobs round-trip + 4xx-on-bad through `/api/settings`, with clean type errors +
+12 new tests; suite 2198/16).
 
 ## Goal
 
@@ -97,7 +98,7 @@ build` to verify, commit source only.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-40-01 | Settings API: the missing knobs | backlog | [story-01-settings-api-knobs.md](./story-01-settings-api-knobs.md) | — |
+| HS-40-01 | Settings API: the missing knobs | done | [story-01-settings-api-knobs.md](./story-01-settings-api-knobs.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-40-02 | Persistent correction memory | backlog | [story-02-persistent-correction-memory.md](./story-02-persistent-correction-memory.md) | — |
 | HS-40-03 | Copilot Setup cockpit (UI) | backlog | [story-03-copilot-setup-cockpit.md](./story-03-copilot-setup-cockpit.md) | — |
 | HS-40-04 | Memory + telemetry UI | backlog | [story-04-memory-telemetry-ui.md](./story-04-memory-telemetry-ui.md) | — |
@@ -106,16 +107,20 @@ build` to verify, commit source only.
 
 ## Where we are
 
-**Just scaffolded (2026-06-05), right after Phase 39 merged (PR #16).** The
-territory was mapped before scaffolding — see [`AGENT-BRIEF.md`](./AGENT-BRIEF.md)
-for the full seam map an executing agent needs. Headlines:
+**HS-40-01 done (2026-06-05); HS-40-02 is next.** Phase opened right after
+Phase 39 merged (PR #16). The territory was mapped before scaffolding — see
+[`AGENT-BRIEF.md`](./AGENT-BRIEF.md) for the full seam map. Headlines:
 
-- **Settings (HS-40-01):** `holdspeak/web/routes/system.py` `api_update_settings`
-  (PUT) validates + coerces pipeline fields but **omits the four Phase-39 knobs**,
-  so `_coerce` silently drops them. `GET /api/settings` returns
-  `Config.to_dict()` (the knobs are already in there as dataclass fields). The
-  fix is the PUT validation block + round-trip tests
-  (`tests/integration/test_web_dictation_settings_api.py`).
+- **Settings (HS-40-01) — done.** Re-verifying the seam showed the brief was
+  stale: the four Phase-39 knobs **already** round-tripped + 4xx'd. `PUT
+  /api/settings` builds `merged = deepcopy(current.to_dict())` then deep-merges
+  the payload, so `pipeline_data` carries every field; the knobs flow through
+  `DictationPipelineConfig(**pipeline_data)` and `__post_init__` enforces the
+  1–5 / 0–1 bounds (`DictationConfigError` → 400). `_coerce` is only on the
+  `load()` path, not PUT. Real gaps closed: clean type-error messages for
+  non-numeric payloads (explicit `int()`/`float()` coercion mirroring the
+  `max_total_latency_ms` block) + the missing test coverage (12 tests in
+  `test_web_dictation_settings_api.py`). Suite 2198/16.
 - **Persistence (HS-40-02):** the `holdspeak/db/` package is a `Database`
   container + per-domain repositories on one canonical `SCHEMA_SQL`
   (`db/core.py`), `SCHEMA_VERSION = 1`. Add a `dictation_corrections` table +
@@ -129,11 +134,11 @@ for the full seam map an executing agent needs. Headlines:
   data are already on the API (`/api/dictation/corrections`, the readiness
   `depth` block). Use Signal tokens + the `ui-ux-pro-max` skill.
 
-**Pickup order:** HS-40-01 (backend foundation, unblocks the UI) → HS-40-02
+**Pickup order:** HS-40-01 (backend foundation, unblocks the UI) ✅ → HS-40-02
 (persistence, independent, enables the memory UI) → HS-40-03 (cockpit UI, needs
 01) → HS-40-04 (memory/telemetry UI, needs 02) → HS-40-05 (docs) → HS-40-06
 (closeout). 01 and 02 are independent and can go in either order / in parallel
-worktrees. **Not started.**
+worktrees. **HS-40-01 done; HS-40-02 next.**
 
 ## Active risks
 

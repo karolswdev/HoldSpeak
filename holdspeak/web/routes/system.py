@@ -785,6 +785,42 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                 )
             pipeline_data["target_profile_override"] = target_override
 
+            # HS-40-01: the four Phase-39 depth knobs. They already flow
+            # through via the merge + `DictationPipelineConfig(**pipeline_data)`
+            # construction below (and `__post_init__` is the single source of
+            # truth for the 1–5 / 0–1 bounds), but coerce the numeric/bool
+            # types explicitly here so a non-numeric payload returns a clean
+            # 4xx instead of a raw "'<=' not supported" TypeError. Defaults
+            # come from `current` so an omitted knob is preserved, never reset.
+            try:
+                rewrite_passes = int(pipeline_data.get(
+                    "rewrite_passes", current.dictation.pipeline.rewrite_passes
+                ))
+            except (TypeError, ValueError):
+                return JSONResponse(
+                    {"success": False, "error": "dictation.pipeline.rewrite_passes must be an integer"},
+                    status_code=400,
+                )
+            pipeline_data["rewrite_passes"] = rewrite_passes
+            try:
+                target_detect_below = float(pipeline_data.get(
+                    "target_detect_llm_below",
+                    current.dictation.pipeline.target_detect_llm_below,
+                ))
+            except (TypeError, ValueError):
+                return JSONResponse(
+                    {"success": False, "error": "dictation.pipeline.target_detect_llm_below must be a number"},
+                    status_code=400,
+                )
+            pipeline_data["target_detect_llm_below"] = target_detect_below
+            pipeline_data["corrections_enabled"] = bool(pipeline_data.get(
+                "corrections_enabled", current.dictation.pipeline.corrections_enabled
+            ))
+            pipeline_data["target_detect_llm_enabled"] = bool(pipeline_data.get(
+                "target_detect_llm_enabled",
+                current.dictation.pipeline.target_detect_llm_enabled,
+            ))
+
             backend = str(runtime_data.get(
                 "backend", current.dictation.runtime.backend
             )).strip().lower()

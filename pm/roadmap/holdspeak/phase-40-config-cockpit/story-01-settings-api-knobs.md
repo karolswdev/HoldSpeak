@@ -2,10 +2,11 @@
 
 - **Project:** holdspeak
 - **Phase:** 40
-- **Status:** backlog
+- **Status:** done (2026-06-05)
 - **Depends on:** none
 - **Unblocks:** HS-40-03
 - **Owner:** unassigned
+- **Evidence:** [evidence-story-01.md](./evidence-story-01.md)
 
 ## Problem
 
@@ -36,17 +37,27 @@ foundation.
 
 ## Acceptance criteria
 
-- [ ] `GET /api/settings` includes `dictation.pipeline.rewrite_passes` /
+- [x] `GET /api/settings` includes `dictation.pipeline.rewrite_passes` /
       `corrections_enabled` / `target_detect_llm_enabled` /
       `target_detect_llm_below` with their current values.
-- [ ] `PUT /api/settings` persists each knob; a follow-up `GET` returns the new
+- [x] `PUT /api/settings` persists each knob; a follow-up `GET` returns the new
       value (round-trip).
-- [ ] Out-of-range `rewrite_passes` (0 or 6) and `target_detect_llm_below`
+- [x] Out-of-range `rewrite_passes` (0 or 6) and `target_detect_llm_below`
       (>1.0) are rejected with a 4xx, not clamped or dropped.
-- [ ] Default behavior unchanged: omitting the knobs from a PUT leaves them at
+- [x] Default behavior unchanged: omitting the knobs from a PUT leaves them at
       their current values (no accidental reset).
-- [ ] `tests/integration/test_web_dictation_settings_api.py` covers the
+- [x] `tests/integration/test_web_dictation_settings_api.py` covers the
       round-trip + the rejection cases.
+
+## Outcome
+
+The four knobs **already** round-tripped + 4xx'd (the PUT merges the full
+current dict, then constructs `DictationPipelineConfig(**pipeline_data)` whose
+`__post_init__` enforces the bounds) — the brief's "`_coerce` drops them" was
+stale. Real gaps closed: a **clean type-error** for non-numeric payloads
+(explicit `int()`/`float()` coercion mirroring `max_total_latency_ms`) and the
+**missing test coverage** (`TestSettingsPipelineDepthKnobs`, 12 tests). Suite
+2198/16. See [evidence-story-01.md](./evidence-story-01.md).
 
 ## Test plan
 
