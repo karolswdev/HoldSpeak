@@ -1,18 +1,18 @@
 # Phase 45 — Dictation Memory & the Moment of Truth
 
-**Status:** IN PROGRESS (5/6). Opened 2026-06-06 on user direction ("think really
+**Status:** CLOSED ✅ (6/6). Opened 2026-06-06 on user direction ("think really
 hard around the experience … scaffold a phase that will be oh-so-meaningful")
-after a grounded look at how HoldSpeak feels to live with.
+after a grounded look at how HoldSpeak feels to live with. Full record:
+[final-summary.md](./final-summary.md).
 
-**Last updated:** 2026-06-06 (**HS-45-05 — docs — DONE**: `docs/INTELLIGENT_TYPING_GUIDE.md`
-§12 "Dictation journal, corrections & replay" documents what's recorded, the
-local-only privacy posture [secret-filter · retention · wipe · the
-`journal_enabled` toggle · side-channel], the in-moment fix loop, and replay —
-with three real screenshots [`docs/assets/journal/`]; cross-linked from the root
-README + the docs index. Doc-drift + dangling-link guards green [3 passed]. Prior:
-**HS-45-04** replay; **HS-45-03** the moment of truth; **HS-45-02** the Journal
-timeline; **HS-45-01** the spine [true e2e against `.43`]). Only the closeout
-[HS-45-06] remains.
+**Last updated:** 2026-06-06 (**Phase 45 CLOSED ✅ (6/6)** — **HS-45-06 closeout
+DONE**: the no-mic dogfood `scripts/dogfood_journal.py` → **`JOURNAL DOGFOOD OK`**
+[record → review → correct → replay → the journal-off byte-identical invariant],
+invariants re-asserted [no egress · focus-safe], `final-summary.md` written, PR
+to `main` opened. The dictation loop now has the soul the meeting side already
+had: remember → review → correct-in-the-moment → replay, all local-first,
+side-channel [off ⇒ byte-identical], focus-safe, mic-free-provable. Suite
+2363/17; 0 `_built/`.)
 
 ## The thesis — why this phase
 
@@ -121,7 +121,7 @@ trusted, learning companion — without changing what gets typed.
 | HS-45-03 | The moment of truth — correct in flow, and it teaches | done | [story-03-moment-of-truth.md](./story-03-moment-of-truth.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-45-04 | Replay — prove it learned | done | [story-04-replay.md](./story-04-replay.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-45-05 | Docs — the dictation journal & its privacy posture | done | [story-05-docs.md](./story-05-docs.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-45-06 | Closeout — before/after + dogfood + PR | backlog | [story-06-closeout.md](./story-06-closeout.md) | — |
+| HS-45-06 | Closeout — before/after + dogfood + PR | done | [story-06-closeout.md](./story-06-closeout.md) | [evidence-story-06.md](./evidence-story-06.md) |
 
 ## Where we are
 
@@ -133,11 +133,14 @@ right? → Fix it → Taught ✓"*, which teaches + flips `corrected`) → **rep
 before → after; correcting then replaying demonstrably flips the routed target —
 the "it learned" payoff, proven offline). All local-first, focus-safe, side-channel.
 
-**HS-45-05 docs are DONE** — `docs/INTELLIGENT_TYPING_GUIDE.md` §12 documents the
-journal + privacy posture + the in-moment loop + replay (three screenshots),
-cross-linked from the README + docs index; doc guards green. Next: **HS-45-06
-closeout** (no-mic dogfood + before/after + final-summary + PR). Sequence: 01 ✅
-→ 02 ✅ → 03 ✅ → 04 ✅ → 05 ✅ → 06.
+**Phase 45 is CLOSED ✅ (6/6).** The whole arc shipped and is proven mic-free:
+record (the spine, both paths, secret-redacted, off ⇒ byte-identical; true e2e
+against `.43`) → review (the Journal timeline) → correct-in-the-moment (teach +
+flip `corrected`) → replay (before → after; correct → replay → routing changes).
+The no-mic dogfood (`scripts/dogfood_journal.py`) runs the full loop green
+(`JOURNAL DOGFOOD OK`). Docs land in `INTELLIGENT_TYPING_GUIDE.md` §12. Suite
+2363/17, 0 `_built/`. Sequence: 01 ✅ → 02 ✅ → 03 ✅ → 04 ✅ → 05 ✅ → 06 ✅.
+PR to `main` opened — merge when CI green. Full record: `final-summary.md`.
 
 > **Decision (HS-45-04 re-insert):** preview + copy-to-clipboard is the re-insert
 > primitive. OS-typing re-insert is deferred — there's no web→typer seam in the

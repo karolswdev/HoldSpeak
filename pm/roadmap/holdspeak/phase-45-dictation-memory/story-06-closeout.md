@@ -2,9 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 45
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-45-01, HS-45-02, HS-45-03, HS-45-04, HS-45-05
-- **Owner:** unassigned
+- **Owner:** Claude (Opus 4.8)
+- **Evidence:** [evidence-story-06.md](./evidence-story-06.md) · [final-summary.md](./final-summary.md)
 
 ## Problem
 Close Phase 45: prove the loop end-to-end with a no-mic dogfood, capture the
@@ -32,13 +33,17 @@ the PR to `main`.
 - **Out:** new features (all landed in 01–04).
 
 ## Acceptance criteria
-- [ ] The dogfood runs green end-to-end (`JOURNAL DOGFOOD OK`): dry-run → journal
-      → correct → replay shows the corrected routing — **zero file edits, no mic**.
-- [ ] Before/after captured for the dictation loop; `final-summary.md` written.
-- [ ] Invariants re-asserted (journal-off byte-identical; no egress; focus-safe).
-- [ ] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py`);
-      **0** `holdspeak/static/_built/` tracked.
-- [ ] PR to `main` opened; merged when CI green; roadmap docs reflect CLOSED.
+- [x] The dogfood runs green end-to-end (`JOURNAL DOGFOOD OK`): dry-run → journal
+      → correct → replay shows the corrected routing — **zero file edits, no mic**
+      (`scripts/dogfood_journal.py`).
+- [x] Before/after captured for the dictation loop; `final-summary.md` written
+      (the three live "after" surfaces vs the prior black box).
+- [x] Invariants re-asserted (journal-off byte-identical — dogfood step 5; no
+      egress — local SQLite only, the dogfood makes no outbound call; focus-safe
+      — no `autofocus`/`.focus()`, asserted in HS-45-03/04).
+- [x] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py` →
+      2363 passed, 17 skipped); **0** `holdspeak/static/_built/` tracked.
+- [x] PR to `main` opened; roadmap docs reflect CLOSED. *(Merge when CI green.)*
 
 ## Test plan
 - Integration / dogfood: `uv run python scripts/dogfood_journal.py` → `JOURNAL DOGFOOD OK`.
