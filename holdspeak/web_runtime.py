@@ -140,7 +140,8 @@ class WebRuntime:
         # url_provider is read lazily (the macOS renderer loads <url>/presence on
         # first show), so it resolves after the server has a port.
         self.desktop_presence: Optional[DesktopPresenceHost] = build_desktop_presence_host(
-            url_provider=lambda: self.runtime_url
+            url_provider=lambda: self.runtime_url,
+            config_enabled=self._presence_config_enabled(),
         )
         self.device_registry = DeviceRegistry()
         self.device_status = DeviceStatusEmitter(label_lookup=self.device_registry)
@@ -622,6 +623,37 @@ class WebRuntime:
                 log.debug(f"Failed to apply runtime hotkey update: {exc}")
         if self.recorder is not None:
             self.recorder.device = self.config.meeting.mic_device
+        self._sync_desktop_presence()
+
+    def _presence_config_enabled(self) -> bool:
+        """`config.presence.enabled`, defensively (a config without the field = off)."""
+        return bool(getattr(getattr(self.config, "presence", None), "enabled", False))
+
+    def _sync_desktop_presence(self) -> None:
+        """HS-43-04: start/stop the presence host live when the config toggle flips.
+
+        Lets the UI switch presence on/off with no env var and no relaunch. Fully
+        defensive — a renderer that can't construct (e.g. headless) just leaves the
+        host None, and an error never disrupts the runtime.
+        """
+        from .desktop_presence import desktop_presence_enabled
+
+        want = desktop_presence_enabled(config_enabled=self._presence_config_enabled())
+        have = self.desktop_presence is not None
+        if want == have:
+            return
+        try:
+            if want:
+                self.desktop_presence = build_desktop_presence_host(
+                    url_provider=lambda: self.runtime_url,
+                    config_enabled=True,
+                )
+            else:
+                if self.desktop_presence is not None:
+                    self.desktop_presence.close()
+                self.desktop_presence = None
+        except Exception as exc:  # pragma: no cover - presence must never disrupt
+            log.warning(f"Failed to apply desktop-presence toggle: {exc}")
 
     def _start_meeting(self, *, devices: Optional[list[str]] = None) -> dict[str, object]:
         if self._active_meeting_session() is not None:
@@ -1037,9 +1069,12 @@ class WebRuntime:
             unmet = sum(
                 1 for s in setup.get("sections", []) if s.get("status") in ("fail", "warn")
             )
-            if setup.get("first_run") or setup.get("overall") == "blocked":
+            if setup.get("first_run"):
+                # HS-43-06: a brand-new user gets the guided wizard.
+                print(f"  → Welcome! Get set up in a minute: open {url}/welcome")
+            elif setup.get("overall") == "blocked":
                 suffix = f" — {unmet} thing{'' if unmet == 1 else 's'} need{'s' if unmet == 1 else ''} attention" if unmet else ""
-                print(f"  → First-run setup: open {url}/setup{suffix}")
+                print(f"  → Setup needs attention: open {url}/setup{suffix}")
                 action = (setup.get("primary_action") or {}).get("label")
                 if action:
                     print(f"    Next: {action}")

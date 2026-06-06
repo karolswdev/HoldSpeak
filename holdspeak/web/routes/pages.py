@@ -47,6 +47,24 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
             )
         return HTMLResponse(html)
 
+    @router.get("/welcome")
+    async def welcome_wizard() -> Any:
+        """Serve the first-run wizard (HS-43-01) — a full-screen takeover, read
+        from the Astro-built _built/welcome/index.html."""
+        page = _HOLDSPEAK_DIR / "static" / "_built" / "welcome" / "index.html"
+        try:
+            html = page.read_text(encoding="utf-8")
+        except Exception as e:
+            log.error(f"Failed to read built welcome wizard: {e}")
+            html = (
+                "<!doctype html><html><head><meta charset='utf-8'/>"
+                "<title>Welcome to HoldSpeak</title></head>"
+                "<body><h1>Welcome to HoldSpeak</h1>"
+                "<p>Wizard not built. Run <code>npm run build</code> "
+                "in <code>web/</code>.</p></body></html>"
+            )
+        return HTMLResponse(html)
+
     @router.get("/setup")
     async def setup_page() -> Any:
         """Serve the welcome / setup surface (HS-42-03), read from the

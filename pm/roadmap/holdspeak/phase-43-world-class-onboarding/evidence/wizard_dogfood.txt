@@ -1,0 +1,11 @@
+HoldSpeak wizard dogfood
+========================
+1. fresh `/` -> /welcome
+2. permissions: system check shown
+3. model: selected GGUF -> config backend = 'llama_cpp'
+4. first dictation: It worked. ('my first words in holdspeak')
+5. presence: toggled on -> config.presence.enabled = True (no env var)
+6. you're set: celebration shown
+7. Open HoldSpeak -> dashboard
+
+WIZARD DOGFOOD OK — fresh clone → guided wizard → first dictation, zero file edits

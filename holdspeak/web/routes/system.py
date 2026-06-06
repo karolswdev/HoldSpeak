@@ -474,6 +474,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                 LLMRuntimeConfig,
                 MeetingConfig,
                 ModelConfig,
+                PresenceConfig,
                 UIConfig,
             )
 
@@ -486,6 +487,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
             ui_data = merged.get("ui", {})
             meeting_data = merged.get("meeting", {})
             device_data = merged.get("device", {})
+            presence_data = merged.get("presence", {})
 
             hotkey_key = str(hotkey_data.get("key", current.hotkey.key))
             if hotkey_key not in KEY_MAP:
@@ -905,6 +907,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                 meeting=MeetingConfig(**meeting_data),
                 dictation=dictation_cfg,
                 device=DeviceConfig(**device_data),
+                presence=PresenceConfig(**presence_data),
             )
             updated.save()
 

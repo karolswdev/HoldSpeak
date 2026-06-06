@@ -512,17 +512,20 @@ import HoldMark from "../components/HoldMark.astro";
     </div>
   </div>
 
-  {/* HS-42-03: first-run guard. A brand-new user (never dictated) or a
-      hard-blocked runtime is sent to /setup; a healthy returning user stays on
-      the dashboard (no nag). A mere WARN does NOT redirect. Runs early + best-
-      effort — a status failure never blocks the dashboard. */}
+  {/* HS-42-03 / HS-43-06: first-run guard. A brand-new user (never dictated) is
+      sent to the /welcome WIZARD; a returning-but-hard-blocked runtime goes to
+      the /setup status surface; a healthy returning user stays on the dashboard
+      (no nag — a mere WARN does NOT redirect). Best-effort; never blocks the
+      dashboard. */}
   <script is:inline>
     (async () => {
       try {
         const res = await fetch("/api/setup/status");
         if (!res.ok) return;
         const s = await res.json();
-        if (s && (s.first_run || s.overall === "blocked")) {
+        if (s && s.first_run) {
+          location.replace("/welcome");
+        } else if (s && s.overall === "blocked") {
           location.replace("/setup");
         }
       } catch (_e) {

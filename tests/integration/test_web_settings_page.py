@@ -64,3 +64,19 @@ def test_topnav_gear_links_to_settings_route() -> None:
     topnav = (_REPO / "web" / "src" / "components" / "TopNav.astro").read_text()
     # The gear is a real link to /settings (not the old drawer button).
     assert re.search(r'href="/settings"', topnav)
+
+
+def test_settings_is_sectioned_searchable_and_progressive() -> None:
+    """HS-43-05: the form dump is gone — sectioned nav + search + Common/Advanced
+    + the config-backed presence toggle."""
+    page = (_REPO / "web" / "src" / "pages" / "settings.astro").read_text()
+    app = (_REPO / "web" / "src" / "scripts" / "settings-app.js").read_text()
+    # sectioned left-nav + search + progressive disclosure (view-model).
+    for marker in ("sections", "fieldVisible", "showAdvanced", "searching"):
+        assert marker in app
+    assert "set-nav" in page and "Search settings" in page and "Show advanced" in page
+    # the five sections.
+    for sec in ("appearance", "voice", "presence", "meetings", "cloud"):
+        assert f'"{sec}"' in app
+    # the presence toggle lives in settings, bound to the config flag.
+    assert 'role="switch"' in page and "settings.presence.enabled" in page

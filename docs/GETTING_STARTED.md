@@ -51,38 +51,40 @@ holdspeak
 ```
 
 This starts the local web runtime on loopback (`127.0.0.1`). On a fresh install
-the terminal points you straight at the guided setup:
+the terminal points you straight at the welcome wizard:
 
 ```text
 HoldSpeak web runtime is running at: http://127.0.0.1:PORT
-  → First-run setup: open http://127.0.0.1:PORT/setup — N things need attention
-    Next: <the single next step>
+  → Welcome! Get set up in a minute: open http://127.0.0.1:PORT/welcome
 ```
 
-## 4. Open Setup — the guided home
+## 4. The welcome wizard
 
-Open **`/setup`** (a fresh install opens it for you). It's a single, calm
-checklist driven by `holdspeak doctor` under the hood — **no file editing**:
+A fresh launch opens **`/welcome`** — a full-screen, step-by-step wizard that
+takes you from install to your first words, **no file editing**:
 
-- one **headline** ("Everything's ready" / "N things need attention") + a
-  progress bar;
-- exactly **one primary action** — the single next step to fix;
-- a **"Try your first dictation"** guide that confirms text landing in another
-  app (it celebrates "✓ It worked" live), an **optional model assistant** (Basic
-  / Apple MLX / GGUF / OpenAI-compatible, each with a one-click **Test**), and a
-  **presence** step;
-- a **Privacy** chip in the header (on every page) that shows, at a glance, what
-  can leave your machine — click it for the full Trust & Privacy panel.
+1. **Welcome** — what HoldSpeak does (voice typing *and* meeting notes).
+2. **Permissions** — a live check of microphone, text insertion, and the hotkey
+   (they turn green as you grant them).
+3. **Model** — pick your intelligence level (Basic / Apple MLX / GGUF /
+   OpenAI-compatible), each with a one-click **Test**. Basic needs nothing.
+4. **First dictation** — hold your hotkey, speak, release; it celebrates
+   **"✓ It worked"** live and shows your transcript.
+5. **Desktop presence** — flip a switch (no env var) for the ambient HUD.
+6. **You're set** — jump into dictation, a meeting, or the copilot.
 
-A healthy returning user lands on the normal dashboard instead — setup never nags.
+A returning user lands on the dashboard instead (the wizard never nags). If
+something later needs attention, **`/setup`** is the calm status surface, and the
+**Privacy** chip in the header always shows what can leave your machine.
 
 Useful routes:
 
 | Route | Purpose |
 | --- | --- |
-| `/setup` | The guided first-run home — readiness, one next step, first dictation |
+| `/welcome` | The first-run wizard (opens on a fresh install) |
+| `/setup` | The status surface — readiness + the single next step |
 | `/` | Runtime dashboard |
-| `/settings` | Global settings (open from the ⚙ on any page) |
+| `/settings` | Global settings (sectioned + searchable; open from the ⚙) |
 | `/dictation` | Dictation readiness, blocks, project context, runtime, dry-run |
 | `/history` | Meeting history and artifacts |
 
