@@ -86,12 +86,36 @@ import "../styles/global.css";
             <p class="stp-placeholder">Model picker — built in HS-43-02.</p>
           </section>
 
-          <!-- 4 · First dictation (the reward — deepened in HS-43-03) -->
+          <!-- 4 · First dictation — the reward moment -->
           <section class="stp stp-dictation" x-show="isActive('dictation')" :class="{ 'is-active': isActive('dictation') }">
             <p class="stp-eyebrow">Step 4 · The moment</p>
-            <h2 class="stp-h" tabindex="-1" x-ref="heading_dictation">Try your first dictation</h2>
-            <p class="stp-lead">Click into any text field, hold your hotkey, say a sentence, release. We'll confirm it right here.</p>
-            <p class="stp-placeholder">The live reward moment — built in HS-43-03.</p>
+            <h2 class="stp-h" tabindex="-1" x-ref="heading_dictation" x-show="!dictation.ok">Try your first dictation</h2>
+
+            <!-- waiting / live -->
+            <div class="dict-stage" x-show="!dictation.ok">
+              <div class="dict-target" :class="dictating ? 'is-live' : (activity ? 'is-warm' : 'is-idle')">
+                <span class="dict-ring r1"></span><span class="dict-ring r2"></span><span class="dict-ring r3"></span>
+                <span class="dict-core">
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+                </span>
+              </div>
+              <p class="dict-prompt">
+                Click into any text field, hold <kbd x-text="hotkeyLabel"></kbd>, say a sentence, and release.
+              </p>
+              <p class="dict-live" x-show="dictating" x-cloak><span class="dict-live-dot"></span><span x-text="liveLabel"></span>…</p>
+              <p class="dict-hint" x-show="!dictating" x-cloak>Don't have it working yet? <a href="/setup#first-dictation">Troubleshoot in setup</a> or <button type="button" class="wz-link inline" @click="skip()">skip for now</button>.</p>
+            </div>
+
+            <!-- the win -->
+            <div class="dict-win" x-show="dictation.ok" x-cloak>
+              <div class="dict-check" aria-hidden="true">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+                <span class="spark s1"></span><span class="spark s2"></span><span class="spark s3"></span><span class="spark s4"></span><span class="spark s5"></span><span class="spark s6"></span>
+              </div>
+              <h2 class="dict-win-h" tabindex="-1" x-ref="heading_dictation_win">It worked.</h2>
+              <p class="dict-win-sub">Your words landed in the app — typed for you, on this machine.</p>
+              <blockquote class="dict-quote" x-show="dictation.transcript" x-cloak><span x-text="dictation.transcript"></span></blockquote>
+            </div>
           </section>
 
           <!-- 5 · Presence — a real config-backed toggle (no env var) -->
@@ -323,6 +347,44 @@ import "../styles/global.css";
       .ma-cmd-lite:hover { border-color: var(--accent); }
       .pres-noenv { margin-top: var(--space-4); color: var(--text-faint); font-size: var(--font-size-xs); font-family: var(--font-mono); }
       @media (max-width: 860px) { .pres-row { flex-direction: column; align-items: flex-start; } .pres-hud { width: 100%; } }
+
+      /* First-dictation — the reward */
+      .dict-stage { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-5); margin-top: var(--space-5); }
+      .dict-target { position: relative; width: 132px; height: 132px; display: grid; place-items: center; }
+      .dict-ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--border-strong); opacity: .5; transition: border-color var(--duration-medium) var(--ease-standard), opacity var(--duration-medium) var(--ease-standard); }
+      .dict-ring.r2 { inset: 16px; } .dict-ring.r3 { inset: 32px; }
+      .dict-core { position: relative; z-index: 1; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-3); color: var(--text-muted); border: 1px solid var(--border-strong); transition: background var(--duration-medium) var(--ease-standard), color var(--duration-medium) var(--ease-standard), box-shadow var(--duration-medium) var(--ease-standard); }
+      /* live: rings ripple, core glows accent */
+      .dict-target.is-live .dict-ring { border-color: var(--accent); animation: dict-ripple 1.6s ease-out infinite; }
+      .dict-target.is-live .dict-ring.r2 { animation-delay: .3s; }
+      .dict-target.is-live .dict-ring.r3 { animation-delay: .6s; }
+      .dict-target.is-live .dict-core { background: var(--accent); color: var(--text-on-accent, #0b0d10); box-shadow: 0 0 26px color-mix(in srgb, var(--accent) 60%, transparent); }
+      @keyframes dict-ripple { 0% { transform: scale(.9); opacity: .7; } 100% { transform: scale(1.12); opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { .dict-target.is-live .dict-ring { animation: none; opacity: 1; } }
+      .dict-prompt { color: var(--text); font-size: var(--font-size-md); margin: 0; max-width: 46ch; }
+      .dict-prompt kbd { font-family: var(--font-mono); font-size: .85em; padding: 2px 8px; border-radius: var(--radius-sm); background: var(--surface-3); border: 1px solid var(--border-strong); border-bottom-width: 2px; color: var(--text); }
+      .dict-live { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--accent); font-weight: 600; font-size: var(--font-size-sm); margin: 0; }
+      .dict-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: wz-wave 1s ease-in-out infinite; }
+      @media (prefers-reduced-motion: reduce) { .dict-live-dot { animation: none; } }
+      .dict-hint { color: var(--text-faint); font-size: var(--font-size-sm); margin: 0; }
+      .dict-hint a, .wz-link.inline { color: var(--text-muted); }
+      .wz-link.inline { margin: 0; padding: 0; font-size: inherit; }
+
+      /* the win */
+      .dict-win { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); }
+      .dict-check { position: relative; width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; background: var(--ok); color: var(--bg, #0b0d10); margin-bottom: var(--space-2); box-shadow: 0 0 0 10px color-mix(in srgb, var(--ok) 14%, transparent), 0 0 44px color-mix(in srgb, var(--ok) 45%, transparent); animation: wz-pop .55s var(--ease-emphasized) both; }
+      .dict-check .spark { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); opacity: 0; animation: dict-spark .7s ease-out .15s both; }
+      .dict-check .s1 { top: -6px; left: 50%; --tx: 0px; --ty: -42px; }
+      .dict-check .s2 { top: 50%; right: -6px; --tx: 42px; --ty: 0px; }
+      .dict-check .s3 { bottom: -6px; left: 50%; --tx: 0px; --ty: 42px; }
+      .dict-check .s4 { top: 50%; left: -6px; --tx: -42px; --ty: 0px; }
+      .dict-check .s5 { top: 4px; right: 4px; --tx: 34px; --ty: -34px; background: var(--ok); }
+      .dict-check .s6 { bottom: 4px; left: 4px; --tx: -34px; --ty: 34px; background: var(--ok); }
+      @keyframes dict-spark { 0% { opacity: 1; transform: translate(0,0) scale(1); } 100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(.3); } }
+      @media (prefers-reduced-motion: reduce) { .dict-check { animation: none; } .dict-check .spark { display: none; } }
+      .dict-win-h { font-family: var(--font-display); font-size: clamp(var(--font-size-2xl), 4vw, var(--font-size-3xl)); font-weight: 700; color: var(--text); margin: 0; outline: none; }
+      .dict-win-sub { color: var(--text-muted); font-size: var(--font-size-md); margin: 0; }
+      .dict-quote { margin: var(--space-3) 0 0; padding: var(--space-4) var(--space-5); border-left: 3px solid var(--accent); border-radius: 0 var(--radius-md) var(--radius-md) 0; background: var(--surface-2); color: var(--text); font-size: var(--font-size-lg); font-style: italic; max-width: 52ch; }
 
       /* ── Nav ── */
       .wz-nav { display: flex; align-items: center; gap: var(--space-4); padding-top: var(--space-6); margin-top: var(--space-5); border-top: 1px solid var(--border-subtle); }

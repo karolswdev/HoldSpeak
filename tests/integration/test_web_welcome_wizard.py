@@ -56,3 +56,20 @@ def test_wizard_reads_os_dynamically_and_mentions_meetings() -> None:
     # meetings are part of the pitch (welcome value prop + a "Run a meeting" card).
     assert "meeting" in page.lower()
     assert "Run a meeting" in page
+
+
+def test_first_dictation_is_a_reward_moment() -> None:
+    """HS-43-03: a live mic ring + a real celebration, the actual hotkey, a11y."""
+    page = (_REPO / "web" / "src" / "pages" / "welcome.astro").read_text()
+    app = (_REPO / "web" / "src" / "scripts" / "welcome-app.js").read_text()
+    # live target + a celebration (check + transcript reveal) keyed off the WS.
+    assert "dict-target" in page and "dict-ring" in page
+    assert "dict-win" in page and "It worked." in page
+    assert 'x-show="dictation.transcript"' in page  # the transcript is revealed
+    # the real configured hotkey is shown (mapped), not a hardcoded key.
+    assert "hotkeyLabel" in app and "x-text=\"hotkeyLabel\"" in page
+    assert "loadHotkey" in app and "/api/settings" in app
+    # the celebration respects reduced-motion.
+    assert "prefers-reduced-motion" in page
+    # focus moves to the "It worked" heading on success (a11y).
+    assert "heading_dictation_win" in app and "heading_dictation_win" in page

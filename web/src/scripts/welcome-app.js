@@ -32,14 +32,43 @@ function welcomeApp() {
     presenceSaving: false,
     presenceNote: "",
 
+    hotkeyKey: "",
+
     init() {
       try {
         this.reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       } catch (_e) {}
       this.loadStatus();
+      this.loadHotkey();
       this.connectActivity();
       this.focusHeading();
       // Esc is *not* a trap — let people leave to the dashboard.
+    },
+
+    async loadHotkey() {
+      try {
+        const res = await fetch("/api/settings");
+        if (res.ok) {
+          const s = await res.json();
+          this.hotkeyKey = (s.hotkey && s.hotkey.key) || "";
+        }
+      } catch (_e) {}
+    },
+    get hotkeyLabel() {
+      const map = {
+        alt_r: "Right ⌥ / Alt", alt_l: "Left ⌥ / Alt",
+        ctrl_r: "Right Ctrl", ctrl_l: "Left Ctrl",
+        cmd_r: "Right ⌘", cmd_l: "Left ⌘",
+        shift_r: "Right Shift", shift_l: "Left Shift",
+        caps_lock: "Caps Lock", fn: "Fn",
+      };
+      if (!this.hotkeyKey) return "your hotkey";
+      if (map[this.hotkeyKey]) return map[this.hotkeyKey];
+      return this.hotkeyKey.toUpperCase().replace("_", " ");
+    },
+    get dictating() {
+      const st = this.activity && this.activity.state;
+      return ["listening", "recording", "transcribing", "processing", "typing"].includes(st);
     },
 
     get step() {
@@ -170,6 +199,13 @@ function welcomeApp() {
       if (data.state === "complete" && ["dictation_typed", "dictation_delivered"].includes(data.last_event)) {
         await this.fetchTranscript();
         this.dictation.ok = true;
+        // a11y: move focus to the celebration heading when it replaces the prompt.
+        if (this.isActive("dictation")) {
+          this.$nextTick(() => {
+            const el = this.$refs.heading_dictation_win;
+            if (el && el.focus) el.focus();
+          });
+        }
       }
     },
     async fetchTranscript() {

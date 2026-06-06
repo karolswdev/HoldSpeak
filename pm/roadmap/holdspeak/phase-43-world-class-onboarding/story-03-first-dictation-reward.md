@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 43
-- **Status:** backlog
+- **Status:** done (2026-06-06)
 - **Depends on:** HS-43-01
 
 ## Problem
@@ -17,5 +17,6 @@ must feel like a genuine **reward** when text lands.
 - Out: changing the dictation pipeline.
 
 ## Acceptance criteria
-- [ ] The step shows live dictation state + a celebratory success with the
-      transcript; reduced-motion safe; covered by a live WS test.
+- [x] The step shows live dictation state (mic ripple + the actual hotkey) + a
+      celebratory success with the transcript; reduced-motion safe; covered by a
+      live WS Playwright capture + a source test.
