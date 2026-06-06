@@ -47,6 +47,31 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
             )
         return HTMLResponse(html)
 
+    @router.get("/setup")
+    async def setup_page() -> Any:
+        """Serve the welcome / setup surface (HS-42-03), read from the
+        Astro-built _built/setup/index.html. Driven client-side by
+        GET /api/setup/status."""
+        page = (
+            _HOLDSPEAK_DIR
+            / "static"
+            / "_built"
+            / "setup"
+            / "index.html"
+        )
+        try:
+            html = page.read_text(encoding="utf-8")
+        except Exception as e:
+            log.error(f"Failed to read built setup page: {e}")
+            html = (
+                "<!doctype html><html><head><meta charset='utf-8'/>"
+                "<title>HoldSpeak Setup</title></head>"
+                "<body><h1>HoldSpeak Setup</h1>"
+                "<p>Setup UI not built. Run <code>npm run build</code> "
+                "in <code>web/</code>.</p></body></html>"
+            )
+        return HTMLResponse(html)
+
     @router.get("/history")
     async def history_dashboard() -> Any:
         """Serve the history dashboard (HS-10-08: now read from the

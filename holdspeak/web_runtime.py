@@ -1021,6 +1021,33 @@ class WebRuntime:
             "egress": description,
         }
 
+    def _print_setup_nudge(self) -> None:
+        """HS-42-03: point a first-run or hard-blocked user at /setup on launch.
+
+        Uses the cheap (`skip_network`) setup-status read so it never delays
+        startup, and is fully defensive — a status failure prints nothing and
+        never blocks the runtime. A healthy returning user gets no nudge.
+        """
+        try:
+            from .db import get_database
+            from .setup_status import build_setup_status
+
+            setup = build_setup_status(database=get_database())
+            url = self.runtime_url
+            unmet = sum(
+                1 for s in setup.get("sections", []) if s.get("status") in ("fail", "warn")
+            )
+            if setup.get("first_run") or setup.get("overall") == "blocked":
+                suffix = f" — {unmet} thing{'' if unmet == 1 else 's'} need{'s' if unmet == 1 else ''} attention" if unmet else ""
+                print(f"  → First-run setup: open {url}/setup{suffix}")
+                action = (setup.get("primary_action") or {}).get("label")
+                if action:
+                    print(f"    Next: {action}")
+            elif setup.get("overall") == "needs_attention":
+                print(f"  → Setup ready (some optional items to review): {url}/setup")
+        except Exception as exc:  # pragma: no cover - a nudge must never block boot
+            log.debug(f"setup nudge skipped: {exc}")
+
     def _on_bookmark(self, label: str) -> dict[str, object]:
         session = self._active_meeting_session()
         if session is not None:
@@ -2157,7 +2184,8 @@ class WebRuntime:
 
         log.info(f"HoldSpeak web runtime active at {self.runtime_url}")
         print(f"HoldSpeak web runtime is running at: {self.runtime_url}")
-        print(f"History and settings are available at: {self.runtime_url}/history")
+        self._print_setup_nudge()
+        print(f"Settings: {self.runtime_url}/settings · History: {self.runtime_url}/history")
         if self.hotkey_listener is not None:
             print(f"Voice typing hotkey is active: hold {self.config.hotkey.display}, speak, release.")
         else:

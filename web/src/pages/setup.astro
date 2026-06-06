@@ -1,0 +1,255 @@
+---
+// HS-42-03: the welcome / setup surface.
+//
+// Driven by GET /api/setup/status (HS-42-01). One primary action, a
+// status-grouped checklist (every doctor FAIL surfaces), and a trust/presence
+// summary. `/` redirects here for a first-run or hard-blocked user (the dashboard
+// guard in index.astro); a healthy returning user never sees it.
+import AppLayout from "../layouts/AppLayout.astro";
+---
+
+<AppLayout title="HoldSpeak — Setup" description="Get HoldSpeak ready for voice typing">
+  <div class="setup" x-data="setupApp()" x-init="init()">
+
+    <div x-show="loading" class="setup-loading" x-cloak>Checking your setup…</div>
+    <div x-show="error" class="setup-error" x-cloak x-text="error"></div>
+
+    <template x-if="status">
+      <div>
+        <!-- Hero -->
+        <header class="setup-hero" :class="`is-${overall}`">
+          <img class="setup-mark" src="/_built/holdspeak-mark.png" alt="" width="72" height="72" />
+          <div class="setup-hero-text">
+            <p class="eyebrow">Welcome to HoldSpeak</p>
+            <h1 x-text="headline"></h1>
+            <p class="lead" x-text="subhead"></p>
+            <div class="setup-progress" role="img" :aria-label="`${passCount} of ${total} checks ready`">
+              <div class="setup-progress-track">
+                <div class="setup-progress-fill" :style="`width: ${progressPct}%`"></div>
+              </div>
+              <span class="setup-progress-label" x-text="`${passCount} / ${total} ready`"></span>
+            </div>
+          </div>
+          <span class="local-chip" aria-hidden="true"><span class="dot"></span> Local · 127.0.0.1</span>
+        </header>
+
+        <!-- Primary action -->
+        <template x-if="status.primary_action">
+          <a class="primary-action" :href="status.primary_action.route">
+            <div class="primary-action-body">
+              <span class="primary-action-eyebrow">Next step</span>
+              <span class="primary-action-label" x-text="status.primary_action.label"></span>
+            </div>
+            <svg class="primary-action-arrow" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </template>
+
+        <!-- Needs attention -->
+        <template x-if="unmet.length">
+          <section class="setup-group">
+            <h2 class="setup-group-title">Needs attention</h2>
+            <ul class="check-list">
+              <template x-for="s in unmet" :key="s.id">
+                <li class="check-row" :id="s.id" :class="`st-${s.status}`">
+                  <span class="check-glyph" x-text="statusGlyph(s.status)"></span>
+                  <div class="check-main">
+                    <span class="check-label" x-text="s.label"></span>
+                    <span class="check-detail" x-text="s.detail"></span>
+                    <span class="check-fix" x-show="s.fix" x-cloak x-text="s.fix"></span>
+                  </div>
+                </li>
+              </template>
+            </ul>
+          </section>
+        </template>
+
+        <!-- First dictation CTA (HS-42-04 makes this a guided flow) -->
+        <section class="first-dictation" id="first-dictation" :class="{ primed: overall === 'ready' }">
+          <div class="fd-text">
+            <h2>Try your first dictation</h2>
+            <p>Focus a text field in any app, hold your hotkey, speak, and release. HoldSpeak types it for you — locally.</p>
+          </div>
+          <a class="btn primary" href="/dictation">Open dictation</a>
+        </section>
+
+        <!-- Ready -->
+        <template x-if="ready.length">
+          <section class="setup-group">
+            <h2 class="setup-group-title">Ready <span class="muted" x-text="`(${ready.length})`"></span></h2>
+            <ul class="ready-grid">
+              <template x-for="s in ready" :key="s.id">
+                <li class="ready-chip"><span class="ready-tick">✓</span> <span x-text="s.label"></span></li>
+              </template>
+            </ul>
+          </section>
+        </template>
+
+        <!-- Trust + presence summary -->
+        <section class="setup-summary">
+          <a class="summary-card" href="/settings">
+            <span class="summary-eyebrow">Privacy</span>
+            <span class="summary-value" x-text="egressLabel()"></span>
+            <span class="summary-meta" x-show="status.trust.configured_endpoints.length" x-cloak x-text="status.trust.configured_endpoints[0]"></span>
+            <span class="summary-meta" x-show="!status.trust.configured_endpoints.length">Transcripts stay on this machine</span>
+          </a>
+          <div class="summary-card">
+            <span class="summary-eyebrow">Desktop presence</span>
+            <span class="summary-value" x-text="presenceLabel()"></span>
+            <span class="summary-meta">Ambient status while you dictate</span>
+          </div>
+        </section>
+      </div>
+    </template>
+  </div>
+
+  <script>
+    import Alpine from "alpinejs";
+    import factorySource from "../scripts/setup-app.js?raw";
+    const fn = new Function(factorySource + "; return setupApp;");
+    window.setupApp = fn();
+    window.Alpine = Alpine;
+    Alpine.start();
+  </script>
+</AppLayout>
+
+<style>
+  .setup { max-width: 880px; margin: 0 auto; padding: var(--space-6) var(--space-5) calc(var(--space-8) * 2); }
+  [x-cloak] { display: none !important; }
+  .setup-loading, .setup-error { color: var(--text-muted); padding: var(--space-6) 0; }
+  .setup-error { color: var(--danger); }
+
+  /* Hero */
+  .setup-hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-4) var(--space-5);
+    align-items: center;
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    background:
+      radial-gradient(120% 140% at 0% 0%, var(--accent-tint), transparent 55%),
+      var(--surface-2);
+    margin-bottom: var(--space-5);
+    overflow: hidden;
+  }
+  .setup-hero.is-ready { border-color: var(--ok); }
+  .setup-hero.is-blocked { border-color: var(--danger); }
+  .setup-mark { border-radius: var(--radius-md); image-rendering: pixelated; align-self: start; }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-eyebrow); text-transform: uppercase;
+    color: var(--accent); margin: 0 0 var(--space-2);
+  }
+  .setup-hero h1 {
+    font-family: var(--font-display); font-size: var(--font-size-2xl); font-weight: 700;
+    color: var(--text); margin: 0 0 var(--space-2); line-height: var(--line-height-tight);
+  }
+  .lead { color: var(--text-muted); font-size: var(--font-size-md); line-height: var(--line-height-relaxed); margin: 0 0 var(--space-4); max-width: 56ch; }
+  .setup-progress { display: flex; align-items: center; gap: var(--space-3); }
+  .setup-progress-track { flex: 1; max-width: 280px; height: 8px; border-radius: var(--radius-pill); background: var(--surface-active, var(--surface-3)); overflow: hidden; }
+  .setup-progress-fill { height: 100%; border-radius: var(--radius-pill); background: var(--accent); transition: width var(--duration-long) var(--ease-emphasized); }
+  .is-ready .setup-progress-fill { background: var(--ok); }
+  .setup-progress-label { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--text-muted); }
+  .local-chip {
+    position: absolute; top: var(--space-4); right: var(--space-5);
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    padding: var(--space-1) var(--space-3); border: 1px solid var(--border);
+    border-radius: var(--radius-pill); background: var(--local-soft, var(--surface-3));
+    color: var(--local, var(--text-muted)); font-family: var(--font-mono); font-size: var(--font-size-xs);
+  }
+  .local-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--local, var(--ok)); box-shadow: 0 0 8px var(--local, var(--ok)); }
+
+  /* Primary action */
+  .primary-action {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+    padding: var(--space-5);
+    border-radius: var(--radius-lg);
+    background: var(--accent); color: var(--text-on-accent, var(--accent-on));
+    text-decoration: none; box-shadow: var(--elev-2);
+    margin-bottom: var(--space-6);
+    transition: transform var(--duration-short) var(--ease-standard), box-shadow var(--duration-short) var(--ease-standard);
+  }
+  .primary-action:hover { transform: translateY(-1px); box-shadow: var(--elev-3); }
+  .primary-action-body { display: flex; flex-direction: column; gap: 2px; }
+  .primary-action-eyebrow { font-family: var(--font-mono); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-eyebrow); opacity: 0.8; }
+  .primary-action-label { font-family: var(--font-display); font-size: var(--font-size-lg); font-weight: 600; }
+  .primary-action-arrow { flex: none; }
+
+  /* Groups */
+  .setup-group { margin-bottom: var(--space-6); }
+  .setup-group-title { font-family: var(--font-display); font-size: var(--font-size-md); font-weight: 600; color: var(--text); margin: 0 0 var(--space-3); }
+  .setup-group-title .muted { color: var(--text-faint); font-weight: 400; }
+
+  .check-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+  .check-row {
+    display: grid; grid-template-columns: auto 1fr; gap: var(--space-3); align-items: start;
+    padding: var(--space-4); border-radius: var(--radius-md);
+    background: var(--surface-2); border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--border);
+    scroll-margin-top: var(--space-6);
+  }
+  .check-row.st-fail { border-left-color: var(--danger); background: var(--danger-soft); }
+  .check-row.st-warn { border-left-color: var(--warn); }
+  .check-glyph {
+    display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+    font-size: var(--font-size-sm); font-weight: 700;
+  }
+  .st-fail .check-glyph { background: var(--danger); color: var(--text-on-accent, #fff); }
+  .st-warn .check-glyph { background: var(--warn); color: var(--bg, #111); }
+  .check-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .check-label { font-weight: 600; color: var(--text); font-size: var(--font-size-sm); }
+  .check-detail { color: var(--text-muted); font-size: var(--font-size-sm); }
+  .check-fix { color: var(--accent); font-size: var(--font-size-sm); margin-top: var(--space-1); }
+
+  /* First dictation CTA */
+  .first-dictation {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+    padding: var(--space-5); margin-bottom: var(--space-6);
+    border-radius: var(--radius-lg); border: 1px dashed var(--border-strong);
+    background: var(--surface-1); scroll-margin-top: var(--space-6);
+  }
+  .first-dictation.primed { border-style: solid; border-color: var(--ok); background: var(--ok-soft, var(--surface-2)); }
+  .fd-text h2 { font-family: var(--font-display); font-size: var(--font-size-lg); font-weight: 600; color: var(--text); margin: 0 0 var(--space-1); }
+  .fd-text p { color: var(--text-muted); font-size: var(--font-size-sm); margin: 0; max-width: 52ch; }
+
+  /* Ready grid */
+  .ready-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-2); }
+  .ready-chip {
+    display: flex; align-items: center; gap: var(--space-2);
+    padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm);
+    background: var(--surface-2); border: 1px solid var(--border-subtle);
+    color: var(--text-muted); font-size: var(--font-size-sm);
+  }
+  .ready-tick { color: var(--ok); font-weight: 700; }
+
+  /* Summary */
+  .setup-summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+  .summary-card {
+    display: flex; flex-direction: column; gap: var(--space-1);
+    padding: var(--space-4); border-radius: var(--radius-md);
+    background: var(--surface-2); border: 1px solid var(--border-subtle);
+    text-decoration: none;
+  }
+  a.summary-card:hover { border-color: var(--accent); }
+  .summary-eyebrow { font-family: var(--font-mono); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-eyebrow); color: var(--text-faint); }
+  .summary-value { font-weight: 600; color: var(--text); }
+  .summary-meta { color: var(--text-muted); font-size: var(--font-size-xs); }
+
+  .btn {
+    padding: var(--space-2) var(--space-5); border-radius: var(--radius-sm);
+    border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text);
+    font-family: var(--font-ui); font-size: var(--font-size-sm); font-weight: 600;
+    cursor: pointer; text-decoration: none; white-space: nowrap;
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--text-on-accent, var(--accent-on)); }
+  .btn:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: var(--focus-outline-offset); }
+
+  @media (max-width: 680px) {
+    .setup-hero { grid-template-columns: 1fr; }
+    .local-chip { position: static; margin-top: var(--space-2); width: fit-content; }
+    .setup-summary { grid-template-columns: 1fr; }
+    .first-dictation { flex-direction: column; align-items: stretch; }
+  }
+</style>

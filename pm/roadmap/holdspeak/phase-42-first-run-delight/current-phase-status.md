@@ -1,12 +1,17 @@
 # Phase 42 — First-Run Delight & Daily Confidence
 
-**Status:** IN PROGRESS (2/8 stories). Opened 2026-06-06. Direction chosen by the
+**Status:** IN PROGRESS (3/8 stories). Opened 2026-06-06. Direction chosen by the
 user: the product depth is now ahead of the product **entrance** — make
 **arrival** stellar. A user should go from fresh clone to a verified first
 dictation, with visible privacy/trust state and **zero file editing**, inside one
 guided local cockpit.
 
-**Last updated:** 2026-06-06 (**HS-42-02 done** — the interim
+**Last updated:** 2026-06-06 (**HS-42-03 done** — the welcome/setup surface: a
+Signal `/setup` page driven by `/api/setup/status` (brand-mark hero + dynamic
+headline + progress + one primary action + needs-attention list + ready grid +
+Privacy/Presence cards), a `/` first-run guard (redirect to `/setup` only when
+`first_run|blocked` — never nag a healthy user), and a CLI launch nudge. Proven
+live; +5 tests; suite **2291/16**. **HS-42-02 done** — the interim
 "consolidating / History → Settings" drawer retired into a real shell-level
 **`/settings`** page (Signal cards + sticky save bar); gear→`/settings`; History
 settings tab removed; server route serves the built page; save round-trip proven
@@ -122,7 +127,7 @@ launch and a healthy returning user skips straight to work.
 |---|---|---|---|---|
 | HS-42-01 | Setup-state contract + `first_run` milestone | done | [story-01-setup-state-contract.md](./story-01-setup-state-contract.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-42-02 | Global settings completion | done | [story-02-global-settings-completion.md](./story-02-global-settings-completion.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-42-03 | Welcome / Setup route + CLI nudge | backlog | [story-03-welcome-setup-route.md](./story-03-welcome-setup-route.md) | — |
+| HS-42-03 | Welcome / Setup route + CLI nudge | done | [story-03-welcome-setup-route.md](./story-03-welcome-setup-route.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-42-04 | Guided first dictation test (real app) | backlog | [story-04-guided-first-dictation.md](./story-04-guided-first-dictation.md) | — |
 | HS-42-05 | Trust & Privacy — ambient chip + panel | backlog | [story-05-trust-privacy-panel.md](./story-05-trust-privacy-panel.md) | — |
 | HS-42-06 | Runtime model setup assistant | backlog | [story-06-runtime-model-assistant.md](./story-06-runtime-model-assistant.md) | — |
@@ -148,7 +153,15 @@ local chip, sticky save bar), the gear links to it, the History settings tab is
 removed (read-only `loadSettings` kept for the intel-alert getters), and the
 server `/settings` route serves the built page. **Save round-trip proven live**
 (set→save→reload→disk all 37) + a screenshot; +3 tests, 3 old settings-as-tab
-tests updated in lockstep. Next: **HS-42-03** (welcome/setup route + CLI nudge).
+tests updated in lockstep. **HS-42-03 shipped (2026-06-06)** — the first real
+first-run surface: a Signal `/setup` welcome page (brand-mark hero + dynamic
+headline + 20/22 progress + one bright **primary action** + a "Needs attention"
+list + a first-dictation CTA + a "Ready" grid + Privacy/Presence cards), driven
+by `/api/setup/status`; a `/` **first-run guard** (redirects to `/setup` only
+when `first_run|blocked` — a healthy returning user keeps the dashboard); and a
+**CLI launch nudge**. Proven live (Playwright redirect both ways + stdout
+capture) + a screenshot; +5 tests; suite **2291/16**. Next: **HS-42-04** (guided
+real-app first-dictation — the magic-moment proof).
 
 ## Active risks
 
@@ -173,9 +186,10 @@ tests updated in lockstep. Next: **HS-42-03** (welcome/setup route + CLI nudge).
 
 ## Decisions deferred
 
-- **`/setup` route vs `/` setup-mode** — trigger HS-42-03 — default: `/` renders
-  setup-mode when `needs_attention`, `/settings`-style `/setup` is the addressable
-  full-checklist deep link.
+- ~~**`/setup` route vs `/` setup-mode**~~ — **resolved HS-42-03:** `/setup` is
+  the addressable full-checklist surface; `/` redirects to it only when
+  `first_run|blocked` (a mere WARN does **not** redirect — never nag a healthy
+  returning user).
 - **Where the first-success milestone lives** (a `milestones` table vs reusing an
   existing repo) — trigger HS-42-01 — default: a small durable marker via the
   existing repository pattern.

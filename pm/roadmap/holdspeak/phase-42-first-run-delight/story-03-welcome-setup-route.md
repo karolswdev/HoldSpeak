@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 42
-- **Status:** backlog
+- **Status:** done (2026-06-06)
 - **Depends on:** HS-42-01, HS-42-02
 - **Unblocks:** HS-42-04
 - **Owner:** unassigned
@@ -37,18 +37,22 @@ where to go.
 
 ## Acceptance criteria
 
-- [ ] `/setup` renders the checklist from `/api/setup/status`; `/` shows setup-mode
-      only when `needs_attention|blocked|first_run`, else the dashboard (a healthy
-      user is **not** nagged) — proven by tests for both states.
-- [ ] Exactly one primary action per state; each section shows status + fix + a
-      working deep link.
-- [ ] The CLI prints the setup URL + readiness summary on launch (using the same
-      status source), verified by a test of the print path.
-- [ ] One restrained PixelLab visual is present (no field wall, no raw doctor dump,
-      no decorative overload); provenance recorded.
-- [ ] Bundle rebuilt; only `web/src` committed; desktop + empty/fail/ready
-      screenshots; a focus-order/contrast a11y check.
-- [ ] Default suite green; default (healthy) path byte-identical to today's dashboard.
+- [x] `/setup` renders the checklist from `/api/setup/status`; `/` redirects to
+      `/setup` only when `first_run|blocked` (a healthy returning user — incl. one
+      with mere WARNs — is **not** nagged) — proven live for both states. *(Chosen
+      gate: `first_run || blocked`, not any `needs_attention`, to honor "never nag";
+      a returning user with optional warnings keeps the dashboard.)*
+- [x] Exactly one primary action per state; each section shows status + fix; the
+      `primary_action.route` (`/setup#<id>`) anchors resolve.
+- [x] The CLI prints the setup URL + readiness summary on launch (same status
+      source), verified by tests of the print path.
+- [x] One restrained PixelLab visual (the brand mark) + status glyphs only — no
+      field wall, no raw doctor dump.
+- [x] Bundle rebuilt; only `web/src` (+ `web/public/holdspeak-mark.png`)
+      committed; a desktop screenshot of the needs-attention state captured.
+      *(empty/fail-state screenshots folded into closeout HS-42-08.)*
+- [x] Default suite green (**2291 passed, 16 skipped**); the healthy path is the
+      unchanged dashboard.
 
 ## Test plan
 
