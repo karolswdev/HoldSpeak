@@ -1,0 +1,93 @@
+# Phase 43 — World-Class Onboarding & First-Run UX
+
+**Status:** IN PROGRESS (0/6). Opened 2026-06-06. On direct user feedback that the
+Phase-42 first-run UX, while functional, is **not world-class** — "boring cards
+with an accent on the left", a status checklist instead of a real **wizard**, a
+settings **form dump**, and — worst — desktop presence gated behind an **env
+var** (`HOLDSPEAK_DESKTOP_PRESENCE=1`) with no UI toggle.
+
+**Direction (user):** *Full world-class first-run* + *build your best* (iterate on
+screenshots, no mockup gate). Phase 42 built the **plumbing** (`/api/setup/status`,
+the `first_run` milestone, the live magic-moment, the trust data) — Phase 43 is
+the **world-class UX layer** on those bones, not a rewrite.
+
+**Last updated:** 2026-06-06 (phase opened; design direction pulled from the
+`ui-ux-pro-max` skill — Funnel/progressive disclosure, one thing per step, Step
+N-of-M, Skip+Back user freedom, focus-to-heading on transition, 150–300ms
+ease-out motion + reduced-motion, SVG-not-emoji, minimal Signal glow for the
+reward moment).
+
+## Goal
+
+Replace the boring-checklist first run with a **genuinely delightful, full-screen
+step-by-step wizard**, make **desktop presence a one-click UI toggle** (kill the
+env var as the path), **redesign Settings** (sectioned/searchable/progressive),
+and establish a **richer component language** beyond the one left-accent-card
+motif. World-class, not competent.
+
+## Non-negotiable invariants
+
+- **The Phase-42 plumbing is reused, not rewritten** — the wizard is driven by the
+  same `/api/setup/status` + the `first_run` milestone + the `runtime_activity` WS.
+- **Local-first + byte-identical** with everything off; the default suite makes no
+  real network/LLM call; 0 `_built/` tracked.
+- **Accessibility is not optional** — visible focus, focus-to-heading on step
+  change, `prefers-reduced-motion`, SVG glyphs (no emoji as structural icons),
+  Skip/Back on every step.
+
+## Scope
+
+### In
+- A full-screen **first-run wizard** (`/welcome`) — Welcome → Permissions →
+  Model → First dictation → Presence → Done — distinct visual treatment per step,
+  real motion, a celebratory first-dictation reward (HS-43-01/02/03).
+- **Presence as a config-backed UI toggle** — a `config.presence` field + a real
+  switch that enables it (env var demoted to a power-user override) (HS-43-04).
+- **Settings, redesigned** — sectioned nav, search, Common/Advanced progressive
+  disclosure, inline help (HS-43-05).
+- **Closeout** — docs, dogfood, screenshots, PR (HS-43-06).
+
+### Out
+- New backend intelligence; new dictation features.
+- Removing `/setup` (it stays as the returning-user "needs attention" surface; the
+  wizard is the *first-run* takeover).
+
+## Exit criteria (evidence required)
+- [ ] A full-screen wizard replaces the first-run checklist; one thing per step;
+      Step N-of-M; Skip/Back; focus-to-heading; reduced-motion safe.
+- [ ] The first-dictation step is a real **reward** moment (celebration, the
+      transcript revealed), reduced-motion safe.
+- [ ] Desktop presence is a **UI toggle** (config-backed); the env var is no longer
+      the only path; proven by a test + a screenshot.
+- [ ] Settings is sectioned/searchable/progressive — no single-scroll form dump.
+- [ ] A richer component language is visible (distinct per-step treatments, not the
+      one left-accent card).
+- [ ] All optional off ⇒ local-first + byte-identical; suite green; 0 `_built/`.
+- [ ] Docs + dogfood + `final-summary.md`; PR opened/merged.
+
+## Story status
+
+| ID | Story | Status | Story file | Evidence |
+|---|---|---|---|---|
+| HS-43-01 | Wizard shell + motion + a11y (Welcome) | done | [story-01-wizard-shell.md](./story-01-wizard-shell.md) | [evidence-story-01.md](./evidence-story-01.md) |
+| HS-43-02 | Permissions + Model steps | backlog | story-02-permissions-model.md | — |
+| HS-43-03 | First-dictation reward + Done | backlog | story-03-first-dictation-reward.md | — |
+| HS-43-04 | Presence as a UI toggle (kill the env var) | backlog | story-04-presence-toggle.md | — |
+| HS-43-05 | Settings redesign | backlog | story-05-settings-redesign.md | — |
+| HS-43-06 | Closeout (docs + dogfood + PR) | backlog | story-06-closeout.md | — |
+
+## Where we are
+
+**Phase opened 2026-06-06**, branched `phase-43-world-class-onboarding` off `main`
+(post Phase-42 merge, PR #20). Design direction taken from the `ui-ux-pro-max`
+skill. **HS-43-01** (the wizard shell — full-screen takeover, the step-progress
+rail, directional motion, focus management, and the Welcome step) is the entry
+point and the first visible proof of the new aesthetic.
+
+## Decisions made (this phase)
+- **Full world-class first-run** in one phase (user) + **build-your-best**, iterate
+  on screenshots (no mockup-approval gate).
+- The wizard is a **separate full-screen route** (`/welcome`), not a re-skin of the
+  `/setup` dashboard — `/setup` stays as the returning-user status surface.
+- Presence becomes **config-backed** with a UI toggle; the env var is demoted to an
+  override, not removed (power users + headless).

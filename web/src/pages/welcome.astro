@@ -1,0 +1,266 @@
+---
+// HS-43-01: the first-run wizard — a full-screen takeover (NOT the AppLayout
+// dashboard shell). Funnel/progressive disclosure, one step at a time, driven by
+// the Phase-42 plumbing (/api/setup/status + the runtime_activity WS). Distinct
+// visual treatment per step; directional motion; focus moves to the step heading.
+import "../styles/global.css";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Welcome to HoldSpeak</title>
+    <link rel="icon" type="image/svg+xml" href="/_built/favicon.svg" />
+  </head>
+  <body class="wz-body">
+    <div class="wz" x-data="welcomeApp()" x-init="init()" :class="dir === 'back' ? 'dir-back' : 'dir-fwd'">
+      <a class="wz-exit" href="/" title="Skip setup and open HoldSpeak">Skip&nbsp;setup&nbsp;→</a>
+
+      <!-- Progress rail -->
+      <aside class="wz-rail" aria-hidden="true">
+        <div class="wz-brand"><span class="wz-brand-key"></span> HoldSpeak</div>
+        <ol class="wz-steps">
+          <template x-for="(s, idx) in steps" :key="s.id">
+            <li class="wz-step" :class="{ 'is-active': idx === i, 'is-done': isDone(idx) }">
+              <span class="wz-step-dot">
+                <svg x-show="isDone(idx)" x-cloak width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+              </span>
+              <span class="wz-step-label" x-text="s.label"></span>
+            </li>
+          </template>
+        </ol>
+        <div class="wz-rail-foot">Local · 127.0.0.1 · nothing leaves your machine</div>
+      </aside>
+
+      <!-- Stage -->
+      <main class="wz-stage" id="wz-main">
+        <!-- mobile progress -->
+        <div class="wz-mobile-progress" aria-hidden="true">
+          <div class="wz-mobile-bar"><span :style="`width:${progressPct}%`"></span></div>
+          <span class="wz-mobile-count" x-text="`${i + 1} / ${steps.length}`"></span>
+        </div>
+
+        <div class="wz-panels">
+          <!-- 1 · Welcome -->
+          <section class="stp stp-welcome" x-show="isActive('welcome')" :class="{ 'is-active': isActive('welcome') }">
+            <div class="welcome-glyph" aria-hidden="true">
+              <span class="wave"></span><span class="wave"></span><span class="wave"></span><span class="wave"></span><span class="wave"></span>
+            </div>
+            <p class="stp-eyebrow">Welcome</p>
+            <h1 class="welcome-h" tabindex="-1" x-ref="heading_welcome">Hold a key.<br/>Speak.<br/><span class="acc">Watch it type.</span></h1>
+            <p class="welcome-sub">HoldSpeak turns your voice into text in any app — privately, on this machine. Let's get you to your first words in under a minute.</p>
+          </section>
+
+          <!-- 2 · Permissions -->
+          <section class="stp stp-perms" x-show="isActive('permissions')" :class="{ 'is-active': isActive('permissions') }">
+            <p class="stp-eyebrow">Step 2 · System check</p>
+            <h2 class="stp-h" tabindex="-1" x-ref="heading_permissions">Let's make sure your Mac is ready</h2>
+            <p class="stp-lead">HoldSpeak needs a couple of things from the OS. We check them live — grant what's missing and they'll turn green here.</p>
+            <ul class="perm-tiles">
+              <template x-for="t in [
+                {id:'microphone', name:'Microphone', why:'to hear you'},
+                {id:'text-injection', name:'Text insertion', why:'to type into other apps'},
+                {id:'global-hotkey', name:'Hotkey', why:'to start on a key-hold'}
+              ]" :key="t.id">
+                <li class="perm-tile" :class="`st-${sectionStatus(t.id)}`">
+                  <span class="perm-state" aria-hidden="true">
+                    <svg x-show="sectionStatus(t.id)==='pass'" x-cloak width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+                    <svg x-show="sectionStatus(t.id)!=='pass'" x-cloak class="spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.6"/></svg>
+                  </span>
+                  <div class="perm-text">
+                    <span class="perm-name" x-text="t.name"></span>
+                    <span class="perm-why" x-text="sectionStatus(t.id)==='pass' ? 'Ready' : (section(t.id)?.fix || `Needed ${t.why}`)"></span>
+                  </div>
+                </li>
+              </template>
+            </ul>
+          </section>
+
+          <!-- 3 · Model (deepened in HS-43-02) -->
+          <section class="stp stp-model" x-show="isActive('model')" :class="{ 'is-active': isActive('model') }">
+            <p class="stp-eyebrow">Step 3 · Intelligence</p>
+            <h2 class="stp-h" tabindex="-1" x-ref="heading_model">How smart should it be?</h2>
+            <p class="stp-lead">Basic typing works with nothing extra. Add a model and HoldSpeak rewrites rough speech into clean, project-aware text. You can change this anytime.</p>
+            <p class="stp-placeholder">Model picker — built in HS-43-02.</p>
+          </section>
+
+          <!-- 4 · First dictation (the reward — deepened in HS-43-03) -->
+          <section class="stp stp-dictation" x-show="isActive('dictation')" :class="{ 'is-active': isActive('dictation') }">
+            <p class="stp-eyebrow">Step 4 · The moment</p>
+            <h2 class="stp-h" tabindex="-1" x-ref="heading_dictation">Try your first dictation</h2>
+            <p class="stp-lead">Click into any text field, hold your hotkey, say a sentence, release. We'll confirm it right here.</p>
+            <p class="stp-placeholder">The live reward moment — built in HS-43-03.</p>
+          </section>
+
+          <!-- 5 · Presence (real toggle wired in HS-43-04) -->
+          <section class="stp stp-presence" x-show="isActive('presence')" :class="{ 'is-active': isActive('presence') }">
+            <p class="stp-eyebrow">Step 5 · On your desktop</p>
+            <h2 class="stp-h" tabindex="-1" x-ref="heading_presence">See it working while you type elsewhere</h2>
+            <p class="stp-lead">An optional ambient HUD shows what HoldSpeak is doing — and never steals your keyboard.</p>
+            <p class="stp-placeholder">A real one-click toggle (no env var) — built in HS-43-04.</p>
+          </section>
+
+          <!-- 6 · Done -->
+          <section class="stp stp-done" x-show="isActive('done')" :class="{ 'is-active': isActive('done') }">
+            <div class="done-burst" aria-hidden="true">
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+            </div>
+            <p class="stp-eyebrow">You're set</p>
+            <h2 class="stp-h" tabindex="-1" x-ref="heading_done">That's it — HoldSpeak is yours</h2>
+            <p class="stp-lead">Hold your hotkey anywhere and start talking. Everything you say stays on this machine.</p>
+          </section>
+        </div>
+
+        <!-- Nav -->
+        <nav class="wz-nav" aria-label="Wizard navigation">
+          <button class="wz-btn ghost" type="button" @click="back()" x-show="!atFirst" x-cloak>Back</button>
+          <span class="wz-nav-count" x-text="`Step ${i + 1} of ${steps.length}`"></span>
+          <button class="wz-link" type="button" @click="skip()" x-show="step.skippable && !atLast" x-cloak>Skip</button>
+          <button class="wz-btn primary" type="button" @click="next()" x-text="primaryLabel()"></button>
+        </nav>
+      </main>
+    </div>
+
+    <script>
+      import Alpine from "alpinejs";
+      import factorySource from "../scripts/welcome-app.js?raw";
+      const fn = new Function(factorySource + "; return welcomeApp;");
+      window.welcomeApp = fn();
+      window.Alpine = Alpine;
+      Alpine.start();
+    </script>
+
+    <style is:global>
+      .wz-body { margin: 0; background: var(--bg, #0b0d10); color: var(--text); }
+    </style>
+
+    <style>
+      [x-cloak] { display: none !important; }
+
+      .wz {
+        position: relative;
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        min-height: 100dvh;
+        background:
+          radial-gradient(80% 60% at 12% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
+          radial-gradient(70% 50% at 100% 100%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 55%),
+          var(--bg, #0b0d10);
+      }
+      .wz-exit {
+        position: absolute; top: var(--space-5); right: var(--space-6); z-index: 30;
+        font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--text-faint);
+        text-decoration: none; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm);
+      }
+      .wz-exit:hover { color: var(--text-muted); }
+
+      /* ── Rail ── */
+      .wz-rail {
+        display: flex; flex-direction: column; gap: var(--space-7);
+        padding: var(--space-7) var(--space-6);
+        border-right: 1px solid var(--border-subtle);
+        background: color-mix(in srgb, var(--surface-1) 50%, transparent);
+        backdrop-filter: blur(8px);
+      }
+      .wz-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-display); font-weight: 700; color: var(--text); }
+      .wz-brand-key { width: 16px; height: 16px; border-radius: 4px; background: var(--accent); box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 60%, transparent); }
+      .wz-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); position: relative; }
+      .wz-steps::before { content: ""; position: absolute; left: 11px; top: 16px; bottom: 16px; width: 2px; background: var(--border-subtle); }
+      .wz-step { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; position: relative; z-index: 1; }
+      .wz-step-dot {
+        flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+        background: var(--surface-2); border: 2px solid var(--border-strong); color: var(--bg);
+        transition: background var(--duration-medium) var(--ease-standard), border-color var(--duration-medium) var(--ease-standard), box-shadow var(--duration-medium) var(--ease-standard);
+      }
+      .wz-step-label { font-size: var(--font-size-sm); color: var(--text-faint); transition: color var(--duration-medium) var(--ease-standard); }
+      .wz-step.is-done .wz-step-dot { background: var(--ok); border-color: var(--ok); }
+      .wz-step.is-done .wz-step-label { color: var(--text-muted); }
+      .wz-step.is-active .wz-step-dot { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-tint), 0 0 16px color-mix(in srgb, var(--accent) 55%, transparent); }
+      .wz-step.is-active .wz-step-label { color: var(--text); font-weight: 600; }
+      .wz-rail-foot { margin-top: auto; font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); line-height: var(--line-height-relaxed); }
+
+      /* ── Stage ── */
+      .wz-stage { position: relative; display: flex; flex-direction: column; padding: clamp(var(--space-6), 6vw, var(--space-8)) clamp(var(--space-5), 7vw, 120px); }
+      .wz-mobile-progress { display: none; }
+      .wz-panels { position: relative; flex: 1; min-height: 420px; display: flex; }
+
+      .stp {
+        position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; max-width: 620px;
+        opacity: 0; transform: translateX(28px); pointer-events: none;
+        transition: opacity .3s var(--ease-decelerate), transform .3s var(--ease-decelerate);
+      }
+      .dir-back .stp { transform: translateX(-28px); }
+      .stp.is-active { opacity: 1; transform: none; pointer-events: auto; }
+      @media (prefers-reduced-motion: reduce) { .stp { transition: opacity .12s linear; transform: none; } .dir-back .stp { transform: none; } }
+
+      .stp-eyebrow { font-family: var(--font-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-eyebrow); text-transform: uppercase; color: var(--accent); margin: 0 0 var(--space-3); }
+      .stp-h { font-family: var(--font-display); font-size: clamp(var(--font-size-2xl), 4vw, var(--font-size-3xl)); font-weight: 700; color: var(--text); margin: 0 0 var(--space-4); line-height: var(--line-height-tight); outline: none; }
+      .stp-lead { color: var(--text-muted); font-size: var(--font-size-md); line-height: var(--line-height-relaxed); margin: 0; max-width: 52ch; }
+      .stp-placeholder { margin-top: var(--space-5); padding: var(--space-4); border: 1px dashed var(--border-strong); border-radius: var(--radius-md); color: var(--text-faint); font-family: var(--font-mono); font-size: var(--font-size-xs); }
+
+      /* Welcome */
+      .welcome-glyph { display: flex; align-items: flex-end; gap: 6px; height: 64px; margin-bottom: var(--space-5); }
+      .welcome-glyph .wave { width: 8px; border-radius: 4px; background: var(--accent); box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 50%, transparent); animation: wz-wave 1.4s ease-in-out infinite; }
+      .welcome-glyph .wave:nth-child(1){ height: 24px; animation-delay: 0s; }
+      .welcome-glyph .wave:nth-child(2){ height: 48px; animation-delay: .12s; }
+      .welcome-glyph .wave:nth-child(3){ height: 64px; animation-delay: .24s; }
+      .welcome-glyph .wave:nth-child(4){ height: 40px; animation-delay: .36s; }
+      .welcome-glyph .wave:nth-child(5){ height: 20px; animation-delay: .48s; }
+      @keyframes wz-wave { 0%,100% { transform: scaleY(0.5); opacity: .6; } 50% { transform: scaleY(1); opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { .welcome-glyph .wave { animation: none; } }
+      .welcome-h { font-family: var(--font-display); font-weight: 700; font-size: clamp(2.4rem, 6vw, 4.2rem); line-height: 1.02; letter-spacing: -0.02em; margin: 0 0 var(--space-5); color: var(--text); outline: none; }
+      .welcome-h .acc { color: var(--accent); text-shadow: 0 0 28px color-mix(in srgb, var(--accent) 40%, transparent); }
+      .welcome-sub { color: var(--text-muted); font-size: var(--font-size-lg); line-height: var(--line-height-relaxed); max-width: 46ch; margin: 0; }
+
+      /* Permissions */
+      .perm-tiles { list-style: none; margin: var(--space-6) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); max-width: 540px; }
+      .perm-tile {
+        display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4) var(--space-5);
+        border-radius: var(--radius-lg); background: var(--surface-2); border: 1px solid var(--border-subtle);
+        transition: border-color var(--duration-medium) var(--ease-standard), background var(--duration-medium) var(--ease-standard);
+      }
+      .perm-tile.st-pass { border-color: color-mix(in srgb, var(--ok) 55%, transparent); background: color-mix(in srgb, var(--ok) 8%, var(--surface-2)); }
+      .perm-state { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-3); color: var(--text-faint); }
+      .perm-tile.st-pass .perm-state { background: var(--ok); color: var(--bg, #0b0d10); }
+      .perm-tile.st-fail .perm-state { color: var(--danger); }
+      .perm-state .spin { animation: wz-spin 1s linear infinite; }
+      @keyframes wz-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { .perm-state .spin { animation: none; } }
+      .perm-text { display: flex; flex-direction: column; gap: 2px; }
+      .perm-name { font-weight: 600; color: var(--text); }
+      .perm-why { font-size: var(--font-size-sm); color: var(--text-muted); }
+
+      /* Done */
+      .done-burst { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; margin-bottom: var(--space-5); color: var(--bg, #0b0d10); background: var(--ok); box-shadow: 0 0 0 10px color-mix(in srgb, var(--ok) 16%, transparent), 0 0 40px color-mix(in srgb, var(--ok) 45%, transparent); animation: wz-pop .5s var(--ease-emphasized) both; }
+      @keyframes wz-pop { 0% { transform: scale(.4); opacity: 0; } 60% { transform: scale(1.12); } 100% { transform: scale(1); opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { .done-burst { animation: none; } }
+
+      /* ── Nav ── */
+      .wz-nav { display: flex; align-items: center; gap: var(--space-4); padding-top: var(--space-6); margin-top: var(--space-5); border-top: 1px solid var(--border-subtle); }
+      .wz-nav-count { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--text-faint); }
+      .wz-link { margin-left: auto; background: none; border: none; color: var(--text-muted); font-size: var(--font-size-sm); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+      .wz-link:hover { color: var(--text); }
+      .wz-btn { font-family: var(--font-ui); font-weight: 600; font-size: var(--font-size-md); padding: var(--space-3) var(--space-6); border-radius: var(--radius-md); cursor: pointer; border: 1px solid transparent; transition: transform var(--duration-short) var(--ease-standard), box-shadow var(--duration-short) var(--ease-standard), background var(--duration-short) var(--ease-standard); }
+      .wz-btn.ghost { background: transparent; border-color: var(--border-strong); color: var(--text-muted); }
+      .wz-btn.ghost:hover { color: var(--text); border-color: var(--text-faint); }
+      .wz-btn.primary { background: var(--accent); color: var(--text-on-accent, #0b0d10); box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 35%, transparent); }
+      .wz-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 10px 28px color-mix(in srgb, var(--accent) 45%, transparent); }
+      .wz-btn:not(.wz-link) ~ .wz-link { margin-left: auto; }
+      .wz-btn:focus-visible, .wz-link:focus-visible, .wz-exit:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: var(--focus-outline-offset); }
+      /* when Back is hidden, push counter from the left */
+      .wz-nav > .wz-nav-count:first-child { margin-left: 0; }
+
+      @media (max-width: 860px) {
+        .wz { grid-template-columns: 1fr; }
+        .wz-rail { display: none; }
+        .wz-mobile-progress { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-6); }
+        .wz-mobile-bar { flex: 1; height: 6px; border-radius: var(--radius-pill); background: var(--surface-3); overflow: hidden; }
+        .wz-mobile-bar span { display: block; height: 100%; background: var(--accent); border-radius: var(--radius-pill); transition: width .3s var(--ease-emphasized); }
+        .wz-mobile-count { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--text-faint); }
+        .wz-panels { min-height: 360px; }
+      }
+    </style>
+  </body>
+</html>
