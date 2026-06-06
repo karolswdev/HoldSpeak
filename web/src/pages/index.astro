@@ -125,6 +125,36 @@ import HoldMark from "../components/HoldMark.astro";
       </div>
     </section>
 
+    {/* HS-44-01: idle "command center" home — warm daily-action cards (matching
+        the Phase-43 wizard), shown only when no meeting is live so the active
+        meeting view keeps the screen. */}
+    <section class="home-actions" x-show="!meetingActive && !stopInProgress" x-cloak aria-label="Quick actions">
+      <a class="home-card" href="/dictation">
+        <span class="home-card-glyph" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg></span>
+        <span class="home-card-t">Dictation cockpit</span>
+        <span class="home-card-d">Tune intelligent typing — blocks, project context, runtime</span>
+        <span class="home-card-go" aria-hidden="true">→</span>
+      </a>
+      <a class="home-card" href="/history">
+        <span class="home-card-glyph" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></span>
+        <span class="home-card-t">Meeting history</span>
+        <span class="home-card-d">Past meetings, transcripts, artifacts &amp; exports</span>
+        <span class="home-card-go" aria-hidden="true">→</span>
+      </a>
+      <a class="home-card" href="/activity">
+        <span class="home-card-glyph" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+        <span class="home-card-t">Local activity</span>
+        <span class="home-card-d">Your private work-context ledger &amp; connectors</span>
+        <span class="home-card-go" aria-hidden="true">→</span>
+      </a>
+      <a class="home-card" href="/settings">
+        <span class="home-card-glyph" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+        <span class="home-card-t">Settings</span>
+        <span class="home-card-d">Every global knob — sectioned &amp; searchable</span>
+        <span class="home-card-go" aria-hidden="true">→</span>
+      </a>
+    </section>
+
     {/* HS-13-08: pre-meeting briefing surface. Renders the
         meeting_context pipeline's deterministic markdown when a
         briefing exists, and hides during active meetings so the
@@ -567,6 +597,69 @@ import HoldMark from "../components/HoldMark.astro";
     flex-direction: column;
     gap: var(--space-5);
   }
+
+  /* HS-44-01: a subtle accent glow behind the home, matching the wizard. */
+  .runtime::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: 360px;
+    pointer-events: none;
+    z-index: -1;
+    background: radial-gradient(60% 100% at 50% 0%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%);
+  }
+
+  /* HS-44-01: idle "command center" home cards. */
+  .home-actions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+  .home-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-4) var(--space-4) var(--space-5);
+    border-radius: var(--radius-lg);
+    background: var(--surface-2);
+    border: 1px solid var(--border-subtle);
+    text-decoration: none;
+    overflow: hidden;
+    transition: border-color var(--duration-short) var(--ease-standard),
+      transform var(--duration-short) var(--ease-standard),
+      box-shadow var(--duration-short) var(--ease-standard);
+  }
+  .home-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+  .home-card:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .home-card-glyph {
+    width: 38px; height: 38px;
+    border-radius: var(--radius-md);
+    display: grid; place-items: center;
+    background: var(--accent-tint); color: var(--accent);
+    margin-bottom: var(--space-2);
+  }
+  .home-card-t { font-family: var(--font-display); font-weight: 600; color: var(--text); font-size: var(--font-size-md); }
+  .home-card-d { color: var(--text-muted); font-size: var(--font-size-xs); line-height: var(--line-height-relaxed); }
+  .home-card-go {
+    position: absolute; top: var(--space-4); right: var(--space-4);
+    color: var(--text-faint); font-size: var(--font-size-lg);
+    transition: transform var(--duration-short) var(--ease-standard), color var(--duration-short) var(--ease-standard);
+  }
+  .home-card:hover .home-card-go { color: var(--accent); transform: translateX(3px); }
+  @media (prefers-reduced-motion: reduce) {
+    .home-card:hover { transform: none; }
+    .home-card:hover .home-card-go { transform: none; }
+  }
+  @media (max-width: 900px) { .home-actions { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { .home-actions { grid-template-columns: 1fr; } }
 
   /* === Hero =============================================== */
   /* HS-12-02 hero: tighter density, Workbench window grammar
