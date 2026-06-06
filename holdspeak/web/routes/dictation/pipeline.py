@@ -342,4 +342,130 @@ def build_pipeline_router(
         store.clear()
         return JSONResponse({"cleared": True, "size": len(store)})
 
+    # ── HS-45-02: the dictation journal (review + curate) ─────────────────
+    def _journal_repo():
+        """The durable journal repository behind the recorder, or None."""
+        recorder = ctx.journal
+        return getattr(recorder, "repository", None) if recorder is not None else None
+
+    @router.get("/api/dictation/journal")
+    async def api_dictation_journal_list(
+        limit: int = 200, source: Optional[str] = None
+    ) -> Any:
+        """List journal entries newest-first (HS-45-02).
+
+        Reports the toggle + retention from config so the UI can show the
+        local-only trust statement. With no durable repo (a bare server) the
+        list is empty — never an error.
+        """
+        from ....config import Config
+
+        cfg = Config.load().dictation
+        repo = _journal_repo()
+        clean_source = source if source in ("dictation", "dry_run") else None
+        items = (
+            [_journal_to_dict(r) for r in repo.recent(limit=limit, source=clean_source)]
+            if repo is not None
+            else []
+        )
+        return JSONResponse(
+            {
+                "enabled": bool(getattr(cfg.pipeline, "journal_enabled", True)),
+                "retention": int(getattr(cfg.pipeline, "journal_retention", 500)),
+                "count": repo.count() if repo is not None else 0,
+                "items": items,
+            }
+        )
+
+    @router.delete("/api/dictation/journal/{entry_id}")
+    async def api_dictation_journal_delete(entry_id: int) -> Any:
+        """Delete one journal entry by id (HS-45-02)."""
+        repo = _journal_repo()
+        if repo is None:
+            return JSONResponse({"error": "journal unavailable"}, status_code=404)
+        if repo.delete(entry_id):
+            return JSONResponse({"removed": True, "count": repo.count()})
+        return JSONResponse({"removed": False, "error": "entry not found"}, status_code=404)
+
+    @router.delete("/api/dictation/journal")
+    async def api_dictation_journal_clear() -> Any:
+        """Wipe the whole journal (HS-45-02 — the one-click local wipe)."""
+        repo = _journal_repo()
+        if repo is None:
+            return JSONResponse({"error": "journal unavailable"}, status_code=404)
+        removed = repo.clear()
+        return JSONResponse({"cleared": True, "removed": removed, "count": repo.count()})
+
+    @router.post("/api/dictation/journal/{entry_id}/correct")
+    async def api_dictation_journal_correct(entry_id: int, payload: dict[str, Any]) -> Any:
+        """HS-45-03: correct a journaled run in the moment — and teach.
+
+        Records a correction (reusing the Phase-40 `CorrectionStore`, so future
+        routing is nudged) keyed on the entry's own transcript, then flips the
+        journal entry's `corrected` flag and links the correction. The teach
+        path is gist-only + secret-filtered by the store, exactly like the
+        Memory tab.
+        """
+        from ....plugins.dictation.corrections import CORRECTION_KINDS
+
+        repo = _journal_repo()
+        store = ctx.corrections
+        if repo is None:
+            return JSONResponse({"error": "journal unavailable"}, status_code=404)
+        if store is None:
+            return JSONResponse({"error": "correction store unavailable"}, status_code=503)
+        kind = payload.get("kind") if isinstance(payload, dict) else None
+        value = payload.get("value") if isinstance(payload, dict) else None
+        if kind not in CORRECTION_KINDS:
+            return JSONResponse(
+                {"error": f"kind must be one of {list(CORRECTION_KINDS)}"}, status_code=400
+            )
+        if not isinstance(value, str) or not value.strip():
+            return JSONResponse({"error": "value must be a non-empty string"}, status_code=400)
+        entry = repo.get(entry_id)
+        if entry is None:
+            return JSONResponse({"error": "entry not found"}, status_code=404)
+        # Teach from the entry's own transcript (the gist the correction applies
+        # to). The store secret-filters + dedups; a secret-like transcript is a
+        # no-op teach but the entry is still flagged corrected.
+        recorded = store.record(kind, entry.transcript, value)
+        correction_id = None
+        try:
+            items = store.list_for_display()
+            if items and items[0].get("id") is not None:
+                correction_id = int(items[0]["id"])
+        except Exception:  # pragma: no cover - id linkage is best-effort
+            correction_id = None
+        repo.mark_corrected(entry_id, correction_id=correction_id)
+        return JSONResponse(
+            {
+                "corrected": True,
+                "taught": bool(recorded),
+                "correction_id": correction_id,
+                "size": len(store),
+            }
+        )
+
     return router
+
+
+def _journal_to_dict(record: Any) -> dict[str, Any]:
+    """Serialize a `DictationJournalRecord` for the Journal UI (HS-45-02)."""
+    return {
+        "id": record.id,
+        "created_at": record.created_at,
+        "source": record.source,
+        "transcript": record.transcript,
+        "final_text": record.final_text,
+        "project_root": record.project_root,
+        "intent": record.intent,
+        "block_id": record.block_id,
+        "target_profile": record.target_profile,
+        "stage_ms": record.stage_ms,
+        "total_ms": record.total_ms,
+        "rewrite_pass_ms": record.rewrite_pass_ms,
+        "confidence": record.confidence,
+        "warnings": record.warnings,
+        "corrected": record.corrected,
+        "correction_id": record.correction_id,
+    }

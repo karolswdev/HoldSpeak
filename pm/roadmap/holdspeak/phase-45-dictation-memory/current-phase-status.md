@@ -1,16 +1,19 @@
 # Phase 45 — Dictation Memory & the Moment of Truth
 
-**Status:** IN PROGRESS (1/6). Opened 2026-06-06 on user direction ("think really
+**Status:** IN PROGRESS (2/6). Opened 2026-06-06 on user direction ("think really
 hard around the experience … scaffold a phase that will be oh-so-meaningful")
 after a grounded look at how HoldSpeak feels to live with.
 
-**Last updated:** 2026-06-06 (**HS-45-01 — the dictation journal persistence
-spine — DONE**: `dictation_journal` table + `DictationJournalRepository` + a
-side-channel `DictationJournalRecorder` wired into both the live + dry-run paths,
-config toggle [default ON] + retention cap + secret redaction. Proven by 13 unit
-+ 2 integration tests AND a **true end-to-end run against `.43`** [real pipeline
-→ real LLM → real DB row: a 446-char ramble journaled with routing/target/
-per-stage latency]. Suite 2343/17; journal-off ⇒ byte-identical).
+**Last updated:** 2026-06-06 (**HS-45-02 — the Journal review timeline — DONE**:
+a Journal tab on `/dictation` over `GET/DELETE /api/dictation/journal` — an
+elevated said→typed timeline with source chips, block/target badges, a
+**per-utterance latency strip** [the black box, opened], search + source/warning/
+corrected filters, copy, per-entry delete + clear, a first-class local-only
+trust statement, a warm empty state, and the Phase-44 premium bar. 8 integration
+tests + a live `journal_timeline.png`; route-table guard 30→34; suite 2351/17; 0
+`_built/`. Prior: **HS-45-01 — the persistence spine — DONE** [`dictation_journal`
+table + repository + side-channel recorder, both paths, proven by a true e2e
+against `.43`]).
 
 ## The thesis — why this phase
 
@@ -115,7 +118,7 @@ trusted, learning companion — without changing what gets typed.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-45-01 | Dictation journal — the persistence spine | done | [story-01-journal-persistence.md](./story-01-journal-persistence.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-45-02 | The Journal — a reviewable utterance timeline | backlog | [story-02-journal-surface.md](./story-02-journal-surface.md) | — |
+| HS-45-02 | The Journal — a reviewable utterance timeline | done | [story-02-journal-surface.md](./story-02-journal-surface.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-45-03 | The moment of truth — correct in flow, and it teaches | backlog | [story-03-moment-of-truth.md](./story-03-moment-of-truth.md) | — |
 | HS-45-04 | Replay — prove it learned | backlog | [story-04-replay.md](./story-04-replay.md) | — |
 | HS-45-05 | Docs — the dictation journal & its privacy posture | backlog | [story-05-docs.md](./story-05-docs.md) | — |
@@ -123,16 +126,17 @@ trusted, learning companion — without changing what gets typed.
 
 ## Where we are
 
-**HS-45-01 (the spine) is DONE.** The journal table + `DictationJournalRepository`
-exist; a `DictationJournalRecorder` writes one row per run (best-effort,
-secret-redacted) at the same post-run seam telemetry uses, wired into both the
-live runtime (`source='dictation'`) and the dry-run path (`source='dry_run'`).
-Journaling defaults ON (local), is retention-capped, and is a pure side-channel
-(off ⇒ byte-identical, proven). It was exercised end-to-end against the live
-`.43` endpoint (real pipeline → real DB row). Next up is the pair **HS-45-02**
-(the review surface on `/dictation`) and **HS-45-03** (correct-in-the-moment,
-which sets `corrected`/`correction_id` via `mark_corrected`), both reading this
-spine. Sequence: 01 ✅ → (02, 03) → 04 → 05 → 06.
+**HS-45-01 (spine) + HS-45-02 (review) are DONE.** The journal table + repository
++ side-channel recorder write one row per run (both paths, secret-redacted,
+retention-capped, off ⇒ byte-identical), and the **Journal** tab on `/dictation`
+makes those rows reviewable — a said→typed timeline with a per-utterance latency
+strip, search/filters, copy, delete/clear, and a first-class local-only trust
+statement, at the Phase-44 bar. The journal API (`GET/DELETE /api/dictation/
+journal`) plus the **dormant** `POST …/journal/{id}/correct` plumbing are wired.
+Next: **HS-45-03** (correct-in-the-moment — activate the correct-attach flow from
+the dry-run result panel; set `corrected`/`correction_id` via `mark_corrected`;
+focus-safe; nudge proven), then HS-45-04 replay. Sequence: 01 ✅ → 02 ✅ → 03 →
+04 → 05 → 06.
 
 > **Note:** the `openai` package was installed into the dev venv to run the real
 > `.43` e2e (it's the optional `dictation-openai` extra, not a new hard dep).

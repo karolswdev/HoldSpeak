@@ -396,6 +396,7 @@ function activateSection(name) {
     hooks: "view-hooks",
     runtime: "view-runtime",
     memory: "view-memory",
+    journal: "view-journal",
     "dry-run": "view-dry-run",
   };
   for (const [key, id] of Object.entries(views)) {
@@ -414,6 +415,7 @@ function activateSection(name) {
   if (name === "hooks") loadAgentHooks();
   if (name === "runtime") loadRuntime();
   if (name === "memory") loadMemory();
+  if (name === "journal") loadJournal();
 }
 
 // ── Readiness snapshot ──────────────────────────────────────────────
@@ -1333,6 +1335,171 @@ function relativeTime(iso) {
 }
 
 // ── Dry-run preview ────────────────────────────────────────────────
+// ── Journal (HS-45-02) ───────────────────────────────────────────────
+const journalState = { items: [], retention: 500, enabled: true };
+
+async function loadJournal() {
+  const meta = document.getElementById("journal-meta");
+  meta.classList.remove("warn", "error");
+  meta.textContent = "Loading…";
+  try {
+    const data = await api("GET", "/api/dictation/journal?limit=200");
+    journalState.items = Array.isArray(data.items) ? data.items : [];
+    journalState.retention = Number(data.retention) || 500;
+    journalState.enabled = !!data.enabled;
+    const trust = document.getElementById("journal-trust");
+    if (trust) trust.classList.toggle("is-off", !data.enabled);
+    meta.classList.toggle("warn", !data.enabled);
+    meta.innerHTML = data.enabled
+      ? `journaling: <strong>on</strong>  ·  stored: <strong>${data.count ?? 0}</strong>  ·  keeps the most recent <strong>${journalState.retention}</strong>`
+      : `journaling: <strong>off</strong> — new dictations are not being recorded. Turn it on under <strong>Runtime → Copilot depth</strong>.`;
+    renderJournal();
+  } catch (e) {
+    meta.classList.add("error");
+    meta.textContent = e.message;
+  }
+}
+
+function journalMatches(item) {
+  const q = (document.getElementById("journal-search")?.value || "").trim().toLowerCase();
+  const src = document.getElementById("journal-filter-source")?.value || "";
+  const warnOnly = !!document.getElementById("journal-filter-warnings")?.checked;
+  const corrOnly = !!document.getElementById("journal-filter-corrected")?.checked;
+  if (src && item.source !== src) return false;
+  if (warnOnly && !(item.warnings || []).length) return false;
+  if (corrOnly && !item.corrected) return false;
+  if (q) {
+    const hay = `${item.transcript || ""}\n${item.final_text || ""}`.toLowerCase();
+    if (!hay.includes(q)) return false;
+  }
+  return true;
+}
+
+function renderJournal() {
+  const list = document.getElementById("journal-list");
+  if (!list) return;
+  const items = journalState.items.filter(journalMatches);
+  if (!journalState.items.length) {
+    list.innerHTML = `<div class="journal-empty">
+      <div class="journal-empty-glyph" aria-hidden="true">🎙️</div>
+      <p class="journal-empty-head">Your dictations will appear here.</p>
+      <p class="journal-empty-sub">Speak — or run a <strong>Dry-run</strong> — and each one is remembered: what you said, where it routed, and how long it took.</p>
+    </div>`;
+    return;
+  }
+  if (!items.length) {
+    list.innerHTML = `<div class="journal-empty"><p class="journal-empty-sub">No entries match your search or filters.</p></div>`;
+    return;
+  }
+  list.innerHTML = items.map(renderJournalEntry).join("");
+  list.querySelectorAll("button[data-journal-del]").forEach((btn) =>
+    btn.addEventListener("click", () => deleteJournalEntry(btn.dataset.journalDel))
+  );
+}
+
+function renderLatencyStrip(item) {
+  const stages = item.stage_ms || {};
+  const ids = Object.keys(stages);
+  const total = Number(item.total_ms) || ids.reduce((s, k) => s + (Number(stages[k]) || 0), 0);
+  if (!ids.length || total <= 0) {
+    return `<div class="lat-strip lat-strip--empty" title="no per-stage timing recorded">
+      <span class="lat-total">${total ? `${total.toFixed(0)} ms` : "—"}</span>
+    </div>`;
+  }
+  const segs = ids
+    .map((sid) => {
+      const ms = Number(stages[sid]) || 0;
+      const pct = Math.max(2, Math.round((ms / total) * 100));
+      const cls = sid.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      return `<span class="lat-seg lat-${escapeAttr(cls)}" style="width:${pct}%" title="${escapeAttr(sid)} · ${ms.toFixed(0)} ms">
+        <span class="lat-seg-label">${escapeHtml(sid)} ${ms.toFixed(0)}ms</span>
+      </span>`;
+    })
+    .join("");
+  return `<div class="lat-strip" role="img" aria-label="per-stage latency, total ${total.toFixed(0)} milliseconds">
+    <div class="lat-bar">${segs}</div>
+    <span class="lat-total">${total.toFixed(0)} ms total</span>
+  </div>`;
+}
+
+function renderJournalEntry(item) {
+  const spoken = item.source === "dictation";
+  const sourceChip = `<span class="jr-source ${spoken ? "src-spoken" : "src-dry"}">${spoken ? "Spoken" : "Dry-run"}</span>`;
+  const when = item.created_at ? `<span class="jr-when" title="${escapeAttr(item.created_at)}">${escapeHtml(relativeTime(item.created_at))}</span>` : "";
+  const corrected = item.corrected
+    ? `<span class="jr-corrected" title="You corrected this — the copilot learned from it">✓ corrected</span>`
+    : "";
+  const block = item.block_id
+    ? `<span class="jr-badge jr-block" title="routed block">${escapeHtml(item.block_id)}${item.confidence != null ? ` · ${Number(item.confidence).toFixed(2)}` : ""}</span>`
+    : `<span class="jr-badge jr-block jr-muted">no route</span>`;
+  const target = item.target_profile
+    ? `<span class="jr-badge jr-target" title="target profile">→ ${escapeHtml(item.target_profile)}</span>`
+    : "";
+  const warnings = (item.warnings || []).length
+    ? `<details class="jr-warnings"><summary>${(item.warnings || []).length} warning${(item.warnings || []).length === 1 ? "" : "s"}</summary>
+        <ul>${(item.warnings || []).map((w) => `<li>${escapeHtml(w)}</li>`).join("")}</ul></details>`
+    : "";
+  const transcript = item.transcript || "";
+  const finalText = item.final_text || "";
+  return `<article class="journal-card ${item.corrected ? "is-corrected" : ""}">
+    <header class="jr-head">
+      ${sourceChip}
+      ${block}
+      ${target}
+      ${corrected}
+      <span class="jr-spacer"></span>
+      ${when}
+      <button class="jr-del" type="button" data-journal-del="${escapeAttr(String(item.id))}" title="Delete this entry" aria-label="Delete this journal entry">×</button>
+    </header>
+    <div class="jr-flow">
+      <figure class="jr-text jr-said">
+        <figcaption>You said</figcaption>
+        <div class="jr-text-frame">
+          <p>${escapeHtml(transcript) || "<em>(empty)</em>"}</p>
+          <button type="button" class="cmd-copy jr-copy" data-cmd-copy data-command="${escapeAttr(transcript)}" aria-label="Copy transcript"><span data-cmd-copy-label>Copy</span></button>
+        </div>
+      </figure>
+      <div class="jr-arrow" aria-hidden="true">→</div>
+      <figure class="jr-text jr-typed">
+        <figcaption>It typed</figcaption>
+        <div class="jr-text-frame">
+          <p>${escapeHtml(finalText) || "<em>(empty)</em>"}</p>
+          <button type="button" class="cmd-copy jr-copy" data-cmd-copy data-command="${escapeAttr(finalText)}" aria-label="Copy typed text"><span data-cmd-copy-label>Copy</span></button>
+        </div>
+      </figure>
+    </div>
+    ${renderLatencyStrip(item)}
+    ${warnings}
+  </article>`;
+}
+
+async function deleteJournalEntry(id) {
+  try {
+    await api("DELETE", `/api/dictation/journal/${encodeURIComponent(id)}`);
+    journalState.items = journalState.items.filter((it) => String(it.id) !== String(id));
+    renderJournal();
+    loadJournal();
+  } catch (e) {
+    const meta = document.getElementById("journal-meta");
+    meta.classList.add("error");
+    meta.textContent = e.message;
+  }
+}
+
+async function clearJournal() {
+  if (!journalState.items.length) return;
+  if (!window.confirm("Clear the entire dictation journal? This can't be undone.")) return;
+  try {
+    await api("DELETE", "/api/dictation/journal");
+    journalState.items = [];
+    loadJournal();
+  } catch (e) {
+    const meta = document.getElementById("journal-meta");
+    meta.classList.add("error");
+    meta.textContent = e.message;
+  }
+}
+
 async function runDryRun() {
   const msg = document.getElementById("dry-msg");
   const meta = document.getElementById("dry-meta");
@@ -1814,6 +1981,13 @@ document.getElementById("mem-btn-refresh").addEventListener("click", loadMemory)
 document
   .getElementById("mem-corrections-enabled")
   .addEventListener("change", toggleCorrectionsEnabled);
+// Journal (HS-45-02).
+document.getElementById("journal-btn-refresh").addEventListener("click", loadJournal);
+document.getElementById("journal-btn-clear").addEventListener("click", clearJournal);
+document.getElementById("journal-search").addEventListener("input", renderJournal);
+document.getElementById("journal-filter-source").addEventListener("change", renderJournal);
+document.getElementById("journal-filter-warnings").addEventListener("change", renderJournal);
+document.getElementById("journal-filter-corrected").addEventListener("change", renderJournal);
 document.getElementById("dry-btn-run").addEventListener("click", runDryRun);
 document.getElementById("dry-btn-clear").addEventListener("click", clearDryRun);
 document.getElementById("project-root-apply").addEventListener("click", applyProjectRootOverride);

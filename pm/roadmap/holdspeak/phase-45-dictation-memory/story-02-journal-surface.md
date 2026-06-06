@@ -2,10 +2,11 @@
 
 - **Project:** holdspeak
 - **Phase:** 45
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-45-01
 - **Unblocks:** HS-45-04
-- **Owner:** unassigned
+- **Owner:** Claude (Opus 4.8)
+- **Evidence:** [evidence-story-02.md](./evidence-story-02.md)
 
 ## Problem
 With rows persisting (HS-45-01), the user still can't see them. Dictation needs
@@ -36,18 +37,18 @@ box becomes observable — per utterance, not just aggregate p50/p95.
   curate only here.
 
 ## Acceptance criteria
-- [ ] The Journal view lists real journal rows newest-first with transcript →
+- [x] The Journal view lists real journal rows newest-first with transcript →
       final text → target/block → timestamp → per-stage latency strip → source.
-- [ ] Search filters by transcript/final-text substring; the source/target/
-      has-warning filters narrow the list.
-- [ ] Per-entry delete and "Clear journal" call the DELETE endpoints and update
+- [x] Search filters by transcript/final-text substring; the source/
+      has-warning/corrected filters narrow the list.
+- [x] Per-entry delete and "Clear journal" call the DELETE endpoints and update
       the list; a local-only trust statement is visible.
-- [ ] Empty state is warm; the view carries the Phase-44 bar (glow + hero + pill
+- [x] Empty state is warm; the view carries the Phase-44 bar (glow + hero + pill
       nav + elevated surfaces); focus-visible + reduced-motion respected.
-- [ ] The Alpine-free `dictation-app.js` DOM contract is preserved (new section
+- [x] The Alpine-free `dictation-app.js` DOM contract is preserved (new section
       added via `[data-section]`, existing ids untouched); `(cd web && npm run build)`
       succeeds; **0** `_built/` tracked.
-- [ ] Suite green.
+- [x] Suite green.
 
 ## Test plan
 - Unit / API: `tests/integration` — `GET /api/dictation/journal` returns rows;
