@@ -43,3 +43,16 @@ def test_wizard_is_a_funnel_with_a11y_and_reduced_motion() -> None:
     # the six steps exist
     for sid in ("welcome", "permissions", "model", "dictation", "presence", "done"):
         assert f'"{sid}"' in app
+
+
+def test_wizard_reads_os_dynamically_and_mentions_meetings() -> None:
+    """No hardcoded 'Mac'; HoldSpeak is also a meeting tool — say so."""
+    page = (_REPO / "web" / "src" / "pages" / "welcome.astro").read_text()
+    app = (_REPO / "web" / "src" / "scripts" / "welcome-app.js").read_text()
+    # OS is read dynamically from the status, never hardcoded.
+    assert "your Mac is ready" not in page
+    assert "osLabel" in app and "presence?.os" in app
+    assert 'x-text="osLabel"' in page
+    # meetings are part of the pitch (welcome value prop + a "Run a meeting" card).
+    assert "meeting" in page.lower()
+    assert "Run a meeting" in page

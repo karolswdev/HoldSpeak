@@ -50,13 +50,13 @@ import "../styles/global.css";
             </div>
             <p class="stp-eyebrow">Welcome</p>
             <h1 class="welcome-h" tabindex="-1" x-ref="heading_welcome">Hold a key.<br/>Speak.<br/><span class="acc">Watch it type.</span></h1>
-            <p class="welcome-sub">HoldSpeak turns your voice into text in any app — privately, on this machine. Let's get you to your first words in under a minute.</p>
+            <p class="welcome-sub">Voice typing in any app — <em>and</em> AI notes, action items, and summaries from your meetings. All private, all on this machine. Let's get you to your first words in under a minute.</p>
           </section>
 
           <!-- 2 · Permissions -->
           <section class="stp stp-perms" x-show="isActive('permissions')" :class="{ 'is-active': isActive('permissions') }">
             <p class="stp-eyebrow">Step 2 · System check</p>
-            <h2 class="stp-h" tabindex="-1" x-ref="heading_permissions">Let's make sure your Mac is ready</h2>
+            <h2 class="stp-h" tabindex="-1" x-ref="heading_permissions">Let's make sure your <span x-text="osLabel"></span> is ready</h2>
             <p class="stp-lead">HoldSpeak needs a couple of things from the OS. We check them live — grant what's missing and they'll turn green here.</p>
             <ul class="perm-tiles">
               <template x-for="t in [
@@ -109,7 +109,30 @@ import "../styles/global.css";
             </div>
             <p class="stp-eyebrow">You're set</p>
             <h2 class="stp-h" tabindex="-1" x-ref="heading_done">That's it — HoldSpeak is yours</h2>
-            <p class="stp-lead">Hold your hotkey anywhere and start talking. Everything you say stays on this machine.</p>
+            <p class="stp-lead">Hold your hotkey anywhere to type with your voice, or start a meeting to capture notes and action items. Everything stays on this machine.</p>
+            <div class="done-next">
+              <a class="done-card" href="/">
+                <span class="done-card-glyph" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4"/></svg>
+                </span>
+                <span class="done-card-t">Dictate anywhere</span>
+                <span class="done-card-d">Hold your hotkey in any app</span>
+              </a>
+              <a class="done-card" href="/">
+                <span class="done-card-glyph" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M3 8h11v8H3z"/></svg>
+                </span>
+                <span class="done-card-t">Run a meeting</span>
+                <span class="done-card-d">Live notes, actions &amp; summaries</span>
+              </a>
+              <a class="done-card" href="/dictation">
+                <span class="done-card-glyph" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+                </span>
+                <span class="done-card-t">Tune the copilot</span>
+                <span class="done-card-d">Project-aware intelligent typing</span>
+              </a>
+            </div>
           </section>
         </div>
 
@@ -236,6 +259,14 @@ import "../styles/global.css";
       .done-burst { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; margin-bottom: var(--space-5); color: var(--bg, #0b0d10); background: var(--ok); box-shadow: 0 0 0 10px color-mix(in srgb, var(--ok) 16%, transparent), 0 0 40px color-mix(in srgb, var(--ok) 45%, transparent); animation: wz-pop .5s var(--ease-emphasized) both; }
       @keyframes wz-pop { 0% { transform: scale(.4); opacity: 0; } 60% { transform: scale(1.12); } 100% { transform: scale(1); opacity: 1; } }
       @media (prefers-reduced-motion: reduce) { .done-burst { animation: none; } }
+      .done-next { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-6); max-width: 620px; }
+      .done-card { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-4); border-radius: var(--radius-md); background: var(--surface-2); border: 1px solid var(--border-subtle); text-decoration: none; transition: border-color var(--duration-short) var(--ease-standard), transform var(--duration-short) var(--ease-standard); }
+      .done-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+      .done-card-glyph { width: 34px; height: 34px; border-radius: var(--radius-sm); display: grid; place-items: center; background: var(--accent-tint); color: var(--accent); margin-bottom: var(--space-1); }
+      .done-card-t { font-weight: 600; color: var(--text); font-size: var(--font-size-sm); }
+      .done-card-d { color: var(--text-muted); font-size: var(--font-size-xs); }
+      .done-card:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: var(--focus-outline-offset); }
+      @media (max-width: 860px) { .done-next { grid-template-columns: 1fr; } }
 
       /* ── Nav ── */
       .wz-nav { display: flex; align-items: center; gap: var(--space-4); padding-top: var(--space-6); margin-top: var(--space-5); border-top: 1px solid var(--border-subtle); }

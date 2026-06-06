@@ -106,6 +106,11 @@ function welcomeApp() {
         if (res.ok) this.status = await res.json();
       } catch (_e) {}
     },
+    // Read the OS dynamically — never hardcode "Mac".
+    get osLabel() {
+      const os = this.status?.presence?.os;
+      return { macos: "Mac", linux: "Linux machine" }[os] || "system";
+    },
     section(id) {
       return (this.status?.sections || []).find((s) => s.id === id) || null;
     },
