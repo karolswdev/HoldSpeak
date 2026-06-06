@@ -225,7 +225,18 @@ class DesktopPresenceHost:
                 pass
 
 
-def desktop_presence_enabled(env: Optional[dict[str, str]] = None) -> bool:
+def desktop_presence_enabled(
+    env: Optional[dict[str, str]] = None, *, config_enabled: bool = False
+) -> bool:
+    """True when desktop presence should run.
+
+    HS-43-04: presence is **config-backed** (``config.presence.enabled``, passed
+    here as ``config_enabled``). The legacy ``HOLDSPEAK_DESKTOP_PRESENCE`` env var
+    is retained as a power-user / headless **override** (force-on), so either path
+    enables it.
+    """
+    if config_enabled:
+        return True
     values = os.environ if env is None else env
     raw = str(values.get("HOLDSPEAK_DESKTOP_PRESENCE", "")).strip().lower()
     return raw in {"1", "true", "yes", "on"}
@@ -317,16 +328,17 @@ def build_desktop_presence_host(
     env: Optional[dict[str, str]] = None,
     *,
     url_provider: Optional[Callable[[], str]] = None,
+    config_enabled: bool = False,
 ) -> Optional[DesktopPresenceHost]:
-    """Build the opt-in desktop host, or None (flag off / no native renderer).
+    """Build the opt-in desktop host, or None (off / no native renderer).
 
-    `url_provider` is a lazy callable returning the runtime base URL (e.g.
-    ``http://127.0.0.1:PORT``); the macOS renderer reads it at first show to load
-    the ``/presence`` HUD. Defensive: a renderer that fails to construct never
-    stops the runtime — it falls back to None and the web presence card stays the
-    active surface.
+    Enabled by ``config.presence.enabled`` (passed as ``config_enabled``, HS-43-04)
+    or the legacy ``HOLDSPEAK_DESKTOP_PRESENCE`` env override. `url_provider` is a
+    lazy callable returning the runtime base URL; the macOS renderer reads it at
+    first show to load ``/presence``. Defensive: a renderer that fails to construct
+    never stops the runtime — it falls back to None and the web card stays active.
     """
-    if not desktop_presence_enabled(env):
+    if not desktop_presence_enabled(env, config_enabled=config_enabled):
         return None
     platform = detect_presence_platform(env)
     try:

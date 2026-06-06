@@ -364,6 +364,20 @@ class DeviceConfig:
 
 
 @dataclass
+class PresenceConfig:
+    """Desktop-presence config (HS-43-04).
+
+    The ambient native HUD/tray is off by default and now **config-backed** — a
+    UI toggle flips ``enabled`` (persisted via /api/settings); the runtime starts
+    or stops the presence host live. The legacy ``HOLDSPEAK_DESKTOP_PRESENCE=1``
+    environment variable is retained only as a power-user / headless override
+    (it force-enables regardless of this flag), no longer the only path.
+    """
+
+    enabled: bool = False
+
+
+@dataclass
 class Config:
     """Main configuration container."""
     hotkey: HotkeyConfig = field(default_factory=HotkeyConfig)
@@ -372,6 +386,7 @@ class Config:
     meeting: MeetingConfig = field(default_factory=MeetingConfig)
     dictation: DictationConfig = field(default_factory=DictationConfig)
     device: DeviceConfig = field(default_factory=DeviceConfig)
+    presence: PresenceConfig = field(default_factory=PresenceConfig)
 
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "Config":
@@ -406,6 +421,7 @@ class Config:
                 meeting=_coerce(MeetingConfig, data.get("meeting", {}) or {}, section="meeting"),
                 dictation=dictation,
                 device=_coerce(DeviceConfig, data.get("device", {}) or {}, section="device"),
+                presence=_coerce(PresenceConfig, data.get("presence", {}) or {}, section="presence"),
             )
         except Exception as exc:
             # Last-resort fallback for a genuinely broken config (bad JSON, wrong

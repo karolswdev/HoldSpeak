@@ -1,6 +1,8 @@
 # HS-43-04 — Presence as a UI toggle (kill the env var)
 
-- **Project:** holdspeak · **Phase:** 43 · **Status:** backlog
+- **Project:** holdspeak
+- **Phase:** 43
+- **Status:** done (2026-06-06)
 - **Depends on:** HS-43-01
 
 ## Problem
@@ -17,5 +19,6 @@ enable a flagship feature is the single worst UX wart in the product.
 - Out: turning presence on by default; new renderers.
 
 ## Acceptance criteria
-- [ ] Presence is enabled from the UI (config-backed); the env var is no longer the
-      only path; default-off byte-identical; covered by a test + screenshot.
+- [x] Presence is enabled from the UI (config-backed via `/api/settings`); the env
+      var is no longer the only path (retained as an override); default-off
+      byte-identical; live start/stop; covered by 7 tests + a screenshot.

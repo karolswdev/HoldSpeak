@@ -1,6 +1,8 @@
 # HS-43-06 — Closeout (docs + dogfood + PR)
 
-- **Project:** holdspeak · **Phase:** 43 · **Status:** backlog
+- **Project:** holdspeak
+- **Phase:** 43
+- **Status:** backlog
 - **Depends on:** HS-43-01 … HS-43-05
 
 ## Scope

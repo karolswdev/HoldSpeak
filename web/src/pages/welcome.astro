@@ -94,12 +94,39 @@ import "../styles/global.css";
             <p class="stp-placeholder">The live reward moment — built in HS-43-03.</p>
           </section>
 
-          <!-- 5 · Presence (real toggle wired in HS-43-04) -->
+          <!-- 5 · Presence — a real config-backed toggle (no env var) -->
           <section class="stp stp-presence" x-show="isActive('presence')" :class="{ 'is-active': isActive('presence') }">
             <p class="stp-eyebrow">Step 5 · On your desktop</p>
             <h2 class="stp-h" tabindex="-1" x-ref="heading_presence">See it working while you type elsewhere</h2>
-            <p class="stp-lead">An optional ambient HUD shows what HoldSpeak is doing — and never steals your keyboard.</p>
-            <p class="stp-placeholder">A real one-click toggle (no env var) — built in HS-43-04.</p>
+            <p class="stp-lead">An optional ambient HUD shows what HoldSpeak is doing — <em>listening · transcribing · typing</em> — and never steals your keyboard.</p>
+
+            <div class="pres-row">
+              <div class="pres-left">
+                <button type="button" class="switch" role="switch" :aria-checked="presenceOn ? 'true' : 'false'" :class="{ on: presenceOn }" @click="togglePresence()" :disabled="presenceSaving">
+                  <span class="switch-knob"></span>
+                </button>
+                <div class="pres-copy">
+                  <span class="pres-title" x-text="presenceOn ? 'Desktop presence is on' : 'Turn on desktop presence'"></span>
+                  <span class="pres-note" x-text="presenceNote || (presenceAvailable ? 'Available on this machine' : 'Optional native extra needed (below)')"></span>
+                </div>
+              </div>
+              <!-- faithful inline HUD preview -->
+              <div class="pres-hud" :class="{ live: presenceOn }" aria-hidden="true">
+                <span class="pres-hud-ring"></span>
+                <div>
+                  <div class="pres-hud-label">Transcribing</div>
+                  <div class="pres-hud-detail">Turning your speech into text…</div>
+                </div>
+              </div>
+            </div>
+
+            <p class="pres-focus">🔒 Never takes keyboard focus — your keystrokes keep landing where you're typing.</p>
+
+            <div class="pres-install" x-show="!presenceAvailable" x-cloak>
+              <p>Not installed yet? Add the optional native extra:</p>
+              <button class="ma-cmd-lite" type="button" @click="copy(\"uv pip install -e '.[presence]'\")"><code>uv pip install -e '.[presence]'</code></button>
+            </div>
+            <p class="pres-noenv">No environment variable, no relaunch from a terminal — it's a real setting now.</p>
           </section>
 
           <!-- 6 · Done -->
@@ -267,6 +294,35 @@ import "../styles/global.css";
       .done-card-d { color: var(--text-muted); font-size: var(--font-size-xs); }
       .done-card:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: var(--focus-outline-offset); }
       @media (max-width: 860px) { .done-next { grid-template-columns: 1fr; } }
+
+      /* Presence step */
+      .pres-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); margin-top: var(--space-6); flex-wrap: wrap; }
+      .pres-left { display: flex; align-items: center; gap: var(--space-4); }
+      .switch { position: relative; width: 56px; height: 32px; border-radius: var(--radius-pill); background: var(--surface-3); border: 1px solid var(--border-strong); cursor: pointer; flex: none; transition: background var(--duration-medium) var(--ease-standard), border-color var(--duration-medium) var(--ease-standard); }
+      .switch.on { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 45%, transparent); }
+      .switch:disabled { opacity: .6; cursor: default; }
+      .switch-knob { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--text); transition: transform var(--duration-medium) var(--ease-emphasized); }
+      .switch.on .switch-knob { transform: translateX(24px); background: var(--text-on-accent, #0b0d10); }
+      @media (prefers-reduced-motion: reduce) { .switch-knob { transition: none; } }
+      .switch:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: 3px; }
+      .pres-copy { display: flex; flex-direction: column; gap: 2px; }
+      .pres-title { font-weight: 600; color: var(--text); }
+      .pres-note { font-size: var(--font-size-sm); color: var(--text-muted); }
+
+      .pres-hud { display: flex; align-items: center; gap: var(--space-3); width: 260px; padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); background: #14171c; border: 1px solid #262b33; opacity: .35; filter: grayscale(.6); transition: opacity var(--duration-medium) var(--ease-standard), filter var(--duration-medium) var(--ease-standard); }
+      .pres-hud.live { opacity: 1; filter: none; box-shadow: 0 14px 36px rgba(0,0,0,.45); }
+      .pres-hud-ring { flex: none; width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--accent); box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 50%, transparent); }
+      .pres-hud-label { color: #f3f5f8; font-weight: 600; font-size: var(--font-size-sm); }
+      .pres-hud-detail { color: #9aa3ad; font-size: var(--font-size-xs); margin-top: 1px; }
+
+      .pres-focus { margin-top: var(--space-5); color: var(--text); font-size: var(--font-size-sm); }
+      .pres-install { margin-top: var(--space-3); }
+      .pres-install p { color: var(--text-muted); font-size: var(--font-size-sm); margin: 0 0 var(--space-2); }
+      .ma-cmd-lite { padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--canvas, var(--bg)); border: 1px solid var(--border); cursor: pointer; }
+      .ma-cmd-lite code { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--text-muted); }
+      .ma-cmd-lite:hover { border-color: var(--accent); }
+      .pres-noenv { margin-top: var(--space-4); color: var(--text-faint); font-size: var(--font-size-xs); font-family: var(--font-mono); }
+      @media (max-width: 860px) { .pres-row { flex-direction: column; align-items: flex-start; } .pres-hud { width: 100%; } }
 
       /* ── Nav ── */
       .wz-nav { display: flex; align-items: center; gap: var(--space-4); padding-top: var(--space-6); margin-top: var(--space-5); border-top: 1px solid var(--border-subtle); }

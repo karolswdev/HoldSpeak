@@ -1,7 +1,10 @@
 # HS-43-02 — Permissions polish + Model picker step
 
-- **Project:** holdspeak · **Phase:** 43 · **Status:** backlog
-- **Depends on:** HS-43-01 · **Unblocks:** HS-43-03
+- **Project:** holdspeak
+- **Phase:** 43
+- **Status:** backlog
+- **Depends on:** HS-43-01
+- **Unblocks:** HS-43-03
 
 ## Problem
 The Model step is a placeholder. A newcomer should pick their intelligence level

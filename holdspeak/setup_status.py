@@ -124,7 +124,9 @@ def _trust_block(config: Any, *, web_bind: str = "127.0.0.1") -> dict[str, Any]:
     }
 
 
-def _presence_block(env: Optional[dict[str, str]] = None) -> dict[str, Any]:
+def _presence_block(
+    env: Optional[dict[str, str]] = None, *, config_enabled: bool = False
+) -> dict[str, Any]:
     """Presence availability + the platform tier (no native imports)."""
     from .desktop_presence import desktop_presence_enabled, detect_presence_platform
 
@@ -138,7 +140,7 @@ def _presence_block(env: Optional[dict[str, str]] = None) -> dict[str, Any]:
     else:
         tier = "none"
     return {
-        "enabled": desktop_presence_enabled(env),
+        "enabled": desktop_presence_enabled(env, config_enabled=config_enabled),
         "available": os_name in ("macos", "linux"),
         "tier": tier,
         "os": os_name,
@@ -187,5 +189,7 @@ def build_setup_status(
         "primary_action": _primary_action(sections, first_run=first_run, ready=ready),
         "sections": sections,
         "trust": _trust_block(config),
-        "presence": _presence_block(env),
+        "presence": _presence_block(
+            env, config_enabled=bool(getattr(getattr(config, "presence", None), "enabled", False))
+        ),
     }

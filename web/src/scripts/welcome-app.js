@@ -27,8 +27,10 @@ function welcomeApp() {
     activity: null,
     dictation: { ok: false, transcript: "" },
 
-    // presence toggle (wired to the backend in HS-43-04)
+    // presence toggle (config-backed — HS-43-04; no env var)
     presenceOn: false,
+    presenceSaving: false,
+    presenceNote: "",
 
     init() {
       try {
@@ -103,8 +105,35 @@ function welcomeApp() {
     async loadStatus() {
       try {
         const res = await fetch("/api/setup/status");
-        if (res.ok) this.status = await res.json();
+        if (res.ok) {
+          this.status = await res.json();
+          this.presenceOn = !!(this.status.presence && this.status.presence.enabled);
+        }
       } catch (_e) {}
+    },
+    get presenceAvailable() {
+      return !!(this.status && this.status.presence && this.status.presence.available);
+    },
+    // HS-43-04: flip the config-backed presence toggle — no env var, no relaunch.
+    async togglePresence() {
+      const next = !this.presenceOn;
+      this.presenceSaving = true;
+      this.presenceNote = "";
+      try {
+        const res = await fetch("/api/settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ presence: { enabled: next } }),
+        });
+        if (!res.ok) throw new Error(`Request failed (${res.status})`);
+        this.presenceOn = next;
+        this.presenceNote = next
+          ? (this.presenceAvailable ? "On — the HUD appears the next time you dictate." : "Saved — install the presence extra to see it (below).")
+          : "Off.";
+      } catch (e) {
+        this.presenceNote = `Couldn't save: ${e.message}`;
+      }
+      this.presenceSaving = false;
     },
     // Read the OS dynamically — never hardcode "Mac".
     get osLabel() {

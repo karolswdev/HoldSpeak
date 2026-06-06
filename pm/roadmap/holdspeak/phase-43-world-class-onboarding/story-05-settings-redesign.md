@@ -1,6 +1,8 @@
 # HS-43-05 — Settings redesign
 
-- **Project:** holdspeak · **Phase:** 43 · **Status:** backlog
+- **Project:** holdspeak
+- **Phase:** 43
+- **Status:** backlog
 - **Depends on:** HS-43-01
 
 ## Problem

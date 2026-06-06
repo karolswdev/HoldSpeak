@@ -1,6 +1,6 @@
 # Phase 43 — World-Class Onboarding & First-Run UX
 
-**Status:** IN PROGRESS (0/6). Opened 2026-06-06. On direct user feedback that the
+**Status:** IN PROGRESS (2/6). Opened 2026-06-06. On direct user feedback that the
 Phase-42 first-run UX, while functional, is **not world-class** — "boring cards
 with an accent on the left", a status checklist instead of a real **wizard**, a
 settings **form dump**, and — worst — desktop presence gated behind an **env
@@ -72,7 +72,7 @@ motif. World-class, not competent.
 | HS-43-01 | Wizard shell + motion + a11y (Welcome) | done | [story-01-wizard-shell.md](./story-01-wizard-shell.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-43-02 | Permissions + Model steps | backlog | story-02-permissions-model.md | — |
 | HS-43-03 | First-dictation reward + Done | backlog | story-03-first-dictation-reward.md | — |
-| HS-43-04 | Presence as a UI toggle (kill the env var) | backlog | story-04-presence-toggle.md | — |
+| HS-43-04 | Presence as a UI toggle (kill the env var) | done | [story-04-presence-toggle.md](./story-04-presence-toggle.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-43-05 | Settings redesign | backlog | story-05-settings-redesign.md | — |
 | HS-43-06 | Closeout (docs + dogfood + PR) | backlog | story-06-closeout.md | — |
 
@@ -82,7 +82,7 @@ motif. World-class, not competent.
 (post Phase-42 merge, PR #20). Design direction taken from the `ui-ux-pro-max`
 skill. **HS-43-01** (the wizard shell — full-screen takeover, the step-progress
 rail, directional motion, focus management, and the Welcome step) is the entry
-point and the first visible proof of the new aesthetic.
+point and the first visible proof of the new aesthetic. **HS-43-04 shipped (2026-06-06, prioritized on user ask — "especially kill that env var"):** desktop presence is now a **config-backed one-click UI toggle** — `PresenceConfig.enabled` + `config.presence`, `desktop_presence_enabled(config_enabled=…)` (config OR the demoted env override), a `_sync_desktop_presence()` that **starts/stops the host live** on a settings change (no relaunch), the `/api/settings` PUT reconstructs `presence`, and the wizard Presence step is a real switch + a lit HUD preview that PUTs the flag. Proven live (toggle → `config.presence.enabled: True` on disk) + 7 tests. The env var is gone as the path. Next: HS-43-03 (the first-dictation reward).
 
 ## Decisions made (this phase)
 - **Full world-class first-run** in one phase (user) + **build-your-best**, iterate
