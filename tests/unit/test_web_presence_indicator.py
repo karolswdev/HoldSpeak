@@ -54,6 +54,7 @@ def test_presence_route_serves_the_hud() -> None:
 
     from fastapi.testclient import TestClient
 
+    import holdspeak.web.routes.pages as pages
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
     server = MeetingWebServer(
@@ -66,4 +67,16 @@ def test_presence_route_serves_the_hud() -> None:
     client = TestClient(server.app)
     resp = client.get("/presence")
     assert resp.status_code == 200
-    assert 'id="presence-card"' in resp.text
+
+    # The route is build-agnostic: when the web bundle is built it serves the
+    # Signal presence card; when it isn't (e.g. the Unit Tests CI job, which runs
+    # against source without the gitignored `_built/` bundle) it returns a 200
+    # fallback that still identifies the presence HUD. Assert the right one for
+    # the current state so the test is green in both.
+    built = (
+        pages._HOLDSPEAK_DIR / "static" / "_built" / "presence" / "index.html"
+    ).exists()
+    if built:
+        assert 'id="presence-card"' in resp.text
+    else:
+        assert "HoldSpeak Presence" in resp.text
