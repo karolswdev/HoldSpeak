@@ -14,6 +14,38 @@ function settingsApp() {
     isError: false,
     _timer: null,
 
+    // HS-43-05: sectioned + searchable + progressive.
+    sections: [
+      { id: "appearance", label: "Appearance" },
+      { id: "voice", label: "Voice typing" },
+      { id: "presence", label: "Desktop presence" },
+      { id: "meetings", label: "Meetings & intel" },
+      { id: "cloud", label: "Cloud & advanced" },
+    ],
+    active: "appearance",
+    query: "",
+    showAdvanced: false,
+
+    get searching() {
+      return this.query.trim().length > 0;
+    },
+    // A field is visible if it matches the search, or it's in the active section
+    // (and either common, or advanced-disclosure is on). `keywords` lets search
+    // find a field by more than its label.
+    fieldVisible(section, tier, keywords) {
+      if (this.searching) {
+        return String(keywords || "").toLowerCase().includes(this.query.trim().toLowerCase());
+      }
+      return section === this.active && (tier !== "advanced" || this.showAdvanced);
+    },
+    sectionVisible(section) {
+      if (this.searching) return false; // search flattens; section chrome hides
+      return section === this.active;
+    },
+    sectionHasAdvanced(_section) {
+      return true; // cloud/meetings carry advanced fields; the toggle is harmless elsewhere
+    },
+
     async init() {
       await this.load();
     },

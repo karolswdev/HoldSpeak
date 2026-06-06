@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 43
-- **Status:** backlog
+- **Status:** done (2026-06-06)
 - **Depends on:** HS-43-01
 
 ## Problem
@@ -16,5 +16,6 @@ common/advanced split.
 - Out: new settings fields.
 
 ## Acceptance criteria
-- [ ] Settings is sectioned + searchable + progressive (no single form dump);
-      save round-trip still works; screenshot; suite green.
+- [x] Settings is sectioned + searchable + progressive (Common/Advanced) — no
+      single form dump; save round-trip proven live (save → disk); the config-
+      backed presence toggle lives in Settings; screenshots; suite green.
