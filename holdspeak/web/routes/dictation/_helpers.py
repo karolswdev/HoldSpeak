@@ -427,6 +427,7 @@ def _run_dictation_dry_run_text(
     corrections: Any = None,
     dismissed_signatures: set[str] | None = None,
     telemetry: Any = None,
+    journal: Any = None,
 ) -> dict[str, Any]:
     """Execute the browser dry-run path for already-validated text."""
     from ....config import Config
@@ -509,6 +510,23 @@ def _run_dictation_dry_run_text(
             activity={"target": target_profile.to_dict()},
         )
     )
+    # HS-45-01: journal the dry-run as a side-channel (best-effort; never alters
+    # the returned result). Tagged `source='dry_run'` so the no-mic path is
+    # first-class. A recorder with no repository (bare server) is a no-op.
+    # HS-45-03: the returned record's id flows back so the result panel can
+    # offer an in-the-moment "fix it here" that attaches to this entry.
+    journal_id = None
+    if journal is not None:
+        recorded = journal.record(
+            run,
+            source="dry_run",
+            transcript=text,
+            target_profile=target_profile,
+            project_root=project_root,
+            enabled=bool(getattr(cfg.pipeline, "journal_enabled", True)),
+            retention=int(getattr(cfg.pipeline, "journal_retention", 500)),
+        )
+        journal_id = getattr(recorded, "id", None)
     stages = [_serialize_stage_result(sr) for sr in run.stage_results]
     suggestion_status = _store_project_doc_suggestion(
         project, stages, suggestions, dismissed_signatures=dismissed_signatures
@@ -518,6 +536,7 @@ def _run_dictation_dry_run_text(
         "project": dict(project) if project else None,
         "target": target_profile.to_dict(),
         "suggestion_status": suggestion_status,
+        "journal_id": journal_id,
         "runtime_status": result.runtime_status,
         "runtime_detail": result.runtime_detail,
         "blocks_count": len(result.blocks.blocks),

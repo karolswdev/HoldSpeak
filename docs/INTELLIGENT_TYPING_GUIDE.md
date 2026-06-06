@@ -540,6 +540,92 @@ guarantees this at the platform level — macOS via the non-activating panel,
 Linux via notifications and the tray (which can't be focused) and an
 override-redirect, non-focus overlay window.
 
+## 12. Dictation journal, corrections & replay
+
+Your meetings get a rich afterlife — a searchable archive, transcripts,
+artifacts. Now your **dictation** does too. The journal turns the daily-driver
+loop from a black box that evaporates the instant it types into something you
+can review, correct, and replay.
+
+Open it from the **Journal** tab on `/dictation`.
+
+![The dictation Journal: a said → typed timeline. Each entry shows a source chip
+(Spoken / Dry-run), the routed block + target, a timestamp, the transcript and
+the typed text side by side, and a per-stage latency strip.](assets/journal/journal-timeline.png)
+
+### Your dictation stays local
+
+The journal is **local-only** — it never leaves your machine. Nothing about it
+is uploaded, synced, or shared. Privacy comes from *local + filter + cap +
+wipe*, not from being off:
+
+- **Secret-filtered.** Before an entry is stored, the transcript and typed text
+  are checked with the same secret-shape filter the correction memory uses; a
+  field that looks like it carries a key/token is redacted, so a secret never
+  lands in the journal.
+- **Retention-capped.** The journal keeps the most recent *N* entries
+  (`dictation.journal_retention`, default 500) and prunes older ones on every
+  write.
+- **Curatable.** Delete any single entry, or **Clear journal** to wipe it all,
+  from the tab.
+- **Toggle.** The journal is **on by default** (local). Turn it off with
+  `dictation.journal_enabled = false` — when off, **no** rows are written and
+  your typed output is byte-identical to journaling-off. (Journaling is a pure
+  side-channel: it never changes what gets typed or how fast.)
+
+### What is recorded
+
+One row per pipeline run — real dictation **and** dry-run, tagged by source:
+
+| Field | What it captures |
+|---|---|
+| transcript | what you said (secret-filtered) |
+| final text | what was typed (secret-filtered) |
+| route | the matched block + confidence |
+| target | the target profile it was headed to |
+| latency | per-stage timing + total (the latency strip) |
+| source | `dictation` (spoken) or `dry_run` |
+| corrected | set when you fix it in the moment (below) |
+
+Search the timeline by transcript/typed text; filter by source, "only with
+warnings", or "only corrected".
+
+### The moment of truth — fix it in flow, and it teaches
+
+When a dictation lands wrong, the cheapest time to fix it is right then. After a
+**dry-run** (the no-mic path; the same surface appears for real dictation), the
+result panel asks **"Was that right?"** with the routed summary and a **Fix it**
+button. Choose the correct route or target, hit **Teach & record**, and you get
+a **Taught ✓** confirmation.
+
+![The moment-of-truth fix: a dry-run result with a "Taught ✓" confirmation —
+"the copilot will nudge similar dictations toward this, and the journal entry is
+marked corrected."](assets/journal/moment-of-truth.png)
+
+That one gesture does two things: it **teaches** the copilot (it writes a
+correction — the same kind the [Memory tab](#10-copilot-depth-multi-pass-memory-model-assist-telemetry)
+manages — so similar future utterances are nudged toward your fix), and it
+**marks the journal entry corrected**. The teach is gist-only and
+secret-filtered, exactly like the Memory tab; it never steals keyboard focus.
+
+### Replay — prove it learned
+
+The promise of a learning copilot only feels real when you can *see* it get
+better. Press **↻ Replay** on any journal entry to re-run that utterance's
+stored transcript through the **current** pipeline — in dry-run mode, so nothing
+is typed and no new journal row is created — and see a **before → after** diff.
+
+![A replayed utterance: the before → after diff shows the routed target changing
+from terminal_shell to browser after a correction, with "Preview only — nothing
+was typed."](assets/journal/replay-before-after.png)
+
+The satisfying loop: **correct** an utterance → **replay** it → watch the
+routing change to your corrected target. Replay reuses the same dry-run path, so
+it automatically reflects everything the copilot knows *now* (your corrections,
+project context, and config). Re-insert is **preview + copy** — copy the
+improved result and paste it where you want; HoldSpeak never types into your
+active app from a background click.
+
 ## Good First Configuration
 
 For daily coding-agent dictation, use:

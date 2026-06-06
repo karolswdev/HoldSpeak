@@ -175,6 +175,7 @@ class MeetingWebServer:
         port: Optional[int] = None,
         auth_token: str = "",
         dictation_corrections_repository: Optional[Any] = None,
+        dictation_journal_repository: Optional[Any] = None,
     ) -> None:
         if _IMPORT_ERROR is not None:
             raise RuntimeError(
@@ -201,6 +202,16 @@ class MeetingWebServer:
         from .plugins.dictation.telemetry_store import DictationTelemetryStore
 
         self.dictation_telemetry = DictationTelemetryStore()
+        # HS-45-01: one session-scoped dictation journal recorder, fed at the
+        # same post-run seam telemetry uses from the dry-run + live paths. When
+        # the live runtime injects a repository the recorder is durable; with
+        # none (the default — every bare server / test) it is a no-op and
+        # dictation stays byte-identical (no DB touched).
+        from .plugins.dictation.journal import DictationJournalRecorder
+
+        self.dictation_journal = DictationJournalRecorder(
+            repository=dictation_journal_repository
+        )
         self.on_bookmark = callbacks.on_bookmark
         self.on_stop = callbacks.on_stop
         self.on_meeting_stop = callbacks.on_meeting_stop
@@ -465,6 +476,7 @@ class MeetingWebServer:
             current_formatted_duration=self._current_formatted_duration,
             corrections=self.dictation_corrections,
             telemetry=self.dictation_telemetry,
+            journal=self.dictation_journal,
         )
         app.include_router(build_core_router(web_ctx))
         app.include_router(build_meetings_router(web_ctx))

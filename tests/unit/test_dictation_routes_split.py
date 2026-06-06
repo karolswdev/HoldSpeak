@@ -46,6 +46,14 @@ _EXPECTED_ROUTES = {
     # HS-40-04: curate the (now persistent) correction memory.
     ("/api/dictation/corrections/{correction_id}", "DELETE"),
     ("/api/dictation/corrections", "DELETE"),
+    # HS-45-02: the dictation journal (review + curate). The correct-attach
+    # route is HS-45-03 (the in-moment teach), wired here with its siblings.
+    ("/api/dictation/journal", "GET"),
+    ("/api/dictation/journal/{entry_id}", "DELETE"),
+    ("/api/dictation/journal", "DELETE"),
+    ("/api/dictation/journal/{entry_id}/correct", "POST"),
+    # HS-45-04: replay a stored utterance through the current pipeline.
+    ("/api/dictation/journal/{entry_id}/replay", "POST"),
 }
 
 
@@ -68,4 +76,4 @@ def test_dictation_route_table_is_unchanged_after_split() -> None:
 
 
 def test_dictation_route_count_is_stable() -> None:
-    assert len(_router_route_set()) == len(_EXPECTED_ROUTES) == 30
+    assert len(_router_route_set()) == len(_EXPECTED_ROUTES) == 35

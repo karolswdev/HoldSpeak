@@ -396,6 +396,7 @@ function activateSection(name) {
     hooks: "view-hooks",
     runtime: "view-runtime",
     memory: "view-memory",
+    journal: "view-journal",
     "dry-run": "view-dry-run",
   };
   for (const [key, id] of Object.entries(views)) {
@@ -414,6 +415,7 @@ function activateSection(name) {
   if (name === "hooks") loadAgentHooks();
   if (name === "runtime") loadRuntime();
   if (name === "memory") loadMemory();
+  if (name === "journal") loadJournal();
 }
 
 // ── Readiness snapshot ──────────────────────────────────────────────
@@ -1333,6 +1335,222 @@ function relativeTime(iso) {
 }
 
 // ── Dry-run preview ────────────────────────────────────────────────
+// ── Journal (HS-45-02) ───────────────────────────────────────────────
+const journalState = { items: [], retention: 500, enabled: true };
+
+async function loadJournal() {
+  const meta = document.getElementById("journal-meta");
+  meta.classList.remove("warn", "error");
+  meta.textContent = "Loading…";
+  try {
+    const data = await api("GET", "/api/dictation/journal?limit=200");
+    journalState.items = Array.isArray(data.items) ? data.items : [];
+    journalState.retention = Number(data.retention) || 500;
+    journalState.enabled = !!data.enabled;
+    const trust = document.getElementById("journal-trust");
+    if (trust) trust.classList.toggle("is-off", !data.enabled);
+    meta.classList.toggle("warn", !data.enabled);
+    meta.innerHTML = data.enabled
+      ? `journaling: <strong>on</strong>  ·  stored: <strong>${data.count ?? 0}</strong>  ·  keeps the most recent <strong>${journalState.retention}</strong>`
+      : `journaling: <strong>off</strong> — new dictations are not being recorded. Turn it on under <strong>Runtime → Copilot depth</strong>.`;
+    renderJournal();
+  } catch (e) {
+    meta.classList.add("error");
+    meta.textContent = e.message;
+  }
+}
+
+function journalMatches(item) {
+  const q = (document.getElementById("journal-search")?.value || "").trim().toLowerCase();
+  const src = document.getElementById("journal-filter-source")?.value || "";
+  const warnOnly = !!document.getElementById("journal-filter-warnings")?.checked;
+  const corrOnly = !!document.getElementById("journal-filter-corrected")?.checked;
+  if (src && item.source !== src) return false;
+  if (warnOnly && !(item.warnings || []).length) return false;
+  if (corrOnly && !item.corrected) return false;
+  if (q) {
+    const hay = `${item.transcript || ""}\n${item.final_text || ""}`.toLowerCase();
+    if (!hay.includes(q)) return false;
+  }
+  return true;
+}
+
+function renderJournal() {
+  const list = document.getElementById("journal-list");
+  if (!list) return;
+  const items = journalState.items.filter(journalMatches);
+  if (!journalState.items.length) {
+    list.innerHTML = `<div class="journal-empty">
+      <div class="journal-empty-glyph" aria-hidden="true">🎙️</div>
+      <p class="journal-empty-head">Your dictations will appear here.</p>
+      <p class="journal-empty-sub">Speak — or run a <strong>Dry-run</strong> — and each one is remembered: what you said, where it routed, and how long it took.</p>
+    </div>`;
+    return;
+  }
+  if (!items.length) {
+    list.innerHTML = `<div class="journal-empty"><p class="journal-empty-sub">No entries match your search or filters.</p></div>`;
+    return;
+  }
+  list.innerHTML = items.map(renderJournalEntry).join("");
+  list.querySelectorAll("button[data-journal-del]").forEach((btn) =>
+    btn.addEventListener("click", () => deleteJournalEntry(btn.dataset.journalDel))
+  );
+  list.querySelectorAll("button[data-journal-replay]").forEach((btn) =>
+    btn.addEventListener("click", () => replayJournalEntry(btn.dataset.journalReplay, btn))
+  );
+}
+
+// ── Replay (HS-45-04): prove it learned ────────────────────────────────
+function replayDiffRow(label, before, after) {
+  const changed = (before || "—") !== (after || "—");
+  return `<div class="replay-row ${changed ? "is-changed" : ""}">
+    <span class="replay-label">${escapeHtml(label)}</span>
+    <span class="replay-before">${escapeHtml(before || "—")}</span>
+    <span class="replay-arrow" aria-hidden="true">→</span>
+    <span class="replay-after">${escapeHtml(after || "—")}</span>
+  </div>`;
+}
+
+async function replayJournalEntry(id, btn) {
+  const host = document.querySelector(`[data-replay-host="${CSS.escape(String(id))}"]`);
+  if (!host) return;
+  host.hidden = false;
+  host.innerHTML = `<p class="replay-pending">Replaying through the current pipeline…</p>`;
+  if (btn) btn.disabled = true;
+  try {
+    const data = await api("POST", `/api/dictation/journal/${encodeURIComponent(id)}/replay`);
+    const b = data.before || {};
+    const a = data.after || {};
+    const blockBefore = b.block_id ? `${b.block_id}${b.confidence != null ? ` @ ${Number(b.confidence).toFixed(2)}` : ""}` : "";
+    const blockAfter = a.block_id ? `${a.block_id}${a.confidence != null ? ` @ ${Number(a.confidence).toFixed(2)}` : ""}` : "";
+    const headline = data.changed
+      ? `<span class="replay-changed">↻ The pipeline routes this differently now.</span>`
+      : `<span class="replay-same">Same result as before — nothing's changed for this one yet.</span>`;
+    const finalText = a.final_text || "";
+    host.innerHTML = `
+      <div class="replay-head">${headline}</div>
+      ${replayDiffRow("route", blockBefore, blockAfter)}
+      ${replayDiffRow("target", b.target_profile, a.target_profile)}
+      <div class="replay-final">
+        <span class="replay-label">now types</span>
+        <div class="replay-final-frame">
+          <p>${escapeHtml(finalText) || "<em>(empty)</em>"}</p>
+          <button type="button" class="cmd-copy" data-cmd-copy data-command="${escapeAttr(finalText)}" aria-label="Copy the improved result"><span data-cmd-copy-label>Copy</span></button>
+        </div>
+      </div>
+      <p class="replay-note">Preview only — nothing was typed. Copy the improved result to use it.</p>`;
+  } catch (e) {
+    host.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function renderLatencyStrip(item) {
+  const stages = item.stage_ms || {};
+  const ids = Object.keys(stages);
+  const total = Number(item.total_ms) || ids.reduce((s, k) => s + (Number(stages[k]) || 0), 0);
+  if (!ids.length || total <= 0) {
+    return `<div class="lat-strip lat-strip--empty" title="no per-stage timing recorded">
+      <span class="lat-total">${total ? `${total.toFixed(0)} ms` : "—"}</span>
+    </div>`;
+  }
+  const segs = ids
+    .map((sid) => {
+      const ms = Number(stages[sid]) || 0;
+      const pct = Math.max(2, Math.round((ms / total) * 100));
+      const cls = sid.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      return `<span class="lat-seg lat-${escapeAttr(cls)}" style="width:${pct}%" title="${escapeAttr(sid)} · ${ms.toFixed(0)} ms">
+        <span class="lat-seg-label">${escapeHtml(sid)} ${ms.toFixed(0)}ms</span>
+      </span>`;
+    })
+    .join("");
+  return `<div class="lat-strip" role="img" aria-label="per-stage latency, total ${total.toFixed(0)} milliseconds">
+    <div class="lat-bar">${segs}</div>
+    <span class="lat-total">${total.toFixed(0)} ms total</span>
+  </div>`;
+}
+
+function renderJournalEntry(item) {
+  const spoken = item.source === "dictation";
+  const sourceChip = `<span class="jr-source ${spoken ? "src-spoken" : "src-dry"}">${spoken ? "Spoken" : "Dry-run"}</span>`;
+  const when = item.created_at ? `<span class="jr-when" title="${escapeAttr(item.created_at)}">${escapeHtml(relativeTime(item.created_at))}</span>` : "";
+  const corrected = item.corrected
+    ? `<span class="jr-corrected" title="You corrected this — the copilot learned from it">✓ corrected</span>`
+    : "";
+  const block = item.block_id
+    ? `<span class="jr-badge jr-block" title="routed block">${escapeHtml(item.block_id)}${item.confidence != null ? ` · ${Number(item.confidence).toFixed(2)}` : ""}</span>`
+    : `<span class="jr-badge jr-block jr-muted">no route</span>`;
+  const target = item.target_profile
+    ? `<span class="jr-badge jr-target" title="target profile">→ ${escapeHtml(item.target_profile)}</span>`
+    : "";
+  const warnings = (item.warnings || []).length
+    ? `<details class="jr-warnings"><summary>${(item.warnings || []).length} warning${(item.warnings || []).length === 1 ? "" : "s"}</summary>
+        <ul>${(item.warnings || []).map((w) => `<li>${escapeHtml(w)}</li>`).join("")}</ul></details>`
+    : "";
+  const transcript = item.transcript || "";
+  const finalText = item.final_text || "";
+  return `<article class="journal-card ${item.corrected ? "is-corrected" : ""}">
+    <header class="jr-head">
+      ${sourceChip}
+      ${block}
+      ${target}
+      ${corrected}
+      <span class="jr-spacer"></span>
+      ${when}
+      <button class="btn jr-replay-btn" type="button" data-journal-replay="${escapeAttr(String(item.id))}" title="Re-run this through the current pipeline">↻ Replay</button>
+      <button class="jr-del" type="button" data-journal-del="${escapeAttr(String(item.id))}" title="Delete this entry" aria-label="Delete this journal entry">×</button>
+    </header>
+    <div class="jr-flow">
+      <figure class="jr-text jr-said">
+        <figcaption>You said</figcaption>
+        <div class="jr-text-frame">
+          <p>${escapeHtml(transcript) || "<em>(empty)</em>"}</p>
+          <button type="button" class="cmd-copy jr-copy" data-cmd-copy data-command="${escapeAttr(transcript)}" aria-label="Copy transcript"><span data-cmd-copy-label>Copy</span></button>
+        </div>
+      </figure>
+      <div class="jr-arrow" aria-hidden="true">→</div>
+      <figure class="jr-text jr-typed">
+        <figcaption>It typed</figcaption>
+        <div class="jr-text-frame">
+          <p>${escapeHtml(finalText) || "<em>(empty)</em>"}</p>
+          <button type="button" class="cmd-copy jr-copy" data-cmd-copy data-command="${escapeAttr(finalText)}" aria-label="Copy typed text"><span data-cmd-copy-label>Copy</span></button>
+        </div>
+      </figure>
+    </div>
+    ${renderLatencyStrip(item)}
+    ${warnings}
+    <div class="jr-replay" data-replay-host="${escapeAttr(String(item.id))}" hidden></div>
+  </article>`;
+}
+
+async function deleteJournalEntry(id) {
+  try {
+    await api("DELETE", `/api/dictation/journal/${encodeURIComponent(id)}`);
+    journalState.items = journalState.items.filter((it) => String(it.id) !== String(id));
+    renderJournal();
+    loadJournal();
+  } catch (e) {
+    const meta = document.getElementById("journal-meta");
+    meta.classList.add("error");
+    meta.textContent = e.message;
+  }
+}
+
+async function clearJournal() {
+  if (!journalState.items.length) return;
+  if (!window.confirm("Clear the entire dictation journal? This can't be undone.")) return;
+  try {
+    await api("DELETE", "/api/dictation/journal");
+    journalState.items = [];
+    loadJournal();
+  } catch (e) {
+    const meta = document.getElementById("journal-meta");
+    meta.classList.add("error");
+    meta.textContent = e.message;
+  }
+}
+
 async function runDryRun() {
   const msg = document.getElementById("dry-msg");
   const meta = document.getElementById("dry-meta");
@@ -1397,6 +1615,12 @@ function renderDryRun(data) {
   // copy button; no per-render wiring required.
   const finalText = data.final_text || "";
   const finalAttr = escapeAttr(finalText);
+  // HS-45-03: `telemetryHtml` was referenced here but only ever defined inside
+  // `renderHSMeta` — a pre-existing ReferenceError that left every browser
+  // dry-run result blank (caught by runDryRun's try/catch; never surfaced
+  // because the dry-run was only API-tested, never browser-tested). Define it
+  // in scope from this run's telemetry.
+  const telemetryHtml = renderDryTelemetry(data.telemetry || {});
   finalHost.innerHTML = `
     <figure class="cmd cmd--neutral" aria-label="Dry-run final text">
       <figcaption class="cmd-caption">Final text</figcaption>
@@ -1411,12 +1635,114 @@ function renderDryRun(data) {
     ${warnings}
   `;
 
+  renderMomentOfTruth(data);
+
   const stages = data.stages || [];
   if (!stages.length) {
     trace.innerHTML = `<p class="trace-empty">No stages executed.</p>`;
     return;
   }
   trace.innerHTML = stages.map((stage) => renderDryStage(stage)).join("");
+}
+
+// ── HS-45-03: the moment of truth — fix it in flow, and it teaches ──────
+function momentRoute(data) {
+  // The block the run routed to (newest intent across stages), for the prompt.
+  let block = null;
+  let conf = null;
+  for (const s of data.stages || []) {
+    if (s.intent && s.intent.block_id) {
+      block = s.intent.block_id;
+      conf = s.intent.confidence;
+    }
+  }
+  const target = data.target && data.target.id ? data.target.id : null;
+  return { block, conf, target };
+}
+
+function renderMomentOfTruth(data) {
+  const host = document.getElementById("dry-moment");
+  if (!host) return;
+  // Only when this run was journaled (durable repo + journaling on) — there's
+  // an entry to attach a correction to. Works offline (no mic / no runtime):
+  // the dry-run still journals, so the fix-and-teach is provable without a mic.
+  const journalId = data.journal_id;
+  if (journalId == null) {
+    host.hidden = true;
+    host.innerHTML = "";
+    return;
+  }
+  const { block, conf, target } = momentRoute(data);
+  const routed = block
+    ? `routed to <strong>${escapeHtml(block)}</strong>${conf != null ? ` <span class="moment-conf">@ ${Number(conf).toFixed(2)}</span>` : ""}${target ? ` · target <strong>${escapeHtml(target)}</strong>` : ""}`
+    : target
+      ? `target <strong>${escapeHtml(target)}</strong>`
+      : "no route matched";
+  host.hidden = false;
+  host.dataset.journalId = String(journalId);
+  host.innerHTML = `
+    <div class="moment-head">
+      <span class="moment-q">Was that right?</span>
+      <span class="moment-routed">${routed}</span>
+      <span class="moment-spacer"></span>
+      <button type="button" class="btn moment-fix-btn" id="moment-fix-open">Fix it →</button>
+    </div>
+    <form class="moment-form" id="moment-form" hidden>
+      <p class="moment-hint">Teach the copilot what this <em>should</em> have been — it'll nudge similar dictations next time, and this entry is marked corrected in your Journal.</p>
+      <div class="row">
+        <label>Correct the
+          <select id="moment-kind">
+            <option value="intent">route (block)</option>
+            <option value="target">target (profile)</option>
+          </select>
+        </label>
+        <label>to
+          <input type="text" id="moment-value" placeholder="${escapeAttr(block || target || "block id / target profile")}" />
+        </label>
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn primary" id="moment-submit">Teach &amp; record</button>
+        <button type="button" class="btn" id="moment-cancel">Cancel</button>
+      </div>
+      <div id="moment-msg"></div>
+    </form>`;
+  // Focus-safe: the form is revealed on click; we never auto-focus an input
+  // (the dictation flow / the dry-run textarea keeps focus until the user acts).
+  document.getElementById("moment-fix-open").addEventListener("click", () => {
+    document.getElementById("moment-form").hidden = false;
+    document.getElementById("moment-fix-open").hidden = true;
+  });
+  document.getElementById("moment-cancel").addEventListener("click", () => {
+    document.getElementById("moment-form").hidden = true;
+    document.getElementById("moment-fix-open").hidden = false;
+  });
+  document.getElementById("moment-form").addEventListener("submit", submitMomentFix);
+}
+
+async function submitMomentFix(ev) {
+  ev.preventDefault();
+  const host = document.getElementById("dry-moment");
+  const id = host.dataset.journalId;
+  const kind = document.getElementById("moment-kind").value;
+  const value = document.getElementById("moment-value").value.trim();
+  const msg = document.getElementById("moment-msg");
+  msg.innerHTML = "";
+  if (!value) {
+    msg.innerHTML = `<div class="error-box">Enter the correct ${kind === "target" ? "target profile" : "block id"}.</div>`;
+    return;
+  }
+  try {
+    const res = await api("POST", `/api/dictation/journal/${encodeURIComponent(id)}/correct`, { kind, value });
+    const taught = res && res.taught;
+    host.innerHTML = `<div class="moment-done" role="status">
+      <span class="moment-check" aria-hidden="true">✓</span>
+      <span>${taught
+        ? "Taught — the copilot will nudge similar dictations toward this, and the Journal entry is marked corrected."
+        : "Recorded against the Journal entry. (Nothing was taught — the text looked like a secret, so it wasn't stored.)"}</span>
+    </div>`;
+  } catch (e) {
+    msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+  }
 }
 
 function escapeAttr(value) {
@@ -1493,6 +1819,8 @@ function clearDryRun() {
   document.getElementById("dry-meta").textContent = "No dry-run yet.";
   document.getElementById("dry-meta").classList.remove("warn", "error");
   document.getElementById("dry-final").innerHTML = "";
+  const moment = document.getElementById("dry-moment");
+  if (moment) { moment.hidden = true; moment.innerHTML = ""; }
   document.getElementById("dry-trace").innerHTML = "";
 }
 
@@ -1814,6 +2142,13 @@ document.getElementById("mem-btn-refresh").addEventListener("click", loadMemory)
 document
   .getElementById("mem-corrections-enabled")
   .addEventListener("change", toggleCorrectionsEnabled);
+// Journal (HS-45-02).
+document.getElementById("journal-btn-refresh").addEventListener("click", loadJournal);
+document.getElementById("journal-btn-clear").addEventListener("click", clearJournal);
+document.getElementById("journal-search").addEventListener("input", renderJournal);
+document.getElementById("journal-filter-source").addEventListener("change", renderJournal);
+document.getElementById("journal-filter-warnings").addEventListener("change", renderJournal);
+document.getElementById("journal-filter-corrected").addEventListener("change", renderJournal);
 document.getElementById("dry-btn-run").addEventListener("click", runDryRun);
 document.getElementById("dry-btn-clear").addEventListener("click", clearDryRun);
 document.getElementById("project-root-apply").addEventListener("click", applyProjectRootOverride);

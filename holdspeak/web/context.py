@@ -77,3 +77,8 @@ class WebContext:
     # HS-39-05: session dictation telemetry store (a `DictationTelemetryStore`),
     # fed via the pipeline `on_run` hook; readiness reads per-stage quantiles.
     telemetry: Optional[Any] = None
+
+    # HS-45-01: session dictation journal recorder (a `DictationJournalRecorder`),
+    # fed at the same post-run seam; the dry-run path records a row through it,
+    # the live runtime shares the instance via `server.dictation_journal`.
+    journal: Optional[Any] = None
