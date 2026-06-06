@@ -1597,6 +1597,13 @@ import CommandPreview from "../components/CommandPreview.astro";
     border-radius: var(--radius-1);
   }
 
+</style>
+
+<!-- HS-45 components are injected by dictation-app.js at runtime, so they
+     live in an is:global block — Astro's scoped styles only match elements
+     present in the .astro template (which carry the data-astro-cid attr),
+     never runtime-injected DOM. -->
+<style is:global>
   /* === HS-45-02: the dictation journal ============================== */
   /* The local-only trust statement — the privacy posture is first-class,
      not a footnote (the TrustChip idiom, expanded to a note). */
@@ -1614,8 +1621,8 @@ import CommandPreview from "../components/CommandPreview.astro";
     line-height: var(--line-height-relaxed);
   }
   .journal-trust.is-off {
-    background: color-mix(in srgb, var(--warning, #d08b2f) 9%, var(--surface-2));
-    border-color: color-mix(in srgb, var(--warning, #d08b2f) 30%, var(--border-subtle));
+    background: color-mix(in srgb, var(--warn) 9%, var(--surface-2));
+    border-color: color-mix(in srgb, var(--warn) 30%, var(--border-subtle));
   }
   .journal-trust-glyph { flex: none; margin-top: 1px; color: var(--accent); }
   .journal-trust strong { color: var(--text); }
@@ -1681,7 +1688,7 @@ import CommandPreview from "../components/CommandPreview.astro";
     border-radius: var(--radius-3);
     background: color-mix(in srgb, var(--surface-2) 50%, transparent);
   }
-  .journal-empty-glyph { font-size: 2.2rem; margin-bottom: var(--space-2); }
+  .journal-empty-glyph { color: var(--accent); opacity: 0.6; margin-bottom: var(--space-2); }
   .journal-empty-head {
     margin: 0 0 var(--space-1);
     font-family: var(--font-display);
@@ -1690,91 +1697,132 @@ import CommandPreview from "../components/CommandPreview.astro";
   }
   .journal-empty-sub { margin: 0 auto; max-width: 44ch; color: var(--text-muted); }
 
-  /* An elevated, rounded card — the Phase-44 surface treatment, with an
-     accent edge that turns green once an entry has been corrected. */
+  /* An elevated, contained card on the canvas. A hairline accent rail on the
+     left turns success-green once an entry has been corrected. */
   .journal-card {
+    position: relative;
     border: 1px solid var(--border-subtle);
-    border-left: 3px solid var(--accent);
-    border-radius: var(--radius-2);
+    border-radius: var(--radius-3);
     background: var(--surface-1);
     box-shadow: var(--elev-1);
-    padding: var(--space-3);
-    transition: box-shadow var(--motion-fast, 120ms) ease, transform var(--motion-fast, 120ms) ease;
+    padding: var(--space-4);
+    overflow: hidden;
+    transition: box-shadow 140ms ease, transform 140ms ease, border-color 140ms ease;
   }
-  .journal-card:hover { box-shadow: var(--elev-2); transform: translateY(-1px); }
-  .journal-card.is-corrected { border-left-color: var(--success, #4caf7d); }
+  .journal-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0.55;
+  }
+  .journal-card:hover { box-shadow: var(--elev-2); transform: translateY(-2px); border-color: var(--border); }
+  .journal-card.is-corrected::before { background: var(--success); opacity: 1; }
 
   .jr-head {
     display: flex;
     align-items: center;
     gap: var(--space-2);
     flex-wrap: wrap;
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--space-3);
   }
   .jr-spacer { flex: 1; }
   .jr-source {
     font-family: var(--font-mono);
-    font-size: var(--font-size-xs);
+    font-size: 10px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: var(--letter-spacing-eyebrow);
-    padding: 2px var(--space-2);
-    border-radius: var(--radius-pill);
+    letter-spacing: 0.08em;
+    padding: 3px var(--space-2);
+    border-radius: var(--radius-sm);
   }
-  .src-spoken { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
-  .src-dry { background: color-mix(in srgb, var(--text-muted) 16%, transparent); color: var(--text-muted); }
+  .src-spoken { background: var(--accent-tint); color: var(--accent); }
+  .src-dry { background: var(--surface-3); color: var(--text-muted); }
   .jr-badge {
+    display: inline-flex;
+    align-items: center;
     font-size: var(--font-size-xs);
-    padding: 2px var(--space-2);
-    border-radius: var(--radius-pill);
+    padding: 3px var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
     border: 1px solid var(--border-subtle);
     color: var(--text);
     font-family: var(--font-mono);
   }
-  .jr-target { color: var(--text-muted); }
-  .jr-muted { color: var(--text-muted); opacity: 0.7; }
-  .jr-when { color: var(--text-muted); font-size: var(--font-size-xs); }
+  .jr-target { background: transparent; border-color: transparent; color: var(--text-muted); padding-left: 0; }
+  .jr-muted { color: var(--text-faint); }
+  .jr-when { color: var(--text-faint); font-size: var(--font-size-xs); font-variant-numeric: tabular-nums; }
   .jr-corrected {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: var(--font-size-xs);
-    color: var(--success, #4caf7d);
     font-weight: 600;
+    color: var(--success-strong);
+    background: var(--success-soft);
+    padding: 3px var(--space-2);
+    border-radius: var(--radius-sm);
   }
+  /* Header action buttons: real targets, icon + label, calm until hover. */
+  .jr-replay-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: var(--font-size-xs);
+    padding: 5px var(--space-2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    background: var(--surface-2);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+  }
+  .jr-replay-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-tint); }
   .jr-del {
     appearance: none;
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
     background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: var(--font-size-lg);
-    line-height: 1;
+    border: 1px solid transparent;
+    color: var(--text-faint);
     cursor: pointer;
-    padding: 0 var(--space-1);
-    border-radius: var(--radius-1);
+    border-radius: var(--radius-sm);
+    transition: color 140ms ease, background 140ms ease;
   }
-  .jr-del:hover { color: var(--danger, #e0606a); background: color-mix(in srgb, var(--danger, #e0606a) 12%, transparent); }
+  .jr-del:hover { color: var(--danger); background: var(--danger-soft); }
 
   .jr-flow {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: 1fr 1.5rem 1fr;
     align-items: stretch;
     gap: var(--space-2);
   }
   .jr-text { margin: 0; min-width: 0; }
   .jr-text figcaption {
-    font-size: var(--font-size-xs);
+    font-size: 10px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: var(--letter-spacing-eyebrow);
-    color: var(--text-muted);
-    margin-bottom: 4px;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    margin-bottom: 6px;
   }
+  .jr-typed figcaption { color: var(--accent); }
   .jr-text-frame {
     position: relative;
     background: var(--canvas);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-1);
-    padding: var(--space-2);
+    border-radius: var(--radius-2);
+    padding: var(--space-3);
+    padding-right: 2.6rem;
     height: 100%;
   }
-  .jr-said .jr-text-frame { border-left: 2px solid var(--text-muted); }
-  .jr-typed .jr-text-frame { border-left: 2px solid var(--accent); }
+  .jr-typed .jr-text-frame {
+    background: var(--accent-tint);
+    border-color: color-mix(in srgb, var(--accent) 30%, var(--border-subtle));
+  }
   .jr-text-frame p {
     margin: 0;
     white-space: pre-wrap;
@@ -1782,42 +1830,83 @@ import CommandPreview from "../components/CommandPreview.astro";
     color: var(--text);
     font-size: var(--font-size-sm);
     line-height: var(--line-height-relaxed);
-    padding-right: 3.2rem;
   }
+  .jr-said .jr-text-frame p { color: var(--text-muted); }
   .jr-copy {
     position: absolute;
-    top: 6px;
-    right: 6px;
+    top: 8px;
+    right: 8px;
+    opacity: 0;
+    transition: opacity 140ms ease;
   }
-  .jr-arrow { align-self: center; color: var(--accent); font-size: var(--font-size-lg); }
+  .journal-card:hover .jr-copy, .jr-copy:focus-visible { opacity: 1; }
+  .jr-arrow {
+    align-self: center;
+    justify-self: center;
+    color: var(--text-faint);
+    font-size: var(--font-size-md);
+  }
 
-  /* per-utterance latency strip — the black box, opened */
-  .lat-strip { margin-top: var(--space-2); }
+  /* per-utterance latency strip — the black box, opened. A real segmented
+     bar (proportional to each stage's time) + a labelled legend below it. */
+  .lat-strip {
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-subtle);
+  }
+  .lat-strip-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .lat-strip-title {
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    color: var(--text-faint);
+  }
+  .lat-total {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--text);
+  }
   .lat-bar {
     display: flex;
     width: 100%;
-    height: 10px;
+    height: 8px;
     border-radius: var(--radius-pill);
     overflow: hidden;
-    background: var(--surface-2);
-    border: 1px solid var(--border-subtle);
+    background: var(--canvas);
+    box-shadow: inset 0 0 0 1px var(--border-subtle);
   }
-  .lat-seg { position: relative; min-width: 2px; }
-  .lat-intent-router { background: color-mix(in srgb, var(--accent) 55%, transparent); }
-  .lat-kb-enricher { background: color-mix(in srgb, var(--accent) 30%, transparent); }
-  .lat-project-rewriter { background: var(--accent); }
-  .lat-seg { background: color-mix(in srgb, var(--text-muted) 40%, transparent); }
-  .lat-seg-label {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    pointer-events: none;
+  /* base first, stage tints after — so the per-stage colour wins (the prior
+     duplicate base rule was silently greying every segment). */
+  .lat-seg { min-width: 3px; background: var(--accent-soft); }
+  .lat-seg.lat-intent-router, .lat-dot.lat-intent-router { background: color-mix(in srgb, var(--accent) 45%, var(--surface-3)); }
+  .lat-seg.lat-kb-enricher, .lat-dot.lat-kb-enricher { background: color-mix(in srgb, var(--accent) 22%, var(--surface-3)); }
+  .lat-seg.lat-project-rewriter, .lat-dot.lat-project-rewriter { background: var(--accent); }
+  .lat-dot { background: var(--accent-soft); }
+  .lat-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    margin-top: 8px;
   }
-  .lat-total { display: inline-block; margin-top: 4px; color: var(--text-muted); font-size: var(--font-size-xs); }
-  .lat-strip--empty .lat-total { margin-top: 0; }
+  .lat-key {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+  }
+  .lat-dot { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+  .lat-key b { color: var(--text); font-weight: 600; font-family: var(--font-mono); }
+  .lat-strip--empty { color: var(--text-faint); font-size: var(--font-size-xs); padding-top: var(--space-2); }
 
   .jr-warnings { margin-top: var(--space-2); font-size: var(--font-size-sm); }
-  .jr-warnings summary { cursor: pointer; color: var(--warning, #d08b2f); }
+  .jr-warnings summary { cursor: pointer; color: var(--warn); }
   .jr-warnings ul { margin: var(--space-1) 0 0; padding-left: var(--space-3); color: var(--text-muted); }
 
   @media (max-width: 640px) {
@@ -1829,20 +1918,50 @@ import CommandPreview from "../components/CommandPreview.astro";
     .journal-card:hover { transform: none; }
   }
 
-  /* === HS-45-03: the moment of truth (in-flow correct-and-teach) ===== */
-  .moment {
+  /* Calm advisory notes for the dry-run (NOT a red error box) — stage skips,
+     "llm disabled", target fallbacks read as context, not failure. */
+  .dry-notes {
     margin-top: var(--space-2);
-    border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border-subtle));
-    border-radius: var(--radius-2);
-    background: color-mix(in srgb, var(--accent) 6%, var(--surface-1));
     padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border-subtle);
+    border-left: 2px solid var(--warn);
+    border-radius: var(--radius-2);
+    background: var(--surface-2);
+  }
+  .dry-notes-title {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    margin-bottom: 4px;
+  }
+  .dry-notes ul { margin: 0; padding-left: var(--space-3); }
+  .dry-notes li { color: var(--text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
+
+  /* === HS-45-03: the moment of truth (in-flow correct-and-teach) ===== */
+  /* The focal, delightful element — an accent-edged card that invites the fix. */
+  .moment {
+    margin-top: var(--space-3);
+    border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--border-subtle));
+    border-radius: var(--radius-3);
+    background: linear-gradient(180deg, var(--accent-tint), var(--surface-1) 60%);
+    box-shadow: var(--elev-1);
+    padding: var(--space-3) var(--space-4);
   }
   .moment-head { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
-  .moment-q { font-weight: 600; color: var(--text); }
+  .moment-q { font-family: var(--font-display); font-weight: 700; font-size: var(--font-size-md); color: var(--text); }
   .moment-routed { color: var(--text-muted); font-size: var(--font-size-sm); }
   .moment-conf { font-family: var(--font-mono); opacity: 0.85; }
   .moment-spacer { flex: 1; }
-  .moment-form { margin-top: var(--space-2); display: flex; flex-direction: column; gap: var(--space-2); }
+  .moment-fix-btn {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--text-on-accent);
+    font-weight: 600;
+  }
+  .moment-fix-btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .moment-form { margin-top: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); }
   .moment-hint { margin: 0; color: var(--text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
   .moment-form .row { display: flex; gap: var(--space-2); flex-wrap: wrap; }
   .moment-form label { display: flex; flex-direction: column; gap: 4px; font-size: var(--font-size-sm); color: var(--text-muted); }
@@ -1871,10 +1990,10 @@ import CommandPreview from "../components/CommandPreview.astro";
     width: 1.5rem;
     height: 1.5rem;
     border-radius: 50%;
-    background: var(--success, #4caf7d);
+    background: var(--success);
     color: #fff;
     font-weight: 700;
-    animation: moment-pop var(--motion-fast, 160ms) ease;
+    animation: moment-pop 160ms ease;
   }
   @keyframes moment-pop {
     from { transform: scale(0.6); opacity: 0; }

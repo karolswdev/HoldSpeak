@@ -165,3 +165,16 @@ def test_dictation_journal_premium_and_a11y_markers(test_client: TestClient) -> 
         joined = "\n".join(p.read_text() for p in css)
         assert "lat-strip" in joined  # the per-utterance latency strip
         assert "journal-card" in joined
+        # REGRESSION GUARD: the journal/moment/replay DOM is injected by
+        # dictation-app.js at runtime, so its CSS MUST be global. Astro scopes
+        # `.journal-card { }` to `.journal-card[data-astro-cid-…]`, which never
+        # matches runtime-injected elements — that left the whole surface
+        # rendering naked. Keep these rules in a `<style is:global>` block.
+        assert ".journal-card{" in joined.replace(" ", ""), (
+            "journal styles must be global (is:global) — scoped CSS does not "
+            "apply to the JS-injected journal cards"
+        )
+        assert "journal-card[data-astro-cid" not in joined, (
+            "journal-card is scoped — it will NOT style the runtime-injected "
+            "cards. Move these rules into <style is:global>."
+        )
