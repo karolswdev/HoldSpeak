@@ -1,12 +1,18 @@
 # Phase 42 — First-Run Delight & Daily Confidence
 
-**Status:** IN PROGRESS (4/8 stories). Opened 2026-06-06. Direction chosen by the
+**Status:** IN PROGRESS (5/8 stories). Opened 2026-06-06. Direction chosen by the
 user: the product depth is now ahead of the product **entrance** — make
 **arrival** stellar. A user should go from fresh clone to a verified first
 dictation, with visible privacy/trust state and **zero file editing**, inside one
 guided local cockpit.
 
-**Last updated:** 2026-06-06 (**HS-42-04 done** — the magic-moment proof: a
+**Last updated:** 2026-06-06 (**HS-42-05 done** — the privacy posture is now
+**ambient**: a persistent shell **TrustChip** (Local only · Configured endpoint ·
+Writes need approval · Needs attention) reading `/api/setup/status` `trust{}`,
+opening a right-side **Trust & Privacy panel** (web bind/auth · egress + endpoint ·
+actuators · webhook hosts · presence). Pure `trust-view.js` verified by a Node
+harness (5 cases) + a live two-config Playwright check + 2 screenshots; suite
+**2296/16**. **HS-42-04 done** — the magic-moment proof: a
 guided `/setup` first-dictation panel (steps + readiness row + **live WS
 feedback** → "✓ It worked, text landed in your app" + transcript on a real
 dictation) + a fallback ladder, and the durable `FIRST_DICTATION_SUCCESS`
@@ -135,7 +141,7 @@ launch and a healthy returning user skips straight to work.
 | HS-42-02 | Global settings completion | done | [story-02-global-settings-completion.md](./story-02-global-settings-completion.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-42-03 | Welcome / Setup route + CLI nudge | done | [story-03-welcome-setup-route.md](./story-03-welcome-setup-route.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-42-04 | Guided first dictation test (real app) | done | [story-04-guided-first-dictation.md](./story-04-guided-first-dictation.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-42-05 | Trust & Privacy — ambient chip + panel | backlog | [story-05-trust-privacy-panel.md](./story-05-trust-privacy-panel.md) | — |
+| HS-42-05 | Trust & Privacy — ambient chip + panel | done | [story-05-trust-privacy-panel.md](./story-05-trust-privacy-panel.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-42-06 | Runtime model setup assistant | backlog | [story-06-runtime-model-assistant.md](./story-06-runtime-model-assistant.md) | — |
 | HS-42-07 | Presence onboarding | backlog | [story-07-presence-onboarding.md](./story-07-presence-onboarding.md) | — |
 | HS-42-08 | First-run evidence + docs closeout | backlog | [story-08-closeout-docs-evidence.md](./story-08-closeout-docs-evidence.md) | — |
@@ -175,7 +181,17 @@ the durable **`FIRST_DICTATION_SUCCESS` milestone** set at the two real
 dictation-success points in `_transcribe_and_type` (so `first_run` flips false
 and `/` stops nagging). 3 milestone-wiring tests + a live Playwright magic-moment
 + 3 screenshots; suite **2294/16**. The real-mic leg is the HS-42-08 dogfood.
-Next: **HS-42-05** (ambient trust chip + panel).
+**HS-42-05 shipped (2026-06-06)** — the local-first posture is now **ambient**: a
+persistent shell **TrustChip** (replaced the static LocalPill default) shows the
+single highest-priority posture from `/api/setup/status` `trust{}` (Local only ·
+Configured endpoint · Writes need approval · Needs attention) and opens a
+right-side **Trust & Privacy panel** (web bind/auth · egress + endpoint ·
+actuators · webhook hosts · presence, with a Settings link). Pure exported
+`trust-view.js` (`trustPosture`/`trustRows`) — verified by a **Node harness (5
+posture cases)** + a **live two-config Playwright** check (Local only vs
+Configured endpoint) + 2 screenshots; +2 committed shell tests (3 settings/
+identity tests updated in lockstep); suite **2294/16**. Next: **HS-42-06**
+(runtime model setup assistant).
 
 ## Active risks
 

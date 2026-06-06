@@ -17,7 +17,7 @@
 // menu toggle ([data-nav-toggle]); no flex-wrap pile-up.
 
 import AppMark from "./AppMark.astro";
-import LocalPill from "./LocalPill.astro";
+import TrustChip from "./TrustChip.astro";
 
 type Route = "runtime" | "activity" | "history" | "dictation" | "companion";
 
@@ -88,7 +88,7 @@ const groups: { label: string; routes: { slug: Route; label: string; href: strin
 
   <div class="topnav-tail">
     <slot name="status">
-      <LocalPill />
+      <TrustChip />
     </slot>
     <slot name="overflow" />
     <a

@@ -111,8 +111,9 @@ def test_components_gallery_is_served(test_client: TestClient) -> None:
     reason="run `cd web && npm run build` to populate holdspeak/static/_built/",
 )
 def test_identity_layer_assets_serve(test_client: TestClient) -> None:
-    """HS-10-05: app mark SVG inlines in TopNav, favicon + apple-touch-icon
-    are referenced + served, LocalPill tooltip appears."""
+    """HS-10-05 / HS-42-05: app mark SVG inlines in TopNav, favicon +
+    apple-touch-icon are referenced + served, and the shell privacy signal (now
+    the ambient TrustChip, HS-42-05) renders."""
     response = test_client.get("/_built/design/check/")
     body = response.text
     # Favicon refs in <head>.
@@ -121,9 +122,10 @@ def test_identity_layer_assets_serve(test_client: TestClient) -> None:
     # App mark inline SVG geometry (keycap rect + 3 waveform paths).
     assert 'viewBox="0 0 24 24"' in body
     assert 'rx="3"' in body
-    # Local-only pill tooltip text from LocalPill.
-    assert "Everything stays" not in body  # ensure default — we set tooltip
-    assert "stays on your machine" in body
+    # The shell privacy signal — the ambient TrustChip (replaced the static
+    # LocalPill default in the TopNav).
+    assert "data-trust-open" in body
+    assert "what can leave this machine" in body
 
     # Static-files mount serves the SVG itself.
     favicon = test_client.get("/_built/favicon.svg")

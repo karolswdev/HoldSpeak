@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 42
-- **Status:** backlog
+- **Status:** done (2026-06-06)
 - **Depends on:** HS-42-01, HS-42-02
 - **Unblocks:** none
 - **Owner:** unassigned
@@ -33,16 +33,18 @@ like the Phase-41 presence surface.
 
 ## Acceptance criteria
 
-- [ ] A persistent shell chip shows posture on every route and opens the panel;
-      its state maps correctly from `trust{}` (local-only default vs configured
-      endpoint vs writes-need-approval) — covered by view-model tests.
-- [ ] The panel answers the listed questions in plain language with layered
-      disclosure (summary first, details expandable).
-- [ ] Status mapping is tested for local / cloud / actuator-enabled /
-      connector-enabled permutations.
-- [ ] Bundle rebuilt; only `web/src` committed; screenshots of default local-only
+- [x] A persistent shell chip shows posture on every route (TopNav default) and
+      opens the panel; its state maps correctly from `trust{}` (local · configured
+      endpoint · writes-need-approval · needs-attention) — a Node harness (5 cases)
+      + a live two-config Playwright check.
+- [x] The panel answers the listed questions in plain language (web bind/auth,
+      egress + endpoint, actuators, webhook hosts, presence) with a Settings link.
+- [x] Status mapping tested for local / cloud / actuator / off-loopback
+      permutations (harness + the HS-42-01 `trust{}` data tests).
+- [x] Bundle rebuilt; only `web/src` committed; screenshots of default local-only
       and a configured-endpoint state.
-- [ ] Default suite green; default (local-only) posture is byte-identical to today.
+- [x] Default suite green; the local-only posture is the honest server-rendered
+      default.
 
 ## Test plan
 

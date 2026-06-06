@@ -1771,7 +1771,7 @@ class TestHistoryUiSmoke:
         # HS-42-02: Settings moved out of History into the global /settings route.
         for label in ("Meetings", "Action items", "Speakers", "Intel queue"):
             assert label in html
-        assert ">Settings<" not in html  # the History settings tab is gone
+        assert "setTab('settings')" not in html  # the History settings tab is gone
         assert "Deferred plugin jobs" in html
         # UI strings + Alpine bindings still rendered server-side.
         for ui_string in (
