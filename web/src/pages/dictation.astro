@@ -21,7 +21,21 @@ import CommandPreview from "../components/CommandPreview.astro";
 
 <AppLayout title="HoldSpeak Dictation" current="dictation">
   <main id="app" class="dictation">
-    <div class="scope-row" role="tablist" aria-label="Dictation sections">
+    {/* HS-44-02: cockpit hero — carry the Phase-43 wizard's bar (eyebrow +
+        display title + lede) so the daily-driver surface reads premium, not
+        like a bare tab dump. Presentation only; the Alpine-free app below is
+        untouched. */}
+    <header class="cockpit-hero">
+      <p class="cockpit-eyebrow">Dictation</p>
+      <h1 class="cockpit-h">Dictation cockpit</h1>
+      <p class="cockpit-lede">
+        Tune intelligent typing end-to-end — readiness, blocks, project
+        context, runtime, and a live dry-run — without hand-editing a single
+        config file.
+      </p>
+    </header>
+
+    <div class="scope-row cockpit-tabs" role="tablist" aria-label="Dictation sections">
       <button id="section-readiness" data-section="readiness" type="button" role="tab">Readiness</button>
       <button id="section-blocks" data-section="blocks" class="active" type="button" role="tab">Blocks</button>
       <button id="section-kb" data-section="kb" type="button" role="tab">Project KB</button>
@@ -511,12 +525,80 @@ import CommandPreview from "../components/CommandPreview.astro";
   /* All values flow from tokens.css. */
 
   .dictation {
+    position: relative;
     max-width: 80rem;
     margin: 0 auto;
     padding: var(--space-5);
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+  }
+
+  /* HS-44-02: an ambient accent glow behind the cockpit, the same
+   * treatment as the dashboard home + the wizard. */
+  .dictation::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: 340px;
+    pointer-events: none;
+    z-index: -1;
+    background: radial-gradient(
+      60% 100% at 50% 0%,
+      color-mix(in srgb, var(--accent) 8%, transparent),
+      transparent 70%
+    );
+  }
+
+  /* HS-44-02: cockpit hero — eyebrow + display title + lede. */
+  .cockpit-hero {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .cockpit-eyebrow {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-eyebrow);
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .cockpit-h {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(var(--font-size-2xl), 3.2vw, var(--font-size-3xl));
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    color: var(--text);
+  }
+  .cockpit-lede {
+    margin: var(--space-1) 0 0;
+    color: var(--text-muted);
+    line-height: var(--line-height-relaxed);
+    max-width: 62ch;
+  }
+
+  /* HS-44-02: the section nav reads as a premium contained pill bar
+   * (elevated surface, blur) rather than loose buttons on the canvas.
+   * Scoped to `.cockpit-tabs` so the in-panel block-scope row keeps its
+   * lighter treatment. */
+  .cockpit-tabs {
+    padding: var(--space-1);
+    background: color-mix(in srgb, var(--surface-2) 82%, transparent);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--elev-1);
+    backdrop-filter: blur(8px);
+  }
+  /* Specificity beats the later `.scope-row button.active` so the active
+   * section reads as a punchy solid accent, not the soft block-scope look. */
+  .scope-row.cockpit-tabs button.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-on);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 32%, transparent);
   }
 
   .lede {
@@ -755,14 +837,20 @@ import CommandPreview from "../components/CommandPreview.astro";
   .block-list { display: flex; flex-direction: column; gap: var(--space-1); }
   .block-card {
     border: 1px solid var(--border-subtle);
+    border-left: 3px solid transparent;
     border-radius: var(--radius-sm);
     padding: var(--space-2) var(--space-3);
     background: var(--surface-2);
     cursor: pointer;
     transition: background var(--duration-short) var(--ease-standard),
-                color var(--duration-short) var(--ease-standard);
+                color var(--duration-short) var(--ease-standard),
+                border-color var(--duration-short) var(--ease-standard);
   }
-  .block-card:hover:not(.selected) { background: var(--surface-hover); }
+  /* HS-44-02: a hover accent edge gives the list tactile feedback. */
+  .block-card:hover:not(.selected) {
+    background: var(--surface-hover);
+    border-left-color: var(--accent);
+  }
   .block-card.selected {
     background: var(--selected-bg);
     color: var(--selected-fg);
@@ -957,6 +1045,17 @@ import CommandPreview from "../components/CommandPreview.astro";
     padding: var(--space-3);
     background: var(--canvas);
     min-height: 6.5rem;
+    /* HS-44-02: depth + motion to match the wizard's bar. */
+    transition: transform var(--duration-short) var(--ease-standard),
+                border-color var(--duration-short) var(--ease-standard),
+                box-shadow var(--duration-short) var(--ease-standard);
+  }
+  .readiness-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--elev-1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .readiness-card:hover { transform: none; }
   }
   .readiness-card strong { display: block; margin-bottom: var(--space-2); color: var(--text); }
   .readiness-card .value {
