@@ -1883,4 +1883,64 @@ import CommandPreview from "../components/CommandPreview.astro";
   @media (prefers-reduced-motion: reduce) {
     .moment-check { animation: none; }
   }
+
+  /* === HS-45-04: replay (before → after, "prove it learned") ========= */
+  .jr-replay-btn {
+    font-size: var(--font-size-xs);
+    padding: 2px var(--space-2);
+  }
+  .jr-replay {
+    margin-top: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border-subtle));
+    border-radius: var(--radius-1);
+    background: color-mix(in srgb, var(--accent) 5%, var(--surface-2));
+  }
+  .replay-pending { margin: 0; color: var(--text-muted); font-size: var(--font-size-sm); }
+  .replay-head { margin-bottom: var(--space-2); font-size: var(--font-size-sm); }
+  .replay-changed { color: var(--accent); font-weight: 600; }
+  .replay-same { color: var(--text-muted); }
+  .replay-row {
+    display: grid;
+    grid-template-columns: 5rem 1fr auto 1fr;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 2px 0;
+    font-size: var(--font-size-sm);
+  }
+  .replay-label {
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    color: var(--text-muted);
+  }
+  .replay-before { color: var(--text-muted); font-family: var(--font-mono); }
+  .replay-after { color: var(--text); font-family: var(--font-mono); }
+  .replay-arrow { color: var(--text-muted); }
+  .replay-row.is-changed .replay-after { color: var(--accent); font-weight: 600; }
+  .replay-row.is-changed .replay-before { text-decoration: line-through; opacity: 0.7; }
+  .replay-final { margin-top: var(--space-2); }
+  .replay-final-frame {
+    position: relative;
+    background: var(--canvas);
+    border: 1px solid var(--border-subtle);
+    border-left: 2px solid var(--accent);
+    border-radius: var(--radius-1);
+    padding: var(--space-2);
+    margin-top: 4px;
+  }
+  .replay-final-frame p {
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color: var(--text);
+    font-size: var(--font-size-sm);
+    padding-right: 3.2rem;
+  }
+  .replay-final-frame .cmd-copy { position: absolute; top: 6px; right: 6px; }
+  .replay-note { margin: var(--space-2) 0 0; color: var(--text-muted); font-size: var(--font-size-xs); }
+  @media (max-width: 640px) {
+    .replay-row { grid-template-columns: 1fr; }
+    .replay-arrow { display: none; }
+  }
 </style>

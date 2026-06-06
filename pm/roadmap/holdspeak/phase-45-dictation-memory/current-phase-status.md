@@ -1,19 +1,20 @@
 # Phase 45 — Dictation Memory & the Moment of Truth
 
-**Status:** IN PROGRESS (3/6). Opened 2026-06-06 on user direction ("think really
+**Status:** IN PROGRESS (4/6). Opened 2026-06-06 on user direction ("think really
 hard around the experience … scaffold a phase that will be oh-so-meaningful")
 after a grounded look at how HoldSpeak feels to live with.
 
-**Last updated:** 2026-06-06 (**HS-45-03 — the moment of truth — DONE**: after a
-dry-run, the result panel surfaces **"Was that right? → Fix it"** → teach a
-correction → **"Taught ✓"**, via `POST /api/dictation/journal/{id}/correct`
-[records a correction keyed on the entry transcript + flips `corrected` +
-nudges future routing] — focus-safe [no `autofocus`/`.focus()`], byte-identical
-when not correcting, provable with no mic. 7 integration tests [incl. the nudge
-proof] + a live `moment_of_truth.png`; also **fixed a pre-existing dry-run
-ReferenceError** that left browser results blank. Suite 2358/17. Prior:
-**HS-45-02** the Journal review timeline; **HS-45-01** the persistence spine
-[proven by a true e2e against `.43`]).
+**Last updated:** 2026-06-06 (**HS-45-04 — replay — DONE**: `POST /api/dictation/
+journal/{id}/replay` re-runs a stored utterance's transcript through the current
+pipeline [dry-run, no typing, **no new row**, original untouched, in its original
+project context] → a per-entry **↻ Replay** action on the Journal renders a
+**before → after** diff. The payoff proven offline: correct an utterance's target
+→ replay → the routed target flips to the corrected profile [`changed: true`].
+Re-insert is **preview + copy** [focus-safe]; OS-typing re-insert deferred [no
+web→typer seam; focus-steal risk]. 5 integration tests [incl. the correction→
+replay nudge] + a live `replay_before_after.png`; route-table guard 34→35; suite
+2363/17. Prior: **HS-45-03** the moment of truth; **HS-45-02** the Journal
+timeline; **HS-45-01** the spine [true e2e against `.43`]).
 
 ## The thesis — why this phase
 
@@ -120,23 +121,28 @@ trusted, learning companion — without changing what gets typed.
 | HS-45-01 | Dictation journal — the persistence spine | done | [story-01-journal-persistence.md](./story-01-journal-persistence.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-45-02 | The Journal — a reviewable utterance timeline | done | [story-02-journal-surface.md](./story-02-journal-surface.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-45-03 | The moment of truth — correct in flow, and it teaches | done | [story-03-moment-of-truth.md](./story-03-moment-of-truth.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-45-04 | Replay — prove it learned | backlog | [story-04-replay.md](./story-04-replay.md) | — |
+| HS-45-04 | Replay — prove it learned | done | [story-04-replay.md](./story-04-replay.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-45-05 | Docs — the dictation journal & its privacy posture | backlog | [story-05-docs.md](./story-05-docs.md) | — |
 | HS-45-06 | Closeout — before/after + dogfood + PR | backlog | [story-06-closeout.md](./story-06-closeout.md) | — |
 
 ## Where we are
 
-**HS-45-01 (spine) + HS-45-02 (review) + HS-45-03 (moment of truth) are DONE.**
-The journal records every run (both paths, secret-redacted, retention-capped, off
-⇒ byte-identical); the **Journal** tab reviews them (said→typed timeline, latency
-strip, search/filters, copy, delete/clear, local-only trust); and the **dry-run
-result panel** now closes the loop — *"Was that right? → Fix it → Taught ✓"* via
-`POST /api/dictation/journal/{id}/correct` (records a correction keyed on the
-entry transcript, flips `corrected`, nudges future routing), focus-safe and
-provable with no mic. Next: **HS-45-04** replay (re-run a stored utterance
-through the current pipeline; before/after; opt-in re-insert) — the `mark_corrected`
-linkage + the recorder's record-return are in place for it. Sequence: 01 ✅ →
-02 ✅ → 03 ✅ → 04 → 05 → 06.
+**HS-45-01…04 are DONE — the journal's whole arc works.** Record every run
+(spine, both paths, secret-redacted, off ⇒ byte-identical) → **review** it (the
+Journal timeline) → **correct it in the moment** (the dry-run panel's *"Was that
+right? → Fix it → Taught ✓"*, which teaches + flips `corrected`) → **replay** it
+(↻ Replay re-runs the stored transcript through the current pipeline and shows
+before → after; correcting then replaying demonstrably flips the routed target —
+the "it learned" payoff, proven offline). All local-first, focus-safe, side-channel.
+
+Next: **HS-45-05 docs** (describe the journal + its privacy posture + the in-moment
+loop + replay; doc-drift/link-check green) → **HS-45-06 closeout** (no-mic dogfood
++ before/after + PR). Sequence: 01 ✅ → 02 ✅ → 03 ✅ → 04 ✅ → 05 → 06.
+
+> **Decision (HS-45-04 re-insert):** preview + copy-to-clipboard is the re-insert
+> primitive. OS-typing re-insert is deferred — there's no web→typer seam in the
+> route layer, and typing into the active app from a background web click is the
+> exact focus-steal vector this phase forbids. The story permits preview-only.
 
 > **Note:** the `openai` package was installed into the dev venv to run the real
 > `.43` e2e (it's the optional `dictation-openai` extra, not a new hard dep).

@@ -2,9 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 45
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-45-01, HS-45-02
-- **Owner:** unassigned
+- **Owner:** Claude (Opus 4.8)
+- **Evidence:** [evidence-story-04.md](./evidence-story-04.md)
 
 ## Problem
 The copilot learns (corrections, KB, config), but the user never *sees* it get
@@ -30,18 +31,22 @@ stored utterance, run it through the **current** pipeline, and show before → a
   durable artifact).
 
 ## Acceptance criteria
-- [ ] `POST /api/dictation/journal/{id}/replay` re-runs the stored transcript
+- [x] `POST /api/dictation/journal/{id}/replay` re-runs the stored transcript
       through the current pipeline (dry-run) and returns new routing + final text
       + latency, without typing anything.
-- [ ] The Journal shows a per-entry **Replay** action rendering before → after
+- [x] The Journal shows a per-entry **Replay** action rendering before → after
       (old vs new block/target/final).
-- [ ] After a correction (HS-45-03) targeting an utterance's gist, replaying that
-      utterance demonstrably routes to the corrected block/target — a test
-      asserts the changed outcome.
-- [ ] Re-insert is **opt-in + focus-safe** (preview by default; typing requires a
-      separate explicit action) and reuses the existing typer path.
-- [ ] Replay never mutates the original journal row (it's a fresh dry-run); suite
-      green; `(cd web && npm run build)` succeeds; **0** `_built/` tracked.
+- [x] After a correction (HS-45-03) targeting an utterance's gist, replaying that
+      utterance demonstrably routes to the corrected target — a test asserts the
+      changed outcome (offline, via the target-correction nudge).
+- [x] Re-insert is **opt-in + focus-safe** — preview by default; a deliberate
+      **Copy improved result** (clipboard) is the re-insert primitive. *OS-typing
+      re-insert is deferred:* no web→typer seam exists and typing into the active
+      app from a background web click is the exact focus-steal vector this phase
+      forbids; the story permits preview-only ("preview alone already proves the
+      learning"). Decision recorded in the phase status.
+- [x] Replay never mutates the original journal row (a fresh dry-run, `journal=None`);
+      suite green; `(cd web && npm run build)` succeeds; **0** `_built/` tracked.
 
 ## Test plan
 - Unit / API: replay endpoint returns a fresh pipeline result for a stored

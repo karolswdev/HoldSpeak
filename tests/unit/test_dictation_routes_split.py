@@ -52,6 +52,8 @@ _EXPECTED_ROUTES = {
     ("/api/dictation/journal/{entry_id}", "DELETE"),
     ("/api/dictation/journal", "DELETE"),
     ("/api/dictation/journal/{entry_id}/correct", "POST"),
+    # HS-45-04: replay a stored utterance through the current pipeline.
+    ("/api/dictation/journal/{entry_id}/replay", "POST"),
 }
 
 
@@ -74,4 +76,4 @@ def test_dictation_route_table_is_unchanged_after_split() -> None:
 
 
 def test_dictation_route_count_is_stable() -> None:
-    assert len(_router_route_set()) == len(_EXPECTED_ROUTES) == 34
+    assert len(_router_route_set()) == len(_EXPECTED_ROUTES) == 35

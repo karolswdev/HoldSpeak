@@ -446,7 +446,81 @@ def build_pipeline_router(
             }
         )
 
+    @router.post("/api/dictation/journal/{entry_id}/replay")
+    async def api_dictation_journal_replay(entry_id: int) -> Any:
+        """HS-45-04: re-run a stored utterance through the *current* pipeline.
+
+        Replays the entry's stored **transcript** (not audio) through the dry-run
+        pipeline — no typing, no new journal row — using the entry's original
+        project root so routing context matches, and returns a before → after
+        diff. This makes "it learned" tangible: correct an utterance, replay it,
+        and watch the routing change. The original journal row is never mutated.
+        """
+        repo = _journal_repo()
+        if repo is None:
+            return JSONResponse({"error": "journal unavailable"}, status_code=404)
+        entry = repo.get(entry_id)
+        if entry is None:
+            return JSONResponse({"error": "entry not found"}, status_code=404)
+        try:
+            after = _run_dictation_dry_run_text(
+                entry.transcript,
+                entry.project_root,  # original context
+                None,
+                suggestions=project_doc_suggestions,
+                corrections=ctx.corrections,
+                dismissed_signatures=dismissed_signatures,
+                telemetry=None,  # a preview — don't pollute readiness telemetry
+                journal=None,  # replay never journals (it's not a new dictation)
+            )
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except Exception as exc:  # pragma: no cover - mirrors the dry-run route
+            log.error(f"Journal replay failed: {exc}")
+            return JSONResponse({"error": str(exc)}, status_code=500)
+
+        after_block, after_conf = _routed_from_stages(after.get("stages") or [])
+        after_summary = {
+            "block_id": after_block,
+            "confidence": after_conf,
+            "target_profile": (after.get("target") or {}).get("id"),
+            "final_text": after.get("final_text") or "",
+            "runtime_status": after.get("runtime_status"),
+        }
+        before = {
+            "block_id": entry.block_id,
+            "confidence": entry.confidence,
+            "target_profile": entry.target_profile,
+            "final_text": entry.final_text,
+        }
+        changed = (
+            (before["block_id"] or None) != (after_summary["block_id"] or None)
+            or (before["target_profile"] or None) != (after_summary["target_profile"] or None)
+            or (before["final_text"] or "") != (after_summary["final_text"] or "")
+        )
+        return JSONResponse(
+            {
+                "entry_id": entry_id,
+                "before": before,
+                "after": after_summary,
+                "detail": after,
+                "changed": changed,
+            }
+        )
+
     return router
+
+
+def _routed_from_stages(stages: list[Any]) -> tuple[Optional[str], Optional[float]]:
+    """The block the run routed to (the newest stage intent with a block_id)."""
+    block: Optional[str] = None
+    conf: Optional[float] = None
+    for stage in stages:
+        intent = stage.get("intent") if isinstance(stage, dict) else None
+        if isinstance(intent, dict) and intent.get("block_id"):
+            block = intent.get("block_id")
+            conf = intent.get("confidence")
+    return block, conf
 
 
 def _journal_to_dict(record: Any) -> dict[str, Any]:

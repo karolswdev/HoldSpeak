@@ -1395,6 +1395,55 @@ function renderJournal() {
   list.querySelectorAll("button[data-journal-del]").forEach((btn) =>
     btn.addEventListener("click", () => deleteJournalEntry(btn.dataset.journalDel))
   );
+  list.querySelectorAll("button[data-journal-replay]").forEach((btn) =>
+    btn.addEventListener("click", () => replayJournalEntry(btn.dataset.journalReplay, btn))
+  );
+}
+
+// ── Replay (HS-45-04): prove it learned ────────────────────────────────
+function replayDiffRow(label, before, after) {
+  const changed = (before || "—") !== (after || "—");
+  return `<div class="replay-row ${changed ? "is-changed" : ""}">
+    <span class="replay-label">${escapeHtml(label)}</span>
+    <span class="replay-before">${escapeHtml(before || "—")}</span>
+    <span class="replay-arrow" aria-hidden="true">→</span>
+    <span class="replay-after">${escapeHtml(after || "—")}</span>
+  </div>`;
+}
+
+async function replayJournalEntry(id, btn) {
+  const host = document.querySelector(`[data-replay-host="${CSS.escape(String(id))}"]`);
+  if (!host) return;
+  host.hidden = false;
+  host.innerHTML = `<p class="replay-pending">Replaying through the current pipeline…</p>`;
+  if (btn) btn.disabled = true;
+  try {
+    const data = await api("POST", `/api/dictation/journal/${encodeURIComponent(id)}/replay`);
+    const b = data.before || {};
+    const a = data.after || {};
+    const blockBefore = b.block_id ? `${b.block_id}${b.confidence != null ? ` @ ${Number(b.confidence).toFixed(2)}` : ""}` : "";
+    const blockAfter = a.block_id ? `${a.block_id}${a.confidence != null ? ` @ ${Number(a.confidence).toFixed(2)}` : ""}` : "";
+    const headline = data.changed
+      ? `<span class="replay-changed">↻ The pipeline routes this differently now.</span>`
+      : `<span class="replay-same">Same result as before — nothing's changed for this one yet.</span>`;
+    const finalText = a.final_text || "";
+    host.innerHTML = `
+      <div class="replay-head">${headline}</div>
+      ${replayDiffRow("route", blockBefore, blockAfter)}
+      ${replayDiffRow("target", b.target_profile, a.target_profile)}
+      <div class="replay-final">
+        <span class="replay-label">now types</span>
+        <div class="replay-final-frame">
+          <p>${escapeHtml(finalText) || "<em>(empty)</em>"}</p>
+          <button type="button" class="cmd-copy" data-cmd-copy data-command="${escapeAttr(finalText)}" aria-label="Copy the improved result"><span data-cmd-copy-label>Copy</span></button>
+        </div>
+      </div>
+      <p class="replay-note">Preview only — nothing was typed. Copy the improved result to use it.</p>`;
+  } catch (e) {
+    host.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 function renderLatencyStrip(item) {
@@ -1449,6 +1498,7 @@ function renderJournalEntry(item) {
       ${corrected}
       <span class="jr-spacer"></span>
       ${when}
+      <button class="btn jr-replay-btn" type="button" data-journal-replay="${escapeAttr(String(item.id))}" title="Re-run this through the current pipeline">↻ Replay</button>
       <button class="jr-del" type="button" data-journal-del="${escapeAttr(String(item.id))}" title="Delete this entry" aria-label="Delete this journal entry">×</button>
     </header>
     <div class="jr-flow">
@@ -1470,6 +1520,7 @@ function renderJournalEntry(item) {
     </div>
     ${renderLatencyStrip(item)}
     ${warnings}
+    <div class="jr-replay" data-replay-host="${escapeAttr(String(item.id))}" hidden></div>
   </article>`;
 }
 
