@@ -63,13 +63,55 @@ import AppLayout from "../layouts/AppLayout.astro";
           </section>
         </template>
 
-        <!-- First dictation CTA (HS-42-04 makes this a guided flow) -->
-        <section class="first-dictation" id="first-dictation" :class="{ primed: overall === 'ready' }">
-          <div class="fd-text">
+        <!-- Guided first dictation (HS-42-04) -->
+        <section class="first-dictation" id="first-dictation" :class="{ primed: overall === 'ready', done: firstDone || dictation.ok }">
+          <div class="fd-head">
             <h2>Try your first dictation</h2>
-            <p>Focus a text field in any app, hold your hotkey, speak, and release. HoldSpeak types it for you — locally.</p>
+            <span class="fd-badge" x-show="firstDone || dictation.ok" x-cloak>✓ Done</span>
           </div>
-          <a class="btn primary" href="/dictation">Open dictation</a>
+
+          <!-- Success -->
+          <template x-if="dictation.ok || firstDone">
+            <div class="fd-success">
+              <p class="fd-success-line">It worked — text landed in your app. You're all set.</p>
+              <p class="fd-transcript" x-show="dictation.transcript" x-cloak>
+                <span class="fd-quote">“</span><span x-text="dictation.transcript"></span><span class="fd-quote">”</span>
+              </p>
+            </div>
+          </template>
+
+          <!-- Guide -->
+          <template x-if="!(dictation.ok || firstDone)">
+            <div class="fd-guide">
+              <p class="fd-intro">Hold your hotkey, speak, release — HoldSpeak types it into whatever app is focused, locally.</p>
+              <ol class="fd-steps">
+                <li><span class="fd-step-n">1</span> Open an editor, note, or chat box and click into a text field.</li>
+                <li><span class="fd-step-n">2</span> Press &amp; hold your hotkey (set it in <a href="/settings">Settings</a>), say a sentence, then release.</li>
+                <li><span class="fd-step-n">3</span> Watch the words appear — we'll confirm it here.</li>
+              </ol>
+
+              <!-- Live status -->
+              <div class="fd-live" x-show="liveLabel" x-cloak>
+                <span class="fd-live-dot"></span> <span x-text="liveLabel"></span>
+              </div>
+
+              <!-- Readiness mini-row -->
+              <div class="fd-ready" x-show="sectionById('global-hotkey') || sectionById('text-injection') || sectionById('transcription-backend')" x-cloak>
+                <template x-for="id in ['global-hotkey','text-injection','transcription-backend']" :key="id">
+                  <span class="fd-chip" x-show="sectionById(id)" :class="`st-${sectionById(id)?.status}`">
+                    <span class="fd-chip-glyph" x-text="statusGlyph(sectionById(id)?.status)"></span>
+                    <span x-text="sectionById(id)?.label"></span>
+                  </span>
+                </template>
+              </div>
+
+              <p class="fd-fallback">
+                Hotkey blocked (e.g. Wayland) or text not appearing? Keep the HoldSpeak
+                window focused for the hold-to-talk fallback, or paste from the
+                clipboard — see <a href="/dictation">the dictation cockpit</a>.
+              </p>
+            </div>
+          </template>
         </section>
 
         <!-- Ready -->
@@ -203,16 +245,62 @@ import AppLayout from "../layouts/AppLayout.astro";
   .check-detail { color: var(--text-muted); font-size: var(--font-size-sm); }
   .check-fix { color: var(--accent); font-size: var(--font-size-sm); margin-top: var(--space-1); }
 
-  /* First dictation CTA */
+  /* Guided first dictation */
   .first-dictation {
-    display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
     padding: var(--space-5); margin-bottom: var(--space-6);
-    border-radius: var(--radius-lg); border: 1px dashed var(--border-strong);
-    background: var(--surface-1); scroll-margin-top: var(--space-6);
+    border-radius: var(--radius-lg); border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--accent);
+    background: var(--surface-2); scroll-margin-top: var(--space-6);
   }
-  .first-dictation.primed { border-style: solid; border-color: var(--ok); background: var(--ok-soft, var(--surface-2)); }
-  .fd-text h2 { font-family: var(--font-display); font-size: var(--font-size-lg); font-weight: 600; color: var(--text); margin: 0 0 var(--space-1); }
-  .fd-text p { color: var(--text-muted); font-size: var(--font-size-sm); margin: 0; max-width: 52ch; }
+  .first-dictation.primed { border-left-color: var(--ok); }
+  .first-dictation.done { border-left-color: var(--ok); background: var(--ok-soft, var(--surface-2)); }
+  .fd-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
+  .fd-head h2 { font-family: var(--font-display); font-size: var(--font-size-lg); font-weight: 600; color: var(--text); margin: 0; }
+  .fd-badge {
+    font-family: var(--font-mono); font-size: var(--font-size-xs); font-weight: 600;
+    padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill);
+    background: var(--ok); color: var(--bg, #0b0d10);
+  }
+
+  .fd-intro { color: var(--text-muted); font-size: var(--font-size-sm); margin: 0 0 var(--space-4); max-width: 60ch; }
+  .fd-steps { list-style: none; margin: 0 0 var(--space-4); padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+  .fd-steps li { display: flex; align-items: baseline; gap: var(--space-3); color: var(--text); font-size: var(--font-size-sm); }
+  .fd-steps a { color: var(--accent); }
+  .fd-step-n {
+    flex: none; display: inline-grid; place-items: center; width: 22px; height: 22px;
+    border-radius: 50%; background: var(--accent-tint); color: var(--accent);
+    font-family: var(--font-mono); font-size: var(--font-size-xs); font-weight: 700;
+    transform: translateY(2px);
+  }
+
+  .fd-live {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    padding: var(--space-2) var(--space-4); margin-bottom: var(--space-4);
+    border-radius: var(--radius-pill); background: var(--accent-tint); color: var(--accent);
+    font-size: var(--font-size-sm); font-weight: 600;
+  }
+  .fd-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: fd-pulse 1.1s ease-in-out infinite; }
+  @keyframes fd-pulse { 0%,100% { opacity: 0.35; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.15); } }
+  @media (prefers-reduced-motion: reduce) { .fd-live-dot { animation: none; } }
+
+  .fd-ready { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-4); }
+  .fd-chip {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill);
+    background: var(--surface-3); border: 1px solid var(--border-subtle);
+    color: var(--text-muted); font-size: var(--font-size-xs);
+  }
+  .fd-chip.st-pass { color: var(--ok); border-color: var(--ok); }
+  .fd-chip.st-warn { color: var(--warn-strong, var(--warn)); border-color: var(--warn); }
+  .fd-chip.st-fail { color: var(--danger); border-color: var(--danger); }
+  .fd-chip-glyph { font-weight: 700; }
+
+  .fd-fallback { color: var(--text-faint); font-size: var(--font-size-xs); margin: 0; max-width: 64ch; }
+  .fd-fallback a { color: var(--text-muted); }
+
+  .fd-success-line { color: var(--text); font-size: var(--font-size-md); font-weight: 600; margin: 0 0 var(--space-2); }
+  .fd-transcript { color: var(--text-muted); font-size: var(--font-size-sm); font-style: italic; margin: 0; }
+  .fd-quote { color: var(--accent); font-weight: 700; }
 
   /* Ready grid */
   .ready-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-2); }

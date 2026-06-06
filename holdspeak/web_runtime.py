@@ -1048,6 +1048,23 @@ class WebRuntime:
         except Exception as exc:  # pragma: no cover - a nudge must never block boot
             log.debug(f"setup nudge skipped: {exc}")
 
+    def _mark_first_dictation(self) -> None:
+        """HS-42-04: record the durable first-dictation milestone on a real,
+        successful dictation (text delivered to an agent session or typed into
+        the active app). This flips `first_run` false so the `/setup` welcome no
+        longer fronts the dashboard. Idempotent (the runtime sets it at most once)
+        and fully defensive — a DB hiccup never disrupts dictation.
+        """
+        if getattr(self, "_first_dictation_marked", False):
+            return
+        try:
+            from .db import FIRST_DICTATION_SUCCESS, get_database
+
+            get_database().milestones.mark(FIRST_DICTATION_SUCCESS)
+            self._first_dictation_marked = True
+        except Exception as exc:  # pragma: no cover - never block dictation
+            log.debug(f"first-dictation milestone not recorded: {exc}")
+
     def _on_bookmark(self, label: str) -> dict[str, object]:
         session = self._active_meeting_session()
         if session is not None:
@@ -1557,6 +1574,7 @@ class WebRuntime:
                         last_event="dictation_delivered",
                         last_error="",
                     )
+                    self._mark_first_dictation()
                 if not delivered and self.typer is not None:
                     try:
                         paste_target_profile = self._paste_target_profile(agent_reply_session)
@@ -1580,6 +1598,7 @@ class WebRuntime:
                             last_event="dictation_typed",
                             last_error="",
                         )
+                        self._mark_first_dictation()
                     except Exception as exc:
                         with self.state_lock:
                             self.runtime_status["last_error"] = f"Typing failed: {exc}"

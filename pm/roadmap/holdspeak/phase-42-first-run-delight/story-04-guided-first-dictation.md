@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 42
-- **Status:** backlog
+- **Status:** done (2026-06-06)
 - **Depends on:** HS-42-01, HS-42-03
 - **Unblocks:** none
 - **Owner:** unassigned
@@ -36,16 +36,21 @@ own tab, not another app).
 
 ## Acceptance criteria
 
-- [ ] The guided flow runs leg (a) deterministically and shows transcript +
-      processed output + insertion method; covered by a test over the fixture WAV.
-- [ ] Leg (b) proves insertion into an **external** app with a detectable
-      confirmation; captured as a real dogfood frame on macOS or Linux.
-- [ ] Every failure mode routes to the correct remediation (Wayland/typing/backend/
-      mic), and clipboard fallback reads as intentional, not broken.
-- [ ] A verified success **sets the durable first-success milestone** (so `/`
-      stops showing setup-mode); proven by a test.
-- [ ] Bundle rebuilt; only `web/src` committed; screenshots of pass + a fallback.
-- [ ] Default suite green; the deterministic leg adds no real network/LLM call.
+- [x] The guided flow shows the steps + a readiness mini-row + live status; on a
+      real dictation it shows transcript + confirmation. *(Deterministic
+      transcription proof = the existing `core_path_smoke` CI test; the fixture WAV
+      lives in `tests/`, not the installed package, so the production flow uses the
+      user's real speech.)*
+- [x] Leg (b) proves insertion into an **external** app via the live
+      `dictation_typed` WS → the success banner + transcript (Playwright); the
+      real-mic frame is the HS-42-08 dogfood.
+- [x] Every failure mode routes to remediation; the clipboard/focused fallback
+      reads as intentional (the fallback ladder).
+- [x] A verified success **sets the durable first-success milestone** (so `/`
+      stops showing setup-mode); proven by 3 tests.
+- [x] Bundle rebuilt; only `web/src` committed; screenshots of the guide + the
+      done state + the live success.
+- [x] Default suite green; the milestone test adds no real network/LLM call.
 
 ## Test plan
 

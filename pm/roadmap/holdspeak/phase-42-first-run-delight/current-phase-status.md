@@ -1,12 +1,18 @@
 # Phase 42 — First-Run Delight & Daily Confidence
 
-**Status:** IN PROGRESS (3/8 stories). Opened 2026-06-06. Direction chosen by the
+**Status:** IN PROGRESS (4/8 stories). Opened 2026-06-06. Direction chosen by the
 user: the product depth is now ahead of the product **entrance** — make
 **arrival** stellar. A user should go from fresh clone to a verified first
 dictation, with visible privacy/trust state and **zero file editing**, inside one
 guided local cockpit.
 
-**Last updated:** 2026-06-06 (**HS-42-03 done** — the welcome/setup surface: a
+**Last updated:** 2026-06-06 (**HS-42-04 done** — the magic-moment proof: a
+guided `/setup` first-dictation panel (steps + readiness row + **live WS
+feedback** → "✓ It worked, text landed in your app" + transcript on a real
+dictation) + a fallback ladder, and the durable `FIRST_DICTATION_SUCCESS`
+milestone set at the real dictation-success points (`first_run` flips false, `/`
+stops nagging). 3 milestone tests + a live Playwright magic-moment + 3
+screenshots; suite **2294/16**. **HS-42-03 done** — the welcome/setup surface: a
 Signal `/setup` page driven by `/api/setup/status` (brand-mark hero + dynamic
 headline + progress + one primary action + needs-attention list + ready grid +
 Privacy/Presence cards), a `/` first-run guard (redirect to `/setup` only when
@@ -128,7 +134,7 @@ launch and a healthy returning user skips straight to work.
 | HS-42-01 | Setup-state contract + `first_run` milestone | done | [story-01-setup-state-contract.md](./story-01-setup-state-contract.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-42-02 | Global settings completion | done | [story-02-global-settings-completion.md](./story-02-global-settings-completion.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-42-03 | Welcome / Setup route + CLI nudge | done | [story-03-welcome-setup-route.md](./story-03-welcome-setup-route.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-42-04 | Guided first dictation test (real app) | backlog | [story-04-guided-first-dictation.md](./story-04-guided-first-dictation.md) | — |
+| HS-42-04 | Guided first dictation test (real app) | done | [story-04-guided-first-dictation.md](./story-04-guided-first-dictation.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-42-05 | Trust & Privacy — ambient chip + panel | backlog | [story-05-trust-privacy-panel.md](./story-05-trust-privacy-panel.md) | — |
 | HS-42-06 | Runtime model setup assistant | backlog | [story-06-runtime-model-assistant.md](./story-06-runtime-model-assistant.md) | — |
 | HS-42-07 | Presence onboarding | backlog | [story-07-presence-onboarding.md](./story-07-presence-onboarding.md) | — |
@@ -160,8 +166,16 @@ list + a first-dictation CTA + a "Ready" grid + Privacy/Presence cards), driven
 by `/api/setup/status`; a `/` **first-run guard** (redirects to `/setup` only
 when `first_run|blocked` — a healthy returning user keeps the dashboard); and a
 **CLI launch nudge**. Proven live (Playwright redirect both ways + stdout
-capture) + a screenshot; +5 tests; suite **2291/16**. Next: **HS-42-04** (guided
-real-app first-dictation — the magic-moment proof).
+capture) + a screenshot; +5 tests; suite **2291/16**. **HS-42-04 shipped
+(2026-06-06)** — the magic-moment proof: a guided `/setup` first-dictation panel
+(3 steps + a readiness mini-row + **live `runtime_activity` WS feedback** that
+flips to a green "✓ It worked — text landed in your app" + the transcript on a
+real `dictation_typed`/`dictation_delivered`) + an honest fallback ladder; and
+the durable **`FIRST_DICTATION_SUCCESS` milestone** set at the two real
+dictation-success points in `_transcribe_and_type` (so `first_run` flips false
+and `/` stops nagging). 3 milestone-wiring tests + a live Playwright magic-moment
++ 3 screenshots; suite **2294/16**. The real-mic leg is the HS-42-08 dogfood.
+Next: **HS-42-05** (ambient trust chip + panel).
 
 ## Active risks
 

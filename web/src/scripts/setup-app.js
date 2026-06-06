@@ -9,9 +9,76 @@ function setupApp() {
     status: null,
     loading: true,
     error: "",
+    // Live first-dictation tracking (HS-42-04), fed by the runtime_activity WS.
+    activity: null,
+    dictation: { ok: false, transcript: "" },
 
     async init() {
       await this.load();
+      this.connectActivity();
+    },
+
+    // ── Live dictation feedback over the runtime_activity websocket ──────
+    connectActivity() {
+      const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+      let ws;
+      try {
+        ws = new WebSocket(`${proto}//${window.location.host}/ws`);
+      } catch (_e) {
+        return; // no live feedback; the page still works from /api/setup/status
+      }
+      ws.onmessage = (event) => {
+        let msg;
+        try {
+          msg = JSON.parse(event.data);
+        } catch (_e) {
+          return;
+        }
+        if (msg && msg.type === "runtime_activity") this.onActivity(msg.data || {});
+      };
+      ws.onclose = () => setTimeout(() => this.connectActivity(), 2000);
+    },
+
+    async onActivity(data) {
+      if (!data || data.source !== "dictation") return;
+      this.activity = data;
+      const success = data.state === "complete" &&
+        ["dictation_typed", "dictation_delivered"].includes(data.last_event);
+      if (success) {
+        this.dictation.ok = true;
+        await this.fetchTranscript();
+        await this.load(); // refresh first_run (the milestone is now set)
+      }
+    },
+
+    async fetchTranscript() {
+      try {
+        const res = await fetch("/api/state");
+        if (!res.ok) return;
+        const s = await res.json();
+        const t = (s.runtime && s.runtime.last_transcription) ||
+          (s.runtime_status && s.runtime_status.last_transcription) || s.last_transcription;
+        if (t) this.dictation.transcript = String(t);
+      } catch (_e) {
+        /* the success banner stands without the exact transcript */
+      }
+    },
+
+    get liveLabel() {
+      const st = this.activity && this.activity.state;
+      return {
+        listening: "Listening…",
+        recording: "Recording…",
+        transcribing: "Transcribing…",
+        processing: "Processing…",
+        typing: "Typing it into your app…",
+      }[st] || "";
+    },
+    get firstDone() {
+      return this.status ? this.status.first_run === false : false;
+    },
+    sectionById(id) {
+      return this.sections.find((s) => s.id === id) || null;
     },
 
     async load() {
