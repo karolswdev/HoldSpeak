@@ -1017,6 +1017,7 @@ import AppLayout from "../layouts/AppLayout.astro";
   /* All values flow from tokens.css. */
 
   .shell {
+    position: relative;
     max-width: 88rem;
     margin: 0 auto;
     padding: var(--space-5);
@@ -1025,34 +1026,57 @@ import AppLayout from "../layouts/AppLayout.astro";
     gap: var(--space-5);
   }
 
+  /* HS-44-03: an ambient accent glow behind the archive, the same
+   * top-of-page treatment as the dashboard home, the cockpit, and
+   * the wizard. */
+  .shell::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: 340px;
+    pointer-events: none;
+    z-index: -1;
+    background: radial-gradient(
+      60% 100% at 50% 0%,
+      color-mix(in srgb, var(--accent) 8%, transparent),
+      transparent 70%
+    );
+  }
+
   /* === Hero =============================================== */
-  /* HS-12-02: history hero is the page's overview pane — keep
-   * the white panel (Workbench window border) but tighten the
-   * cavernous padding, scale the h1 to a sensible display
-   * size, and brighten the eyebrow so it reads against white. */
+  /* HS-44-03: the overview pane lifted to the wizard's bar — a raised,
+   * rounded surface with real depth + an accent-tint wash, a mono accent
+   * eyebrow, and a bold display headline (retired the flat square panel +
+   * weight-400 title). */
   .hero {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
     gap: var(--space-4);
-    padding: var(--space-4);
-    background: var(--surface-2);
-    border: 1px solid var(--border);
+    padding: var(--space-5);
+    background:
+      radial-gradient(120% 140% at 0% 0%, var(--accent-tint), transparent 55%),
+      var(--surface-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--elev-1);
   }
   .hero h1 {
     margin: var(--space-1) 0 var(--space-2);
     font-family: var(--font-display);
-    font-size: var(--font-size-2xl);
-    font-weight: 400;
-    letter-spacing: 0.02em;
+    font-size: clamp(var(--font-size-2xl), 3vw, var(--font-size-3xl));
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
     color: var(--text);
   }
   .eyebrow {
     margin: 0;
-    color: var(--accent-strong);
+    color: var(--accent);
+    font-family: var(--font-mono);
     font-size: var(--font-size-xs);
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: var(--letter-spacing-eyebrow);
   }
   .hero-copy {
     margin: 0;
@@ -1074,8 +1098,9 @@ import AppLayout from "../layouts/AppLayout.astro";
   }
   .metric {
     padding: var(--space-3);
-    background: var(--surface-1);
-    border: 1px solid var(--border);
+    background: var(--surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
   }
   .metric-label {
     color: var(--text-muted);
@@ -1097,10 +1122,12 @@ import AppLayout from "../layouts/AppLayout.astro";
     line-height: var(--line-height-normal);
   }
 
-  /* === Section + tabs (HS-12-02 Workbench window grammar) === */
+  /* === Section + tabs (HS-44-03: raised, rounded, elevated) === */
   .section {
-    background: var(--surface-2);
-    border: 1px solid var(--border);
+    background: var(--surface-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--elev-1);
     overflow: hidden;
   }
   .section-head {
@@ -1131,40 +1158,46 @@ import AppLayout from "../layouts/AppLayout.astro";
   .section-body {
     padding: var(--space-4);
   }
+  /* HS-44-03: the tab row reads as a premium contained pill bar
+   * (elevated surface + blur) matching the dashboard / cockpit; the
+   * active tab is a punchy solid accent. (Retired the square notebook
+   * tabs.) */
   .tab-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 0;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: var(--space-3);
+    gap: var(--space-1);
+    padding: var(--space-1);
+    background: color-mix(in srgb, var(--surface-2) 82%, transparent);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--elev-1);
+    backdrop-filter: blur(8px);
   }
-  /* Tabs read as Workbench notebook tabs — square corners, hard
-   * border on three sides, the active tab "merges" into the
-   * panel below by losing its bottom border. */
   .tab {
     appearance: none;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-bottom: none;
-    margin-right: -1px;
-    margin-bottom: -1px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
     padding: var(--space-2) var(--space-3);
     color: var(--text-muted);
     font-family: var(--font-ui);
     font-size: var(--font-size-sm);
     cursor: pointer;
     transition: background var(--duration-short) var(--ease-standard),
-                color var(--duration-short) var(--ease-standard);
+                color var(--duration-short) var(--ease-standard),
+                border-color var(--duration-short) var(--ease-standard);
   }
-  .tab:hover { color: var(--text); background: var(--surface-2); }
+  .tab:hover:not(.active) { color: var(--text); border-color: var(--line); }
   .tab.active {
-    background: var(--surface-2);
-    color: var(--text);
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-on);
     font-weight: 500;
+    box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 32%, transparent);
   }
   .tab:focus-visible {
     outline: var(--focus-outline-width) solid var(--accent);
-    outline-offset: -2px;
+    outline-offset: var(--focus-outline-offset);
     z-index: 1;
   }
 
@@ -1289,14 +1322,15 @@ import AppLayout from "../layouts/AppLayout.astro";
     .layout-split { grid-template-columns: 1fr; }
   }
 
-  /* Workbench rows — square, hard black border, hover lights
-   * background; selected row uses the inverse-bar idiom (blue
-   * fill, white text). */
+  /* HS-44-03: archive rows lifted to the wizard's bar — rounded,
+   * subtle border, and a hover lift with depth (retired the flat
+   * square rows). The selected row keeps the inverse-bar idiom. */
   .meeting-card, .action-card, .speaker-card, .segment {
     appearance: none;
     text-align: left;
     background: var(--surface-2);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
     padding: var(--space-3);
     color: var(--text);
     display: flex;
@@ -1304,17 +1338,30 @@ import AppLayout from "../layouts/AppLayout.astro";
     gap: var(--space-2);
     cursor: pointer;
     transition: background var(--duration-short) var(--ease-standard),
-                color var(--duration-short) var(--ease-standard);
+                color var(--duration-short) var(--ease-standard),
+                border-color var(--duration-short) var(--ease-standard),
+                transform var(--duration-short) var(--ease-standard),
+                box-shadow var(--duration-short) var(--ease-standard);
   }
   .segment, .meeting-card--static { cursor: default; }
   .meeting-card:hover:not(.meeting-card--static):not(.meeting-card--selected),
   .action-card:hover,
-  .speaker-card:hover:not(.active) { background: var(--accent-tint); }
+  .speaker-card:hover:not(.active) {
+    background: var(--accent-tint);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+  /* The transcript segment list stays calm — no lift on read-only rows. */
+  .segment:hover, .meeting-card--static:hover { transform: none; box-shadow: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .meeting-card:hover, .action-card:hover, .speaker-card:hover { transform: none; }
+  }
   .speaker-card.active,
   .meeting-card--selected {
     background: var(--selected-bg);
     color: var(--selected-fg);
-    border-color: var(--border);
+    border-color: var(--accent);
   }
   .meeting-card:focus-visible,
   .speaker-card:focus-visible {
