@@ -1,12 +1,16 @@
 # Phase 42 — First-Run Delight & Daily Confidence
 
-**Status:** IN PROGRESS (6/8 stories). Opened 2026-06-06. Direction chosen by the
+**Status:** IN PROGRESS (7/8 stories). Opened 2026-06-06. Direction chosen by the
 user: the product depth is now ahead of the product **entrance** — make
 **arrival** stellar. A user should go from fresh clone to a verified first
 dictation, with visible privacy/trust state and **zero file editing**, inside one
 guided local cockpit.
 
-**Last updated:** 2026-06-06 (**HS-42-06 done** — a guided **model-setup
+**Last updated:** 2026-06-06 (**HS-42-07 done** — presence onboarding on
+`/setup`: a guided step (status pill · honest per-platform tier · the focus
+invariant · copyable enable commands incl. Linux typelibs · a faithful inline HUD
+preview + a Preview-the-live-HUD link), driven by the `presence{}` block. 2 tests
++ a screenshot; suite **2306/16**. **HS-42-06 done** — a guided **model-setup
 assistant** on `/setup`: the four backend choices (Basic · MLX · GGUF ·
 OpenAI-compatible) with copyable install commands + a one-click **Test my runtime**
 (`probe_runtime`: `resolve_backend` + model-path for local, an injectable
@@ -149,7 +153,7 @@ launch and a healthy returning user skips straight to work.
 | HS-42-04 | Guided first dictation test (real app) | done | [story-04-guided-first-dictation.md](./story-04-guided-first-dictation.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-42-05 | Trust & Privacy — ambient chip + panel | done | [story-05-trust-privacy-panel.md](./story-05-trust-privacy-panel.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-42-06 | Runtime model setup assistant | done | [story-06-runtime-model-assistant.md](./story-06-runtime-model-assistant.md) | [evidence-story-06.md](./evidence-story-06.md) |
-| HS-42-07 | Presence onboarding | backlog | [story-07-presence-onboarding.md](./story-07-presence-onboarding.md) | — |
+| HS-42-07 | Presence onboarding | done | [story-07-presence-onboarding.md](./story-07-presence-onboarding.md) | [evidence-story-07.md](./evidence-story-07.md) |
 | HS-42-08 | First-run evidence + docs closeout | backlog | [story-08-closeout-docs-evidence.md](./story-08-closeout-docs-evidence.md) | — |
 
 ## Where we are
@@ -202,8 +206,13 @@ choices (Basic · MLX · GGUF · OpenAI-compatible) with copyable install comman
 a one-click **Test my runtime** (`probe_runtime` → `resolve_backend` + model-path
 check for local, a time-boxed injectable `/models` preflight for OpenAI-compatible)
 + a link into the advanced `/dictation` cockpit. 8 tests (injected seams — no
-network/model load) + a live screenshot; suite **2304/16**. Next: **HS-42-07**
-(presence onboarding).
+network/model load) + a live screenshot; suite **2304/16**. **HS-42-07 shipped
+(2026-06-06)** — presence onboarding on `/setup`: a guided step driven by the
+`presence{}` block (status pill, an honest per-platform tier line, the focus
+invariant, copyable enable commands incl. the Linux typelibs, and a faithful
+inline HUD preview + a Preview-the-live-HUD link). 2 tests + a screenshot; suite
+**2306/16**. The **stellar core + depth are complete** — only **HS-42-08**
+(closeout: TTFD dogfood + docs + PR) remains.
 
 ## Active risks
 

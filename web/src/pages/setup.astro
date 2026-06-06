@@ -144,6 +144,44 @@ import AppLayout from "../layouts/AppLayout.astro";
           </div>
         </section>
 
+        <!-- Presence onboarding (HS-42-07) -->
+        <section class="presence-setup" id="presence-setup">
+          <div class="ps-head">
+            <h2>Desktop presence (optional)</h2>
+            <span class="ps-status" :class="presence.enabled ? 'on' : (presence.available ? 'avail' : 'na')"
+                  x-text="presence.enabled ? 'On' : (presence.available ? 'Available · off' : 'Not on this platform')"></span>
+          </div>
+          <div class="ps-body">
+            <div class="ps-copy">
+              <p>See what the copilot is doing — <em>listening · transcribing · typing</em> — on your desktop while you dictate into another app, without the dashboard visible.</p>
+              <p class="ps-tier" x-text="presenceTier"></p>
+              <p class="ps-focus">🔒 It <strong>never takes keyboard focus</strong> — your keystrokes keep landing in the app you're typing into.</p>
+              <div class="ps-install" x-show="!presence.enabled" x-cloak>
+                <p class="ps-install-h">Turn it on:</p>
+                <template x-for="cmd in presenceInstall" :key="cmd">
+                  <button class="ma-cmd" type="button" @click="copy(cmd)" :title="copied === cmd ? 'Copied!' : 'Click to copy'">
+                    <code x-text="cmd"></code>
+                    <span class="ma-cmd-state" x-text="copied === cmd ? '✓ copied' : 'copy'"></span>
+                  </button>
+                </template>
+              </div>
+              <p class="ps-docs"><a href="/docs/dictation-runtime">Presence docs</a> · <a href="/presence" target="_blank" rel="noopener">Preview the live HUD ↗</a></p>
+            </div>
+            <!-- Faithful inline preview of the Signal HUD card -->
+            <div class="ps-preview" aria-label="Preview of the presence HUD">
+              <div class="ps-hud">
+                <span class="ps-hud-ring"></span>
+                <div class="ps-hud-text">
+                  <div class="ps-hud-label">Transcribing</div>
+                  <div class="ps-hud-detail">Turning your speech into text…</div>
+                  <div class="ps-hud-src">Hotkey</div>
+                </div>
+              </div>
+              <span class="ps-preview-tag">Preview</span>
+            </div>
+          </div>
+        </section>
+
         <!-- Ready -->
         <template x-if="ready.length">
           <section class="setup-group">
@@ -359,6 +397,48 @@ import AppLayout from "../layouts/AppLayout.astro";
   .ma-result.ok { color: var(--ok); }
   .ma-result.bad { color: var(--danger); }
 
+  /* Presence onboarding */
+  .presence-setup {
+    padding: var(--space-5); margin-bottom: var(--space-6);
+    border-radius: var(--radius-lg); border: 1px solid var(--border-subtle);
+    background: var(--surface-2); scroll-margin-top: var(--space-6);
+  }
+  .ps-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-4); }
+  .ps-head h2 { font-family: var(--font-display); font-size: var(--font-size-lg); font-weight: 600; color: var(--text); margin: 0; }
+  .ps-status { font-family: var(--font-mono); font-size: var(--font-size-xs); padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); border: 1px solid var(--border); color: var(--text-muted); }
+  .ps-status.on { color: var(--ok); border-color: var(--ok); }
+  .ps-status.avail { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+  .ps-body { display: grid; grid-template-columns: 1fr auto; gap: var(--space-5); align-items: start; }
+  .ps-copy p { color: var(--text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); margin: 0 0 var(--space-3); max-width: 54ch; }
+  .ps-tier { color: var(--text); }
+  .ps-focus { color: var(--text); }
+  .ps-install-h { color: var(--text-faint); font-size: var(--font-size-xs); margin: 0 0 var(--space-2) !important; }
+  .ps-install .ma-cmd { margin-bottom: var(--space-2); }
+  .ps-docs a { color: var(--accent); }
+
+  /* Inline HUD preview (faithful to the macOS/Linux HUD) */
+  .ps-preview { position: relative; }
+  .ps-hud {
+    display: flex; align-items: center; gap: var(--space-3);
+    width: 280px; padding: var(--space-4) var(--space-5);
+    border-radius: var(--radius-lg);
+    background: #14171c; border: 1px solid #262b33;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+  }
+  .ps-hud-ring {
+    flex: none; width: 34px; height: 34px; border-radius: 50%;
+    border: 3px solid var(--accent);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  .ps-hud-label { color: #f3f5f8; font-weight: 600; font-size: var(--font-size-sm); }
+  .ps-hud-detail { color: #9aa3ad; font-size: var(--font-size-xs); margin-top: 1px; }
+  .ps-hud-src { color: #6b7280; font-family: var(--font-mono); font-size: 10px; margin-top: var(--space-2); }
+  .ps-preview-tag {
+    position: absolute; top: -8px; right: 8px;
+    font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: var(--letter-spacing-eyebrow);
+    color: var(--text-faint); background: var(--surface-2); padding: 0 var(--space-2);
+  }
+
   /* Ready grid */
   .ready-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-2); }
   .ready-chip {
@@ -396,5 +476,7 @@ import AppLayout from "../layouts/AppLayout.astro";
     .local-chip { position: static; margin-top: var(--space-2); width: fit-content; }
     .setup-summary { grid-template-columns: 1fr; }
     .first-dictation { flex-direction: column; align-items: stretch; }
+    .ps-body { grid-template-columns: 1fr; }
+    .ma-choices { grid-template-columns: 1fr; }
   }
 </style>

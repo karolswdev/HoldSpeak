@@ -187,5 +187,29 @@ function setupApp() {
       if (p.enabled) return `On · ${p.tier}`;
       return `Available · ${p.tier} (off)`;
     },
+    get presence() {
+      return this.status?.presence || {};
+    },
+    get presenceTier() {
+      const p = this.presence;
+      if (p.os === "macos") return "A floating HUD of the Signal card + a menu-bar glyph.";
+      if (p.os === "linux") {
+        return p.tier === "hud"
+          ? "A floating HUD (X11/wlroots) + a tray glyph + an in-place notification."
+          : "A tray glyph + an in-place notification (your Wayland compositor blocks floating overlays).";
+      }
+      return "Not available on this platform.";
+    },
+    get presenceInstall() {
+      const p = this.presence;
+      const lines = [
+        "HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak",
+        "uv pip install -e '.[presence]'",
+      ];
+      if (p.os === "linux") {
+        lines.push("sudo apt-get install gir1.2-notify-0.7 gir1.2-ayatanaappindicator3-0.1");
+      }
+      return lines;
+    },
   };
 }
