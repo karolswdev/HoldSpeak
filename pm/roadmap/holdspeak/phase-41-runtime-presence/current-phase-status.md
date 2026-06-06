@@ -1,12 +1,20 @@
 # Phase 41 — Runtime Presence Indicators
 
-**Status:** IN PROGRESS (6/8 stories). Opened 2026-06-05 (grew 7→8 on user ask:
+**Status:** IN PROGRESS (7/8 stories). Opened 2026-06-05 (grew 7→8 on user ask:
 un-defer the Linux floating overlay). Direction chosen by the
 user: **know what the copilot is doing on the desktop** while dictating —
 without the web dashboard being visible — via a rich, branded, native-feeling
 presence indicator on **both macOS and Linux**.
 
-**Last updated:** 2026-06-05 (**HS-41-08 done** — the Linux **floating GTK-WebKit
+**Last updated:** 2026-06-05 (**HS-41-06 done** — the user-facing presence
+docs: `docs/INTELLIGENT_TYPING_GUIDE.md` §11 "Desktop Presence" (enable flag +
+the `.[presence]` extra + the Linux freedesktop typelibs; the state table; the
+macOS HUD/glyph + Linux notification/overlay surfaces with **embedded
+screenshots from both OSes**; the honest Wayland-GNOME/KDE tray-only caveat; the
+focus invariant), screenshots copied into `docs/assets/presence/`, and
+cross-links from the root README + docs index + Getting Started. Doc drift-guard
++ link-check (which resolves embedded image paths) green: 3 passed. Suite
+unchanged (docs-only). HS-41-08 done — the Linux **floating GTK-WebKit
 overlay** (the macOS HUD's twin), live-captured on `.43`/X11: the same Signal
 card in a GTK3 POPUP, served from the Mac over an SSH reverse tunnel. Suite
 2261/16. HS-41-05 done — the Linux renderer:
@@ -106,7 +114,7 @@ available tier; everything is gated by `HOLDSPEAK_DESKTOP_PRESENCE=1`.
 | HS-41-04 | macOS renderer (NSStatusItem + NSPanel webview) | done | [story-04-macos-renderer.md](./story-04-macos-renderer.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-41-05 | Linux renderer (notification + tray) | done | [story-05-linux-renderer.md](./story-05-linux-renderer.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-41-08 | Linux GTK-WebKit floating overlay | done | [story-08-linux-gtk-overlay.md](./story-08-linux-gtk-overlay.md) | [evidence-story-08.md](./evidence-story-08.md) |
-| HS-41-06 | Documentation | backlog | [story-06-documentation.md](./story-06-documentation.md) | — |
+| HS-41-06 | Documentation | done | [story-06-documentation.md](./story-06-documentation.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-41-07 | Closeout | backlog | [story-07-closeout.md](./story-07-closeout.md) | — |
 
 ## Where we are
@@ -142,8 +150,18 @@ floating overlay (user ask): `desktop_presence_gtk.py` — a GTK3 POPUP
 `WebKit2.WebView` of `/presence`, fork-child-driven, wired into the freedesktop
 renderer when `overlay_capable`. **Live-captured on `.43`/X11** — the same Signal
 card as the macOS HUD, served from the Mac over an SSH reverse tunnel. Both
-renderers + the overlay are now proven on real hardware. Suite 2261/16. Next:
-**HS-41-06** (documentation) → **HS-41-07** (closeout).
+renderers + the overlay are now proven on real hardware. Suite 2261/16.
+**HS-41-06** documented presence for users — `docs/INTELLIGENT_TYPING_GUIDE.md`
+§11 "Desktop Presence" (the `HOLDSPEAK_DESKTOP_PRESENCE=1` enable + the
+`.[presence]` extra + the Linux freedesktop typelibs; the activity-state table;
+the macOS HUD/glyph + Linux notification/overlay surfaces, each with a **real
+screenshot from that OS** under `docs/assets/presence/`; the honest
+Wayland-GNOME/KDE tray-only caveat; the focus invariant), cross-linked from the
+root README ("What it does" + "Where to go next"), the docs index, and Getting
+Started. The doc drift-guard + link-check (which resolves embedded image paths,
+so the four screenshots are proven on disk) is green. Next: **HS-41-07**
+(closeout — dogfood + flag-off byte-identity + final-summary + PR/merge + close
+codex PR #17).
 
 ## Active risks
 

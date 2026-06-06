@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 41
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-41-01, HS-41-02, HS-41-03, HS-41-04, HS-41-05
 - **Unblocks:** HS-41-07
 - **Owner:** unassigned
@@ -26,7 +26,8 @@ platform, and the honest Wayland caveat.
 
 ## Acceptance criteria
 
-- [ ] Enabling + per-platform behavior documented, incl. the Wayland caveat +
-      the optional-extras install.
-- [ ] Screenshots embedded; doc-guards + link-check green.
-- [ ] Every documented surface matches what shipped in 01–05.
+- [x] Enabling + per-platform behavior documented, incl. the Wayland caveat +
+      the optional-extras install. (`docs/INTELLIGENT_TYPING_GUIDE.md` §11)
+- [x] Screenshots embedded (macOS HUD/glyph + Linux notification/overlay);
+      doc-guards + link-check green (`test_doc_drift_guard.py` 3 passed).
+- [x] Every documented surface matches what shipped in 01–05/08.

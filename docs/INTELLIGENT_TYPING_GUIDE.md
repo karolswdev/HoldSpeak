@@ -431,6 +431,115 @@ under `dictation.pipeline`:
 }
 ```
 
+## 11. Desktop Presence (ambient, on-desktop status)
+
+When you dictate into another app, the HoldSpeak web dashboard isn't on screen —
+so you can't see whether the copilot is **listening**, **transcribing**, or
+**typing**. Desktop presence is an **opt-in, native** surface that tells you, at
+a glance, what the runtime is doing right now — without ever stealing keyboard
+focus from the app you're typing into.
+
+It is **off by default** and adds **no GUI dependency** unless you turn it on.
+
+### Turn it on
+
+Set the environment variable before launching HoldSpeak:
+
+```bash
+HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak
+```
+
+Install the optional native extra for your platform:
+
+```bash
+uv pip install -e '.[presence]'
+```
+
+On **Linux** you also need the freedesktop system typelibs (PyGObject binds to
+them; they are not pip packages):
+
+```bash
+# Notification + tray (Tier 1)
+sudo apt-get install gir1.2-notify-0.7 gir1.2-ayatanaappindicator3-0.1
+# Floating HUD overlay (Tier 2 — X11 / wlroots only)
+sudo apt-get install gir1.2-gtk-3.0 gir1.2-webkit2-4.1
+```
+
+> With the flag **unset**, the runtime is byte-identical and pulls in none of
+> these — presence is purely additive.
+
+### What you'll see — the states
+
+Presence reflects the live runtime activity and disappears when idle:
+
+| State | Label | Meaning |
+| --- | --- | --- |
+| `listening` | Listening | Hotkey held; capturing audio |
+| `recording` | Recording | Recording your utterance |
+| `transcribing` | Transcribing | Turning speech into text (Whisper) |
+| `processing` | Processing | Running the dictation pipeline |
+| `typing` | Typing | Injecting text into the active app |
+| `complete` | Complete | Done — lingers briefly, then hides |
+| `error` | Needs attention | Something failed; lingers so you notice |
+
+`idle` never renders a surface — presence is **transient** by design, present
+only while something is happening.
+
+### macOS
+
+On macOS you get the rich **floating HUD** — a frameless, non-activating panel
+that hosts the Signal presence card (native rounded corners + shadow, live over
+the websocket) — plus a **menu-bar glyph**.
+
+![The macOS presence HUD: a dark Signal card with an animated state glyph,
+"Transcribing — Turning your speech into text…", and the dictation source
+("Hotkey").](assets/presence/macos-hud.png)
+
+![The HoldSpeak glyph in the macOS menu bar, alongside the system status
+items.](assets/presence/macos-menubar-glyph.png)
+
+The HUD uses an `NSWindowStyleMaskNonactivatingPanel`, so it **cannot take
+keyboard focus** — while it's visible, your keystrokes keep flowing into the
+frontmost app. Needs the `pyobjc` extra (`.[presence]`); without it (or without
+WebKit), presence falls back to the web dashboard card and nothing breaks.
+
+### Linux
+
+On Linux, Tier 1 works everywhere — an **in-place-updating notification** (one
+banner that mutates as the state changes, rather than spamming new ones) plus a
+**tray glyph** (StatusNotifierItem):
+
+![A GNOME notification banner reading "HoldSpeak — Transcribing / Turning your
+speech into text…", updating in place as the state
+changes.](assets/presence/linux-notification.png)
+
+Where the compositor allows free-floating always-on-top windows (**X11** and
+**wlroots** Wayland), you also get the same rich **floating HUD** as macOS —
+a GTK3 + WebKit2 overlay of the very same Signal card:
+
+![The Linux floating HUD overlay: the same dark Signal "Transcribing" card,
+rendered as a GTK-WebKit popup over the desktop.](assets/presence/linux-overlay.png)
+
+> **The Wayland caveat.** On mainstream Wayland (**GNOME/KDE**), the compositor
+> blocks arbitrary always-on-top overlays, so the floating HUD is **not**
+> available there — the native path is the Tier-1 **notification + tray glyph**
+> (which is focus-safe and works on every desktop). The floating HUD is for
+> macOS, X11, and wlroots compositors. HoldSpeak probes your session at startup
+> and picks the best available surface automatically.
+>
+> On **GNOME** specifically, the tray glyph needs the *AppIndicator* shell
+> extension installed/enabled; without it, presence degrades to
+> notification-only.
+
+### The focus invariant
+
+The one non-negotiable rule: **the presence surface never takes keyboard
+focus.** While it's on screen, you're actively typing into another app, so any
+focus theft would land your keystrokes in the wrong window. Every surface
+guarantees this at the platform level — macOS via the non-activating panel,
+Linux via notifications and the tray (which can't be focused) and an
+override-redirect, non-focus overlay window.
+
 ## Good First Configuration
 
 For daily coding-agent dictation, use:

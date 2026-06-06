@@ -20,6 +20,10 @@ intelligent-typing layer. This folder is the documentation index.
    local rewriting, target profiles, and the dictation pipeline.
    - **[The Dictation Copilot](./DICTATION_COPILOT.md)** — see it work: rough
      speech → a project-grounded coding-agent task, with a reproducible demo.
+   - **[Desktop Presence](./INTELLIGENT_TYPING_GUIDE.md#11-desktop-presence-ambient-on-desktop-status)**
+     — an opt-in, native, on-desktop status surface (macOS HUD · Linux tray +
+     notification) so you can see *listening / transcribing / typing* while
+     dictating into another app.
 6. **[Security & Privacy](./SECURITY.md)** — what's stored, trust boundaries, and
    what can (and can't) leave your machine.
 
