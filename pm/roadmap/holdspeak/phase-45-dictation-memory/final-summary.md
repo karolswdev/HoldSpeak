@@ -89,6 +89,24 @@ surface to capture.
 - **Provable remotely (no mic)** — the dry-run path mirrors real dictation and is
   journaled (`source='dry_run'`); everything was exercised mic-free.
 
+## Post-merge UI fix (2026-06-06, follow-up)
+
+On user review the journal/moment/replay surfaces rendered **naked**. Root cause:
+Astro **scopes** `<style>` to elements present in the `.astro` template (which
+carry a `data-astro-cid` attribute); the journal/moment/replay DOM is injected by
+`dictation-app.js` **at runtime**, so it never matched `.journal-card[data-astro-cid-…]`
+and the bespoke styles were dead (an architecture trap the older JS-rendered
+dictation components quietly hit too, leaning on global utility classes). Fixed
+by moving the HS-45 component CSS into a **`<style is:global>`** block, plus a
+real polish pass: a visible per-stage **latency bar + legend** (a duplicate
+`.lat-seg` rule had greyed it out), genuine card containment, a side-by-side
+said→typed with the typed result accent-tinted, real token colors (the prior
+`var(--warning, …)` fallbacks were off-palette — the token is `--warn`), SVG
+icons (no emoji/glyphs), and the dry-run's runtime-unavailable advisory calmed
+from a red error box to an amber note. A regression guard
+(`test_web_dictation_journal.py`) now fails if these styles are ever scoped
+again. Evidence screenshots re-captured.
+
 ## Handoff
 
 Phase 45 is complete. The journal arc (record → review → correct → replay) is the

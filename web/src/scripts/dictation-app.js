@@ -1381,7 +1381,9 @@ function renderJournal() {
   const items = journalState.items.filter(journalMatches);
   if (!journalState.items.length) {
     list.innerHTML = `<div class="journal-empty">
-      <div class="journal-empty-glyph" aria-hidden="true">🎙️</div>
+      <svg class="journal-empty-glyph" viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">
+        <path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"/>
+      </svg>
       <p class="journal-empty-head">Your dictations will appear here.</p>
       <p class="journal-empty-sub">Speak — or run a <strong>Dry-run</strong> — and each one is remembered: what you said, where it routed, and how long it took.</p>
     </div>`;
@@ -1446,28 +1448,39 @@ async function replayJournalEntry(id, btn) {
   }
 }
 
+function latSegClass(sid) {
+  return "lat-" + sid.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+}
+
 function renderLatencyStrip(item) {
   const stages = item.stage_ms || {};
   const ids = Object.keys(stages);
   const total = Number(item.total_ms) || ids.reduce((s, k) => s + (Number(stages[k]) || 0), 0);
   if (!ids.length || total <= 0) {
-    return `<div class="lat-strip lat-strip--empty" title="no per-stage timing recorded">
-      <span class="lat-total">${total ? `${total.toFixed(0)} ms` : "—"}</span>
-    </div>`;
+    return `<div class="lat-strip lat-strip--empty">No per-stage timing recorded${
+      total ? ` · ${total.toFixed(0)} ms total` : ""
+    }.</div>`;
   }
   const segs = ids
     .map((sid) => {
       const ms = Number(stages[sid]) || 0;
-      const pct = Math.max(2, Math.round((ms / total) * 100));
-      const cls = sid.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
-      return `<span class="lat-seg lat-${escapeAttr(cls)}" style="width:${pct}%" title="${escapeAttr(sid)} · ${ms.toFixed(0)} ms">
-        <span class="lat-seg-label">${escapeHtml(sid)} ${ms.toFixed(0)}ms</span>
-      </span>`;
+      const pct = Math.max(3, Math.round((ms / total) * 100));
+      return `<span class="lat-seg ${escapeAttr(latSegClass(sid))}" style="width:${pct}%" title="${escapeAttr(sid)} · ${ms.toFixed(0)} ms"></span>`;
+    })
+    .join("");
+  const keys = ids
+    .map((sid) => {
+      const ms = Number(stages[sid]) || 0;
+      return `<span class="lat-key"><span class="lat-dot ${escapeAttr(latSegClass(sid))}"></span>${escapeHtml(sid)} <b>${ms.toFixed(0)}ms</b></span>`;
     })
     .join("");
   return `<div class="lat-strip" role="img" aria-label="per-stage latency, total ${total.toFixed(0)} milliseconds">
+    <div class="lat-strip-head">
+      <span class="lat-strip-title">Latency</span>
+      <span class="lat-total">${total.toFixed(0)} ms total</span>
+    </div>
     <div class="lat-bar">${segs}</div>
-    <span class="lat-total">${total.toFixed(0)} ms total</span>
+    <div class="lat-legend">${keys}</div>
   </div>`;
 }
 
@@ -1498,8 +1511,13 @@ function renderJournalEntry(item) {
       ${corrected}
       <span class="jr-spacer"></span>
       ${when}
-      <button class="btn jr-replay-btn" type="button" data-journal-replay="${escapeAttr(String(item.id))}" title="Re-run this through the current pipeline">↻ Replay</button>
-      <button class="jr-del" type="button" data-journal-del="${escapeAttr(String(item.id))}" title="Delete this entry" aria-label="Delete this journal entry">×</button>
+      <button class="jr-replay-btn" type="button" data-journal-replay="${escapeAttr(String(item.id))}" title="Re-run this through the current pipeline">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M12 5V2L7 7l5 5V8a5 5 0 1 1-5 5H5a7 7 0 1 0 7-8Z"/></svg>
+        Replay
+      </button>
+      <button class="jr-del" type="button" data-journal-del="${escapeAttr(String(item.id))}" title="Delete this entry" aria-label="Delete this journal entry">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 9Z"/></svg>
+      </button>
     </header>
     <div class="jr-flow">
       <figure class="jr-text jr-said">
@@ -1587,7 +1605,11 @@ function renderDryRun(data) {
     renderProjectDocSuggestion();
   }
   meta.classList.remove("warn", "error");
-  if (data.runtime_status !== "loaded") meta.classList.add(data.runtime_status === "disabled" ? "warn" : "error");
+  // A dry-run still produces output without a runtime (lexical routing) — so
+  // "disabled"/"unavailable"/no-runtime is an advisory amber state, not a red
+  // error. Only a genuine error status is alarming.
+  if (data.runtime_status !== "loaded")
+    meta.classList.add(data.runtime_status === "error" ? "error" : "warn");
   const project = data.project
     ? `${escapeHtml(data.project.name)} (${escapeHtml(data.project.anchor)} @ ${escapeHtml(data.project.root)})`
     : "(none detected)";
@@ -1606,8 +1628,12 @@ function renderDryRun(data) {
     source +
     sample;
 
+  // Advisory notes (stage skips, "llm disabled", target fallbacks) are calm —
+  // not a red error box. They read as informational context, not failure.
   const warnings = (data.warnings || []).length
-    ? `<div class="error-box">${(data.warnings || []).map(escapeHtml).join("<br>")}</div>`
+    ? `<div class="dry-notes"><span class="dry-notes-title">Notes</span><ul>${(data.warnings || [])
+        .map((w) => `<li>${escapeHtml(w)}</li>`)
+        .join("")}</ul></div>`
     : "";
   // HS-10-10 / HS-10-09: final text rendered through CommandPreview
   // markup so it inherits the standardized monospaced/copy treatment.
