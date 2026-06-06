@@ -2,9 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 45
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-45-01, HS-45-02, HS-45-03, HS-45-04
-- **Owner:** unassigned
+- **Owner:** Claude (Opus 4.8)
+- **Evidence:** [evidence-story-05.md](./evidence-story-05.md)
 
 ## Problem
 A persistent record of everything spoken is powerful and sensitive. Users need to
@@ -32,15 +33,16 @@ closeout.)
   user guide unless trivially adjacent.
 
 ## Acceptance criteria
-- [ ] `docs/INTELLIGENT_TYPING_GUIDE.md` documents the journal (record/store/
-      protect/curate/disable), the in-moment fix loop, and replay, with a real
-      screenshot.
-- [ ] Root README + docs index cross-link the new section; the journal toggle is
-      named where settings are documented.
-- [ ] Doc-drift guard + link-check pass (`uv run pytest -q -k "doc or link"` /
-      the repo's doc-guard tests).
-- [ ] No live doc overstates behavior (no claim the journal is cloud-synced or
-      on-by-default-without-opt-out wording that contradicts the toggle).
+- [x] `docs/INTELLIGENT_TYPING_GUIDE.md` §12 documents the journal (record/store/
+      protect/curate/disable), the in-moment fix loop, and replay, with **three**
+      real screenshots (timeline, moment-of-truth, replay before→after).
+- [x] Root README (the dictation blurb + the quick-link table) + the `docs/`
+      index cross-link the new section; the `journal_enabled`/`journal_retention`
+      toggles are named in the section.
+- [x] Doc-drift guard + link-check pass (`test_doc_drift_guard.py`, 3 passed —
+      incl. the dangling-relative-link check over the new image/section refs).
+- [x] No live doc overstates behavior — the posture is explicit: local-only,
+      never uploaded/synced, on-by-default-but-toggleable, side-channel.
 
 ## Test plan
 - Unit: `uv run pytest -q -k "doc_drift or link or doc_guard"` (the existing

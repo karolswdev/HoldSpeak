@@ -24,6 +24,9 @@ intelligent-typing layer. This folder is the documentation index.
      — an opt-in, native, on-desktop status surface (macOS HUD · Linux tray +
      notification) so you can see *listening / transcribing / typing* while
      dictating into another app.
+   - **[Dictation journal, corrections & replay](./INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay)**
+     — a local-only record of every dictation (said → typed → routed → latency),
+     an in-the-moment "fix it here" that teaches, and replay to watch it learn.
 6. **[Security & Privacy](./SECURITY.md)** — what's stored, trust boundaries, and
    what can (and can't) leave your machine.
 

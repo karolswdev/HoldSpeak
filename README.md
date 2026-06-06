@@ -21,7 +21,7 @@ Voice input for macOS and Linux — hold a key, speak, release. Local-first and 
 
 **Meeting mode** — dual-stream capture (mic + system audio), live transcript with speaker labels, AI-extracted topics and action items, web dashboard, deferred intel queue for homelab/cloud models.
 
-**Intelligent dictation** — project-aware pipeline that routes utterances through intent classification, project KB enrichment, and LLM rewriting before text lands in the destination app. Adapts output for Codex, Claude, terminal, browser, or editor.
+**Intelligent dictation** — project-aware pipeline that routes utterances through intent classification, project KB enrichment, and LLM rewriting before text lands in the destination app. Adapts output for Codex, Claude, terminal, browser, or editor. Every dictation is kept in a local-only **journal** (said → typed → routed → latency) you can review, **correct in the moment** (one tap teaches the copilot), and **replay** through the current pipeline to watch it learn — see [Dictation journal, corrections & replay](docs/INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay).
 
 **Desktop presence** *(opt-in)* — an ambient, native status surface so you can see what the copilot is doing (*listening / transcribing / typing*) while you dictate into another app, without the dashboard on screen. A floating HUD on macOS and X11/wlroots; a focus-safe tray glyph + in-place notification everywhere. Off by default, never steals keyboard focus. Enable with `HOLDSPEAK_DESKTOP_PRESENCE=1` — see [Desktop Presence](docs/INTELLIGENT_TYPING_GUIDE.md#11-desktop-presence-ambient-on-desktop-status).
 
@@ -121,6 +121,7 @@ for the contract and current model suggestions.
 | See the dictation copilot turn speech into a project-grounded task | [The Dictation Copilot](docs/DICTATION_COPILOT.md) |
 | Set up project-aware dictation for Codex / Claude | [Intelligent Typing Setup](docs/INTELLIGENT_TYPING_GUIDE.md) |
 | See an on-desktop status while dictating into another app | [Desktop Presence](docs/INTELLIGENT_TYPING_GUIDE.md#11-desktop-presence-ambient-on-desktop-status) |
+| Review, correct, and replay past dictations | [Dictation journal, corrections & replay](docs/INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay) |
 | Use meeting mode and configure AI intelligence | [Meeting Mode Guide](docs/MEETING_MODE_GUIDE.md) |
 | Wire up the AIPI-Lite companion device | [AIPI-Lite Developer Workflow](docs/AIPI_LITE_DEV_WORKFLOW.md) |
 | Install Claude / Codex agent hooks | [Agent Hook Install](docs/AGENT_HOOK_INSTALL.md) |

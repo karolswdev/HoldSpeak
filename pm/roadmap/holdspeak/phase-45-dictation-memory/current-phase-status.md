@@ -1,20 +1,18 @@
 # Phase 45 — Dictation Memory & the Moment of Truth
 
-**Status:** IN PROGRESS (4/6). Opened 2026-06-06 on user direction ("think really
+**Status:** IN PROGRESS (5/6). Opened 2026-06-06 on user direction ("think really
 hard around the experience … scaffold a phase that will be oh-so-meaningful")
 after a grounded look at how HoldSpeak feels to live with.
 
-**Last updated:** 2026-06-06 (**HS-45-04 — replay — DONE**: `POST /api/dictation/
-journal/{id}/replay` re-runs a stored utterance's transcript through the current
-pipeline [dry-run, no typing, **no new row**, original untouched, in its original
-project context] → a per-entry **↻ Replay** action on the Journal renders a
-**before → after** diff. The payoff proven offline: correct an utterance's target
-→ replay → the routed target flips to the corrected profile [`changed: true`].
-Re-insert is **preview + copy** [focus-safe]; OS-typing re-insert deferred [no
-web→typer seam; focus-steal risk]. 5 integration tests [incl. the correction→
-replay nudge] + a live `replay_before_after.png`; route-table guard 34→35; suite
-2363/17. Prior: **HS-45-03** the moment of truth; **HS-45-02** the Journal
-timeline; **HS-45-01** the spine [true e2e against `.43`]).
+**Last updated:** 2026-06-06 (**HS-45-05 — docs — DONE**: `docs/INTELLIGENT_TYPING_GUIDE.md`
+§12 "Dictation journal, corrections & replay" documents what's recorded, the
+local-only privacy posture [secret-filter · retention · wipe · the
+`journal_enabled` toggle · side-channel], the in-moment fix loop, and replay —
+with three real screenshots [`docs/assets/journal/`]; cross-linked from the root
+README + the docs index. Doc-drift + dangling-link guards green [3 passed]. Prior:
+**HS-45-04** replay; **HS-45-03** the moment of truth; **HS-45-02** the Journal
+timeline; **HS-45-01** the spine [true e2e against `.43`]). Only the closeout
+[HS-45-06] remains.
 
 ## The thesis — why this phase
 
@@ -122,7 +120,7 @@ trusted, learning companion — without changing what gets typed.
 | HS-45-02 | The Journal — a reviewable utterance timeline | done | [story-02-journal-surface.md](./story-02-journal-surface.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-45-03 | The moment of truth — correct in flow, and it teaches | done | [story-03-moment-of-truth.md](./story-03-moment-of-truth.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-45-04 | Replay — prove it learned | done | [story-04-replay.md](./story-04-replay.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-45-05 | Docs — the dictation journal & its privacy posture | backlog | [story-05-docs.md](./story-05-docs.md) | — |
+| HS-45-05 | Docs — the dictation journal & its privacy posture | done | [story-05-docs.md](./story-05-docs.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-45-06 | Closeout — before/after + dogfood + PR | backlog | [story-06-closeout.md](./story-06-closeout.md) | — |
 
 ## Where we are
@@ -135,9 +133,11 @@ right? → Fix it → Taught ✓"*, which teaches + flips `corrected`) → **rep
 before → after; correcting then replaying demonstrably flips the routed target —
 the "it learned" payoff, proven offline). All local-first, focus-safe, side-channel.
 
-Next: **HS-45-05 docs** (describe the journal + its privacy posture + the in-moment
-loop + replay; doc-drift/link-check green) → **HS-45-06 closeout** (no-mic dogfood
-+ before/after + PR). Sequence: 01 ✅ → 02 ✅ → 03 ✅ → 04 ✅ → 05 → 06.
+**HS-45-05 docs are DONE** — `docs/INTELLIGENT_TYPING_GUIDE.md` §12 documents the
+journal + privacy posture + the in-moment loop + replay (three screenshots),
+cross-linked from the README + docs index; doc guards green. Next: **HS-45-06
+closeout** (no-mic dogfood + before/after + final-summary + PR). Sequence: 01 ✅
+→ 02 ✅ → 03 ✅ → 04 ✅ → 05 ✅ → 06.
 
 > **Decision (HS-45-04 re-insert):** preview + copy-to-clipboard is the re-insert
 > primitive. OS-typing re-insert is deferred — there's no web→typer seam in the
