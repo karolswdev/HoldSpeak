@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 43
-- **Status:** backlog
+- **Status:** done (2026-06-06)
 - **Depends on:** HS-43-01 … HS-43-05
 
 ## Scope
@@ -12,5 +12,5 @@
 - Out: new surfaces.
 
 ## Acceptance criteria
-- [ ] Wizard dogfooded; before/after captured; full suite green; 0 `_built/`;
-      final-summary.md; README → done; PR opened/merged.
+- [x] Wizard dogfooded (`WIZARD DOGFOOD OK`); before/after captured; full suite
+      green; 0 `_built/`; final-summary.md; README → done; PR opened/merged.

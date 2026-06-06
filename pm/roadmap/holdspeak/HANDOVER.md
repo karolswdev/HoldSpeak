@@ -9,10 +9,25 @@ with the live status docs, the status docs win.
 
 ## 1. TL;DR — where things stand
 
-- **LATEST (2026-06-06): Phases 33–42 shipped since this doc was first written.**
+- **LATEST (2026-06-06): Phases 33–43 shipped since this doc was first written.**
   The bullets below are the Phase-31/32 era and are kept for history; for the
   current phase index + status, the roadmap **`README.md`** is the source of
-  truth. Most recent: **Phase 42 — First-Run Delight & Daily Confidence: CLOSED
+  truth. Most recent: **Phase 43 — World-Class Onboarding & First-Run UX: CLOSED
+  ✅ (6/6)** — on user feedback that the Phase-42 first-run was "boring cards" / a
+  checklist not a wizard / a settings form dump / desktop presence behind an env
+  var. Reimagined as a world-class UX **layer on the Phase-42 plumbing** (no
+  rewrite): a full-screen **`/welcome` wizard** (Welcome · live Permissions ·
+  Model picker · a celebratory first-dictation reward · a one-click presence
+  toggle · Done; `web/src/pages/welcome.astro` + `welcome-app.js`), desktop
+  presence is now a **config-backed UI toggle** (`config.presence.enabled`;
+  `desktop_presence_enabled(config_enabled=)`; live start/stop in
+  `_sync_desktop_presence`; **the env var is dead as the path**), and **Settings**
+  is sectioned + searchable + progressive (the form dump retired). The `/` guard
+  sends first-run users to `/welcome`. Proven by `scripts/dogfood_wizard.py` →
+  WIZARD DOGFOOD OK (fresh clone → wizard → first dictation, zero file edits).
+  Suite **2319 passed, 16 skipped**. Branch `phase-43-world-class-onboarding` —
+  open a PR to `main`. (Prior: **Phase 42 — First-Run Delight & Daily Confidence:
+  CLOSED
   ✅ (8/8)** — made **arrival** stellar: a user goes from fresh clone to a
   **verified first dictation**, with visible privacy/trust state and **zero file
   editing**, in one guided local cockpit. The spine is **`GET /api/setup/status`**

@@ -42,8 +42,10 @@ def test_dashboard_has_the_first_run_guard() -> None:
     resp = _client().get("/")
     assert resp.status_code == 200
     if _built("index.html"):
-        # The inline guard redirects a first-run / hard-blocked user to /setup.
+        # HS-43-06: the guard sends a first-run user to the /welcome wizard and a
+        # hard-blocked returning user to /setup.
         assert "/api/setup/status" in resp.text
+        assert '"/welcome"' in resp.text
         assert '"/setup"' in resp.text
 
 
@@ -62,22 +64,29 @@ def _nudge_output(monkeypatch, status: dict) -> str:
     return buf.getvalue()
 
 
-def test_cli_nudge_points_first_run_user_at_setup(monkeypatch) -> None:
+def test_cli_nudge_points_first_run_user_at_the_wizard(monkeypatch) -> None:
+    # HS-43-06: a first-run user is pointed at the /welcome wizard.
+    out = _nudge_output(
+        monkeypatch,
+        {"first_run": True, "overall": "needs_attention", "primary_action": None, "sections": []},
+    )
+    assert "/welcome" in out
+    assert "Welcome" in out
+
+
+def test_cli_nudge_points_blocked_returning_user_at_setup(monkeypatch) -> None:
     out = _nudge_output(
         monkeypatch,
         {
-            "first_run": True,
-            "overall": "needs_attention",
+            "first_run": False,
+            "overall": "blocked",
             "primary_action": {"label": "Enable microphone access"},
-            "sections": [
-                {"status": "pass"},
-                {"status": "warn"},
-                {"status": "fail"},
-            ],
+            "sections": [{"status": "pass"}, {"status": "fail"}],
         },
     )
     assert "/setup" in out
-    assert "2 things need attention" in out
+    assert "1 thing needs attention" in out
+    assert "Enable microphone access" in out
     assert "Enable microphone access" in out
 
 

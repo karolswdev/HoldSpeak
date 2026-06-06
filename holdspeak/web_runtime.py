@@ -1069,9 +1069,12 @@ class WebRuntime:
             unmet = sum(
                 1 for s in setup.get("sections", []) if s.get("status") in ("fail", "warn")
             )
-            if setup.get("first_run") or setup.get("overall") == "blocked":
+            if setup.get("first_run"):
+                # HS-43-06: a brand-new user gets the guided wizard.
+                print(f"  → Welcome! Get set up in a minute: open {url}/welcome")
+            elif setup.get("overall") == "blocked":
                 suffix = f" — {unmet} thing{'' if unmet == 1 else 's'} need{'s' if unmet == 1 else ''} attention" if unmet else ""
-                print(f"  → First-run setup: open {url}/setup{suffix}")
+                print(f"  → Setup needs attention: open {url}/setup{suffix}")
                 action = (setup.get("primary_action") or {}).get("label")
                 if action:
                     print(f"    Next: {action}")
