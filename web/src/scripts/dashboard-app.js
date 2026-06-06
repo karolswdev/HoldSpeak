@@ -124,6 +124,7 @@
             this.loadPluginJobs();
             this.loadPluginJobSummary();
             this.fetchBriefing();
+            this.loadRecentMeetings();
             this.connect();
             window.addEventListener("beforeunload", () => {
               this.closedByUser = true;
@@ -369,6 +370,29 @@
               " " +
               date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
             );
+          },
+
+          // HS-44-01: a "recent meetings" glance on the idle home.
+          recentMeetings: [],
+          recentLoaded: false,
+          async loadRecentMeetings() {
+            try {
+              const res = await fetch("/api/meetings?limit=4");
+              if (res.ok) {
+                const data = await res.json();
+                this.recentMeetings = data.meetings || [];
+              }
+            } catch (_e) {
+              /* the glance is best-effort */
+            }
+            this.recentLoaded = true;
+          },
+          meetingDuration(seconds) {
+            const s = Number(seconds || 0);
+            if (s < 60) return `${Math.round(s)}s`;
+            const m = Math.floor(s / 60);
+            if (m < 60) return `${m}m`;
+            return `${Math.floor(m / 60)}h ${m % 60}m`;
           },
 
           formatRelativeFromNow(iso) {

@@ -46,6 +46,9 @@ import HoldMark from "../components/HoldMark.astro";
           </button>
         </div>
 
+        {/* HS-44-01: a warm idle headline so the home doesn't read empty. */}
+        <h1 class="hero-idle-h" x-show="!meetingActive && !stopInProgress" x-cloak>Ready when you are.</h1>
+
         {/* The "...run locally on this machine" sentence used to
             duplicate the side-rail message; trimmed to the
             workspace summary only. */}
@@ -153,6 +156,29 @@ import HoldMark from "../components/HoldMark.astro";
         <span class="home-card-d">Every global knob — sectioned &amp; searchable</span>
         <span class="home-card-go" aria-hidden="true">→</span>
       </a>
+    </section>
+
+    {/* HS-44-01: recent-meetings glance (idle only). */}
+    <section class="home-recent" x-show="!meetingActive && !stopInProgress && recentMeetings.length" x-cloak aria-label="Recent meetings">
+      <header class="home-recent-head">
+        <h2>Recent meetings</h2>
+        <a class="home-recent-all" href="/history">All history →</a>
+      </header>
+      <div class="recent-row">
+        <template x-for="m in recentMeetings" :key="m.id">
+          <a class="recent-card" :href="`/history#meeting-${m.id}`">
+            <span class="recent-title" x-text="m.title || 'Untitled meeting'"></span>
+            <span class="recent-date" x-text="formatDate(m.started_at)"></span>
+            <span class="recent-meta">
+              <span class="recent-stat" x-text="meetingDuration(m.duration_seconds)"></span>
+              <span class="recent-dot">·</span>
+              <span class="recent-stat" x-text="`${m.segment_count || 0} segs`"></span>
+              <span class="recent-dot" x-show="(m.action_item_count || 0) > 0" x-cloak>·</span>
+              <span class="recent-stat accent" x-show="(m.action_item_count || 0) > 0" x-cloak x-text="`${m.action_item_count} actions`"></span>
+            </span>
+          </a>
+        </template>
+      </div>
     </section>
 
     {/* HS-13-08: pre-meeting briefing surface. Renders the
@@ -660,6 +686,41 @@ import HoldMark from "../components/HoldMark.astro";
   }
   @media (max-width: 900px) { .home-actions { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 520px) { .home-actions { grid-template-columns: 1fr; } }
+
+  /* HS-44-01: idle hero headline. */
+  .hero-idle-h {
+    font-family: var(--font-display);
+    font-size: clamp(var(--font-size-2xl), 3.4vw, var(--font-size-3xl));
+    font-weight: 700; letter-spacing: -0.02em; line-height: 1.05;
+    color: var(--text); margin: var(--space-1) 0 var(--space-2);
+  }
+
+  /* HS-44-01: recent-meetings glance. */
+  .home-recent { display: flex; flex-direction: column; gap: var(--space-3); }
+  .home-recent-head { display: flex; align-items: baseline; justify-content: space-between; }
+  .home-recent-head h2 { font-family: var(--font-display); font-size: var(--font-size-lg); font-weight: 600; color: var(--text); margin: 0; }
+  .home-recent-all { color: var(--accent); font-size: var(--font-size-sm); text-decoration: none; }
+  .home-recent-all:hover { text-decoration: underline; }
+  .recent-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
+  .recent-card {
+    display: flex; flex-direction: column; gap: var(--space-1);
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--surface-2); border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--accent);
+    text-decoration: none;
+    transition: transform var(--duration-short) var(--ease-standard), border-color var(--duration-short) var(--ease-standard);
+  }
+  .recent-card:hover { transform: translateY(-2px); border-left-color: var(--accent); border-color: var(--border-strong); }
+  .recent-card:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: var(--focus-outline-offset); }
+  @media (prefers-reduced-motion: reduce) { .recent-card:hover { transform: none; } }
+  .recent-title { font-weight: 600; color: var(--text); font-size: var(--font-size-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .recent-date { color: var(--text-faint); font-size: var(--font-size-xs); font-family: var(--font-mono); }
+  .recent-meta { display: flex; align-items: center; gap: var(--space-1); margin-top: var(--space-2); color: var(--text-muted); font-size: var(--font-size-xs); }
+  .recent-stat.accent { color: var(--accent); }
+  .recent-dot { color: var(--text-faint); }
+  @media (max-width: 900px) { .recent-row { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { .recent-row { grid-template-columns: 1fr; } }
 
   /* === Hero =============================================== */
   /* HS-12-02 hero: tighter density, Workbench window grammar
