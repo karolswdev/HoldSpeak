@@ -25,7 +25,6 @@ interface Props {
 
 const { title, description, current } = Astro.props;
 const hasSecondary = Astro.slots.has("secondary");
-const hasSettings = Astro.slots.has("settings");
 ---
 
 <!doctype html>
@@ -62,88 +61,17 @@ const hasSettings = Astro.slots.has("settings");
 
     <ConfirmDialog />
 
-    {/* Global Settings drawer (HS-30-04). Content slot filled per-route;
-        full migration of History → Settings lands in HS-30-08. */}
-    <div class="settings-overlay" data-settings-overlay hidden>
-      <div class="settings-backdrop" data-settings-close></div>
-      <aside
-        id="settings-drawer"
-        class="settings-drawer"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Settings"
-        tabindex="-1"
-      >
-        <header class="settings-head">
-          <span class="settings-eyebrow">Settings</span>
-          <button type="button" class="settings-close" data-settings-close aria-label="Close settings">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
-          </button>
-        </header>
-        <div class="settings-body">
-          {hasSettings ? (
-            <slot name="settings" />
-          ) : (
-            <div class="settings-interim">
-              <p>
-                Global settings are consolidating here — appearance, core
-                runtime, and cloud-intel config, reachable from every route.
-              </p>
-              <p class="settings-interim-note">
-                The full move from <strong>History → Settings</strong> lands in
-                HS-30-08. Until then, manage settings there:
-              </p>
-              <a class="settings-link" href="/history">Open History → Settings</a>
-            </div>
-          )}
-        </div>
-      </aside>
-    </div>
-
     <script>
-      // HS-30-04: shell interactions (drawer + mobile nav), vanilla so they
-      // work on every route regardless of whether Alpine is loaded.
+      // HS-30-04 / HS-42-02: shell interactions (mobile nav), vanilla so they
+      // work on every route regardless of whether Alpine is loaded. Global
+      // settings now live at the real /settings route (HS-42-02 retired the
+      // interim drawer); preserve the legacy `#settings` deep link by
+      // redirecting it there.
       (() => {
-        const overlay = document.querySelector("[data-settings-overlay]");
-        const drawer = document.getElementById("settings-drawer");
-        let lastFocus = null;
-
-        const openSettings = (trigger) => {
-          if (!overlay) return;
-          lastFocus = trigger || document.activeElement;
-          overlay.hidden = false;
-          // next frame so the transition runs
-          requestAnimationFrame(() => overlay.setAttribute("data-open", ""));
-          drawer && drawer.focus();
-        };
-        const closeSettings = () => {
-          if (!overlay) return;
-          overlay.removeAttribute("data-open");
-          const done = () => {
-            overlay.hidden = true;
-            overlay.removeEventListener("transitionend", done);
-          };
-          overlay.addEventListener("transitionend", done);
-          // fallback if no transition fires
-          setTimeout(() => { if (!overlay.hasAttribute("data-open")) overlay.hidden = true; }, 350);
-          if (lastFocus && lastFocus.focus) lastFocus.focus();
-        };
-
-        document.querySelectorAll("[data-settings-open]").forEach((b) =>
-          b.addEventListener("click", () => openSettings(b))
-        );
-        document.querySelectorAll("[data-settings-close]").forEach((b) =>
-          b.addEventListener("click", closeSettings)
-        );
-        document.addEventListener("keydown", (e) => {
-          if (e.key === "Escape" && overlay && !overlay.hidden) closeSettings();
-        });
-
-        // Deep link: #settings opens the drawer on load (and lets any
-        // page link straight to settings).
-        if (location.hash === "#settings") openSettings();
+        if (location.hash === "#settings") {
+          location.replace("/settings");
+          return;
+        }
 
         // Mobile nav toggle.
         const topnav = document.querySelector(".topnav");
@@ -171,110 +99,6 @@ const hasSettings = Astro.slots.has("settings");
     padding: var(--space-3) var(--space-5);
     background: var(--surface-1);
     border-bottom: 1px solid var(--border-subtle);
-  }
-
-  /* Settings drawer */
-  .settings-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: var(--z-dialog);
-  }
-  .settings-backdrop {
-    position: absolute;
-    inset: 0;
-    background: var(--canvas-overlay);
-    opacity: 0;
-    transition: opacity var(--duration-medium) var(--ease-standard);
-  }
-  .settings-overlay[data-open] .settings-backdrop {
-    opacity: 1;
-  }
-  .settings-drawer {
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 100%;
-    width: min(420px, 92vw);
-    display: flex;
-    flex-direction: column;
-    background: var(--surface-2);
-    border-left: 1px solid var(--border);
-    box-shadow: var(--elev-3);
-    transform: translateX(100%);
-    transition: transform var(--duration-long) var(--ease-emphasized);
-    outline: none;
-  }
-  .settings-overlay[data-open] .settings-drawer {
-    transform: translateX(0);
-  }
-  .settings-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-4) var(--space-5);
-    border-bottom: 1px solid var(--border-subtle);
-  }
-  .settings-eyebrow {
-    font-family: var(--font-display);
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--text);
-  }
-  .settings-close {
-    display: inline-grid;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    color: var(--text-muted);
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: color var(--duration-short) var(--ease-standard),
-      border-color var(--duration-short) var(--ease-standard);
-  }
-  .settings-close:hover {
-    color: var(--text);
-    border-color: var(--border-strong);
-  }
-  .settings-close:focus-visible {
-    outline: var(--focus-outline-width) solid var(--accent);
-    outline-offset: var(--focus-outline-offset);
-  }
-  .settings-body {
-    padding: var(--space-5);
-    overflow-y: auto;
-    flex: 1;
-  }
-  .settings-interim p {
-    margin: 0 0 var(--space-3);
-    color: var(--text-muted);
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-relaxed);
-  }
-  .settings-interim-note {
-    color: var(--text-faint);
-  }
-  .settings-link {
-    display: inline-flex;
-    align-items: center;
-    margin-top: var(--space-2);
-    padding: var(--space-2) var(--space-4);
-    background: var(--accent-tint);
-    color: var(--accent);
-    border: 1px solid var(--accent);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-sm);
-    font-weight: 600;
-    text-decoration: none;
-  }
-  .settings-link:hover {
-    background: var(--accent);
-    color: var(--text-on-accent);
-  }
-  .settings-link:focus-visible {
-    outline: var(--focus-outline-width) solid var(--accent);
-    outline-offset: var(--focus-outline-offset);
   }
 
   @media (max-width: 640px) {

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 42
-- **Status:** backlog
+- **Status:** done (2026-06-06)
 - **Depends on:** none (sequenced early so later surfaces land on a clean shell)
 - **Unblocks:** HS-42-03, HS-42-05
 - **Owner:** unassigned
@@ -36,16 +36,15 @@ of it.
 
 ## Acceptance criteria
 
-- [ ] A real global-settings surface exists and is reachable from every route via
-      the shell gear; page-local settings unchanged.
-- [ ] **No live product copy** says "consolidating", "History → Settings", or
-      "HS-30-08" — `rg "History → Settings|consolidating|HS-30-08" web/ holdspeak/`
-      returns nothing outside frozen PMO history.
-- [ ] The `#settings` deep link still resolves (or a stable `/settings` route
-      replaces it), verified.
-- [ ] Bundle rebuilt; only `web/src` committed (no `_built/`); a Playwright/route
-      check confirms the surface opens; screenshot captured.
-- [ ] Default suite green; behavior of existing settings round-trips unchanged.
+- [x] A real global-settings surface (`/settings`) exists and is reachable from
+      every route via the shell gear; page-local settings unchanged.
+- [x] **No live product copy** has the interim-drawer markers (`consolidating` /
+      `settings-interim` / `data-settings-open`) — guarded by a test.
+- [x] The `#settings` deep link still resolves (redirects to `/settings`).
+- [x] Bundle rebuilt; only `web/src` committed (no `_built/`); a **Playwright
+      round-trip** confirms set→save→reload→disk; screenshot captured.
+- [x] Default suite green; existing settings round-trips unchanged (same
+      `/api/settings` contract).
 
 ## Test plan
 

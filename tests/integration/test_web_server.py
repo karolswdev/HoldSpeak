@@ -1768,8 +1768,10 @@ class TestHistoryUiSmoke:
         assert "text/html" in response.headers["content-type"]
 
         html = response.text
-        for label in ("Meetings", "Action items", "Speakers", "Intel queue", "Settings"):
+        # HS-42-02: Settings moved out of History into the global /settings route.
+        for label in ("Meetings", "Action items", "Speakers", "Intel queue"):
             assert label in html
+        assert ">Settings<" not in html  # the History settings tab is gone
         assert "Deferred plugin jobs" in html
         # UI strings + Alpine bindings still rendered server-side.
         for ui_string in (
@@ -1791,7 +1793,6 @@ class TestHistoryUiSmoke:
         assert match, "expected history JS chunk reference"
         js = test_client.get(match.group(1)).text
         for marker in (
-            "saveSettings",
             "openSpeaker",
             "processIntelJobs",
             "retryIntelJob",
@@ -1816,12 +1817,14 @@ class TestHistoryUiSmoke:
         assert "/export?format=" in js
         assert "No pending action items need review." in js
 
-    def test_settings_route_serves_history_ui_shell(self, test_client):
+    def test_settings_route_serves_the_global_settings_page(self, test_client):
+        # HS-42-02: /settings is now its own shell-level page (not the history
+        # shell). It carries the settings Alpine factory + the cloud-intel field.
         response = test_client.get("/settings")
         assert response.status_code == 200
-        assert "HoldSpeak History" in response.text
-        # Sentence-cased after HS-10-08 rebuild.
+        assert "settingsApp" in response.text
         assert "OpenAI-compatible base URL" in response.text
+        assert "HoldSpeak History" not in response.text
 
 
 @pytest.mark.integration
