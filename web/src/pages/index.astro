@@ -512,6 +512,25 @@ import HoldMark from "../components/HoldMark.astro";
     </div>
   </div>
 
+  {/* HS-42-03: first-run guard. A brand-new user (never dictated) or a
+      hard-blocked runtime is sent to /setup; a healthy returning user stays on
+      the dashboard (no nag). A mere WARN does NOT redirect. Runs early + best-
+      effort — a status failure never blocks the dashboard. */}
+  <script is:inline>
+    (async () => {
+      try {
+        const res = await fetch("/api/setup/status");
+        if (!res.ok) return;
+        const s = await res.json();
+        if (s && (s.first_run || s.overall === "blocked")) {
+          location.replace("/setup");
+        }
+      } catch (_e) {
+        /* never block the dashboard on the setup check */
+      }
+    })();
+  </script>
+
   <script>
     import Alpine from "alpinejs";
     import factorySource from "../scripts/dashboard-app.js?raw";

@@ -8,8 +8,7 @@
 //   Configure → Dictation, Companion
 //
 // Right cluster: a status slot (default LocalPill) + a Settings (⚙)
-// button that opens the global Settings drawer (wired in AppLayout via
-// the [data-settings-open] hook — vanilla, since Alpine loads per-page).
+// link to the global /settings route (HS-42-02 retired the interim drawer).
 //
 // Active route is DUAL-encoded (not colour-only, per skill ux/Color
 // Only): accent-tint fill + weight + an accent underbar + aria-current.
@@ -18,7 +17,7 @@
 // menu toggle ([data-nav-toggle]); no flex-wrap pile-up.
 
 import AppMark from "./AppMark.astro";
-import LocalPill from "./LocalPill.astro";
+import TrustChip from "./TrustChip.astro";
 
 type Route = "runtime" | "activity" | "history" | "dictation" | "companion";
 
@@ -89,15 +88,12 @@ const groups: { label: string; routes: { slug: Route; label: string; href: strin
 
   <div class="topnav-tail">
     <slot name="status">
-      <LocalPill />
+      <TrustChip />
     </slot>
     <slot name="overflow" />
-    <button
-      type="button"
+    <a
       class="topnav-icon"
-      data-settings-open
-      aria-haspopup="dialog"
-      aria-controls="settings-drawer"
+      href="/settings"
       aria-label="Settings"
       title="Settings"
     >
@@ -105,7 +101,7 @@ const groups: { label: string; routes: { slug: Route; label: string; href: strin
         <circle cx="12" cy="12" r="3" />
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
       </svg>
-    </button>
+    </a>
   </div>
 </header>
 

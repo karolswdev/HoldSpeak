@@ -9,10 +9,26 @@ with the live status docs, the status docs win.
 
 ## 1. TL;DR — where things stand
 
-- **LATEST (2026-06-05): Phases 33–41 shipped since this doc was first written.**
+- **LATEST (2026-06-06): Phases 33–42 shipped since this doc was first written.**
   The bullets below are the Phase-31/32 era and are kept for history; for the
   current phase index + status, the roadmap **`README.md`** is the source of
-  truth. Most recent: **Phase 41 — Runtime Presence Indicators: CLOSED ✅ (8/8)**
+  truth. Most recent: **Phase 42 — First-Run Delight & Daily Confidence: CLOSED
+  ✅ (8/8)** — made **arrival** stellar: a user goes from fresh clone to a
+  **verified first dictation**, with visible privacy/trust state and **zero file
+  editing**, in one guided local cockpit. The spine is **`GET /api/setup/status`**
+  (`holdspeak/setup_status.py` — an *adapter* over `collect_doctor_checks()` +
+  readiness + egress + presence, drift-guarded so every doctor `FAIL` surfaces;
+  cheap via `skip_network`) + a durable **`first_run` milestone** (`db.milestones`,
+  set on a real dictation). Surfaces: a Signal **`/setup`** welcome (one primary
+  action · guided first-dictation with live WS "✓ It worked" + the
+  `FIRST_DICTATION_SUCCESS` milestone · model-setup assistant · presence
+  onboarding), a real **`/settings`** page (the interim "History → Settings"
+  drawer retired), a **`/` first-run guard** (never nags a healthy user), a **CLI
+  launch nudge**, and an **ambient TrustChip + Trust & Privacy panel** on every
+  page. Proven by an all-in-app, zero-file-edit **TTFD dogfood**
+  (`scripts/dogfood_first_run.py` → `DOGFOOD OK`, launch→/setup 1.13s). Suite
+  **2306 passed, 16 skipped**. Branch `phase-42-first-run-delight` — open a PR to
+  `main`. (Prior: **Phase 41 — Runtime Presence Indicators: CLOSED ✅ (8/8)**
   — an **opt-in** (`HOLDSPEAK_DESKTOP_PRESENCE=1`), per-platform **native**
   desktop presence layer so a user dictating into another app can see what the
   copilot is doing (*listening / transcribing / typing*) without the web

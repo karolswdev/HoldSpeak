@@ -16,6 +16,7 @@ from .dictation import build_dictation_router
 from .meetings import build_meetings_router
 from .pages import build_pages_router
 from .projects import build_projects_router
+from .setup import build_setup_router
 from .system import build_system_router
 
 __all__ = [
@@ -25,5 +26,6 @@ __all__ = [
     "build_meetings_router",
     "build_pages_router",
     "build_projects_router",
+    "build_setup_router",
     "build_system_router",
 ]

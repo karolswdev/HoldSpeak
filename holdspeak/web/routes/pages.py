@@ -47,12 +47,35 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
             )
         return HTMLResponse(html)
 
+    @router.get("/setup")
+    async def setup_page() -> Any:
+        """Serve the welcome / setup surface (HS-42-03), read from the
+        Astro-built _built/setup/index.html. Driven client-side by
+        GET /api/setup/status."""
+        page = (
+            _HOLDSPEAK_DIR
+            / "static"
+            / "_built"
+            / "setup"
+            / "index.html"
+        )
+        try:
+            html = page.read_text(encoding="utf-8")
+        except Exception as e:
+            log.error(f"Failed to read built setup page: {e}")
+            html = (
+                "<!doctype html><html><head><meta charset='utf-8'/>"
+                "<title>HoldSpeak Setup</title></head>"
+                "<body><h1>HoldSpeak Setup</h1>"
+                "<p>Setup UI not built. Run <code>npm run build</code> "
+                "in <code>web/</code>.</p></body></html>"
+            )
+        return HTMLResponse(html)
+
     @router.get("/history")
     async def history_dashboard() -> Any:
         """Serve the history dashboard (HS-10-08: now read from the
-        Astro-built _built/history/index.html). The /settings route
-        still points here because settings live as a tab inside
-        the history page."""
+        Astro-built _built/history/index.html)."""
         history_path = (
             _HOLDSPEAK_DIR
             / "static"
@@ -75,8 +98,28 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
 
     @router.get("/settings")
     async def settings_dashboard() -> Any:
-        """Serve web settings UI (currently integrated with history dashboard)."""
-        return await history_dashboard()
+        """Serve the global Settings page (HS-42-02: a real shell-level
+        route, read from the Astro-built _built/settings/index.html — the
+        History → Settings move is complete)."""
+        page = (
+            _HOLDSPEAK_DIR
+            / "static"
+            / "_built"
+            / "settings"
+            / "index.html"
+        )
+        try:
+            html = page.read_text(encoding="utf-8")
+        except Exception as e:
+            log.error(f"Failed to read built settings page: {e}")
+            html = (
+                "<!doctype html><html><head><meta charset='utf-8'/>"
+                "<title>HoldSpeak Settings</title></head>"
+                "<body><h1>HoldSpeak Settings</h1>"
+                "<p>Settings UI not built. Run <code>npm run build</code> "
+                "in <code>web/</code>.</p></body></html>"
+            )
+        return HTMLResponse(html)
 
     @router.get("/activity")
     async def activity_dashboard() -> Any:

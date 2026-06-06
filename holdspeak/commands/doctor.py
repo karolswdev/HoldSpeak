@@ -421,7 +421,9 @@ def _check_web_auth(config: Config) -> DoctorCheck:
     )
 
 
-def _check_meeting_intel_cloud_preflight(config: Config, *, timeout_seconds: float = 4.0) -> DoctorCheck:
+def _check_meeting_intel_cloud_preflight(
+    config: Config, *, timeout_seconds: float = 4.0, skip_network: bool = False
+) -> DoctorCheck:
     meeting = config.meeting
     if not meeting.intel_enabled:
         return DoctorCheck(
@@ -434,6 +436,13 @@ def _check_meeting_intel_cloud_preflight(config: Config, *, timeout_seconds: flo
             name="Cloud intel preflight",
             status="PASS",
             detail="Skipped (provider mode `local`)",
+        )
+    if skip_network:
+        return DoctorCheck(
+            name="Cloud intel preflight",
+            status="PASS",
+            detail="Not run (network preflight skipped at setup load)",
+            fix="Run `holdspeak doctor` for a live cloud-endpoint preflight.",
         )
 
     api_key_env = (meeting.intel_cloud_api_key_env or "OPENAI_API_KEY").strip() or "OPENAI_API_KEY"
@@ -904,8 +913,14 @@ def _check_connector_packs() -> DoctorCheck:
     )
 
 
-def collect_doctor_checks() -> list[DoctorCheck]:
-    """Collect all doctor checks in display order."""
+def collect_doctor_checks(*, skip_network: bool = False) -> list[DoctorCheck]:
+    """Collect all doctor checks in display order.
+
+    `skip_network=True` makes every check cheap (no outbound call) — the cloud
+    preflight returns a neutral "not run" check instead of probing the endpoint.
+    The setup-status surface (HS-42-01) uses this so a page load never blocks on a
+    4-second HTTP timeout; the CLI `holdspeak doctor` keeps the full live preflight.
+    """
     is_wayland = _is_wayland_session()
     config_check, config = _check_config()
 
@@ -918,7 +933,7 @@ def collect_doctor_checks() -> list[DoctorCheck]:
         _check_web_auth(config),
         _check_meeting_intel_runtime(config),
         _check_meeting_intel_egress(config),
-        _check_meeting_intel_cloud_preflight(config),
+        _check_meeting_intel_cloud_preflight(config, skip_network=skip_network),
         _check_dictation_project_context(config),
         _check_dictation_runtime(config),
         _check_dictation_constraint_compile(config),

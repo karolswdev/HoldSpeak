@@ -42,7 +42,8 @@ const ROUTES = [
   ["activity", "/activity/", 1440, 1100, true],
   ["companion", "/companion/", 1440, 1000, true],
   ["components", "/design/components/", 1440, 1200, true],
-  ["settings-drawer", "/#settings", 1440, 900, false],
+  ["settings", "/settings/", 1440, 1100, true],
+  ["setup", "/setup/", 1440, 1100, true],
   ["runtime-mobile", "/", 560, 1000, false],
 ];
 

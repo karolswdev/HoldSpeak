@@ -12,7 +12,7 @@
 
 import "../styles/global.css";
 import TopNav from "../components/TopNav.astro";
-import LocalPill from "../components/LocalPill.astro";
+import TrustChip from "../components/TrustChip.astro";
 import ConfirmDialog from "../components/ConfirmDialog.astro";
 
 type Route = "runtime" | "activity" | "history" | "dictation" | "companion";
@@ -25,7 +25,6 @@ interface Props {
 
 const { title, description, current } = Astro.props;
 const hasSecondary = Astro.slots.has("secondary");
-const hasSettings = Astro.slots.has("settings");
 ---
 
 <!doctype html>
@@ -43,7 +42,7 @@ const hasSettings = Astro.slots.has("settings");
       {Astro.slots.has("status") ? (
         <Fragment slot="status"><slot name="status" /></Fragment>
       ) : (
-        <LocalPill slot="status" />
+        <TrustChip slot="status" />
       )}
       {Astro.slots.has("topnav-overflow") && (
         <Fragment slot="overflow"><slot name="topnav-overflow" /></Fragment>
@@ -62,88 +61,104 @@ const hasSettings = Astro.slots.has("settings");
 
     <ConfirmDialog />
 
-    {/* Global Settings drawer (HS-30-04). Content slot filled per-route;
-        full migration of History → Settings lands in HS-30-08. */}
-    <div class="settings-overlay" data-settings-overlay hidden>
-      <div class="settings-backdrop" data-settings-close></div>
-      <aside
-        id="settings-drawer"
-        class="settings-drawer"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Settings"
-        tabindex="-1"
-      >
-        <header class="settings-head">
-          <span class="settings-eyebrow">Settings</span>
-          <button type="button" class="settings-close" data-settings-close aria-label="Close settings">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
+    {/* HS-42-05: the ambient Trust & Privacy panel (opened by the shell
+        TrustChip). Populated client-side from GET /api/setup/status. */}
+    <div class="trust-overlay" data-trust-overlay hidden>
+      <div class="trust-backdrop" data-trust-close></div>
+      <aside id="trust-panel" class="trust-panel" role="dialog" aria-modal="true" aria-label="Privacy and trust" tabindex="-1">
+        <header class="trust-head">
+          <div>
+            <span class="trust-eyebrow">Privacy &amp; Trust</span>
+            <p class="trust-summary" data-trust-summary>Checking what can leave this machine…</p>
+          </div>
+          <button type="button" class="trust-close" data-trust-close aria-label="Close">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
           </button>
         </header>
-        <div class="settings-body">
-          {hasSettings ? (
-            <slot name="settings" />
-          ) : (
-            <div class="settings-interim">
-              <p>
-                Global settings are consolidating here — appearance, core
-                runtime, and cloud-intel config, reachable from every route.
-              </p>
-              <p class="settings-interim-note">
-                The full move from <strong>History → Settings</strong> lands in
-                HS-30-08. Until then, manage settings there:
-              </p>
-              <a class="settings-link" href="/history">Open History → Settings</a>
-            </div>
-          )}
-        </div>
+        <div class="trust-rows" data-trust-rows></div>
+        <footer class="trust-foot">
+          <p>Change any of this in <a href="/settings">Settings</a>. The invariant: nothing leaves your machine without you configuring it.</p>
+        </footer>
       </aside>
     </div>
 
     <script>
-      // HS-30-04: shell interactions (drawer + mobile nav), vanilla so they
-      // work on every route regardless of whether Alpine is loaded.
-      (() => {
-        const overlay = document.querySelector("[data-settings-overlay]");
-        const drawer = document.getElementById("settings-drawer");
-        let lastFocus = null;
+      // HS-42-05: the ambient trust chip + panel. Fetches the privacy posture
+      // once and renders the shell chip + the panel rows. Best-effort: a status
+      // failure leaves the honest "Local only" default in place.
+      import { trustPosture, trustRows } from "../scripts/trust-view.js";
 
-        const openSettings = (trigger) => {
-          if (!overlay) return;
-          lastFocus = trigger || document.activeElement;
+      (async () => {
+        const chip = document.querySelector("[data-trust-open]");
+        const labelEl = document.querySelector("[data-trust-label]");
+        const overlay = document.querySelector("[data-trust-overlay]");
+        const summaryEl = document.querySelector("[data-trust-summary]");
+        const rowsEl = document.querySelector("[data-trust-rows]");
+        if (!chip || !overlay) return;
+
+        // ── open / close ──
+        let lastFocus = null;
+        const open = () => {
+          lastFocus = document.activeElement;
           overlay.hidden = false;
-          // next frame so the transition runs
           requestAnimationFrame(() => overlay.setAttribute("data-open", ""));
-          drawer && drawer.focus();
+          document.getElementById("trust-panel")?.focus();
         };
-        const closeSettings = () => {
-          if (!overlay) return;
+        const close = () => {
           overlay.removeAttribute("data-open");
-          const done = () => {
-            overlay.hidden = true;
-            overlay.removeEventListener("transitionend", done);
-          };
-          overlay.addEventListener("transitionend", done);
-          // fallback if no transition fires
-          setTimeout(() => { if (!overlay.hasAttribute("data-open")) overlay.hidden = true; }, 350);
+          setTimeout(() => { if (!overlay.hasAttribute("data-open")) overlay.hidden = true; }, 240);
           if (lastFocus && lastFocus.focus) lastFocus.focus();
         };
+        chip.addEventListener("click", open);
+        overlay.querySelectorAll("[data-trust-close]").forEach((b) => b.addEventListener("click", close));
+        document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !overlay.hidden) close(); });
 
-        document.querySelectorAll("[data-settings-open]").forEach((b) =>
-          b.addEventListener("click", () => openSettings(b))
-        );
-        document.querySelectorAll("[data-settings-close]").forEach((b) =>
-          b.addEventListener("click", closeSettings)
-        );
-        document.addEventListener("keydown", (e) => {
-          if (e.key === "Escape" && overlay && !overlay.hidden) closeSettings();
-        });
+        // ── populate from the setup-status trust block ──
+        try {
+          const res = await fetch("/api/setup/status");
+          if (!res.ok) return;
+          const status = await res.json();
+          const posture = trustPosture(status.trust);
+          chip.className = `trust-chip tone-${posture.tone}`;
+          if (labelEl) labelEl.textContent = posture.label;
+          chip.title = posture.detail;
+          if (summaryEl) summaryEl.textContent = posture.detail;
+          if (rowsEl) {
+            rowsEl.textContent = "";
+            const cell = (cls, text) => {
+              const d = document.createElement("div");
+              d.className = cls;
+              d.textContent = String(text);  // config values are user data — never innerHTML
+              return d;
+            };
+            for (const row of trustRows(status.trust, status.presence)) {
+              const el = document.createElement("div");
+              el.className = `trust-row tone-${row.tone}`;
+              el.append(
+                cell("trust-row-label", row.label),
+                cell("trust-row-value", row.value),
+                cell("trust-row-meta", row.meta),
+              );
+              rowsEl.appendChild(el);
+            }
+          }
+        } catch (_e) {
+          /* keep the honest default chip */
+        }
+      })();
+    </script>
 
-        // Deep link: #settings opens the drawer on load (and lets any
-        // page link straight to settings).
-        if (location.hash === "#settings") openSettings();
+    <script>
+      // HS-30-04 / HS-42-02: shell interactions (mobile nav), vanilla so they
+      // work on every route regardless of whether Alpine is loaded. Global
+      // settings now live at the real /settings route (HS-42-02 retired the
+      // interim drawer); preserve the legacy `#settings` deep link by
+      // redirecting it there.
+      (() => {
+        if (location.hash === "#settings") {
+          location.replace("/settings");
+          return;
+        }
 
         // Mobile nav toggle.
         const topnav = document.querySelector(".topnav");
@@ -173,109 +188,56 @@ const hasSettings = Astro.slots.has("settings");
     border-bottom: 1px solid var(--border-subtle);
   }
 
-  /* Settings drawer */
-  .settings-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: var(--z-dialog);
+  /* HS-42-05: Trust & Privacy panel */
+  .trust-overlay { position: fixed; inset: 0; z-index: var(--z-dialog); }
+  .trust-backdrop {
+    position: absolute; inset: 0; background: var(--canvas-overlay);
+    opacity: 0; transition: opacity var(--duration-medium) var(--ease-standard);
   }
-  .settings-backdrop {
-    position: absolute;
-    inset: 0;
-    background: var(--canvas-overlay);
-    opacity: 0;
-    transition: opacity var(--duration-medium) var(--ease-standard);
-  }
-  .settings-overlay[data-open] .settings-backdrop {
-    opacity: 1;
-  }
-  .settings-drawer {
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 100%;
-    width: min(420px, 92vw);
-    display: flex;
-    flex-direction: column;
-    background: var(--surface-2);
-    border-left: 1px solid var(--border);
-    box-shadow: var(--elev-3);
+  .trust-overlay[data-open] .trust-backdrop { opacity: 1; }
+  .trust-panel {
+    position: absolute; top: 0; right: 0; height: 100%;
+    width: min(440px, 94vw); display: flex; flex-direction: column;
+    background: var(--surface-2); border-left: 1px solid var(--border);
+    box-shadow: var(--elev-3); outline: none;
     transform: translateX(100%);
     transition: transform var(--duration-long) var(--ease-emphasized);
-    outline: none;
   }
-  .settings-overlay[data-open] .settings-drawer {
-    transform: translateX(0);
+  .trust-overlay[data-open] .trust-panel { transform: translateX(0); }
+  .trust-head {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3);
+    padding: var(--space-5); border-bottom: 1px solid var(--border-subtle);
   }
-  .settings-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-4) var(--space-5);
-    border-bottom: 1px solid var(--border-subtle);
+  .trust-eyebrow {
+    font-family: var(--font-mono); font-size: var(--font-size-xs); text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow); color: var(--accent);
   }
-  .settings-eyebrow {
-    font-family: var(--font-display);
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--text);
+  .trust-summary { margin: var(--space-2) 0 0; color: var(--text); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
+  .trust-close {
+    flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px;
+    color: var(--text-muted); background: transparent; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); cursor: pointer;
   }
-  .settings-close {
-    display: inline-grid;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    color: var(--text-muted);
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: color var(--duration-short) var(--ease-standard),
-      border-color var(--duration-short) var(--ease-standard);
+  .trust-close:hover { color: var(--text); border-color: var(--border-strong); }
+  .trust-rows { flex: 1; overflow-y: auto; padding: var(--space-4) var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }
+  .trust-row {
+    padding: var(--space-4); border-radius: var(--radius-md);
+    background: var(--surface-3); border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--border);
   }
-  .settings-close:hover {
-    color: var(--text);
-    border-color: var(--border-strong);
-  }
-  .settings-close:focus-visible {
-    outline: var(--focus-outline-width) solid var(--accent);
-    outline-offset: var(--focus-outline-offset);
-  }
-  .settings-body {
-    padding: var(--space-5);
-    overflow-y: auto;
-    flex: 1;
-  }
-  .settings-interim p {
-    margin: 0 0 var(--space-3);
-    color: var(--text-muted);
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-relaxed);
-  }
-  .settings-interim-note {
-    color: var(--text-faint);
-  }
-  .settings-link {
-    display: inline-flex;
-    align-items: center;
-    margin-top: var(--space-2);
-    padding: var(--space-2) var(--space-4);
-    background: var(--accent-tint);
-    color: var(--accent);
-    border: 1px solid var(--accent);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-sm);
-    font-weight: 600;
-    text-decoration: none;
-  }
-  .settings-link:hover {
-    background: var(--accent);
-    color: var(--text-on-accent);
-  }
-  .settings-link:focus-visible {
-    outline: var(--focus-outline-width) solid var(--accent);
-    outline-offset: var(--focus-outline-offset);
-  }
+  .trust-row.tone-ok { border-left-color: var(--ok); }
+  .trust-row.tone-warn { border-left-color: var(--warn); }
+  .trust-row.tone-danger { border-left-color: var(--danger); }
+  .trust-row.tone-neutral { border-left-color: var(--border-strong); }
+  .trust-row-label { font-family: var(--font-mono); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-eyebrow); color: var(--text-faint); }
+  .trust-row-value { color: var(--text); font-weight: 600; font-size: var(--font-size-sm); margin-top: 2px; }
+  .trust-row.tone-ok .trust-row-value { color: var(--ok); }
+  .trust-row.tone-warn .trust-row-value { color: var(--warn-strong, var(--warn)); }
+  .trust-row.tone-danger .trust-row-value { color: var(--danger); }
+  .trust-row-meta { color: var(--text-muted); font-size: var(--font-size-xs); margin-top: var(--space-1); }
+  .trust-foot { padding: var(--space-4) var(--space-5); border-top: 1px solid var(--border-subtle); }
+  .trust-foot p { margin: 0; color: var(--text-muted); font-size: var(--font-size-xs); }
+  .trust-foot a { color: var(--accent); }
 
   @media (max-width: 640px) {
     .app-secondary {

@@ -1,0 +1,111 @@
+"""Runtime self-test for the setup model assistant (HS-42-06).
+
+Tests the configured dictation (intelligent-typing) runtime and reports a plain
+pass/fail + detail, reusing the existing `resolve_backend` for local backends and
+a time-boxed HTTP preflight for an OpenAI-compatible endpoint. The HTTP getter is
+injectable so the default test suite never makes a real outbound call.
+"""
+from __future__ import annotations
+
+import os
+from pathlib import Path
+from typing import Any, Callable, Optional
+from urllib.error import URLError
+from urllib.request import Request, urlopen
+
+from .logging_config import get_logger
+
+log = get_logger("setup_runtime")
+
+
+def _default_http_get(url: str, *, headers: dict[str, str], timeout: float) -> int:
+    req = Request(url, headers=headers, method="GET")
+    with urlopen(req, timeout=timeout) as resp:  # noqa: S310 - explicit http(s) preflight
+        return int(getattr(resp, "status", 200) or 200)
+
+
+def probe_runtime(
+    dictation_cfg: Any,
+    *,
+    http_get: Optional[Callable[..., int]] = None,
+    timeout_seconds: float = 4.0,
+) -> dict[str, Any]:
+    """Test the configured dictation runtime. Returns `{ok, status, backend, detail}`.
+
+    - pipeline disabled → `basic` (no LLM runtime needed; voice typing still works).
+    - mlx / llama_cpp → resolve the backend, then check the model path exists.
+    - openai_compatible → a time-boxed GET `{base_url}/models` preflight.
+    Never raises — every failure is a `{ok: False}` result with a `detail`.
+    """
+    from .plugins.dictation import runtime as runtime_module
+
+    pipeline = getattr(dictation_cfg, "pipeline", None)
+    runtime = getattr(dictation_cfg, "runtime", None)
+    if pipeline is None or not getattr(pipeline, "enabled", False):
+        return {
+            "ok": True,
+            "status": "basic",
+            "backend": None,
+            "detail": "Basic voice typing — no LLM runtime configured. Hold, speak, release works as-is.",
+        }
+
+    requested = getattr(runtime, "backend", "auto")
+    try:
+        resolved, _reason = runtime_module.resolve_backend(requested)
+    except runtime_module.RuntimeUnavailableError as exc:
+        return {"ok": False, "status": "unavailable", "backend": requested, "detail": str(exc)}
+
+    if resolved in ("mlx", "llama_cpp"):
+        path_attr = "mlx_model" if resolved == "mlx" else "llama_cpp_model_path"
+        raw = str(getattr(runtime, path_attr, "") or "").strip()
+        if not raw:
+            return {"ok": False, "status": "unconfigured", "backend": resolved,
+                    "detail": f"No model path set for backend '{resolved}'."}
+        path = Path(raw).expanduser()
+        if not path.exists():
+            return {"ok": False, "status": "missing_model", "backend": resolved,
+                    "detail": f"Model not found at {path}."}
+        return {"ok": True, "status": "ok", "backend": resolved,
+                "detail": f"Ready — {resolved} model at {path}."}
+
+    if resolved == "openai_compatible":
+        base = str(getattr(runtime, "openai_compatible_base_url", "") or "").strip().rstrip("/")
+        if not base:
+            return {"ok": False, "status": "unconfigured", "backend": resolved,
+                    "detail": "No base URL set for the OpenAI-compatible endpoint."}
+        key_env = str(getattr(runtime, "openai_compatible_api_key_env", "") or "OPENAI_API_KEY").strip()
+        api_key = (os.environ.get(key_env) or "").strip()
+        headers = {"Accept": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        getter = http_get or _default_http_get
+        try:
+            code = getter(f"{base}/models", headers=headers, timeout=timeout_seconds)
+        except (URLError, OSError, ValueError) as exc:
+            return {"ok": False, "status": "unreachable", "backend": resolved,
+                    "detail": f"Could not reach {base}: {exc}"}
+        if 200 <= int(code) < 300:
+            return {"ok": True, "status": "ok", "backend": resolved,
+                    "detail": f"Endpoint reachable ({base}, HTTP {code})."}
+        return {"ok": False, "status": "error", "backend": resolved,
+                "detail": f"Endpoint returned HTTP {code} for {base}/models."}
+
+    return {"ok": True, "status": "ok", "backend": resolved, "detail": f"Backend '{resolved}' resolved."}
+
+
+def runtime_choices() -> list[dict[str, Any]]:
+    """Static reference for the four guided backend choices (HS-42-06 UI)."""
+    return [
+        {"id": "basic", "label": "Basic voice typing only", "backend": "none",
+         "extra": None, "needs": "Nothing — Whisper transcription only.",
+         "affects": "Dictation (no LLM rewrite)."},
+        {"id": "mlx", "label": "Local Apple Silicon (MLX)", "backend": "mlx",
+         "extra": "uv pip install -e '.[dictation-mlx]'", "needs": "An MLX model under ~/Models/mlx/…",
+         "affects": "Dictation + meeting intel."},
+        {"id": "llama_cpp", "label": "Local GGUF (llama.cpp)", "backend": "llama_cpp",
+         "extra": "uv pip install -e '.[dictation-llama]'", "needs": "A GGUF model under ~/Models/gguf/…",
+         "affects": "Dictation + meeting intel."},
+        {"id": "openai_compatible", "label": "OpenAI-compatible endpoint", "backend": "openai_compatible",
+         "extra": "uv pip install -e '.[dictation-openai]'", "needs": "A base URL (LAN, Ollama, vLLM, or hosted).",
+         "affects": "Dictation + meeting intel."},
+    ]

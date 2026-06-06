@@ -322,6 +322,10 @@ table meetings: CREATE TABLE meetings (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 )
+table milestones: CREATE TABLE milestones (
+    key TEXT PRIMARY KEY,
+    achieved_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
 table plugin_run_jobs: CREATE TABLE plugin_run_jobs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     meeting_id TEXT NOT NULL,
