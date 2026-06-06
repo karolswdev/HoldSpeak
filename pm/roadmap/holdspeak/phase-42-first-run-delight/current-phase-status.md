@@ -1,16 +1,26 @@
 # Phase 42 — First-Run Delight & Daily Confidence
 
-**Status:** IN PROGRESS (0/8 stories). Opened 2026-06-06. Direction chosen by the
+**Status:** IN PROGRESS (1/8 stories). Opened 2026-06-06. Direction chosen by the
 user: the product depth is now ahead of the product **entrance** — make
 **arrival** stellar. A user should go from fresh clone to a verified first
 dictation, with visible privacy/trust state and **zero file editing**, inside one
 guided local cockpit.
 
-**Last updated:** 2026-06-06 (Phase opened + scaffolded off the reviewed,
-repo-grounded proposal [`PROPOSAL_PHASE_42_first_run.md`](../PROPOSAL_PHASE_42_first_run.md).
-8 stories, resequenced so the shell is finished before the new surfaces land on
-it. HS-42-01 — the setup-state contract + the `first_run` milestone — is the
-entry point.)
+**Last updated:** 2026-06-06 (**HS-42-01 done** — the setup-state contract +
+`first_run` milestone. `holdspeak/setup_status.py::build_setup_status` composes
+one `GET /api/setup/status` snapshot as an **adapter** over the existing sources
+(`collect_doctor_checks()` 1:1 → sections; `intel_egress_posture()` + config →
+trust; `detect_presence_platform()` → presence) with a single `primary_action`
+and `overall` verdict; cheap by construction (doctor gained `skip_network=True`,
+so the cloud preflight is a neutral "not run" instead of a 4s HTTP probe — the
+CLI keeps the live preflight). The durable `first_run` is a new `milestones`
+table + `MilestoneRepository` (`db.milestones`); it survives a restart (canonical
+schema snapshot regenerated). Route `build_setup_router` registered.
+**+22 tests** (composition / drift-guard "every FAIL surfaces" / route shape /
+milestone persist-across-restart / cheapness); full suite **2283 passed, 16
+skipped**; new files ruff-clean. Next: **HS-42-02** (global settings completion).
+Phase opened + scaffolded off the reviewed, repo-grounded proposal
+[`PROPOSAL_PHASE_42_first_run.md`](../PROPOSAL_PHASE_42_first_run.md).)
 
 ## Goal
 
@@ -105,7 +115,7 @@ launch and a healthy returning user skips straight to work.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-42-01 | Setup-state contract + `first_run` milestone | backlog | [story-01-setup-state-contract.md](./story-01-setup-state-contract.md) | — |
+| HS-42-01 | Setup-state contract + `first_run` milestone | done | [story-01-setup-state-contract.md](./story-01-setup-state-contract.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-42-02 | Global settings completion | backlog | [story-02-global-settings-completion.md](./story-02-global-settings-completion.md) | — |
 | HS-42-03 | Welcome / Setup route + CLI nudge | backlog | [story-03-welcome-setup-route.md](./story-03-welcome-setup-route.md) | — |
 | HS-42-04 | Guided first dictation test (real app) | backlog | [story-04-guided-first-dictation.md](./story-04-guided-first-dictation.md) | — |
@@ -122,9 +132,13 @@ load-bearing claim was verified against the live code first (the `/dictation`
 Blocks default, the `AppLayout` interim Settings drawer, the absence of any setup
 surface, and the reusable `collect_doctor_checks()` / readiness / egress / presence
 sources). Resequenced from the proposal so the shell debt (HS-42-02) is retired
-**before** the new surfaces sit on it. **HS-42-01** (the setup-state contract +
-the `first_run` milestone — the backend spine every later surface reads) is the
-entry point.
+**before** the new surfaces sit on it. **HS-42-01 shipped (2026-06-06)** — the
+backend spine: `build_setup_status` (an adapter over the doctor/readiness/egress/
+presence sources, cheap via `skip_network`), the durable `first_run` milestone
+(`db.milestones`, survives restart), and `GET /api/setup/status`. +22 tests;
+suite **2283/16**. Next: **HS-42-02** (global settings completion) — retire the
+`AppLayout` "consolidating / History → Settings" interim drawer into a real
+`/settings` surface so the welcome route + trust chip land on a finished shell.
 
 ## Active risks
 

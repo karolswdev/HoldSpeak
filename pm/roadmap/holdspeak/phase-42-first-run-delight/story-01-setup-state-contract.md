@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 42
-- **Status:** backlog
+- **Status:** done (2026-06-06)
 - **Depends on:** none
 - **Unblocks:** HS-42-03, HS-42-04, HS-42-05, HS-42-06, HS-42-07
 - **Owner:** unassigned
@@ -42,19 +42,18 @@ surface would re-derive readiness and drift from the doctor.
 
 ## Acceptance criteria
 
-- [ ] `GET /api/setup/status` returns the documented shape; integration-tested for
-      a ready state and a blocked state (snapshot fixtures).
-- [ ] The composition is an **adapter over `collect_doctor_checks()`** — a unit
-      test asserts **every doctor `FAIL` maps to a setup section** (the drift guard),
-      and check IDs are stable.
-- [ ] `first_run` flips from `true` to `false` once the durable milestone is set,
+- [x] `GET /api/setup/status` returns the documented shape; integration-tested for
+      a ready state and a blocked state (`test_web_setup_status_api.py`).
+- [x] The composition is an **adapter over `collect_doctor_checks()`** — a unit
+      test asserts **every doctor `FAIL` maps to a setup section** 1:1 (the drift
+      guard), and check IDs are stable slugs.
+- [x] `first_run` flips from `true` to `false` once the durable milestone is set,
       and **survives a process restart** (DB-backed); proven by a test.
-- [ ] `primary_action` points at the single highest-severity next step with a
+- [x] `primary_action` points at the single highest-severity next step with a
       `route` deep link.
-- [ ] The status read is cheap (no large-model load / no default network call);
-      asserted structurally.
-- [ ] Default suite green; with no config it reports `first_run: true` without
-      error.
+- [x] The status read is cheap (`skip_network=True`; no large-model load / no
+      default network call); asserted.
+- [x] Default suite green; with no config it reports `first_run: true` without error.
 
 ## Test plan
 

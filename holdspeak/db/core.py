@@ -15,6 +15,7 @@ from .projects import ProjectRepository
 from .activity import ActivityRepository
 from .actuators import ActuatorRepository
 from .corrections import DictationCorrectionRepository
+from .milestones import MilestoneRepository
 
 log = get_logger("db")
 
@@ -544,6 +545,15 @@ CREATE TABLE IF NOT EXISTS dictation_corrections (
 
 CREATE INDEX IF NOT EXISTS idx_dictation_corrections_recent
 ON dictation_corrections(created_at DESC, id DESC);
+
+-- Phase 42 (HS-42-01): durable one-time milestones for first-run state. A key
+-- is recorded once (e.g. `first_dictation_success`); `first_run` is true while
+-- the first-success key is absent, so a healthy returning user is never sent
+-- back to setup-mode. Opaque keys only — no payload, no secrets.
+CREATE TABLE IF NOT EXISTS milestones (
+    key TEXT PRIMARY KEY,
+    achieved_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 
@@ -561,6 +571,7 @@ class Database:
         self.activity = ActivityRepository(self._connection, self)
         self.actuators = ActuatorRepository(self._connection, self)
         self.dictation_corrections = DictationCorrectionRepository(self._connection, self)
+        self.milestones = MilestoneRepository(self._connection, self)
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:
