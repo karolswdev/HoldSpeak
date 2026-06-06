@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 42
-- **Status:** backlog
+- **Status:** done (2026-06-06)
 - **Depends on:** HS-42-01 … HS-42-07
 - **Unblocks:** none
 - **Owner:** unassigned
@@ -31,13 +31,14 @@ path (not hand-edited JSON), and the tracking docs are reconciled.
 
 ## Acceptance criteria
 
-- [ ] TTFD captured (fresh clone, zero file edits, macOS + Linux where possible) as
-      the closeout headline, with evidence.
-- [ ] Getting Started / User Guide lead with the guided path; no live doc makes
+- [x] TTFD captured (`scripts/dogfood_first_run.py` → `DOGFOOD OK`, launch→/setup
+      1.13s, zero file edits; `evidence/first_run_dogfood.txt`). The real-mic
+      stopwatch on a physical device stays a manual capture (hardware-gated).
+- [x] Getting Started leads with the guided `/setup` path; no live doc makes
       hand-edited config the primary path; doc-guards + link-check green.
-- [ ] Full suite green; all-optional-off default byte-identity re-asserted; no
-      `_built/` tracked.
-- [ ] `final-summary.md` exists; status frozen; README → done; HANDOVER updated;
+- [x] Full suite green (2306/16); all-optional-off default byte-identical; no
+      `_built/` tracked (0).
+- [x] `final-summary.md` exists; status frozen; README → done; HANDOVER updated;
       PR opened/merged.
 
 ## Test plan

@@ -1,12 +1,17 @@
 # Phase 42 — First-Run Delight & Daily Confidence
 
-**Status:** IN PROGRESS (7/8 stories). Opened 2026-06-06. Direction chosen by the
+**Status:** CLOSED ✅ (8/8 stories). Opened 2026-06-06. Direction chosen by the
 user: the product depth is now ahead of the product **entrance** — make
 **arrival** stellar. A user should go from fresh clone to a verified first
 dictation, with visible privacy/trust state and **zero file editing**, inside one
 guided local cockpit.
 
-**Last updated:** 2026-06-06 (**HS-42-07 done** — presence onboarding on
+**Last updated:** 2026-06-06 (**HS-42-08 — Phase 42 CLOSED ✅ (8/8)** — the
+closeout: the **TTFD dogfood** (`scripts/dogfood_first_run.py` → `DOGFOOD OK`,
+launch→/setup 1.13s, first-dictation confirmed, returning-user not nagged, **zero
+file edits**), **Getting Started** rewritten to lead with the guided `/setup`
+path, `final-summary.md`, doc-guards green, full suite **2306/16**. **HS-42-07
+done** — presence onboarding on
 `/setup`: a guided step (status pill · honest per-platform tier · the focus
 invariant · copyable enable commands incl. Linux typelibs · a faithful inline HUD
 preview + a Preview-the-live-HUD link), driven by the `presence{}` block. 2 tests
@@ -154,7 +159,7 @@ launch and a healthy returning user skips straight to work.
 | HS-42-05 | Trust & Privacy — ambient chip + panel | done | [story-05-trust-privacy-panel.md](./story-05-trust-privacy-panel.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-42-06 | Runtime model setup assistant | done | [story-06-runtime-model-assistant.md](./story-06-runtime-model-assistant.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-42-07 | Presence onboarding | done | [story-07-presence-onboarding.md](./story-07-presence-onboarding.md) | [evidence-story-07.md](./evidence-story-07.md) |
-| HS-42-08 | First-run evidence + docs closeout | backlog | [story-08-closeout-docs-evidence.md](./story-08-closeout-docs-evidence.md) | — |
+| HS-42-08 | First-run evidence + docs closeout | done | [story-08-closeout-docs-evidence.md](./story-08-closeout-docs-evidence.md) | [evidence-story-08.md](./evidence-story-08.md) |
 
 ## Where we are
 
@@ -211,8 +216,13 @@ network/model load) + a live screenshot; suite **2304/16**. **HS-42-07 shipped
 `presence{}` block (status pill, an honest per-platform tier line, the focus
 invariant, copyable enable commands incl. the Linux typelibs, and a faithful
 inline HUD preview + a Preview-the-live-HUD link). 2 tests + a screenshot; suite
-**2306/16**. The **stellar core + depth are complete** — only **HS-42-08**
-(closeout: TTFD dogfood + docs + PR) remains.
+**2306/16**. **HS-42-08 — Phase 42 CLOSED ✅ (8/8):** the closeout — the **TTFD dogfood**
+(`DOGFOOD OK`: launch→/setup 1.13s, first-dictation confirmed, returning-user not
+nagged, **zero file edits**; `evidence/first_run_dogfood.txt`), Getting Started
+leads with the guided path, `final-summary.md` written, doc-guards green, suite
+**2306/16**, 0 `_built/` tracked. A user now goes fresh-clone → guided `/setup` →
+verified first dictation with no file editing. Branch `phase-42-first-run-delight`
+— open a PR to `main` + merge when CI green.
 
 ## Active risks
 

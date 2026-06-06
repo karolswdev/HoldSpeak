@@ -50,20 +50,43 @@ Run:
 holdspeak
 ```
 
-This starts the local web runtime on loopback (`127.0.0.1`). The browser UI is
-the main cockpit for dictation, meetings, history, runtime configuration, and
-project context.
+This starts the local web runtime on loopback (`127.0.0.1`). On a fresh install
+the terminal points you straight at the guided setup:
+
+```text
+HoldSpeak web runtime is running at: http://127.0.0.1:PORT
+  → First-run setup: open http://127.0.0.1:PORT/setup — N things need attention
+    Next: <the single next step>
+```
+
+## 4. Open Setup — the guided home
+
+Open **`/setup`** (a fresh install opens it for you). It's a single, calm
+checklist driven by `holdspeak doctor` under the hood — **no file editing**:
+
+- one **headline** ("Everything's ready" / "N things need attention") + a
+  progress bar;
+- exactly **one primary action** — the single next step to fix;
+- a **"Try your first dictation"** guide that confirms text landing in another
+  app (it celebrates "✓ It worked" live), an **optional model assistant** (Basic
+  / Apple MLX / GGUF / OpenAI-compatible, each with a one-click **Test**), and a
+  **presence** step;
+- a **Privacy** chip in the header (on every page) that shows, at a glance, what
+  can leave your machine — click it for the full Trust & Privacy panel.
+
+A healthy returning user lands on the normal dashboard instead — setup never nags.
 
 Useful routes:
 
 | Route | Purpose |
 | --- | --- |
+| `/setup` | The guided first-run home — readiness, one next step, first dictation |
 | `/` | Runtime dashboard |
+| `/settings` | Global settings (open from the ⚙ on any page) |
 | `/dictation` | Dictation readiness, blocks, project context, runtime, dry-run |
 | `/history` | Meeting history and artifacts |
-| `/docs/dictation-runtime` | Runtime backend setup help |
 
-## 4. Try Basic Voice Typing
+## 5. Try Basic Voice Typing
 
 1. Start HoldSpeak with `holdspeak`.
 2. Click into a text field in another app.
@@ -86,7 +109,7 @@ focused and use the focused hold-to-talk fallback.
 > into another app — and never steals keyboard focus. See
 > [Desktop Presence](INTELLIGENT_TYPING_GUIDE.md#11-desktop-presence-ambient-on-desktop-status).
 
-## 5. Use Punctuation Commands
+## 6. Use Punctuation Commands
 
 Say punctuation naturally:
 
@@ -111,7 +134,7 @@ becomes:
 Hello, can you review this?
 ```
 
-## 6. Use Clipboard Insertion
+## 7. Use Clipboard Insertion
 
 Say `clipboard` inside a dictated phrase when you want HoldSpeak to splice in
 the current clipboard text. The word `clipboard` is removed from the output and
@@ -126,7 +149,7 @@ Taking a look at this clipboard could you refactor it?
 If the clipboard contains a code block, that code is inserted into the same
 dictated request before HoldSpeak types or pastes it.
 
-## 7. Set Up A Project Root
+## 8. Set Up A Project Root
 
 Open:
 
@@ -146,7 +169,7 @@ Good project markers include:
 - `.holdspeak/`
 - `.hs/`
 
-## 8. Enable Intelligent Typing Later
+## 9. Enable Intelligent Typing Later
 
 Do not enable the dictation LLM pipeline until basic typing is working.
 When ready, continue with:

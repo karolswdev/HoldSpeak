@@ -1,0 +1,12 @@
+HoldSpeak first-run dogfood
+===========================
+1. launch → /setup interactive: 1.13s
+2. one primary action: "Set a valid local model path (currently '~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf')."
+   guided first-dictation steps shown
+3. model assistant test: ✓ Basic voice typing — no LLM runtime configured. Hold, speak, release works as-is.
+4. first dictation: It worked — text landed in your app. You're all set.
+   durable milestone set (by the runtime on a real dictation): True
+5. returning user → dashboard (no nag)
+6. config.json hand edits: NONE (zero file editing)
+
+TTFD-to-ready: 1.13s · all-in-app, zero file edits · DOGFOOD OK
