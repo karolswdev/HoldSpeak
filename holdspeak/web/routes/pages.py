@@ -171,4 +171,31 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
             )
         return HTMLResponse(html)
 
+    @router.get("/presence")
+    async def presence_hud() -> Any:
+        """Serve the minimal runtime-presence HUD (HS-41-03).
+
+        A transparent, HUD-sized page rendering just the Signal presence card,
+        driven live by the `runtime_activity` websocket. This is the content the
+        native desktop webview (HS-41-04/05) loads in a frameless window."""
+        page = (
+            _HOLDSPEAK_DIR
+            / "static"
+            / "_built"
+            / "presence"
+            / "index.html"
+        )
+        try:
+            html = page.read_text(encoding="utf-8")
+        except Exception as e:
+            log.error(f"Failed to read built presence HUD: {e}")
+            html = (
+                "<!doctype html><html><head><meta charset='utf-8'/>"
+                "<title>HoldSpeak Presence</title></head>"
+                "<body><h1>HoldSpeak Presence</h1>"
+                "<p>Presence HUD not built. Run <code>npm run build</code> "
+                "in <code>web/</code>.</p></body></html>"
+            )
+        return HTMLResponse(html)
+
     return router

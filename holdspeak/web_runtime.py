@@ -27,6 +27,7 @@ from .device_status import (
     push_intel_to_devices,
     push_segment_to_devices,
 )
+from .desktop_presence import DesktopPresenceHost, build_desktop_presence_host
 from .hotkey import HotkeyListener
 from .voice_typing import VoiceTypingSession
 from .logging_config import get_logger
@@ -44,6 +45,7 @@ from .plugins.host import PluginHost, build_idempotency_key
 from .plugins.project_detector import ProjectDetectorPlugin
 from .plugins.queue import drain_plugin_run_queue, process_next_plugin_run_job
 from .plugins.signals import extract_intent_signals
+from .runtime_activity import RuntimeActivityTracker
 from .text_processor import TextProcessor
 from .transcribe import Transcriber
 from .typer import TextTyper
@@ -133,6 +135,13 @@ class WebRuntime:
         self.transcriber: Optional[Transcriber] = None
         self.server: Optional[MeetingWebServer] = None
         self.meeting_session: Optional[MeetingSession] = None
+        # HS-41-03/04: the opt-in desktop presence host (None unless
+        # HOLDSPEAK_DESKTOP_PRESENCE=1 and a native renderer is available). The
+        # url_provider is read lazily (the macOS renderer loads <url>/presence on
+        # first show), so it resolves after the server has a port.
+        self.desktop_presence: Optional[DesktopPresenceHost] = build_desktop_presence_host(
+            url_provider=lambda: self.runtime_url
+        )
         self.device_registry = DeviceRegistry()
         self.device_status = DeviceStatusEmitter(label_lookup=self.device_registry)
         # HS-17-05: periodic Recording-tick emitter for attached devices.
@@ -145,6 +154,7 @@ class WebRuntime:
         self.voice_session = VoiceTypingSession()
         self.transcription_lock = threading.Lock()
         self.text_processor = TextProcessor()
+        self.activity_tracker = RuntimeActivityTracker()
         from .activity_context import ActivityContextProvider
 
         # HS-16-02: enable the "llm" plugin capability iff a meeting-intel
@@ -218,6 +228,7 @@ class WebRuntime:
             "global_hotkey_error": "",
             "text_injection_enabled": self.text_injection_enabled,
             "text_injection_error": "" if self.text_injection_enabled else "TextTyper unavailable",
+            "activity": self.activity_tracker.snapshot(),
         }
 
         # AIPI-4-14: per-device cycle index for the meeting-stats double-tap
@@ -234,6 +245,32 @@ class WebRuntime:
             self.runtime_status["transcription_warm_on_start"] = self._transcription_warm_on_start_enabled()
             self.runtime_status["transcription_status"] = status
             self.runtime_status["transcription_error"] = error
+        if status == "warming":
+            self._set_runtime_activity(
+                "processing",
+                source="runtime",
+                label="Warming model",
+                detail=f"Preparing transcription model {self.config.model.name}.",
+                last_event="transcription_warming",
+                last_error="",
+            )
+        elif status == "loading":
+            self._set_runtime_activity(
+                "processing",
+                source="runtime",
+                label="Loading model",
+                detail=f"Loading transcription model {self.config.model.name}.",
+                last_event="transcription_loading",
+                last_error="",
+            )
+        elif status == "error":
+            self._set_runtime_activity(
+                "error",
+                source="runtime",
+                detail="Transcription model unavailable.",
+                last_event="transcription_status_error",
+                last_error=error,
+            )
 
     def _ensure_transcriber_loaded(self) -> Transcriber:
         if self.transcriber is None or getattr(self.transcriber, "model_name", None) != self.config.model.name:
@@ -274,9 +311,67 @@ class WebRuntime:
             return None
         return session
 
-    def _set_voice_state(self, value: str) -> None:
+    def _broadcast_runtime_activity(self, activity: dict[str, object]) -> None:
+        # Fan the activity snapshot out to: (1) the opt-in desktop presence host
+        # (HS-41-03 — None unless HOLDSPEAK_DESKTOP_PRESENCE=1 and a native
+        # renderer is available), and (2) web clients over the websocket.
+        if self.desktop_presence is not None:
+            try:
+                self.desktop_presence.handle_activity(activity)
+            except Exception as exc:
+                log.debug(f"Desktop presence update failed: {exc}")
+        if self.server is None:
+            return
+        try:
+            self.server.broadcast("runtime_activity", activity)
+        except Exception as exc:
+            log.debug(f"Failed to broadcast runtime_activity: {exc}")
+
+    def _set_runtime_activity(
+        self,
+        state: str,
+        *,
+        source: str = "runtime",
+        label: Optional[str] = None,
+        detail: str = "",
+        last_event: str = "",
+        last_error: Optional[str] = None,
+    ) -> dict[str, object]:
+        with self.state_lock:
+            activity = self.activity_tracker.update(
+                state,
+                source=source,
+                label=label,
+                detail=detail,
+                last_event=last_event,
+                last_error=last_error,
+            )
+            self.runtime_status["activity"] = activity
+        self._broadcast_runtime_activity(activity)
+        return activity
+
+    def _set_voice_state(
+        self,
+        value: str,
+        *,
+        source: str = "voice",
+        detail: str = "",
+        last_event: str = "",
+        last_error: Optional[str] = None,
+        update_activity: bool = True,
+    ) -> None:
         with self.state_lock:
             self.runtime_status["voice_state"] = value
+        if not update_activity:
+            return
+        activity_state = value if value in {"idle", "recording", "transcribing"} else "processing"
+        self._set_runtime_activity(
+            activity_state,
+            source=source,
+            detail=detail,
+            last_event=last_event,
+            last_error=last_error,
+        )
 
     def _normalize_tags(self, tags: Optional[list[str]]) -> list[str]:
         if not isinstance(tags, list):
@@ -354,6 +449,7 @@ class WebRuntime:
             },
             "mir": mir_snapshot,
             "runtime": runtime_snapshot,
+            "activity": runtime_snapshot.get("activity") if isinstance(runtime_snapshot.get("activity"), dict) else {},
         }
 
     def _get_state(self) -> dict[str, object]:
@@ -375,6 +471,11 @@ class WebRuntime:
             payload["web_url"] = self.runtime_url
         with self.state_lock:
             payload["runtime"] = dict(self.runtime_status)
+            payload["activity"] = (
+                dict(self.runtime_status["activity"])
+                if isinstance(self.runtime_status.get("activity"), dict)
+                else {}
+            )
         payload["mir"] = self._mir_controls_payload()
         return payload
 
@@ -387,6 +488,20 @@ class WebRuntime:
             self.server.broadcast("intel_status", intel_status)
 
     def _on_meeting_segment(self, segment) -> None:
+        try:
+            speaker = str(getattr(segment, "speaker", "") or "Speaker")
+            text = str(getattr(segment, "text", "") or "").strip()
+            detail = f"{speaker}: {text}" if text else "Transcript segment captured."
+            self._set_runtime_activity(
+                "meeting_live",
+                source="meeting",
+                label="Segment captured",
+                detail=detail[:220],
+                last_event="meeting_segment",
+                last_error="",
+            )
+        except Exception as exc:
+            log.debug(f"Failed to map meeting segment activity: {exc}")
         if self.server is not None:
             try:
                 self.server.broadcast("segment", segment.to_dict())
@@ -404,6 +519,14 @@ class WebRuntime:
             log.debug(f"Failed to push segment to device LCD: {exc}")
 
     def _on_meeting_intel(self, intel) -> None:
+        self._set_runtime_activity(
+            "complete",
+            source="meeting",
+            label="Intel ready",
+            detail="Meeting intelligence finished.",
+            last_event="meeting_intel_complete",
+            last_error="",
+        )
         if self.server is not None:
             try:
                 self.server.broadcast("intel_complete", intel.to_dict())
@@ -438,14 +561,45 @@ class WebRuntime:
         embedded per-meeting server, and dead in the flagship runtime — are
         forwarded here.
         """
-        if self.server is None:
-            return
         if message_type in self._BROADCAST_VIA_DEDICATED_HANDLER:
+            return
+        self._map_meeting_broadcast_activity(message_type, data)
+        if self.server is None:
             return
         try:
             self.server.broadcast(message_type, data)
         except Exception as exc:
             log.debug(f"Failed to forward meeting broadcast {message_type!r}: {exc}")
+
+    def _map_meeting_broadcast_activity(self, message_type: str, data: object) -> None:
+        if message_type == "intel_token":
+            self._set_runtime_activity(
+                "processing",
+                source="meeting",
+                label="Intel streaming",
+                detail="Meeting intelligence is streaming.",
+                last_event="meeting_intel_streaming",
+                last_error="",
+            )
+            return
+        if message_type == "actuator_proposed":
+            label = "Action proposed"
+            detail = "An actuator proposed an external action."
+            if isinstance(data, dict):
+                title = str(data.get("title") or data.get("preview") or "").strip()
+                target = str(data.get("target") or "").strip()
+                if title and target:
+                    detail = f"{target}: {title}"
+                elif title:
+                    detail = title
+            self._set_runtime_activity(
+                "complete",
+                source="meeting",
+                label=label,
+                detail=detail[:220],
+                last_event="actuator_proposed",
+                last_error="",
+            )
 
     def _apply_updated_config(self, updated_config: Config) -> None:
         previous_model = self.config.model.name
@@ -574,6 +728,13 @@ class WebRuntime:
         except Exception:
             # Roll back the floor claim if the meeting never came up.
             self.voice_session.release(_MEETING_AUDIO_OWNER)
+            self._set_runtime_activity(
+                "error",
+                source="meeting",
+                detail="Meeting start failed.",
+                last_event="meeting_start_failed",
+                last_error="Meeting start failed",
+            )
             raise
 
         if attached_ids:
@@ -597,6 +758,13 @@ class WebRuntime:
             self.preview_window_seq = 0
         with self.state_lock:
             self.runtime_status["last_error"] = ""
+        self._set_runtime_activity(
+            "meeting_live",
+            source="meeting",
+            detail="Meeting recording is live.",
+            last_event="meeting_started",
+            last_error="",
+        )
 
         self._broadcast_intel_status()
         return state.to_dict()
@@ -622,6 +790,13 @@ class WebRuntime:
         self.device_stats_cycle.clear()
         if attached_ids:
             self.device_status.broadcast(attached_ids, "Saving meeting...", ttl_ms=0)
+        self._set_runtime_activity(
+            "saving",
+            source="meeting",
+            detail="Stopping and saving meeting.",
+            last_event="meeting_saving",
+            last_error="",
+        )
 
         final_state = session.stop()
         # HS-32-03: the meeting's recorder is now closed — release the shared
@@ -685,6 +860,23 @@ class WebRuntime:
 
         with self.state_lock:
             self.runtime_status["last_error"] = save_error or ""
+        if save_error:
+            self._set_runtime_activity(
+                "error",
+                source="meeting",
+                detail="Meeting save failed.",
+                last_event="meeting_save_failed",
+                last_error=save_error,
+            )
+        else:
+            self._set_runtime_activity(
+                "complete",
+                source="meeting",
+                label="Saved",
+                detail="Meeting saved.",
+                last_event="meeting_saved",
+                last_error="",
+            )
 
         return {
             "status": "stopped",
@@ -790,6 +982,7 @@ class WebRuntime:
             "meeting": meeting,
             "last_meeting": last_meeting,
             "voice_state": runtime.get("voice_state", runtime_snapshot.get("voice_state", "idle")),
+            "activity": runtime_snapshot.get("activity") if isinstance(runtime_snapshot.get("activity"), dict) else {},
             "text_injection_enabled": runtime_snapshot.get("text_injection_enabled"),
             "text_injection_error": runtime_snapshot.get("text_injection_error", ""),
             "llm_capability_enabled": self.llm_capability_enabled,
@@ -1299,8 +1492,23 @@ class WebRuntime:
             try:
                 text = self._ensure_transcriber_loaded().transcribe(audio)
                 if not text:
+                    self._set_runtime_activity(
+                        "complete",
+                        source="dictation",
+                        label="No speech",
+                        detail="No speech detected.",
+                        last_event="dictation_no_speech",
+                        last_error="",
+                    )
                     return
                 text = self.text_processor.process(text)
+                self._set_runtime_activity(
+                    "processing",
+                    source="dictation",
+                    detail="Processing dictation.",
+                    last_event="dictation_processing",
+                    last_error="",
+                )
                 text = self._maybe_run_dictation_pipeline(
                     text,
                     audio_duration_s=len(audio) / 16000.0,
@@ -1313,26 +1521,64 @@ class WebRuntime:
                     self.runtime_status["last_error"] = ""
                 print(f"-> {text}")
                 delivered = self._try_tmux_agent_reply(text, agent_reply_session)
+                if delivered:
+                    self._set_runtime_activity(
+                        "complete",
+                        source="dictation",
+                        label="Sent",
+                        detail="Sent dictated text to the agent session.",
+                        last_event="dictation_delivered",
+                        last_error="",
+                    )
                 if not delivered and self.typer is not None:
                     try:
                         paste_target_profile = self._paste_target_profile(agent_reply_session)
+                        self._set_runtime_activity(
+                            "typing",
+                            source="dictation",
+                            detail="Typing dictated text.",
+                            last_event="dictation_typing",
+                            last_error="",
+                        )
                         self.typer.type_text(
                             text,
                             target_profile=paste_target_profile,
                             submit=agent_reply_session is not None,
+                        )
+                        self._set_runtime_activity(
+                            "complete",
+                            source="dictation",
+                            label="Typed",
+                            detail="Dictated text was inserted.",
+                            last_event="dictation_typed",
+                            last_error="",
                         )
                     except Exception as exc:
                         with self.state_lock:
                             self.runtime_status["last_error"] = f"Typing failed: {exc}"
                             self.runtime_status["text_injection_enabled"] = False
                             self.runtime_status["text_injection_error"] = f"{type(exc).__name__}: {exc}"
+                        self._set_runtime_activity(
+                            "error",
+                            source="dictation",
+                            detail="Typing failed.",
+                            last_event="dictation_typing_failed",
+                            last_error=f"{type(exc).__name__}: {exc}",
+                        )
                         log.warning(f"Typing failed in web mode: {exc}")
             except Exception as exc:
                 with self.state_lock:
                     self.runtime_status["last_error"] = f"Transcription failed: {exc}"
+                self._set_runtime_activity(
+                    "error",
+                    source="dictation",
+                    detail="Transcription failed.",
+                    last_event="dictation_transcription_failed",
+                    last_error=f"{type(exc).__name__}: {exc}",
+                )
                 log.error(f"Transcription failed in web mode: {exc}")
             finally:
-                self._set_voice_state("idle")
+                self._set_voice_state("idle", update_activity=False)
         if on_complete is not None and completed_text is not None:
             try:
                 on_complete(completed_text)
@@ -1345,11 +1591,26 @@ class WebRuntime:
         *,
         on_complete: Optional[Callable[[str], None]] = None,
         agent_reply_session: Any | None = None,
+        source: str = "dictation",
     ) -> None:
         if len(audio) < 1600:
-            self._set_voice_state("idle")
+            self._set_voice_state("idle", update_activity=False)
+            self._set_runtime_activity(
+                "complete",
+                source=source,
+                label="Too short",
+                detail="Recording was too short.",
+                last_event="dictation_too_short",
+                last_error="",
+            )
             return
-        self._set_voice_state("transcribing")
+        self._set_voice_state(
+            "transcribing",
+            source=source,
+            detail="Transcribing audio.",
+            last_event="dictation_transcribing",
+            last_error="",
+        )
         threading.Thread(
             target=lambda: self._transcribe_and_type(
                 audio,
@@ -1495,6 +1756,13 @@ class WebRuntime:
         if self.runtime_stop_event.is_set():
             return
         if self.recorder is None:
+            self._set_runtime_activity(
+                "error",
+                source="hotkey",
+                detail="Voice typing hotkey is unavailable.",
+                last_event="dictation_hotkey_unavailable",
+                last_error=str(self.runtime_status.get("global_hotkey_error") or ""),
+            )
             return
         # HS-32-03: no explicit "is a meeting active?" check — the shared
         # `voice_session` arbiter is the single owner model. While a meeting
@@ -1504,13 +1772,33 @@ class WebRuntime:
         except Exception as exc:
             with self.state_lock:
                 self.runtime_status["last_error"] = f"Recording failed: {exc}"
-            self._set_voice_state("idle")
+            self._set_voice_state(
+                "idle",
+                source="hotkey",
+                detail="Recording failed.",
+                last_event="dictation_recording_failed",
+                last_error=f"{type(exc).__name__}: {exc}",
+            )
             log.error(f"Recording failed in web mode: {exc}")
             return
         if not accepted:
             log.info("hotkey_press_ignored_session_active")
+            self._set_runtime_activity(
+                "complete",
+                source="hotkey",
+                label="Busy",
+                detail="Another HoldSpeak audio session is active.",
+                last_event="dictation_recording_busy",
+                last_error="",
+            )
             return
-        self._set_voice_state("recording")
+        self._set_voice_state(
+            "recording",
+            source="hotkey",
+            detail="HoldSpeak is listening.",
+            last_event="dictation_recording_started",
+            last_error="",
+        )
 
     def _on_hotkey_release(self) -> None:
         # No meeting check: `end("hotkey")` returns None when the hotkey
@@ -1520,14 +1808,20 @@ class WebRuntime:
         except Exception as exc:
             with self.state_lock:
                 self.runtime_status["last_error"] = f"Recording error: {exc}"
-            self._set_voice_state("idle")
+            self._set_voice_state(
+                "idle",
+                source="hotkey",
+                detail="Recording stop failed.",
+                last_event="dictation_recording_stop_failed",
+                last_error=f"{type(exc).__name__}: {exc}",
+            )
             log.error(f"Recording error in web mode: {exc}")
             return
         if audio is None:
-            self._set_voice_state("idle")
+            self._set_voice_state("idle", source="hotkey", last_event="dictation_recording_ignored")
             return
 
-        self._kick_off_transcribe(audio)
+        self._kick_off_transcribe(audio, source="hotkey")
 
     def _on_device_voice_start(self, device_id: str, source: AudioSource) -> bool:
         """Begin a device-driven voice-typing session.
@@ -1548,6 +1842,14 @@ class WebRuntime:
         if active_meeting is not None:
             if active_meeting.is_device_attached(device_id):
                 return True
+            self._set_runtime_activity(
+                "complete",
+                source="device",
+                label="Device busy",
+                detail="Meeting audio is already active.",
+                last_event="device_dictation_busy",
+                last_error="",
+            )
             return False
         from .agent_context import get_recent_awaiting_agent_session
 
@@ -1560,16 +1862,44 @@ class WebRuntime:
                 "device_voice_start_rejected_no_agent_reply_target",
                 extra={"device_id": device_id},
             )
+            self._set_runtime_activity(
+                "error",
+                source="device",
+                detail="Agent reply target unavailable.",
+                last_event="device_dictation_no_reply_target",
+                last_error="Agent reply target unavailable",
+            )
             return False
         owner = f"device:{device_id}"
         try:
             accepted = self.voice_session.begin(source, owner=owner)
         except Exception as exc:
             log.error(f"Device voice-typing start failed: {exc}")
+            self._set_runtime_activity(
+                "error",
+                source="device",
+                detail="Device recording failed.",
+                last_event="device_dictation_recording_failed",
+                last_error=f"{type(exc).__name__}: {exc}",
+            )
             return False
         if not accepted:
+            self._set_runtime_activity(
+                "complete",
+                source="device",
+                label="Device busy",
+                detail="Another HoldSpeak audio session is active.",
+                last_event="device_dictation_busy",
+                last_error="",
+            )
             return False
-        self._set_voice_state("recording")
+        self._set_voice_state(
+            "recording",
+            source="device",
+            detail="Device voice input is recording.",
+            last_event="device_dictation_recording_started",
+            last_error="",
+        )
         # AIPI-4-13: TX state lives in the device's firmware-side
         # tx_label glyph (top-right, ↑ during right-button hold).
         # No "Listening..." pushback — would clobber the bottom
@@ -1588,10 +1918,16 @@ class WebRuntime:
             audio = self.voice_session.end(owner=owner)
         except Exception as exc:
             log.error(f"Device voice-typing stop failed: {exc}")
-            self._set_voice_state("idle")
+            self._set_voice_state(
+                "idle",
+                source="device",
+                detail="Device recording stop failed.",
+                last_event="device_dictation_recording_stop_failed",
+                last_error=f"{type(exc).__name__}: {exc}",
+            )
             return None
         if audio is None:
-            self._set_voice_state("idle")
+            self._set_voice_state("idle", source="device", last_event="device_dictation_recording_ignored")
             return None
 
         # AIPI-4-13: no "Thinking..." pushback to bottom — the absent
@@ -1611,6 +1947,7 @@ class WebRuntime:
             audio,
             on_complete=_device_transcript_complete,
             agent_reply_session=agent_reply_session,
+            source="device",
         )
         return audio
 
@@ -1861,6 +2198,11 @@ class WebRuntime:
                     log.error(f"Failed to finalize active meeting during shutdown: {exc}")
             if self.server is not None:
                 self.server.stop()
+            if self.desktop_presence is not None:
+                try:
+                    self.desktop_presence.close()
+                except Exception as exc:
+                    log.debug(f"Desktop presence close failed: {exc}")
             if self.plugin_queue_thread is not None:
                 self.plugin_queue_thread.join(timeout=2.0)
 

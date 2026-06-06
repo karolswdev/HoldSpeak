@@ -78,6 +78,18 @@ dictation-mlx = [
 dictation-openai = [
     "openai>=1.0.0",
 ]
+# HS-41-04: optional native desktop-presence renderer (Phase 41). Only needed
+# when HOLDSPEAK_DESKTOP_PRESENCE=1; the runtime degrades to the web card when
+# absent. macOS: a non-activating NSPanel hosting a WKWebView of /presence + an
+# NSStatusItem glyph. (Linux notification/tray deps land with HS-41-05.)
+presence = [
+    "pyobjc-framework-Cocoa>=10.0; sys_platform == 'darwin'",
+    "pyobjc-framework-WebKit>=10.0; sys_platform == 'darwin'",
+    # Linux (HS-41-05): notification (libnotify) + StatusNotifierItem tray via
+    # PyGObject. The libnotify/AppIndicator typelibs are system packages
+    # (e.g. gir1.2-notify-0.7, gir1.2-ayatanaappindicator3-0.1) — see the docs.
+    "PyGObject>=3.44; sys_platform == 'linux'",
+]
 dev = [
     "playwright>=1.40.0",
     "pytest>=8.0",

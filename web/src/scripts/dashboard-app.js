@@ -48,6 +48,17 @@
           reconnectAt: null,
           closedByUser: false,
           connectionState: "connecting",
+          runtimeActivity: {
+            state: "idle",
+            source: "runtime",
+            label: "Ready",
+            detail: "Waiting for activity.",
+            started_at: null,
+            updated_at: null,
+            last_event: "",
+            last_error: "",
+            window: { mode: "hidden", visible: false, linger_ms: 0 },
+          },
           duration: "00:00",
           meetingActive: false,
           startInProgress: false,
@@ -151,6 +162,93 @@
 
           connectionTone() {
             return `status-${this.connectionState}`;
+          },
+
+          applyActivity(activity) {
+            if (!activity || typeof activity !== "object") return;
+            const state = String(activity.state || "idle").trim().toLowerCase() || "idle";
+            const source = String(activity.source || "runtime").trim().toLowerCase() || "runtime";
+            const windowPolicy = activity.window && typeof activity.window === "object"
+              ? activity.window
+              : { mode: state === "idle" ? "hidden" : "active", visible: state !== "idle", linger_ms: 0 };
+            this.runtimeActivity = {
+              state,
+              source,
+              label: String(activity.label || this.activityDefaultLabel(state)).trim() || this.activityDefaultLabel(state),
+              detail: String(activity.detail || "").trim(),
+              started_at: activity.started_at || null,
+              updated_at: activity.updated_at || null,
+              last_event: String(activity.last_event || "").trim(),
+              last_error: String(activity.last_error || "").trim(),
+              window: {
+                mode: String(windowPolicy.mode || "hidden"),
+                visible: Boolean(windowPolicy.visible),
+                linger_ms: Number(windowPolicy.linger_ms || 0),
+              },
+            };
+          },
+
+          activityDefaultLabel(state) {
+            return (
+              {
+                idle: "Ready",
+                listening: "Listening",
+                recording: "Recording",
+                transcribing: "Transcribing",
+                processing: "Processing",
+                typing: "Typing",
+                complete: "Complete",
+                meeting_live: "Meeting live",
+                saving: "Saving",
+                error: "Needs attention",
+              }[state] || "Ready"
+            );
+          },
+
+          activityToneClass() {
+            const state = String(this.runtimeActivity?.state || "idle");
+            if (state === "error") return "tone-error";
+            if (state === "complete") return "tone-complete";
+            if (state === "recording" || state === "listening" || state === "meeting_live") return "tone-recording";
+            if (state === "idle") return "tone-idle";
+            return "tone-working";
+          },
+
+          activityDotLive() {
+            const state = String(this.runtimeActivity?.state || "idle");
+            return !["idle", "complete", "error"].includes(state);
+          },
+
+          activityDetailLine() {
+            const activity = this.runtimeActivity || {};
+            if (activity.last_error) return activity.last_error;
+            if (activity.detail) return activity.detail;
+            if (activity.last_event) return activity.last_event;
+            return activity.state === "idle"
+              ? "No active dictation or meeting work."
+              : "Activity update received.";
+          },
+
+          activitySourceLabel() {
+            const source = String(this.runtimeActivity?.source || "runtime");
+            return (
+              {
+                hotkey: "Hotkey",
+                device: "Device",
+                dictation: "Dictation",
+                meeting: "Meeting",
+                runtime: "Runtime",
+                voice: "Voice",
+              }[source] || source
+            );
+          },
+
+          activityWindowLabel() {
+            const policy = this.runtimeActivity?.window || {};
+            const mode = String(policy.mode || "hidden");
+            if (mode === "hidden") return "Desktop hidden";
+            if (mode === "linger") return "Desktop linger";
+            return "Desktop active";
           },
 
           // HS-25-08: glanceable egress posture for the runtime header.
@@ -330,6 +428,11 @@
             if (state?.intel_status && typeof state.intel_status === "object") {
               this.intelStatus = state.intel_status;
             }
+            if (state?.activity && typeof state.activity === "object") {
+              this.applyActivity(state.activity);
+            } else if (state?.runtime?.activity && typeof state.runtime.activity === "object") {
+              this.applyActivity(state.runtime.activity);
+            }
             if (state?.intel && typeof state.intel === "object") {
               this.updateIntel(state.intel);
             } else if (replaceTimeline) {
@@ -393,6 +496,9 @@
               }
               if (payload?.intel_egress && typeof payload.intel_egress === "object") {
                 this.intelEgress = payload.intel_egress;
+              }
+              if (payload?.activity && typeof payload.activity === "object") {
+                this.applyActivity(payload.activity);
               }
               if (payload?.state && typeof payload.state === "object") {
                 this.applyState(payload.state, { replaceTimeline: true });
@@ -604,6 +710,10 @@
             const { type, data } = msg;
             if (type === "duration") {
               if (typeof data === "string") this.duration = data;
+              return;
+            }
+            if (type === "runtime_activity") {
+              if (data && typeof data === "object") this.applyActivity(data);
               return;
             }
             if (type === "segment") {
