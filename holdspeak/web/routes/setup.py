@@ -38,4 +38,19 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:  # pragma: no cover - defensive
             return error_500(exc, log, "Failed to build setup status")
 
+    @router.post("/api/setup/runtime-test")
+    async def api_setup_runtime_test() -> Any:
+        """Test the configured dictation (intelligent-typing) runtime (HS-42-06).
+
+        Local backends → resolve + model-path-exists; an OpenAI-compatible endpoint
+        → a time-boxed HTTP preflight. Reads the current config; opt-in (the
+        caller decides when to run it)."""
+        try:
+            from ...config import Config
+            from ...setup_runtime import probe_runtime
+
+            return probe_runtime(Config.load().dictation)
+        except Exception as exc:  # pragma: no cover - defensive
+            return error_500(exc, log, "Failed to test runtime")
+
     return router

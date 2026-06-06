@@ -114,6 +114,36 @@ import AppLayout from "../layouts/AppLayout.astro";
           </template>
         </section>
 
+        <!-- Model setup assistant (HS-42-06) -->
+        <section class="model-assistant" id="runtime">
+          <div class="ma-head">
+            <h2>Intelligent typing (optional)</h2>
+            <p>Add a model and HoldSpeak rewrites rough speech into clean, project-aware text. Pick a path — basic voice typing already works without one.</p>
+          </div>
+          <ul class="ma-choices">
+            <template x-for="c in runtimeChoices" :key="c.id">
+              <li class="ma-choice">
+                <div class="ma-choice-top">
+                  <span class="ma-choice-label" x-text="c.label"></span>
+                  <span class="ma-choice-affects" x-text="c.affects"></span>
+                </div>
+                <p class="ma-choice-needs" x-text="c.needs"></p>
+                <button class="ma-cmd" type="button" x-show="c.extra" x-cloak @click="copy(c.extra)" :title="copied === c.extra ? 'Copied!' : 'Click to copy'">
+                  <code x-text="c.extra"></code>
+                  <span class="ma-cmd-state" x-text="copied === c.extra ? '✓ copied' : 'copy'"></span>
+                </button>
+              </li>
+            </template>
+          </ul>
+          <div class="ma-actions">
+            <button class="btn primary" type="button" @click="testRuntime" :disabled="runtimeTest.state === 'testing'" x-text="runtimeTest.state === 'testing' ? 'Testing…' : 'Test my runtime'"></button>
+            <a class="btn" href="/dictation">Advanced runtime settings</a>
+            <div class="ma-result" x-show="runtimeTest.state === 'done'" x-cloak :class="runtimeTest.ok ? 'ok' : 'bad'">
+              <span x-text="runtimeTest.ok ? '✓' : '✕'"></span> <span x-text="runtimeTest.detail"></span>
+            </div>
+          </div>
+        </section>
+
         <!-- Ready -->
         <template x-if="ready.length">
           <section class="setup-group">
@@ -301,6 +331,33 @@ import AppLayout from "../layouts/AppLayout.astro";
   .fd-success-line { color: var(--text); font-size: var(--font-size-md); font-weight: 600; margin: 0 0 var(--space-2); }
   .fd-transcript { color: var(--text-muted); font-size: var(--font-size-sm); font-style: italic; margin: 0; }
   .fd-quote { color: var(--accent); font-weight: 700; }
+
+  /* Model setup assistant */
+  .model-assistant {
+    padding: var(--space-5); margin-bottom: var(--space-6);
+    border-radius: var(--radius-lg); border: 1px solid var(--border-subtle);
+    background: var(--surface-2); scroll-margin-top: var(--space-6);
+  }
+  .ma-head h2 { font-family: var(--font-display); font-size: var(--font-size-lg); font-weight: 600; color: var(--text); margin: 0 0 var(--space-1); }
+  .ma-head p { color: var(--text-muted); font-size: var(--font-size-sm); margin: 0 0 var(--space-4); max-width: 64ch; }
+  .ma-choices { list-style: none; margin: 0 0 var(--space-4); padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+  .ma-choice { padding: var(--space-4); border-radius: var(--radius-md); background: var(--surface-3); border: 1px solid var(--border-subtle); }
+  .ma-choice-top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-1); }
+  .ma-choice-label { font-weight: 600; color: var(--text); font-size: var(--font-size-sm); }
+  .ma-choice-affects { color: var(--text-faint); font-size: var(--font-size-xs); white-space: nowrap; }
+  .ma-choice-needs { color: var(--text-muted); font-size: var(--font-size-xs); margin: 0 0 var(--space-3); }
+  .ma-cmd {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%;
+    padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm);
+    background: var(--canvas, var(--bg)); border: 1px solid var(--border); cursor: pointer; text-align: left;
+  }
+  .ma-cmd:hover { border-color: var(--accent); }
+  .ma-cmd code { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ma-cmd-state { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--accent); flex: none; }
+  .ma-actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); }
+  .ma-result { font-size: var(--font-size-sm); }
+  .ma-result.ok { color: var(--ok); }
+  .ma-result.bad { color: var(--danger); }
 
   /* Ready grid */
   .ready-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-2); }

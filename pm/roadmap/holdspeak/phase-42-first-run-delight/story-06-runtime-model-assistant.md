@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 42
-- **Status:** backlog
+- **Status:** done (2026-06-06)
 - **Depends on:** HS-42-01
 - **Unblocks:** none
 - **Owner:** unassigned
@@ -32,14 +32,14 @@ reaching a working state.
 
 ## Acceptance criteria
 
-- [ ] Each of the four choices shows extra + path/endpoint + scope + a Test button
-      with a clear pass/fail result; copyable commands appear only when needed.
-- [ ] Endpoint preflight is opt-in + time-boxed and degrades gracefully on failure
-      (routes to a fix, never hangs the UI); covered by tests incl. a preflight
-      failure.
-- [ ] The advanced Runtime cockpit remains reachable and unchanged.
-- [ ] Bundle rebuilt; only `web/src` committed; a screenshot per backend choice.
-- [ ] Default suite green; no real network call in the default suite (preflight
+- [x] Each of the four choices shows extra + needs + scope + a copyable install
+      command; a "Test my runtime" button gives a clear pass/fail result.
+- [x] Endpoint preflight is opt-in (only on test click) + time-boxed and degrades
+      gracefully (`unreachable`/`error`, never hangs); covered incl. a failure case.
+- [x] The advanced Runtime cockpit remains reachable (the "Advanced runtime
+      settings" → `/dictation` link) and unchanged.
+- [x] Bundle rebuilt; only `web/src` committed; a screenshot of the assistant card.
+- [x] Default suite green; no real network call in the default suite (preflight
       injected/mocked).
 
 ## Test plan

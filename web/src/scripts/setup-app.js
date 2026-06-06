@@ -12,6 +12,38 @@ function setupApp() {
     // Live first-dictation tracking (HS-42-04), fed by the runtime_activity WS.
     activity: null,
     dictation: { ok: false, transcript: "" },
+    // Model setup assistant (HS-42-06).
+    runtimeTest: { state: "idle", ok: false, detail: "" },
+    runtimeChoices: [
+      { id: "basic", label: "Basic voice typing only", extra: null,
+        needs: "Nothing — Whisper transcription only.", affects: "Dictation (no LLM rewrite)." },
+      { id: "mlx", label: "Local Apple Silicon (MLX)", extra: "uv pip install -e '.[dictation-mlx]'",
+        needs: "An MLX model under ~/Models/mlx/…", affects: "Dictation + meeting intel." },
+      { id: "llama_cpp", label: "Local GGUF (llama.cpp)", extra: "uv pip install -e '.[dictation-llama]'",
+        needs: "A GGUF model under ~/Models/gguf/…", affects: "Dictation + meeting intel." },
+      { id: "openai_compatible", label: "OpenAI-compatible endpoint", extra: "uv pip install -e '.[dictation-openai]'",
+        needs: "A base URL (LAN, Ollama, vLLM, or hosted).", affects: "Dictation + meeting intel." },
+    ],
+    copied: "",
+
+    async testRuntime() {
+      this.runtimeTest = { state: "testing", ok: false, detail: "" };
+      try {
+        const res = await fetch("/api/setup/runtime-test", { method: "POST" });
+        const data = await res.json();
+        this.runtimeTest = { state: "done", ok: !!data.ok, detail: data.detail || "" };
+      } catch (e) {
+        this.runtimeTest = { state: "done", ok: false, detail: e.message || "Test failed." };
+      }
+    },
+
+    async copy(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        this.copied = text;
+        setTimeout(() => { if (this.copied === text) this.copied = ""; }, 1500);
+      } catch (_e) { /* clipboard blocked; the command is visible to copy by hand */ }
+    },
 
     async init() {
       await this.load();

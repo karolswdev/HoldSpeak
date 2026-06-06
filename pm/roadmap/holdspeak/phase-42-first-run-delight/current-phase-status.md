@@ -1,12 +1,18 @@
 # Phase 42 — First-Run Delight & Daily Confidence
 
-**Status:** IN PROGRESS (5/8 stories). Opened 2026-06-06. Direction chosen by the
+**Status:** IN PROGRESS (6/8 stories). Opened 2026-06-06. Direction chosen by the
 user: the product depth is now ahead of the product **entrance** — make
 **arrival** stellar. A user should go from fresh clone to a verified first
 dictation, with visible privacy/trust state and **zero file editing**, inside one
 guided local cockpit.
 
-**Last updated:** 2026-06-06 (**HS-42-05 done** — the privacy posture is now
+**Last updated:** 2026-06-06 (**HS-42-06 done** — a guided **model-setup
+assistant** on `/setup`: the four backend choices (Basic · MLX · GGUF ·
+OpenAI-compatible) with copyable install commands + a one-click **Test my runtime**
+(`probe_runtime`: `resolve_backend` + model-path for local, an injectable
+time-boxed `/models` preflight for OpenAI-compatible) + a link to the advanced
+cockpit. 8 tests (no network/model load) + a screenshot; suite **2304/16**.
+**HS-42-05 done** — the privacy posture is now
 **ambient**: a persistent shell **TrustChip** (Local only · Configured endpoint ·
 Writes need approval · Needs attention) reading `/api/setup/status` `trust{}`,
 opening a right-side **Trust & Privacy panel** (web bind/auth · egress + endpoint ·
@@ -142,7 +148,7 @@ launch and a healthy returning user skips straight to work.
 | HS-42-03 | Welcome / Setup route + CLI nudge | done | [story-03-welcome-setup-route.md](./story-03-welcome-setup-route.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-42-04 | Guided first dictation test (real app) | done | [story-04-guided-first-dictation.md](./story-04-guided-first-dictation.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-42-05 | Trust & Privacy — ambient chip + panel | done | [story-05-trust-privacy-panel.md](./story-05-trust-privacy-panel.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-42-06 | Runtime model setup assistant | backlog | [story-06-runtime-model-assistant.md](./story-06-runtime-model-assistant.md) | — |
+| HS-42-06 | Runtime model setup assistant | done | [story-06-runtime-model-assistant.md](./story-06-runtime-model-assistant.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-42-07 | Presence onboarding | backlog | [story-07-presence-onboarding.md](./story-07-presence-onboarding.md) | — |
 | HS-42-08 | First-run evidence + docs closeout | backlog | [story-08-closeout-docs-evidence.md](./story-08-closeout-docs-evidence.md) | — |
 
@@ -190,8 +196,14 @@ actuators · webhook hosts · presence, with a Settings link). Pure exported
 `trust-view.js` (`trustPosture`/`trustRows`) — verified by a **Node harness (5
 posture cases)** + a **live two-config Playwright** check (Local only vs
 Configured endpoint) + 2 screenshots; +2 committed shell tests (3 settings/
-identity tests updated in lockstep); suite **2294/16**. Next: **HS-42-06**
-(runtime model setup assistant).
+identity tests updated in lockstep); suite **2294/16**. **HS-42-06 shipped
+(2026-06-06)** — a guided model-setup assistant on `/setup`: the four backend
+choices (Basic · MLX · GGUF · OpenAI-compatible) with copyable install commands +
+a one-click **Test my runtime** (`probe_runtime` → `resolve_backend` + model-path
+check for local, a time-boxed injectable `/models` preflight for OpenAI-compatible)
++ a link into the advanced `/dictation` cockpit. 8 tests (injected seams — no
+network/model load) + a live screenshot; suite **2304/16**. Next: **HS-42-07**
+(presence onboarding).
 
 ## Active risks
 
