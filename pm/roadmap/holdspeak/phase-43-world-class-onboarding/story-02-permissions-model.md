@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 43
-- **Status:** backlog
+- **Status:** done (2026-06-06)
 - **Depends on:** HS-43-01
 - **Unblocks:** HS-43-03
 
@@ -18,6 +18,6 @@ other steps.
 - Out: new backends.
 
 ## Acceptance criteria
-- [ ] The Model step lets a user choose Basic/Local/Endpoint with a clear selected
-      state + a one-click Test result; reuses the HS-42-06 endpoint.
-- [ ] Distinct visual treatment; reduced-motion safe; suite green.
+- [x] The Model step lets a user choose Basic/Local/Endpoint with a clear selected
+      state + a one-click Test result; reuses the HS-42-06 endpoint; persists to config.
+- [x] Distinct visual treatment (selection grid); reduced-motion safe; suite green.

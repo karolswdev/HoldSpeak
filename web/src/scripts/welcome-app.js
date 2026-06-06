@@ -45,14 +45,67 @@ function welcomeApp() {
       // Esc is *not* a trap — let people leave to the dashboard.
     },
 
+    settings: null,
     async loadHotkey() {
       try {
         const res = await fetch("/api/settings");
         if (res.ok) {
-          const s = await res.json();
-          this.hotkeyKey = (s.hotkey && s.hotkey.key) || "";
+          this.settings = await res.json();
+          this.hotkeyKey = (this.settings.hotkey && this.settings.hotkey.key) || "";
         }
       } catch (_e) {}
+    },
+
+    // ── Model picker (HS-43-02) ──
+    modelChoices: [
+      { id: "basic", label: "Basic voice typing", backend: "none", extra: null,
+        blurb: "Just Whisper transcription. Works out of the box — nothing to install.", affects: "Dictation" },
+      { id: "mlx", label: "Local · Apple Silicon", backend: "mlx", extra: "uv pip install -e '.[dictation-mlx]'",
+        blurb: "Fast, private MLX inference on your Mac's GPU. Needs an MLX model.", affects: "Dictation + meetings" },
+      { id: "llama_cpp", label: "Local · GGUF", backend: "llama_cpp", extra: "uv pip install -e '.[dictation-llama]'",
+        blurb: "Any GGUF model via llama.cpp, on any machine.", affects: "Dictation + meetings" },
+      { id: "openai_compatible", label: "OpenAI-compatible", backend: "openai_compatible", extra: "uv pip install -e '.[dictation-openai]'",
+        blurb: "Point at a LAN, Ollama, vLLM, or hosted /v1 endpoint.", affects: "Dictation + meetings" },
+    ],
+    modelTest: { state: "idle", ok: false, detail: "" },
+    modelSaving: false,
+    copied: "",
+
+    get selectedModel() {
+      const d = this.settings && this.settings.dictation;
+      if (!d || !d.pipeline || !d.pipeline.enabled) return "basic";
+      const backend = (d.runtime && d.runtime.backend) || "auto";
+      return ["mlx", "llama_cpp", "openai_compatible"].includes(backend) ? backend : "basic";
+    },
+    async selectModel(choice) {
+      this.modelSaving = true;
+      this.modelTest = { state: "idle", ok: false, detail: "" };
+      const payload = choice.id === "basic"
+        ? { dictation: { pipeline: { enabled: false } } }
+        : { dictation: { pipeline: { enabled: true }, runtime: { backend: choice.backend } } };
+      try {
+        const res = await fetch("/api/settings", {
+          method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          this.settings = data.settings || this.settings;
+        }
+      } catch (_e) {}
+      this.modelSaving = false;
+    },
+    async testModel() {
+      this.modelTest = { state: "testing", ok: false, detail: "" };
+      try {
+        const res = await fetch("/api/setup/runtime-test", { method: "POST" });
+        const d = await res.json();
+        this.modelTest = { state: "done", ok: !!d.ok, detail: d.detail || "" };
+      } catch (e) {
+        this.modelTest = { state: "done", ok: false, detail: e.message || "Test failed." };
+      }
+    },
+    async copy(text) {
+      try { await navigator.clipboard.writeText(text); this.copied = text; setTimeout(() => { if (this.copied === text) this.copied = ""; }, 1500); } catch (_e) {}
     },
     get hotkeyLabel() {
       const map = {

@@ -73,3 +73,17 @@ def test_first_dictation_is_a_reward_moment() -> None:
     assert "prefers-reduced-motion" in page
     # focus moves to the "It worked" heading on success (a11y).
     assert "heading_dictation_win" in app and "heading_dictation_win" in page
+
+
+def test_model_step_is_a_real_picker() -> None:
+    """HS-43-02: selectable backend tiles that persist + a Test (no placeholder)."""
+    page = (_REPO / "web" / "src" / "pages" / "welcome.astro").read_text()
+    app = (_REPO / "web" / "src" / "scripts" / "welcome-app.js").read_text()
+    assert "stp-placeholder" not in page  # every step is real now
+    # a radiogroup of the four backends, selection persists via /api/settings.
+    assert 'role="radiogroup"' in page and 'role="radio"' in page
+    assert "selectModel" in app and "modelChoices" in app
+    for backend in ("basic", "mlx", "llama_cpp", "openai_compatible"):
+        assert f'"{backend}"' in app
+    # a Test reuses the HS-42-06 endpoint.
+    assert "testModel" in app and "/api/setup/runtime-test" in app

@@ -78,12 +78,32 @@ import "../styles/global.css";
             </ul>
           </section>
 
-          <!-- 3 · Model (deepened in HS-43-02) -->
+          <!-- 3 · Model picker -->
           <section class="stp stp-model" x-show="isActive('model')" :class="{ 'is-active': isActive('model') }">
             <p class="stp-eyebrow">Step 3 · Intelligence</p>
             <h2 class="stp-h" tabindex="-1" x-ref="heading_model">How smart should it be?</h2>
-            <p class="stp-lead">Basic typing works with nothing extra. Add a model and HoldSpeak rewrites rough speech into clean, project-aware text. You can change this anytime.</p>
-            <p class="stp-placeholder">Model picker — built in HS-43-02.</p>
+            <p class="stp-lead">Basic typing works with nothing extra. Add a model and HoldSpeak rewrites rough speech into clean, project-aware text. Change it anytime.</p>
+
+            <div class="model-grid" role="radiogroup" aria-label="Intelligence level">
+              <template x-for="c in modelChoices" :key="c.id">
+                <button type="button" class="model-tile" role="radio" :aria-checked="selectedModel === c.id ? 'true' : 'false'" :class="{ sel: selectedModel === c.id }" @click="selectModel(c)" :disabled="modelSaving">
+                  <span class="model-radio" aria-hidden="true"></span>
+                  <span class="model-body">
+                    <span class="model-top"><span class="model-name" x-text="c.label"></span><span class="model-affects" x-text="c.affects"></span></span>
+                    <span class="model-blurb" x-text="c.blurb"></span>
+                  </span>
+                </button>
+              </template>
+            </div>
+
+            <div class="model-foot">
+              <button class="wz-btn ghost sm" type="button" @click="testModel()" :disabled="modelTest.state === 'testing'" x-text="modelTest.state === 'testing' ? 'Testing…' : 'Test my runtime'"></button>
+              <div class="model-result" x-show="modelTest.state === 'done'" x-cloak :class="modelTest.ok ? 'ok' : 'bad'"><span x-text="modelTest.ok ? '✓' : '✕'"></span> <span x-text="modelTest.detail"></span></div>
+            </div>
+            <button class="ma-cmd-lite" type="button" x-show="selectedModel !== 'basic'" x-cloak @click="copy(modelChoices.find(c => c.id === selectedModel)?.extra)" :title="copied ? 'Copied!' : 'Click to copy the install command'">
+              <code x-text="modelChoices.find(c => c.id === selectedModel)?.extra"></code>
+              <span class="ma-cmd-state" x-text="copied === modelChoices.find(c => c.id === selectedModel)?.extra ? '✓ copied' : 'copy'"></span>
+            </button>
           </section>
 
           <!-- 4 · First dictation — the reward moment -->
@@ -272,7 +292,6 @@ import "../styles/global.css";
       .stp-eyebrow { font-family: var(--font-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-eyebrow); text-transform: uppercase; color: var(--accent); margin: 0 0 var(--space-3); }
       .stp-h { font-family: var(--font-display); font-size: clamp(var(--font-size-2xl), 4vw, var(--font-size-3xl)); font-weight: 700; color: var(--text); margin: 0 0 var(--space-4); line-height: var(--line-height-tight); outline: none; }
       .stp-lead { color: var(--text-muted); font-size: var(--font-size-md); line-height: var(--line-height-relaxed); margin: 0; max-width: 52ch; }
-      .stp-placeholder { margin-top: var(--space-5); padding: var(--space-4); border: 1px dashed var(--border-strong); border-radius: var(--radius-md); color: var(--text-faint); font-family: var(--font-mono); font-size: var(--font-size-xs); }
 
       /* Welcome */
       .welcome-glyph { display: flex; align-items: flex-end; gap: 6px; height: 64px; margin-bottom: var(--space-5); }
@@ -347,6 +366,28 @@ import "../styles/global.css";
       .ma-cmd-lite:hover { border-color: var(--accent); }
       .pres-noenv { margin-top: var(--space-4); color: var(--text-faint); font-size: var(--font-size-xs); font-family: var(--font-mono); }
       @media (max-width: 860px) { .pres-row { flex-direction: column; align-items: flex-start; } .pres-hud { width: 100%; } }
+
+      /* Model picker */
+      .model-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-5); max-width: 620px; }
+      .model-tile { display: flex; align-items: flex-start; gap: var(--space-3); text-align: left; padding: var(--space-4); border-radius: var(--radius-lg); background: var(--surface-2); border: 1.5px solid var(--border-subtle); cursor: pointer; transition: border-color var(--duration-short) var(--ease-standard), background var(--duration-short) var(--ease-standard), transform var(--duration-short) var(--ease-standard); }
+      .model-tile:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+      .model-tile.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface-2)); box-shadow: 0 0 0 1px var(--accent), 0 8px 22px color-mix(in srgb, var(--accent) 18%, transparent); }
+      .model-tile:disabled { opacity: .7; cursor: default; }
+      .model-tile:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: 2px; }
+      .model-radio { flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border-strong); margin-top: 2px; transition: border-color var(--duration-short) var(--ease-standard); position: relative; }
+      .model-tile.sel .model-radio { border-color: var(--accent); }
+      .model-tile.sel .model-radio::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--accent); }
+      .model-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+      .model-top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
+      .model-name { font-weight: 600; color: var(--text); font-size: var(--font-size-sm); }
+      .model-affects { color: var(--text-faint); font-size: 10px; font-family: var(--font-mono); white-space: nowrap; }
+      .model-blurb { color: var(--text-muted); font-size: var(--font-size-xs); line-height: var(--line-height-relaxed); }
+      .model-foot { display: flex; align-items: center; gap: var(--space-4); margin-top: var(--space-4); flex-wrap: wrap; }
+      .wz-btn.sm { font-size: var(--font-size-sm); padding: var(--space-2) var(--space-4); border-radius: var(--radius-sm); }
+      .model-result { font-size: var(--font-size-sm); } .model-result.ok { color: var(--ok); } .model-result.bad { color: var(--danger); }
+      .stp-model .ma-cmd-lite { display: inline-flex; align-items: center; gap: var(--space-3); margin-top: var(--space-3); }
+      .ma-cmd-state { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--accent); }
+      @media (max-width: 860px) { .model-grid { grid-template-columns: 1fr; } }
 
       /* First-dictation — the reward */
       .dict-stage { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-5); margin-top: var(--space-5); }
