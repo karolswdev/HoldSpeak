@@ -9,18 +9,28 @@ with the live status docs, the status docs win.
 
 ## 1. TL;DR — where things stand
 
-- **LATEST (2026-06-05): Phases 33–40 shipped since this doc was first written.**
+- **LATEST (2026-06-05): Phases 33–41 shipped since this doc was first written.**
   The bullets below are the Phase-31/32 era and are kept for history; for the
   current phase index + status, the roadmap **`README.md`** is the source of
-  truth. Most recent: **Phase 40 — Configuration Cockpit & Persistent Memory:
-  CLOSED ✅ (6/6)** — the whole dictation copilot is now configurable + curatable
-  from the Web UI: every Phase-39 knob is a slider/toggle in `/dictation →
-  Runtime → Copilot depth`, correction memory is **DB-backed and survives a
-  restart**, and a **Memory** tab curates it + renders depth telemetry. Proven by
-  a UI-only dogfood across a restart. Branch
-  `phase-40/hs-40-01-settings-api-knobs` — push + open a PR to `main`. Suite
-  **2221 passed, 16 skipped**. (Prior: **Phase 39 — Dictation Copilot Depth:
-  CLOSED ✅ (9/9)** — the opt-in, self-improving copilot, merged via PR #16.)
+  truth. Most recent: **Phase 41 — Runtime Presence Indicators: CLOSED ✅ (8/8)**
+  — an **opt-in** (`HOLDSPEAK_DESKTOP_PRESENCE=1`), per-platform **native**
+  desktop presence layer so a user dictating into another app can see what the
+  copilot is doing (*listening / transcribing / typing*) without the web
+  dashboard visible. One normalized `runtime_activity` contract → a websocket
+  broadcast → a Signal `/presence` card, hosted natively: **macOS** = a
+  focus-safe non-activating `NSPanel` + `WKWebView` HUD + an `NSStatusItem`
+  glyph; **Linux** = an in-place libnotify notification + StatusNotifierItem tray
+  (Tier 1, everywhere) + a GTK-WebKit floating overlay (Tier 2, X11/wlroots).
+  **Never steals keyboard focus** (re-proven live in closeout: `focus_stolen:
+  False`). Off by default; native deps are optional extras; flag-unset ⇒
+  byte-identical. Both renderers + the overlay proven on real hardware (macOS
+  here, Linux on `.43`). Branch `phase-41-runtime-presence` — open a PR to
+  `main`; **codex PR #17 closed as superseded**. Suite **2261 passed, 16
+  skipped**. (Prior: **Phase 40 — Configuration Cockpit & Persistent Memory:
+  CLOSED ✅ (6/6)**, merged via PR #18 — the dictation copilot configurable +
+  curatable from the Web UI, correction memory **DB-backed and survives a
+  restart**. **Phase 39 — Dictation Copilot Depth: CLOSED ✅ (9/9)**, merged via
+  PR #16.)
 - **Phase 31 (db decomposition): MERGED** to `main` (was PR #7). `holdspeak/db.py`
   (5,481-line god-object) → the `holdspeak/db/` package: a thin `Database`
   container + 5 repositories, migration ladder squashed to one canonical schema.

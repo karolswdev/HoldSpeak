@@ -1,12 +1,21 @@
 # Phase 41 — Runtime Presence Indicators
 
-**Status:** IN PROGRESS (7/8 stories). Opened 2026-06-05 (grew 7→8 on user ask:
+**Status:** CLOSED ✅ (8/8 stories). Opened 2026-06-05 (grew 7→8 on user ask:
 un-defer the Linux floating overlay). Direction chosen by the
 user: **know what the copilot is doing on the desktop** while dictating —
 without the web dashboard being visible — via a rich, branded, native-feeling
 presence indicator on **both macOS and Linux**.
 
-**Last updated:** 2026-06-05 (**HS-41-06 done** — the user-facing presence
+**Last updated:** 2026-06-05 (**HS-41-07 — Phase 41 CLOSED ✅ (8/8)** — the
+closeout. The macOS focus-safety smoke was **re-run live this closeout**
+(`frontmost before: Terminal | after: Terminal | focus_stolen: False` —
+`SMOKE PASSED`, fresh HUD capture under `evidence/closeout_macos/`); Linux
+Tier-1 + Tier-2 stand live-verified on `.43`. Flag-off byte-identity re-asserted
+(presence + runtime-activity units: 37 passed; `build_desktop_presence_host`
+returns `None` with the flag unset). Full suite **2261 passed, 16 skipped**; **0**
+`holdspeak/static/_built/` files tracked. `final-summary.md` written; README row
+→ done + pointer advanced; HANDOVER refreshed; **codex PR #17 closed as
+superseded**. **HS-41-06 done** — the user-facing presence
 docs: `docs/INTELLIGENT_TYPING_GUIDE.md` §11 "Desktop Presence" (enable flag +
 the `.[presence]` extra + the Linux freedesktop typelibs; the state table; the
 macOS HUD/glyph + Linux notification/overlay surfaces with **embedded
@@ -115,7 +124,7 @@ available tier; everything is gated by `HOLDSPEAK_DESKTOP_PRESENCE=1`.
 | HS-41-05 | Linux renderer (notification + tray) | done | [story-05-linux-renderer.md](./story-05-linux-renderer.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-41-08 | Linux GTK-WebKit floating overlay | done | [story-08-linux-gtk-overlay.md](./story-08-linux-gtk-overlay.md) | [evidence-story-08.md](./evidence-story-08.md) |
 | HS-41-06 | Documentation | done | [story-06-documentation.md](./story-06-documentation.md) | [evidence-story-06.md](./evidence-story-06.md) |
-| HS-41-07 | Closeout | backlog | [story-07-closeout.md](./story-07-closeout.md) | — |
+| HS-41-07 | Closeout | done | [story-07-closeout.md](./story-07-closeout.md) | [evidence-story-07.md](./evidence-story-07.md) |
 
 ## Where we are
 
@@ -159,9 +168,13 @@ screenshot from that OS** under `docs/assets/presence/`; the honest
 Wayland-GNOME/KDE tray-only caveat; the focus invariant), cross-linked from the
 root README ("What it does" + "Where to go next"), the docs index, and Getting
 Started. The doc drift-guard + link-check (which resolves embedded image paths,
-so the four screenshots are proven on disk) is green. Next: **HS-41-07**
-(closeout — dogfood + flag-off byte-identity + final-summary + PR/merge + close
-codex PR #17).
+so the four screenshots are proven on disk) is green. **HS-41-07 closed the
+phase**: the macOS focus-safety smoke re-ran live (`focus_stolen: False`,
+`SMOKE PASSED`), Linux Tier-1/2 stand live-verified on `.43`, flag-off
+byte-identity re-asserted (37 passed; host returns `None` with the flag unset),
+full suite **2261 passed, 16 skipped**, **0** `_built/` files tracked,
+`final-summary.md` written, and **codex PR #17 closed as superseded**.
+**Phase 41 is CLOSED ✅ (8/8)** — open a PR to `main` and merge when CI is green.
 
 ## Active risks
 
