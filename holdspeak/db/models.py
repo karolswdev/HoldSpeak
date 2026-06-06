@@ -5,7 +5,7 @@ Database container share them without import cycles.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, Any
 
@@ -409,4 +409,36 @@ class DictationCorrectionRecord:
     gist: str
     value: str
     created_at: str
+
+
+@dataclass
+class DictationJournalRecord:
+    """One persisted dictation-journal entry (Phase 45, HS-45-01).
+
+    The durable afterlife of a single dictation/dry-run pipeline run: what was
+    said (`transcript`), how it routed (`intent`/`block_id`/`confidence`), where
+    it was headed (`target_profile`), what got typed (`final_text`), and how long
+    each stage took (`stage_ms`/`total_ms`/`rewrite_pass_ms`). `source` is
+    `"dictation"` (a real spoken run) or `"dry_run"` (the no-mic web path).
+    `corrected`/`correction_id` are unset here and set by HS-45-03 when the user
+    fixes the entry in the moment. Transcript + final text are secret-filtered
+    before persistence, so a stored row never carries a secret.
+    """
+
+    id: int
+    created_at: str
+    source: str
+    transcript: str
+    final_text: str
+    project_root: Optional[str] = None
+    intent: Optional[str] = None
+    block_id: Optional[str] = None
+    target_profile: Optional[str] = None
+    stage_ms: dict[str, float] = field(default_factory=dict)
+    total_ms: float = 0.0
+    rewrite_pass_ms: list[float] = field(default_factory=list)
+    confidence: Optional[float] = None
+    warnings: list[str] = field(default_factory=list)
+    corrected: bool = False
+    correction_id: Optional[int] = None
 

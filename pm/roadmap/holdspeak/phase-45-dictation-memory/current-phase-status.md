@@ -1,11 +1,16 @@
 # Phase 45 — Dictation Memory & the Moment of Truth
 
-**Status:** PLANNING (0/6). Opened 2026-06-06 on user direction ("think really
+**Status:** IN PROGRESS (1/6). Opened 2026-06-06 on user direction ("think really
 hard around the experience … scaffold a phase that will be oh-so-meaningful")
 after a grounded look at how HoldSpeak feels to live with.
 
-**Last updated:** 2026-06-06 (phase scaffolded; HS-45-01 — the dictation journal
-persistence spine — is the entry point).
+**Last updated:** 2026-06-06 (**HS-45-01 — the dictation journal persistence
+spine — DONE**: `dictation_journal` table + `DictationJournalRepository` + a
+side-channel `DictationJournalRecorder` wired into both the live + dry-run paths,
+config toggle [default ON] + retention cap + secret redaction. Proven by 13 unit
++ 2 integration tests AND a **true end-to-end run against `.43`** [real pipeline
+→ real LLM → real DB row: a 446-char ramble journaled with routing/target/
+per-stage latency]. Suite 2343/17; journal-off ⇒ byte-identical).
 
 ## The thesis — why this phase
 
@@ -109,7 +114,7 @@ trusted, learning companion — without changing what gets typed.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-45-01 | Dictation journal — the persistence spine | backlog | [story-01-journal-persistence.md](./story-01-journal-persistence.md) | — |
+| HS-45-01 | Dictation journal — the persistence spine | done | [story-01-journal-persistence.md](./story-01-journal-persistence.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-45-02 | The Journal — a reviewable utterance timeline | backlog | [story-02-journal-surface.md](./story-02-journal-surface.md) | — |
 | HS-45-03 | The moment of truth — correct in flow, and it teaches | backlog | [story-03-moment-of-truth.md](./story-03-moment-of-truth.md) | — |
 | HS-45-04 | Replay — prove it learned | backlog | [story-04-replay.md](./story-04-replay.md) | — |
@@ -118,11 +123,19 @@ trusted, learning companion — without changing what gets typed.
 
 ## Where we are
 
-Phase scaffolded off `main` (post Phase-44 merge, PR #22) on branch
-`phase-45-dictation-memory`. Nothing built yet. **HS-45-01** is the spine — the
-journal table + repository + the side-channel write over the pipeline's existing
-`on_run` hook — and everything else (review, correct, replay) reads/writes it.
-Sequence: 01 → (02, 03) → 04 → 05 → 06.
+**HS-45-01 (the spine) is DONE.** The journal table + `DictationJournalRepository`
+exist; a `DictationJournalRecorder` writes one row per run (best-effort,
+secret-redacted) at the same post-run seam telemetry uses, wired into both the
+live runtime (`source='dictation'`) and the dry-run path (`source='dry_run'`).
+Journaling defaults ON (local), is retention-capped, and is a pure side-channel
+(off ⇒ byte-identical, proven). It was exercised end-to-end against the live
+`.43` endpoint (real pipeline → real DB row). Next up is the pair **HS-45-02**
+(the review surface on `/dictation`) and **HS-45-03** (correct-in-the-moment,
+which sets `corrected`/`correction_id` via `mark_corrected`), both reading this
+spine. Sequence: 01 ✅ → (02, 03) → 04 → 05 → 06.
+
+> **Note:** the `openai` package was installed into the dev venv to run the real
+> `.43` e2e (it's the optional `dictation-openai` extra, not a new hard dep).
 
 ## Active risks
 

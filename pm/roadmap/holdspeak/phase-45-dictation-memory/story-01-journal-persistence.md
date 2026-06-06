@@ -2,10 +2,11 @@
 
 - **Project:** holdspeak
 - **Phase:** 45
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-45-02, HS-45-03, HS-45-04
-- **Owner:** unassigned
+- **Owner:** Claude (Opus 4.8)
+- **Evidence:** [evidence-story-01.md](./evidence-story-01.md)
 
 ## Problem
 Dictation is ephemeral. Meetings persist (`db.meetings`, `/history`), but the
@@ -46,19 +47,19 @@ the spine the rest of the phase reads and writes.
   rewrite / typing output.
 
 ## Acceptance criteria
-- [ ] `dictation_journal` table + `DictationJournalRepository` exist; a fresh DB
+- [x] `dictation_journal` table + `DictationJournalRepository` exist; a fresh DB
       builds the table and `TestDatabaseShape::test_fresh_schema_matches_canonical_snapshot`
       passes with the regenerated snapshot in the same commit.
-- [ ] A pipeline run (dictation **and** dry-run) persists exactly one journal row
+- [x] A pipeline run (dictation **and** dry-run) persists exactly one journal row
       with transcript, routing, final text, per-stage + total latency, and
       `source` set correctly.
-- [ ] Secrets in the input/output are filtered before persistence (same filter
+- [x] Secrets in the input/output are filtered before persistence (same filter
       as the correction store) — a test proves a known secret never lands.
-- [ ] Retention prunes to the configured bound on insert; `journal_enabled=false`
+- [x] Retention prunes to the configured bound on insert; `journal_enabled=false`
       ⇒ **no rows written** and the dictation/dry-run result is byte-identical.
-- [ ] A journal write failure is swallowed (best-effort) and does not raise into
+- [x] A journal write failure is swallowed (best-effort) and does not raise into
       the dictation path.
-- [ ] Suite green; `db/` ruff-clean; **0** `_built/` tracked.
+- [x] Suite green; `db/` ruff-clean; **0** `_built/` tracked.
 
 ## Test plan
 - Unit: a new `tests/unit/test_db_dictation_journal.py` — record/list/delete/wipe,

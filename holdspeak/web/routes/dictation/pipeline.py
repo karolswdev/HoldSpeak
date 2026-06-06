@@ -277,6 +277,7 @@ def build_pipeline_router(
                     corrections=ctx.corrections,
                     dismissed_signatures=dismissed_signatures,
                     telemetry=ctx.telemetry,
+                    journal=ctx.journal,
                 )
             )
         except ValueError as exc:

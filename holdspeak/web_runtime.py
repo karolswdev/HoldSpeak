@@ -92,6 +92,22 @@ def _dictation_corrections_repo():
         return None
 
 
+def _dictation_journal_repo():
+    """The durable dictation-journal repository, or None if the DB is unavailable.
+
+    HS-45-01: resolves the persistence repo for the live session journal
+    recorder. Defensive — a DB failure must not stop the web runtime from
+    booting; the recorder just becomes a no-op (no journaling, byte-identical).
+    """
+    try:
+        from .db import get_database
+
+        return get_database().dictation_journal
+    except Exception as exc:  # pragma: no cover - durability must never block boot
+        log.warning(f"Dictation journal persistence unavailable: {exc}")
+        return None
+
+
 class WebRuntime:
     """Web-first runtime: owns the web server, hotkey/device capture, the
     meeting session, and the MIR plugin pipeline.
@@ -1790,6 +1806,19 @@ class WebRuntime:
                     activity=activity,
                 )
             )
+            # HS-45-01: journal this run as a side-channel (best-effort, never
+            # alters the typed result). Same post-run seam telemetry uses.
+            journal = getattr(self.server, "dictation_journal", None)
+            if journal is not None:
+                journal.record(
+                    run,
+                    source="dictation",
+                    transcript=text,
+                    target_profile=target_profile,
+                    project_root=project_root,
+                    enabled=bool(getattr(pipeline_cfg, "journal_enabled", True)),
+                    retention=int(getattr(pipeline_cfg, "journal_retention", 500)),
+                )
             return run.final_text
         except Exception as exc:
             log.warning(f"Web dictation pipeline raised; falling back to processed text: {exc}")
@@ -2197,6 +2226,11 @@ class WebRuntime:
                 # live runtime wires this; bare servers (tests/dry-run) stay
                 # in-memory and byte-identical.
                 dictation_corrections_repository=_dictation_corrections_repo(),
+                # HS-45-01: back the session journal recorder with the durable
+                # repository so the dictation loop gets a reviewable, replayable
+                # afterlife. Only the live runtime wires this; bare servers
+                # (tests/dry-run-only) stay no-op and byte-identical.
+                dictation_journal_repository=_dictation_journal_repo(),
             )
             self.runtime_url = self.server.start()
         except Exception as exc:

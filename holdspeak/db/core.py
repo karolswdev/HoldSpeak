@@ -15,6 +15,7 @@ from .projects import ProjectRepository
 from .activity import ActivityRepository
 from .actuators import ActuatorRepository
 from .corrections import DictationCorrectionRepository
+from .journal import DictationJournalRepository
 from .milestones import MilestoneRepository
 
 log = get_logger("db")
@@ -554,6 +555,35 @@ CREATE TABLE IF NOT EXISTS milestones (
     key TEXT PRIMARY KEY,
     achieved_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Phase 45 (HS-45-01): the dictation journal. A durable, local-only, private
+-- record of each dictation/dry-run pipeline run — what was said, how it routed,
+-- what got typed, and per-stage latency — so the daily-driver dictation loop
+-- becomes reviewable, correctable after the fact, and replayable. The transcript
+-- + final text are secret-filtered before insert and the table is retention-
+-- capped (prune-on-insert to a last-N bound). `corrected` / `correction_id` are
+-- set by HS-45-03 when a user fixes an entry in the moment.
+CREATE TABLE IF NOT EXISTS dictation_journal (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    source TEXT NOT NULL,
+    project_root TEXT,
+    transcript TEXT NOT NULL DEFAULT '',
+    intent TEXT,
+    block_id TEXT,
+    target_profile TEXT,
+    final_text TEXT NOT NULL DEFAULT '',
+    stage_ms TEXT NOT NULL DEFAULT '{}',
+    total_ms REAL NOT NULL DEFAULT 0,
+    rewrite_pass_ms TEXT NOT NULL DEFAULT '[]',
+    confidence REAL,
+    warnings TEXT NOT NULL DEFAULT '[]',
+    corrected INTEGER NOT NULL DEFAULT 0,
+    correction_id INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_dictation_journal_recent
+ON dictation_journal(created_at DESC, id DESC);
 """
 
 
@@ -571,6 +601,7 @@ class Database:
         self.activity = ActivityRepository(self._connection, self)
         self.actuators = ActuatorRepository(self._connection, self)
         self.dictation_corrections = DictationCorrectionRepository(self._connection, self)
+        self.dictation_journal = DictationJournalRepository(self._connection, self)
         self.milestones = MilestoneRepository(self._connection, self)
 
     @contextmanager

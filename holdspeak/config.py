@@ -309,6 +309,14 @@ class DictationPipelineConfig:
     # wins over both the heuristic and the LLM.
     target_detect_llm_enabled: bool = False
     target_detect_llm_below: float = 0.8
+    # HS-45-01: the persistent dictation journal. ON by default and local-only —
+    # privacy is delivered by local + secret-filter + retention + wipe, not by
+    # default-off (otherwise "it remembers" never lands). When off, no journal
+    # rows are written and the typed output is byte-identical.
+    journal_enabled: bool = True
+    # Last-N retention cap: the journal repository prunes to this many
+    # most-recent rows on each insert. Must be >= 1.
+    journal_retention: int = 500
 
     def __post_init__(self) -> None:
         # DIR-C-002: reject unknown stage IDs at config load time so
@@ -333,6 +341,12 @@ class DictationPipelineConfig:
             raise DictationConfigError(
                 "target_detect_llm_below must be between 0.0 and 1.0; "
                 f"got {self.target_detect_llm_below!r}"
+            )
+        # HS-45-01: the journal retention cap is a last-N bound; one row is the
+        # floor (a zero/negative cap would prune away every write).
+        if self.journal_retention < 1:
+            raise DictationConfigError(
+                f"journal_retention must be >= 1; got {self.journal_retention!r}"
             )
         self.target_profile_override = str(self.target_profile_override or "auto").strip().lower()
         if self.target_profile_override not in _KNOWN_TARGET_PROFILE_OVERRIDES:
