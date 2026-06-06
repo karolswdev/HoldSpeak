@@ -1564,6 +1564,12 @@ function renderDryRun(data) {
   // copy button; no per-render wiring required.
   const finalText = data.final_text || "";
   const finalAttr = escapeAttr(finalText);
+  // HS-45-03: `telemetryHtml` was referenced here but only ever defined inside
+  // `renderHSMeta` — a pre-existing ReferenceError that left every browser
+  // dry-run result blank (caught by runDryRun's try/catch; never surfaced
+  // because the dry-run was only API-tested, never browser-tested). Define it
+  // in scope from this run's telemetry.
+  const telemetryHtml = renderDryTelemetry(data.telemetry || {});
   finalHost.innerHTML = `
     <figure class="cmd cmd--neutral" aria-label="Dry-run final text">
       <figcaption class="cmd-caption">Final text</figcaption>
@@ -1578,12 +1584,114 @@ function renderDryRun(data) {
     ${warnings}
   `;
 
+  renderMomentOfTruth(data);
+
   const stages = data.stages || [];
   if (!stages.length) {
     trace.innerHTML = `<p class="trace-empty">No stages executed.</p>`;
     return;
   }
   trace.innerHTML = stages.map((stage) => renderDryStage(stage)).join("");
+}
+
+// ── HS-45-03: the moment of truth — fix it in flow, and it teaches ──────
+function momentRoute(data) {
+  // The block the run routed to (newest intent across stages), for the prompt.
+  let block = null;
+  let conf = null;
+  for (const s of data.stages || []) {
+    if (s.intent && s.intent.block_id) {
+      block = s.intent.block_id;
+      conf = s.intent.confidence;
+    }
+  }
+  const target = data.target && data.target.id ? data.target.id : null;
+  return { block, conf, target };
+}
+
+function renderMomentOfTruth(data) {
+  const host = document.getElementById("dry-moment");
+  if (!host) return;
+  // Only when this run was journaled (durable repo + journaling on) — there's
+  // an entry to attach a correction to. Works offline (no mic / no runtime):
+  // the dry-run still journals, so the fix-and-teach is provable without a mic.
+  const journalId = data.journal_id;
+  if (journalId == null) {
+    host.hidden = true;
+    host.innerHTML = "";
+    return;
+  }
+  const { block, conf, target } = momentRoute(data);
+  const routed = block
+    ? `routed to <strong>${escapeHtml(block)}</strong>${conf != null ? ` <span class="moment-conf">@ ${Number(conf).toFixed(2)}</span>` : ""}${target ? ` · target <strong>${escapeHtml(target)}</strong>` : ""}`
+    : target
+      ? `target <strong>${escapeHtml(target)}</strong>`
+      : "no route matched";
+  host.hidden = false;
+  host.dataset.journalId = String(journalId);
+  host.innerHTML = `
+    <div class="moment-head">
+      <span class="moment-q">Was that right?</span>
+      <span class="moment-routed">${routed}</span>
+      <span class="moment-spacer"></span>
+      <button type="button" class="btn moment-fix-btn" id="moment-fix-open">Fix it →</button>
+    </div>
+    <form class="moment-form" id="moment-form" hidden>
+      <p class="moment-hint">Teach the copilot what this <em>should</em> have been — it'll nudge similar dictations next time, and this entry is marked corrected in your Journal.</p>
+      <div class="row">
+        <label>Correct the
+          <select id="moment-kind">
+            <option value="intent">route (block)</option>
+            <option value="target">target (profile)</option>
+          </select>
+        </label>
+        <label>to
+          <input type="text" id="moment-value" placeholder="${escapeAttr(block || target || "block id / target profile")}" />
+        </label>
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn primary" id="moment-submit">Teach &amp; record</button>
+        <button type="button" class="btn" id="moment-cancel">Cancel</button>
+      </div>
+      <div id="moment-msg"></div>
+    </form>`;
+  // Focus-safe: the form is revealed on click; we never auto-focus an input
+  // (the dictation flow / the dry-run textarea keeps focus until the user acts).
+  document.getElementById("moment-fix-open").addEventListener("click", () => {
+    document.getElementById("moment-form").hidden = false;
+    document.getElementById("moment-fix-open").hidden = true;
+  });
+  document.getElementById("moment-cancel").addEventListener("click", () => {
+    document.getElementById("moment-form").hidden = true;
+    document.getElementById("moment-fix-open").hidden = false;
+  });
+  document.getElementById("moment-form").addEventListener("submit", submitMomentFix);
+}
+
+async function submitMomentFix(ev) {
+  ev.preventDefault();
+  const host = document.getElementById("dry-moment");
+  const id = host.dataset.journalId;
+  const kind = document.getElementById("moment-kind").value;
+  const value = document.getElementById("moment-value").value.trim();
+  const msg = document.getElementById("moment-msg");
+  msg.innerHTML = "";
+  if (!value) {
+    msg.innerHTML = `<div class="error-box">Enter the correct ${kind === "target" ? "target profile" : "block id"}.</div>`;
+    return;
+  }
+  try {
+    const res = await api("POST", `/api/dictation/journal/${encodeURIComponent(id)}/correct`, { kind, value });
+    const taught = res && res.taught;
+    host.innerHTML = `<div class="moment-done" role="status">
+      <span class="moment-check" aria-hidden="true">✓</span>
+      <span>${taught
+        ? "Taught — the copilot will nudge similar dictations toward this, and the Journal entry is marked corrected."
+        : "Recorded against the Journal entry. (Nothing was taught — the text looked like a secret, so it wasn't stored.)"}</span>
+    </div>`;
+  } catch (e) {
+    msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+  }
 }
 
 function escapeAttr(value) {
@@ -1660,6 +1768,8 @@ function clearDryRun() {
   document.getElementById("dry-meta").textContent = "No dry-run yet.";
   document.getElementById("dry-meta").classList.remove("warn", "error");
   document.getElementById("dry-final").innerHTML = "";
+  const moment = document.getElementById("dry-moment");
+  if (moment) { moment.hidden = true; moment.innerHTML = ""; }
   document.getElementById("dry-trace").innerHTML = "";
 }
 

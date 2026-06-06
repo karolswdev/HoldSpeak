@@ -416,6 +416,10 @@ import CommandPreview from "../components/CommandPreview.astro";
           <header class="panel-header"><h3>Result</h3></header>
           <div id="dry-meta" class="meta-banner">No dry-run yet.</div>
           <div id="dry-final"></div>
+          <!-- HS-45-03: the moment of truth — review the just-typed result and
+               fix it in flow; the fix teaches the copilot and is recorded
+               against the journal entry. Populated by renderMomentOfTruth(). -->
+          <div id="dry-moment" class="moment" hidden></div>
           <div id="dry-trace"></div>
         </section>
       </div>
@@ -1823,5 +1827,60 @@ import CommandPreview from "../components/CommandPreview.astro";
   @media (prefers-reduced-motion: reduce) {
     .journal-card { transition: none; }
     .journal-card:hover { transform: none; }
+  }
+
+  /* === HS-45-03: the moment of truth (in-flow correct-and-teach) ===== */
+  .moment {
+    margin-top: var(--space-2);
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border-subtle));
+    border-radius: var(--radius-2);
+    background: color-mix(in srgb, var(--accent) 6%, var(--surface-1));
+    padding: var(--space-2) var(--space-3);
+  }
+  .moment-head { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+  .moment-q { font-weight: 600; color: var(--text); }
+  .moment-routed { color: var(--text-muted); font-size: var(--font-size-sm); }
+  .moment-conf { font-family: var(--font-mono); opacity: 0.85; }
+  .moment-spacer { flex: 1; }
+  .moment-form { margin-top: var(--space-2); display: flex; flex-direction: column; gap: var(--space-2); }
+  .moment-hint { margin: 0; color: var(--text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
+  .moment-form .row { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+  .moment-form label { display: flex; flex-direction: column; gap: 4px; font-size: var(--font-size-sm); color: var(--text-muted); }
+  .moment-form select, .moment-form input {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-1);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    padding: var(--space-1) var(--space-2);
+  }
+  .moment-form .actions { display: flex; gap: var(--space-1); }
+  .moment-done {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+  .moment-check {
+    flex: none;
+    display: inline-grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--success, #4caf7d);
+    color: #fff;
+    font-weight: 700;
+    animation: moment-pop var(--motion-fast, 160ms) ease;
+  }
+  @keyframes moment-pop {
+    from { transform: scale(0.6); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .moment-check { animation: none; }
   }
 </style>

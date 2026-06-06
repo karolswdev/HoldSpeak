@@ -2,10 +2,11 @@
 
 - **Project:** holdspeak
 - **Phase:** 45
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-45-01
 - **Unblocks:** HS-45-04
-- **Owner:** unassigned
+- **Owner:** Claude (Opus 4.8)
+- **Evidence:** [evidence-story-03.md](./evidence-story-03.md)
 
 ## Problem
 The moment a dictation lands wrong is when fixing is cheapest — and when teaching
@@ -38,18 +39,19 @@ focus-safe gesture that teaches — and records the fix against the journal.
   **linkage**.
 
 ## Acceptance criteria
-- [ ] After a **dry-run**, the result panel offers a one-tap fix that records a
+- [x] After a **dry-run**, the result panel offers a one-tap fix that records a
       correction and flips the journal entry's `corrected` flag — verifiable
       without a mic.
-- [ ] The recorded correction is the same kind the Memory tab manages and
+- [x] The recorded correction is the same kind the Memory tab manages and
       **nudges future routing** (a follow-up similar utterance routes to the
-      corrected block/target — assert via the intent-router nudge path).
-- [ ] The Journal (HS-45-02) renders a `corrected` marker on fixed entries.
-- [ ] The in-moment surface does **not** steal keyboard focus (assert via the
-      presence focus-safety pattern / a no-focus-grab test where applicable).
-- [ ] Journaling/typing **output is byte-identical** when the user does NOT
-      correct (the fix path is purely additive).
-- [ ] Suite green; `(cd web && npm run build)` succeeds; **0** `_built/` tracked.
+      corrected block/target — asserted via the intent-router `best_match_in`
+      nudge path).
+- [x] The Journal (HS-45-02) renders a `corrected` marker on fixed entries.
+- [x] The in-moment surface does **not** steal keyboard focus (no `autofocus`;
+      the dictation app script never calls `.focus()`; reveal is click-driven).
+- [x] Journaling/typing **output is byte-identical** when the user does NOT
+      correct (the fix path is purely additive — no run path touched).
+- [x] Suite green; `(cd web && npm run build)` succeeds; **0** `_built/` tracked.
 
 ## Test plan
 - Unit: correction-attach endpoint writes a correction + flips `corrected`;

@@ -186,7 +186,7 @@ def test_recorder_persists_run_with_context(db: Database) -> None:
         project_root="/work/ledger",
         retention=500,
     )
-    assert wrote is True
+    assert wrote is not None and wrote.id > 0  # returns the persisted record
     [row] = db.dictation_journal.recent()
     assert row.source == "dry_run"
     assert row.transcript == "add idempotency"
@@ -205,18 +205,18 @@ def test_recorder_disabled_writes_nothing(db: Database) -> None:
     recorder = DictationJournalRecorder(repository=db.dictation_journal)
     assert recorder.record(
         _sample_run(), source="dictation", transcript="x", enabled=False
-    ) is False
+    ) is None
     assert db.dictation_journal.count() == 0
 
 
 def test_recorder_without_repository_is_noop() -> None:
     recorder = DictationJournalRecorder(repository=None)
-    assert recorder.record(_sample_run(), source="dictation", transcript="x") is False
+    assert recorder.record(_sample_run(), source="dictation", transcript="x") is None
 
 
 def test_recorder_rejects_unknown_source(db: Database) -> None:
     recorder = DictationJournalRecorder(repository=db.dictation_journal)
-    assert recorder.record(_sample_run(), source="bogus", transcript="x") is False
+    assert recorder.record(_sample_run(), source="bogus", transcript="x") is None
     assert db.dictation_journal.count() == 0
 
 
@@ -244,5 +244,5 @@ def test_recorder_swallows_repository_failure(db: Database) -> None:
             raise RuntimeError("disk full")
 
     recorder = DictationJournalRecorder(repository=_Boom())
-    # Must not raise into the dictation path; returns False.
-    assert recorder.record(_sample_run(), source="dictation", transcript="x") is False
+    # Must not raise into the dictation path; returns None.
+    assert recorder.record(_sample_run(), source="dictation", transcript="x") is None

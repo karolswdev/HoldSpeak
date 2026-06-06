@@ -98,20 +98,23 @@ class DictationJournalRecorder:
         project_root: Any = None,
         enabled: bool = True,
         retention: Optional[int] = None,
-    ) -> bool:
-        """Persist one journal row for `run`. Returns True iff a row was written.
+    ) -> Any:
+        """Persist one journal row for `run`; return the stored record (or None).
 
-        No-op (returns False) when journaling is disabled, no repository is
-        attached, or the source is unknown. Never raises into the dictation path.
+        Returns the `DictationJournalRecord` so a caller (the dry-run path) can
+        reference the entry — e.g. to attach an in-the-moment correction
+        (HS-45-03). A no-op (returns `None`) when journaling is disabled, no
+        repository is attached, or the source is unknown. Never raises into the
+        dictation path — every failure is swallowed and yields `None`.
         """
         if not enabled or self._repository is None:
-            return False
+            return None
         if str(source or "") not in VALID_SOURCES:
-            return False
+            return None
         try:
             intent = getattr(run, "intent", None)
             stage_ms, rewrite_pass_ms = extract_stage_ms(run)
-            self._repository.record(
+            return self._repository.record(
                 source=str(source),
                 transcript=filter_secret(transcript),
                 final_text=filter_secret(getattr(run, "final_text", "") or ""),
@@ -130,6 +133,5 @@ class DictationJournalRecorder:
                 warnings=list(getattr(run, "warnings", []) or []),
                 retention=retention,
             )
-            return True
         except Exception:  # pragma: no cover - journaling must never break typing
-            return False
+            return None
