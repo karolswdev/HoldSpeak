@@ -141,8 +141,8 @@ still making tests and operation first-class from the unified checkout.
 
 ## See also
 
-- [Device Protocol](DEVICE_PROTOCOL.md) — the remote-audio WebSocket protocol the
+- [Device Protocol](DEVICE_PROTOCOL.md): the remote-audio WebSocket protocol the
   bridge speaks.
-- [Agent Hook Install](AGENT_HOOK_INSTALL.md) — wire agent replies through to the
+- [Agent Hook Install](AGENT_HOOK_INSTALL.md): wire agent replies through to the
   device.
-- [Meeting Mode Guide](MEETING_MODE_GUIDE.md) — what the device controls.
+- [Meeting Mode Guide](MEETING_MODE_GUIDE.md): what the device controls.

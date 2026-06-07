@@ -75,7 +75,7 @@ takes you from install to your first words, **no file editing**:
 
 ![The HoldSpeak welcome wizard: a full-screen first-run screen headlined "Hold a key. Speak. Watch it type." with a step rail (Welcome · Permissions · Model · First dictation · Presence · You're set) and a "Get started" button; the footer reads "Local · 127.0.0.1 · nothing leaves your machine".](assets/screenshots/welcome.png)
 
-*The `/welcome` wizard on a fresh install — fresh clone to a verified first dictation, no file editing.*
+*The `/welcome` wizard on a fresh install. It takes you from a fresh clone to a verified first dictation, with no file editing.*
 
 A returning user lands on the dashboard instead (the wizard never nags). If
 something later needs attention, **`/setup`** is the calm status surface, and the
@@ -108,13 +108,13 @@ Default hotkey:
 If global hotkeys or synthetic typing are blocked, keep the HoldSpeak window
 focused and use the focused hold-to-talk fallback.
 
-> **Tip — see what the copilot is doing without the dashboard.** Flip on
-> **desktop presence** in **Settings** (or set `presence.enabled` in your config)
-> to get an ambient, native surface (a floating HUD on macOS / X11, a tray glyph +
-> notification everywhere) that shows *listening / transcribing / typing* while you
-> dictate into another app — and never steals keyboard focus. For a headless launch
-> you can force it on with `HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak`. See
-> [Desktop Presence](INTELLIGENT_TYPING_GUIDE.md#11-desktop-presence-ambient-on-desktop-status).
+> **Tip: see what the copilot is doing without the dashboard.** Turn on **desktop
+> presence** in **Settings** (or set `presence.enabled` in your config) to get an
+> ambient, native surface (a floating HUD on macOS and X11, a tray glyph plus
+> notification everywhere). It shows whether it's listening, transcribing, or typing
+> while you dictate into another app, and it never takes keyboard focus. For a
+> headless launch you can force it on with `HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak`.
+> See [Desktop Presence](INTELLIGENT_TYPING_GUIDE.md#11-desktop-presence-ambient-on-desktop-status).
 
 ## 6. Use Punctuation Commands
 
@@ -196,8 +196,8 @@ When ready, continue with:
 
 ## See also
 
-- [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md) — once basic voice
-  typing works, turn on the project-aware copilot.
-- [Meeting Mode Guide](MEETING_MODE_GUIDE.md) — meeting-specific setup and capture.
-- [Models — bring your own](MODELS.md) — pick and point at an LLM.
-- [Security & Privacy](SECURITY.md) — what's stored and what can leave your machine.
+- [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md): once basic voice typing
+  works, turn on the project-aware copilot.
+- [Meeting Mode Guide](MEETING_MODE_GUIDE.md): meeting-specific setup and capture.
+- [Models (bring your own)](MODELS.md): pick and point at an LLM.
+- [Security & Privacy](SECURITY.md): what's stored and what can leave your machine.

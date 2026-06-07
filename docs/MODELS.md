@@ -128,7 +128,7 @@ makes the larger tiers practical.
 
 ## See also
 
-- [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md) — where the dictation
-  model is used.
-- [Meeting Mode Guide](MEETING_MODE_GUIDE.md) — where the meeting-intel model is used.
-- [Security & Privacy](SECURITY.md) — what a cloud endpoint changes about egress.
+- [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md): where the dictation model
+  is used.
+- [Meeting Mode Guide](MEETING_MODE_GUIDE.md): where the meeting-intel model is used.
+- [Security & Privacy](SECURITY.md): what a cloud endpoint changes about egress.

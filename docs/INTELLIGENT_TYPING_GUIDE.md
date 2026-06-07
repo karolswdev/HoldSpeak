@@ -27,15 +27,14 @@ The pipeline can:
 - adapt output for Codex, Claude, terminal, browser, editor, or chat;
 - suggest narrow `.hs/.../*.md` project documentation updates for review.
 
-> **Heads-up — "project KB" and "project context" are two different things.**
-> Your **project KB** is a small key-value map (`kb:`) in
-> `<repo>/.holdspeak/project.yaml`; its keys become `{project.kb.<key>}`
-> placeholders that the default **`kb-enricher`** stage substitutes into a block's
-> template — deterministic, no LLM. Edit it on the **Project KB** tab.
-> **Project context** is the *separate* `.hs/` folder of Markdown files
-> (`instructions`, `context`, `workflows`, `targets`, plus an `ignore` for secrets)
-> that the **optional `project-rewriter`** (LLM) stage uses to rewrite your speech —
-> edit it on the **Project Context** tab; set it up in
+> **"Project KB" and "project context" are two different things.** Your project KB
+> is a small key-value map (`kb:`) in `<repo>/.holdspeak/project.yaml`. Its keys
+> become `{project.kb.<key>}` placeholders, and the default **`kb-enricher`** stage
+> substitutes them into a block's template (deterministic, no LLM). You edit it on
+> the **Project KB** tab. Project context is the *separate* `.hs/` folder of Markdown
+> files (`instructions`, `context`, `workflows`, `targets`, plus an `ignore` for
+> secrets), and the **optional `project-rewriter`** (LLM) stage uses it to rewrite
+> your speech. You edit it on the **Project Context** tab, and set it up in
 > [§5. Create Project Context](#5-create-project-context). HoldSpeak reads both but
 > never writes them without your approval.
 
@@ -690,10 +689,10 @@ holdspeak dictation dry-run "ask codex to summarize what changed and suggest a n
 
 ## See also
 
-- [Getting Started](GETTING_STARTED.md) — install and basic voice typing first.
-- [The Dictation Copilot](DICTATION_COPILOT.md) — see the pipeline turn rough
-  speech into a project-grounded task, end to end.
-- [Models — bring your own](MODELS.md) — choosing and pointing at an LLM.
-- [Agent Hook Install](AGENT_HOOK_INSTALL.md) — feed Claude/Codex context into the
+- [Getting Started](GETTING_STARTED.md): install and basic voice typing first.
+- [The Dictation Copilot](DICTATION_COPILOT.md): see the pipeline turn rough speech
+  into a project-grounded task, end to end.
+- [Models (bring your own)](MODELS.md): choosing and pointing at an LLM.
+- [Agent Hook Install](AGENT_HOOK_INSTALL.md): feed Claude/Codex context into the
   rewriter.
-- [Security & Privacy](SECURITY.md) — what's stored and what can leave your machine.
+- [Security & Privacy](SECURITY.md): what's stored and what can leave your machine.

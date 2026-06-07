@@ -351,8 +351,8 @@ Confirm HoldSpeak sees the expected project root and context files.
 
 ## See also
 
-- [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md) — how captured agent
-  context shapes a rewrite.
-- [The Dictation Copilot](DICTATION_COPILOT.md) — see the agent-grounded rewrite
-  end to end.
-- [Security & Privacy](SECURITY.md) — what hook capture stores and what it doesn't.
+- [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md): how captured agent context
+  shapes a rewrite.
+- [The Dictation Copilot](DICTATION_COPILOT.md): see the agent-grounded rewrite end
+  to end.
+- [Security & Privacy](SECURITY.md): what hook capture stores and what it doesn't.

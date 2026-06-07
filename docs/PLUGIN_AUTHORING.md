@@ -809,9 +809,9 @@ This contract deliberately does **not** cover:
 
 ## See also
 
-- [Meeting Mode Guide](MEETING_MODE_GUIDE.md) — configure the intel endpoint +
+- [Meeting Mode Guide](MEETING_MODE_GUIDE.md): configure the intel endpoint and the
   routing your plugin runs under.
-- [Connector Development](CONNECTOR_DEVELOPMENT.md) — the sibling contract for
-  local activity connectors.
-- [`internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md`](internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md)
-  — the design rationale (the parent plugin-system RFC).
+- [Connector Development](CONNECTOR_DEVELOPMENT.md): the sibling contract for local
+  activity connectors.
+- [`internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md`](internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md):
+  the design rationale (the parent plugin-system RFC).

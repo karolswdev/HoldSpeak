@@ -413,6 +413,6 @@ server → device  {"type":"status","text":"Saving meeting...","ttl_ms":0}
 
 ## See also
 
-- [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md) — the firmware + bridge
+- [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md): the firmware and bridge
   workflow that implements this protocol.
-- [Security & Privacy](SECURITY.md) — the device PSK + loopback trust boundary.
+- [Security & Privacy](SECURITY.md): the device PSK and loopback trust boundary.
