@@ -1,0 +1,68 @@
+name: Release
+
+# Publishes HoldSpeak to PyPI via OIDC trusted publishing (no stored token).
+#
+# Triggers:
+#   - pushing a version tag (vX.Y.Z) cuts that release.
+#   - manual dispatch publishes the current default-branch HEAD (used for the
+#     first release, whose tag predates this workflow).
+#
+# The PyPI trusted publisher must be registered for this repo with:
+#   workflow name = release.yml, environment = pypi.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Build and publish to PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/holdspeak
+    permissions:
+      id-token: write # OIDC token for trusted publishing
+    steps:
+      - uses: actions/checkout@v4
+
+      # The default `holdspeak` command serves the web runtime, so the wheel must
+      # carry the built Astro bundle under holdspeak/static/_built.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build the web bundle
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      # Build the sdist (carries the web/ source) and the wheel separately. The
+      # wheel is built from source with the bundle already present, so it packages
+      # holdspeak/static/_built. (A combined `uv build` does an sdist->wheel
+      # round-trip whose isolated env produces a bundle-less wheel.)
+      - name: Build sdist and wheel
+        env:
+          HOLDSPEAK_SKIP_WEB_BUILD: "1"
+        run: |
+          uv build --sdist
+          uv build --wheel
+
+      - name: Check artifacts
+        run: |
+          uvx twine check dist/*
+          test "$(unzip -l dist/holdspeak-*.whl | grep -c 'static/_built/')" -gt 0 \
+            || { echo "::error::wheel is missing the web bundle (static/_built)"; exit 1; }
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
