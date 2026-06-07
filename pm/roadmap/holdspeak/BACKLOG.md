@@ -24,7 +24,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 |---|---|---|---|---|
 | A | Meeting aftercare ("close the loop") | feature | review bet #5 | **shipped → [phase-49](./phase-49-meeting-aftercare/) (CLOSED 6/6)** |
 | B | Voice macros / command grammar | feature | review bet #2; deferred from P48 | strong |
-| C | Release-readiness gate (schema policy + 1.0) | release | review "Trouble" #5; deferred from P48 | unlock |
+| C | Release-readiness gate (schema policy + 1.0) | release | review "Trouble" #5; deferred from P48 | **scaffolded → [phase-50](./phase-50-release-readiness/)** |
 | D | Frontend density paydown (dictation page) | debt | review "Trouble" #4; P48 standing invariant | recurring |
 | E | `WebRuntime` / `web_server` decomposition | debt | review "Trouble" #1 | watch |
 | F | Local activity as pre-briefing fuel | feature | review bet #6 | exploratory |
@@ -46,7 +46,7 @@ concise", plus user-defined phrases ("standup update", "bug report template").
 Inspectable and editable in the UI, not LLM magic. Stays on the daily-dictation
 north star (Future A).
 
-### C. Release-readiness gate
+### C. Release-readiness gate — scaffolded as Phase 50
 The DB is intentionally `SCHEMA_VERSION = 1`, greenfield, **not release-stable**.
 Before a tagged/PyPI release, define and ship the policy: supported config/DB
 versions, whether destructive migration is ever allowed, backup/export before
