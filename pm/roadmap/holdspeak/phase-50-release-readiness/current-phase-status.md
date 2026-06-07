@@ -1,14 +1,17 @@
 # Phase 50 — Release Readiness ("cut a real 0.x")
 
-**Status:** IN PROGRESS (1/7). Opened 2026-06-07 on user direction, right after
+**Status:** IN PROGRESS (2/7). Opened 2026-06-07 on user direction, right after
 Phase 49 closed + merged (PR #33). Picked from the [project backlog](../BACKLOG.md)
 candidate C: the bet that actually lets the open-source push ship publicly.
 
-**Last updated:** 2026-06-07 (HS-50-01 done: one true version. `__version__` now
-resolves from package metadata with a `pyproject.toml` fallback, the
-`0.1.0`/`0.2.1` split is gone, the version shows in `doctor` and
-`/api/setup/status`, `install.sh` pins a tag via `HOLDSPEAK_REF`, and a drift test
-pins it. Next: HS-50-02, the safe-by-default schema policy, the heart of the phase.)
+**Last updated:** 2026-06-07 (HS-50-02 done: the safe-by-default schema policy, the
+heart of the phase. `_ensure_schema` now implements the four-way matrix
+(create-fresh / no-op-equal / backup-then-apply-older / refuse-newer); a
+`backup_database` primitive copies the DB to a timestamped sibling before any
+destructive action; `SchemaVersionError` refuses a newer-than-known DB untouched.
+Verified the live schema is additive today, so the closed holes are "newer DB run
+by older build" + "no backup before a future migration". Next: HS-50-03, the
+user-facing backup + restore surface on top of `backup_database`.)
 
 ## The thesis — why this phase
 
@@ -88,7 +91,7 @@ routing.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-50-01 | One true version (single source + surfaced) | done | [story-01-version-ssot.md](./story-01-version-ssot.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-50-02 | Safe-by-default schema policy | backlog | [story-02-schema-policy.md](./story-02-schema-policy.md) | — |
+| HS-50-02 | Safe-by-default schema policy | done | [story-02-schema-policy.md](./story-02-schema-policy.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-50-03 | Backup + restore | backlog | [story-03-backup-restore.md](./story-03-backup-restore.md) | — |
 | HS-50-04 | doctor + config honesty | backlog | [story-04-doctor-config-honesty.md](./story-04-doctor-config-honesty.md) | — |
 | HS-50-05 | Verified clean-machine install + pinned contract | backlog | [story-05-install-verification.md](./story-05-install-verification.md) | — |
@@ -97,20 +100,29 @@ routing.
 
 ## Where we are
 
-**HS-50-01 (one true version) is done.** `holdspeak/__init__.py` now resolves
-`__version__` from package metadata (`importlib.metadata`) with a `pyproject.toml`
-regex fallback for raw checkouts, so the `0.1.0`/`0.2.1` split is gone and
-`pyproject.toml` is the single source. The version is surfaced in the `doctor`
-runtime check and in the `/api/setup/status` payload (`version` key).
-`scripts/install.sh` now installs a pinned tag via `HOLDSPEAK_REF` (default
-`v0.2.1`, documented `main` dev fallback). `tests/unit/test_version_ssot.py` pins
-code-version == pyproject-version so it cannot drift again.
+**HS-50-01 (one true version) is done.** `holdspeak/__init__.py` resolves
+`__version__` from package metadata with a `pyproject.toml` regex fallback, so the
+`0.1.0`/`0.2.1` split is gone. The version shows in the `doctor` runtime check and
+the `/api/setup/status` payload. `scripts/install.sh` pins a tag via
+`HOLDSPEAK_REF` (default `v0.2.1`, `main` dev fallback).
+`tests/unit/test_version_ssot.py` pins it.
 
-Next: **HS-50-02** (the safe-by-default schema policy) is the heart of the phase.
-**Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first** — it has the mission, the
-mapped + verified seams (version, db/core schema, doctor, config, backup/export,
-install, docs), the rules of the road, and per-story success criteria. Sequence:
-01 -> 02 -> 03 -> 04 -> 05 -> 06 -> 07.
+**HS-50-02 (safe-by-default schema policy) is done — the heart of the phase.**
+`db/core.py:_ensure_schema` now implements the four-way matrix: create-fresh,
+no-op-equal, backup-then-apply-older, refuse-newer. `backup_database()` copies the
+SQLite file to a timestamped, non-clobbering sibling before any destructive
+action; `SchemaVersionError` refuses a newer-than-known DB and leaves it
+byte-for-byte untouched. The fresh-install path is unchanged. One honest
+correction to the scaffold framing: the live `SCHEMA_SQL` is fully additive today
+(`CREATE TABLE IF NOT EXISTS`, no `DROP`/`DELETE`), so there was no literal wipe to
+fix; the real unguarded holes closed are "a newer DB silently run by an older
+build" and "no backup before a future migration." `tests/unit/test_db_schema_policy.py`
+covers all four cells.
+
+Next: **HS-50-03** (backup + restore) wraps the `backup_database` primitive in a
+user-facing `holdspeak backup` command plus a restore path, then **HS-50-04**
+surfaces schema/config state in `doctor`. **Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md)
+first.** Sequence: 01 -> 02 -> 03 -> 04 -> 05 -> 06 -> 07.
 
 ## Active risks
 

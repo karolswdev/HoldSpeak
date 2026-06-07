@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import shutil
 import sqlite3
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, Iterator
 
@@ -26,6 +28,34 @@ log = get_logger("db")
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
 SCHEMA_VERSION = 1
+
+
+class SchemaVersionError(RuntimeError):
+    """The stored database is newer than this build of HoldSpeak understands.
+
+    Raised instead of touching the data, so an older build can never
+    downgrade-rebuild a database written by a newer one.
+    """
+
+
+def backup_database(db_path: Path) -> Path:
+    """Copy the SQLite database file to a timestamped sibling and return it.
+
+    A plain file copy is a correct backup here: it runs at startup, before
+    `_ensure_schema` mutates anything, so there is no concurrent writer. This is
+    the safety net invoked before any destructive schema action, so an upgrade
+    never changes a user's data without leaving a recoverable copy first. The
+    backup lands next to the database as `<name>.<timestamp>.bak`; a counter is
+    appended if that name is already taken.
+    """
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    backup_path = db_path.with_name(f"{db_path.name}.{timestamp}.bak")
+    counter = 1
+    while backup_path.exists():
+        backup_path = db_path.with_name(f"{db_path.name}.{timestamp}-{counter}.bak")
+        counter += 1
+    shutil.copy2(db_path, backup_path)
+    return backup_path
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -621,19 +651,65 @@ class Database:
             conn.close()
 
     def _ensure_schema(self) -> None:
-        """Create or migrate database schema."""
+        """Bring the database to the current schema version, safely by default.
+
+        The four-way matrix that defines HoldSpeak's forward upgrade contract:
+
+        - **fresh / empty** (no stored version): create the schema at the current
+          version, exactly as the original install path did.
+        - **stored == SCHEMA_VERSION**: nothing to do.
+        - **stored < SCHEMA_VERSION**: an older database. Back it up first, then
+          apply the schema. No destructive action ever runs without a backup.
+        - **stored > SCHEMA_VERSION**: a database written by a newer HoldSpeak.
+          Refuse with a clear error and leave the data untouched; never
+          downgrade-rebuild it.
+        """
+        stored = self._read_schema_version()
+
+        if stored is None or stored == 0:
+            with self._connection() as conn:
+                self._apply_schema(conn)
+            return
+
+        if stored == SCHEMA_VERSION:
+            return
+
+        if stored > SCHEMA_VERSION:
+            raise SchemaVersionError(
+                f"The database at {self.db_path} is schema version {stored}, but "
+                f"this build of HoldSpeak only understands version {SCHEMA_VERSION}. "
+                f"It was almost certainly written by a newer HoldSpeak. Upgrade "
+                f"HoldSpeak (or restore a backup from this version). The database "
+                f"was left untouched."
+            )
+
+        # stored < SCHEMA_VERSION: an older database. Back up before any change.
+        backup = backup_database(self.db_path)
+        log.warning(
+            f"Database at {self.db_path} is schema version {stored}; this build is "
+            f"{SCHEMA_VERSION}. Backed up to {backup} before applying the schema."
+        )
         with self._connection() as conn:
-            # Check current version
+            self._apply_schema(conn)
+
+    def _read_schema_version(self) -> Optional[int]:
+        """Return the stored schema version, or None for a fresh/empty database.
+
+        A missing file or a missing `schema_version` table both read as None (a
+        fresh database). Reading does not create the file.
+        """
+        if not self.db_path.exists():
+            return None
+        with self._connection() as conn:
             try:
                 row = conn.execute(
                     "SELECT MAX(version) FROM schema_version"
                 ).fetchone()
-                current_version = row[0] if row and row[0] else 0
             except sqlite3.OperationalError:
-                current_version = 0
-
-            if current_version < SCHEMA_VERSION:
-                self._apply_schema(conn)
+                return None
+            if not row or row[0] is None:
+                return None
+            return int(row[0])
 
     def _apply_schema(self, conn: sqlite3.Connection) -> None:
         """Create the database schema.
