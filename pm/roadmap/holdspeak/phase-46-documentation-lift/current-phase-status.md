@@ -1,12 +1,21 @@
 # Phase 46 — Documentation Excellence & the 10-Second Hook
 
-**Status:** IN PROGRESS (1/6). Opened 2026-06-06 on user direction ("a dedicated
+**Status:** IN PROGRESS (2/6). Opened 2026-06-06 on user direction ("a dedicated
 phase that will guide us through scaffolding/updating documentation … the main
 README is too low on cool facts of the app, and slightly too large and
 repetitive. People love the graphics, so that stays … other documentation files
 probably also need a big lift").
 
-**Last updated:** 2026-06-06 (**HS-46-01 — Doc truth audit & drift fix: DONE**.
+**Last updated:** 2026-06-07 (**HS-46-02 — The README, reimagined: DONE**. The
+README went spec-sheet → product pitch: a 10-second hook ("Hold a key. Speak. It
+types — anywhere. 100% local. And it learns you.") + a "Why it's different"
+cool-facts strip (the journal/replay "it learns you" story above the fold), every
+pixellab graphic kept, the 52-line plugin table + 22-line AIPI prose cut to
+teasers+links, the raw config block linked out, pre-release stated once —
+**205 → 152 lines** (26%). Honest per the HS-46-01 audit (every cool fact true;
+install extras + anchors verified). Guards 7 passed; full suite 2364/17. Next:
+HS-46-03 (voice & structure) + HS-46-04 (visual lift). Prior: **HS-46-01 — Doc
+truth audit & drift fix: DONE**.
 `docs/internal/DOC_AUDIT_2026-06.md` inventories all 18 live user-facing/root
 docs with a Fresh/Minor-drift/Stale verdict against a code-verified canonical-facts
 table. 4 drift findings fixed across 6 docs: presence is config-backed not
@@ -110,7 +119,7 @@ discoverable and represented, the graphics kept, the bloat gone.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-46-01 | Doc truth audit & drift fix | done | [story-01-doc-truth-audit.md](./story-01-doc-truth-audit.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-46-02 | The README, reimagined (the 10-second hook) | backlog | [story-02-readme-reimagined.md](./story-02-readme-reimagined.md) | — |
+| HS-46-02 | The README, reimagined (the 10-second hook) | done | [story-02-readme-reimagined.md](./story-02-readme-reimagined.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-46-03 | Docs voice & structure system + elevated index | backlog | [story-03-voice-and-structure.md](./story-03-voice-and-structure.md) | — |
 | HS-46-04 | Visual lift — real screenshots across the guides | backlog | [story-04-visual-lift.md](./story-04-visual-lift.md) | — |
 | HS-46-05 | Coverage & discoverability (feature → doc matrix) | backlog | [story-05-coverage-discoverability.md](./story-05-coverage-discoverability.md) | — |
@@ -118,7 +127,18 @@ discoverable and represented, the graphics kept, the bloat gone.
 
 ## Where we are
 
-**HS-46-01 done** — the accuracy foundation is laid. `docs/internal/DOC_AUDIT_2026-06.md`
+**HS-46-01 + HS-46-02 done** — the README now hooks in ten seconds (a real hook +
+a cool-facts strip, the "it learns you" journal/replay story above the fold), keeps
+every graphic, cuts the repetition (plugin table + AIPI prose → teasers; pre-release
+once; raw config linked out), and is **205 → 152 lines**, all on top of the HS-46-01
+truth audit (every cool fact verified). Suite green (2364/17). **Next: HS-46-03**
+(docs voice & structure system + elevated index) and **HS-46-04** (visual lift —
+real UI screenshots), which can run together. Sequence: ~~01~~ → ~~02~~ → (03, 04) →
+05 → 06.
+
+---
+
+_Earlier — HS-46-01 (the accuracy foundation):_ `docs/internal/DOC_AUDIT_2026-06.md`
 is the map: a canonical-facts yardstick + a per-doc verdict for all 18 live docs,
 with 4 drift findings fixed (presence enablement, a phantom config key, a missing
 connector kind, a self-contradicting protocol example) and a new README-plugin-count
