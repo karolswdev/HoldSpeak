@@ -38,7 +38,7 @@ import CommandPreview from "../components/CommandPreview.astro";
     <div class="scope-row cockpit-tabs" role="tablist" aria-label="Dictation sections">
       <button id="section-readiness" data-section="readiness" type="button" role="tab">Readiness</button>
       <button id="section-blocks" data-section="blocks" class="active" type="button" role="tab">Blocks</button>
-      <button id="section-kb" data-section="kb" type="button" role="tab">Project KB</button>
+      <button id="section-kb" data-section="kb" type="button" role="tab">Project Facts</button>
       <button id="section-hs" data-section="hs" type="button" role="tab">Project Context</button>
       <button id="section-hooks" data-section="hooks" type="button" role="tab">Agent Hooks</button>
       <span class="tab-tier-sep" aria-hidden="true" title="Runtime &amp; test"></span>
@@ -77,7 +77,7 @@ import CommandPreview from "../components/CommandPreview.astro";
       <h2>Dictation readiness</h2>
       <p class="lede">
         One snapshot of the selected project's dictation setup:
-        pipeline, blocks, project KB, runtime model, and next actions.
+        pipeline, blocks, project facts, runtime model, and next actions.
       </p>
       <div id="ready-meta" class="meta-banner">Loading…</div>
       <div id="ready-cards" class="readiness-grid"></div>
@@ -425,20 +425,23 @@ import CommandPreview from "../components/CommandPreview.astro";
       </div>
     </section>
 
-    <!-- ============= Project KB ============= -->
+    <!-- ============= Project Facts ============= -->
     <section id="view-kb" class="view" hidden>
-      <h2>Project knowledge base</h2>
+      <h2>Project facts</h2>
       <p class="lede">
-        Edit the <code>kb</code> mapping in
+        Facts are one of the two parts of <strong>project knowledge</strong>
+        (the other is <strong>Project Context</strong>). A fact is an exact
+        value that gets stamped into your dictation verbatim, with no model
+        involved. Each entry's key becomes a
+        <code>{`{project.kb.<key>}`}</code> placeholder that block templates
+        fill in. Keys must match <code>[A-Za-z_][A-Za-z0-9_]*</code>; values are
+        strings (or null). Stored as the <code>kb</code> mapping in
         <code>&lt;project_root&gt;/.holdspeak/project.yaml</code>.
-        Keys become <code>{`{project.kb.<key>}`}</code> placeholders
-        inside block templates. Keys must match
-        <code>[A-Za-z_][A-Za-z0-9_]*</code>; values are strings (or null).
       </p>
       <div id="kb-meta-banner" class="meta-banner">Loading…</div>
       <section class="panel">
         <header class="panel-header">
-          <h3>Knowledge-base entries</h3>
+          <h3>Fact entries</h3>
           <div class="panel-toolbar">
             <button id="kb-btn-starter" class="btn" type="button">Use starter</button>
             <button id="kb-btn-add" class="btn primary" type="button">+ New entry</button>
@@ -458,11 +461,15 @@ import CommandPreview from "../components/CommandPreview.astro";
     <section id="view-hs" class="view" hidden>
       <h2>Project context</h2>
       <p class="lede">
-        Edit repo-local <code>.hs/</code> files used by project-aware dictation.
-        These files guide prompt rewrites, context injection, memory, workflows,
-        active issues, vocabulary, and ignore rules. Legacy <code>.hs_*</code>
-        files are shown as read-only compatibility inputs; saving creates or
-        updates the canonical <code>.hs/</code> copy.
+        Context is the other part of <strong>project knowledge</strong>
+        (the first is <strong>Project Facts</strong>). Where a fact is an exact
+        value stamped in verbatim, context is background the rewrite model reads
+        so it phrases things the way this project expects. It only takes effect
+        when the optional rewrite stage is on. Edit the repo-local
+        <code>.hs/</code> files here: instructions, background, workflows,
+        targets, vocabulary, and ignore rules. Legacy <code>.hs_*</code> files
+        are shown as read-only compatibility inputs; saving creates or updates
+        the canonical <code>.hs/</code> copy.
       </p>
       <div id="hs-meta-banner" class="meta-banner">Loading…</div>
       <section class="panel hs-suggestion-panel" id="hs-suggestion-panel" hidden>

@@ -20,6 +20,18 @@ no guided path from a detected project to working project-aware dictation.
     (instructions/context/workflows/targets/ignore) **and** a starter `project.yaml`
     `kb:` map — with the user reviewing/editing inline before it's written
     (respecting the "never writes without approval" invariant).
+  - A **"draft with your coding agent" on-ramp** (user direction, 2026-06-07):
+    a copiable, ready-to-paste prompt that asks the user's existing agent (Claude
+    Code / Codex) to generate good starter `.hs/` context files for *this* repo,
+    following HoldSpeak's conventions and common use cases (instructions, project
+    background, workflows, target preferences, ignore rules), with a worked
+    example baked in so the output is usable, not generic. One-click copy. The
+    agent does the drafting on the user's own machine (no HoldSpeak LLM
+    dependency, stays local), and anything written back into `.hs/` still goes
+    through the approval-gated apply path. This hand-holds users who do not know
+    what good context looks like; pair it with the "scaffold the defaults" path
+    above so a user can either start from a template or have their agent author a
+    tailored set.
   - A **"you're set" confirmation** that shows the next step (enable the rewrite
     stage if they want context-based rewriting; try a dry-run) and links the dry-run.
   - Reuse the existing project-root detection + the KB/`.hs/` write primitives
@@ -36,6 +48,11 @@ no guided path from a detected project to working project-aware dictation.
       (a `{project.kb.*}` value stamped, or `.hs/` context shaping a rewrite).
 - [ ] Proven by a **dogfood** (fresh temp project → guided flow → working dictation,
       zero hand-editing), provable without a mic.
+- [ ] The Context surface offers a copiable, repo-aware "draft with your coding
+      agent" prompt (one-click copy); the prompt carries enough convention + a
+      worked example that pasting it into Claude/Codex yields usable starter
+      `.hs/` files. Generation stays on the user's machine; any write back is
+      approval-gated.
 - [ ] No silent writes; behavior-preserving; tests + `npm run build` green.
 
 ## Test plan

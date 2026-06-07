@@ -1,14 +1,18 @@
 # Phase 47 — Project Knowledge: Legible & Inviting
 
-**Status:** PLANNING (0/6). Opened 2026-06-07 on user direction — while reviewing
+**Status:** IN PROGRESS (1/6). Opened 2026-06-07 on user direction — while reviewing
 the Phase-46 docs, the user said: *"I struggle to understand the 'project KB' …
 and I feel like many users will also struggle. It's not only about documentation,
 but also the UI/UX, and the way to present it."* Confirmed by the doc-fix attempt
 itself getting the concept **wrong** (see the thesis).
 
-**Last updated:** 2026-06-07 (phase scaffolded off the Phase-46 finding. HS-47-01 —
-the concept & naming reconciliation — is the entry point; everything else builds on
-the model it settles.)
+**Last updated:** 2026-06-07 (HS-47-01 shipped. The model is settled: **project
+knowledge = Facts (the `project.yaml` KB, stamped in verbatim, no LLM) + Context
+(the `.hs/` files, read by the optional rewrite stage)**. The `/dictation`
+"Project KB" tab is renamed **"Project Facts"**; both ledes + the readiness card +
+the `DOCS_STYLE.md` glossary state the relationship; on-disk names + pipeline
+behavior unchanged. New user direction folded into HS-47-03: a copiable
+"draft my `.hs/` with your coding agent" prompt. Next: HS-47-02.)
 
 ## The thesis — why this phase
 
@@ -111,7 +115,7 @@ bar.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-47-01 | Concept & naming reconciliation (the model) | backlog | [story-01-concept-and-naming.md](./story-01-concept-and-naming.md) | — |
+| HS-47-01 | Concept & naming reconciliation (the model) | done | [story-01-concept-and-naming.md](./story-01-concept-and-naming.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-47-02 | In-app explainer + inviting empty states | backlog | [story-02-explainer-empty-states.md](./story-02-explainer-empty-states.md) | — |
 | HS-47-03 | Guided setup flow (fresh repo → working) | backlog | [story-03-guided-setup-flow.md](./story-03-guided-setup-flow.md) | — |
 | HS-47-04 | Discovery nudge (find it where it helps) | backlog | [story-04-discovery-nudge.md](./story-04-discovery-nudge.md) | — |
@@ -120,13 +124,24 @@ bar.
 
 ## Where we are
 
-Scaffolded off the Phase-46 documentation lift, which surfaced (and stumbled on)
-the project-KB overload. Nothing built yet. **Read
-[`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first** — it has the mission, the mapped code
-seams, the rules of the road, and per-story success criteria. **HS-47-01** (settle
-the concept + names) is the foundation — every other surface presents the model it
-decides. Sequence: 01 → 02 → (03, 04) → 05 → 06. Phase 46 is CLOSED + merged
-(PR #25); the docs humanize pass merged too (PR #26).
+**HS-47-01 is done.** The model is settled and recorded in
+[`decision-concept-and-naming.md`](./decision-concept-and-naming.md): project
+knowledge = **Facts** (the `project.yaml` `kb:` map, stamped into templates
+verbatim by `kb-enricher`, no LLM) + **Context** (the `.hs/` files, read by the
+optional `project-rewriter` stage). The `/dictation` "Project KB" tab is now
+"Project Facts"; both tab ledes, the readiness card, and the `DOCS_STYLE.md`
+glossary all name the umbrella and state the relationship. On-disk names and
+pipeline behavior are unchanged; full suite 2365/17, 0 tracked `_built/`.
+
+Next is **HS-47-02** (in-app explainer + inviting empty states), which presents
+this model on both surfaces. Then HS-47-03 (guided setup), which now carries an
+added user direction: a **copiable "draft my `.hs/` with your coding agent"
+prompt** so users who do not know what good context looks like can have Claude or
+Codex author a tailored starter set (generation stays on their machine; writes
+stay approval-gated). Sequence: 01 ✅ → 02 → (03, 04) → 05 → 06. **Read
+[`AGENT-BRIEF.md`](./AGENT-BRIEF.md)** for the mapped code seams and rules of the
+road. Phase 46 is CLOSED + merged (PR #25); the docs humanize pass merged too
+(PR #26).
 
 ## Active risks
 
@@ -145,11 +160,21 @@ decides. Sequence: 01 → 02 → (03, 04) → 05 → 06. Phase 46 is CLOSED + me
 - **Split from Phase 46.** The docs-side clarity fix landed in Phase 46 (HS-46-05);
   the product/UX legibility is this dedicated phase (user chose "new phase + docs
   fix now").
+- **The names (HS-47-01).** Umbrella **"Project knowledge"** with two parts,
+  **Facts** (the KB) and **Context** (the `.hs/` files). Rename only the jargon
+  half: "Project KB" tab → "Project Facts"; "Project Context" kept. Keep all
+  on-disk names + config keys + `{project.kb.*}` placeholders. Rationale +
+  alternatives in [`decision-concept-and-naming.md`](./decision-concept-and-naming.md).
+- **"Draft with your coding agent" prompt (from user, 2026-06-07).** The setup
+  flow should offer a copiable, repo-aware prompt that has the user's own agent
+  (Claude/Codex) generate good starter `.hs/` files, with a worked example so the
+  output is usable. Folded into HS-47-03 (scope + an acceptance criterion);
+  generation stays local, writes stay approval-gated.
 
 ## Decisions deferred
 
-- **Rename vs. keep "Project KB" / "Project Context".** Whether to rename the tabs
-  (and/or unify them under one umbrella with two clearly-labelled parts) or keep
-  the names with strong framing — settle in HS-47-01.
-- **On-disk renames.** Whether to touch `.holdspeak/project.yaml` / `.hs/` on disk
-  at all (default: no) — settle in HS-47-01.
+- ~~**Rename vs. keep "Project KB" / "Project Context".**~~ Decided in HS-47-01:
+  unified under the "Project knowledge" umbrella; "Project KB" → "Project Facts",
+  "Project Context" kept.
+- ~~**On-disk renames.**~~ Decided in HS-47-01: keep `.holdspeak/project.yaml` +
+  `.hs/` + config keys as-is; presentation change only.

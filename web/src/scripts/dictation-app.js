@@ -480,7 +480,7 @@ function renderReadiness(data) {
       `${blocks.resolved_scope || "global"} · ${blocks.resolved?.path || "no file"}`
     ),
     readinessCard(
-      "Project KB",
+      "Project Facts",
       kb.exists ? `${(kb.keys || []).length} keys` : "missing",
       kb.valid && kb.exists ? "ok" : "warn",
       kb.path || "no project"
@@ -517,7 +517,7 @@ function renderReadiness(data) {
       <span>${escapeHtml(w.action || "")}</span>
       ${w.section && w.section !== "readiness" ? `<button class="btn" data-ready-section="${escapeAttr(w.section)}" style="float:right;">Open</button>` : ""}
       ${w.template_id ? `<button class="btn primary" data-ready-template-id="${escapeAttr(w.template_id)}" data-ready-template-scope="${escapeAttr(w.template_scope || "global")}" style="float:right;margin-right:8px;">Create + dry-run</button>` : ""}
-      ${w.kb_action === "create_starter" ? `<button class="btn primary" data-ready-kb-starter="1" style="float:right;margin-right:8px;">Create starter KB</button>` : ""}
+      ${w.kb_action === "create_starter" ? `<button class="btn primary" data-ready-kb-starter="1" style="float:right;margin-right:8px;">Create starter facts</button>` : ""}
       ${w.runtime_action === "enable_pipeline" ? `<button class="btn primary" data-ready-runtime-action="enable_pipeline" style="float:right;margin-right:8px;">Enable pipeline</button>` : ""}
       ${renderRuntimeGuidance(w.guidance)}
     </div>
@@ -711,7 +711,7 @@ async function createStarterKB(options = {}) {
     kbState.detected = data.detected;
     kbState.kbPath = data.kb_path;
     kbState.rows = Object.entries(data.kb || {}).map(([k, v]) => ({ key: k, value: v ?? "" }));
-    msg.innerHTML = `<div class="ok-box">Created starter Project KB.</div>`;
+    msg.innerHTML = `<div class="ok-box">Created starter project facts.</div>`;
     renderKBMeta(data);
     renderKBRows();
     if (state.activeSection === "readiness") loadReadiness();
@@ -724,8 +724,8 @@ async function kbDelete() {
   if (!kbState.detected) return;
   const ok = await window.holdspeakConfirm({
     title: `Delete ${kbState.kbPath}?`,
-    body: "The project knowledge base file is removed from disk. The enclosing .holdspeak/ directory is preserved so other project state (blocks, runtime config) stays intact.",
-    scopeNote: "Only the local knowledge-base file is affected. Source files referenced from inside the KB are not touched.",
+    body: "The project facts file is removed from disk. The enclosing .holdspeak/ directory is preserved so other project state (blocks, runtime config) stays intact.",
+    scopeNote: "Only the local project facts file is affected. Source files referenced from inside it are not touched.",
     confirmLabel: "Delete file",
   });
   if (!ok) return;
