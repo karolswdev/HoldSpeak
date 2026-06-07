@@ -396,7 +396,6 @@ Configuration file: `~/.config/holdspeak/config.json`
 | `intel_cloud_model` | string | "gpt-5-mini" | Cloud model used when provider is `cloud` or `auto` falls back to cloud |
 | `intel_cloud_api_key_env` | string | "OPENAI_API_KEY" | Environment variable name containing your cloud API key |
 | `intel_cloud_base_url` | string | null | Optional OpenAI-compatible base URL (for proxies/compatible providers) |
-| `intel_cloud_timeout_seconds` | float | 180.0 | Per-request HTTP timeout for cloud intel calls. Large models on a homelab can take well over 20 s for a full segment analysis; the default prevents premature timeouts. Lower it (e.g., `30`) if you want faster fallback to the deferred queue on a slow or flaky endpoint. |
 | `intel_cloud_reasoning_effort` | string | null | Optional cloud reasoning setting (provider dependent) |
 | `intel_cloud_store` | bool | false | Allow provider-side storage for cloud requests |
 | `intel_summary_model` | string | null | Path to larger model for end-of-meeting summary. Falls back to realtime model if null. |

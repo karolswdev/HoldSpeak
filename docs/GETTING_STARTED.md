@@ -104,11 +104,12 @@ Default hotkey:
 If global hotkeys or synthetic typing are blocked, keep the HoldSpeak window
 focused and use the focused hold-to-talk fallback.
 
-> **Tip — see what the copilot is doing without the dashboard.** Launch with
-> `HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak` to get an ambient, native presence
-> surface (a floating HUD on macOS / X11, a tray glyph + notification
-> everywhere) that shows *listening / transcribing / typing* while you dictate
-> into another app — and never steals keyboard focus. See
+> **Tip — see what the copilot is doing without the dashboard.** Flip on
+> **desktop presence** in **Settings** (or set `presence.enabled` in your config)
+> to get an ambient, native surface (a floating HUD on macOS / X11, a tray glyph +
+> notification everywhere) that shows *listening / transcribing / typing* while you
+> dictate into another app — and never steals keyboard focus. For a headless launch
+> you can force it on with `HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak`. See
 > [Desktop Presence](INTELLIGENT_TYPING_GUIDE.md#11-desktop-presence-ambient-on-desktop-status).
 
 ## 6. Use Punctuation Commands

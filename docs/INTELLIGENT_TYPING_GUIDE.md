@@ -443,7 +443,16 @@ It is **off by default** and adds **no GUI dependency** unless you turn it on.
 
 ### Turn it on
 
-Set the environment variable before launching HoldSpeak:
+Presence is a **config toggle**. Flip it from the **Settings** page (or the
+welcome wizard) — the runtime starts and stops the presence host live — or set it
+directly in your config:
+
+```json
+{ "presence": { "enabled": true } }
+```
+
+For a headless or power-user launch you can also force it on with an environment
+variable (a retained override — the config toggle is the normal path):
 
 ```bash
 HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak

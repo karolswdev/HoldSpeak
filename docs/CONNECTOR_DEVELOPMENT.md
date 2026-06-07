@@ -64,7 +64,7 @@ fields:
 | `id` | string | `^[a-z][a-z0-9_]{0,31}$`. Persisted as `source_connector_id`. |
 | `label` | string | Human-readable name shown on `/activity`. |
 | `version` | string | Semver-ish: `MAJOR.MINOR.PATCH` (with optional `-pre.N`). |
-| `kind` | string | One of `KNOWN_KINDS`: `cli_enrichment`, `candidate_inference`, `extension_events`, `history_import`. |
+| `kind` | string | One of `KNOWN_KINDS`: `cli_enrichment`, `candidate_inference`, `extension_events`, `history_import`, `pipeline`. |
 | `capabilities` | list[string] | Subset of `KNOWN_CAPABILITIES`: `records`, `annotations`, `candidates`, `commands`. Cannot be empty. |
 
 Optional:

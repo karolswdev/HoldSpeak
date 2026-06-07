@@ -1,13 +1,21 @@
 # Phase 46 — Documentation Excellence & the 10-Second Hook
 
-**Status:** PLANNING (0/6). Opened 2026-06-06 on user direction ("a dedicated
+**Status:** IN PROGRESS (1/6). Opened 2026-06-06 on user direction ("a dedicated
 phase that will guide us through scaffolding/updating documentation … the main
 README is too low on cool facts of the app, and slightly too large and
 repetitive. People love the graphics, so that stays … other documentation files
 probably also need a big lift").
 
-**Last updated:** 2026-06-06 (phase scaffolded; HS-46-01 — the doc truth audit —
-is the entry point; you reimagine on top of truth, not vibes).
+**Last updated:** 2026-06-06 (**HS-46-01 — Doc truth audit & drift fix: DONE**.
+`docs/internal/DOC_AUDIT_2026-06.md` inventories all 18 live user-facing/root
+docs with a Fresh/Minor-drift/Stale verdict against a code-verified canonical-facts
+table. 4 drift findings fixed across 6 docs: presence is config-backed not
+env-var-only [README, ITG §11, GETTING_STARTED]; the phantom `intel_cloud_timeout_seconds`
+config key removed [MEETING_MODE_GUIDE]; the missing `pipeline` connector kind added
+[CONNECTOR_DEVELOPMENT]; the stale `Listening...`/`Thinking...` device pushbacks
+removed [DEVICE_PROTOCOL]. A new guard pins the README plugin count to the registry.
+The deep-link anchors flagged by an auto-pass were verified *correct* and left
+alone. Suite 2364 passed, 17 skipped. Next: HS-46-02 the README reimagining.)
 
 ## The thesis — why this phase
 
@@ -101,7 +109,7 @@ discoverable and represented, the graphics kept, the bloat gone.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-46-01 | Doc truth audit & drift fix | backlog | [story-01-doc-truth-audit.md](./story-01-doc-truth-audit.md) | — |
+| HS-46-01 | Doc truth audit & drift fix | done | [story-01-doc-truth-audit.md](./story-01-doc-truth-audit.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-46-02 | The README, reimagined (the 10-second hook) | backlog | [story-02-readme-reimagined.md](./story-02-readme-reimagined.md) | — |
 | HS-46-03 | Docs voice & structure system + elevated index | backlog | [story-03-voice-and-structure.md](./story-03-voice-and-structure.md) | — |
 | HS-46-04 | Visual lift — real screenshots across the guides | backlog | [story-04-visual-lift.md](./story-04-visual-lift.md) | — |
@@ -110,10 +118,15 @@ discoverable and represented, the graphics kept, the bloat gone.
 
 ## Where we are
 
-Phase scaffolded off `main` (post Phase-45 + the journal-UI fix, PRs #23/#24) on
-branch `phase-46-documentation-lift`. Nothing written yet. **HS-46-01** (the
-truth audit) is the foundation — you reimagine on top of an accurate picture, not
-vibes. Sequence: 01 → (02, 03) → (04, 05) → 06.
+**HS-46-01 done** — the accuracy foundation is laid. `docs/internal/DOC_AUDIT_2026-06.md`
+is the map: a canonical-facts yardstick + a per-doc verdict for all 18 live docs,
+with 4 drift findings fixed (presence enablement, a phantom config key, a missing
+connector kind, a self-contradicting protocol example) and a new README-plugin-count
+guard. The "verified-correct" anchors note keeps the next pass from regressing the
+deep links. Suite green (2364/17). **Next: HS-46-02** — the bold README reimagining,
+built on the now-accurate picture (10-second hook + cool-facts strip, every graphic
+kept, repetition cut, depth linked, ~130–150 lines). Sequence: ~~01~~ → (02, 03) →
+(04, 05) → 06.
 
 ## Active risks
 

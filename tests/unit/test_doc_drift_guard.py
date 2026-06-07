@@ -79,3 +79,29 @@ def test_no_live_doc_has_a_dangling_relative_link() -> None:
         "A live doc links a path that does not exist (dangling relative link). "
         "Fix the path or the move:\n  " + "\n  ".join(offenders)
     )
+
+
+# HS-46-01: the README headlines a built-in-plugin count ("ships **14 built-in
+# plugins**"). That number drifted before and is exactly the kind of "cool fact"
+# the docs lead with — pin it to the registry so it can't silently rot. Cheap:
+# one import + one regex.
+_PLUGIN_COUNT_CLAIM = re.compile(r"(\d+)\s+built-in plugins", re.IGNORECASE)
+
+
+def test_readme_plugin_count_matches_registry() -> None:
+    from holdspeak.plugins.builtin import _BUILTIN_PLUGIN_DEFS
+
+    registry_count = len(_BUILTIN_PLUGIN_DEFS)
+    readme = (_REPO / "README.md").read_text(encoding="utf-8")
+    claims = [int(m) for m in _PLUGIN_COUNT_CLAIM.findall(readme)]
+
+    assert claims, (
+        "README no longer states a built-in-plugin count ('N built-in plugins'). "
+        "If the phrasing changed, update this guard; otherwise restore the count."
+    )
+    mismatched = [n for n in claims if n != registry_count]
+    assert not mismatched, (
+        f"README advertises {mismatched} built-in plugins but the registry has "
+        f"{registry_count} (holdspeak/plugins/builtin/_BUILTIN_PLUGIN_DEFS). "
+        "Reconcile the count and the plugin table."
+    )
