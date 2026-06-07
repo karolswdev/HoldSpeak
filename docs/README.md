@@ -38,8 +38,11 @@ intelligent-typing layer. This page is the map. Pick a journey.
 ## Meet: meeting intelligence
 
 - **[Meeting Mode Guide](./MEETING_MODE_GUIDE.md)**: capture mic and system audio
-  together, get a live transcript with speaker labels, and review AI-extracted
-  topics, actions, and artifacts at `/history`.
+  together, get a live transcript with speaker labels, review AI-extracted topics,
+  actions, and artifacts at `/history`, then close the loop with aftercare: see
+  what is still open, decided, or changed since last time, jump to the transcript
+  moment that justifies a result, file an accepted action as a human-approved
+  issue, and draft the follow-up.
 
 ## Extend: build on it
 

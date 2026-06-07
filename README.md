@@ -141,6 +141,14 @@ that specific action. Actuators are off by default. Write your own with the
 [Plugin Authoring guide](docs/PLUGIN_AUTHORING.md); for endpoints and routing, see
 the [Meeting Mode Guide](docs/MEETING_MODE_GUIDE.md).
 
+Then close the loop. After a meeting, the "Your next move" aftercare panel at
+`/history` shows what is still open (by owner), what was decided, and what changed
+since the last meeting. Jump to the transcript moment that justifies any result,
+file an accepted action as a human-approved issue through that same actuator flow,
+or draft a copyable follow-up. It is read-only and local: nothing is sent, and
+nothing runs, without your approval. See the
+[Meeting Mode Guide](docs/MEETING_MODE_GUIDE.md#meeting-aftercare-close-the-loop).
+
 ## AIPI-Lite companion
 
 <p align="center">

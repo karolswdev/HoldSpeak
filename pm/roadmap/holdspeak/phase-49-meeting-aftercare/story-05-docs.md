@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 49
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-49-01, HS-49-02, HS-49-03, HS-49-04
 - **Owner:** unassigned
 
@@ -26,14 +26,14 @@ Per the standing rule, every phase gets its own dedicated docs story; this is it
 - **Out:** new feature work (HS-49-01..04). Documentation + framing only.
 
 ## Acceptance criteria
-- [ ] The Meeting Mode guide documents aftercare as one coherent flow matching the
+- [x] The Meeting Mode guide documents aftercare as one coherent flow matching the
       shipped UI (open/decided/changed, the moment jump, accept -> issue, follow-up
       draft); no over-claim (off-by-default actuators, preview-only drafts).
-- [ ] README/index hooks present aftercare as the meeting-side "close the loop"
+- [x] README/index hooks present aftercare as the meeting-side "close the loop"
       follow-through; terms consistent with `DOCS_STYLE.md`.
-- [ ] Doc-drift + dangling-link/image-ref guards green; claims grounded in
-      `meetings.py` / `actuators.py` / the aftercare endpoint; a real screenshot
-      added (mirror `scripts/screenshot_*.py`).
+- [x] Doc-drift + dangling-link/image-ref guards green; claims grounded in
+      `meetings.py` / `actuators.py` / the aftercare endpoint; real screenshots
+      added (from the `scripts/screenshot_aftercare_*.py` captures).
 
 ## Test plan
 - `uv run pytest -q -k "doc_drift or link or doc_guard or doc"`.
