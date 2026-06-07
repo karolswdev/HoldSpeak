@@ -20,4 +20,6 @@ from .core import (  # noqa: F401  explicit: names import * may skip
     SCHEMA_SQL,
     SchemaVersionError,
     backup_database,
+    restore_database,
+    read_schema_version,
 )

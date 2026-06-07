@@ -38,6 +38,31 @@ class SchemaVersionError(RuntimeError):
     """
 
 
+def read_schema_version(db_path: Path) -> Optional[int]:
+    """Return a database's stored schema version without opening it for use.
+
+    A missing file or a missing/empty `schema_version` table reads as None (a
+    fresh database). This is a read-only probe: it never creates the file and
+    never runs `_ensure_schema`, so `doctor` can report a newer-than-known
+    database honestly instead of triggering the refusal.
+    """
+    if not db_path.exists():
+        return None
+    conn = sqlite3.connect(str(db_path))
+    try:
+        try:
+            row = conn.execute("SELECT MAX(version) FROM schema_version").fetchone()
+        except sqlite3.DatabaseError:
+            # No schema_version table (OperationalError) or the file is not a
+            # SQLite database at all (DatabaseError). Either way: no version.
+            return None
+        if not row or row[0] is None:
+            return None
+        return int(row[0])
+    finally:
+        conn.close()
+
+
 def _timestamped_backup_path(db_path: Path) -> Path:
     """A non-clobbering, timestamped backup path next to the database."""
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -740,23 +765,8 @@ class Database:
             self._apply_schema(conn)
 
     def _read_schema_version(self) -> Optional[int]:
-        """Return the stored schema version, or None for a fresh/empty database.
-
-        A missing file or a missing `schema_version` table both read as None (a
-        fresh database). Reading does not create the file.
-        """
-        if not self.db_path.exists():
-            return None
-        with self._connection() as conn:
-            try:
-                row = conn.execute(
-                    "SELECT MAX(version) FROM schema_version"
-                ).fetchone()
-            except sqlite3.OperationalError:
-                return None
-            if not row or row[0] is None:
-                return None
-            return int(row[0])
+        """Return the stored schema version, or None for a fresh/empty database."""
+        return read_schema_version(self.db_path)
 
     def _apply_schema(self, conn: sqlite3.Connection) -> None:
         """Create the database schema.
