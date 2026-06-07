@@ -78,7 +78,7 @@ extensions/firefox/
 
 ## See also
 
-- [Connector Development](CONNECTOR_DEVELOPMENT.md) — the connector contract this
+- [Connector Development](CONNECTOR_DEVELOPMENT.md): the connector contract this
   extension is an instance of.
-- [Security & Privacy](SECURITY.md) — what the browser connector posts and where
-  it goes.
+- [Security & Privacy](SECURITY.md): what the browser connector posts and where it
+  goes.

@@ -184,12 +184,12 @@ Multiple local browser tabs can connect at once. Live pages receive real-time up
 
 ## Meeting Intelligence
 
-A saved meeting's transcript is turned into structured, reviewable artifacts —
-each an elevated, copy-as-Markdown card at `/history`:
+A saved meeting's transcript becomes structured, reviewable artifacts. Each one is
+a copy-as-Markdown card at `/history`:
 
 ![A saved meeting open at /history: the transcript on the left, and on the right a stack of elevated artifact cards — a Risk register table (impact / likelihood / mitigation / owner), Decisions & open questions, and typed Requirements — each with a confidence score and a copy button.](assets/screenshots/history.png)
 
-*The meeting detail at `/history` — requirements, decisions, and a risk register, each extracted by an LLM-backed plugin and rendered read-only.*
+*The meeting detail at `/history`. Requirements, decisions, and a risk register, each extracted by an LLM-backed plugin and rendered read-only.*
 
 HoldSpeak supports three intelligence modes:
 - `local`: requires a local GGUF model
@@ -604,7 +604,7 @@ GitHub Issues, Slack, or any other external system.
 
 ## See also
 
-- [Getting Started](GETTING_STARTED.md) — install and first-run setup.
-- [Models — bring your own](MODELS.md) — configure the LLM that powers intel.
-- [Plugin Authoring](PLUGIN_AUTHORING.md) — write your own meeting-intel plugin.
-- [Security & Privacy](SECURITY.md) — what's stored and what can leave your machine.
+- [Getting Started](GETTING_STARTED.md): install and first-run setup.
+- [Models (bring your own)](MODELS.md): configure the LLM that powers intel.
+- [Plugin Authoring](PLUGIN_AUTHORING.md): write your own meeting-intel plugin.
+- [Security & Privacy](SECURITY.md): what's stored and what can leave your machine.

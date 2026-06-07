@@ -455,8 +455,8 @@ the current roadmap.
 
 ## See also
 
-- [Firefox Extension Guide](FIREFOX_EXTENSION_GUIDE.md) — a first-party
+- [Firefox Extension Guide](FIREFOX_EXTENSION_GUIDE.md): a first-party
   `extension_events` connector, end to end.
-- [Plugin Authoring](PLUGIN_AUTHORING.md) — the sibling contract for meeting-intel
+- [Plugin Authoring](PLUGIN_AUTHORING.md): the sibling contract for meeting-intel
   plugins.
-- [Security & Privacy](SECURITY.md) — the permission model connectors declare against.
+- [Security & Privacy](SECURITY.md): the permission model connectors declare against.
