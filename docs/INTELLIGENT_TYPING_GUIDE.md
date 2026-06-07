@@ -22,10 +22,19 @@ speech -> Whisper transcript -> punctuation cleanup -> dictation pipeline -> typ
 The pipeline can:
 
 - classify an utterance against dictation blocks;
-- inject project knowledge;
+- inject your **project KB** (see below);
 - rewrite rough speech into a cleaner prompt;
 - adapt output for Codex, Claude, terminal, browser, editor, or chat;
 - suggest narrow `.hs/.../*.md` project documentation updates for review.
+
+> **What's a "project KB"?** Your project KB is a small **`.hs/` folder of
+> plain-Markdown files** you keep in a repo — `instructions.md` (how to rewrite),
+> `context.md` (what the project is), `workflows.md` (your commands), `targets.md`
+> (per-destination style), and an `ignore` for secrets. It tells the copilot about
+> *this* project so it can rewrite your speech in a project-aware way. The
+> pipeline's **`kb-enricher`** stage (the project-KB stage) reads it at dictation
+> time; HoldSpeak reads `.hs/` but never writes it without your approval. Set it up
+> in [§5. Create Project Context](#5-create-project-context).
 
 ## 1. Open The Dictation Cockpit
 

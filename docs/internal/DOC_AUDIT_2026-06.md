@@ -149,3 +149,49 @@ excludes `docs/evidence/`.
   stub; no dangling relative links. **Extended in this story** with a guard that the
   advertised built-in-plugin count (README "N built-in plugins") matches
   `register_builtin_plugins` (14), so the headline count can't silently drift.
+  (HS-46-04 added an **image-ref guard** — `<img src>` + markdown images across the
+  README + docs resolve.)
+
+## Feature → doc coverage matrix (HS-46-05)
+
+Every shipped, user-facing capability → its **guide home** → its **README/highlights
+hook** → its **index journey** (`docs/README.md`). The test: no orphan feature (a
+capability no doc covers) and no orphan doc (a doc nothing links to).
+
+| Capability (phase) | Guide home | README hook | Index journey |
+|---|---|---|---|
+| Voice typing — hold-to-talk, punctuation, `clipboard` | Getting Started; User Guide | hook line + "What it does at a glance" | Start here / Dictate |
+| Intelligent dictation pipeline — intent routing, KB enrichment, rewriting, target profiles (DIR-01/39) | Intelligent Typing; Dictation Copilot | strip 🧠 + "See it learn" | Dictate |
+| Dictation **journal + correct-in-the-moment + replay** (45) | Intelligent Typing §12 | strip 🧠 + journal screenshot | Dictate (own entry) |
+| **Persistent correction memory + config cockpit** (40) | Intelligent Typing §10 (cockpit + Memory tab shots) | strip 🧠 ("it learns you") | Dictate (Intelligent Typing) |
+| **Desktop presence** — native HUD / tray (41/43) | Intelligent Typing §11 | strip 🪟 | Dictate (own entry) |
+| **First-run welcome wizard** (42/43) | Getting Started (welcome screenshot) | quickstart → Getting Started | Start here |
+| Settings — sectioned/searchable (43) | Getting Started (routes table) | Configuration section | Start here |
+| Meeting mode — dual-stream capture, transcript, speakers | Meeting Mode Guide | "What it does at a glance" | Meet |
+| Meeting intelligence + **14 plugins** + MIR routing | Meeting Mode; Plugin Authoring | strip 🧩 + "Meeting intelligence" + `/history` screenshot | Meet / Extend |
+| **Actuators I/II** — propose→approve→execute, write connectors (37/38) | Plugin Authoring §Actuators | "Meeting intelligence" paragraph | Extend (Plugin Authoring) |
+| Models — bring your own (GGUF/MLX/OpenAI-compatible) | MODELS.md | strip 🔌 | Dictate |
+| Agent hooks — Claude/Codex | Agent Hook Install | (ITG "see also" + index) | Extend |
+| Activity connectors / Firefox extension | Connector Development; Firefox Extension | (Extend group) | Extend |
+| AIPI-Lite companion + device protocol | AIPI-Lite Workflow; Device Protocol | strip 📟 + "AIPI-Lite companion" + art | Extend |
+| Security & privacy posture | SECURITY.md | strip 🔒 | Operate & Trust |
+| CLI — `doctor` / `meeting` / `history` / `actions` / `intel` / `dictation` / `agent-hook` / `device-psk` | User Guide; Getting Started; Meeting Mode | quickstart | Start here / Dictate / Meet |
+
+**Result:** no orphan features (every capability has a guide home + an index link)
+and no orphan docs (every `docs/*.md` is linked from the journey-map index;
+verified by sweep). The README strip carries the seven top differentiators; depth
+features (cockpit/memory, wizard, settings) are covered in their guide and reached
+from the index rather than padded into the strip — discoverable without
+overstating. Gap closed in this story: the index's Plugin Authoring entry now names
+**actuators** (previously discoverable only by opening the guide). Every hook
+cross-checked true against the canonical-facts table above.
+
+**Clarity gap found (user-reported): the "project KB" is under-explained.** The
+term + `kb-enricher` appeared in the Intelligent Typing guide ~150 lines before the
+`.hs/` folder that *is* the KB was shown, and the README never grounds it. Fixed
+here (docs side): a plain definition on first use in the guide, a gloss on
+`kb-enricher`, and a glossary entry in `DOCS_STYLE.md`. The deeper **product/UX
+legibility** (naming, the `/dictation → Project Context` surface, an in-app
+explainer/empty-state, a guided "create your `.hs/`" flow, a discovery nudge) is
+out of scope for a docs-only phase and is **teed up as a dedicated phase (47 —
+"Project KB: legible & inviting")**.

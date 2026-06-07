@@ -25,7 +25,9 @@ one is **voice + structure + navigation**.
 - **Terms, consistently:** *dictation* (not "voice typing" mid-guide once you've
   introduced it), *meeting mode*, *the dictation pipeline*, *intel* for LLM meeting
   extraction, *actuator* for the propose→approve→execute kind, *desktop presence*
-  for the ambient HUD. Code identifiers in `backticks`.
+  for the ambient HUD, and *project KB* for the repo's `.hs/` Markdown files (gloss
+  it on first use — it's jargon; the `kb-enricher` stage reads it). Code
+  identifiers in `backticks`.
 
 ## The standard page skeleton
 

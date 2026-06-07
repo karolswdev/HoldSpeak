@@ -38,7 +38,8 @@ intelligent-typing layer. This is the map; pick a journey.
 ## Extend — build on it
 
 - **[Plugin Authoring](./PLUGIN_AUTHORING.md)** — write a meeting-intel plugin: the
-  `HostPlugin` contract, prompt → LLM → structured output, rendering, and chains.
+  `HostPlugin` contract, prompt → LLM → structured output, rendering, chains, and
+  the **actuator** propose → approve → execute flow.
 - **[Connector Development](./CONNECTOR_DEVELOPMENT.md)** — build a local activity
   connector (the `cli_enrichment` / `pipeline` / … kinds).
 - **[Agent Hook Install](./AGENT_HOOK_INSTALL.md)** — wire Claude/Codex agent hooks

@@ -1,12 +1,20 @@
 # Phase 46 — Documentation Excellence & the 10-Second Hook
 
-**Status:** IN PROGRESS (4/6). Opened 2026-06-06 on user direction ("a dedicated
+**Status:** IN PROGRESS (5/6). Opened 2026-06-06 on user direction ("a dedicated
 phase that will guide us through scaffolding/updating documentation … the main
 README is too low on cool facts of the app, and slightly too large and
 repetitive. People love the graphics, so that stays … other documentation files
 probably also need a big lift").
 
-**Last updated:** 2026-06-07 (**HS-46-04 — Visual lift: DONE**. A repeatable
+**Last updated:** 2026-06-07 (**HS-46-05 — Coverage & discoverability: DONE**. A
+**feature → doc matrix** in the audit doc maps 16 user-facing capabilities →
+guide home → README hook → index journey: **no orphan features, no orphan docs**.
+Gaps closed: the index now names **actuators**, and the user-reported **"project
+KB" confusion** is fixed in the docs (a plain definition on first use + a gloss on
+`kb-enricher` + a `DOCS_STYLE.md` glossary entry) — its deeper **product/UX
+legibility teed up as new Phase 47**. No stale residue. Guards 8 passed; full
+suite 2365/17. Next: HS-46-06 (closeout + PR). Prior: **HS-46-04 — Visual lift:
+DONE**. A repeatable
 `scripts/screenshot_docs.py` (boots a real server over seeded state — no mic/LLM —
 and writes `welcome.png` / `journal.png` / `history.png` to
 `docs/assets/screenshots/`) + three real UI shots embedded with alt+caption: the
@@ -141,10 +149,16 @@ discoverable and represented, the graphics kept, the bloat gone.
 | HS-46-02 | The README, reimagined (the 10-second hook) | done | [story-02-readme-reimagined.md](./story-02-readme-reimagined.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-46-03 | Docs voice & structure system + elevated index | done | [story-03-voice-and-structure.md](./story-03-voice-and-structure.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-46-04 | Visual lift — real screenshots across the guides | done | [story-04-visual-lift.md](./story-04-visual-lift.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-46-05 | Coverage & discoverability (feature → doc matrix) | backlog | [story-05-coverage-discoverability.md](./story-05-coverage-discoverability.md) | — |
+| HS-46-05 | Coverage & discoverability (feature → doc matrix) | done | [story-05-coverage-discoverability.md](./story-05-coverage-discoverability.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-46-06 | Closeout — before/after + guards + PR | backlog | [story-06-closeout.md](./story-06-closeout.md) | — |
 
 ## Where we are
+
+**HS-46-01 → 05 done** — accurate spine, one voice, the real app on screen, *and*
+proven coverage. A feature → doc matrix shows no orphan features or docs; the index
+names actuators; the user-reported "project KB" confusion is fixed in the docs (the
+product/UX side spun out as **Phase 47**). Only **HS-46-06 (closeout + PR)** remains.
+_(Earlier — HS-46-01 → 04:)_
 
 **HS-46-01 → 04 done** — accurate spine, one voice, *and* the real app on screen.
 The README hooks in ten seconds (HS-46-02: 205 → 152 lines), the guides clear a
