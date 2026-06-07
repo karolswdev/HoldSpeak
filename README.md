@@ -50,6 +50,11 @@ dictation is recorded, you can **review** what it heard, **correct** a misfire i
 one tap (which teaches it), and **replay** it through the updated pipeline — so
 "it got better" becomes something you can watch. [End to end →](docs/DICTATION_COPILOT.md)
 
+<p align="center">
+  <img src="docs/assets/screenshots/journal.png" alt="The HoldSpeak dictation Journal: a said-to-typed timeline of recent dictations, each card showing the spoken transcript, the typed result, its routing target, and a per-utterance latency strip; one row marked corrected." width="760">
+</p>
+<p align="center"><em>The dictation Journal — every utterance: what you said, what it typed, where it routed, and how long it took.</em></p>
+
 ## Quickstart
 
 The install script clones it; `doctor` checks your setup; `holdspeak` launches:

@@ -2,7 +2,8 @@
 
 - **Project:** holdspeak
 - **Phase:** 46
-- **Status:** backlog
+- **Status:** done
+- **Evidence:** [evidence-story-04.md](./evidence-story-04.md)
 - **Depends on:** HS-46-01
 - **Unblocks:** HS-46-06
 - **Owner:** unassigned

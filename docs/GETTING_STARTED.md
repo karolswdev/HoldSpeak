@@ -73,6 +73,10 @@ takes you from install to your first words, **no file editing**:
 5. **Desktop presence** — flip a switch (no env var) for the ambient HUD.
 6. **You're set** — jump into dictation, a meeting, or the copilot.
 
+![The HoldSpeak welcome wizard: a full-screen first-run screen headlined "Hold a key. Speak. Watch it type." with a step rail (Welcome · Permissions · Model · First dictation · Presence · You're set) and a "Get started" button; the footer reads "Local · 127.0.0.1 · nothing leaves your machine".](assets/screenshots/welcome.png)
+
+*The `/welcome` wizard on a fresh install — fresh clone to a verified first dictation, no file editing.*
+
 A returning user lands on the dashboard instead (the wizard never nags). If
 something later needs attention, **`/setup`** is the calm status surface, and the
 **Privacy** chip in the header always shows what can leave your machine.

@@ -105,3 +105,38 @@ def test_readme_plugin_count_matches_registry() -> None:
         f"{registry_count} (holdspeak/plugins/builtin/_BUILTIN_PLUGIN_DEFS). "
         "Reconcile the count and the plugin table."
     )
+
+
+# HS-46-04: real UI screenshots + pixellab art are embedded via HTML `<img src>`
+# (for width/centering), which the markdown-link guard above does NOT see. Guard
+# every local image reference — markdown `![](...)` *and* `<img src="...">`, across
+# the README *and* the live docs — so a renamed/missing asset can't ship a broken
+# image. (The markdown-link guard already covers `![](...)` in docs; this adds the
+# HTML tags and the root README.)
+_IMG_TAG_SRC = re.compile(r"<img\b[^>]*\bsrc=[\"']([^\"']+)[\"']", re.IGNORECASE)
+_MD_IMG = re.compile(r"!\[[^\]]*\]\(([^)]+)\)")
+
+
+def _docs_with_images() -> list[Path]:
+    return [_REPO / "README.md", *_live_docs()]
+
+
+def test_all_embedded_image_refs_resolve() -> None:
+    offenders: list[str] = []
+    for path in _docs_with_images():
+        text = path.read_text(encoding="utf-8")
+        for lineno, line in enumerate(text.splitlines(), 1):
+            for src in _IMG_TAG_SRC.findall(line) + _MD_IMG.findall(line):
+                src = src.strip()
+                if src.startswith(("http://", "https://", "data:", "#", "<")):
+                    continue
+                rel = src.split("#", 1)[0].split("?", 1)[0]
+                if not rel:
+                    continue
+                if not (path.parent / rel).resolve().exists():
+                    offenders.append(f"{path.relative_to(_REPO)}:{lineno}: -> {src}")
+
+    assert not offenders, (
+        "A doc embeds an image whose path does not resolve (renamed/missing asset). "
+        "Fix the path or restore the file:\n  " + "\n  ".join(offenders)
+    )
