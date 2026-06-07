@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import shutil
 import sqlite3
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, Iterator
 
@@ -26,6 +28,106 @@ log = get_logger("db")
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
 SCHEMA_VERSION = 1
+
+
+class SchemaVersionError(RuntimeError):
+    """The stored database is newer than this build of HoldSpeak understands.
+
+    Raised instead of touching the data, so an older build can never
+    downgrade-rebuild a database written by a newer one.
+    """
+
+
+def read_schema_version(db_path: Path) -> Optional[int]:
+    """Return a database's stored schema version without opening it for use.
+
+    A missing file or a missing/empty `schema_version` table reads as None (a
+    fresh database). This is a read-only probe: it never creates the file and
+    never runs `_ensure_schema`, so `doctor` can report a newer-than-known
+    database honestly instead of triggering the refusal.
+    """
+    if not db_path.exists():
+        return None
+    conn = sqlite3.connect(str(db_path))
+    try:
+        try:
+            row = conn.execute("SELECT MAX(version) FROM schema_version").fetchone()
+        except sqlite3.DatabaseError:
+            # No schema_version table (OperationalError) or the file is not a
+            # SQLite database at all (DatabaseError). Either way: no version.
+            return None
+        if not row or row[0] is None:
+            return None
+        return int(row[0])
+    finally:
+        conn.close()
+
+
+def _timestamped_backup_path(db_path: Path) -> Path:
+    """A non-clobbering, timestamped backup path next to the database."""
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    backup_path = db_path.with_name(f"{db_path.name}.{timestamp}.bak")
+    counter = 1
+    while backup_path.exists():
+        backup_path = db_path.with_name(f"{db_path.name}.{timestamp}-{counter}.bak")
+        counter += 1
+    return backup_path
+
+
+def backup_database(db_path: Path) -> Path:
+    """Snapshot the SQLite database to a timestamped sibling and return it.
+
+    Uses SQLite's online backup API (`Connection.backup`) so the copy is a
+    consistent snapshot even if something else holds a connection. This is the
+    safety net invoked before any destructive schema action, so an upgrade never
+    changes a user's data without leaving a recoverable copy first, and it is
+    what the `holdspeak backup` command runs on demand. The backup lands next to
+    the database as `<name>.<timestamp>.bak`; a counter is appended if that name
+    is already taken.
+    """
+    backup_path = _timestamped_backup_path(db_path)
+    source = sqlite3.connect(str(db_path))
+    try:
+        dest = sqlite3.connect(str(backup_path))
+        try:
+            source.backup(dest)
+        finally:
+            dest.close()
+    finally:
+        source.close()
+    return backup_path
+
+
+def restore_database(backup_path: Path, db_path: Path) -> Optional[Path]:
+    """Restore `db_path` from `backup_path`, returning the safety backup taken.
+
+    The current database (if any) is itself snapshotted first, so a restore can
+    never be the thing that loses data: if you restore the wrong file you can
+    still get back to where you were. Returns the path of that safety backup, or
+    None when there was no existing database to protect. Raises ValueError if
+    `backup_path` is not a readable HoldSpeak database.
+    """
+    if not backup_path.exists():
+        raise ValueError(f"Backup file not found: {backup_path}")
+
+    probe = sqlite3.connect(str(backup_path))
+    try:
+        try:
+            probe.execute("SELECT MAX(version) FROM schema_version").fetchone()
+        except sqlite3.DatabaseError as exc:
+            raise ValueError(
+                f"{backup_path} is not a readable HoldSpeak database backup ({exc})."
+            ) from exc
+    finally:
+        probe.close()
+
+    safety: Optional[Path] = None
+    if db_path.exists():
+        safety = backup_database(db_path)
+
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(backup_path, db_path)
+    return safety
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -621,19 +723,50 @@ class Database:
             conn.close()
 
     def _ensure_schema(self) -> None:
-        """Create or migrate database schema."""
-        with self._connection() as conn:
-            # Check current version
-            try:
-                row = conn.execute(
-                    "SELECT MAX(version) FROM schema_version"
-                ).fetchone()
-                current_version = row[0] if row and row[0] else 0
-            except sqlite3.OperationalError:
-                current_version = 0
+        """Bring the database to the current schema version, safely by default.
 
-            if current_version < SCHEMA_VERSION:
+        The four-way matrix that defines HoldSpeak's forward upgrade contract:
+
+        - **fresh / empty** (no stored version): create the schema at the current
+          version, exactly as the original install path did.
+        - **stored == SCHEMA_VERSION**: nothing to do.
+        - **stored < SCHEMA_VERSION**: an older database. Back it up first, then
+          apply the schema. No destructive action ever runs without a backup.
+        - **stored > SCHEMA_VERSION**: a database written by a newer HoldSpeak.
+          Refuse with a clear error and leave the data untouched; never
+          downgrade-rebuild it.
+        """
+        stored = self._read_schema_version()
+
+        if stored is None or stored == 0:
+            with self._connection() as conn:
                 self._apply_schema(conn)
+            return
+
+        if stored == SCHEMA_VERSION:
+            return
+
+        if stored > SCHEMA_VERSION:
+            raise SchemaVersionError(
+                f"The database at {self.db_path} is schema version {stored}, but "
+                f"this build of HoldSpeak only understands version {SCHEMA_VERSION}. "
+                f"It was almost certainly written by a newer HoldSpeak. Upgrade "
+                f"HoldSpeak (or restore a backup from this version). The database "
+                f"was left untouched."
+            )
+
+        # stored < SCHEMA_VERSION: an older database. Back up before any change.
+        backup = backup_database(self.db_path)
+        log.warning(
+            f"Database at {self.db_path} is schema version {stored}; this build is "
+            f"{SCHEMA_VERSION}. Backed up to {backup} before applying the schema."
+        )
+        with self._connection() as conn:
+            self._apply_schema(conn)
+
+    def _read_schema_version(self) -> Optional[int]:
+        """Return the stored schema version, or None for a fresh/empty database."""
+        return read_schema_version(self.db_path)
 
     def _apply_schema(self, conn: sqlite3.Connection) -> None:
         """Create the database schema.

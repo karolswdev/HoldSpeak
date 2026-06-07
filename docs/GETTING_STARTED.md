@@ -40,7 +40,13 @@ holdspeak doctor
 Fix anything marked as failing before debugging higher-level features.
 The most important checks are microphone access, transcription backend,
 hotkey support, text insertion support, web runtime, and optional LLM
-runtime status.
+runtime status. `doctor` also reports the database schema and config state,
+so you know it is healthy before and after an upgrade.
+
+Later, when you upgrade HoldSpeak, you can snapshot your data first with
+`holdspeak backup` and put a snapshot back with `holdspeak restore`. Upgrades
+are safe by default; see [`RELEASING.md`](RELEASING.md) for what happens to your
+data on a version change.
 
 ## 3. Start HoldSpeak
 

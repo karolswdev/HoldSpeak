@@ -45,6 +45,8 @@ Examples:
   holdspeak meeting      # Start in meeting mode (capture mic + system audio)
   holdspeak meeting --setup  # Check system audio setup
   holdspeak doctor       # Verify runtime deps and setup
+  holdspeak backup       # Back up the database before upgrading
+  holdspeak restore      # List backups, or restore one (holdspeak restore <file>)
   holdspeak agent-hook templates --agent claude
                         # Print Claude/Codex hook templates for context capture
   holdspeak intel        # Inspect or process deferred meeting intelligence
@@ -289,6 +291,26 @@ Logs are written to: {LOG_FILE}
         ),
     )
 
+    subparsers.add_parser(
+        "backup",
+        help="Back up the HoldSpeak database to a timestamped file",
+    )
+
+    restore_parser = subparsers.add_parser(
+        "restore",
+        help="Restore the HoldSpeak database from a backup file",
+    )
+    restore_parser.add_argument(
+        "backup",
+        nargs="?",
+        help="Path to the backup file (omit to list available backups)",
+    )
+    restore_parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="Skip the overwrite confirmation prompt",
+    )
+
     args = parser.parse_args()
 
     # Setup logging (always to file, optionally to stderr)
@@ -336,6 +358,17 @@ Logs are written to: {LOG_FILE}
     # Handle doctor subcommand
     if args.command == "doctor":
         raise SystemExit(run_doctor_command(args))
+
+    # Handle backup / restore subcommands (HS-50-03)
+    if args.command == "backup":
+        from .commands.backup import run_backup_command
+
+        raise SystemExit(run_backup_command(args))
+
+    if args.command == "restore":
+        from .commands.backup import run_restore_command
+
+        raise SystemExit(run_restore_command(args))
 
     # Default mode: web-first runtime.
     log.info("HoldSpeak default mode routing to web")

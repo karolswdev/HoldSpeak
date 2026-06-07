@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 50
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-50-01, HS-50-02, HS-50-03, HS-50-04, HS-50-05
 - **Owner:** unassigned
 
@@ -27,12 +27,15 @@ gives every phase its own dedicated docs story.
 - **Out:** new feature docs; the meeting/dictation guides (unchanged).
 
 ## Acceptance criteria
-- [ ] A release + upgrade/backup policy doc exists and matches the shipped behavior
+- [x] A release + upgrade/backup policy doc exists and matches the shipped behavior
       (HS-50-02/03/04); a maintainer release checklist is written.
-- [ ] README + GETTING_STARTED reconciled: honest status, pinned install, backup
-      note; terms consistent with `DOCS_STYLE.md`.
-- [ ] Doc-drift + dangling-link/image-ref guards green; every claim grounded in
+      (`docs/RELEASING.md`)
+- [x] README + GETTING_STARTED reconciled: honest status, pinned install, backup
+      note; terms consistent with `DOCS_STYLE.md`. ("Upgrading and your data" in
+      README; backup pointer in GETTING_STARTED; status line already honest)
+- [x] Doc-drift + dangling-link/image-ref guards green; every claim grounded in
       `db/core.py` / `commands/doctor.py` / `config.py` / the backup path.
+      (`test_doc_drift_guard.py` 5 passed; humanizer voice, no em/en dashes)
 
 ## Test plan
 - `uv run pytest -q -k "doc_drift or link or doc_guard or doc"`.

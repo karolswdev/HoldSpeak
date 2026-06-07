@@ -1,3 +1,40 @@
 """HoldSpeak - Voice typing for macOS and Linux. Hold, speak, release."""
 
-__version__ = "0.1.0"
+from __future__ import annotations
+
+
+def _resolve_version() -> str:
+    """Return the one true version.
+
+    The package metadata written from `pyproject.toml` is the single source of
+    truth. An editable install (`uv pip install -e .`) registers that metadata,
+    so this resolves correctly for both installed and source-tree runs. The
+    fallback only matters when running from a raw checkout that was never
+    installed; there we read the version straight out of `pyproject.toml`.
+    """
+    try:
+        from importlib.metadata import PackageNotFoundError, version
+
+        try:
+            return version("holdspeak")
+        except PackageNotFoundError:
+            pass
+    except Exception:
+        pass
+
+    try:
+        import re
+        from pathlib import Path
+
+        pyproject = Path(__file__).resolve().parent.parent / "pyproject.toml"
+        text = pyproject.read_text(encoding="utf-8")
+        match = re.search(r'(?m)^\s*version\s*=\s*"([^"]+)"', text)
+        if match:
+            return match.group(1)
+    except Exception:
+        pass
+
+    return "0.0.0+unknown"
+
+
+__version__ = _resolve_version()

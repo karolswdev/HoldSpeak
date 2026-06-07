@@ -115,6 +115,16 @@ uv pip install -e '.[dictation-openai]'# intelligent dictation via an OpenAI-com
 The dictation and meeting LLM is yours to choose. See
 [`docs/MODELS.md`](docs/MODELS.md) for the contract and current suggestions.
 
+### Upgrading and your data
+
+Your whole HoldSpeak database is a single SQLite file. Before a version jump you
+can snapshot it with `holdspeak backup`, and put one back with `holdspeak
+restore`. Upgrades are safe by default: HoldSpeak backs up an older database
+before it touches it, and refuses to open a database written by a newer build
+rather than risk your data. `holdspeak doctor` reports the schema and config
+state it found. The full policy is in
+[`docs/RELEASING.md`](docs/RELEASING.md).
+
 ## Platform support
 
 | Capability | macOS 14+ (Apple Silicon) | Linux X11 | Linux Wayland |

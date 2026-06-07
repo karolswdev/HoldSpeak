@@ -1,12 +1,17 @@
 # Phase 50 — Release Readiness ("cut a real 0.x")
 
-**Status:** PLANNING (0/7). Opened 2026-06-07 on user direction, right after Phase
-49 closed + merged (PR #33). Picked from the [project backlog](../BACKLOG.md)
-candidate C: the bet that actually lets the open-source push ship publicly.
+**Status:** CLOSED (7/7). Opened and closed 2026-06-07 on user direction, right
+after Phase 49 closed + merged (PR #33). Picked from the
+[project backlog](../BACKLOG.md) candidate C: the bet that actually lets the
+open-source push ship publicly.
 
-**Last updated:** 2026-06-07 (phase scaffolded. **Read
-[`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.** HS-50-02 — the safe-by-default schema
-policy — is the heart; HS-50-01 — one true version — is the cheapest first win.)
+**Last updated:** 2026-06-07 (HS-50-07 done: closeout. The dogfood proves the
+safety matrix end to end (`dogfood-transcript.txt`, RESULT: PASS): one true
+version, fresh-create, no-op-equal, older -> backup-then-apply with data intact,
+newer -> refused untouched, doctor honest, newer config kept + flagged. Full suite
+green (2451 passed, 17 skipped), `npm run build` clean, 0 `_built/` tracked,
+`final-summary.md` written, BACKLOG candidate C flipped to shipped. Phase CLOSED;
+PR to `main` opened and merged on green CI.)
 
 ## The thesis — why this phase
 
@@ -85,23 +90,67 @@ routing.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-50-01 | One true version (single source + surfaced) | backlog | [story-01-version-ssot.md](./story-01-version-ssot.md) | — |
-| HS-50-02 | Safe-by-default schema policy | backlog | [story-02-schema-policy.md](./story-02-schema-policy.md) | — |
-| HS-50-03 | Backup + restore | backlog | [story-03-backup-restore.md](./story-03-backup-restore.md) | — |
-| HS-50-04 | doctor + config honesty | backlog | [story-04-doctor-config-honesty.md](./story-04-doctor-config-honesty.md) | — |
-| HS-50-05 | Verified clean-machine install + pinned contract | backlog | [story-05-install-verification.md](./story-05-install-verification.md) | — |
-| HS-50-06 | Docs: release + upgrade/backup policy | backlog | [story-06-docs.md](./story-06-docs.md) | — |
-| HS-50-07 | Closeout — dogfood + final-summary + PR | backlog | [story-07-closeout.md](./story-07-closeout.md) | — |
+| HS-50-01 | One true version (single source + surfaced) | done | [story-01-version-ssot.md](./story-01-version-ssot.md) | [evidence-story-01.md](./evidence-story-01.md) |
+| HS-50-02 | Safe-by-default schema policy | done | [story-02-schema-policy.md](./story-02-schema-policy.md) | [evidence-story-02.md](./evidence-story-02.md) |
+| HS-50-03 | Backup + restore | done | [story-03-backup-restore.md](./story-03-backup-restore.md) | [evidence-story-03.md](./evidence-story-03.md) |
+| HS-50-04 | doctor + config honesty | done | [story-04-doctor-config-honesty.md](./story-04-doctor-config-honesty.md) | [evidence-story-04.md](./evidence-story-04.md) |
+| HS-50-05 | Verified clean-machine install + pinned contract | done | [story-05-install-verification.md](./story-05-install-verification.md) | [evidence-story-05.md](./evidence-story-05.md), [install-transcript.txt](./install-transcript.txt) |
+| HS-50-06 | Docs: release + upgrade/backup policy | done | [story-06-docs.md](./story-06-docs.md) | [evidence-story-06.md](./evidence-story-06.md) |
+| HS-50-07 | Closeout — dogfood + final-summary + PR | done | [story-07-closeout.md](./story-07-closeout.md) | [evidence-story-07.md](./evidence-story-07.md), [final-summary.md](./final-summary.md), [dogfood-transcript.txt](./dogfood-transcript.txt) |
 
 ## Where we are
 
-Scaffolded right after Phase 49 closed + merged (PR #33), from backlog candidate C.
-Nothing built yet. **Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first** — it has the
-mission, the mapped + verified seams (version, db/core schema, doctor, config,
-backup/export, install, docs), the rules of the road, and per-story success
-criteria. **HS-50-02** (the safe schema policy) is the heart; **HS-50-01** (one
-true version) is the cheapest first win. Sequence: 01 -> 02 -> 03 -> 04 -> 05 ->
-06 -> 07.
+**HS-50-01 (one true version) is done.** `holdspeak/__init__.py` resolves
+`__version__` from package metadata with a `pyproject.toml` regex fallback, so the
+`0.1.0`/`0.2.1` split is gone. The version shows in the `doctor` runtime check and
+the `/api/setup/status` payload. `scripts/install.sh` pins a tag via
+`HOLDSPEAK_REF` (default `v0.2.1`, `main` dev fallback).
+`tests/unit/test_version_ssot.py` pins it.
+
+**HS-50-02 (safe-by-default schema policy) is done — the heart of the phase.**
+`db/core.py:_ensure_schema` now implements the four-way matrix: create-fresh,
+no-op-equal, backup-then-apply-older, refuse-newer. `backup_database()` copies the
+SQLite file to a timestamped, non-clobbering sibling before any destructive
+action; `SchemaVersionError` refuses a newer-than-known DB and leaves it
+byte-for-byte untouched. The fresh-install path is unchanged. One honest
+correction to the scaffold framing: the live `SCHEMA_SQL` is fully additive today
+(`CREATE TABLE IF NOT EXISTS`, no `DROP`/`DELETE`), so there was no literal wipe to
+fix; the real unguarded holes closed are "a newer DB silently run by an older
+build" and "no backup before a future migration." `tests/unit/test_db_schema_policy.py`
+covers all four cells.
+
+**HS-50-03 (backup + restore) is done.** `backup_database` takes a consistent
+snapshot via SQLite's `Connection.backup`; `restore_database` validates the backup,
+snapshots the current DB first, then puts it in place. `holdspeak backup` and
+`holdspeak restore` are wired into the CLI.
+
+**HS-50-04 (doctor + config honesty) is done.** `doctor` has a read-only Database
+check (`read_schema_version` probe: current=PASS, older=WARN, newer=FAIL,
+unreadable=WARN) that flows into `/api/setup/status` too. `Config` carries a
+`config_version` that coerces an older/unversioned shape forward without dropping
+fields and keeps + flags a newer one; the config check also flags a newer config.
+Honest over silent in both places.
+
+**HS-50-05 (verified clean-machine install) is done.** Ran `uv pip install -e .`
+in a fresh venv with a clean temp HOME; `holdspeak doctor` reaches exit 0, version
+resolves to 0.2.1 from real install metadata, and the new Database/Config checks
+pass. The two warnings are the expected optional gaps (no llama.cpp model, no
+system-audio source) and doctor degrades honestly. `install.sh` pins a tag via
+`HOLDSPEAK_REF`, verified statically; transcript captured in `install-transcript.txt`.
+
+**HS-50-06 (docs) is done.** `docs/RELEASING.md` is the release + upgrade/backup
+policy plus a maintainer checklist; README and GETTING_STARTED reconciled.
+
+**HS-50-07 (closeout) is done. The phase is CLOSED (7/7).** The dogfood
+(`dogfood-transcript.txt`, RESULT: PASS) proves the safety matrix end to end:
+one true version, fresh-create, no-op-equal, older -> backup-then-apply with the
+data intact, newer -> refused and untouched, doctor honest at each state, and a
+newer config kept + flagged. Full suite green (2451 passed, 17 skipped),
+`npm run build` clean, 0 `_built/` tracked, `final-summary.md` written, BACKLOG
+candidate C flipped to shipped, PR to `main` opened and merged on green CI.
+
+HoldSpeak is now safe to install, upgrade, and trust. The PyPI publish itself is a
+deliberate maintainer step once the gate is green (see `docs/RELEASING.md`).
 
 ## Active risks
 

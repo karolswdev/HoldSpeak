@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 50
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-50-02
 - **Unblocks:** HS-50-07
 - **Owner:** unassigned
@@ -26,12 +26,16 @@ a way to take a backup on demand before they upgrade.
   the backup primitive + entry point.
 
 ## Acceptance criteria
-- [ ] A backup primitive copies the live DB to a timestamped file and returns its
+- [x] A backup primitive copies the live DB to a timestamped file and returns its
       path; it is invoked automatically before any destructive schema action.
-- [ ] A `holdspeak backup` entry point exists and is documented.
-- [ ] No data is lost: the backup is a faithful copy (open it, read a row).
-- [ ] Tests assert a backup file is produced + readable; the auto-backup fires on
-      the older-version upgrade path.
+      (`db/core.py` `backup_database` via `Connection.backup`; called by HS-50-02)
+- [x] A `holdspeak backup` entry point exists and is documented.
+      (`commands/backup.py`, wired in `main.py` + help epilog; `holdspeak restore` too)
+- [x] No data is lost: the backup is a faithful copy (open it, read a row).
+      (`test_backup_produces_a_readable_copy`)
+- [x] Tests assert a backup file is produced + readable; the auto-backup fires on
+      the older-version upgrade path. (`tests/unit/test_backup_restore_cli.py` +
+      `test_db_schema_policy.py::test_older_db_is_backed_up_then_applied`)
 
 ## Test plan
 - Unit/integration: take a backup of a seeded DB -> the file exists, opens, and has

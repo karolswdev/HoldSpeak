@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 50
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-50-03, HS-50-04, HS-50-07
 - **Owner:** unassigned
@@ -28,12 +28,22 @@ data. This is the heart of the phase.
   is the forward contract).
 
 ## Acceptance criteria
-- [ ] `_ensure_schema` implements the four-way matrix; the silent data-loss path is
+- [x] `_ensure_schema` implements the four-way matrix; the silent data-loss path is
       closed (no destructive action without a backup; newer DB refused untouched).
-- [ ] The fresh-install path (empty/absent DB) is byte-identical to today.
-- [ ] Behavior-preserving for the common case (stored == version is a no-op); the
+      (`db/core.py` `_ensure_schema` + `_read_schema_version` + `SchemaVersionError`)
+- [x] The fresh-install path (empty/absent DB) is byte-identical to today.
+      (same `_apply_schema(conn)`, no backup; full suite green)
+- [x] Behavior-preserving for the common case (stored == version is a no-op); the
       `reset_database()` / temp-DB test idiom still works.
-- [ ] Tests cover fresh / equal / older / newer; full relevant suite green.
+- [x] Tests cover fresh / equal / older / newer; full relevant suite green.
+      (`tests/unit/test_db_schema_policy.py`; 2436 passed)
+
+## Note on the framing (verified against the live tree)
+`SCHEMA_SQL` is fully additive today (all `CREATE TABLE IF NOT EXISTS`, no
+`DROP`/`DELETE`), so the current `executescript` does not literally drop tables.
+The real unguarded holes were: a newer DB silently run by an older build, and no
+backup before any future migration. Both are closed. See
+[evidence-story-02.md](./evidence-story-02.md).
 
 ## Test plan
 - Unit/integration: open a fresh DB (created at version); open at-version (no-op);

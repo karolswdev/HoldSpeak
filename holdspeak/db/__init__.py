@@ -18,4 +18,8 @@ from .core import (  # noqa: F401  explicit: names import * may skip
     DEFAULT_DB_PATH,
     SCHEMA_VERSION,
     SCHEMA_SQL,
+    SchemaVersionError,
+    backup_database,
+    restore_database,
+    read_schema_version,
 )

@@ -1,0 +1,59 @@
+HoldSpeak clean-machine install verification (HS-50-05)
+Captured: 2026-06-07  Host: Darwin 25.2.0 (arm64)  uv 0.9.28  CPython 3.13.11
+Source: editable install from the checkout (the documented GETTING_STARTED step 1)
+Isolation: fresh venv at $TMPROOT/venv, clean temp HOME at $TMPROOT/home
+============================================================
+
+$ uv venv $TMPROOT/venv --python 3.13
+Using CPython 3.13.11 / Creating virtual environment at: $TMPROOT/venv
+
+$ uv pip install -e <checkout> --python $TMPROOT/venv/bin/python
+(resolved + installed the full dependency set: torch 2.12.0, fastapi/starlette,
+ uvicorn 0.49.0, websockets 16.0, mlx stack, etc. — completed without error)
+
+$ $TMPROOT/venv/bin/python -c 'import holdspeak; print(holdspeak.__version__)'
+0.2.1
+
+$ HOME=$TMPROOT/home XDG_*=$TMPROOT/home/... holdspeak doctor
+HoldSpeak Doctor
+===============
+[PASS] Runtime: HoldSpeak 0.2.1 on Darwin 25.2.0 (arm64), Python 3.13.11
+[PASS] Config: Loaded /tmp/hs-clean-install/home/.config/holdspeak/config.json (config version 1)
+[PASS] Database: No database yet at /tmp/hs-clean-install/home/.local/share/holdspeak/holdspeak.db; it is created on first use.
+[PASS] Microphone: Default input: MacBook Pro Microphone (index 0)
+[PASS] Transcription backend: `auto` resolves to `mlx`
+[PASS] Web runtime: fastapi, uvicorn, and websockets are importable
+[PASS] Web runtime auth: Web runtime binds loopback (open to this machine). Auth token is not set — required automatically if a non-loopback bind is ever configured.
+[WARN] Meeting intelligence runtime: llama-cpp-python is not available
+[PASS] Meeting intelligence egress: Local only — transcripts never leave this machine.
+[PASS] Cloud intel preflight: Skipped (provider mode `local`)
+[PASS] Project context: dictation pipeline disabled (opt-in)
+[PASS] LLM runtime: dictation pipeline disabled (opt-in)
+[PASS] Structured-output compilation: dictation pipeline disabled (opt-in)
+[PASS] LLM runtime counters: dictation pipeline disabled (opt-in)
+[PASS] MIR routing: MIR-01 routing pipeline disabled (opt-in)
+[PASS] MIR telemetry: router_counters=[dropped_windows, routed_windows]; host_metrics=[blocked, deduped, error, proposed, queued, runs_total, success, timeout]
+[PASS] Global hotkey: Hotkey listener initialized for `alt_r`
+[PASS] Text injection: Keyboard injection backend initialized
+[PASS] Clipboard backend: Platform default clipboard backend
+[PASS] ffmpeg: Detected in PATH
+[PASS] pactl: Not required on this platform
+[WARN] System audio capture: System-audio capture source not configured
+[PASS] Connector packs: first-party: calendar_activity, firefox_ext, gh, jira, meeting_context
+
+Summary: 21 passed, 2 warnings, 0 failed
+
+Suggested fixes:
+- Meeting intelligence runtime: Set a valid local model path (currently '~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf').
+- System audio capture: Run `holdspeak meeting --setup` and follow the printed instructions.
+doctor exit code: 0
+
+============================================================
+install.sh (the from-script path) static verification:
+  bash -n scripts/install.sh  -> parses cleanly
+  default spec: holdspeak @ git+https://github.com/karolswdev/HoldSpeak.git@v0.2.1
+  dev fallback: HOLDSPEAK_REF=main -> ...@main
+Note: a live install.sh network run installs from the pushed git ref. The
+v0.2.1 tag is a maintainer release step (HS-50-06 checklist); until it is
+pushed, HOLDSPEAK_REF=main is the working ref. The from-checkout path above
+is what verifies this branch's code (an @main install would predate it).

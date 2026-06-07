@@ -14,6 +14,12 @@ logger = logging.getLogger(__name__)
 CONFIG_DIR = Path.home() / ".config" / "holdspeak"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
+# The config format version. Bumped when the on-disk shape changes in a way that
+# needs forward coercion. A config without this field is treated as pre-versioning
+# and coerced forward; a config newer than this build is loaded but flagged rather
+# than silently honored.
+CONFIG_VERSION = 1
+
 
 def _coerce(dc_type, data, *, section: str):
     """Build a config dataclass from a dict, dropping unknown/legacy keys.
@@ -34,6 +40,34 @@ def _coerce(dc_type, data, *, section: str):
             "config: ignoring unknown key(s) in [%s]: %s", section, ", ".join(extra)
         )
     return dc_type(**{k: v for k, v in data.items() if k in known})
+
+
+def _coerce_config_version(raw) -> int:
+    """Resolve the on-disk config_version into the value to load with.
+
+    - Missing (a pre-versioning config) or not an int: coerce forward to the
+      current version. No fields are dropped; the rest of load() keeps every
+      known key, so an older shape upgrades in place.
+    - Older than this build: coerce forward to the current version (the forward
+      upgrade is a no-op today; this is where a real migration would hook in).
+    - Newer than this build: keep the stored value and warn. Loading proceeds so
+      the user is not locked out, but doctor flags it rather than pretending the
+      config is understood.
+    """
+    if not isinstance(raw, int):
+        return CONFIG_VERSION
+    if raw < CONFIG_VERSION:
+        logger.info("config: coercing config_version %s forward to %s", raw, CONFIG_VERSION)
+        return CONFIG_VERSION
+    if raw > CONFIG_VERSION:
+        logger.warning(
+            "config: config_version %s is newer than this build (%s); "
+            "loading anyway, some settings may be ignored",
+            raw,
+            CONFIG_VERSION,
+        )
+        return raw
+    return raw
 
 
 @dataclass
@@ -394,6 +428,7 @@ class PresenceConfig:
 @dataclass
 class Config:
     """Main configuration container."""
+    config_version: int = CONFIG_VERSION
     hotkey: HotkeyConfig = field(default_factory=HotkeyConfig)
     model: ModelConfig = field(default_factory=ModelConfig)
     ui: UIConfig = field(default_factory=UIConfig)
@@ -416,6 +451,8 @@ class Config:
             with open(config_path) as f:
                 data = json.load(f)
 
+            config_version = _coerce_config_version(data.get("config_version"))
+
             dictation_data = data.get("dictation", {}) or {}
             pipeline_data = dictation_data.get("pipeline", {}) or {}
             runtime_data = dictation_data.get("runtime", {}) or {}
@@ -429,6 +466,7 @@ class Config:
             )
 
             return cls(
+                config_version=config_version,
                 hotkey=_coerce(HotkeyConfig, data.get("hotkey", {}) or {}, section="hotkey"),
                 model=_coerce(ModelConfig, data.get("model", {}) or {}, section="model"),
                 ui=_coerce(UIConfig, data.get("ui", {}) or {}, section="ui"),

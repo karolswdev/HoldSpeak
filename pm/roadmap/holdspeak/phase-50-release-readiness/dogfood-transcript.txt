@@ -1,0 +1,39 @@
+Database at /tmp/claude-501/tmprh71gq7a/holdspeak.db is schema version 1; this build is 2. Backed up to /tmp/claude-501/tmprh71gq7a/holdspeak.db.20260607-120215.bak before applying the schema.
+config: config_version 4 is newer than this build (1); loading anyway, some settings may be ignored
+============================================================
+HoldSpeak Phase 50 dogfood: release-safety matrix
+============================================================
+
+0. One true version
+    holdspeak.__version__ = 0.2.1
+    pyproject version     = 0.2.1
+[PASS] version is one number (code == pyproject)
+
+1. Fresh / empty DB -> created at current version
+[PASS] fresh DB created
+[PASS] stamped at SCHEMA_VERSION (1)
+[PASS] doctor: current DB -> PASS
+
+2. Same version -> no-op
+[PASS] no backup on no-op reopen
+
+3. Older DB -> backup taken, schema applied, data intact
+[PASS] a backup was taken
+[PASS] backup is readable + has the data
+[PASS] live DB upgraded to new version
+[PASS] live DB data intact
+[PASS] doctor: at-current after upgrade -> PASS
+
+4. Newer DB -> refused, left untouched
+[PASS] opening a newer DB raises SchemaVersionError
+[PASS] refusal message says newer + untouched
+[PASS] DB file byte-for-byte untouched
+[PASS] doctor: newer DB -> FAIL
+
+5. Config version honesty
+[PASS] newer config kept (not silently reset)
+[PASS] newer config still loads its data
+
+============================================================
+RESULT: PASS - HoldSpeak is safe to install, upgrade, and trust.
+============================================================

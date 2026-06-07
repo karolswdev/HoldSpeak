@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 50
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-50-01, HS-50-02
 - **Unblocks:** HS-50-07
 - **Owner:** unassigned
@@ -27,12 +27,15 @@ silently drops unknown keys, so an evolving config format fails invisibly.
   the honest reporting + config versioning.
 
 ## Acceptance criteria
-- [ ] `doctor` and `/api/setup/status` report the real schema state (version vs
+- [x] `doctor` and `/api/setup/status` report the real schema state (version vs
       build; unexpected/newer flagged); honest, no silent fix that hides a problem.
-- [ ] `Config` carries `config_version` with load-time coercion; an evolving config
-      does not silently drop renamed/removed fields.
-- [ ] doctor check messages follow the humanizer voice; behavior-preserving
-      otherwise; `npm run build` ✓ if UI touched, 0 `_built/` tracked.
+      (`doctor._check_database` via `read_schema_version`, wired into
+      `collect_doctor_checks` which feeds `build_setup_status`)
+- [x] `Config` carries `config_version` with load-time coercion; an evolving config
+      does not silently drop renamed/removed fields. (`config.py` `CONFIG_VERSION`
+      + `_coerce_config_version`; older coerces forward, newer kept + flagged)
+- [x] doctor check messages follow the humanizer voice; behavior-preserving
+      otherwise; `npm run build` n/a (no UI touched), 0 `_built/` tracked.
 
 ## Test plan
 - Unit/integration: doctor reports OK on a current DB, flags a stamped newer DB;

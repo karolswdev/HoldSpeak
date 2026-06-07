@@ -47,27 +47,103 @@ def _command_exists(name: str) -> bool:
 
 
 def _check_runtime() -> DoctorCheck:
+    from .. import __version__
+
     return DoctorCheck(
         name="Runtime",
         status="PASS",
-        detail=f"{platform.system()} {platform.release()} ({platform.machine()}), Python {sys.version.split()[0]}",
+        detail=(
+            f"HoldSpeak {__version__} on {platform.system()} {platform.release()} "
+            f"({platform.machine()}), Python {sys.version.split()[0]}"
+        ),
+    )
+
+
+def _check_database() -> DoctorCheck:
+    """Report the database's schema version against this build.
+
+    Read-only: it probes the stored version without opening the database for
+    use, so a newer-than-known database is reported plainly rather than refused.
+    A missing database is normal before first run, not a problem.
+    """
+    from ..db import DEFAULT_DB_PATH, SCHEMA_VERSION, read_schema_version
+
+    db_path = DEFAULT_DB_PATH.expanduser()
+
+    if not db_path.exists():
+        return DoctorCheck(
+            name="Database",
+            status="PASS",
+            detail=f"No database yet at {db_path}; it is created on first use.",
+        )
+
+    stored = read_schema_version(db_path)
+
+    if stored is None:
+        return DoctorCheck(
+            name="Database",
+            status="WARN",
+            detail=f"A file is present at {db_path} but its schema version cannot be read.",
+            fix="If this is not a HoldSpeak database, move it aside and let HoldSpeak create a fresh one.",
+        )
+
+    if stored == SCHEMA_VERSION:
+        return DoctorCheck(
+            name="Database",
+            status="PASS",
+            detail=f"Schema version {stored} (current) at {db_path}.",
+        )
+
+    if stored < SCHEMA_VERSION:
+        return DoctorCheck(
+            name="Database",
+            status="WARN",
+            detail=(
+                f"Schema version {stored} is older than this build ({SCHEMA_VERSION}). "
+                f"HoldSpeak backs the database up and upgrades it on the next start."
+            ),
+            fix="Run `holdspeak backup` first if you want your own copy before the upgrade.",
+        )
+
+    return DoctorCheck(
+        name="Database",
+        status="FAIL",
+        detail=(
+            f"Schema version {stored} is newer than this build ({SCHEMA_VERSION}). "
+            f"The database was written by a newer HoldSpeak; this build refuses to open it."
+        ),
+        fix="Upgrade HoldSpeak, or `holdspeak restore` a backup taken with this version.",
     )
 
 
 def _check_config() -> tuple[DoctorCheck, Config]:
+    from ..config import CONFIG_VERSION
+
     config = Config.load()
     config_path = CONFIG_FILE.expanduser()
-    if config_path.exists():
+    if not config_path.exists():
         return DoctorCheck(
             name="Config",
-            status="PASS",
-            detail=f"Loaded {config_path}",
+            status="WARN",
+            detail=f"Config file not found at {config_path}",
+            fix="Run `holdspeak` once to create a default config file.",
         ), config
+
+    if config.config_version > CONFIG_VERSION:
+        return DoctorCheck(
+            name="Config",
+            status="WARN",
+            detail=(
+                f"Config version {config.config_version} is newer than this build "
+                f"({CONFIG_VERSION}); some settings may be ignored. Loaded {config_path}."
+            ),
+            fix="Upgrade HoldSpeak so it understands this config.",
+        ), config
+
     return DoctorCheck(
         name="Config",
-        status="WARN",
-        detail=f"Config file not found at {config_path}",
-        fix="Run `holdspeak` once to create a default config file.",
+        status="PASS",
+        detail=f"Loaded {config_path} (config version {config.config_version})",
     ), config
 
 
@@ -927,6 +1003,7 @@ def collect_doctor_checks(*, skip_network: bool = False) -> list[DoctorCheck]:
     return [
         _check_runtime(),
         config_check,
+        _check_database(),
         _check_microphone(),
         _check_transcription_backend(),
         _check_web_runtime(),

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 50
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-50-01
 - **Unblocks:** HS-50-06, HS-50-07
 - **Owner:** unassigned
@@ -25,12 +25,16 @@ a working `holdspeak doctor` from the documented steps.
   actually publishing to PyPI.
 
 ## Acceptance criteria
-- [ ] The documented install path is run on a clean-ish environment and reaches a
+- [x] The documented install path is run on a clean-ish environment and reaches a
       working `holdspeak doctor`; the transcript is captured as evidence.
-- [ ] The install is pinned to a tag (with a documented dev fallback);
-      behavior-preserving for the dev/editable path.
-- [ ] Any breakage found is fixed (or documented with a clear workaround if it is a
-      genuine external dependency, e.g. a model download).
+      (fresh venv + temp HOME, `uv pip install -e .`, doctor exit 0;
+      [install-transcript.txt](./install-transcript.txt))
+- [x] The install is pinned to a tag (with a documented dev fallback);
+      behavior-preserving for the dev/editable path. (`HOLDSPEAK_REF` default
+      `v0.2.1`, `main` fallback; verified statically)
+- [x] Any breakage found is fixed (or documented with a clear workaround if it is a
+      genuine external dependency, e.g. a model download). (none found; the 2 doctor
+      warnings are the expected optional llama.cpp model + system-audio gaps)
 
 ## Test plan
 - Manual + captured transcript: fresh venv -> install -> `holdspeak doctor` exits 0
