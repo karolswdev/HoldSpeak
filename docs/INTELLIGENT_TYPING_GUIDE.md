@@ -22,10 +22,22 @@ speech -> Whisper transcript -> punctuation cleanup -> dictation pipeline -> typ
 The pipeline can:
 
 - classify an utterance against dictation blocks;
-- inject project knowledge;
+- inject your **project KB** values and **project context** (see below);
 - rewrite rough speech into a cleaner prompt;
 - adapt output for Codex, Claude, terminal, browser, editor, or chat;
 - suggest narrow `.hs/.../*.md` project documentation updates for review.
+
+> **Heads-up — "project KB" and "project context" are two different things.**
+> Your **project KB** is a small key-value map (`kb:`) in
+> `<repo>/.holdspeak/project.yaml`; its keys become `{project.kb.<key>}`
+> placeholders that the default **`kb-enricher`** stage substitutes into a block's
+> template — deterministic, no LLM. Edit it on the **Project KB** tab.
+> **Project context** is the *separate* `.hs/` folder of Markdown files
+> (`instructions`, `context`, `workflows`, `targets`, plus an `ignore` for secrets)
+> that the **optional `project-rewriter`** (LLM) stage uses to rewrite your speech —
+> edit it on the **Project Context** tab; set it up in
+> [§5. Create Project Context](#5-create-project-context). HoldSpeak reads both but
+> never writes them without your approval.
 
 ## 1. Open The Dictation Cockpit
 
@@ -443,7 +455,16 @@ It is **off by default** and adds **no GUI dependency** unless you turn it on.
 
 ### Turn it on
 
-Set the environment variable before launching HoldSpeak:
+Presence is a **config toggle**. Flip it from the **Settings** page (or the
+welcome wizard) — the runtime starts and stops the presence host live — or set it
+directly in your config:
+
+```json
+{ "presence": { "enabled": true } }
+```
+
+For a headless or power-user launch you can also force it on with an environment
+variable (a retained override — the config toggle is the normal path):
 
 ```bash
 HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak
@@ -666,3 +687,13 @@ holdspeak dictation dry-run "ask codex to summarize what changed and suggest a n
 > rough speech using `.hs/` context before enrichment. This adds one extra LLM
 > round-trip; only enable it when an OpenAI-compatible runtime is configured and
 > you have populated `.hs/instructions.md`.
+
+## See also
+
+- [Getting Started](GETTING_STARTED.md) — install and basic voice typing first.
+- [The Dictation Copilot](DICTATION_COPILOT.md) — see the pipeline turn rough
+  speech into a project-grounded task, end to end.
+- [Models — bring your own](MODELS.md) — choosing and pointing at an LLM.
+- [Agent Hook Install](AGENT_HOOK_INSTALL.md) — feed Claude/Codex context into the
+  rewriter.
+- [Security & Privacy](SECURITY.md) — what's stored and what can leave your machine.

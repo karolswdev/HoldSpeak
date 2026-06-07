@@ -198,7 +198,7 @@ it asserts all four features fired and that the task is grounded in project
 specifics. It **auto-skips** when no endpoint is configured (so it's safe in
 hosted CI) and runs for real wherever your endpoint is reachable.
 
-## Where to go next
+## See also
 
 - [Intelligent Typing Guide](./INTELLIGENT_TYPING_GUIDE.md) — the full setup:
   `.hs/` conventions, target profiles, agent hooks, and every config knob.

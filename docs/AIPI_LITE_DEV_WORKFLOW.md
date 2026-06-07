@@ -138,3 +138,11 @@ For provisioning details, see `aipi-lite/docs/PROVISIONING.md`.
 The AIPI bridge remains a separate Python environment under `aipi-lite/.venv`.
 That keeps ESPHome/aioesphomeapi pins out of HoldSpeak's main runtime while
 still making tests and operation first-class from the unified checkout.
+
+## See also
+
+- [Device Protocol](DEVICE_PROTOCOL.md) — the remote-audio WebSocket protocol the
+  bridge speaks.
+- [Agent Hook Install](AGENT_HOOK_INSTALL.md) — wire agent replies through to the
+  device.
+- [Meeting Mode Guide](MEETING_MODE_GUIDE.md) — what the device controls.

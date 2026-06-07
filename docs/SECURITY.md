@@ -135,3 +135,10 @@ machine except via the connector CLIs above (entity IDs only).
 
 This is a personal/local-first project. Security-relevant findings: open an
 issue describing the data class, trust boundary, and egress point involved.
+
+## See also
+
+- [Models — bring your own](MODELS.md) — pointing at a cloud endpoint is the one
+  deliberate egress choice.
+- [Getting Started](GETTING_STARTED.md) — the local-by-default setup this posture
+  describes.

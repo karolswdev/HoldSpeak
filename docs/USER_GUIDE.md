@@ -430,7 +430,7 @@ Common issues:
 7. Enable the dictation pipeline and run a dry-run.
 8. Start using voice typing in your editor or LLM CLI.
 
-## Related Docs
+## See also
 
 - [README](../README.md): install, platform notes, configuration reference.
 - [Getting Started](GETTING_STARTED.md): first-run setup and basic voice typing.

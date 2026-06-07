@@ -276,7 +276,7 @@ The server pushes status updates onto the same WebSocket so
 the device can show them on its LCD:
 
 ```json
-{"type": "status", "text": "Listening...", "ttl_ms": 0}
+{"type": "status", "text": "Recording 00:42", "ttl_ms": 0}
 ```
 
 | field | type | meaning |
@@ -347,7 +347,7 @@ device → server  {"type":"hello","device_id":"aipi-1","label":"Karol",
 server → device  {"type":"hello-ack","device_id":"aipi-1","label":"Karol"}
 
 device → server  {"type":"start"}
-server → device  {"type":"status","text":"Listening...","ttl_ms":0}
+                 (no status pushback — the firmware TX glyph signals recording)
 
 device → server  <16 ms of int16 LE PCM bytes>
 device → server  <16 ms of int16 LE PCM bytes>
@@ -355,7 +355,7 @@ device → server  <16 ms of int16 LE PCM bytes>
 ... (more PCM frames as the user holds the button)
 
 device → server  {"type":"stop"}
-server → device  {"type":"status","text":"Thinking...","ttl_ms":0}
+                 (no status pushback — the absent TX glyph signals processing)
 
 (server runs Whisper, applies text_processor punctuation,
  types via TextTyper)
@@ -410,3 +410,9 @@ server → device  {"type":"status","text":"Saving meeting...","ttl_ms":0}
   coffee-shop networks, the server-side label registry will
   need to persist (currently each reconnect is a clean
   slate).
+
+## See also
+
+- [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md) — the firmware + bridge
+  workflow that implements this protocol.
+- [Security & Privacy](SECURITY.md) — the device PSK + loopback trust boundary.

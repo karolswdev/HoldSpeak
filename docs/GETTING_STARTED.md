@@ -73,6 +73,10 @@ takes you from install to your first words, **no file editing**:
 5. **Desktop presence** — flip a switch (no env var) for the ambient HUD.
 6. **You're set** — jump into dictation, a meeting, or the copilot.
 
+![The HoldSpeak welcome wizard: a full-screen first-run screen headlined "Hold a key. Speak. Watch it type." with a step rail (Welcome · Permissions · Model · First dictation · Presence · You're set) and a "Get started" button; the footer reads "Local · 127.0.0.1 · nothing leaves your machine".](assets/screenshots/welcome.png)
+
+*The `/welcome` wizard on a fresh install — fresh clone to a verified first dictation, no file editing.*
+
 A returning user lands on the dashboard instead (the wizard never nags). If
 something later needs attention, **`/setup`** is the calm status surface, and the
 **Privacy** chip in the header always shows what can leave your machine.
@@ -104,11 +108,12 @@ Default hotkey:
 If global hotkeys or synthetic typing are blocked, keep the HoldSpeak window
 focused and use the focused hold-to-talk fallback.
 
-> **Tip — see what the copilot is doing without the dashboard.** Launch with
-> `HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak` to get an ambient, native presence
-> surface (a floating HUD on macOS / X11, a tray glyph + notification
-> everywhere) that shows *listening / transcribing / typing* while you dictate
-> into another app — and never steals keyboard focus. See
+> **Tip — see what the copilot is doing without the dashboard.** Flip on
+> **desktop presence** in **Settings** (or set `presence.enabled` in your config)
+> to get an ambient, native surface (a floating HUD on macOS / X11, a tray glyph +
+> notification everywhere) that shows *listening / transcribing / typing* while you
+> dictate into another app — and never steals keyboard focus. For a headless launch
+> you can force it on with `HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak`. See
 > [Desktop Presence](INTELLIGENT_TYPING_GUIDE.md#11-desktop-presence-ambient-on-desktop-status).
 
 ## 6. Use Punctuation Commands
@@ -189,4 +194,10 @@ When ready, continue with:
 | Web UI does not open | Browser auto-open disabled or blocked | Visit the printed local URL manually |
 | Project is wrong | Started from another cwd | Set Project root in `/dictation` |
 
-For meeting-specific setup, see [Meeting Mode Guide](MEETING_MODE_GUIDE.md).
+## See also
+
+- [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md) — once basic voice
+  typing works, turn on the project-aware copilot.
+- [Meeting Mode Guide](MEETING_MODE_GUIDE.md) — meeting-specific setup and capture.
+- [Models — bring your own](MODELS.md) — pick and point at an LLM.
+- [Security & Privacy](SECURITY.md) — what's stored and what can leave your machine.
