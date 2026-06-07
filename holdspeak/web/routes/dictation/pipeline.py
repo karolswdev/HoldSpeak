@@ -92,6 +92,15 @@ def build_pipeline_router(
                 kb_payload["valid"] = False
                 kb_payload["error"] = str(exc)
 
+        # HS-47-04: the `.hs/` context existence, so the discovery nudge can tell
+        # "this project has no knowledge yet" (no KB and no context) without a new
+        # detection path.
+        hs_context_payload: dict[str, Any] = {"path": None, "exists": False}
+        if project_root_path is not None:
+            hs_dir = project_root_path / ".hs"
+            hs_context_payload["path"] = str(hs_dir)
+            hs_context_payload["exists"] = hs_dir.is_dir()
+
         runtime_payload = _runtime_readiness(cfg)
         try:
             target_payload = detect_active_target_profile(
@@ -219,6 +228,7 @@ def build_pipeline_router(
                     "resolved": resolved_blocks,
                 },
                 "project_kb": kb_payload,
+                "project_context": hs_context_payload,
                 "runtime": runtime_payload,
                 "telemetry": runtime_payload.get("telemetry"),
                 "depth": depth_payload,

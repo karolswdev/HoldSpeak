@@ -608,8 +608,9 @@ def test_dictation_page_includes_project_kb_section() -> None:
     response = client.get("/dictation")
     assert response.status_code == 200
     body = response.text
-    # HS-10-09: KB tab label + button id remain in server-rendered HTML.
-    assert "Project KB" in body
+    # HS-47-01: the KB tab is now labelled "Project Facts" (one half of
+    # "project knowledge"); the Context tab keeps its name.
+    assert "Project Facts" in body
     assert "Project Context" in body
     assert "Agent Hooks" in body
     assert "External agent summary" in body

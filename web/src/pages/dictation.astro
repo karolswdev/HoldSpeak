@@ -35,10 +35,30 @@ import CommandPreview from "../components/CommandPreview.astro";
       </p>
     </header>
 
+    {/* HS-47-04: ambient discovery nudge. Shown by JS only when a project is
+        detected but has no knowledge (no facts, no .hs/), is not dismissed for
+        this project, and the global setting is on. role="note", never a modal,
+        never steals focus. Static markup toggled by JS. */}
+    <div id="kn-nudge" class="kn-nudge" role="note" aria-label="Project knowledge suggestion" hidden>
+      <svg class="kn-nudge-glyph" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+        <path fill="currentColor" d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2Zm-3 19a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/>
+      </svg>
+      <p class="kn-nudge-text">
+        <strong>Teach the copilot about this project.</strong>
+        <span id="kn-nudge-project"></span> HoldSpeak can use this repo's facts and
+        context to sharpen your dictation.
+      </p>
+      <div class="kn-nudge-actions">
+        <button class="btn primary" id="kn-nudge-setup" type="button">Set it up</button>
+        <button class="btn" id="kn-nudge-dismiss" type="button">Not now</button>
+      </div>
+      <button class="kn-nudge-off" id="kn-nudge-off" type="button" title="Stop suggesting this on any project">Stop suggesting</button>
+    </div>
+
     <div class="scope-row cockpit-tabs" role="tablist" aria-label="Dictation sections">
       <button id="section-readiness" data-section="readiness" type="button" role="tab">Readiness</button>
       <button id="section-blocks" data-section="blocks" class="active" type="button" role="tab">Blocks</button>
-      <button id="section-kb" data-section="kb" type="button" role="tab">Project KB</button>
+      <button id="section-kb" data-section="kb" type="button" role="tab">Project Facts</button>
       <button id="section-hs" data-section="hs" type="button" role="tab">Project Context</button>
       <button id="section-hooks" data-section="hooks" type="button" role="tab">Agent Hooks</button>
       <span class="tab-tier-sep" aria-hidden="true" title="Runtime &amp; test"></span>
@@ -77,7 +97,7 @@ import CommandPreview from "../components/CommandPreview.astro";
       <h2>Dictation readiness</h2>
       <p class="lede">
         One snapshot of the selected project's dictation setup:
-        pipeline, blocks, project KB, runtime model, and next actions.
+        pipeline, blocks, project facts, runtime model, and next actions.
       </p>
       <div id="ready-meta" class="meta-banner">Loading…</div>
       <div id="ready-cards" class="readiness-grid"></div>
@@ -425,25 +445,80 @@ import CommandPreview from "../components/CommandPreview.astro";
       </div>
     </section>
 
-    <!-- ============= Project KB ============= -->
+    <!-- ============= Project Facts ============= -->
     <section id="view-kb" class="view" hidden>
-      <h2>Project knowledge base</h2>
+      <h2>Project facts</h2>
       <p class="lede">
-        Edit the <code>kb</code> mapping in
+        Facts are one of the two parts of <strong>project knowledge</strong>
+        (the other is <strong>Project Context</strong>). A fact is an exact
+        value that gets stamped into your dictation verbatim, with no model
+        involved. Each entry's key becomes a
+        <code>{`{project.kb.<key>}`}</code> placeholder that block templates
+        fill in. Keys must match <code>[A-Za-z_][A-Za-z0-9_]*</code>; values are
+        strings (or null). Stored as the <code>kb</code> mapping in
         <code>&lt;project_root&gt;/.holdspeak/project.yaml</code>.
-        Keys become <code>{`{project.kb.<key>}`}</code> placeholders
-        inside block templates. Keys must match
-        <code>[A-Za-z_][A-Za-z0-9_]*</code>; values are strings (or null).
       </p>
+
+      {/* HS-47-02: in-app explainer — what a fact is, why it helps, and a
+          worked example of the verbatim substitution. Static markup, so the
+          scoped CSS below applies (no JS-injection trap). */}
+      <aside class="kn-explainer" aria-label="What project facts are">
+        <div class="kn-explainer-main">
+          <p class="kn-explainer-eyebrow">Project knowledge · Facts</p>
+          <p class="kn-explainer-what">Exact values, stamped in word for word.</p>
+          <p class="kn-explainer-why">
+            A fact is a value you reuse a lot: your stack, a deploy command, a
+            ticket prefix. The <code>kb-enricher</code> stage drops it into a
+            block template exactly as written, with no model in the loop. Its
+            companion is <strong>Project Context</strong>, which guides a rewrite
+            instead of substituting a value.
+          </p>
+        </div>
+        <figure class="kn-example">
+          <figcaption>How a fact reaches your text</figcaption>
+          <div class="kn-example-row">
+            <span class="kn-example-tag">fact</span>
+            <code>stack = Rails 7 + Postgres 16</code>
+          </div>
+          <div class="kn-example-row">
+            <span class="kn-example-tag">template</span>
+            <code>Follow our stack: {`{project.kb.stack}`}</code>
+          </div>
+          <div class="kn-example-arrow" aria-hidden="true">↓</div>
+          <div class="kn-example-row kn-example-out">
+            <span class="kn-example-tag">typed</span>
+            <code>Follow our stack: Rails 7 + Postgres 16</code>
+          </div>
+        </figure>
+      </aside>
+
       <div id="kb-meta-banner" class="meta-banner">Loading…</div>
       <section class="panel">
         <header class="panel-header">
-          <h3>Knowledge-base entries</h3>
+          <h3>Fact entries</h3>
           <div class="panel-toolbar">
             <button id="kb-btn-starter" class="btn" type="button">Use starter</button>
             <button id="kb-btn-add" class="btn primary" type="button">+ New entry</button>
           </div>
         </header>
+        {/* HS-47-02: teaching empty state for a detected project with no facts.
+            Static markup toggled by JS (renderKBRows) so scoped CSS applies. */}
+        <div id="kb-empty" class="kn-empty" hidden>
+          <svg class="kn-empty-glyph" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+            <path fill="currentColor" d="M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm1 2v3h14V6H5Zm0 5v3h14v-3H5Zm0 5v2h8v-2H5Z"/>
+          </svg>
+          <p class="kn-empty-title">No facts yet</p>
+          <p class="kn-empty-text">
+            Facts are exact values HoldSpeak stamps into your dictation, no model
+            involved. Add the handful you repeat most and they show up verbatim
+            wherever a block references them.
+          </p>
+          <p class="kn-empty-eg"><code>stack</code> → <code>Rails 7 + Postgres 16</code></p>
+          <div class="kn-empty-actions">
+            <button class="btn primary" id="kb-empty-starter" type="button">Use starter facts</button>
+            <button class="btn" id="kb-empty-add" type="button">Add one manually</button>
+          </div>
+        </div>
         <div id="kb-rows"></div>
         <div id="kb-msg"></div>
         <div class="actions">
@@ -458,13 +533,109 @@ import CommandPreview from "../components/CommandPreview.astro";
     <section id="view-hs" class="view" hidden>
       <h2>Project context</h2>
       <p class="lede">
-        Edit repo-local <code>.hs/</code> files used by project-aware dictation.
-        These files guide prompt rewrites, context injection, memory, workflows,
-        active issues, vocabulary, and ignore rules. Legacy <code>.hs_*</code>
-        files are shown as read-only compatibility inputs; saving creates or
-        updates the canonical <code>.hs/</code> copy.
+        Context is the other part of <strong>project knowledge</strong>
+        (the first is <strong>Project Facts</strong>). Where a fact is an exact
+        value stamped in verbatim, context is background the rewrite model reads
+        so it phrases things the way this project expects. It only takes effect
+        when the optional rewrite stage is on. Edit the repo-local
+        <code>.hs/</code> files here: instructions, background, workflows,
+        targets, vocabulary, and ignore rules. Legacy <code>.hs_*</code> files
+        are shown as read-only compatibility inputs; saving creates or updates
+        the canonical <code>.hs/</code> copy.
       </p>
+
+      {/* HS-47-02: in-app explainer — context shapes a rewrite, it is not
+          substituted; static markup so scoped CSS applies. */}
+      <aside class="kn-explainer" aria-label="What project context is">
+        <div class="kn-explainer-main">
+          <p class="kn-explainer-eyebrow">Project knowledge · Context</p>
+          <p class="kn-explainer-what">Background the rewrite model reads.</p>
+          <p class="kn-explainer-why">
+            Context is prose, not values. When the optional rewrite stage is on,
+            it reads these <code>.hs/</code> notes so it phrases dictation the way
+            this project expects. It shapes a rewrite; it is never copied in word
+            for word. Its companion is <strong>Project Facts</strong>, which
+            stamps exact values with no model.
+          </p>
+        </div>
+        <figure class="kn-example">
+          <figcaption>How context shapes a rewrite</figcaption>
+          <div class="kn-example-row">
+            <span class="kn-example-tag">.hs/terms.md</span>
+            <code>The product is "Holdr". Use British spelling.</code>
+          </div>
+          <div class="kn-example-row">
+            <span class="kn-example-tag">you say</span>
+            <code>tell the team the color picker is done</code>
+          </div>
+          <div class="kn-example-arrow" aria-hidden="true">↓</div>
+          <div class="kn-example-row kn-example-out">
+            <span class="kn-example-tag">rewrite</span>
+            <code>Update the team: the Holdr colour picker is complete.</code>
+          </div>
+        </figure>
+      </aside>
+
       <div id="hs-meta-banner" class="meta-banner">Loading…</div>
+      {/* HS-47-02: teaching empty state when .hs/ does not exist yet. Static
+          markup toggled by JS (renderHSFileList) so scoped CSS applies. */}
+      <div id="hs-empty" class="kn-empty" hidden>
+        <svg class="kn-empty-glyph" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+          <path fill="currentColor" d="M10 4H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-8l-2-2Zm-5 6h14v8H5v-8Zm2 2v2h6v-2H7Z"/>
+        </svg>
+        <p class="kn-empty-title">No project context yet</p>
+        <p class="kn-empty-text">
+          Context teaches the rewrite model how this project talks: its
+          vocabulary, conventions, and what to leave alone. It only takes effect
+          when the optional rewrite stage is on, and nothing is written until you
+          save.
+        </p>
+        <p class="kn-empty-eg"><code>.hs/terms.md</code> → the rewrite uses your product name and spelling</p>
+        <div class="kn-empty-actions">
+          <button class="btn primary" id="hs-empty-setup" type="button">Set up project knowledge</button>
+          <button class="btn" id="hs-empty-example" type="button">Start with an example</button>
+        </div>
+      </div>
+
+      {/* HS-47-03: guided setup. Static markup toggled by JS so scoped CSS
+          applies. Two authoring paths for context (a template starter you
+          review before it writes, or a copiable prompt for your own coding
+          agent) plus a "you're set" hand-off to the dry-run. */}
+      <section id="hs-setup" class="kn-setup panel" hidden aria-label="Set up project knowledge">
+        <header class="panel-header">
+          <h3>Set up project knowledge</h3>
+          <button class="btn" id="hs-setup-close" type="button">Close</button>
+        </header>
+        <p class="kn-setup-lede">
+          Two parts, both from here, no file editing. <strong>Facts</strong> are
+          exact values: set them in the
+          <button class="kn-linkbtn" type="button" data-section-jump="kb">Project Facts</button>
+          tab. <strong>Context</strong> is guidance the rewrite model reads.
+          Create it one of two ways:
+        </p>
+        <div class="kn-setup-grid">
+          <article class="kn-setup-card">
+            <h4 class="kn-setup-card-title">Use a starter set</h4>
+            <p class="kn-setup-card-text">
+              Create a small, well-formed <code>.hs/</code> set (instructions,
+              context, terms) that you can then edit. You review exactly what will
+              be written first; nothing is saved silently.
+            </p>
+            <button class="btn primary" id="hs-setup-starter" type="button">Create a starter set</button>
+          </article>
+          <article class="kn-setup-card">
+            <h4 class="kn-setup-card-title">Draft with your coding agent</h4>
+            <p class="kn-setup-card-text">
+              Have Claude or Codex read this repo and write the <code>.hs/</code>
+              files for you. Copy the prompt, paste it into your agent, then review
+              the result in this tab. The drafting stays on your machine.
+            </p>
+            <button class="btn" id="hs-setup-copy-prompt" type="button">Copy the agent prompt</button>
+            <pre class="kn-agent-prompt" id="hs-agent-prompt" aria-label="Coding-agent prompt for drafting .hs files">Loading the prompt…</pre>
+          </article>
+        </div>
+        <div id="hs-setup-msg"></div>
+      </section>
       <section class="panel hs-suggestion-panel" id="hs-suggestion-panel" hidden>
         <header class="panel-header">
           <h3>Suggested project doc update</h3>
@@ -1155,6 +1326,271 @@ import CommandPreview from "../components/CommandPreview.astro";
     color: var(--text);
     font-family: var(--font-mono);
     font-size: var(--font-size-xs);
+  }
+
+  /* ===== Project-knowledge explainer + empty states (HS-47-02) =====
+   * All markup here is static (or static-toggled), so this scoped CSS
+   * applies. The empty states are toggled by dictation-app.js setting the
+   * `hidden` attribute, never re-rendered via innerHTML — that sidesteps the
+   * Astro scoped-CSS-on-injected-DOM trap. */
+  .kn-explainer {
+    display: grid;
+    grid-template-columns: 1fr minmax(0, 23rem);
+    gap: var(--space-4);
+    align-items: start;
+    padding: var(--space-4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
+    box-shadow: var(--elev-1);
+  }
+  @media (max-width: 760px) {
+    .kn-explainer { grid-template-columns: 1fr; }
+  }
+  .kn-explainer-main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .kn-explainer-eyebrow {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-eyebrow);
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .kn-explainer-what {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .kn-explainer-why {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    max-width: 52ch;
+  }
+  /* Worked example: a small monospace transform panel. */
+  .kn-example {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    background: var(--canvas);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+  }
+  .kn-example figcaption {
+    font-family: var(--font-ui);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .kn-example-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+  }
+  .kn-example-tag {
+    flex: 0 0 5.5rem;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-eyebrow);
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .kn-example code {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+  .kn-example-arrow {
+    color: var(--accent);
+    font-size: var(--font-size-sm);
+    line-height: 1;
+    padding-left: 5.5rem;
+  }
+  .kn-example-out code { color: var(--accent); font-weight: 600; }
+
+  /* Teaching empty states (KB rows / .hs files). */
+  .kn-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-2);
+    padding: var(--space-5) var(--space-4);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-md);
+    background: var(--canvas);
+  }
+  .kn-empty[hidden] { display: none; }
+  .kn-empty-glyph { color: var(--accent); opacity: 0.85; }
+  .kn-empty-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--text);
+  }
+  .kn-empty-text {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    max-width: 46ch;
+  }
+  .kn-empty-eg {
+    margin: var(--space-1) 0 0;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+  }
+  .kn-empty-eg code { color: var(--accent); }
+  .kn-empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+
+  /* ===== Guided setup (HS-47-03) ===== */
+  .kn-setup[hidden] { display: none; }
+  .kn-setup-lede {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    max-width: 64ch;
+  }
+  .kn-setup-lede strong { color: var(--text); }
+  .kn-linkbtn {
+    appearance: none;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .kn-linkbtn:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+    border-radius: var(--radius-1);
+  }
+  .kn-setup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
+  @media (max-width: 760px) { .kn-setup-grid { grid-template-columns: 1fr; } }
+  .kn-setup-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+  }
+  .kn-setup-card-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--text);
+  }
+  .kn-setup-card-text {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    flex: 1;
+  }
+  .kn-setup-card .btn { align-self: flex-start; }
+  .kn-agent-prompt {
+    margin: var(--space-1) 0 0;
+    max-height: 14rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    padding: var(--space-2) var(--space-3);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-relaxed);
+  }
+
+  /* ===== Discovery nudge (HS-47-04) ===== */
+  .kn-nudge {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-md);
+    background:
+      linear-gradient(90deg, var(--accent-tint, var(--accent-soft)), transparent 70%),
+      var(--surface-2);
+    box-shadow: var(--elev-1);
+  }
+  .kn-nudge[hidden] { display: none; }
+  .kn-nudge-glyph { flex: 0 0 auto; color: var(--accent); }
+  .kn-nudge-text {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+  }
+  .kn-nudge-text strong { color: var(--text); }
+  #kn-nudge-project { color: var(--text); font-family: var(--font-mono); font-size: var(--font-size-xs); }
+  .kn-nudge-actions {
+    flex: 0 0 auto;
+    display: flex;
+    gap: var(--space-2);
+  }
+  .kn-nudge-off {
+    flex: 0 0 auto;
+    appearance: none;
+    background: none;
+    border: none;
+    padding: var(--space-1);
+    color: var(--text-faint);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .kn-nudge-off:hover { color: var(--text-muted); }
+  .kn-nudge-off:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+    border-radius: var(--radius-1);
+  }
+  @media (max-width: 760px) {
+    .kn-nudge { flex-wrap: wrap; }
+    .kn-nudge-text { flex: 1 1 100%; }
   }
 
   /* Misc small JS-injected helpers */

@@ -167,6 +167,42 @@ def test_dry_run_matches_block_and_enriches_with_project_kb(
     assert body["final_text"].endswith("Stack: python")
 
 
+def test_project_facts_context_starter_block_stamps_a_fact(
+    test_client: TestClient,
+    settings_path: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """HS-47-03: the guided-setup chain works end to end through the API — the
+    `project_facts_context` starter block consumes a Project Fact, so a fact set
+    in the KB reaches dictation output. This is the CI regression behind the
+    dogfood (scripts/dogfood_project_knowledge.py)."""
+    _save_config(settings_path, enabled=True)
+    root = _seed_project(tmp_path, monkeypatch)  # writes kb: {stack: "python"}, chdirs
+    # Create the fact-consuming block at project scope via the starter template
+    # (no hand-edited YAML).
+    created = test_client.post(
+        "/api/dictation/blocks/from-template?scope=project",
+        json={"template_id": "project_facts_context"},
+    )
+    assert created.status_code in (200, 201), created.text
+    monkeypatch.setattr(
+        assembly_module,
+        "build_runtime",
+        lambda **_kwargs: _StubRuntime("project_facts_context"),
+    )
+
+    response = test_client.post(
+        "/api/dictation/dry-run",
+        json={"utterance": "help me refactor the payments module"},
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["stages"][-1]["stage_id"] == "kb-enricher"
+    assert body["final_text"].endswith("Project stack: python")
+
+
 def test_dry_run_project_root_override_selects_project_without_relaunch(
     test_client: TestClient,
     settings_path: Path,

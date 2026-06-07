@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 47
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-47-02, HS-47-03, HS-47-04, HS-47-05
 - **Owner:** unassigned
@@ -34,14 +34,16 @@ they're called.
   pipeline behavior. This story decides + labels; later stories build the surfaces.
 
 ## Acceptance criteria
-- [ ] A recorded decision states the canonical model, the names, and the
-      on-disk-rename call (with rationale).
-- [ ] The `/dictation` labels/headers/ledes reflect the settled model — the two
-      tabs no longer read as unrelated jargon; their relationship is stated.
-- [ ] UI labels and the `DOCS_STYLE.md` glossary agree; no surface implies the KB
+- [x] A recorded decision states the canonical model, the names, and the
+      on-disk-rename call (with rationale). See
+      [`decision-concept-and-naming.md`](./decision-concept-and-naming.md).
+- [x] The `/dictation` labels/headers/ledes reflect the settled model: the
+      "Project KB" tab is now "Project Facts", both ledes name the
+      "project knowledge = Facts + Context" umbrella and state how the two relate.
+- [x] UI labels and the `DOCS_STYLE.md` glossary agree; no surface implies the KB
       does what context does or vice-versa.
-- [ ] Behavior unchanged (labels/copy only); page-content tests + pipeline tests
-      green.
+- [x] Behavior unchanged (labels/copy only); page-content tests + pipeline tests
+      green (full suite 2365 passed, 17 skipped).
 
 ## Test plan
 - Unit: `uv run pytest -q -k "dictation or doc_drift or link"`; `(cd web && npm run build)`.

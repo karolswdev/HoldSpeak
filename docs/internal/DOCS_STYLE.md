@@ -25,12 +25,18 @@ one is **voice + structure + navigation**.
 - **Terms, consistently:** *dictation* (not "voice typing" mid-guide once you've
   introduced it), *meeting mode*, *the dictation pipeline*, *intel* for LLM meeting
   extraction, *actuator* for the propose→approve→execute kind, *desktop presence*
-  for the ambient HUD, *project KB* for the `.holdspeak/project.yaml` `kb:` map
-  (the `{project.kb.*}` placeholders the `kb-enricher` stage substitutes), and
-  *project context* for the **separate** `.hs/` Markdown files (the optional
-  `project-rewriter` LLM stage). The two are distinct and easily confused — gloss
-  *project KB* on first use and never use it to mean the `.hs/` files. Code
-  identifiers in `backticks`.
+  for the ambient HUD, and *project knowledge* for the whole capability of
+  teaching the copilot about a repo. Project knowledge has two parts. *Project
+  facts* (UI tab **Project Facts**, formerly "Project KB") is the
+  `.holdspeak/project.yaml` `kb:` map: exact values the `kb-enricher` stage stamps
+  into block templates verbatim via `{project.kb.*}` placeholders, no LLM.
+  *Project context* (UI tab **Project Context**) is the **separate** `.hs/`
+  Markdown files: background the optional `project-rewriter` LLM stage reads. The
+  two are distinct and easily confused, so gloss them on first use and never use
+  one to mean the other (facts are stamped in verbatim; context guides a rewrite).
+  The on-disk names (`.holdspeak/project.yaml`, `.hs/`, `kb-enricher`,
+  `project-rewriter`, `{project.kb.*}`) are unchanged; "facts" and "context" are
+  the user-facing names. Code identifiers in `backticks`.
 
 ## The standard page skeleton
 

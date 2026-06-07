@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 47
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-47-01
 - **Unblocks:** HS-47-06
 - **Owner:** unassigned
@@ -29,12 +29,18 @@ docs/product drift reopens the exact confusion this phase exists to close.
   own dedicated docs story — this is it.
 
 ## Acceptance criteria
-- [ ] The guide documents **both** the KB (`project.yaml`) and the context (`.hs/`)
-      correctly, with the right stage for each and a worked example, matching the UI.
-- [ ] README/index + `DICTATION_COPILOT.md` are consistent with the new framing; no
-      doc implies the KB does what context does or vice-versa.
-- [ ] Doc-drift + dangling-link/image-ref guards green; the new framing is checked
-      against live code (the standing doc-truth rule).
+- [x] The Intelligent Typing guide's new "§5. Set Up Project Knowledge" documents
+      **both**: Facts (the `project.yaml` `kb:` map → `{project.kb.*}` →
+      `kb-enricher`, no LLM, with a worked stack example) and Context (the `.hs/`
+      files → optional `project-rewriter`), each with what it is, when it fires,
+      and matching the UI tab names (Project Facts / Project Context). The intro
+      callout reframes to the "facts + context" model.
+- [x] README docs index + `DICTATION_COPILOT.md` + `USER_GUIDE.md` + the
+      `dictation-runtime` web doc are consistent with the new framing; no doc
+      implies the KB does what context does or vice-versa (also fixed the web doc
+      that wrongly called KB enrichment an LLM step).
+- [x] Doc-drift + dangling-link/image-ref guards green (8 passed); the new framing
+      is grounded in `kb_enricher.py` / `project_kb.py` / `project_rewriter.py`.
 
 ## Test plan
 - Unit: `uv run pytest -q -k "doc_drift or link"`.

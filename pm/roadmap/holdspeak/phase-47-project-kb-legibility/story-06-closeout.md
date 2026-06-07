@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 47
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-47-01, HS-47-02, HS-47-03, HS-47-04, HS-47-05
 - **Owner:** unassigned
 
@@ -24,11 +24,14 @@ merged.
 - **Out:** new feature work (that's HS-47-01→05).
 
 ## Acceptance criteria
-- [ ] Before/after captured (old vs new surfaces) + a green dogfood transcript.
-- [ ] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py`);
-      `npm run build` ✓; 0 `_built/` tracked.
-- [ ] `final-summary.md` written; phase CLOSED; status docs + roadmap updated; PR to
-      `main` opened (and merged when CI green).
+- [x] Before/after captured (old bare tabs vs the new explainer + empty states +
+      guided panel + nudge) under `docs/assets/screenshots/project-knowledge-*`;
+      a repeatable `scripts/screenshot_project_knowledge.py` for the after-state;
+      a green dogfood transcript (`scripts/dogfood_project_knowledge.py`).
+- [x] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py` →
+      2372 passed, 17 skipped); `npm run build` ✓; 0 `_built/` tracked.
+- [x] `final-summary.md` written; phase CLOSED; status docs + roadmap updated; PR
+      to `main` opened (and merged when CI green).
 
 ## Test plan
 - Full suite + the phase dogfood; manual walk of the before/after.

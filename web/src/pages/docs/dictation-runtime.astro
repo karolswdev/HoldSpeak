@@ -19,10 +19,11 @@ import Pill from "../../components/Pill.astro";
       <h1>Dictation runtime setup</h1>
       <p class="lede">
         The dictation pipeline uses an LLM runtime for block
-        classification and Project KB enrichment. Pick a local model
-        backend or point HoldSpeak at an OpenAI-compatible endpoint.
-        The model names below are <em>suggestions</em>, not requirements
-        — bring your own (see <code>docs/MODELS.md</code>).
+        classification and the optional project-context rewrite. Project
+        Facts enrichment is deterministic and needs no model. Pick a local
+        model backend or point HoldSpeak at an OpenAI-compatible endpoint.
+        The model names below are <em>suggestions</em>, not requirements.
+        Bring your own (see <code>docs/MODELS.md</code>).
       </p>
     </header>
 

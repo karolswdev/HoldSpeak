@@ -367,6 +367,16 @@ const HS_FILE_META = [
   ["targets.md", "Per-target style notes for Codex, Claude, terminal, browser, editor, and chat."],
   ["ignore", "Paths, topics, or data HoldSpeak should not inject."],
 ];
+// HS-47-02: a small worked example the empty state loads into the editor so a
+// first-time user sees what good context looks like. Loaded unsaved; the user
+// reviews and saves (never written without approval).
+const HS_EXAMPLE_INSTRUCTIONS = `# How HoldSpeak should rewrite for this project
+
+- Keep dictation terse and imperative; this is a developer's repo.
+- Expand spoken shorthand into our real names (see .hs/terms.md).
+- Never invent file paths or commands; if you are unsure, leave a TODO.
+- Match the target: tighter for the terminal, fuller prose for chat.
+`;
 const hsState = {
   detected: null,
   contextDir: null,
@@ -480,7 +490,7 @@ function renderReadiness(data) {
       `${blocks.resolved_scope || "global"} · ${blocks.resolved?.path || "no file"}`
     ),
     readinessCard(
-      "Project KB",
+      "Project Facts",
       kb.exists ? `${(kb.keys || []).length} keys` : "missing",
       kb.valid && kb.exists ? "ok" : "warn",
       kb.path || "no project"
@@ -517,7 +527,7 @@ function renderReadiness(data) {
       <span>${escapeHtml(w.action || "")}</span>
       ${w.section && w.section !== "readiness" ? `<button class="btn" data-ready-section="${escapeAttr(w.section)}" style="float:right;">Open</button>` : ""}
       ${w.template_id ? `<button class="btn primary" data-ready-template-id="${escapeAttr(w.template_id)}" data-ready-template-scope="${escapeAttr(w.template_scope || "global")}" style="float:right;margin-right:8px;">Create + dry-run</button>` : ""}
-      ${w.kb_action === "create_starter" ? `<button class="btn primary" data-ready-kb-starter="1" style="float:right;margin-right:8px;">Create starter KB</button>` : ""}
+      ${w.kb_action === "create_starter" ? `<button class="btn primary" data-ready-kb-starter="1" style="float:right;margin-right:8px;">Create starter facts</button>` : ""}
       ${w.runtime_action === "enable_pipeline" ? `<button class="btn primary" data-ready-runtime-action="enable_pipeline" style="float:right;margin-right:8px;">Enable pipeline</button>` : ""}
       ${renderRuntimeGuidance(w.guidance)}
     </div>
@@ -632,14 +642,20 @@ function renderKBMeta(data) {
 
 function renderKBRows() {
   const host = document.getElementById("kb-rows");
+  // HS-47-02: the teaching empty state is static markup in dictation.astro; we
+  // only toggle its `hidden` attribute so its scoped CSS keeps applying.
+  const empty = document.getElementById("kb-empty");
   if (!kbState.detected) {
-    host.innerHTML = `<p style="color:var(--muted);font-size:13px;">No project detected. Navigate <code>holdspeak</code> from inside a project directory.</p>`;
+    if (empty) empty.hidden = true;
+    host.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">No project detected. Navigate <code>holdspeak</code> from inside a project directory.</p>`;
     return;
   }
   if (!kbState.rows.length) {
-    host.innerHTML = `<p style="color:var(--muted);font-size:13px;">No entries yet. Click <strong>+ New entry</strong> to add one.</p>`;
+    if (empty) empty.hidden = false;
+    host.innerHTML = "";
     return;
   }
+  if (empty) empty.hidden = true;
   host.innerHTML = kbState.rows.map((row, idx) => `
     <div class="row" style="margin-bottom: 8px; align-items: stretch;">
       <input type="text" data-kb-idx="${idx}" data-kb-field="key" placeholder="key" value="${escapeAttr(row.key)}" style="flex: 0 0 30%; font-family: var(--font-mono);" />
@@ -711,7 +727,7 @@ async function createStarterKB(options = {}) {
     kbState.detected = data.detected;
     kbState.kbPath = data.kb_path;
     kbState.rows = Object.entries(data.kb || {}).map(([k, v]) => ({ key: k, value: v ?? "" }));
-    msg.innerHTML = `<div class="ok-box">Created starter Project KB.</div>`;
+    msg.innerHTML = youreSetHtml("Created starter project facts. Fill in a value (like stack), add the \"Project facts context\" block in Blocks, then");
     renderKBMeta(data);
     renderKBRows();
     if (state.activeSection === "readiness") loadReadiness();
@@ -724,8 +740,8 @@ async function kbDelete() {
   if (!kbState.detected) return;
   const ok = await window.holdspeakConfirm({
     title: `Delete ${kbState.kbPath}?`,
-    body: "The project knowledge base file is removed from disk. The enclosing .holdspeak/ directory is preserved so other project state (blocks, runtime config) stays intact.",
-    scopeNote: "Only the local knowledge-base file is affected. Source files referenced from inside the KB are not touched.",
+    body: "The project facts file is removed from disk. The enclosing .holdspeak/ directory is preserved so other project state (blocks, runtime config) stays intact.",
+    scopeNote: "Only the local project facts file is affected. Source files referenced from inside it are not touched.",
     confirmLabel: "Delete file",
   });
   if (!ok) return;
@@ -760,9 +776,18 @@ async function loadHSContext() {
     renderHSFileList();
     renderHSEditor();
     await loadProjectDocSuggestion();
+    // HS-47-04: if we arrived here from the discovery nudge, open the guided
+    // setup now that the project is detected.
+    if (knNudgeState.pendingOpen) {
+      knNudgeState.pendingOpen = false;
+      openHsSetup();
+    }
   } catch (e) {
+    knNudgeState.pendingOpen = false;
     banner.classList.add(e.status === 404 ? "warn" : "error");
     banner.textContent = e.message;
+    const hsEmpty = document.getElementById("hs-empty");
+    if (hsEmpty) hsEmpty.hidden = true;
     document.getElementById("hs-file-list").innerHTML = "";
     document.getElementById("hs-editor").value = "";
     hsState.suggestion = null;
@@ -802,6 +827,10 @@ function renderHSMeta(data) {
 
 function renderHSFileList() {
   const host = document.getElementById("hs-file-list");
+  // HS-47-02: teaching empty state when a project is detected but .hs/ does not
+  // exist yet. Static markup, toggled (not re-rendered) so scoped CSS applies.
+  const empty = document.getElementById("hs-empty");
+  if (empty) empty.hidden = !(hsState.detected && !hsState.contextDirExists);
   host.innerHTML = HS_FILE_META.map(([name, help]) => {
     const file = hsState.files[name] || {};
     const source = file.source === "flat"
@@ -847,6 +876,155 @@ function renderHSEditor() {
     save.textContent = file.source === "flat" ? "Create editable .hs copy" : "Save";
   }
   document.getElementById("hs-msg").innerHTML = "";
+}
+
+// HS-47-02: one-click starter for the .hs/ empty state. Drops an example into
+// the instructions.md editor without writing anything; the user reviews and
+// clicks Save, honoring the never-write-without-approval rule.
+function hsLoadExample() {
+  if (!hsState.detected) return;
+  hsState.selected = "instructions.md";
+  hsState.files = hsState.files || {};
+  hsState.files["instructions.md"] = {
+    ...(hsState.files["instructions.md"] || {}),
+    content: HS_EXAMPLE_INSTRUCTIONS,
+    source: "new",
+    exists: false,
+    truncated: false,
+  };
+  renderHSFileList();
+  renderHSEditor();
+  // Focus-safe: bring the editor into view but never steal keyboard focus — the
+  // dictation flow is sacred (see test_moment_affordance_present_and_focus_safe).
+  const editor = document.getElementById("hs-editor");
+  if (editor) {
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    editor.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+  }
+  const msg = document.getElementById("hs-msg");
+  if (msg) {
+    msg.innerHTML = `<div class="ok-box">Loaded an example into .hs/instructions.md. Review it, then click Save to create the file.</div>`;
+  }
+}
+
+// ── HS-47-03: guided setup ───────────────────────────────────────────
+// A curated starter set: short templates with fill-in prompts, kept to the
+// files most worth having on day one.
+const STARTER_HS_FILES = {
+  "instructions.md": HS_EXAMPLE_INSTRUCTIONS,
+  "context.md": `# Project context
+
+- What this repo is: <one line>
+- Key entry points and paths: <e.g. the CLI, src/, the web app>
+- Important constraints: <perf budgets, security rules, things to never touch>
+`,
+  "terms.md": `# Project vocabulary
+
+- <ProductName>: what we call the product in writing.
+- <ACRONYM>: what it expands to.
+- Spelling: <e.g. British spelling, "colour" not "color">
+`,
+};
+
+// A copiable, repo-aware prompt the user pastes into their own coding agent
+// (Claude / Codex) to draft the .hs/ files. The drafting happens on the user's
+// machine; HoldSpeak never calls a model here.
+function buildAgentPrompt(project) {
+  const name = (project && project.name) || "this repo";
+  const root = (project && project.root) || ".";
+  return `You are setting up "project context" for HoldSpeak in the repo ${name} (at ${root}).
+
+HoldSpeak is a local dictation tool. When its optional rewrite stage is on, it
+reads the Markdown files in this repo's .hs/ folder and uses them to rewrite my
+spoken dictation so it matches this project's conventions. Your job: read this
+repo and write those .hs/ files. Keep every file short, factual, and specific to
+THIS repo. No boilerplate, no secrets, no invented facts. If you are unsure about
+something, leave a clearly marked TODO instead of guessing.
+
+Create these files under .hs/ (skip any that do not apply):
+
+- instructions.md: how HoldSpeak should rewrite dictation here. Tone, length,
+  what to expand, and what to leave exactly as said.
+- context.md: the architecture, the key paths, and the constraints a new
+  contributor needs to know.
+- terms.md: project vocabulary, acronyms, product names, and preferred spellings.
+- workflows.md: the real test, build, review, and deploy commands.
+- targets.md: per-target style notes (Codex, Claude, terminal, browser, editor,
+  chat) if they should differ.
+
+Worked example for instructions.md:
+
+    # How HoldSpeak should rewrite for this project
+    - Keep dictation terse and imperative; this is a developer's repo.
+    - Expand "the CLI" to its real name (see terms.md).
+    - Never invent file paths or commands; if unsure, leave a TODO.
+
+When you are done, list which files you created with a one-line summary of each,
+so I can review them in HoldSpeak's Project Context tab before they take effect.`;
+}
+
+function renderHsAgentPrompt() {
+  const pre = document.getElementById("hs-agent-prompt");
+  if (pre) pre.textContent = buildAgentPrompt(hsState.detected);
+}
+
+function openHsSetup() {
+  if (!hsState.detected) return;
+  const empty = document.getElementById("hs-empty");
+  if (empty) empty.hidden = true;
+  renderHsAgentPrompt();
+  const setup = document.getElementById("hs-setup");
+  if (setup) {
+    setup.hidden = false;
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setup.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }
+}
+
+function closeHsSetup() {
+  const setup = document.getElementById("hs-setup");
+  if (setup) setup.hidden = true;
+  const empty = document.getElementById("hs-empty");
+  if (empty) empty.hidden = !(hsState.detected && !hsState.contextDirExists);
+}
+
+async function hsCopyAgentPrompt() {
+  const prompt = buildAgentPrompt(hsState.detected);
+  const msg = document.getElementById("hs-setup-msg");
+  try {
+    await navigator.clipboard.writeText(prompt);
+    if (msg) msg.innerHTML = `<div class="ok-box">Prompt copied. Paste it into Claude or Codex, then review the files it writes here.</div>`;
+  } catch (e) {
+    if (msg) msg.innerHTML = `<div class="error-box">Could not copy automatically. Select the prompt text above and copy it manually.</div>`;
+  }
+}
+
+// "You're set" hand-off: a success line that routes into the dry-run.
+function youreSetHtml(prefix) {
+  return `<div class="ok-box">${escapeHtml(prefix)} <button class="kn-linkbtn" type="button" data-section-jump="dry-run">Try a dry-run</button> to see it affect your dictation.</div>`;
+}
+
+async function hsCreateStarterSet() {
+  if (!hsState.detected) return;
+  const names = Object.keys(STARTER_HS_FILES);
+  const ok = await window.holdspeakConfirm({
+    title: "Create a starter context set?",
+    body: `HoldSpeak will create ${names.length} files under .hs/: ${names.join(", ")}. They are templates with fill-in prompts; review and edit each here afterward.`,
+    scopeNote: "Existing .hs/ files with these names are overwritten. Nothing else in the repo is touched.",
+    confirmLabel: "Create files",
+  });
+  if (!ok) return;
+  const msg = document.getElementById("hs-setup-msg");
+  if (msg) msg.innerHTML = "";
+  try {
+    await api("PUT", `/api/dictation/project-hs${projectRootParam("?")}`, { files: STARTER_HS_FILES });
+    await loadHSContext();
+    if (msg) {
+      msg.innerHTML = youreSetHtml("Starter context created under .hs/. Refine each file, turn on the rewrite stage in Runtime, then");
+    }
+  } catch (e) {
+    if (msg) msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+  }
 }
 
 async function saveHSContext() {
@@ -2126,6 +2304,61 @@ function refreshProjectScopedView() {
   if (state.activeSection === "hs") loadHSContext();
   if (state.activeSection === "hooks") loadAgentHooks();
   if (state.activeSection === "dry-run") clearDryRun();
+  maybeShowKnNudge();
+}
+
+// ── HS-47-04: discovery nudge ────────────────────────────────────────
+// Ambient, dismissible, focus-safe. Shows only when a detected project has no
+// knowledge (no facts, no .hs/), is not dismissed for this project, and the
+// global switch is on. Dismissal is durable (localStorage). Reuses the existing
+// readiness signal; adds no detection path.
+const KN_NUDGE_DISABLED_KEY = "holdspeak.knNudgeDisabled";
+const KN_NUDGE_DISMISSED_KEY = "holdspeak.knNudgeDismissed";
+const knNudgeState = { root: null, pendingOpen: false };
+
+function knNudgeGloballyOff() {
+  try { return localStorage.getItem(KN_NUDGE_DISABLED_KEY) === "1"; } catch (e) { return false; }
+}
+function knNudgeDismissedRoots() {
+  try { return JSON.parse(localStorage.getItem(KN_NUDGE_DISMISSED_KEY) || "{}") || {}; } catch (e) { return {}; }
+}
+function knNudgeIsDismissed(root) {
+  return !!(root && knNudgeDismissedRoots()[root]);
+}
+function knNudgeDismiss(root) {
+  if (!root) return;
+  try {
+    const map = knNudgeDismissedRoots();
+    map[root] = true;
+    localStorage.setItem(KN_NUDGE_DISMISSED_KEY, JSON.stringify(map));
+  } catch (e) { /* ignore quota / disabled storage */ }
+}
+function hideKnNudge() {
+  const el = document.getElementById("kn-nudge");
+  if (el) el.hidden = true;
+}
+
+async function maybeShowKnNudge() {
+  const el = document.getElementById("kn-nudge");
+  if (!el) return;
+  el.hidden = true;  // re-evaluate cleanly every time.
+  if (knNudgeGloballyOff()) return;
+  let data;
+  try {
+    data = await api("GET", `/api/dictation/readiness${projectRootParam("?")}`);
+  } catch (e) {
+    return;  // no project / error -> no nudge.
+  }
+  const project = data && data.project;
+  if (!project || !project.root) return;
+  const hasFacts = !!(data.project_kb && data.project_kb.exists);
+  const hasContext = !!(data.project_context && data.project_context.exists);
+  if (hasFacts || hasContext) return;            // already has knowledge.
+  if (knNudgeIsDismissed(project.root)) return;  // dismissed for this project.
+  knNudgeState.root = project.root;
+  const label = document.getElementById("kn-nudge-project");
+  if (label) label.textContent = project.name ? `"${project.name}" has none yet.` : "";
+  el.hidden = false;
 }
 
 // ── Init ─────────────────────────────────────────────────────────────
@@ -2142,6 +2375,36 @@ document.getElementById("kb-btn-starter").addEventListener("click", createStarte
 document.getElementById("kb-btn-save").addEventListener("click", kbSave);
 document.getElementById("kb-btn-reset").addEventListener("click", kbReset);
 document.getElementById("kb-btn-delete").addEventListener("click", kbDelete);
+// HS-47-02: empty-state actions reuse the existing starter/add/example paths.
+document.getElementById("kb-empty-starter").addEventListener("click", createStarterKB);
+document.getElementById("kb-empty-add").addEventListener("click", kbAdd);
+document.getElementById("hs-empty-example").addEventListener("click", hsLoadExample);
+// HS-47-03: guided setup wiring.
+document.getElementById("hs-empty-setup").addEventListener("click", openHsSetup);
+document.getElementById("hs-setup-close").addEventListener("click", closeHsSetup);
+document.getElementById("hs-setup-starter").addEventListener("click", hsCreateStarterSet);
+document.getElementById("hs-setup-copy-prompt").addEventListener("click", hsCopyAgentPrompt);
+// HS-47-04: discovery-nudge wiring.
+document.getElementById("kn-nudge-setup").addEventListener("click", () => {
+  if (knNudgeState.root) knNudgeDismiss(knNudgeState.root);  // acting on it counts.
+  hideKnNudge();
+  knNudgeState.pendingOpen = true;  // open the guided panel once .hs loads.
+  activateSection("hs");
+});
+document.getElementById("kn-nudge-dismiss").addEventListener("click", () => {
+  if (knNudgeState.root) knNudgeDismiss(knNudgeState.root);
+  hideKnNudge();
+});
+document.getElementById("kn-nudge-off").addEventListener("click", () => {
+  try { localStorage.setItem(KN_NUDGE_DISABLED_KEY, "1"); } catch (e) { /* ignore */ }
+  hideKnNudge();
+});
+// Delegated jump for "Try a dry-run" / "Project Facts" links rendered into
+// success messages and the guided panel.
+document.addEventListener("click", (ev) => {
+  const jump = ev.target.closest ? ev.target.closest("[data-section-jump]") : null;
+  if (jump) activateSection(jump.dataset.sectionJump);
+});
 document.getElementById("hs-btn-save").addEventListener("click", saveHSContext);
 document.getElementById("hs-btn-reset").addEventListener("click", resetHSContext);
 document.getElementById("hs-suggestion-apply").addEventListener("click", applyProjectDocSuggestion);
@@ -2191,4 +2454,5 @@ loadDetectedProjectContext();
 loadAgentContext();
 loadStarterTemplates();
 loadScope("global");
+maybeShowKnNudge();  // HS-47-04: evaluate the discovery nudge on load.
 window.setInterval(loadAgentContext, 10000);

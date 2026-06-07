@@ -233,6 +233,35 @@ def _read_blocks_document(path: Path) -> tuple[dict[str, Any], bool]:
 
 _STARTER_BLOCK_TEMPLATES: tuple[dict[str, Any], ...] = (
     {
+        # HS-47-03: a starter block that consumes a Project Fact, so a fact set
+        # in the KB actually shows up in dictation out of the box (otherwise
+        # facts have nothing referencing them). The {project.kb.stack}
+        # placeholder is left unresolved -- and the injection skipped -- until
+        # the user fills in the `stack` fact, so it is safe by default.
+        "id": "project_facts_context",
+        "title": "Project facts context",
+        "description": "Append your project's stack fact to AI-assistant prompts so the copilot always has it. Set the `stack` fact in Project Facts to see it appear.",
+        "sample_utterance": "help me refactor the payments module",
+        "requires_project": True,
+        "block": {
+            "id": "project_facts_context",
+            "description": "User is dictating a prompt for an AI assistant and wants the project's facts attached.",
+            "match": {
+                "examples": [
+                    "help me refactor the payments module",
+                    "write a test for this endpoint",
+                    "explain how this service is wired together",
+                ],
+                "negative_examples": ["remind me to buy milk"],
+                "threshold": 0.7,
+            },
+            "inject": {
+                "mode": "append",
+                "template": "\n\nProject stack: {project.kb.stack}",
+            },
+        },
+    },
+    {
         "id": "ai_prompt_context",
         "title": "AI prompt context",
         "description": "Append the selected project name and clear instruction context to AI-assistant prompts.",
