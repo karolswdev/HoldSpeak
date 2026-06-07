@@ -128,6 +128,7 @@ def _open_item_payload(item: Any, segments: Optional[list[Any]] = None) -> dict[
         "task": item.task,
         "owner": _clean_owner(item.owner),
         "due": item.due,
+        "review_state": item.review_state,
         "source_timestamp": _coerce_timestamp(item.source_timestamp),
         "provenance": resolve_provenance_segment(segments or [], item.source_timestamp),
         "meeting_id": item.meeting_id,

@@ -74,6 +74,48 @@ def _is_unowned(owner: Any) -> bool:
     return str(owner or "").strip().lower() in _UNASSIGNED
 
 
+def build_github_issue_proposal(
+    *,
+    task: str,
+    owner: Optional[str],
+    due: Optional[str],
+    meeting_title: str,
+    repo: str,
+) -> dict[str, Any]:
+    """Build a GitHub-issue `ActuatorProposal` payload for one action item.
+
+    The single source of the proposal shape, shared by `GithubIssueActuator.run`
+    (the "first unowned" path) and the HS-49-03 aftercare "file this accepted
+    action" path. Building a proposal never reaches out; the `{repo, title,
+    body}` payload is exactly what `build_github_issue_connector` consumes once
+    the proposal is separately approved.
+    """
+    clean_task = str(task or "").strip() or "Unspecified action item"
+    clean_owner = str(owner or "").strip()
+    clean_due = str(due or "").strip()
+    clean_title = str(meeting_title or "meeting").strip() or "meeting"
+    owner_line = clean_owner if clean_owner and not _is_unowned(clean_owner) else "_unassigned_"
+
+    title = f"Follow up: {clean_task}"
+    body = "\n".join(
+        [
+            f"Raised in **{clean_title}**.",
+            "",
+            f"- **Task:** {clean_task}",
+            f"- **Owner:** {owner_line}",
+            f"- **Due:** {clean_due or '_not stated_'}",
+        ]
+    )
+    return {
+        "target": "github",
+        "action": "create_issue",
+        "preview": f"Open a GitHub issue in {repo}: “{title}”",
+        "payload": {"repo": repo, "title": title, "body": body},
+        "reversible": False,  # a filed issue can be closed but not trivially undone
+        "required_capabilities": ["actuator"],
+    }
+
+
 class GithubIssueActuator:
     """Proposes a GitHub issue for the first unowned action item."""
 
@@ -102,31 +144,16 @@ class GithubIssueActuator:
             # proposal, so this is an `error`, not a half-formed proposal.
             raise ValueError("no github_repo in context to file the issue against")
 
-        task = str(unowned.get("task") or "").strip() or "Unspecified action item"
         meeting_title = str(
             context.get("meeting_title") or context.get("title") or "meeting"
         ).strip()
-        due = str(unowned.get("due") or "").strip()
-
-        title = f"Follow up: {task}"
-        body = "\n".join(
-            [
-                f"Raised in **{meeting_title}** with no owner assigned.",
-                "",
-                f"- **Task:** {task}",
-                "- **Owner:** _unassigned_",
-                f"- **Due:** {due or '_not stated_'}",
-            ]
+        return build_github_issue_proposal(
+            task=unowned.get("task"),
+            owner=None,  # this path fires only on unowned items
+            due=unowned.get("due"),
+            meeting_title=meeting_title,
+            repo=repo,
         )
-
-        return {
-            "target": "github",
-            "action": "create_issue",
-            "preview": f"Open a GitHub issue in {repo}: “{title}”",
-            "payload": {"repo": repo, "title": title, "body": body},
-            "reversible": False,  # a filed issue can be closed but not trivially undone
-            "required_capabilities": ["actuator"],
-        }
 
 
 def _plan(proposal: Any, *, timeout_seconds: float) -> GatedOperation:
@@ -213,5 +240,6 @@ __all__ = [
     "GITHUB_ISSUE_MANIFEST",
     "GithubIssueActuator",
     "build_github_issue_connector",
+    "build_github_issue_proposal",
     "register_github_issue_actuator",
 ]

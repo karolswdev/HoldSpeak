@@ -679,7 +679,7 @@ import AppLayout from "../layouts/AppLayout.astro";
                     <div class="aftercare-owner">
                       <p class="aftercare-owner-name" x-text="group.owner || 'Unassigned'"></p>
                       <template x-for="item in group.items" :key="item.id">
-                        <div class="aftercare-item">
+                        <div class="aftercare-item" x-data="{ filing: false, repo: '' }">
                           <p x-text="item.task"></p>
                           <div class="pill-row">
                             <span class="pill" x-show="item.due" x-cloak x-text="`Due ${item.due}`"></span>
@@ -693,6 +693,30 @@ import AppLayout from "../layouts/AppLayout.astro";
                               <span aria-hidden="true">&#9658;</span>
                               <span x-text="`Show me the moment · ${formatTimestamp(item.source_timestamp)}`"></span>
                             </button>
+                            <button
+                              class="moment-btn loop-btn"
+                              x-show="item.review_state === 'accepted' && !filing"
+                              x-cloak
+                              @click="filing = true"
+                              title="Create a GitHub-issue proposal for this accepted action"
+                            >
+                              <span aria-hidden="true">&#43;</span>
+                              <span>File as issue</span>
+                            </button>
+                          </div>
+                          <div class="loop-form" x-show="filing" x-cloak>
+                            <input
+                              type="text"
+                              class="loop-input"
+                              placeholder="owner/repo"
+                              x-model="repo"
+                              @keydown.enter.prevent="fileActionAsIssue(item, repo) && (filing = false, repo = '')"
+                            />
+                            <div class="loop-form-actions">
+                              <button class="btn primary" @click="(await fileActionAsIssue(item, repo)) && (filing = false, repo = '')">Create proposal</button>
+                              <button class="btn" @click="filing = false; repo = ''">Cancel</button>
+                            </div>
+                            <p class="loop-note">Creates a proposal only. Nothing is sent until you approve it below, and execution needs actuators enabled.</p>
                           </div>
                         </div>
                       </template>
@@ -2662,5 +2686,40 @@ import AppLayout from "../layouts/AppLayout.astro";
   }
   @media (prefers-reduced-motion: reduce) {
     .segment.segment-flash { animation: none; outline: 1px solid var(--accent); }
+  }
+
+  /* HS-49-03: close the loop — file an accepted action as an actuator proposal.
+     The inline form lives under its action item; the note keeps the privacy
+     posture explicit at the point of action. */
+  .loop-btn { gap: 0.3rem; }
+  .loop-btn span[aria-hidden] { font-size: 0.8rem; font-weight: 700; }
+  .loop-form {
+    margin-top: var(--space-2);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .loop-input {
+    width: 100%;
+    font: inherit;
+    font-size: 0.82rem;
+    color: var(--text);
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.4rem 0.6rem;
+  }
+  .loop-input:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: 1px;
+    border-color: var(--accent);
+  }
+  .loop-form-actions { display: flex; gap: var(--space-2); }
+  .loop-form-actions .btn { font-size: 0.78rem; padding: 0.3rem 0.7rem; }
+  .loop-note {
+    margin: 0;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    color: var(--text-muted);
   }
 </style>

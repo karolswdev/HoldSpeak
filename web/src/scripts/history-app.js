@@ -492,6 +492,41 @@ function historyApp() {
       }
     },
 
+    // HS-49-03: close the loop — turn an accepted action item into a GitHub-issue
+    // actuator PROPOSAL through the existing propose -> approve -> execute flow.
+    // This records a `proposed` proposal only; nothing leaves the machine until
+    // the proposal is separately approved AND actuators are enabled + allow-listed.
+    async fileActionAsIssue(item, repo) {
+      const target = String(repo || "").trim();
+      if (!this.selectedMeeting?.id || !item?.id) return;
+      if (!target) {
+        this.flash("Enter a target repo (owner/name) first.", true);
+        return;
+      }
+      try {
+        const res = await this.apiJson(
+          `/api/meetings/${this.selectedMeeting.id}/aftercare/file-issue`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action_item_id: item.id, repo: target }),
+          },
+        );
+        if (res.proposal) {
+          // Surface it in the existing proposals section (deduped on id, since
+          // filing is idempotent per action item).
+          const others = this.selectedMeetingProposals.filter((p) => p.id !== res.proposal.id);
+          this.selectedMeetingProposals = [res.proposal, ...others];
+        }
+        this.flash("Issue proposal created — review and approve it below. Nothing is sent yet.");
+        return true;
+      } catch (error) {
+        console.error("Failed to file action as issue:", error);
+        this.flash(`Could not create proposal: ${error.message}`, true);
+        return false;
+      }
+    },
+
     proposalStatusLabel(status) {
       return (
         {
