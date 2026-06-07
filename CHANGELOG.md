@@ -5,11 +5,22 @@ All notable changes to HoldSpeak are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-> **Pre-release.** HoldSpeak has not been formally released or published to PyPI.
-> Everything below is **Unreleased** — install from source. Version `0.2.1` in
-> `pyproject.toml` is an in-development marker, not a published tag.
+> **0.x, early but real.** HoldSpeak is published on PyPI (`pip install
+> holdspeak`). APIs, config, and defaults can still change while it is pre-1.0;
+> upgrades are safe by default (your database is backed up first).
 
-## [Unreleased]
+## [0.2.2] - 2026-06-07
+
+### Changed
+- README is now PyPI-ready: `pip install holdspeak` is the headline install,
+  every image uses an absolute URL so screenshots render on the PyPI project
+  page, and every doc link resolves from PyPI. The "isn't on PyPI yet" status
+  line is gone.
+
+## [0.2.1] - 2026-06-07
+
+First release published to PyPI, cut after Phase 50 (Release Readiness). The
+items below shipped in this release.
 
 ### Added
 - **Bring-your-own model contract** (`docs/MODELS.md`): GGUF in-process, MLX on
