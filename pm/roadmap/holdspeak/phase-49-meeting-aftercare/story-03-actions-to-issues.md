@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 49
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-49-01
 - **Owner:** unassigned
 
@@ -28,14 +28,14 @@ and file it" from the surface where they just reviewed it.
   This story wires accepted actions into the actuator system.
 
 ## Acceptance criteria
-- [ ] An accepted action item can become an actuator proposal from the aftercare
+- [x] An accepted action item can become an actuator proposal from the aftercare
       surface, through the existing propose -> approve -> execute path; **no new
-      write primitive**.
-- [ ] Off by default and safe: execution still requires `allow_actuators` + the
+      write primitive** (reuses `record_proposal` + `build_github_issue_connector`).
+- [x] Off by default and safe: execution still requires `allow_actuators` + the
       per-project allow-list + a host-injected connector; per-action human
       approval; the payload-parity (TOCTOU) gate and audit trail hold; refusal is
       graceful.
-- [ ] Behavior-preserving (no auto-execute, no egress without approval); tests
+- [x] Behavior-preserving (no auto-execute, no egress without approval); tests
       assert proposal creation from an accepted action + that an unapproved
       proposal never executes; `npm run build` ✓; 0 `_built/` tracked.
 

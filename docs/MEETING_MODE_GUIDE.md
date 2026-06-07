@@ -10,9 +10,10 @@ HoldSpeak's Meeting Mode captures your microphone plus remote participants' audi
 4. [Using Meeting Mode](#using-meeting-mode)
 5. [Web Interfaces](#web-interfaces)
 6. [Meeting Intelligence](#meeting-intelligence)
-7. [Configuration Reference](#configuration-reference)
-8. [Web API Reference](#web-api-reference)
-9. [Troubleshooting](#troubleshooting)
+7. [Meeting Aftercare (close the loop)](#meeting-aftercare-close-the-loop)
+8. [Configuration Reference](#configuration-reference)
+9. [Web API Reference](#web-api-reference)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -337,6 +338,79 @@ Without GPU: Same model takes 20+ minutes
 
 ---
 
+## Meeting Aftercare (close the loop)
+
+A finished meeting leaves you with artifacts. Aftercare turns those into your next
+move. Open a saved meeting at `/history` and the "Your next move" panel sits at the
+top of the detail view, above the artifact cards. It is read-only and it stays
+quiet when there is nothing to act on, so it only appears when a meeting actually
+has open work, decisions, or a change since last time.
+
+![The "Your next move" aftercare panel on a meeting at /history: a "Still open" count grouped by owner, a "What was decided" list, and a "Since the last meeting" section, each row carrying a "Show me the moment" jump to the transcript.](assets/aftercare/aftercare-digest.png)
+
+*The aftercare panel: open work by owner, the decisions, and a real diff against the previous meeting, each with a jump back to the transcript moment.*
+
+### What the panel shows
+
+1. **Still open.** The meeting's pending action items, grouped by owner, with the
+   unassigned ones last. This is "what is still on someone's plate."
+2. **What was decided.** The decisions captured for the meeting, each with its
+   rationale when one was recorded.
+3. **Since the last meeting.** A real diff against the chronologically previous
+   meeting: new decisions, new action items, and items from last time that have
+   since closed. If there is no prior meeting, or nothing changed, this section
+   does not appear. The numbers come from your real data; nothing is invented.
+
+### Show me the moment
+
+Wherever a result carries a real transcript timestamp, a "Show me the moment"
+button appears on it (open items, decisions, and the action-item cards). Clicking
+it scrolls the transcript to the segment that justifies the result and flashes it,
+so you can read the exact exchange before you act on it. The button only shows when
+a real timestamp resolves to a real segment, so there is no misleading jump to
+`0:00`. It reveals the segment without taking keyboard focus.
+
+### File an accepted action as an issue
+
+When you have reviewed and accepted an action item, a "File as issue" button
+appears on it in the panel. It opens a small form for a target repo (`owner/name`)
+and creates a GitHub-issue **proposal**. This reuses the existing actuator system
+(propose, then approve, then execute), so filing here records a proposal only.
+Nothing leaves your machine at this step.
+
+![The "File as issue" proposal in the Proposed actions section: a create_issue -> github proposal awaiting approval, showing the full payload preview (repo, title, body) with Approve and Reject controls and the note that nothing runs without approval.](assets/aftercare/file-as-issue.png)
+
+*The filed proposal lands in the existing Proposed actions section, awaiting your approval. Execution is a separate, audited step.*
+
+This stays safe by default:
+
+- **Off by default.** Execution requires `allow_actuators` to be on plus a
+  per-project allow-list plus a host-injected connector. With actuators off, an
+  approved proposal still does not run.
+- **Human-approved, per action.** You approve or reject each proposal yourself in
+  the Proposed actions section. Approval only records the decision; it does not
+  send anything.
+- **Audited, and what executes is what you saw.** Every state change is recorded,
+  and a payload-parity check aborts execution if the stored payload no longer
+  matches what was approved.
+
+The connector that files the issue runs your already-authenticated local `gh`; it
+manages no tokens and can only run `gh issue create`.
+
+### Draft the follow-up
+
+"Draft follow-up" in the panel header assembles a plain-markdown summary from the
+same data: the decisions, the open items with owners, and the since-last-meeting
+delta. It is assembled locally and is preview plus copy only. There is no model
+call and nothing is sent; you read it, copy it, and paste it wherever your team
+talks.
+
+![The follow-up draft preview in the aftercare panel: a monospace block with a Follow-up heading, a "What we decided" list, "Open items" by owner with due dates, and a "Since" section, plus a Copy draft button and a note that it is assembled locally and nothing is sent.](assets/aftercare/followup-draft.png)
+
+*The follow-up draft: assembled from the meeting's decisions and open items, ready to copy. An empty meeting yields one honest line, not filler.*
+
+---
+
 ## Configuration Reference
 
 Configuration file: `~/.config/holdspeak/config.json`
@@ -461,6 +535,9 @@ Health check endpoint.
 - `GET /api/meetings/{meeting_id}/intent-timeline` - persisted MIR timeline windows + transitions
 - `GET /api/meetings/{meeting_id}/plugin-runs` - persisted MIR plugin execution history
 - `GET /api/meetings/{meeting_id}/artifacts` - synthesized artifacts with lineage sources
+- `GET /api/meetings/{meeting_id}/aftercare` - read-only aftercare digest (open items by owner, decisions, the since-last-meeting diff)
+- `GET /api/meetings/{meeting_id}/followup-draft` - locally-assembled follow-up draft (preview + copy; nothing sent)
+- `POST /api/meetings/{meeting_id}/aftercare/file-issue` - file an accepted action as a GitHub-issue actuator proposal (records a proposal only; off by default, human-approved, audited)
 - `GET /api/all-action-items`
 - `PATCH /api/all-action-items/{item_id}` - update persisted action item status
 - `PATCH /api/all-action-items/{item_id}/review` - update persisted action item review state

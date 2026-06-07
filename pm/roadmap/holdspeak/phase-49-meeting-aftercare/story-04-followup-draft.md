@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 49
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-49-01
 - **Owner:** unassigned
 
@@ -26,11 +26,11 @@ decided, here's who owns what, here's what's still open." The data already exist
   (HS-49-03); docs (HS-49-05). This story is the draft + copy.
 
 ## Acceptance criteria
-- [ ] A follow-up draft (decisions + open actions + owners) is generated locally
+- [x] A follow-up draft (decisions + open actions + owners) is generated locally
       from the aftercare data and is copyable from the surface.
-- [ ] Preview + copy only: nothing is sent and no connector is opened; behavior-
+- [x] Preview + copy only: nothing is sent and no connector is opened; behavior-
       preserving; honest when there's little to summarize (no padding).
-- [ ] Tests assert the draft content reflects the seeded decisions/actions;
+- [x] Tests assert the draft content reflects the seeded decisions/actions;
       `npm run build` ✓; 0 `_built/` tracked.
 
 ## Test plan

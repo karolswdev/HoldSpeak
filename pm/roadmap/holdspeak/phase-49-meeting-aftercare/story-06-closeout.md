@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 49
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-49-01, HS-49-02, HS-49-03, HS-49-04, HS-49-05
 - **Owner:** unassigned
 
@@ -28,10 +28,10 @@ dogfooded end to end, and merged.
 - **Out:** new feature work (HS-49-01..05).
 
 ## Acceptance criteria
-- [ ] Before/after captured (old vs new surfaces) + a green dogfood transcript.
-- [ ] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py`);
-      `npm run build` ✓; 0 `_built/` tracked.
-- [ ] `final-summary.md` written; phase CLOSED; status docs + roadmap updated;
+- [x] Before/after captured (old vs new surfaces) + a green dogfood transcript.
+- [x] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py` →
+      2426 passed, 17 skipped); `npm run build` ✓; 0 `_built/` tracked.
+- [x] `final-summary.md` written; phase CLOSED; status docs + roadmap updated;
       the [backlog](../BACKLOG.md) row for candidate A flipped to shipped; PR to
       `main` opened (and merged when CI green).
 

@@ -24,6 +24,7 @@ from ...web_requests import (
     _ActionItemEditRequest,
     _ActionItemReviewRequest,
     _ActionItemUpdateRequest,
+    _AftercareFileIssueRequest,
     _BookmarkRequest,
     _GlobalActionItemEditRequest,
     _GlobalActionItemReviewRequest,
@@ -637,6 +638,54 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
         except Exception as e:
             return error_500(e, log, "Failed to load meeting artifacts")
 
+    @router.get("/api/meetings/{meeting_id}/aftercare")
+    async def api_get_meeting_aftercare(meeting_id: str) -> Any:
+        """Read-only aftercare digest for one meeting (HS-49-01).
+
+        Aggregates what's still open (by owner), what was decided, and a real
+        diff against the chronologically previous meeting. Pure read — no writes,
+        no side effects. Returns `is_empty` so the surface can stay quiet when
+        there is nothing open, nothing decided, and nothing changed.
+        """
+        try:
+            from ...db import get_database
+            from ...meeting_aftercare import compute_meeting_aftercare
+
+            db = get_database()
+            digest = compute_meeting_aftercare(db, meeting_id)
+            if digest is None:
+                return JSONResponse({"error": "Meeting not found"}, status_code=404)
+            return JSONResponse(digest)
+        except Exception as e:
+            return error_500(e, log, "Failed to load meeting aftercare")
+
+    @router.get("/api/meetings/{meeting_id}/followup-draft")
+    async def api_get_meeting_followup_draft(meeting_id: str) -> Any:
+        """A local, copyable follow-up draft for one meeting (HS-49-04).
+
+        Assembled deterministically from the aftercare digest — decisions, open
+        items by owner, and the since-last-meeting delta. Preview + copy only:
+        nothing is sent and no connector is opened. Honest when there's little to
+        say (no padding). Pure read; 404 for an unknown meeting.
+        """
+        try:
+            from ...db import get_database
+            from ...meeting_aftercare import build_followup_draft, compute_meeting_aftercare
+
+            db = get_database()
+            digest = compute_meeting_aftercare(db, meeting_id)
+            if digest is None:
+                return JSONResponse({"error": "Meeting not found"}, status_code=404)
+            return JSONResponse(
+                {
+                    "meeting_id": meeting_id,
+                    "markdown": build_followup_draft(digest),
+                    "is_empty": digest["is_empty"],
+                }
+            )
+        except Exception as e:
+            return error_500(e, log, "Failed to build meeting follow-up draft")
+
     def _proposal_to_dict(proposal: Any) -> dict[str, Any]:
         return {
             "id": proposal.id,
@@ -729,6 +778,79 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"success": True, "proposal": _proposal_to_dict(updated)})
         except Exception as e:
             return error_500(e, log, "Failed to decide meeting proposal")
+
+    @router.post("/api/meetings/{meeting_id}/aftercare/file-issue")
+    async def api_aftercare_file_issue(
+        meeting_id: str, payload: _AftercareFileIssueRequest
+    ) -> Any:
+        """Turn an accepted action item into a GitHub-issue actuator proposal (HS-49-03).
+
+        Closing the loop reuses the existing propose -> approve -> execute flow:
+        this records a `proposed` proposal only. Nothing leaves the machine here —
+        execution still requires a separate human approval (the decision endpoint)
+        plus `allow_actuators` + the per-project allow-list + a host-injected
+        connector. No new write primitive; idempotent per (meeting, action item).
+        """
+        repo = str(payload.repo or "").strip()
+        if not repo:
+            return JSONResponse(
+                {"success": False, "error": "A target repo (owner/name) is required"},
+                status_code=400,
+            )
+        try:
+            from ...db import get_database
+            from ...plugins.builtin.github_issue_actuator import (
+                GithubIssueActuator,
+                build_github_issue_proposal,
+            )
+
+            db = get_database()
+            meeting = db.meetings.get_meeting(meeting_id)
+            if meeting is None:
+                return JSONResponse({"error": "Meeting not found"}, status_code=404)
+
+            item = db.meetings.get_action_item(payload.action_item_id)
+            if item is None or item.meeting_id != meeting_id:
+                return JSONResponse(
+                    {"success": False, "error": "Action item not found"},
+                    status_code=404,
+                )
+            # Only a human-reviewed (accepted) action can be filed — this is the
+            # "take what I just accepted and track it" seam, not auto-filing.
+            if item.review_state != "accepted":
+                return JSONResponse(
+                    {
+                        "success": False,
+                        "error": "Only an accepted action item can be filed as an issue",
+                    },
+                    status_code=400,
+                )
+
+            spec = build_github_issue_proposal(
+                task=item.task,
+                owner=item.owner,
+                due=item.due,
+                meeting_title=meeting.title or "meeting",
+                repo=repo,
+            )
+            proposal = db.actuators.record_proposal(
+                meeting_id=meeting_id,
+                window_id=f"{meeting_id}:aftercare",
+                plugin_id=GithubIssueActuator.id,
+                plugin_version=GithubIssueActuator.version,
+                idempotency_key=f"aftercare-issue:{meeting_id}:{item.id}",
+                target=spec["target"],
+                action=spec["action"],
+                preview=spec["preview"],
+                payload=spec["payload"],
+                reversible=spec["reversible"],
+                required_capabilities=spec["required_capabilities"],
+            )
+            return JSONResponse(
+                {"success": True, "proposal": _proposal_to_dict(proposal)}
+            )
+        except Exception as e:
+            return error_500(e, log, "Failed to file aftercare issue")
 
     @router.get("/api/all-action-items")
     async def api_list_all_action_items(

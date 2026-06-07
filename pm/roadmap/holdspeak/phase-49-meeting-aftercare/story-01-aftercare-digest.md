@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 49
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-49-02, HS-49-03, HS-49-04, HS-49-05, HS-49-06
 - **Owner:** unassigned
@@ -33,14 +33,15 @@ all. The meeting result is display, not follow-through.
   surface.
 
 ## Acceptance criteria
-- [ ] An aggregation endpoint returns honest counts over meetings + action items +
+- [x] An aggregation endpoint returns honest counts over meetings + action items +
       artifacts: open items (by owner), decisions, and a real since-last-meeting
       diff (new/closed decisions + actions vs the prior meeting).
-- [ ] An aftercare surface renders it on the meeting/history view; empty/no-change
+- [x] An aftercare surface renders it on the meeting/history view; empty/no-change
       state stays quiet (no fabricated "changes"); numbers are accurate.
-- [ ] Local-first and read-only: no new writes; behavior-preserving; page-content +
-      API tests; `npm run build` ✓; 0 `_built/` tracked; CSS for any JS-injected
-      DOM is `is:global` and screenshot-verified.
+- [x] Local-first and read-only: no new writes; behavior-preserving; page-content +
+      API tests; `npm run build` ✓; 0 `_built/` tracked; CSS for the
+      Alpine-template DOM lives in the scoped `<style>` block and is
+      screenshot-verified.
 
 ## Test plan
 - Unit/integration: seed two meetings (prior + current) with decisions + action

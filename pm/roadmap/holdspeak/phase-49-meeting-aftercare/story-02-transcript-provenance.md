@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 49
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-49-01
 - **Owner:** unassigned
 
@@ -26,13 +26,13 @@ the aftercare surface.
   (HS-49-04). This story makes provenance visible and navigable.
 
 ## Acceptance criteria
-- [ ] A "jump to the transcript moment" control appears only when a real
+- [x] A "jump to the transcript moment" control appears only when a real
       `source_timestamp` / segment range exists (hidden otherwise; never a fake
       0:00), and it scrolls/opens the transcript at that segment.
-- [ ] The provenance comes from existing data (action-item `source_timestamp`,
+- [x] The provenance comes from existing data (action-item `source_timestamp`,
       segment `start_time`); no fabricated linkage; behavior-preserving.
-- [ ] Focus-safe; tests assert the affordance presence/absence + the seek target;
-      `npm run build` ✓; 0 `_built/` tracked.
+- [x] Focus-safe (reveal + flash, never `.focus()`); tests assert the affordance
+      presence/absence + the seek target; `npm run build` ✓; 0 `_built/` tracked.
 
 ## Test plan
 - Unit/integration: an action item with a `source_timestamp` exposes the jump

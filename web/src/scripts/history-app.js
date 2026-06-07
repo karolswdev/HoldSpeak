@@ -22,6 +22,8 @@ function historyApp() {
     selectedMeeting: null,
     selectedMeetingArtifacts: [],
     selectedMeetingProposals: [],
+    selectedMeetingAftercare: null,
+    highlightedSegmentIndex: null,
     selectedSpeakerId: "",
     selectedSpeaker: null,
     speakerDraft: { name: "", avatar: "" },
@@ -387,7 +389,17 @@ function historyApp() {
         this.tab = "meetings";
         this.selectedMeetingArtifacts = [];
         this.selectedMeetingProposals = [];
+        this.selectedMeetingAftercare = null;
         this.selectedMeeting = await this.apiJson(`/api/meetings/${id}`);
+        // HS-49-01: the aftercare digest (open / decided / changed). Read-only;
+        // stays quiet (is_empty) when there's nothing to act on.
+        try {
+          const aftercare = await this.apiJson(`/api/meetings/${id}/aftercare`);
+          this.selectedMeetingAftercare = aftercare && !aftercare.is_empty ? aftercare : null;
+        } catch (aftercareError) {
+          console.error("Failed to load meeting aftercare:", aftercareError);
+          this.selectedMeetingAftercare = null;
+        }
         try {
           const artifacts = await this.apiJson(`/api/meetings/${id}/artifacts`);
           this.selectedMeetingArtifacts = artifacts.artifacts || [];
@@ -407,6 +419,46 @@ function historyApp() {
         console.error("Failed to load meeting:", error);
         this.flash(`Meeting detail failed: ${error.message}`, true);
       }
+    },
+
+    // HS-49-02: "show me the moment". Reveal + briefly flash the transcript
+    // segment that justifies a result. Focus-safe — it scrolls the segment into
+    // view but never calls .focus(), so it can't steal keyboard focus from a
+    // live dictation/presence surface sharing the bundle.
+    jumpToSegment(index) {
+      if (index === null || index === undefined || index < 0) return;
+      this.highlightedSegmentIndex = index;
+      this.$nextTick(() => {
+        const el = document.getElementById(`seg-${index}`);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      // Clear the flash so a later jump re-triggers the animation.
+      window.setTimeout(() => {
+        if (this.highlightedSegmentIndex === index) this.highlightedSegmentIndex = null;
+      }, 2200);
+    },
+
+    // Resolve a raw provenance timestamp to its segment client-side (mirrors the
+    // backend resolve_provenance_segment), for surfaces that carry only the raw
+    // source_timestamp (e.g. the intel action-item cards).
+    jumpToMoment(ts) {
+      if (ts === null || ts === undefined) return;
+      const segments = this.selectedMeeting?.segments || [];
+      if (!segments.length) return;
+      let target = 0;
+      for (let i = 0; i < segments.length; i++) {
+        if (segments[i].start_time <= ts) target = i;
+        else break;
+      }
+      this.jumpToSegment(target);
+    },
+
+    hasMoment(ts) {
+      return (
+        ts !== null &&
+        ts !== undefined &&
+        (this.selectedMeeting?.segments || []).length > 0
+      );
     },
 
     // HS-37-03: approve/reject an actuator proposal. Approving only flips DB
@@ -437,6 +489,58 @@ function historyApp() {
       } catch (error) {
         console.error("Failed to decide proposal:", error);
         this.flash(`Decision failed: ${error.message}`, true);
+      }
+    },
+
+    // HS-49-03: close the loop — turn an accepted action item into a GitHub-issue
+    // actuator PROPOSAL through the existing propose -> approve -> execute flow.
+    // This records a `proposed` proposal only; nothing leaves the machine until
+    // the proposal is separately approved AND actuators are enabled + allow-listed.
+    async fileActionAsIssue(item, repo) {
+      const target = String(repo || "").trim();
+      if (!this.selectedMeeting?.id || !item?.id) return;
+      if (!target) {
+        this.flash("Enter a target repo (owner/name) first.", true);
+        return;
+      }
+      try {
+        const res = await this.apiJson(
+          `/api/meetings/${this.selectedMeeting.id}/aftercare/file-issue`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action_item_id: item.id, repo: target }),
+          },
+        );
+        if (res.proposal) {
+          // Surface it in the existing proposals section (deduped on id, since
+          // filing is idempotent per action item).
+          const others = this.selectedMeetingProposals.filter((p) => p.id !== res.proposal.id);
+          this.selectedMeetingProposals = [res.proposal, ...others];
+        }
+        this.flash("Issue proposal created — review and approve it below. Nothing is sent yet.");
+        return true;
+      } catch (error) {
+        console.error("Failed to file action as issue:", error);
+        this.flash(`Could not create proposal: ${error.message}`, true);
+        return false;
+      }
+    },
+
+    // HS-49-04: assemble the local follow-up draft (decisions + open items +
+    // owners). Preview + copy only — this fetches the locally-assembled markdown;
+    // the caller shows it and lets the user copy it. Nothing is ever sent.
+    async fetchFollowupDraft() {
+      if (!this.selectedMeeting?.id) return null;
+      try {
+        const res = await this.apiJson(
+          `/api/meetings/${this.selectedMeeting.id}/followup-draft`,
+        );
+        return res.markdown || "";
+      } catch (error) {
+        console.error("Failed to build follow-up draft:", error);
+        this.flash(`Draft failed: ${error.message}`, true);
+        return null;
       }
     },
 

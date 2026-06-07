@@ -1,13 +1,15 @@
 # Phase 49 — Meeting Aftercare ("close the loop")
 
-**Status:** PLANNING (0/6). Opened 2026-06-07 on user direction, right after Phase
-48 closed (PR #30). Picked from the [project backlog](../BACKLOG.md) candidate A
-(user-favored): make the meeting side close its own loops instead of just
-displaying artifacts.
+**Status:** CLOSED (6/6). Opened and closed 2026-06-07. Picked from the
+[project backlog](../BACKLOG.md) candidate A (user-favored): make the meeting side
+close its own loops instead of just displaying artifacts.
 
-**Last updated:** 2026-06-07 (phase scaffolded. **Read
-[`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.** HS-49-01 — the aftercare digest — is
-the entry point; everything else builds on the cross-meeting aggregation it adds.)
+**Last updated:** 2026-06-07 (HS-49-06 done — phase CLOSED. Before/after captured
+(artifact-only view vs the aftercare surface), a green end-to-end dogfood
+(`dogfood-transcript.txt`: open/decided/changed -> show me the moment -> accept +
+file -> approve + execute audited -> draft the follow-up), full suite green (2426
+passed, 17 skipped), `npm run build` clean, 0 `_built/` tracked. `final-summary.md`
+written; BACKLOG candidate A flipped to shipped; PR to `main` merged on green.)
 
 ## The thesis — why this phase
 
@@ -93,22 +95,60 @@ acting on the user's behalf without explicit approval.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-49-01 | The aftercare digest (open / decided / changed) | backlog | [story-01-aftercare-digest.md](./story-01-aftercare-digest.md) | — |
-| HS-49-02 | Transcript provenance ("show me the moment") | backlog | [story-02-transcript-provenance.md](./story-02-transcript-provenance.md) | — |
-| HS-49-03 | Close the loop: accepted actions to issues | backlog | [story-03-actions-to-issues.md](./story-03-actions-to-issues.md) | — |
-| HS-49-04 | Draft the follow-up (preview + copy) | backlog | [story-04-followup-draft.md](./story-04-followup-draft.md) | — |
-| HS-49-05 | Docs: meeting aftercare, end to end | backlog | [story-05-docs.md](./story-05-docs.md) | — |
-| HS-49-06 | Closeout — before/after + dogfood + PR | backlog | [story-06-closeout.md](./story-06-closeout.md) | — |
+| HS-49-01 | The aftercare digest (open / decided / changed) | done | [story-01-aftercare-digest.md](./story-01-aftercare-digest.md) | [evidence-story-01.md](./evidence-story-01.md) |
+| HS-49-02 | Transcript provenance ("show me the moment") | done | [story-02-transcript-provenance.md](./story-02-transcript-provenance.md) | [evidence-story-02.md](./evidence-story-02.md) |
+| HS-49-03 | Close the loop: accepted actions to issues | done | [story-03-actions-to-issues.md](./story-03-actions-to-issues.md) | [evidence-story-03.md](./evidence-story-03.md) |
+| HS-49-04 | Draft the follow-up (preview + copy) | done | [story-04-followup-draft.md](./story-04-followup-draft.md) | [evidence-story-04.md](./evidence-story-04.md) |
+| HS-49-05 | Docs: meeting aftercare, end to end | done | [story-05-docs.md](./story-05-docs.md) | [evidence-story-05.md](./evidence-story-05.md) |
+| HS-49-06 | Closeout — before/after + dogfood + PR | done | [story-06-closeout.md](./story-06-closeout.md) | [final-summary.md](./final-summary.md) |
 
 ## Where we are
 
-Scaffolded right after Phase 48 closed + merged (PR #30), from backlog candidate A.
-Nothing built yet. **Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first** — it has the
-mission, the mapped + verified code seams (meetings, action items, artifacts, the
-actuator system, the GitHub/gated connector, the routes, the history UI), the rules
-of the road, and per-story success criteria. **HS-49-01** (the aftercare digest) is
-the foundation; provenance, actions-to-issues, and the follow-up draft present and
-feed it. Sequence: 01 -> 02 -> 03 -> 04 -> 05 -> 06.
+**HS-49-01 + HS-49-02 are done.** The aftercare digest
+(`holdspeak/meeting_aftercare.py` → `compute_meeting_aftercare`, served read-only
+by `GET /api/meetings/{id}/aftercare`) aggregates what's open (by owner), what was
+decided, and a real since-last-meeting diff, surfaced as a "Your next move" panel
+above the artifacts and quiet when there's nothing to act on (`is_empty`).
+HS-49-02 added the trust layer: `resolve_provenance_segment` threads a resolved
+jump target into that payload, and a focus-safe "show me the moment" affordance on
+open items, decisions, and action-item cards reveals + flashes the transcript
+segment that justifies a result — shown only when a real `source_timestamp`
+resolves to a real segment (no fake 0:00). 14 new tests across the two stories;
+the 509-passing relevant sweep; before/after screenshots
+(`screenshots/story-01-*`, `screenshots/story-02-*`).
+
+HS-49-03 closed the highest-value loop: from the aftercare surface, an
+**accepted** action item becomes a GitHub-issue actuator **proposal** through the
+**existing** propose -> approve -> execute flow. The shared
+`build_github_issue_proposal` feeds the same `{repo, title, body}` payload the
+existing `build_github_issue_connector` consumes, so there is no new write
+primitive — `POST /api/meetings/{id}/aftercare/file-issue` only records a
+`proposed` proposal (idempotent per action), and the existing read/decision
+endpoints + `ActuatorExecutor` carry it the rest of the way. Off by default,
+human-approved, audited; an executor test proves a proposed/unapproved proposal
+never egresses, and that enabling + approving yields `proposed -> approved ->
+executed`.
+
+HS-49-04 added the last loop-closer: `build_followup_draft(digest)` assembles a
+local markdown follow-up (decisions, open items by owner, the since-last delta)
+from the HS-49-01 aggregation, served read-only by
+`GET /api/meetings/{id}/followup-draft` and surfaced as a "Draft follow-up"
+preview + Copy in the panel head. Preview + copy only, never sent, no connector;
+honest at empty (one plain line, no padding); deterministic, no LLM.
+
+**The phase is CLOSED (6/6).** The meeting result now closes its own loops: the
+"Your next move" aftercare panel shows what's open (by owner), decided, and
+changed since last time; "show me the moment" jumps to the transcript segment that
+justifies a result; an accepted action files as a human-approved actuator proposal
+through the existing flow (no new write primitive, off by default, audited); and a
+local follow-up draft is preview + copy. HS-49-06 verified the exit: before/after
+captured (`screenshots/story-06-before-artifact-only.png` vs
+`story-06-after-aftercare.png`), a green end-to-end dogfood
+(`dogfood-transcript.txt`), full suite green (2426 passed, 17 skipped), `npm run
+build` clean, 0 `_built/` tracked, [`final-summary.md`](./final-summary.md)
+written, BACKLOG candidate A flipped to shipped, PR to `main` merged on green.
+
+Sequence: 01 ✓ -> 02 ✓ -> 03 ✓ -> 04 ✓ -> 05 ✓ -> 06 ✓.
 
 ## Active risks
 

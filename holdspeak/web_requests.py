@@ -41,6 +41,15 @@ class _ActionItemEditRequest(BaseModel):
     due: Optional[str] = None
 
 
+class _AftercareFileIssueRequest(BaseModel):
+    # HS-49-03: turn an accepted action item into a GitHub-issue actuator
+    # *proposal* (proposed state) through the existing propose -> approve ->
+    # execute flow. `repo` is the target "owner/name"; nothing is sent until the
+    # proposal is separately approved and actuators are enabled.
+    action_item_id: str
+    repo: str
+
+
 class _UpdateMeetingRequest(BaseModel):
     title: Optional[str] = None
     tags: Optional[list[str]] = None
