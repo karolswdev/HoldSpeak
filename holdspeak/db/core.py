@@ -38,24 +38,71 @@ class SchemaVersionError(RuntimeError):
     """
 
 
-def backup_database(db_path: Path) -> Path:
-    """Copy the SQLite database file to a timestamped sibling and return it.
-
-    A plain file copy is a correct backup here: it runs at startup, before
-    `_ensure_schema` mutates anything, so there is no concurrent writer. This is
-    the safety net invoked before any destructive schema action, so an upgrade
-    never changes a user's data without leaving a recoverable copy first. The
-    backup lands next to the database as `<name>.<timestamp>.bak`; a counter is
-    appended if that name is already taken.
-    """
+def _timestamped_backup_path(db_path: Path) -> Path:
+    """A non-clobbering, timestamped backup path next to the database."""
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     backup_path = db_path.with_name(f"{db_path.name}.{timestamp}.bak")
     counter = 1
     while backup_path.exists():
         backup_path = db_path.with_name(f"{db_path.name}.{timestamp}-{counter}.bak")
         counter += 1
-    shutil.copy2(db_path, backup_path)
     return backup_path
+
+
+def backup_database(db_path: Path) -> Path:
+    """Snapshot the SQLite database to a timestamped sibling and return it.
+
+    Uses SQLite's online backup API (`Connection.backup`) so the copy is a
+    consistent snapshot even if something else holds a connection. This is the
+    safety net invoked before any destructive schema action, so an upgrade never
+    changes a user's data without leaving a recoverable copy first, and it is
+    what the `holdspeak backup` command runs on demand. The backup lands next to
+    the database as `<name>.<timestamp>.bak`; a counter is appended if that name
+    is already taken.
+    """
+    backup_path = _timestamped_backup_path(db_path)
+    source = sqlite3.connect(str(db_path))
+    try:
+        dest = sqlite3.connect(str(backup_path))
+        try:
+            source.backup(dest)
+        finally:
+            dest.close()
+    finally:
+        source.close()
+    return backup_path
+
+
+def restore_database(backup_path: Path, db_path: Path) -> Optional[Path]:
+    """Restore `db_path` from `backup_path`, returning the safety backup taken.
+
+    The current database (if any) is itself snapshotted first, so a restore can
+    never be the thing that loses data: if you restore the wrong file you can
+    still get back to where you were. Returns the path of that safety backup, or
+    None when there was no existing database to protect. Raises ValueError if
+    `backup_path` is not a readable HoldSpeak database.
+    """
+    if not backup_path.exists():
+        raise ValueError(f"Backup file not found: {backup_path}")
+
+    probe = sqlite3.connect(str(backup_path))
+    try:
+        try:
+            probe.execute("SELECT MAX(version) FROM schema_version").fetchone()
+        except sqlite3.DatabaseError as exc:
+            raise ValueError(
+                f"{backup_path} is not a readable HoldSpeak database backup ({exc})."
+            ) from exc
+    finally:
+        probe.close()
+
+    safety: Optional[Path] = None
+    if db_path.exists():
+        safety = backup_database(db_path)
+
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(backup_path, db_path)
+    return safety
 
 # SQL Schema
 SCHEMA_SQL = """

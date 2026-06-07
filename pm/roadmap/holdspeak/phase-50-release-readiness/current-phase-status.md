@@ -1,17 +1,15 @@
 # Phase 50 — Release Readiness ("cut a real 0.x")
 
-**Status:** IN PROGRESS (2/7). Opened 2026-06-07 on user direction, right after
+**Status:** IN PROGRESS (3/7). Opened 2026-06-07 on user direction, right after
 Phase 49 closed + merged (PR #33). Picked from the [project backlog](../BACKLOG.md)
 candidate C: the bet that actually lets the open-source push ship publicly.
 
-**Last updated:** 2026-06-07 (HS-50-02 done: the safe-by-default schema policy, the
-heart of the phase. `_ensure_schema` now implements the four-way matrix
-(create-fresh / no-op-equal / backup-then-apply-older / refuse-newer); a
-`backup_database` primitive copies the DB to a timestamped sibling before any
-destructive action; `SchemaVersionError` refuses a newer-than-known DB untouched.
-Verified the live schema is additive today, so the closed holes are "newer DB run
-by older build" + "no backup before a future migration". Next: HS-50-03, the
-user-facing backup + restore surface on top of `backup_database`.)
+**Last updated:** 2026-06-07 (HS-50-03 done: backup + restore. `backup_database`
+now takes a consistent snapshot via SQLite's `Connection.backup`; new
+`holdspeak backup` and `holdspeak restore` CLI commands let a user snapshot before
+upgrading and put a backup back. Restore snapshots the current DB first, so it can
+never be the step that loses data, and rejects a non-database file. Next: HS-50-04,
+doctor + config honesty.)
 
 ## The thesis — why this phase
 
@@ -92,7 +90,7 @@ routing.
 |---|---|---|---|---|
 | HS-50-01 | One true version (single source + surfaced) | done | [story-01-version-ssot.md](./story-01-version-ssot.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-50-02 | Safe-by-default schema policy | done | [story-02-schema-policy.md](./story-02-schema-policy.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-50-03 | Backup + restore | backlog | [story-03-backup-restore.md](./story-03-backup-restore.md) | — |
+| HS-50-03 | Backup + restore | done | [story-03-backup-restore.md](./story-03-backup-restore.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-50-04 | doctor + config honesty | backlog | [story-04-doctor-config-honesty.md](./story-04-doctor-config-honesty.md) | — |
 | HS-50-05 | Verified clean-machine install + pinned contract | backlog | [story-05-install-verification.md](./story-05-install-verification.md) | — |
 | HS-50-06 | Docs: release + upgrade/backup policy | backlog | [story-06-docs.md](./story-06-docs.md) | — |
@@ -119,10 +117,18 @@ fix; the real unguarded holes closed are "a newer DB silently run by an older
 build" and "no backup before a future migration." `tests/unit/test_db_schema_policy.py`
 covers all four cells.
 
-Next: **HS-50-03** (backup + restore) wraps the `backup_database` primitive in a
-user-facing `holdspeak backup` command plus a restore path, then **HS-50-04**
-surfaces schema/config state in `doctor`. **Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md)
-first.** Sequence: 01 -> 02 -> 03 -> 04 -> 05 -> 06 -> 07.
+**HS-50-03 (backup + restore) is done.** `backup_database` now takes a consistent
+snapshot via SQLite's `Connection.backup`; `restore_database` validates the backup,
+snapshots the current DB first, then puts the backup in place. `holdspeak backup`
+and `holdspeak restore` (list / restore with confirm + `--yes`) are wired into the
+CLI. The auto-backup before the older-version upgrade path (HS-50-02) now has a
+user-facing twin and a reversal.
+
+Next: **HS-50-04** (doctor + config honesty) adds a database/schema check to
+`doctor` and `/api/setup/status` (current version vs this build, newer flagged) and
+a `config_version` field with load-time coercion. **Read
+[`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.** Sequence: 01 -> 02 -> 03 -> 04 -> 05
+-> 06 -> 07.
 
 ## Active risks
 

@@ -118,11 +118,22 @@ def test_newer_db_is_refused_and_left_untouched(db_path: Path) -> None:
 
 def test_backup_database_copies_to_timestamped_sibling(db_path: Path) -> None:
     Database(db_path)
+    conn = sqlite3.connect(str(db_path))
+    conn.execute(
+        "INSERT INTO meetings (id, title, started_at) VALUES ('m1', 'Snap', datetime('now'))"
+    )
+    conn.commit()
+    conn.close()
+
     backup = db_core.backup_database(db_path)
     assert backup.exists()
     assert backup.name.startswith(db_path.name)
     assert backup.name.endswith(".bak")
-    assert backup.read_bytes() == db_path.read_bytes()
+    # A consistent snapshot, not a byte copy: it opens and carries the data.
+    conn = sqlite3.connect(str(backup))
+    row = conn.execute("SELECT title FROM meetings WHERE id = 'm1'").fetchone()
+    conn.close()
+    assert row and row[0] == "Snap"
 
 
 def test_backup_database_does_not_clobber(db_path: Path) -> None:
