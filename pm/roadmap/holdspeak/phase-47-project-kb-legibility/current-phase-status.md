@@ -1,19 +1,18 @@
 # Phase 47 — Project Knowledge: Legible & Inviting
 
-**Status:** IN PROGRESS (5/6). Opened 2026-06-07 on user direction — while reviewing
+**Status:** CLOSED (6/6). Opened 2026-06-07 on user direction — while reviewing
 the Phase-46 docs, the user said: *"I struggle to understand the 'project KB' …
 and I feel like many users will also struggle. It's not only about documentation,
 but also the UI/UX, and the way to present it."* Confirmed by the doc-fix attempt
 itself getting the concept **wrong** (see the thesis).
 
-**Last updated:** 2026-06-07 (HS-47-05 shipped. The docs now document both halves
-correctly and match the new UI framing: the Intelligent Typing guide's
-"§5. Set Up Project Knowledge" documents Facts (the `project.yaml` KB, a worked
-`stack` example, `kb-enricher`, no LLM) and Context (the `.hs/` files, optional
-`project-rewriter`); the intro callout reframes to "facts + context"; the docs
-index, `DICTATION_COPILOT.md`, `USER_GUIDE.md`, and the `dictation-runtime` web
-doc are reconciled (and the web doc's wrong "KB is an LLM step" claim fixed). Doc
-guards 8/8; full suite 2372/17. Next: HS-47-06 (closeout + PR to `main`).)
+**Last updated:** 2026-06-07 (HS-47-06 shipped. Phase **CLOSED (6/6)**. Before/after
+screenshots under `docs/assets/screenshots/project-knowledge-*`, a repeatable
+`scripts/screenshot_project_knowledge.py`, a green dogfood, full suite 2372/17,
+and `final-summary.md`. PR to `main` opened and merged on green CI. Project
+knowledge is now legible (one model, clear names), inviting (explainers, teaching
+empty states, a guided flow with a copiable coding-agent prompt), and
+discoverable (an ambient, focus-safe nudge); pipeline behavior unchanged.)
 
 ## The thesis — why this phase
 
@@ -121,7 +120,7 @@ bar.
 | HS-47-03 | Guided setup flow (fresh repo → working) | done | [story-03-guided-setup-flow.md](./story-03-guided-setup-flow.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-47-04 | Discovery nudge (find it where it helps) | done | [story-04-discovery-nudge.md](./story-04-discovery-nudge.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-47-05 | Docs alignment (both mechanisms, correctly) | done | [story-05-docs-alignment.md](./story-05-docs-alignment.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-47-06 | Closeout — before/after + dogfood + PR | backlog | [story-06-closeout.md](./story-06-closeout.md) | — |
+| HS-47-06 | Closeout — before/after + dogfood + PR | done | [story-06-closeout.md](./story-06-closeout.md) | [evidence-story-06.md](./evidence-story-06.md) |
 
 ## Where we are
 
@@ -134,21 +133,18 @@ optional `project-rewriter` stage). The `/dictation` "Project KB" tab is now
 glossary all name the umbrella and state the relationship. On-disk names and
 pipeline behavior are unchanged; full suite 2365/17, 0 tracked `_built/`.
 
-**HS-47-05 is done.** The docs match the product. The Intelligent Typing guide's
-"§5. Set Up Project Knowledge" documents both Facts (the `project.yaml` KB, worked
-example, `kb-enricher`, no LLM) and Context (the `.hs/` files, optional
-`project-rewriter`); the intro callout reframes to "facts + context"; the docs
-index, `DICTATION_COPILOT.md`, `USER_GUIDE.md`, and the `dictation-runtime` web doc
-are reconciled (and the web doc's wrong "KB is an LLM step" claim fixed). Doc
-guards 8/8.
+**Phase CLOSED (6/6).** All six stories shipped; see
+[`final-summary.md`](./final-summary.md). Project knowledge is now legible (one
+settled model, clear names), inviting (explainers, teaching empty states, a guided
+flow with a copiable coding-agent prompt), and discoverable (an ambient,
+focus-safe nudge). Pipeline behavior unchanged. Before/after under
+`docs/assets/screenshots/project-knowledge-*`; the dogfood
+(`scripts/dogfood_project_knowledge.py`) and the after-state screenshots
+(`scripts/screenshot_project_knowledge.py`) are repeatable. Full suite 2372/17;
+doc guards 8/8; 0 `_built/` tracked. PR to `main` merged on green CI.
 
-Next is **HS-47-06** (closeout): before/after captures (old bare tabs vs the new
-explainer + empty states + guided panel + nudge), a green dogfood, full suite
-green, `final-summary.md`, phase CLOSED, and a PR to `main` merged on green.
-Sequence: 01 ✅ → 02 ✅ → 03 ✅ → 04 ✅ → 05 ✅ → 06. **Read
-[`AGENT-BRIEF.md`](./AGENT-BRIEF.md)** for the mapped code seams and rules of the
-road. Phase 46 is CLOSED + merged (PR #25); the docs humanize pass merged too
-(PR #26).
+Sequence delivered: 01 ✅ → 02 ✅ → 03 ✅ → 04 ✅ → 05 ✅ → 06 ✅. Phase 46 is
+CLOSED + merged (PR #25); the docs humanize pass merged too (PR #26).
 
 ## Active risks
 
