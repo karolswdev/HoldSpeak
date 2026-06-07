@@ -776,7 +776,14 @@ async function loadHSContext() {
     renderHSFileList();
     renderHSEditor();
     await loadProjectDocSuggestion();
+    // HS-47-04: if we arrived here from the discovery nudge, open the guided
+    // setup now that the project is detected.
+    if (knNudgeState.pendingOpen) {
+      knNudgeState.pendingOpen = false;
+      openHsSetup();
+    }
   } catch (e) {
+    knNudgeState.pendingOpen = false;
     banner.classList.add(e.status === 404 ? "warn" : "error");
     banner.textContent = e.message;
     const hsEmpty = document.getElementById("hs-empty");
@@ -2297,6 +2304,61 @@ function refreshProjectScopedView() {
   if (state.activeSection === "hs") loadHSContext();
   if (state.activeSection === "hooks") loadAgentHooks();
   if (state.activeSection === "dry-run") clearDryRun();
+  maybeShowKnNudge();
+}
+
+// ── HS-47-04: discovery nudge ────────────────────────────────────────
+// Ambient, dismissible, focus-safe. Shows only when a detected project has no
+// knowledge (no facts, no .hs/), is not dismissed for this project, and the
+// global switch is on. Dismissal is durable (localStorage). Reuses the existing
+// readiness signal; adds no detection path.
+const KN_NUDGE_DISABLED_KEY = "holdspeak.knNudgeDisabled";
+const KN_NUDGE_DISMISSED_KEY = "holdspeak.knNudgeDismissed";
+const knNudgeState = { root: null, pendingOpen: false };
+
+function knNudgeGloballyOff() {
+  try { return localStorage.getItem(KN_NUDGE_DISABLED_KEY) === "1"; } catch (e) { return false; }
+}
+function knNudgeDismissedRoots() {
+  try { return JSON.parse(localStorage.getItem(KN_NUDGE_DISMISSED_KEY) || "{}") || {}; } catch (e) { return {}; }
+}
+function knNudgeIsDismissed(root) {
+  return !!(root && knNudgeDismissedRoots()[root]);
+}
+function knNudgeDismiss(root) {
+  if (!root) return;
+  try {
+    const map = knNudgeDismissedRoots();
+    map[root] = true;
+    localStorage.setItem(KN_NUDGE_DISMISSED_KEY, JSON.stringify(map));
+  } catch (e) { /* ignore quota / disabled storage */ }
+}
+function hideKnNudge() {
+  const el = document.getElementById("kn-nudge");
+  if (el) el.hidden = true;
+}
+
+async function maybeShowKnNudge() {
+  const el = document.getElementById("kn-nudge");
+  if (!el) return;
+  el.hidden = true;  // re-evaluate cleanly every time.
+  if (knNudgeGloballyOff()) return;
+  let data;
+  try {
+    data = await api("GET", `/api/dictation/readiness${projectRootParam("?")}`);
+  } catch (e) {
+    return;  // no project / error -> no nudge.
+  }
+  const project = data && data.project;
+  if (!project || !project.root) return;
+  const hasFacts = !!(data.project_kb && data.project_kb.exists);
+  const hasContext = !!(data.project_context && data.project_context.exists);
+  if (hasFacts || hasContext) return;            // already has knowledge.
+  if (knNudgeIsDismissed(project.root)) return;  // dismissed for this project.
+  knNudgeState.root = project.root;
+  const label = document.getElementById("kn-nudge-project");
+  if (label) label.textContent = project.name ? `"${project.name}" has none yet.` : "";
+  el.hidden = false;
 }
 
 // ── Init ─────────────────────────────────────────────────────────────
@@ -2322,6 +2384,21 @@ document.getElementById("hs-empty-setup").addEventListener("click", openHsSetup)
 document.getElementById("hs-setup-close").addEventListener("click", closeHsSetup);
 document.getElementById("hs-setup-starter").addEventListener("click", hsCreateStarterSet);
 document.getElementById("hs-setup-copy-prompt").addEventListener("click", hsCopyAgentPrompt);
+// HS-47-04: discovery-nudge wiring.
+document.getElementById("kn-nudge-setup").addEventListener("click", () => {
+  if (knNudgeState.root) knNudgeDismiss(knNudgeState.root);  // acting on it counts.
+  hideKnNudge();
+  knNudgeState.pendingOpen = true;  // open the guided panel once .hs loads.
+  activateSection("hs");
+});
+document.getElementById("kn-nudge-dismiss").addEventListener("click", () => {
+  if (knNudgeState.root) knNudgeDismiss(knNudgeState.root);
+  hideKnNudge();
+});
+document.getElementById("kn-nudge-off").addEventListener("click", () => {
+  try { localStorage.setItem(KN_NUDGE_DISABLED_KEY, "1"); } catch (e) { /* ignore */ }
+  hideKnNudge();
+});
 // Delegated jump for "Try a dry-run" / "Project Facts" links rendered into
 // success messages and the guided panel.
 document.addEventListener("click", (ev) => {
@@ -2377,4 +2454,5 @@ loadDetectedProjectContext();
 loadAgentContext();
 loadStarterTemplates();
 loadScope("global");
+maybeShowKnNudge();  // HS-47-04: evaluate the discovery nudge on load.
 window.setInterval(loadAgentContext, 10000);

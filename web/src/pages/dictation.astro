@@ -35,6 +35,26 @@ import CommandPreview from "../components/CommandPreview.astro";
       </p>
     </header>
 
+    {/* HS-47-04: ambient discovery nudge. Shown by JS only when a project is
+        detected but has no knowledge (no facts, no .hs/), is not dismissed for
+        this project, and the global setting is on. role="note", never a modal,
+        never steals focus. Static markup toggled by JS. */}
+    <div id="kn-nudge" class="kn-nudge" role="note" aria-label="Project knowledge suggestion" hidden>
+      <svg class="kn-nudge-glyph" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+        <path fill="currentColor" d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2Zm-3 19a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/>
+      </svg>
+      <p class="kn-nudge-text">
+        <strong>Teach the copilot about this project.</strong>
+        <span id="kn-nudge-project"></span> HoldSpeak can use this repo's facts and
+        context to sharpen your dictation.
+      </p>
+      <div class="kn-nudge-actions">
+        <button class="btn primary" id="kn-nudge-setup" type="button">Set it up</button>
+        <button class="btn" id="kn-nudge-dismiss" type="button">Not now</button>
+      </div>
+      <button class="kn-nudge-off" id="kn-nudge-off" type="button" title="Stop suggesting this on any project">Stop suggesting</button>
+    </div>
+
     <div class="scope-row cockpit-tabs" role="tablist" aria-label="Dictation sections">
       <button id="section-readiness" data-section="readiness" type="button" role="tab">Readiness</button>
       <button id="section-blocks" data-section="blocks" class="active" type="button" role="tab">Blocks</button>
@@ -1517,6 +1537,60 @@ import CommandPreview from "../components/CommandPreview.astro";
     font-family: var(--font-mono);
     font-size: var(--font-size-xs);
     line-height: var(--line-height-relaxed);
+  }
+
+  /* ===== Discovery nudge (HS-47-04) ===== */
+  .kn-nudge {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-md);
+    background:
+      linear-gradient(90deg, var(--accent-tint, var(--accent-soft)), transparent 70%),
+      var(--surface-2);
+    box-shadow: var(--elev-1);
+  }
+  .kn-nudge[hidden] { display: none; }
+  .kn-nudge-glyph { flex: 0 0 auto; color: var(--accent); }
+  .kn-nudge-text {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+  }
+  .kn-nudge-text strong { color: var(--text); }
+  #kn-nudge-project { color: var(--text); font-family: var(--font-mono); font-size: var(--font-size-xs); }
+  .kn-nudge-actions {
+    flex: 0 0 auto;
+    display: flex;
+    gap: var(--space-2);
+  }
+  .kn-nudge-off {
+    flex: 0 0 auto;
+    appearance: none;
+    background: none;
+    border: none;
+    padding: var(--space-1);
+    color: var(--text-faint);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .kn-nudge-off:hover { color: var(--text-muted); }
+  .kn-nudge-off:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+    border-radius: var(--radius-1);
+  }
+  @media (max-width: 760px) {
+    .kn-nudge { flex-wrap: wrap; }
+    .kn-nudge-text { flex: 1 1 100%; }
   }
 
   /* Misc small JS-injected helpers */

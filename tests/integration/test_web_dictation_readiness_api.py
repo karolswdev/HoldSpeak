@@ -287,6 +287,30 @@ def test_readiness_missing_project_kb_recommends_starter_action(
     assert warning["section"] == "kb"
 
 
+def test_readiness_exposes_project_context_existence_for_the_nudge(
+    test_client: TestClient,
+    settings_path: Path,
+    tmp_path: Path,
+) -> None:
+    """HS-47-04: readiness reports whether `.hs/` exists, so the discovery nudge
+    can tell "no knowledge yet" (no facts and no context) without a new path."""
+    _save_config(settings_path, enabled=True)
+    # A bare project: no .holdspeak KB, no .hs/ -> the nudge condition.
+    root = tmp_path / "bare"
+    root.mkdir()
+    (root / "pyproject.toml").write_text('[project]\nname = "bare"\n', encoding="utf-8")
+
+    body = test_client.get(f"/api/dictation/readiness?project_root={root}").json()
+    assert body["project"]["name"] == "bare"
+    assert body["project_kb"]["exists"] is False
+    assert body["project_context"]["exists"] is False  # nudge would show
+
+    # Once .hs/ exists, the context signal flips (nudge would suppress).
+    (root / ".hs").mkdir()
+    body2 = test_client.get(f"/api/dictation/readiness?project_root={root}").json()
+    assert body2["project_context"]["exists"] is True
+
+
 def test_readiness_rejects_bad_project_root(test_client: TestClient, settings_path: Path) -> None:
     _save_config(settings_path, enabled=True)
 

@@ -105,6 +105,34 @@ def test_dictation_context_has_guided_setup_and_agent_prompt() -> None:
     assert ".kn-agent-prompt" in page
 
 
+def test_dictation_has_focus_safe_discovery_nudge() -> None:
+    """HS-47-04: an ambient, dismissible, focus-safe discovery nudge with a
+    per-project + global off switch, routing into the guided flow."""
+    page = _page()
+    js = _app_js()
+    # ambient bar above the tabs, a note (not a modal), with its scoped CSS.
+    assert 'id="kn-nudge"' in page
+    assert 'role="note"' in page
+    assert ".kn-nudge" in page
+    assert 'id="kn-nudge-setup"' in page    # routes into the guided flow
+    assert 'id="kn-nudge-dismiss"' in page  # per-project dismiss
+    assert 'id="kn-nudge-off"' in page      # global off switch
+    # show/suppress logic + durable dismissal live in the bundle.
+    assert "maybeShowKnNudge" in js
+    assert "project_context" in js          # suppress when context exists
+    assert "knNudgeDismiss" in js           # durable per-project dismissal
+    assert "holdspeak.knNudgeDisabled" in js  # global off key
+    # focus-safe: the dictation bundle still calls no .focus().
+    astro = (
+        Path(__file__).resolve().parents[2]
+        / "holdspeak" / "static" / "_built" / "_astro"
+    )
+    dict_js = list(astro.glob("dictation.astro_astro_type_script*.js"))
+    if dict_js:
+        bundle = "\n".join(p.read_text() for p in dict_js)
+        assert ".focus()" not in bundle
+
+
 def test_agent_prompt_is_repo_aware_and_lists_the_hs_files() -> None:
     """HS-47-03: the copiable prompt names this repo and the .hs/ files to write,
     and the starter set + prompt builder live in the client bundle."""

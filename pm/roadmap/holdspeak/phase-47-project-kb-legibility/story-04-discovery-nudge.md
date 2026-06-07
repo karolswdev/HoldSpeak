@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 47
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-47-01
 - **Unblocks:** HS-47-06
 - **Owner:** unassigned
@@ -26,13 +26,18 @@ is never discovered.
   story is *discovery + entry*, not the destination.
 
 ## Acceptance criteria
-- [ ] When a detected project lacks project knowledge, an honest, dismissible hint
-      surfaces and routes into the guided flow; when knowledge exists, no hint.
-- [ ] The hint never steals keyboard focus, is dismissible, dismissal is durable
-      (per-project), and a global setting can turn it off.
-- [ ] Never naggy — shown once per project until acted on or dismissed; no
-      modal/blocking UI.
-- [ ] Behavior-preserving; tests + `npm run build` green.
+- [x] When a detected project lacks knowledge (no facts and no `.hs/`), an ambient
+      `#kn-nudge` bar surfaces on `/dictation` (above the tabs, seen from any tab)
+      and "Set it up" routes into the guided flow (HS-47-03); when knowledge
+      exists, the readiness `project_context.exists` / `project_kb.exists` signals
+      suppress it.
+- [x] Focus-safe (the dictation bundle still calls zero `.focus()`); dismissible
+      ("Not now"); dismissal is durable per-project (localStorage map keyed by
+      root); a global off switch ("Stop suggesting") persists too.
+- [x] Never naggy: `role="note"`, not a modal; suppressed once dismissed for that
+      project or globally; re-evaluated cleanly on project-root change.
+- [x] Behavior-preserving (the readiness `project_context` field is additive);
+      tests + `npm run build` green; 0 `_built/` tracked.
 
 ## Test plan
 - Unit: the hint's show/suppress logic (detected-project ∧ no-knowledge ∧
