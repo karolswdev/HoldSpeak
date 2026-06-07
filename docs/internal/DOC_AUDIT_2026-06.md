@@ -186,12 +186,19 @@ overstating. Gap closed in this story: the index's Plugin Authoring entry now na
 **actuators** (previously discoverable only by opening the guide). Every hook
 cross-checked true against the canonical-facts table above.
 
-**Clarity gap found (user-reported): the "project KB" is under-explained.** The
-term + `kb-enricher` appeared in the Intelligent Typing guide ~150 lines before the
-`.hs/` folder that *is* the KB was shown, and the README never grounds it. Fixed
-here (docs side): a plain definition on first use in the guide, a gloss on
-`kb-enricher`, and a glossary entry in `DOCS_STYLE.md`. The deeper **product/UX
-legibility** (naming, the `/dictation → Project Context` surface, an in-app
-explainer/empty-state, a guided "create your `.hs/`" flow, a discovery nudge) is
-out of scope for a docs-only phase and is **teed up as a dedicated phase (47 —
-"Project KB: legible & inviting")**.
+**Clarity gap found (user-reported): "project KB" is under-explained — and the
+term is overloaded.** Investigating it surfaced a genuine conflation (which an
+initial fix in this story got wrong and a follow-up corrected): the **project KB**
+is the `kb:` key-value map in `<repo>/.holdspeak/project.yaml` → `{project.kb.*}`
+placeholders that the **default `kb-enricher`** stage substitutes deterministically;
+the **`.hs/` folder is "project context"**, consumed by the **optional
+`project-rewriter`** LLM stage. They are *different mechanisms with confusingly
+adjacent names* — and `/dictation` even shows them as two side-by-side tabs
+("Project KB" + "Project Context"). The Intelligent Typing guide documented `.hs/`
+but **not** the real (project.yaml) KB. Fixed here (docs side): an accurate "two
+different things" definition on first use distinguishing KB (project.yaml) from
+context (`.hs/`), with the right stage for each, and a corrected `DOCS_STYLE.md`
+glossary entry. The deeper **product/UX legibility** (the two-tab naming, an in-app
+explainer/empty-state, a guided setup flow, a discovery nudge) is out of scope for a
+docs-only phase and is **teed up as a dedicated phase (47 — "Project KB: legible &
+inviting")** — for which this overload is now the lead exhibit.

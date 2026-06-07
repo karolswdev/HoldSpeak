@@ -25,8 +25,11 @@ one is **voice + structure + navigation**.
 - **Terms, consistently:** *dictation* (not "voice typing" mid-guide once you've
   introduced it), *meeting mode*, *the dictation pipeline*, *intel* for LLM meeting
   extraction, *actuator* for the propose→approve→execute kind, *desktop presence*
-  for the ambient HUD, and *project KB* for the repo's `.hs/` Markdown files (gloss
-  it on first use — it's jargon; the `kb-enricher` stage reads it). Code
+  for the ambient HUD, *project KB* for the `.holdspeak/project.yaml` `kb:` map
+  (the `{project.kb.*}` placeholders the `kb-enricher` stage substitutes), and
+  *project context* for the **separate** `.hs/` Markdown files (the optional
+  `project-rewriter` LLM stage). The two are distinct and easily confused — gloss
+  *project KB* on first use and never use it to mean the `.hs/` files. Code
   identifiers in `backticks`.
 
 ## The standard page skeleton

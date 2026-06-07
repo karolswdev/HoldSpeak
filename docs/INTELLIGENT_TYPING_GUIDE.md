@@ -22,19 +22,22 @@ speech -> Whisper transcript -> punctuation cleanup -> dictation pipeline -> typ
 The pipeline can:
 
 - classify an utterance against dictation blocks;
-- inject your **project KB** (see below);
+- inject your **project KB** values and **project context** (see below);
 - rewrite rough speech into a cleaner prompt;
 - adapt output for Codex, Claude, terminal, browser, editor, or chat;
 - suggest narrow `.hs/.../*.md` project documentation updates for review.
 
-> **What's a "project KB"?** Your project KB is a small **`.hs/` folder of
-> plain-Markdown files** you keep in a repo — `instructions.md` (how to rewrite),
-> `context.md` (what the project is), `workflows.md` (your commands), `targets.md`
-> (per-destination style), and an `ignore` for secrets. It tells the copilot about
-> *this* project so it can rewrite your speech in a project-aware way. The
-> pipeline's **`kb-enricher`** stage (the project-KB stage) reads it at dictation
-> time; HoldSpeak reads `.hs/` but never writes it without your approval. Set it up
-> in [§5. Create Project Context](#5-create-project-context).
+> **Heads-up — "project KB" and "project context" are two different things.**
+> Your **project KB** is a small key-value map (`kb:`) in
+> `<repo>/.holdspeak/project.yaml`; its keys become `{project.kb.<key>}`
+> placeholders that the default **`kb-enricher`** stage substitutes into a block's
+> template — deterministic, no LLM. Edit it on the **Project KB** tab.
+> **Project context** is the *separate* `.hs/` folder of Markdown files
+> (`instructions`, `context`, `workflows`, `targets`, plus an `ignore` for secrets)
+> that the **optional `project-rewriter`** (LLM) stage uses to rewrite your speech —
+> edit it on the **Project Context** tab; set it up in
+> [§5. Create Project Context](#5-create-project-context). HoldSpeak reads both but
+> never writes them without your approval.
 
 ## 1. Open The Dictation Cockpit
 
