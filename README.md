@@ -26,10 +26,13 @@ intelligence, project-aware dictation, and the AIPI-Lite companion device.
 - **100% local by default.** Whisper transcription and your own LLM. Nothing is
   sent anywhere unless you deliberately point it at a cloud endpoint. See
   [Security & privacy](docs/SECURITY.md).
-- **It learns how you work.** Every dictation is saved: what you said, what it
-  typed, where it routed, how long it took. Fix a wrong one with a single tap and
-  it remembers; replay it through the updated pipeline and watch the result change.
-  See [the dictation journal](docs/INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay).
+- **It gets better at your voice, and shows you the proof.** Every dictation is
+  saved: what you said, what it typed, where it routed, how long it took. Fix a
+  wrong one with a single tap and it learns; a "What HoldSpeak learned" digest
+  shows the honest "learned from N similar" count; replay an utterance through the
+  updated pipeline and watch the routing change. Local, off by default for
+  routing, no hidden retraining.
+  See [the learning loop](docs/INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay).
 - **Your voice gets the afterlife your meetings already have.** A dictation doesn't
   vanish the second it's typed. It's saved, searchable, and reviewable, the same
   way a recorded meeting is.
@@ -70,6 +73,16 @@ of trusting that it improved, you watch it happen.
   <img src="docs/assets/screenshots/journal.png" alt="The HoldSpeak dictation Journal: a said-to-typed timeline of recent dictations, each card showing the spoken transcript, the typed result, its routing target, and a per-utterance latency strip; one row marked corrected." width="760">
 </p>
 <p align="center"><em>The dictation journal. Every utterance, with what you said, what it typed, where it routed, and how long it took.</em></p>
+
+And it shows you what it learned. The Memory tab opens with a "What HoldSpeak
+learned" digest: how many corrections you made, how many dictations you corrected,
+and for each correction a real "learned from N similar" count, computed by the
+same matcher that nudges routing. No inflated numbers, quiet when nothing matched.
+
+<p align="center">
+  <img src="docs/assets/screenshots/learning-digest-week.png" alt="The 'What HoldSpeak learned' digest: a this-week / all-time toggle, headline counts for corrections made, dictations corrected, and utterances nudged, a breakdown by block and target, and per-correction 'learned from N similar' rows." width="760">
+</p>
+<p align="center"><em>What HoldSpeak learned. Honest, windowed counts from the same matcher that nudges your routing.</em></p>
 
 ## Quickstart
 

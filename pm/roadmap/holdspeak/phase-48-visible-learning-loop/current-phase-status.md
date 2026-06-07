@@ -1,20 +1,20 @@
 # Phase 48 — The Visible Learning Loop ("What HoldSpeak learned")
 
-**Status:** IN PROGRESS (3/5). Opened 2026-06-07 on user direction, after Phase 47
+**Status:** IN PROGRESS (4/5). Opened 2026-06-07 on user direction, after Phase 47
 closed (PR #28). The user liked the "what I learned this week" idea from the
 strategic review and asked to make it a real phase, framed as an open-source
 differentiator: *"I do like the 'what I learned this week' ... let's make this
 Open Source thing happen."*
 
-**Last updated:** 2026-06-07 (HS-48-03 — the correction ritual — **done**.
-Correcting is now one tap on the dry-run result *and* every journal entry: a
-shared inline `correctionRitual` / `wireFixit`, "Right" a calm client-only
-acknowledgement, "Wrong" the existing correct path pre-scoped (block/target in
-one tap, routed value pre-filled). Reuses `POST /journal/{id}/correct` — no new
-write primitive — and stays focus-safe (zero `.focus()`). Also fixed a latent
-`[hidden]`-vs-`display` leak so panels stay closed. New: 7 integration tests.
-Full suite 2401/18; 0 `_built/` tracked. Next: HS-48-04 docs. Prior: HS-48-02
-inline trust signals, HS-48-01 the learning digest.)
+**Last updated:** 2026-06-07 (HS-48-04 — docs — **done**. The Intelligent Typing
+guide §12 now tells the loop as one five-step story (dictate, correct in one tap,
+learn, see the digest, replay) with real screenshots, plus a "how the learning
+works, and its limits" note (Jaccard, local, off by default). README + docs index
+frame it as the local-first differentiator ("gets better at your voice, and shows
+you the proof"); the README gained the digest screenshot. Doc guards 65/2 (no
+dangling links, image refs resolve, plugin count intact). Full suite 2401/18.
+Next: HS-48-05 closeout (before/after, dogfood, final-summary, PR). Prior:
+HS-48-03 ritual, HS-48-02 signals, HS-48-01 digest.)
 
 ## The thesis — why this phase
 
@@ -103,7 +103,7 @@ does.
 | HS-48-01 | The learning digest ("What HoldSpeak learned") | done | [story-01-learning-digest.md](./story-01-learning-digest.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-48-02 | Inline trust signals ("learned from N similar") | done | [story-02-inline-trust-signals.md](./story-02-inline-trust-signals.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-48-03 | Frictionless correction ritual (right/wrong, in flow) | done | [story-03-correction-ritual.md](./story-03-correction-ritual.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-48-04 | Docs: the learning loop, end to end | backlog | [story-04-docs.md](./story-04-docs.md) | — |
+| HS-48-04 | Docs: the learning loop, end to end | done | [story-04-docs.md](./story-04-docs.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-48-05 | Closeout — before/after + dogfood + PR | backlog | [story-05-closeout.md](./story-05-closeout.md) | — |
 
 ## Where we are
@@ -117,10 +117,12 @@ the Memory tab; the "learned from N similar" chip rides the dry-run result,
 journal entries, and the Memory list; and correcting is one tap (`correctionRitual`
 / `wireFixit`, reusing `POST /journal/{id}/correct`, focus-safe). Everything is
 quiet at N=0 and honest about `corrections_enabled` + secret-filtering; the
-spoken `say` → Whisper → digest e2e still proves it through real voice. **Read
-[`AGENT-BRIEF.md`](./AGENT-BRIEF.md)** for the mapped seams. Next: **HS-48-04**
-(docs — tell the loop end to end as the OSS differentiator). Sequence:
-01 ✓ → 02 ✓ → 03 ✓ → 04 → 05.
+spoken `say` → Whisper → digest e2e still proves it through real voice. The docs
+(guide §12 + README + index) now tell the loop end to end and frame it as the
+local-first differentiator, with an honest limits note. **Read
+[`AGENT-BRIEF.md`](./AGENT-BRIEF.md)** for the mapped seams. Next and last:
+**HS-48-05** (closeout — before/after, dogfood, `final-summary.md`, CLOSE, PR to
+`main`). Sequence: 01 ✓ → 02 ✓ → 03 ✓ → 04 ✓ → 05.
 
 ## Active risks
 
