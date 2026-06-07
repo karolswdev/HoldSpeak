@@ -2659,6 +2659,48 @@ import CommandPreview from "../components/CommandPreview.astro";
     .moment-check { animation: none; }
   }
 
+  /* === HS-48-03: the one-tap right/wrong ritual ===================== */
+  /* Shared by the dry-run moment and every journal entry. On a journal card it
+     reads as a quiet footer rule; on the dry-run it sits inside the accent
+     `.moment` card. */
+  .fixit { font-size: var(--font-size-sm); }
+  /* `[hidden]` must win over the `display` rules below (an explicit author
+     `display` otherwise overrides the UA hidden rule and the panels leak open). */
+  .fixit-ask[hidden], .fixit-scopes[hidden], .fixit-form[hidden], .fixit-done[hidden] { display: none; }
+  .journal-card .fixit {
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-subtle);
+  }
+  .fixit-ask { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+  .fixit-yes {
+    background: var(--surface-2);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+  }
+  .fixit-yes:hover { color: var(--success-strong); border-color: var(--success); background: var(--success-soft); }
+  .fixit-scopes {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    margin-top: var(--space-3);
+  }
+  .fixit-scope-q { color: var(--text-muted); }
+  .fixit-scope {
+    padding: 4px var(--space-3);
+    border-radius: var(--radius-pill);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border-subtle));
+    background: var(--accent-tint);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: border-color 140ms ease, background 140ms ease;
+  }
+  .fixit-scope:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, var(--surface-2)); }
+  .fixit-form { margin-top: var(--space-3); }
+
   /* === HS-45-04: replay (before → after, "prove it learned") ========= */
   .jr-replay-btn {
     font-size: var(--font-size-xs);

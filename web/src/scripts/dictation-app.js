@@ -1703,6 +1703,8 @@ function renderJournal() {
   list.querySelectorAll("button[data-journal-replay]").forEach((btn) =>
     btn.addEventListener("click", () => replayJournalEntry(btn.dataset.journalReplay, btn))
   );
+  // HS-48-03: wire the one-tap right/wrong ritual on each entry.
+  wireFixit(list);
 }
 
 // ── Replay (HS-45-04): prove it learned ────────────────────────────────
@@ -1843,6 +1845,7 @@ function renderJournalEntry(item) {
     </div>
     ${renderLatencyStrip(item)}
     ${warnings}
+    ${item.corrected ? "" : correctionRitual({ journalId: item.id, block: item.block_id, target: item.target_profile, routed: "", sig: "" })}
     <div class="jr-replay" data-replay-host="${escapeAttr(String(item.id))}" hidden></div>
   </article>`;
 }
@@ -2009,85 +2012,171 @@ function renderMomentOfTruth(data) {
     : target
       ? `target <strong>${escapeHtml(target)}</strong>`
       : "no route matched";
-  host.hidden = false;
-  host.dataset.journalId = String(journalId);
   const sig = data.learning && data.learning.matched ? learnSigChip(data.learning.similar) : "";
-  host.innerHTML = `
-    <div class="moment-head">
+  host.hidden = false;
+  host.innerHTML = correctionRitual({ journalId, block, target, routed, sig });
+  wireFixit(host);
+}
+
+// ── HS-48-03: the one-tap right/wrong ritual ──────────────────────────────
+// One inline component, reused by the dry-run result and every journal entry,
+// so "that was wrong" is a normal tap instead of a buried form. "Right" is a
+// calm client-only acknowledgement (no write churn). "Wrong" opens the existing
+// correct path pre-scoped — block or target chosen in one tap, the routed value
+// pre-filled as the placeholder. Submit reuses POST /journal/{id}/correct (no
+// new write primitive) and states honest coverage. Focus-safe: panels reveal on
+// click and keyboard focus stays where the user put it (never stolen).
+function correctionRitual(opts) {
+  const { journalId, block, target, routed, sig } = opts;
+  const routedLine = routed ? `<span class="moment-routed">${routed}</span>` : "";
+  const targetScope = target
+    ? `<button type="button" class="fixit-scope" data-fixit-scope="target">Wrong target</button>`
+    : "";
+  return `<div class="fixit" data-journal-id="${escapeAttr(String(journalId))}" data-block="${escapeAttr(block || "")}" data-target="${escapeAttr(target || "")}">
+    <div class="fixit-ask">
       <span class="moment-q">Was that right?</span>
-      <span class="moment-routed">${routed}</span>
-      ${sig}
+      ${routedLine}
+      ${sig || ""}
       <span class="moment-spacer"></span>
-      <button type="button" class="btn moment-fix-btn" id="moment-fix-open">Fix it →</button>
+      <button type="button" class="btn fixit-yes" data-fixit-yes>Right</button>
+      <button type="button" class="btn moment-fix-btn" data-fixit-no>Fix it →</button>
     </div>
-    <form class="moment-form" id="moment-form" hidden>
-      <p class="moment-hint">Teach the copilot what this <em>should</em> have been — it'll nudge similar dictations next time, and this entry is marked corrected in your Journal.</p>
+    <div class="fixit-scopes" hidden>
+      <span class="fixit-scope-q">What was wrong?</span>
+      <button type="button" class="fixit-scope" data-fixit-scope="intent">Wrong block</button>
+      ${targetScope}
+    </div>
+    <form class="moment-form fixit-form" hidden>
+      <p class="moment-hint">Teach the copilot the right <span data-fixit-kind-label>block</span> — it'll nudge similar dictations next time, and this entry is marked corrected.</p>
       <div class="row">
-        <label>Correct the
-          <select id="moment-kind">
-            <option value="intent">route (block)</option>
-            <option value="target">target (profile)</option>
-          </select>
+        <label>Correct to
+          <input type="text" data-fixit-value placeholder="block id" />
         </label>
-        <label>to
-          <input type="text" id="moment-value" placeholder="${escapeAttr(block || target || "block id / target profile")}" />
-        </label>
+        <div class="actions">
+          <button type="submit" class="btn primary" data-fixit-submit>Teach</button>
+          <button type="button" class="btn" data-fixit-cancel>Cancel</button>
+        </div>
       </div>
-      <div class="actions">
-        <button type="submit" class="btn primary" id="moment-submit">Teach &amp; record</button>
-        <button type="button" class="btn" id="moment-cancel">Cancel</button>
-      </div>
-      <div id="moment-msg"></div>
-    </form>`;
-  // Focus-safe: the form is revealed on click; we never auto-focus an input
-  // (the dictation flow / the dry-run textarea keeps focus until the user acts).
-  document.getElementById("moment-fix-open").addEventListener("click", () => {
-    document.getElementById("moment-form").hidden = false;
-    document.getElementById("moment-fix-open").hidden = true;
+      <div data-fixit-msg></div>
+    </form>
+    <div class="fixit-done moment-done" role="status" hidden></div>
+  </div>`;
+}
+
+function wireFixit(root) {
+  if (!root) return;
+  root.querySelectorAll(".fixit:not([data-wired])").forEach((el) => {
+    el.dataset.wired = "1";
+    el.addEventListener("click", onFixitClick);
+    const form = el.querySelector(".fixit-form");
+    if (form) form.addEventListener("submit", submitMomentFix);
   });
-  document.getElementById("moment-cancel").addEventListener("click", () => {
-    document.getElementById("moment-form").hidden = true;
-    document.getElementById("moment-fix-open").hidden = false;
-  });
-  document.getElementById("moment-form").addEventListener("submit", submitMomentFix);
+}
+
+function onFixitClick(ev) {
+  const root = ev.target.closest(".fixit");
+  if (!root) return;
+  if (ev.target.closest("[data-fixit-yes]")) {
+    showFixitDone(root, "Glad it landed. Nothing to teach.");
+    return;
+  }
+  if (ev.target.closest("[data-fixit-no]")) {
+    // One teachable dimension -> go straight to it; two -> pick in one tap.
+    if (root.dataset.target) {
+      root.querySelector(".fixit-ask").hidden = true;
+      root.querySelector(".fixit-scopes").hidden = false;
+    } else {
+      setFixitScope(root, "intent");
+    }
+    return;
+  }
+  const scope = ev.target.closest("[data-fixit-scope]");
+  if (scope) {
+    setFixitScope(root, scope.dataset.fixitScope);
+    return;
+  }
+  if (ev.target.closest("[data-fixit-cancel]")) {
+    root.querySelector(".fixit-form").hidden = true;
+    root.querySelector(".fixit-scopes").hidden = true;
+    root.querySelector(".fixit-ask").hidden = false;
+  }
+}
+
+function setFixitScope(root, kind) {
+  const isTarget = kind === "target";
+  root.dataset.fixitKind = kind;
+  const label = root.querySelector("[data-fixit-kind-label]");
+  if (label) label.textContent = isTarget ? "target profile" : "block";
+  const input = root.querySelector("[data-fixit-value]");
+  if (input) {
+    input.value = "";
+    input.setAttribute(
+      "placeholder",
+      isTarget ? root.dataset.target || "target profile" : root.dataset.block || "block id",
+    );
+  }
+  root.querySelector(".fixit-ask").hidden = true;
+  root.querySelector(".fixit-scopes").hidden = true;
+  // Focus-safe: the input is revealed but never programmatically focused.
+  root.querySelector(".fixit-form").hidden = false;
+}
+
+function showFixitDone(root, text) {
+  root.querySelector(".fixit-ask").hidden = true;
+  const scopes = root.querySelector(".fixit-scopes");
+  if (scopes) scopes.hidden = true;
+  const form = root.querySelector(".fixit-form");
+  if (form) form.hidden = true;
+  const done = root.querySelector(".fixit-done");
+  done.hidden = false;
+  done.innerHTML = `<span class="moment-check" aria-hidden="true">✓</span><span>${text}</span>`;
+}
+
+// Honest post-correction copy — real coverage, split on the corrections posture,
+// shared by every surface that teaches. Quiet about reach it cannot claim.
+function correctionDoneText(res) {
+  if (!res || !res.taught) {
+    return "Recorded against the Journal entry. (Nothing was taught — the text looked like a secret, so it wasn't stored.)";
+  }
+  const n = Number(res.similar) || 0;
+  let reach = "";
+  if (n > 0) {
+    reach = res.enabled
+      ? ` It now nudges ${n} similar ${plural(n, "dictation")} toward this.`
+      : ` It matches ${n} similar ${plural(n, "dictation")} — turn on corrections to use it.`;
+  } else if (!res.enabled) {
+    reach = " Turn on corrections to use it while routing.";
+  }
+  return `Taught — the Journal entry is marked corrected.${reach}`;
 }
 
 async function submitMomentFix(ev) {
   ev.preventDefault();
-  const host = document.getElementById("dry-moment");
-  const id = host.dataset.journalId;
-  const kind = document.getElementById("moment-kind").value;
-  const value = document.getElementById("moment-value").value.trim();
-  const msg = document.getElementById("moment-msg");
-  msg.innerHTML = "";
+  const root = ev.target.closest(".fixit");
+  if (!root) return;
+  const id = root.dataset.journalId;
+  const kind = root.dataset.fixitKind || "intent";
+  const input = root.querySelector("[data-fixit-value]");
+  const value = input ? input.value.trim() : "";
+  const msg = root.querySelector("[data-fixit-msg]");
+  if (msg) msg.innerHTML = "";
   if (!value) {
-    msg.innerHTML = `<div class="error-box">Enter the correct ${kind === "target" ? "target profile" : "block id"}.</div>`;
+    if (msg)
+      msg.innerHTML = `<div class="error-box">Enter the correct ${kind === "target" ? "target profile" : "block id"}.</div>`;
     return;
   }
   try {
     const res = await api("POST", `/api/dictation/journal/${encodeURIComponent(id)}/correct`, { kind, value });
-    const taught = res && res.taught;
-    let inner;
-    if (!taught) {
-      inner = "Recorded against the Journal entry. (Nothing was taught — the text looked like a secret, so it wasn't stored.)";
-    } else {
-      const n = Number(res.similar) || 0;
-      let reach = "";
-      if (n > 0) {
-        reach = res.enabled
-          ? ` It now nudges ${n} similar ${plural(n, "dictation")} toward this.`
-          : ` It matches ${n} similar ${plural(n, "dictation")} — turn on corrections to use it.`;
-      } else if (!res.enabled) {
-        reach = " Turn on corrections to use it while routing.";
-      }
-      inner = `Taught — the Journal entry is marked corrected.${reach}`;
-    }
-    host.innerHTML = `<div class="moment-done" role="status">
-      <span class="moment-check" aria-hidden="true">✓</span>
-      <span>${inner}</span>
-    </div>`;
+    showFixitDone(root, correctionDoneText(res));
+    // Reflect it: flag the journal card corrected + refresh the digest hero
+    // (harmless when the Memory tab isn't showing).
+    const card = root.closest(".journal-card");
+    if (card) card.classList.add("is-corrected");
+    try {
+      loadLearningDigest();
+    } catch (_) {}
   } catch (e) {
-    msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+    if (msg) msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
   }
 }
 

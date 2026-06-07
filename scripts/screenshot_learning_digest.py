@@ -104,6 +104,12 @@ def _capture(seed, suffix: str) -> None:
                 page.wait_for_timeout(600)
                 page.screenshot(path=str(OUT_DIR / "trust-signals-journal.png"), full_page=True)
                 print(f"Wrote {OUT_DIR / 'trust-signals-journal.png'}")
+                # HS-48-03: the one-tap ritual mid-flow — "Fix it" opens the
+                # pre-scoped correct path inline on the first entry.
+                page.click(".journal-card [data-fixit-no]")
+                page.wait_for_timeout(400)
+                page.screenshot(path=str(OUT_DIR / "correction-ritual.png"), full_page=True)
+                print(f"Wrote {OUT_DIR / 'correction-ritual.png'}")
             browser.close()
     finally:
         server.stop()

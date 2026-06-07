@@ -1,20 +1,20 @@
 # Phase 48 — The Visible Learning Loop ("What HoldSpeak learned")
 
-**Status:** IN PROGRESS (2/5). Opened 2026-06-07 on user direction, after Phase 47
+**Status:** IN PROGRESS (3/5). Opened 2026-06-07 on user direction, after Phase 47
 closed (PR #28). The user liked the "what I learned this week" idea from the
 strategic review and asked to make it a real phase, framed as an open-source
 differentiator: *"I do like the 'what I learned this week' ... let's make this
 Open Source thing happen."*
 
-**Last updated:** 2026-06-07 (HS-48-02 — inline trust signals — **done**. A
-calm "learned from N similar" chip now rides the dry-run result, journal
-entries, and the Memory list, and the post-correction toast states real
-coverage. All counts come from one shared helper (`reach_for_gist` /
-`best_correction_signal`, reusing the router's `best_match_in`); surfaces stay
-quiet at N=0 and claim nothing when `corrections_enabled` is off or a teach was
-secret-filtered. New: 3 unit + 7 integration tests. Full suite 2395/18; 0
-`_built/` tracked. Next: HS-48-03 the one-tap right/wrong ritual. Prior:
-HS-48-01 the learning digest.)
+**Last updated:** 2026-06-07 (HS-48-03 — the correction ritual — **done**.
+Correcting is now one tap on the dry-run result *and* every journal entry: a
+shared inline `correctionRitual` / `wireFixit`, "Right" a calm client-only
+acknowledgement, "Wrong" the existing correct path pre-scoped (block/target in
+one tap, routed value pre-filled). Reuses `POST /journal/{id}/correct` — no new
+write primitive — and stays focus-safe (zero `.focus()`). Also fixed a latent
+`[hidden]`-vs-`display` leak so panels stay closed. New: 7 integration tests.
+Full suite 2401/18; 0 `_built/` tracked. Next: HS-48-04 docs. Prior: HS-48-02
+inline trust signals, HS-48-01 the learning digest.)
 
 ## The thesis — why this phase
 
@@ -102,24 +102,25 @@ does.
 |---|---|---|---|---|
 | HS-48-01 | The learning digest ("What HoldSpeak learned") | done | [story-01-learning-digest.md](./story-01-learning-digest.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-48-02 | Inline trust signals ("learned from N similar") | done | [story-02-inline-trust-signals.md](./story-02-inline-trust-signals.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-48-03 | Frictionless correction ritual (right/wrong, in flow) | backlog | [story-03-correction-ritual.md](./story-03-correction-ritual.md) | — |
+| HS-48-03 | Frictionless correction ritual (right/wrong, in flow) | done | [story-03-correction-ritual.md](./story-03-correction-ritual.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-48-04 | Docs: the learning loop, end to end | backlog | [story-04-docs.md](./story-04-docs.md) | — |
 | HS-48-05 | Closeout — before/after + dogfood + PR | backlog | [story-05-closeout.md](./story-05-closeout.md) | — |
 
 ## Where we are
 
-**HS-48-01 (digest) and HS-48-02 (inline signals) are done.** The aggregation
-lives in `holdspeak/dictation_learning.py`: `reach_for_gist` is the one
-definition of "N similar" (Jaccard over journal transcripts, the router's own
-bar), and `best_correction_signal` reuses `best_match_in` so a chip means "the
-router would apply this here." The digest hero is at the top of the Memory tab;
-the "learned from N similar" chip rides the dry-run result, journal entries, and
-the Memory list; the post-correction toast states real coverage. Everything is
-quiet at N=0 and honest about `corrections_enabled` + secret-filtering. The
+**HS-48-01 (digest), HS-48-02 (inline signals), and HS-48-03 (the ritual) are
+done — the whole visible loop now works.** The aggregation lives in
+`holdspeak/dictation_learning.py`: `reach_for_gist` is the one definition of
+"N similar" and `best_correction_signal` reuses `best_match_in`, so the digest,
+the chips, and the toast all count identically. The digest hero is at the top of
+the Memory tab; the "learned from N similar" chip rides the dry-run result,
+journal entries, and the Memory list; and correcting is one tap (`correctionRitual`
+/ `wireFixit`, reusing `POST /journal/{id}/correct`, focus-safe). Everything is
+quiet at N=0 and honest about `corrections_enabled` + secret-filtering; the
 spoken `say` → Whisper → digest e2e still proves it through real voice. **Read
-[`AGENT-BRIEF.md`](./AGENT-BRIEF.md)** for the mapped seams. Next: **HS-48-03**
-(the one-tap right/wrong ritual, reusing the correct endpoint; focus-safe).
-Sequence: 01 ✓ → 02 ✓ → 03 → 04 → 05.
+[`AGENT-BRIEF.md`](./AGENT-BRIEF.md)** for the mapped seams. Next: **HS-48-04**
+(docs — tell the loop end to end as the OSS differentiator). Sequence:
+01 ✓ → 02 ✓ → 03 ✓ → 04 → 05.
 
 ## Active risks
 
