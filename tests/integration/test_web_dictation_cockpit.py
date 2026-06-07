@@ -43,3 +43,40 @@ def test_dictation_cockpit_preserves_behavior_hooks() -> None:
     assert 'data-scope="global"' in page
     assert 'id="project-root-apply"' in page
     assert 'id="dry-btn-run"' in page
+
+
+def test_dictation_surfaces_carry_the_knowledge_explainer() -> None:
+    """HS-47-02: each surface has a what/why/worked-example explainer that names
+    the HS-47-01 model (project knowledge = Facts + Context)."""
+    page = _page()
+    # both explainer cards exist, under the one umbrella.
+    assert page.count("kn-explainer") >= 2
+    assert "Project knowledge · Facts" in page
+    assert "Project knowledge · Context" in page
+    # the what-line for each, accurate per the Phase-46 facts.
+    assert "Exact values, stamped in word for word." in page
+    assert "Background the rewrite model reads." in page
+    # a worked example demonstrating the verbatim substitution (literal braces).
+    assert "kn-example" in page
+    assert "{project.kb.stack}" in page
+    # each names its companion so the two read as one capability.
+    assert "<strong>Project Context</strong>" in page
+    assert "<strong>Project Facts</strong>" in page
+
+
+def test_dictation_surfaces_have_teaching_empty_states() -> None:
+    """HS-47-02: a detected-but-empty project meets a teaching empty state with a
+    one-click starter, not a bare grid/textarea. Markup is static (toggled by JS)
+    so its scoped CSS applies."""
+    page = _page()
+    assert 'id="kb-empty"' in page
+    assert 'id="hs-empty"' in page
+    assert "No facts yet" in page
+    assert "No project context yet" in page
+    # one-click starter actions on each surface.
+    assert 'id="kb-empty-starter"' in page
+    assert 'id="hs-empty-example"' in page
+    assert "Use starter facts" in page
+    assert "Start with an example" in page
+    # the scoped CSS for the toggled DOM is present in this page (the trap guard).
+    assert ".kn-empty" in page

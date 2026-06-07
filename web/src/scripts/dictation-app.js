@@ -367,6 +367,16 @@ const HS_FILE_META = [
   ["targets.md", "Per-target style notes for Codex, Claude, terminal, browser, editor, and chat."],
   ["ignore", "Paths, topics, or data HoldSpeak should not inject."],
 ];
+// HS-47-02: a small worked example the empty state loads into the editor so a
+// first-time user sees what good context looks like. Loaded unsaved; the user
+// reviews and saves (never written without approval).
+const HS_EXAMPLE_INSTRUCTIONS = `# How HoldSpeak should rewrite for this project
+
+- Keep dictation terse and imperative; this is a developer's repo.
+- Expand spoken shorthand into our real names (see .hs/terms.md).
+- Never invent file paths or commands; if you are unsure, leave a TODO.
+- Match the target: tighter for the terminal, fuller prose for chat.
+`;
 const hsState = {
   detected: null,
   contextDir: null,
@@ -632,14 +642,20 @@ function renderKBMeta(data) {
 
 function renderKBRows() {
   const host = document.getElementById("kb-rows");
+  // HS-47-02: the teaching empty state is static markup in dictation.astro; we
+  // only toggle its `hidden` attribute so its scoped CSS keeps applying.
+  const empty = document.getElementById("kb-empty");
   if (!kbState.detected) {
-    host.innerHTML = `<p style="color:var(--muted);font-size:13px;">No project detected. Navigate <code>holdspeak</code> from inside a project directory.</p>`;
+    if (empty) empty.hidden = true;
+    host.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">No project detected. Navigate <code>holdspeak</code> from inside a project directory.</p>`;
     return;
   }
   if (!kbState.rows.length) {
-    host.innerHTML = `<p style="color:var(--muted);font-size:13px;">No entries yet. Click <strong>+ New entry</strong> to add one.</p>`;
+    if (empty) empty.hidden = false;
+    host.innerHTML = "";
     return;
   }
+  if (empty) empty.hidden = true;
   host.innerHTML = kbState.rows.map((row, idx) => `
     <div class="row" style="margin-bottom: 8px; align-items: stretch;">
       <input type="text" data-kb-idx="${idx}" data-kb-field="key" placeholder="key" value="${escapeAttr(row.key)}" style="flex: 0 0 30%; font-family: var(--font-mono);" />
@@ -763,6 +779,8 @@ async function loadHSContext() {
   } catch (e) {
     banner.classList.add(e.status === 404 ? "warn" : "error");
     banner.textContent = e.message;
+    const hsEmpty = document.getElementById("hs-empty");
+    if (hsEmpty) hsEmpty.hidden = true;
     document.getElementById("hs-file-list").innerHTML = "";
     document.getElementById("hs-editor").value = "";
     hsState.suggestion = null;
@@ -802,6 +820,10 @@ function renderHSMeta(data) {
 
 function renderHSFileList() {
   const host = document.getElementById("hs-file-list");
+  // HS-47-02: teaching empty state when a project is detected but .hs/ does not
+  // exist yet. Static markup, toggled (not re-rendered) so scoped CSS applies.
+  const empty = document.getElementById("hs-empty");
+  if (empty) empty.hidden = !(hsState.detected && !hsState.contextDirExists);
   host.innerHTML = HS_FILE_META.map(([name, help]) => {
     const file = hsState.files[name] || {};
     const source = file.source === "flat"
@@ -847,6 +869,35 @@ function renderHSEditor() {
     save.textContent = file.source === "flat" ? "Create editable .hs copy" : "Save";
   }
   document.getElementById("hs-msg").innerHTML = "";
+}
+
+// HS-47-02: one-click starter for the .hs/ empty state. Drops an example into
+// the instructions.md editor without writing anything; the user reviews and
+// clicks Save, honoring the never-write-without-approval rule.
+function hsLoadExample() {
+  if (!hsState.detected) return;
+  hsState.selected = "instructions.md";
+  hsState.files = hsState.files || {};
+  hsState.files["instructions.md"] = {
+    ...(hsState.files["instructions.md"] || {}),
+    content: HS_EXAMPLE_INSTRUCTIONS,
+    source: "new",
+    exists: false,
+    truncated: false,
+  };
+  renderHSFileList();
+  renderHSEditor();
+  // Focus-safe: bring the editor into view but never steal keyboard focus — the
+  // dictation flow is sacred (see test_moment_affordance_present_and_focus_safe).
+  const editor = document.getElementById("hs-editor");
+  if (editor) {
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    editor.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+  }
+  const msg = document.getElementById("hs-msg");
+  if (msg) {
+    msg.innerHTML = `<div class="ok-box">Loaded an example into .hs/instructions.md. Review it, then click Save to create the file.</div>`;
+  }
 }
 
 async function saveHSContext() {
@@ -2142,6 +2193,10 @@ document.getElementById("kb-btn-starter").addEventListener("click", createStarte
 document.getElementById("kb-btn-save").addEventListener("click", kbSave);
 document.getElementById("kb-btn-reset").addEventListener("click", kbReset);
 document.getElementById("kb-btn-delete").addEventListener("click", kbDelete);
+// HS-47-02: empty-state actions reuse the existing starter/add/example paths.
+document.getElementById("kb-empty-starter").addEventListener("click", createStarterKB);
+document.getElementById("kb-empty-add").addEventListener("click", kbAdd);
+document.getElementById("hs-empty-example").addEventListener("click", hsLoadExample);
 document.getElementById("hs-btn-save").addEventListener("click", saveHSContext);
 document.getElementById("hs-btn-reset").addEventListener("click", resetHSContext);
 document.getElementById("hs-suggestion-apply").addEventListener("click", applyProjectDocSuggestion);

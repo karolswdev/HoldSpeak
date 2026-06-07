@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 47
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-47-01
 - **Unblocks:** HS-47-06
 - **Owner:** unassigned
@@ -31,14 +31,19 @@ what it does.
   behavior. This story makes the *existing* surfaces self-explanatory.
 
 ## Acceptance criteria
-- [ ] Each surface has an explainer (what / why / example) consistent with the
-      HS-47-01 model and accurate per the Phase-46 facts.
-- [ ] Each surface has an inviting, teaching empty state with a one-click starter —
-      no bare grid/textarea on first visit.
-- [ ] The premium UX bar is met (Signal language via `ui-ux-pro-max`); reduced-motion
-      safe; nothing steals focus.
-- [ ] Behavior unchanged; page-content tests assert the explainer + empty-state
-      markers; `npm run build` ✓; 0 `_built/` tracked.
+- [x] Each surface has an explainer (what / why / example) consistent with the
+      HS-47-01 model and accurate per the Phase-46 facts. Facts: "Exact values,
+      stamped in word for word" + a `{project.kb.stack}` substitution example;
+      Context: "Background the rewrite model reads" + a rewrite-shaping example.
+- [x] Each surface has an inviting, teaching empty state with a one-click starter:
+      Facts → "Use starter facts"; Context → "Start with an example" (loads an
+      unsaved example into the editor). No bare grid/textarea on first visit.
+- [x] The premium UX bar is met (Signal eyebrow + display headline + elevated
+      surfaces + worked-example panel); reduced-motion safe (`scrollIntoView`
+      honors `prefers-reduced-motion`); nothing steals focus (no `.focus()` in the
+      bundle — the focus-safe guard passes).
+- [x] Behavior unchanged; page-content tests assert the explainer + empty-state
+      markers (two new tests); `(cd web && npm run build)` ✓; 0 `_built/` tracked.
 
 ## Test plan
 - Unit: `uv run pytest -q -k "dictation"`; page-content assertions for the new
