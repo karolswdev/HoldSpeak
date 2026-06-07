@@ -55,11 +55,17 @@ def _capture(seed, suffix: str) -> None:
     from playwright.sync_api import sync_playwright
 
     import holdspeak.config as config_module
+    from holdspeak.config import Config
     from holdspeak.db import get_database, reset_database
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
     tmp = Path(tempfile.mkdtemp())
     config_module.CONFIG_FILE = tmp / "config.json"
+    # Corrections on, so the inline "learned from N similar" chips render on the
+    # journal entries (the matcher only nudges when enabled).
+    cfg = Config()
+    cfg.dictation.pipeline.corrections_enabled = True
+    cfg.save(path=config_module.CONFIG_FILE)
     reset_database()
     db = get_database(tmp / "shot.db")
     seed(db)
@@ -89,6 +95,15 @@ def _capture(seed, suffix: str) -> None:
                 page.wait_for_timeout(600)
                 page.screenshot(path=str(OUT_DIR / "learning-digest-all.png"))
                 print(f"Wrote {OUT_DIR / 'learning-digest-all.png'}")
+                # HS-48-02: the inline reach chips on the Memory list (full page),
+                # then the Journal tab where each matched entry carries one.
+                page.screenshot(path=str(OUT_DIR / "trust-signals-memory.png"), full_page=True)
+                print(f"Wrote {OUT_DIR / 'trust-signals-memory.png'}")
+                page.click('#section-journal')
+                page.wait_for_selector("#journal-list", state="visible", timeout=5000)
+                page.wait_for_timeout(600)
+                page.screenshot(path=str(OUT_DIR / "trust-signals-journal.png"), full_page=True)
+                print(f"Wrote {OUT_DIR / 'trust-signals-journal.png'}")
             browser.close()
     finally:
         server.stop()

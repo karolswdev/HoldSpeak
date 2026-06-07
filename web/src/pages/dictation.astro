@@ -2120,6 +2120,23 @@ import CommandPreview from "../components/CommandPreview.astro";
 
   .learn-digest { min-height: 2.5rem; }
 
+  /* HS-48-02: the inline "learned from N similar" trust chip, shared by the
+     dry-run result, journal entries, and the Memory list. Calm, not loud —
+     honesty over celebration. */
+  .learn-sig {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px var(--space-2);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--success) 13%, var(--surface-2));
+    border: 1px solid color-mix(in srgb, var(--success) 30%, var(--border-subtle));
+    color: var(--text);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+  }
+  .learn-sig svg { color: var(--success); flex: none; }
+
   /* The headline sentence — the honest one-liner. */
   .learn-sentence {
     margin: 0 0 var(--space-4);

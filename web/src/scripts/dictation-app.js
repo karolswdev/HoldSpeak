@@ -1334,6 +1334,17 @@ function plural(n, word) {
   return Number(n) === 1 ? word : `${word}s`;
 }
 
+// HS-48-02: the inline "learned from N similar" trust chip. One renderer for the
+// dry-run result, journal entries, and the Memory list. Quiet at N=0 — never a
+// claim of learning that did not happen.
+function learnSigChip(similar) {
+  const n = Number(similar) || 0;
+  if (n <= 0) return "";
+  return `<span class="learn-sig" title="How many journal utterances this nudge reaches — counted by the same matcher that routes">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m12 3 2.2 5.4L20 9.6l-4 4 1 5.8L12 16.8 7 19.4l1-5.8-4-4 5.8-1.2z"/></svg>
+    learned from ${n} similar</span>`;
+}
+
 async function loadLearningDigest(win) {
   const host = document.getElementById("learn-digest");
   if (!host) return;
@@ -1484,6 +1495,7 @@ function renderMemoryCorrections(data) {
       const del = it.id != null
         ? `<button class="mem-del" type="button" data-id="${escapeAttr(String(it.id))}" title="Forget this" aria-label="Forget this correction">×</button>`
         : "";
+      const sig = learnSigChip(it.similar);
       return `<div class="mem-item ${target ? "kind-target" : "kind-intent"}">
         <div class="mem-item-body">
           <span class="mem-kind">${target ? "target → profile" : "intent → block"}</span>
@@ -1491,6 +1503,7 @@ function renderMemoryCorrections(data) {
         </div>
         <span class="mem-arrow">→</span>
         <span class="mem-value">${escapeHtml(it.value || "")}</span>
+        ${sig}
         ${when}
         ${del}
       </div>`;
@@ -1781,6 +1794,7 @@ function renderJournalEntry(item) {
   const corrected = item.corrected
     ? `<span class="jr-corrected" title="You corrected this — the copilot learned from it">✓ corrected</span>`
     : "";
+  const learnSig = item.learning && item.learning.matched ? learnSigChip(item.learning.similar) : "";
   const block = item.block_id
     ? `<span class="jr-badge jr-block" title="routed block">${escapeHtml(item.block_id)}${item.confidence != null ? ` · ${Number(item.confidence).toFixed(2)}` : ""}</span>`
     : `<span class="jr-badge jr-block jr-muted">no route</span>`;
@@ -1799,6 +1813,7 @@ function renderJournalEntry(item) {
       ${block}
       ${target}
       ${corrected}
+      ${learnSig}
       <span class="jr-spacer"></span>
       ${when}
       <button class="jr-replay-btn" type="button" data-journal-replay="${escapeAttr(String(item.id))}" title="Re-run this through the current pipeline">
@@ -1996,10 +2011,12 @@ function renderMomentOfTruth(data) {
       : "no route matched";
   host.hidden = false;
   host.dataset.journalId = String(journalId);
+  const sig = data.learning && data.learning.matched ? learnSigChip(data.learning.similar) : "";
   host.innerHTML = `
     <div class="moment-head">
       <span class="moment-q">Was that right?</span>
       <span class="moment-routed">${routed}</span>
+      ${sig}
       <span class="moment-spacer"></span>
       <button type="button" class="btn moment-fix-btn" id="moment-fix-open">Fix it →</button>
     </div>
@@ -2050,11 +2067,24 @@ async function submitMomentFix(ev) {
   try {
     const res = await api("POST", `/api/dictation/journal/${encodeURIComponent(id)}/correct`, { kind, value });
     const taught = res && res.taught;
+    let inner;
+    if (!taught) {
+      inner = "Recorded against the Journal entry. (Nothing was taught — the text looked like a secret, so it wasn't stored.)";
+    } else {
+      const n = Number(res.similar) || 0;
+      let reach = "";
+      if (n > 0) {
+        reach = res.enabled
+          ? ` It now nudges ${n} similar ${plural(n, "dictation")} toward this.`
+          : ` It matches ${n} similar ${plural(n, "dictation")} — turn on corrections to use it.`;
+      } else if (!res.enabled) {
+        reach = " Turn on corrections to use it while routing.";
+      }
+      inner = `Taught — the Journal entry is marked corrected.${reach}`;
+    }
     host.innerHTML = `<div class="moment-done" role="status">
       <span class="moment-check" aria-hidden="true">✓</span>
-      <span>${taught
-        ? "Taught — the copilot will nudge similar dictations toward this, and the Journal entry is marked corrected."
-        : "Recorded against the Journal entry. (Nothing was taught — the text looked like a secret, so it wasn't stored.)"}</span>
+      <span>${inner}</span>
     </div>`;
   } catch (e) {
     msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;

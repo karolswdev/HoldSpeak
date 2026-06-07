@@ -299,16 +299,24 @@ def build_pipeline_router(
     @router.get("/api/dictation/corrections")
     async def api_dictation_corrections_list() -> Any:
         from ....config import Config
+        from ....dictation_learning import reach_for_gist
         from ....plugins.dictation.corrections import CORRECTION_KINDS
 
         store = ctx.corrections
         cfg = Config.load().dictation
+        items = store.list_for_display() if store is not None else []
+        # HS-48-02: each correction's real reach over the journal (the same
+        # Jaccard count the digest reports), so the Memory list shows how far
+        # each thing it learned actually carries.
+        transcripts = _journal_transcripts()
+        for item in items:
+            item["similar"] = reach_for_gist(str(item.get("key") or ""), transcripts)
         return JSONResponse(
             {
                 "enabled": bool(getattr(cfg.pipeline, "corrections_enabled", False)),
                 "kinds": list(CORRECTION_KINDS),
                 "size": len(store) if store is not None else 0,
-                "items": store.list_for_display() if store is not None else [],
+                "items": items,
             }
         )
 
@@ -395,6 +403,11 @@ def build_pipeline_router(
         recorder = ctx.journal
         return getattr(recorder, "repository", None) if recorder is not None else None
 
+    def _journal_transcripts() -> list[str]:
+        """Every journal transcript (for reach counts), or [] on a bare server."""
+        repo = _journal_repo()
+        return [r.transcript for r in repo.recent()] if repo is not None else []
+
     @router.get("/api/dictation/journal")
     async def api_dictation_journal_list(
         limit: int = 200, source: Optional[str] = None
@@ -406,15 +419,33 @@ def build_pipeline_router(
         list is empty — never an error.
         """
         from ....config import Config
+        from ....dictation_learning import best_correction_signal, reach_by_gist_map
 
         cfg = Config.load().dictation
         repo = _journal_repo()
         clean_source = source if source in ("dictation", "dry_run") else None
-        items = (
-            [_journal_to_dict(r) for r in repo.recent(limit=limit, source=clean_source)]
-            if repo is not None
-            else []
+        records = repo.recent(limit=limit, source=clean_source) if repo is not None else []
+        items = [_journal_to_dict(r) for r in records]
+        # HS-48-02: a per-entry "learned from N similar" signal — the correction
+        # the live router would apply to this utterance, and its reach. Gated on
+        # `corrections_enabled`: a None snapshot means the router nudges nothing,
+        # so we claim nothing. Reach is over the whole journal, precomputed once.
+        store = ctx.corrections
+        snapshot = (
+            store.snapshot()
+            if store is not None and bool(getattr(cfg.pipeline, "corrections_enabled", False))
+            else None
         )
+        if snapshot:
+            transcripts = _journal_transcripts()
+            reach_map = reach_by_gist_map(snapshot, transcripts)
+            for item in items:
+                item["learning"] = best_correction_signal(
+                    str(item.get("transcript") or ""), snapshot, reach_map
+                )
+        else:
+            for item in items:
+                item["learning"] = None
         return JSONResponse(
             {
                 "enabled": bool(getattr(cfg.pipeline, "journal_enabled", True)),
@@ -484,12 +515,26 @@ def build_pipeline_router(
         except Exception:  # pragma: no cover - id linkage is best-effort
             correction_id = None
         repo.mark_corrected(entry_id, correction_id=correction_id)
+        # HS-48-02: the honest coverage this teach now has — how many journal
+        # utterances the correction reaches (the same Jaccard count the digest
+        # uses). Only meaningful when something was actually taught; `enabled`
+        # lets the UI say "now nudges N" vs "will nudge N once corrections are on"
+        # without ever overclaiming.
+        from ....config import Config
+        from ....dictation_learning import reach_for_gist
+
+        similar = (
+            reach_for_gist(entry.transcript, _journal_transcripts()) if recorded else 0
+        )
+        cfg = Config.load().dictation
         return JSONResponse(
             {
                 "corrected": True,
                 "taught": bool(recorded),
                 "correction_id": correction_id,
                 "size": len(store),
+                "similar": similar,
+                "enabled": bool(getattr(cfg.pipeline, "corrections_enabled", False)),
             }
         )
 

@@ -22,7 +22,11 @@ from collections import Counter
 from datetime import datetime, timedelta
 from typing import Any, Optional, Sequence
 
-from holdspeak.plugins.dictation.corrections import similarity
+from holdspeak.plugins.dictation.corrections import (
+    CORRECTION_KINDS,
+    best_match_in,
+    similarity,
+)
 
 #: Windows the digest accepts. "week" is the last 7 days; "all" is everything.
 WINDOWS = ("week", "all")
@@ -92,6 +96,81 @@ def _row_field(row: Any, name: str) -> Any:
     return row.get(name) if isinstance(row, dict) else getattr(row, name, None)
 
 
+def reach_for_gist(
+    gist: str,
+    transcripts: Sequence[str],
+    *,
+    min_similarity: float = MIN_SIMILARITY,
+) -> int:
+    """How many journal transcripts a correction's gist reaches (Jaccard >= bar).
+
+    This is the single definition of "N similar" the whole phase reuses — the
+    digest, the inline trust chips, and the post-correction toast all count
+    reach through this one function, so no surface can drift to a second number.
+    """
+    if not gist:
+        return 0
+    return sum(1 for t in transcripts if t and similarity(t, gist) >= min_similarity)
+
+
+def reach_by_gist_map(
+    corrections: Optional[Sequence[Any]],
+    transcripts: Sequence[str],
+    *,
+    min_similarity: float = MIN_SIMILARITY,
+) -> dict[str, int]:
+    """Precompute reach per correction gist, so per-entry lookups stay cheap.
+
+    Accepts `Correction` objects (`.key`) or display dicts (`key`/`gist`).
+    """
+    out: dict[str, int] = {}
+    for c in corrections or []:
+        gist = getattr(c, "key", None)
+        if gist is None and isinstance(c, dict):
+            gist = c.get("key") or c.get("gist")
+        gist = str(gist or "")
+        if gist and gist not in out:
+            out[gist] = reach_for_gist(gist, transcripts, min_similarity=min_similarity)
+    return out
+
+
+def best_correction_signal(
+    text: str,
+    corrections: Optional[Sequence[Any]],
+    reach_by_gist: dict[str, int],
+    *,
+    min_similarity: float = MIN_SIMILARITY,
+) -> Optional[dict[str, Any]]:
+    """The inline "learned from N similar" signal for one utterance, or None.
+
+    Finds the correction the live router would apply to `text` (reusing
+    `best_match_in`, the router's own matcher, across both kinds) and reports
+    that correction's reach. Returns None when nothing matches — surfaces stay
+    quiet rather than claim learning that did not happen. Pass `corrections=None`
+    (the disabled / no-snapshot posture) to get None, byte-identical to routing.
+    """
+    if not text or not corrections:
+        return None
+    best = None
+    best_sim = -1.0
+    for kind in CORRECTION_KINDS:
+        match = best_match_in(corrections, kind, text, min_similarity=min_similarity)
+        if match is None:
+            continue
+        sim = similarity(text, match.key)
+        if sim > best_sim:
+            best, best_sim = match, sim
+    if best is None:
+        return None
+    return {
+        "matched": True,
+        "kind": best.kind,
+        "value": best.value,
+        "gist": best.key,
+        "similar": reach_by_gist.get(best.key, reach_for_gist(best.key, [], min_similarity=min_similarity)),
+    }
+
+
 def build_learning_digest(
     *,
     corrections: Optional[Sequence[Any]],
@@ -131,12 +210,8 @@ def build_learning_digest(
     all_transcripts = [t for t in _transcripts(journal_rows) if t]
 
     # Per-correction reach: how many journal utterances this correction would
-    # nudge (Jaccard >= threshold), over the whole journal.
-    def _similar(gist: str) -> int:
-        if not gist:
-            return 0
-        return sum(1 for t in all_transcripts if similarity(t, gist) >= min_similarity)
-
+    # nudge (Jaccard >= threshold), over the whole journal. Reuses the shared
+    # reach function so the digest and the inline chips count identically.
     correction_rows: list[dict[str, Any]] = []
     for c in windowed_corr:
         correction_rows.append(
@@ -146,7 +221,7 @@ def build_learning_digest(
                 "gist": c["gist"],
                 "value": c["value"],
                 "created_at": c["created_at"],
-                "similar": _similar(c["gist"]),
+                "similar": reach_for_gist(c["gist"], all_transcripts, min_similarity=min_similarity),
             }
         )
 

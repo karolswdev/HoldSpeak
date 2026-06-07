@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 48
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-48-01
 - **Owner:** unassigned
 
@@ -25,13 +25,13 @@ later that it did. Trust is built where the work happens, not in a separate tab.
   This story makes the existing surfaces *show the learning*.
 
 ## Acceptance criteria
-- [ ] The dry-run result and journal entries carry a truthful "learned from N
+- [x] The dry-run result and journal entries carry a truthful "learned from N
       similar" signal (hidden when N is 0); the post-correction confirmation states
       the real coverage count, not a generic message.
-- [ ] Counts come from the HS-48-01 similarity logic (one matcher, no second
+- [x] Counts come from the HS-48-01 similarity logic (one matcher, no second
       source of truth); no surface implies learning that did not happen
       (secret-filtered / disabled corrections stay honest).
-- [ ] Focus-safe; behavior-preserving; tests assert the signal + count; `npm run
+- [x] Focus-safe; behavior-preserving; tests assert the signal + count; `npm run
       build` ✓; 0 `_built/` tracked.
 
 ## Test plan
