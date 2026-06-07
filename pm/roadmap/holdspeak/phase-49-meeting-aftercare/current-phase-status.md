@@ -1,17 +1,17 @@
 # Phase 49 — Meeting Aftercare ("close the loop")
 
-**Status:** IN PROGRESS (3/6). Opened 2026-06-07 on user direction, right after
+**Status:** IN PROGRESS (4/6). Opened 2026-06-07 on user direction, right after
 Phase 48 closed (PR #30). Picked from the [project backlog](../BACKLOG.md)
 candidate A (user-favored): make the meeting side close its own loops instead of
 just displaying artifacts.
 
-**Last updated:** 2026-06-07 (HS-49-03 done — close the loop: a "File as issue"
-affordance on accepted aftercare actions records a GitHub-issue actuator
-*proposal* through the existing propose -> approve -> execute flow. No new write
-primitive (shared `build_github_issue_proposal` + the existing connector); off by
-default, human-approved, audited, payload-parity holds; idempotent per action. An
-executor test proves a proposed/unapproved proposal never egresses. 5 new tests +
-523-passing sweep; before/after screenshots. Next: HS-49-04 follow-up draft.)
+**Last updated:** 2026-06-07 (HS-49-04 done — the follow-up draft: a deterministic
+`build_followup_draft` assembles a local markdown summary (decisions + open items
+by owner + since-last delta) from the aftercare digest, served by
+`GET /api/meetings/{id}/followup-draft` and surfaced as a "Draft follow-up"
+preview + Copy in the panel head. Preview + copy only, never sent; honest at empty
+(one line, no padding); no LLM. 6 new tests + 479-passing sweep; screenshot. Next:
+HS-49-05 docs.)
 
 ## The thesis — why this phase
 
@@ -100,7 +100,7 @@ acting on the user's behalf without explicit approval.
 | HS-49-01 | The aftercare digest (open / decided / changed) | done | [story-01-aftercare-digest.md](./story-01-aftercare-digest.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-49-02 | Transcript provenance ("show me the moment") | done | [story-02-transcript-provenance.md](./story-02-transcript-provenance.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-49-03 | Close the loop: accepted actions to issues | done | [story-03-actions-to-issues.md](./story-03-actions-to-issues.md) | [evidence-story-03.md](./evidence-story-03.md) |
-| HS-49-04 | Draft the follow-up (preview + copy) | backlog | [story-04-followup-draft.md](./story-04-followup-draft.md) | — |
+| HS-49-04 | Draft the follow-up (preview + copy) | done | [story-04-followup-draft.md](./story-04-followup-draft.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-49-05 | Docs: meeting aftercare, end to end | backlog | [story-05-docs.md](./story-05-docs.md) | — |
 | HS-49-06 | Closeout — before/after + dogfood + PR | backlog | [story-06-closeout.md](./story-06-closeout.md) | — |
 
@@ -131,10 +131,19 @@ human-approved, audited; an executor test proves a proposed/unapproved proposal
 never egresses, and that enabling + approving yields `proposed -> approved ->
 executed`.
 
-Next: **HS-49-04** (draft the follow-up — a local, copyable summary of decisions
-+ open actions + owners; preview + copy, never auto-sent). The
+HS-49-04 added the last loop-closer: `build_followup_draft(digest)` assembles a
+local markdown follow-up (decisions, open items by owner, the since-last delta)
+from the HS-49-01 aggregation, served read-only by
+`GET /api/meetings/{id}/followup-draft` and surfaced as a "Draft follow-up"
+preview + Copy in the panel head. Preview + copy only, never sent, no connector;
+honest at empty (one plain line, no padding); deterministic, no LLM.
+
+Next: **HS-49-05** (docs — the Meeting Mode guide tells aftercare end to end:
+what's open / decided / changed -> jump to the moment -> file an issue -> draft
+the follow-up; README/index frames "close the loop"; guards green; honest about
+off-by-default actuators + preview-only drafts). The
 [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) has the mission, the mapped code seams, and
-per-story success criteria. Sequence: 01 ✓ -> 02 ✓ -> 03 ✓ -> 04 -> 05 -> 06.
+per-story success criteria. Sequence: 01 ✓ -> 02 ✓ -> 03 ✓ -> 04 ✓ -> 05 -> 06.
 
 ## Active risks
 

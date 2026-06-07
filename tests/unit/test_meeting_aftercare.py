@@ -15,6 +15,7 @@ import pytest
 
 from holdspeak.db import get_database, reset_database
 from holdspeak.meeting_aftercare import (
+    build_followup_draft,
     compute_meeting_aftercare,
     resolve_provenance_segment,
 )
@@ -226,6 +227,62 @@ def test_decisions_carry_provenance_when_timestamped(db):
     decisions = compute_meeting_aftercare(db, "m1")["decisions"]
     assert decisions[0]["provenance"]["segment_index"] == 1
     assert decisions[1]["provenance"] is None
+
+
+# --- HS-49-04: the local follow-up draft (preview + copy) ---
+
+
+def test_followup_draft_includes_decisions_owners_and_due(db):
+    _seed_meeting(
+        db,
+        "m1",
+        started_at=datetime(2026, 6, 4, 10, 0, 0),
+        title="API design",
+        action_items=[
+            {**_action("a1", "Wire the rate limiter", owner="Priya"), "due": "Friday"},
+            _action("a2", "Pick a name"),  # unassigned, no due
+        ],
+    )
+    _seed_decisions(db, "m1", [{"decision": "Use Postgres", "rationale": "Transactions"}])
+    draft = build_followup_draft(compute_meeting_aftercare(db, "m1"))
+    assert "# Follow-up: API design" in draft
+    assert "## What we decided" in draft
+    assert "- Use Postgres. Why: Transactions" in draft
+    assert "## Open items" in draft
+    assert "- Priya: Wire the rate limiter (due Friday)" in draft
+    assert "- Unassigned: Pick a name" in draft
+    assert "—" not in draft  # no em dashes in the copy
+
+
+def test_followup_draft_empty_is_honest_not_padded(db):
+    _seed_meeting(db, "m1", started_at=datetime(2026, 6, 4, 10, 0, 0), title="Quiet")
+    draft = build_followup_draft(compute_meeting_aftercare(db, "m1"))
+    assert "Nothing was decided and nothing is open" in draft
+    assert "## " not in draft  # no empty section headers
+
+
+def test_followup_draft_since_section(db):
+    _seed_meeting(
+        db,
+        "prior",
+        started_at=datetime(2026, 6, 1, 9, 0, 0),
+        title="Kickoff",
+        action_items=[_action("p1", "Stand up CI", status="done")],
+    )
+    _seed_decisions(db, "prior", [{"decision": "Use Postgres"}])
+    _seed_meeting(
+        db,
+        "current",
+        started_at=datetime(2026, 6, 4, 10, 0, 0),
+        title="Follow-up",
+        action_items=[_action("c1", "Wire the API", owner="Sam")],
+    )
+    _seed_decisions(db, "current", [{"decision": "Adopt feature flags"}])
+    draft = build_followup_draft(compute_meeting_aftercare(db, "current"))
+    assert "## Since Kickoff" in draft
+    assert "New decisions:" in draft and "- Adopt feature flags" in draft
+    assert "New action items:" in draft and "- Wire the API" in draft
+    assert "Closed since last time:" in draft and "- Stand up CI" in draft
 
 
 def test_no_change_since_last_meeting_is_quiet(db):

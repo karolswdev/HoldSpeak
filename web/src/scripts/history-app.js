@@ -527,6 +527,23 @@ function historyApp() {
       }
     },
 
+    // HS-49-04: assemble the local follow-up draft (decisions + open items +
+    // owners). Preview + copy only — this fetches the locally-assembled markdown;
+    // the caller shows it and lets the user copy it. Nothing is ever sent.
+    async fetchFollowupDraft() {
+      if (!this.selectedMeeting?.id) return null;
+      try {
+        const res = await this.apiJson(
+          `/api/meetings/${this.selectedMeeting.id}/followup-draft`,
+        );
+        return res.markdown || "";
+      } catch (error) {
+        console.error("Failed to build follow-up draft:", error);
+        this.flash(`Draft failed: ${error.message}`, true);
+        return null;
+      }
+    },
+
     proposalStatusLabel(status) {
       return (
         {

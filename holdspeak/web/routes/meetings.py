@@ -659,6 +659,33 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
         except Exception as e:
             return error_500(e, log, "Failed to load meeting aftercare")
 
+    @router.get("/api/meetings/{meeting_id}/followup-draft")
+    async def api_get_meeting_followup_draft(meeting_id: str) -> Any:
+        """A local, copyable follow-up draft for one meeting (HS-49-04).
+
+        Assembled deterministically from the aftercare digest — decisions, open
+        items by owner, and the since-last-meeting delta. Preview + copy only:
+        nothing is sent and no connector is opened. Honest when there's little to
+        say (no padding). Pure read; 404 for an unknown meeting.
+        """
+        try:
+            from ...db import get_database
+            from ...meeting_aftercare import build_followup_draft, compute_meeting_aftercare
+
+            db = get_database()
+            digest = compute_meeting_aftercare(db, meeting_id)
+            if digest is None:
+                return JSONResponse({"error": "Meeting not found"}, status_code=404)
+            return JSONResponse(
+                {
+                    "meeting_id": meeting_id,
+                    "markdown": build_followup_draft(digest),
+                    "is_empty": digest["is_empty"],
+                }
+            )
+        except Exception as e:
+            return error_500(e, log, "Failed to build meeting follow-up draft")
+
     def _proposal_to_dict(proposal: Any) -> dict[str, Any]:
         return {
             "id": proposal.id,

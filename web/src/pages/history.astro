@@ -664,10 +664,29 @@ import AppLayout from "../layouts/AppLayout.astro";
             <div class="detail-side">
               <!-- HS-49-01: aftercare digest — open / decided / changed. Quiet
                    when there's nothing to act on (server sets is_empty). -->
-              <div class="detail-card aftercare-card" x-show="selectedMeetingAftercare" x-cloak>
+              <div class="detail-card aftercare-card" x-show="selectedMeetingAftercare" x-cloak x-data="{ draft: null, copyState: 'idle' }">
                 <div class="aftercare-head">
                   <h4>Your next move</h4>
-                  <span class="aftercare-tag">Aftercare</span>
+                  <div class="aftercare-head-actions">
+                    <button
+                      class="moment-btn"
+                      @click="draft === null ? (draft = await fetchFollowupDraft()) : (draft = null, copyState = 'idle')"
+                      x-text="draft === null ? 'Draft follow-up' : 'Hide draft'"
+                    ></button>
+                    <span class="aftercare-tag">Aftercare</span>
+                  </div>
+                </div>
+
+                <div class="followup-draft" x-show="draft !== null" x-cloak>
+                  <pre class="followup-pre" x-text="draft"></pre>
+                  <div class="loop-form-actions">
+                    <button
+                      class="btn primary"
+                      @click="copyState = (await copyMarkdown(draft)) ? 'done' : 'fail'; setTimeout(() => copyState = 'idle', 1400)"
+                      x-text="copyState === 'done' ? 'Copied' : (copyState === 'fail' ? 'Copy failed' : 'Copy draft')"
+                    ></button>
+                  </div>
+                  <p class="loop-note">Assembled locally from this meeting. Preview and copy only; nothing is sent.</p>
                 </div>
 
                 <div class="aftercare-section" x-show="selectedMeetingAftercare?.open_items?.total" x-cloak>
@@ -2721,5 +2740,33 @@ import AppLayout from "../layouts/AppLayout.astro";
     font-size: 0.72rem;
     line-height: 1.4;
     color: var(--text-muted);
+  }
+
+  /* HS-49-04: the local follow-up draft — preview + copy, never sent. */
+  .aftercare-head-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .followup-draft {
+    margin-bottom: var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .followup-pre {
+    margin: 0;
+    max-height: 18rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
   }
 </style>

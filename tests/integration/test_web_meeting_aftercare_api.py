@@ -147,3 +147,19 @@ def test_aftercare_is_read_only(client, seeded, db) -> None:
 def test_aftercare_404_for_unknown_meeting(client, db) -> None:
     response = client.get("/api/meetings/nope/aftercare")
     assert response.status_code == 404
+
+
+@pytest.mark.integration
+def test_followup_draft_endpoint(client, seeded) -> None:
+    body = client.get("/api/meetings/current/followup-draft").json()
+    assert body["meeting_id"] == "current"
+    assert body["is_empty"] is False
+    md = body["markdown"]
+    assert "# Follow-up: Follow-up" in md
+    assert "## What we decided" in md and "- Adopt feature flags" in md
+    assert "## Open items" in md and "- alice: Wire the API" in md
+
+
+@pytest.mark.integration
+def test_followup_draft_404_for_unknown_meeting(client, db) -> None:
+    assert client.get("/api/meetings/nope/followup-draft").status_code == 404

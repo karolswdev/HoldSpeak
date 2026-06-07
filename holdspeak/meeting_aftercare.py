@@ -285,3 +285,71 @@ def compute_meeting_aftercare(
         "since_last_meeting": since_last_meeting,
         "is_empty": is_empty,
     }
+
+
+def build_followup_draft(digest: dict[str, Any]) -> str:
+    """Assemble a local, copyable follow-up message from an aftercare digest.
+
+    Deterministic and offline — it consumes the HS-49-01 aggregation, never
+    re-queries, and is preview + copy only (the caller never sends it). Honest
+    when there is little to say: an empty meeting yields one plain line, not
+    padding. The voice avoids dashes so the draft reads like something a person
+    would paste into chat.
+    """
+    title = str(digest.get("meeting_title") or "").strip() or "Meeting"
+    date = str(digest.get("meeting_date") or "")[:10]
+    header = f"# Follow-up: {title}"
+    if date:
+        header += f"\n{date}"
+
+    if digest.get("is_empty"):
+        return f"{header}\n\nNothing was decided and nothing is open for this meeting."
+
+    sections: list[str] = [header]
+
+    decisions = digest.get("decisions") or []
+    if decisions:
+        lines = ["## What we decided"]
+        for d in decisions:
+            decision = str(d.get("decision") or "").strip()
+            if not decision:
+                continue
+            rationale = str(d.get("rationale") or "").strip()
+            lines.append(f"- {decision}" + (f". Why: {rationale}" if rationale else ""))
+        if len(lines) > 1:
+            sections.append("\n".join(lines))
+
+    by_owner = (digest.get("open_items") or {}).get("by_owner") or []
+    if by_owner:
+        lines = ["## Open items"]
+        for group in by_owner:
+            owner = group.get("owner") or "Unassigned"
+            for item in group.get("items") or []:
+                task = str(item.get("task") or "").strip()
+                if not task:
+                    continue
+                due = str(item.get("due") or "").strip()
+                lines.append(f"- {owner}: {task}" + (f" (due {due})" if due else ""))
+        if len(lines) > 1:
+            sections.append("\n".join(lines))
+
+    since = digest.get("since_last_meeting")
+    if since and since.get("changed"):
+        prev = (since.get("previous_meeting") or {}).get("title") or "the last meeting"
+        lines = [f"## Since {prev}"]
+        new_decisions = since.get("new_decisions") or []
+        if new_decisions:
+            lines.append("New decisions:")
+            lines.extend(f"- {str(d.get('decision') or '').strip()}" for d in new_decisions)
+        new_actions = since.get("new_actions") or []
+        if new_actions:
+            lines.append("New action items:")
+            lines.extend(f"- {str(a.get('task') or '').strip()}" for a in new_actions)
+        closed = since.get("closed_actions") or []
+        if closed:
+            lines.append("Closed since last time:")
+            lines.extend(f"- {str(a.get('task') or '').strip()}" for a in closed)
+        if len(lines) > 1:
+            sections.append("\n".join(lines))
+
+    return "\n\n".join(sections)
