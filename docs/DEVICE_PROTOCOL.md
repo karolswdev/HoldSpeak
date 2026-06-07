@@ -410,3 +410,9 @@ server → device  {"type":"status","text":"Saving meeting...","ttl_ms":0}
   coffee-shop networks, the server-side label registry will
   need to persist (currently each reconnect is a clean
   slate).
+
+## See also
+
+- [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md) — the firmware + bridge
+  workflow that implements this protocol.
+- [Security & Privacy](SECURITY.md) — the device PSK + loopback trust boundary.

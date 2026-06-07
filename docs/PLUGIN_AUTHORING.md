@@ -806,3 +806,12 @@ This contract deliberately does **not** cover:
   boundary.
 - **Changing the built-ins' behavior or the default routing output** —
   new plugins layer on; the 14 built-ins stay behavior-identical.
+
+## See also
+
+- [Meeting Mode Guide](MEETING_MODE_GUIDE.md) — configure the intel endpoint +
+  routing your plugin runs under.
+- [Connector Development](CONNECTOR_DEVELOPMENT.md) — the sibling contract for
+  local activity connectors.
+- [`internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md`](internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md)
+  — the design rationale (the parent plugin-system RFC).

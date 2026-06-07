@@ -1,12 +1,21 @@
 # Phase 46 — Documentation Excellence & the 10-Second Hook
 
-**Status:** IN PROGRESS (2/6). Opened 2026-06-06 on user direction ("a dedicated
+**Status:** IN PROGRESS (3/6). Opened 2026-06-06 on user direction ("a dedicated
 phase that will guide us through scaffolding/updating documentation … the main
 README is too low on cool facts of the app, and slightly too large and
 repetitive. People love the graphics, so that stays … other documentation files
 probably also need a big lift").
 
-**Last updated:** 2026-06-07 (**HS-46-02 — The README, reimagined: DONE**. The
+**Last updated:** 2026-06-07 (**HS-46-03 — Docs voice & structure + elevated
+index: DONE**. A style guide (`docs/internal/DOCS_STYLE.md`: voice + the standard
+page skeleton + privacy callout + cross-link/anchor rules); a **uniform `## See
+also` footer across all 13 docs** (renamed the two strays, added the missing ones);
+and `docs/README.md` rebuilt as a **journey map** (Start here · Dictate · Meet ·
+Extend · Operate & Trust), in lockstep with the README's "Where to go next".
+Voice+structure, not a rewrite — reference docs kept their depth. A guard catch
+(example links in a code fence) fixed honestly. Guards 7 passed; full suite
+2364/17. Next: HS-46-04 (visual lift — real UI screenshots) + HS-46-05 (coverage
+matrix). Prior: **HS-46-02 — The README, reimagined: DONE**. The
 README went spec-sheet → product pitch: a 10-second hook ("Hold a key. Speak. It
 types — anywhere. 100% local. And it learns you.") + a "Why it's different"
 cool-facts strip (the journal/replay "it learns you" story above the fold), every
@@ -120,21 +129,22 @@ discoverable and represented, the graphics kept, the bloat gone.
 |---|---|---|---|---|
 | HS-46-01 | Doc truth audit & drift fix | done | [story-01-doc-truth-audit.md](./story-01-doc-truth-audit.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-46-02 | The README, reimagined (the 10-second hook) | done | [story-02-readme-reimagined.md](./story-02-readme-reimagined.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-46-03 | Docs voice & structure system + elevated index | backlog | [story-03-voice-and-structure.md](./story-03-voice-and-structure.md) | — |
+| HS-46-03 | Docs voice & structure system + elevated index | done | [story-03-voice-and-structure.md](./story-03-voice-and-structure.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-46-04 | Visual lift — real screenshots across the guides | backlog | [story-04-visual-lift.md](./story-04-visual-lift.md) | — |
 | HS-46-05 | Coverage & discoverability (feature → doc matrix) | backlog | [story-05-coverage-discoverability.md](./story-05-coverage-discoverability.md) | — |
 | HS-46-06 | Closeout — before/after + guards + PR | backlog | [story-06-closeout.md](./story-06-closeout.md) | — |
 
 ## Where we are
 
-**HS-46-01 + HS-46-02 done** — the README now hooks in ten seconds (a real hook +
-a cool-facts strip, the "it learns you" journal/replay story above the fold), keeps
-every graphic, cuts the repetition (plugin table + AIPI prose → teasers; pre-release
-once; raw config linked out), and is **205 → 152 lines**, all on top of the HS-46-01
-truth audit (every cool fact verified). Suite green (2364/17). **Next: HS-46-03**
-(docs voice & structure system + elevated index) and **HS-46-04** (visual lift —
-real UI screenshots), which can run together. Sequence: ~~01~~ → ~~02~~ → (03, 04) →
-05 → 06.
+**HS-46-01 → 03 done** — the docs now have an accurate spine *and* one voice. The
+README hooks in ten seconds (HS-46-02: 205 → 152 lines, hook + cool-facts strip,
+every graphic kept). The guides clear a shared skeleton with a **uniform `## See
+also` footer (13/13)**, governed by `docs/internal/DOCS_STYLE.md`, and the index is
+a **journey map** (Start here · Dictate · Meet · Extend · Operate & Trust) — all on
+the HS-46-01 truth audit. Suite green (2364/17). **Next: HS-46-04** (visual lift —
+real UI screenshots via a repeatable capture script; needs the web build + a running
+server) and **HS-46-05** (feature → doc coverage matrix). Sequence: ~~01~~ → ~~02~~
+→ ~~03~~ → (04, 05) → 06.
 
 ---
 

@@ -190,4 +190,10 @@ When ready, continue with:
 | Web UI does not open | Browser auto-open disabled or blocked | Visit the printed local URL manually |
 | Project is wrong | Started from another cwd | Set Project root in `/dictation` |
 
-For meeting-specific setup, see [Meeting Mode Guide](MEETING_MODE_GUIDE.md).
+## See also
+
+- [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md) — once basic voice
+  typing works, turn on the project-aware copilot.
+- [Meeting Mode Guide](MEETING_MODE_GUIDE.md) — meeting-specific setup and capture.
+- [Models — bring your own](MODELS.md) — pick and point at an LLM.
+- [Security & Privacy](SECURITY.md) — what's stored and what can leave your machine.

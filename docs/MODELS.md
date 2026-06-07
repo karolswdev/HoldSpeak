@@ -125,3 +125,10 @@ makes the larger tiers practical.
 - If a model path is missing or an endpoint times out, HoldSpeak degrades
   gracefully (preserves the original transcript; queues meeting intel for retry)
   rather than failing the capture.
+
+## See also
+
+- [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md) — where the dictation
+  model is used.
+- [Meeting Mode Guide](MEETING_MODE_GUIDE.md) — where the meeting-intel model is used.
+- [Security & Privacy](SECURITY.md) — what a cloud endpoint changes about egress.

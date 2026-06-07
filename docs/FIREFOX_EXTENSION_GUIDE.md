@@ -75,3 +75,10 @@ extensions/firefox/
 ├── options.html     # Runtime URL setting
 └── options.js       # Persists runtime URL via browser.storage
 ```
+
+## See also
+
+- [Connector Development](CONNECTOR_DEVELOPMENT.md) — the connector contract this
+  extension is an instance of.
+- [Security & Privacy](SECURITY.md) — what the browser connector posts and where
+  it goes.

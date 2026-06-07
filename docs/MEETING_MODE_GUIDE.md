@@ -595,6 +595,9 @@ action-item review state, source timestamps when available, and synthesized
 artifacts. They are local downloads only and do not publish to Jira, Linear,
 GitHub Issues, Slack, or any other external system.
 
----
+## See also
 
-*For more information, see the [README](../README.md) or open an issue on GitHub.*
+- [Getting Started](GETTING_STARTED.md) — install and first-run setup.
+- [Models — bring your own](MODELS.md) — configure the LLM that powers intel.
+- [Plugin Authoring](PLUGIN_AUTHORING.md) — write your own meeting-intel plugin.
+- [Security & Privacy](SECURITY.md) — what's stored and what can leave your machine.

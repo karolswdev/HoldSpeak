@@ -452,3 +452,11 @@ This story does not cover:
 Phase 11 ships the *contract* and the *first-party packs*. Any
 external distribution mechanism is a separate phase, not on
 the current roadmap.
+
+## See also
+
+- [Firefox Extension Guide](FIREFOX_EXTENSION_GUIDE.md) — a first-party
+  `extension_events` connector, end to end.
+- [Plugin Authoring](PLUGIN_AUTHORING.md) — the sibling contract for meeting-intel
+  plugins.
+- [Security & Privacy](SECURITY.md) — the permission model connectors declare against.

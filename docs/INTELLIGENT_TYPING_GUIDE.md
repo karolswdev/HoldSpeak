@@ -675,3 +675,13 @@ holdspeak dictation dry-run "ask codex to summarize what changed and suggest a n
 > rough speech using `.hs/` context before enrichment. This adds one extra LLM
 > round-trip; only enable it when an OpenAI-compatible runtime is configured and
 > you have populated `.hs/instructions.md`.
+
+## See also
+
+- [Getting Started](GETTING_STARTED.md) — install and basic voice typing first.
+- [The Dictation Copilot](DICTATION_COPILOT.md) — see the pipeline turn rough
+  speech into a project-grounded task, end to end.
+- [Models — bring your own](MODELS.md) — choosing and pointing at an LLM.
+- [Agent Hook Install](AGENT_HOOK_INSTALL.md) — feed Claude/Codex context into the
+  rewriter.
+- [Security & Privacy](SECURITY.md) — what's stored and what can leave your machine.
