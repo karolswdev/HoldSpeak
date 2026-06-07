@@ -1,15 +1,16 @@
 # Phase 50 — Release Readiness ("cut a real 0.x")
 
-**Status:** IN PROGRESS (4/7). Opened 2026-06-07 on user direction, right after
+**Status:** IN PROGRESS (5/7). Opened 2026-06-07 on user direction, right after
 Phase 49 closed + merged (PR #33). Picked from the [project backlog](../BACKLOG.md)
 candidate C: the bet that actually lets the open-source push ship publicly.
 
-**Last updated:** 2026-06-07 (HS-50-04 done: doctor + config honesty. `doctor` now
-has a Database check (read-only `read_schema_version` probe: current=PASS,
-older=WARN, newer=FAIL, unreadable=WARN) that also flows into `/api/setup/status`;
-`Config` carries a `config_version` that coerces an older/unversioned shape forward
-without dropping fields and keeps + flags a newer one; the config doctor check
-flags a newer config. Next: HS-50-05, verified clean-machine install.)
+**Last updated:** 2026-06-07 (HS-50-05 done: verified clean-machine install. Ran the
+documented `uv pip install -e .` in a fresh venv with a clean temp HOME; `holdspeak
+doctor` reaches exit 0 with only the expected optional warnings (no llama.cpp model,
+no system-audio source). Version resolves to 0.2.1 from real install metadata; the
+new Database/Config checks pass. `install.sh` pins a tag via `HOLDSPEAK_REF`,
+verified statically. Transcript captured. Next: HS-50-06, the release + upgrade/backup
+policy docs.)
 
 ## The thesis — why this phase
 
@@ -92,7 +93,7 @@ routing.
 | HS-50-02 | Safe-by-default schema policy | done | [story-02-schema-policy.md](./story-02-schema-policy.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-50-03 | Backup + restore | done | [story-03-backup-restore.md](./story-03-backup-restore.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-50-04 | doctor + config honesty | done | [story-04-doctor-config-honesty.md](./story-04-doctor-config-honesty.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-50-05 | Verified clean-machine install + pinned contract | backlog | [story-05-install-verification.md](./story-05-install-verification.md) | — |
+| HS-50-05 | Verified clean-machine install + pinned contract | done | [story-05-install-verification.md](./story-05-install-verification.md) | [evidence-story-05.md](./evidence-story-05.md), [install-transcript.txt](./install-transcript.txt) |
 | HS-50-06 | Docs: release + upgrade/backup policy | backlog | [story-06-docs.md](./story-06-docs.md) | — |
 | HS-50-07 | Closeout — dogfood + final-summary + PR | backlog | [story-07-closeout.md](./story-07-closeout.md) | — |
 
@@ -129,12 +130,18 @@ unreadable=WARN) that flows into `/api/setup/status` too. `Config` carries a
 fields and keeps + flags a newer one; the config check also flags a newer config.
 Honest over silent in both places.
 
-Next: **HS-50-05** (verified clean-machine install) actually runs the documented
-install path on a clean-ish environment, fixes whatever breaks, and captures the
-transcript. This is the story that needs network for a real `pip install` from git,
-so it may run via the `! <cmd>` session prefix or `dangerouslyDisableSandbox`.
-**Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.** Sequence: 01 -> 02 -> 03 -> 04
--> 05 -> 06 -> 07.
+**HS-50-05 (verified clean-machine install) is done.** Ran `uv pip install -e .`
+in a fresh venv with a clean temp HOME; `holdspeak doctor` reaches exit 0, version
+resolves to 0.2.1 from real install metadata, and the new Database/Config checks
+pass. The two warnings are the expected optional gaps (no llama.cpp model, no
+system-audio source) and doctor degrades honestly. `install.sh` pins a tag via
+`HOLDSPEAK_REF`, verified statically; transcript captured in `install-transcript.txt`.
+
+Next: **HS-50-06** (docs, the dedicated docs story) writes the release +
+upgrade/backup policy doc and a maintainer release checklist, reconciles
+README/GETTING_STARTED, and keeps the doc guards green. **Read
+[`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.** Sequence: 01 -> 02 -> 03 -> 04 -> 05
+-> 06 -> 07.
 
 ## Active risks
 
