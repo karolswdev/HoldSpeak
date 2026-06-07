@@ -497,6 +497,7 @@ def _run_dictation_dry_run_text(
             "final_text": text,
             "total_elapsed_ms": 0.0,
             "warnings": warnings,
+            "learning": None,
             "telemetry": summarize_dry_run(
                 runtime_status="disabled",
                 runtime_detail="dictation pipeline disabled (opt-in)",
@@ -544,6 +545,22 @@ def _run_dictation_dry_run_text(
     # first-class. A recorder with no repository (bare server) is a no-op.
     # HS-45-03: the returned record's id flows back so the result panel can
     # offer an in-the-moment "fix it here" that attaches to this entry.
+    # HS-48-02: the inline "learned from N similar" signal for this utterance.
+    # Computed from the same snapshot routing used (None when corrections are
+    # off -> no signal), over the journal as it stood *before* this run, so the
+    # count reflects past utterances rather than counting this one. Quiet when
+    # nothing matches.
+    learning_signal = None
+    if correction_snapshot:
+        from ....dictation_learning import best_correction_signal, reach_by_gist_map
+
+        repo = getattr(journal, "repository", None) if journal is not None else None
+        past_transcripts = (
+            [r.transcript for r in repo.recent()] if repo is not None else []
+        )
+        reach_map = reach_by_gist_map(correction_snapshot, past_transcripts)
+        learning_signal = best_correction_signal(text, correction_snapshot, reach_map)
+
     journal_id = None
     if journal is not None:
         recorded = journal.record(
@@ -566,6 +583,7 @@ def _run_dictation_dry_run_text(
         "target": target_profile.to_dict(),
         "suggestion_status": suggestion_status,
         "journal_id": journal_id,
+        "learning": learning_signal,
         "runtime_status": result.runtime_status,
         "runtime_detail": result.runtime_detail,
         "blocks_count": len(result.blocks.blocks),

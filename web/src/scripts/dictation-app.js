@@ -1326,7 +1326,130 @@ async function enablePipelineFromReadiness() {
 }
 
 // ── Memory + telemetry (HS-40-04) ───────────────────────────────────
+// HS-48-01: the "What HoldSpeak learned" digest. Read-only; every number is
+// real and comes from the same Jaccard matcher that nudges routing.
+let learnWindow = "week";
+
+function plural(n, word) {
+  return Number(n) === 1 ? word : `${word}s`;
+}
+
+// HS-48-02: the inline "learned from N similar" trust chip. One renderer for the
+// dry-run result, journal entries, and the Memory list. Quiet at N=0 — never a
+// claim of learning that did not happen.
+function learnSigChip(similar) {
+  const n = Number(similar) || 0;
+  if (n <= 0) return "";
+  return `<span class="learn-sig" title="How many journal utterances this nudge reaches — counted by the same matcher that routes">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m12 3 2.2 5.4L20 9.6l-4 4 1 5.8L12 16.8 7 19.4l1-5.8-4-4 5.8-1.2z"/></svg>
+    learned from ${n} similar</span>`;
+}
+
+async function loadLearningDigest(win) {
+  const host = document.getElementById("learn-digest");
+  if (!host) return;
+  if (win) learnWindow = win;
+  host.textContent = "Loading…";
+  try {
+    const data = await api("GET", `/api/dictation/learning-digest?window=${encodeURIComponent(learnWindow)}`);
+    renderLearningDigest(data);
+  } catch (e) {
+    host.innerHTML = `<div class="learn-empty"><p class="learn-empty-sub">${escapeHtml(e.message)}</p></div>`;
+  }
+}
+
+function renderLearningDigest(data) {
+  const host = document.getElementById("learn-digest");
+  if (!host) return;
+  const t = (data && data.totals) || {};
+  const made = Number(t.corrections_made) || 0;
+  const corrected = Number(t.dictations_corrected) || 0;
+  const nudged = Number(t.similar_nudged) || 0;
+  const windowLabel = data.window === "all" ? "all time" : "this week";
+
+  // Stay quiet when there is nothing real to show (no invented learning).
+  if (!made && !corrected) {
+    host.innerHTML = `<div class="learn-empty">
+      <div class="learn-empty-glyph">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>
+          <circle cx="12" cy="12" r="3.2"/>
+        </svg>
+      </div>
+      <p class="learn-empty-head">Nothing learned ${data.window === "all" ? "yet" : "this week"}.</p>
+      <p class="learn-empty-sub">Correct a dictation and it shows up here, with how many similar utterances in your journal it now nudges. The Journal tab has a one-tap fix on every entry.</p>
+    </div>`;
+    return;
+  }
+
+  // The honest one-liner. "Now nudged" only when corrections actually route.
+  let reach = "";
+  if (nudged > 0) {
+    const isAre = nudged === 1 ? "is" : "are";
+    reach = data.enabled
+      ? ` <span class="learn-reach-on">${nudged} similar ${plural(nudged, "utterance")} in your journal ${isAre} now nudged toward your fixes.</span>`
+      : ` <span class="learn-reach-off">${nudged} similar ${plural(nudged, "utterance")} would be nudged once you turn corrections on.</span>`;
+  }
+  const sentence = `You made <strong>${made}</strong> ${plural(made, "correction")} and corrected <strong>${corrected}</strong> ${plural(corrected, "dictation")} ${windowLabel}.${reach}`;
+
+  const stats = `
+    <div class="learn-stats">
+      <div class="learn-stat"><div class="learn-stat-num">${made}</div><div class="learn-stat-label">corrections made</div></div>
+      <div class="learn-stat"><div class="learn-stat-num">${corrected}</div><div class="learn-stat-label">dictations corrected</div></div>
+      <div class="learn-stat is-reach"><div class="learn-stat-num">${nudged}</div><div class="learn-stat-label">utterances nudged</div></div>
+    </div>`;
+
+  const blocks = Array.isArray(data.by_block) ? data.by_block : [];
+  const targets = Array.isArray(data.by_target) ? data.by_target : [];
+  const chip = (name, count) =>
+    `<span class="learn-chip">${escapeHtml(name)}<span class="learn-chip-count">×${count}</span></span>`;
+  const breakdownRows = [];
+  if (blocks.length) {
+    breakdownRows.push(
+      `<div class="learn-break-row"><span class="learn-break-label">Routed to block</span>${blocks
+        .map((b) => chip(b.block_id, b.count))
+        .join("")}</div>`
+    );
+  }
+  if (targets.length) {
+    breakdownRows.push(
+      `<div class="learn-break-row"><span class="learn-break-label">Target profile</span>${targets
+        .map((b) => chip(b.target_profile, b.count))
+        .join("")}</div>`
+    );
+  }
+  const breakdown = breakdownRows.length
+    ? `<div class="learn-breakdown">${breakdownRows.join("")}</div>`
+    : "";
+
+  const corrections = Array.isArray(data.corrections) ? data.corrections : [];
+  let rows = "";
+  if (corrections.length) {
+    const rowHtml = corrections
+      .map((c) => {
+        const target = c.kind === "target";
+        // Stay quiet at N=0: no reach chip when nothing is within reach yet.
+        const reachChip =
+          Number(c.similar) > 0
+            ? `<span class="learn-reach-chip">learned from ${c.similar} similar</span>`
+            : "";
+        return `<div class="learn-row">
+          <span class="learn-row-kind">${target ? "target" : "intent"}</span>
+          <span class="learn-row-gist" title="${escapeAttr(c.gist || "")}">${escapeHtml(c.gist || "")}</span>
+          <span class="learn-row-arrow">→</span>
+          <span class="learn-row-value">${escapeHtml(c.value || "")}</span>
+          ${reachChip}
+        </div>`;
+      })
+      .join("");
+    rows = `<p class="learn-rows-head">Each correction, and how far it reaches</p><div class="learn-rows">${rowHtml}</div>`;
+  }
+
+  host.innerHTML = `<p class="learn-sentence">${sentence}</p>${stats}${breakdown}${rows}`;
+}
+
 async function loadMemory() {
+  loadLearningDigest();
   const banner = document.getElementById("mem-meta-banner");
   banner.classList.remove("warn", "error");
   banner.textContent = "Loading…";
@@ -1372,6 +1495,7 @@ function renderMemoryCorrections(data) {
       const del = it.id != null
         ? `<button class="mem-del" type="button" data-id="${escapeAttr(String(it.id))}" title="Forget this" aria-label="Forget this correction">×</button>`
         : "";
+      const sig = learnSigChip(it.similar);
       return `<div class="mem-item ${target ? "kind-target" : "kind-intent"}">
         <div class="mem-item-body">
           <span class="mem-kind">${target ? "target → profile" : "intent → block"}</span>
@@ -1379,6 +1503,7 @@ function renderMemoryCorrections(data) {
         </div>
         <span class="mem-arrow">→</span>
         <span class="mem-value">${escapeHtml(it.value || "")}</span>
+        ${sig}
         ${when}
         ${del}
       </div>`;
@@ -1578,6 +1703,8 @@ function renderJournal() {
   list.querySelectorAll("button[data-journal-replay]").forEach((btn) =>
     btn.addEventListener("click", () => replayJournalEntry(btn.dataset.journalReplay, btn))
   );
+  // HS-48-03: wire the one-tap right/wrong ritual on each entry.
+  wireFixit(list);
 }
 
 // ── Replay (HS-45-04): prove it learned ────────────────────────────────
@@ -1669,6 +1796,7 @@ function renderJournalEntry(item) {
   const corrected = item.corrected
     ? `<span class="jr-corrected" title="You corrected this — the copilot learned from it">✓ corrected</span>`
     : "";
+  const learnSig = item.learning && item.learning.matched ? learnSigChip(item.learning.similar) : "";
   const block = item.block_id
     ? `<span class="jr-badge jr-block" title="routed block">${escapeHtml(item.block_id)}${item.confidence != null ? ` · ${Number(item.confidence).toFixed(2)}` : ""}</span>`
     : `<span class="jr-badge jr-block jr-muted">no route</span>`;
@@ -1687,6 +1815,7 @@ function renderJournalEntry(item) {
       ${block}
       ${target}
       ${corrected}
+      ${learnSig}
       <span class="jr-spacer"></span>
       ${when}
       <button class="jr-replay-btn" type="button" data-journal-replay="${escapeAttr(String(item.id))}" title="Re-run this through the current pipeline">
@@ -1716,6 +1845,7 @@ function renderJournalEntry(item) {
     </div>
     ${renderLatencyStrip(item)}
     ${warnings}
+    ${item.corrected ? "" : correctionRitual({ journalId: item.id, block: item.block_id, target: item.target_profile, routed: "", sig: "" })}
     <div class="jr-replay" data-replay-host="${escapeAttr(String(item.id))}" hidden></div>
   </article>`;
 }
@@ -1882,70 +2012,171 @@ function renderMomentOfTruth(data) {
     : target
       ? `target <strong>${escapeHtml(target)}</strong>`
       : "no route matched";
+  const sig = data.learning && data.learning.matched ? learnSigChip(data.learning.similar) : "";
   host.hidden = false;
-  host.dataset.journalId = String(journalId);
-  host.innerHTML = `
-    <div class="moment-head">
+  host.innerHTML = correctionRitual({ journalId, block, target, routed, sig });
+  wireFixit(host);
+}
+
+// ── HS-48-03: the one-tap right/wrong ritual ──────────────────────────────
+// One inline component, reused by the dry-run result and every journal entry,
+// so "that was wrong" is a normal tap instead of a buried form. "Right" is a
+// calm client-only acknowledgement (no write churn). "Wrong" opens the existing
+// correct path pre-scoped — block or target chosen in one tap, the routed value
+// pre-filled as the placeholder. Submit reuses POST /journal/{id}/correct (no
+// new write primitive) and states honest coverage. Focus-safe: panels reveal on
+// click and keyboard focus stays where the user put it (never stolen).
+function correctionRitual(opts) {
+  const { journalId, block, target, routed, sig } = opts;
+  const routedLine = routed ? `<span class="moment-routed">${routed}</span>` : "";
+  const targetScope = target
+    ? `<button type="button" class="fixit-scope" data-fixit-scope="target">Wrong target</button>`
+    : "";
+  return `<div class="fixit" data-journal-id="${escapeAttr(String(journalId))}" data-block="${escapeAttr(block || "")}" data-target="${escapeAttr(target || "")}">
+    <div class="fixit-ask">
       <span class="moment-q">Was that right?</span>
-      <span class="moment-routed">${routed}</span>
+      ${routedLine}
+      ${sig || ""}
       <span class="moment-spacer"></span>
-      <button type="button" class="btn moment-fix-btn" id="moment-fix-open">Fix it →</button>
+      <button type="button" class="btn fixit-yes" data-fixit-yes>Right</button>
+      <button type="button" class="btn moment-fix-btn" data-fixit-no>Fix it →</button>
     </div>
-    <form class="moment-form" id="moment-form" hidden>
-      <p class="moment-hint">Teach the copilot what this <em>should</em> have been — it'll nudge similar dictations next time, and this entry is marked corrected in your Journal.</p>
+    <div class="fixit-scopes" hidden>
+      <span class="fixit-scope-q">What was wrong?</span>
+      <button type="button" class="fixit-scope" data-fixit-scope="intent">Wrong block</button>
+      ${targetScope}
+    </div>
+    <form class="moment-form fixit-form" hidden>
+      <p class="moment-hint">Teach the copilot the right <span data-fixit-kind-label>block</span> — it'll nudge similar dictations next time, and this entry is marked corrected.</p>
       <div class="row">
-        <label>Correct the
-          <select id="moment-kind">
-            <option value="intent">route (block)</option>
-            <option value="target">target (profile)</option>
-          </select>
+        <label>Correct to
+          <input type="text" data-fixit-value placeholder="block id" />
         </label>
-        <label>to
-          <input type="text" id="moment-value" placeholder="${escapeAttr(block || target || "block id / target profile")}" />
-        </label>
+        <div class="actions">
+          <button type="submit" class="btn primary" data-fixit-submit>Teach</button>
+          <button type="button" class="btn" data-fixit-cancel>Cancel</button>
+        </div>
       </div>
-      <div class="actions">
-        <button type="submit" class="btn primary" id="moment-submit">Teach &amp; record</button>
-        <button type="button" class="btn" id="moment-cancel">Cancel</button>
-      </div>
-      <div id="moment-msg"></div>
-    </form>`;
-  // Focus-safe: the form is revealed on click; we never auto-focus an input
-  // (the dictation flow / the dry-run textarea keeps focus until the user acts).
-  document.getElementById("moment-fix-open").addEventListener("click", () => {
-    document.getElementById("moment-form").hidden = false;
-    document.getElementById("moment-fix-open").hidden = true;
+      <div data-fixit-msg></div>
+    </form>
+    <div class="fixit-done moment-done" role="status" hidden></div>
+  </div>`;
+}
+
+function wireFixit(root) {
+  if (!root) return;
+  root.querySelectorAll(".fixit:not([data-wired])").forEach((el) => {
+    el.dataset.wired = "1";
+    el.addEventListener("click", onFixitClick);
+    const form = el.querySelector(".fixit-form");
+    if (form) form.addEventListener("submit", submitMomentFix);
   });
-  document.getElementById("moment-cancel").addEventListener("click", () => {
-    document.getElementById("moment-form").hidden = true;
-    document.getElementById("moment-fix-open").hidden = false;
-  });
-  document.getElementById("moment-form").addEventListener("submit", submitMomentFix);
+}
+
+function onFixitClick(ev) {
+  const root = ev.target.closest(".fixit");
+  if (!root) return;
+  if (ev.target.closest("[data-fixit-yes]")) {
+    showFixitDone(root, "Glad it landed. Nothing to teach.");
+    return;
+  }
+  if (ev.target.closest("[data-fixit-no]")) {
+    // One teachable dimension -> go straight to it; two -> pick in one tap.
+    if (root.dataset.target) {
+      root.querySelector(".fixit-ask").hidden = true;
+      root.querySelector(".fixit-scopes").hidden = false;
+    } else {
+      setFixitScope(root, "intent");
+    }
+    return;
+  }
+  const scope = ev.target.closest("[data-fixit-scope]");
+  if (scope) {
+    setFixitScope(root, scope.dataset.fixitScope);
+    return;
+  }
+  if (ev.target.closest("[data-fixit-cancel]")) {
+    root.querySelector(".fixit-form").hidden = true;
+    root.querySelector(".fixit-scopes").hidden = true;
+    root.querySelector(".fixit-ask").hidden = false;
+  }
+}
+
+function setFixitScope(root, kind) {
+  const isTarget = kind === "target";
+  root.dataset.fixitKind = kind;
+  const label = root.querySelector("[data-fixit-kind-label]");
+  if (label) label.textContent = isTarget ? "target profile" : "block";
+  const input = root.querySelector("[data-fixit-value]");
+  if (input) {
+    input.value = "";
+    input.setAttribute(
+      "placeholder",
+      isTarget ? root.dataset.target || "target profile" : root.dataset.block || "block id",
+    );
+  }
+  root.querySelector(".fixit-ask").hidden = true;
+  root.querySelector(".fixit-scopes").hidden = true;
+  // Focus-safe: the input is revealed but never programmatically focused.
+  root.querySelector(".fixit-form").hidden = false;
+}
+
+function showFixitDone(root, text) {
+  root.querySelector(".fixit-ask").hidden = true;
+  const scopes = root.querySelector(".fixit-scopes");
+  if (scopes) scopes.hidden = true;
+  const form = root.querySelector(".fixit-form");
+  if (form) form.hidden = true;
+  const done = root.querySelector(".fixit-done");
+  done.hidden = false;
+  done.innerHTML = `<span class="moment-check" aria-hidden="true">✓</span><span>${text}</span>`;
+}
+
+// Honest post-correction copy — real coverage, split on the corrections posture,
+// shared by every surface that teaches. Quiet about reach it cannot claim.
+function correctionDoneText(res) {
+  if (!res || !res.taught) {
+    return "Recorded against the Journal entry. (Nothing was taught — the text looked like a secret, so it wasn't stored.)";
+  }
+  const n = Number(res.similar) || 0;
+  let reach = "";
+  if (n > 0) {
+    reach = res.enabled
+      ? ` It now nudges ${n} similar ${plural(n, "dictation")} toward this.`
+      : ` It matches ${n} similar ${plural(n, "dictation")} — turn on corrections to use it.`;
+  } else if (!res.enabled) {
+    reach = " Turn on corrections to use it while routing.";
+  }
+  return `Taught — the Journal entry is marked corrected.${reach}`;
 }
 
 async function submitMomentFix(ev) {
   ev.preventDefault();
-  const host = document.getElementById("dry-moment");
-  const id = host.dataset.journalId;
-  const kind = document.getElementById("moment-kind").value;
-  const value = document.getElementById("moment-value").value.trim();
-  const msg = document.getElementById("moment-msg");
-  msg.innerHTML = "";
+  const root = ev.target.closest(".fixit");
+  if (!root) return;
+  const id = root.dataset.journalId;
+  const kind = root.dataset.fixitKind || "intent";
+  const input = root.querySelector("[data-fixit-value]");
+  const value = input ? input.value.trim() : "";
+  const msg = root.querySelector("[data-fixit-msg]");
+  if (msg) msg.innerHTML = "";
   if (!value) {
-    msg.innerHTML = `<div class="error-box">Enter the correct ${kind === "target" ? "target profile" : "block id"}.</div>`;
+    if (msg)
+      msg.innerHTML = `<div class="error-box">Enter the correct ${kind === "target" ? "target profile" : "block id"}.</div>`;
     return;
   }
   try {
     const res = await api("POST", `/api/dictation/journal/${encodeURIComponent(id)}/correct`, { kind, value });
-    const taught = res && res.taught;
-    host.innerHTML = `<div class="moment-done" role="status">
-      <span class="moment-check" aria-hidden="true">✓</span>
-      <span>${taught
-        ? "Taught — the copilot will nudge similar dictations toward this, and the Journal entry is marked corrected."
-        : "Recorded against the Journal entry. (Nothing was taught — the text looked like a secret, so it wasn't stored.)"}</span>
-    </div>`;
+    showFixitDone(root, correctionDoneText(res));
+    // Reflect it: flag the journal card corrected + refresh the digest hero
+    // (harmless when the Memory tab isn't showing).
+    const card = root.closest(".journal-card");
+    if (card) card.classList.add("is-corrected");
+    try {
+      loadLearningDigest();
+    } catch (_) {}
   } catch (e) {
-    msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
+    if (msg) msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
   }
 }
 
@@ -2431,6 +2662,19 @@ document.getElementById("mem-btn-refresh").addEventListener("click", loadMemory)
 document
   .getElementById("mem-corrections-enabled")
   .addEventListener("change", toggleCorrectionsEnabled);
+// HS-48-01: the learning-digest window toggle.
+function setLearnWindow(win) {
+  const weekBtn = document.getElementById("learn-window-week");
+  const allBtn = document.getElementById("learn-window-all");
+  const isWeek = win === "week";
+  weekBtn.classList.toggle("is-active", isWeek);
+  allBtn.classList.toggle("is-active", !isWeek);
+  weekBtn.setAttribute("aria-selected", String(isWeek));
+  allBtn.setAttribute("aria-selected", String(!isWeek));
+  loadLearningDigest(win);
+}
+document.getElementById("learn-window-week").addEventListener("click", () => setLearnWindow("week"));
+document.getElementById("learn-window-all").addEventListener("click", () => setLearnWindow("all"));
 // Journal (HS-45-02).
 document.getElementById("journal-btn-refresh").addEventListener("click", loadJournal);
 document.getElementById("journal-btn-clear").addEventListener("click", clearJournal);

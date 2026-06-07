@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 48
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-48-01
 - **Owner:** unassigned
 
@@ -28,13 +28,13 @@ that powers the digest (HS-48-01) and the trust signals (HS-48-02) starves.
   and is not required for this story).
 
 ## Acceptance criteria
-- [ ] A one-tap right / wrong affordance sits on the dictation result + journal
+- [x] A one-tap right / wrong affordance sits on the dictation result + journal
       entries; "wrong" opens the correct flow inline (pre-scoped), reusing the
       existing correct endpoint — no new write primitive.
-- [ ] Correcting feels like one decision, not a form; the path still records
+- [x] Correcting feels like one decision, not a form; the path still records
       against the journal entry and teaches the correction store (honoring
       secret-filter + `corrections_enabled`).
-- [ ] Focus-safe (no `.focus()` in the dictation bundle); behavior-preserving;
+- [x] Focus-safe (no `.focus()` in the dictation bundle); behavior-preserving;
       tests assert the affordance + the correct call; `npm run build` ✓; 0 `_built/`
       tracked.
 

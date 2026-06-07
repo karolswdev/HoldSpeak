@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 48
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-48-02, HS-48-03, HS-48-04, HS-48-05
 - **Owner:** unassigned
@@ -34,13 +34,13 @@ is invisible.
   correction ritual (HS-48-03); docs (HS-48-04). This story is the digest itself.
 
 ## Acceptance criteria
-- [ ] An aggregation endpoint returns honest, windowed counts over the journal +
+- [x] An aggregation endpoint returns honest, windowed counts over the journal +
       corrections (corrections made, dictations corrected, by-kind/by-target/by-block
       breakdown, and a real "N similar" count from the existing Jaccard matcher).
-- [ ] A "What HoldSpeak learned" view renders the digest at the Signal bar with a
+- [x] A "What HoldSpeak learned" view renders the digest at the Signal bar with a
       week/all-time toggle; empty state teaches ("make a correction and it shows up
       here"); numbers are accurate, never inflated.
-- [ ] Local-first and read-only: no new writes, `corrections_enabled` posture
+- [x] Local-first and read-only: no new writes, `corrections_enabled` posture
       respected; behavior-preserving; page-content + API tests; `npm run build` ✓;
       0 `_built/` tracked.
 

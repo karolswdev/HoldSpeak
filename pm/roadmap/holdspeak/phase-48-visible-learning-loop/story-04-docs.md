@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 48
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-48-01, HS-48-02, HS-48-03
 - **Owner:** unassigned
 
@@ -26,11 +26,11 @@ phase gets its own dedicated docs story; this is it.
 - **Out:** new feature work (HS-48-01..03). Documentation + framing only.
 
 ## Acceptance criteria
-- [ ] The guide documents the learning loop as one coherent flow, matching the
+- [x] The guide documents the learning loop as one coherent flow, matching the
       shipped UI (digest, inline counts, one-tap correction, replay); no over-claim.
-- [ ] README/index hooks present the loop as a headline local-first differentiator;
+- [x] README/index hooks present the loop as a headline local-first differentiator;
       terms consistent with `DOCS_STYLE.md`.
-- [ ] Doc-drift + dangling-link/image-ref guards green; claims grounded in
+- [x] Doc-drift + dangling-link/image-ref guards green; claims grounded in
       `journal.py` / `corrections.py` / the digest endpoint.
 
 ## Test plan

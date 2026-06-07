@@ -1,14 +1,18 @@
 # Phase 48 — The Visible Learning Loop ("What HoldSpeak learned")
 
-**Status:** PLANNING (0/5). Opened 2026-06-07 on user direction, after Phase 47
+**Status:** CLOSED (5/5). Opened 2026-06-07 on user direction, after Phase 47
 closed (PR #28). The user liked the "what I learned this week" idea from the
 strategic review and asked to make it a real phase, framed as an open-source
 differentiator: *"I do like the 'what I learned this week' ... let's make this
 Open Source thing happen."*
 
-**Last updated:** 2026-06-07 (phase scaffolded. **Read
-[`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.** HS-48-01 — the learning digest — is
-the entry point; everything else builds on the aggregation it adds.)
+**Last updated:** 2026-06-07 (**Phase CLOSED (5/5).** HS-48-05 — closeout —
+**done**: true before/after captured (old raw Memory/Journal vs the new digest +
+inline chips + one-tap ritual, the before built from `5a3c047` then restored), a
+green `scripts/dogfood_learning_loop.py` (dictate -> correct -> digest shows
+`similar_nudged=2`), `final-summary.md` written, full suite 2401/18, 0 `_built/`
+tracked, PR to `main` opened and merged on green CI. See
+[`final-summary.md`](./final-summary.md).)
 
 ## The thesis — why this phase
 
@@ -94,20 +98,29 @@ does.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-48-01 | The learning digest ("What HoldSpeak learned") | backlog | [story-01-learning-digest.md](./story-01-learning-digest.md) | — |
-| HS-48-02 | Inline trust signals ("learned from N similar") | backlog | [story-02-inline-trust-signals.md](./story-02-inline-trust-signals.md) | — |
-| HS-48-03 | Frictionless correction ritual (right/wrong, in flow) | backlog | [story-03-correction-ritual.md](./story-03-correction-ritual.md) | — |
-| HS-48-04 | Docs: the learning loop, end to end | backlog | [story-04-docs.md](./story-04-docs.md) | — |
-| HS-48-05 | Closeout — before/after + dogfood + PR | backlog | [story-05-closeout.md](./story-05-closeout.md) | — |
+| HS-48-01 | The learning digest ("What HoldSpeak learned") | done | [story-01-learning-digest.md](./story-01-learning-digest.md) | [evidence-story-01.md](./evidence-story-01.md) |
+| HS-48-02 | Inline trust signals ("learned from N similar") | done | [story-02-inline-trust-signals.md](./story-02-inline-trust-signals.md) | [evidence-story-02.md](./evidence-story-02.md) |
+| HS-48-03 | Frictionless correction ritual (right/wrong, in flow) | done | [story-03-correction-ritual.md](./story-03-correction-ritual.md) | [evidence-story-03.md](./evidence-story-03.md) |
+| HS-48-04 | Docs: the learning loop, end to end | done | [story-04-docs.md](./story-04-docs.md) | [evidence-story-04.md](./evidence-story-04.md) |
+| HS-48-05 | Closeout — before/after + dogfood + PR | done | [story-05-closeout.md](./story-05-closeout.md) | [evidence-story-05.md](./evidence-story-05.md) |
 
 ## Where we are
 
-Scaffolded right after Phase 47 closed + merged (PR #28). Nothing built yet.
-**Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first** — it has the mission, the mapped
-code seams (journal, corrections, the matcher, the routes, the UI), the rules of the
-road, and per-story success criteria. **HS-48-01** (the digest) is the foundation —
-the trust signals and the ritual present and feed the aggregation it adds. Sequence:
-01 → 02 → 03 → 04 → 05.
+**HS-48-01 (digest), HS-48-02 (inline signals), and HS-48-03 (the ritual) are
+done — the whole visible loop now works.** The aggregation lives in
+`holdspeak/dictation_learning.py`: `reach_for_gist` is the one definition of
+"N similar" and `best_correction_signal` reuses `best_match_in`, so the digest,
+the chips, and the toast all count identically. The digest hero is at the top of
+the Memory tab; the "learned from N similar" chip rides the dry-run result,
+journal entries, and the Memory list; and correcting is one tap (`correctionRitual`
+/ `wireFixit`, reusing `POST /journal/{id}/correct`, focus-safe). Everything is
+quiet at N=0 and honest about `corrections_enabled` + secret-filtering; the
+spoken `say` → Whisper → digest e2e still proves it through real voice. The docs
+(guide §12 + README + index) tell the loop end to end and frame it as the
+local-first differentiator, with an honest limits note. **The phase is CLOSED:**
+before/after captured, `scripts/dogfood_learning_loop.py` green, full suite
+2401/18, `final-summary.md` written, PR to `main` merged on green CI. Sequence:
+01 ✓ → 02 ✓ → 03 ✓ → 04 ✓ → 05 ✓. See [`final-summary.md`](./final-summary.md).
 
 ## Active risks
 

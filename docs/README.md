@@ -24,9 +24,10 @@ intelligent-typing layer. This page is the map. Pick a journey.
   this is what each is and how to set up both.
 - **[The Dictation Copilot](./DICTATION_COPILOT.md)**: see it work. Rough speech
   becomes a project-grounded coding-agent task, with a demo you can reproduce.
-- **[Dictation journal, corrections & replay](./INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay)**:
-  the local-only record of every dictation. Fix a misfire in the moment, then replay
-  it to watch the copilot improve.
+- **[The learning loop: journal, correct, see what it learned, replay](./INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay)**:
+  the local-only loop that gets better at your voice. Fix a misfire in one tap, see
+  the honest "learned from N similar" count in the "What HoldSpeak learned" digest,
+  and replay an utterance to watch the routing change. The proof, not the promise.
 - **[Desktop Presence](./INTELLIGENT_TYPING_GUIDE.md#11-desktop-presence-ambient-on-desktop-status)**:
   an opt-in, native, focus-safe status surface (a macOS HUD, a Linux tray and
   notification) that shows whether it's listening, transcribing, or typing while you

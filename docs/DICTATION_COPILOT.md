@@ -202,6 +202,9 @@ hosted CI) and runs for real wherever your endpoint is reachable.
 
 - [Intelligent Typing Guide](./INTELLIGENT_TYPING_GUIDE.md) — the full setup:
   `.hs/` conventions, target profiles, agent hooks, and every config knob.
+- [The learning loop](./INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay):
+  what feature ② becomes over time. Correct a misfire in one tap, watch the "What
+  HoldSpeak learned" digest count the honest reach, and replay to prove it improved.
 - [Models](./MODELS.md) — choosing and pointing at a model.
 - [Security & Privacy](./SECURITY.md) — what leaves your machine (only the LLM
   endpoint you configure; local or LAN is fine).

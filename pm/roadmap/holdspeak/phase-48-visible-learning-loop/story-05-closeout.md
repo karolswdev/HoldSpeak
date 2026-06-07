@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 48
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-48-01, HS-48-02, HS-48-03, HS-48-04
 - **Owner:** unassigned
 
@@ -25,10 +25,10 @@ correction), captured as before/after, dogfooded end to end, and merged.
 - **Out:** new feature work (HS-48-01..04).
 
 ## Acceptance criteria
-- [ ] Before/after captured (old vs new surfaces) + a green dogfood transcript.
-- [ ] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py`);
+- [x] Before/after captured (old vs new surfaces) + a green dogfood transcript.
+- [x] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py`);
       `npm run build` ✓; 0 `_built/` tracked.
-- [ ] `final-summary.md` written; phase CLOSED; status docs + roadmap updated; PR to
+- [x] `final-summary.md` written; phase CLOSED; status docs + roadmap updated; PR to
       `main` opened (and merged when CI green).
 
 ## Test plan

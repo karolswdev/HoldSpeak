@@ -615,10 +615,17 @@ override-redirect, non-focus overlay window.
 
 ## 12. Dictation journal, corrections & replay
 
-Your meetings get a rich afterlife — a searchable archive, transcripts,
-artifacts. Now your **dictation** does too. The journal turns the daily-driver
-loop from a black box that evaporates the instant it types into something you
-can review, correct, and replay.
+This is the learning loop, and it is the part of HoldSpeak worth showing off: it
+hears rough speech, routes and rewrites it, records the attempt, learns from your
+corrections, shows you what it learned, and lets you replay to prove it improved.
+All of it runs on your machine. The loop has five steps, and the rest of this
+section walks them in order:
+
+1. **Dictate.** Every run is journaled (real dictation and dry-run alike).
+2. **Correct.** One tap on a result says "that was wrong" and teaches the fix.
+3. **Learn.** The correction nudges similar future utterances toward your fix.
+4. **See it.** The "What HoldSpeak learned" digest shows the honest count.
+5. **Replay.** Re-run a past utterance and watch the routing change.
 
 Open it from the **Journal** tab on `/dictation`.
 
@@ -663,41 +670,89 @@ One row per pipeline run — real dictation **and** dry-run, tagged by source:
 Search the timeline by transcript/typed text; filter by source, "only with
 warnings", or "only corrected".
 
-### The moment of truth — fix it in flow, and it teaches
+### Step 2: correct it in one tap
 
-When a dictation lands wrong, the cheapest time to fix it is right then. After a
-**dry-run** (the no-mic path; the same surface appears for real dictation), the
-result panel asks **"Was that right?"** with the routed summary and a **Fix it**
-button. Choose the correct route or target, hit **Teach & record**, and you get
-a **Taught ✓** confirmation.
+When a dictation lands wrong, the cheapest time to fix it is right then. Every
+result carries a quiet **"Was that right?"** with two buttons, **Right** and
+**Fix it**. It sits on the dry-run result (the no-mic path, and the same surface
+for real dictation) and on every journal entry.
 
-![The moment-of-truth fix: a dry-run result with a "Taught ✓" confirmation —
-"the copilot will nudge similar dictations toward this, and the journal entry is
-marked corrected."](assets/journal/moment-of-truth.png)
+- **Right** is a single tap. It just acknowledges the result and writes nothing,
+  so your routing is untouched.
+- **Fix it** opens the correction inline, already scoped to the likely fix. If
+  the run had a target, you pick **Wrong block** or **Wrong target** in one tap;
+  otherwise it goes straight to the block. The value it routed to is pre-filled
+  as the placeholder, so correcting is one decision, not a blank form. Type the
+  right value and press **Teach**.
 
-That one gesture does two things: it **teaches** the copilot (it writes a
-correction — the same kind the [Memory tab](#10-copilot-depth-multi-pass-memory-model-assist-telemetry)
-manages — so similar future utterances are nudged toward your fix), and it
+![The one-tap fix on a journal entry: "Was that right?" with Right and Fix it,
+and the inline "Teach the copilot the right block" form pre-scoped after one
+tap.](assets/screenshots/correction-ritual.png)
+
+That gesture does two things. It **teaches** the copilot (it writes a correction,
+the same kind the [Memory tab](#10-copilot-depth-multi-pass-memory-model-assist-telemetry)
+manages, so similar future utterances are nudged toward your fix), and it
 **marks the journal entry corrected**. The teach is gist-only and
-secret-filtered, exactly like the Memory tab; it never steals keyboard focus.
+secret-filtered, exactly like the Memory tab, and it never takes keyboard focus.
+The confirmation is honest about reach: it tells you how many similar utterances
+the fix now covers, and if corrections are off it says so rather than pretending.
 
-### Replay — prove it learned
+### Steps 3 and 4: see what it learned
+
+Corrections are easy to make and easy to forget. The **Memory** tab opens with
+**"What HoldSpeak learned"**, a digest of the loop over a window you choose (this
+week or all time). It shows how many corrections you made, how many dictations
+you corrected, where they landed (by block and by target), and for each
+correction a real **"learned from N similar"** count.
+
+![The "What HoldSpeak learned" digest: a window toggle, three headline counts
+(corrections made, dictations corrected, utterances nudged), a breakdown by
+block and target, and per-correction "learned from N similar"
+rows.](assets/screenshots/learning-digest-week.png)
+
+The same "learned from N similar" signal rides the places the work happens: the
+dry-run result, each journal entry, and the Memory list. It shows up only when a
+correction actually reaches past utterances, and stays quiet at zero. Nothing
+here is decorative; every count is the real reach of your correction (see the
+limits note below).
+
+![Inline trust signals: journal entries each carry a "learned from N similar"
+chip, while an unrelated utterance carries none.](assets/screenshots/trust-signals-journal.png)
+
+### Step 5: replay, and prove it learned
 
 The promise of a learning copilot only feels real when you can *see* it get
 better. Press **↻ Replay** on any journal entry to re-run that utterance's
-stored transcript through the **current** pipeline — in dry-run mode, so nothing
-is typed and no new journal row is created — and see a **before → after** diff.
+stored transcript through the **current** pipeline, in dry-run mode, so nothing
+is typed and no new journal row is created, and see a **before / after** diff.
 
 ![A replayed utterance: the before → after diff shows the routed target changing
 from terminal_shell to browser after a correction, with "Preview only — nothing
 was typed."](assets/journal/replay-before-after.png)
 
-The satisfying loop: **correct** an utterance → **replay** it → watch the
-routing change to your corrected target. Replay reuses the same dry-run path, so
-it automatically reflects everything the copilot knows *now* (your corrections,
-project context, and config). Re-insert is **preview + copy** — copy the
-improved result and paste it where you want; HoldSpeak never types into your
+The satisfying loop: **correct** an utterance, **replay** it, watch the routing
+change to your corrected target. Replay reuses the same dry-run path, so it
+automatically reflects everything the copilot knows *now* (your corrections,
+project context, and config). Re-insert is **preview plus copy**: copy the
+improved result and paste it where you want. HoldSpeak never types into your
 active app from a background click.
+
+### How the learning works, and its limits
+
+The learning is real, local, and bounded. Be clear-eyed about what it is:
+
+- **It is token overlap, not a model that retrains.** A correction matches a new
+  utterance by Jaccard similarity (the fraction of words they share) above a
+  threshold. The "learned from N similar" count everywhere in the UI is that same
+  measure, run over your journal. There is no hidden training and no embedding
+  model, which is also why the count is honest and easy to reason about.
+- **It is off by default for routing.** A correction is stored the moment you
+  make it, but it only nudges routing once you turn on **Use corrections when
+  routing** (`dictation.corrections_enabled`) in the Memory tab. Until then the UI
+  says a fix *would* nudge N utterances, not that it does.
+- **It is local.** Corrections and the journal live on your machine, gist-only
+  and secret-filtered, like everything else in this loop. A secret-shaped
+  correction teaches nothing, and the confirmation says so.
 
 ## Good First Configuration
 
