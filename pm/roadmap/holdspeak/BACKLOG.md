@@ -22,7 +22,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 
 | # | Candidate | Type | Source | Signal |
 |---|---|---|---|---|
-| A | Meeting aftercare ("close the loop") | feature | review bet #5 | **scaffolded → [phase-49](./phase-49-meeting-aftercare/)** |
+| A | Meeting aftercare ("close the loop") | feature | review bet #5 | **shipped → [phase-49](./phase-49-meeting-aftercare/) (CLOSED 6/6)** |
 | B | Voice macros / command grammar | feature | review bet #2; deferred from P48 | strong |
 | C | Release-readiness gate (schema policy + 1.0) | release | review "Trouble" #5; deferred from P48 | unlock |
 | D | Frontend density paydown (dictation page) | debt | review "Trouble" #4; P48 standing invariant | recurring |
@@ -30,7 +30,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 | F | Local activity as pre-briefing fuel | feature | review bet #6 | exploratory |
 | G | Privacy visible at decision points | feature | review bet #7 | delight |
 
-### A. Meeting aftercare ("close the loop") — scaffolded as Phase 49
+### A. Meeting aftercare ("close the loop") — shipped as Phase 49 (CLOSED 6/6)
 The meeting side has plugins + artifacts; the next value is follow-through, not
 more artifact types. "What changed since last meeting?", "what did we decide?",
 "what is still open for me?", "draft the follow-up", "turn accepted actions into

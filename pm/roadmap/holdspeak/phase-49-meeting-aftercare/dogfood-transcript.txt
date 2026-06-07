@@ -1,0 +1,37 @@
+HS-49-06 dogfood - meeting aftercare, end to end (no mic / no LLM)
+
+1. seeded prior (API design kickoff) + current (API design follow-up)
+
+2. aftercare digest:
+   still open (2): Priya (1), Unassigned (1)
+   decided: ['Use Postgres for the primary store', 'Adopt feature flags for the rollout']
+   since 'API design kickoff': new_decisions=['Adopt feature flags for the rollout'] new_actions=['Wire the rate limiter', 'Pick a service name'] closed=['Stand up the staging cluster']
+
+3. provenance for 'Wire the rate limiter': source 72.0s -> segment #1 ("Priya owns the rate limiter.")
+
+4. accepted 'Wire the rate limiter' -> filed proposal 3543f663 (create_issue -> github, status=proposed)
+   guard: a proposed (un-approved) proposal is refused by the executor (no egress)
+5. approved -> executed via connector: issue #12; audit ['proposed', 'approved', 'executed']
+
+6. follow-up draft (local, preview + copy):
+   | # Follow-up: API design follow-up
+   | 2026-06-05
+   | 
+   | ## What we decided
+   | - Use Postgres for the primary store. Why: Transactions
+   | - Adopt feature flags for the rollout
+   | 
+   | ## Open items
+   | - Priya: Wire the rate limiter (due Friday)
+   | - Unassigned: Pick a service name (due Friday)
+   | 
+   | ## Since API design kickoff
+   | New decisions:
+   | - Adopt feature flags for the rollout
+   | New action items:
+   | - Wire the rate limiter
+   | - Pick a service name
+   | Closed since last time:
+   | - Stand up the staging cluster
+
+PASS: open/decided/changed -> show me the moment -> accept + file -> approve + execute (audited) -> draft the follow-up. Nothing ran without approval; nothing was sent by the draft.

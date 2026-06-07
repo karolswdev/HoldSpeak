@@ -1,17 +1,15 @@
 # Phase 49 — Meeting Aftercare ("close the loop")
 
-**Status:** IN PROGRESS (5/6). Opened 2026-06-07 on user direction, right after
-Phase 48 closed (PR #30). Picked from the [project backlog](../BACKLOG.md)
-candidate A (user-favored): make the meeting side close its own loops instead of
-just displaying artifacts.
+**Status:** CLOSED (6/6). Opened and closed 2026-06-07. Picked from the
+[project backlog](../BACKLOG.md) candidate A (user-favored): make the meeting side
+close its own loops instead of just displaying artifacts.
 
-**Last updated:** 2026-06-07 (HS-49-05 done — docs: the Meeting Mode guide gained
-a "Meeting Aftercare (close the loop)" section telling the flow end to end
-(open/decided/changed -> show me the moment -> file an accepted action -> draft the
-follow-up) with three real shipped-UI screenshots and the honest posture
-(off-by-default actuators, preview-only drafts, real diffs); README + docs index
-frame "close the loop"; the three new endpoints documented. Doc guards 65/2; every
-claim grounded in code. Next: HS-49-06 closeout + PR.)
+**Last updated:** 2026-06-07 (HS-49-06 done — phase CLOSED. Before/after captured
+(artifact-only view vs the aftercare surface), a green end-to-end dogfood
+(`dogfood-transcript.txt`: open/decided/changed -> show me the moment -> accept +
+file -> approve + execute audited -> draft the follow-up), full suite green (2426
+passed, 17 skipped), `npm run build` clean, 0 `_built/` tracked. `final-summary.md`
+written; BACKLOG candidate A flipped to shipped; PR to `main` merged on green.)
 
 ## The thesis — why this phase
 
@@ -102,7 +100,7 @@ acting on the user's behalf without explicit approval.
 | HS-49-03 | Close the loop: accepted actions to issues | done | [story-03-actions-to-issues.md](./story-03-actions-to-issues.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-49-04 | Draft the follow-up (preview + copy) | done | [story-04-followup-draft.md](./story-04-followup-draft.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-49-05 | Docs: meeting aftercare, end to end | done | [story-05-docs.md](./story-05-docs.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-49-06 | Closeout — before/after + dogfood + PR | backlog | [story-06-closeout.md](./story-06-closeout.md) | — |
+| HS-49-06 | Closeout — before/after + dogfood + PR | done | [story-06-closeout.md](./story-06-closeout.md) | [final-summary.md](./final-summary.md) |
 
 ## Where we are
 
@@ -138,18 +136,19 @@ from the HS-49-01 aggregation, served read-only by
 preview + Copy in the panel head. Preview + copy only, never sent, no connector;
 honest at empty (one plain line, no padding); deterministic, no LLM.
 
-HS-49-05 documented it: the Meeting Mode guide now has a "Meeting Aftercare (close
-the loop)" section telling the flow end to end (what's open / decided / changed ->
-show me the moment -> file an accepted action -> draft the follow-up) with three
-real shipped-UI screenshots and an honest posture note (off-by-default actuators,
-preview-only drafts, real diffs/provenance); the README and docs index frame it as
-"close the loop"; the three new endpoints are in the API reference. Doc guards
-green (65/2); every claim grounded in code.
+**The phase is CLOSED (6/6).** The meeting result now closes its own loops: the
+"Your next move" aftercare panel shows what's open (by owner), decided, and
+changed since last time; "show me the moment" jumps to the transcript segment that
+justifies a result; an accepted action files as a human-approved actuator proposal
+through the existing flow (no new write primitive, off by default, audited); and a
+local follow-up draft is preview + copy. HS-49-06 verified the exit: before/after
+captured (`screenshots/story-06-before-artifact-only.png` vs
+`story-06-after-aftercare.png`), a green end-to-end dogfood
+(`dogfood-transcript.txt`), full suite green (2426 passed, 17 skipped), `npm run
+build` clean, 0 `_built/` tracked, [`final-summary.md`](./final-summary.md)
+written, BACKLOG candidate A flipped to shipped, PR to `main` merged on green.
 
-Next: **HS-49-06** (closeout — before/after capture, a green dogfood, full suite
-green, `final-summary.md`, phase CLOSED, one PR to `main` merged on green). The
-[`AGENT-BRIEF.md`](./AGENT-BRIEF.md) has the mission, the mapped code seams, and
-per-story success criteria. Sequence: 01 ✓ -> 02 ✓ -> 03 ✓ -> 04 ✓ -> 05 ✓ -> 06.
+Sequence: 01 ✓ -> 02 ✓ -> 03 ✓ -> 04 ✓ -> 05 ✓ -> 06 ✓.
 
 ## Active risks
 
