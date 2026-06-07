@@ -41,11 +41,50 @@ def _coerce_timestamp(value: object) -> Optional[float]:
     return None
 
 
-def _decisions_for_meeting(db: "Database", meeting_id: str) -> list[dict[str, Any]]:
+def resolve_provenance_segment(
+    segments: list[Any], source_timestamp: object
+) -> Optional[dict[str, Any]]:
+    """Map a real provenance timestamp to the transcript segment that justifies it.
+
+    The seek target for the "show me the moment" jump (HS-49-02). Returns None —
+    no affordance, honest — when the timestamp is missing/non-numeric or there are
+    no segments. Otherwise picks the segment with the greatest `start_time` at or
+    before the timestamp (clamped to the first segment), so a real `0.0` resolves
+    to the opening segment rather than a fake jump.
+
+    `segments` are `TranscriptSegment`s in `start_time` order (as
+    `MeetingState.segments` is loaded).
+    """
+    ts = _coerce_timestamp(source_timestamp)
+    if ts is None or not segments:
+        return None
+    chosen_index = 0
+    chosen = segments[0]
+    for idx, seg in enumerate(segments):
+        if seg.start_time <= ts:
+            chosen_index = idx
+            chosen = seg
+        else:
+            break
+    text = str(getattr(chosen, "text", "") or "")
+    return {
+        "source_timestamp": ts,
+        "segment_index": chosen_index,
+        "segment_start": chosen.start_time,
+        "speaker": getattr(chosen, "speaker", None),
+        "text_preview": text[:120],
+    }
+
+
+def _decisions_for_meeting(
+    db: "Database", meeting_id: str, segments: Optional[list[Any]] = None
+) -> list[dict[str, Any]]:
     """Pull the decisions captured for one meeting from its `decisions` artifact.
 
     Decisions live in the `decisions` artifact's `structured_json` (see
     `plugins/synthesis.py`). Deduped by normalized decision text, first wins.
+    When `segments` is given, a decision carrying a real `source_timestamp` gets
+    a resolved `provenance` jump target; decisions without one stay unlinked.
     """
     seen: set[str] = set()
     out: list[dict[str, Any]] = []
@@ -66,34 +105,43 @@ def _decisions_for_meeting(db: "Database", meeting_id: str) -> list[dict[str, An
                 continue
             seen.add(key)
             rationale = str(entry.get("rationale") or "").strip() or None
+            source_timestamp = _coerce_timestamp(entry.get("source_timestamp"))
             out.append(
                 {
                     "decision": decision,
                     "rationale": rationale,
-                    "source_timestamp": _coerce_timestamp(entry.get("source_timestamp")),
+                    "source_timestamp": source_timestamp,
+                    "provenance": (
+                        resolve_provenance_segment(segments, source_timestamp)
+                        if segments is not None
+                        else None
+                    ),
                 }
             )
     return out
 
 
-def _open_item_payload(item: Any) -> dict[str, Any]:
-    """Serialize one open action item for the aftercare surface."""
+def _open_item_payload(item: Any, segments: Optional[list[Any]] = None) -> dict[str, Any]:
+    """Serialize one open action item (with a resolved provenance jump target)."""
     return {
         "id": item.id,
         "task": item.task,
         "owner": _clean_owner(item.owner),
         "due": item.due,
         "source_timestamp": _coerce_timestamp(item.source_timestamp),
+        "provenance": resolve_provenance_segment(segments or [], item.source_timestamp),
         "meeting_id": item.meeting_id,
     }
 
 
-def _group_open_by_owner(items: list[Any]) -> list[dict[str, Any]]:
+def _group_open_by_owner(
+    items: list[Any], segments: Optional[list[Any]] = None
+) -> list[dict[str, Any]]:
     """Group pending items by owner; named owners A→Z, unassigned last."""
     groups: dict[Optional[str], list[dict[str, Any]]] = {}
     for item in items:
         owner = _clean_owner(item.owner)
-        groups.setdefault(owner, []).append(_open_item_payload(item))
+        groups.setdefault(owner, []).append(_open_item_payload(item, segments))
 
     def sort_key(owner: Optional[str]) -> tuple[int, str]:
         # Unassigned sinks to the bottom; named owners sort case-insensitively.
@@ -138,8 +186,11 @@ def _since_last_meeting(
     previous: Any,
     current_decisions: list[dict[str, Any]],
     current_open_items: list[Any],
+    current_segments: list[Any],
 ) -> dict[str, Any]:
     """Compute the real diff of decisions + action items vs the prior meeting."""
+    # Prior decisions/items are needed only for text comparison, so skip
+    # resolving their (other meeting's) provenance.
     prior_decisions = _decisions_for_meeting(db, previous.id)
     prior_decision_keys = {_norm(d["decision"]) for d in prior_decisions}
 
@@ -154,7 +205,7 @@ def _since_last_meeting(
         d for d in current_decisions if _norm(d["decision"]) not in prior_decision_keys
     ]
     new_actions = [
-        _open_item_payload(item)
+        _open_item_payload(item, current_segments)
         for item in current_open_items
         if _norm(item.task) not in prior_task_keys
     ]
@@ -196,10 +247,11 @@ def compute_meeting_aftercare(
     if meeting is None:
         return None
 
+    segments = meeting.segments or []
     open_items = db.meetings.list_action_items(
         include_completed=False, meeting_id=meeting_id
     )
-    decisions = _decisions_for_meeting(db, meeting_id)
+    decisions = _decisions_for_meeting(db, meeting_id, segments)
 
     previous = _previous_meeting(db, meeting)
     since_last_meeting = (
@@ -208,6 +260,7 @@ def compute_meeting_aftercare(
             previous=previous,
             current_decisions=decisions,
             current_open_items=open_items,
+            current_segments=segments,
         )
         if previous is not None
         else None
@@ -225,7 +278,7 @@ def compute_meeting_aftercare(
         "meeting_date": meeting.started_at.isoformat(),
         "open_items": {
             "total": len(open_items),
-            "by_owner": _group_open_by_owner(open_items),
+            "by_owner": _group_open_by_owner(open_items, segments),
         },
         "decisions": decisions,
         "since_last_meeting": since_last_meeting,

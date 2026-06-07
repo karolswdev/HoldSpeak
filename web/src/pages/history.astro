@@ -649,8 +649,8 @@ import AppLayout from "../layouts/AppLayout.astro";
             <div class="detail-card">
               <h4>Transcript</h4>
               <div class="transcript-list">
-                <template x-for="segment in selectedMeeting?.segments || []" :key="`${segment.start_time}-${segment.end_time}-${segment.text}`">
-                  <div class="segment">
+                <template x-for="(segment, segIndex) in selectedMeeting?.segments || []" :key="`${segment.start_time}-${segment.end_time}-${segment.text}`">
+                  <div class="segment" :id="`seg-${segIndex}`" :class="{ 'segment-flash': highlightedSegmentIndex === segIndex }">
                     <div class="segment-top">
                       <span class="speaker" x-text="segment.speaker"></span>
                       <span class="time" x-text="formatTimestamp(segment.start_time)"></span>
@@ -683,7 +683,16 @@ import AppLayout from "../layouts/AppLayout.astro";
                           <p x-text="item.task"></p>
                           <div class="pill-row">
                             <span class="pill" x-show="item.due" x-cloak x-text="`Due ${item.due}`"></span>
-                            <span class="pill" x-show="item.source_timestamp !== null && item.source_timestamp !== undefined" x-cloak x-text="`Source ${formatTimestamp(item.source_timestamp)}`"></span>
+                            <button
+                              class="moment-btn"
+                              x-show="item.provenance"
+                              x-cloak
+                              @click="jumpToSegment(item.provenance.segment_index)"
+                              :title="`Jump to ${formatTimestamp(item.source_timestamp)} in the transcript`"
+                            >
+                              <span aria-hidden="true">&#9658;</span>
+                              <span x-text="`Show me the moment · ${formatTimestamp(item.source_timestamp)}`"></span>
+                            </button>
                           </div>
                         </div>
                       </template>
@@ -697,6 +706,16 @@ import AppLayout from "../layouts/AppLayout.astro";
                     <div class="aftercare-item">
                       <p x-text="decision.decision"></p>
                       <p class="aftercare-rationale" x-show="decision.rationale" x-cloak x-text="decision.rationale"></p>
+                      <div class="pill-row" x-show="decision.provenance" x-cloak>
+                        <button
+                          class="moment-btn"
+                          @click="jumpToSegment(decision.provenance.segment_index)"
+                          :title="`Jump to ${formatTimestamp(decision.source_timestamp)} in the transcript`"
+                        >
+                          <span aria-hidden="true">&#9658;</span>
+                          <span x-text="`Show me the moment · ${formatTimestamp(decision.source_timestamp)}`"></span>
+                        </button>
+                      </div>
                     </div>
                   </template>
                 </div>
@@ -746,7 +765,16 @@ import AppLayout from "../layouts/AppLayout.astro";
                       <div class="pill-row">
                         <span class="pill" x-show="item.owner" x-cloak x-text="`Owner ${item.owner}`"></span>
                         <span class="pill" x-show="item.due" x-cloak x-text="`Due ${item.due}`"></span>
-                        <span class="pill" x-show="item.source_timestamp !== null && item.source_timestamp !== undefined" x-cloak x-text="`Source ${formatTimestamp(item.source_timestamp)}`"></span>
+                        <button
+                          class="moment-btn"
+                          x-show="hasMoment(item.source_timestamp)"
+                          x-cloak
+                          @click="jumpToMoment(item.source_timestamp)"
+                          :title="`Jump to ${formatTimestamp(item.source_timestamp)} in the transcript`"
+                        >
+                          <span aria-hidden="true">&#9658;</span>
+                          <span x-text="`Show me the moment · ${formatTimestamp(item.source_timestamp)}`"></span>
+                        </button>
                         <span class="status-pill" :class="`review-${reviewStateValue(item.review_state)}`" x-text="reviewStateLabel(item.review_state)"></span>
                       </div>
                       <div class="action-controls" x-show="item.id" x-cloak>
@@ -2589,5 +2617,50 @@ import AppLayout from "../layouts/AppLayout.astro";
     color: var(--success, var(--accent));
     background: var(--success-soft, var(--accent-soft));
     border-color: color-mix(in srgb, var(--success, var(--accent)) 28%, transparent);
+  }
+
+  /* HS-49-02: "show me the moment" — a provenance jump that scrolls the
+     transcript to the segment that justifies a result. Shown only when a real
+     timestamp resolved to a real segment. */
+  .moment-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font: inherit;
+    font-size: 0.72rem;
+    cursor: pointer;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: var(--radius-pill);
+    padding: 0.18rem 0.6rem;
+    transition: background 0.12s ease, border-color 0.12s ease;
+  }
+  .moment-btn:hover {
+    background: color-mix(in srgb, var(--accent) 18%, var(--accent-soft));
+    border-color: var(--accent);
+  }
+  .moment-btn span[aria-hidden] { font-size: 0.6rem; line-height: 1; }
+  .moment-btn:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* The flash the jump leaves on its target segment, so the eye lands on it. */
+  .segment.segment-flash {
+    animation: segment-flash 2.2s ease-out;
+  }
+  @keyframes segment-flash {
+    0% {
+      background: var(--accent-soft);
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+    100% {
+      background: transparent;
+      box-shadow: inset 3px 0 0 transparent;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .segment.segment-flash { animation: none; outline: 1px solid var(--accent); }
   }
 </style>

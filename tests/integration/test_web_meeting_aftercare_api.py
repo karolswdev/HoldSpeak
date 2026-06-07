@@ -22,7 +22,7 @@ from fastapi.testclient import TestClient
 pytestmark = [pytest.mark.requires_meeting]
 
 from holdspeak.db import Database, get_database, reset_database
-from holdspeak.meeting_session import IntelSnapshot, MeetingState
+from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
@@ -40,7 +40,7 @@ def db(temp_db_dir):
     return get_database(temp_db_dir / "test.db")
 
 
-def _action(item_id, task, *, owner=None, status="pending"):
+def _action(item_id, task, *, owner=None, status="pending", source_timestamp=None):
     return {
         "id": item_id,
         "task": task,
@@ -48,7 +48,7 @@ def _action(item_id, task, *, owner=None, status="pending"):
         "due": None,
         "status": status,
         "review_state": "pending",
-        "source_timestamp": None,
+        "source_timestamp": source_timestamp,
         "created_at": datetime(2026, 6, 4, 10, 0, 0).isoformat(),
     }
 
@@ -71,9 +71,15 @@ def seeded(db: Database):
             id="current",
             started_at=datetime(2026, 6, 4, 10, 0, 0),
             title="Follow-up",
+            segments=[
+                TranscriptSegment(text="Let's start", speaker="Me", start_time=0.0, end_time=10.0),
+                TranscriptSegment(text="Wire the API next", speaker="alice", start_time=10.0, end_time=30.0),
+            ],
             intel=IntelSnapshot(
                 timestamp=0.0,
-                action_items=[_action("c1", "Wire the API", owner="alice")],
+                action_items=[
+                    _action("c1", "Wire the API", owner="alice", source_timestamp=15.0)
+                ],
             ),
         )
     )
@@ -117,6 +123,16 @@ def test_aftercare_aggregates_real_data(client, seeded) -> None:
     assert [a["task"] for a in since["new_actions"]] == ["Wire the API"]
     assert [d["decision"] for d in since["new_decisions"]] == ["Adopt feature flags"]
     assert [a["task"] for a in since["closed_actions"]] == ["Set up CI"]
+
+
+@pytest.mark.integration
+def test_aftercare_surfaces_provenance_jump_target(client, seeded) -> None:
+    body = client.get("/api/meetings/current/aftercare").json()
+    item = body["open_items"]["by_owner"][0]["items"][0]
+    assert item["task"] == "Wire the API"
+    # 15.0 falls inside the second segment [10, 30) → seek target index 1.
+    assert item["provenance"]["segment_index"] == 1
+    assert item["provenance"]["segment_start"] == 10.0
 
 
 @pytest.mark.integration

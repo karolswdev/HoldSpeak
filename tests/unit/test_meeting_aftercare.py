@@ -14,8 +14,11 @@ from pathlib import Path
 import pytest
 
 from holdspeak.db import get_database, reset_database
-from holdspeak.meeting_aftercare import compute_meeting_aftercare
-from holdspeak.meeting_session import IntelSnapshot, MeetingState
+from holdspeak.meeting_aftercare import (
+    compute_meeting_aftercare,
+    resolve_provenance_segment,
+)
+from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
 
 
 @pytest.fixture
@@ -41,15 +44,24 @@ def _action(item_id, task, *, owner=None, status="pending", source_timestamp=Non
     }
 
 
-def _seed_meeting(db, meeting_id, *, started_at, title, action_items=None):
+def _seed_meeting(db, meeting_id, *, started_at, title, action_items=None, segments=None):
     db.meetings.save_meeting(
         MeetingState(
             id=meeting_id,
             started_at=started_at,
             title=title,
+            segments=segments or [],
             intel=IntelSnapshot(timestamp=0.0, action_items=action_items or []),
         )
     )
+
+
+def _segments():
+    return [
+        TranscriptSegment(text="Kicking off the design", speaker="Me", start_time=0.0, end_time=10.0),
+        TranscriptSegment(text="We should use Postgres", speaker="Sam", start_time=10.0, end_time=25.0),
+        TranscriptSegment(text="And add a rate limiter", speaker="Priya", start_time=25.0, end_time=40.0),
+    ]
 
 
 def _seed_decisions(db, meeting_id, decisions):
@@ -156,6 +168,64 @@ def test_since_last_meeting_real_diff(db):
     assert [d["decision"] for d in since["new_decisions"]] == ["Adopt feature flags"]
     assert [a["task"] for a in since["new_actions"]] == ["Wire the API"]
     assert [a["task"] for a in since["closed_actions"]] == ["Set up CI"]
+
+
+# --- HS-49-02: transcript provenance (the "show me the moment" seek target) ---
+
+
+def test_resolve_provenance_picks_segment_at_or_before_timestamp():
+    segments = _segments()
+    # 18.0 falls inside the second segment [10, 25).
+    prov = resolve_provenance_segment(segments, 18.0)
+    assert prov["segment_index"] == 1
+    assert prov["segment_start"] == 10.0
+    assert prov["speaker"] == "Sam"
+    assert prov["source_timestamp"] == 18.0
+
+
+def test_resolve_provenance_clamps_and_guards():
+    segments = _segments()
+    # A real 0.0 resolves to the opening segment (not a fake jump).
+    assert resolve_provenance_segment(segments, 0.0)["segment_index"] == 0
+    # Past the last segment start clamps to the last segment.
+    assert resolve_provenance_segment(segments, 999.0)["segment_index"] == 2
+    # No timestamp / no segments → no affordance.
+    assert resolve_provenance_segment(segments, None) is None
+    assert resolve_provenance_segment([], 5.0) is None
+
+
+def test_open_items_carry_provenance_only_when_real(db):
+    _seed_meeting(
+        db,
+        "m1",
+        started_at=datetime(2026, 6, 4, 10, 0, 0),
+        title="Design",
+        segments=_segments(),
+        action_items=[
+            _action("a1", "Wire the rate limiter", owner="Priya", source_timestamp=30.0),
+            _action("a2", "Pick a name"),  # no source_timestamp
+        ],
+    )
+    by_owner = {g["owner"]: g for g in compute_meeting_aftercare(db, "m1")["open_items"]["by_owner"]}
+    priya_item = by_owner["Priya"]["items"][0]
+    assert priya_item["provenance"]["segment_index"] == 2  # 30.0 → third segment
+    unassigned_item = by_owner[None]["items"][0]
+    assert unassigned_item["provenance"] is None
+
+
+def test_decisions_carry_provenance_when_timestamped(db):
+    _seed_meeting(db, "m1", started_at=datetime(2026, 6, 4, 10, 0, 0), title="Design", segments=_segments())
+    _seed_decisions(
+        db,
+        "m1",
+        [
+            {"decision": "Use Postgres", "source_timestamp": 12.0},
+            {"decision": "Ship in Q3"},  # no moment
+        ],
+    )
+    decisions = compute_meeting_aftercare(db, "m1")["decisions"]
+    assert decisions[0]["provenance"]["segment_index"] == 1
+    assert decisions[1]["provenance"] is None
 
 
 def test_no_change_since_last_meeting_is_quiet(db):

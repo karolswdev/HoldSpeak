@@ -23,6 +23,7 @@ function historyApp() {
     selectedMeetingArtifacts: [],
     selectedMeetingProposals: [],
     selectedMeetingAftercare: null,
+    highlightedSegmentIndex: null,
     selectedSpeakerId: "",
     selectedSpeaker: null,
     speakerDraft: { name: "", avatar: "" },
@@ -418,6 +419,46 @@ function historyApp() {
         console.error("Failed to load meeting:", error);
         this.flash(`Meeting detail failed: ${error.message}`, true);
       }
+    },
+
+    // HS-49-02: "show me the moment". Reveal + briefly flash the transcript
+    // segment that justifies a result. Focus-safe — it scrolls the segment into
+    // view but never calls .focus(), so it can't steal keyboard focus from a
+    // live dictation/presence surface sharing the bundle.
+    jumpToSegment(index) {
+      if (index === null || index === undefined || index < 0) return;
+      this.highlightedSegmentIndex = index;
+      this.$nextTick(() => {
+        const el = document.getElementById(`seg-${index}`);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      // Clear the flash so a later jump re-triggers the animation.
+      window.setTimeout(() => {
+        if (this.highlightedSegmentIndex === index) this.highlightedSegmentIndex = null;
+      }, 2200);
+    },
+
+    // Resolve a raw provenance timestamp to its segment client-side (mirrors the
+    // backend resolve_provenance_segment), for surfaces that carry only the raw
+    // source_timestamp (e.g. the intel action-item cards).
+    jumpToMoment(ts) {
+      if (ts === null || ts === undefined) return;
+      const segments = this.selectedMeeting?.segments || [];
+      if (!segments.length) return;
+      let target = 0;
+      for (let i = 0; i < segments.length; i++) {
+        if (segments[i].start_time <= ts) target = i;
+        else break;
+      }
+      this.jumpToSegment(target);
+    },
+
+    hasMoment(ts) {
+      return (
+        ts !== null &&
+        ts !== undefined &&
+        (this.selectedMeeting?.segments || []).length > 0
+      );
     },
 
     // HS-37-03: approve/reject an actuator proposal. Approving only flips DB

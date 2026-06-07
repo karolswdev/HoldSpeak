@@ -1,15 +1,16 @@
 # Phase 49 — Meeting Aftercare ("close the loop")
 
-**Status:** IN PROGRESS (1/6). Opened 2026-06-07 on user direction, right after
+**Status:** IN PROGRESS (2/6). Opened 2026-06-07 on user direction, right after
 Phase 48 closed (PR #30). Picked from the [project backlog](../BACKLOG.md)
 candidate A (user-favored): make the meeting side close its own loops instead of
 just displaying artifacts.
 
-**Last updated:** 2026-06-07 (HS-49-01 done — the aftercare digest: a read-only
-`compute_meeting_aftercare` + `GET /api/meetings/{id}/aftercare` over open items
-(by owner), decisions, and a real since-last-meeting diff, surfaced as a "Your
-next move" panel above the artifacts. Quiet when nothing's open/decided/changed.
-9 new tests + 477-passing sweep; screenshot captured. Next: HS-49-02 provenance.)
+**Last updated:** 2026-06-07 (HS-49-02 done — transcript provenance: a focus-safe
+"show me the moment" jump on open items, decisions, and action-item cards that
+reveals + flashes the justifying segment. Backend `resolve_provenance_segment`
+threads a resolved jump target into the aftercare payload; shown only when a real
+`source_timestamp` resolves to a real segment (no fake 0:00). 5 new tests +
+509-passing sweep; before/after screenshots. Next: HS-49-03 actions-to-issues.)
 
 ## The thesis — why this phase
 
@@ -96,7 +97,7 @@ acting on the user's behalf without explicit approval.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-49-01 | The aftercare digest (open / decided / changed) | done | [story-01-aftercare-digest.md](./story-01-aftercare-digest.md) | [evidence-story-01.md](./evidence-story-01.md) |
-| HS-49-02 | Transcript provenance ("show me the moment") | backlog | [story-02-transcript-provenance.md](./story-02-transcript-provenance.md) | — |
+| HS-49-02 | Transcript provenance ("show me the moment") | done | [story-02-transcript-provenance.md](./story-02-transcript-provenance.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-49-03 | Close the loop: accepted actions to issues | backlog | [story-03-actions-to-issues.md](./story-03-actions-to-issues.md) | — |
 | HS-49-04 | Draft the follow-up (preview + copy) | backlog | [story-04-followup-draft.md](./story-04-followup-draft.md) | — |
 | HS-49-05 | Docs: meeting aftercare, end to end | backlog | [story-05-docs.md](./story-05-docs.md) | — |
@@ -104,21 +105,24 @@ acting on the user's behalf without explicit approval.
 
 ## Where we are
 
-**HS-49-01 is done** — the aftercare digest is built and shipped. The foundation
-the rest of the phase presents: `holdspeak/meeting_aftercare.py`
-(`compute_meeting_aftercare`) aggregates what's open (by owner), what was decided
-(the `decisions` artifact), and a real since-last-meeting diff (new decisions /
-new actions / closed actions vs the chronologically prior meeting). It's served
-read-only by `GET /api/meetings/{id}/aftercare` and surfaced as a "Your next move"
-panel at the top of the meeting-detail side column, above the artifact dump. The
-panel and the diff stay quiet when there's nothing open, decided, or changed
-(`is_empty`). 9 new tests (unit + API), the 477-passing relevant sweep, and a
-screenshot (`screenshots/story-01-aftercare-digest.png`) back it.
+**HS-49-01 + HS-49-02 are done.** The aftercare digest
+(`holdspeak/meeting_aftercare.py` → `compute_meeting_aftercare`, served read-only
+by `GET /api/meetings/{id}/aftercare`) aggregates what's open (by owner), what was
+decided, and a real since-last-meeting diff, surfaced as a "Your next move" panel
+above the artifacts and quiet when there's nothing to act on (`is_empty`).
+HS-49-02 added the trust layer: `resolve_provenance_segment` threads a resolved
+jump target into that payload, and a focus-safe "show me the moment" affordance on
+open items, decisions, and action-item cards reveals + flashes the transcript
+segment that justifies a result — shown only when a real `source_timestamp`
+resolves to a real segment (no fake 0:00). 14 new tests across the two stories;
+the 509-passing relevant sweep; before/after screenshots
+(`screenshots/story-01-*`, `screenshots/story-02-*`).
 
-Next: **HS-49-02** (transcript provenance — the "jump to the moment" affordance
-off the `source_timestamp` the digest already threads through). The
+Next: **HS-49-03** (close the loop — accepted action items become actuator
+*proposals* through the existing propose -> approve -> execute flow; off by
+default, human-approved, audited; no new write primitive). The
 [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) has the mission, the mapped code seams, and
-per-story success criteria. Sequence: 01 ✓ -> 02 -> 03 -> 04 -> 05 -> 06.
+per-story success criteria. Sequence: 01 ✓ -> 02 ✓ -> 03 -> 04 -> 05 -> 06.
 
 ## Active risks
 
