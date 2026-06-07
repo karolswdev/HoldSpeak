@@ -47,10 +47,15 @@ def _command_exists(name: str) -> bool:
 
 
 def _check_runtime() -> DoctorCheck:
+    from .. import __version__
+
     return DoctorCheck(
         name="Runtime",
         status="PASS",
-        detail=f"{platform.system()} {platform.release()} ({platform.machine()}), Python {sys.version.split()[0]}",
+        detail=(
+            f"HoldSpeak {__version__} on {platform.system()} {platform.release()} "
+            f"({platform.machine()}), Python {sys.version.split()[0]}"
+        ),
     )
 
 

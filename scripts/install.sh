@@ -13,8 +13,13 @@ VENV_DIR="$INSTALL_ROOT/venv"
 # Override this to pin a release tag/commit or use a local/package spec.
 # Examples:
 #   HOLDSPEAK_PIP_SPEC="holdspeak[linux]==0.2.0"
-#   HOLDSPEAK_PIP_SPEC="holdspeak[linux] @ git+https://github.com/karolswdev/HoldSpeak.git@main"
+#   HOLDSPEAK_PIP_SPEC="holdspeak[linux] @ git+https://github.com/karolswdev/HoldSpeak.git@v0.2.1"
 HOLDSPEAK_PIP_SPEC="${HOLDSPEAK_PIP_SPEC:-}"
+
+# Git ref to install from when no explicit HOLDSPEAK_PIP_SPEC is given. The
+# default pins a release tag so an install is reproducible. For a development
+# install off the latest commit, set HOLDSPEAK_REF=main.
+HOLDSPEAK_REF="${HOLDSPEAK_REF:-v0.2.1}"
 
 WITH_MEETING=0
 SKIP_SYSTEM_DEPS="${HOLDSPEAK_SKIP_SYSTEM_DEPS:-0}"
@@ -32,6 +37,8 @@ Environment variables:
   HOLDSPEAK_INSTALL_ROOT    Install root (default: ~/.local/share/holdspeak)
   HOLDSPEAK_BIN_DIR         Wrapper bin dir (default: ~/.local/bin)
   HOLDSPEAK_PIP_SPEC        Full pip requirement spec override
+  HOLDSPEAK_REF             Git ref to install (default: a pinned release tag;
+                            set HOLDSPEAK_REF=main for a development install)
   HOLDSPEAK_SKIP_SYSTEM_DEPS=1  Skip apt/brew dependency install
 USAGE
 }
@@ -131,7 +138,7 @@ log "Upgrading pip"
 "$VENV_DIR/bin/python" -m pip install --upgrade pip setuptools wheel
 
 if [[ -z "$HOLDSPEAK_PIP_SPEC" ]]; then
-  SOURCE="git+https://github.com/karolswdev/HoldSpeak.git@main"
+  SOURCE="git+https://github.com/karolswdev/HoldSpeak.git@${HOLDSPEAK_REF}"
   HOLDSPEAK_PIP_SPEC="holdspeak${EXTRAS} @ ${SOURCE}"
 fi
 

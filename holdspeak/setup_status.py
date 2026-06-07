@@ -181,9 +181,12 @@ def build_setup_status(
             log.warning(f"setup_status: milestone read failed ({exc}); treating as first run")
             first_run = True
 
+    from . import __version__
+
     overall = _overall(sections)
     ready = overall == "ready"
     return {
+        "version": __version__,
         "overall": overall,
         "first_run": first_run,
         "primary_action": _primary_action(sections, first_run=first_run, ready=ready),

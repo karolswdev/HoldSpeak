@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 50
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-50-04, HS-50-05, HS-50-06, HS-50-07
 - **Owner:** unassigned
@@ -28,12 +28,15 @@ a tag. A release cannot have an ambiguous version.
   (a maintainer call at close).
 
 ## Acceptance criteria
-- [ ] A single source of truth for the version; `__init__.__version__` and
+- [x] A single source of truth for the version; `__init__.__version__` and
       `pyproject` agree (no mismatch); a drift test enforces it.
-- [ ] The version is surfaced in `doctor` and one API/UI spot.
-- [ ] `scripts/install.sh` installs a pinned tag (documented `@main` fallback);
-      behavior-preserving otherwise.
-- [ ] `npm run build` ✓ (if UI touched); 0 `_built/` tracked.
+      (`holdspeak/__init__.py` `_resolve_version()`,
+      `tests/unit/test_version_ssot.py`)
+- [x] The version is surfaced in `doctor` and one API/UI spot.
+      (doctor runtime check + `/api/setup/status` `version` key)
+- [x] `scripts/install.sh` installs a pinned tag (documented `@main` fallback);
+      behavior-preserving otherwise. (`HOLDSPEAK_REF`, default `v0.2.1`)
+- [x] `npm run build` n/a (no UI bundle touched); 0 `_built/` tracked.
 
 ## Test plan
 - Unit: `holdspeak.__version__` equals the `pyproject`/metadata version;
