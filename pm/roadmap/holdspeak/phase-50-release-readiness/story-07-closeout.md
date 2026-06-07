@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 50
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-50-01, HS-50-02, HS-50-03, HS-50-04, HS-50-05, HS-50-06
 - **Owner:** unassigned
 
@@ -25,11 +25,12 @@ doctor, a verified install), captured as a dogfood, and merged.
   gate is green — note it in the summary).
 
 ## Acceptance criteria
-- [ ] A green dogfood transcript proving fresh / equal / older(+backup) / newer(refused)
-      and an honest doctor schema report.
-- [ ] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py`);
-      `npm run build` ✓; 0 `_built/` tracked.
-- [ ] `final-summary.md` written; phase CLOSED; status docs + roadmap updated;
+- [x] A green dogfood transcript proving fresh / equal / older(+backup) / newer(refused)
+      and an honest doctor schema report. (`dogfood-transcript.txt`,
+      RESULT: PASS)
+- [x] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py` -> 2451
+      passed, 17 skipped); `npm run build` ✓; 0 `_built/` tracked.
+- [x] `final-summary.md` written; phase CLOSED; status docs + roadmap updated;
       BACKLOG candidate C flipped to shipped; PR to `main` opened (and merged on
       green CI).
 

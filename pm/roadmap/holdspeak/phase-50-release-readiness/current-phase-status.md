@@ -1,16 +1,17 @@
 # Phase 50 — Release Readiness ("cut a real 0.x")
 
-**Status:** IN PROGRESS (6/7). Opened 2026-06-07 on user direction, right after
-Phase 49 closed + merged (PR #33). Picked from the [project backlog](../BACKLOG.md)
-candidate C: the bet that actually lets the open-source push ship publicly.
+**Status:** CLOSED (7/7). Opened and closed 2026-06-07 on user direction, right
+after Phase 49 closed + merged (PR #33). Picked from the
+[project backlog](../BACKLOG.md) candidate C: the bet that actually lets the
+open-source push ship publicly.
 
-**Last updated:** 2026-06-07 (HS-50-06 done: docs. New `docs/RELEASING.md` states
-the version/upgrade/backup policy (the four-way schema matrix in plain words,
-`holdspeak backup`/`restore`, what `doctor` reports) and a maintainer release
-checklist. README gained an "Upgrading and your data" subsection; GETTING_STARTED
-gained a backup-before-upgrade pointer. Humanizer voice, no em/en dashes, doc guards
-green, every claim grounded in code. Next: HS-50-07, closeout (dogfood +
-final-summary + PR to main).)
+**Last updated:** 2026-06-07 (HS-50-07 done: closeout. The dogfood proves the
+safety matrix end to end (`dogfood-transcript.txt`, RESULT: PASS): one true
+version, fresh-create, no-op-equal, older -> backup-then-apply with data intact,
+newer -> refused untouched, doctor honest, newer config kept + flagged. Full suite
+green (2451 passed, 17 skipped), `npm run build` clean, 0 `_built/` tracked,
+`final-summary.md` written, BACKLOG candidate C flipped to shipped. Phase CLOSED;
+PR to `main` opened and merged on green CI.)
 
 ## The thesis — why this phase
 
@@ -95,7 +96,7 @@ routing.
 | HS-50-04 | doctor + config honesty | done | [story-04-doctor-config-honesty.md](./story-04-doctor-config-honesty.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-50-05 | Verified clean-machine install + pinned contract | done | [story-05-install-verification.md](./story-05-install-verification.md) | [evidence-story-05.md](./evidence-story-05.md), [install-transcript.txt](./install-transcript.txt) |
 | HS-50-06 | Docs: release + upgrade/backup policy | done | [story-06-docs.md](./story-06-docs.md) | [evidence-story-06.md](./evidence-story-06.md) |
-| HS-50-07 | Closeout — dogfood + final-summary + PR | backlog | [story-07-closeout.md](./story-07-closeout.md) | — |
+| HS-50-07 | Closeout — dogfood + final-summary + PR | done | [story-07-closeout.md](./story-07-closeout.md) | [evidence-story-07.md](./evidence-story-07.md), [final-summary.md](./final-summary.md), [dogfood-transcript.txt](./dogfood-transcript.txt) |
 
 ## Where we are
 
@@ -138,18 +139,18 @@ system-audio source) and doctor degrades honestly. `install.sh` pins a tag via
 `HOLDSPEAK_REF`, verified statically; transcript captured in `install-transcript.txt`.
 
 **HS-50-06 (docs) is done.** `docs/RELEASING.md` is the release + upgrade/backup
-policy: the four-way schema matrix in plain words, the config coercion rule,
-`holdspeak backup` / `restore`, what `doctor` reports, and a maintainer release
-checklist. README gained an "Upgrading and your data" subsection and
-GETTING_STARTED a backup-before-upgrade pointer. Humanizer voice (no em/en dashes),
-doc guards green, every claim grounded in the code shipped in 02 to 05.
+policy plus a maintainer checklist; README and GETTING_STARTED reconciled.
 
-Next: **HS-50-07** (closeout) runs a dogfood proving the safety matrix (fresh
-create, older -> backup-then-apply, newer -> refused untouched, doctor honest),
-confirms the full suite green, writes `final-summary.md`, flips the phase to CLOSED,
-opens the PR to `main`, and flips BACKLOG candidate C to shipped. **Read
-[`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.** Sequence: 01 -> 02 -> 03 -> 04 -> 05
--> 06 -> 07.
+**HS-50-07 (closeout) is done. The phase is CLOSED (7/7).** The dogfood
+(`dogfood-transcript.txt`, RESULT: PASS) proves the safety matrix end to end:
+one true version, fresh-create, no-op-equal, older -> backup-then-apply with the
+data intact, newer -> refused and untouched, doctor honest at each state, and a
+newer config kept + flagged. Full suite green (2451 passed, 17 skipped),
+`npm run build` clean, 0 `_built/` tracked, `final-summary.md` written, BACKLOG
+candidate C flipped to shipped, PR to `main` opened and merged on green CI.
+
+HoldSpeak is now safe to install, upgrade, and trust. The PyPI publish itself is a
+deliberate maintainer step once the gate is green (see `docs/RELEASING.md`).
 
 ## Active risks
 
