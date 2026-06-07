@@ -1,12 +1,19 @@
 # Phase 46 — Documentation Excellence & the 10-Second Hook
 
-**Status:** IN PROGRESS (5/6). Opened 2026-06-06 on user direction ("a dedicated
+**Status:** CLOSED ✅ (6/6). Opened 2026-06-06 on user direction ("a dedicated
 phase that will guide us through scaffolding/updating documentation … the main
 README is too low on cool facts of the app, and slightly too large and
 repetitive. People love the graphics, so that stays … other documentation files
 probably also need a big lift").
 
-**Last updated:** 2026-06-07 (**HS-46-05 — Coverage & discoverability: DONE**. A
+**Last updated:** 2026-06-07 (**Phase 46 CLOSED ✅ (6/6)** — HS-46-06 closeout:
+`final-summary.md` written; before/after captured (README **205 → 157**, index
+list → map, a guide gains a real screenshot + footer); invariants re-asserted
+(all 6 graphics kept; honesty; doc-drift + link + plugin-count + image-ref guards
+8 passed; `npm run build` ✓; 0 `_built/`; docs-only — full suite **2365 passed,
+17 skipped**, after confirming a 2-test Playwright flake passes in isolation); PR
+to `main` opened. Project-KB product/UX legibility handed to **Phase 47**. Prior:
+**HS-46-05 — Coverage & discoverability: DONE**. A
 **feature → doc matrix** in the audit doc maps 16 user-facing capabilities →
 guide home → README hook → index journey: **no orphan features, no orphan docs**.
 Gaps closed: the index now names **actuators**, and the user-reported **"project
@@ -150,9 +157,17 @@ discoverable and represented, the graphics kept, the bloat gone.
 | HS-46-03 | Docs voice & structure system + elevated index | done | [story-03-voice-and-structure.md](./story-03-voice-and-structure.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-46-04 | Visual lift — real screenshots across the guides | done | [story-04-visual-lift.md](./story-04-visual-lift.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-46-05 | Coverage & discoverability (feature → doc matrix) | done | [story-05-coverage-discoverability.md](./story-05-coverage-discoverability.md) | [evidence-story-05.md](./evidence-story-05.md) |
-| HS-46-06 | Closeout — before/after + guards + PR | backlog | [story-06-closeout.md](./story-06-closeout.md) | — |
+| HS-46-06 | Closeout — before/after + guards + PR | done | [story-06-closeout.md](./story-06-closeout.md) | [evidence-story-06.md](./evidence-story-06.md) |
 
 ## Where we are
+
+**Phase CLOSED ✅ (6/6).** Accurate spine, one voice, the real app on screen, proven
+coverage, and a verified closeout: README 205 → 157 with a hook + cool-facts strip
+(every graphic kept), a uniform `## See also` footer (13/13) + a journey-map index,
+real screenshots from a repeatable script, a feature → doc matrix (no orphans), and
+a truth audit pinning the headline facts with guards. **PR to `main` opened.** The
+project-KB *product/UX* legibility lives on in scaffolded **Phase 47**.
+_(Earlier — HS-46-01 → 05:)_
 
 **HS-46-01 → 05 done** — accurate spine, one voice, the real app on screen, *and*
 proven coverage. A feature → doc matrix shows no orphan features or docs; the index
