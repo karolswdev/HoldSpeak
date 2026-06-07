@@ -121,9 +121,12 @@ bar.
 ## Where we are
 
 Scaffolded off the Phase-46 documentation lift, which surfaced (and stumbled on)
-the project-KB overload. Nothing built yet. **HS-47-01** (settle the concept +
-names) is the foundation — every other surface presents the model it decides.
-Sequence: 01 → 02 → (03, 04) → 05 → 06. Phase 46 is still closing (HS-46-06).
+the project-KB overload. Nothing built yet. **Read
+[`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first** — it has the mission, the mapped code
+seams, the rules of the road, and per-story success criteria. **HS-47-01** (settle
+the concept + names) is the foundation — every other surface presents the model it
+decides. Sequence: 01 → 02 → (03, 04) → 05 → 06. Phase 46 is CLOSED + merged
+(PR #25); the docs humanize pass merged too (PR #26).
 
 ## Active risks
 
