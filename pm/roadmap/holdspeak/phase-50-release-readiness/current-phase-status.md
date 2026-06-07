@@ -1,16 +1,16 @@
 # Phase 50 — Release Readiness ("cut a real 0.x")
 
-**Status:** IN PROGRESS (5/7). Opened 2026-06-07 on user direction, right after
+**Status:** IN PROGRESS (6/7). Opened 2026-06-07 on user direction, right after
 Phase 49 closed + merged (PR #33). Picked from the [project backlog](../BACKLOG.md)
 candidate C: the bet that actually lets the open-source push ship publicly.
 
-**Last updated:** 2026-06-07 (HS-50-05 done: verified clean-machine install. Ran the
-documented `uv pip install -e .` in a fresh venv with a clean temp HOME; `holdspeak
-doctor` reaches exit 0 with only the expected optional warnings (no llama.cpp model,
-no system-audio source). Version resolves to 0.2.1 from real install metadata; the
-new Database/Config checks pass. `install.sh` pins a tag via `HOLDSPEAK_REF`,
-verified statically. Transcript captured. Next: HS-50-06, the release + upgrade/backup
-policy docs.)
+**Last updated:** 2026-06-07 (HS-50-06 done: docs. New `docs/RELEASING.md` states
+the version/upgrade/backup policy (the four-way schema matrix in plain words,
+`holdspeak backup`/`restore`, what `doctor` reports) and a maintainer release
+checklist. README gained an "Upgrading and your data" subsection; GETTING_STARTED
+gained a backup-before-upgrade pointer. Humanizer voice, no em/en dashes, doc guards
+green, every claim grounded in code. Next: HS-50-07, closeout (dogfood +
+final-summary + PR to main).)
 
 ## The thesis — why this phase
 
@@ -94,7 +94,7 @@ routing.
 | HS-50-03 | Backup + restore | done | [story-03-backup-restore.md](./story-03-backup-restore.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-50-04 | doctor + config honesty | done | [story-04-doctor-config-honesty.md](./story-04-doctor-config-honesty.md) | [evidence-story-04.md](./evidence-story-04.md) |
 | HS-50-05 | Verified clean-machine install + pinned contract | done | [story-05-install-verification.md](./story-05-install-verification.md) | [evidence-story-05.md](./evidence-story-05.md), [install-transcript.txt](./install-transcript.txt) |
-| HS-50-06 | Docs: release + upgrade/backup policy | backlog | [story-06-docs.md](./story-06-docs.md) | — |
+| HS-50-06 | Docs: release + upgrade/backup policy | done | [story-06-docs.md](./story-06-docs.md) | [evidence-story-06.md](./evidence-story-06.md) |
 | HS-50-07 | Closeout — dogfood + final-summary + PR | backlog | [story-07-closeout.md](./story-07-closeout.md) | — |
 
 ## Where we are
@@ -137,9 +137,17 @@ pass. The two warnings are the expected optional gaps (no llama.cpp model, no
 system-audio source) and doctor degrades honestly. `install.sh` pins a tag via
 `HOLDSPEAK_REF`, verified statically; transcript captured in `install-transcript.txt`.
 
-Next: **HS-50-06** (docs, the dedicated docs story) writes the release +
-upgrade/backup policy doc and a maintainer release checklist, reconciles
-README/GETTING_STARTED, and keeps the doc guards green. **Read
+**HS-50-06 (docs) is done.** `docs/RELEASING.md` is the release + upgrade/backup
+policy: the four-way schema matrix in plain words, the config coercion rule,
+`holdspeak backup` / `restore`, what `doctor` reports, and a maintainer release
+checklist. README gained an "Upgrading and your data" subsection and
+GETTING_STARTED a backup-before-upgrade pointer. Humanizer voice (no em/en dashes),
+doc guards green, every claim grounded in the code shipped in 02 to 05.
+
+Next: **HS-50-07** (closeout) runs a dogfood proving the safety matrix (fresh
+create, older -> backup-then-apply, newer -> refused untouched, doctor honest),
+confirms the full suite green, writes `final-summary.md`, flips the phase to CLOSED,
+opens the PR to `main`, and flips BACKLOG candidate C to shipped. **Read
 [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.** Sequence: 01 -> 02 -> 03 -> 04 -> 05
 -> 06 -> 07.
 
