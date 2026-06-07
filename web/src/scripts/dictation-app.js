@@ -727,7 +727,7 @@ async function createStarterKB(options = {}) {
     kbState.detected = data.detected;
     kbState.kbPath = data.kb_path;
     kbState.rows = Object.entries(data.kb || {}).map(([k, v]) => ({ key: k, value: v ?? "" }));
-    msg.innerHTML = `<div class="ok-box">Created starter project facts.</div>`;
+    msg.innerHTML = youreSetHtml("Created starter project facts. Fill in a value (like stack), add the \"Project facts context\" block in Blocks, then");
     renderKBMeta(data);
     renderKBRows();
     if (state.activeSection === "readiness") loadReadiness();
@@ -897,6 +897,126 @@ function hsLoadExample() {
   const msg = document.getElementById("hs-msg");
   if (msg) {
     msg.innerHTML = `<div class="ok-box">Loaded an example into .hs/instructions.md. Review it, then click Save to create the file.</div>`;
+  }
+}
+
+// ── HS-47-03: guided setup ───────────────────────────────────────────
+// A curated starter set: short templates with fill-in prompts, kept to the
+// files most worth having on day one.
+const STARTER_HS_FILES = {
+  "instructions.md": HS_EXAMPLE_INSTRUCTIONS,
+  "context.md": `# Project context
+
+- What this repo is: <one line>
+- Key entry points and paths: <e.g. the CLI, src/, the web app>
+- Important constraints: <perf budgets, security rules, things to never touch>
+`,
+  "terms.md": `# Project vocabulary
+
+- <ProductName>: what we call the product in writing.
+- <ACRONYM>: what it expands to.
+- Spelling: <e.g. British spelling, "colour" not "color">
+`,
+};
+
+// A copiable, repo-aware prompt the user pastes into their own coding agent
+// (Claude / Codex) to draft the .hs/ files. The drafting happens on the user's
+// machine; HoldSpeak never calls a model here.
+function buildAgentPrompt(project) {
+  const name = (project && project.name) || "this repo";
+  const root = (project && project.root) || ".";
+  return `You are setting up "project context" for HoldSpeak in the repo ${name} (at ${root}).
+
+HoldSpeak is a local dictation tool. When its optional rewrite stage is on, it
+reads the Markdown files in this repo's .hs/ folder and uses them to rewrite my
+spoken dictation so it matches this project's conventions. Your job: read this
+repo and write those .hs/ files. Keep every file short, factual, and specific to
+THIS repo. No boilerplate, no secrets, no invented facts. If you are unsure about
+something, leave a clearly marked TODO instead of guessing.
+
+Create these files under .hs/ (skip any that do not apply):
+
+- instructions.md: how HoldSpeak should rewrite dictation here. Tone, length,
+  what to expand, and what to leave exactly as said.
+- context.md: the architecture, the key paths, and the constraints a new
+  contributor needs to know.
+- terms.md: project vocabulary, acronyms, product names, and preferred spellings.
+- workflows.md: the real test, build, review, and deploy commands.
+- targets.md: per-target style notes (Codex, Claude, terminal, browser, editor,
+  chat) if they should differ.
+
+Worked example for instructions.md:
+
+    # How HoldSpeak should rewrite for this project
+    - Keep dictation terse and imperative; this is a developer's repo.
+    - Expand "the CLI" to its real name (see terms.md).
+    - Never invent file paths or commands; if unsure, leave a TODO.
+
+When you are done, list which files you created with a one-line summary of each,
+so I can review them in HoldSpeak's Project Context tab before they take effect.`;
+}
+
+function renderHsAgentPrompt() {
+  const pre = document.getElementById("hs-agent-prompt");
+  if (pre) pre.textContent = buildAgentPrompt(hsState.detected);
+}
+
+function openHsSetup() {
+  if (!hsState.detected) return;
+  const empty = document.getElementById("hs-empty");
+  if (empty) empty.hidden = true;
+  renderHsAgentPrompt();
+  const setup = document.getElementById("hs-setup");
+  if (setup) {
+    setup.hidden = false;
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setup.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }
+}
+
+function closeHsSetup() {
+  const setup = document.getElementById("hs-setup");
+  if (setup) setup.hidden = true;
+  const empty = document.getElementById("hs-empty");
+  if (empty) empty.hidden = !(hsState.detected && !hsState.contextDirExists);
+}
+
+async function hsCopyAgentPrompt() {
+  const prompt = buildAgentPrompt(hsState.detected);
+  const msg = document.getElementById("hs-setup-msg");
+  try {
+    await navigator.clipboard.writeText(prompt);
+    if (msg) msg.innerHTML = `<div class="ok-box">Prompt copied. Paste it into Claude or Codex, then review the files it writes here.</div>`;
+  } catch (e) {
+    if (msg) msg.innerHTML = `<div class="error-box">Could not copy automatically. Select the prompt text above and copy it manually.</div>`;
+  }
+}
+
+// "You're set" hand-off: a success line that routes into the dry-run.
+function youreSetHtml(prefix) {
+  return `<div class="ok-box">${escapeHtml(prefix)} <button class="kn-linkbtn" type="button" data-section-jump="dry-run">Try a dry-run</button> to see it affect your dictation.</div>`;
+}
+
+async function hsCreateStarterSet() {
+  if (!hsState.detected) return;
+  const names = Object.keys(STARTER_HS_FILES);
+  const ok = await window.holdspeakConfirm({
+    title: "Create a starter context set?",
+    body: `HoldSpeak will create ${names.length} files under .hs/: ${names.join(", ")}. They are templates with fill-in prompts; review and edit each here afterward.`,
+    scopeNote: "Existing .hs/ files with these names are overwritten. Nothing else in the repo is touched.",
+    confirmLabel: "Create files",
+  });
+  if (!ok) return;
+  const msg = document.getElementById("hs-setup-msg");
+  if (msg) msg.innerHTML = "";
+  try {
+    await api("PUT", `/api/dictation/project-hs${projectRootParam("?")}`, { files: STARTER_HS_FILES });
+    await loadHSContext();
+    if (msg) {
+      msg.innerHTML = youreSetHtml("Starter context created under .hs/. Refine each file, turn on the rewrite stage in Runtime, then");
+    }
+  } catch (e) {
+    if (msg) msg.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
   }
 }
 
@@ -2197,6 +2317,17 @@ document.getElementById("kb-btn-delete").addEventListener("click", kbDelete);
 document.getElementById("kb-empty-starter").addEventListener("click", createStarterKB);
 document.getElementById("kb-empty-add").addEventListener("click", kbAdd);
 document.getElementById("hs-empty-example").addEventListener("click", hsLoadExample);
+// HS-47-03: guided setup wiring.
+document.getElementById("hs-empty-setup").addEventListener("click", openHsSetup);
+document.getElementById("hs-setup-close").addEventListener("click", closeHsSetup);
+document.getElementById("hs-setup-starter").addEventListener("click", hsCreateStarterSet);
+document.getElementById("hs-setup-copy-prompt").addEventListener("click", hsCopyAgentPrompt);
+// Delegated jump for "Try a dry-run" / "Project Facts" links rendered into
+// success messages and the guided panel.
+document.addEventListener("click", (ev) => {
+  const jump = ev.target.closest ? ev.target.closest("[data-section-jump]") : null;
+  if (jump) activateSection(jump.dataset.sectionJump);
+});
 document.getElementById("hs-btn-save").addEventListener("click", saveHSContext);
 document.getElementById("hs-btn-reset").addEventListener("click", resetHSContext);
 document.getElementById("hs-suggestion-apply").addEventListener("click", applyProjectDocSuggestion);

@@ -10,6 +10,10 @@ def _page() -> str:
     return (_REPO / "web" / "src" / "pages" / "dictation.astro").read_text()
 
 
+def _app_js() -> str:
+    return (_REPO / "web" / "src" / "scripts" / "dictation-app.js").read_text()
+
+
 def test_dictation_has_cockpit_hero() -> None:
     """A wizard-bar hero (eyebrow + display title + lede) heads the surface."""
     page = _page()
@@ -80,3 +84,35 @@ def test_dictation_surfaces_have_teaching_empty_states() -> None:
     assert "Start with an example" in page
     # the scoped CSS for the toggled DOM is present in this page (the trap guard).
     assert ".kn-empty" in page
+
+
+def test_dictation_context_has_guided_setup_and_agent_prompt() -> None:
+    """HS-47-03: the Context surface offers a guided setup with both a template
+    starter and a copiable, repo-aware coding-agent prompt."""
+    page = _page()
+    assert 'id="hs-setup"' in page
+    assert "Set up project knowledge" in page
+    assert 'id="hs-empty-setup"' in page  # launches the flow from the empty state
+    # the template-starter path.
+    assert 'id="hs-setup-starter"' in page
+    assert "Use a starter set" in page
+    # the coding-agent prompt path.
+    assert 'id="hs-setup-copy-prompt"' in page
+    assert 'id="hs-agent-prompt"' in page
+    assert "Draft with your coding agent" in page
+    # the guided panel's scoped CSS ships with the page (the trap guard).
+    assert ".kn-setup" in page
+    assert ".kn-agent-prompt" in page
+
+
+def test_agent_prompt_is_repo_aware_and_lists_the_hs_files() -> None:
+    """HS-47-03: the copiable prompt names this repo and the .hs/ files to write,
+    and the starter set + prompt builder live in the client bundle."""
+    js = _app_js()
+    assert "function buildAgentPrompt" in js
+    assert "STARTER_HS_FILES" in js
+    # repo-aware: the prompt interpolates the detected project name/root.
+    assert "project.name" in js and "project.root" in js
+    # it tells the agent which .hs/ files to author.
+    for name in ("instructions.md", "context.md", "terms.md", "workflows.md", "targets.md"):
+        assert name in js

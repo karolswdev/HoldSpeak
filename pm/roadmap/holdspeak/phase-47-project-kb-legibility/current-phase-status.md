@@ -1,20 +1,20 @@
 # Phase 47 — Project Knowledge: Legible & Inviting
 
-**Status:** IN PROGRESS (2/6). Opened 2026-06-07 on user direction — while reviewing
+**Status:** IN PROGRESS (3/6). Opened 2026-06-07 on user direction — while reviewing
 the Phase-46 docs, the user said: *"I struggle to understand the 'project KB' …
 and I feel like many users will also struggle. It's not only about documentation,
 but also the UI/UX, and the way to present it."* Confirmed by the doc-fix attempt
 itself getting the concept **wrong** (see the thesis).
 
-**Last updated:** 2026-06-07 (HS-47-02 shipped. Both surfaces now teach: a
-what/why/worked-example **explainer** on each (Facts shows a `{project.kb.stack}`
-substitution; Context shows a rewrite being shaped), plus an inviting **empty
-state** with a one-click starter (Facts → "Use starter facts"; Context → "Start
-with an example", which loads an unsaved example to review and save). Static
-markup toggled by JS to dodge the scoped-CSS trap; screenshot-verified;
-focus-safe (0 `.focus()` in the bundle). Full suite 2367/17. Next: HS-47-03
-(guided setup, which carries the copiable "draft my `.hs/` with your coding
-agent" prompt) + HS-47-04 (discovery nudge).)
+**Last updated:** 2026-06-07 (HS-47-03 shipped. A guided setup panel on the
+Context surface takes a fresh repo to working dictation with no file editing:
+"Use a starter set" (confirm-gated `.hs/` scaffold) and the user-requested
+**copiable, repo-aware "draft my `.hs/` with your coding agent" prompt** (Claude/
+Codex draft on your machine; you review in the tab). A new additive
+`project_facts_context` starter block consumes the `{project.kb.stack}` fact, so
+facts are demonstrable; the dogfood (`scripts/dogfood_project_knowledge.py`)
+proves a fact reaches output with zero hand-editing. Full suite 2370/17. Next:
+HS-47-04 (discovery nudge).)
 
 ## The thesis — why this phase
 
@@ -119,7 +119,7 @@ bar.
 |---|---|---|---|---|
 | HS-47-01 | Concept & naming reconciliation (the model) | done | [story-01-concept-and-naming.md](./story-01-concept-and-naming.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-47-02 | In-app explainer + inviting empty states | done | [story-02-explainer-empty-states.md](./story-02-explainer-empty-states.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-47-03 | Guided setup flow (fresh repo → working) | backlog | [story-03-guided-setup-flow.md](./story-03-guided-setup-flow.md) | — |
+| HS-47-03 | Guided setup flow (fresh repo → working) | done | [story-03-guided-setup-flow.md](./story-03-guided-setup-flow.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-47-04 | Discovery nudge (find it where it helps) | backlog | [story-04-discovery-nudge.md](./story-04-discovery-nudge.md) | — |
 | HS-47-05 | Docs alignment (both mechanisms, correctly) | backlog | [story-05-docs-alignment.md](./story-05-docs-alignment.md) | — |
 | HS-47-06 | Closeout — before/after + dogfood + PR | backlog | [story-06-closeout.md](./story-06-closeout.md) | — |
@@ -135,19 +135,20 @@ optional `project-rewriter` stage). The `/dictation` "Project KB" tab is now
 glossary all name the umbrella and state the relationship. On-disk names and
 pipeline behavior are unchanged; full suite 2365/17, 0 tracked `_built/`.
 
-**HS-47-02 is done.** Both surfaces present the HS-47-01 model: a
-what/why/worked-example explainer (`.kn-explainer`) and a teaching empty state
-(`#kb-empty` / `#hs-empty`) with a one-click starter. The empty states are static
-markup toggled by JS (not `innerHTML`) so their scoped CSS applies, and they are
-screenshot-verified. The Context starter loads an unsaved example for the user to
-review and save, keeping the never-write-without-approval rule.
+**HS-47-03 is done.** The Context surface has a guided setup panel (`#hs-setup`,
+launched from the empty state) with two authoring paths: "Use a starter set"
+(confirm-gated `.hs/` scaffold) and the user-requested copiable, repo-aware
+"draft my `.hs/` with your coding agent" prompt (`buildAgentPrompt`), plus a
+"you're set" hand-off into the dry-run. A new additive `project_facts_context`
+starter block consumes `{project.kb.stack}` so a fact is demonstrable end to end;
+`scripts/dogfood_project_knowledge.py` proves a fresh repo reaches working
+dictation with zero hand-editing (deterministic stub runtime stands in for the
+local model; no mic).
 
-Next is **HS-47-03** (guided setup, fresh repo → working), which carries the added
-user direction: a **copiable "draft my `.hs/` with your coding agent" prompt** so
-users who do not know what good context looks like can have Claude or Codex author
-a tailored starter set (generation stays on their machine; writes stay
-approval-gated). **HS-47-04** (discovery nudge) can run alongside. Sequence:
-01 ✅ → 02 ✅ → (03, 04) → 05 → 06. **Read
+Next is **HS-47-04** (discovery nudge): an ambient, dismissible hint that routes a
+user dictating into a detected-but-unconfigured project toward this guided flow.
+Then HS-47-05 (docs) and HS-47-06 (closeout). Sequence:
+01 ✅ → 02 ✅ → 03 ✅ → 04 → 05 → 06. **Read
 [`AGENT-BRIEF.md`](./AGENT-BRIEF.md)** for the mapped code seams and rules of the
 road. Phase 46 is CLOSED + merged (PR #25); the docs humanize pass merged too
 (PR #26).

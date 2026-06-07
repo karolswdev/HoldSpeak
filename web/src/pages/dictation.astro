@@ -572,9 +572,50 @@ import CommandPreview from "../components/CommandPreview.astro";
         </p>
         <p class="kn-empty-eg"><code>.hs/terms.md</code> → the rewrite uses your product name and spelling</p>
         <div class="kn-empty-actions">
-          <button class="btn primary" id="hs-empty-example" type="button">Start with an example</button>
+          <button class="btn primary" id="hs-empty-setup" type="button">Set up project knowledge</button>
+          <button class="btn" id="hs-empty-example" type="button">Start with an example</button>
         </div>
       </div>
+
+      {/* HS-47-03: guided setup. Static markup toggled by JS so scoped CSS
+          applies. Two authoring paths for context (a template starter you
+          review before it writes, or a copiable prompt for your own coding
+          agent) plus a "you're set" hand-off to the dry-run. */}
+      <section id="hs-setup" class="kn-setup panel" hidden aria-label="Set up project knowledge">
+        <header class="panel-header">
+          <h3>Set up project knowledge</h3>
+          <button class="btn" id="hs-setup-close" type="button">Close</button>
+        </header>
+        <p class="kn-setup-lede">
+          Two parts, both from here, no file editing. <strong>Facts</strong> are
+          exact values: set them in the
+          <button class="kn-linkbtn" type="button" data-section-jump="kb">Project Facts</button>
+          tab. <strong>Context</strong> is guidance the rewrite model reads.
+          Create it one of two ways:
+        </p>
+        <div class="kn-setup-grid">
+          <article class="kn-setup-card">
+            <h4 class="kn-setup-card-title">Use a starter set</h4>
+            <p class="kn-setup-card-text">
+              Create a small, well-formed <code>.hs/</code> set (instructions,
+              context, terms) that you can then edit. You review exactly what will
+              be written first; nothing is saved silently.
+            </p>
+            <button class="btn primary" id="hs-setup-starter" type="button">Create a starter set</button>
+          </article>
+          <article class="kn-setup-card">
+            <h4 class="kn-setup-card-title">Draft with your coding agent</h4>
+            <p class="kn-setup-card-text">
+              Have Claude or Codex read this repo and write the <code>.hs/</code>
+              files for you. Copy the prompt, paste it into your agent, then review
+              the result in this tab. The drafting stays on your machine.
+            </p>
+            <button class="btn" id="hs-setup-copy-prompt" type="button">Copy the agent prompt</button>
+            <pre class="kn-agent-prompt" id="hs-agent-prompt" aria-label="Coding-agent prompt for drafting .hs files">Loading the prompt…</pre>
+          </article>
+        </div>
+        <div id="hs-setup-msg"></div>
+      </section>
       <section class="panel hs-suggestion-panel" id="hs-suggestion-panel" hidden>
         <header class="panel-header">
           <h3>Suggested project doc update</h3>
@@ -1403,6 +1444,79 @@ import CommandPreview from "../components/CommandPreview.astro";
     justify-content: center;
     gap: var(--space-2);
     margin-top: var(--space-2);
+  }
+
+  /* ===== Guided setup (HS-47-03) ===== */
+  .kn-setup[hidden] { display: none; }
+  .kn-setup-lede {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    max-width: 64ch;
+  }
+  .kn-setup-lede strong { color: var(--text); }
+  .kn-linkbtn {
+    appearance: none;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .kn-linkbtn:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+    border-radius: var(--radius-1);
+  }
+  .kn-setup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
+  @media (max-width: 760px) { .kn-setup-grid { grid-template-columns: 1fr; } }
+  .kn-setup-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+  }
+  .kn-setup-card-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--text);
+  }
+  .kn-setup-card-text {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    flex: 1;
+  }
+  .kn-setup-card .btn { align-self: flex-start; }
+  .kn-agent-prompt {
+    margin: var(--space-1) 0 0;
+    max-height: 14rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    padding: var(--space-2) var(--space-3);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-relaxed);
   }
 
   /* Misc small JS-injected helpers */
