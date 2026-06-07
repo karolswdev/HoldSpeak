@@ -1,18 +1,19 @@
 # Phase 47 — Project Knowledge: Legible & Inviting
 
-**Status:** IN PROGRESS (4/6). Opened 2026-06-07 on user direction — while reviewing
+**Status:** IN PROGRESS (5/6). Opened 2026-06-07 on user direction — while reviewing
 the Phase-46 docs, the user said: *"I struggle to understand the 'project KB' …
 and I feel like many users will also struggle. It's not only about documentation,
 but also the UI/UX, and the way to present it."* Confirmed by the doc-fix attempt
 itself getting the concept **wrong** (see the thesis).
 
-**Last updated:** 2026-06-07 (HS-47-04 shipped. An ambient, dismissible,
-focus-safe discovery nudge (`#kn-nudge`) sits above the `/dictation` tabs and
-shows only when a detected project has no knowledge (no facts, no `.hs/`); "Set it
-up" routes into the HS-47-03 guided flow. Dismissal is durable per-project plus a
-global off switch (localStorage); readiness gained an additive `project_context`
-existence signal so the nudge needs no new detection path. Full suite 2372/17.
-Next: HS-47-05 (docs alignment), then HS-47-06 (closeout + PR).)
+**Last updated:** 2026-06-07 (HS-47-05 shipped. The docs now document both halves
+correctly and match the new UI framing: the Intelligent Typing guide's
+"§5. Set Up Project Knowledge" documents Facts (the `project.yaml` KB, a worked
+`stack` example, `kb-enricher`, no LLM) and Context (the `.hs/` files, optional
+`project-rewriter`); the intro callout reframes to "facts + context"; the docs
+index, `DICTATION_COPILOT.md`, `USER_GUIDE.md`, and the `dictation-runtime` web
+doc are reconciled (and the web doc's wrong "KB is an LLM step" claim fixed). Doc
+guards 8/8; full suite 2372/17. Next: HS-47-06 (closeout + PR to `main`).)
 
 ## The thesis — why this phase
 
@@ -119,7 +120,7 @@ bar.
 | HS-47-02 | In-app explainer + inviting empty states | done | [story-02-explainer-empty-states.md](./story-02-explainer-empty-states.md) | [evidence-story-02.md](./evidence-story-02.md) |
 | HS-47-03 | Guided setup flow (fresh repo → working) | done | [story-03-guided-setup-flow.md](./story-03-guided-setup-flow.md) | [evidence-story-03.md](./evidence-story-03.md) |
 | HS-47-04 | Discovery nudge (find it where it helps) | done | [story-04-discovery-nudge.md](./story-04-discovery-nudge.md) | [evidence-story-04.md](./evidence-story-04.md) |
-| HS-47-05 | Docs alignment (both mechanisms, correctly) | backlog | [story-05-docs-alignment.md](./story-05-docs-alignment.md) | — |
+| HS-47-05 | Docs alignment (both mechanisms, correctly) | done | [story-05-docs-alignment.md](./story-05-docs-alignment.md) | [evidence-story-05.md](./evidence-story-05.md) |
 | HS-47-06 | Closeout — before/after + dogfood + PR | backlog | [story-06-closeout.md](./story-06-closeout.md) | — |
 
 ## Where we are
@@ -133,19 +134,18 @@ optional `project-rewriter` stage). The `/dictation` "Project KB" tab is now
 glossary all name the umbrella and state the relationship. On-disk names and
 pipeline behavior are unchanged; full suite 2365/17, 0 tracked `_built/`.
 
-**HS-47-04 is done.** An ambient `#kn-nudge` bar above the `/dictation` tabs shows
-only when a detected project has no knowledge; "Set it up" routes into the
-HS-47-03 guided flow. Focus-safe (zero `.focus()`), dismissible, with durable
-per-project + global dismissal in localStorage. Readiness gained an additive
-`project_context` existence signal so the suppress logic needs no new detection
-path.
+**HS-47-05 is done.** The docs match the product. The Intelligent Typing guide's
+"§5. Set Up Project Knowledge" documents both Facts (the `project.yaml` KB, worked
+example, `kb-enricher`, no LLM) and Context (the `.hs/` files, optional
+`project-rewriter`); the intro callout reframes to "facts + context"; the docs
+index, `DICTATION_COPILOT.md`, `USER_GUIDE.md`, and the `dictation-runtime` web doc
+are reconciled (and the web doc's wrong "KB is an LLM step" claim fixed). Doc
+guards 8/8.
 
-Next is **HS-47-05** (docs alignment): document both mechanisms correctly (Facts =
-`project.yaml`; Context = `.hs/`) in the Intelligent Typing guide and reconcile
-`DICTATION_COPILOT.md` + the README/index, matching the new UI framing (and fix
-the stale "Project KB enrichment" mention in `web/src/pages/docs/dictation-runtime.astro`
-left from HS-47-01). Then HS-47-06 (closeout + PR). Sequence:
-01 ✅ → 02 ✅ → 03 ✅ → 04 ✅ → 05 → 06. **Read
+Next is **HS-47-06** (closeout): before/after captures (old bare tabs vs the new
+explainer + empty states + guided panel + nudge), a green dogfood, full suite
+green, `final-summary.md`, phase CLOSED, and a PR to `main` merged on green.
+Sequence: 01 ✅ → 02 ✅ → 03 ✅ → 04 ✅ → 05 ✅ → 06. **Read
 [`AGENT-BRIEF.md`](./AGENT-BRIEF.md)** for the mapped code seams and rules of the
 road. Phase 46 is CLOSED + merged (PR #25); the docs humanize pass merged too
 (PR #26).

@@ -15,7 +15,7 @@ how to turn it on and run the same demo yourself.
 A real run over the [`ledgerline`](../tests/fixtures/dictation_demo_project/pyproject.toml)
 fixture project (it has [`.hs/` context](../tests/fixtures/dictation_demo_project/.hs/memory.md),
 a [block taxonomy](../tests/fixtures/dictation_demo_project/.holdspeak/blocks.yaml),
-a [project KB](../tests/fixtures/dictation_demo_project/.holdspeak/project.yaml),
+[project facts](../tests/fixtures/dictation_demo_project/.holdspeak/project.yaml) (the `kb:` map),
 and code), driving a homelab `Qwen3.5-9B` over an OpenAI-compatible endpoint —
 **every depth feature firing at once**:
 
@@ -86,7 +86,7 @@ flowchart LR
     C --> D["raw 'spoken' text"]
 
     D --> E["① intent-router<br/>LLM classify<br/>+ correction nudge ②"]
-    E --> F["kb-enricher ④<br/>inject project KB<br/>for the matched block"]
+    E --> F["kb-enricher ④<br/>inject project facts<br/>for the matched block"]
     F --> G["project-rewriter ①<br/>multi-pass draft → critique → refine<br/>uses .hs context + target profile"]
     G --> H["✍️ typed:<br/>project-grounded task"]
     G -.->|optional| I[".hs/* context-<br/>preservation suggestion"]

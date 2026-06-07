@@ -22,21 +22,22 @@ speech -> Whisper transcript -> punctuation cleanup -> dictation pipeline -> typ
 The pipeline can:
 
 - classify an utterance against dictation blocks;
-- inject your **project KB** values and **project context** (see below);
+- inject your **project facts** and **project context** (see below);
 - rewrite rough speech into a cleaner prompt;
 - adapt output for Codex, Claude, terminal, browser, editor, or chat;
 - suggest narrow `.hs/.../*.md` project documentation updates for review.
 
-> **"Project KB" and "project context" are two different things.** Your project KB
-> is a small key-value map (`kb:`) in `<repo>/.holdspeak/project.yaml`. Its keys
-> become `{project.kb.<key>}` placeholders, and the default **`kb-enricher`** stage
-> substitutes them into a block's template (deterministic, no LLM). You edit it on
-> the **Project KB** tab. Project context is the *separate* `.hs/` folder of Markdown
-> files (`instructions`, `context`, `workflows`, `targets`, plus an `ignore` for
-> secrets), and the **optional `project-rewriter`** (LLM) stage uses it to rewrite
-> your speech. You edit it on the **Project Context** tab, and set it up in
-> [§5. Create Project Context](#5-create-project-context). HoldSpeak reads both but
-> never writes them without your approval.
+> **Project knowledge has two parts, and they are different.** *Facts* (the
+> **Project Facts** tab) are a small key-value map (`kb:`) in
+> `<repo>/.holdspeak/project.yaml`. Each key becomes a `{project.kb.<key>}`
+> placeholder that the default **`kb-enricher`** stage stamps into a block's
+> template, verbatim, with no LLM. *Context* (the **Project Context** tab) is the
+> *separate* `.hs/` folder of Markdown files (`instructions`, `context`,
+> `workflows`, `targets`, plus an `ignore` for secrets); the **optional
+> `project-rewriter`** (LLM) stage reads it to rewrite your speech. In short:
+> facts are exact values stamped in; context is guidance a rewrite reads. Set up
+> both in [§5. Set Up Project Knowledge](#5-set-up-project-knowledge). HoldSpeak
+> reads both but never writes them without your approval.
 
 ## 1. Open The Dictation Cockpit
 
@@ -183,15 +184,67 @@ Options:
 
 Use **Reset target to auto** when active-window detection is working again.
 
-## 5. Create Project Context
+## 5. Set Up Project Knowledge
+
+Project knowledge is what HoldSpeak knows about this repo. It has two parts that
+do different jobs: **facts** are exact values stamped in verbatim; **context** is
+background the rewrite model reads. Set up both from the UI. HoldSpeak reads both
+but never writes them without your approval.
+
+### Facts (the Project Facts tab)
+
+A fact is an exact value you reuse a lot: your stack, a deploy command, a ticket
+prefix. Facts live in the `kb:` map of `<repo>/.holdspeak/project.yaml`. Each key
+becomes a `{project.kb.<key>}` placeholder that the default **`kb-enricher`** stage
+stamps into a matched block's template, verbatim, with no model involved (facts
+are on the default pipeline).
 
 Open:
+
+```text
+/dictation -> Project Facts
+```
+
+Click **Use starter facts**, fill in the values you care about, and Save. A fact:
+
+```yaml
+# <repo>/.holdspeak/project.yaml
+kb:
+  stack: Rails 7 + Postgres 16
+```
+
+referenced by a block template:
+
+```text
+Follow our stack: {project.kb.stack}
+```
+
+comes out as exact text:
+
+```text
+Follow our stack: Rails 7 + Postgres 16
+```
+
+The **Project facts context** starter block (Blocks -> Starter templates) already
+references `{project.kb.stack}`, so once you set the `stack` fact a dry-run shows
+it stamped. Keys must match `[A-Za-z_][A-Za-z0-9_]*`; values are strings (or empty
+for null).
+
+### Context (the Project Context tab)
+
+Context is prose, not values: background the **optional `project-rewriter`** (LLM)
+stage reads so it phrases dictation the way this project expects. It only takes
+effect when you enable the rewrite stage (Runtime). Open:
 
 ```text
 /dictation -> Project Context
 ```
 
-Create a small `.hs/` directory in your repo:
+The fastest start is the **Set up project knowledge** panel on that tab: "Use a
+starter set" scaffolds the files below (you review before they write), or "Draft
+with your coding agent" gives you a copiable prompt so Claude or Codex writes the
+`.hs/` files for this repo, which you then review in the tab. To do it by hand,
+create a small `.hs/` directory in your repo:
 
 ```text
 .hs/
@@ -680,8 +733,8 @@ holdspeak dictation dry-run "ask codex to summarize what changed and suggest a n
 ```
 
 > **Optional: add `project-rewriter` stage.** The default stage list
-> (`intent-router`, `kb-enricher`) classifies your utterance and injects
-> project KB context without invoking the LLM for rewriting. Add
+> (`intent-router`, `kb-enricher`) classifies your utterance and stamps in your
+> project facts without invoking the LLM for rewriting. Add
 > `"project-rewriter"` to the `stages` array to also ask the runtime to rewrite
 > rough speech using `.hs/` context before enrichment. This adds one extra LLM
 > round-trip; only enable it when an OpenAI-compatible runtime is configured and

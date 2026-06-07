@@ -17,7 +17,11 @@ intelligent-typing layer. This page is the map. Pick a journey.
 - **[User Guide](./USER_GUIDE.md)**: the day-to-day. Workflows, the web runtime, and
   how the two halves (typing and meetings) fit together.
 - **[Intelligent Typing Setup](./INTELLIGENT_TYPING_GUIDE.md)**: the project-aware
-  pipeline. Intent routing, project-KB enrichment, target profiles, LLM rewriting.
+  pipeline. Intent routing, project-facts enrichment, target profiles, LLM rewriting.
+- **[Project knowledge: facts + context](./INTELLIGENT_TYPING_GUIDE.md#5-set-up-project-knowledge)**:
+  teach the copilot about a repo. Facts (the `project.yaml` KB, stamped in verbatim)
+  and context (the `.hs/` files an optional rewrite reads) are two different things;
+  this is what each is and how to set up both.
 - **[The Dictation Copilot](./DICTATION_COPILOT.md)**: see it work. Rough speech
   becomes a project-grounded coding-agent task, with a demo you can reproduce.
 - **[Dictation journal, corrections & replay](./INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay)**:

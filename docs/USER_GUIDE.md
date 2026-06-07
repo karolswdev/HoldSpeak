@@ -24,7 +24,8 @@ Use these guides depending on what you are setting up:
 | --- | --- | --- |
 | Voice typing | Hold a hotkey, speak, release, insert text | Any text field, editor, terminal, browser |
 | Dictation pipeline | Routes and rewrites dictated text with local rules and optional LLM stages | `/dictation`, `holdspeak dictation ...` |
-| Project context | Keeps repo-local `.hs/` files that guide intelligent rewrites | `/dictation` -> Project Context |
+| Project facts | Keeps a `kb:` map in `.holdspeak/project.yaml`; exact values stamped into dictation verbatim, no LLM | `/dictation` -> Project Facts |
+| Project context | Keeps repo-local `.hs/` files that guide intelligent rewrites (optional LLM stage) | `/dictation` -> Project Context |
 | Agent hooks | Lets Claude Code and Codex report current cwd/session state to HoldSpeak | `/dictation` -> Agent Hooks |
 | Meeting mode | Captures microphone plus optional system audio | Dashboard, `holdspeak meeting` command |
 | Meeting intelligence | Produces transcript, topics, summaries, actions, artifacts | Dashboard and `/history` |
