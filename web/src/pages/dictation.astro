@@ -294,6 +294,23 @@ import CommandPreview from "../components/CommandPreview.astro";
         and how <strong>deep</strong> it's running this session. Curate the
         memory here; tune the knobs in <strong>Runtime → Copilot depth</strong>.
       </p>
+      <!-- HS-48-01: the "What HoldSpeak learned" digest hero. Reads as a
+           reward at the top of the tab; the cards inside #learn-digest are
+           rendered by dictation-app.js, so their CSS lives in <style is:global>. -->
+      <section class="learn-hero" aria-labelledby="learn-hero-title">
+        <header class="learn-hero-head">
+          <div>
+            <p class="learn-eyebrow">The learning loop</p>
+            <h3 id="learn-hero-title">What HoldSpeak learned</h3>
+          </div>
+          <div class="learn-window" role="tablist" aria-label="Digest window">
+            <button id="learn-window-week" class="learn-window-btn is-active" type="button" role="tab" aria-selected="true">This week</button>
+            <button id="learn-window-all" class="learn-window-btn" type="button" role="tab" aria-selected="false">All time</button>
+          </div>
+        </header>
+        <div id="learn-digest" class="learn-digest">Loading…</div>
+      </section>
+
       <div id="mem-meta-banner" class="meta-banner">Loading…</div>
       <div class="grid">
         <!-- ===== What the copilot has learned ===== -->
@@ -2040,6 +2057,192 @@ import CommandPreview from "../components/CommandPreview.astro";
      present in the .astro template (which carry the data-astro-cid attr),
      never runtime-injected DOM. -->
 <style is:global>
+  /* === HS-48-01: the "What HoldSpeak learned" digest ================ */
+  /* The hero shell is static markup; the digest body (#learn-digest) is
+     rendered at runtime by dictation-app.js, so every rule here is global. */
+  .learn-hero {
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-3);
+    background:
+      radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 60%),
+      var(--surface-1);
+    box-shadow: var(--elev-1);
+    padding: var(--space-4) var(--space-5);
+    margin-bottom: var(--space-4);
+  }
+  .learn-hero-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-3);
+  }
+  .learn-eyebrow {
+    margin: 0 0 2px;
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .learn-hero h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--font-size-xl);
+    color: var(--text);
+  }
+  .learn-window {
+    display: inline-flex;
+    padding: 2px;
+    gap: 2px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+  }
+  .learn-window-btn {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
+  }
+  .learn-window-btn:hover { color: var(--text); }
+  .learn-window-btn.is-active {
+    background: var(--accent);
+    color: var(--text-on-accent);
+    font-weight: 600;
+  }
+
+  .learn-digest { min-height: 2.5rem; }
+
+  /* The headline sentence — the honest one-liner. */
+  .learn-sentence {
+    margin: 0 0 var(--space-4);
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-relaxed);
+    color: var(--text);
+  }
+  .learn-sentence .learn-reach-off { color: var(--text-muted); }
+
+  /* Three headline numbers. */
+  .learn-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+  .learn-stat {
+    text-align: center;
+    padding: var(--space-3) var(--space-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-2);
+    background: var(--surface-2);
+  }
+  .learn-stat-num {
+    font-family: var(--font-display);
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.1;
+  }
+  .learn-stat.is-reach .learn-stat-num { color: var(--accent); }
+  .learn-stat-label {
+    margin-top: 2px;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* Breakdown chips — where the learning landed. */
+  .learn-breakdown { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-4); }
+  .learn-break-row { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+  .learn-break-label {
+    flex: none;
+    min-width: 6.5rem;
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+  }
+  .learn-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+    border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--border-subtle));
+    color: var(--text);
+    font-size: var(--font-size-sm);
+  }
+  .learn-chip-count { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+  /* Per-correction reach rows. */
+  .learn-rows-head {
+    margin: 0 0 var(--space-2);
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+  }
+  .learn-rows { display: flex; flex-direction: column; gap: var(--space-2); }
+  .learn-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-2);
+    background: var(--surface-1);
+  }
+  .learn-row-kind {
+    flex: none;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .learn-row-gist {
+    flex: 1 1 12rem;
+    min-width: 0;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .learn-row-arrow { color: var(--text-muted); flex: none; }
+  .learn-row-value { flex: none; color: var(--accent); font-weight: 600; }
+  .learn-reach-chip {
+    flex: none;
+    margin-left: auto;
+    padding: 1px var(--space-2);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--success) 14%, var(--surface-2));
+    border: 1px solid color-mix(in srgb, var(--success) 30%, var(--border-subtle));
+    color: var(--text);
+    font-size: var(--font-size-xs);
+  }
+
+  .learn-empty {
+    text-align: center;
+    padding: var(--space-5) var(--space-3);
+  }
+  .learn-empty-glyph { color: var(--accent); opacity: 0.6; margin-bottom: var(--space-2); }
+  .learn-empty-head {
+    margin: 0 0 var(--space-1);
+    font-family: var(--font-display);
+    font-size: var(--font-size-lg);
+    color: var(--text);
+  }
+  .learn-empty-sub { margin: 0 auto; max-width: 46ch; color: var(--text-muted); }
+
+  @media (max-width: 560px) {
+    .learn-stats { grid-template-columns: 1fr; }
+  }
+
   /* === HS-45-02: the dictation journal ============================== */
   /* The local-only trust statement — the privacy posture is first-class,
      not a footnote (the TrustChip idiom, expanded to a note). */

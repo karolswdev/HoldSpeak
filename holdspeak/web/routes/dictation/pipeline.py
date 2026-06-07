@@ -312,6 +312,43 @@ def build_pipeline_router(
             }
         )
 
+    @router.get("/api/dictation/learning-digest")
+    async def api_dictation_learning_digest(window: str = "week") -> Any:
+        """HS-48-01: a read-only "What HoldSpeak learned" aggregation.
+
+        Reads the correction memory + the journal and returns honest, windowed
+        counts: corrections made, dictations corrected, the by-kind / by-block /
+        by-target breakdown, and a real "learned from N similar" per correction.
+        The "N similar" is the same Jaccard matcher that nudges routing, so the
+        reported reach is exactly what the live pipeline would nudge. No writes.
+        """
+        from ....config import Config
+        from ....dictation_learning import build_learning_digest
+
+        cfg = Config.load().dictation
+        store = ctx.corrections
+        corrections = store.list_for_display() if store is not None else []
+        repo = _journal_repo()
+        journal_rows = (
+            [
+                {
+                    "transcript": r.transcript,
+                    "created_at": r.created_at,
+                    "corrected": r.corrected,
+                }
+                for r in repo.recent()
+            ]
+            if repo is not None
+            else []
+        )
+        digest = build_learning_digest(
+            corrections=corrections,
+            journal_rows=journal_rows,
+            window=window,
+            enabled=bool(getattr(cfg.pipeline, "corrections_enabled", False)),
+        )
+        return JSONResponse(digest)
+
     @router.post("/api/dictation/corrections")
     async def api_dictation_corrections_record(payload: dict[str, Any]) -> Any:
         from ....plugins.dictation.corrections import CORRECTION_KINDS

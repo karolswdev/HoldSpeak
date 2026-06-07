@@ -1326,7 +1326,119 @@ async function enablePipelineFromReadiness() {
 }
 
 // ── Memory + telemetry (HS-40-04) ───────────────────────────────────
+// HS-48-01: the "What HoldSpeak learned" digest. Read-only; every number is
+// real and comes from the same Jaccard matcher that nudges routing.
+let learnWindow = "week";
+
+function plural(n, word) {
+  return Number(n) === 1 ? word : `${word}s`;
+}
+
+async function loadLearningDigest(win) {
+  const host = document.getElementById("learn-digest");
+  if (!host) return;
+  if (win) learnWindow = win;
+  host.textContent = "Loading…";
+  try {
+    const data = await api("GET", `/api/dictation/learning-digest?window=${encodeURIComponent(learnWindow)}`);
+    renderLearningDigest(data);
+  } catch (e) {
+    host.innerHTML = `<div class="learn-empty"><p class="learn-empty-sub">${escapeHtml(e.message)}</p></div>`;
+  }
+}
+
+function renderLearningDigest(data) {
+  const host = document.getElementById("learn-digest");
+  if (!host) return;
+  const t = (data && data.totals) || {};
+  const made = Number(t.corrections_made) || 0;
+  const corrected = Number(t.dictations_corrected) || 0;
+  const nudged = Number(t.similar_nudged) || 0;
+  const windowLabel = data.window === "all" ? "all time" : "this week";
+
+  // Stay quiet when there is nothing real to show (no invented learning).
+  if (!made && !corrected) {
+    host.innerHTML = `<div class="learn-empty">
+      <div class="learn-empty-glyph">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>
+          <circle cx="12" cy="12" r="3.2"/>
+        </svg>
+      </div>
+      <p class="learn-empty-head">Nothing learned ${data.window === "all" ? "yet" : "this week"}.</p>
+      <p class="learn-empty-sub">Correct a dictation and it shows up here, with how many similar utterances in your journal it now nudges. The Journal tab has a one-tap fix on every entry.</p>
+    </div>`;
+    return;
+  }
+
+  // The honest one-liner. "Now nudged" only when corrections actually route.
+  let reach = "";
+  if (nudged > 0) {
+    const isAre = nudged === 1 ? "is" : "are";
+    reach = data.enabled
+      ? ` <span class="learn-reach-on">${nudged} similar ${plural(nudged, "utterance")} in your journal ${isAre} now nudged toward your fixes.</span>`
+      : ` <span class="learn-reach-off">${nudged} similar ${plural(nudged, "utterance")} would be nudged once you turn corrections on.</span>`;
+  }
+  const sentence = `You made <strong>${made}</strong> ${plural(made, "correction")} and corrected <strong>${corrected}</strong> ${plural(corrected, "dictation")} ${windowLabel}.${reach}`;
+
+  const stats = `
+    <div class="learn-stats">
+      <div class="learn-stat"><div class="learn-stat-num">${made}</div><div class="learn-stat-label">corrections made</div></div>
+      <div class="learn-stat"><div class="learn-stat-num">${corrected}</div><div class="learn-stat-label">dictations corrected</div></div>
+      <div class="learn-stat is-reach"><div class="learn-stat-num">${nudged}</div><div class="learn-stat-label">utterances nudged</div></div>
+    </div>`;
+
+  const blocks = Array.isArray(data.by_block) ? data.by_block : [];
+  const targets = Array.isArray(data.by_target) ? data.by_target : [];
+  const chip = (name, count) =>
+    `<span class="learn-chip">${escapeHtml(name)}<span class="learn-chip-count">×${count}</span></span>`;
+  const breakdownRows = [];
+  if (blocks.length) {
+    breakdownRows.push(
+      `<div class="learn-break-row"><span class="learn-break-label">Routed to block</span>${blocks
+        .map((b) => chip(b.block_id, b.count))
+        .join("")}</div>`
+    );
+  }
+  if (targets.length) {
+    breakdownRows.push(
+      `<div class="learn-break-row"><span class="learn-break-label">Target profile</span>${targets
+        .map((b) => chip(b.target_profile, b.count))
+        .join("")}</div>`
+    );
+  }
+  const breakdown = breakdownRows.length
+    ? `<div class="learn-breakdown">${breakdownRows.join("")}</div>`
+    : "";
+
+  const corrections = Array.isArray(data.corrections) ? data.corrections : [];
+  let rows = "";
+  if (corrections.length) {
+    const rowHtml = corrections
+      .map((c) => {
+        const target = c.kind === "target";
+        // Stay quiet at N=0: no reach chip when nothing is within reach yet.
+        const reachChip =
+          Number(c.similar) > 0
+            ? `<span class="learn-reach-chip">learned from ${c.similar} similar</span>`
+            : "";
+        return `<div class="learn-row">
+          <span class="learn-row-kind">${target ? "target" : "intent"}</span>
+          <span class="learn-row-gist" title="${escapeAttr(c.gist || "")}">${escapeHtml(c.gist || "")}</span>
+          <span class="learn-row-arrow">→</span>
+          <span class="learn-row-value">${escapeHtml(c.value || "")}</span>
+          ${reachChip}
+        </div>`;
+      })
+      .join("");
+    rows = `<p class="learn-rows-head">Each correction, and how far it reaches</p><div class="learn-rows">${rowHtml}</div>`;
+  }
+
+  host.innerHTML = `<p class="learn-sentence">${sentence}</p>${stats}${breakdown}${rows}`;
+}
+
 async function loadMemory() {
+  loadLearningDigest();
   const banner = document.getElementById("mem-meta-banner");
   banner.classList.remove("warn", "error");
   banner.textContent = "Loading…";
@@ -2431,6 +2543,19 @@ document.getElementById("mem-btn-refresh").addEventListener("click", loadMemory)
 document
   .getElementById("mem-corrections-enabled")
   .addEventListener("change", toggleCorrectionsEnabled);
+// HS-48-01: the learning-digest window toggle.
+function setLearnWindow(win) {
+  const weekBtn = document.getElementById("learn-window-week");
+  const allBtn = document.getElementById("learn-window-all");
+  const isWeek = win === "week";
+  weekBtn.classList.toggle("is-active", isWeek);
+  allBtn.classList.toggle("is-active", !isWeek);
+  weekBtn.setAttribute("aria-selected", String(isWeek));
+  allBtn.setAttribute("aria-selected", String(!isWeek));
+  loadLearningDigest(win);
+}
+document.getElementById("learn-window-week").addEventListener("click", () => setLearnWindow("week"));
+document.getElementById("learn-window-all").addEventListener("click", () => setLearnWindow("all"));
 // Journal (HS-45-02).
 document.getElementById("journal-btn-refresh").addEventListener("click", loadJournal);
 document.getElementById("journal-btn-clear").addEventListener("click", clearJournal);

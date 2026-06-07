@@ -1,14 +1,20 @@
 # Phase 48 — The Visible Learning Loop ("What HoldSpeak learned")
 
-**Status:** PLANNING (0/5). Opened 2026-06-07 on user direction, after Phase 47
+**Status:** IN PROGRESS (1/5). Opened 2026-06-07 on user direction, after Phase 47
 closed (PR #28). The user liked the "what I learned this week" idea from the
 strategic review and asked to make it a real phase, framed as an open-source
 differentiator: *"I do like the 'what I learned this week' ... let's make this
 Open Source thing happen."*
 
-**Last updated:** 2026-06-07 (phase scaffolded. **Read
-[`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.** HS-48-01 — the learning digest — is
-the entry point; everything else builds on the aggregation it adds.)
+**Last updated:** 2026-06-07 (HS-48-01 — the learning digest — **done**. A
+read-only `GET /api/dictation/learning-digest?window=week|all` aggregates the
+journal + corrections into honest, windowed counts, with a real "N similar" per
+correction from the same Jaccard matcher that nudges routing. A Signal-styled
+"What HoldSpeak learned" hero on the Memory tab renders it (week/all toggle,
+stat cards, breakdown chips, per-correction reach, teaching empty state).
+Proven through real voice end to end: a `say` → Whisper → dry-run → correct →
+digest e2e (`tests/e2e/test_dictation_learning_digest_spoken_e2e.py`, opt-in).
+Full suite 2385/18; 0 `_built/` tracked. Next: HS-48-02 inline trust signals.)
 
 ## The thesis — why this phase
 
@@ -94,7 +100,7 @@ does.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-48-01 | The learning digest ("What HoldSpeak learned") | backlog | [story-01-learning-digest.md](./story-01-learning-digest.md) | — |
+| HS-48-01 | The learning digest ("What HoldSpeak learned") | done | [story-01-learning-digest.md](./story-01-learning-digest.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-48-02 | Inline trust signals ("learned from N similar") | backlog | [story-02-inline-trust-signals.md](./story-02-inline-trust-signals.md) | — |
 | HS-48-03 | Frictionless correction ritual (right/wrong, in flow) | backlog | [story-03-correction-ritual.md](./story-03-correction-ritual.md) | — |
 | HS-48-04 | Docs: the learning loop, end to end | backlog | [story-04-docs.md](./story-04-docs.md) | — |
@@ -102,12 +108,15 @@ does.
 
 ## Where we are
 
-Scaffolded right after Phase 47 closed + merged (PR #28). Nothing built yet.
-**Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first** — it has the mission, the mapped
-code seams (journal, corrections, the matcher, the routes, the UI), the rules of the
-road, and per-story success criteria. **HS-48-01** (the digest) is the foundation —
-the trust signals and the ritual present and feed the aggregation it adds. Sequence:
-01 → 02 → 03 → 04 → 05.
+**HS-48-01 (the digest) is done** — the foundation the rest of the phase presents.
+A read-only `GET /api/dictation/learning-digest?window=week|all` aggregates the
+journal + corrections (`holdspeak/dictation_learning.py`, pure + unit-tested),
+reusing `corrections.similarity` so "N similar" is the true reach. The "What
+HoldSpeak learned" hero lives at the top of the Memory tab (Signal language, JS
+body with global CSS). It is proven through actual voice by an opt-in `say` →
+Whisper → dry-run → correct → digest e2e. **Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md)**
+for the mapped seams. Next: **HS-48-02** (inline trust signals on the result +
+journal surfaces, reusing the one matcher). Sequence: 01 ✓ → 02 → 03 → 04 → 05.
 
 ## Active risks
 
