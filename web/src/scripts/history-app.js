@@ -22,6 +22,7 @@ function historyApp() {
     selectedMeeting: null,
     selectedMeetingArtifacts: [],
     selectedMeetingProposals: [],
+    selectedMeetingAftercare: null,
     selectedSpeakerId: "",
     selectedSpeaker: null,
     speakerDraft: { name: "", avatar: "" },
@@ -387,7 +388,17 @@ function historyApp() {
         this.tab = "meetings";
         this.selectedMeetingArtifacts = [];
         this.selectedMeetingProposals = [];
+        this.selectedMeetingAftercare = null;
         this.selectedMeeting = await this.apiJson(`/api/meetings/${id}`);
+        // HS-49-01: the aftercare digest (open / decided / changed). Read-only;
+        // stays quiet (is_empty) when there's nothing to act on.
+        try {
+          const aftercare = await this.apiJson(`/api/meetings/${id}/aftercare`);
+          this.selectedMeetingAftercare = aftercare && !aftercare.is_empty ? aftercare : null;
+        } catch (aftercareError) {
+          console.error("Failed to load meeting aftercare:", aftercareError);
+          this.selectedMeetingAftercare = null;
+        }
         try {
           const artifacts = await this.apiJson(`/api/meetings/${id}/artifacts`);
           this.selectedMeetingArtifacts = artifacts.artifacts || [];

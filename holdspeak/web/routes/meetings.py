@@ -637,6 +637,27 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
         except Exception as e:
             return error_500(e, log, "Failed to load meeting artifacts")
 
+    @router.get("/api/meetings/{meeting_id}/aftercare")
+    async def api_get_meeting_aftercare(meeting_id: str) -> Any:
+        """Read-only aftercare digest for one meeting (HS-49-01).
+
+        Aggregates what's still open (by owner), what was decided, and a real
+        diff against the chronologically previous meeting. Pure read — no writes,
+        no side effects. Returns `is_empty` so the surface can stay quiet when
+        there is nothing open, nothing decided, and nothing changed.
+        """
+        try:
+            from ...db import get_database
+            from ...meeting_aftercare import compute_meeting_aftercare
+
+            db = get_database()
+            digest = compute_meeting_aftercare(db, meeting_id)
+            if digest is None:
+                return JSONResponse({"error": "Meeting not found"}, status_code=404)
+            return JSONResponse(digest)
+        except Exception as e:
+            return error_500(e, log, "Failed to load meeting aftercare")
+
     def _proposal_to_dict(proposal: Any) -> dict[str, Any]:
         return {
             "id": proposal.id,

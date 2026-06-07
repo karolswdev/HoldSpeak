@@ -662,6 +662,62 @@ import AppLayout from "../layouts/AppLayout.astro";
             </div>
 
             <div class="detail-side">
+              <!-- HS-49-01: aftercare digest — open / decided / changed. Quiet
+                   when there's nothing to act on (server sets is_empty). -->
+              <div class="detail-card aftercare-card" x-show="selectedMeetingAftercare" x-cloak>
+                <div class="aftercare-head">
+                  <h4>Your next move</h4>
+                  <span class="aftercare-tag">Aftercare</span>
+                </div>
+
+                <div class="aftercare-section" x-show="selectedMeetingAftercare?.open_items?.total" x-cloak>
+                  <p class="aftercare-label">
+                    Still open
+                    <span class="aftercare-count" x-text="selectedMeetingAftercare?.open_items?.total"></span>
+                  </p>
+                  <template x-for="group in selectedMeetingAftercare?.open_items?.by_owner || []" :key="group.owner || 'unassigned'">
+                    <div class="aftercare-owner">
+                      <p class="aftercare-owner-name" x-text="group.owner || 'Unassigned'"></p>
+                      <template x-for="item in group.items" :key="item.id">
+                        <div class="aftercare-item">
+                          <p x-text="item.task"></p>
+                          <div class="pill-row">
+                            <span class="pill" x-show="item.due" x-cloak x-text="`Due ${item.due}`"></span>
+                            <span class="pill" x-show="item.source_timestamp !== null && item.source_timestamp !== undefined" x-cloak x-text="`Source ${formatTimestamp(item.source_timestamp)}`"></span>
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                </div>
+
+                <div class="aftercare-section" x-show="selectedMeetingAftercare?.decisions?.length" x-cloak>
+                  <p class="aftercare-label">What was decided</p>
+                  <template x-for="(decision, idx) in selectedMeetingAftercare?.decisions || []" :key="idx">
+                    <div class="aftercare-item">
+                      <p x-text="decision.decision"></p>
+                      <p class="aftercare-rationale" x-show="decision.rationale" x-cloak x-text="decision.rationale"></p>
+                    </div>
+                  </template>
+                </div>
+
+                <div class="aftercare-section aftercare-changed" x-show="selectedMeetingAftercare?.since_last_meeting?.changed" x-cloak>
+                  <p class="aftercare-label">
+                    Since
+                    <span x-text="selectedMeetingAftercare?.since_last_meeting?.previous_meeting?.title || 'last meeting'"></span>
+                  </p>
+                  <template x-for="(decision, idx) in selectedMeetingAftercare?.since_last_meeting?.new_decisions || []" :key="`nd-${idx}`">
+                    <div class="aftercare-item"><span class="aftercare-delta delta-new">New decision</span><p x-text="decision.decision"></p></div>
+                  </template>
+                  <template x-for="item in selectedMeetingAftercare?.since_last_meeting?.new_actions || []" :key="`na-${item.id}`">
+                    <div class="aftercare-item"><span class="aftercare-delta delta-new">New action</span><p x-text="item.task"></p></div>
+                  </template>
+                  <template x-for="item in selectedMeetingAftercare?.since_last_meeting?.closed_actions || []" :key="`ca-${item.id}`">
+                    <div class="aftercare-item"><span class="aftercare-delta delta-closed">Closed</span><p x-text="item.task"></p></div>
+                  </template>
+                </div>
+              </div>
+
               <div class="detail-card">
                 <h4>Intelligence</h4>
                 <span class="status-pill" :class="selectedMeeting?.intel_status?.state || 'disabled'" x-text="intelStatusLabel(selectedMeeting?.intel_status?.state)"></span>
@@ -2437,5 +2493,101 @@ import AppLayout from "../layouts/AppLayout.astro";
   .briefing-row-body a {
     color: var(--accent);
     text-decoration: underline;
+  }
+
+  /* HS-49-01: the aftercare digest — "your next move", lifted above the
+     artifact dump so the meeting closes its own loops. */
+  .aftercare-card {
+    background:
+      radial-gradient(140% 120% at 0% 0%, var(--accent-tint), transparent 60%),
+      var(--surface-1);
+    border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border-subtle));
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+  .aftercare-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+  .aftercare-head h4 { margin: 0; }
+  .aftercare-tag {
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: var(--radius-pill);
+    padding: 0.15rem 0.55rem;
+  }
+  .aftercare-section { margin-top: var(--space-3); }
+  .aftercare-section:first-of-type { margin-top: 0; }
+  .aftercare-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-2);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .aftercare-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.4rem;
+    padding: 0 0.4rem;
+    font-size: 0.72rem;
+    color: var(--accent-on);
+    background: var(--accent);
+    border-radius: var(--radius-pill);
+  }
+  .aftercare-owner { margin-bottom: var(--space-2); }
+  .aftercare-owner-name {
+    margin: 0 0 0.25rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .aftercare-item {
+    background: var(--surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-3);
+    margin-bottom: 0.4rem;
+  }
+  .aftercare-item p { margin: 0; color: var(--text); }
+  .aftercare-rationale {
+    margin-top: 0.25rem !important;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+  .aftercare-changed .aftercare-item {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+  }
+  .aftercare-delta {
+    flex: none;
+    font-size: 0.64rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: var(--radius-pill);
+    padding: 0.12rem 0.5rem;
+    border: 1px solid transparent;
+  }
+  .aftercare-delta.delta-new {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: color-mix(in srgb, var(--accent) 28%, transparent);
+  }
+  .aftercare-delta.delta-closed {
+    color: var(--success, var(--accent));
+    background: var(--success-soft, var(--accent-soft));
+    border-color: color-mix(in srgb, var(--success, var(--accent)) 28%, transparent);
   }
 </style>
