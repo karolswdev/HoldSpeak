@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 53
-- **Status:** not started
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-53-02, HS-53-03, HS-53-04, HS-53-05, HS-53-06
 - **Owner:** unassigned
@@ -35,13 +35,13 @@ else surfaces.
 - **Out:** the API (HS-53-02); the context override (HS-53-03); the UI (HS-53-04).
 
 ## Acceptance criteria
-- [ ] The engine reads existing `ActivityRecord`s (no new watcher) and the meeting window;
+- [x] The engine reads existing `ActivityRecord`s (no new watcher) and the meeting window;
       returns 1 to 3 nudges, each with a source citation + the originating record id.
-- [ ] A dismissed nudge does not return again (dismissal persisted).
-- [ ] With activity tracking off, the engine returns no nudges.
-- [ ] The relevance heuristic is deterministic and unit-tested (window boundary, ordering,
+- [x] A dismissed nudge does not return again (dismissal persisted).
+- [x] With activity tracking off, the engine returns no nudges.
+- [x] The relevance heuristic is deterministic and unit-tested (window boundary, ordering,
       weak-signal suppression).
-- [ ] `npm run build` n/a; 0 `_built/` tracked.
+- [x] `npm run build` n/a; 0 `_built/` tracked.
 
 ## Test plan
 - Unit: seed activity records + a prior meeting -> a windowed nudge with a citation; a

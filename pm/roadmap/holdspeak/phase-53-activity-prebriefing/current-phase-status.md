@@ -1,12 +1,13 @@
 # Phase 53 — Activity Pre-Briefing
 
-**Status:** SCAFFOLDED (0/6). Opened 2026-06-08 on user direction, right after Phase 52
+**Status:** IN PROGRESS (1/6). Opened 2026-06-08 on user direction, right after Phase 52
 closed + merged (PR #39). From the [project backlog](../BACKLOG.md): candidate **F**
 (local activity as pre-briefing fuel), picked by the user as the next phase.
 
-**Last updated:** 2026-06-08 (phase scaffolded: AGENT-BRIEF + this status doc + 6 story
-files written; the activity layer mapped + seams verified against the live tree. No story
-started yet.)
+**Last updated:** 2026-06-08 (HS-53-01 done: the nudge engine + dismissal store; pure
+reader over the existing ledger + meeting window, source-cited, deterministic heuristic,
+off-when-activity-off, dismissals persisted in a new tiny table; 10 unit tests; full
+suite green at 2509 passed.)
 
 ## The thesis — why this phase
 
@@ -75,7 +76,7 @@ own), local. No change to meeting capture, intel, plugins, or synthesis behaviou
 
 | Story | Title | Status | Depends on |
 |---|---|---|---|
-| HS-53-01 | The nudge engine + dismissal store | not started | none |
+| HS-53-01 | The nudge engine + dismissal store | done | none |
 | HS-53-02 | The nudges API | not started | HS-53-01 |
 | HS-53-03 | Dictate with this as context | not started | HS-53-01 |
 | HS-53-04 | The nudge UI (dictation surface) | not started | HS-53-02, HS-53-03 |
@@ -84,10 +85,17 @@ own), local. No change to meeting capture, intel, plugins, or synthesis behaviou
 
 ## Where we are
 
-Scaffolded on 2026-06-08, on the `phase-53-activity-prebriefing` branch. Nothing started.
-Start with HS-53-01 (the engine is the brain everything surfaces; build it read-only,
-source-cited, gated by the activity toggle, with a simple honest relevance heuristic,
-fully unit-tested). Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+HS-53-01 shipped on 2026-06-08. The engine (`holdspeak/activity_nudges.py`) is a pure
+reader over the existing `ActivityRepository` + the meeting window: it returns 1–3
+source-cited `Nudge`s (a windowed summary + per-record suggestions), filters by a
+persisted dismissal store (new `activity_nudge_dismissals` table), uses a deterministic
+relevance heuristic (recency bucket + entity-type bonus + project match), and returns
+`[]` when the activity privacy toggle is off. 10 focused unit tests; full suite at
+**2509 passed, 17 skipped**. The schema snapshot is regenerated and green.
+
+Next is **HS-53-02 — the nudges API**: `GET /api/activity/nudges` (compute + drop
+dismissed + return top N with citations) and `POST /api/activity/nudges/{id}/dismiss`.
+The engine's `Nudge.to_dict()` is already JSON-safe; the API is a thin route over it.
 
 ## Open decisions (defaults chosen; flag to change)
 

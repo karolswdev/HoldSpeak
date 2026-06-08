@@ -469,6 +469,29 @@ class ActivityRepository(BaseRepository):
             )
         return self.get_activity_privacy_settings()
 
+    def list_dismissed_nudge_keys(self) -> set[str]:
+        """Phase 53: persisted nudge dismissals (HS-53-01)."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT nudge_key FROM activity_nudge_dismissals"
+            ).fetchall()
+            return {str(row["nudge_key"]) for row in rows}
+
+    def dismiss_nudge(self, nudge_key: str) -> None:
+        """Phase 53: persist a nudge dismissal so it stays dismissed (HS-53-01)."""
+        clean = str(nudge_key or "").strip()
+        if not clean:
+            raise ValueError("nudge_key is required")
+        with self._connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO activity_nudge_dismissals (nudge_key, dismissed_at)
+                VALUES (?, ?)
+                ON CONFLICT(nudge_key) DO UPDATE SET dismissed_at = excluded.dismissed_at
+                """,
+                (clean, datetime.now().isoformat()),
+            )
+
     def list_activity_domain_rules(self) -> list[dict[str, str]]:
         """List domain allow/deny rules for activity ingestion."""
         with self._connection() as conn:
