@@ -19,6 +19,12 @@ macros off, and that the carve changed no behavior. Captured as a dogfood, and m
     audit row, while a non-keyword utterance dictates unchanged; with macros off the typed
     output is byte-identical. Use injected connectors / a temp target so the dogfood has no
     destructive side effect. Print PASS.
+  - **The screenshot gallery** from HS-52-05 (the board with multiple macro kinds, the
+    editor, the shell danger treatment) is part of the closeout evidence and shown in
+    `final-summary.md` so the surface is reviewable from the PR.
+  - Optional: a real-voice e2e behind the existing opt-in pattern (macOS `say` + Whisper,
+    like `test_spoken_*`) that says a keyword and asserts the configured action fired. Keep
+    it opt-in so CI does not need a mic; note it in the summary either way.
   - `final-summary.md`; flip the phase to CLOSED; update the project README + phase status
     per the operating cadence; flip the [backlog](../BACKLOG.md) candidate B row to shipped
     and record that a scoped slice of candidate E (the dispatch-seam carve) landed with it;

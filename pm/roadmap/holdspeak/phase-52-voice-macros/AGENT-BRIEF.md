@@ -76,7 +76,12 @@ dispatch out of `web_runtime` must not change what gets typed in the no-macro pa
 - **The web bundle is gitignored.** Edit `web/src`, `cd web && npm run build`, commit
   source only, never `holdspeak/static/_built/`. JS-injected DOM needs
   `<style is:global>`; screenshot-verify.
-- **High UI/UX bar** (`ui-ux-pro-max`). The macro editor is a real editing surface.
+- **High UI/UX bar** (`ui-ux-pro-max`). The command board is the centerpiece, designed
+  UI-first (`design-voice-commands-board.md`). It ships **screenshot evidence**: a
+  `scripts/screenshot_voice_commands.py` (mirror `scripts/screenshot_learning_digest.py`)
+  captures the board with all four macro kinds, the empty state, each per-kind editor, and
+  the shell danger treatment, committed to the phase `screenshots/` folder. The new
+  `/commands` route is also picked up by the `screenshots.yml` route-screenshot CI.
 - **User-facing docs obey the Phase-51 guard.** The new Voice Commands guide (HS-52-06)
   must be product-tense with no roadmap vocabulary (`Phase 52` / `HS-52-xx`); run the
   `humanizer` skill over it.

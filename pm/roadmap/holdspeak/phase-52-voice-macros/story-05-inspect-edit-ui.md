@@ -45,6 +45,14 @@ other way around).
   - **An inviting empty state** with one-tap starter examples so the first command takes
     seconds.
   - Persisted through `PUT /api/settings` (HS-52-02). No LLM anywhere in this surface.
+  - **Screenshot evidence (required).** A `scripts/screenshot_voice_commands.py` (mirror
+    `scripts/screenshot_learning_digest.py`: boot a real server over a temp DB seeded with
+    fixtures, no mic/LLM, drive Playwright) that captures the board's states:
+    the **populated grid with all four macro kinds** (open_url, launch_app, shell,
+    type_text), the **empty state**, the **per-kind adaptive editor** for each kind, and
+    the **shell danger treatment**. PNGs committed to this phase's `screenshots/` folder.
+    The new `/commands` route is also picked up by the `screenshots.yml` route-screenshot
+    CI on this web-touching PR.
 - **Out:** the matcher/dispatcher (HS-52-04); the docs (HS-52-06).
 
 ## Acceptance criteria
@@ -55,14 +63,17 @@ other way around).
 - [ ] A per-row Test button fires the macro through the dispatch path without speaking it.
 - [ ] The add/edit editor is per-kind adaptive (no raw payload field); shows the normalized
       match and warns on a keyword conflict; an inviting empty state with starters.
-- [ ] `cd web && npm run build` clean; JS-injected rows use `<style is:global>` CSS;
-      screenshot-verified that styles apply, the list does not overflow, and the empty
-      state and each action-kind editor render well.
+- [ ] `cd web && npm run build` clean; JS-injected rows use `<style is:global>` CSS.
+- [ ] `scripts/screenshot_voice_commands.py` captures the populated board (all four macro
+      kinds), the empty state, each per-kind editor, and the shell danger treatment; the
+      PNGs are committed to this phase's `screenshots/` folder and reviewed (styles apply,
+      no overflow, each state renders well).
 - [ ] Source committed; 0 `holdspeak/static/_built/` tracked.
 
 ## Test plan
-- `cd web && npm run build` succeeds; manual + screenshots (empty state, a few macros of
-  different kinds, an overflow check). Page-content test if the surface has one.
+- `cd web && npm run build` succeeds; run `scripts/screenshot_voice_commands.py` and review
+  the captured states (populated grid with all four kinds, empty state, each per-kind
+  editor, shell danger). A page-content test for the `/commands` route if it has one.
 
 ## Notes / open questions
 - UI/UX bar via `ui-ux-pro-max`: a real editing surface with affordances and the Signal
