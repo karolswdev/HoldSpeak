@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 52
-- **Status:** not started
+- **Status:** done
 - **Depends on:** HS-52-04, HS-52-05
 - **Owner:** unassigned
 
@@ -26,15 +26,15 @@ product-tense, and the doc must obey the Phase-51 roadmap-vocabulary guard.
 - **Out:** new feature work; internal design docs.
 
 ## Acceptance criteria
-- [ ] `docs/VOICE_COMMANDS.md` exists: action kinds, add-your-own walkthrough, the
-      off-by-default + you-own-the-risk + deterministic-match + audit model stated
-      honestly; every claim grounded in the shipped code.
-- [ ] Linked in `docs/README.md` (and README "Where to go next" if added); index stays a
-      map.
-- [ ] Passes the Phase-51 roadmap-vocabulary guard and the link/image guards
-      (`uv run pytest -q -k "doc_drift or doc_guard or doc"`); `humanizer` run, no em/en
-      dashes.
-- [ ] `npm run build` n/a; 0 `_built/` tracked.
+- [x] `docs/VOICE_COMMANDS.md` exists: the action kinds, the add/test/save walkthrough,
+      and the off-by-default + you-own-the-risk + deterministic-match model stated
+      honestly (including that shell runs real code); every claim grounded in the shipped
+      board + dispatch.
+- [x] Linked in `docs/README.md` under "Dictate"; the index stays a map.
+- [x] Passes the Phase-51 roadmap-vocabulary guard and the link/image guards
+      (`uv run pytest -q -k "doc_drift or doc_guard or doc"` -> 75 passed); `humanizer`
+      run (one tailing-negation fixed), no em/en dashes, no roadmap vocabulary.
+- [x] `npm run build` n/a; 0 `_built/` tracked.
 
 ## Test plan
 - `uv run pytest -q -k "doc_drift or doc_guard or doc"`; manual read as a new user

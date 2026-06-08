@@ -1,11 +1,17 @@
 # Phase 52 — Voice Command Macros on a carved dispatch seam
 
-**Status:** IN PROGRESS (5/7). Opened 2026-06-08 on user direction, right after Phase 51
+**Status:** IN PROGRESS (6/7). Opened 2026-06-08 on user direction, right after Phase 51
 closed + merged (PR #38). From the [project backlog](../BACKLOG.md): candidate **B**
 (voice macros) re-envisioned by the user as a **voice command launcher**, paired with a
 scoped slice of candidate **E** (carve the dispatch seam out of `web_runtime`).
 
-**Last updated:** 2026-06-08 (HS-52-05 done: **the Voice Commands board, the centerpiece**.
+**Last updated:** 2026-06-08 (HS-52-06 done: the Voice Commands user guide.
+`docs/VOICE_COMMANDS.md` (linked in the docs index under Dictate) explains the action
+kinds, the deterministic match, the you-own-the-risk model, and the off-by-default switch,
+honestly and in product-tense. The Phase-51 roadmap-vocabulary guard now scans this Phase-52
+doc and passes; `humanizer` run; no em/en dashes. Doc guards green (75 passed). Only HS-52-07
+(closeout: dogfood + PR + merge) remains. Earlier: HS-52-05 done: **the Voice Commands board,
+the centerpiece**.
 A dedicated `/commands` route (`web/src/pages/commands.astro` + `commands-app.js`, nav entry
 under Configure): a card-per-command grid with per-kind color edges/badges, a live "what
 fires" preview per card, the honest shell danger treatment (red-framed command + "⚠ runs
@@ -133,7 +139,7 @@ capture, intel, plugins, or synthesis behavior.
 | HS-52-03 | Local action connectors on the actuator framework | done | HS-52-02 |
 | HS-52-04 | Dispatch wiring: match -> auto-approved actuator execute | done | HS-52-01, HS-52-03 |
 | HS-52-05 | The Voice Commands board (centerpiece) | done | HS-52-02, HS-52-04 |
-| HS-52-06 | Docs: the Voice Commands guide | not started | HS-52-04, HS-52-05 |
+| HS-52-06 | Docs: the Voice Commands guide | done | HS-52-04, HS-52-05 |
 | HS-52-07 | Closeout: dogfood + final-summary + PR | not started | HS-52-01..06 |
 
 ## Where we are
