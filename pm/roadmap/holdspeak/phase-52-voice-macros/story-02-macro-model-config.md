@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 52
-- **Status:** not started
+- **Status:** done
 - **Depends on:** HS-52-01
 - **Unblocks:** HS-52-03, HS-52-04, HS-52-05
 - **Owner:** unassigned
@@ -28,13 +28,19 @@ settings API, so the connectors (HS-52-03), the dispatcher (HS-52-04), and the e
 - **Out:** the connectors (HS-52-03); the dispatcher (HS-52-04); the editor UI (HS-52-05).
 
 ## Acceptance criteria
-- [ ] `VoiceMacro` + `MacrosConfig` exist; `enabled` defaults `False`, `items` empty.
-- [ ] Config load/save round-trips a macros section; an older/unversioned config loads
-      without dropping other fields.
-- [ ] `GET /api/settings` returns the macros section; `PUT` validates + persists it; a
-      malformed macro is rejected with a clear error.
-- [ ] A unit test pins round-trip, the action-kind validation, and off-by-default.
-- [ ] `npm run build` n/a; 0 `_built/` tracked.
+- [x] `VoiceMacro` + `MacrosConfig` exist; `enabled` defaults `False`, `items` empty.
+      (`config.py`: `VoiceMacroAction` / `VoiceMacro` / `MacrosConfig` on
+      `DictationConfig.macros`)
+- [x] Config load/save round-trips a macros section; an older/unversioned config loads
+      without dropping other fields. (`_coerce(MacrosConfig, ...)` in `Config.load`;
+      round-trip + version-safe unit tests)
+- [x] `GET /api/settings` returns the macros section; `PUT` validates + persists it; a
+      malformed macro is rejected with a clear error (400). (`system.py`;
+      `TestVoiceMacrosSettingsApi`)
+- [x] A unit test pins round-trip, the action-kind validation, the normalized
+      whole-utterance match, the preview strings, and off-by-default.
+      (`tests/unit/test_voice_macros_config.py`, 15 tests)
+- [x] `npm run build` n/a; 0 `_built/` tracked.
 
 ## Test plan
 - Unit: config round-trip + default shape + kind validation; settings API read/write

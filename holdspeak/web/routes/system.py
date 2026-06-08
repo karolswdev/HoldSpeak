@@ -472,10 +472,12 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                 KEY_DISPLAY,
                 KEY_MAP,
                 LLMRuntimeConfig,
+                MacrosConfig,
                 MeetingConfig,
                 ModelConfig,
                 PresenceConfig,
                 UIConfig,
+                VoiceMacroError,
             )
 
             current = Config.load()
@@ -884,10 +886,33 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                 "warm_on_start", current.dictation.runtime.warm_on_start
             ))
 
+            # HS-52-02: voice command macros. Validate the section so a malformed
+            # macro returns a clean 4xx with a clear message, never a 500 and never a
+            # silently-dropped command. `merged` already carries `current`'s macros as
+            # the base, so omitting the section preserves it.
+            macros_data = dictation_data.get("macros", {}) or {}
+            macros_enabled = bool(
+                macros_data.get("enabled", current.dictation.macros.enabled)
+            )
+            raw_macros = macros_data.get("items", [])
+            if not isinstance(raw_macros, list):
+                return JSONResponse(
+                    {"success": False, "error": "dictation.macros.items must be a list"},
+                    status_code=400,
+                )
+            try:
+                macros_cfg = MacrosConfig(enabled=macros_enabled, items=raw_macros)
+            except VoiceMacroError as exc:
+                return JSONResponse(
+                    {"success": False, "error": f"Invalid voice macro: {exc}"},
+                    status_code=400,
+                )
+
             try:
                 dictation_cfg = DictationConfig(
                     pipeline=DictationPipelineConfig(**pipeline_data),
                     runtime=LLMRuntimeConfig(**runtime_data),
+                    macros=macros_cfg,
                 )
             except DictationConfigError as exc:
                 return JSONResponse(

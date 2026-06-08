@@ -1,18 +1,19 @@
 # Phase 52 — Voice Command Macros on a carved dispatch seam
 
-**Status:** IN PROGRESS (1/7). Opened 2026-06-08 on user direction, right after Phase 51
+**Status:** IN PROGRESS (2/7). Opened 2026-06-08 on user direction, right after Phase 51
 closed + merged (PR #38). From the [project backlog](../BACKLOG.md): candidate **B**
 (voice macros) re-envisioned by the user as a **voice command launcher**, paired with a
 scoped slice of candidate **E** (carve the dispatch seam out of `web_runtime`).
 
-**Last updated:** 2026-06-08 (HS-52-01 done: the scoped-E carve. The dictation
-orchestration moved out of the 2,341-line `web_runtime.py` (now 2,255) into a standalone,
-unit-testable `holdspeak/dictation_runner.py` `run_dictation_pipeline`; the old inline
-method is a thin delegate. Byte-identical: full suite green (2460 passed, 17 skipped; +6
-is the new unit tests, no behavioural edits). Named `dictation_runner` to stay distinct
-from the DIR-01 LLM runtime. Next: HS-52-02 (macro model + config). Earlier: phase
-re-scaffolded after a vision correction and designed UI-first (the dedicated
-`/commands` board, `design-voice-commands-board.md`).)
+**Last updated:** 2026-06-08 (HS-52-02 done: the macro model + config. `VoiceMacro` =
+keyword + a deterministic action (`open_url` / `launch_app` / `shell` / `type_text` + one
+payload), with a `preview()` single-source-of-truth string and a normalized
+whole-utterance `matches()`; `MacrosConfig` (off by default) nested on `DictationConfig`,
+loaded config-version-safe and read/write through `/api/settings` with a clean 400 on a
+malformed macro. Designed UI-first so the schema is exactly what the `/commands` board
+shows. Full suite green (2480 passed, 17 skipped; +20 is the new tests). Next: HS-52-03
+(local action connectors on the actuator framework). Earlier: HS-52-01 carved the
+dictation seam into `holdspeak/dictation_runner.py`.)
 
 ## The thesis — why this phase
 
@@ -103,7 +104,7 @@ capture, intel, plugins, or synthesis behavior.
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HS-52-01 | Carve the dictation-dispatch seam out of `web_runtime` (scoped E) | done | none |
-| HS-52-02 | Macro model + config (keyword -> action; `/api/settings`) | not started | HS-52-01 |
+| HS-52-02 | Macro model + config (keyword -> action; `/api/settings`) | done | HS-52-01 |
 | HS-52-03 | Local action connectors on the actuator framework | not started | HS-52-02 |
 | HS-52-04 | Dispatch wiring: match -> auto-approved actuator execute | not started | HS-52-01, HS-52-03 |
 | HS-52-05 | Inspect/edit UI: the voice-commands editor | not started | HS-52-02, HS-52-04 |
@@ -112,12 +113,13 @@ capture, intel, plugins, or synthesis behavior.
 
 ## Where we are
 
-2026-06-08, on the `phase-52-voice-macros` branch. HS-52-01 (the scoped-E carve) is done:
-the dictation orchestration is now `holdspeak/dictation_runner.py`, byte-identical, full
-suite green. The seam everything lands on is in place and testable. Next is HS-52-02 (the
-macro model + config, designed to serve the `/commands` board per
-[`design-voice-commands-board.md`](./design-voice-commands-board.md)), then the connectors
-(03), the dispatch wiring (04), the board (05), docs (06), closeout (07). Read
+2026-06-08, on the `phase-52-voice-macros` branch. HS-52-01 (the carve) and HS-52-02 (the
+macro model + config) are done: the dictation seam is `holdspeak/dictation_runner.py`, and
+the `VoiceMacro` schema + `MacrosConfig` (off by default) round-trip config-version-safe
+through `/api/settings`, designed to serve the `/commands` board
+([`design-voice-commands-board.md`](./design-voice-commands-board.md)). Full suite green
+(2480 passed). Next is HS-52-03 (local action connectors on the reused actuator
+framework), then the dispatch wiring (04), the board (05), docs (06), closeout (07). Read
 [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
 
 ## Open decisions (defaults chosen; flag to change)

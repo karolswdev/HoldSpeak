@@ -459,3 +459,94 @@ def test_dictation_page_includes_copilot_depth_controls() -> None:
     assert 'id="rt-target-detect-llm-below"' in body
     # The "test this config in the dry-run" affordance.
     assert 'id="rt-btn-test"' in body
+
+
+class TestVoiceMacrosSettingsApi:
+    """HS-52-02: the voice command macros section of `/api/settings`."""
+
+    def test_get_includes_macros_off_by_default(
+        self, test_client: TestClient, settings_path: Path
+    ) -> None:
+        body = test_client.get("/api/settings").json()
+        macros = body["dictation"]["macros"]
+        assert macros == {"enabled": False, "items": []}
+
+    def test_put_persists_macros_of_each_kind(
+        self, test_client: TestClient, settings_path: Path
+    ) -> None:
+        payload = {
+            "dictation": {
+                "macros": {
+                    "enabled": True,
+                    "items": [
+                        {"keyword": "docs", "action": {"kind": "open_url", "payload": "https://docs.example"}},
+                        {"keyword": "terminal", "action": {"kind": "launch_app", "payload": "Terminal"}},
+                        {"keyword": "ship it", "action": {"kind": "shell", "payload": "git push origin HEAD"}},
+                        {"keyword": "standup", "action": {"kind": "type_text", "payload": "## Standup"}},
+                    ],
+                }
+            }
+        }
+        response = test_client.put("/api/settings", json=payload)
+        assert response.status_code == 200, response.text
+        out = response.json()["settings"]["dictation"]["macros"]
+        assert out["enabled"] is True
+        assert [m["keyword"] for m in out["items"]] == ["docs", "terminal", "ship it", "standup"]
+        assert {m["action"]["kind"] for m in out["items"]} == {
+            "open_url",
+            "launch_app",
+            "shell",
+            "type_text",
+        }
+
+        persisted = Config.load(settings_path)
+        assert persisted.dictation.macros.enabled is True
+        assert persisted.dictation.macros.items[2].action.payload == "git push origin HEAD"
+
+    def test_put_rejects_unknown_action_kind(
+        self, test_client: TestClient, settings_path: Path
+    ) -> None:
+        payload = {
+            "dictation": {
+                "macros": {
+                    "enabled": True,
+                    "items": [{"keyword": "x", "action": {"kind": "telepathy", "payload": "y"}}],
+                }
+            }
+        }
+        response = test_client.put("/api/settings", json=payload)
+        assert response.status_code == 400
+        assert "voice macro" in response.json()["error"].lower()
+
+    def test_put_rejects_empty_keyword(
+        self, test_client: TestClient, settings_path: Path
+    ) -> None:
+        payload = {
+            "dictation": {
+                "macros": {
+                    "enabled": True,
+                    "items": [{"keyword": "  ", "action": {"kind": "shell", "payload": "ls"}}],
+                }
+            }
+        }
+        response = test_client.put("/api/settings", json=payload)
+        assert response.status_code == 400
+
+    def test_put_omitting_macros_preserves_them(
+        self, test_client: TestClient, settings_path: Path
+    ) -> None:
+        # Seed a macro, then PUT an unrelated change; the macro must survive.
+        seed = {
+            "dictation": {
+                "macros": {
+                    "enabled": True,
+                    "items": [{"keyword": "docs", "action": {"kind": "open_url", "payload": "https://x"}}],
+                }
+            }
+        }
+        assert test_client.put("/api/settings", json=seed).status_code == 200
+        # A PUT that touches only the UI theme, not macros.
+        assert test_client.put("/api/settings", json={"ui": {"theme": "light"}}).status_code == 200
+        persisted = Config.load(settings_path)
+        assert persisted.dictation.macros.enabled is True
+        assert persisted.dictation.macros.items[0].keyword == "docs"
