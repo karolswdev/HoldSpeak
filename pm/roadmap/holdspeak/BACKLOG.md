@@ -8,9 +8,10 @@ flips to "scaffolded" then "shipped".
 Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
-**Last updated:** 2026-06-07 (candidate **H** added and scaffolded as Phase 51:
-public-docs hygiene, the cheap release-facing follow-on to the Phase-50 gate.
-Created at Phase 48 close.)
+**Last updated:** 2026-06-08 (candidate **B** scaffolded as Phase 52, voice macros,
+paired with a scoped slice of **E** (carve the dictation-execution seam out of
+`web_runtime`); a feature shipped with a motivated refactor under one thesis.
+Candidate **H** shipped as Phase 51. Created at Phase 48 close.)
 
 ## Why not one mega-phase
 
@@ -25,10 +26,10 @@ sequence. This file is the "all of them" container; the phases are how they land
 | # | Candidate | Type | Source | Signal |
 |---|---|---|---|---|
 | A | Meeting aftercare ("close the loop") | feature | review bet #5 | **shipped → [phase-49](./phase-49-meeting-aftercare/) (CLOSED 6/6)** |
-| B | Voice macros / command grammar | feature | review bet #2; deferred from P48 | strong |
+| B | Voice macros / command grammar | feature | review bet #2; deferred from P48 | **scaffolded → [phase-52](./phase-52-voice-macros/)** (with a scoped slice of E) |
 | C | Release-readiness gate (schema policy + 1.0) | release | review "Trouble" #5; deferred from P48 | **shipped → [phase-50](./phase-50-release-readiness/) (CLOSED 7/7)** |
 | D | Frontend density paydown (dictation page) | debt | review "Trouble" #4; P48 standing invariant | recurring |
-| E | `WebRuntime` / `web_server` decomposition | debt | review "Trouble" #1 | watch |
+| E | `WebRuntime` / `web_server` decomposition | debt | review "Trouble" #1 | watch (a **dictation-path slice** is being carved in [phase-52](./phase-52-voice-macros/) with B; the full decomposition stays a watch item) |
 | F | Local activity as pre-briefing fuel | feature | review bet #6 | exploratory |
 | G | Privacy visible at decision points | feature | review bet #7 | delight |
 | H | Public-docs hygiene (strip roadmap vocab from user-facing docs) | release/debt | this conversation (post-P50 release polish) | **shipped → [phase-51](./phase-51-public-docs-hygiene/) (CLOSED 5/5)** |
@@ -42,12 +43,16 @@ artifact that never changes the user's next action is decoration.
 *Lands on:* the meeting/history surface + the actuator system (P37/P38) for
 "actions -> issues".
 
-### B. Voice macros / command grammar
+### B. Voice macros / command grammar — scaffolded as Phase 52 (with a scoped E slice)
 A small, visible, deterministic spoken-command layer alongside the LLM rewrite:
-"new paragraph", "bullet list", "code block", "send it", "copy only", "make it
-concise", plus user-defined phrases ("standup update", "bug report template").
-Inspectable and editable in the UI, not LLM magic. Stays on the daily-dictation
-north star (Future A).
+"new paragraph", "bullet list", "code block", "send it", "copy only", plus
+user-defined phrases ("standup update", "bug report template"). Inspectable and
+editable in the UI, not LLM magic. Stays on the daily-dictation north star
+(Future A). Scaffolded as [phase-52](./phase-52-voice-macros/), paired with a scoped
+slice of **E**: the feature lands on a dictation-execution seam carved out of the
+`web_runtime` god-object, so a meaningful codebase improvement ships with the
+feature under one thesis. Note: LLM-flavored items ("make it concise") are out of the
+deterministic grammar by design; that is the existing rewrite pipeline, not a macro.
 
 ### C. Release-readiness gate — shipped as Phase 50 (CLOSED 7/7)
 The DB is intentionally `SCHEMA_VERSION = 1`, greenfield, **not release-stable**.
@@ -61,10 +66,15 @@ that actually lets the open-source push *ship* publicly.
 grew every recent phase (the standing page-density invariant). Factor into section
 partials / behavior modules before the next feature makes it worse.
 
-### E. `WebRuntime` / `web_server` decomposition
+### E. `WebRuntime` / `web_server` decomposition — partial slice in flight (Phase 52)
 The review flags `WebRuntime` as "the next central chip under thermal load" after
 the DB decomposition (P31) and route split (P26/P34). A structural phase if it
-keeps absorbing responsibility.
+keeps absorbing responsibility. [Phase 52](./phase-52-voice-macros/) carves the
+**dictation-execution slice** (the inline `_maybe_run_dictation_pipeline`
+orchestration, currently inside the 2,341-line `web_runtime.py`) out into a testable
+module, because that is the seam the voice-macro feature lands on. The rest of the
+god-object (hotkey/device/meeting/activity) stays a watch item; full E is still its
+own future phase if it keeps absorbing responsibility.
 
 ### F. Local activity as pre-briefing fuel
 Turn the abstract browser/activity layer into concrete, dismissible, source-cited
