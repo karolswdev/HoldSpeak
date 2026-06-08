@@ -7,7 +7,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 52
-- **Status:** not started
+- **Status:** done
 - **Depends on:** HS-52-02, HS-52-04
 - **Unblocks:** HS-52-06
 - **Owner:** unassigned
@@ -56,19 +56,25 @@ other way around).
 - **Out:** the matcher/dispatcher (HS-52-04); the docs (HS-52-06).
 
 ## Acceptance criteria
-- [ ] A "Voice commands" settings section: enable switch + an editable list with
-      add/edit/remove, persisted via `/api/settings`.
-- [ ] Every row has a plain-language live preview of exactly what fires; a `shell` macro's
-      command is shown in monospace with the "runs code" treatment.
-- [ ] A per-row Test button fires the macro through the dispatch path without speaking it.
-- [ ] The add/edit editor is per-kind adaptive (no raw payload field); shows the normalized
-      match and warns on a keyword conflict; an inviting empty state with starters.
-- [ ] `cd web && npm run build` clean; JS-injected rows use `<style is:global>` CSS.
-- [ ] `scripts/screenshot_voice_commands.py` captures the populated board (all four macro
-      kinds), the empty state, each per-kind editor, and the shell danger treatment; the
+- [x] A dedicated `/commands` board: master enable switch + a card-per-command grid with
+      add/edit/remove, persisted via `/api/settings`. (`web/src/pages/commands.astro` +
+      `commands-app.js`; route in `web/routes/pages.py`; nav entry under "Configure")
+- [x] Every card has a plain-language live preview of exactly what fires (the same string
+      `VoiceMacroAction.preview()` produces); a `shell` macro's command shows in monospace
+      in a danger-tinted box with the "⚠ runs code" badge. (see `screenshots/board-populated.png`)
+- [x] A per-row Test button (and an editor Test) fires the action via `POST /api/commands/test`
+      without speaking it (egress runs on the host; `type_text` returns a preview).
+- [x] The add/edit editor is per-kind adaptive (the payload field morphs by kind, no raw
+      payload field); shows the normalized match hint and warns on a keyword conflict; an
+      inviting empty state with one-tap starters. (`screenshots/editor-shell-danger.png`,
+      `editor-open-url.png`, `board-empty.png`)
+- [x] `cd web && npm run build` clean; JS-injected cards use `<style is:global>` CSS (with
+      explicit `[hidden]` handling so toggled elements hide).
+- [x] `scripts/screenshot_voice_commands.py` captures the populated board (all four macro
+      kinds), the empty state, the per-kind editor, and the shell danger treatment; the four
       PNGs are committed to this phase's `screenshots/` folder and reviewed (styles apply,
       no overflow, each state renders well).
-- [ ] Source committed; 0 `holdspeak/static/_built/` tracked.
+- [x] Source committed; 0 `holdspeak/static/_built/` tracked.
 
 ## Test plan
 - `cd web && npm run build` succeeds; run `scripts/screenshot_voice_commands.py` and review

@@ -185,6 +185,25 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
             )
         return HTMLResponse(html)
 
+    @router.get("/commands")
+    async def commands_board() -> Any:
+        """Serve the Voice Commands board (HS-52-05), read from the Astro-built
+        _built/commands/index.html. Driven client-side by GET/PUT /api/settings and
+        POST /api/commands/test."""
+        page = _HOLDSPEAK_DIR / "static" / "_built" / "commands" / "index.html"
+        try:
+            html = page.read_text(encoding="utf-8")
+        except Exception as e:
+            log.error(f"Failed to read built commands page: {e}")
+            html = (
+                "<!doctype html><html><head><meta charset='utf-8'/>"
+                "<title>Voice Commands</title></head>"
+                "<body><h1>Voice Commands</h1>"
+                "<p>Commands UI not built. Run <code>npm run build</code> "
+                "in <code>web/</code>.</p></body></html>"
+            )
+        return HTMLResponse(html)
+
     @router.get("/companion")
     async def companion_dashboard() -> Any:
         """Serve the AI PI companion surface (HS-24-01)."""

@@ -1,12 +1,20 @@
 # Phase 52 — Voice Command Macros on a carved dispatch seam
 
-**Status:** IN PROGRESS (4/7). Opened 2026-06-08 on user direction, right after Phase 51
+**Status:** IN PROGRESS (5/7). Opened 2026-06-08 on user direction, right after Phase 51
 closed + merged (PR #38). From the [project backlog](../BACKLOG.md): candidate **B**
 (voice macros) re-envisioned by the user as a **voice command launcher**, paired with a
 scoped slice of candidate **E** (carve the dispatch seam out of `web_runtime`).
 
-**Last updated:** 2026-06-08 (HS-52-04 done: the dispatch wiring, the feature now works
-end to end. `dictation_runner.dispatch_voice_command` sits at the top of the carved seam:
+**Last updated:** 2026-06-08 (HS-52-05 done: **the Voice Commands board, the centerpiece**.
+A dedicated `/commands` route (`web/src/pages/commands.astro` + `commands-app.js`, nav entry
+under Configure): a card-per-command grid with per-kind color edges/badges, a live "what
+fires" preview per card, the honest shell danger treatment (red-framed command + "⚠ runs
+code"), a per-card Test button (`POST /api/commands/test`), a per-kind adaptive editor with
+match hint + conflict warning, and an inviting empty state with starters. Built UI-first to
+`design-voice-commands-board.md` and **screenshot-verified** (4 PNGs in `screenshots/`; a
+screenshot pass caught a real `[hidden]`-override CSS bug). Full suite green (2499 passed;
++4). Next: HS-52-06 (the Voice Commands user guide). Earlier: HS-52-04 done: the dispatch
+wiring, the feature works end to end. `dictation_runner.dispatch_voice_command` sits at the top of the carved seam:
 off by default, deterministic whole-utterance match, and on a match it fires the bounded
 connector, surfaces "command: <keyword>" as a runtime activity, and types nothing;
 `web_runtime` returns early on a fire (byte-identical when off / no match). Resolved the
@@ -124,20 +132,20 @@ capture, intel, plugins, or synthesis behavior.
 | HS-52-02 | Macro model + config (keyword -> action; `/api/settings`) | done | HS-52-01 |
 | HS-52-03 | Local action connectors on the actuator framework | done | HS-52-02 |
 | HS-52-04 | Dispatch wiring: match -> auto-approved actuator execute | done | HS-52-01, HS-52-03 |
-| HS-52-05 | Inspect/edit UI: the voice-commands editor | not started | HS-52-02, HS-52-04 |
+| HS-52-05 | The Voice Commands board (centerpiece) | done | HS-52-02, HS-52-04 |
 | HS-52-06 | Docs: the Voice Commands guide | not started | HS-52-04, HS-52-05 |
 | HS-52-07 | Closeout: dogfood + final-summary + PR | not started | HS-52-01..06 |
 
 ## Where we are
 
-2026-06-08, on the `phase-52-voice-macros` branch. HS-52-01..04 are done: the dictation
-seam, the `VoiceMacro` schema, the bounded connectors, and the dispatch wiring. **The
-feature works end to end on the Python side** (off by default): say a configured keyword
-and the bounded action fires while nothing is typed; say anything else and you dictate as
-normal, byte-identical. Full suite green (2495 passed). Next is HS-52-05, **the centerpiece**:
-the dedicated `/commands` board where a user creates, tests, and manages macros, built to
-[`design-voice-commands-board.md`](./design-voice-commands-board.md) with screenshot
-evidence. Then docs (06) and closeout (07). Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+2026-06-08, on the `phase-52-voice-macros` branch. HS-52-01..05 are done: the dictation
+seam, the `VoiceMacro` schema, the bounded connectors, the dispatch wiring, and **the
+`/commands` board** (the centerpiece, screenshot-verified). The feature is complete and
+usable end to end: create/test/manage commands on a beautiful board, speak a keyword and the
+bounded action fires. Full suite green (2499 passed). Only HS-52-06 (the Voice Commands user
+guide, which must pass the Phase-51 roadmap-vocabulary guard) and HS-52-07 (closeout: dogfood
++ PR) remain. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) and
+[`design-voice-commands-board.md`](./design-voice-commands-board.md).
 
 ## Open decisions (defaults chosen; flag to change)
 

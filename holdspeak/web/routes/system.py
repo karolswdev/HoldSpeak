@@ -458,6 +458,51 @@ def build_system_router(ctx: WebContext) -> APIRouter:
         except Exception as e:
             return error_500(e, log, "Failed to load settings")
 
+    @router.post("/api/commands/test")
+    async def api_test_voice_command(payload: dict[str, Any]) -> Any:
+        """HS-52-05: fire one voice command action from the board, to verify it.
+
+        Egress kinds (open_url / launch_app / shell) run on the host through the same
+        bounded connector the dispatcher uses (the browser cannot open a terminal). The
+        `type_text` kind types into whatever app has focus when the keyword is spoken, so
+        there is nothing to run here; it returns a preview instead of firing.
+        """
+        from ...config import VoiceMacroAction, VoiceMacroError
+
+        try:
+            action = VoiceMacroAction(
+                kind=str((payload or {}).get("kind", "")),
+                payload=str((payload or {}).get("payload", "")),
+            )
+        except VoiceMacroError as exc:
+            return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+
+        if action.kind == "type_text":
+            return JSONResponse({
+                "ok": True,
+                "tested": False,
+                "preview": action.preview(),
+                "note": "types into the focused app",
+            })
+
+        from ...plugins.actuators import ActuatorProposal
+        from ...plugins.voice_macro_connector import build_voice_macro_connector
+
+        proposal = ActuatorProposal(
+            target="voice_macro",
+            action=action.kind,
+            preview=action.preview(),
+            payload={"kind": action.kind, "payload": action.payload},
+            reversible=False,
+            required_capabilities=(),
+        )
+        try:
+            connector = build_voice_macro_connector(action)
+            result = connector(proposal)
+            return JSONResponse({"ok": True, "tested": True, "result": result})
+        except Exception as exc:  # a failed command is reported inline, not as a 5xx
+            return JSONResponse({"ok": False, "error": f"{type(exc).__name__}: {exc}"})
+
     @router.put("/api/settings")
     async def api_update_settings(payload: dict[str, Any]) -> Any:
         """Persist app settings from web UI."""
