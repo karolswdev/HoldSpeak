@@ -28,7 +28,7 @@ from .device_status import (
     push_segment_to_devices,
 )
 from .desktop_presence import DesktopPresenceHost, build_desktop_presence_host
-from .dictation_runner import run_dictation_pipeline
+from .dictation_runner import dispatch_voice_command, run_dictation_pipeline
 from .hotkey import HotkeyListener
 from .voice_typing import VoiceTypingSession
 from .logging_config import get_logger
@@ -1598,6 +1598,35 @@ class WebRuntime:
                     )
                     return
                 text = self.text_processor.process(text)
+                # HS-52-04: voice command dispatch. A configured, enabled keyword fires
+                # an action instead of being typed; on a match we return early and type
+                # nothing. Off by default and on no match this is inert (byte-identical).
+                voice_command = self._maybe_dispatch_voice_command(text, agent_reply_session)
+                if voice_command is not None:
+                    if voice_command.ok:
+                        self._set_runtime_activity(
+                            "complete",
+                            source="dictation",
+                            label="Command",
+                            detail=voice_command.preview,
+                            last_event="voice_command_fired",
+                            last_error="",
+                        )
+                        self._mark_first_dictation()
+                    else:
+                        with self.state_lock:
+                            self.runtime_status["last_error"] = (
+                                f"Voice command failed: {voice_command.error}"
+                            )
+                        self._set_runtime_activity(
+                            "error",
+                            source="dictation",
+                            label="Command failed",
+                            detail=voice_command.preview,
+                            last_event="voice_command_failed",
+                            last_error=voice_command.error,
+                        )
+                    return
                 self._set_runtime_activity(
                     "processing",
                     source="dictation",
@@ -1717,6 +1746,36 @@ class WebRuntime:
             ),
             daemon=True,
         ).start()
+
+    def _maybe_dispatch_voice_command(
+        self, text: str, agent_reply_session: Any | None = None
+    ) -> Any:
+        # HS-52-04: thin delegate to the carved dispatch seam. Injects the runtime
+        # typer for `type_text` macros and surfaces a matched command as a runtime
+        # activity. Returns a VoiceCommandResult if a command fired (caller types
+        # nothing), else None.
+        def _type(t: str) -> None:
+            if self.typer is not None:
+                self.typer.type_text(
+                    t, target_profile=self._paste_target_profile(agent_reply_session)
+                )
+
+        def _activity(label: str) -> None:
+            self._set_runtime_activity(
+                "processing",
+                source="dictation",
+                label=label,
+                detail=label,
+                last_event="voice_command_match",
+                last_error="",
+            )
+
+        return dispatch_voice_command(
+            text,
+            config=self.config,
+            type_writer=_type,
+            on_activity=_activity,
+        )
 
     def _maybe_run_dictation_pipeline(
         self,

@@ -1,12 +1,21 @@
 # Phase 52 — Voice Command Macros on a carved dispatch seam
 
-**Status:** IN PROGRESS (3/7). Opened 2026-06-08 on user direction, right after Phase 51
+**Status:** IN PROGRESS (4/7). Opened 2026-06-08 on user direction, right after Phase 51
 closed + merged (PR #38). From the [project backlog](../BACKLOG.md): candidate **B**
 (voice macros) re-envisioned by the user as a **voice command launcher**, paired with a
 scoped slice of candidate **E** (carve the dispatch seam out of `web_runtime`).
 
-**Last updated:** 2026-06-08 (HS-52-03 done: the local action connectors, REUSING the
-Phase-38 gated-connector framework. `plugins/voice_macro_connector.py`
+**Last updated:** 2026-06-08 (HS-52-04 done: the dispatch wiring, the feature now works
+end to end. `dictation_runner.dispatch_voice_command` sits at the top of the carved seam:
+off by default, deterministic whole-utterance match, and on a match it fires the bounded
+connector, surfaces "command: <keyword>" as a runtime activity, and types nothing;
+`web_runtime` returns early on a fire (byte-identical when off / no match). Resolved the
+non-meeting persistence wrinkle honestly: the actuator table is meeting-FK'd, so a voice
+fire reuses the guarded execution (connector + gate + bounded manifest) but is audited via
+the activity broadcast + log, not that table (a persistent fire-log is deferred). Full
+suite green (2495 passed; +7). Next: HS-52-05 (the `/commands` board, the centerpiece).
+Earlier: HS-52-03 done: the local action connectors, REUSING the Phase-38 gated-connector
+framework. `plugins/voice_macro_connector.py`
 `build_voice_macro_connector`: `open_url`/`launch_app`/`shell` run bounded subprocesses
 through `build_gated_connector` + a per-macro manifest; `type_text` is a plain local
 connector that types via an injected writer. Tested the safety property end to end: a
@@ -114,22 +123,21 @@ capture, intel, plugins, or synthesis behavior.
 | HS-52-01 | Carve the dictation-dispatch seam out of `web_runtime` (scoped E) | done | none |
 | HS-52-02 | Macro model + config (keyword -> action; `/api/settings`) | done | HS-52-01 |
 | HS-52-03 | Local action connectors on the actuator framework | done | HS-52-02 |
-| HS-52-04 | Dispatch wiring: match -> auto-approved actuator execute | not started | HS-52-01, HS-52-03 |
+| HS-52-04 | Dispatch wiring: match -> auto-approved actuator execute | done | HS-52-01, HS-52-03 |
 | HS-52-05 | Inspect/edit UI: the voice-commands editor | not started | HS-52-02, HS-52-04 |
 | HS-52-06 | Docs: the Voice Commands guide | not started | HS-52-04, HS-52-05 |
 | HS-52-07 | Closeout: dogfood + final-summary + PR | not started | HS-52-01..06 |
 
 ## Where we are
 
-2026-06-08, on the `phase-52-voice-macros` branch. HS-52-01..03 are done: the dictation
-seam (`dictation_runner.py`), the `VoiceMacro` schema + `MacrosConfig` (off by default),
-and the local action connectors on the reused actuator framework (each egress macro bounded
-by its own manifest, capability off by default). Full suite green (2488 passed). Next is
-HS-52-04 (the dispatch wiring: on a keyword match, build the macro's proposal, auto-approve
-it, and execute via the reused `ActuatorExecutor`, injecting the runtime typer for
-`type_text` and resolving the non-meeting persistence context), then the `/commands` board
-(05), docs (06), closeout (07). Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) and
-[`design-voice-commands-board.md`](./design-voice-commands-board.md).
+2026-06-08, on the `phase-52-voice-macros` branch. HS-52-01..04 are done: the dictation
+seam, the `VoiceMacro` schema, the bounded connectors, and the dispatch wiring. **The
+feature works end to end on the Python side** (off by default): say a configured keyword
+and the bounded action fires while nothing is typed; say anything else and you dictate as
+normal, byte-identical. Full suite green (2495 passed). Next is HS-52-05, **the centerpiece**:
+the dedicated `/commands` board where a user creates, tests, and manages macros, built to
+[`design-voice-commands-board.md`](./design-voice-commands-board.md) with screenshot
+evidence. Then docs (06) and closeout (07). Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
 
 ## Open decisions (defaults chosen; flag to change)
 

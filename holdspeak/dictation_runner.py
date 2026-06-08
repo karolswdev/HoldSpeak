@@ -18,13 +18,108 @@ this story only carves it out, adding no new behaviour.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Optional
 
 from .logging_config import get_logger
 
 log = get_logger("dictation_runtime")
+
+
+@dataclass
+class VoiceCommandResult:
+    """Outcome of a fired voice command (HS-52-04).
+
+    ``handled`` means the utterance was a configured command and was therefore NOT
+    typed; ``ok`` is whether the action succeeded. The caller (the transcription path)
+    returns early without typing whenever a result is returned.
+    """
+
+    handled: bool
+    keyword: str = ""
+    kind: str = ""
+    preview: str = ""
+    ok: bool = True
+    error: str = ""
+    result: Optional[dict] = None
+
+
+def dispatch_voice_command(
+    text: str,
+    *,
+    config: Any,
+    runner: Any = None,
+    type_writer: Optional[Callable[[str], None]] = None,
+    platform: Optional[str] = None,
+    on_activity: Optional[Callable[[str], None]] = None,
+) -> Optional[VoiceCommandResult]:
+    """If ``text`` is a configured, enabled voice command, fire it and return the
+    outcome (handled); otherwise return ``None`` so the caller dictates as normal.
+
+    This is the dispatch decision at the top of the dictation seam. It is off by
+    default (macros disabled -> ``None``, byte-identical to no feature), matches the
+    whole utterance deterministically (``VoiceMacro.matches`` selects WHICH macro, never
+    composes one), and fires through the bounded connector (HS-52-03), which reuses the
+    guarded execution (permission gate + per-macro manifest). A configured macro is
+    auto-fired: the config is the consent, so there is no per-fire prompt.
+
+    The actuator *persistence* table is meeting-scoped (``actuator_proposals.meeting_id``
+    references ``meetings(id)``) and a voice fire has no meeting, so the fire is audited
+    via ``on_activity`` + the log rather than that table. The guarded execution (the
+    security-relevant part) is fully reused.
+    """
+    macros_cfg = getattr(getattr(config, "dictation", None), "macros", None)
+    if macros_cfg is None or not bool(getattr(macros_cfg, "enabled", False)):
+        return None
+    macro = next((m for m in getattr(macros_cfg, "items", []) if m.matches(text)), None)
+    if macro is None:
+        return None
+
+    from .plugins.actuators import ActuatorProposal
+    from .plugins.voice_macro_connector import build_voice_macro_connector
+
+    action = macro.action
+    preview = action.preview()
+    if on_activity is not None:
+        try:
+            on_activity(f"command: {macro.keyword}")
+        except Exception:  # an activity-broadcast hiccup must never block the command
+            pass
+
+    proposal_view = ActuatorProposal(
+        target="voice_macro",
+        action=action.kind,
+        preview=preview,
+        payload={"kind": action.kind, "payload": action.payload},
+        reversible=False,
+        required_capabilities=(),
+    )
+    try:
+        connector = build_voice_macro_connector(
+            action, runner=runner, type_writer=type_writer, platform=platform
+        )
+        result = connector(proposal_view)
+        log.info("voice command fired: %r -> %s", macro.keyword, preview)
+        return VoiceCommandResult(
+            handled=True,
+            keyword=macro.keyword,
+            kind=action.kind,
+            preview=preview,
+            ok=True,
+            result=result if isinstance(result, dict) else {"result": result},
+        )
+    except Exception as exc:
+        log.warning("voice command %r failed: %s", macro.keyword, exc)
+        return VoiceCommandResult(
+            handled=True,
+            keyword=macro.keyword,
+            kind=action.kind,
+            preview=preview,
+            ok=False,
+            error=f"{type(exc).__name__}: {exc}",
+        )
 
 
 def run_dictation_pipeline(

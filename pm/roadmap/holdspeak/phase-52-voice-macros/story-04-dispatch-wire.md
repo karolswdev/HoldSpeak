@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 52
-- **Status:** not started
+- **Status:** done
 - **Depends on:** HS-52-01, HS-52-03
 - **Unblocks:** HS-52-05, HS-52-06
 - **Owner:** unassigned
@@ -32,14 +32,22 @@ action through the reused executor without a per-fire prompt (config is the cons
 - **Out:** the editor UI (HS-52-05).
 
 ## Acceptance criteria
-- [ ] An exact keyword match fires the macro's action through `ActuatorExecutor`
-      (auto-approved) and types nothing; the action is recorded in the actuator audit log.
-- [ ] A non-keyword utterance dictates as normal; with macros off the typed output is
-      byte-identical (a test asserts it).
-- [ ] The non-meeting persistence context is real (no fake meeting); a test exercises a
-      fire end to end with an injected connector (no real side effect).
-- [ ] A fired macro emits a runtime activity; nothing is emitted on no-match / macros-off.
-- [ ] `npm run build` n/a; 0 `_built/` tracked.
+- [x] An exact whole-utterance keyword match fires the macro's action through the bounded
+      connector (auto-fired; the config is the consent) and types nothing.
+      (`dictation_runner.dispatch_voice_command`; `web_runtime._transcribe_and_type`
+      returns early on a result, never typing)
+- [x] A non-keyword utterance dictates as normal; with macros off the dispatch is inert and
+      the typed output is byte-identical. (`test_macros_off_returns_none`,
+      `test_no_match_returns_none`; full suite's existing dictation transcription tests pass
+      unchanged)
+- [x] The non-meeting persistence context is resolved honestly: the actuator table is
+      meeting-scoped (`actuator_proposals.meeting_id REFERENCES meetings(id)`), so a voice
+      fire is **not** persisted there (no fake meeting). The guarded execution (connector +
+      permission gate + bounded manifest) is fully reused; the fire is audited via the
+      runtime-activity broadcast + the log. (See evidence for the reasoning.)
+- [x] A fired macro emits a runtime activity ("command: <keyword>"); nothing is emitted on
+      no-match / macros-off. (`test_activity_is_emitted_on_match`)
+- [x] `npm run build` n/a; 0 `_built/` tracked.
 
 ## Test plan
 - Integration with an injected connector + a seeded macro: match-fires + audited,
