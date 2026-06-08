@@ -118,7 +118,7 @@ def _capture(suffix: str, *, enabled: bool, click_dictate: bool = False) -> None
                 if click_dictate:
                     # Click the first record card's "Dictate with this" so the
                     # selection-pin renders; the screenshot captures the full flow.
-                    page.locator(".activity-nudge[data-kind='record'] .btn-dictate").first.click()
+                    page.locator(".activity-nudge[data-kind='record'] .an-btn-primary").first.click()
                     page.wait_for_selector("#activity-nudges-pin:not([hidden])", timeout=2000)
                     page.wait_for_timeout(200)
                 # Crop tight to the nudge surface for a clean record.

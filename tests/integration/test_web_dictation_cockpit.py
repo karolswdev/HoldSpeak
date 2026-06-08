@@ -156,21 +156,28 @@ def test_dictation_has_focus_safe_activity_nudges() -> None:
     """
     page = _page()
     js = _app_js()
-    # Static shell — region wrapper + the list mount + the selection pin.
+    # Static hero shell — region wrapper + the list mount + the selection pin.
     assert 'id="activity-nudges"' in page
     assert 'role="region"' in page
     assert 'id="activity-nudges-list"' in page
     assert 'id="activity-nudges-pin"' in page
     assert 'id="activity-nudges-pin-clear"' in page
-    # The card CSS is in the is:global block (the JS-injected-DOM rule).
+    # Signal hero: eyebrow + display title + trust strip + activity-nudge card.
+    assert "an-eyebrow" in page
+    assert "an-title" in page
+    assert "an-trust" in page
     assert ".activity-nudge {" in page
-    assert ".activity-nudge-cite" in page
-    # JS: the loader, the citation builder, the pin store, and the API verbs.
+    # Chip-style citations and a real primary CTA (no flat ghost buttons).
+    assert ".an-chip-entity" in page
+    assert ".an-btn-primary" in page
+    # JS: the loader, the chip + glyph builders, the pin store, and the API verbs.
     assert "maybeShowActivityNudges" in js
     assert "/api/activity/nudges" in js
     assert "/dismiss" in js
     assert "anSavePin" in js
     assert "anRenderCards" in js
+    assert "anChip" in js
+    assert "AN_SVG" in js
     # The card is a focus-safe note, not a modal.
     assert 'card.setAttribute("role", "note")' in js
     # The dictation bundle still calls no .focus().
