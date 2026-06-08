@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 52
-- **Status:** not started
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-52-02, HS-52-03, HS-52-04, HS-52-05, HS-52-06, HS-52-07
 - **Owner:** unassigned
@@ -28,13 +28,17 @@ home. Carve the seam first so the feature lands clean, not deeper in the god-obj
   `web_runtime` beyond the dictation path.
 
 ## Acceptance criteria
-- [ ] The dictation orchestration lives in its own module; `web_runtime` delegates to it;
-      the god-object shrinks by the moved region.
-- [ ] Typed output byte-identical: `uv run pytest -q --ignore=tests/e2e/test_metal.py`
-      green with no behavioral test edits.
-- [ ] A unit test calls the extracted entry directly and asserts the same result the
-      inline path produced.
-- [ ] `npm run build` n/a; 0 `_built/` tracked.
+- [x] The dictation orchestration lives in its own module; `web_runtime` delegates to it;
+      the god-object shrinks by the moved region. (`holdspeak/dictation_runner.py`
+      `run_dictation_pipeline`; `web_runtime.py` 2341 -> 2255 lines, the method is now a
+      thin delegate)
+- [x] Typed output byte-identical: `uv run pytest -q --ignore=tests/e2e/test_metal.py`
+      -> 2460 passed, 17 skipped (was 2454; +6 is the new unit tests, no behavioral edits).
+- [x] A unit test calls the extracted entry directly and asserts the same result the
+      inline path produced. (`tests/unit/test_dictation_runner.py`: disabled/no-config/
+      error/not-loaded return the text unchanged, happy path returns `final_text`, and the
+      `WebRuntime` method delegates)
+- [x] `npm run build` n/a (no UI bundle touched); 0 `_built/` tracked.
 
 ## Test plan
 - Full suite (the existing dictation integration/e2e tests are the byte-identical guard)
