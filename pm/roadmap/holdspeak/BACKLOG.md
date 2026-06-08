@@ -8,9 +8,10 @@ flips to "scaffolded" then "shipped".
 Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
-**Last updated:** 2026-06-08 (candidate **B** scaffolded as Phase 52, voice macros,
-paired with a scoped slice of **E** (carve the dictation-execution seam out of
-`web_runtime`); a feature shipped with a motivated refactor under one thesis.
+**Last updated:** 2026-06-08 (candidate **B** scaffolded as Phase 52, re-envisioned by
+the user as a voice command launcher (spoken keyword fires a real system action via the
+reused actuator executor), paired with a scoped slice of **E** (carve the dispatch seam
+out of `web_runtime`); a feature shipped with a motivated refactor under one thesis.
 Candidate **H** shipped as Phase 51. Created at Phase 48 close.)
 
 ## Why not one mega-phase
@@ -43,16 +44,17 @@ artifact that never changes the user's next action is decoration.
 *Lands on:* the meeting/history surface + the actuator system (P37/P38) for
 "actions -> issues".
 
-### B. Voice macros / command grammar — scaffolded as Phase 52 (with a scoped E slice)
-A small, visible, deterministic spoken-command layer alongside the LLM rewrite:
-"new paragraph", "bullet list", "code block", "send it", "copy only", plus
-user-defined phrases ("standup update", "bug report template"). Inspectable and
-editable in the UI, not LLM magic. Stays on the daily-dictation north star
-(Future A). Scaffolded as [phase-52](./phase-52-voice-macros/), paired with a scoped
-slice of **E**: the feature lands on a dictation-execution seam carved out of the
-`web_runtime` god-object, so a meaningful codebase improvement ships with the
-feature under one thesis. Note: LLM-flavored items ("make it concise") are out of the
-deterministic grammar by design; that is the existing rewrite pipeline, not a macro.
+### B. Voice macros / command grammar — scaffolded as Phase 52 (voice command launcher + scoped E slice)
+Originally framed as a deterministic text-transform layer inside dictation. The user
+re-envisioned it (2026-06-08) as a **voice command launcher**: map a spoken keyword to
+a real system action (open a URL, launch an app, run a shell command, type a snippet)
+in the web UI; speaking the keyword fires the action instead of typing. Deterministic
+and inspectable, not LLM magic. Scaffolded as [phase-52](./phase-52-voice-macros/),
+which **reuses the actuator guarded executor** (Phase 37/38) with new local connectors
+rather than reinventing execution, and pairs the feature with a scoped slice of **E**
+(carve the dispatch seam out of the `web_runtime` god-object). Safety model (user's
+call): a configured macro is auto-approved (configuring is consent), off by default,
+deterministic and bounded by a per-macro permission manifest, every fire audited.
 
 ### C. Release-readiness gate — shipped as Phase 50 (CLOSED 7/7)
 The DB is intentionally `SCHEMA_VERSION = 1`, greenfield, **not release-stable**.

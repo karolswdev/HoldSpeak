@@ -7,27 +7,28 @@
 - **Owner:** unassigned
 
 ## Problem
-The phase needs a verified exit: proof that a spoken command yields a deterministic
-action, that normal dictation is byte-identical with macros off, and that the carve did
-not change behavior. Captured as a dogfood, and merged.
+The phase needs a verified exit: proof that a spoken keyword fires its configured action
+through the reused executor, that a normal utterance still dictates byte-identical with
+macros off, and that the carve changed no behavior. Captured as a dogfood, and merged.
 
 ## Scope
 - **In:**
-  - A **dogfood** proving both paths (no real mic required; drive the dictation entry
-    directly): with macros off, a normal utterance types byte-identical text; with macros
-    on, a built-in command (e.g. "new paragraph") yields its deterministic action and
-    short-circuits the LLM, while a non-command utterance still flows through the rewrite
-    unchanged. Print PASS.
-  - `final-summary.md`; flip the phase to CLOSED; update the project README + phase
-    status per the operating cadence; flip the [backlog](../BACKLOG.md) candidate B row to
-    shipped and record that a scoped slice of candidate E (the dictation-seam carve)
-    landed with it; **open a PR to `main`** and merge on green CI.
+  - A **dogfood** (no real mic; drive the dispatch entry directly): with a configured
+    `type_text` or `shell` macro (e.g. an `echo` into a temp file) and an `open_url` macro,
+    speaking/feeding the keyword fires the action through `ActuatorExecutor` and records an
+    audit row, while a non-keyword utterance dictates unchanged; with macros off the typed
+    output is byte-identical. Use injected connectors / a temp target so the dogfood has no
+    destructive side effect. Print PASS.
+  - `final-summary.md`; flip the phase to CLOSED; update the project README + phase status
+    per the operating cadence; flip the [backlog](../BACKLOG.md) candidate B row to shipped
+    and record that a scoped slice of candidate E (the dispatch-seam carve) landed with it;
+    **open a PR to `main`** and merge on green CI.
 - **Out:** new feature work; the full `web_runtime` decomposition (candidate E stays a
   watch item).
 
 ## Acceptance criteria
-- [ ] A green dogfood transcript proving deterministic-command-on and
-      byte-identical-off (plus non-command passthrough). (`dogfood-transcript.txt`,
+- [ ] A green dogfood transcript proving keyword-fires-action (audited) and
+      byte-identical-off (plus non-keyword passthrough). (`dogfood-transcript.txt`,
       RESULT: PASS)
 - [ ] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py`);
       `cd web && npm run build` clean; 0 `_built/` tracked.
@@ -36,9 +37,10 @@ not change behavior. Captured as a dogfood, and merged.
       green CI.
 
 ## Test plan
-- Full suite + the phase dogfood; manual read of the Voice Macros guide.
+- Full suite + the phase dogfood; manual read of the Voice Commands guide.
 
 ## Notes / open questions
 - Mirror the Phase-50/51 closeout pattern (dogfood script + final-summary + PR).
-- Record in the final summary that full candidate E (the `web_runtime` decomposition)
-  remains a backlog "watch" item; this phase took only the dictation slice.
+- The dogfood must not run a destructive command; use a temp target and/or injected
+  connectors. Record in the final summary that full candidate E remains a backlog watch
+  item; this phase took only the dispatch slice.
