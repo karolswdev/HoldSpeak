@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 51
-- **Status:** not started
+- **Status:** done
 - **Depends on:** HS-51-02
 - **Unblocks:** HS-51-04, HS-51-05
 - **Owner:** unassigned
@@ -33,14 +33,20 @@ is a snapshot, not a contract.
   the internal corpus; new product behavior.
 
 ## Acceptance criteria
-- [ ] A guard test fails on a user-facing doc containing `Phase <N>` / `HS-NN-NN` /
+- [x] A guard test fails on a user-facing doc containing `Phase <N>` / `HS-NN-NN` /
       `PMO` / the chosen process words, and passes on the post-scrub tree.
-- [ ] The scan scope excludes `docs/internal/**`, `docs/evidence/**`, and
-      `pm/roadmap/**`; a sanity test proves the guard scans real user-facing files.
-- [ ] The patterns do not match `MIR-01` / `DIR-01` or product nouns (verified by a
+      (`test_no_user_facing_doc_leaks_roadmap_vocabulary`; proven red on a planted
+      lowercase "phase 99" in `USER_GUIDE.md`, green after revert)
+- [x] The scan scope excludes `docs/internal/**`, `docs/evidence/**`,
+      `docs/assets/**`, and `pm/roadmap/**`; a sanity test proves the guard scans
+      real user-facing files. (`_user_facing_docs()` = README + non-recursive
+      `docs/*.md`; `test_roadmap_vocab_guard_scans_real_user_facing_docs`)
+- [x] The patterns do not match `MIR-01` / `DIR-01` or product nouns (verified by a
       kept-term not tripping the guard).
-- [ ] `uv run pytest -q -k "doc_drift or doc_guard"` green.
-- [ ] `npm run build` n/a (no UI bundle touched); 0 `_built/` tracked.
+      (`test_roadmap_vocab_pattern_is_narrow_enough_to_keep_spec_names`)
+- [x] Case-insensitive (the lowercase leaks HS-51-02 caught proved this is required).
+- [x] `uv run pytest -q tests/unit/test_doc_drift_guard.py` -> 8 passed.
+- [x] `npm run build` n/a (no UI bundle touched); 0 `_built/` tracked.
 
 ## Test plan
 - `uv run pytest -q -k "doc_drift or doc_guard"`.
