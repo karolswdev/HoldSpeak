@@ -128,6 +128,10 @@ table activity_meeting_candidates: CREATE TABLE activity_meeting_candidates (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 )
+table activity_nudge_dismissals: CREATE TABLE activity_nudge_dismissals (
+    nudge_key TEXT PRIMARY KEY,
+    dismissed_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
 table activity_privacy_settings: CREATE TABLE activity_privacy_settings (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     enabled INTEGER NOT NULL DEFAULT 1,

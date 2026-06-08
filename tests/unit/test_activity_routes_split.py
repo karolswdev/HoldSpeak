@@ -50,6 +50,12 @@ _EXPECTED_ROUTES = {
     ("/api/plugin-jobs/process", "POST"),
     ("/api/plugin-jobs/{job_id}/retry-now", "POST"),
     ("/api/plugin-jobs/{job_id}/cancel", "POST"),
+    # Phase 53 (HS-53-02): activity pre-briefing nudges.
+    ("/api/activity/nudges", "GET"),
+    ("/api/activity/nudges/{nudge_id}/dismiss", "POST"),
+    # Phase 53 (HS-53-07): "Dictate with this" parks/clears a server-side selection.
+    ("/api/activity/nudges/select", "POST"),
+    ("/api/activity/nudges/select/clear", "POST"),
 }
 
 
@@ -70,4 +76,4 @@ def test_activity_route_table_is_unchanged_after_split() -> None:
 
 
 def test_activity_route_count_is_stable() -> None:
-    assert len(_router_route_set()) == len(_EXPECTED_ROUTES) == 38
+    assert len(_router_route_set()) == len(_EXPECTED_ROUTES) == 42

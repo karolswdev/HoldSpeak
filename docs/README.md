@@ -28,6 +28,11 @@ intelligent-typing layer. This page is the map. Pick a journey.
   Say a keyword while dictating and HoldSpeak opens a URL, launches an app, runs a
   shell command, or types a snippet instead of typing the words. Off by default, you
   configure every command, and each one is limited to exactly the action you gave it.
+- **[Activity Pre-Briefing](./ACTIVITY_PREBRIEFING.md)**: a quiet read of what you
+  touched recently, above the dictation cockpit. At most three source-cited cards,
+  dismissible, never acting on their own. One action pins a record so your next
+  dictation can use it as context. Gated by the activity tracking toggle: off means
+  no cards.
 - **[The learning loop: journal, correct, see what it learned, replay](./INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay)**:
   the local-only loop that gets better at your voice. Fix a misfire in one tap, see
   the honest "learned from N similar" count in the "What HoldSpeak learned" digest,

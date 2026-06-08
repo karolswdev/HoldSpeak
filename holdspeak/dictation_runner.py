@@ -189,7 +189,16 @@ def run_dictation_pipeline(
             target_profile_override_for_agent(agent_reply_session)
             or getattr(pipeline_cfg, "target_profile_override", "auto")
         )
-        activity = build_activity_context(limit=20, refresh=False).to_dict()
+        # HS-53-07: the pre-briefing loop closes here. A "Dictate with this"
+        # click parked a record id; consume it (one-shot, recency-bounded) so the
+        # selected ActivityRecord is pinned at records[0] and named to the model.
+        # No pending pin -> selected_record_id is None -> byte-identical default.
+        from holdspeak.dictation_selection import consume_selected_record
+
+        selected_record_id = consume_selected_record()
+        activity = build_activity_context(
+            limit=20, refresh=False, selected_record_id=selected_record_id
+        ).to_dict()
         target_hints = collect_active_target_hints()
         target_profile = detect_target_profile_with_override(target_hints, target_override)
         target_profile = apply_target_correction(

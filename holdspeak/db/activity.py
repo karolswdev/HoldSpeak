@@ -469,6 +469,49 @@ class ActivityRepository(BaseRepository):
             )
         return self.get_activity_privacy_settings()
 
+    def get_activity_record(self, record_id: int) -> Optional[ActivityRecord]:
+        """Phase 53 (HS-53-03): fetch a single activity record by id.
+
+        Used by the dictation-context override so a nudge-selected record can be
+        pinned without re-importing browser history. Returns ``None`` for an
+        unknown id.
+        """
+        try:
+            clean_id = int(record_id)
+        except (TypeError, ValueError):
+            return None
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM activity_records WHERE id = ?",
+                (clean_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            return self._row_to_activity_record(row)
+
+    def list_dismissed_nudge_keys(self) -> set[str]:
+        """Phase 53: persisted nudge dismissals (HS-53-01)."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT nudge_key FROM activity_nudge_dismissals"
+            ).fetchall()
+            return {str(row["nudge_key"]) for row in rows}
+
+    def dismiss_nudge(self, nudge_key: str) -> None:
+        """Phase 53: persist a nudge dismissal so it stays dismissed (HS-53-01)."""
+        clean = str(nudge_key or "").strip()
+        if not clean:
+            raise ValueError("nudge_key is required")
+        with self._connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO activity_nudge_dismissals (nudge_key, dismissed_at)
+                VALUES (?, ?)
+                ON CONFLICT(nudge_key) DO UPDATE SET dismissed_at = excluded.dismissed_at
+                """,
+                (clean, datetime.now().isoformat()),
+            )
+
     def list_activity_domain_rules(self) -> list[dict[str, str]]:
         """List domain allow/deny rules for activity ingestion."""
         with self._connection() as conn:

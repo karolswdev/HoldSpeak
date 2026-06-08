@@ -563,6 +563,14 @@ ON activity_project_rules(enabled, priority DESC, created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_activity_project_rules_project
 ON activity_project_rules(project_id, priority DESC);
 
+-- Phase 53: persisted dismissals for activity pre-briefing nudges.
+-- A nudge_key is deterministic (e.g. "window:<since_iso>", "record:<id>") so a
+-- dismissal survives recomputation across reloads.
+CREATE TABLE IF NOT EXISTS activity_nudge_dismissals (
+    nudge_key TEXT PRIMARY KEY,
+    dismissed_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Assisted activity enrichment connector state and local annotations
 CREATE TABLE IF NOT EXISTS activity_enrichment_connectors (
     id TEXT PRIMARY KEY,
