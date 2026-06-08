@@ -144,3 +144,41 @@ def test_agent_prompt_is_repo_aware_and_lists_the_hs_files() -> None:
     # it tells the agent which .hs/ files to author.
     for name in ("instructions.md", "context.md", "terms.md", "workflows.md", "targets.md"):
         assert name in js
+
+
+def test_dictation_has_focus_safe_activity_nudges() -> None:
+    """HS-53-04: the activity pre-briefing nudges — a focus-safe region with a
+    JS-injected list, a citation-rich card pattern, and a selection pin.
+
+    The shell is static markup; the list items are runtime-rendered, so their
+    CSS lives in `<style is:global>` (Astro scoped CSS dies on JS-injected DOM)
+    and a `role="region"` / `role="note"` keeps focus put.
+    """
+    page = _page()
+    js = _app_js()
+    # Static shell — region wrapper + the list mount + the selection pin.
+    assert 'id="activity-nudges"' in page
+    assert 'role="region"' in page
+    assert 'id="activity-nudges-list"' in page
+    assert 'id="activity-nudges-pin"' in page
+    assert 'id="activity-nudges-pin-clear"' in page
+    # The card CSS is in the is:global block (the JS-injected-DOM rule).
+    assert ".activity-nudge {" in page
+    assert ".activity-nudge-cite" in page
+    # JS: the loader, the citation builder, the pin store, and the API verbs.
+    assert "maybeShowActivityNudges" in js
+    assert "/api/activity/nudges" in js
+    assert "/dismiss" in js
+    assert "anSavePin" in js
+    assert "anRenderCards" in js
+    # The card is a focus-safe note, not a modal.
+    assert 'card.setAttribute("role", "note")' in js
+    # The dictation bundle still calls no .focus().
+    astro = (
+        Path(__file__).resolve().parents[2]
+        / "holdspeak" / "static" / "_built" / "_astro"
+    )
+    dict_js = list(astro.glob("dictation.astro_astro_type_script*.js"))
+    if dict_js:
+        bundle = "\n".join(p.read_text() for p in dict_js)
+        assert ".focus()" not in bundle

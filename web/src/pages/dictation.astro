@@ -55,6 +55,33 @@ import CommandPreview from "../components/CommandPreview.astro";
       <button class="kn-nudge-off" id="kn-nudge-off" type="button" title="Stop suggesting this on any project">Stop suggesting</button>
     </div>
 
+    {/* HS-53-04: activity pre-briefing nudges. JS-rendered into #activity-nudges;
+        each card is role="note", never steals focus, source-cited from the
+        ActivityRecord that produced it. Hidden until /api/activity/nudges
+        returns at least one nudge AND activity tracking is on. */}
+    <section
+      id="activity-nudges"
+      class="activity-nudges"
+      role="region"
+      aria-label="Activity pre-briefing"
+      hidden
+    >
+      <header class="an-header">
+        <span class="an-glyph" aria-hidden="true">●</span>
+        <h2 class="an-title">Pre-briefing</h2>
+        <span class="an-sub">From your local activity</span>
+      </header>
+      <div id="activity-nudges-list" class="an-list" aria-live="polite"></div>
+      <div id="activity-nudges-pin" class="an-pin" role="status" aria-live="polite" hidden>
+        <span class="an-pin-glyph" aria-hidden="true">↵</span>
+        <p class="an-pin-text">
+          <strong>Your next dictation will include</strong>
+          <span id="activity-nudges-pin-entity" class="an-pin-entity"></span>
+        </p>
+        <button class="btn an-pin-clear" id="activity-nudges-pin-clear" type="button">Clear</button>
+      </div>
+    </section>
+
     <div class="scope-row cockpit-tabs" role="tablist" aria-label="Dictation sections">
       <button id="section-readiness" data-section="readiness" type="button" role="tab">Readiness</button>
       <button id="section-blocks" data-section="blocks" class="active" type="button" role="tab">Blocks</button>
@@ -2759,5 +2786,156 @@ import CommandPreview from "../components/CommandPreview.astro";
   @media (max-width: 640px) {
     .replay-row { grid-template-columns: 1fr; }
     .replay-arrow { display: none; }
+  }
+
+  /* ===== HS-53-04: Activity Pre-Briefing nudges ===================== */
+  /* The card list inside #activity-nudges-list is rendered at runtime by
+     dictation-app.js, so every rule here must be global (Astro scoped CSS
+     dies on JS-injected DOM). The outer shell is in the static template; we
+     style it here too to keep the whole feature in one block. */
+  .activity-nudges {
+    margin: var(--space-3) 0 var(--space-4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-3);
+    background:
+      radial-gradient(140% 120% at 100% 0%,
+        color-mix(in srgb, var(--accent) 8%, transparent) 0%, transparent 60%),
+      var(--surface-1);
+    box-shadow: var(--elev-1);
+    padding: var(--space-3) var(--space-4) var(--space-4);
+  }
+  .activity-nudges[hidden] { display: none; }
+  .activity-nudges .an-header {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px dashed var(--border-subtle);
+  }
+  .activity-nudges .an-glyph {
+    color: var(--accent);
+    font-size: 0.65em;
+    line-height: 1;
+    transform: translateY(-1px);
+  }
+  .activity-nudges .an-title {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .activity-nudges .an-sub {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-mono);
+  }
+  .activity-nudges .an-list {
+    display: grid;
+    gap: var(--space-2);
+  }
+  .activity-nudge {
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-3);
+    border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+  }
+  .activity-nudge[data-kind="window"] {
+    border-left-color: color-mix(in srgb, var(--accent) 75%, transparent);
+    background:
+      linear-gradient(90deg,
+        color-mix(in srgb, var(--accent) 6%, transparent) 0%, transparent 35%),
+      var(--surface-2);
+  }
+  .activity-nudge-glyph {
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--accent);
+    font-size: 0.95em;
+    font-weight: 600;
+    font-family: var(--font-mono);
+  }
+  .activity-nudge-body {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: grid;
+    gap: var(--space-1);
+  }
+  .activity-nudge-title {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+    color: var(--text);
+    font-weight: 600;
+  }
+  .activity-nudge-summary {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+  }
+  .activity-nudge-cite {
+    margin: 0;
+    color: var(--text-faint);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-mono);
+    word-break: break-word;
+  }
+  .activity-nudge-cite-entity { color: var(--accent); font-weight: 600; }
+  .activity-nudge-cite-sep { color: var(--text-faint); padding: 0 var(--space-1); }
+  .activity-nudge-actions {
+    flex: 0 0 auto;
+    width: 11rem;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .activity-nudge-actions .btn { width: 100%; justify-content: center; }
+  .activity-nudge-actions .btn-dismiss {
+    background: transparent;
+    color: var(--text-faint);
+    border: 1px solid var(--border-subtle);
+  }
+  .activity-nudge-actions .btn-dismiss:hover { color: var(--text-muted); }
+
+  /* The selection pin (after "Dictate with this"). */
+  .activity-nudges .an-pin {
+    margin-top: var(--space-3);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--accent) 10%, var(--surface-2));
+  }
+  .activity-nudges .an-pin[hidden] { display: none; }
+  .activity-nudges .an-pin-glyph { color: var(--accent); font-family: var(--font-mono); }
+  .activity-nudges .an-pin-text { margin: 0; flex: 1; color: var(--text); font-size: var(--font-size-sm); }
+  .activity-nudges .an-pin-text strong { color: var(--text); }
+  .activity-nudges .an-pin-entity { font-family: var(--font-mono); color: var(--accent); padding-left: var(--space-1); }
+  .activity-nudges .an-pin-clear { flex: 0 0 auto; }
+
+  @media (max-width: 760px) {
+    .activity-nudge {
+      flex-wrap: wrap;
+    }
+    .activity-nudge-body { flex-basis: 100%; }
+    .activity-nudge-actions {
+      width: 100%;
+      flex-direction: row;
+    }
   }
 </style>

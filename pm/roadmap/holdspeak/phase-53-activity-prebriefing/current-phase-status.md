@@ -1,17 +1,21 @@
 # Phase 53 — Activity Pre-Briefing
 
-**Status:** IN PROGRESS (3/6). Opened 2026-06-08 on user direction, right after Phase 52
+**Status:** IN PROGRESS (4/6). Opened 2026-06-08 on user direction, right after Phase 52
 closed + merged (PR #39). From the [project backlog](../BACKLOG.md): candidate **F**
 (local activity as pre-briefing fuel), picked by the user as the next phase.
 
-**Last updated:** 2026-06-08 (HS-53-03 done: dictate-with-this-as-context. The
-`build_activity_context` / `ActivityContextProvider` seam gained a `selected_record_id`
-override that pins the chosen `ActivityRecord` at `records[0]` (fetching it via the new
-`ActivityRepository.get_activity_record(id)` if it has fallen off the default window).
-The default daily path is byte-identical — `selected_record_id` is `None` and the bundle
-JSON shape is unchanged; the existing activity-context tests still pass. 8 new unit
-tests cover the pin, the off-window fetch, the unknown-id no-op, the provider's two
-input shapes, and the garbage-input guard. Full suite green at 2522 passed.)
+**Last updated:** 2026-06-08 (HS-53-04 done: the nudge UI on the dictation surface. A
+`role="region"` "Pre-briefing" block above the cockpit tabs hosts JS-rendered
+`role="note"` cards with an accented glyph, the title/summary, and a citation line that
+names the entity (accent-colored) + browser/profile + last-seen date. Each record card
+offers **Dictate with this** + **Dismiss**; the windowed-summary card offers Dismiss
+only. **Dictate with this** sets a localStorage pin and renders a visible confirmation
+banner — *"Your next dictation will include &lt;entity&gt;"* with a **Clear**. The shell
+is hidden until `/api/activity/nudges` returns at least one nudge AND
+`activity_enabled !== false`. Three PNGs committed: `nudges-populated.png`,
+`nudges-pinned.png`, `nudges-off.png`. Layout bug from the first grid pass caught and
+fixed by swapping to flexbox. Page-content lock test added. `npm run build` clean; 0
+`_built/` tracked. Full suite at 2523 passed.)
 
 ## The thesis — why this phase
 
@@ -83,24 +87,22 @@ own), local. No change to meeting capture, intel, plugins, or synthesis behaviou
 | HS-53-01 | The nudge engine + dismissal store | done | none |
 | HS-53-02 | The nudges API | done | HS-53-01 |
 | HS-53-03 | Dictate with this as context | done | HS-53-01 |
-| HS-53-04 | The nudge UI (dictation surface) | not started | HS-53-02, HS-53-03 |
+| HS-53-04 | The nudge UI (dictation surface) | done | HS-53-02, HS-53-03 |
 | HS-53-05 | Docs: the pre-briefing guide | not started | HS-53-04 |
 | HS-53-06 | Closeout: dogfood + final-summary + PR | not started | HS-53-01..05 |
 
 ## Where we are
 
-HS-53-01 + HS-53-02 + HS-53-03 shipped on 2026-06-08. The engine
-(`holdspeak/activity_nudges.py`) computes source-cited, dismissible nudges; the HTTP
-surface (`holdspeak/web/routes/activity/nudges.py`) exposes them at
-`/api/activity/nudges`; the dictation-context path
-(`holdspeak/activity_context.py`) takes an explicit `selected_record_id` so a
-nudge-selected record is pinned at `records[0]` for the rewrite stage, with the default
-no-selection path proven byte-identical. Full suite at **2522 passed, 17 skipped**.
+HS-53-01 → HS-53-04 shipped on 2026-06-08. The engine + the HTTP surface + the
+dictation-context override + the UI card stack on the dictation cockpit all wired. Full
+suite at **2523 passed, 17 skipped**; `npm run build` clean; three screenshots
+(`screenshots/nudges-populated.png`, `nudges-pinned.png`, `nudges-off.png`).
 
-Next is **HS-53-04 — the nudge UI**: a dismissible, source-cited card on the dictation
-surface (clone of `#kn-nudge` at `web/src/pages/dictation.astro:42`) with "Dictate with
-this" + "Dismiss", driven by `/api/activity/nudges`, JS-injected (so any CSS must be
-`<style is:global>`), screenshot-verified.
+Next is **HS-53-05 — the user guide**: a short product-tense doc that names
+pre-briefing nudges, the local + source-cited + dismissible + never-acts contract, how
+the "Dictate with this" selection pin works, and how the activity privacy toggle gates
+the whole feature. Must pass the Phase-51 roadmap-vocabulary guard and the `humanizer`
+pass; linked from the docs index.
 
 ## Open decisions (defaults chosen; flag to change)
 

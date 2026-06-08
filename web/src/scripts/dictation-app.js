@@ -2592,6 +2592,177 @@ async function maybeShowKnNudge() {
   el.hidden = false;
 }
 
+// ── HS-53-04: Activity Pre-Briefing nudges ──────────────────────────
+// Render the source-cited nudges from `/api/activity/nudges` as quiet,
+// dismissible cards above the cockpit. Two actions per card:
+//   * "Dictate with this" — pins the selected ActivityRecord id in
+//     localStorage so the dictation pipeline includes it as context
+//     (HS-53-03 wired the override on the server). A visible pin
+//     confirms what the next dictation will carry, with a "Clear".
+//   * "Dismiss"           — POST /api/activity/nudges/{key}/dismiss,
+//     remove the card; dismissal persists server-side (the engine
+//     drops dismissed keys on the next GET).
+// role="note" / role="region" — never steals focus.
+const AN_PIN_KEY = "holdspeak.activityNudgePin";
+
+function anSavePin(payload) {
+  try {
+    if (payload) {
+      localStorage.setItem(AN_PIN_KEY, JSON.stringify(payload));
+    } else {
+      localStorage.removeItem(AN_PIN_KEY);
+    }
+  } catch (e) { /* ignore quota / disabled storage */ }
+}
+
+function anReadPin() {
+  try {
+    const raw = localStorage.getItem(AN_PIN_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
+function anEntityLabel(citation) {
+  if (!citation) return "this page";
+  if (citation.entity_type && citation.entity_id) {
+    return `${citation.entity_type} ${citation.entity_id}`;
+  }
+  return citation.title || citation.url || "this page";
+}
+
+function anLastSeenLabel(citation) {
+  if (!citation || !citation.last_seen_at) return "recently";
+  const parsed = new Date(citation.last_seen_at);
+  if (Number.isNaN(parsed.getTime())) return "recently";
+  return parsed.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function anRenderPin() {
+  const pinHost = document.getElementById("activity-nudges-pin");
+  const entityEl = document.getElementById("activity-nudges-pin-entity");
+  if (!pinHost || !entityEl) return;
+  const pin = anReadPin();
+  if (!pin) {
+    pinHost.hidden = true;
+    entityEl.textContent = "";
+    return;
+  }
+  entityEl.textContent = pin.entity_label || "this page";
+  pinHost.hidden = false;
+}
+
+function anRenderCards(nudges) {
+  const list = document.getElementById("activity-nudges-list");
+  const shell = document.getElementById("activity-nudges");
+  if (!list || !shell) return;
+  list.innerHTML = "";
+  if (!nudges || nudges.length === 0) {
+    shell.hidden = anReadPin() == null;
+    return;
+  }
+  shell.hidden = false;
+  for (const nudge of nudges) {
+    const card = document.createElement("article");
+    card.className = "activity-nudge";
+    card.dataset.kind = nudge.kind || "record";
+    card.dataset.key = nudge.key;
+    card.setAttribute("role", "note");
+    card.setAttribute("aria-label", nudge.title || "Activity nudge");
+
+    const glyph = document.createElement("div");
+    glyph.className = "activity-nudge-glyph";
+    glyph.setAttribute("aria-hidden", "true");
+    glyph.textContent = nudge.kind === "window" ? "Σ" : "•";
+    card.appendChild(glyph);
+
+    const body = document.createElement("div");
+    body.className = "activity-nudge-body";
+    const title = document.createElement("p");
+    title.className = "activity-nudge-title";
+    title.textContent = nudge.title || "Activity nudge";
+    body.appendChild(title);
+
+    if (nudge.body) {
+      const summary = document.createElement("p");
+      summary.className = "activity-nudge-summary";
+      summary.textContent = nudge.body;
+      body.appendChild(summary);
+    }
+
+    const citation = (nudge.citations && nudge.citations[0]) || null;
+    if (citation) {
+      const cite = document.createElement("p");
+      cite.className = "activity-nudge-cite";
+      const entity = document.createElement("span");
+      entity.className = "activity-nudge-cite-entity";
+      entity.textContent = anEntityLabel(citation);
+      cite.appendChild(entity);
+      const sep1 = document.createElement("span");
+      sep1.className = "activity-nudge-cite-sep";
+      sep1.textContent = "·";
+      cite.appendChild(sep1);
+      const browser = document.createTextNode(
+        `${citation.source_browser || "browser"}${citation.source_profile ? "/" + citation.source_profile : ""}`
+      );
+      cite.appendChild(browser);
+      const sep2 = document.createElement("span");
+      sep2.className = "activity-nudge-cite-sep";
+      sep2.textContent = "·";
+      cite.appendChild(sep2);
+      cite.appendChild(document.createTextNode(`last on ${anLastSeenLabel(citation)}`));
+      body.appendChild(cite);
+    }
+    card.appendChild(body);
+
+    const actions = document.createElement("div");
+    actions.className = "activity-nudge-actions";
+    if (nudge.kind === "record" && citation && citation.record_id) {
+      const dictate = document.createElement("button");
+      dictate.className = "btn primary btn-dictate";
+      dictate.type = "button";
+      dictate.textContent = "Dictate with this";
+      dictate.addEventListener("click", () => {
+        anSavePin({
+          record_id: citation.record_id,
+          entity_label: anEntityLabel(citation),
+        });
+        anRenderPin();
+      });
+      actions.appendChild(dictate);
+    }
+    const dismiss = document.createElement("button");
+    dismiss.className = "btn btn-dismiss";
+    dismiss.type = "button";
+    dismiss.textContent = "Dismiss";
+    dismiss.addEventListener("click", async () => {
+      try {
+        await api("POST", `/api/activity/nudges/${encodeURIComponent(nudge.key)}/dismiss`);
+      } catch (e) { /* swallow — the GET will re-evaluate */ }
+      card.remove();
+      if (!list.querySelector(".activity-nudge")) {
+        shell.hidden = anReadPin() == null;
+      }
+    });
+    actions.appendChild(dismiss);
+    card.appendChild(actions);
+
+    list.appendChild(card);
+  }
+}
+
+async function maybeShowActivityNudges() {
+  anRenderPin();
+  let payload;
+  try {
+    payload = await api("GET", "/api/activity/nudges");
+  } catch (e) { return; }
+  if (!payload || payload.activity_enabled === false) {
+    anRenderCards([]);
+    return;
+  }
+  anRenderCards(payload.nudges || []);
+}
+
 // ── Init ─────────────────────────────────────────────────────────────
 document.getElementById("project-root-override").value = state.projectRootOverride;
 document.querySelectorAll('.scope-row button[data-scope]').forEach((b) =>
@@ -2699,4 +2870,14 @@ loadAgentContext();
 loadStarterTemplates();
 loadScope("global");
 maybeShowKnNudge();  // HS-47-04: evaluate the discovery nudge on load.
+// HS-53-04: wire the pin-clear button and load the activity nudges.
+document.getElementById("activity-nudges-pin-clear").addEventListener("click", () => {
+  anSavePin(null);
+  anRenderPin();
+  // If there are no visible cards either, hide the whole shell again.
+  const list = document.getElementById("activity-nudges-list");
+  const shell = document.getElementById("activity-nudges");
+  if (shell && list && !list.querySelector(".activity-nudge")) shell.hidden = true;
+});
+maybeShowActivityNudges();
 window.setInterval(loadAgentContext, 10000);

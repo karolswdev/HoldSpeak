@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 53
-- **Status:** not started
+- **Status:** done
 - **Depends on:** HS-53-02, HS-53-03
 - **Unblocks:** HS-53-05
 - **Owner:** unassigned
@@ -32,14 +32,14 @@ instead of buried on `/activity`.
 - **Out:** the docs (HS-53-05); the engine/API (HS-53-01/02).
 
 ## Acceptance criteria
-- [ ] A dismissible, source-cited nudge card renders on the dictation surface; it names
+- [x] A dismissible, source-cited nudge card renders on the dictation surface; it names
       the source and offers "Dictate with this" + "Dismiss".
-- [ ] Dismiss persists (the card does not return on reload); nothing renders when the
+- [x] Dismiss persists (the card does not return on reload); nothing renders when the
       nudge list is empty or activity is off.
-- [ ] Quiet + focus-safe (`role="note"`, never steals focus).
-- [ ] `cd web && npm run build` clean; JS-injected DOM uses `<style is:global>`;
+- [x] Quiet + focus-safe (`role="note"`, never steals focus).
+- [x] `cd web && npm run build` clean; JS-injected DOM uses `<style is:global>`;
       screenshot-verified.
-- [ ] `scripts/screenshot_activity_nudges.py` captures the nudge card + the empty state;
+- [x] `scripts/screenshot_activity_nudges.py` captures the nudge card + the empty state;
       PNGs committed to `screenshots/`. Source committed; 0 `_built/` tracked.
 
 ## Test plan
