@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 52
-- **Status:** not started
+- **Status:** done
 - **Depends on:** HS-52-02
 - **Unblocks:** HS-52-04
 - **Owner:** unassigned
@@ -32,14 +32,23 @@ safe zone." Build the local action connectors on it instead of reinventing execu
 - **Out:** the dispatch wiring + auto-approval (HS-52-04); the UI (HS-52-05).
 
 ## Acceptance criteria
-- [ ] A connector per action kind, built on `build_gated_connector`, each carrying a
-      per-macro manifest derived from the configured action.
-- [ ] The allowed action runs; an operation that does not match the macro's manifest is
-      refused before any side effect (`ConnectorOperationRefused`).
-- [ ] With the capability off, no connector executes.
-- [ ] Each connector unit-tested with an injected runner/opener (no real side effects in
-      CI): allowed-runs, off-manifest-refused, capability-off-blocks.
-- [ ] `npm run build` n/a; 0 `_built/` tracked.
+- [x] A connector per action kind: `open_url` / `launch_app` / `shell` on
+      `build_gated_connector` (each with a per-macro manifest derived from the configured
+      action), `type_text` as a plain local connector. (`plugins/voice_macro_connector.py`
+      `build_voice_macro_connector`)
+- [x] The allowed action runs (injected runner); an op that does not match the macro's
+      manifest is refused before any side effect.
+      (`test_connector_refuses_a_different_command_than_configured` raises
+      `ConnectorOperationRefused`, the runner is never reached — the bounded-blast-radius
+      property)
+- [x] With the capability off, no connector executes.
+      (`test_capability_off_blocks_execution_before_the_connector`: real `ActuatorExecutor`
+      with `allow_actuators=False` raises `ActuatorPolicyError`, the connector never runs)
+- [x] Each connector unit-tested with an injected runner / type_writer (no real side
+      effects): allowed-runs per kind, off-manifest-refused, non-zero-exit-raises,
+      type_text-types, capability-off-blocks. (`tests/unit/test_voice_macro_connector.py`,
+      8 tests)
+- [x] `npm run build` n/a; 0 `_built/` tracked.
 
 ## Test plan
 - Unit with injected `runner` / `opener` (the framework supports test doubles): per-kind
