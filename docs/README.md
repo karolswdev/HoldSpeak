@@ -24,6 +24,10 @@ intelligent-typing layer. This page is the map. Pick a journey.
   this is what each is and how to set up both.
 - **[The Dictation Copilot](./DICTATION_COPILOT.md)**: see it work. Rough speech
   becomes a project-grounded coding-agent task, with a demo you can reproduce.
+- **[Voice Commands](./VOICE_COMMANDS.md)**: map a spoken keyword to a real action.
+  Say a keyword while dictating and HoldSpeak opens a URL, launches an app, runs a
+  shell command, or types a snippet instead of typing the words. Off by default, you
+  configure every command, and each one is limited to exactly the action you gave it.
 - **[The learning loop: journal, correct, see what it learned, replay](./INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay)**:
   the local-only loop that gets better at your voice. Fix a misfire in one tap, see
   the honest "learned from N similar" count in the "What HoldSpeak learned" digest,

@@ -28,6 +28,7 @@ from .device_status import (
     push_segment_to_devices,
 )
 from .desktop_presence import DesktopPresenceHost, build_desktop_presence_host
+from .dictation_runner import dispatch_voice_command, run_dictation_pipeline
 from .hotkey import HotkeyListener
 from .voice_typing import VoiceTypingSession
 from .logging_config import get_logger
@@ -1597,6 +1598,35 @@ class WebRuntime:
                     )
                     return
                 text = self.text_processor.process(text)
+                # HS-52-04: voice command dispatch. A configured, enabled keyword fires
+                # an action instead of being typed; on a match we return early and type
+                # nothing. Off by default and on no match this is inert (byte-identical).
+                voice_command = self._maybe_dispatch_voice_command(text, agent_reply_session)
+                if voice_command is not None:
+                    if voice_command.ok:
+                        self._set_runtime_activity(
+                            "complete",
+                            source="dictation",
+                            label="Command",
+                            detail=voice_command.preview,
+                            last_event="voice_command_fired",
+                            last_error="",
+                        )
+                        self._mark_first_dictation()
+                    else:
+                        with self.state_lock:
+                            self.runtime_status["last_error"] = (
+                                f"Voice command failed: {voice_command.error}"
+                            )
+                        self._set_runtime_activity(
+                            "error",
+                            source="dictation",
+                            label="Command failed",
+                            detail=voice_command.preview,
+                            last_event="voice_command_failed",
+                            last_error=voice_command.error,
+                        )
+                    return
                 self._set_runtime_activity(
                     "processing",
                     source="dictation",
@@ -1717,6 +1747,36 @@ class WebRuntime:
             daemon=True,
         ).start()
 
+    def _maybe_dispatch_voice_command(
+        self, text: str, agent_reply_session: Any | None = None
+    ) -> Any:
+        # HS-52-04: thin delegate to the carved dispatch seam. Injects the runtime
+        # typer for `type_text` macros and surfaces a matched command as a runtime
+        # activity. Returns a VoiceCommandResult if a command fired (caller types
+        # nothing), else None.
+        def _type(t: str) -> None:
+            if self.typer is not None:
+                self.typer.type_text(
+                    t, target_profile=self._paste_target_profile(agent_reply_session)
+                )
+
+        def _activity(label: str) -> None:
+            self._set_runtime_activity(
+                "processing",
+                source="dictation",
+                label=label,
+                detail=label,
+                last_event="voice_command_match",
+                last_error="",
+            )
+
+        return dispatch_voice_command(
+            text,
+            config=self.config,
+            type_writer=_type,
+            on_activity=_activity,
+        )
+
     def _maybe_run_dictation_pipeline(
         self,
         text: str,
@@ -1725,104 +1785,17 @@ class WebRuntime:
         transcribed_at: datetime,
         agent_reply_session: Any | None = None,
     ) -> str:
-        dictation_cfg = getattr(self.config, "dictation", None)
-        pipeline_cfg = getattr(dictation_cfg, "pipeline", None)
-        if dictation_cfg is None or pipeline_cfg is None or not bool(getattr(pipeline_cfg, "enabled", False)):
-            return text
-
-        try:
-            from holdspeak.activity_context import build_activity_context
-            from holdspeak.agent_context import get_recent_agent_session
-            from holdspeak.agent_device import target_profile_override_for_agent
-            from holdspeak.plugins.dictation.assembly import build_pipeline
-            from holdspeak.plugins.dictation.contracts import Utterance
-            from holdspeak.plugins.dictation.project_root import detect_project_for_cwd
-            from holdspeak.target_profile import (
-                apply_model_assisted_target,
-                apply_target_correction,
-                collect_active_target_hints,
-                detect_target_profile_with_override,
-            )
-
-            if agent_reply_session is not None and getattr(agent_reply_session, "cwd", None):
-                project = detect_project_for_cwd(
-                    Path(str(agent_reply_session.cwd)),
-                    prefer_agent_session=False,
-                )
-            else:
-                project = detect_project_for_cwd()
-            project_root = Path(project["root"]) if project else None
-
-            # HS-39-02: consult the session correction store (shared with the
-            # dictation routes via the server) when corrections are enabled.
-            corrections_store = getattr(self.server, "dictation_corrections", None)
-            correction_snapshot = (
-                corrections_store.snapshot()
-                if corrections_store is not None and bool(getattr(pipeline_cfg, "corrections_enabled", False))
-                else None
-            )
-
-            telemetry_store = getattr(self.server, "dictation_telemetry", None)
-            result = build_pipeline(
-                dictation_cfg,
-                project_root=project_root,
-                corrections=correction_snapshot,
-                on_run=(telemetry_store.record_run if telemetry_store is not None else None),
-            )
-            if result.runtime_status != "loaded":
-                return text
-
-            target_override = (
-                target_profile_override_for_agent(agent_reply_session)
-                or getattr(pipeline_cfg, "target_profile_override", "auto")
-            )
-            activity = build_activity_context(limit=20, refresh=False).to_dict()
-            target_hints = collect_active_target_hints()
-            target_profile = detect_target_profile_with_override(target_hints, target_override)
-            target_profile = apply_target_correction(
-                target_profile, text=text, corrections=correction_snapshot
-            )
-            target_profile = apply_model_assisted_target(
-                target_profile,
-                runtime=getattr(result, "runtime", None),
-                hints=target_hints,
-                text=text,
-                enabled=bool(getattr(pipeline_cfg, "target_detect_llm_enabled", False)),
-                below_confidence=float(getattr(pipeline_cfg, "target_detect_llm_below", 0.8)),
-            )
-            activity["target"] = target_profile.to_dict()
-            recent_agent = agent_reply_session or get_recent_agent_session(max_age_seconds=120)
-            if recent_agent is not None and bool(getattr(recent_agent, "awaiting_response", False)):
-                agent_project_root = getattr(recent_agent, "repo_root", None)
-                if not project_root or not agent_project_root or str(project_root) == str(agent_project_root):
-                    activity["agent"] = recent_agent.to_dict()
-
-            run = result.pipeline.run(
-                Utterance(
-                    raw_text=text,
-                    audio_duration_s=audio_duration_s,
-                    transcribed_at=transcribed_at,
-                    project=project,
-                    activity=activity,
-                )
-            )
-            # HS-45-01: journal this run as a side-channel (best-effort, never
-            # alters the typed result). Same post-run seam telemetry uses.
-            journal = getattr(self.server, "dictation_journal", None)
-            if journal is not None:
-                journal.record(
-                    run,
-                    source="dictation",
-                    transcript=text,
-                    target_profile=target_profile,
-                    project_root=project_root,
-                    enabled=bool(getattr(pipeline_cfg, "journal_enabled", True)),
-                    retention=int(getattr(pipeline_cfg, "journal_retention", 500)),
-                )
-            return run.final_text
-        except Exception as exc:
-            log.warning(f"Web dictation pipeline raised; falling back to processed text: {exc}")
-            return text
+        # HS-52-01: the orchestration was carved out of this god-object into
+        # `holdspeak.dictation_runner`; this stays as the thin delegate the
+        # transcription path calls. Behaviour is unchanged.
+        return run_dictation_pipeline(
+            text,
+            config=self.config,
+            server=self.server,
+            audio_duration_s=audio_duration_s,
+            transcribed_at=transcribed_at,
+            agent_reply_session=agent_reply_session,
+        )
 
     def _paste_target_profile(self, agent_reply_session: Any | None) -> str | None:
         if agent_reply_session is None:

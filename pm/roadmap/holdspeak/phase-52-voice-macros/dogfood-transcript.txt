@@ -1,0 +1,18 @@
+== Phase 52 dogfood: voice command macros ==
+
+-- 1. off by default: no command fires (byte-identical) --
+  [PASS] a macros-disabled config returns None
+
+-- 2. a non-keyword utterance is not a command --
+  [PASS] an unmatched phrase returns None
+
+-- 3. a shell command really fires on a keyword --
+  [PASS] the command was handled and ok
+  [PASS] nothing was typed (handled = not dictated)
+  [PASS] the echo actually ran (temp file written)
+
+-- 4. a type_text command types via the writer --
+  [PASS] the command was handled and ok
+  [PASS] the snippet was typed
+
+RESULT: PASS
