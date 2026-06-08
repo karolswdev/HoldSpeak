@@ -38,6 +38,40 @@ one is **voice + structure + navigation**.
   `project-rewriter`, `{project.kb.*}`) are unchanged; "facts" and "context" are
   the user-facing names. Code identifiers in `backticks`.
 
+## Product-tense, not roadmap vocabulary (guard-enforced)
+
+User-facing docs describe the product as it is, not the project's build history. A
+reader installing HoldSpeak has never heard of a "phase" and does not know what
+`HS-17-05` means, so the guides never carry the internal roadmap or process
+vocabulary.
+
+**Banned in user-facing docs** (the root README and `docs/*.md`):
+
+- Phase tags: `Phase 14`, `phase-37`, "the next phase".
+- Story ids: `HS-17-05`, `HS-25-03`.
+- Process words: `PMO`, "closeout", "the current roadmap", "evidence snapshot".
+- Phase-relative tense. Rewrite "Phase 11 shipped the connector contract" as
+  "HoldSpeak's connector contract is ...", and "Phase 15 will add TLS" as "TLS is
+  future work".
+
+**Kept** (these are product, not roadmap):
+
+- Product nouns: `actuator`, `connector`, `artifact_generator`, the dictation
+  pipeline.
+- Named architecture specs: `MIR-01`, `DIR-01`, `WFS-01`. They are spec names, not
+  phase tags.
+
+**Exempt corpus.** This rule is for what a user reads. The internal record keeps its
+phase/story vocabulary by design and is never scrubbed or scanned: `docs/internal/`
+(including this guide, which is why it can list the banned tokens above),
+`docs/evidence/`, `docs/assets/`, and `pm/roadmap/`.
+
+**Enforced.** A case-insensitive guard in `tests/unit/test_doc_drift_guard.py`
+(`test_no_user_facing_doc_leaks_roadmap_vocabulary`) fails the build when a
+user-facing doc carries a numbered or tagged leak. It catches the high-signal tags;
+bare process-speak with no number ("a separate phase") is on you and the reviewer to
+keep out.
+
 ## The standard page skeleton
 
 Every user-facing guide clears this spine, in this order:

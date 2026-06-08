@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 51
-- **Status:** not started
+- **Status:** done
 - **Depends on:** HS-51-02, HS-51-03
 - **Owner:** unassigned
 
@@ -29,14 +29,17 @@ dedicated docs story; for a docs-hygiene phase, that story is codifying the poli
   themselves.
 
 ## Acceptance criteria
-- [ ] `docs/internal/DOCS_STYLE.md` carries the rule (banned list, kept list,
-      internal-corpus exemption) and points at the guard.
-- [ ] The rule matches what HS-51-03 actually enforces (no daylight between the
-      written rule and the test).
-- [ ] The `humanizer` skill was run over the edited `DOCS_STYLE.md` and its fixes
-      applied; doc guards green
-      (`uv run pytest -q -k "doc_drift or doc_guard or doc"`); no em/en dashes.
-- [ ] `npm run build` n/a (no UI bundle touched); 0 `_built/` tracked.
+- [x] `docs/internal/DOCS_STYLE.md` carries the rule (banned list, kept list,
+      internal-corpus exemption) and points at the guard. (new section
+      "Product-tense, not roadmap vocabulary (guard-enforced)" after Voice)
+- [x] The rule matches what HS-51-03 actually enforces (no daylight between the
+      written rule and the test). (same banned set: `Phase NN` / `HS-NN-NN` / `PMO`
+      / "the current roadmap" / "closeout"; same kept set `MIR-01`/`DIR-01`/`WFS-01`;
+      same exempt corpus; names the guard test)
+- [x] The `humanizer` skill was run over the edited `DOCS_STYLE.md` and its fixes
+      applied; doc guards green (`uv run pytest -q tests/unit/test_doc_drift_guard.py`
+      -> 8 passed); no em/en dashes in the new section.
+- [x] `npm run build` n/a (no UI bundle touched); 0 `_built/` tracked.
 
 ## Test plan
 - `uv run pytest -q -k "doc_drift or doc_guard or doc"`.
