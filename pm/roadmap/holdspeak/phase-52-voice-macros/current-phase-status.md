@@ -1,11 +1,18 @@
 # Phase 52 — Voice Command Macros on a carved dispatch seam
 
-**Status:** IN PROGRESS (6/7). Opened 2026-06-08 on user direction, right after Phase 51
-closed + merged (PR #38). From the [project backlog](../BACKLOG.md): candidate **B**
-(voice macros) re-envisioned by the user as a **voice command launcher**, paired with a
-scoped slice of candidate **E** (carve the dispatch seam out of `web_runtime`).
+**Status:** CLOSED (7/7). Opened and closed 2026-06-08 on user direction, right after
+Phase 51 closed + merged (PR #38). From the [project backlog](../BACKLOG.md): candidate
+**B** (voice macros) re-envisioned by the user as a **voice command launcher**, paired
+with a scoped slice of candidate **E** (carve the dispatch seam out of `web_runtime`).
 
-**Last updated:** 2026-06-08 (HS-52-06 done: the Voice Commands user guide.
+**Last updated:** 2026-06-08 (HS-52-07 done: closeout. The dogfood (`dogfood.py` +
+`dogfood-transcript.txt`, RESULT: PASS) proves the feature both ways: off-by-default
+returns no command (byte-identical), a non-keyword utterance is not handled, a configured
+`shell` macro really fires (an `echo` into a temp file, verified), and a `type_text` macro
+types via the writer. Full suite green (2499 passed, 17 skipped), `npm run build` clean, 0
+`_built/` tracked, `final-summary.md` written, BACKLOG candidate B flipped to shipped (E
+slice noted). Phase CLOSED; PR to `main` opened and merged on green CI. Earlier: HS-52-06
+done: the Voice Commands user guide.
 `docs/VOICE_COMMANDS.md` (linked in the docs index under Dictate) explains the action
 kinds, the deterministic match, the you-own-the-risk model, and the off-by-default switch,
 honestly and in product-tense. The Phase-51 roadmap-vocabulary guard now scans this Phase-52
@@ -140,7 +147,7 @@ capture, intel, plugins, or synthesis behavior.
 | HS-52-04 | Dispatch wiring: match -> auto-approved actuator execute | done | HS-52-01, HS-52-03 |
 | HS-52-05 | The Voice Commands board (centerpiece) | done | HS-52-02, HS-52-04 |
 | HS-52-06 | Docs: the Voice Commands guide | done | HS-52-04, HS-52-05 |
-| HS-52-07 | Closeout: dogfood + final-summary + PR | not started | HS-52-01..06 |
+| HS-52-07 | Closeout: dogfood + final-summary + PR | done | HS-52-01..06 |
 
 ## Where we are
 

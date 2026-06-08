@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 52
-- **Status:** not started
+- **Status:** done
 - **Depends on:** HS-52-01, HS-52-02, HS-52-03, HS-52-04, HS-52-05, HS-52-06
 - **Owner:** unassigned
 
@@ -33,12 +33,12 @@ macros off, and that the carve changed no behavior. Captured as a dogfood, and m
   watch item).
 
 ## Acceptance criteria
-- [ ] A green dogfood transcript proving keyword-fires-action (audited) and
-      byte-identical-off (plus non-keyword passthrough). (`dogfood-transcript.txt`,
-      RESULT: PASS)
-- [ ] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py`);
-      `cd web && npm run build` clean; 0 `_built/` tracked.
-- [ ] `final-summary.md` written; phase CLOSED; status docs + roadmap updated; BACKLOG
+- [x] A green dogfood transcript proving keyword-fires-action and byte-identical-off
+      (plus non-keyword passthrough). (`dogfood.py` + `dogfood-transcript.txt`,
+      RESULT: PASS; a real `shell` echo fired into a temp file, verified)
+- [x] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py` -> 2499
+      passed, 17 skipped); `cd web && npm run build` clean; 0 `_built/` tracked.
+- [x] `final-summary.md` written; phase CLOSED; status docs + roadmap updated; BACKLOG
       candidate B flipped to shipped (E slice noted); PR to `main` opened and merged on
       green CI.
 

@@ -27,7 +27,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 | # | Candidate | Type | Source | Signal |
 |---|---|---|---|---|
 | A | Meeting aftercare ("close the loop") | feature | review bet #5 | **shipped → [phase-49](./phase-49-meeting-aftercare/) (CLOSED 6/6)** |
-| B | Voice macros / command grammar | feature | review bet #2; deferred from P48 | **scaffolded → [phase-52](./phase-52-voice-macros/)** (with a scoped slice of E) |
+| B | Voice macros / command grammar | feature | review bet #2; deferred from P48 | **shipped → [phase-52](./phase-52-voice-macros/) (CLOSED 7/7)** (a voice command launcher; with a scoped slice of E) |
 | C | Release-readiness gate (schema policy + 1.0) | release | review "Trouble" #5; deferred from P48 | **shipped → [phase-50](./phase-50-release-readiness/) (CLOSED 7/7)** |
 | D | Frontend density paydown (dictation page) | debt | review "Trouble" #4; P48 standing invariant | recurring |
 | E | `WebRuntime` / `web_server` decomposition | debt | review "Trouble" #1 | watch (a **dictation-path slice** is being carved in [phase-52](./phase-52-voice-macros/) with B; the full decomposition stays a watch item) |
@@ -44,7 +44,7 @@ artifact that never changes the user's next action is decoration.
 *Lands on:* the meeting/history surface + the actuator system (P37/P38) for
 "actions -> issues".
 
-### B. Voice macros / command grammar — scaffolded as Phase 52 (voice command launcher + scoped E slice)
+### B. Voice macros / command grammar — shipped as Phase 52 (CLOSED 7/7, voice command launcher + scoped E slice)
 Originally framed as a deterministic text-transform layer inside dictation. The user
 re-envisioned it (2026-06-08) as a **voice command launcher**: map a spoken keyword to
 a real system action (open a URL, launch an app, run a shell command, type a snippet)
