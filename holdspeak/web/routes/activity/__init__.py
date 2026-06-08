@@ -29,6 +29,7 @@ from ...context import WebContext
 from .candidates import build_candidates_router
 from .enrichment import build_enrichment_router
 from .ledger import build_ledger_router
+from .nudges import build_nudges_router
 from .plugin_jobs import build_plugin_jobs_router
 from .rules import build_rules_router
 
@@ -42,4 +43,5 @@ def build_activity_router(ctx: WebContext) -> APIRouter:
     router.include_router(build_enrichment_router(ctx))
     router.include_router(build_candidates_router(ctx))
     router.include_router(build_plugin_jobs_router(ctx))
+    router.include_router(build_nudges_router(ctx))
     return router

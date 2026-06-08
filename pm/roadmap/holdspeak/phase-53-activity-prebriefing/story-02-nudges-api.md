@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 53
-- **Status:** not started
+- **Status:** done
 - **Depends on:** HS-53-01
 - **Unblocks:** HS-53-04
 - **Owner:** unassigned
@@ -23,14 +23,14 @@ over HTTP, and a dismiss action needs to reach the dismissal store.
 - **Out:** the engine (HS-53-01); the UI (HS-53-04); the context override (HS-53-03).
 
 ## Acceptance criteria
-- [ ] `GET /api/activity/nudges` returns the computed nudges (with citations); empty when
+- [x] `GET /api/activity/nudges` returns the computed nudges (with citations); empty when
       activity is off.
-- [ ] `POST /api/activity/nudges/{id}/dismiss` persists the dismissal; a re-GET no longer
+- [x] `POST /api/activity/nudges/{id}/dismiss` persists the dismissal; a re-GET no longer
       returns it.
-- [ ] A malformed dismiss request returns a clean 4xx.
-- [ ] Tested with a `TestClient` over a seeded DB (mirror the existing activity route
+- [x] A malformed dismiss request returns a clean 4xx.
+- [x] Tested with a `TestClient` over a seeded DB (mirror the existing activity route
       tests).
-- [ ] `npm run build` n/a; 0 `_built/` tracked.
+- [x] `npm run build` n/a; 0 `_built/` tracked.
 
 ## Test plan
 - Integration: GET returns seeded nudges; POST dismiss removes one; activity-off GET is

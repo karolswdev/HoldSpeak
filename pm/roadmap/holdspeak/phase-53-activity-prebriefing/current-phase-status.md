@@ -1,13 +1,15 @@
 # Phase 53 — Activity Pre-Briefing
 
-**Status:** IN PROGRESS (1/6). Opened 2026-06-08 on user direction, right after Phase 52
+**Status:** IN PROGRESS (2/6). Opened 2026-06-08 on user direction, right after Phase 52
 closed + merged (PR #39). From the [project backlog](../BACKLOG.md): candidate **F**
 (local activity as pre-briefing fuel), picked by the user as the next phase.
 
-**Last updated:** 2026-06-08 (HS-53-01 done: the nudge engine + dismissal store; pure
-reader over the existing ledger + meeting window, source-cited, deterministic heuristic,
-off-when-activity-off, dismissals persisted in a new tiny table; 10 unit tests; full
-suite green at 2509 passed.)
+**Last updated:** 2026-06-08 (HS-53-02 done: the nudges HTTP API. `GET
+/api/activity/nudges` + `POST /api/activity/nudges/{id}/dismiss` ship as a thin router
+over the engine — citations preserved, the consent gate inherited from the engine
+(activity-off returns `[]`), dismissals round-trip end-to-end. 5 `TestClient` integration
+tests + the activity route-table lock updated from 38 to 40. Full suite green at 2514
+passed.)
 
 ## The thesis — why this phase
 
@@ -77,7 +79,7 @@ own), local. No change to meeting capture, intel, plugins, or synthesis behaviou
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HS-53-01 | The nudge engine + dismissal store | done | none |
-| HS-53-02 | The nudges API | not started | HS-53-01 |
+| HS-53-02 | The nudges API | done | HS-53-01 |
 | HS-53-03 | Dictate with this as context | not started | HS-53-01 |
 | HS-53-04 | The nudge UI (dictation surface) | not started | HS-53-02, HS-53-03 |
 | HS-53-05 | Docs: the pre-briefing guide | not started | HS-53-04 |
@@ -85,17 +87,17 @@ own), local. No change to meeting capture, intel, plugins, or synthesis behaviou
 
 ## Where we are
 
-HS-53-01 shipped on 2026-06-08. The engine (`holdspeak/activity_nudges.py`) is a pure
-reader over the existing `ActivityRepository` + the meeting window: it returns 1–3
-source-cited `Nudge`s (a windowed summary + per-record suggestions), filters by a
-persisted dismissal store (new `activity_nudge_dismissals` table), uses a deterministic
-relevance heuristic (recency bucket + entity-type bonus + project match), and returns
-`[]` when the activity privacy toggle is off. 10 focused unit tests; full suite at
-**2509 passed, 17 skipped**. The schema snapshot is regenerated and green.
+HS-53-01 + HS-53-02 shipped on 2026-06-08. The engine
+(`holdspeak/activity_nudges.py`) computes source-cited, dismissible nudges with a
+deterministic heuristic; the HTTP surface (`holdspeak/web/routes/activity/nudges.py`)
+exposes `GET /api/activity/nudges` + `POST /api/activity/nudges/{id}/dismiss` as a thin
+router over it. The route-table lock ticked from 38 to 40. Full suite at **2514 passed,
+17 skipped**.
 
-Next is **HS-53-02 — the nudges API**: `GET /api/activity/nudges` (compute + drop
-dismissed + return top N with citations) and `POST /api/activity/nudges/{id}/dismiss`.
-The engine's `Nudge.to_dict()` is already JSON-safe; the API is a thin route over it.
+Next is **HS-53-03 — dictate with this as context**: extend the activity-context path so
+a nudge-selected record is injected into the dictation pipeline as context, without
+changing the default (no-selection) behaviour. The seam is
+`ActivityContextProvider` / `build_activity_context` in `holdspeak/activity_context.py`.
 
 ## Open decisions (defaults chosen; flag to change)
 
