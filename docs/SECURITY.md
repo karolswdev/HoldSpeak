@@ -1,6 +1,6 @@
 # HoldSpeak — Security & Privacy Posture
 
-**Status:** living document (HS-25-03, Phase 25 "Trust & Hardening").
+**Status:** living document.
 **Last updated:** 2026-05-31.
 
 This document is the threat model for HoldSpeak: what data it holds, where that
@@ -42,7 +42,7 @@ beaconing** anywhere in the codebase.
 - Activity retention is enforced at import time (default 30 days) and per-domain
   exclusion rules are honored.
 
-### Encryption-at-rest decision (HS-25-03)
+### Encryption-at-rest decision
 
 **Decision: document the stance; do not implement app-level encryption now.**
 
@@ -72,11 +72,11 @@ SQLCipher) becomes warranted and should be its own story.
 1. **The local process** — fully trusted; runs as the user.
 2. **The web runtime** (`web_server.py`) — binds `127.0.0.1` by default (open,
    the long-standing "localhost is trusted" model). When bound to a non-loopback
-   host it is gated by an auth token (HS-25-02): required to bind and on every
+   host it is gated by an auth token: required to bind and on every
    request, except `/health`, the device-audio WS, and `/_built` static assets.
 3. **The device link** (`/api/devices/audio`) — AIPI-Lite and compatible clients
    authenticate with a pre-shared key (PSK) compared in constant time
-   (`device_audio.verify_psk`). Same-LAN scope today; cross-network is Phase 15.
+   (`device_audio.verify_psk`). Same-LAN scope today; cross-network reach is planned.
 4. **Connector packs** — user-supplied code under `~/.holdspeak/connector_packs/`
    runs **in-process with the user's permissions**. The manifest permission gate
    (`connector_runtime.py`) is an *honesty* mechanism, **not a security sandbox**:
@@ -89,10 +89,10 @@ SQLCipher) becomes warranted and should be its own story.
 
 | Egress | Trigger | What leaves | Gate |
 |---|---|---|---|
-| **Cloud meeting intel** (`intel.py` → OpenAI client) | `intel_provider` = `cloud`, or `auto` falling back | Transcript text (no audio, no embeddings, no activity) | Explicit provider choice. `provider="local"` (default) **never** egresses — locked by `tests/unit/test_intel_egress_invariant.py`; surfaced by `doctor` + `intel_egress` in the runtime status (HS-25-01). |
+| **Cloud meeting intel** (`intel.py` → OpenAI client) | `intel_provider` = `cloud`, or `auto` falling back | Transcript text (no audio, no embeddings, no activity) | Explicit provider choice. `provider="local"` (default) **never** egresses — locked by `tests/unit/test_intel_egress_invariant.py`; surfaced by `doctor` + `intel_egress` in the runtime status. |
 | **Deferred-intel failure webhook** (`intel_queue.py:345`) | User configures `intel_retry_failure_webhook_url` | Queue statistics only (counts, rates) — **no transcript** | Opt-in (URL must be set). |
 | **Connector CLI enrichment** (`gh`, `jira` via subprocess) | User enables the connector pack | Entity IDs (PR/issue/ticket numbers) to the user's own CLI tools, which call their services | Opt-in + manifest permissions (`shell:exec`, `network:outbound`). |
-| **Web runtime responses** | A client requests data | Whatever the API returns (transcripts, action items, etc.) | Loopback by default; token-gated off-loopback (HS-25-02). |
+| **Web runtime responses** | A client requests data | Whatever the API returns (transcripts, action items, etc.) | Loopback by default; token-gated off-loopback. |
 | **Device audio link** | A paired device streams audio | Audio in; status/LCD text out | PSK; same-LAN today. |
 
 Browser history reads (`activity_*`) make **no network calls** — they are
@@ -127,7 +127,7 @@ machine except via the connector CLIs above (entity IDs only).
   encryption (see §2).
 - Malicious connector packs the user chooses to install (§3.4).
 - Network-level confidentiality for cross-network device/web reach — owned by
-  **Phase 15** (TLS, tunnels, per-device PSKs), which this phase unblocks.
+  planned as future work (TLS, tunnels, per-device PSKs).
 
 ---
 

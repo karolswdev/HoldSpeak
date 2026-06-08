@@ -628,8 +628,8 @@ invent a new outbound path — build it with
 [`build_gated_connector`](../holdspeak/plugins/gated_connector.py), which routes
 every call through the existing `connector_runtime.PermissionGate` behind a
 per-connector **permission manifest** (see [Write connectors](#write-connectors-the-permission-manifest)
-below). The Phase-37 `outbox` reference writes a local file; the Phase-38
-references reach real systems (GitHub, a webhook) under that manifest.
+below). The `outbox` reference writes a local file; the GitHub and webhook
+references reach real systems under that manifest.
 
 ### Worked example: `followup_ticket_actuator`
 

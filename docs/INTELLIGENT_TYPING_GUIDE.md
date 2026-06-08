@@ -132,7 +132,7 @@ keys in `.hs/` files.
 > dictation rewrites. If your endpoint does not support the `extra_body` field
 > this parameter is silently ignored.
 
-Known-good local dogfood profile from HS-19 closeout:
+A known-good local profile:
 
 ```json
 {

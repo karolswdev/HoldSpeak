@@ -1,0 +1,17 @@
+== Phase 51 dogfood: public-docs hygiene ==
+
+-- 1. clean tree: the roadmap-vocabulary guard passes --
+PASS (guard green on clean tree): 1 passed in 0.02s
+
+-- 2. in-scope leak grep (README + docs/*.md, case-insensitive) is empty --
+PASS (no in-scope roadmap vocabulary)
+
+-- 3. plant a leak in a user-facing doc: the guard must go red --
+PASS (guard caught the planted leak):
+docs/USER_GUIDE.md:443: Planted dogfood leak: scheduled for phase 99.
+
+-- 4. revert: the guard is green again and the tree is clean --
+PASS (guard green after revert): 1 passed in 0.02s
+PASS (USER_GUIDE.md clean, no diff)
+
+RESULT: PASS
