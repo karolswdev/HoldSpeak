@@ -99,7 +99,7 @@ For whoever cuts a release:
    `uv run pytest -q --ignore=tests/e2e/test_metal.py`.
 5. Verify the clean install: a fresh virtual environment, `uv pip install -e .`,
    then `holdspeak doctor` reaches exit 0 (optional gaps like a missing local
-   model are fine). See the captured example in the Phase 50 evidence.
+   model are fine). See the captured example in the release evidence.
 6. Set the default install ref to the new tag: `HOLDSPEAK_REF` in
    `scripts/install.sh` (default) so a script install pins the release.
 7. Tag the release (`vX.Y.Z`) and push the tag.

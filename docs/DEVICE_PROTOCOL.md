@@ -1,7 +1,7 @@
 # HoldSpeak Device Protocol
 
-**Status:** phase-14 substrate. LAN-only. Cross-network reach
-(TLS, tunnels, public URL) is the subject of phase 15.
+**Status:** LAN-only substrate today. Cross-network reach
+(TLS, tunnels, public URL) is future work.
 
 This document specifies the WebSocket protocol that lets an
 external device — the AIPI-Lite ESP32-S3 robot, or any
@@ -19,7 +19,7 @@ ws://<host>:<port>/api/devices/audio
 ```
 
 The web runtime (`holdspeak web`, or just `holdspeak`) binds
-to `127.0.0.1`. Cross-network reach is phase 15; for now an
+to `127.0.0.1`. Cross-network reach is future work; for now an
 AIPI-Lite-side bridge running on the same LAN as HoldSpeak
 forwards device audio over this loopback WebSocket.
 
@@ -307,12 +307,12 @@ typing failed (e.g., Wayland blocked synthetic typing).
 | trigger | text | ttl_ms |
 |---|---|---|
 | Meeting starts with this device attached | `Recording 00:00` | 0 |
-| **Periodic tick during meeting (HS-17-05, currently every 1 s)** | `Recording MM:SS` | 0 |
-| **Finalized transcript segment (HS-17-08 / HS-17-13)** | `<speaker>: <text>` (bounded to the server LCD payload ceiling) | 3000 |
+| **Periodic tick during meeting (currently every 1 s)** | `Recording MM:SS` | 0 |
+| **Finalized transcript segment** | `<speaker>: <text>` (bounded to the server LCD payload ceiling) | 3000 |
 | Bookmark added (web button or `long_press` event) | `Bookmark @ <seconds>s` | 2500 |
 | Meeting stop initiated | `Saving meeting...` | 0 |
 
-The periodic Recording-tick (HS-17-05, 2026-05-10) fires every
+The periodic Recording-tick fires every
 1 second while a meeting has at least one attached device. Format
 `Recording MM:SS`, sticky (`ttl_ms: 0`) so it overwrites the previous
 sticky activity until the next tick. The ticker stops cleanly on
@@ -384,10 +384,10 @@ server → device  {"type":"status","text":"Bookmark @ 47s","ttl_ms":2500}
 server → device  {"type":"status","text":"Saving meeting...","ttl_ms":0}
 ```
 
-## 8. What phase 15 will need to revisit
+## 8. What cross-network reach will need to revisit
 
-- **TLS termination point.** Phase 14 is plain `ws://` on
-  loopback. Phase 15's tunnel layer (Tailscale / Cloudflare
+- **TLS termination point.** The device link is plain `ws://` on
+  loopback today. A future tunnel layer (Tailscale / Cloudflare
   Tunnel / WireGuard) terminates TLS somewhere; the
   WebSocket route may need to read forwarded headers to
   preserve client-IP for audit logging.
@@ -397,8 +397,8 @@ server → device  {"type":"status","text":"Saving meeting...","ttl_ms":0}
   longer to drain old sessions — sharing PSKs across many
   devices on different networks needs revocation, not just
   rotation.
-- **Per-device PSKs.** Phase 14 uses a single shared secret.
-  Phase 15+ should issue per-device PSKs once HoldSpeak
+- **Per-device PSKs.** HoldSpeak uses a single shared secret
+  today. Per-device PSKs become worthwhile once HoldSpeak
   ships to a second install or the user wants to revoke a
   single device.
 - **Tunnel-vs-direct addressing.** The bridge currently

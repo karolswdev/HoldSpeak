@@ -2,8 +2,8 @@
 
 > A connector is anything that produces local activity records,
 > annotations, candidates, or planned commands for HoldSpeak.
-> Phase 9 shipped the first three first-party connectors; phase 11
-> generalises the contract so anyone can author a local one.
+> HoldSpeak ships first-party connectors, and the contract is general
+> enough that anyone can author a local one.
 
 This guide documents the contract you need to satisfy and the
 testing surface you get for free.
@@ -313,11 +313,10 @@ That's a complete connector. Drop a fixture and you're done.
 
 ---
 
-## Phase 13 additions — runtime gates, pipelines, user packs, run history
+## Runtime gates, pipelines, user packs, and run history
 
-Phase 11 shipped the contract; phase 13 turns it on. The four
-surfaces below are what changed in the runtime — read these
-before authoring a pack against the current main.
+Beyond the base contract, the runtime adds four surfaces. Read
+these before authoring a pack.
 
 ### `kind: pipeline` — packs that consume other packs
 
@@ -432,7 +431,7 @@ is removed). The web surface is
 `GET /api/activity/enrichment/connectors/{id}/runs`; the
 dashboard renders the latest row inline next to each
 connector. UI for the full per-pack timeline is deferred to
-phase 14.
+a future release.
 
 `connector_runs` is also what `PipelineRunner` consults for
 its freshness skip — the row's `started_at` plus the
@@ -449,9 +448,8 @@ This story does not cover:
 - A marketplace.
 - A plugin loader for third-party packages from the internet.
 
-Phase 11 ships the *contract* and the *first-party packs*. Any
-external distribution mechanism is a separate phase, not on
-the current roadmap.
+HoldSpeak ships the *contract* and the *first-party packs*. Any
+external distribution mechanism is out of scope today.
 
 ## See also
 

@@ -1,17 +1,17 @@
 # Phase 51 — Public-Docs Hygiene
 
-**Status:** IN PROGRESS (1/5). Opened 2026-06-07 on user direction, right after
+**Status:** IN PROGRESS (2/5). Opened 2026-06-07 on user direction, right after
 Phase 50 closed + merged (PR #35). Net-new from a between-phases conversation
 (captured as [project backlog](../BACKLOG.md) candidate H): a cheap, release-facing
 follow-on now that the gate is down and strangers can install from the public repo.
 
-**Last updated:** 2026-06-07 (HS-51-01 done: the leak inventory (`leak-inventory.md`)
-maps 20 banned roadmap-vocabulary hits across 6 in-scope guides, each with a
-product-tense rewrite, plus the fixed scope (IN = README + `docs/*.md`; OUT =
-internal/evidence/assets/PMO corpus) and the guard pattern + allowlist. The scan
-found more than the scaffold-time list: `SECURITY.md`, `PLUGIN_AUTHORING.md`, and an
-asset readme also leak; the root README is clean. Next: HS-51-02 (apply the
-rewrites).)
+**Last updated:** 2026-06-07 (HS-51-02 done: the scrub. All 6 in-scope guides plus
+the optional asset readme are rewritten into product-tense; the in-scope leak grep
+(case-insensitive) is now empty, doc guards green (75 passed), `MIR-01`/`DIR-01`
+intact. A case-insensitive re-grep before scrubbing caught 5 lowercase-only leaks
+the HS-51-01 grep missed, so the HS-51-03 guard must be case-insensitive. The
+`humanizer` skill was run over all 15 rewrites (no AI tells, no new dashes). Next:
+HS-51-03 (the guard).)
 
 ## The thesis — why this phase
 
@@ -87,16 +87,18 @@ reintroduce the leak. Docs-and-test only; no product behavior changes.
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HS-51-01 | Leak inventory + vocabulary policy | done | none |
-| HS-51-02 | Scrub user-facing docs (phase-relative -> product-tense) | not started | HS-51-01 |
+| HS-51-02 | Scrub user-facing docs (phase-relative -> product-tense) | done | HS-51-01 |
 | HS-51-03 | Lock it: roadmap-vocabulary doc-drift guard | not started | HS-51-02 |
 | HS-51-04 | Docs: codify the rule in DOCS_STYLE.md | not started | HS-51-02, HS-51-03 |
 | HS-51-05 | Closeout: dogfood + final-summary + PR | not started | HS-51-01..04 |
 
 ## Where we are
 
-2026-06-07, on the `phase-51-public-docs-hygiene` branch. HS-51-01 (the inventory)
-is done: `leak-inventory.md` is the map, with a recorded product-tense rewrite for
-every banned line. Next is HS-51-02 (apply those rewrites to the 6 in-scope guides,
-running the `humanizer` skill on each touched file), then HS-51-03 (the guard) and
-HS-51-04 (the `DOCS_STYLE.md` rule). Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) and
-[`leak-inventory.md`](./leak-inventory.md) first.
+2026-06-07, on the `phase-51-public-docs-hygiene` branch. HS-51-01 (inventory) and
+HS-51-02 (scrub) are done: the 6 in-scope guides now read in product-tense, the
+in-scope leak grep is empty, doc guards are green, and the `humanizer` skill cleared
+all 15 rewrites. Next is HS-51-03 (the doc-drift guard that locks the clean state,
+**case-insensitive** per the lowercase leaks the first grep missed), then HS-51-04
+(the `DOCS_STYLE.md` rule) and HS-51-05 (closeout). Read
+[`AGENT-BRIEF.md`](./AGENT-BRIEF.md) and [`leak-inventory.md`](./leak-inventory.md)
+first.

@@ -6,7 +6,7 @@ signature orange `#FF6B35`). To regenerate any sprite, re-run its prompt against
 the PixelLab MCP; for the *derived* card/icons (below) re-run
 [`compose_og_card.py`](./compose_og_card.py) after the mark is regenerated.
 
-## Brand identity (HS-33-05, 2026-06-03)
+## Brand identity (2026-06-03)
 
 | File | PixelLab object ID | Prompt |
 | --- | --- | --- |

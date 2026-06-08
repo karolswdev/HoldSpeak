@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 51
-- **Status:** not started
+- **Status:** done
 - **Depends on:** HS-51-01
 - **Unblocks:** HS-51-03, HS-51-04, HS-51-05
 - **Owner:** unassigned
@@ -38,16 +38,19 @@ fix and which to keep.
   restructuring or rewording beyond the vocabulary fix.
 
 ## Acceptance criteria
-- [ ] Every banned reference from the HS-51-01 inventory is gone from the
-      user/operator-facing docs; a re-run of the AGENT-BRIEF grep over those docs is
-      empty.
-- [ ] Each rewrite preserves the original meaning (no dangling clause from a deleted
+- [x] Every banned reference from the HS-51-01 inventory is gone from the
+      user/operator-facing docs; a re-run of the grep over those docs is empty.
+      (case-insensitive sweep of `README.md` + `docs/*.md` returns no in-scope hits;
+      see evidence)
+- [x] Each rewrite preserves the original meaning (no dangling clause from a deleted
       tag); product nouns and `MIR-01`/`DIR-01` are untouched.
-- [ ] The `humanizer` skill was run over every doc edited in this story and its
-      fixes applied (no em/en dashes; plain and direct).
-- [ ] Existing doc guards green (drift, dangling-link, image-ref):
-      `uv run pytest -q -k "doc_drift or doc_guard or link or doc"`.
-- [ ] `npm run build` n/a (no UI bundle touched); 0 `_built/` tracked.
+      (`docs/README.md:78-79` MIR/DIR lines verified intact)
+- [x] The `humanizer` skill was run over every doc edited in this story and its
+      fixes applied (no em/en dashes; plain and direct). (skill invoked on all 15
+      rewritten passages; audit found no AI tells, no new em/en dashes)
+- [x] Existing doc guards green (drift, dangling-link, image-ref):
+      `uv run pytest -q -k "doc_drift or doc_guard or link or doc"` -> 75 passed, 2 skipped.
+- [x] `npm run build` n/a (no UI bundle touched); 0 `_built/` tracked.
 
 ## Test plan
 - `uv run pytest -q -k "doc_drift or doc_guard or link or doc"`.
