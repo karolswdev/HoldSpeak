@@ -8,7 +8,9 @@ flips to "scaffolded" then "shipped".
 Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
-**Last updated:** 2026-06-07 (created at Phase 48 close).
+**Last updated:** 2026-06-07 (candidate **H** added and scaffolded as Phase 51:
+public-docs hygiene, the cheap release-facing follow-on to the Phase-50 gate.
+Created at Phase 48 close.)
 
 ## Why not one mega-phase
 
@@ -29,6 +31,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 | E | `WebRuntime` / `web_server` decomposition | debt | review "Trouble" #1 | watch |
 | F | Local activity as pre-briefing fuel | feature | review bet #6 | exploratory |
 | G | Privacy visible at decision points | feature | review bet #7 | delight |
+| H | Public-docs hygiene (strip roadmap vocab from user-facing docs) | release/debt | this conversation (post-P50 release polish) | **scaffolded → [phase-51](./phase-51-public-docs-hygiene/)** |
 
 ### A. Meeting aftercare ("close the loop") — shipped as Phase 49 (CLOSED 6/6)
 The meeting side has plugins + artifacts; the next value is follow-through, not
@@ -74,10 +77,28 @@ source answers three plain-language questions: what data is used, does anything
 leave this machine, what control do I have right now. A delight feature for this
 category.
 
+### H. Public-docs hygiene — scaffolded as Phase 51
+Net-new, surfaced in the post-Phase-50 between-phases conversation. The release gate
+is down and strangers now install from the public repo, but the deeper user/operator
+guides still narrate the product by its build history: "Phase 9 shipped the
+connectors", "Periodic tick (HS-17-05)", "the HS-19 closeout", "the current
+roadmap". That roadmap vocabulary means nothing to a new user and reads as
+half-finished. Strip it from user-facing docs, rewrite phase-relative claims into
+product-tense, keep legitimate product nouns (`actuator`) and named specs
+(`MIR-01`/`DIR-01`), and lock the clean state with a doc-drift guard (scoped to
+user-facing docs, never the internal corpus) plus a codified `DOCS_STYLE.md` rule.
+Docs-and-test only, behavior-preserving. *Lands on:* `docs/*.md` +
+`tests/unit/test_doc_drift_guard.py`. Cheap and release-facing; the natural polish
+after the release gate.
+
 ## Sequencing note
 
 No fixed order. If the open-source *release* is the goal, **C** is the highest
 leverage (everything else polishes a thing that is not formally shippable). If
 deepening the product first, **A** (user-favored) or **B** continue the north
 star. **D** can ride along with whichever dictation-side phase comes next rather
-than being its own phase.
+than being its own phase. **H** is the cheap release-facing follow-on to **C**
+(scaffolded as Phase 51). The strongest remaining product bet is **B** (voice
+macros), and pairing it with a scoped slice of **E** (carve only the routing seam
+the macros land on, not the whole `WebRuntime` decomposition) is the way to ship a
+meaningful codebase improvement *with* a feature under one thesis.
