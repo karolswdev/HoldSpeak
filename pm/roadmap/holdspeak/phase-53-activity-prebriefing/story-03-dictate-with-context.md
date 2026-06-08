@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 53
-- **Status:** not started
+- **Status:** done
 - **Depends on:** HS-53-01
 - **Unblocks:** HS-53-04
 - **Owner:** unassigned
@@ -26,14 +26,14 @@ is no way to say "use this specific record" when a user picks one from a nudge.
 - **Out:** the nudge UI button wiring (HS-53-04 calls this); the engine (HS-53-01).
 
 ## Acceptance criteria
-- [ ] A selected `ActivityRecord` can be injected as dictation context; the rewrite path
+- [x] A selected `ActivityRecord` can be injected as dictation context; the rewrite path
       sees its entity/title/url.
-- [ ] With no selection, the context build is unchanged (a test asserts the default path
+- [x] With no selection, the context build is unchanged (a test asserts the default path
       is byte-identical).
-- [ ] The override is local + read-only (it reads an existing record; it does not fetch
+- [x] The override is local + read-only (it reads an existing record; it does not fetch
       anything new).
-- [ ] Unit/integration tested (selected-record context vs. default).
-- [ ] `npm run build` n/a; 0 `_built/` tracked.
+- [x] Unit/integration tested (selected-record context vs. default).
+- [x] `npm run build` n/a; 0 `_built/` tracked.
 
 ## Test plan
 - Unit/integration: build context with an override record id -> the bundle contains that

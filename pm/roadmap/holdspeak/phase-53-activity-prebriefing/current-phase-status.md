@@ -1,15 +1,17 @@
 # Phase 53 — Activity Pre-Briefing
 
-**Status:** IN PROGRESS (2/6). Opened 2026-06-08 on user direction, right after Phase 52
+**Status:** IN PROGRESS (3/6). Opened 2026-06-08 on user direction, right after Phase 52
 closed + merged (PR #39). From the [project backlog](../BACKLOG.md): candidate **F**
 (local activity as pre-briefing fuel), picked by the user as the next phase.
 
-**Last updated:** 2026-06-08 (HS-53-02 done: the nudges HTTP API. `GET
-/api/activity/nudges` + `POST /api/activity/nudges/{id}/dismiss` ship as a thin router
-over the engine — citations preserved, the consent gate inherited from the engine
-(activity-off returns `[]`), dismissals round-trip end-to-end. 5 `TestClient` integration
-tests + the activity route-table lock updated from 38 to 40. Full suite green at 2514
-passed.)
+**Last updated:** 2026-06-08 (HS-53-03 done: dictate-with-this-as-context. The
+`build_activity_context` / `ActivityContextProvider` seam gained a `selected_record_id`
+override that pins the chosen `ActivityRecord` at `records[0]` (fetching it via the new
+`ActivityRepository.get_activity_record(id)` if it has fallen off the default window).
+The default daily path is byte-identical — `selected_record_id` is `None` and the bundle
+JSON shape is unchanged; the existing activity-context tests still pass. 8 new unit
+tests cover the pin, the off-window fetch, the unknown-id no-op, the provider's two
+input shapes, and the garbage-input guard. Full suite green at 2522 passed.)
 
 ## The thesis — why this phase
 
@@ -80,24 +82,25 @@ own), local. No change to meeting capture, intel, plugins, or synthesis behaviou
 |---|---|---|---|
 | HS-53-01 | The nudge engine + dismissal store | done | none |
 | HS-53-02 | The nudges API | done | HS-53-01 |
-| HS-53-03 | Dictate with this as context | not started | HS-53-01 |
+| HS-53-03 | Dictate with this as context | done | HS-53-01 |
 | HS-53-04 | The nudge UI (dictation surface) | not started | HS-53-02, HS-53-03 |
 | HS-53-05 | Docs: the pre-briefing guide | not started | HS-53-04 |
 | HS-53-06 | Closeout: dogfood + final-summary + PR | not started | HS-53-01..05 |
 
 ## Where we are
 
-HS-53-01 + HS-53-02 shipped on 2026-06-08. The engine
-(`holdspeak/activity_nudges.py`) computes source-cited, dismissible nudges with a
-deterministic heuristic; the HTTP surface (`holdspeak/web/routes/activity/nudges.py`)
-exposes `GET /api/activity/nudges` + `POST /api/activity/nudges/{id}/dismiss` as a thin
-router over it. The route-table lock ticked from 38 to 40. Full suite at **2514 passed,
-17 skipped**.
+HS-53-01 + HS-53-02 + HS-53-03 shipped on 2026-06-08. The engine
+(`holdspeak/activity_nudges.py`) computes source-cited, dismissible nudges; the HTTP
+surface (`holdspeak/web/routes/activity/nudges.py`) exposes them at
+`/api/activity/nudges`; the dictation-context path
+(`holdspeak/activity_context.py`) takes an explicit `selected_record_id` so a
+nudge-selected record is pinned at `records[0]` for the rewrite stage, with the default
+no-selection path proven byte-identical. Full suite at **2522 passed, 17 skipped**.
 
-Next is **HS-53-03 — dictate with this as context**: extend the activity-context path so
-a nudge-selected record is injected into the dictation pipeline as context, without
-changing the default (no-selection) behaviour. The seam is
-`ActivityContextProvider` / `build_activity_context` in `holdspeak/activity_context.py`.
+Next is **HS-53-04 — the nudge UI**: a dismissible, source-cited card on the dictation
+surface (clone of `#kn-nudge` at `web/src/pages/dictation.astro:42`) with "Dictate with
+this" + "Dismiss", driven by `/api/activity/nudges`, JS-injected (so any CSS must be
+`<style is:global>`), screenshot-verified.
 
 ## Open decisions (defaults chosen; flag to change)
 

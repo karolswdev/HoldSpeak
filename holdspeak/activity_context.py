@@ -28,9 +28,14 @@ class ActivityContextBundle:
     project_id: Optional[str] = None
     refreshed: bool = False
     refresh_errors: list[str] | None = None
+    # Phase 53 (HS-53-03): when a nudge action selects a specific record, its id
+    # is pinned at `records[0]` and recorded here so the rewrite stage can name
+    # which entity the user is dictating "with". `None` for the default daily
+    # path (byte-identical to pre-Phase-53 behaviour).
+    selected_record_id: Optional[int] = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload: dict[str, Any] = {
             "records": list(self.records),
             "entity_counts": dict(self.entity_counts),
             "domain_counts": dict(self.domain_counts),
@@ -40,6 +45,9 @@ class ActivityContextBundle:
             "refreshed": self.refreshed,
             "refresh_errors": list(self.refresh_errors or []),
         }
+        if self.selected_record_id is not None:
+            payload["selected_record_id"] = int(self.selected_record_id)
+        return payload
 
 
 class ActivityContextProvider:
@@ -64,12 +72,14 @@ class ActivityContextProvider:
 
     def __call__(self, context: dict[str, Any]) -> dict[str, Any]:
         project_id = _project_id_from_context(context)
+        selected_record_id = _selected_record_id_from_context(context)
         bundle = build_activity_context(
             db=self._db,
             project_id=project_id,
             limit=self._limit,
             refresh=self._should_refresh(),
             importer=self._importer,
+            selected_record_id=selected_record_id,
         )
         return {"activity": bundle.to_dict()}
 
@@ -90,6 +100,7 @@ def build_activity_context(
     limit: int = 20,
     refresh: bool = False,
     importer: Callable[..., Any] = import_browser_history,
+    selected_record_id: Optional[int] = None,
 ) -> ActivityContextBundle:
     """Build a plugin-safe local activity context bundle."""
     database = db or get_database()
@@ -113,6 +124,16 @@ def build_activity_context(
         limit=max(1, min(int(limit), 200)),
     )
     serialized = [_serialize_activity_record(record) for record in records]
+
+    resolved_selected_id: Optional[int] = None
+    if selected_record_id is not None:
+        # Pin the selected record at records[0] so the rewrite stage names it
+        # first. Unknown ids are a quiet no-op — the default daily path stays
+        # byte-identical.
+        serialized, resolved_selected_id = _pin_selected_record(
+            database, serialized, selected_record_id
+        )
+
     return ActivityContextBundle(
         records=serialized,
         entity_counts=dict(Counter(item["entity_type"] for item in serialized if item["entity_type"])),
@@ -122,7 +143,37 @@ def build_activity_context(
         project_id=project_id,
         refreshed=did_refresh,
         refresh_errors=refresh_errors,
+        selected_record_id=resolved_selected_id,
     )
+
+
+def _pin_selected_record(
+    database: Database,
+    serialized: list[dict[str, Any]],
+    selected_record_id: int,
+) -> tuple[list[dict[str, Any]], Optional[int]]:
+    """Move the selected record to ``records[0]``; fetch it if absent.
+
+    Returns the reordered list and the resolved selected id (``None`` when the
+    id does not match a real record — the engine refuses to fabricate context).
+    """
+    try:
+        wanted_id = int(selected_record_id)
+    except (TypeError, ValueError):
+        return serialized, None
+
+    for index, item in enumerate(serialized):
+        if item.get("id") == wanted_id:
+            if index == 0:
+                return serialized, wanted_id
+            reordered = [item] + serialized[:index] + serialized[index + 1 :]
+            return reordered, wanted_id
+
+    record = database.activity.get_activity_record(wanted_id)
+    if record is None:
+        return serialized, None
+    pinned = _serialize_activity_record(record)
+    return [pinned] + serialized, wanted_id
 
 
 def _serialize_activity_record(record: ActivityRecord) -> dict[str, Any]:
@@ -140,6 +191,27 @@ def _serialize_activity_record(record: ActivityRecord) -> dict[str, Any]:
         "entity_id": record.entity_id,
         "project_id": record.project_id,
     }
+
+
+def _selected_record_id_from_context(context: dict[str, Any]) -> Optional[int]:
+    """Phase 53 (HS-53-03): a nudge action puts the selected record id here.
+
+    Looks for ``context["selected_activity_record_id"]`` (preferred) or, as a
+    convenience for callers that bundle the whole nudge,
+    ``context["selected_activity"]["record_id"]``. Returns ``None`` when absent
+    or unparsable so the default daily path is byte-identical.
+    """
+    raw = context.get("selected_activity_record_id")
+    if raw in (None, ""):
+        selected = context.get("selected_activity")
+        if isinstance(selected, dict):
+            raw = selected.get("record_id") or selected.get("id")
+    if raw in (None, ""):
+        return None
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return None
 
 
 def _project_id_from_context(context: dict[str, Any]) -> Optional[str]:
