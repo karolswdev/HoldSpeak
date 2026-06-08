@@ -31,7 +31,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 | E | `WebRuntime` / `web_server` decomposition | debt | review "Trouble" #1 | watch |
 | F | Local activity as pre-briefing fuel | feature | review bet #6 | exploratory |
 | G | Privacy visible at decision points | feature | review bet #7 | delight |
-| H | Public-docs hygiene (strip roadmap vocab from user-facing docs) | release/debt | this conversation (post-P50 release polish) | **scaffolded → [phase-51](./phase-51-public-docs-hygiene/)** |
+| H | Public-docs hygiene (strip roadmap vocab from user-facing docs) | release/debt | this conversation (post-P50 release polish) | **shipped → [phase-51](./phase-51-public-docs-hygiene/) (CLOSED 5/5)** |
 
 ### A. Meeting aftercare ("close the loop") — shipped as Phase 49 (CLOSED 6/6)
 The meeting side has plugins + artifacts; the next value is follow-through, not
@@ -77,7 +77,7 @@ source answers three plain-language questions: what data is used, does anything
 leave this machine, what control do I have right now. A delight feature for this
 category.
 
-### H. Public-docs hygiene — scaffolded as Phase 51
+### H. Public-docs hygiene — shipped as Phase 51 (CLOSED 5/5)
 Net-new, surfaced in the post-Phase-50 between-phases conversation. The release gate
 is down and strangers now install from the public repo, but the deeper user/operator
 guides still narrate the product by its build history: "Phase 9 shipped the

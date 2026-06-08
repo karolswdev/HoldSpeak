@@ -1,17 +1,18 @@
 # Phase 51 — Public-Docs Hygiene
 
-**Status:** IN PROGRESS (4/5). Opened 2026-06-07 on user direction, right after
-Phase 50 closed + merged (PR #35). Net-new from a between-phases conversation
-(captured as [project backlog](../BACKLOG.md) candidate H): a cheap, release-facing
-follow-on now that the gate is down and strangers can install from the public repo.
+**Status:** CLOSED (5/5). Opened 2026-06-07 and closed 2026-06-08 on user direction,
+right after Phase 50 closed + merged (PR #35). Net-new from a between-phases
+conversation (captured as [project backlog](../BACKLOG.md) candidate H): a cheap,
+release-facing follow-on now that the gate is down and strangers can install from the
+public repo.
 
-**Last updated:** 2026-06-08 (HS-51-04 done: the rule is codified. A new section
-"Product-tense, not roadmap vocabulary (guard-enforced)" in `docs/internal/DOCS_STYLE.md`
-states the banned set, the kept set (`MIR-01`/`DIR-01`/`WFS-01`), the exempt corpus,
-and the guard that enforces it, with no daylight from HS-51-03. `humanizer` run over
-the section (no AI tells, no dashes). The new example tokens (`Phase 14`, `HS-17-05`)
-sit in `docs/internal/`, so the guard ignores them: file still 8 passed, in-scope
-grep still empty. Next: HS-51-05 (closeout: dogfood + final-summary + PR).)
+**Last updated:** 2026-06-08 (HS-51-05 done: closeout. The dogfood
+(`dogfood.sh` + `dogfood-transcript.txt`, RESULT: PASS) proves the guard end to end:
+green on the clean tree, in-scope grep empty, red on a planted "phase 99" with a
+`path:line` offender, green again after revert with the tree clean. Full suite green
+(2454 passed, 17 skipped; the +3 over Phase 50 is the new guard tests), 0 `_built/`
+tracked, `final-summary.md` written, BACKLOG candidate H flipped to shipped. Phase
+CLOSED; PR to `main` opened and merged on green CI.)
 
 ## The thesis — why this phase
 
@@ -90,15 +91,12 @@ reintroduce the leak. Docs-and-test only; no product behavior changes.
 | HS-51-02 | Scrub user-facing docs (phase-relative -> product-tense) | done | HS-51-01 |
 | HS-51-03 | Lock it: roadmap-vocabulary doc-drift guard | done | HS-51-02 |
 | HS-51-04 | Docs: codify the rule in DOCS_STYLE.md | done | HS-51-02, HS-51-03 |
-| HS-51-05 | Closeout: dogfood + final-summary + PR | not started | HS-51-01..04 |
+| HS-51-05 | Closeout: dogfood + final-summary + PR | done | HS-51-01..04 |
 
 ## Where we are
 
-2026-06-08, on the `phase-51-public-docs-hygiene` branch. HS-51-01..04 are done: the
-user-facing docs read in product-tense, a case-insensitive doc-drift guard locks the
-clean state, and `DOCS_STYLE.md` now states the rule for authors. Only HS-51-05 (the
-closeout) remains: a dogfood formalizing the guard's plant-then-revert proof, the
-full suite, `final-summary.md`, flip the phase to CLOSED, flip BACKLOG candidate H to
-shipped, open the PR to `main`, and merge on green. Read
-[`AGENT-BRIEF.md`](./AGENT-BRIEF.md) and [`leak-inventory.md`](./leak-inventory.md)
-first.
+2026-06-08: CLOSED. All five stories shipped. The user-facing docs read in
+product-tense, a case-insensitive doc-drift guard locks the clean state (proven both
+ways by the dogfood), and `DOCS_STYLE.md` states the rule for authors. Full suite
+green (2454 passed, 17 skipped), PR to `main` merged on green CI, BACKLOG candidate H
+flipped to shipped. See [`final-summary.md`](./final-summary.md).

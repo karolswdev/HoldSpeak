@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 51
-- **Status:** not started
+- **Status:** done
 - **Depends on:** HS-51-01, HS-51-02, HS-51-03, HS-51-04
 - **Owner:** unassigned
 
@@ -24,12 +24,12 @@ the guard keeps it that way, captured as a dogfood, and merged.
 - **Out:** new feature work; any product/behavior change.
 
 ## Acceptance criteria
-- [ ] A green dogfood transcript proving the guard passes clean, fails on a planted
-      violation, and the user-facing grep is empty. (`dogfood-transcript.txt`,
-      RESULT: PASS)
-- [ ] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py`);
-      `npm run build` n/a; 0 `_built/` tracked.
-- [ ] `final-summary.md` written; phase CLOSED; status docs + roadmap updated;
+- [x] A green dogfood transcript proving the guard passes clean, fails on a planted
+      violation, and the user-facing grep is empty. (`dogfood.sh` +
+      `dogfood-transcript.txt`, RESULT: PASS)
+- [x] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py` -> 2454
+      passed, 17 skipped); `npm run build` n/a; 0 `_built/` tracked.
+- [x] `final-summary.md` written; phase CLOSED; status docs + roadmap updated;
       BACKLOG candidate H flipped to shipped; PR to `main` opened (and merged on
       green CI).
 
