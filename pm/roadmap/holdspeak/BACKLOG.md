@@ -8,11 +8,10 @@ flips to "scaffolded" then "shipped".
 Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
-**Last updated:** 2026-06-08 (candidate **B** scaffolded as Phase 52, re-envisioned by
-the user as a voice command launcher (spoken keyword fires a real system action via the
-reused actuator executor), paired with a scoped slice of **E** (carve the dispatch seam
-out of `web_runtime`); a feature shipped with a motivated refactor under one thesis.
-Candidate **H** shipped as Phase 51. Created at Phase 48 close.)
+**Last updated:** 2026-06-08 (candidate **F** scaffolded as Phase 53: local activity as
+pre-briefing fuel, source-cited dismissible nudges on the daily surfaces. Candidate **B**
+shipped as Phase 52 (a voice command launcher reusing the actuator executor, with a scoped
+slice of **E**). Candidate **H** shipped as Phase 51. Created at Phase 48 close.)
 
 ## Why not one mega-phase
 
@@ -31,7 +30,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 | C | Release-readiness gate (schema policy + 1.0) | release | review "Trouble" #5; deferred from P48 | **shipped → [phase-50](./phase-50-release-readiness/) (CLOSED 7/7)** |
 | D | Frontend density paydown (dictation page) | debt | review "Trouble" #4; P48 standing invariant | recurring |
 | E | `WebRuntime` / `web_server` decomposition | debt | review "Trouble" #1 | watch (a **dictation-path slice** is being carved in [phase-52](./phase-52-voice-macros/) with B; the full decomposition stays a watch item) |
-| F | Local activity as pre-briefing fuel | feature | review bet #6 | exploratory |
+| F | Local activity as pre-briefing fuel | feature | review bet #6 | **scaffolded → [phase-53](./phase-53-activity-prebriefing/)** |
 | G | Privacy visible at decision points | feature | review bet #7 | delight |
 | H | Public-docs hygiene (strip roadmap vocab from user-facing docs) | release/debt | this conversation (post-P50 release polish) | **shipped → [phase-51](./phase-51-public-docs-hygiene/) (CLOSED 5/5)** |
 
@@ -78,10 +77,14 @@ module, because that is the seam the voice-macro feature lands on. The rest of t
 god-object (hotkey/device/meeting/activity) stays a watch item; full E is still its
 own future phase if it keeps absorbing responsibility.
 
-### F. Local activity as pre-briefing fuel
+### F. Local activity as pre-briefing fuel — scaffolded as Phase 53
 Turn the abstract browser/activity layer into concrete, dismissible, source-cited
 nudges: "here is what you touched since last time" before a meeting; "want to
 dictate a reply with this GitHub issue as context?" Ambient without being creepy.
+Scaffolded as [phase-53](./phase-53-activity-prebriefing/): a small reader over the
+source-cited activity records that already exist (no new watcher), gated by the
+existing activity privacy toggle, read-only (it surfaces and offers, never acts),
+every nudge citing its source, one action feeding the selected record into dictation.
 
 ### G. Privacy visible at decision points
 Every place that could use a model, connector, actuator, device, or activity
