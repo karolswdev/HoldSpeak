@@ -1,0 +1,42 @@
+== Phase 53 real-metal dogfood: dictate-with-this on a live LLM ==
+
+  endpoint: http://192.168.1.43:8080/v1  model: Qwen3.5-9B-UD-Q6_K_XL.gguf
+
+-- CONTROL: no selection --
+  output: Review the open issues in the `ledgerline` repository and select the most recent relevant item. Summarize the required implementation steps into a concise 1–2 sentence imperative task that specifies the exact files to modify (e.g., `src/ledgerline/api/charges.py`, `src/ledgerline/ledger.py`) and the desired outcome, ensuring the solution adheres to the append-only ledger invariant and idempotency rules defined in `.hs/memory.md`.
+
+-- TREATMENT: 'Dictate with this' on github_issue karolswdev/HoldSpeak#412 --
+  output: Implement the `--since` flag in `src/ledgerline/api/charges.py` to filter exported ledger entries by date as requested in HoldSpeak#412. Ensure the implementation respects the append-only invariant and does not alter existing entry retrieval logic. Acceptance criteria: the CLI accepts a `--since` argument, filters results correctly, and includes a test verifying the date boundary behavior.
+
+---
+Context preservation suggestion:
+Suggested file: `.hs/memory/charges-since-flag.md`
+Rationale: Captures the specific requirement to implement the --since flag for filtering ledger entries by date, ensuring it respects the append-only invariant.
+
+Suggested content:
+```md
+# Feature: `--since` Flag for Charge Exports
+
+**Context**: HoldSpeak#412 requests filtering exported ledger entries by a start date.
+
+**Implementation Spec**:
+- Add a `--since` argument to the CLI command in `src/ledgerline/api/charges.py`.
+- Filter retrieved `ledger_entries` where `created_at >= since_date`.
+- **Invariant**: This is a read-only filter operation. It must not trigger any new postings, updates, or deletions in the ledger. The append-only nature of `ledger_entries` remains unchanged.
+
+**Acceptance Criteria**:
+1. CLI accepts `--since YYYY-MM-DD` argument.
+2. Exported results only include entries on or after the specified date.
+3. Existing entry retrieval logic (non-filtered) remains unaltered.
+4. Unit test verifies correct boundary behavior for the date filter.
+```
+
+If useful, update the repo docs with this narrow note before continuing.
+
+-- assertions --
+  [PASS] both runs produced non-empty output
+  [PASS] TREATMENT references the selected issue (matched: ['412', '--since', 'since flag'])
+  [PASS] CONTROL does NOT reference the issue (matched: none)
+  [PASS] the selection changed the output
+
+RESULT: PASS

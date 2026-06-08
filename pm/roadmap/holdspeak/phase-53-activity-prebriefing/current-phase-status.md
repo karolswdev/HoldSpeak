@@ -1,10 +1,23 @@
 # Phase 53 — Activity Pre-Briefing
 
-**Status:** IN PROGRESS (5/6). Opened 2026-06-08 on user direction, right after Phase 52
-closed + merged (PR #39). From the [project backlog](../BACKLOG.md): candidate **F**
-(local activity as pre-briefing fuel), picked by the user as the next phase.
+**Status:** CLOSED (7/7). Opened and closed 2026-06-08 on user direction, right after
+Phase 52 closed + merged (PR #39). From the [project backlog](../BACKLOG.md): candidate
+**F** (local activity as pre-briefing fuel), picked by the user as the next phase. See
+[`final-summary.md`](./final-summary.md).
 
-**Last updated:** 2026-06-08 (HS-53-05 done: the pre-briefing user guide.
+**Last updated:** 2026-06-08 (HS-53-07 done: **closed the loop for real.** Chasing a
+real-metal proof exposed that "Dictate with this" did not actually feed the model — the
+live dictation path never read the pin, and the rewriter never consumed activity records.
+Fixed both ends: a process-local one-shot selection pin (`dictation_selection.py`) set by
+`POST /api/activity/nudges/select` and consumed by `run_dictation_pipeline`, which now
+passes `selected_record_id` to `build_activity_context`; the project-rewriter names the
+selected record in both the draft + refine prompts. Proven on the `.43` Qwen3.5-9B-Q6
+endpoint: the same generic dictation, run with vs. without a selected `github_issue`,
+yields a control task grounded in the generic ledger context vs. a treatment task
+*"Implement the `--since` flag … as requested in HoldSpeak#412"* — the selection
+demonstrably changes the model output (`dogfood-real-llm-transcript.txt`, RESULT: PASS).
+Byte-identical default when no pin. +17 tests; full suite 2540 passed; `npm run build`
+clean. **HS-53-05 (prior):** the pre-briefing user guide.
 `docs/ACTIVITY_PREBRIEFING.md` is a short product-tense guide naming what the cards
 are, the local + source-cited + dismissible + never-acts contract, the
 dictate-with-this action, the deterministic relevance rule, and the activity tracking
@@ -96,20 +109,23 @@ own), local. No change to meeting capture, intel, plugins, or synthesis behaviou
 | HS-53-03 | Dictate with this as context | done | HS-53-01 |
 | HS-53-04 | The nudge UI (dictation surface) | done | HS-53-02, HS-53-03 |
 | HS-53-05 | Docs: the pre-briefing guide | done | HS-53-04 |
-| HS-53-06 | Closeout: dogfood + final-summary + PR | not started | HS-53-01..05 |
+| HS-53-07 | Close the loop: selection feeds the model (real metal) | done | HS-53-03, HS-53-04 |
+| HS-53-06 | Closeout: dogfood + final-summary + PR | done | HS-53-01..05, HS-53-07 |
 
 ## Where we are
 
-HS-53-01 → HS-53-05 shipped on 2026-06-08. The engine + HTTP surface + dictation-context
-override + UI card stack + user guide are all in place. Full suite at **2523 passed,
-17 skipped**; `npm run build` clean; the doc-drift + roadmap-vocab guards are green
-against the new user-facing doc.
+HS-53-01 → HS-53-05 + **HS-53-07** shipped on 2026-06-08. The engine + HTTP surface +
+dictation-context override + UI card stack + user guide are in place, and the loop is now
+**closed for real**: "Dictate with this" parks a server-side selection, the live dictation
+runner consumes it, and the project-rewriter grounds the rewrite in the selected record —
+proven on the `.43` Qwen3.5-9B-Q6 endpoint (treatment references the issue, control does
+not). Full suite at **2540 passed, 17 skipped**; `npm run build` clean; doc guards green.
 
-Next is **HS-53-06 — closeout**: a dogfood proving the engine end to end (seed
-activity + a prior meeting → a windowed, source-cited nudge is computed; dismiss it →
-it stays gone; activity off → no nudges; "dictate with this" injects the record),
-final-summary, phase CLOSED, PR to `main` merged on green, BACKLOG candidate F flipped
-to shipped.
+Two dogfoods green: `dogfood.py` (the engine math, no LLM) and `dogfood_real_llm.py`
+(the closed loop on real metal).
+
+Next is **HS-53-06 — closeout**: final-summary, phase CLOSED, README + BACKLOG candidate
+F flipped to shipped, PR to `main` merged on green.
 
 ## Open decisions (defaults chosen; flag to change)
 

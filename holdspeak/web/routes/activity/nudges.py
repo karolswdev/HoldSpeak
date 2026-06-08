@@ -9,6 +9,11 @@ Thin HTTP surface over `holdspeak.activity_nudges.compute_nudges` and
 - `POST /api/activity/nudges/{nudge_id}/dismiss` — persist a dismissal so the
   same nudge does not return. ``nudge_id`` is the deterministic ``Nudge.key``
   (e.g. ``record:42`` or ``window:2026-06-08T12:00:00``).
+- `POST /api/activity/nudges/select` — park a record id (HS-53-07) so the next
+  dictation folds that ``ActivityRecord`` into its rewrite context. One-shot and
+  recency-bounded server-side.
+- `POST /api/activity/nudges/select/clear` — drop the pending selection (the
+  nudge UI's Clear button).
 """
 
 from __future__ import annotations
@@ -66,5 +71,38 @@ def build_nudges_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": str(e)}, status_code=400)
         except Exception as e:
             return error_500(e, log, "Failed to dismiss activity nudge")
+
+    @router.post("/api/activity/nudges/select")
+    async def api_select_activity_nudge(payload: dict[str, Any]) -> Any:
+        # HS-53-07: a "Dictate with this" click parks the chosen record id so the
+        # next dictation grounds its rewrite in that ActivityRecord. The id is
+        # validated against the real ledger so an unknown id is a clean 400 (the
+        # loop never fabricates context).
+        try:
+            from ....db import get_database
+            from ....dictation_selection import set_selected_record
+
+            raw = payload.get("record_id") if isinstance(payload, dict) else None
+            try:
+                record_id = int(raw)
+            except (TypeError, ValueError):
+                return JSONResponse({"error": "record_id (int) is required"}, status_code=400)
+            record = get_database().activity.get_activity_record(record_id)
+            if record is None:
+                return JSONResponse({"error": f"unknown record_id {record_id}"}, status_code=400)
+            set_selected_record(record_id)
+            return JSONResponse({"selected": record_id})
+        except Exception as e:
+            return error_500(e, log, "Failed to select activity record for dictation")
+
+    @router.post("/api/activity/nudges/select/clear")
+    async def api_clear_activity_nudge_selection() -> Any:
+        try:
+            from ....dictation_selection import clear_selected_record
+
+            clear_selected_record()
+            return JSONResponse({"cleared": True})
+        except Exception as e:
+            return error_500(e, log, "Failed to clear activity selection")
 
     return router

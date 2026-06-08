@@ -2,8 +2,8 @@
 
 - **Project:** holdspeak
 - **Phase:** 53
-- **Status:** not started
-- **Depends on:** HS-53-01, HS-53-02, HS-53-03, HS-53-04, HS-53-05
+- **Status:** done
+- **Depends on:** HS-53-01, HS-53-02, HS-53-03, HS-53-04, HS-53-05, HS-53-07
 - **Owner:** unassigned
 
 ## Problem
@@ -23,11 +23,14 @@ with this" injects the record. Captured as a dogfood, and merged.
 - **Out:** new feature work.
 
 ## Acceptance criteria
-- [ ] A green dogfood transcript proving compute-cited-nudge / dismissal-persists /
+- [x] A green dogfood transcript proving compute-cited-nudge / dismissal-persists /
       activity-off-empty / select-injects-context. (`dogfood-transcript.txt`, RESULT: PASS)
-- [ ] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py`);
+- [x] A real-LLM dogfood (added via HS-53-07) proving the closed loop on the `.43`
+      endpoint — the selection demonstrably changes the model output.
+      (`dogfood-real-llm-transcript.txt`, RESULT: PASS)
+- [x] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py`, 2540 passed);
       `cd web && npm run build` clean; 0 `_built/` tracked.
-- [ ] `final-summary.md` written; phase CLOSED; status docs + roadmap updated; BACKLOG
+- [x] `final-summary.md` written; phase CLOSED; status docs + roadmap updated; BACKLOG
       candidate F flipped to shipped; PR to `main` opened and merged on green CI.
 
 ## Test plan

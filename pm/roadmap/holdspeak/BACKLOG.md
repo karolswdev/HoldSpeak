@@ -30,7 +30,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 | C | Release-readiness gate (schema policy + 1.0) | release | review "Trouble" #5; deferred from P48 | **shipped → [phase-50](./phase-50-release-readiness/) (CLOSED 7/7)** |
 | D | Frontend density paydown (dictation page) | debt | review "Trouble" #4; P48 standing invariant | recurring |
 | E | `WebRuntime` / `web_server` decomposition | debt | review "Trouble" #1 | watch (a **dictation-path slice** is being carved in [phase-52](./phase-52-voice-macros/) with B; the full decomposition stays a watch item) |
-| F | Local activity as pre-briefing fuel | feature | review bet #6 | **scaffolded → [phase-53](./phase-53-activity-prebriefing/)** |
+| F | Local activity as pre-briefing fuel | feature | review bet #6 | **shipped → [phase-53](./phase-53-activity-prebriefing/) (CLOSED 7/7)** (source-cited dismissible nudges + "Dictate with this" closes the loop, proven on a live LLM) |
 | G | Privacy visible at decision points | feature | review bet #7 | delight |
 | H | Public-docs hygiene (strip roadmap vocab from user-facing docs) | release/debt | this conversation (post-P50 release polish) | **shipped → [phase-51](./phase-51-public-docs-hygiene/) (CLOSED 5/5)** |
 
@@ -77,14 +77,18 @@ module, because that is the seam the voice-macro feature lands on. The rest of t
 god-object (hotkey/device/meeting/activity) stays a watch item; full E is still its
 own future phase if it keeps absorbing responsibility.
 
-### F. Local activity as pre-briefing fuel — scaffolded as Phase 53
+### F. Local activity as pre-briefing fuel — shipped as Phase 53 (CLOSED 7/7)
 Turn the abstract browser/activity layer into concrete, dismissible, source-cited
 nudges: "here is what you touched since last time" before a meeting; "want to
 dictate a reply with this GitHub issue as context?" Ambient without being creepy.
-Scaffolded as [phase-53](./phase-53-activity-prebriefing/): a small reader over the
+Shipped as [phase-53](./phase-53-activity-prebriefing/): a small reader over the
 source-cited activity records that already exist (no new watcher), gated by the
 existing activity privacy toggle, read-only (it surfaces and offers, never acts),
 every nudge citing its source, one action feeding the selected record into dictation.
+The "Dictate with this" loop is closed end to end and proven on a live LLM (the `.43`
+Qwen3.5-9B-Q6 endpoint): a server-side one-shot selection pin reaches the dictation
+runner, and the project-rewriter grounds the rewrite in the selected record — a
+control vs. treatment dogfood shows the selection demonstrably changes the model output.
 
 ### G. Privacy visible at decision points
 Every place that could use a model, connector, actuator, device, or activity

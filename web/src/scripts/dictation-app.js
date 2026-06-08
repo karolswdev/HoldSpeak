@@ -2792,12 +2792,20 @@ function anRenderCards(nudges) {
       dictate.className = "an-btn an-btn-primary";
       dictate.type = "button";
       dictate.innerHTML = `${AN_SVG.arrow}<span>Dictate with this</span>`;
-      dictate.addEventListener("click", () => {
+      dictate.addEventListener("click", async () => {
         anSavePin({
           record_id: citation.record_id,
           entity_label: anEntityLabel(citation),
         });
         anRenderPin();
+        // HS-53-07: park the selection server-side so the next dictation folds
+        // this record into its rewrite. The localStorage pin is the visible
+        // affordance; this POST is what actually closes the loop.
+        try {
+          await api("POST", "/api/activity/nudges/select", {
+            record_id: citation.record_id,
+          });
+        } catch (e) { /* the pin still shows; the server simply has no selection */ }
       });
       actions.appendChild(dictate);
     }
@@ -2942,9 +2950,14 @@ loadStarterTemplates();
 loadScope("global");
 maybeShowKnNudge();  // HS-47-04: evaluate the discovery nudge on load.
 // HS-53-04: wire the pin-clear button and load the activity nudges.
-document.getElementById("activity-nudges-pin-clear").addEventListener("click", () => {
+document.getElementById("activity-nudges-pin-clear").addEventListener("click", async () => {
   anSavePin(null);
   anRenderPin();
+  // HS-53-07: drop the server-side selection too, so Clear actually un-arms the
+  // next dictation (not just the visible pin).
+  try {
+    await api("POST", "/api/activity/nudges/select/clear");
+  } catch (e) { /* the visible pin is already cleared */ }
   // If there are no visible cards either, hide the whole shell again.
   const list = document.getElementById("activity-nudges-list");
   const shell = document.getElementById("activity-nudges");

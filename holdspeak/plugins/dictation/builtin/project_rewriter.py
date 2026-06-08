@@ -69,6 +69,16 @@ def _default_prompt_builder(utt: Utterance, text: str, hs_context: str) -> str:
             "Recent agent message awaiting user response:",
             agent_context,
         ]
+    selected_activity = _selected_activity_context(utt)
+    selected_lines = (
+        [
+            "",
+            "The user chose to dictate with this local activity as context:",
+            selected_activity,
+        ]
+        if selected_activity
+        else []
+    )
     return "\n".join(
         [
             "Rewrite the dictated text for direct insertion into the user's active app.",
@@ -76,6 +86,7 @@ def _default_prompt_builder(utt: Utterance, text: str, hs_context: str) -> str:
             f"Target profile: {target_id} ({target_label})",
             f"Target guidance: {target_directive}",
             *agent_lines,
+            *selected_lines,
             "",
             "Project context from repo-local .hs files:",
             hs_context,
@@ -83,6 +94,8 @@ def _default_prompt_builder(utt: Utterance, text: str, hs_context: str) -> str:
             "Rules:",
             "- Preserve the user's intent and do not invent facts.",
             "- Apply the .hs instructions, memory, workflows, issues, terms, and ignore guidance.",
+            "- When the user chose a local-activity context above, ground the rewrite in that"
+            " specific issue/PR/page and reference it by name.",
             "- Adapt wording to the target profile. For coding agents, write an actionable prompt.",
             "- If the text already fits, return it unchanged.",
             "- Return only the rewritten text. No explanation, preface, or code fence.",
@@ -108,12 +121,23 @@ def _default_refine_prompt_builder(utt: Utterance, draft: str, hs_context: str) 
     target_id = target.get("id", "unknown")
     target_label = target.get("label", "Unknown")
     target_directive = _target_directive(str(target_id))
+    selected_activity = _selected_activity_context(utt)
+    selected_lines = (
+        [
+            "",
+            "Keep the draft grounded in the local-activity context the user chose:",
+            selected_activity,
+        ]
+        if selected_activity
+        else []
+    )
     return "\n".join(
         [
             "Improve the draft rewrite below for direct insertion into the user's active app.",
             f"Project: {project_label}",
             f"Target profile: {target_id} ({target_label})",
             f"Target guidance: {target_directive}",
+            *selected_lines,
             "",
             "Project context from repo-local .hs files:",
             hs_context,
@@ -369,6 +393,47 @@ def _target_profile(utt: Utterance) -> dict[str, Any]:
         "confidence": 0.0,
         "source": "none",
     }
+
+
+def _selected_activity_context(utt: Utterance) -> str:
+    """HS-53-07: the record the user chose via "Dictate with this", named for the model.
+
+    The dictation runner pins the selected ``ActivityRecord`` at ``records[0]`` of
+    the activity bundle and records its id in ``selected_record_id``. We surface a
+    one-line, source-cited reference so the rewrite can ground the dictation in
+    that issue/PR/page. Empty string when nothing was selected (the default daily
+    path), so the prompt is byte-identical without a pin.
+    """
+    if not isinstance(utt.activity, dict):
+        return ""
+    selected_id = utt.activity.get("selected_record_id")
+    if selected_id in (None, ""):
+        return ""
+    records = utt.activity.get("records")
+    if not isinstance(records, list):
+        return ""
+    record = next(
+        (r for r in records if isinstance(r, dict) and r.get("id") == selected_id),
+        None,
+    )
+    if record is None:
+        return ""
+    entity_type = str(record.get("entity_type") or "").strip()
+    entity_id = str(record.get("entity_id") or "").strip()
+    if entity_type and entity_id:
+        head = f"{entity_type} {entity_id}"
+    else:
+        head = str(record.get("title") or record.get("url") or "").strip()
+    if not head:
+        return ""
+    parts = [head]
+    title = str(record.get("title") or "").strip()
+    if title and title != head:
+        parts.append(f"titled \"{title}\"")
+    url = str(record.get("url") or "").strip()
+    if url:
+        parts.append(f"({url})")
+    return " ".join(parts)
 
 
 def _agent_reply_context(utt: Utterance) -> str:

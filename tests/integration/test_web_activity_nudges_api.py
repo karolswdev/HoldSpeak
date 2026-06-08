@@ -144,3 +144,55 @@ def test_get_nudges_respects_limit_query(client, db: Database) -> None:
         )
     body = client.get("/api/activity/nudges?limit=2").json()
     assert len(body["nudges"]) == 2
+
+
+# --- HS-53-07: "Dictate with this" parks a server-side selection -------------
+
+
+@pytest.mark.integration
+def test_select_parks_pin_consumed_by_next_dictation(client, db: Database) -> None:
+    from holdspeak import dictation_selection as ds
+
+    ds.clear_selected_record()
+    record_id = _seed_record(
+        db,
+        url="https://github.com/karol/holdspeak/issues/53",
+        entity_type="github_issue",
+        entity_id="karol/holdspeak#53",
+        minutes_ago=5,
+    )
+    resp = client.post("/api/activity/nudges/select", json={"record_id": record_id})
+    assert resp.status_code == 200
+    assert resp.json() == {"selected": record_id}
+    # The next dictation would consume exactly this id (one-shot).
+    assert ds.consume_selected_record() == record_id
+    assert ds.consume_selected_record() is None
+
+
+@pytest.mark.integration
+def test_select_unknown_record_is_400(client, db: Database) -> None:
+    from holdspeak import dictation_selection as ds
+
+    ds.clear_selected_record()
+    resp = client.post("/api/activity/nudges/select", json={"record_id": 999999})
+    assert resp.status_code == 400
+    assert ds.peek_selected_record() is None
+
+
+@pytest.mark.integration
+def test_select_missing_record_id_is_400(client, db: Database) -> None:
+    resp = client.post("/api/activity/nudges/select", json={})
+    assert resp.status_code == 400
+
+
+@pytest.mark.integration
+def test_select_clear_drops_the_pin(client, db: Database) -> None:
+    from holdspeak import dictation_selection as ds
+
+    record_id = _seed_record(db, url="https://example.com/x", minutes_ago=5)
+    client.post("/api/activity/nudges/select", json={"record_id": record_id})
+    assert ds.peek_selected_record() == record_id
+    resp = client.post("/api/activity/nudges/select/clear")
+    assert resp.status_code == 200
+    assert resp.json() == {"cleared": True}
+    assert ds.peek_selected_record() is None

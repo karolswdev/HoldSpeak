@@ -1,0 +1,25 @@
+== Phase 53 dogfood: activity pre-briefing ==
+
+-- 1. compute a windowed, source-cited nudge from real activity --
+  [PASS] the engine returned nudges
+  [PASS] there is a windowed summary nudge
+  [PASS] the window cites the previous meeting as its lower bound
+  [PASS] the window counts both records
+  [PASS] the window is source-cited
+  [PASS] there is a per-record nudge
+  [PASS] the record nudge names its browser/profile + entity
+
+-- 2. a dismissed nudge stays dismissed (across a fresh handle) --
+  [PASS] the dismissed nudge does not return
+  [PASS] dismissal persists across a fresh Database handle
+
+-- 3. activity off -> no nudges --
+  [PASS] the engine returns nothing when activity is off
+
+-- 4. selecting a record injects it into the dictation context --
+  [PASS] the default daily path selects nothing (byte-identical)
+  [PASS] the selected record id is recorded on the bundle
+  [PASS] the selected record is pinned at records[0]
+  [PASS] the pinned record carries its entity citation
+
+RESULT: PASS
