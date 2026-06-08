@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 53
-- **Status:** not started
+- **Status:** done
 - **Depends on:** HS-53-04
 - **Unblocks:** HS-53-06
 - **Owner:** unassigned
@@ -26,14 +26,14 @@ honest guide, in product-tense, that obeys the Phase-51 roadmap-vocabulary guard
 - **Out:** new feature work.
 
 ## Acceptance criteria
-- [ ] The guide exists: what the nudges are, the local + source-cited + dismissible +
+- [x] The guide exists: what the nudges are, the local + source-cited + dismissible +
       never-acts model stated honestly, the dictate-with-context action, the activity
       toggle gate; every claim grounded in the shipped engine + UI.
-- [ ] Linked in `docs/README.md`; the index stays a map.
-- [ ] Passes the Phase-51 roadmap-vocabulary guard and the link/image guards
+- [x] Linked in `docs/README.md`; the index stays a map.
+- [x] Passes the Phase-51 roadmap-vocabulary guard and the link/image guards
       (`uv run pytest -q -k "doc_drift or doc_guard or doc"`); `humanizer` run, no em/en
       dashes.
-- [ ] `npm run build` n/a; 0 `_built/` tracked.
+- [x] `npm run build` n/a; 0 `_built/` tracked.
 
 ## Test plan
 - `uv run pytest -q -k "doc_drift or doc_guard or doc"`; manual read as a user deciding

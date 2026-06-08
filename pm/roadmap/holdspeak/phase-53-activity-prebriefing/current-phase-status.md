@@ -1,10 +1,17 @@
 # Phase 53 — Activity Pre-Briefing
 
-**Status:** IN PROGRESS (4/6). Opened 2026-06-08 on user direction, right after Phase 52
+**Status:** IN PROGRESS (5/6). Opened 2026-06-08 on user direction, right after Phase 52
 closed + merged (PR #39). From the [project backlog](../BACKLOG.md): candidate **F**
 (local activity as pre-briefing fuel), picked by the user as the next phase.
 
-**Last updated:** 2026-06-08 (HS-53-04 done: the nudge UI on the dictation surface. A
+**Last updated:** 2026-06-08 (HS-53-05 done: the pre-briefing user guide.
+`docs/ACTIVITY_PREBRIEFING.md` is a short product-tense guide naming what the cards
+are, the local + source-cited + dismissible + never-acts contract, the
+dictate-with-this action, the deterministic relevance rule, and the activity tracking
+toggle gate; linked from `docs/README.md` under the Dictate journey. The
+roadmap-vocab guard scans the new doc and is happy; no em/en dashes; the humanizer
+pass rewrote the two inline-header bullet lists (pattern #16) into flowing prose +
+plain bullets. Full suite green at 2523 passed.) **HS-53-04 (prior, 2026-06-08):** the nudge UI on the dictation surface. A
 `role="region"` "Pre-briefing" block above the cockpit tabs hosts JS-rendered
 `role="note"` cards with an accented glyph, the title/summary, and a citation line that
 names the entity (accent-colored) + browser/profile + last-seen date. Each record card
@@ -88,21 +95,21 @@ own), local. No change to meeting capture, intel, plugins, or synthesis behaviou
 | HS-53-02 | The nudges API | done | HS-53-01 |
 | HS-53-03 | Dictate with this as context | done | HS-53-01 |
 | HS-53-04 | The nudge UI (dictation surface) | done | HS-53-02, HS-53-03 |
-| HS-53-05 | Docs: the pre-briefing guide | not started | HS-53-04 |
+| HS-53-05 | Docs: the pre-briefing guide | done | HS-53-04 |
 | HS-53-06 | Closeout: dogfood + final-summary + PR | not started | HS-53-01..05 |
 
 ## Where we are
 
-HS-53-01 → HS-53-04 shipped on 2026-06-08. The engine + the HTTP surface + the
-dictation-context override + the UI card stack on the dictation cockpit all wired. Full
-suite at **2523 passed, 17 skipped**; `npm run build` clean; three screenshots
-(`screenshots/nudges-populated.png`, `nudges-pinned.png`, `nudges-off.png`).
+HS-53-01 → HS-53-05 shipped on 2026-06-08. The engine + HTTP surface + dictation-context
+override + UI card stack + user guide are all in place. Full suite at **2523 passed,
+17 skipped**; `npm run build` clean; the doc-drift + roadmap-vocab guards are green
+against the new user-facing doc.
 
-Next is **HS-53-05 — the user guide**: a short product-tense doc that names
-pre-briefing nudges, the local + source-cited + dismissible + never-acts contract, how
-the "Dictate with this" selection pin works, and how the activity privacy toggle gates
-the whole feature. Must pass the Phase-51 roadmap-vocabulary guard and the `humanizer`
-pass; linked from the docs index.
+Next is **HS-53-06 — closeout**: a dogfood proving the engine end to end (seed
+activity + a prior meeting → a windowed, source-cited nudge is computed; dismiss it →
+it stays gone; activity off → no nudges; "dictate with this" injects the record),
+final-summary, phase CLOSED, PR to `main` merged on green, BACKLOG candidate F flipped
+to shipped.
 
 ## Open decisions (defaults chosen; flag to change)
 
