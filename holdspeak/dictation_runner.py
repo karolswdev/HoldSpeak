@@ -130,6 +130,7 @@ def run_dictation_pipeline(
     audio_duration_s: float,
     transcribed_at: datetime,
     agent_reply_session: Any | None = None,
+    journal_source: str = "dictation",
 ) -> str:
     """Run the dictation pipeline over ``text`` and return the text to type.
 
@@ -234,7 +235,7 @@ def run_dictation_pipeline(
         if journal is not None:
             journal.record(
                 run,
-                source="dictation",
+                source=journal_source,
                 transcript=text,
                 target_profile=target_profile,
                 project_root=project_root,

@@ -1,6 +1,6 @@
 # Phase 60 — The Wake Word
 
-**Status:** in-progress (1/6). Opened 2026-06-11 on standing user direction
+**Status:** in-progress (2/6). Opened 2026-06-11 on standing user direction
 ("K, then O" → "Word"), right after Phase 59 closed (PR #48). From the
 [project backlog](../BACKLOG.md): candidate **O**, with the four recorded
 safety conditions fixed: **arms, not types** (preview is the default
@@ -9,7 +9,19 @@ indicator** (presence + Qlippy + cockpit), **a local engine with a
 MEASURED false-accept story** (openWakeWord, Apache-2.0; Porcupine ruled
 out on licensing), **off by default**.
 
-**Last updated:** 2026-06-11 (**HS-60-01 done: the engine seam +
+**Last updated:** 2026-06-11 (**HS-60-02 done: arm, capture, and the
+pipeline.** `ArmedCapture` (frame-count time: speech onset in the window,
+silence-stop, runaway cap, silent disarm); the runtime glue with a
+self-healing floor-respecting frame source (any audio-floor owner pauses
+the listener); `_on_wake_detect` acquires the floor as `wake` (held floor
+→ silent skip), arms visibly (the NEW `armed` activity state +
+`wake_armed`), captures under a hard iteration cap, releases;
+`_transcribe_wake` runs the NORMAL pipeline (journal source `wake`) and
+forks: preview (default) stores a one-shot burned-on-use token +
+broadcasts `wake_preview` and NEVER touches the typing seam; type is the
+explicit opt-in. Lifecycle: boot, live settings sync, shutdown finally.
+10 tests (preview-never-types locked); full suite **2715 passed, 17
+skipped** (+10). **HS-60-01 (prior): the engine seam +
 config.** `WakeWordListener` is fully injectable and carries the safety
 behaviors in its bones: the refractory cooldown blocks the double-arm,
 pause drains frames without scoring, resume resets the detector AND
@@ -98,7 +110,7 @@ false-accept posture measured, not asserted.
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HS-60-01 | The engine seam + config | done | none |
-| HS-60-02 | Arm, capture, and the pipeline | backlog | HS-60-01 |
+| HS-60-02 | Arm, capture, and the pipeline | done | HS-60-01 |
 | HS-60-03 | The armed UX + settings | backlog | HS-60-02 |
 | HS-60-04 | The false-accept measurement | backlog | HS-60-01 |
 | HS-60-05 | Docs: the wake word | backlog | HS-60-03, HS-60-04 |
@@ -106,6 +118,7 @@ false-accept posture measured, not asserted.
 
 ## Where we are
 
-**HS-60-01 shipped 2026-06-11.** The seam is real and CI-safe. Next is
-**HS-60-02 — arm, capture, and the pipeline**: the runtime loop from
-detection to the preview-by-default outcome.
+**HS-60-01 → HS-60-02 shipped 2026-06-11.** The loop is real: detection
+to a preview that never types. Next is **HS-60-03 — the armed UX +
+settings**: the unmissable armed state, the preview card with the
+one-shot Type it, the settings section.

@@ -147,6 +147,68 @@ class WakeWordListener:
                 log.debug(f"wake on_detect raised: {exc}")
 
 
+class ArmedCapture:
+    """The post-detection state machine, fed one int16 frame at a time.
+
+    Frame-count time (one frame = 80 ms), no wall clock: wait for speech
+    onset inside the armed window; capture until sustained silence or the
+    utterance cap; then `result()` yields float32 audio for the normal
+    pipeline, or None when the window expired with nothing spoken (the
+    silent disarm). Pure and injectable: HS-60-02's runtime drives it from
+    the live stream; tests drive it from arrays.
+    """
+
+    def __init__(
+        self,
+        *,
+        window_seconds: float = 8.0,
+        max_utterance_seconds: float = 15.0,
+        silence_seconds: float = 1.2,
+        speech_rms: float = 350.0,
+    ) -> None:
+        frame_s = FRAME_SAMPLES / SAMPLE_RATE
+        self._window_frames = max(1, int(window_seconds / frame_s))
+        self._max_frames = max(1, int(max_utterance_seconds / frame_s))
+        self._silence_frames = max(1, int(silence_seconds / frame_s))
+        self.speech_rms = float(speech_rms)
+        self._waiting = 0
+        self._silent_run = 0
+        self._captured: list[np.ndarray] = []
+        self.state = "waiting"  # waiting | capturing | captured | expired
+
+    @staticmethod
+    def _rms(frame: np.ndarray) -> float:
+        return float(np.sqrt(np.mean(np.square(frame.astype(np.float64)))))
+
+    def feed(self, frame: np.ndarray) -> str:
+        """Feed one frame; returns the state after consuming it."""
+        if self.state in ("captured", "expired"):
+            return self.state
+        frame = np.asarray(frame)
+        loud = self._rms(frame) >= self.speech_rms
+        if self.state == "waiting":
+            self._waiting += 1
+            if loud:
+                self.state = "capturing"
+                self._captured.append(frame)
+            elif self._waiting >= self._window_frames:
+                self.state = "expired"
+            return self.state
+        # capturing
+        self._captured.append(frame)
+        self._silent_run = 0 if loud else self._silent_run + 1
+        if self._silent_run >= self._silence_frames or len(self._captured) >= self._max_frames:
+            self.state = "captured"
+        return self.state
+
+    def result(self) -> Optional[np.ndarray]:
+        """float32 [-1, 1] audio when captured; None otherwise."""
+        if self.state != "captured" or not self._captured:
+            return None
+        audio = np.concatenate(self._captured).astype(np.float32) / 32768.0
+        return audio
+
+
 # ── the real engine, strictly optional ──────────────────────────────────────
 
 
@@ -197,6 +259,7 @@ class OpenWakeWordDetector:
 
 
 __all__ = [
+    "ArmedCapture",
     "FRAME_SAMPLES",
     "SAMPLE_RATE",
     "FrameSource",

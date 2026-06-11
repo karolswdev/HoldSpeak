@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 60
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-60-01
 - **Unblocks:** HS-60-03, HS-60-06
 - **Owner:** unassigned
@@ -25,15 +25,21 @@ a normal pipeline run whose default outcome is a preview, never typing.
 - **Out:** the UI surfaces (HS-60-03).
 
 ## Acceptance criteria
-- [ ] With fakes end to end: detect → armed broadcast → captured speech
-      → pipeline → preview journaled + broadcast, and the typing seam
-      verifiably NOT invoked; with `action="type"` the typing seam IS
-      invoked with the pipeline result.
-- [ ] No speech in the window → silent disarm (no journal, no broadcast
-      beyond the disarm).
-- [ ] Hold-to-talk and meeting capture pause/resume the listener
-      (tested at the seam).
-- [ ] Disabled config → no listener construction (byte-identical lock).
+- [x] With fakes end to end: detect → armed activity + `wake_armed`
+      broadcast → captured speech → the normal pipeline
+      (`journal_source="wake"`) → preview broadcast with a one-shot
+      burned-on-use token, and the typing spy verifiably empty; with
+      `action="type"` the typing seam IS invoked with the pipeline
+      result.
+- [x] No speech in the window → silent disarm (the wake_disarmed
+      activity only; the hand-off provably not called).
+- [x] The floor model is the pause seam: a held floor silently blocks
+      arming (tested), and the frame source self-heals pause/resume
+      against `voice_session.active_owner` every read (the pause
+      semantics themselves are HS-60-01-tested).
+- [x] Disabled config → no listener construction (tested); the listener
+      is also stopped in the shutdown finally and live-synced on
+      settings-applied. See `evidence-story-02.md`.
 
 ## Test plan
 - Unit/integration with fake listener + recorder + pipeline; full suite.
