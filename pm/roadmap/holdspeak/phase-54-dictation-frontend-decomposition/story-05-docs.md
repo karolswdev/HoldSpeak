@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 54
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-54-03
 - **Unblocks:** HS-54-06
 - **Owner:** unassigned
@@ -30,12 +30,15 @@ incompatible way.
   internal plans.
 
 ## Acceptance criteria
-- [ ] The doc exists, matches what actually shipped (verified against the tree, not
+- [x] The doc exists, matches what actually shipped (verified against the tree, not
       the plan), and is linked from `CONTRIBUTING.md`.
-- [ ] A "add a new cockpit section" walkthrough is concrete enough to follow without
-      reading this phase's history.
-- [ ] The Phase-51 roadmap-vocab guard is untouched and green (internal docs are out
-      of its scope; user-facing docs were not modified).
+      (`docs/internal/ARCHITECTURE_WEB_FRONTEND.md`; see `evidence-story-05.md`.)
+- [x] A "add a new cockpit section" walkthrough is concrete enough to follow without
+      reading this phase's history. (Six steps: partial → page → switcher map →
+      module + registerSection → init wiring → verify.)
+- [x] The Phase-51 roadmap-vocab guard is untouched and green (internal docs are out
+      of its scope; user-facing docs were not modified). (Doc-guard slice 74 passed;
+      full suite 2545 passed, 17 skipped.)
 
 ## Test plan
 - `uv run pytest -q tests/unit -k "doc"` (the doc guards) plus the full suite
