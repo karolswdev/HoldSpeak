@@ -1,13 +1,15 @@
-# Firefox companion extension — local install guide
+# Firefox companion extension: local install guide
 
-> HS-9-03. The extension is **not distributed via addons.mozilla.org**;
+> The extension is **not distributed via addons.mozilla.org**;
 > it lives in this repo and is loaded as a temporary add-on for
 > personal local use only.
 
 ## What it does
 
-The companion extension posts active-tab URL + title to the running
-local HoldSpeak runtime so the activity ledger reflects browsing in
+Activity pre-briefing is only as good as the activity it can see, and
+Firefox does not expose browsing to outside processes. This small
+companion closes that gap: it posts the active tab's URL + title to the
+running local HoldSpeak runtime so the activity ledger reflects browsing in
 near-real-time, instead of waiting for Firefox's history database to
 flush.
 
@@ -22,12 +24,12 @@ flush.
 The receiving parser
 (`holdspeak/activity_extension.py:FORBIDDEN_FIELDS`) hard-rejects
 events that ship any of those fields, even if empty. This is
-defense-in-depth — the extension itself never builds those fields.
+defense-in-depth; the extension itself never builds those fields.
 
 ## Local install (Firefox)
 
-1. Start the HoldSpeak runtime: `holdspeak web` (note the
-   `http://127.0.0.1:<port>` line in stdout — the port is randomly
+1. Start the HoldSpeak runtime: `holdspeak web`, and note the
+   `http://127.0.0.1:<port>` line in stdout (the port is randomly
    assigned per launch).
 2. In Firefox, open `about:debugging#/runtime/this-firefox`.
 3. Click **Load Temporary Add-on…** and select
@@ -38,7 +40,7 @@ defense-in-depth — the extension itself never builds those fields.
 5. Browse normally. Tab activations and load completions show up
    in `/activity` under `source_browser=firefox_ext`.
 
-The temporary add-on is removed on Firefox restart — re-load it via
+The temporary add-on is removed on Firefox restart; re-load it via
 step 3 each session. This is intentional: the extension is for
 personal local use and is not packaged for distribution.
 
@@ -49,7 +51,7 @@ After loading the extension, open `/activity` in your browser. The
 a `firefox_ext` row. If it doesn't:
 
 - Check Firefox's browser console (`Ctrl+Shift+J`) for
-  `[holdspeak-companion] runtime not reachable` — the runtime URL
+  `[holdspeak-companion] runtime not reachable`: the runtime URL
   in options likely doesn't match the runtime port.
 - Confirm the runtime is actually running on the configured port.
 - Confirm your browsing is in a regular (non-private) window.
@@ -58,7 +60,7 @@ a `firefox_ext` row. If it doesn't:
 
 - **Trust boundary**: The extension is part of the local toolchain.
   A malicious extension on the same machine could already read the
-  active tab via `tabs` permission directly — this extension
+  active tab via `tabs` permission directly; this extension
   doesn't widen that surface.
 - **Network**: The extension only talks to the loopback URL the
   user configured. The runtime binds to `127.0.0.1` by default; if

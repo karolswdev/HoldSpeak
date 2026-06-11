@@ -1,9 +1,10 @@
 # HoldSpeak User Guide
 
-HoldSpeak is a local-first voice workspace. It has two main jobs:
+HoldSpeak is one local copilot with two modes, and this guide is the
+day-to-day map of both:
 
-- **Meeting intelligence:** record conversations, transcribe them, extract topics, actions, summaries, and reviewable handoff artifacts.
-- **Intelligent typing:** hold a hotkey, speak, and insert useful text into the active app. For coding assistants, HoldSpeak can use project context and recent Claude/Codex state to rewrite dictation into better prompts.
+- **Dictate:** hold a hotkey, speak, and insert useful text into the active app. With the dictation pipeline on, HoldSpeak uses project context and recent Claude/Codex state to rewrite rough speech into better prompts, and the dictation journal records every run so corrections teach it.
+- **Meet:** record conversations (or import recordings and transcripts), transcribe them, and extract topics, actions, summaries, and reviewable artifacts, with meeting aftercare showing what is still open when it ends.
 
 HoldSpeak is private by default. Audio capture, transcription, project context, and session metadata are stored locally unless you explicitly configure a cloud or OpenAI-compatible endpoint.
 

@@ -1,9 +1,10 @@
-# The Dictation Copilot — spoken → enriched
+# The Dictation Copilot: spoken to enriched
 
-HoldSpeak's intelligent dictation doesn't just transcribe — it turns rough,
-rambling speech into a precise, **project-grounded** task for your coding agent.
-This page shows it working end-to-end against a real local LLM, then tells you
-how to turn it on and run the same demo yourself.
+Transcription gets your words onto the screen; the dictation pipeline gets
+your *intent* there. It turns rough, rambling speech into a precise,
+**project-grounded** task for your coding agent, using a model you run.
+This page shows it working end to end against a real local LLM, then tells
+you how to turn it on and run the same demo yourself.
 
 > Everything here is **opt-in and off by default**. With the dictation pipeline
 > disabled, HoldSpeak types your transcript exactly as before. See
@@ -16,8 +17,8 @@ A real run over the [`ledgerline`](../tests/fixtures/dictation_demo_project/pypr
 fixture project (it has [`.hs/` context](../tests/fixtures/dictation_demo_project/.hs/memory.md),
 a [block taxonomy](../tests/fixtures/dictation_demo_project/.holdspeak/blocks.yaml),
 [project facts](../tests/fixtures/dictation_demo_project/.holdspeak/project.yaml) (the `kb:` map),
-and code), driving a homelab `Qwen3.5-9B` over an OpenAI-compatible endpoint —
-**every depth feature firing at once**:
+and code), driving a homelab `Qwen3.5-9B` over an OpenAI-compatible endpoint,
+with **every depth feature firing at once**:
 
 ```text
   Features that fired this run
@@ -68,7 +69,7 @@ and code), driving a homelab `Qwen3.5-9B` over an OpenAI-compatible endpoint —
 The 446-character ramble became a task that names the real files
 (`src/ledgerline/...`), the real store columns (`key`, `request_hash`,
 `response_json`), the **append-only** and **double-entry** invariants, and an
-acceptance-criteria checklist — none of which were spoken. That grounding comes
+acceptance-criteria checklist, none of which were spoken. That grounding comes
 from the project's own [`.hs/memory.md`](../tests/fixtures/dictation_demo_project/.hs/memory.md)
 and KB, not from the model's imagination.
 
@@ -76,7 +77,7 @@ and KB, not from the model's imagination.
 
 After Whisper transcribes and `TextProcessor` cleans punctuation, the utterance
 flows through an **opt-in, ordered pipeline** before it's typed. Each stage
-fails open — if it errors or the LLM is unreachable, your plain transcript is
+fails open: if it errors or the LLM is unreachable, your plain transcript is
 what gets typed.
 
 ```mermaid
@@ -94,15 +95,15 @@ flowchart LR
     E -.->|"any stage fails / LLM down"| D
 ```
 
-The **target profile** (where the text is headed — Claude Code, Codex, a
-browser, an editor…) is resolved in parallel and shapes the rewrite. That's
+The **target profile** (where the text is headed: Claude Code, Codex, a
+browser, an editor) is resolved in parallel and shapes the rewrite. That's
 where correction memory (②) and model-assisted detection (③) decide together:
 
 ```mermaid
 flowchart TD
     T1["window / app hints"] --> T2["heuristic profile<br/>+ confidence"]
     T2 --> T3{"manual override<br/>or a user correction ②?"}
-    T3 -- yes --> TW["use it — always wins"]
+    T3 -- yes --> TW["use it (always wins)"]
     T3 -- no --> T4{"confidence &lt; threshold?"}
     T4 -- no --> TH["keep the heuristic"]
     T4 -- yes --> T5["model-assisted ③<br/>LLM infers the target<br/>from your words"]
@@ -112,7 +113,7 @@ flowchart TD
 In the run above there was **no window signal** (the Wayland/terminal reality),
 so the heuristic returned `unknown@0.00`; below the threshold, the LLM inferred
 `claude_code` from the words. And the intent-router's raw classify actually
-*failed* on this endpoint — but your earlier **correction rescued the routing**,
+*failed* on this endpoint, but your earlier **correction rescued the routing**,
 so the task still landed in the right block.
 
 ## What each feature did
@@ -120,7 +121,7 @@ so the task still landed in the right block.
 | # | Feature | What happened above | Turn it on with |
 |---|---------|---------------------|-----------------|
 | ① | **Multi-pass rewriting** | Drafted, then critiqued + tightened in a second pass (latency-budget-gated). | `rewrite_passes: 2` |
-| ② | **Correction memory** | A correction you made last session (`this kind of utterance → agent_task_buildout`) nudged routing. The LLM classifier actually *failed* on this turn — the correction **rescued** it. **Persists across restarts** (DB-backed); curate it in `/dictation → Memory`. | `corrections_enabled: true` |
+| ② | **Correction memory** | A correction you made last session (`this kind of utterance → agent_task_buildout`) nudged routing. The LLM classifier actually *failed* on this turn; the correction **rescued** it. **Persists across restarts** (DB-backed); curate it in `/dictation → Memory`. | `corrections_enabled: true` |
 | ③ | **Model-assisted target** | No window signal was available (the Wayland/terminal reality). The heuristic gave `unknown@0.00`; below the threshold, the LLM **inferred** `claude_code` from your words. A manual override always wins. | `target_detect_llm_enabled: true` |
 | ④ | **KB injection** | The matched block injected the project's stack / invariants / definition-of-done before the rewrite. | add a block with an `inject` template |
 
@@ -130,7 +131,7 @@ text un-typeable.
 
 ## Turn it on
 
-**Do it all in the web UI — no file editing.** Open the cockpit and flip the
+**Do it all in the web UI, no file editing.** Open the cockpit and flip the
 toggles:
 
 ```
@@ -139,10 +140,10 @@ toggles:
 /dictation -> Memory          # see + curate what the copilot has learned
 ```
 
-![The Copilot depth card — segmented rewrite passes, correction-memory and
+![The Copilot depth card: segmented rewrite passes, correction-memory and
 model-assist toggles, and a confidence threshold.](assets/cockpit/copilot-depth.png)
 
-Every feature above (①–④) is a slider or toggle in **Runtime → Copilot depth**;
+Every feature above (① through ④) is a slider or toggle in **Runtime → Copilot depth**;
 the round-trip persists through the settings API. See the
 [Intelligent Typing Setup guide](./INTELLIGENT_TYPING_GUIDE.md) for the full
 walk-through.
@@ -200,11 +201,11 @@ hosted CI) and runs for real wherever your endpoint is reachable.
 
 ## See also
 
-- [Intelligent Typing Guide](./INTELLIGENT_TYPING_GUIDE.md) — the full setup:
+- [Intelligent Typing Guide](./INTELLIGENT_TYPING_GUIDE.md): the full setup,
   `.hs/` conventions, target profiles, agent hooks, and every config knob.
 - [The learning loop](./INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay):
   what feature ② becomes over time. Correct a misfire in one tap, watch the "What
   HoldSpeak learned" digest count the honest reach, and replay to prove it improved.
-- [Models](./MODELS.md) — choosing and pointing at a model.
-- [Security & Privacy](./SECURITY.md) — what leaves your machine (only the LLM
+- [Models](./MODELS.md): choosing and pointing at a model.
+- [Security & Privacy](./SECURITY.md): what leaves your machine (only the LLM
   endpoint you configure; local or LAN is fine).

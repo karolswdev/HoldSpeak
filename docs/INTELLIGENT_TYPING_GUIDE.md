@@ -1,8 +1,10 @@
 # HoldSpeak Intelligent Typing Setup
 
-Intelligent typing turns rough speech into useful text for the active app. It
-can route an utterance through local rules, project context, agent context, and
-an optional LLM rewrite stage before inserting text.
+The gap between what you say and what you meant to type is where dictation
+tools usually stop; the dictation pipeline is HoldSpeak crossing it. It
+routes an utterance through local rules, project context, agent context, and
+an optional LLM rewrite stage before inserting text, so rough speech lands
+as useful text for the active app.
 
 Use this after basic voice typing works. If you are starting from zero, read
 [Getting Started](GETTING_STARTED.md) first.
@@ -396,18 +398,18 @@ under:
 ## 10. Copilot Depth (multi-pass, memory, model-assist, telemetry)
 
 These knobs make the copilot deeper and self-improving. **Every one is opt-in
-and off by default** — with them off, behavior is identical to the basic
+and off by default**: with them off, behavior is identical to the basic
 pipeline. See [The Dictation Copilot](./DICTATION_COPILOT.md) for a live demo of
 all of them firing at once.
 
-### Set it in the UI — no file editing
+### Set it in the UI, no file editing
 
 ```
 /dictation -> Runtime -> Copilot depth
 ```
 
 Everything below is a slider or a toggle in the **Copilot depth** card. There is
-no need to touch `config.json` — set it here and it round-trips through the
+no need to touch `config.json`; set it here and it round-trips through the
 settings API.
 
 ![The Copilot depth card: a segmented rewrite-passes control, toggles for
@@ -416,7 +418,7 @@ confidence threshold.](assets/cockpit/copilot-depth.png)
 
 | Control (Runtime → Copilot depth) | Knob (`dictation.pipeline`) | Default | What it does |
 | --- | --- | --- | --- |
-| **Rewrite passes** (segmented 1–5) | `rewrite_passes` | `1` | Project-rewriter passes (draft → critique → refine). `1` is single-pass. Extra passes are skipped if they would breach `max_total_latency_ms`. |
+| **Rewrite passes** (segmented 1-5) | `rewrite_passes` | `1` | Project-rewriter passes (draft → critique → refine). `1` is single-pass. Extra passes are skipped if they would breach `max_total_latency_ms`. |
 | **Learn from my corrections** (toggle) | `corrections_enabled` | `false` | Consult the **correction memory** when routing: a correction you made earlier nudges a similar later utterance. |
 | **Infer the target when unsure** (toggle) | `target_detect_llm_enabled` | `false` | When window/app detection is unsure, ask the LLM to infer the **target profile** from your words. A manual override always wins. |
 | **Ask the model below confidence** (slider) | `target_detect_llm_below` | `0.8` | The heuristic-confidence threshold below which the LLM fallback fires. |
@@ -431,7 +433,7 @@ than single-pass.
 
 **Correction memory.** When a correction is recorded (from the live runtime, or
 added by hand in the Memory tab), a later similar utterance is nudged toward it.
-The memory is **DB-backed and persists across restarts** — corrections you make
+The memory is **DB-backed and persists across restarts**: corrections you make
 survive a relaunch (a bounded in-memory ring stays the fast nudge path; the
 SQLite store is durability). Corrections are gist-only: gists are truncated and
 secret-looking text is rejected before anything is stored. Curate it in the UI:
@@ -465,7 +467,7 @@ tab renders, over the session's recent runs:
 
 - per-stage **p50/p95** latency (ms) + run count, each with a bar against your
   latency budget (it turns red at ≥ 66%);
-- **budget guidance** — a hint when a stage's p95 reaches ≥ 66% of
+- **budget guidance**: a hint when a stage's p95 reaches ≥ 66% of
   `max_total_latency_ms` (consider a smaller/faster model);
 - the most recent **multi-pass** rewrite timings as chips;
 - the correction-store size.
@@ -497,18 +499,18 @@ under `dictation.pipeline`:
 
 ## 11. Desktop Presence (ambient, on-desktop status)
 
-When you dictate into another app, the HoldSpeak web dashboard isn't on screen —
-so you can't see whether the copilot is **listening**, **transcribing**, or
-**typing**. Desktop presence is an **opt-in, native** surface that tells you, at
-a glance, what the runtime is doing right now — without ever stealing keyboard
-focus from the app you're typing into.
+When you dictate into another app, the HoldSpeak web dashboard isn't on
+screen, so you can't see whether the copilot is **listening**,
+**transcribing**, or **typing**. Desktop presence is an **opt-in, native**
+surface that tells you, at a glance, what the runtime is doing right now,
+without ever stealing keyboard focus from the app you're typing into.
 
 It is **off by default** and adds **no GUI dependency** unless you turn it on.
 
 ### Turn it on
 
 Presence is a **config toggle**. Flip it from the **Settings** page (or the
-welcome wizard) — the runtime starts and stops the presence host live — or set it
+welcome wizard); the runtime starts and stops the presence host live. Or set it
 directly in your config:
 
 ```json
@@ -516,7 +518,7 @@ directly in your config:
 ```
 
 For a headless or power-user launch you can also force it on with an environment
-variable (a retained override — the config toggle is the normal path):
+variable (a retained override; the config toggle is the normal path):
 
 ```bash
 HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak
@@ -534,14 +536,14 @@ them; they are not pip packages):
 ```bash
 # Notification + tray (Tier 1)
 sudo apt-get install gir1.2-notify-0.7 gir1.2-ayatanaappindicator3-0.1
-# Floating HUD overlay (Tier 2 — X11 / wlroots only)
+# Floating HUD overlay (Tier 2: X11 / wlroots only)
 sudo apt-get install gir1.2-gtk-3.0 gir1.2-webkit2-4.1
 ```
 
 > With the flag **unset**, the runtime is byte-identical and pulls in none of
-> these — presence is purely additive.
+> these; presence is purely additive.
 
-### What you'll see — the states
+### What you'll see: the states
 
 Presence reflects the live runtime activity and disappears when idle:
 
@@ -552,42 +554,42 @@ Presence reflects the live runtime activity and disappears when idle:
 | `transcribing` | Transcribing | Turning speech into text (Whisper) |
 | `processing` | Processing | Running the dictation pipeline |
 | `typing` | Typing | Injecting text into the active app |
-| `complete` | Complete | Done — lingers briefly, then hides |
+| `complete` | Complete | Done; lingers briefly, then hides |
 | `error` | Needs attention | Something failed; lingers so you notice |
 
-`idle` never renders a surface — presence is **transient** by design, present
+`idle` never renders a surface; presence is **transient** by design, present
 only while something is happening.
 
 ### macOS
 
-On macOS you get the rich **floating HUD** — a frameless, non-activating panel
+On macOS you get the rich **floating HUD**, a frameless, non-activating panel
 that hosts the Signal presence card (native rounded corners + shadow, live over
-the websocket) — plus a **menu-bar glyph**.
+the websocket), plus a **menu-bar glyph**.
 
 ![The macOS presence HUD: a dark Signal card with an animated state glyph,
-"Transcribing — Turning your speech into text…", and the dictation source
+"Transcribing: Turning your speech into text…", and the dictation source
 ("Hotkey").](assets/presence/macos-hud.png)
 
 ![The HoldSpeak glyph in the macOS menu bar, alongside the system status
 items.](assets/presence/macos-menubar-glyph.png)
 
 The HUD uses an `NSWindowStyleMaskNonactivatingPanel`, so it **cannot take
-keyboard focus** — while it's visible, your keystrokes keep flowing into the
+keyboard focus**: while it's visible, your keystrokes keep flowing into the
 frontmost app. Needs the `pyobjc` extra (`.[presence]`); without it (or without
 WebKit), presence falls back to the web dashboard card and nothing breaks.
 
 ### Linux
 
-On Linux, Tier 1 works everywhere — an **in-place-updating notification** (one
+On Linux, Tier 1 works everywhere: an **in-place-updating notification** (one
 banner that mutates as the state changes, rather than spamming new ones) plus a
 **tray glyph** (StatusNotifierItem):
 
-![A GNOME notification banner reading "HoldSpeak — Transcribing / Turning your
+![A GNOME notification banner reading "HoldSpeak: Transcribing / Turning your
 speech into text…", updating in place as the state
 changes.](assets/presence/linux-notification.png)
 
 Where the compositor allows free-floating always-on-top windows (**X11** and
-**wlroots** Wayland), you also get the same rich **floating HUD** as macOS —
+**wlroots** Wayland), you also get the same rich **floating HUD** as macOS:
 a GTK3 + WebKit2 overlay of the very same Signal card:
 
 ![The Linux floating HUD overlay: the same dark Signal "Transcribing" card,
@@ -595,7 +597,7 @@ rendered as a GTK-WebKit popup over the desktop.](assets/presence/linux-overlay.
 
 > **The Wayland caveat.** On mainstream Wayland (**GNOME/KDE**), the compositor
 > blocks arbitrary always-on-top overlays, so the floating HUD is **not**
-> available there — the native path is the Tier-1 **notification + tray glyph**
+> available there; the native path is the Tier-1 **notification + tray glyph**
 > (which is focus-safe and works on every desktop). The floating HUD is for
 > macOS, X11, and wlroots compositors. HoldSpeak probes your session at startup
 > and picks the best available surface automatically.
@@ -609,7 +611,7 @@ rendered as a GTK-WebKit popup over the desktop.](assets/presence/linux-overlay.
 The one non-negotiable rule: **the presence surface never takes keyboard
 focus.** While it's on screen, you're actively typing into another app, so any
 focus theft would land your keystrokes in the wrong window. Every surface
-guarantees this at the platform level — macOS via the non-activating panel,
+guarantees this at the platform level: macOS via the non-activating panel,
 Linux via notifications and the tray (which can't be focused) and an
 override-redirect, non-focus overlay window.
 
@@ -719,7 +721,7 @@ the typed text side by side, and a per-stage latency strip.](assets/journal/jour
 
 ### Your dictation stays local
 
-The journal is **local-only** — it never leaves your machine. Nothing about it
+The journal is **local-only**: it never leaves your machine. Nothing about it
 is uploaded, synced, or shared. Privacy comes from *local + filter + cap +
 wipe*, not from being off:
 
@@ -733,13 +735,13 @@ wipe*, not from being off:
 - **Curatable.** Delete any single entry, or **Clear journal** to wipe it all,
   from the tab.
 - **Toggle.** The journal is **on by default** (local). Turn it off with
-  `dictation.journal_enabled = false` — when off, **no** rows are written and
+  `dictation.journal_enabled = false`; when off, **no** rows are written and
   your typed output is byte-identical to journaling-off. (Journaling is a pure
   side-channel: it never changes what gets typed or how fast.)
 
 ### What is recorded
 
-One row per pipeline run — real dictation **and** dry-run, tagged by source:
+One row per pipeline run, real dictation **and** dry-run, tagged by source:
 
 | Field | What it captures |
 |---|---|

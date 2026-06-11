@@ -1,13 +1,22 @@
 # Phase 58 — The Front Door (positioning + the user-facing docs, revised)
 
-**Status:** in-progress (2/6). Opened 2026-06-11 on user direction, right
+**Status:** in-progress (3/6). Opened 2026-06-11 on user direction, right
 after Phase 57 closed (PR #44): *"a proper phase. Where we also revise WHAT
 we are saying, so that we can be explicit around how to 'sell' this product
 to our community."* The user fixed the three positioning decisions directly:
 **lead angle "one copilot, two modes"**, **audience: developers**,
 **comparisons: name names, honestly**.
 
-**Last updated:** 2026-06-11 (**HS-58-02 done: README.md, the front
+**Last updated:** 2026-06-11 (**HS-58-03 done: the core guides.** All
+eight user-flow guides revised against the canon: why-ledes (the
+five-minute promise, the say-vs-meant gap, "a meeting should end with
+decisions, not a recording"), canonical names in prose, 70 em/en dashes
+removed with hand-chosen replacements (the one survivor is a verbatim UI
+quote the canon exempts — a first-pass edit of it was caught by grepping
+the real `journal.js` string and restored). Bonus find: an `HS-9-03`
+vocab leak in the Firefox guide that Phase 51's two-digit pattern misses
+(fixed; guard widening → HS-58-05). Locks green; suite 2641.
+**HS-58-02 (prior): README.md, the front
 door.** The hero IS the canon's one-liner; "The two modes" gives Dictate
 and Meet equal billing and carries the post-48 surface the old README
 missed (voice commands, pre-briefing, recording AND transcript import,
@@ -95,13 +104,14 @@ as honest as the product.
 |---|---|---|---|
 | HS-58-01 | The positioning canon | done | none |
 | HS-58-02 | README.md, the front door | done | HS-58-01 |
-| HS-58-03 | The core guides | backlog | HS-58-01 |
+| HS-58-03 | The core guides | done | HS-58-01 |
 | HS-58-04 | The developer + ops docs | backlog | HS-58-01 |
 | HS-58-05 | The guard | backlog | HS-58-02..04 |
 | HS-58-06 | Closeout: fresh-eyes pass + final-summary + PR | backlog | HS-58-01..05 |
 
 ## Where we are
 
-**HS-58-01 → HS-58-02 shipped 2026-06-11.** The repo can pitch itself.
-Next is **HS-58-03 — the core guides**: why-ledes, canonical names, the
-humanizer pass, and the dash cleanup across the eight user-flow docs.
+**HS-58-01 → HS-58-03 shipped 2026-06-11.** The front door and every
+user-flow guide now tell one story in one voice. Next is **HS-58-04 — the
+developer + ops docs**: the same treatment for the extend-it corpus,
+starting with the 82-dash PLUGIN_AUTHORING monster.
