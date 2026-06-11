@@ -1,13 +1,24 @@
 # Phase 59 — Speak Your Language (languages + the spoken-symbol dictionary)
 
-**Status:** in-progress (1/4). Opened 2026-06-11 on user direction ("K, then
+**Status:** in-progress (2/4). Opened 2026-06-11 on user direction ("K, then
 O" → "Kkkkk"), right after the Phase-58 follow-ups merged (PRs #46, #47).
 From the [project backlog](../BACKLOG.md): candidate **K**, the cheapest
 reach-expansion on the board, under one thesis: **the input layer adapts to
 you**. Candidate **O** (wake word) is queued behind it per the same user
 direction, with the misfire-safety conditions recorded in the conversation.
 
-**Last updated:** 2026-06-11 (**HS-59-01 done: the language knob, end to
+**Last updated:** 2026-06-11 (**HS-59-02 done: the spoken-symbol
+dictionary.** `dictation.spoken_symbols` (default empty) validated
+actionably in `__post_init__`; `TextProcessor` merges user entries over
+the pristine built-ins (user wins; symbols are literal, never regex
+templates); web_runtime threads it; the Voice-typing settings editor
+ships. **A real find**: per-table ordering let built-in "colon" eat the
+user's "double colon" — `_process_punctuation` is now ONE combined
+longest-first pass across every table, with the strongest byte-identical
+proof available: the golden lock AND all 55 pre-existing processor tests
+pass unmodified. POSITIONING gains the canonical rows. 20 tests;
+screenshot reviewed; full suite **2683 passed, 17 skipped** (+20).
+**HS-59-01 (prior): the language knob, end to
 end.** `holdspeak/languages.py` (pure, import-locked) vendors the
 99-language Whisper registry with `normalize_language` (auto/codes/names,
 actionable refusal); `ModelConfig.language="auto"` coerces older shapes;
@@ -87,13 +98,12 @@ non-English speech at closeout.
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HS-59-01 | The language knob, end to end | done | none |
-| HS-59-02 | The spoken-symbol dictionary | backlog | none |
+| HS-59-02 | The spoken-symbol dictionary | done | none |
 | HS-59-03 | Docs: languages + the dictionary | backlog | HS-59-01, HS-59-02 |
 | HS-59-04 | Closeout: real-metal dogfood + final-summary + PR | backlog | HS-59-01..03 |
 
 ## Where we are
 
-**HS-59-01 shipped 2026-06-11.** HoldSpeak speaks your language,
-everywhere the one Transcriber is built. Next is **HS-59-02 — the
-spoken-symbol dictionary**: user entries merged over the built-in
-punctuation table, the settings editor, empty-dict byte-identical.
+**HS-59-01 → HS-59-02 shipped 2026-06-11.** The input layer adapts to
+you: your language, your vocabulary. Next is **HS-59-03 — docs**, then
+the real-metal closeout.

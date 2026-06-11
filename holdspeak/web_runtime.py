@@ -171,7 +171,9 @@ class WebRuntime:
         )
         self.voice_session = VoiceTypingSession()
         self.transcription_lock = threading.Lock()
-        self.text_processor = TextProcessor()
+        self.text_processor = TextProcessor(
+            spoken_symbols=getattr(self.config.dictation, "spoken_symbols", [])
+        )
         self.activity_tracker = RuntimeActivityTracker()
         from .activity_context import ActivityContextProvider
 

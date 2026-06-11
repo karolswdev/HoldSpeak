@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 59
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-59-03, HS-59-04
 - **Owner:** unassigned
@@ -26,14 +26,20 @@ value and there is nowhere to put it.
   per-target dictionaries.
 
 ## Acceptance criteria
-- [ ] Processor matrix: each attach mode lands its spacing; a user entry
-      overrides a built-in with the same spoken phrase; multi-word
-      phrases win over shorter prefixes; an empty dictionary is
-      byte-identical (locked against a golden set of built-in cases).
-- [ ] Malformed entries refuse with a clean 400; valid entries round-trip.
-- [ ] The settings editor ships (page locks + screenshot); build clean.
-- [ ] POSITIONING.md gains the canonical-name row ("the spoken-symbol
-      dictionary").
+- [x] Processor matrix: each attach mode lands its spacing (incl. the
+      literal-symbol guarantee); user overrides a built-in (class tables
+      un-mutated) and can move one to another mode; multi-word phrases
+      win over shorter prefixes ACROSS tables — a real find: per-table
+      ordering let built-in "colon" eat the user's "double colon"; the
+      pass is now one combined longest-first sweep, with the 55 existing
+      processor tests passing unmodified as the byte-identical proof.
+- [x] Malformed entries refuse with a clean 400 (and the bad write
+      changes nothing); valid entries round-trip normalized.
+- [x] The settings editor ships (page locks + screenshot with three
+      seeded rows); build clean.
+- [x] POSITIONING.md gains the canonical-name rows ("the spoken-symbol
+      dictionary" + "the spoken language setting").
+      See `evidence-story-02.md`.
 
 ## Test plan
 - Unit matrix on TextProcessor; config validation; page locks. Full suite.

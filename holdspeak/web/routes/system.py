@@ -971,6 +971,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                     pipeline=DictationPipelineConfig(**pipeline_data),
                     runtime=LLMRuntimeConfig(**runtime_data),
                     macros=macros_cfg,
+                    spoken_symbols=dictation_data.get("spoken_symbols", []) or [],
                 )
             except DictationConfigError as exc:
                 return JSONResponse(
