@@ -1,12 +1,21 @@
 """Text post-processing for transcribed speech."""
 
 import re
+from typing import Optional, Sequence
 
 import pyperclip
 
 
 class TextProcessor:
-    """Process transcribed text to handle punctuation commands and substitutions."""
+    """Process transcribed text to handle punctuation commands and substitutions.
+
+    HS-59-02: takes the user's spoken-symbol dictionary and merges it over
+    the built-in tables. A user entry with the same spoken phrase as a
+    built-in replaces it (the phrase is removed from every built-in table
+    first, then inserted into its own attach mode's table), so the user
+    always wins. With no entries the instance tables equal the class tables
+    and the output is byte-identical.
+    """
 
     # Punctuation that removes space before it (attaches to previous word)
     # e.g., "hello period" -> "hello."
@@ -48,6 +57,36 @@ class TextProcessor:
         "new paragraph": "\n\n",
     }
 
+    def __init__(self, spoken_symbols: Optional[Sequence[dict]] = None) -> None:
+        # Instance copies; the class attributes remain the pristine built-ins.
+        self._attach_left = dict(self.ATTACH_LEFT)
+        self._attach_right = dict(self.ATTACH_RIGHT)
+        self._attach_both = dict(self.ATTACH_BOTH)
+        self._newlines = dict(self.NEWLINES)
+        self._plain: dict[str, str] = {}
+
+        for entry in spoken_symbols or []:
+            spoken = str(entry.get("spoken", "")).strip().lower()
+            symbol = str(entry.get("symbol", ""))
+            attach = str(entry.get("attach", "none") or "none").lower()
+            if not spoken or not symbol:
+                continue
+            # User wins: drop the phrase from every table before inserting.
+            for table in (
+                self._attach_left,
+                self._attach_right,
+                self._attach_both,
+                self._newlines,
+                self._plain,
+            ):
+                table.pop(spoken, None)
+            target = {
+                "left": self._attach_left,
+                "right": self._attach_right,
+                "both": self._attach_both,
+            }.get(attach, self._plain)
+            target[spoken] = symbol
+
     def process(self, text: str) -> str:
         """Apply all text transformations.
 
@@ -76,36 +115,37 @@ class TextProcessor:
         - ATTACH_BOTH: removes spaces both sides (e.g., "self dash aware" -> "self-aware")
         - NEWLINES: removes surrounding spaces
         """
-        # Process longer commands first to handle multi-word commands properly
-        # e.g., "new paragraph" before "new"
+        # One combined pass, longest command first ACROSS every table
+        # (HS-59-02): per-table ordering let a short built-in ("colon") eat
+        # the inside of a longer user phrase ("double colon") that lives in
+        # a different table. The built-ins never overlapped across tables,
+        # so their behavior is unchanged (locked by the golden set).
+        entries: list[tuple[str, str, str]] = []
+        entries.extend((c, r, "plain") for c, r in self._plain.items())
+        entries.extend((c, r, "left") for c, r in self._attach_left.items())
+        entries.extend((c, r, "right") for c, r in self._attach_right.items())
+        entries.extend((c, r, "both") for c, r in self._attach_both.items())
+        entries.extend((c, r, "newline") for c, r in self._newlines.items())
 
-        # ATTACH_LEFT: space before is removed
-        for command in sorted(self.ATTACH_LEFT.keys(), key=len, reverse=True):
-            punctuation = self.ATTACH_LEFT[command]
-            # Match optional space before, the command, then word boundary
-            pattern = rf"\s*\b{re.escape(command)}\b"
-            text = re.sub(pattern, punctuation, text, flags=re.IGNORECASE)
-
-        # ATTACH_RIGHT: space after is removed
-        for command in sorted(self.ATTACH_RIGHT.keys(), key=len, reverse=True):
-            punctuation = self.ATTACH_RIGHT[command]
-            # Match word boundary, command, then optional space after
-            pattern = rf"\b{re.escape(command)}\b\s*"
-            text = re.sub(pattern, punctuation, text, flags=re.IGNORECASE)
-
-        # ATTACH_BOTH: spaces on both sides removed
-        for command in sorted(self.ATTACH_BOTH.keys(), key=len, reverse=True):
-            punctuation = self.ATTACH_BOTH[command]
-            # Match optional space, command, optional space
-            pattern = rf"\s*\b{re.escape(command)}\b\s*"
-            text = re.sub(pattern, punctuation, text, flags=re.IGNORECASE)
-
-        # NEWLINES: remove surrounding spaces, add newline
-        for command in sorted(self.NEWLINES.keys(), key=len, reverse=True):
-            replacement = self.NEWLINES[command]
-            # Match optional space, command, optional space
-            pattern = rf"\s*\b{re.escape(command)}\b\s*"
-            text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+        for command, replacement, mode in sorted(
+            entries, key=lambda e: len(e[0]), reverse=True
+        ):
+            escaped = re.escape(command)
+            if mode == "plain":
+                # Spacing preserved; the replacement is literal text, never
+                # a regex template (backslashes / \g<> must not be special).
+                pattern = rf"\b{escaped}\b"
+            elif mode == "left":
+                # Optional space before is removed (attach to previous word).
+                pattern = rf"\s*\b{escaped}\b"
+            elif mode == "right":
+                # Optional space after is removed (attach to next word).
+                pattern = rf"\b{escaped}\b\s*"
+            else:  # both / newline: surrounding spaces removed
+                pattern = rf"\s*\b{escaped}\b\s*"
+            text = re.sub(
+                pattern, lambda _m, s=replacement: s, text, flags=re.IGNORECASE
+            )
 
         return text
 

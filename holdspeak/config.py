@@ -83,6 +83,12 @@ class ModelConfig:
     name: str = "base"
     warm_on_start: bool = True
     backend: str = "auto"  # "auto" | "mlx" | "faster-whisper"
+    # HS-59: pin transcription to one Whisper language ("pl", "de", …) or
+    # "auto" for Whisper's own per-utterance detection (today's behavior).
+    # One knob serves dictation, meetings, and import: they share the
+    # Transcriber. Validated against holdspeak/languages.py at the
+    # settings boundary.
+    language: str = "auto"
     # Available: tiny, base, small, medium, large
     # HS-25-05: hard ceiling (seconds) on a single transcription so a hung model
     # can't freeze the pipeline. Generous by default to never clip a legitimate
@@ -320,6 +326,55 @@ class DictationConfigError(ValueError):
     """Raised when dictation config validation fails (DIR-C-002)."""
 
 
+# HS-59-02: attach modes for spoken-symbol entries, mirroring the built-in
+# punctuation tables' spacing semantics ("none" = plain replacement, the
+# safe default: spacing is left exactly as spoken).
+VALID_SYMBOL_ATTACH = ("none", "left", "right", "both")
+
+
+def validate_spoken_symbols(raw: object) -> list[dict]:
+    """Validate `dictation.spoken_symbols` entries; raise actionably.
+
+    Each entry is ``{"spoken": str, "symbol": str, "attach": mode}``. The
+    spoken phrase and symbol must be non-empty; attach defaults to "none".
+    """
+    if raw in (None, ""):
+        return []
+    if not isinstance(raw, list):
+        raise DictationConfigError("dictation.spoken_symbols must be a list")
+    validated: list[dict] = []
+    seen: set[str] = set()
+    for index, item in enumerate(raw):
+        if not isinstance(item, dict):
+            raise DictationConfigError(
+                f"spoken_symbols[{index}] must be an object with spoken/symbol/attach"
+            )
+        spoken = str(item.get("spoken", "")).strip()
+        symbol = str(item.get("symbol", ""))
+        attach = str(item.get("attach", "none") or "none").strip().lower()
+        if not spoken:
+            raise DictationConfigError(
+                f"spoken_symbols[{index}]: the spoken phrase must not be empty"
+            )
+        if not symbol:
+            raise DictationConfigError(
+                f"spoken_symbols[{index}] ({spoken!r}): the symbol must not be empty"
+            )
+        if attach not in VALID_SYMBOL_ATTACH:
+            raise DictationConfigError(
+                f"spoken_symbols[{index}] ({spoken!r}): attach must be one of "
+                f"{', '.join(VALID_SYMBOL_ATTACH)}"
+            )
+        key = spoken.lower()
+        if key in seen:
+            raise DictationConfigError(
+                f"spoken_symbols: duplicate spoken phrase {spoken!r}"
+            )
+        seen.add(key)
+        validated.append({"spoken": spoken, "symbol": symbol, "attach": attach})
+    return validated
+
+
 @dataclass
 class DictationPipelineConfig:
     """DIR-01 dictation pipeline config (spec §9.4). OFF by default."""
@@ -502,6 +557,13 @@ class DictationConfig:
     pipeline: DictationPipelineConfig = field(default_factory=DictationPipelineConfig)
     runtime: LLMRuntimeConfig = field(default_factory=LLMRuntimeConfig)
     macros: MacrosConfig = field(default_factory=MacrosConfig)
+    # HS-59-02: the spoken-symbol dictionary — user-defined spoken→symbol
+    # entries merged over the built-in punctuation table (user wins).
+    # Default empty = byte-identical typing.
+    spoken_symbols: list = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        self.spoken_symbols = validate_spoken_symbols(self.spoken_symbols)
 
 
 @dataclass
@@ -575,6 +637,7 @@ class Config:
                     LLMRuntimeConfig, runtime_data, section="dictation.runtime"
                 ),
                 macros=_coerce(MacrosConfig, macros_data, section="dictation.macros"),
+                spoken_symbols=dictation_data.get("spoken_symbols", []) or [],
             )
 
             return cls(

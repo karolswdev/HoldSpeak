@@ -136,6 +136,10 @@ Say punctuation naturally:
 | `new line` | line break |
 | `new paragraph` | blank line |
 
+You can add your own spoken symbols, and pin transcription to your
+language, under **Settings, Voice typing**. The
+[User Guide](USER_GUIDE.md) covers both.
+
 Example:
 
 ```text

@@ -119,6 +119,7 @@ class _MlxTranscriber:
         model_name: str = "base",
         device: Optional[str] = None,
         compute_type: Optional[str] = None,
+        language: Optional[str] = None,
     ) -> None:
         """Initialize the Whisper model.
 
@@ -126,8 +127,11 @@ class _MlxTranscriber:
             model_name: Whisper model name (defaults to "base").
             device: Unused (kept for backwards compatibility with faster-whisper).
             compute_type: Unused (kept for backwards compatibility with faster-whisper).
+            language: A Whisper language code to pin transcription to, or
+                None for Whisper's own per-utterance auto-detection (HS-59).
         """
 
+        self.language = language
         log.info(f"Initializing Transcriber with model_name='{model_name}'")
 
         try:
@@ -193,11 +197,12 @@ class _MlxTranscriber:
         # Fallback: run a tiny, silent transcription to force weight download/load.
         log.debug("Using silent transcription fallback to load model...")
         silent = np.zeros(1600, dtype=np.float32)  # ~0.1s at 16 kHz
+        warm_kwargs = {"language": self.language} if self.language else {"language": "en"}
         self._mlx_whisper.transcribe(  # type: ignore[union-attr]
             silent,
             path_or_hf_repo=path_or_hf_repo,
             verbose=None,
-            language="en",
+            **warm_kwargs,
         )
         log.debug("Fallback transcription completed - model loaded")
 
@@ -231,10 +236,14 @@ class _MlxTranscriber:
         log.debug(f"Transcribing {len(audio)} samples ({len(audio)/16000:.2f}s)")
 
         try:
+            # HS-59: pass `language` only when pinned — the auto-detect call
+            # stays byte-identical to the pre-knob behavior.
+            extra = {"language": self.language} if self.language else {}
             result = self._mlx_whisper.transcribe(  # type: ignore[union-attr]
                 audio,
                 path_or_hf_repo=self._path_or_hf_repo,
                 verbose=None,
+                **extra,
             )
             if isinstance(result, dict):
                 text = str(result.get("text", "")).strip()
@@ -256,7 +265,9 @@ class _FasterWhisperTranscriber:
         model_name: str = "base",
         device: Optional[str] = None,
         compute_type: Optional[str] = None,
+        language: Optional[str] = None,
     ) -> None:
+        self.language = language
         try:
             faster_whisper = importlib.import_module("faster_whisper")
         except Exception as exc:  # pragma: no cover
@@ -293,7 +304,9 @@ class _FasterWhisperTranscriber:
         audio = np.ascontiguousarray(audio, dtype=np.float32)
 
         try:
-            segments, _info = self._model.transcribe(audio, vad_filter=False)
+            # HS-59: pass `language` only when pinned — auto stays byte-identical.
+            extra = {"language": self.language} if self.language else {}
+            segments, _info = self._model.transcribe(audio, vad_filter=False, **extra)
             parts: list[str] = []
             for seg in segments:
                 text = str(getattr(seg, "text", "")).strip()
@@ -315,24 +328,32 @@ class Transcriber:
         compute_type: Optional[str] = None,
         backend: str = "auto",
         timeout_seconds: float = 0.0,
+        language: Optional[str] = None,
     ) -> None:
+        from .languages import normalize_language
+
         resolved = _resolve_backend(backend)
         self.backend = resolved
         # HS-25-05: hard ceiling so a hung model can't freeze the pipeline
         # forever. <= 0 disables the timeout (calls run inline, as before).
         self.timeout_seconds = float(timeout_seconds)
+        # HS-59: "auto"/""/None all mean Whisper's own detection — the
+        # backends then receive no language at all (byte-identical calls).
+        self.language = normalize_language(language)
 
         if resolved == "mlx":
             self._impl: _TranscriberImpl = _MlxTranscriber(
                 model_name=model_name,
                 device=device,
                 compute_type=compute_type,
+                language=self.language,
             )
         else:
             self._impl = _FasterWhisperTranscriber(
                 model_name=model_name,
                 device=device,
                 compute_type=compute_type,
+                language=self.language,
             )
 
         self.model_name = model_name

@@ -288,7 +288,7 @@ def test_run_web_runtime_warms_transcriber_on_start(monkeypatch: pytest.MonkeyPa
             return None
 
     class FakeTranscriber:
-        def __init__(self, model_name: str, backend: str = "auto"):
+        def __init__(self, model_name: str, backend: str = "auto", language: str = "auto"):
             self.model_name = model_name
             loaded.set()
 
@@ -604,7 +604,7 @@ def test_runtime_meeting_control_callbacks_are_wired(monkeypatch: pytest.MonkeyP
             return None
 
     class FakeTranscriber:
-        def __init__(self, model_name: str, backend: str = "auto"):
+        def __init__(self, model_name: str, backend: str = "auto", language: str = "auto"):
             self.model_name = model_name
 
         def transcribe(self, _audio):
@@ -705,7 +705,7 @@ def test_device_voice_reply_uses_waiting_agent_target_profile(
             return None
 
     class FakeTranscriber:
-        def __init__(self, model_name: str, backend: str = "auto"):
+        def __init__(self, model_name: str, backend: str = "auto", language: str = "auto"):
             self.model_name = model_name
 
         def transcribe(self, _audio):
@@ -832,7 +832,7 @@ def test_device_voice_reply_prefers_tmux_pane_over_gui_typing(
             return None
 
     class FakeTranscriber:
-        def __init__(self, model_name: str, backend: str = "auto"):
+        def __init__(self, model_name: str, backend: str = "auto", language: str = "auto"):
             self.model_name = model_name
 
         def transcribe(self, _audio):
@@ -942,7 +942,7 @@ def test_device_voice_reply_rejects_undeliverable_agent_target(
             return None
 
     class FakeTranscriber:
-        def __init__(self, model_name: str, backend: str = "auto"):
+        def __init__(self, model_name: str, backend: str = "auto", language: str = "auto"):
             self.model_name = model_name
 
         def transcribe(self, _audio):

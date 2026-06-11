@@ -5,6 +5,111 @@
 // validator (settingsApp(), src/scripts/settings-app.js). Replaces the Phase-42
 // single-scroll form dump.
 import AppLayout from "../layouts/AppLayout.astro";
+
+// HS-59-01: the Whisper language list, kept in lockstep with
+// holdspeak/languages.py by tests/integration/test_settings_language_ui.py.
+const WHISPER_LANGUAGES = [
+  { code: "af", name: "Afrikaans" },
+  { code: "sq", name: "Albanian" },
+  { code: "am", name: "Amharic" },
+  { code: "ar", name: "Arabic" },
+  { code: "hy", name: "Armenian" },
+  { code: "as", name: "Assamese" },
+  { code: "az", name: "Azerbaijani" },
+  { code: "ba", name: "Bashkir" },
+  { code: "eu", name: "Basque" },
+  { code: "be", name: "Belarusian" },
+  { code: "bn", name: "Bengali" },
+  { code: "bs", name: "Bosnian" },
+  { code: "br", name: "Breton" },
+  { code: "bg", name: "Bulgarian" },
+  { code: "yue", name: "Cantonese" },
+  { code: "ca", name: "Catalan" },
+  { code: "zh", name: "Chinese" },
+  { code: "hr", name: "Croatian" },
+  { code: "cs", name: "Czech" },
+  { code: "da", name: "Danish" },
+  { code: "nl", name: "Dutch" },
+  { code: "en", name: "English" },
+  { code: "et", name: "Estonian" },
+  { code: "fo", name: "Faroese" },
+  { code: "fi", name: "Finnish" },
+  { code: "fr", name: "French" },
+  { code: "gl", name: "Galician" },
+  { code: "ka", name: "Georgian" },
+  { code: "de", name: "German" },
+  { code: "el", name: "Greek" },
+  { code: "gu", name: "Gujarati" },
+  { code: "ht", name: "Haitian Creole" },
+  { code: "ha", name: "Hausa" },
+  { code: "haw", name: "Hawaiian" },
+  { code: "he", name: "Hebrew" },
+  { code: "hi", name: "Hindi" },
+  { code: "hu", name: "Hungarian" },
+  { code: "is", name: "Icelandic" },
+  { code: "id", name: "Indonesian" },
+  { code: "it", name: "Italian" },
+  { code: "ja", name: "Japanese" },
+  { code: "jw", name: "Javanese" },
+  { code: "kn", name: "Kannada" },
+  { code: "kk", name: "Kazakh" },
+  { code: "km", name: "Khmer" },
+  { code: "ko", name: "Korean" },
+  { code: "lo", name: "Lao" },
+  { code: "la", name: "Latin" },
+  { code: "lv", name: "Latvian" },
+  { code: "ln", name: "Lingala" },
+  { code: "lt", name: "Lithuanian" },
+  { code: "lb", name: "Luxembourgish" },
+  { code: "mk", name: "Macedonian" },
+  { code: "mg", name: "Malagasy" },
+  { code: "ms", name: "Malay" },
+  { code: "ml", name: "Malayalam" },
+  { code: "mt", name: "Maltese" },
+  { code: "mi", name: "Maori" },
+  { code: "mr", name: "Marathi" },
+  { code: "mn", name: "Mongolian" },
+  { code: "my", name: "Myanmar" },
+  { code: "ne", name: "Nepali" },
+  { code: "no", name: "Norwegian" },
+  { code: "nn", name: "Nynorsk" },
+  { code: "oc", name: "Occitan" },
+  { code: "ps", name: "Pashto" },
+  { code: "fa", name: "Persian" },
+  { code: "pl", name: "Polish" },
+  { code: "pt", name: "Portuguese" },
+  { code: "pa", name: "Punjabi" },
+  { code: "ro", name: "Romanian" },
+  { code: "ru", name: "Russian" },
+  { code: "sa", name: "Sanskrit" },
+  { code: "sr", name: "Serbian" },
+  { code: "sn", name: "Shona" },
+  { code: "sd", name: "Sindhi" },
+  { code: "si", name: "Sinhala" },
+  { code: "sk", name: "Slovak" },
+  { code: "sl", name: "Slovenian" },
+  { code: "so", name: "Somali" },
+  { code: "es", name: "Spanish" },
+  { code: "su", name: "Sundanese" },
+  { code: "sw", name: "Swahili" },
+  { code: "sv", name: "Swedish" },
+  { code: "tl", name: "Tagalog" },
+  { code: "tg", name: "Tajik" },
+  { code: "ta", name: "Tamil" },
+  { code: "tt", name: "Tatar" },
+  { code: "te", name: "Telugu" },
+  { code: "th", name: "Thai" },
+  { code: "bo", name: "Tibetan" },
+  { code: "tr", name: "Turkish" },
+  { code: "tk", name: "Turkmen" },
+  { code: "uk", name: "Ukrainian" },
+  { code: "ur", name: "Urdu" },
+  { code: "uz", name: "Uzbek" },
+  { code: "vi", name: "Vietnamese" },
+  { code: "cy", name: "Welsh" },
+  { code: "yi", name: "Yiddish" },
+  { code: "yo", name: "Yoruba" },
+];
 ---
 
 <AppLayout title="HoldSpeak — Settings" description="Global HoldSpeak runtime settings">
@@ -73,7 +178,35 @@ import AppLayout from "../layouts/AppLayout.astro";
               <label>Whisper model</label>
               <select class="select" x-model="settings.model.name"><option value="tiny">tiny</option><option value="base">base</option><option value="small">small</option><option value="medium">medium</option><option value="large">large</option></select>
             </div>
+            <div class="field" x-show="fieldVisible('voice','common','spoken language transcription auto detect polish german spanish')" x-cloak>
+              <label>Spoken language</label>
+              <select class="select" x-model="settings.model.language">
+                <option value="auto">Auto-detect</option>
+                {WHISPER_LANGUAGES.map((l) => <option value={l.code}>{l.name}</option>)}
+              </select>
+              <p class="hint">Pins transcription for dictation, meetings, and import. Auto-detect works well for longer speech; pin your language if short utterances get misdetected.</p>
+            </div>
             <label class="check field full" x-show="fieldVisible('voice','common','warm whisper startup preload')" x-cloak><input type="checkbox" x-model="settings.model.warm_on_start" /> <span>Warm Whisper on web startup <em>— preloads transcription so the first utterance isn't slow.</em></span></label>
+
+            <div class="field full sym-dict" x-show="fieldVisible('voice','common','spoken symbol dictionary tilde arrow custom vocabulary')" x-cloak>
+              <label>Spoken-symbol dictionary</label>
+              <p class="hint">Your own spoken words for symbols, merged over the built-in punctuation commands (yours win). Say the phrase while dictating and the symbol is typed. Attach controls spacing: none keeps it, left/right/both glue the symbol to its neighbors.</p>
+              <template x-for="(entry, idx) in settings.dictation.spoken_symbols" :key="idx">
+                <div class="sym-row">
+                  <input class="input sym-spoken" type="text" placeholder="spoken phrase (e.g. tilde)" x-model="entry.spoken" />
+                  <input class="input sym-symbol" type="text" placeholder="symbol (e.g. ~)" x-model="entry.symbol" />
+                  <select class="select sym-attach" x-model="entry.attach">
+                    <option value="none">none</option>
+                    <option value="left">left</option>
+                    <option value="right">right</option>
+                    <option value="both">both</option>
+                  </select>
+                  <button type="button" class="btn sym-remove" @click="settings.dictation.spoken_symbols.splice(idx, 1)">Remove</button>
+                </div>
+              </template>
+              <p class="sym-empty" x-show="!settings.dictation.spoken_symbols || settings.dictation.spoken_symbols.length === 0" x-cloak>No custom symbols yet. The built-in commands (period, comma, dash, new line) always work.</p>
+              <button type="button" class="btn sym-add" @click="(settings.dictation.spoken_symbols = settings.dictation.spoken_symbols || []).push({ spoken: '', symbol: '', attach: 'none' })">Add a symbol</button>
+            </div>
           </div>
 
           <!-- Desktop presence -->
@@ -180,6 +313,9 @@ import AppLayout from "../layouts/AppLayout.astro";
   .set-search:focus-within { border-color: var(--accent); }
   .set-nav-list { display: flex; flex-direction: column; gap: 2px; }
   .set-nav-list.dim { opacity: .5; }
+  .sym-row { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr) auto auto; gap: var(--space-2); margin-top: var(--space-2); align-items: center; }
+  .sym-empty { color: var(--text-muted); font-size: var(--font-size-sm); margin: var(--space-2) 0; }
+  .sym-add { margin-top: var(--space-2); }
   .set-nav-item { text-align: left; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text-muted); font-size: var(--font-size-sm); cursor: pointer; border-left: 2px solid transparent; transition: background var(--duration-short) var(--ease-standard), color var(--duration-short) var(--ease-standard); }
   .set-nav-item:hover { background: var(--surface-2); color: var(--text); }
   .set-nav-item.active { background: var(--surface-2); color: var(--text); border-left-color: var(--accent); font-weight: 600; }

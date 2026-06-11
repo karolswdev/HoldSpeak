@@ -118,6 +118,8 @@ left column is the name; do not alternate with the synonyms.
 | the archive | "/history" is the route; the surface is "the archive" |
 | desktop presence | "the HUD" after first use is fine |
 | Qlippy, the mascot | "the assistant", "the agent" |
+| the spoken-symbol dictionary | "custom symbols", "symbol macros", "vocabulary" |
+| the spoken language setting | "language mode", "locale" |
 | AIPI-Lite | "the companion device" after first use |
 
 ## Voice rules (the editing standard for every user-facing doc)

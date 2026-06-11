@@ -555,6 +555,19 @@ def build_system_router(ctx: WebContext) -> APIRouter:
             model_data["warm_on_start"] = bool(
                 model_data.get("warm_on_start", current.model.warm_on_start)
             )
+            # HS-59: validate the transcription language at the boundary so a
+            # typo fails the settings write, not a dictation later. Store the
+            # normalized code ("auto" for detection).
+            from ...languages import normalize_language
+
+            raw_language = model_data.get("language", current.model.language)
+            try:
+                normalized = normalize_language(raw_language)
+            except ValueError as exc:
+                return JSONResponse(
+                    {"success": False, "error": str(exc)}, status_code=400
+                )
+            model_data["language"] = normalized or "auto"
 
             # --- UIConfig validation ---
             theme = str(ui_data.get("theme", current.ui.theme)).strip().lower()
@@ -958,6 +971,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                     pipeline=DictationPipelineConfig(**pipeline_data),
                     runtime=LLMRuntimeConfig(**runtime_data),
                     macros=macros_cfg,
+                    spoken_symbols=dictation_data.get("spoken_symbols", []) or [],
                 )
             except DictationConfigError as exc:
                 return JSONResponse(
