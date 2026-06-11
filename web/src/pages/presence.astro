@@ -40,7 +40,43 @@ import "../styles/global.css";
       </div>
     </div>
 
+    {/* HS-56-02: Qlippy — the mascot dock + the sliding card shell. Static
+        skeleton, hidden until qlippy.js confirms presence.enabled AND
+        presence.mascot; with the flag off this renders nothing. Headline /
+        detail / preview are filled via textContent into these static nodes
+        (scoped CSS applies); only the action buttons are JS-created (their
+        styles are in the is:global block below). */}
+    <div id="qlippy" class="q-wrap" hidden>
+      <section
+        id="qlippy-card"
+        class="q-card"
+        role="group"
+        aria-label="Qlippy has something for you"
+        hidden
+      >
+        <button id="qlippy-dismiss" class="q-x" type="button" aria-label="Dismiss">✕</button>
+        <div class="q-card-bay" aria-hidden="true">
+          <span id="qlippy-card-sprite" class="q-sprite"></span>
+          <span id="qlippy-card-glyph" class="q-glyph" hidden></span>
+        </div>
+        <div class="q-card-body">
+          <p id="qlippy-headline" class="q-headline"></p>
+          <p id="qlippy-detail" class="q-detail"></p>
+          <pre id="qlippy-preview" class="q-preview" hidden></pre>
+          <p id="qlippy-privacy" class="q-privacy" hidden></p>
+          <div id="qlippy-actions" class="q-actions"></div>
+        </div>
+        <span id="qlippy-queue-hint" class="q-queue-hint" hidden></span>
+      </section>
+      <div class="q-dock" aria-hidden="true">
+        <span id="qlippy-dock-sprite" class="q-sprite"></span>
+      </div>
+      <span id="qlippy-announcer" class="q-sr-only" aria-live="polite"></span>
+    </div>
+
     <script src="../scripts/presence-app.js"></script>
+    <script src="../scripts/qlippy.js"></script>
+    <script src="../scripts/qlippy-events.js"></script>
 
     <style>
       /* The window behind the HUD is transparent — only the card shows, with
@@ -132,6 +168,198 @@ import "../styles/global.css";
         .presence-ring.is-live {
           animation: none;
         }
+      }
+
+      /* ===== HS-56-02: Qlippy — the dock + the card shell ===== */
+      .q-wrap {
+        position: fixed;
+        right: var(--space-3);
+        bottom: var(--space-3);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: var(--space-2);
+        z-index: 10;
+      }
+      .q-wrap[hidden] { display: none; }
+      .q-sprite {
+        display: block;
+        width: 80px;
+        height: 80px;
+        background-repeat: no-repeat;
+        background-size: 720px 80px;
+        image-rendering: pixelated;
+        animation: q-strip 1.2s steps(9) infinite;
+      }
+      @keyframes q-strip {
+        from { background-position: 0 0; }
+        to { background-position: -720px 0; }
+      }
+      /* The dock is a smaller Qlippy — scaled by transform so the 9-frame
+         background-position math stays exact. */
+      .q-dock .q-sprite { transform: scale(0.7); transform-origin: bottom right; }
+      .q-glyph {
+        position: absolute;
+        top: -6px;
+        right: -2px;
+        width: 20px;
+        height: 20px;
+        background-size: contain;
+        background-repeat: no-repeat;
+        image-rendering: pixelated;
+      }
+
+      /* The card: slides in from the right edge ("Signal settle"). */
+      .q-card {
+        position: relative;
+        display: grid;
+        grid-template-columns: 88px minmax(0, 1fr);
+        gap: var(--space-3);
+        align-items: start;
+        width: min(340px, calc(100vw - 2 * var(--space-3)));
+        padding: var(--space-3) var(--space-4);
+        background: var(--surface-1);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-4);
+        box-shadow: var(--elev-3);
+        transform: translateX(112%);
+        opacity: 0;
+        transition:
+          transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
+          opacity 420ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .q-card[hidden] { display: none; }
+      .q-card.is-in { transform: translateX(0); opacity: 1; }
+      .q-card.is-out {
+        transform: translateX(112%);
+        opacity: 0;
+        transition-duration: 280ms;
+      }
+      .q-card.is-in.is-alert {
+        border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+        box-shadow: var(--elev-3), 0 0 18px color-mix(in srgb, var(--accent) 28%, transparent);
+        animation: q-settle 480ms cubic-bezier(0.16, 1, 0.3, 1) 420ms 1;
+      }
+      @keyframes q-settle {
+        0%, 100% { transform: translateX(0) translateY(0); }
+        40% { transform: translateX(0) translateY(-4px); }
+      }
+      .q-card-bay { position: relative; width: 80px; }
+      .q-headline {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: var(--font-size-sm);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text);
+      }
+      .q-detail {
+        margin: var(--space-1) 0 0;
+        color: var(--text-muted);
+        font-size: var(--font-size-sm);
+        line-height: var(--line-height-normal);
+        overflow-wrap: anywhere;
+      }
+      .q-preview {
+        margin: var(--space-2) 0 0;
+        max-height: 76px;
+        overflow: auto;
+        padding: var(--space-2);
+        background: var(--canvas, var(--surface-2));
+        border: 1px solid var(--line);
+        border-radius: var(--radius-2);
+        color: var(--text);
+        font-family: var(--font-mono);
+        font-size: var(--font-size-xs);
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .q-privacy {
+        margin: var(--space-2) 0 0;
+        color: var(--text-faint);
+        font-size: var(--font-size-xs);
+        line-height: var(--line-height-normal);
+      }
+      .q-x {
+        position: absolute;
+        top: 6px;
+        right: 8px;
+        appearance: none;
+        border: none;
+        background: none;
+        color: var(--text-faint);
+        font-size: var(--font-size-sm);
+        cursor: pointer;
+        padding: 2px 4px;
+      }
+      .q-x:hover { color: var(--text); }
+      .q-queue-hint {
+        position: absolute;
+        bottom: 6px;
+        right: 10px;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: var(--font-size-xs);
+      }
+      .q-sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .q-sprite { animation: none; }
+        .q-card {
+          transform: none;
+          transition: opacity 200ms ease;
+        }
+        .q-card.is-in.is-alert { animation: none; }
+        .q-card.is-out { transform: none; }
+      }
+    </style>
+
+    <!-- The action buttons are created at runtime by qlippy.js, so their
+         styles are global (Astro scoped CSS never matches JS-created DOM —
+         see docs/internal/ARCHITECTURE_WEB_FRONTEND.md). -->
+    <style is:global>
+      .q-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+        margin-top: var(--space-2);
+      }
+      .q-btn {
+        appearance: none;
+        border-radius: var(--radius-pill);
+        padding: 5px var(--space-3);
+        font-family: var(--font-ui);
+        font-size: var(--font-size-sm);
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface-2);
+        color: var(--text);
+      }
+      .q-btn-primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--accent-on, var(--text-on-accent));
+      }
+      .q-btn-danger {
+        background: transparent;
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+      .q-btn-ghost {
+        background: transparent;
+        color: var(--text-muted);
+      }
+      .q-btn:focus-visible {
+        outline: var(--focus-outline-width) solid var(--accent);
+        outline-offset: var(--focus-outline-offset);
       }
     </style>
   </body>

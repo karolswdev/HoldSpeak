@@ -846,6 +846,23 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                 return JSONResponse(
                     {"success": False, "error": str(ve)}, status_code=400
                 )
+            if decision == "rejected":
+                # HS-56-03: a rejection is a terminal result the presence
+                # mascot can reflect. Wire-safe: preview only, never the
+                # machine payload.
+                ctx.broadcast(
+                    "actuator_result",
+                    {
+                        "id": updated.id,
+                        "meeting_id": updated.meeting_id,
+                        "status": "rejected",
+                        "target": updated.target,
+                        "action": updated.action,
+                        "preview": updated.preview,
+                        "reversible": bool(updated.reversible),
+                        "error": None,
+                    },
+                )
             return JSONResponse({"success": True, "proposal": _proposal_to_dict(updated)})
         except Exception as e:
             return error_500(e, log, "Failed to decide meeting proposal")
@@ -916,6 +933,25 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                 payload=spec["payload"],
                 reversible=spec["reversible"],
                 required_capabilities=spec["required_capabilities"],
+            )
+            # HS-56-03: the live in-meeting path already broadcasts proposals;
+            # the aftercare path now does too, with the identical wire-safe
+            # shape (the human preview only — never the machine payload).
+            ctx.broadcast(
+                "actuator_proposed",
+                {
+                    "id": proposal.id,
+                    "meeting_id": proposal.meeting_id,
+                    "plugin_id": proposal.plugin_id,
+                    "status": proposal.status,
+                    "target": proposal.target,
+                    "action": proposal.action,
+                    "preview": proposal.preview,
+                    "reversible": bool(proposal.reversible),
+                    "created_at": proposal.created_at.isoformat()
+                    if hasattr(proposal.created_at, "isoformat")
+                    else proposal.created_at,
+                },
             )
             return JSONResponse(
                 {"success": True, "proposal": _proposal_to_dict(proposal)}
@@ -1257,8 +1293,19 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                     status_code=400,
                 )
             include_scheduled = normalized_mode == "retry_now"
+
+            # HS-56-04: when deferred intel completes, the meeting's open
+            # work becomes knowable — the presence mascot's aftercare card.
+            def _on_meeting_ready(meeting_id: str) -> None:
+                from ...meeting_aftercare import build_aftercare_ready_event
+
+                event = build_aftercare_ready_event(get_database(), meeting_id)
+                if event is not None:
+                    ctx.broadcast("aftercare_ready", event)
+
             processed = drain_intel_queue(
                 cfg.intel_realtime_model,
+                on_meeting_ready=_on_meeting_ready,
                 provider=cfg.intel_provider,
                 cloud_model=cfg.intel_cloud_model,
                 cloud_api_key_env=cfg.intel_cloud_api_key_env,

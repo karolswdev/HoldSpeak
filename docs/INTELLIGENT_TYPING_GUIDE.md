@@ -613,6 +613,90 @@ guarantees this at the platform level — macOS via the non-activating panel,
 Linux via notifications and the tray (which can't be focused) and an
 override-redirect, non-focus overlay window.
 
+### Qlippy, the mascot (optional)
+
+Presence has an optional second layer: **Qlippy**, a small pixel-art
+companion who gives the runtime a face. He is a homage to a certain office
+paperclip, rebuilt for a tool that types what you say. Where the plain
+presence card tells you what the runtime is doing, Qlippy also surfaces the
+few moments that genuinely need you, and he does it without ever acting in
+your place.
+
+Qlippy is **off by default**, even when presence is on. He has his own
+toggle, so the minimal ring stays the default for existing presence users:
+
+```json
+{ "presence": { "enabled": true, "mascot": true } }
+```
+
+Or flip **"Qlippy, the mascot"** inside the Desktop presence section of
+**Settings**. Turning presence off removes the whole surface, Qlippy
+included, in one click.
+
+**Two levels.** The **dock** is ambient: a small animated sprite in the
+corner of the presence surface that mirrors the runtime state (listening,
+thinking, celebrating a finished dictation with a short flourish, dozing off
+after five quiet minutes). It has no buttons and makes no sound. The
+**card** slides out next to him only when something deserves your attention.
+One card at a time, every card dismissible, and ignoring a card is always
+safe.
+
+**Exactly these moments produce a card:**
+
+- **A decision needs you.** An action is proposed and waiting for approval,
+  for example filing an accepted meeting action as a GitHub issue. This card
+  stays until you resolve or dismiss it. It never decides for you and never
+  expires into a decision.
+- **The result of an action you approved.** It ran exactly as previewed, or
+  it failed and the card says so plainly (and that nothing was sent).
+- **Learned from you.** A correction you taught actually reaches past
+  dictations, with the honest match count. If a correction was not stored or
+  matches nothing, no card appears: Qlippy never claims learning that did
+  not happen.
+- **A finished meeting left open items.** The aftercare digest found work
+  still open, with the top items named.
+
+![The decision card: Qlippy in an alert pose beside "A decision needs you",
+the exact preview of the proposed GitHub issue, the plain-language privacy
+answers, and Approve / Decline buttons.](assets/presence/qlippy-decision-card.png)
+
+**Qlippy never acts on his own.** The Approve button on a card sends the
+identical request the dashboard's Approve sends: it records your decision in
+the same audit trail, and execution stays behind the same guarded,
+permission-checked path. Until you approve, nothing runs and nothing leaves
+your machine. Dismissing a decision card is always safe; the proposal stays
+on the dashboard, untouched.
+
+**Every actionable card answers three questions, in plain language, on the
+card itself:**
+
+1. **"Data used:"** what information is involved. You see the exact
+   human-readable preview; the machine payload stays on this machine until
+   you approve.
+2. **"If you approve, this goes to"** the named destination, so you always
+   know whether anything would leave your machine, and where it would go.
+3. **"Your controls:"** the buttons you have, plus the reminder that the
+   proposal also stays on the dashboard.
+
+Cards that involve no decision (learned, aftercare) state where their data
+lives instead: local only, read from your own records, nothing leaves the
+machine.
+
+**On the native HUD too.** On macOS and on overlay-capable Linux (X11 and
+wlroots), the same cards appear in the floating HUD. The panel accepts
+pointer clicks only while a card is showing, returns to click-through the
+moment it resolves, and at no point can it take keyboard focus, so your
+keystrokes keep landing in the app you are typing into even as you click
+Approve.
+
+![The native Linux overlay hosting the decision card over a real desktop:
+the same dark card with Qlippy, the preview, the privacy answers, and the
+Approve and Decline buttons.](assets/presence/qlippy-native-overlay.png)
+
+**Motion and accessibility.** New cards are announced to screen readers.
+Hovering a card pauses its auto-dismiss timer. With reduced motion enabled,
+slide animations become simple fades and the sprites hold still.
+
 ## 12. Dictation journal, corrections & replay
 
 This is the learning loop, and it is the part of HoldSpeak worth showing off: it

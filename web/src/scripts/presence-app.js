@@ -47,6 +47,8 @@ function isLive(state) {
 
 function applyActivity(activity) {
   if (!activity || typeof activity !== "object") return;
+  // HS-56-02: let the mascot layer (qlippy.js) follow the same stream.
+  document.dispatchEvent(new CustomEvent("hs-activity", { detail: activity }));
   const state = String(activity.state || "idle").trim().toLowerCase() || "idle";
   const policy = activity.window && typeof activity.window === "object" ? activity.window : {};
   const visible = policy.visible !== undefined ? Boolean(policy.visible) : state !== "idle";
@@ -85,6 +87,11 @@ function connect() {
       return;
     }
     if (msg && msg.type === "runtime_activity") applyActivity(msg.data);
+    // HS-56-02: re-dispatch every broadcast as a DOM event so the mascot's
+    // card stories (actuator / learning / aftercare) ride the same socket.
+    if (msg && msg.type) {
+      document.dispatchEvent(new CustomEvent("hs-broadcast", { detail: msg }));
+    }
   };
   ws.onclose = () => window.setTimeout(connect, 1500);
   ws.onerror = () => {};

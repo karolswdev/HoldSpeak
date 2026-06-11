@@ -21,6 +21,11 @@ import multiprocessing
 import queue
 from typing import Any, Callable
 
+from .desktop_presence import (
+    PANEL_CARD_PROBE_JS,
+    PANEL_FRAME_PASSIVE,
+    presence_panel_frame,
+)
 from .logging_config import get_logger
 
 log = get_logger("desktop_presence_cocoa")
@@ -43,8 +48,10 @@ def cocoa_presence_available() -> bool:
 class _CocoaPresenceUI:
     """Owns the NSPanel + WKWebView + NSStatusItem. Main-thread only."""
 
-    WIDTH = 408
-    HEIGHT = 132
+    # The passive (ring/dock-only) geometry — the exact Phase-41 frame. The
+    # card frame comes from the same `presence_panel_frame` policy (HS-56-05).
+    WIDTH = int(PANEL_FRAME_PASSIVE["width"])
+    HEIGHT = int(PANEL_FRAME_PASSIVE["height"])
 
     def __init__(self, url: str) -> None:
         import AppKit
@@ -93,10 +100,21 @@ class _CocoaPresenceUI:
             self.webview.setUnderPageBackgroundColor_(AppKit.NSColor.clearColor())
         except Exception:
             pass
+        # The webview follows the panel through the HS-56-05 card resize.
+        self.webview.setAutoresizingMask_(
+            AppKit.NSViewWidthSizable | AppKit.NSViewHeightSizable
+        )
         self.panel.setContentView_(self.webview)
         self.webview.loadRequest_(
             NSURLRequest.requestWithURL_(NSURL.URLWithString_(url))
         )
+        # HS-56-05 card-frame state: what the panel currently shows, and the
+        # latest probe answer from the page (applied on the next pump tick).
+        self._width = self.WIDTH
+        self._height = self.HEIGHT
+        self._card_visible = False
+        self._card_seen = False
+        self._panel_shown = False  # the activity policy's say (show/hide)
         self._position()
 
     def _position(self) -> None:
@@ -105,9 +123,62 @@ class _CocoaPresenceUI:
         if screen is None:
             return
         frame = screen.visibleFrame()
-        x = frame.origin.x + frame.size.width - self.WIDTH - 22
-        y = frame.origin.y + frame.size.height - self.HEIGHT - 14
+        x = frame.origin.x + frame.size.width - self._width - 22
+        # Cocoa origins are bottom-left; subtracting the current height keeps
+        # the panel's TOP edge fixed, so a card grows the frame downward.
+        y = frame.origin.y + frame.size.height - self._height - 14
         self.panel.setFrameOrigin_((x, y))
+
+    # ── HS-56-05: the card frame ────────────────────────────────────────
+
+    def poll_card(self) -> None:
+        """Ask the page whether a Qlippy card is showing (async, main-thread)."""
+
+        def _done(result: Any, _error: Any) -> None:
+            self._card_seen = bool(result)
+
+        try:
+            self.webview.evaluateJavaScript_completionHandler_(PANEL_CARD_PROBE_JS, _done)
+        except Exception:  # pragma: no cover - GUI session dependent
+            pass
+
+    def sync_card_frame(self) -> None:
+        """Apply the latest probe answer when it differs from the panel."""
+        if self._card_seen != self._card_visible:
+            self.apply_card_frame(self._card_seen)
+
+    def apply_card_frame(self, card_visible: bool) -> None:
+        """Resize the panel per the frame policy + manage pointer events.
+
+        A presented card needs clickable buttons, so `ignoresMouseEvents`
+        turns off — but ONLY then, and the non-activating style mask is
+        untouched, so the panel never takes keyboard focus either way.
+        Passive states return to the exact Phase-41 click-through frame.
+        """
+        from Foundation import NSMakeRect
+
+        spec = presence_panel_frame(card_visible)
+        self._width = int(spec["width"])
+        self._height = int(spec["height"])
+        self._card_visible = bool(card_visible)
+        AppKit = self._AppKit
+        screen = AppKit.NSScreen.mainScreen()
+        if screen is not None:
+            frame = screen.visibleFrame()
+            x = frame.origin.x + frame.size.width - self._width - 22
+            y = frame.origin.y + frame.size.height - self._height - 14
+            self.panel.setFrame_display_(
+                NSMakeRect(x, y, self._width, self._height), True
+            )
+        self.panel.setIgnoresMouseEvents_(not bool(spec["interactive"]))
+        if self._card_visible:
+            # A card needs to be seen even when the activity policy has the
+            # panel hidden (e.g. a proposal arrives while idle).
+            self.panel.orderFrontRegardless()
+        elif not self._panel_shown:
+            # The card resolved and the activity policy wants the panel gone.
+            self.panel.orderOut_(None)
+            self._set_glyph("#8b95a7")
 
     def _set_glyph(self, accent_hex: str) -> None:
         AppKit = self._AppKit
@@ -136,6 +207,7 @@ class _CocoaPresenceUI:
         self._set_glyph(view.accent)
         self._position()
         self.panel.orderFrontRegardless()
+        self._panel_shown = True
 
     def update(self, activity: dict[str, Any]) -> None:
         # The webview self-updates over the websocket; we only refresh the glyph.
@@ -144,8 +216,15 @@ class _CocoaPresenceUI:
         self._set_glyph(build_presence_window_view(activity).accent)
 
     def hide(self) -> None:
+        self._panel_shown = False
+        # A card awaiting the user outlives the activity linger: keep the
+        # panel up until the card resolves (ignoring it is always safe — it
+        # will drop the panel the moment it goes).
+        if self._card_visible:
+            return
         self.panel.orderOut_(None)
         self._set_glyph("#8b95a7")
+        self._card_seen = False
 
     def pump(self, seconds: float) -> None:
         from Foundation import NSDate, NSRunLoop
@@ -177,7 +256,14 @@ def _cocoa_child_main(commands, ready, closed, errors, url: str) -> None:
 
     ready.set()
     running = True
+    ticks = 0
     while running:
+        # HS-56-05: ~every 0.4 s ask the page whether a Qlippy card is up and
+        # apply the frame policy. Cheap (one async JS probe), main-thread.
+        ticks += 1
+        if ticks % 8 == 0:
+            ui.poll_card()
+            ui.sync_card_frame()
         try:
             command, payload = commands.get_nowait()
         except queue.Empty:

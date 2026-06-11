@@ -83,6 +83,12 @@ import AppLayout from "../layouts/AppLayout.astro";
               <button type="button" class="switch" role="switch" :aria-checked="settings.presence.enabled ? 'true':'false'" :class="{ on: settings.presence.enabled }" @click="settings.presence.enabled = !settings.presence.enabled"><span class="switch-knob"></span></button>
               <span class="switch-copy"><span class="switch-title">Show an ambient desktop HUD</span><span class="switch-note">A native floating HUD / tray that shows what HoldSpeak is doing while you dictate — and never steals keyboard focus. Save to apply live. (No environment variable.)</span></span>
             </label>
+            {/* HS-56-01: the Qlippy mascot sub-toggle — subordinate to the HUD
+                toggle (inert + dimmed when presence itself is off). */}
+            <label class="switch-field field full mascot-subfield" :class="{ 'is-inert': !settings.presence.enabled }">
+              <button type="button" class="switch" role="switch" :aria-checked="settings.presence.mascot ? 'true':'false'" :aria-disabled="!settings.presence.enabled ? 'true':'false'" :class="{ on: settings.presence.mascot && settings.presence.enabled }" @click="settings.presence.enabled && (settings.presence.mascot = !settings.presence.mascot)"><span class="switch-knob"></span></button>
+              <span class="switch-copy"><span class="switch-title">Qlippy, the mascot</span><span class="switch-note">Give the HUD a face: an ambient pixel-art helper that reflects what HoldSpeak is doing, and a small card for moments that need you (an approval, something learned). He only ever offers — nothing runs without your click. Off keeps the minimal status ring.</span></span>
+            </label>
           </div>
 
           <!-- Meetings & intel -->
@@ -214,6 +220,10 @@ import AppLayout from "../layouts/AppLayout.astro";
   .switch-copy { display: flex; flex-direction: column; gap: 2px; }
   .switch-title { font-weight: 600; color: var(--text); }
   .switch-note { color: var(--text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
+  /* HS-56-01: the mascot sub-toggle reads as subordinate to the HUD toggle. */
+  .mascot-subfield { margin-left: calc(50px + var(--space-4)); padding-left: var(--space-3); border-left: 2px solid var(--border-subtle); }
+  .mascot-subfield.is-inert { opacity: 0.45; }
+  .mascot-subfield.is-inert .switch { cursor: not-allowed; }
 
   .save-bar { position: sticky; bottom: 0; z-index: var(--z-sticky); display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-top: var(--space-5); padding: var(--space-4) var(--space-5); background: var(--canvas-elevated, var(--surface-3)); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--elev-3); }
   .save-msg { color: var(--ok, var(--accent)); font-size: var(--font-size-sm); } .save-msg.error { color: var(--danger); }

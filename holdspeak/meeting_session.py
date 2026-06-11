@@ -1482,6 +1482,21 @@ class MeetingSession:
             database_error = f"{type(e).__name__}: {e}"
             log.error(f"Failed to save meeting to database: {e}")
 
+        # HS-56-04: a wrapped meeting with open work / decisions is a moment
+        # the presence mascot reflects. Fires only for a finished meeting
+        # (ended_at set), only when the digest is non-empty, and never breaks
+        # the save.
+        if database_saved and state.ended_at is not None:
+            try:
+                from .db import get_database as _get_db
+                from .meeting_aftercare import build_aftercare_ready_event
+
+                event = build_aftercare_ready_event(_get_db(), state.id)
+                if event is not None:
+                    self._emit_broadcast("aftercare_ready", event)
+            except Exception as exc:  # observational only
+                log.debug(f"aftercare_ready broadcast skipped: {exc}")
+
         # Save to JSON (backward compatibility).
         if directory is None:
             directory = Path.home() / ".local" / "share" / "holdspeak" / "meetings"

@@ -353,3 +353,34 @@ def build_followup_draft(digest: dict[str, Any]) -> str:
             sections.append("\n".join(lines))
 
     return "\n\n".join(sections)
+
+
+def build_aftercare_ready_event(db, meeting_id: str) -> Optional[dict]:
+    """HS-56-04: the wire-safe `aftercare_ready` payload, or None when quiet.
+
+    Computed from the same read-only digest the /history panel uses; returns
+    None for an empty digest (the presence mascot stays quiet when a meeting
+    left nothing open, decided, or changed).
+    """
+    try:
+        digest = compute_meeting_aftercare(db, meeting_id)
+    except Exception:
+        return None
+    if not digest or digest.get("is_empty"):
+        return None
+    open_items = digest.get("open_items") or {}
+    top: list[dict] = []
+    for group in open_items.get("by_owner") or []:
+        for item in group.get("items") or []:
+            top.append({"task": item.get("task"), "owner": group.get("owner")})
+            if len(top) >= 2:
+                break
+        if len(top) >= 2:
+            break
+    return {
+        "meeting_id": digest.get("meeting_id"),
+        "title": digest.get("meeting_title"),
+        "open_total": int(open_items.get("total") or 0),
+        "decided_total": len(digest.get("decisions") or []),
+        "top_items": top,
+    }

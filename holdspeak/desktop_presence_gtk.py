@@ -17,6 +17,11 @@ import multiprocessing
 import queue
 from typing import Any, Callable
 
+from .desktop_presence import (
+    PANEL_CARD_PROBE_JS,
+    PANEL_FRAME_PASSIVE,
+    presence_panel_frame,
+)
 from .logging_config import get_logger
 
 log = get_logger("desktop_presence_gtk")
@@ -56,13 +61,20 @@ def _require_webkit2(gi: Any):
 class _GtkWebKitOverlay:
     """The overlay window. Main-thread (child process) only."""
 
-    WIDTH = 408
-    HEIGHT = 132
+    # The passive (ring/dock-only) geometry — the exact Phase-41 frame. The
+    # card frame comes from the same `presence_panel_frame` policy (HS-56-05).
+    WIDTH = int(PANEL_FRAME_PASSIVE["width"])
+    HEIGHT = int(PANEL_FRAME_PASSIVE["height"])
 
     def __init__(self, url: str) -> None:
         import gi
 
         gi.require_version("Gtk", "3.0")
+        # Pin Gdk too: unpinned, gi resolves the NEWEST typelib, so on a box
+        # that also ships GTK4 the `Gdk` import grabs 4.0 and then Gtk 3.0's
+        # own Gdk-3.0 requirement explodes (found live on real X11 metal,
+        # HS-56-05 — present since Phase 41 but latent on GTK3-only boxes).
+        gi.require_version("Gdk", "3.0")
         from gi.repository import Gdk, Gtk
 
         WebKit2 = _require_webkit2(gi)
@@ -95,32 +107,96 @@ class _GtkWebKitOverlay:
         self.web.load_uri(url)
         self.win.add(self.web)
 
-        # Top-right of the primary monitor.
+        # Top-right of the primary monitor. GTK origins are top-left, so a
+        # taller card frame grows downward with x/y untouched.
         display = screen.get_display()
         monitor = display.get_primary_monitor() or display.get_monitor(0)
         geo = monitor.get_geometry()
         self._x = geo.x + geo.width - self.WIDTH - 22
         self._y = geo.y + 38
 
+        # HS-56-05 card-frame state (the macOS HUD's analog, best-effort).
+        self._card_visible = False
+        self._card_seen = False
+        self._shown = False
+
     def show(self) -> None:
         self.win.move(self._x, self._y)
         self.win.show_all()
+        self._shown = True
         gdk_win = self.win.get_window()
         if gdk_win is not None:
             try:
                 gdk_win.set_override_redirect(True)
             except Exception:
                 pass
-        # Click-through: an empty input shape passes all pointer events through.
+        self._apply_input_shape()
+
+    def _apply_input_shape(self) -> None:
+        """Click-through when passive; pointer events only while a card shows.
+
+        An empty input shape passes every pointer event through. Resetting the
+        shape to None restores the full window region so the card's buttons
+        click — the window stays `accept_focus(False)`, so keyboard focus
+        never moves either way.
+        """
         try:
             import cairo
 
-            self.win.input_shape_combine_region(cairo.Region())
+            if self._card_visible:
+                self.win.input_shape_combine_region(None)
+            else:
+                self.win.input_shape_combine_region(cairo.Region())
         except Exception:
             pass
 
+    # ── HS-56-05: the card frame (best-effort; no-hardware posture) ─────
+
+    def poll_card(self) -> None:
+        """Ask the page whether a Qlippy card is showing (async)."""
+
+        def _done(web: Any, result: Any) -> None:
+            try:
+                value = web.run_javascript_finish(result)
+                js_value = getattr(value, "get_js_value", lambda: value)()
+                self._card_seen = bool(js_value.to_boolean())
+            except Exception:
+                pass
+
+        try:
+            self.web.run_javascript(PANEL_CARD_PROBE_JS, None, _done)
+        except Exception:
+            pass
+
+    def sync_card_frame(self) -> None:
+        if self._card_seen != self._card_visible:
+            self.apply_card_frame(self._card_seen)
+
+    def apply_card_frame(self, card_visible: bool) -> None:
+        spec = presence_panel_frame(card_visible)
+        self._card_visible = bool(card_visible)
+        try:
+            self.win.resize(int(spec["width"]), int(spec["height"]))
+        except Exception:
+            pass
+        if self._card_visible:
+            # A card needs to be seen even while the activity policy has the
+            # overlay hidden; `_shown` stays the policy's say.
+            self.win.move(self._x, self._y)
+            self.win.show_all()
+        elif not self._shown:
+            # The card resolved and the activity policy wants the overlay gone.
+            self.win.hide()
+        # After any (re)show: the input shape must match the card state.
+        self._apply_input_shape()
+
     def hide(self) -> None:
+        self._shown = False
+        # A card awaiting the user outlives the activity linger.
+        if self._card_visible:
+            return
         self.win.hide()
+        self._card_seen = False
 
     def destroy(self) -> None:
         try:
@@ -159,7 +235,15 @@ def _gtk_child_main(commands, ready, closed, errors, url: str) -> None:
             return False
         return True
 
+    def poll_card() -> bool:
+        # HS-56-05: ~every 0.4 s ask the page whether a Qlippy card is up and
+        # apply the frame policy (best-effort; see the module docstring).
+        overlay.poll_card()
+        overlay.sync_card_frame()
+        return True
+
     GLib.timeout_add(50, pump)
+    GLib.timeout_add(400, poll_card)
     ready.set()
     Gtk.main()
     closed.set()
@@ -187,10 +271,13 @@ class GtkOverlayRenderer:
             return False
         presence_url = f"{url}/presence"
 
-        # fork (the Linux default): the parent never imports gi/GTK, so the
-        # child forks clean and initializes GTK fresh. (spawn would force a
-        # re-import of the caller's __main__, which breaks stdin-run drivers.)
-        ctx = multiprocessing.get_context("fork")
+        # forkserver: by first show the runtime is multi-threaded (uvicorn is
+        # up), and fork-from-threads deadlocks the GTK child before it can
+        # signal ready (found live on real X11 metal, HS-56-05 — the child
+        # timed out every time under a running server, instantly fine without
+        # one). forkserver children come from a clean single-threaded server
+        # process, and unlike spawn it never re-imports the caller's __main__.
+        ctx = multiprocessing.get_context("forkserver")
         self._commands = ctx.Queue()
         ready = ctx.Event()
         self._closed = ctx.Event()

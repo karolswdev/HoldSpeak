@@ -8,7 +8,7 @@ flips to "scaffolded" then "shipped".
 Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
-**Last updated:** 2026-06-11 (post-Phase-53 strategic review: candidate **D** promoted
+**Last updated:** 2026-06-11 (candidate **J** shipped as [phase-56](./phase-56-qlippy/) (CLOSED 7/7), **G** absorbed-shipped with it; **K** is next per the agreed sequence. Prior: post-Phase-53 strategic review: candidate **D** promoted
 to its own phase and scaffolded as [phase-54](./phase-54-dictation-frontend-decomposition/)
 — the dictation frontend is now 6,101 coupled lines and lost the density invariant five
 phases running. New candidates **I** (meeting import + faceted history search), **J**
@@ -36,11 +36,11 @@ sequence. This file is the "all of them" container; the phases are how they land
 | D | Frontend density paydown (dictation page) | debt | review "Trouble" #4; P48 standing invariant | **shipped → [phase-54](./phase-54-dictation-frontend-decomposition/) (CLOSED 6/6)** (6,101 lines → largest file 576, guard-locked; two latent bugs fixed) |
 | E | `WebRuntime` / `web_server` decomposition (+ `meeting_session.py`) | debt | review "Trouble" #1 | watch (a **dictation-path slice** was carved in [phase-52](./phase-52-voice-macros/) with B; the full decomposition stays a watch item) |
 | F | Local activity as pre-briefing fuel | feature | review bet #6 | **shipped → [phase-53](./phase-53-activity-prebriefing/) (CLOSED 7/7)** (source-cited dismissible nudges + "Dictate with this" closes the loop, proven on a live LLM) |
-| G | Privacy visible at decision points | feature | review bet #7 | absorbed into **J** (the Qlippy card is the decision-point surface) |
+| G | Privacy visible at decision points | feature | review bet #7 | **absorbed-shipped → [phase-56](./phase-56-qlippy/)** (the three privacy answers verbatim on every actionable card, doc-locked) |
 | H | Public-docs hygiene (strip roadmap vocab from user-facing docs) | release/debt | this conversation (post-P50 release polish) | **shipped → [phase-51](./phase-51-public-docs-hygiene/) (CLOSED 5/5)** |
 | I | Meeting import ("bring your archive") + faceted history search | feature | post-P53 strategic review | **shipped → [phase-55](./phase-55-meeting-import/) (CLOSED 6/6)** (proven on real metal: real Whisper + real intel on `.43`) |
-| J | Qlippy, the presence enhancer (absorbs G) | feature/delight | post-P53 review + [proposal](./proposals/qlippy-presence-enhancer.md) | queued after I |
-| K | Speak the world's languages + spoken-symbol dictionary | feature | post-P53 strategic review | queued after J |
+| J | Qlippy, the presence enhancer (absorbs G) | feature/delight | post-P53 review + [proposal](./proposals/qlippy-presence-enhancer.md) | **shipped → [phase-56](./phase-56-qlippy/) (CLOSED 7/7)** (dock + cards on real broadcasts; native HUD proven on real Linux metal; two latent presence bugs fixed) |
+| K | Speak the world's languages + spoken-symbol dictionary | feature | post-P53 strategic review | **next** (J shipped) |
 | L | Export connectors (Notion / Slack / Docs) on the connector-pack framework | feature | post-P53 strategic review | parked |
 | M | Dictation preview-before-commit (review before it types) | feature | post-P53 strategic review | parked |
 | N | Windows port | strategic | post-P53 review; `CODEX_IDEAS.md` | parked (large; biggest reach unlock) |
@@ -110,14 +110,14 @@ Qwen3.5-9B-Q6 endpoint): a server-side one-shot selection pin reaches the dictat
 runner, and the project-rewriter grounds the rewrite in the selected record — a
 control vs. treatment dogfood shows the selection demonstrably changes the model output.
 
-### G. Privacy visible at decision points — absorbed into J
+### G. Privacy visible at decision points — absorbed-shipped with J (Phase 56)
 Every place that could use a model, connector, actuator, device, or activity
 source answers three plain-language questions: what data is used, does anything
 leave this machine, what control do I have right now. A delight feature for this
 category. *2026-06-11:* absorbed into candidate **J** — the Qlippy card is exactly
 the per-decision surface where those three answers belong (an actuator-approval card
-that names what data is used and what egresses *is* G, with a face). If J is never
-picked up, G reverts to its own candidate.
+that names what data is used and what egresses *is* G, with a face). Shipped with J as Phase 56: every actionable
+card answers the three questions verbatim, locked by a doc-drift test.
 
 ### H. Public-docs hygiene — shipped as Phase 51 (CLOSED 5/5)
 Net-new, surfaced in the post-Phase-50 between-phases conversation. The release gate
@@ -144,7 +144,7 @@ action-status; today `/history` has a single text box), because import is what m
 the archive big enough to need it.
 *Lands on:* the meeting capture seam + `/history`.
 
-### J. Qlippy, the presence enhancer (absorbs G) — queued
+### J. Qlippy, the presence enhancer (absorbs G) — shipped as Phase 56 (CLOSED 7/7)
 Give the presence layer a face and a voice: an ambient Qlippy dock reflecting runtime
 state, and a sliding card that makes the two least-visible high-stakes moments —
 actuator approval and the learning loop — actionable in the moment, without stealing
