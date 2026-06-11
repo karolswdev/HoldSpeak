@@ -113,11 +113,18 @@ def _name_prefix(line: str) -> tuple[str, str] | None:
 
 
 def _looks_like_text(content: str) -> bool:
-    """A cheap binary-garbage gate: mostly printable, some letters."""
+    """A cheap binary-garbage gate: mostly printable, some letters.
+
+    U+FFFD replacement characters count as garbage, not text — callers read
+    bytes with ``errors="replace"``, so a binary upload arrives here as a
+    wall of perfectly "printable" replacement chars.
+    """
     if not content.strip():
         return False
     sample = content[:4000]
-    printable = sum(1 for ch in sample if ch.isprintable() or ch in "\n\t")
+    printable = sum(
+        1 for ch in sample if (ch.isprintable() and ch != "�") or ch in "\n\t"
+    )
     if printable / len(sample) < 0.85:
         return False
     return any(ch.isalpha() for ch in sample)

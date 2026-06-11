@@ -93,18 +93,20 @@ import AppLayout from "../layouts/AppLayout.astro";
               <span class="search-row-spacer" aria-hidden="true"></span>
               <button class="btn import-open-btn" @click="importPanelOpen = !importPanelOpen" :aria-expanded="importPanelOpen ? 'true' : 'false'">
                 <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0L7 9m5-5 5 5M4 20h16"/></svg>
-                Import a recording
+                Import a recording or transcript
               </button>
             </div>
 
-            {/* HS-55-03: bring an existing recording into meeting intelligence.
-                Honest panel: formats (ffmpeg for compressed), one speaker label,
-                audio not retained, everything local. */}
-            <section class="detail-card import-panel" x-show="importPanelOpen" x-cloak aria-label="Import a recording">
+            {/* HS-55-03 + HS-57-03: bring an existing recording or transcript
+                into meeting intelligence. Honest panel: per-kind notes (ffmpeg
+                for compressed audio, one speaker label for audio; real
+                timestamps only from cue-timed transcripts), source file not
+                retained, everything local. */}
+            <section class="detail-card import-panel" x-show="importPanelOpen" x-cloak aria-label="Import a recording or transcript">
               <div class="import-head">
                 <div>
-                  <h4 class="import-title">Import a recording</h4>
-                  <p class="import-lede">Turn an existing recording into a real meeting — transcript, intelligence, the works.</p>
+                  <h4 class="import-title">Import a recording or transcript</h4>
+                  <p class="import-lede">Turn an existing recording — or a transcript export — into a real meeting: intelligence, search, aftercare, the works.</p>
                 </div>
                 <button class="btn" @click="importPanelOpen = false">Close</button>
               </div>
@@ -114,9 +116,9 @@ import AppLayout from "../layouts/AppLayout.astro";
                 @dragover.prevent
                 @drop.prevent="onImportDrop($event)"
               >
-                <input type="file" class="import-file-input" accept=".wav,.mp3,.m4a,.aac,.ogg,.oga,.opus,.flac,.webm,.mp4,audio/*" @change="onImportFileChange($event)" />
+                <input type="file" class="import-file-input" accept=".wav,.mp3,.m4a,.aac,.ogg,.oga,.opus,.flac,.webm,.mp4,.vtt,.srt,.txt,audio/*,text/vtt,text/plain" @change="onImportFileChange($event)" />
                 <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 18V6l10-2v12M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm10-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
-                <span class="import-drop-text" x-show="!importFile">Drop an audio file here, or <strong>browse</strong></span>
+                <span class="import-drop-text" x-show="!importFile">Drop an audio or transcript file here, or <strong>browse</strong></span>
                 <span class="import-drop-file" x-show="importFile" x-cloak x-text="importFile && importFile.name"></span>
               </label>
               <div class="form-grid import-fields">
@@ -131,9 +133,12 @@ import AppLayout from "../layouts/AppLayout.astro";
                 </label>
               </div>
               <p class="import-notes">
-                WAV imports out of the box; mp3 / m4a / ogg / flac need <code>ffmpeg</code> installed.
-                The whole recording gets one speaker label. The audio file isn't kept — only the
-                transcript. Everything stays on this machine.
+                <strong>Recordings:</strong> WAV imports out of the box; mp3 / m4a / ogg / flac need
+                <code>ffmpeg</code> installed. The whole recording gets one speaker label.
+                <strong>Transcripts:</strong> vtt / srt / txt. Speaker names are read from the file
+                when it carries them; timestamps are real for vtt / srt and approximate for plain
+                text. Either way the source file isn't kept — only the meeting record. Everything
+                stays on this machine.
               </p>
               <div class="search-row">
                 <button class="btn primary" :disabled="!importFile || importBusy" @click="submitImport" x-text="importBusy ? 'Uploading…' : 'Import'"></button>

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 57
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-57-02
 - **Unblocks:** HS-57-04
 - **Owner:** unassigned
@@ -28,14 +28,21 @@ model load — and the panel must tell the truth about what each kind gives.
 - **Out:** docs (HS-57-04); any new status vocabulary or poll mechanism.
 
 ## Acceptance criteria
-- [ ] A `.vtt` upload 202s, lands `importing`, resolves to a real meeting
-      with the file's speakers/timestamps; `_transcriber_factory` is NOT
-      called (monkeypatch-asserted); a garbage `.txt` lands
-      `import_failed` with the actionable detail and stays removable.
-- [ ] An audio upload is byte-identical (existing route tests unmodified).
-- [ ] The panel reads "Import a recording or transcript" with the per-kind
-      honest notes; accept list extended; page-content locks; screenshots
-      reviewed; `npm run build` clean; 0 `_built/` tracked.
+- [x] A `.vtt` upload 202s, lands `importing` ("Parsing transcript…"),
+      resolves to a real meeting with the file's speakers/timestamps;
+      `_transcriber_factory` is NOT called (poisoned-factory fixture); a
+      garbage `.txt` lands `import_failed` with the actionable detail and
+      stays removable. Two real bugs found and fixed along the way: the
+      untitled-import title fell back to the temp file's stem (latent
+      Phase-55, audio path included), and the binary gate counted U+FFFD
+      as printable (see `evidence-story-03.md`).
+- [x] An audio upload is byte-identical (existing route tests unmodified;
+      the per-kind speaker default resolves in the worker).
+- [x] The panel reads "Import a recording or transcript" with the per-kind
+      honest notes; accept list extended (audio list untouched, asserted);
+      page-content locks (+1); live browser dogfood 3/3 with a poisoned
+      transcriber, zero page errors, three reviewed screenshots;
+      `npm run build` clean; 0 `_built/` tracked.
 
 ## Test plan
 - Route integration (transcript happy/failure + no-transcriber assertion +

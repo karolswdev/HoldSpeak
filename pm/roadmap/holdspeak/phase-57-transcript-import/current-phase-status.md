@@ -1,6 +1,6 @@
 # Phase 57 — Transcript Import ("bring your archive", part 2)
 
-**Status:** in-progress (2/5). Opened 2026-06-11 on user direction, straight
+**Status:** in-progress (3/5). Opened 2026-06-11 on user direction, straight
 after Phase 56 closed (PR #43): *"can we also do it by simply uploading a
 transcript too? I often have transcripts, rarely do I have recordings (but I
 don't want you to remove the recording upload affordance, of course!)"*.
@@ -8,7 +8,23 @@ Net-new from that conversation (BACKLOG candidate **P**), slotted ahead of
 **K** because it is small and completes the Phase-55 "bring your archive"
 thesis.
 
-**Last updated:** 2026-06-11 (**HS-57-02 done: the engine path + CLI.** The
+**Last updated:** 2026-06-11 (**HS-57-03 done: API + /history UI.** The
+route's worker branches by suffix — a transcript upload rides the exact
+recording lifecycle ("Parsing transcript…" placeholder → engine save /
+`import_failed`) and **never constructs a transcriber** (a poisoned
+factory locks it, in tests AND the live dogfood); per-kind speaker
+defaults resolve in the worker. The panel reads "Import a recording or
+transcript" with per-kind honest notes (speaker names read from the file;
+timestamps real for vtt/srt, approximate for plain text; source not
+retained). **Two real bugs found and fixed**: untitled imports fell back
+to the temp file's stem (latent Phase-55, audio path included — the route
+now resolves the title from the uploaded name) and the binary-garbage
+gate counted U+FFFD as printable (a wall of replacement chars imported as
+a "transcript"). Live dogfood 3/3: a real browser upload of a
+multi-speaker VTT became a real meeting (file speakers, real cue starts,
+queued intel), zero page errors, three reviewed screenshots. +5 tests;
+full suite **2641 passed, 17 skipped**.
+**HS-57-02 (prior): the engine path + CLI.** The
 Phase-55 persistence tail factored verbatim into `_persist_import` (the
 audio path byte-identical — its test file untouched and green);
 `import_transcript` reads, parses, and persists honest segments through
@@ -99,14 +115,15 @@ stays, untouched.
 |---|---|---|---|
 | HS-57-01 | The transcript parsers | done | none |
 | HS-57-02 | The engine path + CLI | done | HS-57-01 |
-| HS-57-03 | API + /history UI | backlog | HS-57-02 |
+| HS-57-03 | API + /history UI | done | HS-57-02 |
 | HS-57-04 | Docs: transcript import | backlog | HS-57-03 |
 | HS-57-05 | Closeout: real-VTT dogfood + final-summary + PR | backlog | HS-57-01..04 |
 
 ## Where we are
 
-**HS-57-01 → HS-57-02 shipped 2026-06-11.** A `.vtt` on disk is one CLI
-command away from being a real meeting, with no model load at all. Next is
-**HS-57-03 — API + /history UI**: the route branches by suffix (no
-transcriber built; same lifecycle) and the panel becomes "Import a
-recording or transcript" with per-kind honest notes.
+**HS-57-01 → HS-57-03 shipped 2026-06-11.** The feature is end-to-end
+usable: drop a VTT on /history and it becomes a real meeting with the
+file's own speakers and timestamps, no model load. Next is **HS-57-04 —
+docs**: the Meeting Mode Guide's import section learns the transcript
+story (formats, the timestamp/speaker honesty rules, file-not-retained,
+intel parity).

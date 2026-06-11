@@ -21,9 +21,9 @@ def _app_js() -> str:
 
 def test_history_has_the_import_affordance_and_panel() -> None:
     page = _page()
-    # The opener sits in the meetings toolbar.
+    # The opener sits in the meetings toolbar (HS-57: transcripts too).
     assert "import-open-btn" in page
-    assert "Import a recording" in page
+    assert "Import a recording or transcript" in page
     # The panel: drop target + browse, metadata fields, actions.
     assert "import-panel" in page
     assert "import-drop" in page
@@ -37,12 +37,25 @@ def test_history_has_the_import_affordance_and_panel() -> None:
 
 def test_import_panel_states_the_honest_truths() -> None:
     page = _page()
-    # ffmpeg for compressed formats; one speaker label; audio not retained;
-    # local-only.
+    # ffmpeg for compressed formats; one speaker label for audio; the
+    # per-kind transcript truths (HS-57); source not retained; local-only.
     assert "ffmpeg" in page
     assert "one speaker label" in page
-    assert "audio file isn't kept" in page
+    assert "Speaker names are read from the file" in page
+    assert "real for vtt / srt and approximate for plain" in page
+    assert "source file isn't kept" in page
     assert "stays on this machine" in page
+
+
+def test_import_panel_accepts_the_transcript_trio() -> None:
+    page = _page()
+    accept = next(l for l in page.split("\n") if "import-file-input" in l)
+    for suffix in (".vtt", ".srt", ".txt"):
+        assert suffix in accept, f"accept list missing {suffix}"
+    # The audio accept list is untouched (the recording path stays).
+    for suffix in (".wav", ".mp3", ".m4a", ".flac"):
+        assert suffix in accept, f"accept list lost {suffix}"
+    assert "Drop an audio or transcript file" in page
 
 
 def test_import_lifecycle_states_render_honestly() -> None:
