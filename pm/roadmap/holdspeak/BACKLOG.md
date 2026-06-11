@@ -45,6 +45,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 | M | Dictation preview-before-commit (review before it types) | feature | post-P53 strategic review | parked |
 | N | Windows port | strategic | post-P53 review; `CODEX_IDEAS.md` | parked (large; biggest reach unlock) |
 | O | Wake word ("local + private" positioning) | strategic | post-P53 strategic review | parked (high false-positive risk) |
+| P | Transcript import (`.vtt`/`.srt`/`.txt` → real meetings) | feature | user direction, post-P56 conversation | **scaffolded → [phase-57](./phase-57-transcript-import/)** |
 
 ### A. Meeting aftercare ("close the loop") — shipped as Phase 49 (CLOSED 6/6)
 The meeting side has plugins + artifacts; the next value is follow-through, not
@@ -198,3 +199,14 @@ graduates if `web_runtime.py` / `meeting_session.py` keep absorbing responsibili
 The original (pre-2026-06-11) note for the record: no fixed order; **C** was the
 release unlock; **D** could ride along with a dictation-side phase; **B** paired with
 a scoped slice of **E** was the strongest product bet. All three shipped that way.
+
+---
+### P. Transcript import — scaffolded as Phase 57
+Most meeting tools export a transcript, not audio; the user has transcripts
+("I often have transcripts, rarely do I have recordings"). Upload `.vtt`/`.srt`/`.txt`
+and get a real meeting through the exact Phase-55 import pipeline — real cue
+timestamps + multi-speaker labels when the file carries them (a genuine upgrade
+over single-label audio import), honest synthetic ordering for plain text. The
+recording upload stays untouched (explicit user constraint).
+*Lands on:* the Phase-55 import engine/route/UI seams; everything downstream of
+`TranscriptSegment`s is already format-agnostic.
