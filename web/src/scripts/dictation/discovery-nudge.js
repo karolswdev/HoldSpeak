@@ -3,21 +3,12 @@
 // knowledge (no facts, no .hs/), is not dismissed for this project, and the
 // global switch is on. Dismissal is durable (localStorage). Reuses the existing
 // readiness signal; adds no detection path.
-//
-// Dependencies (`api`, `projectRootParam`) are injected by the page entry via
-// initDiscoveryNudge() rather than imported, because they still live in the
-// dictation-app.js monolith. When the shared core module exists, switch to
-// direct imports and delete the injection.
+import { api, projectRootParam } from "./core.js";
+
 const KN_NUDGE_DISABLED_KEY = "holdspeak.knNudgeDisabled";
 const KN_NUDGE_DISMISSED_KEY = "holdspeak.knNudgeDismissed";
 
 export const knNudgeState = { root: null, pendingOpen: false };
-
-let deps = { api: null, projectRootParam: null };
-
-export function initDiscoveryNudge(injected) {
-  deps = injected;
-}
 
 function knNudgeGloballyOff() {
   try { return localStorage.getItem(KN_NUDGE_DISABLED_KEY) === "1"; } catch (e) { return false; }
@@ -51,7 +42,7 @@ export async function maybeShowKnNudge() {
   if (knNudgeGloballyOff()) return;
   let data;
   try {
-    data = await deps.api("GET", `/api/dictation/readiness${deps.projectRootParam("?")}`);
+    data = await api("GET", `/api/dictation/readiness${projectRootParam("?")}`);
   } catch (e) {
     return;  // no project / error -> no nudge.
   }

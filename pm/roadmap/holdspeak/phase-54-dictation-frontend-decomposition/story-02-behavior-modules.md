@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 54
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-54-01
 - **Unblocks:** HS-54-03, HS-54-04, HS-54-06
 - **Owner:** unassigned
@@ -36,11 +36,16 @@ each phase.
   (HS-54-03); behavior "fixes" of any kind.
 
 ## Acceptance criteria
-- [ ] `dictation-app.js` is gone (or reduced to a thin entry) and the behavior lives in
-      single-concern modules, none over ~600 lines.
-- [ ] Init order and the 10s `loadAgentContext` interval are preserved exactly.
-- [ ] All dictation integration + e2e tests pass **unmodified**; full suite green.
-- [ ] `npm run build` clean; 0 `_built/` tracked.
+- [x] `dictation-app.js` is gone (or reduced to a thin entry) and the behavior lives in
+      single-concern modules, none over ~600 lines. (19-line entry + 12 modules,
+      largest 576; see `evidence-story-02.md` §1.)
+- [x] Init order and the 10s `loadAgentContext` interval are preserved exactly.
+      (init.js is the original wiring sequence verbatim; interval at the same point.)
+- [x] All dictation integration + e2e tests pass **unmodified**; full suite green.
+      (Zero test files changed this story; slice 158 passed; full suite 2540 passed,
+      17 skipped. Plus a new all-tabs Playwright dogfood: 16/16 PASS, zero page
+      errors — evidence §5.)
+- [x] `npm run build` clean; 0 `_built/` tracked.
 
 ## Test plan
 - `uv run pytest -q tests/integration -k "dictation"`, the dictation e2e files, then

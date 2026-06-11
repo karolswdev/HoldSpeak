@@ -1,11 +1,27 @@
 # Phase 54 — Dictation Frontend Decomposition
 
-**Status:** in-progress (1/6). Opened 2026-06-11 on user direction (the agreed post-53
+**Status:** in-progress (2/6). Opened 2026-06-11 on user direction (the agreed post-53
 sequence), right after Phase 53 closed + merged (PR #40). From the
 [project backlog](../BACKLOG.md): candidate **D** (frontend density paydown), promoted
 from "ride along with the next dictation feature" to its own phase.
 
-**Last updated:** 2026-06-11 (**HS-54-01 done: the module seam is decided and proven.**
+**Last updated:** 2026-06-11 (**HS-54-02 done: the monolith is carved.** The
+2,907-line `dictation-app.js` is now a 19-line entry + twelve single-concern ES
+modules under `scripts/dictation/` (largest: `knowledge.js` at 576 — all under the
+~600 budget). Code moved verbatim; the one structural idiom is core's
+section-loader registry (`registerSection`/`loadSection`), which keeps the module
+graph **acyclic** where direct imports would have made knowledge↔readiness and
+core↔features cycles. Three shared HTML helpers (`renderRuntimeGuidance`,
+`renderDryTelemetry`, `learnSigChip`) moved to core for the same reason; the
+discovery-nudge DI from HS-54-01 became direct core imports as planned. **Zero
+test files changed**; slice 158 passed; full suite **2540 passed, 17 skipped**;
+`npm run build` clean. Proven live by a new all-tabs Playwright dogfood
+(`dogfood_story02.py`): all nine tabs activate + populate, pipeline enabled via
+the UI, dry-run renders final text + stage trace + moment-of-truth, the ritual
+acknowledges, the run journals, a correction adds + deletes — 16/16 PASS with
+**zero uncaught page errors**. Two early dogfood failures were wrong assumptions
+(a disabled pipeline's dry-run never journals — verified server-side), not carve
+regressions. **HS-54-01 (prior): the module seam decided and proven.**
 The `?raw` + `new Function()` loader turned out to be a Phase-10 (HS-10-09) migration
 shim with nothing depending on the eval — no inline handlers, no DOMContentLoaded
 reliance, no sloppy-mode dependence (each verified). The dictation page now loads its
@@ -90,7 +106,7 @@ density guard. No feature, no visual change, no behavior change.
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HS-54-01 | The module seam (decide + prove on one cluster) | done | none |
-| HS-54-02 | Behavior modules (carve dictation-app.js) | backlog | HS-54-01 |
+| HS-54-02 | Behavior modules (carve dictation-app.js) | done | HS-54-01 |
 | HS-54-03 | Section partials (carve dictation.astro) | backlog | HS-54-02 |
 | HS-54-04 | The density guard | backlog | HS-54-03 |
 | HS-54-05 | Docs: the frontend architecture pattern | backlog | HS-54-03 |
@@ -98,15 +114,17 @@ density guard. No feature, no visual change, no behavior change.
 
 ## Where we are
 
-**HS-54-01 shipped 2026-06-11.** The seam is real: the page entry is a bundled ES
-module, the discovery nudge is the first module under `web/src/scripts/dictation/`,
-the client bundle ships un-minified (readable source, as the shim always effectively
-did), and the build now mechanically rejects eval-masked defects (it already caught
-one: the duplicate `escapeAttr`). Full suite 2540 passed, 17 skipped.
+**HS-54-01 + HS-54-02 shipped 2026-06-11.** The JS side of the paydown is done:
+the page entry is a bundled ES module and the whole behavior lives in twelve
+single-concern modules (largest 576 lines), acyclic via core's section-loader
+registry, proven by an all-tabs live dogfood with zero page errors and the full
+suite green with zero test edits.
 
-Next is **HS-54-02 — behavior modules**: carve the remaining 14 clusters onto the
-proven seam, starting with `core.js` (shared state + `api` + `projectRootParam` +
-tab switching) so the discovery-nudge dependency injection can become direct imports.
+Next is **HS-54-03 — section partials**: carve the `dictation.astro` markup +
+styles into per-tab Astro components under `web/src/components/dictation/`. The
+DOM contract is now fully enumerable per behavior module, which gives the partial
+boundaries exactly; the scoped-CSS-on-JS-injected-DOM gotcha is the main risk —
+screenshot-verify every tab.
 
 ## Open decisions (defaults chosen; flag to change)
 
