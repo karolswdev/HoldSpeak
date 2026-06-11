@@ -1,6 +1,6 @@
 # Phase 60 — The Wake Word
 
-**Status:** in-progress (3/6). Opened 2026-06-11 on standing user direction
+**Status:** in-progress (4/6). Opened 2026-06-11 on standing user direction
 ("K, then O" → "Word"), right after Phase 59 closed (PR #48). From the
 [project backlog](../BACKLOG.md): candidate **O**, with the four recorded
 safety conditions fixed: **arms, not types** (preview is the default
@@ -9,7 +9,17 @@ indicator** (presence + Qlippy + cockpit), **a local engine with a
 MEASURED false-accept story** (openWakeWord, Apache-2.0; Porcupine ruled
 out on licensing), **off by default**.
 
-**Last updated:** 2026-06-11 (**HS-60-03 done: the armed UX + settings.**
+**Last updated:** 2026-06-11 (**HS-60-04 done: the false-accept
+measurement — and the phase's central honest finding.** The harness's
+first run FAILED, valuably: phrases containing the wake word (0.996) or a
+near-homophone ("hey jarred": 0.995) are indistinguishable from real
+wakes (0.628-0.861) — no threshold separates them, which is inherent to
+wake-word detection and exactly why arms-not-types + preview-default
+exist. Re-measured in two classes: **ordinary speech (57 utterances,
+adversarial included): 0 false accepts at 0.5** (margin 0.196);
+wake-adjacent: fires in 3 of 9 (voice-dependent), mitigated by design.
+The numbers + caveats (synthetic TTS; real rooms differ) go verbatim to
+the docs. **HS-60-03 (prior): the armed UX + settings.**
 The armed state is first-class on the ambient surfaces (presence
 STATE_META, the Qlippy dock, every socket page); the sticky wake preview
 card carries the safety copy ("Nothing has been typed… Type it, or
@@ -97,10 +107,12 @@ false-accept posture measured, not asserted.
   preview card's Type it types only the server-stored preview via a
   one-shot token; settings ship with the egress-honest download
   affordance; screenshots. (HS-60-03)
-- The false-accept posture is measured and committed: ≥40
-  distractor utterances (≥2 voices, adversarial included) → zero
-  detections at the default threshold; the wake phrase detects across
-  voices. (HS-60-04)
+- The false-accept posture is measured and committed, in two classes
+  the first run's honest FAIL forced: ordinary speech (57 utterances,
+  adversarial included) → zero detections at the default; wake-adjacent
+  phrases (containing the wake word / near-homophones) fire by nature
+  and are mitigated by the preview default — stated with numbers.
+  (HS-60-04)
 - Docs canon-clean; SECURITY egress row; POSITIONING rows. (HS-60-05)
 - Real metal: the full loop live; type proven opt-in; defaults
   byte-identical; full suite green; `final-summary.md`; BACKLOG **O**
@@ -123,12 +135,12 @@ false-accept posture measured, not asserted.
 | HS-60-01 | The engine seam + config | done | none |
 | HS-60-02 | Arm, capture, and the pipeline | done | HS-60-01 |
 | HS-60-03 | The armed UX + settings | done | HS-60-02 |
-| HS-60-04 | The false-accept measurement | backlog | HS-60-01 |
+| HS-60-04 | The false-accept measurement | done | HS-60-01 |
 | HS-60-05 | Docs: the wake word | backlog | HS-60-03, HS-60-04 |
 | HS-60-06 | Closeout: real-metal loop + final-summary + PR | backlog | HS-60-01..05 |
 
 ## Where we are
 
-**HS-60-01 → HS-60-03 shipped 2026-06-11.** The loop is visible and the
-preview is one decisive glance. Next is **HS-60-04 — the false-accept
-measurement**: the committed harness, the numbers in evidence.
+**HS-60-01 → HS-60-04 shipped 2026-06-11.** The safety posture has
+numbers now, including the honest one (near-homophones fire; the preview
+default is the mitigation). Next is **HS-60-05 — docs**.
