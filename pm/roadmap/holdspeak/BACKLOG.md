@@ -40,11 +40,11 @@ sequence. This file is the "all of them" container; the phases are how they land
 | H | Public-docs hygiene (strip roadmap vocab from user-facing docs) | release/debt | this conversation (post-P50 release polish) | **shipped → [phase-51](./phase-51-public-docs-hygiene/) (CLOSED 5/5)** |
 | I | Meeting import ("bring your archive") + faceted history search | feature | post-P53 strategic review | **shipped → [phase-55](./phase-55-meeting-import/) (CLOSED 6/6)** (proven on real metal: real Whisper + real intel on `.43`) |
 | J | Qlippy, the presence enhancer (absorbs G) | feature/delight | post-P53 review + [proposal](./proposals/qlippy-presence-enhancer.md) | **shipped → [phase-56](./phase-56-qlippy/) (CLOSED 7/7)** (dock + cards on real broadcasts; native HUD proven on real Linux metal; two latent presence bugs fixed) |
-| K | Speak the world's languages + spoken-symbol dictionary | feature | post-P53 strategic review | **next** (J shipped) |
+| K | Speak the world's languages + spoken-symbol dictionary | feature | post-P53 strategic review | **scaffolded → [phase-59](./phase-59-languages/)** |
 | L | Export connectors (Notion / Slack / Docs) on the connector-pack framework | feature | post-P53 strategic review | parked |
 | M | Dictation preview-before-commit (review before it types) | feature | post-P53 strategic review | parked |
 | N | Windows port | strategic | post-P53 review; `CODEX_IDEAS.md` | parked (large; biggest reach unlock) |
-| O | Wake word ("local + private" positioning) | strategic | post-P53 strategic review | parked (high false-positive risk) |
+| O | Wake word ("local + private" positioning) | strategic | post-P53 strategic review | **queued after K** (user direction "K, then O"; conditions: arms-not-types, unmissable armed indicator via presence, local engine with a real false-accept story, off by default) |
 | P | Transcript import (`.vtt`/`.srt`/`.txt` → real meetings) | feature | user direction, post-P56 conversation | **shipped → [phase-57](./phase-57-transcript-import/) (CLOSED 5/5)** (real speakers + timestamps from the file; proven on `.43` intel; recording path untouched) |
 | Q | The Front Door (positioning + user-facing docs revision) | release/community | user direction, post-P57 conversation | **shipped → [phase-58](./phase-58-front-door/) (CLOSED 6/6)** (positioning canon + README pitch + named comparisons + the voice guard) |
 
@@ -159,7 +159,7 @@ approval as the dashboard.
 *Lands on:* the presence layer (P41/P43) + the actuator flow (P37/P38) + the learning
 loop (P48).
 
-### K. Speak the world's languages + spoken-symbol dictionary — queued
+### K. Speak the world's languages + spoken-symbol dictionary — scaffolded as Phase 59
 Confirmed absent: no language config, no Whisper language param, no per-session
 override — yet Whisper supports ~99 languages, so this is mostly one settings knob,
 pipeline plumbing, and honest docs. The cheapest reach-expansion available. Rider in
