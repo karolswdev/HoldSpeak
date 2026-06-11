@@ -72,6 +72,36 @@ class PresenceWindowView:
     max_detail_chars: int = 156
 
 
+# HS-56-05: the native HUD's two frames. Passive (ring/dock only) keeps the
+# exact Phase-41 geometry and stays click-through; a presented Qlippy card
+# sizes the panel up and accepts pointer events — while the panel itself stays
+# non-activating, so keyboard focus never leaves the user's app. The card's
+# presence is read from the page itself (`#qlippy-card.is-in`): the activity
+# payload cannot know about cards (they ride other broadcasts), so the page —
+# which owns the card lifecycle — is the one honest source.
+PANEL_FRAME_PASSIVE: dict[str, object] = {"width": 408, "height": 132, "interactive": False}
+PANEL_FRAME_CARD: dict[str, object] = {"width": 408, "height": 460, "interactive": True}
+
+#: The probe native webviews evaluate to learn whether a card is showing.
+#: Matches the HS-56-02 shell's contract: the card element slides in with
+#: `is-in`. With the mascot off the element never gains the class, so the
+#: panel never leaves the passive frame.
+PANEL_CARD_PROBE_JS = (
+    "(function(){var c=document.getElementById('qlippy-card');"
+    "return !!(c && c.classList.contains('is-in'));})()"
+)
+
+
+def presence_panel_frame(card_visible: bool) -> dict[str, object]:
+    """The native panel frame for the current card state (pure, testable).
+
+    Returns a fresh dict (renderers may annotate it) with ``width``,
+    ``height``, and ``interactive`` — interactive meaning the panel should
+    accept pointer events; it must never mean "may take keyboard focus".
+    """
+    return dict(PANEL_FRAME_CARD if card_visible else PANEL_FRAME_PASSIVE)
+
+
 def _truncate(value: object, max_chars: int) -> str:
     text = str(value or "").strip()
     if len(text) <= max_chars:
@@ -358,10 +388,14 @@ def build_desktop_presence_host(
 __all__ = [
     "DesktopPresenceHost",
     "NullPresenceRenderer",
+    "PANEL_CARD_PROBE_JS",
+    "PANEL_FRAME_CARD",
+    "PANEL_FRAME_PASSIVE",
     "PresenceRenderer",
     "PresenceWindowView",
     "build_desktop_presence_host",
     "build_presence_window_view",
     "desktop_presence_enabled",
     "detect_presence_platform",
+    "presence_panel_frame",
 ]
