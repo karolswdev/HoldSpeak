@@ -1,15 +1,21 @@
 # Phase 56 — Qlippy, the Presence Enhancer
 
-**Status:** scaffolded. Opened 2026-06-11 on user direction ("lettuce go with
-qlippy"), the third step of the agreed sequence **54 → I → J → K**, right after
+**Status:** in-progress (1/7). Opened 2026-06-11 on user direction ("lettuce go
+with qlippy"), the third step of the agreed sequence **54 → I → J → K**, right after
 Phase 55 closed + merged (PR #42). From the [project backlog](../BACKLOG.md):
 candidate **J**, **absorbing candidate G** (privacy visible at decision
 points). Design RFC: [`../proposals/qlippy-presence-enhancer.md`](../proposals/qlippy-presence-enhancer.md).
 
-**Last updated:** 2026-06-11 (scaffolded: AGENT-BRIEF + seven stories; seams
-verified against the live tree — including the find that `actuator_proposed`
-is **already broadcast** for live in-meeting proposals, so the marquee story
-needs `actuator_result` + the aftercare-route broadcast, not a new event bus).
+**Last updated:** 2026-06-11 (**HS-56-01 done: assets + the mascot gate.** The
+PixelLab pack vendored to `web/public/qlippy/` (14 strips + 4 glyphs + avatar +
+provenance README; 136 KiB; 14 sprites verified in the built bundle);
+`PresenceConfig.mascot: bool = False` round-tripping `/api/settings` with zero
+route changes (the `PresenceConfig(**data)` construction carries it) and
+coercing older config shapes forward; the `/settings` presence section gains
+the indented, inert-when-presence-off "Qlippy, the mascot" sub-toggle with
+honest copy. 5 tests; two reviewed screenshots; full suite **2573 passed, 17
+skipped** (+5). Earlier: scaffolded — seams verified, incl. the find that
+`actuator_proposed` is already broadcast (Phase 38).)
 
 ## The thesis — why this phase
 
@@ -92,7 +98,7 @@ acts on his own; flag-unset is byte-identical.
 
 | Story | Title | Status | Depends on |
 |---|---|---|---|
-| HS-56-01 | Assets + the mascot gate | backlog | none |
+| HS-56-01 | Assets + the mascot gate | done | none |
 | HS-56-02 | The dock + the card shell | backlog | HS-56-01 |
 | HS-56-03 | The actuator card (marquee; absorbs G) | backlog | HS-56-02 |
 | HS-56-04 | Learning + aftercare cards | backlog | HS-56-02 |
@@ -102,9 +108,14 @@ acts on his own; flag-unset is byte-identical.
 
 ## Where we are
 
-Scaffolded 2026-06-11. Nothing has shipped. Start with **HS-56-01** (assets +
-gate): vendored sprites + the config flag + the settings sub-toggle are the
-foundation and the off-switch for everything after.
+**HS-56-01 shipped 2026-06-11.** The foundation is in: assets in the bundle,
+the double opt-in gate, the settings affordance.
+
+Next is **HS-56-02 — the dock + the card shell**: the sprite-strip dock on
+`/presence` (the RFC state map, sleeping after 5 min, the complete flourish)
+and the sliding card component with the full motion spec + FIFO queue +
+reduced-motion story, behind the flag, with a mock trigger for tests and
+screenshots.
 
 ## Open decisions (defaults chosen per the RFC's open questions; flag to change)
 

@@ -529,6 +529,10 @@ class PresenceConfig:
     """
 
     enabled: bool = False
+    # HS-56-01: Qlippy, the mascot layer on the presence surface — a second
+    # opt-in on top of ``enabled`` (existing presence users keep the minimal
+    # ring). Off by default; unset is byte-identical.
+    mascot: bool = False
 
 
 @dataclass

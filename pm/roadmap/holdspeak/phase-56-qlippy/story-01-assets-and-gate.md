@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 56
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-56-02..07
 - **Owner:** unassigned
@@ -30,14 +30,19 @@ affordance, no way for the presence page to know the mascot is wanted.
 - **Out:** any rendering (HS-56-02+).
 
 ## Acceptance criteria
-- [ ] Assets committed under `web/public/qlippy/` with the provenance README;
-      `npm run build` clean; served under the `/_built` base (verified).
-- [ ] `presence.mascot` defaults off, persists via `/api/settings`, coerces
-      config-version-safe (test).
-- [ ] The settings sub-toggle renders, persists, and is subordinate to the
-      presence toggle (page-content + integration test; screenshot).
-- [ ] The presence page can read the flag; with it unset, the page's served
-      output and behavior are byte-identical (test).
+- [x] Assets committed under `web/public/qlippy/` with the provenance README;
+      `npm run build` clean; served under the `/_built` base (verified: 14
+      sprites in `_built/qlippy/sprites/` post-build).
+- [x] `presence.mascot` defaults off, persists via `/api/settings`, coerces
+      config-version-safe (test — zero route changes needed; the
+      `PresenceConfig(**data)` construction carries it).
+- [x] The settings sub-toggle renders, persists, and is subordinate to the
+      presence toggle (page-content + integration test; two reviewed
+      screenshots: inert + on).
+- [x] The presence page can read the flag (via the existing
+      `GET /api/settings`); with it unset, nothing else changed — the
+      presence page was not touched this story, and the full suite is green
+      unmodified (2573 passed, 17 skipped; see `evidence-story-01.md`).
 
 ## Test plan
 - Unit/integration: config round-trip + coercion; settings API; page-content
