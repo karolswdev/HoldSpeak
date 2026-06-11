@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 58
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-58-02, HS-58-03, HS-58-04
 - **Owner:** unassigned
@@ -24,12 +24,15 @@ standard to align to.
 - **Out:** any user-facing doc change (later stories).
 
 ## Acceptance criteria
-- [ ] The canon encodes the user's three decisions verbatim and every
+- [x] The canon encodes the user's three decisions verbatim and every
       pillar's proof points name shipped capabilities.
-- [ ] The competitive frame covers cloud dictation, local Whisper apps,
-      AI dictation services, Talon, raw Whisper CLIs — honest both ways.
-- [ ] The canonical-name table declares one name per feature surface.
-- [ ] CLAUDE.md lists the canon as a source-canon doc.
+- [x] The competitive frame covers OS dictation, local Whisper apps,
+      AI dictation services, Talon, raw Whisper tooling — honest both
+      ways, as-of-dated, architecture-level by design.
+- [x] The canonical-name table declares one name per feature surface
+      (with the banned synonyms beside each).
+- [x] CLAUDE.md lists the canon as a source-canon doc.
+      See `evidence-story-01.md`.
 
 ## Test plan
 - Doc-guard slice (the canon is internal — the vocab guard must NOT scan

@@ -1,13 +1,24 @@
 # Phase 58 — The Front Door (positioning + the user-facing docs, revised)
 
-**Status:** scaffolded (0/6). Opened 2026-06-11 on user direction, right
+**Status:** in-progress (1/6). Opened 2026-06-11 on user direction, right
 after Phase 57 closed (PR #44): *"a proper phase. Where we also revise WHAT
 we are saying, so that we can be explicit around how to 'sell' this product
 to our community."* The user fixed the three positioning decisions directly:
 **lead angle "one copilot, two modes"**, **audience: developers**,
 **comparisons: name names, honestly**.
 
-**Last updated:** 2026-06-11 (scaffolded — the corpus measured: vocabulary
+**Last updated:** 2026-06-11 (**HS-58-01 done: the positioning canon.**
+`docs/internal/POSITIONING.md` fixes the story on the user's three
+decisions (recorded verbatim as non-relitigable): the one-copilot-two-modes
+one-liner, four pillars each with shipped proof points, the named
+competitive frame (OS dictation / local Whisper apps / AI dictation
+services / Talon / raw tooling — both directions, as-of-dated,
+architecture-level), the canonical feature-name table with banned
+synonyms, and the voice rules (humanizer standard, no-dash, the honesty
+bar, why-ledes, developer register). CLAUDE.md lists it as source canon,
+binding every future phase. Doc slice green (the vocab guard correctly
+does not scan internal docs); full suite 2641 passed, 17 skipped.
+Earlier: scaffolded — the corpus measured: vocabulary
 already clean (Phase 51 + per-phase humanizer passes), em-dashes pervasive
 in pre-Phase-55 text (PLUGIN_AUTHORING 82, the typing guide 28, README 0),
 no comparison section anywhere, the README's feature story stops around
@@ -72,7 +83,7 @@ as honest as the product.
 
 | Story | Title | Status | Depends on |
 |---|---|---|---|
-| HS-58-01 | The positioning canon | backlog | none |
+| HS-58-01 | The positioning canon | done | none |
 | HS-58-02 | README.md, the front door | backlog | HS-58-01 |
 | HS-58-03 | The core guides | backlog | HS-58-01 |
 | HS-58-04 | The developer + ops docs | backlog | HS-58-01 |
@@ -81,5 +92,6 @@ as honest as the product.
 
 ## Where we are
 
-Scaffolded. Next is **HS-58-01 — the positioning canon**: the keystone doc,
-built strictly on the user's three decisions.
+**HS-58-01 shipped 2026-06-11.** The story is fixed and canonized. Next is
+**HS-58-02 — README.md, the front door**: the pitch rewrite against the
+canon, including the comparison section the repo never had.
