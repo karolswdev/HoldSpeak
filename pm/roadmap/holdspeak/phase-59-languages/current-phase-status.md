@@ -1,13 +1,22 @@
 # Phase 59 — Speak Your Language (languages + the spoken-symbol dictionary)
 
-**Status:** in-progress (3/4). Opened 2026-06-11 on user direction ("K, then
-O" → "Kkkkk"), right after the Phase-58 follow-ups merged (PRs #46, #47).
+**Status:** CLOSED (4/4) — opened and closed 2026-06-11 on user direction
+("K, then O" → "Kkkkk"), right after the Phase-58 follow-ups merged (PRs
+#46, #47). See [`final-summary.md`](./final-summary.md).
 From the [project backlog](../BACKLOG.md): candidate **K**, the cheapest
 reach-expansion on the board, under one thesis: **the input layer adapts to
 you**. Candidate **O** (wake word) is queued behind it per the same user
 direction, with the misfire-safety conditions recorded in the conversation.
 
-**Last updated:** 2026-06-11 (**HS-59-03 done: docs.** The User Guide
+**Last updated:** 2026-06-11 (**HS-59-04 done: closeout — phase CLOSED.**
+The real-metal dogfood passed 4/4: real German speech (`say -v Anna`)
+through real Whisper pinned to `de`, near-verbatim (auto-detect also
+succeeded on the 4.7-s sentence and is reported honestly — the pin earns
+its keep on short utterances, as the docs say); the dictionary fired
+through the real settings round-trip (`std::vector`, `x → y`); defaults
+byte-identical. `final-summary.md`; BACKLOG **K → shipped**, **O** stays
+queued-next with its conditions; suite **2683 passed, 17 skipped**; build
+clean; PR merged on green. **HS-59-03 (prior): docs.** The User Guide
 (the punctuation table's home; extend-don't-fragment) gains "Speak your
 language" (Auto-detect explained, the honest short-utterance note, the
 one-setting-covers-everything statement) and the spoken-symbol dictionary
@@ -107,11 +116,11 @@ non-English speech at closeout.
 | HS-59-01 | The language knob, end to end | done | none |
 | HS-59-02 | The spoken-symbol dictionary | done | none |
 | HS-59-03 | Docs: languages + the dictionary | done | HS-59-01, HS-59-02 |
-| HS-59-04 | Closeout: real-metal dogfood + final-summary + PR | backlog | HS-59-01..03 |
+| HS-59-04 | Closeout: real-metal dogfood + final-summary + PR | done | HS-59-01..03 |
 
 ## Where we are
 
-**HS-59-01 → HS-59-03 shipped 2026-06-11.** Built, locked, and
-documented. Next is **HS-59-04 — closeout**: real non-English speech
-through real Whisper (pinned vs. auto), the dictionary through the real
-pipeline, final-summary, PR.
+**Phase CLOSED 2026-06-11, 4/4.** The input layer adapts to you: 99
+languages through one knob serving dictation, meetings, and import, and
+your own spoken vocabulary merged over the built-ins — proven on real
+German speech. Next per the standing direction: **O — wake word**.

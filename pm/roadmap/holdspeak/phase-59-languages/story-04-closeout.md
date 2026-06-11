@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 59
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-59-01..03
 - **Unblocks:** none (phase exit)
 - **Owner:** unassigned
@@ -22,12 +22,15 @@ proves it.
 - **Out:** new feature work (findings go back to their story).
 
 ## Acceptance criteria
-- [ ] Dogfood transcript committed: pinned-language transcription of real
-      non-English speech; the dictionary firing end to end; defaults
-      byte-identical.
-- [ ] Full suite green; build clean; 0 `_built/` tracked.
-- [ ] `final-summary.md` + this story's evidence in the same commit.
-- [ ] README + BACKLOG updated in the same commit; PR merged on green.
+- [x] Dogfood transcript committed: real German (`say -v Anna`) through
+      real Whisper pinned to `de`, near-verbatim (auto shown honestly);
+      the dictionary fired through the real settings round-trip
+      (`std::vector`, `x → y`); defaults byte-identical.
+- [x] Full suite green (2683 passed, 17 skipped); build clean; 0
+      `_built/` tracked.
+- [x] `final-summary.md` + this story's evidence in the same commit.
+- [x] README + BACKLOG (K shipped; O queued-next with conditions)
+      updated in the same commit; PR merged on green.
 
 ## Test plan
 - The dogfood + the full suite; CI green on the PR.
