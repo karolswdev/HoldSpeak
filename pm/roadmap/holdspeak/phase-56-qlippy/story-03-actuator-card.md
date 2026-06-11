@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 56
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-56-02
 - **Unblocks:** HS-56-06, HS-56-07
 - **Owner:** unassigned
@@ -39,17 +39,23 @@ user has (backlog candidate G).
   manifests, or proposal persistence in any way.
 
 ## Acceptance criteria
-- [ ] The aftercare route's proposal creation broadcasts `actuator_proposed`;
+- [x] The aftercare route's proposal creation broadcasts `actuator_proposed`;
       executor executed/failed and decision-rejected broadcast
-      `actuator_result` (integration tests on all three).
-- [ ] The alert card presents on the broadcast; Approve/Decline POST the
-      identical request the dashboard sends; an unapproved proposal still
-      never egresses (the existing executor tests stay green, untouched).
-- [ ] Result cards render with the right glyph + detail.
-- [ ] The three privacy answers appear on every actionable card
-      (page/behavior test asserts the three, verbatim-checkable).
-- [ ] Live proof: a real proposal → the card → Approve → the same audit
-      trail as a dashboard approval (transcript + screenshots).
+      `actuator_result` (integration tests on all three; wire-safe — the
+      machine payload never rides a broadcast, asserted).
+- [x] The alert card presents on the broadcast; Approve/Decline POST the
+      identical request the dashboard sends (byte-asserted against
+      dashboard-app.js); an unapproved proposal still never egresses (the
+      existing executor tests untouched and green; the dashboard's Approve
+      is decision-only, and so is the card's).
+- [x] Result cards render with the right glyph + detail (executed/failed/
+      rejected; the failed card states "Nothing egressed.").
+- [x] The three privacy answers appear on every actionable card
+      (verbatim-locked: "Data used:", "If you approve, this goes to",
+      "Your controls:").
+- [x] Live proof: a real proposal → the card → Approve → status=approved,
+      decided_by recorded, no side effect (dogfood 4/4, zero page errors,
+      two reviewed screenshots — see `evidence-story-03.md`).
 
 ## Test plan
 - Integration: broadcast emission on all three transitions; the card's POST

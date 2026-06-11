@@ -69,9 +69,16 @@ class ActuatorExecutor:
         allow_actuators: bool = False,
         allowed_actuator_ids: Optional[Iterable[str]] = None,
         actor: str = "executor",
+        on_result: Optional[Callable[[dict], None]] = None,
     ) -> None:
         self._db = db
         self._connector = connector
+        # HS-56-03: an optional observer for terminal outcomes (executed /
+        # failed) so a host with a broadcast channel can reflect them (the
+        # presence mascot's result cards). Wire-safe summary only — never the
+        # machine payload. Purely observational: a callback failure never
+        # affects the transition it reports on.
+        self._on_result = on_result
         self._allow_actuators = bool(allow_actuators)
         # None => no allow-list enforcement (the master gate is the only gate);
         # a set (even empty) => the actuator id must be a member to execute.
@@ -118,7 +125,7 @@ class ActuatorExecutor:
                 approved_payload_hash[:12],
                 current_hash[:12],
             )
-            return self._db.actuators.transition_proposal(
+            updated = self._db.actuators.transition_proposal(
                 proposal_id,
                 to_status="failed",
                 actor=self._actor,
@@ -128,6 +135,8 @@ class ActuatorExecutor:
                 ),
                 error="payload parity check failed — execution aborted, no side effect performed",
             )
+            self._notify_result(updated)
+            return updated
 
         # 4. egress via the injected connector (never a socket from here). The
         #    side effect is built from the stored payload, not any caller input.
@@ -143,22 +152,45 @@ class ActuatorExecutor:
             result = self._connector(proposal_view)
         except Exception as exc:  # connector failure → failed (retryable) + audit
             log.error("actuator connector failed for %s: %s", proposal_id, exc)
-            return self._db.actuators.transition_proposal(
+            updated = self._db.actuators.transition_proposal(
                 proposal_id,
                 to_status="failed",
                 actor=self._actor,
                 detail=f"connector error; payload {current_hash[:12]}",
                 error=f"{type(exc).__name__}: {exc}",
             )
+            self._notify_result(updated)
+            return updated
 
         # 5. success → executed + audit (result recorded; payload hash in detail).
-        return self._db.actuators.transition_proposal(
+        updated = self._db.actuators.transition_proposal(
             proposal_id,
             to_status="executed",
             actor=self._actor,
             detail=f"executed via connector; payload {current_hash[:12]}",
             result=result if isinstance(result, dict) else {"result": result},
         )
+        self._notify_result(updated)
+        return updated
+
+    def _notify_result(self, proposal: Any) -> None:
+        if self._on_result is None or proposal is None:
+            return
+        try:
+            self._on_result(
+                {
+                    "id": getattr(proposal, "id", ""),
+                    "meeting_id": getattr(proposal, "meeting_id", ""),
+                    "status": getattr(proposal, "status", ""),
+                    "target": getattr(proposal, "target", ""),
+                    "action": getattr(proposal, "action", ""),
+                    "preview": getattr(proposal, "preview", ""),
+                    "reversible": bool(getattr(proposal, "reversible", False)),
+                    "error": getattr(proposal, "error", None),
+                }
+            )
+        except Exception as exc:  # observational only — never break the audit
+            log.debug(f"actuator on_result observer failed: {exc}")
 
 
 __all__ = [

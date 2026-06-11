@@ -1,12 +1,28 @@
 # Phase 56 — Qlippy, the Presence Enhancer
 
-**Status:** in-progress (2/7). Opened 2026-06-11 on user direction ("lettuce go
+**Status:** in-progress (3/7). Opened 2026-06-11 on user direction ("lettuce go
 with qlippy"), the third step of the agreed sequence **54 → I → J → K**, right after
 Phase 55 closed + merged (PR #42). From the [project backlog](../BACKLOG.md):
 candidate **J**, **absorbing candidate G** (privacy visible at decision
 points). Design RFC: [`../proposals/qlippy-presence-enhancer.md`](../proposals/qlippy-presence-enhancer.md).
 
-**Last updated:** 2026-06-11 (**HS-56-02 done: the dock + the card shell.**
+**Last updated:** 2026-06-11 (**HS-56-03 done: the actuator card (the
+marquee; G absorbed).** Three small backend seams: the aftercare route now
+broadcasts `actuator_proposed` (wire-safe — the machine payload never rides a
+broadcast, asserted), a rejection broadcasts `actuator_result`, and the
+executor gains a purely-observational `on_result` hook (an exploding observer
+never breaks the audited transition — tested). `qlippy-events.js` presents the
+sticky alert card whose Approve/Decline send the **byte-identical request the
+dashboard sends** (the investigation settled it: the dashboard's Approve is
+decision-only, execution stays the guarded executor's job — so the card does
+exactly that), plus the executed/failed/rejected result cards with composited
+glyphs. The G privacy panel is verbatim-locked on every actionable card.
+Proven live with no mocks: a real aftercare proposal's real broadcast slid the
+card out, Approve recorded the audited decision (status=approved,
+decided_by=web-user, no side effect), Decline's real result broadcast
+presented the Declined card — 4/4, zero page errors, screenshots reviewed.
+4 tests; full suite **2582 passed, 17 skipped** (+4).
+**HS-56-02 (prior): the dock + the card shell.**
 `qlippy.js` (framework-free, gated twice at boot, no POST in the shell — the
 one fetch is the gate, locked by test) drives the dock through the RFC state
 map (with the 5-min sleep + the complete flourish) and exposes
@@ -114,7 +130,7 @@ acts on his own; flag-unset is byte-identical.
 |---|---|---|---|
 | HS-56-01 | Assets + the mascot gate | done | none |
 | HS-56-02 | The dock + the card shell | done | HS-56-01 |
-| HS-56-03 | The actuator card (marquee; absorbs G) | backlog | HS-56-02 |
+| HS-56-03 | The actuator card (marquee; absorbs G) | done | HS-56-02 |
 | HS-56-04 | Learning + aftercare cards | backlog | HS-56-02 |
 | HS-56-05 | The native HUD frame | backlog | HS-56-02 |
 | HS-56-06 | Docs: Qlippy | backlog | HS-56-03, HS-56-04 |
@@ -122,14 +138,14 @@ acts on his own; flag-unset is byte-identical.
 
 ## Where we are
 
-**HS-56-01 + HS-56-02 shipped 2026-06-11.** Qlippy lives: the dock follows
-the runtime, the card slides with the Signal settle, the queue never piles,
-and the off-flag renders nothing.
+**HS-56-01 → HS-56-03 shipped 2026-06-11.** The marquee is real: a live
+proposal slides the card out and the decision on the card IS the dashboard's
+decision, audited, with the G answers in plain sight.
 
-Next is **HS-56-03 — the actuator card (the marquee, absorbing G)**: the
-aftercare-route `actuator_proposed` broadcast + the new `actuator_result`
-broadcasts, the alert card whose Approve/Decline mirror the dashboard's exact
-decision flow, and the three privacy answers on every actionable card.
+Next is **HS-56-04 — learning + aftercare cards**: the `learning_event`
+broadcast at the journal correct route (only when taught && reach > 0) and
+`aftercare_ready` fired from the meeting wrap flow (only when non-empty),
+with their `learned` 💡 and `present-note` cards.
 
 ## Open decisions (defaults chosen per the RFC's open questions; flag to change)
 
