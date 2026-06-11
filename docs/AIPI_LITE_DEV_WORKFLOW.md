@@ -28,10 +28,10 @@ The source lives in `aipi-lite/`; helper scripts live at repo root in
 
 These files are intentionally local and ignored:
 
-- `aipi-lite/secrets.yaml` — ESPHome Wi-Fi/API secrets used at firmware compile time.
-- `aipi-lite/bridge.env` — Python bridge runtime config.
-- `aipi-lite/.venv/` — AIPI bridge/test Python environment.
-- `aipi-lite/.esphome/` — ESPHome build/cache output.
+- `aipi-lite/secrets.yaml`: ESPHome Wi-Fi/API secrets used at firmware compile time.
+- `aipi-lite/bridge.env`: Python bridge runtime config.
+- `aipi-lite/.venv/`: AIPI bridge/test Python environment.
+- `aipi-lite/.esphome/`: ESPHome build/cache output.
 
 Start from the checked-in templates:
 

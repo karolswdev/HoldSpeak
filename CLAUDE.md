@@ -49,6 +49,9 @@ These are the docs phases must be grounded in. If any phase document
 disagrees with one of these, canon wins:
 
 - `README.md` — public install + usage surface.
+- `docs/internal/POSITIONING.md` — the positioning canon: the story, the
+  pillars, the named competitive frame, canonical feature names, and the
+  voice rules every user-facing doc must align to.
 - `docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` — parent plugin RFC.
 - `docs/internal/PLAN_PHASE_MULTI_INTENT_ROUTING.md` — meeting-side multi-intent routing (MIR-01).
 - `docs/internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` — dictation pipeline (DIR-01).

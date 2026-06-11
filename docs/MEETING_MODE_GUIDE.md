@@ -1,6 +1,11 @@
 # Meeting Mode - Complete User Guide
 
-HoldSpeak's Meeting Mode captures your microphone plus remote participants' audio, transcribes in real-time, and extracts structured meeting intelligence. It runs local-first, with optional cloud inference when configured.
+A meeting should end with decisions, owners, and follow-ups, not a recording
+you never reopen. Meeting Mode captures your microphone plus remote
+participants' audio, transcribes in real time, and runs meeting intelligence
+over the transcript: typed artifacts, action items, aftercare, and
+approval-gated follow-through. It runs local-first, with optional endpoint
+inference when configured.
 
 ## Table of Contents
 
@@ -48,11 +53,11 @@ holdspeak
 
 ### For Meeting Intelligence (AI)
 - **GGUF model** - Local LLM for extracting topics, action items, and summaries.
-  Bring your own — any GGUF chat model works (see [MODELS.md](./MODELS.md)). A
+  Bring your own; any GGUF chat model works (see [MODELS.md](./MODELS.md)). A
   current small/mid instruct model (e.g. a Qwen3.5 build) is a good default;
   larger models give better intel at the cost of speed.
 - Optional endpoint mode: `intel_provider: "cloud"` (or `auto` fallback) points
-  at **any OpenAI-compatible endpoint** — a self-hosted LAN server, Ollama, vLLM,
+  at **any OpenAI-compatible endpoint**: a self-hosted LAN server, Ollama, vLLM,
   llama.cpp-server, or a real cloud API. Set `intel_cloud_base_url`; the API key
   (`OPENAI_API_KEY` or your configured env var) is optional for keyless
   self-hosted endpoints.
@@ -173,11 +178,11 @@ Use this during or after meetings for cross-session management:
   - `intel_cloud_model`
   - `intel_cloud_api_key_env`
   - `intel_cloud_base_url` (OpenAI-compatible endpoint override)
-  - `intel_cloud_store` — when `true`, HoldSpeak sends OpenAI's `store` flag with
+  - `intel_cloud_store`: when `true`, HoldSpeak sends OpenAI's `store` flag with
     each request. **Advisory:** this only takes effect if your endpoint honors
     the `store` parameter (OpenAI does; many OpenAI-compatible servers ignore
     unknown fields). HoldSpeak forwards the flag but cannot guarantee the remote
-    acts on it — verify with your provider if retention matters.
+    acts on it; verify with your provider if retention matters.
 
 ### Multiple Clients
 
@@ -190,7 +195,7 @@ Multiple local browser tabs can connect at once. Live pages receive real-time up
 A saved meeting's transcript becomes structured, reviewable artifacts. Each one is
 a copy-as-Markdown card at `/history`:
 
-![A saved meeting open at /history: the transcript on the left, and on the right a stack of elevated artifact cards — a Risk register table (impact / likelihood / mitigation / owner), Decisions & open questions, and typed Requirements — each with a confidence score and a copy button.](assets/screenshots/history.png)
+![A saved meeting open at /history: the transcript on the left, and on the right a stack of elevated artifact cards (a Risk register table with impact / likelihood / mitigation / owner, Decisions & open questions, and typed Requirements), each with a confidence score and a copy button.](assets/screenshots/history.png)
 
 *The meeting detail at `/history`. Requirements, decisions, and a risk register, each extracted by an LLM-backed plugin and rendered read-only.*
 
@@ -205,7 +210,7 @@ Transcripts leave your machine **only** when you choose a mode that uses the
 cloud. The boundary is explicit, not accidental:
 
 - `local` (the default): transcripts **never** leave the machine. If no local
-  model is available, intelligence fails closed or queues locally — it does
+  model is available, intelligence fails closed or queues locally; it does
   **not** silently fall back to the cloud.
 - `cloud`: transcripts are sent to your configured cloud endpoint. This is your
   choice and fully supported.
@@ -262,7 +267,7 @@ POST /api/intents/preview  → dry-run route from current transcript without per
 
 **After a Meeting**
 
-The `/history` view exposes the intent timeline for each saved meeting — a chronological record of how intents shifted and which plugins fired. The local Markdown and JSON exports include the timeline and any synthesized artifacts.
+The `/history` view exposes the intent timeline for each saved meeting: a chronological record of how intents shifted and which plugins fired. The local Markdown and JSON exports include the timeline and any synthesized artifacts.
 
 ### MIR CLI Dry-Run and Re-Route
 
@@ -307,15 +312,15 @@ Review: pending (needs review)
 
 ### Model Requirements
 
-Intelligence requires a GGUF model — **bring your own** (any GGUF chat model
+Intelligence requires a GGUF model. **Bring your own** (any GGUF chat model
 works; see [MODELS.md](./MODELS.md) for the full contract). Model names are a
 moving target, so treat the table below as a rough *shape* guide, not a
 prescription: a small model is fast and fine; a larger model gives sharper intel.
 
 | Tier | Approx size | Speed | Quality |
 |------|-------------|-------|---------|
-| Small instruct (~4–9B) Q4–Q6 | ~3–8GB | fast | Good |
-| Mid instruct (~14–32B) Q4_K_M | ~10–20GB | ~8s (GPU) | Excellent |
+| Small instruct (~4-9B) Q4-Q6 | ~3-8GB | fast | Good |
+| Mid instruct (~14-32B) Q4_K_M | ~10-20GB | ~8s (GPU) | Excellent |
 
 ### Installing a Model
 
@@ -323,7 +328,7 @@ Download any GGUF chat model from HuggingFace. For example, a current small/mid
 instruct model:
 
 ```bash
-# Using the hf CLI — swap the repo/file for whatever model you want:
+# Using the hf CLI; swap the repo/file for whatever model you want:
 hf download bartowski/Qwen3.5-9B-Instruct-GGUF \
   --include "*Q6_K.gguf" \
   --local-dir ~/Models/gguf/
@@ -557,7 +562,7 @@ Configuration file: `~/.config/holdspeak/config.json`
 | `export_format` | string | "markdown" | Export format: txt, markdown, json, srt |
 | `intel_enabled` | bool | true | Enable AI intelligence extraction |
 | `intel_provider` | string | "local" | Intel mode: `local` (in-process GGUF), `cloud` (any OpenAI-compatible endpoint), or `auto` (local-first, endpoint fallback) |
-| `intel_realtime_model` | string | (suggested GGUF path) | Path to a GGUF model for real-time intel — bring your own |
+| `intel_realtime_model` | string | (suggested GGUF path) | Path to a GGUF model for real-time intel; bring your own |
 | `intel_queue_poll_seconds` | int | 120 | Interval for deferred-intel background worker polling |
 | `intel_retry_base_seconds` | int | 30 | Initial deferred-intel retry delay after a failed run |
 | `intel_retry_max_seconds` | int | 900 | Maximum deferred-intel retry delay cap |
@@ -708,7 +713,7 @@ Send `"ping"` text message, receive `"pong"` response.
 ### Intel extraction is slow
 
 1. Check GPU is being used: Look for "Metal" in logs
-2. Use a smaller model (a ~4–9B instruct model instead of a 32B)
+2. Use a smaller model (a ~4-9B instruct model instead of a 32B)
 3. Ensure `n_gpu_layers=-1` is set (default)
 
 ### Web dashboard not loading

@@ -4,9 +4,10 @@
   <img src="assets/pixellab/hold-to-talk-microphone.png" alt="Pixel art microphone with hold-to-talk waves" width="128">
 </p>
 
-This guide gets HoldSpeak installed, running, and typing into another app.
-Use it first; then move to the intelligent-typing guide when basic voice
-typing works.
+Five minutes from install to speaking a sentence into another app: that is
+this guide's whole job. Voice typing is the foundation everything else
+(the dictation pipeline, meetings) builds on, so get this working first;
+the deeper guides pick up where it ends.
 
 ## 1. Install
 
@@ -66,18 +67,18 @@ HoldSpeak web runtime is running at: http://127.0.0.1:PORT
 
 ## 4. The welcome wizard
 
-A fresh launch opens **`/welcome`** — a full-screen, step-by-step wizard that
+A fresh launch opens **`/welcome`**, a full-screen, step-by-step wizard that
 takes you from install to your first words, **no file editing**:
 
-1. **Welcome** — what HoldSpeak does (voice typing *and* meeting notes).
-2. **Permissions** — a live check of microphone, text insertion, and the hotkey
+1. **Welcome**: what HoldSpeak does (voice typing *and* meeting notes).
+2. **Permissions**: a live check of microphone, text insertion, and the hotkey
    (they turn green as you grant them).
-3. **Model** — pick your intelligence level (Basic / Apple MLX / GGUF /
+3. **Model**: pick your intelligence level (Basic / Apple MLX / GGUF /
    OpenAI-compatible), each with a one-click **Test**. Basic needs nothing.
-4. **First dictation** — hold your hotkey, speak, release; it celebrates
+4. **First dictation**: hold your hotkey, speak, release; it celebrates
    **"✓ It worked"** live and shows your transcript.
-5. **Desktop presence** — flip a switch (no env var) for the ambient HUD.
-6. **You're set** — jump into dictation, a meeting, or the copilot.
+5. **Desktop presence**: flip a switch (no env var) for the ambient HUD.
+6. **You're set**: jump into dictation, a meeting, or the copilot.
 
 ![The HoldSpeak welcome wizard: a full-screen first-run screen headlined "Hold a key. Speak. Watch it type." with a step rail (Welcome · Permissions · Model · First dictation · Presence · You're set) and a "Get started" button; the footer reads "Local · 127.0.0.1 · nothing leaves your machine".](assets/screenshots/welcome.png)
 
@@ -92,7 +93,7 @@ Useful routes:
 | Route | Purpose |
 | --- | --- |
 | `/welcome` | The first-run wizard (opens on a fresh install) |
-| `/setup` | The status surface — readiness + the single next step |
+| `/setup` | The status surface: readiness + the single next step |
 | `/` | Runtime dashboard |
 | `/settings` | Global settings (sectioned + searchable; open from the ⚙) |
 | `/dictation` | Dictation readiness, blocks, project context, runtime, dry-run |

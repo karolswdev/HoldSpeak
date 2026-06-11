@@ -1,12 +1,15 @@
 # Plugin Authoring
 
 > A meeting-intel **plugin** turns a saved meeting's transcript into a
-> structured, reviewable artifact — decisions, requirements, a risk
+> structured, reviewable artifact: decisions, requirements, a risk
 > register, an architecture diagram. The transcript is scored for
 > intent, a chain of plugins is selected, and each plugin calls your
 > configured LLM to produce typed output that the web UI renders
 > read-only at `/history`.
 
+Writing one is the highest-leverage way to make HoldSpeak yours: the
+routing, persistence, rendering, and approval machinery already exist, so
+a new artifact type is mostly the prompt you wish your meetings produced.
 This guide documents the contract you satisfy to write one, and the
 testing surface you get for free. It is the public companion to the
 internal design RFC,
@@ -22,7 +25,7 @@ A plugin is a Python object that:
 
 1. Declares `id`, `version`, and (optionally) `kind`,
    `execution_mode`, and `required_capabilities` as attributes.
-2. Implements `run(context: dict) -> dict` — build a JSON-only prompt,
+2. Implements `run(context: dict) -> dict`: build a JSON-only prompt,
    call the configured intel, parse + validate the response, and
    return structured output carrying a `confidence_hint`.
 3. Registers a **synthesis renderer** so its artifact shows up in the
@@ -32,7 +35,7 @@ A plugin is a Python object that:
 
 The canonical reference is
 [`holdspeak/plugins/builtin/decision_capture.py`](../holdspeak/plugins/builtin/decision_capture.py)
-— a real, LLM-backed plugin in ~200 lines. Read it alongside this
+(a real, LLM-backed plugin in ~200 lines). Read it alongside this
 guide.
 
 ---
@@ -48,17 +51,17 @@ guide.
                                   └──────────┘
 ```
 
-- **Declare** — your class exposes `id`/`version` (required) plus the
+- **Declare**: your class exposes `id`/`version` (required) plus the
   optional `kind`/`execution_mode`/`required_capabilities` attributes
   the host reads with `getattr`.
-- **Route** — the router scores the transcript's intents and assembles
+- **Route**: the router scores the transcript's intents and assembles
   a plugin chain for the meeting's profile + active intents.
-- **Run** — the host calls `run(context)` inside a timeout, after the
+- **Run**: the host calls `run(context)` inside a timeout, after the
   actuator gate and the capability gate pass. You build a prompt, call
   the LLM, and return a dict.
-- **Persist** — the host stores your output as a canonical artifact
+- **Persist**: the host stores your output as a canonical artifact
   keyed by an idempotency hash (a re-run on the same window is a no-op).
-- **Render** — your registered renderer turns the stored output into a
+- **Render**: your registered renderer turns the stored output into a
   Markdown block in the read-only `/history` view.
 
 Plugins run on **saved/recorded** meetings, never live audio.
@@ -92,7 +95,7 @@ default, so you declare only what you need.
 |---|---|---|---|
 | `id` | `str` | **yes** | Unique, stable. Used as the artifact + idempotency key and the chain entry. Lowercase snake_case by convention (e.g. `decision_capture`). |
 | `version` | `str` | **yes** | Semver-ish. Recorded on every run result. |
-| `kind` | `str` | no | Artifact category — see below. Defaults to unset. |
+| `kind` | `str` | no | Artifact category; see below. Defaults to unset. |
 | `execution_mode` | `str` | no | `"inline"` (default) or `"deferred"`. See "Execution mode". |
 | `required_capabilities` | `list[str]` | no | Capabilities the host must have enabled, e.g. `["llm"]`. See "The `llm` capability gate". |
 
@@ -110,25 +113,25 @@ is a hint for rendering. The built-ins use these values:
 | `actuator` | Proposes an external side effect (approval-gated) | `followup_ticket_actuator` |
 
 **Actuators propose; they never act on their own.** A plugin whose
-`kind` is `actuator` returns an `ActuatorProposal` from `run()` — a
-*description* of a side effect — which the host records (status
+`kind` is `actuator` returns an `ActuatorProposal` from `run()`, a
+*description* of a side effect, which the host records (status
 `proposed`); the effect only happens after an explicit human **approval**
 and the governance gate, performed by a separate guarded executor. This
-is its own topic — see [Actuators](#actuators) below before authoring one.
+is its own topic; see [Actuators](#actuators) below before authoring one.
 
 ### Execution mode
 
 `execution_mode` decides whether the host runs your plugin synchronously
 or queues it:
 
-- `"inline"` (default) — `run()` executes during window dispatch and the
+- `"inline"` (default): `run()` executes during window dispatch and the
   result returns immediately.
-- `"deferred"` (synonyms accepted: `"queued"`, `"queue"`, `"heavy"`) —
+- `"deferred"` (synonyms accepted: `"queued"`, `"queue"`, `"heavy"`):
   the run is queued as a `DeferredPluginRun` and processed later by the
   background worker (`PluginHost.process_next_deferred_run()`). The
   dispatch call returns status `queued` straight away.
 
-Any plugin that makes a real (slow) LLM call should be `deferred` — that
+Any plugin that makes a real (slow) LLM call should be `deferred`; that
 is what `decision_capture` does. Use `inline` only for cheap,
 deterministic work.
 
@@ -151,7 +154,7 @@ The fields you can rely on:
 
 Context providers registered with the host
 (`register_context_provider`) may add more keys; read defensively and
-default everything. Your return value is a `dict` — the convention is
+default everything. Your return value is a `dict`; the convention is
 documented next.
 
 ---
@@ -161,7 +164,7 @@ documented next.
 Every LLM-backed built-in follows the same four steps. Here is
 `decision_capture`, condensed.
 
-**1 — Build a JSON-only prompt.** Pin the exact output shape in the
+**Step 1: build a JSON-only prompt.** Pin the exact output shape in the
 system prompt and demand a single fenced ```json block, no prose:
 
 ````python
@@ -176,7 +179,7 @@ _SYSTEM_PROMPT = (
 )
 ````
 
-**2 — Call the configured intel.** Use the shared provider so the
+**Step 2: call the configured intel.** Use the shared provider so the
 plugin honors whatever LLM the user configured (in-process GGUF, MLX, or
 any OpenAI-compatible endpoint). Build it lazily and cache it:
 
@@ -198,8 +201,8 @@ configured provider; `_chat_completion_text(messages, *, temperature,
 max_tokens)` takes OpenAI-style `{"role", "content"}` messages and
 returns the raw response text.
 
-**3 — Parse + validate.** Pull the JSON out of the fenced block (with a
-brace-scan fallback), `json.loads` it, and normalize — never trust the
+**Step 3: parse + validate.** Pull the JSON out of the fenced block (with a
+brace-scan fallback), `json.loads` it, and normalize; never trust the
 shape. Return `None` on anything unparseable so `run` can emit the
 failure shape:
 
@@ -210,9 +213,9 @@ obj = json.loads(candidate)                  # guarded by try/except
 # ... coerce each field, drop empties ...
 ````
 
-**4 — Return structured output.** Two shapes by convention:
+**Step 4: return structured output.** Two shapes by convention:
 
-- **Success** — your typed keys plus a `summary` string and
+- **Success**: your typed keys plus a `summary` string and
   `confidence_hint` of `1.0`:
 
   ```python
@@ -225,7 +228,7 @@ obj = json.loads(candidate)                  # guarded by try/except
   }
   ```
 
-- **Failure** — a `summary` explaining why and `confidence_hint` of
+- **Failure**: a `summary` explaining why and `confidence_hint` of
   `0.0`, with the typed keys **absent**:
 
   ```python
@@ -233,7 +236,7 @@ obj = json.loads(candidate)                  # guarded by try/except
   ```
 
 Catch exceptions from the intel call and turn them into the failure
-shape — a plugin must never raise out of `run`. `confidence_hint` is a
+shape: a plugin must never raise out of `run`. `confidence_hint` is a
 float in `[0.0, 1.0]` that downstream surfaces use to rank/triage
 artifacts; emit `0.0` for failures and a calibrated value otherwise.
 
@@ -255,7 +258,7 @@ class DecisionCapturePlugin:
 
 At dispatch the host compares each required capability against its
 `enabled_capabilities` set. If any is missing, the plugin is **not run**
-— it returns status `blocked` with `error="Missing capabilities: llm"`,
+instead it returns status `blocked` with `error="Missing capabilities: llm"`,
 duration `0.0`, no output. "Blocked" is a clean skip, not a failure:
 the meeting still completes; the artifact simply isn't produced.
 
@@ -264,7 +267,7 @@ config: `resolve_llm_capability(config.meeting)` decides whether an LLM
 endpoint is actually configured, and only then is the host built with
 `enabled_capabilities={"llm"}` (see
 [`holdspeak/web_runtime.py`](../holdspeak/web_runtime.py)). So with no
-endpoint configured, every `llm`-gated plugin is uniformly skipped — by
+endpoint configured, every `llm`-gated plugin is uniformly skipped; by
 design.
 
 ---
@@ -291,7 +294,7 @@ _ARTIFACT_RENDERERS: dict[str, Callable[[_RenderContext], _Rendered]] = {
 }
 ```
 
-A renderer takes a `_RenderContext` (which carries `output` — your
+A renderer takes a `_RenderContext` (which carries `output`, your
 `run` return value) and returns `_Rendered`, i.e.
 `Optional[tuple[str, dict[str, Any]]]`:
 
@@ -324,7 +327,7 @@ def _render_decisions(ctx: _RenderContext) -> _Rendered:
 3. Register it under your artifact type in `_ARTIFACT_RENDERERS`.
 
 If you skip this, the artifact still persists and renders with the
-default body — but a bespoke renderer is what makes it readable.
+default body, but a bespoke renderer is what makes it readable.
 
 ---
 
@@ -363,14 +366,14 @@ appends the profile's base chain, extends with each active intent's
 chain, and de-dupes while preserving order. To make a new plugin fire,
 add its `id` to the appropriate profile base chain and/or intent chain.
 
-> **⚠ Routing ripple — update tests in lockstep, do not silence.**
+> **⚠ Routing ripple: update tests in lockstep, do not silence.**
 > Adding (or suppressing) a plugin id in a chain breaks three test
 > surfaces that assert the exact chains:
 >
-> - `tests/unit/test_intent_dispatch.py` — chain constants + per-window
+> - `tests/unit/test_intent_dispatch.py`: chain constants + per-window
 >   plugin counts,
 > - `tests/unit/test_intent_pipeline.py` and
->   `tests/unit/test_multi_intent_routing.py` — full-pipeline tests that
+>   `tests/unit/test_multi_intent_routing.py`: full-pipeline tests that
 >   register the *union* of plugin ids as test doubles.
 >
 > Update these to reflect the new expected chains in the same change.
@@ -399,7 +402,7 @@ Editing core is the path for a **first-party** plugin. To ship a plugin
 
 ## Plugin packs
 
-A pack lets a plugin ship outside the built-in tree — discovered and
+A pack lets a plugin ship outside the built-in tree, discovered and
 registered at startup, mirroring the connector-pack system. The contract
 is a manifest plus a factory; the loader is
 [`holdspeak/plugin_pack_loader.py`](../holdspeak/plugin_pack_loader.py)
@@ -434,7 +437,7 @@ def create_plugin():            # zero-arg factory → a HostPlugin instance
 ```
 
 `validate_manifest` collects **every** problem before raising
-`PluginManifestError` (each is a `ManifestError` with a stable `code` —
+`PluginManifestError` (each is a `ManifestError` with a stable `code`;
 `id_format`, `version_format`, `unknown_kind`, `unknown_capability`,
 `invalid_execution_mode`, `unknown_profile`, `unknown_intent`), so you fix
 all issues in one pass. `actuator` **is** a valid `kind` (see
@@ -445,8 +448,8 @@ proposals is approval- and gate-controlled.
 (override with `HOLDSPEAK_USER_PLUGIN_PACKS_DIR`). At startup the loader
 imports each `.py` file, re-validates its `MANIFEST`, checks for a callable
 `create_plugin`, and registers the produced plugin on the host alongside
-the built-ins. Discovery is honest, not sandboxed — a file under your home
-dir is code you trust — but it **never crashes the runtime**: a bad pack
+the built-ins. Discovery is honest, not sandboxed (a file under your home
+dir is code you trust), but it **never crashes the runtime**: a bad pack
 (import error, missing manifest/factory, invalid manifest, id colliding
 with a built-in or another pack, id/manifest mismatch) is surfaced as a
 structured `DiscoveryError` and skipped. First-party/built-in ids always
@@ -454,7 +457,7 @@ win a collision.
 
 > **Chain hints are declarative today.** A pack registers on the host so
 > it can execute by id, and its `profiles`/`intents` record where it
-> *wants* to fire — but wiring those hints into the live router chains is
+> *wants* to fire, but wiring those hints into the live router chains is
 > still pending. Until then a pack plugin runs when invoked by id; the
 > built-in routing chains above are unchanged.
 
@@ -466,8 +469,8 @@ is a complete, working pack.
 
 A team can suppress specific plugins without code: list their ids in
 `MeetingConfig.disabled_plugins` (the `meeting.disabled_plugins` config
-key). At dispatch a disabled id is recorded as a `skipped` run — distinct
-from a capability-`blocked` or a failed run — and never invoked. The
+key). At dispatch a disabled id is recorded as a `skipped` run (distinct
+from a capability-`blocked` or a failed run) and never invoked. The
 *built* chain is unchanged (the skip is in the *executed* set), so this is
 a runtime suppression, not a routing change. An empty list (the default)
 runs every chain-selected plugin, exactly as before.
@@ -476,7 +479,7 @@ runs every chain-selected plugin, exactly as before.
 
 ## Testing
 
-The contract is built for cheap unit tests — the LLM is injected, so no
+The contract is built for cheap unit tests: the LLM is injected, so no
 network or model is needed.
 
 **Inject a fake intel call** via the plugin's constructor seam

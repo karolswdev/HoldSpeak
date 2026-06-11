@@ -1,11 +1,11 @@
-# Models — bring your own
+# Models: bring your own
 
 HoldSpeak does **not** ship model weights, and it does not require one specific
 model. The LLM layer is deliberately model-agnostic: pick whatever runs well on
 your hardware and point HoldSpeak at it.
 
 > **Model names are a moving target.** The specific models suggested below are
-> *current picks*, refreshed periodically — they are **suggestions, not
+> *current picks*, refreshed periodically; they are **suggestions, not
 > requirements**. If a name here looks dated, that's expected: swap in whatever
 > the current good small/mid instruct model is. The contract is the *interface*
 > (GGUF / MLX / OpenAI-compatible), not any single checkpoint.
@@ -17,8 +17,8 @@ There are two model roles, configured independently:
 | **Transcription** (Whisper) | speech → text | `model.name`, `model.backend` |
 | **LLM** | dictation block-classification + KB enrichment, and meeting intel | `dictation.runtime.*`, `meeting.intel_*` |
 
-This document is about the **LLM** role. (Transcription uses Whisper sizes —
-`tiny` / `base` / `small` / … — via MLX-Whisper or faster-whisper; see the
+This document is about the **LLM** role. (Transcription uses Whisper sizes,
+`tiny` / `base` / `small` and up, via MLX-Whisper or faster-whisper; see the
 [README](../README.md).)
 
 ---
@@ -48,7 +48,7 @@ The cross-platform default. HoldSpeak loads a `.gguf` file directly via
 
 ### 2. MLX, in-process (Apple Silicon, `mlx`)
 
-The recommended in-process path on M-series Macs — faster and more
+The recommended in-process path on M-series Macs: faster and more
 memory-efficient than GGUF there.
 
 - **Install:** `uv pip install -e '.[dictation-mlx]'`
@@ -69,7 +69,7 @@ memory-efficient than GGUF there.
 The escape hatch: point HoldSpeak at **any** server that implements
 `/v1/chat/completions`. This covers a self-hosted LAN box, Ollama's OpenAI
 bridge, vLLM, llama.cpp-server, LM Studio, LiteLLM, or an actual cloud API. The
-endpoint owns model loading — HoldSpeak needs no local weights.
+endpoint owns model loading; HoldSpeak needs no local weights.
 
 - **Install:** `uv pip install -e '.[dictation-openai]'` (dictation side)
 - **Configure (dictation):**
@@ -88,7 +88,7 @@ endpoint owns model loading — HoldSpeak needs no local weights.
   `meeting.intel_cloud_base_url` + `meeting.intel_cloud_model`.
 
 > **On the name `cloud`.** The intel provider called `cloud` just means
-> "the endpoint provider" — it is **not** necessarily a hosted/paid API. Point
+> "the endpoint provider"; it is **not** necessarily a hosted/paid API. Point
 > `intel_cloud_base_url` at a self-hosted LAN server and it stays entirely local.
 > The API key (`intel_cloud_api_key_env`) is **optional** for keyless
 > self-hosted endpoints.
@@ -97,7 +97,7 @@ endpoint owns model loading — HoldSpeak needs no local weights.
 
 ## Current suggestions (a moving target)
 
-These are reasonable defaults at the time of writing — **not** mandates. Newer
+These are reasonable defaults at the time of writing, **not** mandates. Newer
 or smaller models that fit your hardware are fine; HoldSpeak only cares that the
 model can follow an instruction and return JSON when asked.
 
@@ -108,8 +108,8 @@ model can follow an instruction and return JSON when asked.
 | Meeting intel | `local` (GGUF) | a current small/mid instruct GGUF (e.g. `Qwen3.5-9B-Instruct-Q6_K`) | `meeting.intel_realtime_model` |
 | Meeting intel | `cloud` (endpoint) | whatever your endpoint serves | `meeting.intel_cloud_model` + `meeting.intel_cloud_base_url` |
 
-**Sizing intuition:** a small instruct model (~4–9B, Q4–Q6) is fast and good
-enough for routing/enrichment and most meeting intel; a mid model (~14–32B) gives
+**Sizing intuition:** a small instruct model (~4-9B, Q4-Q6) is fast and good
+enough for routing/enrichment and most meeting intel; a mid model (~14-32B) gives
 sharper intel at the cost of latency. GPU offload (Metal/CUDA, `n_gpu_layers=-1`)
 makes the larger tiers practical.
 
@@ -117,7 +117,7 @@ makes the larger tiers practical.
 
 ## Notes
 
-- **GGUF is current**, not legacy — it's the standard local-inference format and
+- **GGUF is current**, not legacy: it's the standard local-inference format and
   HoldSpeak keeps it as the default in-process format. Only specific *model
   names* get refreshed over time.
 - HoldSpeak never downloads weights for you. `holdspeak doctor` and the web

@@ -8,7 +8,7 @@ flips to "scaffolded" then "shipped".
 Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
-**Last updated:** 2026-06-11 (candidate **P** shipped as [phase-57](./phase-57-transcript-import/) (CLOSED 5/5) — transcripts import as real meetings. Earlier today: **J** shipped as [phase-56](./phase-56-qlippy/) (CLOSED 7/7), **G** absorbed-shipped with it; **K** is next per the agreed sequence. Prior: post-Phase-53 strategic review: candidate **D** promoted
+**Last updated:** 2026-06-11 (candidate **Q** shipped as [phase-58](./phase-58-front-door/) (CLOSED 6/6) — the story is a decision now. Earlier today: **P** shipped as [phase-57](./phase-57-transcript-import/) (CLOSED 5/5) — transcripts import as real meetings. Earlier today: **J** shipped as [phase-56](./phase-56-qlippy/) (CLOSED 7/7), **G** absorbed-shipped with it; **K** is next per the agreed sequence. Prior: post-Phase-53 strategic review: candidate **D** promoted
 to its own phase and scaffolded as [phase-54](./phase-54-dictation-frontend-decomposition/)
 — the dictation frontend is now 6,101 coupled lines and lost the density invariant five
 phases running. New candidates **I** (meeting import + faceted history search), **J**
@@ -46,6 +46,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 | N | Windows port | strategic | post-P53 review; `CODEX_IDEAS.md` | parked (large; biggest reach unlock) |
 | O | Wake word ("local + private" positioning) | strategic | post-P53 strategic review | parked (high false-positive risk) |
 | P | Transcript import (`.vtt`/`.srt`/`.txt` → real meetings) | feature | user direction, post-P56 conversation | **shipped → [phase-57](./phase-57-transcript-import/) (CLOSED 5/5)** (real speakers + timestamps from the file; proven on `.43` intel; recording path untouched) |
+| Q | The Front Door (positioning + user-facing docs revision) | release/community | user direction, post-P57 conversation | **shipped → [phase-58](./phase-58-front-door/) (CLOSED 6/6)** (positioning canon + README pitch + named comparisons + the voice guard) |
 
 ### A. Meeting aftercare ("close the loop") — shipped as Phase 49 (CLOSED 6/6)
 The meeting side has plugins + artifacts; the next value is follow-through, not
@@ -210,3 +211,13 @@ over single-label audio import), honest synthetic ordering for plain text. The
 recording upload stays untouched (explicit user constraint).
 *Lands on:* the Phase-55 import engine/route/UI seams; everything downstream of
 `TranscriptSegment`s is already format-agnostic.
+
+---
+### Q. The Front Door — shipped as Phase 58 (CLOSED 6/6)
+Decide what HoldSpeak's story IS and tell it everywhere: a positioning canon
+(the user fixed the angle: "one copilot, two modes", pitched to developers,
+with named honest comparisons), README rewritten as the pitch, every
+user-facing guide re-framed with why-ledes + canonical feature names + the
+humanizer voice (and the em-dash cleanup the pre-P55 corpus never had), and
+a voice drift guard. The pitch stays as honest as the product.
+*Lands on:* the Phase-51 docs hygiene lineage + the per-phase docs-story culture.

@@ -4,58 +4,56 @@
   <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/holdspeak-mark.png" alt="HoldSpeak logo, a held key with rising soundwaves" width="120">
 </p>
 
-<p align="center"><strong>Hold a key. Speak. It types in any app. 100% local. And it learns how you work.</strong></p>
+<p align="center"><strong>One local copilot, two modes: dictation that types anywhere and learns how you work, and meetings that end with decisions, actions, and follow-ups instead of a recording. Nothing leaves your machine.</strong></p>
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/karolswdev/HoldSpeak/blob/main/LICENSE)
 [![Tests](https://github.com/karolswdev/HoldSpeak/actions/workflows/test.yml/badge.svg)](https://github.com/karolswdev/HoldSpeak/actions/workflows/test.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Platform: macOS | Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg)](#platform-support)
 
-HoldSpeak is local-first voice input for macOS and Linux. Hold your hotkey, speak,
-release, and the text appears in whatever app you're in. No cloud, no account, no
-telemetry. Nothing leaves your machine except the model endpoint you choose to
-point at. Use it on its own as a voice-typing tool, or grow into meeting
-intelligence, project-aware dictation, and the AIPI-Lite companion device.
+Your voice does work in two places: at the keyboard and in meetings.
+HoldSpeak covers both with one runtime on macOS and Linux. Hold a hotkey,
+speak, release, and the text lands in whatever app you are in, optionally
+rewritten by your own LLM with your project's context. Record or import a
+meeting, and it comes back as reviewable decisions, action items, and typed
+artifacts, with a follow-up panel that shows what is still open. Whisper
+runs locally; the LLM is one you run or point at. No cloud, no account, no
+telemetry.
 
 > **Status: 0.x, early but real.** HoldSpeak is on PyPI (`pip install holdspeak`).
 > The features are mature; APIs, config, and defaults can still change while it is
 > pre-1.0. Upgrades are safe by default (your data is backed up first). Feedback
 > and contributions welcome.
 
+## The two modes
+
+| Dictate | Meet |
+| --- | --- |
+| ![Pixel art microphone with hold-to-talk waves](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/hold-to-talk-microphone.png) | ![Pixel art meeting notebook with action items](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/meeting-intelligence-notebook.png) |
+| Hold the hotkey, speak, release: the text goes into the active app. Turn on the dictation pipeline and rough speech is routed by intent, enriched with your project's context, and rewritten for its target (Codex, Claude, the terminal, the browser, your editor). Every run lands in the dictation journal; one tap on a wrong result teaches the correction memory. Voice commands map a spoken keyword to a real action (open a URL, launch an app, run a command). Activity pre-briefing offers what you touched recently as dictation context, source-cited. | Capture mic and system audio live with speaker labels, or import a recording or a transcript file you already have (vtt and srt keep their real timestamps and speaker names). 14 built-in plugins call your LLM to pull typed artifacts out of the transcript: decisions, action items, ADRs, risk registers, incident timelines. Meeting aftercare then shows what is open, decided, and changed since last time, and an accepted action can become a filed issue through a propose, approve, execute flow that never acts without you. The archive is searchable and filterable by date, speaker, tag, and open actions. |
+
 ## Why it's different
 
-- **100% local by default.** Whisper transcription and your own LLM. Nothing is
-  sent anywhere unless you deliberately point it at a cloud endpoint. See
-  [Security & privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md).
-- **It gets better at your voice, and shows you the proof.** Every dictation is
-  saved: what you said, what it typed, where it routed, how long it took. Fix a
-  wrong one with a single tap and it learns; a "What HoldSpeak learned" digest
-  shows the honest "learned from N similar" count; replay an utterance through the
-  updated pipeline and watch the routing change. Local, off by default for
-  routing, no hidden retraining.
-  See [the learning loop](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay).
-- **Your voice gets the afterlife your meetings already have.** A dictation doesn't
-  vanish the second it's typed. It's saved, searchable, and reviewable, the same
-  way a recorded meeting is.
-- **14 real LLM-backed meeting plugins.** Architecture diagrams, ADRs, risk
-  registers, incident timelines, decisions, and stakeholder updates, all pulled out
-  of the transcript. See [meeting intelligence](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MEETING_MODE_GUIDE.md).
-- **Bring your own model.** GGUF in-process, MLX on Apple Silicon, or any
-  OpenAI-compatible endpoint. See [Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
-- **Ambient desktop presence, if you want it.** A native, focus-safe HUD shows
-  whether it's listening, transcribing, or typing while you dictate into another
-  app. Off by default. See
-  [Desktop Presence](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INTELLIGENT_TYPING_GUIDE.md#11-desktop-presence-ambient-on-desktop-status).
-- **AIPI-Lite companion, if you have one.** A small device for meeting-capture
-  controls, and for speaking a reply to your coding agent from another room. See
-  [the workflow](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AIPI_LITE_DEV_WORKFLOW.md).
-
-## What it does, at a glance
-
-| Voice typing | Meeting intelligence | Project-aware typing |
-| --- | --- | --- |
-| ![Pixel art microphone with hold-to-talk waves](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/hold-to-talk-microphone.png) | ![Pixel art meeting notebook with action items](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/meeting-intelligence-notebook.png) | ![Pixel art code editor connected to local context](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/project-aware-typing.png) |
-| Hold the hotkey, speak, release. The text goes into the active app. Punctuation commands (`"period"`, `"comma"`) and `"clipboard"` substitution work out of the box. | Capture mic and system audio together, get a live transcript with speaker labels, and let the AI pull out topics, actions, and artifacts you can review at `/history`. | Rough speech runs through intent classification, project-KB enrichment, and an LLM rewrite before it lands, tuned for Codex, Claude, the terminal, the browser, or your editor. |
+- **Everything is local, including the intelligence.** Whisper transcribes on
+  your machine and the LLM is yours: GGUF in-process, MLX on Apple Silicon, or
+  any OpenAI-compatible endpoint you choose, including one on your own LAN.
+  See [Security & privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md) and [Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
+- **It learns how you work, and shows you the receipts.** The dictation
+  journal records what you said, what it typed, where it routed, and how long
+  it took. Fix a wrong result in one tap and the correction memory learns; the
+  learning digest reports a real "learned from N similar" count, honest at
+  zero; replay an old utterance through the updated pipeline and watch the
+  routing change. See [the learning loop](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay).
+- **Meetings end with their loops closed.** A meeting produces artifacts,
+  an aftercare digest, and approval-gated actions where most tools stop at
+  a transcript. Actuators are off by default, audited, and only ever run
+  exactly what you previewed. See
+  [meeting intelligence](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MEETING_MODE_GUIDE.md).
+- **Honest by construction.** `holdspeak doctor` reports what is actually
+  broken. The import panel says which timestamps are approximate. The learning
+  digest never inflates a count. Upgrades back your database up before
+  touching it and refuse to open data written by a newer build. The docs hold
+  themselves to the same bar.
 
 ## See it learn
 
@@ -63,27 +61,46 @@ intelligence, project-aware dictation, and the AIPI-Lite companion device.
   <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/operator-working-loop.gif" alt="Animated pixel art operator working at a terminal while companion and task cards update" width="280">
 </p>
 
-Speech turns into transcript context, reviewable actions, summaries, and replies
-for your coding agent, while the local runtime stays in charge. Because every
-dictation is recorded, you can look back at what it heard, fix a mistake in one tap
-(which teaches it), and replay the utterance through the updated pipeline. Instead
-of trusting that it improved, you watch it happen.
+Because every dictation is recorded, you can look back at what it heard, fix
+a mistake in one tap (which teaches it), and replay the utterance through the
+updated pipeline. Instead of trusting that it improved, you watch it happen.
 [See the full walkthrough](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_COPILOT.md).
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/journal.png" alt="The HoldSpeak dictation Journal: a said-to-typed timeline of recent dictations, each card showing the spoken transcript, the typed result, its routing target, and a per-utterance latency strip; one row marked corrected." width="760">
+  <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/journal.png" alt="The HoldSpeak dictation journal: a said-to-typed timeline of recent dictations, each card showing the spoken transcript, the typed result, its routing target, and a per-utterance latency strip; one row marked corrected." width="760">
 </p>
 <p align="center"><em>The dictation journal. Every utterance, with what you said, what it typed, where it routed, and how long it took.</em></p>
-
-And it shows you what it learned. The Memory tab opens with a "What HoldSpeak
-learned" digest: how many corrections you made, how many dictations you corrected,
-and for each correction a real "learned from N similar" count, computed by the
-same matcher that nudges routing. No inflated numbers, quiet when nothing matched.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/learning-digest-week.png" alt="The 'What HoldSpeak learned' digest: a this-week / all-time toggle, headline counts for corrections made, dictations corrected, and utterances nudged, a breakdown by block and target, and per-correction 'learned from N similar' rows." width="760">
 </p>
-<p align="center"><em>What HoldSpeak learned. Honest, windowed counts from the same matcher that nudges your routing.</em></p>
+<p align="center"><em>The learning digest. Honest, windowed counts from the same matcher that nudges your routing.</em></p>
+
+And if you want a face on all of it: Qlippy, an optional pixel-art mascot,
+sits on the desktop presence surface and turns the moments that need you into
+dismissible cards: an action awaiting approval, a correction that actually
+reached past dictations, a meeting that left open items. He never acts on his
+own, and every actionable card states in plain language what data is used,
+whether anything leaves your machine, and what your controls are. Off by
+default, like everything ambient here.
+
+## How it compares (as of mid-2026)
+
+Honest comparisons, architecture-level on purpose: where your audio goes,
+what the tool spans, and whether it learns. These tools are good at what
+they do; pick the one that fits.
+
+| Tool | What it does better | What HoldSpeak does better |
+|---|---|---|
+| **OS dictation** (Apple Dictation, Windows Voice Typing) | Zero setup, free, always available | Your own models, LLM rewriting with project context, the learning loop, meetings |
+| **Local Whisper apps** (superwhisper, MacWhisper, VoiceInk) | Simpler setup, polished single-purpose UX | The LLM stays local too (their AI modes often call cloud APIs), a visible learning loop, meeting intelligence, Linux support |
+| **AI dictation services** (Wispr Flow, Aqua Voice) | Out-of-box accuracy and editing polish, no model management | Your voice never leaves your machine, open source, no subscription, meetings |
+| **Talon** | The deepest hands-free coding and computer control there is | Prose-first dictation with LLM rewriting, lower learning curve, meeting intelligence |
+| **Raw Whisper tooling** (whisper.cpp scripts) | Total control, minimal surface | A product: typing integration, routing, the journal, meetings, a web UI |
+
+And the trade-offs in the other direction: HoldSpeak is 0.x, the smart parts
+need a model you provide, setup is heavier than a menu-bar app, there is no
+Windows build today, and Wayland limits global hotkeys to best effort.
 
 ## Quickstart
 
@@ -114,9 +131,9 @@ Install only the extras you need:
 
 ```bash
 pip install 'holdspeak[meeting]'          # meeting mode and AI intelligence
-pip install 'holdspeak[dictation-mlx]'    # intelligent dictation on Apple Silicon (MLX)
-pip install 'holdspeak[dictation-llama]'  # intelligent dictation, cross-platform (GGUF)
-pip install 'holdspeak[dictation-openai]' # intelligent dictation via an OpenAI-compatible endpoint
+pip install 'holdspeak[dictation-mlx]'    # the dictation pipeline on Apple Silicon (MLX)
+pip install 'holdspeak[dictation-llama]'  # the dictation pipeline, cross-platform (GGUF)
+pip install 'holdspeak[dictation-openai]' # the dictation pipeline via an OpenAI-compatible endpoint
 ```
 
 (From a clone, use the editable form instead, e.g. `uv pip install -e '.[meeting]'`.)
@@ -146,28 +163,29 @@ state it found. The full policy is in
 
 Wayland often blocks global hooks and synthetic typing, so HoldSpeak falls back to clipboard paste for injection.
 
-## Meeting intelligence
+## Meeting intelligence, a little deeper
 
-Record or save a meeting and HoldSpeak turns the transcript into structured,
-reviewable artifacts. Recordings you already have count too: import a file from
-the History page (or `holdspeak import call.wav`) and it becomes a real meeting,
-transcribed locally and run through the same intelligence. It scores the transcript for intent (architecture, delivery,
-product, incident, comms), runs a chain of plugins, and has each one call your LLM
-to produce a typed artifact. The results render read-only at `/history`. HoldSpeak
-ships 14 built-in plugins, all real and backed by an LLM.
+Record a meeting live, or bring one you already have: import a recording
+(WAV out of the box; compressed formats with ffmpeg) or a transcript file
+(`.vtt`, `.srt`, `.txt`) from the archive page or with `holdspeak import
+call.wav`, and it becomes a real meeting, run through the same intelligence.
+The transcript is scored for intent (architecture, delivery, product,
+incident, comms), a chain of plugins runs, and each one calls your LLM to
+produce a typed artifact. The results render read-only at `/history`.
+HoldSpeak ships 14 built-in plugins, all real and backed by an LLM.
 
-Plugins can also propose actions. An actuator proposes an external side effect,
-like filing a ticket or posting an update, that only runs after you approve it for
-that specific action. Actuators are off by default. Write your own with the
-[Plugin Authoring guide](https://github.com/karolswdev/HoldSpeak/blob/main/docs/PLUGIN_AUTHORING.md); for endpoints and routing, see
+Plugins can also propose actions. An actuator proposes an external side
+effect, like filing a ticket or posting an update, that only runs after you
+approve it for that specific action. Actuators are off by default. Write your
+own with the [Plugin Authoring guide](https://github.com/karolswdev/HoldSpeak/blob/main/docs/PLUGIN_AUTHORING.md); for endpoints and routing, see
 the [Meeting Mode Guide](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MEETING_MODE_GUIDE.md).
 
-Then close the loop. After a meeting, the "Your next move" aftercare panel at
-`/history` shows what is still open (by owner), what was decided, and what changed
-since the last meeting. Jump to the transcript moment that justifies any result,
-file an accepted action as a human-approved issue through that same actuator flow,
-or draft a copyable follow-up. It is read-only and local: nothing is sent, and
-nothing runs, without your approval. See the
+Then close the loop. Meeting aftercare shows what is still open (by owner),
+what was decided, and what changed since the last meeting. Jump to the
+transcript moment that justifies any result, file an accepted action as a
+human-approved issue through that same actuator flow, or draft a copyable
+follow-up. It is read-only and local: nothing is sent, and nothing runs,
+without your approval. See the
 [Meeting Mode Guide](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MEETING_MODE_GUIDE.md#meeting-aftercare-close-the-loop).
 
 ## AIPI-Lite companion
@@ -192,8 +210,9 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 | Get it running and verify my setup | [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) |
 | Choose / configure a model | [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md) |
 | See speech become a project-grounded task | [The Dictation Copilot](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_COPILOT.md) |
-| Set up project-aware dictation for Codex / Claude | [Intelligent Typing Setup](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INTELLIGENT_TYPING_GUIDE.md) |
-| Review, correct, and replay past dictations | [Dictation journal & replay](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay) |
+| Set up the dictation pipeline for Codex / Claude | [Intelligent Typing Setup](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INTELLIGENT_TYPING_GUIDE.md) |
+| Review, correct, and replay past dictations | [The dictation journal & replay](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay) |
+| Map spoken keywords to real actions | [Voice Commands](https://github.com/karolswdev/HoldSpeak/blob/main/docs/VOICE_COMMANDS.md) |
 | Use meeting mode and configure AI intelligence | [Meeting Mode Guide](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MEETING_MODE_GUIDE.md) |
 | Wire up the AIPI-Lite companion | [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AIPI_LITE_DEV_WORKFLOW.md) |
 | Install Claude / Codex agent hooks | [Agent Hook Install](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AGENT_HOOK_INSTALL.md) |
@@ -210,7 +229,10 @@ dictation pipeline, and presence options. The full reference is in
 
 Contributions are welcome. See [`CONTRIBUTING.md`](https://github.com/karolswdev/HoldSpeak/blob/main/CONTRIBUTING.md) for setup
 (`uv`, the git hooks, the test command) and the commit-contract workflow. Recent
-changes are in [`CHANGELOG.md`](https://github.com/karolswdev/HoldSpeak/blob/main/CHANGELOG.md).
+changes are in [`CHANGELOG.md`](https://github.com/karolswdev/HoldSpeak/blob/main/CHANGELOG.md). If you want to build on
+HoldSpeak rather than just use it, the
+[Plugin Authoring guide](https://github.com/karolswdev/HoldSpeak/blob/main/docs/PLUGIN_AUTHORING.md) and
+[Connector Development](https://github.com/karolswdev/HoldSpeak/blob/main/docs/CONNECTOR_DEVELOPMENT.md) are the doors in.
 
 ## License
 

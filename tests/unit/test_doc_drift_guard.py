@@ -155,7 +155,7 @@ def test_all_embedded_image_refs_resolve() -> None:
 # real (see Phase 51 HS-51-02), and the patterns stay narrow enough that the kept
 # architecture spec names MIR-01 / DIR-01 / WFS-01 never match.
 _ROADMAP_VOCAB = re.compile(
-    r"\bHS-\d{2}(?:-\d+)?\b"      # story ids: HS-25, HS-17-05
+    r"\bHS-\d{1,2}(?:-\d+)?\b"    # story ids: HS-25, HS-17-05, HS-9-03
     r"|\bphase[ -]\d+\b"          # phase tags: Phase 15, phase-37, phase 9
     r"|\bPMO\b"
     r"|the current roadmap"
@@ -206,6 +206,7 @@ def test_roadmap_vocab_pattern_is_narrow_enough_to_keep_spec_names() -> None:
     """The pattern flags phase/story tags but never the kept architecture spec names
     (MIR-01 / DIR-01 / WFS-01) or bare 'phase' with no number."""
     for leak in ("Phase 15", "phase-37", "phase 9", "HS-25-03", "HS-17-05",
+                 "HS-9-03",  # single-digit phase — leaked past the old pattern (found live)
                  "the current roadmap", "PMO", "from HS-19 closeout"):
         assert _ROADMAP_VOCAB.search(leak), f"guard should flag {leak!r}"
     for keep in ("the DIR-01 dictation pipeline spec",
@@ -228,3 +229,114 @@ def test_qlippy_doc_states_the_guarantees_verbatim() -> None:
     events = (_REPO / "web" / "src" / "scripts" / "qlippy-events.js").read_text()
     for marker in ("Data used:", "If you approve, this goes to", "Your controls:"):
         assert marker in events
+
+
+# ── HS-58-05: the voice guard ────────────────────────────────────────────────
+# Phase 51 guards WHAT user-facing docs say (no roadmap vocabulary); this
+# guards HOW they say it, per docs/internal/POSITIONING.md: no em/en dashes
+# in prose, none of the high-frequency AI-vocabulary tells, and no banned
+# synonyms for canonical feature names. Fenced code blocks are exempt
+# (example code and shell output are not prose), as are the explicitly
+# allowlisted verbatim UI quotes below.
+
+# Lines that quote real UI strings verbatim (the UI may contain dashes; the
+# doc must match the UI exactly). Keyed by a stable substring of the line.
+_VERBATIM_UI_QUOTES = (
+    'with "Preview only — nothing',  # journal replay note (web/src/scripts/dictation/journal.js)
+)
+
+_AI_VOCAB = re.compile(
+    r"\bdelve[sd]?\b|\bdelving\b"
+    r"|\bseamless(?:ly)?\b"
+    r"|\bleverag(?:es|ing)\b"        # the verb; compounds like "highest-leverage" stay
+    r"|\bsupercharge[sd]?\b"
+    r"|\beffortless(?:ly)?\b"
+    r"|\bgame[- ]chang\w+"
+    r"|\bcutting[- ]edge\b"
+    r"|\bis a testament\b"
+    # The negative-parallelism TIC only ("it's not just X, it's Y"); a plain
+    # logical "not just X" ("every meeting, not just the visible page") is
+    # legitimate prose and stays legal.
+    r"|\b(?:it|this|that)'?s not just\b|\bisn'?t just\b|\baren'?t just\b"
+    r"|\bnot merely\b",
+    re.IGNORECASE,
+)
+
+# Banned synonyms for canonical feature names (POSITIONING.md table).
+_BANNED_NAMES = re.compile(
+    r"\bvoice macros?\b"             # canonical: voice commands
+    r"|\bintelligent dictation\b",   # canonical: the dictation pipeline
+    re.IGNORECASE,
+)
+
+
+def _prose_lines(path: Path):
+    """Yield (lineno, line) for non-code-block lines of a doc."""
+    fenced = False
+    for lineno, line in enumerate(path.read_text(encoding="utf-8").split("\n"), 1):
+        if line.strip().startswith("```"):
+            fenced = not fenced
+            continue
+        if not fenced:
+            yield lineno, line
+
+
+def test_no_user_facing_doc_uses_dashes_in_prose() -> None:
+    offenders = []
+    for doc in _user_facing_docs():
+        for lineno, line in _prose_lines(doc):
+            if "—" not in line and "–" not in line:
+                continue
+            if any(marker in line for marker in _VERBATIM_UI_QUOTES):
+                continue
+            offenders.append(f"{doc.relative_to(_REPO)}:{lineno}: {line.strip()[:80]}")
+    assert not offenders, (
+        "Em/en dashes in user-facing prose (use a period, comma, colon, or "
+        "parentheses — see docs/internal/POSITIONING.md voice rules; verbatim "
+        "UI quotes belong in _VERBATIM_UI_QUOTES):\n  " + "\n  ".join(offenders)
+    )
+
+
+def test_no_user_facing_doc_uses_ai_vocabulary() -> None:
+    offenders = []
+    for doc in _user_facing_docs():
+        for lineno, line in _prose_lines(doc):
+            match = _AI_VOCAB.search(line)
+            if match:
+                offenders.append(
+                    f"{doc.relative_to(_REPO)}:{lineno}: {match.group(0)!r}"
+                )
+    assert not offenders, (
+        "AI-vocabulary tells in user-facing docs (reword per "
+        "docs/internal/POSITIONING.md voice rules):\n  " + "\n  ".join(offenders)
+    )
+
+
+def test_no_user_facing_doc_uses_banned_feature_names() -> None:
+    offenders = []
+    for doc in _user_facing_docs():
+        for lineno, line in _prose_lines(doc):
+            match = _BANNED_NAMES.search(line)
+            if match:
+                offenders.append(
+                    f"{doc.relative_to(_REPO)}:{lineno}: {match.group(0)!r}"
+                )
+    assert not offenders, (
+        "Non-canonical feature names (the canonical table lives in "
+        "docs/internal/POSITIONING.md):\n  " + "\n  ".join(offenders)
+    )
+
+
+def test_voice_guard_patterns_catch_seeded_violations() -> None:
+    """Proven both ways: each pattern flags what it must and spares what it must."""
+    for hit in ("we delve into", "a seamless flow", "leverages the runtime",
+                "it isn't just a tool", "it's not just a transcript",
+                "not merely a wrapper"):
+        assert _AI_VOCAB.search(hit), f"AI-vocab pattern should flag {hit!r}"
+    for keep in ("the highest-leverage way", "elevated artifact cards",
+                 "cut leverage ratios",
+                 "every meeting, not just the visible page"):  # plain logic stays legal
+        assert not _AI_VOCAB.search(keep), f"AI-vocab pattern should NOT flag {keep!r}"
+    for hit in ("configure voice macros", "intelligent dictation mode"):
+        assert _BANNED_NAMES.search(hit), f"name pattern should flag {hit!r}"
+    assert not _BANNED_NAMES.search("voice commands fire on keywords")
