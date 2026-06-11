@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 54
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-54-03
 - **Unblocks:** HS-54-06
 - **Owner:** unassigned
@@ -28,11 +28,14 @@ way it accumulated.
   follow-up for the phase that carves them).
 
 ## Acceptance criteria
-- [ ] The guard test exists, is in the default suite (no marker gymnastics), and
-      passes on the carved tree.
-- [ ] Proven both ways: temporarily exceeding a budget makes it fail with an
+- [x] The guard test exists, is in the default suite (no marker gymnastics), and
+      passes on the carved tree. (`tests/unit/test_frontend_density_guard.py`,
+      5 tests incl. a non-vacuity sanity check; budgets: page ≤300, entry ≤50,
+      components/modules ≤600.)
+- [x] Proven both ways: temporarily exceeding a budget makes it fail with an
       actionable message; reverting makes it pass (shown in evidence, not committed).
-- [ ] Before/after metrics recorded in the evidence file.
+- [x] Before/after metrics recorded in the evidence file. (6,101 lines / largest
+      3,134 → largest 576; full table in `evidence-story-04.md` §3.)
 
 ## Test plan
 - `uv run pytest -q tests/unit -k "density"` plus the full suite

@@ -1,11 +1,17 @@
 # Phase 54 — Dictation Frontend Decomposition
 
-**Status:** in-progress (3/6). Opened 2026-06-11 on user direction (the agreed post-53
+**Status:** in-progress (4/6). Opened 2026-06-11 on user direction (the agreed post-53
 sequence), right after Phase 53 closed + merged (PR #40). From the
 [project backlog](../BACKLOG.md): candidate **D** (frontend density paydown), promoted
 from "ride along with the next dictation feature" to its own phase.
 
-**Last updated:** 2026-06-11 (**HS-54-03 done: the page is carved.** The 3,131-line
+**Last updated:** 2026-06-11 (**HS-54-04 done: the density guard is armed.**
+`tests/unit/test_frontend_density_guard.py` locks the shipped shape — page ≤300
+(shipped 252), entry ≤50 (19), components/modules ≤600 each (largest 499/576) —
+with carve-don't-bump failure messages and a non-vacuity sanity check. Proven both
+ways (a 500-line pad fires the guard with the actionable message; revert is green).
+Full suite **2545 passed, 17 skipped** (the five guard tests are the +5).
+**HS-54-03 (prior): the page is carved.** The 3,131-line
 `dictation.astro` is now a **252-line composition** of fourteen components under
 `components/dictation/`: eleven section/feature partials carrying their own styles
 plus three markup-less shared-style components (`SharedStyles`, `KnowledgeStyles`,
@@ -123,7 +129,7 @@ density guard. No feature, no visual change, no behavior change.
 | HS-54-01 | The module seam (decide + prove on one cluster) | done | none |
 | HS-54-02 | Behavior modules (carve dictation-app.js) | done | HS-54-01 |
 | HS-54-03 | Section partials (carve dictation.astro) | done | HS-54-02 |
-| HS-54-04 | The density guard | backlog | HS-54-03 |
+| HS-54-04 | The density guard | done | HS-54-03 |
 | HS-54-05 | Docs: the frontend architecture pattern | backlog | HS-54-03 |
 | HS-54-06 | Closeout: dogfood + final-summary + PR | backlog | HS-54-01..05 |
 
@@ -137,9 +143,14 @@ nine-tab screenshot sweep), the full suite is green with byte-identical
 assertions, and the seam surfaced two real latent bugs along the way (the
 duplicate `escapeAttr`; the silently-unstyled JS-rendered elements).
 
-Next is **HS-54-04 — the density guard**: lock the shipped shape (page ≤ 300;
-components and modules ≤ 600) with a drift-guard-style unit test so the page
-cannot silently regrow.
+**HS-54-04 shipped the same day**: the guard is armed (page ≤300, entry ≤50,
+components/modules ≤600), proven both ways, in the default suite.
+
+Next is **HS-54-05 — docs**: the internal frontend-architecture doc
+(`docs/internal/ARCHITECTURE_WEB_FRONTEND.md`) recording the pattern — the
+module seam decision, partials + behavior modules, the `is:global` rule (and
+the attribute-scoping trap it avoids), the guard budgets, and the
+add-a-section walkthrough — linked from `CONTRIBUTING.md`.
 
 ## Open decisions (defaults chosen; flag to change)
 
