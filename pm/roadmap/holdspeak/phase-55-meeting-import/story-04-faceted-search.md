@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 55
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-55-05, HS-55-06
 - **Owner:** unassigned
@@ -31,13 +31,19 @@ query, not a scroll.
   schema change beyond what composition requires.
 
 ## Acceptance criteria
-- [ ] Each facet filters correctly server-side, alone and combined with
+- [x] Each facet filters correctly server-side, alone and combined with
       `search` and each other (integration tests with seeded meetings).
-- [ ] Facets see the whole archive (a match outside the first page is found).
-- [ ] The filter row renders, drives the API params, shows active filters,
-      and clears; page-content test + screenshot.
-- [ ] No behavior change with no facets supplied (existing callers
-      byte-identical).
+- [x] Facets see the whole archive (a match outside the first page is found).
+      (The `limit=1` + facet test; filtering is in SQL.)
+- [x] The filter row renders, drives the API params, shows active filters,
+      and clears; page-content test + screenshot. (Live Playwright pass:
+      speaker facet narrowed 3 → 2 cards, zero page errors;
+      `story04-facets.png` reviewed.)
+- [x] No behavior change with no facets supplied (existing callers
+      byte-identical). (Regression test. One deliberate, documented
+      improvement: the `search` branch's response unified to the summary
+      shape — its old full-`to_dict` payloads had a nested `intel_status`
+      that broke the status pill on every search result. Evidence §1.)
 
 ## Test plan
 - Integration: seeded meetings exercising every facet alone + combined +

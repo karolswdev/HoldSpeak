@@ -385,8 +385,16 @@ class MeetingRepository(BaseRepository):
         date_from: Optional[datetime] = None,
         date_to: Optional[datetime] = None,
         tag: Optional[str] = None,
+        speaker: Optional[str] = None,
+        has_open_actions: bool = False,
+        meeting_ids: Optional[list[str]] = None,
     ) -> list[MeetingSummary]:
-        """List meetings with optional filters."""
+        """List meetings with optional filters.
+
+        HS-55-04: every facet filters in SQL (the whole archive, not a page)
+        and composes with the others; ``meeting_ids`` lets full-text search
+        results flow through the same faceted query.
+        """
         with self._connection() as conn:
             query = """
                 SELECT m.*,
@@ -407,6 +415,20 @@ class MeetingRepository(BaseRepository):
             if tag:
                 query += " AND m.id IN (SELECT meeting_id FROM meeting_tags WHERE tag = ?)"
                 params.append(tag)
+            if speaker:
+                query += " AND m.id IN (SELECT DISTINCT meeting_id FROM segments WHERE speaker = ?)"
+                params.append(speaker)
+            if has_open_actions:
+                query += (
+                    " AND m.id IN (SELECT DISTINCT meeting_id FROM action_items"
+                    " WHERE status = 'pending')"
+                )
+            if meeting_ids is not None:
+                if not meeting_ids:
+                    return []
+                placeholders = ",".join("?" for _ in meeting_ids)
+                query += f" AND m.id IN ({placeholders})"
+                params.extend(meeting_ids)
 
             query += " ORDER BY m.started_at DESC LIMIT ? OFFSET ?"
             params.extend([limit, offset])
@@ -426,6 +448,25 @@ class MeetingRepository(BaseRepository):
                 )
                 for r in conn.execute(query, params)
             ]
+
+    def list_facet_values(self) -> dict:
+        """Distinct speakers + tags across the archive (HS-55-04 filter row)."""
+        with self._connection() as conn:
+            speakers = [
+                r[0]
+                for r in conn.execute(
+                    "SELECT DISTINCT speaker FROM segments"
+                    " WHERE speaker IS NOT NULL AND speaker != ''"
+                    " ORDER BY speaker COLLATE NOCASE"
+                )
+            ]
+            tags = [
+                r[0]
+                for r in conn.execute(
+                    "SELECT DISTINCT tag FROM meeting_tags ORDER BY tag COLLATE NOCASE"
+                )
+            ]
+        return {"speakers": speakers, "tags": tags}
 
     def list_action_items(
         self,

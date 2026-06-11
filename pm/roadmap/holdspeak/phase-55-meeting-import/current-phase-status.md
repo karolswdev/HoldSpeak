@@ -1,11 +1,24 @@
 # Phase 55 — Meeting Import ("bring your archive") + faceted history search
 
-**Status:** in-progress (3/6). Opened 2026-06-11 on user direction (the agreed post-53
+**Status:** in-progress (4/6). Opened 2026-06-11 on user direction (the agreed post-53
 sequence **54 → I → J → K**), right after Phase 54 closed + merged (PR #41).
 From the [project backlog](../BACKLOG.md): candidate **I** (meeting import +
 faceted history search).
 
-**Last updated:** 2026-06-11 (**HS-55-03 done: the /history import UI.** An
+**Last updated:** 2026-06-11 (**HS-55-04 done: faceted history search.**
+`GET /api/meetings` gains `date_from`/`date_to` (bare end date inclusive),
+`speaker`, `tag`, `has_open_actions` — all filtering **in SQL over the whole
+archive** and composing with `search` (FTS ids flow through the same faceted
+query); `GET /api/meetings/facets` feeds the new `/history` filter row (dates,
+speaker/tag selects, an open-actions toggle, Clear-when-active), with one
+`meetingsQuery()` builder driving every meetings fetch so filters survive
+search, refresh, and the import poll. A real fix fell out: the old search
+branch returned nested `intel_status` objects that broke the status pill on
+every search result — both branches now share the flat summary shape. 5 facet
+API tests (incl. the whole-archive `limit=1` proof + the no-params regression)
++ a facet-row page lock; live Playwright pass (3 → 2 cards on speaker=Alice,
+zero page errors, screenshot reviewed). Full suite **2568 passed, 17 skipped**
+(+6). **HS-55-03 (prior): the /history import UI.** An
 "Import a recording" opener in the meetings toolbar + an accent-edged panel
 (dashed drag/drop + browse target, Title/Speaker/Tags, the honest notes
 verbatim: ffmpeg for compressed, one speaker label, audio not kept, local
@@ -126,19 +139,20 @@ about the single speaker label (no diarization in v1).
 | HS-55-01 | The import engine (file → meeting) | done | none |
 | HS-55-02 | Import API + background job + CLI | done | HS-55-01 |
 | HS-55-03 | The /history import UI | done | HS-55-02 |
-| HS-55-04 | Faceted history search (API + filter row) | backlog | none |
+| HS-55-04 | Faceted history search (API + filter row) | done | none |
 | HS-55-05 | Docs: import + facets | backlog | HS-55-03, HS-55-04 |
 | HS-55-06 | Closeout: real-audio dogfood + final-summary + PR | backlog | HS-55-01..05 |
 
 ## Where we are
 
-**HS-55-01 + HS-55-02 + HS-55-03 shipped 2026-06-11.** The import feature is
-whole: engine → API/CLI → an inviting browser flow proven live (real upload,
-in-place lifecycle, zero page errors).
+**HS-55-01 → HS-55-04 shipped 2026-06-11.** Both halves of the thesis are
+real: the archive imports (engine → API/CLI → live browser flow) and the
+archive filters (server-side facets + the row, with the search-pill fix
+along the way).
 
-Next is **HS-55-04 — faceted history search**: server-side
-`date_from`/`date_to`/`speaker`/`tag`/`has_open_actions` filters composing
-with `search` in SQL, + the `/history` filter row.
+Next is **HS-55-05 — docs**: the import flow + facets documented
+product-tense (the three honest truths verbatim), passing the doc guards,
+linked from the docs index.
 
 ## Open decisions (defaults chosen; flag to change)
 

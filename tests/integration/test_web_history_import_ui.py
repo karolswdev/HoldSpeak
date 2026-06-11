@@ -61,6 +61,24 @@ def test_import_lifecycle_states_render_honestly() -> None:
     assert "/api/meetings/${meetingId}" in js
 
 
+def test_history_has_the_facet_row() -> None:
+    """HS-55-04: the server-side filter row composes with search."""
+    page = _page()
+    js = _app_js()
+    assert "facet-row" in page
+    assert 'x-model="facetDateFrom"' in page
+    assert 'x-model="facetDateTo"' in page
+    assert 'x-model="facetSpeaker"' in page
+    assert 'x-model="facetTag"' in page
+    assert 'x-model="facetOpenActions"' in page
+    assert "clearFacets" in page
+    # The query builder drives every meetings fetch (facets + search compose;
+    # the quiet import poll keeps the active filters).
+    assert "meetingsQuery" in js
+    assert "has_open_actions" in js
+    assert '"/api/meetings/facets"' in js
+
+
 def test_import_behavior_markers() -> None:
     js = _app_js()
     # Multipart POST with the honest started_at_ms (File.lastModified).

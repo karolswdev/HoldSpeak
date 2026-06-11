@@ -54,6 +54,14 @@ function historyApp() {
     projectActionItems: [],
     projectArtifacts: [],
 
+    // HS-55-04: server-side facet state.
+    facetDateFrom: "",
+    facetDateTo: "",
+    facetSpeaker: "",
+    facetTag: "",
+    facetOpenActions: false,
+    facetOptions: { speakers: [], tags: [] },
+
     // HS-55-03: import-a-recording state.
     importPanelOpen: false,
     importFile: null,
@@ -73,6 +81,7 @@ function historyApp() {
     async init() {
       await Promise.all([
         this.loadMeetings(),
+        this.loadFacetOptions(),
         this.loadActionItems(),
         this.loadSpeakers(),
         this.loadIntelJobs(),
@@ -246,7 +255,7 @@ function historyApp() {
     async loadMeetings() {
       this.loading = true;
       try {
-        const data = await this.apiJson("/api/meetings");
+        const data = await this.apiJson(this.meetingsQuery({ includeSearch: false }));
         this.meetings = data.meetings || [];
       } catch (error) {
         console.error("Failed to load meetings:", error);
@@ -259,6 +268,50 @@ function historyApp() {
       if (this.meetings.some((m) => m.intel_status === "importing")) {
         this.watchImports();
       }
+    },
+
+    // ── HS-55-04: server-side facets ─────────────────────────────────
+    meetingsQuery({ includeSearch = true } = {}) {
+      const params = new URLSearchParams();
+      const q = this.searchQuery.trim();
+      if (includeSearch && q) params.set("search", q);
+      if (this.facetDateFrom) params.set("date_from", this.facetDateFrom);
+      if (this.facetDateTo) params.set("date_to", this.facetDateTo);
+      if (this.facetSpeaker) params.set("speaker", this.facetSpeaker);
+      if (this.facetTag) params.set("tag", this.facetTag);
+      if (this.facetOpenActions) params.set("has_open_actions", "true");
+      const qs = params.toString();
+      return qs ? `/api/meetings?${qs}` : "/api/meetings";
+    },
+
+    facetsActive() {
+      return Boolean(
+        this.facetDateFrom || this.facetDateTo || this.facetSpeaker ||
+        this.facetTag || this.facetOpenActions
+      );
+    },
+
+    applyFacets() {
+      return this.searchQuery.trim() ? this.searchMeetings() : this.loadMeetings();
+    },
+
+    clearFacets() {
+      this.facetDateFrom = "";
+      this.facetDateTo = "";
+      this.facetSpeaker = "";
+      this.facetTag = "";
+      this.facetOpenActions = false;
+      this.applyFacets();
+    },
+
+    async loadFacetOptions() {
+      try {
+        const data = await this.apiJson("/api/meetings/facets");
+        this.facetOptions = {
+          speakers: data.speakers || [],
+          tags: data.tags || [],
+        };
+      } catch (_error) { /* the row simply offers no options */ }
     },
 
     // ── HS-55-03: import a recording ─────────────────────────────────
@@ -304,7 +357,7 @@ function historyApp() {
     // A quiet refresh (no list-wide loading flicker) for import polling.
     async refreshMeetingsQuiet() {
       try {
-        const data = await this.apiJson("/api/meetings");
+        const data = await this.apiJson(this.meetingsQuery());
         this.meetings = data.meetings || [];
       } catch (_error) { /* the next poll or manual refresh will recover */ }
     },
@@ -346,7 +399,7 @@ function historyApp() {
       }
       this.loading = true;
       try {
-        const data = await this.apiJson(`/api/meetings?search=${encodeURIComponent(this.searchQuery)}`);
+        const data = await this.apiJson(this.meetingsQuery());
         this.meetings = data.meetings || [];
       } catch (error) {
         console.error("Failed to search meetings:", error);

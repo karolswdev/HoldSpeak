@@ -141,6 +141,34 @@ import AppLayout from "../layouts/AppLayout.astro";
               </div>
             </section>
 
+            {/* HS-55-04: server-side facets — every filter queries the whole
+                archive in SQL and composes with the search box. */}
+            <div class="facet-row" role="group" aria-label="Filter meetings">
+              <label class="facet-field">From
+                <input class="input facet-date" type="date" x-model="facetDateFrom" @change="applyFacets" />
+              </label>
+              <label class="facet-field">To
+                <input class="input facet-date" type="date" x-model="facetDateTo" @change="applyFacets" />
+              </label>
+              <select class="input facet-select" x-model="facetSpeaker" @change="applyFacets" aria-label="Filter by speaker">
+                <option value="">All speakers</option>
+                <template x-for="s in facetOptions.speakers" :key="s">
+                  <option :value="s" x-text="s"></option>
+                </template>
+              </select>
+              <select class="input facet-select" x-model="facetTag" @change="applyFacets" aria-label="Filter by tag">
+                <option value="">All tags</option>
+                <template x-for="t in facetOptions.tags" :key="t">
+                  <option :value="t" x-text="t"></option>
+                </template>
+              </select>
+              <label class="facet-toggle" :class="facetOpenActions ? 'is-on' : ''">
+                <input type="checkbox" x-model="facetOpenActions" @change="applyFacets" />
+                Open actions
+              </label>
+              <button class="btn facet-clear" x-show="facetsActive()" x-cloak @click="clearFacets">Clear filters</button>
+            </div>
+
             <div x-show="loading" class="loading">Loading meetings…</div>
 
             <div x-show="!loading && meetings.length === 0" class="empty">
