@@ -49,6 +49,8 @@ dependencies = [
     "uvicorn[standard]>=0.20.0",
     # DIR-01 dictation pipeline reads block configs from YAML.
     "PyYAML>=6.0",
+    # Meeting import accepts multipart uploads (POST /api/meetings/import).
+    "python-multipart>=0.0.9",
 ]
 
 [project.optional-dependencies]

@@ -11,9 +11,11 @@ HoldSpeak's Meeting Mode captures your microphone plus remote participants' audi
 5. [Web Interfaces](#web-interfaces)
 6. [Meeting Intelligence](#meeting-intelligence)
 7. [Meeting Aftercare (close the loop)](#meeting-aftercare-close-the-loop)
-8. [Configuration Reference](#configuration-reference)
-9. [Web API Reference](#web-api-reference)
-10. [Troubleshooting](#troubleshooting)
+8. [Import an Existing Recording](#import-an-existing-recording)
+9. [Find Meetings in Your Archive](#find-meetings-in-your-archive)
+10. [Configuration Reference](#configuration-reference)
+11. [Web API Reference](#web-api-reference)
+12. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -410,6 +412,63 @@ talks.
 *The follow-up draft: assembled from the meeting's decisions and open items, ready to copy. An empty meeting yields one honest line, not filler.*
 
 ---
+
+## Import an Existing Recording
+
+You can run meeting intelligence on recordings you already have. If a Zoom
+export, a Teams download, or a voice memo is sitting on your disk, import it
+and HoldSpeak treats it like any other meeting: the audio is transcribed
+locally, the transcript is stored with timestamps, and the result appears on
+the History page with the same intelligence, artifacts, and aftercare as a
+live capture.
+
+From the browser: open **History**, click **Import a recording**, drop the file
+in (or browse), optionally set a title, a speaker label, and tags, and click
+Import. The meeting appears in the list immediately with an "Importing" badge
+and live progress, then resolves in place when transcription finishes. A failed
+import says why and can be removed with one click.
+
+From the shell (the right tool for very long files or headless machines):
+
+```bash
+holdspeak import path/to/recording.wav --title "Q3 kickoff" --speaker "Team call" --tag imported
+```
+
+The command prints progress per transcription window and tells you when meeting
+intelligence has been queued.
+
+WAV imports out of the box. mp3, m4a, aac, ogg, opus, flac, webm, and mp4
+audio need `ffmpeg` on your PATH (for example `brew install ffmpeg`); without
+it, HoldSpeak refuses the import with a clear message rather than handing you
+a half-decoded transcript.
+
+The whole recording gets one speaker label, yours to choose (the default is
+"Recording"). A single mixed audio file does not carry the separate microphone
+and system streams a live capture has, and HoldSpeak does not guess speaker
+boundaries it cannot verify.
+
+The audio file itself is read, transcribed locally, and not retained. The
+transcript is the record, the same as for a live meeting, and nothing leaves
+your machine.
+
+The meeting's start time comes from the file's last-modified time, so an old
+recording sorts where it happened in your history, not where it was imported.
+
+## Find Meetings in Your Archive
+
+The History page searches full transcript text, and the filter row beneath the
+search box narrows the archive server-side, so filters see every meeting you
+have, not just the visible page:
+
+- **Date range.** From/to dates against the meeting start time.
+- **Speaker.** Meetings where a given speaker has transcript segments.
+- **Tag.** Meetings carrying a tag (imports can be tagged on the way in).
+- **Open actions.** Only meetings that still have pending action items.
+
+Filters compose with each other and with the search box: "meetings with Alice
+in March that mention the budget and still have open actions" is one query.
+Active filters show a Clear button; with nothing set, the list shows your
+newest meetings first.
 
 ## Configuration Reference
 

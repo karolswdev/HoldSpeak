@@ -90,6 +90,83 @@ import AppLayout from "../layouts/AppLayout.astro";
               <input class="input" type="text" placeholder="Search transcripts…" x-model="searchQuery" @keyup.enter="searchMeetings" />
               <button class="btn primary" @click="searchMeetings">Search</button>
               <button class="btn" @click="clearSearch" x-show="searchQuery.trim()" x-cloak>Clear</button>
+              <span class="search-row-spacer" aria-hidden="true"></span>
+              <button class="btn import-open-btn" @click="importPanelOpen = !importPanelOpen" :aria-expanded="importPanelOpen ? 'true' : 'false'">
+                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0L7 9m5-5 5 5M4 20h16"/></svg>
+                Import a recording
+              </button>
+            </div>
+
+            {/* HS-55-03: bring an existing recording into meeting intelligence.
+                Honest panel: formats (ffmpeg for compressed), one speaker label,
+                audio not retained, everything local. */}
+            <section class="detail-card import-panel" x-show="importPanelOpen" x-cloak aria-label="Import a recording">
+              <div class="import-head">
+                <div>
+                  <h4 class="import-title">Import a recording</h4>
+                  <p class="import-lede">Turn an existing recording into a real meeting — transcript, intelligence, the works.</p>
+                </div>
+                <button class="btn" @click="importPanelOpen = false">Close</button>
+              </div>
+              <label
+                class="import-drop"
+                :class="importFile ? 'has-file' : ''"
+                @dragover.prevent
+                @drop.prevent="onImportDrop($event)"
+              >
+                <input type="file" class="import-file-input" accept=".wav,.mp3,.m4a,.aac,.ogg,.oga,.opus,.flac,.webm,.mp4,audio/*" @change="onImportFileChange($event)" />
+                <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 18V6l10-2v12M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm10-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+                <span class="import-drop-text" x-show="!importFile">Drop an audio file here, or <strong>browse</strong></span>
+                <span class="import-drop-file" x-show="importFile" x-cloak x-text="importFile && importFile.name"></span>
+              </label>
+              <div class="form-grid import-fields">
+                <label class="field">Title
+                  <input class="input" type="text" placeholder="Defaults to the file name" x-model="importTitle" />
+                </label>
+                <label class="field">Speaker label
+                  <input class="input" type="text" placeholder="Recording" x-model="importSpeaker" />
+                </label>
+                <label class="field">Tags (comma-separated)
+                  <input class="input" type="text" placeholder="imported, q3" x-model="importTags" />
+                </label>
+              </div>
+              <p class="import-notes">
+                WAV imports out of the box; mp3 / m4a / ogg / flac need <code>ffmpeg</code> installed.
+                The whole recording gets one speaker label. The audio file isn't kept — only the
+                transcript. Everything stays on this machine.
+              </p>
+              <div class="search-row">
+                <button class="btn primary" :disabled="!importFile || importBusy" @click="submitImport" x-text="importBusy ? 'Uploading…' : 'Import'"></button>
+                <button class="btn" @click="importPanelOpen = false">Cancel</button>
+              </div>
+            </section>
+
+            {/* HS-55-04: server-side facets — every filter queries the whole
+                archive in SQL and composes with the search box. */}
+            <div class="facet-row" role="group" aria-label="Filter meetings">
+              <label class="facet-field">From
+                <input class="input facet-date" type="date" x-model="facetDateFrom" @change="applyFacets" />
+              </label>
+              <label class="facet-field">To
+                <input class="input facet-date" type="date" x-model="facetDateTo" @change="applyFacets" />
+              </label>
+              <select class="input facet-select" x-model="facetSpeaker" @change="applyFacets" aria-label="Filter by speaker">
+                <option value="">All speakers</option>
+                <template x-for="s in facetOptions.speakers" :key="s">
+                  <option :value="s" x-text="s"></option>
+                </template>
+              </select>
+              <select class="input facet-select" x-model="facetTag" @change="applyFacets" aria-label="Filter by tag">
+                <option value="">All tags</option>
+                <template x-for="t in facetOptions.tags" :key="t">
+                  <option :value="t" x-text="t"></option>
+                </template>
+              </select>
+              <label class="facet-toggle" :class="facetOpenActions ? 'is-on' : ''">
+                <input type="checkbox" x-model="facetOpenActions" @change="applyFacets" />
+                Open actions
+              </label>
+              <button class="btn facet-clear" x-show="facetsActive()" x-cloak @click="clearFacets">Clear filters</button>
             </div>
 
             <div x-show="loading" class="loading">Loading meetings…</div>
@@ -100,24 +177,34 @@ import AppLayout from "../layouts/AppLayout.astro";
 
             <div class="grid" x-show="!loading && meetings.length > 0">
               <template x-for="meeting in meetings" :key="meeting.id">
-                <button class="meeting-card" @click="openMeeting(meeting.id)">
-                  <div class="card-top">
-                    <div class="card-id">
-                      <p class="card-title" x-text="meeting.title || '(untitled meeting)'"></p>
-                      <p class="card-subtitle" x-text="formatDate(meeting.started_at)"></p>
+                <div class="meeting-card-wrap">
+                  <button class="meeting-card" @click="openMeeting(meeting.id)">
+                    <div class="card-top">
+                      <div class="card-id">
+                        <p class="card-title" x-text="meeting.title || '(untitled meeting)'"></p>
+                        <p class="card-subtitle" x-text="formatDate(meeting.started_at)"></p>
+                      </div>
+                      <span class="status-pill" :class="meeting.intel_status || 'disabled'" x-text="intelStatusLabel(meeting.intel_status)"></span>
                     </div>
-                    <span class="status-pill" :class="meeting.intel_status || 'disabled'" x-text="intelStatusLabel(meeting.intel_status)"></span>
-                  </div>
-                  <div class="pill-row">
-                    <span class="pill" x-text="formatDuration(meeting.duration_seconds)"></span>
-                    <span class="pill" x-text="`${meeting.segment_count} segments`"></span>
-                    <span class="pill" x-show="meeting.action_item_count > 0" x-cloak x-text="`${meeting.action_item_count} action items`"></span>
-                    <template x-for="tag in meeting.tags || []" :key="tag">
-                      <span class="pill" x-text="tag"></span>
-                    </template>
-                  </div>
-                  <p class="meta-line" x-show="meeting.intel_status_detail" x-cloak x-text="meeting.intel_status_detail"></p>
-                </button>
+                    <div class="pill-row">
+                      <span class="pill" x-text="formatDuration(meeting.duration_seconds)"></span>
+                      <span class="pill" x-text="`${meeting.segment_count} segments`"></span>
+                      <span class="pill" x-show="meeting.action_item_count > 0" x-cloak x-text="`${meeting.action_item_count} action items`"></span>
+                      <template x-for="tag in meeting.tags || []" :key="tag">
+                        <span class="pill" x-text="tag"></span>
+                      </template>
+                    </div>
+                    <p class="meta-line" x-show="meeting.intel_status_detail" x-cloak x-text="meeting.intel_status_detail"></p>
+                  </button>
+                  {/* HS-55-03: a failed import's honest row is removable. */}
+                  <button
+                    class="card-remove"
+                    type="button"
+                    x-show="meeting.intel_status === 'import_failed'"
+                    x-cloak
+                    @click="removeMeeting(meeting.id)"
+                  >Remove</button>
+                </div>
               </template>
             </div>
           </div>
@@ -1559,6 +1646,25 @@ import AppLayout from "../layouts/AppLayout.astro";
     background: var(--danger-soft, var(--canvas-raised));
   }
   .status-pill.disabled, .status-pill.unknown { color: var(--text-faint); }
+  /* HS-55-03: import lifecycle states. */
+  .status-pill.importing {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    animation: import-pulse 1.6s ease-in-out infinite;
+  }
+  .status-pill.import_failed {
+    color: var(--danger);
+    border-color: var(--danger);
+    background: var(--danger-soft, var(--canvas-raised));
+  }
+  @keyframes import-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .status-pill.importing { animation: none; }
+  }
 
   .meta-line {
     margin: 0;
@@ -2769,4 +2875,103 @@ import AppLayout from "../layouts/AppLayout.astro";
     border-radius: var(--radius-md);
     padding: var(--space-3);
   }
+  /* ===== HS-55-03: the import-a-recording affordance ===== */
+  .search-row-spacer { flex: 1; }
+  .import-open-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .import-open-btn svg { color: var(--accent); flex: none; }
+  .import-panel {
+    border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
+    background:
+      radial-gradient(120% 120% at 0% 0%,
+        color-mix(in srgb, var(--accent) 8%, transparent) 0%, transparent 60%),
+      var(--canvas);
+  }
+  .import-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+  .import-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--font-size-md);
+    color: var(--text);
+  }
+  .import-lede {
+    margin: var(--space-1) 0 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+  .import-drop {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-5) var(--space-3);
+    border: 1.5px dashed color-mix(in srgb, var(--accent) 40%, var(--line));
+    border-radius: var(--radius-2);
+    background: color-mix(in srgb, var(--accent) 4%, var(--canvas));
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: border-color 120ms ease, background 120ms ease;
+  }
+  .import-drop:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--canvas));
+  }
+  .import-drop svg { color: var(--accent); flex: none; }
+  .import-drop.has-file {
+    border-style: solid;
+    border-color: var(--accent);
+    color: var(--text);
+  }
+  .import-file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+  }
+  .import-drop-text strong { color: var(--accent); }
+  .import-drop-file {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
+  }
+  .import-fields { margin-top: var(--space-2); }
+  .import-notes {
+    margin: var(--space-2) 0 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-relaxed);
+  }
+
+  /* The failed-import remove affordance sits outside the card button. */
+  .meeting-card-wrap {
+    position: relative;
+    display: flex;
+  }
+  .meeting-card-wrap .meeting-card { flex: 1; min-width: 0; }
+  .card-remove {
+    position: absolute;
+    right: var(--space-2);
+    bottom: var(--space-2);
+    appearance: none;
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-pill);
+    background: var(--danger-soft, var(--canvas-raised));
+    color: var(--danger);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-xs);
+    padding: 2px var(--space-2);
+    cursor: pointer;
+  }
+  .card-remove:hover { background: var(--danger); color: #fff; }
 </style>

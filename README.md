@@ -149,7 +149,9 @@ Wayland often blocks global hooks and synthetic typing, so HoldSpeak falls back 
 ## Meeting intelligence
 
 Record or save a meeting and HoldSpeak turns the transcript into structured,
-reviewable artifacts. It scores the transcript for intent (architecture, delivery,
+reviewable artifacts. Recordings you already have count too: import a file from
+the History page (or `holdspeak import call.wav`) and it becomes a real meeting,
+transcribed locally and run through the same intelligence. It scores the transcript for intent (architecture, delivery,
 product, incident, comms), runs a chain of plugins, and has each one call your LLM
 to produce a typed artifact. The results render read-only at `/history`. HoldSpeak
 ships 14 built-in plugins, all real and backed by an LLM.

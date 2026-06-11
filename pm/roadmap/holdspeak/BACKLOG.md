@@ -38,7 +38,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 | F | Local activity as pre-briefing fuel | feature | review bet #6 | **shipped → [phase-53](./phase-53-activity-prebriefing/) (CLOSED 7/7)** (source-cited dismissible nudges + "Dictate with this" closes the loop, proven on a live LLM) |
 | G | Privacy visible at decision points | feature | review bet #7 | absorbed into **J** (the Qlippy card is the decision-point surface) |
 | H | Public-docs hygiene (strip roadmap vocab from user-facing docs) | release/debt | this conversation (post-P50 release polish) | **shipped → [phase-51](./phase-51-public-docs-hygiene/) (CLOSED 5/5)** |
-| I | Meeting import ("bring your archive") + faceted history search | feature | post-P53 strategic review | **queued — next after Phase 54** |
+| I | Meeting import ("bring your archive") + faceted history search | feature | post-P53 strategic review | **shipped → [phase-55](./phase-55-meeting-import/) (CLOSED 6/6)** (proven on real metal: real Whisper + real intel on `.43`) |
 | J | Qlippy, the presence enhancer (absorbs G) | feature/delight | post-P53 review + [proposal](./proposals/qlippy-presence-enhancer.md) | queued after I |
 | K | Speak the world's languages + spoken-symbol dictionary | feature | post-P53 strategic review | queued after J |
 | L | Export connectors (Notion / Slack / Docs) on the connector-pack framework | feature | post-P53 strategic review | parked |
@@ -133,7 +133,7 @@ Docs-and-test only, behavior-preserving. *Lands on:* `docs/*.md` +
 `tests/unit/test_doc_drift_guard.py`. Cheap and release-facing; the natural polish
 after the release gate.
 
-### I. Meeting import ("bring your archive") + faceted history search — queued
+### I. Meeting import ("bring your archive") + faceted history search — shipped as Phase 55 (CLOSED 6/6)
 The single highest-ROI feature gap from the post-P53 review: meeting intelligence is
 live-capture-only. There is no "import this recording" path anywhere (verified:
 `MeetingRecorder` only handles live audio; no import in CLI or web). An import flow

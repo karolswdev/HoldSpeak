@@ -42,6 +42,25 @@ from ..context import WebContext
 log = get_logger("web.routes.meetings")
 
 
+def _parse_facet_date(value: Optional[str], *, end_of_day: bool = False):
+    """Parse a facet date param (ISO date or datetime); None on blank/garbage.
+
+    A bare date used as the range end is made inclusive of the whole day.
+    """
+    from datetime import datetime
+
+    text = (value or "").strip()
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if end_of_day and len(text) == 10:  # a bare YYYY-MM-DD
+        parsed = parsed.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return parsed
+
+
 def build_meetings_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
@@ -275,25 +294,43 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
         limit: int = 50,
         offset: int = 0,
         search: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+        speaker: Optional[str] = None,
+        tag: Optional[str] = None,
+        has_open_actions: bool = False,
     ) -> Any:
-        """List meetings from database."""
+        """List meetings, with HS-55-04 server-side facets composing with search.
+
+        Facets filter in SQL over the whole archive. With ``search``, the
+        full-text hits flow through the same faceted query, so both branches
+        return the same summary shape (this also fixed search results
+        previously returning full ``to_dict`` payloads whose nested
+        ``intel_status`` broke the status pill).
+        """
         try:
             from ...db import get_database
             db = get_database()
 
-            if search:
-                # Search transcripts
-                results = db.meetings.search_transcripts(search, limit=limit)
-                # Group by meeting
-                meeting_ids = list(dict.fromkeys([r[0] for r in results]))
-                meetings = [db.meetings.get_meeting(mid) for mid in meeting_ids[:limit]]
-                meetings = [m for m in meetings if m is not None]
-                return JSONResponse({
-                    "meetings": [m.to_dict() for m in meetings],
-                    "total": len(meetings),
-                })
+            parsed_from = _parse_facet_date(date_from)
+            parsed_to = _parse_facet_date(date_to, end_of_day=True)
 
-            meetings = db.meetings.list_meetings(limit=limit, offset=offset)
+            search_ids: Optional[list[str]] = None
+            if search:
+                results = db.meetings.search_transcripts(search, limit=500)
+                search_ids = list(dict.fromkeys([r[0] for r in results]))
+
+            meetings = db.meetings.list_meetings(
+                limit=limit,
+                offset=offset,
+                date_from=parsed_from,
+                date_to=parsed_to,
+                tag=tag,
+                speaker=speaker,
+                has_open_actions=has_open_actions,
+                meeting_ids=search_ids,
+            )
+            filtered = bool(search or date_from or date_to or speaker or tag or has_open_actions)
             return JSONResponse({
                 "meetings": [
                     {
@@ -310,7 +347,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                     }
                     for m in meetings
                 ],
-                "total": db.meetings.get_meeting_count(),
+                "total": len(meetings) if filtered else db.meetings.get_meeting_count(),
             })
         except Exception as e:
             log.error(f"Failed to list meetings: {e}")
@@ -429,6 +466,23 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             log.error(f"Failed to update speaker: {e}")
             return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
+    @router.get("/api/meetings/facets")
+    async def api_meeting_facets() -> Any:
+        """Distinct speakers + tags for the /history filter row (HS-55-04).
+
+        Registered before ``/api/meetings/{meeting_id}`` so "facets" never
+        matches as a meeting id.
+        """
+        try:
+            from ...db import get_database
+            db = get_database()
+            return JSONResponse(db.meetings.list_facet_values())
+        except Exception as e:
+            log.error(f"Failed to list meeting facets: {e}")
+            return JSONResponse(
+                {"error": str(e)}, status_code=500
+            )
+
     @router.get("/api/meetings/{meeting_id}")
     async def api_get_meeting(meeting_id: str) -> Any:
         """Get meeting details from database."""
@@ -443,6 +497,23 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(meeting.to_dict())
         except Exception as e:
             log.error(f"Failed to get meeting: {e}")
+            return JSONResponse(
+                {"error": str(e)}, status_code=500
+            )
+
+    @router.delete("/api/meetings/{meeting_id}")
+    async def api_delete_meeting(meeting_id: str) -> Any:
+        """Delete a meeting (HS-55-02: e.g. a failed import's honest row)."""
+        try:
+            from ...db import get_database
+            db = get_database()
+            if not db.meetings.delete_meeting(meeting_id):
+                return JSONResponse(
+                    {"error": "Meeting not found"}, status_code=404
+                )
+            return JSONResponse({"deleted": meeting_id})
+        except Exception as e:
+            log.error(f"Failed to delete meeting: {e}")
             return JSONResponse(
                 {"error": str(e)}, status_code=500
             )
