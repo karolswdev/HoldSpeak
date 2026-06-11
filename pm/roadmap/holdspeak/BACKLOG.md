@@ -39,7 +39,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 | G | Privacy visible at decision points | feature | review bet #7 | absorbed into **J** (the Qlippy card is the decision-point surface) |
 | H | Public-docs hygiene (strip roadmap vocab from user-facing docs) | release/debt | this conversation (post-P50 release polish) | **shipped → [phase-51](./phase-51-public-docs-hygiene/) (CLOSED 5/5)** |
 | I | Meeting import ("bring your archive") + faceted history search | feature | post-P53 strategic review | **shipped → [phase-55](./phase-55-meeting-import/) (CLOSED 6/6)** (proven on real metal: real Whisper + real intel on `.43`) |
-| J | Qlippy, the presence enhancer (absorbs G) | feature/delight | post-P53 review + [proposal](./proposals/qlippy-presence-enhancer.md) | queued after I |
+| J | Qlippy, the presence enhancer (absorbs G) | feature/delight | post-P53 review + [proposal](./proposals/qlippy-presence-enhancer.md) | **scaffolded → [phase-56](./phase-56-qlippy/)** |
 | K | Speak the world's languages + spoken-symbol dictionary | feature | post-P53 strategic review | queued after J |
 | L | Export connectors (Notion / Slack / Docs) on the connector-pack framework | feature | post-P53 strategic review | parked |
 | M | Dictation preview-before-commit (review before it types) | feature | post-P53 strategic review | parked |
@@ -144,7 +144,7 @@ action-status; today `/history` has a single text box), because import is what m
 the archive big enough to need it.
 *Lands on:* the meeting capture seam + `/history`.
 
-### J. Qlippy, the presence enhancer (absorbs G) — queued
+### J. Qlippy, the presence enhancer (absorbs G) — scaffolded as Phase 56
 Give the presence layer a face and a voice: an ambient Qlippy dock reflecting runtime
 state, and a sliding card that makes the two least-visible high-stakes moments —
 actuator approval and the learning loop — actionable in the moment, without stealing
