@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 55
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-55-03, HS-55-04
 - **Unblocks:** HS-55-06
 - **Owner:** unassigned
@@ -29,12 +29,17 @@ kept) that must be stated, not discovered.
   evidence); roadmap vocabulary anywhere user-facing.
 
 ## Acceptance criteria
-- [ ] Docs ship product-tense; the Phase-51 roadmap-vocab guard passes; no
+- [x] Docs ship product-tense; the Phase-51 roadmap-vocab guard passes; no
       em/en dashes per `DOCS_STYLE.md`; `humanizer` run and pattern findings
-      addressed.
-- [ ] The three honest truths are present verbatim-checkably (guarded by the
-      doc tests if a cheap assertion fits).
-- [ ] Linked from the docs index under the meeting journey.
+      addressed. (The audit found a real cluster — the three-bold-bullets
+      list + announcement — rewritten to prose; evidence §2. Doc guards 69
+      passed; zero dashes in the new sections.)
+- [x] The three honest truths are present verbatim-checkably. (Stated plainly
+      in the guide: the ffmpeg requirement with the refusal behavior, the
+      one-speaker-label truth with the why, audio-not-retained/local-only.)
+- [x] Linked from the docs index under the meeting journey. (The Meet entry
+      mentions import + facets; the root README gains the one-liner; the
+      guide TOC gains both sections. Full suite 2568 passed, 17 skipped.)
 
 ## Test plan
 - `uv run pytest -q tests/unit -k "doc or drift"` + the full suite.

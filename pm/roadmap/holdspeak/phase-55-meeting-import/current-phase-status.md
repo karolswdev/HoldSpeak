@@ -1,11 +1,18 @@
 # Phase 55 — Meeting Import ("bring your archive") + faceted history search
 
-**Status:** in-progress (4/6). Opened 2026-06-11 on user direction (the agreed post-53
+**Status:** in-progress (5/6). Opened 2026-06-11 on user direction (the agreed post-53
 sequence **54 → I → J → K**), right after Phase 54 closed + merged (PR #41).
 From the [project backlog](../BACKLOG.md): candidate **I** (meeting import +
 faceted history search).
 
-**Last updated:** 2026-06-11 (**HS-55-04 done: faceted history search.**
+**Last updated:** 2026-06-11 (**HS-55-05 done: the docs.** Two product-tense
+sections in `docs/MEETING_MODE_GUIDE.md` ("Import an Existing Recording" with
+the web + CLI flows and the three honest truths in plain prose; "Find Meetings
+in Your Archive" for the server-side filter row), the docs-index Meet entry and
+the root README one-liner touched. The humanizer audit found a real cluster
+(announcement + three bold inline-header bullets) and the draft was rewritten;
+zero em/en dashes in the new sections; doc guards 69 passed; full suite **2568
+passed, 17 skipped**. **HS-55-04 (prior): faceted history search.**
 `GET /api/meetings` gains `date_from`/`date_to` (bare end date inclusive),
 `speaker`, `tag`, `has_open_actions` — all filtering **in SQL over the whole
 archive** and composing with `search` (FTS ids flow through the same faceted
@@ -140,19 +147,17 @@ about the single speaker label (no diarization in v1).
 | HS-55-02 | Import API + background job + CLI | done | HS-55-01 |
 | HS-55-03 | The /history import UI | done | HS-55-02 |
 | HS-55-04 | Faceted history search (API + filter row) | done | none |
-| HS-55-05 | Docs: import + facets | backlog | HS-55-03, HS-55-04 |
+| HS-55-05 | Docs: import + facets | done | HS-55-03, HS-55-04 |
 | HS-55-06 | Closeout: real-audio dogfood + final-summary + PR | backlog | HS-55-01..05 |
 
 ## Where we are
 
-**HS-55-01 → HS-55-04 shipped 2026-06-11.** Both halves of the thesis are
-real: the archive imports (engine → API/CLI → live browser flow) and the
-archive filters (server-side facets + the row, with the search-pill fix
-along the way).
+**HS-55-01 → HS-55-05 shipped 2026-06-11.** Feature + docs are whole.
 
-Next is **HS-55-05 — docs**: the import flow + facets documented
-product-tense (the three honest truths verbatim), passing the doc guards,
-linked from the docs index.
+Next is **HS-55-06 — closeout**: the real-metal dogfood (`say`-generated WAV →
+the real import API → real Whisper → `/history` segments → intel enqueued,
+processed on `.43` when reachable → facets include/exclude it), full suite,
+final-summary, BACKLOG candidate I flipped, PR to `main` merged on green.
 
 ## Open decisions (defaults chosen; flag to change)
 
