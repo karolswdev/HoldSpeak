@@ -1,11 +1,19 @@
 # Phase 54 — Dictation Frontend Decomposition
 
-**Status:** in-progress (5/6). Opened 2026-06-11 on user direction (the agreed post-53
+**Status:** CLOSED (6/6). See [`final-summary.md`](./final-summary.md). Opened 2026-06-11 on user direction (the agreed post-53
 sequence), right after Phase 53 closed + merged (PR #40). From the
 [project backlog](../BACKLOG.md): candidate **D** (frontend density paydown), promoted
 from "ride along with the next dictation feature" to its own phase.
 
-**Last updated:** 2026-06-11 (**HS-54-05 done: the pattern is documented.**
+**Last updated:** 2026-06-11 (**HS-54-06 done: phase CLOSED (6/6).** The closeout
+dogfood proves the nudge surfaces on the carved frontend with seeded activity
+(cards → pin "github_issue karolswdev/HoldSpeak#54" → clear → dismiss → the
+discovery nudge), 6/6 with zero page errors, on top of the standing 16/16
+all-tabs dogfood. Final suite **2545 passed, 17 skipped**; build clean; 0
+`_built/` tracked. `final-summary.md` records the paydown (6,101 lines / largest
+3,134 → largest 576, guard-locked) and the two latent bugs the seam caught.
+BACKLOG candidate **D** flipped to shipped; PR to `main` merged on green.
+**HS-54-05 (prior): the pattern is documented.**
 `docs/internal/ARCHITECTURE_WEB_FRONTEND.md` records the architecture as shipped —
 the shape + budgets, the module-seam decision (eval shim → real ES modules,
 un-minified client via the `configEnvironment` override), the section-loader
@@ -139,7 +147,7 @@ density guard. No feature, no visual change, no behavior change.
 | HS-54-03 | Section partials (carve dictation.astro) | done | HS-54-02 |
 | HS-54-04 | The density guard | done | HS-54-03 |
 | HS-54-05 | Docs: the frontend architecture pattern | done | HS-54-03 |
-| HS-54-06 | Closeout: dogfood + final-summary + PR | backlog | HS-54-01..05 |
+| HS-54-06 | Closeout: dogfood + final-summary + PR | done | HS-54-01..05 |
 
 ## Where we are
 
@@ -151,14 +159,10 @@ nine-tab screenshot sweep), the full suite is green with byte-identical
 assertions, and the seam surfaced two real latent bugs along the way (the
 duplicate `escapeAttr`; the silently-unstyled JS-rendered elements).
 
-**HS-54-04 + HS-54-05 shipped the same day**: the guard is armed and the
-pattern is documented (`docs/internal/ARCHITECTURE_WEB_FRONTEND.md`, linked
-from CONTRIBUTING).
-
-Next is **HS-54-06 — closeout**: the live nine-tab dogfood is already green
-(16/16, zero page errors) and the screenshot sweep committed; remaining is the
-final-summary with the before/after metrics, the README/BACKLOG flips, and the
-PR to `main` merged on green CI.
+**HS-54-04 + HS-54-05 + HS-54-06 shipped the same day**: the guard is armed,
+the pattern is documented, and the closeout dogfood proved the nudge surfaces
+end to end on seeded activity. **The phase is CLOSED (6/6)** — see
+[`final-summary.md`](./final-summary.md); PR to `main` merged on green CI.
 
 ## Open decisions (defaults chosen; flag to change)
 

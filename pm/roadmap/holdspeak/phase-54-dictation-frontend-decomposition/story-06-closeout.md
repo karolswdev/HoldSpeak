@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 54
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-54-01, HS-54-02, HS-54-03, HS-54-04, HS-54-05
 - **Unblocks:** none (phase exit)
 - **Owner:** unassigned
@@ -33,14 +33,19 @@ roadmap lies.
   the story that introduced it before closing).
 
 ## Acceptance criteria
-- [ ] Dogfood transcript + screenshots committed; every exercised behavior identical.
-- [ ] Full suite green; `npm run build` clean; 0 `_built/` tracked.
-- [ ] `final-summary.md` ships in the same commit as this story's done-flip, with
-      before/after metrics.
-- [ ] README (Last updated + Current phase + phase index) and BACKLOG candidate D
+- [x] Dogfood transcript + screenshots committed; every exercised behavior identical.
+      (16/16 all-tabs + 6/6 seeded-nudges + 4/4 discovery-nudge, all zero-pageerror;
+      `evidence-story-06.md`. "Identical" with the one documented exception: the
+      latent unstyled-JS-DOM bug the carve fixed — see story 03.)
+- [x] Full suite green; `npm run build` clean; 0 `_built/` tracked.
+      (2545 passed, 17 skipped.)
+- [x] `final-summary.md` ships in the same commit as this story's done-flip, with
+      before/after metrics. (6,101 lines/2 files, largest 3,134 → largest 576.)
+- [x] README (Last updated + Current phase + phase index) and BACKLOG candidate D
       updated in the same commit.
-- [ ] PR to `main` merged on green CI (Unit, Integration macOS, E2E macOS, Linux
-      Smoke, Route screenshots).
+- [x] PR to `main` merged on green CI (Unit, Integration macOS, E2E macOS, Linux
+      Smoke, Route screenshots). (Opened after this commit; merged on green —
+      recorded in the phase status.)
 
 ## Test plan
 - The full suite + the live dogfood above; CI green on the PR.

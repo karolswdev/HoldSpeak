@@ -33,7 +33,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 | A | Meeting aftercare ("close the loop") | feature | review bet #5 | **shipped → [phase-49](./phase-49-meeting-aftercare/) (CLOSED 6/6)** |
 | B | Voice macros / command grammar | feature | review bet #2; deferred from P48 | **shipped → [phase-52](./phase-52-voice-macros/) (CLOSED 7/7)** (a voice command launcher; with a scoped slice of E) |
 | C | Release-readiness gate (schema policy + 1.0) | release | review "Trouble" #5; deferred from P48 | **shipped → [phase-50](./phase-50-release-readiness/) (CLOSED 7/7)** |
-| D | Frontend density paydown (dictation page) | debt | review "Trouble" #4; P48 standing invariant | **scaffolded → [phase-54](./phase-54-dictation-frontend-decomposition/)** |
+| D | Frontend density paydown (dictation page) | debt | review "Trouble" #4; P48 standing invariant | **shipped → [phase-54](./phase-54-dictation-frontend-decomposition/) (CLOSED 6/6)** (6,101 lines → largest file 576, guard-locked; two latent bugs fixed) |
 | E | `WebRuntime` / `web_server` decomposition (+ `meeting_session.py`) | debt | review "Trouble" #1 | watch (a **dictation-path slice** was carved in [phase-52](./phase-52-voice-macros/) with B; the full decomposition stays a watch item) |
 | F | Local activity as pre-briefing fuel | feature | review bet #6 | **shipped → [phase-53](./phase-53-activity-prebriefing/) (CLOSED 7/7)** (source-cited dismissible nudges + "Dictate with this" closes the loop, proven on a live LLM) |
 | G | Privacy visible at decision points | feature | review bet #7 | absorbed into **J** (the Qlippy card is the decision-point surface) |
@@ -74,7 +74,7 @@ versions, whether destructive migration is ever allowed, backup/export before
 upgrade, and what `doctor` reports on unexpected schema state. This is the bet
 that actually lets the open-source push *ship* publicly.
 
-### D. Frontend density paydown — scaffolded as Phase 54
+### D. Frontend density paydown — shipped as Phase 54 (CLOSED 6/6)
 `dictation.astro` (3,134 lines) and `dictation-app.js` (2,967 lines) grew every recent
 phase (the standing page-density invariant lost five rounds running: P40, P45, P47,
 P48, P53). Promoted from "ride along with the next dictation feature" to its own phase:
