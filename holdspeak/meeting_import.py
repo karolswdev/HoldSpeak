@@ -1,12 +1,15 @@
-"""Import an existing audio recording as a real meeting.
+"""Import an existing recording — or transcript — as a real meeting.
 
 The engine behind ``holdspeak import`` and ``POST /api/meetings/import``:
-file in, meeting out. It decodes a recording (WAV natively via the stdlib
-``wave`` module; common compressed formats by shelling out to ``ffmpeg`` when
-it is on PATH), transcribes it in fixed windows through the normal
-``Transcriber`` so segments carry real start/end times, persists a normal
-``MeetingState`` via ``db.meetings.save_meeting``, and enqueues deferred
-meeting intelligence under the same conditions as a live capture.
+file in, meeting out. A recording (WAV natively via the stdlib ``wave``
+module; common compressed formats by shelling out to ``ffmpeg`` when it is
+on PATH) is transcribed in fixed windows through the normal ``Transcriber``
+so segments carry real start/end times. A transcript (``.vtt``/``.srt``/
+``.txt``, HS-57) skips transcription entirely: the parser produces honest
+cues (real timestamps and speaker names when the file carries them). Both
+paths share one persistence tail: a normal ``MeetingState`` via
+``db.meetings.save_meeting`` and deferred meeting intelligence enqueued
+under the same conditions as a live capture.
 
 Honest limits, by design:
 
@@ -38,6 +41,11 @@ import numpy as np
 
 from .audio import _linear_resample_mono
 from .meeting_session import MeetingState, TranscriptSegment
+from .transcript_parse import (
+    TRANSCRIPT_SUFFIXES,
+    TranscriptParseError,
+    parse_transcript,
+)
 
 log = logging.getLogger("holdspeak.meeting_import")
 
@@ -50,6 +58,8 @@ DEFAULT_WINDOW_SECONDS = 30.0
 # Formats ffmpeg can decode for us. WAV is handled natively first.
 FFMPEG_SUFFIXES = {".mp3", ".m4a", ".aac", ".ogg", ".oga", ".opus", ".flac", ".webm", ".mp4"}
 DEFAULT_SPEAKER_LABEL = "Recording"
+# The fallback voice for transcript imports whose file carries no labels.
+DEFAULT_TRANSCRIPT_SPEAKER_LABEL = "Transcript"
 
 ProgressCallback = Callable[[int, int], None]
 
@@ -68,6 +78,9 @@ class ImportResult:
     windows_empty: int
     duration_seconds: float
     warnings: list[str] = field(default_factory=list)
+    # HS-57-02: transcript imports only — the speaker labels the FILE carried
+    # (never invented; empty for audio imports and unlabeled transcripts).
+    speakers_found: list[str] = field(default_factory=list)
 
 
 def ffmpeg_available() -> bool:
@@ -115,14 +128,22 @@ def _decode_with_ffmpeg(path: Path) -> tuple[np.ndarray, int]:
     return audio, TARGET_SAMPLE_RATE
 
 
+def is_transcript_filename(filename: str) -> bool:
+    """True when ``filename`` names a transcript import (HS-57)."""
+    return Path(filename).suffix.lower() in TRANSCRIPT_SUFFIXES
+
+
 def validate_format(filename: str) -> None:
     """Cheap suffix/ffmpeg validation so callers can refuse before decoding.
 
     Raises :class:`MeetingImportError` with the same actionable messages
     ``load_audio`` would produce for an unsupported format or missing ffmpeg.
+    Transcript suffixes (HS-57) validate without any decoder dependency.
     """
     suffix = Path(filename).suffix.lower()
     if suffix == ".wav":
+        return
+    if suffix in TRANSCRIPT_SUFFIXES:
         return
     if suffix in FFMPEG_SUFFIXES:
         if not ffmpeg_available():
@@ -135,7 +156,9 @@ def validate_format(filename: str) -> None:
     raise MeetingImportError(
         f"Unsupported audio format: {suffix or filename}. Supported: .wav natively; "
         + ", ".join(sorted(FFMPEG_SUFFIXES))
-        + " with ffmpeg installed."
+        + " with ffmpeg installed; transcripts: "
+        + ", ".join(sorted(TRANSCRIPT_SUFFIXES))
+        + "."
     )
 
 
@@ -240,11 +263,48 @@ def import_meeting(
             f"({windows_total} window(s) checked). Nothing was imported."
         )
 
+    return _persist_import(
+        db=db,
+        config=config,
+        segments=segments,
+        duration=duration,
+        started_at=started_at,
+        title=(title or path.stem).strip() or path.stem,
+        tags=tags,
+        meeting_id=meeting_id,
+        source_name=path.name,
+        windows_total=windows_total,
+        windows_empty=windows_empty,
+    )
+
+
+def _persist_import(
+    *,
+    db,
+    config,
+    segments: list[TranscriptSegment],
+    duration: float,
+    started_at: datetime,
+    title: str,
+    tags: Sequence[str],
+    meeting_id: Optional[str],
+    source_name: str,
+    windows_total: int = 0,
+    windows_empty: int = 0,
+    speakers_found: Optional[list[str]] = None,
+) -> ImportResult:
+    """The shared persistence tail: segments in, a real meeting out.
+
+    One tail, every import path (audio HS-55, transcripts HS-57): builds the
+    normal ``MeetingState``, mirrors the live capture's intel posture, saves
+    via the normal ``save_meeting``, and enqueues deferred intel under the
+    same conditions as a live capture.
+    """
     state = MeetingState(
         id=meeting_id or str(uuid.uuid4())[:8],
         started_at=started_at,
         ended_at=started_at + timedelta(seconds=duration),
-        title=(title or path.stem).strip() or path.stem,
+        title=title,
         tags=[t for t in (tag.strip() for tag in tags) if t],
         segments=segments,
     )
@@ -270,7 +330,7 @@ def import_meeting(
         intel_job_enqueued = True
 
     log.info(
-        f"Imported meeting {state.id} from {path.name}: "
+        f"Imported meeting {state.id} from {source_name}: "
         f"{len(segments)} segment(s), {duration:.1f}s, intel_enqueued={intel_job_enqueued}"
     )
     return ImportResult(
@@ -279,4 +339,68 @@ def import_meeting(
         windows_total=windows_total,
         windows_empty=windows_empty,
         duration_seconds=duration,
+        speakers_found=list(speakers_found or []),
+    )
+
+
+def import_transcript(
+    path: Path | str,
+    *,
+    db,
+    config,
+    title: Optional[str] = None,
+    speaker: str = DEFAULT_TRANSCRIPT_SPEAKER_LABEL,
+    tags: Sequence[str] = (),
+    started_at: Optional[datetime] = None,
+    meeting_id: Optional[str] = None,
+) -> ImportResult:
+    """Import one transcript file (`.vtt`/`.srt`/`.txt`) as a real meeting.
+
+    The cheaper sibling of :func:`import_meeting`: no transcriber, no ffmpeg
+    — parse (HS-57-01), build honest segments, and run the same persistence
+    tail. Segments carry the file's real cue timestamps (VTT/SRT) or the
+    parser's synthetic ordering (TXT); speakers are the file's own labels,
+    falling back to ``speaker`` for unlabeled content. The file is read and
+    **not retained** — the meeting record is the artifact.
+    """
+    path = Path(path)
+    if not path.is_file():
+        raise MeetingImportError(f"No such transcript file: {path}")
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError as exc:
+        raise MeetingImportError(f"Could not read {path.name}: {exc}") from exc
+
+    fallback = (speaker or DEFAULT_TRANSCRIPT_SPEAKER_LABEL).strip() or (
+        DEFAULT_TRANSCRIPT_SPEAKER_LABEL
+    )
+    try:
+        parsed = parse_transcript(text, path.name, fallback_speaker=fallback)
+    except TranscriptParseError as exc:
+        raise MeetingImportError(str(exc)) from exc
+
+    segments = [
+        TranscriptSegment(
+            text=cue.text, speaker=cue.speaker, start_time=cue.start, end_time=cue.end
+        )
+        for cue in parsed.cues
+    ]
+    duration = max(cue.end for cue in parsed.cues)
+
+    if started_at is None:
+        # An old transcript should sort where the meeting happened, not where
+        # it was imported — the file's mtime is the best honest default.
+        started_at = datetime.fromtimestamp(path.stat().st_mtime)
+
+    return _persist_import(
+        db=db,
+        config=config,
+        segments=segments,
+        duration=duration,
+        started_at=started_at,
+        title=(title or path.stem).strip() or path.stem,
+        tags=tags,
+        meeting_id=meeting_id,
+        source_name=path.name,
+        speakers_found=parsed.speakers_found,
     )

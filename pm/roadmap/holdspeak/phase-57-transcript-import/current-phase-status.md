@@ -1,6 +1,6 @@
 # Phase 57 — Transcript Import ("bring your archive", part 2)
 
-**Status:** in-progress (1/5). Opened 2026-06-11 on user direction, straight
+**Status:** in-progress (2/5). Opened 2026-06-11 on user direction, straight
 after Phase 56 closed (PR #43): *"can we also do it by simply uploading a
 transcript too? I often have transcripts, rarely do I have recordings (but I
 don't want you to remove the recording upload affordance, of course!)"*.
@@ -8,7 +8,19 @@ Net-new from that conversation (BACKLOG candidate **P**), slotted ahead of
 **K** because it is small and completes the Phase-55 "bring your archive"
 thesis.
 
-**Last updated:** 2026-06-11 (**HS-57-01 done: the transcript parsers.**
+**Last updated:** 2026-06-11 (**HS-57-02 done: the engine path + CLI.** The
+Phase-55 persistence tail factored verbatim into `_persist_import` (the
+audio path byte-identical — its test file untouched and green);
+`import_transcript` reads, parses, and persists honest segments through
+that one tail (real cue timestamps for VTT/SRT, synthetic ordering for
+TXT, file-carried speakers with the `Transcript` fallback, mtime
+`started_at`, one error type for callers); `ImportResult` stays truthful
+(0 windows, a new additive `speakers_found`); `validate_format` learns the
+trio without touching audio messages; `holdspeak import notes.vtt`
+branches before any model load — the no-transcriber guarantee is
+monkeypatch-asserted. 12 tests; zero-cue refusal persists nothing; FTS
+reachability asserted. Full suite **2636 passed, 17 skipped** (+12).
+**HS-57-01 (prior): the transcript parsers.**
 `holdspeak/transcript_parse.py`, pure and greenfield: VTT (BOM/CRLF,
 hour-optional timings, voice tags with optional close + the voice
 continuity model, NOTE/STYLE skip, tag stripping, suffix-mislabel rescue
@@ -86,14 +98,15 @@ stays, untouched.
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HS-57-01 | The transcript parsers | done | none |
-| HS-57-02 | The engine path + CLI | backlog | HS-57-01 |
+| HS-57-02 | The engine path + CLI | done | HS-57-01 |
 | HS-57-03 | API + /history UI | backlog | HS-57-02 |
 | HS-57-04 | Docs: transcript import | backlog | HS-57-03 |
 | HS-57-05 | Closeout: real-VTT dogfood + final-summary + PR | backlog | HS-57-01..04 |
 
 ## Where we are
 
-**HS-57-01 shipped 2026-06-11.** The parsers are real and honest. Next is
-**HS-57-02 — the engine path + CLI**: factor the Phase-55 persistence tail
-(audio byte-identical), `import_transcript`, `validate_format` learns the
-trio, the CLI branches by suffix.
+**HS-57-01 → HS-57-02 shipped 2026-06-11.** A `.vtt` on disk is one CLI
+command away from being a real meeting, with no model load at all. Next is
+**HS-57-03 — API + /history UI**: the route branches by suffix (no
+transcriber built; same lifecycle) and the panel becomes "Import a
+recording or transcript" with per-kind honest notes.

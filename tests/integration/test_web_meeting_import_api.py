@@ -138,9 +138,11 @@ def test_import_happy_path_progresses_to_a_real_meeting(client, db, monkeypatch)
 
 
 def test_unsupported_format_and_missing_ffmpeg_refuse_up_front(client, db, monkeypatch):
+    # HS-57: .txt is a transcript format now, no longer refused — the
+    # up-front refusal is exercised with a genuinely unsupported suffix.
     bad = client.post(
         "/api/meetings/import",
-        files={"file": ("notes.txt", b"not audio", "text/plain")},
+        files={"file": ("slides.pdf", b"%PDF fake", "application/pdf")},
     )
     assert bad.status_code == 400
     assert "Unsupported audio format" in bad.json()["error"]

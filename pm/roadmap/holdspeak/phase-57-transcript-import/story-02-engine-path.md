@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 57
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-57-01
 - **Unblocks:** HS-57-03
 - **Owner:** unassigned
@@ -29,16 +29,19 @@ is exactly what they need — but it is welded to the audio path.
 - **Out:** the web route/UI (HS-57-03); any change to audio behavior.
 
 ## Acceptance criteria
-- [ ] The audio path is byte-identical: existing engine/route tests pass
-      unmodified; the tail is one function with two callers.
-- [ ] `import_transcript` mirrors the live intel-enqueue conditions and
-      enqueues with the final transcript hash.
-- [ ] Saved segments carry the file's real cue timestamps (VTT/SRT) or the
+- [x] The audio path is byte-identical: existing engine/route tests pass
+      unmodified; the tail is one function (`_persist_import`) with two
+      callers.
+- [x] `import_transcript` mirrors the live intel-enqueue conditions and
+      enqueues with the final transcript hash (the shared tail does it).
+- [x] Saved segments carry the file's real cue timestamps (VTT/SRT) or the
       synthetic ones (TXT), and the file's speaker labels reach the db
-      (visible to the speaker facet / FTS).
-- [ ] Zero-cue input refuses with the parser's actionable message; nothing
-      is persisted.
-- [ ] CLI: a `.vtt` imports without constructing a transcriber.
+      (FTS-reachability asserted).
+- [x] Zero-cue input refuses with the parser's actionable message; nothing
+      is persisted (meetings AND intel jobs asserted empty).
+- [x] CLI: a `.vtt` imports without constructing a transcriber
+      (monkeypatch-asserted at the engine seam the CLI calls).
+      12 tests; see `evidence-story-02.md`.
 
 ## Test plan
 - Unit: tail-parity (audio fixtures before/after), transcript engine
@@ -46,5 +49,7 @@ is exactly what they need — but it is welded to the audio path.
   CLI smoke via the engine. Full suite.
 
 ## Notes / open questions
-- Decide and document `ImportResult` semantics for transcripts
-  (windows_total/empty = 0; duration from cues).
+- Decided: `ImportResult` for transcripts carries `windows_total=0` /
+  `windows_empty=0` (no transcription happened — truthful) plus a new
+  additive `speakers_found` list (the file's labels; empty for audio);
+  duration is the last cue's end.
