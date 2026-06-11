@@ -167,6 +167,51 @@ function onAftercareReady(data) {
   });
 }
 
+// HS-60: the wake preview — the safety fork made visible. The wake word
+// armed, your sentence ran the normal pipeline, and NOTHING was typed:
+// this card is the one decisive glance. Type it sends the one-shot token;
+// the server types only its own stored preview and burns the token.
+function onWakePreview(data) {
+  if (!data || !data.token) return;
+  presentCard({
+    key: `wake:${data.token}`,
+    sprite: "alert",
+    glyph: "check",
+    headline: "Heard you — review before it types",
+    detail: data.transcript || "",
+    preview: data.text || "",
+    privacy:
+      "Nothing has been typed. Local only: the wake word and transcription ran on this machine. " +
+      "Your controls: Type it, or dismiss and nothing happens.",
+    sticky: true,
+    actions: [
+      {
+        label: "Type it",
+        kind: "primary",
+        onClick: () => {
+          fetch("/api/dictation/wake/type", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: data.token }),
+          })
+            .then((r) => r.json())
+            .then((body) => {
+              if (!body.success) throw new Error(body.error || "failed");
+            })
+            .catch((error) =>
+              presentCard({
+                sprite: "error",
+                glyph: "x",
+                headline: "Couldn't type the preview",
+                detail: String(error.message || error),
+              })
+            );
+        },
+      },
+    ],
+  });
+}
+
 document.addEventListener("hs-broadcast", (event) => {
   const msg = event.detail;
   if (!msg || !msg.type) return;
@@ -174,4 +219,5 @@ document.addEventListener("hs-broadcast", (event) => {
   if (msg.type === "actuator_result") onActuatorResult(msg.data);
   if (msg.type === "learning_event") onLearningEvent(msg.data);
   if (msg.type === "aftercare_ready") onAftercareReady(msg.data);
+  if (msg.type === "wake_preview") onWakePreview(msg.data);
 });

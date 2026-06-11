@@ -35,6 +35,7 @@ const DOCK_MAP = {
   saving: "thinking",
   typing: "thinking",
   error: "error",
+  armed: "listening",
 };
 
 const wrap = document.getElementById("qlippy");

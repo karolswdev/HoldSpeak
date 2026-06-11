@@ -458,6 +458,33 @@ def build_system_router(ctx: WebContext) -> APIRouter:
         except Exception as e:
             return error_500(e, log, "Failed to load settings")
 
+    @router.post("/api/dictation/wake/type")
+    async def api_wake_type(payload: dict[str, Any]) -> Any:
+        """HS-60: type a stored wake preview, exactly once.
+
+        The token was minted server-side when the preview was created; the
+        runtime types ONLY its own stored text and burns the token. Client
+        text is never accepted here.
+        """
+        if ctx.on_wake_type is None:
+            return JSONResponse(
+                {"success": False, "error": "Wake typing is unavailable in this runtime."},
+                status_code=503,
+            )
+        token = str((payload or {}).get("token", "")).strip()
+        if not token:
+            return JSONResponse(
+                {"success": False, "error": "A preview token is required."},
+                status_code=400,
+            )
+        typed = ctx.on_wake_type(token)
+        if typed is None:
+            return JSONResponse(
+                {"success": False, "error": "Unknown or already used preview token."},
+                status_code=404,
+            )
+        return {"success": True, "typed": typed}
+
     @router.post("/api/commands/test")
     async def api_test_voice_command(payload: dict[str, Any]) -> Any:
         """HS-52-05: fire one voice command action from the board, to verify it.

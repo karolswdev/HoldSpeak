@@ -745,6 +745,7 @@ class WebRuntime:
                 on_system_level=lambda _level: None,
                 on_intel=self._on_meeting_intel,
                 on_settings_applied=self._apply_updated_config,
+                on_wake_type=self._type_wake_preview,
                 on_broadcast=self._on_meeting_broadcast,
                 intel_enabled=self.config.meeting.intel_enabled,
                 intel_model_path=self.config.meeting.intel_realtime_model,
@@ -1883,9 +1884,22 @@ class WebRuntime:
         cfg = self.config.wake_word
         try:
             detector = OpenWakeWordDetector(cfg.model)
-        except Exception as exc:
-            log.warning(f"Wake model {cfg.model!r} unavailable: {exc}")
-            return
+        except Exception:
+            # First enable: fetch the models — the feature's ONE network
+            # moment (~7 MB from the openWakeWord GitHub releases), stated in
+            # the settings copy and the docs.
+            try:
+                from .wake_word import download_wake_models
+
+                log.info(
+                    f"Downloading the wake models for {cfg.model!r} "
+                    "(one-time, from the openWakeWord GitHub releases)…"
+                )
+                download_wake_models(cfg.model)
+                detector = OpenWakeWordDetector(cfg.model)
+            except Exception as exc:
+                log.warning(f"Wake model {cfg.model!r} unavailable: {exc}")
+                return
         import queue as queue_mod
 
         try:
@@ -2107,6 +2121,32 @@ class WebRuntime:
         """One-shot: return the stored preview text and burn the token."""
         entry = self.wake_previews.pop(str(token or ""), None)
         return None if entry is None else str(entry.get("text", ""))
+
+    def _type_wake_preview(self, token: str) -> Optional[str]:
+        """The Type-it route's handler: burn the token, type the stored text."""
+        text = self.consume_wake_preview(token)
+        if text is None:
+            return None
+        try:
+            self.typer.type_text(text)
+        except Exception as exc:
+            self._set_runtime_activity(
+                "error",
+                source="wake",
+                detail="Typing the wake preview failed.",
+                last_event="wake_type_failed",
+                last_error=f"{type(exc).__name__}: {exc}",
+            )
+            return None
+        self._set_runtime_activity(
+            "complete",
+            source="wake",
+            label="Typed",
+            detail=text[:120],
+            last_event="wake_preview_typed",
+            last_error="",
+        )
+        return text
 
     def _on_hotkey_press(self) -> None:
         if self.runtime_stop_event.is_set():
@@ -2451,6 +2491,7 @@ class WebRuntime:
                     on_update_action_item_review=self._on_update_action_item_review,
                     on_edit_action_item=self._on_edit_action_item,
                     on_settings_applied=self._apply_updated_config,
+                on_wake_type=self._type_wake_preview,
                     project_detector=self.project_detector,
                     device_registry=self.device_registry,
                     device_psk_provider=lambda: ensure_device_psk(self.config),

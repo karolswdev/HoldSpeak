@@ -1,6 +1,6 @@
 # Phase 60 — The Wake Word
 
-**Status:** in-progress (2/6). Opened 2026-06-11 on standing user direction
+**Status:** in-progress (3/6). Opened 2026-06-11 on standing user direction
 ("K, then O" → "Word"), right after Phase 59 closed (PR #48). From the
 [project backlog](../BACKLOG.md): candidate **O**, with the four recorded
 safety conditions fixed: **arms, not types** (preview is the default
@@ -9,7 +9,18 @@ indicator** (presence + Qlippy + cockpit), **a local engine with a
 MEASURED false-accept story** (openWakeWord, Apache-2.0; Porcupine ruled
 out on licensing), **off by default**.
 
-**Last updated:** 2026-06-11 (**HS-60-02 done: arm, capture, and the
+**Last updated:** 2026-06-11 (**HS-60-03 done: the armed UX + settings.**
+The armed state is first-class on the ambient surfaces (presence
+STATE_META, the Qlippy dock, every socket page); the sticky wake preview
+card carries the safety copy ("Nothing has been typed… Type it, or
+dismiss and nothing happens"); the one-shot Type-it route burns its
+server-minted token and **structurally ignores client text** (asserted
+with an injection payload); the settings section ships the honest copy
+(the egress note, the false-detection warning on the type option, the
+presence recommendation) + first-enable self-healing model download. The
+cockpit-banner idea replaced by the recorded broadcast-everywhere +
+presence-recommended design. 8 tests; three screenshots; suite **2723
+passed, 17 skipped** (+8). **HS-60-02 (prior): arm, capture, and the
 pipeline.** `ArmedCapture` (frame-count time: speech onset in the window,
 silence-stop, runaway cap, silent disarm); the runtime glue with a
 self-healing floor-respecting frame source (any audio-floor owner pauses
@@ -111,14 +122,13 @@ false-accept posture measured, not asserted.
 |---|---|---|---|
 | HS-60-01 | The engine seam + config | done | none |
 | HS-60-02 | Arm, capture, and the pipeline | done | HS-60-01 |
-| HS-60-03 | The armed UX + settings | backlog | HS-60-02 |
+| HS-60-03 | The armed UX + settings | done | HS-60-02 |
 | HS-60-04 | The false-accept measurement | backlog | HS-60-01 |
 | HS-60-05 | Docs: the wake word | backlog | HS-60-03, HS-60-04 |
 | HS-60-06 | Closeout: real-metal loop + final-summary + PR | backlog | HS-60-01..05 |
 
 ## Where we are
 
-**HS-60-01 → HS-60-02 shipped 2026-06-11.** The loop is real: detection
-to a preview that never types. Next is **HS-60-03 — the armed UX +
-settings**: the unmissable armed state, the preview card with the
-one-shot Type it, the settings section.
+**HS-60-01 → HS-60-03 shipped 2026-06-11.** The loop is visible and the
+preview is one decisive glance. Next is **HS-60-04 — the false-accept
+measurement**: the committed harness, the numbers in evidence.
