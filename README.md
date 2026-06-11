@@ -84,18 +84,40 @@ updated pipeline. Instead of trusting that it improved, you watch it happen.
 </p>
 <p align="center"><em>The learning digest. Honest, windowed counts from the same matcher that nudges your routing.</em></p>
 
-And if you want a face on all of it: Qlippy, an optional pixel-art mascot,
-sits on the desktop presence surface and turns the moments that need you into
-dismissible cards: an action awaiting approval, a correction that actually
-reached past dictations, a meeting that left open items. He never acts on his
-own, and every actionable card states in plain language what data is used,
-whether anything leaves your machine, and what your controls are. Off by
-default, like everything ambient here.
+## Meet Qlippy
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/presence/qlippy-decision-card.png" alt="Qlippy's decision card: the pixel-art mascot in an alert pose beside the headline 'A decision needs you', the exact preview of a proposed GitHub issue, plain-language privacy answers, and Approve and Decline buttons." width="420">
+  <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/presence/qlippy-avatar.png" alt="Qlippy, HoldSpeak's pixel-art paperclip mascot: an orange paperclip with big expressive eyes and skeptical eyebrows." width="160">
 </p>
-<p align="center"><em>Qlippy asking for a decision: the exact preview, the privacy answers, and your controls. Nothing runs until you approve.</em></p>
+
+Yes, he is a paperclip. The famous one had two problems: he interrupted you,
+and he could not actually do anything. Qlippy is the apology for both. He
+lives on the desktop presence surface (opt-in, two switches deep), spends
+most of his time as a tiny animated dock sprite mirroring what the runtime is
+doing, and slides out a card only for the few moments that genuinely need
+you: an action awaiting your approval, a correction that actually reached
+past dictations, a meeting that ended with open items.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/presence/qlippy-native-overlay.png" alt="The native Linux overlay on a real desktop: Qlippy in an alert pose beside the headline 'A decision needs you', the exact preview of a proposed GitHub issue, plain-language privacy answers, and Approve and Decline buttons, floating over a browser window." width="420">
+</p>
+<p align="center"><em>The marquee moment, on a real desktop: a proposed GitHub issue waiting for a decision. The native panel takes pointer clicks only while a card shows and can never steal keyboard focus.</em></p>
+
+**He never acts on his own.** Approving on his card sends the identical
+audited request the dashboard sends; until then nothing runs and nothing
+leaves your machine. Every actionable card answers three questions in plain
+language: what data is used, whether anything leaves this machine, and what
+your controls are. Dismissing him is always safe, and he is honest to a
+fault: the "Learned from you" card only ever appears when a correction
+really reached past dictations, with the real count.
+
+| A decision needs you | Learned from you |
+| --- | --- |
+| ![Qlippy's decision card: the alert-pose mascot, the exact preview of a proposed GitHub issue, plain-language privacy answers, and Approve and Decline buttons.](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/presence/qlippy-decision-card.png) | ![Qlippy's learned card: the mascot with a lightbulb, reporting that a correction was applied and matches 2 past dictations, with a local-only privacy note and a View digest button.](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/presence/qlippy-learned-card.png) |
+| The exact preview, the privacy answers, your controls. Nothing runs until you approve. | Only when a correction really reached past dictations, with the honest count. Local only. |
+
+Off by default, like everything ambient here. Turn him on under
+**Settings, Desktop presence, "Qlippy, the mascot"**.
 
 ## How it compares (as of mid-2026)
 
@@ -226,6 +248,7 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 | Set up the dictation pipeline for Codex / Claude | [Intelligent Typing Setup](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INTELLIGENT_TYPING_GUIDE.md) |
 | Review, correct, and replay past dictations | [The dictation journal & replay](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay) |
 | Map spoken keywords to real actions | [Voice Commands](https://github.com/karolswdev/HoldSpeak/blob/main/docs/VOICE_COMMANDS.md) |
+| Turn on Qlippy, the mascot | [Qlippy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INTELLIGENT_TYPING_GUIDE.md#qlippy-the-mascot-optional) |
 | Use meeting mode and configure AI intelligence | [Meeting Mode Guide](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MEETING_MODE_GUIDE.md) |
 | Wire up the AIPI-Lite companion | [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AIPI_LITE_DEV_WORKFLOW.md) |
 | Install Claude / Codex agent hooks | [Agent Hook Install](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AGENT_HOOK_INSTALL.md) |
