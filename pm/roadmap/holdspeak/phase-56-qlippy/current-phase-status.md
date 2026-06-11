@@ -1,12 +1,26 @@
 # Phase 56 — Qlippy, the Presence Enhancer
 
-**Status:** in-progress (1/7). Opened 2026-06-11 on user direction ("lettuce go
+**Status:** in-progress (2/7). Opened 2026-06-11 on user direction ("lettuce go
 with qlippy"), the third step of the agreed sequence **54 → I → J → K**, right after
 Phase 55 closed + merged (PR #42). From the [project backlog](../BACKLOG.md):
 candidate **J**, **absorbing candidate G** (privacy visible at decision
 points). Design RFC: [`../proposals/qlippy-presence-enhancer.md`](../proposals/qlippy-presence-enhancer.md).
 
-**Last updated:** 2026-06-11 (**HS-56-01 done: assets + the mascot gate.** The
+**Last updated:** 2026-06-11 (**HS-56-02 done: the dock + the card shell.**
+`qlippy.js` (framework-free, gated twice at boot, no POST in the shell — the
+one fetch is the gate, locked by test) drives the dock through the RFC state
+map (with the 5-min sleep + the complete flourish) and exposes
+`window.qlippyCard.present(...)`: one-at-a-time FIFO with a "+N" hint,
+pause-on-hover, slide-out on resolve/dismiss, an aria-live announcer. The page
+carries a static hidden skeleton (scoped CSS survives; only the JS-created
+action buttons are `is:global` per the Phase-54 rule) with the full motion
+spec (420 ms in / 280 ms out on the Signal curve, the settle bob + accent
+glow on alert, reduced-motion pauses + fade). `presence-app.js` re-dispatches
+the socket as `hs-activity`/`hs-broadcast` DOM events (+4 lines, no second
+WebSocket). A real CSS bug caught in-flight: scaling the dock by size desynced
+the 9-frame keyframe math — fixed with `transform: scale`. Live dogfood 6/6
+with zero page errors; 4 reviewed screenshots; 5 page locks; full suite
+**2578 passed, 17 skipped** (+5). **HS-56-01 (prior): assets + the gate.** The
 PixelLab pack vendored to `web/public/qlippy/` (14 strips + 4 glyphs + avatar +
 provenance README; 136 KiB; 14 sprites verified in the built bundle);
 `PresenceConfig.mascot: bool = False` round-tripping `/api/settings` with zero
@@ -99,7 +113,7 @@ acts on his own; flag-unset is byte-identical.
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HS-56-01 | Assets + the mascot gate | done | none |
-| HS-56-02 | The dock + the card shell | backlog | HS-56-01 |
+| HS-56-02 | The dock + the card shell | done | HS-56-01 |
 | HS-56-03 | The actuator card (marquee; absorbs G) | backlog | HS-56-02 |
 | HS-56-04 | Learning + aftercare cards | backlog | HS-56-02 |
 | HS-56-05 | The native HUD frame | backlog | HS-56-02 |
@@ -108,14 +122,14 @@ acts on his own; flag-unset is byte-identical.
 
 ## Where we are
 
-**HS-56-01 shipped 2026-06-11.** The foundation is in: assets in the bundle,
-the double opt-in gate, the settings affordance.
+**HS-56-01 + HS-56-02 shipped 2026-06-11.** Qlippy lives: the dock follows
+the runtime, the card slides with the Signal settle, the queue never piles,
+and the off-flag renders nothing.
 
-Next is **HS-56-02 — the dock + the card shell**: the sprite-strip dock on
-`/presence` (the RFC state map, sleeping after 5 min, the complete flourish)
-and the sliding card component with the full motion spec + FIFO queue +
-reduced-motion story, behind the flag, with a mock trigger for tests and
-screenshots.
+Next is **HS-56-03 — the actuator card (the marquee, absorbing G)**: the
+aftercare-route `actuator_proposed` broadcast + the new `actuator_result`
+broadcasts, the alert card whose Approve/Decline mirror the dashboard's exact
+decision flow, and the three privacy answers on every actionable card.
 
 ## Open decisions (defaults chosen per the RFC's open questions; flag to change)
 

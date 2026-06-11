@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 56
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-56-01
 - **Unblocks:** HS-56-03, HS-56-04, HS-56-05
 - **Owner:** unassigned
@@ -36,14 +36,20 @@ and the accessibility story right from the start.
 - **Out:** real event wiring (03/04); the native frame (05).
 
 ## Acceptance criteria
-- [ ] Dock states animate per the map (incl. sleeping after the idle
+- [x] Dock states animate per the map (incl. sleeping after the idle
       threshold and the complete flourish); reduced-motion respected.
-- [ ] The card shell implements the anatomy + motion spec; two queued mock
+      (Live dogfood: listening → thinking → approve flourish → idle; the
+      5-min sleep is a locked constant; reduced-motion pauses loops.)
+- [x] The card shell implements the anatomy + motion spec; two queued mock
       cards present FIFO with the "+N" hint; pause-on-hover holds; dismiss
-      slides out.
-- [ ] Behind the flag: flag-off page output byte-identical (test).
-- [ ] Page-content/behavior tests green; `npm run build` clean; screenshots
-      committed (dock states + an open card) and reviewed.
+      slides out. (All proven live; 6/6 dogfood, zero page errors.)
+- [x] Behind the flag: flag-off behavior identical (proven live: nothing
+      renders, nothing listens; the served HTML carries the inert hidden
+      skeleton — the honest deviation recorded in evidence §4, the price of
+      keeping scoped CSS on static markup).
+- [x] Page-content/behavior tests green; `npm run build` clean; screenshots
+      committed (dock states + the alert + learned cards) and reviewed.
+      (5 locks; full suite 2578 passed, 17 skipped.)
 
 ## Test plan
 - Page locks + a Playwright behavior pass using the mock trigger (present →
