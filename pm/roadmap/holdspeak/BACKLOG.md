@@ -46,6 +46,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 | N | Windows port | strategic | post-P53 review; `CODEX_IDEAS.md` | parked (large; biggest reach unlock) |
 | O | Wake word ("local + private" positioning) | strategic | post-P53 strategic review | parked (high false-positive risk) |
 | P | Transcript import (`.vtt`/`.srt`/`.txt` → real meetings) | feature | user direction, post-P56 conversation | **shipped → [phase-57](./phase-57-transcript-import/) (CLOSED 5/5)** (real speakers + timestamps from the file; proven on `.43` intel; recording path untouched) |
+| Q | The Front Door (positioning + user-facing docs revision) | release/community | user direction, post-P57 conversation | **scaffolded → [phase-58](./phase-58-front-door/)** |
 
 ### A. Meeting aftercare ("close the loop") — shipped as Phase 49 (CLOSED 6/6)
 The meeting side has plugins + artifacts; the next value is follow-through, not
@@ -210,3 +211,13 @@ over single-label audio import), honest synthetic ordering for plain text. The
 recording upload stays untouched (explicit user constraint).
 *Lands on:* the Phase-55 import engine/route/UI seams; everything downstream of
 `TranscriptSegment`s is already format-agnostic.
+
+---
+### Q. The Front Door — scaffolded as Phase 58
+Decide what HoldSpeak's story IS and tell it everywhere: a positioning canon
+(the user fixed the angle: "one copilot, two modes", pitched to developers,
+with named honest comparisons), README rewritten as the pitch, every
+user-facing guide re-framed with why-ledes + canonical feature names + the
+humanizer voice (and the em-dash cleanup the pre-P55 corpus never had), and
+a voice drift guard. The pitch stays as honest as the product.
+*Lands on:* the Phase-51 docs hygiene lineage + the per-phase docs-story culture.
