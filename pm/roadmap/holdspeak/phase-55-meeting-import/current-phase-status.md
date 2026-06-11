@@ -1,11 +1,26 @@
 # Phase 55 — Meeting Import ("bring your archive") + faceted history search
 
-**Status:** in-progress (1/6). Opened 2026-06-11 on user direction (the agreed post-53
+**Status:** in-progress (2/6). Opened 2026-06-11 on user direction (the agreed post-53
 sequence **54 → I → J → K**), right after Phase 54 closed + merged (PR #41).
 From the [project backlog](../BACKLOG.md): candidate **I** (meeting import +
 faceted history search).
 
-**Last updated:** 2026-06-11 (**HS-55-01 done: the import engine.**
+**Last updated:** 2026-06-11 (**HS-55-02 done: the import API + CLI.**
+`POST /api/meetings/import` (multipart; `python-multipart` added — it was
+absent) refuses bad formats up front via the engine's new `validate_format()`,
+saves a visible `intel_status="importing"` placeholder row immediately,
+returns **202** with the meeting id, and runs the engine on a daemon thread
+with the Whisper transcriber built lazily inside the worker. Progress rides
+the meeting row (`intel_status_detail`, the intel queue's load→mutate→save
+pattern) so `/history` polling needs nothing new; success resolves to the
+live-mirrored intel posture; failure marks `import_failed` with the
+actionable detail. Also shipped the missing `DELETE /api/meetings/{id}` (the
+repo's `delete_meeting` had no HTTP route) and `holdspeak import <file>`
+(synchronous, per-window progress, refusal smoke-tested for real). 4 route
+integration tests incl. responsiveness-under-import; full suite **2558
+passed, 17 skipped** (+4). Found for HS-55-03: the detail endpoint nests
+`intel_status` as `{state, detail}` (the list is flat).
+**HS-55-01 (prior): the import engine.**
 `holdspeak/meeting_import.py` — PCM WAV via the stdlib `wave` module (scipy is
 dev-only), compressed formats via ffmpeg-on-PATH with an honest refusal +
 install hint when absent, downmix/resample to the 16 kHz mono transcriber
@@ -96,7 +111,7 @@ about the single speaker label (no diarization in v1).
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HS-55-01 | The import engine (file → meeting) | done | none |
-| HS-55-02 | Import API + background job + CLI | backlog | HS-55-01 |
+| HS-55-02 | Import API + background job + CLI | done | HS-55-01 |
 | HS-55-03 | The /history import UI | backlog | HS-55-02 |
 | HS-55-04 | Faceted history search (API + filter row) | backlog | none |
 | HS-55-05 | Docs: import + facets | backlog | HS-55-03, HS-55-04 |
@@ -104,15 +119,15 @@ about the single speaker label (no diarization in v1).
 
 ## Where we are
 
-**HS-55-01 shipped 2026-06-11.** The engine is real: file in → a downstream-
-indistinguishable meeting out, honest about formats/speakers/audio-retention,
-intel mirrored from the live path, fully unit-tested with an injected
-transcriber plus a parity integration test.
+**HS-55-01 + HS-55-02 shipped 2026-06-11.** The engine and both its callers
+are real: upload → 202 → visible importing row → progress on the row →
+resolved meeting (or honest failure + the new DELETE route), and
+`holdspeak import` from the shell.
 
-Next is **HS-55-02 — the import API + CLI**: `POST /api/meetings/import`
-(multipart — add `python-multipart`, it is not a dependency yet) creating a
-visible importing-state row and running the engine on a background thread,
-plus `holdspeak import <file>`.
+Next is **HS-55-03 — the /history import UI**: the inviting "Import a
+recording" affordance + panel, upload with progress (poll the row; the detail
+endpoint nests `intel_status` as `{state, detail}`), in-place resolution,
+`started_at_ms` from `File.lastModified`, the remove affordance on failures.
 
 ## Open decisions (defaults chosen; flag to change)
 

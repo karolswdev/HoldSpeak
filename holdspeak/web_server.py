@@ -438,6 +438,7 @@ class MeetingWebServer:
             build_activity_router,
             build_core_router,
             build_dictation_router,
+            build_meeting_import_router,
             build_meetings_router,
             build_pages_router,
             build_projects_router,
@@ -480,6 +481,7 @@ class MeetingWebServer:
         )
         app.include_router(build_core_router(web_ctx))
         app.include_router(build_meetings_router(web_ctx))
+        app.include_router(build_meeting_import_router(web_ctx))
         app.include_router(build_dictation_router(web_ctx))
         app.include_router(build_activity_router(web_ctx))
         app.include_router(build_pages_router(web_ctx))

@@ -115,6 +115,30 @@ def _decode_with_ffmpeg(path: Path) -> tuple[np.ndarray, int]:
     return audio, TARGET_SAMPLE_RATE
 
 
+def validate_format(filename: str) -> None:
+    """Cheap suffix/ffmpeg validation so callers can refuse before decoding.
+
+    Raises :class:`MeetingImportError` with the same actionable messages
+    ``load_audio`` would produce for an unsupported format or missing ffmpeg.
+    """
+    suffix = Path(filename).suffix.lower()
+    if suffix == ".wav":
+        return
+    if suffix in FFMPEG_SUFFIXES:
+        if not ffmpeg_available():
+            raise MeetingImportError(
+                f"Importing {suffix} audio requires ffmpeg on your PATH "
+                "(e.g. `brew install ffmpeg` or your package manager). "
+                "WAV files import without it."
+            )
+        return
+    raise MeetingImportError(
+        f"Unsupported audio format: {suffix or filename}. Supported: .wav natively; "
+        + ", ".join(sorted(FFMPEG_SUFFIXES))
+        + " with ffmpeg installed."
+    )
+
+
 def load_audio(path: Path) -> tuple[np.ndarray, int]:
     """Decode ``path`` to mono float32 + its sample rate.
 
@@ -160,6 +184,7 @@ def import_meeting(
     started_at: Optional[datetime] = None,
     window_seconds: float = DEFAULT_WINDOW_SECONDS,
     progress: Optional[ProgressCallback] = None,
+    meeting_id: Optional[str] = None,
 ) -> ImportResult:
     """Import one recording as a meeting; returns the persisted state.
 
@@ -216,7 +241,7 @@ def import_meeting(
         )
 
     state = MeetingState(
-        id=str(uuid.uuid4())[:8],
+        id=meeting_id or str(uuid.uuid4())[:8],
         started_at=started_at,
         ended_at=started_at + timedelta(seconds=duration),
         title=(title or path.stem).strip() or path.stem,

@@ -45,6 +45,7 @@ Examples:
   holdspeak meeting      # Start in meeting mode (capture mic + system audio)
   holdspeak meeting --setup  # Check system audio setup
   holdspeak doctor       # Verify runtime deps and setup
+  holdspeak import call.wav  # Import an existing recording as a meeting
   holdspeak backup       # Back up the database before upgrading
   holdspeak restore      # List backups, or restore one (holdspeak restore <file>)
   holdspeak agent-hook templates --agent claude
@@ -291,6 +292,15 @@ Logs are written to: {LOG_FILE}
         ),
     )
 
+    import_parser = subparsers.add_parser(
+        "import",
+        help="Import an existing audio recording as a meeting",
+    )
+    import_parser.add_argument("file", help="Path to the recording (.wav natively; mp3/m4a/ogg/flac with ffmpeg)")
+    import_parser.add_argument("--title", help="Meeting title (defaults to the file name)")
+    import_parser.add_argument("--speaker", help='Speaker label for the whole recording (default "Recording")')
+    import_parser.add_argument("--tag", action="append", help="Tag the meeting (repeatable)")
+
     subparsers.add_parser(
         "backup",
         help="Back up the HoldSpeak database to a timestamped file",
@@ -358,6 +368,12 @@ Logs are written to: {LOG_FILE}
     # Handle doctor subcommand
     if args.command == "doctor":
         raise SystemExit(run_doctor_command(args))
+
+    # Handle meeting import
+    if args.command == "import":
+        from .commands.import_recording import run_import_command
+
+        raise SystemExit(run_import_command(args))
 
     # Handle backup / restore subcommands (HS-50-03)
     if args.command == "backup":

@@ -447,6 +447,23 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                 {"error": str(e)}, status_code=500
             )
 
+    @router.delete("/api/meetings/{meeting_id}")
+    async def api_delete_meeting(meeting_id: str) -> Any:
+        """Delete a meeting (HS-55-02: e.g. a failed import's honest row)."""
+        try:
+            from ...db import get_database
+            db = get_database()
+            if not db.meetings.delete_meeting(meeting_id):
+                return JSONResponse(
+                    {"error": "Meeting not found"}, status_code=404
+                )
+            return JSONResponse({"deleted": meeting_id})
+        except Exception as e:
+            log.error(f"Failed to delete meeting: {e}")
+            return JSONResponse(
+                {"error": str(e)}, status_code=500
+            )
+
     @router.get("/api/meetings/{meeting_id}/export")
     async def api_export_meeting(
         meeting_id: str,
