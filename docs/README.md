@@ -1,8 +1,9 @@
 # HoldSpeak documentation
 
-HoldSpeak is a local, private, hold-to-talk voice typing tool for macOS and
-Linux, plus a meeting mode with AI-extracted intel and a project-aware
-intelligent-typing layer. This page is the map. Pick a journey.
+HoldSpeak is one local copilot with two modes: dictation that types in any
+app and learns how you work, and meetings that end with decisions, actions,
+and follow-ups instead of a recording. Everything runs on your machine,
+including the LLM. This page is the map. Pick a journey.
 
 > New here? Start with the [main README](../README.md) for the pitch and a
 > quickstart, then follow **Start here** below.
