@@ -1,13 +1,21 @@
 # Phase 58 — The Front Door (positioning + the user-facing docs, revised)
 
-**Status:** in-progress (4/6). Opened 2026-06-11 on user direction, right
+**Status:** in-progress (5/6). Opened 2026-06-11 on user direction, right
 after Phase 57 closed (PR #44): *"a proper phase. Where we also revise WHAT
 we are saying, so that we can be explicit around how to 'sell' this product
 to our community."* The user fixed the three positioning decisions directly:
 **lead angle "one copilot, two modes"**, **audience: developers**,
 **comparisons: name names, honestly**.
 
-**Last updated:** 2026-06-11 (**HS-58-04 done: the developer + ops
+**Last updated:** 2026-06-11 (**HS-58-05 done: the voice guard.** Four
+new tests over the user-facing corpus (prose only, code blocks exempt):
+dashes-zero with a verbatim-UI-quote allowlist, the AI-vocab tells (tuned
+live: the "not just" pattern was narrowed to the tic forms after flagging
+two legitimate logical uses), the canonical-name bans, and a
+both-ways seeded-violations proof. The Phase-51 vocab pattern widened to
+single-digit phases (the live HS-9-03 find). DOCS_STYLE.md documents the
+rules. Suite **2645 passed, 17 skipped** (+4).
+**HS-58-04 (prior): the developer + ops
 docs.** The extend-it corpus revised: contributor-pitch ledes on
 PLUGIN_AUTHORING ("the highest-leverage way to make HoldSpeak yours…
 mostly the prompt you wish your meetings produced") and
@@ -113,13 +121,11 @@ as honest as the product.
 | HS-58-02 | README.md, the front door | done | HS-58-01 |
 | HS-58-03 | The core guides | done | HS-58-01 |
 | HS-58-04 | The developer + ops docs | done | HS-58-01 |
-| HS-58-05 | The guard | backlog | HS-58-02..04 |
+| HS-58-05 | The guard | done | HS-58-02..04 |
 | HS-58-06 | Closeout: fresh-eyes pass + final-summary + PR | backlog | HS-58-01..05 |
 
 ## Where we are
 
-**HS-58-01 → HS-58-04 shipped 2026-06-11.** The whole user-facing corpus
-now tells one story in one voice, dash-free. Next is **HS-58-05 — the
-guard**: lock dashes-zero + AI-vocab + canonical names over the corpus
-(with the verbatim-UI-quote allowlist and the widened HS-N-NN vocab
-pattern), proven both ways.
+**HS-58-01 → HS-58-05 shipped 2026-06-11.** The story is told everywhere
+and locked against decay. Next is **HS-58-06 — closeout**: the fresh-eyes
+render pass, before/after metrics, final-summary, PR merged on green.

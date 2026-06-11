@@ -86,7 +86,27 @@ Every user-facing guide clears this spine, in this order:
    `##`/`###`; a long doc may open with a table of contents.
 5. **Troubleshooting** — a symptom → cause → fix table where the surface has common
    failure modes.
-6. **`## See also`** — 2–4 cross-links, each with a short value prop (see below).
+6. **`## The voice guard (POSITIONING.md is the canon)
+
+User-facing prose follows the voice rules in
+[`POSITIONING.md`](./POSITIONING.md), and three of them are enforced by
+`tests/unit/test_doc_drift_guard.py` over the same corpus as the vocabulary
+guard (root README + non-recursive `docs/*.md`, fenced code blocks exempt):
+
+- **No em/en dashes in prose.** Use a period, comma, colon, or parentheses.
+  A doc line that quotes a real UI string containing a dash must match the
+  UI verbatim and be added to the guard's `_VERBATIM_UI_QUOTES` allowlist.
+- **No AI-vocabulary tells** (delve, seamless, the verb leverage,
+  supercharge, effortless, game-changing, cutting-edge, "is a testament",
+  the "it's not just X" tic). Compounds and plain logical uses
+  ("highest-leverage", "every meeting, not just the visible page") stay
+  legal; the patterns are tuned for zero false positives on the corpus.
+- **Canonical feature names only.** One name per surface, declared in the
+  POSITIONING.md table; the guard bans the drift-prone synonyms (e.g.
+  "voice macros" for voice commands). New surfaces add a canon row in the
+  phase that ships them.
+
+## See also`** — 2–4 cross-links, each with a short value prop (see below).
 
 Reference/developer docs (Plugin Authoring, Connector Development, Device
 Protocol) keep their own deep structure but still carry a one-line lede and a

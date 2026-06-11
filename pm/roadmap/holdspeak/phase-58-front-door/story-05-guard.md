@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 58
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-58-02, HS-58-03, HS-58-04
 - **Unblocks:** HS-58-06
 - **Owner:** unassigned
@@ -21,10 +21,16 @@ doc commit reintroduces dashes and AI-isms and the phase decays.
 - **Out:** guarding internal docs; style rules beyond the canon.
 
 ## Acceptance criteria
-- [ ] The corpus passes; a seeded dash, a seeded "delve", and a seeded
-      non-canonical name each fail with actionable messages.
-- [ ] Code blocks and legitimate literals are exempt (no false positives).
-- [ ] The rule documented in DOCS_STYLE.md (the Phase-51 home).
+- [x] The corpus passes; seeded dashes, AI-vocab, and non-canonical names
+      are flagged (proven in `test_voice_guard_patterns_catch_seeded_violations`)
+      with file:line messages pointing at the canon.
+- [x] Code blocks exempt via `_prose_lines`; the verbatim UI quote
+      allowlisted; the "not just" pattern narrowed live to the tic forms
+      after flagging two legitimate logical uses (no false positives on
+      the corpus).
+- [x] The rule documented in DOCS_STYLE.md — and the Phase-51 vocab
+      pattern widened to catch single-digit phases (the live `HS-9-03`
+      find). See `evidence-story-05.md`.
 
 ## Test plan
 - The new guards both ways + the full doc slice + full suite.
