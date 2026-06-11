@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 55
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-55-02, HS-55-03, HS-55-06
 - **Owner:** unassigned
@@ -36,18 +36,21 @@ timestamps, and the same intel enqueue as a live capture.
   retaining the audio.
 
 ## Acceptance criteria
-- [ ] A generated WAV (tone/silence fixtures) imports end to end with a fake
+- [x] A generated WAV (tone/silence fixtures) imports end to end with a fake
       transcriber: correct segment count, window timestamps, speaker label,
       title/tags, duration, `started_at` from mtime.
-- [ ] 44.1 kHz stereo input is downmixed + resampled before transcription
+- [x] 44.1 kHz stereo input is downmixed + resampled before transcription
       (asserted via the fake transcriber's received arrays).
-- [ ] A compressed-format file with ffmpeg absent is refused with an
+- [x] A compressed-format file with ffmpeg absent is refused with an
       actionable error; with ffmpeg present (or faked) it decodes.
-- [ ] Intel is enqueued exactly under the live path's conditions; disabled
-      intel or an empty transcript enqueues nothing.
-- [ ] The persisted meeting is indistinguishable downstream: it lists via
+      (WAV decodes via the stdlib `wave` module — scipy is dev-only.)
+- [x] Intel is enqueued exactly under the live path's conditions; disabled
+      intel or an empty transcript enqueues nothing. (All-empty transcripts
+      refuse the whole import — no mystery rows.)
+- [x] The persisted meeting is indistinguishable downstream: it lists via
       `GET /api/meetings`, exports, and full-text-searches like a live one
-      (integration test).
+      (integration test). (8 unit + 1 parity test; full suite 2554 passed,
+      17 skipped — see `evidence-story-01.md`.)
 
 ## Test plan
 - Unit: `uv run pytest -q tests/unit -k "meeting_import or import_engine"` —

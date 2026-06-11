@@ -1,12 +1,22 @@
 # Phase 55 — Meeting Import ("bring your archive") + faceted history search
 
-**Status:** scaffolded. Opened 2026-06-11 on user direction (the agreed post-53
+**Status:** in-progress (1/6). Opened 2026-06-11 on user direction (the agreed post-53
 sequence **54 → I → J → K**), right after Phase 54 closed + merged (PR #41).
 From the [project backlog](../BACKLOG.md): candidate **I** (meeting import +
 faceted history search).
 
-**Last updated:** 2026-06-11 (scaffolded: AGENT-BRIEF + six stories; seams
-mapped against the live tree).
+**Last updated:** 2026-06-11 (**HS-55-01 done: the import engine.**
+`holdspeak/meeting_import.py` — PCM WAV via the stdlib `wave` module (scipy is
+dev-only), compressed formats via ffmpeg-on-PATH with an honest refusal +
+install hint when absent, downmix/resample to the 16 kHz mono transcriber
+contract, ~30 s windowed transcription stamping real segment start/end times
+(all-empty transcripts refuse the import — no mystery rows), a normal
+`MeetingState` (`started_at` from file mtime) through the normal
+`save_meeting`, and the live path's exact intel-enqueue conditions mirrored.
+8 unit tests + a downstream-parity integration test (lists / full-text
+searches / exports like a live meeting). Full suite **2554 passed, 17
+skipped** (+9). Earlier: scaffolded — AGENT-BRIEF + six stories, seams mapped
+against the live tree.)
 
 ## The thesis — why this phase
 
@@ -85,7 +95,7 @@ about the single speaker label (no diarization in v1).
 
 | Story | Title | Status | Depends on |
 |---|---|---|---|
-| HS-55-01 | The import engine (file → meeting) | backlog | none |
+| HS-55-01 | The import engine (file → meeting) | done | none |
 | HS-55-02 | Import API + background job + CLI | backlog | HS-55-01 |
 | HS-55-03 | The /history import UI | backlog | HS-55-02 |
 | HS-55-04 | Faceted history search (API + filter row) | backlog | none |
@@ -94,9 +104,15 @@ about the single speaker label (no diarization in v1).
 
 ## Where we are
 
-Scaffolded 2026-06-11. Nothing has shipped. Start with **HS-55-01** (the
-engine): productize the spoken-e2e recipe behind a clean module with an
-injected transcriber, then hang the API/CLI, UI, and facets off it.
+**HS-55-01 shipped 2026-06-11.** The engine is real: file in → a downstream-
+indistinguishable meeting out, honest about formats/speakers/audio-retention,
+intel mirrored from the live path, fully unit-tested with an injected
+transcriber plus a parity integration test.
+
+Next is **HS-55-02 — the import API + CLI**: `POST /api/meetings/import`
+(multipart — add `python-multipart`, it is not a dependency yet) creating a
+visible importing-state row and running the engine on a background thread,
+plus `holdspeak import <file>`.
 
 ## Open decisions (defaults chosen; flag to change)
 
