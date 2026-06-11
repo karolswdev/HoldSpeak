@@ -97,6 +97,45 @@ One setting covers everything that transcribes: dictation, live
 meetings, and imported recordings all share the same engine, so they all
 follow it.
 
+### The wake word
+
+Hold-to-talk needs a key; **the wake word** needs nothing but your voice.
+Say the wake phrase (the pretrained model listens for "hey jarvis") and
+HoldSpeak enters **the armed window**: a short, visible countdown during
+which your next sentence is captured and run through the normal dictation
+pipeline. Everything happens on your machine; the only network moment in
+the whole feature is a one-time download of the detection models (about
+7 MB) when you first enable it.
+
+It is off by default, and what happens after it hears you is the safety
+decision the feature is built around:
+
+- **Preview first (the default).** Nothing is typed. The result appears as
+  a card with the transcript, the pipeline output, and a **Type it**
+  button. Typing happens only when you press it, and the server types only
+  the exact previewed text. Dismissing the card is always safe.
+- **Type immediately (an explicit opt-in).** Your call to make, with the
+  consequence stated where you make it: a false detection would type into
+  whatever app is focused.
+
+Turn it on under **Settings, Voice typing, Wake word**, and turn on
+desktop presence with it: the presence surface (and Qlippy's dock, if he
+is on) shows the armed state while you work in other apps. The wake word
+pauses automatically whenever something else holds the microphone (a
+hold-to-talk dictation, a meeting) and resumes after.
+
+**The honest numbers.** Measured on synthesized speech across three
+voices: ordinary sentences, including adversarial near-misses like "hey
+travis" and "play jazz", produced **zero false detections in 57
+utterances** at the default threshold. But a sentence that contains the
+wake phrase or a near-homophone ("hey jarred…") can score
+indistinguishably from the real thing; no threshold can separate them.
+That is inherent to wake-word detection, and it is exactly why the
+preview default exists: when it happens, the cost is a glance at a card,
+never text in your document. Real rooms (noise, distance, accents) differ
+from synthesized speech in both directions; the detection threshold is a
+settings knob for that reason.
+
 ### Punctuation
 
 Say punctuation words and HoldSpeak converts them:

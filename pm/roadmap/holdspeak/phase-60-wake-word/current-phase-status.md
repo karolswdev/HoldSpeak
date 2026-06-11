@@ -1,6 +1,6 @@
 # Phase 60 — The Wake Word
 
-**Status:** in-progress (4/6). Opened 2026-06-11 on standing user direction
+**Status:** in-progress (5/6). Opened 2026-06-11 on standing user direction
 ("K, then O" → "Word"), right after Phase 59 closed (PR #48). From the
 [project backlog](../BACKLOG.md): candidate **O**, with the four recorded
 safety conditions fixed: **arms, not types** (preview is the default
@@ -9,7 +9,14 @@ indicator** (presence + Qlippy + cockpit), **a local engine with a
 MEASURED false-accept story** (openWakeWord, Apache-2.0; Porcupine ruled
 out on licensing), **off by default**.
 
-**Last updated:** 2026-06-11 (**HS-60-04 done: the false-accept
+**Last updated:** 2026-06-11 (**HS-60-05 done: docs.** The User Guide's
+"The wake word" section leads with the safety fork (preview-first; the
+type opt-in with its consequence stated where you choose it), names the
+one-time model download as the only network moment, and quotes the
+HS-60-04 numbers verbatim incl. the near-homophone reality; SECURITY's
+egress table gains the honestly-framed download row; POSITIONING gains
+"the wake word" + "the armed window". Zero dashes; doc slice 82 green;
+suite 2723 (docs-only). **HS-60-04 (prior): the false-accept
 measurement — and the phase's central honest finding.** The harness's
 first run FAILED, valuably: phrases containing the wake word (0.996) or a
 near-homophone ("hey jarred": 0.995) are indistinguishable from real
@@ -136,11 +143,10 @@ false-accept posture measured, not asserted.
 | HS-60-02 | Arm, capture, and the pipeline | done | HS-60-01 |
 | HS-60-03 | The armed UX + settings | done | HS-60-02 |
 | HS-60-04 | The false-accept measurement | done | HS-60-01 |
-| HS-60-05 | Docs: the wake word | backlog | HS-60-03, HS-60-04 |
+| HS-60-05 | Docs: the wake word | done | HS-60-03, HS-60-04 |
 | HS-60-06 | Closeout: real-metal loop + final-summary + PR | backlog | HS-60-01..05 |
 
 ## Where we are
 
-**HS-60-01 → HS-60-04 shipped 2026-06-11.** The safety posture has
-numbers now, including the honest one (near-homophones fire; the preview
-default is the mitigation). Next is **HS-60-05 — docs**.
+**HS-60-01 → HS-60-05 shipped 2026-06-11.** Built, measured, and told
+honestly. Next is **HS-60-06 — closeout**: the real-metal live loop.

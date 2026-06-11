@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 60
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-60-03, HS-60-04
 - **Unblocks:** HS-60-06
 - **Owner:** unassigned
@@ -22,9 +22,12 @@ measured.
 - **Out:** localization; marketing beyond the docs.
 
 ## Acceptance criteria
-- [ ] Product-tense; voice guard green; the egress row ships; the
-      measured numbers cited honestly.
-- [ ] Doc slice green.
+- [x] Product-tense; voice guard green (zero dashes in new prose,
+      canonical names); the SECURITY egress row ships (inbound-only,
+      opt-in, no audio egress); the measured numbers cited verbatim
+      including the near-homophone reality and the synthetic-speech
+      caveat.
+- [x] Doc slice green (82). See `evidence-story-05.md`.
 
 ## Test plan
 - Doc-guard slice + full suite.
