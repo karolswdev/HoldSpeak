@@ -7,7 +7,12 @@ to our community."* The user fixed the three positioning decisions directly:
 **lead angle "one copilot, two modes"**, **audience: developers**,
 **comparisons: name names, honestly**.
 
-**Last updated:** 2026-06-11 (**HS-58-06 done: closeout — phase CLOSED.**
+**Last updated:** 2026-06-11 (**post-close follow-up on user feedback:**
+the README now SHOWCASES the product, not just pixel art — the meeting
+artifacts screenshot (`history.png`) lands directly under "The two modes"
+and Qlippy's decision card illustrates his paragraph; both assets were
+already on main so the absolute URLs resolve immediately. Earlier:
+**HS-58-06 done: closeout — phase CLOSED.**
 The fresh-eyes pass verified the new README through GitHub's own renderer
 (11 images, every key section incl. the comparison table) and curl-checked
 every absolute asset URL; before/after metrics recorded (prose dashes

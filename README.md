@@ -32,6 +32,14 @@ telemetry.
 | ![Pixel art microphone with hold-to-talk waves](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/hold-to-talk-microphone.png) | ![Pixel art meeting notebook with action items](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/meeting-intelligence-notebook.png) |
 | Hold the hotkey, speak, release: the text goes into the active app. Turn on the dictation pipeline and rough speech is routed by intent, enriched with your project's context, and rewritten for its target (Codex, Claude, the terminal, the browser, your editor). Every run lands in the dictation journal; one tap on a wrong result teaches the correction memory. Voice commands map a spoken keyword to a real action (open a URL, launch an app, run a command). Activity pre-briefing offers what you touched recently as dictation context, source-cited. | Capture mic and system audio live with speaker labels, or import a recording or a transcript file you already have (vtt and srt keep their real timestamps and speaker names). 14 built-in plugins call your LLM to pull typed artifacts out of the transcript: decisions, action items, ADRs, risk registers, incident timelines. Meeting aftercare then shows what is open, decided, and changed since last time, and an accepted action can become a filed issue through a propose, approve, execute flow that never acts without you. The archive is searchable and filterable by date, speaker, tag, and open actions. |
 
+This is what they look like in the product, not in pixel art. A saved meeting
+comes back as typed, reviewable artifacts:
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/history.png" alt="A saved meeting open at /history: the transcript on the left, and on the right a stack of artifact cards (a Risk register table with impact, likelihood, mitigation, and owner; Decisions and open questions; typed Requirements), each with a confidence score and a copy button." width="760">
+</p>
+<p align="center"><em>A meeting after intelligence ran: a risk register, decisions, and requirements, each extracted by an LLM-backed plugin and rendered read-only at /history.</em></p>
+
 ## Why it's different
 
 - **Everything is local, including the intelligence.** Whisper transcribes on
@@ -83,6 +91,11 @@ reached past dictations, a meeting that left open items. He never acts on his
 own, and every actionable card states in plain language what data is used,
 whether anything leaves your machine, and what your controls are. Off by
 default, like everything ambient here.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/presence/qlippy-decision-card.png" alt="Qlippy's decision card: the pixel-art mascot in an alert pose beside the headline 'A decision needs you', the exact preview of a proposed GitHub issue, plain-language privacy answers, and Approve and Decline buttons." width="420">
+</p>
+<p align="center"><em>Qlippy asking for a decision: the exact preview, the privacy answers, and your controls. Nothing runs until you approve.</em></p>
 
 ## How it compares (as of mid-2026)
 
