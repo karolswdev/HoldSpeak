@@ -1,6 +1,6 @@
 # Phase 57 — Transcript Import ("bring your archive", part 2)
 
-**Status:** scaffolded (0/5). Opened 2026-06-11 on user direction, straight
+**Status:** in-progress (1/5). Opened 2026-06-11 on user direction, straight
 after Phase 56 closed (PR #43): *"can we also do it by simply uploading a
 transcript too? I often have transcripts, rarely do I have recordings (but I
 don't want you to remove the recording upload affordance, of course!)"*.
@@ -8,12 +8,18 @@ Net-new from that conversation (BACKLOG candidate **P**), slotted ahead of
 **K** because it is small and completes the Phase-55 "bring your archive"
 thesis.
 
-**Last updated:** 2026-06-11 (scaffolded — seams verified against the live
-tree: the Phase-55 engine's persistence tail is cleanly factorable, the
-route's lifecycle and the /history panel extend without new concepts, no
-VTT/SRT parsing exists anywhere yet (greenfield module), and labeled
-transcripts will give the speaker facet real multi-speaker data for the
-first time.)
+**Last updated:** 2026-06-11 (**HS-57-01 done: the transcript parsers.**
+`holdspeak/transcript_parse.py`, pure and greenfield: VTT (BOM/CRLF,
+hour-optional timings, voice tags with optional close + the voice
+continuity model, NOTE/STYLE skip, tag stripping, suffix-mislabel rescue
+when content starts `WEBVTT`), SRT (comma times, `Name:` prefixes), TXT
+(the conservative ≤3-word name rule with a structure-label blocklist;
+synthetic 6-s spacing). The honesty flags ship: `has_real_timestamps` only
+for cue-timed formats, `speakers_found` only file-carried labels. Zero-cue
+input refused actionably — an import can never silently produce an empty
+meeting. 22 tests incl. a Teams/Zoom-shaped fixture and a purity lock;
+full suite **2624 passed, 17 skipped** (+22). Earlier: scaffolded — the
+Phase-55 tail is cleanly factorable; no VTT/SRT parsing existed anywhere.)
 
 ## The thesis — why this phase
 
@@ -79,7 +85,7 @@ stays, untouched.
 
 | Story | Title | Status | Depends on |
 |---|---|---|---|
-| HS-57-01 | The transcript parsers | backlog | none |
+| HS-57-01 | The transcript parsers | done | none |
 | HS-57-02 | The engine path + CLI | backlog | HS-57-01 |
 | HS-57-03 | API + /history UI | backlog | HS-57-02 |
 | HS-57-04 | Docs: transcript import | backlog | HS-57-03 |
@@ -87,5 +93,7 @@ stays, untouched.
 
 ## Where we are
 
-Scaffolded. Next is **HS-57-01 — the transcript parsers**: the pure
-greenfield module with thorough format tests; nothing existing is touched.
+**HS-57-01 shipped 2026-06-11.** The parsers are real and honest. Next is
+**HS-57-02 — the engine path + CLI**: factor the Phase-55 persistence tail
+(audio byte-identical), `import_transcript`, `validate_format` learns the
+trio, the CLI branches by suffix.

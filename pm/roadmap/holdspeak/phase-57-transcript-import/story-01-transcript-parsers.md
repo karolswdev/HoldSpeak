@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 57
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-57-02
 - **Owner:** unassigned
@@ -32,16 +32,20 @@ actually export: a transcript. Nothing in the tree parses VTT/SRT/TXT.
 - **Out:** file handling, persistence, config, UI; DOCX/PDF/HTML.
 
 ## Acceptance criteria
-- [ ] VTT: a realistic Teams/Zoom-shaped fixture parses with real
+- [x] VTT: a realistic Teams/Zoom-shaped fixture parses with real
       timestamps + voice-tag speakers; spec quirks covered (optional
-      hours, missing close tags, NOTE blocks, styling tags, BOM, CRLF).
-- [ ] SRT: comma times + `Name:` prefixes parse; indices ignored.
-- [ ] TXT: labeled and unlabeled lines parse; the name rule rejects URLs,
-      clock times, and ordinary colon sentences; timestamps synthetic and
-      monotonic.
-- [ ] Malformed input (binary garbage, empty file, header-only VTT) raises
+      hours, missing close tags, NOTE blocks, styling tags, BOM, CRLF) —
+      plus a bonus: `WEBVTT`-headed content is rescued as VTT even with a
+      `.txt` suffix (tools mislabel exports).
+- [x] SRT: comma times + `Name:` prefixes parse; indices ignored.
+- [x] TXT: labeled and unlabeled lines parse; the name rule rejects URLs,
+      clock times, structure labels (Note:/Agenda:), and colon sentences
+      (limit tightened 4 → 3 words during testing); timestamps synthetic
+      and monotonic.
+- [x] Malformed input (binary garbage, empty file, header-only VTT) raises
       `TranscriptParseError` with an actionable message.
-- [ ] Pure module: no db/config/network imports (locked by test).
+- [x] Pure module: no db/config/network imports (locked by test).
+      22 tests; see `evidence-story-01.md`.
 
 ## Test plan
 - `tests/unit/test_transcript_parse.py` — per-format happy paths, the quirk
