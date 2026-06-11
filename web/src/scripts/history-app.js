@@ -54,6 +54,15 @@ function historyApp() {
     projectActionItems: [],
     projectArtifacts: [],
 
+    // HS-55-03: import-a-recording state.
+    importPanelOpen: false,
+    importFile: null,
+    importTitle: "",
+    importSpeaker: "",
+    importTags: "",
+    importBusy: false,
+    _importPollTimer: null,
+
     // HS-13-09: project briefing timeline state.
     projectBriefings: [],
     loadingBriefingTimeline: false,
@@ -127,6 +136,8 @@ function historyApp() {
       if (value === "queued") return "Queued";
       if (value === "error") return "Unavailable";
       if (value === "disabled") return "Disabled";
+      if (value === "importing") return "Importing…";
+      if (value === "import_failed") return "Import failed";
       return "Pending";
     },
 
@@ -243,6 +254,90 @@ function historyApp() {
         this.flash(`Meeting list failed: ${error.message}`, true);
       }
       this.loading = false;
+      // HS-55-03: if an import is already in flight (e.g. after a page
+      // refresh), keep the list following it.
+      if (this.meetings.some((m) => m.intel_status === "importing")) {
+        this.watchImports();
+      }
+    },
+
+    // ── HS-55-03: import a recording ─────────────────────────────────
+    onImportFileChange(event) {
+      const file = event.target.files && event.target.files[0];
+      if (file) this.importFile = file;
+    },
+
+    onImportDrop(event) {
+      const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+      if (file) this.importFile = file;
+    },
+
+    async submitImport() {
+      if (!this.importFile || this.importBusy) return;
+      this.importBusy = true;
+      const form = new FormData();
+      form.append("file", this.importFile);
+      if (this.importTitle.trim()) form.append("title", this.importTitle.trim());
+      if (this.importSpeaker.trim()) form.append("speaker", this.importSpeaker.trim());
+      if (this.importTags.trim()) form.append("tags", this.importTags.trim());
+      // The file's real last-modified time, so an old recording sorts where
+      // it happened rather than where it was imported.
+      if (this.importFile.lastModified) {
+        form.append("started_at_ms", String(this.importFile.lastModified));
+      }
+      try {
+        await this.apiJson("/api/meetings/import", { method: "POST", body: form });
+        this.flash(`Importing ${this.importFile.name} — transcribing locally…`);
+        this.importPanelOpen = false;
+        this.importFile = null;
+        this.importTitle = "";
+        this.importSpeaker = "";
+        this.importTags = "";
+        await this.refreshMeetingsQuiet();
+        this.watchImports();
+      } catch (error) {
+        this.flash(`Import failed: ${error.message}`, true);
+      }
+      this.importBusy = false;
+    },
+
+    // A quiet refresh (no list-wide loading flicker) for import polling.
+    async refreshMeetingsQuiet() {
+      try {
+        const data = await this.apiJson("/api/meetings");
+        this.meetings = data.meetings || [];
+      } catch (_error) { /* the next poll or manual refresh will recover */ }
+    },
+
+    // Poll the list only while an import is in flight; stop when none is.
+    watchImports() {
+      if (this._importPollTimer) return;
+      this._importPollTimer = window.setInterval(async () => {
+        await this.refreshMeetingsQuiet();
+        const active = this.meetings.some((m) => m.intel_status === "importing");
+        if (!active && this._importPollTimer) {
+          window.clearInterval(this._importPollTimer);
+          this._importPollTimer = null;
+        }
+      }, 2000);
+    },
+
+    async removeMeeting(meetingId) {
+      const ok = await window.holdspeakConfirm({
+        title: "Remove this failed import?",
+        body: "The meeting row (and any partial transcript) is deleted from the local database. The original audio file on disk is not touched.",
+        scopeNote: "Only the local HoldSpeak database is affected.",
+        confirmLabel: "Remove",
+        danger: true,
+      });
+      if (!ok) return;
+      try {
+        await this.apiJson(`/api/meetings/${meetingId}`, { method: "DELETE" });
+        this.flash("Removed.");
+        await this.refreshMeetingsQuiet();
+      } catch (error) {
+        this.flash(`Remove failed: ${error.message}`, true);
+      }
     },
 
     async searchMeetings() {

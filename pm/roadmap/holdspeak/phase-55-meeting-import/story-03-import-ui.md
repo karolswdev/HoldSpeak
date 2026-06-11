@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 55
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-55-02
 - **Unblocks:** HS-55-05, HS-55-06
 - **Owner:** unassigned
@@ -33,12 +33,18 @@ input.
   a time in v1); facet UI (HS-55-04).
 
 ## Acceptance criteria
-- [ ] The affordance + panel ship with the honest notes; screenshot-verified
-      (a class in the bundle ≠ it applies).
-- [ ] A real upload through the browser lands a meeting that progresses and
+- [x] The affordance + panel ship with the honest notes; screenshot-verified
+      (a class in the bundle ≠ it applies). (`story03-panel.png`, reviewed.)
+- [x] A real upload through the browser lands a meeting that progresses and
       resolves in place without a manual refresh (Playwright evidence).
-- [ ] Failure state renders the actionable detail and can be removed.
-- [ ] Page-content tests green; `npm run build` clean; 0 `_built/` tracked.
+      (`dogfood_story03.py` — RESULT: PASS, zero page errors; importing pill
+      + progress detail + in-place resolution screenshots committed.)
+- [x] Failure state renders the actionable detail and can be removed.
+      (Danger pill + detail; Remove placed outside the card button — valid
+      HTML — confirming via holdspeakConfirm → DELETE; page-content locked.)
+- [x] Page-content tests green; `npm run build` clean; 0 `_built/` tracked.
+      (4 new locks; full suite 2562 passed, 17 skipped — see
+      `evidence-story-03.md`.)
 
 ## Test plan
 - Integration: page-content markers; the status-poll wiring against a fake

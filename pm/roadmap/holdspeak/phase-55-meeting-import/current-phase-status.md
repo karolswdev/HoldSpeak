@@ -1,11 +1,24 @@
 # Phase 55 — Meeting Import ("bring your archive") + faceted history search
 
-**Status:** in-progress (2/6). Opened 2026-06-11 on user direction (the agreed post-53
+**Status:** in-progress (3/6). Opened 2026-06-11 on user direction (the agreed post-53
 sequence **54 → I → J → K**), right after Phase 54 closed + merged (PR #41).
 From the [project backlog](../BACKLOG.md): candidate **I** (meeting import +
 faceted history search).
 
-**Last updated:** 2026-06-11 (**HS-55-02 done: the import API + CLI.**
+**Last updated:** 2026-06-11 (**HS-55-03 done: the /history import UI.** An
+"Import a recording" opener in the meetings toolbar + an accent-edged panel
+(dashed drag/drop + browse target, Title/Speaker/Tags, the honest notes
+verbatim: ffmpeg for compressed, one speaker label, audio not kept, local
+only). Submit posts multipart with `started_at_ms` from `File.lastModified`;
+the card renders a reduced-motion-safe pulsing "Importing…" pill with the
+window-progress detail, followed by **in-place resolution** via a quiet 2 s
+poll that runs only while an import is in flight (re-armed after page
+refresh, self-stopping). Failures render a danger pill + detail with a
+Remove affordance placed outside the card button (valid HTML) →
+holdspeakConfirm → the new DELETE route. Proven live by a real browser
+upload (`dogfood_story03.py`: RESULT PASS, zero page errors; 3 screenshots
+reviewed). 4 page-content locks; `npm run build` clean; full suite **2562
+passed, 17 skipped** (+4). **HS-55-02 (prior): the import API + CLI.**
 `POST /api/meetings/import` (multipart; `python-multipart` added — it was
 absent) refuses bad formats up front via the engine's new `validate_format()`,
 saves a visible `intel_status="importing"` placeholder row immediately,
@@ -112,22 +125,20 @@ about the single speaker label (no diarization in v1).
 |---|---|---|---|
 | HS-55-01 | The import engine (file → meeting) | done | none |
 | HS-55-02 | Import API + background job + CLI | done | HS-55-01 |
-| HS-55-03 | The /history import UI | backlog | HS-55-02 |
+| HS-55-03 | The /history import UI | done | HS-55-02 |
 | HS-55-04 | Faceted history search (API + filter row) | backlog | none |
 | HS-55-05 | Docs: import + facets | backlog | HS-55-03, HS-55-04 |
 | HS-55-06 | Closeout: real-audio dogfood + final-summary + PR | backlog | HS-55-01..05 |
 
 ## Where we are
 
-**HS-55-01 + HS-55-02 shipped 2026-06-11.** The engine and both its callers
-are real: upload → 202 → visible importing row → progress on the row →
-resolved meeting (or honest failure + the new DELETE route), and
-`holdspeak import` from the shell.
+**HS-55-01 + HS-55-02 + HS-55-03 shipped 2026-06-11.** The import feature is
+whole: engine → API/CLI → an inviting browser flow proven live (real upload,
+in-place lifecycle, zero page errors).
 
-Next is **HS-55-03 — the /history import UI**: the inviting "Import a
-recording" affordance + panel, upload with progress (poll the row; the detail
-endpoint nests `intel_status` as `{state, detail}`), in-place resolution,
-`started_at_ms` from `File.lastModified`, the remove affordance on failures.
+Next is **HS-55-04 — faceted history search**: server-side
+`date_from`/`date_to`/`speaker`/`tag`/`has_open_actions` filters composing
+with `search` in SQL, + the `/history` filter row.
 
 ## Open decisions (defaults chosen; flag to change)
 
