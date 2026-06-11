@@ -4,8 +4,8 @@
 (TLS, tunnels, public URL) is future work.
 
 This document specifies the WebSocket protocol that lets an
-external device — the AIPI-Lite ESP32-S3 robot, or any
-compatible client — feed audio into HoldSpeak's voice-typing
+external device (the AIPI-Lite ESP32-S3 robot, or any
+compatible client) feed audio into HoldSpeak's voice-typing
 and meeting paths. The on-host implementation lives in
 `holdspeak/device_audio.py`, `holdspeak/device_audio_ws.py`,
 `holdspeak/device_status.py`, `holdspeak/voice_typing.py`,
@@ -129,7 +129,7 @@ surface lands. No reply.
 ```
 
 Reports a device-side gesture. `at` is a numeric
-device-side timestamp anchor (any int / float, optional —
+device-side timestamp anchor (any int / float; optional,
 defaults to `null` server-side).
 
 Currently honored:
@@ -215,7 +215,7 @@ After `start`, the device pushes raw PCM as binary
 WebSocket frames. The wire format is fixed:
 
 - 16 kHz mono, int16 little-endian.
-- No header / framing — each frame's bytes are appended to
+- No header / framing: each frame's bytes are appended to
   the recorder's pushed-audio buffer.
 - Odd trailing bytes (incomplete sample) are dropped.
 - Frames pushed before `start` or after `stop` are silently
@@ -251,9 +251,9 @@ on handshake-time failures:
 
 | code | meaning |
 |---|---|
-| 4001 | Invalid handshake — payload missing fields, malformed JSON, unknown extra fields, or wrong `type` literal |
-| 4003 | PSK mismatch — the device's PSK didn't match the configured value |
-| 4009 | Duplicate label — another active device is already using this label |
+| 4001 | Invalid handshake: payload missing fields, malformed JSON, unknown extra fields, or wrong `type` literal |
+| 4003 | PSK mismatch: the device's PSK didn't match the configured value |
+| 4009 | Duplicate label: another active device is already using this label |
 
 Constants live at `holdspeak/device_audio.py:`
 `WS_CLOSE_INVALID_HANDSHAKE`, `WS_CLOSE_PSK_MISMATCH`,
@@ -289,8 +289,8 @@ the device can show them on its LCD:
 
 | trigger | text | ttl_ms |
 |---|---|---|
-| `start` accepted, voice session begun | *(no pushback — TX arrow glyph in firmware top-right indicates recording)* | — |
-| `stop` produced ≥ 0.1 s of audio, transcription kicked off | *(no pushback — absence of TX arrow signals processing)* | — |
+| `start` accepted, voice session begun | *(no pushback; TX arrow glyph in firmware top-right indicates recording)* | none |
+| `stop` produced ≥ 0.1 s of audio, transcription kicked off | *(no pushback; absence of TX arrow signals processing)* | none |
 | Transcription completed | `<first 150 chars of transcript>` | 4000 |
 
 AIPI-4-13 (2026-05): `Listening...` and `Thinking...` pushbacks were
@@ -317,7 +317,7 @@ The periodic Recording-tick fires every
 `Recording MM:SS`, sticky (`ttl_ms: 0`) so it overwrites the previous
 sticky activity until the next tick. The ticker stops cleanly on
 meeting stop (the `Saving meeting...` frame is the last status seen
-by the device). Cap: MM clamps to `99` at 100+ minute meetings —
+by the device). Cap: MM clamps to `99` at 100+ minute meetings;
 cosmetic concession to LCD width.
 
 Transcript pushback filters the clearest Whisper silence/noise
@@ -333,7 +333,7 @@ filtered by this display-only rule.
 ```
 
 Currently the only `error` code is `session_busy` (§3.1).
-The connection is **not** closed on this error — the device
+The connection is **not** closed on this error; the device
 can wait and retry on the next button press.
 
 ## 7. End-to-end example
@@ -394,7 +394,7 @@ server → device  {"type":"status","text":"Saving meeting...","ttl_ms":0}
 - **PSK rotation under reconnect.** Today rotation takes
   effect on the *next* connection because `get_psk` is
   called per handshake. Cross-network reconnects may take
-  longer to drain old sessions — sharing PSKs across many
+  longer to drain old sessions; sharing PSKs across many
   devices on different networks needs revocation, not just
   rotation.
 - **Per-device PSKs.** HoldSpeak uses a single shared secret

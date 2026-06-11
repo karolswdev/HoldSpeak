@@ -5,8 +5,10 @@
 > HoldSpeak ships first-party connectors, and the contract is general
 > enough that anyone can author a local one.
 
-This guide documents the contract you need to satisfy and the
-testing surface you get for free.
+If HoldSpeak does not yet see the part of your world you care about
+(your tracker, your CI, your notes), a connector is how you teach it,
+without forking the runtime. This guide documents the contract you need
+to satisfy and the testing surface you get for free.
 
 ---
 
@@ -76,7 +78,7 @@ Optional:
 | `requires_network` | bool | If true, you must declare at least one network permission (see below). |
 | `permissions` | list[string] | See "Permission model". |
 | `source_boundary` | string | Where data comes from in plain English. |
-| `dry_run` | bool | Always `true` in practice — connectors must support dry-run. |
+| `dry_run` | bool | Always `true` in practice; connectors must support dry-run. |
 
 ### Validation
 
@@ -121,7 +123,7 @@ Recognised permissions (from `holdspeak.connector_sdk.KNOWN_PERMISSIONS`):
 | `shell:exec` | Connector invokes a local CLI subprocess. |
 | `fs:read` | Connector reads files outside HoldSpeak's own data dir. |
 | `loopback:http` | Connector accepts loopback POSTs (e.g. browser extension). |
-| `network:outbound` | Connector opens an outbound socket — high-trust. |
+| `network:outbound` | Connector opens an outbound socket; high-trust. |
 
 Network rule: if your manifest declares `requires_network: true`,
 you must include at least one of `loopback:http` or
@@ -165,7 +167,7 @@ Section caps: each list is capped at
 
 `permission_notes` is the right place to surface "the
 connector is currently disabled" / "the CLI binary isn't on
-PATH" — the runtime + UI render them as advisory blocks above
+PATH"; the runtime + UI render them as advisory blocks above
 the planned commands.
 
 ---
@@ -184,7 +186,7 @@ Before merging a connector:
       that implies sensitive content (cookies, body, headers,
       form data, screenshots, selection text)? See
       `holdspeak/activity_extension.py:FORBIDDEN_FIELDS` for
-      the canonical list — re-export and *extend* it for any
+      the canonical list; re-export and *extend* it for any
       new sensitive surface.
 - [ ] Are non-`http(s)` URLs rejected at the schema layer?
 - [ ] Is `requires_network` honest? (Reading a local file is
@@ -254,7 +256,7 @@ canonical reference implementations:
 
 | Pack | Source | Manifest | Fixture |
 |---|---|---|---|
-| Firefox companion | [firefox_ext.py](../holdspeak/connector_packs/firefox_ext.py) | `firefox_ext.MANIFEST` | none — coverage via [`tests/unit/test_activity_extension.py`](../tests/unit/test_activity_extension.py) parser-contract tests |
+| Firefox companion | [firefox_ext.py](../holdspeak/connector_packs/firefox_ext.py) | `firefox_ext.MANIFEST` | none (coverage via [`tests/unit/test_activity_extension.py`](../tests/unit/test_activity_extension.py) parser-contract tests) |
 | GitHub CLI | [github_cli.py](../holdspeak/connector_packs/github_cli.py) | `github_cli.MANIFEST` | [`gh-happy-path.json`](../tests/fixtures/connectors/gh-happy-path.json), [`gh-empty-ledger.json`](../tests/fixtures/connectors/gh-empty-ledger.json) |
 | Jira CLI | [jira_cli.py](../holdspeak/connector_packs/jira_cli.py) | `jira_cli.MANIFEST` | [`jira-happy-path.json`](../tests/fixtures/connectors/jira-happy-path.json), [`jira-empty-ledger.json`](../tests/fixtures/connectors/jira-empty-ledger.json) |
 | Calendar candidates | [activity_candidates.py](../holdspeak/activity_candidates.py) | (built-in via the descriptor in [`activity_connectors.py`](../holdspeak/activity_connectors.py)) | [`calendar-happy-path.json`](../tests/fixtures/connectors/calendar-happy-path.json), [`calendar-empty-ledger.json`](../tests/fixtures/connectors/calendar-empty-ledger.json) |
@@ -318,7 +320,7 @@ That's a complete connector. Drop a fixture and you're done.
 Beyond the base contract, the runtime adds four surfaces. Read
 these before authoring a pack.
 
-### `kind: pipeline` — packs that consume other packs
+### `kind: pipeline`: packs that consume other packs
 
 A pipeline pack reads other packs' rows and writes one of its
 own. The first first-party pipeline is `meeting_context`
@@ -330,12 +332,12 @@ Manifest delta vs. a regular pack:
 | Field | Required for pipelines | Notes |
 |---|---|---|
 | `kind` | `"pipeline"` | Added to `KNOWN_KINDS`. |
-| `consumes` | yes — at least one entry | List of `{pack_id, output_kind}` upstreams. `output_kind` is one of `records` / `annotations` / `candidates`. |
+| `consumes` | yes, at least one entry | List of `{pack_id, output_kind}` upstreams. `output_kind` is one of `records` / `annotations` / `candidates`. |
 | `pipeline_freshness_seconds` | optional | Skip an upstream's re-run if its last successful `connector_runs` row is within this window. |
 | `permissions` | must include the read-permission for every consumed `output_kind` | E.g. consuming `annotations` requires `read:activity_annotations`. The validator enforces this; missing reads fail with `pipeline_missing_read_permission`. |
 
 `consumes` is rejected on non-pipeline packs and required on
-pipeline packs — the validator emits
+pipeline packs; the validator emits
 `pipeline_requires_consumes` / `consumes_only_on_pipeline` so
 the failure mode is unambiguous.
 
@@ -343,12 +345,12 @@ The `PipelineRunner` (`holdspeak.connector_runtime.PipelineRunner`)
 walks `consumes` into a topological order and executes each
 upstream as either:
 
-- `skipped_fresh` — last successful `connector_runs` row is
+- `skipped_fresh`: last successful `connector_runs` row is
   within `pipeline_freshness_seconds`,
-- `ran` — runner invoked the pack's module-level `run(db)`
+- `ran`: runner invoked the pack's module-level `run(db)`
   callable,
-- `failed` — the runner raised; pipeline aborts,
-- `missing_runner` — pack has no `run(db)` and no fresh row;
+- `failed`: the runner raised; pipeline aborts,
+- `missing_runner`: pack has no `run(db)` and no fresh row;
   pipeline aborts.
 
 Failure of any step aborts the pipeline; there are no retries
@@ -400,13 +402,13 @@ discovery rules:
 
 Each registered pack carries a `source` field
 (`"first-party"` / `"user"`) that the API and doctor surface
-verbatim. Discovery is *not* sandboxing — code under the
+verbatim. Discovery is *not* sandboxing: code under the
 user's home dir is by definition code the user trusts.
 
 ### Pack run history (`connector_runs`)
 
-Every pack invocation — preview is exempt; enrich runs and
-pipeline-step runs are not — writes one row to
+Every pack invocation (preview is exempt; enrich runs and
+pipeline-step runs are not) writes one row to
 `connector_runs`:
 
 ```sql
@@ -434,7 +436,7 @@ connector. UI for the full per-pack timeline is deferred to
 a future release.
 
 `connector_runs` is also what `PipelineRunner` consults for
-its freshness skip — the row's `started_at` plus the
+its freshness skip: the row's `started_at` plus the
 upstream's `pipeline_freshness_seconds` decides whether a
 step short-circuits.
 

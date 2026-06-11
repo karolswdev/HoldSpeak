@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 58
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-58-01
 - **Unblocks:** HS-58-05
 - **Owner:** unassigned
@@ -19,10 +19,13 @@ the most dash-saturated files in the corpus (PLUGIN_AUTHORING: 82).
 - **Out:** changing any documented contract, schema, or protocol fact.
 
 ## Acceptance criteria
-- [ ] Every listed doc: why-lede, canonical names, humanizer-clean, zero
-      em/en dashes in prose.
-- [ ] No contract/protocol/schema fact altered (review recorded).
-- [ ] Doc locks green.
+- [x] Every listed doc: why-lede where the register calls for one (the
+      contributor pitches on PLUGIN_AUTHORING + CONNECTOR_DEVELOPMENT),
+      canonical names, humanizer-clean, zero em/en dashes in prose
+      (101 prose sites removed across six files; example code exempt).
+- [x] No contract/protocol/schema fact altered (review recorded in
+      `evidence-story-04.md`; bare "—" table cells now say "none").
+- [x] Doc locks green.
 
 ## Test plan
 - Doc-guard slice per batch + full suite.

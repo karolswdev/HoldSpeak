@@ -1,13 +1,20 @@
 # Phase 58 — The Front Door (positioning + the user-facing docs, revised)
 
-**Status:** in-progress (3/6). Opened 2026-06-11 on user direction, right
+**Status:** in-progress (4/6). Opened 2026-06-11 on user direction, right
 after Phase 57 closed (PR #44): *"a proper phase. Where we also revise WHAT
 we are saying, so that we can be explicit around how to 'sell' this product
 to our community."* The user fixed the three positioning decisions directly:
 **lead angle "one copilot, two modes"**, **audience: developers**,
 **comparisons: name names, honestly**.
 
-**Last updated:** 2026-06-11 (**HS-58-03 done: the core guides.** All
+**Last updated:** 2026-06-11 (**HS-58-04 done: the developer + ops
+docs.** The extend-it corpus revised: contributor-pitch ledes on
+PLUGIN_AUTHORING ("the highest-leverage way to make HoldSpeak yours…
+mostly the prompt you wish your meetings produced") and
+CONNECTOR_DEVELOPMENT ("teach it… without forking the runtime"); 101
+prose dashes removed across six files (example code exempt per the
+canon), every replacement hand-chosen; no contract/protocol/schema fact
+altered. Locks green; suite 2641. **HS-58-03 (prior): the core guides.** All
 eight user-flow guides revised against the canon: why-ledes (the
 five-minute promise, the say-vs-meant gap, "a meeting should end with
 decisions, not a recording"), canonical names in prose, 70 em/en dashes
@@ -105,13 +112,14 @@ as honest as the product.
 | HS-58-01 | The positioning canon | done | none |
 | HS-58-02 | README.md, the front door | done | HS-58-01 |
 | HS-58-03 | The core guides | done | HS-58-01 |
-| HS-58-04 | The developer + ops docs | backlog | HS-58-01 |
+| HS-58-04 | The developer + ops docs | done | HS-58-01 |
 | HS-58-05 | The guard | backlog | HS-58-02..04 |
 | HS-58-06 | Closeout: fresh-eyes pass + final-summary + PR | backlog | HS-58-01..05 |
 
 ## Where we are
 
-**HS-58-01 → HS-58-03 shipped 2026-06-11.** The front door and every
-user-flow guide now tell one story in one voice. Next is **HS-58-04 — the
-developer + ops docs**: the same treatment for the extend-it corpus,
-starting with the 82-dash PLUGIN_AUTHORING monster.
+**HS-58-01 → HS-58-04 shipped 2026-06-11.** The whole user-facing corpus
+now tells one story in one voice, dash-free. Next is **HS-58-05 — the
+guard**: lock dashes-zero + AI-vocab + canonical names over the corpus
+(with the verbatim-UI-quote allowlist and the widened HS-N-NN vocab
+pattern), proven both ways.
