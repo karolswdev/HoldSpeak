@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 57
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-57-01..04
 - **Unblocks:** none (phase exit)
 - **Owner:** unassigned
@@ -25,12 +25,15 @@ path untouched) are behavioral — only a live runtime proves them.
 - **Out:** new feature work (findings go back to their story first).
 
 ## Acceptance criteria
-- [ ] Dogfood transcript + screenshots committed (VTT speakers/timestamps,
-      real intel ready on `.43`, the facet pass, the audio-path pass).
-- [ ] Full suite green; build clean; 0 `_built/` tracked.
-- [ ] `final-summary.md` + this story's evidence in the same commit.
-- [ ] README + BACKLOG updated in the same commit.
-- [ ] PR to `main` merged on green CI.
+- [x] Dogfood transcript + screenshot committed (VTT speakers/timestamps,
+      real intel ready on `.43` with an accurate summary + 2 extracted
+      action items, the facet pass both ways, the audio-path pass via real
+      `say` → Whisper in the same run) — see `evidence-story-05.md`.
+- [x] Full suite green (2641 passed, 17 skipped); build clean; 0 `_built/`
+      tracked.
+- [x] `final-summary.md` + this story's evidence in the same commit.
+- [x] README + BACKLOG (P shipped) updated in the same commit.
+- [x] PR to `main` merged on green CI.
 
 ## Test plan
 - The dogfood + the full suite; CI green on the PR.

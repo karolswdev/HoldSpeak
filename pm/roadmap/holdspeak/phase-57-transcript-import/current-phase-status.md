@@ -1,14 +1,24 @@
 # Phase 57 — Transcript Import ("bring your archive", part 2)
 
-**Status:** in-progress (4/5). Opened 2026-06-11 on user direction, straight
-after Phase 56 closed (PR #43): *"can we also do it by simply uploading a
-transcript too? I often have transcripts, rarely do I have recordings (but I
-don't want you to remove the recording upload affordance, of course!)"*.
-Net-new from that conversation (BACKLOG candidate **P**), slotted ahead of
-**K** because it is small and completes the Phase-55 "bring your archive"
-thesis.
+**Status:** CLOSED (5/5) — opened and closed 2026-06-11 on user direction,
+straight after Phase 56 closed (PR #43): *"can we also do it by simply
+uploading a transcript too? I often have transcripts, rarely do I have
+recordings (but I don't want you to remove the recording upload affordance,
+of course!)"*. Net-new from that conversation (BACKLOG candidate **P**),
+slotted ahead of **K** because it is small and completes the Phase-55
+"bring your archive" thesis. See [`final-summary.md`](./final-summary.md).
 
-**Last updated:** 2026-06-11 (**HS-57-04 done: docs.** The Meeting Mode
+**Last updated:** 2026-06-11 (**HS-57-05 done: closeout — phase CLOSED.**
+The real-metal dogfood passed 5/5: a multi-speaker VTT through the real
+API landed with the file's speakers and exact cue starts; its deferred
+intel processed FOR REAL on the `.43` endpoint (ready, an accurate
+summary, 2 extracted action items); the server-side speaker facet
+filtered by a transcript-carried name both ways; a real spoken WAV
+(`say` → real MLX Whisper) imported through the same route in the same
+run, proving the recording path untouched; /history rendered both with
+zero page errors. `final-summary.md`; BACKLOG **P → shipped**; full suite
+**2641 passed, 17 skipped**; build clean; 0 `_built/` tracked; PR merged
+on green. **HS-57-04 (prior): docs.** The Meeting Mode
 Guide's import section became "Import an Existing Recording or Transcript"
 with an "Importing a transcript" subsection: the three formats + the
 no-model fast path, the speaker honesty rule (file labels become real
@@ -126,12 +136,12 @@ stays, untouched.
 | HS-57-02 | The engine path + CLI | done | HS-57-01 |
 | HS-57-03 | API + /history UI | done | HS-57-02 |
 | HS-57-04 | Docs: transcript import | done | HS-57-03 |
-| HS-57-05 | Closeout: real-VTT dogfood + final-summary + PR | backlog | HS-57-01..04 |
+| HS-57-05 | Closeout: real-VTT dogfood + final-summary + PR | done | HS-57-01..04 |
 
 ## Where we are
 
-**HS-57-01 → HS-57-04 shipped 2026-06-11.** The feature is end-to-end
-usable and documented honestly. Next is **HS-57-05 — closeout**: the
-real-VTT + real-`.43`-intel dogfood (with a WAV in the same run proving
-the audio path untouched), `final-summary.md`, BACKLOG P flipped, PR
-merged on green.
+**Phase CLOSED 2026-06-11, 5/5.** Transcripts are first-class citizens of
+the archive: a VTT becomes a real meeting with its own speakers and
+timestamps, real intel digests it accurately, the speaker facet sees the
+names, and the recording path is untouched — all proven on real metal.
+Next per the agreed sequence: **K — languages + spoken-symbol dictionary**.
