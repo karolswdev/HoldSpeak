@@ -57,7 +57,9 @@ def _default_transcriber_factory(config: Config):
     from ...transcribe import Transcriber
 
     return Transcriber(
-        model_name=config.model.name, backend=getattr(config.model, "backend", None)
+        model_name=config.model.name,
+        backend=getattr(config.model, "backend", None),
+        language=getattr(config.model, "language", "auto"),
     )
 
 

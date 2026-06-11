@@ -83,6 +83,12 @@ class ModelConfig:
     name: str = "base"
     warm_on_start: bool = True
     backend: str = "auto"  # "auto" | "mlx" | "faster-whisper"
+    # HS-59: pin transcription to one Whisper language ("pl", "de", …) or
+    # "auto" for Whisper's own per-utterance detection (today's behavior).
+    # One knob serves dictation, meetings, and import: they share the
+    # Transcriber. Validated against holdspeak/languages.py at the
+    # settings boundary.
+    language: str = "auto"
     # Available: tiny, base, small, medium, large
     # HS-25-05: hard ceiling (seconds) on a single transcription so a hung model
     # can't freeze the pipeline. Generous by default to never clip a legitimate

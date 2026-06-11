@@ -72,7 +72,9 @@ def run_import_command(args) -> int:
     from ..transcribe import Transcriber
 
     transcriber = Transcriber(
-        model_name=config.model.name, backend=getattr(config.model, "backend", None)
+        model_name=config.model.name,
+        backend=getattr(config.model, "backend", None),
+        language=getattr(config.model, "language", "auto"),
     )
 
     def on_progress(done: int, total: int) -> None:

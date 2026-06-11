@@ -444,7 +444,10 @@ def _run_meeting_mode(args):
 
     # Load transcriber
     print(f"Loading Whisper '{config.model.name}' model...")
-    transcriber = Transcriber(model_name=config.model.name)
+    transcriber = Transcriber(
+        model_name=config.model.name,
+        language=getattr(config.model, "language", "auto"),
+    )
     print("Model ready!")
     print()
 

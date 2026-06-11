@@ -294,7 +294,11 @@ class WebRuntime:
         if self.transcriber is None or getattr(self.transcriber, "model_name", None) != self.config.model.name:
             self._set_transcription_status("loading")
             try:
-                self.transcriber = Transcriber(model_name=self.config.model.name, backend=self.config.model.backend)
+                self.transcriber = Transcriber(
+                    model_name=self.config.model.name,
+                    backend=self.config.model.backend,
+                    language=getattr(self.config.model, "language", "auto"),
+                )
             except Exception as exc:
                 self._set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")
                 raise

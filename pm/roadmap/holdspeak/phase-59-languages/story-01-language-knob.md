@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 59
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-59-03, HS-59-04
 - **Owner:** unassigned
@@ -25,14 +25,18 @@ neighbor's. There is no knob anywhere: config, settings, or docs.
   (one knob serves all three consumers by design).
 
 ## Acceptance criteria
-- [ ] Fake-backend tests assert the kwarg both ways per backend: "auto" →
-      no language (byte-identical call shape), "pl" → `language="pl"`.
-- [ ] All four construction sites thread `config.model.language` (grep
-      lock or per-site tests).
-- [ ] An invalid code is refused at the settings write with an actionable
-      message; "auto" and valid codes round-trip; an older config without
-      the field coerces forward.
-- [ ] The settings model section exposes the knob (page lock + screenshot).
+- [x] Fake-backend tests assert the kwarg both ways per backend: "auto" →
+      no language at all (byte-identical call shape, structurally — the
+      kwarg is conditionally built), "pl"/"de" → the code.
+- [x] All four construction sites thread the knob (source-marker lock;
+      web_runtime reads it defensively after its SimpleNamespace fixtures
+      exploded the strict read — see evidence).
+- [x] An invalid code is refused at the settings write with the
+      actionable message AND the bad write changes nothing; "auto"/names/
+      codes round-trip normalized; older configs coerce forward.
+- [x] The settings Voice section exposes the knob with the honest
+      auto-detect hint; the UI option list is set-equality-locked to the
+      Python registry. Screenshot reviewed. See `evidence-story-01.md`.
 
 ## Test plan
 - Unit on the Transcriber threading (fake impls); config round-trip +
