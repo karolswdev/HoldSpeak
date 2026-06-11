@@ -1,11 +1,22 @@
 # Phase 55 — Meeting Import ("bring your archive") + faceted history search
 
-**Status:** in-progress (5/6). Opened 2026-06-11 on user direction (the agreed post-53
+**Status:** CLOSED (6/6). See [`final-summary.md`](./final-summary.md). Opened 2026-06-11 on user direction (the agreed post-53
 sequence **54 → I → J → K**), right after Phase 54 closed + merged (PR #41).
 From the [project backlog](../BACKLOG.md): candidate **I** (meeting import +
 faceted history search).
 
-**Last updated:** 2026-06-11 (**HS-55-05 done: the docs.** Two product-tense
+**Last updated:** 2026-06-11 (**HS-55-06 done: phase CLOSED (6/6).** The
+closeout dogfood ran with no fakes anywhere: real `say` speech → the real
+import route → real MLX Whisper transcribed both utterances **verbatim**
+across their two ~30 s windows → the deferred intel job processed for real on
+the `.43` Qwen3.5-9B-Q6 endpoint, reaching `ready` with a correct summary →
+facets included (speaker+tag) and excluded (wrong speaker) it. The first run
+accidentally proved the honest-failure path on real metal (a machine-config
+backend quirk → `import_failed` with the actionable hint). Final suite **2568
+passed, 17 skipped** (+23 this phase); build clean; 0 `_built/` tracked.
+`final-summary.md` records the finds (the missing DELETE route, the broken
+search-result pill) and the follow-ups. BACKLOG candidate **I** flipped; PR to
+`main` merged on green. **HS-55-05 (prior): the docs.** Two product-tense
 sections in `docs/MEETING_MODE_GUIDE.md` ("Import an Existing Recording" with
 the web + CLI flows and the three honest truths in plain prose; "Find Meetings
 in Your Archive" for the server-side filter row), the docs-index Meet entry and
@@ -148,16 +159,14 @@ about the single speaker label (no diarization in v1).
 | HS-55-03 | The /history import UI | done | HS-55-02 |
 | HS-55-04 | Faceted history search (API + filter row) | done | none |
 | HS-55-05 | Docs: import + facets | done | HS-55-03, HS-55-04 |
-| HS-55-06 | Closeout: real-audio dogfood + final-summary + PR | backlog | HS-55-01..05 |
+| HS-55-06 | Closeout: real-audio dogfood + final-summary + PR | done | HS-55-01..05 |
 
 ## Where we are
 
-**HS-55-01 → HS-55-05 shipped 2026-06-11.** Feature + docs are whole.
-
-Next is **HS-55-06 — closeout**: the real-metal dogfood (`say`-generated WAV →
-the real import API → real Whisper → `/history` segments → intel enqueued,
-processed on `.43` when reachable → facets include/exclude it), full suite,
-final-summary, BACKLOG candidate I flipped, PR to `main` merged on green.
+**CLOSED — all six stories shipped 2026-06-11.** The archive is part of the
+product: import from the browser or the shell, watch it become a real meeting
+with real intelligence, and find it again with real filters. Proven end to
+end on real metal. See [`final-summary.md`](./final-summary.md).
 
 ## Open decisions (defaults chosen; flag to change)
 
