@@ -1,6 +1,6 @@
 # Phase 57 — Transcript Import ("bring your archive", part 2)
 
-**Status:** in-progress (3/5). Opened 2026-06-11 on user direction, straight
+**Status:** in-progress (4/5). Opened 2026-06-11 on user direction, straight
 after Phase 56 closed (PR #43): *"can we also do it by simply uploading a
 transcript too? I often have transcripts, rarely do I have recordings (but I
 don't want you to remove the recording upload affordance, of course!)"*.
@@ -8,7 +8,16 @@ Net-new from that conversation (BACKLOG candidate **P**), slotted ahead of
 **K** because it is small and completes the Phase-55 "bring your archive"
 thesis.
 
-**Last updated:** 2026-06-11 (**HS-57-03 done: API + /history UI.** The
+**Last updated:** 2026-06-11 (**HS-57-04 done: docs.** The Meeting Mode
+Guide's import section became "Import an Existing Recording or Transcript"
+with an "Importing a transcript" subsection: the three formats + the
+no-model fast path, the speaker honesty rule (file labels become real
+per-segment speakers; never invented), the timestamp honesty rule (real
+cues for vtt/srt; approximate, never presented as real, for txt), the
+refusal posture, file-not-retained, and the explicit recordings-unchanged
+statement. Docs index touched. Zero dashes in new text; doc-guard slice
+green (77); full suite **2641 passed, 17 skipped** (docs-only).
+**HS-57-03 (prior): API + /history UI.** The
 route's worker branches by suffix — a transcript upload rides the exact
 recording lifecycle ("Parsing transcript…" placeholder → engine save /
 `import_failed`) and **never constructs a transcriber** (a poisoned
@@ -116,14 +125,13 @@ stays, untouched.
 | HS-57-01 | The transcript parsers | done | none |
 | HS-57-02 | The engine path + CLI | done | HS-57-01 |
 | HS-57-03 | API + /history UI | done | HS-57-02 |
-| HS-57-04 | Docs: transcript import | backlog | HS-57-03 |
+| HS-57-04 | Docs: transcript import | done | HS-57-03 |
 | HS-57-05 | Closeout: real-VTT dogfood + final-summary + PR | backlog | HS-57-01..04 |
 
 ## Where we are
 
-**HS-57-01 → HS-57-03 shipped 2026-06-11.** The feature is end-to-end
-usable: drop a VTT on /history and it becomes a real meeting with the
-file's own speakers and timestamps, no model load. Next is **HS-57-04 —
-docs**: the Meeting Mode Guide's import section learns the transcript
-story (formats, the timestamp/speaker honesty rules, file-not-retained,
-intel parity).
+**HS-57-01 → HS-57-04 shipped 2026-06-11.** The feature is end-to-end
+usable and documented honestly. Next is **HS-57-05 — closeout**: the
+real-VTT + real-`.43`-intel dogfood (with a WAV in the same run proving
+the audio path untouched), `final-summary.md`, BACKLOG P flipped, PR
+merged on green.

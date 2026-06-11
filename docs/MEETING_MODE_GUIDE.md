@@ -11,7 +11,7 @@ HoldSpeak's Meeting Mode captures your microphone plus remote participants' audi
 5. [Web Interfaces](#web-interfaces)
 6. [Meeting Intelligence](#meeting-intelligence)
 7. [Meeting Aftercare (close the loop)](#meeting-aftercare-close-the-loop)
-8. [Import an Existing Recording](#import-an-existing-recording)
+8. [Import an Existing Recording or Transcript](#import-an-existing-recording-or-transcript)
 9. [Find Meetings in Your Archive](#find-meetings-in-your-archive)
 10. [Configuration Reference](#configuration-reference)
 11. [Web API Reference](#web-api-reference)
@@ -413,19 +413,19 @@ talks.
 
 ---
 
-## Import an Existing Recording
+## Import an Existing Recording or Transcript
 
-You can run meeting intelligence on recordings you already have. If a Zoom
-export, a Teams download, or a voice memo is sitting on your disk, import it
-and HoldSpeak treats it like any other meeting: the audio is transcribed
-locally, the transcript is stored with timestamps, and the result appears on
-the History page with the same intelligence, artifacts, and aftercare as a
-live capture.
+You can run meeting intelligence on recordings and transcripts you already
+have. If a Zoom export, a Teams download, a voice memo, or a transcript file
+is sitting on your disk, import it and HoldSpeak treats it like any other
+meeting: the content is processed locally, stored with timestamps, and the
+result appears on the History page with the same intelligence, artifacts, and
+aftercare as a live capture.
 
-From the browser: open **History**, click **Import a recording**, drop the file
-in (or browse), optionally set a title, a speaker label, and tags, and click
-Import. The meeting appears in the list immediately with an "Importing" badge
-and live progress, then resolves in place when transcription finishes. A failed
+From the browser: open **History**, click **Import a recording or
+transcript**, drop the file in (or browse), optionally set a title, a speaker
+label, and tags, and click Import. The meeting appears in the list immediately
+with an "Importing" badge and live progress, then resolves in place. A failed
 import says why and can be removed with one click.
 
 From the shell (the right tool for very long files or headless machines):
@@ -453,6 +453,40 @@ your machine.
 
 The meeting's start time comes from the file's last-modified time, so an old
 recording sorts where it happened in your history, not where it was imported.
+
+### Importing a transcript
+
+Most meeting tools export a transcript rather than audio, and HoldSpeak
+imports those directly: `.vtt` (WebVTT, the common Teams, Zoom, and Meet
+export), `.srt` (SubRip), and plain `.txt`. A transcript import is the fast
+path. There is nothing to transcribe, so no model loads and even a long
+meeting imports in well under a second:
+
+```bash
+holdspeak import path/to/meeting.vtt --tag imported
+```
+
+Transcripts can carry more than audio does, and HoldSpeak uses exactly what
+the file provides:
+
+- **Speaker names.** WebVTT voice tags (`<v Priya>`) and `Name:` line
+  prefixes become real per-segment speaker labels, so the speaker filter on
+  the History page works across imported transcripts. A file with no labels
+  gets one label of your choosing (the default is "Transcript"). HoldSpeak
+  never invents a name.
+- **Timestamps.** `.vtt` and `.srt` cues carry real start and end times, and
+  the imported segments keep them. Plain `.txt` has no timing, so segments
+  get evenly spaced approximate times. They keep the meeting ordered and
+  readable, and HoldSpeak does not present them as real moments.
+
+A file that yields no readable content (an empty file, a subtitle file with
+no cues, something that is not text at all) is refused with a clear message.
+An import never silently creates an empty meeting.
+
+The transcript file itself is read once and not retained. The meeting record
+is the artifact, the same as every other meeting, and nothing leaves your
+machine. Recordings import exactly as they did before; nothing about the
+audio path changed.
 
 ## Find Meetings in Your Archive
 

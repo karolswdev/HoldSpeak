@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 57
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-57-03
 - **Unblocks:** HS-57-05
 - **Owner:** unassigned
@@ -21,10 +21,12 @@ needs the same honest treatment (and the docs index entry should mention it).
 - **Out:** internal/architecture docs beyond evidence.
 
 ## Acceptance criteria
-- [ ] Product-tense; vocab guard green; zero em/en dashes in new text;
-      humanizer applied.
-- [ ] The timestamp-honesty and speaker-label rules stated plainly.
-- [ ] Docs index updated.
+- [x] Product-tense; vocab guard green (77-doc-test slice); zero em/en
+      dashes in new text (grep-verified); humanizer applied.
+- [x] The timestamp-honesty and speaker-label rules stated plainly — plus
+      the explicit "recordings import exactly as they did before"
+      statement (the user's constraint, in writing).
+- [x] Docs index updated. See `evidence-story-04.md`.
 
 ## Test plan
 - Doc-guard slice + full suite.

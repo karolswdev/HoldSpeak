@@ -55,8 +55,9 @@ intelligent-typing layer. This page is the map. Pick a journey.
   actions, and artifacts at `/history`, then close the loop with aftercare: see
   what is still open, decided, or changed since last time, jump to the transcript
   moment that justifies a result, file an accepted action as a human-approved
-  issue, and draft the follow-up. Import recordings you already have (web
-  upload or `holdspeak import`) and filter the archive by date, speaker, tag,
+  issue, and draft the follow-up. Import recordings and transcripts you
+  already have (web upload or `holdspeak import`; vtt and srt keep their real
+  timestamps and speaker names) and filter the archive by date, speaker, tag,
   and open actions.
 
 ## Extend: build on it
