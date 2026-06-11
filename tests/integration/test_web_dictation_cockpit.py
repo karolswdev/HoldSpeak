@@ -11,7 +11,14 @@ def _page() -> str:
 
 
 def _app_js() -> str:
-    return (_REPO / "web" / "src" / "scripts" / "dictation-app.js").read_text()
+    """The dictation page behavior source: the entry module plus the carved
+    behavior modules under scripts/dictation/ (the page bundles them into
+    one chunk). Assertions target this combined source."""
+    scripts = _REPO / "web" / "src" / "scripts"
+    parts = [(scripts / "dictation-app.js").read_text()]
+    for module in sorted((scripts / "dictation").glob("*.js")):
+        parts.append(module.read_text())
+    return "\n".join(parts)
 
 
 def test_dictation_has_cockpit_hero() -> None:

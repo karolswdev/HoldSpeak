@@ -6,7 +6,8 @@
 // markup that hand-rolled a topbar/navigation. This rebuild:
 //
 //   - Wraps the page in AppLayout (TopNav + LocalPill + skip link).
-//   - Loads dictation-app.js verbatim from src/scripts/.
+//   - Loads dictation-app.js as a bundled ES module entry; carved
+//     behavior modules live under src/scripts/dictation/.
 //   - Replaces inline <style> with scoped CSS that flows from
 //     tokens.css.
 //   - Preserves every DOM id the JS reads via getElementById.
@@ -800,16 +801,12 @@ import CommandPreview from "../components/CommandPreview.astro";
   </div>
 
   <script>
-    import factorySource from "../scripts/dictation-app.js?raw";
-
-    // The legacy script ran at module level (no factory wrapper) and
-    // attached to DOM via window.addEventListener("DOMContentLoaded",
-    // ...). Astro hoists this script after the body — DOM is ready,
-    // so Function-eval'd execution runs immediately and the
-    // DOMContentLoaded handler inside the legacy code still fires
-    // because Astro emits the script as type="module" which deferrs
-    // until the document is parsed.
-    new Function(factorySource)();
+    // The page behavior is a real ES module bundled by Astro (it emits
+    // this script as type="module", deferred until the document is
+    // parsed — DOM is ready when it runs, same timing as the previous
+    // `?raw` + new Function() eval shim this replaced). The entry
+    // imports its carved behavior modules from scripts/dictation/.
+    import "../scripts/dictation-app.js";
   </script>
 </AppLayout>
 

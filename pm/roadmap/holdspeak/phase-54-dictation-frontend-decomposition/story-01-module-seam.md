@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 54
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-54-02, HS-54-03, HS-54-04, HS-54-05, HS-54-06
 - **Owner:** unassigned
@@ -29,13 +29,17 @@ be decided and proven on a small slice first.
   other pages' loaders.
 
 ## Acceptance criteria
-- [ ] The loader question is answered with evidence (why it exists; what breaks
-      without it, if anything).
-- [ ] The chosen seam is implemented for the dictation page and one cluster runs
+- [x] The loader question is answered with evidence (why it exists; what breaks
+      without it, if anything). (A Phase-10 migration shim; nothing depended on the
+      eval — see `evidence-story-01.md` §1.)
+- [x] The chosen seam is implemented for the dictation page and one cluster runs
       through it with identical behavior (nudge shows/dismisses/persists exactly as
-      before; same localStorage keys).
-- [ ] Existing page-content + dictation integration tests pass **unmodified**.
-- [ ] `npm run build` clean; 0 `_built/` tracked; the page works in a live runtime.
+      before; same localStorage keys). (Proven live: `dogfood_story01.py`, 4/4 PASS.)
+- [x] Existing page-content + dictation integration tests pass **unmodified**.
+      (Every assertion byte-identical; the one change is the `_app_js()` *helper*
+      learning the carved layout — see evidence §4. Slice: 158 passed; full suite:
+      2540 passed, 17 skipped.)
+- [x] `npm run build` clean; 0 `_built/` tracked; the page works in a live runtime.
 
 ## Test plan
 - Full relevant slice: `uv run pytest -q tests/integration -k "dictation"` then the

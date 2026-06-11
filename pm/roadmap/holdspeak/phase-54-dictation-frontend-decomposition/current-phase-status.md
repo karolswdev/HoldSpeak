@@ -1,13 +1,27 @@
 # Phase 54 — Dictation Frontend Decomposition
 
-**Status:** scaffolded. Opened 2026-06-11 on user direction (the agreed post-53
+**Status:** in-progress (1/6). Opened 2026-06-11 on user direction (the agreed post-53
 sequence), right after Phase 53 closed + merged (PR #40). From the
 [project backlog](../BACKLOG.md): candidate **D** (frontend density paydown), promoted
 from "ride along with the next dictation feature" to its own phase.
 
-**Last updated:** 2026-06-11 (scaffolded: AGENT-BRIEF + six stories; ground truth mapped
-against the live tree — `dictation.astro` 3,134 lines + `dictation-app.js` 2,967 lines =
-6,101 coupled lines).
+**Last updated:** 2026-06-11 (**HS-54-01 done: the module seam is decided and proven.**
+The `?raw` + `new Function()` loader turned out to be a Phase-10 (HS-10-09) migration
+shim with nothing depending on the eval — no inline handlers, no DOMContentLoaded
+reliance, no sloppy-mode dependence (each verified). The dictation page now loads its
+behavior as a **real bundled ES module**, and the first carved module
+(`web/src/scripts/dictation/discovery-nudge.js`, the HS-47-04 nudge, deps injected via
+`initDiscoveryNudge` until core.js exists) rides the seam with identical behavior —
+proven live by `dogfood_story01.py` (4/4: show, dismiss-persists, return-on-clear,
+global-off-persists). The seam immediately paid for itself: module scope rejected a
+**latent duplicate `escapeAttr` declaration** the eval had been masking via hoisting
+(the dead `:365` alias deleted; the live `:2192` implementation kept). Client chunks
+now ship **un-minified** via a `configEnvironment` vite hook (Astro 6 hardcodes client
+`minify: true`, ignoring `vite.build.minify`) — behavior-preserving in the strictest
+sense, since the shim always shipped the full un-minified source as a raw string.
+Every page-content assertion byte-identical; the one test change is the `_app_js()`
+helper reading the carved tree. Slice 158 passed; full suite **2540 passed, 17
+skipped**; `npm run build` clean; 0 `_built/` tracked.)
 
 ## The thesis — why this phase
 
@@ -75,7 +89,7 @@ density guard. No feature, no visual change, no behavior change.
 
 | Story | Title | Status | Depends on |
 |---|---|---|---|
-| HS-54-01 | The module seam (decide + prove on one cluster) | backlog | none |
+| HS-54-01 | The module seam (decide + prove on one cluster) | done | none |
 | HS-54-02 | Behavior modules (carve dictation-app.js) | backlog | HS-54-01 |
 | HS-54-03 | Section partials (carve dictation.astro) | backlog | HS-54-02 |
 | HS-54-04 | The density guard | backlog | HS-54-03 |
@@ -84,9 +98,15 @@ density guard. No feature, no visual change, no behavior change.
 
 ## Where we are
 
-Scaffolded 2026-06-11. Nothing has shipped. Start with **HS-54-01** (the module seam):
-answer the loader question with evidence and prove the pattern on the discovery-nudge
-cluster before anything big moves.
+**HS-54-01 shipped 2026-06-11.** The seam is real: the page entry is a bundled ES
+module, the discovery nudge is the first module under `web/src/scripts/dictation/`,
+the client bundle ships un-minified (readable source, as the shim always effectively
+did), and the build now mechanically rejects eval-masked defects (it already caught
+one: the duplicate `escapeAttr`). Full suite 2540 passed, 17 skipped.
+
+Next is **HS-54-02 — behavior modules**: carve the remaining 14 clusters onto the
+proven seam, starting with `core.js` (shared state + `api` + `projectRootParam` +
+tab switching) so the discovery-nudge dependency injection can become direct imports.
 
 ## Open decisions (defaults chosen; flag to change)
 

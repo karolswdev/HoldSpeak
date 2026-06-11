@@ -1,3 +1,12 @@
+import {
+  initDiscoveryNudge,
+  knNudgeState,
+  knNudgeDismiss,
+  knNudgeDisableGlobally,
+  hideKnNudge,
+  maybeShowKnNudge,
+} from "./dictation/discovery-nudge.js";
+
 const state = {
   scope: "global",
   document: null,
@@ -353,7 +362,11 @@ function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
 }
-function escapeAttr(s) { return escapeHtml(s); }
+// escapeAttr lives below, next to the dry-run renderers. (This file used
+// to declare it twice; under the old eval loader the later declaration
+// silently won via hoisting. Module scope rejects the duplicate, so the
+// dead earlier alias was removed — the surviving one is the version that
+// was actually live.)
 
 // ── Project KB editor ───────────────────────────────────────────────
 const kbState = { detected: null, kbPath: null, lastLoaded: null, rows: [] };
@@ -2539,58 +2552,11 @@ function refreshProjectScopedView() {
 }
 
 // ── HS-47-04: discovery nudge ────────────────────────────────────────
-// Ambient, dismissible, focus-safe. Shows only when a detected project has no
-// knowledge (no facts, no .hs/), is not dismissed for this project, and the
-// global switch is on. Dismissal is durable (localStorage). Reuses the existing
-// readiness signal; adds no detection path.
-const KN_NUDGE_DISABLED_KEY = "holdspeak.knNudgeDisabled";
-const KN_NUDGE_DISMISSED_KEY = "holdspeak.knNudgeDismissed";
-const knNudgeState = { root: null, pendingOpen: false };
-
-function knNudgeGloballyOff() {
-  try { return localStorage.getItem(KN_NUDGE_DISABLED_KEY) === "1"; } catch (e) { return false; }
-}
-function knNudgeDismissedRoots() {
-  try { return JSON.parse(localStorage.getItem(KN_NUDGE_DISMISSED_KEY) || "{}") || {}; } catch (e) { return {}; }
-}
-function knNudgeIsDismissed(root) {
-  return !!(root && knNudgeDismissedRoots()[root]);
-}
-function knNudgeDismiss(root) {
-  if (!root) return;
-  try {
-    const map = knNudgeDismissedRoots();
-    map[root] = true;
-    localStorage.setItem(KN_NUDGE_DISMISSED_KEY, JSON.stringify(map));
-  } catch (e) { /* ignore quota / disabled storage */ }
-}
-function hideKnNudge() {
-  const el = document.getElementById("kn-nudge");
-  if (el) el.hidden = true;
-}
-
-async function maybeShowKnNudge() {
-  const el = document.getElementById("kn-nudge");
-  if (!el) return;
-  el.hidden = true;  // re-evaluate cleanly every time.
-  if (knNudgeGloballyOff()) return;
-  let data;
-  try {
-    data = await api("GET", `/api/dictation/readiness${projectRootParam("?")}`);
-  } catch (e) {
-    return;  // no project / error -> no nudge.
-  }
-  const project = data && data.project;
-  if (!project || !project.root) return;
-  const hasFacts = !!(data.project_kb && data.project_kb.exists);
-  const hasContext = !!(data.project_context && data.project_context.exists);
-  if (hasFacts || hasContext) return;            // already has knowledge.
-  if (knNudgeIsDismissed(project.root)) return;  // dismissed for this project.
-  knNudgeState.root = project.root;
-  const label = document.getElementById("kn-nudge-project");
-  if (label) label.textContent = project.name ? `"${project.name}" has none yet.` : "";
-  el.hidden = false;
-}
+// Lives in ./dictation/discovery-nudge.js (the first carved behavior
+// module). Its `api` / `projectRootParam` dependencies are injected here
+// because they still live in this file; switch to direct imports when the
+// shared core module exists.
+initDiscoveryNudge({ api, projectRootParam });
 
 // ── HS-53-04: Activity Pre-Briefing nudges ──────────────────────────
 // Render the source-cited nudges from `/api/activity/nudges` as quiet,
@@ -2877,7 +2843,7 @@ document.getElementById("kn-nudge-dismiss").addEventListener("click", () => {
   hideKnNudge();
 });
 document.getElementById("kn-nudge-off").addEventListener("click", () => {
-  try { localStorage.setItem(KN_NUDGE_DISABLED_KEY, "1"); } catch (e) { /* ignore */ }
+  knNudgeDisableGlobally();
   hideKnNudge();
 });
 // Delegated jump for "Try a dry-run" / "Project Facts" links rendered into
