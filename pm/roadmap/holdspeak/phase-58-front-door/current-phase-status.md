@@ -7,7 +7,12 @@ to our community."* The user fixed the three positioning decisions directly:
 **lead angle "one copilot, two modes"**, **audience: developers**,
 **comparisons: name names, honestly**.
 
-**Last updated:** 2026-06-11 (**post-close follow-up on user feedback:**
+**Last updated:** 2026-06-11 (**second post-close follow-up on user
+feedback ("where's Clippy? where's the personality?"):** Qlippy now has his
+own README section — the avatar at 160px, the real-desktop native-overlay
+shot as the marquee, a decision/learned card pair with honest captions, the
+apology-for-the-famous-paperclip framing, and a where-next row; two assets
+shipped to doc assets (avatar + learned card). **First follow-up:**
 the README now SHOWCASES the product, not just pixel art — the meeting
 artifacts screenshot (`history.png`) lands directly under "The two modes"
 and Qlippy's decision card illustrates his paragraph; both assets were
