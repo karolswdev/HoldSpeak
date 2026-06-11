@@ -1,13 +1,20 @@
 # Phase 59 — Speak Your Language (languages + the spoken-symbol dictionary)
 
-**Status:** in-progress (2/4). Opened 2026-06-11 on user direction ("K, then
+**Status:** in-progress (3/4). Opened 2026-06-11 on user direction ("K, then
 O" → "Kkkkk"), right after the Phase-58 follow-ups merged (PRs #46, #47).
 From the [project backlog](../BACKLOG.md): candidate **K**, the cheapest
 reach-expansion on the board, under one thesis: **the input layer adapts to
 you**. Candidate **O** (wake word) is queued behind it per the same user
 direction, with the misfire-safety conditions recorded in the conversation.
 
-**Last updated:** 2026-06-11 (**HS-59-02 done: the spoken-symbol
+**Last updated:** 2026-06-11 (**HS-59-03 done: docs.** The User Guide
+(the punctuation table's home; extend-don't-fragment) gains "Speak your
+language" (Auto-detect explained, the honest short-utterance note, the
+one-setting-covers-everything statement) and the spoken-symbol dictionary
+woven in beside the built-in table (three real examples, user-wins, all
+four attach modes with `std::vector`); Getting Started gets the pointer.
+Zero dashes in new prose; doc slice 81 green; suite 2683 (docs-only).
+**HS-59-02 (prior): the spoken-symbol
 dictionary.** `dictation.spoken_symbols` (default empty) validated
 actionably in `__post_init__`; `TextProcessor` merges user entries over
 the pristine built-ins (user wins; symbols are literal, never regex
@@ -99,11 +106,12 @@ non-English speech at closeout.
 |---|---|---|---|
 | HS-59-01 | The language knob, end to end | done | none |
 | HS-59-02 | The spoken-symbol dictionary | done | none |
-| HS-59-03 | Docs: languages + the dictionary | backlog | HS-59-01, HS-59-02 |
+| HS-59-03 | Docs: languages + the dictionary | done | HS-59-01, HS-59-02 |
 | HS-59-04 | Closeout: real-metal dogfood + final-summary + PR | backlog | HS-59-01..03 |
 
 ## Where we are
 
-**HS-59-01 → HS-59-02 shipped 2026-06-11.** The input layer adapts to
-you: your language, your vocabulary. Next is **HS-59-03 — docs**, then
-the real-metal closeout.
+**HS-59-01 → HS-59-03 shipped 2026-06-11.** Built, locked, and
+documented. Next is **HS-59-04 — closeout**: real non-English speech
+through real Whisper (pinned vs. auto), the dictionary through the real
+pipeline, final-summary, PR.

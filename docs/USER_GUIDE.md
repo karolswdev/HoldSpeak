@@ -83,6 +83,20 @@ Default hotkey:
 
 If global hotkeys or synthetic typing are blocked, especially on Wayland, keep HoldSpeak focused and use the focused hold-to-talk fallback.
 
+### Speak your language
+
+Whisper, the transcription engine, speaks about 99 languages, and the
+**spoken language setting** (Settings, Voice typing, Spoken language)
+decides how HoldSpeak uses that. The default, Auto-detect, lets Whisper
+identify the language per utterance, which works well for longer speech.
+Short utterances are where it can stumble: a few words in one language
+can be detected as a neighboring one. If that happens to you, pin your
+language and transcription stops guessing.
+
+One setting covers everything that transcribes: dictation, live
+meetings, and imported recordings all share the same engine, so they all
+follow it.
+
 ### Punctuation
 
 Say punctuation words and HoldSpeak converts them:
@@ -97,6 +111,16 @@ Say punctuation words and HoldSpeak converts them:
 | `semicolon` | `;` |
 | `new line` | line break |
 | `new paragraph` | blank line |
+
+These are the built-ins. **The spoken-symbol dictionary** adds your own:
+open **Settings, Voice typing, Spoken-symbol dictionary** and map any
+spoken phrase to any symbol or snippet ("tilde" to `~`, "arrow" to `→`,
+"double colon" to `::`). Your entries win over the built-ins if the
+phrases collide. Each entry has an attach mode that controls spacing:
+`none` keeps the spacing you spoke, `left` glues the symbol to the
+previous word (like `period` does), `right` to the next word, and `both`
+to both sides (so "std double colon vector" with `both` types
+`std::vector`).
 
 Example:
 
