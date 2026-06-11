@@ -1,0 +1,89 @@
+---
+// The Project Facts tab: the project.yaml `kb:` map behind {project.kb.*}
+// placeholders. The explainer + empty-state styles are shared with Project
+// Context and live in SharedStyles; the fact rows are rendered at runtime
+// by the knowledge behavior module.
+---
+
+<section id="view-kb" class="view" hidden>
+  <h2>Project facts</h2>
+  <p class="lede">
+    Facts are one of the two parts of <strong>project knowledge</strong>
+    (the other is <strong>Project Context</strong>). A fact is an exact
+    value that gets stamped into your dictation verbatim, with no model
+    involved. Each entry's key becomes a
+    <code>{`{project.kb.<key>}`}</code> placeholder that block templates
+    fill in. Keys must match <code>[A-Za-z_][A-Za-z0-9_]*</code>; values are
+    strings (or null). Stored as the <code>kb</code> mapping in
+    <code>&lt;project_root&gt;/.holdspeak/project.yaml</code>.
+  </p>
+
+  {/* HS-47-02: in-app explainer — what a fact is, why it helps, and a
+      worked example of the verbatim substitution. Static markup; the shared
+      kn-* styles apply (no JS-injection trap). */}
+  <aside class="kn-explainer" aria-label="What project facts are">
+    <div class="kn-explainer-main">
+      <p class="kn-explainer-eyebrow">Project knowledge · Facts</p>
+      <p class="kn-explainer-what">Exact values, stamped in word for word.</p>
+      <p class="kn-explainer-why">
+        A fact is a value you reuse a lot: your stack, a deploy command, a
+        ticket prefix. The <code>kb-enricher</code> stage drops it into a
+        block template exactly as written, with no model in the loop. Its
+        companion is <strong>Project Context</strong>, which guides a rewrite
+        instead of substituting a value.
+      </p>
+    </div>
+    <figure class="kn-example">
+      <figcaption>How a fact reaches your text</figcaption>
+      <div class="kn-example-row">
+        <span class="kn-example-tag">fact</span>
+        <code>stack = Rails 7 + Postgres 16</code>
+      </div>
+      <div class="kn-example-row">
+        <span class="kn-example-tag">template</span>
+        <code>Follow our stack: {`{project.kb.stack}`}</code>
+      </div>
+      <div class="kn-example-arrow" aria-hidden="true">↓</div>
+      <div class="kn-example-row kn-example-out">
+        <span class="kn-example-tag">typed</span>
+        <code>Follow our stack: Rails 7 + Postgres 16</code>
+      </div>
+    </figure>
+  </aside>
+
+  <div id="kb-meta-banner" class="meta-banner">Loading…</div>
+  <section class="panel">
+    <header class="panel-header">
+      <h3>Fact entries</h3>
+      <div class="panel-toolbar">
+        <button id="kb-btn-starter" class="btn" type="button">Use starter</button>
+        <button id="kb-btn-add" class="btn primary" type="button">+ New entry</button>
+      </div>
+    </header>
+    {/* HS-47-02: teaching empty state for a detected project with no facts.
+        Static markup toggled by JS (renderKBRows). */}
+    <div id="kb-empty" class="kn-empty" hidden>
+      <svg class="kn-empty-glyph" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+        <path fill="currentColor" d="M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm1 2v3h14V6H5Zm0 5v3h14v-3H5Zm0 5v2h8v-2H5Z"/>
+      </svg>
+      <p class="kn-empty-title">No facts yet</p>
+      <p class="kn-empty-text">
+        Facts are exact values HoldSpeak stamps into your dictation, no model
+        involved. Add the handful you repeat most and they show up verbatim
+        wherever a block references them.
+      </p>
+      <p class="kn-empty-eg"><code>stack</code> → <code>Rails 7 + Postgres 16</code></p>
+      <div class="kn-empty-actions">
+        <button class="btn primary" id="kb-empty-starter" type="button">Use starter facts</button>
+        <button class="btn" id="kb-empty-add" type="button">Add one manually</button>
+      </div>
+    </div>
+    <div id="kb-rows"></div>
+    <div id="kb-msg"></div>
+    <div class="actions">
+      <button class="btn primary" id="kb-btn-save" type="button">Save</button>
+      <button class="btn" id="kb-btn-reset" type="button">Reset</button>
+      <button class="btn danger" id="kb-btn-delete" type="button">Delete file</button>
+    </div>
+  </section>
+</section>

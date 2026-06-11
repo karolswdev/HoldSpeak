@@ -1,0 +1,62 @@
+---
+// The Readiness tab: one snapshot of the selected project's dictation setup.
+// The cards + next-action rows are rendered at runtime by the readiness
+// behavior module, so their CSS is global.
+---
+
+<section id="view-readiness" class="view" hidden>
+  <h2>Dictation readiness</h2>
+  <p class="lede">
+    One snapshot of the selected project's dictation setup:
+    pipeline, blocks, project facts, runtime model, and next actions.
+  </p>
+  <div id="ready-meta" class="meta-banner">Loading…</div>
+  <div id="ready-cards" class="readiness-grid"></div>
+  <section class="panel">
+    <header class="panel-header">
+      <h3>Next actions</h3>
+      <button class="btn" id="ready-btn-refresh" type="button">Refresh</button>
+    </header>
+    <div id="ready-actions" class="warning-list"></div>
+  </section>
+</section>
+
+<style is:global>
+  /* === Readiness ========================================= */
+  .readiness-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+  @media (max-width: 900px) { .readiness-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .readiness-grid { grid-template-columns: 1fr; } }
+  .readiness-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    padding: var(--space-3);
+    background: var(--canvas);
+    min-height: 6.5rem;
+    /* HS-44-02: depth + motion to match the wizard's bar. */
+    transition: transform var(--duration-short) var(--ease-standard),
+                border-color var(--duration-short) var(--ease-standard),
+                box-shadow var(--duration-short) var(--ease-standard);
+  }
+  .readiness-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--elev-1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .readiness-card:hover { transform: none; }
+  }
+  .readiness-card strong { display: block; margin-bottom: var(--space-2); color: var(--text); }
+  .readiness-card .value {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+  }
+  .readiness-card.ok { border-color: var(--success); }
+  .readiness-card.warn { border-color: var(--warn); }
+  .readiness-card.error { border-color: var(--danger); }
+
+  .warning-list { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2); }
+</style>

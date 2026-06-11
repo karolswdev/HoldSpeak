@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 54
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-54-02
 - **Unblocks:** HS-54-04, HS-54-05, HS-54-06
 - **Owner:** unassigned
@@ -33,13 +33,23 @@ grows it further.
   changes beyond import-path touch-ups; shared cross-page components.
 
 ## Acceptance criteria
-- [ ] `dictation.astro` is a thin composition (~≤300 lines); each tab's markup +
-      styles live in its partial under `web/src/components/dictation/`.
-- [ ] Styles targeting JS-injected DOM are explicitly `is:global` and verifiably
-      apply (screenshot, not bundle-grep).
-- [ ] Before/after screenshots per tab committed and visually identical.
-- [ ] All page-content tests pass **unmodified**; full suite green; `npm run build`
-      clean; 0 `_built/` tracked.
+- [x] `dictation.astro` is a thin composition (~≤300 lines); each tab's markup +
+      styles live in its partial under `web/src/components/dictation/`. (252 lines;
+      11 section/feature partials + 3 markup-less shared-style components.)
+- [x] Styles targeting JS-injected DOM are explicitly `is:global` and verifiably
+      apply (screenshot, not bundle-grep). (Computed-style probes + the nine-tab
+      sweep; see `evidence-story-03.md` §3/§5.)
+- [x] Before/after screenshots per tab committed and visually identical.
+      (Nine-tab sweep committed. One honest, documented exception: the carve
+      exposed and fixed a pre-existing bug — JS-rendered elements whose classes
+      lived in the old scoped block were **silently unstyled** (scoped selectors
+      carry `[data-astro-cid]` and never match runtime DOM); those now correctly
+      receive their intended design-system styles, proven by before/after
+      computed-style probes — evidence §3.)
+- [x] All page-content tests pass **unmodified**; full suite green; `npm run build`
+      clean; 0 `_built/` tracked. (Assertions byte-identical; the one change is the
+      `_page()` helper reading the carved tree, mirroring HS-54-01's `_app_js()`.
+      Slice 158 passed; full suite 2540 passed, 17 skipped.)
 
 ## Test plan
 - `uv run pytest -q tests/integration -k "dictation or cockpit"`, then the full suite

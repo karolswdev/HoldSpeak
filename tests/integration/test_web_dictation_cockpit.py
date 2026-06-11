@@ -7,7 +7,14 @@ _REPO = Path(__file__).resolve().parents[2]
 
 
 def _page() -> str:
-    return (_REPO / "web" / "src" / "pages" / "dictation.astro").read_text()
+    """The dictation page source: the page plus its section partials under
+    components/dictation/ (the page renders them into one document).
+    Assertions target this combined source."""
+    web_src = _REPO / "web" / "src"
+    parts = [(web_src / "pages" / "dictation.astro").read_text()]
+    for partial in sorted((web_src / "components" / "dictation").glob("*.astro")):
+        parts.append(partial.read_text())
+    return "\n".join(parts)
 
 
 def _app_js() -> str:

@@ -1,11 +1,26 @@
 # Phase 54 — Dictation Frontend Decomposition
 
-**Status:** in-progress (2/6). Opened 2026-06-11 on user direction (the agreed post-53
+**Status:** in-progress (3/6). Opened 2026-06-11 on user direction (the agreed post-53
 sequence), right after Phase 53 closed + merged (PR #40). From the
 [project backlog](../BACKLOG.md): candidate **D** (frontend density paydown), promoted
 from "ride along with the next dictation feature" to its own phase.
 
-**Last updated:** 2026-06-11 (**HS-54-02 done: the monolith is carved.** The
+**Last updated:** 2026-06-11 (**HS-54-03 done: the page is carved.** The 3,131-line
+`dictation.astro` is now a **252-line composition** of fourteen components under
+`components/dictation/`: eleven section/feature partials carrying their own styles
+plus three markup-less shared-style components (`SharedStyles`, `KnowledgeStyles`,
+`DepthControlStyles`) imported first so the emitted CSS keeps the pre-carve
+base-then-feature cascade order (verified positionally in the built bundle). The
+carve **exposed and fixed a real latent visual bug**: Astro 6 emits scoped styles
+with `[data-astro-cid]` attribute selectors, so every JS-rendered element whose
+class lived in the old scoped block (block cards, template cards, readiness cards,
+the JS-rendered editor's forms/buttons, warn/error banners) has been **silently
+unstyled** — proven by before/after computed-style probes (`border=0/UA-default` →
+the intended design-system values). Assertions byte-identical (the `_page()` helper
+learned the carved tree, mirroring `_app_js()`); slice 158 passed; full suite
+**2540 passed, 17 skipped**; `npm run build` clean; the all-tabs dogfood re-ran
+16/16 with zero page errors; a nine-tab screenshot sweep is committed.
+**HS-54-02 (prior): the monolith is carved.** The
 2,907-line `dictation-app.js` is now a 19-line entry + twelve single-concern ES
 modules under `scripts/dictation/` (largest: `knowledge.js` at 576 — all under the
 ~600 budget). Code moved verbatim; the one structural idiom is core's
@@ -107,24 +122,24 @@ density guard. No feature, no visual change, no behavior change.
 |---|---|---|---|
 | HS-54-01 | The module seam (decide + prove on one cluster) | done | none |
 | HS-54-02 | Behavior modules (carve dictation-app.js) | done | HS-54-01 |
-| HS-54-03 | Section partials (carve dictation.astro) | backlog | HS-54-02 |
+| HS-54-03 | Section partials (carve dictation.astro) | done | HS-54-02 |
 | HS-54-04 | The density guard | backlog | HS-54-03 |
 | HS-54-05 | Docs: the frontend architecture pattern | backlog | HS-54-03 |
 | HS-54-06 | Closeout: dogfood + final-summary + PR | backlog | HS-54-01..05 |
 
 ## Where we are
 
-**HS-54-01 + HS-54-02 shipped 2026-06-11.** The JS side of the paydown is done:
-the page entry is a bundled ES module and the whole behavior lives in twelve
-single-concern modules (largest 576 lines), acyclic via core's section-loader
-registry, proven by an all-tabs live dogfood with zero page errors and the full
-suite green with zero test edits.
+**HS-54-01 + HS-54-02 + HS-54-03 shipped 2026-06-11.** The whole paydown is done:
+6,101 coupled lines are now a 19-line script entry + twelve behavior modules
+(largest 576) and a 252-line page + fourteen components (largest 499). Both
+carves were proven on a live runtime (16/16 all-tabs dogfood, zero page errors;
+nine-tab screenshot sweep), the full suite is green with byte-identical
+assertions, and the seam surfaced two real latent bugs along the way (the
+duplicate `escapeAttr`; the silently-unstyled JS-rendered elements).
 
-Next is **HS-54-03 — section partials**: carve the `dictation.astro` markup +
-styles into per-tab Astro components under `web/src/components/dictation/`. The
-DOM contract is now fully enumerable per behavior module, which gives the partial
-boundaries exactly; the scoped-CSS-on-JS-injected-DOM gotcha is the main risk —
-screenshot-verify every tab.
+Next is **HS-54-04 — the density guard**: lock the shipped shape (page ≤ 300;
+components and modules ≤ 600) with a drift-guard-style unit test so the page
+cannot silently regrow.
 
 ## Open decisions (defaults chosen; flag to change)
 
