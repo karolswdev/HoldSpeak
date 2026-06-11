@@ -18,4 +18,25 @@ export default defineConfig({
     host: "127.0.0.1",
     port: 4321,
   },
+  vite: {
+    plugins: [
+      {
+        // Ship the page behavior un-minified. The bundle is served from a
+        // loopback FastAPI mount (size is irrelevant), the pre-module
+        // loader shipped the full un-minified source anyway (as a ?raw
+        // string), readable JS is on-brand for a local-first tool, and
+        // the integration tests assert real source markers in the served
+        // chunks. Astro hardcodes `minify: true` for the client
+        // environment (core/build/static-build.js), so a plain
+        // `vite.build.minify: false` is ignored; this environment hook
+        // is the supported override point.
+        name: "holdspeak-unminified-client",
+        configEnvironment(name) {
+          if (name === "client") {
+            return { build: { minify: false } };
+          }
+        },
+      },
+    ],
+  },
 });

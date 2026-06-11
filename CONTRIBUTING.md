@@ -37,6 +37,11 @@ uv run ruff check holdspeak/
 Run the **whole** suite before sending changes — `-k` filters miss real
 regressions. If you touch anything under `web/`, rebuild the static bundle
 (`cd web && npm run build`; Node ≥ 22.12) since some tests read the built JS.
+Before changing web pages or their scripts, read
+[`docs/internal/ARCHITECTURE_WEB_FRONTEND.md`](docs/internal/ARCHITECTURE_WEB_FRONTEND.md)
+— it records the page decomposition pattern (section partials + behavior
+modules), the Astro scoped-CSS-on-JS-rendered-DOM trap, and the density
+budgets a guard test enforces.
 
 ## Commit workflow
 
