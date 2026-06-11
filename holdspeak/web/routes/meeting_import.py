@@ -1,10 +1,12 @@
-"""The meeting-import route: upload a recording, get a real meeting.
+"""The meeting-import route: upload a recording or transcript, get a real meeting.
 
 ``POST /api/meetings/import`` accepts a multipart upload, refuses unsupported
 formats up front (including the honest missing-ffmpeg message), creates the
 meeting row **immediately** in a visible ``importing`` state, and runs the
 import engine on a background thread so the event loop stays responsive
-during minutes of Whisper. Progress is written into the meeting row's
+during minutes of Whisper. A transcript upload (``.vtt``/``.srt``/``.txt``,
+HS-57) rides the identical lifecycle but never constructs a transcriber —
+parsing takes milliseconds and no model loads. Progress is written into the meeting row's
 ``intel_status_detail`` (the same load → mutate → ``save_meeting`` pattern
 the deferred-intel queue uses), so `/history` polling needs nothing new:
 the normal list/detail payloads carry the state.
@@ -39,8 +41,11 @@ from fastapi.responses import JSONResponse
 from ...config import Config
 from ...meeting_import import (
     DEFAULT_SPEAKER_LABEL,
+    DEFAULT_TRANSCRIPT_SPEAKER_LABEL,
     MeetingImportError,
     import_meeting,
+    import_transcript,
+    is_transcript_filename,
     validate_format,
 )
 from ...meeting_session import MeetingState
@@ -77,11 +82,27 @@ def _run_import_job(
     meeting_id: str,
     tmp_path: Path,
     title: Optional[str],
-    speaker: str,
+    speaker: Optional[str],
     tags: list[str],
     started_at: datetime,
 ) -> None:
     try:
+        if is_transcript_filename(tmp_path.name):
+            # HS-57: the transcript path — parse, never transcribe. No
+            # transcriber (and no model) is ever constructed here.
+            import_transcript(
+                tmp_path,
+                db=db,
+                config=config,
+                meeting_id=meeting_id,
+                title=title,
+                speaker=speaker or DEFAULT_TRANSCRIPT_SPEAKER_LABEL,
+                tags=tags,
+                started_at=started_at,
+            )
+            log.info(f"Transcript import finished for meeting {meeting_id}")
+            return
+
         transcriber = _transcriber_factory(config)
 
         def on_progress(done: int, total: int) -> None:
@@ -99,7 +120,7 @@ def _run_import_job(
             config=config,
             meeting_id=meeting_id,
             title=title,
-            speaker=speaker,
+            speaker=speaker or DEFAULT_SPEAKER_LABEL,
             tags=tags,
             started_at=started_at,
             progress=on_progress,
@@ -168,7 +189,11 @@ def build_meeting_import_router(ctx) -> APIRouter:
             segments=[],
         )
         placeholder.intel_status = "importing"
-        placeholder.intel_status_detail = "Preparing transcription…"
+        placeholder.intel_status_detail = (
+            "Parsing transcript…"
+            if is_transcript_filename(filename)
+            else "Preparing transcription…"
+        )
         from ...db import get_database
 
         db = get_database()
@@ -181,8 +206,12 @@ def build_meeting_import_router(ctx) -> APIRouter:
                 "config": config,
                 "meeting_id": meeting_id,
                 "tmp_path": tmp_path,
-                "title": title,
-                "speaker": (speaker or DEFAULT_SPEAKER_LABEL),
+                # Resolve the default title from the UPLOADED name here: the
+                # engine only ever sees the temp file, whose stem is noise
+                # (found by the HS-57 route tests; the audio path had the
+                # same latent fallback-to-tmp-stem bug).
+                "title": (title or Path(filename).stem).strip() or Path(filename).stem,
+                "speaker": speaker,  # per-kind default resolved in the worker
                 "tags": tag_list,
                 "started_at": started_at,
             },
