@@ -1,13 +1,22 @@
 # Phase 58 — The Front Door (positioning + the user-facing docs, revised)
 
-**Status:** in-progress (5/6). Opened 2026-06-11 on user direction, right
-after Phase 57 closed (PR #44): *"a proper phase. Where we also revise WHAT
+**Status:** CLOSED (6/6) — opened and closed 2026-06-11 on user direction,
+right after Phase 57 closed (PR #44): *"a proper phase. Where we also revise WHAT
 we are saying, so that we can be explicit around how to 'sell' this product
 to our community."* The user fixed the three positioning decisions directly:
 **lead angle "one copilot, two modes"**, **audience: developers**,
 **comparisons: name names, honestly**.
 
-**Last updated:** 2026-06-11 (**HS-58-05 done: the voice guard.** Four
+**Last updated:** 2026-06-11 (**HS-58-06 done: closeout — phase CLOSED.**
+The fresh-eyes pass verified the new README through GitHub's own renderer
+(11 images, every key section incl. the comparison table) and curl-checked
+every absolute asset URL; before/after metrics recorded (prose dashes
+~170+ → 1 allowlisted verbatim UI quote; comparison content none → a
+named, dated, both-ways section; README feature story ~P48 → the live
+tree). `final-summary.md`; BACKLOG **Q → shipped**; suite **2645 passed,
+17 skipped**; PR merged on green. See
+[`final-summary.md`](./final-summary.md). **HS-58-05 (prior): the voice
+guard.** Four
 new tests over the user-facing corpus (prose only, code blocks exempt):
 dashes-zero with a verbatim-UI-quote allowlist, the AI-vocab tells (tuned
 live: the "not just" pattern was narrowed to the tic forms after flagging
@@ -122,10 +131,11 @@ as honest as the product.
 | HS-58-03 | The core guides | done | HS-58-01 |
 | HS-58-04 | The developer + ops docs | done | HS-58-01 |
 | HS-58-05 | The guard | done | HS-58-02..04 |
-| HS-58-06 | Closeout: fresh-eyes pass + final-summary + PR | backlog | HS-58-01..05 |
+| HS-58-06 | Closeout: fresh-eyes pass + final-summary + PR | done | HS-58-01..05 |
 
 ## Where we are
 
-**HS-58-01 → HS-58-05 shipped 2026-06-11.** The story is told everywhere
-and locked against decay. Next is **HS-58-06 — closeout**: the fresh-eyes
-render pass, before/after metrics, final-summary, PR merged on green.
+**Phase CLOSED 2026-06-11, 6/6.** HoldSpeak's story is a decision, told
+in one voice at every door, with honest named comparisons, and locked
+against decay. Next per the agreed sequence: **K — languages +
+spoken-symbol dictionary**.

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 58
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-58-01..05
 - **Unblocks:** none (phase exit)
 - **Owner:** unassigned
@@ -20,10 +20,14 @@ proves them.
 - **Out:** new revision work (findings go back to their story).
 
 ## Acceptance criteria
-- [ ] Before/after metrics in evidence; rendered README reviewed.
-- [ ] Full suite green; doc slice green.
-- [ ] `final-summary.md` + this story's evidence in the same commit.
-- [ ] README + BACKLOG updated in the same commit; PR merged on green.
+- [x] Before/after metrics in evidence (prose dashes ~170+ → 1
+      allowlisted; comparisons none → named/dated/both-ways); the README
+      reviewed through GitHub's own renderer (11 images, every key
+      marker) and every absolute asset URL curl-checked 200.
+- [x] Full suite green (2645 passed, 17 skipped); doc slice green.
+- [x] `final-summary.md` + this story's evidence in the same commit.
+- [x] README + BACKLOG (Q shipped) updated in the same commit; PR merged
+      on green.
 
 ## Test plan
 - The full doc slice + full suite; CI green on the PR.
