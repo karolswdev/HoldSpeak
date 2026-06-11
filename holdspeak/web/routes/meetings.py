@@ -1293,8 +1293,19 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                     status_code=400,
                 )
             include_scheduled = normalized_mode == "retry_now"
+
+            # HS-56-04: when deferred intel completes, the meeting's open
+            # work becomes knowable — the presence mascot's aftercare card.
+            def _on_meeting_ready(meeting_id: str) -> None:
+                from ...meeting_aftercare import build_aftercare_ready_event
+
+                event = build_aftercare_ready_event(get_database(), meeting_id)
+                if event is not None:
+                    ctx.broadcast("aftercare_ready", event)
+
             processed = drain_intel_queue(
                 cfg.intel_realtime_model,
+                on_meeting_ready=_on_meeting_ready,
                 provider=cfg.intel_provider,
                 cloud_model=cfg.intel_cloud_model,
                 cloud_api_key_env=cfg.intel_cloud_api_key_env,

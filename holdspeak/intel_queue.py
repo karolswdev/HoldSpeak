@@ -100,6 +100,7 @@ def process_next_intel_job(
     model_path: Optional[str] = None,
     *,
     provider: str = "local",
+    on_meeting_ready=None,
     cloud_model: str = "gpt-5-mini",
     cloud_api_key_env: str = "OPENAI_API_KEY",
     cloud_base_url: Optional[str] = None,
@@ -194,6 +195,13 @@ def process_next_intel_job(
         )
         db.intel.complete_intel_job(job.meeting_id)
         log.info(f"Deferred intel completed for meeting {job.meeting_id}")
+        # HS-56-04: observational hand-off for hosts with a broadcast channel
+        # (the presence mascot's aftercare card). Never breaks the job.
+        if on_meeting_ready is not None:
+            try:
+                on_meeting_ready(job.meeting_id)
+            except Exception as exc:
+                log.debug(f"on_meeting_ready observer failed: {exc}")
     except Exception as exc:
         _retry_or_fail_job(
             db,
@@ -212,6 +220,7 @@ def drain_intel_queue(
     model_path: Optional[str] = None,
     *,
     provider: str = "local",
+    on_meeting_ready=None,
     cloud_model: str = "gpt-5-mini",
     cloud_api_key_env: str = "OPENAI_API_KEY",
     cloud_base_url: Optional[str] = None,
@@ -229,6 +238,7 @@ def drain_intel_queue(
         if not process_next_intel_job(
             model_path,
             provider=provider,
+            on_meeting_ready=on_meeting_ready,
             cloud_model=cloud_model,
             cloud_api_key_env=cloud_api_key_env,
             cloud_base_url=cloud_base_url,

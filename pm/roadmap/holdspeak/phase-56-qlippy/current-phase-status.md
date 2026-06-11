@@ -1,13 +1,28 @@
 # Phase 56 — Qlippy, the Presence Enhancer
 
-**Status:** in-progress (3/7). Opened 2026-06-11 on user direction ("lettuce go
+**Status:** in-progress (4/7). Opened 2026-06-11 on user direction ("lettuce go
 with qlippy"), the third step of the agreed sequence **54 → I → J → K**, right after
 Phase 55 closed + merged (PR #42). From the [project backlog](../BACKLOG.md):
 candidate **J**, **absorbing candidate G** (privacy visible at decision
 points). Design RFC: [`../proposals/qlippy-presence-enhancer.md`](../proposals/qlippy-presence-enhancer.md).
 
-**Last updated:** 2026-06-11 (**HS-56-03 done: the actuator card (the
-marquee; G absorbed).** Three small backend seams: the aftercare route now
+**Last updated:** 2026-06-11 (**HS-56-04 done: learning + aftercare cards.**
+Three observational backend seams: the journal correct route broadcasts
+`learning_event` only under the honest-reach rule (`taught && similar > 0` —
+the wire's reach is asserted equal to the route's; one matcher, one number);
+`MeetingSession.save()` broadcasts `aftercare_ready` only for a finished,
+DB-saved meeting whose digest is non-empty (the new
+`build_aftercare_ready_event` reads the same digest /history uses; an
+autosave mid-meeting stays quiet); and the deferred intel queue gains a
+purely-observational `on_meeting_ready` hook (exploding-observer-safe,
+tested) the web drain route wires to the same broadcast. `qlippy-events.js`
+presents the `learned` 💡 card ("matches N past dictations", with the
+corrections-off honesty suffix, View digest) and the `present-note`
+aftercare card (open count + top items, Open aftercare, 14-s auto-dismiss).
+Live dogfood 4/4 with zero page errors — a real correction and a real
+meeting wrap drove both cards; a refused teach stayed silent; two reviewed
+screenshots. 8 tests; full suite **2590 passed, 17 skipped** (+8).
+**HS-56-03 (prior): the actuator card (the marquee; G absorbed).** Three small backend seams: the aftercare route now
 broadcasts `actuator_proposed` (wire-safe — the machine payload never rides a
 broadcast, asserted), a rejection broadcasts `actuator_result`, and the
 executor gains a purely-observational `on_result` hook (an exploding observer
@@ -131,21 +146,22 @@ acts on his own; flag-unset is byte-identical.
 | HS-56-01 | Assets + the mascot gate | done | none |
 | HS-56-02 | The dock + the card shell | done | HS-56-01 |
 | HS-56-03 | The actuator card (marquee; absorbs G) | done | HS-56-02 |
-| HS-56-04 | Learning + aftercare cards | backlog | HS-56-02 |
+| HS-56-04 | Learning + aftercare cards | done | HS-56-02 |
 | HS-56-05 | The native HUD frame | backlog | HS-56-02 |
 | HS-56-06 | Docs: Qlippy | backlog | HS-56-03, HS-56-04 |
 | HS-56-07 | Closeout: live dogfood + final-summary + PR | backlog | HS-56-01..06 |
 
 ## Where we are
 
-**HS-56-01 → HS-56-03 shipped 2026-06-11.** The marquee is real: a live
-proposal slides the card out and the decision on the card IS the dashboard's
-decision, audited, with the G answers in plain sight.
+**HS-56-01 → HS-56-04 shipped 2026-06-11.** Every card the phase promised is
+live: the marquee actuator card (the decision on the card IS the dashboard's
+decision, audited, the G answers in plain sight), the honest learned card,
+and the aftercare present-note — all driven by real broadcasts, never mocks.
 
-Next is **HS-56-04 — learning + aftercare cards**: the `learning_event`
-broadcast at the journal correct route (only when taught && reach > 0) and
-`aftercare_ready` fired from the meeting wrap flow (only when non-empty),
-with their `learned` 💡 and `present-note` cards.
+Next is **HS-56-05 — the native HUD frame**: enlarge the macOS NSPanel to
+host the interactive card without stealing focus (clickable buttons while
+non-activating), proven live on this machine; Linux best-effort documented;
+ring-only behavior unchanged.
 
 ## Open decisions (defaults chosen per the RFC's open questions; flag to change)
 

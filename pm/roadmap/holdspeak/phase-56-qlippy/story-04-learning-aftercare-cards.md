@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 56
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-56-02
 - **Unblocks:** HS-56-06, HS-56-07
 - **Owner:** unassigned
@@ -32,13 +32,18 @@ user where they are.
   reach math, or aftercare computation.
 
 ## Acceptance criteria
-- [ ] A taught correction with reach > 0 broadcasts `learning_event`; a
+- [x] A taught correction with reach > 0 broadcasts `learning_event`; a
       correction with reach 0 (or not taught) broadcasts nothing
-      (integration tests both ways).
-- [ ] A wrapped meeting with a non-empty digest broadcasts `aftercare_ready`
-      once; an empty digest stays silent (tests both ways).
-- [ ] Both cards render with honest copy, their actions navigate, and they
-      respect the shell's queue/dismiss rules (behavior test + screenshots).
+      (integration tests both ways; the broadcast's reach is asserted equal
+      to the route's — one matcher, one number).
+- [x] A wrapped meeting with a non-empty digest broadcasts `aftercare_ready`
+      once; an empty digest stays silent (tests both ways, plus the
+      unfinished-meeting negative — an autosave mid-meeting stays quiet; the
+      deferred-intel path hands the same moment over via an observational
+      `on_meeting_ready` hook, exploding-observer-safe).
+- [x] Both cards render with honest copy, their actions navigate, and they
+      respect the shell's queue/dismiss rules (live dogfood 4/4, zero page
+      errors, two reviewed screenshots — see `evidence-story-04.md`).
 
 ## Test plan
 - Integration on both seams (positive + negative); Playwright card pass via

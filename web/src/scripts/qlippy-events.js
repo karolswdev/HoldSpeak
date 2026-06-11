@@ -118,9 +118,60 @@ function onActuatorResult(data) {
   }
 }
 
+// HS-56-04: the learning loop, reflected honestly. The backend only emits
+// this when a correction was actually taught AND has real Jaccard reach
+// (similar > 0) — Qlippy never claims learning that did not happen.
+function onLearningEvent(data) {
+  if (!data || !data.similar) return;
+  const n = Number(data.similar) || 0;
+  presentCard({
+    sprite: "learned",
+    glyph: "lightbulb",
+    headline: "Learned from you",
+    detail:
+      `Applied "${data.gist || ""}" → ${data.value || ""} — matches ${n} past ` +
+      `dictation${n === 1 ? "" : "s"}` +
+      (data.enabled ? "." : " (turn on corrections to use it while routing)."),
+    privacy: "Local only: the correction memory lives on this machine; nothing leaves it.",
+    actions: [
+      {
+        label: "View digest",
+        kind: "ghost",
+        onClick: () => window.open("/dictation", "_blank"),
+      },
+    ],
+  });
+}
+
+// HS-56-04: a wrapped meeting that left open work. The backend stays quiet
+// for an empty digest.
+function onAftercareReady(data) {
+  if (!data || !data.meeting_id) return;
+  const open = Number(data.open_total) || 0;
+  const top = (data.top_items || [])
+    .map((item) => `${item.task}${item.owner ? ` (${item.owner})` : ""}`)
+    .join(" · ");
+  presentCard({
+    sprite: "present-note",
+    headline: `Your meeting left ${open} open item${open === 1 ? "" : "s"}`,
+    detail: `${data.title || "The meeting"}${top ? ` — ${top}` : ""}`,
+    privacy: "Local only: the digest is read from your own meeting record.",
+    autoDismissMs: 14000,
+    actions: [
+      {
+        label: "Open aftercare",
+        kind: "ghost",
+        onClick: () => window.open("/history", "_blank"),
+      },
+    ],
+  });
+}
+
 document.addEventListener("hs-broadcast", (event) => {
   const msg = event.detail;
   if (!msg || !msg.type) return;
   if (msg.type === "actuator_proposed") onActuatorProposed(msg.data);
   if (msg.type === "actuator_result") onActuatorResult(msg.data);
+  if (msg.type === "learning_event") onLearningEvent(msg.data);
+  if (msg.type === "aftercare_ready") onAftercareReady(msg.data);
 });

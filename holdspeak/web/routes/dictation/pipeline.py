@@ -527,6 +527,23 @@ def build_pipeline_router(
             reach_for_gist(entry.transcript, _journal_transcripts()) if recorded else 0
         )
         cfg = Config.load().dictation
+        corrections_enabled = bool(getattr(cfg.pipeline, "corrections_enabled", False))
+        # HS-56-04: reflect the learning loop on the presence surface — but only
+        # honestly. The broadcast fires only when something was actually taught
+        # AND has real reach (similar > 0); a no-op teach or a reach of zero
+        # stays silent, so Qlippy never claims learning that did not happen.
+        if recorded and similar > 0:
+            gist = (entry.transcript or "").strip()
+            ctx.broadcast(
+                "learning_event",
+                {
+                    "kind": kind,
+                    "gist": gist[:120] + ("…" if len(gist) > 120 else ""),
+                    "value": str(value).strip(),
+                    "similar": int(similar),
+                    "enabled": corrections_enabled,
+                },
+            )
         return JSONResponse(
             {
                 "corrected": True,
@@ -534,7 +551,7 @@ def build_pipeline_router(
                 "correction_id": correction_id,
                 "size": len(store),
                 "similar": similar,
-                "enabled": bool(getattr(cfg.pipeline, "corrections_enabled", False)),
+                "enabled": corrections_enabled,
             }
         )
 
