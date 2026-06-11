@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 60
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-60-02, HS-60-04
 - **Owner:** unassigned
@@ -25,14 +25,19 @@ the optional engine being installed.
 - **Out:** audio streams, the runtime loop, UX (HS-60-02/03).
 
 ## Acceptance criteria
-- [ ] A fake detector + frame source drive detection, threshold edges,
-      the refractory cooldown (no double-arm), pause/resume idempotence,
-      and stop — with openwakeword absent.
-- [ ] `wake_word_available()` is False-and-harmless without the extra;
-      the real detector path imports lazily.
-- [ ] Config round-trips with older-shape coercion; malformed values
-      refuse with clean 400s at the settings boundary.
-- [ ] The `[wakeword]` extra resolves (openwakeword + onnxruntime).
+- [x] A fake detector + frame source drive detection, threshold edges,
+      the refractory cooldown (no double-arm; fire-again after), pause
+      drains-never-scores, resume resets AND re-arms the cooldown,
+      idempotence, stop, and exploding-observer survival — 15 tests, no
+      engine import anywhere (locked).
+- [x] `wake_word_available()` is False-and-harmless without the extra;
+      the engine imports lazily (top-level-import lock).
+- [x] Config round-trips with older-shape coercion and tolerant
+      file-edit normalization; five malformed shapes refuse with clean
+      400s that change nothing.
+- [x] The `[wakeword]` extra ships and resolves (openwakeword ≥0.6 +
+      onnxruntime; verified at scaffold on this machine).
+      See `evidence-story-01.md`.
 
 ## Test plan
 - Unit with fakes; settings-boundary integration; full suite (no extra

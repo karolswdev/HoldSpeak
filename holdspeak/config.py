@@ -598,6 +598,41 @@ class PresenceConfig:
 
 
 @dataclass
+class WakeWordConfig:
+    """The wake word (HS-60): hands-free ARMING of dictation, off by default.
+
+    The conditions baked in: the wake word never types directly — the
+    default ``action`` is ``"preview"`` (the result is journaled and shown,
+    typed only on an explicit confirm); ``"type"`` is the user's explicit
+    opt-in (configuring is consent, the voice-commands model). File-edited
+    values are normalized tolerantly here; the settings route validates
+    strictly (clean 400s).
+    """
+
+    enabled: bool = False
+    model: str = "hey_jarvis"
+    threshold: float = 0.5
+    armed_window_seconds: float = 8.0
+    action: str = "preview"  # "preview" | "type"
+
+    def __post_init__(self) -> None:
+        self.enabled = bool(self.enabled)
+        self.model = str(self.model or "hey_jarvis").strip() or "hey_jarvis"
+        try:
+            self.threshold = float(self.threshold)
+        except (TypeError, ValueError):
+            self.threshold = 0.5
+        self.threshold = min(1.0, max(0.0, self.threshold))
+        try:
+            self.armed_window_seconds = float(self.armed_window_seconds)
+        except (TypeError, ValueError):
+            self.armed_window_seconds = 8.0
+        self.armed_window_seconds = min(30.0, max(2.0, self.armed_window_seconds))
+        action = str(self.action or "preview").strip().lower()
+        self.action = action if action in ("preview", "type") else "preview"
+
+
+@dataclass
 class Config:
     """Main configuration container."""
     config_version: int = CONFIG_VERSION
@@ -608,6 +643,7 @@ class Config:
     dictation: DictationConfig = field(default_factory=DictationConfig)
     device: DeviceConfig = field(default_factory=DeviceConfig)
     presence: PresenceConfig = field(default_factory=PresenceConfig)
+    wake_word: WakeWordConfig = field(default_factory=WakeWordConfig)
 
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "Config":
@@ -649,6 +685,7 @@ class Config:
                 dictation=dictation,
                 device=_coerce(DeviceConfig, data.get("device", {}) or {}, section="device"),
                 presence=_coerce(PresenceConfig, data.get("presence", {}) or {}, section="presence"),
+                wake_word=_coerce(WakeWordConfig, data.get("wake_word", {}) or {}, section="wake_word"),
             )
         except Exception as exc:
             # Last-resort fallback for a genuinely broken config (bad JSON, wrong

@@ -1,6 +1,6 @@
 # Phase 60 — The Wake Word
 
-**Status:** scaffolded (0/6). Opened 2026-06-11 on standing user direction
+**Status:** in-progress (1/6). Opened 2026-06-11 on standing user direction
 ("K, then O" → "Word"), right after Phase 59 closed (PR #48). From the
 [project backlog](../BACKLOG.md): candidate **O**, with the four recorded
 safety conditions fixed: **arms, not types** (preview is the default
@@ -9,7 +9,17 @@ indicator** (presence + Qlippy + cockpit), **a local engine with a
 MEASURED false-accept story** (openWakeWord, Apache-2.0; Porcupine ruled
 out on licensing), **off by default**.
 
-**Last updated:** 2026-06-11 (scaffolded — and the feasibility spike is
+**Last updated:** 2026-06-11 (**HS-60-01 done: the engine seam +
+config.** `WakeWordListener` is fully injectable and carries the safety
+behaviors in its bones: the refractory cooldown blocks the double-arm,
+pause drains frames without scoring, resume resets the detector AND
+re-arms the cooldown so stale audio can never fire, an exploding observer
+never kills the loop. The real engine hides behind lazy imports
+(top-level-import-locked); `download_wake_models()` is THE one network
+moment, named as such. `WakeWordConfig` (off, preview, 0.5, 8 s) with
+tolerant file-edit normalization + strict settings-route 400s; the
+`[wakeword]` extra ships. 22 tests, none needing the engine; full suite
+**2705 passed, 17 skipped** (+22). Earlier: scaffolded — the feasibility spike is
 already real: openwakeword 0.6.0 + onnxruntime 1.26.0 install on this
 py3.13 arm64 venv, and `hey_jarvis` on TTS speech scores **0.861** for the
 wake phrase vs. **≤0.063** for distractors incl. adversarial near-misses
@@ -87,7 +97,7 @@ false-accept posture measured, not asserted.
 
 | Story | Title | Status | Depends on |
 |---|---|---|---|
-| HS-60-01 | The engine seam + config | backlog | none |
+| HS-60-01 | The engine seam + config | done | none |
 | HS-60-02 | Arm, capture, and the pipeline | backlog | HS-60-01 |
 | HS-60-03 | The armed UX + settings | backlog | HS-60-02 |
 | HS-60-04 | The false-accept measurement | backlog | HS-60-01 |
@@ -96,6 +106,6 @@ false-accept posture measured, not asserted.
 
 ## Where we are
 
-Scaffolded, with the feasibility spike already green. Next is
-**HS-60-01 — the engine seam**: the injectable listener, the config, the
-extra, fully testable without the engine installed.
+**HS-60-01 shipped 2026-06-11.** The seam is real and CI-safe. Next is
+**HS-60-02 — arm, capture, and the pipeline**: the runtime loop from
+detection to the preview-by-default outcome.
