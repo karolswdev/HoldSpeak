@@ -1,12 +1,27 @@
 # Phase 56 — Qlippy, the Presence Enhancer
 
-**Status:** in-progress (6/7). Opened 2026-06-11 on user direction ("lettuce go
-with qlippy"), the third step of the agreed sequence **54 → I → J → K**, right after
-Phase 55 closed + merged (PR #42). From the [project backlog](../BACKLOG.md):
-candidate **J**, **absorbing candidate G** (privacy visible at decision
-points). Design RFC: [`../proposals/qlippy-presence-enhancer.md`](../proposals/qlippy-presence-enhancer.md).
+**Status:** CLOSED (7/7) — opened and closed 2026-06-11 on user direction
+("lettuce go with qlippy"), the third step of the agreed sequence
+**54 → I → J → K**, right after Phase 55 closed + merged (PR #42). From the
+[project backlog](../BACKLOG.md): candidate **J**, **absorbing candidate G**
+(privacy visible at decision points — shipped verbatim on every actionable
+card, doc-locked). Design RFC:
+[`../proposals/qlippy-presence-enhancer.md`](../proposals/qlippy-presence-enhancer.md).
+See [`final-summary.md`](./final-summary.md).
 
-**Last updated:** 2026-06-11 (**HS-56-06 done: the Qlippy docs.** The
+**Last updated:** 2026-06-11 (**HS-56-07 done: closeout — phase CLOSED.**
+The all-in-one live dogfood passed 9/9 with zero page errors on one real
+runtime: the dock followed REAL socket broadcasts and settled idle after
+the flourish; the sticky decision card held a race with a "+1" queue hint;
+**audit parity shown side by side** (card approve == dashboard approve,
+both `approved`/`web-user`, no side effect on either); the queued learned
+card presented with the honest reach; a real wrap presented the aftercare
+card; and the off-proof held (the served page byte-identical across the
+mascot flag, no card on either off-path — the double gate). Six reviewed
+screenshots; `final-summary.md`; BACKLOG **J → shipped**, **G →
+absorbed-shipped**, **K → next**; full suite **2602 passed, 17 skipped**;
+build clean; 0 `_built/` tracked; PR merged on green.
+**HS-56-06 (prior): the Qlippy docs.** The
 Desktop Presence section of the typing guide gains "Qlippy, the mascot
 (optional)": the double opt-in, dock vs. card, exactly which moments
 produce a card, the never-acts guarantee and the three privacy answers
@@ -175,19 +190,17 @@ acts on his own; flag-unset is byte-identical.
 | HS-56-04 | Learning + aftercare cards | done | HS-56-02 |
 | HS-56-05 | The native HUD frame | done | HS-56-02 |
 | HS-56-06 | Docs: Qlippy | done | HS-56-03, HS-56-04 |
-| HS-56-07 | Closeout: live dogfood + final-summary + PR | backlog | HS-56-01..06 |
+| HS-56-07 | Closeout: live dogfood + final-summary + PR | done | HS-56-01..06 |
 
 ## Where we are
 
-**HS-56-01 → HS-56-06 shipped 2026-06-11.** Every card the phase promised is
-live, the native HUD hosts them (proven by a real X11 click recording a real
-audited decision without moving focus), and the docs state the guarantees
-verbatim, locked against drift.
-
-Next is **HS-56-07 — closeout**: the full live dogfood (dock ← real
-dictation; cards ← real broadcasts; flag-off byte-identical),
-`final-summary.md`, BACKLOG J shipped + G absorbed, README, PR merged on
-green. (The macOS live HUD click stays waived per the user.)
+**Phase CLOSED 2026-06-11, 7/7.** Every card the phase promised is live on
+real broadcasts; the native HUD hosts them (a real X11 click recorded a
+real audited decision without moving focus); the docs state the guarantees
+verbatim, locked against drift; the closeout dogfood passed 9/9 with the
+audit-parity and off-proofs. The macOS live HUD click stays waived per the
+user (its proof script ships, ready for any unlocked session). Next per the
+agreed sequence: **K — languages + spoken-symbol dictionary**.
 
 ## Open decisions (defaults chosen per the RFC's open questions; flag to change)
 

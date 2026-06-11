@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 56
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-56-01..06
 - **Unblocks:** none (phase exit)
 - **Owner:** unassigned
@@ -29,13 +29,19 @@ focus, byte-identical off) — only a live runtime proves them.
 - **Out:** new feature work (findings go back to their story first).
 
 ## Acceptance criteria
-- [ ] Dogfood transcript + screenshots committed covering dock, actuator
-      card (with the audit-parity proof), learned card, aftercare card, the
-      queue, and the off-proof.
-- [ ] Full suite green; build clean; 0 `_built/` tracked.
-- [ ] `final-summary.md` ships in the same commit as this story's done-flip.
-- [ ] README + BACKLOG (J shipped, G absorbed) updated in the same commit.
-- [ ] PR to `main` merged on green CI.
+- [x] Dogfood transcript + screenshots committed covering dock (driven over
+      the REAL socket, not DOM events), actuator card (audit parity shown
+      side by side: card approve == dashboard approve, both
+      `approved`/`web-user`), learned card (honest reach), aftercare card,
+      the queue holding a race ("+1" on the sticky card), and the off-proof
+      (byte-identical page + no card on either flag) — 9/9, zero page
+      errors, five screenshots (see `final-summary.md`).
+- [x] Full suite green (2602 passed, 17 skipped); build clean; 0 `_built/`
+      tracked.
+- [x] `final-summary.md` ships in the same commit as this story's done-flip.
+- [x] README + BACKLOG (J shipped, G absorbed-shipped) updated in the same
+      commit.
+- [x] PR to `main` merged on green CI.
 
 ## Test plan
 - The dogfood above + the full suite; CI green on the PR.
