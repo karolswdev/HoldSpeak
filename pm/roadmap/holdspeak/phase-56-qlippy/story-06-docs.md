@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 56
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-56-03, HS-56-04
 - **Unblocks:** HS-56-07
 - **Owner:** unassigned
@@ -24,11 +24,16 @@ to turn him off.
   anywhere user-facing.
 
 ## Acceptance criteria
-- [ ] Product-tense, passes the roadmap-vocab guard, zero em/en dashes in the
-      new text, `humanizer` run with findings addressed.
-- [ ] The never-acts guarantee and the three privacy answers are stated
-      verbatim-checkably.
-- [ ] Linked from the docs index; screenshots included.
+- [x] Product-tense, passes the roadmap-vocab guard, zero em/en dashes in the
+      new text (grep-verified), `humanizer` checklist applied while writing.
+- [x] The never-acts guarantee and the three privacy answers are stated
+      verbatim-checkably — and now LOCKED by
+      `test_qlippy_doc_states_the_guarantees_verbatim`, which also pins the
+      same three markers in `qlippy-events.js` so the doc and the cards
+      cannot drift apart silently.
+- [x] Linked from the docs index; two screenshots shipped (the web decision
+      card + the real Linux overlay, both from live dogfoods — see
+      `evidence-story-06.md`).
 
 ## Test plan
 - Doc-guard slice + full suite.

@@ -40,7 +40,11 @@ intelligent-typing layer. This page is the map. Pick a journey.
 - **[Desktop Presence](./INTELLIGENT_TYPING_GUIDE.md#11-desktop-presence-ambient-on-desktop-status)**:
   an opt-in, native, focus-safe status surface (a macOS HUD, a Linux tray and
   notification) that shows whether it's listening, transcribing, or typing while you
-  dictate elsewhere.
+  dictate elsewhere. Optionally with
+  **[Qlippy, the mascot](./INTELLIGENT_TYPING_GUIDE.md#qlippy-the-mascot-optional)**:
+  an ambient pixel-art dock plus one-at-a-time cards for the moments that need
+  you (approvals, results, learning, meeting follow-ups), each with plain
+  privacy answers. He never acts on his own.
 - **[Models (bring your own)](./MODELS.md)**: the model contract. GGUF in-process,
   MLX on Apple Silicon, or any OpenAI-compatible endpoint.
 

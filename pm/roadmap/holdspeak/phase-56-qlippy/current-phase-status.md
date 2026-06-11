@@ -1,12 +1,21 @@
 # Phase 56 — Qlippy, the Presence Enhancer
 
-**Status:** in-progress (5/7). Opened 2026-06-11 on user direction ("lettuce go
+**Status:** in-progress (6/7). Opened 2026-06-11 on user direction ("lettuce go
 with qlippy"), the third step of the agreed sequence **54 → I → J → K**, right after
 Phase 55 closed + merged (PR #42). From the [project backlog](../BACKLOG.md):
 candidate **J**, **absorbing candidate G** (privacy visible at decision
 points). Design RFC: [`../proposals/qlippy-presence-enhancer.md`](../proposals/qlippy-presence-enhancer.md).
 
-**Last updated:** 2026-06-11 (**HS-56-05 done: the native HUD frame —
+**Last updated:** 2026-06-11 (**HS-56-06 done: the Qlippy docs.** The
+Desktop Presence section of the typing guide gains "Qlippy, the mascot
+(optional)": the double opt-in, dock vs. card, exactly which moments
+produce a card, the never-acts guarantee and the three privacy answers
+verbatim (now LOCKED by a doc-drift test that also pins the same markers in
+`qlippy-events.js`), the native-HUD pointer behavior, and
+motion/accessibility. Two live-dogfood screenshots shipped to doc assets;
+docs index linked; zero dashes in the new text; roadmap-vocab guard green.
+Full suite **2602 passed, 17 skipped** (+1).
+**HS-56-05 (prior): the native HUD frame —
 proven live on real Linux metal.** One pure policy
 (`presence_panel_frame`: passive IS the exact Phase-41 click-through
 geometry, locked by test; a card is 408×460 + pointer events, never focus)
@@ -165,19 +174,20 @@ acts on his own; flag-unset is byte-identical.
 | HS-56-03 | The actuator card (marquee; absorbs G) | done | HS-56-02 |
 | HS-56-04 | Learning + aftercare cards | done | HS-56-02 |
 | HS-56-05 | The native HUD frame | done | HS-56-02 |
-| HS-56-06 | Docs: Qlippy | backlog | HS-56-03, HS-56-04 |
+| HS-56-06 | Docs: Qlippy | done | HS-56-03, HS-56-04 |
 | HS-56-07 | Closeout: live dogfood + final-summary + PR | backlog | HS-56-01..06 |
 
 ## Where we are
 
-**HS-56-01 → HS-56-05 shipped 2026-06-11.** Every card the phase promised is
-live — and the native HUD now hosts them: a real X11 click on the real
-overlay's Approve recorded a real audited decision without moving focus.
+**HS-56-01 → HS-56-06 shipped 2026-06-11.** Every card the phase promised is
+live, the native HUD hosts them (proven by a real X11 click recording a real
+audited decision without moving focus), and the docs state the guarantees
+verbatim, locked against drift.
 
-Next is **HS-56-06 — docs** (the presence guide learns about Qlippy:
-product-tense, the never-acts guarantee + the three privacy answers
-verbatim, humanizer pass), then **HS-56-07 — closeout** (full live dogfood,
-final-summary, BACKLOG J shipped + G absorbed, PR merged on green).
+Next is **HS-56-07 — closeout**: the full live dogfood (dock ← real
+dictation; cards ← real broadcasts; flag-off byte-identical),
+`final-summary.md`, BACKLOG J shipped + G absorbed, README, PR merged on
+green. (The macOS live HUD click stays waived per the user.)
 
 ## Open decisions (defaults chosen per the RFC's open questions; flag to change)
 

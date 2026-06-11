@@ -213,3 +213,18 @@ def test_roadmap_vocab_pattern_is_narrow_enough_to_keep_spec_names() -> None:
                  "WFS-01", "a phased rollout",
                  "the actuator phase of the pipeline"):
         assert not _ROADMAP_VOCAB.search(keep), f"guard should NOT flag {keep!r}"
+
+
+def test_qlippy_doc_states_the_guarantees_verbatim() -> None:
+    """HS-56-06: the mascot doc must keep the never-acts guarantee and the three
+    privacy answers verbatim-checkable (the same markers the cards render)."""
+    guide = (_REPO / "docs" / "INTELLIGENT_TYPING_GUIDE.md").read_text()
+    assert "Qlippy, the mascot" in guide
+    assert "never acts on his own" in guide
+    for marker in ('"Data used:"', '"If you approve, this goes to"', '"Your controls:"'):
+        assert marker in guide, f"privacy answer missing from the guide: {marker}"
+    # The cards themselves render the same three markers (locked in
+    # qlippy-events.js); the doc and the UI cannot drift apart silently.
+    events = (_REPO / "web" / "src" / "scripts" / "qlippy-events.js").read_text()
+    for marker in ("Data used:", "If you approve, this goes to", "Your controls:"):
+        assert marker in events
