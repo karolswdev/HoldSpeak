@@ -385,7 +385,7 @@ and creates a GitHub-issue **proposal**. This reuses the existing actuator syste
 (propose, then approve, then execute), so filing here records a proposal only.
 Nothing leaves your machine at this step.
 
-![The "File as issue" proposal in the Proposed actions section: a create_issue -> github proposal awaiting approval, showing the full payload preview (repo, title, body) with Approve and Reject controls and the note that nothing runs without approval.](assets/aftercare/file-as-issue.png)
+![The "File as issue" proposal in the Proposed actions section: a create_issue -> github proposal awaiting approval, showing the full payload preview (repo, title, body) with Approve and Reject controls.](assets/aftercare/file-as-issue.png)
 
 *The filed proposal lands in the existing Proposed actions section, awaiting your approval. Execution is a separate, audited step.*
 
@@ -412,7 +412,7 @@ delta. It is assembled locally and is preview plus copy only. There is no model
 call and nothing is sent; you read it, copy it, and paste it wherever your team
 talks.
 
-![The follow-up draft preview in the aftercare panel: a monospace block with a Follow-up heading, a "What we decided" list, "Open items" by owner with due dates, and a "Since" section, plus a Copy draft button and a note that it is assembled locally and nothing is sent.](assets/aftercare/followup-draft.png)
+![The follow-up draft preview in the aftercare panel: a monospace block with a Follow-up heading, a "What we decided" list, "Open items" by owner with due dates, and a "Since" section, plus a Copy draft button.](assets/aftercare/followup-draft.png)
 
 *The follow-up draft: assembled from the meeting's decisions and open items, ready to copy. An empty meeting yields one honest line, not filler.*
 
@@ -425,7 +425,7 @@ a "Send to Slack" button on the digest and another on the follow-up draft.
 With no URL configured, the buttons do not exist and nothing about Slack
 appears anywhere.
 
-![The aftercare panel with Send to Slack configured: a green Send to Slack pill in the panel header, the follow-up draft open with Copy draft and Send to Slack side by side, and the note that sending creates a proposal you approve first.](assets/aftercare/send-to-slack.png)
+![The aftercare panel with Send to Slack configured: a green Send to Slack pill in the panel header, the follow-up draft open with Copy draft and Send to Slack side by side, and the one-line note that sending creates a proposal you approve.](assets/aftercare/send-to-slack.png)
 
 *The one outbound door: the green buttons appear only after you configure a webhook URL, and they create proposals, not sends.*
 

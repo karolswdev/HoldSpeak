@@ -137,6 +137,14 @@ left column is the name; do not alternate with the synonyms.
   guide or test can point to; superlatives without proof points do not
   ship; limits are stated next to the strengths they qualify; comparisons
   credit the other tool.
+- **Egress is a badge, not prose** (owner direction, Phase 62). UI cards
+  and notifications state where data goes with the compact egress badge
+  (local / local+cloud / cloud, plus the target name), never with
+  reassurance sentences ("nothing leaves your machine", "stored
+  locally"). The dedicated trust surfaces (the TrustChip and its
+  popover), the welcome wizard's single pitch line, and reference docs
+  may explain the posture, once. Behavioral warnings that change what
+  the user should do are not reassurance and stay.
 - **Ledes sell the why.** Every guide opens with one or two sentences on
   why the feature exists and what the reader gets, before any mechanics.
 - **Developer register.** Direct, technical, unafraid of a config snippet;

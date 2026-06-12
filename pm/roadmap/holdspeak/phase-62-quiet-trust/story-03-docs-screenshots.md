@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 62
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-62-02
 - **Unblocks:** HS-62-04
 - **Owner:** unassigned
@@ -25,11 +25,13 @@ that), and user-facing docs embed screenshots showing the old copy.
   evidence screenshots (history, not user-facing).
 
 ## Acceptance criteria
-- [ ] No user-facing doc quotes a privacy paragraph as card copy; the
+- [x] No user-facing doc quotes a privacy paragraph as card copy; the
       badge contract is documented once.
-- [ ] The POSITIONING voice rule ships; the voice guard green.
-- [ ] Every re-shot screenshot reviewed by eye and embedded; no
+- [x] The POSITIONING voice rule ships; the voice guard green.
+- [x] Every re-shot screenshot reviewed by eye and embedded; no
       user-facing doc image shows the old copy.
+
+      See `evidence-story-03.md`.
 
 ## Test plan
 - The rewritten doc-drift locks; the doc guard slice; the full suite.

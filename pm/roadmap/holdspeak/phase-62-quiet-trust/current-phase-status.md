@@ -1,13 +1,23 @@
 # Phase 62 — Quiet Trust
 
-**Status:** in progress (2/4). Opened 2026-06-12 on direct owner feedback:
+**Status:** in progress (3/4). Opened 2026-06-12 on direct owner feedback:
 the privacy-reassurance prose across the UI is "really cringey" — replace
 the novels on cards and notifications with a compact **egress badge**
 (local · local+cloud · cloud) and redo the affected screenshots. This
 reverses the locked Phase-56 "three privacy answers verbatim on every
 actionable card" decision.
 
-**Last updated:** 2026-06-12 (**HS-62-02 done:** the sweep. Nine files, every
+**Last updated:** 2026-06-12 (**HS-62-03 done:** docs + the re-shot
+screenshots. POSITIONING gains the voice rule (egress is a badge, not
+prose); README/docs alts stopped quoting retired paragraphs; all seven
+user-facing screenshots re-shot from live runs, content-asserted before
+capture — including the native overlay on **real .43 metal** (the rsynced
+tree, the real GTK overlay, a real filed proposal, `import` off the real
+root window). The zero-page-error gate also caught and fixed a
+**pre-existing Phase-43 bug** (verified pre-existing on main): the welcome
+wizard's `@click="copy(\"…\")"` HTML-truncated into a SyntaxError on every
+/welcome load and that copy button never worked. Suite **2768 passed, 17
+skipped**. Prior: **HS-62-02 done:** the sweep. Nine files, every
 operational reassurance tail cut to its functional core (notes, flashes,
 guards, the wizard rail, the settings lead, the LocalPill tooltip); the
 dashboard guard's per-target fix also closed a real lie ('only records your
@@ -71,11 +81,11 @@ old copy is re-shot live.
 |---|---|---|---|
 | HS-62-01 | The egress badge on Qlippy cards | done | none |
 | HS-62-02 | The sweep | done | HS-62-01 |
-| HS-62-03 | Docs + re-shot screenshots | backlog | HS-62-02 |
+| HS-62-03 | Docs + re-shot screenshots | done | HS-62-02 |
 | HS-62-04 | Closeout | backlog | HS-62-01..03 |
 
 ## Where we are
 
-Cards and pages are quiet. Next is **HS-62-03 — docs + the re-shot
-screenshots** (the wider doc pass, the POSITIONING voice rule, and every
-user-facing screenshot showing the old copy re-shot live).
+Three of four done: quiet cards, quiet pages, aligned docs, fresh
+screenshots (native overlay included). Next is **HS-62-04 — closeout**
+(the live badge proof on real broadcast-driven cards, final-summary, PR).

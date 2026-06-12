@@ -99,7 +99,7 @@ you: an action awaiting your approval, a correction that actually reached
 past dictations, a meeting that ended with open items.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/presence/qlippy-native-overlay.png" alt="The native Linux overlay on a real desktop: Qlippy in an alert pose beside the headline 'A decision needs you', the exact preview of a proposed GitHub issue, plain-language privacy answers, and Approve and Decline buttons, floating over a browser window." width="420">
+  <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/presence/qlippy-native-overlay.png" alt="The native Linux overlay on a real desktop: Qlippy in an alert pose beside the headline 'A decision needs you', the exact preview of a proposed GitHub issue, the egress badge naming the destination, and Approve and Decline buttons, floating over a browser window." width="420">
 </p>
 <p align="center"><em>The marquee moment, on a real desktop: a proposed GitHub issue waiting for a decision. The native panel takes pointer clicks only while a card shows and can never steal keyboard focus.</em></p>
 
@@ -113,8 +113,8 @@ really reached past dictations, with the real count.
 
 | A decision needs you | Learned from you |
 | --- | --- |
-| ![Qlippy's decision card: the alert-pose mascot, the exact preview of a proposed GitHub issue, plain-language privacy answers, and Approve and Decline buttons.](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/presence/qlippy-decision-card.png) | ![Qlippy's learned card: the mascot with a lightbulb, reporting that a correction was applied and matches 2 past dictations, with a local-only privacy note and a View digest button.](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/presence/qlippy-learned-card.png) |
-| The exact preview, the privacy answers, your controls. Nothing runs until you approve. | Only when a correction really reached past dictations, with the honest count. Local only. |
+| ![Qlippy's decision card: the alert-pose mascot, the exact preview of a proposed GitHub issue, the egress badge naming the destination, and Approve and Decline buttons.](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/presence/qlippy-decision-card.png) | ![Qlippy's learned card: the mascot with a lightbulb, reporting that a correction was applied and matches 2 past dictations, with its local badge and a View digest button.](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/presence/qlippy-learned-card.png) |
+| The exact preview, the destination on the badge, your call. | Only when a correction really reached past dictations, with the honest count. Local only. |
 
 Off by default, like everything ambient here. Turn him on under
 **Settings, Desktop presence, "Qlippy, the mascot"**.
