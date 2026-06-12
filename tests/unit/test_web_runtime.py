@@ -7,6 +7,9 @@ import numpy as np
 import pytest
 
 from holdspeak.agent_context import AgentSession
+import holdspeak.runtime.meeting_glue as meeting_glue
+import holdspeak.runtime.plugin_queue as plugin_queue
+import holdspeak.runtime.transcriber_state as transcriber_state
 import holdspeak.web_runtime as web_runtime
 
 
@@ -298,7 +301,7 @@ def test_run_web_runtime_warms_transcriber_on_start(monkeypatch: pytest.MonkeyPa
     monkeypatch.setattr(web_runtime, "MeetingWebServer", FakeServer)
     monkeypatch.setattr(web_runtime, "AudioRecorder", FakeAudioRecorder)
     monkeypatch.setattr(web_runtime, "HotkeyListener", FakeHotkeyListener)
-    monkeypatch.setattr(web_runtime, "Transcriber", FakeTranscriber)
+    monkeypatch.setattr(transcriber_state, "Transcriber", FakeTranscriber)
 
     stop_event = threading.Event()
     stop_event.set()
@@ -356,7 +359,7 @@ def test_runtime_meeting_control_callbacks_are_wired(monkeypatch: pytest.MonkeyP
         )
         return 3 if include_scheduled else 1
 
-    monkeypatch.setattr(web_runtime, "drain_plugin_run_queue", _fake_drain_plugin_run_queue)
+    monkeypatch.setattr(plugin_queue, "drain_plugin_run_queue", _fake_drain_plugin_run_queue)
 
     class FakeDb:
         plugins = property(lambda self: self)
@@ -614,11 +617,11 @@ def test_runtime_meeting_control_callbacks_are_wired(monkeypatch: pytest.MonkeyP
         def type_text(self, _text: str, **_kwargs) -> None:
             return None
 
-    monkeypatch.setattr(web_runtime, "MeetingSession", FakeMeetingSession)
+    monkeypatch.setattr(meeting_glue, "MeetingSession", FakeMeetingSession)
     monkeypatch.setattr(web_runtime, "MeetingWebServer", FakeServer)
     monkeypatch.setattr(web_runtime, "AudioRecorder", FakeAudioRecorder)
     monkeypatch.setattr(web_runtime, "HotkeyListener", FakeHotkeyListener)
-    monkeypatch.setattr(web_runtime, "Transcriber", FakeTranscriber)
+    monkeypatch.setattr(transcriber_state, "Transcriber", FakeTranscriber)
     monkeypatch.setattr(web_runtime, "TextTyper", FakeTextTyper)
 
     stop_event = threading.Event()
@@ -728,7 +731,7 @@ def test_device_voice_reply_uses_waiting_agent_target_profile(
     monkeypatch.setattr(web_runtime, "MeetingWebServer", FakeServer)
     monkeypatch.setattr(web_runtime, "AudioRecorder", FakeAudioRecorder)
     monkeypatch.setattr(web_runtime, "HotkeyListener", FakeHotkeyListener)
-    monkeypatch.setattr(web_runtime, "Transcriber", FakeTranscriber)
+    monkeypatch.setattr(transcriber_state, "Transcriber", FakeTranscriber)
     monkeypatch.setattr(web_runtime, "TextTyper", FakeTextTyper)
 
     import holdspeak.agent_context as agent_context
@@ -850,7 +853,7 @@ def test_device_voice_reply_prefers_tmux_pane_over_gui_typing(
     monkeypatch.setattr(web_runtime, "MeetingWebServer", FakeServer)
     monkeypatch.setattr(web_runtime, "AudioRecorder", FakeAudioRecorder)
     monkeypatch.setattr(web_runtime, "HotkeyListener", FakeHotkeyListener)
-    monkeypatch.setattr(web_runtime, "Transcriber", FakeTranscriber)
+    monkeypatch.setattr(transcriber_state, "Transcriber", FakeTranscriber)
     monkeypatch.setattr(web_runtime, "TextTyper", FakeTextTyper)
 
     import holdspeak.agent_context as agent_context
@@ -955,7 +958,7 @@ def test_device_voice_reply_rejects_undeliverable_agent_target(
     monkeypatch.setattr(web_runtime, "MeetingWebServer", FakeServer)
     monkeypatch.setattr(web_runtime, "AudioRecorder", FakeAudioRecorder)
     monkeypatch.setattr(web_runtime, "HotkeyListener", FakeHotkeyListener)
-    monkeypatch.setattr(web_runtime, "Transcriber", FakeTranscriber)
+    monkeypatch.setattr(transcriber_state, "Transcriber", FakeTranscriber)
     monkeypatch.setattr(web_runtime, "TextTyper", BrokenTextTyper)
 
     import holdspeak.agent_context as agent_context

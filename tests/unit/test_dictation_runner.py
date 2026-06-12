@@ -13,6 +13,7 @@ from __future__ import annotations
 from datetime import datetime
 from types import SimpleNamespace
 
+import holdspeak.runtime.dictation_capture as dictation_capture
 import holdspeak.web_runtime as web_runtime
 from holdspeak.dictation_runner import run_dictation_pipeline
 
@@ -157,7 +158,7 @@ def test_web_runtime_method_delegates(monkeypatch) -> None:
         )
         return "SENTINEL"
 
-    monkeypatch.setattr(web_runtime, "run_dictation_pipeline", _spy)
+    monkeypatch.setattr(dictation_capture, "run_dictation_pipeline", _spy)
     fake_self = SimpleNamespace(config="CFG", server="SRV")
     out = web_runtime.WebRuntime._maybe_run_dictation_pipeline(
         fake_self,
