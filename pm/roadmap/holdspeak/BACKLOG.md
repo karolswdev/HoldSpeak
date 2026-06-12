@@ -41,9 +41,9 @@ sequence. This file is the "all of them" container; the phases are how they land
 | I | Meeting import ("bring your archive") + faceted history search | feature | post-P53 strategic review | **shipped → [phase-55](./phase-55-meeting-import/) (CLOSED 6/6)** (proven on real metal: real Whisper + real intel on `.43`) |
 | J | Qlippy, the presence enhancer (absorbs G) | feature/delight | post-P53 review + [proposal](./proposals/qlippy-presence-enhancer.md) | **shipped → [phase-56](./phase-56-qlippy/) (CLOSED 7/7)** (dock + cards on real broadcasts; native HUD proven on real Linux metal; two latent presence bugs fixed) |
 | K | Speak the world's languages + spoken-symbol dictionary | feature | post-P53 strategic review | **shipped → [phase-59](./phase-59-languages/) (CLOSED 4/4)** (99 languages, one knob, auto byte-identical; the spoken-symbol dictionary; proven on real German speech) |
-| L | Export connectors (Notion / Slack / Docs) on the connector-pack framework | feature | post-P53 strategic review | parked |
+| L | Export connectors (Notion / Slack / Docs) on the connector-pack framework | feature | post-P53 strategic review | **scoped by the owner to one easy connector** ("Export Connectors are fine…, but let's just choose an easy one") → **Slack incoming webhook, scaffolded → [phase-61](./phase-61-send-to-slack/)**; Notion/Docs stay parked |
 | M | Dictation preview-before-commit (review before it types) | feature | post-P53 strategic review | parked |
-| N | Windows port | strategic | post-P53 review; `CODEX_IDEAS.md` | parked (large; biggest reach unlock) |
+| N | Windows port | strategic | post-P53 review; `CODEX_IDEAS.md` | **rejected by the owner** ("Absolutely not. Not by me. If someone wants it, they will port it.") — community contributions welcome; not roadmap work |
 | O | Wake word ("local + private" positioning) | strategic | post-P53 strategic review | **shipped → [phase-60](./phase-60-wake-word/) (CLOSED 6/6)** (arms-not-types with the preview default; 0 false accepts in 57 ordinary utterances measured; two latent production crashes fixed: GGML lldb auto-attach + the process-fatal cross-thread MLX call) |
 | P | Transcript import (`.vtt`/`.srt`/`.txt` → real meetings) | feature | user direction, post-P56 conversation | **shipped → [phase-57](./phase-57-transcript-import/) (CLOSED 5/5)** (real speakers + timestamps from the file; proven on `.43` intel; recording path untouched) |
 | Q | The Front Door (positioning + user-facing docs revision) | release/community | user direction, post-P57 conversation | **shipped → [phase-58](./phase-58-front-door/) (CLOSED 6/6)** (positioning canon + README pitch + named comparisons + the voice guard) |
@@ -168,7 +168,7 @@ dictionary** ("tilde" → `~`, "arrow" → `→`) — the punctuation table is h
 today, and personal vocabulary is classic daily-driver value.
 *Lands on:* settings + the transcription path + the punctuation layer.
 
-### L. Export connectors (Notion / Slack / Docs) — parked
+### L. Export connectors — owner-scoped to Slack; scaffolded as Phase 61
 "Meeting notes land in Notion" is the most-requested shape of this product category.
 The connector-pack + actuator framework is proven; these are new write connectors
 behind the existing permission-manifest gate. Parked until the queue above clears.
@@ -177,7 +177,7 @@ behind the existing permission-manifest gate. Parked until the queue above clear
 A "show me what you're about to type, edit, confirm" mode for high-stakes targets
 (emails, shell). Today the pipeline types immediately. Small, safety-flavored.
 
-### N. Windows port — parked (strategic)
+### N. Windows port — rejected by the owner (community port welcome)
 The largest reach unlock (voice-typing demand is Windows-heavy); weeks of OS-level
 work (hotkey, synthetic typing, audio capture). Already noted in `CODEX_IDEAS.md`.
 A commitment, not a phase rider — park until deliberately chosen.
