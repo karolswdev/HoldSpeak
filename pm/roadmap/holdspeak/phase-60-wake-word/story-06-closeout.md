@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 60
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-60-01..05
 - **Unblocks:** none (phase exit)
 - **Owner:** unassigned
@@ -23,10 +23,18 @@ live loop proves it.
 - **Out:** new feature work (findings go back to their story).
 
 ## Acceptance criteria
-- [ ] The live-loop transcript + screenshots committed.
-- [ ] Full suite green; build clean; 0 `_built/` tracked.
-- [ ] `final-summary.md` + this story's evidence in the same commit.
-- [ ] README + BACKLOG updated in the same commit; PR merged on green.
+- [x] The live-loop transcript + screenshot committed (7/7, zero page
+      errors; real detection → armed → real Whisper verbatim → the
+      preview default held → Type it through the real route → the
+      token burned → the type opt-in proven; defaults off). Two REAL
+      production bugs found and fixed along the way (GGML's lldb
+      auto-attach suspension; the process-fatal cross-thread MLX call
+      — see `evidence-story-06.md`).
+- [x] Full suite green (2723 passed, 17 skipped); build clean; 0
+      `_built/` tracked.
+- [x] `final-summary.md` + this story's evidence in the same commit.
+- [x] README + BACKLOG (O shipped) updated in the same commit; PR
+      merged on green.
 
 ## Test plan
 - The live loop + the full suite; CI green on the PR.

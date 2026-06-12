@@ -78,12 +78,16 @@ class _FakeMlxModule:
 
 
 def _mlx(language):
+    import concurrent.futures
+
     impl = _MlxTranscriber.__new__(_MlxTranscriber)
     impl._mlx_whisper = _FakeMlxModule()
     impl._path_or_hf_repo = "repo"
     impl.language = language
     impl.device = "mlx"
     impl.compute_type = "default"
+    # HS-60: real instances pin all MLX work to one thread.
+    impl._mlx_thread = concurrent.futures.ThreadPoolExecutor(max_workers=1)
     return impl
 
 

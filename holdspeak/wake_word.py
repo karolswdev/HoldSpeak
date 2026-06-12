@@ -242,6 +242,13 @@ class OpenWakeWordDetector:
 
         self._name = model
         self._model = Model(wakeword_models=[model], inference_framework="onnx")
+        # Warm the inference path on the CONSTRUCTION thread: onnxruntime's
+        # first run initializes its thread pool and kernels, and doing that
+        # lazily on the listener's daemon thread proved fragile in the full
+        # runtime cocktail (uvicorn + Metal resident). One silent frame here
+        # makes every later predict a plain steady-state call.
+        self._model.predict(np.zeros(FRAME_SAMPLES, dtype=np.int16))
+        self._model.reset()
 
     def predict(self, frame: np.ndarray) -> float:
         frame = np.asarray(frame)

@@ -2,6 +2,18 @@
 
 from __future__ import annotations
 
+import os
+
+# HS-60-06 (a real production finding): llama.cpp's GGML installs a signal
+# handler that spawns `lldb --batch -o bt -o quit -p <pid>` on ANY in-process
+# fault — including benign Mach exceptions other runtimes (MLX Metal,
+# onnxruntime) handle internally. The attach SUSPENDS every thread, which
+# wedged live transcription mid-flight for minutes during the wake-word
+# closeout. A debugger auto-attach has no place in a user-facing audio
+# runtime; a genuinely fatal fault should crash visibly instead. Must be set
+# before llama_cpp first loads, hence the package root.
+os.environ.setdefault("GGML_NO_BACKTRACE", "1")
+
 
 def _resolve_version() -> str:
     """Return the one true version.

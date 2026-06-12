@@ -1,7 +1,8 @@
 # Phase 60 — The Wake Word
 
-**Status:** in-progress (5/6). Opened 2026-06-11 on standing user direction
-("K, then O" → "Word"), right after Phase 59 closed (PR #48). From the
+**Status:** CLOSED (6/6) — opened and closed 2026-06-11 on standing user
+direction ("K, then O" → "Word"), right after Phase 59 closed (PR #48).
+See [`final-summary.md`](./final-summary.md). From the
 [project backlog](../BACKLOG.md): candidate **O**, with the four recorded
 safety conditions fixed: **arms, not types** (preview is the default
 action; direct typing is an explicit opt-in), **an unmissable armed
@@ -9,7 +10,20 @@ indicator** (presence + Qlippy + cockpit), **a local engine with a
 MEASURED false-accept story** (openWakeWord, Apache-2.0; Porcupine ruled
 out on licensing), **off by default**.
 
-**Last updated:** 2026-06-11 (**HS-60-05 done: docs.** The User Guide's
+**Last updated:** 2026-06-11 (**HS-60-06 done: closeout — phase CLOSED,
+and the live loop earned its keep twice over.** The loop passed 7/7 with
+zero page errors (real detection on real speech → armed over the real
+socket → real Whisper verbatim → the preview default held → Type it
+through the real one-shot route → the type opt-in proven; defaults off).
+Getting there flushed out TWO real production bugs: GGML's lldb
+auto-attach (resident in every runtime via llama_cpp's eager load)
+suspending all threads on any in-process fault — fixed with
+GGML_NO_BACKTRACE at the package root; and cross-thread MLX
+transcription being PROCESS-FATAL ("no Stream(gpu, 1) in current
+thread"), previously masked by the first bug — fixed architecturally by
+pinning all MLX work to one dedicated thread, making the Transcriber
+caller-agnostic for every feature. Suite **2723**; BACKLOG **O →
+shipped**; PR merged on green. **HS-60-05 (prior): docs.** The User Guide's
 "The wake word" section leads with the safety fork (preview-first; the
 type opt-in with its consequence stated where you choose it), names the
 one-time model download as the only network moment, and quotes the
@@ -144,9 +158,11 @@ false-accept posture measured, not asserted.
 | HS-60-03 | The armed UX + settings | done | HS-60-02 |
 | HS-60-04 | The false-accept measurement | done | HS-60-01 |
 | HS-60-05 | Docs: the wake word | done | HS-60-03, HS-60-04 |
-| HS-60-06 | Closeout: real-metal loop + final-summary + PR | backlog | HS-60-01..05 |
+| HS-60-06 | Closeout: real-metal loop + final-summary + PR | done | HS-60-01..05 |
 
 ## Where we are
 
-**HS-60-01 → HS-60-05 shipped 2026-06-11.** Built, measured, and told
-honestly. Next is **HS-60-06 — closeout**: the real-metal live loop.
+**Phase CLOSED 2026-06-11, 6/6.** Hands-free entry that keeps the trust
+posture, measured where it could be and designed-around where it could
+not — and two latent production crashes fixed because the loop ran for
+real.
