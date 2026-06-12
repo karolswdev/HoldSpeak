@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 63
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-63-01, HS-63-02, HS-63-03, HS-63-04
 - **Unblocks:** HS-63-06
 - **Owner:** unassigned
@@ -18,16 +18,18 @@ and the pattern documented for the next contributor.
   `holdspeak/meeting/*.py` module ≤ the shipped-max budget) with
   carve-don't-bump failure messages, proven both ways;
   routes/meetings.py (1,525) recorded as the named watch item in the
-  guard's comments. The architecture doc gains the backend twin section
+  guard's comments. `docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md` (the sibling doc) records the pattern
   (the mixin pattern, the concern map, the patch-target rule, a
   add-a-concern walkthrough); CONTRIBUTING pointer; voice guard green.
 - **Out:** carving routes/meetings.py (watch item only).
 
 ## Acceptance criteria
-- [ ] The guard fails on a regrown module with a carve-don't-bump
+- [x] The guard fails on a regrown module with a carve-don't-bump
       message, passes on the shipped shape (both proven).
-- [ ] The docs record the pattern; doc guard green.
-- [ ] Full suite green.
+- [x] The docs record the pattern; doc guard green.
+- [x] Full suite green.
+
+      See `evidence-story-05.md`.
 
 ## Test plan
 - The guard slice both ways; the doc guard; the full suite.

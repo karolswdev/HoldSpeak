@@ -1,12 +1,19 @@
 # Phase 63 — Backend Decomposition
 
-**Status:** in progress (4/6). Opened 2026-06-12 on owner direction ("E,
+**Status:** in progress (5/6). Opened 2026-06-12 on owner direction ("E,
 puh-lease"): backlog row **E**, the backend twin of Phase 54. The two
 god-objects — `web_runtime.py` (2,635 lines, regrown PAST its pre-Phase-52
 size) and `meeting_session.py` (1,674) — carve into single-concern modules,
 behavior-preserving, locked by a backend density guard.
 
-**Last updated:** 2026-06-12 (**HS-63-04 done:** the platform glue is out —
+**Last updated:** 2026-06-12 (**HS-63-05 done:** the shape is locked — 5
+guard tests (cores 650/850; modules ≤600; carve-don't-bump messages; proven
+both ways; routes/meetings.py recorded as the named watch item, deliberately
+unguarded) and `docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md` records the
+mixin pattern, the patch-targets-live-where-the-lookup-happens rule (with
+this phase's two hard-way stories), and the add-a-concern walkthrough;
+CONTRIBUTING points to it beside the frontend twin. Suite **2773 passed, 17
+skipped** (+5). Prior: **HS-63-04 done:** the platform glue is out —
 meeting_glue (552), routing_glue (450), activity (264), plugin_queue (171),
 transcriber_state (144); **web_runtime.py is 555 lines** (boot/run/config
 only; was 2,635 at phase open). Verbatim: 0 body lines lost. The census
@@ -92,11 +99,11 @@ guard locks the shape.
 | HS-63-02 | MeetingSession mixins | done | HS-63-01 |
 | HS-63-03 | WebRuntime mixins: the feature glue | done | none |
 | HS-63-04 | WebRuntime mixins: the platform glue + thin core | done | HS-63-03 |
-| HS-63-05 | The backend density guard + docs | backlog | HS-63-01..04 |
+| HS-63-05 | The backend density guard + docs | done | HS-63-01..04 |
 | HS-63-06 | Closeout: the live boot proof + final-summary + PR | backlog | HS-63-01..05 |
 
 ## Where we are
 
-Both god-objects are carved: web_runtime 2,635 → 555; meeting_session
-1,674 → 795 core; thirteen single-concern modules, all ≤600. Next is
-**HS-63-05 — the backend density guard + docs**.
+Carved, locked, documented. Next is **HS-63-06 — closeout** (the live
+boot proof: the composed runtime serves, a meeting runs start→stop, a
+dictation dry-run flows; final-summary; PR).

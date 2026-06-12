@@ -41,7 +41,11 @@ Before changing web pages or their scripts, read
 [`docs/internal/ARCHITECTURE_WEB_FRONTEND.md`](docs/internal/ARCHITECTURE_WEB_FRONTEND.md)
 — it records the page decomposition pattern (section partials + behavior
 modules), the Astro scoped-CSS-on-JS-rendered-DOM trap, and the density
-budgets a guard test enforces.
+budgets a guard test enforces. Before changing `web_runtime.py` or
+`meeting_session/`, read
+[`docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md`](docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md)
+— the backend twin: the mixin pattern, where patch targets live, and the
+backend density budgets.
 
 ## Commit workflow
 
