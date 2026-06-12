@@ -1,6 +1,6 @@
 # Phase 61 — Send to Slack
 
-**Status:** in progress (3/4). Opened 2026-06-11 on owner direction: candidate
+**Status:** CLOSED (4/4). Opened 2026-06-11 on owner direction: candidate
 **L** scoped to one easy connector ("Export Connectors are fine…, but let's
 just choose an easy one"); the pick is the Slack **incoming webhook** (one
 POST, no OAuth) because Phase 38's gated webhook connector was built for
@@ -8,7 +8,19 @@ exactly it. In the same direction, **N (Windows) was rejected by the owner**
 ("Absolutely not. Not by me. If someone wants it, they will port it.") and
 is recorded as community-port-welcome, not roadmap work.
 
-**Last updated:** 2026-06-12 (**HS-61-03 done:** docs. The Meeting Mode
+**Last updated:** 2026-06-12 (**HS-61-04 done — phase CLOSED 4/4:** the live
+proof with no mocks anywhere: a real Chromium clicked Send to Slack (one
+`proposed` proposal, NOTHING at the receiver), then Approve — the real
+decision route ran the real gated connector and a real urllib POST landed on
+a real local incoming-webhook receiver, body **byte-equal** to the stored
+preview; audit proposed→approved→executed. The live wrong-host probe (real
+transport, manifest 127.0.0.1, proposal at 192.0.2.55) refused before any
+socket opened; the off-proof 400 held. A real find fixed on the way: the
+proposal card's guard copy ("only records your decision") was untrue for
+slack — it now tells the per-target truth, locked. Final suite **2768
+passed, 17 skipped**; BACKLOG **L shipped**; see
+[final-summary.md](./final-summary.md). PR merged on green. Prior:
+**HS-61-03 done:** docs. The Meeting Mode
 Guide's aftercare section gains "Send to Slack" with a real product
 screenshot and the plainly-stated truths: configured-only visibility, the
 preview IS the message, **approving is the moment it posts** (explicitly
@@ -99,12 +111,11 @@ unconfigured.
 | HS-61-01 | The export engine + route | done | none |
 | HS-61-02 | The surfaces | done | HS-61-01 |
 | HS-61-03 | Docs: Send to Slack | done | HS-61-02 |
-| HS-61-04 | Closeout: the real POST + final-summary + PR | backlog | HS-61-01..03 |
+| HS-61-04 | Closeout: the real POST + final-summary + PR | done | HS-61-01..03 |
 
 ## Where we are
 
-Three of four done: the feature works end to end through the real UI and is
-documented honestly under canon. Next is **HS-61-04 — closeout**: the live
-proof (a real approval driving a REAL POST into a real local
-incoming-webhook receiver, body byte-equal to the preview), the off-proof,
-final-summary, BACKLOG L flipped, PR merged on green.
+CLOSED 4/4. The feature is live end to end (configure → buttons → proposal
+→ approve → the real gated POST, byte-equal to the preview), documented
+under canon, and proven against a real receiver. See
+[final-summary.md](./final-summary.md).

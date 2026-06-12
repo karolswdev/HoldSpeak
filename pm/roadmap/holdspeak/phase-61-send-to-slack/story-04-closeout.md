@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 61
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-61-01, HS-61-02, HS-61-03
 - **Unblocks:** phase exit
 - **Owner:** unassigned
@@ -27,13 +27,17 @@ unconfigured path is proven invisible.
   the proof; the wire format is Slack's documented contract).
 
 ## Acceptance criteria
-- [ ] The live trace ships in evidence: proposal recorded → nothing
+- [x] The live trace ships in evidence: proposal recorded → nothing
       received → approval → exactly one POST → body byte-equal to the
-      preview.
-- [ ] The off-proof and the wrong-host refusal ship in evidence.
-- [ ] Full suite green (`--ignore=tests/e2e/test_metal.py`).
-- [ ] final-summary.md written; BACKLOG row L flipped; README cadence
+      preview. (14/14, real browser + real receiver + real transport.)
+- [x] The off-proof and the wrong-host refusal ship in evidence (the
+      wrong-host probe ran with the REAL transport; refused before any
+      socket opened).
+- [x] Full suite green (`--ignore=tests/e2e/test_metal.py`): 2768
+      passed, 17 skipped.
+- [x] final-summary.md written; BACKLOG row L flipped; README cadence
       done; PR merged on green; memory recorded.
+      See `evidence-story-04.md`.
 
 ## Test plan
 - A dogfood script driving the live loop against a local HTTP receiver;

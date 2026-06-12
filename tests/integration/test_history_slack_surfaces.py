@@ -133,6 +133,14 @@ def test_history_buttons_are_gated_on_the_flag():
     assert "nothing is sent until you approve it below" in page
 
 
+def test_proposal_guard_copy_tells_the_per_target_truth():
+    # The generic guard copy ("only records your decision") is untrue for
+    # slack targets, where approving executes the send — the card says so.
+    page = (_REPO / "web" / "src" / "pages" / "history.astro").read_text()
+    assert "approving sends this exact message to Slack" in page
+    assert "this only records your decision" in page  # other targets keep the truth
+
+
 def test_history_app_wires_the_export_route():
     js = (_REPO / "web" / "src" / "scripts" / "history-app.js").read_text()
     assert "async exportToSlack(what)" in js

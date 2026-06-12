@@ -1212,7 +1212,14 @@ import AppLayout from "../layouts/AppLayout.astro";
                         <div class="proposal-actions" x-show="p.status === 'proposed'" x-cloak>
                           <button type="button" class="btn primary" @click="decideProposal(p, 'approved')">Approve</button>
                           <button type="button" class="btn" @click="decideProposal(p, 'rejected')">Reject</button>
-                          <span class="proposal-guard">Nothing runs without your approval — this only records your decision.</span>
+                          <!-- HS-61-04: the guard copy tells the per-target truth — a
+                               slack approval executes the send right away. -->
+                          <span
+                            class="proposal-guard"
+                            x-text="p.target === 'slack'
+                              ? 'Nothing runs without your approval — approving sends this exact message to Slack.'
+                              : 'Nothing runs without your approval — this only records your decision.'"
+                          ></span>
                         </div>
                         <p class="proposal-decided" x-show="p.status !== 'proposed'" x-cloak
                            x-text="proposalStatusLabel(p.status) + (p.decided_by ? ` · ${p.decided_by}` : '')"></p>
