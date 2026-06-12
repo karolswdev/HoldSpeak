@@ -1,15 +1,22 @@
 # Phase 63 — Backend Decomposition
 
-**Status:** scaffolded (0/6). Opened 2026-06-12 on owner direction ("E,
+**Status:** in progress (1/6). Opened 2026-06-12 on owner direction ("E,
 puh-lease"): backlog row **E**, the backend twin of Phase 54. The two
 god-objects — `web_runtime.py` (2,635 lines, regrown PAST its pre-Phase-52
 size) and `meeting_session.py` (1,674) — carve into single-concern modules,
 behavior-preserving, locked by a backend density guard.
 
-**Last updated:** 2026-06-12 (scaffolded — the concern maps, the
-monkeypatch census (11 globals; 6 stay with the core, 5 move with their
-methods), and the test-edit policy (patch-target paths only, assertions
-byte-identical) are recorded in the brief §3.)
+**Last updated:** 2026-06-12 (**HS-63-01 done:** `meeting_session` is a
+package (the planned `holdspeak/meeting/` name was taken by the
+MeetingRecorder module — the package conversion keeps the import point
+instead, strictly better); the five models live in `models.py` (240 lines,
+bodies verbatim, proven by a body-line diff: 0 original lines lost);
+**zero test edits** across the 38 importing files. A trap caught mid-story:
+indented `try:` optional imports silently swallowed a packaging mistake
+(intel became None; 8 tests failed loudly) — the lesson recorded for the
+remaining carves. Suite **2768 passed, 17 skipped**. Earlier: scaffolded —
+the concern maps, the monkeypatch census, and the test-edit policy are in
+the brief §3.)
 
 ## The thesis — why this phase
 
@@ -56,7 +63,7 @@ guard locks the shape.
 
 | Story | Title | Status | Depends on |
 |---|---|---|---|
-| HS-63-01 | The meeting models | backlog | none |
+| HS-63-01 | The meeting models | done | none |
 | HS-63-02 | MeetingSession mixins | backlog | HS-63-01 |
 | HS-63-03 | WebRuntime mixins: the feature glue | backlog | none |
 | HS-63-04 | WebRuntime mixins: the platform glue + thin core | backlog | HS-63-03 |
@@ -65,4 +72,6 @@ guard locks the shape.
 
 ## Where we are
 
-Scaffolded. Next is **HS-63-01 — the meeting models**.
+The models are out. Next is **HS-63-02 — MeetingSession mixins**
+(transcribe loop / intel / persistence / mutations out of the 1,460-line
+session.py).
