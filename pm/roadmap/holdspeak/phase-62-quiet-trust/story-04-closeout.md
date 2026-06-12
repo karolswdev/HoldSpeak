@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 62
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-62-01, HS-62-02, HS-62-03
 - **Unblocks:** phase exit
 - **Owner:** unassigned
@@ -22,10 +22,12 @@ needs its exit artifacts.
   Phase 56 proved the frame).
 
 ## Acceptance criteria
-- [ ] The live trace ships in evidence: both badge states on real cards,
+- [x] The live trace ships in evidence: both badge states on real cards,
       zero page errors, screenshots reviewed.
-- [ ] Full suite green (`--ignore=tests/e2e/test_metal.py`).
-- [ ] final-summary.md; README cadence; PR merged on green; memory.
+- [x] Full suite green (`--ignore=tests/e2e/test_metal.py`).
+- [x] final-summary.md; README cadence; PR merged on green; memory.
+
+      See `evidence-story-04.md`.
 
 ## Test plan
 - The dogfood script + the full suite as regression.

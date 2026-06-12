@@ -1,13 +1,19 @@
 # Phase 62 — Quiet Trust
 
-**Status:** in progress (3/4). Opened 2026-06-12 on direct owner feedback:
+**Status:** CLOSED (4/4). Opened 2026-06-12 on direct owner feedback:
 the privacy-reassurance prose across the UI is "really cringey" — replace
 the novels on cards and notifications with a compact **egress badge**
 (local · local+cloud · cloud) and redo the affected screenshots. This
 reverses the locked Phase-56 "three privacy answers verbatim on every
 actionable card" decision.
 
-**Last updated:** 2026-06-12 (**HS-62-03 done:** docs + the re-shot
+**Last updated:** 2026-06-12 (**HS-62-04 done — phase CLOSED 4/4:** the
+badge proven on REAL broadcast-driven cards: the real file-issue route's
+`actuator_proposed` slid in a card carrying exactly '☁ github'; a real
+taught correction's `learning_event` (reach 2) carried exactly '⌂ Local';
+zero retired phrases on either card, zero page errors (17/17). Final suite
+**2768 passed, 17 skipped**; see [final-summary.md](./final-summary.md);
+PR merged on green. Prior: **HS-62-03 done:** docs + the re-shot
 screenshots. POSITIONING gains the voice rule (egress is a badge, not
 prose); README/docs alts stopped quoting retired paragraphs; all seven
 user-facing screenshots re-shot from live runs, content-asserted before
@@ -82,10 +88,9 @@ old copy is re-shot live.
 | HS-62-01 | The egress badge on Qlippy cards | done | none |
 | HS-62-02 | The sweep | done | HS-62-01 |
 | HS-62-03 | Docs + re-shot screenshots | done | HS-62-02 |
-| HS-62-04 | Closeout | backlog | HS-62-01..03 |
+| HS-62-04 | Closeout | done | HS-62-01..03 |
 
 ## Where we are
 
-Three of four done: quiet cards, quiet pages, aligned docs, fresh
-screenshots (native overlay included). Next is **HS-62-04 — closeout**
-(the live badge proof on real broadcast-driven cards, final-summary, PR).
+CLOSED 4/4. Trust is ambient: one badge, three states, no novels. See
+[final-summary.md](./final-summary.md).
