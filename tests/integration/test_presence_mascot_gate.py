@@ -89,8 +89,8 @@ def test_settings_page_has_the_subordinate_sub_toggle():
     assert "mascot-subfield" in page
     assert "is-inert" in page
     assert "settings.presence.enabled && (settings.presence.mascot" in page
-    # Honest copy: he only offers.
-    assert "nothing runs without your click" in page
+    # Honest copy: he only offers (HS-62-02 swept the reassurance tail).
+    assert "He only ever offers." in page
 
 
 def test_assets_are_vendored_with_provenance():

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 62
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-62-01
 - **Unblocks:** HS-62-03, HS-62-04
 - **Owner:** unassigned
@@ -23,10 +23,12 @@ history notes, flashes, the welcome rail, the settings lead, tooltips.
   danger copy; docs (HS-62-03).
 
 ## Acceptance criteria
-- [ ] A grep sweep for the reassurance phrases over web/src returns only
+- [x] A grep sweep for the reassurance phrases over web/src returns only
       the allowed explain-once surfaces (recorded in evidence).
-- [ ] The slack/aftercare locks pin the new shorter copy; suite green.
-- [ ] `cd web && npm run build` clean; 0 `_built/` tracked.
+- [x] The slack/aftercare locks pin the new shorter copy; suite green.
+- [x] `cd web && npm run build` clean; 0 `_built/` tracked.
+
+      See `evidence-story-02.md`.
 
 ## Test plan
 - Updated `test_history_slack_surfaces.py` + any other copy locks; the

@@ -1,13 +1,21 @@
 # Phase 62 — Quiet Trust
 
-**Status:** in progress (1/4). Opened 2026-06-12 on direct owner feedback:
+**Status:** in progress (2/4). Opened 2026-06-12 on direct owner feedback:
 the privacy-reassurance prose across the UI is "really cringey" — replace
 the novels on cards and notifications with a compact **egress badge**
 (local · local+cloud · cloud) and redo the affected screenshots. This
 reverses the locked Phase-56 "three privacy answers verbatim on every
 actionable card" decision.
 
-**Last updated:** 2026-06-12 (**HS-62-01 done:** the egress badge. The card
+**Last updated:** 2026-06-12 (**HS-62-02 done:** the sweep. Nine files, every
+operational reassurance tail cut to its functional core (notes, flashes,
+guards, the wizard rail, the settings lead, the LocalPill tooltip); the
+dashboard guard's per-target fix also closed a real lie ('only records your
+decision' was untrue for slack since Phase 61). What remains, deliberately:
+the TrustChip surfaces (one short line each), the single welcome pitch
+sentence, and the behavioral warnings — the residue grep ships in evidence.
+Locks updated in place; build clean; suite **2768 passed, 17 skipped**.
+Prior: **HS-62-01 done:** the egress badge. The card
 shell renders `egress: {scope, label?}` as one pill (⌂ Local green / ⌂+☁ /
 ☁ + target orange); every card swapped its privacy paragraph for the badge
 (`privacyLine()` deleted; the wake card's not-typed state is now three
@@ -62,11 +70,12 @@ old copy is re-shot live.
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HS-62-01 | The egress badge on Qlippy cards | done | none |
-| HS-62-02 | The sweep | backlog | HS-62-01 |
+| HS-62-02 | The sweep | done | HS-62-01 |
 | HS-62-03 | Docs + re-shot screenshots | backlog | HS-62-02 |
 | HS-62-04 | Closeout | backlog | HS-62-01..03 |
 
 ## Where we are
 
-HS-62-01 is done: the cards are quiet. Next is **HS-62-02 — the sweep**
-(the reassurance tails across history/welcome/settings/components).
+Cards and pages are quiet. Next is **HS-62-03 — docs + the re-shot
+screenshots** (the wider doc pass, the POSITIONING voice rule, and every
+user-facing screenshot showing the old copy re-shot live).

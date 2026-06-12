@@ -323,7 +323,7 @@ import HoldMark from "../components/HoldMark.astro";
             </div>
           </header>
           <div class="panel-body">
-            <p class="rail-muted">An actuator proposed an external action. Review it, then approve or reject — approval only records your decision; nothing runs without it.</p>
+            <p class="rail-muted">An actuator proposed an external action. Review the preview, then approve or reject.</p>
             <ul class="proposal-list">
               <template x-for="p in pendingProposals" :key="p.id">
                 <li class="proposal-item" :class="`accent-${proposalAccent(p)}`">
@@ -343,7 +343,10 @@ import HoldMark from "../components/HoldMark.astro";
                     <button type="button" class="btn btn--sm proposal-approve" @click="decideLiveProposal(p, 'approved')">Approve</button>
                     <button type="button" class="btn btn--secondary btn--sm" @click="decideLiveProposal(p, 'rejected')">Reject</button>
                   </div>
-                  <p class="proposal-guard rail-faint" x-show="p.status === 'proposed'" x-cloak>Nothing runs without your approval — this only records your decision.</p>
+                  <p class="proposal-guard rail-faint" x-show="p.status === 'proposed'" x-cloak
+                     x-text="p.target === 'slack'
+                       ? 'Approving sends this message to Slack.'
+                       : 'Approving records the decision; execution is a separate step.'"></p>
                   <p class="proposal-decided rail-faint" x-show="p.status !== 'proposed'" x-cloak
                      x-text="proposalStatusLabel(p.status) + (p.decided_by ? ` · ${p.decided_by}` : '')"></p>
                 </li>

@@ -638,9 +638,7 @@ function historyApp() {
           this.flash(`Approved, but the send failed: ${updated.error || "unknown error"}`, true);
         } else {
           this.flash(
-            decision === "approved"
-              ? "Proposal approved — recorded; nothing runs without it."
-              : "Proposal rejected.",
+            decision === "approved" ? "Proposal approved." : "Proposal rejected.",
           );
         }
       } catch (error) {
@@ -675,7 +673,7 @@ function historyApp() {
           const others = this.selectedMeetingProposals.filter((p) => p.id !== res.proposal.id);
           this.selectedMeetingProposals = [res.proposal, ...others];
         }
-        this.flash("Issue proposal created — review and approve it below. Nothing is sent yet.");
+        this.flash("Issue proposal created — approve it below.");
         return true;
       } catch (error) {
         console.error("Failed to file action as issue:", error);
@@ -703,7 +701,7 @@ function historyApp() {
           const others = this.selectedMeetingProposals.filter((p) => p.id !== res.proposal.id);
           this.selectedMeetingProposals = [res.proposal, ...others];
         }
-        this.flash("Slack proposal created — review and approve it below. Nothing is sent yet.");
+        this.flash("Slack proposal created — approve it below.");
       } catch (error) {
         console.error("Failed to propose Slack export:", error);
         this.flash(`Could not create the Slack proposal: ${error.message}`, true);

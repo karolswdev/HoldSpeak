@@ -876,7 +876,9 @@
               }
               this.toast(
                 decision === "approved"
-                  ? "Proposal approved — recorded; nothing runs without it."
+                  ? (updated && updated.status === "executed"
+                      ? "Approved — sent."
+                      : "Proposal approved.")
                   : "Proposal rejected.",
               );
             } catch (error) {
