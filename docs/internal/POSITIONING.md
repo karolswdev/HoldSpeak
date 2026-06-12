@@ -122,6 +122,7 @@ left column is the name; do not alternate with the synonyms.
 | the spoken language setting | "language mode", "locale" |
 | the wake word | "hotword", "voice activation" |
 | the armed window | "listening window", "wake session" |
+| Send to Slack | "Slack integration", "Slack connector" (user-facing), "Slack export" |
 | AIPI-Lite | "the companion device" after first use |
 
 ## Voice rules (the editing standard for every user-facing doc)

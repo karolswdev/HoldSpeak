@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 61
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-61-02
 - **Unblocks:** HS-61-04
 - **Owner:** unassigned
@@ -27,12 +27,17 @@ approval truth and the security posture before the phase can close, and
   stay as-is unless a lock forces an update — check the locks).
 
 ## Acceptance criteria
-- [ ] The Meeting Mode Guide section ships with the approval truth, the
-      host gate, and the credential note stated plainly.
-- [ ] The SECURITY egress row ships.
-- [ ] The POSITIONING canonical-name row ships ("Send to Slack").
-- [ ] The voice guard and the full suite are green (no em/en dashes in
-      user-facing prose, no banned vocab, names canon-consistent).
+- [x] The Meeting Mode Guide section ships with the approval truth, the
+      host gate, and the credential note stated plainly (plus a real
+      product screenshot and the API-list row).
+- [x] The SECURITY egress row ships (and the secrets section gains the
+      webhook-URL entry).
+- [x] The POSITIONING canonical-name row ships ("Send to Slack").
+- [x] The voice guard and the full suite are green (no em/en dashes in
+      user-facing prose, no banned vocab, names canon-consistent; the
+      guard's banned-names pattern now covers the Slack synonyms, proven
+      both ways).
+      See `evidence-story-03.md`.
 
 ## Test plan
 - `uv run pytest -q tests/unit/test_doc_drift_guard.py` then the full

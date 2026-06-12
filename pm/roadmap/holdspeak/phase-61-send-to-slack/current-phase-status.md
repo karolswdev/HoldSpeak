@@ -1,6 +1,6 @@
 # Phase 61 — Send to Slack
 
-**Status:** in progress (2/4). Opened 2026-06-11 on owner direction: candidate
+**Status:** in progress (3/4). Opened 2026-06-11 on owner direction: candidate
 **L** scoped to one easy connector ("Export Connectors are fine…, but let's
 just choose an easy one"); the pick is the Slack **incoming webhook** (one
 POST, no OAuth) because Phase 38's gated webhook connector was built for
@@ -8,7 +8,16 @@ exactly it. In the same direction, **N (Windows) was rejected by the owner**
 ("Absolutely not. Not by me. If someone wants it, they will port it.") and
 is recorded as community-port-welcome, not roadmap work.
 
-**Last updated:** 2026-06-12 (**HS-61-02 done:** the surfaces. The aftercare
+**Last updated:** 2026-06-12 (**HS-61-03 done:** docs. The Meeting Mode
+Guide's aftercare section gains "Send to Slack" with a real product
+screenshot and the plainly-stated truths: configured-only visibility, the
+preview IS the message, **approving is the moment it posts** (explicitly
+contrasted with the state-only GitHub approval), the host gate, the
+URL-as-password rule, visible truncation. SECURITY gains the egress row
+(double opt-in gate) + the secrets entry; POSITIONING gains the canonical
+row; the voice guard's banned-names pattern now covers "Slack
+integration"/"Slack export", proven both ways. Doc slice 13 green; suite
+**2767 passed, 17 skipped**. Prior: **HS-61-02 done:** the surfaces. The aftercare
 card grows a green-edged "Send to Slack" pill (digest) + a second button in
 the draft view (beside Copy draft), both gated on a `slack_configured` bool
 the aftercare API now carries (never the URL); the draft's privacy note flips
@@ -89,13 +98,13 @@ unconfigured.
 |---|---|---|---|
 | HS-61-01 | The export engine + route | done | none |
 | HS-61-02 | The surfaces | done | HS-61-01 |
-| HS-61-03 | Docs: Send to Slack | backlog | HS-61-02 |
+| HS-61-03 | Docs: Send to Slack | done | HS-61-02 |
 | HS-61-04 | Closeout: the real POST + final-summary + PR | backlog | HS-61-01..03 |
 
 ## Where we are
 
-HS-61-01 and HS-61-02 are done: the feature works end to end through the
-real UI (configure → buttons appear → propose → the approval section), with
-the engine proven against the full connector stack. Next is **HS-61-03 —
-docs** (the Meeting Mode Guide aftercare section, the SECURITY egress row,
-the POSITIONING canonical row).
+Three of four done: the feature works end to end through the real UI and is
+documented honestly under canon. Next is **HS-61-04 — closeout**: the live
+proof (a real approval driving a REAL POST into a real local
+incoming-webhook receiver, body byte-equal to the preview), the off-proof,
+final-summary, BACKLOG L flipped, PR merged on green.

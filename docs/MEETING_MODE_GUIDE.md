@@ -416,6 +416,38 @@ talks.
 
 *The follow-up draft: assembled from the meeting's decisions and open items, ready to copy. An empty meeting yields one honest line, not filler.*
 
+### Send to Slack
+
+If your team reads Slack, the digest and the follow-up draft can go there
+directly through a Slack incoming webhook. Set the webhook URL once in
+Settings (under Meetings & intel) and every meeting's aftercare panel gains
+a "Send to Slack" button on the digest and another on the follow-up draft.
+With no URL configured, the buttons do not exist and nothing about Slack
+appears anywhere.
+
+![The aftercare panel with Send to Slack configured: a green Send to Slack pill in the panel header, the follow-up draft open with Copy draft and Send to Slack side by side, and the note that sending creates a proposal you approve first.](assets/aftercare/send-to-slack.png)
+
+*The one outbound door: the green buttons appear only after you configure a webhook URL, and they create proposals, not sends.*
+
+How a send actually works:
+
+1. Clicking the button creates a **proposal** in the Proposed actions
+   section. The proposal's preview is the exact message Slack will receive,
+   so what you read is what posts, byte for byte.
+2. **Approving the proposal is the moment it posts.** Unlike the
+   GitHub-issue flow above, you initiated this send yourself and the
+   approval is your confirmation, so HoldSpeak posts immediately on
+   approval. Rejecting it ends there; nothing is sent.
+3. The message can only ever go to the host of the URL you configured. The
+   connector refuses any other destination before a single byte leaves, and
+   a failed post is recorded honestly on the proposal.
+
+Two honesty notes. Slack treats webhook URLs like passwords, so HoldSpeak
+does too: the URL lives in your local config, is shown only on the Settings
+page, and never appears in a proposal, a status broadcast, or an API
+response. And the message is plain text in Slack's own formatting; a long
+digest is cut with a visible truncation notice rather than silently.
+
 ---
 
 ## Import an Existing Recording or Transcript
@@ -636,6 +668,7 @@ Health check endpoint.
 - `GET /api/meetings/{meeting_id}/aftercare` - read-only aftercare digest (open items by owner, decisions, the since-last-meeting diff)
 - `GET /api/meetings/{meeting_id}/followup-draft` - locally-assembled follow-up draft (preview + copy; nothing sent)
 - `POST /api/meetings/{meeting_id}/aftercare/file-issue` - file an accepted action as a GitHub-issue actuator proposal (records a proposal only; off by default, human-approved, audited)
+- `POST /api/meetings/{meeting_id}/export/slack` - propose sending the digest or follow-up draft to the configured Slack webhook (`what`: `digest` or `followup`; records a proposal whose preview is the exact message; refuses when no URL is configured)
 - `GET /api/all-action-items`
 - `PATCH /api/all-action-items/{item_id}` - update persisted action item status
 - `PATCH /api/all-action-items/{item_id}/review` - update persisted action item review state
