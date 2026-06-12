@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import holdspeak.runtime.dictation_capture as dictation_capture
 import holdspeak.web_runtime as web_runtime
 from holdspeak.config import Config, MacrosConfig, VoiceMacro, VoiceMacroAction
 from holdspeak.dictation_runner import dispatch_voice_command
@@ -92,7 +93,7 @@ def test_web_runtime_delegate_injects_typer_and_activity(monkeypatch) -> None:
         captured.update(text=text, config=config, type_writer=type_writer, on_activity=on_activity)
         return "SENTINEL"
 
-    monkeypatch.setattr(web_runtime, "dispatch_voice_command", _spy)
+    monkeypatch.setattr(dictation_capture, "dispatch_voice_command", _spy)
     typed: list[str] = []
     fake_self = SimpleNamespace(
         config="CFG",

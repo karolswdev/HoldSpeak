@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 63
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-63-04
 - **Owner:** unassigned
@@ -22,9 +22,11 @@ are ~900 lines of feature glue inside WebRuntime.
 - **Out:** the platform glue (HS-63-04); behavior changes.
 
 ## Acceptance criteria
-- [ ] The three mixins are single-concern and under budget.
-- [ ] Test edits are patch-target paths ONLY, enumerated in evidence.
-- [ ] Full suite green; the wake/dictation/device slices read.
+- [x] The three mixins are single-concern and under budget.
+- [x] Test edits are patch-target paths ONLY, enumerated in evidence.
+- [x] Full suite green; the wake/dictation/device slices read.
+
+      See `evidence-story-03.md`.
 
 ## Test plan
 - Full suite + the wake_runtime / dictation / device test slices.

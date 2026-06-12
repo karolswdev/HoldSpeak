@@ -1,12 +1,22 @@
 # Phase 63 — Backend Decomposition
 
-**Status:** in progress (2/6). Opened 2026-06-12 on owner direction ("E,
+**Status:** in progress (3/6). Opened 2026-06-12 on owner direction ("E,
 puh-lease"): backlog row **E**, the backend twin of Phase 54. The two
 god-objects — `web_runtime.py` (2,635 lines, regrown PAST its pre-Phase-52
 size) and `meeting_session.py` (1,674) — carve into single-concern modules,
 behavior-preserving, locked by a backend density guard.
 
-**Last updated:** 2026-06-12 (**HS-63-02 done:** MeetingSession is
+**Last updated:** 2026-06-12 (**HS-63-03 done:** the feature glue is out of
+WebRuntime — dictation_capture (413: transcribe-and-type, hotkey, tmux,
+voice commands), wake_glue (~360, the HS-60 section verbatim), device_glue
+(~315); web_runtime.py is **1,763** (was 2,635). The verbatim proof is again
+one line (`class WebRuntime:` → the composition). Test edits: exactly the
+censused patch-target paths (5 sites, 3 files) — with an honest find: the
+first wake retarget pointed at wake_glue and two tests passed COINCIDENTALLY
+(the real global lives in dictation_capture via
+_maybe_run_dictation_pipeline); the third failed loudly and exposed it, and
+the misleading unused imports were trimmed so nobody patches a name nothing
+calls. Suite **2768 passed, 17 skipped**. Prior: **HS-63-02 done:** MeetingSession is
 composed of four mixins (transcribe_loop 270 / intel_analysis 207 /
 persistence 145 / mutations 285); session.py is **795 lines** (was 1,460;
 the original file was 1,674). The verbatim proof is one line: the only
@@ -71,13 +81,13 @@ guard locks the shape.
 |---|---|---|---|
 | HS-63-01 | The meeting models | done | none |
 | HS-63-02 | MeetingSession mixins | done | HS-63-01 |
-| HS-63-03 | WebRuntime mixins: the feature glue | backlog | none |
+| HS-63-03 | WebRuntime mixins: the feature glue | done | none |
 | HS-63-04 | WebRuntime mixins: the platform glue + thin core | backlog | HS-63-03 |
 | HS-63-05 | The backend density guard + docs | backlog | HS-63-01..04 |
 | HS-63-06 | Closeout: the live boot proof + final-summary + PR | backlog | HS-63-01..05 |
 
 ## Where we are
 
-The meeting side is carved (largest file 795, from 1,674). Next is
-**HS-63-03 — WebRuntime mixins: the feature glue** (wake, devices,
-dictation capture out of the 2,635-line web_runtime.py).
+Both feature carves are done (meeting side largest 795; runtime at 1,763).
+Next is **HS-63-04 — the platform glue + thin core** (meeting glue, MIR/
+routing, the plugin queue, activity, transcriber state).
