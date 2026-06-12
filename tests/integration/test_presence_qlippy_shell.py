@@ -27,7 +27,7 @@ def test_skeleton_is_static_and_hidden_by_default() -> None:
     page = _page()
     assert 'id="qlippy"' in page and 'class="q-wrap" hidden' in page
     for el in ("qlippy-card", "qlippy-dock-sprite", "qlippy-headline",
-               "qlippy-detail", "qlippy-preview", "qlippy-privacy",
+               "qlippy-detail", "qlippy-preview", "qlippy-egress",
                "qlippy-actions", "qlippy-queue-hint", "qlippy-dismiss",
                "qlippy-announcer"):
         assert f'id="{el}"' in page

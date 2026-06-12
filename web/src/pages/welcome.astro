@@ -31,7 +31,7 @@ import "../styles/global.css";
             </li>
           </template>
         </ol>
-        <div class="wz-rail-foot">Local · 127.0.0.1 · nothing leaves your machine</div>
+        <div class="wz-rail-foot">Local · 127.0.0.1</div>
       </aside>
 
       <!-- Stage -->
@@ -168,7 +168,7 @@ import "../styles/global.css";
 
             <div class="pres-install" x-show="!presenceAvailable" x-cloak>
               <p>Not installed yet? Add the optional native extra:</p>
-              <button class="ma-cmd-lite" type="button" @click="copy(\"uv pip install -e '.[presence]'\")"><code>uv pip install -e '.[presence]'</code></button>
+              <button class="ma-cmd-lite" type="button" @click="copy(`uv pip install -e '.[presence]'`)"><code>uv pip install -e '.[presence]'</code></button>
             </div>
             <p class="pres-noenv">No environment variable, no relaunch from a terminal — it's a real setting now.</p>
           </section>

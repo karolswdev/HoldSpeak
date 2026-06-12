@@ -128,24 +128,26 @@ def test_history_buttons_are_gated_on_the_flag():
     assert page.count('x-show="selectedMeetingAftercare?.slack_configured"') >= 2
     assert "exportToSlack('digest')" in page
     assert "exportToSlack('followup')" in page
-    # The follow-up note stays honest in both states.
-    assert "Preview and copy only; nothing is sent." in page
-    assert "nothing is sent until you approve it below" in page
+    # The follow-up note stays honest in both states — and short (HS-62-02:
+    # no reassurance tails).
+    assert "'Preview and copy only.'" in page
+    assert "Send to Slack creates a proposal; approve it below." in page
 
 
 def test_proposal_guard_copy_tells_the_per_target_truth():
-    # The generic guard copy ("only records your decision") is untrue for
-    # slack targets, where approving executes the send — the card says so.
-    page = (_REPO / "web" / "src" / "pages" / "history.astro").read_text()
-    assert "approving sends this exact message to Slack" in page
-    assert "this only records your decision" in page  # other targets keep the truth
+    # The guard copy tells the per-target truth, in one short line each
+    # (HS-62-02 swept the "Nothing runs without your approval" preamble).
+    for page_name in ("history.astro", "index.astro"):
+        page = (_REPO / "web" / "src" / "pages" / page_name).read_text()
+        assert "Approving sends this message to Slack." in page, page_name
+        assert "Approving records the decision; execution is a separate step." in page, page_name
 
 
 def test_history_app_wires_the_export_route():
     js = (_REPO / "web" / "src" / "scripts" / "history-app.js").read_text()
     assert "async exportToSlack(what)" in js
     assert "/export/slack" in js
-    assert "Nothing is sent yet." in js
+    assert "Slack proposal created — approve it below." in js
     # The decision flash tells the truth about the execute-on-approve leg.
     assert "Approved — sent to Slack." in js
 
@@ -155,10 +157,9 @@ def test_settings_field_ships_the_honest_copy():
     assert "Send to Slack webhook URL" in page
     assert 'x-model="settings.meeting.slack_webhook_url"' in page
     for truth in (
-        "exactly as previewed",
-        "only after you approve",
-        "only ever post to this URL's host",
-        "stored in your local config and shown nowhere else",
-        "Leave empty to keep the feature off",
+        "Sends exactly what you preview",
+        "after you approve each send",
+        "only to this URL's host",
+        "Leave empty to turn the feature off",
     ):
         assert truth in page, truth

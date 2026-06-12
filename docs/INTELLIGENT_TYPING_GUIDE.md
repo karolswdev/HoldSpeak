@@ -659,30 +659,27 @@ safe.
   still open, with the top items named.
 
 ![The decision card: Qlippy in an alert pose beside "A decision needs you",
-the exact preview of the proposed GitHub issue, the plain-language privacy
-answers, and Approve / Decline buttons.](assets/presence/qlippy-decision-card.png)
+the exact preview of the proposed action, the egress badge naming the
+destination, and Approve / Decline buttons.](assets/presence/qlippy-decision-card.png)
 
 **Qlippy never acts on his own.** The Approve button on a card sends the
 identical request the dashboard's Approve sends: it records your decision in
 the same audit trail, and execution stays behind the same guarded,
-permission-checked path. Until you approve, nothing runs and nothing leaves
-your machine. Dismissing a decision card is always safe; the proposal stays
-on the dashboard, untouched.
+permission-checked path. Dismissing a decision card is always safe; the
+proposal stays on the dashboard, untouched.
 
-**Every actionable card answers three questions, in plain language, on the
-card itself:**
+**Every card carries the egress badge** instead of explanatory text: one
+small pill that says where the card's data goes, at a glance.
 
-1. **"Data used:"** what information is involved. You see the exact
-   human-readable preview; the machine payload stays on this machine until
-   you approve.
-2. **"If you approve, this goes to"** the named destination, so you always
-   know whether anything would leave your machine, and where it would go.
-3. **"Your controls:"** the buttons you have, plus the reminder that the
-   proposal also stays on the dashboard.
+- **⌂ Local** (green): everything involved lives on this machine. Learned,
+  aftercare, and wake preview cards are always local.
+- **☁ + a destination** (orange): approving sends the previewed content to
+  that named destination, and nowhere else. Decision and result cards name
+  their target on the badge, for example "☁ slack".
+- **⌂+☁** (orange): a mixed operation, partly local, partly out.
 
-Cards that involve no decision (learned, aftercare) state where their data
-lives instead: local only, read from your own records, nothing leaves the
-machine.
+The preview on a decision card is the exact content in question; the badge
+is the destination. That pair is the whole answer.
 
 **On the native HUD too.** On macOS and on overlay-capable Linux (X11 and
 wlroots), the same cards appear in the floating HUD. The panel accepts
@@ -692,7 +689,7 @@ keystrokes keep landing in the app you are typing into even as you click
 Approve.
 
 ![The native Linux overlay hosting the decision card over a real desktop:
-the same dark card with Qlippy, the preview, the privacy answers, and the
+the same dark card with Qlippy, the preview, the egress badge, and the
 Approve and Decline buttons.](assets/presence/qlippy-native-overlay.png)
 
 **Motion and accessibility.** New cards are announced to screen readers.

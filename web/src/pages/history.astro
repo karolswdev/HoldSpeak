@@ -137,8 +137,7 @@ import AppLayout from "../layouts/AppLayout.astro";
                 <code>ffmpeg</code> installed. The whole recording gets one speaker label.
                 <strong>Transcripts:</strong> vtt / srt / txt. Speaker names are read from the file
                 when it carries them; timestamps are real for vtt / srt and approximate for plain
-                text. Either way the source file isn't kept — only the meeting record. Everything
-                stays on this machine.
+                text. Either way the source file isn't kept — only the meeting record.
               </p>
               <div class="search-row">
                 <button class="btn primary" :disabled="!importFile || importBusy" @click="submitImport" x-text="importBusy ? 'Uploading…' : 'Import'"></button>
@@ -801,8 +800,8 @@ import AppLayout from "../layouts/AppLayout.astro";
                   <p
                     class="loop-note"
                     x-text="selectedMeetingAftercare?.slack_configured
-                      ? 'Assembled locally from this meeting. Send to Slack creates a proposal; nothing is sent until you approve it below.'
-                      : 'Assembled locally from this meeting. Preview and copy only; nothing is sent.'"
+                      ? 'Send to Slack creates a proposal; approve it below.'
+                      : 'Preview and copy only.'"
                   ></p>
                 </div>
 
@@ -852,7 +851,7 @@ import AppLayout from "../layouts/AppLayout.astro";
                               <button class="btn primary" @click="(await fileActionAsIssue(item, repo)) && (filing = false, repo = '')">Create proposal</button>
                               <button class="btn" @click="filing = false; repo = ''">Cancel</button>
                             </div>
-                            <p class="loop-note">Creates a proposal only. Nothing is sent until you approve it below, and execution needs actuators enabled.</p>
+                            <p class="loop-note">Creates a proposal; approve it below (execution needs actuators enabled).</p>
                           </div>
                         </div>
                       </template>
@@ -1181,7 +1180,7 @@ import AppLayout from "../layouts/AppLayout.astro";
                    Viewing never acts; approval is required before anything runs. -->
               <div class="detail-card" x-show="selectedMeetingProposals.length" x-cloak>
                 <h4>Proposed actions</h4>
-                <p class="proposal-note">Actuator proposals — review the preview, then approve or reject. Viewing never triggers the action; nothing runs without your approval.</p>
+                <p class="proposal-note">Review the preview, then approve or reject.</p>
                 <div class="artifact-stack">
                   <template x-for="p in selectedMeetingProposals" :key="p.id">
                     <div class="artifact-card proposal-card" :class="`accent-${proposalAccent(p)}`" x-data="{ open: true, copyState: 'idle' }">
@@ -1217,8 +1216,8 @@ import AppLayout from "../layouts/AppLayout.astro";
                           <span
                             class="proposal-guard"
                             x-text="p.target === 'slack'
-                              ? 'Nothing runs without your approval — approving sends this exact message to Slack.'
-                              : 'Nothing runs without your approval — this only records your decision.'"
+                              ? 'Approving sends this message to Slack.'
+                              : 'Approving records the decision; execution is a separate step.'"
                           ></span>
                         </div>
                         <p class="proposal-decided" x-show="p.status !== 'proposed'" x-cloak

@@ -63,7 +63,9 @@ import "../styles/global.css";
           <p id="qlippy-headline" class="q-headline"></p>
           <p id="qlippy-detail" class="q-detail"></p>
           <pre id="qlippy-preview" class="q-preview" hidden></pre>
-          <p id="qlippy-privacy" class="q-privacy" hidden></p>
+          {/* HS-62-01: the egress badge — one glance instead of a privacy
+              paragraph: local ⌂, local+cloud ⌂+☁, or cloud ☁ (+ target). */}
+          <span id="qlippy-egress" class="q-egress" hidden></span>
           <div id="qlippy-actions" class="q-actions"></div>
         </div>
         <span id="qlippy-queue-hint" class="q-queue-hint" hidden></span>
@@ -275,11 +277,28 @@ import "../styles/global.css";
         white-space: pre-wrap;
         overflow-wrap: anywhere;
       }
-      .q-privacy {
+      .q-egress {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        width: fit-content;
         margin: var(--space-2) 0 0;
-        color: var(--text-faint);
+        padding: 0.12rem 0.55rem;
         font-size: var(--font-size-xs);
-        line-height: var(--line-height-normal);
+        letter-spacing: 0.02em;
+        border-radius: var(--radius-pill);
+        border: 1px solid transparent;
+      }
+      .q-egress.is-local {
+        color: var(--ok);
+        background: color-mix(in srgb, var(--ok) 10%, transparent);
+        border-color: color-mix(in srgb, var(--ok) 30%, transparent);
+      }
+      .q-egress.is-mixed,
+      .q-egress.is-cloud {
+        color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 10%, transparent);
+        border-color: color-mix(in srgb, var(--accent) 30%, transparent);
       }
       .q-x {
         position: absolute;

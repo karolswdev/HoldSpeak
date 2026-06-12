@@ -44,7 +44,6 @@ def test_import_panel_states_the_honest_truths() -> None:
     assert "Speaker names are read from the file" in page
     assert "real for vtt / srt and approximate for plain" in page
     assert "source file isn't kept" in page
-    assert "stays on this machine" in page
 
 
 def test_import_panel_accepts_the_transcript_trio() -> None:

@@ -100,7 +100,8 @@ def test_wake_preview_card_ships_with_the_safety_copy():
     js = (_REPO / "web" / "src" / "scripts" / "qlippy-events.js").read_text()
     assert "onWakePreview" in js
     assert '"wake_preview"' in js
-    assert "Nothing has been typed" in js
+    # HS-62-01: the not-typed state rides the egress badge, not a paragraph.
+    assert "Local · not typed yet" in js
     assert "/api/dictation/wake/type" in js
     assert "sticky: true" in js  # the preview waits for the user
 

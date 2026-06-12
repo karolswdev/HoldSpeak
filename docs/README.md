@@ -44,8 +44,8 @@ including the LLM. This page is the map. Pick a journey.
   dictate elsewhere. Optionally with
   **[Qlippy, the mascot](./INTELLIGENT_TYPING_GUIDE.md#qlippy-the-mascot-optional)**:
   an ambient pixel-art dock plus one-at-a-time cards for the moments that need
-  you (approvals, results, learning, meeting follow-ups), each with plain
-  privacy answers. He never acts on his own.
+  you (approvals, results, learning, meeting follow-ups), each carrying an
+  egress badge that shows where its data goes. He never acts on his own.
 - **[Models (bring your own)](./MODELS.md)**: the model contract. GGUF in-process,
   MLX on Apple Silicon, or any OpenAI-compatible endpoint.
 

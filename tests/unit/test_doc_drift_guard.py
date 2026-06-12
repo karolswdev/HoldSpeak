@@ -217,18 +217,21 @@ def test_roadmap_vocab_pattern_is_narrow_enough_to_keep_spec_names() -> None:
 
 
 def test_qlippy_doc_states_the_guarantees_verbatim() -> None:
-    """HS-56-06: the mascot doc must keep the never-acts guarantee and the three
-    privacy answers verbatim-checkable (the same markers the cards render)."""
+    """HS-56-06 / revised HS-62-01: the mascot doc keeps the never-acts
+    guarantee, and the cards state egress with the BADGE, never a privacy
+    paragraph (the owner's Quiet Trust direction — one symbol, no novels)."""
     guide = (_REPO / "docs" / "INTELLIGENT_TYPING_GUIDE.md").read_text()
     assert "Qlippy, the mascot" in guide
     assert "never acts on his own" in guide
-    for marker in ('"Data used:"', '"If you approve, this goes to"', '"Your controls:"'):
-        assert marker in guide, f"privacy answer missing from the guide: {marker}"
-    # The cards themselves render the same three markers (locked in
-    # qlippy-events.js); the doc and the UI cannot drift apart silently.
+    assert "the egress badge" in guide  # the documented contract
+    # The cards pass structured egress states; the retired privacy
+    # paragraphs must never come back.
     events = (_REPO / "web" / "src" / "scripts" / "qlippy-events.js").read_text()
-    for marker in ("Data used:", "If you approve, this goes to", "Your controls:"):
-        assert marker in events
+    assert 'egress: { scope: "cloud", label: data.target' in events
+    assert 'egress: { scope: "local"' in events
+    for retired in ("Data used:", "If you approve, this goes to", "Your controls:",
+                    "nothing leaves", "stays on this machine"):
+        assert retired not in events, f"privacy prose crept back: {retired!r}"
 
 
 # ── HS-58-05: the voice guard ────────────────────────────────────────────────
