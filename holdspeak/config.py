@@ -190,6 +190,13 @@ class MeetingConfig:
     # a host on this list; a proposal whose target host is not a member is refused
     # before egress. Default-empty ⇒ nothing posts, even with actuators enabled.
     webhook_allowed_hosts: list[str] = field(default_factory=list)
+    # HS-61-01: the Send-to-Slack incoming-webhook URL. Default-empty = the
+    # feature is invisible (no aftercare buttons, the export route refuses).
+    # Setting it is the consent for that URL's host: the Slack connector's
+    # manifest allow-lists exactly this host, nothing else. Slack treats
+    # webhook URLs as credentials — this value never rides a proposal payload,
+    # a broadcast, or a non-settings API response.
+    slack_webhook_url: str = ""
 
     # Speaker diarization
     diarization_enabled: bool = False  # Identify multiple speakers in system audio
@@ -280,6 +287,21 @@ class MeetingConfig:
                 seen_host.add(host)
                 normalized_hosts.append(host)
         self.webhook_allowed_hosts = normalized_hosts
+
+        # HS-61-01: the Slack webhook URL — empty is fine (the feature is
+        # off); anything else must pass THE rule (https with a host; plain
+        # http for loopback only), the same one the settings boundary
+        # enforces with a 400. Imported lazily: config loads everywhere and
+        # the export module pulls in the plugin stack.
+        slack_url = str(self.slack_webhook_url or "").strip()
+        if slack_url:
+            from .slack_export import slack_webhook_host
+
+            try:
+                slack_webhook_host(slack_url)
+            except ValueError as exc:
+                raise ValueError(f"slack_webhook_url: {exc}") from exc
+        self.slack_webhook_url = slack_url
 
     def intent_hysteresis(self) -> float:
         """Convert `intent_hysteresis_windows` (int) to the float gap value

@@ -92,6 +92,7 @@ SQLCipher) becomes warranted and should be its own story.
 | **Cloud meeting intel** (`intel.py` → OpenAI client) | `intel_provider` = `cloud`, or `auto` falling back | Transcript text (no audio, no embeddings, no activity) | Explicit provider choice. `provider="local"` (default) **never** egresses, locked by `tests/unit/test_intel_egress_invariant.py`; surfaced by `doctor` + `intel_egress` in the runtime status. |
 | **Deferred-intel failure webhook** (`intel_queue.py:345`) | User configures `intel_retry_failure_webhook_url` | Queue statistics only (counts, rates), **no transcript** | Opt-in (URL must be set). |
 | **Wake-model download** (`wake_word.py`, first enable) | `wake_word.enabled` flipped on with models absent | Nothing leaves: an inbound fetch of the detection models (~7 MB) from the openWakeWord GitHub releases, once, cached locally | Opt-in (the feature is off by default); stated in the settings copy. Detection itself runs locally and no audio ever egresses. |
+| **Send to Slack** (`slack_export.py` → the gated webhook connector) | User configures `meeting.slack_webhook_url` AND approves one specific send | The meeting digest or follow-up draft, exactly as previewed on the proposal (plain text; no transcript, no audio) | Double opt-in: the URL must be set (consent for exactly its host; the connector refuses any other host before egress) and every send is a separate per-action approval. The webhook URL is treated as a credential: never in proposals, broadcasts, or API responses. |
 | **Connector CLI enrichment** (`gh`, `jira` via subprocess) | User enables the connector pack | Entity IDs (PR/issue/ticket numbers) to the user's own CLI tools, which call their services | Opt-in + manifest permissions (`shell:exec`, `network:outbound`). |
 | **Web runtime responses** | A client requests data | Whatever the API returns (transcripts, action items, etc.) | Loopback by default; token-gated off-loopback. |
 | **Device audio link** | A paired device streams audio | Audio in; status/LCD text out | PSK; same-LAN today. |
@@ -111,6 +112,11 @@ machine except via the connector CLIs above (entity IDs only).
   closed.
 - **Web auth token**: generated lazily, stored in `config.json`
   (`web_auth.ensure_web_token`); constant-time comparison; never logged.
+- **Slack webhook URL** (`meeting.slack_webhook_url`): stored in
+  `config.json` because it *is* the feature's configuration, but treated as
+  a credential everywhere else: shown only on the Settings page, never on a
+  proposal record, a broadcast, or any other API response (the connector
+  joins it to the POST in memory at execution time).
 - Bridge/firmware secrets (AIPI-Lite) live in gitignored `bridge.env` /
   `secrets.yaml`; `.example` templates are checked in.
 

@@ -836,6 +836,28 @@ def build_system_router(ctx: WebContext) -> APIRouter:
             meeting_data["intel_retry_failure_webhook_header_name"] = webhook_header_name or None
             meeting_data["intel_retry_failure_webhook_header_value"] = webhook_header_value or None
 
+            # HS-61-01: the Send-to-Slack incoming-webhook URL. Empty = the
+            # feature is off; anything else must pass THE shared rule (https
+            # with a host; plain http for loopback only). The URL's host is
+            # exactly what the Slack connector may POST to.
+            slack_url = str(
+                meeting_data.get(
+                    "slack_webhook_url", current.meeting.slack_webhook_url or ""
+                )
+                or ""
+            ).strip()
+            if slack_url:
+                from ...slack_export import slack_webhook_host
+
+                try:
+                    slack_webhook_host(slack_url)
+                except ValueError as exc:
+                    return JSONResponse(
+                        {"success": False, "error": f"slack_webhook_url: {exc}"},
+                        status_code=400,
+                    )
+            meeting_data["slack_webhook_url"] = slack_url
+
             similarity = float(meeting_data.get("similarity_threshold", current.meeting.similarity_threshold))
             if not (0.0 <= similarity <= 1.0):
                 return JSONResponse(

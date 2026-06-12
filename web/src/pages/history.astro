@@ -760,6 +760,19 @@ import AppLayout from "../layouts/AppLayout.astro";
                 <div class="aftercare-head">
                   <h4>Your next move</h4>
                   <div class="aftercare-head-actions">
+                    <!-- HS-61-02: visible only when a webhook URL is configured
+                         (the server's slack_configured flag — a bool, never the
+                         URL). Creates a proposal; you approve before any send. -->
+                    <button
+                      class="moment-btn slack-btn"
+                      x-show="selectedMeetingAftercare?.slack_configured"
+                      x-cloak
+                      @click="exportToSlack('digest')"
+                      title="Propose sending this digest to Slack — you approve below before anything is sent"
+                    >
+                      <span aria-hidden="true">&#128172;</span>
+                      <span>Send to Slack</span>
+                    </button>
                     <button
                       class="moment-btn"
                       @click="draft === null ? (draft = await fetchFollowupDraft()) : (draft = null, copyState = 'idle')"
@@ -777,8 +790,20 @@ import AppLayout from "../layouts/AppLayout.astro";
                       @click="copyState = (await copyMarkdown(draft)) ? 'done' : 'fail'; setTimeout(() => copyState = 'idle', 1400)"
                       x-text="copyState === 'done' ? 'Copied' : (copyState === 'fail' ? 'Copy failed' : 'Copy draft')"
                     ></button>
+                    <button
+                      class="btn slack-btn"
+                      x-show="selectedMeetingAftercare?.slack_configured"
+                      x-cloak
+                      @click="exportToSlack('followup')"
+                      title="Propose sending this draft to Slack — you approve below before anything is sent"
+                    >Send to Slack</button>
                   </div>
-                  <p class="loop-note">Assembled locally from this meeting. Preview and copy only; nothing is sent.</p>
+                  <p
+                    class="loop-note"
+                    x-text="selectedMeetingAftercare?.slack_configured
+                      ? 'Assembled locally from this meeting. Send to Slack creates a proposal; nothing is sent until you approve it below.'
+                      : 'Assembled locally from this meeting. Preview and copy only; nothing is sent.'"
+                  ></p>
                 </div>
 
                 <div class="aftercare-section" x-show="selectedMeetingAftercare?.open_items?.total" x-cloak>
@@ -1187,7 +1212,14 @@ import AppLayout from "../layouts/AppLayout.astro";
                         <div class="proposal-actions" x-show="p.status === 'proposed'" x-cloak>
                           <button type="button" class="btn primary" @click="decideProposal(p, 'approved')">Approve</button>
                           <button type="button" class="btn" @click="decideProposal(p, 'rejected')">Reject</button>
-                          <span class="proposal-guard">Nothing runs without your approval — this only records your decision.</span>
+                          <!-- HS-61-04: the guard copy tells the per-target truth — a
+                               slack approval executes the send right away. -->
+                          <span
+                            class="proposal-guard"
+                            x-text="p.target === 'slack'
+                              ? 'Nothing runs without your approval — approving sends this exact message to Slack.'
+                              : 'Nothing runs without your approval — this only records your decision.'"
+                          ></span>
                         </div>
                         <p class="proposal-decided" x-show="p.status !== 'proposed'" x-cloak
                            x-text="proposalStatusLabel(p.status) + (p.decided_by ? ` · ${p.decided_by}` : '')"></p>
@@ -2818,6 +2850,20 @@ import AppLayout from "../layouts/AppLayout.astro";
     .segment.segment-flash { animation: none; outline: 1px solid var(--accent); }
   }
 
+  /* HS-61-02: Send to Slack — the one outbound door on the aftercare card.
+     A distinct green edge so the eye separates "leaves the machine (after
+     approval)" from the local-only affordances beside it. */
+  .slack-btn {
+    color: var(--ok, #34d399);
+    background: color-mix(in srgb, var(--ok, #34d399) 10%, transparent);
+    border-color: color-mix(in srgb, var(--ok, #34d399) 35%, transparent);
+  }
+  .slack-btn:hover {
+    background: color-mix(in srgb, var(--ok, #34d399) 20%, transparent);
+    border-color: var(--ok, #34d399);
+  }
+  button.btn.slack-btn { color: var(--ok, #34d399); }
+
   /* HS-49-03: close the loop — file an accepted action as an actuator proposal.
      The inline form lives under its action item; the note keeps the privacy
      posture explicit at the point of action. */
@@ -2857,8 +2903,13 @@ import AppLayout from "../layouts/AppLayout.astro";
   .aftercare-head-actions {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: var(--space-2);
   }
+  /* HS-61-02: the head actions are pills, not paragraphs — keep each on one
+     line and let the row wrap as a whole instead. */
+  .aftercare-head-actions .moment-btn { white-space: nowrap; }
   .followup-draft {
     margin-bottom: var(--space-3);
     display: flex;

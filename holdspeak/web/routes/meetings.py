@@ -32,6 +32,7 @@ from ...web_requests import (
     _IntelProcessRequest,
     _MeetingStartRequest,
     _ProposalDecisionRequest,
+    _SlackExportRequest,
     _SpeakerUpdateRequest,
     _StopRequest,
     _UpdateMeetingRequest,
@@ -726,6 +727,14 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             digest = compute_meeting_aftercare(db, meeting_id)
             if digest is None:
                 return JSONResponse({"error": "Meeting not found"}, status_code=404)
+            # HS-61-02: the capability flag the Send-to-Slack buttons gate on.
+            # A bool only — the webhook URL is a credential and never rides
+            # an aftercare response.
+            from ...config import Config
+
+            digest["slack_configured"] = bool(
+                Config.load().meeting.slack_webhook_url
+            )
             return JSONResponse(digest)
         except Exception as e:
             return error_500(e, log, "Failed to load meeting aftercare")
@@ -778,6 +787,68 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             "decided_at": proposal.decided_at,
             "executed_at": proposal.executed_at,
         }
+
+    def _actuator_result_event(proposal: Any) -> dict[str, Any]:
+        """The wire-safe `actuator_result` payload (preview only, never the
+        machine payload — the Phase-56 lock)."""
+        return {
+            "id": getattr(proposal, "id", ""),
+            "meeting_id": getattr(proposal, "meeting_id", ""),
+            "status": getattr(proposal, "status", ""),
+            "target": getattr(proposal, "target", ""),
+            "action": getattr(proposal, "action", ""),
+            "preview": getattr(proposal, "preview", ""),
+            "reversible": bool(getattr(proposal, "reversible", False)),
+            "error": getattr(proposal, "error", None),
+        }
+
+    def _execute_slack_proposal(db: Any, proposal: Any, *, actor: str) -> Any:
+        """HS-61-01: the execute leg for an approved Send-to-Slack proposal.
+
+        The repo had no production execute path at all before this — the
+        `ActuatorExecutor` was host-injected in dogfoods only. For `slack`
+        proposals the approval IS the moment the user wants the send, so the
+        decision route executes right here, through the full executor guard
+        stack (status gate, payload parity, audit).
+
+        On consent: the user configured `meeting.slack_webhook_url` (consent
+        for exactly that host — the connector's manifest allow-lists it and
+        nothing else) and just approved this very action. That pair is the
+        Phase-52 "configuring is consent" model PLUS a per-action approval,
+        so this executor instance runs with its master switch on rather than
+        demanding a third toggle (`allow_actuators`) be flipped too.
+
+        The webhook URL is a credential: it is read from config at execution
+        time and injected by the connector in memory only — never stored on
+        the proposal, never broadcast, never returned.
+        """
+        from ...config import Config
+        from ...plugins.actuator_executor import ActuatorExecutor
+        from ...slack_export import build_slack_connector
+
+        url = Config.load().meeting.slack_webhook_url
+        if not url:
+            # Configured when proposed, unconfigured by execution time: an
+            # honest terminal failure (retryable via failed -> approved once
+            # the URL is back), never a silent drop.
+            updated = db.actuators.transition_proposal(
+                proposal.id,
+                to_status="failed",
+                actor=actor,
+                detail="slack export: no webhook URL configured at execution time",
+                error="Slack is not configured (meeting.slack_webhook_url is empty)",
+            )
+            ctx.broadcast("actuator_result", _actuator_result_event(updated))
+            return updated
+
+        executor = ActuatorExecutor(
+            db,
+            connector=build_slack_connector(url),
+            allow_actuators=True,
+            actor=actor,
+            on_result=lambda event: ctx.broadcast("actuator_result", event),
+        )
+        return executor.execute(proposal.id)
 
     @router.get("/api/meetings/{meeting_id}/proposals")
     async def api_get_meeting_proposals(
@@ -862,6 +933,15 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
                         "reversible": bool(updated.reversible),
                         "error": None,
                     },
+                )
+            if decision == "approved" and updated.target == "slack":
+                # HS-61-01: a Send-to-Slack approval executes immediately —
+                # see _execute_slack_proposal for the consent reasoning. Other
+                # targets keep today's behavior (approval flips state only).
+                updated = _execute_slack_proposal(
+                    db,
+                    updated,
+                    actor=(payload.decided_by or "web-user").strip() or "web-user",
                 )
             return JSONResponse({"success": True, "proposal": _proposal_to_dict(updated)})
         except Exception as e:
@@ -958,6 +1038,104 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             )
         except Exception as e:
             return error_500(e, log, "Failed to file aftercare issue")
+
+    @router.post("/api/meetings/{meeting_id}/export/slack")
+    async def api_export_meeting_to_slack(
+        meeting_id: str, payload: _SlackExportRequest
+    ) -> Any:
+        """Propose sending one aftercare artifact to Slack (HS-61-01).
+
+        Records a `proposed` actuator proposal whose preview IS the exact
+        message text Slack would receive — nothing is sent here; execution
+        happens only when the proposal is approved (the decision endpoint).
+        Refuses up front when no webhook URL is configured (the feature is
+        invisible then), when `what` is unknown, or when the meeting's
+        aftercare is empty (no padding gets sent to a channel).
+
+        Wire safety: the stored payload carries only the message body. The
+        webhook URL is a credential — it stays in config, joined to the POST
+        in memory at execution time only.
+        """
+        import hashlib
+
+        from ...config import Config
+        from ...slack_export import EXPORT_KINDS, slack_message_for
+
+        what = str(payload.what or "").strip().lower()
+        if what not in EXPORT_KINDS:
+            return JSONResponse(
+                {
+                    "success": False,
+                    "error": f"Unknown export kind: {what!r} (expected 'digest' or 'followup')",
+                },
+                status_code=400,
+            )
+        if not Config.load().meeting.slack_webhook_url:
+            return JSONResponse(
+                {
+                    "success": False,
+                    "error": "Slack is not configured (set the webhook URL in Settings first)",
+                },
+                status_code=400,
+            )
+        try:
+            from ...db import get_database
+            from ...meeting_aftercare import compute_meeting_aftercare
+            from ...plugins.builtin.webhook_post_actuator import WebhookPostActuator
+
+            db = get_database()
+            digest = compute_meeting_aftercare(db, meeting_id)
+            if digest is None:
+                return JSONResponse({"error": "Meeting not found"}, status_code=404)
+            if digest.get("is_empty"):
+                return JSONResponse(
+                    {
+                        "success": False,
+                        "error": "This meeting has nothing open, decided, or changed to send",
+                    },
+                    status_code=400,
+                )
+
+            text = slack_message_for(digest, what)
+            # Identical content dedupes to the existing proposal; edited
+            # aftercare (a new item, a corrected decision) re-proposes.
+            content_key = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+            proposal = db.actuators.record_proposal(
+                meeting_id=meeting_id,
+                window_id=f"{meeting_id}:aftercare",
+                plugin_id=WebhookPostActuator.id,
+                plugin_version=WebhookPostActuator.version,
+                idempotency_key=f"slack-export:{meeting_id}:{what}:{content_key}",
+                target="slack",
+                action="post_message",
+                preview=text,
+                payload={"body": {"text": text}},
+                reversible=False,  # a posted message cannot be unsent
+                required_capabilities=["actuator"],
+            )
+            # The same wire-safe shape every proposal broadcast uses (the
+            # human preview only — never the machine payload).
+            ctx.broadcast(
+                "actuator_proposed",
+                {
+                    "id": proposal.id,
+                    "meeting_id": proposal.meeting_id,
+                    "plugin_id": proposal.plugin_id,
+                    "status": proposal.status,
+                    "target": proposal.target,
+                    "action": proposal.action,
+                    "preview": proposal.preview,
+                    "reversible": bool(proposal.reversible),
+                    "created_at": proposal.created_at.isoformat()
+                    if hasattr(proposal.created_at, "isoformat")
+                    else proposal.created_at,
+                },
+            )
+            return JSONResponse(
+                {"success": True, "proposal": _proposal_to_dict(proposal)}
+            )
+        except Exception as e:
+            return error_500(e, log, "Failed to propose Slack export")
 
     @router.get("/api/all-action-items")
     async def api_list_all_action_items(

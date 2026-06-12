@@ -50,6 +50,13 @@ class _AftercareFileIssueRequest(BaseModel):
     repo: str
 
 
+class _SlackExportRequest(BaseModel):
+    # HS-61-01: export one aftercare artifact to Slack as an actuator
+    # *proposal* (proposed state). `what` picks the artifact: "digest" or
+    # "followup". Nothing is sent until the proposal is separately approved.
+    what: str = ""
+
+
 class _UpdateMeetingRequest(BaseModel):
     title: Optional[str] = None
     tags: Optional[list[str]] = None

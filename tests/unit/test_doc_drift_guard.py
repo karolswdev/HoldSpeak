@@ -264,8 +264,9 @@ _AI_VOCAB = re.compile(
 
 # Banned synonyms for canonical feature names (POSITIONING.md table).
 _BANNED_NAMES = re.compile(
-    r"\bvoice macros?\b"             # canonical: voice commands
-    r"|\bintelligent dictation\b",   # canonical: the dictation pipeline
+    r"\bvoice macros?\b"               # canonical: voice commands
+    r"|\bintelligent dictation\b"      # canonical: the dictation pipeline
+    r"|\bslack (?:integration|export)\b",  # canonical: Send to Slack
     re.IGNORECASE,
 )
 
@@ -337,6 +338,9 @@ def test_voice_guard_patterns_catch_seeded_violations() -> None:
                  "cut leverage ratios",
                  "every meeting, not just the visible page"):  # plain logic stays legal
         assert not _AI_VOCAB.search(keep), f"AI-vocab pattern should NOT flag {keep!r}"
-    for hit in ("configure voice macros", "intelligent dictation mode"):
+    for hit in ("configure voice macros", "intelligent dictation mode",
+                "the Slack integration", "use the Slack export"):
         assert _BANNED_NAMES.search(hit), f"name pattern should flag {hit!r}"
     assert not _BANNED_NAMES.search("voice commands fire on keywords")
+    assert not _BANNED_NAMES.search("Send to Slack creates a proposal")
+    assert not _BANNED_NAMES.search("the configured Slack webhook")
