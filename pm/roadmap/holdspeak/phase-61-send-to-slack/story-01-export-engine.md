@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 61
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-61-02, HS-61-04
 - **Owner:** unassigned
@@ -31,20 +31,23 @@ registration, and no config for a webhook URL.
   (HS-61-03); rich blocks/OAuth/threads (out of phase).
 
 ## Acceptance criteria
-- [ ] The message builder produces the digest and follow-up texts,
+- [x] The message builder produces the digest and follow-up texts,
       mrkdwn-safe, capped honestly; empty meetings yield empty content
       (and the route refuses them).
-- [ ] The route matrix holds: unconfigured → 400 (the off-proof at the
+- [x] The route matrix holds: unconfigured → 400 (the off-proof at the
       API layer), unknown `what` → 400, missing meeting → 404, success
       records the proposal with preview byte-equal to the payload text.
-- [ ] The wire-safety lock: no broadcast and no API response ever
-      contains the webhook URL or the machine payload.
-- [ ] Never-egress-unapproved: executor-pattern tests prove a recorded
+- [x] The wire-safety lock: no broadcast and no API response ever
+      contains the webhook URL or the machine payload. (Structural: the
+      URL never enters the stored payload at all — the connector joins
+      it in memory at execution time.)
+- [x] Never-egress-unapproved: executor-pattern tests prove a recorded
       `slack` proposal POSTs nothing until approved, and the connector
       refuses any host other than the configured URL's host before
       egress.
-- [ ] Config round-trips; malformed URLs (http, no host, garbage)
+- [x] Config round-trips; malformed URLs (http, no host, garbage)
       refuse with clean 400s that change nothing.
+      See `evidence-story-01.md`.
 
 ## Test plan
 - Unit: the message builder; the connector manifest host derivation.

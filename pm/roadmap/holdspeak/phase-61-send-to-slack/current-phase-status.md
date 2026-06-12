@@ -1,6 +1,6 @@
 # Phase 61 — Send to Slack
 
-**Status:** scaffolded (0/4). Opened 2026-06-11 on owner direction: candidate
+**Status:** in progress (1/4). Opened 2026-06-11 on owner direction: candidate
 **L** scoped to one easy connector ("Export Connectors are fine…, but let's
 just choose an easy one"); the pick is the Slack **incoming webhook** (one
 POST, no OAuth) because Phase 38's gated webhook connector was built for
@@ -8,7 +8,18 @@ exactly it. In the same direction, **N (Windows) was rejected by the owner**
 ("Absolutely not. Not by me. If someone wants it, they will port it.") and
 is recorded as community-port-welcome, not roadmap work.
 
-**Last updated:** 2026-06-11 (scaffolded — seams verified: the Phase-38
+**Last updated:** 2026-06-11 (**HS-61-01 done:** the engine + route + the
+execute leg. `slack_export.py` builds the exact message (mrkdwn, visible
+truncation cap), the export route records a wire-safe proposal whose preview
+is byte-equal to the stored body, and — a ground-truth find — the repo had NO
+production execute path at all, so the decision route now executes approved
+`slack` proposals through the full `ActuatorExecutor` guard stack (other
+targets unchanged, locked). The credential rule is structural: the URL never
+enters the payload; the connector joins it in memory at execution time, so
+`GET .../proposals` cannot leak it by construction. One shared URL rule
+(https with a host; loopback http only, for the real-receiver closeout)
+enforced at config AND settings. +39 tests; suite **2762 passed, 17
+skipped**. Earlier: scaffolded — seams verified: the Phase-38
 `build_webhook_connector` is host-gated `network:outbound` and documents
 Slack incoming webhooks as its target case; the Phase-49 file-issue route is
 the proposal-creation template; Phase-56's Qlippy decision/result cards ride
@@ -65,11 +76,14 @@ unconfigured.
 
 | Story | Title | Status | Depends on |
 |---|---|---|---|
-| HS-61-01 | The export engine + route | backlog | none |
+| HS-61-01 | The export engine + route | done | none |
 | HS-61-02 | The surfaces | backlog | HS-61-01 |
 | HS-61-03 | Docs: Send to Slack | backlog | HS-61-02 |
 | HS-61-04 | Closeout: the real POST + final-summary + PR | backlog | HS-61-01..03 |
 
 ## Where we are
 
-Scaffolded. Next is **HS-61-01 — the export engine + route**.
+HS-61-01 is done: the whole Python side works end to end (propose → approve
+→ the real gated POST), proven against the full connector stack with only
+the transport faked. Next is **HS-61-02 — the surfaces** (the aftercare
+buttons, configured-only, + the settings field).
