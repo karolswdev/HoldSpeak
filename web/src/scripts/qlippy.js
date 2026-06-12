@@ -46,7 +46,7 @@ const cardGlyph = document.getElementById("qlippy-card-glyph");
 const headlineEl = document.getElementById("qlippy-headline");
 const detailEl = document.getElementById("qlippy-detail");
 const previewEl = document.getElementById("qlippy-preview");
-const privacyEl = document.getElementById("qlippy-privacy");
+const egressEl = document.getElementById("qlippy-egress");
 const actionsEl = document.getElementById("qlippy-actions");
 const queueHintEl = document.getElementById("qlippy-queue-hint");
 const dismissBtn = document.getElementById("qlippy-dismiss");
@@ -102,9 +102,12 @@ const qlippyCard = {
   _dismissTimer: null,
   _hovered: false,
 
-  // card: {key, sprite, glyph, headline, detail, preview, privacy,
+  // card: {key, sprite, glyph, headline, detail, preview,
+  //        egress: {scope: "local"|"mixed"|"cloud", label?},
   //        actions: [{label, kind: "primary"|"danger"|"ghost", onClick}],
   //        sticky: bool, autoDismissMs}
+  // HS-62-01: `egress` renders the compact badge (⌂ Local / ⌂+☁ / ☁ target)
+  // — the one-glance replacement for the retired privacy paragraphs.
   present(card) {
     if (!mascotOn || !card) return;
     if (this.current) {
@@ -128,8 +131,19 @@ const qlippyCard = {
     detailEl.textContent = card.detail || "";
     previewEl.textContent = card.preview || "";
     previewEl.hidden = !card.preview;
-    privacyEl.textContent = card.privacy || "";
-    privacyEl.hidden = !card.privacy;
+    const EGRESS = {
+      local: { glyph: "⌂", fallback: "Local" },
+      mixed: { glyph: "⌂+☁", fallback: "Local + cloud" },
+      cloud: { glyph: "☁", fallback: "Leaves device" },
+    };
+    const egress = card.egress && EGRESS[card.egress.scope];
+    if (egress) {
+      egressEl.textContent = `${egress.glyph} ${card.egress.label || egress.fallback}`;
+      egressEl.className = `q-egress is-${card.egress.scope}`;
+      egressEl.hidden = false;
+    } else {
+      egressEl.hidden = true;
+    }
     actionsEl.textContent = "";
     for (const action of card.actions || []) {
       const btn = document.createElement("button");

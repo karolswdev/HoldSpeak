@@ -212,8 +212,8 @@ def test_qlippy_events_mirror_the_dashboard_decision_exactly():
     assert "/proposals/${data.id}/decision" in events
     assert "JSON.stringify({ decision })" in events
     assert "JSON.stringify({ decision })" in dashboard
-    # Sticky proposed cards; the three privacy answers; never the payload.
+    # Sticky proposed cards; the egress badge naming the target (HS-62-01
+    # retired the privacy paragraphs); never the payload.
     assert "sticky: true" in events
-    for marker in ("Data used:", "If you approve, this goes to", "Your controls:"):
-        assert marker in events
+    assert 'egress: { scope: "cloud", label: data.target' in events
     assert "data.payload" not in events

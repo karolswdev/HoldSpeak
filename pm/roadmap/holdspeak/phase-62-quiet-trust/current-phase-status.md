@@ -1,14 +1,23 @@
 # Phase 62 — Quiet Trust
 
-**Status:** scaffolded (0/4). Opened 2026-06-12 on direct owner feedback:
+**Status:** in progress (1/4). Opened 2026-06-12 on direct owner feedback:
 the privacy-reassurance prose across the UI is "really cringey" — replace
 the novels on cards and notifications with a compact **egress badge**
 (local · local+cloud · cloud) and redo the affected screenshots. This
 reverses the locked Phase-56 "three privacy answers verbatim on every
 actionable card" decision.
 
-**Last updated:** 2026-06-12 (scaffolded — the full prose inventory and
-every lock pinning the old copy are recorded in the brief §3).
+**Last updated:** 2026-06-12 (**HS-62-01 done:** the egress badge. The card
+shell renders `egress: {scope, label?}` as one pill (⌂ Local green / ⌂+☁ /
+☁ + target orange); every card swapped its privacy paragraph for the badge
+(`privacyLine()` deleted; the wake card's not-typed state is now three
+words); the Phase-56 verbatim locks REWRITTEN to pin the badge and to refuse
+the retired prose forever; the typing guide's Qlippy section truth-updated
+with them. Live dogfood 11/11, zero page errors: '☁ slack' and '⌂ Local'
+render styled (computed-style probed), and the rendered card DOM contains
+none of the retired phrases. Suite **2768 passed, 17 skipped**. Earlier:
+scaffolded — the full prose inventory and
+every lock pinning the old copy are recorded in the brief §3.)
 
 ## The thesis — why this phase
 
@@ -52,11 +61,12 @@ old copy is re-shot live.
 
 | Story | Title | Status | Depends on |
 |---|---|---|---|
-| HS-62-01 | The egress badge on Qlippy cards | backlog | none |
+| HS-62-01 | The egress badge on Qlippy cards | done | none |
 | HS-62-02 | The sweep | backlog | HS-62-01 |
 | HS-62-03 | Docs + re-shot screenshots | backlog | HS-62-02 |
 | HS-62-04 | Closeout | backlog | HS-62-01..03 |
 
 ## Where we are
 
-Scaffolded. Next is **HS-62-01 — the egress badge on Qlippy cards**.
+HS-62-01 is done: the cards are quiet. Next is **HS-62-02 — the sweep**
+(the reassurance tails across history/welcome/settings/components).

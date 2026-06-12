@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 62
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-62-02, HS-62-04
 - **Owner:** unassigned
@@ -25,12 +25,14 @@ should be one glance, not a paragraph.
 - **Out:** the rest of the web UI prose (HS-62-02); docs (HS-62-03).
 
 ## Acceptance criteria
-- [ ] No card passes `privacy:` prose; the badge renders for all three
+- [x] No card passes `privacy:` prose; the badge renders for all three
       states with the cloud target label surviving.
-- [ ] The badge is styled and VISIBLE on the live card (JS-rendered DOM —
+- [x] The badge is styled and VISIBLE on the live card (JS-rendered DOM —
       proven by screenshot or computed-style probe, not grep).
-- [ ] All previously-locked tests updated and green; no old-copy lock
+- [x] All previously-locked tests updated and green; no old-copy lock
       left half-alive.
+
+      See `evidence-story-01.md`.
 
 ## Test plan
 - Updated shell/event locks; a live render check in the story dogfood or

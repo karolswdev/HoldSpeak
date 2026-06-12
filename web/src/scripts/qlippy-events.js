@@ -34,15 +34,9 @@ async function decideProposal(data, decision) {
   return body;
 }
 
-function privacyLine(data) {
-  const target = String(data.target || "an external service");
-  return (
-    `Data used: the preview above (the exact machine payload stays on this machine until you approve). ` +
-    `If you approve, this goes to ${target} — nothing is sent before that. ` +
-    `Your controls: Approve, Decline, or dismiss — the proposal also stays on the dashboard.`
-  );
-}
-
+// HS-62-01: cards state their egress with the compact badge (the `egress`
+// field on presentCard), never a privacy paragraph. Cloud-scoped cards keep
+// the target name on the badge.
 function onActuatorProposed(data) {
   if (!data || !data.id || !data.meeting_id) return;
   presentCard({
@@ -54,7 +48,7 @@ function onActuatorProposed(data) {
       `${data.target || "?"} · ${data.action || "?"}` +
       (data.reversible ? " · reversible" : ""),
     preview: data.preview || "",
-    privacy: privacyLine(data),
+    egress: { scope: "cloud", label: data.target || undefined },
     sticky: true,
     actions: [
       {
@@ -98,7 +92,7 @@ function onActuatorResult(data) {
       glyph: "check",
       headline: `Done — ${action}`,
       detail: `${data.target || ""} · ${data.preview || ""}`.trim(),
-      privacy: "This ran exactly as previewed, after your approval. The audit trail is on the dashboard.",
+      egress: { scope: "cloud", label: data.target || undefined },
     });
   } else if (data.status === "failed") {
     presentCard({
@@ -106,7 +100,7 @@ function onActuatorResult(data) {
       glyph: "x",
       headline: "Didn't run",
       detail: String(data.error || "The connector reported a failure."),
-      privacy: "Nothing egressed. The proposal and its audit trail are on the dashboard.",
+      egress: { scope: "local", label: "Nothing sent" },
     });
   } else if (data.status === "rejected") {
     presentCard({
@@ -132,7 +126,7 @@ function onLearningEvent(data) {
       `Applied "${data.gist || ""}" → ${data.value || ""} — matches ${n} past ` +
       `dictation${n === 1 ? "" : "s"}` +
       (data.enabled ? "." : " (turn on corrections to use it while routing)."),
-    privacy: "Local only: the correction memory lives on this machine; nothing leaves it.",
+    egress: { scope: "local" },
     actions: [
       {
         label: "View digest",
@@ -155,7 +149,7 @@ function onAftercareReady(data) {
     sprite: "present-note",
     headline: `Your meeting left ${open} open item${open === 1 ? "" : "s"}`,
     detail: `${data.title || "The meeting"}${top ? ` — ${top}` : ""}`,
-    privacy: "Local only: the digest is read from your own meeting record.",
+    egress: { scope: "local" },
     autoDismissMs: 14000,
     actions: [
       {
@@ -180,9 +174,7 @@ function onWakePreview(data) {
     headline: "Heard you — review before it types",
     detail: data.transcript || "",
     preview: data.text || "",
-    privacy:
-      "Nothing has been typed. Local only: the wake word and transcription ran on this machine. " +
-      "Your controls: Type it, or dismiss and nothing happens.",
+    egress: { scope: "local", label: "Local · not typed yet" },
     sticky: true,
     actions: [
       {
