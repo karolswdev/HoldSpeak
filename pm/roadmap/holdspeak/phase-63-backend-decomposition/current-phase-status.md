@@ -1,12 +1,18 @@
 # Phase 63 — Backend Decomposition
 
-**Status:** in progress (1/6). Opened 2026-06-12 on owner direction ("E,
+**Status:** in progress (2/6). Opened 2026-06-12 on owner direction ("E,
 puh-lease"): backlog row **E**, the backend twin of Phase 54. The two
 god-objects — `web_runtime.py` (2,635 lines, regrown PAST its pre-Phase-52
 size) and `meeting_session.py` (1,674) — carve into single-concern modules,
 behavior-preserving, locked by a backend density guard.
 
-**Last updated:** 2026-06-12 (**HS-63-01 done:** `meeting_session` is a
+**Last updated:** 2026-06-12 (**HS-63-02 done:** MeetingSession is
+composed of four mixins (transcribe_loop 270 / intel_analysis 207 /
+persistence 145 / mutations 285); session.py is **795 lines** (was 1,460;
+the original file was 1,674). The verbatim proof is one line: the only
+original body line lost is `class MeetingSession:` itself, rewritten as the
+composition. **Zero test edits**, as the census predicted. Suite **2768
+passed, 17 skipped**. Prior: **HS-63-01 done:** `meeting_session` is a
 package (the planned `holdspeak/meeting/` name was taken by the
 MeetingRecorder module — the package conversion keeps the import point
 instead, strictly better); the five models live in `models.py` (240 lines,
@@ -64,7 +70,7 @@ guard locks the shape.
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HS-63-01 | The meeting models | done | none |
-| HS-63-02 | MeetingSession mixins | backlog | HS-63-01 |
+| HS-63-02 | MeetingSession mixins | done | HS-63-01 |
 | HS-63-03 | WebRuntime mixins: the feature glue | backlog | none |
 | HS-63-04 | WebRuntime mixins: the platform glue + thin core | backlog | HS-63-03 |
 | HS-63-05 | The backend density guard + docs | backlog | HS-63-01..04 |
@@ -72,6 +78,6 @@ guard locks the shape.
 
 ## Where we are
 
-The models are out. Next is **HS-63-02 — MeetingSession mixins**
-(transcribe loop / intel / persistence / mutations out of the 1,460-line
-session.py).
+The meeting side is carved (largest file 795, from 1,674). Next is
+**HS-63-03 — WebRuntime mixins: the feature glue** (wake, devices,
+dictation capture out of the 2,635-line web_runtime.py).
