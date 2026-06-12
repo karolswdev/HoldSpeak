@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 63
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-63-03
 - **Unblocks:** HS-63-05
 - **Owner:** unassigned
@@ -25,10 +25,12 @@ the activity/status payload builders fill the rest of the god-object.
 - **Out:** behavior changes; web_server.py.
 
 ## Acceptance criteria
-- [ ] The five mixins are single-concern and under budget; the core
+- [x] The five mixins are single-concern and under budget; the core
       `web_runtime.py` is boot/run/config only, under budget.
-- [ ] Test edits are patch-target paths ONLY, enumerated in evidence.
-- [ ] Full suite green.
+- [x] Test edits are patch-target paths ONLY, enumerated in evidence.
+- [x] Full suite green.
+
+      See `evidence-story-04.md`.
 
 ## Test plan
 - Full suite + the web_runtime / meeting-flow / MIR slices.
