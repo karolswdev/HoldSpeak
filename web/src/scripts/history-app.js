@@ -629,11 +629,20 @@ function historyApp() {
             p.id === updated.id ? updated : p,
           );
         }
-        this.flash(
-          decision === "approved"
-            ? "Proposal approved — recorded; nothing runs without it."
-            : "Proposal rejected.",
-        );
+        // HS-61-02: a Send-to-Slack approval executes right away (the
+        // decision route runs the gated connector), so the flash tells the
+        // truth about what just happened.
+        if (decision === "approved" && updated?.status === "executed") {
+          this.flash("Approved — sent to Slack.");
+        } else if (decision === "approved" && updated?.status === "failed") {
+          this.flash(`Approved, but the send failed: ${updated.error || "unknown error"}`, true);
+        } else {
+          this.flash(
+            decision === "approved"
+              ? "Proposal approved — recorded; nothing runs without it."
+              : "Proposal rejected.",
+          );
+        }
       } catch (error) {
         console.error("Failed to decide proposal:", error);
         this.flash(`Decision failed: ${error.message}`, true);
@@ -672,6 +681,32 @@ function historyApp() {
         console.error("Failed to file action as issue:", error);
         this.flash(`Could not create proposal: ${error.message}`, true);
         return false;
+      }
+    },
+
+    // HS-61-02: propose sending the digest or the follow-up draft to Slack —
+    // a PROPOSAL through the existing approve flow, never a direct send. The
+    // buttons calling this are gated on the server's `slack_configured`
+    // capability flag (a bool; the webhook URL never reaches this page).
+    async exportToSlack(what) {
+      if (!this.selectedMeeting?.id) return;
+      try {
+        const res = await this.apiJson(
+          `/api/meetings/${this.selectedMeeting.id}/export/slack`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ what }),
+          },
+        );
+        if (res.proposal) {
+          const others = this.selectedMeetingProposals.filter((p) => p.id !== res.proposal.id);
+          this.selectedMeetingProposals = [res.proposal, ...others];
+        }
+        this.flash("Slack proposal created — review and approve it below. Nothing is sent yet.");
+      } catch (error) {
+        console.error("Failed to propose Slack export:", error);
+        this.flash(`Could not create the Slack proposal: ${error.message}`, true);
       }
     },
 

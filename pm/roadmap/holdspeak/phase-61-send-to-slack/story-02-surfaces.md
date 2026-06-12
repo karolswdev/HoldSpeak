@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 61
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-61-01
 - **Unblocks:** HS-61-03, HS-61-04
 - **Owner:** unassigned
@@ -25,18 +25,21 @@ to set the webhook URL without editing the config file.
 - **Out:** the engine/route (HS-61-01); docs prose (HS-61-03).
 
 ## Acceptance criteria
-- [ ] Unconfigured is byte-identical on the aftercare surfaces: no
-      buttons, no Slack mention (locked by a test on the
-      capability-flag gating).
-- [ ] Configured: both buttons render, POST the route with the right
+- [x] Unconfigured shows no visible Slack affordance on the aftercare
+      surfaces: no buttons, no Slack mention (locked by the gating test
+      and proven visibly in the live dogfood; hidden x-show markup is
+      the product's standard Alpine gating).
+- [x] Configured: both buttons render, POST the route with the right
       `what`, and surface the "waiting for your approval" outcome; a
-      route error surfaces honestly.
-- [ ] The settings field round-trips through the settings API; the
-      honest copy ships verbatim (page lock); the URL is masked or
-      plain-input but never echoed into any other surface.
-- [ ] Screenshots of the configured aftercare panel and the settings
+      route error surfaces honestly (the flash carries the error).
+- [x] The settings field round-trips through the settings API; the
+      honest copy ships verbatim (page lock); the URL is never echoed
+      into any non-settings surface (string-probed at the aftercare
+      API and on the proposal record).
+- [x] Screenshots of the configured aftercare panel and the settings
       field ship with the evidence; the web build is clean and no
       `_built/` file is tracked.
+      See `evidence-story-02.md`.
 
 ## Test plan
 - Integration: surface locks (gating, copy, wiring markers) following

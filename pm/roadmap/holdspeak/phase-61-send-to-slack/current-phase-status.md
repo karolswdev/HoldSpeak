@@ -1,6 +1,6 @@
 # Phase 61 — Send to Slack
 
-**Status:** in progress (1/4). Opened 2026-06-11 on owner direction: candidate
+**Status:** in progress (2/4). Opened 2026-06-11 on owner direction: candidate
 **L** scoped to one easy connector ("Export Connectors are fine…, but let's
 just choose an easy one"); the pick is the Slack **incoming webhook** (one
 POST, no OAuth) because Phase 38's gated webhook connector was built for
@@ -8,7 +8,18 @@ exactly it. In the same direction, **N (Windows) was rejected by the owner**
 ("Absolutely not. Not by me. If someone wants it, they will port it.") and
 is recorded as community-port-welcome, not roadmap work.
 
-**Last updated:** 2026-06-11 (**HS-61-01 done:** the engine + route + the
+**Last updated:** 2026-06-12 (**HS-61-02 done:** the surfaces. The aftercare
+card grows a green-edged "Send to Slack" pill (digest) + a second button in
+the draft view (beside Copy draft), both gated on a `slack_configured` bool
+the aftercare API now carries (never the URL); the draft's privacy note flips
+honestly between local-only and the approval truth; the decision flash tells
+the truth about execute-on-approve. The settings field ships with the honest
+copy (what is sent / only after approval / only this URL's host / stored
+locally, shown nowhere else). Live Chromium dogfood 11/11 with zero page
+errors (off-proof visible, proposal recorded with no egress, credential
+nowhere); 5 lock tests; 4 reviewed screenshots; a wrap-mid-word pill bug
+found in the first screenshot and fixed. Suite **2767 passed, 17 skipped**.
+Prior: **HS-61-01 done:** the engine + route + the
 execute leg. `slack_export.py` builds the exact message (mrkdwn, visible
 truncation cap), the export route records a wire-safe proposal whose preview
 is byte-equal to the stored body, and — a ground-truth find — the repo had NO
@@ -77,13 +88,14 @@ unconfigured.
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HS-61-01 | The export engine + route | done | none |
-| HS-61-02 | The surfaces | backlog | HS-61-01 |
+| HS-61-02 | The surfaces | done | HS-61-01 |
 | HS-61-03 | Docs: Send to Slack | backlog | HS-61-02 |
 | HS-61-04 | Closeout: the real POST + final-summary + PR | backlog | HS-61-01..03 |
 
 ## Where we are
 
-HS-61-01 is done: the whole Python side works end to end (propose → approve
-→ the real gated POST), proven against the full connector stack with only
-the transport faked. Next is **HS-61-02 — the surfaces** (the aftercare
-buttons, configured-only, + the settings field).
+HS-61-01 and HS-61-02 are done: the feature works end to end through the
+real UI (configure → buttons appear → propose → the approval section), with
+the engine proven against the full connector stack. Next is **HS-61-03 —
+docs** (the Meeting Mode Guide aftercare section, the SECURITY egress row,
+the POSITIONING canonical row).

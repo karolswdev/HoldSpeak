@@ -727,6 +727,14 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             digest = compute_meeting_aftercare(db, meeting_id)
             if digest is None:
                 return JSONResponse({"error": "Meeting not found"}, status_code=404)
+            # HS-61-02: the capability flag the Send-to-Slack buttons gate on.
+            # A bool only — the webhook URL is a credential and never rides
+            # an aftercare response.
+            from ...config import Config
+
+            digest["slack_configured"] = bool(
+                Config.load().meeting.slack_webhook_url
+            )
             return JSONResponse(digest)
         except Exception as e:
             return error_500(e, log, "Failed to load meeting aftercare")
