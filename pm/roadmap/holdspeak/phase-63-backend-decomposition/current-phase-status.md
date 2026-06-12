@@ -1,12 +1,25 @@
 # Phase 63 — Backend Decomposition
 
-**Status:** in progress (5/6). Opened 2026-06-12 on owner direction ("E,
+**Status:** CLOSED (6/6). Opened 2026-06-12 on owner direction ("E,
 puh-lease"): backlog row **E**, the backend twin of Phase 54. The two
 god-objects — `web_runtime.py` (2,635 lines, regrown PAST its pre-Phase-52
 size) and `meeting_session.py` (1,674) — carve into single-concern modules,
 behavior-preserving, locked by a backend density guard.
 
-**Last updated:** 2026-06-12 (**HS-63-05 done:** the shape is locked — 5
+**Last updated:** 2026-06-12 (**HS-63-06 done — phase CLOSED 6/6:** the live
+boot proof (the REAL run_web_runtime entry in a subprocess: /api/state, a
+full meeting on the real recorder + real MLX Whisper, the carved save path,
+a dictation dry-run, zero cockpit page errors, clean SIGTERM exit — 8/8)
+caught **two pre-existing production bugs** in the live meeting path no
+proof had exercised since Phase 60: (1) live meeting start broken since
+HS-60-03 (a stray on_wake_type kwarg on the MeetingSession constructor,
+masked by the FakeMeetingSession's **kwargs) — fixed + locked by an
+AST/signature contract test; (2) a racy unlocked transcriber construct
+whose blast radius was the process-fatal cross-thread MLX death at meeting
+stop (two instances, mlx_whisper's process-level cache) — fixed with a
+dedicated init lock + an 8-thread race lock. Final suite **2775 passed, 17
+skipped** (+7 this phase); see [final-summary.md](./final-summary.md); PR
+merged on green. Prior: **HS-63-05 done:** the shape is locked — 5
 guard tests (cores 650/850; modules ≤600; carve-don't-bump messages; proven
 both ways; routes/meetings.py recorded as the named watch item, deliberately
 unguarded) and `docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md` records the
@@ -100,10 +113,11 @@ guard locks the shape.
 | HS-63-03 | WebRuntime mixins: the feature glue | done | none |
 | HS-63-04 | WebRuntime mixins: the platform glue + thin core | done | HS-63-03 |
 | HS-63-05 | The backend density guard + docs | done | HS-63-01..04 |
-| HS-63-06 | Closeout: the live boot proof + final-summary + PR | backlog | HS-63-01..05 |
+| HS-63-06 | Closeout: the live boot proof + final-summary + PR | done | HS-63-01..05 |
 
 ## Where we are
 
-Carved, locked, documented. Next is **HS-63-06 — closeout** (the live
-boot proof: the composed runtime serves, a meeting runs start→stop, a
-dictation dry-run flows; final-summary; PR).
+CLOSED 6/6. web_runtime 2,635 → 555; meeting_session 1,674 → a package
+(core 795); the shape guard-locked; the live meeting path WORKS again
+(two pre-existing Phase-60-era production bugs found + fixed at closeout).
+See [final-summary.md](./final-summary.md).

@@ -64,17 +64,21 @@ class TranscriberStateMixin:
             )
 
     def _ensure_transcriber_loaded(self) -> Transcriber:
-        if self.transcriber is None or getattr(self.transcriber, "model_name", None) != self.config.model.name:
-            self._set_transcription_status("loading")
-            try:
-                self.transcriber = Transcriber(
-                    model_name=self.config.model.name,
-                    backend=self.config.model.backend,
-                    language=getattr(self.config.model, "language", "auto"),
-                )
-            except Exception as exc:
-                self._set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")
-                raise
+        # HS-63-06: the check-and-construct is serialized — see the
+        # _transcriber_init_lock comment in web_runtime.__init__ for the
+        # process-fatal MLX consequence of letting two instances exist.
+        with self._transcriber_init_lock:
+            if self.transcriber is None or getattr(self.transcriber, "model_name", None) != self.config.model.name:
+                self._set_transcription_status("loading")
+                try:
+                    self.transcriber = Transcriber(
+                        model_name=self.config.model.name,
+                        backend=self.config.model.backend,
+                        language=getattr(self.config.model, "language", "auto"),
+                    )
+                except Exception as exc:
+                    self._set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")
+                    raise
         self._set_transcription_status("loaded")
         return self.transcriber
 

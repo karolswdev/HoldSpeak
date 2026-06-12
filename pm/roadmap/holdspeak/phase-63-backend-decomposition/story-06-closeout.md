@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 63
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-63-01..05
 - **Unblocks:** phase exit
 - **Owner:** unassigned
@@ -20,11 +20,13 @@ boot; the phase closes only on a live proof.
 - **Out:** new features.
 
 ## Acceptance criteria
-- [ ] The live trace ships in evidence (boot, meeting lifecycle,
+- [x] The live trace ships in evidence (boot, meeting lifecycle,
       dictation dry-run, zero page errors).
-- [ ] Full suite green (`--ignore=tests/e2e/test_metal.py`).
-- [ ] final-summary; BACKLOG E flipped; README cadence; PR merged on
+- [x] Full suite green (`--ignore=tests/e2e/test_metal.py`).
+- [x] final-summary; BACKLOG E flipped; README cadence; PR merged on
       green; memory recorded.
+
+      See `evidence-story-06.md`.
 
 ## Test plan
 - The dogfood script + the full suite as regression.

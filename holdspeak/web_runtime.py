@@ -169,6 +169,17 @@ class WebRuntime(
         self.hotkey_listener: Optional[HotkeyListener] = None
         self.recorder: Optional[AudioRecorder] = None
         self.transcriber: Optional[Transcriber] = None
+        # HS-63-06: serializes transcriber construction. The boot-time warmup
+        # thread and the first dictation/meeting both call
+        # _ensure_transcriber_loaded; an unlocked check-then-construct let two
+        # _MlxTranscriber instances exist, and mlx_whisper's process-level
+        # model cache then binds the model to the FIRST instance's pinned
+        # thread — the second instance's transcribe dies with the
+        # process-fatal "no Stream(gpu, N) in current thread" (the Phase-60
+        # crash class, one level up). A dedicated leaf lock, NOT
+        # transcription_lock: the warmup already holds that one around its
+        # call and would deadlock.
+        self._transcriber_init_lock = threading.Lock()
         self.server: Optional[MeetingWebServer] = None
         self.meeting_session: Optional[MeetingSession] = None
         # HS-41-03/04: the opt-in desktop presence host (None unless

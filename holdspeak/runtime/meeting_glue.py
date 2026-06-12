@@ -241,7 +241,6 @@ class MeetingGlueMixin:
                 on_system_level=lambda _level: None,
                 on_intel=self._on_meeting_intel,
                 on_settings_applied=self._apply_updated_config,
-                on_wake_type=self._type_wake_preview,
                 on_broadcast=self._on_meeting_broadcast,
                 intel_enabled=self.config.meeting.intel_enabled,
                 intel_model_path=self.config.meeting.intel_realtime_model,
