@@ -52,6 +52,8 @@ _STATE_META: dict[str, dict[str, str]] = {
     "meeting_live": {"tone": "recording", "label": "Meeting live", "accent": "#ff6b35"},
     "saving": {"tone": "working", "label": "Saving", "accent": "#f6c356"},
     "error": {"tone": "error", "label": "Needs attention", "accent": "#ff5a67"},
+    # HS-60: the wake word's bounded armed window — amber, unmistakably hot.
+    "armed": {"tone": "recording", "label": "Armed", "accent": "#f6c356"},
 }
 
 

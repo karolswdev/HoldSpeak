@@ -120,6 +120,8 @@ left column is the name; do not alternate with the synonyms.
 | Qlippy, the mascot | "the assistant", "the agent" |
 | the spoken-symbol dictionary | "custom symbols", "symbol macros", "vocabulary" |
 | the spoken language setting | "language mode", "locale" |
+| the wake word | "hotword", "voice activation" |
+| the armed window | "listening window", "wake session" |
 | AIPI-Lite | "the companion device" after first use |
 
 ## Voice rules (the editing standard for every user-facing doc)

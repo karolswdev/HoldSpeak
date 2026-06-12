@@ -146,6 +146,9 @@ class WebRuntimeCallbacks:
     on_set_title: Optional[Callable[[str], None]] = None
     on_set_tags: Optional[Callable[[list[str]], None]] = None
     on_settings_applied: Optional[Callable[[Any], None]] = None
+    # HS-60: type a stored wake preview by its one-shot token; returns the
+    # typed text, or None for an unknown/used token.
+    on_wake_type: Optional[Callable[[str], Optional[str]]] = None
     on_dictation_config_changed: Optional[Callable[[], None]] = None
     project_detector: Optional[Any] = None
     device_registry: Optional["DeviceRegistry"] = None
@@ -230,6 +233,7 @@ class MeetingWebServer:
         self.on_set_title = callbacks.on_set_title
         self.on_set_tags = callbacks.on_set_tags
         self.on_settings_applied = callbacks.on_settings_applied
+        self.on_wake_type = callbacks.on_wake_type
         self.on_dictation_config_changed = callbacks.on_dictation_config_changed
         self._project_detector = callbacks.project_detector
         device_registry = callbacks.device_registry
@@ -474,6 +478,7 @@ class MeetingWebServer:
             ws=self._ws,
             on_get_status=self.on_get_status,
             on_settings_applied=self.on_settings_applied,
+            on_wake_type=self.on_wake_type,
             current_formatted_duration=self._current_formatted_duration,
             corrections=self.dictation_corrections,
             telemetry=self.dictation_telemetry,

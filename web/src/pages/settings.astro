@@ -209,6 +209,37 @@ const WHISPER_LANGUAGES = [
             </div>
           </div>
 
+          <!-- The wake word (HS-60) -->
+          <h2 class="set-sec-h" x-show="sectionVisible('voice')" x-cloak>Wake word</h2>
+          <div class="set-grid" x-show="fieldVisible('voice','common','wake word hands free arm jarvis preview type')" x-cloak>
+            <label class="switch-field field full">
+              <button type="button" class="switch" role="switch" :aria-checked="settings.wake_word.enabled ? 'true':'false'" :class="{ on: settings.wake_word.enabled }" @click="settings.wake_word.enabled = !settings.wake_word.enabled"><span class="switch-knob"></span></button>
+              <span><strong>Wake word</strong> <em>— say the phrase, HoldSpeak arms for a few seconds, and your next sentence runs the dictation pipeline. By default the result is previewed, never typed. First enable downloads the detection models once (about 7 MB) from the openWakeWord GitHub releases; after that everything runs locally.</em></span>
+            </label>
+            <div class="field">
+              <label>Wake phrase model</label>
+              <input class="input" type="text" placeholder="hey_jarvis" x-model="settings.wake_word.model" />
+              <p class="hint">The openWakeWord model name. "hey_jarvis" ships pretrained.</p>
+            </div>
+            <div class="field">
+              <label>After it hears you</label>
+              <select class="select" x-model="settings.wake_word.action">
+                <option value="preview">Preview first (recommended)</option>
+                <option value="type">Type immediately</option>
+              </select>
+              <p class="hint">Preview shows the result with a Type it button; nothing is typed until you confirm. Type immediately is your call to make: a false detection would type into whatever app is focused.</p>
+            </div>
+            <div class="field">
+              <label>Detection threshold</label>
+              <input class="input" type="number" min="0" max="1" step="0.05" x-model.number="settings.wake_word.threshold" />
+            </div>
+            <div class="field">
+              <label>Armed window (seconds)</label>
+              <input class="input" type="number" min="2" max="30" step="1" x-model.number="settings.wake_word.armed_window_seconds" />
+            </div>
+            <p class="hint field full">Turn on Desktop presence too: it is the always-visible armed indicator while you work in other apps.</p>
+          </div>
+
           <!-- Desktop presence -->
           <h2 class="set-sec-h" x-show="sectionVisible('presence')" x-cloak>Desktop presence</h2>
           <div class="set-grid" x-show="fieldVisible('presence','common','desktop presence hud tray notification env')" x-cloak>

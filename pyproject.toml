@@ -70,6 +70,10 @@ meeting = [
     "openai>=1.0.0",
     "resemblyzer>=0.1.3",
 ]
+wakeword = [
+    # HS-60: the optional local wake-word engine (Apache-2.0; ONNX runtime).
+    "openwakeword>=0.6.0",
+]
 dictation-llama = [
     "llama-cpp-python>=0.2.90",
 ]

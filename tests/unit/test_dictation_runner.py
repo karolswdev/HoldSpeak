@@ -146,7 +146,7 @@ def test_web_runtime_method_delegates(monkeypatch) -> None:
     ``self.config`` / ``self.server`` through to the carved function."""
     captured: dict = {}
 
-    def _spy(text, *, config, server, audio_duration_s, transcribed_at, agent_reply_session=None):
+    def _spy(text, *, config, server, audio_duration_s, transcribed_at, agent_reply_session=None, journal_source="dictation"):
         captured.update(
             text=text,
             config=config,

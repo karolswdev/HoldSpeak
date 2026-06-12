@@ -91,6 +91,7 @@ SQLCipher) becomes warranted and should be its own story.
 |---|---|---|---|
 | **Cloud meeting intel** (`intel.py` → OpenAI client) | `intel_provider` = `cloud`, or `auto` falling back | Transcript text (no audio, no embeddings, no activity) | Explicit provider choice. `provider="local"` (default) **never** egresses, locked by `tests/unit/test_intel_egress_invariant.py`; surfaced by `doctor` + `intel_egress` in the runtime status. |
 | **Deferred-intel failure webhook** (`intel_queue.py:345`) | User configures `intel_retry_failure_webhook_url` | Queue statistics only (counts, rates), **no transcript** | Opt-in (URL must be set). |
+| **Wake-model download** (`wake_word.py`, first enable) | `wake_word.enabled` flipped on with models absent | Nothing leaves: an inbound fetch of the detection models (~7 MB) from the openWakeWord GitHub releases, once, cached locally | Opt-in (the feature is off by default); stated in the settings copy. Detection itself runs locally and no audio ever egresses. |
 | **Connector CLI enrichment** (`gh`, `jira` via subprocess) | User enables the connector pack | Entity IDs (PR/issue/ticket numbers) to the user's own CLI tools, which call their services | Opt-in + manifest permissions (`shell:exec`, `network:outbound`). |
 | **Web runtime responses** | A client requests data | Whatever the API returns (transcripts, action items, etc.) | Loopback by default; token-gated off-loopback. |
 | **Device audio link** | A paired device streams audio | Audio in; status/LCD text out | PSK; same-LAN today. |

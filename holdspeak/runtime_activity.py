@@ -21,6 +21,8 @@ VALID_ACTIVITY_STATES = frozenset(
         "meeting_live",
         "saving",
         "error",
+        # HS-60: the wake word's bounded armed window.
+        "armed",
     }
 )
 
@@ -35,10 +37,11 @@ _DEFAULT_LABELS = {
     "meeting_live": "Meeting live",
     "saving": "Saving",
     "error": "Needs attention",
+    "armed": "Armed",
 }
 
 _ACTIVE_WINDOW_STATES = frozenset(
-    {"listening", "recording", "transcribing", "processing", "typing", "saving"}
+    {"listening", "recording", "transcribing", "processing", "typing", "saving", "armed"}
 )
 _LINGER_WINDOW_STATES = frozenset({"complete", "meeting_live", "error"})
 

@@ -132,6 +132,18 @@ class _MlxTranscriber:
         """
 
         self.language = language
+        # HS-60-06 (a real latent crash, reproduced): MLX streams are bound to
+        # the thread that created them — loading the model on one thread and
+        # transcribing from another raises an UNCAUGHT C++ exception
+        # ("There is no Stream(gpu, 1) in current thread") that terminates
+        # the whole process. Pin ALL MLX work (the load below and every
+        # transcribe) to one dedicated thread, so callers may live anywhere
+        # (the hotkey thread, the wake listener, a route worker).
+        import concurrent.futures
+
+        self._mlx_thread = concurrent.futures.ThreadPoolExecutor(
+            max_workers=1, thread_name_prefix="HoldSpeakMlx"
+        )
         log.info(f"Initializing Transcriber with model_name='{model_name}'")
 
         try:
@@ -159,7 +171,8 @@ class _MlxTranscriber:
         for repo in candidates:
             log.info(f"Attempting to load model from: {repo}")
             try:
-                self._preload_model(repo)
+                # On the pinned MLX thread (the same one every transcribe uses).
+                self._mlx_thread.submit(self._preload_model, repo).result()
             except Exception as exc:
                 log.warning(f"Failed to load from {repo}: {exc}")
                 last_error = exc
@@ -235,7 +248,7 @@ class _MlxTranscriber:
         audio = np.ascontiguousarray(audio, dtype=np.float32)
         log.debug(f"Transcribing {len(audio)} samples ({len(audio)/16000:.2f}s)")
 
-        try:
+        def _run() -> str:
             # HS-59: pass `language` only when pinned — the auto-detect call
             # stays byte-identical to the pre-knob behavior.
             extra = {"language": self.language} if self.language else {}
@@ -246,9 +259,14 @@ class _MlxTranscriber:
                 **extra,
             )
             if isinstance(result, dict):
-                text = str(result.get("text", "")).strip()
-            else:
-                text = str(getattr(result, "text", result)).strip()
+                return str(result.get("text", "")).strip()
+            return str(getattr(result, "text", result)).strip()
+
+        try:
+            # Always on the pinned MLX thread (HS-60-06): MLX streams are
+            # thread-bound, and a cross-thread call is a process-fatal C++
+            # exception, not a Python error.
+            text = self._mlx_thread.submit(_run).result()
             log.info(f"Transcription result: '{text[:100]}{'...' if len(text) > 100 else ''}'")
             return text
         except Exception as exc:

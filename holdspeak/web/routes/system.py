@@ -458,6 +458,33 @@ def build_system_router(ctx: WebContext) -> APIRouter:
         except Exception as e:
             return error_500(e, log, "Failed to load settings")
 
+    @router.post("/api/dictation/wake/type")
+    async def api_wake_type(payload: dict[str, Any]) -> Any:
+        """HS-60: type a stored wake preview, exactly once.
+
+        The token was minted server-side when the preview was created; the
+        runtime types ONLY its own stored text and burns the token. Client
+        text is never accepted here.
+        """
+        if ctx.on_wake_type is None:
+            return JSONResponse(
+                {"success": False, "error": "Wake typing is unavailable in this runtime."},
+                status_code=503,
+            )
+        token = str((payload or {}).get("token", "")).strip()
+        if not token:
+            return JSONResponse(
+                {"success": False, "error": "A preview token is required."},
+                status_code=400,
+            )
+        typed = ctx.on_wake_type(token)
+        if typed is None:
+            return JSONResponse(
+                {"success": False, "error": "Unknown or already used preview token."},
+                status_code=404,
+            )
+        return {"success": True, "typed": typed}
+
     @router.post("/api/commands/test")
     async def api_test_voice_command(payload: dict[str, Any]) -> Any:
         """HS-52-05: fire one voice command action from the board, to verify it.
@@ -523,6 +550,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                 PresenceConfig,
                 UIConfig,
                 VoiceMacroError,
+                WakeWordConfig,
             )
 
             current = Config.load()
@@ -568,6 +596,53 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                     {"success": False, "error": str(exc)}, status_code=400
                 )
             model_data["language"] = normalized or "auto"
+
+            # --- HS-60: wake-word validation (strict at the boundary) ---
+            wake_data = merged.get("wake_word", {}) or {}
+            current_wake = getattr(current, "wake_word", WakeWordConfig())
+            wake_action = str(wake_data.get("action", current_wake.action)).strip().lower()
+            if wake_action not in ("preview", "type"):
+                return JSONResponse(
+                    {"success": False, "error": f"wake_word.action must be 'preview' or 'type', got {wake_action!r}"},
+                    status_code=400,
+                )
+            wake_data["action"] = wake_action
+            try:
+                wake_threshold = float(wake_data.get("threshold", current_wake.threshold))
+            except (TypeError, ValueError):
+                return JSONResponse(
+                    {"success": False, "error": "wake_word.threshold must be a number"},
+                    status_code=400,
+                )
+            if not (0.0 <= wake_threshold <= 1.0):
+                return JSONResponse(
+                    {"success": False, "error": "wake_word.threshold must be between 0 and 1"},
+                    status_code=400,
+                )
+            wake_data["threshold"] = wake_threshold
+            try:
+                wake_window = float(
+                    wake_data.get("armed_window_seconds", current_wake.armed_window_seconds)
+                )
+            except (TypeError, ValueError):
+                return JSONResponse(
+                    {"success": False, "error": "wake_word.armed_window_seconds must be a number"},
+                    status_code=400,
+                )
+            if not (2.0 <= wake_window <= 30.0):
+                return JSONResponse(
+                    {"success": False, "error": "wake_word.armed_window_seconds must be between 2 and 30"},
+                    status_code=400,
+                )
+            wake_data["armed_window_seconds"] = wake_window
+            wake_model = str(wake_data.get("model", current_wake.model)).strip()
+            if not wake_model:
+                return JSONResponse(
+                    {"success": False, "error": "wake_word.model must not be empty"},
+                    status_code=400,
+                )
+            wake_data["model"] = wake_model
+            wake_data["enabled"] = bool(wake_data.get("enabled", current_wake.enabled))
 
             # --- UIConfig validation ---
             theme = str(ui_data.get("theme", current.ui.theme)).strip().lower()
@@ -992,6 +1067,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                 dictation=dictation_cfg,
                 device=DeviceConfig(**device_data),
                 presence=PresenceConfig(**presence_data),
+                wake_word=WakeWordConfig(**wake_data),
             )
             updated.save()
 
