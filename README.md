@@ -30,7 +30,7 @@ telemetry.
 | Dictate | Meet |
 | --- | --- |
 | ![Pixel art microphone with hold-to-talk waves](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/hold-to-talk-microphone.png) | ![Pixel art meeting notebook with action items](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/meeting-intelligence-notebook.png) |
-| Hold the hotkey, speak, release: the text goes into the active app. Turn on the dictation pipeline and rough speech is routed by intent, enriched with your project's context, and rewritten for its target (Codex, Claude, the terminal, the browser, your editor). Every run lands in the dictation journal; one tap on a wrong result teaches the correction memory. Voice commands map a spoken keyword to a real action (open a URL, launch an app, run a command). Activity pre-briefing offers what you touched recently as dictation context, source-cited. | Capture mic and system audio live with speaker labels, or import a recording or a transcript file you already have (vtt and srt keep their real timestamps and speaker names). 14 built-in plugins call your LLM to pull typed artifacts out of the transcript: decisions, action items, ADRs, risk registers, incident timelines. Meeting aftercare then shows what is open, decided, and changed since last time, and an accepted action can become a filed issue through a propose, approve, execute flow that never acts without you. The archive is searchable and filterable by date, speaker, tag, and open actions. |
+| Hold the hotkey, speak, release: the text goes into the active app. Turn on the dictation pipeline and rough speech is routed by intent, enriched with your project's context, and rewritten for its target (Codex, Claude, the terminal, the browser, your editor). Every run lands in the dictation journal; one tap on a wrong result teaches the correction memory. Voice commands map a spoken keyword to a real action (open a URL, launch an app, run a command). Say the wake phrase and it listens hands-free, with the result previewed, never typed, until you confirm. The spoken language setting pins any of Whisper's 99 languages, and the spoken-symbol dictionary types your own vocabulary ("double colon" becomes `::`). Activity pre-briefing offers what you touched recently as dictation context, source-cited. | Capture mic and system audio live with speaker labels, or import a recording or a transcript file you already have (vtt and srt keep their real timestamps and speaker names). 14 built-in plugins call your LLM to pull typed artifacts out of the transcript: decisions, action items, ADRs, risk registers, incident timelines. Meeting aftercare then shows what is open, decided, and changed since last time; an accepted action can become a filed issue, and the digest or follow-up draft can go to your team through Send to Slack, all on a propose, approve, execute flow that never acts without you. The archive is searchable and filterable by date, speaker, tag, and open actions. |
 
 This is what they look like in the product, not in pixel art. A saved meeting
 comes back as typed, reviewable artifacts:
@@ -43,7 +43,7 @@ comes back as typed, reviewable artifacts:
 ## Why it's different
 
 - **Everything is local, including the intelligence.** Whisper transcribes on
-  your machine and the LLM is yours: GGUF in-process, MLX on Apple Silicon, or
+  your machine, in any of its 99 languages, and the LLM is yours: GGUF in-process, MLX on Apple Silicon, or
   any OpenAI-compatible endpoint you choose, including one on your own LAN.
   See [Security & privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md) and [Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
 - **It learns how you work, and shows you the receipts.** The dictation
@@ -104,10 +104,9 @@ past dictations, a meeting that ended with open items.
 <p align="center"><em>The marquee moment, on a real desktop: a proposed GitHub issue waiting for a decision. The native panel takes pointer clicks only while a card shows and can never steal keyboard focus.</em></p>
 
 **He never acts on his own.** Approving on his card sends the identical
-audited request the dashboard sends; until then nothing runs and nothing
-leaves your machine. Every actionable card answers three questions in plain
-language: what data is used, whether anything leaves this machine, and what
-your controls are. Dismissing him is always safe, and he is honest to a
+audited request the dashboard sends. Every card carries the egress badge,
+one small pill that says at a glance whether its data stays local or goes
+out, and to where. Dismissing him is always safe, and he is honest to a
 fault: the "Learned from you" card only ever appears when a correction
 really reached past dictations, with the real count.
 

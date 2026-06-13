@@ -195,6 +195,21 @@ When ready, continue with:
 - [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md)
 - [User Guide](USER_GUIDE.md)
 
+## 10. Where To Go Next
+
+Once hold-to-talk feels natural, the rest is one setting away each:
+
+- **Hands-free**: [the wake word](USER_GUIDE.md#the-wake-word) listens for a
+  phrase and previews the result before anything is typed.
+- **Your language**: [the spoken language setting](USER_GUIDE.md#speak-your-language) pins any of
+  Whisper's 99 languages, and [the spoken-symbol dictionary](USER_GUIDE.md#punctuation)
+  types your own vocabulary.
+- **Spoken actions**: [voice commands](VOICE_COMMANDS.md) map a keyword to a
+  real action.
+- **Meetings**: [the Meeting Mode Guide](MEETING_MODE_GUIDE.md) covers live
+  capture, importing recordings or transcripts you already have, and the
+  aftercare that closes the loop.
+
 ## Troubleshooting
 
 | Symptom | Likely cause | First fix |
