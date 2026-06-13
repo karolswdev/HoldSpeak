@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 66
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-66-01
 - **Unblocks:** HS-66-04
 - **Owner:** unassigned
@@ -22,10 +22,12 @@ machine boundary and the gate on each crossing, are not drawn anywhere.
 - **Out:** the dictation side (HS-66-02).
 
 ## Acceptance criteria
-- [ ] The meeting flow and the trust-boundary diagram are accurate to the
+- [x] The meeting flow and the trust-boundary diagram are accurate to the
       code and to SECURITY (no egress drawn that does not exist; none
       omitted).
-- [ ] All blocks render (guard green); voice guard + full suite green.
+- [x] All blocks render (guard green); voice guard + full suite green.
+
+      See `evidence-story-03.md`.
 
 ## Test plan
 - The render guard; cross-check against SECURITY's egress table; the suite.

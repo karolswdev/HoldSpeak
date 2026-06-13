@@ -149,10 +149,47 @@ sequenceDiagram
 
 ## The meeting pipeline
 
-How captured or imported audio becomes a transcript, typed artifacts, and
-an aftercare digest, with approval-gated actions out.
+How captured or imported audio becomes a transcript, typed artifacts, and an
+aftercare digest. The intelligence work calls the LLM you configured; the
+actions out are proposals you approve, never automatic.
+
+```mermaid
+flowchart TD
+  LIVE["Live capture<br/>mic plus system audio"] --> TRW
+  IMP["Import a recording (meeting_import.py)<br/>or a transcript (transcript_parse.py)"] --> TRW
+  TRW["Windowed transcribe<br/>(meeting_session/transcribe_loop.py)"] --> ROUTE
+  ROUTE["Intent routing, opt-in<br/>(plugins/router.py)"] --> HOST
+  HOST["Plugin host runs the chain<br/>(plugins/host.py)"]
+  HOST -. "intel" .-> LLM(["LLM backend"])
+  HOST --> ART["Typed artifacts:<br/>decisions, action items, ADRs, risk registers, and more"]
+  ART --> AFT["Aftercare digest:<br/>open, decided, changed since last time<br/>(meeting_aftercare.py)"]
+  AFT --> ISSUE["An accepted action becomes<br/>a GitHub issue proposal"]
+  AFT --> SLACK["The digest or draft becomes<br/>a Send to Slack proposal (slack_export.py)"]
+  ISSUE --> APV{"Propose, approve, execute<br/>(plugins/actuator_executor.py)"}
+  SLACK --> APV
+  APV -. "approved only" .-> EXT(["GitHub, Slack"])
+```
 
 ## The trust boundary
 
-Every point where data crosses the machine boundary, and the gate on each
-crossing. Aligned with [`SECURITY.md`](SECURITY.md).
+Everything inside the box runs on your machine. Every arrow leaving it is a
+crossing you opened, with the gate on it named. This mirrors the egress
+table in [`SECURITY.md`](SECURITY.md); if the two ever disagree, SECURITY is
+the source of truth.
+
+```mermaid
+flowchart LR
+  subgraph machine["Your machine"]
+    RT["HoldSpeak runtime"]
+    WH["Whisper, local"]
+    DB[("SQLite")]
+    LL["LLM, when local<br/>(GGUF / MLX)"]
+  end
+  RT -->|"loopback by default; token required off-loopback"| WEB(["Browser and API clients"])
+  RT -->|"only when intel provider is cloud or auto; transcript text"| CLOUD(["Cloud LLM endpoint"])
+  RT -->|"approved proposal only; to the configured host"| SK(["Slack webhook"])
+  RT -->|"opt-in pack; entity IDs via your own CLIs"| CLI(["gh, jira, to their services"])
+  RT -->|"opt-in; queue stats only, no transcript"| OPS(["Ops alert webhook"])
+  RT -->|"one-time inbound fetch, about 7 MB"| WM(["Wake models, GitHub releases"])
+  DEVCE(["Paired device, same LAN, PSK"]) -->|"audio in, status out"| RT
+```

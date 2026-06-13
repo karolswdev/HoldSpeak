@@ -1,12 +1,18 @@
 # Phase 66 — The Architecture Map
 
-**Status:** in progress (2/4). Opened 2026-06-13 on owner direction (a
+**Status:** in progress (3/4). Opened 2026-06-13 on owner direction (a
 dedicated phase for pipeline architecture and Mermaid diagrams). There is
 no system-overview doc today and three Mermaid blocks in the whole corpus;
 this builds the map a developer hits first, with diagrams that render and a
 guard that keeps them rendering.
 
-**Last updated:** 2026-06-13 (**HS-66-02 done:** the dictation section gains
+**Last updated:** 2026-06-13 (**HS-66-03 done:** two more diagrams — the
+meeting pipeline (capture/import -> windowed transcribe -> routing -> plugin
+host -> artifacts -> aftercare -> the two approve-gated proposals) and the
+trust boundary (a "Your machine" box with all seven egress crossings drawn
+out and labeled by their gate, checked one-to-one against SECURITY's egress
+table). Render guard green (6 blocks); trust boundary eyeballed. Prior:
+**HS-66-02 done:** the dictation section gains
 three diagrams traced against the code: the end-to-end flow (entries ->
 transcribe -> voice-command branch -> the opt-in stages intent-router/
 project-rewriter/kb-enricher -> the wake preview-default fork -> type ->
@@ -66,10 +72,10 @@ index, CONTRIBUTING, and a README pointer.
 |---|---|---|---|
 | HS-66-01 | The system map + the diagram render guard | done | none |
 | HS-66-02 | The dictation pipeline, diagrammed | done | HS-66-01 |
-| HS-66-03 | The meeting pipeline + the trust boundary, diagrammed | backlog | HS-66-01 |
+| HS-66-03 | The meeting pipeline + the trust boundary, diagrammed | done | HS-66-01 |
 | HS-66-04 | Closeout: render re-verify + wiring + final-summary | backlog | HS-66-01..03 |
 
 ## Where we are
 
-The dictation side is drawn. Next is **HS-66-03 — the meeting pipeline +
-the trust boundary, diagrammed**.
+All diagrams are drawn (6 blocks). Next is **HS-66-04 — closeout**:
+render re-verify + index/CONTRIBUTING/README wiring + final-summary.
