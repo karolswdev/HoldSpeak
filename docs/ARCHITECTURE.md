@@ -85,9 +85,67 @@ The dictation and meeting flows are detailed in their own sections below.
 
 ## The dictation pipeline
 
-How held-key or wake-word speech becomes typed text, with the optional
-routing and rewrite stages, the learning loop, voice commands, and the
-device path in between.
+How held-key or wake-word speech becomes typed text. Capture and
+transcription always run; the routing and rewrite stages are opt-in and off
+by default, so the plain path is "speak, and it types what you said."
+
+```mermaid
+flowchart TD
+  HK["Hotkey hold then release<br/>(hotkey.py)"] --> CAP
+  WW["Wake word, then the armed window<br/>(wake_word.py)"] --> CAP
+  DEV["Device audio over WebSocket<br/>(device_audio_ws.py)"] --> CAP
+  CAP["Capture"] --> TR["Transcribe, local Whisper<br/>(transcribe.py)"]
+  TR --> PUNC["Punctuation and spoken symbols<br/>(text_processor.py)"]
+  PUNC --> VC{"Matches a voice command keyword?"}
+  VC -- yes --> FIRE["Fire the bounded connector<br/>open URL, launch app, run command, type a snippet"]
+  VC -- no --> PIPE{"Dictation pipeline enabled?"}
+  PIPE -- "off, the default" --> FORK
+  PIPE -- "on" --> STAGES["Stages, in order:<br/>intent-router, project-rewriter, kb-enricher<br/>(project-rewriter calls your LLM)"]
+  STAGES --> FORK{"Entered by wake word?"}
+  FORK -- "hotkey or device" --> TYPE["Type into the focused app<br/>(typer.py)"]
+  FORK -- "wake, preview by default" --> PREVIEW["Preview card, nothing typed yet"]
+  PREVIEW -. "you tap Type it" .-> TYPE
+  TYPE --> J[("Journal the run<br/>db/journal.py")]
+```
+
+### The learning loop
+
+Every dictation is recorded, so you can correct a wrong result once and
+watch the change take effect, rather than trusting that it did.
+
+```mermaid
+flowchart LR
+  RUN["A dictation runs"] --> J[("Dictation journal:<br/>said, typed, route, latency")]
+  J --> REVIEW["Review at /dictation"]
+  REVIEW --> FIX["One-tap correction"]
+  FIX --> MEM[("Correction memory<br/>db/corrections.py")]
+  MEM -. "nudges future routing" .-> RUN
+  J --> REPLAY["Replay an utterance through<br/>the updated pipeline"]
+  MEM -. "applied" .-> REPLAY
+```
+
+### The device path
+
+An AIPI-Lite ESP32-S3 board on the same network (home Wi-Fi or a phone
+hotspot) streams audio to the runtime. If a coding agent is waiting on a
+reply, the transcribed text goes straight into that session instead of the
+focused app.
+
+```mermaid
+sequenceDiagram
+  participant D as ESP32-S3 device
+  participant WS as Device WebSocket
+  participant VT as Voice typing
+  participant AG as Coding agent session
+  D->>WS: 16 kHz audio frames (same LAN)
+  WS->>VT: utterance
+  VT->>VT: transcribe, then the pipeline
+  alt an agent is awaiting a reply
+    VT->>AG: type the reply into the selected session
+  else
+    VT->>VT: type into the focused app
+  end
+```
 
 ## The meeting pipeline
 

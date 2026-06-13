@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 66
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-66-01
 - **Unblocks:** HS-66-04
 - **Owner:** unassigned
@@ -23,9 +23,11 @@ undocumented as a flow.
 - **Out:** the meeting side (HS-66-03).
 
 ## Acceptance criteria
-- [ ] Each diagram traced against shipped code (module names current
+- [x] Each diagram traced against shipped code (module names current
       post-decomposition); opt-in paths marked.
-- [ ] All blocks render (guard green); voice guard + full suite green.
+- [x] All blocks render (guard green); voice guard + full suite green.
+
+      See `evidence-story-02.md`.
 
 ## Test plan
 - The render guard; the full suite.

@@ -1,12 +1,19 @@
 # Phase 66 — The Architecture Map
 
-**Status:** in progress (1/4). Opened 2026-06-13 on owner direction (a
+**Status:** in progress (2/4). Opened 2026-06-13 on owner direction (a
 dedicated phase for pipeline architecture and Mermaid diagrams). There is
 no system-overview doc today and three Mermaid blocks in the whole corpus;
 this builds the map a developer hits first, with diagrams that render and a
 guard that keeps them rendering.
 
-**Last updated:** 2026-06-13 (**HS-66-01 done:** `docs/ARCHITECTURE.md` is
+**Last updated:** 2026-06-13 (**HS-66-02 done:** the dictation section gains
+three diagrams traced against the code: the end-to-end flow (entries ->
+transcribe -> voice-command branch -> the opt-in stages intent-router/
+project-rewriter/kb-enricher -> the wake preview-default fork -> type ->
+journal), the learning loop (journal -> correct -> memory -> replay), and a
+sequence diagram of the ESP32-S3 device path with the agent-reply branch.
+Render guard green (4 blocks); dictation flow eyeballed. Prior: **HS-66-01
+done:** `docs/ARCHITECTURE.md` is
 born with the orienting overview + the top-level component diagram (traced
 against the shipped post-decomposition modules, rendered + eyeballed), and
 the Mermaid render guard (`tests/e2e/test_mermaid_renders.py`, mmdc-backed,
@@ -58,11 +65,11 @@ index, CONTRIBUTING, and a README pointer.
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HS-66-01 | The system map + the diagram render guard | done | none |
-| HS-66-02 | The dictation pipeline, diagrammed | backlog | HS-66-01 |
+| HS-66-02 | The dictation pipeline, diagrammed | done | HS-66-01 |
 | HS-66-03 | The meeting pipeline + the trust boundary, diagrammed | backlog | HS-66-01 |
 | HS-66-04 | Closeout: render re-verify + wiring + final-summary | backlog | HS-66-01..03 |
 
 ## Where we are
 
-The map and the guard exist. Next is **HS-66-02 — the dictation pipeline,
-diagrammed**.
+The dictation side is drawn. Next is **HS-66-03 — the meeting pipeline +
+the trust boundary, diagrammed**.
