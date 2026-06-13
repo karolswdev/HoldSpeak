@@ -9,6 +9,19 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 > holdspeak`). APIs, config, and defaults can still change while it is pre-1.0;
 > upgrades are safe by default (your database is backed up first).
 
+## [0.3.1] - 2026-06-13
+
+Documentation. No runtime change from 0.3.0.
+
+### Added
+- **An architecture map** (`docs/ARCHITECTURE.md`): the runtime view of how
+  the pieces fit and how a single utterance flows through them, with
+  rendered diagrams for the component map, the dictation and meeting
+  pipelines, the learning loop, the device path, and the trust boundary.
+  Linked from the docs index, the README, and CONTRIBUTING.
+- A docs guard that renders every Mermaid diagram and fails on any that
+  does not, so a broken diagram cannot ship.
+
 ## [0.3.0] - 2026-06-13
 
 The first release since 0.2.x, gathering fourteen development phases. Both
