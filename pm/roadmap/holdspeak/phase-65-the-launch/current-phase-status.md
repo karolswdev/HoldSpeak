@@ -1,11 +1,19 @@
 # Phase 65 — The Launch
 
-**Status:** in progress (3/4). Opened 2026-06-13 on owner direction ("Let's
+**Status:** CLOSED (4/4). Opened 2026-06-13 on owner direction ("Let's
 launch!"): cut v0.3.0 through the existing tag-triggered trusted-publishing
 machinery, behind a real pre-flight, with the announcement kit drafted for
 the owner.
 
-**Last updated:** 2026-06-13 (**HS-65-03 done:** the announcement kit —
+**Last updated:** 2026-06-13 (**HS-65-04 done — phase CLOSED 4/4: HoldSpeak
+v0.3.0 is LIVE on PyPI.** PR #55 merged on green (6/6); `v0.3.0` tagged on
+the merge commit `c87b743` and pushed; the release workflow published via
+OIDC trusted publishing (run succeeded, ~57s, bundle present); PyPI serves
+0.3.0; a from-PyPI fresh-venv `pip install holdspeak==0.3.0` verified
+(version 0.3.0, web bundle present, `doctor` 22 passed / 0 failed); the
+GitHub release is live with the notes. The announcement drafts are in the
+owner's hands to post. See [final-summary.md](./final-summary.md). Prior:
+**HS-65-03 done:** the announcement kit —
 GitHub release notes + Show HN / lobste.rs / r/LocalLLaMA drafts, all in
 canon voice (one copilot two modes / developers / named honest
 comparisons / honest 0.x limits), `<REPO_URL>` left for the owner, posting
@@ -71,10 +79,10 @@ announcement drafts in the owner's hands.
 | HS-65-01 | Pre-flight: every route loads clean | done | none |
 | HS-65-02 | The release cut | backlog | HS-65-01 |
 | HS-65-03 | The announcement kit | done | none |
-| HS-65-04 | Closeout: tag, publish, verify | backlog | HS-65-01..03 |
+| HS-65-04 | Closeout: tag, publish, verify | done | HS-65-01..03 |
 
 ## Where we are
 
-Pre-flight, cut, and kit all done. Next is **HS-65-04 — closeout**: merge
-on green, then tag v0.3.0 on the merge commit → trusted publishing →
-verify `pip install holdspeak==0.3.0` from PyPI.
+CLOSED 4/4. **HoldSpeak v0.3.0 is published on PyPI and verified from
+there.** The GitHub release is live; the announcement kit is the owner's
+to post. See [final-summary.md](./final-summary.md).
