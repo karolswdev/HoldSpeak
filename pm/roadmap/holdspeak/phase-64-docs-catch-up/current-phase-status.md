@@ -1,11 +1,16 @@
 # Phase 64 — Docs Catch-Up
 
-**Status:** in progress (2/3). Opened 2026-06-13 on owner direction ("Feels
+**Status:** CLOSED (3/3). Opened 2026-06-13 on owner direction ("Feels
 like a docs phase is on the books again, no?"). Phase 58 fixed the story;
 six phases shipped since, each documenting itself deep in its own guide —
 and the front door never caught up.
 
-**Last updated:** 2026-06-13 (**HS-64-02 done:** the index blurbs name the
+**Last updated:** 2026-06-13 (**HS-64-03 done — phase CLOSED 3/3:** every
+embedded image audited (P62's seven re-shoots + eyeball verdicts on the
+rest, all current); one quiet-trust candidate flagged for the owner without
+scope-creep (the journal tab's Phase-45 trust banner). Suite 2775/17; see
+[final-summary.md](./final-summary.md); PR merged on green. Prior:
+**HS-64-02 done:** the index blurbs name the
 P59–P62 surface, Getting Started gains a four-pointer "Where To Go Next"
 (anchor-linked), and the coherence read found the deep guides already read
 as one document (the per-phase docs stories held the line) — zero
@@ -59,9 +64,10 @@ solo-written sections, and the locks stay green.
 |---|---|---|---|
 | HS-64-01 | The README catches up | done | none |
 | HS-64-02 | The index + Getting Started + the coherence read | done | HS-64-01 |
-| HS-64-03 | Closeout | backlog | HS-64-01..02 |
+| HS-64-03 | Closeout | done | HS-64-01..02 |
 
 ## Where we are
 
-Entry points current, corpus coherent. Next is **HS-64-03 — closeout**
-(the embedded-image audit, final-summary, PR).
+CLOSED 3/3. The corpus is current end to end. Open owner question: the
+journal trust banner (quiet-trust treatment or keep). See
+[final-summary.md](./final-summary.md).

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 64
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-64-01, HS-64-02
 - **Unblocks:** phase exit
 - **Owner:** unassigned
@@ -18,10 +18,12 @@ The phase needs its image audit, full verification, and exit artifacts.
 - **Out:** new content.
 
 ## Acceptance criteria
-- [ ] The image audit ships in evidence (every embed listed, verdict
+- [x] The image audit ships in evidence (every embed listed, verdict
       each).
-- [ ] Full suite green; PR merged on green; final-summary + cadence +
+- [x] Full suite green; PR merged on green; final-summary + cadence +
       memory done.
+
+      See `evidence-story-03.md`.
 
 ## Test plan
 - The image audit + the full suite.
