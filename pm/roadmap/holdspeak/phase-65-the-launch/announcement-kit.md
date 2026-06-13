@@ -1,9 +1,10 @@
 # HoldSpeak v0.3.0 — announcement kit
 
 Drafts for the owner to post. The agent publishes nothing here. Replace
-`<REPO_URL>` with the repo link and `<tested model/backend>` with a real
-setup you have run (or cut that line), trim to taste, post the GitHub
-release first since the others point at it.
+`<REPO_URL>` with the repo link, trim to taste, and post the GitHub release
+first since the others point at it. The r/LocalLLaMA post names the real
+tested setup (a self-hosted llama.cpp serving Qwen3.5-9B at Q6); swap in a
+different one if you would rather front a different model.
 
 A note on voice: these are written to sound like one person who built a
 thing and is showing it, not like a launch. Two things are deliberate and
@@ -163,9 +164,12 @@ before it types, ~99-language transcription, Slack export for meeting
 digests behind an approval step, and importing recordings or transcripts
 you already have.
 
-I have mostly run it against `<tested model/backend>`; curious what people
-here would put behind it instead, and whether the intent-routing rewrite
-earns its place for dictation or just gets in the way.
+I have mostly run it against a self-hosted llama.cpp serving Qwen3.5-9B at
+Q6, which is plenty capable for the rewriting and the meeting extraction.
+A 9B at that quant is about 8 GB, so it is a modern-laptop model, not a
+server one. Curious what people here would put behind it instead, and
+whether the intent-routing rewrite earns its place for dictation or just
+gets in the way.
 
 0.x, macOS and Linux, Apache-2.0. `pip install holdspeak`, then
 `holdspeak doctor`. <REPO_URL>
@@ -189,6 +193,7 @@ ships Slack export, a model download, and remote-endpoint support. That is
 now precise everywhere (local-by-default, not local-only). Also cut on its
 advice: "typed artifacts", "local by construction", "meeting-intel egress",
 and most repeated uses of "copilot" (kept once, in the canonical lead, per
-the owner's positioning decision). The `<tested model/backend>` placeholder
-in the r/LocalLLaMA post is left for the owner to fill with a real setup or
-cut, rather than invent one.
+the owner's positioning decision). The r/LocalLLaMA post names the
+real tested setup (self-hosted llama.cpp, Qwen3.5-9B at Q6, ~8 GB, framed
+as a modern-laptop model rather than "anyone's laptop", which that audience
+would nitpick).
