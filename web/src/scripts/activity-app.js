@@ -1,4 +1,3 @@
-    <script>
       const state = {
         status: null,
         activity: null,

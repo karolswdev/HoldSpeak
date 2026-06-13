@@ -9,6 +9,71 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 > holdspeak`). APIs, config, and defaults can still change while it is pre-1.0;
 > upgrades are safe by default (your database is backed up first).
 
+## [0.3.0] - 2026-06-13
+
+The first release since 0.2.x, gathering fourteen development phases. Both
+modes grew: dictation gained hands-free entry and your language, meetings
+gained imports and an outbound door, and the codebase paid down two large
+god-objects. Everything below is off by default unless noted, and nothing
+acts without your approval.
+
+### Added
+- **The wake word.** Say a phrase and HoldSpeak listens hands-free for a
+  bounded, visible window, then runs your next sentence through the normal
+  dictation pipeline. The result is previewed, never typed, until you
+  confirm (typing directly is an explicit opt-in). Local detection
+  (openWakeWord); the only network moment is a one-time ~7 MB model
+  download on first enable. Measured zero false detections in 57 ordinary
+  utterances at the default threshold.
+- **Speak your language.** One setting pins any of Whisper's ~99 languages
+  for dictation, meetings, and imports (the default auto-detects per
+  utterance). Plus the spoken-symbol dictionary: map your own spoken
+  phrases to symbols or snippets (`"double colon"` becomes `::`), merged
+  over the built-ins.
+- **Send to Slack.** The meeting aftercare digest or follow-up draft can go
+  to a Slack incoming webhook, on the same propose, approve, execute flow
+  as every actuator: the preview is the exact message, and nothing is sent
+  until you approve that one send.
+- **Voice command macros.** Map a spoken keyword to a real action (open a
+  URL, launch an app, run a command, type a snippet) on a dedicated board;
+  it fires when you say the keyword while dictating.
+- **Activity pre-briefing.** A quiet, source-cited read of what you touched
+  recently, above the dictation cockpit; one tap pins a record as context
+  for your next dictation. Gated by the activity-tracking toggle.
+- **Meeting and transcript import.** Bring recordings (WAV native, others
+  via ffmpeg) or transcript files (`.vtt`/`.srt`/`.txt`, keeping their real
+  timestamps and speaker names) into the full intelligence pipeline, via
+  the web UI or `holdspeak import`. The archive gained server-side facets
+  (date, speaker, tag, open actions).
+- **Qlippy, the optional presence mascot.** An ambient pixel-art dock and
+  one-at-a-time cards for the few moments that need you (an approval, a
+  result, something learned, a meeting that left open items). Double opt-in,
+  focus-safe, and he never acts on his own.
+
+### Changed
+- **Quiet trust.** Cards and notifications now state where data goes with a
+  compact egress badge (local, local and cloud, or cloud with the target
+  named) instead of repeated privacy paragraphs.
+- **The front door.** A positioning canon ("one copilot, two modes"), a
+  rewritten README with an honest, named comparison section, and a voice
+  guard that holds every user-facing doc to one standard.
+
+### Fixed
+- A wake-word-era crash class where a library fault froze transcription,
+  and a process-fatal cross-thread transcription path, both fixed during
+  the wake-word work.
+- The first-run welcome wizard's "copy install command" button (a parsing
+  error made it a no-op), the dictation activity page (its script had
+  silently failed to load), and the companion page (it threw on first
+  paint) — all caught by a new pre-launch route sweep.
+- A broken live-meeting-start path and a transcriber-construction race,
+  both surfaced and fixed during a large internal decomposition.
+
+### Internal
+- The dictation frontend and the `web_runtime` / `meeting_session` backend
+  were each decomposed from multi-thousand-line files into single-concern
+  modules, behavior-preserving and locked by density guards.
+
 ## [0.2.2] - 2026-06-07
 
 ### Changed
