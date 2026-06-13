@@ -1,6 +1,6 @@
 [project]
 name = "holdspeak"
-version = "0.2.2"
+version = "0.3.0"
 description = "Voice typing for macOS and Linux - hold a hotkey, speak, release. Local & private."
 readme = "README.md"
 requires-python = ">=3.10"

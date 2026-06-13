@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 65
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-65-01
 - **Unblocks:** HS-65-04
 - **Owner:** unassigned
@@ -20,9 +20,11 @@ the install proofs must be ready before any tag exists.
 - **Out:** the tag (closeout only).
 
 ## Acceptance criteria
-- [ ] Version + changelog shipped; no stale version claims.
-- [ ] The wheel carries the bundle; both fresh-venv doctors recorded.
-- [ ] Full suite green.
+- [x] Version + changelog shipped; no stale version claims.
+- [x] The wheel carries the bundle; both fresh-venv doctors recorded.
+- [x] Full suite green.
+
+      See `evidence-story-02.md`.
 
 ## Test plan
 - The wheel build + two install proofs; the full suite.

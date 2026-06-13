@@ -1,11 +1,18 @@
 # Phase 65 — The Launch
 
-**Status:** in progress (1/4). Opened 2026-06-13 on owner direction ("Let's
+**Status:** in progress (2/4). Opened 2026-06-13 on owner direction ("Let's
 launch!"): cut v0.3.0 through the existing tag-triggered trusted-publishing
 machinery, behind a real pre-flight, with the announcement kit drafted for
 the owner.
 
-**Last updated:** 2026-06-13 (**HS-65-01 done:** the all-routes pre-flight
+**Last updated:** 2026-06-13 (**HS-65-02 done:** pyproject → 0.3.0; the
+CHANGELOG [0.3.0] entry summarizes P51–P64 in canon voice; no stale version
+claims in prose. The wheel built exactly as release.yml does it (194
+`static/_built/` entries; twine check PASSED) installs clean in a fresh venv
+to a working `holdspeak doctor` on **both** macOS (20/0 fail) and **real
+.43 Linux metal** (22/0 fail, version 0.3.0, faster-whisper resolving, real
+X11 hotkey + injection) — the standing Linux-proofs-live rule. Suite **2777
+passed, 17 skipped**. Prior: **HS-65-01 done:** the all-routes pre-flight
 (11 page routes in Chromium, zero-page-error per route; a coverage guard so
 no new page escapes; CI-skip-clean) — and it paid off instantly, catching
 TWO dead-on-arrival bugs no dogfood had reached: `/activity`'s JS had a
@@ -60,5 +67,6 @@ announcement drafts in the owner's hands.
 
 ## Where we are
 
-Pre-flight green (two latent page bugs fixed). Next is **HS-65-02 — the
-release cut** (version, changelog, fresh-venv install proofs).
+0.3.0 cut and install-proven on macOS + .43. Next is **HS-65-03 — the
+announcement kit** (release notes + Show HN / lobste.rs / r/LocalLLaMA
+drafts in canon voice).
