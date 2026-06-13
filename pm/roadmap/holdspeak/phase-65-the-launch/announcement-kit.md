@@ -211,9 +211,10 @@ your machine; point it at a remote endpoint and that is a choice you make,
 not a default.
 
 The part I did not expect to like this much: flash an off-the-shelf
-ESP32-S3 board (about $30), put it on the same Wi-Fi as your machine, and
-you can speak to it from across the room while HoldSpeak hands what you
-said to a coding agent running locally. A physical voice remote for a dev
+ESP32-S3 board (about $30), put it and your machine on the same Wi-Fi (your
+home network, or just a phone hotspot when you are out), and you can speak
+to it from across the room while HoldSpeak hands what you said to a coding
+agent running on your laptop. A physical voice remote for a dev
 environment, built from a commodity board instead of a new subscription.
 
 No HoldSpeak account, no telemetry, and the network use is called out in
