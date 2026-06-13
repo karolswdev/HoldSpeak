@@ -1,10 +1,11 @@
 # HoldSpeak v0.3.0 — announcement kit
 
-Drafts for the owner to post. The agent publishes nothing here. Replace
-`<REPO_URL>` with the repo link, trim to taste, and post the GitHub release
-first since the others point at it. The r/LocalLLaMA post names the real
-tested setup (a self-hosted llama.cpp serving Qwen3.5-9B at Q6); swap in a
-different one if you would rather front a different model.
+Drafts for the owner to post. The agent publishes nothing here. The repo
+link (`https://github.com/karolswdev/HoldSpeak`) and the tested model are
+filled in; trim to taste, and post the GitHub release first since the
+others point at it. The r/LocalLLaMA post names the real tested setup (a
+self-hosted llama.cpp serving Qwen3.5-9B at Q6); swap in a different one if
+you would rather front a different model.
 
 A note on voice: these are written to sound like one person who built a
 thing and is showing it, not like a launch. Two things are deliberate and
@@ -98,7 +99,7 @@ is no subscription. Talon is far better than this if what you want is
 hands-free control of the machine; HoldSpeak is aimed at prose.
 
 Python, Apache-2.0, macOS and Linux. `pip install holdspeak`, then
-`holdspeak doctor`. <REPO_URL>
+`holdspeak doctor`. https://github.com/karolswdev/HoldSpeak
 
 Two questions I would genuinely like answers to: does one tool covering
 both dictation and meetings make sense to you, or are those two different
@@ -133,7 +134,7 @@ their own model. macOS and Linux, Apache-2.0. The README has trade-off
 comparisons with superwhisper, MacWhisper, VoiceInk, Wispr Flow, Aqua
 Voice, and Talon, including the cases where the other tool wins.
 
-`pip install holdspeak`. <REPO_URL>
+`pip install holdspeak`. https://github.com/karolswdev/HoldSpeak
 
 ---
 
@@ -172,7 +173,7 @@ whether the intent-routing rewrite earns its place for dictation or just
 gets in the way.
 
 0.x, macOS and Linux, Apache-2.0. `pip install holdspeak`, then
-`holdspeak doctor`. <REPO_URL>
+`holdspeak doctor`. https://github.com/karolswdev/HoldSpeak
 
 ---
 
