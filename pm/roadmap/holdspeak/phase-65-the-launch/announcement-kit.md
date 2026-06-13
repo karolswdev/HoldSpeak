@@ -1,9 +1,19 @@
 # HoldSpeak v0.3.0 — announcement kit
 
-Drafts for the owner to post. Nothing here is published by the agent. Each
-draft is in the POSITIONING voice: one copilot two modes, written for
-developers, comparisons named honestly, no superlative without a proof
-point behind it. Pick, edit, post.
+Drafts for the owner to post. The agent publishes nothing here. Replace
+`<REPO_URL>` with the repo link and `<tested model/backend>` with a real
+setup you have run (or cut that line), trim to taste, post the GitHub
+release first since the others point at it.
+
+A note on voice: these are written to sound like one person who built a
+thing and is showing it, not like a launch. Two things are deliberate and
+worth keeping. The honest limits and the named comparisons stay in even
+when you cut for length, because they are why a developer audience trusts
+the rest. And the network claims are precise on purpose: HoldSpeak's local
+modes are local, but Slack export, the wake-word model download, and a
+remote LLM endpoint are real network use, so the copy says "local stays
+local" rather than "nothing ever leaves," which a careful reader would
+immediately catch.
 
 ---
 
@@ -11,157 +21,174 @@ point behind it. Pick, edit, post.
 
 **HoldSpeak v0.3.0**
 
-One local copilot with two modes: dictation that types in any app and
-learns how you work, and meetings that end with decisions, actions, and
-follow-ups instead of a recording. Whisper runs on your machine and the
-LLM is yours (GGUF in-process, MLX on Apple Silicon, or any
-OpenAI-compatible endpoint, including one on your LAN).
+HoldSpeak is one local voice copilot with two modes. Hold a key and it
+types what you say into the focused app. Record a meeting and you get back
+decisions, action items, and open questions, plus a digest of what is still
+unresolved, instead of only a transcript. Whisper runs on your machine, and
+the LLM side is whichever backend you configure: a local GGUF, MLX on Apple
+Silicon, or any OpenAI-compatible endpoint, including one on your LAN.
 
-This is the first release since 0.2.x, and it gathers fourteen development
-phases. Highlights:
+This is the first release since 0.2.x and it pulls in a lot. The headline
+additions:
 
-- **The wake word.** Say a phrase and it listens hands-free for a short,
-  visible window. The result is previewed, never typed, until you confirm.
-  Detection runs locally; the only network moment is a one-time ~7 MB model
-  download.
-- **Speak your language.** Pin any of Whisper's ~99 languages for dictation,
-  meetings, and imports, plus a spoken-symbol dictionary that types your own
-  vocabulary (say "double colon", get `::`).
-- **Send to Slack.** A meeting's aftercare digest or follow-up draft can go
-  to a Slack incoming webhook, on the same propose, approve, execute flow as
-  every action: the preview is the exact message, and nothing sends until
-  you approve it.
-- **Bring your archive.** Import recordings and transcript files
-  (`.vtt`/`.srt`/`.txt`, keeping their real timestamps and speaker names)
-  into the full meeting-intelligence pipeline. The archive is searchable
-  and filterable by date, speaker, tag, and open actions.
-- **Voice command macros** and **activity pre-briefing** for the dictation
-  side; **Qlippy**, an optional and entirely opt-in presence mascot, for the
-  moments that need a decision.
-- **Quiet trust.** Cards say where data goes with a small badge, not a
-  paragraph.
+- A **wake word**, so you can start a dictation hands-free. It listens
+  locally, arms for a few visible seconds, and shows you the result before
+  it types anything. The one network moment is a ~7 MB model download the
+  first time you turn it on.
+- **Languages.** Pin any of Whisper's ~99, for dictation, meetings, and
+  imports alike, and teach it your own spoken symbols (say "double colon",
+  get `::`).
+- **Send to Slack.** A meeting's digest or follow-up draft can post to a
+  Slack incoming webhook, but only after you approve that exact message.
+  What you see in the preview is what gets posted, byte for byte.
+- **Import what you already have.** Drop in recordings or transcript files
+  (`.vtt`, `.srt`, `.txt`, timestamps and speaker names preserved) and they
+  run through the same meeting pipeline as a live capture. The archive is
+  searchable and filterable.
 
-Everything new is off by default, and nothing acts without your approval.
+Everything new is off until you turn it on. The local modes stay local;
+the network features (the wake-word model download, Slack export, a remote
+LLM endpoint) are explicit choices you make, and nothing takes an outbound
+action without you approving it first.
+
 Install: `pip install holdspeak`, then `holdspeak doctor`.
 
-Full notes in [CHANGELOG.md](../../CHANGELOG.md). It is 0.x: mature
-features, but config and defaults can still move before 1.0. Upgrades back
-your database up first.
+This is still 0.x: features work, but config and defaults may move before
+1.0, so upgrades back your database up before touching it. Full notes are
+in
+[CHANGELOG.md](https://github.com/karolswdev/HoldSpeak/blob/main/CHANGELOG.md).
 
 ---
 
 ## 2. Show HN
 
-**Title:** Show HN: HoldSpeak – local voice dictation and meeting notes, bring your own LLM
+**Title:** Show HN: HoldSpeak – local voice dictation and meeting notes, you bring the model
 
 **Body:**
 
-HoldSpeak is one local copilot with two modes. Hold a hotkey and speak: it
-types into whatever app is focused, and with the pipeline on it routes rough
-speech by intent, grounds it in your project's context, and rewrites it for
-its target (a coding agent, the terminal, your editor). Record a meeting and
-it comes back as typed artifacts (decisions, action items, risk registers)
-plus an aftercare digest of what is open, decided, and changed since last
-time.
+I kept wanting one tool for two related jobs: dictation that types into my
+editor and routes the rough speech into something a coding agent can use,
+and meeting recording that ends in decisions and action items rather than
+another transcript I never open. And I wanted both to run on a model I
+control. So I built HoldSpeak.
 
-The part I care about: the intelligence is local too. Whisper transcribes
-on your machine, and the LLM is one you run (GGUF in-process, MLX on Apple
-Silicon) or an OpenAI-compatible endpoint you point at, including one on
-your own LAN. No account, no telemetry.
+Hold a hotkey, talk, and it types into the focused app. Turn on the
+pipeline and it routes what you said by intent, grounds it in the project
+you are in, and rewrites it for where it is going. Every dictation is
+recorded with what you said, what it typed, and where it sent it, so when
+it gets something wrong you fix it once and can replay the old utterance to
+watch the routing change. That is the part I am most attached to: you see
+it improve instead of being told it did.
 
-It learns how you work and shows the receipts: every dictation is journaled
-(what you said, what it typed, where it routed, how long it took), one tap
-teaches a correction, and you can replay an old utterance through the
-updated pipeline to watch the routing change rather than trusting that it
-improved.
+Transcription is local Whisper. The LLM is whichever backend you point it
+at: in-process GGUF, MLX, or an OpenAI-compatible endpoint, so a box on
+your own LAN is a supported path. Worth being precise, since people here
+will check: the local modes are local, but Slack export and a remote
+endpoint are real network use you opt into, and `holdspeak doctor` tells
+you when a cloud endpoint is configured.
 
-Honest about what it is not: it is 0.x, the smart parts need a model you
-provide, setup is heavier than a menu-bar app, there is no Windows build
-today, and Wayland limits global hotkeys to best effort. Compared to
-superwhisper / MacWhisper / VoiceInk, the difference is that the AI stays
-local and there is a meeting side and a visible learning loop; compared to
-Wispr Flow / Aqua Voice, your voice never leaves the machine and there is no
-subscription; Talon is far deeper for hands-free control, this is
-prose-first with LLM rewriting.
+What it is not: it is 0.x and a little rough. The smart parts need a model
+you supply. Setup is more involved than a menu-bar app. There is no Windows
+build, and on Wayland the global hotkey is best-effort. Next to
+superwhisper, MacWhisper, or VoiceInk, the differences are that it is built
+for local and self-hosted inference and there is a whole meeting side. Next
+to Wispr Flow or Aqua Voice, your audio is not going to a service and there
+is no subscription. Talon is far better than this if what you want is
+hands-free control of the machine; HoldSpeak is aimed at prose.
 
-Python, Apache-2.0, macOS and Linux. `pip install holdspeak` then
-`holdspeak doctor`. Repo: <REPO_URL>
+Python, Apache-2.0, macOS and Linux. `pip install holdspeak`, then
+`holdspeak doctor`. <REPO_URL>
 
-I would most like feedback on the two-modes framing (does one tool spanning
-dictation and meetings make sense to you, or should they be two projects?)
-and on the model-bring-your-own setup friction.
+Two questions I would genuinely like answers to: does one tool covering
+both dictation and meetings make sense to you, or are those two different
+products in a trenchcoat? And is bring-your-own-model too much friction to
+bother with?
 
 ---
 
 ## 3. lobste.rs
 
-**Title:** HoldSpeak: local dictation + meeting intelligence, you bring the LLM
+**Title:** HoldSpeak: local voice dictation and meeting notes, bring your own LLM
 
 **Tags:** audio, privacy, python, release
 
 **Body:**
 
-A local voice copilot with two modes, just tagged v0.3.0.
+I tagged v0.3.0 of HoldSpeak, a local dictation and meeting-notes tool.
+Two modes: hold a key and it types your speech into the focused app
+(optionally routing and rewriting it for a coding agent or terminal
+first), and meetings come back as decisions, action items, and open
+questions with a digest of what is still unresolved across them.
 
-Dictation: hold a key, speak, it types into the focused app; optionally
-route the speech by intent and rewrite it for a target (coding agent,
-terminal, editor) using a model you control. Meetings: capture or import
-audio and transcripts, get typed artifacts and an aftercare digest that
-tracks what is still open across meetings.
+The default path is local: Whisper runs on-device, and the LLM backend can
+be a local GGUF, MLX, or an OpenAI-compatible endpoint (a LAN box counts).
+That last option can point at a cloud service if you choose, so the precise
+claim is local-by-default, not local-only. Dictations are journaled and
+correctable, and you can replay one through the updated pipeline to see the
+routing change rather than trust that it did.
 
-Local by construction: Whisper on-device, and the LLM is GGUF in-process,
-MLX, or any OpenAI-compatible endpoint you choose (LAN endpoints included).
-No account or telemetry. Every dictation is journaled and correctable, and
-you can replay an utterance through the updated pipeline to see the routing
-change.
+It is honestly 0.x and aimed at people who will read a config file and run
+their own model. macOS and Linux, Apache-2.0. The README has trade-off
+comparisons with superwhisper, MacWhisper, VoiceInk, Wispr Flow, Aqua
+Voice, and Talon, including the cases where the other tool wins.
 
-It is honestly 0.x and developer-facing: assumes a shell, a config file,
-and that you will run a model or point at one. macOS and Linux, Apache-2.0.
-The README carries a date-stamped comparison section against the obvious
-alternatives, trade-offs in both directions.
-
-`pip install holdspeak`. Repo and docs: <REPO_URL>
+`pip install holdspeak`. <REPO_URL>
 
 ---
 
 ## 4. r/LocalLLaMA
 
-**Title:** HoldSpeak v0.3.0 — voice dictation + meeting notes that run on your own LLM endpoint
+**Title:** HoldSpeak v0.3.0: voice dictation and meeting notes that run on your own LLM endpoint
 
 **Body:**
 
-If you already run a local or LAN LLM, this plugs straight into it.
+If you already have a local or LAN model running, this is built to point at
+it.
 
-HoldSpeak is a local voice copilot with two modes. Dictation types into any
-app from a hotkey, and with the pipeline on it rewrites rough speech for its
-target using your model. Meetings (live capture or imported recordings and
-transcripts) come back as typed artifacts plus an aftercare digest.
+HoldSpeak does two things: types your speech into the focused app from a
+hotkey (and can rewrite the rough version for a coding agent using your
+model), and turns meetings, live or imported, into notes and a running list
+of open items. Whisper is on-device and the LLM is whichever backend you
+configure: in-process GGUF, MLX, or any OpenAI-compatible endpoint.
+Pointing it at your own llama.cpp, Ollama, or vLLM server is the intended
+setup, and `holdspeak doctor` will tell you whether it can actually reach
+the endpoint and model you configured.
 
-The LLM is entirely yours: GGUF in-process, MLX on Apple Silicon, or any
-OpenAI-compatible endpoint, so pointing it at your own llama.cpp / Ollama /
-vLLM server on the LAN is a first-class setup, not a workaround. Whisper
-runs on-device too. No account, no telemetry, and the meeting-intel egress
-posture is visible in `holdspeak doctor` (local stays local, and it tells
-you when a cloud endpoint is configured).
+No HoldSpeak account, no app telemetry. The network behavior is meant to be
+visible rather than taken on faith: local backends stay local, and doctor
+calls out when you have a cloud endpoint configured.
 
-New in 0.3.0: a wake word (local detection, previewed before it types),
-~99-language transcription, Send to Slack for meeting digests on an
-approval flow, and recording/transcript import into the full pipeline.
+New in 0.3.0 if you saw an earlier version: a local wake word that previews
+before it types, ~99-language transcription, Slack export for meeting
+digests behind an approval step, and importing recordings or transcripts
+you already have.
 
-0.x, developer-facing, macOS + Linux, Apache-2.0. `pip install holdspeak`,
-then `holdspeak doctor` to see it find your endpoint. Repo: <REPO_URL>
+I have mostly run it against `<tested model/backend>`; curious what people
+here would put behind it instead, and whether the intent-routing rewrite
+earns its place for dictation or just gets in the way.
 
-Curious what model + endpoint combos people would point this at, and whether
-the intent-routing rewrite is useful or just gets in the way for dictation.
+0.x, macOS and Linux, Apache-2.0. `pip install holdspeak`, then
+`holdspeak doctor`. <REPO_URL>
 
 ---
 
-## Posting notes (for the owner)
+## On the demo GIF
 
-- Replace `<REPO_URL>` with the public repo link.
-- The honest-comparison and "0.x, here is what it is not" paragraphs are
-  load-bearing for these audiences; keep them even when trimming for length.
-- Post the GitHub release first (it is the canonical link the others point
-  at), then the rest at your own pace.
-- A README demo GIF was attempted this phase; see the story-03 evidence for
-  the outcome and the honest fallback.
+Skipped, deliberately. The moment worth showing is speaking and watching
+text land in a real editor, which is a one-take screencast with real audio.
+A staged or sped-up fake would be less useful than the real thing, and the
+README already carries real product screenshots. A screencast is a good
+thing to record by hand when there is a quiet minute.
+
+## What Codex flagged (incorporated)
+
+A second-pass review (`codex exec`, feedback in
+`/tmp/codex-fdb-human-starterkit.md`) caught the load-bearing problem: the
+first draft overclaimed "nothing leaves your machine" while the release
+ships Slack export, a model download, and remote-endpoint support. That is
+now precise everywhere (local-by-default, not local-only). Also cut on its
+advice: "typed artifacts", "local by construction", "meeting-intel egress",
+and most repeated uses of "copilot" (kept once, in the canonical lead, per
+the owner's positioning decision). The `<tested model/backend>` placeholder
+in the r/LocalLLaMA post is left for the owner to fill with a real setup or
+cut, rather than invent one.
