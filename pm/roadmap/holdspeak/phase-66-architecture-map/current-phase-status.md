@@ -1,12 +1,17 @@
 # Phase 66 — The Architecture Map
 
-**Status:** in progress (3/4). Opened 2026-06-13 on owner direction (a
+**Status:** CLOSED (4/4). Opened 2026-06-13 on owner direction (a
 dedicated phase for pipeline architecture and Mermaid diagrams). There is
 no system-overview doc today and three Mermaid blocks in the whole corpus;
 this builds the map a developer hits first, with diagrams that render and a
 guard that keeps them rendering.
 
-**Last updated:** 2026-06-13 (**HS-66-03 done:** two more diagrams — the
+**Last updated:** 2026-06-13 (**HS-66-04 done — phase CLOSED 4/4:** all six
+diagrams re-verified to render (the device sequence's agent-reply alt branch
+included); the map wired into the README ("how it works, with diagrams")
+and CONTRIBUTING (the runtime view; the two structure docs beneath it).
+Final suite **2779 passed, 17 skipped**; see [final-summary.md](./final-summary.md);
+PR merged on green. Prior: **HS-66-03 done:** two more diagrams — the
 meeting pipeline (capture/import -> windowed transcribe -> routing -> plugin
 host -> artifacts -> aftercare -> the two approve-gated proposals) and the
 trust boundary (a "Your machine" box with all seven egress crossings drawn
@@ -73,9 +78,10 @@ index, CONTRIBUTING, and a README pointer.
 | HS-66-01 | The system map + the diagram render guard | done | none |
 | HS-66-02 | The dictation pipeline, diagrammed | done | HS-66-01 |
 | HS-66-03 | The meeting pipeline + the trust boundary, diagrammed | done | HS-66-01 |
-| HS-66-04 | Closeout: render re-verify + wiring + final-summary | backlog | HS-66-01..03 |
+| HS-66-04 | Closeout: render re-verify + wiring + final-summary | done | HS-66-01..03 |
 
 ## Where we are
 
-All diagrams are drawn (6 blocks). Next is **HS-66-04 — closeout**:
-render re-verify + index/CONTRIBUTING/README wiring + final-summary.
+CLOSED 4/4. docs/ARCHITECTURE.md has the system map, both pipelines, and
+the trust boundary, all rendering and guard-protected, wired into the
+index/README/CONTRIBUTING. See [final-summary.md](./final-summary.md).

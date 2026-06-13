@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 66
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-66-01, HS-66-02, HS-66-03
 - **Unblocks:** phase exit
 - **Owner:** unassigned
@@ -20,9 +20,11 @@ map is discoverable.
 - **Out:** new diagrams.
 
 ## Acceptance criteria
-- [ ] Render re-verification recorded for every block.
-- [ ] Index + CONTRIBUTING + README point at the map.
-- [ ] Full suite + voice guard green; final-summary; PR merged on green.
+- [x] Render re-verification recorded for every block.
+- [x] Index + CONTRIBUTING + README point at the map.
+- [x] Full suite + voice guard green; final-summary; PR merged on green.
+
+      See `evidence-story-04.md`.
 
 ## Test plan
 - The render guard + a manual GitHub-preview pass; the full suite.
