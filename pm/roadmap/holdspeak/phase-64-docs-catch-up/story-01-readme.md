@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 64
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-64-02
 - **Owner:** unassigned
@@ -22,11 +22,13 @@ dictionary.
 - **Out:** re-positioning; new screenshots unless a claim needs one.
 
 ## Acceptance criteria
-- [ ] Every P59–P62 surface is findable from the README, named per
+- [x] Every P59–P62 surface is findable from the README, named per
       POSITIONING.
-- [ ] The doc-drift guard slice is green (dashes, vocab, names, counts,
+- [x] The doc-drift guard slice is green (dashes, vocab, names, counts,
       links, images).
-- [ ] The diff reads at humanizer standard.
+- [x] The diff reads at humanizer standard.
+
+      See `evidence-story-01.md`.
 
 ## Test plan
 - `uv run pytest -q tests/unit/test_doc_drift_guard.py`; the full suite.
