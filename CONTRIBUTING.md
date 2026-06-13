@@ -47,6 +47,11 @@ budgets a guard test enforces. Before changing `web_runtime.py` or
 — the backend twin: the mixin pattern, where patch targets live, and the
 backend density budgets.
 
+For the runtime view — how the pieces connect and how an utterance flows
+through them, with diagrams — start at
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); the two docs above are the
+module-structure detail beneath it.
+
 ## Commit workflow
 
 This repo gates every commit on a small "commit contract" via a pre-commit hook
