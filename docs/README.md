@@ -13,6 +13,11 @@ including the LLM. This page is the map. Pick a journey.
 - **[Getting Started](./GETTING_STARTED.md)**: install, grant permissions, and land
   your first hold-to-talk dictation in another app.
 
+## Understand the system
+
+- **[Architecture](./ARCHITECTURE.md)**: how the pieces fit and how a single
+  utterance flows through them, with diagrams. The map to read before the code.
+
 ## Dictate: voice typing and the intelligent copilot
 
 - **[User Guide](./USER_GUIDE.md)**: the day-to-day. Workflows, the web runtime, and

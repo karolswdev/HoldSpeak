@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 66
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-66-02, HS-66-03, HS-66-04
 - **Owner:** unassigned
@@ -23,11 +23,13 @@ fit, and nothing stops a broken Mermaid diagram from shipping.
 - **Out:** the pipeline-detail diagrams (HS-66-02/03).
 
 ## Acceptance criteria
-- [ ] `docs/ARCHITECTURE.md` exists with the overview + the component
+- [x] `docs/ARCHITECTURE.md` exists with the overview + the component
       diagram, traced against real module names.
-- [ ] The guard fails on a deliberately broken block and passes on the
+- [x] The guard fails on a deliberately broken block and passes on the
       shipped ones (both proven); CI-skip-clean.
-- [ ] GitHub render confirmed; voice guard + full suite green.
+- [x] GitHub render confirmed; voice guard + full suite green.
+
+      See `evidence-story-01.md`.
 
 ## Test plan
 - The render guard both ways; the doc guard; the full suite.

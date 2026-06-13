@@ -1,12 +1,19 @@
 # Phase 66 — The Architecture Map
 
-**Status:** scaffolded (0/4). Opened 2026-06-13 on owner direction (a
+**Status:** in progress (1/4). Opened 2026-06-13 on owner direction (a
 dedicated phase for pipeline architecture and Mermaid diagrams). There is
 no system-overview doc today and three Mermaid blocks in the whole corpus;
 this builds the map a developer hits first, with diagrams that render and a
 guard that keeps them rendering.
 
-**Last updated:** 2026-06-13 (scaffolded — verified: no top-level
+**Last updated:** 2026-06-13 (**HS-66-01 done:** `docs/ARCHITECTURE.md` is
+born with the orienting overview + the top-level component diagram (traced
+against the shipped post-decomposition modules, rendered + eyeballed), and
+the Mermaid render guard (`tests/e2e/test_mermaid_renders.py`, mmdc-backed,
+CI-skippable) is proven both ways. The voice guard caught HS-ID
+placeholders leaking into the user-facing doc; rewritten as product-tense
+section intros. Docs index gained an "Understand the system" pointer.
+Suite **2779 passed, 17 skipped** (+2). Earlier: scaffolded — verified: no top-level
 architecture doc; the two internal ARCHITECTURE_* docs are module-structure
 not data-flow; mermaid renders natively on GitHub; mmdc 11.15.0 available
 via npx for a real render guard.)
@@ -50,11 +57,12 @@ index, CONTRIBUTING, and a README pointer.
 
 | Story | Title | Status | Depends on |
 |---|---|---|---|
-| HS-66-01 | The system map + the diagram render guard | backlog | none |
+| HS-66-01 | The system map + the diagram render guard | done | none |
 | HS-66-02 | The dictation pipeline, diagrammed | backlog | HS-66-01 |
 | HS-66-03 | The meeting pipeline + the trust boundary, diagrammed | backlog | HS-66-01 |
 | HS-66-04 | Closeout: render re-verify + wiring + final-summary | backlog | HS-66-01..03 |
 
 ## Where we are
 
-Scaffolded. Next is **HS-66-01 — the system map + the diagram render guard**.
+The map and the guard exist. Next is **HS-66-02 — the dictation pipeline,
+diagrammed**.
