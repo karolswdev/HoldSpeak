@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 65
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-65-04
 - **Owner:** unassigned
@@ -21,9 +21,11 @@ the owner can publish without rewriting.
 - **Out:** posting anything (the owner's button).
 
 ## Acceptance criteria
-- [ ] Four drafts in canon voice, humanizer standard.
-- [ ] The GIF shipped only if it clears the quality bar, else the
+- [x] Four drafts in canon voice, humanizer standard.
+- [x] The GIF shipped only if it clears the quality bar, else the
       fallback is recorded honestly.
+
+      See `evidence-story-03.md`.
 
 ## Test plan
 - Humanizer read; the voice rules applied by hand (pm/ is unguarded).

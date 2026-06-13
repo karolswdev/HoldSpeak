@@ -1,11 +1,19 @@
 # Phase 65 — The Launch
 
-**Status:** in progress (2/4). Opened 2026-06-13 on owner direction ("Let's
+**Status:** in progress (3/4). Opened 2026-06-13 on owner direction ("Let's
 launch!"): cut v0.3.0 through the existing tag-triggered trusted-publishing
 machinery, behind a real pre-flight, with the announcement kit drafted for
 the owner.
 
-**Last updated:** 2026-06-13 (**HS-65-02 done:** pyproject → 0.3.0; the
+**Last updated:** 2026-06-13 (**HS-65-03 done:** the announcement kit —
+GitHub release notes + Show HN / lobste.rs / r/LocalLLaMA drafts, all in
+canon voice (one copilot two modes / developers / named honest
+comparisons / honest 0.x limits), `<REPO_URL>` left for the owner, posting
+explicitly the owner's button. The demo GIF took the documented honest
+fallback: the speak-and-type hero moment needs real audio + a real target
+app + a screencast (a one-take manual capture), and a staged fake would
+break the honesty bar — the README's existing real screenshots + the pixel
+loop carry the visual story. Prior: **HS-65-02 done:** pyproject → 0.3.0; the
 CHANGELOG [0.3.0] entry summarizes P51–P64 in canon voice; no stale version
 claims in prose. The wheel built exactly as release.yml does it (194
 `static/_built/` entries; twine check PASSED) installs clean in a fresh venv
@@ -62,11 +70,11 @@ announcement drafts in the owner's hands.
 |---|---|---|---|
 | HS-65-01 | Pre-flight: every route loads clean | done | none |
 | HS-65-02 | The release cut | backlog | HS-65-01 |
-| HS-65-03 | The announcement kit | backlog | none |
+| HS-65-03 | The announcement kit | done | none |
 | HS-65-04 | Closeout: tag, publish, verify | backlog | HS-65-01..03 |
 
 ## Where we are
 
-0.3.0 cut and install-proven on macOS + .43. Next is **HS-65-03 — the
-announcement kit** (release notes + Show HN / lobste.rs / r/LocalLLaMA
-drafts in canon voice).
+Pre-flight, cut, and kit all done. Next is **HS-65-04 — closeout**: merge
+on green, then tag v0.3.0 on the merge commit → trusted publishing →
+verify `pip install holdspeak==0.3.0` from PyPI.
