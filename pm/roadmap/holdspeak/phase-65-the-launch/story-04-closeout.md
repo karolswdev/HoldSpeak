@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 65
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-65-01, HS-65-02, HS-65-03
 - **Unblocks:** phase exit
 - **Owner:** unassigned
@@ -20,10 +20,12 @@ everything else is green.
 - **Out:** the announcements (handed off, not posted).
 
 ## Acceptance criteria
-- [ ] Workflow green; PyPI serves 0.3.0; the from-PyPI install proof
+- [x] Workflow green; PyPI serves 0.3.0; the from-PyPI install proof
       recorded.
-- [ ] GitHub release live with the notes.
-- [ ] final-summary; cadence; memory.
+- [x] GitHub release live with the notes.
+- [x] final-summary; cadence; memory.
+
+      See `evidence-story-04.md`.
 
 ## Test plan
 - The from-PyPI install proof is the test.
