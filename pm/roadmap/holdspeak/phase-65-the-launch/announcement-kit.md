@@ -177,6 +177,62 @@ gets in the way.
 
 ---
 
+## 5. LinkedIn
+
+**Note:** LinkedIn wants more confidence and a stronger hook than the dev
+forums, so this one leads with the gadget and is talked up. No "thrilled to
+announce," no emoji wall, no hashtag soup, and no "cost of lunch" filler.
+The honest 0.x line and the precise network claims stay, because that is
+the difference between confident and cringe. ("copilot" is the canonical
+positioning word; swap it for "voice tool" if it reads me-too in your
+feed.) Hashtags are optional and at the bottom; cut them if you would
+rather.
+
+**Body:**
+
+Plenty of voice tools get good by sending your audio to a cloud service. I
+spent the last stretch building one that does not have to, and then got it
+talking to a $30 gadget.
+
+HoldSpeak v0.3.0 is out: a local-first voice copilot with two modes.
+Whisper transcribes on-device, and for the LLM you pick the backend: a
+local GGUF, MLX on Apple Silicon, or any OpenAI-compatible endpoint,
+including a box already on your LAN.
+
+Dictation: hold a key, talk, and it types into whatever app you are in.
+Turn on the pipeline and it can route rough speech by intent, use the
+project you are in as context, and rewrite it for the destination: a coding
+agent, the terminal, or your editor.
+
+Meetings: record one or import an existing recording, and get back
+decisions, action items, open questions, and risks, plus a digest of what
+is still unresolved. Run it against a local model and that all stays on
+your machine; point it at a remote endpoint and that is a choice you make,
+not a default.
+
+The part I did not expect to like this much: flash an off-the-shelf
+ESP32-S3 board (about $30), put it and your machine on the same Wi-Fi (your
+home network, or just a phone hotspot when you are out), and you can speak
+to it from across the room while HoldSpeak hands what you said to a coding
+agent running on your laptop. A physical voice remote for a dev
+environment, built from a commodity board instead of a new subscription.
+
+No HoldSpeak account, no telemetry, and the network use is called out in
+`holdspeak doctor` rather than hidden.
+
+It is 0.x and still rough in places, macOS and Linux only for now, and you
+bring your own model. But it is real and you can install it today:
+`pip install holdspeak`.
+
+github.com/karolswdev/HoldSpeak
+
+If you live in a terminal and care where your voice goes, I would genuinely
+like your eyes on it.
+
+*(optional tags: #LocalFirst #DeveloperTools #VoiceInterfaces #OpenSource)*
+
+---
+
 ## On the demo GIF
 
 Skipped, deliberately. The moment worth showing is speaking and watching
