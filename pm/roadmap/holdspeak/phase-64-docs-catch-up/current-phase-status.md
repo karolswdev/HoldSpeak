@@ -1,11 +1,16 @@
 # Phase 64 — Docs Catch-Up
 
-**Status:** in progress (1/3). Opened 2026-06-13 on owner direction ("Feels
+**Status:** in progress (2/3). Opened 2026-06-13 on owner direction ("Feels
 like a docs phase is on the books again, no?"). Phase 58 fixed the story;
 six phases shipped since, each documenting itself deep in its own guide —
 and the front door never caught up.
 
-**Last updated:** 2026-06-13 (**HS-64-01 done:** the README's two-modes
+**Last updated:** 2026-06-13 (**HS-64-02 done:** the index blurbs name the
+P59–P62 surface, Getting Started gains a four-pointer "Where To Go Next"
+(anchor-linked), and the coherence read found the deep guides already read
+as one document (the per-phase docs stories held the line) — zero
+retired-pattern or stale-version hits across the corpus. Guard 13 green;
+suite 2775/17. Prior: **HS-64-01 done:** the README's two-modes
 tour absorbs the wake word (preview-default framing), the spoken language
 setting, the spoken-symbol dictionary, and Send to Slack; the local pillar
 notes the 99 languages; and a real find got fixed — the Meet Qlippy
@@ -53,10 +58,10 @@ solo-written sections, and the locks stay green.
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HS-64-01 | The README catches up | done | none |
-| HS-64-02 | The index + Getting Started + the coherence read | backlog | HS-64-01 |
+| HS-64-02 | The index + Getting Started + the coherence read | done | HS-64-01 |
 | HS-64-03 | Closeout | backlog | HS-64-01..02 |
 
 ## Where we are
 
-The front door is current. Next is **HS-64-02 — the index + Getting
-Started + the coherence read**.
+Entry points current, corpus coherent. Next is **HS-64-03 — closeout**
+(the embedded-image audit, final-summary, PR).

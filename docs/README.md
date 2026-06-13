@@ -16,7 +16,9 @@ including the LLM. This page is the map. Pick a journey.
 ## Dictate: voice typing and the intelligent copilot
 
 - **[User Guide](./USER_GUIDE.md)**: the day-to-day. Workflows, the web runtime, and
-  how the two halves (typing and meetings) fit together.
+  how the two halves (typing and meetings) fit together. Also home to the wake
+  word (hands-free entry, previewed before it types), the spoken language
+  setting (any of Whisper's 99 languages), and the spoken-symbol dictionary.
 - **[Intelligent Typing Setup](./INTELLIGENT_TYPING_GUIDE.md)**: the project-aware
   pipeline. Intent routing, project-facts enrichment, target profiles, LLM rewriting.
 - **[Project knowledge: facts + context](./INTELLIGENT_TYPING_GUIDE.md#5-set-up-project-knowledge)**:
@@ -56,7 +58,8 @@ including the LLM. This page is the map. Pick a journey.
   actions, and artifacts at `/history`, then close the loop with aftercare: see
   what is still open, decided, or changed since last time, jump to the transcript
   moment that justifies a result, file an accepted action as a human-approved
-  issue, and draft the follow-up. Import recordings and transcripts you
+  issue, draft the follow-up, or send the digest to your team with Send to
+  Slack (every send is a proposal you approve). Import recordings and transcripts you
   already have (web upload or `holdspeak import`; vtt and srt keep their real
   timestamps and speaker names) and filter the archive by date, speaker, tag,
   and open actions.

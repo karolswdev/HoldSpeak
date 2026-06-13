@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 64
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-64-01
 - **Unblocks:** HS-64-03
 - **Owner:** unassigned
@@ -22,9 +22,11 @@ guide sections were each written solo and have seams.
 - **Out:** rewriting current, accurate sections.
 
 ## Acceptance criteria
-- [ ] The index + Getting Started point at every major current surface.
-- [ ] The coherence read's findings + fixes are listed in evidence.
-- [ ] Guard slice + full suite green.
+- [x] The index + Getting Started point at every major current surface.
+- [x] The coherence read's findings + fixes are listed in evidence.
+- [x] Guard slice + full suite green.
+
+      See `evidence-story-02.md`.
 
 ## Test plan
 - The doc guard slice; the full suite.
