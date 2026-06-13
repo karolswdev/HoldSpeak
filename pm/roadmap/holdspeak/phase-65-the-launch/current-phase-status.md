@@ -1,11 +1,19 @@
 # Phase 65 — The Launch
 
-**Status:** scaffolded (0/4). Opened 2026-06-13 on owner direction ("Let's
+**Status:** in progress (1/4). Opened 2026-06-13 on owner direction ("Let's
 launch!"): cut v0.3.0 through the existing tag-triggered trusted-publishing
 machinery, behind a real pre-flight, with the announcement kit drafted for
 the owner.
 
-**Last updated:** 2026-06-13 (scaffolded — ground truth: PyPI at 0.2.2, the
+**Last updated:** 2026-06-13 (**HS-65-01 done:** the all-routes pre-flight
+(11 page routes in Chromium, zero-page-error per route; a coverage guard so
+no new page escapes; CI-skip-clean) — and it paid off instantly, catching
+TWO dead-on-arrival bugs no dogfood had reached: `/activity`'s JS had a
+spurious leading `<script>` tag (dead since HS-9/10 — the page never ran
+`load()`, a static shell for ~55 phases; fixed, now fires all 5 API calls)
+and `/companion`'s x-for read `status.blockers` while status was null on
+first paint (fixed with optional chaining). Suite **2777 passed, 17
+skipped** (+2). Earlier: scaffolded — ground truth: PyPI at 0.2.2, the
 release workflow proven by the 0.2.x cuts, CI has no Playwright, the .43
 rig alive.)
 
@@ -45,11 +53,12 @@ announcement drafts in the owner's hands.
 
 | Story | Title | Status | Depends on |
 |---|---|---|---|
-| HS-65-01 | Pre-flight: every route loads clean | backlog | none |
+| HS-65-01 | Pre-flight: every route loads clean | done | none |
 | HS-65-02 | The release cut | backlog | HS-65-01 |
 | HS-65-03 | The announcement kit | backlog | none |
 | HS-65-04 | Closeout: tag, publish, verify | backlog | HS-65-01..03 |
 
 ## Where we are
 
-Scaffolded. Next is **HS-65-01 — pre-flight**.
+Pre-flight green (two latent page bugs fixed). Next is **HS-65-02 — the
+release cut** (version, changelog, fresh-venv install proofs).

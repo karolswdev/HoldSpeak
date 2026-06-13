@@ -146,7 +146,7 @@ import AppLayout from "../layouts/AppLayout.astro";
         </div>
       </div>
       <div class="blocker-list" x-show="status?.blockers?.length" x-cloak>
-        <template x-for="blocker in status.blockers" :key="blocker">
+        <template x-for="blocker in (status?.blockers || [])" :key="blocker">
           <span class="blocker" x-text="blockerLabel(blocker)"></span>
         </template>
       </div>

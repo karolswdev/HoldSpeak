@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 65
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-65-02, HS-65-04
 - **Owner:** unassigned
@@ -20,10 +20,12 @@ about to install this.
 - **Out:** per-page behavior tests (exists elsewhere).
 
 ## Acceptance criteria
-- [ ] The sweep covers every route in the built app (enumerated, not
+- [x] The sweep covers every route in the built app (enumerated, not
       hand-listed where possible).
-- [ ] Local run green (or finds fixed + rerun green); CI skip-clean.
-- [ ] Full suite green.
+- [x] Local run green (or finds fixed + rerun green); CI skip-clean.
+- [x] Full suite green.
+
+      See `evidence-story-01.md`.
 
 ## Test plan
 - The sweep itself + the full suite.
