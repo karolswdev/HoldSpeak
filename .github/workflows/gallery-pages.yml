@@ -1,0 +1,40 @@
+name: Product gallery (GitHub Pages)
+
+# Publishes the standalone product gallery (gallery/) to GitHub Pages.
+# It's a static folder (index.html + assets) — no build step. Deploys on a push to
+# main that touches gallery/, or on demand.
+on:
+  push:
+    branches: [main]
+    paths: ["gallery/**", ".github/workflows/gallery-pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One in-flight Pages deploy at a time; let a newer push supersede an older run.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true   # auto-enable Pages (source: Actions) if not yet on
+      - name: Upload the gallery as the Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: gallery
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
