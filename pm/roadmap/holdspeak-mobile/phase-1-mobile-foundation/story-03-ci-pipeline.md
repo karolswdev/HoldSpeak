@@ -2,10 +2,22 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 1
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** HSM-1-01
 - **Unblocks:** HSM-1-04
 - **Owner:** unassigned
+
+## Progress (2026-06-18)
+
+`.github/workflows/holdspeak-mobile-ci.yml` authored: a `swift` job (macOS runner)
+running the layer grep-guard + `swift build` + `swift test`, and a `contracts`
+job running the Python validator over the golden fixtures. YAML validated; **every
+step verified green locally** (build complete, 5/5 tests, validator ALL CHECKS
+PASSED, layer guard pass). Stays in-progress until it runs **green on a real
+hosted run** (needs a push to GitHub — the only thing blocking phase close).
+Optional enhancement noted: add `xcodebuild -destination` sim-destination test
+runs (the round-trip tests are platform-agnostic, so host `swift test` is a valid
+proxy today).
 
 ## Problem
 

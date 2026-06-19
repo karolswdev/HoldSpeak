@@ -1,0 +1,52 @@
+name: holdspeak-mobile CI
+
+# Phase 1 / HSM-1-03: build + test the Apple Swift package and re-validate the
+# Phase-0 contracts. Scoped to the mobile work so it never gates the Python repo.
+on:
+  push:
+    paths:
+      - "apple/**"
+      - "pm/roadmap/holdspeak-mobile/contracts/**"
+      - ".github/workflows/holdspeak-mobile-ci.yml"
+  pull_request:
+    paths:
+      - "apple/**"
+      - "pm/roadmap/holdspeak-mobile/contracts/**"
+
+jobs:
+  swift:
+    name: Swift package (build + test + layer guard)
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: apple
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Swift version
+        run: swift --version
+
+      - name: Layer rule — core layers import no UI
+        run: |
+          if grep -rn -E "import (SwiftUI|UIKit|WebKit)" Sources/Contracts Sources/RuntimeCore Sources/Providers; then
+            echo "::error::A core layer imports a UI framework (charter layer rule)"; exit 1
+          fi
+          echo "core layers are UI-free"
+
+      - name: Build
+        run: swift build
+
+      - name: Test (round-trips the Phase-0 fixtures)
+        run: swift test
+
+  contracts:
+    name: Contract schemas (Python validator)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Validate schemas against the golden fixtures
+        run: |
+          uv run --with jsonschema python \
+            pm/roadmap/holdspeak-mobile/contracts/validate.py
