@@ -33,6 +33,22 @@ The `Contracts` types are written against
 (the schemas + serialization contract + golden fixtures). The tests read those
 same fixtures, so the Swift and Python runtimes are validated against one source.
 
+### Launch the shell on a device
+
+```bash
+# Simulator (Gate 1, no signing): iPhone + iPad simulators, screenshots each.
+scripts/gate1-launch.sh
+
+# Physical device (Gate 1 on real metal): build → sign → install → launch via
+# devicectl. Auto-selects a connected iPad. One-time prereqs (all persist):
+#   Xcode > Settings > Accounts signed in · latest Apple Developer PLA accepted ·
+#   Developer Mode on the device · the device registered in the account.
+scripts/gate1-device.sh [device-udid]
+```
+
+`gate1-device.sh` calls `gen-device-project.rb` to generate a signed iOS app
+project under `build/` (gitignored). Override the signing team with `HS_TEAM=…`.
+
 ## Status
 
 Phase 1 (Mobile Foundation): the SPM package + `Contracts` types are in
