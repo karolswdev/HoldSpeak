@@ -5,6 +5,8 @@ engine = llama.cpp+GGUF**; **HSM-5-06 — endpoint provider (Modes B/C) + mode
 setting — host/live-proven, device build+install done, on-device launch pending
 the iPad unlock**; **HSM-5-02 — `LlamaProvider` (llama.cpp/Mode A) host-proven on
 Metal, iPad airplane-mode run pending the unlock**; HSM-5-03 in-progress; HSM-5-05
+**HSM-5-03 — model packaging both delivery paths host-proven (Files sideload +
+Hugging Face download), iPad clean-install pending the unlock**; HSM-5-05
 device-gated). Track F
 of the Council Implementation Charter. The phase
 that lights up Mode A (Fully Local): it delivers the on-device `ILLMProvider`
@@ -12,8 +14,17 @@ that lights up Mode A (Fully Local): it delivers the on-device `ILLMProvider`
 It also resolves the Phase-0 deferred decision — which inference engine the mobile
 runtime stands on.
 
-**Last updated:** 2026-06-19 (**HSM-5-02 — the on-device (Mode A) engine, host-proven
-on Metal.** `LlamaProvider` (an `ILLMProvider` backed by **llama.cpp via LLM.swift**,
+**Last updated:** 2026-06-19 (**HSM-5-03 — model packaging: both delivery paths
+host-proven.** A `ModelCatalog` pins the per-tier GGUFs (4B Llama-3.2-3B / 8B
+Llama-3.1-8B / 12B+ Mistral-Nemo, all Q4_K_M; HF URLs verified live), a Foundation
+`ModelStore` is the model manager (list / **Files-sideload import** / delete /
+per-device `resolveActive`), and a Foundation `ModelDownloader` does the **Hugging
+Face download** by canonical resolve-URL with real progress (LLM.swift's built-in
+HF scraper is broken against current HF, so we download by pinned URL). `swift test`
+**62/62** (6 opt-in skips) incl. store/catalog tests; the real download is proven by
+an opt-in test (TinyLlama 0→100% → load → complete). `push-model-device.sh` adds the
+`devicectl` dev path. Remaining: the iPad clean-install first-run (unlock). Earlier:
+**HSM-5-02 — the on-device (Mode A) engine, host-proven on Metal.** `LlamaProvider` (an `ILLMProvider` backed by **llama.cpp via LLM.swift**,
 the HSM-5-01 pick) loads a GGUF by path and completes with no network. Proven on this
 Mac's Metal against **Qwen2.5-7B Q4_K_M**: a completion (`PONG`, ~8.5s incl. cold load)
 and a full **fully-local** run (transcript → `LlamaProvider` → `ArtifactGenerationEngine`
@@ -101,7 +112,7 @@ on Tier-1 hardware.
 |---|---|---|---|---|
 | HSM-5-01 | Engine evaluation & pick | done | [story-01](./story-01-engine-evaluation.md) | [evidence-01](./evidence-story-01.md) |
 | HSM-5-02 | `ILLMProvider` impl + Mode A | in-progress (host-proven; iPad run pending unlock) | [story-02](./story-02-llm-provider-impl.md) | in story (host Metal proof) |
-| HSM-5-03 | Model packaging & per-device defaults | in-progress | [story-03](./story-03-model-packaging-strategy.md) | — |
+| HSM-5-03 | Model packaging & per-device defaults | in-progress (sideload + HF download host-proven; iPad install pending) | [story-03](./story-03-model-packaging-strategy.md) | in story (host proof) |
 | HSM-5-04 | Structured / JSON output | done | [story-04](./story-04-structured-output.md) | [evidence-04](./evidence-story-04.md) |
 | HSM-5-05 | 30-minute meeting closeout (Gate 4) | backlog | [story-05](./story-05-thirty-minute-meeting-closeout.md) | — |
 | HSM-5-06 | Endpoint provider (Modes B/C) + mode setting | in-progress | [story-06](./story-06-endpoint-provider.md) | in story (evidence-06 on `done`) |
