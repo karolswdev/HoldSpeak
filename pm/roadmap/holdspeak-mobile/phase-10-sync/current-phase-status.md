@@ -66,7 +66,7 @@ local-first; it never acts autonomously.
 | HSM-10-01 | Sync provider + object model | done | [story-01](./story-01-sync-provider-object-model.md) | [evidence-01](./evidence-story-01.md) |
 | HSM-10-02 | Transport targets | done (both sides) | [story-02](./story-02-transport-targets.md) | [evidence-02](./evidence-story-02.md) |
 | HSM-10-03 | Conflict + round-trip | done | [story-03](./story-03-conflict-and-roundtrip.md) | [evidence-03](./evidence-story-03.md) |
-| HSM-10-04 | Continuity closeout (Gate 6) | backlog | [story-04](./story-04-continuity-closeout.md) | — |
+| HSM-10-04 | Continuity closeout (Gate 6) | in-progress (SyncCoordinator orchestration host-proven; live device walkthrough pending) | [story-04](./story-04-continuity-closeout.md) | in story |
 
 ## Where we are
 
