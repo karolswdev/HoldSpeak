@@ -1,20 +1,26 @@
 # Phase 5 — Local Inference
 
-**Status:** in-progress (HSM-5-04 done 2026-06-18; HSM-5-01/02/03 in-progress;
-HSM-5-05 device-gated). Track F of the Council Implementation Charter. The phase
+**Status:** in-progress (HSM-5-04 done 2026-06-18; **HSM-5-01 done 2026-06-19 —
+engine = llama.cpp+GGUF**; HSM-5-02/03 in-progress; HSM-5-05 device-gated). Track F
+of the Council Implementation Charter. The phase
 that lights up Mode A (Fully Local): it delivers the on-device `ILLMProvider`
 (Layer 3) so a meeting can go Audio → Whisper → LLM → Artifacts with no network.
 It also resolves the Phase-0 deferred decision — which inference engine the mobile
 runtime stands on.
 
-**Last updated:** 2026-06-18 (**HSM-5-04 done + host slice landed** — the
-structured-output plumbing (`StructuredOutput`: extract JSON from messy model
-text → decode through the contract `Codable` → bounded repair-retry) and the
-per-device LLM model policy (`InferenceModelPolicy`: iPhone→4B / iPad→8B, 12B+
-plugged-in-only) are host-tested (`swift test` **24/24**). The engine pick
-(HSM-5-01), the engine-backed `ILLMProvider` (HSM-5-02), the model packaging half
-of HSM-5-03, and the 30-min local gate (HSM-5-05) are device/dep. Earlier:
-pre-grounded by the owner's inference brief
+**Last updated:** 2026-06-19 (**HSM-5-01 done — engine = `llama.cpp` + GGUF**, a
+banked decision from the research canon (not a bake-off, per the owner's no-spikes
+directive); resolves the Phase-0 Track-F deferral. Decisive axis: off-the-shelf
+4B/8B GGUF availability (no Core ML conversion / MLC compile); mature Metal; a C
+API behind the existing `ILLMProvider` port → reversible. Named models
+`Llama-3.2-3B` (Tier-1) + `Llama-3.1-8B` (Tier-2) Q4_K_M GGUF; MLX is the fallback.
+**HSM-5-02 next** — wire llama.cpp + run a GGUF completion on the connected iPad
+Air M4 (the iPad's first real on-device inference; unblocks HSM-6-05). Earlier:
+**HSM-5-04 done + host slice** — the structured-output plumbing (`StructuredOutput`:
+extract JSON from messy model text → decode through the contract `Codable` →
+bounded repair-retry) and the per-device LLM model policy (`InferenceModelPolicy`:
+iPhone→4B / iPad→8B, 12B+ plugged-in-only) are host-tested (`swift test` **24/24**).
+Earlier: pre-grounded by the owner's inference brief
 ([`../research/inference-on-apple.md`](../research/inference-on-apple.md)) — candidate
 set Core ML / llama.cpp+GGUF / MLC-LLM, 4-bit PTQ default, per-device tiers.).
 
@@ -67,7 +73,7 @@ on Tier-1 hardware.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HSM-5-01 | Engine evaluation & pick | in-progress | [story-01](./story-01-engine-evaluation.md) | — |
+| HSM-5-01 | Engine evaluation & pick | done | [story-01](./story-01-engine-evaluation.md) | [evidence-01](./evidence-story-01.md) |
 | HSM-5-02 | `ILLMProvider` impl + Mode A | in-progress | [story-02](./story-02-llm-provider-impl.md) | — |
 | HSM-5-03 | Model packaging & per-device defaults | in-progress | [story-03](./story-03-model-packaging-strategy.md) | — |
 | HSM-5-04 | Structured / JSON output | done | [story-04](./story-04-structured-output.md) | [evidence-04](./evidence-story-04.md) |
@@ -81,13 +87,15 @@ turns messy model text into validated contract values with a bounded repair-retr
 (tested with a fake provider, 24/24). The **per-device model policy**
 (`InferenceModelPolicy`, part of HSM-5-03) is done + tested (iPhone→4B / iPad→8B,
 12B+ plugged-in-only). The candidate set is fixed (Core ML / llama.cpp+GGUF /
-MLC-LLM; Ollama/vLLM Mode-B/C). What remains is genuinely device/dep: the
-**measured engine pick** (HSM-5-01 — needs the engines + models on a Tier-1
-device), the **engine-backed `ILLMProvider`** (HSM-5-02) + **model packaging**
-(HSM-5-03's other half), and the **30-min local gate** (HSM-5-05). Next authorable
-step is Phase 6 (Meeting Intelligence) — its artifact-generation engine consumes
-this `ILLMProvider`/`StructuredOutput` seam, and the substance-based parity harness
-is host-testable.
+MLC-LLM; Ollama/vLLM Mode-B/C). **HSM-5-01 is now done — the engine is
+`llama.cpp` + GGUF** (banked from the canon, not a bake-off, per the owner's
+no-spikes directive; named models `Llama-3.2-3B`/`Llama-3.1-8B` Q4_K_M GGUF). Phase
+6 (Meeting Intelligence) is built on this seam (6-01/02/03/04 done). What remains is
+device/dep: the **engine-backed `ILLMProvider`** (HSM-5-02 — wire llama.cpp, bridge
+the C API, run a GGUF completion on the connected iPad Air M4), **model packaging**
+(HSM-5-03's other half), and the **30-min local gate** (HSM-5-05). **HSM-5-02 is the
+next thrust** — it's the first time the iPad actually runs a model, and it unblocks
+the Phase-6 parity verdict (HSM-6-05).
 
 ## Active risks
 
@@ -107,8 +115,16 @@ is host-testable.
   runtimes** (they belong to the homelab/endpoint providers + Phase-10 sync
   targets); **4-bit PTQ** is the shipping default; the charter's per-device tiers
   (4B iPhone / 8B iPad / 12B-experimental-plugged-in) are confirmed, with 7B the
-  practical phone upper bound and 12B an iPad-16GB/hybrid target. The measured
-  pick is still HSM-5-01.
+  practical phone upper bound and 12B an iPad-16GB/hybrid target.
+- 2026-06-19 — **HSM-5-01 resolved: the engine is `llama.cpp` + GGUF** (resolves
+  the Phase-0 deferred Track-F decision). **Banked, not bake-off measured** — the
+  owner's standing directive is no measurement spikes before implementation, so the
+  pick is made from the research canon (decisive axis: off-the-shelf 4B/8B GGUF
+  model availability with no conversion/compile step; mature Metal backend; a C API
+  bridged behind the existing `ILLMProvider` port, so the choice is reversible).
+  Named models: `Llama-3.2-3B` (Tier-1) + `Llama-3.1-8B` (Tier-2) Q4_K_M GGUF;
+  12B+ plugged-in-only. MLX is the recorded fallback if llama.cpp underperforms
+  on-device (validated implicitly in HSM-5-02 — failure re-opens HSM-5-01).
 
 ## Decisions deferred
 

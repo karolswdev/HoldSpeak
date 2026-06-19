@@ -144,8 +144,10 @@ existing green validator).
   ([`../research/inference-on-apple.md`](../research/inference-on-apple.md)):
   candidate set narrowed to **Core ML / llama.cpp+GGUF / MLC-LLM** (Ollama/vLLM
   are Mode-B/C companions, not in-app); 4-bit PTQ default; charter per-device
-  model tiers confirmed. The measured pick remains Phase-5 work (HSM-5-01), now
-  pre-grounded.
+  model tiers confirmed. **RESOLVED 2026-06-19 (HSM-5-01): the engine is
+  `llama.cpp` + GGUF** — a banked decision from the canon (no bake-off, per the
+  owner's no-spikes directive), reversible behind `ILLMProvider`, MLX as the
+  fallback. See `../phase-5-local-inference/evidence-story-01.md`.
 
 (The Quality-Gate-list and timestamp questions that were deferred here are now
 resolved — see "Decisions made" above.)

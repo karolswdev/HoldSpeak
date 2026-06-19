@@ -1,6 +1,15 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-19 (**Phase 6 — HSM-6-04 done (parity harness)** — a
+**Last updated:** 2026-06-19 (**Phase 5 — HSM-5-01 done: the inference engine is
+`llama.cpp` + GGUF** — a banked decision from the owner's research canon (not a
+bake-off, per the no-spikes directive); resolves the Phase-0 Track-F deferral.
+Decisive axis: off-the-shelf 4B/8B GGUF availability (no Core ML conversion / MLC
+compile); mature Metal; a C API behind the existing `ILLMProvider` port →
+reversible (MLX is the fallback). Named models `Llama-3.2-3B`/`Llama-3.1-8B` Q4_K_M
+GGUF. **HSM-5-02 is the active thrust** — wire llama.cpp + run a GGUF completion on
+the connected iPad Air M4 (the device's first real on-device inference; unblocks
+the Phase-6 parity verdict HSM-6-05). Earlier: **Phase 6 — HSM-6-04 done (parity
+harness)** — a
 deterministic, phrasing-tolerant substance-coverage scorer (`ParityRubric` /
 `ParityScorer` / `ParityReport`) that operationally defines the Track-G parity
 gate (per-type `mustCover` facts, fact-weighted coverage vs an owner-agreed 0.8
