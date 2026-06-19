@@ -7,6 +7,23 @@
 - **Unblocks:** HSM-10-04
 - **Owner:** unassigned
 
+## Progress (2026-06-19) — the Swift transport + offline queue (PR-A)
+
+Shipped in two PRs; this is the mobile half. The desktop **Python sync receiver**
+is PR-B (`holdspeak/web/routes/sync.py`).
+
+- `HTTPSyncProvider` (`apple/Sources/Providers/Sync/HTTPSyncProvider.swift`) — an
+  `ISyncProvider` over HTTP: `push` → `POST {base}/api/sync/push`, `pull` →
+  `GET {base}/api/sync/pull` (URLSession, Foundation; optional bearer; honest
+  `egressLabel` "local + LAN → host"). Direct to the peer, no relay.
+- `SyncQueue` (`apple/Sources/Providers/Sync/SyncQueue.swift`) — disk-backed FIFO;
+  `flush(through:)` drains to a reachable peer and **leaves the queue intact +
+  doesn't throw when the peer is down** (offline tolerated, resume later; sync never
+  on the capture/review path).
+- Proof: `swift test` **77/77** (6 opt-in skips) incl. 8 transport tests (push
+  shape, pull decode, non-2xx error, egress label, FIFO order, drain-when-reachable,
+  keep-when-unreachable, partial-resume).
+
 ## Problem
 
 The sync object model needs a wire. The charter's targets are the user's own
@@ -25,14 +42,15 @@ peers, opportunistically and offline-tolerant.
 
 ## Acceptance criteria
 
-- [ ] Change-sets push and pull between the phone and a desktop/homelab endpoint
-      over a Tailscale network.
-- [ ] Offline is tolerated: with no peer reachable the app fully works and sync
-      resumes when a peer returns (sync is never on the capture/review path).
-- [ ] The transport is one implementation of `ISyncProvider`; swapping it would
-      not touch the Runtime Core.
-- [ ] Sync egress is represented honestly (local + LAN target) per the egress-badge
-      convention where surfaced.
+- [~] Change-sets push and pull between the phone and a desktop/homelab endpoint —
+      the Swift transport (`HTTPSyncProvider`) is done + host-proven against a stub;
+      the live desktop receiver is PR-B (Python sync API).
+- [x] Offline is tolerated: `SyncQueue.flush` keeps the queue + never throws when
+      the peer is unreachable; the app is unaffected (sync off the capture path).
+- [x] The transport is one implementation of `ISyncProvider`; swapping it would not
+      touch the Runtime Core.
+- [x] Sync egress is represented honestly (`egressLabel` = "local + LAN → host");
+      the badge wiring is the host UI's (Phases 8–9).
 
 ## Test plan
 

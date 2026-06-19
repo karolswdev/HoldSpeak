@@ -1,7 +1,8 @@
 # Phase 10 — Sync
 
-**Status:** in-progress (HSM-10-01 done 2026-06-19 — the sync object model + engine
-are host-proven; transport/conflict/gate remain). Track K of the Council
+**Status:** in-progress (HSM-10-01 done; **HSM-10-02 underway — the Swift HTTP
+transport + offline queue are host-proven (PR-A); the desktop Python sync receiver
+is PR-B**; conflict/gate remain). Track K of the Council
 Implementation Charter. The `ISyncProvider` (Layer 3): cross-device continuity so
 a meeting captured on the phone shows up on the desktop, and edits round-trip —
 over the user's own network (desktop / homelab / Tailscale), local-first and
@@ -61,7 +62,7 @@ local-first; it never acts autonomously.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HSM-10-01 | Sync provider + object model | done | [story-01](./story-01-sync-provider-object-model.md) | [evidence-01](./evidence-story-01.md) |
-| HSM-10-02 | Transport targets | backlog | [story-02](./story-02-transport-targets.md) | — |
+| HSM-10-02 | Transport targets | in-progress (Swift transport+queue done; Python receiver PR-B) | [story-02](./story-02-transport-targets.md) | in story (PR-A) |
 | HSM-10-03 | Conflict + round-trip | backlog | [story-03](./story-03-conflict-and-roundtrip.md) | — |
 | HSM-10-04 | Continuity closeout (Gate 6) | backlog | [story-04](./story-04-continuity-closeout.md) | — |
 
