@@ -1,13 +1,21 @@
 # Phase 7 — MIR Port
 
-**Status:** planning (scaffolded 2026-06-18). Track H of the Council
+**Status:** CLOSED ✅ 2026-06-19 — Track-H gate met (4/4). Track H of the Council
 Implementation Charter. Ports the desktop's Meeting Intelligence Routing
 (MIR-01 canon, `docs/internal/PLAN_PHASE_MULTI_INTENT_ROUTING.md`) into the
 mobile Runtime Core (Layer 2), so the artifact generation Phase 6 stood up
 becomes profile-driven instead of one-size-fits-all.
 
-**Last updated:** 2026-06-18 (scaffolded — stories HSM-7-01..04 stubbed from
-charter Track H and the MIR-01 canon; no work started).
+**Last updated:** 2026-06-19 (**Phase 7 CLOSED — the MIR port, host-proven.** The
+routing decision (`IntentScorer` deterministic lexical scoring of MIR-01's five
+intents → `MIRRouter` profile-emphasis tables + score-driven additions → ordered
+`ArtifactType` chain) lives in RuntimeCore and drives the Phase-6 engine via
+`RoutedArtifactGenerator`. Five profiles with distinct emphasis; profile rides on
+`Meeting.mirProfile` (Phase-0 contract). **Track-H gate PASSED**: same transcript,
+balanced vs architect → artifact-type delta `{action_items, dependency_map,
+risk_register}`. `swift test` 69/6-skip/0-fail. Model-free + deterministic; desktop
+windows/hysteresis/synthesis/lineage + per-window override parked. See
+[`final-summary.md`](./final-summary.md).)
 
 ## Goal
 
@@ -62,10 +70,10 @@ measurably different extraction.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HSM-7-01 | Port the MIR routing engine | backlog | [story-01](./story-01-mir-engine-port.md) | — |
-| HSM-7-02 | The five profiles | backlog | [story-02](./story-02-five-profiles.md) | — |
-| HSM-7-03 | Profile-selection seam | backlog | [story-03](./story-03-profile-selection-seam.md) | — |
-| HSM-7-04 | Profile-effect gate closeout | backlog | [story-04](./story-04-profile-effect-closeout.md) | — |
+| HSM-7-01 | Port the MIR routing engine | done | [story-01](./story-01-mir-engine-port.md) | [evidence-01](./evidence-story-01.md) |
+| HSM-7-02 | The five profiles | done | [story-02](./story-02-five-profiles.md) | [evidence-02](./evidence-story-02.md) |
+| HSM-7-03 | Profile-selection seam | done | [story-03](./story-03-profile-selection-seam.md) | [evidence-03](./evidence-story-03.md) |
+| HSM-7-04 | Profile-effect gate closeout | done | [story-04](./story-04-profile-effect-closeout.md) | [evidence-04](./evidence-story-04.md) |
 
 ## Where we are
 

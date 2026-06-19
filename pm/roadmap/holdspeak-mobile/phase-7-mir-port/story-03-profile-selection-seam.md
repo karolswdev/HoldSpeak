@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 7
-- **Status:** backlog
+- **Status:** done (2026-06-19 — profile rides on `Meeting.mirProfile` (Phase-0
+  contract) + `routingProfile` helper (defaults `.balanced`); round-trip proven. See
+  [evidence-03](./evidence-story-03.md).)
 - **Depends on:** HSM-7-01, HSM-0-01
 - **Unblocks:** HSM-8-04, HSM-9-02
 - **Owner:** unassigned

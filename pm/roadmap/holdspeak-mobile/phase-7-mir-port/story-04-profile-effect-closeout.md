@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 7
-- **Status:** backlog
+- **Status:** done (2026-06-19 — **Track-H gate PASSED**: same transcript,
+  balanced vs architect → artifact-type delta `{action_items, dependency_map,
+  risk_register}`. See [evidence-04](./evidence-story-04.md).)
 - **Depends on:** HSM-7-01, HSM-7-02, HSM-7-03
 - **Owner:** unassigned
 
