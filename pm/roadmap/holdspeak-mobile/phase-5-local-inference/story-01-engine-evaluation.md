@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 5
-- **Status:** in-progress
+- **Status:** done (banked decision — see "Decision" below)
 - **Depends on:** none
 - **Unblocks:** HSM-5-02, HSM-5-03, HSM-5-04, HSM-5-05
 - **Owner:** unassigned
@@ -12,9 +12,43 @@
 Pre-grounded by the owner's inference brief (`../research/inference-on-apple.md`):
 candidate set fixed to **Core ML / llama.cpp+GGUF / MLC-LLM** (Ollama/vLLM are
 Mode-B/C companions, not in-app); 4-bit PTQ default; per-device tiers confirmed
-(now encoded as `InferenceModelPolicy`). The actual **measured pick** needs the
-engines + models running on a real Tier-1 device (sustained throughput, thermal),
-so it stays in-progress until that on-device evaluation.
+(now encoded as `InferenceModelPolicy`).
+
+## Decision (banked, 2026-06-19) — **llama.cpp + GGUF**
+
+**Method note (supersedes the measured bake-off below):** the owner's standing
+directive is *bank on chosen tech — no measurement spikes/gates before
+implementation*. So this story is resolved by a **banked decision from the
+research canon**, not a three-engine on-device bake-off. The real validation is
+implicit: HSM-5-02 runs the chosen engine on the Tier-1 device, and if it
+disappoints (the risk register's "engine can't hold Gate 4" / "can't emit
+contract JSON" stop-signals), HSM-5-01 re-opens with that evidence.
+
+**Chosen engine: `llama.cpp` + GGUF.** Rationale, against the canon's axes:
+
+- **Model availability (decisive):** any 4B/8B in GGUF at 4-bit, off the shelf —
+  no Core ML conversion pipeline, no MLC compile step.
+- **Maturity + Metal:** a battle-tested Metal backend at the M-series decode-bound
+  sweet spot the brief describes; the brief names llama.cpp one of "the relevant
+  embedded iOS/iPadOS runtimes."
+- **Integration cost:** a C API bridged from Swift behind the existing
+  `ILLMProvider` port — so the pick is **reversible** (swap the adapter, not the
+  app) if on-device behavior argues for MLX/Core ML later.
+- **Structured output:** llama.cpp supports GBNF grammars (a future constrained-
+  decoding optimization); the engine-agnostic `StructuredOutput` floor (HSM-5-04)
+  already covers correctness.
+
+**Concrete, currently-available models (HSM-5-03 pins exact artifacts):**
+- **Tier-1 (iPhone, 4B):** `Llama-3.2-3B-Instruct` Q4_K_M GGUF (~2GB).
+- **Tier-2 (iPad, 8B):** `Llama-3.1-8B-Instruct` Q4_K_M GGUF (~4.9GB) — fits the
+  M4 iPad's unified memory.
+- **12B+ (plugged-in only):** a 12–14B Q4 GGUF (e.g. `Qwen2.5-14B-Instruct`),
+  gated by `InferenceModelPolicy.isAllowed(_, pluggedIn:)`.
+
+**MLX considered, not chosen (now):** Swift-native and the desktop uses it for
+Whisper, but it is outside the owner's captured candidate set and llama.cpp wins on
+raw model availability. Recorded as the first fallback if llama.cpp underperforms
+on-device.
 
 ## Problem
 
@@ -39,17 +73,24 @@ pick is the first thing that has to happen and it has to be defensible.
 
 ## Acceptance criteria
 
-- [ ] The decision axes are fixed and weighted before measurement, and at minimum
-      cover: sustained (not burst) Tier-1 throughput at the 4B and 8B sizes,
-      4B/8B model availability for Apple silicon, structured-output / constrained
-      decoding support, and on-device integration cost.
-- [ ] Each of the three engines is run on real Tier-1 hardware with a concrete 4B
-      model, and the measured numbers per axis are recorded.
-- [ ] A concrete, currently-available 4B and 8B model is named for each engine
-      (or the absence is recorded as a disqualifier).
-- [ ] One engine is chosen, and the choice is written up with the measured
-      evidence and the trade-off accepted — recorded as a "Decisions made" entry
-      in the phase's `current-phase-status.md`.
+> **Superseded by the owner's no-spikes directive (2026-06-19):** the two
+> *measured-bake-off* criteria below are replaced by a banked decision from the
+> research canon. On-device behavior is validated implicitly in HSM-5-02 (re-open
+> this story if it disappoints). The model-availability + named-engine + recorded-
+> decision criteria still hold and are met.
+
+- [~] ~~Decision axes fixed and weighted before measurement~~ — **superseded**:
+      no pre-implementation measurement gate (owner directive). The canon's axes
+      (model availability, Metal maturity, structured-output, integration cost)
+      still framed the decision — see "Decision".
+- [~] ~~Each of the three engines run on real Tier-1 hardware, numbers recorded~~
+      — **superseded** (no bake-off). The chosen engine is exercised on-device in
+      HSM-5-02; failure re-opens this story (risk register stop-signal).
+- [x] A concrete, currently-available 4B and 8B model is named — `Llama-3.2-3B`
+      (Tier-1) + `Llama-3.1-8B` (Tier-2) Q4_K_M GGUF (see "Decision").
+- [x] One engine is chosen and written up with the rationale + the trade-off
+      accepted (reversibility behind `ILLMProvider`; MLX as the fallback) —
+      recorded here + as a "Decisions made" entry in `current-phase-status.md`.
 - [ ] The Phase-0 deferred Track-F decision is marked resolved (cross-referenced
       from Phase 0's "Decisions deferred").
 
