@@ -1,9 +1,13 @@
 # Phase 6 — Meeting Intelligence
 
 **Status:** in-progress (HSM-6-01 + 6-02 + 6-03 + 6-04 done 2026-06-19; the
-intelligence layer + the parity harness are host-proven. 6-05 (Gate-5 verdict)
-blocked on the device/dep-gated mobile inference engine — Phase 5; 6-06 Follow-ups
-blocked on a cross-runtime contract decision). Track G of the Council
+intelligence layer + the parity harness are host-proven. 6-05 (Gate-5 verdict) is
+**no longer engine-blocked** — HSM-5-06 gives the runtime a real on-device
+`ILLMProvider` (the OpenAI-compatible endpoint, Modes B/C), and the parity
+*mechanism* already scores real endpoint output 1.00 PASS; the formal verdict now
+awaits the owner-signed baseline set + rubric (HSM-6-04 acceptance) and an
+on-device capture. 6-06 Follow-ups still blocked on a cross-runtime contract
+decision). Track G of the Council
 Implementation Charter. The artifact-generation engine: it turns a transcribed
 meeting into the structured intelligence HoldSpeak is known for — Action Items,
 Decisions, Risks, Requirements, Summaries, plus the charter Vision's ADR
@@ -101,7 +105,7 @@ Review → Approve → Execute lifecycle is preserved end to end.
 | HSM-6-02 | The five core artifact types | done | [story-02](./story-02-core-artifact-types.md) | [evidence-02](./evidence-story-02.md) |
 | HSM-6-03 | ADR Candidates (Follow-ups split to 6-06) | done | [story-03](./story-03-adr-candidates-followups.md) | [evidence-03](./evidence-story-03.md) |
 | HSM-6-04 | The parity baseline harness | done | [story-04](./story-04-parity-baseline-harness.md) | [evidence-04](./evidence-story-04.md) |
-| HSM-6-05 | Gate-5 parity closeout | blocked | [story-05](./story-05-parity-closeout.md) | — |
+| HSM-6-05 | Gate-5 parity closeout | unblocked (awaits owner rubric + on-device capture) | [story-05](./story-05-parity-closeout.md) | — |
 | HSM-6-06 | Follow-ups | blocked | [story-06](./story-06-followups.md) | — |
 
 ## Where we are

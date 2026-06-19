@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>HoldSpeakMobile</string>
+    <key>CFBundleDisplayName</key>
+    <string>HoldSpeak HSM-5-06</string>
+    <key>CFBundleIdentifier</key>
+    <string>dev.holdspeak.mobile</string>
+    <key>CFBundleExecutable</key>
+    <string>HoldSpeakMobile</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>MinimumOSVersion</key>
+    <string>17.0</string>
+    <key>UILaunchScreen</key>
+    <dict/>
+    <key>UIDeviceFamily</key>
+    <array>
+        <integer>1</integer>
+        <integer>2</integer>
+    </array>
+    <!-- Mode C talks to a homelab/LAN endpoint over plain HTTP. Allow local
+         networking + cleartext to a private address; the device still prompts
+         once for Local Network permission (owner taps Allow). -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>HoldSpeak connects to your homelab/LAN inference endpoint to generate meeting artifacts.</string>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
+</dict>
+</plist>
