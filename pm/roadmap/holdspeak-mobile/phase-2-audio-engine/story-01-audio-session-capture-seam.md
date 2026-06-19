@@ -2,9 +2,21 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 2
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** HSM-1-01 (the Xcode workspace + SPM layout + the `IAudioCapture`
   provider contract from Phase 1)
+
+## Progress (2026-06-18)
+
+`AudioCaptureService` (iOS) authored in `apple/Sources/Providers/Audio/`: an
+`AVAudioEngine` input tap converting the hardware format to 16 kHz mono PCM16 via
+`AVAudioConverter`, streaming `AudioChunk`s through the enriched `IAudioCapture`
+seam, with `AVAudioSession` `.record` config and interruption + route-change
+handlers (pause/resume + restart). **iOS-type-checked** against the iphonesimulator
+SDK (exit 0, no warnings); the streaming seam is exercised host-side by a
+`FakeAudioCapture` pipeline test. Stays in-progress until **live mic + real
+interruption/route-change behavior is verified on a device** (defers with the
+Track-C hardware gate, HSM-2-04).
 - **Unblocks:** HSM-2-02, HSM-2-03
 - **Owner:** unassigned
 

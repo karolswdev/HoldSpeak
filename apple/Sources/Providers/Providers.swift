@@ -8,7 +8,9 @@ import Contracts
 // IStorage (Phase 4), ISyncProvider (Phase 10).
 
 public protocol IAudioCapture: Sendable {
-    func start() throws
+    /// Begin capture; `onChunk` is called with 16 kHz mono PCM16 chunks as audio
+    /// streams in. HSM-2-01/02.
+    func start(onChunk: @escaping @Sendable (AudioChunk) -> Void) throws
     func stop() throws
 }
 

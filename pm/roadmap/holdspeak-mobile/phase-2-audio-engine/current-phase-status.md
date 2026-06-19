@@ -1,12 +1,18 @@
 # Phase 2 — Audio Engine
 
-**Status:** planning (scaffolded 2026-06-18). Track C of the Council
-Implementation Charter. The first Layer-3 provider: the `IAudioCapture`
-implementation the mobile runtime records meetings and dictation through, and
-the WAV export that feeds the Phase-3 transcriber.
+**Status:** in-progress (HSM-2-02/03 done 2026-06-18; HSM-2-01 authored +
+iOS-type-checked, device-pending; HSM-2-04 = the 1-hour hardware gate). Track C of
+the Council Implementation Charter. The first Layer-3 provider: the `IAudioCapture`
+implementation the mobile runtime records meetings and dictation through, and the
+WAV export that feeds the Phase-3 transcriber.
 
-**Last updated:** 2026-06-18 (scaffolded — stories HSM-2-01..04 stubbed from the
-charter Track C deliverables; no work started).
+**Last updated:** 2026-06-18 (**HSM-2-02 + HSM-2-03 done** — `AudioChunk` +
+bounded `AudioAccumulator` and the 16 kHz-mono-PCM16 `WavWriter`, host-tested
+(`swift test` 8/8, header re-parsed + capture→WAV pipeline). **HSM-2-01** capture
+service (`AVAudioEngine`/`AVAudioSession`, format conversion, interruption +
+route-change handling) authored + **iOS-type-checked** (exit 0); in-progress until
+device-verified. **HSM-2-04** is the 1-hour continuous-recording gate — needs real
+hardware + a mic, deferred).
 
 ## Goal
 
@@ -53,19 +59,27 @@ glitch, or memory growth (Track C gate / Quality Gate 2 — Audio Stability).
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HSM-2-01 | Audio session + capture seam | backlog | [story-01](./story-01-audio-session-capture-seam.md) | — |
-| HSM-2-02 | AudioChunk streaming | backlog | [story-02](./story-02-audio-chunk-streaming.md) | — |
-| HSM-2-03 | Recording + WAV export (16 kHz mono PCM) | backlog | [story-03](./story-03-recording-wav-export.md) | — |
+| HSM-2-01 | Audio session + capture seam | in-progress | [story-01](./story-01-audio-session-capture-seam.md) | — |
+| HSM-2-02 | AudioChunk streaming | done | [story-02](./story-02-audio-chunk-streaming.md) | [evidence-02](./evidence-story-02.md) |
+| HSM-2-03 | Recording + WAV export (16 kHz mono PCM) | done | [story-03](./story-03-recording-wav-export.md) | [evidence-03](./evidence-story-03.md) |
 | HSM-2-04 | 1-hour stability closeout (Gate 2) | backlog | [story-04](./story-04-one-hour-stability-closeout.md) | — |
 
 ## Where we are
 
-Just scaffolded. Track C's three deliverables (`AudioCaptureService`,
-`AudioSession`, `AudioChunk`) map to HSM-2-01..03; the Track C gate gets its own
-closeout story (HSM-2-04) so "1-hour continuous recording" is proven on metal,
-not asserted. Blocked on Phase 1 (the Xcode workspace + SPM layout + the
-`IAudioCapture` contract live there — HSM-2-01 depends on HSM-1-01). Next: once
-Phase 1 lands the workspace and the provider protocol, pick up HSM-2-01.
+The testable core of Track C is done. `AudioChunk` + the bounded
+`AudioAccumulator` (HSM-2-02) and the 16 kHz-mono-PCM16 `WavWriter` (HSM-2-03) are
+host-tested (`swift test` 8/8: the WAV header is re-parsed to assert
+PCM/mono/16000/16-bit/length, and a fake-capture → chunks → accumulator → WAV
+pipeline runs end to end). The live `AudioCaptureService` (HSM-2-01,
+`AVAudioEngine`/`AVAudioSession` + `AVAudioConverter` to the canonical format +
+interruption/route-change handling) is authored and **iOS-type-checked** against
+the simulator SDK (exit 0), exercised host-side through a `FakeAudioCapture`; it
+stays in-progress until live mic + interruption behavior is verified on a device.
+**The only remaining Phase-2 work is hardware-gated:** HSM-2-01's device
+verification and HSM-2-04 (the 1-hour continuous-recording Gate 2) both need real
+Tier-1 hardware + a mic. Next authorable step is Phase 3 (Whisper Runtime), which
+consumes this `AudioChunk` stream; the Phase-2 hardware closeouts run when a device
+is available.
 
 ## Active risks
 

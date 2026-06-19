@@ -1,6 +1,11 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-18 (**Phase 1 CLOSED ✅ 4/4** — Gate 1 proven (the shell
+**Last updated:** 2026-06-18 (**Phase 2 started — HSM-2-02/03 done** — the audio
+engine's testable core: `AudioChunk` + bounded `AudioAccumulator` and the
+16 kHz-mono-PCM16 `WavWriter`, host-tested (`swift test` 8/8); the `AVAudioEngine`
+capture service (HSM-2-01) is authored + iOS-type-checked, device-pending, and the
+1-hour Gate 2 (HSM-2-04) is hardware-gated. Earlier: **Phase 1 CLOSED ✅ 4/4** —
+Gate 1 proven (the shell
 launched on the iPhone 17 Pro Max + iPad Pro M5 iOS-26.5 simulators, screenshots
 committed) and CI is **green on a hosted run** (Actions 27801601150, pushed to
 GitHub). The `apple/` package builds + `swift test` 5/5 + CI green. **Phase 2
@@ -95,7 +100,7 @@ WebView, or UIKit.
 |---|---|---|---|---|
 | 0 | A | Extract the desktop domain into language-neutral contracts (`holdspeak-contracts`) | **done (5/5)** | [phase-0](./phase-0-contracts-and-charter-lock/) |
 | 1 | B | Mobile foundation: Xcode workspace, SPM layout, CI, launches on device | **done (4/4)** | [phase-1](./phase-1-mobile-foundation/) |
-| 2 | C | Audio engine: AVAudioEngine streaming capture + WAV export, 1-hour stable | current | [phase-2](./phase-2-audio-engine/) |
+| 2 | C | Audio engine: AVAudioEngine streaming capture + WAV export, 1-hour stable | in-progress (2/4; rest hardware-gated) | [phase-2](./phase-2-audio-engine/) |
 | 3 | D | Whisper runtime via WhisperKit, realtime latency < 2s | not-started | [phase-3](./phase-3-whisper-runtime/) |
 | 4 | E | SQLite persistence with full crash recovery | not-started | [phase-4](./phase-4-persistence/) |
 | 5 | F | Local inference (4B/8B) — a 30-min meeting processed on-device | not-started | [phase-5](./phase-5-local-inference/) |
