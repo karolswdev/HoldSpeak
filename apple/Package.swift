@@ -26,6 +26,6 @@ let package = Package(
         // Layer 4 — platform hosts (iPad/iPhone apps). The only UI layer.
         .target(name: "Hosts", dependencies: ["RuntimeCore", "Providers", "Contracts"]),
         .testTarget(name: "ContractsTests", dependencies: ["Contracts"]),
-        .testTarget(name: "ProvidersTests", dependencies: ["Providers"]),
+        .testTarget(name: "ProvidersTests", dependencies: ["Providers", "Contracts"]),
     ]
 )

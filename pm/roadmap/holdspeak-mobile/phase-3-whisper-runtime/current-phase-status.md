@@ -1,12 +1,19 @@
 # Phase 3 — Whisper Runtime
 
-**Status:** planning (scaffolded 2026-06-18). Track D of the Council
-Implementation Charter. The transcription provider phase: it stands up the first
-real `ITranscriber` (Layer 3) on Apple hardware via WhisperKit, feeding the audio
-captured in Phase 2 through to speaker-ready segments in the Phase-0 contract
-shape.
+**Status:** in-progress (HSM-3-03/04 done 2026-06-18; HSM-3-01 seam authored,
+WhisperKit dep+impl device-pending; HSM-3-02 + HSM-3-05 device-gated). Track D of
+the Council Implementation Charter. The transcription provider phase: it stands up
+the first real `ITranscriber` (Layer 3) on Apple hardware via WhisperKit, feeding
+the audio captured in Phase 2 through to speaker-ready segments in the Phase-0
+contract shape.
 
-**Last updated:** 2026-06-18 (scaffolded — stories HSM-3-01..05 stubbed from the
+**Last updated:** 2026-06-18 (**HSM-3-03 + HSM-3-04 done** — the language registry
+generated at parity with desktop (`WhisperLanguage`, 100 codes, `normalize`/auto)
+and the transcription→`Segment` mapping (speaker-ready, reserved speaker slot),
+host-tested (`swift test` 13/13). The WhisperKit seam (`TranscriberConfig`,
+per-device model policy iPhone→Base/iPad→Small) is in; the WhisperKit dependency +
+backed `ITranscriber` impl + the latency Gate 3 are device/dep-pending. Earlier:
+scaffolded — stories HSM-3-01..05 stubbed from the
 charter Track D deliverables; no work started).
 
 ## Goal
@@ -53,21 +60,27 @@ Track D gate and program Gate 3.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HSM-3-01 | WhisperKit transcriber behind ITranscriber | backlog | [story-01](./story-01-whisperkit-transcriber.md) | — |
+| HSM-3-01 | WhisperKit transcriber behind ITranscriber | in-progress | [story-01](./story-01-whisperkit-transcriber.md) | — |
 | HSM-3-02 | Realtime + chunk transcription | backlog | [story-02](./story-02-realtime-and-chunk-transcription.md) | — |
-| HSM-3-03 | Language selection (99-language parity) | backlog | [story-03](./story-03-language-selection.md) | — |
-| HSM-3-04 | Speaker-ready segmentation | backlog | [story-04](./story-04-speaker-ready-segmentation.md) | — |
+| HSM-3-03 | Language selection (99-language parity) | done | [story-03](./story-03-language-selection.md) | [evidence-03](./evidence-story-03.md) |
+| HSM-3-04 | Speaker-ready segmentation | done | [story-04](./story-04-speaker-ready-segmentation.md) | [evidence-04](./evidence-story-04.md) |
 | HSM-3-05 | Latency gate closeout (< 2s) | backlog | [story-05](./story-05-latency-closeout.md) | — |
 
 ## Where we are
 
-Just scaffolded. The audio engine (Phase 2, Track C) supplies the `AudioChunk`
-stream this phase transcribes, and the Phase-0 `Segment` contract fixes the shape
-the segments must land in. The five stories are stubbed against Track D's four
-responsibilities (realtime, chunk, language selection, speaker-ready
-segmentation) plus the Gate-3 latency closeout that proves the < 2s bar on real
-hardware. Next: pick up HSM-3-01 and stand up WhisperKit behind the
-`ITranscriber` abstraction once HSM-2-03 (the `AudioChunk` shape) lands.
+The pure/testable core of Track D is done. **HSM-3-03** ships the
+`WhisperLanguage` registry generated from desktop's `holdspeak/languages.py` (100
+codes, `normalize` with the "auto" default, count-parity asserted), and **HSM-3-04**
+ships the `TranscribedSegment → Contracts.Segment` mapping (real timing + a
+reserved `speakerId` slot for later diarization) — `swift test` 13/13. The
+WhisperKit **seam** is in (`TranscriberConfig` + the per-device model policy
+iPhone→Base / iPad→Small). What's left is genuinely engine/device work:
+**HSM-3-01** (add the WhisperKit dependency + the WhisperKit-backed `ITranscriber`
+— deferred so the package/CI stay lean, since a real decode needs a model + audio
+on a device), **HSM-3-02** (realtime/chunk decode), and **HSM-3-05** (the <2s
+latency Gate 3, real-hardware-only because sim timing isn't representative). Next
+authorable step is Phase 4 (Persistence — SQLite `IStorage`), which is fully
+host-testable.
 
 ## Active risks
 

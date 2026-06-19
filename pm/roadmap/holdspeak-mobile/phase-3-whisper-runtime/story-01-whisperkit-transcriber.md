@@ -2,10 +2,21 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 3
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** HSM-1-01, HSM-2-03
 - **Unblocks:** HSM-3-02, HSM-3-04
 - **Owner:** unassigned
+
+## Progress (2026-06-18)
+
+The seam around WhisperKit is built + host-tested: `TranscriberConfig` (language
+"auto" default + `normalizedLanguage()`), `WhisperModelPolicy.defaultModel(for:)`
+(iPhone→Base / iPad→Small, charter local-model strategy), and the transcription→
+`Segment` mapping (HSM-3-04). The **WhisperKit dependency + the WhisperKit-backed
+`ITranscriber` implementation are deferred**: pulling WhisperKit + a model into
+this headless env buys only a compile (real transcription needs a model + audio on
+a device), so it lands as device work to keep the package + CI lean. Stays
+in-progress until the WhisperKit impl + an on-device transcription run.
 
 ## Problem
 

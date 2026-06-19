@@ -13,6 +13,21 @@ public struct Segment: Codable, Equatable, Sendable {
     public var endTime: Double
     public var isBookmarked: Bool
     public var deviceId: String?
+
+    // Public memberwise init so RuntimeCore/Providers (other modules) can build a
+    // Segment — e.g. the Phase-3 transcription mapping. (Synthesized memberwise
+    // inits are internal; cross-module construction needs this.)
+    public init(text: String, speaker: String, speakerId: String? = nil,
+                startTime: Double, endTime: Double,
+                isBookmarked: Bool = false, deviceId: String? = nil) {
+        self.text = text
+        self.speaker = speaker
+        self.speakerId = speakerId
+        self.startTime = startTime
+        self.endTime = endTime
+        self.isBookmarked = isBookmarked
+        self.deviceId = deviceId
+    }
 }
 
 public struct Bookmark: Codable, Equatable, Sendable {
