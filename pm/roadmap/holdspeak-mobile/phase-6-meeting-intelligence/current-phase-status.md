@@ -1,14 +1,26 @@
 # Phase 6 — Meeting Intelligence
 
-**Status:** in-progress (HSM-6-01 + 6-02 + 6-03 done 2026-06-19; 6-06 Follow-ups
-split out, blocked on a cross-runtime contract decision). Track G of the Council
+**Status:** in-progress (HSM-6-01 + 6-02 + 6-03 + 6-04 done 2026-06-19; the
+intelligence layer + the parity harness are host-proven. 6-05 (Gate-5 verdict)
+blocked on the device/dep-gated mobile inference engine — Phase 5; 6-06 Follow-ups
+blocked on a cross-runtime contract decision). Track G of the Council
 Implementation Charter. The artifact-generation engine: it turns a transcribed
 meeting into the structured intelligence HoldSpeak is known for — Action Items,
 Decisions, Risks, Requirements, Summaries, plus the charter Vision's ADR
 Candidates and Follow-ups — running in the Runtime Core (Layer 2) on top of the
 Phase-5 `ILLMProvider`, and held to parity with the desktop quality baseline.
 
-**Last updated:** 2026-06-19 (**HSM-6-03 done — ADR Candidates** — an open-blob
+**Last updated:** 2026-06-19 (**HSM-6-04 done — the parity baseline harness** — a
+deterministic, phrasing-tolerant substance-coverage scorer (`ParityRubric` /
+`ParityScorer` / `ParityReport`) that operationally defines the Track-G parity gate:
+per-category `mustCover` facts, fact-weighted coverage vs an owner-agreed threshold
+(0.8), pure/stable across reruns, per-type attribution. `swift test` 38/38. The
+intelligence layer (6-01/02/03) + the harness are now host-proven. **HSM-6-05
+(Gate-5 verdict) is blocked** — running a real mobile-vs-desktop parity comparison
+needs an on-device `ILLMProvider` (the device/dep-gated Phase-5 inference engine);
+no mobile model exists yet, so the verdict can't run. Next major thrust: the mobile
+inference engine (unblocks 6-05) and/or the sync-by-default work. Earlier:
+**HSM-6-03 done — ADR Candidates** — an open-blob
 `Artifact(.adr)` on the HSM-6-01 seam: a candidate ties to an architectural-weight
 decision, carries a `source_timestamp` to the moment + a transcript source, and is
 never fabricated (no architectural decision → empty candidates). `swift test`
@@ -88,8 +100,8 @@ Review → Approve → Execute lifecycle is preserved end to end.
 | HSM-6-01 | The artifact-generation engine | done | [story-01](./story-01-artifact-generation-engine.md) | [evidence-01](./evidence-story-01.md) |
 | HSM-6-02 | The five core artifact types | done | [story-02](./story-02-core-artifact-types.md) | [evidence-02](./evidence-story-02.md) |
 | HSM-6-03 | ADR Candidates (Follow-ups split to 6-06) | done | [story-03](./story-03-adr-candidates-followups.md) | [evidence-03](./evidence-story-03.md) |
-| HSM-6-04 | The parity baseline harness | backlog | [story-04](./story-04-parity-baseline-harness.md) | — |
-| HSM-6-05 | Gate-5 parity closeout | backlog | [story-05](./story-05-parity-closeout.md) | — |
+| HSM-6-04 | The parity baseline harness | done | [story-04](./story-04-parity-baseline-harness.md) | [evidence-04](./evidence-story-04.md) |
+| HSM-6-05 | Gate-5 parity closeout | blocked | [story-05](./story-05-parity-closeout.md) | — |
 | HSM-6-06 | Follow-ups | blocked | [story-06](./story-06-followups.md) | — |
 
 ## Where we are
@@ -108,11 +120,16 @@ types are real on the seam (Action Items typed to `[ActionItem]`; Decisions / Ri
 (no invented `summary` type), empty-input-safe. The remaining stories: the Vision
 extras: **HSM-6-03 (ADR Candidates) is done** on the seam; **Follow-ups split to
 HSM-6-06 (blocked** on a `follow_up` artifact-type contract decision — see Decisions
-deferred). Remaining: a substance-based parity harness against a desktop baseline
-(HSM-6-04, needs a baseline captured early) and the Gate-5 closeout (HSM-6-05).
-**Next: HSM-6-04** (the parity baseline harness). After Phase 6 closes, the next
-major thrust is **sync-by-default to the server** (owner steer — see the program
-README / Phase 10).
+deferred). **HSM-6-04 is done** — the parity harness operationally defines the gate
+(substance coverage, per-type, threshold 0.8, deterministic). What remains in
+Phase 6 is **HSM-6-05 (the Gate-5 verdict)**, which is **blocked**: a real
+mobile-vs-desktop parity comparison needs an on-device `ILLMProvider` to generate
+mobile artifacts — that is the device/dep-gated Phase-5 inference engine, and no
+mobile model exists yet. So Phase 6's intelligence + harness are host-proven, but
+the verdict awaits the on-device engine. **Next** is therefore either the **mobile
+inference engine** (unblocks 6-05) or the owner's **sync-by-default** thrust
+(see the program README / Phase 10); HSM-6-06 (Follow-ups) stays blocked on the
+cross-runtime `follow_up` type.
 
 ## Active risks
 
