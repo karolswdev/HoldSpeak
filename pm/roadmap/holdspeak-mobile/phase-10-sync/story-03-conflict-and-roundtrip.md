@@ -2,7 +2,10 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done (2026-06-19 — conflict-aware `SyncEngine.apply` (LWW by
+  `last_modified`; same-time divergence surfaced non-destructively; tombstone
+  no-resurrect; idempotent) + desktop-end push validation. See
+  [evidence-03](./evidence-story-03.md).)
 - **Depends on:** HSM-10-01, HSM-10-02
 - **Unblocks:** HSM-10-04
 - **Owner:** unassigned

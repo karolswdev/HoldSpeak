@@ -35,6 +35,21 @@ def _iso(value: Any) -> Any:
     return value.isoformat() if hasattr(value, "isoformat") else str(value)
 
 
+def _records_valid(records: Any) -> bool:
+    """Every record is a `synced<T>` with a well-formed `meta` (id + known kind)."""
+    if not isinstance(records, list):
+        return False
+    for rec in records:
+        if not isinstance(rec, dict):
+            return False
+        meta = rec.get("meta")
+        if not isinstance(meta, dict):
+            return False
+        if not meta.get("id") or meta.get("kind") not in ("meeting", "artifact"):
+            return False
+    return True
+
+
 def _artifact_value(artifact: Any) -> dict[str, Any]:
     """An `ArtifactSummary` → the Phase-0 `Artifact` contract dict."""
     return {
@@ -99,6 +114,14 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
         if not isinstance(body, dict) or ("meetings" not in body and "artifacts" not in body):
             return JSONResponse(
                 {"success": False, "error": "expected a change_set with meetings/artifacts"},
+                status_code=422,
+            )
+
+        # HSM-10-03 — validate the envelope on this end too: every record needs a
+        # well-formed sync header (id + a known kind). Malformed → 422, never stored.
+        if not _records_valid(body.get("meetings") or []) or not _records_valid(body.get("artifacts") or []):
+            return JSONResponse(
+                {"success": False, "error": "malformed sync record (need meta.id + meta.kind)"},
                 status_code=422,
             )
 

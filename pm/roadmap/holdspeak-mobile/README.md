@@ -1,6 +1,14 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-19 (**HSM-10-02 (sync transport) DONE — both sides of the
+**Last updated:** 2026-06-19 (**HSM-10-03 (sync conflict + round-trip) DONE.**
+`SyncEngine.apply` is now conflict-aware: LWW by `last_modified`, **same-time
+divergence surfaced non-destructively** (kept local + reported, never silently
+dropped), tombstone no-resurrect, and **idempotent** (sync twice → no change) — all
+over the Phase-0 fixture; plus desktop-end push validation (malformed record → 422).
+Both ends validate against the contract. `swift test` 81/81; `uv run pytest
+tests/unit/test_web_routes_sync.py` 4 passed. Phase 10 now 3/4 — only the live
+cross-device gate (HSM-10-04, needs the iPad) remains. Earlier: **HSM-10-02 (sync
+transport) DONE — both sides of the
 wire.** The desktop **Python sync receiver** landed (PR-B): `holdspeak/web/routes/sync.py`
 serves the desktop's meetings/artifacts as a contract change-set on
 `GET /api/sync/pull` and receives a pushed change-set into a durable inbox on
@@ -242,7 +250,7 @@ WebView, or UIKit.
 | 7 | H | MIR port: 5 profiles measurably alter extraction | **done (4/4) ✅** | [phase-7](./phase-7-mir-port/) |
 | 8 | I | iPad experience: PencilKit notebook + transcript linking + review | not-started | [phase-8](./phase-8-ipad-experience/) |
 | 9 | J | iPhone experience: Quick Capture / Capture / Review Queue / Voice Notes | not-started | [phase-9](./phase-9-iphone-experience/) |
-| 10 | K | Sync to desktop / homelab / Tailscale — cross-device continuity | in-progress (2/4; HSM-10-01 object model + HSM-10-02 transport both sides done; conflict + live gate remain) | [phase-10](./phase-10-sync/) |
+| 10 | K | Sync to desktop / homelab / Tailscale — cross-device continuity | in-progress (3/4; object model + transport + conflict policy host-proven; only the live cross-device gate (device) remains) | [phase-10](./phase-10-sync/) |
 | 11 | L | Hardening: the five stress scenarios, production readiness | not-started | [phase-11](./phase-11-hardening/) |
 
 Phases are sequenced as the charter lists the tracks. The contract layer (Phase
