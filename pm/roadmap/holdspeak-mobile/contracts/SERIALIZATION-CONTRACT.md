@@ -163,6 +163,27 @@ no ambiguity — which is the HSM-0-03 acceptance bar.
 
 ---
 
+## §11 — Sync envelope (HSM-10-01)
+
+Cross-device sync moves the **contract entities themselves**, never a parallel sync
+schema. The sync metadata a transport needs rides in a thin additive envelope; the
+entity structs are unchanged (no `last_modified`/`deleted` field bolted onto each
+entity — that was the escalation the story flagged, resolved this way):
+
+- `sync_metadata`: `{ id (string), kind ("meeting"|"artifact"), last_modified
+  (ISO-8601 UTC Z, §2), deleted (bool) }`. `deleted=true` is a **tombstone** — a
+  propagated delete that carries no payload.
+- `synced<T>`: `{ meta: sync_metadata, value: T|null }`; `value` is the unmodified
+  Phase-0 entity, and is `null` exactly when `meta.deleted`.
+- `change_set`: `{ meetings: synced<Meeting>[], artifacts: synced<Artifact>[] }`.
+  Actions are not a top-level store entity (they live inside an Action-Items
+  artifact), so the store-backed sync set is Meetings + Artifacts.
+
+The envelope is the wire shape; the entities inside it validate against their
+existing schemas (meeting/artifact). The **JSON Schema for the envelope + the
+Python-side mirror** land with the transport story (HSM-10-02), which introduces the
+desktop sync API; HSM-10-01 is the Swift object model + engine, host-proven.
+
 ## Decisions locked here (carried to the phase status)
 
 1. Wire = desktop `to_dict()` snake_case; Swift maps via key strategy (§1).

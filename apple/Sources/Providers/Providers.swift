@@ -32,6 +32,27 @@ public protocol IStorage: Sendable {
 }
 
 public protocol ISyncProvider: Sendable {
-    /// Push/pull contract objects across devices (Phase 10).
-    func sync() async throws
+    /// Push a local change-set to the peer (desktop / homelab / Tailscale — the
+    /// concrete transports are HSM-10-02). The Runtime Core depends on this seam,
+    /// never on a transport.
+    func push(_ changeSet: ChangeSet) async throws
+    /// Pull the peer's change-set (its live entities + tombstones since last sync).
+    func pull() async throws -> ChangeSet
+}
+
+/// The sync-facing view of the local store (HSM-10-01): modified-time tracking and
+/// soft-delete tombstones on top of the Phase-4 store, so a change-set can be
+/// produced from and applied to it. Kept separate from `IStorage` so the base CRUD
+/// surface stays lean.
+public protocol ISyncStore: Sendable {
+    func saveMeeting(_ meeting: Meeting, modifiedAt: Date) throws
+    func saveArtifact(_ artifact: Artifact, modifiedAt: Date) throws
+    /// Soft-delete: record a tombstone (`deleted=1`) so the delete can propagate.
+    func deleteMeeting(id: String, at: Date) throws
+    func deleteArtifact(id: String, at: Date) throws
+    /// Live (non-tombstoned) entities with their last-modified instant.
+    func allMeetings() throws -> [(meeting: Meeting, modifiedAt: Date)]
+    func allArtifacts() throws -> [(artifact: Artifact, modifiedAt: Date)]
+    /// Tombstones (propagated deletes) for both kinds.
+    func tombstones() throws -> [SyncMetadata]
 }

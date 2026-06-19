@@ -2,7 +2,10 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done (2026-06-19 — `ChangeSet`/`Synced` object model + `ISyncStore`
+  (SQLite schema v2: modified-time + tombstones) + RuntimeCore `SyncEngine`
+  snapshot/apply/round-trip; `swift test` 55/55 incl. 6 sync tests. See
+  [evidence-01](./evidence-story-01.md).)
 - **Depends on:** HSM-0-04, HSM-4-01
 - **Unblocks:** HSM-10-02, HSM-10-03, HSM-10-04
 - **Owner:** unassigned
