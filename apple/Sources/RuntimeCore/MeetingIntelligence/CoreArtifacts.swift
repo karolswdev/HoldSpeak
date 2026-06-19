@@ -115,6 +115,24 @@ public struct CoreArtifactGenerator: Sendable {
             topics: draft.topics ?? [], actionItems: [], summary: draft.summary)
     }
 
+    // MARK: ADR Candidates (HSM-6-03 — open-blob `Artifact(.adr)`)
+
+    /// Generate ADR (Architecture Decision Record) Candidates — decisions with
+    /// architectural weight, each tied to the decision context it derives from.
+    /// An open-blob `Artifact(.adr)` via the HSM-6-01 engine. Does not fabricate:
+    /// a transcript with no architectural decision yields an empty candidate set.
+    ///
+    /// (Follow-ups, the other Vision extra, are deferred — the contract has no
+    /// follow-up `artifact_type` and that is a cross-runtime decision; see
+    /// HSM-6-06.)
+    public func generateADRCandidates(from transcript: Transcript) async throws -> Artifact {
+        let engine = ArtifactGenerationEngine(
+            provider: provider, pluginId: pluginId, pluginVersion: pluginVersion,
+            maxAttempts: maxAttempts,
+            promptBuilder: { _, tr in CoreArtifactPrompts.adrCandidates(tr) })
+        return try await engine.generate(.adr, from: transcript)
+    }
+
     // MARK: helpers
 
     /// Mirror the desktop's content-addressed id: `sha256(task:owner)[:12]`
@@ -148,6 +166,23 @@ public enum CoreArtifactPrompts {
         element is {"task": string, "owner": string|null, "due": string|null,
         "source_timestamp": number|null} where source_timestamp is the second mark
         in the transcript that justifies it. If there are NO action items, return [].
+
+        Transcript:
+        \(transcriptText(t))
+        """
+    }
+
+    public static func adrCandidates(_ t: Transcript) -> String {
+        """
+        Extract ADR (Architecture Decision Record) CANDIDATES from the transcript
+        below. An ADR candidate is a decision with architectural weight — a choice
+        about structure, technology, or a tradeoff with lasting consequences. Tie
+        each to the decision context it derives from. Return ONLY a JSON object
+        {"title": string, "body_markdown": string, "structured_json": {"candidates":
+        [{"title": string, "context": string, "decision": string, "consequences":
+        string|null, "source_timestamp": number|null}]}, "confidence": number 0-1}.
+        If there is NO architectural decision, return an empty "candidates" array —
+        never invent one.
 
         Transcript:
         \(transcriptText(t))

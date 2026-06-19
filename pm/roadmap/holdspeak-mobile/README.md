@@ -1,12 +1,16 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-19 (**Phase 6 — HSM-6-02 done** — the five core artifact
-types are real on the HSM-6-01 seam: Action Items (`Artifact(.actionItems)` whose
-`structured_json` is a schema-valid `[ActionItem]`), Decisions/Risks/Requirements
-(open-blob `Artifact`s via per-type prompts), and Summary → `IntelSnapshot` (no
-invented `summary` type — contract-honest). Empty input → empty set, never
-hallucinated; also fixed a Phase-5 `extractJSON` array bug. `swift test` 33/33.
-Next: HSM-6-03 (ADR Candidates + Follow-ups). Earlier: **HSM-6-01 done** — the
+**Last updated:** 2026-06-19 (**Phase 6 — HSM-6-03 done (ADR Candidates)** — an
+open-blob `Artifact(.adr)` on the seam: ties to an architectural-weight decision,
+carries a `source_timestamp` + transcript source, never fabricated. `swift test`
+35/35. **Follow-ups split to HSM-6-06 (blocked)** — `artifact_type` is a closed
+cross-runtime enum with no follow-up type (needs a desktop+schema+fixtures contract
+decision). **Program steer (owner): the iPad syncs to the server by default**
+(local-first, off-LAN → queue → reconcile later); after Phase 6 closes, the sync
+thrust (incl. a new Python-side sync API) is next. Earlier: **HSM-6-02 done** — the
+five core artifact types (Action Items typed to `[ActionItem]`; Decisions/Risks/
+Requirements open-blob; Summary → `IntelSnapshot`); fixed a Phase-5 `extractJSON`
+array bug. Earlier: **HSM-6-01 done** — the
 artifact-generation engine seam (`ArtifactGenerationEngine`: Phase-0 `Transcript`
 + injected `ILLMProvider` → schema-valid `Artifact` via the Phase-5
 `StructuredOutput` bridge; propose-only, robust to prose). Earlier: **Gate 1
@@ -74,8 +78,8 @@ Earlier today: **program scaffolded** — the Council Implementation
 Charter (Rev 1.0) mapped onto a 12-phase roadmap (Phase 0 Contract Extraction →
 Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every phase
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
-**Current phase:** [phase-6-meeting-intelligence](./phase-6-meeting-intelligence/current-phase-status.md) (Phases 0 ✅, 1 ✅, 4 ✅; 2 + 3 + 5 testable cores done, device-gated remainder; Phase 6 in-progress, HSM-6-01 + 6-02 done)
-**Status:** in-progress (Phases 0–1–4 closed; Phase 2 + 3 + 5 testable cores shipped; Phase 6 started — HSM-6-01 + 6-02 done, HSM-6-03 next).
+**Current phase:** [phase-6-meeting-intelligence](./phase-6-meeting-intelligence/current-phase-status.md) (Phases 0 ✅, 1 ✅, 4 ✅; 2 + 3 + 5 testable cores done, device-gated remainder; Phase 6 in-progress, HSM-6-01 + 6-02 + 6-03 done; 6-06 Follow-ups blocked)
+**Status:** in-progress (Phases 0–1–4 closed; Phase 2 + 3 + 5 testable cores shipped; Phase 6 — HSM-6-01/02/03 done, HSM-6-04 next; sync-by-default is the next major thrust after Phase 6).
 
 ## Vision
 
