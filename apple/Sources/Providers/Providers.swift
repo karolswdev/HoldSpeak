@@ -27,6 +27,8 @@ public protocol ILLMProvider: Sendable {
 public protocol IStorage: Sendable {
     func saveMeeting(_ meeting: Meeting) throws
     func loadMeeting(id: String) throws -> Meeting?
+    func saveArtifact(_ artifact: Artifact) throws
+    func loadArtifacts(meetingId: String) throws -> [Artifact]
 }
 
 public protocol ISyncProvider: Sendable {

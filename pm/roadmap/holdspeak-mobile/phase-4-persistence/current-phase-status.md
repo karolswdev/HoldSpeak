@@ -1,12 +1,18 @@
 # Phase 4 — Persistence
 
-**Status:** planning (scaffolded 2026-06-18). Track E of the Council
-Implementation Charter. The `IStorage` provider (Layer 3): a local SQLite store
-for `Meeting`, `Segment`, `Artifact`, and `Action`, whose stored shapes match
-the Phase-0 contracts, and which survives a mid-write crash with data intact.
+**Status:** CLOSED ✅ (3/3) 2026-06-18 — see [`final-summary.md`](./final-summary.md).
+Track E of the Council Implementation Charter. The `IStorage` provider (Layer 3):
+a local SQLite store for the Phase-0 contracts that survives a crash with data
+intact.
 
-**Last updated:** 2026-06-18 (scaffolded — stories HSM-4-01..03 stubbed from the
-charter Track E deliverables; no work started).
+**Last updated:** 2026-06-18 (**Phase 4 CLOSED ✅ 3/3** — `SQLiteStorage` over the
+built-in `SQLite3` C API (no dependency): `meetings`/`artifacts` tables storing
+the Phase-0 contract JSON, WAL mode, `SCHEMA_VERSION=1`. `swift test` **18/18**
+incl. round-trip (saveMeeting→loadMeeting == the exact contract), crash-recovery
+durability (committed survives an abandoned/unclosed connection + `integrity_check`
+ok), atomicity (uncommitted rolled back), and the schema-version assertion. The
+true on-device SIGKILL-mid-write is the one stronger proof noted as device-pending.
+Phase 5 (Local Inference) is next.).
 
 ## Goal
 
@@ -57,19 +63,24 @@ migration ceremony, no compat shims.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HSM-4-01 | SQLite schema + stores | backlog | [story-01](./story-01-sqlite-schema-and-stores.md) | — |
-| HSM-4-02 | Crash recovery (Gate closeout) | backlog | [story-02](./story-02-crash-recovery-closeout.md) | — |
-| HSM-4-03 | Versioning policy | backlog | [story-03](./story-03-versioning-policy.md) | — |
+| HSM-4-01 | SQLite schema + stores | done | [story-01](./story-01-sqlite-schema-and-stores.md) | [evidence-01](./evidence-story-01.md) |
+| HSM-4-02 | Crash recovery (Gate closeout) | done | [story-02](./story-02-crash-recovery-closeout.md) | [evidence-02](./evidence-story-02.md) |
+| HSM-4-03 | Versioning policy | done | [story-03](./story-03-versioning-policy.md) | [evidence-03](./evidence-story-03.md) |
 
 ## Where we are
 
-Just scaffolded. The three stories are stubbed against Track E: the schema and
-`IStorage`-backed stores (HSM-4-01), the WAL/journaling work plus the
-crash-recovery Gate closeout (HSM-4-02), and the schema/version policy that ties
-the DB version to Phase-0's `contract_version` under greenfield discipline
-(HSM-4-03). HSM-4-01 depends on the Phase-0 schemas (HSM-0-02) being landed and
-on the Mobile Foundation (HSM-1-01); next: confirm HSM-0-02 fixtures exist, then
-pick up HSM-4-01.
+**Phase 4 is CLOSED ✅ (3/3) — fully host-verified, no device deferral.**
+`SQLiteStorage` (built-in `SQLite3` C API, no SPM dependency) backs `IStorage`:
+`meetings`/`artifacts` tables holding the Phase-0 contract JSON, WAL mode,
+`SCHEMA_VERSION=1` in `PRAGMA user_version`. `swift test` 18/18 covers HSM-4-01
+(saveMeeting→loadMeeting returns the exact Meeting; artifact store), HSM-4-02
+(crash-recovery durability — committed survives an abandoned/unclosed connection +
+`integrity_check` ok — and atomicity — uncommitted rolled back), and HSM-4-03
+(SCHEMA_VERSION=1, independent of `contract_version`, greenfield). The one stronger
+proof not reproducible host-side — an on-device SIGKILL mid-write — is noted as the
+device-pending closeout. Next: Phase 5 (Local Inference), pre-grounded by the
+owner's inference brief; its testable seam lands host-side, the engine pick + the
+30-min local gate are device work.
 
 ## Active risks
 
