@@ -1,13 +1,17 @@
 # Phase 1 — Mobile Foundation
 
-**Status:** planning (scaffolded 2026-06-18). Track B of the Council
-Implementation Charter. The first Swift-bearing phase: it stands up the Xcode
-workspace and the four-layer SPM target structure (Contracts / Runtime Core /
-Providers / Platform Hosts) and lands the Swift `Codable` types against the
-Phase-0 contracts, then proves the shell launches on both device classes.
+**Status:** in-progress (HSM-1-01/02 done 2026-06-18; HSM-1-03/04 remain). Track B
+of the Council Implementation Charter. The first Swift-bearing phase: it stands up
+the four-layer SPM target structure (Contracts / Runtime Core / Providers /
+Platform Hosts) and lands the Swift `Codable` types against the Phase-0 contracts,
+then proves the shell launches on both device classes.
 
-**Last updated:** 2026-06-18 (scaffolded — stories HSM-1-01..04 stubbed from the
-charter Track B deliverables; no work started).
+**Last updated:** 2026-06-18 (**HSM-1-01 + HSM-1-02 done** — the `apple/` Swift
+package exists with the four-layer target graph, the core layers UI-free
+(grep-guarded); the `Contracts` `Codable` types + enums + `JSONValue` + the
+snake_case/UTC-Z coder round-trip the Phase-0 golden fixtures via `swift test`
+(**5/5 green**, the same fixtures the Python validator checks). Remaining: HSM-1-03
+(CI) and HSM-1-04 (iOS app target + the Gate-1 on-device launch)).
 
 ## Goal
 
@@ -58,8 +62,8 @@ iPad.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HSM-1-01 | Xcode workspace + four-layer SPM layout | backlog | [story-01](./story-01-xcode-workspace-spm-layout.md) | — |
-| HSM-1-02 | Contracts Swift Codable types | backlog | [story-02](./story-02-contracts-swift-types.md) | — |
+| HSM-1-01 | Xcode workspace + four-layer SPM layout | done | [story-01](./story-01-xcode-workspace-spm-layout.md) | [evidence-01](./evidence-story-01.md) |
+| HSM-1-02 | Contracts Swift Codable types | done | [story-02](./story-02-contracts-swift-types.md) | [evidence-02](./evidence-story-02.md) |
 | HSM-1-03 | CI pipeline (iPhone + iPad sim) | backlog | [story-03](./story-03-ci-pipeline.md) | — |
 | HSM-1-04 | Test harness + Gate-1 launch closeout | backlog | [story-04](./story-04-test-harness-launch-closeout.md) | — |
 
@@ -69,11 +73,16 @@ Just scaffolded. Phase 0 (Track A) fixes the contracts this phase consumes: the
 `holdspeak-contracts` package home + serialization contract (HSM-0-03) and the
 golden conformance fixtures (HSM-0-04) are the upstream inputs. The four stories
 are stubbed against Track B's four deliverables (Xcode Workspace, Swift Package
-Layout, CI Pipeline, Test Harness), ordered so the layout lands first (HSM-1-01),
-the contract types prove interop next (HSM-1-02), CI gates both device classes
-(HSM-1-03), and the harness carries the Gate-1 launch closeout (HSM-1-04). Next:
-HSM-1-01 cannot start until HSM-0-03 settles the package home — confirm that
-before opening the workspace.
+Layout, CI Pipeline, Test Harness). **HSM-1-01 and HSM-1-02 are done:** the
+`apple/` SPM package builds all four layers (Swift 6.3 / Xcode 26.5), the core
+three are UI-free (grep-guarded), and the `Contracts` Codable types round-trip the
+Phase-0 golden fixtures (`swift test` 5/5 green — decode, typed encode→decode
+equality, UTC-Z encoding, the MIR-profile dimension, the actuator). The SPM
+package is the source of truth (the deferred "workspace shape" resolved SPM-first;
+no standalone `.xcworkspace`). Next: **HSM-1-03** (CI: build + `swift test` on a
+macOS runner, with the layer grep-guard as a step) and **HSM-1-04** (the iOS app
+target + the Gate-1 on-device/simulator launch) — both need either CI wiring or an
+Xcode app project, the natural next chunk.
 
 ## Active risks
 

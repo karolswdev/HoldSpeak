@@ -1,6 +1,12 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-18 (**Phase 0 CLOSED ✅ 5/5** — the contract layer ships:
+**Last updated:** 2026-06-18 (**Phase 1 started — HSM-1-01/02 done** — the real
+Swift codebase is in at [`../../../apple/`](../../apple/README.md): a four-layer
+SPM package (`Contracts`/`RuntimeCore`/`Providers`/`Hosts`, core layers UI-free)
+whose `Contracts` `Codable` types round-trip the Phase-0 golden fixtures —
+`swift test` 5/5 green on Swift 6.3, the same fixtures the Python validator
+checks. Remaining in Phase 1: CI (HSM-1-03) + the on-device launch (HSM-1-04).
+Earlier today: **Phase 0 CLOSED ✅ 5/5** — the contract layer ships:
 the entity catalog, 9 JSON schemas, the serialization contract (10 locked rules),
 two golden fixtures, and `validate.py` green across 10 checks; HSM-0-04 broadened
 the fixtures (actuator proposal + balanced/architect intent windows + a round-trip
@@ -84,7 +90,7 @@ WebView, or UIKit.
 | Phase | Track | Goal (one line) | Status | Folder |
 |---|---|---|---|---|
 | 0 | A | Extract the desktop domain into language-neutral contracts (`holdspeak-contracts`) | **done (5/5)** | [phase-0](./phase-0-contracts-and-charter-lock/) |
-| 1 | B | Mobile foundation: Xcode workspace, SPM layout, CI, launches on device | current | [phase-1](./phase-1-mobile-foundation/) |
+| 1 | B | Mobile foundation: Xcode workspace, SPM layout, CI, launches on device | in-progress (2/4) | [phase-1](./phase-1-mobile-foundation/) |
 | 2 | C | Audio engine: AVAudioEngine streaming capture + WAV export, 1-hour stable | not-started | [phase-2](./phase-2-audio-engine/) |
 | 3 | D | Whisper runtime via WhisperKit, realtime latency < 2s | not-started | [phase-3](./phase-3-whisper-runtime/) |
 | 4 | E | SQLite persistence with full crash recovery | not-started | [phase-4](./phase-4-persistence/) |
