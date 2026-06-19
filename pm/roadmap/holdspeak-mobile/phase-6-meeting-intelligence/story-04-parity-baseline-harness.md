@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 6
-- **Status:** backlog
+- **Status:** done (harness + rubric framework; the live verdict run is HSM-6-05)
 - **Depends on:** HSM-6-02, HSM-6-03
 - **Unblocks:** HSM-6-05
 - **Owner:** unassigned
@@ -26,14 +26,20 @@ mobile output against it on substance, repeatably.
 
 ## Acceptance criteria
 
-- [ ] A documented baseline-meeting set exists with captured desktop artifacts.
-- [ ] A substance rubric defines what "covered" means per artifact type and the
-      pass threshold for parity (agreed with the owner).
-- [ ] The harness scores mobile output against the baseline and produces a stable
-      result across reruns despite non-deterministic generation (run it twice →
-      same verdict).
-- [ ] The harness reports per-type, so a gap is attributable to a specific
-      artifact type, not a single opaque score.
+- [x] A documented baseline-meeting set: the **Phase-67 dogfood transcripts**
+      (owner-agreed). NOTE: *capturing* the desktop artifacts on that set + the
+      live mobile run is the HSM-6-05 verdict (it needs the desktop intel pipeline
+      and, on the mobile side, the device/dep-gated inference engine — Phase 5).
+- [x] A substance rubric defines what "covered" means per artifact type and the
+      pass threshold — `ParityRubric` (per-`ParityCategory` `mustCover` facts) +
+      threshold **0.8 overall coverage, reported per-type** (owner-agreed default).
+- [x] The harness scores output against the rubric and is **stable across reruns**:
+      `ParityScorer.score` is a pure function — `testScorerIsDeterministic` (run
+      twice → identical `ParityReport`). The non-determinism is in generation, not
+      in judging.
+- [x] The harness **reports per-category** (`ParityReport.perCategory`) with the
+      `missing` facts, so a gap is attributable to a specific type, not one opaque
+      score (`testThresholdFailsAndAttributes`).
 
 ## Test plan
 

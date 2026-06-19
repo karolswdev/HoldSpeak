@@ -1,6 +1,14 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-19 (**Phase 6 — HSM-6-03 done (ADR Candidates)** — an
+**Last updated:** 2026-06-19 (**Phase 6 — HSM-6-04 done (parity harness)** — a
+deterministic, phrasing-tolerant substance-coverage scorer (`ParityRubric` /
+`ParityScorer` / `ParityReport`) that operationally defines the Track-G parity
+gate (per-type `mustCover` facts, fact-weighted coverage vs an owner-agreed 0.8
+threshold, stable across reruns). `swift test` 38/38. The intelligence layer
+(6-01/02/03) + harness are host-proven; **HSM-6-05 (the Gate-5 verdict) is blocked**
+on the device/dep-gated mobile inference engine (Phase 5 — no on-device model yet,
+so a real mobile-vs-desktop comparison can't run). Earlier: **HSM-6-03 done (ADR
+Candidates)** — an
 open-blob `Artifact(.adr)` on the seam: ties to an architectural-weight decision,
 carries a `source_timestamp` + transcript source, never fabricated. `swift test`
 35/35. **Follow-ups split to HSM-6-06 (blocked)** — `artifact_type` is a closed
@@ -78,8 +86,8 @@ Earlier today: **program scaffolded** — the Council Implementation
 Charter (Rev 1.0) mapped onto a 12-phase roadmap (Phase 0 Contract Extraction →
 Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every phase
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
-**Current phase:** [phase-6-meeting-intelligence](./phase-6-meeting-intelligence/current-phase-status.md) (Phases 0 ✅, 1 ✅, 4 ✅; 2 + 3 + 5 testable cores done, device-gated remainder; Phase 6 in-progress, HSM-6-01 + 6-02 + 6-03 done; 6-06 Follow-ups blocked)
-**Status:** in-progress (Phases 0–1–4 closed; Phase 2 + 3 + 5 testable cores shipped; Phase 6 — HSM-6-01/02/03 done, HSM-6-04 next; sync-by-default is the next major thrust after Phase 6).
+**Current phase:** [phase-6-meeting-intelligence](./phase-6-meeting-intelligence/current-phase-status.md) (Phases 0 ✅, 1 ✅, 4 ✅; 2 + 3 + 5 testable cores done, device-gated remainder; Phase 6 — HSM-6-01/02/03/04 done; 6-05 verdict blocked on the mobile inference engine, 6-06 Follow-ups blocked on a contract decision)
+**Status:** in-progress (Phases 0–1–4 closed; Phase 2 + 3 + 5 testable cores shipped; Phase 6 intelligence + parity harness host-proven — Gate-5 verdict awaits the on-device LLM. Next: the mobile inference engine and/or the sync-by-default thrust).
 
 ## Vision
 
