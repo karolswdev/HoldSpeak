@@ -1,14 +1,29 @@
 # Phase 5 — Local Inference
 
 **Status:** in-progress (HSM-5-04 done 2026-06-18; **HSM-5-01 done 2026-06-19 —
-engine = llama.cpp+GGUF**; HSM-5-02/03 in-progress; HSM-5-05 device-gated). Track F
+engine = llama.cpp+GGUF**; **HSM-5-06 — endpoint provider (Modes B/C) + mode
+setting — host/live-proven, device build+install done, on-device launch pending
+the iPad unlock**; HSM-5-02/03 in-progress; HSM-5-05 device-gated). Track F
 of the Council Implementation Charter. The phase
 that lights up Mode A (Fully Local): it delivers the on-device `ILLMProvider`
 (Layer 3) so a meeting can go Audio → Whisper → LLM → Artifacts with no network.
 It also resolves the Phase-0 deferred decision — which inference engine the mobile
 runtime stands on.
 
-**Last updated:** 2026-06-19 (**HSM-5-01 done — engine = `llama.cpp` + GGUF**, a
+**Last updated:** 2026-06-19 (**HSM-5-06 — the OpenAI-compatible endpoint provider
+(charter Modes B/C) + a runtime-mode setting**, shipped ahead of the on-device
+engine on the owner's steer: inference mode is a user setting (local default) and
+the runtime must point at any OpenAI-compatible endpoint, so the iPad need not
+spend unified memory on a resident model. `OpenAIEndpointProvider` (URLSession,
+Foundation only) + `RuntimeMode`/`EndpointConfig`/`InferenceProviderFactory`;
+`swift test` **46/46** (+8), a live run emits real contract-shaped artifacts from a
+transcript against a clean LAN `llama-server` (Qwen2.5-7B), and the HSM-6-05 parity
+*mechanism* scores that real output **1.00 PASS**. The Mode-C harness **built +
+signed + installed on the physical iPad Air M4**; launch is blocked only by the
+device lock screen (one command finishes it once unlocked). Finding: the `.43`
+homelab box forces a `{"line": …}` grammar, so the proof used a clean dev-Mac
+endpoint over the LAN. HSM-5-02 (on-device GGUF, Mode A) reuses this same seam +
+harness. Earlier: **HSM-5-01 done — engine = `llama.cpp` + GGUF**, a
 banked decision from the research canon (not a bake-off, per the owner's no-spikes
 directive); resolves the Phase-0 Track-F deferral. Decisive axis: off-the-shelf
 4B/8B GGUF availability (no Core ML conversion / MLC compile); mature Metal; a C
@@ -78,6 +93,7 @@ on Tier-1 hardware.
 | HSM-5-03 | Model packaging & per-device defaults | in-progress | [story-03](./story-03-model-packaging-strategy.md) | — |
 | HSM-5-04 | Structured / JSON output | done | [story-04](./story-04-structured-output.md) | [evidence-04](./evidence-story-04.md) |
 | HSM-5-05 | 30-minute meeting closeout (Gate 4) | backlog | [story-05](./story-05-thirty-minute-meeting-closeout.md) | — |
+| HSM-5-06 | Endpoint provider (Modes B/C) + mode setting | in-progress | [story-06](./story-06-endpoint-provider.md) | in story (evidence-06 on `done`) |
 
 ## Where we are
 
@@ -94,8 +110,11 @@ no-spikes directive; named models `Llama-3.2-3B`/`Llama-3.1-8B` Q4_K_M GGUF). Ph
 device/dep: the **engine-backed `ILLMProvider`** (HSM-5-02 — wire llama.cpp, bridge
 the C API, run a GGUF completion on the connected iPad Air M4), **model packaging**
 (HSM-5-03's other half), and the **30-min local gate** (HSM-5-05). **HSM-5-02 is the
-next thrust** — it's the first time the iPad actually runs a model, and it unblocks
-the Phase-6 parity verdict (HSM-6-05).
+next thrust** for true airplane-mode-local inference. But the **iPad already runs
+real meeting intelligence today via HSM-5-06** — the OpenAI-compatible endpoint
+provider (Modes B/C), built/signed/installed on the iPad Air M4 and host/live-proven
+against a real model; that path also gives HSM-6-05 a real on-device `ILLMProvider`,
+so the parity verdict is no longer engine-blocked.
 
 ## Active risks
 
@@ -126,8 +145,26 @@ the Phase-6 parity verdict (HSM-6-05).
   12B+ plugged-in-only. MLX is the recorded fallback if llama.cpp underperforms
   on-device (validated implicitly in HSM-5-02 — failure re-opens HSM-5-01).
 
+- 2026-06-19 — **Inference mode is a user setting, and any OpenAI-compatible
+  endpoint is a first-class target (owner steer).** Local (Mode A) is the privacy
+  default, but a meeting can instead run against a LAN/homelab (Mode B) or any
+  endpoint (Mode C), so the iPad need not load a resident model when a capable
+  endpoint is available. Modeled as `RuntimeMode` + `EndpointConfig` +
+  `InferenceProviderFactory` on the one `ILLMProvider` seam (HSM-5-06). This
+  re-sequences the endpoint provider ahead of the on-device GGUF (HSM-5-02), since
+  it is the faster route to real on-device inference and unblocks HSM-6-05.
+- 2026-06-19 — **The `.43` homelab box is not used for the structured-output
+  proof:** it forces a server-side `{"line": …}` grammar that ignores the request's
+  system prompt and `response_format`. The live proof runs against a clean
+  dev-Mac `llama-server` over the LAN. Open question surfaced to the owner: relaunch
+  `.43` without the grammar, or target per-call `response_format`.
+
 ## Decisions deferred
 
+- **Default runtime mode** (local-as-privacy-default vs homelab-as-recommended,
+  which the charter calls Mode B "recommended") — trigger: the Phase-8/9 settings
+  UI — default: ship the setting now (HSM-5-06), confirm the shipped default with
+  the owner before the experience phases.
 - The inference engine itself (Core ML vs llama.cpp+GGUF vs MLC-LLM) — trigger:
   HSM-5-01 — default: none; this story makes the measured pick from the
   research-narrowed candidate set above (inherited from Phase 0's Track-F
