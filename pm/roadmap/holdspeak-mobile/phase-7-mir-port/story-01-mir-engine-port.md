@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 7
-- **Status:** backlog
+- **Status:** done (2026-06-19 — `IntentScorer` + `MIRRouter` + `RoutedArtifactGenerator`
+  in RuntimeCore; deterministic, model-free; drives the Phase-6 engine. See
+  [evidence-01](./evidence-story-01.md).)
 - **Depends on:** HSM-6-01
 - **Unblocks:** HSM-7-02, HSM-7-03, HSM-7-04
 - **Owner:** unassigned

@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 7
-- **Status:** backlog
+- **Status:** done (2026-06-19 — five profiles with distinct per-profile artifact
+  emphasis over MIR-01's intent set; each differs from Balanced. See
+  [evidence-02](./evidence-story-02.md).)
 - **Depends on:** HSM-7-01
 - **Unblocks:** HSM-7-04
 - **Owner:** unassigned

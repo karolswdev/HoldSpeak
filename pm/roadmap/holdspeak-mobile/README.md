@@ -1,6 +1,15 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-19 (**HSM-5-03 — model packaging: both delivery paths
+**Last updated:** 2026-06-19 (**Phase 7 CLOSED ✅ — the MIR port, host-proven.** The
+profile-driven routing decision lives in RuntimeCore: `IntentScorer` (deterministic
+lexical scoring of MIR-01's five intents) → `MIRRouter` (per-profile emphasis +
+score-driven additions → ordered `ArtifactType` chain) → `RoutedArtifactGenerator`
+driving the Phase-6 engine. Five distinct profiles; profile rides on
+`Meeting.mirProfile` (Phase-0 contract). **Track-H gate PASSED**: same transcript,
+balanced vs architect → artifact-type delta `{action_items, dependency_map,
+risk_register}`. `swift test` **69/6-skip/0-fail**; model-free + deterministic.
+See [`phase-7…/final-summary.md`](./phase-7-mir-port/final-summary.md). Earlier:
+**HSM-5-03 — model packaging: both delivery paths
 host-proven (Files sideload + Hugging Face download).** A `ModelCatalog` pins the
 per-tier GGUFs (4B Llama-3.2-3B / 8B Llama-3.1-8B / 12B+ Mistral-Nemo, Q4_K_M; HF
 URLs verified live), a Foundation `ModelStore` is the model manager (list /
@@ -152,8 +161,8 @@ Earlier today: **program scaffolded** — the Council Implementation
 Charter (Rev 1.0) mapped onto a 12-phase roadmap (Phase 0 Contract Extraction →
 Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every phase
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
-**Current phase:** [phase-6-meeting-intelligence](./phase-6-meeting-intelligence/current-phase-status.md) (Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5 PASSED**; 2 + 3 + 5 testable cores done, device-gated remainder; Phase 5 — HSM-5-06 endpoint provider host/live-proven + on-device build; 6-06 Follow-ups deferred on a contract decision)
-**Status:** in-progress (Phases 0–1–4 closed, **Phase 6 closed — Gate 5 desktop-parity PASSED at mean 0.92 vs 0.8**; Phase 2 + 3 + 5 testable cores shipped; HSM-5-06 makes the iPad run real meeting intelligence via an OpenAI-compatible endpoint, on-device launch pending the device unlock; **Phase 10 (Sync) opened — HSM-10-01 object model + engine host-proven**. Next: HSM-10-02 sync transport + Python sync API; the iPad on-device captures (HSM-5-06 launch, HSM-5-02 GGUF) when the device is unlocked).
+**Current phase:** [phase-7-mir-port](./phase-7-mir-port/current-phase-status.md) closed; Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5**, **7 ✅ Gate H**; Phase 5 host-complete (engine pick + structured output + endpoint Modes B/C + on-device Mode A + model packaging — all host-proven; device runs pending the iPad unlock); Phase 10 in-progress (HSM-10-01 done); 2 + 3 testable cores done, device-gated remainder; 6-06 Follow-ups deferred.
+**Status:** in-progress (Phases 0–1–4 closed, **Phase 6 closed (Gate 5 desktop-parity PASSED 0.92)**, **Phase 7 closed (MIR port — profile measurably changes extraction)**; Phase 5 host-complete — on-device Mode A + endpoint Modes B/C + sideload/HF packaging, device runs await the iPad unlock; Phase 10 opened (sync object model + engine). Next device-free: HSM-10-02 sync transport + Python sync API, or Phases 8/9 experience. iPad on-device batch (HSM-5-02/03/06 + Gate-4) when the device is unlocked).
 
 ## Vision
 
@@ -214,7 +223,7 @@ WebView, or UIKit.
 | 4 | E | SQLite persistence with full crash recovery | **done (3/3)** | [phase-4](./phase-4-persistence/) |
 | 5 | F | Local inference (4B/8B) — a 30-min meeting processed on-device | in-progress (engine pick + structured-output + model policy done; HSM-5-06 endpoint Modes B/C; **HSM-5-02 LlamaProvider/Mode A host-proven on Metal**; **HSM-5-03 packaging — sideload + HF download host-proven**; iPad runs + HSM-5-05 gate device) | [phase-5](./phase-5-local-inference/) |
 | 6 | G | Meeting intelligence: structured-JSON artifacts at desktop parity | **Gate 5 PASSED ✅ (5/6; 6-06 deferred)** | [phase-6](./phase-6-meeting-intelligence/) |
-| 7 | H | MIR port: 5 profiles measurably alter extraction | not-started | [phase-7](./phase-7-mir-port/) |
+| 7 | H | MIR port: 5 profiles measurably alter extraction | **done (4/4) ✅** | [phase-7](./phase-7-mir-port/) |
 | 8 | I | iPad experience: PencilKit notebook + transcript linking + review | not-started | [phase-8](./phase-8-ipad-experience/) |
 | 9 | J | iPhone experience: Quick Capture / Capture / Review Queue / Voice Notes | not-started | [phase-9](./phase-9-iphone-experience/) |
 | 10 | K | Sync to desktop / homelab / Tailscale — cross-device continuity | in-progress (1/4; HSM-10-01 object model + engine host-proven) | [phase-10](./phase-10-sync/) |
