@@ -226,6 +226,10 @@ WebView, or UIKit.
   device/quantization/memory budgeting, and the architecture mapping that ground
   Phase 5 (and inform Phases 3 and 11). Its performance numbers are planning
   estimates to be replaced by on-device measurement (HSM-5-01).
+- [`../../apple/ARCHITECTURE.md`](../../apple/ARCHITECTURE.md) — the code map of the
+  shipped mobile runtime (four layers, provider seams, the two inference modes, the
+  meeting-intelligence + MIR path, sync). Read it to see how the roadmap's phases
+  fit together in the `apple/` package.
 - `../holdspeak/README.md` and the existing `holdspeak` phase corpus — the
   shipped desktop/web product whose entities Phase 0 extracts into contracts.
 - `/docs/internal/POSITIONING.md` — the positioning canon ("one copilot, two

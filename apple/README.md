@@ -4,6 +4,10 @@ The Apple runtime of the HoldSpeak ecosystem (iPhone/iPad). Roadmap + canon live
 at [`../pm/roadmap/holdspeak-mobile/`](../pm/roadmap/holdspeak-mobile/); this is
 the Swift codebase that roadmap builds.
 
+**New here? Read [`ARCHITECTURE.md`](./ARCHITECTURE.md)** — the map of the four
+layers, the provider seams, the two inference modes, the meeting-intelligence + MIR
+path, and sync.
+
 ## Layout (charter four-layer architecture)
 
 ```
