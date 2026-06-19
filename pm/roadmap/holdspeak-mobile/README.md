@@ -1,6 +1,15 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-19 (**Phase 5 — HSM-5-06: the iPad runs real meeting
+**Last updated:** 2026-06-19 (**Phase 6 CLOSED ✅ — Gate 5 (desktop-parity) PASSED.**
+HSM-6-05: the parity harness over a fixed baseline meeting, with real mobile
+generation through the Mode-B/C endpoint provider, scores **mean coverage 0.92 over
+3 runs vs the pre-fixed 0.8 threshold (3/3 pass)** — mobile meeting intelligence is
+at parity with the desktop quality baseline. Threshold fixed before the run; gaps
+filed honestly; bar not moved (the owner delegated the rubric + verdict). On-device
+execution is carried by HSM-5-06 (built/installed on the iPad; launch pending unlock)
++ HSM-5-02 (fully-local). HSM-6-06 (Follow-ups) stays deferred on a cross-runtime
+contract decision. See [`phase-6…/final-summary.md`](./phase-6-meeting-intelligence/final-summary.md).
+Earlier: **Phase 5 — HSM-5-06: the iPad runs real meeting
 intelligence today via an OpenAI-compatible endpoint (charter Modes B/C).** On the
 owner's steer — inference mode is a user setting (local default) and the runtime
 must point at any OpenAI-compatible endpoint so the iPad need not load a resident
@@ -111,8 +120,8 @@ Earlier today: **program scaffolded** — the Council Implementation
 Charter (Rev 1.0) mapped onto a 12-phase roadmap (Phase 0 Contract Extraction →
 Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every phase
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
-**Current phase:** [phase-6-meeting-intelligence](./phase-6-meeting-intelligence/current-phase-status.md) (Phases 0 ✅, 1 ✅, 4 ✅; 2 + 3 + 5 testable cores done, device-gated remainder; Phase 5 — HSM-5-06 endpoint provider host/live-proven + on-device build; Phase 6 — HSM-6-01/02/03/04 done; 6-05 verdict no longer engine-blocked, awaits owner rubric + on-device capture; 6-06 Follow-ups blocked on a contract decision)
-**Status:** in-progress (Phases 0–1–4 closed; Phase 2 + 3 + 5 testable cores shipped; **HSM-5-06 makes the iPad run real meeting intelligence today via an OpenAI-compatible endpoint** — built/signed/installed on the iPad Air M4, on-device launch pending the device unlock. Phase 6 intelligence + parity harness host-proven; the parity mechanism scores real endpoint output 1.00 PASS. Next: finish the on-device capture, the owner-signed Gate-5 rubric, then HSM-5-02 on-device GGUF and/or the sync-by-default thrust).
+**Current phase:** [phase-6-meeting-intelligence](./phase-6-meeting-intelligence/current-phase-status.md) (Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5 PASSED**; 2 + 3 + 5 testable cores done, device-gated remainder; Phase 5 — HSM-5-06 endpoint provider host/live-proven + on-device build; 6-06 Follow-ups deferred on a contract decision)
+**Status:** in-progress (Phases 0–1–4 closed, **Phase 6 closed — Gate 5 desktop-parity PASSED at mean 0.92 vs 0.8**; Phase 2 + 3 + 5 testable cores shipped; **HSM-5-06 makes the iPad run real meeting intelligence today via an OpenAI-compatible endpoint** — built/signed/installed on the iPad Air M4, on-device launch pending the device unlock. Next: the on-device capture, then HSM-5-02 on-device GGUF and/or the sync-by-default thrust).
 
 ## Vision
 
@@ -172,7 +181,7 @@ WebView, or UIKit.
 | 3 | D | Whisper runtime via WhisperKit, realtime latency < 2s | in-progress (2/5; lang+segment done, WhisperKit/latency device-gated) | [phase-3](./phase-3-whisper-runtime/) |
 | 4 | E | SQLite persistence with full crash recovery | **done (3/3)** | [phase-4](./phase-4-persistence/) |
 | 5 | F | Local inference (4B/8B) — a 30-min meeting processed on-device | in-progress (structured-output + model policy + engine pick done; HSM-5-06 endpoint provider Modes B/C host/live-proven + on-device build; HSM-5-02 on-device GGUF + gate device) | [phase-5](./phase-5-local-inference/) |
-| 6 | G | Meeting intelligence: structured-JSON artifacts at desktop parity | current | [phase-6](./phase-6-meeting-intelligence/) |
+| 6 | G | Meeting intelligence: structured-JSON artifacts at desktop parity | **Gate 5 PASSED ✅ (5/6; 6-06 deferred)** | [phase-6](./phase-6-meeting-intelligence/) |
 | 7 | H | MIR port: 5 profiles measurably alter extraction | not-started | [phase-7](./phase-7-mir-port/) |
 | 8 | I | iPad experience: PencilKit notebook + transcript linking + review | not-started | [phase-8](./phase-8-ipad-experience/) |
 | 9 | J | iPhone experience: Quick Capture / Capture / Review Queue / Voice Notes | not-started | [phase-9](./phase-9-iphone-experience/) |
