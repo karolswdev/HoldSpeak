@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 1
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HSM-1-01
 - **Unblocks:** HSM-1-04
 - **Owner:** unassigned

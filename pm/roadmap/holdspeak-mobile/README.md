@@ -1,10 +1,10 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-18 (**Phase 1 — Gate 1 PROVEN (3/4)** — the runtime
-shell launched on both the iPhone 17 Pro Max and iPad Pro M5 iOS-26.5 simulators
-(HSM-1-04, screenshots committed), showing the real `Contracts` version. CI is
-authored + green locally (HSM-1-03), pending a hosted run to close the phase.
-Earlier: **HSM-1-01/02 done** — the real Swift codebase is in at
+**Last updated:** 2026-06-18 (**Phase 1 CLOSED ✅ 4/4** — Gate 1 proven (the shell
+launched on the iPhone 17 Pro Max + iPad Pro M5 iOS-26.5 simulators, screenshots
+committed) and CI is **green on a hosted run** (Actions 27801601150, pushed to
+GitHub). The `apple/` package builds + `swift test` 5/5 + CI green. **Phase 2
+(Audio Engine) is next.** Earlier: the real Swift codebase landed at
 [`../../../apple/`](../../apple/README.md): a four-layer
 SPM package (`Contracts`/`RuntimeCore`/`Providers`/`Hosts`, core layers UI-free)
 whose `Contracts` `Codable` types round-trip the Phase-0 golden fixtures —
@@ -38,8 +38,8 @@ Earlier today: **program scaffolded** — the Council Implementation
 Charter (Rev 1.0) mapped onto a 12-phase roadmap (Phase 0 Contract Extraction →
 Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every phase
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
-**Current phase:** [phase-1-mobile-foundation](./phase-1-mobile-foundation/current-phase-status.md) (Phase 0 CLOSED ✅ 5/5)
-**Status:** in-progress (Phase 0 closed; Phase 1 next).
+**Current phase:** [phase-2-audio-engine](./phase-2-audio-engine/current-phase-status.md) (Phase 0 ✅ 5/5, Phase 1 ✅ 4/4)
+**Status:** in-progress (Phases 0–1 closed; Phase 2 next).
 
 ## Vision
 
@@ -94,8 +94,8 @@ WebView, or UIKit.
 | Phase | Track | Goal (one line) | Status | Folder |
 |---|---|---|---|---|
 | 0 | A | Extract the desktop domain into language-neutral contracts (`holdspeak-contracts`) | **done (5/5)** | [phase-0](./phase-0-contracts-and-charter-lock/) |
-| 1 | B | Mobile foundation: Xcode workspace, SPM layout, CI, launches on device | in-progress (3/4, Gate 1 ✓) | [phase-1](./phase-1-mobile-foundation/) |
-| 2 | C | Audio engine: AVAudioEngine streaming capture + WAV export, 1-hour stable | not-started | [phase-2](./phase-2-audio-engine/) |
+| 1 | B | Mobile foundation: Xcode workspace, SPM layout, CI, launches on device | **done (4/4)** | [phase-1](./phase-1-mobile-foundation/) |
+| 2 | C | Audio engine: AVAudioEngine streaming capture + WAV export, 1-hour stable | current | [phase-2](./phase-2-audio-engine/) |
 | 3 | D | Whisper runtime via WhisperKit, realtime latency < 2s | not-started | [phase-3](./phase-3-whisper-runtime/) |
 | 4 | E | SQLite persistence with full crash recovery | not-started | [phase-4](./phase-4-persistence/) |
 | 5 | F | Local inference (4B/8B) — a 30-min meeting processed on-device | not-started | [phase-5](./phase-5-local-inference/) |

@@ -1,14 +1,17 @@
 # Phase 1 — Mobile Foundation
 
-**Status:** in-progress (3/4 done 2026-06-18 — HSM-1-01/02/04; **Gate 1 proven**.
-HSM-1-03 CI authored + locally green, pending a hosted run to close the phase).
+**Status:** CLOSED ✅ (4/4) 2026-06-18 — Gate 1 proven, CI green on a hosted run.
+See [`final-summary.md`](./final-summary.md).
 Track B
 of the Council Implementation Charter. The first Swift-bearing phase: it stands up
 the four-layer SPM target structure (Contracts / Runtime Core / Providers /
 Platform Hosts) and lands the Swift `Codable` types against the Phase-0 contracts,
 then proves the shell launches on both device classes.
 
-**Last updated:** 2026-06-18 (**HSM-1-01 + HSM-1-02 done** — the `apple/` Swift
+**Last updated:** 2026-06-18 (**Phase 1 CLOSED ✅ 4/4** — Gate 1 proven on the
+iPhone 17 Pro Max + iPad Pro M5 simulators (HSM-1-04, screenshots committed) and
+CI green on a hosted run (HSM-1-03, Actions 27801601150). See `final-summary.md`.
+Phase 2 next. Earlier: **HSM-1-01 + HSM-1-02 done** — the `apple/` Swift
 package exists with the four-layer target graph, the core layers UI-free
 (grep-guarded); the `Contracts` `Codable` types + enums + `JSONValue` + the
 snake_case/UTC-Z coder round-trip the Phase-0 golden fixtures via `swift test`
@@ -66,7 +69,7 @@ iPad.
 |---|---|---|---|---|
 | HSM-1-01 | Xcode workspace + four-layer SPM layout | done | [story-01](./story-01-xcode-workspace-spm-layout.md) | [evidence-01](./evidence-story-01.md) |
 | HSM-1-02 | Contracts Swift Codable types | done | [story-02](./story-02-contracts-swift-types.md) | [evidence-02](./evidence-story-02.md) |
-| HSM-1-03 | CI pipeline (iPhone + iPad sim) | in-progress | [story-03](./story-03-ci-pipeline.md) | — |
+| HSM-1-03 | CI pipeline (iPhone + iPad sim) | done | [story-03](./story-03-ci-pipeline.md) | [evidence-03](./evidence-story-03.md) |
 | HSM-1-04 | Test harness + Gate-1 launch closeout | done | [story-04](./story-04-test-harness-launch-closeout.md) | [evidence-04](./evidence-story-04.md) |
 
 ## Where we are
@@ -81,15 +84,12 @@ three are UI-free (grep-guarded), and the `Contracts` Codable types round-trip t
 Phase-0 golden fixtures (`swift test` 5/5 green — decode, typed encode→decode
 equality, UTC-Z encoding, the MIR-profile dimension, the actuator). The SPM
 package is the source of truth (the deferred "workspace shape" resolved SPM-first;
-no standalone `.xcworkspace`). **HSM-1-04 is done — Gate 1 is proven:** a minimal
-SwiftUI shell (compiled with the Contracts sources) launched on the iPhone 17 Pro
-Max AND iPad Pro 13-inch (M5) iOS-26.5 simulators, screenshots committed
-(`gate1-*.png`), showing "contracts v0.1.0" read from the real contract layer.
-**HSM-1-03 (CI) is the only thing left to close the phase:**
-`.github/workflows/holdspeak-mobile-ci.yml` is authored and every step is green
-locally (layer guard + `swift build` + `swift test` + the Python validator); it
-flips to done once it runs green on a hosted run — which needs a `git push`
-(owner's call, per the commit-don't-push posture).
+no standalone `.xcworkspace`). **Phase 1 is CLOSED ✅ (4/4).** Gate 1 is proven
+(HSM-1-04: the shell launched on the iPhone 17 Pro Max AND iPad Pro 13-inch (M5)
+iOS-26.5 simulators, screenshots committed, showing "contracts v0.1.0" from the
+real contract layer), and CI is green on a **hosted** run (HSM-1-03: Actions run
+27801601150, both jobs ✓, after `git push`). See
+[`final-summary.md`](./final-summary.md). Phase 2 (Audio Engine) is next.
 
 ## Active risks
 
