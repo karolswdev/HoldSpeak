@@ -1,18 +1,22 @@
 # Phase 5 — Local Inference
 
-**Status:** planning (scaffolded 2026-06-18). Track F of the Council
-Implementation Charter. The phase that lights up Mode A (Fully Local): it
-delivers the on-device `ILLMProvider` (Layer 3) so a meeting can go
-Audio → Whisper → LLM → Artifacts with no network. It also resolves the
-Phase-0 deferred decision — which inference engine the mobile runtime stands on.
+**Status:** in-progress (HSM-5-04 done 2026-06-18; HSM-5-01/02/03 in-progress;
+HSM-5-05 device-gated). Track F of the Council Implementation Charter. The phase
+that lights up Mode A (Fully Local): it delivers the on-device `ILLMProvider`
+(Layer 3) so a meeting can go Audio → Whisper → LLM → Artifacts with no network.
+It also resolves the Phase-0 deferred decision — which inference engine the mobile
+runtime stands on.
 
-**Last updated:** 2026-06-18 (scaffolded + **pre-grounded** — the owner's
-inference brief landed early ([`../research/inference-on-apple.md`](../research/inference-on-apple.md)):
-the in-app candidate set is Core ML / llama.cpp+GGUF / MLC-LLM (Ollama and vLLM
-are Mode-B/C companions, not in-app), 4-bit PTQ is the shipping default, and the
-charter's per-device model tiers are confirmed. HSM-5-01 and HSM-5-03 are updated
-to cite it; the measured engine pick is still HSM-5-01's job. No build work
-started.).
+**Last updated:** 2026-06-18 (**HSM-5-04 done + host slice landed** — the
+structured-output plumbing (`StructuredOutput`: extract JSON from messy model
+text → decode through the contract `Codable` → bounded repair-retry) and the
+per-device LLM model policy (`InferenceModelPolicy`: iPhone→4B / iPad→8B, 12B+
+plugged-in-only) are host-tested (`swift test` **24/24**). The engine pick
+(HSM-5-01), the engine-backed `ILLMProvider` (HSM-5-02), the model packaging half
+of HSM-5-03, and the 30-min local gate (HSM-5-05) are device/dep. Earlier:
+pre-grounded by the owner's inference brief
+([`../research/inference-on-apple.md`](../research/inference-on-apple.md)) — candidate
+set Core ML / llama.cpp+GGUF / MLC-LLM, 4-bit PTQ default, per-device tiers.).
 
 ## Goal
 
@@ -63,25 +67,27 @@ on Tier-1 hardware.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HSM-5-01 | Engine evaluation & pick | backlog | [story-01](./story-01-engine-evaluation.md) | — |
-| HSM-5-02 | `ILLMProvider` impl + Mode A | backlog | [story-02](./story-02-llm-provider-impl.md) | — |
-| HSM-5-03 | Model packaging & per-device defaults | backlog | [story-03](./story-03-model-packaging-strategy.md) | — |
-| HSM-5-04 | Structured / JSON output | backlog | [story-04](./story-04-structured-output.md) | — |
+| HSM-5-01 | Engine evaluation & pick | in-progress | [story-01](./story-01-engine-evaluation.md) | — |
+| HSM-5-02 | `ILLMProvider` impl + Mode A | in-progress | [story-02](./story-02-llm-provider-impl.md) | — |
+| HSM-5-03 | Model packaging & per-device defaults | in-progress | [story-03](./story-03-model-packaging-strategy.md) | — |
+| HSM-5-04 | Structured / JSON output | done | [story-04](./story-04-structured-output.md) | [evidence-04](./evidence-story-04.md) |
 | HSM-5-05 | 30-minute meeting closeout (Gate 4) | backlog | [story-05](./story-05-thirty-minute-meeting-closeout.md) | — |
 
 ## Where we are
 
-Scaffolded and pre-grounded. Phase 0 deferred the engine choice to this phase, and
-the owner's inference brief ([`../research/inference-on-apple.md`](../research/inference-on-apple.md))
-arrived early — so HSM-5-01 no longer starts from a blank page: the candidate set
-is fixed (Core ML / llama.cpp+GGUF / MLC-LLM), the eval axes and device/quant
-budgets are documented, and Ollama/vLLM are ruled out as in-app. HSM-5-01 is still
-the story that makes the measured pick, and everything else depends on its outcome. The five stories are stubbed
-against Track F's three deliverable areas (engine evaluation, the on-device
-`ILLMProvider`, the local-model strategy) plus the two stories this program needs
-to make Mode A real and testable (structured output in the contract shapes, and
-the Gate-4 closeout). Next: pick up HSM-5-01 — evaluate the three engines on
-Tier-1 hardware and record the pick.
+The host-testable slice of Track F is shipped. **HSM-5-04 (done)** is the
+structured-output bridge — `StructuredOutput.extractJSON`/`decode`/`generate`
+turns messy model text into validated contract values with a bounded repair-retry
+(tested with a fake provider, 24/24). The **per-device model policy**
+(`InferenceModelPolicy`, part of HSM-5-03) is done + tested (iPhone→4B / iPad→8B,
+12B+ plugged-in-only). The candidate set is fixed (Core ML / llama.cpp+GGUF /
+MLC-LLM; Ollama/vLLM Mode-B/C). What remains is genuinely device/dep: the
+**measured engine pick** (HSM-5-01 — needs the engines + models on a Tier-1
+device), the **engine-backed `ILLMProvider`** (HSM-5-02) + **model packaging**
+(HSM-5-03's other half), and the **30-min local gate** (HSM-5-05). Next authorable
+step is Phase 6 (Meeting Intelligence) — its artifact-generation engine consumes
+this `ILLMProvider`/`StructuredOutput` seam, and the substance-based parity harness
+is host-testable.
 
 ## Active risks
 

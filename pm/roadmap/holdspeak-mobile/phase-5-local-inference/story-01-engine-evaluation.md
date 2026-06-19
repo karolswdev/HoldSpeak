@@ -2,10 +2,19 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 5
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** none
 - **Unblocks:** HSM-5-02, HSM-5-03, HSM-5-04, HSM-5-05
 - **Owner:** unassigned
+
+## Progress (2026-06-18)
+
+Pre-grounded by the owner's inference brief (`../research/inference-on-apple.md`):
+candidate set fixed to **Core ML / llama.cpp+GGUF / MLC-LLM** (Ollama/vLLM are
+Mode-B/C companions, not in-app); 4-bit PTQ default; per-device tiers confirmed
+(now encoded as `InferenceModelPolicy`). The actual **measured pick** needs the
+engines + models running on a real Tier-1 device (sustained throughput, thermal),
+so it stays in-progress until that on-device evaluation.
 
 ## Problem
 

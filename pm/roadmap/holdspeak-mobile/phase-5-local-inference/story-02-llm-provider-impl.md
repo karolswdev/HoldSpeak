@@ -2,10 +2,19 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 5
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** HSM-5-01
 - **Unblocks:** HSM-5-04, HSM-5-05, HSM-6-01
 - **Owner:** unassigned
+
+## Progress (2026-06-18)
+
+The seam the impl plugs into is ready + host-tested: the `ILLMProvider` protocol
+(`complete(prompt:)`) and the `StructuredOutput.generate(...)` layer on top of it
+(HSM-5-04) that turns a provider's text into validated contract values with a
+bounded repair-retry — exercised by a fake provider. The **concrete engine-backed
+`ILLMProvider`** (the HSM-5-01 engine + a model, running Mode A on a device) is
+device/dep work and stays in-progress until then.
 
 ## Problem
 

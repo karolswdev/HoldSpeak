@@ -2,10 +2,20 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 5
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** HSM-5-01
 - **Unblocks:** HSM-5-05
 - **Owner:** unassigned
+
+## Progress (2026-06-18)
+
+The **per-device default policy** is done + host-tested: `InferenceModel`
+(4B/8B/12B+) + `InferenceModelPolicy.defaultModel(for:)` (iPhone→4B, iPad→8B) and
+`isAllowed(_:pluggedIn:)` (12B+ only when plugged in, never a default) —
+`apple/Sources/Providers/Inference/InferenceModel.swift`, `swift test` green. The
+**packaging/download** half (obtaining + storing the model artifacts, first-run
+download) is device/dep work that lands with the engine pick (HSM-5-01) and the
+chosen runtime — stays in-progress until then.
 
 ## Problem
 

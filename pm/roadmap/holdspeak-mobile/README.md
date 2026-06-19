@@ -1,6 +1,10 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-18 (**Phase 4 CLOSED ✅ 3/3** — `SQLiteStorage` (built-in
+**Last updated:** 2026-06-18 (**Phase 5 — HSM-5-04 done + host slice** — the
+structured-output bridge (`StructuredOutput`: extract JSON from messy model text →
+decode through the contract → bounded repair-retry) + the per-device LLM model
+policy (4B iPhone / 8B iPad / 12B+ plugged-in); `swift test` 24/24. Engine pick +
+`ILLMProvider` impl + 30-min gate are device/dep. Earlier: **Phase 4 CLOSED ✅ 3/3** — `SQLiteStorage` (built-in
 `SQLite3`, no dep) backs `IStorage`: contract-JSON `meetings`/`artifacts` tables,
 WAL, `SCHEMA_VERSION=1`; `swift test` 18/18 incl. round-trip + crash-recovery
 durability/atomicity/integrity. Fully host-verified (on-device SIGKILL noted as
@@ -51,8 +55,8 @@ Earlier today: **program scaffolded** — the Council Implementation
 Charter (Rev 1.0) mapped onto a 12-phase roadmap (Phase 0 Contract Extraction →
 Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every phase
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
-**Current phase:** [phase-5-local-inference](./phase-5-local-inference/current-phase-status.md) (Phases 0 ✅, 1 ✅, 4 ✅; 2 + 3 cores done, hardware/device-gated remainder)
-**Status:** in-progress (Phases 0–1–4 closed; Phase 2 + 3 testable cores shipped; Phase 5 next).
+**Current phase:** [phase-6-meeting-intelligence](./phase-6-meeting-intelligence/current-phase-status.md) (Phases 0 ✅, 1 ✅, 4 ✅; 2 + 3 + 5 testable cores done, device-gated remainder)
+**Status:** in-progress (Phases 0–1–4 closed; Phase 2 + 3 + 5 testable cores shipped; Phase 6 next).
 
 ## Vision
 
@@ -111,8 +115,8 @@ WebView, or UIKit.
 | 2 | C | Audio engine: AVAudioEngine streaming capture + WAV export, 1-hour stable | in-progress (2/4; rest hardware-gated) | [phase-2](./phase-2-audio-engine/) |
 | 3 | D | Whisper runtime via WhisperKit, realtime latency < 2s | in-progress (2/5; lang+segment done, WhisperKit/latency device-gated) | [phase-3](./phase-3-whisper-runtime/) |
 | 4 | E | SQLite persistence with full crash recovery | **done (3/3)** | [phase-4](./phase-4-persistence/) |
-| 5 | F | Local inference (4B/8B) — a 30-min meeting processed on-device | current | [phase-5](./phase-5-local-inference/) |
-| 6 | G | Meeting intelligence: structured-JSON artifacts at desktop parity | not-started | [phase-6](./phase-6-meeting-intelligence/) |
+| 5 | F | Local inference (4B/8B) — a 30-min meeting processed on-device | in-progress (1/5; structured-output + model policy done, engine/gate device) | [phase-5](./phase-5-local-inference/) |
+| 6 | G | Meeting intelligence: structured-JSON artifacts at desktop parity | current | [phase-6](./phase-6-meeting-intelligence/) |
 | 7 | H | MIR port: 5 profiles measurably alter extraction | not-started | [phase-7](./phase-7-mir-port/) |
 | 8 | I | iPad experience: PencilKit notebook + transcript linking + review | not-started | [phase-8](./phase-8-ipad-experience/) |
 | 9 | J | iPhone experience: Quick Capture / Capture / Review Queue / Voice Notes | not-started | [phase-9](./phase-9-iphone-experience/) |
