@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 0
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** none (can run in parallel with HSM-0-01..04)
 - **Unblocks:** clean entry to Phase 5 (tech decision) and Phase 11 (gate list)
 - **Owner:** unassigned

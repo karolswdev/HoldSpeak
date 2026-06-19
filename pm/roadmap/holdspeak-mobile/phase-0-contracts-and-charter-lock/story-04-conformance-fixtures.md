@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 0
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HSM-0-02, HSM-0-03
 - **Unblocks:** Phase 1 (the Swift types validate against these), Phase 10 (sync
   round-trips these)

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/intent-window.schema.json",
+  "title": "IntentWindow",
+  "description": "A persisted MIR intent window with confidence scores and the active routing profile. Source: holdspeak/db/models.py IntentWindowSummary. This is where the MIR profile is actually persisted per-meeting (a Meeting itself does not carry mir_profile).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["meeting_id", "window_id", "start_seconds", "end_seconds", "transcript_hash", "transcript_excerpt", "profile", "threshold", "active_intents", "intent_scores", "override_intents", "tags", "metadata", "created_at", "updated_at"],
+  "properties": {
+    "meeting_id": { "type": "string" },
+    "window_id": { "type": "string" },
+    "start_seconds": { "type": "number", "description": "Seconds since meeting start" },
+    "end_seconds": { "type": "number" },
+    "transcript_hash": { "type": "string" },
+    "transcript_excerpt": { "type": "string" },
+    "profile": {
+      "description": "The MIR meeting routing profile (NOT the dictation target_profile).",
+      "enum": ["balanced", "architect", "delivery", "product", "incident"]
+    },
+    "threshold": { "type": "number" },
+    "active_intents": {
+      "type": "array",
+      "items": { "enum": ["architecture", "delivery", "product", "incident", "comms"] }
+    },
+    "intent_scores": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    },
+    "override_intents": { "type": "array", "items": { "type": "string" } },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "metadata": { "type": "object" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}

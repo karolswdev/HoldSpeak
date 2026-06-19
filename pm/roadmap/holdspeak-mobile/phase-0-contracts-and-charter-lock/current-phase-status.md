@@ -1,7 +1,7 @@
 # Phase 0 — Contract Extraction & Charter Lock
 
-**Status:** in-progress (HSM-0-01/02/03 done 2026-06-18; HSM-0-04 next, HSM-0-05
-owner-calls done). Track A of the Council
+**Status:** CLOSED ✅ (5/5) 2026-06-18 — see [`final-summary.md`](./final-summary.md).
+Track A of the Council
 Implementation Charter. The convergence phase: it fixes the shared
 `holdspeak-contracts` schema every later phase builds on, and it reconciles the
 charter's open items (the truncated Gate list, the deferred tech decisions).
@@ -70,8 +70,8 @@ ground.
 | HSM-0-01 | The entity catalog | done | [story-01](./story-01-entity-catalog.md) | [evidence-01](./evidence-story-01.md) |
 | HSM-0-02 | JSON Schemas | done | [story-02](./story-02-json-schemas.md) | [evidence-02](./evidence-story-02.md) |
 | HSM-0-03 | Serialization contracts + package | done | [story-03](./story-03-serialization-contracts.md) | [evidence-03](./evidence-story-03.md) |
-| HSM-0-04 | Conformance fixtures | backlog | [story-04](./story-04-conformance-fixtures.md) | — |
-| HSM-0-05 | Charter reconciliation & decisions lock | in-progress | [story-05](./story-05-charter-reconciliation.md) | — |
+| HSM-0-04 | Conformance fixtures | done | [story-04](./story-04-conformance-fixtures.md) | [evidence-04](./evidence-story-04.md) |
+| HSM-0-05 | Charter reconciliation & decisions lock | done | [story-05](./story-05-charter-reconciliation.md) | [evidence-05](./evidence-story-05.md) |
 
 ## Where we are
 
@@ -94,10 +94,12 @@ worked Meeting→Swift example — Phase 1 is unblocked. The owner's two HSM-0-0
 calls are now in: **Quality Gates 3–7 confirmed** (CHARTER de-flagged) and
 **instants standardized to UTC `Z`** (folded into the contract §2, the fixture,
 and a green `validate.py` UTC-Z check — so the standard is tested, not just
-written). **HSM-0-01/02/03 are `done` (shipped to `main` with evidence, one
-atomic bundle); HSM-0-05 is in progress** (its owner-gated calls are done; only
-the program-risk-register pass + the one-line `holdspeak`-roadmap cross-link
-remain).
+written). **Phase 0 is CLOSED ✅ (5/5)** — HSM-0-04 broadened the fixtures (9
+schemas total, actuator + balanced/architect intent windows, a round-trip +
+MIR-profile + UTC-Z sweep, validator green across 10 checks) and HSM-0-05 closed
+the reconciliation (program risk register `../PROGRAM-RISKS.md`, `holdspeak`
+HANDOVER cross-link). See [`final-summary.md`](./final-summary.md). Phase 1
+(Mobile Foundation) is the current phase.
 Next authorable step: HSM-0-04 (broaden the fixtures — add the parked entities,
 multiple MIR profiles, and a parse→re-serialize round-trip assertion on top of the
 existing green validator).

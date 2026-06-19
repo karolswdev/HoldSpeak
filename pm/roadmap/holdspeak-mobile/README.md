@@ -1,6 +1,14 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-18 (**owner confirmations locked** — Quality Gates 3–7
+**Last updated:** 2026-06-18 (**Phase 0 CLOSED ✅ 5/5** — the contract layer ships:
+the entity catalog, 9 JSON schemas, the serialization contract (10 locked rules),
+two golden fixtures, and `validate.py` green across 10 checks; HSM-0-04 broadened
+the fixtures (actuator proposal + balanced/architect intent windows + a round-trip
++ MIR-profile check) and HSM-0-05 closed the charter reconciliation (program risk
+register seeded, `holdspeak` cross-link added). See
+[`phase-0…/final-summary.md`](./phase-0-contracts-and-charter-lock/final-summary.md).
+**Phase 1 (Mobile Foundation) is next.** Earlier: **owner confirmations locked** —
+Quality Gates 3–7
 confirmed as-reconstructed (CHARTER de-flagged) and instants standardized to
 **UTC `Z`** (folded into the serialization contract + fixture + a green validator
 UTC-Z check); HSM-0-05's owner-gated calls are done. Earlier today —
@@ -20,8 +28,8 @@ Earlier today: **program scaffolded** — the Council Implementation
 Charter (Rev 1.0) mapped onto a 12-phase roadmap (Phase 0 Contract Extraction →
 Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every phase
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
-**Current phase:** [phase-0-contracts-and-charter-lock](./phase-0-contracts-and-charter-lock/current-phase-status.md)
-**Status:** in-progress (Phase 0, 3/5 stories done).
+**Current phase:** [phase-1-mobile-foundation](./phase-1-mobile-foundation/current-phase-status.md) (Phase 0 CLOSED ✅ 5/5)
+**Status:** in-progress (Phase 0 closed; Phase 1 next).
 
 ## Vision
 
@@ -75,8 +83,8 @@ WebView, or UIKit.
 
 | Phase | Track | Goal (one line) | Status | Folder |
 |---|---|---|---|---|
-| 0 | A | Extract the desktop domain into language-neutral contracts (`holdspeak-contracts`) | in-progress (3/5 done) | [phase-0](./phase-0-contracts-and-charter-lock/) |
-| 1 | B | Mobile foundation: Xcode workspace, SPM layout, CI, launches on device | not-started | [phase-1](./phase-1-mobile-foundation/) |
+| 0 | A | Extract the desktop domain into language-neutral contracts (`holdspeak-contracts`) | **done (5/5)** | [phase-0](./phase-0-contracts-and-charter-lock/) |
+| 1 | B | Mobile foundation: Xcode workspace, SPM layout, CI, launches on device | current | [phase-1](./phase-1-mobile-foundation/) |
 | 2 | C | Audio engine: AVAudioEngine streaming capture + WAV export, 1-hour stable | not-started | [phase-2](./phase-2-audio-engine/) |
 | 3 | D | Whisper runtime via WhisperKit, realtime latency < 2s | not-started | [phase-3](./phase-3-whisper-runtime/) |
 | 4 | E | SQLite persistence with full crash recovery | not-started | [phase-4](./phase-4-persistence/) |

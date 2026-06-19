@@ -45,6 +45,8 @@ FIXTURE_DIR = HERE / "fixtures"
 MEETING = "https://holdspeak.dev/contracts/v0/meeting.schema.json"
 ARTIFACT = "https://holdspeak.dev/contracts/v0/artifact.schema.json"
 INTEL_JOB = "https://holdspeak.dev/contracts/v0/intel-job.schema.json"
+ACTUATOR = "https://holdspeak.dev/contracts/v0/actuator-proposal.schema.json"
+INTENT_WINDOW = "https://holdspeak.dev/contracts/v0/intent-window.schema.json"
 
 
 def _registry() -> Registry:
@@ -67,9 +69,12 @@ def _errors(validator: Draft202012Validator, instance: object) -> list[str]:
 def main() -> int:
     registry = _registry()
     fixture = json.loads((FIXTURE_DIR / "meeting-sample.json").read_text())
+    mir = json.loads((FIXTURE_DIR / "mir-and-actuator-sample.json").read_text())
     meeting_v = _validator(MEETING, registry)
     artifact_v = _validator(ARTIFACT, registry)
     intel_job_v = _validator(INTEL_JOB, registry)
+    actuator_v = _validator(ACTUATOR, registry)
+    window_v = _validator(INTENT_WINDOW, registry)
 
     ok = True
 
@@ -78,6 +83,9 @@ def main() -> int:
         ("meeting", meeting_v, fixture["meeting"]),
         ("artifact", artifact_v, fixture["artifact"]),
         ("intel_job", intel_job_v, fixture["intel_job"]),
+        ("actuator_proposal", actuator_v, mir["actuator_proposal"]),
+        ("intent_window[balanced]", window_v, mir["intent_window_balanced"]),
+        ("intent_window[architect]", window_v, mir["intent_window_architect"]),
     ):
         errs = _errors(validator, instance)
         if errs:
@@ -89,7 +97,7 @@ def main() -> int:
             print(f"PASS  {name}: validates against its schema (0 errors)")
 
     # Timestamps: every instant must be UTC Z-terminated (HSM-0-03 §2).
-    tz_bad = _utc_z_violations(fixture["meeting"]) + _utc_z_violations(fixture["intel_job"])
+    tz_bad = _utc_z_violations(fixture) + _utc_z_violations(mir)
     if tz_bad:
         ok = False
         print(f"FAIL  utc-z: {len(tz_bad)} non-UTC-Z instant(s)")
@@ -97,6 +105,28 @@ def main() -> int:
             print(f"        - {e}")
     else:
         print("PASS  utc-z: all instants are UTC Z-terminated")
+
+    # Round-trip stability: each fixture is canonical (parse -> re-serialize ==
+    # on-disk), so committed fixtures don't drift. The typed Swift Codable
+    # round-trip is Phase 1's job; this is the JSON-canonical-form guard.
+    rt_ok = True
+    for fname in ("meeting-sample.json", "mir-and-actuator-sample.json"):
+        raw = (FIXTURE_DIR / fname).read_text()
+        canonical = json.dumps(json.loads(raw), indent=2) + "\n"
+        if raw != canonical:
+            rt_ok = False
+            print(f"FAIL  round-trip: {fname} is not canonical (would drift on re-serialize)")
+    print("PASS  round-trip: fixtures are canonical / stable" if rt_ok else "")
+    ok = ok and rt_ok
+
+    # MIR profile dimension: the two windows carry distinct profiles, both valid.
+    pb = mir["intent_window_balanced"]["profile"]
+    pa = mir["intent_window_architect"]["profile"]
+    if pb != pa:
+        print(f"PASS  mir-profile: distinct profiles carried ({pb} vs {pa})")
+    else:
+        ok = False
+        print(f"FAIL  mir-profile: windows do not differ ({pb})")
 
     # Negative: a corrupted payload (bad enum + missing required) must fail.
     bad = json.loads(json.dumps(fixture["artifact"]))

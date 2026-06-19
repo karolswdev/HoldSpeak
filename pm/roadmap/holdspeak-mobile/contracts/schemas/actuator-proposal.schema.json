@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/actuator-proposal.schema.json",
+  "title": "ActuatorProposal",
+  "description": "A proposed external side effect awaiting human approval (Propose -> Review -> Approve -> Execute). Source: holdspeak/db/models.py ActuatorProposalRecord.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "meeting_id", "window_id", "plugin_id", "plugin_version", "idempotency_key", "status", "target", "action", "preview", "payload", "reversible", "required_capabilities", "created_at", "updated_at"],
+  "properties": {
+    "id": { "type": "string" },
+    "meeting_id": { "type": "string" },
+    "window_id": { "type": "string" },
+    "plugin_id": { "type": "string" },
+    "plugin_version": { "type": "string" },
+    "idempotency_key": { "type": "string" },
+    "status": { "enum": ["proposed", "approved", "executed", "rejected", "failed"] },
+    "target": { "type": "string" },
+    "action": { "type": "string" },
+    "preview": { "type": "string", "description": "Human-readable preview; for some connectors byte-equal to the wire body" },
+    "payload": { "type": "object", "description": "The exact machine representation of the side effect (parity source-of-truth)" },
+    "reversible": { "type": "boolean" },
+    "required_capabilities": { "type": "array", "items": { "type": "string" } },
+    "decided_by": { "type": ["string", "null"] },
+    "result": { "type": ["object", "null"] },
+    "error": { "type": ["string", "null"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "decided_at": { "type": ["string", "null"], "format": "date-time" },
+    "executed_at": { "type": ["string", "null"], "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}

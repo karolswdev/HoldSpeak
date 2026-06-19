@@ -1,0 +1,82 @@
+{
+  "_note": "Real holdspeak serialization (asdict) for the beyond-charter 'keep' entities; timestamps normalized to the contract UTC-Z form. Two intent windows demonstrate the MIR profile dimension (balanced vs architect). HSM-0-04 fixture.",
+  "actuator_proposal": {
+    "id": "prop_001",
+    "meeting_id": "mtg_001",
+    "window_id": "win_002",
+    "plugin_id": "github_issue_actuator",
+    "plugin_version": "1.0.0",
+    "idempotency_key": "mtg_001:win_002:gh",
+    "status": "proposed",
+    "target": "github",
+    "action": "create_issue",
+    "preview": "Create issue: Lock the contract schema",
+    "payload": {
+      "repo": "holdspeak",
+      "title": "Lock the contract schema"
+    },
+    "reversible": false,
+    "required_capabilities": [
+      "github:write"
+    ],
+    "decided_by": null,
+    "result": null,
+    "error": null,
+    "created_at": "2026-06-18T09:31:00Z",
+    "decided_at": null,
+    "executed_at": null,
+    "updated_at": "2026-06-18T09:31:00Z"
+  },
+  "intent_window_balanced": {
+    "meeting_id": "mtg_001",
+    "window_id": "win_001",
+    "start_seconds": 0.0,
+    "end_seconds": 30.0,
+    "transcript_hash": "abc123",
+    "transcript_excerpt": "Let's lock the schema and capture the decision.",
+    "profile": "balanced",
+    "threshold": 0.6,
+    "active_intents": [
+      "architecture"
+    ],
+    "intent_scores": {
+      "architecture": 0.71,
+      "delivery": 0.42
+    },
+    "override_intents": [],
+    "tags": [
+      "architecture"
+    ],
+    "metadata": {
+      "router": "lexical"
+    },
+    "created_at": "2026-06-18T09:30:05Z",
+    "updated_at": "2026-06-18T09:30:05Z"
+  },
+  "intent_window_architect": {
+    "meeting_id": "mtg_001",
+    "window_id": "win_002",
+    "start_seconds": 0.0,
+    "end_seconds": 30.0,
+    "transcript_hash": "abc123",
+    "transcript_excerpt": "Let's lock the schema and capture the decision.",
+    "profile": "architect",
+    "threshold": 0.6,
+    "active_intents": [
+      "architecture"
+    ],
+    "intent_scores": {
+      "architecture": 0.88,
+      "delivery": 0.31
+    },
+    "override_intents": [],
+    "tags": [
+      "architecture"
+    ],
+    "metadata": {
+      "router": "lexical"
+    },
+    "created_at": "2026-06-18T09:30:05Z",
+    "updated_at": "2026-06-18T09:30:05Z"
+  }
+}

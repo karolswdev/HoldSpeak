@@ -5,6 +5,12 @@
 `current-phase-status.md`. This is a pickup snapshot, not canon — if it disagrees
 with the live status docs, the status docs win.
 
+> **Sibling roadmap (2026-06-18):** the Apple mobile runtime is a **separate**
+> project at [`../holdspeak-mobile/`](../holdspeak-mobile/README.md) (prefix
+> `HSM`, the Council Implementation Charter — 12 phases, Phase 0 in progress). It
+> does not renumber or interrupt this roadmap; the two meet only at Phase 0's
+> contract extraction.
+
 ---
 
 ## 1. TL;DR — where things stand
