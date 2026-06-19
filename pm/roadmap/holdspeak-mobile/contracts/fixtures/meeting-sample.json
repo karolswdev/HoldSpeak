@@ -1,0 +1,97 @@
+{
+  "_note": "Real holdspeak desktop serialization (to_dict/asdict), timestamps normalized to the contract's UTC-Z form (HSM-0-03 \u00a72). Seed conformance fixture for HSM-0-02/04.",
+  "meeting": {
+    "id": "mtg_001",
+    "started_at": "2026-06-18T09:00:00Z",
+    "ended_at": "2026-06-18T09:30:00Z",
+    "duration": 1800.0,
+    "formatted_duration": "30:00",
+    "title": "Contract lock",
+    "tags": [
+      "architecture"
+    ],
+    "segments": [
+      {
+        "text": "Let's lock the schema this week.",
+        "speaker": "Karol",
+        "speaker_id": "spk_1",
+        "start_time": 10.0,
+        "end_time": 14.2,
+        "is_bookmarked": false,
+        "device_id": null
+      }
+    ],
+    "bookmarks": [
+      {
+        "timestamp": 10.0,
+        "label": "key decision",
+        "created_at": "2026-06-18T09:10:00Z"
+      }
+    ],
+    "intel": {
+      "timestamp": 20.0,
+      "topics": [
+        "contracts",
+        "timeline"
+      ],
+      "action_items": [
+        {
+          "task": "Ship the contract package",
+          "owner": "Karol",
+          "due": "Friday",
+          "id": "a0375768f4eb",
+          "status": "pending",
+          "review_state": "pending",
+          "reviewed_at": null,
+          "source_timestamp": 12.5,
+          "created_at": "2026-06-18T09:30:00Z",
+          "completed_at": null
+        }
+      ],
+      "summary": "Team agreed to lock the contract schema by Friday."
+    },
+    "intel_status": {
+      "state": "ready",
+      "detail": null,
+      "requested_at": null,
+      "completed_at": null
+    },
+    "mic_label": "Me",
+    "remote_label": "Remote",
+    "web_url": null,
+    "devices": []
+  },
+  "artifact": {
+    "id": "art_001",
+    "meeting_id": "mtg_001",
+    "artifact_type": "decisions",
+    "title": "Lock the contract schema",
+    "body_markdown": "- Decided: lock by Friday",
+    "structured_json": {
+      "decision": "lock schema",
+      "owner": "Karol"
+    },
+    "confidence": 0.82,
+    "status": "draft",
+    "plugin_id": "decision_capture",
+    "plugin_version": "1.0.0",
+    "sources": [
+      {
+        "source_type": "segment",
+        "source_ref": "seg_0"
+      }
+    ]
+  },
+  "intel_job": {
+    "meeting_id": "mtg_001",
+    "status": "ready",
+    "transcript_hash": "881fb8a6e05fd2a221184e05a6de62831dbb757f01f84044f99984d8571639e1",
+    "requested_at": "2026-06-18T09:30:01Z",
+    "updated_at": "2026-06-18T09:30:09Z",
+    "attempts": 1,
+    "last_error": null,
+    "meeting_title": "Contract lock",
+    "started_at": "2026-06-18T09:30:02Z",
+    "intel_status_detail": null
+  }
+}

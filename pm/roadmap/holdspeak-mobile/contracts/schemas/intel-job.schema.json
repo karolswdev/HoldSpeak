@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/intel-job.schema.json",
+  "title": "IntelJob",
+  "description": "Deferred intelligence job metadata. Source: holdspeak/db/models.py IntelJob.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["meeting_id", "status", "transcript_hash", "requested_at", "updated_at", "attempts"],
+  "properties": {
+    "meeting_id": { "type": "string" },
+    "status": { "type": "string", "description": "Queue lifecycle state (queued/running/ready/failed family)" },
+    "transcript_hash": { "type": "string", "description": "Idempotency key tying a job to a transcript state" },
+    "requested_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "attempts": { "type": "integer", "minimum": 0 },
+    "last_error": { "type": ["string", "null"] },
+    "meeting_title": { "type": ["string", "null"] },
+    "started_at": { "type": ["string", "null"], "format": "date-time" },
+    "intel_status_detail": { "type": ["string", "null"] }
+  }
+}

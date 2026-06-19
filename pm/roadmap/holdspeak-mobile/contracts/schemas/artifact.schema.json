@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/artifact.schema.json",
+  "title": "Artifact",
+  "description": "A synthesized MIR artifact (tagged union via artifact_type + structured_json). Source: holdspeak/artifacts.py ArtifactDraft.to_dict() / db ArtifactSummary.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "meeting_id", "artifact_type", "title", "body_markdown", "structured_json", "confidence", "status", "plugin_id", "plugin_version", "sources"],
+  "properties": {
+    "id": { "type": "string" },
+    "meeting_id": { "type": "string" },
+    "artifact_type": {
+      "description": "Discriminator. The 15 shipped types from plugins/synthesis.py _ARTIFACT_TYPE_BY_PLUGIN, plus the plugin_output fallback.",
+      "enum": ["requirements", "action_items", "diagram", "decisions", "adr", "milestone_plan", "dependency_map", "scope_review", "customer_signals", "incident_timeline", "risk_register", "stakeholder_update", "runbook_delta", "decision_announcement", "project_association", "plugin_output"]
+    },
+    "title": { "type": "string" },
+    "body_markdown": { "type": "string" },
+    "structured_json": { "type": "object", "description": "Type-specific payload; open in v0 (HSM-0-03 may add per-type sub-schemas)" },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "status": { "enum": ["draft", "needs_review", "accepted", "rejected"] },
+    "plugin_id": { "type": "string" },
+    "plugin_version": { "type": "string" },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_type", "source_ref"],
+        "properties": {
+          "source_type": { "type": "string" },
+          "source_ref": { "type": "string" }
+        }
+      }
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}

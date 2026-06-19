@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/segment.schema.json",
+  "title": "Segment",
+  "description": "A transcribed segment with a speaker label. Source: holdspeak/meeting_session/models.py TranscriptSegment.to_dict().",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["text", "speaker", "start_time", "end_time", "is_bookmarked"],
+  "properties": {
+    "text": { "type": "string" },
+    "speaker": { "type": "string", "description": "Display name: Me, Speaker 1, John, ..." },
+    "speaker_id": { "type": ["string", "null"], "description": "Identity link; null for Me" },
+    "start_time": { "type": "number", "description": "Seconds since meeting start" },
+    "end_time": { "type": "number", "description": "Seconds since meeting start" },
+    "is_bookmarked": { "type": "boolean" },
+    "device_id": { "type": ["string", "null"], "description": "Producing AIPI-Lite device id" }
+  }
+}

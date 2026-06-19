@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/bookmark.schema.json",
+  "title": "Bookmark",
+  "description": "A marked moment in a meeting. Source: holdspeak/meeting_session/models.py Bookmark.to_dict().",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["timestamp", "label", "created_at"],
+  "properties": {
+    "timestamp": { "type": "number", "description": "Seconds since meeting start" },
+    "label": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/action-item.schema.json",
+  "title": "ActionItem",
+  "description": "A captured action item. Source: holdspeak/intel/models.py ActionItem.to_dict() (asdict).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["task", "id", "status", "review_state", "created_at"],
+  "properties": {
+    "task": { "type": "string" },
+    "owner": { "type": ["string", "null"] },
+    "due": { "type": ["string", "null"], "description": "Free-text due" },
+    "id": { "type": "string", "description": "sha256(task:owner)[:12] when auto-generated" },
+    "status": { "enum": ["pending", "done", "dismissed"] },
+    "review_state": { "enum": ["pending", "accepted"] },
+    "reviewed_at": { "type": ["string", "null"], "format": "date-time" },
+    "source_timestamp": { "type": ["number", "null"], "description": "Link to transcript moment (seconds)" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "completed_at": { "type": ["string", "null"], "format": "date-time" }
+  }
+}
