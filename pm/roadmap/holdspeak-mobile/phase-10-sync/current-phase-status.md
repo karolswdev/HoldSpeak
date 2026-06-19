@@ -1,13 +1,25 @@
 # Phase 10 — Sync
 
-**Status:** planning (scaffolded 2026-06-18). Track K of the Council
+**Status:** in-progress (HSM-10-01 done 2026-06-19 — the sync object model + engine
+are host-proven; transport/conflict/gate remain). Track K of the Council
 Implementation Charter. The `ISyncProvider` (Layer 3): cross-device continuity so
 a meeting captured on the phone shows up on the desktop, and edits round-trip —
 over the user's own network (desktop / homelab / Tailscale), local-first and
 never destructive.
 
-**Last updated:** 2026-06-18 (scaffolded — stories HSM-10-01..04 stubbed from
-charter Track K; no work started).
+**Last updated:** 2026-06-19 (**HSM-10-01 done — the sync object model + engine**.
+The sync set is the Phase-0 entities themselves, carried in a contract-layer
+envelope (`ChangeSet` of `Synced<T>`; payload = the unmodified entity, `nil` ⇔
+tombstone) — no parallel schema, no drift; recorded in SERIALIZATION-CONTRACT §11.
+`ISyncProvider` is now a `push`/`pull` seam; `ISyncStore` adds modified-time +
+soft-delete tombstones to the Phase-4 store (SQLite **schema v2**, guarded
+migration); the RuntimeCore `SyncEngine` does `snapshot`/`apply` (schema-validated
+before any write) / `sync(local:via:)`. `swift test` **55/55** incl. 6 sync tests
+(round-trip, JSON-wire round-trip, tombstone propagation, idempotent apply,
+malformed-wire rejection) — and the Phase-4 storage tests still pass through the
+migration. The envelope's JSON Schema + the Python-side mirror land with HSM-10-02
+(transport). Earlier: scaffolded — stories HSM-10-01..04 stubbed from charter Track
+K.)
 
 ## Goal
 
@@ -48,21 +60,24 @@ local-first; it never acts autonomously.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HSM-10-01 | Sync provider + object model | backlog | [story-01](./story-01-sync-provider-object-model.md) | — |
+| HSM-10-01 | Sync provider + object model | done | [story-01](./story-01-sync-provider-object-model.md) | [evidence-01](./evidence-story-01.md) |
 | HSM-10-02 | Transport targets | backlog | [story-02](./story-02-transport-targets.md) | — |
 | HSM-10-03 | Conflict + round-trip | backlog | [story-03](./story-03-conflict-and-roundtrip.md) | — |
 | HSM-10-04 | Continuity closeout (Gate 6) | backlog | [story-04](./story-04-continuity-closeout.md) | — |
 
 ## Where we are
 
-Just scaffolded. Sync sits on the Phase-0 contracts (the interop spine) and the
-Phase-4 store, and it reuses the Phase-0 conformance fixtures as its round-trip
-test bed — the same golden payloads both runtimes already round-trip become the
-sync payloads. The four stories split the work: the provider + object model
-(HSM-10-01), the transport to the user's own targets (HSM-10-02), the
-conflict/idempotency policy (HSM-10-03), and the continuity gate on real devices
-(HSM-10-04). Next: HSM-10-01 once Phase 4 (the local store) and the Phase-0
-fixtures are in hand.
+**HSM-10-01 is done.** The object model + engine are host-proven on the Phase-0
+contracts + the Phase-4 store, reusing the Phase-0 conformance fixture as the
+round-trip test bed. The sync set is the entities themselves in a `ChangeSet` of
+`Synced<T>` envelopes; the `SyncEngine` produces a snapshot from the store and
+applies one back (schema-validated), driven through the `ISyncProvider` push/pull
+seam — so the Runtime Core depends on the interface, never a transport. The store
+gained modified-time + tombstones (schema v2). **Next: HSM-10-02 (transport to the
+user's own desktop/homelab/Tailscale targets, incl. the new Python-side sync API +
+the envelope's JSON Schema), then HSM-10-03 (conflict/idempotency) and HSM-10-04
+(the continuity gate on real devices).** The remaining stories are where sync
+touches real hardware/network; HSM-10-01 is fully host-proven.
 
 ## Active risks
 

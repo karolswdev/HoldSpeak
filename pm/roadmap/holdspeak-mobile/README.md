@@ -1,6 +1,18 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-19 (**Phase 6 CLOSED ✅ — Gate 5 (desktop-parity) PASSED.**
+**Last updated:** 2026-06-19 (**Phase 10 (Sync) opened — HSM-10-01 done: the sync
+object model + engine.** Following the owner's program steer (sync is next after
+Phase 6), and fully host-testable (no device). Cross-device sync moves the **Phase-0
+entities themselves** in a contract-layer envelope (`ChangeSet` of `Synced<T>`;
+payload = the unmodified entity, `nil` ⇔ tombstone) — no parallel schema, no drift
+(SERIALIZATION-CONTRACT §11). `ISyncProvider` is now a `push`/`pull` seam;
+`ISyncStore` adds modified-time + soft-delete tombstones to the Phase-4 store
+(SQLite schema v2, guarded migration); the RuntimeCore `SyncEngine` does
+`snapshot`/`apply` (schema-validated) / `sync(local:via:)`. `swift test` **55/55**
+incl. 6 sync tests (round-trip, JSON-wire round-trip, tombstone propagation,
+idempotent apply, malformed-wire rejection), Phase-4 storage intact through the
+migration. Next: HSM-10-02 (transport + the Python-side sync API + the envelope's
+JSON Schema). Earlier: **Phase 6 CLOSED ✅ — Gate 5 (desktop-parity) PASSED.**
 HSM-6-05: the parity harness over a fixed baseline meeting, with real mobile
 generation through the Mode-B/C endpoint provider, scores **mean coverage 0.92 over
 3 runs vs the pre-fixed 0.8 threshold (3/3 pass)** — mobile meeting intelligence is
@@ -121,7 +133,7 @@ Charter (Rev 1.0) mapped onto a 12-phase roadmap (Phase 0 Contract Extraction �
 Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every phase
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
 **Current phase:** [phase-6-meeting-intelligence](./phase-6-meeting-intelligence/current-phase-status.md) (Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5 PASSED**; 2 + 3 + 5 testable cores done, device-gated remainder; Phase 5 — HSM-5-06 endpoint provider host/live-proven + on-device build; 6-06 Follow-ups deferred on a contract decision)
-**Status:** in-progress (Phases 0–1–4 closed, **Phase 6 closed — Gate 5 desktop-parity PASSED at mean 0.92 vs 0.8**; Phase 2 + 3 + 5 testable cores shipped; **HSM-5-06 makes the iPad run real meeting intelligence today via an OpenAI-compatible endpoint** — built/signed/installed on the iPad Air M4, on-device launch pending the device unlock. Next: the on-device capture, then HSM-5-02 on-device GGUF and/or the sync-by-default thrust).
+**Status:** in-progress (Phases 0–1–4 closed, **Phase 6 closed — Gate 5 desktop-parity PASSED at mean 0.92 vs 0.8**; Phase 2 + 3 + 5 testable cores shipped; HSM-5-06 makes the iPad run real meeting intelligence via an OpenAI-compatible endpoint, on-device launch pending the device unlock; **Phase 10 (Sync) opened — HSM-10-01 object model + engine host-proven**. Next: HSM-10-02 sync transport + Python sync API; the iPad on-device captures (HSM-5-06 launch, HSM-5-02 GGUF) when the device is unlocked).
 
 ## Vision
 
@@ -185,7 +197,7 @@ WebView, or UIKit.
 | 7 | H | MIR port: 5 profiles measurably alter extraction | not-started | [phase-7](./phase-7-mir-port/) |
 | 8 | I | iPad experience: PencilKit notebook + transcript linking + review | not-started | [phase-8](./phase-8-ipad-experience/) |
 | 9 | J | iPhone experience: Quick Capture / Capture / Review Queue / Voice Notes | not-started | [phase-9](./phase-9-iphone-experience/) |
-| 10 | K | Sync to desktop / homelab / Tailscale — cross-device continuity | not-started | [phase-10](./phase-10-sync/) |
+| 10 | K | Sync to desktop / homelab / Tailscale — cross-device continuity | in-progress (1/4; HSM-10-01 object model + engine host-proven) | [phase-10](./phase-10-sync/) |
 | 11 | L | Hardening: the five stress scenarios, production readiness | not-started | [phase-11](./phase-11-hardening/) |
 
 Phases are sequenced as the charter lists the tracks. The contract layer (Phase

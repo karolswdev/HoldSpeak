@@ -36,10 +36,10 @@ final class StorageTests: XCTestCase {
         XCTAssertEqual(try db.loadArtifacts(meetingId: "other"), [])
     }
 
-    func testSchemaVersionIsOne() throws {
+    func testSchemaVersionIsTwo() throws {
         let db = try SQLiteStorage(path: tempPath()); defer { db.close() }
         XCTAssertEqual(try db.userVersion(), SQLiteStorage.schemaVersion)
-        XCTAssertEqual(try db.userVersion(), 1)
+        XCTAssertEqual(try db.userVersion(), 2)   // HSM-10-01: modified_at + tombstones
     }
 
     /// Durability + no-corruption across an unclean shutdown: a committed write
