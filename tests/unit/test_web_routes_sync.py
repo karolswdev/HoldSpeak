@@ -108,3 +108,13 @@ def test_push_rejects_non_changeset(monkeypatch, tmp_path):
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: _fake_db(tmp_path))
     resp = _client().post("/api/sync/push", json={"nope": 1})
     assert resp.status_code == 422
+
+
+def test_push_rejects_malformed_record(monkeypatch, tmp_path):
+    # HSM-10-03 both-ends validation: a record without a well-formed meta is rejected
+    # and never reaches the inbox.
+    monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: _fake_db(tmp_path))
+    bad = {"meetings": [{"value": {"id": "m1"}}], "artifacts": []}  # no meta
+    resp = _client().post("/api/sync/push", json=bad)
+    assert resp.status_code == 422
+    assert not (tmp_path / "sync_inbox").exists()
