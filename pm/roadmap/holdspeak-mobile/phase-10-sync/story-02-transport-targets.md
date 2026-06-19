@@ -2,7 +2,10 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done (2026-06-19 — both sides of the wire: Swift `HTTPSyncProvider` +
+  `SyncQueue` (PR-A, #75) and the desktop Python sync receiver (PR-B). Each side
+  host-tested; live phone↔desktop run rides with HSM-10-04. See
+  [evidence-02](./evidence-story-02.md).)
 - **Depends on:** HSM-10-01
 - **Unblocks:** HSM-10-04
 - **Owner:** unassigned

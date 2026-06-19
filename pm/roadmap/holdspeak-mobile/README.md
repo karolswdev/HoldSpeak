@@ -1,6 +1,15 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-19 (**HSM-10-02 (sync transport) — the Swift HTTP transport
+**Last updated:** 2026-06-19 (**HSM-10-02 (sync transport) DONE — both sides of the
+wire.** The desktop **Python sync receiver** landed (PR-B): `holdspeak/web/routes/sync.py`
+serves the desktop's meetings/artifacts as a contract change-set on
+`GET /api/sync/pull` and receives a pushed change-set into a durable inbox on
+`POST /api/sync/push` (additive — no DB schema change), mounted in `web_server.py`.
+Paired with the Swift `HTTPSyncProvider` + `SyncQueue` (PR-A, #75), the phone can now
+push/pull change-sets to a desktop/homelab peer, offline-tolerant. `uv run pytest
+tests/unit/test_web_routes_sync.py` 3 passed (+ route preflight green); `swift test`
+77/77. Conflict/merge into the live store is HSM-10-03; the live cross-device run is
+HSM-10-04. Earlier: **HSM-10-02 (sync transport) — the Swift HTTP transport
 + offline queue, host-proven (PR-A).** `HTTPSyncProvider` (`ISyncProvider` over
 `POST /api/sync/push` + `GET /api/sync/pull`, direct to the peer, honest egress
 label) + `SyncQueue` (disk FIFO; `flush` keeps the queue + never throws when the peer
@@ -233,7 +242,7 @@ WebView, or UIKit.
 | 7 | H | MIR port: 5 profiles measurably alter extraction | **done (4/4) ✅** | [phase-7](./phase-7-mir-port/) |
 | 8 | I | iPad experience: PencilKit notebook + transcript linking + review | not-started | [phase-8](./phase-8-ipad-experience/) |
 | 9 | J | iPhone experience: Quick Capture / Capture / Review Queue / Voice Notes | not-started | [phase-9](./phase-9-iphone-experience/) |
-| 10 | K | Sync to desktop / homelab / Tailscale — cross-device continuity | in-progress (HSM-10-01 done; HSM-10-02 Swift transport+queue host-proven, Python receiver next) | [phase-10](./phase-10-sync/) |
+| 10 | K | Sync to desktop / homelab / Tailscale — cross-device continuity | in-progress (2/4; HSM-10-01 object model + HSM-10-02 transport both sides done; conflict + live gate remain) | [phase-10](./phase-10-sync/) |
 | 11 | L | Hardening: the five stress scenarios, production readiness | not-started | [phase-11](./phase-11-hardening/) |
 
 Phases are sequenced as the charter lists the tracks. The contract layer (Phase
