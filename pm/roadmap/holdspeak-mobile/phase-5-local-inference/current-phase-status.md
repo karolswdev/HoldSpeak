@@ -3,14 +3,25 @@
 **Status:** in-progress (HSM-5-04 done 2026-06-18; **HSM-5-01 done 2026-06-19 —
 engine = llama.cpp+GGUF**; **HSM-5-06 — endpoint provider (Modes B/C) + mode
 setting — host/live-proven, device build+install done, on-device launch pending
-the iPad unlock**; HSM-5-02/03 in-progress; HSM-5-05 device-gated). Track F
+the iPad unlock**; **HSM-5-02 — `LlamaProvider` (llama.cpp/Mode A) host-proven on
+Metal, iPad airplane-mode run pending the unlock**; HSM-5-03 in-progress; HSM-5-05
+device-gated). Track F
 of the Council Implementation Charter. The phase
 that lights up Mode A (Fully Local): it delivers the on-device `ILLMProvider`
 (Layer 3) so a meeting can go Audio → Whisper → LLM → Artifacts with no network.
 It also resolves the Phase-0 deferred decision — which inference engine the mobile
 runtime stands on.
 
-**Last updated:** 2026-06-19 (**HSM-5-06 — the OpenAI-compatible endpoint provider
+**Last updated:** 2026-06-19 (**HSM-5-02 — the on-device (Mode A) engine, host-proven
+on Metal.** `LlamaProvider` (an `ILLMProvider` backed by **llama.cpp via LLM.swift**,
+the HSM-5-01 pick) loads a GGUF by path and completes with no network. Proven on this
+Mac's Metal against **Qwen2.5-7B Q4_K_M**: a completion (`PONG`, ~8.5s incl. cold load)
+and a full **fully-local** run (transcript → `LlamaProvider` → `ArtifactGenerationEngine`
+→ real decisions + action_items, ~13.4s). The native engine is isolated to a separate
+`InferenceLlama` SPM product so the domain never links it (the Phase-6
+"ProviderInterfaces" concern, resolved). `swift test` **57/57** (5 opt-in skips), layer
+guard green. Remaining: the iPad airplane-mode run (gated on the device unlock) +
+model packaging (HSM-5-03). Earlier: **HSM-5-06 — the OpenAI-compatible endpoint provider
 (charter Modes B/C) + a runtime-mode setting**, shipped ahead of the on-device
 engine on the owner's steer: inference mode is a user setting (local default) and
 the runtime must point at any OpenAI-compatible endpoint, so the iPad need not
@@ -89,7 +100,7 @@ on Tier-1 hardware.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HSM-5-01 | Engine evaluation & pick | done | [story-01](./story-01-engine-evaluation.md) | [evidence-01](./evidence-story-01.md) |
-| HSM-5-02 | `ILLMProvider` impl + Mode A | in-progress | [story-02](./story-02-llm-provider-impl.md) | — |
+| HSM-5-02 | `ILLMProvider` impl + Mode A | in-progress (host-proven; iPad run pending unlock) | [story-02](./story-02-llm-provider-impl.md) | in story (host Metal proof) |
 | HSM-5-03 | Model packaging & per-device defaults | in-progress | [story-03](./story-03-model-packaging-strategy.md) | — |
 | HSM-5-04 | Structured / JSON output | done | [story-04](./story-04-structured-output.md) | [evidence-04](./evidence-story-04.md) |
 | HSM-5-05 | 30-minute meeting closeout (Gate 4) | backlog | [story-05](./story-05-thirty-minute-meeting-closeout.md) | — |

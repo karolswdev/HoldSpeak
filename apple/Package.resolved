@@ -1,0 +1,24 @@
+{
+  "originHash" : "da160223bacaaaaa3c2dcbad80a1193eaff85d81fb4be742a537ab00c6dd007a",
+  "pins" : [
+    {
+      "identity" : "llm.swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/eastriverlee/LLM.swift",
+      "state" : {
+        "revision" : "427f3b8957a40982500abc8d35ccff8b83ec56a4",
+        "version" : "2.1.0"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-syntax.git",
+      "state" : {
+        "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
+        "version" : "602.0.0"
+      }
+    }
+  ],
+  "version" : 3
+}

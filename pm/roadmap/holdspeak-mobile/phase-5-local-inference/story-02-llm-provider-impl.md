@@ -16,6 +16,31 @@ bounded repair-retry — exercised by a fake provider. The **concrete engine-bac
 `ILLMProvider`** (the HSM-5-01 engine + a model, running Mode A on a device) is
 device/dep work and stays in-progress until then.
 
+## Progress & evidence (2026-06-19) — host-proven on Metal
+
+The engine-backed provider is implemented and **Mode A is proven on real metal
+(this Mac's Metal)**; only the iPad-specific run is gated on the device unlock.
+
+- **`LlamaProvider`** (`apple/Sources/InferenceLlama/LlamaProvider.swift`) — an
+  `ILLMProvider` backed by **llama.cpp via LLM.swift** (the HSM-5-01 pick). Loads a
+  GGUF by path, `complete(prompt:)` returns text with **no network**. The native
+  engine is isolated to the `InferenceLlama` SPM target, so the domain
+  (Contracts/RuntimeCore) never links it (the Phase-6 "ProviderInterfaces" concern,
+  resolved as a separate product).
+- **Proof** (`apple/Tests/InferenceLlamaTests/LlamaProviderTests.swift`, opt-in via
+  `HS_GGUF_PATH`), against **Qwen2.5-7B-Instruct Q4_K_M** on disk:
+  - `testLoadsGGUFAndCompletes` — loads the GGUF, completion = `PONG` (~8.5s incl.
+    cold model load, 512-ctx).
+  - `testModeAArtifactGenerationFullyLocal` — transcript → `LlamaProvider` →
+    `ArtifactGenerationEngine` → real `decisions` + `action_items` artifacts, fully
+    local (~13.4s for two generations). Propose-only (`.draft`).
+- Full suite: `swift test` **57 executed / 5 skipped (opt-in) / 0 failures**;
+  llama.cpp builds; the layer guard still confirms the domain doesn't link the engine.
+
+**Remaining:** the on-device airplane-mode run on the iPad Air M4 (HSM-5-02's
+device acceptance) — gated on the device unlock; it reuses this exact `LlamaProvider`
+behind the same seam. Model packaging/download is HSM-5-03.
+
 ## Problem
 
 The engine pick (HSM-5-01) is a decision, not a running provider. The runtime
@@ -36,15 +61,17 @@ A (fully local) works end to end.
 
 ## Acceptance criteria
 
-- [ ] `ILLMProvider` is implemented on the HSM-5-01 engine and returns a
-      completion for a prompt on a Tier-1 device.
-- [ ] Mode A runs end to end with the network disabled (airplane mode): a
-      transcript reaches the provider and a response comes back, no egress.
-- [ ] The Runtime Core calls only the `ILLMProvider` interface — swapping the
-      engine would not touch core code (proven by the call site depending on the
-      protocol, not the concrete type).
-- [ ] Cold-load and warm-call behavior is documented (load time, memory) for the
-      per-device default model.
+- [x] `ILLMProvider` is implemented on the HSM-5-01 engine and returns a
+      completion (proven on host Metal; the iPad-device run is gated on the unlock).
+- [~] Mode A runs end to end with no network — proven host-side (transcript →
+      `LlamaProvider` → artifacts, no egress); the airplane-mode run on the iPad
+      Air M4 is pending the device unlock.
+- [x] The Runtime Core calls only the `ILLMProvider` interface — the engine lives
+      in a separate `InferenceLlama` product; the domain doesn't link it (layer
+      guard green), so swapping the engine wouldn't touch core code.
+- [x] Cold-load and warm-call behavior documented: Qwen2.5-7B Q4_K_M on this Mac's
+      Metal — ~8.5s to first token incl. cold load (512-ctx); two artifact
+      generations ~13.4s. iPad figures land with the device run.
 
 ## Test plan
 
