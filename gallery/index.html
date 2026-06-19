@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HoldSpeak Mobile — Product gallery</title>
+  <meta name="description" content="The HoldSpeak Mobile runtime, shown working on real Apple hardware: a meeting turned into decisions, actions, and requirements on device." />
+  <meta property="og:title" content="HoldSpeak Mobile — the runtime, in the open" />
+  <meta property="og:description" content="Meeting intelligence on iPad & iPhone — fully local or against your own endpoint. Real screenshots, not mockups." />
+  <meta property="og:image" content="./assets/ipad-results.png" />
+  <link rel="icon" href="./assets/holdspeak-mark.png" />
+  <style>
+    /* Signal design tokens (subset, inlined for a self-contained Pages page). */
+    :root {
+      color-scheme: dark;
+      --bg: #0E0F13; --surface-1: #15171D; --surface-2: #1C1F27; --surface-3: #242833;
+      --text: #F2F3F5; --text-muted: #9BA2B0; --text-faint: #767E8D;
+      --accent: #FF6B35; --accent-tint: rgba(255,107,53,0.12); --accent-glow: rgba(255,107,53,0.28);
+      --done: #3ECF8E;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background-image: radial-gradient(900px 500px at 80% -10%, rgba(255,107,53,0.07), transparent 70%);
+    }
+    a { color: var(--accent); }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3.5rem) 1.25rem 4rem; }
+
+    .brand { display: inline-flex; align-items: center; gap: 0.6rem; margin-bottom: 2.5rem; }
+    .brand img { width: 28px; height: 28px; border-radius: 7px; }
+    .brand b { font-weight: 700; letter-spacing: -0.01em; }
+    .brand span { color: var(--text-faint); }
+
+    .intro { max-width: 64ch; margin-bottom: clamp(2rem, 5vw, 3.5rem); }
+    .eyebrow { display: inline-block; font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 0.75rem; }
+    .intro h1 { font-size: clamp(2rem, 5vw, 3.25rem); line-height: 1.05; letter-spacing: -0.02em; margin: 0 0 1rem; }
+    .intro p { font-size: 1.075rem; color: var(--text-muted); margin: 0; }
+    .intro strong { color: var(--text); }
+
+    .showcase { display: flex; align-items: center; justify-content: center; gap: clamp(0.75rem, 3vw, 2rem); flex-wrap: wrap; }
+    figure.device { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 0.75rem; flex: 1 1 320px; max-width: 460px; }
+    .bezel { width: 100%; background: #000; border-radius: 28px; padding: 10px; border: 1px solid var(--surface-3);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5); transition: transform 220ms ease; }
+    .device.hero .bezel { box-shadow: 0 28px 80px var(--accent-glow), 0 24px 60px rgba(0,0,0,0.55); }
+    .bezel:hover { transform: translateY(-4px); }
+    .bezel img { display: block; width: 100%; height: auto; border-radius: 18px; }
+    figcaption { font-size: 0.9rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.5rem; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .dot.live { background: var(--accent); box-shadow: 0 0 0 4px var(--accent-tint); animation: pulse 1.6s ease-in-out infinite; }
+    .dot.done { background: var(--done); box-shadow: 0 0 0 4px rgba(62,207,142,0.14); }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .arrow { color: var(--text-faint); font-size: 1.75rem; }
+    .authenticity { text-align: center; color: var(--text-faint); font-size: 0.85rem; margin: 1.25rem auto 0; max-width: 62ch; }
+
+    .bento { margin-top: clamp(2.5rem, 6vw, 4rem); display: grid; gap: 1rem; grid-template-columns: repeat(3, 1fr); }
+    .cell { background: var(--surface-1); border: 1px solid var(--surface-3); border-radius: 16px; padding: 1.4rem; transition: transform 200ms ease, background 200ms ease; }
+    .cell:hover { transform: translateY(-3px); background: var(--surface-2); }
+    .cell.wide { grid-column: span 2; }
+    .cell.accent { border-color: var(--accent); background: linear-gradient(180deg, var(--accent-tint), transparent); }
+    .cell h3 { margin: 0 0 0.5rem; font-size: 1.075rem; letter-spacing: -0.01em; }
+    .cell p { margin: 0; color: var(--text-muted); font-size: 0.95rem; }
+    .modes { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1rem; }
+    .chip { background: var(--surface-3); border-radius: 999px; padding: 0.4rem 0.85rem; font-size: 0.85rem; color: var(--text-muted); }
+    .chip b { color: var(--text); }
+    .profiles { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.85rem; }
+    .profiles span { font-size: 0.78rem; color: var(--text-muted); background: var(--surface-2); border: 1px solid var(--surface-3); border-radius: 8px; padding: 0.25rem 0.55rem; }
+
+    footer { margin-top: 3rem; text-align: center; color: var(--text-faint); font-size: 0.9rem; }
+
+    @media (max-width: 760px) {
+      .bento { grid-template-columns: 1fr; }
+      .cell.wide { grid-column: span 1; }
+      .arrow { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <img src="./assets/holdspeak-mark.png" alt="" />
+      <b>HoldSpeak</b> <span>Mobile</span>
+    </div>
+
+    <header class="intro">
+      <span class="eyebrow">Product gallery</span>
+      <h1>The runtime, in the open.</h1>
+      <p>
+        The first mobile runtime of the HoldSpeak ecosystem — meeting intelligence on
+        iPad and iPhone, fully local or against your own endpoint. Below is the real
+        thing: a meeting turned into decisions, actions, and requirements
+        <strong>on device</strong>, captured straight off the simulator.
+      </p>
+    </header>
+
+    <section class="showcase" aria-label="The runtime running">
+      <figure class="device">
+        <div class="bezel"><img src="./assets/ipad-generating.png" alt="HoldSpeak Mode C generating artifacts on an iPad" /></div>
+        <figcaption><span class="dot live"></span> Generating — Mode C, against a homelab endpoint</figcaption>
+      </figure>
+      <div class="arrow" aria-hidden="true">→</div>
+      <figure class="device hero">
+        <div class="bezel"><img src="./assets/ipad-results.png" alt="HoldSpeak: 3 of 3 artifacts generated on device — decisions, action items, requirements" /></div>
+        <figcaption><span class="dot done"></span> Done — 3/3 artifacts in 25.4s, on device</figcaption>
+      </figure>
+    </section>
+    <p class="authenticity">
+      Real capture · iPad Pro (M5) simulator · the shipped Mode-C runtime · live
+      OpenAI-compatible endpoint. No mockups.
+    </p>
+
+    <section class="bento" aria-label="What the runtime ships">
+      <article class="cell wide">
+        <h3>One copilot, two inference modes</h3>
+        <p>Every meeting runs behind one swappable seam — pick where the model lives.</p>
+        <div class="modes">
+          <span class="chip"><b>Mode A</b> on-device · llama.cpp + GGUF</span>
+          <span class="chip"><b>Mode B/C</b> your endpoint · OpenAI-compatible</span>
+        </div>
+      </article>
+      <article class="cell">
+        <h3>Five MIR profiles</h3>
+        <p>The active profile measurably reshapes what gets extracted.</p>
+        <div class="profiles"><span>Balanced</span><span>Architect</span><span>Delivery</span><span>Product</span><span>Incident</span></div>
+      </article>
+      <article class="cell">
+        <h3>Meeting intelligence</h3>
+        <p>Decisions · Action items · Risks · Requirements · ADRs · Summaries — propose-only.</p>
+      </article>
+      <article class="cell">
+        <h3>Local-first sync</h3>
+        <p>Snapshot → queue → reconcile. Offline-safe; conflicts surfaced, never lost.</p>
+      </article>
+      <article class="cell">
+        <h3>Your weights, your way</h3>
+        <p>Sideload a GGUF from Files, or pull one from Hugging Face. Never bundled.</p>
+      </article>
+      <article class="cell accent">
+        <h3>Private by default</h3>
+        <p>Nothing leaves the device unless you point it at an endpoint — shown by an honest egress badge.</p>
+      </article>
+    </section>
+
+    <footer>
+      <p>How it fits together: <a href="https://github.com/karolswdev/HoldSpeak/blob/main/apple/ARCHITECTURE.md">the mobile architecture map</a> · <a href="https://github.com/karolswdev/HoldSpeak">source on GitHub</a></p>
+    </footer>
+  </div>
+</body>
+</html>

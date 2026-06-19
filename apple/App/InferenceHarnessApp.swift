@@ -20,13 +20,18 @@ struct InferenceHarnessApp: App {
 
 @MainActor
 final class HarnessModel: ObservableObject {
-    // Default to the dev Mac on the LAN; editable on-device.
-    @Published var endpoint = "http://192.168.1.13:8081/v1"
-    @Published var model = "local"
+    // Default to the dev Mac on the LAN; editable on-device. `HS_ENDPOINT` /
+    // `HS_MODEL` override it (used for the simulator capture, which reaches the
+    // host over loopback).
+    @Published var endpoint = ProcessInfo.processInfo.environment["HS_ENDPOINT"] ?? "http://192.168.1.13:8081/v1"
+    @Published var model = ProcessInfo.processInfo.environment["HS_MODEL"] ?? "local"
     @Published var mode: RuntimeMode = .homelab
     @Published var running = false
     @Published var status = "Ready."
     @Published var results: [ArtifactResult] = []
+
+    /// `HS_AUTORUN=1` kicks generation on launch (so a screenshot captures real output).
+    var autoRun: Bool { ProcessInfo.processInfo.environment["HS_AUTORUN"] == "1" }
 
     struct ArtifactResult: Identifiable {
         let id = UUID()
@@ -117,6 +122,7 @@ struct HarnessView: View {
                 .padding()
             }
             .navigationTitle("HoldSpeak · Mode C")
+            .onAppear { if m.autoRun { m.run() } }
         }
     }
 
