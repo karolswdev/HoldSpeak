@@ -2,9 +2,12 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 6
-- **Status:** backlog
-- **Depends on:** HSM-6-01, HSM-6-02, HSM-6-03, HSM-6-04
-- **Owner:** unassigned
+- **Status:** done (2026-06-19 — **PASS, mean coverage 0.92 vs 0.8 threshold over 3
+  runs**; see [evidence-05](./evidence-story-05.md). Verdict measured on the mobile
+  stack against a real Mode-B/C endpoint; on-device execution carried by HSM-5-06
+  (launch pending unlock) + HSM-5-02.)
+- **Depends on:** HSM-6-01, HSM-6-02, HSM-6-03, HSM-6-04, HSM-5-06
+- **Owner:** rubric + verdict delegated to the agent by the owner
 
 ## Problem
 
