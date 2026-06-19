@@ -1,6 +1,16 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-19 (**HSM-5-02 — the on-device (Mode A) engine, host-proven
+**Last updated:** 2026-06-19 (**HSM-5-03 — model packaging: both delivery paths
+host-proven (Files sideload + Hugging Face download).** A `ModelCatalog` pins the
+per-tier GGUFs (4B Llama-3.2-3B / 8B Llama-3.1-8B / 12B+ Mistral-Nemo, Q4_K_M; HF
+URLs verified live), a Foundation `ModelStore` is the model manager (list /
+sideload-import / delete / per-device `resolveActive`), and a Foundation
+`ModelDownloader` does the HF download by canonical resolve-URL with real progress
+(LLM.swift's built-in HF scraper is broken against current HF — we download by
+pinned URL instead). `swift test` **62/62** (6 opt-in skips); the real download is
+proven by an opt-in test (TinyLlama 0→100% → load → complete); `push-model-device.sh`
+adds the `devicectl` dev path. Remaining: the iPad clean-install first-run (unlock).
+Earlier: **HSM-5-02 — the on-device (Mode A) engine, host-proven
 on Metal.** `LlamaProvider` (an `ILLMProvider` backed by **llama.cpp via LLM.swift**,
 the HSM-5-01 pick) loads a GGUF and completes with no network — proven on this Mac's
 Metal against Qwen2.5-7B Q4_K_M (`PONG` ~8.5s incl. cold load; a full fully-local run
@@ -202,7 +212,7 @@ WebView, or UIKit.
 | 2 | C | Audio engine: AVAudioEngine streaming capture + WAV export, 1-hour stable | in-progress (2/4; rest hardware-gated) | [phase-2](./phase-2-audio-engine/) |
 | 3 | D | Whisper runtime via WhisperKit, realtime latency < 2s | in-progress (2/5; lang+segment done, WhisperKit/latency device-gated) | [phase-3](./phase-3-whisper-runtime/) |
 | 4 | E | SQLite persistence with full crash recovery | **done (3/3)** | [phase-4](./phase-4-persistence/) |
-| 5 | F | Local inference (4B/8B) — a 30-min meeting processed on-device | in-progress (structured-output + model policy + engine pick done; HSM-5-06 endpoint provider Modes B/C host/live-proven + on-device build; **HSM-5-02 LlamaProvider/Mode A host-proven on Metal**, iPad run + HSM-5-03 packaging + HSM-5-05 gate device) | [phase-5](./phase-5-local-inference/) |
+| 5 | F | Local inference (4B/8B) — a 30-min meeting processed on-device | in-progress (engine pick + structured-output + model policy done; HSM-5-06 endpoint Modes B/C; **HSM-5-02 LlamaProvider/Mode A host-proven on Metal**; **HSM-5-03 packaging — sideload + HF download host-proven**; iPad runs + HSM-5-05 gate device) | [phase-5](./phase-5-local-inference/) |
 | 6 | G | Meeting intelligence: structured-JSON artifacts at desktop parity | **Gate 5 PASSED ✅ (5/6; 6-06 deferred)** | [phase-6](./phase-6-meeting-intelligence/) |
 | 7 | H | MIR port: 5 profiles measurably alter extraction | not-started | [phase-7](./phase-7-mir-port/) |
 | 8 | I | iPad experience: PencilKit notebook + transcript linking + review | not-started | [phase-8](./phase-8-ipad-experience/) |
