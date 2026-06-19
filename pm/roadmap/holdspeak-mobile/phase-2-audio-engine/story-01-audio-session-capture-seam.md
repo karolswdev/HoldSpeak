@@ -5,6 +5,8 @@
 - **Status:** in-progress
 - **Depends on:** HSM-1-01 (the Xcode workspace + SPM layout + the `IAudioCapture`
   provider contract from Phase 1)
+- **Unblocks:** HSM-2-02, HSM-2-03
+- **Owner:** unassigned
 
 ## Progress (2026-06-18)
 
@@ -14,11 +16,18 @@
 seam, with `AVAudioSession` `.record` config and interruption + route-change
 handlers (pause/resume + restart). **iOS-type-checked** against the iphonesimulator
 SDK (exit 0, no warnings); the streaming seam is exercised host-side by a
-`FakeAudioCapture` pipeline test. Stays in-progress until **live mic + real
-interruption/route-change behavior is verified on a device** (defers with the
-Track-C hardware gate, HSM-2-04).
-- **Unblocks:** HSM-2-02, HSM-2-03
-- **Owner:** unassigned
+`FakeAudioCapture` pipeline test.
+
+**Sim probe (2026-06-18) — the precise device-pending boundary.** Ran the *real*
+`AudioCaptureService` on the iPhone 17 Pro Max simulator via
+`apple/scripts/capture-probe.sh`. The service instantiates and its task runs on
+iOS (`PROBE_START` written to the app container), but `AVAudioEngine` input
+**SIGABRTs inside AVFAudio/AudioToolbox's HAL** at `engine.start()` — the
+simulator has no real microphone input route (crash: `EXC_CRASH`/`SIGABRT`,
+`HALC_ProxyIOContext` / `libEmbeddedSystemAUs`). So "the capture code runs on iOS"
+is proven; **live mic capture specifically** (plus interruption/route-change
+behavior) is the exact part that needs a real device — that is what
+"device-pending" means here, not the whole story.
 
 ## Problem
 
