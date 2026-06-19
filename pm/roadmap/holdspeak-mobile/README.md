@@ -1,6 +1,15 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-18 (**Phase 5 — HSM-5-04 done + host slice** — the
+**Last updated:** 2026-06-19 (**Gate 1 proven on real metal** — the Phase-1
+runtime shell launched on a **physical iPad Air 11" (M4), iPadOS 26.5** (owner-confirmed
+"contracts v0.1.0" on-device), discharging the HSM-1-04 physical-device follow-up
+via new headless on-device deploy tooling (`apple/scripts/gen-device-project.rb` +
+`gate1-device.sh`: build → sign → install → launch over `devicectl`). One-time
+enrollment (account sign-in, Apple Developer PLA, Developer Mode, device
+registration) is done and persists, so the on-device path is now repeatable for
+the heavier device-gated gates (capture/Whisper/inference). Phase 1 stays CLOSED.
+See [`phase-1…/gate1-ipadair-m4-realmetal.log`](./phase-1-mobile-foundation/gate1-ipadair-m4-realmetal.log).
+Earlier: **Phase 5 — HSM-5-04 done + host slice** — the
 structured-output bridge (`StructuredOutput`: extract JSON from messy model text →
 decode through the contract → bounded repair-retry) + the per-device LLM model
 policy (4B iPhone / 8B iPad / 12B+ plugged-in); `swift test` 24/24. Engine pick +

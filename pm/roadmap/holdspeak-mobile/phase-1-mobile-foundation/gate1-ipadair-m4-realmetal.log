@@ -1,0 +1,26 @@
+# Gate 1 — real-metal launch (physical iPad Air 11" M4, iPadOS 26.5)
+#
+# Discharges the HSM-1-04 follow-up ("a physical-device launch when Tier-1/Tier-2
+# hardware is available"). The Phase-1 Gate-1 bar was the simulator launch on both
+# device classes (met, screenshots committed); this is the stronger physical-device
+# proof, run fully headless via apple/scripts/gate1-device.sh.
+#
+# Device: AjPed — iPad Air 11-inch (M4) (iPad16,9) — coredevice 6B2F424D-…, hw udid 00008132-…
+# Team: M84954HNL6 (automatic signing) · Bundle: dev.holdspeak.mobile · Xcode 26.5
+
+== target device: 6B2F424D-707F-51F7-A33E-259427861CB1 ==
+== build + sign (destination id=00008132-001928291E45401C) ==
+** BUILD SUCCEEDED **
+== install /Users/karol/dev/tools/HoldSpeak/apple/build/device/HoldSpeakMobile.app ==
+Acquired tunnel connection to device.
+Enabling developer disk image services.
+Launched application with dev.holdspeak.mobile bundle identifier.
+== Gate 1 (device): launched dev.holdspeak.mobile on 6B2F424D-707F-51F7-A33E-259427861CB1 ==
+
+# On-screen (confirmed by owner): "HoldSpeak Mobile — Runtime foundation — Phase 1
+# — contracts v0.1.0" — the version is read from the Contracts layer compiled into
+# the app, so the launch exercises real contract code on Apple hardware.
+#
+# One-time enrollment done to reach this (all persist): Xcode signed into the
+# M84954HNL6 account, latest Apple Developer PLA accepted, Developer Mode enabled
+# on the iPad, device registered in the account. After that the deploy is headless.

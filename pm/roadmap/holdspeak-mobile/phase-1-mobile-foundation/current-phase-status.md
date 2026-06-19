@@ -2,6 +2,14 @@
 
 **Status:** CLOSED ✅ (4/4) 2026-06-18 — Gate 1 proven, CI green on a hosted run.
 See [`final-summary.md`](./final-summary.md).
+**Real-metal addendum (2026-06-19):** the HSM-1-04 follow-up is discharged — the
+shell launched on a **physical iPad Air 11" (M4), iPadOS 26.5** (owner-confirmed
+"contracts v0.1.0" on-device), via the new headless deploy tooling
+(`apple/scripts/gen-device-project.rb` + `gate1-device.sh`). Stronger than the
+simulator bar; phase stays CLOSED. Evidence:
+[`gate1-ipadair-m4-realmetal.log`](./gate1-ipadair-m4-realmetal.log)
+(`** BUILD SUCCEEDED **` → `Launched application with dev.holdspeak.mobile`),
+discharging the HSM-1-04 physical-device follow-up.
 Track B
 of the Council Implementation Charter. The first Swift-bearing phase: it stands up
 the four-layer SPM target structure (Contracts / Runtime Core / Providers /
