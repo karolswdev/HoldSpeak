@@ -88,6 +88,11 @@ public struct Meeting: Codable, Equatable, Sendable {
 public struct ArtifactSource: Codable, Equatable, Sendable {
     public var sourceType: String
     public var sourceRef: String
+
+    public init(sourceType: String, sourceRef: String) {
+        self.sourceType = sourceType
+        self.sourceRef = sourceRef
+    }
 }
 
 /// A synthesized artifact — the tagged union (contract §5): `artifactType` is the
@@ -108,6 +113,29 @@ public struct Artifact: Codable, Equatable, Sendable {
     public var updatedAt: Date?
     // Reserved optional egress scope (contract §8); unpopulated in v0.
     public var egress: JSONValue?
+
+    public init(
+        id: String, meetingId: String, artifactType: ArtifactType,
+        title: String, bodyMarkdown: String, structuredJson: JSONValue,
+        confidence: Double, status: ArtifactStatus, pluginId: String,
+        pluginVersion: String, sources: [ArtifactSource] = [],
+        createdAt: Date? = nil, updatedAt: Date? = nil, egress: JSONValue? = nil
+    ) {
+        self.id = id
+        self.meetingId = meetingId
+        self.artifactType = artifactType
+        self.title = title
+        self.bodyMarkdown = bodyMarkdown
+        self.structuredJson = structuredJson
+        self.confidence = confidence
+        self.status = status
+        self.pluginId = pluginId
+        self.pluginVersion = pluginVersion
+        self.sources = sources
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.egress = egress
+    }
 }
 
 public struct IntelJob: Codable, Equatable, Sendable {
@@ -172,4 +200,10 @@ public struct Transcript: Codable, Equatable, Sendable {
     public var meetingId: String
     public var segments: [Segment]
     public var transcriptHash: String
+
+    public init(meetingId: String, segments: [Segment], transcriptHash: String) {
+        self.meetingId = meetingId
+        self.segments = segments
+        self.transcriptHash = transcriptHash
+    }
 }

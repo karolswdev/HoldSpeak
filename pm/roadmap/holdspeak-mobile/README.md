@@ -1,6 +1,14 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-19 (**Gate 1 proven on real metal** — the Phase-1
+**Last updated:** 2026-06-19 (**Phase 6 — HSM-6-01 done** — the artifact-generation
+engine seam lands in the Runtime Core: `ArtifactGenerationEngine` takes a Phase-0
+`Transcript` + an injected `ILLMProvider`, drives the model through the Phase-5
+`StructuredOutput` bridge, and binds the result into a schema-valid Phase-0
+`Artifact` (engine owns id/type/provenance; the model contributes only the
+intelligence). Propose-only, robust to prose output. `swift test` 28/28, layer
+guard green. `RuntimeCore` now depends on `Providers` for the port protocols
+(transitive-dep risk flagged for Phase 3). Next: HSM-6-02 (five core artifact
+types). Earlier: **Gate 1 proven on real metal** — the Phase-1
 runtime shell launched on a **physical iPad Air 11" (M4), iPadOS 26.5** (owner-confirmed
 "contracts v0.1.0" on-device), discharging the HSM-1-04 physical-device follow-up
 via new headless on-device deploy tooling (`apple/scripts/gen-device-project.rb` +
@@ -64,8 +72,8 @@ Earlier today: **program scaffolded** — the Council Implementation
 Charter (Rev 1.0) mapped onto a 12-phase roadmap (Phase 0 Contract Extraction →
 Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every phase
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
-**Current phase:** [phase-6-meeting-intelligence](./phase-6-meeting-intelligence/current-phase-status.md) (Phases 0 ✅, 1 ✅, 4 ✅; 2 + 3 + 5 testable cores done, device-gated remainder)
-**Status:** in-progress (Phases 0–1–4 closed; Phase 2 + 3 + 5 testable cores shipped; Phase 6 next).
+**Current phase:** [phase-6-meeting-intelligence](./phase-6-meeting-intelligence/current-phase-status.md) (Phases 0 ✅, 1 ✅, 4 ✅; 2 + 3 + 5 testable cores done, device-gated remainder; Phase 6 in-progress, HSM-6-01 done)
+**Status:** in-progress (Phases 0–1–4 closed; Phase 2 + 3 + 5 testable cores shipped; Phase 6 started — HSM-6-01 done, HSM-6-02 next).
 
 ## Vision
 
