@@ -1,13 +1,21 @@
 # Phase 6 — Meeting Intelligence
 
-**Status:** in-progress (HSM-6-01 done 2026-06-19). Track G of the Council
+**Status:** in-progress (HSM-6-01 + HSM-6-02 done 2026-06-19). Track G of the Council
 Implementation Charter. The artifact-generation engine: it turns a transcribed
 meeting into the structured intelligence HoldSpeak is known for — Action Items,
 Decisions, Risks, Requirements, Summaries, plus the charter Vision's ADR
 Candidates and Follow-ups — running in the Runtime Core (Layer 2) on top of the
 Phase-5 `ILLMProvider`, and held to parity with the desktop quality baseline.
 
-**Last updated:** 2026-06-19 (**HSM-6-01 done** — the artifact-generation engine
+**Last updated:** 2026-06-19 (**HSM-6-02 done** — the five core artifact types are
+real on the HSM-6-01 seam: Action Items (`Artifact(.actionItems)` whose
+`structured_json` is a schema-valid `[ActionItem]`, lifecycle + `sha256(task:owner)[:12]`
+id stamped by the engine), Decisions/Risks/Requirements (open-blob `Artifact`s via
+per-type desktop-intent prompts), and Summary → `IntelSnapshot` (no invented
+`summary` artifact type — contract-honest). Empty input → empty set, never
+hallucinated. Also fixed a Phase-5 `extractJSON` bug (it grabbed the first inner
+object of an array). `swift test` 33/33, layer guard green. Next: HSM-6-03 (ADR
+Candidates + Follow-ups). Earlier: **HSM-6-01 done** — the artifact-generation engine
 seam lands in the Runtime Core: `ArtifactGenerationEngine` takes a Phase-0
 `Transcript` + an injected `ILLMProvider`, drives the model, decodes via the
 Phase-5 `StructuredOutput` bridge into an `ArtifactDraft`, and binds it into a
@@ -70,7 +78,7 @@ Review → Approve → Execute lifecycle is preserved end to end.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HSM-6-01 | The artifact-generation engine | done | [story-01](./story-01-artifact-generation-engine.md) | [evidence-01](./evidence-story-01.md) |
-| HSM-6-02 | The five core artifact types | backlog | [story-02](./story-02-core-artifact-types.md) | — |
+| HSM-6-02 | The five core artifact types | done | [story-02](./story-02-core-artifact-types.md) | [evidence-02](./evidence-story-02.md) |
 | HSM-6-03 | ADR Candidates + Follow-ups | backlog | [story-03](./story-03-adr-candidates-followups.md) | — |
 | HSM-6-04 | The parity baseline harness | backlog | [story-04](./story-04-parity-baseline-harness.md) | — |
 | HSM-6-05 | Gate-5 parity closeout | backlog | [story-05](./story-05-parity-closeout.md) | — |
@@ -85,11 +93,14 @@ HSM-6-02/03 inject the concrete ones), drives the model through the Phase-5
 schema-valid Phase-0 `Artifact` — the engine owns the discriminator/identity/
 provenance, the model owns only the intelligence. Propose-only (`.draft`); prose
 output surfaces as a recoverable error and one bad type doesn't sink a batch.
-`swift test` 28/28, layer guard green. The remaining four stories split into: the
-five core artifact types (HSM-6-02, unblocked); the Vision extras — ADR Candidates
-and Follow-ups — (HSM-6-03); a substance-based parity harness against a desktop
-baseline (HSM-6-04, needs a baseline captured early); and the Gate-5 closeout
-(HSM-6-05). **Next: HSM-6-02** (the five core artifact types on this seam).
+`swift test` 33/33, layer guard green. **HSM-6-02 is also done** — the five core
+types are real on the seam (Action Items typed to `[ActionItem]`; Decisions / Risks
+/ Requirements as open-blob `Artifact`s; Summary as `IntelSnapshot`), contract-honest
+(no invented `summary` type), empty-input-safe. The remaining stories: the Vision
+extras — ADR Candidates and Follow-ups — (HSM-6-03, unblocked); a substance-based
+parity harness against a desktop baseline (HSM-6-04, needs a baseline captured
+early); and the Gate-5 closeout (HSM-6-05). **Next: HSM-6-03** (ADR Candidates +
+Follow-ups on this seam).
 
 ## Active risks
 

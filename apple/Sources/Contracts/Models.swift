@@ -47,6 +47,23 @@ public struct ActionItem: Codable, Equatable, Sendable {
     public var sourceTimestamp: Double?
     public var createdAt: Date
     public var completedAt: Date?
+
+    public init(task: String, owner: String? = nil, due: String? = nil,
+                id: String, status: ActionStatus = .pending,
+                reviewState: ReviewState = .pending, reviewedAt: Date? = nil,
+                sourceTimestamp: Double? = nil, createdAt: Date,
+                completedAt: Date? = nil) {
+        self.task = task
+        self.owner = owner
+        self.due = due
+        self.id = id
+        self.status = status
+        self.reviewState = reviewState
+        self.reviewedAt = reviewedAt
+        self.sourceTimestamp = sourceTimestamp
+        self.createdAt = createdAt
+        self.completedAt = completedAt
+    }
 }
 
 public struct IntelSnapshot: Codable, Equatable, Sendable {
@@ -54,6 +71,13 @@ public struct IntelSnapshot: Codable, Equatable, Sendable {
     public var topics: [String]
     public var actionItems: [ActionItem]
     public var summary: String
+
+    public init(timestamp: Double, topics: [String], actionItems: [ActionItem], summary: String) {
+        self.timestamp = timestamp
+        self.topics = topics
+        self.actionItems = actionItems
+        self.summary = summary
+    }
 }
 
 /// `intel_status` serializes nested (NOT the flat in-memory string) — contract §1.

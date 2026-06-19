@@ -35,8 +35,22 @@ public enum StructuredOutput {
             }
         }
         let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let o = t.firstIndex(of: "{"), let c = t.lastIndex(of: "}"), o < c { return String(t[o...c]) }
-        if let o = t.firstIndex(of: "["), let c = t.lastIndex(of: "]"), o < c { return String(t[o...c]) }
+        // Extract whichever structure opens FIRST — an array of objects must not
+        // be mis-extracted as its first inner object (`[{…}]` → `{…}`).
+        let firstObj = t.firstIndex(of: "{")
+        let firstArr = t.firstIndex(of: "[")
+        let preferArray: Bool
+        switch (firstObj, firstArr) {
+        case (nil, .some): preferArray = true
+        case (.some, nil): preferArray = false
+        case let (.some(o), .some(a)): preferArray = a < o
+        case (nil, nil): return nil
+        }
+        if preferArray {
+            if let o = firstArr, let c = t.lastIndex(of: "]"), o < c { return String(t[o...c]) }
+        } else if let o = firstObj, let c = t.lastIndex(of: "}"), o < c {
+            return String(t[o...c])
+        }
         return nil
     }
 

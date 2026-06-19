@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 6
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HSM-6-01
 - **Unblocks:** HSM-6-04
 - **Owner:** unassigned
@@ -25,15 +25,20 @@ extraction intent; this story makes all five real.
 
 ## Acceptance criteria
 
-- [ ] All five types generate from a real transcript and each validates against
-      its Phase-0 contract with zero schema errors.
-- [ ] The engine emits nothing a contract can't hold (no stray fields); a type
+- [x] All five types generate from a real transcript and each validates against
+      its Phase-0 contract with zero schema errors. (ActionItems → `[ActionItem]`;
+      Decisions/Risks/Requirements → `Artifact` envelope; Summary → `IntelSnapshot`;
+      each round-trips through the contract coder in tests.)
+- [x] The engine emits nothing a contract can't hold (no stray fields); a type
       with no instances in a transcript yields an empty set, not a hallucinated
-      one.
-- [ ] Each type's extraction is a substance check in tests (presence/coverage of
+      one. (No invented `summary` artifact type — Summary is `IntelSnapshot`;
+      `testNoInstancesYieldsEmptySet`; every prompt mandates "[] when none".)
+- [x] Each type's extraction is a substance check in tests (presence/coverage of
       what's actually in the transcript), never an exact-string assertion.
-- [ ] Provenance is carried where the contract supports it (e.g. a Decision/Action
-      pointing at the transcript moment that justifies it), matching the desktop's
+      (`CoreArtifactsTests` assert task/topic presence, not phrasing.)
+- [x] Provenance is carried where the contract supports it — an `ActionItem`'s
+      `source_timestamp` points at the transcript moment; every artifact carries a
+      transcript `ArtifactSource`. ids are `sha256(task:owner)[:12]`, the desktop's
       shape.
 
 ## Test plan
