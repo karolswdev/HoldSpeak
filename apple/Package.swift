@@ -20,12 +20,14 @@ let package = Package(
         // Layer 1 — language-neutral schema as Swift types. Foundation only.
         .target(name: "Contracts"),
         // Layer 2 — meeting/artifact/MIR engines, persistence, sync. No UI.
-        .target(name: "RuntimeCore", dependencies: ["Contracts"]),
+        // Depends on Providers for the injected port protocols (ILLMProvider etc.).
+        .target(name: "RuntimeCore", dependencies: ["Contracts", "Providers"]),
         // Layer 3 — provider protocols (transcriber/LLM/audio/storage/sync).
         .target(name: "Providers", dependencies: ["Contracts"]),
         // Layer 4 — platform hosts (iPad/iPhone apps). The only UI layer.
         .target(name: "Hosts", dependencies: ["RuntimeCore", "Providers", "Contracts"]),
         .testTarget(name: "ContractsTests", dependencies: ["Contracts"]),
+        .testTarget(name: "RuntimeCoreTests", dependencies: ["RuntimeCore", "Providers", "Contracts"]),
         .testTarget(name: "ProvidersTests", dependencies: ["Providers", "Contracts"]),
     ]
 )

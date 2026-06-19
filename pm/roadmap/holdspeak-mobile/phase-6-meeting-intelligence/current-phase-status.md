@@ -1,14 +1,23 @@
 # Phase 6 — Meeting Intelligence
 
-**Status:** planning (scaffolded 2026-06-18). Track G of the Council
+**Status:** in-progress (HSM-6-01 done 2026-06-19). Track G of the Council
 Implementation Charter. The artifact-generation engine: it turns a transcribed
 meeting into the structured intelligence HoldSpeak is known for — Action Items,
 Decisions, Risks, Requirements, Summaries, plus the charter Vision's ADR
 Candidates and Follow-ups — running in the Runtime Core (Layer 2) on top of the
 Phase-5 `ILLMProvider`, and held to parity with the desktop quality baseline.
 
-**Last updated:** 2026-06-18 (scaffolded — stories HSM-6-01..05 stubbed from the
-charter Track G deliverables + the Vision intelligence list; no work started).
+**Last updated:** 2026-06-19 (**HSM-6-01 done** — the artifact-generation engine
+seam lands in the Runtime Core: `ArtifactGenerationEngine` takes a Phase-0
+`Transcript` + an injected `ILLMProvider`, drives the model, decodes via the
+Phase-5 `StructuredOutput` bridge into an `ArtifactDraft`, and binds it into a
+schema-valid Phase-0 `Artifact` (engine stamps id/type/provenance; model
+contributes only the intelligence). Propose-only (`.draft`), robust to prose
+output (recoverable error, per-type batch resilience). `swift test` 28/28, layer
+guard green. Added public inits to `Artifact`/`ArtifactSource`/`Transcript`;
+`RuntimeCore` now depends on `Providers` for the port protocols (transitive-dep
+risk flagged for Phase 3 — see Decisions deferred). Concrete per-type prompts are
+HSM-6-02/03. Earlier: scaffolded — stories HSM-6-01..05 stubbed).
 
 ## Goal
 
@@ -60,7 +69,7 @@ Review → Approve → Execute lifecycle is preserved end to end.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HSM-6-01 | The artifact-generation engine | backlog | [story-01](./story-01-artifact-generation-engine.md) | — |
+| HSM-6-01 | The artifact-generation engine | done | [story-01](./story-01-artifact-generation-engine.md) | [evidence-01](./evidence-story-01.md) |
 | HSM-6-02 | The five core artifact types | backlog | [story-02](./story-02-core-artifact-types.md) | — |
 | HSM-6-03 | ADR Candidates + Follow-ups | backlog | [story-03](./story-03-adr-candidates-followups.md) | — |
 | HSM-6-04 | The parity baseline harness | backlog | [story-04](./story-04-parity-baseline-harness.md) | — |
@@ -68,14 +77,19 @@ Review → Approve → Execute lifecycle is preserved end to end.
 
 ## Where we are
 
-Just scaffolded. Track G depends on a working `ILLMProvider` (Phase 5) and the
-Phase-0 contracts being locked. The five stories split the work into: the engine
-that drives the provider and binds to contracts (HSM-6-01); the five core
-artifact types (HSM-6-02); the Vision extras — ADR Candidates and Follow-ups —
-(HSM-6-03); a substance-based parity harness against the desktop baseline
-(HSM-6-04); and the Gate-5 closeout that runs it and records the verdict
-(HSM-6-05). Next: pick up HSM-6-01 once Phase 5 lands a callable provider, and
-capture a desktop baseline early (HSM-6-04 needs it).
+**HSM-6-01 is done.** The artifact-generation engine seam lives in the Runtime
+Core (`ArtifactGenerationEngine`): it takes a Phase-0 `Transcript` + an injected
+`ILLMProvider`, builds a per-type prompt (a generic schema-hinted default;
+HSM-6-02/03 inject the concrete ones), drives the model through the Phase-5
+`StructuredOutput` bridge to decode an `ArtifactDraft`, and binds that into a
+schema-valid Phase-0 `Artifact` — the engine owns the discriminator/identity/
+provenance, the model owns only the intelligence. Propose-only (`.draft`); prose
+output surfaces as a recoverable error and one bad type doesn't sink a batch.
+`swift test` 28/28, layer guard green. The remaining four stories split into: the
+five core artifact types (HSM-6-02, unblocked); the Vision extras — ADR Candidates
+and Follow-ups — (HSM-6-03); a substance-based parity harness against a desktop
+baseline (HSM-6-04, needs a baseline captured early); and the Gate-5 closeout
+(HSM-6-05). **Next: HSM-6-02** (the five core artifact types on this seam).
 
 ## Active risks
 
@@ -107,3 +121,11 @@ capture a desktop baseline early (HSM-6-04 needs it).
 - Whether ADR Candidates and Follow-ups are full `Artifact` subtypes or a
   distinct shape — trigger: HSM-6-03 — default: model them as `Artifact` types per
   the Phase-0 contract until the contract says otherwise.
+- **How to keep the heavy adapter deps out of the domain.** HSM-6-01 made
+  `RuntimeCore` depend on `Providers` (the port protocols live there). Trigger:
+  **HSM-3-01** adds the WhisperKit SPM dependency to the `Providers` target —
+  which would then transitively link a transcription engine into `RuntimeCore`
+  and its tests. Default: at Phase 3, split a dependency-free `ProviderInterfaces`
+  target (the `I*` protocols) that both `RuntimeCore` and the concrete `Providers`
+  adapters depend on, so the domain never links WhisperKit/llama.cpp. Cheap to do
+  now, cheaper than after more RuntimeCore code piles on the current edge.
