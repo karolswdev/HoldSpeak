@@ -1,6 +1,14 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-19 (**HSM-10-03 (sync conflict + round-trip) DONE.**
+**Last updated:** 2026-06-19 (**Sync "do it now" orchestration — `SyncCoordinator`,
+host-proven.** The one-call sync the host UI drives: `syncNow()` snapshots the store →
+durably queues the outbound change-set → flushes to the peer → pulls + applies
+(conflict-resolved), **offline-safe by construction** (never throws on an unreachable
+peer; the snapshot is queued for the next pass). `SyncQueue.enqueueNext` (clock-free)
+backs the durable-first record. `swift test` **84/84** incl. `SyncCoordinatorTests`
+(reachable / offline / resume). This is the mobile side of the continuity gate
+(HSM-10-04 → in-progress); only the live on-device walkthrough remains. Earlier:
+**HSM-10-03 (sync conflict + round-trip) DONE.**
 `SyncEngine.apply` is now conflict-aware: LWW by `last_modified`, **same-time
 divergence surfaced non-destructively** (kept local + reported, never silently
 dropped), tombstone no-resurrect, and **idempotent** (sync twice → no change) — all
@@ -254,7 +262,7 @@ WebView, or UIKit.
 | 7 | H | MIR port: 5 profiles measurably alter extraction | **done (4/4) ✅** | [phase-7](./phase-7-mir-port/) |
 | 8 | I | iPad experience: PencilKit notebook + transcript linking + review | not-started | [phase-8](./phase-8-ipad-experience/) |
 | 9 | J | iPhone experience: Quick Capture / Capture / Review Queue / Voice Notes | not-started | [phase-9](./phase-9-iphone-experience/) |
-| 10 | K | Sync to desktop / homelab / Tailscale — cross-device continuity | in-progress (3/4; object model + transport + conflict policy host-proven; only the live cross-device gate (device) remains) | [phase-10](./phase-10-sync/) |
+| 10 | K | Sync to desktop / homelab / Tailscale — cross-device continuity | in-progress (object model + transport + conflict + `SyncCoordinator` orchestration host-proven; only the live cross-device walkthrough (device) remains) | [phase-10](./phase-10-sync/) |
 | 11 | L | Hardening: the five stress scenarios, production readiness | not-started | [phase-11](./phase-11-hardening/) |
 
 Phases are sequenced as the charter lists the tracks. The contract layer (Phase

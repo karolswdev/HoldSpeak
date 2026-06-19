@@ -2,9 +2,29 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** in-progress (the mobile-side orchestration is built + host-proven; the
+  live cross-device walkthrough is gated on the iPad unlock)
 - **Depends on:** HSM-10-01, HSM-10-02, HSM-10-03
 - **Owner:** unassigned
+
+## Progress (2026-06-19) — the "Sync now" orchestration is ready
+
+The one-call sync operation the host UI drives is built + host-proven; only the
+live, on-hardware walkthrough remains.
+
+- `SyncCoordinator` (`apple/Sources/RuntimeCore/Sync/SyncCoordinator.swift`):
+  `syncNow()` snapshots the store → durably records the outbound change-set to the
+  queue → flushes to the peer → pulls + applies (conflict-resolved). **Offline-safe
+  by construction** — never throws on an unreachable peer; reports
+  `reachedPeer=false` with the snapshot queued for the next pass.
+- `SyncQueue.enqueueNext` (clock-free monotonic seq) backs the durable-first record.
+- Host tests (`SyncCoordinatorTests`): reachable (push + drain + apply), offline
+  (queued, no throw), and resume (all queued snapshots delivered when the peer
+  returns). `swift test` 84/84.
+
+**Remaining for the gate:** the live phone↔desktop walkthrough over Tailscale on real
+devices (needs the iPad unlock + a running desktop receiver, which shipped in
+HSM-10-02 PR-B). On pass, write `evidence-story-04.md` + `final-summary.md`.
 
 ## Problem
 

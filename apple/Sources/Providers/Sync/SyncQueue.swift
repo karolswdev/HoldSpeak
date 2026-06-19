@@ -36,6 +36,15 @@ public struct SyncQueue: Sendable {
         return url
     }
 
+    /// Enqueue with a monotonic seq derived from the current contents
+    /// (max-existing + 1) — stays clock/RNG-free and keeps FIFO order even across
+    /// partial flushes (a removed-then-readded item never reuses a live index).
+    @discardableResult
+    public func enqueueNext(_ changeSet: ChangeSet) throws -> URL {
+        let next = (try pending().compactMap { Int($0.deletingPathExtension().lastPathComponent) }.max() ?? -1) + 1
+        return try enqueue(changeSet, seq: next)
+    }
+
     /// Queued change-sets in FIFO order.
     public func pending() throws -> [URL] {
         try ensure()
