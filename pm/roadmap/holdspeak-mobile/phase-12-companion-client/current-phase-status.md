@@ -1,18 +1,28 @@
 # Phase 12 — The Companion Client
 
-**Status:** planning (scaffolded 2026-06-20). **Track M — added by owner steer
-(2026-06-20), outside the original charter's Tracks A–L.** The iPad stops being a
-launch stub and becomes a **first-class companion to the desktop/server you are
-already coding against**, without losing one ounce of its own on-device power
-(Phases 0–7 stand). Point the iPad at the same server your tmux + hooks session
-points at, and it becomes a native window into that runtime: list and start
-meetings, see live state, and (Phase 13) answer the coder by voice. Built
-**native over the desktop's existing HTTP API** (owner call, 2026-06-20) — the
-same endpoints the web portal uses — so the experience is web-app-consistent and
-genuinely native, not a WebView shell.
+**Status:** in-progress (1/4 — **HSM-12-01 done**, the seam is live). **Track M —
+ratified into the charter as Amendment 1.1 (2026-06-20), co-canon with Rev 1.0.**
+The device stops being a launch stub and becomes a **first-class companion to the
+desktop/server you are already coding against**, without losing one ounce of its own
+on-device power (Phases 0–7 stand). Point the iPhone/iPad at the same server your
+tmux + hooks session points at, and it becomes a native window into that runtime:
+list and start meetings, see live state, and (Phase 13) answer the coder by voice.
+Built **native over the desktop's existing HTTP API** (owner call) — the same
+endpoints the web portal uses — so the experience is web-app-consistent and
+genuinely native, not a WebView shell. iPhone + iPad at parity (Amendment 1.1, Q4).
 
-**Last updated:** 2026-06-20 (scaffolded — stories HSM-12-01..04 stubbed from the
-owner's companion-client steer. No work started.)
+**Last updated:** 2026-06-20 (**HSM-12-01 done — the desktop client seam + pairing,
+host-proven.** `IDesktopClient` is a non-throwing `handshake() async ->
+DesktopConnection` seam (an unreachable desktop is a state, never an error on the
+caller path); `HTTPDesktopClient` + `DesktopPeer` pair host/port + token and probe
+`/health` + `/api/runtime/status` over the existing API, with an honest `local +
+LAN → <host>` egress and the token joined at call time (never in the badge). The
+RuntimeCore `CompanionLink` holds the interface, so the core depends on the seam,
+not a transport — and a test proves on-device work runs unaffected while the
+desktop is unreachable ("not a dumb terminal", made structural). `swift test`
+**96 passed / 6 skipped / 0 failed** (+12). See
+[`evidence-story-01.md`](./evidence-story-01.md). Next: HSM-12-02 (meetings remote
+control). Earlier: scaffolded from the owner's companion-client steer.)
 
 ## Why this exists (the gap this closes)
 
@@ -86,20 +96,22 @@ views present it.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HSM-12-01 | Desktop client seam + pairing | backlog | [story-01](./story-01-desktop-client-seam.md) | — |
+| HSM-12-01 | Desktop client seam + pairing | **done** | [story-01](./story-01-desktop-client-seam.md) | [evidence-01](./evidence-story-01.md) |
 | HSM-12-02 | Meetings remote control | backlog | [story-02](./story-02-meetings-remote-control.md) | — |
 | HSM-12-03 | The unified Companion shell | backlog | [story-03](./story-03-unified-companion-shell.md) | — |
 | HSM-12-04 | Track M gate closeout | backlog | [story-04](./story-04-companion-gate-closeout.md) | — |
 
 ## Where we are
 
-Just scaffolded from the owner's 2026-06-20 steer. The foundation (HSM-12-01) is
-fully host-testable against a fake desktop and unblocks the rest; meetings remote
-control (HSM-12-02) consumes endpoints that already ship; the shell (HSM-12-03) is
-where the web-app consistency and the "not a dumb terminal" principle become
-visible; the gate (HSM-12-04) needs the unlocked iPad + a reachable desktop. Phase
-13 (Answer the Coder) builds the voice-note-into-the-coder payoff on this
-foundation. Next: HSM-12-01.
+**HSM-12-01 is done** — the foundation (`IDesktopClient` seam + `HTTPDesktopClient`
+pairing/handshake/egress + the RuntimeCore `CompanionLink`) is host-proven against a
+fake desktop and a stubbed network, and it unblocks the rest. Next: meetings remote
+control (HSM-12-02), which consumes endpoints that already ship (`/api/meetings`,
+`/api/meeting/start|stop`, `/api/runtime/status`) through this seam; then the shell
+(HSM-12-03), where the web-app consistency and the "not a dumb terminal" principle
+become visible; then the gate (HSM-12-04), which needs an unlocked iPhone/iPad + a
+reachable desktop. Phase 13 (Answer the Coder) builds the voice-note-into-the-coder
+payoff on this same seam.
 
 ## Active risks
 

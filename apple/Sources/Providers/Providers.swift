@@ -40,6 +40,17 @@ public protocol ISyncProvider: Sendable {
     func pull() async throws -> ChangeSet
 }
 
+public protocol IDesktopClient: Sendable {
+    /// Probe the configured desktop/homelab peer (HSM-12-01). **Never throws** — an
+    /// unreachable desktop is a first-class state, not an error, so the companion can
+    /// render it and the device's on-device runtime is never blocked on the server.
+    /// The Runtime Core depends on this seam, never on a concrete transport.
+    func handshake() async -> DesktopConnection
+    /// Honest egress descriptor for the badge (positioning canon: one badge, never a
+    /// privacy novel). The companion talks to a LAN peer.
+    var egressLabel: String { get }
+}
+
 /// The sync-facing view of the local store (HSM-10-01): modified-time tracking and
 /// soft-delete tombstones on top of the Phase-4 store, so a change-set can be
 /// produced from and applied to it. Kept separate from `IStorage` so the base CRUD
