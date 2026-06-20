@@ -115,6 +115,17 @@ scenario. Next: HSM-13-01, once Phase 12's seam exists.
 - 2026-06-20 — The answer runs through the **rich** dictation pipeline
   (plugins/blocks/corrections), not as raw transcript — the owner asked for "all
   the rich plugins," and that richness is the differentiator over a dumb text box.
+- 2026-06-20 — **Ratified into the charter as Amendment 1.1** (co-canon with Rev
+  1.0); this phase's track gate is **Gate 10 (Answer the Coder)**. Program risk P10
+  retired.
+- 2026-06-20 — **Owner call (Amendment 1.1, Q4):** iPhone and iPad are at the
+  **same priority** — answering a waiting coder from the phone in your pocket is at
+  least as valuable as from the iPad. This phase targets **iPhone + iPad at
+  parity**; the gate (HSM-13-04) proves the scenario on both.
+- 2026-06-20 — **Owner call (Amendment 1.1, Q5):** the desktop API change
+  (`POST /api/dictation/remote`, HSM-13-01) is **authorized** as a tracked
+  cross-roadmap `holdspeak` dependency; route through the existing dictation
+  runtime so the AI PI delivery path + the rich pipeline both apply.
 
 ## Decisions deferred
 

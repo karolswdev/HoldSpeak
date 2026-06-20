@@ -66,10 +66,11 @@ the Runtime Core, it does not own business logic.
 - [ ] **Track I gate — the meeting-notebook workflow is complete:** record →
       transcript → notebook notes → linked moments → artifact review, end to end
       on a real iPad, evidenced by a device walkthrough (HSM-8-04).
-- [ ] **Air-gapped gate — the fully-local notetaker:** the whole workflow runs in
-      real airplane mode (no desktop / LAN / endpoint) with Mode-A on-device
-      inference, rich (not a degraded fallback), honest local egress, proven on a
-      physical iPad (HSM-8-05).
+- [ ] **Gate 8 — Air-gapped Notetaker (program Quality Gate, ratified Amendment
+      1.1):** the whole workflow runs in real airplane mode (no desktop / LAN /
+      endpoint) with Mode-A on-device inference, **rich in functionality** (not a
+      degraded fallback — the owner's bar for the gate to count), honest local
+      egress, **proven on a physical iPad** with iPhone at parity (HSM-8-05).
 - [ ] **The magic pencil is involved:** handwriting is recognized on-device, a
       note/marked moment can be promoted to a contract artifact (propose-and-confirm),
       and a marked moment measurably shapes MIR extraction — ink feeds the output,
@@ -115,6 +116,16 @@ transcribing runtime; 8-05/8-06 sequence after Phase 6 (artifacts) + HSM-5-02
 - 2026-06-18 — The iPad host is a thin SwiftUI Platform Host (Layer 4) over the
   Runtime Core; all business logic stays in the core, per the charter's
   architecture principle — charter Architecture §Principle + §Layers.
+- 2026-06-20 — **Ratified in charter Amendment 1.1 (Q3):** the air-gapped
+  fully-local notetaker (HSM-8-05) is its **own program Quality Gate — Gate 8** —
+  proven on a real iPad and **required to be rich in functionality**, not just an
+  offline run. Owner: "we're gonna have to gate it on an actual iPad … needs to be
+  rich in functionality for us to even make anything out of it."
+- 2026-06-20 — **Amendment 1.1 (Q4):** iPhone is at the **same priority** as iPad.
+  The air-gapped notetaker + intelligence ship on iPhone at parity (the iPhone air-
+  gapped proof rides Track J / Phase 9); the **Apple-Pencil notebook + ink-into-
+  intelligence (HSM-8-02 / HSM-8-06) stay iPad** (hardware), iPhone reaching the
+  same outcomes via finger/typed/voice.
 
 ## Decisions deferred
 
