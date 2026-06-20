@@ -113,11 +113,19 @@ foundation. Next: HSM-12-01.
 
 ## Decisions made (this phase)
 
-- 2026-06-20 — **Owner steer:** the iPad must be a first-class companion to the
+- 2026-06-20 — **Owner steer:** the device must be a first-class companion to the
   desktop server in addition to its standalone on-device runtime — not a dumb
-  terminal, not neutered. This adds Track M (this phase) + Track N (Phase 13)
-  outside the original charter Tracks A–L; the charter may want an owner-blessed
-  amendment to record the new tracks (flagged, not silently rewritten).
+  terminal, not neutered. This adds Track M (this phase) + Track N (Phase 13),
+  **ratified into the charter as Amendment 1.1 (2026-06-20), co-canon with Rev 1.0**
+  (program risk P10 retired).
+- 2026-06-20 — **Owner call (Amendment 1.1, Q4):** iPhone and iPad are at the
+  **same priority** for the companion — this phase targets **iPhone + iPad at
+  parity**, not iPad-first. The companion shell, pairing, and meetings remote
+  control all ship on both; the gate (HSM-12-04) proves both. This phase's track
+  gate is **Gate 9 (Companion)**.
+- 2026-06-20 — **Owner call (Amendment 1.1, Q1):** Tracks M–N run **before**
+  Hardening (Phase 11), which is re-sequenced last; Gate 7 (Production Readiness)
+  extends to the companion failure scenarios.
 - 2026-06-20 — **Owner call:** the client is **native SwiftUI over the desktop's
   existing HTTP API** (the same endpoints the web portal uses), not a WebView
   wrapper — native richness + web-app consistency. New desktop endpoints are added

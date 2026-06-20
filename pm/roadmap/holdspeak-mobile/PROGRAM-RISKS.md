@@ -4,7 +4,8 @@
 each phase's `current-phase-status.md`). Every risk names a **stop signal** — the
 concrete observation that triggers "halt this approach and regroup."
 
-**Last updated:** 2026-06-20 (added P8–P10 for the Companion track, Phases 12–13).
+**Last updated:** 2026-06-20 (added P8–P9 for the Companion track; **P10 retired —
+charter Amendment 1.1 ratified**, so the track no longer drifts from canon).
 
 | # | Risk | Phase(s) | Likelihood | Mitigation | Stop signal |
 |---|---|---|---|---|---|
@@ -17,9 +18,10 @@ concrete observation that triggers "halt this approach and regroup."
 | P7 | **Charter scope is large** (~26 weeks, 12 phases) and a late phase surfaces an early-phase design flaw | all | medium | Phase gates are evidence-bound; hardening (Phase 11) findings route back to the owning phase, not patched in place | A Phase-11 scenario fails for a reason rooted in an earlier phase — file it back to that phase, don't hack the hardening layer |
 | P8 | **The iPad is reduced to a dumb terminal** — the companion track quietly neuters the on-device runtime the owner forbade neutering | 12, 13 | high | The unified shell (HSM-12-03) presents the on-device runtime as a first-class peer of the server; both gates (HSM-12-04 / HSM-13-04) re-prove on-device capability; the companion is additive, never on the local path | A paired iPad hides/disables on-device meetings or inference — restore them; the device must stand its own ground |
 | P9 | **The remote-dictation inject endpoint becomes an unauthenticated write into the dev machine**, or injects without the user's explicit send | 13 | high | Tokened behind the Phase-12 client handshake; deliver-on-command only (never autonomous); credential joined at call time, never echoed (Phase-61 Slack discipline); mirrors the actuator Propose→Approve lifecycle | The endpoint accepts an untokened write, or any path delivers without an explicit send — halt and gate it |
-| P10 | **Tracks M–N drift from the charter** — the companion track lives outside the charter's Tracks A–L and the two specs disagree | 12, 13 | medium | The addition is recorded in the README + each phase's "Decisions made" as an owner steer (2026-06-20); flagged for an owner-blessed charter amendment, not silently rewritten | A phase doc and `CHARTER.md` give conflicting direction for the iPad's identity — get the owner's amendment before building deeper |
-
 ## Retired
 
 - ~~Truncated charter Quality Gate list~~ — RETIRED 2026-06-18: owner confirmed
   Gates 3–7 as-reconstructed; `CHARTER.md` is the gate list of record.
+- ~~P10 — Tracks M–N drift from the charter~~ — RETIRED 2026-06-20: the companion
+  track is ratified into the charter as **Amendment 1.1** (co-canon with Rev 1.0);
+  `CHARTER.md` and the phase docs now agree.

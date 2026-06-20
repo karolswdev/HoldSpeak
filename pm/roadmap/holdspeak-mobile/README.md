@@ -1,7 +1,12 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-20 (**Companion track scaffolded — Phases 12–13 (Tracks
-M–N), by owner steer.** The program was chartered as a standalone on-device runtime
+**Last updated:** 2026-06-20 (**Charter Amendment 1.1 RATIFIED** — the Companion
+relationship is now co-canon with Rev 1.0: Tracks M–N, "companion to the desktop
+coder" promoted to a headline Vision objective, **iPhone + iPad at parity**, the
+**air-gapped notetaker made its own program gate (Gate 8)** + Gates 9/10, and
+**Hardening re-sequenced last** with Gate 7 extended to the companion failure
+scenarios. Program risk P10 retired. Earlier the same day: **Companion track
+scaffolded — Phases 12–13 (Tracks M–N), by owner steer.** The program was chartered as a standalone on-device runtime
 and never planned the iPad as a **first-class companion to the desktop coder** — the
 one iPad-UI phase (8) is a PencilKit notebook, and the iPad app today is a Gate-1
 launch stub plus a demo harness. Two new phases close that gap without neutering the
@@ -217,8 +222,9 @@ Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every pha
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
 **Current phase:** [phase-7-mir-port](./phase-7-mir-port/current-phase-status.md) closed; Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5**, **7 ✅ Gate H**; Phase 5 host-complete (engine pick + structured output + endpoint Modes B/C + on-device Mode A + model packaging — all host-proven; device runs pending the iPad unlock); Phase 10 in-progress (HSM-10-01 done); 2 + 3 testable cores done, device-gated remainder; 6-06 Follow-ups deferred. **Phases 12–13 (Tracks M–N — the Companion Client + Answer the Coder) scaffolded 2026-06-20 by owner steer; no work started.**
 
-**Highest-value direction (owner steer, 2026-06-20).** The program's value now
-concentrates on the **two iPad faces, both first-class**: (1) the **Companion track**
+**Highest-value direction (owner steer, 2026-06-20; ratified in charter Amendment
+1.1).** The program's value now concentrates on the **two device faces, both
+first-class, on iPhone + iPad at parity**: (1) the **Companion track**
 — point the iPad at the server you code against and **answer the coder by voice**
 (Phase 12 → 13, the Answer-the-Coder payoff), and (2) the **air-gapped fully-local
 notetaker** with a magic pencil that feeds the output (Phase 8, elevated: HSM-8-05 +
@@ -261,8 +267,9 @@ WebView, or UIKit.
 
 ## Source canon
 
-- [`CHARTER.md`](./CHARTER.md) — the Council Implementation Charter (Rev 1.0),
-  the authoritative spec for this program. Charter wins over any phase doc.
+- [`CHARTER.md`](./CHARTER.md) — the Council Implementation Charter (Rev 1.0 +
+  **Amendment 1.1**, the Companion relationship — co-canon), the authoritative spec
+  for this program. Charter wins over any phase doc.
 - [`research/inference-on-apple.md`](./research/inference-on-apple.md) — the
   owner's inference research brief (2026-06-18): the candidate runtimes, the
   device/quantization/memory budgeting, and the architecture mapping that ground
@@ -294,26 +301,32 @@ WebView, or UIKit.
 | 5 | F | Local inference (4B/8B) — a 30-min meeting processed on-device | in-progress (engine pick + structured-output + model policy done; HSM-5-06 endpoint Modes B/C; **HSM-5-02 LlamaProvider/Mode A host-proven on Metal**; **HSM-5-03 packaging — sideload + HF download host-proven**; iPad runs + HSM-5-05 gate device) | [phase-5](./phase-5-local-inference/) |
 | 6 | G | Meeting intelligence: structured-JSON artifacts at desktop parity | **Gate 5 PASSED ✅ (5/6; 6-06 deferred)** | [phase-6](./phase-6-meeting-intelligence/) |
 | 7 | H | MIR port: 5 profiles measurably alter extraction | **done (4/4) ✅** | [phase-7](./phase-7-mir-port/) |
-| 8 | I | iPad experience: the **air-gapped fully-local notetaker** (rich, zero-connectivity, Mode A) + a **magic pencil that feeds the output** (PencilKit notebook, marked moments, ink → artifacts) + review | not-started (elevated 2026-06-20: +HSM-8-05 air-gapped gate, +HSM-8-06 ink-into-intelligence) | [phase-8](./phase-8-ipad-experience/) |
-| 9 | J | iPhone experience: Quick Capture / Capture / Review Queue / Voice Notes | not-started | [phase-9](./phase-9-iphone-experience/) |
+| 8 | I | iPad experience: the **air-gapped fully-local notetaker** (rich, zero-connectivity, Mode A — **Gate 8**, real-iPad-proven) + a **magic pencil that feeds the output** (PencilKit notebook, marked moments, ink → artifacts) + review | not-started (elevated 2026-06-20: +HSM-8-05 air-gapped gate, +HSM-8-06 ink-into-intelligence) | [phase-8](./phase-8-ipad-experience/) |
+| 9 | J | iPhone experience: Quick Capture / Capture / Review Queue / Voice Notes — **+ companion + answer-the-coder + air-gapped notetaker at iPad parity** (Amendment 1.1) | not-started | [phase-9](./phase-9-iphone-experience/) |
 | 10 | K | Sync to desktop / homelab / Tailscale — cross-device continuity | in-progress (object model + transport + conflict + `SyncCoordinator` orchestration host-proven; only the live cross-device walkthrough (device) remains) | [phase-10](./phase-10-sync/) |
-| 11 | L | Hardening: the five stress scenarios, production readiness | not-started | [phase-11](./phase-11-hardening/) |
-| 12 | M | **The Companion Client:** point the iPad at the same server you code against — a unified shell (on-device runtime + server, never a dumb terminal) + meetings remote control | not-started (scaffolded 2026-06-20) | [phase-12](./phase-12-companion-client/) |
-| 13 | N | **Answer the Coder:** the AI PI payoff — the agent's question surfaces on the iPad, you answer by native voice note, it lands back in the coder session | not-started (scaffolded 2026-06-20) | [phase-13](./phase-13-answer-the-coder/) |
+| 11 | L | Hardening: the five stress scenarios **+ companion failure scenarios** (Gate 7 extended), production readiness — **runs last** (after 12–13, per Amendment 1.1) | not-started | [phase-11](./phase-11-hardening/) |
+| 12 | M | **The Companion Client:** point the iPhone/iPad at the same server you code against — a unified shell (on-device runtime + server, never a dumb terminal) + meetings remote control | not-started (scaffolded 2026-06-20) | [phase-12](./phase-12-companion-client/) |
+| 13 | N | **Answer the Coder:** the AI PI payoff — the agent's question surfaces on the device, you answer by native voice note, it lands back in the coder session | not-started (scaffolded 2026-06-20) | [phase-13](./phase-13-answer-the-coder/) |
 
-**Tracks M–N (Phases 12–13)** were added by owner steer (2026-06-20), outside the
-original charter's Tracks A–L. They close a gap the owner named directly: there was
-no phase for the iPad as a **first-class companion to the desktop coder**. The iPad
-keeps every on-device power (Phases 0–7 stand — "not a dumb terminal"); the
-companion track *adds* a server-aware face, built native over the desktop's
-existing HTTP API. Phase 8 (the PencilKit notebook) stays the on-device iPad
-flagship, untouched. The charter (Tracks A–L) may want an owner-blessed amendment
-to record M–N; this is flagged, not silently rewritten.
+**Tracks M–N (Phases 12–13)** were added by owner steer (2026-06-20) and **ratified
+into the charter as Amendment 1.1 (co-canon with Rev 1.0)**. They close a gap the
+owner named directly: there was no phase for the device as a **first-class companion
+to the desktop coder**. The device keeps every on-device power (Phases 0–7 stand —
+"not a dumb terminal"); the companion track *adds* a server-aware face, built native
+over the desktop's existing HTTP API. Phase 8 (the PencilKit notebook) stays the
+on-device flagship, untouched. Amendment 1.1 also: promotes "companion to the
+desktop coder" to a headline Vision objective, puts **iPhone + iPad at parity** for
+the companion / answer-the-coder / air-gapped notetaker (the Apple-Pencil notebook
+stays iPad hardware), makes the **air-gapped notetaker its own program gate (Gate
+8)**, and adds Gates 9 (Companion) / 10 (Answer the Coder).
 
-Phases are sequenced as the charter lists the tracks. The contract layer (Phase
-0) and runtime-core seams gate everything above them; the two experience phases
-(8, 9) and sync (10) can overlap once intelligence (6) is real. Re-sequencing is
-the owner's call and is recorded in each phase's "Decisions made" section.
+**Sequencing (Amendment 1.1).** Hardening (Phase 11) is re-sequenced to run **last**
+— after Phases 12–13 — so the complete product (companion paths included) is what
+gets hardened; **Gate 7 (Production Readiness) extends** to the companion failure
+scenarios. Otherwise phases follow the charter's track order; re-sequencing is the
+owner's call and is recorded in each phase's "Decisions made" section. The contract
+layer (Phase 0) and runtime-core seams gate everything above them; the two
+experience phases (8, 9) and sync (10) can overlap once intelligence (6) is real.
 
 ## Operating cadence
 
