@@ -6,8 +6,30 @@ turns the runtime into the charter's flagship experience — record a meeting, t
 PencilKit notes, link them to the transcript, and review the artifacts, all on an
 iPad Air/Pro M4.
 
-**Last updated:** 2026-06-18 (scaffolded — stories HSM-8-01..04 stubbed from
-charter Track I; no work started).
+**Last updated:** 2026-06-20 (**elevated to the owner's richness bar.** Two stories
+added and the existing notebook/linking stories raised: HSM-8-05 makes the
+**air-gapped, fully-local notetaker** (iPad at a meeting, zero connectivity, Mode A
+on-device) a first-class scenario with its own gate, and HSM-8-06 makes the **magic
+pencil genuinely involved** — handwriting recognized on-device, notes/marks promoted
+to artifacts, marked moments weighting MIR extraction — so ink shapes the meeting
+output instead of sitting parallel to it. Owner steer: "the air-gapped scenario is
+paradigm and has to be rich; the magic pencil has to be involved." Earlier:
+scaffolded — stories HSM-8-01..04 stubbed from charter Track I; no work started.)
+
+## The paradigm (owner, 2026-06-20)
+
+> "Hosting a local model and doing local inference on the iPad in the scenario where
+> it can't connect to a desktop is the paradigm — an air-gapped meeting. We bring
+> the iPad to a meeting, zero connectivity, and let it do the notetaker job. That
+> has to be rich. And there has to be a way to create notes with the magic pencil,
+> real notes, and have that somehow involved."
+
+This phase is the home of that experience. The fully-local engine (Mode A) lives in
+Phase 5; the intelligence in Phase 6; MIR in Phase 7. Phase 8 is where they become
+a **rich, first-class, offline notetaker with a magic pencil that feeds the
+output** — the standalone counterpart to the Companion track (Phases 12–13). The
+iPad stands its own ground with zero connectivity; that is not a fallback, it is the
+point.
 
 ## Goal
 
@@ -21,9 +43,12 @@ the Runtime Core, it does not own business logic.
 ## Scope
 
 - **In:** the iPad app shell + meeting-capture screen over the Runtime Core
-  (HSM-8-01); PencilKit handwritten notes + notebook mode (HSM-8-02); transcript
-  linking — note ↔ `Segment`/timestamp (HSM-8-03); artifact review + the
-  notebook-workflow gate closeout (HSM-8-04).
+  (HSM-8-01); a rich PencilKit notebook (pages, tools, ink + typed) (HSM-8-02);
+  transcript linking + one-gesture marked moments — note ↔ `Segment`/timestamp
+  (HSM-8-03); artifact review + the notebook-workflow gate closeout (HSM-8-04); the
+  **air-gapped fully-local notetaker** scenario + gate (HSM-8-05); and **ink into
+  intelligence** — handwriting recognized on-device, notes/marks promoted to
+  artifacts, marks weighting MIR extraction (HSM-8-06).
 - **Out:** the iPhone experience (Phase 9). Sync across devices (Phase 10). The
   audio/transcription/inference/intelligence engines themselves (Phases 2–7 — this
   host consumes them). Any business logic in the view layer (it stays in the
@@ -41,6 +66,14 @@ the Runtime Core, it does not own business logic.
 - [ ] **Track I gate — the meeting-notebook workflow is complete:** record →
       transcript → notebook notes → linked moments → artifact review, end to end
       on a real iPad, evidenced by a device walkthrough (HSM-8-04).
+- [ ] **Air-gapped gate — the fully-local notetaker:** the whole workflow runs in
+      real airplane mode (no desktop / LAN / endpoint) with Mode-A on-device
+      inference, rich (not a degraded fallback), honest local egress, proven on a
+      physical iPad (HSM-8-05).
+- [ ] **The magic pencil is involved:** handwriting is recognized on-device, a
+      note/marked moment can be promoted to a contract artifact (propose-and-confirm),
+      and a marked moment measurably shapes MIR extraction — ink feeds the output,
+      it is not a parallel scratchpad (HSM-8-06).
 
 ## Story status
 
@@ -50,15 +83,23 @@ the Runtime Core, it does not own business logic.
 | HSM-8-02 | PencilKit notebook | backlog | [story-02](./story-02-pencilkit-notebook.md) | — |
 | HSM-8-03 | Transcript linking | backlog | [story-03](./story-03-transcript-linking.md) | — |
 | HSM-8-04 | Artifact review + notebook closeout | backlog | [story-04](./story-04-artifact-review-closeout.md) | — |
+| HSM-8-05 | The air-gapped notetaker (fully-local, zero-connectivity) | backlog | [story-05](./story-05-air-gapped-notetaker.md) | — |
+| HSM-8-06 | Ink into intelligence (the magic pencil, involved) | backlog | [story-06](./story-06-ink-into-intelligence.md) | — |
 
 ## Where we are
 
-Just scaffolded. This is the first real product surface and it sits on top of the
-whole stack: it needs Phase 2 (audio), Phase 3 (transcript), and — for the review
-to show real artifacts — Phases 5–7. The four stories follow Track I's feature
-list (capture, PencilKit notebook, transcript linking, artifact review) and end
-on the notebook-workflow gate. Next: HSM-8-01 once Phases 2–3 give a recordable,
-transcribing runtime; the artifact-review depth (HSM-8-04) wants Phase 6.
+Scaffolded and now elevated to the owner's richness bar (2026-06-20). This is the
+first real on-device product surface and it sits on top of the whole stack: it
+needs Phase 2 (audio), Phase 3 (transcript), and — for the review + the air-gapped
+loop + ink-into-intelligence — Phases 5–7 (Mode-A on-device inference, the artifact
+engine, the MIR seam). The six stories: capture (8-01), the rich PencilKit notebook
+(8-02), transcript linking + marked moments (8-03), artifact review + the Track I
+gate (8-04), the **air-gapped fully-local notetaker + gate (8-05)**, and **ink into
+intelligence (8-06)**. The phase now closes on two things being true at once: the
+notebook workflow is complete *and* it is rich with zero connectivity, with the
+magic pencil feeding the output. Next: HSM-8-01 once Phases 2–3 give a recordable,
+transcribing runtime; 8-05/8-06 sequence after Phase 6 (artifacts) + HSM-5-02
+(Mode A) so the offline richness is real, not stubbed.
 
 ## Active risks
 
