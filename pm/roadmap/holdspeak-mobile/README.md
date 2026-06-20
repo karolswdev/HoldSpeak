@@ -1,7 +1,29 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-19 (**Sync "do it now" orchestration — `SyncCoordinator`,
-host-proven.** The one-call sync the host UI drives: `syncNow()` snapshots the store →
+**Last updated:** 2026-06-20 (**Companion track scaffolded — Phases 12–13 (Tracks
+M–N), by owner steer.** The program was chartered as a standalone on-device runtime
+and never planned the iPad as a **first-class companion to the desktop coder** — the
+one iPad-UI phase (8) is a PencilKit notebook, and the iPad app today is a Gate-1
+launch stub plus a demo harness. Two new phases close that gap without neutering the
+device: **Phase 12 — The Companion Client** (point the iPad at the same server you
+code against; a unified shell presenting both its own on-device runtime *and* the
+server; meetings remote control — list / start / stop / live state over the existing
+HTTP API), and **Phase 13 — Answer the Coder** (the AI PI payoff: the agent's
+question surfaces on the iPad, you answer with a native voice note through the rich
+dictation pipeline, it lands back in the coder session — never autonomous). Built
+native over the desktop's existing API (owner call); the desktop already serves what
+the client consumes (`/api/meetings`, `/api/meeting/start|stop`, `/api/dictation/*`,
+`/api/companion/*`), the one new desktop surface being the remote-dictation inject
+endpoint (HSM-13-01). Phase 8 + the on-device runtime stand untouched. Ten new story
+files scaffolded; no implementation started. **Also: Phase 8 (the on-device iPad
+experience) elevated to the owner's richness bar** — the **air-gapped fully-local
+notetaker** (iPad at a meeting, zero connectivity, Mode A on-device) is now a
+first-class scenario with its own gate (HSM-8-05), and the **magic pencil is
+genuinely involved** (HSM-8-06: on-device handwriting recognition, notes/marks
+promoted to artifacts, marked moments weighting MIR) rather than a parallel
+scratchpad; the notebook/linking stories raised to match. The standalone on-device
+paradigm and the companion track are now both first-class, in both directions.
+Earlier: **Sync "do it now" orchestration — `SyncCoordinator`, host-proven.** The one-call sync the host UI drives: `syncNow()` snapshots the store →
 durably queues the outbound change-set → flushes to the peer → pulls + applies
 (conflict-resolved), **offline-safe by construction** (never throws on an unreachable
 peer; the snapshot is queued for the next pass). `SyncQueue.enqueueNext` (clock-free)
@@ -193,8 +215,20 @@ Earlier today: **program scaffolded** — the Council Implementation
 Charter (Rev 1.0) mapped onto a 12-phase roadmap (Phase 0 Contract Extraction →
 Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every phase
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
-**Current phase:** [phase-7-mir-port](./phase-7-mir-port/current-phase-status.md) closed; Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5**, **7 ✅ Gate H**; Phase 5 host-complete (engine pick + structured output + endpoint Modes B/C + on-device Mode A + model packaging — all host-proven; device runs pending the iPad unlock); Phase 10 in-progress (HSM-10-01 done); 2 + 3 testable cores done, device-gated remainder; 6-06 Follow-ups deferred.
-**Status:** in-progress (Phases 0–1–4 closed, **Phase 6 closed (Gate 5 desktop-parity PASSED 0.92)**, **Phase 7 closed (MIR port — profile measurably changes extraction)**; Phase 5 host-complete — on-device Mode A + endpoint Modes B/C + sideload/HF packaging, device runs await the iPad unlock; Phase 10 opened (sync object model + engine). Next device-free: HSM-10-02 sync transport + Python sync API, or Phases 8/9 experience. iPad on-device batch (HSM-5-02/03/06 + Gate-4) when the device is unlocked).
+**Current phase:** [phase-7-mir-port](./phase-7-mir-port/current-phase-status.md) closed; Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5**, **7 ✅ Gate H**; Phase 5 host-complete (engine pick + structured output + endpoint Modes B/C + on-device Mode A + model packaging — all host-proven; device runs pending the iPad unlock); Phase 10 in-progress (HSM-10-01 done); 2 + 3 testable cores done, device-gated remainder; 6-06 Follow-ups deferred. **Phases 12–13 (Tracks M–N — the Companion Client + Answer the Coder) scaffolded 2026-06-20 by owner steer; no work started.**
+
+**Highest-value direction (owner steer, 2026-06-20).** The program's value now
+concentrates on the **two iPad faces, both first-class**: (1) the **Companion track**
+— point the iPad at the server you code against and **answer the coder by voice**
+(Phase 12 → 13, the Answer-the-Coder payoff), and (2) the **air-gapped fully-local
+notetaker** with a magic pencil that feeds the output (Phase 8, elevated: HSM-8-05 +
+HSM-8-06). **Start here →** [HSM-12-01](./phase-12-companion-client/story-01-desktop-client-seam.md)
+(the desktop client seam) — the highest-value **device-free** story, fully
+host-testable against a fake desktop, and the spine the whole Companion track hangs
+off. The on-device richness (HSM-8-05/06) sequences behind Phase 6 + HSM-5-02 (Mode
+A) and the iPad unlock; build its host-testable seams first, then gate on device.
+Sync (Phase 10) continues in parallel but is plumbing, not the headline value.
+**Status:** in-progress (Phases 0–1–4 closed, **Phase 6 closed (Gate 5 desktop-parity PASSED 0.92)**, **Phase 7 closed (MIR port — profile measurably changes extraction)**; Phase 5 host-complete — on-device Mode A + endpoint Modes B/C + sideload/HF packaging, device runs await the iPad unlock; Phase 10 opened (sync object model + engine). Next device-free: HSM-10-02 sync transport + Python sync API, or Phases 8/9 experience, or **Phase 12 — The Companion Client (HSM-12-01, the desktop client seam, fully host-testable against a fake desktop)**. iPad on-device batch (HSM-5-02/03/06 + Gate-4) when the device is unlocked; the companion gates (HSM-12-04 / HSM-13-04) join that device batch).
 
 ## Vision
 
@@ -260,10 +294,21 @@ WebView, or UIKit.
 | 5 | F | Local inference (4B/8B) — a 30-min meeting processed on-device | in-progress (engine pick + structured-output + model policy done; HSM-5-06 endpoint Modes B/C; **HSM-5-02 LlamaProvider/Mode A host-proven on Metal**; **HSM-5-03 packaging — sideload + HF download host-proven**; iPad runs + HSM-5-05 gate device) | [phase-5](./phase-5-local-inference/) |
 | 6 | G | Meeting intelligence: structured-JSON artifacts at desktop parity | **Gate 5 PASSED ✅ (5/6; 6-06 deferred)** | [phase-6](./phase-6-meeting-intelligence/) |
 | 7 | H | MIR port: 5 profiles measurably alter extraction | **done (4/4) ✅** | [phase-7](./phase-7-mir-port/) |
-| 8 | I | iPad experience: PencilKit notebook + transcript linking + review | not-started | [phase-8](./phase-8-ipad-experience/) |
+| 8 | I | iPad experience: the **air-gapped fully-local notetaker** (rich, zero-connectivity, Mode A) + a **magic pencil that feeds the output** (PencilKit notebook, marked moments, ink → artifacts) + review | not-started (elevated 2026-06-20: +HSM-8-05 air-gapped gate, +HSM-8-06 ink-into-intelligence) | [phase-8](./phase-8-ipad-experience/) |
 | 9 | J | iPhone experience: Quick Capture / Capture / Review Queue / Voice Notes | not-started | [phase-9](./phase-9-iphone-experience/) |
 | 10 | K | Sync to desktop / homelab / Tailscale — cross-device continuity | in-progress (object model + transport + conflict + `SyncCoordinator` orchestration host-proven; only the live cross-device walkthrough (device) remains) | [phase-10](./phase-10-sync/) |
 | 11 | L | Hardening: the five stress scenarios, production readiness | not-started | [phase-11](./phase-11-hardening/) |
+| 12 | M | **The Companion Client:** point the iPad at the same server you code against — a unified shell (on-device runtime + server, never a dumb terminal) + meetings remote control | not-started (scaffolded 2026-06-20) | [phase-12](./phase-12-companion-client/) |
+| 13 | N | **Answer the Coder:** the AI PI payoff — the agent's question surfaces on the iPad, you answer by native voice note, it lands back in the coder session | not-started (scaffolded 2026-06-20) | [phase-13](./phase-13-answer-the-coder/) |
+
+**Tracks M–N (Phases 12–13)** were added by owner steer (2026-06-20), outside the
+original charter's Tracks A–L. They close a gap the owner named directly: there was
+no phase for the iPad as a **first-class companion to the desktop coder**. The iPad
+keeps every on-device power (Phases 0–7 stand — "not a dumb terminal"); the
+companion track *adds* a server-aware face, built native over the desktop's
+existing HTTP API. Phase 8 (the PencilKit notebook) stays the on-device iPad
+flagship, untouched. The charter (Tracks A–L) may want an owner-blessed amendment
+to record M–N; this is flagged, not silently rewritten.
 
 Phases are sequenced as the charter lists the tracks. The contract layer (Phase
 0) and runtime-core seams gate everything above them; the two experience phases

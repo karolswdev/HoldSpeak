@@ -15,16 +15,23 @@ Notes have to live alongside the live transcript and persist with the meeting.
 
 ## Scope
 
-- **In:** a PencilKit notebook surface in the meeting screen (handwritten notes,
-  notebook mode), with the drawing persisted and associated with the meeting via
-  the Phase-4 store.
+- **In:** a **first-class** PencilKit notebook surface in the meeting screen — not
+  a bare canvas: multiple pages, real pen tools (pen / highlighter / eraser,
+  PencilKit's tool picker), ink mixed with typed text, and the Signal design
+  language — with the drawing persisted and associated with the meeting via the
+  Phase-4 store. The notebook is a flagship surface (the owner's "magic pencil,"
+  rich), the thing a laptop can't do in a meeting.
 - **Out:** linking a note to a transcript moment (HSM-8-03). Handwriting-to-text
-  recognition. Artifact review (HSM-8-04). Any business logic in the view.
+  recognition + ink-into-intelligence (HSM-8-06). Artifact review (HSM-8-04). Any
+  business logic in the view.
 
 ## Acceptance criteria
 
 - [ ] A PencilKit canvas captures handwritten notes during/after a meeting in a
       notebook mode.
+- [ ] The notebook is a **rich** surface, not a blank box: multiple pages, the
+      pen/highlighter/eraser tool set, and ink mixed with typed text, to a high UI
+      standard (Signal language) verified by screenshot.
 - [ ] The notebook persists with the meeting and reloads intact (strokes
       preserved).
 - [ ] The notebook coexists with the live transcript view without dropping Pencil

@@ -27,7 +27,12 @@ identity, not on rendered text that re-flows.
 
 - [ ] Making a note records the transcript moment (a Phase-0 `Segment` identity /
       timestamp), stored as a structured link anchor.
-- [ ] Tapping a linked note navigates to that transcript moment.
+- [ ] Tapping a linked note navigates to that transcript moment, and the link is
+      **bidirectional** — from a transcript moment you can reach the note(s) taken
+      there.
+- [ ] A one-gesture "mark this moment" (a pen tap/star) creates a linked anchor
+      without writing a full note, so a live meeting can be flagged at speed (these
+      marks are the raw material HSM-8-06 weaves into the intelligence).
 - [ ] The link survives reload and re-render of the transcript (anchored on the
       `Segment` contract, not on text offsets).
 - [ ] A note made when no transcript exists yet degrades gracefully (no crash, no
