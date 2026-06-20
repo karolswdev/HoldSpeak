@@ -2,7 +2,10 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 12
-- **Status:** backlog
+- **Status:** done (2026-06-20 — `IDesktopClient` seam + `HTTPDesktopClient`
+  (pairing/handshake/egress, offline-tolerant) + RuntimeCore `CompanionLink`;
+  `swift test` 96 passed / 6 skipped / 0 failed (+12). See
+  [evidence-01](./evidence-story-01.md).)
 - **Depends on:** HSM-0-04 (contracts), HSM-1-01 (SPM layout), HSM-10-02 (transport posture to reuse)
 - **Unblocks:** HSM-12-02, HSM-12-03, HSM-13-01
 - **Owner:** unassigned
