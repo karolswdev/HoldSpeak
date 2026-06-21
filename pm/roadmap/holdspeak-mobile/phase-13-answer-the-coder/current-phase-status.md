@@ -1,8 +1,9 @@
 # Phase 13 — Answer the Coder
 
-**Status:** in-progress (HSM-13-01 + HSM-13-02 done; **HSM-13-04 delivery half proven
-on real metal** — an answer originating on a physical iPad lands in a live tmux coder
-session; the gate's native-voice leg + HSM-13-03 board remain). **Track N — added by owner steer
+**Status:** in-progress (3/4 — **Track N gate ACHIEVED (HSM-13-04 done)**: a question
+surfaced on a physical iPad, answered by a spoken voice note transcribed **on-device**,
+delivered into a live tmux coder. Only HSM-13-03 (the Companion board, multi-target
+selection) remains). **Track N — added by owner steer
 (2026-06-20), outside the original charter's Tracks A–L.** This is the payoff of
 the companion track and the scenario the owner painted in his own words:
 
@@ -20,7 +21,17 @@ That is the AI PI ("AI Pie") companion loop, driven from the iPad for the first
 time. Built native over the desktop HTTP API (owner call), on the Phase-12 client
 foundation.
 
-**Last updated:** 2026-06-20 (**HSM-13-04 — the answer-the-coder gate, delivery half
+**Last updated:** 2026-06-20 (**HSM-13-04 DONE — the answer-the-coder gate ACHIEVED by
+voice.** A real on-device voice answer app (`CompanionAnswerApp` + `WhisperKitTranscriber`
+driving the HSM-13-02 `VoiceNoteComposer` over `AudioCaptureService` + WhisperKit) lets
+the iPad surface the waiting question, record a spoken answer, transcribe it **on-device**,
+review, and deliver it into the coder. Proven on a physical iPad Air M4: the question
+surfaced → a spoken answer → on-device WhisperKit → landed in a live tmux coder pane. The
+first run exposed a Whisper control-token leak in the delivered text — fixed with the pure,
+unit-tested `WhisperText.clean` (+5 tests) and redeployed. `swift test` 122/6-skip/0-fail;
+the voice app builds + links WhisperKit for device. See [`evidence-story-04`](./evidence-story-04.md)
++ [`final-summary`](./final-summary.md). Only HSM-13-03 (board multi-target selection)
+remains in the phase. Earlier: **HSM-13-04 — the answer-the-coder gate, delivery half
 proven on real metal.** The keystone HSM-13-01 deferred — real delivery — is now wired:
 `WebRuntime._deliver_remote_dictation` delivers a companion answer into the waiting
 coder via the EXACT path local dictation uses (`_try_tmux_agent_reply` → `tmux
@@ -109,14 +120,13 @@ explicit send.
 - [ ] The iPad surfaces the AI PI companion state (waiting sessions, selected
       target, confidence, blockers) from `/api/companion/status` and can pick the
       target session via `select`/`dismiss`/`pin` (HSM-13-03).
-- [~] **Track N gate — answer the coder, end to end:** in a real coding session
+- [x] **Track N gate — answer the coder, end to end:** in a real coding session
       (tmux + hooks → desktop server) an agent's question is surfaced on a physical
       iPad, answered by a native voice note, and the answer lands back in that coder
       session — the user pressing send, never autonomous — evidenced by a device
-      walkthrough (HSM-13-04). *(Delivery half proven on metal: real awaiting session →
-      answer from a physical iPad → landed in a live tmux coder pane, never autonomous.
-      Remaining: the **native voice note** (on-device Whisper) and board surfacing — the
-      gate closes when the iPad answers by voice.)*
+      walkthrough (HSM-13-04). *(ACHIEVED: question surfaced on the iPad → a **spoken**
+      answer → on-device WhisperKit → landed in a live tmux coder pane, never
+      autonomous. The first run's Whisper token-leak was fixed + unit-tested.)*
 
 ## Story status
 
@@ -125,7 +135,7 @@ explicit send.
 | HSM-13-01 | Remote-dictation inject path (desktop + client) | done | [story-01](./story-01-remote-dictation-inject.md) | [evidence](./evidence-story-01.md) |
 | HSM-13-02 | Native voice-note capture → dictation | done | [story-02](./story-02-voice-note-capture.md) | [evidence](./evidence-story-02.md) |
 | HSM-13-03 | The Companion board (the agent's question on the iPad) | backlog | [story-03](./story-03-companion-board.md) | — |
-| HSM-13-04 | Answer-the-coder gate closeout | in-progress | [story-04](./story-04-answer-the-coder-closeout.md) | [real-metal log](./realmetal-log-gate.md) |
+| HSM-13-04 | Answer-the-coder gate closeout | done | [story-04](./story-04-answer-the-coder-closeout.md) | [evidence](./evidence-story-04.md) · [final-summary](./final-summary.md) |
 
 ## Where we are
 
@@ -136,15 +146,17 @@ Swift seam posts it; a physical iPad reached the desktop over the LAN to prove t
 carrying seam on real metal. The native voice-note composer (HSM-13-02) is **done** —
 a RuntimeCore state machine that records, transcribes on-device, lets you review/edit,
 and delivers on an explicit send (never before), host-tested over its capture /
-transcriber / desktop seams. The gate (HSM-13-04) is now mostly real: the
-`on_remote_dictation` hook is **wired into the live coder-delivery path** (the exact
-tmux/type path local dictation uses), and the device→coder loop is **proven on real
-metal** — a real Stop-hook awaiting session, an answer originating on a physical iPad,
-landing in a live tmux pane, never autonomously. Two things stand between here and a
-closed gate: the **native voice note** (the iPad sent typed text; this needs on-device
-Whisper, a pending Phase-3 device gate — the `VoiceNoteComposer` seam is ready for it),
-and the **Companion board** (HSM-13-03) to surface *which* waiting coder the answer
-targets. Next: HSM-13-03 (the board), then close the gate by answering with voice.
+transcriber / desktop seams. The gate (HSM-13-04) is **achieved by voice**: a
+`CompanionAnswerApp` surfaces the waiting question, records a spoken answer, transcribes
+it **on-device** with WhisperKit (a real `WhisperKitTranscriber` driving the HSM-13-02
+`VoiceNoteComposer`), lets you review, and delivers it through the inject path into the
+live coder — proven on a physical iPad Air M4 (question surfaced → spoken answer →
+on-device transcript → landed in a live tmux pane, never autonomously). The first run
+caught a Whisper control-token leak in the delivered text; fixed with the unit-tested
+`WhisperText.clean` and redeployed. The on-device-Whisper "last mile" is closed. The one
+remaining story in the phase is the **Companion board** (HSM-13-03) — surfacing *which*
+of several waiting coders an answer targets (`select`/`pin`); this gate surfaced the
+single waiting question and delivered to it. Next: HSM-13-03 to finish Phase 13.
 
 ## Active risks
 

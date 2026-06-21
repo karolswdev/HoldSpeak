@@ -29,6 +29,22 @@ public enum WhisperModel: String, Sendable, CaseIterable {
     case base, small, medium, large
 }
 
+/// Cleaning Whisper output into deliverable prose. A WhisperKit segment's raw `text`
+/// carries control tokens — `<|startoftranscript|>`, `<|en|>`, `<|0.00|>` timestamps,
+/// `<|endoftext|>` — which must never reach the coder (HSM-13-04 real-metal run caught
+/// this). Pure + testable so the on-device transcriber can stay a thin adapter.
+public enum WhisperText {
+    /// Strip Whisper special tokens (`<|...|>`) and collapse the whitespace they leave.
+    public static func clean(_ raw: String) -> String {
+        let withoutTokens = raw.replacingOccurrences(
+            of: "<\\|[^|]*\\|>", with: " ", options: .regularExpression)
+        let collapsed = withoutTokens
+            .split(whereSeparator: { $0 == " " || $0 == "\n" || $0 == "\t" })
+            .joined(separator: " ")
+        return collapsed.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
 public enum DeviceClass: Sendable { case iPhone, iPad }
 
 public enum WhisperModelPolicy {
