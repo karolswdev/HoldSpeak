@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** in-progress (2026-06-20 — delivery wiring real + the device→coder loop
+  proven on real metal from a physical iPad; the **native on-device-voice** leg and
+  the HSM-13-03 board surfacing remain. See [realmetal-log-gate](./realmetal-log-gate.md))
 - **Depends on:** HSM-13-01, HSM-13-02, HSM-13-03
 - **Unblocks:** — (Track N gate; the companion track's payoff is proven here)
 - **Owner:** unassigned
@@ -29,18 +31,27 @@ the end-to-end walkthrough — with the never-autonomous guarantee held througho
 
 ## Acceptance criteria
 
-- [ ] End to end on real hardware: agent question (tmux + hooks → server) → surfaced
+- [~] End to end on real hardware: agent question (tmux + hooks → server) → surfaced
       on the physical iPad → answered by a native voice note → delivered into that
       coder session, evidenced by a device walkthrough (screenshots/log committed).
-- [ ] **Never autonomous:** the answer is delivered only on the user's explicit
+      *(Proven: a real Stop-hook awaiting session → an answer originating on the
+      physical iPad → delivered into a live tmux coder pane (`tmux capture-pane`
+      committed in realmetal-log-gate). Not yet: the **native voice note** (iPad sent
+      typed text; needs on-device Whisper) and the HSM-13-03 board surfacing.)*
+- [x] **Never autonomous:** the answer is delivered only on the user's explicit
       send, to the target shown in the board — demonstrated in the walkthrough (no
-      auto-delivery path exercised).
-- [ ] **Rich-pipeline proof:** the delivered answer shows a pipeline transform
+      auto-delivery path exercised). *(`_deliver_remote_dictation` fires only on the
+      POST and **raises** rather than inventing a target; the composer delivers only
+      from `.review` on an explicit send. No autonomous path exists.)*
+- [~] **Rich-pipeline proof:** the delivered answer shows a pipeline transform
       (a correction/block/plugin applied), not raw transcript — captured in the
-      evidence.
+      evidence. *(The route runs the rich pipeline — proven in HSM-13-01; a live
+      delivery with a configured correction applied is still to capture.)*
 - [ ] `final-summary.md` records the gate result + evidence + deferrals;
       `current-phase-status.md`, this README's phase index, and the program README
-      "Last updated" line are updated per the operating cadence.
+      "Last updated" line are updated per the operating cadence. *(Cadence docs
+      updated now; `final-summary.md` is written when the gate closes — i.e. once the
+      iPad answers by voice.)*
 
 ## Test plan
 

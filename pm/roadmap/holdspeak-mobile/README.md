@@ -1,7 +1,18 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-20 (**HSM-13-02 done — the native voice-note composer
-(Phase 13 now 2/4).** `VoiceNoteComposer` (RuntimeCore) is a state machine —
+**Last updated:** 2026-06-20 (**HSM-13-04 — the answer-the-coder gate, delivery half
+proven on real metal.** The keystone HSM-13-01 deferred — real delivery — is wired:
+`WebRuntime._deliver_remote_dictation` delivers a companion answer into the waiting
+coder via the EXACT path local dictation uses (`_try_tmux_agent_reply` → `tmux
+send-keys`, `typer` fallback), deliver-only and **raises** when undeliverable (no false
+ack). Proven end-to-end: a **real** Stop-hook awaiting session → an answer
+**originating on a physical iPad** (the CompanionProbe grew an "Answer the coder" send)
+→ **landed in a live tmux coder pane** (`tmux capture-pane` committed). `uv run pytest`
+(delivery) 5 / sweep 315 passed; the iPad harness builds for device. The gate stays
+**in-progress** — the iPad sent typed text, not a native voice note (needs on-device
+Whisper, a pending Phase-3 device gate), and the HSM-13-03 board remains. Next:
+HSM-13-03, then close the gate by voice. Earlier: **HSM-13-02 done — the native
+voice-note composer (Phase 13 now 2/4).** `VoiceNoteComposer` (RuntimeCore) is a state machine —
 record → transcribe on-device → review/edit → deliver — over three seams it does not
 own: the Phase-2 `IAudioCapture`, a `([AudioChunk]) -> ITranscriber` factory (built
 over the captured audio; no second transcription path, MLX discipline stays inside the
@@ -259,7 +270,7 @@ Earlier today: **program scaffolded** — the Council Implementation
 Charter (Rev 1.0) mapped onto a 12-phase roadmap (Phase 0 Contract Extraction →
 Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every phase
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
-**Current phase:** [phase-7-mir-port](./phase-7-mir-port/current-phase-status.md) closed; Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5**, **7 ✅ Gate H**; Phase 5 host-complete (engine pick + structured output + endpoint Modes B/C + on-device Mode A + model packaging — all host-proven; device runs pending the iPad unlock); Phase 10 in-progress (HSM-10-01 done); 2 + 3 testable cores done, device-gated remainder; 6-06 Follow-ups deferred. **Phases 12–13 (Tracks M–N — the Companion Client + Answer the Coder) in progress (owner steer 2026-06-20): Phase 12 2/4 (HSM-12-01 seam + HSM-12-02 meetings remote, merged); Phase 13 2/4 (HSM-13-01 remote-dictation inject LAN-proven on a physical iPad; HSM-13-02 native voice-note composer, host-tested).**
+**Current phase:** [phase-7-mir-port](./phase-7-mir-port/current-phase-status.md) closed; Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5**, **7 ✅ Gate H**; Phase 5 host-complete (engine pick + structured output + endpoint Modes B/C + on-device Mode A + model packaging — all host-proven; device runs pending the iPad unlock); Phase 10 in-progress (HSM-10-01 done); 2 + 3 testable cores done, device-gated remainder; 6-06 Follow-ups deferred. **Phases 12–13 (Tracks M–N — the Companion Client + Answer the Coder) in progress (owner steer 2026-06-20): Phase 12 2/4 (HSM-12-01 seam + HSM-12-02 meetings remote, merged); Phase 13 (HSM-13-01 inject + HSM-13-02 voice-note composer done; HSM-13-04 gate delivery-half proven on real metal — an iPad answer lands in a live tmux coder; native-voice leg + HSM-13-03 board remain).**
 
 **Highest-value direction (owner steer, 2026-06-20; ratified in charter Amendment
 1.1).** The program's value now concentrates on the **two device faces, both

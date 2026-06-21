@@ -59,6 +59,15 @@ final class ProbeModel: ObservableObject {
     @Published var egress = ""
     @Published var didProbe = false
 
+    // HSM-13-04 — answer the coder: type a reply and deliver it into the waiting
+    // agent session through the inject path (POST /api/dictation/remote). This is the
+    // device origin of the answer-the-coder loop; the voice-note capture (HSM-13-02)
+    // lands once on-device Whisper is wired.
+    @Published var answer = ProcessInfo.processInfo.environment["HS_ANSWER"] ?? ""
+    @Published var sending = false
+    @Published var sendResult = ""
+    @Published var sendOK = false
+
     /// Auto-probe on launch when a host is supplied via the environment (hands-off
     /// device demo); otherwise wait for the owner to fill the form and tap Connect.
     var autoProbe: Bool { !host.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -80,6 +89,35 @@ final class ProbeModel: ObservableObject {
         egress = link.egressLabel
         connection = await link.probe()
     }
+
+    /// Build the desktop client from the current pairing, or nil if it's invalid.
+    private func makeClient() -> HTTPDesktopClient? {
+        guard let port = Int(portText.trimmingCharacters(in: .whitespaces)), port > 0 else { return nil }
+        let peer = DesktopPeer(host: host, port: port,
+                               token: token.isEmpty ? nil : token,
+                               scheme: useTLS ? "https" : "http")
+        guard let config = HTTPDesktopClient.Config(peer: peer) else { return nil }
+        return HTTPDesktopClient(config: config)
+    }
+
+    /// Deliver the typed answer into the waiting coder (deliver-on-command).
+    func sendAnswer() async {
+        let text = answer.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { sendResult = "Type an answer first."; sendOK = false; return }
+        guard let client = makeClient() else { sendResult = "Invalid pairing."; sendOK = false; return }
+        sending = true
+        defer { sending = false }
+        do {
+            let r = try await client.sendRemoteDictation(text: text)
+            sendOK = r.delivered
+            sendResult = r.delivered
+                ? "Delivered → the coder received it"
+                : "Processed, but no coder was waiting"
+        } catch {
+            sendOK = false
+            sendResult = "Send failed: \(error)"
+        }
+    }
 }
 
 // MARK: - View
@@ -95,6 +133,7 @@ struct ProbeView: View {
                     header
                     pairingCard
                     if model.didProbe || model.probing { statusCard }
+                    if model.connection?.reachable == true { answerCard }
                     footer
                 }
                 .padding(20)
@@ -102,7 +141,15 @@ struct ProbeView: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .task { if model.autoProbe { await model.connect() } }
+        .task {
+            if model.autoProbe { await model.connect() }
+            // Hands-off real-metal proof: when an answer is preset (HS_ANSWER) and the
+            // desktop is reachable, deliver it on launch. The Send button is the real
+            // affordance; this env path just makes the device-origin proof captureable.
+            if model.connection?.reachable == true && !model.answer.isEmpty {
+                await model.sendAnswer()
+            }
+        }
         .tint(Sig.accent)
     }
 
@@ -172,8 +219,32 @@ struct ProbeView: View {
         .cardChrome()
     }
 
+    private var answerCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            cardTitle("Answer the coder", "Deliver a reply into the waiting agent session")
+            field("Your answer", text: $model.answer,
+                  placeholder: "e.g. Use Redis for the cache, 24h TTL")
+            Button { Task { await model.sendAnswer() } } label: {
+                HStack {
+                    if model.sending { ProgressView().tint(.black) }
+                    Text(model.sending ? "Sending…" : "Send to the coder")
+                        .font(.headline).foregroundStyle(.black)
+                }
+                .frame(maxWidth: .infinity).padding(.vertical, 13)
+                .background(Sig.accent, in: RoundedRectangle(cornerRadius: 12))
+            }
+            .disabled(model.sending || model.answer.trimmingCharacters(in: .whitespaces).isEmpty)
+            .opacity(model.answer.trimmingCharacters(in: .whitespaces).isEmpty ? 0.5 : 1)
+            if !model.sendResult.isEmpty {
+                statusRow("Result", model.sendResult, model.sendOK ? Sig.ok : Sig.warn)
+            }
+            if !model.egress.isEmpty { egressBadge(model.egress) }
+        }
+        .cardChrome()
+    }
+
     private var footer: some View {
-        Text("Reachability probes /health; readiness reads /api/runtime/status. Nothing is sent but the probe — the egress badge shows exactly where it goes.")
+        Text("Reachability probes /health; readiness reads /api/runtime/status. An answer is delivered on your explicit send — never autonomously. The egress badge shows exactly where it goes.")
             .font(.caption).foregroundStyle(Sig.faint)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
