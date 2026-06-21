@@ -1,6 +1,14 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-20 (**HSM-12-03 DONE — the unified Companion shell (Phase 12
+**Last updated:** 2026-06-21 (**HSM-8-01 DONE — the iPad on-device meeting-capture loop
+(Phase 8 opened, 1/6).** `MeetingCapture` (RuntimeCore) composes capture + a transcriber
+factory + a `MeetingStore` seam: record → **windowed live transcript** → persist →
+reopen-intact, fully on-device. `MeetingCaptureApp` is a Signal iPad shell (meeting list +
+Record/Stop + live transcript + reopen) over a `WhisperKitTranscriber` + `SQLiteMeetingStore`;
+public `Meeting`/`IntelStatus`/`Bookmark` inits added (Codable/schema unchanged). `swift
+test` 140/6-skip/0-fail (+7); the on-device transcription is the same WhisperKit path proven
+on metal in HSM-13-04; built + run live on a physical iPad. The standalone on-device
+paradigm (Track I) is underway. Earlier: **HSM-12-03 DONE — the unified Companion shell (Phase 12
 now 3/4).** `CompanionShell` (RuntimeCore) composes the HSM-12-01 link + HSM-12-02
 meetings with the iPad's own `LocalRuntimeSummary` into one state; an unreachable desktop
 is a calm `localOnly` mode, never a blocked app. `CompanionShellApp` is a custom Signal
@@ -296,7 +304,7 @@ Earlier today: **program scaffolded** — the Council Implementation
 Charter (Rev 1.0) mapped onto a 12-phase roadmap (Phase 0 Contract Extraction →
 Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every phase
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
-**Current phase:** [phase-7-mir-port](./phase-7-mir-port/current-phase-status.md) closed; Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5**, **7 ✅ Gate H**; Phase 5 host-complete (engine pick + structured output + endpoint Modes B/C + on-device Mode A + model packaging — all host-proven; device runs pending the iPad unlock); Phase 10 in-progress (HSM-10-01 done); 2 + 3 testable cores done, device-gated remainder; 6-06 Follow-ups deferred. **Phases 12–13 (Tracks M–N — the Companion Client + Answer the Coder) in progress (owner steer 2026-06-20): Phase 12 2/4 (HSM-12-01 seam + HSM-12-02 meetings remote, merged); **Phase 13 — Answer the Coder COMPLETE (4/4): HSM-13-01 inject, 13-02 voice-note composer, 13-03 Companion board, 13-04 Track N gate ACHIEVED by voice** (a spoken answer from a physical iPad, transcribed on-device, lands in a live tmux coder). Companion track (Tracks M–N) is now Phase 12 3/4 (12-01 seam, 12-02 meetings, 12-03 unified shell; only 12-04 gate remains) + Phase 13 done.**
+**Current phase:** [phase-7-mir-port](./phase-7-mir-port/current-phase-status.md) closed; Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5**, **7 ✅ Gate H**; Phase 5 host-complete (engine pick + structured output + endpoint Modes B/C + on-device Mode A + model packaging — all host-proven; device runs pending the iPad unlock); Phase 10 in-progress (HSM-10-01 done); 2 + 3 testable cores done, device-gated remainder; 6-06 Follow-ups deferred. **Phases 12–13 (Tracks M–N — the Companion Client + Answer the Coder) in progress (owner steer 2026-06-20): Phase 12 2/4 (HSM-12-01 seam + HSM-12-02 meetings remote, merged); **Phase 13 — Answer the Coder COMPLETE (4/4): HSM-13-01 inject, 13-02 voice-note composer, 13-03 Companion board, 13-04 Track N gate ACHIEVED by voice** (a spoken answer from a physical iPad, transcribed on-device, lands in a live tmux coder). Companion track (Tracks M–N) is now Phase 12 3/4 (12-01 seam, 12-02 meetings, 12-03 unified shell; only 12-04 gate remains) + Phase 13 done. **Phase 8 (Track I — the iPad on-device experience) opened 1/6: HSM-8-01 the on-device meeting-capture loop (record → live transcript → persist → reopen) done, run live on the iPad.**
 
 **Highest-value direction (owner steer, 2026-06-20; ratified in charter Amendment
 1.1).** The program's value now concentrates on the **two device faces, both

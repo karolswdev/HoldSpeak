@@ -34,6 +34,12 @@ public struct Bookmark: Codable, Equatable, Sendable {
     public var timestamp: Double
     public var label: String
     public var createdAt: Date
+
+    public init(timestamp: Double, label: String, createdAt: Date) {
+        self.timestamp = timestamp
+        self.label = label
+        self.createdAt = createdAt
+    }
 }
 
 public struct ActionItem: Codable, Equatable, Sendable {
@@ -86,6 +92,13 @@ public struct IntelStatus: Codable, Equatable, Sendable {
     public var detail: String?
     public var requestedAt: Date?
     public var completedAt: Date?
+
+    public init(state: String, detail: String? = nil, requestedAt: Date? = nil, completedAt: Date? = nil) {
+        self.state = state
+        self.detail = detail
+        self.requestedAt = requestedAt
+        self.completedAt = completedAt
+    }
 }
 
 public struct Meeting: Codable, Equatable, Sendable {
@@ -107,6 +120,22 @@ public struct Meeting: Codable, Equatable, Sendable {
     // mir_profile is NOT a desktop Meeting field; HSM-7-03 adds it as a contract
     // addition (Phase 7). Reserved here, absent on the wire today.
     public var mirProfile: MIRProfile?
+
+    /// Build a meeting — used by on-device capture (HSM-8-01) to create a recording
+    /// from captured segments. Defaults keep the call site small; the wire/Codable
+    /// shape is unchanged (this is only a Swift convenience initializer).
+    public init(id: String, startedAt: Date, endedAt: Date? = nil, duration: Double? = nil,
+                formattedDuration: String? = nil, title: String? = nil, tags: [String] = [],
+                segments: [Segment] = [], bookmarks: [Bookmark] = [], intel: IntelSnapshot? = nil,
+                intelStatus: IntelStatus = IntelStatus(state: "none"), micLabel: String = "",
+                remoteLabel: String = "", webUrl: String? = nil, devices: [JSONValue] = [],
+                mirProfile: MIRProfile? = nil) {
+        self.id = id; self.startedAt = startedAt; self.endedAt = endedAt; self.duration = duration
+        self.formattedDuration = formattedDuration; self.title = title; self.tags = tags
+        self.segments = segments; self.bookmarks = bookmarks; self.intel = intel
+        self.intelStatus = intelStatus; self.micLabel = micLabel; self.remoteLabel = remoteLabel
+        self.webUrl = webUrl; self.devices = devices; self.mirProfile = mirProfile
+    }
 }
 
 public struct ArtifactSource: Codable, Equatable, Sendable {
