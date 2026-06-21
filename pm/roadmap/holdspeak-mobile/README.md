@@ -1,6 +1,21 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-20 (**HSM-12-02 done — meetings remote control (host-proven).**
+**Last updated:** 2026-06-20 (**HSM-13-01 done — the remote-dictation inject path,
+LAN-proven (Phase 13 opened, 1/4).** The desktop's first answer-the-coder surface:
+`POST /api/dictation/remote` runs a client-dictated answer through the **same rich
+pipeline** as the browser dry-run (corrections/blocks/plugins) and hands the
+*processed* text to a new `on_remote_dictation` host hook (no hook → process-only;
+hook raises → `502`, never autonomous). The Swift seam
+`IDesktopClient.sendRemoteDictation` + `RemoteDictationResult` posts it, token joined
+at call time. A new `HOLDSPEAK_WEB_HOST` override lets the desktop bind off-loopback
+(default `127.0.0.1` unchanged) so a companion can reach it — token-enforced. **Proven
+on real metal:** a physical iPad Air M4 ran a new `CompanionProbe` device harness
+(`gen-companion-probe.rb` + `companion-probe-device.sh`) and established a live
+connection to this Mac's desktop runtime over the LAN (`192.168.1.28:8000 ←
+192.168.1.67`), with off-loopback auth verified `401`-without-token → `200`-with —
+the HSM-12-01 seam on real metal, seeding the HSM-12-03 shell. `uv run pytest` (route)
+7 passed; `swift test` 107/6-skip/0-fail. Next: HSM-13-02 (native voice-note capture).
+Earlier: **HSM-12-02 done — meetings remote control (host-proven).**
 The `IDesktopClient` seam grew the meeting verbs — `listMeetings` / `runtimeState` /
 `startMeeting` / `stopMeeting` — over the desktop's existing endpoints (`/api/meetings`,
 `/api/meeting/start|stop`, `/api/runtime/status`), decoded to the server's exact wire
@@ -235,7 +250,7 @@ Earlier today: **program scaffolded** — the Council Implementation
 Charter (Rev 1.0) mapped onto a 12-phase roadmap (Phase 0 Contract Extraction →
 Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every phase
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
-**Current phase:** [phase-7-mir-port](./phase-7-mir-port/current-phase-status.md) closed; Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5**, **7 ✅ Gate H**; Phase 5 host-complete (engine pick + structured output + endpoint Modes B/C + on-device Mode A + model packaging — all host-proven; device runs pending the iPad unlock); Phase 10 in-progress (HSM-10-01 done); 2 + 3 testable cores done, device-gated remainder; 6-06 Follow-ups deferred. **Phases 12–13 (Tracks M–N — the Companion Client + Answer the Coder) scaffolded 2026-06-20 by owner steer; no work started.**
+**Current phase:** [phase-7-mir-port](./phase-7-mir-port/current-phase-status.md) closed; Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5**, **7 ✅ Gate H**; Phase 5 host-complete (engine pick + structured output + endpoint Modes B/C + on-device Mode A + model packaging — all host-proven; device runs pending the iPad unlock); Phase 10 in-progress (HSM-10-01 done); 2 + 3 testable cores done, device-gated remainder; 6-06 Follow-ups deferred. **Phases 12–13 (Tracks M–N — the Companion Client + Answer the Coder) in progress (owner steer 2026-06-20): Phase 12 2/4 (HSM-12-01 seam + HSM-12-02 meetings remote, merged); Phase 13 1/4 (HSM-13-01 remote-dictation inject, LAN-proven on a physical iPad).**
 
 **Highest-value direction (owner steer, 2026-06-20; ratified in charter Amendment
 1.1).** The program's value now concentrates on the **two device faces, both

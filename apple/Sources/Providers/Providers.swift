@@ -64,6 +64,25 @@ public protocol IDesktopClient: Sendable {
     /// Stop the active meeting on the desktop (`POST /api/meeting/stop`), returning
     /// the resulting live state.
     func stopMeeting() async throws -> RuntimeState
+
+    // MARK: Answer the coder (HSM-13-01)
+
+    /// Deliver a dictated answer to the desktop (`POST /api/dictation/remote`). The
+    /// desktop runs it through the rich dictation pipeline and delivers it into the
+    /// coder; this returns the processed text + whether it was delivered.
+    /// Deliver-on-command — the user pressed send; never autonomous.
+    func sendRemoteDictation(text: String) async throws -> RemoteDictationResult
+}
+
+/// The desktop's response to a remote-dictation inject (HSM-13-01).
+public struct RemoteDictationResult: Sendable, Equatable, Decodable {
+    public var success: Bool
+    public var finalText: String      // the pipeline-processed text (not raw transcript)
+    public var delivered: Bool        // true if a desktop dictation target received it
+
+    public init(success: Bool, finalText: String, delivered: Bool) {
+        self.success = success; self.finalText = finalText; self.delivered = delivered
+    }
 }
 
 /// A meeting as the desktop's `GET /api/meetings` summarizes it (HSM-12-02). Decoded

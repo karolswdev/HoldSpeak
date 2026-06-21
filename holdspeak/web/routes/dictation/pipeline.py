@@ -296,6 +296,61 @@ def build_pipeline_router(
             log.error(f"Dictation dry-run failed: {exc}")
             return JSONResponse({"error": str(exc)}, status_code=500)
 
+    @router.post("/api/dictation/remote")
+    async def api_dictation_remote(payload: dict[str, Any]) -> Any:
+        """HSM-13-01 — accept a dictated answer from a companion client (iPhone/iPad),
+        run it through the rich dictation pipeline (corrections/blocks/plugins), and
+        deliver it into the desktop's dictation target / AI PI path.
+
+        Auth: gated by the runtime's web-auth middleware (``Authorization: Bearer``)
+        exactly like every other route when bound off-loopback — the companion client
+        mirrors the server's ``web_auth_token`` on every request. Delivery is
+        deliver-on-command (the client user pressed send); there is no autonomous path.
+        """
+        text = payload.get("text") if isinstance(payload, dict) else None
+        if not isinstance(text, str) or not text.strip():
+            return JSONResponse({"error": "text must be a non-empty string"}, status_code=400)
+        text = text.strip()
+        target_hints = payload.get("target") if isinstance(payload, dict) else None
+        if target_hints is not None and not isinstance(target_hints, dict):
+            return JSONResponse(
+                {"error": "target must be an object when provided"}, status_code=400
+            )
+
+        # Reuse the exact rich-pipeline path the browser dry-run uses, so the same
+        # corrections/blocks/plugins apply — the answer is as smart as one spoken at
+        # the desk, not raw transcript.
+        try:
+            processed = _run_dictation_dry_run_text(
+                text,
+                None,
+                target_hints,
+                suggestions=project_doc_suggestions,
+                corrections=ctx.corrections,
+                dismissed_signatures=dismissed_signatures,
+                telemetry=ctx.telemetry,
+                journal=ctx.journal,
+            )
+        except Exception as exc:
+            log.error(f"Remote dictation pipeline failed: {exc}")
+            return JSONResponse({"error": str(exc)}, status_code=500)
+
+        final_text = (
+            processed.get("final_text", text) if isinstance(processed, dict) else text
+        )
+        delivered = False
+        if ctx.on_remote_dictation is not None:
+            try:
+                ctx.on_remote_dictation(final_text)
+                delivered = True
+            except Exception as exc:
+                log.error(f"Remote dictation delivery failed: {exc}")
+                return JSONResponse(
+                    {"error": f"delivery failed: {exc}", "final_text": final_text, "delivered": False},
+                    status_code=502,
+                )
+        return JSONResponse({"success": True, "final_text": final_text, "delivered": delivered})
+
     @router.get("/api/dictation/corrections")
     async def api_dictation_corrections_list() -> Any:
         from ....config import Config

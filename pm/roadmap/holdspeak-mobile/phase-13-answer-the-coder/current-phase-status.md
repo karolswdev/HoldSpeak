@@ -1,6 +1,7 @@
 # Phase 13 — Answer the Coder
 
-**Status:** planning (scaffolded 2026-06-20). **Track N — added by owner steer
+**Status:** in-progress (1/4 — **HSM-13-01 done**: the remote-dictation inject path
+ships and the Companion seam carrying it is proven on real metal). **Track N — added by owner steer
 (2026-06-20), outside the original charter's Tracks A–L.** This is the payoff of
 the companion track and the scenario the owner painted in his own words:
 
@@ -18,8 +19,21 @@ That is the AI PI ("AI Pie") companion loop, driven from the iPad for the first
 time. Built native over the desktop HTTP API (owner call), on the Phase-12 client
 foundation.
 
-**Last updated:** 2026-06-20 (scaffolded — stories HSM-13-01..04 stubbed from the
-owner's answer-the-coder steer. No work started.)
+**Last updated:** 2026-06-20 (**HSM-13-01 done — the remote-dictation inject path,
+LAN-proven.** Desktop `POST /api/dictation/remote` runs a client-dictated answer
+through the **same rich pipeline** as the browser dry-run
+(`_run_dictation_dry_run_text` — corrections/blocks/plugins) and delivers the
+*processed* text via a new `on_remote_dictation` host hook (no hook → process-only;
+hook raises → `502`, never an autonomous retry). The Swift seam
+`IDesktopClient.sendRemoteDictation` + `RemoteDictationResult` posts it, token joined
+at call time. A new `HOLDSPEAK_WEB_HOST` override lets the desktop bind off-loopback
+(default `127.0.0.1` unchanged) so a companion can reach it — token-enforced. Proven
+on real metal: a physical iPad Air M4 ran the new `CompanionProbe` device harness and
+established a live connection to this Mac's desktop runtime over the LAN
+(`192.168.1.28:8000 ← 192.168.1.67`); off-loopback auth verified `401`-without-token →
+`200`-with. `uv run pytest` (route) **7 passed**; `swift test` **107/6-skip/0-fail**.
+See [`evidence-story-01`](./evidence-story-01.md). Next: HSM-13-02 (native voice-note
+capture). Earlier: scaffolded from the owner's answer-the-coder steer.)
 
 ## What "AI PI" is (so this is grounded, not invented)
 
@@ -58,10 +72,10 @@ explicit send.
 
 ## Exit criteria (evidence required)
 
-- [ ] A desktop endpoint accepts a dictated payload from the client and routes it
+- [x] A desktop endpoint accepts a dictated payload from the client and routes it
       through the dictation runtime's rich pipeline (plugins/blocks/corrections),
       not as raw text; the client posts to it through the Phase-12 seam; both ends
-      tested (HSM-13-01).
+      tested (HSM-13-01). *(LAN-proven on a physical iPad — evidence-story-01.)*
 - [ ] The iPad captures a native voice note (on-device capture + Whisper) and turns
       it into pipeline-processed dictation text ready to deliver (HSM-13-02).
 - [ ] The iPad surfaces the AI PI companion state (waiting sessions, selected
@@ -77,20 +91,24 @@ explicit send.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HSM-13-01 | Remote-dictation inject path (desktop + client) | backlog | [story-01](./story-01-remote-dictation-inject.md) | — |
+| HSM-13-01 | Remote-dictation inject path (desktop + client) | done | [story-01](./story-01-remote-dictation-inject.md) | [evidence](./evidence-story-01.md) |
 | HSM-13-02 | Native voice-note capture → dictation | backlog | [story-02](./story-02-voice-note-capture.md) | — |
 | HSM-13-03 | The Companion board (the agent's question on the iPad) | backlog | [story-03](./story-03-companion-board.md) | — |
 | HSM-13-04 | Answer-the-coder gate closeout | backlog | [story-04](./story-04-answer-the-coder-closeout.md) | — |
 
 ## Where we are
 
-Just scaffolded from the owner's 2026-06-20 steer, on top of Phase 12's client
-foundation. The inject path (HSM-13-01) is the one genuinely new desktop-side
-surface (precedent: the mobile program already added Python routes in Phase 10 —
-`holdspeak/web/routes/sync.py`); voice-note capture (HSM-13-02) reuses the proven
-on-device capture + Whisper; the Companion board (HSM-13-03) consumes endpoints
-that already ship; the gate (HSM-13-04) is the real-metal proof of the owner's
-scenario. Next: HSM-13-01, once Phase 12's seam exists.
+The inject path (HSM-13-01) is **done** — the one genuinely new desktop-side surface
+(precedent: the mobile program already added Python routes in Phase 10 —
+`holdspeak/web/routes/sync.py`) now accepts a client-dictated answer, runs it through
+the rich pipeline, and hands the processed text to a host delivery hook; the Swift
+seam posts it; and a physical iPad reached the desktop over the LAN to prove the
+carrying seam on real metal. What remains is the iPad-side payoff: voice-note capture
+(HSM-13-02, reuses the proven on-device capture + Whisper), the Companion board
+(HSM-13-03, consumes `/api/companion/*` that already ships), and the end-to-end gate
+(HSM-13-04) — wiring the `on_remote_dictation` hook into a live coder session and
+proving the owner's scenario on real hardware. Next: HSM-13-02 (native voice-note
+capture).
 
 ## Active risks
 
