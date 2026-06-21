@@ -5,6 +5,7 @@ import PencilKit
 import Vision
 import os
 import UIKit
+import MarkdownUI
 
 // HSM-8-01 — the iPad's on-device meeting-capture loop. Open the app, see your
 // recordings, press Record, watch the transcript appear, stop to keep it. Capture
@@ -773,36 +774,64 @@ private func tactile(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) 
     UIImpactFeedbackGenerator(style: style).impactOccurred()
 }
 
-/// HSM-14-03 — the Tactile Sheets artifact card: gesture-first (swipe → approve / ← dismiss
-/// with haptics), tinted by type, elevated. Wired to the live review actions.
+/// Wraps an artifact so it can drive a `.sheet(item:)` without retroactive Identifiable.
+struct OpenDoc: Identifiable { let id = UUID(); let artifact: Artifact; let ink: UIImage? }
+
+/// HSM-14-03 — the Tactile Sheets artifact card: gesture-first + ALIVE. Swipe tilts/scales
+/// the card and pops a bouncing action badge (left → approve, right → dismiss, haptic on
+/// commit); tap opens the full readable/copyable/shareable document; cards spring + stagger
+/// in on appear. Tinted by type, elevated. Wired to the live review actions.
 struct SwipeableArtifactCard: View {
     let artifact: Artifact
     let ink: UIImage?
+    var index: Int = 0
     let onApprove: () -> Void
     let onDismiss: () -> Void
+    let onOpen: () -> Void
     @State private var dragX: CGFloat = 0
+    @State private var appeared = false
+    @State private var pressed = false
 
     private var actionable: Bool { artifact.status == .draft || artifact.status == .needsReview }
     private var tint: Color { artifactTint(artifact.artifactType) }
+    private var swipeProgress: CGFloat { min(abs(dragX) / 100, 1) }
 
     var body: some View {
         ZStack {
             HStack {
-                sideAction("xmark", "Dismiss", Sig.bad, active: dragX > 55)
+                sideAction("xmark.circle.fill", "Dismiss", Sig.bad, active: dragX > 55, lead: true)
                 Spacer()
-                sideAction("checkmark", "Approve", Sig.ok, active: dragX < -55)
+                sideAction("checkmark.circle.fill", "Approve", Sig.ok, active: dragX < -55, lead: false)
             }
-            face.offset(x: dragX).gesture(actionable ? drag : nil)
+            face
+                .offset(x: dragX)
+                .rotationEffect(.degrees(Double(dragX) / 26), anchor: .bottom)
+                .scaleEffect(pressed ? 0.97 : 1 - swipeProgress * 0.05)
+                .gesture(actionable ? drag : nil)
+                .onTapGesture {
+                    tactile()
+                    withAnimation(.spring(response: 0.22, dampingFraction: 0.55)) { pressed = true }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.13) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { pressed = false }
+                        onOpen()
+                    }
+                }
+        }
+        .opacity(appeared ? 1 : 0)
+        .offset(y: appeared ? 0 : 22)
+        .scaleEffect(appeared ? 1 : 0.95, anchor: .top)
+        .onAppear {
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.74).delay(Double(index) * 0.06)) { appeared = true }
         }
     }
 
     private var drag: some Gesture {
         DragGesture(minimumDistance: 12)
-            .onChanged { g in dragX = max(-150, min(150, g.translation.width)) }
+            .onChanged { g in withAnimation(.interactiveSpring()) { dragX = max(-170, min(170, g.translation.width)) } }
             .onEnded { g in
-                if g.translation.width < -100 { tactile(.medium); onApprove() }
-                else if g.translation.width > 100 { tactile(.medium); onDismiss() }
-                withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) { dragX = 0 }
+                if g.translation.width < -100 { tactile(.heavy); onApprove() }
+                else if g.translation.width > 100 { tactile(.heavy); onDismiss() }
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.62)) { dragX = 0 }
             }
     }
 
@@ -810,35 +839,44 @@ struct SwipeableArtifactCard: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 11) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 11, style: .continuous).fill(tint.opacity(0.16))
+                    RoundedRectangle(cornerRadius: 11, style: .continuous).fill(tint.opacity(0.18))
                     Image(systemName: artifactGlyph(artifact.artifactType)).font(.system(size: 15, weight: .bold)).foregroundStyle(tint)
                 }.frame(width: 36, height: 36)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(artifactTypeLabel(artifact.artifactType)).font(.system(size: 12, weight: .heavy)).tracking(0.4).foregroundStyle(tint)
-                    Text(artifact.title).font(.system(size: 16, weight: .bold)).foregroundStyle(Sig.text).lineLimit(2)
+                    Text(artifact.title).font(.system(size: 16.5, weight: .bold)).foregroundStyle(Sig.text).lineLimit(2)
                 }
                 Spacer(minLength: 4)
                 statusView
             }
             if let ink {
-                Image(uiImage: ink).resizable().scaledToFit().frame(maxHeight: 240).frame(maxWidth: .infinity)
+                Image(uiImage: ink).resizable().scaledToFit().frame(maxHeight: 220).frame(maxWidth: .infinity)
                     .background(Color.white, in: RoundedRectangle(cornerRadius: 10))
             }
             if !artifact.bodyMarkdown.isEmpty {
-                Text(artifact.bodyMarkdown).font(.system(size: 14)).foregroundStyle(Sig.muted).lineSpacing(2).lineLimit(5)
+                Markdown(artifact.bodyMarkdown)
+                    .markdownTextStyle { ForegroundColor(Sig.muted); FontSize(14) }
+                    .lineLimit(3)
+                    .allowsHitTesting(false)   // taps belong to the card (open the doc)
             }
-            if actionable {
-                HStack(spacing: 6) {
-                    Image(systemName: "hand.draw").font(.system(size: 11, weight: .bold))
-                    Text("swipe → approve   ·   ← dismiss").font(.system(size: 12, weight: .semibold))
-                }.foregroundStyle(Sig.faint.opacity(0.85))
+            HStack(spacing: 6) {
+                if actionable {
+                    Image(systemName: "hand.draw.fill").font(.system(size: 11, weight: .bold))
+                    Text("swipe → approve  ·  ← dismiss").font(.system(size: 12, weight: .semibold))
+                }
+                Spacer()
+                Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 11, weight: .bold))
+                Text("Open").font(.system(size: 12, weight: .heavy))
             }
+            .foregroundStyle(Sig.faint.opacity(0.9))
         }
         .padding(15)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Sig.s1, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Sig.line, lineWidth: 1))
-        .shadow(color: .black.opacity(0.3), radius: 14, x: 0, y: 8)
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
+            .stroke((dragX < 0 ? Sig.ok : Sig.bad).opacity(0.7 * swipeProgress), lineWidth: 2))
+        .shadow(color: .black.opacity(0.32 + swipeProgress * 0.1), radius: 14 + swipeProgress * 8, x: 0, y: 8)
     }
 
     @ViewBuilder private var statusView: some View {
@@ -852,16 +890,95 @@ struct SwipeableArtifactCard: View {
         Text(t).font(.system(size: 11, weight: .heavy)).foregroundStyle(c)
             .padding(.horizontal, 9).padding(.vertical, 4).background(c.opacity(0.14), in: Capsule())
     }
-    private func sideAction(_ sys: String, _ label: String, _ c: Color, active: Bool) -> some View {
+    private func sideAction(_ sys: String, _ label: String, _ c: Color, active: Bool, lead: Bool) -> some View {
         VStack(spacing: 5) {
-            ZStack { Circle().fill(c.opacity(active ? 1 : 0.2))
-                Image(systemName: sys).font(.system(size: 18, weight: .heavy)).foregroundStyle(active ? .black : c) }
-                .frame(width: 44, height: 44)
+            Image(systemName: sys).font(.system(size: 30, weight: .heavy)).foregroundStyle(c)
+                .symbolEffect(.bounce, value: active)
             Text(label).font(.system(size: 11, weight: .bold)).foregroundStyle(c)
         }
-        .padding(.horizontal, 16)
-        .scaleEffect(active ? 1.12 : 0.9)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: active)
+        .padding(.horizontal, 20)
+        .scaleEffect(active ? 1.18 : 0.85)
+        .opacity(active ? 1 : 0.6)
+        .animation(.spring(response: 0.3, dampingFraction: 0.55), value: active)
+    }
+}
+
+/// HSM-14-03 — the full artifact as a readable document: rendered Markdown (MarkdownUI,
+/// styled code blocks), selectable text, Copy + Share. Tap a card to open it.
+struct ArtifactDetailView: View {
+    let artifact: Artifact
+    let ink: UIImage?
+    @Environment(\.dismiss) private var dismiss
+    @State private var copied = false
+    private var tint: Color { artifactTint(artifact.artifactType) }
+    private var shareText: String {
+        "\(artifactTypeLabel(artifact.artifactType)) — \(artifact.title)\n\n\(artifact.bodyMarkdown)"
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 13, style: .continuous).fill(tint.opacity(0.18))
+                            Image(systemName: artifactGlyph(artifact.artifactType)).font(.system(size: 19, weight: .bold)).foregroundStyle(tint)
+                        }.frame(width: 46, height: 46)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(artifactTypeLabel(artifact.artifactType)).font(.system(size: 12, weight: .heavy)).tracking(0.6).foregroundStyle(tint)
+                            Text(artifact.title).font(.system(size: 23, weight: .heavy)).foregroundStyle(Sig.text)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    if let ink {
+                        Image(uiImage: ink).resizable().scaledToFit().frame(maxWidth: .infinity)
+                            .background(Color.white, in: RoundedRectangle(cornerRadius: 12))
+                    }
+                    if artifact.bodyMarkdown.isEmpty {
+                        Text("No written content for this artifact.").font(.callout).foregroundStyle(Sig.faint)
+                    } else {
+                        Markdown(artifact.bodyMarkdown)
+                            .markdownTextStyle { ForegroundColor(Sig.text); FontSize(16) }
+                            .markdownBlockStyle(\.codeBlock) { config in
+                                config.label.padding(12).font(.system(.callout, design: .monospaced))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12))
+                            }
+                            .tint(Sig.accent)
+                            .textSelection(.enabled)
+                    }
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .background(Sig.bg.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark.circle.fill").font(.system(size: 22)).foregroundStyle(Sig.faint)
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    HStack(spacing: 16) {
+                        Button {
+                            UIPasteboard.general.string = artifact.bodyMarkdown.isEmpty ? artifact.title : artifact.bodyMarkdown
+                            tactile(.medium)
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) { copied = true }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { withAnimation { copied = false } }
+                        } label: {
+                            Image(systemName: copied ? "checkmark.circle.fill" : "doc.on.doc")
+                                .font(.system(size: 18, weight: .semibold)).foregroundStyle(copied ? Sig.ok : Sig.text)
+                                .symbolEffect(.bounce, value: copied)
+                        }
+                        ShareLink(item: shareText) {
+                            Image(systemName: "square.and.arrow.up").font(.system(size: 18, weight: .semibold)).foregroundStyle(Sig.text)
+                        }
+                    }
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
     }
 }
 
@@ -872,6 +989,7 @@ struct MeetingDetailView: View {
     @StateObject private var notes: NotebookModel
     @StateObject private var review: MeetingReviewState
     private let links: [TranscriptLink]
+    @State private var openDoc: OpenDoc?
 
     init(meeting: Meeting) {
         self.meeting = meeting
@@ -934,6 +1052,7 @@ struct MeetingDetailView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .sheet(item: $openDoc) { ArtifactDetailView(artifact: $0.artifact, ink: $0.ink) }
     }
 
     // MARK: artifact review (HSM-8-04)
@@ -967,11 +1086,12 @@ struct MeetingDetailView: View {
                     .font(.caption).foregroundStyle(Sig.faint)
             } else {
                 ForEach(review.groups, id: \.type) { group in
-                    ForEach(group.items, id: \.id) { a in
+                    ForEach(Array(group.items.enumerated()), id: \.element.id) { idx, a in
                         SwipeableArtifactCard(
-                            artifact: a, ink: inkImage(a),
+                            artifact: a, ink: inkImage(a), index: idx,
                             onApprove: { review.approve(a.id) },
-                            onDismiss: { review.reject(a.id) })
+                            onDismiss: { review.reject(a.id) },
+                            onOpen: { openDoc = OpenDoc(artifact: a, ink: inkImage(a)) })
                     }
                 }
             }

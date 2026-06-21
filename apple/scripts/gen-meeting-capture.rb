@@ -61,6 +61,8 @@ add_pkg(project, target, 'https://github.com/argmaxinc/WhisperKit',
         { 'kind' => 'exactVersion', 'version' => '0.11.0' }, 'WhisperKit')
 add_pkg(project, target, 'https://github.com/eastriverlee/LLM.swift',
         { 'kind' => 'upToNextMajorVersion', 'minimumVersion' => '2.1.0' }, 'LLM')
+add_pkg(project, target, 'https://github.com/gonzalezreal/swift-markdown-ui',
+        { 'kind' => 'upToNextMajorVersion', 'minimumVersion' => '2.0.0' }, 'MarkdownUI')
 
 info_plist = File.join(ROOT, 'App/Capture-Info.plist')
 target.build_configurations.each do |config|

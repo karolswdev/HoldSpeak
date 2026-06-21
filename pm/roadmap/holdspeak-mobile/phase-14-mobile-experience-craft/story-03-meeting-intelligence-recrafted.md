@@ -33,6 +33,17 @@ owner actually uses, not a mockup.
 - [x] Artifact cards in the real app are **swipeable** (left→approve / right→dismiss) with
       haptics, wired to the live review actions, type-tinted + elevated — built + deployed to
       the iPad.
+- [x] **Markdown is rendered, not dumped** — `MarkdownUI` (swift-markdown-ui, styled code
+      blocks) renders both the card preview and the full document (owner: "the markdown
+      literally has to be rendered … through a library").
+- [x] **Tap a card → a full readable document** — the artifact opens as a scrollable sheet:
+      rendered Markdown, **selectable text**, a **Copy** button (with a copied flourish), and
+      a **Share** (`ShareLink`) (owner: "can't expand … doesn't open as a copyable document …
+      no share, no nothing").
+- [x] **The motion is alive** — the swipe tilts + scales the card, the action symbols
+      `symbolEffect(.bounce)`, a swipe-direction glow grows, cards **spring + stagger in** on
+      appear, tap gives a press-pop before opening (owner: "more dynamic … fun … playful …
+      animated").
 - [ ] The header + transcript card are recrafted to the design system.
 - [ ] The generate/ink actions become a draggable bottom action sheet.
 - [ ] Empty / generating / error states are considered (with HSM-14-06).
