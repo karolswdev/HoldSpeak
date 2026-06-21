@@ -2,9 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 13
-- **Status:** in-progress (2026-06-20 — delivery wiring real + the device→coder loop
-  proven on real metal from a physical iPad; the **native on-device-voice** leg and
-  the HSM-13-03 board surfacing remain. See [realmetal-log-gate](./realmetal-log-gate.md))
+- **Status:** done (2026-06-20 — **Track N gate ACHIEVED**: a question surfaced on a
+  physical iPad, answered by a spoken voice note transcribed on-device (WhisperKit),
+  delivered into a live tmux coder. The real-metal run caught a token-leak, fixed +
+  unit-tested. See [evidence-story-04](./evidence-story-04.md) + [final-summary](./final-summary.md).
+  HSM-13-03 board target-selection remains the phase's last story.)
 - **Depends on:** HSM-13-01, HSM-13-02, HSM-13-03
 - **Unblocks:** — (Track N gate; the companion track's payoff is proven here)
 - **Owner:** unassigned
@@ -31,13 +33,13 @@ the end-to-end walkthrough — with the never-autonomous guarantee held througho
 
 ## Acceptance criteria
 
-- [~] End to end on real hardware: agent question (tmux + hooks → server) → surfaced
+- [x] End to end on real hardware: agent question (tmux + hooks → server) → surfaced
       on the physical iPad → answered by a native voice note → delivered into that
       coder session, evidenced by a device walkthrough (screenshots/log committed).
-      *(Proven: a real Stop-hook awaiting session → an answer originating on the
-      physical iPad → delivered into a live tmux coder pane (`tmux capture-pane`
-      committed in realmetal-log-gate). Not yet: the **native voice note** (iPad sent
-      typed text; needs on-device Whisper) and the HSM-13-03 board surfacing.)*
+      *(Proven: a real Stop-hook awaiting session → the question surfaced on the iPad →
+      a **spoken** answer transcribed **on-device** (WhisperKit) → delivered into a live
+      tmux coder pane (`tmux capture-pane` committed in evidence-story-04). The first run
+      exposed a Whisper token-leak in the delivered text — fixed + unit-tested.)*
 - [x] **Never autonomous:** the answer is delivered only on the user's explicit
       send, to the target shown in the board — demonstrated in the walkthrough (no
       auto-delivery path exercised). *(`_deliver_remote_dictation` fires only on the
@@ -47,11 +49,10 @@ the end-to-end walkthrough — with the never-autonomous guarantee held througho
       (a correction/block/plugin applied), not raw transcript — captured in the
       evidence. *(The route runs the rich pipeline — proven in HSM-13-01; a live
       delivery with a configured correction applied is still to capture.)*
-- [ ] `final-summary.md` records the gate result + evidence + deferrals;
+- [x] `final-summary.md` records the gate result + evidence + deferrals;
       `current-phase-status.md`, this README's phase index, and the program README
-      "Last updated" line are updated per the operating cadence. *(Cadence docs
-      updated now; `final-summary.md` is written when the gate closes — i.e. once the
-      iPad answers by voice.)*
+      "Last updated" line are updated per the operating cadence. *(`final-summary.md`
+      written; cadence docs updated in this commit.)*
 
 ## Test plan
 
