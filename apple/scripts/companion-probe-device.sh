@@ -47,6 +47,8 @@ add_env() { # key value
 add_env HS_DESKTOP_HOST  "${HS_DESKTOP_HOST:-}"
 add_env HS_DESKTOP_PORT  "${HS_DESKTOP_PORT:-}"
 add_env HS_DESKTOP_TOKEN "${HS_DESKTOP_TOKEN:-}"
+# HSM-13-04: preset an answer to auto-deliver on launch (hands-off gate proof).
+add_env HS_ANSWER        "${HS_ANSWER:-}"
 
 echo "== launch =="
 if [ -n "$ENVJSON" ]; then

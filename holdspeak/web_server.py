@@ -150,6 +150,11 @@ class WebRuntimeCallbacks:
     # typed text, or None for an unknown/used token.
     on_wake_type: Optional[Callable[[str], Optional[str]]] = None
     on_dictation_config_changed: Optional[Callable[[], None]] = None
+    # HSM-13-04: deliver a companion-dictated answer (already pipeline-processed by the
+    # route) into the waiting coder session via the SAME tmux/type path local dictation
+    # uses. Deliver-on-command only; raises if undeliverable so the client sees an
+    # honest failure rather than a false ack.
+    on_remote_dictation: Optional[Callable[[str], Any]] = None
     project_detector: Optional[Any] = None
     device_registry: Optional["DeviceRegistry"] = None
     device_psk_provider: Optional[Callable[[], str]] = None
@@ -235,6 +240,7 @@ class MeetingWebServer:
         self.on_settings_applied = callbacks.on_settings_applied
         self.on_wake_type = callbacks.on_wake_type
         self.on_dictation_config_changed = callbacks.on_dictation_config_changed
+        self.on_remote_dictation = callbacks.on_remote_dictation
         self._project_detector = callbacks.project_detector
         device_registry = callbacks.device_registry
         if device_registry is None:
@@ -473,6 +479,7 @@ class MeetingWebServer:
             on_set_intent_override=self.on_set_intent_override,
             on_route_preview=self.on_route_preview,
             on_dictation_config_changed=self.on_dictation_config_changed,
+            on_remote_dictation=self.on_remote_dictation,
             on_process_plugin_jobs=self.on_process_plugin_jobs,
             device_registry=self.device_registry,
             project_detector=self._project_detector,

@@ -1,8 +1,8 @@
 # Phase 13 — Answer the Coder
 
-**Status:** in-progress (2/4 — **HSM-13-01 + HSM-13-02 done**: the remote-dictation
-inject path is proven on real metal, and the native voice-note composer
-(capture→transcribe→review→deliver) is host-tested over its seams). **Track N — added by owner steer
+**Status:** in-progress (HSM-13-01 + HSM-13-02 done; **HSM-13-04 delivery half proven
+on real metal** — an answer originating on a physical iPad lands in a live tmux coder
+session; the gate's native-voice leg + HSM-13-03 board remain). **Track N — added by owner steer
 (2026-06-20), outside the original charter's Tracks A–L.** This is the payoff of
 the companion track and the scenario the owner painted in his own words:
 
@@ -20,7 +20,21 @@ That is the AI PI ("AI Pie") companion loop, driven from the iPad for the first
 time. Built native over the desktop HTTP API (owner call), on the Phase-12 client
 foundation.
 
-**Last updated:** 2026-06-20 (**HSM-13-02 done — the native voice-note composer.**
+**Last updated:** 2026-06-20 (**HSM-13-04 — the answer-the-coder gate, delivery half
+proven on real metal.** The keystone HSM-13-01 deferred — real delivery — is now wired:
+`WebRuntime._deliver_remote_dictation` delivers a companion answer into the waiting
+coder via the EXACT path local dictation uses (`_try_tmux_agent_reply` → `tmux
+send-keys`, `typer` fallback), deliver-only (the route already ran the pipeline) and
+**raises** when undeliverable so the client never gets a false ack; wired through
+`WebRuntimeCallbacks.on_remote_dictation` → `WebContext`. Proven end-to-end on metal: a
+**real** Stop-hook awaiting session (`agent-hook ingest`) → an answer **originating on a
+physical iPad** (the CompanionProbe grew an "Answer the coder" send) → landed in a live
+tmux coder pane (`tmux capture-pane` committed). `uv run pytest` (delivery) 5 passed,
+sweep 315 passed; the iPad harness builds for device. The gate stays **in-progress**:
+the iPad sent typed text, not a **native voice note** (needs on-device Whisper, a
+pending Phase-3 device gate), and the HSM-13-03 board surfacing remains. See
+[`realmetal-log-gate`](./realmetal-log-gate.md). Next: HSM-13-03 (the board), then close
+the gate by answering with voice. Earlier: **HSM-13-02 done — the native voice-note composer.**
 `VoiceNoteComposer` (RuntimeCore) is a state machine — idle → recording →
 transcribing → review → delivering → delivered/failed — over three seams it does not
 own: the Phase-2 `IAudioCapture`, a `([AudioChunk]) -> ITranscriber` **factory** (built
@@ -95,11 +109,14 @@ explicit send.
 - [ ] The iPad surfaces the AI PI companion state (waiting sessions, selected
       target, confidence, blockers) from `/api/companion/status` and can pick the
       target session via `select`/`dismiss`/`pin` (HSM-13-03).
-- [ ] **Track N gate — answer the coder, end to end:** in a real coding session
+- [~] **Track N gate — answer the coder, end to end:** in a real coding session
       (tmux + hooks → desktop server) an agent's question is surfaced on a physical
       iPad, answered by a native voice note, and the answer lands back in that coder
       session — the user pressing send, never autonomous — evidenced by a device
-      walkthrough (HSM-13-04).
+      walkthrough (HSM-13-04). *(Delivery half proven on metal: real awaiting session →
+      answer from a physical iPad → landed in a live tmux coder pane, never autonomous.
+      Remaining: the **native voice note** (on-device Whisper) and board surfacing — the
+      gate closes when the iPad answers by voice.)*
 
 ## Story status
 
@@ -108,7 +125,7 @@ explicit send.
 | HSM-13-01 | Remote-dictation inject path (desktop + client) | done | [story-01](./story-01-remote-dictation-inject.md) | [evidence](./evidence-story-01.md) |
 | HSM-13-02 | Native voice-note capture → dictation | done | [story-02](./story-02-voice-note-capture.md) | [evidence](./evidence-story-02.md) |
 | HSM-13-03 | The Companion board (the agent's question on the iPad) | backlog | [story-03](./story-03-companion-board.md) | — |
-| HSM-13-04 | Answer-the-coder gate closeout | backlog | [story-04](./story-04-answer-the-coder-closeout.md) | — |
+| HSM-13-04 | Answer-the-coder gate closeout | in-progress | [story-04](./story-04-answer-the-coder-closeout.md) | [real-metal log](./realmetal-log-gate.md) |
 
 ## Where we are
 
@@ -119,12 +136,15 @@ Swift seam posts it; a physical iPad reached the desktop over the LAN to prove t
 carrying seam on real metal. The native voice-note composer (HSM-13-02) is **done** —
 a RuntimeCore state machine that records, transcribes on-device, lets you review/edit,
 and delivers on an explicit send (never before), host-tested over its capture /
-transcriber / desktop seams. What remains is the surfacing + the proof: the Companion
-board (HSM-13-03, consumes `/api/companion/*` that already ships) to show *which*
-waiting coder the answer targets, and the end-to-end gate (HSM-13-04) — wiring the
-`on_remote_dictation` hook into a live coder session and proving the owner's scenario
-on real hardware with a real spoken note. Next: HSM-13-03 (the Companion board), then
-the gate.
+transcriber / desktop seams. The gate (HSM-13-04) is now mostly real: the
+`on_remote_dictation` hook is **wired into the live coder-delivery path** (the exact
+tmux/type path local dictation uses), and the device→coder loop is **proven on real
+metal** — a real Stop-hook awaiting session, an answer originating on a physical iPad,
+landing in a live tmux pane, never autonomously. Two things stand between here and a
+closed gate: the **native voice note** (the iPad sent typed text; this needs on-device
+Whisper, a pending Phase-3 device gate — the `VoiceNoteComposer` seam is ready for it),
+and the **Companion board** (HSM-13-03) to surface *which* waiting coder the answer
+targets. Next: HSM-13-03 (the board), then close the gate by answering with voice.
 
 ## Active risks
 

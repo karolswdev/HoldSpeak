@@ -438,6 +438,7 @@ class WebRuntime(
                     on_update_action_item_review=self._on_update_action_item_review,
                     on_edit_action_item=self._on_edit_action_item,
                     on_settings_applied=self._apply_updated_config,
+                on_remote_dictation=self._deliver_remote_dictation,
                 on_wake_type=self._type_wake_preview,
                     project_detector=self.project_detector,
                     device_registry=self.device_registry,

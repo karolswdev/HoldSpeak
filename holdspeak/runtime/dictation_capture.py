@@ -341,6 +341,39 @@ class DictationCaptureMixin:
             return True
         return self.typer is not None
 
+    def _deliver_remote_dictation(self, text: str) -> dict[str, Any]:
+        """HSM-13-04 — deliver a companion-dictated answer into the waiting coder.
+
+        The text was ALREADY run through the rich dictation pipeline by the
+        ``/api/dictation/remote`` route, so this is **deliver-only** — it does not
+        re-transcribe or re-run the pipeline. It reuses the exact path the local
+        dictation loop uses (``_try_tmux_agent_reply`` → fall back to
+        ``typer.type_text``), so an answer spoken on the iPad lands the same way one
+        spoken at the desk does. Deliver-on-command (the client user pressed send);
+        never autonomous. **Raises** when it cannot be delivered, so the client sees
+        an honest failure rather than a false ack.
+        """
+        from ..agent_context import get_recent_awaiting_agent_session
+
+        text = (text or "").strip()
+        if not text:
+            raise ValueError("remote dictation text is empty")
+        session = get_recent_awaiting_agent_session(max_age_seconds=120)
+        if self._try_tmux_agent_reply(text, session):
+            self._mark_first_dictation()
+            return {"delivered": True, "method": "tmux", "target": self._agent_tmux_pane(session)}
+        if self.typer is not None:
+            self.typer.type_text(
+                text,
+                target_profile=self._paste_target_profile(session),
+                submit=session is not None,
+            )
+            self._mark_first_dictation()
+            return {"delivered": True, "method": "type", "target": self._paste_target_profile(session)}
+        raise RuntimeError(
+            "no delivery target: no waiting agent tmux pane and text injection is unavailable"
+        )
+
     def _on_hotkey_press(self) -> None:
         if self.runtime_stop_event.is_set():
             return
