@@ -1,6 +1,14 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-21 (**HSM-8-07 + HSM-8-08 HOST-COMPLETE — long meetings never
+**Last updated:** 2026-06-21 (**HSM-11-06 DONE — on-device generation robustness
+(structured-output salvage).** First Phase-11 hardening, host-side, flowing from the real-metal
+finding that a 22-min meeting dropped 3 of 4 artifact types to `noJSON`. `StructuredOutput`
+now does balanced extraction (string/escape-aware, not first-`{`-to-last-`}`), truncation
+salvage (close an open string + brackets so a cut-off object decodes), conservative repair
+(smart quotes, value-position Python literals, string-aware trailing commas — never corrupting
+body text), and array unwrap. `swift test` **197/6-skip/0-fail (+15)**, existing `InferenceTests`
+green (no regressions). Pure/model-free → de-risks the pending HSM-8-06 device gate without
+needing the device. Earlier: **HSM-8-07 + HSM-8-08 HOST-COMPLETE — long meetings never
 gamble on RAM.** `OnDeviceBudget` (RuntimeCore, pure) sizes the model context to *this*
 device (the KV-cache is RAM): the 16K from HSM-8-06 becomes the *ceiling*, lowered when the
 device can't afford it, never exceeding the affordable footprint. `TranscriptWindowing` +

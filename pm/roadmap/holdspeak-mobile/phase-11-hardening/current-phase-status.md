@@ -1,13 +1,23 @@
 # Phase 11 — Hardening
 
-**Status:** planning (scaffolded 2026-06-18). Track L of the Council
-Implementation Charter — the final phase. It stresses the whole stack (audio +
-Whisper + local inference + persistence + sync + UI) against the charter's five
-real-world scenarios and declares production readiness. Closing this phase means
-the HoldSpeak Mobile Runtime ships.
+**Status:** in-progress (scaffolded 2026-06-18; **HSM-11-06 done** — the first hardening
+landed: on-device generation robustness, host-side). Track L of the Council Implementation
+Charter — the final phase. It stresses the whole stack (audio + Whisper + local inference +
+persistence + sync + UI) against the charter's five real-world scenarios and declares
+production readiness. Closing this phase means the HoldSpeak Mobile Runtime ships.
 
-**Last updated:** 2026-06-18 (scaffolded — stories HSM-11-01..05 stubbed from
-charter Track L; no work started).
+**Last updated:** 2026-06-21 (**HSM-11-06 done — on-device generation robustness
+(structured-output salvage).** A host-side hardening that flowed straight from the real-metal
+finding that a 22-min meeting dropped 3 of 4 artifact types to `noJSON`. `StructuredOutput`
+now does **balanced extraction** (first complete brace-balanced structure, string/escape
+aware — not first-`{`-to-last-`}`), **truncation salvage** (close an open string + brackets so
+a cut-off object still decodes), **conservative repair** (smart quotes, value-position Python
+literals, string-aware trailing-comma removal — never corrupting body text), and **array
+unwrap** (`[{…}]` → the inner object). The repair-retry loop stays the backstop. `swift test`
+**197/6-skip/0-fail (+15)**; the existing `InferenceTests` stay green (no regressions). Pure +
+model-free → no device needed; it **de-risks the pending HSM-8-06 device gate** (fewer
+`noJSON` losses) without replacing it. See [`evidence-story-06`](./evidence-story-06.md).
+Earlier: scaffolded — stories HSM-11-01..05 stubbed from charter Track L; no work started.)
 
 ## Goal
 
@@ -53,6 +63,7 @@ final gate.
 | HSM-11-03 | Low battery + thermal stress | backlog | [story-03](./story-03-low-battery-thermal.md) | — |
 | HSM-11-04 | Suspend / resume + background audio | backlog | [story-04](./story-04-suspend-resume.md) | — |
 | HSM-11-05 | Production-readiness closeout (Gate 7) | backlog | [story-05](./story-05-production-readiness-closeout.md) | — |
+| HSM-11-06 | On-device generation robustness (structured-output salvage) | done | [story-06](./story-06-structured-output-robustness.md) | [evidence](./evidence-story-06.md) |
 
 ## Where we are
 
