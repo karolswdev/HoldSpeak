@@ -322,6 +322,47 @@ final class CaptureModel: ObservableObject {
     }
 }
 
+// MARK: - Voice correction capture (HSM-14-07)
+
+/// Thread-safe collector for streamed audio chunks (capture thread → main).
+final class ChunkSink: @unchecked Sendable {
+    private let q = DispatchQueue(label: "voice.chunks")
+    private var chunks: [AudioChunk] = []
+    func add(_ c: AudioChunk) { q.sync { chunks.append(c) } }
+    func drain() -> [AudioChunk] { q.sync { chunks } }
+    func reset() { q.sync { chunks.removeAll() } }
+}
+
+/// A short on-device voice capture for a correction: record the mic, transcribe the clip with
+/// WhisperKit. No meeting is created — fully local, just the user's words.
+@MainActor
+final class VoiceCaptureState: ObservableObject {
+    @Published var recording = false
+    @Published var transcribing = false
+    @Published var text = ""
+    @Published var error = ""
+    private let capture = AudioCaptureService()
+    private let sink = ChunkSink()
+
+    func start() async {
+        guard await CaptureModel.requestMic() else { error = "Microphone permission denied."; return }
+        error = ""; text = ""; sink.reset()
+        do { try capture.start { [sink] chunk in sink.add(chunk) }; recording = true }
+        catch { self.error = "Couldn't start the mic: \(error)" }
+    }
+
+    func stopAndTranscribe() async {
+        try? capture.stop()
+        recording = false
+        transcribing = true; defer { transcribing = false }
+        do {
+            let segs = try await WhisperKitTranscriber(chunks: sink.drain(), model: "base").transcribe()
+            let said = segs.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+            if said.isEmpty { self.error = "Didn't catch that — try again, or type it." } else { text = said }
+        } catch { self.error = "Couldn't transcribe: \(error)" }
+    }
+}
+
 // MARK: - Meeting list
 
 struct MeetingListView: View {
@@ -513,6 +554,7 @@ final class MeetingReviewState: ObservableObject {
     @Published var profile: MIRProfile
     @Published var generating = false
     @Published var note = ""
+    @Published var correctingId: String?     // HSM-14-07 — the card regenerating from a voice correction
 
     private let storage: SQLiteStorage?
     private let marks: [Double]              // hand-flagged moments (HSM-8-03) — weight extraction
@@ -641,6 +683,31 @@ final class MeetingReviewState: ObservableObject {
     }
     func reject(_ id: String) {
         try? ReviewModel(artifacts: artifacts, store: storage).reject(id); load()
+    }
+
+    /// HSM-14-07 — apply a spoken correction: re-route the artifact + the user's words back to
+    /// the local model and **regenerate it in place** (same id → the card morphs, no duplicate).
+    /// Propose-and-confirm: the corrected version returns as a `.draft` the user re-approves.
+    func correct(_ artifact: Artifact, spoken: String) async {
+        let spoken = spoken.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !spoken.isEmpty else { return }
+        guard let modelPath = Self.localGGUF() else { note = "No on-device model found."; return }
+        withAnimation(.easeInOut(duration: 0.35)) { correctingId = artifact.id }
+        defer { withAnimation(.easeInOut(duration: 0.45)) { correctingId = nil } }
+        let modelBytes = ((try? FileManager.default.attributesOfItem(atPath: modelPath))?[.size] as? Int) ?? 0
+        let context = OnDeviceBudget.contextTokens(
+            availableBytes: Self.availableMemoryBytes(), modelBytes: modelBytes,
+            marginBytes: 768 * 1_048_576, ceiling: Self.contextCeiling)
+        do {
+            let provider = try LlamaProvider(modelPath: modelPath, maxTokenCount: Int32(context))
+            let transcript = Transcript(meetingId: meeting.id, segments: meeting.segments,
+                                        transcriptHash: "ondevice-\(meeting.segments.count)")
+            let fixed = try await ArtifactCorrection.corrected(
+                original: artifact, correction: spoken, transcript: transcript,
+                provider: provider, idGenerator: { artifact.id })   // replace in place
+            try? storage?.saveArtifact(fixed)
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { load() }
+        } catch { note = "Couldn't apply the correction: \(error)" }
     }
 
     var hasInkArtifacts: Bool { artifacts.contains { $0.pluginId == "holdspeak.mobile.ink" } }
@@ -774,6 +841,14 @@ private func tactile(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) 
     UIImpactFeedbackGenerator(style: style).impactOccurred()
 }
 
+/// A clean one-glance teaser for a card: strip the common Markdown syntax so the preview
+/// reads as plain prose (the full doc renders the real Markdown on tap).
+private func plainPreview(_ md: String) -> String {
+    var s = md
+    for token in ["**", "__", "`", "#", ">", "- ", "* "] { s = s.replacingOccurrences(of: token, with: "") }
+    return s.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+}
+
 /// Wraps an artifact so it can drive a `.sheet(item:)` without retroactive Identifiable.
 struct OpenDoc: Identifiable { let id = UUID(); let artifact: Artifact; let ink: UIImage? }
 
@@ -785,12 +860,14 @@ struct SwipeableArtifactCard: View {
     let artifact: Artifact
     let ink: UIImage?
     var index: Int = 0
+    var regenerating: Bool = false
     let onApprove: () -> Void
     let onDismiss: () -> Void
     let onOpen: () -> Void
     @State private var dragX: CGFloat = 0
     @State private var appeared = false
     @State private var pressed = false
+    @State private var shimmerX: CGFloat = -0.7
 
     private var actionable: Bool { artifact.status == .draft || artifact.status == .needsReview }
     private var tint: Color { artifactTint(artifact.artifactType) }
@@ -804,11 +881,14 @@ struct SwipeableArtifactCard: View {
                 sideAction("checkmark.circle.fill", "Approve", Sig.ok, active: dragX < -55, lead: false)
             }
             face
-                .offset(x: dragX)
-                .rotationEffect(.degrees(Double(dragX) / 26), anchor: .bottom)
+                .blur(radius: regenerating ? 3 : 0)
+                .overlay { if regenerating { regeneratingOverlay } }
+                .offset(x: regenerating ? 0 : dragX)
+                .rotationEffect(.degrees(regenerating ? 0 : Double(dragX) / 26), anchor: .bottom)
                 .scaleEffect(pressed ? 0.97 : 1 - swipeProgress * 0.05)
-                .gesture(actionable ? drag : nil)
+                .gesture(actionable && !regenerating ? drag : nil)
                 .onTapGesture {
+                    guard !regenerating else { return }
                     tactile()
                     withAnimation(.spring(response: 0.22, dampingFraction: 0.55)) { pressed = true }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.13) {
@@ -816,6 +896,7 @@ struct SwipeableArtifactCard: View {
                         onOpen()
                     }
                 }
+                .animation(.easeInOut(duration: 0.35), value: regenerating)
         }
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 22)
@@ -823,6 +904,37 @@ struct SwipeableArtifactCard: View {
         .onAppear {
             withAnimation(.spring(response: 0.55, dampingFraction: 0.74).delay(Double(index) * 0.06)) { appeared = true }
         }
+        .onChange(of: regenerating) { _, on in
+            if on {
+                shimmerX = -0.7
+                withAnimation(.linear(duration: 1.15).repeatForever(autoreverses: false)) { shimmerX = 1.3 }
+            }
+        }
+    }
+
+    /// HSM-14-07 — the card "re-thinking" with the user's spoken note: a tint shimmer sweep,
+    /// a glowing border, and a pulsing sparkle badge, over the blurred old content. The
+    /// corrected content is revealed underneath when the overlay fades.
+    @ViewBuilder private var regeneratingOverlay: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Sig.bg.opacity(0.55))
+            GeometryReader { geo in
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(LinearGradient(colors: [.clear, tint.opacity(0.5), .clear], startPoint: .leading, endPoint: .trailing))
+                    .frame(width: geo.size.width * 0.55)
+                    .offset(x: shimmerX * geo.size.width)
+                    .blendMode(.plusLighter)
+            }
+            VStack(spacing: 9) {
+                Image(systemName: "sparkles").font(.system(size: 24, weight: .bold)).foregroundStyle(tint)
+                    .symbolEffect(.variableColor.iterative.reversing, options: .repeating)
+                Text("Re-thinking with your note…").font(.system(size: 13, weight: .heavy)).foregroundStyle(Sig.text)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(tint, lineWidth: 2)
+            .shadow(color: tint.opacity(0.85), radius: 11))
+        .transition(.opacity.combined(with: .scale(scale: 1.03)))
     }
 
     private var drag: some Gesture {
@@ -854,10 +966,8 @@ struct SwipeableArtifactCard: View {
                     .background(Color.white, in: RoundedRectangle(cornerRadius: 10))
             }
             if !artifact.bodyMarkdown.isEmpty {
-                Markdown(artifact.bodyMarkdown)
-                    .markdownTextStyle { ForegroundColor(Sig.muted); FontSize(14) }
-                    .lineLimit(3)
-                    .allowsHitTesting(false)   // taps belong to the card (open the doc)
+                Text(plainPreview(artifact.bodyMarkdown))
+                    .font(.system(size: 14)).foregroundStyle(Sig.muted).lineSpacing(2).lineLimit(3)
             }
             HStack(spacing: 6) {
                 if actionable {
@@ -908,9 +1018,12 @@ struct SwipeableArtifactCard: View {
 struct ArtifactDetailView: View {
     let artifact: Artifact
     let ink: UIImage?
+    var onCorrect: ((String) -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var copied = false
+    @State private var showVoice = false
     private var tint: Color { artifactTint(artifact.artifactType) }
+    private var actionable: Bool { artifact.status == .draft || artifact.status == .needsReview }
     private var shareText: String {
         "\(artifactTypeLabel(artifact.artifactType)) — \(artifact.title)\n\n\(artifact.bodyMarkdown)"
     }
@@ -947,6 +1060,20 @@ struct ArtifactDetailView: View {
                             .tint(Sig.accent)
                             .textSelection(.enabled)
                     }
+
+                    if onCorrect != nil && actionable {
+                        Button { showVoice = true } label: {
+                            HStack(spacing: 9) {
+                                Image(systemName: "mic.badge.plus").font(.system(size: 16, weight: .bold))
+                                Text("Not right? Fix it by voice").font(.system(size: 15.5, weight: .heavy))
+                            }
+                            .foregroundStyle(tint)
+                            .frame(maxWidth: .infinity).frame(height: 54)
+                            .background(tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(tint.opacity(0.45), lineWidth: 1))
+                        }
+                        .padding(.top, 6)
+                    }
                 }
                 .padding(20)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -979,6 +1106,91 @@ struct ArtifactDetailView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .sheet(isPresented: $showVoice) {
+            VoiceCorrectionSheet(artifact: artifact) { spoken in onCorrect?(spoken) }
+        }
+    }
+}
+
+/// HSM-14-07 — "say what's wrong," on-device. Record → WhisperKit → the spoken correction (or
+/// type it), then re-route to the local model. Submitting closes back to the meeting where the
+/// card itself shows the "re-thinking" effect.
+struct VoiceCorrectionSheet: View {
+    let artifact: Artifact
+    let onSubmit: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var voice = VoiceCaptureState()
+    @State private var correction = ""
+    @State private var pulse = false
+    private var tint: Color { artifactTint(artifact.artifactType) }
+    private var canSubmit: Bool { !correction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                VStack(spacing: 6) {
+                    Text("What's wrong with it?").font(.system(size: 25, weight: .heavy)).foregroundStyle(Sig.text)
+                    Text(artifact.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Sig.faint).lineLimit(1)
+                }.padding(.top, 6)
+
+                Spacer(minLength: 0)
+                Button { Task { await toggle() } } label: { micButton }
+                    .disabled(voice.transcribing)
+                Text(statusLine).font(.system(size: 13, weight: .semibold)).foregroundStyle(Sig.muted)
+                Spacer(minLength: 0)
+
+                TextField("…or type what to fix", text: $correction, axis: .vertical)
+                    .lineLimit(2...5).font(.system(size: 16)).foregroundStyle(Sig.text)
+                    .padding(14).background(Sig.s2, in: RoundedRectangle(cornerRadius: 16))
+                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Sig.line, lineWidth: 1))
+                if !voice.error.isEmpty {
+                    Text(voice.error).font(.caption).foregroundStyle(Sig.warn)
+                }
+
+                Button { onSubmit(correction) } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "wand.and.stars")
+                        Text("Regenerate with this")
+                    }
+                    .font(.system(size: 16, weight: .heavy)).foregroundStyle(.black)
+                    .frame(maxWidth: .infinity).frame(height: 56)
+                    .background(canSubmit ? Sig.accent : Sig.s3, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                }
+                .disabled(!canSubmit)
+            }
+            .padding(24)
+            .background(Sig.bg.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Cancel") { dismiss() }.tint(Sig.faint) } }
+            .onChange(of: voice.text) { _, t in if !t.isEmpty { correction = t } }
+        }
+        .preferredColorScheme(.dark)
+        .presentationDetents([.medium, .large])
+    }
+
+    private var micButton: some View {
+        ZStack {
+            Circle().fill(voice.recording ? Sig.bad.opacity(0.18) : tint.opacity(0.16))
+                .frame(width: 112, height: 112)
+                .scaleEffect(voice.recording && pulse ? 1.14 : 1)
+            Circle().fill(voice.recording ? Sig.bad : tint).frame(width: 80, height: 80)
+            Image(systemName: voice.transcribing ? "waveform" : (voice.recording ? "stop.fill" : "mic.fill"))
+                .font(.system(size: 30, weight: .bold)).foregroundStyle(.black)
+                .symbolEffect(.variableColor.iterative, isActive: voice.transcribing)
+        }
+        .onChange(of: voice.recording) { _, on in
+            pulse = false
+            if on { withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) { pulse = true } }
+        }
+    }
+    private var statusLine: String {
+        if voice.transcribing { return "Transcribing on-device…" }
+        if voice.recording { return "Listening… tap to stop" }
+        if !correction.isEmpty { return "Tap to re-record, or edit below" }
+        return "Tap the mic and say what to fix"
+    }
+    private func toggle() async {
+        if voice.recording { await voice.stopAndTranscribe() } else { await voice.start() }
     }
 }
 
@@ -1052,7 +1264,12 @@ struct MeetingDetailView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .sheet(item: $openDoc) { ArtifactDetailView(artifact: $0.artifact, ink: $0.ink) }
+        .sheet(item: $openDoc) { doc in
+            ArtifactDetailView(artifact: doc.artifact, ink: doc.ink, onCorrect: { spoken in
+                openDoc = nil                                   // back to the meeting — the card itself shows it
+                Task { await review.correct(doc.artifact, spoken: spoken) }
+            })
+        }
     }
 
     // MARK: artifact review (HSM-8-04)
@@ -1089,6 +1306,7 @@ struct MeetingDetailView: View {
                     ForEach(Array(group.items.enumerated()), id: \.element.id) { idx, a in
                         SwipeableArtifactCard(
                             artifact: a, ink: inkImage(a), index: idx,
+                            regenerating: review.correctingId == a.id,
                             onApprove: { review.approve(a.id) },
                             onDismiss: { review.reject(a.id) },
                             onOpen: { openDoc = OpenDoc(artifact: a, ink: inkImage(a)) })
