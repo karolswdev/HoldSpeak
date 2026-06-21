@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 8
-- **Status:** backlog
+- **Status:** host-complete (cores + host tests landed; on-device walkthrough deferred per owner — not at the iPad)
 - **Depends on:** HSM-8-04 (on-device generation), HSM-5-02 (Mode A / `LlamaProvider`)
 - **Unblocks:** HSM-8-07 (chunking consumes the budget this story computes)
 - **Owner:** unassigned
@@ -72,6 +72,27 @@ gambling on RAM at any meeting length.
 - Device: confirm the chosen budget on the real iPad (log/inspect the opened context),
   then run a long meeting end to end with no OOM — folded into the HSM-8-07 / HSM-8-05
   device walkthroughs.
+
+## Host-complete (2026-06-21)
+
+Cores + host tests landed (PR pending); the on-device no-OOM proof is the only remaining
+acceptance item, deferred per the owner ("not at my iPad — don't consider any iPad gates").
+
+- **`OnDeviceBudget`** (RuntimeCore) — pure, deterministic: `contextTokens(availableBytes,
+  modelBytes, marginBytes, floor, ceiling)` returns the largest safe context, clamped, never
+  exceeding the affordable KV footprint; `windowTokens` reserves prompt + output room;
+  `transcriptTokens` + `needsChunking` give HSM-8-07 its threshold. Host-tested (ample RAM →
+  16K ceiling; constrained device → smaller, never exceeds RAM−margin; monotonic in RAM;
+  window reserve; chunk threshold).
+- **App wiring** — `generate()` sizes `LlamaProvider` from the budget (the 16K becomes the
+  *ceiling*, lowered when the device can't afford it), drawing memory headroom from iOS
+  `os_proc_available_memory()` with a `physicalMemory/2` fallback and the GGUF's on-disk size
+  as the model footprint. The 768 MB margin covers the app + WhisperKit + activations. Builds
+  + signs for device (verified).
+- `swift test` → **182 passed / 6 skipped / 0 failed** (shared suite with HSM-8-07).
+
+**Remaining for `done`:** confirm the chosen budget on the physical iPad and run a long
+meeting end to end with no jetsam kill (owner-witnessed) — at the reconvene.
 
 ## Notes / open questions
 

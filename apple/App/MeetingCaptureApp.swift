@@ -3,6 +3,7 @@ import AVFoundation
 import WhisperKit
 import PencilKit
 import Vision
+import os
 
 // HSM-8-01 — the iPad's on-device meeting-capture loop. Open the app, see your
 // recordings, press Record, watch the transcript appear, stop to keep it. Capture
@@ -530,11 +531,17 @@ final class MeetingReviewState: ObservableObject {
 
     /// Generate the meeting's artifacts ON-DEVICE (Mode A): the MIR profile picks the
     /// types, the local GGUF model drafts each, and they persist as proposals.
-    /// The on-device model's context budget. 16K tokens ≈ ~12k words ≈ ~80 min of speech
-    /// (vs 8K ≈ ~45 min). The cost is a bigger KV cache (~+1.2 GB) — safe on an 8 GB iPad
-    /// for a single meeting, but HSM-8-08 makes this memory-aware and HSM-8-07 chunks
-    /// anything longer so we NEVER gamble on RAM regardless of meeting length.
-    private static let contextTokens: Int32 = 16384
+    /// The on-device context CEILING — what we'd *like* (16K ≈ ~80 min of speech).
+    /// HSM-8-08 lowers it to what THIS device can actually afford (the KV-cache is RAM),
+    /// and HSM-8-07 chunks anything that still won't fit — so we never gamble on memory
+    /// regardless of meeting length.
+    private static let contextCeiling = 16_384
+
+    /// Memory headroom before the iOS jetsam limit, with a conservative fallback.
+    private static func availableMemoryBytes() -> Int {
+        let avail = Int(os_proc_available_memory())
+        return avail > 0 ? avail : Int(ProcessInfo.processInfo.physicalMemory / 2)
+    }
 
     func generate() async {
         guard !meeting.segments.isEmpty else {
@@ -544,14 +551,37 @@ final class MeetingReviewState: ObservableObject {
             note = "No on-device model found. Push a .gguf to the app's Documents first."; return
         }
         generating = true; defer { generating = false }
+
+        // HSM-8-08 — size the context to THIS device, never a blind constant.
+        let modelBytes = ((try? FileManager.default.attributesOfItem(atPath: modelPath))?[.size] as? Int) ?? 0
+        let context = OnDeviceBudget.contextTokens(
+            availableBytes: Self.availableMemoryBytes(), modelBytes: modelBytes,
+            marginBytes: 768 * 1_048_576,            // app + WhisperKit + activations
+            ceiling: Self.contextCeiling)
+        let windowBudget = OnDeviceBudget.windowTokens(context: context)
+
         do {
-            let provider = try LlamaProvider(modelPath: modelPath, maxTokenCount: Self.contextTokens)
+            let provider = try LlamaProvider(modelPath: modelPath, maxTokenCount: Int32(context))
             let engine = ArtifactGenerationEngine(provider: provider, maxAttempts: 2)
             let transcript = Transcript(meetingId: meeting.id, segments: meeting.segments,
                                         transcriptHash: "ondevice-\(meeting.segments.count)")
             let types = marks.isEmpty
                 ? (MIRRouter.baseEmphasis[profile] ?? [.decisions, .actionItems, .requirements])
                 : InkEmphasis.routedTypes(profile: profile, transcript: transcript, marks: marks)
+
+            // HSM-8-07 — a long meeting extracts in length-independent windows so peak
+            // memory stays flat; a short one keeps the single fast streaming pass.
+            let extractor = ChunkedExtractor(engine: engine, windowTokens: windowBudget)
+            if extractor.shouldChunk(transcript) {
+                let passes = TranscriptWindowing.windows(transcript.segments, maxTokens: windowBudget).count
+                note = "Long meeting — extracting in \(passes) pass\(passes == 1 ? "" : "es")…"
+                let artifacts = await extractor.generate(types: types, from: transcript)
+                for a in artifacts { try? storage?.saveArtifact(a) }
+                load()
+                note = artifacts.isEmpty ? "The model produced nothing." : ""
+                return
+            }
+
             var any = false
             var lastError = ""
             for (i, type) in types.enumerated() {
