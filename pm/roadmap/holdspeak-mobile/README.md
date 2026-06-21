@@ -1,7 +1,18 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-21 (**HSM-8-06 DONE — ink into intelligence, the magic pencil
-made involved (Phase 8 now 5/8).** `InkPromoter` (RuntimeCore) promotes recognized
+**Last updated:** 2026-06-21 (**HSM-8-07 + HSM-8-08 HOST-COMPLETE — long meetings never
+gamble on RAM.** `OnDeviceBudget` (RuntimeCore, pure) sizes the model context to *this*
+device (the KV-cache is RAM): the 16K from HSM-8-06 becomes the *ceiling*, lowered when the
+device can't afford it, never exceeding the affordable footprint. `TranscriptWindowing` +
+`ArtifactMerge` + `ChunkedExtractor` do **map-reduce extraction** — window (segment-aligned,
+overlapping, budget-bounded) → extract per window over the real engine → merge/dedup — so
+**peak memory stays flat regardless of meeting length**. The app's `generate()` opens the
+provider at the budget and routes long meetings through chunking ("extracting in N passes…");
+short meetings keep the single fast pass. `swift test` **182/6-skip/0-fail (+12)**; the app
+builds + signs for device. Owner steer: "increase the baseline … but let's chunk it. Let's
+not risk OOM ever." These land **host-complete** — the on-device long-meeting proof is the
+only deferred item (owner not at the iPad), so no story flips to `done` yet. Earlier:
+**HSM-8-06 DONE — ink into intelligence, the magic pencil made involved (Phase 8 now 5/8).** `InkPromoter` (RuntimeCore) promotes recognized
 handwriting to a schema-valid `.draft` `Artifact` (propose-and-confirm); `InkEmphasis`
 boosts the intents in hand-marked segments so a starred moment **measurably changes the
 routed artifact chain** (host-proven). The app's **"Add your handwritten notes"** action
@@ -343,7 +354,7 @@ Earlier today: **program scaffolded** — the Council Implementation
 Charter (Rev 1.0) mapped onto a 12-phase roadmap (Phase 0 Contract Extraction →
 Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every phase
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
-**Current phase:** [phase-7-mir-port](./phase-7-mir-port/current-phase-status.md) closed; Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5**, **7 ✅ Gate H**; Phase 5 host-complete (engine pick + structured output + endpoint Modes B/C + on-device Mode A + model packaging — all host-proven; device runs pending the iPad unlock); Phase 10 in-progress (HSM-10-01 done); 2 + 3 testable cores done, device-gated remainder; 6-06 Follow-ups deferred. **Phases 12–13 (Tracks M–N — the Companion Client + Answer the Coder) in progress (owner steer 2026-06-20): Phase 12 2/4 (HSM-12-01 seam + HSM-12-02 meetings remote, merged); **Phase 13 — Answer the Coder COMPLETE (4/4): HSM-13-01 inject, 13-02 voice-note composer, 13-03 Companion board, 13-04 Track N gate ACHIEVED by voice** (a spoken answer from a physical iPad, transcribed on-device, lands in a live tmux coder). Companion track (Tracks M–N) is now Phase 12 3/4 (12-01 seam, 12-02 meetings, 12-03 unified shell; only 12-04 gate remains) + Phase 13 done. **Phase 8 (Track I — the iPad on-device experience) 5/8: HSM-8-01 capture + 8-02 notebook + 8-03 linking + 8-04 on-device artifact review (the Track I workflow gate ACHIEVED on a physical iPad) + 8-06 ink-into-intelligence (handwriting → image + on-device Vision text + marked-moment-weighted MIR, proven on a real 13-min meeting) done; HSM-8-05 (air-gapped gate) + 8-07 (chunked long-meeting extraction) + 8-08 (OOM-safe budget) remain.**
+**Current phase:** [phase-7-mir-port](./phase-7-mir-port/current-phase-status.md) closed; Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5**, **7 ✅ Gate H**; Phase 5 host-complete (engine pick + structured output + endpoint Modes B/C + on-device Mode A + model packaging — all host-proven; device runs pending the iPad unlock); Phase 10 in-progress (HSM-10-01 done); 2 + 3 testable cores done, device-gated remainder; 6-06 Follow-ups deferred. **Phases 12–13 (Tracks M–N — the Companion Client + Answer the Coder) in progress (owner steer 2026-06-20): Phase 12 2/4 (HSM-12-01 seam + HSM-12-02 meetings remote, merged); **Phase 13 — Answer the Coder COMPLETE (4/4): HSM-13-01 inject, 13-02 voice-note composer, 13-03 Companion board, 13-04 Track N gate ACHIEVED by voice** (a spoken answer from a physical iPad, transcribed on-device, lands in a live tmux coder). Companion track (Tracks M–N) is now Phase 12 3/4 (12-01 seam, 12-02 meetings, 12-03 unified shell; only 12-04 gate remains) + Phase 13 done. **Phase 8 (Track I — the iPad on-device experience) 5/8: HSM-8-01 capture + 8-02 notebook + 8-03 linking + 8-04 on-device artifact review (the Track I workflow gate ACHIEVED on a physical iPad) + 8-06 ink-into-intelligence (handwriting → image + on-device Vision text + marked-moment-weighted MIR, proven on a real 13-min meeting) done; **8-07 (chunked long-meeting extraction) + 8-08 (OOM-safe budget) HOST-COMPLETE** (cores + 12 host tests + app wiring + device build; on-device proofs deferred — owner not at the iPad); HSM-8-05 (air-gapped gate) + the 8-07/8-08 device proofs remain.**
 
 **Highest-value direction (owner steer, 2026-06-20; ratified in charter Amendment
 1.1).** The program's value now concentrates on the **two device faces, both

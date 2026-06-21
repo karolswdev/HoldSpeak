@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 8
-- **Status:** backlog
+- **Status:** host-complete (cores + host tests landed; on-device walkthrough deferred per owner — not at the iPad)
 - **Depends on:** HSM-8-04 (on-device artifact review + generation), HSM-5-02 (Mode A on-device inference), HSM-6-02 (artifacts), HSM-8-08 (the memory budget that decides *when* to chunk)
 - **Unblocks:** hour-plus meetings on-device without growing the context window
 - **Owner:** unassigned
@@ -79,6 +79,30 @@ with meeting length; **memory stays flat** regardless of how long the meeting ra
   on-device, and watch it extract per window without OOM, producing a coherent merged
   artifact set in review — folded into the HSM-8-05 air-gapped walkthrough where
   practical.
+
+## Host-complete (2026-06-21)
+
+Cores + host tests landed (PR pending); the on-device walkthrough is the only remaining
+acceptance item, deferred per the owner ("not at my iPad — don't consider any iPad gates").
+
+- **`TranscriptWindowing.windows`** (RuntimeCore) — segment-aligned, budget-bounded,
+  overlapping windows; never splits a segment; an oversized lone segment is kept whole
+  rather than dropped. Host-tested (coverage, overlap, budget bound, empty, oversized).
+- **`ArtifactMerge.dedup`** — collapses cross-window duplicates by (type + normalized
+  body), keeping the higher-confidence draft, order-stable. Host-tested.
+- **`ChunkedExtractor`** — `shouldChunk` decides the path; `generate` runs the real
+  `ArtifactGenerationEngine` per window and merges. Host-tested over a fake provider
+  (N windows × M types collapse to M artifacts; propose-only `.draft` preserved).
+- **App wiring** — `generate()` opens the provider at the HSM-8-08 budget, and a meeting
+  that exceeds one window routes through `ChunkedExtractor` with a legible "extracting in
+  N passes…" note; a short meeting keeps the single fast streaming pass. The meeting app
+  **builds + signs for device** (verified); the on-device long-meeting run is the deferred
+  item.
+- `swift test` → **182 passed / 6 skipped / 0 failed** (+12 with HSM-8-08).
+
+**Remaining for `done`:** the physical-iPad long-meeting (hour-plus) walkthrough —
+extract via chunking with no OOM, coherent merged set in review. Folds into the HSM-8-05
+air-gapped walkthrough at the reconvene.
 
 ## Notes / open questions
 

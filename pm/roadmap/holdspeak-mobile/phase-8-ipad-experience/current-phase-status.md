@@ -1,16 +1,35 @@
 # Phase 8 — iPad Experience
 
-**Status:** in-progress (5/8 — **HSM-8-01..04 + HSM-8-06 done; the Track I workflow gate
-ACHIEVED**: record → live transcript → PencilKit notebook → linked moments → **on-device
-artifact review** + **ink-into-intelligence** run end to end on a physical iPad
-(owner-witnessed). Remaining: HSM-8-05 (air-gapped notetaker gate) + two stories the
-real-metal testing motivated — HSM-8-07 (chunked extraction for long meetings) + HSM-8-08
-(OOM-safe budgeting)). Track I of the Council Implementation Charter. The first Platform
-Host (Layer 4): the iPad app that turns the runtime into the charter's flagship experience
-— record a meeting, take PencilKit notes, link them to the transcript, and review the
-artifacts, all on an iPad Air/Pro M4.
+**Status:** in-progress (5/8 done + HSM-8-07/8-08 host-complete — **HSM-8-01..04 + HSM-8-06
+done; the Track I workflow gate ACHIEVED**: record → live transcript → PencilKit notebook →
+linked moments → **on-device artifact review** + **ink-into-intelligence** run end to end on
+a physical iPad (owner-witnessed). **HSM-8-07 (chunked extraction) + HSM-8-08 (OOM-safe
+budget) are host-complete** — cores + 12 host tests landed, app wired + device-built; only
+their on-device walkthroughs remain, deferred per the owner ("not at my iPad — don't consider
+any iPad gates"). Remaining: HSM-8-05 (air-gapped notetaker gate) + the 8-07/8-08 device
+proofs). Track I of the Council Implementation Charter. The first Platform Host (Layer 4): the
+iPad app that turns the runtime into the charter's flagship experience — record a meeting,
+take PencilKit notes, link them to the transcript, and review the artifacts, all on an iPad
+Air/Pro M4.
 
-**Last updated:** 2026-06-21 (**HSM-8-06 done — ink into intelligence (the magic pencil,
+**Last updated:** 2026-06-21 (**HSM-8-07 + HSM-8-08 host-complete — long meetings never
+gamble on RAM.** `OnDeviceBudget` (RuntimeCore, pure) sizes the model context to *this*
+device — `contextTokens(availableBytes, modelBytes, marginBytes)` returns the largest safe
+window (the KV-cache is RAM), clamped to a floor/ceiling, never exceeding the affordable
+footprint; the 16K from HSM-8-06 becomes the *ceiling*, lowered when the device can't pay.
+`TranscriptWindowing` + `ArtifactMerge` + `ChunkedExtractor` do **map-reduce extraction**:
+window the transcript (segment-aligned, overlapping, budget-bounded), extract per window over
+the real `ArtifactGenerationEngine`, merge/dedup into one `.draft` set — so **peak memory
+stays flat regardless of meeting length** (a 2-hour transcript uses the same per-pass context
+as a 20-min one). The app's `generate()` opens the provider at the budget and routes any
+meeting that exceeds one window through chunking with a legible "extracting in N passes…"
+note; short meetings keep the single fast pass. Owner steer: "increase the baseline … but
+let's chunk it. Let's not risk OOM ever." `swift test` **182/6-skip/0-fail (+12)**; the
+meeting app **builds + signs for device** (the on-device long-meeting proof is the only
+deferred item — owner not at the iPad). These two land **host-complete** (no story flips to
+`done`; their evidence files ship with the device proof at the reconvene). See
+[`story-07`](./story-07-chunked-extraction.md) + [`story-08`](./story-08-oom-safe-budget.md).
+Earlier: **HSM-8-06 done — ink into intelligence (the magic pencil,
 involved).** `InkPromoter` (RuntimeCore) turns recognized handwriting into a schema-valid
 `.draft` `Artifact` proposal (propose-and-confirm); `InkEmphasis` boosts the intents in
 hand-marked segments so a starred moment **measurably changes the routed artifact chain**
@@ -158,8 +177,8 @@ the Runtime Core, it does not own business logic.
 | HSM-8-04 | Artifact review + notebook closeout | done | [story-04](./story-04-artifact-review-closeout.md) | [evidence](./evidence-story-04.md) |
 | HSM-8-05 | The air-gapped notetaker (fully-local, zero-connectivity) | backlog | [story-05](./story-05-air-gapped-notetaker.md) | — |
 | HSM-8-06 | Ink into intelligence (the magic pencil, involved) | done | [story-06](./story-06-ink-into-intelligence.md) | [evidence](./evidence-story-06.md) |
-| HSM-8-07 | Chunked extraction for long meetings (map-reduce, length-safe) | backlog | [story-07](./story-07-chunked-extraction.md) | — |
-| HSM-8-08 | OOM-safe on-device budgeting (never gamble on RAM) | backlog | [story-08](./story-08-oom-safe-budget.md) | — |
+| HSM-8-07 | Chunked extraction for long meetings (map-reduce, length-safe) | host-complete | [story-07](./story-07-chunked-extraction.md) | device proof deferred |
+| HSM-8-08 | OOM-safe on-device budgeting (never gamble on RAM) | host-complete | [story-08](./story-08-oom-safe-budget.md) | device proof deferred |
 
 ## Where we are
 
