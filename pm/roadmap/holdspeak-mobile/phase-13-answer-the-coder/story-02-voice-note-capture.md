@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** done (2026-06-20 — the `VoiceNoteComposer` capture→transcribe→review→
+  deliver view-model ships, host-tested over fake seams; live on-device run folds
+  into HSM-13-04. See [evidence-story-02](./evidence-story-02.md))
 - **Depends on:** HSM-13-01, HSM-2-01 (capture), HSM-3-01 (Whisper)
 - **Unblocks:** HSM-13-04
 - **Owner:** unassigned
@@ -31,16 +33,25 @@ server's.
 
 ## Acceptance criteria
 
-- [ ] Press-to-talk captures a voice note on the iPad via the Phase-2 capture seam
+- [x] Press-to-talk captures a voice note on the iPad via the Phase-2 capture seam
       and transcribes it with the Phase-3 Whisper transcriber, fully on-device.
-- [ ] The recognized text is shown for a quick review/edit before anything is sent
-      (never auto-sent from recognition).
-- [ ] On send, the text is delivered through the HSM-13-01 client method; the
+      *(`VoiceNoteComposer` drives `IAudioCapture` → an `ITranscriber` built over the
+      captured `AudioChunk`s; host-tested that the captured chunks reach the
+      transcriber. The live on-device capture+Whisper run folds into HSM-13-04, per
+      this story's test plan.)*
+- [x] The recognized text is shown for a quick review/edit before anything is sent
+      (never auto-sent from recognition). *(`stopAndTranscribe()` always lands in
+      `.review`; `editText(_:)` mutates it; `send()` is separate —
+      `testTranscriptionNeverAutoSends` / `testEditChangesTheDeliveredPayload`.)*
+- [x] On send, the text is delivered through the HSM-13-01 client method; the
       egress label is honest (capture stays local; the dictation payload goes to the
-      paired server).
-- [ ] The capture path reuses the on-device seams (no new transcription/capture
+      paired server). *(`send()` calls `IDesktopClient.sendRemoteDictation`;
+      `egressLabel` mirrors the client's `local + LAN → <host>`.)*
+- [x] The capture path reuses the on-device seams (no new transcription/capture
       engine); a view-model drives capture → transcribe → review → deliver without
-      UIKit.
+      UIKit. *(Pure RuntimeCore; a transcriber **factory** over the existing
+      `ITranscriber` — no second transcription path; the MLX single-executor-thread
+      discipline stays inside the transcriber.)*
 
 ## Test plan
 
