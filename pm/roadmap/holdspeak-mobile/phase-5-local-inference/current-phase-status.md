@@ -14,8 +14,19 @@ that lights up Mode A (Fully Local): it delivers the on-device `ILLMProvider`
 It also resolves the Phase-0 deferred decision — which inference engine the mobile
 runtime stands on.
 
-**Last updated:** 2026-06-19 (**HSM-5-03 — model packaging: both delivery paths
-host-proven.** A `ModelCatalog` pins the per-tier GGUFs (4B Llama-3.2-3B / 8B
+**Last updated:** 2026-06-20 (**HSM-5-02 DONE — Mode A proven on REAL METAL.** A GGUF
+is hosted entirely on the iPad Air M4 and turns a meeting transcript into artifacts
+with no network — the owner witnessed the artifact cards render on the device. Model:
+**Qwen3-4B-Instruct-2507 Q6_K** (3.08 GB), pushed via `push-model-device.sh`; app =
+the first iOS build that links the native llama.cpp engine (`gen-local-harness.rb`
+stages InferenceLlama + the LLM.swift SPM package). The process stayed alive with the
+3 GB model resident, so Q6 fits the 8 GB ceiling without the increased-memory
+entitlement (which would unlock Qwen3-8B once the App-ID capability is enabled). Build
+snags cleared for the next device build: `-skipMacroValidation` (the LLM macro plugin)
++ `-derivedDataPath` rather than a flat `CONFIGURATION_BUILD_DIR` (swift-syntax object
+collisions). See [`evidence-story-02.md`](./evidence-story-02.md).
+Earlier: **HSM-5-03 — model packaging: both delivery paths host-proven.** A
+`ModelCatalog` pins the per-tier GGUFs (4B Llama-3.2-3B / 8B
 Llama-3.1-8B / 12B+ Mistral-Nemo, all Q4_K_M; HF URLs verified live), a Foundation
 `ModelStore` is the model manager (list / **Files-sideload import** / delete /
 per-device `resolveActive`), and a Foundation `ModelDownloader` does the **Hugging
