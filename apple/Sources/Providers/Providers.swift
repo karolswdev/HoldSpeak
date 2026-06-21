@@ -49,6 +49,55 @@ public protocol IDesktopClient: Sendable {
     /// Honest egress descriptor for the badge (positioning canon: one badge, never a
     /// privacy novel). The companion talks to a LAN peer.
     var egressLabel: String { get }
+
+    // MARK: Meetings remote control (HSM-12-02)
+    // These DO throw on an unreachable/erroring peer — the view-model catches and
+    // renders the unreachable state, keeping the on-device runtime unaffected.
+
+    /// The server's meetings (`GET /api/meetings`).
+    func listMeetings() async throws -> [MeetingSummary]
+    /// The live runtime state (`GET /api/runtime/status`).
+    func runtimeState() async throws -> RuntimeState
+    /// Start a meeting on the desktop (`POST /api/meeting/start`), returning the
+    /// resulting live state.
+    func startMeeting(title: String?) async throws -> RuntimeState
+    /// Stop the active meeting on the desktop (`POST /api/meeting/stop`), returning
+    /// the resulting live state.
+    func stopMeeting() async throws -> RuntimeState
+}
+
+/// A meeting as the desktop's `GET /api/meetings` summarizes it (HSM-12-02). Decoded
+/// loosely — only `id` is required — so the client tolerates the server's payload
+/// evolving. Keys arrive snake_case and convert via the shared decoder.
+public struct MeetingSummary: Sendable, Equatable, Decodable, Identifiable {
+    public var id: String
+    public var title: String?
+    public var startedAt: Date?
+    public var endedAt: Date?
+    public var durationSeconds: Double?
+    public var segmentCount: Int?
+    public var actionItemCount: Int?
+    public var intelStatus: String?
+
+    public init(id: String, title: String? = nil, startedAt: Date? = nil, endedAt: Date? = nil,
+                durationSeconds: Double? = nil, segmentCount: Int? = nil,
+                actionItemCount: Int? = nil, intelStatus: String? = nil) {
+        self.id = id; self.title = title; self.startedAt = startedAt; self.endedAt = endedAt
+        self.durationSeconds = durationSeconds; self.segmentCount = segmentCount
+        self.actionItemCount = actionItemCount; self.intelStatus = intelStatus
+    }
+}
+
+/// The desktop's live runtime state (`GET /api/runtime/status`), HSM-12-02.
+public struct RuntimeState: Sendable, Equatable {
+    public var status: String          // "ok" when the runtime is up
+    public var mode: String?           // e.g. "web"
+    public var meetingActive: Bool
+    public var meetingId: String?
+
+    public init(status: String, mode: String? = nil, meetingActive: Bool = false, meetingId: String? = nil) {
+        self.status = status; self.mode = mode; self.meetingActive = meetingActive; self.meetingId = meetingId
+    }
 }
 
 /// The sync-facing view of the local store (HSM-10-01): modified-time tracking and
