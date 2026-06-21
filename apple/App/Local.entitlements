@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- HSM-5-02: hosting a real GGUF on the device needs more than the default
+         per-app memory ceiling. This entitlement raises it toward the device's
+         physical RAM, so a 4B/7B model isn't jetsam-killed on an 8GB iPad. -->
+    <key>com.apple.developer.kernel.increased-memory-limit</key>
+    <true/>
+</dict>
+</plist>

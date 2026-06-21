@@ -2,7 +2,10 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 5
-- **Status:** in-progress
+- **Status:** done (2026-06-20 — **Mode A proven on real metal**: Qwen3-4B-Instruct-2507
+  Q6_K hosted fully on the iPad Air M4, transcript → on-device artifacts, no network,
+  owner-witnessed. First iOS build linking the llama.cpp engine. See
+  [evidence-story-02.md](./evidence-story-02.md).)
 - **Depends on:** HSM-5-01
 - **Unblocks:** HSM-5-04, HSM-5-05, HSM-6-01
 - **Owner:** unassigned
