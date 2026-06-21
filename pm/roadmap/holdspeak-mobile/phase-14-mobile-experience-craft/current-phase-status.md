@@ -84,6 +84,7 @@ Pencil), accessibility + adaptivity, and a polish pass — each delivered with c
 | HSM-14-04 | Interaction craft (gesture, haptic, motion, Pencil) | backlog | story-04 | — |
 | HSM-14-05 | Accessibility + adaptivity | backlog | story-05 | — |
 | HSM-14-06 | Polish & craft QA (states, micro-copy, screenshot gallery) | backlog | story-06 | — |
+| HSM-14-07 | Voice correction — reject by voice → local model re-routes | in-progress | [story-07](./story-07-voice-correction.md) | host-tested + on iPad |
 
 ## Where we are
 
