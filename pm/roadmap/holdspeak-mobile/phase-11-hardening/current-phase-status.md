@@ -1,13 +1,25 @@
 # Phase 11 — Hardening
 
-**Status:** in-progress (scaffolded 2026-06-18; **HSM-11-06 done** — the first hardening
-landed: on-device generation robustness, host-side). Track L of the Council Implementation
+**Status:** in-progress (scaffolded 2026-06-18; **HSM-11-06 + HSM-11-07 done** — two host-side
+hardenings: on-device generation robustness + bounded windows for single-segment transcripts).
+Track L of the Council Implementation
 Charter — the final phase. It stresses the whole stack (audio + Whisper + local inference +
 persistence + sync + UI) against the charter's five real-world scenarios and declares
 production readiness. Closing this phase means the HoldSpeak Mobile Runtime ships.
 
-**Last updated:** 2026-06-21 (**HSM-11-06 done — on-device generation robustness
-(structured-output salvage).** A host-side hardening that flowed straight from the real-metal
+**Last updated:** 2026-06-21 (**HSM-11-07 done — bounded windows for single-segment
+transcripts.** HSM-8-07's chunking only bounded memory across *multiple* segments, but the
+on-device transcriber emits the whole meeting as **one giant segment** (`segments=1` in the
+real-metal log) and the old windowing kept an oversized segment whole — so a real hour-long
+meeting still overflowed the context. `TranscriptWindowing` now splits an oversized segment
+**internally**: `splitText` prefers sentence boundaries → words → a hard char-cut (text
+preserved exactly), and `splitOversized` interpolates sub-segment timing across the parent
+span (first keeps the parent's start). `windows()` runs it first, so every pass is genuinely
+bounded — the "memory flat regardless of length" promise made real on the *current*
+transcriber output. Public signature unchanged → the app benefits transparently. `swift test`
+**201/6-skip/0-fail (+4)**; no regressions. Pure RuntimeCore → no device needed. See
+[`evidence-story-07`](./evidence-story-07.md). Earlier: **HSM-11-06 done — on-device generation
+robustness (structured-output salvage).** A host-side hardening that flowed straight from the real-metal
 finding that a 22-min meeting dropped 3 of 4 artifact types to `noJSON`. `StructuredOutput`
 now does **balanced extraction** (first complete brace-balanced structure, string/escape
 aware — not first-`{`-to-last-`}`), **truncation salvage** (close an open string + brackets so
@@ -64,6 +76,7 @@ final gate.
 | HSM-11-04 | Suspend / resume + background audio | backlog | [story-04](./story-04-suspend-resume.md) | — |
 | HSM-11-05 | Production-readiness closeout (Gate 7) | backlog | [story-05](./story-05-production-readiness-closeout.md) | — |
 | HSM-11-06 | On-device generation robustness (structured-output salvage) | done | [story-06](./story-06-structured-output-robustness.md) | [evidence](./evidence-story-06.md) |
+| HSM-11-07 | Bounded windows for single-segment transcripts (intra-segment split) | done | [story-07](./story-07-bounded-windows-single-segment.md) | [evidence](./evidence-story-07.md) |
 
 ## Where we are
 

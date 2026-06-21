@@ -1,6 +1,13 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-21 (**HSM-11-06 DONE — on-device generation robustness
+**Last updated:** 2026-06-21 (**HSM-11-07 DONE — bounded windows for single-segment
+transcripts.** HSM-8-07's chunking only bounded memory across *multiple* segments, but the
+on-device transcriber emits the whole meeting as one giant segment, and the old windowing kept
+an oversized segment whole — so a real hour-long meeting still overflowed. `TranscriptWindowing`
+now splits an oversized segment internally (sentence → word → hard-cut, text preserved;
+sub-segment timing interpolated), so every pass is genuinely bounded — the chunking promise made
+real on the actual transcriber output. `swift test` **201/6-skip/0-fail (+4)**, no regressions,
+pure RuntimeCore (no device needed). Earlier: **HSM-11-06 DONE — on-device generation robustness
 (structured-output salvage).** First Phase-11 hardening, host-side, flowing from the real-metal
 finding that a 22-min meeting dropped 3 of 4 artifact types to `noJSON`. `StructuredOutput`
 now does balanced extraction (string/escape-aware, not first-`{`-to-last-`}`), truncation

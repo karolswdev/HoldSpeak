@@ -63,12 +63,49 @@ final class ChunkedExtractionTests: XCTestCase {
         XCTAssertEqual(windows[0].last?.startTime, windows[1].first?.startTime)
     }
 
-    func testOversizedSegmentIsKeptWholeNotDropped() {
-        let big = seg(String(repeating: "y", count: 400), 0)   // ~100 tokens alone
-        let small = seg(String(repeating: "z", count: 12), 1)  // ~3
-        let windows = TranscriptWindowing.windows([big, small], maxTokens: 10, overlap: 0)
-        XCTAssertTrue(windows.contains { $0.count == 1 && $0[0].startTime == 0 })
-        XCTAssertEqual(Set(windows.flatMap { $0 }.map { $0.startTime }), [0, 1])
+    // HSM-11-07 — a single giant segment (the on-device transcriber's reality) is split so
+    // every window fits the budget, not kept whole (which would overflow the context).
+    func testOversizedSegmentIsSplitSoEveryWindowFitsBudget() {
+        let big = seg(String(repeating: "y", count: 400), 0)   // ~100 tokens, unbroken
+        let windows = TranscriptWindowing.windows([big], maxTokens: 10, overlap: 0)
+        XCTAssertGreaterThan(windows.count, 1)                  // split, not kept whole
+        for w in windows {
+            XCTAssertLessThanOrEqual(OnDeviceBudget.transcriptTokens(w), 10)   // every pass bounded
+        }
+        // No text lost (no whitespace to trim in a run of 'y').
+        XCTAssertEqual(windows.flatMap { $0 }.reduce(0) { $0 + $1.text.count }, 400)
+    }
+
+    func testSplitTextPrefersSentenceBoundaries() {
+        let text = "First sentence here. Second sentence here. Third sentence here. Fourth one too."
+        let pieces = TranscriptWindowing.splitText(text, maxTokens: 6, estimate: OnDeviceBudget.estimateTokens)
+        XCTAssertGreaterThan(pieces.count, 1)
+        for p in pieces { XCTAssertLessThanOrEqual(OnDeviceBudget.estimateTokens(p), 6) }
+        XCTAssertTrue(pieces.allSatisfy { $0.hasSuffix(".") })   // broke at sentence ends
+        let joined = pieces.joined(separator: " ")
+        XCTAssertTrue(joined.contains("First") && joined.contains("Fourth"))   // coverage
+    }
+
+    func testSplitTextHardCutsAnUnbrokenSpan() {
+        let pieces = TranscriptWindowing.splitText(String(repeating: "x", count: 100),
+                                                   maxTokens: 5, estimate: OnDeviceBudget.estimateTokens)
+        XCTAssertGreaterThan(pieces.count, 1)
+        for p in pieces { XCTAssertLessThanOrEqual(OnDeviceBudget.estimateTokens(p), 5) }
+        XCTAssertEqual(pieces.joined().count, 100)   // no text lost
+    }
+
+    func testSplitOversizedInterpolatesTimingMonotonically() {
+        let big = Segment(text: String(repeating: "w ", count: 100), speaker: "S", startTime: 10, endTime: 70)
+        let parts = TranscriptWindowing.splitOversized([big], maxTokens: 10)
+        XCTAssertGreaterThan(parts.count, 1)
+        XCTAssertEqual(parts.first?.startTime, 10)               // first keeps the parent's start
+        for i in 1..<parts.count { XCTAssertGreaterThanOrEqual(parts[i].startTime, parts[i - 1].startTime) }
+        XCTAssertLessThanOrEqual(parts.last!.endTime, 70.0001)   // stays within the parent span
+    }
+
+    func testWithinBudgetSegmentPassesThroughUnsplit() {
+        let s = Segment(text: "short note", speaker: "S", startTime: 5, endTime: 6)
+        XCTAssertEqual(TranscriptWindowing.splitOversized([s], maxTokens: 100), [s])
     }
 
     func testEmptyTranscriptYieldsNoWindows() {

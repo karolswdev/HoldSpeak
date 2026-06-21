@@ -104,6 +104,14 @@ acceptance item, deferred per the owner ("not at my iPad — don't consider any 
 extract via chunking with no OOM, coherent merged set in review. Folds into the HSM-8-05
 air-gapped walkthrough at the reconvene.
 
+## Follow-up landed — HSM-11-07
+
+This story's windowing originally kept an oversized *single* segment whole (correctness over
+budget). But the on-device transcriber emits the whole meeting as one giant segment, so that
+exception was the normal case and left the per-pass budget unbounded. **HSM-11-07** (Phase 11)
+closed it: `windows()` now splits an oversized segment internally (sentence → word → hard-cut),
+so every pass is genuinely bounded on real transcriber output. The public API is unchanged.
+
 ## Notes / open questions
 
 - Overlap size is a tuning knob: enough that a decision straddling a boundary is
