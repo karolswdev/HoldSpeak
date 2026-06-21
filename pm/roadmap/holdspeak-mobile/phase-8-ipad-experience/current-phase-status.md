@@ -1,12 +1,24 @@
 # Phase 8 — iPad Experience
 
-**Status:** planning (scaffolded 2026-06-18). Track I of the Council
+**Status:** in-progress (1/6 — **HSM-8-01 done**: the on-device meeting-capture loop
+(record → live transcript → persist → reopen) ships as the `MeetingCapture` view-model +
+the `MeetingCaptureApp` iPad shell, host-tested and run live on a physical iPad). Track I of the Council
 Implementation Charter. The first Platform Host (Layer 4): the iPad app that
 turns the runtime into the charter's flagship experience — record a meeting, take
 PencilKit notes, link them to the transcript, and review the artifacts, all on an
 iPad Air/Pro M4.
 
-**Last updated:** 2026-06-20 (**elevated to the owner's richness bar.** Two stories
+**Last updated:** 2026-06-21 (**HSM-8-01 done — the on-device meeting-capture loop.**
+`MeetingCapture` (RuntimeCore) composes `IAudioCapture` + a transcriber factory + a
+`MeetingStore` seam: record → **windowed live transcript** (`tick()` re-transcribes the
+audio so far) → stop persists a `Meeting` → list/reopen-intact. Public inits added to
+`Meeting`/`IntelStatus`/`Bookmark` so on-device code can build a recording (Codable/schema
+unchanged). `MeetingCaptureApp` is a Signal iPad shell (meeting list + Record/Stop + live
+transcript + reopen) over a `WhisperKitTranscriber` + a `SQLiteMeetingStore`. `swift test`
+140/6-skip/0-fail (+7); the on-device transcription path is the same WhisperKit one proven
+on real metal in HSM-13-04; built + **launched live on a physical iPad Air M4**;
+screenshot of the entry surface committed. See [`evidence-story-01`](./evidence-story-01.md).
+Next: HSM-8-02 (the PencilKit notebook). Earlier: **elevated to the owner's richness bar.** Two stories
 added and the existing notebook/linking stories raised: HSM-8-05 makes the
 **air-gapped, fully-local notetaker** (iPad at a meeting, zero connectivity, Mode A
 on-device) a first-class scenario with its own gate, and HSM-8-06 makes the **magic
@@ -80,7 +92,7 @@ the Runtime Core, it does not own business logic.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HSM-8-01 | iPad shell + meeting capture | backlog | [story-01](./story-01-ipad-shell-meeting-capture.md) | — |
+| HSM-8-01 | iPad shell + meeting capture | done | [story-01](./story-01-ipad-shell-meeting-capture.md) | [evidence](./evidence-story-01.md) |
 | HSM-8-02 | PencilKit notebook | backlog | [story-02](./story-02-pencilkit-notebook.md) | — |
 | HSM-8-03 | Transcript linking | backlog | [story-03](./story-03-transcript-linking.md) | — |
 | HSM-8-04 | Artifact review + notebook closeout | backlog | [story-04](./story-04-artifact-review-closeout.md) | — |

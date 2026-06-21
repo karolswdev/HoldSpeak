@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 8
-- **Status:** backlog
+- **Status:** done (2026-06-21 — the `MeetingCapture` view-model (record → windowed live
+  transcript → persist → reopen) + the `MeetingCaptureApp` iPad shell ship; host-tested
+  and run live on a physical iPad. See [evidence-story-01](./evidence-story-01.md))
 - **Depends on:** HSM-1-01, HSM-2-01, HSM-3-02
 - **Unblocks:** HSM-8-02, HSM-8-03, HSM-8-04
 - **Owner:** unassigned
