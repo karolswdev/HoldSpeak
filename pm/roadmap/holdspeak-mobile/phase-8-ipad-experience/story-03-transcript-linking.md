@@ -2,7 +2,10 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 8
-- **Status:** backlog
+- **Status:** done (2026-06-21 — `TranscriptLinker` anchors notes/marks on a `Segment`
+  moment (resolves both ways, survives re-render, graceful with no transcript); a ★
+  mark-moment button + tap-to-jump in the detail. Host-tested + run live on a physical
+  iPad. See [evidence-story-03](./evidence-story-03.md))
 - **Depends on:** HSM-8-01, HSM-8-02
 - **Unblocks:** HSM-8-04
 - **Owner:** unassigned
