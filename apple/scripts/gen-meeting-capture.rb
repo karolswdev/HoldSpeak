@@ -16,8 +16,11 @@ TEAM = ENV.fetch('HS_TEAM', 'M84954HNL6')
 BUNDLE_ID = 'dev.holdspeak.mobile'
 DEPLOY = '17.0'
 
-LAYER_DIRS = %w[Sources/Contracts Sources/Providers Sources/RuntimeCore]
-INTRA_IMPORT = /^import\s+(Contracts|Providers|RuntimeCore)\s*$/
+# Includes InferenceLlama (the llama.cpp adapter) so the meeting can generate Phase-6
+# artifacts ON-DEVICE (Mode A) from its transcript for the HSM-8-04 review. `import LLM`
+# (the external package) is kept; only intra-package imports are stripped.
+LAYER_DIRS = %w[Sources/Contracts Sources/Providers Sources/RuntimeCore Sources/InferenceLlama]
+INTRA_IMPORT = /^import\s+(Contracts|Providers|RuntimeCore|InferenceLlama)\s*$/
 
 FileUtils.rm_rf(STAGE); FileUtils.mkdir_p(STAGE)
 staged = []; seen = {}
@@ -40,18 +43,24 @@ target = project.new_target(:application, 'HoldSpeakMobile', :ios, DEPLOY)
 group = project.new_group('Sources', STAGE)
 staged.each { |p| target.add_file_references([group.new_reference(p)]) }
 
-# --- Swift Package dependency: WhisperKit (on-device transcription) ---
-pkg = project.new(Xcodeproj::Project::Object::XCRemoteSwiftPackageReference)
-pkg.repositoryURL = 'https://github.com/argmaxinc/WhisperKit'
-pkg.requirement = { 'kind' => 'exactVersion', 'version' => '0.11.0' }
-project.root_object.package_references << pkg
-dep = project.new(Xcodeproj::Project::Object::XCSwiftPackageProductDependency)
-dep.package = pkg
-dep.product_name = 'WhisperKit'
-target.package_product_dependencies << dep
-bf = project.new(Xcodeproj::Project::Object::PBXBuildFile)
-bf.product_ref = dep
-target.frameworks_build_phase.files << bf
+# --- Swift Package dependencies: WhisperKit (transcription) + LLM.swift (on-device LLM) ---
+def add_pkg(project, target, url, requirement, product)
+  pkg = project.new(Xcodeproj::Project::Object::XCRemoteSwiftPackageReference)
+  pkg.repositoryURL = url
+  pkg.requirement = requirement
+  project.root_object.package_references << pkg
+  dep = project.new(Xcodeproj::Project::Object::XCSwiftPackageProductDependency)
+  dep.package = pkg
+  dep.product_name = product
+  target.package_product_dependencies << dep
+  bf = project.new(Xcodeproj::Project::Object::PBXBuildFile)
+  bf.product_ref = dep
+  target.frameworks_build_phase.files << bf
+end
+add_pkg(project, target, 'https://github.com/argmaxinc/WhisperKit',
+        { 'kind' => 'exactVersion', 'version' => '0.11.0' }, 'WhisperKit')
+add_pkg(project, target, 'https://github.com/eastriverlee/LLM.swift',
+        { 'kind' => 'upToNextMajorVersion', 'minimumVersion' => '2.1.0' }, 'LLM')
 
 info_plist = File.join(ROOT, 'App/Capture-Info.plist')
 target.build_configurations.each do |config|

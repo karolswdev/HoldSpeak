@@ -28,4 +28,11 @@ final class WhisperTextTests: XCTestCase {
         XCTAssertEqual(WhisperText.clean("<|startoftranscript|><|endoftext|>"), "")
         XCTAssertEqual(WhisperText.clean("   "), "")
     }
+
+    func testStripsNonSpeechMarkers() {
+        // HSM-8-04: recording a meeting off a speaker, WhisperKit emits these for silence/music.
+        XCTAssertEqual(WhisperText.clean("[BLANK_AUDIO]"), "")
+        XCTAssertEqual(WhisperText.clean("[MUSIC] ship it [BLANK_AUDIO]"), "ship it")
+        XCTAssertEqual(WhisperText.clean("we decided [INAUDIBLE] to use postgres"), "we decided to use postgres")
+    }
 }

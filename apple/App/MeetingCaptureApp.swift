@@ -228,11 +228,14 @@ private enum Sig {
     static let bg = Color(hex: 0x0E0F13)
     static let s1 = Color(hex: 0x15171D)
     static let s2 = Color(hex: 0x1C1F27)
+    static let s3 = Color(hex: 0x242833)
     static let line = Color.white.opacity(0.07)
     static let text = Color(hex: 0xF2F3F5)
     static let muted = Color(hex: 0x9BA2B0)
     static let faint = Color(hex: 0x767E8D)
     static let accent = Color(hex: 0xFF6B35)
+    static let ok = Color(hex: 0x3ECF8E)
+    static let warn = Color(hex: 0xF2A33C)
     static let bad = Color(hex: 0xE5544B)
     static let local = Color(hex: 0x5B8DEF)
 }
@@ -497,16 +500,97 @@ struct CaptureView: View {
     }
 }
 
+// MARK: - On-device artifact generation + review (HSM-8-04)
+
+@MainActor
+final class MeetingReviewState: ObservableObject {
+    let meeting: Meeting
+    @Published var artifacts: [Artifact] = []
+    @Published var profile: MIRProfile
+    @Published var generating = false
+    @Published var note = ""
+
+    private let storage: SQLiteStorage?
+
+    init(meeting: Meeting) {
+        self.meeting = meeting
+        self.profile = meeting.routingProfile
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        storage = try? SQLiteStorage(path: docs.appendingPathComponent("meetings.sqlite").path)
+        load()
+    }
+
+    func load() { artifacts = (try? storage?.loadArtifacts(meetingId: meeting.id)) ?? [] }
+
+    var groups: [ArtifactGroup] { ReviewModel(artifacts: artifacts).grouped(profile: profile) }
+    var pendingCount: Int { ReviewModel(artifacts: artifacts).pendingCount }
+
+    /// Generate the meeting's artifacts ON-DEVICE (Mode A): the MIR profile picks the
+    /// types, the local GGUF model drafts each, and they persist as proposals.
+    func generate() async {
+        guard !meeting.segments.isEmpty else { note = "No transcript to analyze."; return }
+        guard let modelPath = Self.localGGUF() else {
+            note = "No on-device model found. Push a .gguf to the app's Documents first."
+            return
+        }
+        generating = true; defer { generating = false }
+        do {
+            let provider = try LlamaProvider(modelPath: modelPath, maxTokenCount: 8192)
+            // maxAttempts: 2 keeps the bounded repair but halves the worst-case on-device
+            // cost vs the default 3 — each retry is a full completion on a 4B model.
+            let engine = ArtifactGenerationEngine(provider: provider, maxAttempts: 2)
+            let transcript = Transcript(meetingId: meeting.id, segments: meeting.segments,
+                                        transcriptHash: "ondevice-\(meeting.segments.count)")
+            // The profile's emphasis types, generated ONE AT A TIME so each artifact
+            // streams in as it lands — a multi-minute on-device run should feel alive,
+            // not a dead wait.
+            let types = MIRRouter.baseEmphasis[profile] ?? [.decisions, .actionItems, .requirements]
+            var any = false
+            for (i, type) in types.enumerated() {
+                note = "Generating \(artifactTypeLabel(type))…  (\(i + 1)/\(types.count))"
+                if let artifact = try? await engine.generate(type, from: transcript) {
+                    try? storage?.saveArtifact(artifact)
+                    any = true
+                    load()   // publish immediately — the user sees it appear
+                }
+            }
+            note = any ? "" : "The model returned nothing usable."
+        } catch {
+            note = "Generation failed: \(error)"
+        }
+    }
+
+    func approve(_ id: String) {
+        try? ReviewModel(artifacts: artifacts, store: storage).approve(id); load()
+    }
+    func reject(_ id: String) {
+        try? ReviewModel(artifacts: artifacts, store: storage).reject(id); load()
+    }
+
+    static func localGGUF() -> String? {
+        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return nil }
+        return ((try? FileManager.default.contentsOfDirectory(at: docs, includingPropertiesForKeys: nil)) ?? [])
+            .filter { $0.pathExtension.lowercased() == "gguf" }
+            .sorted { $0.lastPathComponent < $1.lastPathComponent }.first?.path
+    }
+}
+
+private func artifactTypeLabel(_ t: ArtifactType) -> String {
+    t.rawValue.replacingOccurrences(of: "_", with: " ").capitalized
+}
+
 // MARK: - Meeting detail (reopen-intact)
 
 struct MeetingDetailView: View {
     let meeting: Meeting
     @StateObject private var notes: NotebookModel
+    @StateObject private var review: MeetingReviewState
     private let links: [TranscriptLink]
 
     init(meeting: Meeting) {
         self.meeting = meeting
         _notes = StateObject(wrappedValue: NotebookModel(store: FileNotebookStore(), meetingID: meeting.id))
+        _review = StateObject(wrappedValue: MeetingReviewState(meeting: meeting))
         links = TranscriptLinker(store: FileLinkStore(), meetingID: meeting.id).links()
     }
 
@@ -541,6 +625,8 @@ struct MeetingDetailView: View {
                         }
                     }
 
+                    artifactsSection
+
                     Text("TRANSCRIPT").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.faint).padding(.top, 4)
                     if meeting.segments.isEmpty {
                         Text("No speech was transcribed.").font(.callout).foregroundStyle(Sig.faint)
@@ -562,5 +648,106 @@ struct MeetingDetailView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+    }
+
+    // MARK: artifact review (HSM-8-04)
+
+    @ViewBuilder private var artifactsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Text("INTELLIGENCE").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.accent)
+                Spacer()
+                egressBadge
+            }
+            Picker("Profile", selection: $review.profile) {
+                ForEach(MIRProfile.allCases, id: \.self) { Text($0.rawValue.capitalized).tag($0) }
+            }
+            .pickerStyle(.segmented)
+
+            if review.generating {
+                HStack(spacing: 8) {
+                    ProgressView().tint(Sig.accent)
+                    Text(review.note.isEmpty ? "Thinking on-device…" : review.note)
+                        .font(.caption).foregroundStyle(Sig.muted)
+                }
+                Text("Runs fully on this iPad — a few minutes for a 4B model, no network.")
+                    .font(.caption2).foregroundStyle(Sig.faint)
+            }
+
+            if review.artifacts.isEmpty {
+                if !review.generating {
+                    Text(review.note.isEmpty ? "Generate decisions, action items, risks and more from this meeting — fully on-device." : review.note)
+                        .font(.caption).foregroundStyle(Sig.faint)
+                    Button { Task { await review.generate() } } label: {
+                        HStack(spacing: 6) { Image(systemName: "sparkles"); Text("Generate on-device") }
+                            .font(.subheadline.weight(.semibold)).foregroundStyle(.black)
+                            .frame(maxWidth: .infinity).padding(.vertical, 12)
+                            .background(Sig.accent, in: RoundedRectangle(cornerRadius: 12))
+                    }
+                }
+            } else {
+                // Artifacts stream in as the model finishes each type.
+                ForEach(review.groups, id: \.type) { group in
+                    Text(artifactTypeLabel(group.type).uppercased())
+                        .font(.caption2.weight(.bold)).tracking(1).foregroundStyle(Sig.local).padding(.top, 4)
+                    ForEach(group.items, id: \.id) { a in artifactCard(a) }
+                }
+            }
+        }
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Sig.line, lineWidth: 1))
+    }
+
+    private func artifactCard(_ a: Artifact) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Text(a.title).font(.subheadline.weight(.semibold)).foregroundStyle(Sig.text)
+                Spacer()
+                statusChip(a.status)
+            }
+            if !a.bodyMarkdown.isEmpty {
+                Text(a.bodyMarkdown).font(.caption).foregroundStyle(Sig.muted).lineLimit(6)
+            }
+            if a.status == .draft || a.status == .needsReview {
+                HStack(spacing: 10) {
+                    Button { review.approve(a.id) } label: {
+                        Label("Approve", systemImage: "checkmark.circle.fill").font(.caption.weight(.semibold))
+                            .foregroundStyle(.black).padding(.horizontal, 12).padding(.vertical, 7)
+                            .background(Sig.ok, in: Capsule())
+                    }
+                    Button { review.reject(a.id) } label: {
+                        Label("Dismiss", systemImage: "xmark").font(.caption.weight(.semibold))
+                            .foregroundStyle(Sig.muted).padding(.horizontal, 12).padding(.vertical, 7)
+                            .background(Sig.s3, in: Capsule())
+                    }
+                }
+            }
+        }
+        .padding(12).background(Sig.s2, in: RoundedRectangle(cornerRadius: 11))
+        .overlay(RoundedRectangle(cornerRadius: 11).stroke(Sig.line, lineWidth: 1))
+    }
+
+    private func statusChip(_ s: ArtifactStatus) -> some View {
+        let (label, color): (String, Color) = {
+            switch s {
+            case .accepted: ("Approved", Sig.ok)
+            case .rejected: ("Dismissed", Sig.faint)
+            case .needsReview: ("Review", Sig.warn)
+            case .draft: ("Proposed", Sig.local)
+            }
+        }()
+        return Text(label).font(.caption2.weight(.bold)).foregroundStyle(color)
+            .padding(.horizontal, 8).padding(.vertical, 3)
+            .background(color.opacity(0.12), in: Capsule())
+    }
+
+    private var egressBadge: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "lock.fill").font(.caption2)
+            Text("on-device").font(.caption2.weight(.medium))
+        }
+        .foregroundStyle(Sig.ok).padding(.horizontal, 8).padding(.vertical, 4)
+        .background(Sig.ok.opacity(0.1), in: Capsule())
     }
 }

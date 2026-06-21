@@ -22,6 +22,7 @@ public final class MeetingCapture: @unchecked Sendable {
     private var _state: CaptureState = .idle
     private var startedAt: Date?
     private var meetingID: String?
+    private var lastGoodSegments: [Segment] = []   // last non-empty transcript (blank-pass fallback)
 
     public init(capture: IAudioCapture,
                 store: MeetingStore,
@@ -46,7 +47,7 @@ public final class MeetingCapture: @unchecked Sendable {
 
     /// Begin a recording. Audio accumulates on-device; the live transcript starts empty.
     public func start() {
-        locked { chunks.removeAll(); startedAt = now(); meetingID = makeID(); _state = .recording(liveTranscript: "") }
+        locked { chunks.removeAll(); lastGoodSegments = []; startedAt = now(); meetingID = makeID(); _state = .recording(liveTranscript: "") }
         do {
             try capture.start { [weak self] chunk in
                 guard let self else { return }
@@ -58,14 +59,22 @@ public final class MeetingCapture: @unchecked Sendable {
     }
 
     /// Re-transcribe the audio captured so far and update the live transcript. The view
-    /// drives this on a timer while recording; a no-op outside `.recording`.
+    /// drives this on a timer while recording; a no-op outside `.recording`. The last
+    /// **non-empty** result is remembered, so a later blank pass can't lose the take.
     public func tick() async {
         guard case .recording = state else { return }
         let captured = locked { chunks }
         guard !captured.isEmpty else { return }
         let segments = (try? await makeTranscriber(captured).transcribe()) ?? []
         let text = segments.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
-        locked { if case .recording = _state { _state = .recording(liveTranscript: text) } }
+        locked {
+            if !text.isEmpty { lastGoodSegments = segments }
+            if case .recording = _state {
+                // Don't flicker back to empty if this window came back blank.
+                let shown = text.isEmpty ? lastGoodSegments.map(\.text).joined(separator: " ") : text
+                _state = .recording(liveTranscript: shown)
+            }
+        }
     }
 
     /// Stop capture, transcribe the full take, persist the meeting, and return it. Lands
@@ -81,7 +90,12 @@ public final class MeetingCapture: @unchecked Sendable {
         let id = locked { meetingID } ?? makeID()
         let ended = now()
 
-        let segments = (try? await makeTranscriber(captured).transcribe()) ?? []
+        // A single pass over a long buffer can come back blank (WhisperKit emits
+        // [BLANK_AUDIO] for non-speech); when it does, keep the best live transcript
+        // rather than persist nothing (HSM-8-04 real-metal run caught this).
+        let finalSegs = (try? await makeTranscriber(captured).transcribe()) ?? []
+        let finalText = finalSegs.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        let segments = finalText.isEmpty ? locked { lastGoodSegments } : finalSegs
         let meeting = Meeting(
             id: id, startedAt: started, endedAt: ended,
             duration: ended.timeIntervalSince(started),
