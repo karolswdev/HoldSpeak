@@ -1,14 +1,24 @@
 # Phase 8 — iPad Experience
 
-**Status:** in-progress (1/6 — **HSM-8-01 done**: the on-device meeting-capture loop
-(record → live transcript → persist → reopen) ships as the `MeetingCapture` view-model +
-the `MeetingCaptureApp` iPad shell, host-tested and run live on a physical iPad). Track I of the Council
+**Status:** in-progress (2/6 — **HSM-8-01 + HSM-8-02 done**: the on-device
+meeting-capture loop + a rich PencilKit notebook (multi-page + tool picker, persisted per
+meeting and reloaded intact) — host-tested, screenshot-verified, run live on a physical
+iPad). Track I of the Council
 Implementation Charter. The first Platform Host (Layer 4): the iPad app that
 turns the runtime into the charter's flagship experience — record a meeting, take
 PencilKit notes, link them to the transcript, and review the artifacts, all on an
 iPad Air/Pro M4.
 
-**Last updated:** 2026-06-21 (**HSM-8-01 done — the on-device meeting-capture loop.**
+**Last updated:** 2026-06-21 (**HSM-8-02 done — the PencilKit notebook.** A `Notebook`
+view-model (RuntimeCore) round-trips PencilKit pages (serialized `PKDrawing` blobs) through
+a `NotebookStore` seam, keyed per meeting + versioned; UIKit-free, corrupt-blob-safe. The
+app gained a `PencilCanvas` (PKCanvasView + the system tool picker: pen/pencil/highlighter/
+eraser/ruler), `NotebookView` (multi-page + add-page), a `FileNotebookStore` behind the
+seam, a **Transcript / Notes** segmented control in the capture screen so ink + transcript
+coexist, and a notebook reload on the meeting detail. `swift test` 146/6-skip/0-fail (+6);
+screenshot-verified (the rich surface) + run live on a physical iPad. See
+[`evidence-story-02`](./evidence-story-02.md). Next: HSM-8-03 (transcript linking).
+Earlier: **HSM-8-01 done — the on-device meeting-capture loop.**
 `MeetingCapture` (RuntimeCore) composes `IAudioCapture` + a transcriber factory + a
 `MeetingStore` seam: record → **windowed live transcript** (`tick()` re-transcribes the
 audio so far) → stop persists a `Meeting` → list/reopen-intact. Public inits added to
@@ -93,7 +103,7 @@ the Runtime Core, it does not own business logic.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HSM-8-01 | iPad shell + meeting capture | done | [story-01](./story-01-ipad-shell-meeting-capture.md) | [evidence](./evidence-story-01.md) |
-| HSM-8-02 | PencilKit notebook | backlog | [story-02](./story-02-pencilkit-notebook.md) | — |
+| HSM-8-02 | PencilKit notebook | done | [story-02](./story-02-pencilkit-notebook.md) | [evidence](./evidence-story-02.md) |
 | HSM-8-03 | Transcript linking | backlog | [story-03](./story-03-transcript-linking.md) | — |
 | HSM-8-04 | Artifact review + notebook closeout | backlog | [story-04](./story-04-artifact-review-closeout.md) | — |
 | HSM-8-05 | The air-gapped notetaker (fully-local, zero-connectivity) | backlog | [story-05](./story-05-air-gapped-notetaker.md) | — |
