@@ -2,7 +2,10 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 12
-- **Status:** backlog
+- **Status:** done (2026-06-20 — the `CompanionShell` view-model + `CompanionShellApp`
+  present both the on-device runtime and the server in one Signal-language shell;
+  host-tested, screenshot-verified on the sim, and run live on a physical iPad. See
+  [evidence-story-03](./evidence-story-03.md))
 - **Depends on:** HSM-12-01, HSM-12-02
 - **Unblocks:** HSM-12-04
 - **Owner:** unassigned

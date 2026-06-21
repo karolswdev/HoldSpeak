@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>HoldSpeakMobile</string>
+    <key>CFBundleDisplayName</key>
+    <string>HoldSpeak</string>
+    <key>CFBundleIdentifier</key>
+    <string>dev.holdspeak.mobile</string>
+    <key>CFBundleExecutable</key>
+    <string>HoldSpeakMobile</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>MinimumOSVersion</key>
+    <string>17.0</string>
+    <key>UILaunchScreen</key>
+    <dict/>
+    <key>UIDeviceFamily</key>
+    <array>
+        <integer>1</integer>
+        <integer>2</integer>
+    </array>
+    <!-- The shell reaches a desktop on the owner's own LAN over plain HTTP. -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>HoldSpeak connects to your HoldSpeak desktop on your local network to show its meetings and the coder waiting on it.</string>
+</dict>
+</plist>

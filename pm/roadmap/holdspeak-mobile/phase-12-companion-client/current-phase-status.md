@@ -1,7 +1,9 @@
 # Phase 12 — The Companion Client
 
-**Status:** in-progress (2/4 — **HSM-12-01 + HSM-12-02 done**: the seam is live and
-meetings remote control (list/start/stop/live-state) is host-proven). **Track M —
+**Status:** in-progress (3/4 — **HSM-12-01 + HSM-12-02 + HSM-12-03 done**: the seam is
+live, meetings remote control is host-proven, and the unified Companion shell presents
+both the on-device runtime and the server in one Signal app — only HSM-12-04 (the Track M
+gate closeout) remains). **Track M —
 ratified into the charter as Amendment 1.1 (2026-06-20), co-canon with Rev 1.0.**
 The device stops being a launch stub and becomes a **first-class companion to the
 desktop/server you are already coding against**, without losing one ounce of its own
@@ -12,7 +14,17 @@ Built **native over the desktop's existing HTTP API** (owner call) — the same
 endpoints the web portal uses — so the experience is web-app-consistent and
 genuinely native, not a WebView shell. iPhone + iPad at parity (Amendment 1.1, Q4).
 
-**Last updated:** 2026-06-20 (**HSM-12-01 done — the desktop client seam + pairing,
+**Last updated:** 2026-06-20 (**HSM-12-03 done — the unified Companion shell.**
+`CompanionShell` (RuntimeCore) composes the HSM-12-01 link + HSM-12-02 meetings with the
+iPad's own `LocalRuntimeSummary` into one state; an unreachable desktop is a calm
+`localOnly` mode, never a blocked app. `CompanionShellApp` is a custom Signal shell — a
+3-tab bottom bar (Meetings / Dictate / Companion), a connect onboarding, meetings
+start/stop, and the "THIS iPAD" on-device peer shown first-class **alongside** the
+"DESKTOP" server card (the "not a dumb terminal" principle, made visible). `swift test`
+133/6-skip/0-fail (+4 `CompanionShellTests`); screenshot-verified on the iPad-Pro sim
+(connected + unreachable) and **run live on a physical iPad Air M4**. See
+[`evidence-story-03`](./evidence-story-03.md). Next: HSM-12-04 (the Track M gate
+closeout). Earlier: **HSM-12-01 done — the desktop client seam + pairing,
 host-proven.** `IDesktopClient` is a non-throwing `handshake() async ->
 DesktopConnection` seam (an unreachable desktop is a state, never an error on the
 caller path); `HTTPDesktopClient` + `DesktopPeer` pair host/port + token and probe
@@ -99,20 +111,22 @@ views present it.
 |---|---|---|---|---|
 | HSM-12-01 | Desktop client seam + pairing | **done** | [story-01](./story-01-desktop-client-seam.md) | [evidence-01](./evidence-story-01.md) |
 | HSM-12-02 | Meetings remote control | **done** | [story-02](./story-02-meetings-remote-control.md) | [evidence-02](./evidence-story-02.md) |
-| HSM-12-03 | The unified Companion shell | backlog | [story-03](./story-03-unified-companion-shell.md) | — |
+| HSM-12-03 | The unified Companion shell | done | [story-03](./story-03-unified-companion-shell.md) | [evidence](./evidence-story-03.md) |
 | HSM-12-04 | Track M gate closeout | backlog | [story-04](./story-04-companion-gate-closeout.md) | — |
 
 ## Where we are
 
-**HSM-12-01 is done** — the foundation (`IDesktopClient` seam + `HTTPDesktopClient`
-pairing/handshake/egress + the RuntimeCore `CompanionLink`) is host-proven against a
-fake desktop and a stubbed network, and it unblocks the rest. Next: meetings remote
-control (HSM-12-02), which consumes endpoints that already ship (`/api/meetings`,
-`/api/meeting/start|stop`, `/api/runtime/status`) through this seam; then the shell
-(HSM-12-03), where the web-app consistency and the "not a dumb terminal" principle
-become visible; then the gate (HSM-12-04), which needs an unlocked iPhone/iPad + a
-reachable desktop. Phase 13 (Answer the Coder) builds the voice-note-into-the-coder
-payoff on this same seam.
+**HSM-12-01 + 12-02 + 12-03 are done.** The seam (`IDesktopClient` +
+`HTTPDesktopClient` + `CompanionLink`) and meetings remote control are host-proven, and
+the **unified Companion shell** now makes the web-app consistency and the "not a dumb
+terminal" principle visible: `CompanionShell` composes the link + meetings with the
+iPad's own `LocalRuntimeSummary`, and `CompanionShellApp` shows the "THIS iPAD" on-device
+peer first-class **alongside** the "DESKTOP" server card, with a calm `localOnly` state
+when the desktop is away (screenshot-verified; run live on a physical iPad). What remains
+is **HSM-12-04 — the Track M gate closeout**: the full device walkthrough that re-proves
+on-device capability while paired (needs an unlocked iPhone/iPad + a reachable desktop).
+Phase 13 (Answer the Coder) — the voice-note-into-the-coder payoff on this same seam — is
+already **complete**.
 
 ## Active risks
 
