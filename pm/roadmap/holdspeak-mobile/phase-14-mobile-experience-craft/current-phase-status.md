@@ -13,8 +13,11 @@ sheet / chip components, `haptic()` wired) built and **proven on the hero meetin
 intelligence screen — committed Simulator screenshot** (`./screenshots/tactile-sheets.png`,
 iPhone 17 Pro Max). Swipe-to-approve reveal, draggable Regenerate/Ink sheet, egress as the
 single `Local` badge (caught + removed a banned "privacy novel" line mid-build). Built as a
-one-module `swiftc` simulator harness so craft is shown **without the device**. Next: adopt the
-system into the app's real screens (HSM-14-03). — the missing dimension. The mobile roadmap was all
+one-module `swiftc` simulator harness so craft is shown **without the device**. **HSM-14-03 started + on device:** the Tactile Sheets
+`SwipeableArtifactCard` is now adopted into the REAL app (`MeetingCaptureApp`) — swipe
+left→approve / right→dismiss with haptics, type-tinted over all 15 artifact types, elevated —
+wired to the live `review.approve`/`review.reject`, built + deployed to the iPad Air M4. Next
+under 14-03: the header + transcript card + a draggable bottom action sheet. — the missing dimension. The mobile roadmap was all
 engineering tracks (Council Charter A–N); there was no track that owned whether the app is
 **usable, designed, and modern** as a hand-driven (touch + Apple Pencil) product. Phase 14
 is that track. It is **proven in the iOS Simulator with committed screenshots** — design and
@@ -77,7 +80,7 @@ Pencil), accessibility + adaptivity, and a polish pass — each delivered with c
 |---|---|---|---|---|
 | HSM-14-01 | Native design system (Signal → SwiftUI tokens + components) | in-progress | [story-01](./story-01-native-design-system.md) | [shot](./screenshots/tactile-sheets.png) |
 | HSM-14-02 | The capture experience, recrafted (flagship moment) | backlog | story-02 | — |
-| HSM-14-03 | The meeting + intelligence surface, recrafted | backlog | story-03 | — |
+| HSM-14-03 | The meeting + intelligence surface, recrafted | in-progress | [story-03](./story-03-meeting-intelligence-recrafted.md) | swipeable cards live on device |
 | HSM-14-04 | Interaction craft (gesture, haptic, motion, Pencil) | backlog | story-04 | — |
 | HSM-14-05 | Accessibility + adaptivity | backlog | story-05 | — |
 | HSM-14-06 | Polish & craft QA (states, micro-copy, screenshot gallery) | backlog | story-06 | — |

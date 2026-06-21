@@ -4,6 +4,7 @@ import WhisperKit
 import PencilKit
 import Vision
 import os
+import UIKit
 
 // HSM-8-01 — the iPad's on-device meeting-capture loop. Open the app, see your
 // recordings, press Record, watch the transcript appear, stop to keep it. Capture
@@ -743,6 +744,127 @@ private func artifactTypeLabel(_ t: ArtifactType) -> String {
     t.rawValue.replacingOccurrences(of: "_", with: " ").capitalized
 }
 
+/// Per-type accent (HSM-14 Tactile Sheets — each artifact type reads at a glance).
+private func artifactTint(_ t: ArtifactType) -> Color {
+    switch t {
+    case .decisions, .decisionAnnouncement: return Sig.ok
+    case .actionItems, .milestonePlan: return Sig.accent
+    case .riskRegister, .incidentTimeline, .runbookDelta: return Sig.warn
+    case .requirements, .scopeReview, .dependencyMap: return Sig.local
+    default: return Sig.local
+    }
+}
+private func artifactGlyph(_ t: ArtifactType) -> String {
+    switch t {
+    case .decisions, .decisionAnnouncement: return "checkmark.seal.fill"
+    case .actionItems: return "bolt.fill"
+    case .riskRegister: return "exclamationmark.triangle.fill"
+    case .incidentTimeline: return "clock.badge.exclamationmark.fill"
+    case .requirements: return "list.bullet.rectangle.fill"
+    case .adr: return "doc.text.fill"
+    case .diagram, .dependencyMap: return "rectangle.3.group.fill"
+    case .milestonePlan: return "flag.checkered"
+    case .customerSignals, .stakeholderUpdate: return "person.2.fill"
+    default: return "sparkles"
+    }
+}
+/// A light tactile tap (HSM-14 — the app should feel hand-driven).
+private func tactile(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
+    UIImpactFeedbackGenerator(style: style).impactOccurred()
+}
+
+/// HSM-14-03 — the Tactile Sheets artifact card: gesture-first (swipe → approve / ← dismiss
+/// with haptics), tinted by type, elevated. Wired to the live review actions.
+struct SwipeableArtifactCard: View {
+    let artifact: Artifact
+    let ink: UIImage?
+    let onApprove: () -> Void
+    let onDismiss: () -> Void
+    @State private var dragX: CGFloat = 0
+
+    private var actionable: Bool { artifact.status == .draft || artifact.status == .needsReview }
+    private var tint: Color { artifactTint(artifact.artifactType) }
+
+    var body: some View {
+        ZStack {
+            HStack {
+                sideAction("xmark", "Dismiss", Sig.bad, active: dragX > 55)
+                Spacer()
+                sideAction("checkmark", "Approve", Sig.ok, active: dragX < -55)
+            }
+            face.offset(x: dragX).gesture(actionable ? drag : nil)
+        }
+    }
+
+    private var drag: some Gesture {
+        DragGesture(minimumDistance: 12)
+            .onChanged { g in dragX = max(-150, min(150, g.translation.width)) }
+            .onEnded { g in
+                if g.translation.width < -100 { tactile(.medium); onApprove() }
+                else if g.translation.width > 100 { tactile(.medium); onDismiss() }
+                withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) { dragX = 0 }
+            }
+    }
+
+    private var face: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 11) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 11, style: .continuous).fill(tint.opacity(0.16))
+                    Image(systemName: artifactGlyph(artifact.artifactType)).font(.system(size: 15, weight: .bold)).foregroundStyle(tint)
+                }.frame(width: 36, height: 36)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(artifactTypeLabel(artifact.artifactType)).font(.system(size: 12, weight: .heavy)).tracking(0.4).foregroundStyle(tint)
+                    Text(artifact.title).font(.system(size: 16, weight: .bold)).foregroundStyle(Sig.text).lineLimit(2)
+                }
+                Spacer(minLength: 4)
+                statusView
+            }
+            if let ink {
+                Image(uiImage: ink).resizable().scaledToFit().frame(maxHeight: 240).frame(maxWidth: .infinity)
+                    .background(Color.white, in: RoundedRectangle(cornerRadius: 10))
+            }
+            if !artifact.bodyMarkdown.isEmpty {
+                Text(artifact.bodyMarkdown).font(.system(size: 14)).foregroundStyle(Sig.muted).lineSpacing(2).lineLimit(5)
+            }
+            if actionable {
+                HStack(spacing: 6) {
+                    Image(systemName: "hand.draw").font(.system(size: 11, weight: .bold))
+                    Text("swipe → approve   ·   ← dismiss").font(.system(size: 12, weight: .semibold))
+                }.foregroundStyle(Sig.faint.opacity(0.85))
+            }
+        }
+        .padding(15)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Sig.line, lineWidth: 1))
+        .shadow(color: .black.opacity(0.3), radius: 14, x: 0, y: 8)
+    }
+
+    @ViewBuilder private var statusView: some View {
+        switch artifact.status {
+        case .accepted: pill("Approved", Sig.ok)
+        case .rejected: pill("Dismissed", Sig.faint)
+        default: Image(systemName: "circle.dashed").font(.system(size: 14, weight: .semibold)).foregroundStyle(Sig.faint)
+        }
+    }
+    private func pill(_ t: String, _ c: Color) -> some View {
+        Text(t).font(.system(size: 11, weight: .heavy)).foregroundStyle(c)
+            .padding(.horizontal, 9).padding(.vertical, 4).background(c.opacity(0.14), in: Capsule())
+    }
+    private func sideAction(_ sys: String, _ label: String, _ c: Color, active: Bool) -> some View {
+        VStack(spacing: 5) {
+            ZStack { Circle().fill(c.opacity(active ? 1 : 0.2))
+                Image(systemName: sys).font(.system(size: 18, weight: .heavy)).foregroundStyle(active ? .black : c) }
+                .frame(width: 44, height: 44)
+            Text(label).font(.system(size: 11, weight: .bold)).foregroundStyle(c)
+        }
+        .padding(.horizontal, 16)
+        .scaleEffect(active ? 1.12 : 0.9)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: active)
+    }
+}
+
 // MARK: - Meeting detail (reopen-intact)
 
 struct MeetingDetailView: View {
@@ -845,9 +967,12 @@ struct MeetingDetailView: View {
                     .font(.caption).foregroundStyle(Sig.faint)
             } else {
                 ForEach(review.groups, id: \.type) { group in
-                    Text(artifactTypeLabel(group.type).uppercased())
-                        .font(.caption2.weight(.bold)).tracking(1).foregroundStyle(Sig.local).padding(.top, 4)
-                    ForEach(group.items, id: \.id) { a in artifactCard(a) }
+                    ForEach(group.items, id: \.id) { a in
+                        SwipeableArtifactCard(
+                            artifact: a, ink: inkImage(a),
+                            onApprove: { review.approve(a.id) },
+                            onDismiss: { review.reject(a.id) })
+                    }
                 }
             }
 
