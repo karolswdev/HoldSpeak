@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** done (2026-06-20 — the `CompanionBoard` seam + view-model surface the
+  waiting coders and make the selected reply target unmistakable; host-tested, board UI
+  shipped in `CompanionAnswerApp`. See [evidence-story-03](./evidence-story-03.md))
 - **Depends on:** HSM-12-01 (seam), HSM-12-03 (the Companion nav slot)
 - **Unblocks:** HSM-13-04
 - **Owner:** unassigned

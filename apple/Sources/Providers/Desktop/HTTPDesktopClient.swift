@@ -167,9 +167,78 @@ public struct HTTPDesktopClient: IDesktopClient {
         catch { throw DesktopClientError.malformed }
     }
 
+    // MARK: - The Companion board (HSM-13-03)
+
+    public func companionStatus() async throws -> CompanionBoardState {
+        let data = try await send(makeRequest(path: "api/companion/status"))
+        guard let dto = try? HoldSpeakContracts.decoder().decode(CompanionStatusDTO.self, from: data) else {
+            throw DesktopClientError.malformed
+        }
+        return dto.toState()
+    }
+
+    public func selectCompanionTarget(agent: String, sessionID: String) async throws {
+        _ = try await send(makeJSONRequest(path: "api/companion/select",
+                                           body: ["agent": agent, "session_id": sessionID]))
+    }
+
+    public func dismissCompanionTarget(agent: String, sessionID: String) async throws {
+        _ = try await send(makeJSONRequest(path: "api/companion/dismiss",
+                                           body: ["agent": agent, "session_id": sessionID]))
+    }
+
+    public func pinCompanionTarget(agent: String, sessionID: String, pinned: Bool) async throws {
+        // `pinned` MUST ride as a JSON bool — the desktop does `bool(body.get("pinned"))`,
+        // and a string "false" would read truthy. makeJSONRequest keeps it a real bool.
+        _ = try await send(makeJSONRequest(path: "api/companion/pin",
+                                           body: ["agent": agent, "session_id": sessionID, "pinned": pinned]))
+    }
+
     // MARK: - internals
 
     struct MeetingsEnvelope: Decodable { var meetings: [MeetingSummary] }
+
+    /// Loose decode of `/api/companion/status` — only what the board needs, every
+    /// field optional so the client tolerates the rich payload evolving. Keys arrive
+    /// snake_case and convert via the shared decoder.
+    struct CompanionStatusDTO: Decodable {
+        var readyForAgentReply: Bool?
+        var blockers: [String]?
+        var agent: Agent?
+
+        struct Agent: Decodable {
+            var awaitingResponse: Bool?
+            var sessions: Sessions?
+            struct Sessions: Decodable { var items: [Item]? }
+            struct Item: Decodable {
+                var selected: Bool?
+                var pinned: Bool?
+                var stale: Bool?
+                var session: Session?
+                var identity: Identity?
+                struct Session: Decodable {
+                    var agent: String?
+                    var sessionId: String?
+                    var lastAssistantText: String?
+                    var projectName: String?
+                }
+                struct Identity: Decodable { var targetConfidence: String? }
+            }
+        }
+
+        func toState() -> CompanionBoardState {
+            let targets = (agent?.sessions?.items ?? []).compactMap { item -> CompanionTarget? in
+                guard let s = item.session, let a = s.agent, let sid = s.sessionId else { return nil }
+                return CompanionTarget(
+                    agent: a, sessionID: sid, question: s.lastAssistantText, project: s.projectName,
+                    selected: item.selected ?? false, pinned: item.pinned ?? false,
+                    stale: item.stale ?? false, confidence: item.identity?.targetConfidence)
+            }
+            return CompanionBoardState(
+                readyForReply: readyForAgentReply ?? false, blockers: blockers ?? [],
+                awaiting: agent?.awaitingResponse ?? false, targets: targets)
+        }
+    }
 
     /// Loose decode of `/api/runtime/status` — every field optional so the client
     /// tolerates the desktop payload evolving (the codebase's robust-decode posture).
@@ -216,6 +285,22 @@ public struct HTTPDesktopClient: IDesktopClient {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try? JSONSerialization.data(withJSONObject: jsonBody)
         }
+        return request
+    }
+
+    /// A POST with a heterogeneous JSON body (e.g. a real bool for `pinned`). Keeps
+    /// the raw snake_case keys the desktop's control routes read verbatim.
+    private func makeJSONRequest(path: String, body: [String: Any]) -> URLRequest {
+        let base = config.baseURL.absoluteString.hasSuffix("/")
+            ? String(config.baseURL.absoluteString.dropLast()) : config.baseURL.absoluteString
+        var request = URLRequest(url: URL(string: "\(base)/\(path)") ?? config.baseURL)
+        request.httpMethod = "POST"
+        request.timeoutInterval = config.timeout
+        if let token = config.token, !token.isEmpty {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         return request
     }
 

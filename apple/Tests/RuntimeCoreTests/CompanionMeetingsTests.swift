@@ -17,6 +17,10 @@ final class CompanionMeetingsTests: XCTestCase {
         var started: [String?] = []
         var stopped = 0
         var remoteSent: [String] = []
+        var board = CompanionBoardState()
+        var selected: [(String, String)] = []
+        var dismissed: [(String, String)] = []
+        var pinnedCalls: [(String, String, Bool)] = []
         init(meetings: [MeetingSummary] = [], state: RuntimeState = RuntimeState(status: "ok"), reachable: Bool = true) {
             self.meetings = meetings; self.state = state; self.reachable = reachable
         }
@@ -36,6 +40,29 @@ final class CompanionMeetingsTests: XCTestCase {
             if !reachable { throw Down() }
             remoteSent.append(text)
             return RemoteDictationResult(success: true, finalText: text, delivered: true)
+        }
+        func companionStatus() async throws -> CompanionBoardState {
+            if !reachable { throw Down() }
+            return board
+        }
+        func selectCompanionTarget(agent: String, sessionID: String) async throws {
+            if !reachable { throw Down() }
+            selected.append((agent, sessionID))
+            board.targets = board.targets.map {
+                var t = $0; t.selected = (t.agent == agent && t.sessionID == sessionID); return t
+            }
+        }
+        func dismissCompanionTarget(agent: String, sessionID: String) async throws {
+            if !reachable { throw Down() }
+            dismissed.append((agent, sessionID))
+            board.targets.removeAll { $0.agent == agent && $0.sessionID == sessionID }
+        }
+        func pinCompanionTarget(agent: String, sessionID: String, pinned: Bool) async throws {
+            if !reachable { throw Down() }
+            pinnedCalls.append((agent, sessionID, pinned))
+            board.targets = board.targets.map {
+                var t = $0; if t.agent == agent && t.sessionID == sessionID { t.pinned = pinned }; return t
+            }
         }
     }
 

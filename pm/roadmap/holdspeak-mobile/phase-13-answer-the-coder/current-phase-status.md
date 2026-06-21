@@ -1,9 +1,8 @@
 # Phase 13 — Answer the Coder
 
-**Status:** in-progress (3/4 — **Track N gate ACHIEVED (HSM-13-04 done)**: a question
-surfaced on a physical iPad, answered by a spoken voice note transcribed **on-device**,
-delivered into a live tmux coder. Only HSM-13-03 (the Companion board, multi-target
-selection) remains). **Track N — added by owner steer
+**Status:** COMPLETE (4/4 — **Track N gate ACHIEVED** + the Companion board shipped.
+Answer the coder by voice from the iPad — surface the waiting coder(s), pick the target,
+speak, transcribe on-device, deliver — is real end to end). **Track N — added by owner steer
 (2026-06-20), outside the original charter's Tracks A–L.** This is the payoff of
 the companion track and the scenario the owner painted in his own words:
 
@@ -21,8 +20,16 @@ That is the AI PI ("AI Pie") companion loop, driven from the iPad for the first
 time. Built native over the desktop HTTP API (owner call), on the Phase-12 client
 foundation.
 
-**Last updated:** 2026-06-20 (**HSM-13-04 DONE — the answer-the-coder gate ACHIEVED by
-voice.** A real on-device voice answer app (`CompanionAnswerApp` + `WhisperKitTranscriber`
+**Last updated:** 2026-06-20 (**HSM-13-03 DONE — the Companion board; PHASE 13 COMPLETE
+(4/4).** A `CompanionBoard` seam (`companionStatus`/`select`/`dismiss`/`pin` over
+`/api/companion/*`) + RuntimeCore view-model surface the waiting coder(s) and make the
+selected reply target unmistakable; selection is server-side so the next answer delivers
+to it with no silent default. `CompanionAnswerApp` renders the board (each waiting coder
++ its question, confidence, pin/stale; "Answer this one" → "Your answer lands here").
+`swift test` 129/6-skip/0-fail (+7 `CompanionBoardTests`: render, select-makes-active,
+pin/unpin, dismiss, honest-empty, unreachable→failure); the app builds for device. See
+[`evidence-story-03`](./evidence-story-03.md). **Phase 13 — Answer the Coder is done.**
+Earlier: **HSM-13-04 DONE — the answer-the-coder gate ACHIEVED by voice.** A real on-device voice answer app (`CompanionAnswerApp` + `WhisperKitTranscriber`
 driving the HSM-13-02 `VoiceNoteComposer` over `AudioCaptureService` + WhisperKit) lets
 the iPad surface the waiting question, record a spoken answer, transcribe it **on-device**,
 review, and deliver it into the coder. Proven on a physical iPad Air M4: the question
@@ -117,9 +124,10 @@ explicit send.
       it into pipeline-processed dictation text ready to deliver (HSM-13-02).
       *(`VoiceNoteComposer` view-model + seams, host-tested; live on-device run folds
       into HSM-13-04.)*
-- [ ] The iPad surfaces the AI PI companion state (waiting sessions, selected
+- [x] The iPad surfaces the AI PI companion state (waiting sessions, selected
       target, confidence, blockers) from `/api/companion/status` and can pick the
-      target session via `select`/`dismiss`/`pin` (HSM-13-03).
+      target session via `select`/`dismiss`/`pin` (HSM-13-03). *(`CompanionBoard` seam +
+      view-model + board UI; host-tested. Server-side selection routes the answer.)*
 - [x] **Track N gate — answer the coder, end to end:** in a real coding session
       (tmux + hooks → desktop server) an agent's question is surfaced on a physical
       iPad, answered by a native voice note, and the answer lands back in that coder
@@ -134,7 +142,7 @@ explicit send.
 |---|---|---|---|---|
 | HSM-13-01 | Remote-dictation inject path (desktop + client) | done | [story-01](./story-01-remote-dictation-inject.md) | [evidence](./evidence-story-01.md) |
 | HSM-13-02 | Native voice-note capture → dictation | done | [story-02](./story-02-voice-note-capture.md) | [evidence](./evidence-story-02.md) |
-| HSM-13-03 | The Companion board (the agent's question on the iPad) | backlog | [story-03](./story-03-companion-board.md) | — |
+| HSM-13-03 | The Companion board (the agent's question on the iPad) | done | [story-03](./story-03-companion-board.md) | [evidence](./evidence-story-03.md) |
 | HSM-13-04 | Answer-the-coder gate closeout | done | [story-04](./story-04-answer-the-coder-closeout.md) | [evidence](./evidence-story-04.md) · [final-summary](./final-summary.md) |
 
 ## Where we are
@@ -153,10 +161,13 @@ it **on-device** with WhisperKit (a real `WhisperKitTranscriber` driving the HSM
 live coder — proven on a physical iPad Air M4 (question surfaced → spoken answer →
 on-device transcript → landed in a live tmux pane, never autonomously). The first run
 caught a Whisper control-token leak in the delivered text; fixed with the unit-tested
-`WhisperText.clean` and redeployed. The on-device-Whisper "last mile" is closed. The one
-remaining story in the phase is the **Companion board** (HSM-13-03) — surfacing *which*
-of several waiting coders an answer targets (`select`/`pin`); this gate surfaced the
-single waiting question and delivered to it. Next: HSM-13-03 to finish Phase 13.
+`WhisperText.clean` and redeployed. The on-device-Whisper "last mile" is closed. The **Companion board** (HSM-13-03)
+now closes the phase: a `CompanionBoard` seam + view-model surface the waiting coder(s)
+and make the selected reply target unmistakable (`select`/`dismiss`/`pin`), with
+server-side selection routing the answer — no silent default. **Phase 13 — Answer the
+Coder is complete (4/4).** The companion track's payoff is real: point the iPad at the
+same server you code against, see the agent's question, pick the target, and answer by
+voice — transcribed on-device, delivered into the coder, never autonomously.
 
 ## Active risks
 
