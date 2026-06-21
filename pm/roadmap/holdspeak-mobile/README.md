@@ -1,7 +1,13 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-20 (**HSM-12-01 done — the Companion track's first code
-ships: the desktop client seam.** `IDesktopClient` is a non-throwing `handshake()
+**Last updated:** 2026-06-20 (**HSM-12-02 done — meetings remote control (host-proven).**
+The `IDesktopClient` seam grew the meeting verbs — `listMeetings` / `runtimeState` /
+`startMeeting` / `stopMeeting` — over the desktop's existing endpoints (`/api/meetings`,
+`/api/meeting/start|stop`, `/api/runtime/status`), decoded to the server's exact wire
+shape; the RuntimeCore `CompanionMeetings` view-model returns `Result`s so an
+unreachable desktop degrades to a rendered failure (never a throw on the caller path).
+`swift test` **105 passed / 6 skipped / 0 failed** (+9). Next: HSM-12-03 (the shell).
+Earlier: **HSM-12-01 done — the Companion track's first code ships: the desktop client seam.** `IDesktopClient` is a non-throwing `handshake()
 async -> DesktopConnection` seam (an unreachable desktop is a state, never an error);
 `HTTPDesktopClient` + `DesktopPeer` pair host/port + token and probe `/health` +
 `/api/runtime/status` over the desktop's existing API, honest `local + LAN → <host>`
@@ -237,9 +243,9 @@ first-class, on iPhone + iPad at parity**: (1) the **Companion track**
 — point the iPad at the server you code against and **answer the coder by voice**
 (Phase 12 → 13, the Answer-the-Coder payoff), and (2) the **air-gapped fully-local
 notetaker** with a magic pencil that feeds the output (Phase 8, elevated: HSM-8-05 +
-HSM-8-06). **HSM-12-01 (the desktop client seam) is done — the spine is in.** Next →
-[HSM-12-02](./phase-12-companion-client/story-02-meetings-remote-control.md) (meetings
-remote control over the existing endpoints, host-testable against a fake desktop).
+HSM-8-06). **HSM-12-01 (seam) + HSM-12-02 (meetings remote control) are done.** Next →
+[HSM-12-03](./phase-12-companion-client/story-03-unified-companion-shell.md) (the
+unified Signal shell that renders the seam — on-device runtime + server in one app).
 The on-device richness (HSM-8-05/06) sequences behind Phase 6 + HSM-5-02 (Mode A) and
 the iPad unlock; build its host-testable seams first, then gate on device.
 Sync (Phase 10) continues in parallel but is plumbing, not the headline value.
@@ -314,7 +320,7 @@ WebView, or UIKit.
 | 9 | J | iPhone experience: Quick Capture / Capture / Review Queue / Voice Notes — **+ companion + answer-the-coder + air-gapped notetaker at iPad parity** (Amendment 1.1) | not-started | [phase-9](./phase-9-iphone-experience/) |
 | 10 | K | Sync to desktop / homelab / Tailscale — cross-device continuity | in-progress (object model + transport + conflict + `SyncCoordinator` orchestration host-proven; only the live cross-device walkthrough (device) remains) | [phase-10](./phase-10-sync/) |
 | 11 | L | Hardening: the five stress scenarios **+ companion failure scenarios** (Gate 7 extended), production readiness — **runs last** (after 12–13, per Amendment 1.1) | not-started | [phase-11](./phase-11-hardening/) |
-| 12 | M | **The Companion Client:** point the iPhone/iPad at the same server you code against — a unified shell (on-device runtime + server, never a dumb terminal) + meetings remote control | **in-progress (1/4 — HSM-12-01 seam done)** | [phase-12](./phase-12-companion-client/) |
+| 12 | M | **The Companion Client:** point the iPhone/iPad at the same server you code against — a unified shell (on-device runtime + server, never a dumb terminal) + meetings remote control | **in-progress (2/4 — HSM-12-01 seam + HSM-12-02 meetings remote control done)** | [phase-12](./phase-12-companion-client/) |
 | 13 | N | **Answer the Coder:** the AI PI payoff — the agent's question surfaces on the device, you answer by native voice note, it lands back in the coder session | not-started (scaffolded 2026-06-20) | [phase-13](./phase-13-answer-the-coder/) |
 
 **Tracks M–N (Phases 12–13)** were added by owner steer (2026-06-20) and **ratified

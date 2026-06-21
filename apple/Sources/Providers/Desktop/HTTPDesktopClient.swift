@@ -127,7 +127,40 @@ public struct HTTPDesktopClient: IDesktopClient {
         }
     }
 
+    // MARK: - Meetings remote control (HSM-12-02)
+
+    public enum DesktopClientError: Error, Equatable { case http(Int), malformed }
+
+    public func listMeetings() async throws -> [MeetingSummary] {
+        let data = try await send(makeRequest(path: "api/meetings"))
+        do { return try HoldSpeakContracts.decoder().decode(MeetingsEnvelope.self, from: data).meetings }
+        catch { throw DesktopClientError.malformed }
+    }
+
+    public func runtimeState() async throws -> RuntimeState {
+        let data = try await send(makeRequest(path: "api/runtime/status"))
+        guard let dto = try? HoldSpeakContracts.decoder().decode(RuntimeStatusDTO.self, from: data) else {
+            throw DesktopClientError.malformed
+        }
+        return dto.toState()
+    }
+
+    /// `POST /api/meeting/start`, then read back the resulting live state so the
+    /// caller reflects what actually happened on the desktop.
+    public func startMeeting(title: String?) async throws -> RuntimeState {
+        let body = title.map { ["title": $0] }
+        _ = try await send(makeRequest(path: "api/meeting/start", method: "POST", jsonBody: body))
+        return try await runtimeState()
+    }
+
+    public func stopMeeting() async throws -> RuntimeState {
+        _ = try await send(makeRequest(path: "api/meeting/stop", method: "POST"))
+        return try await runtimeState()
+    }
+
     // MARK: - internals
+
+    struct MeetingsEnvelope: Decodable { var meetings: [MeetingSummary] }
 
     /// Loose decode of `/api/runtime/status` — every field optional so the client
     /// tolerates the desktop payload evolving (the codebase's robust-decode posture).
@@ -136,22 +169,43 @@ public struct HTTPDesktopClient: IDesktopClient {
         var status: String?
         var mode: String?
         var meetingActive: Bool?
+        var meetingId: String?
 
         var summary: String {
             if meetingActive == true { return "meeting active" }
             let s = status ?? "unknown"
             return mode.map { "\(s) · \($0)" } ?? s
         }
+
+        func toState() -> RuntimeState {
+            RuntimeState(status: status ?? "unknown", mode: mode,
+                         meetingActive: meetingActive ?? false, meetingId: meetingId)
+        }
     }
 
-    private func makeRequest(path: String) -> URLRequest {
+    /// Run a request, throwing `DesktopClientError.http` on a non-2xx (so the verb
+    /// methods surface a real failure the view-model can render as unreachable).
+    private func send(_ request: URLRequest) async throws -> Data {
+        let (data, response) = try await session.data(for: request)
+        if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+            throw DesktopClientError.http(http.statusCode)
+        }
+        return data
+    }
+
+    private func makeRequest(path: String, method: String = "GET",
+                             jsonBody: [String: String]? = nil) -> URLRequest {
         let base = config.baseURL.absoluteString.hasSuffix("/")
             ? String(config.baseURL.absoluteString.dropLast()) : config.baseURL.absoluteString
         var request = URLRequest(url: URL(string: "\(base)/\(path)") ?? config.baseURL)
-        request.httpMethod = "GET"
+        request.httpMethod = method
         request.timeoutInterval = config.timeout
         if let token = config.token, !token.isEmpty {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        if let jsonBody {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try? JSONSerialization.data(withJSONObject: jsonBody)
         }
         return request
     }

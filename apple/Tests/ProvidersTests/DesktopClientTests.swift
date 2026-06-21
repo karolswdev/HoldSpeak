@@ -14,11 +14,13 @@ final class DesktopClientTests: XCTestCase {
         /// path -> (status, body). A missing path → network failure (simulated down).
         nonisolated(unsafe) static var routes: [String: (Int, Data)] = [:]
         nonisolated(unsafe) static var lastAuth: String??
+        nonisolated(unsafe) static var lastMethod: String?
         nonisolated(unsafe) static var failEverything = false
         override class func canInit(with request: URLRequest) -> Bool { true }
         override class func canonicalRequest(for r: URLRequest) -> URLRequest { r }
         override func startLoading() {
             StubProtocol.lastAuth = request.value(forHTTPHeaderField: "Authorization")
+            StubProtocol.lastMethod = request.httpMethod
             let path = request.url?.path ?? ""
             if StubProtocol.failEverything || StubProtocol.routes[path] == nil {
                 client?.urlProtocol(self, didFailWithError: URLError(.cannotConnectToHost))
@@ -135,5 +137,61 @@ final class DesktopClientTests: XCTestCase {
         _ = await c.handshake()
         XCTAssertEqual(StubProtocol.lastAuth, "Bearer s3cret")   // joined at call time
         XCTAssertFalse(c.egressLabel.contains("s3cret"))         // never leaked to the badge
+    }
+
+    // MARK: meetings remote control (HSM-12-02)
+
+    func testListMeetingsDecodesServerShape() async throws {
+        StubProtocol.routes = ["/api/meetings": (200, Data(#"""
+        {"meetings":[
+          {"id":"m1","title":"Arch review","started_at":"2026-06-20T10:00:00Z","ended_at":null,
+           "duration_seconds":1800,"segment_count":42,"action_item_count":3,"intel_status":"ready"},
+          {"id":"m2","title":"Standup","started_at":"2026-06-19T09:00:00Z","duration_seconds":600}
+        ],"total":2}
+        """#.utf8))]
+        let meetings = try await client().listMeetings()
+        XCTAssertEqual(meetings.count, 2)
+        XCTAssertEqual(meetings[0].id, "m1")
+        XCTAssertEqual(meetings[0].title, "Arch review")
+        XCTAssertEqual(meetings[0].actionItemCount, 3)
+        XCTAssertEqual(meetings[0].intelStatus, "ready")
+        XCTAssertEqual(meetings[1].id, "m2")          // second decodes with fields absent
+        XCTAssertNil(meetings[1].endedAt)
+    }
+
+    func testRuntimeStateDecodesActiveMeeting() async throws {
+        StubProtocol.routes = ["/api/runtime/status": (200,
+            runtimeStatus(#"{"status":"ok","mode":"web","meeting_active":true,"meeting_id":"m9"}"#))]
+        let s = try await client().runtimeState()
+        XCTAssertEqual(s.status, "ok")
+        XCTAssertTrue(s.meetingActive)
+        XCTAssertEqual(s.meetingId, "m9")
+    }
+
+    func testStartMeetingPostsThenReflectsLiveState() async throws {
+        StubProtocol.routes = [
+            "/api/meeting/start": (200, Data(#"{"success":true}"#.utf8)),
+            "/api/runtime/status": (200, runtimeStatus(#"{"status":"ok","meeting_active":true,"meeting_id":"m1"}"#)),
+        ]
+        let s = try await client().startMeeting(title: "Kickoff")
+        XCTAssertEqual(StubProtocol.lastMethod, "GET")   // last call is the status read-back
+        XCTAssertTrue(s.meetingActive)
+        XCTAssertEqual(s.meetingId, "m1")
+    }
+
+    func testStopMeetingPostsThenReflectsIdle() async throws {
+        StubProtocol.routes = [
+            "/api/meeting/stop": (200, Data(#"{"success":true}"#.utf8)),
+            "/api/runtime/status": (200, runtimeStatus(#"{"status":"ok","meeting_active":false}"#)),
+        ]
+        let s = try await client().stopMeeting()
+        XCTAssertFalse(s.meetingActive)
+    }
+
+    func testListMeetingsHTTPErrorThrows() async {
+        StubProtocol.routes = ["/api/meetings": (500, Data())]
+        do { _ = try await client().listMeetings(); XCTFail("expected throw") }
+        catch HTTPDesktopClient.DesktopClientError.http(let code) { XCTAssertEqual(code, 500) }
+        catch { XCTFail("wrong error: \(error)") }
     }
 }

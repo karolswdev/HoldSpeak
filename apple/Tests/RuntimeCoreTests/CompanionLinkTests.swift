@@ -15,6 +15,11 @@ final class CompanionLinkTests: XCTestCase {
         init(_ connection: DesktopConnection) { self.connection = connection }
         func handshake() async -> DesktopConnection { probes += 1; return connection }
         var egressLabel: String { "local + LAN → fake.desk" }
+        // HSM-12-02 verbs — unused by these tests; default stubs to satisfy the seam.
+        func listMeetings() async throws -> [MeetingSummary] { [] }
+        func runtimeState() async throws -> RuntimeState { RuntimeState(status: "ok") }
+        func startMeeting(title: String?) async throws -> RuntimeState { RuntimeState(status: "ok", meetingActive: true) }
+        func stopMeeting() async throws -> RuntimeState { RuntimeState(status: "ok") }
     }
 
     func testProbeReportsReadyConnection() async {

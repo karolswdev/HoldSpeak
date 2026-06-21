@@ -2,7 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 12
-- **Status:** backlog
+- **Status:** done (2026-06-20 — `IDesktopClient` meeting verbs (list/start/stop/
+  live-state) + `HTTPDesktopClient` impl over the existing endpoints + the
+  `CompanionMeetings` view-model (Result-based, unreachable degrades gracefully);
+  `swift test` 105 passed / 6 skipped / 0 failed (+9). Detail+artifact rendering
+  rides HSM-12-03. See [evidence-02](./evidence-story-02.md).)
 - **Depends on:** HSM-12-01
 - **Unblocks:** HSM-12-03, HSM-12-04
 - **Owner:** unassigned

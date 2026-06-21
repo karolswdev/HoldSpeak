@@ -1,6 +1,7 @@
 # Phase 12 — The Companion Client
 
-**Status:** in-progress (1/4 — **HSM-12-01 done**, the seam is live). **Track M —
+**Status:** in-progress (2/4 — **HSM-12-01 + HSM-12-02 done**: the seam is live and
+meetings remote control (list/start/stop/live-state) is host-proven). **Track M —
 ratified into the charter as Amendment 1.1 (2026-06-20), co-canon with Rev 1.0.**
 The device stops being a launch stub and becomes a **first-class companion to the
 desktop/server you are already coding against**, without losing one ounce of its own
@@ -97,7 +98,7 @@ views present it.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HSM-12-01 | Desktop client seam + pairing | **done** | [story-01](./story-01-desktop-client-seam.md) | [evidence-01](./evidence-story-01.md) |
-| HSM-12-02 | Meetings remote control | backlog | [story-02](./story-02-meetings-remote-control.md) | — |
+| HSM-12-02 | Meetings remote control | **done** | [story-02](./story-02-meetings-remote-control.md) | [evidence-02](./evidence-story-02.md) |
 | HSM-12-03 | The unified Companion shell | backlog | [story-03](./story-03-unified-companion-shell.md) | — |
 | HSM-12-04 | Track M gate closeout | backlog | [story-04](./story-04-companion-gate-closeout.md) | — |
 
