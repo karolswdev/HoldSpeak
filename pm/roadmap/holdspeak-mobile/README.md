@@ -1,7 +1,14 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-21 (**HSM-11-07 DONE — bounded windows for single-segment
-transcripts.** HSM-8-07's chunking only bounded memory across *multiple* segments, but the
+**Last updated:** 2026-06-21 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT opened.** The roadmap was
+all engineering tracks; usability, design, and modern hand-driven mobile craft were never
+tracked, and the app shipped as a bare functional shell. Phase 14 makes the **experience**
+first-class: a native design system, every core screen recrafted, interaction craft (gesture/
+haptic/motion/Pencil), accessibility + adaptivity, and a polish pass — each **proven with
+committed iOS-Simulator screenshots**, so design is delivered and shown without the physical
+device. Owner bar: flat/default components are a failure; it must feel like a premium modern
+native app. Design/usability is now a STANDING quality bar on every mobile surface. Earlier:
+**HSM-11-07 DONE — bounded windows for single-segment transcripts.** HSM-8-07's chunking only bounded memory across *multiple* segments, but the
 on-device transcriber emits the whole meeting as one giant segment, and the old windowing kept
 an oversized segment whole — so a real hour-long meeting still overflowed. `TranscriptWindowing`
 now splits an oversized segment internally (sentence → word → hard-cut, text preserved;
