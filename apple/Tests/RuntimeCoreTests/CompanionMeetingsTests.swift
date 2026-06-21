@@ -16,6 +16,7 @@ final class CompanionMeetingsTests: XCTestCase {
         var reachable: Bool
         var started: [String?] = []
         var stopped = 0
+        var remoteSent: [String] = []
         init(meetings: [MeetingSummary] = [], state: RuntimeState = RuntimeState(status: "ok"), reachable: Bool = true) {
             self.meetings = meetings; self.state = state; self.reachable = reachable
         }
@@ -33,6 +34,7 @@ final class CompanionMeetingsTests: XCTestCase {
         }
         func sendRemoteDictation(text: String) async throws -> RemoteDictationResult {
             if !reachable { throw Down() }
+            remoteSent.append(text)
             return RemoteDictationResult(success: true, finalText: text, delivered: true)
         }
     }
