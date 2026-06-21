@@ -37,6 +37,10 @@ public final class MeetingCapture: @unchecked Sendable {
 
     public var state: CaptureState { locked { _state } }
 
+    /// The id of the recording in progress (assigned at `start`), so a notebook
+    /// (HSM-8-02) can bind notes to the meeting before it is persisted at `stop`.
+    public var currentID: String? { locked { meetingID } }
+
     /// Capture stays local; the egress badge says so plainly.
     public var egressLabel: String { "on-device · nothing leaves" }
 

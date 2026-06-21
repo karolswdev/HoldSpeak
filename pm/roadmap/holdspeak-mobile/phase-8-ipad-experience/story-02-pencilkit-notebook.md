@@ -2,7 +2,10 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 8
-- **Status:** backlog
+- **Status:** done (2026-06-21 — a rich PencilKit notebook (multi-page + tool picker) in
+  the meeting screen, persisted per meeting via the `NotebookStore` seam and reloaded
+  intact; host-tested, screenshot-verified, run live on a physical iPad. See
+  [evidence-story-02](./evidence-story-02.md))
 - **Depends on:** HSM-8-01
 - **Unblocks:** HSM-8-03
 - **Owner:** unassigned

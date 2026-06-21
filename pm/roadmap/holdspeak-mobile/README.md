@@ -1,7 +1,14 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-21 (**HSM-8-01 DONE — the iPad on-device meeting-capture loop
-(Phase 8 opened, 1/6).** `MeetingCapture` (RuntimeCore) composes capture + a transcriber
+**Last updated:** 2026-06-21 (**HSM-8-02 DONE — the PencilKit notebook (Phase 8 now 2/6).**
+A `Notebook` view-model (RuntimeCore) round-trips PencilKit pages (serialized `PKDrawing`
+blobs) through a `NotebookStore` seam, keyed per meeting + versioned, UIKit-free,
+corrupt-safe. The app gained a real PencilKit canvas + the system tool picker
+(pen/highlighter/eraser), multi-page nav, a `FileNotebookStore` behind the seam, a
+Transcript/Notes segmented control so ink + the live transcript coexist, and a notebook
+reload on the meeting detail. `swift test` 146/6-skip/0-fail (+6); the rich surface is
+screenshot-verified + run live on a physical iPad. The owner's "magic pencil" is real.
+Earlier: **HSM-8-01 DONE — the iPad on-device meeting-capture loop (Phase 8 opened, 1/6).** `MeetingCapture` (RuntimeCore) composes capture + a transcriber
 factory + a `MeetingStore` seam: record → **windowed live transcript** → persist →
 reopen-intact, fully on-device. `MeetingCaptureApp` is a Signal iPad shell (meeting list +
 Record/Stop + live transcript + reopen) over a `WhisperKitTranscriber` + `SQLiteMeetingStore`;
@@ -304,7 +311,7 @@ Earlier today: **program scaffolded** — the Council Implementation
 Charter (Rev 1.0) mapped onto a 12-phase roadmap (Phase 0 Contract Extraction →
 Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every phase
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
-**Current phase:** [phase-7-mir-port](./phase-7-mir-port/current-phase-status.md) closed; Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5**, **7 ✅ Gate H**; Phase 5 host-complete (engine pick + structured output + endpoint Modes B/C + on-device Mode A + model packaging — all host-proven; device runs pending the iPad unlock); Phase 10 in-progress (HSM-10-01 done); 2 + 3 testable cores done, device-gated remainder; 6-06 Follow-ups deferred. **Phases 12–13 (Tracks M–N — the Companion Client + Answer the Coder) in progress (owner steer 2026-06-20): Phase 12 2/4 (HSM-12-01 seam + HSM-12-02 meetings remote, merged); **Phase 13 — Answer the Coder COMPLETE (4/4): HSM-13-01 inject, 13-02 voice-note composer, 13-03 Companion board, 13-04 Track N gate ACHIEVED by voice** (a spoken answer from a physical iPad, transcribed on-device, lands in a live tmux coder). Companion track (Tracks M–N) is now Phase 12 3/4 (12-01 seam, 12-02 meetings, 12-03 unified shell; only 12-04 gate remains) + Phase 13 done. **Phase 8 (Track I — the iPad on-device experience) opened 1/6: HSM-8-01 the on-device meeting-capture loop (record → live transcript → persist → reopen) done, run live on the iPad.**
+**Current phase:** [phase-7-mir-port](./phase-7-mir-port/current-phase-status.md) closed; Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5**, **7 ✅ Gate H**; Phase 5 host-complete (engine pick + structured output + endpoint Modes B/C + on-device Mode A + model packaging — all host-proven; device runs pending the iPad unlock); Phase 10 in-progress (HSM-10-01 done); 2 + 3 testable cores done, device-gated remainder; 6-06 Follow-ups deferred. **Phases 12–13 (Tracks M–N — the Companion Client + Answer the Coder) in progress (owner steer 2026-06-20): Phase 12 2/4 (HSM-12-01 seam + HSM-12-02 meetings remote, merged); **Phase 13 — Answer the Coder COMPLETE (4/4): HSM-13-01 inject, 13-02 voice-note composer, 13-03 Companion board, 13-04 Track N gate ACHIEVED by voice** (a spoken answer from a physical iPad, transcribed on-device, lands in a live tmux coder). Companion track (Tracks M–N) is now Phase 12 3/4 (12-01 seam, 12-02 meetings, 12-03 unified shell; only 12-04 gate remains) + Phase 13 done. **Phase 8 (Track I — the iPad on-device experience) 2/6: HSM-8-01 the on-device meeting-capture loop + HSM-8-02 the PencilKit notebook (the "magic pencil") done, run live on the iPad.**
 
 **Highest-value direction (owner steer, 2026-06-20; ratified in charter Amendment
 1.1).** The program's value now concentrates on the **two device faces, both

@@ -1,6 +1,7 @@
 import SwiftUI
 import AVFoundation
 import WhisperKit
+import PencilKit
 
 // HSM-8-01 — the iPad's on-device meeting-capture loop. Open the app, see your
 // recordings, press Record, watch the transcript appear, stop to keep it. Capture
@@ -11,8 +12,40 @@ import WhisperKit
 @main
 struct MeetingCaptureApp: App {
     var body: some Scene {
-        WindowGroup { MeetingListView().preferredColorScheme(.dark) }
+        WindowGroup {
+            // HS_DEMO_NOTEBOOK opens straight onto the notebook surface for a
+            // screenshot run (no mic/taps needed); the real entry is the meeting list.
+            if ProcessInfo.processInfo.environment["HS_DEMO_NOTEBOOK"] != nil {
+                DemoNotebookView().preferredColorScheme(.dark)
+            } else {
+                MeetingListView().preferredColorScheme(.dark)
+            }
+        }
     }
+}
+
+/// A standalone notebook for screenshot-verification of the rich surface (tool picker +
+/// pages), over an in-memory store.
+struct DemoNotebookView: View {
+    @StateObject private var notes = NotebookModel(store: InMemoryNotebookStore(), meetingID: "demo")
+    var body: some View {
+        ZStack {
+            Color(.sRGB, red: 0x0E/255, green: 0x0F/255, blue: 0x13/255, opacity: 1).ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 14) {
+                Text("NOTEBOOK").font(.caption.weight(.bold)).tracking(2)
+                    .foregroundStyle(Color(.sRGB, red: 0x5B/255, green: 0x8D/255, blue: 0xEF/255, opacity: 1))
+                Text("Handwritten notes").font(.largeTitle.bold()).foregroundStyle(.white)
+                NotebookView(model: notes, editable: true)
+            }
+            .padding(20).frame(maxWidth: 760).frame(maxWidth: .infinity)
+        }
+    }
+}
+
+final class InMemoryNotebookStore: NotebookStore, @unchecked Sendable {
+    private var blobs: [String: Data] = [:]
+    func saveNotebook(_ data: Data, meetingID: String) throws { blobs[meetingID] = data }
+    func loadNotebook(meetingID: String) throws -> Data? { blobs[meetingID] }
 }
 
 // MARK: - On-device transcription (WhisperKit behind ITranscriber)
@@ -50,6 +83,129 @@ final class SQLiteMeetingStore: MeetingStore, @unchecked Sendable {
     }
 }
 
+// MARK: - Notebook persistence (HSM-8-02) — a meeting-keyed blob behind the seam
+
+/// Backs the `NotebookStore` seam with one JSON blob per meeting in the app container.
+/// The view never touches files — it goes through the `Notebook` view-model.
+final class FileNotebookStore: NotebookStore, @unchecked Sendable {
+    private let dir: URL
+    init() {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        dir = docs.appendingPathComponent("notebooks", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    }
+    private func url(_ id: String) -> URL { dir.appendingPathComponent("\(id).json") }
+    func saveNotebook(_ data: Data, meetingID: String) throws { try data.write(to: url(meetingID), options: .atomic) }
+    func loadNotebook(meetingID: String) throws -> Data? {
+        let u = url(meetingID)
+        return FileManager.default.fileExists(atPath: u.path) ? try Data(contentsOf: u) : nil
+    }
+}
+
+// MARK: - PencilKit canvas (the magic pencil)
+
+/// A PencilKit canvas with the system tool picker (pen / highlighter / eraser). Strokes
+/// flow back through `drawing`; stroke capture stays on PencilKit's own path so it never
+/// fights transcription for the main thread.
+struct PencilCanvas: UIViewRepresentable {
+    @Binding var drawing: PKDrawing
+    var editable: Bool
+
+    func makeUIView(context: Context) -> PKCanvasView {
+        let cv = PKCanvasView()
+        cv.drawing = drawing
+        cv.backgroundColor = .clear
+        cv.isOpaque = false
+        cv.drawingPolicy = .anyInput               // finger OR pencil (the sim has no pencil)
+        cv.delegate = context.coordinator
+        if editable {
+            let picker = context.coordinator.toolPicker
+            picker.setVisible(true, forFirstResponder: cv)
+            picker.addObserver(cv)
+            DispatchQueue.main.async { cv.becomeFirstResponder() }
+        } else {
+            cv.isUserInteractionEnabled = false
+        }
+        return cv
+    }
+
+    func updateUIView(_ cv: PKCanvasView, context: Context) {
+        if cv.drawing != drawing { cv.drawing = drawing }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    final class Coordinator: NSObject, PKCanvasViewDelegate {
+        let parent: PencilCanvas
+        let toolPicker = PKToolPicker()
+        init(_ parent: PencilCanvas) { self.parent = parent }
+        func canvasViewDrawingDidChange(_ cv: PKCanvasView) { parent.drawing = cv.drawing }
+    }
+}
+
+@MainActor
+final class NotebookModel: ObservableObject {
+    @Published var pages: [PKDrawing]
+    @Published var current = 0
+    private let notebook: Notebook
+
+    init(store: NotebookStore, meetingID: String) {
+        notebook = Notebook(store: store, meetingID: meetingID)
+        let loaded = notebook.reload().compactMap { try? PKDrawing(data: $0) }
+        pages = loaded.isEmpty ? [PKDrawing()] : loaded
+    }
+
+    func page(_ i: Int) -> Binding<PKDrawing> {
+        Binding(get: { self.pages[i] }, set: { self.pages[i] = $0; self.save() })
+    }
+    func addPage() { pages.append(PKDrawing()); current = pages.count - 1; save() }
+    func save() { try? notebook.save(pages: pages.map { $0.dataRepresentation() }) }
+    var hasInk: Bool { pages.contains { !$0.strokes.isEmpty } }
+}
+
+// MARK: - Notebook surface
+
+struct NotebookView: View {
+    @ObservedObject var model: NotebookModel
+    var editable: Bool
+
+    var body: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                Text("Page \(model.current + 1) of \(model.pages.count)")
+                    .font(.caption.weight(.medium)).foregroundStyle(SigN.muted)
+                Spacer()
+                if editable {
+                    Button { if model.current > 0 { model.current -= 1 } } label: {
+                        Image(systemName: "chevron.left").foregroundStyle(model.current > 0 ? SigN.accent : SigN.faint)
+                    }.disabled(model.current == 0)
+                    Button { if model.current < model.pages.count - 1 { model.current += 1 } } label: {
+                        Image(systemName: "chevron.right").foregroundStyle(model.current < model.pages.count - 1 ? SigN.accent : SigN.faint)
+                    }.disabled(model.current == model.pages.count - 1)
+                    Button { model.addPage() } label: {
+                        HStack(spacing: 4) { Image(systemName: "plus"); Text("Page") }
+                            .font(.caption.weight(.semibold)).foregroundStyle(SigN.accent)
+                    }
+                }
+            }
+            PencilCanvas(drawing: editable ? model.page(model.current) : .constant(model.pages[model.current]),
+                         editable: editable)
+                .frame(maxWidth: .infinity, minHeight: 360)
+                .background(SigN.s1, in: RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(SigN.line, lineWidth: 1))
+        }
+    }
+}
+
+/// A tiny palette mirror so the notebook views compile alongside the (fileprivate) one.
+private enum SigN {
+    static let s1 = Color(.sRGB, red: 0x15/255, green: 0x17/255, blue: 0x1D/255, opacity: 1)
+    static let line = Color.white.opacity(0.07)
+    static let muted = Color(.sRGB, red: 0x9B/255, green: 0xA2/255, blue: 0xB0/255, opacity: 1)
+    static let faint = Color(.sRGB, red: 0x76/255, green: 0x7E/255, blue: 0x8D/255, opacity: 1)
+    static let accent = Color(.sRGB, red: 0xFF/255, green: 0x6B/255, blue: 0x35/255, opacity: 1)
+}
+
 // MARK: - Signal palette
 
 private enum Sig {
@@ -78,7 +234,9 @@ final class CaptureModel: ObservableObject {
     @Published var transcribing = false
     @Published var liveTranscript = ""
     @Published var error = ""
+    @Published var notebook: NotebookModel?      // the live meeting's notes (HSM-8-02)
 
+    let notebookStore: NotebookStore = FileNotebookStore()
     private var mc: MeetingCapture?
     private var ticker: Task<Void, Never>?
 
@@ -100,6 +258,7 @@ final class CaptureModel: ObservableObject {
         mc.start()
         if case .failed(let r) = mc.state { error = r; return }
         recording = true
+        if let id = mc.currentID { notebook = NotebookModel(store: notebookStore, meetingID: id) }
         ticker = Task { [weak self] in
             while !Task.isCancelled, self?.recording == true {
                 try? await Task.sleep(nanoseconds: 3_000_000_000)   // window the live transcript
@@ -113,6 +272,7 @@ final class CaptureModel: ObservableObject {
         guard let mc else { return }
         ticker?.cancel(); ticker = nil
         recording = false; transcribing = true; defer { transcribing = false }
+        notebook?.save()           // final flush of the meeting's notes
         _ = await mc.stop()
         if case .failed(let r) = mc.state { error = r }
         refresh()
@@ -209,11 +369,13 @@ struct MeetingListView: View {
 struct CaptureView: View {
     @ObservedObject var model: CaptureModel
     var done: () -> Void
+    @State private var pane: Pane = .transcript
+    enum Pane: String, CaseIterable { case transcript = "Transcript", notes = "Notes" }
 
     var body: some View {
         ZStack {
             Sig.bg.ignoresSafeArea()
-            VStack(spacing: 18) {
+            VStack(spacing: 16) {
                 HStack {
                     Text(model.recording ? "Recording" : (model.transcribing ? "Transcribing…" : "Ready"))
                         .font(.title3.bold()).foregroundStyle(model.recording ? Sig.accent : Sig.text)
@@ -221,12 +383,36 @@ struct CaptureView: View {
                     Spacer()
                     Button("Done") { done() }.foregroundStyle(Sig.muted)
                 }
-                transcriptCard
+                Picker("", selection: $pane) {
+                    ForEach(Pane.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                }
+                .pickerStyle(.segmented)
+
+                if pane == .transcript {
+                    transcriptCard
+                } else {
+                    notesPane
+                }
                 recordButton
             }
             .padding(20).frame(maxWidth: 760).frame(maxWidth: .infinity)
         }
         .toolbar(.hidden, for: .navigationBar)
+    }
+
+    @ViewBuilder private var notesPane: some View {
+        if let nb = model.notebook {
+            NotebookView(model: nb, editable: true)   // ink + transcript coexist; strokes persist
+        } else {
+            VStack(spacing: 8) {
+                Image(systemName: "pencil.and.scribble").font(.largeTitle).foregroundStyle(Sig.local)
+                Text("Press Record to start a meeting, then take handwritten notes here — they save with it.")
+                    .font(.callout).foregroundStyle(Sig.faint).multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity, minHeight: 360)
+            .background(Sig.s1, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Sig.line, lineWidth: 1))
+        }
     }
 
     private var recordingDot: some View {
@@ -267,6 +453,13 @@ struct CaptureView: View {
 
 struct MeetingDetailView: View {
     let meeting: Meeting
+    @StateObject private var notes: NotebookModel
+
+    init(meeting: Meeting) {
+        self.meeting = meeting
+        _notes = StateObject(wrappedValue: NotebookModel(store: FileNotebookStore(), meetingID: meeting.id))
+    }
+
     var body: some View {
         ZStack {
             Sig.bg.ignoresSafeArea()
@@ -275,6 +468,8 @@ struct MeetingDetailView: View {
                     Text(meeting.title ?? "Meeting").font(.largeTitle.bold()).foregroundStyle(Sig.text)
                     Text(meeting.startedAt.formatted(date: .complete, time: .shortened))
                         .font(.caption).foregroundStyle(Sig.faint)
+
+                    Text("TRANSCRIPT").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.faint).padding(.top, 4)
                     if meeting.segments.isEmpty {
                         Text("No speech was transcribed.").font(.callout).foregroundStyle(Sig.faint)
                     } else {
@@ -284,6 +479,10 @@ struct MeetingDetailView: View {
                                 .padding(12).background(Sig.s2, in: RoundedRectangle(cornerRadius: 10))
                         }
                     }
+
+                    Text("NOTES").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.local).padding(.top, 8)
+                    // Reloads the meeting's PencilKit pages; editable so notes can be added after.
+                    NotebookView(model: notes, editable: true)
                 }
                 .padding(20).frame(maxWidth: 760).frame(maxWidth: .infinity)
             }
