@@ -31,6 +31,10 @@ final class CompanionMeetingsTests: XCTestCase {
             if !reachable { throw Down() }
             stopped += 1; state = RuntimeState(status: "ok", meetingActive: false); return state
         }
+        func sendRemoteDictation(text: String) async throws -> RemoteDictationResult {
+            if !reachable { throw Down() }
+            return RemoteDictationResult(success: true, finalText: text, delivered: true)
+        }
     }
 
     func testListsMeetings() async {

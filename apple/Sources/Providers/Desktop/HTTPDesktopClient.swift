@@ -158,6 +158,15 @@ public struct HTTPDesktopClient: IDesktopClient {
         return try await runtimeState()
     }
 
+    // MARK: - Answer the coder (HSM-13-01)
+
+    public func sendRemoteDictation(text: String) async throws -> RemoteDictationResult {
+        let data = try await send(makeRequest(path: "api/dictation/remote", method: "POST",
+                                              jsonBody: ["text": text]))
+        do { return try HoldSpeakContracts.decoder().decode(RemoteDictationResult.self, from: data) }
+        catch { throw DesktopClientError.malformed }
+    }
+
     // MARK: - internals
 
     struct MeetingsEnvelope: Decodable { var meetings: [MeetingSummary] }

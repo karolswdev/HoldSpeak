@@ -2,7 +2,8 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** done (2026-06-20 — desktop inject path + Swift seam shipped and
+  LAN-proven; see [evidence-story-01](./evidence-story-01.md))
 - **Depends on:** HSM-12-01 (the desktop client seam + token)
 - **Unblocks:** HSM-13-02, HSM-13-04
 - **Owner:** unassigned
@@ -33,16 +34,24 @@ track. (Precedent: the mobile program already added Python routes in Phase 10 �
 
 ## Acceptance criteria
 
-- [ ] `POST /api/dictation/remote` accepts a dictated payload and routes it through
+- [x] `POST /api/dictation/remote` accepts a dictated payload and routes it through
       the dictation runtime's rich pipeline — a test asserts a known
       correction/block/plugin transform is applied (the delivered text is **not**
-      raw input).
-- [ ] The endpoint requires the Phase-12 client token; an untokened request is
-      refused; the token is never echoed in a response/log.
-- [ ] Delivery is deliver-on-command (the payload carries an explicit intent to
-      send); there is no autonomous/background injection path.
-- [ ] The Swift `IDesktopClient` posts a payload through the seam and surfaces the
+      raw input). *(`test_processes_through_pipeline_and_delivers`: the stubbed
+      pipeline's `[corrected]` transform is what gets delivered, not the raw input.)*
+- [x] The endpoint requires the Phase-12 client token; an untokened request is
+      refused; the token is never echoed in a response/log. *(Auth is the runtime's
+      existing off-loopback web-auth middleware — proven on real metal over the LAN:
+      `/api/runtime/status` 401 without token → 200 with it; the Swift seam joins the
+      token at call time and never echoes it.)*
+- [x] Delivery is deliver-on-command (the payload carries an explicit intent to
+      send); there is no autonomous/background injection path. *(The route fires only
+      on the client's POST; a delivery-hook failure returns 502 with no retry —
+      `test_delivery_failure_surfaces_502_not_autonomous_retry`.)*
+- [x] The Swift `IDesktopClient` posts a payload through the seam and surfaces the
       desktop's accept/refuse result; a fake desktop drives the client test.
+      *(`testSendRemoteDictationPostsAndDecodes` / `...HTTPErrorThrows` against
+      `StubProtocol`; the Bearer token rides, the 401 path throws.)*
 
 ## Test plan
 

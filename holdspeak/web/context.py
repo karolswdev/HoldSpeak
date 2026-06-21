@@ -53,6 +53,12 @@ class WebContext:
     on_route_preview: Optional[Callable[..., Any]] = None
     on_dictation_config_changed: Optional[Callable[[], None]] = None
 
+    # HSM-13-01: deliver a remote-dictation answer (already run through the rich
+    # pipeline) into the desktop's dictation target / AI PI delivery path. The host
+    # injects the actual delivery; the route is deliver-on-command only (the client
+    # user pressed send) and never autonomous. Absent hook = process-and-return only.
+    on_remote_dictation: Optional[Callable[[str], Any]] = None
+
     # HS-26-04: deferred plugin-job queue processing for the activity routes.
     # The activity-intelligence reads close over no server state; the meeting-
     # candidate-start route reuses on_start / on_update_meeting (HS-26-02).

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>HoldSpeakMobile</string>
+    <key>CFBundleDisplayName</key>
+    <string>HoldSpeak Companion</string>
+    <key>CFBundleIdentifier</key>
+    <string>dev.holdspeak.mobile</string>
+    <key>CFBundleExecutable</key>
+    <string>HoldSpeakMobile</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>MinimumOSVersion</key>
+    <string>17.0</string>
+    <key>UILaunchScreen</key>
+    <dict/>
+    <key>UIDeviceFamily</key>
+    <array>
+        <integer>1</integer>
+        <integer>2</integer>
+    </array>
+    <!-- HSM-12: the Companion probes a desktop on the owner's own LAN over plain
+         HTTP (192.168.x.x). ATS blocks cleartext by default; NSAllowsLocalNetworking
+         permits private-range hosts without weakening transport for the public
+         internet. The egress badge in-app reads the honest "local + LAN -> <host>". -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>HoldSpeak connects to your HoldSpeak desktop or homelab server on your local network so the iPad can act as a companion to it.</string>
+</dict>
+</plist>

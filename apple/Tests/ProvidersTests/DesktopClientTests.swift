@@ -194,4 +194,24 @@ final class DesktopClientTests: XCTestCase {
         catch HTTPDesktopClient.DesktopClientError.http(let code) { XCTAssertEqual(code, 500) }
         catch { XCTFail("wrong error: \(error)") }
     }
+
+    // MARK: answer the coder (HSM-13-01)
+
+    func testSendRemoteDictationPostsAndDecodes() async throws {
+        StubProtocol.routes = ["/api/dictation/remote": (200,
+            Data(#"{"success":true,"final_text":"[corrected] ship it","delivered":true}"#.utf8))]
+        let result = try await client(token: "tok").sendRemoteDictation(text: "ship it")
+        XCTAssertEqual(StubProtocol.lastMethod, "POST")
+        XCTAssertEqual(StubProtocol.lastAuth, "Bearer tok")        // the mirrored token rides
+        XCTAssertTrue(result.success)
+        XCTAssertTrue(result.delivered)
+        XCTAssertEqual(result.finalText, "[corrected] ship it")    // processed, not raw
+    }
+
+    func testSendRemoteDictationHTTPErrorThrows() async {
+        StubProtocol.routes = ["/api/dictation/remote": (401, Data())]   // bad/missing token
+        do { _ = try await client().sendRemoteDictation(text: "hi"); XCTFail("expected throw") }
+        catch HTTPDesktopClient.DesktopClientError.http(let code) { XCTAssertEqual(code, 401) }
+        catch { XCTFail("wrong error: \(error)") }
+    }
 }

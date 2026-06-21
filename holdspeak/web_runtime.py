@@ -77,6 +77,22 @@ def _configured_web_port_from_env() -> int | None:
     return port
 
 
+def _configured_web_host_from_env() -> str:
+    """The bind host, defaulting to loopback.
+
+    HSM-12: a Companion client (iPhone/iPad) points at the same desktop a coding
+    session runs against, so the runtime must be able to bind off-loopback on the
+    owner's own LAN. The default stays ``127.0.0.1`` (byte-identical to before);
+    set ``HOLDSPEAK_WEB_HOST=0.0.0.0`` to expose it. A non-loopback bind is already
+    refused without an auth token (``web_auth.nonloopback_bind_blocked``), so the
+    token path is enforced the moment this opens.
+    """
+    raw = os.environ.get("HOLDSPEAK_WEB_HOST")
+    if raw is None or not raw.strip():
+        return "127.0.0.1"
+    return raw.strip()
+
+
 def _dictation_corrections_repo():
     """The durable correction repository, or None if the DB is unavailable.
 
@@ -434,7 +450,7 @@ class WebRuntime(
                     on_device_health=self._on_device_health,
                     on_device_query=self._on_device_query,
                 ),
-                host="127.0.0.1",
+                host=_configured_web_host_from_env(),
                 port=_configured_web_port_from_env(),
                 # HS-25-02: token exists/persists now so it is ready the moment a
                 # non-loopback bind is introduced (Phase 15); dormant on loopback.
