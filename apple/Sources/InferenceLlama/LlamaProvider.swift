@@ -38,8 +38,13 @@ public final class LlamaProvider: ILLMProvider, @unchecked Sendable {
     }
 
     public func complete(prompt: String) async throws -> String {
-        // Apply the chat template, then generate. `getCompletion` expects an
-        // already-templated input (it does not re-run preprocess).
+        // One-shot completion. NOTE: LLM.swift accumulates KV context across
+        // `getCompletion` calls (it's built for chat) and never clears it, so a single
+        // instance must NOT be reused for independent completions — the 2nd+ call starves
+        // for context (`noJSON`), and clearing it mid-flight races the decoder (crash).
+        // The caller therefore uses a FRESH provider per inference; see the on-device
+        // generation loop. Apply the chat template, then generate (`getCompletion`
+        // expects already-templated input — it does not re-run preprocess).
         let templated = llm.preprocess(prompt, [], .none)
         return await llm.getCompletion(from: templated)
     }

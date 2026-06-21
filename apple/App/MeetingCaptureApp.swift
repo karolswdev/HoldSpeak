@@ -543,60 +543,95 @@ final class MeetingReviewState: ObservableObject {
         return avail > 0 ? avail : Int(ProcessInfo.processInfo.physicalMemory / 2)
     }
 
+    // Pullable diagnostics for the generation path (Documents/gen-debug.log).
+    static func glogReset() { try? FileManager.default.removeItem(at: glogURL()) }
+    static func glogURL() -> URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("gen-debug.log")
+    }
+    static func glog(_ s: String) {
+        NSLog("HSGEN: \(s)")
+        let url = glogURL(); let line = s + "\n"
+        if let h = try? FileHandle(forWritingTo: url) { h.seekToEndOfFile(); if let d = line.data(using: .utf8) { h.write(d) }; try? h.close() }
+        else { try? line.write(to: url, atomically: true, encoding: .utf8) }
+    }
+
     func generate() async {
+        Self.glogReset()
+        let chars = meeting.segments.map(\.text).joined(separator: " ").count
+        Self.glog("segments=\(meeting.segments.count) chars=\(chars) tokens≈\(chars / 4)")
         guard !meeting.segments.isEmpty else {
-            note = "No transcript to analyze — this recording saved no text."; return
+            note = "No transcript to analyze — this recording saved no text."; Self.glog("ABORT empty"); return
         }
         guard let modelPath = Self.localGGUF() else {
-            note = "No on-device model found. Push a .gguf to the app's Documents first."; return
+            note = "No on-device model found. Push a .gguf to the app's Documents first."; Self.glog("ABORT no model"); return
         }
         generating = true; defer { generating = false }
 
+        // Regenerate cleanly: drop any PRIOR model artifacts so a re-run replaces rather
+        // than piles up (ids are fresh UUIDs each run). The handwritten ink is preserved.
+        for a in artifacts where a.pluginId == "holdspeak.mobile.intelligence" {
+            try? storage?.deleteArtifact(id: a.id, at: Date())
+        }
+        load()
+
         // HSM-8-08 — size the context to THIS device, never a blind constant.
         let modelBytes = ((try? FileManager.default.attributesOfItem(atPath: modelPath))?[.size] as? Int) ?? 0
+        let avail = Self.availableMemoryBytes()
         let context = OnDeviceBudget.contextTokens(
-            availableBytes: Self.availableMemoryBytes(), modelBytes: modelBytes,
-            marginBytes: 768 * 1_048_576,            // app + WhisperKit + activations
-            ceiling: Self.contextCeiling)
+            availableBytes: avail, modelBytes: modelBytes,
+            marginBytes: 768 * 1_048_576, ceiling: Self.contextCeiling)
         let windowBudget = OnDeviceBudget.windowTokens(context: context)
+        Self.glog("availMB=\(avail / 1_048_576) modelMB=\(modelBytes / 1_048_576) context=\(context) window=\(windowBudget)")
 
-        do {
-            let provider = try LlamaProvider(modelPath: modelPath, maxTokenCount: Int32(context))
-            let engine = ArtifactGenerationEngine(provider: provider, maxAttempts: 2)
-            let transcript = Transcript(meetingId: meeting.id, segments: meeting.segments,
-                                        transcriptHash: "ondevice-\(meeting.segments.count)")
-            let types = marks.isEmpty
-                ? (MIRRouter.baseEmphasis[profile] ?? [.decisions, .actionItems, .requirements])
-                : InkEmphasis.routedTypes(profile: profile, transcript: transcript, marks: marks)
+        let transcript = Transcript(meetingId: meeting.id, segments: meeting.segments,
+                                    transcriptHash: "ondevice-\(meeting.segments.count)")
+        let types = marks.isEmpty
+            ? (MIRRouter.baseEmphasis[profile] ?? [.decisions, .actionItems, .requirements])
+            : InkEmphasis.routedTypes(profile: profile, transcript: transcript, marks: marks)
+        Self.glog("types=\(types.map(\.rawValue))")
 
-            // HSM-8-07 — a long meeting extracts in length-independent windows so peak
-            // memory stays flat; a short one keeps the single fast streaming pass.
-            let extractor = ChunkedExtractor(engine: engine, windowTokens: windowBudget)
-            if extractor.shouldChunk(transcript) {
-                let passes = TranscriptWindowing.windows(transcript.segments, maxTokens: windowBudget).count
-                note = "Long meeting — extracting in \(passes) pass\(passes == 1 ? "" : "es")…"
-                let artifacts = await extractor.generate(types: types, from: transcript)
-                for a in artifacts { try? storage?.saveArtifact(a) }
-                load()
-                note = artifacts.isEmpty ? "The model produced nothing." : ""
-                return
-            }
+        // HSM-8-07 — chunk a long meeting into length-bounded windows; a short one is a
+        // single window (the whole transcript). One loop drives both.
+        let chunk = OnDeviceBudget.needsChunking(
+            transcriptTokens: OnDeviceBudget.transcriptTokens(transcript.segments), windowTokens: windowBudget)
+        let windows = chunk
+            ? TranscriptWindowing.windows(transcript.segments, maxTokens: windowBudget)
+            : [transcript.segments]
+        Self.glog("chunk=\(chunk) windows=\(windows.count) sizes=\(windows.map { $0.count }) tokens=\(windows.map { OnDeviceBudget.transcriptTokens($0) })")
 
-            var any = false
-            var lastError = ""
-            for (i, type) in types.enumerated() {
-                note = "Generating \(artifactTypeLabel(type))…  (\(i + 1)/\(types.count))"
+        var all: [Artifact] = []
+        var lastError = ""
+        for (wi, segs) in windows.enumerated() {
+            let sub = Transcript(meetingId: transcript.meetingId, segments: segs,
+                                 transcriptHash: "\(transcript.transcriptHash)#w\(wi)")
+            for type in types {
+                note = chunk ? "Long meeting — pass \(wi + 1)/\(windows.count): \(artifactTypeLabel(type))…"
+                             : "Generating \(artifactTypeLabel(type))…"
                 do {
-                    let artifact = try await engine.generate(type, from: transcript)
-                    try? storage?.saveArtifact(artifact); any = true; load()   // stream it in
+                    // FRESH provider per inference — a clean llama context every time. The
+                    // FIRST call always works; reusing one instance accumulates KV (the
+                    // 2nd+ call starves → noJSON) and clearing it mid-flight races the
+                    // decoder (crash). A new instance is the deterministic clean slate, and
+                    // it also dodges LLM.swift's `isAvailable` getting stuck after a bad run
+                    // (the "had to restart the app" symptom). It deinits at scope exit, so
+                    // only one llama context is ever resident.
+                    let provider = try LlamaProvider(modelPath: modelPath, maxTokenCount: Int32(context))
+                    let engine = ArtifactGenerationEngine(provider: provider, maxAttempts: 2)
+                    let a = try await engine.generate(type, from: sub)
+                    all.append(a)
+                    if !chunk { try? storage?.saveArtifact(a); load() }   // stream the single pass
+                    Self.glog("w\(wi) ok \(type.rawValue)")
                 } catch {
-                    lastError = "\(error)"   // surface the real reason rather than fail silent
+                    lastError = "\(error)"; Self.glog("w\(wi) FAIL \(type.rawValue): \(error)")
                 }
             }
-            note = any ? "" : "The model produced nothing." + (lastError.isEmpty ? "" : " (\(lastError))")
-        } catch {
-            note = "Couldn't load the on-device model: \(error)"
         }
+        let merged = ArtifactMerge.dedup(all)
+        if chunk { for a in merged { try? storage?.saveArtifact(a) }; load() }
+        Self.glog("done produced=\(merged.count)")
+        note = merged.isEmpty
+            ? "The model produced nothing." + (lastError.isEmpty ? "" : " (\(lastError))")
+            : ""
     }
 
     func approve(_ id: String) {
@@ -817,16 +852,18 @@ struct MeetingDetailView: View {
             }
 
             // The two actions are INDEPENDENT — adding handwritten notes must never block
-            // generating the AI intelligence (and vice-versa). Generate shows until the
-            // model artifacts exist; Add-notes shows until the ink is attached.
+            // generating the AI intelligence (and vice-versa). Generate is ALWAYS available:
+            // "Generate on-device" when nothing's there, "Regenerate on-device" once it is
+            // (a clean regenerate drops the prior model artifacts and keeps your ink).
             if !review.generating {
-                if !review.hasGeneratedArtifacts {
-                    Button { Task { await review.generate() } } label: {
-                        HStack(spacing: 6) { Image(systemName: "sparkles"); Text("Generate on-device") }
-                            .font(.subheadline.weight(.semibold)).foregroundStyle(.black)
-                            .frame(maxWidth: .infinity).padding(.vertical, 12)
-                            .background(Sig.accent, in: RoundedRectangle(cornerRadius: 12))
+                Button { Task { await review.generate() } } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: review.hasGeneratedArtifacts ? "arrow.clockwise" : "sparkles")
+                        Text(review.hasGeneratedArtifacts ? "Regenerate on-device" : "Generate on-device")
                     }
+                    .font(.subheadline.weight(.semibold)).foregroundStyle(.black)
+                    .frame(maxWidth: .infinity).padding(.vertical, 12)
+                    .background(Sig.accent, in: RoundedRectangle(cornerRadius: 12))
                 }
                 if !review.hasInkArtifacts {
                     Button { Task { await review.promoteNotes() } } label: {

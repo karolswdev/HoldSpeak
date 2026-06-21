@@ -101,6 +101,37 @@ output instead of sitting parallel to it. Owner steer: "the air-gapped scenario 
 paradigm and has to be rich; the magic pencil has to be involved." Earlier:
 scaffolded — stories HSM-8-01..04 stubbed from charter Track I; no work started.)
 
+## ⚠️ Pending device verification — the on-device generation fix (2026-06-21)
+
+The on-device artifact generation had a real bug the real-metal testing surfaced. It is
+**fixed in code, host-built, but NOT yet verified on the iPad** (owner stepped away from the
+device). **This gate must clear before HSM-8-06's generation and the HSM-8-07/8-08 device
+proofs can be called done.**
+
+**The bug (root-caused from a device breadcrumb log):** a 22-min meeting generated only
+`decisions`; the other three types failed `noJSON`, and a context-reset attempt made the app
+**crash** on the 2nd inference. Cause: `LlamaProvider` reused ONE `LLM` instance for every
+artifact type, but LLM.swift accumulates KV context across `getCompletion` calls and never
+clears it — so the 2nd+ call starved for context (`noJSON`), and clearing it mid-flight raced
+the decoder (crash).
+
+**The fix (in code, device-UNVERIFIED):** the generation loop now creates a **fresh
+`LlamaProvider` per inference** — every call is a clean "first call" (the one that always
+works). No racy reset; one llama context resident at a time (LLM `deinit` frees it). Also: a
+**"Regenerate on-device"** button (always available — "Generate" when empty, "Regenerate"
+when populated; a clean regenerate drops prior model artifacts, keeps the ink), and a pullable
+`Documents/gen-debug.log` (TEMPORARY diagnostic scaffolding — REMOVE at gate close).
+
+**To clear this gate on the iPad (no code changes needed — already deployed):**
+1. Open the 22-min meeting → **Regenerate on-device** → it runs all four passes
+   (decisions → action items → risk register → requirements) and **does not crash**.
+2. Pull `Documents/gen-debug.log` → expect four `w0 ok …` lines + `done produced=4`
+   (not one `ok` + three `noJSON`).
+3. Confirm **Regenerate** stays available afterward and replaces cleanly (no duplicate piles).
+4. Memory stays flat across the four passes (no jetsam kill).
+5. Once green: **remove the `gen-debug.log` instrumentation**, then proceed to the
+   HSM-8-07/8-08 long-meeting (hour-plus) + HSM-8-05 air-gapped device proofs.
+
 ## The paradigm (owner, 2026-06-20)
 
 > "Hosting a local model and doing local inference on the iPad in the scenario where
