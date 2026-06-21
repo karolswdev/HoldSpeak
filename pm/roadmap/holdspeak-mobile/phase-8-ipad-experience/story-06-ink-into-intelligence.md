@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 8
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HSM-8-02 (notebook), HSM-8-03 (linking + marked moments), HSM-8-04 (artifact review), HSM-6-02 (artifacts), HSM-7-03 (MIR seam)
 - **Unblocks:** —
 - **Owner:** unassigned
