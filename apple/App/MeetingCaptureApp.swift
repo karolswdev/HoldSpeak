@@ -102,6 +102,22 @@ final class FileNotebookStore: NotebookStore, @unchecked Sendable {
     }
 }
 
+/// File-backed `LinkStore` (HSM-8-03) — a meeting-keyed JSON blob of transcript links.
+final class FileLinkStore: LinkStore, @unchecked Sendable {
+    private let dir: URL
+    init() {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        dir = docs.appendingPathComponent("links", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    }
+    private func url(_ id: String) -> URL { dir.appendingPathComponent("\(id).json") }
+    func saveLinks(_ data: Data, meetingID: String) throws { try data.write(to: url(meetingID), options: .atomic) }
+    func loadLinks(meetingID: String) throws -> Data? {
+        let u = url(meetingID)
+        return FileManager.default.fileExists(atPath: u.path) ? try Data(contentsOf: u) : nil
+    }
+}
+
 // MARK: - PencilKit canvas (the magic pencil)
 
 /// A PencilKit canvas with the system tool picker (pen / highlighter / eraser). Strokes
@@ -235,8 +251,12 @@ final class CaptureModel: ObservableObject {
     @Published var liveTranscript = ""
     @Published var error = ""
     @Published var notebook: NotebookModel?      // the live meeting's notes (HSM-8-02)
+    @Published var markCount = 0                  // moments flagged this meeting (HSM-8-03)
 
     let notebookStore: NotebookStore = FileNotebookStore()
+    private let linkStore: LinkStore = FileLinkStore()
+    private var linker: TranscriptLinker?
+    private var recordStart: Date?
     private var mc: MeetingCapture?
     private var ticker: Task<Void, Never>?
 
@@ -258,7 +278,11 @@ final class CaptureModel: ObservableObject {
         mc.start()
         if case .failed(let r) = mc.state { error = r; return }
         recording = true
-        if let id = mc.currentID { notebook = NotebookModel(store: notebookStore, meetingID: id) }
+        markCount = 0; recordStart = Date()
+        if let id = mc.currentID {
+            notebook = NotebookModel(store: notebookStore, meetingID: id)
+            linker = TranscriptLinker(store: linkStore, meetingID: id)
+        }
         ticker = Task { [weak self] in
             while !Task.isCancelled, self?.recording == true {
                 try? await Task.sleep(nanoseconds: 3_000_000_000)   // window the live transcript
@@ -276,6 +300,14 @@ final class CaptureModel: ObservableObject {
         _ = await mc.stop()
         if case .failed(let r) = mc.state { error = r }
         refresh()
+    }
+
+    /// One-gesture "mark this moment" at the current elapsed time (HSM-8-03). A linked
+    /// anchor with no note — flag a live meeting at speed.
+    func mark() {
+        guard let linker, let start = recordStart else { return }
+        try? linker.markMoment(at: Date().timeIntervalSince(start), label: "★")
+        markCount = linker.links().count
     }
 
     static func requestMic() async -> Bool {
@@ -393,6 +425,7 @@ struct CaptureView: View {
                 } else {
                     notesPane
                 }
+                if model.recording { markRow }
                 recordButton
             }
             .padding(20).frame(maxWidth: 760).frame(maxWidth: .infinity)
@@ -418,6 +451,21 @@ struct CaptureView: View {
     private var recordingDot: some View {
         Circle().fill(Sig.bad).frame(width: 10, height: 10)
             .shadow(color: Sig.bad.opacity(0.8), radius: 5)
+    }
+
+    private var markRow: some View {
+        Button { model.mark() } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "star.circle.fill")
+                Text("Mark this moment")
+                Spacer()
+                if model.markCount > 0 { Text("\(model.markCount)").font(.caption.weight(.bold)) }
+            }
+            .font(.subheadline.weight(.semibold)).foregroundStyle(Sig.local)
+            .padding(.horizontal, 14).padding(.vertical, 11)
+            .background(Sig.local.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Sig.local.opacity(0.35), lineWidth: 1))
+        }
     }
 
     private var transcriptCard: some View {
@@ -454,29 +502,54 @@ struct CaptureView: View {
 struct MeetingDetailView: View {
     let meeting: Meeting
     @StateObject private var notes: NotebookModel
+    private let links: [TranscriptLink]
 
     init(meeting: Meeting) {
         self.meeting = meeting
         _notes = StateObject(wrappedValue: NotebookModel(store: FileNotebookStore(), meetingID: meeting.id))
+        links = TranscriptLinker(store: FileLinkStore(), meetingID: meeting.id).links()
     }
 
     var body: some View {
         ZStack {
             Sig.bg.ignoresSafeArea()
+            ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     Text(meeting.title ?? "Meeting").font(.largeTitle.bold()).foregroundStyle(Sig.text)
                     Text(meeting.startedAt.formatted(date: .complete, time: .shortened))
                         .font(.caption).foregroundStyle(Sig.faint)
 
+                    if !links.isEmpty {
+                        Text("MARKED MOMENTS").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.local).padding(.top, 4)
+                        ForEach(Array(links.enumerated()), id: \.offset) { _, link in
+                            Button {
+                                if let i = TranscriptLinker.segmentIndex(for: link.anchorTime, in: meeting.segments) {
+                                    withAnimation { proxy.scrollTo(i, anchor: .center) }
+                                }
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: link.isMark ? "star.fill" : "pencil.line").foregroundStyle(Sig.local)
+                                    Text(link.label ?? (link.isMark ? "Marked moment" : "Note"))
+                                        .font(.subheadline).foregroundStyle(Sig.text)
+                                    Spacer()
+                                    Text(String(format: "%.0fs", link.anchorTime)).font(.caption.monospaced()).foregroundStyle(Sig.faint)
+                                    Image(systemName: "arrow.down.right").font(.caption2).foregroundStyle(Sig.faint)
+                                }
+                                .padding(11).background(Sig.local.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+                            }.buttonStyle(.plain)
+                        }
+                    }
+
                     Text("TRANSCRIPT").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.faint).padding(.top, 4)
                     if meeting.segments.isEmpty {
                         Text("No speech was transcribed.").font(.callout).foregroundStyle(Sig.faint)
                     } else {
-                        ForEach(Array(meeting.segments.enumerated()), id: \.offset) { _, seg in
+                        ForEach(Array(meeting.segments.enumerated()), id: \.offset) { i, seg in
                             Text(seg.text).font(.body).foregroundStyle(Sig.text)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(12).background(Sig.s2, in: RoundedRectangle(cornerRadius: 10))
+                                .id(i)
                         }
                     }
 
@@ -485,6 +558,7 @@ struct MeetingDetailView: View {
                     NotebookView(model: notes, editable: true)
                 }
                 .padding(20).frame(maxWidth: 760).frame(maxWidth: .infinity)
+            }
             }
         }
         .toolbar(.hidden, for: .navigationBar)

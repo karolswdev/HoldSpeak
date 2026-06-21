@@ -1,15 +1,25 @@
 # Phase 8 — iPad Experience
 
-**Status:** in-progress (2/6 — **HSM-8-01 + HSM-8-02 done**: the on-device
-meeting-capture loop + a rich PencilKit notebook (multi-page + tool picker, persisted per
-meeting and reloaded intact) — host-tested, screenshot-verified, run live on a physical
-iPad). Track I of the Council
+**Status:** in-progress (3/6 — **HSM-8-01 + HSM-8-02 + HSM-8-03 done**: the on-device
+meeting-capture loop + the PencilKit notebook + transcript linking (notes/marks anchored
+on a `Segment` moment, bidirectional, re-render-stable) — host-tested, screenshot-verified,
+run live on a physical iPad). Track I of the Council
 Implementation Charter. The first Platform Host (Layer 4): the iPad app that
 turns the runtime into the charter's flagship experience — record a meeting, take
 PencilKit notes, link them to the transcript, and review the artifacts, all on an
 iPad Air/Pro M4.
 
-**Last updated:** 2026-06-21 (**HSM-8-02 done — the PencilKit notebook.** A `Notebook`
+**Last updated:** 2026-06-21 (**HSM-8-03 done — transcript linking.** `TranscriptLinker`
+(RuntimeCore) anchors a note/mark on a `Segment` start time (the contract's stable timing,
+not text offsets), resolves to the segment whose window contains it (else nearest, else nil
+when no transcript — graceful), bidirectionally (`links(atSegmentIndex:)`), persisted per
+meeting via a `LinkStore` seam. The app gained a ★ "Mark this moment" button during
+recording + a MARKED MOMENTS list in the detail that **taps to jump** to the transcript
+segment. `swift test` 154/6-skip/0-fail (+8); run live on a physical iPad. Note: granular
+per-segment jumps await HSM-3-02's realtime segmentation (today's transcript is one clean
+segment); the anchor logic is already correct for it. See
+[`evidence-story-03`](./evidence-story-03.md). Next: HSM-8-04 (artifact review + notebook
+closeout). Earlier: **HSM-8-02 done — the PencilKit notebook.** A `Notebook`
 view-model (RuntimeCore) round-trips PencilKit pages (serialized `PKDrawing` blobs) through
 a `NotebookStore` seam, keyed per meeting + versioned; UIKit-free, corrupt-blob-safe. The
 app gained a `PencilCanvas` (PKCanvasView + the system tool picker: pen/pencil/highlighter/
@@ -104,7 +114,7 @@ the Runtime Core, it does not own business logic.
 |---|---|---|---|---|
 | HSM-8-01 | iPad shell + meeting capture | done | [story-01](./story-01-ipad-shell-meeting-capture.md) | [evidence](./evidence-story-01.md) |
 | HSM-8-02 | PencilKit notebook | done | [story-02](./story-02-pencilkit-notebook.md) | [evidence](./evidence-story-02.md) |
-| HSM-8-03 | Transcript linking | backlog | [story-03](./story-03-transcript-linking.md) | — |
+| HSM-8-03 | Transcript linking | done | [story-03](./story-03-transcript-linking.md) | [evidence](./evidence-story-03.md) |
 | HSM-8-04 | Artifact review + notebook closeout | backlog | [story-04](./story-04-artifact-review-closeout.md) | — |
 | HSM-8-05 | The air-gapped notetaker (fully-local, zero-connectivity) | backlog | [story-05](./story-05-air-gapped-notetaker.md) | — |
 | HSM-8-06 | Ink into intelligence (the magic pencil, involved) | backlog | [story-06](./story-06-ink-into-intelligence.md) | — |
