@@ -1,15 +1,29 @@
 # Phase 8 — iPad Experience
 
-**Status:** in-progress (3/6 — **HSM-8-01 + HSM-8-02 + HSM-8-03 done**: the on-device
-meeting-capture loop + the PencilKit notebook + transcript linking (notes/marks anchored
-on a `Segment` moment, bidirectional, re-render-stable) — host-tested, screenshot-verified,
-run live on a physical iPad). Track I of the Council
+**Status:** in-progress (4/6 — **HSM-8-01..04 done; the Track I workflow gate ACHIEVED**:
+record → live transcript → PencilKit notebook → linked moments → **on-device artifact
+review** runs end to end on a physical iPad (owner-witnessed). The owner's later additions
+HSM-8-05 (air-gapped notetaker gate) + HSM-8-06 (ink-into-intelligence) remain). Track I of the Council
 Implementation Charter. The first Platform Host (Layer 4): the iPad app that
 turns the runtime into the charter's flagship experience — record a meeting, take
 PencilKit notes, link them to the transcript, and review the artifacts, all on an
 iPad Air/Pro M4.
 
-**Last updated:** 2026-06-21 (**HSM-8-03 done — transcript linking.** `TranscriptLinker`
+**Last updated:** 2026-06-21 (**HSM-8-04 done — artifact review + the Track I gate.**
+`ReviewModel` (RuntimeCore) groups a meeting's artifacts by type in the active MIR
+profile's emphasis order + approve/reject (draft→accepted, persisted, **never executes**).
+The meeting detail's INTELLIGENCE section runs the Phase-6 `ArtifactGenerationEngine` over
+the transcript with the **on-device `LlamaProvider`** (Mode A, the GGUF in the app
+container) for the profile's types, streaming each artifact in (one type at a time,
+`maxAttempts: 2`) with Approve/Dismiss + an on-device egress badge. The **Track I gate is
+ACHIEVED on a physical iPad** (owner-witnessed: record→transcript→on-device intelligence→
+review, no network). A real-metal bug was caught + fixed: WhisperKit's final pass over a
+long buffer returned `[BLANK_AUDIO]` — `WhisperText.clean` now strips non-speech markers
+and `MeetingCapture.stop` falls back to the last good live transcript. `swift test`
+165/6-skip/0-fail (+11). On-device latency for a 4B model over a multi-min meeting is a few
+minutes (now streamed + trimmed). See [`evidence-story-04`](./evidence-story-04.md). Phase
+8 is **4/6** — HSM-8-05 (air-gapped gate; the app is already network-free) + HSM-8-06
+(ink-into-intelligence) remain. Earlier: **HSM-8-03 done — transcript linking.** `TranscriptLinker`
 (RuntimeCore) anchors a note/mark on a `Segment` start time (the contract's stable timing,
 not text offsets), resolves to the segment whose window contains it (else nearest, else nil
 when no transcript — graceful), bidirectionally (`links(atSegmentIndex:)`), persisted per
@@ -115,7 +129,7 @@ the Runtime Core, it does not own business logic.
 | HSM-8-01 | iPad shell + meeting capture | done | [story-01](./story-01-ipad-shell-meeting-capture.md) | [evidence](./evidence-story-01.md) |
 | HSM-8-02 | PencilKit notebook | done | [story-02](./story-02-pencilkit-notebook.md) | [evidence](./evidence-story-02.md) |
 | HSM-8-03 | Transcript linking | done | [story-03](./story-03-transcript-linking.md) | [evidence](./evidence-story-03.md) |
-| HSM-8-04 | Artifact review + notebook closeout | backlog | [story-04](./story-04-artifact-review-closeout.md) | — |
+| HSM-8-04 | Artifact review + notebook closeout | done | [story-04](./story-04-artifact-review-closeout.md) | [evidence](./evidence-story-04.md) |
 | HSM-8-05 | The air-gapped notetaker (fully-local, zero-connectivity) | backlog | [story-05](./story-05-air-gapped-notetaker.md) | — |
 | HSM-8-06 | Ink into intelligence (the magic pencil, involved) | backlog | [story-06](./story-06-ink-into-intelligence.md) | — |
 

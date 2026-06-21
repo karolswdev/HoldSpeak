@@ -31,14 +31,20 @@ public enum WhisperModel: String, Sendable, CaseIterable {
 
 /// Cleaning Whisper output into deliverable prose. A WhisperKit segment's raw `text`
 /// carries control tokens — `<|startoftranscript|>`, `<|en|>`, `<|0.00|>` timestamps,
-/// `<|endoftext|>` — which must never reach the coder (HSM-13-04 real-metal run caught
-/// this). Pure + testable so the on-device transcriber can stay a thin adapter.
+/// `<|endoftext|>` (HSM-13-04 real-metal run) — and non-speech markers like
+/// `[BLANK_AUDIO]` / `[MUSIC]` / `[INAUDIBLE]` it emits for silence or music (HSM-8-04
+/// real-metal run, recording a meeting off a speaker). Neither belongs in a transcript.
+/// Pure + testable so the on-device transcriber can stay a thin adapter.
 public enum WhisperText {
-    /// Strip Whisper special tokens (`<|...|>`) and collapse the whitespace they leave.
+    /// Strip Whisper special tokens (`<|...|>`) + all-caps bracketed non-speech markers
+    /// (`[BLANK_AUDIO]`, `[MUSIC]`, …) and collapse the whitespace they leave. A take
+    /// that is entirely non-speech cleans to `""` (the caller then keeps the last good
+    /// transcript instead of saving a blank marker).
     public static func clean(_ raw: String) -> String {
-        let withoutTokens = raw.replacingOccurrences(
-            of: "<\\|[^|]*\\|>", with: " ", options: .regularExpression)
-        let collapsed = withoutTokens
+        let stripped = raw
+            .replacingOccurrences(of: "<\\|[^|]*\\|>", with: " ", options: .regularExpression)
+            .replacingOccurrences(of: "\\[[A-Z][A-Z0-9 _]*\\]", with: " ", options: .regularExpression)
+        let collapsed = stripped
             .split(whereSeparator: { $0 == " " || $0 == "\n" || $0 == "\t" })
             .joined(separator: " ")
         return collapsed.trimmingCharacters(in: .whitespacesAndNewlines)

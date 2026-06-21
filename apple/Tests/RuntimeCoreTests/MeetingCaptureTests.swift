@@ -111,6 +111,37 @@ final class MeetingCaptureTests: XCTestCase {
         if case .failed = mc.state {} else { XCTFail("expected failed on save error") }
     }
 
+    func testStopFallsBackToLastGoodWhenFinalPassBlanks() async {
+        // The transcriber yields good text on a short buffer but blanks once it's long
+        // (>= 5 chunks) — exactly the on-device [BLANK_AUDIO] symptom. Stop must keep the
+        // last good live transcript, not persist the blank.
+        let date = fixedDate
+        let cap = PushCapture(); let store = MemStore()
+        let mc = MeetingCapture(
+            capture: cap, store: store,
+            makeTranscriber: { CountTranscriber(count: $0.count >= 5 ? 0 : $0.count) },
+            now: { date }, makeID: { "m-1" })
+        mc.start()
+        cap.emit(2); await mc.tick()
+        XCTAssertEqual(mc.state, .recording(liveTranscript: "w0 w1"))
+        cap.emit(4)                              // now 6 chunks → the final pass blanks
+        let meeting = await mc.stop()
+        XCTAssertEqual(meeting?.segments.map(\.text), ["w0", "w1"], "blank final pass keeps the last good transcript")
+    }
+
+    func testLiveTranscriptDoesNotFlickerToBlank() async {
+        let date = fixedDate
+        let cap = PushCapture(); let store = MemStore()
+        let mc = MeetingCapture(
+            capture: cap, store: store,
+            makeTranscriber: { CountTranscriber(count: $0.count >= 5 ? 0 : $0.count) },
+            now: { date }, makeID: { "m-1" })
+        mc.start()
+        cap.emit(2); await mc.tick()             // "w0 w1"
+        cap.emit(4); await mc.tick()             // blank window → keep showing the last good
+        XCTAssertEqual(mc.state, .recording(liveTranscript: "w0 w1"))
+    }
+
     func testTickIsNoOpWhenIdle() async {
         let mc = make(PushCapture(), MemStore())
         await mc.tick()

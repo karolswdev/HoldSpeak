@@ -2,7 +2,10 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 8
-- **Status:** backlog
+- **Status:** done (2026-06-21 — the `ReviewModel` (group by type + MIR profile +
+  approve-without-execute) + on-device artifact generation in the meeting app; the Track I
+  workflow gate (record→notebook→link→review) ACHIEVED on a physical iPad, owner-witnessed.
+  See [evidence-story-04](./evidence-story-04.md))
 - **Depends on:** HSM-8-01, HSM-8-02, HSM-8-03, HSM-6-02, HSM-7-03
 - **Owner:** unassigned
 
