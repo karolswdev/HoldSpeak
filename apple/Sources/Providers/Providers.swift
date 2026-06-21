@@ -72,6 +72,19 @@ public protocol IDesktopClient: Sendable {
     /// coder; this returns the processed text + whether it was delivered.
     /// Deliver-on-command — the user pressed send; never autonomous.
     func sendRemoteDictation(text: String) async throws -> RemoteDictationResult
+
+    // MARK: The Companion board (HSM-13-03)
+
+    /// The AI PI companion state (`GET /api/companion/status`): which coder sessions
+    /// are waiting, which is the selected reply target, confidence + blockers.
+    func companionStatus() async throws -> CompanionBoardState
+    /// Make a waiting session the active reply target (`POST /api/companion/select`),
+    /// so the next answer (HSM-13-01/02) delivers to it — no silent default.
+    func selectCompanionTarget(agent: String, sessionID: String) async throws
+    /// Clear a waiting session's captured question (`POST /api/companion/dismiss`).
+    func dismissCompanionTarget(agent: String, sessionID: String) async throws
+    /// Pin/unpin a waiting session as the sticky target (`POST /api/companion/pin`).
+    func pinCompanionTarget(agent: String, sessionID: String, pinned: Bool) async throws
 }
 
 /// The desktop's response to a remote-dictation inject (HSM-13-01).
@@ -82,6 +95,50 @@ public struct RemoteDictationResult: Sendable, Equatable, Decodable {
 
     public init(success: Bool, finalText: String, delivered: Bool) {
         self.success = success; self.finalText = finalText; self.delivered = delivered
+    }
+}
+
+/// One waiting coder session as the Companion board shows it (HSM-13-03) — a row in
+/// the AI PI overview (`/api/companion/status` → `agent.sessions.items[]`). The board
+/// makes the *selected* target unmistakable before any answer is sent.
+public struct CompanionTarget: Sendable, Equatable, Identifiable {
+    public var agent: String           // "claude" / "codex"
+    public var sessionID: String
+    public var question: String?       // the agent's last message — the ask
+    public var project: String?        // repo/project name, for telling sessions apart
+    public var selected: Bool          // the active reply target an answer would hit
+    public var pinned: Bool            // sticky target, never auto-expired
+    public var stale: Bool             // older than the freshness threshold
+    public var confidence: String?     // delivery confidence ("high"/"medium"/…)
+
+    public init(agent: String, sessionID: String, question: String? = nil, project: String? = nil,
+                selected: Bool = false, pinned: Bool = false, stale: Bool = false, confidence: String? = nil) {
+        self.agent = agent; self.sessionID = sessionID; self.question = question; self.project = project
+        self.selected = selected; self.pinned = pinned; self.stale = stale; self.confidence = confidence
+    }
+
+    public var id: String { "\(agent)/\(sessionID)" }
+}
+
+/// The Companion board's view of the AI PI loop (HSM-13-03), decoded from
+/// `GET /api/companion/status`. Honest by construction: an empty `targets` with
+/// `awaiting == false` means *nothing is waiting* — never a manufactured target.
+public struct CompanionBoardState: Sendable, Equatable {
+    public var readyForReply: Bool     // the desktop can deliver an answer right now
+    public var blockers: [String]      // why not, if not (e.g. "no_agent_waiting")
+    public var awaiting: Bool          // at least one coder is waiting on a reply
+    public var targets: [CompanionTarget]
+
+    public init(readyForReply: Bool = false, blockers: [String] = [],
+                awaiting: Bool = false, targets: [CompanionTarget] = []) {
+        self.readyForReply = readyForReply; self.blockers = blockers
+        self.awaiting = awaiting; self.targets = targets
+    }
+
+    /// The target an answer would currently land in (the selected one, else the first
+    /// waiting session). `nil` when nothing is waiting.
+    public var activeTarget: CompanionTarget? {
+        targets.first(where: { $0.selected }) ?? targets.first
     }
 }
 

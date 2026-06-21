@@ -37,11 +37,14 @@ the live tmux coder session — on an explicit send, never autonomously.
 `swift test` 122/6-skip/0-fail (+5 `WhisperTextTests`); the voice app builds + signs for
 device; delivery (5) + composer (10) host tests green.
 
-## What remains in Phase 13 (not this gate)
+## Phase 13 — Answer the Coder: COMPLETE (4/4)
 
-- **HSM-13-03 — the Companion board:** surface *which* of several waiting coders an
-  answer targets (`select`/`dismiss`/`pin`). This gate surfaced the single waiting
-  question and delivered to it; multi-target selection is the phase's last story.
+After the gate, **HSM-13-03 — the Companion board** shipped: a `CompanionBoard` seam +
+view-model surface the waiting coder(s) and make the selected reply target unmistakable
+(`select`/`dismiss`/`pin`), with server-side selection routing the answer — no silent
+default. (See [`evidence-story-03.md`](./evidence-story-03.md).)
 
-Phase 13 status after this gate: **3/4** (13-01 ✅, 13-02 ✅, 13-04 ✅; 13-03 remains).
-The companion track's payoff — answer the coder by voice from the iPad — is real.
+Phase 13 status: **4/4** (13-01 ✅, 13-02 ✅, 13-03 ✅, 13-04 ✅). The companion track's
+payoff — point the iPad at the server you code against, see the agent's question, pick
+the target, and **answer by voice** (transcribed on-device, delivered into the coder,
+never autonomous) — is real, end to end, on real hardware.

@@ -89,8 +89,7 @@ final class AnswerModel: ObservableObject {
 
     @Published var connection: DesktopConnection?
     @Published var egress = ""
-    @Published var question = ""          // the waiting coder's last message (the ask)
-    @Published var agentWaiting = false
+    @Published var board = CompanionBoardState()   // the waiting coders + the selected target (HSM-13-03)
 
     // Voice answer state (mirrored from the VoiceNoteComposer)
     @Published var phase: Phase = .idle
@@ -104,6 +103,8 @@ final class AnswerModel: ObservableObject {
     private var composer: VoiceNoteComposer?
 
     var canConnect: Bool { !host.trimmingCharacters(in: .whitespaces).isEmpty }
+    /// The target an answer would currently land in (the selected waiting coder).
+    var activeTarget: CompanionTarget? { board.activeTarget }
 
     private func makeClient() -> HTTPDesktopClient? {
         guard let port = Int(portText.trimmingCharacters(in: .whitespaces)), port > 0 else { return nil }
@@ -122,27 +123,25 @@ final class AnswerModel: ObservableObject {
         let link = CompanionLink(client: HTTPDesktopClient(config: config))
         egress = link.egressLabel
         connection = await link.probe()
-        await refreshQuestion()
+        await refreshBoard()
     }
 
-    /// GET /api/companion/status → the waiting agent's last message (the question).
-    func refreshQuestion() async {
-        guard let port = Int(portText.trimmingCharacters(in: .whitespaces)), port > 0,
-              var comps = URLComponents(string: "http://\(host):\(port)/api/companion/status") else { return }
-        comps.scheme = "http"
-        guard let url = comps.url else { return }
-        var req = URLRequest(url: url, timeoutInterval: 6)
-        if !token.isEmpty { req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
-        do {
-            let (data, _) = try await URLSession.shared.data(for: req)
-            guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
-            let agent = root["agent"] as? [String: Any]
-            agentWaiting = (agent?["awaiting_response"] as? Bool) ?? false
-            let session = agent?["session"] as? [String: Any]
-            question = (session?["last_assistant_text"] as? String) ?? ""
-        } catch {
-            // leave question empty; the UI says "no question surfaced"
-        }
+    /// Load the Companion board (the waiting coders + the selected target) via the seam.
+    func refreshBoard() async {
+        guard let client = makeClient() else { return }
+        if case .success(let s) = await CompanionBoard(client: client).load() { board = s }
+    }
+
+    /// Make `target` the active reply target — the next answer delivers to it.
+    func select(_ target: CompanionTarget) async {
+        guard let client = makeClient() else { return }
+        if case .success(let s) = await CompanionBoard(client: client).select(target) { board = s }
+    }
+
+    /// Pin/unpin a waiting coder (sticky target).
+    func pin(_ target: CompanionTarget, _ pinned: Bool) async {
+        guard let client = makeClient() else { return }
+        if case .success(let s) = await CompanionBoard(client: client).pin(target, pinned: pinned) { board = s }
     }
 
     // MARK: voice answer
@@ -214,7 +213,7 @@ struct AnswerView: View {
                     header
                     if model.connection == nil { pairingCard } else { connectionRow }
                     if model.connection?.reachable == true {
-                        questionCard
+                        boardCard
                         answerCard
                     }
                     footer
@@ -262,7 +261,7 @@ struct AnswerView: View {
             Text(reachable ? "Connected to \(model.host)" : "Unreachable")
                 .font(.subheadline).foregroundStyle(Sig.muted)
             Spacer()
-            Button { Task { await model.refreshQuestion() } } label: {
+            Button { Task { await model.refreshBoard() } } label: {
                 Image(systemName: "arrow.clockwise").foregroundStyle(Sig.accent)
             }
         }
@@ -270,22 +269,59 @@ struct AnswerView: View {
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Sig.line, lineWidth: 1))
     }
 
-    private var questionCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
+    /// The Companion board (HSM-13-03): the waiting coders, the selected target made
+    /// unmistakable. Tap a row to make it the target your answer will land in.
+    private var boardCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
-                Circle().fill(model.agentWaiting ? Sig.warn : Sig.faint).frame(width: 8, height: 8)
-                Text(model.agentWaiting ? "The agent is waiting" : "No question surfaced")
-                    .font(.caption.weight(.bold)).tracking(1).foregroundStyle(model.agentWaiting ? Sig.warn : Sig.faint)
+                Circle().fill(model.board.awaiting ? Sig.warn : Sig.faint).frame(width: 8, height: 8)
+                Text(model.board.awaiting ? "Waiting for you" : "No coder waiting")
+                    .font(.caption.weight(.bold)).tracking(1)
+                    .foregroundStyle(model.board.awaiting ? Sig.warn : Sig.faint)
+                Spacer()
+                if model.board.targets.count > 1 {
+                    Text("\(model.board.targets.count) sessions").font(.caption2).foregroundStyle(Sig.faint)
+                }
             }
-            if !model.question.isEmpty {
-                Text(model.question).font(.body).foregroundStyle(Sig.text)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                Text("Nothing is waiting on the desktop right now. Your answer still delivers into the focused session.")
+            if model.board.targets.isEmpty {
+                Text("Nothing is waiting on the desktop right now. An answer still delivers into the focused session.")
                     .font(.caption).foregroundStyle(Sig.faint)
+            } else {
+                ForEach(model.board.targets) { t in targetRow(t) }
             }
         }
         .cardChrome()
+    }
+
+    private func targetRow(_ t: CompanionTarget) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: t.selected ? "largecircle.fill.circle" : "circle")
+                    .foregroundStyle(t.selected ? Sig.accent : Sig.faint)
+                Text(t.project ?? t.agent).font(.subheadline.weight(.semibold)).foregroundStyle(Sig.text)
+                if t.pinned { Image(systemName: "pin.fill").font(.caption2).foregroundStyle(Sig.accent) }
+                if t.stale { Text("stale").font(.caption2).foregroundStyle(Sig.warn) }
+                Spacer()
+                Button { Task { await model.pin(t, !t.pinned) } } label: {
+                    Image(systemName: t.pinned ? "pin.slash" : "pin").font(.caption).foregroundStyle(Sig.muted)
+                }
+            }
+            if let q = t.question, !q.isEmpty {
+                Text(q).font(.callout).foregroundStyle(t.selected ? Sig.text : Sig.muted)
+                    .lineLimit(3).frame(maxWidth: .infinity, alignment: .leading)
+            }
+            if !t.selected {
+                Button { Task { await model.select(t) } } label: {
+                    Text("Answer this one").font(.caption.weight(.semibold)).foregroundStyle(Sig.accent)
+                }
+            } else {
+                Text("Your answer lands here").font(.caption2.weight(.bold)).tracking(1).foregroundStyle(Sig.accent)
+            }
+        }
+        .padding(12)
+        .background(t.selected ? Sig.s3 : Sig.s2, in: RoundedRectangle(cornerRadius: 11))
+        .overlay(RoundedRectangle(cornerRadius: 11)
+            .stroke(t.selected ? Sig.accent.opacity(0.5) : Sig.line, lineWidth: 1))
     }
 
     @ViewBuilder private var answerCard: some View {

@@ -23,6 +23,11 @@ final class CompanionLinkTests: XCTestCase {
         func sendRemoteDictation(text: String) async throws -> RemoteDictationResult {
             RemoteDictationResult(success: true, finalText: text, delivered: true)
         }
+        // HSM-13-03 companion-board verbs — unused by these tests; default stubs.
+        func companionStatus() async throws -> CompanionBoardState { CompanionBoardState() }
+        func selectCompanionTarget(agent: String, sessionID: String) async throws {}
+        func dismissCompanionTarget(agent: String, sessionID: String) async throws {}
+        func pinCompanionTarget(agent: String, sessionID: String, pinned: Bool) async throws {}
     }
 
     func testProbeReportsReadyConnection() async {
