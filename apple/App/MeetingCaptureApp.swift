@@ -2,6 +2,7 @@ import SwiftUI
 import AVFoundation
 import WhisperKit
 import PencilKit
+import Vision
 
 // HSM-8-01 — the iPad's on-device meeting-capture loop. Open the app, see your
 // recordings, press Record, watch the transcript appear, stop to keep it. Capture
@@ -511,12 +512,14 @@ final class MeetingReviewState: ObservableObject {
     @Published var note = ""
 
     private let storage: SQLiteStorage?
+    private let marks: [Double]              // hand-flagged moments (HSM-8-03) — weight extraction
 
     init(meeting: Meeting) {
         self.meeting = meeting
         self.profile = meeting.routingProfile
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         storage = try? SQLiteStorage(path: docs.appendingPathComponent("meetings.sqlite").path)
+        marks = TranscriptLinker(store: FileLinkStore(), meetingID: meeting.id).links().map(\.anchorTime)
         load()
     }
 
@@ -527,36 +530,42 @@ final class MeetingReviewState: ObservableObject {
 
     /// Generate the meeting's artifacts ON-DEVICE (Mode A): the MIR profile picks the
     /// types, the local GGUF model drafts each, and they persist as proposals.
+    /// The on-device model's context budget. 16K tokens ≈ ~12k words ≈ ~80 min of speech
+    /// (vs 8K ≈ ~45 min). The cost is a bigger KV cache (~+1.2 GB) — safe on an 8 GB iPad
+    /// for a single meeting, but HSM-8-08 makes this memory-aware and HSM-8-07 chunks
+    /// anything longer so we NEVER gamble on RAM regardless of meeting length.
+    private static let contextTokens: Int32 = 16384
+
     func generate() async {
-        guard !meeting.segments.isEmpty else { note = "No transcript to analyze."; return }
+        guard !meeting.segments.isEmpty else {
+            note = "No transcript to analyze — this recording saved no text."; return
+        }
         guard let modelPath = Self.localGGUF() else {
-            note = "No on-device model found. Push a .gguf to the app's Documents first."
-            return
+            note = "No on-device model found. Push a .gguf to the app's Documents first."; return
         }
         generating = true; defer { generating = false }
         do {
-            let provider = try LlamaProvider(modelPath: modelPath, maxTokenCount: 8192)
-            // maxAttempts: 2 keeps the bounded repair but halves the worst-case on-device
-            // cost vs the default 3 — each retry is a full completion on a 4B model.
+            let provider = try LlamaProvider(modelPath: modelPath, maxTokenCount: Self.contextTokens)
             let engine = ArtifactGenerationEngine(provider: provider, maxAttempts: 2)
             let transcript = Transcript(meetingId: meeting.id, segments: meeting.segments,
                                         transcriptHash: "ondevice-\(meeting.segments.count)")
-            // The profile's emphasis types, generated ONE AT A TIME so each artifact
-            // streams in as it lands — a multi-minute on-device run should feel alive,
-            // not a dead wait.
-            let types = MIRRouter.baseEmphasis[profile] ?? [.decisions, .actionItems, .requirements]
+            let types = marks.isEmpty
+                ? (MIRRouter.baseEmphasis[profile] ?? [.decisions, .actionItems, .requirements])
+                : InkEmphasis.routedTypes(profile: profile, transcript: transcript, marks: marks)
             var any = false
+            var lastError = ""
             for (i, type) in types.enumerated() {
                 note = "Generating \(artifactTypeLabel(type))…  (\(i + 1)/\(types.count))"
-                if let artifact = try? await engine.generate(type, from: transcript) {
-                    try? storage?.saveArtifact(artifact)
-                    any = true
-                    load()   // publish immediately — the user sees it appear
+                do {
+                    let artifact = try await engine.generate(type, from: transcript)
+                    try? storage?.saveArtifact(artifact); any = true; load()   // stream it in
+                } catch {
+                    lastError = "\(error)"   // surface the real reason rather than fail silent
                 }
             }
-            note = any ? "" : "The model returned nothing usable."
+            note = any ? "" : "The model produced nothing." + (lastError.isEmpty ? "" : " (\(lastError))")
         } catch {
-            note = "Generation failed: \(error)"
+            note = "Couldn't load the on-device model: \(error)"
         }
     }
 
@@ -565,6 +574,96 @@ final class MeetingReviewState: ObservableObject {
     }
     func reject(_ id: String) {
         try? ReviewModel(artifacts: artifacts, store: storage).reject(id); load()
+    }
+
+    var hasInkArtifacts: Bool { artifacts.contains { $0.pluginId == "holdspeak.mobile.ink" } }
+    var hasGeneratedArtifacts: Bool { artifacts.contains { $0.pluginId == "holdspeak.mobile.intelligence" } }
+
+    /// HSM-8-06 — the magic pencil, involved. Render each handwritten page to an actual
+    /// IMAGE attached to the meeting (the literal scribble — arrows, sketches, stars),
+    /// AND recognize the handwriting on-device (Vision) into a text note. Both are
+    /// proposals you review; nothing is auto-committed.
+    func promoteNotes() async {
+        let pages = NotebookModel(store: FileNotebookStore(), meetingID: meeting.id).pages
+        let inked = pages.filter { !$0.strokes.isEmpty }
+        guard !inked.isEmpty else { note = "No handwritten notes on this meeting yet."; return }
+        generating = true; note = "Reading your handwriting on-device…"; defer { generating = false }
+        let dir = Self.inkDir()
+        for (i, drawing) in inked.enumerated() {
+            guard let image = Self.render(drawing) else { continue }
+            // 1) attach the literal ink as an image artifact
+            if let png = image.pngData() {
+                let url = dir.appendingPathComponent("\(meeting.id)-\(i).png")
+                try? png.write(to: url, options: .atomic)
+                let imageArtifact = Artifact(
+                    id: "ink-img-\(meeting.id)-\(i)", meetingId: meeting.id, artifactType: .diagram,
+                    title: "Handwritten note \(i + 1)", bodyMarkdown: "",
+                    structuredJson: .object(["source": .string("ink"), "image_path": .string(url.path)]),
+                    confidence: 1, status: .draft, pluginId: "holdspeak.mobile.ink",
+                    pluginVersion: HoldSpeakContracts.contractVersion,
+                    sources: [ArtifactSource(sourceType: "handwriting", sourceRef: "notebook")])
+                try? storage?.saveArtifact(imageArtifact); load()
+            }
+            // 2) recognize the handwriting → a text note proposal (best-effort; the image
+            //    above is already attached, so OCR never blocks the owner's ask)
+            let text = await Self.recognize(image)
+            if !text.isEmpty {
+                let recognized = InkPromoter.artifact(text: text, type: .actionItems,
+                                                      meetingID: meeting.id, id: "ink-txt-\(meeting.id)-\(i)")
+                try? storage?.saveArtifact(recognized); load()
+            }
+        }
+        note = ""
+    }
+
+    private static func inkDir() -> URL {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let dir = docs.appendingPathComponent("ink-images", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }
+
+
+    /// Render a PencilKit page to a light-background image (dark ink reads best for the
+    /// eye and Vision). Defensive: a sprawling canvas's bounds could be huge — clamp the
+    /// pixel budget so the renderer can't OOM (the crash on first try).
+    private static func render(_ drawing: PKDrawing) -> UIImage? {
+        var bounds = drawing.bounds
+        guard bounds.width > 1, bounds.height > 1, bounds.width.isFinite, bounds.height.isFinite else { return nil }
+        bounds = bounds.insetBy(dx: -24, dy: -24)
+        // Fit into ~6 megapixels at most, scaling down a large drawing rather than
+        // allocating a giant bitmap.
+        let budget: CGFloat = 6_000_000
+        let scale = min(2.0, (budget / (bounds.width * bounds.height)).squareRoot())
+        let ink = drawing.image(from: bounds, scale: scale)
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = scale
+        format.opaque = true
+        let renderer = UIGraphicsImageRenderer(size: bounds.size, format: format)
+        return renderer.image { ctx in
+            UIColor(white: 0.97, alpha: 1).setFill()
+            ctx.fill(CGRect(origin: .zero, size: bounds.size))
+            ink.draw(in: CGRect(origin: .zero, size: bounds.size))
+        }
+    }
+
+    /// On-device handwriting recognition (Vision). Runs in a **detached** task so the
+    /// synchronous `perform` (and its results read) never cross the main actor — the
+    /// actor-crossing was the crash. `nonisolated` + a fresh request per call.
+    nonisolated private static func recognize(_ image: UIImage) async -> String {
+        guard let cg = image.cgImage else { return "" }
+        return await Task.detached(priority: .userInitiated) {
+            let request = VNRecognizeTextRequest()
+            request.recognitionLevel = .accurate
+            request.usesLanguageCorrection = true
+            do {
+                try VNImageRequestHandler(cgImage: cg, options: [:]).perform([request])
+                let lines = (request.results)?.compactMap { $0.topCandidates(1).first?.string } ?? []
+                return lines.joined(separator: "\n")
+            } catch {
+                return ""
+            }
+        }.value
     }
 
     static func localGGUF() -> String? {
@@ -674,10 +773,24 @@ struct MeetingDetailView: View {
                     .font(.caption2).foregroundStyle(Sig.faint)
             }
 
-            if review.artifacts.isEmpty {
-                if !review.generating {
-                    Text(review.note.isEmpty ? "Generate decisions, action items, risks and more from this meeting — fully on-device." : review.note)
-                        .font(.caption).foregroundStyle(Sig.faint)
+            // Whatever's been produced so far — generated artifacts and/or handwritten
+            // notes — streams in here.
+            if review.artifacts.isEmpty && !review.generating {
+                Text("Generate decisions, action items, risks and more from this meeting — or add your handwritten notes. All on-device.")
+                    .font(.caption).foregroundStyle(Sig.faint)
+            } else {
+                ForEach(review.groups, id: \.type) { group in
+                    Text(artifactTypeLabel(group.type).uppercased())
+                        .font(.caption2.weight(.bold)).tracking(1).foregroundStyle(Sig.local).padding(.top, 4)
+                    ForEach(group.items, id: \.id) { a in artifactCard(a) }
+                }
+            }
+
+            // The two actions are INDEPENDENT — adding handwritten notes must never block
+            // generating the AI intelligence (and vice-versa). Generate shows until the
+            // model artifacts exist; Add-notes shows until the ink is attached.
+            if !review.generating {
+                if !review.hasGeneratedArtifacts {
                     Button { Task { await review.generate() } } label: {
                         HStack(spacing: 6) { Image(systemName: "sparkles"); Text("Generate on-device") }
                             .font(.subheadline.weight(.semibold)).foregroundStyle(.black)
@@ -685,12 +798,14 @@ struct MeetingDetailView: View {
                             .background(Sig.accent, in: RoundedRectangle(cornerRadius: 12))
                     }
                 }
-            } else {
-                // Artifacts stream in as the model finishes each type.
-                ForEach(review.groups, id: \.type) { group in
-                    Text(artifactTypeLabel(group.type).uppercased())
-                        .font(.caption2.weight(.bold)).tracking(1).foregroundStyle(Sig.local).padding(.top, 4)
-                    ForEach(group.items, id: \.id) { a in artifactCard(a) }
+                if !review.hasInkArtifacts {
+                    Button { Task { await review.promoteNotes() } } label: {
+                        HStack(spacing: 6) { Image(systemName: "hand.draw"); Text("Add your handwritten notes") }
+                            .font(.subheadline.weight(.semibold)).foregroundStyle(Sig.local)
+                            .frame(maxWidth: .infinity).padding(.vertical, 11)
+                            .background(Sig.local.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Sig.local.opacity(0.35), lineWidth: 1))
+                    }
                 }
             }
         }
@@ -705,6 +820,11 @@ struct MeetingDetailView: View {
                 Text(a.title).font(.subheadline.weight(.semibold)).foregroundStyle(Sig.text)
                 Spacer()
                 statusChip(a.status)
+            }
+            if let img = inkImage(a) {
+                Image(uiImage: img).resizable().scaledToFit()
+                    .frame(maxHeight: 260).frame(maxWidth: .infinity)
+                    .background(Color.white, in: RoundedRectangle(cornerRadius: 8))
             }
             if !a.bodyMarkdown.isEmpty {
                 Text(a.bodyMarkdown).font(.caption).foregroundStyle(Sig.muted).lineLimit(6)
@@ -726,6 +846,14 @@ struct MeetingDetailView: View {
         }
         .padding(12).background(Sig.s2, in: RoundedRectangle(cornerRadius: 11))
         .overlay(RoundedRectangle(cornerRadius: 11).stroke(Sig.line, lineWidth: 1))
+    }
+
+    /// Load the attached ink image for an ink-image artifact, if any.
+    private func inkImage(_ a: Artifact) -> UIImage? {
+        guard a.pluginId == "holdspeak.mobile.ink",
+              case .object(let o) = a.structuredJson,
+              case .string(let path)? = o["image_path"] else { return nil }
+        return UIImage(contentsOfFile: path)
     }
 
     private func statusChip(_ s: ArtifactStatus) -> some View {

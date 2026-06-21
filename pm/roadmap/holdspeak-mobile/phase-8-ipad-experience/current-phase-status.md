@@ -1,15 +1,36 @@
 # Phase 8 — iPad Experience
 
-**Status:** in-progress (4/6 — **HSM-8-01..04 done; the Track I workflow gate ACHIEVED**:
-record → live transcript → PencilKit notebook → linked moments → **on-device artifact
-review** runs end to end on a physical iPad (owner-witnessed). The owner's later additions
-HSM-8-05 (air-gapped notetaker gate) + HSM-8-06 (ink-into-intelligence) remain). Track I of the Council
-Implementation Charter. The first Platform Host (Layer 4): the iPad app that
-turns the runtime into the charter's flagship experience — record a meeting, take
-PencilKit notes, link them to the transcript, and review the artifacts, all on an
-iPad Air/Pro M4.
+**Status:** in-progress (5/8 — **HSM-8-01..04 + HSM-8-06 done; the Track I workflow gate
+ACHIEVED**: record → live transcript → PencilKit notebook → linked moments → **on-device
+artifact review** + **ink-into-intelligence** run end to end on a physical iPad
+(owner-witnessed). Remaining: HSM-8-05 (air-gapped notetaker gate) + two stories the
+real-metal testing motivated — HSM-8-07 (chunked extraction for long meetings) + HSM-8-08
+(OOM-safe budgeting)). Track I of the Council Implementation Charter. The first Platform
+Host (Layer 4): the iPad app that turns the runtime into the charter's flagship experience
+— record a meeting, take PencilKit notes, link them to the transcript, and review the
+artifacts, all on an iPad Air/Pro M4.
 
-**Last updated:** 2026-06-21 (**HSM-8-04 done — artifact review + the Track I gate.**
+**Last updated:** 2026-06-21 (**HSM-8-06 done — ink into intelligence (the magic pencil,
+involved).** `InkPromoter` (RuntimeCore) turns recognized handwriting into a schema-valid
+`.draft` `Artifact` proposal (propose-and-confirm); `InkEmphasis` boosts the intents in
+hand-marked segments so a starred moment **measurably changes the routed artifact chain**
+(host-proven: a marked light-incident moment surfaces `incidentTimeline` that the unmarked
+transcript does not route). The app's **"Add your handwritten notes"** action, per inked
+notebook page, (1) renders the ink to an **image artifact** attached to the meeting — the
+literal scribble, the owner's explicit ask: *"attach those notes as an actual image"* — and
+(2) recognizes the handwriting with **on-device Vision** into a text proposal; Generate +
+Add-notes are **independent actions** (run AI before or after adding ink). `swift test`
+170/6-skip/0-fail (+5 `InkIntelligenceTests`). **Proven on a real 13-min production meeting**
+on the physical iPad (owner-witnessed; artifacts good). Two real-metal fixes landed: a
+`@MainActor` static Vision call crashed off-actor — recognition is now `nonisolated` /
+`Task.detached`; and on-device generation now **surfaces the real per-type error** instead
+of failing silent. **Context bumped 8K→16K** (`maxTokenCount`, ≈ ~80 min of speech) — and
+the real-metal long-meeting concern is now backlogged as **HSM-8-07** (chunked map-reduce
+extraction, length-independent, never grows the context) + **HSM-8-08** (memory-aware OOM-
+safe budget that decides when to chunk). Owner steer: *"increase the baseline … but at the
+same time, let's protect this product — let's chunk it. Let's not risk OOM ever."* See
+[`evidence-story-06`](./evidence-story-06.md). Phase 8 is **5/8** — HSM-8-05, HSM-8-07,
+HSM-8-08 remain. Earlier: **HSM-8-04 done — artifact review + the Track I gate.**
 `ReviewModel` (RuntimeCore) groups a meeting's artifacts by type in the active MIR
 profile's emphasis order + approve/reject (draft→accepted, persisted, **never executes**).
 The meeting detail's INTELLIGENCE section runs the Phase-6 `ArtifactGenerationEngine` over
@@ -21,9 +42,8 @@ review, no network). A real-metal bug was caught + fixed: WhisperKit's final pas
 long buffer returned `[BLANK_AUDIO]` — `WhisperText.clean` now strips non-speech markers
 and `MeetingCapture.stop` falls back to the last good live transcript. `swift test`
 165/6-skip/0-fail (+11). On-device latency for a 4B model over a multi-min meeting is a few
-minutes (now streamed + trimmed). See [`evidence-story-04`](./evidence-story-04.md). Phase
-8 is **4/6** — HSM-8-05 (air-gapped gate; the app is already network-free) + HSM-8-06
-(ink-into-intelligence) remain. Earlier: **HSM-8-03 done — transcript linking.** `TranscriptLinker`
+minutes (now streamed + trimmed). See [`evidence-story-04`](./evidence-story-04.md).
+Earlier: **HSM-8-03 done — transcript linking.** `TranscriptLinker`
 (RuntimeCore) anchors a note/mark on a `Segment` start time (the contract's stable timing,
 not text offsets), resolves to the segment whose window contains it (else nearest, else nil
 when no transcript — graceful), bidirectionally (`links(atSegmentIndex:)`), persisted per
@@ -117,10 +137,16 @@ the Runtime Core, it does not own business logic.
       endpoint) with Mode-A on-device inference, **rich in functionality** (not a
       degraded fallback — the owner's bar for the gate to count), honest local
       egress, **proven on a physical iPad** with iPhone at parity (HSM-8-05).
-- [ ] **The magic pencil is involved:** handwriting is recognized on-device, a
+- [x] **The magic pencil is involved:** handwriting is recognized on-device, a
       note/marked moment can be promoted to a contract artifact (propose-and-confirm),
       and a marked moment measurably shapes MIR extraction — ink feeds the output,
-      it is not a parallel scratchpad (HSM-8-06).
+      it is not a parallel scratchpad. The literal ink also attaches as an **image
+      artifact** (owner's ask). Proven on a real 13-min production meeting (HSM-8-06).
+- [ ] **Long meetings never gamble on RAM:** generation over an hour-plus meeting runs
+      to completion on-device via **chunked map-reduce extraction** (HSM-8-07), with a
+      **memory-aware budget** that sizes the context to the device and decides when to
+      chunk (HSM-8-08) — so peak memory stays flat with meeting length and the app is
+      never OOM-killed mid-generation. Owner steer: "let's not risk OOM ever."
 
 ## Story status
 
@@ -131,7 +157,9 @@ the Runtime Core, it does not own business logic.
 | HSM-8-03 | Transcript linking | done | [story-03](./story-03-transcript-linking.md) | [evidence](./evidence-story-03.md) |
 | HSM-8-04 | Artifact review + notebook closeout | done | [story-04](./story-04-artifact-review-closeout.md) | [evidence](./evidence-story-04.md) |
 | HSM-8-05 | The air-gapped notetaker (fully-local, zero-connectivity) | backlog | [story-05](./story-05-air-gapped-notetaker.md) | — |
-| HSM-8-06 | Ink into intelligence (the magic pencil, involved) | backlog | [story-06](./story-06-ink-into-intelligence.md) | — |
+| HSM-8-06 | Ink into intelligence (the magic pencil, involved) | done | [story-06](./story-06-ink-into-intelligence.md) | [evidence](./evidence-story-06.md) |
+| HSM-8-07 | Chunked extraction for long meetings (map-reduce, length-safe) | backlog | [story-07](./story-07-chunked-extraction.md) | — |
+| HSM-8-08 | OOM-safe on-device budgeting (never gamble on RAM) | backlog | [story-08](./story-08-oom-safe-budget.md) | — |
 
 ## Where we are
 
