@@ -63,6 +63,16 @@ should feel "nearly like an operating system."
   elapsed timer · the audio-reactive waveform · mark-this-moment · transcript/notes toggle. Drag
   it anywhere; the canvas goes **full-bleed**. The chrome floats and moves out of the way.
 
+## One free-form desktop (not two big boxes)
+
+Owner: "why must we be contained to those big-ass pages… move things around… like an operating
+system." The canvas was a top "stream column" + a bottom dashed "board." It's now **one
+continuous spatial desktop**: a subtle dot-grid surface (`DesktopGrid`), utterances stream from
+the top strip, and you **fling any bubble anywhere on the whole surface to tack it** (drop below
+a small `pinFloor`, not into a tray). Pinned notes live wherever you drop them and drag freely; a
+small frosted "N tacked" chip replaces the big board label. Combined with the draggable
+`FloatingRecorder`, the meeting reads as an arrangeable workspace, not stacked pages.
+
 ## Promote a note → a real artifact
 
 A note card on the canvas now **offers** an action: a visible **Promote** pill (smart-guesses
