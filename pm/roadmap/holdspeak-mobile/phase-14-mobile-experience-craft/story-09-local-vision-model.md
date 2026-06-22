@@ -47,8 +47,12 @@ can prove the loop on an endpoint (Mode B/C) **today**, before the on-device MLX
 - [x] **The seam exists + the domain depends on it** — `IVisionProvider.describe(image:prompt:)`,
       and `SketchVision.resolveShape(image:using:)` maps a VLM answer to a `ShapeKind`,
       returning nil on an unusable answer (caller keeps the geometry guess). Host-tested.
-- [ ] **Endpoint VLM (Mode B/C)** backs the seam and resolves a genuinely ambiguous sketch
-      shape on a real vision model.
+- [x] **Endpoint VLM (Mode B) backs the seam + recognizes real sketches** — `.43:8080` now runs
+      **Qwythos-9B + its `mmproj`** (vision), proven end-to-end: a box image with "Login" →
+      VLM read `Login`. The app's **"Recognize with AI"** renders the PencilKit drawing → POSTs
+      the image to the endpoint → gets Mermaid → `MermaidParse` parses + lays it out → renders
+      natively. ATS/local-network entitlements added. Device-built + deployed; owner verifies
+      the live sketch→diagram.
 - [ ] **On-device Gemma 4 E4B (MLX-VLM, Mode A)** backs the seam fully air-gapped, proven on
       the iPad.
 - [ ] **General image understanding** — describe/extract from a pasted whiteboard photo via
