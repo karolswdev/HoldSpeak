@@ -28,15 +28,27 @@ public enum WorkflowSource: String, Codable, Sendable, CaseIterable {
     }
 }
 
-/// One step in the pipeline — the basic logic blocks the builder offers.
-public enum WorkflowStep: Codable, Sendable, Equatable, Identifiable {
-    case lens(MIRProfile)        // surface through a meeting lens (weights what to find)
-    case extract(ArtifactType)   // draft a specific artifact type
-    case summarize               // condense to a tight summary
-    case rewrite(tone: String)   // restate in a tone (e.g. "executive", "plain")
-    case keepIf(String)          // basic filter: keep only items mentioning a keyword
+/// What a step reads as its input — the meeting source, or the output of the step above it. The
+/// custom `llmCall` block uses this to be wired into the pipeline.
+public enum WorkflowInput: String, Codable, Sendable, CaseIterable {
+    case meeting        // the workflow's SOURCE (full transcript / tacked moments / selection)
+    case previousStep   // the output of the step directly above
 
-    public var id: String { label }
+    public var label: String { self == .meeting ? "the meeting" : "the previous step" }
+}
+
+/// One step in the pipeline. The curated blocks (lens / extract / summarize / rewrite / filter) are
+/// first-class, AND there's a fully custom **`llmCall`** — your own prompt over a chosen input — so a
+/// workflow isn't limited to the presets. The custom node is what makes this a real builder.
+public enum WorkflowStep: Codable, Sendable, Equatable, Identifiable {
+    case lens(MIRProfile)                                   // surface through a meeting lens
+    case extract(ArtifactType)                             // draft a specific artifact type
+    case summarize                                         // condense to a tight summary
+    case rewrite(tone: String)                             // restate in a tone
+    case keepIf(String)                                    // basic filter: keep items mentioning a keyword
+    case llmCall(name: String, prompt: String, input: WorkflowInput)   // CUSTOM: your prompt, your input
+
+    public var id: String { label + "·" + String(describing: self).prefix(40) }
 
     public var label: String {
         switch self {
@@ -45,6 +57,7 @@ public enum WorkflowStep: Codable, Sendable, Equatable, Identifiable {
         case .summarize:      return "Summarize"
         case .rewrite(let t): return "Rewrite · \(t)"
         case .keepIf(let k):  return "Keep if · \(k)"
+        case .llmCall(let n, _, _): return n.isEmpty ? "LLM call" : n
         }
     }
     public var glyph: String {
@@ -54,8 +67,11 @@ public enum WorkflowStep: Codable, Sendable, Equatable, Identifiable {
         case .summarize: return "text.append"
         case .rewrite:   return "pencil.and.outline"
         case .keepIf:    return "line.3.horizontal.decrease.circle"
+        case .llmCall:   return "terminal.fill"
         }
     }
+    /// Whether this is the fully custom LLM-call node (the builder treats it specially).
+    public var isCustom: Bool { if case .llmCall = self { return true }; return false }
 }
 
 /// Where the pipeline's result goes.
@@ -137,5 +153,10 @@ public enum WorkflowPresets {
                  steps: [.summarize, .rewrite(tone: "executive")], output: .slack),
         Workflow(name: "Risks only", source: .fullTranscript,
                  steps: [.lens(.incident), .extract(.riskRegister), .keepIf("risk")], output: .artifacts),
+        Workflow(name: "Custom: open questions", source: .fullTranscript,
+                 steps: [.llmCall(name: "Open questions",
+                                  prompt: "From {input}, list the unresolved questions raised but not answered. One per line, no preamble.",
+                                  input: .meeting)],
+                 output: .note),
     ]
 }

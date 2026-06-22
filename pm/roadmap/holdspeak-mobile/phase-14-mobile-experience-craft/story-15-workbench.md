@@ -2,10 +2,12 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 14
-- **Status:** in-progress — **engine + gamified canvas + run-from-meeting shipped** (2026-06-22):
-  build/configure/reorder/preset/save a pipeline, run a saved workflow on a meeting through the
-  configured provider (artifacts output). Remaining: the non-extract steps (summarize/rewrite/keepIf)
-  as real transforms, note/Slack outputs, in-canvas run, device proof.
+- **Status:** in-progress — **engine + gamified canvas + a CUSTOM LLM-call node + tap-to-edit
+  configuration sheets + run-from-meeting shipped** (2026-06-22). On owner feedback that the first
+  cut "wasn't a builder" (no custom node, cramped menus): added `WorkflowStep.llmCall(name,prompt,input)`
+  and replaced inline menus with full editor sheets (a real prompt editor for the custom node).
+  Remaining: execute the custom prompt + the non-extract transforms (summarize/rewrite/keepIf) +
+  note/Slack outputs, in-canvas run, device proof.
 - **Depends on:** HSM-14 Settings (the configured `ILLMProvider` target), HSM-8-04 (artifact gen)
 - **Owner:** unassigned
 
