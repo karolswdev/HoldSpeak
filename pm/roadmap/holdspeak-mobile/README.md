@@ -3,7 +3,13 @@
 > 🚀 **New agent? Start here:** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **The Workbench begins**
+**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **Three owner-flagged fixes:**
+(1) cut the prose — Settings' endpoint state is a tight chip ("3 found" / "no connection"), not a
+sentence; (2) the model is **fetched** from the endpoint's `GET /v1/models` and **picked** from a
+menu (no more hand-typing); (3) **PixelLab used for real** — a bespoke generated plasma energy core
+(`theaterorb.png`) is the rotating/breathing centerpiece of the generation theater, replacing the SF
+glyph. Standing note: lean on the PixelLab MCP for craft. Live on the iPad. Prior same-day: **The
+Workbench begins**
 (HSM-14-15) — the owner's gamified visual intelligence builder: user-defined workflows as a linear
 pipeline (SOURCE → STEPs → OUTPUT; the usability bet over a node graph) with basic logic blocks
 (lens/extract/summarize/rewrite/keep-if), egress-aware outputs, presets, a readable plan. **Engine
