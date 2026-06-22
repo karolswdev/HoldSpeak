@@ -1763,6 +1763,282 @@ struct SettingsView: View {
     }
 }
 
+// MARK: - Workbench (user-defined intelligence builder)
+
+/// The library of saved user-defined workflows, persisted to UserDefaults. The builder edits a
+/// working copy and saves here; a meeting runs any saved workflow.
+@MainActor final class WorkflowStore: ObservableObject {
+    static let shared = WorkflowStore()
+    @Published var saved: [Workflow] = []
+    private let d = UserDefaults.standard
+    private let key = "hs.workflows.v1"
+    private init() {
+        if let data = d.data(forKey: key), let ws = try? JSONDecoder().decode([Workflow].self, from: data) { saved = ws }
+    }
+    func save(_ w: Workflow) {
+        if let i = saved.firstIndex(where: { $0.id == w.id }) { saved[i] = w } else { saved.insert(w, at: 0) }
+        persist()
+    }
+    func delete(_ id: UUID) { saved.removeAll { $0.id == id }; persist() }
+    private func persist() { if let data = try? JSONEncoder().encode(saved) { d.set(data, forKey: key) } }
+}
+
+/// The Workbench: a gamified, tap-to-build pipeline editor for user-defined intelligence. Reads
+/// top-to-bottom (SOURCE → STEPs → OUTPUT) — the crushing-usability bet over a node graph. Tap a
+/// block from the palette to add a step, configure it inline, reorder, save. Signal depth + a
+/// bespoke PixelLab energy core; no prose.
+struct WorkbenchView: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var store = WorkflowStore.shared
+    @State private var wf = Workflow(name: "My workflow", source: .fullTranscript,
+                                     steps: [.lens(.delivery), .extract(.decisions)], output: .artifacts)
+    @State private var spin = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ZStack {
+            Sig.bgGradient.ignoresSafeArea()
+            Circle().fill(Sig.accent.opacity(0.15)).frame(width: 420).blur(radius: 130)
+                .offset(x: 150, y: -300).ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    header
+                    presetsRow
+                    pipeline
+                    paletteBar
+                    saveBar
+                    if !store.saved.isEmpty { savedRow }
+                }
+                .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
+            }
+        }
+        .toolbar(.hidden, for: .navigationBar).tint(Sig.accent)
+        .onAppear { spin = true }
+    }
+
+    private var header: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle().fill(Sig.accent.opacity(0.5)).frame(width: 40, height: 40).blur(radius: 16)
+                pixelAsset("crystal", size: 46, fallback: "cube.transparent.fill", tint: .black)
+                    .rotationEffect(.degrees(spin ? 360 : 0))
+                    .animation(reduceMotion ? nil : .linear(duration: 12).repeatForever(autoreverses: false), value: spin)
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                Text("WORKBENCH").font(.system(size: 10, weight: .heavy)).tracking(1.6).foregroundStyle(Sig.accent)
+                Text("Build intelligence").font(.system(size: 27, weight: .heavy)).foregroundStyle(Sig.text)
+            }
+            Spacer()
+            Button { dismiss() } label: {
+                Image(systemName: "xmark").font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
+                    .frame(width: 44, height: 44).signalCard(Sig.s2, radius: 14)
+            }.buttonStyle(PressableCard())
+        }.padding(.top, 6)
+    }
+
+    private var presetsRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 9) {
+                ForEach(WorkflowPresets.all) { p in
+                    Button {
+                        tactile(); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+                            wf = Workflow(name: p.name, source: p.source, steps: p.steps, output: p.output)
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "wand.and.stars").font(.system(size: 11, weight: .bold))
+                            Text(p.name).font(.system(size: 12, weight: .heavy))
+                        }
+                        .foregroundStyle(Sig.text)
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                        .background(Sig.s2, in: Capsule()).overlay(Capsule().strokeBorder(Sig.topHairline, lineWidth: 1))
+                    }.buttonStyle(PressableCard())
+                }
+            }.padding(.vertical, 1)
+        }
+    }
+
+    // The pipeline: SOURCE → steps → OUTPUT, with flowing connectors between.
+    private var pipeline: some View {
+        VStack(spacing: 0) {
+            sourceBlock
+            ForEach(Array(wf.steps.enumerated()), id: \.offset) { i, step in
+                connector
+                stepBlock(i, step)
+            }
+            connector
+            outputBlock
+        }
+    }
+
+    private var connector: some View {
+        ZStack {
+            Rectangle().fill(Sig.accent.opacity(0.5)).frame(width: 2, height: 26)
+            Image(systemName: "chevron.compact.down").font(.system(size: 13, weight: .black)).foregroundStyle(Sig.accent.opacity(0.7))
+        }
+    }
+
+    private func blockShell<Content: View>(_ tag: String, _ glyph: String, _ gradient: LinearGradient,
+                                           @ViewBuilder _ content: () -> Content) -> some View {
+        HStack(spacing: 13) {
+            GlyphChip(system: glyph, gradient: gradient, size: 46)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(tag).font(.system(size: 9, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint)
+                content()
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 18)
+    }
+
+    private var sourceBlock: some View {
+        blockShell("SOURCE", wf.source.glyph, Sig.localGradient) {
+            Menu {
+                ForEach(WorkflowSource.allCases, id: \.self) { s in Button(s.label) { wf.source = s; tactile() } }
+            } label: { menuLabel(wf.source.label) }
+        }
+    }
+
+    private var outputBlock: some View {
+        blockShell("OUTPUT", wf.output.glyph, wf.output.isEgress ? Sig.accentGradient : Sig.localGradient) {
+            HStack(spacing: 8) {
+                Menu {
+                    ForEach(WorkflowOutput.allCases, id: \.self) { o in Button(o.label) { wf.output = o; tactile() } }
+                } label: { menuLabel(wf.output.label) }
+                if wf.output.isEgress {
+                    HStack(spacing: 3) { Image(systemName: "antenna.radiowaves.left.and.right").font(.system(size: 8, weight: .black)); Text("leaves device").font(.system(size: 9, weight: .heavy)) }
+                        .foregroundStyle(Sig.accent).padding(.horizontal, 6).padding(.vertical, 3).background(Sig.accent.opacity(0.14), in: Capsule())
+                }
+            }
+        }
+    }
+
+    private func stepBlock(_ i: Int, _ step: WorkflowStep) -> some View {
+        HStack(spacing: 13) {
+            GlyphChip(system: step.glyph, gradient: Sig.accentGradient, size: 46)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("STEP \(i + 1)").font(.system(size: 9, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint)
+                stepConfig(i, step)
+            }
+            Spacer(minLength: 0)
+            VStack(spacing: 6) {
+                Button { move(i, -1) } label: { Image(systemName: "chevron.up").font(.system(size: 12, weight: .bold)) }
+                    .disabled(i == 0).foregroundStyle(i == 0 ? Sig.faint.opacity(0.4) : Sig.muted)
+                Button { move(i, 1) } label: { Image(systemName: "chevron.down").font(.system(size: 12, weight: .bold)) }
+                    .disabled(i == wf.steps.count - 1).foregroundStyle(i == wf.steps.count - 1 ? Sig.faint.opacity(0.4) : Sig.muted)
+            }.buttonStyle(.plain)
+            Button { withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { wf.steps.remove(at: i) }; tactile() } label: {
+                Image(systemName: "xmark.circle.fill").font(.system(size: 19, weight: .bold)).foregroundStyle(Sig.faint)
+            }.buttonStyle(.plain)
+        }
+        .padding(14).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 18)
+        .transition(.scale(scale: 0.95).combined(with: .opacity))
+    }
+
+    // Inline config: a Menu for the parameterized steps; a plain label for the fixed ones.
+    @ViewBuilder private func stepConfig(_ i: Int, _ step: WorkflowStep) -> some View {
+        switch step {
+        case .lens:
+            Menu {
+                ForEach(MIRProfile.allCases, id: \.self) { p in Button("Lens · \(p.rawValue.capitalized)") { wf.steps[i] = .lens(p); tactile() } }
+            } label: { menuLabel(step.label) }
+        case .extract:
+            Menu {
+                ForEach(ArtifactType.allCases, id: \.self) { t in Button(t.rawValue) { wf.steps[i] = .extract(t); tactile() } }
+            } label: { menuLabel(step.label) }
+        case .rewrite:
+            Menu {
+                ForEach(["executive", "plain", "friendly", "technical"], id: \.self) { tone in Button("Rewrite · \(tone)") { wf.steps[i] = .rewrite(tone: tone); tactile() } }
+            } label: { menuLabel(step.label) }
+        default:
+            Text(step.label).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text)
+        }
+    }
+
+    private func menuLabel(_ s: String) -> some View {
+        HStack(spacing: 6) {
+            Text(s).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text).lineLimit(1)
+            Image(systemName: "chevron.up.chevron.down").font(.system(size: 10, weight: .bold)).foregroundStyle(Sig.faint)
+        }
+    }
+
+    // The palette — tap a block kind to append a step.
+    private var paletteBar: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text("ADD A STEP").font(.system(size: 10, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint).padding(.leading, 2)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    paletteChip("Lens", "camera.filters") { wf.steps.append(.lens(.delivery)) }
+                    paletteChip("Extract", "doc.text.magnifyingglass") { wf.steps.append(.extract(.actionItems)) }
+                    paletteChip("Summarize", "text.append") { wf.steps.append(.summarize) }
+                    paletteChip("Rewrite", "pencil.and.outline") { wf.steps.append(.rewrite(tone: "executive")) }
+                    paletteChip("Filter", "line.3.horizontal.decrease.circle") { wf.steps.append(.keepIf("risk")) }
+                }.padding(.vertical, 1)
+            }
+        }
+    }
+
+    private func paletteChip(_ title: String, _ glyph: String, _ add: @escaping () -> Void) -> some View {
+        Button { tactile(); withAnimation(.spring(response: 0.4, dampingFraction: 0.78)) { add() } } label: {
+            HStack(spacing: 6) {
+                Image(systemName: glyph).font(.system(size: 12, weight: .bold))
+                Text(title).font(.system(size: 13, weight: .heavy))
+                Image(systemName: "plus").font(.system(size: 10, weight: .black))
+            }
+            .foregroundStyle(Sig.accent)
+            .padding(.horizontal, 12).padding(.vertical, 9)
+            .background(Sig.accent.opacity(0.12), in: Capsule()).overlay(Capsule().strokeBorder(Sig.accent.opacity(0.3), lineWidth: 1))
+        }.buttonStyle(PressableCard())
+    }
+
+    private var saveBar: some View {
+        Button {
+            tactile(.medium)
+            store.save(Workflow(name: wf.name, source: wf.source, steps: wf.steps, output: wf.output))
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "tray.and.arrow.down.fill")
+                Text("Save workflow")
+            }
+            .font(.system(size: 15, weight: .heavy)).foregroundStyle(.black)
+            .frame(maxWidth: .infinity).padding(.vertical, 14)
+            .background(Sig.accentGradient, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .opacity(wf.isRunnable ? 1 : 0.5)
+        }
+        .buttonStyle(PressableCard()).disabled(!wf.isRunnable)
+        .padding(.top, 2)
+    }
+
+    private var savedRow: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text("SAVED — RUN FROM A MEETING").font(.system(size: 10, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint).padding(.leading, 2)
+            ForEach(store.saved) { w in
+                HStack(spacing: 12) {
+                    GlyphChip(system: "wand.and.stars", gradient: Sig.localGradient, size: 38)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(w.name).font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.text).lineLimit(1)
+                        Text(w.plan).font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1)
+                    }
+                    Spacer()
+                    Button { tactile(); withAnimation { wf = w } } label: {
+                        Image(systemName: "square.and.pencil").font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
+                    }.buttonStyle(.plain)
+                    Button { withAnimation { store.delete(w.id) }; tactile() } label: {
+                        Image(systemName: "trash").font(.system(size: 14, weight: .bold)).foregroundStyle(Sig.faint)
+                    }.buttonStyle(.plain)
+                }
+                .padding(12).signalCard(Sig.s1, radius: 14)
+            }
+        }
+    }
+
+    private func move(_ i: Int, _ dir: Int) {
+        let j = i + dir
+        guard wf.steps.indices.contains(j) else { return }
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { wf.steps.swapAt(i, j) }; tactile()
+    }
+}
+
 // MARK: - Meeting list
 
 struct MeetingListView: View {
@@ -1776,6 +2052,7 @@ struct MeetingListView: View {
         #if targetEnvironment(simulator)
         if ProcessInfo.processInfo.environment["HS_DEMO_GEN"] == "1" { return AnyView(GenTheaterDemo()) }
         if ProcessInfo.processInfo.environment["HS_DEMO_SETTINGS"] == "1" { return AnyView(SettingsDemo()) }
+        if ProcessInfo.processInfo.environment["HS_DEMO_WORKBENCH"] == "1" { return AnyView(NavigationStack { WorkbenchView() }) }
         #endif
         return AnyView(listBody)
     }
@@ -1790,6 +2067,7 @@ struct MeetingListView: View {
                         Button { tactile(.medium); capturing = true } label: { recordHero }
                             .buttonStyle(PressableCard())
                             .accessibilityLabel("New recording — capture a meeting on-device")
+                        NavigationLink { WorkbenchView() } label: { workbenchCta }.buttonStyle(PressableCard())
                         HStack(spacing: 12) {
                             NavigationLink { ModelsView() } label: { modelsCta }.buttonStyle(PressableCard())
                             NavigationLink { SketchToDiagramView() } label: { sketchCta }.buttonStyle(PressableCard())
@@ -1901,6 +2179,20 @@ struct MeetingListView: View {
         .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(.white.opacity(0.22), lineWidth: 1))
         .shadow(color: Sig.accent.opacity(0.45), radius: 26, y: 12)
         .opacity(appeared ? 1 : 0).scaleEffect(appeared ? 1 : 0.96)
+    }
+
+    // A full-width flagship tile under the hero — the Workbench, your own intelligence workflows.
+    private var workbenchCta: some View {
+        HStack(spacing: 14) {
+            GlyphChip(system: "slider.horizontal.3", gradient: Sig.accentGradient, size: 50)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Workbench").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Build your own intelligence workflows").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+            }
+            Spacer()
+            Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
+        }
+        .padding(15).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 20)
     }
 
     private var modelsCta: some View {
@@ -2658,7 +2950,7 @@ final class MeetingReviewState: ObservableObject {
         else { try? line.write(to: url, atomically: true, encoding: .utf8) }
     }
 
-    func generate() async {
+    func generate(workflowTypes: [ArtifactType]? = nil) async {
         Self.glogReset()
         let chars = meeting.segments.map(\.text).joined(separator: " ").count
         Self.glog("segments=\(meeting.segments.count) chars=\(chars) tokens≈\(chars / 4)")
@@ -2704,10 +2996,11 @@ final class MeetingReviewState: ObservableObject {
 
         let transcript = Transcript(meetingId: meeting.id, segments: meeting.segments,
                                     transcriptHash: "ondevice-\(meeting.segments.count)")
-        let types = marks.isEmpty
+        // A workflow run pins the types it produces; otherwise the lens (+ tacked moments) pick them.
+        let types = workflowTypes ?? (marks.isEmpty
             ? (MIRRouter.baseEmphasis[profile] ?? [.decisions, .actionItems, .requirements])
-            : InkEmphasis.routedTypes(profile: profile, transcript: transcript, marks: marks)
-        Self.glog("types=\(types.map(\.rawValue))")
+            : InkEmphasis.routedTypes(profile: profile, transcript: transcript, marks: marks))
+        Self.glog("types=\(types.map(\.rawValue)) workflow=\(workflowTypes != nil)")
         // Light up the generation theater with the planned types.
         genTypes = types; genDone = []; genCurrent = nil; genFlourish = 0
 
@@ -3637,6 +3930,7 @@ struct MeetingDetailView: View {
     let meeting: Meeting
     @StateObject private var notes: NotebookModel
     @StateObject private var review: MeetingReviewState
+    @ObservedObject private var workflows = WorkflowStore.shared
     private let links: [TranscriptLink]
     @State private var openDoc: OpenDoc?
 
@@ -3803,6 +4097,24 @@ struct MeetingDetailView: View {
                     .foregroundStyle(.black)
                     .frame(maxWidth: .infinity).padding(.vertical, 11)
                     .background(Sig.accent, in: RoundedRectangle(cornerRadius: 12))
+                }
+                if !workflows.saved.isEmpty {
+                    Menu {
+                        ForEach(workflows.saved) { w in
+                            Button { Task { await review.generate(workflowTypes: w.producedTypes(default: [.decisions, .actionItems, .requirements])) } } label: {
+                                Label(w.name, systemImage: "wand.and.stars")
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "slider.horizontal.3"); Text("Run a workflow")
+                            Image(systemName: "chevron.up.chevron.down").font(.system(size: 11, weight: .bold)).opacity(0.6)
+                        }
+                        .font(.subheadline.weight(.semibold)).foregroundStyle(Sig.accent)
+                        .frame(maxWidth: .infinity).padding(.vertical, 11)
+                        .background(Sig.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Sig.accent.opacity(0.35), lineWidth: 1))
+                    }
                 }
                 if !review.hasInkArtifacts {
                     Button { Task { await review.promoteNotes() } } label: {

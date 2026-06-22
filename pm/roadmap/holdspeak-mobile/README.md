@@ -3,7 +3,13 @@
 > 🚀 **New agent? Start here:** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **Three owner-flagged fixes:**
+**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **The Workbench canvas is
+live** (HSM-14-15) — the gamified visual intelligence builder: a Workbench tile on the home opens a
+vertical SOURCE → STEPs → OUTPUT pipeline of Signal blocks (tap from an ADD-A-STEP palette, configure
+inline, reorder, four presets, a PixelLab crystal header), Save to a persisted library, and **run** a
+saved workflow on a meeting (detail → "Run a workflow" → `generate(workflowTypes:)` through the
+configured provider with the generation-theater treatment). Live on the iPad. Prior same-day: **Three
+owner-flagged fixes:**
 (1) cut the prose — Settings' endpoint state is a tight chip ("3 found" / "no connection"), not a
 sentence; (2) the model is **fetched** from the endpoint's `GET /v1/models` and **picked** from a
 menu (no more hand-typing); (3) **PixelLab used for real** — a bespoke generated plasma energy core
