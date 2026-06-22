@@ -2,8 +2,10 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 14
-- **Status:** in-progress — **engine foundation shipped + host-tested** (2026-06-22); the gamified
-  visual canvas is the next build.
+- **Status:** in-progress — **engine + gamified canvas + run-from-meeting shipped** (2026-06-22):
+  build/configure/reorder/preset/save a pipeline, run a saved workflow on a meeting through the
+  configured provider (artifacts output). Remaining: the non-extract steps (summarize/rewrite/keepIf)
+  as real transforms, note/Slack outputs, in-canvas run, device proof.
 - **Depends on:** HSM-14 Settings (the configured `ILLMProvider` target), HSM-8-04 (artifact gen)
 - **Owner:** unassigned
 
@@ -52,12 +54,16 @@ chosen output. Egress outputs (Slack) ride the existing propose→approve→exec
 
 - [x] **Engine** — a Codable workflow model (source + ordered steps + output), presets, a
       human-readable plan, derived produced-types, host-tested.
-- [ ] **The canvas** — a Workbench screen (from the home) that builds a pipeline by tapping blocks
-      from a palette and dragging to reorder, Signal depth throughout, crushing usability.
-      Simulator-screenshot-proven.
-- [ ] **Run it** — execute a workflow against a meeting through the configured `ILLMProvider`, with
-      the generation-theater treatment; results land in the chosen output.
-- [ ] **Persistence + presets** — workflows save and reload; presets are the one-tap on-ramp.
+- [x] **The canvas** — `WorkbenchView` (Workbench tile on the home): a vertical SOURCE → STEPs →
+      OUTPUT pipeline of Signal blocks with inline config menus, an "ADD A STEP" palette
+      (lens/extract/summarize/rewrite/filter), per-step reorder + remove, the PixelLab crystal in the
+      header. Simulator-shot `workbench-builder.png`.
+- [~] **Run it** — a saved workflow runs on a meeting via the detail's "Run a workflow" menu →
+      `MeetingReviewState.generate(workflowTypes:)` (the workflow's produced types) through the
+      configured `ILLMProvider`, with the generation-theater treatment. The non-extract transforms
+      (summarize/rewrite/keepIf) + note/Slack outputs are the remaining slice.
+- [x] **Persistence + presets** — `WorkflowStore` (UserDefaults) saves/reloads; the four presets are
+      the one-tap on-ramp; the saved list edits/deletes.
 - [ ] **Egress honesty** — a Slack output shows the egress badge and rides propose→approve→execute.
 - [ ] **In-meeting** — the Workbench is reachable mid-meeting (the owner's "while we're in a meeting").
 

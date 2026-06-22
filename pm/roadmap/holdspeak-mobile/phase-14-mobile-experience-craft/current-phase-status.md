@@ -91,7 +91,7 @@ Pencil), accessibility + adaptivity, and a polish pass — each delivered with c
 | HSM-14-11 | The live capture canvas (transcription bubbles + tack-to-board) | in-progress | [story-11](./story-11-live-capture-canvas.md) | built + on iPad + Simulator-proven |
 | HSM-14-12 | Constant-time live transcription (sliding window + commit) | in-progress (built + host-proven + sim-shown; device cadence pending) | [story-12](./story-12-constant-time-transcription.md) | [shot](./screenshots/constant-time-transcription-canvas.png) + story "Evidence" |
 | HSM-14-13 | The spatial workspace (OS-like capture surface) | in-progress (deliverables 1–4 built + host-proven + sim-shown; stretch 5–6 + device feel remain) | [story-13](./story-13-spatial-workspace.md) | [docked](./screenshots/recorder-docked-top.png) / [orb](./screenshots/recorder-minimized-orb.png) / [free-place vs tack](./screenshots/recorder-freeplace-vs-tack.png) / [resize](./screenshots/recorder-resizable-card.png) / [tidy](./screenshots/recorder-tidy-grid.png) |
-| HSM-14-15 | The Workbench (visual intelligence builder) | in-progress (engine shipped + host-tested; gamified canvas next) | [story-15](./story-15-workbench.md) | `WorkflowTests` (7) |
+| HSM-14-15 | The Workbench (visual intelligence builder) | in-progress (engine + gamified canvas + run-from-meeting shipped; transforms/outputs next) | [story-15](./story-15-workbench.md) | [builder](./screenshots/workbench-builder.png) + `WorkflowTests` (7) |
 
 ## Where we are
 
@@ -226,6 +226,17 @@ energy core** (PixelLab `theaterorb.png`, bundled offline) is now the centerpiec
 theater — a swirling sprite that slowly rotates + breathes inside the accent pulse rings, replacing
 the SF-symbol glyph. Built for Simulator + device; shots `settings-models-fetched.png`,
 `generation-theater-pixel-orb.png`. Standing note: lean on the PixelLab MCP for craft, not SF glyphs.
+
+**2026-06-22 — the Workbench canvas (HSM-14-15) is live.** The gamified visual builder the owner
+asked for: `WorkbenchView` (a flagship Workbench tile on the home) is a vertical **SOURCE → STEPs →
+OUTPUT** pipeline of Signal blocks with flowing connectors — tap a block from the **ADD A STEP**
+palette (lens/extract/summarize/rewrite/filter), configure each inline (menus), reorder (per-step
+up/down) and remove, with four one-tap **presets** and a header **PixelLab crystal**. **Save** writes
+to `WorkflowStore` (UserDefaults). And it **runs**: a meeting's detail gains a **"Run a workflow"**
+menu → `MeetingReviewState.generate(workflowTypes:)` executes the saved workflow's produced types
+through the configured provider (on-device or LAN) with the full generation-theater treatment.
+Built for Simulator + device; shot `workbench-builder.png`. Crushing-usability linear-pipeline bet,
+no prose. Remaining: the non-extract transforms (summarize/rewrite/keepIf) + note/Slack outputs.
 
 ## Operating principle (standing, beyond this phase)
 
