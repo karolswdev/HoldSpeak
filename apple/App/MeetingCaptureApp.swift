@@ -528,6 +528,7 @@ private func shapeTint(_ k: ShapeKind) -> Color {
     @Published var vlmBusy = false
     @Published var vlmError = ""
     @Published var usedAI = false
+    @Published var diagramType = ""
     private var task: Task<Void, Never>?
 
     /// HSM-14-09 — hand the whole sketch to the local vision model (Qwythos on .43) when the
@@ -539,10 +540,10 @@ private func shapeTint(_ k: ShapeKind) -> Color {
         Task { [weak self] in
             do {
                 let raw = try await SketchVLM.mermaid(from: png)
-                let mm = MermaidParse.fromResponse(raw)
+                let (mm, type) = MermaidParse.parseResponse(raw)
                 let g = MermaidParse.graph(mm)
                 await MainActor.run {
-                    self?.vlmBusy = false; self?.usedAI = true; self?.mermaid = mm
+                    self?.vlmBusy = false; self?.usedAI = true; self?.mermaid = mm; self?.diagramType = type
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { self?.graph = g }
                 }
             } catch {
@@ -620,33 +621,37 @@ enum SketchVLM {
     static func mermaid(from png: Data) async throws -> String {
         let b64 = png.base64EncodedString()
         let prompt = """
-        You are an expert at reading hand-drawn diagrams. Look at this sketch of a flowchart and \
-        reproduce it as Mermaid flowchart code.
+        You are an expert at reading hand-drawn diagrams. Look at this sketch and reproduce it as a Mermaid diagram.
 
-        Rules:
-        - Each box / rectangle is a node:        A["label"]
-        - Each diamond is a decision:            B{"label"}
-        - Each circle / ellipse is:              C(("label"))
-        - Each arrow is an edge from the shape at its tail to the shape at its head:  A --> B
-        - If a word like yes / no is written on an arrow, use a labelled edge:        B -->|yes| C
-        - Read the handwritten text inside each shape and use it as the label (fix obvious misspellings).
-        - Use short ids (A, B, C, …). Begin with "flowchart TD". Keep it minimal and valid.
+        FIRST decide which Mermaid diagram type best fits what is actually drawn:
+        - "flowchart"        — boxes/diamonds joined by arrows (processes, decisions)
+        - "sequenceDiagram"  — actors with vertical lifelines and horizontal messages
+        - "classDiagram"     — boxes with a title + a list of fields/methods, connected
+        - "stateDiagram-v2"  — states with labelled transitions, often a start/end dot
+        - "erDiagram"        — entities with attributes and relationship lines
+        - "mindmap"          — a central node with radiating branches
+        - "gantt" or "timeline" — bars/events along a time axis
 
-        Return ONLY JSON of the form {"mermaid": "<the mermaid code, with \\n between lines>"}.
+        THEN output VALID Mermaid for that type. Read the handwritten labels (fix obvious misspellings),
+        keep it minimal and correct. For flowcharts: box A["x"], diamond B{"x"}, circle C(("x")),
+        edge A --> B, labelled edge B -->|yes| C.
+
+        Return ONLY JSON: {"diagram_type": "<one of the names above>", "mermaid": "<the full mermaid code, \\n between lines>"}.
         """
         let body: [String: Any] = [
             "messages": [["role": "user", "content": [
                 ["type": "text", "text": prompt],
                 ["type": "image_url", "image_url": ["url": "data:image/png;base64,\(b64)"]],
             ]]],
-            "max_tokens": 800, "temperature": 0.2,
+            "max_tokens": 900, "temperature": 0.2,
             "response_format": [
                 "type": "json_schema",
                 "json_schema": [
                     "name": "diagram",
                     "schema": ["type": "object",
-                               "properties": ["mermaid": ["type": "string", "minLength": 1]],
-                               "required": ["mermaid"], "additionalProperties": false],
+                               "properties": ["diagram_type": ["type": "string"],
+                                              "mermaid": ["type": "string", "minLength": 1]],
+                               "required": ["diagram_type", "mermaid"], "additionalProperties": false],
                 ],
             ],
         ]
@@ -679,12 +684,28 @@ enum MermaidParse {
         return s.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    /// The model may return `{"mermaid":"…"}` (json_schema) or raw/fenced mermaid — handle both.
-    static func fromResponse(_ content: String) -> String {
+    /// The model returns `{"diagram_type":"…","mermaid":"…"}` (json_schema) or raw/fenced mermaid.
+    /// Returns the cleaned mermaid + the diagram type (inferred from the header if absent).
+    static func parseResponse(_ content: String) -> (mermaid: String, type: String) {
         if let data = content.data(using: .utf8),
            let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let mm = obj["mermaid"] as? String { return extract(mm) }
-        return extract(content)
+           let mm = obj["mermaid"] as? String {
+            let m = extract(mm)
+            let t = (obj["diagram_type"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? inferType(m)
+            return (m, t)
+        }
+        let m = extract(content)
+        return (m, inferType(m))
+    }
+    static func inferType(_ mermaid: String) -> String {
+        let head = (mermaid.split(separator: "\n").first.map(String.init) ?? "").lowercased()
+        let map: [(String, String)] = [
+            ("sequencediagram", "sequence"), ("classdiagram", "class"), ("statediagram", "state"),
+            ("erdiagram", "ER"), ("mindmap", "mindmap"), ("gantt", "gantt"), ("timeline", "timeline"),
+            ("flowchart", "flowchart"), ("graph", "flowchart"),
+        ]
+        for (k, v) in map where head.contains(k) { return v }
+        return "diagram"
     }
 
     static func graph(_ mermaid: String) -> DiagramGraph {
@@ -942,11 +963,15 @@ struct SketchToDiagramView: View {
 
                 // Live diagram
                 VStack(alignment: .leading, spacing: 6) {
-                    HStack {
+                    HStack(spacing: 8) {
                         Text(model.usedAI ? "AI DIAGRAM" : "LIVE DIAGRAM").font(.system(size: 11, weight: .heavy)).tracking(1.4)
                             .foregroundStyle(model.usedAI ? Sig.accent : Sig.faint)
+                        if model.usedAI && !model.diagramType.isEmpty {
+                            Text(model.diagramType).font(.system(size: 10, weight: .heavy)).foregroundStyle(Sig.local)
+                                .padding(.horizontal, 7).padding(.vertical, 2).background(Sig.local.opacity(0.16), in: Capsule())
+                        }
                         Spacer()
-                        if !model.graph.nodes.isEmpty {
+                        if !model.usedAI && !model.graph.nodes.isEmpty {
                             Text("\(model.graph.nodes.count) nodes · \(model.graph.edges.count) edges")
                                 .font(.system(size: 11, weight: .semibold)).foregroundStyle(Sig.muted)
                         }
