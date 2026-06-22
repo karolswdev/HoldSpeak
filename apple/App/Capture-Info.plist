@@ -31,5 +31,38 @@
          No networking — capture, transcription and storage all stay on the device. -->
     <key>NSMicrophoneUsageDescription</key>
     <string>HoldSpeak records your meeting so it can transcribe it on-device and keep the notes here on your iPad.</string>
+    <!-- HSM-14: let the owner import models. AirDrop / Files offers "Save to HoldSpeak" for a
+         .gguf, which the app copies into its container (the on-device runtime loads from there). -->
+    <key>UTImportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>dev.holdspeak.gguf</string>
+            <key>UTTypeDescription</key>
+            <string>GGUF model</string>
+            <key>UTTypeConformsTo</key>
+            <array><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array><string>gguf</string></array>
+            </dict>
+        </dict>
+    </array>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>GGUF model</string>
+            <key>LSItemContentTypes</key>
+            <array><string>dev.holdspeak.gguf</string></array>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+        </dict>
+    </array>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <false/>
 </dict>
 </plist>
