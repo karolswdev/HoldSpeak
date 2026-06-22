@@ -1508,6 +1508,225 @@ struct SketchToDiagramView: View {
     }
 }
 
+// MARK: - Inference settings store (where intelligence runs) — HSM-14 / HSM-5-06
+
+/// The persisted choice of where a meeting's intelligence runs: fully on this iPad (Mode A,
+/// LlamaProvider) or against an OpenAI-compatible endpoint on your LAN (Modes B/C,
+/// OpenAIEndpointProvider). One store the Settings UI writes and `generate()` reads, so flipping
+/// the target takes effect with no code change. Persisted in UserDefaults; the API key never
+/// leaves this store and is attached only at request time.
+@MainActor final class InferenceConfigStore: ObservableObject {
+    static let shared = InferenceConfigStore()
+    @Published var mode: RuntimeMode { didSet { d.set(mode.rawValue, forKey: K.mode) } }
+    @Published var endpointURL: String { didSet { d.set(endpointURL, forKey: K.url) } }
+    @Published var endpointModel: String { didSet { d.set(endpointModel, forKey: K.model) } }
+    @Published var endpointKey: String { didSet { d.set(endpointKey, forKey: K.key) } }
+
+    private let d = UserDefaults.standard
+    private enum K { static let mode = "hs.inf.mode", url = "hs.inf.url", model = "hs.inf.model", key = "hs.inf.key" }
+    private init() {
+        mode = RuntimeMode(rawValue: d.string(forKey: K.mode) ?? "") ?? .local
+        endpointURL = d.string(forKey: K.url) ?? ""
+        endpointModel = d.string(forKey: K.model) ?? ""
+        endpointKey = d.string(forKey: K.key) ?? ""
+    }
+
+    var isLocal: Bool { mode == .local }
+
+    /// The endpoint config, or nil if the URL is blank/invalid (so generate() can refuse cleanly).
+    var endpointConfig: EndpointConfig? {
+        let t = endpointURL.trimmingCharacters(in: .whitespaces)
+        guard !t.isEmpty, let u = URL(string: t), u.host != nil else { return nil }
+        return EndpointConfig(baseURL: u, model: endpointModel.isEmpty ? "local-model" : endpointModel,
+                              apiKey: endpointKey.isEmpty ? nil : endpointKey)
+    }
+
+    /// A fresh provider for one inference (Llama must be fresh per call; an endpoint client is cheap).
+    func makeProvider(localModelPath: String?, context: Int) throws -> ILLMProvider {
+        switch mode {
+        case .local:
+            guard let p = localModelPath else { throw InferenceSettingsError.localEngineUnavailable }
+            return try LlamaProvider(modelPath: p, maxTokenCount: Int32(context))
+        case .homelab, .endpoint:
+            guard let cfg = endpointConfig else { throw InferenceSettingsError.endpointNotConfigured }
+            return OpenAIEndpointProvider(config: cfg)
+        }
+    }
+
+    /// The egress reality for the badge: local keeps everything on the iPad; an endpoint sends to its host.
+    var egressLabel: String { isLocal ? "On-device · nothing leaves" : "Sends to \(endpointConfig?.baseURL.host ?? "your endpoint")" }
+}
+
+// MARK: - Settings (where intelligence runs)
+
+/// The settings surface the owner asked for: choose where a meeting's intelligence runs — fully on
+/// this iPad, or against an OpenAI-compatible endpoint on your LAN — and configure + live-test that
+/// endpoint. Signal depth throughout; the egress reality is shown plainly, never narrated.
+struct SettingsView: View {
+    @ObservedObject private var cfg = InferenceConfigStore.shared
+    @Environment(\.dismiss) private var dismiss
+    @FocusState private var focused: Field?
+    @State private var test: TestState = .idle
+    enum Field: Hashable { case url, model, key }
+    enum TestState: Equatable { case idle, testing, ok(String), fail(String) }
+
+    var body: some View {
+        ZStack {
+            Sig.bgGradient.ignoresSafeArea()
+            Circle().fill(Sig.local.opacity(0.13)).frame(width: 400).blur(radius: 130)
+                .offset(x: -150, y: -300).ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    header
+                    label("WHERE INTELLIGENCE RUNS")
+                    targetCard(.local, "This iPad", "Fully on-device · nothing ever leaves", "ipad", Sig.localGradient)
+                    targetCard(.homelab, "LAN endpoint", "An OpenAI-compatible server on your network", "server.rack", Sig.accentGradient)
+                    if !cfg.isLocal { endpointCard }
+                    egressRow
+                }
+                .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
+            }
+        }
+        .toolbar(.hidden, for: .navigationBar)
+        .tint(Sig.accent)
+        .onTapGesture { focused = nil }
+    }
+
+    private var header: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("SETTINGS").font(.system(size: 10, weight: .heavy)).tracking(1.6).foregroundStyle(Sig.accent)
+                Text("Intelligence").font(.system(size: 32, weight: .heavy)).foregroundStyle(Sig.text)
+            }
+            Spacer()
+            Button { dismiss() } label: {
+                Image(systemName: "xmark").font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
+                    .frame(width: 44, height: 44).signalCard(Sig.s2, radius: 14)
+            }.buttonStyle(PressableCard())
+        }.padding(.top, 6)
+    }
+
+    private func label(_ s: String) -> some View {
+        Text(s).font(.system(size: 11, weight: .heavy)).tracking(1.4).foregroundStyle(Sig.faint).padding(.leading, 2).padding(.top, 4)
+    }
+
+    private func targetCard(_ m: RuntimeMode, _ title: String, _ sub: String, _ glyph: String, _ g: LinearGradient) -> some View {
+        let sel = (m == .local) == cfg.isLocal
+        return Button {
+            tactile(); withAnimation(.spring(response: 0.42, dampingFraction: 0.8)) { cfg.mode = m; test = .idle }
+        } label: {
+            HStack(spacing: 14) {
+                GlyphChip(system: glyph, gradient: g, size: 50)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title).font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
+                    Text(sub).font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+                }
+                Spacer()
+                Image(systemName: sel ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 22, weight: .bold)).foregroundStyle(sel ? Sig.accent : Sig.faint)
+            }
+            .padding(15)
+            .background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(sel ? AnyShapeStyle(Sig.accent) : AnyShapeStyle(Sig.topHairline), lineWidth: sel ? 2 : 1))
+            .shadow(color: .black.opacity(0.34), radius: sel ? 16 : 8, y: sel ? 9 : 5)
+        }.buttonStyle(PressableCard())
+    }
+
+    private var endpointCard: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            field("ENDPOINT URL", $cfg.endpointURL, "http://192.168.1.43:8080/v1", .url, keyboard: .URL)
+            field("MODEL", $cfg.endpointModel, "qwen3-9b (servers often ignore this)", .model)
+            field("API KEY (OPTIONAL)", $cfg.endpointKey, "Bearer token, if your server needs one", .key, secure: true)
+            testButton
+            testResult
+        }
+        .padding(16).signalCard(radius: 20)
+        .transition(.asymmetric(insertion: .scale(scale: 0.96).combined(with: .opacity), removal: .opacity))
+    }
+
+    private func field(_ l: String, _ text: Binding<String>, _ placeholder: String, _ f: Field,
+                       keyboard: UIKeyboardType = .default, secure: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(l).font(.system(size: 10, weight: .heavy)).tracking(0.8).foregroundStyle(Sig.faint)
+            Group {
+                if secure { SecureField("", text: text, prompt: Text(placeholder).foregroundColor(Sig.faint)) }
+                else { TextField("", text: text, prompt: Text(placeholder).foregroundColor(Sig.faint)) }
+            }
+            .focused($focused, equals: f)
+            .keyboardType(keyboard).textInputAutocapitalization(.never).autocorrectionDisabled()
+            .font(.system(size: 15, weight: .medium)).foregroundStyle(Sig.text)
+            .padding(.horizontal, 13).padding(.vertical, 12)
+            .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(focused == f ? Sig.accent : Color.white.opacity(0.08), lineWidth: focused == f ? 1.5 : 1))
+        }
+    }
+
+    private var testButton: some View {
+        Button { runTest() } label: {
+            HStack(spacing: 8) {
+                if case .testing = test { ProgressView().tint(.black) } else { Image(systemName: "bolt.fill") }
+                Text(test == .testing ? "Testing…" : "Test connection")
+            }
+            .font(.system(size: 15, weight: .heavy)).foregroundStyle(.black)
+            .frame(maxWidth: .infinity).padding(.vertical, 13)
+            .background(Sig.accentGradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .opacity(cfg.endpointConfig == nil ? 0.5 : 1)
+        }
+        .buttonStyle(PressableCard())
+        .disabled(cfg.endpointConfig == nil || test == .testing)
+    }
+
+    @ViewBuilder private var testResult: some View {
+        switch test {
+        case .ok(let r):
+            resultRow("checkmark.circle.fill", Sig.ok, "Reachable — the model replied", r)
+        case .fail(let e):
+            resultRow("exclamationmark.triangle.fill", Sig.bad, "Couldn't reach the endpoint", e)
+        default: EmptyView()
+        }
+    }
+
+    private func resultRow(_ icon: String, _ color: Color, _ title: String, _ detail: String) -> some View {
+        HStack(alignment: .top, spacing: 9) {
+            Image(systemName: icon).font(.system(size: 14, weight: .bold)).foregroundStyle(color)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.system(size: 13, weight: .heavy)).foregroundStyle(Sig.text)
+                Text(detail).font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(3)
+            }
+            Spacer()
+        }
+        .padding(12).background(color.opacity(0.10), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(color.opacity(0.3), lineWidth: 1))
+    }
+
+    private var egressRow: some View {
+        HStack(spacing: 8) {
+            Image(systemName: cfg.isLocal ? "lock.shield.fill" : "antenna.radiowaves.left.and.right")
+                .font(.system(size: 12, weight: .bold))
+            Text(cfg.egressLabel).font(.system(size: 12, weight: .heavy))
+        }
+        .foregroundStyle(cfg.isLocal ? Sig.local : Sig.accent)
+        .padding(.horizontal, 12).padding(.vertical, 8)
+        .background((cfg.isLocal ? Sig.local : Sig.accent).opacity(0.12), in: Capsule())
+        .padding(.top, 4)
+    }
+
+    private func runTest() {
+        guard let c = cfg.endpointConfig else { return }
+        focused = nil; test = .testing; tactile()
+        Task {
+            do {
+                let reply = try await OpenAIEndpointProvider(config: c).complete(prompt: "Reply with exactly: ok")
+                await MainActor.run { withAnimation { test = .ok(reply.trimmingCharacters(in: .whitespacesAndNewlines).prefix(80).description) }; tactile(.medium) }
+            } catch {
+                await MainActor.run { withAnimation { test = .fail("\(error)") }; tactile(.heavy) }
+            }
+        }
+    }
+}
+
 // MARK: - Meeting list
 
 struct MeetingListView: View {
@@ -1520,6 +1739,7 @@ struct MeetingListView: View {
     var body: some View {
         #if targetEnvironment(simulator)
         if ProcessInfo.processInfo.environment["HS_DEMO_GEN"] == "1" { return AnyView(GenTheaterDemo()) }
+        if ProcessInfo.processInfo.environment["HS_DEMO_SETTINGS"] == "1" { return AnyView(SettingsDemo()) }
         #endif
         return AnyView(listBody)
     }
@@ -1603,10 +1823,19 @@ struct MeetingListView: View {
                     .shadow(color: .black.opacity(0.3), radius: 8, y: 3)
             }
             Spacer()
-            if !model.meetings.isEmpty {
-                Text("\(model.meetings.count)").font(.system(size: 20, weight: .heavy).monospacedDigit())
-                    .foregroundStyle(Sig.text)
-                    .frame(width: 46, height: 46).signalCard(Sig.s2, radius: 14)
+            HStack(spacing: 10) {
+                if !model.meetings.isEmpty {
+                    Text("\(model.meetings.count)").font(.system(size: 20, weight: .heavy).monospacedDigit())
+                        .foregroundStyle(Sig.text)
+                        .frame(width: 46, height: 46).signalCard(Sig.s2, radius: 14)
+                }
+                NavigationLink { SettingsView() } label: {
+                    Image(systemName: "gearshape.fill").font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(Sig.muted)
+                        .frame(width: 46, height: 46).signalCard(Sig.s2, radius: 14)
+                }
+                .buttonStyle(PressableCard())
+                .accessibilityLabel("Settings")
             }
         }
         .padding(.top, 8)
@@ -2400,8 +2629,17 @@ final class MeetingReviewState: ObservableObject {
         guard !meeting.segments.isEmpty else {
             note = "No transcript to analyze — this recording saved no text."; Self.glog("ABORT empty"); return
         }
-        guard let modelPath = Self.localGGUF() else {
-            note = "No on-device model found. Push a .gguf to the app's Documents first."; Self.glog("ABORT no model"); return
+        // Where intelligence runs is a user setting (Settings → Intelligence): on this iPad, or a
+        // LAN endpoint. Refuse cleanly if the chosen target isn't ready.
+        let cfg = InferenceConfigStore.shared
+        let modelPath = Self.localGGUF()
+        if cfg.isLocal && modelPath == nil {
+            note = "No on-device model found. Push a .gguf to the app's Documents, or switch to a LAN endpoint in Settings."
+            Self.glog("ABORT no model"); return
+        }
+        if !cfg.isLocal && cfg.endpointConfig == nil {
+            note = "No endpoint configured. Set a LAN endpoint URL in Settings, or switch to on-device."
+            Self.glog("ABORT no endpoint"); return
         }
         generating = true; defer { generating = false }
 
@@ -2412,14 +2650,21 @@ final class MeetingReviewState: ObservableObject {
         }
         load()
 
-        // HSM-8-08 — size the context to THIS device, never a blind constant.
-        let modelBytes = ((try? FileManager.default.attributesOfItem(atPath: modelPath))?[.size] as? Int) ?? 0
-        let avail = Self.availableMemoryBytes()
-        let context = OnDeviceBudget.contextTokens(
-            availableBytes: avail, modelBytes: modelBytes,
-            marginBytes: 768 * 1_048_576, ceiling: Self.contextCeiling)
+        // HSM-8-08 — on-device, size the context to THIS device (the KV-cache is RAM), never a
+        // blind constant. An endpoint has its own memory, so use the ceiling there.
+        let context: Int
+        if cfg.isLocal, let mp = modelPath {
+            let modelBytes = ((try? FileManager.default.attributesOfItem(atPath: mp))?[.size] as? Int) ?? 0
+            let avail = Self.availableMemoryBytes()
+            context = OnDeviceBudget.contextTokens(
+                availableBytes: avail, modelBytes: modelBytes,
+                marginBytes: 768 * 1_048_576, ceiling: Self.contextCeiling)
+            Self.glog("local availMB=\(avail / 1_048_576) modelMB=\(modelBytes / 1_048_576) context=\(context)")
+        } else {
+            context = Self.contextCeiling
+            Self.glog("endpoint mode host=\(cfg.endpointConfig?.baseURL.host ?? "?") context=\(context)")
+        }
         let windowBudget = OnDeviceBudget.windowTokens(context: context)
-        Self.glog("availMB=\(avail / 1_048_576) modelMB=\(modelBytes / 1_048_576) context=\(context) window=\(windowBudget)")
 
         let transcript = Transcript(meetingId: meeting.id, segments: meeting.segments,
                                     transcriptHash: "ondevice-\(meeting.segments.count)")
@@ -2456,7 +2701,7 @@ final class MeetingReviewState: ObservableObject {
                     // it also dodges LLM.swift's `isAvailable` getting stuck after a bad run
                     // (the "had to restart the app" symptom). It deinits at scope exit, so
                     // only one llama context is ever resident.
-                    let provider = try LlamaProvider(modelPath: modelPath, maxTokenCount: Int32(context))
+                    let provider = try cfg.makeProvider(localModelPath: modelPath, context: context)
                     let engine = ArtifactGenerationEngine(provider: provider, maxAttempts: 2)
                     let a = try await engine.generate(type, from: sub)
                     all.append(a)
@@ -3308,6 +3553,18 @@ private struct GenerationTheater: View {
 }
 
 #if targetEnvironment(simulator)
+/// Simulator-only: open Settings with a sample LAN endpoint configured, for a design screenshot.
+private struct SettingsDemo: View {
+    var body: some View {
+        NavigationStack { SettingsView() }
+            .onAppear {
+                let c = InferenceConfigStore.shared
+                c.mode = .homelab
+                if c.endpointURL.isEmpty { c.endpointURL = "http://192.168.1.43:8080/v1"; c.endpointModel = "qwen3-9b" }
+            }
+    }
+}
+
 /// Simulator-only: the generation theater mid-flight, inside the real INTELLIGENCE card, for a
 /// design screenshot (the live model needs a resident GGUF + minutes). Never in the device build.
 private struct GenTheaterDemo: View {

@@ -192,6 +192,19 @@ animation tracks the actual model work. Built for Simulator + installed live on 
 shot (`generation-theater.png`). **Next: the Workbench (visual intelligence builder) + App Settings
 (inference endpoint/target).**
 
+**2026-06-22 — App Settings (inference target), on owner feedback ("where in the frig are our app
+settings… we can't specify the endpoint and type").** A real, persisted Settings surface (gear in
+the home header → `SettingsView`): choose **where intelligence runs** — *This iPad* (Mode A,
+on-device, nothing leaves) or a *LAN endpoint* (Modes B/C, any OpenAI-compatible server) — with the
+endpoint URL/model/optional-key fields and a live **Test connection** (pings the endpoint via
+`OpenAIEndpointProvider.complete`). Persisted in `InferenceConfigStore` (UserDefaults; the key never
+leaves the store) and **wired into `generate()`**, which now branches the provider on the setting
+(LlamaProvider for local, OpenAIEndpointProvider for an endpoint) and refuses cleanly when the
+chosen target isn't ready — so the owner can finally point inference at the `.43` box. Signal depth
+throughout (gradient target cards with accent-selected border, glyph chips, an honest egress pill).
+Built for Simulator + device; committed shot (`settings-intelligence.png`). Reuses the HSM-5-06
+`RuntimeMode`/`EndpointConfig` seam. **Still next: the Workbench (visual intelligence builder).**
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
