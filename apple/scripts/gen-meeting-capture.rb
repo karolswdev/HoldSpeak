@@ -43,11 +43,13 @@ target = project.new_target(:application, 'HoldSpeakMobile', :ios, DEPLOY)
 group = project.new_group('Sources', STAGE)
 staged.each { |p| target.add_file_references([group.new_reference(p)]) }
 
-# Bundle mermaid.js so the sketch surface renders real Mermaid in a WKWebView (offline).
-mermaid_js = File.join(ROOT, 'App/mermaid.min.js')
-if File.exist?(mermaid_js)
-  res_group = project.new_group('Resources', File.join(ROOT, 'App'))
-  target.add_resources([res_group.new_reference(mermaid_js)])
+# Bundle offline resources: mermaid.js (real Mermaid rendering) + the HSM-14 pixel-art assets
+# (Qlippy mascot, brass pushpin, waveform orb) used by the live capture canvas. All optional —
+# the UI falls back to SF Symbols if a file is missing — but bundling them lights up the craft.
+res_group = project.new_group('Resources', File.join(ROOT, 'App'))
+%w[mermaid.min.js qlippy.png pushpin.png waveorb.png].each do |name|
+  path = File.join(ROOT, 'App', name)
+  target.add_resources([res_group.new_reference(path)]) if File.exist?(path)
 end
 
 # --- Swift Package dependencies: WhisperKit (transcription) + LLM.swift (on-device LLM) ---

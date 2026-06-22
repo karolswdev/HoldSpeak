@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 14
-- **Status:** in-progress (the swipeable artifact card is adopted into the live app + deployed to device; the rest of the screen — header, transcript, pinned action sheet — continues)
+- **Status:** in-progress (swipeable cards live on device; the intelligence pane now MATERIALIZES results — a tint-ring glow + animated insert as each card lands, no more silent "pop" — and the MIR profile is a meaningful **lens**, not a sort toggle: a pill row with a per-profile blurb + emphasized-type chips, and the Generate button names the lens it will run through; transcript replaced by the live capture canvas, see [story-11](./story-11-live-capture-canvas.md))
 - **Depends on:** HSM-14-01 (design system + Tactile Sheets direction)
 - **Unblocks:** the felt-good review flow on real meetings
 - **Owner:** unassigned
