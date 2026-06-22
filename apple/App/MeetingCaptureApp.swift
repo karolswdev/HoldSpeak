@@ -1518,6 +1518,13 @@ struct MeetingListView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
+        #if targetEnvironment(simulator)
+        if ProcessInfo.processInfo.environment["HS_DEMO_GEN"] == "1" { return AnyView(GenTheaterDemo()) }
+        #endif
+        return AnyView(listBody)
+    }
+
+    private var listBody: some View {
         NavigationStack {
             ZStack {
                 background
@@ -2337,6 +2344,11 @@ final class MeetingReviewState: ObservableObject {
     @Published var generating = false
     @Published var note = ""
     @Published var correctingId: String?     // HSM-14-07 — the card regenerating from a voice correction
+    // HSM-14 generation theater — real per-type progress the UI animates as the model drafts each.
+    @Published var genTypes: [ArtifactType] = []   // the lens's planned types for this run
+    @Published var genDone: Set<ArtifactType> = [] // types the model has produced so far
+    @Published var genCurrent: ArtifactType?       // the type in flight right now
+    @Published var genFlourish: Int = 0            // >0 briefly after a run: "N insights ready"
 
     private let storage: SQLiteStorage?
     private let marks: [Double]              // hand-flagged moments (HSM-8-03) — weight extraction
@@ -2415,6 +2427,8 @@ final class MeetingReviewState: ObservableObject {
             ? (MIRRouter.baseEmphasis[profile] ?? [.decisions, .actionItems, .requirements])
             : InkEmphasis.routedTypes(profile: profile, transcript: transcript, marks: marks)
         Self.glog("types=\(types.map(\.rawValue))")
+        // Light up the generation theater with the planned types.
+        genTypes = types; genDone = []; genCurrent = nil; genFlourish = 0
 
         // HSM-8-07 — chunk a long meeting into length-bounded windows; a short one is a
         // single window (the whole transcript). One loop drives both.
@@ -2431,6 +2445,7 @@ final class MeetingReviewState: ObservableObject {
             let sub = Transcript(meetingId: transcript.meetingId, segments: segs,
                                  transcriptHash: "\(transcript.transcriptHash)#w\(wi)")
             for type in types {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { genCurrent = type }
                 note = chunk ? "Long meeting — pass \(wi + 1)/\(windows.count): \(artifactTypeLabel(type))…"
                              : "Generating \(artifactTypeLabel(type))…"
                 do {
@@ -2445,6 +2460,9 @@ final class MeetingReviewState: ObservableObject {
                     let engine = ArtifactGenerationEngine(provider: provider, maxAttempts: 2)
                     let a = try await engine.generate(type, from: sub)
                     all.append(a)
+                    // The type landed — light it up in the theater and stream the card in.
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.7)) { _ = genDone.insert(type); genCurrent = nil }
+                    tactile(.light)
                     // Stream the single pass — animate the insert so each card materializes in.
                     if !chunk { try? storage?.saveArtifact(a); withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { load() } }
                     Self.glog("w\(wi) ok \(type.rawValue)")
@@ -2456,9 +2474,17 @@ final class MeetingReviewState: ObservableObject {
         let merged = ArtifactMerge.dedup(all)
         if chunk { for a in merged { try? storage?.saveArtifact(a) }; withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { load() } }
         Self.glog("done produced=\(merged.count)")
+        genCurrent = nil
         note = merged.isEmpty
             ? "The model produced nothing." + (lastError.isEmpty ? "" : " (\(lastError))")
             : ""
+        // A satisfying finish: a heavier haptic + a transient "N insights ready" flourish.
+        if !merged.isEmpty {
+            tactile(.heavy)
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { genFlourish = merged.count }
+            Task { try? await Task.sleep(nanoseconds: 3_200_000_000)
+                   await MainActor.run { withAnimation(.easeOut(duration: 0.4)) { genFlourish = 0 } } }
+        }
     }
 
     /// HSM-14 — promote a hand-note into a real `needs_review` artifact that joins the model's
@@ -3188,6 +3214,126 @@ struct TranscriptView: View {
     }
 }
 
+// MARK: - Generation theater (HSM-14 craft) — the on-device model, thinking, made visible
+
+/// The post-meeting payoff, made beautiful: a living "thinking" orb (concentric accent rings + a
+/// rotating conic shimmer + a breathing core) over a constellation of the lens's target types that
+/// light up one-by-one as the on-device model drafts each. This replaces a 1pt spinner — the user
+/// watches their meeting's intelligence assemble itself, on this iPad, with nothing leaving.
+private struct GenerationTheater: View {
+    let note: String
+    let lens: MIRProfile
+    let types: [ArtifactType]
+    let done: Set<ArtifactType>
+    let current: ArtifactType?
+    @State private var pulse = false
+    @State private var spin = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var headline: String {
+        if let c = current { return "Drafting \(artifactTypeLabel(c))…" }
+        return note.isEmpty ? "Reading the meeting on-device…" : note
+    }
+
+    var body: some View {
+        VStack(spacing: 16) {
+            orb
+            VStack(spacing: 5) {
+                Text(headline).font(.system(size: 16, weight: .heavy)).foregroundStyle(Sig.text)
+                    .contentTransition(.opacity).id(headline)
+                Text("Through the \(lens.rawValue.capitalized) lens")
+                    .font(.system(size: 12, weight: .heavy)).foregroundStyle(Sig.accent)
+            }
+            if !types.isEmpty { constellation }
+            HStack(spacing: 6) {
+                Image(systemName: "lock.shield.fill").font(.system(size: 11, weight: .bold))
+                Text("Running on this iPad · no network").font(.system(size: 11, weight: .semibold))
+            }
+            .foregroundStyle(Sig.local)
+            .padding(.horizontal, 11).padding(.vertical, 6)
+            .background(Sig.local.opacity(0.10), in: Capsule())
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 26).padding(.horizontal, 12)
+        .background(
+            RadialGradient(colors: [Sig.accent.opacity(0.12), .clear], center: .top, startRadius: 8, endRadius: 220)
+        )
+        .onAppear { pulse = true; spin = true }
+    }
+
+    // The breathing core + outward accent pulses + a rotating shimmer arc — alive, not a spinner.
+    private var orb: some View {
+        ZStack {
+            ForEach(0..<3, id: \.self) { i in
+                Circle().stroke(Sig.accent.opacity(0.45 - Double(i) * 0.12), lineWidth: 2)
+                    .frame(width: 74 + CGFloat(i) * 28, height: 74 + CGFloat(i) * 28)
+                    .scaleEffect(pulse ? 1.12 : 0.92)
+                    .opacity(pulse ? 0.15 : 0.8)
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 1.7).repeatForever().delay(Double(i) * 0.22), value: pulse)
+            }
+            Circle().fill(Sig.accentGradient).frame(width: 66, height: 66)
+                .shadow(color: Sig.accent.opacity(0.6), radius: 20)
+                .scaleEffect(pulse ? 1.06 : 0.98)
+                .animation(reduceMotion ? nil : .easeInOut(duration: 1.1).repeatForever(), value: pulse)
+            Circle().trim(from: 0, to: 0.32)
+                .stroke(AngularGradient(colors: [.clear, .white.opacity(0.95), .clear], center: .center),
+                        style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                .frame(width: 86, height: 86)
+                .rotationEffect(.degrees(spin ? 360 : 0))
+                .animation(reduceMotion ? nil : .linear(duration: 1.1).repeatForever(autoreverses: false), value: spin)
+            Image(systemName: "sparkles").font(.system(size: 24, weight: .bold)).foregroundStyle(.black)
+        }
+        .frame(height: 132)
+    }
+
+    // The lens's types — pending (dim) → in-flight (glowing, ringed) → done (filled + check).
+    private var constellation: some View {
+        HStack(spacing: 8) {
+            ForEach(types, id: \.self) { t in
+                let isDone = done.contains(t), isCur = current == t
+                HStack(spacing: 5) {
+                    Image(systemName: isDone ? "checkmark.circle.fill" : artifactGlyph(t))
+                        .font(.system(size: 11, weight: .bold))
+                    Text(artifactTypeLabel(t)).font(.system(size: 11, weight: .heavy))
+                }
+                .foregroundStyle(isDone ? .black : (isCur ? artifactTint(t) : Sig.faint))
+                .padding(.horizontal, 10).padding(.vertical, 6)
+                .background(isDone ? artifactTint(t) : (isCur ? artifactTint(t).opacity(0.16) : Sig.s2), in: Capsule())
+                .overlay(Capsule().stroke(isCur ? artifactTint(t) : .clear, lineWidth: 1.5))
+                .scaleEffect(isCur ? 1.07 : 1)
+                .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isDone)
+                .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isCur)
+            }
+        }
+    }
+}
+
+#if targetEnvironment(simulator)
+/// Simulator-only: the generation theater mid-flight, inside the real INTELLIGENCE card, for a
+/// design screenshot (the live model needs a resident GGUF + minutes). Never in the device build.
+private struct GenTheaterDemo: View {
+    private let types: [ArtifactType] = [.decisions, .actionItems, .riskRegister, .requirements]
+    var body: some View {
+        ZStack {
+            Sig.bgGradient.ignoresSafeArea()
+            Circle().fill(Sig.accent.opacity(0.14)).frame(width: 420).blur(radius: 130)
+                .offset(x: 150, y: -320).ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text("INTELLIGENCE").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.accent)
+                        Spacer()
+                    }
+                    GenerationTheater(note: "", lens: .delivery, types: types,
+                                      done: [.decisions], current: .actionItems)
+                }
+                .padding(16).signalCard(radius: 18)
+                .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
+            }
+        }
+    }
+}
+#endif
+
 // MARK: - Meeting detail (reopen-intact)
 
 struct MeetingDetailView: View {
@@ -3315,13 +3461,13 @@ struct MeetingDetailView: View {
             }
 
             if review.generating {
-                HStack(spacing: 8) {
-                    ProgressView().tint(Sig.accent)
-                    Text(review.note.isEmpty ? "Thinking on-device…" : review.note)
-                        .font(.caption).foregroundStyle(Sig.muted)
-                }
-                Text("Runs fully on this iPad — a few minutes for a 4B model, no network.")
-                    .font(.caption2).foregroundStyle(Sig.faint)
+                GenerationTheater(note: review.note, lens: review.profile, types: review.genTypes,
+                                  done: review.genDone, current: review.genCurrent)
+                    .transition(.asymmetric(insertion: .scale(scale: 0.92).combined(with: .opacity),
+                                            removal: .opacity))
+            } else if review.genFlourish > 0 {
+                flourishBanner(review.genFlourish)
+                    .transition(.scale(scale: 0.9).combined(with: .opacity))
             }
 
             // Whatever's been produced so far — generated artifacts and/or handwritten
@@ -3373,8 +3519,22 @@ struct MeetingDetailView: View {
             }
         }
         .padding(16).frame(maxWidth: .infinity, alignment: .leading)
-        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Sig.line, lineWidth: 1))
+        .signalCard(radius: 18)
+        .animation(.spring(response: 0.5, dampingFraction: 0.82), value: review.generating)
+    }
+
+    // The completion flourish: a brief, bright "N insights ready" banner after a run finishes.
+    private func flourishBanner(_ n: Int) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "sparkles").font(.system(size: 16, weight: .bold))
+            Text("\(n) insight\(n == 1 ? "" : "s") ready").font(.system(size: 15, weight: .heavy))
+            Spacer()
+            Image(systemName: "checkmark.circle.fill").font(.system(size: 17, weight: .bold))
+        }
+        .foregroundStyle(.black)
+        .padding(.horizontal, 16).padding(.vertical, 13)
+        .background(Sig.accentGradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .shadow(color: Sig.accent.opacity(0.4), radius: 14, y: 6)
     }
 
     private func artifactCard(_ a: Artifact) -> some View {

@@ -180,6 +180,18 @@ a count chip, and a considered empty state. Built for the Simulator AND installe
 Air M4; before/after + empty-state shots committed. This kicks off a standing elevation of every
 surface (capture chrome + intelligence pane next).
 
+**2026-06-22 — the generation theater (HSM-14-03), on owner feedback that the post-meeting
+generation was "the most boring effect imaginable."** The 1pt spinner is replaced by a living,
+narrative on-device moment: a breathing **thinking orb** (concentric accent-pulse rings + a rotating
+conic shimmer + a gradient core), a **constellation of the lens's target types** that light up one
+by one — pending (dim) → in-flight (glowing, ringed) → done (filled + check, with a light haptic) —
+as the model drafts each, the named lens, and a "Running on this iPad · no network" pill; a heavier
+haptic + an "N insights ready" flourish banner on completion. Driven by REAL per-type progress
+(`MeetingReviewState.genTypes`/`genDone`/`genCurrent`/`genFlourish`, set inside `generate()`), so the
+animation tracks the actual model work. Built for Simulator + installed live on the iPad; committed
+shot (`generation-theater.png`). **Next: the Workbench (visual intelligence builder) + App Settings
+(inference endpoint/target).**
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
