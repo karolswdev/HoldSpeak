@@ -419,12 +419,18 @@ struct ModelsView: View {
     @State private var importing = false
     @State private var note = ""
     @State private var busy = false
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ZStack {
             Sig.bg.ignoresSafeArea()
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    Button { dismiss() } label: {
+                        HStack(spacing: 6) { Image(systemName: "chevron.left"); Text("Home") }
+                            .font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
+                            .padding(.vertical, 8).padding(.trailing, 12)
+                    }
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Models").font(.system(size: 32, weight: .heavy)).foregroundStyle(Sig.text)
                         Text("Everything runs on this iPad. Import a .gguf from Files or AirDrop — no Mac, no account.")
@@ -506,6 +512,218 @@ struct ModelsView: View {
     }
 }
 
+// MARK: - Sketch → Diagram (HSM-14-08: the Pencil as a diagram language, live)
+
+private func shapeTint(_ k: ShapeKind) -> Color {
+    switch k { case .rectangle: return Sig.local; case .diamond: return Sig.accent; case .ellipse: return Sig.ok }
+}
+
+/// Recognizes the PencilKit drawing into a graph + Mermaid, live + on-device. Geometry does the
+/// shapes/edges (HSM-14-08 engine); on-device Vision reads the handwriting into node labels.
+@MainActor final class SketchModel: ObservableObject {
+    @Published var drawing = PKDrawing() { didSet { schedule() } }
+    @Published var graph = DiagramGraph(nodes: [], edges: [])
+    @Published var mermaid = ""
+    private var task: Task<Void, Never>?
+
+    func schedule() {
+        task?.cancel()
+        let d = drawing
+        task = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 280_000_000)        // debounce while drawing
+            if Task.isCancelled { return }
+            let result = await Task.detached { Self.recognize(d) }.value   // Vision off the main actor
+            if Task.isCancelled { return }
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { self?.graph = result.0 }
+            self?.mermaid = result.1
+        }
+    }
+    func clear() {
+        drawing = PKDrawing(); graph = DiagramGraph(nodes: [], edges: []); mermaid = ""
+    }
+
+    nonisolated static func recognize(_ drawing: PKDrawing) -> (DiagramGraph, String) {
+        var nodes: [DiagramBuilder.NodeInput] = []
+        var connectors: [DiagramBuilder.ConnectorInput] = []
+        for s in drawing.strokes {
+            let pts = s.path.map { StrokePoint(Double($0.location.x), Double($0.location.y)) }
+            guard pts.count >= 2 else { continue }
+            switch ShapeRecognizer.classify(pts) {
+            case .shape(let kind, let b):
+                nodes.append(.init(kind: kind, text: ocrText(in: b, drawing: drawing), bounds: b))
+            case .connector(let from, let to):
+                let len = ((to.x - from.x) * (to.x - from.x) + (to.y - from.y) * (to.y - from.y)).squareRoot()
+                if len > 30 { connectors.append(.init(from: from, to: to, label: nil)) }   // skip tiny text strokes
+            }
+        }
+        let g = DiagramBuilder.build(nodes: nodes, connectors: connectors)
+        return (g, MermaidGenerator.flowchart(g))
+    }
+
+    /// On-device handwriting OCR over a shape's region → its node label.
+    nonisolated static func ocrText(in b: Bounds, drawing: PKDrawing) -> String {
+        let rect = CGRect(x: b.minX - 6, y: b.minY - 6, width: b.w + 12, height: b.h + 12)
+        guard rect.width > 8, rect.height > 8 else { return "" }
+        let img = drawing.image(from: rect, scale: 2)
+        guard let cg = img.cgImage else { return "" }
+        var text = ""
+        let req = VNRecognizeTextRequest { request, _ in
+            text = (request.results as? [VNRecognizedTextObservation])?
+                .compactMap { $0.topCandidates(1).first?.string }.joined(separator: " ") ?? ""
+        }
+        req.recognitionLevel = .accurate
+        req.usesLanguageCorrection = true
+        try? VNImageRequestHandler(cgImage: cg, options: [:]).perform([req])
+        return text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+/// Renders a `DiagramGraph` natively (offline, on-brand) — nodes as shapes, edges as arrows,
+/// laid out at the sketched positions, scaled to fit.
+struct DiagramPreview: View {
+    let graph: DiagramGraph
+
+    var body: some View {
+        GeometryReader { geo in
+            if graph.nodes.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "scribble.variable").font(.system(size: 26)).foregroundStyle(Sig.faint)
+                    Text("Draw boxes, diamonds and arrows — the diagram builds itself.")
+                        .font(.system(size: 13)).foregroundStyle(Sig.faint).multilineTextAlignment(.center)
+                }.frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                Canvas { ctx, size in render(ctx, size) }
+            }
+        }
+    }
+
+    private func render(_ ctx: GraphicsContext, _ size: CGSize) {
+        let minX = graph.nodes.map { $0.bounds.minX }.min() ?? 0
+        let maxX = graph.nodes.map { $0.bounds.maxX }.max() ?? 1
+        let minY = graph.nodes.map { $0.bounds.minY }.min() ?? 0
+        let maxY = graph.nodes.map { $0.bounds.maxY }.max() ?? 1
+        let gw = max(maxX - minX, 1), gh = max(maxY - minY, 1)
+        let pad: CGFloat = 44
+        let scale = max(min((size.width - 2 * pad) / gw, (size.height - 2 * pad) / gh), 0.05)
+        let offX = (size.width - gw * scale) / 2 - minX * scale
+        let offY = (size.height - gh * scale) / 2 - minY * scale
+        func pt(_ x: Double, _ y: Double) -> CGPoint { CGPoint(x: x * scale + offX, y: y * scale + offY) }
+        func centerOf(_ n: DiagramNode) -> CGPoint { pt(n.bounds.cx, n.bounds.cy) }
+
+        // edges (under nodes)
+        for e in graph.edges {
+            guard let a = graph.nodes.first(where: { $0.id == e.from }),
+                  let b = graph.nodes.first(where: { $0.id == e.to }) else { continue }
+            let p1 = centerOf(a), p2 = centerOf(b)
+            var line = Path(); line.move(to: p1); line.addLine(to: p2)
+            ctx.stroke(line, with: .color(Sig.muted), lineWidth: 2)
+            // arrowhead
+            let ang = atan2(p2.y - p1.y, p2.x - p1.x)
+            let tip = CGPoint(x: p2.x - cos(ang) * 14, y: p2.y - sin(ang) * 14)
+            var head = Path()
+            head.move(to: tip)
+            head.addLine(to: CGPoint(x: tip.x - cos(ang - 0.5) * 12, y: tip.y - sin(ang - 0.5) * 12))
+            head.addLine(to: CGPoint(x: tip.x - cos(ang + 0.5) * 12, y: tip.y - sin(ang + 0.5) * 12))
+            head.closeSubpath()
+            ctx.fill(head, with: .color(Sig.muted))
+        }
+        // nodes
+        for n in graph.nodes {
+            let c = centerOf(n)
+            let w = max(n.bounds.w * scale, 56), h = max(n.bounds.h * scale, 34)
+            let r = CGRect(x: c.x - w / 2, y: c.y - h / 2, width: w, height: h)
+            let tint = shapeTint(n.kind)
+            let shape: Path
+            switch n.kind {
+            case .rectangle: shape = Path(roundedRect: r, cornerRadius: 9)
+            case .ellipse: shape = Path(ellipseIn: r)
+            case .diamond:
+                var p = Path()
+                p.move(to: CGPoint(x: r.midX, y: r.minY)); p.addLine(to: CGPoint(x: r.maxX, y: r.midY))
+                p.addLine(to: CGPoint(x: r.midX, y: r.maxY)); p.addLine(to: CGPoint(x: r.minX, y: r.midY)); p.closeSubpath()
+                shape = p
+            }
+            ctx.fill(shape, with: .color(tint.opacity(0.18)))
+            ctx.stroke(shape, with: .color(tint), lineWidth: 2)
+            let label = n.text.isEmpty ? "…" : n.text
+            ctx.draw(Text(label).font(.system(size: 12, weight: .bold)).foregroundColor(Sig.text), at: c)
+        }
+    }
+}
+
+struct SketchToDiagramView: View {
+    @StateObject private var model = SketchModel()
+    @Environment(\.dismiss) private var dismiss
+    @State private var copied = false
+
+    var body: some View {
+        ZStack {
+            Sig.bg.ignoresSafeArea()
+            VStack(spacing: 12) {
+                HStack {
+                    Button { dismiss() } label: {
+                        HStack(spacing: 6) { Image(systemName: "chevron.left"); Text("Home") }
+                            .font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
+                    }
+                    Spacer()
+                    Text("Sketch → Diagram").font(.system(size: 16, weight: .heavy)).foregroundStyle(Sig.text)
+                    Spacer()
+                    Button { tactile(); model.clear() } label: {
+                        Image(systemName: "trash").font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.faint)
+                    }
+                }.padding(.horizontal, 16).padding(.top, 8)
+
+                // Draw
+                ZStack(alignment: .topLeading) {
+                    PencilCanvas(drawing: $model.drawing, editable: true)
+                    if model.drawing.strokes.isEmpty {
+                        Text("Draw here ✏️").font(.system(size: 13, weight: .semibold)).foregroundStyle(Sig.faint).padding(14)
+                    }
+                }
+                .background(Sig.s1, in: RoundedRectangle(cornerRadius: 18))
+                .overlay(RoundedRectangle(cornerRadius: 18).stroke(Sig.line, lineWidth: 1))
+                .frame(maxHeight: .infinity)
+                .padding(.horizontal, 14)
+
+                // Live diagram
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("LIVE DIAGRAM").font(.system(size: 11, weight: .heavy)).tracking(1.4).foregroundStyle(Sig.faint)
+                        Spacer()
+                        if !model.graph.nodes.isEmpty {
+                            Text("\(model.graph.nodes.count) nodes · \(model.graph.edges.count) edges")
+                                .font(.system(size: 11, weight: .semibold)).foregroundStyle(Sig.muted)
+                        }
+                    }
+                    DiagramPreview(graph: model.graph)
+                        .frame(height: 200)
+                        .background(Sig.bg, in: RoundedRectangle(cornerRadius: 16))
+                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Sig.line, lineWidth: 1))
+                    if !model.mermaid.isEmpty {
+                        HStack {
+                            Text(model.mermaid).font(.system(size: 11, design: .monospaced)).foregroundStyle(Sig.muted).lineLimit(3)
+                            Spacer(minLength: 8)
+                            Button {
+                                UIPasteboard.general.string = model.mermaid; tactile(.medium)
+                                withAnimation { copied = true }
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) { withAnimation { copied = false } }
+                            } label: {
+                                Image(systemName: copied ? "checkmark.circle.fill" : "doc.on.doc")
+                                    .foregroundStyle(copied ? Sig.ok : Sig.accent)
+                            }
+                            ShareLink(item: model.mermaid) { Image(systemName: "square.and.arrow.up").foregroundStyle(Sig.accent) }
+                        }
+                        .padding(10).background(Sig.s2, in: RoundedRectangle(cornerRadius: 12))
+                    }
+                }
+                .padding(.horizontal, 14).padding(.bottom, 10)
+            }
+        }
+        .toolbar(.hidden, for: .navigationBar)
+        .preferredColorScheme(.dark)
+    }
+}
+
 // MARK: - Meeting list
 
 struct MeetingListView: View {
@@ -521,6 +739,7 @@ struct MeetingListView: View {
                         header
                         Button { capturing = true } label: { recordCta }
                         NavigationLink { ModelsView() } label: { modelsCta }.buttonStyle(.plain)
+                        NavigationLink { SketchToDiagramView() } label: { sketchCta }.buttonStyle(.plain)
                         if !model.error.isEmpty { errorNote(model.error) }
                         if model.meetings.isEmpty {
                             Text("No recordings yet. Press record to capture a meeting — it stays on this iPad.")
@@ -576,6 +795,25 @@ struct MeetingListView: View {
                 Text("Models").font(.system(size: 16, weight: .heavy)).foregroundStyle(Sig.text)
                 Text(n == 0 ? "Import a model to enable on-device intelligence"
                             : "\(n) on this iPad · import or manage")
+                    .font(.system(size: 12)).foregroundStyle(Sig.faint)
+            }
+            Spacer()
+            Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
+        }
+        .padding(14)
+        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Sig.line, lineWidth: 1))
+    }
+
+    private var sketchCta: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Sig.accent.opacity(0.16))
+                Image(systemName: "scribble.variable").font(.system(size: 18, weight: .bold)).foregroundStyle(Sig.accent)
+            }.frame(width: 44, height: 44)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Sketch → Diagram").font(.system(size: 16, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Draw boxes + arrows with the Pencil — a live Mermaid diagram builds itself")
                     .font(.system(size: 12)).foregroundStyle(Sig.faint)
             }
             Spacer()

@@ -45,10 +45,16 @@ PencilKit → ShapeRecognizer → DiagramBuilder → MermaidGenerator → live p
 - [x] **Graph + Mermaid (host-tested):** connectors resolve to edges between nearest nodes
       (self-loops/no-node skipped); the owner's login-flow geometry emits the expected
       `flowchart TD` (Login → Validate{decision} →|yes| Home / →|no| Error).
-- [ ] **Live PencilKit surface:** strokes recognized as drawn, Vision supplies node text, a
-      Mermaid preview updates live on the iPad.
+- [x] **Live PencilKit surface (built + on device):** `SketchToDiagramView` — a PencilKit
+      canvas drives `SketchModel`, which on each stroke (debounced, off-main) classifies via
+      the engine, runs **on-device Vision** per shape region for the node label, builds the
+      graph, and renders a **live native diagram** (`DiagramPreview`, Canvas) + the Mermaid
+      code (copy/share). Short open strokes (handwriting) are filtered from connectors; the
+      builder's self-loop skip drops in-node text. Front-and-center home entry. Device-built +
+      deployed; owner verification of the live recognition is the remaining item.
 - [ ] **Ambiguity only via the model:** the local VLM/LLM is invoked only when geometry is
-      uncertain, with a measurable fallback path.
+      uncertain, with a measurable fallback path (the `SketchVision`/`IVisionProvider` hook
+      from HSM-14-09 — wiring it to Gemma 4 / Qwythos is next).
 
 ## Evidence
 
