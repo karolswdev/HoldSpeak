@@ -3,8 +3,14 @@
 > 🚀 **New agent? Start here:** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **App Settings (inference
-target)** — a real, persisted Settings surface (gear in the home header): choose where intelligence
+**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **The Workbench begins**
+(HSM-14-15) — the owner's gamified visual intelligence builder: user-defined workflows as a linear
+pipeline (SOURCE → STEPs → OUTPUT; the usability bet over a node graph) with basic logic blocks
+(lens/extract/summarize/rewrite/keep-if), egress-aware outputs, presets, a readable plan. **Engine
+foundation shipped + host-tested** (`Sources/RuntimeCore/Workbench/Workflow.swift`, `WorkflowTests`,
+`swift test` **240/6/0**); design in `phase-14…/story-15-workbench.md`; the gamified canvas (tap
+blocks, reorder, run through the configured provider with the theater treatment) is the next build.
+Prior same-day: **App Settings (inference target)** — a real, persisted Settings surface (gear in the home header): choose where intelligence
 runs — *This iPad* (on-device) or a *LAN endpoint* (any OpenAI-compatible server) — with URL/model/
 key fields + a live Test connection, persisted in `InferenceConfigStore` and **wired into
 `generate()`** (it branches the provider on the setting), so inference can finally target the LAN
