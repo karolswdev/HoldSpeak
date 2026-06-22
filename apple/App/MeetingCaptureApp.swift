@@ -1889,6 +1889,142 @@ struct VoiceCorrectionSheet: View {
     }
 }
 
+// MARK: - Transcript, recrafted (HSM-14 — alive, not a wall of text in a gray box)
+
+/// A gently-breathing waveform so the transcript feels alive, not static.
+struct WaveformBars: View {
+    var color: Color = Sig.accent
+    var count: Int = 30
+    var body: some View {
+        TimelineView(.animation) { ctx in
+            let t = ctx.date.timeIntervalSinceReferenceDate
+            HStack(spacing: 3) {
+                ForEach(0..<count, id: \.self) { i in
+                    let s = 0.5 + 0.5 * sin(t * 2.1 + Double(i) * 0.45)
+                    Capsule().fill(color.opacity(0.3 + 0.45 * s)).frame(width: 3, height: 5 + 16 * s)
+                }
+            }
+        }
+        .frame(height: 24)
+    }
+}
+
+/// One utterance / paragraph — staggered fade-in, speaker-coloured, tap to copy.
+struct TranscriptBlock: View {
+    let speaker: String?
+    let time: Double?
+    let text: String
+    let color: Color
+    let index: Int
+    @State private var appeared = false
+    @State private var copied = false
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            RoundedRectangle(cornerRadius: 2).fill(color.opacity(0.85)).frame(width: 3)
+            VStack(alignment: .leading, spacing: 7) {
+                if let speaker, !speaker.isEmpty {
+                    HStack(spacing: 8) {
+                        ZStack { Circle().fill(color.opacity(0.2))
+                            Text(initials(speaker)).font(.system(size: 10, weight: .heavy)).foregroundStyle(color) }
+                            .frame(width: 24, height: 24)
+                        Text(speaker).font(.system(size: 13, weight: .heavy)).foregroundStyle(color)
+                        if let time { Text(timeStr(time)).font(.system(size: 11, weight: .semibold).monospacedDigit()).foregroundStyle(Sig.faint) }
+                        Spacer(minLength: 0)
+                        if copied { Image(systemName: "checkmark.circle.fill").font(.system(size: 13)).foregroundStyle(Sig.ok) }
+                    }
+                }
+                Text(text).font(.system(size: 16)).foregroundStyle(Sig.text).lineSpacing(5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(15)
+        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Sig.line, lineWidth: 1))
+        .opacity(appeared ? 1 : 0)
+        .offset(y: appeared ? 0 : 14)
+        .onAppear { withAnimation(.spring(response: 0.55, dampingFraction: 0.8).delay(Double(index) * 0.05)) { appeared = true } }
+        .onTapGesture {
+            UIPasteboard.general.string = text; tactile()
+            withAnimation { copied = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { withAnimation { copied = false } }
+        }
+    }
+    private func initials(_ s: String) -> String {
+        let i = s.split(separator: " ").prefix(2).compactMap { $0.first }.map(String.init).joined()
+        return i.isEmpty ? "•" : i.uppercased()
+    }
+    private func timeStr(_ t: Double) -> String { String(format: "%d:%02d", Int(t) / 60, Int(t) % 60) }
+}
+
+struct TranscriptView: View {
+    let segments: [Segment]
+
+    var body: some View {
+        if segments.isEmpty {
+            HStack(spacing: 10) {
+                Image(systemName: "waveform.slash").foregroundStyle(Sig.faint)
+                Text("No speech was transcribed.").font(.callout).foregroundStyle(Sig.faint)
+            }
+            .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+            .background(Sig.s1, in: RoundedRectangle(cornerRadius: 16))
+        } else {
+            VStack(alignment: .leading, spacing: 12) {
+                header
+                ForEach(Array(blocks.enumerated()), id: \.offset) { i, b in
+                    TranscriptBlock(speaker: b.speaker, time: b.time, text: b.text, color: b.color, index: i)
+                }
+            }
+        }
+    }
+
+    private var header: some View {
+        HStack(spacing: 12) {
+            WaveformBars()
+            Spacer()
+            Text("\(wordCount) words").font(.system(size: 12, weight: .heavy)).foregroundStyle(Sig.muted)
+            Button { UIPasteboard.general.string = fullText; tactile(.medium) } label: {
+                Image(systemName: "doc.on.doc").font(.system(size: 14, weight: .semibold)).foregroundStyle(Sig.accent)
+            }
+            ShareLink(item: fullText) { Image(systemName: "square.and.arrow.up").font(.system(size: 14, weight: .semibold)).foregroundStyle(Sig.accent) }
+        }
+        .padding(.horizontal, 14).padding(.vertical, 10)
+        .background(LinearGradient(colors: [Sig.accent.opacity(0.12), Sig.s1], startPoint: .leading, endPoint: .trailing),
+                    in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Sig.line, lineWidth: 1))
+    }
+
+    private var fullText: String { segments.map(\.text).joined(separator: "\n\n") }
+    private var wordCount: Int { fullText.split(whereSeparator: { $0 == " " || $0 == "\n" }).count }
+
+    /// Multi-segment → speaker utterances; a single run-on segment → readable sentence paragraphs.
+    private var blocks: [(speaker: String?, time: Double?, text: String, color: Color)] {
+        if segments.count > 1 {
+            return segments.map { (speaker: $0.speaker.isEmpty ? "Speaker" : $0.speaker, time: $0.startTime, text: $0.text, color: speakerColor($0.speaker)) }
+        }
+        guard let seg = segments.first else { return [] }
+        return paragraphs(seg.text).map { (speaker: nil, time: nil, text: $0, color: Sig.local) }
+    }
+    private func speakerColor(_ s: String) -> Color {
+        let palette = [Sig.local, Sig.accent, Sig.ok, Sig.warn, Color(hex: 0xB57BEE), Color(hex: 0x3FC7C7)]
+        return palette[abs(s.hashValue) % palette.count]
+    }
+    private func paragraphs(_ text: String) -> [String] {
+        var sentences: [String] = []; var cur = ""
+        for ch in text {
+            cur.append(ch)
+            if ch == "." || ch == "!" || ch == "?" {
+                let t = cur.trimmingCharacters(in: .whitespaces); if !t.isEmpty { sentences.append(t) }; cur = ""
+            }
+        }
+        let tail = cur.trimmingCharacters(in: .whitespaces); if !tail.isEmpty { sentences.append(tail) }
+        if sentences.isEmpty { return [text] }
+        var out: [String] = []; var i = 0
+        while i < sentences.count { out.append(sentences[i..<min(i + 2, sentences.count)].joined(separator: " ")); i += 2 }
+        return out
+    }
+}
+
 // MARK: - Meeting detail (reopen-intact)
 
 struct MeetingDetailView: View {
@@ -1939,16 +2075,7 @@ struct MeetingDetailView: View {
                     artifactsSection
 
                     Text("TRANSCRIPT").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.faint).padding(.top, 4)
-                    if meeting.segments.isEmpty {
-                        Text("No speech was transcribed.").font(.callout).foregroundStyle(Sig.faint)
-                    } else {
-                        ForEach(Array(meeting.segments.enumerated()), id: \.offset) { i, seg in
-                            Text(seg.text).font(.body).foregroundStyle(Sig.text)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(12).background(Sig.s2, in: RoundedRectangle(cornerRadius: 10))
-                                .id(i)
-                        }
-                    }
+                    TranscriptView(segments: meeting.segments).id(0)
 
                     Text("NOTES").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.local).padding(.top, 8)
                     // Reloads the meeting's PencilKit pages; editable so notes can be added after.
