@@ -80,7 +80,7 @@ Pencil), accessibility + adaptivity, and a polish pass — each delivered with c
 |---|---|---|---|---|
 | HSM-14-01 | Native design system (Signal → SwiftUI tokens + components) | in-progress | [story-01](./story-01-native-design-system.md) | [shot](./screenshots/tactile-sheets.png) |
 | HSM-14-02 | The capture experience, recrafted (flagship moment) | backlog | story-02 | — |
-| HSM-14-03 | The meeting + intelligence surface, recrafted | in-progress | [story-03](./story-03-meeting-intelligence-recrafted.md) | swipeable cards live on device |
+| HSM-14-03 | The meeting + intelligence surface, recrafted | in-progress | [story-03](./story-03-meeting-intelligence-recrafted.md) | cards materialize (glow+insert) + MIR-as-lens, on device |
 | HSM-14-04 | Interaction craft (gesture, haptic, motion, Pencil) | backlog | story-04 | — |
 | HSM-14-05 | Accessibility + adaptivity | backlog | story-05 | — |
 | HSM-14-06 | Polish & craft QA (states, micro-copy, screenshot gallery) | backlog | story-06 | — |
@@ -88,6 +88,7 @@ Pencil), accessibility + adaptivity, and a polish pass — each delivered with c
 | HSM-14-08 | The Pencil as a diagram language (sketch → Mermaid) | in-progress | [story-08](./story-08-pencil-diagram-language.md) | engine host-tested (209/0) |
 | HSM-14-09 | Local vision model (Gemma 4) seam + ambiguity resolution | in-progress | [story-09](./story-09-local-vision-model.md) | seam host-tested (211/0) |
 | HSM-14-10 | Models, front and center (import + manage, AirDrop-ready) | in-progress | [story-10](./story-10-model-import.md) | device-built |
+| HSM-14-11 | The live capture canvas (transcription bubbles + tack-to-board) | in-progress | [story-11](./story-11-live-capture-canvas.md) | built + on iPad + Simulator-proven |
 
 ## Where we are
 
@@ -98,6 +99,19 @@ committed**, so the owner can see and judge the craft without the physical iPad 
 is only for final hardware feel. The design direction (the visual + interaction language) is
 the owner's call and is being set before HSM-14-01 lands, so the system is built to the right
 target, not guessed.
+
+**2026-06-21 — the intelligence pane + the live capture canvas.** Owner: artifacts "just
+start appearing, no effect, no nothing," and the balanced/architect/delivery/product/incident
+profiles "don't do shit — all it does is change the order." Fixed both. Cards now
+**materialize**: a type-tint ring flashes around each as it lands + the insert is animated, so
+a generated insight announces itself. The MIR profile became a real **lens** — a pill row with
+a per-profile icon, a one-line blurb of what it surfaces, and emphasized-type chips, and the
+Generate button names the lens it runs through (HSM-14-03). And the flagship: the live
+transcript "wall of text" is replaced by the **live capture canvas** (HSM-14-11) — utterances
+float up as bubbles, the live fragment breathes as a caption, and you grab a bubble with the
+Pencil and **tack it to a pin board**, which marks the moment so the on-device intelligence
+weights it. Three bespoke **Pixellab** pixel-art assets (Qlippy mascot, brass pushpin, waveform
+orb) bundled offline. Built + installed on the iPad Air M4; Simulator screenshot committed.
 
 ## Operating principle (standing, beyond this phase)
 

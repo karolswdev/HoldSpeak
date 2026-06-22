@@ -1,6 +1,13 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-21 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT opened.** The roadmap was
+**Last updated:** 2026-06-21 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** Latest: the
+intelligence pane now **materializes** artifacts (tint-ring glow + animated insert) and the
+MIR profile is a meaningful **lens** (blurb + emphasized-type chips, named on the Generate
+button) — HSM-14-03; and the live transcript "wall of text" is replaced by the **live capture
+canvas** (HSM-14-11) — utterances float up as bubbles you grab with the Pencil and **tack to a
+pin board**, which marks the moment so the on-device model weights it; three bespoke Pixellab
+pixel-art assets bundled offline. Built + on the iPad Air M4, Simulator screenshot committed.
+The roadmap was
 all engineering tracks; usability, design, and modern hand-driven mobile craft were never
 tracked, and the app shipped as a bare functional shell. Phase 14 makes the **experience**
 first-class: a native design system, every core screen recrafted, interaction craft (gesture/

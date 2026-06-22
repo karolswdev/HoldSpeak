@@ -255,6 +255,52 @@ private extension Color {
                                 green: Double((hex >> 8) & 0xFF)/255, blue: Double(hex & 0xFF)/255, opacity: 1) }
 }
 
+// MARK: - Live capture canvas model (HSM-14)
+
+/// A finished utterance, floating in the live stream until it's tacked to the board.
+struct LiveBubble: Identifiable, Equatable {
+    let id = UUID()
+    let text: String
+    let t: Double          // elapsed seconds when it was heard — becomes the moment's anchor
+}
+/// A bubble the user grabbed and tacked to the board. Its position is the drop point; a slight
+/// tilt makes it read as a physical sticky note. Pinning it ALSO marks the moment (HSM-8-03).
+struct PinnedNote: Identifiable, Equatable {
+    let id: UUID
+    let text: String
+    var pos: CGPoint
+    var rot: Double
+    let t: Double
+}
+
+/// Split a running transcript into finished sentences + the trailing in-progress fragment.
+/// WhisperKit's windowed state mostly APPENDS, so counting finished sentences is a stable way
+/// to spawn one bubble per utterance without re-bubbling on minor revisions.
+enum LiveSentences {
+    static func split(_ text: String) -> (completed: [String], trailing: String) {
+        var completed: [String] = []; var cur = ""
+        for ch in text {
+            cur.append(ch)
+            if ch == "." || ch == "!" || ch == "?" {
+                let s = cur.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !s.isEmpty { completed.append(s) }
+                cur = ""
+            }
+        }
+        return (completed, cur.trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+}
+
+/// HSM-14 — render a bundled pixel-art asset crisply if present, else fall back to an SF Symbol.
+/// Keeps the build independent of the (optional) generated art: the UI works either way.
+@ViewBuilder func pixelAsset(_ name: String, size: CGFloat, fallback: String, tint: Color = Sig.accent) -> some View {
+    if let ui = UIImage(named: name) {
+        Image(uiImage: ui).resizable().interpolation(.none).frame(width: size, height: size)
+    } else {
+        Image(systemName: fallback).font(.system(size: size * 0.74, weight: .bold)).foregroundStyle(tint)
+    }
+}
+
 // MARK: - Model
 
 @MainActor
@@ -266,6 +312,13 @@ final class CaptureModel: ObservableObject {
     @Published var error = ""
     @Published var notebook: NotebookModel?      // the live meeting's notes (HSM-8-02)
     @Published var markCount = 0                  // moments flagged this meeting (HSM-8-03)
+    // HSM-14 — the live capture canvas: utterances stream as bubbles, the user tacks the
+    // important ones to the board (which marks the moment for the on-device intelligence).
+    @Published var liveBubbles: [LiveBubble] = []
+    @Published var pinned: [PinnedNote] = []
+    @Published var partial = ""                   // the words still being transcribed
+    private var bubbledCount = 0
+    private var lastFull = ""
 
     let notebookStore: NotebookStore = FileNotebookStore()
     private let linkStore: LinkStore = FileLinkStore()
@@ -289,6 +342,7 @@ final class CaptureModel: ObservableObject {
         guard let mc else { return }
         guard await Self.requestMic() else { error = "Microphone permission denied."; return }
         liveTranscript = ""; error = ""
+        liveBubbles = []; pinned = []; partial = ""; bubbledCount = 0; lastFull = ""
         mc.start()
         if case .failed(let r) = mc.state { error = r; return }
         recording = true
@@ -301,7 +355,7 @@ final class CaptureModel: ObservableObject {
             while !Task.isCancelled, self?.recording == true {
                 try? await Task.sleep(nanoseconds: 3_000_000_000)   // window the live transcript
                 await mc.tick()
-                if case .recording(let t) = mc.state { await MainActor.run { self?.liveTranscript = t } }
+                if case .recording(let t) = mc.state { await MainActor.run { self?.liveTranscript = t; self?.ingest(t) } }
             }
         }
     }
@@ -316,6 +370,44 @@ final class CaptureModel: ObservableObject {
         refresh()
     }
 
+    private func elapsed() -> Double { recordStart.map { Date().timeIntervalSince($0) } ?? 0 }
+
+    /// HSM-14 — turn the running transcript into floating bubbles. Each newly-finished sentence
+    /// becomes a pinnable bubble; the trailing fragment shows as the live caption. Capped so the
+    /// stream stays glanceable (older bubbles drift off the top).
+    private func ingest(_ raw: String) {
+        let full = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !full.isEmpty, full != lastFull else { return }
+        lastFull = full
+        let parts = LiveSentences.split(full)
+        if parts.completed.count > bubbledCount {
+            let now = elapsed()
+            for s in parts.completed[bubbledCount...] { liveBubbles.append(LiveBubble(text: s, t: now)) }
+            bubbledCount = parts.completed.count
+            if liveBubbles.count > 5 { liveBubbles.removeFirst(liveBubbles.count - 5) }
+        }
+        partial = parts.trailing
+    }
+
+    /// Tack a bubble to the board at its drop point. THE WHOLE POINT: a pinned bubble is also a
+    /// marked moment (HSM-8-03), so the on-device intelligence weights what you cared about.
+    func pin(_ b: LiveBubble, at p: CGPoint, in size: CGSize, boardTop: CGFloat) {
+        let pos = clampToBoard(p, in: size, boardTop: boardTop)
+        pinned.append(PinnedNote(id: b.id, text: b.text, pos: pos, rot: Double.random(in: -5...5), t: b.t))
+        liveBubbles.removeAll { $0.id == b.id }
+        try? linker?.markMoment(at: b.t, label: String(b.text.prefix(120)))
+        markCount = linker?.links().count ?? markCount
+    }
+    func unpin(_ id: UUID) { pinned.removeAll { $0.id == id } }
+    func movePin(_ id: UUID, to p: CGPoint, in size: CGSize, boardTop: CGFloat) {
+        guard let i = pinned.firstIndex(where: { $0.id == id }) else { return }
+        pinned[i].pos = clampToBoard(p, in: size, boardTop: boardTop)
+    }
+    private func clampToBoard(_ p: CGPoint, in size: CGSize, boardTop: CGFloat) -> CGPoint {
+        CGPoint(x: min(max(p.x, 90), size.width - 90),
+                y: min(max(p.y, boardTop + 34), size.height - 44))
+    }
+
     /// One-gesture "mark this moment" at the current elapsed time (HSM-8-03). A linked
     /// anchor with no note — flag a live meeting at speed.
     func mark() {
@@ -327,6 +419,27 @@ final class CaptureModel: ObservableObject {
     static func requestMic() async -> Bool {
         await withCheckedContinuation { c in AVAudioApplication.requestRecordPermission { c.resume(returning: $0) } }
     }
+
+    #if targetEnvironment(simulator)
+    /// Simulator-only: stage a few bubbles + tacked notes so a design screenshot shows the live
+    /// canvas in flight. Never compiled into the device build — real behavior is untouched.
+    func seedDemo(size: CGSize, boardTop: CGFloat) {
+        guard liveBubbles.isEmpty, pinned.isEmpty, !recording else { return }
+        liveBubbles = [
+            LiveBubble(text: "Let's ship the beta to the design partners on Friday.", t: 12),
+            LiveBubble(text: "Karol owns the migration script and the rollback plan.", t: 47),
+            LiveBubble(text: "Risk: the vendor SLA doesn't cover the EU region yet.", t: 88),
+        ]
+        let by = boardTop + (size.height - boardTop)
+        pinned = [
+            PinnedNote(id: UUID(), text: "Decision: launch Friday, design partners first.",
+                       pos: CGPoint(x: size.width * 0.30, y: by * 0.42), rot: -4, t: 12),
+            PinnedNote(id: UUID(), text: "Action: Karol — migration + rollback plan.",
+                       pos: CGPoint(x: size.width * 0.68, y: by * 0.5), rot: 5, t: 47),
+        ]
+        partial = "and we should double-check the analytics events before"
+    }
+    #endif
 }
 
 // MARK: - Voice correction capture (HSM-14-07)
@@ -1049,6 +1162,10 @@ struct MeetingListView: View {
             .navigationDestination(isPresented: $capturing) {
                 CaptureView(model: model, done: { capturing = false })
             }
+            #if targetEnvironment(simulator)
+            // Design-screenshot convenience: HS_DEMO=1 opens straight to the live canvas.
+            .onAppear { if ProcessInfo.processInfo.environment["HS_DEMO"] == "1" { capturing = true } }
+            #endif
             .toolbar(.hidden, for: .navigationBar)
         }
         .tint(Sig.accent)
@@ -1164,7 +1281,10 @@ struct CaptureView: View {
                 .pickerStyle(.segmented)
 
                 if pane == .transcript {
-                    transcriptCard
+                    LiveCaptureCanvas(model: model)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Sig.bg, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Sig.line, lineWidth: 1))
                 } else {
                     notesPane
                 }
@@ -1211,19 +1331,6 @@ struct CaptureView: View {
         }
     }
 
-    private var transcriptCard: some View {
-        ScrollView {
-            Text(model.liveTranscript.isEmpty
-                 ? (model.recording ? "Listening… your words appear here on-device." : "Press record to start.")
-                 : model.liveTranscript)
-                .font(.title3).foregroundStyle(model.liveTranscript.isEmpty ? Sig.faint : Sig.text)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(18).frame(maxWidth: .infinity, minHeight: 220, alignment: .topLeading)
-        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Sig.line, lineWidth: 1))
-    }
-
     private var recordButton: some View {
         Button {
             Task { if model.recording { await model.stopRecording(); done() } else { await model.startRecording() } }
@@ -1237,6 +1344,215 @@ struct CaptureView: View {
             .background(model.recording ? Sig.bad : Sig.accent, in: RoundedRectangle(cornerRadius: 16))
         }
         .disabled(model.transcribing)
+    }
+}
+
+// MARK: - The live capture canvas (HSM-14)
+
+/// The meeting, alive. Finished utterances float up as bubbles; the words still being heard
+/// pulse as a live caption; and you grab any bubble — finger or Apple Pencil — and tack it to
+/// the board below. A tacked bubble isn't decoration: it marks that moment so the on-device
+/// intelligence weights what you cared about. This replaces the old wall-of-text transcript.
+struct LiveCaptureCanvas: View {
+    @ObservedObject var model: CaptureModel
+
+    var body: some View {
+        GeometryReader { geo in
+            let boardTop = max(176, geo.size.height * 0.42)
+            ZStack(alignment: .topLeading) {
+                board(boardTop: boardTop, size: geo.size)
+                ForEach(model.pinned) { n in
+                    PinnedNoteView(
+                        note: n,
+                        onMove: { model.movePin(n.id, to: $0, in: geo.size, boardTop: boardTop) },
+                        onRemove: { withAnimation(.spring(response: 0.32, dampingFraction: 0.7)) { model.unpin(n.id) }; tactile() })
+                }
+                liveColumn(boardTop: boardTop, size: geo.size)
+            }
+            .coordinateSpace(name: "canvas")
+            .frame(width: geo.size.width, height: geo.size.height)
+            #if targetEnvironment(simulator)
+            .onAppear { model.seedDemo(size: geo.size, boardTop: max(176, geo.size.height * 0.42)) }
+            #endif
+        }
+        .frame(minHeight: 440)
+    }
+
+    // The streaming utterances + the live caption, bottom-aligned just above the board so the
+    // newest bubble is easiest to grab and pull down.
+    private func liveColumn(boardTop: CGFloat, size: CGSize) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Spacer(minLength: 0)
+            if model.liveBubbles.isEmpty && model.partial.isEmpty {
+                idleHeader
+            }
+            ForEach(model.liveBubbles) { b in
+                LiveBubbleView(bubble: b, boardTop: boardTop,
+                               onPin: { loc in withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                                   model.pin(b, at: loc, in: size, boardTop: boardTop) } })
+            }
+            if !model.partial.isEmpty { LiveCaption(text: model.partial) }
+        }
+        .padding(.horizontal, 8).padding(.top, 10)
+        .frame(width: size.width, height: boardTop, alignment: .bottom)
+        .position(x: size.width / 2, y: boardTop / 2)
+    }
+
+    @ViewBuilder private var idleHeader: some View {
+        VStack(spacing: 10) {
+            pixelAsset("qlippy", size: 58, fallback: model.recording ? "waveform" : "mic.circle.fill",
+                       tint: model.recording ? Sig.accent : Sig.faint)
+                .symbolEffect(.variableColor.iterative, options: .repeating, isActive: model.recording)
+            Text(model.recording ? "Listening… your words will float up here." : "Press Record — your meeting comes alive here.")
+                .font(.callout).foregroundStyle(Sig.faint).multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity).padding(.bottom, 18)
+    }
+
+    // The pin board: a tactile drop zone. Empty, it invites; full, it holds the tacked moments.
+    private func board(boardTop: CGFloat, size: CGSize) -> some View {
+        let h = size.height - boardTop
+        return ZStack(alignment: .top) {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Sig.s1)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [7, 6]))
+                        .foregroundStyle(model.pinned.isEmpty ? Sig.accent.opacity(0.32) : Sig.line))
+            VStack(spacing: 0) {
+                HStack(spacing: 6) {
+                    pixelAsset("pushpin", size: 14, fallback: "pin.fill", tint: Sig.accent)
+                    Text("PINNED MOMENTS").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.muted)
+                    Spacer()
+                    if !model.pinned.isEmpty {
+                        Text("\(model.pinned.count)").font(.caption2.weight(.bold)).foregroundStyle(.black)
+                            .padding(.horizontal, 7).padding(.vertical, 2).background(Sig.accent, in: Capsule())
+                    }
+                }
+                .padding(.horizontal, 13).padding(.vertical, 11)
+                if model.pinned.isEmpty {
+                    Spacer(minLength: 0)
+                    Text(model.recording
+                         ? "Grab a bubble and tack it here.\nPinned moments steer the on-device intelligence."
+                         : "Your tacked moments live here.")
+                        .font(.footnote).foregroundStyle(Sig.faint)
+                        .multilineTextAlignment(.center).padding(.horizontal, 24)
+                    Spacer(minLength: 0)
+                }
+            }
+            .frame(height: h)
+        }
+        .frame(width: size.width, height: h)
+        .position(x: size.width / 2, y: boardTop + h / 2)
+    }
+}
+
+/// A streaming utterance. Springs in on appear; lifts (shadow + scale) the instant you grab it;
+/// drop it below the fold to tack it to the board, or release high to snap it back.
+struct LiveBubbleView: View {
+    let bubble: LiveBubble
+    let boardTop: CGFloat
+    let onPin: (CGPoint) -> Void
+    @State private var offset: CGSize = .zero
+    @State private var lifting = false
+    @State private var appeared = false
+
+    var body: some View {
+        HStack(spacing: 9) {
+            Circle().fill(Sig.accent).frame(width: 7, height: 7)
+                .shadow(color: Sig.accent.opacity(0.7), radius: 3)
+            Text(bubble.text)
+                .font(.system(size: 15, weight: .medium)).foregroundStyle(Sig.text)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 4)
+            Image(systemName: "hand.draw.fill").font(.system(size: 11)).foregroundStyle(lifting ? Sig.accent : Sig.faint)
+        }
+        .padding(.horizontal, 13).padding(.vertical, 10)
+        .background(Sig.s2, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous)
+            .stroke(lifting ? Sig.accent : Sig.line, lineWidth: lifting ? 1.6 : 1))
+        .shadow(color: .black.opacity(lifting ? 0.55 : 0), radius: lifting ? 16 : 0, y: lifting ? 9 : 0)
+        .scaleEffect(lifting ? 1.04 : (appeared ? 1 : 0.82))
+        .opacity(appeared ? 1 : 0)
+        .offset(offset)
+        .zIndex(lifting ? 20 : 0)
+        .gesture(
+            DragGesture(coordinateSpace: .named("canvas"))
+                .onChanged { v in
+                    if !lifting { withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) { lifting = true }; tactile() }
+                    offset = v.translation
+                }
+                .onEnded { v in
+                    if v.location.y > boardTop {
+                        tactile(.medium); onPin(v.location)            // tacked
+                    } else {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.68)) { offset = .zero; lifting = false }
+                    }
+                })
+        .onAppear { withAnimation(.spring(response: 0.5, dampingFraction: 0.68)) { appeared = true } }
+        .transition(.asymmetric(
+            insertion: .scale(scale: 0.8).combined(with: .opacity),
+            removal: .opacity))
+    }
+}
+
+/// The words still being transcribed — a glowing, breathing caption beneath the bubbles.
+struct LiveCaption: View {
+    let text: String
+    @State private var pulse = false
+    var body: some View {
+        HStack(spacing: 8) {
+            HStack(spacing: 3) {
+                ForEach(0..<3) { i in
+                    Capsule().fill(Sig.accent)
+                        .frame(width: 3, height: pulse ? 13 : 5)
+                        .animation(.easeInOut(duration: 0.5).repeatForever().delay(Double(i) * 0.15), value: pulse)
+                }
+            }
+            Text(text).font(.system(size: 15, weight: .medium)).italic().foregroundStyle(Sig.muted)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 13).padding(.vertical, 8)
+        .background(Sig.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 13))
+        .onAppear { pulse = true }
+        .transition(.opacity)
+    }
+}
+
+/// A tacked moment: a brass pushpin holding a slightly-tilted sticky note. Lands with a bounce,
+/// drags to reposition, and unpins when you tap its pin.
+struct PinnedNoteView: View {
+    let note: PinnedNote
+    let onMove: (CGPoint) -> Void
+    let onRemove: () -> Void
+    @State private var landed = false
+
+    var body: some View {
+        VStack(spacing: -4) {
+            Button(action: onRemove) {
+                pixelAsset("pushpin", size: 26, fallback: "pin.fill", tint: Sig.accent)
+                    .rotationEffect(.degrees(UIImage(named: "pushpin") == nil ? -28 : 0))
+                    .shadow(color: .black.opacity(0.4), radius: 3, y: 2)
+            }
+            .buttonStyle(.plain).zIndex(1)
+            Text(note.text)
+                .font(.system(size: 13, weight: .semibold)).foregroundStyle(Sig.text)
+                .lineLimit(4).multilineTextAlignment(.leading)
+                .frame(width: 162, alignment: .leading)
+                .padding(.horizontal, 11).padding(.vertical, 10)
+                .background(Sig.s3, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(Sig.accent.opacity(0.4), lineWidth: 1))
+                .shadow(color: .black.opacity(0.45), radius: 9, y: 5)
+        }
+        .rotationEffect(.degrees(note.rot))
+        .scaleEffect(landed ? 1 : 1.35)
+        .position(note.pos)
+        .gesture(
+            DragGesture(coordinateSpace: .named("canvas"))
+                .onChanged { onMove($0.location) })
+        .onAppear { withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { landed = true }; tactile(.heavy) }
+        .transition(.scale.combined(with: .opacity))
     }
 }
 
@@ -1358,7 +1674,8 @@ final class MeetingReviewState: ObservableObject {
                     let engine = ArtifactGenerationEngine(provider: provider, maxAttempts: 2)
                     let a = try await engine.generate(type, from: sub)
                     all.append(a)
-                    if !chunk { try? storage?.saveArtifact(a); load() }   // stream the single pass
+                    // Stream the single pass — animate the insert so each card materializes in.
+                    if !chunk { try? storage?.saveArtifact(a); withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { load() } }
                     Self.glog("w\(wi) ok \(type.rawValue)")
                 } catch {
                     lastError = "\(error)"; Self.glog("w\(wi) FAIL \(type.rawValue): \(error)")
@@ -1366,7 +1683,7 @@ final class MeetingReviewState: ObservableObject {
             }
         }
         let merged = ArtifactMerge.dedup(all)
-        if chunk { for a in merged { try? storage?.saveArtifact(a) }; load() }
+        if chunk { for a in merged { try? storage?.saveArtifact(a) }; withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { load() } }
         Self.glog("done produced=\(merged.count)")
         note = merged.isEmpty
             ? "The model produced nothing." + (lastError.isEmpty ? "" : " (\(lastError))")
@@ -1531,6 +1848,27 @@ private func artifactGlyph(_ t: ArtifactType) -> String {
     default: return "sparkles"
     }
 }
+/// HSM-14 — the MIR profile as a meaningful LENS, not a sort toggle: an icon + a one-line
+/// description of what it surfaces first. The lens drives BOTH what gets generated (which
+/// artifact types) and the order it reads in — these helpers make that legible in the UI.
+private func profileIcon(_ p: MIRProfile) -> String {
+    switch p {
+    case .balanced: return "circle.grid.cross.fill"
+    case .architect: return "ruler.fill"
+    case .delivery: return "shippingbox.fill"
+    case .product: return "sparkles.rectangle.stack.fill"
+    case .incident: return "exclamationmark.octagon.fill"
+    }
+}
+private func profileBlurb(_ p: MIRProfile) -> String {
+    switch p {
+    case .balanced: return "An even read of the room — decisions, action items, risks and requirements."
+    case .architect: return "Leads with the design record — ADRs, decisions and the dependency map."
+    case .delivery: return "Plans the work — milestones, action items and what could slip."
+    case .product: return "Hears the customer — requirements, customer signals and scope."
+    case .incident: return "Reconstructs what happened — timeline, runbook changes and risks."
+    }
+}
 /// A light tactile tap (HSM-14 — the app should feel hand-driven).
 private func tactile(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
     UIImpactFeedbackGenerator(style: style).impactOccurred()
@@ -1563,6 +1901,7 @@ struct SwipeableArtifactCard: View {
     @State private var appeared = false
     @State private var pressed = false
     @State private var shimmerX: CGFloat = -0.7
+    @State private var materialize = false   // HSM-14 — the tint-ring flash when a card first lands
 
     private var actionable: Bool { artifact.status == .draft || artifact.status == .needsReview }
     private var tint: Color { artifactTint(artifact.artifactType) }
@@ -1596,8 +1935,22 @@ struct SwipeableArtifactCard: View {
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 22)
         .scaleEffect(appeared ? 1 : 0.95, anchor: .top)
+        // HSM-14 — a card doesn't just "appear": it MATERIALIZES. A tint-colored ring flashes
+        // around it as it lands, then fades — so a freshly-generated insight announces itself.
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(tint, lineWidth: 2.5)
+                .opacity(materialize ? 0.9 : 0)
+                .shadow(color: tint.opacity(0.85), radius: materialize ? 16 : 0)
+                .allowsHitTesting(false)
+        )
         .onAppear {
-            withAnimation(.spring(response: 0.55, dampingFraction: 0.74).delay(Double(index) * 0.06)) { appeared = true }
+            let d = Double(index) * 0.06
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.74).delay(d)) { appeared = true }
+            withAnimation(.easeOut(duration: 0.32).delay(d)) { materialize = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + d + 0.65) {
+                withAnimation(.easeInOut(duration: 0.85)) { materialize = false }
+            }
         }
         .onChange(of: regenerating) { _, on in
             if on {
@@ -2103,10 +2456,51 @@ struct MeetingDetailView: View {
                 Spacer()
                 egressBadge
             }
-            Picker("Profile", selection: $review.profile) {
-                ForEach(MIRProfile.allCases, id: \.self) { Text($0.rawValue.capitalized).tag($0) }
+            // HSM-14 — the LENS, not a sort toggle. It picks which intelligence to surface first
+            // and drives what gets generated. Each lens names what it emphasizes, so changing it
+            // is never a mystery: the blurb explains it and the type chips preview its focus.
+            VStack(alignment: .leading, spacing: 9) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(MIRProfile.allCases, id: \.self) { p in
+                            let sel = review.profile == p
+                            Button {
+                                tactile()
+                                withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) { review.profile = p }
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: profileIcon(p)).font(.system(size: 12, weight: .bold))
+                                    Text(p.rawValue.capitalized).font(.system(size: 13, weight: .heavy))
+                                }
+                                .foregroundStyle(sel ? .black : Sig.muted)
+                                .padding(.horizontal, 13).padding(.vertical, 8)
+                                .background(sel ? Sig.accent : Sig.s2, in: Capsule())
+                                .overlay(Capsule().stroke(sel ? Color.clear : Sig.line, lineWidth: 1))
+                                .scaleEffect(sel ? 1 : 0.96)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 1).padding(.vertical, 1)
+                }
+                Text(profileBlurb(review.profile))
+                    .font(.system(size: 12.5)).foregroundStyle(Sig.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .transition(.opacity).id(review.profile)
+                // The types this lens leads with — a live preview of its focus.
+                HStack(spacing: 6) {
+                    ForEach(MIRRouter.baseEmphasis[review.profile] ?? [], id: \.self) { t in
+                        HStack(spacing: 4) {
+                            Image(systemName: artifactGlyph(t)).font(.system(size: 9, weight: .bold))
+                            Text(artifactTypeLabel(t)).font(.system(size: 10, weight: .bold))
+                        }
+                        .foregroundStyle(artifactTint(t))
+                        .padding(.horizontal, 8).padding(.vertical, 4)
+                        .background(artifactTint(t).opacity(0.14), in: Capsule())
+                        .overlay(Capsule().stroke(artifactTint(t).opacity(0.35), lineWidth: 1))
+                    }
+                }
             }
-            .pickerStyle(.segmented)
 
             if review.generating {
                 HStack(spacing: 8) {
@@ -2142,12 +2536,17 @@ struct MeetingDetailView: View {
             // (a clean regenerate drops the prior model artifacts and keeps your ink).
             if !review.generating {
                 Button { Task { await review.generate() } } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: review.hasGeneratedArtifacts ? "arrow.clockwise" : "sparkles")
-                        Text(review.hasGeneratedArtifacts ? "Regenerate on-device" : "Generate on-device")
+                    VStack(spacing: 2) {
+                        HStack(spacing: 6) {
+                            Image(systemName: review.hasGeneratedArtifacts ? "arrow.clockwise" : "sparkles")
+                            Text(review.hasGeneratedArtifacts ? "Regenerate on-device" : "Generate on-device")
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        Text("Through the \(review.profile.rawValue.capitalized) lens")
+                            .font(.system(size: 11, weight: .bold)).opacity(0.65)
                     }
-                    .font(.subheadline.weight(.semibold)).foregroundStyle(.black)
-                    .frame(maxWidth: .infinity).padding(.vertical, 12)
+                    .foregroundStyle(.black)
+                    .frame(maxWidth: .infinity).padding(.vertical, 11)
                     .background(Sig.accent, in: RoundedRectangle(cornerRadius: 12))
                 }
                 if !review.hasInkArtifacts {
