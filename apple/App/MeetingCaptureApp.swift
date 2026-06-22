@@ -390,6 +390,75 @@ private extension Color {
                                 green: Double((hex >> 8) & 0xFF)/255, blue: Double(hex & 0xFF)/255, opacity: 1) }
 }
 
+// MARK: - Signal depth + motion (HSM-14 craft elevation)
+
+private extension Sig {
+    static let bgTop = Color(hex: 0x191B23)
+    /// A cinematic vertical wash — depth instead of a flat fill.
+    static var bgGradient: LinearGradient {
+        LinearGradient(colors: [bgTop, bg], startPoint: .top, endPoint: .bottom)
+    }
+    /// The brand accent as a warm diagonal gradient (amber → ember) for hero surfaces.
+    static var accentGradient: LinearGradient {
+        LinearGradient(colors: [Color(hex: 0xFF9D5C), accent, Color(hex: 0xF24A2E)],
+                       startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+    static var accentSoft: Color { accent.opacity(0.15) }
+    static var localGradient: LinearGradient {
+        LinearGradient(colors: [Color(hex: 0x7AA6FF), local], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+    /// A top-lit hairline so cards catch light at the top edge (glass realism).
+    static var topHairline: LinearGradient {
+        LinearGradient(colors: [Color.white.opacity(0.12), Color.white.opacity(0.035)],
+                       startPoint: .top, endPoint: .bottom)
+    }
+}
+
+/// Elevated Signal surface: layered fill + a top-lit hairline + a soft drop shadow. The one card
+/// treatment the whole app shares, so elevation is consistent (not random shadow values).
+private struct SignalCard: ViewModifier {
+    var fill: Color = Sig.s1
+    var radius: CGFloat = 18
+    var elevated: Bool = true
+    func body(content: Content) -> some View {
+        content
+            .background(fill, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .strokeBorder(Sig.topHairline, lineWidth: 1))
+            .shadow(color: .black.opacity(elevated ? 0.38 : 0), radius: elevated ? 16 : 0, y: elevated ? 9 : 0)
+    }
+}
+private extension View {
+    func signalCard(_ fill: Color = Sig.s1, radius: CGFloat = 18, elevated: Bool = true) -> some View {
+        modifier(SignalCard(fill: fill, radius: radius, elevated: elevated))
+    }
+}
+
+/// A gradient-filled rounded glyph chip — the consistent icon container across rows/CTAs.
+private struct GlyphChip: View {
+    let system: String
+    var gradient: LinearGradient = Sig.localGradient
+    var size: CGFloat = 46
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: size * 0.28, style: .continuous).fill(gradient)
+                .shadow(color: .black.opacity(0.25), radius: 5, y: 3)
+            Image(systemName: system).font(.system(size: size * 0.42, weight: .bold)).foregroundStyle(.white)
+        }.frame(width: size, height: size)
+    }
+}
+
+/// Press feedback every tappable card shares: a subtle scale + dim on a spring (HIG scale-feedback).
+private struct PressableCard: ButtonStyle {
+    var scale: CGFloat = 0.975
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? scale : 1)
+            .opacity(configuration.isPressed ? 0.94 : 1)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
+    }
+}
+
 // MARK: - Live capture canvas model (HSM-14)
 
 /// A finished utterance, floating in the live stream until it's tacked to the board.
@@ -682,6 +751,24 @@ final class CaptureModel: ObservableObject {
     }
 
     #if targetEnvironment(simulator)
+    /// Simulator-only: stage a few saved meetings so a home-screen design screenshot shows real rows.
+    func seedHomeDemo() {
+        guard meetings.isEmpty else { return }
+        func segs(_ n: Int) -> [Segment] { (0..<n).map { Segment(text: "w\($0)", speaker: "Speaker 1", startTime: 0, endTime: 1) } }
+        let now = Date()
+        meetings = [
+            Meeting(id: "demo-1", startedAt: now.addingTimeInterval(-5400), endedAt: now.addingTimeInterval(-4800),
+                    duration: 600, title: "Q3 planning — guilds vs activation", segments: segs(42),
+                    intelStatus: IntelStatus(state: "ready"), micLabel: "On-device", remoteLabel: ""),
+            Meeting(id: "demo-2", startedAt: now.addingTimeInterval(-90000), endedAt: now.addingTimeInterval(-88800),
+                    duration: 1200, title: "Incident review — PI-204 cert outage", segments: segs(88),
+                    intelStatus: IntelStatus(state: "ready"), micLabel: "On-device", remoteLabel: ""),
+            Meeting(id: "demo-3", startedAt: now.addingTimeInterval(-180000), endedAt: now.addingTimeInterval(-179000),
+                    duration: 1000, title: "Write-path scaling sync", segments: segs(31),
+                    intelStatus: IntelStatus(state: "ready"), micLabel: "On-device", remoteLabel: ""),
+        ]
+    }
+
     /// Simulator-only: stage a few bubbles + tacked notes so a design screenshot shows the live
     /// canvas in flight. Never compiled into the device build — real behavior is untouched.
     func seedDemo(size: CGSize, boardTop: CGFloat) {
@@ -1426,125 +1513,198 @@ struct SketchToDiagramView: View {
 struct MeetingListView: View {
     @StateObject private var model = CaptureModel()
     @State private var capturing = false
+    @State private var appeared = false
+    @State private var recordPulse = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Sig.bg.ignoresSafeArea()
+                background
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 18) {
                         header
-                        Button { capturing = true } label: { recordCta }
-                        NavigationLink { ModelsView() } label: { modelsCta }.buttonStyle(.plain)
-                        NavigationLink { SketchToDiagramView() } label: { sketchCta }.buttonStyle(.plain)
+                        Button { tactile(.medium); capturing = true } label: { recordHero }
+                            .buttonStyle(PressableCard())
+                            .accessibilityLabel("New recording — capture a meeting on-device")
+                        HStack(spacing: 12) {
+                            NavigationLink { ModelsView() } label: { modelsCta }.buttonStyle(PressableCard())
+                            NavigationLink { SketchToDiagramView() } label: { sketchCta }.buttonStyle(PressableCard())
+                        }
                         if !model.error.isEmpty { errorNote(model.error) }
                         if model.meetings.isEmpty {
-                            Text("No recordings yet. Press record to capture a meeting — it stays on this iPad.")
-                                .font(.callout).foregroundStyle(Sig.faint).padding(.top, 8)
+                            emptyState.transition(.opacity)
                         } else {
-                            ForEach(model.meetings, id: \.id) { m in
+                            Text("RECENT").font(.system(size: 11, weight: .heavy)).tracking(1.6)
+                                .foregroundStyle(Sig.faint).padding(.top, 6).padding(.leading, 2)
+                            ForEach(Array(model.meetings.enumerated()), id: \.element.id) { i, m in
                                 NavigationLink { MeetingDetailView(meeting: m) } label: { meetingRow(m) }
-                                    .buttonStyle(.plain)
+                                    .buttonStyle(PressableCard())
+                                    .opacity(appeared ? 1 : 0)
+                                    .offset(y: appeared ? 0 : 14)
+                                    .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.82)
+                                        .delay(0.05 + Double(i) * 0.05), value: appeared)
                             }
                         }
                     }
-                    .padding(20).frame(maxWidth: 760).frame(maxWidth: .infinity)
+                    .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
                 }
             }
             .navigationDestination(isPresented: $capturing) {
                 CaptureView(model: model, done: { capturing = false })
             }
             #if targetEnvironment(simulator)
-            // Design-screenshot convenience: HS_DEMO=1 opens straight to the live canvas.
-            .onAppear { if ProcessInfo.processInfo.environment["HS_DEMO"] == "1" { capturing = true } }
+            // Design-screenshot convenience: HS_DEMO=1 opens straight to the live canvas; HS_DEMO_HOME seeds rows.
+            .onAppear {
+                if ProcessInfo.processInfo.environment["HS_DEMO_HOME"] == "1" { model.seedHomeDemo() }
+                if ProcessInfo.processInfo.environment["HS_DEMO"] == "1" { capturing = true }
+            }
             #endif
             .toolbar(.hidden, for: .navigationBar)
         }
         .tint(Sig.accent)
-        .onAppear { model.refresh() }
+        .onAppear {
+            model.refresh()
+            withAnimation(reduceMotion ? nil : .spring(response: 0.6, dampingFraction: 0.85)) { appeared = true }
+            if !reduceMotion { recordPulse = true }
+        }
+    }
+
+    // A cinematic dark wash with a soft amber glow up top — depth, not a flat fill.
+    private var background: some View {
+        ZStack {
+            Sig.bgGradient.ignoresSafeArea()
+            Circle().fill(Sig.accent.opacity(0.16)).frame(width: 420)
+                .blur(radius: 130).offset(x: 150, y: -300).ignoresSafeArea()
+            Circle().fill(Sig.local.opacity(0.10)).frame(width: 360)
+                .blur(radius: 140).offset(x: -180, y: -180).ignoresSafeArea()
+        }
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("ON-DEVICE").font(.caption2.weight(.bold)).tracking(2).foregroundStyle(Sig.local)
-            Text("Meetings").font(.largeTitle.bold()).foregroundStyle(Sig.text)
-            Text("Record · transcribe · keep — all on this iPad, nothing leaves.")
-                .font(.footnote).foregroundStyle(Sig.faint)
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 7) {
+                HStack(spacing: 7) {
+                    Image(systemName: "lock.fill").font(.system(size: 9, weight: .black))
+                    Text("ON-DEVICE · NOTHING LEAVES").font(.system(size: 10, weight: .heavy)).tracking(1.4)
+                }
+                .foregroundStyle(Sig.local)
+                .padding(.horizontal, 10).padding(.vertical, 5)
+                .background(Sig.local.opacity(0.12), in: Capsule())
+                .overlay(Capsule().strokeBorder(Sig.local.opacity(0.25), lineWidth: 1))
+                Text("Meetings").font(.system(size: 38, weight: .heavy)).foregroundStyle(Sig.text)
+                    .shadow(color: .black.opacity(0.3), radius: 8, y: 3)
+            }
+            Spacer()
+            if !model.meetings.isEmpty {
+                Text("\(model.meetings.count)").font(.system(size: 20, weight: .heavy).monospacedDigit())
+                    .foregroundStyle(Sig.text)
+                    .frame(width: 46, height: 46).signalCard(Sig.s2, radius: 14)
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 8)
+        .opacity(appeared ? 1 : 0).offset(y: appeared ? 0 : 10)
     }
 
-    private var recordCta: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "record.circle.fill").font(.title3)
-            Text("New recording").font(.headline)
+    // The hero: a tall gradient card with a pulsing record glyph + a clear primary action.
+    private var recordHero: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle().stroke(.white.opacity(0.35), lineWidth: 2).frame(width: 58, height: 58)
+                    .scaleEffect(recordPulse ? 1.12 : 0.92).opacity(recordPulse ? 0 : 0.9)
+                    .animation(reduceMotion ? nil : .easeOut(duration: 1.8).repeatForever(autoreverses: false), value: recordPulse)
+                Circle().fill(.black.opacity(0.16)).frame(width: 58, height: 58)
+                Image(systemName: "mic.fill").font(.system(size: 23, weight: .bold)).foregroundStyle(.black)
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                Text("New recording").font(.system(size: 21, weight: .heavy)).foregroundStyle(.black)
+                Text("Tap to capture — transcribed live on this iPad")
+                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(.black.opacity(0.68))
+            }
             Spacer()
-            Image(systemName: "chevron.right").font(.caption).opacity(0.6)
+            Image(systemName: "arrow.right").font(.system(size: 17, weight: .black)).foregroundStyle(.black.opacity(0.72))
         }
-        .foregroundStyle(.black).padding(.horizontal, 18).padding(.vertical, 15)
-        .background(Sig.accent, in: RoundedRectangle(cornerRadius: 14))
+        .padding(.horizontal, 22).padding(.vertical, 22)
+        .background(Sig.accentGradient, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(.white.opacity(0.22), lineWidth: 1))
+        .shadow(color: Sig.accent.opacity(0.45), radius: 26, y: 12)
+        .opacity(appeared ? 1 : 0).scaleEffect(appeared ? 1 : 0.96)
     }
 
     private var modelsCta: some View {
         let n = ModelFiles.installed().count
-        return HStack(spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Sig.local.opacity(0.16))
-                Image(systemName: "cpu.fill").font(.system(size: 18, weight: .bold)).foregroundStyle(Sig.local)
-            }.frame(width: 44, height: 44)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Models").font(.system(size: 16, weight: .heavy)).foregroundStyle(Sig.text)
-                Text(n == 0 ? "Import a model to enable on-device intelligence"
-                            : "\(n) on this iPad · import or manage")
-                    .font(.system(size: 12)).foregroundStyle(Sig.faint)
-            }
-            Spacer()
-            Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
-        }
-        .padding(14)
-        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Sig.line, lineWidth: 1))
+        return tile(chip: GlyphChip(system: "cpu.fill"),
+                    title: "Models",
+                    subtitle: n == 0 ? "Import to enable intelligence" : "\(n) on this iPad")
     }
 
     private var sketchCta: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Sig.accent.opacity(0.16))
-                Image(systemName: "scribble.variable").font(.system(size: 18, weight: .bold)).foregroundStyle(Sig.accent)
-            }.frame(width: 44, height: 44)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Sketch → Diagram").font(.system(size: 16, weight: .heavy)).foregroundStyle(Sig.text)
-                Text("Draw boxes + arrows with the Pencil — a live Mermaid diagram builds itself")
-                    .font(.system(size: 12)).foregroundStyle(Sig.faint)
+        tile(chip: GlyphChip(system: "scribble.variable", gradient: Sig.accentGradient),
+             title: "Sketch → Diagram",
+             subtitle: "Pencil boxes become Mermaid")
+    }
+
+    // A compact, equal-weight secondary tile (the two sit side by side under the hero).
+    private func tile(chip: GlyphChip, title: String, subtitle: String) -> some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack {
+                chip
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
             }
-            Spacer()
-            Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.system(size: 16, weight: .heavy)).foregroundStyle(Sig.text)
+                Text(subtitle).font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1)
+            }
         }
-        .padding(14)
-        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Sig.line, lineWidth: 1))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(15).signalCard(radius: 20)
     }
 
     private func meetingRow(_ m: Meeting) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "waveform").foregroundStyle(Sig.local)
+        HStack(spacing: 14) {
+            GlyphChip(system: "waveform")
             VStack(alignment: .leading, spacing: 3) {
-                Text(m.title ?? "Meeting").font(.subheadline.weight(.semibold)).foregroundStyle(Sig.text)
+                Text(m.title ?? "Untitled meeting").font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(Sig.text).lineLimit(1)
                 Text(m.startedAt.formatted(date: .abbreviated, time: .shortened))
-                    .font(.caption).foregroundStyle(Sig.faint)
+                    .font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
             }
             Spacer()
-            Text("\(m.segments.count) segs").font(.caption2).foregroundStyle(Sig.faint)
-            Image(systemName: "chevron.right").font(.caption2).foregroundStyle(Sig.faint)
+            Text("\(m.segments.count) segs").font(.system(size: 11, weight: .heavy).monospacedDigit())
+                .foregroundStyle(Sig.muted)
+                .padding(.horizontal, 9).padding(.vertical, 5).background(Sig.s3, in: Capsule())
+            Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundStyle(Sig.faint)
         }
-        .padding(14).background(Sig.s1, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Sig.line, lineWidth: 1))
+        .padding(13).signalCard(radius: 16)
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 16) {
+            ZStack {
+                Circle().fill(Sig.accentSoft).frame(width: 84, height: 84)
+                Circle().strokeBorder(Sig.accent.opacity(0.3), lineWidth: 1).frame(width: 84, height: 84)
+                Image(systemName: "waveform").font(.system(size: 32, weight: .semibold)).foregroundStyle(Sig.accent)
+            }
+            VStack(spacing: 6) {
+                Text("No meetings yet").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Press New recording to capture your first meeting. It transcribes live and stays on this iPad — nothing leaves.")
+                    .font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.faint)
+                    .multilineTextAlignment(.center).frame(maxWidth: 320).lineSpacing(2)
+            }
+        }
+        .frame(maxWidth: .infinity).padding(.top, 54)
     }
 
     private func errorNote(_ s: String) -> some View {
-        Text(s).font(.caption).foregroundStyle(Sig.bad)
-            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-            .background(Sig.bad.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
+        HStack(spacing: 9) {
+            Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 13, weight: .bold))
+            Text(s).font(.system(size: 13, weight: .medium))
+        }
+        .foregroundStyle(Sig.bad)
+        .padding(13).frame(maxWidth: .infinity, alignment: .leading)
+        .background(Sig.bad.opacity(0.12), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Sig.bad.opacity(0.3), lineWidth: 1))
     }
 }
 

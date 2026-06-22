@@ -3,7 +3,14 @@
 > 🚀 **New agent? Start here:** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **HSM-14-13 deliverables 1–4
+**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **Craft elevation pass begun**
+(owner: the shipped effects were "low-level/basic" — "push the UI/UX a lot more"): the Signal design
+system gained depth + motion primitives (`SignalCard` elevation, `GlyphChip`, `PressableCard`,
+gradient/glow tokens, reduce-motion-aware entrances) and the **home screen was rebuilt to a flagship
+bar** (cinematic gradient bg + glows, ON-DEVICE badge, hero Record CTA with a pulsing mic, gradient
+tiles, elevated staggered meeting cards, considered empty state) — adopting HSM-14-01 into a real
+screen, built for Simulator AND installed live on the iPad; before/after shots committed. Capture
+chrome + intelligence pane are next. Prior same-day: **HSM-14-13 deliverables 1–4
 built** — the "OS-like" capture surface. (1) The recorder **docks** to the top/bottom edge on
 drag-release (magnetic snap + haptic) or **floats** clamped-on-screen, and **minimizes** to a compact
 breathing **rec orb** (tap to re-expand — never trap). (2) **Free-place vs tack**: a dragged bubble
