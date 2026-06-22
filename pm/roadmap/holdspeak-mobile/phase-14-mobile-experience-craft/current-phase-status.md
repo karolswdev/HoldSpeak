@@ -238,6 +238,17 @@ through the configured provider (on-device or LAN) with the full generation-thea
 Built for Simulator + device; shot `workbench-builder.png`. Crushing-usability linear-pipeline bet,
 no prose. Remaining: the non-extract transforms (summarize/rewrite/keepIf) + note/Slack outputs.
 
+**2026-06-22 — the Workbench becomes a real builder (HSM-14-15), on owner feedback ("this is not a
+builder").** Two gaps closed: (1) a fully **custom node** — `WorkflowStep.llmCall(name, prompt,
+input)` — where you write your own prompt over a chosen input (the meeting or the previous step),
+first-class alongside the curated lens/extract blocks (palette-led + emphasized); and (2) the
+**building interaction** — cramped inline menus are gone; **every block is tap-to-configure**, opening
+a real editor sheet (`WorkbenchEditorSheet`) with selectable choice lists and, for the LLM-call node,
+a NAME field + an INPUT selector + a full multi-line **prompt editor** (with `{input}` injection).
+`swift test` **241/6/0** (+1 llmCall test). Built for Simulator + device; shots
+`workbench-custom-node.png`, `workbench-llm-editor.png`. Remaining: execute the custom prompt + the
+other transforms/outputs.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a

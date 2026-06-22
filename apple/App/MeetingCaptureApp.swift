@@ -1793,7 +1793,14 @@ struct WorkbenchView: View {
     @State private var wf = Workflow(name: "My workflow", source: .fullTranscript,
                                      steps: [.lens(.delivery), .extract(.decisions)], output: .artifacts)
     @State private var spin = false
+    @State private var editing: EditTarget?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    // What the configuration sheet is editing — a block's details open in a real editor, not a menu.
+    enum EditTarget: Identifiable, Equatable {
+        case source, output, step(Int)
+        var id: String { switch self { case .source: return "src"; case .output: return "out"; case .step(let i): return "s\(i)" } }
+    }
 
     var body: some View {
         ZStack {
@@ -1813,7 +1820,25 @@ struct WorkbenchView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar).tint(Sig.accent)
-        .onAppear { spin = true }
+        .onAppear {
+            spin = true
+            #if targetEnvironment(simulator)
+            let env = ProcessInfo.processInfo.environment
+            if env["HS_DEMO_WORKBENCH"] == "1" || env["HS_DEMO_WORKBENCH_LLM"] == "1" {
+                wf = Workflow(name: "Custom workflow", source: .fullTranscript,
+                              steps: [.lens(.delivery),
+                                      .llmCall(name: "Risks → questions",
+                                               prompt: "From {input}, list the top risks as pointed questions a reviewer should ask. One per line, no preamble.",
+                                               input: .meeting),
+                                      .extract(.actionItems)],
+                              output: .note)
+            }
+            if env["HS_DEMO_WORKBENCH_LLM"] == "1" { editing = .step(1) }
+            #endif
+        }
+        .sheet(item: $editing) { target in
+            WorkbenchEditorSheet(wf: $wf, target: target).presentationDetents([.medium, .large])
+        }
     }
 
     private var header: some View {
@@ -1878,96 +1903,81 @@ struct WorkbenchView: View {
         }
     }
 
-    private func blockShell<Content: View>(_ tag: String, _ glyph: String, _ gradient: LinearGradient,
-                                           @ViewBuilder _ content: () -> Content) -> some View {
-        HStack(spacing: 13) {
-            GlyphChip(system: glyph, gradient: gradient, size: 46)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(tag).font(.system(size: 9, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint)
-                content()
+    // Every block is tap-to-configure: tapping opens a real editor sheet (not a cramped menu).
+    private func tapBlock(_ tag: String, _ glyph: String, _ gradient: LinearGradient, _ value: String,
+                          subtitle: String? = nil, tagColor: Color = Sig.faint, tap: @escaping () -> Void) -> some View {
+        Button { tactile(); tap() } label: {
+            HStack(spacing: 13) {
+                GlyphChip(system: glyph, gradient: gradient, size: 46)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(tag).font(.system(size: 9, weight: .heavy)).tracking(1.2).foregroundStyle(tagColor)
+                    Text(value).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text).lineLimit(1)
+                    if let s = subtitle { Text(s).font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1) }
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "slider.horizontal.3").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
             }
-            Spacer(minLength: 0)
-        }
-        .padding(14).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 18)
+            .padding(14).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 18).contentShape(Rectangle())
+        }.buttonStyle(PressableCard())
     }
 
     private var sourceBlock: some View {
-        blockShell("SOURCE", wf.source.glyph, Sig.localGradient) {
-            Menu {
-                ForEach(WorkflowSource.allCases, id: \.self) { s in Button(s.label) { wf.source = s; tactile() } }
-            } label: { menuLabel(wf.source.label) }
-        }
+        tapBlock("SOURCE", wf.source.glyph, Sig.localGradient, wf.source.label) { editing = .source }
     }
 
     private var outputBlock: some View {
-        blockShell("OUTPUT", wf.output.glyph, wf.output.isEgress ? Sig.accentGradient : Sig.localGradient) {
-            HStack(spacing: 8) {
-                Menu {
-                    ForEach(WorkflowOutput.allCases, id: \.self) { o in Button(o.label) { wf.output = o; tactile() } }
-                } label: { menuLabel(wf.output.label) }
-                if wf.output.isEgress {
-                    HStack(spacing: 3) { Image(systemName: "antenna.radiowaves.left.and.right").font(.system(size: 8, weight: .black)); Text("leaves device").font(.system(size: 9, weight: .heavy)) }
-                        .foregroundStyle(Sig.accent).padding(.horizontal, 6).padding(.vertical, 3).background(Sig.accent.opacity(0.14), in: Capsule())
-                }
-            }
-        }
+        tapBlock("OUTPUT", wf.output.glyph, wf.output.isEgress ? Sig.accentGradient : Sig.localGradient,
+                 wf.output.label, subtitle: wf.output.isEgress ? "leaves device" : nil) { editing = .output }
     }
 
     private func stepBlock(_ i: Int, _ step: WorkflowStep) -> some View {
-        HStack(spacing: 13) {
-            GlyphChip(system: step.glyph, gradient: Sig.accentGradient, size: 46)
-            VStack(alignment: .leading, spacing: 3) {
-                Text("STEP \(i + 1)").font(.system(size: 9, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint)
-                stepConfig(i, step)
-            }
-            Spacer(minLength: 0)
-            VStack(spacing: 6) {
-                Button { move(i, -1) } label: { Image(systemName: "chevron.up").font(.system(size: 12, weight: .bold)) }
+        HStack(spacing: 10) {
+            Button { tactile(); editing = .step(i) } label: {
+                HStack(spacing: 13) {
+                    GlyphChip(system: step.glyph, gradient: Sig.accentGradient, size: 46)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(step.isCustom ? "CUSTOM" : "STEP \(i + 1)").font(.system(size: 9, weight: .heavy)).tracking(1.2)
+                            .foregroundStyle(step.isCustom ? Sig.accent : Sig.faint)
+                        Text(step.label).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text).lineLimit(1)
+                        if let sub = stepSubtitle(step) { Text(sub).font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1) }
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "slider.horizontal.3").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
+                }.contentShape(Rectangle())
+            }.buttonStyle(PressableCard())
+            VStack(spacing: 8) {
+                Button { move(i, -1) } label: { Image(systemName: "chevron.up").font(.system(size: 13, weight: .bold)) }
                     .disabled(i == 0).foregroundStyle(i == 0 ? Sig.faint.opacity(0.4) : Sig.muted)
-                Button { move(i, 1) } label: { Image(systemName: "chevron.down").font(.system(size: 12, weight: .bold)) }
+                Button { move(i, 1) } label: { Image(systemName: "chevron.down").font(.system(size: 13, weight: .bold)) }
                     .disabled(i == wf.steps.count - 1).foregroundStyle(i == wf.steps.count - 1 ? Sig.faint.opacity(0.4) : Sig.muted)
             }.buttonStyle(.plain)
             Button { withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { wf.steps.remove(at: i) }; tactile() } label: {
                 Image(systemName: "xmark.circle.fill").font(.system(size: 19, weight: .bold)).foregroundStyle(Sig.faint)
             }.buttonStyle(.plain)
         }
-        .padding(14).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 18)
+        .padding(12).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 18)
         .transition(.scale(scale: 0.95).combined(with: .opacity))
     }
 
-    // Inline config: a Menu for the parameterized steps; a plain label for the fixed ones.
-    @ViewBuilder private func stepConfig(_ i: Int, _ step: WorkflowStep) -> some View {
-        switch step {
-        case .lens:
-            Menu {
-                ForEach(MIRProfile.allCases, id: \.self) { p in Button("Lens · \(p.rawValue.capitalized)") { wf.steps[i] = .lens(p); tactile() } }
-            } label: { menuLabel(step.label) }
-        case .extract:
-            Menu {
-                ForEach(ArtifactType.allCases, id: \.self) { t in Button(t.rawValue) { wf.steps[i] = .extract(t); tactile() } }
-            } label: { menuLabel(step.label) }
-        case .rewrite:
-            Menu {
-                ForEach(["executive", "plain", "friendly", "technical"], id: \.self) { tone in Button("Rewrite · \(tone)") { wf.steps[i] = .rewrite(tone: tone); tactile() } }
-            } label: { menuLabel(step.label) }
-        default:
-            Text(step.label).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text)
+    private func stepSubtitle(_ step: WorkflowStep) -> String? {
+        if case .llmCall(_, let prompt, let input) = step {
+            let p = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+            return p.isEmpty ? "Set a prompt · in: \(input.label)" : "\"\(p.prefix(38))\(p.count > 38 ? "…" : "")\" · in: \(input.label)"
         }
+        return nil
     }
 
-    private func menuLabel(_ s: String) -> some View {
-        HStack(spacing: 6) {
-            Text(s).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text).lineLimit(1)
-            Image(systemName: "chevron.up.chevron.down").font(.system(size: 10, weight: .bold)).foregroundStyle(Sig.faint)
-        }
-    }
-
-    // The palette — tap a block kind to append a step.
+    // The palette — tap a block kind to append a step. The custom LLM-call node leads, and opens
+    // its editor immediately so you go straight to writing the prompt.
     private var paletteBar: some View {
         VStack(alignment: .leading, spacing: 7) {
             Text("ADD A STEP").font(.system(size: 10, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint).padding(.leading, 2)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
+                    paletteChip("LLM call", "terminal.fill", emphasized: true) {
+                        wf.steps.append(.llmCall(name: "LLM call", prompt: "", input: .meeting))
+                        editing = .step(wf.steps.count - 1)
+                    }
                     paletteChip("Lens", "camera.filters") { wf.steps.append(.lens(.delivery)) }
                     paletteChip("Extract", "doc.text.magnifyingglass") { wf.steps.append(.extract(.actionItems)) }
                     paletteChip("Summarize", "text.append") { wf.steps.append(.summarize) }
@@ -1978,16 +1988,17 @@ struct WorkbenchView: View {
         }
     }
 
-    private func paletteChip(_ title: String, _ glyph: String, _ add: @escaping () -> Void) -> some View {
+    private func paletteChip(_ title: String, _ glyph: String, emphasized: Bool = false, _ add: @escaping () -> Void) -> some View {
         Button { tactile(); withAnimation(.spring(response: 0.4, dampingFraction: 0.78)) { add() } } label: {
             HStack(spacing: 6) {
                 Image(systemName: glyph).font(.system(size: 12, weight: .bold))
                 Text(title).font(.system(size: 13, weight: .heavy))
                 Image(systemName: "plus").font(.system(size: 10, weight: .black))
             }
-            .foregroundStyle(Sig.accent)
+            .foregroundStyle(emphasized ? .black : Sig.accent)
             .padding(.horizontal, 12).padding(.vertical, 9)
-            .background(Sig.accent.opacity(0.12), in: Capsule()).overlay(Capsule().strokeBorder(Sig.accent.opacity(0.3), lineWidth: 1))
+            .background(emphasized ? AnyShapeStyle(Sig.accentGradient) : AnyShapeStyle(Sig.accent.opacity(0.12)), in: Capsule())
+            .overlay { if !emphasized { Capsule().strokeBorder(Sig.accent.opacity(0.3), lineWidth: 1) } }
         }.buttonStyle(PressableCard())
     }
 
@@ -2039,6 +2050,195 @@ struct WorkbenchView: View {
     }
 }
 
+/// The block configuration editor — a pleasant, full-size sheet (not a cramped menu). For the
+/// custom LLM-call node it's a real prompt editor: a name, the input it reads, and a big prompt
+/// field where `{input}` is injected. For curated blocks it's a clean choices list.
+struct WorkbenchEditorSheet: View {
+    @Binding var wf: Workflow
+    let target: WorkbenchView.EditTarget
+    @Environment(\.dismiss) private var dismiss
+    @State private var name = ""
+    @State private var prompt = ""
+    @State private var keyword = ""
+    @State private var tone = ""
+    @State private var llmInput: WorkflowInput = .meeting
+    @FocusState private var promptFocused: Bool
+
+    private var stepIndex: Int? { if case .step(let i) = target { return i }; return nil }
+    private var step: WorkflowStep? { if let i = stepIndex, wf.steps.indices.contains(i) { return wf.steps[i] }; return nil }
+
+    var body: some View {
+        ZStack {
+            Sig.bg.ignoresSafeArea()
+            VStack(spacing: 0) {
+                header
+                ScrollView { content.padding(20) }
+            }
+        }
+        .tint(Sig.accent).onAppear(perform: seed)
+    }
+
+    private var titleText: String {
+        switch target {
+        case .source: return "Source"
+        case .output: return "Output"
+        case .step:   return step?.isCustom == true ? "LLM call" : "Configure step"
+        }
+    }
+
+    private var header: some View {
+        HStack {
+            Text(titleText).font(.system(size: 21, weight: .heavy)).foregroundStyle(Sig.text)
+            Spacer()
+            Button { commit(); dismiss() } label: {
+                Text("Done").font(.system(size: 15, weight: .heavy)).foregroundStyle(.black)
+                    .padding(.horizontal, 18).padding(.vertical, 9).background(Sig.accentGradient, in: Capsule())
+            }.buttonStyle(.plain)
+        }
+        .padding(.horizontal, 20).padding(.top, 20).padding(.bottom, 8)
+    }
+
+    @ViewBuilder private var content: some View {
+        switch target {
+        case .source:
+            choices(WorkflowSource.allCases.map { ($0.label, $0.glyph, $0 == wf.source) }) { i in
+                wf.source = WorkflowSource.allCases[i]; tactile(); dismiss()
+            }
+        case .output:
+            choices(WorkflowOutput.allCases.map { ($0.label, $0.glyph, $0 == wf.output) }) { i in
+                wf.output = WorkflowOutput.allCases[i]; tactile(); dismiss()
+            }
+        case .step(let i):
+            stepContent(i)
+        }
+    }
+
+    @ViewBuilder private func stepContent(_ i: Int) -> some View {
+        if let s = step {
+            switch s {
+            case .lens(let p):
+                fieldGroup("WHICH LENS — weights what to surface") {
+                    choices(MIRProfile.allCases.map { ("Lens · \($0.rawValue.capitalized)", "camera.filters", $0 == p) }) { idx in
+                        wf.steps[i] = .lens(MIRProfile.allCases[idx]); tactile(); dismiss()
+                    }
+                }
+            case .extract(let t):
+                fieldGroup("WHICH ARTIFACT TYPE TO DRAFT") {
+                    choices(ArtifactType.allCases.map { ($0.rawValue, "doc.text.magnifyingglass", $0 == t) }) { idx in
+                        wf.steps[i] = .extract(ArtifactType.allCases[idx]); tactile(); dismiss()
+                    }
+                }
+            case .summarize:
+                infoCard("Condenses the input to a tight summary. No options.")
+            case .rewrite:
+                fieldGroup("REWRITE — the tone") {
+                    field($tone, "executive, plain, friendly…")
+                    choices(["executive", "plain", "friendly", "technical"].map { ($0, "pencil.and.outline", $0 == tone) }) { idx in
+                        tone = ["executive", "plain", "friendly", "technical"][idx]; commit(); tactile()
+                    }
+                }
+            case .keepIf:
+                fieldGroup("KEEP IF — only items with this keyword survive") { field($keyword, "risk, owner, budget…") }
+            case .llmCall:
+                llmEditor()
+            }
+        }
+    }
+
+    private func llmEditor() -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            fieldGroup("NAME") { field($name, "what this step does") }
+            fieldGroup("INPUT — what the prompt reads") {
+                choices(WorkflowInput.allCases.map { ("Reads \($0.label)", $0 == .meeting ? "text.alignleft" : "arrow.up.circle", $0 == llmInput) }) { idx in
+                    llmInput = WorkflowInput.allCases[idx]; commit(); tactile()
+                }
+            }
+            fieldGroup("PROMPT") {
+                ZStack(alignment: .topLeading) {
+                    if prompt.isEmpty {
+                        Text("Write your prompt. Use {input} where the input text should go.")
+                            .font(.system(size: 15)).foregroundStyle(Sig.faint).padding(.horizontal, 13).padding(.vertical, 16)
+                    }
+                    TextEditor(text: $prompt).focused($promptFocused).scrollContentBackground(.hidden)
+                        .font(.system(size: 15)).foregroundStyle(Sig.text).frame(minHeight: 150).padding(8)
+                }
+                .background(Sig.s2, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .strokeBorder(promptFocused ? Sig.accent : Color.white.opacity(0.08), lineWidth: promptFocused ? 1.5 : 1))
+                HStack(spacing: 5) {
+                    Image(systemName: "curlybraces").font(.system(size: 10, weight: .black))
+                    Text("{input} is replaced with the input text").font(.system(size: 11, weight: .semibold))
+                }.foregroundStyle(Sig.faint).padding(.top, 2)
+            }
+        }
+        .onChange(of: prompt) { _, _ in commit() }
+        .onChange(of: name) { _, _ in commit() }
+        .onChange(of: keyword) { _, _ in commit() }
+        .onChange(of: tone) { _, _ in commit() }
+    }
+
+    // MARK: building blocks
+    private func fieldGroup<C: View>(_ title: String, @ViewBuilder _ c: () -> C) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title).font(.system(size: 10, weight: .heavy)).tracking(1).foregroundStyle(Sig.faint)
+            c()
+        }
+    }
+
+    private func field(_ text: Binding<String>, _ hint: String) -> some View {
+        TextField("", text: text, prompt: Text(hint).foregroundColor(Sig.faint))
+            .textInputAutocapitalization(.never).autocorrectionDisabled()
+            .font(.system(size: 15, weight: .medium)).foregroundStyle(Sig.text)
+            .padding(.horizontal, 13).padding(.vertical, 12)
+            .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
+            .onChange(of: text.wrappedValue) { _, _ in commit() }
+    }
+
+    private func choices(_ items: [(String, String, Bool)], _ pick: @escaping (Int) -> Void) -> some View {
+        VStack(spacing: 8) {
+            ForEach(Array(items.enumerated()), id: \.offset) { i, it in
+                Button { pick(i) } label: {
+                    HStack(spacing: 11) {
+                        Image(systemName: it.1).font(.system(size: 15, weight: .bold)).foregroundStyle(it.2 ? Sig.accent : Sig.muted).frame(width: 24)
+                        Text(it.0).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text)
+                        Spacer()
+                        Image(systemName: it.2 ? "checkmark.circle.fill" : "circle").font(.system(size: 18, weight: .bold)).foregroundStyle(it.2 ? Sig.accent : Sig.faint)
+                    }
+                    .padding(13).background(Sig.s1, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .strokeBorder(it.2 ? AnyShapeStyle(Sig.accent) : AnyShapeStyle(Sig.topHairline), lineWidth: it.2 ? 1.5 : 1))
+                }.buttonStyle(PressableCard())
+            }
+        }
+    }
+
+    private func infoCard(_ text: String) -> some View {
+        Text(text).font(.system(size: 14, weight: .medium)).foregroundStyle(Sig.muted)
+            .frame(maxWidth: .infinity, alignment: .leading).padding(15).signalCard(Sig.s1, radius: 14)
+    }
+
+    private func seed() {
+        guard let s = step else { return }
+        switch s {
+        case .llmCall(let n, let p, let inp): name = n; prompt = p; llmInput = inp
+        case .rewrite(let t): tone = t
+        case .keepIf(let k): keyword = k
+        default: break
+        }
+    }
+
+    private func commit() {
+        guard let i = stepIndex, wf.steps.indices.contains(i) else { return }
+        switch wf.steps[i] {
+        case .llmCall: wf.steps[i] = .llmCall(name: name.isEmpty ? "LLM call" : name, prompt: prompt, input: llmInput)
+        case .rewrite: wf.steps[i] = .rewrite(tone: tone.isEmpty ? "plain" : tone)
+        case .keepIf:  wf.steps[i] = .keepIf(keyword)
+        default: break
+        }
+    }
+}
+
 // MARK: - Meeting list
 
 struct MeetingListView: View {
@@ -2052,7 +2252,7 @@ struct MeetingListView: View {
         #if targetEnvironment(simulator)
         if ProcessInfo.processInfo.environment["HS_DEMO_GEN"] == "1" { return AnyView(GenTheaterDemo()) }
         if ProcessInfo.processInfo.environment["HS_DEMO_SETTINGS"] == "1" { return AnyView(SettingsDemo()) }
-        if ProcessInfo.processInfo.environment["HS_DEMO_WORKBENCH"] == "1" { return AnyView(NavigationStack { WorkbenchView() }) }
+        if ProcessInfo.processInfo.environment["HS_DEMO_WORKBENCH"] == "1" || ProcessInfo.processInfo.environment["HS_DEMO_WORKBENCH_LLM"] == "1" { return AnyView(NavigationStack { WorkbenchView() }) }
         #endif
         return AnyView(listBody)
     }

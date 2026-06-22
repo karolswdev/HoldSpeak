@@ -47,6 +47,18 @@ final class WorkflowTests: XCTestCase {
         XCTAssertEqual(back, w, "name, source, every step (with its associated value), and output survive")
     }
 
+    func testCustomLLMCallStepRoundTripsAndLabels() throws {
+        let step = WorkflowStep.llmCall(name: "Risks → questions",
+                                        prompt: "From {input}, list the risks as questions.", input: .previousStep)
+        XCTAssertEqual(step.label, "Risks → questions")
+        XCTAssertTrue(step.isCustom)
+        XCTAssertFalse(WorkflowStep.summarize.isCustom)
+        let w = Workflow(name: "c", source: .fullTranscript, steps: [step], output: .note)
+        XCTAssertTrue(w.plan.contains("Risks → questions"))
+        let back = try JSONDecoder().decode(Workflow.self, from: try JSONEncoder().encode(w))
+        XCTAssertEqual(back, w, "the custom name, prompt, and input survive a round-trip")
+    }
+
     func testPresetsAreRunnableAndRoundTrip() throws {
         XCTAssertFalse(WorkflowPresets.all.isEmpty)
         for w in WorkflowPresets.all {
