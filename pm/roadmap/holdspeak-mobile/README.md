@@ -3,7 +3,13 @@
 > 🚀 **New agent? Start here:** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **Craft elevation pass begun**
+**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **Generation theater** — the
+post-meeting on-device generation (was a 1pt spinner) is now a living moment: a breathing thinking
+orb + a constellation of the lens's target types lighting up one-by-one as the model drafts each
+(pending → in-flight → done+check+haptic), a "Running on this iPad · no network" pill, and an "N
+insights ready" flourish — driven by real per-type progress. On owner feedback ("the most boring
+effect imaginable"). Live on the iPad. **Next: the Workbench (visual intelligence builder) + App
+Settings.** Prior same-day: **Craft elevation pass begun**
 (owner: the shipped effects were "low-level/basic" — "push the UI/UX a lot more"): the Signal design
 system gained depth + motion primitives (`SignalCard` elevation, `GlyphChip`, `PressableCard`,
 gradient/glow tokens, reduce-motion-aware entrances) and the **home screen was rebuilt to a flagship
