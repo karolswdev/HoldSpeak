@@ -1639,46 +1639,69 @@ struct LiveCaptureCanvas: View {
 
     var body: some View {
         GeometryReader { geo in
-            let boardTop = max(176, geo.size.height * 0.42)
+            // The whole surface is the board. The stream lives in the top strip; anything dropped
+            // below `pinFloor` tacks where you let go — fling a moment ANYWHERE, not into a tray.
+            let pinFloor: CGFloat = max(140, geo.size.height * 0.17)
             ZStack(alignment: .topLeading) {
-                board(boardTop: boardTop, size: geo.size)
+                // One free-form desktop — a subtle dot-grid surface, not two stacked boxes.
+                RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Sig.s1)
+                    .overlay(DesktopGrid().clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous)))
+                    .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Sig.line, lineWidth: 1))
+
                 ForEach(model.pinned) { n in
                     PinnedNoteView(
                         note: n,
-                        onMove: { model.movePin(n.id, to: $0, in: geo.size, boardTop: boardTop) },
+                        onMove: { model.movePin(n.id, to: $0, in: geo.size, boardTop: pinFloor) },
                         onRemove: { withAnimation(.spring(response: 0.32, dampingFraction: 0.7)) { model.unpin(n.id) }; tactile() },
                         onSendToNotes: { model.sendToNotes(n.text) })
                 }
-                liveColumn(boardTop: boardTop, size: geo.size)
+
+                if model.liveBubbles.isEmpty && model.partial.isEmpty {
+                    idleHeader.frame(width: geo.size.width, height: geo.size.height)
+                } else {
+                    stream(pinFloor: pinFloor, size: geo.size)
+                }
+
+                footerChip
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                    .padding(14)
             }
             .coordinateSpace(name: "canvas")
             .frame(width: geo.size.width, height: geo.size.height)
             #if targetEnvironment(simulator)
-            .onAppear { model.seedDemo(size: geo.size, boardTop: max(176, geo.size.height * 0.42)) }
+            .onAppear { model.seedDemo(size: geo.size, boardTop: max(140, geo.size.height * 0.17)) }
             #endif
         }
         .frame(minHeight: 440)
     }
 
-    // The streaming utterances + the live caption, bottom-aligned just above the board so the
-    // newest bubble is easiest to grab and pull down.
-    private func liveColumn(boardTop: CGFloat, size: CGSize) -> some View {
+    // Utterances stream from the top; each can be flung anywhere on the desktop to tack it.
+    private func stream(pinFloor: CGFloat, size: CGSize) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Spacer(minLength: 0)
-            if model.liveBubbles.isEmpty && model.partial.isEmpty {
-                idleHeader
-            }
             ForEach(model.liveBubbles) { b in
-                LiveBubbleView(bubble: b, boardTop: boardTop,
+                LiveBubbleView(bubble: b, boardTop: pinFloor,
                                onPin: { loc in withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                                   model.pin(b, at: loc, in: size, boardTop: boardTop) } },
+                                   model.pin(b, at: loc, in: size, boardTop: pinFloor) } },
                                onSendToNotes: { model.sendToNotes(b.text) })
             }
             if !model.partial.isEmpty { LiveCaption(text: model.partial) }
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 8).padding(.top, 10)
-        .frame(width: size.width, height: boardTop, alignment: .bottom)
-        .position(x: size.width / 2, y: boardTop / 2)
+        .padding(.horizontal, 10).padding(.top, 12)
+        .frame(width: size.width, height: size.height, alignment: .top)
+    }
+
+    private var footerChip: some View {
+        HStack(spacing: 6) {
+            pixelAsset("pushpin", size: 13, fallback: "pin.fill", tint: Sig.accent)
+            Text(model.pinned.isEmpty
+                 ? (model.recording ? "Fling a moment anywhere to tack it — it steers the intelligence" : "Your tacked moments live here")
+                 : "\(model.pinned.count) tacked")
+                .font(.system(size: 11, weight: .bold)).foregroundStyle(Sig.muted)
+        }
+        .padding(.horizontal, 11).padding(.vertical, 7)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay(Capsule().stroke(Sig.line, lineWidth: 1))
     }
 
     @ViewBuilder private var idleHeader: some View {
@@ -1694,41 +1717,25 @@ struct LiveCaptureCanvas: View {
         .frame(maxWidth: .infinity).padding(.bottom, 18)
     }
 
-    // The pin board: a tactile drop zone. Empty, it invites; full, it holds the tacked moments.
-    private func board(boardTop: CGFloat, size: CGSize) -> some View {
-        let h = size.height - boardTop
-        return ZStack(alignment: .top) {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Sig.s1)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [7, 6]))
-                        .foregroundStyle(model.pinned.isEmpty ? Sig.accent.opacity(0.32) : Sig.line))
-            VStack(spacing: 0) {
-                HStack(spacing: 6) {
-                    pixelAsset("pushpin", size: 14, fallback: "pin.fill", tint: Sig.accent)
-                    Text("PINNED MOMENTS").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.muted)
-                    Spacer()
-                    if !model.pinned.isEmpty {
-                        Text("\(model.pinned.count)").font(.caption2.weight(.bold)).foregroundStyle(.black)
-                            .padding(.horizontal, 7).padding(.vertical, 2).background(Sig.accent, in: Capsule())
-                    }
+}
+
+/// HSM-14 — a faint dot grid: the "desktop" texture that makes the capture surface read as a
+/// spatial board you arrange on, not a flat page.
+struct DesktopGrid: View {
+    var body: some View {
+        Canvas { ctx, size in
+            let step: CGFloat = 26, d: CGFloat = 1.4
+            var y = step / 2
+            while y < size.height {
+                var x = step / 2
+                while x < size.width {
+                    ctx.fill(Path(ellipseIn: CGRect(x: x - d / 2, y: y - d / 2, width: d, height: d)), with: .color(Sig.line))
+                    x += step
                 }
-                .padding(.horizontal, 13).padding(.vertical, 11)
-                if model.pinned.isEmpty {
-                    Spacer(minLength: 0)
-                    Text(model.recording
-                         ? "Grab a bubble and tack it here.\nPinned moments steer the on-device intelligence."
-                         : "Your tacked moments live here.")
-                        .font(.footnote).foregroundStyle(Sig.faint)
-                        .multilineTextAlignment(.center).padding(.horizontal, 24)
-                    Spacer(minLength: 0)
-                }
+                y += step
             }
-            .frame(height: h)
         }
-        .frame(width: size.width, height: h)
-        .position(x: size.width / 2, y: boardTop + h / 2)
+        .allowsHitTesting(false)
     }
 }
 
