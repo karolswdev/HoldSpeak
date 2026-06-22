@@ -183,7 +183,7 @@ public enum MermaidGenerator {
 // MARK: - VLM ambiguity resolution (HSM-14-09)
 
 /// The geometry is the primary path (fast, deterministic, offline). When it's UNCERTAIN about
-/// a shape, fall back to a local vision model (Gemma 3 via the `IVisionProvider` seam) — the
+/// a shape, fall back to a local vision model (Gemma 4 via the `IVisionProvider` seam) — the
 /// owner's Option-2 hybrid: the VLM only resolves ambiguity, it never drives the graph.
 public enum SketchVision {
     /// Ask the VLM what a hand-drawn shape is, mapping its words to a `ShapeKind`. Returns nil
