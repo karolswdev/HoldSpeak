@@ -1,14 +1,14 @@
-# HSM-14-09 — Local vision model (Gemma 3) seam + ambiguity resolution
+# HSM-14-09 — Local vision model (Gemma 4) seam + ambiguity resolution
 
 - **Project:** holdspeak-mobile
 - **Phase:** 14
-- **Status:** in-progress (the `IVisionProvider` seam + the sketch ambiguity resolver are host-tested; the concrete VLM backings — on-device MLX Gemma 3 (Mode A) and a vision endpoint (Modes B/C) — are next)
+- **Status:** in-progress (the `IVisionProvider` seam + the sketch ambiguity resolver are host-tested; the concrete VLM backings — on-device MLX Gemma 4 (Mode A) and a vision endpoint (Modes B/C) — are next)
 - **Depends on:** HSM-14-08 (sketch engine), HSM-5 (the provider/Mode seam pattern)
 - **Owner:** unassigned
 
 ## Vision (owner)
 
-Bring a strong small local vision model — **Gemma 3 4B (4-bit)** — into the intelligence. It's
+Bring a strong small local vision model — **Gemma 4 (the small E4B variant)** — into the intelligence. It's
 excellent at handwriting + diagram understanding, and it's the natural "ambiguity resolver"
 for the strokes-first sketch→Mermaid path (HSM-14-08), plus a general image-understanding
 capability (whiteboard photos, pasted screenshots).
@@ -17,7 +17,7 @@ capability (whiteboard photos, pasted screenshots).
 
 ```
 IVisionProvider  (describe(image, prompt) → text)
-   ├── Mode A: on-device Gemma 3 4B via MLX-VLM (Apple Silicon, air-gapped)
+   ├── Mode A: on-device Gemma 4 (E4B) via MLX-VLM (Apple Silicon, air-gapped)
    ├── Mode B: LAN endpoint (OpenAI-compatible vision)
    └── Mode C: cloud endpoint (OpenAI-compatible vision)
 ```
@@ -36,7 +36,7 @@ can prove the loop on an endpoint (Mode B/C) **today**, before the on-device MLX
   (1) an **endpoint-backed** `IVisionProvider` (Mode B/C) — proves the loop on a real vision
   model now (the `.13` / a cloud VLM), wired as the sketch ambiguity fallback + a
   "describe this image" capability for pasted/whiteboard images;
-  (2) the **on-device** `IVisionProvider` — Gemma 3 4B (4-bit) via **MLX-VLM** (mlx-swift),
+  (2) the **on-device** `IVisionProvider` — Gemma 4 (the small E4B variant) via **MLX-VLM** (mlx-swift),
   the air-gapped Mode A backing, behind the same seam (a separate SPM product so the domain
   never links the VLM runtime, mirroring `InferenceLlama`).
 - **Out:** replacing the geometry with the VLM (Option 3 — rejected as fragile). Video. Cloud
@@ -49,7 +49,7 @@ can prove the loop on an endpoint (Mode B/C) **today**, before the on-device MLX
       returning nil on an unusable answer (caller keeps the geometry guess). Host-tested.
 - [ ] **Endpoint VLM (Mode B/C)** backs the seam and resolves a genuinely ambiguous sketch
       shape on a real vision model.
-- [ ] **On-device Gemma 3 4B (MLX-VLM, Mode A)** backs the seam fully air-gapped, proven on
+- [ ] **On-device Gemma 4 E4B (MLX-VLM, Mode A)** backs the seam fully air-gapped, proven on
       the iPad.
 - [ ] **General image understanding** — describe/extract from a pasted whiteboard photo via
       the same seam.
@@ -62,8 +62,13 @@ SketchToMermaid.swift` (`SketchVision`) + `SketchToMermaidTests.swift`
 
 ## Notes
 
-- MLX-VLM (mlx-swift) is the right on-device VLM runtime on Apple Silicon (Gemma 3 / Qwen2.5-VL
+- MLX-VLM (mlx-swift) is the right on-device VLM runtime on Apple Silicon (Gemma 4 / Qwen2.5-VL
   supported, Metal-accelerated). llama.cpp/LLM.swift vision (mmproj) support is newer/less
   exposed; keep the seam runtime-agnostic so either can back it.
 - Prove the loop on an endpoint first (cheap, fast), then bring it on-device — same sequencing
   that worked for the text model (Modes B/C before Mode A).
+- **Gemma 4 variants (released 2026-04-02; 12B added 2026-06-03):** E2B / **E4B** use Per-Layer
+  Embeddings to cut active compute — E4B (~4B effective) is the natural iPad on-device pick
+  (strong OCR + chart/diagram understanding, multimodal from the ground up); the 12B fits a
+  plugged-in/desktop or LAN-endpoint role. The seam picks whichever is best at integration time.
+
