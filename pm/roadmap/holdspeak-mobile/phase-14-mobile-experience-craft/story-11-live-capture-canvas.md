@@ -44,6 +44,34 @@ The old `transcriptCard` (a `Text` in a `ScrollView`) is **replaced** by `LiveCa
   the owner's ask: "pull it into the actual note-taking canvas, or provide it as an option if
   you hold-press that specific part of the transcript."
 
+## Live dynamism + the floating recorder (2026-06-21, owner steer)
+
+Owner: transcription felt slow/static, and the meeting was "contained to big-ass pages" — it
+should feel "nearly like an operating system."
+
+- **Root-caused the slow transcription:** `WhisperKitTranscriber.transcribe()` constructed a
+  **fresh `WhisperKit(...)` on every tick**, reloading the CoreML model from disk (seconds)
+  each time — so the live transcript compounded into a frozen feel. Now the model is **cached**
+  (lock-guarded static; WhisperKit isn't Sendable so it's created+used within the nonisolated
+  method, never crossing isolation) and the tick cadence dropped 3s → **1.2s**.
+- **Audio-reactive control plane:** `MeetingCapture` now exposes a smoothed `inputLevel` (RMS of
+  each captured buffer, ~12×/s); `CaptureModel` polls it at 20 Hz; `MicWaveform` renders bars
+  that **react to the mic the instant sound arrives** — no transcription round-trip. The canvas
+  empty state and the recorder both use it.
+- **The floating recorder (OS-like):** while recording, the big Record button + segmented bar
+  **collapse into one compact, frosted, DRAGGABLE capsule** (`FloatingRecorder`): stop · live
+  elapsed timer · the audio-reactive waveform · mark-this-moment · transcript/notes toggle. Drag
+  it anywhere; the canvas goes **full-bleed**. The chrome floats and moves out of the way.
+
+## Promote a note → a real artifact
+
+A note card on the canvas now **offers** an action: a visible **Promote** pill (smart-guesses
+the type from the text) + a long-press submenu for an explicit type. Promoting writes a
+`needs_review` artifact (`pluginId = holdspeak.mobile.note`, confidence 1.0) into the meeting's
+store, so the hand-note **joins the model's artifacts in the intelligence pane** — the loop
+closes both ways. Cards always render now (the page-0 gate that could hide them on reopen was
+removed).
+
 ## Craft assets (Pixellab)
 
 Three bespoke pixel-art assets were generated and **bundled offline** (no network at runtime),
@@ -66,6 +94,11 @@ each with an SF-Symbol fallback so the build never depends on them (`pixelAsset(
       it onto the PencilKit canvas as a draggable quoted card (above the ink), jumping to the
       Notes pane. Cards persist per meeting + drag/remove. Built + Simulator-proven (committed
       screenshot `transcript-to-notes.png`).
+- [x] **Promote a note → artifact** — a card's "Promote" pill (or long-press type menu) writes a
+      `needs_review` artifact into the meeting; it appears in the intelligence pane. Built + on iPad.
+- [x] **Live dynamism** — WhisperKit model cached (no per-tick reload) + 1.2s cadence; mic-reactive
+      `MicWaveform` from `MeetingCapture.inputLevel`; the recording controls collapse into a
+      draggable `FloatingRecorder` with the canvas full-bleed. Built + Simulator-proven.
 - [ ] **Live-mic verification on device** — record a real meeting, watch bubbles pop, tack one
       with the Pencil, pull a moment into the notes canvas, confirm the marked moment shifts the
       generated artifacts. (App is on the iPad Air M4; owner verification pending.)
