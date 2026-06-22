@@ -2,8 +2,9 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 14
-- **Status:** in-progress — **deliverables 1 (dockable + minimizable recorder) and 2 (free-place vs
-  tack) built + host-proven + Simulator-shown** (2026-06-22); deliverables 3–4 remain. See
+- **Status:** in-progress — **deliverables 1–4 built + host-proven + Simulator-shown** (2026-06-22):
+  dockable/minimizable recorder, free-place vs tack, resizable cards, one-tap tidy with undo. The
+  stretch deliverables 5–6 (minimap, windowed panes) and the device hardware-feel pass remain. See
   "Evidence" below.
 - **Depends on:** HSM-14-11 (free-form desktop + draggable floating recorder)
 - **Unblocks:** the "nearly like an operating system" capture experience the owner is after
@@ -92,7 +93,7 @@ you put them — without losing the one-handed, glanceable feel.
   card / resized / tidied), via the existing `HS_DEMO` sim seeds.
 - Device: hardware feel — drag latency, snap haptics, Pencil vs finger — on the iPad Air M4.
 
-## Evidence (deliverables 1–2 built 2026-06-22; 3–4 remain)
+## Evidence (deliverables 1–4 built 2026-06-22; stretch 5–6 + device feel remain)
 
 **Deliverable 1 — dockable + minimizable recorder.** The `FloatingRecorder` **docks** to the
 top/bottom edge on drag-release (magnetic snap + medium haptic) or **floats** clamped on-screen
@@ -108,16 +109,28 @@ and lights up when the drag is over it) **tacks** it — a pushpin + tilt that c
 (HSM-8-03) so the on-device intelligence weights it. A loose card promotes later via "Tack as
 moment" (`tackExisting`). The drop decision is the pure `BubblePlacement` (RuntimeCore), 5 tests.
 
-- **Tests:** `swift test` **228/6/0** (+9 `RecorderLayoutTests`, +5 `BubblePlacementTests`).
+**Deliverable 3 — resizable cards.** A corner-drag grip on each workspace card (`PinnedNote`, loose
+or tacked) resizes its width; the text reflows within it; the width is clamped to a readable range
+by the pure `CardSize.clampWidth` (RuntimeCore) and persists on the model. `CaptureModel.resizePin`.
+
+**Deliverable 4 — one-tap tidy + undo.** A "Tidy" control re-flows the **loose** cards into a
+centered grid below the streaming strip (tacked moments stay put — placed deliberately), with a
+single **Undo** that restores the prior arrangement. The grid is the pure `WorkspaceTidy.layout`
+(RuntimeCore); `CaptureModel.tidyLoose` saves the pre-tidy centers, `undoTidy` restores them.
+
+- **Tests:** `swift test` **233/6/0** (+9 `RecorderLayoutTests`, +5 `BubblePlacementTests`, +5
+  `CardLayoutTests` — clamp range, empty tidy, all-below-stream + on-screen, row wrap, row centering).
 - **Built + shown:** app `xcodebuild … BUILD SUCCEEDED`; committed Simulator shots:
   [docked](./screenshots/recorder-docked-top.png) · [rec orb](./screenshots/recorder-minimized-orb.png) ·
   [free-place vs tack](./screenshots/recorder-freeplace-vs-tack.png) (footer "1 tacked · 1 placed") ·
-  [lit tack target](./screenshots/recorder-tack-target.png).
-- **Files:** `Sources/RuntimeCore/Capture/{RecorderLayout,BubblePlacement}.swift` + their tests;
-  `App/MeetingCaptureApp.swift` (`FloatingRecorder`, `LiveBubbleView`, `PinnedNoteView`, the canvas
-  `tackTarget`/`tackZone`, `CaptureModel` layout + drop methods).
-- **Remaining:** deliverables 3 (resizable cards) + 4 (tidy), and the device hardware-feel pass
-  (drag latency, snap/tack haptics).
+  [lit tack target](./screenshots/recorder-tack-target.png) ·
+  [resized card](./screenshots/recorder-resizable-card.png) (text reflowed + corner grip) ·
+  [tidied grid](./screenshots/recorder-tidy-grid.png) (5 loose cards re-flowed, Undo·Tidy control).
+- **Files:** `Sources/RuntimeCore/Capture/{RecorderLayout,BubblePlacement,CardLayout}.swift` + their
+  tests; `App/MeetingCaptureApp.swift` (`FloatingRecorder`, `LiveBubbleView`, `PinnedNoteView` + resize
+  grip, the canvas `tackTarget`/`tackZone`/`tidyControl`, `CaptureModel` layout/drop/resize/tidy).
+- **Remaining:** stretch deliverables 5 (minimap) + 6 (windowed panes) — candidate HSM-14-14; and
+  the device hardware-feel pass (drag latency, snap/tack/resize haptics, Pencil vs finger).
 
 ## Notes
 

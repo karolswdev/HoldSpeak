@@ -3,15 +3,18 @@
 > 🚀 **New agent? Start here:** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **HSM-14-13 deliverables 1+2
+**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **HSM-14-13 deliverables 1–4
 built** — the "OS-like" capture surface. (1) The recorder **docks** to the top/bottom edge on
 drag-release (magnetic snap + haptic) or **floats** clamped-on-screen, and **minimizes** to a compact
-breathing **rec orb** (tap to re-expand — never trap); state persists on the model. (2) **Free-place
-vs tack**: a dragged bubble drops as a **loose card** (no marked moment) or, on a mid-drag **tack
-target** that lights up under the drag, **tacks** as a marked moment that steers the intelligence
-(`markMoment`); loose cards promote later. Both decisions are pure host-tested RuntimeCore functions
-(`RecorderSnap`, `BubblePlacement`); `swift test` **228/6/0**; four committed Simulator shots.
-Deliverables 3–4 remain. **HSM-14-12 built** —
+breathing **rec orb** (tap to re-expand — never trap). (2) **Free-place vs tack**: a dragged bubble
+drops as a **loose card** (no marked moment) or, on a mid-drag **tack target** that lights up under
+the drag, **tacks** as a marked moment that steers the intelligence (`markMoment`); loose cards
+promote later. (3) **Resizable cards**: corner-drag resizes a card, text reflows, width clamped +
+persisted. (4) **One-tap tidy + undo**: re-flow loose cards into a centered grid (tacked moments stay
+put), with undo. All decisions are pure host-tested RuntimeCore functions (`RecorderSnap`,
+`BubblePlacement`, `CardSize`/`WorkspaceTidy`); `swift test` **233/6/0**; six committed Simulator
+shots. Only the stretch 5–6 (minimap, windowed panes) + the device hardware-feel pass remain.
+**HSM-14-12 built** —
 constant-time live transcription: `MeetingCapture` now keeps a committed prefix + a bounded active
 window so each `tick()` re-transcribes only the audio since the last commit (the live transcript
 stays complete + monotonic, the per-tick cost is constant at minute 40 as at minute 1); the enabler

@@ -90,7 +90,7 @@ Pencil), accessibility + adaptivity, and a polish pass — each delivered with c
 | HSM-14-10 | Models, front and center (import + manage, AirDrop-ready) | in-progress | [story-10](./story-10-model-import.md) | device-built |
 | HSM-14-11 | The live capture canvas (transcription bubbles + tack-to-board) | in-progress | [story-11](./story-11-live-capture-canvas.md) | built + on iPad + Simulator-proven |
 | HSM-14-12 | Constant-time live transcription (sliding window + commit) | in-progress (built + host-proven + sim-shown; device cadence pending) | [story-12](./story-12-constant-time-transcription.md) | [shot](./screenshots/constant-time-transcription-canvas.png) + story "Evidence" |
-| HSM-14-13 | The spatial workspace (OS-like capture surface) | in-progress (deliverables 1+2 built + host-proven + sim-shown; 3–4 remain) | [story-13](./story-13-spatial-workspace.md) | [docked](./screenshots/recorder-docked-top.png) / [orb](./screenshots/recorder-minimized-orb.png) / [free-place vs tack](./screenshots/recorder-freeplace-vs-tack.png) |
+| HSM-14-13 | The spatial workspace (OS-like capture surface) | in-progress (deliverables 1–4 built + host-proven + sim-shown; stretch 5–6 + device feel remain) | [story-13](./story-13-spatial-workspace.md) | [docked](./screenshots/recorder-docked-top.png) / [orb](./screenshots/recorder-minimized-orb.png) / [free-place vs tack](./screenshots/recorder-freeplace-vs-tack.png) / [resize](./screenshots/recorder-resizable-card.png) / [tidy](./screenshots/recorder-tidy-grid.png) |
 
 ## Where we are
 
@@ -157,6 +157,16 @@ the **tack target** (a dashed pill that appears only mid-drag and lights up when
 loose card promotes to a moment later via "Tack as moment". The drop decision is RuntimeCore's pure
 `BubblePlacement` (5 host tests); `swift test` **228/6/0**. Two committed shots (the mixed canvas
 with the honest "1 tacked · 1 placed" footer, and the lit tack target). Deliverables 3–4 remain.
+
+**2026-06-22 — HSM-14-13 deliverables 3 + 4 built.** (3) **Resizable cards**: a corner-drag grip on
+each workspace card resizes its width, text reflows, the width is clamped to a readable range by the
+pure `CardSize.clampWidth` and persists. (4) **One-tap tidy + undo**: a "Tidy" control re-flows the
+loose cards into a centered grid below the stream (tacked moments stay put) via the pure
+`WorkspaceTidy.layout`, with a single Undo that restores the prior arrangement. Both decisions are
+host-tested (`CardLayoutTests`, +5); `swift test` **233/6/0**. Two committed shots (a reflowed wide
+card with its grip; five loose cards tidied into a grid with the Undo·Tidy control). **HSM-14-13 is
+now deliverables 1–4 complete**; only the stretch 5–6 (minimap, windowed panes → candidate
+HSM-14-14) and the device hardware-feel pass remain.
 
 ## Operating principle (standing, beyond this phase)
 
