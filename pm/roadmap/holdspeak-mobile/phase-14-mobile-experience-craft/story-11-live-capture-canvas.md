@@ -36,6 +36,13 @@ The old `transcriptCard` (a `Text` in a `ScrollView`) is **replaced** by `LiveCa
   intelligence are one flow, not two features.
 - **Pinned notes are live objects** — drag to reposition (clamped to the board), tap the
   pushpin to unpin.
+- **Transcript → note canvas.** Press-and-hold any bubble OR a tacked moment → a context menu
+  ("Add to notes" / "Copy" / "Unpin") — choosing **Add to notes** pulls the snippet onto the
+  actual PencilKit note canvas as a quoted, draggable `NoteCard` (above the ink, so you ink
+  around it), and the UI jumps to the Notes pane so you land where it arrived. Cards persist
+  per meeting (`NotebookModel.cards`, JSON in the container) and drag/remove freely. This is
+  the owner's ask: "pull it into the actual note-taking canvas, or provide it as an option if
+  you hold-press that specific part of the transcript."
 
 ## Craft assets (Pixellab)
 
@@ -55,9 +62,13 @@ each with an SF-Symbol fallback so the build never depends on them (`pixelAsset(
 - [x] **Pinning feeds the intelligence** — `pin(...)` marks the moment (HSM-8-03 link), so MIR
       weights it. Wired through `CaptureModel`.
 - [x] **Bespoke assets, bundled offline** — Qlippy + pushpin + waveform orb, with symbol fallbacks.
+- [x] **Transcript → note canvas** — long-press a bubble/tacked moment → "Add to notes" pulls
+      it onto the PencilKit canvas as a draggable quoted card (above the ink), jumping to the
+      Notes pane. Cards persist per meeting + drag/remove. Built + Simulator-proven (committed
+      screenshot `transcript-to-notes.png`).
 - [ ] **Live-mic verification on device** — record a real meeting, watch bubbles pop, tack one
-      with the Pencil, confirm the marked moment shifts the generated artifacts. (App is on the
-      iPad Air M4; owner verification pending.)
+      with the Pencil, pull a moment into the notes canvas, confirm the marked moment shifts the
+      generated artifacts. (App is on the iPad Air M4; owner verification pending.)
 
 ## Evidence
 

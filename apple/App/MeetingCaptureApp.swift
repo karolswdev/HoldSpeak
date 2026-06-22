@@ -170,16 +170,30 @@ struct PencilCanvas: UIViewRepresentable {
     }
 }
 
+/// HSM-14 — a snippet pulled from the transcript onto the note canvas. The user grabs a moment
+/// (a live bubble or a tacked note) and drops it here as a movable card to ink around.
+struct NoteCard: Identifiable, Codable, Equatable {
+    var id = UUID()
+    var text: String
+    var x: Double
+    var y: Double
+}
+
 @MainActor
 final class NotebookModel: ObservableObject {
     @Published var pages: [PKDrawing]
     @Published var current = 0
+    @Published var cards: [NoteCard] = []          // transcript snippets pulled onto the canvas
     private let notebook: Notebook
+    private let cardsURL: URL
 
     init(store: NotebookStore, meetingID: String) {
         notebook = Notebook(store: store, meetingID: meetingID)
         let loaded = notebook.reload().compactMap { try? PKDrawing(data: $0) }
         pages = loaded.isEmpty ? [PKDrawing()] : loaded
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        cardsURL = docs.appendingPathComponent("notecards-\(meetingID).json")
+        cards = (try? JSONDecoder().decode([NoteCard].self, from: Data(contentsOf: cardsURL))) ?? []
     }
 
     func page(_ i: Int) -> Binding<PKDrawing> {
@@ -188,6 +202,17 @@ final class NotebookModel: ObservableObject {
     func addPage() { pages.append(PKDrawing()); current = pages.count - 1; save() }
     func save() { try? notebook.save(pages: pages.map { $0.dataRepresentation() }) }
     var hasInk: Bool { pages.contains { !$0.strokes.isEmpty } }
+
+    // HSM-14 — transcript → note canvas.
+    func addCard(_ text: String, at p: CGPoint) {
+        cards.append(NoteCard(text: text, x: Double(p.x), y: Double(p.y))); saveCards()
+    }
+    func moveCard(_ id: UUID, to p: CGPoint) {
+        guard let i = cards.firstIndex(where: { $0.id == id }) else { return }
+        cards[i].x = Double(p.x); cards[i].y = Double(p.y); saveCards()
+    }
+    func removeCard(_ id: UUID) { cards.removeAll { $0.id == id }; saveCards() }
+    private func saveCards() { try? JSONEncoder().encode(cards).write(to: cardsURL, options: .atomic) }
 }
 
 // MARK: - Notebook surface
@@ -215,12 +240,67 @@ struct NotebookView: View {
                     }
                 }
             }
-            PencilCanvas(drawing: editable ? model.page(model.current) : .constant(model.pages[model.current]),
-                         editable: editable)
-                .frame(maxWidth: .infinity, minHeight: 360)
-                .background(SigN.s1, in: RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(SigN.line, lineWidth: 1))
+            ZStack(alignment: .topLeading) {
+                PencilCanvas(drawing: editable ? model.page(model.current) : .constant(model.pages[model.current]),
+                             editable: editable)
+                // HSM-14 — transcript snippets pulled onto the canvas float ABOVE the ink, so you
+                // can drag them around and ink in the gaps. Only on the first page (where they land).
+                if model.current == 0 {
+                    ForEach(model.cards) { card in
+                        NoteCardView(card: card, editable: editable,
+                                     onMove: { model.moveCard(card.id, to: $0) },
+                                     onRemove: { withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { model.removeCard(card.id) } })
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 360)
+            .background(SigN.s1, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(SigN.line, lineWidth: 1))
+            .coordinateSpace(name: "notecanvas")
         }
+    }
+}
+
+/// A transcript snippet living on the note canvas: a quoted, tinted card you drag to place and
+/// ink around. Tap its corner to remove. Lands with a spring when it arrives from the transcript.
+struct NoteCardView: View {
+    let card: NoteCard
+    let editable: Bool
+    let onMove: (CGPoint) -> Void
+    let onRemove: () -> Void
+    @State private var landed = false
+    @State private var lifting = false
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 7) {
+            Image(systemName: "quote.opening").font(.system(size: 11, weight: .bold)).foregroundStyle(SigN.accent)
+            Text(card.text)
+                .font(.system(size: 13, weight: .semibold)).foregroundStyle(SigN.muted)
+                .lineLimit(5).fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 11).padding(.vertical, 9)
+        .frame(width: 190, alignment: .leading)
+        .background(SigN.s1, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(SigN.accent.opacity(lifting ? 0.85 : 0.4), lineWidth: lifting ? 1.6 : 1))
+        .shadow(color: .black.opacity(lifting ? 0.5 : 0.28), radius: lifting ? 14 : 7, y: lifting ? 8 : 4)
+        .overlay(alignment: .topTrailing) {
+            if editable {
+                Button(action: onRemove) {
+                    Image(systemName: "xmark.circle.fill").font(.system(size: 16))
+                        .foregroundStyle(SigN.faint).background(Circle().fill(SigN.s1))
+                }
+                .buttonStyle(.plain).offset(x: 6, y: -6)
+            }
+        }
+        .scaleEffect(landed ? (lifting ? 1.04 : 1) : 1.3)
+        .position(x: card.x, y: card.y)
+        .gesture(editable ?
+            DragGesture(coordinateSpace: .named("notecanvas"))
+                .onChanged { v in if !lifting { withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) { lifting = true } }; onMove(v.location) }
+                .onEnded { _ in withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { lifting = false } }
+            : nil)
+        .onAppear { withAnimation(.spring(response: 0.34, dampingFraction: 0.6)) { landed = true } }
+        .transition(.scale.combined(with: .opacity))
     }
 }
 
@@ -317,6 +397,7 @@ final class CaptureModel: ObservableObject {
     @Published var liveBubbles: [LiveBubble] = []
     @Published var pinned: [PinnedNote] = []
     @Published var partial = ""                   // the words still being transcribed
+    @Published var notesJump = 0                  // bump → the UI switches to the Notes pane
     private var bubbledCount = 0
     private var lastFull = ""
 
@@ -399,6 +480,17 @@ final class CaptureModel: ObservableObject {
         markCount = linker?.links().count ?? markCount
     }
     func unpin(_ id: UUID) { pinned.removeAll { $0.id == id } }
+
+    /// HSM-14 — pull a transcript moment ONTO the note canvas as a draggable card, then jump to
+    /// the Notes pane so the user lands where it arrived. The notebook exists once recording starts.
+    func sendToNotes(_ text: String) {
+        guard let nb = notebook else { return }
+        let n = nb.cards.count
+        nb.addCard(String(text.prefix(240)),
+                   at: CGPoint(x: 150 + CGFloat(n % 3) * 26, y: 120 + CGFloat(n % 8) * 24))
+        notesJump += 1
+        tactile(.medium)
+    }
     func movePin(_ id: UUID, to p: CGPoint, in size: CGSize, boardTop: CGFloat) {
         guard let i = pinned.firstIndex(where: { $0.id == id }) else { return }
         pinned[i].pos = clampToBoard(p, in: size, boardTop: boardTop)
@@ -438,6 +530,14 @@ final class CaptureModel: ObservableObject {
                        pos: CGPoint(x: size.width * 0.68, y: by * 0.5), rot: 5, t: 47),
         ]
         partial = "and we should double-check the analytics events before"
+        // Stage the notes canvas with a couple of pulled-in transcript cards for the screenshot.
+        if notebook == nil {
+            let nb = NotebookModel(store: notebookStore, meetingID: "demo-sim")
+            nb.cards = []
+            nb.addCard("Decision: launch Friday, design partners first.", at: CGPoint(x: 150, y: 130))
+            nb.addCard("Risk: the vendor SLA doesn't cover the EU region yet.", at: CGPoint(x: 250, y: 330))
+            notebook = nb
+        }
     }
     #endif
 }
@@ -1261,7 +1361,12 @@ struct MeetingListView: View {
 struct CaptureView: View {
     @ObservedObject var model: CaptureModel
     var done: () -> Void
-    @State private var pane: Pane = .transcript
+    @State private var pane: Pane = {
+        #if targetEnvironment(simulator)
+        if ProcessInfo.processInfo.environment["HS_DEMO_NOTES"] == "1" { return .notes }
+        #endif
+        return .transcript
+    }()
     enum Pane: String, CaseIterable { case transcript = "Transcript", notes = "Notes" }
 
     var body: some View {
@@ -1294,6 +1399,12 @@ struct CaptureView: View {
             .padding(20).frame(maxWidth: 760).frame(maxWidth: .infinity)
         }
         .toolbar(.hidden, for: .navigationBar)
+        // HSM-14 — sending a transcript moment to notes flips to the Notes pane so the user
+        // sees it land in the canvas.
+        .onChange(of: model.notesJump) { _, _ in withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { pane = .notes } }
+        #if targetEnvironment(simulator)
+        .onAppear { model.seedDemo(size: CGSize(width: 720, height: 900), boardTop: 380) }
+        #endif
     }
 
     @ViewBuilder private var notesPane: some View {
@@ -1365,7 +1476,8 @@ struct LiveCaptureCanvas: View {
                     PinnedNoteView(
                         note: n,
                         onMove: { model.movePin(n.id, to: $0, in: geo.size, boardTop: boardTop) },
-                        onRemove: { withAnimation(.spring(response: 0.32, dampingFraction: 0.7)) { model.unpin(n.id) }; tactile() })
+                        onRemove: { withAnimation(.spring(response: 0.32, dampingFraction: 0.7)) { model.unpin(n.id) }; tactile() },
+                        onSendToNotes: { model.sendToNotes(n.text) })
                 }
                 liveColumn(boardTop: boardTop, size: geo.size)
             }
@@ -1389,7 +1501,8 @@ struct LiveCaptureCanvas: View {
             ForEach(model.liveBubbles) { b in
                 LiveBubbleView(bubble: b, boardTop: boardTop,
                                onPin: { loc in withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                                   model.pin(b, at: loc, in: size, boardTop: boardTop) } })
+                                   model.pin(b, at: loc, in: size, boardTop: boardTop) } },
+                               onSendToNotes: { model.sendToNotes(b.text) })
             }
             if !model.partial.isEmpty { LiveCaption(text: model.partial) }
         }
@@ -1453,6 +1566,7 @@ struct LiveBubbleView: View {
     let bubble: LiveBubble
     let boardTop: CGFloat
     let onPin: (CGPoint) -> Void
+    var onSendToNotes: () -> Void = {}
     @State private var offset: CGSize = .zero
     @State private var lifting = false
     @State private var appeared = false
@@ -1493,6 +1607,10 @@ struct LiveBubbleView: View {
         .transition(.asymmetric(
             insertion: .scale(scale: 0.8).combined(with: .opacity),
             removal: .opacity))
+        .contextMenu {
+            Button { onSendToNotes() } label: { Label("Add to notes", systemImage: "square.and.pencil") }
+            Button { UIPasteboard.general.string = bubble.text } label: { Label("Copy", systemImage: "doc.on.doc") }
+        }
     }
 }
 
@@ -1526,6 +1644,7 @@ struct PinnedNoteView: View {
     let note: PinnedNote
     let onMove: (CGPoint) -> Void
     let onRemove: () -> Void
+    var onSendToNotes: () -> Void = {}
     @State private var landed = false
 
     var body: some View {
@@ -1553,6 +1672,11 @@ struct PinnedNoteView: View {
                 .onChanged { onMove($0.location) })
         .onAppear { withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { landed = true }; tactile(.heavy) }
         .transition(.scale.combined(with: .opacity))
+        .contextMenu {
+            Button { onSendToNotes() } label: { Label("Add to notes", systemImage: "square.and.pencil") }
+            Button { UIPasteboard.general.string = note.text } label: { Label("Copy", systemImage: "doc.on.doc") }
+            Button(role: .destructive) { onRemove() } label: { Label("Unpin", systemImage: "pin.slash") }
+        }
     }
 }
 
