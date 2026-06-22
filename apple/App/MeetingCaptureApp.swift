@@ -408,6 +408,7 @@ struct PinnedNote: Identifiable, Equatable {
     var rot: Double
     let t: Double
     var tacked: Bool = true
+    var w: CGFloat = 162          // HSM-14-13 — corner-drag resizes this; text reflows within it
 }
 
 /// Split a running transcript into finished sentences + the trailing in-progress fragment.
@@ -597,8 +598,40 @@ final class CaptureModel: ObservableObject {
 
     /// Tacked moments only — what actually steers MIR (loose cards don't count).
     var tackedCount: Int { pinned.filter(\.tacked).count }
+    var looseCount: Int { pinned.filter { !$0.tacked }.count }
 
     func unpin(_ id: UUID) { pinned.removeAll { $0.id == id } }
+
+    /// HSM-14-13 deliverable 3 — corner-drag resize: clamp the width to the readable range; text
+    /// reflows within it. Width persists on the model for the session.
+    func resizePin(_ id: UUID, to width: CGFloat) {
+        guard let i = pinned.firstIndex(where: { $0.id == id }) else { return }
+        pinned[i].w = CardSize.clampWidth(width)
+    }
+
+    // HSM-14-13 deliverable 4 — the loose-card positions before the last tidy, kept for one undo.
+    @Published private(set) var canUndoTidy = false
+    private var preTidy: [UUID: CGPoint] = [:]
+
+    /// One-tap tidy: re-flow the loose cards into a readable centered grid below `pinFloor`
+    /// (tacked moments stay put — they were placed deliberately). Saves the prior arrangement so a
+    /// single undo restores it.
+    func tidyLoose(in size: CGSize, pinFloor: CGFloat) {
+        let loose = pinned.enumerated().filter { !$0.element.tacked }
+        guard !loose.isEmpty else { return }
+        preTidy = Dictionary(uniqueKeysWithValues: loose.map { ($0.element.id, $0.element.pos) })
+        let targets = WorkspaceTidy.layout(count: loose.count, in: size, pinFloor: pinFloor)
+        for (slot, item) in loose.enumerated() { pinned[item.offset].pos = targets[slot] }
+        canUndoTidy = true
+        tactile(.medium)
+    }
+
+    func undoTidy() {
+        guard canUndoTidy else { return }
+        for i in pinned.indices { if let p = preTidy[pinned[i].id] { pinned[i].pos = p } }
+        preTidy = [:]; canUndoTidy = false
+        tactile()
+    }
 
     /// HSM-14 — pull a transcript moment ONTO the note canvas as a draggable card, then jump to
     /// the Notes pane so the user lands where it arrived. The notebook exists once recording starts.
@@ -664,18 +697,30 @@ final class CaptureModel: ObservableObject {
             LiveBubble(text: "Risk: the vendor SLA doesn't cover the EU region yet.", t: 88),
         ]
         pinned = [
-            // One tacked moment (pushpin + tilt, steers MIR) and one loose card (just placed) —
-            // the HSM-14-13 deliverable-2 distinction, on one surface.
+            // One tacked moment (pushpin + tilt, steers MIR) and one loose card (just placed, and
+            // resized wider) — the HSM-14-13 deliverable-2/3 distinction, on one surface.
             PinnedNote(id: UUID(), text: "Decision: launch Friday, design partners first.",
                        pos: CGPoint(x: size.width * 0.30, y: size.height * 0.60), rot: -4, t: 12, tacked: true),
-            PinnedNote(id: UUID(), text: "Action: Karol — migration + rollback plan.",
-                       pos: CGPoint(x: size.width * 0.66, y: size.height * 0.72), rot: 0, t: 47, tacked: false),
+            PinnedNote(id: UUID(), text: "Action: Karol owns the migration script and the rollback plan for the EU region.",
+                       pos: CGPoint(x: size.width * 0.66, y: size.height * 0.72), rot: 0, t: 47, tacked: false, w: 232),
         ]
         partial = "and we should double-check the analytics events before"
         // Show the tack target lit, as if a bubble is being dragged over it.
         if env["HS_DEMO_TACK"] == "1" {
             bubbleDragging = true
             bubbleDragPoint = CGPoint(x: size.width / 2, y: max(120, size.height - 56 - 80) + 28)
+        }
+        // Seed several scattered loose cards and tidy them, to show the grid re-flow (deliverable 4).
+        if env["HS_DEMO_TIDY"] == "1" {
+            let notes = ["Open Q: EU SLA coverage?", "Owner: Karol — rollback", "Metric: activation +6%",
+                         "Risk: vendor lock-in", "Next: analytics audit"]
+            pinned = notes.enumerated().map { i, txt in
+                PinnedNote(id: UUID(), text: txt,
+                           pos: CGPoint(x: size.width * (0.2 + Double(i % 3) * 0.28),
+                                        y: size.height * (0.42 + Double(i % 4) * 0.13)),
+                           rot: 0, t: Double(i * 10), tacked: false)
+            }
+            tidyLoose(in: size, pinFloor: boardTop)
         }
         // Stage the notes canvas with a couple of pulled-in transcript cards for the screenshot.
         if notebook == nil {
@@ -1787,6 +1832,7 @@ struct LiveCaptureCanvas: View {
                         onMove: { model.movePin(n.id, to: $0, in: geo.size, boardTop: pinFloor) },
                         onRemove: { withAnimation(.spring(response: 0.32, dampingFraction: 0.7)) { model.unpin(n.id) }; tactile() },
                         onTack: { withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) { model.tackExisting(n.id) } },
+                        onResize: { model.resizePin(n.id, to: $0) },
                         onSendToNotes: { model.sendToNotes(n.text) })
                 }
 
@@ -1800,6 +1846,10 @@ struct LiveCaptureCanvas: View {
 
                 footerChip
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                    .padding(14)
+
+                tidyControl(size: geo.size, pinFloor: pinFloor)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                     .padding(14)
             }
             .coordinateSpace(name: "canvas")
@@ -1838,6 +1888,30 @@ struct LiveCaptureCanvas: View {
     private func tackZone(in size: CGSize) -> CGRect {
         let w = min(264, size.width - 72), h: CGFloat = 56
         return CGRect(x: (size.width - w) / 2, y: max(120, size.height - h - 80), width: w, height: h)
+    }
+
+    // HSM-14-13 deliverable 4 — one-tap tidy (re-flow loose cards into a readable grid) with a
+    // single undo. Shows only when there's something to tidy or undo, so it never clutters.
+    @ViewBuilder private func tidyControl(size: CGSize, pinFloor: CGFloat) -> some View {
+        if model.looseCount > 1 || model.canUndoTidy {
+            HStack(spacing: 10) {
+                if model.canUndoTidy {
+                    Button { withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { model.undoTidy() } } label: {
+                        Label("Undo", systemImage: "arrow.uturn.backward").font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(Sig.muted)
+                    }.buttonStyle(.plain)
+                }
+                if model.looseCount > 1 {
+                    Button { withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { model.tidyLoose(in: size, pinFloor: pinFloor) } } label: {
+                        Label("Tidy", systemImage: "square.grid.2x2").font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(Sig.accent)
+                    }.buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 12).padding(.vertical, 8)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(Capsule().stroke(Sig.line, lineWidth: 1))
+        }
     }
 
     // The target only materializes while a bubble is being dragged, and lights up when the drag is
@@ -2030,8 +2104,10 @@ struct PinnedNoteView: View {
     let onMove: (CGPoint) -> Void
     let onRemove: () -> Void
     var onTack: () -> Void = {}
+    var onResize: (CGFloat) -> Void = { _ in }
     var onSendToNotes: () -> Void = {}
     @State private var landed = false
+    @State private var resizeBase: CGFloat?      // card width at the start of a corner-drag
 
     var body: some View {
         VStack(spacing: -4) {
@@ -2046,12 +2122,13 @@ struct PinnedNoteView: View {
             }
             Text(note.text)
                 .font(.system(size: 13, weight: .semibold)).foregroundStyle(Sig.text)
-                .lineLimit(4).multilineTextAlignment(.leading)
-                .frame(width: 162, alignment: .leading)
+                .lineLimit(8).multilineTextAlignment(.leading)
+                .frame(width: note.w, alignment: .leading)            // resize reflows the text
                 .padding(.horizontal, 11).padding(.vertical, 10)
                 .background(note.tacked ? Sig.s3 : Sig.s2, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous)
                     .stroke(note.tacked ? Sig.accent.opacity(0.4) : Sig.line, lineWidth: 1))
+                .overlay(alignment: .bottomTrailing) { resizeHandle }
                 .shadow(color: .black.opacity(note.tacked ? 0.45 : 0.3), radius: note.tacked ? 9 : 6, y: note.tacked ? 5 : 4)
         }
         .rotationEffect(.degrees(note.tacked ? note.rot : 0))
@@ -2070,6 +2147,23 @@ struct PinnedNoteView: View {
             Button { UIPasteboard.general.string = note.text } label: { Label("Copy", systemImage: "doc.on.doc") }
             Button(role: .destructive) { onRemove() } label: { Label("Remove", systemImage: "trash") }
         }
+    }
+
+    // Corner-drag to resize the card width (text reflows; the model clamps to the readable range).
+    private var resizeHandle: some View {
+        Image(systemName: "arrow.down.right")
+            .font(.system(size: 9, weight: .black))
+            .foregroundStyle(Sig.faint)
+            .frame(width: 22, height: 22)
+            .contentShape(Rectangle())
+            .offset(x: 4, y: 4)
+            .gesture(
+                DragGesture()
+                    .onChanged { v in
+                        if resizeBase == nil { resizeBase = note.w }
+                        onResize((resizeBase ?? note.w) + v.translation.width)
+                    }
+                    .onEnded { _ in resizeBase = nil; tactile() })
     }
 }
 
