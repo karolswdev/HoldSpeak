@@ -7,6 +7,7 @@ import os
 import UIKit
 import MarkdownUI
 import UniformTypeIdentifiers
+import WebKit
 
 // HSM-8-01 — the iPad's on-device meeting-capture loop. Open the app, see your
 // recordings, press Record, watch the transcript appear, stop to keep it. Capture
@@ -538,7 +539,7 @@ private func shapeTint(_ k: ShapeKind) -> Color {
         Task { [weak self] in
             do {
                 let raw = try await SketchVLM.mermaid(from: png)
-                let mm = MermaidParse.extract(raw)
+                let mm = MermaidParse.fromResponse(raw)
                 let g = MermaidParse.graph(mm)
                 await MainActor.run {
                     self?.vlmBusy = false; self?.usedAI = true; self?.mermaid = mm
@@ -619,17 +620,35 @@ enum SketchVLM {
     static func mermaid(from png: Data) async throws -> String {
         let b64 = png.base64EncodedString()
         let prompt = """
-        This is a hand-drawn flowchart. Convert it to Mermaid flowchart code.
-        Rectangles are nodes: id["text"]. Diamonds are decisions: id{"text"}. Circles/ellipses: id(("text")).
-        Arrows are edges: A --> B (use A -->|label| B when a label like yes/no is written near the arrow).
-        Read the handwritten labels carefully. Output ONLY valid Mermaid starting with "flowchart TD". No prose, no code fences.
+        You are an expert at reading hand-drawn diagrams. Look at this sketch of a flowchart and \
+        reproduce it as Mermaid flowchart code.
+
+        Rules:
+        - Each box / rectangle is a node:        A["label"]
+        - Each diamond is a decision:            B{"label"}
+        - Each circle / ellipse is:              C(("label"))
+        - Each arrow is an edge from the shape at its tail to the shape at its head:  A --> B
+        - If a word like yes / no is written on an arrow, use a labelled edge:        B -->|yes| C
+        - Read the handwritten text inside each shape and use it as the label (fix obvious misspellings).
+        - Use short ids (A, B, C, …). Begin with "flowchart TD". Keep it minimal and valid.
+
+        Return ONLY JSON of the form {"mermaid": "<the mermaid code, with \\n between lines>"}.
         """
         let body: [String: Any] = [
             "messages": [["role": "user", "content": [
                 ["type": "text", "text": prompt],
                 ["type": "image_url", "image_url": ["url": "data:image/png;base64,\(b64)"]],
             ]]],
-            "max_tokens": 700, "temperature": 0.3,
+            "max_tokens": 800, "temperature": 0.2,
+            "response_format": [
+                "type": "json_schema",
+                "json_schema": [
+                    "name": "diagram",
+                    "schema": ["type": "object",
+                               "properties": ["mermaid": ["type": "string", "minLength": 1]],
+                               "required": ["mermaid"], "additionalProperties": false],
+                ],
+            ],
         ]
         var req = URLRequest(url: endpoint, timeoutInterval: 120)
         req.httpMethod = "POST"
@@ -658,6 +677,14 @@ enum MermaidParse {
         if let r = s.range(of: "flowchart") { s = String(s[r.lowerBound...]) }
         else if let r = s.range(of: "graph ") { s = String(s[r.lowerBound...]) }
         return s.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// The model may return `{"mermaid":"…"}` (json_schema) or raw/fenced mermaid — handle both.
+    static func fromResponse(_ content: String) -> String {
+        if let data = content.data(using: .utf8),
+           let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let mm = obj["mermaid"] as? String { return extract(mm) }
+        return extract(content)
     }
 
     static func graph(_ mermaid: String) -> DiagramGraph {
@@ -719,6 +746,74 @@ enum MermaidParse {
             out.append((a, ns.substring(with: m.range(at: 3)), label))
         }
         return out
+    }
+}
+
+/// A REAL Mermaid renderer — a WKWebView running the bundled mermaid.js (offline). Renders any
+/// valid Mermaid the geometry engine or the VLM produces, re-rendering on each code change.
+struct MermaidWebView: UIViewRepresentable {
+    let code: String
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeUIView(context: Context) -> WKWebView {
+        let cfg = WKWebViewConfiguration()
+        let wv = WKWebView(frame: .zero, configuration: cfg)
+        wv.navigationDelegate = context.coordinator
+        wv.isOpaque = false
+        wv.backgroundColor = .clear
+        wv.scrollView.backgroundColor = .clear
+        context.coordinator.wv = wv
+        wv.loadHTMLString(Self.html(), baseURL: nil)
+        return wv
+    }
+
+    func updateUIView(_ wv: WKWebView, context: Context) {
+        context.coordinator.latest = code
+        if context.coordinator.ready { context.coordinator.render(code) }
+    }
+
+    final class Coordinator: NSObject, WKNavigationDelegate {
+        weak var wv: WKWebView?
+        var ready = false
+        var latest = ""
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            ready = true
+            if !latest.isEmpty { render(latest) }
+        }
+        func render(_ code: String) {
+            let esc = code.replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "`", with: "\\`").replacingOccurrences(of: "$", with: "\\$")
+            wv?.evaluateJavaScript("renderMermaid(`\(esc)`)", completionHandler: nil)
+        }
+    }
+
+    static func html() -> String {
+        let lib = (Bundle.main.url(forResource: "mermaid.min", withExtension: "js")
+            .flatMap { try? String(contentsOf: $0, encoding: .utf8) }) ?? ""
+        return """
+        <!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3">
+        <style>
+          html,body{margin:0;background:transparent;}
+          #wrap{padding:10px;display:flex;align-items:center;justify-content:center;min-height:100%;}
+          .mermaid svg{max-width:100%;height:auto;}
+          .err{color:#E5544B;font:12px -apple-system;padding:10px;white-space:pre-wrap;}
+        </style>
+        <script>\(lib)</script></head>
+        <body><div id="wrap"><div class="mermaid" id="m"></div></div>
+        <script>
+          mermaid.initialize({ startOnLoad:false, theme:'dark', securityLevel:'loose',
+            themeVariables:{ background:'transparent', primaryColor:'#1D202A', primaryTextColor:'#F3F4F7',
+              lineColor:'#9CA3B2', primaryBorderColor:'#FF6B35' } });
+          async function renderMermaid(code){
+            const t = (code||'').trim();
+            if(!t){ document.getElementById('m').innerHTML=''; return; }
+            try{ const { svg } = await mermaid.render('g'+Date.now(), t);
+                 document.getElementById('m').innerHTML = svg; }
+            catch(e){ document.getElementById('m').innerHTML = '<div class="err">'+String(e&&e.message||e)+'</div>'; }
+          }
+        </script></body></html>
+        """
     }
 }
 
@@ -856,10 +951,21 @@ struct SketchToDiagramView: View {
                                 .font(.system(size: 11, weight: .semibold)).foregroundStyle(Sig.muted)
                         }
                     }
-                    DiagramPreview(graph: model.graph)
-                        .frame(height: 200)
-                        .background(Sig.bg, in: RoundedRectangle(cornerRadius: 16))
-                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Sig.line, lineWidth: 1))
+                    Group {
+                        if model.mermaid.isEmpty {
+                            VStack(spacing: 8) {
+                                Image(systemName: "scribble.variable").font(.system(size: 26)).foregroundStyle(Sig.faint)
+                                Text("Draw boxes, diamonds and arrows — or tap Recognize with AI.")
+                                    .font(.system(size: 13)).foregroundStyle(Sig.faint).multilineTextAlignment(.center)
+                            }.frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } else {
+                            MermaidWebView(code: model.mermaid)
+                        }
+                    }
+                    .frame(height: 240)
+                    .background(Sig.s1, in: RoundedRectangle(cornerRadius: 16))
+                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Sig.line, lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
                     if !model.mermaid.isEmpty {
                         HStack {
                             Text(model.mermaid).font(.system(size: 11, design: .monospaced)).foregroundStyle(Sig.muted).lineLimit(3)

@@ -64,6 +64,16 @@ can prove the loop on an endpoint (Mode B/C) **today**, before the on-device MLX
 SketchToMermaid.swift` (`SketchVision`) + `SketchToMermaidTests.swift`
 (`swift test` → 211/0, +2: VLM resolves an ambiguous shape; answer parsing variants).
 
+## Rendering + steering (2026-06-21)
+
+- **Real Mermaid renderer:** `mermaid.min.js` is **bundled** in the app (no CDN) and runs in a
+  `MermaidWebView` (WKWebView, dark theme) that re-renders on each code change — replacing the
+  toy native parser. Renders any valid Mermaid the geometry *or* the VLM produces.
+- **Steered output:** the VLM request now sends a **`response_format` json_schema**
+  `{"mermaid": string}` + a sharper prompt with the exact node/edge syntax. Verified on `.43`:
+  the box image returned exactly `{"mermaid":"flowchart TD\n    Login[Login]\n"}` — clean, no
+  prose. `MermaidParse.fromResponse` handles both the JSON-wrapped and raw/fenced cases.
+
 ## Notes
 
 - MLX-VLM (mlx-swift) is the right on-device VLM runtime on Apple Silicon (Gemma 4 / Qwen2.5-VL

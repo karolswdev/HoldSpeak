@@ -43,6 +43,13 @@ target = project.new_target(:application, 'HoldSpeakMobile', :ios, DEPLOY)
 group = project.new_group('Sources', STAGE)
 staged.each { |p| target.add_file_references([group.new_reference(p)]) }
 
+# Bundle mermaid.js so the sketch surface renders real Mermaid in a WKWebView (offline).
+mermaid_js = File.join(ROOT, 'App/mermaid.min.js')
+if File.exist?(mermaid_js)
+  res_group = project.new_group('Resources', File.join(ROOT, 'App'))
+  target.add_resources([res_group.new_reference(mermaid_js)])
+end
+
 # --- Swift Package dependencies: WhisperKit (transcription) + LLM.swift (on-device LLM) ---
 def add_pkg(project, target, url, requirement, product)
   pkg = project.new(Xcodeproj::Project::Object::XCRemoteSwiftPackageReference)
