@@ -89,6 +89,8 @@ Pencil), accessibility + adaptivity, and a polish pass — each delivered with c
 | HSM-14-09 | Local vision model (Gemma 4) seam + ambiguity resolution | in-progress | [story-09](./story-09-local-vision-model.md) | seam host-tested (211/0) |
 | HSM-14-10 | Models, front and center (import + manage, AirDrop-ready) | in-progress | [story-10](./story-10-model-import.md) | device-built |
 | HSM-14-11 | The live capture canvas (transcription bubbles + tack-to-board) | in-progress | [story-11](./story-11-live-capture-canvas.md) | built + on iPad + Simulator-proven |
+| HSM-14-12 | Constant-time live transcription (sliding window + commit) | planned | [story-12](./story-12-constant-time-transcription.md) | designed |
+| HSM-14-13 | The spatial workspace (OS-like capture surface) | planned | [story-13](./story-13-spatial-workspace.md) | designed |
 
 ## Where we are
 
@@ -112,6 +114,19 @@ float up as bubbles, the live fragment breathes as a caption, and you grab a bub
 Pencil and **tack it to a pin board**, which marks the moment so the on-device intelligence
 weights it. Three bespoke **Pixellab** pixel-art assets (Qlippy mascot, brass pushpin, waveform
 orb) bundled offline. Built + installed on the iPad Air M4; Simulator screenshot committed.
+
+**2026-06-22 — shipped the live-dynamism batch + planned the next two.** PRs #117/#118 landed:
+the transcription slowness was root-caused (the Whisper model reloaded every tick → cached;
+3 s → 1.2 s cadence), an **audio-reactive waveform** off the real mic level, the recording
+controls collapsed into a **draggable floating recorder** (no big button), the canvas became
+**one free-form dot-grid desktop** (fling a bubble anywhere to tack), and note cards now
+**promote to real `needs_review` artifacts**. Then the owner asked to **plan, not build, the next
+two properly**: **HSM-14-12** (constant-time live transcription — a timestamp-driven sliding
+window so long meetings stay immediate; the model-cache fixed the acute pain but per-tick cost
+still grows O(length)) and **HSM-14-13** (the spatial workspace — dockable/minimizable recorder,
+free-place vs tack, resizable cards, tidy, and stretch: minimap + windowed panes). Both are
+written up as stories with architecture, acceptance criteria, and test plans; implementation is
+deferred.
 
 ## Operating principle (standing, beyond this phase)
 

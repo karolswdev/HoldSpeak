@@ -1,6 +1,11 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-**Last updated:** 2026-06-21 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** Latest: the
+**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** Live-dynamism batch
+shipped (PRs #117/#118): transcription root-caused + cached, audio-reactive waveform, draggable
+floating recorder, one free-form dot-grid desktop, note→artifact promotion. Two next stories
+**planned (not built)** on owner request: **HSM-14-12** constant-time live transcription
+(timestamp-driven sliding window) + **HSM-14-13** the spatial workspace (dock/minimize recorder,
+free-place vs tack, resizable cards, tidy; stretch: minimap + windowed panes). Earlier: the
 intelligence pane now **materializes** artifacts (tint-ring glow + animated insert) and the
 MIR profile is a meaningful **lens** (blurb + emphasized-type chips, named on the Generate
 button) — HSM-14-03; and the live transcript "wall of text" is replaced by the **live capture
