@@ -65,11 +65,27 @@ final class WhisperKitTranscriber: ITranscriber, @unchecked Sendable {
     private let chunks: [AudioChunk]
     private let model: String
     init(chunks: [AudioChunk], model: String) { self.chunks = chunks; self.model = model }
+
+    // The WhisperKit model is LOADED ONCE and reused. Previously every call constructed a fresh
+    // `WhisperKit(...)`, which reloads the CoreML model from disk (seconds) — so live ticks
+    // compounded into a frozen-feeling control plane. Cached in a lock-guarded static (WhisperKit
+    // isn't Sendable, so it never crosses an isolation boundary — created + used in this method).
+    private static let cacheLock = NSLock()
+    nonisolated(unsafe) private static var modelCache: [String: WhisperKit] = [:]
+    private static func cachedModel(_ k: String) -> WhisperKit? { cacheLock.lock(); defer { cacheLock.unlock() }; return modelCache[k] }
+    private static func cacheModel(_ k: String, _ m: WhisperKit) { cacheLock.lock(); modelCache[k] = m; cacheLock.unlock() }
+
     func transcribe() async throws -> [Segment] {
         let samples = chunks.flatMap { $0.samples }
         guard samples.count >= 16_000 / 4 else { return [] }
         let floats = samples.map { Float($0) / 32768.0 }
-        let whisper = try await WhisperKit(WhisperKitConfig(model: model))
+        let whisper: WhisperKit
+        if let cached = Self.cachedModel(model) {
+            whisper = cached
+        } else {
+            whisper = try await WhisperKit(WhisperKitConfig(model: model))
+            Self.cacheModel(model, whisper)
+        }
         let results = try await whisper.transcribe(audioArray: floats)
         let clean = WhisperText.clean(results.flatMap { $0.segments }.map(\.text).joined(separator: " "))
         guard !clean.isEmpty else { return [] }
@@ -220,6 +236,7 @@ final class NotebookModel: ObservableObject {
 struct NotebookView: View {
     @ObservedObject var model: NotebookModel
     var editable: Bool
+    var onPromote: ((NoteCard, ArtifactType) -> Void)? = nil
 
     var body: some View {
         VStack(spacing: 10) {
@@ -244,13 +261,13 @@ struct NotebookView: View {
                 PencilCanvas(drawing: editable ? model.page(model.current) : .constant(model.pages[model.current]),
                              editable: editable)
                 // HSM-14 — transcript snippets pulled onto the canvas float ABOVE the ink, so you
-                // can drag them around and ink in the gaps. Only on the first page (where they land).
-                if model.current == 0 {
-                    ForEach(model.cards) { card in
-                        NoteCardView(card: card, editable: editable,
-                                     onMove: { model.moveCard(card.id, to: $0) },
-                                     onRemove: { withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { model.removeCard(card.id) } })
-                    }
+                // can drag them around and ink in the gaps. Always rendered (so they reliably
+                // reappear when a saved meeting is reopened).
+                ForEach(model.cards) { card in
+                    NoteCardView(card: card, editable: editable,
+                                 onMove: { model.moveCard(card.id, to: $0) },
+                                 onRemove: { withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { model.removeCard(card.id) } },
+                                 onPromote: onPromote.map { op in { type in op(card, type) } })
                 }
             }
             .frame(maxWidth: .infinity, minHeight: 360)
@@ -268,18 +285,49 @@ struct NoteCardView: View {
     let editable: Bool
     let onMove: (CGPoint) -> Void
     let onRemove: () -> Void
+    var onPromote: ((ArtifactType) -> Void)? = nil
     @State private var landed = false
     @State private var lifting = false
+    @State private var promoted = false
+
+    private let promoteTypes: [ArtifactType] = [.decisions, .actionItems, .riskRegister, .requirements, .adr]
 
     var body: some View {
-        HStack(alignment: .top, spacing: 7) {
-            Image(systemName: "quote.opening").font(.system(size: 11, weight: .bold)).foregroundStyle(SigN.accent)
-            Text(card.text)
-                .font(.system(size: 13, weight: .semibold)).foregroundStyle(SigN.muted)
-                .lineLimit(5).fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 7) {
+                Image(systemName: "quote.opening").font(.system(size: 11, weight: .bold)).foregroundStyle(SigN.accent)
+                Text(card.text)
+                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(SigN.muted)
+                    .lineLimit(5).fixedSize(horizontal: false, vertical: true)
+            }
+            // The card OFFERS something: turn this moment into a real intelligence artifact.
+            if let onPromote, editable {
+                Button {
+                    guard !promoted else { return }
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { promoted = true }
+                    tactile(.medium); onPromote(guessArtifactType(card.text))
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: promoted ? "checkmark.circle.fill" : "sparkles")
+                        Text(promoted ? "In review" : "Promote to artifact")
+                    }
+                    .font(.system(size: 10, weight: .heavy))
+                    .foregroundStyle(promoted ? SigN.accent : .black)
+                    .padding(.horizontal, 9).padding(.vertical, 5)
+                    .background(promoted ? SigN.accent.opacity(0.16) : SigN.accent, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .contextMenu {
+                    ForEach(promoteTypes, id: \.self) { t in
+                        Button { withAnimation { promoted = true }; tactile(.medium); onPromote(t) } label: {
+                            Label("Promote as \(artifactTypeLabel(t))", systemImage: artifactGlyph(t))
+                        }
+                    }
+                }
+            }
         }
         .padding(.horizontal, 11).padding(.vertical, 9)
-        .frame(width: 190, alignment: .leading)
+        .frame(width: 196, alignment: .leading)
         .background(SigN.s1, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(SigN.accent.opacity(lifting ? 0.85 : 0.4), lineWidth: lifting ? 1.6 : 1))
         .shadow(color: .black.opacity(lifting ? 0.5 : 0.28), radius: lifting ? 14 : 7, y: lifting ? 8 : 4)
@@ -407,6 +455,8 @@ final class CaptureModel: ObservableObject {
     private var recordStart: Date?
     private var mc: MeetingCapture?
     private var ticker: Task<Void, Never>?
+    private var levelTicker: Task<Void, Never>?
+    @Published var level: Float = 0            // HSM-14 — live mic amplitude for the waveform
 
     init() {
         let store: MeetingStore
@@ -434,16 +484,26 @@ final class CaptureModel: ObservableObject {
         }
         ticker = Task { [weak self] in
             while !Task.isCancelled, self?.recording == true {
-                try? await Task.sleep(nanoseconds: 3_000_000_000)   // window the live transcript
+                try? await Task.sleep(nanoseconds: 1_200_000_000)   // window the live transcript (model is cached, so this is the cadence)
                 await mc.tick()
                 if case .recording(let t) = mc.state { await MainActor.run { self?.liveTranscript = t; self?.ingest(t) } }
             }
+        }
+        // Fast, independent poll of the mic amplitude (20 Hz) — the waveform reacts to sound the
+        // instant it arrives, with no transcription round-trip.
+        levelTicker = Task { [weak self] in
+            while !Task.isCancelled, self?.recording == true {
+                await MainActor.run { self?.level = self?.mc?.inputLevel ?? 0 }
+                try? await Task.sleep(nanoseconds: 50_000_000)
+            }
+            await MainActor.run { self?.level = 0 }
         }
     }
 
     func stopRecording() async {
         guard let mc else { return }
         ticker?.cancel(); ticker = nil
+        levelTicker?.cancel(); levelTicker = nil; level = 0
         recording = false; transcribing = true; defer { transcribing = false }
         notebook?.save()           // final flush of the meeting's notes
         _ = await mc.stop()
@@ -452,6 +512,7 @@ final class CaptureModel: ObservableObject {
     }
 
     private func elapsed() -> Double { recordStart.map { Date().timeIntervalSince($0) } ?? 0 }
+    var elapsedSeconds: Double { elapsed() }     // for the floating recorder's timer
 
     /// HSM-14 — turn the running transcript into floating bubbles. Each newly-finished sentence
     /// becomes a pinnable bubble; the trailing fragment shows as the live caption. Capped so the
@@ -491,6 +552,23 @@ final class CaptureModel: ObservableObject {
         notesJump += 1
         tactile(.medium)
     }
+
+    /// HSM-14 — promote a note snippet to a real `needs_review` artifact on the LIVE meeting; it
+    /// shows up in the intelligence pane when the meeting is reviewed.
+    func promoteNoteToArtifact(_ text: String, type: ArtifactType) {
+        guard let id = mc?.currentID else { return }
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let store = try? SQLiteStorage(path: docs.appendingPathComponent("meetings.sqlite").path)
+        try? store?.saveArtifact(noteArtifact(meetingId: id, type: type, text: text))
+        flashMessage("Promoted to a \(artifactTypeLabel(type)) — review it after the meeting")
+        tactile(.medium)
+    }
+
+    @Published var flash = ""
+    func flashMessage(_ s: String) {
+        flash = s
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) { if self.flash == s { self.flash = "" } }
+    }
     func movePin(_ id: UUID, to p: CGPoint, in size: CGSize, boardTop: CGFloat) {
         guard let i = pinned.firstIndex(where: { $0.id == id }) else { return }
         pinned[i].pos = clampToBoard(p, in: size, boardTop: boardTop)
@@ -517,17 +595,17 @@ final class CaptureModel: ObservableObject {
     /// canvas in flight. Never compiled into the device build — real behavior is untouched.
     func seedDemo(size: CGSize, boardTop: CGFloat) {
         guard liveBubbles.isEmpty, pinned.isEmpty, !recording else { return }
+        recording = true; level = 0.14            // show the recording state + floating recorder
         liveBubbles = [
             LiveBubble(text: "Let's ship the beta to the design partners on Friday.", t: 12),
             LiveBubble(text: "Karol owns the migration script and the rollback plan.", t: 47),
             LiveBubble(text: "Risk: the vendor SLA doesn't cover the EU region yet.", t: 88),
         ]
-        let by = boardTop + (size.height - boardTop)
         pinned = [
             PinnedNote(id: UUID(), text: "Decision: launch Friday, design partners first.",
-                       pos: CGPoint(x: size.width * 0.30, y: by * 0.42), rot: -4, t: 12),
+                       pos: CGPoint(x: size.width * 0.30, y: size.height * 0.62), rot: -4, t: 12),
             PinnedNote(id: UUID(), text: "Action: Karol — migration + rollback plan.",
-                       pos: CGPoint(x: size.width * 0.68, y: by * 0.5), rot: 5, t: 47),
+                       pos: CGPoint(x: size.width * 0.66, y: size.height * 0.74), rot: 5, t: 47),
         ]
         partial = "and we should double-check the analytics events before"
         // Stage the notes canvas with a couple of pulled-in transcript cards for the screenshot.
@@ -1372,44 +1450,86 @@ struct CaptureView: View {
     var body: some View {
         ZStack {
             Sig.bg.ignoresSafeArea()
-            VStack(spacing: 16) {
-                HStack {
-                    Text(model.recording ? "Recording" : (model.transcribing ? "Transcribing…" : "Ready"))
-                        .font(.title3.bold()).foregroundStyle(model.recording ? Sig.accent : Sig.text)
-                    if model.recording { recordingDot }
-                    Spacer()
-                    Button("Done") { done() }.foregroundStyle(Sig.muted)
-                }
-                Picker("", selection: $pane) {
-                    ForEach(Pane.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }
-                .pickerStyle(.segmented)
-
-                if pane == .transcript {
-                    LiveCaptureCanvas(model: model)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Sig.bg, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Sig.line, lineWidth: 1))
-                } else {
-                    notesPane
-                }
-                if model.recording { markRow }
-                recordButton
-            }
-            .padding(20).frame(maxWidth: 760).frame(maxWidth: .infinity)
+            if model.recording { recordingBody } else { lobbyBody }
+            flashToast
         }
+        .animation(.spring(response: 0.5, dampingFraction: 0.82), value: model.recording)
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: model.flash)
         .toolbar(.hidden, for: .navigationBar)
         // HSM-14 — sending a transcript moment to notes flips to the Notes pane so the user
         // sees it land in the canvas.
         .onChange(of: model.notesJump) { _, _ in withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { pane = .notes } }
         #if targetEnvironment(simulator)
-        .onAppear { model.seedDemo(size: CGSize(width: 720, height: 900), boardTop: 380) }
+        .onAppear { model.seedDemo(size: CGSize(width: 720, height: 1300), boardTop: max(176, 1300 * 0.42)) }
         #endif
+    }
+
+    // The "lobby": not recording. Title, pane picker, the canvas, and the big Record button.
+    private var lobbyBody: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Text(model.transcribing ? "Transcribing…" : "Ready")
+                    .font(.title3.bold()).foregroundStyle(Sig.text)
+                Spacer()
+                Button("Done") { done() }.foregroundStyle(Sig.muted)
+            }
+            Picker("", selection: $pane) {
+                ForEach(Pane.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            paneContent
+            recordButton
+        }
+        .padding(20).frame(maxWidth: 760).frame(maxWidth: .infinity)
+    }
+
+    // Recording: the canvas goes full-bleed and the controls collapse into a single compact,
+    // DRAGGABLE floating recorder (move it anywhere). No big button, no big segmented bar —
+    // the surface is the meeting, the chrome gets out of the way (HSM-14, owner's "OS-like" ask).
+    private var recordingBody: some View {
+        ZStack(alignment: .bottom) {
+            paneContent
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 2)
+            FloatingRecorder(model: model, pane: $pane,
+                             onStop: { Task { await model.stopRecording(); done() } })
+                .padding(.bottom, 20)
+        }
+        .frame(maxWidth: 860).frame(maxWidth: .infinity)
+        .transition(.opacity)
+    }
+
+    @ViewBuilder private var paneContent: some View {
+        if pane == .transcript {
+            LiveCaptureCanvas(model: model)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Sig.bg, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Sig.line, lineWidth: 1))
+        } else {
+            notesPane
+        }
+    }
+
+    @ViewBuilder private var flashToast: some View {
+        if !model.flash.isEmpty {
+            VStack {
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles").font(.system(size: 13, weight: .bold))
+                    Text(model.flash).font(.system(size: 13, weight: .semibold))
+                }
+                .foregroundStyle(.black).padding(.horizontal, 14).padding(.vertical, 10)
+                .background(Sig.accent, in: Capsule()).shadow(color: .black.opacity(0.4), radius: 10, y: 4)
+                .padding(.top, 8)
+                Spacer()
+            }
+            .transition(.move(edge: .top).combined(with: .opacity)).zIndex(50)
+        }
     }
 
     @ViewBuilder private var notesPane: some View {
         if let nb = model.notebook {
-            NotebookView(model: nb, editable: true)   // ink + transcript coexist; strokes persist
+            NotebookView(model: nb, editable: true,    // ink + transcript coexist; strokes persist
+                         onPromote: { card, type in model.promoteNoteToArtifact(card.text, type: type) })
         } else {
             VStack(spacing: 8) {
                 Image(systemName: "pencil.and.scribble").font(.largeTitle).foregroundStyle(Sig.local)
@@ -1419,26 +1539,6 @@ struct CaptureView: View {
             .frame(maxWidth: .infinity, minHeight: 360)
             .background(Sig.s1, in: RoundedRectangle(cornerRadius: 14))
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Sig.line, lineWidth: 1))
-        }
-    }
-
-    private var recordingDot: some View {
-        Circle().fill(Sig.bad).frame(width: 10, height: 10)
-            .shadow(color: Sig.bad.opacity(0.8), radius: 5)
-    }
-
-    private var markRow: some View {
-        Button { model.mark() } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "star.circle.fill")
-                Text("Mark this moment")
-                Spacer()
-                if model.markCount > 0 { Text("\(model.markCount)").font(.caption.weight(.bold)) }
-            }
-            .font(.subheadline.weight(.semibold)).foregroundStyle(Sig.local)
-            .padding(.horizontal, 14).padding(.vertical, 11)
-            .background(Sig.local.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Sig.local.opacity(0.35), lineWidth: 1))
         }
     }
 
@@ -1455,6 +1555,76 @@ struct CaptureView: View {
             .background(model.recording ? Sig.bad : Sig.accent, in: RoundedRectangle(cornerRadius: 16))
         }
         .disabled(model.transcribing)
+    }
+}
+
+/// HSM-14 — the floating recorder. While recording, ALL the meeting controls collapse into this
+/// one compact, frosted, DRAGGABLE capsule: stop, a live elapsed timer, the audio-reactive
+/// waveform, mark-this-moment, and a transcript/notes toggle. Drag it anywhere — the canvas is
+/// the meeting; the chrome floats and moves out of the way (the owner's "OS-like" ask).
+struct FloatingRecorder: View {
+    @ObservedObject var model: CaptureModel
+    @Binding var pane: CaptureView.Pane
+    let onStop: () -> Void
+    @State private var drag: CGSize = .zero
+    @State private var dragging = false
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Button(action: onStop) {
+                ZStack {
+                    Circle().fill(Sig.bad).frame(width: 40, height: 40)
+                        .shadow(color: Sig.bad.opacity(0.7), radius: dragging ? 2 : 6)
+                    RoundedRectangle(cornerRadius: 3.5).fill(.white).frame(width: 14, height: 14)
+                }
+            }.buttonStyle(.plain)
+
+            VStack(alignment: .leading, spacing: 1) {
+                TimelineView(.periodic(from: .now, by: 1)) { _ in
+                    Text(clockString(model.elapsedSeconds))
+                        .font(.system(size: 16, weight: .heavy).monospacedDigit()).foregroundStyle(Sig.text)
+                }
+                HStack(spacing: 3) {
+                    Circle().fill(Sig.bad).frame(width: 5, height: 5)
+                    Text("REC · on-device").font(.system(size: 8, weight: .bold)).tracking(0.5).foregroundStyle(Sig.faint)
+                }
+            }
+
+            MicWaveform(level: CGFloat(model.level), active: true, bars: 16, height: 26).frame(width: 96)
+
+            Rectangle().fill(Sig.line).frame(width: 1, height: 28)
+
+            Button { model.mark(); tactile(.medium) } label: {
+                VStack(spacing: 0) {
+                    Image(systemName: "star.circle.fill").font(.system(size: 21))
+                    if model.markCount > 0 { Text("\(model.markCount)").font(.system(size: 9, weight: .heavy)) }
+                }.foregroundStyle(Sig.local)
+            }.buttonStyle(.plain)
+
+            Button {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    pane = pane == .transcript ? .notes : .transcript
+                }; tactile()
+            } label: {
+                Image(systemName: pane == .transcript ? "pencil.and.outline" : "waveform")
+                    .font(.system(size: 19, weight: .semibold)).foregroundStyle(Sig.accent)
+                    .frame(width: 30, height: 30)
+            }.buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 10)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay(Capsule().stroke(Sig.line, lineWidth: 1))
+        .shadow(color: .black.opacity(0.5), radius: dragging ? 22 : 14, y: dragging ? 12 : 7)
+        .scaleEffect(dragging ? 1.04 : 1)
+        .offset(drag)
+        .gesture(
+            DragGesture()
+                .onChanged { v in
+                    if !dragging { withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) { dragging = true } }
+                    drag = v.translation
+                }
+                .onEnded { _ in withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) { dragging = false } })
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: drag == .zero)
     }
 }
 
@@ -1512,10 +1682,12 @@ struct LiveCaptureCanvas: View {
     }
 
     @ViewBuilder private var idleHeader: some View {
-        VStack(spacing: 10) {
-            pixelAsset("qlippy", size: 58, fallback: model.recording ? "waveform" : "mic.circle.fill",
-                       tint: model.recording ? Sig.accent : Sig.faint)
-                .symbolEffect(.variableColor.iterative, options: .repeating, isActive: model.recording)
+        VStack(spacing: 12) {
+            if model.recording {
+                MicWaveform(level: CGFloat(model.level), active: true, bars: 32, height: 52)
+            } else {
+                pixelAsset("qlippy", size: 58, fallback: "mic.circle.fill", tint: Sig.faint)
+            }
             Text(model.recording ? "Listening… your words will float up here." : "Press Record — your meeting comes alive here.")
                 .font(.callout).foregroundStyle(Sig.faint).multilineTextAlignment(.center)
         }
@@ -1557,6 +1729,36 @@ struct LiveCaptureCanvas: View {
         }
         .frame(width: size.width, height: h)
         .position(x: size.width / 2, y: boardTop + h / 2)
+    }
+}
+
+/// HSM-14 — the audio-reactive VU. Bars dance to the live mic amplitude (`level`) with a
+/// travelling shimmer, so the control plane visibly responds to sound the instant it arrives —
+/// before any transcription. Quiet → a gentle idle ripple; loud → tall bars.
+struct MicWaveform: View {
+    var level: CGFloat
+    var active: Bool
+    var bars: Int = 28
+    var height: CGFloat = 44
+
+    var body: some View {
+        let amp = active ? min(1, max(0.04, level * 7)) : 0
+        TimelineView(.animation) { ctx in
+            let t = ctx.date.timeIntervalSinceReferenceDate
+            HStack(alignment: .center, spacing: 3) {
+                ForEach(0..<bars, id: \.self) { i in
+                    let shimmer = 0.45 + 0.55 * (0.5 + 0.5 * sin(t * 7 + Double(i) * 0.55))
+                    let centerBias = 1 - abs(Double(i) - Double(bars) / 2) / Double(bars)   // taller in the middle
+                    let h = 3 + CGFloat(shimmer * centerBias) * amp * height + (active ? 2 : 0)
+                    Capsule()
+                        .fill(LinearGradient(colors: [Sig.accent, Sig.accent.opacity(0.55)], startPoint: .bottom, endPoint: .top))
+                        .frame(width: 3, height: max(3, h))
+                        .opacity(active ? 1 : 0.35)
+                }
+            }
+            .animation(.easeOut(duration: 0.08), value: amp)
+        }
+        .frame(height: height)
     }
 }
 
@@ -1814,6 +2016,13 @@ final class MeetingReviewState: ObservableObject {
             : ""
     }
 
+    /// HSM-14 — promote a hand-note into a real `needs_review` artifact that joins the model's
+    /// in the intelligence pane (the loop closes: your notes become reviewable intelligence).
+    func promoteNote(_ text: String, type: ArtifactType) {
+        try? storage?.saveArtifact(noteArtifact(meetingId: meeting.id, type: type, text: text))
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { load() }
+    }
+
     func approve(_ id: String) {
         try? ReviewModel(artifacts: artifacts, store: storage).approve(id); load()
     }
@@ -1993,6 +2202,10 @@ private func profileBlurb(_ p: MIRProfile) -> String {
     case .incident: return "Reconstructs what happened — timeline, runbook changes and risks."
     }
 }
+/// mm:ss for the recorder timer.
+private func clockString(_ s: Double) -> String {
+    let t = Int(max(0, s)); return String(format: "%d:%02d", t / 60, t % 60)
+}
 /// A light tactile tap (HSM-14 — the app should feel hand-driven).
 private func tactile(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
     UIImpactFeedbackGenerator(style: style).impactOccurred()
@@ -2008,6 +2221,34 @@ private func plainPreview(_ md: String) -> String {
 
 /// Wraps an artifact so it can drive a `.sheet(item:)` without retroactive Identifiable.
 struct OpenDoc: Identifiable { let id = UUID(); let artifact: Artifact; let ink: UIImage? }
+
+// MARK: - Note → artifact promotion (HSM-14)
+
+/// Build a `needs_review` artifact from hand-authored note text — a proposal the user reviews
+/// alongside the model's. `pluginId` marks it as note-sourced; confidence is 1.0 (you wrote it).
+func noteArtifact(meetingId: String, type: ArtifactType, text: String) -> Artifact {
+    Artifact(
+        id: UUID().uuidString, meetingId: meetingId, artifactType: type,
+        title: noteArtifactTitle(text), bodyMarkdown: text, structuredJson: .object([:]),
+        confidence: 1.0, status: .needsReview, pluginId: "holdspeak.mobile.note",
+        pluginVersion: "1", sources: [ArtifactSource(sourceType: "note", sourceRef: "handwritten")])
+}
+private func noteArtifactTitle(_ text: String) -> String {
+    let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    if let c = t.firstIndex(of: ":") { return String(t[..<c]).trimmingCharacters(in: .whitespaces) }  // "Decision: …" → "Decision"
+    let words = t.split(separator: " ").prefix(6).joined(separator: " ")
+    return words.isEmpty ? "Note" : words
+}
+/// Guess the artifact type from the snippet so the one-tap "Promote" does the obvious thing;
+/// the long-press menu still offers an explicit choice.
+func guessArtifactType(_ text: String) -> ArtifactType {
+    let t = text.lowercased()
+    if t.hasPrefix("decision") || t.contains("decided") || t.contains("we'll go with") { return .decisions }
+    if t.hasPrefix("risk") || t.contains("risk") || t.contains("blocker") { return .riskRegister }
+    if t.hasPrefix("action") || t.contains("todo") || t.contains("owner") || t.contains("follow up") { return .actionItems }
+    if t.hasPrefix("requirement") || t.contains("must ") || t.contains("should ") || t.contains("need to") { return .requirements }
+    return .decisions
+}
 
 /// HSM-14-03 — the Tactile Sheets artifact card: gesture-first + ALIVE. Swipe tilts/scales
 /// the card and pops a bouncing action badge (left → approve, right → dismiss, haptic on
@@ -2555,8 +2796,10 @@ struct MeetingDetailView: View {
                     TranscriptView(segments: meeting.segments).id(0)
 
                     Text("NOTES").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.local).padding(.top, 8)
-                    // Reloads the meeting's PencilKit pages; editable so notes can be added after.
-                    NotebookView(model: notes, editable: true)
+                    // Reloads the meeting's PencilKit pages + pulled-in transcript cards; editable
+                    // so notes can be added after, and a card can be promoted into the review.
+                    NotebookView(model: notes, editable: true,
+                                 onPromote: { card, type in review.promoteNote(card.text, type: type) })
                 }
                 .padding(20).frame(maxWidth: 760).frame(maxWidth: .infinity)
             }

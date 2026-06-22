@@ -23,6 +23,7 @@ public final class MeetingCapture: @unchecked Sendable {
     private var startedAt: Date?
     private var meetingID: String?
     private var lastGoodSegments: [Segment] = []   // last non-empty transcript (blank-pass fallback)
+    private var _level: Float = 0                   // HSM-14 — smoothed mic amplitude for the live VU
 
     public init(capture: IAudioCapture,
                 store: MeetingStore,
@@ -45,13 +46,26 @@ public final class MeetingCapture: @unchecked Sendable {
     /// Capture stays local; the egress badge says so plainly.
     public var egressLabel: String { "on-device · nothing leaves" }
 
+    /// HSM-14 — the live mic amplitude (0…~1), smoothed, updated on every captured buffer
+    /// (~12×/s). Drives the audio-reactive waveform so the control plane visibly responds to
+    /// sound the instant it arrives — no transcription round-trip needed.
+    public var inputLevel: Float { locked { _level } }
+    private func updateLevel(_ chunk: AudioChunk) {
+        guard !chunk.samples.isEmpty else { return }
+        var sum: Float = 0
+        for s in chunk.samples { let f = Float(s) / 32768.0; sum += f * f }
+        let rms = (sum / Float(chunk.samples.count)).squareRoot()
+        locked { _level = Swift.max(rms, _level * 0.82) }   // fast attack, smooth decay
+    }
+
     /// Begin a recording. Audio accumulates on-device; the live transcript starts empty.
     public func start() {
-        locked { chunks.removeAll(); lastGoodSegments = []; startedAt = now(); meetingID = makeID(); _state = .recording(liveTranscript: "") }
+        locked { chunks.removeAll(); lastGoodSegments = []; _level = 0; startedAt = now(); meetingID = makeID(); _state = .recording(liveTranscript: "") }
         do {
             try capture.start { [weak self] chunk in
                 guard let self else { return }
                 self.locked { self.chunks.append(chunk) }
+                self.updateLevel(chunk)
             }
         } catch {
             setState(.failed(String(describing: error)))
