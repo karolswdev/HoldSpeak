@@ -3,7 +3,13 @@
 > 🚀 **New agent? Start here:** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **Generation theater** — the
+**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **App Settings (inference
+target)** — a real, persisted Settings surface (gear in the home header): choose where intelligence
+runs — *This iPad* (on-device) or a *LAN endpoint* (any OpenAI-compatible server) — with URL/model/
+key fields + a live Test connection, persisted in `InferenceConfigStore` and **wired into
+`generate()`** (it branches the provider on the setting), so inference can finally target the LAN
+box. Signal depth throughout; on owner feedback ("where are our app settings"). Live on the iPad.
+Prior same-day: **Generation theater** — the
 post-meeting on-device generation (was a 1pt spinner) is now a living moment: a breathing thinking
 orb + a constellation of the lens's target types lighting up one-by-one as the model drafts each
 (pending → in-flight → done+check+haptic), a "Running on this iPad · no network" pill, and an "N
