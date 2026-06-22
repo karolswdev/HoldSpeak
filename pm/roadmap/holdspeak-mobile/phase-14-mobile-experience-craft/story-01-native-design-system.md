@@ -38,7 +38,17 @@ action bar, large touch targets, haptic-forward. Built around thumbs + Apple Pen
 - [x] The hero meeting + intelligence screen is built to the system and **proven with a
       committed Simulator screenshot** — swipe-to-approve reveal, draggable action sheet,
       egress as the single **Local badge** (no privacy prose — POSITIONING canon).
-- [ ] The system is **adopted** into the app's real screens (rolls out via HSM-14-02/03).
+- [~] The system is **adopted** into the app's real screens (rolls out via HSM-14-02/03). **2026-06-22:
+      first real-screen adoption + a depth/motion upgrade** on owner feedback ("push the UI/UX a lot
+      more"): the home was rebuilt around new shared primitives — `SignalCard` (one elevation
+      treatment: layered fill + top-lit hairline + soft shadow), `GlyphChip` (gradient icon
+      container), `PressableCard` (HIG scale-on-press), and `Sig` depth tokens
+      (`bgGradient`/`accentGradient`/`localGradient`/`topHairline`) + reduce-motion-aware entrances.
+      Home now: cinematic gradient bg with accent/cobalt glows, an ON-DEVICE badge, a hero Record CTA
+      (accent gradient + pulsing mic ring), gradient-chip tiles, elevated staggered meeting cards, a
+      count chip, a considered empty state. Built for Simulator + installed live on the iPad. Shots:
+      [home before](./screenshots/home-before.png) → [home after](./screenshots/home-after.png),
+      [empty state](./screenshots/home-empty-state.png). Capture chrome + intelligence pane next.
 
 ## Evidence
 

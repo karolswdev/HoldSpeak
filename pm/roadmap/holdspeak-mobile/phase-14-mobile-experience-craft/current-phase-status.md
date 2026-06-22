@@ -168,6 +168,18 @@ card with its grip; five loose cards tidied into a grid with the Undo·Tidy cont
 now deliverables 1–4 complete**; only the stretch 5–6 (minimap, windowed panes → candidate
 HSM-14-14) and the device hardware-feel pass remain.
 
+**2026-06-22 — craft elevation pass begins (owner: "push the UI/UX a lot more").** On owner
+feedback that the shipped effects were "low-level / basic," the Signal design system gained real
+**depth + motion primitives** (`Sig.bgGradient`/`accentGradient`/`localGradient`/`topHairline`, a
+shared `SignalCard` elevation treatment, a `GlyphChip` gradient icon container, a `PressableCard`
+press style, reduce-motion-aware entrances) and the **home screen was rebuilt to a flagship bar**
+(adopting HSM-14-01 into a real screen): a cinematic gradient background with soft accent/cobalt
+glows, an "ON-DEVICE · NOTHING LEAVES" badge, a hero Record CTA on the accent gradient with a
+pulsing mic ring, side-by-side gradient-chip tiles, elevated meeting cards with staggered entrance,
+a count chip, and a considered empty state. Built for the Simulator AND installed live on the iPad
+Air M4; before/after + empty-state shots committed. This kicks off a standing elevation of every
+surface (capture chrome + intelligence pane next).
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
