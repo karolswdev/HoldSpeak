@@ -3,11 +3,25 @@
 > 🚀 **New agent? Start here:** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** Live-dynamism batch
+**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **HSM-14-13 deliverables 1+2
+built** — the "OS-like" capture surface. (1) The recorder **docks** to the top/bottom edge on
+drag-release (magnetic snap + haptic) or **floats** clamped-on-screen, and **minimizes** to a compact
+breathing **rec orb** (tap to re-expand — never trap); state persists on the model. (2) **Free-place
+vs tack**: a dragged bubble drops as a **loose card** (no marked moment) or, on a mid-drag **tack
+target** that lights up under the drag, **tacks** as a marked moment that steers the intelligence
+(`markMoment`); loose cards promote later. Both decisions are pure host-tested RuntimeCore functions
+(`RecorderSnap`, `BubblePlacement`); `swift test` **228/6/0**; four committed Simulator shots.
+Deliverables 3–4 remain. **HSM-14-12 built** —
+constant-time live transcription: `MeetingCapture` now keeps a committed prefix + a bounded active
+window so each `tick()` re-transcribes only the audio since the last commit (the live transcript
+stays complete + monotonic, the per-tick cost is constant at minute 40 as at minute 1); the enabler
+was `WhisperKitTranscriber` returning real per-segment timestamps. No existing test ever commits at
+production thresholds, so all 211 prior tests pass unchanged + three new `SlidingWindowTests`
+(`swift test` **214/6/0**); app builds for the Simulator, canvas shot committed; only the on-device
+cadence eyeball remains for the owner. Earlier same-day: live-dynamism batch
 shipped (PRs #117/#118): transcription root-caused + cached, audio-reactive waveform, draggable
-floating recorder, one free-form dot-grid desktop, note→artifact promotion. Two next stories
-**planned (not built)** on owner request: **HSM-14-12** constant-time live transcription
-(timestamp-driven sliding window) + **HSM-14-13** the spatial workspace (dock/minimize recorder,
+floating recorder, one free-form dot-grid desktop, note→artifact promotion. Next story still
+**planned (not built)**: **HSM-14-13** the spatial workspace (dock/minimize recorder,
 free-place vs tack, resizable cards, tidy; stretch: minimap + windowed panes). Earlier: the
 intelligence pane now **materializes** artifacts (tint-ring glow + animated insert) and the
 MIR profile is a meaningful **lens** (blurb + emphasized-type chips, named on the Generate

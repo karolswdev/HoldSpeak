@@ -89,8 +89,8 @@ Pencil), accessibility + adaptivity, and a polish pass — each delivered with c
 | HSM-14-09 | Local vision model (Gemma 4) seam + ambiguity resolution | in-progress | [story-09](./story-09-local-vision-model.md) | seam host-tested (211/0) |
 | HSM-14-10 | Models, front and center (import + manage, AirDrop-ready) | in-progress | [story-10](./story-10-model-import.md) | device-built |
 | HSM-14-11 | The live capture canvas (transcription bubbles + tack-to-board) | in-progress | [story-11](./story-11-live-capture-canvas.md) | built + on iPad + Simulator-proven |
-| HSM-14-12 | Constant-time live transcription (sliding window + commit) | planned | [story-12](./story-12-constant-time-transcription.md) | designed |
-| HSM-14-13 | The spatial workspace (OS-like capture surface) | planned | [story-13](./story-13-spatial-workspace.md) | designed |
+| HSM-14-12 | Constant-time live transcription (sliding window + commit) | in-progress (built + host-proven + sim-shown; device cadence pending) | [story-12](./story-12-constant-time-transcription.md) | [shot](./screenshots/constant-time-transcription-canvas.png) + story "Evidence" |
+| HSM-14-13 | The spatial workspace (OS-like capture surface) | in-progress (deliverables 1+2 built + host-proven + sim-shown; 3–4 remain) | [story-13](./story-13-spatial-workspace.md) | [docked](./screenshots/recorder-docked-top.png) / [orb](./screenshots/recorder-minimized-orb.png) / [free-place vs tack](./screenshots/recorder-freeplace-vs-tack.png) |
 
 ## Where we are
 
@@ -127,6 +127,36 @@ still grows O(length)) and **HSM-14-13** (the spatial workspace — dockable/min
 free-place vs tack, resizable cards, tidy, and stretch: minimap + windowed panes). Both are
 written up as stories with architecture, acceptance criteria, and test plans; implementation is
 deferred.
+
+**2026-06-22 (later) — HSM-14-12 built.** Constant-time live transcription landed: `MeetingCapture`
+keeps a **committed prefix + a bounded active window**, so `tick()` re-transcribes only the audio
+since the last commit (≤ `commitThreshold + overlap` seconds) instead of the whole take — the live
+transcript stays `committed + tail` (complete, monotonic) and costs the same to recompute at minute
+40 as at minute 1. The enabler was teaching `WhisperKitTranscriber` to return WhisperKit's **real
+per-segment timestamps** (it had collapsed them to one zero-stamp segment). Production thresholds
+plus the existing tests' 1-frame chunks mean **no existing test ever commits**, so the short-meeting
+path is byte-identical and all 211 prior tests pass unchanged; three new `SlidingWindowTests` prove
+the bound, the no-loss/no-dup seam (the fake capture encodes absolute audio position so a gap shows
+up as a wrong word sequence), and the blank-window safety. `swift test` **214/6/0**; the app builds
+for the Simulator and the live canvas it feeds renders intact (committed shot). Remaining: the owner
+eyeballs the cadence at the end of a ≥10-minute real meeting on the iPad (acceptance #6).
+
+**2026-06-22 (later still) — HSM-14-13 deliverable 1 built.** The "OS-like" recorder: the
+`FloatingRecorder` now **docks** to the top/bottom edge on drag-release (magnetic snap + haptic) or
+**floats** clamped-on-screen where you drop it, and **minimizes** to a compact breathing **rec orb**
+(tap to re-expand every control — the "never trap" rule). The dock/float/minimized state persists on
+`CaptureModel` across pane switches + re-entry. The snap/dock math is a **pure RuntimeCore function**
+(`RecorderSnap`, 9 host tests); `swift test` **223/6/0**. Built for the Simulator; the top-docked
+capsule + the minimized orb are committed shots. Deliverables 2–4 (free-place vs tack, resizable
+cards, tidy) remain on the story.
+
+**2026-06-22 — HSM-14-13 deliverable 2 (free-place vs tack) built.** A dragged bubble now lands two
+ways: a plain drop below the stream places it as a **loose card** (no marked moment), and a drop on
+the **tack target** (a dashed pill that appears only mid-drag and lights up when you're over it)
+**tacks** it — a pushpin + tilt that calls `markMoment` so the on-device intelligence weights it. A
+loose card promotes to a moment later via "Tack as moment". The drop decision is RuntimeCore's pure
+`BubblePlacement` (5 host tests); `swift test` **228/6/0**. Two committed shots (the mixed canvas
+with the honest "1 tacked · 1 placed" footer, and the lit tack target). Deliverables 3–4 remain.
 
 ## Operating principle (standing, beyond this phase)
 

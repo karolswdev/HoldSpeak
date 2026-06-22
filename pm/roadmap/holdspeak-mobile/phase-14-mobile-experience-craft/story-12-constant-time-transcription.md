@@ -2,7 +2,8 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 14
-- **Status:** planned (designed; not started)
+- **Status:** in-progress — **built + host-proven + Simulator-shown** (2026-06-22); only the
+  on-device cadence eyeball (acceptance #6) remains for the owner. See "Evidence" below.
 - **Depends on:** HSM-14-11 (the live canvas + the model-cache fix), HSM-8-01 (MeetingCapture)
 - **Unblocks:** a live transcript that stays immediate on a long meeting (the felt "control plane")
 - **Owner:** unassigned
@@ -97,8 +98,26 @@ cheap. The cadence stays ~constant at minute 40.
   tick); keep the cached-instance access serialized.
 - **A window that returns blank** → keep `lastGoodSegments`; never commit on a blank pass.
 
-## Evidence
+## Evidence (built 2026-06-22; closeout pending the device cadence eyeball)
 
-(To fill at implementation.) `Sources/RuntimeCore/Capture/MeetingCapture.swift` (windowing) +
-`App/MeetingCaptureApp.swift` (`WhisperKitTranscriber` timestamps) + `SlidingWindowTests`
-(`swift test` count). Device: a long-meeting cadence note.
+`MeetingCapture` keeps a **committed prefix + a bounded active window**: `tick()` transcribes only
+the audio since the last commit (`Self.windowChunks(_:fromFrame:)`, frame-accurate). Once the window
+passes `commitThresholdSeconds` (45 s), every segment ending before the `overlapSeconds` (8 s) guard
+is frozen into `committedSegments` and `committedFrames` advances by `lastEnd × sampleRate` — no
+mid-word cuts. The live transcript is always `committed + tail` (complete, monotonic). `stop()`
+assembles the prefix + a final pass over the bounded tail (long meeting), or the unchanged legacy
+full pass with the blank-pass fallback (short meeting). `WhisperKitTranscriber` now returns
+WhisperKit's **real per-segment timestamps** (was one `startTime:0/endTime:0` segment).
+
+- **Backward-compatible:** production thresholds + the existing tests' 1-frame chunks mean no
+  existing test ever commits, so the short-meeting path is byte-identical; all 211 prior tests pass
+  unchanged.
+- **Tests:** `swift test` **228/6/0** incl. 3 new `SlidingWindowTests` — bounded per-tick window,
+  no loss/dup across the commit seam (the fake capture encodes absolute audio position so a gap is a
+  wrong word sequence), and blank-window safety.
+- **Built + shown:** app `xcodebuild … BUILD SUCCEEDED`; the live canvas it feeds renders intact —
+  [`screenshots/constant-time-transcription-canvas.png`](./screenshots/constant-time-transcription-canvas.png).
+- **Files:** `Sources/RuntimeCore/Capture/MeetingCapture.swift`,
+  `App/MeetingCaptureApp.swift` (`WhisperKitTranscriber`), `Tests/RuntimeCoreTests/SlidingWindowTests.swift`.
+- **Remaining (acceptance #6, device):** eyeball the cadence at the end of a ≥10-minute real meeting
+  on the iPad Air M4. The host bound guarantees the cost; the device step confirms the felt immediacy.
