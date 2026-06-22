@@ -216,6 +216,17 @@ logic blocks (lens / extract / summarize / rewrite / keep-if), egress-aware outp
 canvas** (tap blocks from a palette, drag to reorder, run through the configured `ILLMProvider` with
 the generation-theater treatment, results to the chosen output).
 
+**2026-06-22 — three owner-flagged fixes (prose / hand-typed model / unused PixelLab).** (1) **No
+prose**: Settings' chatty test-result sentences ("Reachable — the model replied") are gone; the
+endpoint state is now a tight chip ("3 found" ✓ / "no connection" ✗). (2) **Fetched model picker**:
+the model is no longer typed by hand — a fetch button calls the endpoint's `GET /v1/models`
+(`InferenceConfigStore.fetchModels`) and you **pick** from the real list in a menu; the fetch
+doubles as the reachability check. (3) **PixelLab, used for real**: a bespoke generated **plasma
+energy core** (PixelLab `theaterorb.png`, bundled offline) is now the centerpiece of the generation
+theater — a swirling sprite that slowly rotates + breathes inside the accent pulse rings, replacing
+the SF-symbol glyph. Built for Simulator + device; shots `settings-models-fetched.png`,
+`generation-theater-pixel-orb.png`. Standing note: lean on the PixelLab MCP for craft, not SF glyphs.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a

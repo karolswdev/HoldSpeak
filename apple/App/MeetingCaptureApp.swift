@@ -1555,6 +1555,21 @@ struct SketchToDiagramView: View {
 
     /// The egress reality for the badge: local keeps everything on the iPad; an endpoint sends to its host.
     var egressLabel: String { isLocal ? "On-device · nothing leaves" : "Sends to \(endpointConfig?.baseURL.host ?? "your endpoint")" }
+
+    private struct ModelsResponse: Decodable { let data: [Entry]; struct Entry: Decodable { let id: String } }
+
+    /// Ask the endpoint what it serves (OpenAI-compatible `GET /v1/models`) so the user PICKS from
+    /// the real list instead of typing a name. A successful fetch doubles as the reachability test.
+    func fetchModels() async throws -> [String] {
+        let base = endpointURL.trimmingCharacters(in: .whitespaces)
+        guard !base.isEmpty,
+              let u = URL(string: base.hasSuffix("/") ? base + "models" : base + "/models") else { throw URLError(.badURL) }
+        var req = URLRequest(url: u); req.timeoutInterval = 12
+        if !endpointKey.isEmpty { req.setValue("Bearer \(endpointKey)", forHTTPHeaderField: "Authorization") }
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { throw URLError(.badServerResponse) }
+        return try JSONDecoder().decode(ModelsResponse.self, from: data).data.map(\.id)
+    }
 }
 
 // MARK: - Settings (where intelligence runs)
@@ -1566,9 +1581,10 @@ struct SettingsView: View {
     @ObservedObject private var cfg = InferenceConfigStore.shared
     @Environment(\.dismiss) private var dismiss
     @FocusState private var focused: Field?
-    @State private var test: TestState = .idle
-    enum Field: Hashable { case url, model, key }
-    enum TestState: Equatable { case idle, testing, ok(String), fail(String) }
+    @State private var fetch: FetchState = .idle
+    @State private var models: [String] = []
+    enum Field: Hashable { case url, key }
+    enum FetchState: Equatable { case idle, loading, ok(Int), fail }
 
     var body: some View {
         ZStack {
@@ -1613,7 +1629,7 @@ struct SettingsView: View {
     private func targetCard(_ m: RuntimeMode, _ title: String, _ sub: String, _ glyph: String, _ g: LinearGradient) -> some View {
         let sel = (m == .local) == cfg.isLocal
         return Button {
-            tactile(); withAnimation(.spring(response: 0.42, dampingFraction: 0.8)) { cfg.mode = m; test = .idle }
+            tactile(); withAnimation(.spring(response: 0.42, dampingFraction: 0.8)) { cfg.mode = m; fetch = .idle }
         } label: {
             HStack(spacing: 14) {
                 GlyphChip(system: glyph, gradient: g, size: 50)
@@ -1636,13 +1652,67 @@ struct SettingsView: View {
     private var endpointCard: some View {
         VStack(alignment: .leading, spacing: 13) {
             field("ENDPOINT URL", $cfg.endpointURL, "http://192.168.1.43:8080/v1", .url, keyboard: .URL)
-            field("MODEL", $cfg.endpointModel, "qwen3-9b (servers often ignore this)", .model)
+            modelRow
             field("API KEY (OPTIONAL)", $cfg.endpointKey, "Bearer token, if your server needs one", .key, secure: true)
-            testButton
-            testResult
         }
         .padding(16).signalCard(radius: 20)
         .transition(.asymmetric(insertion: .scale(scale: 0.96).combined(with: .opacity), removal: .opacity))
+    }
+
+    // The model is PICKED from what the endpoint actually serves (GET /v1/models) — never typed.
+    // The fetch button doubles as the reachability check; states stay tight (no prose).
+    private var modelRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("MODEL").font(.system(size: 10, weight: .heavy)).tracking(0.8).foregroundStyle(Sig.faint)
+                Spacer()
+                statusChip
+            }
+            HStack(spacing: 8) {
+                Menu {
+                    ForEach(models, id: \.self) { m in Button(m) { cfg.endpointModel = m; tactile() } }
+                } label: {
+                    HStack {
+                        Text(cfg.endpointModel.isEmpty ? "Fetch to choose" : cfg.endpointModel)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(cfg.endpointModel.isEmpty ? Sig.faint : Sig.text).lineLimit(1)
+                        Spacer()
+                        Image(systemName: "chevron.up.chevron.down").font(.system(size: 12, weight: .bold)).foregroundStyle(Sig.faint)
+                    }
+                    .padding(.horizontal, 13).padding(.vertical, 12)
+                    .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
+                }
+                .disabled(models.isEmpty)
+
+                Button { fetchModels() } label: {
+                    Image(systemName: "arrow.down.circle.fill").font(.system(size: 20, weight: .bold)).foregroundStyle(.black)
+                        .frame(width: 48, height: 48)
+                        .background(Sig.accentGradient, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                        .opacity(cfg.endpointConfig == nil ? 0.5 : 1)
+                }
+                .buttonStyle(PressableCard())
+                .disabled(cfg.endpointConfig == nil || fetch == .loading)
+                .accessibilityLabel("Fetch models from endpoint")
+            }
+        }
+    }
+
+    @ViewBuilder private var statusChip: some View {
+        switch fetch {
+        case .loading: ProgressView().controlSize(.small).tint(Sig.accent)
+        case .ok(let n): chip("\(n) found", "checkmark", Sig.ok)
+        case .fail: chip("no connection", "xmark", Sig.bad)
+        case .idle: EmptyView()
+        }
+    }
+
+    private func chip(_ t: String, _ icon: String, _ c: Color) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon).font(.system(size: 9, weight: .black))
+            Text(t).font(.system(size: 10, weight: .heavy))
+        }
+        .foregroundStyle(c).padding(.horizontal, 7).padding(.vertical, 3).background(c.opacity(0.16), in: Capsule())
     }
 
     private func field(_ l: String, _ text: Binding<String>, _ placeholder: String, _ f: Field,
@@ -1663,44 +1733,6 @@ struct SettingsView: View {
         }
     }
 
-    private var testButton: some View {
-        Button { runTest() } label: {
-            HStack(spacing: 8) {
-                if case .testing = test { ProgressView().tint(.black) } else { Image(systemName: "bolt.fill") }
-                Text(test == .testing ? "Testing…" : "Test connection")
-            }
-            .font(.system(size: 15, weight: .heavy)).foregroundStyle(.black)
-            .frame(maxWidth: .infinity).padding(.vertical, 13)
-            .background(Sig.accentGradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .opacity(cfg.endpointConfig == nil ? 0.5 : 1)
-        }
-        .buttonStyle(PressableCard())
-        .disabled(cfg.endpointConfig == nil || test == .testing)
-    }
-
-    @ViewBuilder private var testResult: some View {
-        switch test {
-        case .ok(let r):
-            resultRow("checkmark.circle.fill", Sig.ok, "Reachable — the model replied", r)
-        case .fail(let e):
-            resultRow("exclamationmark.triangle.fill", Sig.bad, "Couldn't reach the endpoint", e)
-        default: EmptyView()
-        }
-    }
-
-    private func resultRow(_ icon: String, _ color: Color, _ title: String, _ detail: String) -> some View {
-        HStack(alignment: .top, spacing: 9) {
-            Image(systemName: icon).font(.system(size: 14, weight: .bold)).foregroundStyle(color)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 13, weight: .heavy)).foregroundStyle(Sig.text)
-                Text(detail).font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(3)
-            }
-            Spacer()
-        }
-        .padding(12).background(color.opacity(0.10), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(color.opacity(0.3), lineWidth: 1))
-    }
-
     private var egressRow: some View {
         HStack(spacing: 8) {
             Image(systemName: cfg.isLocal ? "lock.shield.fill" : "antenna.radiowaves.left.and.right")
@@ -1713,15 +1745,19 @@ struct SettingsView: View {
         .padding(.top, 4)
     }
 
-    private func runTest() {
-        guard let c = cfg.endpointConfig else { return }
-        focused = nil; test = .testing; tactile()
+    private func fetchModels() {
+        guard cfg.endpointConfig != nil else { return }
+        focused = nil; withAnimation { fetch = .loading }; tactile()
         Task {
             do {
-                let reply = try await OpenAIEndpointProvider(config: c).complete(prompt: "Reply with exactly: ok")
-                await MainActor.run { withAnimation { test = .ok(reply.trimmingCharacters(in: .whitespacesAndNewlines).prefix(80).description) }; tactile(.medium) }
+                let ms = try await cfg.fetchModels()
+                await MainActor.run {
+                    models = ms
+                    if cfg.endpointModel.isEmpty || !ms.contains(cfg.endpointModel) { cfg.endpointModel = ms.first ?? cfg.endpointModel }
+                    withAnimation { fetch = .ok(ms.count) }; tactile(.medium)
+                }
             } catch {
-                await MainActor.run { withAnimation { test = .fail("\(error)") }; tactile(.heavy) }
+                await MainActor.run { withAnimation { fetch = .fail } ; tactile(.heavy) }
             }
         }
     }
@@ -3473,6 +3509,7 @@ private struct GenerationTheater: View {
     let current: ArtifactType?
     @State private var pulse = false
     @State private var spin = false
+    @State private var orbSpin = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var headline: String {
@@ -3502,10 +3539,11 @@ private struct GenerationTheater: View {
         .background(
             RadialGradient(colors: [Sig.accent.opacity(0.12), .clear], center: .top, startRadius: 8, endRadius: 220)
         )
-        .onAppear { pulse = true; spin = true }
+        .onAppear { pulse = true; spin = true; orbSpin = true }
     }
 
-    // The breathing core + outward accent pulses + a rotating shimmer arc — alive, not a spinner.
+    // A bespoke PixelLab plasma core — a swirling energy orb, slowly rotating + breathing — ringed
+    // by outward accent pulses and a sweeping shimmer arc. The intelligence, literally alive.
     private var orb: some View {
         ZStack {
             ForEach(0..<3, id: \.self) { i in
@@ -3515,17 +3553,19 @@ private struct GenerationTheater: View {
                     .opacity(pulse ? 0.15 : 0.8)
                     .animation(reduceMotion ? nil : .easeInOut(duration: 1.7).repeatForever().delay(Double(i) * 0.22), value: pulse)
             }
-            Circle().fill(Sig.accentGradient).frame(width: 66, height: 66)
-                .shadow(color: Sig.accent.opacity(0.6), radius: 20)
-                .scaleEffect(pulse ? 1.06 : 0.98)
-                .animation(reduceMotion ? nil : .easeInOut(duration: 1.1).repeatForever(), value: pulse)
+            Circle().fill(Sig.accent.opacity(0.5)).frame(width: 66, height: 66).blur(radius: 24)   // bloom
+            pixelAsset("theaterorb", size: 80, fallback: "sparkles", tint: .black)
+                .rotationEffect(.degrees(orbSpin ? 360 : 0))
+                .scaleEffect(pulse ? 1.05 : 0.96)
+                .shadow(color: Sig.accent.opacity(0.7), radius: 16)
+                .animation(reduceMotion ? nil : .linear(duration: 9).repeatForever(autoreverses: false), value: orbSpin)
+                .animation(reduceMotion ? nil : .easeInOut(duration: 1.2).repeatForever(), value: pulse)
             Circle().trim(from: 0, to: 0.32)
-                .stroke(AngularGradient(colors: [.clear, .white.opacity(0.95), .clear], center: .center),
+                .stroke(AngularGradient(colors: [.clear, .white.opacity(0.9), .clear], center: .center),
                         style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                .frame(width: 86, height: 86)
+                .frame(width: 96, height: 96)
                 .rotationEffect(.degrees(spin ? 360 : 0))
-                .animation(reduceMotion ? nil : .linear(duration: 1.1).repeatForever(autoreverses: false), value: spin)
-            Image(systemName: "sparkles").font(.system(size: 24, weight: .bold)).foregroundStyle(.black)
+                .animation(reduceMotion ? nil : .linear(duration: 1.2).repeatForever(autoreverses: false), value: spin)
         }
         .frame(height: 132)
     }
