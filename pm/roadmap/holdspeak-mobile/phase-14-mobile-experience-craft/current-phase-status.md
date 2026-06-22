@@ -91,6 +91,7 @@ Pencil), accessibility + adaptivity, and a polish pass — each delivered with c
 | HSM-14-11 | The live capture canvas (transcription bubbles + tack-to-board) | in-progress | [story-11](./story-11-live-capture-canvas.md) | built + on iPad + Simulator-proven |
 | HSM-14-12 | Constant-time live transcription (sliding window + commit) | in-progress (built + host-proven + sim-shown; device cadence pending) | [story-12](./story-12-constant-time-transcription.md) | [shot](./screenshots/constant-time-transcription-canvas.png) + story "Evidence" |
 | HSM-14-13 | The spatial workspace (OS-like capture surface) | in-progress (deliverables 1–4 built + host-proven + sim-shown; stretch 5–6 + device feel remain) | [story-13](./story-13-spatial-workspace.md) | [docked](./screenshots/recorder-docked-top.png) / [orb](./screenshots/recorder-minimized-orb.png) / [free-place vs tack](./screenshots/recorder-freeplace-vs-tack.png) / [resize](./screenshots/recorder-resizable-card.png) / [tidy](./screenshots/recorder-tidy-grid.png) |
+| HSM-14-15 | The Workbench (visual intelligence builder) | in-progress (engine shipped + host-tested; gamified canvas next) | [story-15](./story-15-workbench.md) | `WorkflowTests` (7) |
 
 ## Where we are
 
@@ -204,6 +205,16 @@ chosen target isn't ready — so the owner can finally point inference at the `.
 throughout (gradient target cards with accent-selected border, glyph chips, an honest egress pill).
 Built for Simulator + device; committed shot (`settings-intelligence.png`). Reuses the HSM-5-06
 `RuntimeMode`/`EndpointConfig` seam. **Still next: the Workbench (visual intelligence builder).**
+
+**2026-06-22 — the Workbench begins (HSM-14-15), on the owner's vision of a gamified visual
+intelligence builder.** The flagship is scoped + its **engine foundation shipped + host-tested**:
+`Sources/RuntimeCore/Workbench/Workflow.swift` — a user-defined workflow is a *linear pipeline*
+(SOURCE → STEPs → OUTPUT; the deliberate usability bet over a node-and-wire graph), with the basic
+logic blocks (lens / extract / summarize / rewrite / keep-if), egress-aware outputs, a human-readable
+`plan`, derived produced-types, and one-tap `WorkflowPresets`. `WorkflowTests` (7), `swift test`
+**240/6/0**. The design is in [`story-15`](./story-15-workbench.md). **Next build: the gamified
+canvas** (tap blocks from a palette, drag to reorder, run through the configured `ILLMProvider` with
+the generation-theater treatment, results to the chosen output).
 
 ## Operating principle (standing, beyond this phase)
 
