@@ -524,7 +524,41 @@ private func shapeTint(_ k: ShapeKind) -> Color {
     @Published var drawing = PKDrawing() { didSet { schedule() } }
     @Published var graph = DiagramGraph(nodes: [], edges: [])
     @Published var mermaid = ""
+    @Published var vlmBusy = false
+    @Published var vlmError = ""
+    @Published var usedAI = false
     private var task: Task<Void, Never>?
+
+    /// HSM-14-09 — hand the whole sketch to the local vision model (Qwythos on .43) when the
+    /// geometry isn't enough. It returns Mermaid; we parse + render it natively.
+    func recognizeWithAI() {
+        guard !drawing.strokes.isEmpty, !vlmBusy else { return }
+        let png = Self.renderPNG(drawing)
+        vlmBusy = true; vlmError = ""; tactile(.medium)
+        Task { [weak self] in
+            do {
+                let raw = try await SketchVLM.mermaid(from: png)
+                let mm = MermaidParse.extract(raw)
+                let g = MermaidParse.graph(mm)
+                await MainActor.run {
+                    self?.vlmBusy = false; self?.usedAI = true; self?.mermaid = mm
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { self?.graph = g }
+                }
+            } catch {
+                await MainActor.run { self?.vlmBusy = false; self?.vlmError = "Couldn't reach the vision model: \(error.localizedDescription)" }
+            }
+        }
+    }
+    nonisolated static func renderPNG(_ drawing: PKDrawing) -> Data {
+        let b = drawing.bounds.insetBy(dx: -24, dy: -24)
+        let rect = (b.isNull || b.isEmpty) ? CGRect(x: 0, y: 0, width: 400, height: 300) : b
+        let drawn = drawing.image(from: rect, scale: 2)
+        let r = UIGraphicsImageRenderer(size: drawn.size)
+        let onWhite = r.image { ctx in
+            UIColor.white.setFill(); ctx.fill(CGRect(origin: .zero, size: drawn.size)); drawn.draw(at: .zero)
+        }
+        return onWhite.pngData() ?? Data()
+    }
 
     func schedule() {
         task?.cancel()
@@ -575,6 +609,116 @@ private func shapeTint(_ k: ShapeKind) -> Color {
         req.usesLanguageCorrection = true
         try? VNImageRequestHandler(cgImage: cg, options: [:]).perform([req])
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+/// Calls a local OpenAI-compatible VISION endpoint (Qwythos + mmproj on .43) to turn a sketch
+/// image into Mermaid. Points at the owner's LAN server; swap the URL to retarget.
+enum SketchVLM {
+    static let endpoint = URL(string: "http://192.168.1.43:8080/v1/chat/completions")!
+    static func mermaid(from png: Data) async throws -> String {
+        let b64 = png.base64EncodedString()
+        let prompt = """
+        This is a hand-drawn flowchart. Convert it to Mermaid flowchart code.
+        Rectangles are nodes: id["text"]. Diamonds are decisions: id{"text"}. Circles/ellipses: id(("text")).
+        Arrows are edges: A --> B (use A -->|label| B when a label like yes/no is written near the arrow).
+        Read the handwritten labels carefully. Output ONLY valid Mermaid starting with "flowchart TD". No prose, no code fences.
+        """
+        let body: [String: Any] = [
+            "messages": [["role": "user", "content": [
+                ["type": "text", "text": prompt],
+                ["type": "image_url", "image_url": ["url": "data:image/png;base64,\(b64)"]],
+            ]]],
+            "max_tokens": 700, "temperature": 0.3,
+        ]
+        var req = URLRequest(url: endpoint, timeoutInterval: 120)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, _) = try await URLSession.shared.data(for: req)
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        let msg = (json?["choices"] as? [[String: Any]])?.first?["message"] as? [String: Any]
+        return (msg?["content"] as? String) ?? ""
+    }
+}
+
+/// Parse Mermaid flowchart text → a `DiagramGraph` with a simple layered layout, so the VLM's
+/// output renders natively. Best-effort: a parse miss just leaves the graph empty (the raw
+/// Mermaid is still shown).
+enum MermaidParse {
+    static func extract(_ raw: String) -> String {
+        var s = raw
+        if let f = s.range(of: "```") {
+            s = String(s[f.upperBound...])
+            if let e = s.range(of: "```") { s = String(s[..<e.lowerBound]) }
+        }
+        if let nl = s.firstIndex(of: "\n"), s[s.startIndex..<nl].lowercased().contains("mermaid") {
+            s = String(s[s.index(after: nl)...])
+        }
+        if let r = s.range(of: "flowchart") { s = String(s[r.lowerBound...]) }
+        else if let r = s.range(of: "graph ") { s = String(s[r.lowerBound...]) }
+        return s.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    static func graph(_ mermaid: String) -> DiagramGraph {
+        var kinds: [String: ShapeKind] = [:]
+        var texts: [String: String] = [:]
+        var order: [String] = []
+        var edges: [(String, String, String?)] = []
+        func note(_ id: String, _ kind: ShapeKind?, _ text: String?) {
+            if !order.contains(id) { order.append(id) }
+            if let k = kind { kinds[id] = k }
+            if let t = text, !t.isEmpty { texts[id] = t }
+        }
+        for raw in mermaid.split(separator: "\n") {
+            let line = raw.trimmingCharacters(in: .whitespaces)
+            scanDefs(line, note)
+            for e in scanEdges(line) { note(e.0, nil, nil); note(e.1, nil, nil); edges.append(e) }
+        }
+        var depth: [String: Int] = [:]; for id in order { depth[id] = 0 }
+        for _ in 0..<max(order.count, 1) {
+            for (a, b, _) in edges { let d = (depth[a] ?? 0) + 1; if d > (depth[b] ?? 0) { depth[b] = d } }
+        }
+        var perRow: [Int: Int] = [:]
+        var nodes: [DiagramNode] = []
+        for id in order {
+            let d = depth[id] ?? 0
+            let col = perRow[d, default: 0]; perRow[d] = col + 1
+            let x = Double(col) * 175, y = Double(d) * 115
+            nodes.append(DiagramNode(id: id, kind: kinds[id] ?? .rectangle, text: texts[id] ?? id,
+                                     bounds: Bounds(minX: x, minY: y, maxX: x + 130, maxY: y + 54)))
+        }
+        return DiagramGraph(nodes: nodes, edges: edges.map { DiagramEdge(from: $0.0, to: $0.1, label: $0.2) })
+    }
+
+    private static func scanDefs(_ l: String, _ note: (String, ShapeKind?, String?) -> Void) {
+        let pats: [(String, ShapeKind)] = [
+            (#"([A-Za-z0-9_]+)\(\(\s*\"?([^\")]*)\"?\s*\)\)"#, .ellipse),
+            (#"([A-Za-z0-9_]+)\{\s*\"?([^\"}]*)\"?\s*\}"#, .diamond),
+            (#"([A-Za-z0-9_]+)\[\s*\"?([^\"\]]*)\"?\s*\]"#, .rectangle),
+        ]
+        for (pat, kind) in pats {
+            guard let re = try? NSRegularExpression(pattern: pat) else { continue }
+            let ns = l as NSString
+            re.enumerateMatches(in: l, range: NSRange(location: 0, length: ns.length)) { m, _, _ in
+                guard let m = m, m.numberOfRanges >= 3 else { return }
+                note(ns.substring(with: m.range(at: 1)), kind,
+                     ns.substring(with: m.range(at: 2)).trimmingCharacters(in: .whitespaces))
+            }
+        }
+    }
+    private static func scanEdges(_ l: String) -> [(String, String, String?)] {
+        let pat = #"([A-Za-z0-9_]+)(?:\[[^\]]*\]|\{[^}]*\}|\(\([^)]*\)\))?\s*[-.=]+>\s*(?:\|([^|]*)\|\s*)?([A-Za-z0-9_]+)"#
+        guard let re = try? NSRegularExpression(pattern: pat) else { return [] }
+        let ns = l as NSString
+        var out: [(String, String, String?)] = []
+        re.enumerateMatches(in: l, range: NSRange(location: 0, length: ns.length)) { m, _, _ in
+            guard let m = m, m.numberOfRanges >= 4 else { return }
+            let a = ns.substring(with: m.range(at: 1))
+            let label = m.range(at: 2).location != NSNotFound ? ns.substring(with: m.range(at: 2)).trimmingCharacters(in: .whitespaces) : nil
+            out.append((a, ns.substring(with: m.range(at: 3)), label))
+        }
+        return out
     }
 }
 
@@ -685,10 +829,27 @@ struct SketchToDiagramView: View {
                 .frame(maxHeight: .infinity)
                 .padding(.horizontal, 14)
 
+                // Recognize-with-AI (the local vision model rescues messy sketches)
+                Button { model.recognizeWithAI() } label: {
+                    HStack(spacing: 8) {
+                        if model.vlmBusy { ProgressView().tint(.black) } else { Image(systemName: "sparkles") }
+                        Text(model.vlmBusy ? "Reading your sketch…" : "Recognize with AI")
+                    }
+                    .font(.system(size: 15, weight: .heavy)).foregroundStyle(.black)
+                    .frame(maxWidth: .infinity).frame(height: 50)
+                    .background(Sig.accent.opacity(model.drawing.strokes.isEmpty ? 0.3 : 1), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+                .disabled(model.drawing.strokes.isEmpty || model.vlmBusy)
+                .padding(.horizontal, 14)
+                if !model.vlmError.isEmpty {
+                    Text(model.vlmError).font(.caption).foregroundStyle(Sig.warn).padding(.horizontal, 16)
+                }
+
                 // Live diagram
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
-                        Text("LIVE DIAGRAM").font(.system(size: 11, weight: .heavy)).tracking(1.4).foregroundStyle(Sig.faint)
+                        Text(model.usedAI ? "AI DIAGRAM" : "LIVE DIAGRAM").font(.system(size: 11, weight: .heavy)).tracking(1.4)
+                            .foregroundStyle(model.usedAI ? Sig.accent : Sig.faint)
                         Spacer()
                         if !model.graph.nodes.isEmpty {
                             Text("\(model.graph.nodes.count) nodes · \(model.graph.edges.count) edges")
