@@ -87,9 +87,16 @@ final class WhisperKitTranscriber: ITranscriber, @unchecked Sendable {
             Self.cacheModel(model, whisper)
         }
         let results = try await whisper.transcribe(audioArray: floats)
-        let clean = WhisperText.clean(results.flatMap { $0.segments }.map(\.text).joined(separator: " "))
-        guard !clean.isEmpty else { return [] }
-        return [TranscribedSegment(text: clean, startTime: 0, endTime: 0).asContractSegment()]
+        // Preserve WhisperKit's real per-segment timestamps (relative to this window) instead of
+        // collapsing to one zero-timestamp segment — the sliding-window commit (HSM-14-12) needs
+        // them to know exactly which audio a committed segment covers. `WhisperText.clean` runs
+        // per segment; all-non-speech segments drop out, so a blank window still cleans to [].
+        let segs = results.flatMap { $0.segments }.compactMap { seg -> Segment? in
+            let text = WhisperText.clean(seg.text)
+            guard !text.isEmpty else { return nil }
+            return TranscribedSegment(text: text, startTime: Double(seg.start), endTime: Double(seg.end)).asContractSegment()
+        }
+        return segs
     }
 }
 
@@ -391,14 +398,16 @@ struct LiveBubble: Identifiable, Equatable {
     let text: String
     let t: Double          // elapsed seconds when it was heard — becomes the moment's anchor
 }
-/// A bubble the user grabbed and tacked to the board. Its position is the drop point; a slight
-/// tilt makes it read as a physical sticky note. Pinning it ALSO marks the moment (HSM-8-03).
+/// A bubble the user grabbed and placed on the board. `tacked` distinguishes the two HSM-14-13
+/// drops: a **tacked** note wears a pushpin + a slight tilt and ALSO marks the moment (HSM-8-03,
+/// steering the intelligence); a **loose** note is just placed (no pushpin, no marked moment).
 struct PinnedNote: Identifiable, Equatable {
     let id: UUID
     let text: String
     var pos: CGPoint
     var rot: Double
     let t: Double
+    var tacked: Bool = true
 }
 
 /// Split a running transcript into finished sentences + the trailing in-progress fragment.
@@ -457,6 +466,16 @@ final class CaptureModel: ObservableObject {
     private var ticker: Task<Void, Never>?
     private var levelTicker: Task<Void, Never>?
     @Published var level: Float = 0            // HSM-14 — live mic amplitude for the waveform
+
+    // HSM-14-13 — the floating recorder's spatial state (dock / free position / minimized), held on
+    // the model so it survives pane switches and re-entry within the session. The snap math lives
+    // in RuntimeCore (`RecorderSnap`, host-tested); the view just renders this.
+    @Published var recorderLayout = RecorderLayout()
+    func dockRecorder(_ dock: RecorderDock, freeCenter: CGPoint?) {
+        recorderLayout.dock = dock
+        if let f = freeCenter { recorderLayout.freeCenter = f }
+    }
+    func toggleRecorderMinimized() { recorderLayout.minimized.toggle() }
 
     init() {
         let store: MeetingStore
@@ -531,15 +550,54 @@ final class CaptureModel: ObservableObject {
         partial = parts.trailing
     }
 
-    /// Tack a bubble to the board at its drop point. THE WHOLE POINT: a pinned bubble is also a
+    // HSM-14-13 — a live bubble is being dragged; the canvas shows the tack target and highlights
+    // it when the drag is over it. `bubbleDragPoint` is in the named "canvas" space.
+    @Published var bubbleDragging = false
+    @Published var bubbleDragPoint: CGPoint?
+
+    /// Route a dropped bubble (HSM-14-13 deliverable 2): the tack zone tacks it (marks the moment),
+    /// a drop below the stream places it loose, a drop back in the stream snaps it back. The
+    /// decision is RuntimeCore's pure `BubblePlacement` (host-tested). Returns whether it committed
+    /// (so the bubble view knows to snap home when it didn't).
+    func drop(_ b: LiveBubble, at p: CGPoint, in size: CGSize, pinFloor: CGFloat, tackZone: CGRect) -> Bool {
+        switch BubblePlacement.decide(at: p, pinFloor: pinFloor, tackZone: tackZone) {
+        case .tack:  pin(b, at: p, in: size, boardTop: pinFloor);        return true
+        case .loose: placeLoose(b, at: p, in: size, boardTop: pinFloor); return true
+        case .snapBack:                                                  return false
+        }
+    }
+
+    /// Tack a bubble to the board at its drop point. THE WHOLE POINT: a tacked bubble is also a
     /// marked moment (HSM-8-03), so the on-device intelligence weights what you cared about.
     func pin(_ b: LiveBubble, at p: CGPoint, in size: CGSize, boardTop: CGFloat) {
         let pos = clampToBoard(p, in: size, boardTop: boardTop)
-        pinned.append(PinnedNote(id: b.id, text: b.text, pos: pos, rot: Double.random(in: -5...5), t: b.t))
+        pinned.append(PinnedNote(id: b.id, text: b.text, pos: pos, rot: Double.random(in: -5...5), t: b.t, tacked: true))
         liveBubbles.removeAll { $0.id == b.id }
         try? linker?.markMoment(at: b.t, label: String(b.text.prefix(120)))
         markCount = linker?.links().count ?? markCount
     }
+
+    /// Place a bubble loose on the desktop — just arranged, NOT a marked moment (HSM-14-13). It can
+    /// be promoted to a tacked moment later via `tackExisting`.
+    func placeLoose(_ b: LiveBubble, at p: CGPoint, in size: CGSize, boardTop: CGFloat) {
+        let pos = clampToBoard(p, in: size, boardTop: boardTop)
+        pinned.append(PinnedNote(id: b.id, text: b.text, pos: pos, rot: 0, t: b.t, tacked: false))
+        liveBubbles.removeAll { $0.id == b.id }
+    }
+
+    /// Promote a loose card to a tacked moment — NOW it marks the moment and steers the intelligence.
+    func tackExisting(_ id: UUID) {
+        guard let i = pinned.firstIndex(where: { $0.id == id }), !pinned[i].tacked else { return }
+        pinned[i].tacked = true
+        pinned[i].rot = Double.random(in: -5...5)
+        try? linker?.markMoment(at: pinned[i].t, label: String(pinned[i].text.prefix(120)))
+        markCount = linker?.links().count ?? markCount
+        tactile(.medium)
+    }
+
+    /// Tacked moments only — what actually steers MIR (loose cards don't count).
+    var tackedCount: Int { pinned.filter(\.tacked).count }
+
     func unpin(_ id: UUID) { pinned.removeAll { $0.id == id } }
 
     /// HSM-14 — pull a transcript moment ONTO the note canvas as a draggable card, then jump to
@@ -596,18 +654,29 @@ final class CaptureModel: ObservableObject {
     func seedDemo(size: CGSize, boardTop: CGFloat) {
         guard liveBubbles.isEmpty, pinned.isEmpty, !recording else { return }
         recording = true; level = 0.14            // show the recording state + floating recorder
+        // HSM-14-13 — design-screenshot hooks for the recorder's spatial states.
+        let env = ProcessInfo.processInfo.environment
+        if let raw = env["HS_DEMO_DOCK"], let d = RecorderDock(rawValue: raw) { recorderLayout.dock = d }
+        if env["HS_DEMO_MIN"] == "1" { recorderLayout.minimized = true }
         liveBubbles = [
             LiveBubble(text: "Let's ship the beta to the design partners on Friday.", t: 12),
             LiveBubble(text: "Karol owns the migration script and the rollback plan.", t: 47),
             LiveBubble(text: "Risk: the vendor SLA doesn't cover the EU region yet.", t: 88),
         ]
         pinned = [
+            // One tacked moment (pushpin + tilt, steers MIR) and one loose card (just placed) —
+            // the HSM-14-13 deliverable-2 distinction, on one surface.
             PinnedNote(id: UUID(), text: "Decision: launch Friday, design partners first.",
-                       pos: CGPoint(x: size.width * 0.30, y: size.height * 0.62), rot: -4, t: 12),
+                       pos: CGPoint(x: size.width * 0.30, y: size.height * 0.60), rot: -4, t: 12, tacked: true),
             PinnedNote(id: UUID(), text: "Action: Karol — migration + rollback plan.",
-                       pos: CGPoint(x: size.width * 0.66, y: size.height * 0.74), rot: 5, t: 47),
+                       pos: CGPoint(x: size.width * 0.66, y: size.height * 0.72), rot: 0, t: 47, tacked: false),
         ]
         partial = "and we should double-check the analytics events before"
+        // Show the tack target lit, as if a bubble is being dragged over it.
+        if env["HS_DEMO_TACK"] == "1" {
+            bubbleDragging = true
+            bubbleDragPoint = CGPoint(x: size.width / 2, y: max(120, size.height - 56 - 80) + 28)
+        }
         // Stage the notes canvas with a couple of pulled-in transcript cards for the screenshot.
         if notebook == nil {
             let nb = NotebookModel(store: notebookStore, meetingID: "demo-sim")
@@ -1487,13 +1556,17 @@ struct CaptureView: View {
     // DRAGGABLE floating recorder (move it anywhere). No big button, no big segmented bar —
     // the surface is the meeting, the chrome gets out of the way (HSM-14, owner's "OS-like" ask).
     private var recordingBody: some View {
-        ZStack(alignment: .bottom) {
-            paneContent
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 2)
-            FloatingRecorder(model: model, pane: $pane,
-                             onStop: { Task { await model.stopRecording(); done() } })
-                .padding(.bottom, 20)
+        GeometryReader { geo in
+            ZStack(alignment: .topLeading) {
+                paneContent
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 2)
+                // The recorder docks/floats/minimizes within this surface (HSM-14-13) — it knows
+                // the viewport so a drag can snap it to an edge home.
+                FloatingRecorder(model: model, pane: $pane, viewport: geo.size,
+                                 onStop: { Task { await model.stopRecording(); done() } })
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
         }
         .frame(maxWidth: 860).frame(maxWidth: .infinity)
         .transition(.opacity)
@@ -1565,11 +1638,50 @@ struct CaptureView: View {
 struct FloatingRecorder: View {
     @ObservedObject var model: CaptureModel
     @Binding var pane: CaptureView.Pane
+    let viewport: CGSize
     let onStop: () -> Void
     @State private var drag: CGSize = .zero
     @State private var dragging = false
 
+    private var home: CGPoint {
+        RecorderSnap.home(for: model.recorderLayout.dock, in: viewport, free: model.recorderLayout.freeCenter)
+    }
+
     var body: some View {
+        Group {
+            if model.recorderLayout.minimized { orb } else { capsule }
+        }
+        .scaleEffect(dragging ? 1.04 : 1)
+        .position(x: home.x + drag.width, y: home.y + drag.height)
+        .gesture(dragGesture)
+        .animation(.spring(response: 0.42, dampingFraction: 0.82), value: model.recorderLayout)
+        .animation(.spring(response: 0.42, dampingFraction: 0.82), value: drag == .zero)
+    }
+
+    // The drag both moves the recorder and, on release, snaps it to the nearest edge home (medium
+    // haptic) or leaves it floating where it was let go (light haptic), clamped on-screen so it can
+    // never be lost. The snap decision is RuntimeCore's `RecorderSnap` (host-tested).
+    private var dragGesture: some Gesture {
+        DragGesture()
+            .onChanged { v in
+                if !dragging { withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) { dragging = true } }
+                drag = v.translation
+            }
+            .onEnded { v in
+                let dropped = CGPoint(x: home.x + v.translation.width, y: home.y + v.translation.height)
+                let dock = RecorderSnap.dock(forCenter: dropped, in: viewport)
+                let free = dock == .floating ? RecorderSnap.clamp(dropped, in: viewport) : nil
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) {
+                    model.dockRecorder(dock, freeCenter: free)
+                    drag = .zero
+                    dragging = false
+                }
+                tactile(dock == .floating ? .light : .medium)
+            }
+    }
+
+    // The full control capsule (expanded state).
+    private var capsule: some View {
         HStack(spacing: 14) {
             Button(action: onStop) {
                 ZStack {
@@ -1610,21 +1722,40 @@ struct FloatingRecorder: View {
                     .font(.system(size: 19, weight: .semibold)).foregroundStyle(Sig.accent)
                     .frame(width: 30, height: 30)
             }.buttonStyle(.plain)
+
+            // Collapse to the rec orb — the meeting keeps running; the chrome gets fully out of the way.
+            Button { withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { model.toggleRecorderMinimized() }; tactile() } label: {
+                Image(systemName: "minus.circle.fill")
+                    .font(.system(size: 19, weight: .semibold)).foregroundStyle(Sig.faint)
+                    .frame(width: 30, height: 30)
+            }.buttonStyle(.plain)
         }
         .padding(.horizontal, 16).padding(.vertical, 10)
         .background(.ultraThinMaterial, in: Capsule())
         .overlay(Capsule().stroke(Sig.line, lineWidth: 1))
         .shadow(color: .black.opacity(0.5), radius: dragging ? 22 : 14, y: dragging ? 12 : 7)
-        .scaleEffect(dragging ? 1.04 : 1)
-        .offset(drag)
-        .gesture(
-            DragGesture()
-                .onChanged { v in
-                    if !dragging { withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) { dragging = true } }
-                    drag = v.translation
+    }
+
+    // The minimized "rec orb": a glanceable recording heartbeat + a live timer tick. Tap to
+    // re-expand — one gesture restores every control (the "never trap" rule). Drag to dock it.
+    private var orb: some View {
+        Button { withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { model.toggleRecorderMinimized() }; tactile(.medium) } label: {
+            ZStack {
+                Circle().fill(.ultraThinMaterial).frame(width: 60, height: 60)
+                    .overlay(Circle().stroke(Sig.line, lineWidth: 1))
+                Circle().stroke(Sig.bad.opacity(0.55), lineWidth: 2).frame(width: 60, height: 60)
+                    .scaleEffect(1 + CGFloat(model.level) * 0.18)   // breathes with the mic
+                VStack(spacing: 1) {
+                    Circle().fill(Sig.bad).frame(width: 7, height: 7)
+                    TimelineView(.periodic(from: .now, by: 1)) { _ in
+                        Text(clockString(model.elapsedSeconds))
+                            .font(.system(size: 11, weight: .heavy).monospacedDigit()).foregroundStyle(Sig.text)
+                    }
                 }
-                .onEnded { _ in withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) { dragging = false } })
-        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: drag == .zero)
+            }
+        }
+        .buttonStyle(.plain)
+        .shadow(color: .black.opacity(0.5), radius: dragging ? 18 : 10, y: dragging ? 9 : 5)
     }
 }
 
@@ -1639,9 +1770,11 @@ struct LiveCaptureCanvas: View {
 
     var body: some View {
         GeometryReader { geo in
-            // The whole surface is the board. The stream lives in the top strip; anything dropped
-            // below `pinFloor` tacks where you let go — fling a moment ANYWHERE, not into a tray.
+            // The whole surface is the board. The stream lives in the top strip; a bubble dropped
+            // below `pinFloor` is placed loose, and a bubble dropped on the tack target is TACKED
+            // (a marked moment that steers the intelligence) — free-place vs tack (HSM-14-13).
             let pinFloor: CGFloat = max(140, geo.size.height * 0.17)
+            let tack = tackZone(in: geo.size)
             ZStack(alignment: .topLeading) {
                 // One free-form desktop — a subtle dot-grid surface, not two stacked boxes.
                 RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Sig.s1)
@@ -1653,14 +1786,17 @@ struct LiveCaptureCanvas: View {
                         note: n,
                         onMove: { model.movePin(n.id, to: $0, in: geo.size, boardTop: pinFloor) },
                         onRemove: { withAnimation(.spring(response: 0.32, dampingFraction: 0.7)) { model.unpin(n.id) }; tactile() },
+                        onTack: { withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) { model.tackExisting(n.id) } },
                         onSendToNotes: { model.sendToNotes(n.text) })
                 }
 
                 if model.liveBubbles.isEmpty && model.partial.isEmpty {
                     idleHeader.frame(width: geo.size.width, height: geo.size.height)
                 } else {
-                    stream(pinFloor: pinFloor, size: geo.size)
+                    stream(pinFloor: pinFloor, size: geo.size, tack: tack)
                 }
+
+                tackTarget(tack)            // appears only while a bubble is being dragged
 
                 footerChip
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
@@ -1675,13 +1811,19 @@ struct LiveCaptureCanvas: View {
         .frame(minHeight: 440)
     }
 
-    // Utterances stream from the top; each can be flung anywhere on the desktop to tack it.
-    private func stream(pinFloor: CGFloat, size: CGSize) -> some View {
+    // Utterances stream from the top; drag one out to place it loose, or onto the tack target to tack it.
+    private func stream(pinFloor: CGFloat, size: CGSize, tack: CGRect) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             ForEach(model.liveBubbles) { b in
                 LiveBubbleView(bubble: b, boardTop: pinFloor,
-                               onPin: { loc in withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                                   model.pin(b, at: loc, in: size, boardTop: pinFloor) } },
+                               onDragChanged: { loc in model.bubbleDragging = true; model.bubbleDragPoint = loc },
+                               onDrop: { loc in
+                                   let committed = withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                                       model.drop(b, at: loc, in: size, pinFloor: pinFloor, tackZone: tack)
+                                   }
+                                   model.bubbleDragging = false; model.bubbleDragPoint = nil
+                                   return committed
+                               },
                                onSendToNotes: { model.sendToNotes(b.text) })
             }
             if !model.partial.isEmpty { LiveCaption(text: model.partial) }
@@ -1691,12 +1833,43 @@ struct LiveCaptureCanvas: View {
         .frame(width: size.width, height: size.height, alignment: .top)
     }
 
+    // The tack zone (HSM-14-13): a fixed target near the bottom where a dropped bubble becomes a
+    // marked moment. Everywhere else is free placement.
+    private func tackZone(in size: CGSize) -> CGRect {
+        let w = min(264, size.width - 72), h: CGFloat = 56
+        return CGRect(x: (size.width - w) / 2, y: max(120, size.height - h - 80), width: w, height: h)
+    }
+
+    // The target only materializes while a bubble is being dragged, and lights up when the drag is
+    // over it — a discoverable "drop here to tack" affordance that never clutters the resting canvas.
+    @ViewBuilder private func tackTarget(_ zone: CGRect) -> some View {
+        if model.bubbleDragging {
+            let over = model.bubbleDragPoint.map { zone.contains($0) } ?? false
+            HStack(spacing: 7) {
+                pixelAsset("pushpin", size: 16, fallback: "pin.fill", tint: over ? Sig.accent : Sig.muted)
+                Text(over ? "Release to tack — steers the intelligence" : "Drop here to tack")
+                    .font(.system(size: 12, weight: .bold)).foregroundStyle(over ? Sig.accent : Sig.muted)
+            }
+            .frame(width: zone.width, height: zone.height)
+            .background(over ? Sig.accent.opacity(0.16) : Sig.s2.opacity(0.7),
+                        in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(over ? Sig.accent : Sig.line, style: StrokeStyle(lineWidth: over ? 2 : 1.5, dash: [7, 5])))
+            .scaleEffect(over ? 1.06 : 1)
+            .position(x: zone.midX, y: zone.midY)
+            .animation(.spring(response: 0.28, dampingFraction: 0.7), value: over)
+            .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            .zIndex(15)
+        }
+    }
+
     private var footerChip: some View {
-        HStack(spacing: 6) {
+        let tacked = model.tackedCount, loose = model.pinned.count - tacked
+        return HStack(spacing: 6) {
             pixelAsset("pushpin", size: 13, fallback: "pin.fill", tint: Sig.accent)
             Text(model.pinned.isEmpty
-                 ? (model.recording ? "Fling a moment anywhere to tack it — it steers the intelligence" : "Your tacked moments live here")
-                 : "\(model.pinned.count) tacked")
+                 ? (model.recording ? "Drag a moment out to place it — drop on the tack target to steer the intelligence" : "Your moments live here")
+                 : (loose > 0 ? "\(tacked) tacked · \(loose) placed" : "\(tacked) tacked"))
                 .font(.system(size: 11, weight: .bold)).foregroundStyle(Sig.muted)
         }
         .padding(.horizontal, 11).padding(.vertical, 7)
@@ -1774,7 +1947,8 @@ struct MicWaveform: View {
 struct LiveBubbleView: View {
     let bubble: LiveBubble
     let boardTop: CGFloat
-    let onPin: (CGPoint) -> Void
+    var onDragChanged: (CGPoint) -> Void = { _ in }
+    let onDrop: (CGPoint) -> Bool          // returns whether the drop committed (else snap home)
     var onSendToNotes: () -> Void = {}
     @State private var offset: CGSize = .zero
     @State private var lifting = false
@@ -1804,10 +1978,12 @@ struct LiveBubbleView: View {
                 .onChanged { v in
                     if !lifting { withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) { lifting = true }; tactile() }
                     offset = v.translation
+                    onDragChanged(v.location)               // drive the tack-target highlight
                 }
                 .onEnded { v in
-                    if v.location.y > boardTop {
-                        tactile(.medium); onPin(v.location)            // tacked
+                    // Loose-place by default; the tack zone (or the stream) is decided by the canvas.
+                    if onDrop(v.location) {
+                        tactile(.medium)                     // committed (tacked or placed)
                     } else {
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.68)) { offset = .zero; lifting = false }
                     }
@@ -1853,38 +2029,46 @@ struct PinnedNoteView: View {
     let note: PinnedNote
     let onMove: (CGPoint) -> Void
     let onRemove: () -> Void
+    var onTack: () -> Void = {}
     var onSendToNotes: () -> Void = {}
     @State private var landed = false
 
     var body: some View {
         VStack(spacing: -4) {
-            Button(action: onRemove) {
-                pixelAsset("pushpin", size: 26, fallback: "pin.fill", tint: Sig.accent)
-                    .rotationEffect(.degrees(UIImage(named: "pushpin") == nil ? -28 : 0))
-                    .shadow(color: .black.opacity(0.4), radius: 3, y: 2)
+            // Only a tacked moment wears the pushpin; a loose card is just a card.
+            if note.tacked {
+                Button(action: onRemove) {
+                    pixelAsset("pushpin", size: 26, fallback: "pin.fill", tint: Sig.accent)
+                        .rotationEffect(.degrees(UIImage(named: "pushpin") == nil ? -28 : 0))
+                        .shadow(color: .black.opacity(0.4), radius: 3, y: 2)
+                }
+                .buttonStyle(.plain).zIndex(1)
             }
-            .buttonStyle(.plain).zIndex(1)
             Text(note.text)
                 .font(.system(size: 13, weight: .semibold)).foregroundStyle(Sig.text)
                 .lineLimit(4).multilineTextAlignment(.leading)
                 .frame(width: 162, alignment: .leading)
                 .padding(.horizontal, 11).padding(.vertical, 10)
-                .background(Sig.s3, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(Sig.accent.opacity(0.4), lineWidth: 1))
-                .shadow(color: .black.opacity(0.45), radius: 9, y: 5)
+                .background(note.tacked ? Sig.s3 : Sig.s2, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous)
+                    .stroke(note.tacked ? Sig.accent.opacity(0.4) : Sig.line, lineWidth: 1))
+                .shadow(color: .black.opacity(note.tacked ? 0.45 : 0.3), radius: note.tacked ? 9 : 6, y: note.tacked ? 5 : 4)
         }
-        .rotationEffect(.degrees(note.rot))
+        .rotationEffect(.degrees(note.tacked ? note.rot : 0))
         .scaleEffect(landed ? 1 : 1.35)
         .position(note.pos)
         .gesture(
             DragGesture(coordinateSpace: .named("canvas"))
                 .onChanged { onMove($0.location) })
-        .onAppear { withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { landed = true }; tactile(.heavy) }
+        .onAppear { withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { landed = true }; tactile(note.tacked ? .heavy : .light) }
         .transition(.scale.combined(with: .opacity))
         .contextMenu {
+            if !note.tacked {
+                Button { onTack() } label: { Label("Tack as moment", systemImage: "pin.fill") }
+            }
             Button { onSendToNotes() } label: { Label("Add to notes", systemImage: "square.and.pencil") }
             Button { UIPasteboard.general.string = note.text } label: { Label("Copy", systemImage: "doc.on.doc") }
-            Button(role: .destructive) { onRemove() } label: { Label("Unpin", systemImage: "pin.slash") }
+            Button(role: .destructive) { onRemove() } label: { Label("Remove", systemImage: "trash") }
         }
     }
 }

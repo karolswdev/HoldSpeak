@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 14
-- **Status:** planned (designed; not started)
+- **Status:** in-progress — **deliverables 1 (dockable + minimizable recorder) and 2 (free-place vs
+  tack) built + host-proven + Simulator-shown** (2026-06-22); deliverables 3–4 remain. See
+  "Evidence" below.
 - **Depends on:** HSM-14-11 (free-form desktop + draggable floating recorder)
 - **Unblocks:** the "nearly like an operating system" capture experience the owner is after
 - **Owner:** unassigned
@@ -89,6 +91,33 @@ you put them — without losing the one-handed, glanceable feel.
 - Simulator screenshots (committed) for each deliverable's states (docked / minimized / loose
   card / resized / tidied), via the existing `HS_DEMO` sim seeds.
 - Device: hardware feel — drag latency, snap haptics, Pencil vs finger — on the iPad Air M4.
+
+## Evidence (deliverables 1–2 built 2026-06-22; 3–4 remain)
+
+**Deliverable 1 — dockable + minimizable recorder.** The `FloatingRecorder` **docks** to the
+top/bottom edge on drag-release (magnetic snap + medium haptic) or **floats** clamped on-screen
+(light haptic), and **minimizes** to a compact breathing **rec orb** (tap to re-expand every
+control — the "never trap" rule). Dock/float/minimized state persists on `CaptureModel`
+(`recorderLayout`) across pane switches + re-entry. The snap/dock decision is the pure
+`RecorderSnap` (RuntimeCore), 9 `RecorderLayoutTests` (edge decisions, the margin boundary, edge
+homes, the floating fallback, on-screen clamp, Codable round-trip).
+
+**Deliverable 2 — free-place vs tack.** A plain drop below the stream places a bubble as a **loose
+card** (no marked moment); a drop on the **tack target** (a dashed pill that appears only mid-drag
+and lights up when the drag is over it) **tacks** it — a pushpin + tilt that calls `markMoment`
+(HSM-8-03) so the on-device intelligence weights it. A loose card promotes later via "Tack as
+moment" (`tackExisting`). The drop decision is the pure `BubblePlacement` (RuntimeCore), 5 tests.
+
+- **Tests:** `swift test` **228/6/0** (+9 `RecorderLayoutTests`, +5 `BubblePlacementTests`).
+- **Built + shown:** app `xcodebuild … BUILD SUCCEEDED`; committed Simulator shots:
+  [docked](./screenshots/recorder-docked-top.png) · [rec orb](./screenshots/recorder-minimized-orb.png) ·
+  [free-place vs tack](./screenshots/recorder-freeplace-vs-tack.png) (footer "1 tacked · 1 placed") ·
+  [lit tack target](./screenshots/recorder-tack-target.png).
+- **Files:** `Sources/RuntimeCore/Capture/{RecorderLayout,BubblePlacement}.swift` + their tests;
+  `App/MeetingCaptureApp.swift` (`FloatingRecorder`, `LiveBubbleView`, `PinnedNoteView`, the canvas
+  `tackTarget`/`tackZone`, `CaptureModel` layout + drop methods).
+- **Remaining:** deliverables 3 (resizable cards) + 4 (tidy), and the device hardware-feel pass
+  (drag latency, snap/tack haptics).
 
 ## Notes
 
