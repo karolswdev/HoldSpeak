@@ -1,4 +1,5 @@
 import Foundation
+import Providers
 
 /// HSM-14-08 — the Pencil as a diagram language. Strokes, NOT pixels: PencilKit gives us
 /// vector geometry, so we recognize shapes deterministically, build a graph, and emit Mermaid
@@ -176,5 +177,29 @@ public enum MermaidGenerator {
     static func escape(_ s: String) -> String {
         s.replacingOccurrences(of: "\"", with: "'").replacingOccurrences(of: "\n", with: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+// MARK: - VLM ambiguity resolution (HSM-14-09)
+
+/// The geometry is the primary path (fast, deterministic, offline). When it's UNCERTAIN about
+/// a shape, fall back to a local vision model (Gemma 3 via the `IVisionProvider` seam) — the
+/// owner's Option-2 hybrid: the VLM only resolves ambiguity, it never drives the graph.
+public enum SketchVision {
+    /// Ask the VLM what a hand-drawn shape is, mapping its words to a `ShapeKind`. Returns nil
+    /// if the model errors or its answer is unrecognizable (caller keeps the geometry guess).
+    public static func resolveShape(image: Data, using vlm: IVisionProvider) async -> ShapeKind? {
+        let prompt = "This is a single hand-drawn flowchart shape. Reply with ONE word only: rectangle, diamond, or ellipse."
+        guard let answer = try? await vlm.describe(image: image, prompt: prompt) else { return nil }
+        return parse(answer)
+    }
+
+    /// Map a free-text VLM answer to a `ShapeKind` (diamond = decision; ellipse = circle/oval).
+    public static func parse(_ answer: String) -> ShapeKind? {
+        let s = answer.lowercased()
+        if s.contains("diamond") || s.contains("rhombus") || s.contains("decision") { return .diamond }
+        if s.contains("ellipse") || s.contains("circle") || s.contains("oval") || s.contains("round") { return .ellipse }
+        if s.contains("rectangle") || s.contains("rect") || s.contains("box") || s.contains("square") { return .rectangle }
+        return nil
     }
 }

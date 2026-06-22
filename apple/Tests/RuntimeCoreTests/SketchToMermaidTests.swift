@@ -1,4 +1,5 @@
 import XCTest
+import Providers
 @testable import RuntimeCore
 
 /// HSM-14-08 — the Pencil-as-diagram-language engine: strokes → shapes → graph → Mermaid,
@@ -81,5 +82,24 @@ final class SketchToMermaidTests: XCTestCase {
             DiagramBuilder.ConnectorInput(from: StrokePoint(1, 1), to: StrokePoint(2, 2)),   // both nearest A → self-loop
         ])
         XCTAssertTrue(g.edges.isEmpty)
+    }
+
+    // MARK: VLM ambiguity resolution (HSM-14-09)
+
+    final class FakeVLM: IVisionProvider, @unchecked Sendable {
+        let answer: String
+        init(_ a: String) { answer = a }
+        func describe(image: Data, prompt: String) async throws -> String { answer }
+    }
+
+    func testVLMResolvesAmbiguousShape() async {
+        let k = await SketchVision.resolveShape(image: Data(), using: FakeVLM("It looks like a decision diamond."))
+        XCTAssertEqual(k, .diamond)
+    }
+    func testVLMAnswerParsing() {
+        XCTAssertEqual(SketchVision.parse("a rounded oval"), .ellipse)
+        XCTAssertEqual(SketchVision.parse("Rectangle / box"), .rectangle)
+        XCTAssertEqual(SketchVision.parse("rhombus"), .diamond)
+        XCTAssertNil(SketchVision.parse("no idea, sorry"))
     }
 }

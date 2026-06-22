@@ -24,6 +24,17 @@ public protocol ILLMProvider: Sendable {
     func complete(prompt: String) async throws -> String
 }
 
+/// HSM-14-09 — the vision seam: answer a prompt about an image. Same Mode A/B/C shape as
+/// `ILLMProvider`: backed on-device by a local VLM (Gemma 3 4B via MLX-VLM on Apple Silicon)
+/// for the air-gapped case, or an OpenAI-compatible vision endpoint (Modes B/C). The Runtime
+/// Core depends on this seam, never on a concrete model — so a VLM is swappable. Used first as
+/// the ambiguity resolver for the strokes-first sketch→Mermaid path (HSM-14-08), and for
+/// general image understanding (whiteboard photos, pasted screenshots).
+public protocol IVisionProvider: Sendable {
+    /// Answer `prompt` about the PNG-encoded `image`. Fully local when Mode A.
+    func describe(image: Data, prompt: String) async throws -> String
+}
+
 public protocol IStorage: Sendable {
     func saveMeeting(_ meeting: Meeting) throws
     func loadMeeting(id: String) throws -> Meeting?
