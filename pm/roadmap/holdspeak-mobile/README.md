@@ -1,5 +1,8 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
+> 🚀 **New agent? Start here:** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
+> gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
+
 **Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** Live-dynamism batch
 shipped (PRs #117/#118): transcription root-caused + cached, audio-reactive waveform, draggable
 floating recorder, one free-form dot-grid desktop, note→artifact promotion. Two next stories
