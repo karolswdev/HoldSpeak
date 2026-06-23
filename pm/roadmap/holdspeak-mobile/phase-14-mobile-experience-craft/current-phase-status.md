@@ -92,6 +92,7 @@ Pencil), accessibility + adaptivity, and a polish pass — each delivered with c
 | HSM-14-12 | Constant-time live transcription (sliding window + commit) | in-progress (built + host-proven + sim-shown; device cadence pending) | [story-12](./story-12-constant-time-transcription.md) | [shot](./screenshots/constant-time-transcription-canvas.png) + story "Evidence" |
 | HSM-14-13 | The spatial workspace (OS-like capture surface) | in-progress (deliverables 1–4 built + host-proven + sim-shown; stretch 5–6 + device feel remain) | [story-13](./story-13-spatial-workspace.md) | [docked](./screenshots/recorder-docked-top.png) / [orb](./screenshots/recorder-minimized-orb.png) / [free-place vs tack](./screenshots/recorder-freeplace-vs-tack.png) / [resize](./screenshots/recorder-resizable-card.png) / [tidy](./screenshots/recorder-tidy-grid.png) |
 | HSM-14-15 | The Workbench (visual intelligence builder) | in-progress (engine + gamified canvas + run-from-meeting shipped; transforms/outputs next) | [story-15](./story-15-workbench.md) | [builder](./screenshots/workbench-builder.png) + `WorkflowTests` (7) |
+| HSM-14-18 | Real-time MIR (live intelligence on the iPad, configurable) | in-progress (the cadence/trigger brain `LiveIntelCadence` host-tested; runner + Queue HUD + setup screen + device proof pending) | [story-18](./story-18-realtime-mir.md) | `LiveIntelCadenceTests` (6/0) |
 
 ## Where we are
 
@@ -248,6 +249,17 @@ a NAME field + an INPUT selector + a full multi-line **prompt editor** (with `{i
 `swift test` **241/6/0** (+1 llmCall test). Built for Simulator + device; shots
 `workbench-custom-node.png`, `workbench-llm-editor.png`. Remaining: execute the custom prompt + the
 other transforms/outputs.
+
+**2026-06-23 — HSM-14-18 opened, the cadence/trigger brain landed (host slice).** Real-time MIR closes
+the parity gap where the iPad only runs intelligence *post-meeting* while the desktop runs it **live**.
+The first verifiable, device-free slice ships: `LiveIntelCadence` (`Sources/RuntimeCore/Capture/`) — a
+pure decision struct answering *should a live intel pass fire now, and why*. Two INDEPENDENT,
+user-tunable triggers: **tack** (the user flagged a moment ⇒ fire immediately — the cheapest, most
+useful real-time signal) always wins when enabled; **cadence** fires only when BOTH floors are met
+(`minNewSegments` new transcript AND `minSecondsBetweenRuns` elapsed) so a live pass never fights
+Whisper + diarization on one chip. Both toggle + tune independently. `LiveIntelCadenceTests` 6/0;
+`swift test` green. Remaining on the story: the live-intel runner, the gamified tack moment + Queue
+HUD, the setup screen (incl. an OpenRouter endpoint with a fetched model picker), and the device proof.
 
 ## Operating principle (standing, beyond this phase)
 
