@@ -92,6 +92,7 @@ Pencil), accessibility + adaptivity, and a polish pass — each delivered with c
 | HSM-14-12 | Constant-time live transcription (sliding window + commit) | in-progress (built + host-proven + sim-shown; device cadence pending) | [story-12](./story-12-constant-time-transcription.md) | [shot](./screenshots/constant-time-transcription-canvas.png) + story "Evidence" |
 | HSM-14-13 | The spatial workspace (OS-like capture surface) | in-progress (deliverables 1–4 built + host-proven + sim-shown; stretch 5–6 + device feel remain) | [story-13](./story-13-spatial-workspace.md) | [docked](./screenshots/recorder-docked-top.png) / [orb](./screenshots/recorder-minimized-orb.png) / [free-place vs tack](./screenshots/recorder-freeplace-vs-tack.png) / [resize](./screenshots/recorder-resizable-card.png) / [tidy](./screenshots/recorder-tidy-grid.png) |
 | HSM-14-15 | The Workbench (visual intelligence builder) | in-progress (engine + gamified canvas + run-from-meeting shipped; transforms/outputs next) | [story-15](./story-15-workbench.md) | [builder](./screenshots/workbench-builder.png) + `WorkflowTests` (7) |
+| HSM-14-17 | On-device speaker diarization (who's talking, air-gapped) | in-progress (model spike + Swift matcher/diarizer host-tested; capture-wiring + UI + 2-speaker device proof pending) | [story-17](./story-17-on-device-diarization.md) | `SpeakerMatcher`/`SpeakerDiarizer`/`SpeakerClustering` tests + `AudioEmbed.mlpackage` (cosine 0.99993 vs resemblyzer) |
 | HSM-14-18 | Real-time MIR (live intelligence on the iPad, configurable) | in-progress (the cadence/trigger brain `LiveIntelCadence` host-tested; runner + Queue HUD + setup screen + device proof pending) | [story-18](./story-18-realtime-mir.md) | `LiveIntelCadenceTests` (6/0) |
 
 ## Where we are
@@ -249,6 +250,20 @@ a NAME field + an INPUT selector + a full multi-line **prompt editor** (with `{i
 `swift test` **241/6/0** (+1 llmCall test). Built for Simulator + device; shots
 `workbench-custom-node.png`, `workbench-llm-editor.png`. Remaining: execute the custom prompt + the
 other transforms/outputs.
+
+**2026-06-23 — HSM-14-17 opened, the model side is fully de-risked + the Swift matcher landed (host
+slice).** On-device speaker diarization brings desktop parity (the desktop diarizes via resemblyzer +
+cosine matching; the iPad's `Segment.speaker`/`speakerId` slot did nothing — every line "Speaker 1").
+Whisper never produces speaker info, so this is a separate on-device pipeline. The highest-risk pieces
+are answered: resemblyzer's `VoiceEncoder` converts to Core ML **bit-exact** (cosine 0.99999), and an
+end-to-end **audio→embedding** model (`apple/ml/AudioEmbed.mlpackage`, 3.1 MB) bakes the mel front-end
+in (`torch.stft`) and matches resemblyzer at **cosine 0.99993** — so Swift needs ZERO DSP, and the
+encoder being identical to the desktop's unlocks cross-device speaker identity later. The pure Swift
+side ships host-tested: `SpeakerMatcher` (cosine/threshold/EMA/new-speaker/rename) + `SpeakerDiarizer`
+(over an injected `AudioEmbedding` seam; `AudioEmbedder` is the on-device CoreML conformance) +
+clustering, all green. `swift test` green. Remaining on the story: the CoreML wrapper wiring into the
+capture loop, the opt-in setting, transcript speaker labels, and the only proof that counts — a real
+2+ speaker recording separating on the device.
 
 **2026-06-23 — HSM-14-18 opened, the cadence/trigger brain landed (host slice).** Real-time MIR closes
 the parity gap where the iPad only runs intelligence *post-meeting* while the desktop runs it **live**.
