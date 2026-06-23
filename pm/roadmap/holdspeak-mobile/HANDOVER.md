@@ -1,9 +1,17 @@
 # HoldSpeak Mobile — Agent Handover
 
+> ## ⏭️ READ FIRST: [`HANDOVER-2026-06-22-craft.md`](./HANDOVER-2026-06-22-craft.md)
+> A full craft session shipped **PRs #121–#129** (Signal design system, flagship home, generation
+> theater, App Settings, and the **Workbench** — a visual user-defined intelligence builder), all on
+> `main` + the iPad. **The next build is wiring the Workbench to actually EXECUTE** (custom LLM-call
+> prompt + transforms + outputs through the configured provider). That doc has the rich current
+> context + the owner's bar (no prose / use PixelLab / real power + delightful touch / show on
+> device). The sections below remain the accurate cold-start mechanics (build loop, Phase 8, gotchas).
+
 **Written:** 2026-06-22 · **For:** a fresh agent picking up the mobile roadmap.
-**Top priority (owner):** drive **Phase 8 (iPad Experience)** and **Phase 14 (Mobile
-Experience & Craft)** to the finish **as fast as humanly possible**. Everything below exists to
-let you start producing on day one without rediscovering it.
+**Top priority (owner):** **wire the Workbench to execute** (see the craft handover above), then
+finish **Phase 14 (Mobile Experience & Craft)** and the device-gated **Phase 8 (iPad Experience)**
+proofs. Everything below exists to let you start producing on day one without rediscovering it.
 
 ---
 
