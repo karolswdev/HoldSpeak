@@ -186,6 +186,29 @@ func card(_ tint: NSColor, _ kind: CardKind, snippet: String, _ x: Float, _ z: F
     return n
 }
 
+// Load a real CC0 model (OBJ+MTL+texture), AUTO-FIT it to a target width, sit its base on the mat.
+// For a single merged mesh (trimesh force='mesh') the geometry boundingBox is exact, so this is reliable.
+func loadFit(_ name: String, _ targetW: CGFloat, _ x: CGFloat, _ z: CGFloat, rotY: CGFloat = 0) -> SCNNode? {
+    let url = URL(fileURLWithPath: "/tmp/propobj/\(name)/\(name).obj")
+    guard let sc = try? SCNScene(url: url, options: nil) else { return nil }
+    let group = SCNNode(); for c in sc.rootNode.childNodes { group.addChildNode(c) }
+    // apply the palette texture from the obj dir (material_0.png / Atlas.png) — SCNScene(url:obj) doesn't always
+    let texPath = ["material_0.png", "Atlas.png"].map { "/tmp/propobj/\(name)/\($0)" }.first { FileManager.default.fileExists(atPath: $0) }
+    if let tp = texPath, let tex = NSImage(contentsOfFile: tp) {
+        group.enumerateHierarchy { n, _ in n.geometry?.materials.forEach { $0.diffuse.contents = tex; $0.diffuse.wrapS = .clamp; $0.diffuse.wrapT = .clamp } }
+    }
+    var mn = SCNVector3(1e9, 1e9, 1e9), mx = SCNVector3(-1e9, -1e9, -1e9)
+    group.enumerateHierarchy { n, _ in if let g = n.geometry { let b = g.boundingBox
+        mn.x = min(mn.x, b.min.x); mn.y = min(mn.y, b.min.y); mn.z = min(mn.z, b.min.z)
+        mx.x = max(mx.x, b.max.x); mx.y = max(mx.y, b.max.y); mx.z = max(mx.z, b.max.z) } }
+    let s = targetW / max(0.001, max(mx.x - mn.x, mx.z - mn.z))   // fit by the largest horizontal span
+    group.scale = SCNVector3(s, s, s); group.eulerAngles = SCNVector3(0, rotY, 0)
+    let holder = SCNNode(); holder.addChildNode(group)
+    holder.position = SCNVector3(x, -mn.y * s + 0.5, z)
+    holder.enumerateHierarchy { n, _ in n.castsShadow = true }
+    return holder
+}
+
 // Load a poly.pizza prop (OBJ + MTL + texture), keep its colours, scale to a target height, sit it on
 // the desk top, cast shadows.
 func loadProp(_ name: String, scale s: Float, _ x: Float, _ z: Float, rotY: Float = 0) -> SCNNode? {
@@ -280,13 +303,14 @@ func buildScene() -> SCNScene {
     let orange = NSColor(calibratedRed: 0.95, green: 0.64, blue: 0.24, alpha: 1)
     let blue   = NSColor(calibratedRed: 0.36, green: 0.62, blue: 0.95, alpha: 1)
     let cobalt = NSColor(calibratedRed: 0.36, green: 0.55, blue: 0.94, alpha: 1)
-    // The OBJECT LANGUAGE: real 3D things for meetings/models/KBs/notebooks; paper only for documents.
-    scene.rootNode.addChildNode(makeCassette(cobalt, "Weekly Sync", -12, -3, rot: -0.06))   // a meeting = a recording
+    // The OBJECT LANGUAGE (procedural for now — raw CC0 low-poly came in untextured/rough; curation is a
+    // separate art pass): meetings = cassettes, model = a glowing cartridge, KB = a crystal, notebook = a book.
+    scene.rootNode.addChildNode(makeCassette(cobalt, "Weekly Sync", -12, -3, rot: -0.06))
     scene.rootNode.addChildNode(makeCassette(orange, "1:1 · Priya",  -12, 6, rot: 0.05))
-    scene.rootNode.addChildNode(makeCartridge(green, "Qwen3-4B", 1, -4, rot: 0.04))          // a model = a glowing cartridge
-    scene.rootNode.addChildNode(makeCrystal(purple, 13, -3, rot: 0.3))                       // a KB = a crystal
-    scene.rootNode.addChildNode(makeBook(blue, "Atlas", 12, 8, rot: -0.12))                  // a notebook = a book
-    // documents stay paper (the snippet matters) — these are what a meeting spills into
+    scene.rootNode.addChildNode(makeCartridge(green, "Qwen3-4B", 1, -4, rot: 0.04))
+    scene.rootNode.addChildNode(makeCrystal(purple, 13, -3, rot: 0.3))
+    scene.rootNode.addChildNode(makeBook(blue, "Atlas", 12, 8, rot: -0.12))
+    // documents stay paper — what a meeting spills into
     let summary = CardKind(label: "SUMMARY", corner: 15, pxW: 248, pxH: 112, seed: 3)
     let action  = CardKind(label: "ACTION",  corner: 9,  pxW: 196, pxH: 70,  seed: 12)
     scene.rootNode.addChildNode(card(green,  summary, snippet: "Team aligned on shipping the beta Friday; pricing deferred a week pending finance sign-off.", -1, 9, rot: 0.03))

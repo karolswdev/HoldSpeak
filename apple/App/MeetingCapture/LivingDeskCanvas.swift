@@ -15,6 +15,7 @@ struct LivingDeskCanvas: UIViewRepresentable {
     let cards: [DeskCardData]
     var zones: [DeskZone] = []   // persisted drawn places that hold cards (drop a card inside one to file it)
     var pathDepth: Int = 0       // HSM-14-24: how deep we've dived (0 = root) — drives the dive/ascend settle
+    var focusedId: String? = nil // HSM-14-22: the selected object, LIFTED toward the camera (focus-lens mode)
     let onTap: (String) -> Void
     let onCycle: (String) -> Void
     var onZoneCreate: (DeskZone) -> Void = { _ in }       // a drawn+named area becomes a persisted zone
@@ -55,9 +56,11 @@ struct LivingDeskCanvas: UIViewRepresentable {
         context.coordinator.brush = brush
         context.coordinator.zones = zones
         context.coordinator.pathDepth = pathDepth
+        context.coordinator.focusedId = focusedId
         context.coordinator.syncUserZones()
         context.coordinator.sync(cards)
         context.coordinator.syncLevel()        // play the dive/ascend settle if the depth changed
+        context.coordinator.syncFocus()        // lift the selected object / drop it back
     }
 
     @MainActor final class Coord: NSObject {
@@ -69,6 +72,10 @@ struct LivingDeskCanvas: UIViewRepresentable {
         var onAscend: () -> Void = {}
         var pathDepth = 0
         private var lastDepth = 0
+        var focusedId: String? = nil
+        private var lastFocused: String?
+        // saved desk state per lifted node, so it clips back exactly: (pos, rotation, scale, category, collision)
+        private var focusSaved: [String: (SCNVector3, SCNVector4, SCNVector3, Int, Int)] = [:]
         private let homeCam = SCNVector3(0, 44, 34)        // the resting camera (matches buildScene)
         weak var view: SCNView?
         let cameraNode = SCNNode()
@@ -508,6 +515,47 @@ struct LivingDeskCanvas: UIViewRepresentable {
             cameraNode.position = homeCam; cameraNode.camera?.fieldOfView = 38
             SCNTransaction.commit()
             hMed.impactOccurred(intensity: 0.6)
+        }
+
+        // MARK: focus lens — lift the selected object toward the camera, make it non-solid (so it doesn't
+        // shove the desk), and remember where it was so it clips back on exit. The fog + floating outputs
+        // are the SwiftUI overlay above; here we just animate the 3D object.
+        func syncFocus() {
+            if focusedId == lastFocused { return }
+            if let prev = lastFocused, let n = nodes[prev] { dropFromFocus(n, prev) }
+            if let cur = focusedId, let n = nodes[cur] { liftToFocus(n, cur) }
+            lastFocused = focusedId
+        }
+        private func liftToFocus(_ n: SCNNode, _ id: String) {
+            let pres = n.presentation
+            focusSaved[id] = (pres.position, pres.rotation, n.scale,
+                              n.physicsBody?.categoryBitMask ?? 1, n.physicsBody?.collisionBitMask ?? -1)
+            // non-solid: kinematic + collides with nothing, so the lift can't fling the desk around
+            n.physicsBody?.type = .kinematic
+            n.physicsBody?.categoryBitMask = 0; n.physicsBody?.collisionBitMask = 0
+            n.physicsBody?.velocity = SCNVector3Zero; n.physicsBody?.angularVelocity = SCNVector4Zero
+            n.position = pres.position; n.rotation = pres.rotation       // sync model to where physics left it
+            hMed.impactOccurred(intensity: 0.95)
+            SCNTransaction.begin(); SCNTransaction.animationDuration = 0.5
+            SCNTransaction.animationTimingFunction = CAMediaTimingFunction(name: .easeOut)
+            n.position = SCNVector3(0, 16, 15)                            // lifted up + toward the camera
+            n.eulerAngles = SCNVector3(0, 0, 0)                           // squared up, presented
+            n.scale = SCNVector3(1.5, 1.5, 1.5)
+            SCNTransaction.commit()
+        }
+        private func dropFromFocus(_ n: SCNNode, _ id: String) {
+            guard let s = focusSaved[id] else { return }
+            hLight.impactOccurred(intensity: 0.6)
+            SCNTransaction.begin(); SCNTransaction.animationDuration = 0.4
+            SCNTransaction.animationTimingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            n.position = s.0; n.rotation = s.1; n.scale = s.2            // clip back to the saved desk spot
+            SCNTransaction.completionBlock = { [weak n] in
+                guard let n, let b = n.physicsBody else { return }
+                b.type = .dynamic; b.categoryBitMask = s.3; b.collisionBitMask = s.4
+                b.isAffectedByGravity = true; b.velocity = SCNVector3Zero; b.angularVelocity = SCNVector4Zero
+            }
+            SCNTransaction.commit()
+            focusSaved[id] = nil
         }
 
         // MARK: touch

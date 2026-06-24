@@ -143,6 +143,21 @@ These are the owner's explicit, repeated asks — the road to "meaningful":
    notes:** the dive→settle handoff has a tiny camera discontinuity (diveInto ends on the zone center;
    syncLevel snaps to a fixed pose then eases home) — tune on device. Per-level card LAYOUT positions
    aren't persisted yet (cards re-grid each entry). Tune the dive timing/drama on the glass.
+> **FOCUS LENS (2026-06-24, owner's vision for "expand"):** tapping a meeting in 3D no longer spills cards
+> into the physics desk — it **lifts the object toward the camera** (`LivingDeskCanvas.liftToFocus`:
+> kinematic + collisionBitMask 0 so it's non-solid, transform saved in `focusSaved`, animated up+scaled;
+> `dropFromFocus` clips it back on exit), fogs the world under a **lens** and floats its outputs in a
+> **virtual layer** (`DeskFocusOverlay` in DeskHome — radial clear→dark fog, output `DeskCardFace`s fanned
+> in the air, tap-anywhere to close). State: `focusedId`/`focusOutputs`. **NEEDS DEVICE TUNING:** the lift
+> target `(0,16,15)`/scale `1.5` and the fog clear-centre radius are reasoned, not eyeballed on glass yet.
+>
+> **REAL ASSETS — tried + parked.** Pulled CC0 poly.pizza models for the objects (cassette `/m/aR5ot8Z7_-v`
+> Google, microchip `/m/tIp60lIg43` iPoly3D, crystal `/m/nBlnK8G6xw` Quaternius, book `/m/h3Wh4fxSQX`
+> Quaternius) via the §5 pipeline + a `loadFit` auto-fit in the renderer. They imported **untextured**
+> (tiny palette-UV PNGs → white) and read WORSE than the procedural objects, so they're parked. To finish:
+> either bake proper textures, apply a clean per-kind solid tint to the real mesh, or commission Pixellab.
+> The procedural `makeObject` builders stay until a real curation pass beats them.
+
 > **OBJECT LANGUAGE (2026-06-24, owner's core ask — "stop making everything a wooden chip"):** hardware /
 > containers are now REAL 3D objects in `LivingDeskCanvas`, not paper extrusions: **meeting → cassette**,
 > **model → glowing cartridge** (emissive accent bar + gold pins), **kb → crystal**, **notebook → book**

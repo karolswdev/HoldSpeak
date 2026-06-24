@@ -78,6 +78,8 @@ struct DeskHome: View {
     @State private var brush = 0                                   // 0 off · 1 area · 2 crayon · 3 pencil · 4 mud
     @State private var zonesMode = false                           // the zone-drawing toolchain (palette shown)
     @State private var deskPath: [String] = []                     // HSM-14-24: nested-zone dive — [] = root, ["Atlas"] = inside, ["Atlas","Q3"] = deeper
+    @State private var focusedId: String? = nil                    // HSM-14-22: the lifted/selected object (focus-lens mode)
+    @State private var focusOutputs: [DeskCardData] = []           // its outputs, floating in the virtual layer
 
     var body: some View {
         NavigationStack {
@@ -112,8 +114,9 @@ struct DeskHome: View {
             ZStack(alignment: .topLeading) {
                 DeskCanvasBackground()
                 if livingDesk {
-                    LivingDeskCanvas(cards: cardData, zones: deskZones, pathDepth: deskPath.count,
-                                     onTap: { handleTap($0) }, onCycle: { id in tactile(); cycleStyle(id) },
+                    LivingDeskCanvas(cards: cardData, zones: deskZones, pathDepth: deskPath.count, focusedId: focusedId,
+                                     onTap: { handleTap($0) },
+                                     onCycle: { id in guard DeskCardKind.of(id).isDocument else { return }; tactile(); cycleStyle(id) },
                                      onZoneCreate: { addZone($0) },
                                      onFileToZone: { id, zone in tactile(.medium); fileToZone(id, to: zone) },
                                      onDive: { path in dive(into: path) },
@@ -163,6 +166,12 @@ struct DeskHome: View {
                     Spacer()
                 }
 
+                // HSM-14-22 — the focus lens (virtual layer): fogs the world, floats the selected object's
+                // outputs around the lifted object. Sits above the desk, below the window layer.
+                if livingDesk, focusedId != nil {
+                    DeskFocusOverlay(outputs: focusOutputs, onOpen: { openFocusOutput($0) }, onExit: { exitFocus() })
+                }
+
                 // The window layer — apps live ON the desk, floating above the cards.
                 ForEach(windows) { w in
                     DeskWindowChrome(item: binding(for: w.id), desk: geo.size,
@@ -173,8 +182,8 @@ struct DeskHome: View {
                 }
             }
         }
-        .onChange(of: folder) { _ in collapseAll(); selectedIDs = []; deskPath = []; clearToken += 1 }
-        .onChange(of: activeUserFolder) { _ in collapseAll(); selectedIDs = []; deskPath = []; clearToken += 1 }
+        .onChange(of: folder) { _ in collapseAll(); selectedIDs = []; deskPath = []; focusedId = nil; clearToken += 1 }
+        .onChange(of: activeUserFolder) { _ in collapseAll(); selectedIDs = []; deskPath = []; focusedId = nil; clearToken += 1 }
     }
 
     // MARK: spill — a meeting opens into its OUTPUT OBJECTS on the desk (not files in a panel)
@@ -186,8 +195,29 @@ struct DeskHome: View {
         case .notebook: open(.meeting(String(id.dropFirst(5))))                       // the full notebook (generation lives here)
         case .output: if let d = outputBodies[id] { open(.output(id: id, title: d.title, icon: d.icon, body: d.body)) }
         case .knowledgeBase: toggleSpillKB(String(id.dropFirst(3)))                   // a KB opens by spilling its members
-        case .meeting: toggleSpill(id)                                                // a meeting opens by spilling its parts
+        case .meeting:
+            if livingDesk { enterFocus(id) }                                         // 3D: LIFT it under a lens (focus mode)
+            else { toggleSpill(id) }                                                 // 2D: spill its parts onto the desk
         }
+    }
+
+    // HSM-14-22 — the focus lens. Selecting an object LIFTS it toward the camera (the canvas animates the
+    // 3D node + makes it non-solid so it doesn't shove the desk), fogs the rest of the world, and floats the
+    // object's outputs in a VIRTUAL layer (not into the physics desk). Tap out -> it clips back to where it was.
+    private func enterFocus(_ id: String) {
+        let (cards, bodies) = buildOutputs(id)
+        outputBodies.merge(bodies) { _, n in n }
+        focusOutputs = cards
+        withAnimation(.easeOut(duration: 0.3)) { focusedId = id }
+    }
+    private func exitFocus() {
+        tactile()
+        withAnimation(.easeIn(duration: 0.22)) { focusedId = nil }
+        focusOutputs = []
+    }
+    private func openFocusOutput(_ oid: String) {
+        if let d = outputBodies[oid] { open(.output(id: oid, title: d.title, icon: d.icon, body: d.body)) }
+        else if oid.hasPrefix("open:") { open(.meeting(String(oid.dropFirst(5)))) }
     }
     private func childParent(_ id: String) -> String? {
         if id.hasPrefix("open:") { return String(id.dropFirst(5)) }
@@ -399,7 +429,7 @@ struct DeskHome: View {
     }
     /// Dive INTO a zone (double-tap) — its full path becomes the breadcrumb; the desk swaps to its contents.
     private func dive(into path: String) {
-        tactile(.medium); collapseAll()
+        tactile(.medium); collapseAll(); focusedId = nil; focusOutputs = []
         withAnimation(.easeInOut(duration: 0.35)) { deskPath = path.split(separator: "/").map(String.init) }
     }
     /// Climb OUT one level (double-tap empty desk, or the breadcrumb).
@@ -727,6 +757,67 @@ struct DeskBreadcrumb: View {
             .padding(.horizontal, 9).padding(.vertical, 5)
             .background(Capsule().fill(here ? AnyShapeStyle(Sig.accentGradient) : AnyShapeStyle(Color.clear)))
         }.buttonStyle(PressableCard())
+    }
+}
+
+// HSM-14-22 — the focus lens (virtual layer). The selected object is lifted toward the camera by the
+// SceneKit canvas underneath; this overlay puts the rest of the world "under fog" (a clear centre that
+// shows the lifted object, fog getting denser toward the edges) and floats the object's OUTPUTS around it.
+// Tap anywhere in the fog to drop back out.
+struct DeskFocusOverlay: View {
+    let outputs: [DeskCardData]
+    let onOpen: (String) -> Void
+    let onExit: () -> Void
+    @State private var appear = false
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                // FOG: clear at the centre (the lifted object shows through), denser toward the edges.
+                RadialGradient(colors: [.clear, .clear, .black.opacity(0.45), .black.opacity(0.82)],
+                               center: .init(x: 0.5, y: 0.44),
+                               startRadius: 70, endRadius: max(geo.size.width, geo.size.height) * 0.66)
+                    .ignoresSafeArea()
+                    .contentShape(Rectangle())
+                    .onTapGesture { onExit() }
+                    .opacity(appear ? 1 : 0)
+
+                // the outputs, fanned in the air around the lifted object
+                ForEach(Array(outputs.enumerated()), id: \.element.id) { i, c in
+                    let pos = floatPos(i, outputs.count, geo.size)
+                    DeskCardFace(data: c)
+                        .scaleEffect(0.92)
+                        .rotationEffect(.degrees(Double((abs(c.id.hashValue) % 9) - 4)))
+                        .shadow(color: .black.opacity(0.5), radius: 14, y: 8)
+                        .position(pos)
+                        .opacity(appear ? 1 : 0)
+                        .offset(y: appear ? 0 : 60)
+                        .scaleEffect(appear ? 1 : 0.6)
+                        .animation(.spring(response: 0.5, dampingFraction: 0.78).delay(0.06 + Double(i) * 0.05), value: appear)
+                        .onTapGesture { onOpen(c.id) }
+                }
+
+                VStack {
+                    Spacer()
+                    HStack(spacing: 6) {
+                        Image(systemName: "hand.tap.fill").font(.system(size: 11, weight: .bold))
+                        Text("Tap anywhere to close").font(.system(size: 12, weight: .heavy))
+                    }
+                    .foregroundStyle(.white.opacity(0.7)).padding(.horizontal, 14).padding(.vertical, 9)
+                    .background(Capsule().fill(.black.opacity(0.4)))
+                    .padding(.bottom, 26).opacity(appear ? 1 : 0)
+                }
+            }
+            .onAppear { appear = true }
+        }
+    }
+    // Fan the outputs along an arc above/around the lifted object (centre ~0.44 height).
+    private func floatPos(_ i: Int, _ n: Int, _ size: CGSize) -> CGPoint {
+        let cx = size.width * 0.5, cy = size.height * 0.46
+        if n <= 1 { return CGPoint(x: cx, y: cy - size.height * 0.27) }
+        let t = CGFloat(i) / CGFloat(n - 1)                  // 0…1 across the fan
+        let spread = min(CGFloat(n - 1) * 0.42, 2.4)         // total arc (radians)
+        let ang = -CGFloat.pi / 2 + (t - 0.5) * spread       // centred on straight-up
+        return CGPoint(x: cx + sin(ang) * size.width * 0.33, y: cy - cos(ang) * size.height * 0.30)
     }
 }
 

@@ -339,6 +339,25 @@ book, judged together) then ported 1:1. `xcodebuild` device-arch **BUILD SUCCEED
 **launched live on the iPad Air M4** (unlocked this time). Next: extend the object language to the paper
 documents (a scroll for transcript, a sticky for action, a stack for summary) + the act-on-expand affordance.
 
+**2026-06-24 — the FOCUS LENS (lift-to-inspect) + long-press fix (owner feedback on a device walk).**
+(1) **Long-press churned the whole desk** — it cycled a card's paper *style*, and the default desk's
+zone-layout rebuilds *everything* when any card's style signature changes. Gated: long-press only cycles
+style on **paper documents**, so it's a no-op on the cassette/cartridge objects (and the default desk).
+(2) The big one — the owner's vision for **expand**: selecting an object should **lift it toward the
+camera**, and during the lift it goes **non-solid** (so it doesn't shove the desk), with its desk
+position **saved** so it **clips back** on exit; the world goes **under a fog lens** (clear centre on the
+lifted object, denser fog toward the edges); and its **outputs float in a VIRTUAL layer** around it
+instead of spilling into the physics desk. Built: tapping a meeting in 3D enters focus (`focusedId`) →
+`LivingDeskCanvas` lifts the node (kinematic + collisionless, transform saved, animated up + scaled) and
+drops it back on exit; a SwiftUI `DeskFocusOverlay` fogs the desk (radial clear→dark) and fans the
+meeting's output cards (real `DeskCardFace`, readable) in the air with a staggered spring; tap anywhere to
+close. `xcodebuild` device-arch **BUILD SUCCEEDED**; installed on the iPad Air M4 (launch pending an
+unlock). **Needs an on-device tuning pass:** the lift target/scale + the fog's clear-centre radius are set
+by reason, not yet eyeballed on the glass. **Real-asset note:** tried CC0 poly.pizza models
+(cassette/microchip/crystal/book) for the objects — they imported untextured/rough (palette-UV → white)
+and read worse than the procedural objects, so they're set aside pending a real texturing/curation pass
+(IDs + pipeline saved in the handover). The procedural objects stay for now.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a

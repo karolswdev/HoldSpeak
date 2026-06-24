@@ -84,6 +84,11 @@ enum DeskCardKind {
         default: return 15
         }
     }
+    // Paper documents (vs hardware/container objects). Long-press cycles paper STYLE only on these — cycling
+    // the "paper palette" on a cassette/cartridge/crystal is meaningless and only churned its physics body.
+    var isDocument: Bool {
+        switch self { case .summary, .topics, .action, .artifact, .transcript: return true; default: return false }
+    }
 }
 
 // A real PAPER card — card-stock texture, ink type, a glyph stamp, a ruled line, an accent spine and a
