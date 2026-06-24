@@ -126,6 +126,10 @@ ViewModels/        MeetingReviewState, CaptureModel, … (lifted out of the view
 - **The desk is a *place* — [[story-21-desk-environments]]** is canon for themeable environments (a lamp
   on a marble table, a mousepad, real light) with **3 shipped environments + a builder**, from free CC0
   assets. Pixel-art objects on rich material surfaces under real light is the signature look.
+- **The desk is *alive* — [[story-22-the-living-desk]]** is the substrate decision: a fixed-angle (~82°)
+  **3D SceneKit** room where cards lay on the surface, **lift when picked, fall and stack**, and the user
+  **builds barriers from pencils / erasers / clay**. The order to build it all is in
+  **[[DESK_BUILD_SEQUENCE]]** — substrate (Living Desk) before surface (environments + Ask) before sync.
 - Craft bar: bespoke objects over SF glyphs/CSS shapes (lean on PixelLab — [[project_qlippy_mascot]]).
 - The contrast — pixel-art **objects** on **sleek** dark chrome — is the premium feel; keep both.
 - Prove on the device, not seeded shots, for anything claimed `done` (see

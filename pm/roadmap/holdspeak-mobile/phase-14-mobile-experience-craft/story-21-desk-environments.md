@@ -35,6 +35,11 @@ An environment is a small declarative composition (data, not code) of:
 Every object's drop-shadow + the canvas grade derive from the active environment, so swapping themes
 re-lights the whole desk, not just the wallpaper.
 
+**Realized on the Living Desk substrate ([[story-22-the-living-desk]]).** Once the desk is a fixed-angle
+3D SceneKit room, an environment is literally a **material + light rig**: the surface is a PBR material,
+the lamp is a real `SCNLight` casting real shadows. The 3 environments below become 3 light/material
+rigs; the builder composes them. (HSM-14-22 is therefore the dependency — see [[DESK_BUILD_SEQUENCE]].)
+
 ## The 3 starter environments
 
 1. **Marble & Lamp** (the owner's exemplar) — polished white/grey marble, a warm desk lamp pooling light
