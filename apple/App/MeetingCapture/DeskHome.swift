@@ -17,6 +17,7 @@ enum DeskFolder: String, Hashable, CaseIterable {
 struct DeskHome: View {
     @StateObject private var model = CaptureModel()
     @AppStorage("hs.desk.pinned") private var pinnedCSV = ""
+    @AppStorage("hs.desk.cardmodes") private var modesCSV = ""    // "id=full;id=header" — persists each card's presentation
     @State private var folder: DeskFolder = .all
     @State private var tidyToken = 0
     @State private var zoomToken = 0
@@ -47,7 +48,8 @@ struct DeskHome: View {
             ZStack(alignment: .topLeading) {
                 DeskCanvasBackground()
                 DeskPhysicsCanvas(cards: cardData, tidyToken: tidyToken, zoomToken: zoomToken,
-                                  onTap: { id in tactile(); if id.hasPrefix("model:") { showModels = true } else { openMeetingID = id } })
+                                  onTap: { id in tactile(); if id.hasPrefix("model:") { showModels = true } else { openMeetingID = id } },
+                                  onCycle: { id in tactile(); cycleMode(id) })
                 if cardData.isEmpty { DeskEmptyHint(folder: folder).position(x: geo.size.width / 2, y: geo.size.height * 0.42) }
                 if folder != .models {
                     DeskMic().position(x: geo.size.width * 0.5, y: geo.size.height - 92)
@@ -65,11 +67,11 @@ struct DeskHome: View {
         if folder == .models {
             return ModelFiles.installed().map {
                 DeskCardData(id: "model:\($0.id)", title: $0.name.replacingOccurrences(of: ".gguf", with: ""),
-                             sub: "loaded · on device", sprite: "cartridge", tintHex: 0x5B8DEF)
+                             sub: "loaded · on device", sprite: "cartridge", tintHex: 0x5B8DEF, mode: modeFor("model:\($0.id)"))
             }
         }
         return filtered.map { m in
-            DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m), tintHex: tintHexFor(m))
+            DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m), tintHex: tintHexFor(m), mode: modeFor(m.id))
         }
     }
     private var filtered: [Meeting] {
@@ -96,6 +98,21 @@ struct DeskHome: View {
         }
     }
     private var pinnedSet: Set<String> { Set(pinnedCSV.split(separator: ",").map(String.init)) }
+
+    // Per-card presentation mode, persisted in "id=full;id=header" form.
+    private func modesDict() -> [String: CardMode] {
+        var d: [String: CardMode] = [:]
+        for pair in modesCSV.split(separator: ";") {
+            let kv = pair.split(separator: "=", maxSplits: 1)
+            if kv.count == 2, let m = CardMode(rawValue: String(kv[1])) { d[String(kv[0])] = m }
+        }
+        return d
+    }
+    private func modeFor(_ id: String) -> CardMode { modesDict()[id] ?? .full }
+    private func cycleMode(_ id: String) {
+        var d = modesDict(); d[id] = (d[id] ?? .full).next
+        modesCSV = d.map { "\($0.key)=\($0.value.rawValue)" }.joined(separator: ";")
+    }
     private func spriteFor(_ m: Meeting) -> String { abs(m.id.hashValue) % 2 == 0 ? "cassette" : "cassette2" }
     private func titleFor(_ m: Meeting) -> String {
         if let t = m.title, !t.isEmpty { return t }
