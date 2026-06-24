@@ -20,35 +20,87 @@ enum CardMode: String, CaseIterable {
 
 struct DeskCardData: Equatable {
     let id: String; let title: String; let sub: String; let sprite: String; let tintHex: UInt; var mode: CardMode
+    var styleRaw: Int = 0     // CardStyle index (paper/ink palette), customizable per card
 }
 
-// The premium card, rendered to a SpriteKit texture so the physics node looks like the design.
+// A real PAPER card — card-stock texture, ink type, a glyph stamp, a ruled line, an accent spine and a
+// strip of tape. A physical thing you'd keep on a desk, not a flat UI chip. Rendered to a texture for
+// both the SpriteKit and SceneKit desks. `style` picks the paper/ink palette (customizable per card).
 struct DeskCardFace: View {
     let data: DeskCardData
     var body: some View {
         let m = data.mode
+        let st = CardStyle.of(data.styleRaw)
         let tint = Color(hex: data.tintHex)
-        let marker: CGFloat = m == .full ? 48 : (m == .half ? 36 : 24)
-        HStack(spacing: m == .header ? 9 : 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: marker * 0.28, style: .continuous).fill(tint.opacity(0.18))
-                DeskSprite(name: data.sprite, size: marker - 4)
-            }.frame(width: marker, height: marker)
-            VStack(alignment: .leading, spacing: m == .full ? 3 : 1) {
-                Text(data.title).font(.system(size: m == .header ? 13 : 15, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
-                if m == .full { Text(data.sub).font(.system(size: 11, weight: .bold)).foregroundStyle(Sig.muted).lineLimit(1) }
+        let corner: CGFloat = m == .header ? 11 : 15
+        let chip: CGFloat = m == .full ? 40 : (m == .half ? 32 : 26)
+        ZStack(alignment: .topLeading) {
+            // card stock
+            CardPaper(tint: st.paper)
+            // a strip of tape (full cards only) — the creative, physical detail
+            if m == .full {
+                RoundedRectangle(cornerRadius: 2).fill(Color.white.opacity(0.30))
+                    .frame(width: 50, height: 15).rotationEffect(.degrees(-4)).blendMode(.softLight)
+                    .overlay(RoundedRectangle(cornerRadius: 2).strokeBorder(.white.opacity(0.2), lineWidth: 0.5).rotationEffect(.degrees(-4)))
+                    .position(x: m.size.width * 0.5, y: 7)
             }
-            Spacer(minLength: 0)
+            HStack(spacing: m == .header ? 8 : 11) {
+                // a die-cut STICKER of the pixel-art asset, stuck on at an angle
+                ZStack {
+                    RoundedRectangle(cornerRadius: chip * 0.26, style: .continuous).fill(.white)
+                        .shadow(color: .black.opacity(0.28), radius: 2.5, y: 1.5)
+                    DeskSprite(name: data.sprite, size: chip - 9)
+                }.frame(width: chip, height: chip)
+                    .overlay(RoundedRectangle(cornerRadius: chip * 0.26, style: .continuous).strokeBorder(tint.opacity(0.55), lineWidth: 1.5))
+                    .rotationEffect(.degrees(-7))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(data.title).font(.system(size: m == .header ? 13 : 15, weight: .heavy, design: .rounded))
+                        .foregroundStyle(st.ink).lineLimit(1)
+                    if m != .header {
+                        Rectangle().fill(st.ink.opacity(0.14)).frame(height: 1)        // ruled index line
+                        Text(data.sub).font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .foregroundStyle(st.inkSoft).lineLimit(1)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, m == .header ? 11 : 14).padding(.vertical, m == .header ? 7 : 10)
+            .padding(.leading, 4)
         }
-        .padding(.horizontal, m == .header ? 11 : 14).padding(.vertical, m == .header ? 8 : 11)
         .frame(width: m.size.width, height: m.size.height, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: m == .header ? 13 : 18, style: .continuous)
-                .fill(LinearGradient(colors: [Sig.s2, Sig.s1], startPoint: .top, endPoint: .bottom))
-                .overlay(RoundedRectangle(cornerRadius: m == .header ? 13 : 18, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
-                .overlay(alignment: .leading) { RoundedRectangle(cornerRadius: 3).fill(tint).frame(width: 4).padding(.vertical, m == .header ? 9 : 15).padding(.leading, 2) }
-        )
+        .overlay(alignment: .leading) {                                                  // accent spine
+            UnevenRoundedRectangle(topLeadingRadius: corner, bottomLeadingRadius: corner).fill(tint).frame(width: 6)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: corner, style: .continuous).strokeBorder(st.ink.opacity(0.16), lineWidth: 1))
     }
+}
+
+// The paper surface: the generated card-stock texture, a warm tint wash, and a soft edge vignette.
+struct CardPaper: View {
+    let tint: Color
+    var body: some View {
+        ZStack {
+            if let ui = paperImage { Image(uiImage: ui).resizable().interpolation(.medium) }
+            else { tint }
+            tint.opacity(0.5).blendMode(.multiply)
+            RadialGradient(colors: [.clear, .black.opacity(0.10)], center: .init(x: 0.5, y: 0.4), startRadius: 30, endRadius: 170)
+        }
+    }
+    private var paperImage: UIImage? { UIImage(named: "paper") }
+}
+
+// Per-card customizable paper/ink palette.
+struct CardStyle {
+    let paper: Color, ink: Color, inkSoft: Color
+    static let all: [CardStyle] = [
+        CardStyle(paper: Color(hex: 0xEDE6D6), ink: Color(hex: 0x2A2218), inkSoft: Color(hex: 0x6E5F4C)), // cream
+        CardStyle(paper: Color(hex: 0xD8C7A8), ink: Color(hex: 0x3A2C18), inkSoft: Color(hex: 0x6B543A)), // kraft
+        CardStyle(paper: Color(hex: 0xCBD8E6), ink: Color(hex: 0x1C2A38), inkSoft: Color(hex: 0x47586A)), // blueprint
+        CardStyle(paper: Color(hex: 0xF6E59B), ink: Color(hex: 0x4A3D12), inkSoft: Color(hex: 0x7A6A2A)), // sticky note
+    ]
+    static func of(_ raw: Int) -> CardStyle { all[max(0, min(all.count - 1, raw))] }
+    static var count: Int { all.count }
 }
 
 @MainActor final class DeskScene: SKScene {

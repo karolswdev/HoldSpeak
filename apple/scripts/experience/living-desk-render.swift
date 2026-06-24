@@ -10,11 +10,26 @@ import AppKit
 
 func cardImage(_ tint: NSColor) -> NSImage {
     let size = NSSize(width: 246, height: 78); let img = NSImage(size: size); img.lockFocus()
-    NSColor(calibratedWhite: 0.135, alpha: 1).setFill()
-    NSBezierPath(roundedRect: NSRect(origin: .zero, size: size), xRadius: 16, yRadius: 16).fill()
-    tint.setFill(); NSBezierPath(roundedRect: NSRect(x: 10, y: 15, width: 5, height: 48), xRadius: 2.5, yRadius: 2.5).fill()
-    NSColor(calibratedWhite: 0.88, alpha: 1).setFill(); NSBezierPath(roundedRect: NSRect(x: 26, y: 44, width: 150, height: 14), xRadius: 4, yRadius: 4).fill()
-    NSColor(calibratedWhite: 0.42, alpha: 1).setFill(); NSBezierPath(roundedRect: NSRect(x: 26, y: 24, width: 112, height: 10), xRadius: 3, yRadius: 3).fill()
+    let rect = NSRect(origin: .zero, size: size)
+    let clip = NSBezierPath(roundedRect: rect, xRadius: 15, yRadius: 15); clip.addClip()
+    if let paper = NSImage(contentsOfFile: "../../App/paper.png") { paper.draw(in: rect) }
+    else { NSColor(calibratedRed: 0.93, green: 0.90, blue: 0.84, alpha: 1).setFill(); NSBezierPath(rect: rect).fill() }
+    tint.withAlphaComponent(0.10).setFill(); NSBezierPath(rect: rect).fill()
+    tint.setFill(); NSBezierPath(rect: NSRect(x: 0, y: 0, width: 6, height: 78)).fill()        // accent spine
+    // die-cut sticker (white tile, tilted, colored outline)
+    let ctx = NSGraphicsContext.current!.cgContext
+    ctx.saveGState(); ctx.translateBy(x: 40, y: 39); ctx.rotate(by: -0.12)
+    let sq = NSRect(x: -17, y: -17, width: 34, height: 34)
+    ctx.setShadow(offset: CGSize(width: 1.5, height: -1.5), blur: 3, color: NSColor(white: 0, alpha: 0.3).cgColor)
+    NSColor.white.setFill(); NSBezierPath(roundedRect: sq, xRadius: 8, yRadius: 8).fill()
+    ctx.setShadow(offset: .zero, blur: 0, color: nil)
+    tint.setStroke(); let sp = NSBezierPath(roundedRect: sq, xRadius: 8, yRadius: 8); sp.lineWidth = 2; sp.stroke()
+    ctx.restoreGState()
+    let ink = NSColor(calibratedRed: 0.16, green: 0.13, blue: 0.09, alpha: 1)
+    ink.setFill(); NSBezierPath(roundedRect: NSRect(x: 66, y: 46, width: 136, height: 11), xRadius: 3, yRadius: 3).fill()
+    ink.withAlphaComponent(0.14).setFill(); NSBezierPath(rect: NSRect(x: 66, y: 40, width: 150, height: 1)).fill()
+    ink.withAlphaComponent(0.5).setFill(); NSBezierPath(roundedRect: NSRect(x: 66, y: 24, width: 98, height: 8), xRadius: 2, yRadius: 2).fill()
+    ink.withAlphaComponent(0.16).setStroke(); let b = NSBezierPath(roundedRect: rect.insetBy(dx: 0.5, dy: 0.5), xRadius: 15, yRadius: 15); b.lineWidth = 1; b.stroke()
     img.unlockFocus(); return img
 }
 

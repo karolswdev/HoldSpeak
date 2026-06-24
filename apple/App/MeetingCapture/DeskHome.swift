@@ -35,6 +35,7 @@ struct DeskHome: View {
     @StateObject private var model = CaptureModel()
     @AppStorage("hs.desk.pinned") private var pinnedCSV = ""
     @AppStorage("hs.desk.cardmodes") private var modesCSV = ""    // "id=full;id=header" — persists each card's presentation
+    @AppStorage("hs.desk.cardstyles") private var stylesCSV = ""  // "id=2" — per-card paper/ink style (customizable)
     @AppStorage("hs.desk.folders") private var foldersCSV = ""    // user directories: "Project Atlas;Hiring"
     @AppStorage("hs.desk.kbs") private var kbsCSV = ""            // knowledge bases (typed containers): "Onboarding;Architecture"
     @AppStorage("hs.desk.filed") private var filedCSV = ""        // membership: "id=Project Atlas;..." (dirs AND KBs share this map)
@@ -91,12 +92,12 @@ struct DeskHome: View {
             ZStack(alignment: .topLeading) {
                 DeskCanvasBackground()
                 if livingDesk {
-                    LivingDeskCanvas(cards: cardData, onTap: { handleTap($0) }, onCycle: { id in tactile(); cycleMode(id) })
+                    LivingDeskCanvas(cards: cardData, onTap: { handleTap($0) }, onCycle: { id in tactile(); cycleStyle(id) })
                 } else {
                     DeskPhysicsCanvas(cards: cardData, tidyToken: tidyToken, zoomToken: zoomToken,
                                       lassoMode: lassoMode, clearToken: clearToken, gatherToken: gatherToken,
                                       onTap: { id in handleTap(id) },
-                                      onCycle: { id in tactile(); cycleMode(id) },
+                                      onCycle: { id in tactile(); cycleStyle(id) },
                                       onSelect: { ids in selectedIDs = ids })
                 }
                 if cardData.isEmpty { DeskEmptyHint(folder: activeUserFolder == nil ? folder : .all).position(x: geo.size.width / 2, y: geo.size.height * 0.42) }
@@ -249,7 +250,7 @@ struct DeskHome: View {
             return kbCards + spilledCards     // tapping a KB spills its members alongside
         }
         let base = filtered.map { m in
-            DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m), tintHex: tintHexFor(m), mode: modeFor(m.id))
+            DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m), tintHex: tintHexFor(m), mode: modeFor(m.id), styleRaw: styleFor(m.id))
         }
         return base + spilledCards            // the meeting's spilled output objects live alongside the cards
     }
@@ -309,7 +310,7 @@ struct DeskHome: View {
             let d = filedDict()
             let members = model.meetings.filter { d[$0.id] == name }
             spilledCards.append(contentsOf: members.map { m in
-                DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m), tintHex: tintHexFor(m), mode: modeFor(m.id))
+                DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m), tintHex: tintHexFor(m), mode: modeFor(m.id), styleRaw: styleFor(m.id))
             })
         }
     }
@@ -342,6 +343,19 @@ struct DeskHome: View {
     private func cycleMode(_ id: String) {
         var d = modesDict(); d[id] = (d[id] ?? .full).next
         modesCSV = d.map { "\($0.key)=\($0.value.rawValue)" }.joined(separator: ";")
+    }
+    // Per-card paper/ink STYLE — varied by default (by id), customizable: long-press cycles it.
+    private func stylesDict() -> [String: Int] {
+        var d: [String: Int] = [:]
+        for pair in stylesCSV.split(separator: ";") {
+            let kv = pair.split(separator: "=", maxSplits: 1); if kv.count == 2, let v = Int(kv[1]) { d[String(kv[0])] = v }
+        }
+        return d
+    }
+    private func styleFor(_ id: String) -> Int { stylesDict()[id] ?? (abs(id.hashValue) % CardStyle.count) }
+    private func cycleStyle(_ id: String) {
+        var d = stylesDict(); d[id] = (styleFor(id) + 1) % CardStyle.count
+        stylesCSV = d.map { "\($0.key)=\($0.value)" }.joined(separator: ";")
     }
     private func spriteFor(_ m: Meeting) -> String { abs(m.id.hashValue) % 2 == 0 ? "cassette" : "cassette2" }
     private func titleFor(_ m: Meeting) -> String {

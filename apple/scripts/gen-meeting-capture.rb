@@ -58,7 +58,7 @@ staged.each { |p| target.add_file_references([group.new_reference(p)]) }
 # craft surfaces. All optional — the UI falls back to SF Symbols if a file is missing — but
 # bundling them lights up the craft.
 res_group = project.new_group('Resources', File.join(ROOT, 'App'))
-%w[mermaid.min.js qlippy.png pushpin.png waveorb.png theaterorb.png crystal.png cassette.png cassette2.png cartridge.png mic.png folder.png note.png robot.png lightdesk.scn plant.scn books.scn mug.scn keyboard.scn lightdesk_tex.png plant_tex.png books_tex.png keyboard_tex.png].each do |name|
+%w[mermaid.min.js qlippy.png pushpin.png waveorb.png theaterorb.png crystal.png cassette.png cassette2.png cartridge.png mic.png folder.png note.png robot.png lightdesk.scn plant.scn books.scn mug.scn keyboard.scn lightdesk_tex.png plant_tex.png books_tex.png keyboard_tex.png paper.png].each do |name|
   path = File.join(ROOT, 'App', name)
   target.add_resources([res_group.new_reference(path)]) if File.exist?(path)
 end
