@@ -28,9 +28,8 @@ struct DeskHome: View {
     @State private var gatherToken = 0
     @State private var lassoMode = false
     @State private var selectedIDs: Set<String> = []
-    @State private var openMeetingID: String?
-    @State private var capturing = false
-    @State private var showModels = false
+    @State private var windows: [DeskWindowItem] = []            // apps open AS windows on the desk, not as pushed screens
+    @State private var topZ: Double = 1
     @State private var showNewFolder = false
     @State private var newFolderName = ""
     @State private var fileAfterCreate = false                    // creating a directory to immediately file the current selection
@@ -46,11 +45,6 @@ struct DeskHome: View {
                 canvas
             }
             .background(Sig.bg.ignoresSafeArea())
-            .navigationDestination(item: $openMeetingID) { id in
-                if let m = model.meetings.first(where: { $0.id == id }) { MeetingDetailView(meeting: m) }
-            }
-            .navigationDestination(isPresented: $capturing) { CaptureView(model: model, done: { capturing = false; model.refresh() }) }
-            .navigationDestination(isPresented: $showModels) { ModelsView() }
             .toolbar(.hidden, for: .navigationBar)
             .alert("New Directory", isPresented: $showNewFolder) {
                 TextField("Name", text: $newFolderName)
@@ -71,13 +65,13 @@ struct DeskHome: View {
                 DeskCanvasBackground()
                 DeskPhysicsCanvas(cards: cardData, tidyToken: tidyToken, zoomToken: zoomToken,
                                   lassoMode: lassoMode, clearToken: clearToken, gatherToken: gatherToken,
-                                  onTap: { id in tactile(); if id.hasPrefix("model:") { showModels = true } else { openMeetingID = id } },
+                                  onTap: { id in tactile(); if id.hasPrefix("model:") { open(.models) } else { open(.meeting(id)) } },
                                   onCycle: { id in tactile(); cycleMode(id) },
                                   onSelect: { ids in selectedIDs = ids })
                 if cardData.isEmpty { DeskEmptyHint(folder: activeUserFolder == nil ? folder : .all).position(x: geo.size.width / 2, y: geo.size.height * 0.42) }
                 if selectedIDs.isEmpty, activeUserFolder == nil, folder != .models {
                     DeskMic().position(x: geo.size.width * 0.5, y: geo.size.height - 92)
-                        .onTapGesture { tactile(.medium); capturing = true }
+                        .onTapGesture { tactile(.medium); open(.capture) }
                 }
                 if !selectedIDs.isEmpty {
                     VStack { Spacer()
@@ -92,10 +86,49 @@ struct DeskHome: View {
                 VStack { DeskCanvasBar(folder: folder, userFolder: activeUserFolder, count: cardData.count, lassoMode: lassoMode,
                                        onLasso: { tactile(); lassoMode.toggle(); if !lassoMode { selectedIDs = []; clearToken += 1 } },
                                        onTidy: { tactile(); tidyToken += 1 }, onZoom: { tactile(); zoomToken += 1 }); Spacer() }
+
+                // The window layer — apps live ON the desk, floating above the cards.
+                ForEach(windows) { w in
+                    DeskWindowChrome(item: binding(for: w.id), desk: geo.size,
+                                     onClose: { close(w.id) }, onFront: { bringToFront(w.id) }) {
+                        windowContent(w.kind)
+                    }
+                    .zIndex(w.z)
+                }
             }
         }
         .onChange(of: folder) { _ in selectedIDs = []; clearToken += 1 }
         .onChange(of: activeUserFolder) { _ in selectedIDs = []; clearToken += 1 }
+    }
+
+    // MARK: window management
+
+    private func open(_ kind: DeskWindowKind) {
+        tactile()
+        if let i = windows.firstIndex(where: { $0.kind == kind }) { bringToFront(windows[i].id); return }
+        topZ += 1
+        let n = windows.count % 5
+        windows.append(DeskWindowItem(id: UUID().uuidString, kind: kind,
+                                      offset: CGSize(width: CGFloat(n) * 28 - 24, height: CGFloat(n) * 26 - 30), z: topZ))
+    }
+    private func close(_ id: String) { tactile(); windows.removeAll { $0.id == id } }
+    private func closeKind(_ kind: DeskWindowKind) { windows.removeAll { $0.kind == kind } }
+    private func bringToFront(_ id: String) {
+        guard let i = windows.firstIndex(where: { $0.id == id }) else { return }
+        topZ += 1; windows[i].z = topZ
+    }
+    private func binding(for id: String) -> Binding<DeskWindowItem> {
+        Binding(get: { windows.first(where: { $0.id == id }) ?? DeskWindowItem(id: id, kind: .models, offset: .zero, z: 1) },
+                set: { nv in if let i = windows.firstIndex(where: { $0.id == id }) { windows[i] = nv } })
+    }
+    @ViewBuilder private func windowContent(_ kind: DeskWindowKind) -> some View {
+        switch kind {
+        case .meeting(let id):
+            if let m = model.meetings.first(where: { $0.id == id }) { MeetingDetailView(meeting: m) }
+            else { ContentUnavailable(text: "Meeting unavailable") }
+        case .capture: CaptureView(model: model, done: { closeKind(.capture); model.refresh() })
+        case .models: ModelsView()
+        }
     }
 
     // MARK: data
@@ -375,5 +408,86 @@ struct DeskEmptyHint: View {
                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.muted).multilineTextAlignment(.center)
             }
         }.frame(width: 320)
+    }
+}
+
+struct ContentUnavailable: View {
+    let text: String
+    var body: some View { Text(text).font(.system(size: 14, weight: .semibold)).foregroundStyle(Sig.muted).frame(maxWidth: .infinity, maxHeight: .infinity) }
+}
+
+// MARK: - The window layer: apps open ON the desk (draggable / layered / closeable), not as pushed screens
+
+enum DeskWindowKind: Equatable {
+    case meeting(String), capture, models
+    var title: String { switch self { case .meeting: return "Meeting"; case .capture: return "Record"; case .models: return "Models" } }
+    var icon: String { switch self { case .meeting: return "doc.text.fill"; case .capture: return "mic.fill"; case .models: return "cpu.fill" } }
+}
+
+struct DeskWindowItem: Identifiable, Equatable {
+    let id: String
+    var kind: DeskWindowKind
+    var offset: CGSize
+    var z: Double
+    var maximized: Bool = false
+}
+
+struct DeskWindowChrome<Content: View>: View {
+    @Binding var item: DeskWindowItem
+    let desk: CGSize
+    let onClose: () -> Void
+    let onFront: () -> Void
+    @ViewBuilder var content: () -> Content
+    @State private var dragBase: CGSize?
+
+    private var size: CGSize {
+        item.maximized ? CGSize(width: max(280, desk.width - 28), height: max(360, desk.height - 28))
+                       : CGSize(width: min(desk.width - 48, 480), height: min(desk.height - 96, 660))
+    }
+    var body: some View {
+        let s = size
+        VStack(spacing: 0) {
+            titleBar
+            Rectangle().fill(Sig.line).frame(height: 1)
+            NavigationStack { content() }                       // own nav context so the app's internal links/toolbars work
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .tint(Sig.accent)
+        }
+        .frame(width: s.width, height: s.height)
+        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Sig.s1))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
+        .shadow(color: .black.opacity(0.5), radius: 30, y: 16)
+        .position(x: desk.width / 2 + (item.maximized ? 0 : item.offset.width),
+                  y: desk.height / 2 + (item.maximized ? 0 : item.offset.height))
+        .onTapGesture { onFront() }
+    }
+    private var titleBar: some View {
+        HStack(spacing: 10) {
+            Button(action: onClose) { Circle().fill(Color(hex: 0xFF5F57)).frame(width: 13, height: 13)
+                .overlay(Image(systemName: "xmark").font(.system(size: 7, weight: .black)).foregroundStyle(.black.opacity(0.5))) }
+            Image(systemName: item.kind.icon).font(.system(size: 12, weight: .bold)).foregroundStyle(Sig.accent)
+            Text(item.kind.title).font(.system(size: 14, weight: .heavy)).foregroundStyle(Sig.text)
+            Spacer()
+            Button { withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) { item.maximized.toggle() } } label: {
+                Image(systemName: item.maximized ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                    .font(.system(size: 12, weight: .bold)).foregroundStyle(Sig.muted)
+            }
+        }
+        .padding(.horizontal, 14).frame(height: 44)
+        .background(LinearGradient(colors: [Sig.s2, Sig.s1], startPoint: .top, endPoint: .bottom))
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 2)
+                .onChanged { v in
+                    if dragBase == nil { dragBase = item.offset; onFront() }
+                    let nx = (dragBase?.width ?? 0) + v.translation.width
+                    let ny = (dragBase?.height ?? 0) + v.translation.height
+                    item.offset = CGSize(width: min(max(nx, -desk.width / 2), desk.width / 2),
+                                         height: min(max(ny, -desk.height / 2 + 30), desk.height / 2))
+                    item.maximized = false
+                }
+                .onEnded { _ in dragBase = nil }
+        )
     }
 }
