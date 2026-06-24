@@ -15,6 +15,7 @@ struct LivingDeskCanvas: UIViewRepresentable {
     let cards: [DeskCardData]
     let onTap: (String) -> Void
     let onCycle: (String) -> Void
+    var fence: Int = 0          // 0 off, 1 crayon, 2 pencil, 3 mud — draw a fence on the desk
 
     func makeCoordinator() -> Coord { Coord(onTap: onTap, onCycle: onCycle) }
 
@@ -40,6 +41,7 @@ struct LivingDeskCanvas: UIViewRepresentable {
 
     func updateUIView(_ v: SCNView, context: Context) {
         context.coordinator.onTap = onTap; context.coordinator.onCycle = onCycle
+        context.coordinator.fence = fence
         context.coordinator.sync(cards)
     }
 
@@ -54,6 +56,8 @@ struct LivingDeskCanvas: UIViewRepresentable {
         private var last: [DeskCardData] = []
         private var picked: SCNNode?
         private let liftY: Float = 3.4
+        var fence = 0                       // active fence tool (0 off)
+        private var fenceLast: SCNVector3?  // last committed point while drawing a fence
         // Haptics — the feel layer.
         private let hLight = UIImpactFeedbackGenerator(style: .light)
         private let hMed = UIImpactFeedbackGenerator(style: .medium)
@@ -85,8 +89,9 @@ struct LivingDeskCanvas: UIViewRepresentable {
             cameraNode.eulerAngles = SCNVector3(-60.0 * .pi / 180.0, 0, 0)
             scene.rootNode.addChildNode(cameraNode)
 
-            // Desk — light marble (blinn, even + predictable; environments retune this later).
-            let desk = SCNBox(width: 70, height: 1, length: 52, chamferRadius: 0.5)
+            // Desk — large marble surface so cards have room and don't run off the edge.
+            let deskW: CGFloat = 96, deskL: CGFloat = 70
+            let desk = SCNBox(width: deskW, height: 1, length: deskL, chamferRadius: 0.5)
             let dm = SCNMaterial(); dm.lightingModel = .blinn
             dm.diffuse.contents = UIColor(red: 0.85, green: 0.83, blue: 0.79, alpha: 1)
             dm.specular.contents = UIColor(white: 0.5, alpha: 1); dm.shininess = 0.3
@@ -95,6 +100,17 @@ struct LivingDeskCanvas: UIViewRepresentable {
             dnode.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
             dnode.physicsBody?.friction = 0.85; dnode.physicsBody?.restitution = 0.04
             scene.rootNode.addChildNode(dnode); deskNode = dnode
+
+            // Invisible perimeter walls — nothing falls off the desk into the void.
+            let hw = Float(deskW) / 2 - 1, hl = Float(deskL) / 2 - 1
+            for (px, pz, w, l) in [(0, hl, Float(deskW), 1), (0, -hl, Float(deskW), 1), (hw, 0, 1, Float(deskL)), (-hw, 0, 1, Float(deskL))] as [(Float, Float, Float, Float)] {
+                let wall = SCNNode(geometry: SCNBox(width: CGFloat(w), height: 10, length: CGFloat(l), chamferRadius: 0))
+                wall.geometry?.firstMaterial?.transparency = 0
+                wall.position = SCNVector3(px, 4, pz)
+                wall.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+                wall.physicsBody?.restitution = 0.1; wall.physicsBody?.friction = 0.6
+                scene.rootNode.addChildNode(wall)
+            }
 
             // Leather desk mat — a real surface (physics) so cards rest ON it, not fall through + hide under.
             let pad = SCNBox(width: 36, height: 0.5, length: 22, chamferRadius: 1.6)
@@ -197,8 +213,8 @@ struct LivingDeskCanvas: UIViewRepresentable {
                     }
                 } else {
                     let n = makeCard(c)
-                    let col = i % 3, row = i / 3
-                    n.position = SCNVector3(Float(col) * 9.5 - 9.5, 0.9, Float(row) * 5.5 - 2)   // on the mat
+                    let col = i % 4, row = (i / 4) % 4                  // wrap within the mat — never spawn off-desk
+                    n.position = SCNVector3(Float(col) * 8 - 12, 0.9 + Float(i / 16) * 0.6, Float(row) * 4.5 - 5)
                     root.addChildNode(n); nodes[c.id] = n; modeOf[c.id] = sig
                 }
             }
@@ -234,6 +250,7 @@ struct LivingDeskCanvas: UIViewRepresentable {
         }
         @objc func onPan(_ g: UIPanGestureRecognizer) {
             let p = g.location(in: view)
+            if fence != 0 { drawFence(g, p); return }       // the fence tool draws instead of moving a card
             switch g.state {
             case .began:
                 guard let n = cardNode(at: p) else { return }
@@ -280,6 +297,42 @@ struct LivingDeskCanvas: UIViewRepresentable {
             cameraNode.position = SCNVector3(s.x - Float(t.x) * f, s.y, s.z - Float(t.y) * f)
             if g.state == .ended || g.state == .cancelled { camStart = nil }
         }
+        // MARK: fence drawing — drag on the desk to lay a wall in the chosen material (crayon/pencil/mud);
+        // it's a real physics barrier that cards stop against. A core gesture primitive (HSM-14-22 barriers).
+        private func drawFence(_ g: UIPanGestureRecognizer, _ p: CGPoint) {
+            switch g.state {
+            case .began:
+                fenceLast = planePoint(at: p, y: 0.3)
+            case .changed:
+                guard let last = fenceLast, let cur = planePoint(at: p, y: 0.3) else { return }
+                let d = hypotf(cur.x - last.x, cur.z - last.z)
+                if d > 1.4 { addWall(from: last, to: cur); fenceLast = cur; hLight.impactOccurred(intensity: 0.4) }
+            case .ended, .cancelled, .failed:
+                fenceLast = nil
+            default: break
+            }
+        }
+        private func addWall(from a: SCNVector3, to b: SCNVector3) {
+            let len = hypotf(b.x - a.x, b.z - a.z)
+            let (color, h, thick): (UIColor, CGFloat, CGFloat)
+            switch fence {
+            case 1: color = UIColor(red: 0.95, green: 0.35, blue: 0.30, alpha: 1); h = 1.1; thick = 0.55   // crayon
+            case 2: color = UIColor(red: 0.78, green: 0.70, blue: 0.45, alpha: 1); h = 1.4; thick = 0.45   // pencil
+            default: color = UIColor(red: 0.40, green: 0.29, blue: 0.20, alpha: 1); h = 1.9; thick = 1.1   // mud
+            }
+            let box = SCNBox(width: CGFloat(len) + thick, height: h, length: thick, chamferRadius: thick * 0.4)
+            let m = SCNMaterial(); m.lightingModel = .blinn; m.diffuse.contents = color
+            m.roughness.contents = fence == 3 ? 0.95 : 0.6
+            box.materials = [m]
+            let node = SCNNode(geometry: box)
+            node.position = SCNVector3((a.x + b.x) / 2, Float(h) / 2 + 0.5, (a.z + b.z) / 2)
+            node.eulerAngles = SCNVector3(0, -atan2f(b.z - a.z, b.x - a.x), 0)
+            node.castsShadow = true
+            node.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+            node.physicsBody?.friction = 0.7; node.physicsBody?.restitution = 0.1
+            view?.scene?.rootNode.addChildNode(node)
+        }
+
         @objc func onPinch(_ g: UIPinchGestureRecognizer) {      // pinch to zoom (FOV)
             guard g.state == .changed, let cam = cameraNode.camera else { return }
             cam.fieldOfView = max(20, min(58, cam.fieldOfView / Double(g.scale)))

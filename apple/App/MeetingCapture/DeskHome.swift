@@ -58,6 +58,7 @@ struct DeskHome: View {
     @State private var newFolderName = ""
     @State private var fileAfterCreate = false                    // creating a directory to immediately file the current selection
     @AppStorage("hs.desk.living") private var livingDesk = false   // HSM-14-22: the 3D Living Desk (toolbar toggle)
+    @State private var fence = 0                                   // fence tool: 0 off / 1 crayon / 2 pencil / 3 mud
 
     var body: some View {
         NavigationStack {
@@ -92,7 +93,7 @@ struct DeskHome: View {
             ZStack(alignment: .topLeading) {
                 DeskCanvasBackground()
                 if livingDesk {
-                    LivingDeskCanvas(cards: cardData, onTap: { handleTap($0) }, onCycle: { id in tactile(); cycleStyle(id) })
+                    LivingDeskCanvas(cards: cardData, onTap: { handleTap($0) }, onCycle: { id in tactile(); cycleStyle(id) }, fence: fence)
                 } else {
                     DeskPhysicsCanvas(cards: cardData, tidyToken: tidyToken, zoomToken: zoomToken,
                                       lassoMode: lassoMode, clearToken: clearToken, gatherToken: gatherToken,
@@ -125,6 +126,7 @@ struct DeskHome: View {
                 }
                 VStack { DeskCanvasBar(folder: folder, userFolder: activeUserFolder, count: cardData.count, lassoMode: lassoMode,
                                        livingDesk: livingDesk, onToggle3D: { tactile(.medium); livingDesk.toggle() },
+                                       fence: fence, onFence: { tactile(.medium); fence = (fence + 1) % 4 },
                                        onLasso: { tactile(); lassoMode.toggle(); if !lassoMode { selectedIDs = []; clearToken += 1 } },
                                        onTidy: { tactile(); tidyToken += 1 }, onZoom: { tactile(); zoomToken += 1 }); Spacer() }
 
@@ -513,6 +515,7 @@ struct DeskMic: View {
 struct DeskCanvasBar: View {
     let folder: DeskFolder; let userFolder: String?; let count: Int; let lassoMode: Bool
     let livingDesk: Bool; let onToggle3D: () -> Void
+    let fence: Int; let onFence: () -> Void
     let onLasso: () -> Void; let onTidy: () -> Void; let onZoom: () -> Void
     var body: some View {
         HStack(spacing: 10) {
@@ -524,7 +527,9 @@ struct DeskCanvasBar: View {
             }
             Spacer()
             pill("cube.fill", livingDesk ? "3D" : "2D", onToggle3D, on: livingDesk)
-            if !livingDesk {
+            if livingDesk {
+                pill("scribble.variable", ["Fence", "Crayon", "Pencil", "Mud"][max(0, min(3, fence))], onFence, on: fence != 0)
+            } else {
                 pill("lasso", "Select", onLasso, on: lassoMode)
                 pill("arrow.up.left.and.arrow.down.right", "Fit", onZoom)
                 pill("square.grid.2x2.fill", "Tidy", onTidy)
