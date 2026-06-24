@@ -53,6 +53,8 @@ struct LivingDeskCanvas: UIViewRepresentable {
         private weak var deskNode: SCNNode?
         private var nodes: [String: SCNNode] = [:]
         private var modeOf: [String: String] = [:]
+        private var zoneDecor: [SCNNode] = []        // zone fences + labels for the organized default desk
+        private var lastZoneSig = ""
         private var last: [DeskCardData] = []
         private var picked: SCNNode?
         private let liftY: Float = 3.4
@@ -207,6 +209,11 @@ struct LivingDeskCanvas: UIViewRepresentable {
 
         func sync(_ cards: [DeskCardData]) {
             guard let root = view?.scene?.rootNode else { return }
+            if cards.contains(where: { !$0.zone.isEmpty }) { zonedLayout(cards, root); return }
+            if !zoneDecor.isEmpty {                       // left the zoned default view -> drop the fences/labels
+                zoneDecor.forEach { $0.removeFromParentNode() }; zoneDecor.removeAll(); lastZoneSig = ""
+                for (_, n) in nodes { n.removeFromParentNode() }; nodes.removeAll(); modeOf.removeAll()
+            }
             let ids = Set(cards.map(\.id))
             for (id, n) in nodes where !ids.contains(id) { n.removeFromParentNode(); nodes[id] = nil; modeOf[id] = nil }
             for (i, c) in cards.enumerated() {
@@ -225,6 +232,71 @@ struct LivingDeskCanvas: UIViewRepresentable {
                 }
             }
             last = cards
+        }
+
+        // MARK: zoned default desk — meetings grouped into fenced, labeled time zones (the powerhouse default)
+        private func zonedLayout(_ cards: [DeskCardData], _ root: SCNNode) {
+            let sig = cards.map { "\($0.id)|\($0.zone)|\($0.mode.rawValue)|\($0.styleRaw)" }.joined(separator: ";")
+            if sig == lastZoneSig { return }
+            lastZoneSig = sig
+            for (_, n) in nodes { n.removeFromParentNode() }; nodes.removeAll(); modeOf.removeAll()
+            zoneDecor.forEach { $0.removeFromParentNode() }; zoneDecor.removeAll()
+            let order = ["Today", "This Week", "This Month", "Earlier"]
+            let groups = order.compactMap { z -> (String, [DeskCardData])? in
+                let cs = cards.filter { $0.zone == z }; return cs.isEmpty ? nil : (z, cs)
+            }
+            let n = max(1, groups.count)
+            let tints: [UInt] = [0x3ECF8E, 0x5B8DEF, 0xF2A33C, 0x9B8CFF]
+            for (zi, g) in groups.enumerated() {
+                let cx = (Float(zi) - Float(n - 1) / 2) * 25
+                layoutZone(g.0, g.1, cx, UInt(tints[zi % 4]), root)
+            }
+            last = cards
+        }
+        private func layoutZone(_ label: String, _ cards: [DeskCardData], _ cx: Float, _ tint: UInt, _ root: SCNNode) {
+            let zhw: Float = 10, zFront: Float = 13, zBack: Float = -12
+            let c = UIColor(red: CGFloat((tint >> 16) & 0xFF) / 255, green: CGFloat((tint >> 8) & 0xFF) / 255, blue: CGFloat(tint & 0xFF) / 255, alpha: 1)
+            // a low fence around the zone
+            let corners = [SCNVector3(cx - zhw, 0, zBack), SCNVector3(cx + zhw, 0, zBack), SCNVector3(cx + zhw, 0, zFront), SCNVector3(cx - zhw, 0, zFront)]
+            for i in 0..<4 {
+                let a = corners[i], b = corners[(i + 1) % 4]
+                let len = CGFloat(hypotf(b.x - a.x, b.z - a.z))
+                let box = SCNBox(width: len + 0.6, height: 0.9, length: 0.6, chamferRadius: 0.25)
+                let m = SCNMaterial(); m.lightingModel = .blinn; m.diffuse.contents = c
+                box.materials = [m]
+                let node = SCNNode(geometry: box)
+                node.position = SCNVector3((a.x + b.x) / 2, 0.95, (a.z + b.z) / 2)
+                node.eulerAngles = SCNVector3(0, -atan2f(b.z - a.z, b.x - a.x), 0)
+                node.castsShadow = true
+                node.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+                root.addChildNode(node); zoneDecor.append(node)
+            }
+            // label placard, flat at the zone's front edge
+            let plane = SCNPlane(width: 15, height: 3.8)
+            let lm = SCNMaterial(); lm.diffuse.contents = labelImage("\(label)   ·   \(cards.count)", c); lm.isDoubleSided = true; lm.lightingModel = .constant
+            plane.materials = [lm]
+            let lnode = SCNNode(geometry: plane)
+            lnode.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)
+            lnode.position = SCNVector3(cx, 0.62, zFront - 1.8)
+            root.addChildNode(lnode); zoneDecor.append(lnode)
+            // cards in a grid inside the fence
+            for (i, cd) in cards.prefix(12).enumerated() {
+                let col = i % 2, row = i / 2
+                let node = makeCard(cd)
+                node.position = SCNVector3(cx - 4.2 + Float(col) * 8.4, 1.0, zFront - 5.5 - Float(row) * 3.6)
+                root.addChildNode(node); nodes[cd.id] = node; modeOf[cd.id] = "\(cd.mode.rawValue):\(cd.styleRaw)"
+            }
+        }
+        private func labelImage(_ text: String, _ accent: UIColor) -> UIImage {
+            let size = CGSize(width: 380, height: 96)
+            return UIGraphicsImageRenderer(size: size).image { _ in
+                let rect = CGRect(origin: .zero, size: size)
+                UIColor(white: 0.10, alpha: 0.94).setFill(); UIBezierPath(roundedRect: rect, cornerRadius: 20).fill()
+                accent.setFill(); UIBezierPath(rect: CGRect(x: 0, y: 0, width: 9, height: size.height)).fill()
+                let p = NSMutableParagraphStyle(); p.alignment = .center
+                (text as NSString).draw(in: rect.insetBy(dx: 18, dy: 24),
+                    withAttributes: [.font: UIFont.systemFont(ofSize: 42, weight: .heavy), .foregroundColor: UIColor.white, .paragraphStyle: p])
+            }
         }
 
         // MARK: touch

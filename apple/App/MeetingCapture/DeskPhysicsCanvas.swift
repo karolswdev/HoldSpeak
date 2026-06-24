@@ -21,6 +21,7 @@ enum CardMode: String, CaseIterable {
 struct DeskCardData: Equatable {
     let id: String; let title: String; let sub: String; let sprite: String; let tintHex: UInt; var mode: CardMode
     var styleRaw: Int = 0     // CardStyle index (paper/ink palette), customizable per card
+    var zone: String = ""     // the default-desk zone this card lives in (Today / This Week / ...)
 }
 
 // A real PAPER card — card-stock texture, ink type, a glyph stamp, a ruled line, an accent spine and a

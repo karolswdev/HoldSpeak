@@ -252,9 +252,19 @@ struct DeskHome: View {
             return kbCards + spilledCards     // tapping a KB spills its members alongside
         }
         let base = filtered.map { m in
-            DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m), tintHex: tintHexFor(m), mode: modeFor(m.id), styleRaw: styleFor(m.id))
+            DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m), tintHex: tintHexFor(m),
+                         mode: modeFor(m.id), styleRaw: styleFor(m.id), zone: zonedDefault ? zoneFor(m) : "")
         }
         return base + spilledCards            // the meeting's spilled output objects live alongside the cards
+    }
+    // The 3D desk's default view opens ORGANIZED — meetings grouped into time zones (a powerhouse, not a grid).
+    private var zonedDefault: Bool { livingDesk && activeUserFolder == nil && folder == .all }
+    private func zoneFor(_ m: Meeting) -> String {
+        let cal = Calendar.current
+        if cal.isDateInToday(m.startedAt) { return "Today" }
+        if cal.isDate(m.startedAt, equalTo: Date(), toGranularity: .weekOfYear) { return "This Week" }
+        if cal.isDate(m.startedAt, equalTo: Date(), toGranularity: .month) { return "This Month" }
+        return "Earlier"
     }
     private var filtered: [Meeting] {
         if let uf = activeUserFolder { let d = filedDict(); return model.meetings.filter { d[$0.id] == uf } }
