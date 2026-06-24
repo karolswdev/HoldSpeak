@@ -68,10 +68,14 @@ struct LivingDeskCanvas: UIViewRepresentable {
             scene.lightingEnvironment.contents = UIColor(white: 0.72, alpha: 1)
             scene.lightingEnvironment.intensity = 1.25
 
-            let cam = SCNCamera(); cam.fieldOfView = 40; cam.zNear = 0.1; cam.zFar = 500
+            // Camera — pulled BACK to frame the whole workspace, with atmosphere (AO + depth of field + bloom).
+            let cam = SCNCamera(); cam.fieldOfView = 38; cam.zNear = 0.2; cam.zFar = 600
+            cam.screenSpaceAmbientOcclusionIntensity = 1.4; cam.screenSpaceAmbientOcclusionRadius = 3.5
+            cam.wantsDepthOfField = true; cam.focusDistance = 46; cam.fStop = 0.5; cam.focalLength = 30
+            cam.bloomIntensity = 0.4; cam.bloomThreshold = 0.9; cam.bloomBlurRadius = 10
             cameraNode.camera = cam
-            cameraNode.position = SCNVector3(0, 32, 12)
-            cameraNode.eulerAngles = SCNVector3(-80.0 * .pi / 180.0, 0, 0)
+            cameraNode.position = SCNVector3(0, 44, 34)
+            cameraNode.eulerAngles = SCNVector3(-60.0 * .pi / 180.0, 0, 0)
             scene.rootNode.addChildNode(cameraNode)
 
             // Desk — light marble (blinn, even + predictable; environments retune this later).
@@ -84,6 +88,15 @@ struct LivingDeskCanvas: UIViewRepresentable {
             dnode.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
             dnode.physicsBody?.friction = 0.85; dnode.physicsBody?.restitution = 0.04
             scene.rootNode.addChildNode(dnode); deskNode = dnode
+
+            // Leather desk mat — the work surface the cards sit on (grounds the scene).
+            let pad = SCNBox(width: 42, height: 0.3, length: 26, chamferRadius: 1.6)
+            let pmat = SCNMaterial(); pmat.lightingModel = .blinn
+            pmat.diffuse.contents = UIColor(red: 0.14, green: 0.12, blue: 0.11, alpha: 1)
+            pmat.specular.contents = UIColor(white: 0.18, alpha: 1)
+            pad.materials = [pmat]
+            let padNode = SCNNode(geometry: pad); padNode.position = SCNVector3(0, 0.1, 3)
+            scene.rootNode.addChildNode(padNode)
 
             // Key light — the main shadow caster. On a real SCNView a directional shadow needs an
             // explicit ortho extent + auto z-range, or no shadow renders (the device bug).
@@ -107,11 +120,11 @@ struct LivingDeskCanvas: UIViewRepresentable {
 
             // Real poly.pizza props (bundled .scn + palette texture), arranged around the work area.
             let props: [(String, Float, Float, Float, Float)] = [
-                ("lightdesk", 16,   -13, -7, 0.6),
-                ("plant",      3.2,  13, -7, 0),
-                ("books",      5,   -13,  4, 0.3),
-                ("mug",       24,    12,  4, 0),
-                ("keyboard",   0.03,  0, -6, 3.14),
+                ("lightdesk", 17,   -22, -10, 0.5),
+                ("plant",      4.0,  22, -10, 0),
+                ("books",      5.5, -20,  6, 0.3),
+                ("mug",       26,    18,  7, 0),
+                ("keyboard",   0.035, 0, -6, 3.14),
             ]
             for (n, s, x, z, ry) in props { if let p = loadProp(n, scale: s, x, z, rotY: ry) { scene.rootNode.addChildNode(p) } }
             return scene
@@ -227,8 +240,19 @@ struct LivingDeskCanvas: UIViewRepresentable {
                 if let wp = planePoint(at: p, y: liftY) { n.position = SCNVector3(wp.x, liftY, wp.z) }
             case .ended, .cancelled, .failed:
                 guard let n = picked else { return }
-                n.physicsBody?.velocity = SCNVector3Zero
                 n.physicsBody?.isAffectedByGravity = true       // release -> it falls + stacks from the lifted height
+                // Dynamic throw: convert the finger velocity to a world-plane velocity so the card flings + slides.
+                let sv = g.velocity(in: view)
+                let loc = g.location(in: view)
+                if abs(sv.x) + abs(sv.y) > 80,
+                   let p0 = planePoint(at: loc, y: liftY),
+                   let p1 = planePoint(at: CGPoint(x: loc.x + sv.x * 0.1, y: loc.y + sv.y * 0.1), y: liftY) {
+                    let vx = (p1.x - p0.x) / 0.1 * 0.55, vz = (p1.z - p0.z) / 0.1 * 0.55
+                    n.physicsBody?.velocity = SCNVector3(vx, -1, vz)
+                    n.physicsBody?.angularVelocity = SCNVector4(0, 1, 0, Float.random(in: -1.5...1.5))
+                } else {
+                    n.physicsBody?.velocity = SCNVector3Zero
+                }
                 picked = nil
             default: break
             }

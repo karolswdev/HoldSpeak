@@ -66,11 +66,15 @@ func buildScene() -> SCNScene {
     scene.lightingEnvironment.contents = NSColor(calibratedWhite: 0.72, alpha: 1)
     scene.lightingEnvironment.intensity = 1.25
 
-    // Camera — fixed ~82deg.
+    // Camera — pulled BACK to frame the whole workspace, with atmosphere (AO + depth of field + bloom).
     let camNode = SCNNode()
-    let cam = SCNCamera(); cam.fieldOfView = 40; cam.zNear = 0.1; cam.zFar = 500
-    camNode.camera = cam; camNode.position = SCNVector3(0, 32, 12)
-    camNode.eulerAngles = SCNVector3(-80.0 * .pi / 180.0, 0, 0)
+    let cam = SCNCamera(); cam.fieldOfView = 38; cam.zNear = 0.2; cam.zFar = 600
+    cam.screenSpaceAmbientOcclusionIntensity = 1.6; cam.screenSpaceAmbientOcclusionRadius = 3.5
+    cam.screenSpaceAmbientOcclusionBias = 0.08
+    cam.wantsDepthOfField = true; cam.focusDistance = 46; cam.fStop = 0.4; cam.focalLength = 30
+    cam.bloomIntensity = 0.45; cam.bloomThreshold = 0.9; cam.bloomBlurRadius = 10
+    camNode.camera = cam; camNode.position = SCNVector3(0, 44, 34)
+    camNode.eulerAngles = SCNVector3(-60.0 * .pi / 180.0, 0, 0)
     scene.rootNode.addChildNode(camNode)
 
     // Desk — light marble (blinn, even + predictable).
@@ -80,6 +84,14 @@ func buildScene() -> SCNScene {
     dm.specular.contents = NSColor(calibratedWhite: 0.5, alpha: 1); dm.shininess = 0.3
     desk.materials = [dm]
     let dnode = SCNNode(geometry: desk); dnode.position = SCNVector3(0, -0.5, 0); scene.rootNode.addChildNode(dnode)
+
+    // A leather desk mat — the work surface the cards sit on (grounds the scene).
+    let pad = SCNBox(width: 42, height: 0.3, length: 26, chamferRadius: 1.6)
+    let pm = SCNMaterial(); pm.lightingModel = .blinn
+    pm.diffuse.contents = NSColor(calibratedRed: 0.14, green: 0.12, blue: 0.11, alpha: 1)
+    pm.specular.contents = NSColor(calibratedWhite: 0.18, alpha: 1)
+    pad.materials = [pm]
+    let padNode = SCNNode(geometry: pad); padNode.position = SCNVector3(0, 0.1, 3); scene.rootNode.addChildNode(padNode)
 
     // Key light — the main shadow caster, covering the whole desk so every object casts a shadow.
     let key = SCNNode(); let kl = SCNLight(); kl.type = .directional; kl.intensity = 680
@@ -102,11 +114,11 @@ func buildScene() -> SCNScene {
     // Props — real poly.pizza CC0 models arranged around the work area.
     // Explicit per-prop scales (auto-fit is unreliable — these models have wildly different native sizes).
     let props: [(String, Float, Float, Float, Float)] = [
-        ("lightdesk", 16,   -13, -7, 0.6),
-        ("plant",      3.2,  13, -7, 0),
-        ("books",      5,   -13,  4, 0.3),
-        ("mug",       24,    12,  4, 0),
-        ("keyboard",   0.03,  0, -6, 3.14),
+        ("lightdesk", 17,   -22, -10, 0.5),
+        ("plant",      4.0,  22, -10, 0),
+        ("books",      5.5, -20,  6, 0.3),
+        ("mug",       26,    18,  7, 0),
+        ("keyboard",   0.035, 0, -6, 3.14),
     ]
     for (n, s, x, z, ry) in props {
         if let p = loadProp(n, scale: s, x, z, rotY: ry) { scene.rootNode.addChildNode(p) }
@@ -117,11 +129,11 @@ func buildScene() -> SCNScene {
                  NSColor(calibratedRed: 1.0, green: 0.42, blue: 0.21, alpha: 1),
                  NSColor(calibratedRed: 0.24, green: 0.81, blue: 0.56, alpha: 1),
                  NSColor(calibratedRed: 0.95, green: 0.64, blue: 0.24, alpha: 1)]
-    let spots: [(Float, Float, Float)] = [(-13, -4, -0.08), (-2, -3, 0.06), (9, -4, -0.1),
-                                          (-9, 4, 0.04), (3, 5, -0.05), (14, 3, 0.1)]
+    let spots: [(Float, Float, Float)] = [(-11, 1, -0.08), (-1, 0, 0.06), (9, 1, -0.1),
+                                          (-7, 9, 0.04), (4, 10, -0.05), (13, 8, 0.1)]
     for (i, sp) in spots.enumerated() { scene.rootNode.addChildNode(card(tints[i % 4], sp.0, sp.1, rot: sp.2)) }
-    // a small stack
-    scene.rootNode.addChildNode(card(tints[2], 13, 8, rot: 0.1))
+    // a small stack on the mat
+    scene.rootNode.addChildNode(card(tints[2], -10, 9, rot: 0.12))
     return scene
 }
 
