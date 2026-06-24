@@ -1,6 +1,12 @@
 # HoldSpeak Mobile Runtime — Roadmap
 
-> 🚀 **New agent? Start here:** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
+> 🚀 **New agent on THE DESK? Start here:**
+> [`phase-14…/DESK_HANDOVER.md`](./phase-14-mobile-experience-craft/DESK_HANDOVER.md) — the full,
+> serious handover for the DeskOS / 3D Living Desk work (branch `holdspeak-mobile/the-desk`, PR #133):
+> the bar, the build/deploy/verify loop, the offscreen renderer (your eyes), the asset pipeline, known
+> issues, and the exact owner-prioritized next steps. **Read it before touching the desk.**
+>
+> 🚀 **New agent (general):** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
 **Current phase:** [Phase 16 — The Desk, Everywhere](./phase-16-the-desk-everywhere/current-phase-status.md)
