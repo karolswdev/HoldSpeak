@@ -306,6 +306,22 @@ inside a place). `xcodebuild` device-arch **BUILD SUCCEEDED**; built + signed + 
 M4** (the live dive-FEEL walk is the last acceptance criterion — the one thing a static renderer can't
 show). Handover §7 #1 + #2 are now both done; the desk is becoming the fractal workspace the owner can see.
 
+**2026-06-24 — cards that MEAN something + the owner's card-craft feedback (handover §7 #3).** Cards were
+title-and-metadata chips, all the same rounded rect. Now a card is a **window into its content**: every
+card carries a real **snippet** (a meeting's actual summary, else its topics, else the first thing said;
+an output card shows its body preview). And on the owner's sharp feedback — *"some cards should be more
+obvious what they are, cards should come in different shapes and sizes, and the sticker needs to be less
+regulated"* — a new `DeskCardKind` (parsed from the id) drives **form**: (1) **type-legible** — a tinted
+TYPE badge (SUMMARY / TOPICS / ACTION / TRANSCRIPT / ARTIFACT / MODEL / KNOWLEDGE; a meeting needs none)
+plus per-type colour; (2) **different shapes + sizes** — a summary is a big wide document, a transcript a
+tall page, an action a small slip, each with its own corner radius, flowing through both canvases
+(`renderSize`/`corner` replace the one-size `mode.size`) and the snippet line-count flexes with height;
+(3) a **loose sticker** — the die-cut now varies rotation (±15°), scale, shape (rounded/circle/square)
+and nudge per card with a lifted-corner shadow, instead of one regulated tile. Composed in the offscreen
+renderer (a `faces` contact-sheet mode added) so the badges/snippets/sticker variety were judged at full
+clarity first. `xcodebuild` device-arch **BUILD SUCCEEDED**; built + signed + **installed on the iPad Air
+M4**. Handover §7 #1/#2/#3 are now done; the desk reads like a real workspace, not a tech demo.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a

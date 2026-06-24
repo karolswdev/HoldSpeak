@@ -143,9 +143,12 @@ These are the owner's explicit, repeated asks — the road to "meaningful":
    notes:** the dive→settle handoff has a tiny camera discontinuity (diveInto ends on the zone center;
    syncLevel snaps to a fixed pose then eases home) — tune on device. Per-level card LAYOUT positions
    aren't persisted yet (cards re-grid each entry). Tune the dive timing/drama on the glass.
-3. **Cards with real MEANING.** A card should show a real **snippet** of its content (summary/decision
-   text), and **expand should surface real artifacts you act on** (file / Ask AI / run). Right now cards
-   show title + metadata only. This is the heart of "stop being a tech demo."
+3. **Cards with real MEANING.** ~~Snippet on the face~~ **DONE 2026-06-24** + the owner's card-craft pass:
+   every card shows a real content **snippet** (`snippetFor` / output body preview), a `DeskCardKind` drives
+   **type-legible** TYPE badges + **different shapes/sizes** (`renderSize`/`corner` per kind — summary big,
+   transcript tall, action a slip) + a **loose sticker** (varied rotation/scale/shape/nudge). STILL OPEN
+   on this item: **expand should surface real artifacts you ACT on** (file / Ask AI / run) — right now a
+   tap still just spills/opens; the act-on-expand affordance (and the Ask-AI atom, #7) is the next push.
 4. **Ready-made resizable rectangle fences** you drop, then **resize + raise** (drag handles) — fast
    clean enclosures, vs only freehand.
 5. **By Project zones** (group by the meeting project tag) + **scroll inside a zone** when it overflows.

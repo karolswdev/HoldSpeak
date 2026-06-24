@@ -13,9 +13,11 @@
 (web/Astro parity of the DeskOS + desktop sync of the organization layer across the mesh).
 
 **Last updated:** 2026-06-24 (**DESK: drop-to-tag + dive shipped** on `holdspeak-mobile/the-desk` — a 3D
-zone is now a persisted place that holds cards (drop a card in to file it), and **double-tapping a zone
-dives INTO it** as a recursive nested desk with a breadcrumb back (handover §7 #1 + #2; the DeskOS is now
-fractal). Live dive-feel walk pending an iPad unlock. Prior context below. **PHASE 16 — THE DESK,
+zone is now a persisted place that holds cards (drop a card in to file it), **double-tapping a zone dives
+INTO it** as a recursive nested desk with a breadcrumb back, and **cards now mean something** — a real
+content snippet on each, type-legible badges, different shapes/sizes per kind, and a looser hand-placed
+sticker (handover §7 #1 + #2 + #3; the DeskOS is now fractal and the cards read like a real workspace).
+Live device walk pending an iPad unlock. Prior context below. **PHASE 16 — THE DESK,
 EVERYWHERE OPENED.** On the owner's
 instruction to step back after the iPad DeskOS landed (HSM-14-19/20: objects, spill, lasso,
 directories, floating windows, the Knowledge Base primitive on a documented DeskObject convention)

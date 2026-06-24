@@ -13,7 +13,7 @@ import UIKit
 enum CardMode: String, CaseIterable {
     case full, half, header
     var next: CardMode { switch self { case .full: return .half; case .half: return .header; case .header: return .full } }
-    var size: CGSize { switch self { case .full: return CGSize(width: 246, height: 78)
+    var size: CGSize { switch self { case .full: return CGSize(width: 248, height: 106)
                                        case .half: return CGSize(width: 210, height: 56)
                                        case .header: return CGSize(width: 168, height: 40) } }
 }
@@ -22,6 +22,68 @@ struct DeskCardData: Equatable {
     let id: String; let title: String; let sub: String; let sprite: String; let tintHex: UInt; var mode: CardMode
     var styleRaw: Int = 0     // CardStyle index (paper/ink palette), customizable per card
     var zone: String = ""     // the default-desk zone this card lives in (Today / This Week / ...)
+    var snippet: String = ""  // a real preview of the card's CONTENT (summary/decision/body) — the card means something
+
+    var kind: DeskCardKind { DeskCardKind.of(id) }
+    // The card's physical size — DIFFERENT SHAPES + SIZES per kind (a summary is a big document, an action
+    // a small slip, a transcript a tall page). Only .full varies by kind; the rare compact modes fall back.
+    var renderSize: CGSize { mode == .full ? kind.fullSize : mode.size }
+    var corner: CGFloat { mode == .header ? 11 : kind.corner }
+}
+
+// HSM-14-22 — the card's TYPE, parsed from its id (finer than DeskObjectKind's tap-dispatch: it splits
+// output subtypes). Drives what a card looks like — its size, shape, badge, glyph — so it's obvious what
+// it is at a glance instead of every card being the same rounded chip.
+enum DeskCardKind {
+    case meeting, summary, topics, action, artifact, transcript, notebook, model, kb
+    static func of(_ id: String) -> DeskCardKind {
+        if id.hasPrefix("model:") { return .model }
+        if id.hasPrefix("kb:") { return .kb }
+        if id.hasPrefix("open:") { return .notebook }
+        if id.hasPrefix("out:sum:") { return .summary }
+        if id.hasPrefix("out:top:") { return .topics }
+        if id.hasPrefix("out:act:") { return .action }
+        if id.hasPrefix("out:art:") { return .artifact }
+        if id.hasPrefix("out:tx:") { return .transcript }
+        return .meeting
+    }
+    var badge: String? {
+        switch self {
+        case .meeting: return nil                         // a meeting needs no badge — it's the default object
+        case .summary: return "SUMMARY"; case .topics: return "TOPICS"; case .action: return "ACTION"
+        case .artifact: return "ARTIFACT"; case .transcript: return "TRANSCRIPT"; case .notebook: return "NOTEBOOK"
+        case .model: return "MODEL"; case .kb: return "KNOWLEDGE"
+        }
+    }
+    var symbol: String {
+        switch self {
+        case .meeting: return "waveform"; case .summary: return "sparkles"; case .topics: return "tag.fill"
+        case .action: return "checkmark.circle.fill"; case .artifact: return "doc.text.fill"
+        case .transcript: return "text.alignleft"; case .notebook: return "book.closed.fill"
+        case .model: return "cpu.fill"; case .kb: return "diamond.fill"
+        }
+    }
+    // Different shapes + sizes (the owner's ask) — applied to the rich .full card.
+    var fullSize: CGSize {
+        switch self {
+        case .summary:    return CGSize(width: 266, height: 124)   // the headline document — big + wide
+        case .artifact:   return CGSize(width: 250, height: 118)
+        case .transcript: return CGSize(width: 198, height: 150)   // a tall page of talk
+        case .topics:     return CGSize(width: 232, height: 98)
+        case .action:     return CGSize(width: 200, height: 72)    // a small to-do slip
+        case .notebook:   return CGSize(width: 222, height: 92)
+        case .model:      return CGSize(width: 204, height: 82)    // a cartridge
+        case .kb:         return CGSize(width: 200, height: 104)   // a chunky crystal
+        case .meeting:    return CGSize(width: 248, height: 106)
+        }
+    }
+    var corner: CGFloat {
+        switch self {
+        case .action, .transcript: return 9               // crisp slip / page
+        case .kb: return 22                                // soft chunk
+        default: return 15
+        }
+    }
 }
 
 // A real PAPER card — card-stock texture, ink type, a glyph stamp, a ruled line, an accent spine and a
@@ -33,48 +95,98 @@ struct DeskCardFace: View {
         let m = data.mode
         let st = CardStyle.of(data.styleRaw)
         let tint = Color(hex: data.tintHex)
-        let corner: CGFloat = m == .header ? 11 : 15
-        let chip: CGFloat = m == .full ? 27 : (m == .half ? 22 : 18)
-        let seed = abs(data.id.hashValue)
-        let stickerRot = Double(seed % 17) - 8                          // rugged: each sticker sits at its own angle
+        let sz = data.renderSize
+        let corner = data.corner
         ZStack(alignment: .topLeading) {
             // card stock
             CardPaper(paper: st.paper)
             // a strip of tape (full cards only) — the creative, physical detail
             if m == .full {
                 RoundedRectangle(cornerRadius: 2).fill(Color.white.opacity(0.28))
-                    .frame(width: 46, height: 13).rotationEffect(.degrees(-4)).blendMode(.softLight)
-                    .position(x: m.size.width * 0.5, y: 6)
+                    .frame(width: 46, height: 13).rotationEffect(.degrees(Double(abs(data.id.hashValue) % 9) - 6))
+                    .blendMode(.softLight).position(x: sz.width * 0.5, y: 6)
             }
+            content(m: m, st: st, tint: tint)
+                .padding(.horizontal, m == .header ? 11 : 14).padding(.vertical, m == .header ? 7 : 11)
+                .padding(.leading, 4)
+        }
+        .frame(width: sz.width, height: sz.height, alignment: .leading)
+        .overlay(alignment: .leading) {                                                  // accent spine
+            UnevenRoundedRectangle(topLeadingRadius: corner, bottomLeadingRadius: corner).fill(tint).frame(width: 6)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: corner, style: .continuous).strokeBorder(st.ink.opacity(0.16), lineWidth: 1))
+    }
+
+    // The sticker stamp — a die-cut of the pixel asset, slapped on by hand: each one a different angle,
+    // size, and shape (rounded / circle / square), nudged off-centre with a lifted corner. NOT regulated.
+    private func sticker(_ base: CGFloat, _ tint: Color) -> some View {
+        let seed = abs(data.id.hashValue)
+        let rot = Double(seed % 31) - 15                                   // ±15°, every card its own
+        let chip = base * (0.86 + CGFloat(seed % 8) * 0.045)              // 0.86–1.18× scale jitter
+        let shape = seed % 3                                               // 0 rounded · 1 circle · 2 near-square
+        let cr: CGFloat = shape == 1 ? chip / 2 : (shape == 2 ? chip * 0.08 : chip * 0.26)
+        let dx = CGFloat((seed / 7) % 5) - 2, dy = CGFloat((seed / 13) % 5) - 2   // hand-placed nudge
+        return ZStack {
+            RoundedRectangle(cornerRadius: cr, style: .continuous).fill(.white)
+                .shadow(color: .black.opacity(0.28), radius: 2, x: 1.4, y: 1.8)        // a lifted, peeling corner
+            DeskSprite(name: data.sprite, size: chip - 7)
+        }
+        .frame(width: chip, height: chip)
+        .overlay(RoundedRectangle(cornerRadius: cr, style: .continuous).strokeBorder(tint.opacity(0.55), lineWidth: 1.4))
+        .rotationEffect(.degrees(rot)).offset(x: dx, y: dy)
+    }
+
+    // The TYPE badge — a tinted pill that says what the card IS (SUMMARY / ACTION / TRANSCRIPT…).
+    private func badge(_ tint: Color) -> some View {
+        HStack(spacing: 3) {
+            Image(systemName: data.kind.symbol).font(.system(size: 7, weight: .black))
+            Text(data.kind.badge ?? "").font(.system(size: 8, weight: .black, design: .rounded)).tracking(0.5)
+        }
+        .foregroundStyle(.white).padding(.horizontal, 6).padding(.vertical, 2.5)
+        .background(Capsule().fill(tint)).fixedSize()
+    }
+
+    @ViewBuilder private func content(m: CardMode, st: CardStyle, tint: Color) -> some View {
+        if m == .full {
+            // A richer card: header row (sticker + title + TYPE badge), a ruled line, then the REAL content
+            // snippet — a window into what this thing actually says. Snippet length flexes with card height,
+            // so a tall transcript shows more lines than a short action slip.
+            let h = data.renderSize.height
+            let lines = h > 132 ? 5 : (h > 108 ? 3 : (h > 84 ? 2 : 1))
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .top, spacing: 11) {
+                    sticker(27, tint)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(data.title).font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(st.ink).lineLimit(1)
+                        Text(data.sub).font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(st.inkSoft).lineLimit(1)
+                    }
+                    Spacer(minLength: 4)
+                    if data.kind.badge != nil { badge(tint) }
+                }
+                Rectangle().fill(st.ink.opacity(0.13)).frame(height: 1)
+                Text(data.snippet.isEmpty ? "Tap to open" : data.snippet)
+                    .font(.system(size: 11.5, weight: data.snippet.isEmpty ? .semibold : .medium, design: .rounded))
+                    .foregroundStyle(data.snippet.isEmpty ? st.inkSoft.opacity(0.55) : st.ink.opacity(0.8))
+                    .lineLimit(lines).multilineTextAlignment(.leading).lineSpacing(1.5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Spacer(minLength: 0)
+            }
+        } else {
             HStack(spacing: m == .header ? 8 : 11) {
-                // a small, rugged die-cut STICKER of the pixel-art asset, slapped on at an angle
-                ZStack {
-                    RoundedRectangle(cornerRadius: chip * 0.22, style: .continuous).fill(.white)
-                        .shadow(color: .black.opacity(0.22), radius: 1.5, y: 1)
-                    DeskSprite(name: data.sprite, size: chip - 6)
-                }.frame(width: chip, height: chip)
-                    .overlay(RoundedRectangle(cornerRadius: chip * 0.22, style: .continuous).strokeBorder(tint.opacity(0.5), lineWidth: 1.2))
-                    .rotationEffect(.degrees(stickerRot))
+                sticker(m == .half ? 22 : 18, tint)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(data.title).font(.system(size: m == .header ? 13 : 15, weight: .heavy, design: .rounded))
                         .foregroundStyle(st.ink).lineLimit(1)
                     if m != .header {
-                        Rectangle().fill(st.ink.opacity(0.14)).frame(height: 1)        // ruled index line
+                        Rectangle().fill(st.ink.opacity(0.14)).frame(height: 1)
                         Text(data.sub).font(.system(size: 11, weight: .semibold, design: .rounded))
                             .foregroundStyle(st.inkSoft).lineLimit(1)
                     }
                 }
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, m == .header ? 11 : 14).padding(.vertical, m == .header ? 7 : 10)
-            .padding(.leading, 4)
         }
-        .frame(width: m.size.width, height: m.size.height, alignment: .leading)
-        .overlay(alignment: .leading) {                                                  // accent spine
-            UnevenRoundedRectangle(topLeadingRadius: corner, bottomLeadingRadius: corner).fill(tint).frame(width: 6)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: corner, style: .continuous).strokeBorder(st.ink.opacity(0.16), lineWidth: 1))
     }
 }
 
@@ -149,11 +261,11 @@ struct CardStyle {
     }
 
     private func makeCard(_ c: DeskCardData) -> SKNode {
-        let size = c.mode.size
+        let size = c.renderSize                       // per-kind shape + size
         let n: SKNode
         if let tex = texture(c) {
             let s = SKSpriteNode(texture: tex); s.size = size; n = s
-        } else { n = SKShapeNode(rectOf: size, cornerRadius: 16) }
+        } else { n = SKShapeNode(rectOf: size, cornerRadius: c.corner) }
         let body = SKPhysicsBody(rectangleOf: size)
         body.restitution = 0.12; body.friction = 0.55; body.linearDamping = 4.6; body.angularDamping = 5.0
         body.mass = 1.0; body.allowsRotation = true

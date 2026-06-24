@@ -211,8 +211,9 @@ struct LivingDeskCanvas: UIViewRepresentable {
         }
 
         private func makeCard(_ c: DeskCardData) -> SCNNode {
-            let s = c.mode.size
-            let w = CGFloat(s.width) / 28.0, h = CGFloat(s.height) / 28.0, r: CGFloat = 0.55, thick: CGFloat = 0.22
+            let s = c.renderSize                                    // per-kind shape + size
+            let w = CGFloat(s.width) / 28.0, h = CGFloat(s.height) / 28.0, thick: CGFloat = 0.22
+            let r = w * CGFloat(c.corner) / CGFloat(s.width)        // match the face's corner radius
             let path = UIBezierPath(roundedRect: CGRect(x: -w/2, y: -h/2, width: w, height: h), cornerRadius: r)
             let shape = SCNShape(path: path, extrusionDepth: thick)
             let front = SCNMaterial(); front.lightingModel = .blinn

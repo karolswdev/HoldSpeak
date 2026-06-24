@@ -8,28 +8,47 @@ import Foundation
 import SceneKit
 import AppKit
 
-func cardImage(_ tint: NSColor) -> NSImage {
-    let size = NSSize(width: 246, height: 78); let img = NSImage(size: size); img.lockFocus()
+// A kind of card — drives SIZE, shape, badge, mirroring DeskCardKind so the owner sees the real variety.
+struct CardKind { let label: String?; let corner: CGFloat; let pxW: CGFloat; let pxH: CGFloat; let seed: Int }
+
+func cardImage(_ tint: NSColor, _ kind: CardKind, snippet: String) -> NSImage {
+    let size = NSSize(width: kind.pxW, height: kind.pxH); let img = NSImage(size: size); img.lockFocus()
     let rect = NSRect(origin: .zero, size: size)
-    let clip = NSBezierPath(roundedRect: rect, xRadius: 15, yRadius: 15); clip.addClip()
+    let clip = NSBezierPath(roundedRect: rect, xRadius: kind.corner, yRadius: kind.corner); clip.addClip()
     if let paper = NSImage(contentsOfFile: "../../App/paper.png") { paper.draw(in: rect) }
     else { NSColor(calibratedRed: 0.93, green: 0.90, blue: 0.84, alpha: 1).setFill(); NSBezierPath(rect: rect).fill() }
     tint.withAlphaComponent(0.10).setFill(); NSBezierPath(rect: rect).fill()
-    tint.setFill(); NSBezierPath(rect: NSRect(x: 0, y: 0, width: 6, height: 78)).fill()        // accent spine
-    // die-cut sticker (white tile, tilted, colored outline)
-    let ctx = NSGraphicsContext.current!.cgContext
-    ctx.saveGState(); ctx.translateBy(x: 40, y: 39); ctx.rotate(by: -0.12)
-    let sq = NSRect(x: -17, y: -17, width: 34, height: 34)
-    ctx.setShadow(offset: CGSize(width: 1.5, height: -1.5), blur: 3, color: NSColor(white: 0, alpha: 0.3).cgColor)
-    NSColor.white.setFill(); NSBezierPath(roundedRect: sq, xRadius: 8, yRadius: 8).fill()
-    ctx.setShadow(offset: .zero, blur: 0, color: nil)
-    tint.setStroke(); let sp = NSBezierPath(roundedRect: sq, xRadius: 8, yRadius: 8); sp.lineWidth = 2; sp.stroke()
-    ctx.restoreGState()
+    tint.setFill(); NSBezierPath(rect: NSRect(x: 0, y: 0, width: 6, height: kind.pxH)).fill()    // accent spine
     let ink = NSColor(calibratedRed: 0.16, green: 0.13, blue: 0.09, alpha: 1)
-    ink.setFill(); NSBezierPath(roundedRect: NSRect(x: 66, y: 46, width: 136, height: 11), xRadius: 3, yRadius: 3).fill()
-    ink.withAlphaComponent(0.14).setFill(); NSBezierPath(rect: NSRect(x: 66, y: 40, width: 150, height: 1)).fill()
-    ink.withAlphaComponent(0.5).setFill(); NSBezierPath(roundedRect: NSRect(x: 66, y: 24, width: 98, height: 8), xRadius: 2, yRadius: 2).fill()
-    ink.withAlphaComponent(0.16).setStroke(); let b = NSBezierPath(roundedRect: rect.insetBy(dx: 0.5, dy: 0.5), xRadius: 15, yRadius: 15); b.lineWidth = 1; b.stroke()
+    let ctx = NSGraphicsContext.current!.cgContext
+    // LOOSE sticker — varied rotation / scale / shape / nudge with a lifted corner. Not regulated.
+    let rot = CGFloat(kind.seed % 31 - 15) * .pi / 180
+    let chip = 30 * (0.86 + CGFloat(kind.seed % 8) * 0.045)
+    let shape = kind.seed % 3
+    let scr: CGFloat = shape == 1 ? chip/2 : (shape == 2 ? chip*0.08 : chip*0.26)
+    ctx.saveGState(); ctx.translateBy(x: 26 + CGFloat(kind.seed % 5), y: kind.pxH - 28 + CGFloat(kind.seed % 5)); ctx.rotate(by: rot)
+    let sq = NSRect(x: -chip/2, y: -chip/2, width: chip, height: chip)
+    ctx.setShadow(offset: CGSize(width: 1.4, height: -1.8), blur: 3, color: NSColor(white: 0, alpha: 0.3).cgColor)
+    NSColor.white.setFill(); NSBezierPath(roundedRect: sq, xRadius: scr, yRadius: scr).fill()
+    ctx.setShadow(offset: .zero, blur: 0, color: nil)
+    tint.withAlphaComponent(0.75).setFill(); NSBezierPath(roundedRect: sq.insetBy(dx: 7, dy: 7), xRadius: scr*0.6, yRadius: scr*0.6).fill()
+    tint.setStroke(); let sp = NSBezierPath(roundedRect: sq, xRadius: scr, yRadius: scr); sp.lineWidth = 2; sp.stroke()
+    ctx.restoreGState()
+    let tx: CGFloat = 52
+    ink.setFill(); NSBezierPath(roundedRect: NSRect(x: tx, y: kind.pxH - 24, width: min(kind.pxW - tx - 76, 118), height: 11), xRadius: 3, yRadius: 3).fill()
+    ink.withAlphaComponent(0.45).setFill(); NSBezierPath(roundedRect: NSRect(x: tx, y: kind.pxH - 38, width: 78, height: 7), xRadius: 2, yRadius: 2).fill()
+    // TYPE badge pill — obvious what it is
+    if let label = kind.label {
+        let bw = CGFloat(label.count) * 6.6 + 16, bx = kind.pxW - bw - 10, by = kind.pxH - 27
+        tint.setFill(); NSBezierPath(roundedRect: NSRect(x: bx, y: by, width: bw, height: 17), xRadius: 8.5, yRadius: 8.5).fill()
+        let bp = NSMutableParagraphStyle(); bp.alignment = .center
+        (label as NSString).draw(in: NSRect(x: bx, y: by + 3, width: bw, height: 13),
+            withAttributes: [.font: NSFont.systemFont(ofSize: 9, weight: .black), .foregroundColor: NSColor.white, .paragraphStyle: bp])
+    }
+    ink.withAlphaComponent(0.14).setFill(); NSBezierPath(rect: NSRect(x: 14, y: kind.pxH - 48, width: kind.pxW - 28, height: 1)).fill()
+    (snippet as NSString).draw(in: NSRect(x: 16, y: 10, width: kind.pxW - 30, height: kind.pxH - 60),
+        withAttributes: [.font: NSFont.systemFont(ofSize: 11, weight: .medium), .foregroundColor: ink.withAlphaComponent(0.78)])
+    ink.withAlphaComponent(0.16).setStroke(); let b = NSBezierPath(roundedRect: rect.insetBy(dx: 0.5, dy: 0.5), xRadius: kind.corner, yRadius: kind.corner); b.lineWidth = 1; b.stroke()
     img.unlockFocus(); return img
 }
 
@@ -80,14 +99,16 @@ func zone(_ name: String, count: Int, _ accent: NSColor, cx: Float, cz: Float, h
     return holder
 }
 
-func card(_ tint: NSColor, _ x: Float, _ z: Float, rot: Float = 0) -> SCNNode {
-    let w: CGFloat = 8.8, h: CGFloat = 2.8, r: CGFloat = 0.6, thick: CGFloat = 0.22
+func card(_ tint: NSColor, _ kind: CardKind, snippet: String, _ x: Float, _ z: Float, rot: Float = 0) -> SCNNode {
+    let scale: CGFloat = 8.8 / 246                              // px -> world units
+    let w = kind.pxW * scale, h = kind.pxH * scale, thick: CGFloat = 0.22
+    let r = w * kind.corner / kind.pxW
     let g = SCNShape(path: NSBezierPath(roundedRect: NSRect(x: -w/2, y: -h/2, width: w, height: h), xRadius: r, yRadius: r), extrusionDepth: thick)
-    let front = SCNMaterial(); front.diffuse.contents = cardImage(tint); front.roughness.contents = 0.5
+    let front = SCNMaterial(); front.diffuse.contents = cardImage(tint, kind, snippet: snippet); front.roughness.contents = 0.5
     let edge = SCNMaterial(); edge.diffuse.contents = NSColor(calibratedWhite: 0.1, alpha: 1)
     g.materials = [front, edge, edge]
     let n = SCNNode(geometry: g); n.castsShadow = true
-    n.eulerAngles = SCNVector3(-Float.pi / 2, rot, 0); n.position = SCNVector3(x, 0.62, z)  // rest on the mat, above zone decals
+    n.eulerAngles = SCNVector3(-Float.pi / 2, rot, 0); n.position = SCNVector3(x, 0.62, z)
     return n
 }
 
@@ -177,19 +198,52 @@ func buildScene() -> SCNScene {
                  NSColor(calibratedRed: 1.0, green: 0.42, blue: 0.21, alpha: 1),
                  NSColor(calibratedRed: 0.24, green: 0.81, blue: 0.56, alpha: 1),
                  NSColor(calibratedRed: 0.95, green: 0.64, blue: 0.24, alpha: 1)]
-    // HSM-14-24 — the NESTED desk: you've dived into "Project Atlas", so the whole desk now IS that zone.
-    // Its filed cards sit out in the open, AND it has a SUB-ZONE "Q3 Planning" (a child you can dive into
-    // again) holding its own cards. The breadcrumb (Desk > Project Atlas) is the SwiftUI layer, not shown
-    // here. This proves the recursion reads: a place inside a place.
-    let blue = NSColor(calibratedRed: 0.36, green: 0.62, blue: 0.95, alpha: 1)
-    scene.rootNode.addChildNode(zone("Q3 Planning", count: 2, blue, cx: 9, cz: 5, hw: 11, hl: 8))
-    // Project Atlas's own member cards, loose on this level
-    let atlas: [(Float, Float, Float)] = [(-13, -2, -0.06), (-12, 7, 0.08), (-3, -3, 0.05)]
-    for (i, sp) in atlas.enumerated() { scene.rootNode.addChildNode(card(tints[i % 4], sp.0, sp.1, rot: sp.2)) }
-    // the sub-zone's cards, filed inside Q3 Planning
-    scene.rootNode.addChildNode(card(tints[2], 6, 4, rot: 0.1))
-    scene.rootNode.addChildNode(card(tints[3], 12, 6, rot: -0.08))
+    // HSM-14-22 card craft (owner feedback): cards now come in DIFFERENT SHAPES + SIZES, are obviously
+    // TYPED (a tinted badge), carry a real CONTENT snippet, and the sticker is LOOSE (each a different
+    // angle / size / shape / nudge). One of each kind, spread on the desk.
+    let green  = NSColor(calibratedRed: 0.24, green: 0.81, blue: 0.56, alpha: 1)
+    let purple = NSColor(calibratedRed: 0.61, green: 0.55, blue: 1.00, alpha: 1)
+    let orange = NSColor(calibratedRed: 0.95, green: 0.64, blue: 0.24, alpha: 1)
+    let blue   = NSColor(calibratedRed: 0.36, green: 0.62, blue: 0.95, alpha: 1)
+    let cobalt = NSColor(calibratedRed: 0.36, green: 0.55, blue: 0.94, alpha: 1)
+    let summary    = CardKind(label: "SUMMARY",    corner: 15, pxW: 266, pxH: 124, seed: 3)
+    let transcript = CardKind(label: "TRANSCRIPT", corner: 9,  pxW: 198, pxH: 150, seed: 7)
+    let action     = CardKind(label: "ACTION",     corner: 9,  pxW: 200, pxH: 72,  seed: 12)
+    let topics     = CardKind(label: "TOPICS",     corner: 15, pxW: 232, pxH: 98,  seed: 5)
+    let meeting    = CardKind(label: nil,          corner: 15, pxW: 248, pxH: 106, seed: 9)
+    scene.rootNode.addChildNode(card(green,  summary,    snippet: "The team aligned on shipping the beta Friday; pricing deferred a week pending finance sign-off.", -9, -3, rot: -0.05))
+    scene.rootNode.addChildNode(card(blue,   topics,     snippet: "Topics — pricing, beta timeline, export tab, finance sign-off", 9, -3, rot: 0.07))
+    scene.rootNode.addChildNode(card(purple, transcript, snippet: "Alex: can we cut scope? Jordan: only if we drop the export tab. Alex: fine, ship it Friday.", 14, 9, rot: 0.05))
+    scene.rootNode.addChildNode(card(orange, action,     snippet: "Send the finance deck to Priya by EOD.", -14, 9, rot: 0.1))
+    scene.rootNode.addChildNode(card(cobalt, meeting,    snippet: "Weekly sync · 32 min · 3 speakers. Tap to open the full meeting.", -3, 11, rot: 0.03))
     return scene
+}
+
+// "faces" mode — write a flat contact sheet of the card FACES on a light bg, so the badge / snippet /
+// loose sticker can be judged at full clarity (the 3D snapshot path renders dark).
+if CommandLine.arguments.count > 2, CommandLine.arguments[2] == "faces" {
+    let green = NSColor(calibratedRed:0.24,green:0.81,blue:0.56,alpha:1), purple = NSColor(calibratedRed:0.61,green:0.55,blue:1,alpha:1)
+    let orange = NSColor(calibratedRed:0.95,green:0.64,blue:0.24,alpha:1), blue = NSColor(calibratedRed:0.36,green:0.62,blue:0.95,alpha:1)
+    let cobalt = NSColor(calibratedRed:0.36,green:0.55,blue:0.94,alpha:1)
+    let faces: [(NSColor, CardKind, String)] = [
+        (green,  CardKind(label:"SUMMARY",    corner:15, pxW:266, pxH:124, seed:3),  "The team aligned on shipping the beta Friday; pricing deferred a week pending finance sign-off."),
+        (blue,   CardKind(label:"TOPICS",     corner:15, pxW:232, pxH:98,  seed:5),  "Topics — pricing, beta timeline, export tab, finance sign-off"),
+        (purple, CardKind(label:"TRANSCRIPT", corner:9,  pxW:198, pxH:150, seed:7),  "Alex: can we cut scope?  Jordan: only if we drop the export tab.  Alex: fine, ship it Friday."),
+        (orange, CardKind(label:"ACTION",     corner:9,  pxW:200, pxH:72,  seed:12), "Send the finance deck to Priya by EOD."),
+        (cobalt, CardKind(label:nil,          corner:15, pxW:248, pxH:106, seed:9),  "Weekly sync · 32 min · 3 speakers. Tap to open the full meeting."),
+    ]
+    let sheet = NSImage(size: NSSize(width: 600, height: 700)); sheet.lockFocus()
+    NSColor(calibratedWhite: 0.16, alpha: 1).setFill(); NSBezierPath(rect: NSRect(x:0,y:0,width:600,height:700)).fill()
+    var y: CGFloat = 700
+    for (tint, kind, snip) in faces {
+        let im = cardImage(tint, kind, snippet: snip); y -= kind.pxH + 22
+        im.draw(in: NSRect(x: 30, y: y, width: kind.pxW, height: kind.pxH))
+    }
+    sheet.unlockFocus()
+    if let tiff = sheet.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:]) {
+        try? png.write(to: URL(fileURLWithPath: CommandLine.arguments[1])); print("wrote faces \(CommandLine.arguments[1])")
+    }
+    exit(0)
 }
 
 guard let device = MTLCreateSystemDefaultDevice() else { FileHandle.standardError.write("no metal\n".data(using: .utf8)!); exit(1) }

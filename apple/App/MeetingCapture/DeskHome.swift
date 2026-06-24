@@ -213,11 +213,12 @@ struct DeskHome: View {
         guard let m = model.meetings.first(where: { $0.id == mid }) else { return ([], [:]) }
         var cards: [DeskCardData] = []; var bodies: [String: OutputDoc] = [:]
         func add(_ id: String, _ title: String, _ sub: String, _ sprite: String, _ tint: UInt, _ icon: String, _ body: String) {
-            cards.append(DeskCardData(id: id, title: title, sub: sub, sprite: sprite, tintHex: tint, mode: .full))
+            let snip = body.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespaces)
+            cards.append(DeskCardData(id: id, title: title, sub: sub, sprite: sprite, tintHex: tint, mode: .full, snippet: String(snip.prefix(150))))
             bodies[id] = OutputDoc(title: title, icon: icon, body: body)
         }
         // The notebook itself — the full detail view (generation / review / ink) is never lost; it's an object too.
-        cards.append(DeskCardData(id: "open:\(mid)", title: titleFor(m), sub: "open notebook", sprite: "folder", tintHex: 0xFF6B35, mode: .full))
+        cards.append(DeskCardData(id: "open:\(mid)", title: titleFor(m), sub: "open notebook", sprite: "folder", tintHex: 0xFF6B35, mode: .full, snippet: "The full meeting — transcript, generation, review, and ink, all in one place."))
         if let s = m.intel?.summary, !s.isEmpty { add("out:sum:\(mid)", "Summary", "intelligence", "robot", 0x3ECF8E, "sparkles", s) }
         if let t = m.intel?.topics, !t.isEmpty {
             add("out:top:\(mid)", "Topics", "\(t.count) topic\(t.count == 1 ? "" : "s")", "note", 0x5B8DEF, "tag.fill", t.map { "- \($0)" }.joined(separator: "\n"))
@@ -277,25 +278,27 @@ struct DeskHome: View {
             let members = model.meetings.filter { d[$0.id] == cur }
             return members.map { m in
                 DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m),
-                             tintHex: tintHexFor(m), mode: modeFor(m.id), styleRaw: styleFor(m.id))
+                             tintHex: tintHexFor(m), mode: modeFor(m.id), styleRaw: styleFor(m.id), snippet: snippetFor(m))
             } + spilledCards
         }
         if activeUserFolder == nil, folder == .models {
             return ModelFiles.installed().map {
                 DeskCardData(id: "model:\($0.id)", title: $0.name.replacingOccurrences(of: ".gguf", with: ""),
-                             sub: "loaded · on device", sprite: "cartridge", tintHex: 0x5B8DEF, mode: modeFor("model:\($0.id)"))
+                             sub: "loaded · on device", sprite: "cartridge", tintHex: 0x5B8DEF, mode: modeFor("model:\($0.id)"),
+                             snippet: "On-device model — meetings and dictation can run through it, nothing leaves.")
             }
         }
         if activeUserFolder == nil, folder == .knowledge {
             let kbCards = knowledgeBases.map { name in
                 DeskCardData(id: "kb:\(name)", title: name, sub: "\(kbCount(name)) item\(kbCount(name) == 1 ? "" : "s") · knowledge base",
-                             sprite: "crystal", tintHex: 0x9B8CFF, mode: modeFor("kb:\(name)"))
+                             sprite: "crystal", tintHex: 0x9B8CFF, mode: modeFor("kb:\(name)"),
+                             snippet: "Tap to spill what's filed here onto the desk.")
             }
             return kbCards + spilledCards     // tapping a KB spills its members alongside
         }
         let base = filtered.map { m in
             DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m), tintHex: tintHexFor(m),
-                         mode: modeFor(m.id), styleRaw: styleFor(m.id), zone: zonedDefault ? zoneFor(m) : "")
+                         mode: modeFor(m.id), styleRaw: styleFor(m.id), zone: zonedDefault ? zoneFor(m) : "", snippet: snippetFor(m))
         }
         return base + spilledCards            // the meeting's spilled output objects live alongside the cards
     }
@@ -426,7 +429,7 @@ struct DeskHome: View {
             let d = filedDict()
             let members = model.meetings.filter { d[$0.id] == name }
             spilledCards.append(contentsOf: members.map { m in
-                DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m), tintHex: tintHexFor(m), mode: modeFor(m.id), styleRaw: styleFor(m.id))
+                DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m), tintHex: tintHexFor(m), mode: modeFor(m.id), styleRaw: styleFor(m.id), snippet: snippetFor(m))
             })
         }
     }
@@ -481,6 +484,14 @@ struct DeskHome: View {
     private func subFor(_ m: Meeting) -> String {
         let spk = Set(m.segments.map(\.speaker)).count
         return spk > 0 ? "\(clockString(m.duration ?? 0))  ·  \(spk) speaker\(spk == 1 ? "" : "s")" : clockString(m.duration ?? 0)
+    }
+    // The real-content preview printed on a meeting card — its actual summary, else its topics, else the
+    // first thing said. So a card is a window into what it holds, not a title-and-metadata chip.
+    private func snippetFor(_ m: Meeting) -> String {
+        if let s = m.intel?.summary, !s.isEmpty { return String(s.prefix(150)) }
+        if let t = m.intel?.topics, !t.isEmpty { return "Topics — " + t.prefix(4).joined(separator: ", ") }
+        if let first = m.segments.first(where: { !$0.text.isEmpty }) { return String(first.text.prefix(150)) }
+        return ""
     }
     private func tintHexFor(_ m: Meeting) -> UInt { [0x5B8DEF, 0xFF6B35, 0xF2A33C, 0x3ECF8E][abs(m.id.hashValue) % 4] }
 }
