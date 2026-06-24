@@ -15,7 +15,7 @@ struct LivingDeskCanvas: UIViewRepresentable {
     let cards: [DeskCardData]
     let onTap: (String) -> Void
     let onCycle: (String) -> Void
-    var fence: Int = 0          // 0 off, 1 crayon, 2 pencil, 3 mud — draw a fence on the desk
+    var brush: Int = 0          // 0 off · 1 crayon AREA (filled+named) · 2 crayon wall · 3 pencil wall · 4 mud wall
 
     func makeCoordinator() -> Coord { Coord(onTap: onTap, onCycle: onCycle) }
 
@@ -41,7 +41,7 @@ struct LivingDeskCanvas: UIViewRepresentable {
 
     func updateUIView(_ v: SCNView, context: Context) {
         context.coordinator.onTap = onTap; context.coordinator.onCycle = onCycle
-        context.coordinator.fence = fence
+        context.coordinator.brush = brush
         context.coordinator.sync(cards)
     }
 
@@ -58,8 +58,10 @@ struct LivingDeskCanvas: UIViewRepresentable {
         private var last: [DeskCardData] = []
         private var picked: SCNNode?
         private let liftY: Float = 3.4
-        var fence = 0                       // active fence tool (0 off)
+        var brush = 0                       // active brush (0 off)
         private var fenceLast: SCNVector3?  // last committed point while drawing a fence
+        private var areaStart: SCNVector3?  // first corner while dragging a crayon area
+        private var areaPreview: SCNNode?
         private var activeSeg: SCNNode?     // the segment currently growing on dwell
         private var activeA = SCNVector3Zero
         private var activeB = SCNVector3Zero
@@ -328,7 +330,8 @@ struct LivingDeskCanvas: UIViewRepresentable {
         }
         @objc func onPan(_ g: UIPanGestureRecognizer) {
             let p = g.location(in: view)
-            if fence != 0 { drawFence(g, p); return }       // the fence tool draws instead of moving a card
+            if brush == 1 { drawArea(g, p); return }         // crayon AREA marker
+            if brush >= 2 { drawFence(g, p); return }        // fence wall
             switch g.state {
             case .began:
                 guard let n = cardNode(at: p) else { return }
@@ -375,6 +378,90 @@ struct LivingDeskCanvas: UIViewRepresentable {
             cameraNode.position = SCNVector3(s.x - Float(t.x) * f, s.y, s.z - Float(t.y) * f)
             if g.state == .ended || g.state == .cancelled { camStart = nil }
         }
+        // MARK: crayon AREA — drag a rectangle on the desk; it fills with a child's-crayon scribble in a
+        // colour, and you name it. A flat zone marker (no walls) — the simplest organizing brush.
+        private let areaColors: [UIColor] = [UIColor(red: 0.95, green: 0.43, blue: 0.30, alpha: 1), UIColor(red: 0.36, green: 0.62, blue: 0.95, alpha: 1),
+                                             UIColor(red: 0.34, green: 0.78, blue: 0.52, alpha: 1), UIColor(red: 0.96, green: 0.78, blue: 0.30, alpha: 1)]
+        private var areaColorIdx = 0
+        private func drawArea(_ g: UIPanGestureRecognizer, _ p: CGPoint) {
+            switch g.state {
+            case .began:
+                areaStart = planePoint(at: p, y: 0.2)
+            case .changed:
+                guard let a = areaStart, let b = planePoint(at: p, y: 0.2) else { return }
+                areaPreview?.removeFromParentNode()
+                areaPreview = areaPlane(a, b, color: areaColors[areaColorIdx], preview: true)
+                if let pv = areaPreview { view?.scene?.rootNode.addChildNode(pv) }
+            case .ended:
+                guard let a = areaStart, let b = planePoint(at: p, y: 0.2) else { return }
+                areaPreview?.removeFromParentNode(); areaPreview = nil
+                if hypotf(b.x - a.x, b.z - a.z) > 3 {
+                    let node = areaPlane(a, b, color: areaColors[areaColorIdx], preview: false)
+                    view?.scene?.rootNode.addChildNode(node); zoneDecor.append(node)
+                    hMed.impactOccurred(intensity: 0.7)
+                    promptAreaName(node, color: areaColors[areaColorIdx])
+                    areaColorIdx = (areaColorIdx + 1) % areaColors.count
+                }
+                areaStart = nil
+            case .cancelled, .failed:
+                areaPreview?.removeFromParentNode(); areaPreview = nil; areaStart = nil
+            default: break
+            }
+        }
+        private func areaPlane(_ a: SCNVector3, _ b: SCNVector3, color: UIColor, preview: Bool) -> SCNNode {
+            let w = CGFloat(abs(b.x - a.x)), d = CGFloat(abs(b.z - a.z))
+            let plane = SCNPlane(width: max(2, w), height: max(2, d))
+            let m = SCNMaterial(); m.lightingModel = .constant; m.isDoubleSided = true
+            m.diffuse.contents = crayonFillImage(color, w: max(2, w), h: max(2, d)); m.transparency = preview ? 0.5 : 1
+            plane.materials = [m]
+            let node = SCNNode(geometry: plane)
+            node.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)
+            node.position = SCNVector3((a.x + b.x) / 2, 0.18, (a.z + b.z) / 2)
+            node.name = "area"
+            return node
+        }
+        private func crayonFillImage(_ color: UIColor, w: CGFloat, h: CGFloat) -> UIImage {
+            let px = CGSize(width: max(64, w * 14), height: max(64, h * 14))
+            return UIGraphicsImageRenderer(size: px).image { ctx in
+                let c = ctx.cgContext
+                let rect = CGRect(origin: .zero, size: px).insetBy(dx: 6, dy: 6)
+                // a wobbly hand-drawn border
+                color.withAlphaComponent(0.9).setStroke(); c.setLineWidth(5); c.setLineCap(.round)
+                let bp = UIBezierPath(roundedRect: rect, cornerRadius: 14); bp.lineWidth = 5; bp.stroke()
+                // scribble fill — many slightly-random crayon strokes, like a kid filling it in
+                c.setLineWidth(7); c.setLineCap(.round); color.withAlphaComponent(0.34).setStroke()
+                var y = rect.minY + 8; var i = 0
+                while y < rect.maxY {
+                    let jitterA = CGFloat((i * 37) % 11) - 5, jitterB = CGFloat((i * 53) % 13) - 6
+                    c.move(to: CGPoint(x: rect.minX + 6 + jitterA, y: y))
+                    c.addCurve(to: CGPoint(x: rect.maxX - 6 + jitterB, y: y + 3),
+                               control1: CGPoint(x: rect.midX, y: y - 7), control2: CGPoint(x: rect.midX, y: y + 9))
+                    c.strokePath(); y += 12; i += 1
+                }
+            }
+        }
+        private func promptAreaName(_ node: SCNNode, color: UIColor) {
+            guard let host = view?.window?.rootViewController else { return }
+            let alert = UIAlertController(title: "Name this area", message: nil, preferredStyle: .alert)
+            alert.addTextField { $0.placeholder = "e.g. Project Atlas"; $0.autocapitalizationType = .words }
+            alert.addAction(UIAlertAction(title: "Add", style: .default) { [weak self, weak node] _ in
+                guard let self, let node else { return }
+                let name = alert.textFields?.first?.text ?? ""
+                if !name.isEmpty { self.attachAreaLabel(node, name: name, color: color) }
+            })
+            alert.addAction(UIAlertAction(title: "Skip", style: .cancel))
+            host.present(alert, animated: true)
+        }
+        private func attachAreaLabel(_ area: SCNNode, name: String, color: UIColor) {
+            let plane = SCNPlane(width: 13, height: 3.4)
+            let m = SCNMaterial(); m.lightingModel = .constant; m.isDoubleSided = true; m.diffuse.contents = labelImage(name, color)
+            plane.materials = [m]
+            let lnode = SCNNode(geometry: plane)
+            lnode.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)
+            lnode.position = SCNVector3(area.position.x, 0.25, area.position.z - Float((area.geometry as? SCNPlane)?.height ?? 0) / 2 + 2.2)
+            view?.scene?.rootNode.addChildNode(lnode); zoneDecor.append(lnode)
+        }
+
         // MARK: fence drawing — drag on the desk to lay a wall (crayon/pencil/mud); DWELL in one place and
         // the active segment keeps STACKING TALLER (build tall walls by holding). A real physics barrier
         // that casts shadows. A core gesture primitive (HSM-14-22 barriers).
@@ -399,7 +486,7 @@ struct LivingDeskCanvas: UIViewRepresentable {
             default: break
             }
         }
-        private func baseWallH() -> CGFloat { fence == 3 ? 1.9 : (fence == 2 ? 1.4 : 1.1) }
+        private func baseWallH() -> CGFloat { brush == 4 ? 1.9 : (brush == 3 ? 1.4 : 1.1) }
         private func startGrow() {
             growTimer?.invalidate()
             growTimer = Timer.scheduledTimer(withTimeInterval: 0.08, repeats: true) { [weak self] _ in
@@ -417,13 +504,13 @@ struct LivingDeskCanvas: UIViewRepresentable {
         @discardableResult private func buildWall(_ a: SCNVector3, _ b: SCNVector3, _ h: CGFloat) -> SCNNode {
             let len = CGFloat(hypotf(b.x - a.x, b.z - a.z))
             let (color, thick): (UIColor, CGFloat)
-            switch fence {
-            case 1: color = UIColor(red: 0.95, green: 0.35, blue: 0.30, alpha: 1); thick = 0.55   // crayon
-            case 2: color = UIColor(red: 0.78, green: 0.70, blue: 0.45, alpha: 1); thick = 0.45   // pencil
+            switch brush {
+            case 2: color = UIColor(red: 0.95, green: 0.35, blue: 0.30, alpha: 1); thick = 0.55   // crayon
+            case 3: color = UIColor(red: 0.78, green: 0.70, blue: 0.45, alpha: 1); thick = 0.45   // pencil
             default: color = UIColor(red: 0.40, green: 0.29, blue: 0.20, alpha: 1); thick = 1.1   // mud
             }
             let box = SCNBox(width: len + thick, height: h, length: thick, chamferRadius: thick * 0.4)
-            let m = SCNMaterial(); m.lightingModel = .blinn; m.diffuse.contents = color; m.roughness.contents = fence == 3 ? 0.95 : 0.6
+            let m = SCNMaterial(); m.lightingModel = .blinn; m.diffuse.contents = color; m.roughness.contents = brush == 4 ? 0.95 : 0.6
             box.materials = [m]
             let node = SCNNode(geometry: box)
             node.position = SCNVector3((a.x + b.x) / 2, Float(h) / 2 + 0.5, (a.z + b.z) / 2)

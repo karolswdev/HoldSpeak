@@ -58,7 +58,8 @@ struct DeskHome: View {
     @State private var newFolderName = ""
     @State private var fileAfterCreate = false                    // creating a directory to immediately file the current selection
     @AppStorage("hs.desk.living") private var livingDesk = false   // HSM-14-22: the 3D Living Desk (toolbar toggle)
-    @State private var fence = 0                                   // fence tool: 0 off / 1 crayon / 2 pencil / 3 mud
+    @State private var brush = 0                                   // 0 off · 1 area · 2 crayon · 3 pencil · 4 mud
+    @State private var zonesMode = false                           // the zone-drawing toolchain (palette shown)
 
     var body: some View {
         NavigationStack {
@@ -93,7 +94,7 @@ struct DeskHome: View {
             ZStack(alignment: .topLeading) {
                 DeskCanvasBackground()
                 if livingDesk {
-                    LivingDeskCanvas(cards: cardData, onTap: { handleTap($0) }, onCycle: { id in tactile(); cycleStyle(id) }, fence: fence)
+                    LivingDeskCanvas(cards: cardData, onTap: { handleTap($0) }, onCycle: { id in tactile(); cycleStyle(id) }, brush: brush)
                 } else {
                     DeskPhysicsCanvas(cards: cardData, tidyToken: tidyToken, zoomToken: zoomToken,
                                       lassoMode: lassoMode, clearToken: clearToken, gatherToken: gatherToken,
@@ -124,11 +125,15 @@ struct DeskHome: View {
                         .padding(.horizontal, 18).padding(.bottom, 22)
                     }
                 }
-                VStack { DeskCanvasBar(folder: folder, userFolder: activeUserFolder, count: cardData.count, lassoMode: lassoMode,
-                                       livingDesk: livingDesk, onToggle3D: { tactile(.medium); livingDesk.toggle() },
-                                       fence: fence, onFence: { tactile(.medium); fence = (fence + 1) % 4 },
-                                       onLasso: { tactile(); lassoMode.toggle(); if !lassoMode { selectedIDs = []; clearToken += 1 } },
-                                       onTidy: { tactile(); tidyToken += 1 }, onZoom: { tactile(); zoomToken += 1 }); Spacer() }
+                VStack {
+                    DeskCanvasBar(folder: folder, userFolder: activeUserFolder, count: cardData.count, lassoMode: lassoMode,
+                                  livingDesk: livingDesk, onToggle3D: { tactile(.medium); livingDesk.toggle() },
+                                  zonesMode: zonesMode, onZones: { tactile(.medium); zonesMode.toggle(); brush = zonesMode ? max(1, brush) : 0 },
+                                  onLasso: { tactile(); lassoMode.toggle(); if !lassoMode { selectedIDs = []; clearToken += 1 } },
+                                  onTidy: { tactile(); tidyToken += 1 }, onZoom: { tactile(); zoomToken += 1 })
+                    if livingDesk && zonesMode { DeskBrushPalette(brush: $brush) }
+                    Spacer()
+                }
 
                 // The window layer — apps live ON the desk, floating above the cards.
                 ForEach(windows) { w in
@@ -525,7 +530,7 @@ struct DeskMic: View {
 struct DeskCanvasBar: View {
     let folder: DeskFolder; let userFolder: String?; let count: Int; let lassoMode: Bool
     let livingDesk: Bool; let onToggle3D: () -> Void
-    let fence: Int; let onFence: () -> Void
+    let zonesMode: Bool; let onZones: () -> Void
     let onLasso: () -> Void; let onTidy: () -> Void; let onZoom: () -> Void
     var body: some View {
         HStack(spacing: 10) {
@@ -538,7 +543,7 @@ struct DeskCanvasBar: View {
             Spacer()
             pill("cube.fill", livingDesk ? "3D" : "2D", onToggle3D, on: livingDesk)
             if livingDesk {
-                pill("scribble.variable", ["Fence", "Crayon", "Pencil", "Mud"][max(0, min(3, fence))], onFence, on: fence != 0)
+                pill("scribble.variable", "Zones", onZones, on: zonesMode)
             } else {
                 pill("lasso", "Select", onLasso, on: lassoMode)
                 pill("arrow.up.left.and.arrow.down.right", "Fit", onZoom)
@@ -552,6 +557,37 @@ struct DeskCanvasBar: View {
                 .foregroundStyle(on ? .white : Sig.text).padding(.horizontal, 11).padding(.vertical, 7)
                 .background(Capsule().fill(on ? AnyShapeStyle(Sig.accentGradient) : AnyShapeStyle(Sig.s3)))
         }.buttonStyle(PressableCard())
+    }
+}
+
+// The zone-drawing toolchain — pick a brush; then drag on the desk to draw it.
+struct DeskBrushPalette: View {
+    @Binding var brush: Int
+    private let items: [(Int, String, String, UInt)] = [
+        (1, "Area",   "rectangle.dashed",  0xFF6B35),
+        (2, "Crayon", "scribble.variable", 0xF25A4D),
+        (3, "Pencil", "pencil.tip",        0xC7B36F),
+        (4, "Mud",    "drop.fill",         0x7A5230),
+    ]
+    var body: some View {
+        HStack(spacing: 8) {
+            Text("BRUSH").font(.system(size: 10, weight: .black)).tracking(1.4).foregroundStyle(Sig.faint).padding(.leading, 4)
+            ForEach(items, id: \.0) { it in
+                let on = brush == it.0
+                Button { tactile(); brush = it.0 } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: it.2).font(.system(size: 12, weight: .bold))
+                        Text(it.1).font(.system(size: 12, weight: .heavy))
+                    }
+                    .foregroundStyle(on ? .white : Sig.text)
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                    .background(Capsule().fill(on ? AnyShapeStyle(Color(hex: it.3)) : AnyShapeStyle(Sig.s3)))
+                }.buttonStyle(PressableCard())
+            }
+        }
+        .padding(.horizontal, 9).padding(.vertical, 7)
+        .background(Capsule().fill(Sig.s2).overlay(Capsule().strokeBorder(Sig.line, lineWidth: 1)).shadow(color: .black.opacity(0.35), radius: 12, y: 5))
+        .padding(.top, 9)
     }
 }
 
