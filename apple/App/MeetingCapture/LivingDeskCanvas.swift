@@ -63,6 +63,7 @@ struct LivingDeskCanvas: UIViewRepresentable {
         private var activeB = SCNVector3Zero
         private var activeH: CGFloat = 1.1
         private var growTimer: Timer?
+        private var lastMoveTime: CFTimeInterval = 0    // when the finger last moved (dwell detection)
         // Haptics — the feel layer.
         private let hLight = UIImpactFeedbackGenerator(style: .light)
         private let hMed = UIImpactFeedbackGenerator(style: .medium)
@@ -310,13 +311,16 @@ struct LivingDeskCanvas: UIViewRepresentable {
             case .began:
                 guard let p0 = planePoint(at: p, y: 0.3) else { return }
                 fenceLast = p0; activeA = p0; activeB = p0; activeH = baseWallH()
-                placeActive()
-                startGrow()
+                activeSeg = buildWall(activeA, activeB, activeH)     // an initial post
+                lastMoveTime = CACurrentMediaTime(); startGrow()
             case .changed:
                 guard let last = fenceLast, let cur = planePoint(at: p, y: 0.3) else { return }
-                if hypotf(cur.x - last.x, cur.z - last.z) > 1.3 {
-                    activeA = last; activeB = cur; activeH = baseWallH(); placeActive()   // new segment, base height
-                    fenceLast = cur; hLight.impactOccurred(intensity: 0.4)
+                if hypotf(cur.x - last.x, cur.z - last.z) > 1.0 {
+                    // COMMIT the current segment (leave it in place) and start a fresh one -> a fluid line.
+                    activeA = last; activeB = cur; activeH = baseWallH()
+                    activeSeg = buildWall(activeA, activeB, activeH)
+                    fenceLast = cur; lastMoveTime = CACurrentMediaTime()
+                    hLight.impactOccurred(intensity: 0.35)
                 }
             case .ended, .cancelled, .failed:
                 fenceLast = nil; activeSeg = nil; growTimer?.invalidate(); growTimer = nil
@@ -326,16 +330,19 @@ struct LivingDeskCanvas: UIViewRepresentable {
         private func baseWallH() -> CGFloat { fence == 3 ? 1.9 : (fence == 2 ? 1.4 : 1.1) }
         private func startGrow() {
             growTimer?.invalidate()
-            growTimer = Timer.scheduledTimer(withTimeInterval: 0.07, repeats: true) { [weak self] _ in
+            growTimer = Timer.scheduledTimer(withTimeInterval: 0.08, repeats: true) { [weak self] _ in
                 Task { @MainActor in self?.growTick() }
             }
         }
-        private func growTick() {                                  // dwell -> the active segment grows taller
-            guard activeSeg != nil, activeH < 11 else { return }
-            activeH += 0.35; placeActive(); hLight.impactOccurred(intensity: 0.25)
+        private func growTick() {                                   // grow ONLY while dwelling (finger stopped)
+            guard let seg = activeSeg, activeH < 11 else { return }
+            guard CACurrentMediaTime() - lastMoveTime > 0.13 else { return }   // still drawing -> don't grow
+            activeH += 0.35
+            seg.removeFromParentNode()                             // replace the active segment in place, taller
+            activeSeg = buildWall(activeA, activeB, activeH)
+            hLight.impactOccurred(intensity: 0.25)
         }
-        private func placeActive() {                               // (re)build the active wall at its current height
-            let a = activeA, b = activeB
+        @discardableResult private func buildWall(_ a: SCNVector3, _ b: SCNVector3, _ h: CGFloat) -> SCNNode {
             let len = CGFloat(hypotf(b.x - a.x, b.z - a.z))
             let (color, thick): (UIColor, CGFloat)
             switch fence {
@@ -343,17 +350,17 @@ struct LivingDeskCanvas: UIViewRepresentable {
             case 2: color = UIColor(red: 0.78, green: 0.70, blue: 0.45, alpha: 1); thick = 0.45   // pencil
             default: color = UIColor(red: 0.40, green: 0.29, blue: 0.20, alpha: 1); thick = 1.1   // mud
             }
-            let box = SCNBox(width: len + thick, height: activeH, length: thick, chamferRadius: thick * 0.4)
+            let box = SCNBox(width: len + thick, height: h, length: thick, chamferRadius: thick * 0.4)
             let m = SCNMaterial(); m.lightingModel = .blinn; m.diffuse.contents = color; m.roughness.contents = fence == 3 ? 0.95 : 0.6
             box.materials = [m]
             let node = SCNNode(geometry: box)
-            node.position = SCNVector3((a.x + b.x) / 2, Float(activeH) / 2 + 0.5, (a.z + b.z) / 2)
+            node.position = SCNVector3((a.x + b.x) / 2, Float(h) / 2 + 0.5, (a.z + b.z) / 2)
             node.eulerAngles = SCNVector3(0, -atan2f(b.z - a.z, b.x - a.x), 0)
             node.castsShadow = true
             node.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
             node.physicsBody?.friction = 0.7; node.physicsBody?.restitution = 0.1
-            activeSeg?.removeFromParentNode()
-            view?.scene?.rootNode.addChildNode(node); activeSeg = node
+            view?.scene?.rootNode.addChildNode(node)
+            return node
         }
 
         @objc func onPinch(_ g: UIPinchGestureRecognizer) {      // pinch to zoom (FOV)
