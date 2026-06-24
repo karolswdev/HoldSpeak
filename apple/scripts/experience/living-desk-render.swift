@@ -99,6 +99,80 @@ func zone(_ name: String, count: Int, _ accent: NSColor, cx: Float, cz: Float, h
     return holder
 }
 
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// HSM-14-22 the OBJECT LANGUAGE: hardware/containers are REAL 3D things, not chips with text on them.
+// A meeting is a cassette (a recording), a model a glowing cartridge, a KB a crystal, a notebook a book.
+// Only actual documents (summary/transcript/action) stay paper. Composed here first, then ported.
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+
+func objLabel(_ text: String, ink: NSColor, bg: NSColor) -> NSImage {
+    let size = NSSize(width: 256, height: 64); let img = NSImage(size: size); img.lockFocus()
+    bg.setFill(); NSBezierPath(roundedRect: NSRect(origin: .zero, size: size), xRadius: 8, yRadius: 8).fill()
+    let p = NSMutableParagraphStyle(); p.alignment = .left; p.lineBreakMode = .byTruncatingTail
+    (text as NSString).draw(in: NSRect(x: 12, y: 16, width: 232, height: 34),
+        withAttributes: [.font: NSFont.systemFont(ofSize: 28, weight: .heavy), .foregroundColor: ink, .paragraphStyle: p])
+    img.unlockFocus(); return img
+}
+func pbr(_ c: NSColor, rough: CGFloat, metal: CGFloat, emit: NSColor? = nil) -> SCNMaterial {
+    let m = SCNMaterial(); m.lightingModel = .physicallyBased
+    m.diffuse.contents = c; m.roughness.contents = rough; m.metalness.contents = metal
+    if let e = emit { m.emission.contents = e }
+    return m
+}
+func node(_ g: SCNGeometry, _ mat: SCNMaterial, _ x: Float, _ y: Float, _ z: Float) -> SCNNode {
+    g.materials = [mat]; let n = SCNNode(geometry: g); n.position = SCNVector3(x, y, z); return n
+}
+func place(_ holder: SCNNode, _ x: Float, _ z: Float, _ rot: Float) -> SCNNode {
+    holder.position = SCNVector3(x, 0.5, z); holder.eulerAngles = SCNVector3(0, rot, 0)
+    holder.enumerateHierarchy { n, _ in n.castsShadow = true }
+    return holder
+}
+
+// A MEETING — a cassette tape lying on the desk: dark body, a tinted title label, a window, two reels.
+func makeCassette(_ tint: NSColor, _ title: String, _ x: Float, _ z: Float, rot: Float = 0) -> SCNNode {
+    let h = SCNNode()
+    h.addChildNode(node(SCNBox(width: 9, height: 1.0, length: 5.6, chamferRadius: 0.35), pbr(NSColor(white: 0.13, alpha: 1), rough: 0.5, metal: 0), 0, 0.5, 0))
+    let labelBg = tint.blended(withFraction: 0.55, of: .white) ?? tint
+    h.addChildNode(node(SCNBox(width: 8.2, height: 0.1, length: 1.9, chamferRadius: 0.08),
+        { let m = SCNMaterial(); m.lightingModel = .blinn; m.diffuse.contents = objLabel(title, ink: NSColor(white: 0.12, alpha: 1), bg: labelBg); return m }(), 0, 1.03, -1.45))
+    h.addChildNode(node(SCNBox(width: 5.4, height: 0.08, length: 1.8, chamferRadius: 0.15), pbr(NSColor(white: 0.04, alpha: 1), rough: 0.3, metal: 0), 0, 1.02, 1.1))   // window
+    for dx in [Float(-1.45), 1.45] {
+        h.addChildNode(node(SCNCylinder(radius: 0.8, height: 0.16), pbr(NSColor(white: 0.72, alpha: 1), rough: 0.6, metal: 0), dx, 1.08, 1.1))
+        h.addChildNode(node(SCNCylinder(radius: 0.3, height: 0.2), pbr(tint, rough: 0.4, metal: 0.1), dx, 1.1, 1.1))   // hub
+    }
+    return place(h, x, z, rot)
+}
+
+// A MODEL — a glowing cartridge: glossy dark slab, an emissive accent bar (loaded/alive), a name plate,
+// gold contact pins. The owner singled models out — this is the premium object.
+func makeCartridge(_ tint: NSColor, _ name: String, _ x: Float, _ z: Float, rot: Float = 0) -> SCNNode {
+    let h = SCNNode()
+    h.addChildNode(node(SCNBox(width: 7.6, height: 1.5, length: 5.4, chamferRadius: 0.55), pbr(NSColor(white: 0.10, alpha: 1), rough: 0.22, metal: 0.6), 0, 0.75, 0))
+    h.addChildNode(node(SCNBox(width: 6.6, height: 0.14, length: 0.72, chamferRadius: 0.06), pbr(tint, rough: 0.3, metal: 0, emit: tint), 0, 1.52, -1.7))   // GLOW bar
+    h.addChildNode(node(SCNBox(width: 6.6, height: 0.1, length: 2.7, chamferRadius: 0.1),
+        { let m = SCNMaterial(); m.lightingModel = .blinn; m.diffuse.contents = objLabel(name, ink: .white, bg: NSColor(white: 0.17, alpha: 1)); return m }(), 0, 1.52, 0.2))
+    h.addChildNode(node(SCNBox(width: 6.0, height: 0.34, length: 0.5, chamferRadius: 0.05), pbr(NSColor(red: 0.85, green: 0.68, blue: 0.25, alpha: 1), rough: 0.3, metal: 0.9), 0, 0.5, 2.6))   // gold pins
+    return place(h, x, z, rot)
+}
+
+// A KNOWLEDGE BASE — a faceted crystal (a bipyramid gem) with an inner glow.
+func makeCrystal(_ tint: NSColor, _ x: Float, _ z: Float, rot: Float = 0) -> SCNNode {
+    let h = SCNNode()
+    let m = pbr(tint, rough: 0.05, metal: 0.1, emit: tint.withAlphaComponent(0.35))
+    h.addChildNode(node(SCNPyramid(width: 3.0, height: 3.6, length: 3.0), m, 0, 1.4, 0))           // top
+    let bn = node(SCNPyramid(width: 3.0, height: 1.4, length: 3.0), m, 0, 1.4, 0); bn.eulerAngles = SCNVector3(Float.pi, 0, 0); h.addChildNode(bn)   // bottom point
+    return place(h, x, z, rot)
+}
+
+// A NOTEBOOK — a closed book: cream pages between a tinted cover, a darker spine.
+func makeBook(_ tint: NSColor, _ title: String, _ x: Float, _ z: Float, rot: Float = 0) -> SCNNode {
+    let h = SCNNode()
+    h.addChildNode(node(SCNBox(width: 8.2, height: 1.2, length: 5.8, chamferRadius: 0.18), pbr(tint.blended(withFraction: 0.25, of: .black) ?? tint, rough: 0.55, metal: 0), 0, 0.6, 0))   // cover
+    h.addChildNode(node(SCNBox(width: 7.5, height: 1.0, length: 5.1, chamferRadius: 0.05), pbr(NSColor(red: 0.93, green: 0.90, blue: 0.83, alpha: 1), rough: 0.85, metal: 0), 0.2, 0.65, 0))   // pages
+    h.addChildNode(node(SCNBox(width: 0.5, height: 1.28, length: 5.8, chamferRadius: 0.08), pbr(tint, rough: 0.5, metal: 0), -3.85, 0.62, 0))   // spine
+    return place(h, x, z, rot)
+}
+
 func card(_ tint: NSColor, _ kind: CardKind, snippet: String, _ x: Float, _ z: Float, rot: Float = 0) -> SCNNode {
     let scale: CGFloat = 8.8 / 246                              // px -> world units
     let w = kind.pxW * scale, h = kind.pxH * scale, thick: CGFloat = 0.22
@@ -206,16 +280,17 @@ func buildScene() -> SCNScene {
     let orange = NSColor(calibratedRed: 0.95, green: 0.64, blue: 0.24, alpha: 1)
     let blue   = NSColor(calibratedRed: 0.36, green: 0.62, blue: 0.95, alpha: 1)
     let cobalt = NSColor(calibratedRed: 0.36, green: 0.55, blue: 0.94, alpha: 1)
-    let summary    = CardKind(label: "SUMMARY",    corner: 15, pxW: 266, pxH: 124, seed: 3)
-    let transcript = CardKind(label: "TRANSCRIPT", corner: 9,  pxW: 198, pxH: 150, seed: 7)
-    let action     = CardKind(label: "ACTION",     corner: 9,  pxW: 200, pxH: 72,  seed: 12)
-    let topics     = CardKind(label: "TOPICS",     corner: 15, pxW: 232, pxH: 98,  seed: 5)
-    let meeting    = CardKind(label: nil,          corner: 15, pxW: 248, pxH: 106, seed: 9)
-    scene.rootNode.addChildNode(card(green,  summary,    snippet: "The team aligned on shipping the beta Friday; pricing deferred a week pending finance sign-off.", -9, -3, rot: -0.05))
-    scene.rootNode.addChildNode(card(blue,   topics,     snippet: "Topics — pricing, beta timeline, export tab, finance sign-off", 9, -3, rot: 0.07))
-    scene.rootNode.addChildNode(card(purple, transcript, snippet: "Alex: can we cut scope? Jordan: only if we drop the export tab. Alex: fine, ship it Friday.", 14, 9, rot: 0.05))
-    scene.rootNode.addChildNode(card(orange, action,     snippet: "Send the finance deck to Priya by EOD.", -14, 9, rot: 0.1))
-    scene.rootNode.addChildNode(card(cobalt, meeting,    snippet: "Weekly sync · 32 min · 3 speakers. Tap to open the full meeting.", -3, 11, rot: 0.03))
+    // The OBJECT LANGUAGE: real 3D things for meetings/models/KBs/notebooks; paper only for documents.
+    scene.rootNode.addChildNode(makeCassette(cobalt, "Weekly Sync", -12, -3, rot: -0.06))   // a meeting = a recording
+    scene.rootNode.addChildNode(makeCassette(orange, "1:1 · Priya",  -12, 6, rot: 0.05))
+    scene.rootNode.addChildNode(makeCartridge(green, "Qwen3-4B", 1, -4, rot: 0.04))          // a model = a glowing cartridge
+    scene.rootNode.addChildNode(makeCrystal(purple, 13, -3, rot: 0.3))                       // a KB = a crystal
+    scene.rootNode.addChildNode(makeBook(blue, "Atlas", 12, 8, rot: -0.12))                  // a notebook = a book
+    // documents stay paper (the snippet matters) — these are what a meeting spills into
+    let summary = CardKind(label: "SUMMARY", corner: 15, pxW: 248, pxH: 112, seed: 3)
+    let action  = CardKind(label: "ACTION",  corner: 9,  pxW: 196, pxH: 70,  seed: 12)
+    scene.rootNode.addChildNode(card(green,  summary, snippet: "Team aligned on shipping the beta Friday; pricing deferred a week pending finance sign-off.", -1, 9, rot: 0.03))
+    scene.rootNode.addChildNode(card(orange, action,  snippet: "Send the finance deck to Priya by EOD.", -10, 12, rot: 0.1))
     return scene
 }
 

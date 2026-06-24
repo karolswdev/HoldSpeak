@@ -322,6 +322,23 @@ renderer (a `faces` contact-sheet mode added) so the badges/snippets/sticker var
 clarity first. `xcodebuild` device-arch **BUILD SUCCEEDED**; built + signed + **installed on the iPad Air
 M4**. Handover §7 #1/#2/#3 are now done; the desk reads like a real workspace, not a tech demo.
 
+**2026-06-24 — the OBJECT LANGUAGE + the dive fix (owner feedback on the device walk).** Two things from
+walking the build. (1) **Dive was broken** — `cardNode(at:)` returned ANY named node, so a tap on a zone
+hit the zone's own node, fired `onTap("zone:…")` (a no-op) and ate the gesture; double-tap was unreliable
+on top of that. Fixed: zones are excluded from `cardNode`, and **a single tap on a zone now dives in**
+(double-tap still works too; double-tap empty climbs out), with a `›` "enter" cue on the placard.
+(2) The bigger one — *"why would everything be this wooden chip with shit written on it instead of doing
+something proper?"* Right. Introduced an **object language**: hardware/containers are now real 3D things,
+not paper chips — a **meeting is a cassette** (body, reels, tinted title label — a recording), a **model
+is a glowing cartridge** (glossy slab, an emissive accent bar = loaded/alive, gold contact pins; the owner
+singled models out), a **knowledge base is a crystal**, a **notebook is a book**. Only actual **documents**
+(summary / topics / action / transcript / artifact) stay paper — appropriate, since they're what a meeting
+spills into. `makeObject` dispatches by `DeskCardKind`; each object keeps a box physics body so it still
+flings/stacks/files. Sculpted in the offscreen renderer first (cassettes + cartridge-with-glow + crystal +
+book, judged together) then ported 1:1. `xcodebuild` device-arch **BUILD SUCCEEDED**; built + signed +
+**launched live on the iPad Air M4** (unlocked this time). Next: extend the object language to the paper
+documents (a scroll for transcript, a sticky for action, a stack for summary) + the act-on-expand affordance.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a

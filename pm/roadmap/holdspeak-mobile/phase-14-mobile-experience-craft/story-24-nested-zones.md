@@ -44,8 +44,10 @@ difference between a pegboard and a building. It also dovetails with the convent
 
 ## Acceptance criteria
 
-- [x] Double-tapping a zone dives in: camera zoom + the zone becomes a full nested desk. *(built: `onDoubleTap`
-      → `diveInto` camera rush+zoom → `onDive`; the desk swaps to the zone's contents.)*
+- [x] Double-tapping a zone dives in: camera zoom + the zone becomes a full nested desk. *(built + FIXED
+      2026-06-24 after a device walk showed it dead: `cardNode` was eating the tap by treating the zone node
+      as a card. Now a **single tap** on a zone dives — double-tap still works too — via `diveInto` camera
+      rush+zoom → `onDive`; the desk swaps to the zone's contents; a `›` cue marks the placard.)*
 - [x] The nested desk shows the zone's members (the cards filed into it) and supports its own
       fences/sub-zones — recursively (at least 2 levels deep proven). *(built: path-based containers —
       drawing inside "Atlas" makes "Atlas/Q3"; `deskZones` is level-scoped; nested-desk render composed.)*

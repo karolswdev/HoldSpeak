@@ -210,7 +210,97 @@ struct LivingDeskCanvas: UIViewRepresentable {
             let r = ImageRenderer(content: DeskCardFace(data: c)); r.scale = 3; return r.uiImage
         }
 
-        private func makeCard(_ c: DeskCardData) -> SCNNode {
+        // MARK: the OBJECT LANGUAGE — hardware/containers are REAL 3D things, not paper chips. A meeting is
+        // a cassette (a recording), a model a glowing cartridge, a KB a crystal, a notebook a book. Only
+        // actual documents (summary/topics/action/transcript/artifact) stay paper. Composed in the offscreen
+        // renderer (scripts/experience/living-desk-render.swift) first, then ported here 1:1.
+
+        private func uic(_ hex: UInt) -> UIColor {
+            UIColor(red: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255, blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
+        }
+        private func blend(_ a: UIColor, _ b: UIColor, _ t: CGFloat) -> UIColor {
+            var ar: CGFloat = 0, ag: CGFloat = 0, ab: CGFloat = 0, aa: CGFloat = 0; a.getRed(&ar, green: &ag, blue: &ab, alpha: &aa)
+            var br: CGFloat = 0, bg: CGFloat = 0, bb: CGFloat = 0, ba: CGFloat = 0; b.getRed(&br, green: &bg, blue: &bb, alpha: &ba)
+            return UIColor(red: ar + (br - ar) * t, green: ag + (bg - ag) * t, blue: ab + (bb - ab) * t, alpha: 1)
+        }
+        private func pbr(_ c: UIColor, _ rough: CGFloat, _ metal: CGFloat, emit: UIColor? = nil) -> SCNMaterial {
+            let m = SCNMaterial(); m.lightingModel = .physicallyBased
+            m.diffuse.contents = c; m.roughness.contents = rough; m.metalness.contents = metal
+            if let e = emit { m.emission.contents = e }
+            return m
+        }
+        private func gnode(_ g: SCNGeometry, _ mat: SCNMaterial, _ x: Float, _ y: Float, _ z: Float) -> SCNNode {
+            g.materials = [mat]; let n = SCNNode(geometry: g); n.position = SCNVector3(x, y, z); n.castsShadow = true; return n
+        }
+        private func objLabelImg(_ text: String, ink: UIColor, bg: UIColor) -> UIImage {
+            let size = CGSize(width: 256, height: 64)
+            return UIGraphicsImageRenderer(size: size).image { _ in
+                bg.setFill(); UIBezierPath(roundedRect: CGRect(origin: .zero, size: size), cornerRadius: 8).fill()
+                let p = NSMutableParagraphStyle(); p.alignment = .left; p.lineBreakMode = .byTruncatingTail
+                (text as NSString).draw(in: CGRect(x: 12, y: 14, width: 232, height: 36),
+                    withAttributes: [.font: UIFont.systemFont(ofSize: 28, weight: .heavy), .foregroundColor: ink, .paragraphStyle: p])
+            }
+        }
+        private func blinnLabel(_ img: UIImage) -> SCNMaterial { let m = SCNMaterial(); m.lightingModel = .blinn; m.diffuse.contents = img; return m }
+
+        // Each builder returns a visual node whose geometry sits with its BASE at local y=0, plus its
+        // (width, height, length) so makeObject can centre it on the physics box.
+        private func cassetteVisual(_ tint: UIColor, _ title: String) -> (SCNNode, (CGFloat, CGFloat, CGFloat)) {
+            let h = SCNNode()
+            h.addChildNode(gnode(SCNBox(width: 9, height: 1.0, length: 5.6, chamferRadius: 0.35), pbr(UIColor(white: 0.13, alpha: 1), 0.5, 0), 0, 0.5, 0))
+            h.addChildNode(gnode(SCNBox(width: 8.2, height: 0.1, length: 1.9, chamferRadius: 0.08), blinnLabel(objLabelImg(title, ink: UIColor(white: 0.12, alpha: 1), bg: blend(tint, .white, 0.55))), 0, 1.03, -1.45))
+            h.addChildNode(gnode(SCNBox(width: 5.4, height: 0.08, length: 1.8, chamferRadius: 0.15), pbr(UIColor(white: 0.04, alpha: 1), 0.3, 0), 0, 1.02, 1.1))
+            for dx in [Float(-1.45), 1.45] {
+                h.addChildNode(gnode(SCNCylinder(radius: 0.8, height: 0.16), pbr(UIColor(white: 0.72, alpha: 1), 0.6, 0), dx, 1.08, 1.1))
+                h.addChildNode(gnode(SCNCylinder(radius: 0.3, height: 0.2), pbr(tint, 0.4, 0.1), dx, 1.1, 1.1))
+            }
+            return (h, (9, 1.2, 5.6))
+        }
+        private func cartridgeVisual(_ tint: UIColor, _ name: String) -> (SCNNode, (CGFloat, CGFloat, CGFloat)) {
+            let h = SCNNode()
+            h.addChildNode(gnode(SCNBox(width: 7.6, height: 1.5, length: 5.4, chamferRadius: 0.55), pbr(UIColor(white: 0.10, alpha: 1), 0.22, 0.6), 0, 0.75, 0))
+            h.addChildNode(gnode(SCNBox(width: 6.6, height: 0.14, length: 0.72, chamferRadius: 0.06), pbr(tint, 0.3, 0, emit: tint), 0, 1.52, -1.7))   // GLOW
+            h.addChildNode(gnode(SCNBox(width: 6.6, height: 0.1, length: 2.7, chamferRadius: 0.1), blinnLabel(objLabelImg(name, ink: .white, bg: UIColor(white: 0.17, alpha: 1))), 0, 1.52, 0.2))
+            h.addChildNode(gnode(SCNBox(width: 6.0, height: 0.34, length: 0.5, chamferRadius: 0.05), pbr(UIColor(red: 0.85, green: 0.68, blue: 0.25, alpha: 1), 0.3, 0.9), 0, 0.5, 2.6))   // gold pins
+            return (h, (7.6, 1.6, 5.4))
+        }
+        private func crystalVisual(_ tint: UIColor) -> (SCNNode, (CGFloat, CGFloat, CGFloat)) {
+            let h = SCNNode(); let m = pbr(tint, 0.05, 0.1, emit: tint.withAlphaComponent(0.35))
+            h.addChildNode(gnode(SCNPyramid(width: 3.0, height: 3.6, length: 3.0), m, 0, 1.4, 0))
+            let bn = gnode(SCNPyramid(width: 3.0, height: 1.4, length: 3.0), m, 0, 1.4, 0); bn.eulerAngles = SCNVector3(Float.pi, 0, 0); h.addChildNode(bn)
+            return (h, (3.0, 5.0, 3.0))
+        }
+        private func bookVisual(_ tint: UIColor, _ title: String) -> (SCNNode, (CGFloat, CGFloat, CGFloat)) {
+            let h = SCNNode()
+            h.addChildNode(gnode(SCNBox(width: 8.2, height: 1.2, length: 5.8, chamferRadius: 0.18), pbr(blend(tint, .black, 0.25), 0.55, 0), 0, 0.6, 0))
+            h.addChildNode(gnode(SCNBox(width: 7.5, height: 1.0, length: 5.1, chamferRadius: 0.05), pbr(UIColor(red: 0.93, green: 0.90, blue: 0.83, alpha: 1), 0.85, 0), 0.2, 0.65, 0))
+            h.addChildNode(gnode(SCNBox(width: 0.5, height: 1.28, length: 5.8, chamferRadius: 0.08), pbr(tint, 0.5, 0), -3.85, 0.62, 0))
+            return (h, (8.2, 1.3, 5.8))
+        }
+
+        /// Dispatch: a hardware/container kind becomes a real object; a document stays paper.
+        private func makeObject(_ c: DeskCardData) -> SCNNode {
+            let tint = uic(c.tintHex)
+            let built: (SCNNode, (CGFloat, CGFloat, CGFloat))?
+            switch c.kind {
+            case .meeting:  built = cassetteVisual(tint, c.title)
+            case .model:    built = cartridgeVisual(tint, c.title)
+            case .kb:       built = crystalVisual(tint)
+            case .notebook: built = bookVisual(tint, c.title)
+            default:        built = nil                          // summary/topics/action/transcript/artifact = paper
+            }
+            guard let (visual, dim) = built else { return paperCardNode(c) }
+            let (w, H, l) = dim
+            visual.position = SCNVector3(0, Float(-H / 2), 0)     // centre the geometry on the physics box
+            let container = SCNNode(); container.name = c.id; container.addChildNode(visual)
+            let body = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(geometry: SCNBox(width: w, height: H, length: l, chamferRadius: 0), options: nil))
+            body.friction = 0.82; body.restitution = 0.05; body.mass = 0.7
+            body.angularDamping = 0.9; body.damping = 0.74; body.contactTestBitMask = 1
+            container.physicsBody = body
+            return container
+        }
+
+        private func paperCardNode(_ c: DeskCardData) -> SCNNode {
             let s = c.renderSize                                    // per-kind shape + size
             let w = CGFloat(s.width) / 28.0, h = CGFloat(s.height) / 28.0, thick: CGFloat = 0.22
             let r = w * CGFloat(c.corner) / CGFloat(s.width)        // match the face's corner radius
@@ -250,10 +340,10 @@ struct LivingDeskCanvas: UIViewRepresentable {
                     if modeOf[c.id] != sig {                         // mode OR style changed -> rebuild the textured node
                         let p = n.presentation.position
                         n.removeFromParentNode()
-                        let nn = makeCard(c); nn.position = p; root.addChildNode(nn); nodes[c.id] = nn; modeOf[c.id] = sig
+                        let nn = makeObject(c); nn.position = p; root.addChildNode(nn); nodes[c.id] = nn; modeOf[c.id] = sig
                     }
                 } else {
-                    let n = makeCard(c)
+                    let n = makeObject(c)
                     let col = i % 4, row = (i / 4) % 4                  // wrap within the mat — never spawn off-desk
                     n.position = SCNVector3(Float(col) * 8 - 12, 0.9 + Float(i / 16) * 0.6, Float(row) * 4.5 - 5)
                     root.addChildNode(n); nodes[c.id] = n; modeOf[c.id] = sig
@@ -310,7 +400,7 @@ struct LivingDeskCanvas: UIViewRepresentable {
             // cards in a grid inside the fence
             for (i, cd) in cards.prefix(12).enumerated() {
                 let col = i % 2, row = i / 2
-                let node = makeCard(cd)
+                let node = makeObject(cd)
                 node.position = SCNVector3(cx - 4.2 + Float(col) * 8.4, 1.0, zFront - 5.5 - Float(row) * 3.6)
                 root.addChildNode(node); nodes[cd.id] = node; modeOf[cd.id] = "\(cd.mode.rawValue):\(cd.styleRaw)"
             }
@@ -358,7 +448,7 @@ struct LivingDeskCanvas: UIViewRepresentable {
             // a count placard pinned at the zone's front edge
             let lplane = SCNPlane(width: 13, height: 3.4)
             let lm = SCNMaterial(); lm.lightingModel = .constant; lm.isDoubleSided = true
-            lm.diffuse.contents = labelImage("\(z.leaf)   ·   \(z.count)", color)
+            lm.diffuse.contents = labelImage("\(z.leaf)   ·   \(z.count)   ›", color)   // › hints: tap to enter
             lplane.materials = [lm]
             let lnode = SCNNode(geometry: lplane)
             lnode.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)
@@ -379,16 +469,17 @@ struct LivingDeskCanvas: UIViewRepresentable {
         @objc func onDoubleTap(_ g: UITapGestureRecognizer) {
             guard brush == 0 else { return }                    // not while a zone brush is armed
             let p = g.location(in: view)
-            if let path = zoneName(at: p) { diveInto(path); return }
-            if let dp = planePoint(at: p, y: 0.53), let z = zones.first(where: { $0.contains(dp.x, dp.z) }) {
-                diveInto(z.name); return                         // anywhere inside a zone footprint is the doorway
-            }
-            if pathDepth > 0 { hLight.impactOccurred(intensity: 0.7); onAscend() }   // empty desk -> climb out
+            if let path = zoneHit(at: p) { diveInto(path); return }   // double-tap a zone also dives (owner's reflex)
+            if pathDepth > 0 { hLight.impactOccurred(intensity: 0.7); onAscend() }   // double-tap empty desk -> climb out
         }
-        private func zoneName(at p: CGPoint) -> String? {
-            guard let hits = view?.hitTest(p, options: [.searchMode: SCNHitTestSearchMode.closest.rawValue]) else { return nil }
-            for h in hits { var n: SCNNode? = h.node
-                while let c = n { if let nm = c.name, nm.hasPrefix("zone:") { return String(nm.dropFirst(5)) }; n = c.parent } }
+        // Find a zone under the point — by node FIRST (search ALL hits so a card resting on top can't block
+        // it), then by footprint as a fallback. Returns the zone's full path.
+        private func zoneHit(at p: CGPoint) -> String? {
+            if let hits = view?.hitTest(p, options: [.searchMode: SCNHitTestSearchMode.all.rawValue]) {
+                for h in hits { var n: SCNNode? = h.node
+                    while let c = n { if let nm = c.name, nm.hasPrefix("zone:") { return String(nm.dropFirst(5)) }; n = c.parent } }
+            }
+            if let dp = planePoint(at: p, y: 0.53), let z = zones.first(where: { $0.contains(dp.x, dp.z) }) { return z.name }
             return nil
         }
         private func diveInto(_ path: String) {
@@ -423,7 +514,8 @@ struct LivingDeskCanvas: UIViewRepresentable {
 
         private func cardNode(at p: CGPoint) -> SCNNode? {
             guard let hits = view?.hitTest(p, options: [.searchMode: SCNHitTestSearchMode.closest.rawValue]) else { return nil }
-            for h in hits { var n: SCNNode? = h.node; while let c = n { if c.name != nil { return c }; n = c.parent } }
+            for h in hits { var n: SCNNode? = h.node
+                while let c = n { if let nm = c.name { return nm.hasPrefix("zone:") ? nil : c }; n = c.parent } }   // a zone is not a card
             return nil
         }
         // Reliable finger-follow: cast the screen ray and intersect the horizontal plane at height y.
@@ -439,8 +531,10 @@ struct LivingDeskCanvas: UIViewRepresentable {
         }
 
         @objc func onTapGesture(_ g: UITapGestureRecognizer) {
-            guard let id = cardNode(at: g.location(in: view))?.name else { return }
-            onTap(id)
+            guard brush == 0 else { return }
+            let p = g.location(in: view)
+            if let id = cardNode(at: p)?.name { onTap(id); return }   // a card -> open it
+            if let path = zoneHit(at: p) { diveInto(path) }           // a zone (no card on it) -> dive IN (one tap)
         }
         @objc func onLongPress(_ g: UILongPressGestureRecognizer) {
             guard g.state == .began, let id = cardNode(at: g.location(in: view))?.name else { return }

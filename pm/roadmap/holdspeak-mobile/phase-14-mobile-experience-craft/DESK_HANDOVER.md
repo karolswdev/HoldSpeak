@@ -143,6 +143,15 @@ These are the owner's explicit, repeated asks — the road to "meaningful":
    notes:** the dive→settle handoff has a tiny camera discontinuity (diveInto ends on the zone center;
    syncLevel snaps to a fixed pose then eases home) — tune on device. Per-level card LAYOUT positions
    aren't persisted yet (cards re-grid each entry). Tune the dive timing/drama on the glass.
+> **OBJECT LANGUAGE (2026-06-24, owner's core ask — "stop making everything a wooden chip"):** hardware /
+> containers are now REAL 3D objects in `LivingDeskCanvas`, not paper extrusions: **meeting → cassette**,
+> **model → glowing cartridge** (emissive accent bar + gold pins), **kb → crystal**, **notebook → book**
+> (`makeObject` dispatches by `DeskCardKind`; each keeps a box physics body). Only documents
+> (summary/topics/action/transcript/artifact) stay paper. Sculpt new objects in the renderer's object
+> builders FIRST. **Next on this thread:** give the paper docs real form too (transcript = scroll, action =
+> sticky, summary = stacked sheets) + the act-on-expand affordance. Also: the **dive** is now **single-tap**
+> a zone (a device walk found `cardNode` was eating the tap); double-tap still works.
+
 3. **Cards with real MEANING.** ~~Snippet on the face~~ **DONE 2026-06-24** + the owner's card-craft pass:
    every card shows a real content **snippet** (`snippetFor` / output body preview), a `DeskCardKind` drives
    **type-legible** TYPE badges + **different shapes/sizes** (`renderSize`/`corner` per kind — summary big,

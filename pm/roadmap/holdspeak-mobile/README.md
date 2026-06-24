@@ -16,8 +16,10 @@
 zone is now a persisted place that holds cards (drop a card in to file it), **double-tapping a zone dives
 INTO it** as a recursive nested desk with a breadcrumb back, and **cards now mean something** — a real
 content snippet on each, type-legible badges, different shapes/sizes per kind, and a looser hand-placed
-sticker (handover §7 #1 + #2 + #3; the DeskOS is now fractal and the cards read like a real workspace).
-Live device walk pending an iPad unlock. Prior context below. **PHASE 16 — THE DESK,
+sticker (handover §7 #1 + #2 + #3; the DeskOS is now fractal). And an **object language**: a meeting is a
+cassette, a model a glowing cartridge, a KB a crystal, a notebook a book — only documents stay paper; the
+dive is now single-tap (a device walk found + fixed the dead double-tap). Launched live on the iPad Air M4.
+Prior context below. **PHASE 16 — THE DESK,
 EVERYWHERE OPENED.** On the owner's
 instruction to step back after the iPad DeskOS landed (HSM-14-19/20: objects, spill, lasso,
 directories, floating windows, the Knowledge Base primitive on a documented DeskObject convention)
