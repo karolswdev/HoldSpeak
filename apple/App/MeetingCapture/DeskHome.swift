@@ -1,49 +1,36 @@
 import SwiftUI
 
-// HSM-14-19 — THE DESK, for real. The app's home reimagined as the gamified physics workspace, bound
-// to REAL data: your actual meetings (CaptureModel.meetings, from the on-device store) are bespoke
-// cassette objects you fling with momentum and tap to open the real detail; the recorder is the hero
-// puck that starts a real recording; the loaded model is a cartridge. No mock data — this is the shell.
-// Gate to the classic list with HS_CLASSIC_HOME=1.
+// HSM-14-19 — DeskOS: a world-class organization PANE (a directory tree over your real meetings —
+// Smart folders by time, Pinned, the model Library) beside a real PHYSICS CANVAS (SpriteKit) where each
+// meeting is a card you fling — it FLIES, BOUNCES off the walls and other cards, spins to an angle, and
+// settles. Pinch to zoom out; drag the desk to pan; Tidy snaps them into a clean grid; tap a card to
+// open the real meeting. Bound to real data. Classic list behind HS_CLASSIC_HOME=1.
+
+enum DeskFolder: String, Hashable, CaseIterable {
+    case all, today, week, pinned, models, archive
+    var label: String { ["all": "All Meetings", "today": "Today", "week": "This Week",
+                         "pinned": "Pinned", "models": "Models", "archive": "Archive"][rawValue] ?? rawValue }
+    var icon: String { ["all": "tray.full.fill", "today": "sun.max.fill", "week": "calendar",
+                        "pinned": "pin.fill", "models": "cpu.fill", "archive": "archivebox.fill"][rawValue] ?? "folder" }
+}
 
 struct DeskHome: View {
     @StateObject private var model = CaptureModel()
+    @AppStorage("hs.desk.pinned") private var pinnedCSV = ""
+    @State private var folder: DeskFolder = .all
+    @State private var tidyToken = 0
+    @State private var zoomToken = 0
     @State private var openMeetingID: String?
     @State private var capturing = false
     @State private var showModels = false
 
     var body: some View {
         NavigationStack {
-            GeometryReader { geo in
-                let w = geo.size.width, h = geo.size.height
-                ZStack {
-                    DeskBackground()
-
-                    // Real meetings, scattered as cassette tapes.
-                    ForEach(Array(model.meetings.prefix(9).enumerated()), id: \.element.id) { i, m in
-                        DeskDrag(start: Self.meetingPos(i, geo.size), angle: Self.angle(i), bounds: geo.size,
-                                 onTap: { tactile(); openMeetingID = m.id }) {
-                            MeetingTape(meeting: m, sprite: i % 2 == 0 ? "cassette" : "cassette2")
-                        }
-                    }
-
-                    // The loaded model — a cartridge.
-                    if let mdl = ModelFiles.installed().first {
-                        DeskDrag(start: CGPoint(x: w * 0.80, y: h * 0.66), angle: -6, bounds: geo.size,
-                                 onTap: { tactile(); showModels = true }) {
-                            ModelCartridgeObj(name: mdl.name)
-                        }
-                    }
-
-                    // The recorder — the hero. Tap to start a real recording.
-                    DeskRecorder().position(x: w * 0.5, y: h * 0.82)
-                        .onTapGesture { tactile(.medium); capturing = true }
-
-                    if model.meetings.isEmpty { DeskEmptyHint().position(x: w * 0.5, y: h * 0.42) }
-
-                    VStack { DeskTopBar(count: model.meetings.count, onModels: { tactile(); showModels = true }); Spacer() }
-                }
+            HStack(spacing: 0) {
+                DeskSidebar(folder: $folder, count: { count($0) }).frame(width: 236)
+                canvas
             }
+            .background(Sig.bg.ignoresSafeArea())
             .navigationDestination(item: $openMeetingID) { id in
                 if let m = model.meetings.first(where: { $0.id == id }) { MeetingDetailView(meeting: m) }
             }
@@ -55,171 +42,186 @@ struct DeskHome: View {
         .onAppear { model.refresh() }
     }
 
-    // Deterministic scatter in the upper desk (loose 2-column drift).
-    static func meetingPos(_ i: Int, _ s: CGSize) -> CGPoint {
-        let col = i % 2, row = i / 2
-        let xs: [CGFloat] = [0.30, 0.66]
-        let jx = CGFloat((i * 37) % 11 - 5) / 100
-        return CGPoint(x: s.width * (xs[col] + jx), y: s.height * (0.20 + CGFloat(row) * 0.155))
-    }
-    static func angle(_ i: Int) -> Double { [-6, 5, -4, 7, -3, 6, -5, 4, -2][i % 9] }
-}
-
-// MARK: - Real meeting as a cassette tape
-
-struct MeetingTape: View {
-    let meeting: Meeting
-    let sprite: String
-    private var speakers: Int { Set(meeting.segments.map(\.speaker)).count }
-    private var title: String {
-        if let t = meeting.title, !t.isEmpty { return t }
-        let f = DateFormatter(); f.dateFormat = "MMM d · h:mm a"; return f.string(from: meeting.startedAt)
-    }
-    var body: some View {
-        VStack(spacing: 7) {
-            DeskSprite(name: sprite, size: 138).shadow(color: .black.opacity(0.45), radius: 12, y: 9)
-            VStack(spacing: 2) {
-                Text(title).font(.system(size: 13, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
-                HStack(spacing: 6) {
-                    Text(clockString(meeting.duration ?? 0)).font(.system(size: 10.5, weight: .bold)).foregroundStyle(Sig.muted)
-                    if speakers > 0 {
-                        Text("·").foregroundStyle(Sig.faint)
-                        Image(systemName: "person.2.fill").font(.system(size: 8, weight: .bold)).foregroundStyle(Sig.faint)
-                        Text("\(speakers)").font(.system(size: 10.5, weight: .bold)).foregroundStyle(Sig.muted)
-                    }
+    private var canvas: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .topLeading) {
+                DeskCanvasBackground()
+                DeskPhysicsCanvas(cards: cardData, tidyToken: tidyToken, zoomToken: zoomToken,
+                                  onTap: { id in tactile(); if id.hasPrefix("model:") { showModels = true } else { openMeetingID = id } })
+                if cardData.isEmpty { DeskEmptyHint(folder: folder).position(x: geo.size.width / 2, y: geo.size.height * 0.42) }
+                if folder != .models {
+                    DeskMic().position(x: geo.size.width * 0.5, y: geo.size.height - 92)
+                        .onTapGesture { tactile(.medium); capturing = true }
                 }
+                VStack { DeskCanvasBar(folder: folder, count: cardData.count,
+                                       onTidy: { tactile(); tidyToken += 1 }, onZoom: { tactile(); zoomToken += 1 }); Spacer() }
             }
-            .padding(.horizontal, 11).padding(.vertical, 6)
-            .background(Capsule().fill(Sig.s1.opacity(0.82)).overlay(Capsule().strokeBorder(Sig.local.opacity(0.25), lineWidth: 1)))
-        }.frame(width: 150)
-    }
-}
-
-struct ModelCartridgeObj: View {
-    let name: String
-    var body: some View {
-        VStack(spacing: 7) {
-            DeskSprite(name: "cartridge", size: 104).shadow(color: .black.opacity(0.45), radius: 12, y: 9)
-            VStack(spacing: 2) {
-                Text(name.replacingOccurrences(of: ".gguf", with: "")).font(.system(size: 12, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1).frame(maxWidth: 130)
-                HStack(spacing: 4) {
-                    Circle().fill(Sig.ok).frame(width: 5, height: 5)
-                    Text("loaded · on device").font(.system(size: 9.5, weight: .bold)).foregroundStyle(Sig.muted)
-                }
-            }
-            .padding(.horizontal, 10).padding(.vertical, 5)
-            .background(Capsule().fill(Sig.s1.opacity(0.82)).overlay(Capsule().strokeBorder(Sig.local.opacity(0.3), lineWidth: 1)))
         }
     }
+
+    // MARK: data
+
+    private var cardData: [DeskCardData] {
+        if folder == .models {
+            return ModelFiles.installed().map {
+                DeskCardData(id: "model:\($0.id)", title: $0.name.replacingOccurrences(of: ".gguf", with: ""),
+                             sub: "loaded · on device", sprite: "cartridge", tintHex: 0x5B8DEF)
+            }
+        }
+        return filtered.map { m in
+            DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m), tintHex: tintHexFor(m))
+        }
+    }
+    private var filtered: [Meeting] {
+        let cal = Calendar.current
+        switch folder {
+        case .all: return model.meetings
+        case .today: return model.meetings.filter { cal.isDateInToday($0.startedAt) }
+        case .week: return model.meetings.filter { cal.isDate($0.startedAt, equalTo: Date(), toGranularity: .weekOfYear) }
+        case .pinned: return model.meetings.filter { pinnedSet.contains($0.id) }
+        case .archive: return model.meetings.filter { !cal.isDate($0.startedAt, equalTo: Date(), toGranularity: .weekOfYear) }
+        case .models: return []
+        }
+    }
+    private func count(_ f: DeskFolder) -> Int {
+        if f == .models { return ModelFiles.installed().count }
+        let cal = Calendar.current
+        switch f {
+        case .all: return model.meetings.count
+        case .today: return model.meetings.filter { cal.isDateInToday($0.startedAt) }.count
+        case .week: return model.meetings.filter { cal.isDate($0.startedAt, equalTo: Date(), toGranularity: .weekOfYear) }.count
+        case .pinned: return pinnedSet.count
+        case .archive: return model.meetings.filter { !cal.isDate($0.startedAt, equalTo: Date(), toGranularity: .weekOfYear) }.count
+        case .models: return 0
+        }
+    }
+    private var pinnedSet: Set<String> { Set(pinnedCSV.split(separator: ",").map(String.init)) }
+    private func spriteFor(_ m: Meeting) -> String { abs(m.id.hashValue) % 2 == 0 ? "cassette" : "cassette2" }
+    private func titleFor(_ m: Meeting) -> String {
+        if let t = m.title, !t.isEmpty { return t }
+        let f = DateFormatter(); f.dateFormat = "MMM d · h:mm a"; return f.string(from: m.startedAt)
+    }
+    private func subFor(_ m: Meeting) -> String {
+        let spk = Set(m.segments.map(\.speaker)).count
+        return spk > 0 ? "\(clockString(m.duration ?? 0))  ·  \(spk) speaker\(spk == 1 ? "" : "s")" : clockString(m.duration ?? 0)
+    }
+    private func tintHexFor(_ m: Meeting) -> UInt { [0x5B8DEF, 0xFF6B35, 0xF2A33C, 0x3ECF8E][abs(m.id.hashValue) % 4] }
 }
 
-struct DeskRecorder: View {
+// MARK: - The left organization pane
+
+struct DeskSidebar: View {
+    @Binding var folder: DeskFolder
+    let count: (DeskFolder) -> Int
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 8) {
+                RoundedRectangle(cornerRadius: 8).fill(Sig.accentGradient).frame(width: 26, height: 26)
+                    .overlay(Image(systemName: "square.stack.3d.up.fill").font(.system(size: 12, weight: .bold)).foregroundStyle(.white))
+                Text("HoldSpeak").font(.system(size: 17, weight: .black)).foregroundStyle(Sig.text)
+            }.padding(.bottom, 18).padding(.leading, 4)
+            section("SMART")
+            ForEach([DeskFolder.all, .today, .week, .pinned], id: \.self) { row($0) }
+            section("LIBRARY").padding(.top, 14)
+            ForEach([DeskFolder.models, .archive], id: \.self) { row($0) }
+            Spacer()
+            HStack(spacing: 6) {
+                Image(systemName: "lock.fill").font(.system(size: 9, weight: .black))
+                Text("ON-DEVICE").font(.system(size: 9, weight: .heavy)).tracking(1.2)
+            }.foregroundStyle(Sig.local).padding(.leading, 6).padding(.bottom, 6)
+        }
+        .padding(.horizontal, 12).padding(.vertical, 18)
+        .frame(maxHeight: .infinity, alignment: .topLeading)
+        .background(Sig.bg.opacity(0.55).overlay(Rectangle().fill(Sig.line).frame(width: 1), alignment: .trailing).ignoresSafeArea())
+    }
+    private func section(_ t: String) -> some View {
+        Text(t).font(.system(size: 10, weight: .black)).tracking(1.5).foregroundStyle(Sig.faint).padding(.leading, 9).padding(.bottom, 5)
+    }
+    private func row(_ f: DeskFolder) -> some View {
+        let sel = folder == f
+        return Button { tactile(); withAnimation(.easeOut(duration: 0.18)) { folder = f } } label: {
+            HStack(spacing: 10) {
+                Image(systemName: f.icon).font(.system(size: 13, weight: .semibold)).foregroundStyle(sel ? Sig.accent : Sig.muted).frame(width: 20)
+                Text(f.label).font(.system(size: 14, weight: sel ? .heavy : .semibold)).foregroundStyle(sel ? Sig.text : Sig.muted)
+                Spacer()
+                let c = count(f); if c > 0 { Text("\(c)").font(.system(size: 11, weight: .bold)).foregroundStyle(Sig.faint) }
+            }
+            .padding(.horizontal, 9).padding(.vertical, 8)
+            .background(RoundedRectangle(cornerRadius: 10).fill(sel ? Sig.accent.opacity(0.15) : .clear)
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(sel ? Sig.accent.opacity(0.35) : .clear, lineWidth: 1)))
+        }.buttonStyle(PressableCard())
+    }
+}
+
+// MARK: - Canvas chrome
+
+struct DeskMic: View {
     @State private var pulse = false
     var body: some View {
         ZStack {
-            ForEach(0..<3) { i in
-                Circle().stroke(Sig.accent.opacity(0.3 - Double(i) * 0.09), lineWidth: 2)
-                    .frame(width: 112 + CGFloat(i) * 28, height: 112 + CGFloat(i) * 28)
-                    .scaleEffect(pulse ? 1.06 : 1).opacity(pulse ? 0.7 : 1)
+            ForEach(0..<2) { i in
+                Circle().stroke(Sig.accent.opacity(0.3 - Double(i) * 0.12), lineWidth: 2)
+                    .frame(width: 90 + CGFloat(i) * 24, height: 90 + CGFloat(i) * 24).scaleEffect(pulse ? 1.08 : 1).opacity(pulse ? 0.6 : 1)
             }
-            RadialGradient(colors: [Sig.accent.opacity(0.22), .clear], center: .center, startRadius: 6, endRadius: 90).frame(width: 190, height: 190)
-            VStack(spacing: 8) {
-                DeskSprite(name: "mic", size: 128).shadow(color: Sig.accent.opacity(0.55), radius: 20, y: 10)
-                Text("HOLD TO RECORD").font(.system(size: 10, weight: .black)).tracking(1.5).foregroundStyle(.white.opacity(0.95))
-                    .padding(.horizontal, 11).padding(.vertical, 5).background(Capsule().fill(.black.opacity(0.45)))
-            }
-        }
-        .onAppear { withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) { pulse = true } }
+            Circle().fill(RadialGradient(colors: [Color(hex: 0xFF8A5B), Sig.accent, Color(hex: 0xC23C16)], center: .init(x: 0.4, y: 0.35), startRadius: 3, endRadius: 50))
+                .frame(width: 80, height: 80).overlay(Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1)).shadow(color: Sig.accent.opacity(0.55), radius: 18, y: 6)
+            Image(systemName: "mic.fill").font(.system(size: 28, weight: .bold)).foregroundStyle(.white)
+        }.onAppear { withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) { pulse = true } }
     }
 }
 
-struct DeskTopBar: View {
-    let count: Int
-    let onModels: () -> Void
+struct DeskCanvasBar: View {
+    let folder: DeskFolder; let count: Int; let onTidy: () -> Void; let onZoom: () -> Void
     var body: some View {
         HStack(spacing: 10) {
             HStack(spacing: 7) {
-                Circle().fill(Sig.ok).frame(width: 7, height: 7).shadow(color: Sig.ok, radius: 5)
-                Text("YOUR DESK").font(.system(size: 13, weight: .black)).tracking(2).foregroundStyle(Sig.muted)
-                if count > 0 { Text("· \(count)").font(.system(size: 12, weight: .bold)).foregroundStyle(Sig.faint) }
+                Image(systemName: folder.icon).font(.system(size: 12, weight: .bold)).foregroundStyle(Sig.accent)
+                Text(folder.label).font(.system(size: 15, weight: .heavy)).foregroundStyle(Sig.text)
+                if count > 0 { Text("\(count)").font(.system(size: 11, weight: .bold)).foregroundStyle(Sig.faint)
+                    .padding(.horizontal, 6).padding(.vertical, 2).background(Capsule().fill(Sig.s3)) }
             }
-            .padding(.horizontal, 13).padding(.vertical, 8)
-            .background(Capsule().fill(Sig.s1.opacity(0.7)).overlay(Capsule().strokeBorder(Sig.line, lineWidth: 1)))
             Spacer()
-            Button(action: onModels) {
-                HStack(spacing: 5) {
-                    Image(systemName: "cpu.fill").font(.system(size: 11, weight: .bold))
-                    Text("on device").font(.system(size: 12, weight: .bold))
-                }.foregroundStyle(Sig.local)
-                .padding(.horizontal, 11).padding(.vertical, 8)
-                .background(Capsule().fill(Sig.local.opacity(0.12)).overlay(Capsule().strokeBorder(Sig.local.opacity(0.25), lineWidth: 1)))
-            }.buttonStyle(PressableCard())
-        }
-        .padding(.horizontal, 16).padding(.top, 10)
+            pill("arrow.up.left.and.arrow.down.right", "Fit", onZoom)
+            pill("square.grid.2x2.fill", "Tidy", onTidy)
+        }.padding(.horizontal, 18).padding(.top, 14)
+    }
+    private func pill(_ icon: String, _ label: String, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 5) { Image(systemName: icon).font(.system(size: 11, weight: .bold)); Text(label).font(.system(size: 12, weight: .bold)) }
+                .foregroundStyle(Sig.text).padding(.horizontal, 11).padding(.vertical, 7).background(Capsule().fill(Sig.s3))
+        }.buttonStyle(PressableCard())
     }
 }
 
-struct DeskBackground: View {
+struct DeskCanvasBackground: View {
     var body: some View {
         ZStack {
             Sig.bgGradient.ignoresSafeArea()
-            RadialGradient(colors: [Sig.accent.opacity(0.14), .clear], center: .init(x: 0.4, y: 0.78), startRadius: 8, endRadius: 420).ignoresSafeArea()
-            RadialGradient(colors: [Sig.local.opacity(0.12), .clear], center: .init(x: 0.85, y: 0.16), startRadius: 8, endRadius: 380).ignoresSafeArea()
-            DeskDots().opacity(0.4).ignoresSafeArea()
-            RadialGradient(colors: [.clear, .black.opacity(0.42)], center: .center, startRadius: 300, endRadius: 760).ignoresSafeArea()
+            RadialGradient(colors: [Sig.accent.opacity(0.10), .clear], center: .init(x: 0.5, y: 0.85), startRadius: 8, endRadius: 420).ignoresSafeArea()
+            DeskDots().opacity(0.32).ignoresSafeArea()
         }
     }
 }
 struct DeskDots: View {
     var body: some View {
         GeometryReader { g in
-            Path { p in let step: CGFloat = 36; var y: CGFloat = 0
+            Path { p in let step: CGFloat = 38; var y: CGFloat = 0
                 while y < g.size.height { var x: CGFloat = 0
                     while x < g.size.width { p.addEllipse(in: CGRect(x: x, y: y, width: 2, height: 2)); x += step }; y += step }
-            }.fill(Color.white.opacity(0.05))
+            }.fill(Color.white.opacity(0.045))
         }
     }
 }
-
 struct DeskEmptyHint: View {
+    let folder: DeskFolder
     var body: some View {
         VStack(spacing: 10) {
-            Image(systemName: "arrow.down").font(.system(size: 22, weight: .bold)).foregroundStyle(Sig.faint)
-            Text("Your desk is empty.").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
-            Text("Tap the mic to record your first meeting —\nit'll land here as a tape you can open.")
-                .font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.muted).multilineTextAlignment(.center)
-        }.frame(width: 280)
-    }
-}
-
-// MARK: - Drag + tap physics wrapper (tap = a drag that barely moved)
-
-struct DeskDrag<Content: View>: View {
-    let start: CGPoint; var angle: Double; let bounds: CGSize; var onTap: () -> Void = {}
-    @ViewBuilder var content: () -> Content
-    @State private var pos: CGPoint; @State private var drag: CGSize = .zero; @State private var lifted = false
-    init(start: CGPoint, angle: Double = 0, bounds: CGSize, onTap: @escaping () -> Void = {}, @ViewBuilder content: @escaping () -> Content) {
-        self.start = start; self.angle = angle; self.bounds = bounds; self.onTap = onTap; self.content = content
-        _pos = State(initialValue: start)
-    }
-    var body: some View {
-        content()
-            .rotationEffect(.degrees(lifted ? angle * 0.3 : angle)).scaleEffect(lifted ? 1.06 : 1)
-            .shadow(color: .black.opacity(lifted ? 0.45 : 0), radius: lifted ? 26 : 0, y: lifted ? 20 : 0)
-            .position(x: pos.x + drag.width, y: pos.y + drag.height)
-            .gesture(DragGesture(minimumDistance: 0)
-                .onChanged { v in
-                    let moved = abs(v.translation.width) + abs(v.translation.height)
-                    if moved > 5 { if !lifted { withAnimation(.easeOut(duration: 0.16)) { lifted = true }; tactile() }; drag = v.translation }
-                }
-                .onEnded { v in
-                    let moved = abs(v.translation.width) + abs(v.translation.height)
-                    if moved < 6 { onTap(); drag = .zero; lifted = false; return }
-                    var nx = pos.x + v.predictedEndTranslation.width, ny = pos.y + v.predictedEndTranslation.height
-                    nx = min(max(nx, bounds.width * 0.12), bounds.width * 0.88); ny = min(max(ny, bounds.height * 0.12), bounds.height * 0.86)
-                    drag = .zero
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.72)) { pos = CGPoint(x: nx, y: ny); lifted = false }
-                    tactile()
-                })
+            Image(systemName: folder.icon).font(.system(size: 28, weight: .bold)).foregroundStyle(Sig.faint)
+            Text(folder == .all ? "Your desk is empty." : "Nothing in \(folder.label) yet.").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text)
+            if folder != .models {
+                Text("Tap the mic to record — it lands here as a card\nyou can fling, arrange, and tidy.")
+                    .font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.muted).multilineTextAlignment(.center)
+            }
+        }.frame(width: 320)
     }
 }
