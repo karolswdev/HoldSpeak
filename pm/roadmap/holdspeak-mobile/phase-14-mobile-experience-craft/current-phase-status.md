@@ -276,6 +276,22 @@ Whisper + diarization on one chip. Both toggle + tune independently. `LiveIntelC
 `swift test` green. Remaining on the story: the live-intel runner, the gamified tack moment + Queue
 HUD, the setup screen (incl. an OpenRouter endpoint with a fetched model picker), and the device proof.
 
+**2026-06-24 — the desk's zones now HOLD things (drop-to-tag, handover §7 #1).** The 3D Living Desk's
+drawn zones were beautiful and *empty* — you could scribble a crayon area, name it "Project Atlas," and
+nothing could live in it; the drawn zones existed only as ephemeral SceneKit nodes the data model never
+knew about. This leap makes a zone a **real, persisted place that holds cards**: a `DeskZone` (named
+footprint, persisted in `hs.desk.zones`) is created when you name an area, and **a zone IS a directory**
+(it reuses the existing filing map, so it also appears in the sidebar and opens in 2D). **Dropping a card
+inside a zone's footprint files it** — the card settles in (a deliberate drop no longer flings back out),
+a medium haptic fires, the zone pulses, and its count placard ticks up (`Project Atlas · 3`). Drawing
+your first zone retires the auto time-fences (the desk becomes your manual workspace). Composed in the
+offscreen renderer first — which caught a real layering bug (the zone fill was hidden *under* the leather
+mat) before any device build; heights retuned (fill at y=0.53, above the mat top at 0.5) and ported 1:1.
+`xcodebuild` device-arch **BUILD SUCCEEDED**; built + signed + **installed on the iPad Air M4** (live
+launch pending an unlock — the install completes regardless). This is the prerequisite for
+[[story-24-nested-zones]] (dive-into-a-zone): a zone you can dive into must first have contents. Next: the
+dive. See [[DESK_HANDOVER]] §7.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a

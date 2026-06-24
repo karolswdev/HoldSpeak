@@ -33,6 +33,53 @@ func cardImage(_ tint: NSColor) -> NSImage {
     img.unlockFocus(); return img
 }
 
+// A crayon-scribble fill (mirrors LivingDeskCanvas.crayonFillImage) — a hand-drawn "place" on the desk.
+func crayonFill(_ color: NSColor, w: CGFloat, h: CGFloat) -> NSImage {
+    let px = NSSize(width: max(64, w * 14), height: max(64, h * 14))
+    let img = NSImage(size: px); img.lockFocus()
+    let c = NSGraphicsContext.current!.cgContext
+    let rect = NSRect(origin: .zero, size: px).insetBy(dx: 6, dy: 6)
+    color.withAlphaComponent(0.9).setStroke()
+    let bp = NSBezierPath(roundedRect: rect, xRadius: 14, yRadius: 14); bp.lineWidth = 5; bp.lineCapStyle = .round; bp.stroke()
+    c.setLineWidth(7); c.setLineCap(.round); color.withAlphaComponent(0.34).setStroke()
+    var y = rect.minY + 8; var i = 0
+    while y < rect.maxY {
+        let jA = CGFloat((i * 37) % 11) - 5, jB = CGFloat((i * 53) % 13) - 6
+        c.move(to: CGPoint(x: rect.minX + 6 + jA, y: y))
+        c.addCurve(to: CGPoint(x: rect.maxX - 6 + jB, y: y + 3),
+                   control1: CGPoint(x: rect.midX, y: y - 7), control2: CGPoint(x: rect.midX, y: y + 9))
+        c.strokePath(); y += 12; i += 1
+    }
+    img.unlockFocus(); return img
+}
+// A zone placard with a live count (mirrors LivingDeskCanvas.labelImage).
+func zoneLabel(_ text: String, _ accent: NSColor) -> NSImage {
+    let size = NSSize(width: 380, height: 96); let img = NSImage(size: size); img.lockFocus()
+    let rect = NSRect(origin: .zero, size: size)
+    NSColor(calibratedWhite: 0.10, alpha: 0.94).setFill(); NSBezierPath(roundedRect: rect, xRadius: 20, yRadius: 20).fill()
+    accent.setFill(); NSBezierPath(rect: NSRect(x: 0, y: 0, width: 9, height: size.height)).fill()
+    let p = NSMutableParagraphStyle(); p.alignment = .center
+    (text as NSString).draw(in: rect.insetBy(dx: 18, dy: 22),
+        withAttributes: [.font: NSFont.systemFont(ofSize: 42, weight: .heavy), .foregroundColor: NSColor.white, .paragraphStyle: p])
+    img.unlockFocus(); return img
+}
+// A drawn ZONE — a crayon footprint + a named count placard. The thing that gives a place meaning.
+func zone(_ name: String, count: Int, _ accent: NSColor, cx: Float, cz: Float, hw: Float, hl: Float) -> SCNNode {
+    let holder = SCNNode(); holder.position = SCNVector3(cx, 0, cz)
+    let plane = SCNPlane(width: CGFloat(hw * 2), height: CGFloat(hl * 2))
+    let m = SCNMaterial(); m.lightingModel = .constant; m.isDoubleSided = true
+    m.diffuse.contents = crayonFill(accent, w: CGFloat(hw * 2), h: CGFloat(hl * 2))
+    plane.materials = [m]
+    let pnode = SCNNode(geometry: plane); pnode.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)
+    pnode.position = SCNVector3(0, 0.53, 0); holder.addChildNode(pnode)   // just above the mat (top 0.5)
+    let lplane = SCNPlane(width: 13, height: 3.4)
+    let lm = SCNMaterial(); lm.lightingModel = .constant; lm.isDoubleSided = true; lm.diffuse.contents = zoneLabel("\(name)   ·   \(count)", accent)
+    lplane.materials = [lm]
+    let lnode = SCNNode(geometry: lplane); lnode.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)
+    lnode.position = SCNVector3(0, 0.60, -hl + 2.2); holder.addChildNode(lnode)
+    return holder
+}
+
 func card(_ tint: NSColor, _ x: Float, _ z: Float, rot: Float = 0) -> SCNNode {
     let w: CGFloat = 8.8, h: CGFloat = 2.8, r: CGFloat = 0.6, thick: CGFloat = 0.22
     let g = SCNShape(path: NSBezierPath(roundedRect: NSRect(x: -w/2, y: -h/2, width: w, height: h), xRadius: r, yRadius: r), extrusionDepth: thick)
@@ -40,7 +87,7 @@ func card(_ tint: NSColor, _ x: Float, _ z: Float, rot: Float = 0) -> SCNNode {
     let edge = SCNMaterial(); edge.diffuse.contents = NSColor(calibratedWhite: 0.1, alpha: 1)
     g.materials = [front, edge, edge]
     let n = SCNNode(geometry: g); n.castsShadow = true
-    n.eulerAngles = SCNVector3(-Float.pi / 2, rot, 0); n.position = SCNVector3(x, 0.22, z)
+    n.eulerAngles = SCNVector3(-Float.pi / 2, rot, 0); n.position = SCNVector3(x, 0.62, z)  // rest on the mat, above zone decals
     return n
 }
 
@@ -85,13 +132,14 @@ func buildScene() -> SCNScene {
     desk.materials = [dm]
     let dnode = SCNNode(geometry: desk); dnode.position = SCNVector3(0, -0.5, 0); scene.rootNode.addChildNode(dnode)
 
-    // A leather desk mat — the work surface the cards sit on (grounds the scene).
-    let pad = SCNBox(width: 42, height: 0.3, length: 26, chamferRadius: 1.6)
+    // A leather desk mat — the work surface the cards sit on (grounds the scene). Matches the app's mat
+    // (centre y=0.25, height 0.5 -> top at 0.5) so zone/card heights tuned here port 1:1.
+    let pad = SCNBox(width: 42, height: 0.5, length: 26, chamferRadius: 1.6)
     let pm = SCNMaterial(); pm.lightingModel = .blinn
     pm.diffuse.contents = NSColor(calibratedRed: 0.14, green: 0.12, blue: 0.11, alpha: 1)
     pm.specular.contents = NSColor(calibratedWhite: 0.18, alpha: 1)
     pad.materials = [pm]
-    let padNode = SCNNode(geometry: pad); padNode.position = SCNVector3(0, 0.1, 3); scene.rootNode.addChildNode(padNode)
+    let padNode = SCNNode(geometry: pad); padNode.position = SCNVector3(0, 0.25, 3); scene.rootNode.addChildNode(padNode)
 
     // Key light — the main shadow caster, covering the whole desk so every object casts a shadow.
     let key = SCNNode(); let kl = SCNLight(); kl.type = .directional; kl.intensity = 680
@@ -129,11 +177,15 @@ func buildScene() -> SCNScene {
                  NSColor(calibratedRed: 1.0, green: 0.42, blue: 0.21, alpha: 1),
                  NSColor(calibratedRed: 0.24, green: 0.81, blue: 0.56, alpha: 1),
                  NSColor(calibratedRed: 0.95, green: 0.64, blue: 0.24, alpha: 1)]
-    let spots: [(Float, Float, Float)] = [(-11, 1, -0.08), (-1, 0, 0.06), (9, 1, -0.1),
-                                          (-7, 9, 0.04), (4, 10, -0.05), (13, 8, 0.1)]
-    for (i, sp) in spots.enumerated() { scene.rootNode.addChildNode(card(tints[i % 4], sp.0, sp.1, rot: sp.2)) }
-    // a small stack on the mat
-    scene.rootNode.addChildNode(card(tints[2], -10, 9, rot: 0.12))
+    // A drawn ZONE — "Project Atlas" — with three meeting cards filed INSIDE it (the point of the leap:
+    // a place that holds things), plus a couple of loose cards outside to read the contrast.
+    let accent = NSColor(calibratedRed: 0.95, green: 0.43, blue: 0.30, alpha: 1)
+    scene.rootNode.addChildNode(zone("Project Atlas", count: 3, accent, cx: -6, cz: 4, hw: 12, hl: 9))
+    let inside: [(Float, Float, Float)] = [(-12, 0, -0.06), (-1, -1, 0.05), (-9, 7, 0.12)]
+    for (i, sp) in inside.enumerated() { scene.rootNode.addChildNode(card(tints[i % 4], sp.0, sp.1, rot: sp.2)) }
+    // loose cards, not yet filed into any place
+    scene.rootNode.addChildNode(card(tints[1], 14, 0, rot: -0.1))
+    scene.rootNode.addChildNode(card(tints[3], 16, 9, rot: 0.08))
     return scene
 }
 

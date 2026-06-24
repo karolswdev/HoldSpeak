@@ -5,7 +5,8 @@
 - **Status:** todo — opened 2026-06-24 on the owner's (excited) idea. The feature that makes the DeskOS
   **fractal**: a fence/zone isn't just a wall, it's a way *in*.
 - **Depends on:** [[story-22-the-living-desk]] (the 3D desk + fences), [[story-23-the-deskos-shell]]
-  (the shell), the fence/cluster-zone primitive.
+  (the shell), the fence/cluster-zone primitive — **the prerequisite drop-to-tag (a zone is a persisted
+  place that holds cards) shipped 2026-06-24** (handover §7 #1); a zone now has contents to dive into.
 - **Owner:** unassigned
 
 ## The idea (owner, verbatim-distilled)

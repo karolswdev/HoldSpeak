@@ -125,9 +125,15 @@ not auto-fit. `flattenedClone().boundingBox` is degenerate before render -> read
 
 These are the owner's explicit, repeated asks — the road to "meaningful":
 
-1. **Drop-to-tag (the cluster-zone primitive).** Dropping a card *inside* a fence/area = file it into
-   that zone (reuse the directory/KB filing — a zone == a directory/KB). This gives a zone *contents*.
-   *This is the prerequisite for everything below.*
+1. ~~**Drop-to-tag (the cluster-zone primitive).**~~ **DONE 2026-06-24.** A drawn+named area is now a
+   persisted `DeskZone` (footprint in `hs.desk.zones`) AND a real directory (reuses the filing map →
+   shows in the sidebar). Dropping a card inside a zone's footprint files it (`onFileToZone` →
+   `fileToZone`); the card settles (no fling-out), haptic + zone pulse + live count placard. Drawing the
+   first zone retires the auto time-fences. **Gotcha for the next agent:** a flat zone decal at a fixed
+   height only works for ONE surface level — the crayon fill is at y=0.53 to sit above the leather mat
+   (top 0.5); a zone drawn over bare desk (no mat) will float slightly, and a card filed onto bare desk
+   could sit below the decal. The renderer (`living-desk-render.swift`, now draws a sample zone) caught
+   this before device. *This was the prerequisite for everything below.*
 2. **Dive into a zone ([[story-24-nested-zones]]).** Double-tap a boundary -> the camera **dives**, the
    zone becomes its own full **nested desk** with its own objects/fences/sub-zones, recursively, each
    level **backable** via a breadcrumb. The owner is most excited about this. Maps onto the org tree.

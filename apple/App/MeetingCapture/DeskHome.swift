@@ -31,6 +31,21 @@ enum DeskObjectKind {
     }
 }
 
+// HSM-14-22 — a Zone is a real, persisted place on the 3D desk: a named footprint (a rectangle in
+// SceneKit world units) that you draw, and that HOLDS cards. Dropping a card inside its bounds files
+// the card into it. A zone IS a directory (it reuses the directory filing map), so it also shows in the
+// sidebar and can be opened in 2D — the same container, two surfaces. This is what gives a drawn zone
+// meaning: a place is only a place if things can live in it.
+struct DeskZone: Equatable, Identifiable {
+    let name: String
+    let cx: Float; let cz: Float      // centre on the desk (world units)
+    let hw: Float; let hl: Float      // half-extents (x, z)
+    let colorIdx: Int
+    var count: Int = 0                // live member count (filed cards) — for the label
+    var id: String { name }
+    func contains(_ x: Float, _ z: Float) -> Bool { abs(x - cx) <= hw && abs(z - cz) <= hl }
+}
+
 struct DeskHome: View {
     @StateObject private var model = CaptureModel()
     @AppStorage("hs.desk.pinned") private var pinnedCSV = ""
@@ -39,6 +54,7 @@ struct DeskHome: View {
     @AppStorage("hs.desk.folders") private var foldersCSV = ""    // user directories: "Project Atlas;Hiring"
     @AppStorage("hs.desk.kbs") private var kbsCSV = ""            // knowledge bases (typed containers): "Onboarding;Architecture"
     @AppStorage("hs.desk.filed") private var filedCSV = ""        // membership: "id=Project Atlas;..." (dirs AND KBs share this map)
+    @AppStorage("hs.desk.zones") private var zonesCSV = ""        // drawn 3D zones: "name|cx|cz|hw|hl|colorIdx;..." (each is also a directory)
     @State private var folder: DeskFolder = .all
     @State private var activeUserFolder: String?                  // non-nil = a user directory is open (overrides the smart folder)
     @State private var tidyToken = 0
@@ -94,7 +110,11 @@ struct DeskHome: View {
             ZStack(alignment: .topLeading) {
                 DeskCanvasBackground()
                 if livingDesk {
-                    LivingDeskCanvas(cards: cardData, onTap: { handleTap($0) }, onCycle: { id in tactile(); cycleStyle(id) }, brush: brush)
+                    LivingDeskCanvas(cards: cardData, zones: deskZones,
+                                     onTap: { handleTap($0) }, onCycle: { id in tactile(); cycleStyle(id) },
+                                     onZoneCreate: { addZone($0) },
+                                     onFileToZone: { id, zone in tactile(.medium); fileToZone(id, to: zone) },
+                                     brush: brush)
                 } else {
                     DeskPhysicsCanvas(cards: cardData, tidyToken: tidyToken, zoomToken: zoomToken,
                                       lassoMode: lassoMode, clearToken: clearToken, gatherToken: gatherToken,
@@ -263,7 +283,8 @@ struct DeskHome: View {
         return base + spilledCards            // the meeting's spilled output objects live alongside the cards
     }
     // The 3D desk's default view opens ORGANIZED — meetings grouped into time zones (a powerhouse, not a grid).
-    private var zonedDefault: Bool { livingDesk && activeUserFolder == nil && folder == .all }
+    // Once YOU draw your own zones, the auto time-fences step aside: the desk becomes your manual workspace.
+    private var zonedDefault: Bool { livingDesk && activeUserFolder == nil && folder == .all && deskZones.isEmpty }
     private func zoneFor(_ m: Meeting) -> String {
         let cal = Calendar.current
         if cal.isDateInToday(m.startedAt) { return "Today" }
@@ -305,6 +326,38 @@ struct DeskHome: View {
         for id in selectedIDs where !id.contains(":") { d[id] = name }   // file real meetings only (outputs/models carry a ":")
         filedCSV = d.map { "\($0.key)=\($0.value)" }.joined(separator: ";")
         selectedIDs = []; clearToken += 1
+    }
+
+    // MARK: zones — drawn places on the 3D desk that HOLD cards (a zone reuses the directory filing map)
+
+    private func parseZones() -> [DeskZone] {
+        zonesCSV.split(separator: ";").compactMap { row in
+            let f = row.split(separator: "|")
+            guard f.count >= 6, let cx = Float(f[1]), let cz = Float(f[2]),
+                  let hw = Float(f[3]), let hl = Float(f[4]), let ci = Int(f[5]) else { return nil }
+            return DeskZone(name: String(f[0]), cx: cx, cz: cz, hw: hw, hl: hl, colorIdx: ci)
+        }
+    }
+    /// The zones with a LIVE member count baked in (so the 3D label reads "Project Atlas · 3").
+    private var deskZones: [DeskZone] {
+        let counts = filedDict().values
+        return parseZones().map { var z = $0; z.count = counts.filter { $0 == z.name }.count; return z }
+    }
+    /// A drawn-and-named zone becomes a persisted footprint AND a real directory (one container, two surfaces).
+    private func addZone(_ z: DeskZone) {
+        let clean = z.name.replacingOccurrences(of: "|", with: " ")
+            .replacingOccurrences(of: ";", with: " ").replacingOccurrences(of: "=", with: " ")
+            .trimmingCharacters(in: .whitespaces)
+        guard !clean.isEmpty, !parseZones().contains(where: { $0.name == clean }) else { return }
+        let row = "\(clean)|\(z.cx)|\(z.cz)|\(z.hw)|\(z.hl)|\(z.colorIdx)"
+        zonesCSV = zonesCSV.isEmpty ? row : zonesCSV + ";" + row
+        createFolder(clean)                       // a zone IS a directory — it appears in the sidebar too
+    }
+    /// Drop a card inside a zone -> file that meeting into the zone's directory (non-destructive tag).
+    private func fileToZone(_ id: String, to name: String) {
+        guard !id.contains(":") else { return }   // real meetings only
+        var d = filedDict(); d[id] = name
+        filedCSV = d.map { "\($0.key)=\($0.value)" }.joined(separator: ";")
     }
 
     // MARK: knowledge bases — a typed container that reuses filing (to classify) + spill (to open)

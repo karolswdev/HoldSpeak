@@ -13,8 +13,11 @@ import UIKit
 @MainActor
 struct LivingDeskCanvas: UIViewRepresentable {
     let cards: [DeskCardData]
+    var zones: [DeskZone] = []   // persisted drawn places that hold cards (drop a card inside one to file it)
     let onTap: (String) -> Void
     let onCycle: (String) -> Void
+    var onZoneCreate: (DeskZone) -> Void = { _ in }       // a drawn+named area becomes a persisted zone
+    var onFileToZone: (String, String) -> Void = { _, _ in }  // (cardID, zoneName) — drop filed a card into a zone
     var brush: Int = 0          // 0 off · 1 crayon AREA (filled+named) · 2 crayon wall · 3 pencil wall · 4 mud wall
 
     func makeCoordinator() -> Coord { Coord(onTap: onTap, onCycle: onCycle) }
@@ -41,13 +44,18 @@ struct LivingDeskCanvas: UIViewRepresentable {
 
     func updateUIView(_ v: SCNView, context: Context) {
         context.coordinator.onTap = onTap; context.coordinator.onCycle = onCycle
+        context.coordinator.onZoneCreate = onZoneCreate; context.coordinator.onFileToZone = onFileToZone
         context.coordinator.brush = brush
+        context.coordinator.zones = zones
+        context.coordinator.syncUserZones()
         context.coordinator.sync(cards)
     }
 
     @MainActor final class Coord: NSObject {
         var onTap: (String) -> Void
         var onCycle: (String) -> Void
+        var onZoneCreate: (DeskZone) -> Void = { _ in }
+        var onFileToZone: (String, String) -> Void = { _, _ in }
         weak var view: SCNView?
         let cameraNode = SCNNode()
         private weak var deskNode: SCNNode?
@@ -55,6 +63,9 @@ struct LivingDeskCanvas: UIViewRepresentable {
         private var modeOf: [String: String] = [:]
         private var zoneDecor: [SCNNode] = []        // zone fences + labels for the organized default desk
         private var lastZoneSig = ""
+        var zones: [DeskZone] = []                    // the persisted user-drawn zones (drop targets)
+        private var userZoneNodes: [String: SCNNode] = [:]
+        private var lastUserZoneSig = ""
         private var last: [DeskCardData] = []
         private var picked: SCNNode?
         private let liftY: Float = 3.4
@@ -301,6 +312,51 @@ struct LivingDeskCanvas: UIViewRepresentable {
             }
         }
 
+        // MARK: user zones — persisted drawn places that HOLD cards (the drop-to-file targets)
+
+        /// Redraw the persistent zones whenever their set or any member count changes. Each zone is a
+        /// crayon-filled footprint with a live-count placard; its rect is the drop hit-test region.
+        func syncUserZones() {
+            guard let root = view?.scene?.rootNode else { return }
+            let sig = zones.map { "\($0.name)|\($0.cx)|\($0.cz)|\($0.hw)|\($0.hl)|\($0.count)" }.joined(separator: ";")
+            if sig == lastUserZoneSig { return }
+            lastUserZoneSig = sig
+            userZoneNodes.values.forEach { $0.removeFromParentNode() }; userZoneNodes.removeAll()
+            for z in zones {
+                let node = buildUserZone(z)
+                root.addChildNode(node); userZoneNodes[z.name] = node
+            }
+        }
+        private func buildUserZone(_ z: DeskZone) -> SCNNode {
+            let color = areaColors[z.colorIdx % areaColors.count]
+            let holder = SCNNode(); holder.name = "zone:\(z.name)"
+            holder.position = SCNVector3(z.cx, 0, z.cz)
+            let w = CGFloat(z.hw * 2), d = CGFloat(z.hl * 2)
+            let plane = SCNPlane(width: max(2, w), height: max(2, d))
+            let m = SCNMaterial(); m.lightingModel = .constant; m.isDoubleSided = true
+            m.diffuse.contents = crayonFillImage(color, w: max(2, w), h: max(2, d))
+            plane.materials = [m]
+            let pnode = SCNNode(geometry: plane)
+            pnode.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)
+            pnode.position = SCNVector3(0, 0.53, 0)        // just above the mat (top 0.5) so the fill is visible
+            holder.addChildNode(pnode)
+            // a count placard pinned at the zone's front edge
+            let lplane = SCNPlane(width: 13, height: 3.4)
+            let lm = SCNMaterial(); lm.lightingModel = .constant; lm.isDoubleSided = true
+            lm.diffuse.contents = labelImage("\(z.name)   ·   \(z.count)", color)
+            lplane.materials = [lm]
+            let lnode = SCNNode(geometry: lplane)
+            lnode.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)
+            lnode.position = SCNVector3(0, 0.60, -z.hl + 2.2)
+            holder.addChildNode(lnode)
+            return holder
+        }
+        /// A quick "it went in" pulse on the zone the card was just filed into.
+        private func flashZone(_ name: String) {
+            guard let node = userZoneNodes[name] else { return }
+            node.runAction(.sequence([.scale(to: 1.06, duration: 0.12), .scale(to: 1.0, duration: 0.20)]))
+        }
+
         // MARK: touch
 
         private func cardNode(at p: CGPoint) -> SCNNode? {
@@ -349,10 +405,21 @@ struct LivingDeskCanvas: UIViewRepresentable {
             case .ended, .cancelled, .failed:
                 guard let n = picked else { return }
                 n.physicsBody?.isAffectedByGravity = true       // release -> it falls + stacks from the lifted height
+                let loc = g.location(in: view)
+                // Drop-to-tag: if the card was released inside a zone footprint, FILE it into that zone and
+                // let it SETTLE there (a deliberate drop shouldn't fling back out on residual finger speed).
+                var filed = false
+                if g.state == .ended, let id = n.name, !id.contains(":"),
+                   let dp = planePoint(at: loc, y: 0.2),
+                   let z = zones.first(where: { $0.contains(dp.x, dp.z) }) {
+                    onFileToZone(id, z.name)
+                    hMed.impactOccurred(intensity: 1.0)
+                    flashZone(z.name)
+                    filed = true
+                }
                 // Dynamic throw: convert the finger velocity to a world-plane velocity so the card flings + slides.
                 let sv = g.velocity(in: view)
-                let loc = g.location(in: view)
-                if abs(sv.x) + abs(sv.y) > 80,
+                if !filed, abs(sv.x) + abs(sv.y) > 80,
                    let p0 = planePoint(at: loc, y: liftY),
                    let p1 = planePoint(at: CGPoint(x: loc.x + sv.x * 0.1, y: loc.y + sv.y * 0.1), y: liftY) {
                     let vx = (p1.x - p0.x) / 0.1 * 0.55, vz = (p1.z - p0.z) / 0.1 * 0.55
@@ -361,7 +428,7 @@ struct LivingDeskCanvas: UIViewRepresentable {
                     hMed.impactOccurred(intensity: 0.9)         // fling
                 } else {
                     n.physicsBody?.velocity = SCNVector3Zero
-                    hLight.impactOccurred(intensity: 0.5)       // set down
+                    if !filed { hLight.impactOccurred(intensity: 0.5) }   // plain set down
                 }
                 lastFling = CACurrentMediaTime()
                 picked = nil
@@ -396,10 +463,10 @@ struct LivingDeskCanvas: UIViewRepresentable {
                 guard let a = areaStart, let b = planePoint(at: p, y: 0.2) else { return }
                 areaPreview?.removeFromParentNode(); areaPreview = nil
                 if hypotf(b.x - a.x, b.z - a.z) > 3 {
-                    let node = areaPlane(a, b, color: areaColors[areaColorIdx], preview: false)
-                    view?.scene?.rootNode.addChildNode(node); zoneDecor.append(node)
                     hMed.impactOccurred(intensity: 0.7)
-                    promptAreaName(node, color: areaColors[areaColorIdx])
+                    // Hand the footprint up to be NAMED + PERSISTED; syncUserZones draws the real zone.
+                    promptZoneName(cx: (a.x + b.x) / 2, cz: (a.z + b.z) / 2,
+                                   hw: abs(b.x - a.x) / 2, hl: abs(b.z - a.z) / 2, colorIdx: areaColorIdx)
                     areaColorIdx = (areaColorIdx + 1) % areaColors.count
                 }
                 areaStart = nil
@@ -416,7 +483,7 @@ struct LivingDeskCanvas: UIViewRepresentable {
             plane.materials = [m]
             let node = SCNNode(geometry: plane)
             node.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)
-            node.position = SCNVector3((a.x + b.x) / 2, 0.18, (a.z + b.z) / 2)
+            node.position = SCNVector3((a.x + b.x) / 2, 0.53, (a.z + b.z) / 2)   // match the committed zone height
             node.name = "area"
             return node
         }
@@ -440,26 +507,17 @@ struct LivingDeskCanvas: UIViewRepresentable {
                 }
             }
         }
-        private func promptAreaName(_ node: SCNNode, color: UIColor) {
+        private func promptZoneName(cx: Float, cz: Float, hw: Float, hl: Float, colorIdx: Int) {
             guard let host = view?.window?.rootViewController else { return }
-            let alert = UIAlertController(title: "Name this area", message: nil, preferredStyle: .alert)
+            let alert = UIAlertController(title: "Name this zone", message: "Drop cards inside it to file them here.", preferredStyle: .alert)
             alert.addTextField { $0.placeholder = "e.g. Project Atlas"; $0.autocapitalizationType = .words }
-            alert.addAction(UIAlertAction(title: "Add", style: .default) { [weak self, weak node] _ in
-                guard let self, let node else { return }
-                let name = alert.textFields?.first?.text ?? ""
-                if !name.isEmpty { self.attachAreaLabel(node, name: name, color: color) }
+            alert.addAction(UIAlertAction(title: "Add", style: .default) { [weak self] _ in
+                guard let self else { return }
+                let name = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespaces) ?? ""
+                if !name.isEmpty { self.onZoneCreate(DeskZone(name: name, cx: cx, cz: cz, hw: hw, hl: hl, colorIdx: colorIdx)) }
             })
             alert.addAction(UIAlertAction(title: "Skip", style: .cancel))
             host.present(alert, animated: true)
-        }
-        private func attachAreaLabel(_ area: SCNNode, name: String, color: UIColor) {
-            let plane = SCNPlane(width: 13, height: 3.4)
-            let m = SCNMaterial(); m.lightingModel = .constant; m.isDoubleSided = true; m.diffuse.contents = labelImage(name, color)
-            plane.materials = [m]
-            let lnode = SCNNode(geometry: plane)
-            lnode.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)
-            lnode.position = SCNVector3(area.position.x, 0.25, area.position.z - Float((area.geometry as? SCNPlane)?.height ?? 0) / 2 + 2.2)
-            view?.scene?.rootNode.addChildNode(lnode); zoneDecor.append(lnode)
         }
 
         // MARK: fence drawing — drag on the desk to lay a wall (crayon/pencil/mud); DWELL in one place and
