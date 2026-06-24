@@ -130,6 +130,11 @@ ViewModels/        MeetingReviewState, CaptureModel, … (lifted out of the view
   **3D SceneKit** room where cards lay on the surface, **lift when picked, fall and stack**, and the user
   **builds barriers from pencils / erasers / clay**. The order to build it all is in
   **[[DESK_BUILD_SEQUENCE]]** — substrate (Living Desk) before surface (environments + Ask) before sync.
+- **The shell is *logical* — [[story-23-the-deskos-shell]]** places every affordance: **left = organize**
+  (your filed world), **top = toolbar** (control: spotlight/select/fit/tidy/environment/queue), **edges =
+  drawers** (the parts bin: Models/Sources/Blocks/Tools — pull a piece onto the desk), **center = the
+  desk** (work), **floating = windows + bars + the Bin**. The left pane (my stuff) and the drawers (the
+  parts bin) are deliberately different surfaces.
 - Craft bar: bespoke objects over SF glyphs/CSS shapes (lean on PixelLab — [[project_qlippy_mascot]]).
 - The contrast — pixel-art **objects** on **sleek** dark chrome — is the premium feel; keep both.
 - Prove on the device, not seeded shots, for anything claimed `done` (see

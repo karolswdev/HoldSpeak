@@ -69,6 +69,15 @@ scene as a SwiftUI overlay (UI lives in 2D over the 3D room). Spill/file/bundle/
       metal ([[feedback_verify_on_device_not_seeded]]); frame rate holds with a full desk; reduce-motion
       respected.
 
+## Refinement notes (from the offscreen proof)
+
+- **Card silhouette must follow the model.** The proof used a plain rounded box, so a card's outline
+  didn't match its face (rounded corners + the accent rail). The card geometry must match the design:
+  round the corners to the face radius (or alpha-mask the plane to the face shape) so the 3D
+  silhouette *is* the card, not a box behind it.
+- Offscreen snapshot renders warm-dark (no tonemapping) — tune the real look on-device, not in the
+  harness.
+
 ## Test plan
 
 - On device: fling/stack cards (they pile and settle), pick one up (it raises with a growing shadow),
