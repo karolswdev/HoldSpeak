@@ -292,6 +292,20 @@ launch pending an unlock — the install completes regardless). This is the prer
 [[story-24-nested-zones]] (dive-into-a-zone): a zone you can dive into must first have contents. Next: the
 dive. See [[DESK_HANDOVER]] §7.
 
+**2026-06-24 — a boundary becomes a doorway (dive into a zone, HSM-14-24).** The owner's most-excited
+idea, built right on top of drop-to-tag: **double-tap a zone and you fall INTO it** — the camera rushes in
+and zooms, and the zone *becomes* the whole desk, showing exactly the cards filed into it, with room for
+its own sub-zones. It's **recursive**: zones are now **path-based containers** (`Atlas`, `Atlas/Q3`), so
+drawing a zone while inside "Atlas" makes the child "Atlas/Q3" — a sub-zone is just a child directory
+(Phase-16 organization sync carries it for free). Every level is **backable**: a `DeskBreadcrumb`
+(`Desk › Atlas › Q3`, each crumb a tap-to-jump) plus a symmetric **double-tap the empty desk to climb
+out**. The transition is gamified, not a cut — `syncLevel` settles the camera home from a directional
+offset (dive = drop in from close; back = pull out from wide) with haptics. The nested-desk state was
+composed in the offscreen renderer first (Atlas's members + a "Q3 Planning · 2" sub-zone reads as a place
+inside a place). `xcodebuild` device-arch **BUILD SUCCEEDED**; built + signed + **installed on the iPad Air
+M4** (the live dive-FEEL walk is the last acceptance criterion — the one thing a static renderer can't
+show). Handover §7 #1 + #2 are now both done; the desk is becoming the fractal workspace the owner can see.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a

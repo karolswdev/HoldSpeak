@@ -177,15 +177,18 @@ func buildScene() -> SCNScene {
                  NSColor(calibratedRed: 1.0, green: 0.42, blue: 0.21, alpha: 1),
                  NSColor(calibratedRed: 0.24, green: 0.81, blue: 0.56, alpha: 1),
                  NSColor(calibratedRed: 0.95, green: 0.64, blue: 0.24, alpha: 1)]
-    // A drawn ZONE — "Project Atlas" — with three meeting cards filed INSIDE it (the point of the leap:
-    // a place that holds things), plus a couple of loose cards outside to read the contrast.
-    let accent = NSColor(calibratedRed: 0.95, green: 0.43, blue: 0.30, alpha: 1)
-    scene.rootNode.addChildNode(zone("Project Atlas", count: 3, accent, cx: -6, cz: 4, hw: 12, hl: 9))
-    let inside: [(Float, Float, Float)] = [(-12, 0, -0.06), (-1, -1, 0.05), (-9, 7, 0.12)]
-    for (i, sp) in inside.enumerated() { scene.rootNode.addChildNode(card(tints[i % 4], sp.0, sp.1, rot: sp.2)) }
-    // loose cards, not yet filed into any place
-    scene.rootNode.addChildNode(card(tints[1], 14, 0, rot: -0.1))
-    scene.rootNode.addChildNode(card(tints[3], 16, 9, rot: 0.08))
+    // HSM-14-24 — the NESTED desk: you've dived into "Project Atlas", so the whole desk now IS that zone.
+    // Its filed cards sit out in the open, AND it has a SUB-ZONE "Q3 Planning" (a child you can dive into
+    // again) holding its own cards. The breadcrumb (Desk > Project Atlas) is the SwiftUI layer, not shown
+    // here. This proves the recursion reads: a place inside a place.
+    let blue = NSColor(calibratedRed: 0.36, green: 0.62, blue: 0.95, alpha: 1)
+    scene.rootNode.addChildNode(zone("Q3 Planning", count: 2, blue, cx: 9, cz: 5, hw: 11, hl: 8))
+    // Project Atlas's own member cards, loose on this level
+    let atlas: [(Float, Float, Float)] = [(-13, -2, -0.06), (-12, 7, 0.08), (-3, -3, 0.05)]
+    for (i, sp) in atlas.enumerated() { scene.rootNode.addChildNode(card(tints[i % 4], sp.0, sp.1, rot: sp.2)) }
+    // the sub-zone's cards, filed inside Q3 Planning
+    scene.rootNode.addChildNode(card(tints[2], 6, 4, rot: 0.1))
+    scene.rootNode.addChildNode(card(tints[3], 12, 6, rot: -0.08))
     return scene
 }
 

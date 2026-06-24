@@ -134,9 +134,15 @@ These are the owner's explicit, repeated asks — the road to "meaningful":
    (top 0.5); a zone drawn over bare desk (no mat) will float slightly, and a card filed onto bare desk
    could sit below the decal. The renderer (`living-desk-render.swift`, now draws a sample zone) caught
    this before device. *This was the prerequisite for everything below.*
-2. **Dive into a zone ([[story-24-nested-zones]]).** Double-tap a boundary -> the camera **dives**, the
-   zone becomes its own full **nested desk** with its own objects/fences/sub-zones, recursively, each
-   level **backable** via a breadcrumb. The owner is most excited about this. Maps onto the org tree.
+2. ~~**Dive into a zone ([[story-24-nested-zones]]).**~~ **BUILT 2026-06-24** (live dive-feel walk pending
+   an unlock). Double-tap a zone -> `diveInto` rushes the camera in + zooms -> `onDive` swaps the desk to
+   that zone's contents; double-tap the empty desk climbs out; `DeskBreadcrumb` jumps to any level.
+   **Recursion is real:** zones are now **path-based** (`DeskZone.name` = `Atlas/Q3`); `addZone` prefixes
+   `currentPath`, `deskZones` is level-scoped (children of the current path), `cardData` shows the current
+   level's members. `syncLevel` plays the directional camera settle on any depth change. **Next-agent
+   notes:** the dive→settle handoff has a tiny camera discontinuity (diveInto ends on the zone center;
+   syncLevel snaps to a fixed pose then eases home) — tune on device. Per-level card LAYOUT positions
+   aren't persisted yet (cards re-grid each entry). Tune the dive timing/drama on the glass.
 3. **Cards with real MEANING.** A card should show a real **snippet** of its content (summary/decision
    text), and **expand should surface real artifacts you act on** (file / Ask AI / run). Right now cards
    show title + metadata only. This is the heart of "stop being a tech demo."

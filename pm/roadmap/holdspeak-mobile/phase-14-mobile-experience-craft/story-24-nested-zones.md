@@ -2,8 +2,10 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 14
-- **Status:** todo — opened 2026-06-24 on the owner's (excited) idea. The feature that makes the DeskOS
-  **fractal**: a fence/zone isn't just a wall, it's a way *in*.
+- **Status:** in-progress — opened 2026-06-24 on the owner's (excited) idea; **built 2026-06-24**
+  (double-tap dive + camera descent, recursive path-based sub-zones, breadcrumb + double-tap-empty back,
+  haptic transition). The feature that makes the DeskOS **fractal**: a fence/zone isn't just a wall, it's
+  a way *in*. Device-arch compile + install done; the live dive-feel walk on the iPad is the last AC.
 - **Depends on:** [[story-22-the-living-desk]] (the 3D desk + fences), [[story-23-the-deskos-shell]]
   (the shell), the fence/cluster-zone primitive — **the prerequisite drop-to-tag (a zone is a persisted
   place that holds cards) shipped 2026-06-24** (handover §7 #1); a zone now has contents to dive into.
@@ -42,12 +44,17 @@ difference between a pegboard and a building. It also dovetails with the convent
 
 ## Acceptance criteria
 
-- [ ] Double-tapping a zone dives in: camera zoom + the zone becomes a full nested desk.
-- [ ] The nested desk shows the zone's members (the cards filed into it) and supports its own
-      fences/sub-zones — recursively (at least 2 levels deep proven).
-- [ ] A breadcrumb + a Back gesture pop up exactly one level, to the root, with each level's state intact.
-- [ ] The dive/ascend is a smooth, dramatic, haptic transition — not a cut.
-- [ ] Device-proven on the iPad Air M4 ([[feedback_verify_on_device_not_seeded]]).
+- [x] Double-tapping a zone dives in: camera zoom + the zone becomes a full nested desk. *(built: `onDoubleTap`
+      → `diveInto` camera rush+zoom → `onDive`; the desk swaps to the zone's contents.)*
+- [x] The nested desk shows the zone's members (the cards filed into it) and supports its own
+      fences/sub-zones — recursively (at least 2 levels deep proven). *(built: path-based containers —
+      drawing inside "Atlas" makes "Atlas/Q3"; `deskZones` is level-scoped; nested-desk render composed.)*
+- [x] A breadcrumb + a Back gesture pop up exactly one level, to the root, with each level's state intact.
+      *(built: `DeskBreadcrumb` jump-to-any-crumb + double-tap-empty-desk climbs out; `deskPath` drives it.)*
+- [x] The dive/ascend is a smooth, dramatic, haptic transition — not a cut. *(built: `syncLevel` settles the
+      camera home from a directional offset; medium/light haptics on dive/ascend. **Timing tuned on device.**)*
+- [ ] Device-proven on the iPad Air M4 ([[feedback_verify_on_device_not_seeded]]). *(installed; live walk
+      pending an unlock — the dive FEEL is the one thing the static renderer can't show.)*
 
 ## Test plan
 

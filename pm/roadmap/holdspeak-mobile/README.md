@@ -12,9 +12,11 @@
 **Current phase:** [Phase 16 — The Desk, Everywhere](./phase-16-the-desk-everywhere/current-phase-status.md)
 (web/Astro parity of the DeskOS + desktop sync of the organization layer across the mesh).
 
-**Last updated:** 2026-06-24 (**DESK: drop-to-tag shipped** on `holdspeak-mobile/the-desk` — a 3D zone is
-now a persisted place that holds cards; drop a card in to file it (handover §7 #1, the prerequisite for
-dive-into-a-zone). Prior context below. **PHASE 16 — THE DESK, EVERYWHERE OPENED.** On the owner's
+**Last updated:** 2026-06-24 (**DESK: drop-to-tag + dive shipped** on `holdspeak-mobile/the-desk` — a 3D
+zone is now a persisted place that holds cards (drop a card in to file it), and **double-tapping a zone
+dives INTO it** as a recursive nested desk with a breadcrumb back (handover §7 #1 + #2; the DeskOS is now
+fractal). Live dive-feel walk pending an iPad unlock. Prior context below. **PHASE 16 — THE DESK,
+EVERYWHERE OPENED.** On the owner's
 instruction to step back after the iPad DeskOS landed (HSM-14-19/20: objects, spill, lasso,
 directories, floating windows, the Knowledge Base primitive on a documented DeskObject convention)
 and (1) build **web/Astro parity** of the Desk and (2) **design desktop synchronization** so the

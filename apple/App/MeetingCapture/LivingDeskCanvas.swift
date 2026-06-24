@@ -14,10 +14,13 @@ import UIKit
 struct LivingDeskCanvas: UIViewRepresentable {
     let cards: [DeskCardData]
     var zones: [DeskZone] = []   // persisted drawn places that hold cards (drop a card inside one to file it)
+    var pathDepth: Int = 0       // HSM-14-24: how deep we've dived (0 = root) — drives the dive/ascend settle
     let onTap: (String) -> Void
     let onCycle: (String) -> Void
     var onZoneCreate: (DeskZone) -> Void = { _ in }       // a drawn+named area becomes a persisted zone
     var onFileToZone: (String, String) -> Void = { _, _ in }  // (cardID, zoneName) — drop filed a card into a zone
+    var onDive: (String) -> Void = { _ in }              // double-tap a zone -> dive into it (its full path)
+    var onAscend: () -> Void = {}                         // double-tap the empty desk -> climb out one level
     var brush: Int = 0          // 0 off · 1 crayon AREA (filled+named) · 2 crayon wall · 3 pencil wall · 4 mud wall
 
     func makeCoordinator() -> Coord { Coord(onTap: onTap, onCycle: onCycle) }
@@ -31,6 +34,9 @@ struct LivingDeskCanvas: UIViewRepresentable {
         v.pointOfView = context.coordinator.cameraNode
         context.coordinator.view = v
         let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coord.onTapGesture(_:)))
+        let dtap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coord.onDoubleTap(_:)))
+        dtap.numberOfTapsRequired = 2                                   // double-tap a zone dives in / empty climbs out
+        tap.require(toFail: dtap)                                       // a single tap waits to be sure it isn't a double
         let lp = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coord.onLongPress(_:)))
         lp.minimumPressDuration = 0.42
         let pan = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coord.onPan(_:)))
@@ -38,17 +44,20 @@ struct LivingDeskCanvas: UIViewRepresentable {
         let camPan = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coord.onCamPan(_:)))
         camPan.minimumNumberOfTouches = 2                               // two fingers pan the desk
         let pinch = UIPinchGestureRecognizer(target: context.coordinator, action: #selector(Coord.onPinch(_:)))
-        for g in [tap, lp, pan, camPan, pinch] as [UIGestureRecognizer] { v.addGestureRecognizer(g) }
+        for g in [tap, dtap, lp, pan, camPan, pinch] as [UIGestureRecognizer] { v.addGestureRecognizer(g) }
         return v
     }
 
     func updateUIView(_ v: SCNView, context: Context) {
         context.coordinator.onTap = onTap; context.coordinator.onCycle = onCycle
         context.coordinator.onZoneCreate = onZoneCreate; context.coordinator.onFileToZone = onFileToZone
+        context.coordinator.onDive = onDive; context.coordinator.onAscend = onAscend
         context.coordinator.brush = brush
         context.coordinator.zones = zones
+        context.coordinator.pathDepth = pathDepth
         context.coordinator.syncUserZones()
         context.coordinator.sync(cards)
+        context.coordinator.syncLevel()        // play the dive/ascend settle if the depth changed
     }
 
     @MainActor final class Coord: NSObject {
@@ -56,6 +65,11 @@ struct LivingDeskCanvas: UIViewRepresentable {
         var onCycle: (String) -> Void
         var onZoneCreate: (DeskZone) -> Void = { _ in }
         var onFileToZone: (String, String) -> Void = { _, _ in }
+        var onDive: (String) -> Void = { _ in }
+        var onAscend: () -> Void = {}
+        var pathDepth = 0
+        private var lastDepth = 0
+        private let homeCam = SCNVector3(0, 44, 34)        // the resting camera (matches buildScene)
         weak var view: SCNView?
         let cameraNode = SCNNode()
         private weak var deskNode: SCNNode?
@@ -343,7 +357,7 @@ struct LivingDeskCanvas: UIViewRepresentable {
             // a count placard pinned at the zone's front edge
             let lplane = SCNPlane(width: 13, height: 3.4)
             let lm = SCNMaterial(); lm.lightingModel = .constant; lm.isDoubleSided = true
-            lm.diffuse.contents = labelImage("\(z.name)   ·   \(z.count)", color)
+            lm.diffuse.contents = labelImage("\(z.leaf)   ·   \(z.count)", color)
             lplane.materials = [lm]
             let lnode = SCNNode(geometry: lplane)
             lnode.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)
@@ -355,6 +369,53 @@ struct LivingDeskCanvas: UIViewRepresentable {
         private func flashZone(_ name: String) {
             guard let node = userZoneNodes[name] else { return }
             node.runAction(.sequence([.scale(to: 1.06, duration: 0.12), .scale(to: 1.0, duration: 0.20)]))
+        }
+
+        // MARK: dive — a boundary is a doorway (HSM-14-24). Double-tap a zone to fall IN; double-tap the
+        // empty desk to climb OUT. The dramatic camera move sells the descent; the content swap (driven by
+        // the new path's cards/zones flowing down) is masked at the camera's closest point.
+
+        @objc func onDoubleTap(_ g: UITapGestureRecognizer) {
+            guard brush == 0 else { return }                    // not while a zone brush is armed
+            let p = g.location(in: view)
+            if let path = zoneName(at: p) { diveInto(path); return }
+            if let dp = planePoint(at: p, y: 0.53), let z = zones.first(where: { $0.contains(dp.x, dp.z) }) {
+                diveInto(z.name); return                         // anywhere inside a zone footprint is the doorway
+            }
+            if pathDepth > 0 { hLight.impactOccurred(intensity: 0.7); onAscend() }   // empty desk -> climb out
+        }
+        private func zoneName(at p: CGPoint) -> String? {
+            guard let hits = view?.hitTest(p, options: [.searchMode: SCNHitTestSearchMode.closest.rawValue]) else { return nil }
+            for h in hits { var n: SCNNode? = h.node
+                while let c = n { if let nm = c.name, nm.hasPrefix("zone:") { return String(nm.dropFirst(5)) }; n = c.parent } }
+            return nil
+        }
+        private func diveInto(_ path: String) {
+            hMed.impactOccurred(intensity: 0.95)
+            let center = zones.first { $0.name == path }.map { SCNVector3($0.cx, 0, $0.cz) } ?? SCNVector3Zero
+            // Rush toward the zone + zoom in; when we're tight on it, swap to its nested desk.
+            SCNTransaction.begin(); SCNTransaction.animationDuration = 0.42
+            SCNTransaction.animationTimingFunction = CAMediaTimingFunction(name: .easeIn)
+            cameraNode.position = SCNVector3(center.x, 20, center.z + 13)
+            cameraNode.camera?.fieldOfView = 22
+            SCNTransaction.completionBlock = { [weak self] in self?.onDive(path) }
+            SCNTransaction.commit()
+        }
+        /// Called after the content has swapped: if the depth changed, settle the camera home FROM a
+        /// directional offset so a dive feels like landing and a back feels like climbing out.
+        func syncLevel() {
+            guard pathDepth != lastDepth else { return }
+            let deeper = pathDepth > lastDepth
+            lastDepth = pathDepth
+            SCNTransaction.begin(); SCNTransaction.animationDuration = 0          // snap to the start pose
+            if deeper { cameraNode.position = SCNVector3(0, 22, 15); cameraNode.camera?.fieldOfView = 24 }
+            else { cameraNode.position = SCNVector3(0, 60, 48); cameraNode.camera?.fieldOfView = 50 }
+            SCNTransaction.commit()
+            SCNTransaction.begin(); SCNTransaction.animationDuration = 0.55       // ease home
+            SCNTransaction.animationTimingFunction = CAMediaTimingFunction(name: .easeOut)
+            cameraNode.position = homeCam; cameraNode.camera?.fieldOfView = 38
+            SCNTransaction.commit()
+            hMed.impactOccurred(intensity: 0.6)
         }
 
         // MARK: touch

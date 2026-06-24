@@ -43,6 +43,7 @@ struct DeskZone: Equatable, Identifiable {
     let colorIdx: Int
     var count: Int = 0                // live member count (filed cards) — for the label
     var id: String { name }
+    var leaf: String { name.components(separatedBy: "/").last ?? name }   // last path component (the display name)
     func contains(_ x: Float, _ z: Float) -> Bool { abs(x - cx) <= hw && abs(z - cz) <= hl }
 }
 
@@ -76,6 +77,7 @@ struct DeskHome: View {
     @AppStorage("hs.desk.living") private var livingDesk = false   // HSM-14-22: the 3D Living Desk (toolbar toggle)
     @State private var brush = 0                                   // 0 off · 1 area · 2 crayon · 3 pencil · 4 mud
     @State private var zonesMode = false                           // the zone-drawing toolchain (palette shown)
+    @State private var deskPath: [String] = []                     // HSM-14-24: nested-zone dive — [] = root, ["Atlas"] = inside, ["Atlas","Q3"] = deeper
 
     var body: some View {
         NavigationStack {
@@ -110,10 +112,12 @@ struct DeskHome: View {
             ZStack(alignment: .topLeading) {
                 DeskCanvasBackground()
                 if livingDesk {
-                    LivingDeskCanvas(cards: cardData, zones: deskZones,
+                    LivingDeskCanvas(cards: cardData, zones: deskZones, pathDepth: deskPath.count,
                                      onTap: { handleTap($0) }, onCycle: { id in tactile(); cycleStyle(id) },
                                      onZoneCreate: { addZone($0) },
                                      onFileToZone: { id, zone in tactile(.medium); fileToZone(id, to: zone) },
+                                     onDive: { path in dive(into: path) },
+                                     onAscend: { ascend() },
                                      brush: brush)
                 } else {
                     DeskPhysicsCanvas(cards: cardData, tidyToken: tidyToken, zoomToken: zoomToken,
@@ -122,8 +126,8 @@ struct DeskHome: View {
                                       onCycle: { id in tactile(); cycleStyle(id) },
                                       onSelect: { ids in selectedIDs = ids })
                 }
-                if cardData.isEmpty { DeskEmptyHint(folder: activeUserFolder == nil ? folder : .all).position(x: geo.size.width / 2, y: geo.size.height * 0.42) }
-                if selectedIDs.isEmpty, activeUserFolder == nil, folder != .models, folder != .knowledge {
+                if cardData.isEmpty { DeskEmptyHint(folder: activeUserFolder == nil ? folder : .all, zoneName: deskPath.last).position(x: geo.size.width / 2, y: geo.size.height * 0.42) }
+                if selectedIDs.isEmpty, activeUserFolder == nil, deskPath.isEmpty, folder != .models, folder != .knowledge {
                     DeskMic().position(x: geo.size.width * 0.5, y: geo.size.height - 92)
                         .onTapGesture { tactile(.medium); open(.capture) }
                 }
@@ -152,6 +156,10 @@ struct DeskHome: View {
                                   onLasso: { tactile(); lassoMode.toggle(); if !lassoMode { selectedIDs = []; clearToken += 1 } },
                                   onTidy: { tactile(); tidyToken += 1 }, onZoom: { tactile(); zoomToken += 1 })
                     if livingDesk && zonesMode { DeskBrushPalette(brush: $brush) }
+                    if livingDesk && !deskPath.isEmpty {
+                        DeskBreadcrumb(path: deskPath, onJump: { i in tactile(); withAnimation(.easeInOut(duration: 0.3)) { deskPath = i < 0 ? [] : Array(deskPath.prefix(i + 1)) } })
+                            .padding(.top, 9)
+                    }
                     Spacer()
                 }
 
@@ -165,8 +173,8 @@ struct DeskHome: View {
                 }
             }
         }
-        .onChange(of: folder) { _ in collapseAll(); selectedIDs = []; clearToken += 1 }
-        .onChange(of: activeUserFolder) { _ in collapseAll(); selectedIDs = []; clearToken += 1 }
+        .onChange(of: folder) { _ in collapseAll(); selectedIDs = []; deskPath = []; clearToken += 1 }
+        .onChange(of: activeUserFolder) { _ in collapseAll(); selectedIDs = []; deskPath = []; clearToken += 1 }
     }
 
     // MARK: spill — a meeting opens into its OUTPUT OBJECTS on the desk (not files in a panel)
@@ -263,6 +271,15 @@ struct DeskHome: View {
     // MARK: data
 
     private var cardData: [DeskCardData] {
+        // HSM-14-24 — inside a dived zone, the desk shows exactly that zone's members (the cards filed to it).
+        if !deskPath.isEmpty {
+            let d = filedDict(), cur = currentPath
+            let members = model.meetings.filter { d[$0.id] == cur }
+            return members.map { m in
+                DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m),
+                             tintHex: tintHexFor(m), mode: modeFor(m.id), styleRaw: styleFor(m.id))
+            } + spilledCards
+        }
         if activeUserFolder == nil, folder == .models {
             return ModelFiles.installed().map {
                 DeskCardData(id: "model:\($0.id)", title: $0.name.replacingOccurrences(of: ".gguf", with: ""),
@@ -283,8 +300,8 @@ struct DeskHome: View {
         return base + spilledCards            // the meeting's spilled output objects live alongside the cards
     }
     // The 3D desk's default view opens ORGANIZED — meetings grouped into time zones (a powerhouse, not a grid).
-    // Once YOU draw your own zones, the auto time-fences step aside: the desk becomes your manual workspace.
-    private var zonedDefault: Bool { livingDesk && activeUserFolder == nil && folder == .all && deskZones.isEmpty }
+    // Once YOU draw your own zones (or dive into one), the auto time-fences step aside.
+    private var zonedDefault: Bool { livingDesk && activeUserFolder == nil && folder == .all && deskPath.isEmpty && deskZones.isEmpty }
     private func zoneFor(_ m: Meeting) -> String {
         let cal = Calendar.current
         if cal.isDateInToday(m.startedAt) { return "Today" }
@@ -328,8 +345,15 @@ struct DeskHome: View {
         selectedIDs = []; clearToken += 1
     }
 
-    // MARK: zones — drawn places on the 3D desk that HOLD cards (a zone reuses the directory filing map)
+    // MARK: zones — drawn places on the 3D desk that HOLD cards (a zone reuses the directory filing map).
+    // A zone's `name` is a PATH ("Atlas", "Atlas/Q3") so zones nest recursively (HSM-14-24); a sub-zone is
+    // just a child directory, which is exactly how Phase-16 organization sync will carry it.
 
+    private var currentPath: String { deskPath.joined(separator: "/") }
+    private func parentPath(_ p: String) -> String {
+        guard let i = p.lastIndex(of: "/") else { return "" }
+        return String(p[..<i])
+    }
     private func parseZones() -> [DeskZone] {
         zonesCSV.split(separator: ";").compactMap { row in
             let f = row.split(separator: "|")
@@ -338,26 +362,48 @@ struct DeskHome: View {
             return DeskZone(name: String(f[0]), cx: cx, cz: cz, hw: hw, hl: hl, colorIdx: ci)
         }
     }
-    /// The zones with a LIVE member count baked in (so the 3D label reads "Project Atlas · 3").
+    /// The zones that belong to the CURRENT desk level (direct children of the current path), each with a
+    /// recursive member count (everything filed at or below it) so the label reads "Q3 · 5".
     private var deskZones: [DeskZone] {
-        let counts = filedDict().values
-        return parseZones().map { var z = $0; z.count = counts.filter { $0 == z.name }.count; return z }
+        let counts = Array(filedDict().values)
+        let cur = currentPath
+        return parseZones().compactMap { z in
+            guard parentPath(z.name) == cur else { return nil }
+            var zz = z
+            zz.count = counts.filter { $0 == z.name || $0.hasPrefix(z.name + "/") }.count
+            return zz
+        }
     }
-    /// A drawn-and-named zone becomes a persisted footprint AND a real directory (one container, two surfaces).
+    /// A drawn-and-named zone becomes a persisted footprint AND a real directory (one container, two
+    /// surfaces). The typed name is a LEAF; it's nested under the current path so drawing inside "Atlas"
+    /// makes "Atlas/Q3".
     private func addZone(_ z: DeskZone) {
-        let clean = z.name.replacingOccurrences(of: "|", with: " ")
-            .replacingOccurrences(of: ";", with: " ").replacingOccurrences(of: "=", with: " ")
+        let leaf = z.name.replacingOccurrences(of: "|", with: " ").replacingOccurrences(of: ";", with: " ")
+            .replacingOccurrences(of: "=", with: " ").replacingOccurrences(of: "/", with: " ")
             .trimmingCharacters(in: .whitespaces)
-        guard !clean.isEmpty, !parseZones().contains(where: { $0.name == clean }) else { return }
-        let row = "\(clean)|\(z.cx)|\(z.cz)|\(z.hw)|\(z.hl)|\(z.colorIdx)"
+        guard !leaf.isEmpty else { return }
+        let full = currentPath.isEmpty ? leaf : currentPath + "/" + leaf
+        guard !parseZones().contains(where: { $0.name == full }) else { return }
+        let row = "\(full)|\(z.cx)|\(z.cz)|\(z.hw)|\(z.hl)|\(z.colorIdx)"
         zonesCSV = zonesCSV.isEmpty ? row : zonesCSV + ";" + row
-        createFolder(clean)                       // a zone IS a directory — it appears in the sidebar too
+        createFolder(full)                        // a zone IS a directory — it appears in the sidebar too
     }
     /// Drop a card inside a zone -> file that meeting into the zone's directory (non-destructive tag).
     private func fileToZone(_ id: String, to name: String) {
         guard !id.contains(":") else { return }   // real meetings only
         var d = filedDict(); d[id] = name
         filedCSV = d.map { "\($0.key)=\($0.value)" }.joined(separator: ";")
+    }
+    /// Dive INTO a zone (double-tap) — its full path becomes the breadcrumb; the desk swaps to its contents.
+    private func dive(into path: String) {
+        tactile(.medium); collapseAll()
+        withAnimation(.easeInOut(duration: 0.35)) { deskPath = path.split(separator: "/").map(String.init) }
+    }
+    /// Climb OUT one level (double-tap empty desk, or the breadcrumb).
+    private func ascend() {
+        guard !deskPath.isEmpty else { return }
+        tactile(); collapseAll()
+        withAnimation(.easeInOut(duration: 0.35)) { deskPath.removeLast() }
     }
 
     // MARK: knowledge bases — a typed container that reuses filing (to classify) + spill (to open)
@@ -644,6 +690,35 @@ struct DeskBrushPalette: View {
     }
 }
 
+// HSM-14-24 — the dive breadcrumb. "Desk › Atlas › Q3", each crumb a tap-to-jump; the trailing crumb is
+// where you are. Pairs with double-tap-empty (climb out) + double-tap-a-zone (dive in).
+struct DeskBreadcrumb: View {
+    let path: [String]
+    let onJump: (Int) -> Void          // index in path, or -1 for the root desk
+    var body: some View {
+        HStack(spacing: 5) {
+            crumb("Desk", icon: "square.stack.3d.up.fill", here: false) { onJump(-1) }
+            ForEach(Array(path.enumerated()), id: \.offset) { i, name in
+                Image(systemName: "chevron.right").font(.system(size: 9, weight: .black)).foregroundStyle(Sig.faint)
+                crumb(name, icon: i == path.count - 1 ? "folder.fill" : "folder", here: i == path.count - 1) { onJump(i) }
+            }
+        }
+        .padding(.horizontal, 11).padding(.vertical, 8)
+        .background(Capsule().fill(Sig.s2).overlay(Capsule().strokeBorder(Sig.accent.opacity(0.35), lineWidth: 1)).shadow(color: .black.opacity(0.35), radius: 12, y: 5))
+    }
+    private func crumb(_ label: String, icon: String, here: Bool, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Image(systemName: icon).font(.system(size: 11, weight: .bold))
+                Text(label).font(.system(size: 13, weight: here ? .heavy : .semibold)).lineLimit(1)
+            }
+            .foregroundStyle(here ? .white : Sig.muted)
+            .padding(.horizontal, 9).padding(.vertical, 5)
+            .background(Capsule().fill(here ? AnyShapeStyle(Sig.accentGradient) : AnyShapeStyle(Color.clear)))
+        }.buttonStyle(PressableCard())
+    }
+}
+
 struct DeskCanvasBackground: View {
     var body: some View {
         ZStack {
@@ -665,7 +740,18 @@ struct DeskDots: View {
 }
 struct DeskEmptyHint: View {
     let folder: DeskFolder
+    var zoneName: String? = nil
     var body: some View {
+        if let z = zoneName {                     // inside a dived, empty zone
+            VStack(spacing: 10) {
+                Image(systemName: "square.dashed").font(.system(size: 28, weight: .bold)).foregroundStyle(Sig.faint)
+                Text("“\(z)” is empty.").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Climb out (double-tap the desk), drag cards in,\nor draw a sub-zone to nest deeper.")
+                    .font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.muted).multilineTextAlignment(.center)
+            }.frame(width: 320)
+        } else { standard }
+    }
+    private var standard: some View {
         VStack(spacing: 10) {
             Image(systemName: folder.icon).font(.system(size: 28, weight: .bold)).foregroundStyle(Sig.faint)
             Text(folder == .all ? "Your desk is empty." : "Nothing in \(folder.label) yet.").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text)
