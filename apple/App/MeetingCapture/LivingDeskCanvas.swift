@@ -85,12 +85,13 @@ struct LivingDeskCanvas: UIViewRepresentable {
             dnode.physicsBody?.friction = 0.85; dnode.physicsBody?.restitution = 0.04
             scene.rootNode.addChildNode(dnode); deskNode = dnode
 
-            // Key light — the main shadow caster (covers the whole desk so every object casts a shadow).
+            // Key light — the main shadow caster. On a real SCNView a directional shadow needs an
+            // explicit ortho extent + auto z-range, or no shadow renders (the device bug).
             let key = SCNNode(); let kl = SCNLight(); kl.type = .directional; kl.intensity = 680
             kl.color = UIColor.white
-            kl.castsShadow = true; kl.shadowSampleCount = 16; kl.shadowRadius = 4
-            kl.shadowColor = UIColor(white: 0, alpha: 0.4)
-            key.position = SCNVector3(10, 40, 20); key.eulerAngles = SCNVector3(-1.05, 0.4, 0)
+            kl.castsShadow = true; kl.shadowMode = .deferred; kl.shadowSampleCount = 16; kl.shadowRadius = 5
+            kl.shadowColor = UIColor(white: 0, alpha: 0.5)
+            key.position = SCNVector3(8, 44, 22); key.eulerAngles = SCNVector3(-1.05, 0.35, 0)
             scene.rootNode.addChildNode(key)
 
             // Warm lamp pool (no shadow; the key owns shadows).
@@ -165,17 +166,18 @@ struct LivingDeskCanvas: UIViewRepresentable {
             for (id, n) in nodes where !ids.contains(id) { n.removeFromParentNode(); nodes[id] = nil; modeOf[id] = nil }
             let cols = 4
             for (i, c) in cards.enumerated() {
+                let sig = "\(c.mode.rawValue):\(c.styleRaw)"
                 if let n = nodes[c.id] {
-                    if modeOf[c.id] != c.mode.rawValue {
+                    if modeOf[c.id] != sig {                         // mode OR style changed -> rebuild the textured node
                         let p = n.presentation.position
                         n.removeFromParentNode()
-                        let nn = makeCard(c); nn.position = p; root.addChildNode(nn); nodes[c.id] = nn; modeOf[c.id] = c.mode.rawValue
+                        let nn = makeCard(c); nn.position = p; root.addChildNode(nn); nodes[c.id] = nn; modeOf[c.id] = sig
                     }
                 } else {
                     let n = makeCard(c)
                     let col = i % cols, row = i / cols
                     n.position = SCNVector3(Float(col) * 12 - 18, 0.3, Float(row) * 9 - 9)
-                    root.addChildNode(n); nodes[c.id] = n; modeOf[c.id] = c.mode.rawValue
+                    root.addChildNode(n); nodes[c.id] = n; modeOf[c.id] = sig
                 }
             }
             last = cards
@@ -188,9 +190,16 @@ struct LivingDeskCanvas: UIViewRepresentable {
             for h in hits { var n: SCNNode? = h.node; while let c = n { if c.name != nil { return c }; n = c.parent } }
             return nil
         }
-        private func deskPoint(at p: CGPoint) -> SCNVector3? {
-            guard let desk = deskNode, let hits = view?.hitTest(p, options: [.searchMode: SCNHitTestSearchMode.all.rawValue]) else { return nil }
-            return hits.first(where: { $0.node == desk })?.worldCoordinates
+        // Reliable finger-follow: cast the screen ray and intersect the horizontal plane at height y.
+        // (hitTest-on-desk fails once a lifted card occludes the surface, which wedged the drag.)
+        private func planePoint(at p: CGPoint, y: Float) -> SCNVector3? {
+            guard let v = view else { return nil }
+            let near = v.unprojectPoint(SCNVector3(Float(p.x), Float(p.y), 0))
+            let far = v.unprojectPoint(SCNVector3(Float(p.x), Float(p.y), 1))
+            let dy = far.y - near.y
+            if abs(dy) < 1e-4 { return nil }
+            let t = (y - near.y) / dy
+            return SCNVector3(near.x + (far.x - near.x) * t, y, near.z + (far.z - near.z) * t)
         }
 
         @objc func onTapGesture(_ g: UITapGestureRecognizer) {
@@ -211,13 +220,14 @@ struct LivingDeskCanvas: UIViewRepresentable {
                 n.physicsBody?.velocity = SCNVector3Zero
                 n.physicsBody?.angularVelocity = SCNVector4Zero
                 let cur = n.presentation.position
-                n.runAction(.move(to: SCNVector3(cur.x, liftY, cur.z), duration: 0.12))
+                n.position = SCNVector3(cur.x, liftY, cur.z)
             case .changed:
                 guard let n = picked else { return }
                 n.physicsBody?.velocity = SCNVector3Zero
-                if let wp = deskPoint(at: p) { n.position = SCNVector3(wp.x, liftY, wp.z) }
-            case .ended, .cancelled:
+                if let wp = planePoint(at: p, y: liftY) { n.position = SCNVector3(wp.x, liftY, wp.z) }
+            case .ended, .cancelled, .failed:
                 guard let n = picked else { return }
+                n.physicsBody?.velocity = SCNVector3Zero
                 n.physicsBody?.isAffectedByGravity = true       // release -> it falls + stacks from the lifted height
                 picked = nil
             default: break

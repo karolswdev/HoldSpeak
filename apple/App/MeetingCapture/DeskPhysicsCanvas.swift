@@ -33,26 +33,27 @@ struct DeskCardFace: View {
         let st = CardStyle.of(data.styleRaw)
         let tint = Color(hex: data.tintHex)
         let corner: CGFloat = m == .header ? 11 : 15
-        let chip: CGFloat = m == .full ? 40 : (m == .half ? 32 : 26)
+        let chip: CGFloat = m == .full ? 27 : (m == .half ? 22 : 18)
+        let seed = abs(data.id.hashValue)
+        let stickerRot = Double(seed % 17) - 8                          // rugged: each sticker sits at its own angle
         ZStack(alignment: .topLeading) {
             // card stock
-            CardPaper(tint: st.paper)
+            CardPaper(paper: st.paper)
             // a strip of tape (full cards only) — the creative, physical detail
             if m == .full {
-                RoundedRectangle(cornerRadius: 2).fill(Color.white.opacity(0.30))
-                    .frame(width: 50, height: 15).rotationEffect(.degrees(-4)).blendMode(.softLight)
-                    .overlay(RoundedRectangle(cornerRadius: 2).strokeBorder(.white.opacity(0.2), lineWidth: 0.5).rotationEffect(.degrees(-4)))
-                    .position(x: m.size.width * 0.5, y: 7)
+                RoundedRectangle(cornerRadius: 2).fill(Color.white.opacity(0.28))
+                    .frame(width: 46, height: 13).rotationEffect(.degrees(-4)).blendMode(.softLight)
+                    .position(x: m.size.width * 0.5, y: 6)
             }
             HStack(spacing: m == .header ? 8 : 11) {
-                // a die-cut STICKER of the pixel-art asset, stuck on at an angle
+                // a small, rugged die-cut STICKER of the pixel-art asset, slapped on at an angle
                 ZStack {
-                    RoundedRectangle(cornerRadius: chip * 0.26, style: .continuous).fill(.white)
-                        .shadow(color: .black.opacity(0.28), radius: 2.5, y: 1.5)
-                    DeskSprite(name: data.sprite, size: chip - 9)
+                    RoundedRectangle(cornerRadius: chip * 0.22, style: .continuous).fill(.white)
+                        .shadow(color: .black.opacity(0.22), radius: 1.5, y: 1)
+                    DeskSprite(name: data.sprite, size: chip - 6)
                 }.frame(width: chip, height: chip)
-                    .overlay(RoundedRectangle(cornerRadius: chip * 0.26, style: .continuous).strokeBorder(tint.opacity(0.55), lineWidth: 1.5))
-                    .rotationEffect(.degrees(-7))
+                    .overlay(RoundedRectangle(cornerRadius: chip * 0.22, style: .continuous).strokeBorder(tint.opacity(0.5), lineWidth: 1.2))
+                    .rotationEffect(.degrees(stickerRot))
                 VStack(alignment: .leading, spacing: 3) {
                     Text(data.title).font(.system(size: m == .header ? 13 : 15, weight: .heavy, design: .rounded))
                         .foregroundStyle(st.ink).lineLimit(1)
@@ -76,18 +77,18 @@ struct DeskCardFace: View {
     }
 }
 
-// The paper surface: the generated card-stock texture, a warm tint wash, and a soft edge vignette.
+// The paper surface: the generated card-stock texture, gently shifted toward the style's paper colour
+// (colorMultiply keeps it LIGHT — paper, not wood), plus a soft edge vignette.
 struct CardPaper: View {
-    let tint: Color
+    let paper: Color
     var body: some View {
-        ZStack {
-            if let ui = paperImage { Image(uiImage: ui).resizable().interpolation(.medium) }
-            else { tint }
-            tint.opacity(0.5).blendMode(.multiply)
-            RadialGradient(colors: [.clear, .black.opacity(0.10)], center: .init(x: 0.5, y: 0.4), startRadius: 30, endRadius: 170)
+        Group {
+            if let ui = UIImage(named: "paper") {
+                Image(uiImage: ui).resizable().interpolation(.medium).colorMultiply(paper)
+            } else { paper }
         }
+        .overlay(RadialGradient(colors: [.clear, .black.opacity(0.05)], center: .init(x: 0.5, y: 0.4), startRadius: 50, endRadius: 190))
     }
-    private var paperImage: UIImage? { UIImage(named: "paper") }
 }
 
 // Per-card customizable paper/ink palette.
@@ -156,7 +157,7 @@ struct CardStyle {
         body.restitution = 0.12; body.friction = 0.55; body.linearDamping = 4.6; body.angularDamping = 5.0
         body.mass = 1.0; body.allowsRotation = true
         n.physicsBody = body; n.name = c.id
-        n.userData = ["w": size.width, "h": size.height, "mode": c.mode.rawValue]
+        n.userData = ["w": size.width, "h": size.height, "sig": "\(c.mode.rawValue):\(c.styleRaw)"]
         return n
     }
 
@@ -174,7 +175,7 @@ struct CardStyle {
         var burst: [String: Int] = [:]
         for (i, c) in cards.enumerated() {
             if let n = nodes[c.id] {
-                if (n.userData?["mode"] as? String) != c.mode.rawValue {
+                if (n.userData?["sig"] as? String) != "\(c.mode.rawValue):\(c.styleRaw)" {
                     let p = n.position, r = n.zRotation, v = n.physicsBody?.velocity ?? .zero
                     n.removeFromParent()
                     let nn = makeCard(c); nn.position = p; nn.zRotation = r; nn.physicsBody?.velocity = v
