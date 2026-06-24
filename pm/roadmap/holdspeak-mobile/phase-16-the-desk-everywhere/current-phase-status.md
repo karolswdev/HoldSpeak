@@ -63,6 +63,13 @@ does the non-spatial version (detail → "Run a workflow" → `generate(workflow
 workflows and models first-class **DeskObjects** you combine, and makes their definitions/manifests flow
 so a workflow authored on one surface runs on any node of the mesh.
 
+**The atom under all of it — Ask AI (HSM-16-09).** The simplest, highest-value form of combine needs no
+authored graph at all: **lasso context → pull "Ask AI" from a drawer → speak a prompt → a card prints
+out of the shelf → keep it or bin it.** This is the gamified core of the whole DeskOS — context +
+spoken intent + a physical result you judge. A workflow is just this atom *saved and chained*. It runs
+**on-device today** and needs none of the mesh, which makes it the natural **lead** for the capability
+work — the fastest path to felt value while 16-02..05 build the sync underneath.
+
 Getting this taxonomy right is the difference between a mesh that feels coherent and one that fights
 the user. It is the spine of the whole phase.
 
@@ -75,12 +82,13 @@ the user. It is the spine of the whole phase.
 | HSM-16-03 | The desktop hub surface for organization | todo | sync (hub) |
 | HSM-16-04 | The web Astro Desk (parity build) | todo | parity (the big build) |
 | HSM-16-05 | Wire the mesh — organization flows back and forth | todo | sync (wire) |
+| HSM-16-09 | **The Ask AI atom** — lasso → ask → speak → print → keep/bin (on-device, no mesh needed) | todo | capability (the atom — a lead candidate) |
 | HSM-16-08 | Capability objects: workflows + models, combinable + runnable across the mesh | todo | capability (combine/execute) |
 | HSM-16-06 | The cross-device proof | todo | proof (real metal) |
 | HSM-16-07 | Docs catch-up (mesh + DeskObject across surfaces) | todo | docs |
 
-*(16-08 slots after 16-05 — once organization flows, the capability layer is the next thing to flow and
-combine. Numbered 08 to keep 06/07 as the closing proof + docs.)*
+*(16-08/09 are the capability layer; 09 is the atom 08 generalizes. 09 needs no sync and can lead. 06/07
+stay the closing proof + docs.)*
 
 ## Where we are
 

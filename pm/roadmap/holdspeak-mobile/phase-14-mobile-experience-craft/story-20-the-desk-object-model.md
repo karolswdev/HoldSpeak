@@ -51,6 +51,12 @@ desk once.
   **workflow** dropped on an **input** (a meeting / KB / selection) **runs** against it and blooms the
   result as artifacts; a **model** dropped on a workflow node sets that node's compute target. Combine
   *is* run — play is productivity. *(Designed in HSM-16-08; the executable, combinable layer.)*
+  - The **atom** of this gesture is **Ask AI** (HSM-16-09): lasso context → drop **Ask AI** from a
+    drawer → **speak** a prompt → a card **prints** out → **keep or bin** it. No authored graph; a
+    workflow is just this atom saved and chained. The most valuable combine, on-device today.
+- **Keep / bin** → *judge* — a freshly produced output card (from Ask or a workflow run) is **ephemeral
+  until judged**: **keep** promotes it to a real `Artifact` (Content — file-able, syncable, with
+  provenance); **bin** discards it. The output's lifecycle, made a gesture.
 - **Tidy** → snap the scatter into an aligned grid; pull apart to play.
 
 ## `open` — the three behaviors a tap can resolve to
