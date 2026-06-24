@@ -54,6 +54,9 @@ struct DeskCardFace: View {
 @MainActor final class DeskScene: SKScene {
     var onTap: (String) -> Void = { _ in }
     var onCycle: (String) -> Void = { _ in }
+    var onSelect: (Set<String>) -> Void = { _ in }
+    var lassoMode = false
+    private(set) var selected: Set<String> = []
     private var nodes: [String: SKNode] = [:]
     private var dragging: SKNode?
     private var dragOffset: CGPoint = .zero
@@ -62,6 +65,10 @@ struct DeskCardFace: View {
     private var velocity: CGVector = .zero
     private var downPoint: CGPoint = .zero
     private var panning = false
+    private var lassoing = false
+    private var lassoPts: [CGPoint] = []
+    private let lassoNode = SKShapeNode()
+    private let accentUI = UIColor(red: 1.0, green: 0x6B/255.0, blue: 0x35/255.0, alpha: 1.0)
     private var lp: DispatchWorkItem?
     let cam = SKCameraNode()
 
@@ -70,6 +77,10 @@ struct DeskCardFace: View {
         physicsWorld.gravity = .zero
         rebuildWalls()
         camera = cam; if cam.parent == nil { addChild(cam) }
+        lassoNode.strokeColor = accentUI; lassoNode.lineWidth = 2.5; lassoNode.glowWidth = 2
+        lassoNode.fillColor = accentUI.withAlphaComponent(0.08); lassoNode.lineCap = .round
+        lassoNode.zPosition = 60; lassoNode.lineJoin = .round
+        if lassoNode.parent == nil { addChild(lassoNode) }
     }
     override func didChangeSize(_ oldSize: CGSize) { rebuildWalls() }
     private func rebuildWalls() {
@@ -149,11 +160,13 @@ struct DeskCardFace: View {
                 self.onCycle(id)
             }
             lp = item; DispatchQueue.main.asyncAfter(deadline: .now() + 0.42, execute: item)
-        } else { panning = true }
+        } else if lassoMode { lassoing = true; lassoPts = [p]; updateLasso() }
+        else { panning = true }
     }
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let t = touches.first else { return }
         let p = t.location(in: self); let dt = max(0.001, t.timestamp - lastTime)
+        if lassoing { lassoPts.append(p); updateLasso(); lastPoint = p; lastTime = t.timestamp; return }
         if hypot(p.x - downPoint.x, p.y - downPoint.y) > 8 { lp?.cancel() }   // a drag, not a long-press
         velocity = CGVector(dx: (p.x - lastPoint.x)/CGFloat(dt), dy: (p.y - lastPoint.y)/CGFloat(dt))
         if let n = dragging { n.position = CGPoint(x: p.x - dragOffset.x, y: p.y - dragOffset.y) }
@@ -162,6 +175,7 @@ struct DeskCardFace: View {
     }
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         lp?.cancel()
+        if lassoing { finishLasso(); lassoing = false; dragging = nil; panning = false; return }
         guard let t = touches.first else { panning = false; return }
         let p = t.location(in: self); let moved = hypot(p.x - downPoint.x, p.y - downPoint.y)
         if let n = dragging {
@@ -174,18 +188,72 @@ struct DeskCardFace: View {
         }
         dragging = nil; panning = false
     }
-    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) { lp?.cancel(); dragging?.physicsBody?.isDynamic = true; dragging = nil; panning = false }
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) { lp?.cancel(); lassoing = false; lassoNode.path = nil; dragging?.physicsBody?.isDynamic = true; dragging = nil; panning = false }
+
+    // MARK: - Lasso multi-select
+    private func updateLasso() {
+        let path = CGMutablePath()
+        if let f = lassoPts.first { path.move(to: f); for q in lassoPts.dropFirst() { path.addLine(to: q) }; path.closeSubpath() }
+        lassoNode.path = path
+    }
+    private func finishLasso() {
+        lassoNode.path = nil
+        guard lassoPts.count > 2 else { lassoPts = []; selected = []; applySelection(); onSelect(selected); return }
+        let poly = lassoPts
+        selected = Set(nodes.compactMap { (id, n) in pointInPoly(n.position, poly) ? id : nil })
+        lassoPts = []; applySelection(); onSelect(selected)
+    }
+    private func pointInPoly(_ pt: CGPoint, _ poly: [CGPoint]) -> Bool {
+        var inside = false; var j = poly.count - 1
+        for i in 0..<poly.count {
+            let a = poly[i], b = poly[j]
+            if (a.y > pt.y) != (b.y > pt.y), pt.x < (b.x - a.x) * (pt.y - a.y) / (b.y - a.y) + a.x { inside.toggle() }
+            j = i
+        }
+        return inside
+    }
+    func applySelection() {
+        for (id, n) in nodes {
+            let ring = n.childNode(withName: "sel")
+            if selected.contains(id) {
+                if ring == nil {
+                    let w = (n.userData?["w"] as? CGFloat ?? 246), h = (n.userData?["h"] as? CGFloat ?? 78)
+                    let r = SKShapeNode(rectOf: CGSize(width: w + 12, height: h + 12), cornerRadius: 22)
+                    r.name = "sel"; r.strokeColor = accentUI; r.lineWidth = 3; r.glowWidth = 5
+                    r.fillColor = accentUI.withAlphaComponent(0.10); r.zPosition = -1
+                    n.addChild(r)
+                }
+            } else { ring?.removeFromParent() }
+        }
+    }
+    func clearSelection() { selected = []; applySelection(); onSelect(selected) }
+    func gather() {                                  // pull the selected cards into a tight bundle in view
+        guard !selected.isEmpty else { return }
+        let sel = nodes.filter { selected.contains($0.key) }.map(\.value)
+        let cx = sel.map { $0.position.x }.reduce(0, +) / CGFloat(sel.count)
+        let cy = sel.map { $0.position.y }.reduce(0, +) / CGFloat(sel.count)
+        for (i, n) in sel.enumerated() {
+            n.physicsBody?.velocity = .zero; n.physicsBody?.angularVelocity = 0
+            let a = CGFloat(i) * 2.399, rad = CGFloat(i) * 9
+            n.run(.group([.move(to: CGPoint(x: cx + cos(a) * rad, y: cy + sin(a) * rad), duration: 0.32),
+                          .rotate(toAngle: CGFloat.random(in: -0.05...0.05), duration: 0.32, shortestUnitArc: true)]))
+        }
+    }
 }
 
 struct DeskPhysicsCanvas: UIViewRepresentable {
     let cards: [DeskCardData]
     var tidyToken: Int
     var zoomToken: Int
+    var lassoMode: Bool
+    var clearToken: Int
+    var gatherToken: Int
     let onTap: (String) -> Void
     let onCycle: (String) -> Void
+    let onSelect: (Set<String>) -> Void
 
     func makeCoordinator() -> Coord { Coord() }
-    final class Coord { var scene: DeskScene?; var lastTidy = 0; var lastZoom = 0; var last: [DeskCardData] = [] }
+    final class Coord { var scene: DeskScene?; var lastTidy = 0; var lastZoom = 0; var lastClear = 0; var lastGather = 0; var last: [DeskCardData] = [] }
 
     func makeUIView(context: Context) -> SKView {
         let v = SKView(); v.allowsTransparency = true; v.backgroundColor = .clear
@@ -195,11 +263,13 @@ struct DeskPhysicsCanvas: UIViewRepresentable {
     }
     func updateUIView(_ v: SKView, context: Context) {
         guard let scene = context.coordinator.scene else { return }
-        scene.onTap = onTap; scene.onCycle = onCycle
+        scene.onTap = onTap; scene.onCycle = onCycle; scene.onSelect = onSelect; scene.lassoMode = lassoMode
         let size = v.bounds.size; if size.width > 1 { scene.size = size }
-        if cards != context.coordinator.last { scene.sync(cards, size: size); context.coordinator.last = cards }
+        if cards != context.coordinator.last { scene.sync(cards, size: size); scene.applySelection(); context.coordinator.last = cards }
         if tidyToken != context.coordinator.lastTidy { scene.tidy(cards, size: size); context.coordinator.lastTidy = tidyToken }
         if zoomToken != context.coordinator.lastZoom { scene.resetZoom(); context.coordinator.lastZoom = zoomToken }
+        if clearToken != context.coordinator.lastClear { scene.clearSelection(); context.coordinator.lastClear = clearToken }
+        if gatherToken != context.coordinator.lastGather { scene.gather(); context.coordinator.lastGather = gatherToken }
     }
 }
 extension DeskPhysicsCanvas.Coord {
