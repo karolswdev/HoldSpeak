@@ -114,11 +114,11 @@ func buildScene() -> SCNScene {
     // Props — real poly.pizza CC0 models arranged around the work area.
     // Explicit per-prop scales (auto-fit is unreliable — these models have wildly different native sizes).
     let props: [(String, Float, Float, Float, Float)] = [
-        ("lightdesk", 17,   -22, -10, 0.5),
-        ("plant",      4.0,  22, -10, 0),
-        ("books",      5.5, -20,  6, 0.3),
-        ("mug",       26,    18,  7, 0),
-        ("keyboard",   0.035, 0, -6, 3.14),
+        ("lightdesk",  17,   -22, -10, 0.5),
+        ("plant",       4.0,  22, -10, 0),
+        ("books",       5.5, -20,  6, 0.3),
+        ("mug",        26,    19,  8, 0),
+        ("keyboard",    0.035, 0, -6, 3.14),
     ]
     for (n, s, x, z, ry) in props {
         if let p = loadProp(n, scale: s, x, z, rotY: ry) { scene.rootNode.addChildNode(p) }

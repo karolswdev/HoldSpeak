@@ -54,9 +54,15 @@ struct LivingDeskCanvas: UIViewRepresentable {
         private var last: [DeskCardData] = []
         private var picked: SCNNode?
         private let liftY: Float = 3.4
+        // Haptics — the feel layer.
+        private let hLight = UIImpactFeedbackGenerator(style: .light)
+        private let hMed = UIImpactFeedbackGenerator(style: .medium)
+        private var lastTick: CFTimeInterval = 0
+        private var lastFling: CFTimeInterval = -10
 
         init(onTap: @escaping (String) -> Void, onCycle: @escaping (String) -> Void) {
             self.onTap = onTap; self.onCycle = onCycle
+            super.init(); hLight.prepare(); hMed.prepare()
         }
 
         // MARK: scene
@@ -64,6 +70,7 @@ struct LivingDeskCanvas: UIViewRepresentable {
         func buildScene() -> SCNScene {
             let scene = SCNScene()
             scene.physicsWorld.gravity = SCNVector3(0, -9.8, 0)
+            scene.physicsWorld.contactDelegate = self           // landing/collision haptics
             scene.background.contents = UIColor(white: 0.05, alpha: 1)
             scene.lightingEnvironment.contents = UIColor(white: 0.72, alpha: 1)
             scene.lightingEnvironment.intensity = 1.25
@@ -89,13 +96,15 @@ struct LivingDeskCanvas: UIViewRepresentable {
             dnode.physicsBody?.friction = 0.85; dnode.physicsBody?.restitution = 0.04
             scene.rootNode.addChildNode(dnode); deskNode = dnode
 
-            // Leather desk mat — the work surface the cards sit on (grounds the scene).
-            let pad = SCNBox(width: 42, height: 0.3, length: 26, chamferRadius: 1.6)
+            // Leather desk mat — a real surface (physics) so cards rest ON it, not fall through + hide under.
+            let pad = SCNBox(width: 36, height: 0.5, length: 22, chamferRadius: 1.6)
             let pmat = SCNMaterial(); pmat.lightingModel = .blinn
-            pmat.diffuse.contents = UIColor(red: 0.14, green: 0.12, blue: 0.11, alpha: 1)
-            pmat.specular.contents = UIColor(white: 0.18, alpha: 1)
+            pmat.diffuse.contents = UIColor(red: 0.16, green: 0.13, blue: 0.12, alpha: 1)
+            pmat.specular.contents = UIColor(white: 0.16, alpha: 1)
             pad.materials = [pmat]
-            let padNode = SCNNode(geometry: pad); padNode.position = SCNVector3(0, 0.1, 3)
+            let padNode = SCNNode(geometry: pad); padNode.position = SCNVector3(0, 0.25, 3)
+            padNode.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+            padNode.physicsBody?.friction = 0.9; padNode.physicsBody?.restitution = 0.02
             scene.rootNode.addChildNode(padNode)
 
             // Key light — the main shadow caster. On a real SCNView a directional shadow needs an
@@ -167,8 +176,9 @@ struct LivingDeskCanvas: UIViewRepresentable {
             let container = SCNNode(); container.name = c.id; container.addChildNode(visual)
             let body = SCNPhysicsBody(type: .dynamic,
                 shape: SCNPhysicsShape(geometry: SCNBox(width: w, height: thick, length: h, chamferRadius: 0), options: nil))
-            body.friction = 0.75; body.restitution = 0.06; body.mass = 0.6
-            body.angularDamping = 0.7; body.damping = 0.5
+            body.friction = 0.82; body.restitution = 0.05; body.mass = 0.6
+            body.angularDamping = 0.85; body.damping = 0.72        // settle, don't slide forever
+            body.contactTestBitMask = 1                            // fire landing/collision contacts
             container.physicsBody = body
             return container
         }
@@ -177,7 +187,6 @@ struct LivingDeskCanvas: UIViewRepresentable {
             guard let root = view?.scene?.rootNode else { return }
             let ids = Set(cards.map(\.id))
             for (id, n) in nodes where !ids.contains(id) { n.removeFromParentNode(); nodes[id] = nil; modeOf[id] = nil }
-            let cols = 4
             for (i, c) in cards.enumerated() {
                 let sig = "\(c.mode.rawValue):\(c.styleRaw)"
                 if let n = nodes[c.id] {
@@ -188,8 +197,8 @@ struct LivingDeskCanvas: UIViewRepresentable {
                     }
                 } else {
                     let n = makeCard(c)
-                    let col = i % cols, row = i / cols
-                    n.position = SCNVector3(Float(col) * 12 - 18, 0.3, Float(row) * 9 - 9)
+                    let col = i % 3, row = i / 3
+                    n.position = SCNVector3(Float(col) * 9.5 - 9.5, 0.9, Float(row) * 5.5 - 2)   // on the mat
                     root.addChildNode(n); nodes[c.id] = n; modeOf[c.id] = sig
                 }
             }
@@ -229,6 +238,7 @@ struct LivingDeskCanvas: UIViewRepresentable {
             case .began:
                 guard let n = cardNode(at: p) else { return }
                 picked = n
+                hLight.impactOccurred(intensity: 0.7)           // lift
                 n.physicsBody?.isAffectedByGravity = false      // hold it up, move it kinematically
                 n.physicsBody?.velocity = SCNVector3Zero
                 n.physicsBody?.angularVelocity = SCNVector4Zero
@@ -250,9 +260,12 @@ struct LivingDeskCanvas: UIViewRepresentable {
                     let vx = (p1.x - p0.x) / 0.1 * 0.55, vz = (p1.z - p0.z) / 0.1 * 0.55
                     n.physicsBody?.velocity = SCNVector3(vx, -1, vz)
                     n.physicsBody?.angularVelocity = SCNVector4(0, 1, 0, Float.random(in: -1.5...1.5))
+                    hMed.impactOccurred(intensity: 0.9)         // fling
                 } else {
                     n.physicsBody?.velocity = SCNVector3Zero
+                    hLight.impactOccurred(intensity: 0.5)       // set down
                 }
+                lastFling = CACurrentMediaTime()
                 picked = nil
             default: break
             }
@@ -272,5 +285,19 @@ struct LivingDeskCanvas: UIViewRepresentable {
             cam.fieldOfView = max(20, min(58, cam.fieldOfView / Double(g.scale)))
             g.scale = 1
         }
+
+        // A landing "clack" — only in the ~1.6s after a drop/fling, so idle resting cards don't buzz.
+        @MainActor private func contactTick() {
+            let t = CACurrentMediaTime()
+            guard t - lastFling < 1.6, t - lastTick > 0.07 else { return }
+            lastTick = t
+            hLight.impactOccurred(intensity: 0.6)
+        }
+    }
+}
+
+extension LivingDeskCanvas.Coord: SCNPhysicsContactDelegate {
+    nonisolated func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
+        DispatchQueue.main.async { [weak self] in self?.contactTick() }
     }
 }
