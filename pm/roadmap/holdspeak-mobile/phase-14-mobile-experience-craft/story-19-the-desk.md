@@ -123,6 +123,9 @@ ViewModels/        MeetingReviewState, CaptureModel, … (lifted out of the view
 - **The object convention is canon in [[story-20-the-desk-object-model]]** — every primitive (meeting,
   output, model, directory, knowledge base, …) is one **DeskObject** filling in the same facets; add a
   kind by declaring it, not by coding it. Knowledge Base is the first primitive built *on* that convention.
+- **The desk is a *place* — [[story-21-desk-environments]]** is canon for themeable environments (a lamp
+  on a marble table, a mousepad, real light) with **3 shipped environments + a builder**, from free CC0
+  assets. Pixel-art objects on rich material surfaces under real light is the signature look.
 - Craft bar: bespoke objects over SF glyphs/CSS shapes (lean on PixelLab — [[project_qlippy_mascot]]).
 - The contrast — pixel-art **objects** on **sleek** dark chrome — is the premium feel; keep both.
 - Prove on the device, not seeded shots, for anything claimed `done` (see
