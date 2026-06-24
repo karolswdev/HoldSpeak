@@ -16,10 +16,15 @@ in them — has no representation on the wire, so it cannot leave the device tha
 ## Scope
 
 - **In:**
-  - Extend `SyncKind` with `directory`, `knowledgeBase`, `membership` (additive — mirrors the
-    HSM-10-01 principle: sync the real entities in a thin `Synced` envelope, never a parallel schema).
-  - Define the contract entities (`Directory`, `KnowledgeBase`, `Membership`) in `Sources/Contracts`,
-    and widen `ChangeSet` to carry them.
+  - Extend `SyncKind` with `directory`, `knowledgeBase`, `membership` (organization) **and `workflow`,
+    `modelManifest` (capability)** — additive, mirroring the HSM-10-01 principle: sync the real entities
+    in a thin `Synced` envelope, never a parallel schema.
+  - Define the contract entities (`Directory`, `KnowledgeBase`, `Membership`, **`Workflow`** definition,
+    **`ModelManifest`** entry) in `Sources/Contracts`, and widen `ChangeSet` to carry them.
+  - **Capability nuance (decided in the phase taxonomy):** a **workflow definition** is portable data
+    and syncs in full. A **model** does NOT: only its **manifest** (node id, model id, capabilities,
+    context limit) syncs — the GGUF binary stays device-local. So `modelManifest` is a small
+    capability advertisement per node, not the file; the binary is never a `Synced` payload.
   - **Conflict + identity policy:** containers keyed by stable id (not display name — names are
     editable); membership is the assignment `objectId → containerId`, last-writer-wins by
     `lastModified`; deletes are tombstones (a removed KB propagates as a tombstone, its memberships
@@ -33,8 +38,9 @@ in them — has no representation on the wire, so it cannot leave the device tha
 
 ## Acceptance criteria
 
-- [ ] `SyncKind` + `ChangeSet` carry directories, knowledge bases, and memberships as `Synced`
-      envelopes; the entity structs are pure (sync header rides outside).
+- [ ] `SyncKind` + `ChangeSet` carry directories, knowledge bases, memberships, **workflow definitions,
+      and model manifests** as `Synced` envelopes; the entity structs are pure (sync header rides
+      outside). The GGUF binary is provably never a sync payload (only the manifest).
 - [ ] The conflict/identity/tombstone policy is written down and unit-tested (a rename, a re-file, and
       a delete each reconcile deterministically).
 - [ ] The "desktop is canonical, devices reconcile" model is specified, including how the iPad's

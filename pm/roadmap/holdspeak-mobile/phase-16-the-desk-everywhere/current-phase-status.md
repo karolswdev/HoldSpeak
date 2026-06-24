@@ -40,10 +40,28 @@ Not everything on the desk is the same *kind* of data, and conflating them would
 - **Organization** — Directories, Knowledge Bases, and **membership/classification** (which object
   belongs to which container). This is **shared, canonical, must-sync** data. A KB and its contents are
   the same on every surface. *(New: HSM-16-02 adds it to the sync model; the desktop is the hub.)*
+- **Capability** — the **executable, combinable** layer. Two members, treated differently on the wire:
+  - **Workflows** — the Workbench's visual-programming AI programs (the node graph / blueprint). The
+    **definition is portable canonical data → it syncs** (author on the iPad, run on the Mac). A
+    workflow is a first-class object you **combine**: drop it onto a meeting / KB / selection and it
+    **runs immediately**, producing Content (artifacts).
+  - **Models** — the GGUF cartridges. A model **binary is device-local** (you do not sling gigabytes
+    across the mesh; the iPad can't hold the Mac's big model). What **syncs is the model *manifest***:
+    "this node has this model, with these capabilities." That lets a workflow say *run on a reasoning
+    model* and the mesh **resolve the target per node** — exactly Phase-15 fluid compute (RUNS-ON:
+    on-device / your Mac / endpoint). Manifest syncs; binary stays put.
 - **Layout** — where a card physically sits, its presentation mode, whether it's spilled. This is
   **per-device ergonomics**, not shared truth. It does **not** sync as canon (a desk you arranged on
   the iPad is yours; the web arranges its own). At most a soft, last-write hint — never a conflict
   source.
+
+**The cross-cutting behavior — combination/execution.** The classes are not islands: a **Workflow**
+(capability) runs against an **input** (content or organization) on a **target Model** (capability,
+resolved per node) and emits **Content** (artifacts). "Run a workflow immediately against something" is
+the desk made productive — a drag-drop on the canvas, the same gesture as play. The Workbench already
+does the non-spatial version (detail → "Run a workflow" → `generate(workflowTypes:)`); this phase makes
+workflows and models first-class **DeskObjects** you combine, and makes their definitions/manifests flow
+so a workflow authored on one surface runs on any node of the mesh.
 
 Getting this taxonomy right is the difference between a mesh that feels coherent and one that fights
 the user. It is the spine of the whole phase.
@@ -57,8 +75,12 @@ the user. It is the spine of the whole phase.
 | HSM-16-03 | The desktop hub surface for organization | todo | sync (hub) |
 | HSM-16-04 | The web Astro Desk (parity build) | todo | parity (the big build) |
 | HSM-16-05 | Wire the mesh — organization flows back and forth | todo | sync (wire) |
+| HSM-16-08 | Capability objects: workflows + models, combinable + runnable across the mesh | todo | capability (combine/execute) |
 | HSM-16-06 | The cross-device proof | todo | proof (real metal) |
 | HSM-16-07 | Docs catch-up (mesh + DeskObject across surfaces) | todo | docs |
+
+*(16-08 slots after 16-05 — once organization flows, the capability layer is the next thing to flow and
+combine. Numbered 08 to keep 06/07 as the closing proof + docs.)*
 
 ## Where we are
 

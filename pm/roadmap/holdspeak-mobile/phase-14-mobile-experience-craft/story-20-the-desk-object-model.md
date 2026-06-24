@@ -47,6 +47,10 @@ desk once.
 - **Lasso** (Select tool) → *select* — a loop gathers every object whose center it encloses.
 - **Bundle** → *cluster* the selection into a tight pack where it sits.
 - **File into** → *classify* — drop the selection into a container (directory or knowledge base).
+- **Drop-on** → *combine* — dropping one object on another combines them. The headline case: a
+  **workflow** dropped on an **input** (a meeting / KB / selection) **runs** against it and blooms the
+  result as artifacts; a **model** dropped on a workflow node sets that node's compute target. Combine
+  *is* run — play is productivity. *(Designed in HSM-16-08; the executable, combinable layer.)*
 - **Tidy** → snap the scatter into an aligned grid; pull apart to play.
 
 ## `open` — the three behaviors a tap can resolve to
@@ -85,10 +89,17 @@ Once the registry exists, each of these is a declaration, not a project:
 
 - **Data classification** — a "bucket" container kind; lasso mixed objects, file them into a labelled
   class; the bucket spills its class back. (KB and directory are the first two instances.)
-- **Workflows** — a `workflow` kind whose `open` is `.window(WorkbenchApp)`; drop a model + a meeting on
-  it to run (HSM-14-19 pillar 5).
+- **Workflows** — a `workflow` kind: the Workbench's visual-programming AI program as a first-class
+  object. `open` is `.window(WorkbenchApp)` to edit; **drop-on** an input to **run** it immediately
+  (combine = run). Its definition is portable and syncs across the mesh (author here, run on the Mac).
+- **Models** — a `model` kind: the cartridge. **drop-on** a workflow node to set that node's RUNS-ON
+  target. The binary is device-local; only its capability **manifest** travels the mesh.
 - **Live transcript slips** — a `slip` kind on the live canvas; lasso → action ring (Extract/Tack/Note).
 - **People / speakers**, **projects**, **plugin outputs** — all just kinds.
+
+Workflows and models are the **capability** layer — executable and combinable, not passive data. Making
+them first-class objects (with the **drop-on/combine** interaction) and syncing their
+definitions/manifests is HSM-16-08. They sit in the same convention as everything else.
 
 ## Scope of the build
 
