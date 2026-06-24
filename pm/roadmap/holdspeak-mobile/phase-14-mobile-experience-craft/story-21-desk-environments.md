@@ -58,20 +58,31 @@ builder is just exposing the composition the 3 presets already use.
 
 ## Free asset sourcing (real, commercial-safe)
 
-The materials and props come from **CC0 / permissive** libraries (no attribution traps):
+**Two asset kinds, two sources:** flat **materials** (surfaces/mats) come from texture libraries; **3D
+props** (the lamp, mug, plant, pen cup) and **modular building pieces** come from **poly.pizza** — a huge
+CC0/CC-BY library of real glTF models. The lamp becomes an *actual 3D model that emits the light*, not a
+faked gradient — that is what makes the room real.
 
-- **ambientCG** (ambientcg.com) — CC0 PBR materials: marble, wood, slate, leather, fabric, carbon. The
-  surfaces + mats.
-- **Poly Haven** (polyhaven.com) — CC0 textures, **HDRIs** (light references), and models (a lamp, a
-  mug) for props.
-- **Kenney.nl** + **Quaternius** — CC0 game props/UI.
-- **PixelLab** (already vendored) — generate matching **pixel-art props** (lamp, mug, mousepad) to keep
-  the object language consistent where a pixel prop reads better than a photo one.
-- Verify each asset's license at fetch time; record provenance in an `assets/CREDITS.md`. Prefer CC0;
-  never ship an attribution-required asset without the credit line.
+- **poly.pizza** (CC0/CC-BY glTF models) — the primary **3D prop + building-block** source. Owner-picked
+  examples, all **CC0 / public domain**:
+  - **"Light Desk"** by Quaternius — the **desk lamp** prop (the model the environment's `SCNLight`
+    lives inside).
+  - **"Modular Road Kit"** (Kenney) + **"Road Bits"** (Kay Lousberg) — **modular snap-together pieces**:
+    the real basis for the **barrier/wall building set** ([[story-22-the-living-desk]]), elevating
+    "a pencil" into a proper modular construction kit.
+  - …plus mugs, plants, pen cups, books for set-dressing — "poly.pizza has a ton of stuff."
+- **ambientCG** (ambientcg.com) — CC0 PBR **materials**: marble, walnut, slate, leather, carbon — the
+  desk **surfaces + mats**.
+- **Poly Haven** (polyhaven.com) — CC0 textures + **HDRIs** (the `lightingEnvironment` IBL fill).
+- **PixelLab** (vendored) — matching **pixel-art** props where a pixel piece reads better than a model.
 
-Aesthetic call: **photoreal material surfaces + lighting** under **pixel-art objects/props**. The
-contrast is the brand (carries the [[story-19-the-desk]] "pixel objects on premium chrome" note forward).
+**Asset pipeline:** poly.pizza glTF/GLB → **USDZ** (Reality Converter / `usdzconvert`) → bundled → loaded
+natively by SceneKit (`SCNScene(named:)` / Model I/O). Record every asset + license in
+`assets/CREDITS.md`. Prefer CC0; credit CC-BY.
+
+Aesthetic call: **photoreal material surfaces + real 3D props under real light**, with **pixel-art
+objects** (cassette/crystal) as the cards on top — the contrast is the brand (carries the
+[[story-19-the-desk]] "pixel objects on premium chrome" note forward).
 
 ## Sync / taxonomy note
 

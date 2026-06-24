@@ -67,17 +67,32 @@ func buildScene() -> SCNScene {
     let padNode = SCNNode(geometry: pad); padNode.position = SCNVector3(-2, 0.12, 0.5)
     scene.rootNode.addChildNode(padNode)
 
-    // Lamp — a warm spot pooling light from the upper-left, casting real soft shadows.
+    // The lamp is a REAL 3D MODEL (poly.pizza CC0 "Light Desk" by Quaternius) standing on the marble,
+    // and the light emanates from its head — not a faked gradient.
+    if let lampModel = try? SCNScene(url: URL(fileURLWithPath: "assets/models/lightdesk.obj"), options: nil) {
+        let lm = SCNNode()
+        for c in lampModel.rootNode.childNodes { lm.addChildNode(c) }
+        let mat = SCNMaterial(); mat.lightingModel = .blinn
+        mat.diffuse.contents = NSColor(calibratedWhite: 0.16, alpha: 1)
+        mat.specular.contents = NSColor(calibratedWhite: 0.55, alpha: 1); mat.shininess = 0.4
+        lm.enumerateHierarchy { n, _ in n.geometry?.materials = [mat] }
+        lm.scale = SCNVector3(17, 17, 17)
+        lm.position = SCNVector3(-13, 0, -3)
+        lm.eulerAngles = SCNVector3(0, 0.7, 0)
+        scene.rootNode.addChildNode(lm)
+    }
+
+    // The desk-lamp's throw — a warm spot originating at the lamp head, casting real soft shadows.
     let lampNode = SCNNode()
     let lamp = SCNLight(); lamp.type = .spot
     lamp.color = NSColor(calibratedRed: 1.0, green: 0.88, blue: 0.72, alpha: 1)
-    lamp.intensity = 1500
-    lamp.spotInnerAngle = 34; lamp.spotOuterAngle = 82
-    lamp.attenuationStartDistance = 20; lamp.attenuationEndDistance = 80
+    lamp.intensity = 1900
+    lamp.spotInnerAngle = 30; lamp.spotOuterAngle = 80
+    lamp.attenuationStartDistance = 6; lamp.attenuationEndDistance = 60
     lamp.castsShadow = true; lamp.shadowMode = .forward; lamp.shadowSampleCount = 32
     lamp.shadowRadius = 8; lamp.shadowColor = NSColor(calibratedWhite: 0, alpha: 0.34)
-    lampNode.light = lamp; lampNode.position = SCNVector3(-13, 30, 8)
-    lampNode.look(at: SCNVector3(-1, 0, -2))
+    lampNode.light = lamp; lampNode.position = SCNVector3(-11, 8.5, -2)
+    lampNode.look(at: SCNVector3(-3, 0, 2))
     scene.rootNode.addChildNode(lampNode)
 
     // A strong near-top-down key so the whole marble reads evenly bright (predictable, device-like).

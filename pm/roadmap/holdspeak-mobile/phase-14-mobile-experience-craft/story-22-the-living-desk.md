@@ -32,9 +32,12 @@ SceneKit gives the whole vision natively:
   rises** in z (lifts off the surface, its shadow grows + softens, a slight tilt toward the viewer).
   **Release → gravity drops it**; it can **land on another card and stack**, or slide and settle. Real
   `SCNPhysicsBody` collisions.
-- **Buildable barriers** — the user pulls **pencils / erasers / clay** from a drawer and places them as
-  **collidable physics nodes**: lay a pencil as a low wall, mound clay into a pen, build a corral. The
-  objects respect them — roll up to them, stop, pile behind them. The desk becomes a space you *shape*.
+- **Buildable barriers** — the user pulls building pieces from a drawer and places them as **collidable
+  physics nodes**: lay a wall, build a pen, make a corral. Objects respect them — roll up, stop, pile
+  behind. The pieces are **real CC0 3D models from poly.pizza**: simple materials (pencils / erasers /
+  clay) AND a **modular snap-together kit** (e.g. Kenney "Modular Road Kit" / Kay Lousberg "Road Bits")
+  so walls click together into real structures, not just dropped sticks. The desk becomes a space you
+  *shape*. *(Asset pipeline + sources in [[story-21-desk-environments]].)*
 
 The **DeskObject convention is unchanged** — objects are still objects, the gestures still mean the same
 things; only the **rendering + physics gain a dimension**. Tap still opens (spill/window/read);
