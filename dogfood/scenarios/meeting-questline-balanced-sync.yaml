@@ -1,0 +1,33 @@
+id: meeting-questline-balanced-sync
+kind: meeting
+repo: questline
+profile: balanced
+title: "Questline — weekly team sync (balanced)"
+description: >
+  A short, mixed-topic weekly sync — deliberately messy so multi-intent routing
+  has to surface a buried decision and a couple of action items among small talk.
+  Good for the 'balanced' profile and for testing that brief intents are not
+  dropped. Expect: a captured decision, action items with owners, maybe a
+  stakeholder-update draft.
+lines:
+  - speaker: Dana
+    voice: Samantha
+    text: "Morning all, quick weekly sync. How was everyone's weekend? Let's keep it tight, I've got a hard stop at the bottom of the hour."
+  - speaker: Tom
+    voice: Daniel
+    text: "Good. Quick one from me, the onboarding fix is on track, M1 should be done this week. Nothing blocking."
+  - speaker: Meaghan
+    voice: Karen
+    text: "Same, streak timezone fix is in review. Oh, one thing we should actually decide, do we want to send a monthly product update email to users or not? Marketing keeps asking."
+  - speaker: Dana
+    voice: Samantha
+    text: "Hmm. Yeah let's decide it now so it stops coming up. I think yes, a short monthly update, opt-in, nothing spammy. Decision, we'll do a monthly opt-in product update email starting next month."
+  - speaker: Tom
+    voice: Daniel
+    text: "Works for me. Also random, the staging database was slow yesterday, probably nothing, I'll keep an eye on it."
+  - speaker: Meaghan
+    voice: Karen
+    text: "Okay. So action-wise, I'll draft the first monthly update email. Tom you're watching staging. Dana, can you tell marketing we said yes to the monthly email?"
+  - speaker: Dana
+    voice: Samantha
+    text: "Yep, I'll let marketing know and I'll send a short note to the leadership channel that onboarding M1 lands this week. That's it, thanks everyone."

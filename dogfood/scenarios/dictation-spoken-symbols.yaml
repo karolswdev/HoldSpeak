@@ -1,0 +1,16 @@
+id: dictation-spoken-symbols
+kind: dictation
+repo: ledgerline
+voice: Samantha
+language: en
+description: >
+  Exercises the spoken-symbol dictionary (HS-59-02). Configure
+  config.dictation.spoken_symbols with entries like {"at sign": "@"},
+  {"hash": "#", attach: left}, {"dash": "-"}. After transcription + symbol
+  rewriting, "at sign" should become "@", etc. Verify the attach modes
+  (none/left/right/both) control spacing. These are short, deliberate.
+utterances:
+  - "email me at sign ledgerline dot dev"
+  - "see issue hash one one eight for the double post"
+  - "the flag is dash dash dry run"
+  - "rate is fifty percent sign of the total"

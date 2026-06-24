@@ -154,7 +154,7 @@ class WebRuntimeCallbacks:
     # route) into the waiting coder session via the SAME tmux/type path local dictation
     # uses. Deliver-on-command only; raises if undeliverable so the client sees an
     # honest failure rather than a false ack.
-    on_remote_dictation: Optional[Callable[[str], Any]] = None
+    on_remote_dictation: Optional[Callable[..., Any]] = None
     project_detector: Optional[Any] = None
     device_registry: Optional["DeviceRegistry"] = None
     device_psk_provider: Optional[Callable[[], str]] = None
@@ -285,6 +285,9 @@ class MeetingWebServer:
         self._server: Optional[Any] = None
         self._thread: Optional[threading.Thread] = None
         self._started = threading.Event()
+        # HSM-15-10: LAN discovery advertiser, created at start() once the port
+        # is bound, only off-loopback. Best-effort (never blocks/crashes start).
+        self._mesh_advertiser: Optional[Any] = None
 
         self._loop: Optional[asyncio.AbstractEventLoop] = None
         self._ws = WebSocketManager()
@@ -344,6 +347,12 @@ class MeetingWebServer:
             raise RuntimeError("Server started but URL is unknown")
 
         log.info(f"Meeting web server started: {self.url}")
+
+        # HSM-15-10: advertise on the LAN once bound (off-loopback only). Wholly
+        # best-effort — a failure here logs a warning and never affects the
+        # already-running server.
+        self._start_mesh_advertising()
+
         return self.url
 
     def stop(self) -> None:
@@ -352,6 +361,8 @@ class MeetingWebServer:
             return
 
         log.info("Stopping meeting web server")
+        # HSM-15-10: unregister the LAN advertisement before tearing down.
+        self._stop_mesh_advertising()
         self._server.should_exit = True
 
         if self._thread is not None:
@@ -362,6 +373,47 @@ class MeetingWebServer:
         self._loop = None
         self._duration_task = None
         self._started.clear()
+
+    def _start_mesh_advertising(self) -> None:
+        """Advertise this server on the LAN (HSM-15-10), best-effort.
+
+        Off-loopback binds only; any failure (zeroconf missing, registration
+        error) is logged inside the advertiser and never propagates here.
+        """
+        from . import web_auth
+
+        if web_auth.is_loopback_host(self.host) or self.port is None:
+            return
+        try:
+            from . import __version__
+            from .config import Config
+            from .mesh import MeshAdvertiser, resolve_device_name
+
+            try:
+                configured_name = Config.load().mesh.device_name
+            except Exception:
+                configured_name = ""
+            advertiser = MeshAdvertiser(
+                device_name=resolve_device_name(configured_name),
+                host=self.host,
+                port=self.port,
+                version=__version__,
+                requires_token=True,  # off-loopback always requires the token
+            )
+            advertiser.start()
+            self._mesh_advertiser = advertiser
+        except Exception as e:  # pragma: no cover - defensive; advertiser self-guards
+            log.warning(f"Mesh advertising could not start: {e}")
+
+    def _stop_mesh_advertising(self) -> None:
+        advertiser = self._mesh_advertiser
+        self._mesh_advertiser = None
+        if advertiser is None:
+            return
+        try:
+            advertiser.stop()
+        except Exception as e:  # pragma: no cover - defensive
+            log.debug(f"Mesh advertising stop failed: {e}")
 
     def broadcast(self, message_type: str, data: Any) -> None:
         """Broadcast an update to all connected WebSocket clients."""
@@ -400,7 +452,11 @@ class MeetingWebServer:
         # binds stay fully open (the long-standing "localhost is trusted" model).
         # The device-audio WebSocket keeps its own PSK handshake and is exempt;
         # /health stays open for liveness probes.
-        _auth_exempt_paths = {"/health", "/api/devices/audio"}
+        # HSM-15-10: `/api/mesh/info` is the unauthenticated identify endpoint a
+        # freshly-discovered (not-yet-paired) companion hits to learn the
+        # server's name/version + whether pairing needs a token. It leaks nothing
+        # sensitive, so it stays open even off-loopback.
+        _auth_exempt_paths = {"/health", "/api/devices/audio", "/api/mesh/info"}
 
         @app.middleware("http")
         async def _web_auth_gate(request: Request, call_next: Any) -> Any:
@@ -450,6 +506,7 @@ class MeetingWebServer:
             build_dictation_router,
             build_meeting_import_router,
             build_meetings_router,
+            build_mesh_router,
             build_pages_router,
             build_projects_router,
             build_setup_router,
@@ -491,10 +548,14 @@ class MeetingWebServer:
             corrections=self.dictation_corrections,
             telemetry=self.dictation_telemetry,
             journal=self.dictation_journal,
+            # HSM-15-10: a server bound off-loopback requires the auth token; the
+            # mesh identify endpoint surfaces that to an unpaired companion.
+            mesh_requires_token=not web_auth.is_loopback_host(self.host),
         )
         app.include_router(build_core_router(web_ctx))
         app.include_router(build_meetings_router(web_ctx))
         app.include_router(build_meeting_import_router(web_ctx))
+        app.include_router(build_mesh_router(web_ctx))
         app.include_router(build_dictation_router(web_ctx))
         app.include_router(build_activity_router(web_ctx))
         app.include_router(build_pages_router(web_ctx))

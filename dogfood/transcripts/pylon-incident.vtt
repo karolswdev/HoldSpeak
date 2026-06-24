@@ -1,0 +1,19 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:07.500
+<v Jordan>War-room for PI-204. At 09:14 UTC monitoring paged on a spike in edge 5xx on api.prod.</v>
+
+00:00:07.500 --> 00:00:15.000
+<v Wei>We confirmed clients were getting TLS errors. The api.prod certificate had expired. About 38 minutes of impact, SEV-2.</v>
+
+00:00:15.000 --> 00:00:24.000
+<v Jordan>Root cause: a week earlier PI-198 changed a network policy that blocked the ACME HTTP-01 solver path, so cert-manager failed renewal silently.</v>
+
+00:00:24.000 --> 00:00:32.000
+<v Priya>And it only became an outage because we alerted on edge 5xx, which fires after the cert is dead. No alert on expiry headroom.</v>
+
+00:00:32.000 --> 00:00:40.000
+<v Wei>Decision: add a 14-day expiry-headroom alert and a synthetic ACME-path test in CI that runs on any network policy change.</v>
+
+00:00:40.000 --> 00:00:48.000
+<v Jordan>Action items. Priya owns the headroom alert, Wei owns the synthetic ACME CI test, I own the runbook break-glass procedure and the postmortem.</v>

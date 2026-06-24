@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Isolated `holdspeak` launcher for dogfooding.
+#
+# Runs the repo's installed holdspeak with HOME pointed at the sandbox
+# (dogfood/_home) so config + DB never touch your real ~/.config/holdspeak or
+# ~/.local/share/holdspeak. Model caches (~/.cache/huggingface, ~/Models) are
+# symlinked in by setup.sh so Whisper/GGUF are reused, not re-downloaded.
+#
+#   dogfood/setup.sh            # one-time: build sandbox + config
+#   dogfood/hs doctor           # then drive holdspeak in isolation
+#   dogfood/hs import dogfood/_audio/meeting-pylon-incident-warroom.wav
+#
+# Override the sandbox location with DOGFOOD_HOME=/path dogfood/hs ...
+set -euo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO="$(cd "$HERE/.." && pwd)"
+export HOME="${DOGFOOD_HOME:-$HERE/_home}"
+
+HS_BIN="$REPO/.venv/bin/holdspeak"
+if [[ ! -x "$HS_BIN" ]]; then
+  echo "holdspeak not found at $HS_BIN — run 'uv sync' in $REPO first." >&2
+  exit 1
+fi
+if [[ ! -d "$HOME/.config/holdspeak" ]]; then
+  echo "Sandbox HOME not initialised ($HOME). Run dogfood/setup.sh first." >&2
+  exit 1
+fi
+exec "$HS_BIN" "$@"

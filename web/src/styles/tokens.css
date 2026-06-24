@@ -57,6 +57,14 @@
   --accent-tint: rgba(255, 107, 53, 0.12);
   --accent-glow: rgba(255, 107, 53, 0.28);
 
+  /* HS-69-03: gradient tokens ported from the iPad Signal `Sig` enum
+   * (apple/App/MeetingCaptureApp.swift:409-418). The two platforms share
+   * the flat palette byte-for-byte; these gradients carried the felt
+   * depth that the web had no token for. Additive only — nothing
+   * repointed. The status palette stays web-canonical (web-wins). */
+  --accent-gradient: linear-gradient(135deg, #FF9D5C 0%, #FF6B35 50%, #F24A2E 100%); /* amber → ember diagonal */
+  --bg-gradient: linear-gradient(180deg, #191B23 0%, #0E0F13 100%);                  /* cinematic vertical wash */
+
   /* Status — dark-tuned; always paired with an icon, never colour alone. */
   --ok: #34D399;
   --ok-strong: #10B981;

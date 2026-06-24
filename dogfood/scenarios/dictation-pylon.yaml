@@ -1,0 +1,13 @@
+id: dictation-pylon
+kind: dictation
+repo: pylon-infra
+voice: Karen
+language: en
+description: >
+  Rambling infra tasks for pylon-infra. The rewriter should produce precise
+  tasks that name concrete files/modules, require a rollback plan, and call out
+  the progressive-rollout + no-manual-kubectl invariants per .hs/memory.md.
+utterances:
+  - "okay from the cert outage war room i need an alert that fires when any certificate has less than fourteen days of expiry headroom so we catch silent renewal failures a week early not after it's already down"
+  - "we need a synthetic test in ci that actually exercises the acme http challenge path so that any network policy change that would break cert renewal fails the pipeline instead of failing silently in prod"
+  - "start the autoscaler migration prep so move prod off the fixed node pools onto the cluster autoscaler but it has to be progressive and we need a rollback plan and first update the stale pod eviction storm runbook"

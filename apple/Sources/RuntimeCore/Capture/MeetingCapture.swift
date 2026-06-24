@@ -22,6 +22,12 @@ public final class MeetingCapture: @unchecked Sendable {
     private let now: @Sendable () -> Date
     private let makeID: @Sendable () -> String
 
+    /// HSM-14-17 — optional on-device speaker diarization. When injected (the opt-in setting is ON),
+    /// `stop()` runs it over the final segments + the captured audio so each segment is labelled with
+    /// who spoke it. When `nil` (OFF), `stop()` is byte-identical to its pre-diarization behaviour.
+    /// Takes `(segments, pcm16Audio, sampleRate) -> labelledSegments`; runs on a background context.
+    private let diarize: (@Sendable ([Segment], [Int16], Int) -> [Segment])?
+
     // HSM-14-12 — sliding-window tuning. Defaults are the production values; tests inject small
     // numbers (and a small `sampleRate`) to exercise commits without minutes of synthetic audio.
     private let sampleRate: Int
@@ -35,6 +41,8 @@ public final class MeetingCapture: @unchecked Sendable {
     private var meetingID: String?
     private var lastGoodSegments: [Segment] = []   // last non-empty active-window tail (blank-pass fallback)
     private var _level: Float = 0                   // HSM-14 — smoothed mic amplitude for the live VU
+    private var _capturedFrames: Int = 0            // diagnostic: total audio frames the callback delivered
+    private var _peakLevel: Float = 0               // diagnostic: max raw rms seen this run (mic-health check)
 
     // HSM-14-12 — the committed prefix: the already-final transcript (absolute timestamps) and the
     // count of audio frames it represents. The active window is everything past `committedFrames`.
@@ -46,14 +54,21 @@ public final class MeetingCapture: @unchecked Sendable {
                 makeTranscriber: @escaping @Sendable ([AudioChunk]) -> ITranscriber,
                 now: @escaping @Sendable () -> Date = { Date() },
                 makeID: @escaping @Sendable () -> String = { UUID().uuidString },
+                diarize: (@Sendable ([Segment], [Int16], Int) -> [Segment])? = nil,
                 sampleRate: Int = 16_000,
-                commitThresholdSeconds: Double = 45,
-                overlapSeconds: Double = 8) {
+                // The live active window re-transcribes EVERY tick, so its size is the live-latency
+                // budget. 45s made each tick re-run Whisper over up to 45s of audio — seconds of work
+                // per tick — so the live transcript fell badly behind the speaker (the final full pass
+                // still caught everything). A ~10s window keeps each tick cheap so words appear live;
+                // commits fire ~4x more often. ("Constant time" only needs a bound — not a large one.)
+                commitThresholdSeconds: Double = 10,
+                overlapSeconds: Double = 3) {
         self.capture = capture
         self.store = store
         self.makeTranscriber = makeTranscriber
         self.now = now
         self.makeID = makeID
+        self.diarize = diarize
         self.sampleRate = sampleRate
         self.commitThresholdSeconds = commitThresholdSeconds
         self.overlapSeconds = overlapSeconds
@@ -78,17 +93,28 @@ public final class MeetingCapture: @unchecked Sendable {
     /// (~12×/s). Drives the audio-reactive waveform so the control plane visibly responds to
     /// sound the instant it arrives — no transcription round-trip needed.
     public var inputLevel: Float { locked { _level } }
+    /// Diagnostics for the device mic-health readout: total frames the callback delivered, and the
+    /// loudest raw RMS seen this run. `capturedFrames == 0` ⇒ no audio is reaching us at all.
+    public var capturedFrames: Int { locked { _capturedFrames } }
+    public var peakLevel: Float { locked { _peakLevel } }
     private func updateLevel(_ chunk: AudioChunk) {
         guard !chunk.samples.isEmpty else { return }
         var sum: Float = 0
         for s in chunk.samples { let f = Float(s) / 32768.0; sum += f * f }
         let rms = (sum / Float(chunk.samples.count)).squareRoot()
-        locked { _level = Swift.max(rms, _level * 0.82) }   // fast attack, smooth decay
+        // Speech RMS is small (~0.01–0.08); without gain the meter barely twitches. Lift it into a
+        // usable range, then instant-attack / fast-decay so the widget visibly tracks your voice.
+        let gained = Swift.min(1, rms * 4.5)
+        locked {
+            _level = Swift.max(gained, _level * 0.74)
+            _capturedFrames += chunk.samples.count
+            if rms > _peakLevel { _peakLevel = rms }
+        }
     }
 
     /// Begin a recording. Audio accumulates on-device; the live transcript starts empty.
     public func start() {
-        locked { chunks.removeAll(); lastGoodSegments = []; committedSegments = []; committedFrames = 0; _level = 0; startedAt = now(); meetingID = makeID(); _state = .recording(liveTranscript: "") }
+        locked { chunks.removeAll(); lastGoodSegments = []; committedSegments = []; committedFrames = 0; _level = 0; _capturedFrames = 0; _peakLevel = 0; startedAt = now(); meetingID = makeID(); _state = .recording(liveTranscript: "") }
         do {
             try capture.start { [weak self] chunk in
                 guard let self else { return }
@@ -171,12 +197,31 @@ public final class MeetingCapture: @unchecked Sendable {
             let raw = tailSegs.isEmpty ? lastGood : tailSegs
             segments = prefix + raw.map { Self.shifted($0, by: base) }
         }
+
+        // HSM-14-17 — on-device speaker diarization (opt-in). With the diarizer injected, label the
+        // final segments by who spoke each, over the full captured take's PCM16. Off the main thread
+        // (model inference); when no diarizer is injected this whole block is skipped (byte-identical).
+        let pcm = captured.flatMap { $0.samples }
+        var labelled = segments
+        if let diarize, !segments.isEmpty {
+            let sr = sampleRate
+            labelled = await Task.detached(priority: .userInitiated) {
+                diarize(segments, pcm, sr)
+            }.value
+        }
+
         let meeting = Meeting(
             id: id, startedAt: started, endedAt: ended,
             duration: ended.timeIntervalSince(started),
-            title: nil, segments: segments,
+            title: nil, segments: labelled,
             intelStatus: IntelStatus(state: "none"),
             micLabel: "On-device", remoteLabel: "")
+
+        // Persist the full captured take as a replayable WAV keyed by the meeting id, so the detail
+        // view can play back any one segment to judge its speaker label. Best-effort: a write failure
+        // here must never break stop/persist, so this is fire-and-forget with no error propagation.
+        MeetingAudioStore(sampleRate: sampleRate).save(pcm, for: id)
+
         do {
             try store.save(meeting)
             setState(.saved(meeting))

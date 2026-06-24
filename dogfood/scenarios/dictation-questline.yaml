@@ -1,0 +1,13 @@
+id: dictation-questline
+kind: dictation
+repo: questline
+voice: Daniel
+language: en
+description: >
+  Rambling product/eng tasks for questline. The rewriter should produce precise
+  tasks that name concrete files, require a feature flag + a tracked event, and
+  reference the north-star metric WAQC per .hs/instructions.md and the KB.
+utterances:
+  - "hey so for the shared quest experiment we talked about i need the create-a-guild-less version just an invite link to a shared weekly quest behind a flag and it has to fire an event so we can read whac, the weekly active quests metric"
+  - "we have this streak bug where if someone crosses a timezone boundary their streak resets and that's terrible can you fix the streak computation so it never resets on a timezone change and add a test for the non-utc case"
+  - "the onboarding step three leak is killing us please look at the activation flow and propose the smallest change to fix the step three drop off keep it scoped don't redesign the whole first run"

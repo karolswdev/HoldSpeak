@@ -1,0 +1,7 @@
+kb:
+  stack: "Python 3.11 · FastAPI · SQLite (system of record) · uvicorn ASGI server"
+  invariants: "append-only ledger (never UPDATE/DELETE ledger_entries) · every charge produces double-entry rows that sum to zero · money is stored as integer minor units (cents), never floats · idempotency-key replays are no-ops returning the original result · corrections happen via new reversing entries, never edits"
+  dod: "balanced postings asserted in a test · an idempotency replay test proving no double-post · no UPDATE/DELETE statement touches ledger_entries · ADR written for any schema or contract change · changelog entry under Unreleased"
+  owners: "ledger engine + db: payments-core team (karol) · api surface: platform team · reconciliation job: finance-eng"
+  slo: "POST /charges p99 < 120ms · reconciliation drift detected within 5 min · zero unbalanced ledger states tolerated (drift is a page, not a ticket)"
+  repo_layout: "src/ledgerline/ledger.py = posting engine · src/ledgerline/api/charges.py = HTTP surface · src/ledgerline/db/ = SQLite repositories (entries, idempotency) · docs/adr = decisions · STAGES.md = phase history"

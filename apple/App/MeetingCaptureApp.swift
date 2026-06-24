@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import Network
 import WhisperKit
 import PencilKit
 import Vision
@@ -19,17 +20,42 @@ import WebKit
 struct MeetingCaptureApp: App {
     var body: some Scene {
         WindowGroup {
-            // HS_DEMO_NOTEBOOK opens straight onto the notebook surface for a
-            // screenshot run (no mic/taps needed); the real entry is the meeting list.
-            if ProcessInfo.processInfo.environment["HS_DEMO_NOTEBOOK"] != nil {
-                DemoNotebookView().preferredColorScheme(.dark)
-            } else {
-                MeetingListView().preferredColorScheme(.dark)
-                    // AirDrop / "Open in HoldSpeak" a .gguf → copy it into the app's container.
-                    .onOpenURL { url in
-                        guard url.pathExtension.lowercased() == "gguf" else { return }
-                        try? ModelFiles.importModel(from: url)
-                    }
+            ZStack(alignment: .top) {
+                // HS_DEMO_NOTEBOOK opens straight onto the notebook surface for a
+                // screenshot run (no mic/taps needed); the real entry is the meeting list.
+                if ProcessInfo.processInfo.environment["HS_DEMO_NOTEBOOK"] != nil {
+                    DemoNotebookView()
+                } else {
+                    MeetingListView()
+                        // AirDrop / "Open in HoldSpeak" a .gguf → copy it into the app's container.
+                        .onOpenURL { url in
+                            guard url.pathExtension.lowercased() == "gguf" else { return }
+                            try? ModelFiles.importModel(from: url)
+                        }
+                }
+                // The run queue rides above every screen — the app-wide transparency surface.
+                QueueHUD()
+                // The proactive presence nudge rides above the queue — it taps YOU (HSM-15-09).
+                PresenceNudgeOverlay()
+            }
+            .preferredColorScheme(.dark)
+            .onAppear {
+                #if targetEnvironment(simulator)
+                let env = ProcessInfo.processInfo.environment
+                if env["HS_DEMO_QUEUE"] == "1" {
+                    RunQueueStore.shared.seedDemo()
+                    RunQueueStore.shared.expanded = env["HS_DEMO_QUEUE_OPEN"] == "1"
+                }
+                // HSM-15-09 — seed a freshly-waiting agent so BOTH the nudge card AND the HUD
+                // waiting lane are visible with no taps. Feeding `ingest` a rising edge fires
+                // the nudge; the lane shows the currently-waiting agents.
+                if env["HS_DEMO_PRESENCE"] == "1" {
+                    PresenceStore.shared.ingest(PresenceStore.demoSeed)
+                    // HS_DEMO_PRESENCE_OPEN=1 expands the HUD ledger to show the waiting LANE rows;
+                    // default keeps the pill (the always-on ambient lane badge) under the nudge.
+                    RunQueueStore.shared.expanded = env["HS_DEMO_PRESENCE_OPEN"] == "1"
+                }
+                #endif
             }
         }
     }
@@ -50,105 +76,6 @@ struct DemoNotebookView: View {
             }
             .padding(20).frame(maxWidth: 760).frame(maxWidth: .infinity)
         }
-    }
-}
-
-final class InMemoryNotebookStore: NotebookStore, @unchecked Sendable {
-    private var blobs: [String: Data] = [:]
-    func saveNotebook(_ data: Data, meetingID: String) throws { blobs[meetingID] = data }
-    func loadNotebook(meetingID: String) throws -> Data? { blobs[meetingID] }
-}
-
-// MARK: - On-device transcription (WhisperKit behind ITranscriber)
-
-final class WhisperKitTranscriber: ITranscriber, @unchecked Sendable {
-    private let chunks: [AudioChunk]
-    private let model: String
-    init(chunks: [AudioChunk], model: String) { self.chunks = chunks; self.model = model }
-
-    // The WhisperKit model is LOADED ONCE and reused. Previously every call constructed a fresh
-    // `WhisperKit(...)`, which reloads the CoreML model from disk (seconds) — so live ticks
-    // compounded into a frozen-feeling control plane. Cached in a lock-guarded static (WhisperKit
-    // isn't Sendable, so it never crosses an isolation boundary — created + used in this method).
-    private static let cacheLock = NSLock()
-    nonisolated(unsafe) private static var modelCache: [String: WhisperKit] = [:]
-    private static func cachedModel(_ k: String) -> WhisperKit? { cacheLock.lock(); defer { cacheLock.unlock() }; return modelCache[k] }
-    private static func cacheModel(_ k: String, _ m: WhisperKit) { cacheLock.lock(); modelCache[k] = m; cacheLock.unlock() }
-
-    func transcribe() async throws -> [Segment] {
-        let samples = chunks.flatMap { $0.samples }
-        guard samples.count >= 16_000 / 4 else { return [] }
-        let floats = samples.map { Float($0) / 32768.0 }
-        let whisper: WhisperKit
-        if let cached = Self.cachedModel(model) {
-            whisper = cached
-        } else {
-            whisper = try await WhisperKit(WhisperKitConfig(model: model))
-            Self.cacheModel(model, whisper)
-        }
-        let results = try await whisper.transcribe(audioArray: floats)
-        // Preserve WhisperKit's real per-segment timestamps (relative to this window) instead of
-        // collapsing to one zero-timestamp segment — the sliding-window commit (HSM-14-12) needs
-        // them to know exactly which audio a committed segment covers. `WhisperText.clean` runs
-        // per segment; all-non-speech segments drop out, so a blank window still cleans to [].
-        let segs = results.flatMap { $0.segments }.compactMap { seg -> Segment? in
-            let text = WhisperText.clean(seg.text)
-            guard !text.isEmpty else { return nil }
-            return TranscribedSegment(text: text, startTime: Double(seg.start), endTime: Double(seg.end)).asContractSegment()
-        }
-        return segs
-    }
-}
-
-// MARK: - SQLite-backed MeetingStore (Phase-4 persistence)
-
-/// Adapts the Phase-4 `SQLiteStorage` to the capture loop's `MeetingStore`, most-recent
-/// first. Falls back to an in-memory store if the DB can't open, so the app still runs.
-final class SQLiteMeetingStore: MeetingStore, @unchecked Sendable {
-    private let storage: SQLiteStorage
-    init() throws {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        storage = try SQLiteStorage(path: docs.appendingPathComponent("meetings.sqlite").path)
-    }
-    func save(_ meeting: Meeting) throws { try storage.saveMeeting(meeting) }
-    func load(id: String) throws -> Meeting? { try storage.loadMeeting(id: id) }
-    func list() throws -> [Meeting] {
-        try storage.allMeetings().sorted { $0.modifiedAt > $1.modifiedAt }.map(\.meeting)
-    }
-}
-
-// MARK: - Notebook persistence (HSM-8-02) — a meeting-keyed blob behind the seam
-
-/// Backs the `NotebookStore` seam with one JSON blob per meeting in the app container.
-/// The view never touches files — it goes through the `Notebook` view-model.
-final class FileNotebookStore: NotebookStore, @unchecked Sendable {
-    private let dir: URL
-    init() {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        dir = docs.appendingPathComponent("notebooks", isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-    }
-    private func url(_ id: String) -> URL { dir.appendingPathComponent("\(id).json") }
-    func saveNotebook(_ data: Data, meetingID: String) throws { try data.write(to: url(meetingID), options: .atomic) }
-    func loadNotebook(meetingID: String) throws -> Data? {
-        let u = url(meetingID)
-        return FileManager.default.fileExists(atPath: u.path) ? try Data(contentsOf: u) : nil
-    }
-}
-
-/// File-backed `LinkStore` (HSM-8-03) — a meeting-keyed JSON blob of transcript links.
-final class FileLinkStore: LinkStore, @unchecked Sendable {
-    private let dir: URL
-    init() {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        dir = docs.appendingPathComponent("links", isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-    }
-    private func url(_ id: String) -> URL { dir.appendingPathComponent("\(id).json") }
-    func saveLinks(_ data: Data, meetingID: String) throws { try data.write(to: url(meetingID), options: .atomic) }
-    func loadLinks(meetingID: String) throws -> Data? {
-        let u = url(meetingID)
-        return FileManager.default.fileExists(atPath: u.path) ? try Data(contentsOf: u) : nil
     }
 }
 
@@ -360,104 +287,6 @@ struct NoteCardView: View {
 }
 
 /// A tiny palette mirror so the notebook views compile alongside the (fileprivate) one.
-private enum SigN {
-    static let s1 = Color(.sRGB, red: 0x15/255, green: 0x17/255, blue: 0x1D/255, opacity: 1)
-    static let line = Color.white.opacity(0.07)
-    static let muted = Color(.sRGB, red: 0x9B/255, green: 0xA2/255, blue: 0xB0/255, opacity: 1)
-    static let faint = Color(.sRGB, red: 0x76/255, green: 0x7E/255, blue: 0x8D/255, opacity: 1)
-    static let accent = Color(.sRGB, red: 0xFF/255, green: 0x6B/255, blue: 0x35/255, opacity: 1)
-}
-
-// MARK: - Signal palette
-
-private enum Sig {
-    static let bg = Color(hex: 0x0E0F13)
-    static let s1 = Color(hex: 0x15171D)
-    static let s2 = Color(hex: 0x1C1F27)
-    static let s3 = Color(hex: 0x242833)
-    static let line = Color.white.opacity(0.07)
-    static let text = Color(hex: 0xF2F3F5)
-    static let muted = Color(hex: 0x9BA2B0)
-    static let faint = Color(hex: 0x767E8D)
-    static let accent = Color(hex: 0xFF6B35)
-    static let ok = Color(hex: 0x3ECF8E)
-    static let warn = Color(hex: 0xF2A33C)
-    static let bad = Color(hex: 0xE5544B)
-    static let local = Color(hex: 0x5B8DEF)
-}
-private extension Color {
-    init(hex: UInt) { self.init(.sRGB, red: Double((hex >> 16) & 0xFF)/255,
-                                green: Double((hex >> 8) & 0xFF)/255, blue: Double(hex & 0xFF)/255, opacity: 1) }
-}
-
-// MARK: - Signal depth + motion (HSM-14 craft elevation)
-
-private extension Sig {
-    static let bgTop = Color(hex: 0x191B23)
-    /// A cinematic vertical wash — depth instead of a flat fill.
-    static var bgGradient: LinearGradient {
-        LinearGradient(colors: [bgTop, bg], startPoint: .top, endPoint: .bottom)
-    }
-    /// The brand accent as a warm diagonal gradient (amber → ember) for hero surfaces.
-    static var accentGradient: LinearGradient {
-        LinearGradient(colors: [Color(hex: 0xFF9D5C), accent, Color(hex: 0xF24A2E)],
-                       startPoint: .topLeading, endPoint: .bottomTrailing)
-    }
-    static var accentSoft: Color { accent.opacity(0.15) }
-    static var localGradient: LinearGradient {
-        LinearGradient(colors: [Color(hex: 0x7AA6FF), local], startPoint: .topLeading, endPoint: .bottomTrailing)
-    }
-    /// A top-lit hairline so cards catch light at the top edge (glass realism).
-    static var topHairline: LinearGradient {
-        LinearGradient(colors: [Color.white.opacity(0.12), Color.white.opacity(0.035)],
-                       startPoint: .top, endPoint: .bottom)
-    }
-}
-
-/// Elevated Signal surface: layered fill + a top-lit hairline + a soft drop shadow. The one card
-/// treatment the whole app shares, so elevation is consistent (not random shadow values).
-private struct SignalCard: ViewModifier {
-    var fill: Color = Sig.s1
-    var radius: CGFloat = 18
-    var elevated: Bool = true
-    func body(content: Content) -> some View {
-        content
-            .background(fill, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous)
-                .strokeBorder(Sig.topHairline, lineWidth: 1))
-            .shadow(color: .black.opacity(elevated ? 0.38 : 0), radius: elevated ? 16 : 0, y: elevated ? 9 : 0)
-    }
-}
-private extension View {
-    func signalCard(_ fill: Color = Sig.s1, radius: CGFloat = 18, elevated: Bool = true) -> some View {
-        modifier(SignalCard(fill: fill, radius: radius, elevated: elevated))
-    }
-}
-
-/// A gradient-filled rounded glyph chip — the consistent icon container across rows/CTAs.
-private struct GlyphChip: View {
-    let system: String
-    var gradient: LinearGradient = Sig.localGradient
-    var size: CGFloat = 46
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: size * 0.28, style: .continuous).fill(gradient)
-                .shadow(color: .black.opacity(0.25), radius: 5, y: 3)
-            Image(systemName: system).font(.system(size: size * 0.42, weight: .bold)).foregroundStyle(.white)
-        }.frame(width: size, height: size)
-    }
-}
-
-/// Press feedback every tappable card shares: a subtle scale + dim on a spring (HIG scale-feedback).
-private struct PressableCard: ButtonStyle {
-    var scale: CGFloat = 0.975
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? scale : 1)
-            .opacity(configuration.isPressed ? 0.94 : 1)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
-    }
-}
 
 // MARK: - Live capture canvas model (HSM-14)
 
@@ -536,6 +365,8 @@ final class CaptureModel: ObservableObject {
     private var ticker: Task<Void, Never>?
     private var levelTicker: Task<Void, Never>?
     @Published var level: Float = 0            // HSM-14 — live mic amplitude for the waveform
+    @Published var diagFrames: Int = 0         // diagnostic: audio frames captured (0 ⇒ no mic audio)
+    @Published var diagPeak: Float = 0         // diagnostic: loudest raw RMS this run
 
     // HSM-14-13 — the floating recorder's spatial state (dock / free position / minimized), held on
     // the model so it survives pane switches and re-entry within the session. The snap math lives
@@ -552,11 +383,27 @@ final class CaptureModel: ObservableObject {
         do { store = try SQLiteMeetingStore() }
         catch { self.error = "Store unavailable: \(error)"; return }
         mc = MeetingCapture(capture: AudioCaptureService(), store: store,
-                            makeTranscriber: { WhisperKitTranscriber(chunks: $0, model: "base") })
+                            makeTranscriber: { WhisperKitTranscriber(chunks: $0, model: "base") },
+                            diarize: Self.makeDiarize())
         refresh()
     }
 
     func refresh() { meetings = mc?.meetings() ?? [] }
+
+    /// HSM-14-17 — the diarize closure handed to `MeetingCapture`. Lazily loads the bundled Core ML
+    /// embedder once (on first use, off the main thread by the time `stop()` calls it), and gates on
+    /// the live opt-in setting: when OFF it returns the segments untouched, so capture behaves exactly
+    /// as before. A fresh `SpeakerDiarizer` per meeting keeps "Speaker 1/2/…" scoped to the recording.
+    private static let sharedEmbedder: AudioEmbedding? = { try? AudioEmbedder() }()
+    private static func makeDiarize() -> (@Sendable ([Segment], [Int16], Int) -> [Segment])? {
+        guard let embedder = sharedEmbedder else { return nil }
+        return { segments, audio, sampleRate in
+            // Read the toggle at call time so flipping it takes effect without rebuilding capture.
+            let on = DispatchQueue.main.sync { InferenceConfigStore.shared.diarizationOn }
+            guard on else { return segments }
+            return SpeakerDiarizer(embedder: embedder).diarize(segments, audio: audio, sampleRate: sampleRate)
+        }
+    }
 
     func startRecording() async {
         guard let mc else { return }
@@ -573,7 +420,7 @@ final class CaptureModel: ObservableObject {
         }
         ticker = Task { [weak self] in
             while !Task.isCancelled, self?.recording == true {
-                try? await Task.sleep(nanoseconds: 1_200_000_000)   // window the live transcript (model is cached, so this is the cadence)
+                try? await Task.sleep(nanoseconds: 700_000_000)   // poll cadence; the bounded ~10s window keeps each tick cheap
                 await mc.tick()
                 if case .recording(let t) = mc.state { await MainActor.run { self?.liveTranscript = t; self?.ingest(t) } }
             }
@@ -582,7 +429,12 @@ final class CaptureModel: ObservableObject {
         // instant it arrives, with no transcription round-trip.
         levelTicker = Task { [weak self] in
             while !Task.isCancelled, self?.recording == true {
-                await MainActor.run { self?.level = self?.mc?.inputLevel ?? 0 }
+                await MainActor.run {
+                    guard let self else { return }
+                    self.level = self.mc?.inputLevel ?? 0
+                    self.diagFrames = self.mc?.capturedFrames ?? 0
+                    self.diagPeak = self.mc?.peakLevel ?? 0
+                }
                 try? await Task.sleep(nanoseconds: 50_000_000)
             }
             await MainActor.run { self?.level = 0 }
@@ -832,6 +684,24 @@ final class ChunkSink: @unchecked Sendable {
     func reset() { q.sync { chunks.removeAll() } }
 }
 
+/// Thread-safe live mic amplitude (0…~1), gained + instant-attack/fast-decay so a waveform visibly
+/// tracks the voice (HSM-15-01). Mirrors `MeetingCapture.updateLevel`; used by the Dictate surface,
+/// whose `AudioCaptureService` doesn't expose a level itself.
+final class LevelMeter: @unchecked Sendable {
+    private let q = DispatchQueue(label: "voice.level")
+    private var _level: Float = 0
+    var level: Float { q.sync { _level } }
+    func reset() { q.sync { _level = 0 } }
+    func ingest(_ chunk: AudioChunk) {
+        guard !chunk.samples.isEmpty else { return }
+        var sum: Float = 0
+        for s in chunk.samples { let f = Float(s) / 32768.0; sum += f * f }
+        let rms = (sum / Float(chunk.samples.count)).squareRoot()
+        let gained = Swift.min(1, rms * 4.5)
+        q.sync { _level = Swift.max(gained, _level * 0.74) }
+    }
+}
+
 /// A short on-device voice capture for a correction: record the mic, transcribe the clip with
 /// WhisperKit. No meeting is created — fully local, just the user's words.
 @MainActor
@@ -859,149 +729,6 @@ final class VoiceCaptureState: ObservableObject {
             let said = segs.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
             if said.isEmpty { self.error = "Didn't catch that — try again, or type it." } else { text = said }
         } catch { self.error = "Couldn't transcribe: \(error)" }
-    }
-}
-
-// MARK: - Models (import & manage — front and center, owner-requested)
-
-/// An on-device model file in the app's container.
-struct InstalledModel: Identifiable {
-    let url: URL
-    var sizeBytes: Int
-    var id: String { url.lastPathComponent }
-    var name: String { url.deletingPathExtension().lastPathComponent }
-    enum Kind { case language, visionProjector
-        var label: String { self == .visionProjector ? "Vision projector" : "Language / vision model" }
-        var glyph: String { self == .visionProjector ? "eye.fill" : "brain.head.profile" }
-        var tint: Color { self == .visionProjector ? Sig.local : Sig.accent }
-    }
-    var kind: Kind { url.lastPathComponent.lowercased().contains("mmproj") ? .visionProjector : .language }
-}
-
-/// The app-side model-files helper: imports/lists/deletes `.gguf` in the app's **Documents**
-/// (where the on-device runtime's `localGGUF()` loads from + where pushes land). Delegates to
-/// the tested Providers `ModelStore` (HSM-5-03), wrapping the security scope for picker URLs.
-enum ModelFiles {
-    static var root: URL { FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0] }
-    static var store: ModelStore { ModelStore(root: root) }
-
-    static func installed() -> [InstalledModel] {
-        ((try? store.installedModels()) ?? [])
-            .map { InstalledModel(url: $0, sizeBytes: (try? $0.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) }
-    }
-
-    /// Copy an imported/AirDropped file into the container (the host owns the security scope).
-    @discardableResult
-    static func importModel(from src: URL) throws -> URL {
-        let scoped = src.startAccessingSecurityScopedResource()
-        defer { if scoped { src.stopAccessingSecurityScopedResource() } }
-        return try store.importModel(from: src)
-    }
-
-    static func delete(_ m: InstalledModel) { try? store.delete(m.url) }
-
-    static func size(_ bytes: Int) -> String {
-        let f = ByteCountFormatter(); f.allowedUnits = [.useGB, .useMB]; f.countStyle = .file
-        return f.string(fromByteCount: Int64(bytes))
-    }
-    static var ggufTypes: [UTType] { [UTType(filenameExtension: "gguf") ?? .data] }
-}
-
-struct ModelsView: View {
-    @State private var models: [InstalledModel] = []
-    @State private var importing = false
-    @State private var note = ""
-    @State private var busy = false
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        ZStack {
-            Sig.bg.ignoresSafeArea()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Button { dismiss() } label: {
-                        HStack(spacing: 6) { Image(systemName: "chevron.left"); Text("Home") }
-                            .font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
-                            .padding(.vertical, 8).padding(.trailing, 12)
-                    }
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Models").font(.system(size: 32, weight: .heavy)).foregroundStyle(Sig.text)
-                        Text("Everything runs on this iPad. Import a .gguf from Files or AirDrop — no Mac, no account.")
-                            .font(.system(size: 14)).foregroundStyle(Sig.faint)
-                    }
-                    Button { importing = true } label: { importCta }.disabled(busy)
-                    if !note.isEmpty {
-                        HStack(spacing: 7) {
-                            if busy { ProgressView().tint(Sig.accent) }
-                            Text(note).font(.system(size: 13, weight: .semibold)).foregroundStyle(Sig.muted)
-                        }
-                    }
-                    if models.isEmpty && !busy {
-                        Text("No models yet. Import one to power on-device intelligence.")
-                            .font(.callout).foregroundStyle(Sig.faint).padding(.top, 6)
-                    } else {
-                        ForEach(models) { modelCard($0) }
-                    }
-                }
-                .padding(20).frame(maxWidth: 760).frame(maxWidth: .infinity)
-            }
-        }
-        .toolbar(.hidden, for: .navigationBar)
-        .fileImporter(isPresented: $importing, allowedContentTypes: ModelFiles.ggufTypes, allowsMultipleSelection: true) { result in
-            guard case .success(let urls) = result, !urls.isEmpty else { return }
-            busy = true; note = "Importing \(urls.count) file\(urls.count == 1 ? "" : "s")…"; tactile()
-            Task.detached {
-                var ok = 0
-                for u in urls { if (try? ModelFiles.importModel(from: u)) != nil { ok += 1 } }
-                await MainActor.run {
-                    busy = false; note = "Imported \(ok) model\(ok == 1 ? "" : "s"). They're on this iPad now."; refresh()
-                }
-            }
-        }
-        .onAppear(perform: refresh)
-    }
-
-    private func refresh() { withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { models = ModelFiles.installed() } }
-
-    private var importCta: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "square.and.arrow.down.fill").font(.system(size: 20, weight: .bold)).foregroundStyle(Sig.accent)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Import a model").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
-                Text("Pick a .gguf from Files (AirDrop a model, then import it here)").font(.system(size: 12)).foregroundStyle(Sig.faint)
-            }
-            Spacer()
-            Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity)
-        .background(Sig.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [7, 5])).foregroundStyle(Sig.accent.opacity(0.5)))
-    }
-
-    private func modelCard(_ m: InstalledModel) -> some View {
-        HStack(spacing: 13) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous).fill(m.kind.tint.opacity(0.16))
-                Image(systemName: m.kind.glyph).font(.system(size: 18, weight: .bold)).foregroundStyle(m.kind.tint)
-            }.frame(width: 44, height: 44)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(m.name).font(.system(size: 15.5, weight: .bold)).foregroundStyle(Sig.text).lineLimit(1)
-                HStack(spacing: 6) {
-                    Text(m.kind.label).font(.system(size: 12, weight: .heavy)).foregroundStyle(m.kind.tint)
-                    Text("·").foregroundStyle(Sig.faint)
-                    Text(ModelFiles.size(m.sizeBytes)).font(.system(size: 12, weight: .semibold)).foregroundStyle(Sig.faint)
-                }
-            }
-            Spacer(minLength: 4)
-            Button { tactile(); ModelFiles.delete(m); refresh() } label: {
-                Image(systemName: "trash").font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.faint)
-                    .frame(width: 38, height: 38).background(Sig.s3, in: Circle())
-            }
-        }
-        .padding(13)
-        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Sig.line, lineWidth: 1))
     }
 }
 
@@ -1521,14 +1248,18 @@ struct SketchToDiagramView: View {
     @Published var endpointURL: String { didSet { d.set(endpointURL, forKey: K.url) } }
     @Published var endpointModel: String { didSet { d.set(endpointModel, forKey: K.model) } }
     @Published var endpointKey: String { didSet { d.set(endpointKey, forKey: K.key) } }
+    /// HSM-14-17 — on-device speaker diarization (opt-in). Default ON. When set, capture's `stop()`
+    /// labels each transcript segment with who spoke it, fully on-device (no network).
+    @Published var diarizationOn: Bool { didSet { d.set(diarizationOn, forKey: K.diarize) } }
 
     private let d = UserDefaults.standard
-    private enum K { static let mode = "hs.inf.mode", url = "hs.inf.url", model = "hs.inf.model", key = "hs.inf.key" }
+    private enum K { static let mode = "hs.inf.mode", url = "hs.inf.url", model = "hs.inf.model", key = "hs.inf.key", diarize = "hs.inf.diarize" }
     private init() {
         mode = RuntimeMode(rawValue: d.string(forKey: K.mode) ?? "") ?? .local
         endpointURL = d.string(forKey: K.url) ?? ""
         endpointModel = d.string(forKey: K.model) ?? ""
         endpointKey = d.string(forKey: K.key) ?? ""
+        diarizationOn = d.object(forKey: K.diarize) as? Bool ?? true
     }
 
     var isLocal: Bool { mode == .local }
@@ -1599,6 +1330,8 @@ struct SettingsView: View {
                     targetCard(.homelab, "LAN endpoint", "An OpenAI-compatible server on your network", "server.rack", Sig.accentGradient)
                     if !cfg.isLocal { endpointCard }
                     egressRow
+                    label("WHO'S TALKING")
+                    diarizeCard
                 }
                 .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
             }
@@ -1733,6 +1466,23 @@ struct SettingsView: View {
         }
     }
 
+    // HSM-14-17 — the opt-in diarization toggle. Fully on-device; the egress badge below the toggle
+    // says so plainly (no prose). Default ON.
+    private var diarizeCard: some View {
+        HStack(spacing: 14) {
+            GlyphChip(system: "person.2.wave.2.fill", gradient: Sig.localGradient, size: 50)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Identify speakers (on-device)").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Label each line with who spoke it").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+            }
+            Spacer()
+            Toggle("", isOn: $cfg.diarizationOn).labelsHidden().tint(Sig.accent)
+        }
+        .padding(15)
+        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
+    }
+
     private var egressRow: some View {
         HStack(spacing: 8) {
             Image(systemName: cfg.isLocal ? "lock.shield.fill" : "antenna.radiowaves.left.and.right")
@@ -1783,469 +1533,2490 @@ struct SettingsView: View {
     private func persist() { if let data = try? JSONEncoder().encode(saved) { d.set(data, forKey: key) } }
 }
 
-/// The Workbench: a gamified, tap-to-build pipeline editor for user-defined intelligence. Reads
-/// top-to-bottom (SOURCE → STEPs → OUTPUT) — the crushing-usability bet over a node graph. Tap a
-/// block from the palette to add a step, configure it inline, reorder, save. Signal depth + a
-/// bespoke PixelLab energy core; no prose.
-struct WorkbenchView: View {
-    @Environment(\.dismiss) private var dismiss
-    @ObservedObject private var store = WorkflowStore.shared
-    @State private var wf = Workflow(name: "My workflow", source: .fullTranscript,
-                                     steps: [.lens(.delivery), .extract(.decisions)], output: .artifacts)
-    @State private var spin = false
-    @State private var editing: EditTarget?
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+// MARK: - Workbench: the visual language (HSM-14-15)
+//
+// A node-based dataflow canvas. Typed primitives — "Transcription", "Decisions", "LLM call",
+// "Slack" — are draggable objects you wire output→input. Each cable is colored by the data type
+// flowing through it (signal = cobalt, text = amber, findings = green), so the program reads at a
+// glance. This is the builder the owner asked for: a meta-language for composing intelligence,
+// not a config form. Run lights the graph up — signal pulses travel the cables.
 
-    // What the configuration sheet is editing — a block's details open in a real editor, not a menu.
-    enum EditTarget: Identifiable, Equatable {
-        case source, output, step(Int)
-        var id: String { switch self { case .source: return "src"; case .output: return "out"; case .step(let i): return "s\(i)" } }
+/// The typed value that travels along a cable.
+private enum PortType: Equatable {
+    case signal, text, findings
+    var color: Color {
+        switch self { case .signal: return Sig.local; case .text: return Sig.accent; case .findings: return Sig.ok }
     }
+    var label: String {
+        switch self { case .signal: return "signal"; case .text: return "text"; case .findings: return "findings" }
+    }
+}
+
+private enum NodeCat: String { case source = "SOURCE", intel = "INTELLIGENCE", transform = "TRANSFORM", output = "OUTPUT" }
+
+/// A primitive in the language — the vocabulary the user composes from.
+private enum NodeKind: String, CaseIterable, Identifiable {
+    case transcription, tacked, selection
+    case decisions, actions, risks, questions, requirements
+    case llm, summarize, rewrite, filter
+    case note, board, slack, diagram
+    var id: String { rawValue }
+
+    var cat: NodeCat {
+        switch self {
+        case .transcription, .tacked, .selection: return .source
+        case .decisions, .actions, .risks, .questions, .requirements: return .intel
+        case .llm, .summarize, .rewrite, .filter: return .transform
+        case .note, .board, .slack, .diagram: return .output
+        }
+    }
+    var title: String {
+        switch self {
+        case .transcription: return "Transcription"; case .tacked: return "Tacked moments"; case .selection: return "Selection"
+        case .decisions: return "Decisions"; case .actions: return "Action items"; case .risks: return "Risks"
+        case .questions: return "Questions"; case .requirements: return "Requirements"
+        case .llm: return "LLM call"; case .summarize: return "Summarize"; case .rewrite: return "Rewrite"; case .filter: return "Filter"
+        case .note: return "Note"; case .board: return "Artifacts"; case .slack: return "Slack"; case .diagram: return "Diagram"
+        }
+    }
+    var glyph: String {
+        switch self {
+        case .transcription: return "waveform"; case .tacked: return "pin.fill"; case .selection: return "selection.pin.in.out"
+        case .decisions: return "checkmark.seal.fill"; case .actions: return "checklist"; case .risks: return "exclamationmark.triangle.fill"
+        case .questions: return "questionmark.bubble.fill"; case .requirements: return "list.bullet.rectangle.fill"
+        case .llm: return "terminal.fill"; case .summarize: return "text.append"; case .rewrite: return "pencil.and.outline"; case .filter: return "line.3.horizontal.decrease.circle"
+        case .note: return "note.text"; case .board: return "rectangle.stack.fill"; case .slack: return "paperplane.fill"; case .diagram: return "flowchart"
+        }
+    }
+    var inputs: [PortType] {
+        switch cat {
+        case .source: return []
+        case .intel: return [.signal]
+        case .transform: return [.text]
+        case .output: return self == .board ? [.findings] : [.text]
+        }
+    }
+    var outputs: [PortType] {
+        switch cat {
+        case .source: return [.signal]
+        case .intel: return [.findings]
+        case .transform: return [.text]
+        case .output: return []
+        }
+    }
+    var isEgress: Bool { self == .slack }
+    /// Whether running this node calls a language model (so it needs a target + a failure policy).
+    var usesModel: Bool { cat == .intel || self == .llm || self == .summarize || self == .rewrite }
+    var accent: Color {
+        switch cat {
+        case .source: return Sig.local
+        case .intel: return Sig.ok
+        case .transform: return Sig.accent
+        case .output: return isEgress ? Sig.accent : Sig.local
+        }
+    }
+    var grad: LinearGradient {
+        switch cat {
+        case .source: return Sig.localGradient
+        case .intel: return LinearGradient(colors: [Color(hex: 0x6FE3AE), Sig.ok], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .transform: return Sig.accentGradient
+        case .output: return isEgress ? Sig.accentGradient : Sig.localGradient
+        }
+    }
+    /// One tight line describing what the primitive does — shown in the inspector (teaches the language).
+    var blurb: String {
+        switch self {
+        case .transcription: return "The full meeting transcript."
+        case .tacked: return "Only the moments you tacked."
+        case .selection: return "A passage you selected."
+        case .decisions: return "Pulls the decisions made."
+        case .actions: return "Pulls action items + owners."
+        case .risks: return "Surfaces risks raised."
+        case .questions: return "Open questions left unanswered."
+        case .requirements: return "Stated requirements + constraints."
+        case .llm: return "Your prompt, your model. {input} is the wired input."
+        case .summarize: return "Condenses the input to its essence."
+        case .rewrite: return "Rewrites the input in a tone."
+        case .filter: return "Keeps only lines matching a keyword."
+        case .note: return "Saves the result as one note."
+        case .board: return "Files findings to the review board."
+        case .slack: return "Drafts a Slack message (you approve)."
+        case .diagram: return "Renders the result as a Mermaid diagram."
+        }
+    }
+}
+
+/// A placed primitive on the canvas.
+/// Which model a model-backed node prefers to run on. `auto` follows the app's Settings; the others
+/// pin the node to a target regardless of the global default.
+private enum ModelPref: String, CaseIterable, Identifiable {
+    case auto, onDevice, endpoint
+    var id: String { rawValue }
+    var label: String { switch self { case .auto: return "Auto"; case .onDevice: return "On-device"; case .endpoint: return "Endpoint" } }
+    var glyph: String { switch self { case .auto: return "wand.and.stars"; case .onDevice: return "ipad"; case .endpoint: return "network" } }
+    var hint: String {
+        switch self {
+        case .auto: return "Follows Settings."
+        case .onDevice: return "Always the on-device model. No network."
+        case .endpoint: return "Always your configured endpoint."
+        }
+    }
+}
+
+/// What a run does when a node's chosen model can't be reached.
+// `FailurePolicy` (retryThenQueue / fallbackOnDevice / skip) is defined once in RuntimeCore
+// (`Workbench/WorkflowRunner.swift`) — the node inspector's policy IS the runner's policy. The app
+// only adds the UI facets here, so there is a single source of truth.
+extension FailurePolicy: Identifiable {
+    public var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .retryThenQueue: return "Retry, then queue"
+        case .fallbackOnDevice: return "Fall back on-device"
+        case .skip: return "Skip the step"
+        }
+    }
+    var glyph: String {
+        switch self {
+        case .retryThenQueue: return "clock.arrow.circlepath"
+        case .fallbackOnDevice: return "ipad.and.arrow.forward"
+        case .skip: return "arrow.turn.down.right"
+        }
+    }
+    var hint: String {
+        switch self {
+        case .retryThenQueue: return "Retry a few times, then hold the run in the queue and resume when reachable."
+        case .fallbackOnDevice: return "If the endpoint is down, run this step on the on-device model instead."
+        case .skip: return "Drop this step and carry the input straight through."
+        }
+    }
+}
+
+/// HSM-14-15 — how a node is doing in the *current* run. Drives the canvas glow (idle → working
+/// pulse → settled done, or red on fail/park). Mirrors the runner's `StepStatus` but is a UI concern.
+private enum NodeRunState { case idle, working, done, failed, parked }
+
+private struct GraphNode: Identifiable {
+    let id: UUID
+    var kind: NodeKind
+    var pos: CGPoint
+    var prompt: String = ""
+    var tone: String = "Executive"
+    var keyword: String = "risk"
+    var modelPref: ModelPref = .auto
+    var onFail: FailurePolicy = .retryThenQueue
+    /// Live run state — set by the runner as it walks the lowered workflow (HSM-14-15).
+    var runState: NodeRunState = .idle
+    init(_ kind: NodeKind, _ pos: CGPoint) { self.id = UUID(); self.kind = kind; self.pos = pos }
+    var title: String { kind.title }
+    var subtitle: String? {
+        switch kind {
+        case .llm:
+            let p = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+            return p.isEmpty ? "tap to write a prompt" : "\u{201C}\(p.prefix(28))\(p.count > 28 ? "\u{2026}" : "")\u{201D}"
+        case .rewrite: return "tone \u{00B7} \(tone.lowercased())"
+        case .filter: return "keep \u{00B7} \(keyword)"
+        default: return nil
+        }
+    }
+}
+
+private struct PortRef: Hashable { let node: UUID; let isInput: Bool; let index: Int }
+private struct GraphEdge: Identifiable { let id = UUID(); var from: PortRef; var to: PortRef }
+
+private enum GraphGeom {
+    static let nodeW: CGFloat = 198
+    static let nodeH: CGFloat = 72
+    static let canvas = CGSize(width: 2600, height: 1800)
+}
+
+private func cablePath(_ a: CGPoint, _ b: CGPoint) -> Path {
+    var p = Path()
+    let dx = max(46, abs(b.x - a.x) * 0.45)
+    p.move(to: a)
+    p.addCurve(to: b, control1: CGPoint(x: a.x + dx, y: a.y), control2: CGPoint(x: b.x - dx, y: b.y))
+    return p
+}
+private func cablePoint(_ a: CGPoint, _ b: CGPoint, _ t: CGFloat) -> CGPoint {
+    let dx = max(46, abs(b.x - a.x) * 0.45)
+    let c1 = CGPoint(x: a.x + dx, y: a.y), c2 = CGPoint(x: b.x - dx, y: b.y)
+    let m = 1 - t
+    return CGPoint(x: m*m*m*a.x + 3*m*m*t*c1.x + 3*m*t*t*c2.x + t*t*t*b.x,
+                   y: m*m*m*a.y + 3*m*m*t*c1.y + 3*m*t*t*c2.y + t*t*t*b.y)
+}
+
+@MainActor private final class PatchModel: ObservableObject {
+    @Published var nodes: [GraphNode] = []
+    @Published var edges: [GraphEdge] = []
+    @Published var selected: UUID?
+    @Published var pending: (from: PortRef, point: CGPoint)?
+    @Published var running = false
+    /// The edges whose cable should pulse RIGHT NOW — the outgoing cables of the working node, so the
+    /// signal visibly travels the wire the run is on (HSM-14-15). Empty ⇒ no pulse.
+    @Published var activeEdges: Set<UUID> = []
+    var dragOrigin: [UUID: CGPoint] = [:]
+
+    func node(_ id: UUID) -> GraphNode? { nodes.first { $0.id == id } }
+    func idx(_ id: UUID) -> Int? { nodes.firstIndex { $0.id == id } }
+
+    func portCenter(_ ref: PortRef) -> CGPoint? {
+        guard let n = node(ref.node) else { return nil }
+        let arr = ref.isInput ? n.kind.inputs : n.kind.outputs
+        guard ref.index < arr.count else { return nil }
+        let x = ref.isInput ? n.pos.x - GraphGeom.nodeW/2 : n.pos.x + GraphGeom.nodeW/2
+        let top = n.pos.y - GraphGeom.nodeH/2
+        return CGPoint(x: x, y: top + GraphGeom.nodeH * CGFloat(ref.index + 1) / CGFloat(arr.count + 1))
+    }
+    func portType(_ ref: PortRef) -> PortType? {
+        guard let n = node(ref.node) else { return nil }
+        let arr = ref.isInput ? n.kind.inputs : n.kind.outputs
+        return ref.index < arr.count ? arr[ref.index] : nil
+    }
+    func move(_ id: UUID, to p: CGPoint) {
+        guard let i = idx(id) else { return }
+        nodes[i].pos = CGPoint(x: min(max(p.x, GraphGeom.nodeW/2), GraphGeom.canvas.width - GraphGeom.nodeW/2),
+                               y: min(max(p.y, GraphGeom.nodeH/2 + 6), GraphGeom.canvas.height - GraphGeom.nodeH/2))
+    }
+    private func compatible(_ out: PortType, _ inp: PortType) -> Bool {
+        if out == inp { return true }
+        switch (out, inp) { case (.signal, .text), (.findings, .text): return true; default: return false }
+    }
+    func endWire(at p: CGPoint) {
+        defer { pending = nil }
+        guard let pend = pending, let outType = portType(pend.from) else { return }
+        var best: (PortRef, CGFloat)?
+        for n in nodes where n.id != pend.from.node {
+            for i in n.kind.inputs.indices {
+                let ref = PortRef(node: n.id, isInput: true, index: i)
+                guard let c = portCenter(ref), let it = portType(ref), compatible(outType, it) else { continue }
+                let d = hypot(c.x - p.x, c.y - p.y)
+                if d < 46, best == nil || d < best!.1 { best = (ref, d) }
+            }
+        }
+        if let (ref, _) = best {
+            edges.removeAll { $0.to == ref }            // one cable per input
+            edges.append(GraphEdge(from: pend.from, to: ref))
+            tactile(.medium)
+        }
+    }
+    func addNode(_ kind: NodeKind, at p: CGPoint) { let n = GraphNode(kind, p); nodes.append(n); selected = n.id }
+    func remove(_ id: UUID) {
+        edges.removeAll { $0.from.node == id || $0.to.node == id }
+        nodes.removeAll { $0.id == id }
+        if selected == id { selected = nil }
+    }
+
+    // MARK: - HSM-14-15 — lower the graph to a runnable `Workflow`
+
+    /// The result of lowering the canvas graph to the runner's linear model: the `Workflow` the
+    /// engine executes, PLUS the canvas node id for each step (and the source/output node ids), so the
+    /// run can light the right node + cable as each `StepOutcome` lands.
+    struct LoweredGraph {
+        var workflow: Workflow
+        var sourceNode: UUID
+        var stepNodes: [UUID]        // one per `workflow.steps[i]`
+        var outputNode: UUID?
+    }
+
+    /// Walk the **primary** source→…→output chain in wire order and produce an ordered `Workflow`.
+    ///
+    /// v1 LIMITATION — the runnable model is a LINEAR pipeline (Workflow.steps), so this follows the
+    /// MAIN PATH only: it starts at the first source node, and at each node follows its FIRST wired
+    /// outgoing edge. If the graph branches (a source fanning out to two chains, like the seeded
+    /// Decisions + LLM split) only the first branch runs; the other outputs are ignored. A full DAG
+    /// engine is deliberately out of scope — see WorkflowRunner.swift's "Pure linear" note.
+    func lowerToWorkflow(name: String = "Canvas run") -> LoweredGraph? {
+        guard let src = nodes.first(where: { $0.kind.cat == .source }) else { return nil }
+        let source: WorkflowSource = {
+            switch src.kind {
+            case .tacked: return .tackedMoments
+            case .selection: return .selection
+            default: return .fullTranscript
+            }
+        }()
+
+        var steps: [WorkflowStep] = []
+        var stepNodes: [UUID] = []
+        var outputNode: UUID?
+        var output: WorkflowOutput = .artifacts
+
+        // Follow the first outgoing edge from a node to the next node it feeds.
+        func next(after id: UUID) -> GraphNode? {
+            let outgoing = edges.filter { $0.from.node == id }
+            guard let edge = outgoing.first else { return nil }
+            return node(edge.to.node)
+        }
+
+        var current = next(after: src.id)
+        var guardCount = 0
+        while let n = current, guardCount < nodes.count + 2 {
+            guardCount += 1
+            switch n.kind.cat {
+            case .source:
+                // A second source in the chain is meaningless to the linear model — stop.
+                current = nil
+            case .intel, .transform:
+                if let step = step(for: n) { steps.append(step); stepNodes.append(n.id) }
+                current = next(after: n.id)
+            case .output:
+                output = workflowOutput(for: n.kind)
+                outputNode = n.id
+                current = nil
+            }
+        }
+        guard !steps.isEmpty else { return nil }
+        let wf = Workflow(name: name, source: source, steps: steps, output: output)
+        return LoweredGraph(workflow: wf, sourceNode: src.id, stepNodes: stepNodes, outputNode: outputNode)
+    }
+
+    /// Map a single node to its `WorkflowStep`. Intel nodes lower to `.extract(type)`; the transforms
+    /// lower to their direct counterparts; the custom LLM node carries the user's prompt.
+    private func step(for n: GraphNode) -> WorkflowStep? {
+        switch n.kind {
+        case .decisions:    return .extract(.decisions)
+        case .actions:      return .extract(.actionItems)
+        case .risks:        return .extract(.riskRegister)
+        case .questions:    return .lens(.balanced)        // "open questions" — surface via a lens
+        case .requirements: return .extract(.requirements)
+        case .summarize:    return .summarize
+        case .rewrite:      return .rewrite(tone: n.tone)
+        case .filter:       return .keepIf(n.keyword)
+        case .llm:
+            let p = n.prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+            // A custom node with no prompt still runs — substitute the input straight through.
+            return .llmCall(name: n.kind.title, prompt: p.isEmpty ? "{input}" : p, input: .previousStep)
+        default:            return nil
+        }
+    }
+
+    private func workflowOutput(for kind: NodeKind) -> WorkflowOutput {
+        switch kind { case .slack: return .slack; case .note: return .note; default: return .artifacts }
+    }
+
+    // MARK: Run-state drivers (set by the canvas run loop)
+
+    func setRunState(_ id: UUID, _ s: NodeRunState) { if let i = idx(id) { nodes[i].runState = s } }
+    func clearRun() {
+        for i in nodes.indices { nodes[i].runState = .idle }
+        activeEdges.removeAll()
+    }
+    /// Pulse the outgoing cables of `id` (the node currently working).
+    func activateOutgoing(of id: UUID) {
+        activeEdges = Set(edges.filter { $0.from.node == id }.map(\.id))
+    }
+}
+
+/// HSM-14-15 — a seeded **fake** `ILLMProvider` for the demo + the Simulator, where no GGUF is loaded.
+/// Real runs use `InferenceConfigStore.shared.makeProvider(...)` (on-device by default — the iPad is a
+/// full peer); this exists so the canvas run is demonstrable WITHOUT a model. It returns short, canned
+/// text keyed off the prompt, with a small delay so the working-state pulse is visible.
+private struct SeededFakeProvider: ILLMProvider {
+    let stepDelay: Duration
+    init(stepDelay: Duration = .milliseconds(650)) { self.stepDelay = stepDelay }
+    func complete(prompt: String) async throws -> String {
+        try? await Task.sleep(for: stepDelay)
+        let p = prompt.lowercased()
+        if p.contains("decision") { return "Decision: ship the v1 canvas runner.\nDecision: keep the model swappable behind ILLMProvider." }
+        if p.contains("action") { return "[ ] Wire Run → WorkflowRunner — owner: mobile\n[ ] Drive the Queue HUD from StepOutcome — owner: mobile" }
+        if p.contains("risk") || p.contains("question") { return "Risk: a branching graph only runs its main path in v1.\nQuestion: when do we need a real DAG engine?" }
+        if p.contains("requirement") { return "Req: the run must reflect REAL runner state, not a faked animation." }
+        if p.contains("summar") { return "The Workbench now executes: the canvas lowers to a Workflow and the runner walks it live." }
+        if p.contains("rewrite") { return "We shipped on-device workflow execution; the canvas and queue now reflect the real run." }
+        return "Open question: which step should own the egress badge when the output is Slack?"
+    }
+}
+
+/// The canvas — a pannable, pinch-zoomable dot-grid graph with draggable typed nodes and
+/// type-colored cables. This is the Workbench.
+private struct GraphCanvasView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @StateObject private var model = PatchModel()
+    @State private var pan: CGSize = .zero
+    @State private var panStart: CGSize = .zero
+    @State private var zoom: CGFloat = 1
+    @State private var zoomStart: CGFloat = 1
+    @State private var inspect: GraphNode?
+    @State private var spin = false
+    @State private var runTask: Task<Void, Never>?
 
     var body: some View {
         ZStack {
             Sig.bgGradient.ignoresSafeArea()
-            Circle().fill(Sig.accent.opacity(0.15)).frame(width: 420).blur(radius: 130)
-                .offset(x: 150, y: -300).ignoresSafeArea()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    header
-                    presetsRow
-                    pipeline
-                    paletteBar
-                    saveBar
-                    if !store.saved.isEmpty { savedRow }
-                }
-                .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
-            }
+            Circle().fill(Sig.accent.opacity(0.12)).frame(width: 460).blur(radius: 150).offset(x: 170, y: -340).ignoresSafeArea()
+            graphArea
+            VStack(spacing: 0) { header; Spacer(minLength: 0); palette }
         }
         .toolbar(.hidden, for: .navigationBar).tint(Sig.accent)
         .onAppear {
             spin = true
+            if model.nodes.isEmpty { seed() }
             #if targetEnvironment(simulator)
             let env = ProcessInfo.processInfo.environment
-            if env["HS_DEMO_WORKBENCH"] == "1" || env["HS_DEMO_WORKBENCH_LLM"] == "1" {
-                wf = Workflow(name: "Custom workflow", source: .fullTranscript,
-                              steps: [.lens(.delivery),
-                                      .llmCall(name: "Risks → questions",
-                                               prompt: "From {input}, list the top risks as pointed questions a reviewer should ask. One per line, no preamble.",
-                                               input: .meeting),
-                                      .extract(.actionItems)],
-                              output: .note)
+            if env["HS_DEMO_WB_RUN"] == "1" { model.running = true }
+            if env["HS_DEMO_WB_EDIT"] == "1" { inspect = model.nodes.first { $0.kind == .llm } }
+            if env["HS_DEMO_WB_RUNTIME"] == "1" { inspect = model.nodes.first { $0.kind == .decisions } }
+            // HSM-14-15 — kick off a REAL run with the seeded fake provider so the canvas + Queue HUD
+            // show live execution without a loaded model. Open the queue so the HUD is visible.
+            if env["HS_DEMO_WB_EXEC"] == "1" {
+                RunQueueStore.shared.expanded = true
+                startRun()
             }
-            if env["HS_DEMO_WORKBENCH_LLM"] == "1" { editing = .step(1) }
             #endif
         }
-        .sheet(item: $editing) { target in
-            WorkbenchEditorSheet(wf: $wf, target: target).presentationDetents([.medium, .large])
+        .sheet(item: $inspect) { n in
+            NodeInspectorSheet(model: model, nodeID: n.id).presentationDetents([.height(380), .large])
+        }
+    }
+
+    // The signal flows left→right; the viewport opens centered on the seeded graph.
+    private var graphArea: some View {
+        GeometryReader { geo in
+            ZStack {
+                DotGrid()
+                edgeLayer
+                nodeLayer
+                portHandles
+            }
+            .frame(width: GraphGeom.canvas.width, height: GraphGeom.canvas.height)
+            .coordinateSpace(name: "graph")
+            .scaleEffect(zoom)
+            .offset(pan)
+            .frame(width: geo.size.width, height: geo.size.height)
+            .contentShape(Rectangle())
+            .gesture(panGesture)
+            .simultaneousGesture(zoomGesture)
+            .clipped()
         }
     }
 
     private var header: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 11) {
+            Button { tactile(); dismiss() } label: {
+                Image(systemName: "chevron.left").font(.system(size: 16, weight: .heavy)).foregroundStyle(Sig.text)
+                    .frame(width: 40, height: 40).background(.ultraThinMaterial, in: Circle())
+                    .overlay(Circle().strokeBorder(Sig.topHairline, lineWidth: 1))
+            }.buttonStyle(PressableCard())
             ZStack {
-                Circle().fill(Sig.accent.opacity(0.5)).frame(width: 40, height: 40).blur(radius: 16)
-                pixelAsset("crystal", size: 46, fallback: "cube.transparent.fill", tint: .black)
+                Circle().fill(Sig.accent.opacity(0.45)).frame(width: 32, height: 32).blur(radius: 13)
+                pixelAsset("crystal", size: 38, fallback: "cube.transparent.fill", tint: .black)
                     .rotationEffect(.degrees(spin ? 360 : 0))
-                    .animation(reduceMotion ? nil : .linear(duration: 12).repeatForever(autoreverses: false), value: spin)
+                    .animation(reduceMotion ? nil : .linear(duration: 16).repeatForever(autoreverses: false), value: spin)
             }
-            VStack(alignment: .leading, spacing: 3) {
-                Text("WORKBENCH").font(.system(size: 10, weight: .heavy)).tracking(1.6).foregroundStyle(Sig.accent)
-                Text("Build intelligence").font(.system(size: 27, weight: .heavy)).foregroundStyle(Sig.text)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("WORKBENCH").font(.system(size: 9, weight: .heavy)).tracking(1.7).foregroundStyle(Sig.accent)
+                Text("Wire up intelligence").font(.system(size: 19, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
             }
-            Spacer()
-            Button { dismiss() } label: {
-                Image(systemName: "xmark").font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
-                    .frame(width: 44, height: 44).signalCard(Sig.s2, radius: 14)
-            }.buttonStyle(PressableCard())
-        }.padding(.top, 6)
-    }
-
-    private var presetsRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 9) {
-                ForEach(WorkflowPresets.all) { p in
-                    Button {
-                        tactile(); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
-                            wf = Workflow(name: p.name, source: p.source, steps: p.steps, output: p.output)
-                        }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "wand.and.stars").font(.system(size: 11, weight: .bold))
-                            Text(p.name).font(.system(size: 12, weight: .heavy))
-                        }
-                        .foregroundStyle(Sig.text)
-                        .padding(.horizontal, 12).padding(.vertical, 8)
-                        .background(Sig.s2, in: Capsule()).overlay(Capsule().strokeBorder(Sig.topHairline, lineWidth: 1))
-                    }.buttonStyle(PressableCard())
-                }
-            }.padding(.vertical, 1)
+            Spacer(minLength: 6)
+            runButton
         }
+        .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 14)
+        .background(LinearGradient(colors: [Sig.bg, Sig.bg.opacity(0)], startPoint: .top, endPoint: .bottom).ignoresSafeArea(edges: .top))
     }
 
-    // The pipeline: SOURCE → steps → OUTPUT, with flowing connectors between.
-    private var pipeline: some View {
-        VStack(spacing: 0) {
-            sourceBlock
-            ForEach(Array(wf.steps.enumerated()), id: \.offset) { i, step in
-                connector
-                stepBlock(i, step)
-            }
-            connector
-            outputBlock
-        }
-    }
-
-    private var connector: some View {
-        ZStack {
-            Rectangle().fill(Sig.accent.opacity(0.5)).frame(width: 2, height: 26)
-            Image(systemName: "chevron.compact.down").font(.system(size: 13, weight: .black)).foregroundStyle(Sig.accent.opacity(0.7))
-        }
-    }
-
-    // Every block is tap-to-configure: tapping opens a real editor sheet (not a cramped menu).
-    private func tapBlock(_ tag: String, _ glyph: String, _ gradient: LinearGradient, _ value: String,
-                          subtitle: String? = nil, tagColor: Color = Sig.faint, tap: @escaping () -> Void) -> some View {
-        Button { tactile(); tap() } label: {
-            HStack(spacing: 13) {
-                GlyphChip(system: glyph, gradient: gradient, size: 46)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(tag).font(.system(size: 9, weight: .heavy)).tracking(1.2).foregroundStyle(tagColor)
-                    Text(value).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text).lineLimit(1)
-                    if let s = subtitle { Text(s).font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1) }
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "slider.horizontal.3").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
-            }
-            .padding(14).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 18).contentShape(Rectangle())
-        }.buttonStyle(PressableCard())
-    }
-
-    private var sourceBlock: some View {
-        tapBlock("SOURCE", wf.source.glyph, Sig.localGradient, wf.source.label) { editing = .source }
-    }
-
-    private var outputBlock: some View {
-        tapBlock("OUTPUT", wf.output.glyph, wf.output.isEgress ? Sig.accentGradient : Sig.localGradient,
-                 wf.output.label, subtitle: wf.output.isEgress ? "leaves device" : nil) { editing = .output }
-    }
-
-    private func stepBlock(_ i: Int, _ step: WorkflowStep) -> some View {
-        HStack(spacing: 10) {
-            Button { tactile(); editing = .step(i) } label: {
-                HStack(spacing: 13) {
-                    GlyphChip(system: step.glyph, gradient: Sig.accentGradient, size: 46)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(step.isCustom ? "CUSTOM" : "STEP \(i + 1)").font(.system(size: 9, weight: .heavy)).tracking(1.2)
-                            .foregroundStyle(step.isCustom ? Sig.accent : Sig.faint)
-                        Text(step.label).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text).lineLimit(1)
-                        if let sub = stepSubtitle(step) { Text(sub).font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1) }
-                    }
-                    Spacer(minLength: 0)
-                    Image(systemName: "slider.horizontal.3").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
-                }.contentShape(Rectangle())
-            }.buttonStyle(PressableCard())
-            VStack(spacing: 8) {
-                Button { move(i, -1) } label: { Image(systemName: "chevron.up").font(.system(size: 13, weight: .bold)) }
-                    .disabled(i == 0).foregroundStyle(i == 0 ? Sig.faint.opacity(0.4) : Sig.muted)
-                Button { move(i, 1) } label: { Image(systemName: "chevron.down").font(.system(size: 13, weight: .bold)) }
-                    .disabled(i == wf.steps.count - 1).foregroundStyle(i == wf.steps.count - 1 ? Sig.faint.opacity(0.4) : Sig.muted)
-            }.buttonStyle(.plain)
-            Button { withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { wf.steps.remove(at: i) }; tactile() } label: {
-                Image(systemName: "xmark.circle.fill").font(.system(size: 19, weight: .bold)).foregroundStyle(Sig.faint)
-            }.buttonStyle(.plain)
-        }
-        .padding(12).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 18)
-        .transition(.scale(scale: 0.95).combined(with: .opacity))
-    }
-
-    private func stepSubtitle(_ step: WorkflowStep) -> String? {
-        if case .llmCall(_, let prompt, let input) = step {
-            let p = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
-            return p.isEmpty ? "Set a prompt · in: \(input.label)" : "\"\(p.prefix(38))\(p.count > 38 ? "…" : "")\" · in: \(input.label)"
-        }
-        return nil
-    }
-
-    // The palette — tap a block kind to append a step. The custom LLM-call node leads, and opens
-    // its editor immediately so you go straight to writing the prompt.
-    private var paletteBar: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Text("ADD A STEP").font(.system(size: 10, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint).padding(.leading, 2)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    paletteChip("LLM call", "terminal.fill", emphasized: true) {
-                        wf.steps.append(.llmCall(name: "LLM call", prompt: "", input: .meeting))
-                        editing = .step(wf.steps.count - 1)
-                    }
-                    paletteChip("Lens", "camera.filters") { wf.steps.append(.lens(.delivery)) }
-                    paletteChip("Extract", "doc.text.magnifyingglass") { wf.steps.append(.extract(.actionItems)) }
-                    paletteChip("Summarize", "text.append") { wf.steps.append(.summarize) }
-                    paletteChip("Rewrite", "pencil.and.outline") { wf.steps.append(.rewrite(tone: "executive")) }
-                    paletteChip("Filter", "line.3.horizontal.decrease.circle") { wf.steps.append(.keepIf("risk")) }
-                }.padding(.vertical, 1)
-            }
-        }
-    }
-
-    private func paletteChip(_ title: String, _ glyph: String, emphasized: Bool = false, _ add: @escaping () -> Void) -> some View {
-        Button { tactile(); withAnimation(.spring(response: 0.4, dampingFraction: 0.78)) { add() } } label: {
-            HStack(spacing: 6) {
-                Image(systemName: glyph).font(.system(size: 12, weight: .bold))
-                Text(title).font(.system(size: 13, weight: .heavy))
-                Image(systemName: "plus").font(.system(size: 10, weight: .black))
-            }
-            .foregroundStyle(emphasized ? .black : Sig.accent)
-            .padding(.horizontal, 12).padding(.vertical, 9)
-            .background(emphasized ? AnyShapeStyle(Sig.accentGradient) : AnyShapeStyle(Sig.accent.opacity(0.12)), in: Capsule())
-            .overlay { if !emphasized { Capsule().strokeBorder(Sig.accent.opacity(0.3), lineWidth: 1) } }
-        }.buttonStyle(PressableCard())
-    }
-
-    private var saveBar: some View {
+    private var runButton: some View {
         Button {
             tactile(.medium)
-            store.save(Workflow(name: wf.name, source: wf.source, steps: wf.steps, output: wf.output))
+            if model.running { stopRun() } else { startRun() }
         } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "tray.and.arrow.down.fill")
-                Text("Save workflow")
+            HStack(spacing: 6) {
+                Image(systemName: model.running ? "stop.fill" : "play.fill").font(.system(size: 12, weight: .black))
+                Text(model.running ? "Running" : "Run").font(.system(size: 14, weight: .heavy))
             }
-            .font(.system(size: 15, weight: .heavy)).foregroundStyle(.black)
-            .frame(maxWidth: .infinity).padding(.vertical, 14)
-            .background(Sig.accentGradient, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .opacity(wf.isRunnable ? 1 : 0.5)
-        }
-        .buttonStyle(PressableCard()).disabled(!wf.isRunnable)
-        .padding(.top, 2)
+            .foregroundStyle(.black)
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            .background(Sig.accentGradient, in: Capsule())
+            .shadow(color: Sig.accent.opacity(model.running ? 0.65 : 0.3), radius: model.running ? 13 : 6)
+        }.buttonStyle(PressableCard())
     }
 
-    private var savedRow: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Text("SAVED — RUN FROM A MEETING").font(.system(size: 10, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint).padding(.leading, 2)
-            ForEach(store.saved) { w in
-                HStack(spacing: 12) {
-                    GlyphChip(system: "wand.and.stars", gradient: Sig.localGradient, size: 38)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(w.name).font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.text).lineLimit(1)
-                        Text(w.plan).font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1)
+    private var edgeLayer: some View {
+        TimelineView(.animation(paused: !model.running)) { tl in
+            Canvas { ctx, _ in
+                let t = tl.date.timeIntervalSinceReferenceDate
+                for e in model.edges {
+                    guard let a = model.portCenter(e.from), let b = model.portCenter(e.to), let ty = model.portType(e.from) else { continue }
+                    let path = cablePath(a, b)
+                    ctx.drawLayer { l in
+                        l.addFilter(.blur(radius: 7))
+                        l.stroke(path, with: .color(ty.color.opacity(0.5)), style: StrokeStyle(lineWidth: 6, lineCap: .round))
                     }
-                    Spacer()
-                    Button { tactile(); withAnimation { wf = w } } label: {
-                        Image(systemName: "square.and.pencil").font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
-                    }.buttonStyle(.plain)
-                    Button { withAnimation { store.delete(w.id) }; tactile() } label: {
-                        Image(systemName: "trash").font(.system(size: 14, weight: .bold)).foregroundStyle(Sig.faint)
-                    }.buttonStyle(.plain)
+                    ctx.stroke(path, with: .color(ty.color.opacity(0.92)), style: StrokeStyle(lineWidth: 2.4, lineCap: .round))
+                    // Only the WORKING node's outgoing cables pulse — so the signal visibly travels the
+                    // wire the run is on right now (HSM-14-15), not every cable at once.
+                    if model.running && model.activeEdges.contains(e.id) {
+                        let phase = CGFloat((t * 0.8).truncatingRemainder(dividingBy: 1))
+                        let p = cablePoint(a, b, phase)
+                        ctx.drawLayer { l in l.addFilter(.blur(radius: 5)); l.fill(Path(ellipseIn: CGRect(x: p.x-6, y: p.y-6, width: 12, height: 12)), with: .color(ty.color)) }
+                        ctx.fill(Path(ellipseIn: CGRect(x: p.x-3, y: p.y-3, width: 6, height: 6)), with: .color(.white))
+                    }
                 }
-                .padding(12).signalCard(Sig.s1, radius: 14)
+                if let pend = model.pending, let a = model.portCenter(pend.from), let ty = model.portType(pend.from) {
+                    ctx.stroke(cablePath(a, pend.point), with: .color(ty.color.opacity(0.85)),
+                               style: StrokeStyle(lineWidth: 2.4, lineCap: .round, dash: [7, 6]))
+                    ctx.fill(Path(ellipseIn: CGRect(x: pend.point.x-5, y: pend.point.y-5, width: 10, height: 10)), with: .color(ty.color))
+                }
+            }
+            .frame(width: GraphGeom.canvas.width, height: GraphGeom.canvas.height)
+        }
+        .allowsHitTesting(false)
+    }
+
+    private var nodeLayer: some View {
+        ForEach(model.nodes) { n in
+            NodeCardView(node: n, selected: model.selected == n.id,
+                         onDelete: { withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { model.remove(n.id) }; tactile() })
+                .position(n.pos)
+                .gesture(
+                    DragGesture(coordinateSpace: .named("graph"))
+                        .onChanged { v in
+                            if model.dragOrigin[n.id] == nil { model.dragOrigin[n.id] = n.pos; model.selected = n.id }
+                            let o = model.dragOrigin[n.id]!
+                            model.move(n.id, to: CGPoint(x: o.x + v.translation.width, y: o.y + v.translation.height))
+                        }
+                        .onEnded { _ in model.dragOrigin[n.id] = nil; tactile() }
+                )
+                .onTapGesture { tactile(); model.selected = n.id; inspect = n }
+        }
+    }
+
+    // Invisible grab targets over each output port — drag one to pull a cable to an input.
+    private var portHandles: some View {
+        ForEach(model.nodes) { n in
+            ForEach(Array(n.kind.outputs.enumerated()), id: \.offset) { i, _ in
+                let ref = PortRef(node: n.id, isInput: false, index: i)
+                if let c = model.portCenter(ref) {
+                    Circle().fill(Color.white.opacity(0.001)).frame(width: 42, height: 42).contentShape(Circle())
+                        .position(c)
+                        .gesture(
+                            DragGesture(coordinateSpace: .named("graph"))
+                                .onChanged { v in model.pending = (ref, v.location) }
+                                .onEnded { v in model.endWire(at: v.location) }
+                        )
+                }
             }
         }
     }
 
-    private func move(_ i: Int, _ dir: Int) {
-        let j = i + dir
-        guard wf.steps.indices.contains(j) else { return }
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { wf.steps.swapAt(i, j) }; tactile()
+    private var palette: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 9) {
+                ForEach(NodeKind.allCases) { paletteChip($0) }
+            }.padding(.horizontal, 18).padding(.vertical, 13)
+        }
+        .background(.ultraThinMaterial)
+        .overlay(LinearGradient(colors: [Sig.accent.opacity(0.45), .clear], startPoint: .top, endPoint: .bottom).frame(height: 1.5), alignment: .top)
+    }
+
+    private func paletteChip(_ k: NodeKind) -> some View {
+        Button {
+            tactile()
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) {
+                let c = CGPoint(x: GraphGeom.canvas.width/2 - pan.width/zoom + CGFloat.random(in: -44...44),
+                                y: GraphGeom.canvas.height/2 - pan.height/zoom + CGFloat.random(in: -34...34))
+                model.addNode(k, at: c)
+            }
+        } label: {
+            HStack(spacing: 7) {
+                Image(systemName: k.glyph).font(.system(size: 12, weight: .bold))
+                Text(k.title).font(.system(size: 13, weight: .heavy))
+                Image(systemName: "plus").font(.system(size: 9, weight: .black)).opacity(0.65)
+            }
+            .foregroundStyle(k == .llm ? .black : k.accent)
+            .padding(.horizontal, 13).padding(.vertical, 9)
+            .background(k == .llm ? AnyShapeStyle(Sig.accentGradient) : AnyShapeStyle(k.accent.opacity(0.14)), in: Capsule())
+            .overlay { if k != .llm { Capsule().strokeBorder(k.accent.opacity(0.35), lineWidth: 1) } }
+        }.buttonStyle(PressableCard())
+    }
+
+    private var panGesture: some Gesture {
+        DragGesture()
+            .onChanged { v in pan = CGSize(width: panStart.width + v.translation.width, height: panStart.height + v.translation.height) }
+            .onEnded { _ in panStart = pan }
+    }
+    private var zoomGesture: some Gesture {
+        MagnificationGesture()
+            .onChanged { m in zoom = min(1.6, max(0.55, zoomStart * m)) }
+            .onEnded { _ in zoomStart = zoom }
+    }
+
+    // A useful starting program: Transcription fans out to a Decisions lens and a custom LLM call;
+    // findings file to the board, the LLM draft becomes a note.
+    private func seed() {
+        let cx = GraphGeom.canvas.width/2, cy = GraphGeom.canvas.height/2
+        let src = GraphNode(.transcription, CGPoint(x: cx - 360, y: cy - 30))
+        let dec = GraphNode(.decisions, CGPoint(x: cx - 20, y: cy - 150))
+        var llm = GraphNode(.llm, CGPoint(x: cx - 20, y: cy + 80))
+        llm.prompt = "From {input}, list the sharpest risks as pointed questions a reviewer should ask. One per line, no preamble."
+        let board = GraphNode(.board, CGPoint(x: cx + 330, y: cy - 150))
+        let note = GraphNode(.note, CGPoint(x: cx + 330, y: cy + 80))
+        model.nodes = [src, dec, llm, board, note]
+        func o(_ n: GraphNode, _ i: Int) -> PortRef { PortRef(node: n.id, isInput: false, index: i) }
+        func ip(_ n: GraphNode, _ i: Int) -> PortRef { PortRef(node: n.id, isInput: true, index: i) }
+        model.edges = [
+            GraphEdge(from: o(src, 0), to: ip(dec, 0)),
+            GraphEdge(from: o(src, 0), to: ip(llm, 0)),
+            GraphEdge(from: o(dec, 0), to: ip(board, 0)),
+            GraphEdge(from: o(llm, 0), to: ip(note, 0)),
+        ]
+    }
+
+    // MARK: - HSM-14-15 — execute the graph through the real WorkflowRunner
+
+    private func stopRun() {
+        runTask?.cancel(); runTask = nil
+        withAnimation(.easeInOut(duration: 0.3)) { model.running = false }
+        model.clearRun()
+    }
+
+    /// Lower the canvas to a `Workflow`, build a provider, and run it through `WorkflowRunner`. The
+    /// canvas node glow + cable pulse and the app-wide Queue HUD are driven from the REAL per-step
+    /// `StepOutcome`s — only the provider is faked (no GGUF in the Simulator).
+    private func startRun() {
+        guard let lowered = model.lowerToWorkflow() else {
+            tactile(.heavy); return   // nothing wired source→…→output yet
+        }
+        model.clearRun()
+        withAnimation(.easeInOut(duration: 0.3)) { model.running = true }
+        model.setRunState(lowered.sourceNode, .done)
+
+        runTask = Task { await run(lowered) }
+    }
+
+    /// The run loop. We execute step-by-step (one `WorkflowRunner` call per step over the threaded
+    /// text) so the UI can light each node + push a `QueuedJob` as it goes — same engine, same failure
+    /// policy, just stepped so the run is *visible*. The provider work stays off the main actor.
+    private func run(_ lowered: PatchModel.LoweredGraph) async {
+        let queue = RunQueueStore.shared
+        let runName = lowered.workflow.name
+        // The seeded source text the runner reads (the App is source-agnostic; this stands in for the
+        // resolved transcript / tacked moments / selection in the demo).
+        let sourceText = "Standup transcript: we decided to ship the v1 canvas runner. "
+            + "Action: wire Run to WorkflowRunner. Risk: branching graphs only run their main path. "
+            + "Open question: when do we need a real DAG engine?"
+
+        // The provider: REAL on-device/endpoint unless the model is absent — then the seeded fake so
+        // the run is demonstrable. In the Simulator there is never a GGUF, so we use the fake.
+        let provider: ILLMProvider = makeRunProvider()
+        let runner = WorkflowRunner(provider: provider,
+                                    policy: RunPolicy(maxRetries: 1, failurePolicy: .skip))
+
+        var threaded = sourceText
+        for (i, step) in lowered.workflow.steps.enumerated() {
+            if Task.isCancelled { break }
+            let nodeID = lowered.stepNodes[i]
+            let target = InferenceConfigStore.shared.isLocal ? "On-device" : "Endpoint"
+
+            // Light the node + its outgoing cable; push a WORKING job.
+            model.setRunState(nodeID, .working)
+            model.activateOutgoing(of: nodeID)
+            let jobID = UUID()
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                queue.jobs.insert(QueuedJob(runName, model.node(nodeID)?.title ?? step.label,
+                                            target: target, status: .working, progress: 0.4), at: 0)
+            }
+            tactile(.light)
+
+            // A single-step workflow over the threaded value — REAL runner execution.
+            let single = Workflow(name: runName, source: lowered.workflow.source, steps: [step],
+                                  output: lowered.workflow.output)
+            let result = await runner.run(single, sourceText: threaded)
+
+            if Task.isCancelled { break }
+            let outcome = result.steps.first
+            threaded = result.finalText
+
+            // Settle the node + the job from the REAL StepStatus.
+            let status: NodeRunState
+            let job: JobStatus
+            switch outcome?.status {
+            case .ok, .fellBack: status = .done; job = .done
+            case .skipped:       status = .done; job = .done
+            case .parked:        status = .parked; job = .blocked
+            default:             status = .failed; job = .failed
+            }
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+                model.setRunState(nodeID, status)
+                if let qi = queue.jobs.firstIndex(where: { $0.id == jobID }) {
+                    queue.jobs[qi].status = job
+                    queue.jobs[qi].progress = 1
+                    queue.jobs[qi].note = outcome?.error
+                }
+            }
+            // Hand the pulse to the next node's cables (or clear at the end).
+            model.activeEdges.removeAll()
+        }
+
+        // The OUTPUT node settles last — the result landed where the graph sends it.
+        if !Task.isCancelled, let out = lowered.outputNode {
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { model.setRunState(out, .done) }
+        }
+        if !Task.isCancelled {
+            withAnimation(.easeInOut(duration: 0.4)) { model.running = false }
+        }
+        runTask = nil
+    }
+
+    /// The provider for a real run: on-device / endpoint via Settings, falling back to the seeded fake
+    /// when no model is available (always, in the Simulator). Keeps model work off the main actor at
+    /// the call site (the runner awaits it on a background `Task`).
+    private func makeRunProvider() -> ILLMProvider {
+        let cfg = InferenceConfigStore.shared
+        #if targetEnvironment(simulator)
+        return SeededFakeProvider()   // no GGUF in the Simulator — the run is still real, the model is faked
+        #else
+        if let p = try? cfg.makeProvider(localModelPath: MeetingReviewState.localGGUF(), context: 16_384) {
+            return p
+        }
+        return SeededFakeProvider()
+        #endif
     }
 }
 
-/// The block configuration editor — a pleasant, full-size sheet (not a cramped menu). For the
-/// custom LLM-call node it's a real prompt editor: a name, the input it reads, and a big prompt
-/// field where `{input}` is injected. For curated blocks it's a clean choices list.
-struct WorkbenchEditorSheet: View {
-    @Binding var wf: Workflow
-    let target: WorkbenchView.EditTarget
-    @Environment(\.dismiss) private var dismiss
-    @State private var name = ""
-    @State private var prompt = ""
-    @State private var keyword = ""
-    @State private var tone = ""
-    @State private var llmInput: WorkflowInput = .meeting
-    @FocusState private var promptFocused: Bool
+/// A dim graph-paper dot grid — the canvas's "this is a workspace" texture.
+private struct DotGrid: View {
+    var body: some View {
+        Canvas { ctx, size in
+            let step: CGFloat = 34, r: CGFloat = 1.3
+            var y: CGFloat = step
+            while y < size.height {
+                var x: CGFloat = step
+                while x < size.width {
+                    ctx.fill(Path(ellipseIn: CGRect(x: x-r, y: y-r, width: r*2, height: r*2)), with: .color(.white.opacity(0.05)))
+                    x += step
+                }
+                y += step
+            }
+        }
+        .frame(width: GraphGeom.canvas.width, height: GraphGeom.canvas.height)
+        .allowsHitTesting(false)
+    }
+}
 
-    private var stepIndex: Int? { if case .step(let i) = target { return i }; return nil }
-    private var step: WorkflowStep? { if let i = stepIndex, wf.steps.indices.contains(i) { return wf.steps[i] }; return nil }
+/// One node on the canvas: a Signal card with a typed glyph, a title, and colored I/O ports.
+private struct NodeCardView: View {
+    let node: GraphNode
+    let selected: Bool
+    let onDelete: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var pulse = false
+    private var k: NodeKind { node.kind }
+
+    // HSM-14-15 — the live run color for this node (nil ⇒ idle, no run treatment).
+    private var runColor: Color? {
+        switch node.runState {
+        case .idle:    return nil
+        case .working: return Sig.accent
+        case .done:    return Sig.ok
+        case .parked:  return Sig.warn
+        case .failed:  return Sig.bad
+        }
+    }
+    private var isWorking: Bool { node.runState == .working }
 
     var body: some View {
+        HStack(spacing: 11) {
+            GlyphChip(system: k.glyph, gradient: k.grad, size: 40)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(node.title).font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.text).lineLimit(1)
+                if let s = node.subtitle {
+                    Text(s).font(.system(size: 10.5, weight: .medium)).foregroundStyle(k == .llm ? Sig.accent : Sig.faint).lineLimit(1)
+                } else {
+                    Text(k.cat.rawValue).font(.system(size: 8.5, weight: .heavy)).tracking(1).foregroundStyle(Sig.faint)
+                }
+            }
+            Spacer(minLength: 2)
+        }
+        .padding(.horizontal, 13)
+        .frame(width: GraphGeom.nodeW, height: GraphGeom.nodeH)
+        .signalCard(Sig.s1, radius: 17)
+        .overlay(RoundedRectangle(cornerRadius: 17, style: .continuous)
+            .strokeBorder(borderStyle, lineWidth: runColor != nil ? 2.4 : (selected ? 2 : 1)))
+        .overlay(ports)
+        .overlay(alignment: .topLeading) { runPip }
+        .overlay(alignment: .topTrailing) {
+            if selected {
+                Button { onDelete() } label: {
+                    Image(systemName: "xmark.circle.fill").font(.system(size: 19))
+                        .symbolRenderingMode(.palette).foregroundStyle(Sig.muted, Sig.s3)
+                }.offset(x: 9, y: -9)
+            }
+        }
+        .scaleEffect(isWorking && pulse && !reduceMotion ? 1.035 : 1)
+        .shadow(color: runColor?.opacity(isWorking ? 0.6 : 0.4) ?? (selected ? k.accent.opacity(0.3) : .clear),
+                radius: runColor != nil ? (isWorking ? 18 : 12) : (selected ? 12 : 0))
+        .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: pulse)
+        .onAppear { pulse = true }
+    }
+
+    private var borderStyle: AnyShapeStyle {
+        if let c = runColor { return AnyShapeStyle(c) }
+        return selected ? AnyShapeStyle(k.accent) : AnyShapeStyle(Sig.topHairline)
+    }
+
+    // A small status pip in the corner while/after a run touches this node.
+    @ViewBuilder private var runPip: some View {
+        if let c = runColor {
+            Image(systemName: isWorking ? "bolt.fill"
+                  : (node.runState == .done ? "checkmark"
+                     : (node.runState == .parked ? "pause.fill" : "xmark")))
+                .font(.system(size: 9, weight: .black)).foregroundStyle(.black)
+                .frame(width: 19, height: 19).background(c, in: Circle())
+                .overlay(Circle().stroke(Sig.bg, lineWidth: 2))
+                .offset(x: -7, y: -7)
+        }
+    }
+
+    private var ports: some View {
         ZStack {
-            Sig.bg.ignoresSafeArea()
-            VStack(spacing: 0) {
-                header
-                ScrollView { content.padding(20) }
+            ForEach(Array(k.inputs.enumerated()), id: \.offset) { i, ty in
+                portDot(ty).position(x: 0, y: portY(true, i))
+            }
+            ForEach(Array(k.outputs.enumerated()), id: \.offset) { i, ty in
+                portDot(ty).position(x: GraphGeom.nodeW, y: portY(false, i))
             }
         }
-        .tint(Sig.accent).onAppear(perform: seed)
+        .frame(width: GraphGeom.nodeW, height: GraphGeom.nodeH)
     }
+    private func portY(_ input: Bool, _ i: Int) -> CGFloat {
+        let count = input ? k.inputs.count : k.outputs.count
+        return GraphGeom.nodeH * CGFloat(i + 1) / CGFloat(count + 1)
+    }
+    private func portDot(_ ty: PortType) -> some View {
+        Circle().fill(ty.color).frame(width: 13, height: 13)
+            .overlay(Circle().stroke(Sig.bg, lineWidth: 2.5))
+            .shadow(color: ty.color.opacity(0.7), radius: 4)
+    }
+}
 
-    private var titleText: String {
-        switch target {
-        case .source: return "Source"
-        case .output: return "Output"
-        case .step:   return step?.isCustom == true ? "LLM call" : "Configure step"
+/// The node inspector — tap a node to open it. Configurable nodes (LLM call, Rewrite, Filter) get a
+/// real editor; every node shows what it does and its typed I/O (so the language is legible).
+private struct NodeInspectorSheet: View {
+    @ObservedObject var model: PatchModel
+    let nodeID: UUID
+    @Environment(\.dismiss) private var dismiss
+    @State private var prompt = ""
+    @State private var tone = "Executive"
+    @State private var keyword = "risk"
+    @State private var modelPref: ModelPref = .auto
+    @State private var onFail: FailurePolicy = .retryThenQueue
+    private let tones = ["Executive", "Plain", "Friendly", "Technical", "Terse"]
+
+    private var node: GraphNode? { model.node(nodeID) }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            grabber
+            if let n = node {
+                headerBar(n)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        ioRow(n)
+                        editor(n)
+                        if n.kind.usesModel { runtimeSection(n) }
+                        Color.clear.frame(height: 12)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 6)
+                }
+            }
         }
+        .presentationDetents([.height(440), .large])
+        .presentationDragIndicator(.hidden)
+        .presentationCornerRadius(30)
+        .presentationBackground {
+            ZStack {
+                Sig.bgGradient
+                Circle().fill((node?.kind.accent ?? Sig.accent).opacity(0.16)).frame(width: 360).blur(radius: 130)
+                    .offset(x: 120, y: -260)
+            }
+            .ignoresSafeArea()
+        }
+        .onAppear { if let n = node { prompt = n.prompt; tone = n.tone; keyword = n.keyword; modelPref = n.modelPref; onFail = n.onFail } }
     }
 
-    private var header: some View {
-        HStack {
-            Text(titleText).font(.system(size: 21, weight: .heavy)).foregroundStyle(Sig.text)
+    private var grabber: some View {
+        Capsule().fill(Sig.faint.opacity(0.55)).frame(width: 40, height: 5)
+            .padding(.top, 9).padding(.bottom, 4)
+    }
+
+    // A designed header — the node's glyph + identity on the left, a real "Done" pill on the right.
+    private func headerBar(_ n: GraphNode) -> some View {
+        HStack(spacing: 13) {
+            GlyphChip(system: n.kind.glyph, gradient: n.kind.grad, size: 46)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(n.kind.cat.rawValue).font(.system(size: 9, weight: .heavy)).tracking(1.4).foregroundStyle(n.kind.accent)
+                Text(n.title).font(.system(size: 22, weight: .heavy)).foregroundStyle(Sig.text)
+            }
             Spacer()
-            Button { commit(); dismiss() } label: {
-                Text("Done").font(.system(size: 15, weight: .heavy)).foregroundStyle(.black)
-                    .padding(.horizontal, 18).padding(.vertical, 9).background(Sig.accentGradient, in: Capsule())
-            }.buttonStyle(.plain)
+            Button { tactile(.medium); commit(); dismiss() } label: {
+                Text("Done").font(.system(size: 14, weight: .heavy)).foregroundStyle(.black)
+                    .padding(.horizontal, 18).padding(.vertical, 10)
+                    .background(Sig.accentGradient, in: Capsule())
+                    .shadow(color: Sig.accent.opacity(0.35), radius: 7, y: 3)
+            }.buttonStyle(PressableCard())
         }
-        .padding(.horizontal, 20).padding(.top, 20).padding(.bottom, 8)
+        .padding(.horizontal, 20).padding(.top, 6).padding(.bottom, 14)
     }
 
-    @ViewBuilder private var content: some View {
-        switch target {
-        case .source:
-            choices(WorkflowSource.allCases.map { ($0.label, $0.glyph, $0 == wf.source) }) { i in
-                wf.source = WorkflowSource.allCases[i]; tactile(); dismiss()
-            }
-        case .output:
-            choices(WorkflowOutput.allCases.map { ($0.label, $0.glyph, $0 == wf.output) }) { i in
-                wf.output = WorkflowOutput.allCases[i]; tactile(); dismiss()
-            }
-        case .step(let i):
-            stepContent(i)
-        }
-    }
-
-    @ViewBuilder private func stepContent(_ i: Int) -> some View {
-        if let s = step {
-            switch s {
-            case .lens(let p):
-                fieldGroup("WHICH LENS — weights what to surface") {
-                    choices(MIRProfile.allCases.map { ("Lens · \($0.rawValue.capitalized)", "camera.filters", $0 == p) }) { idx in
-                        wf.steps[i] = .lens(MIRProfile.allCases[idx]); tactile(); dismiss()
-                    }
+    private func ioRow(_ n: GraphNode) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(n.kind.blurb).font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.muted)
+            HStack(spacing: 8) {
+                if n.kind.inputs.isEmpty { tinyTag("starts here") }
+                ForEach(Array(n.kind.inputs.enumerated()), id: \.offset) { _, t in typePill(t) }
+                if !n.kind.inputs.isEmpty && !n.kind.outputs.isEmpty {
+                    Image(systemName: "arrow.right").font(.system(size: 10, weight: .black)).foregroundStyle(Sig.faint)
                 }
-            case .extract(let t):
-                fieldGroup("WHICH ARTIFACT TYPE TO DRAFT") {
-                    choices(ArtifactType.allCases.map { ($0.rawValue, "doc.text.magnifyingglass", $0 == t) }) { idx in
-                        wf.steps[i] = .extract(ArtifactType.allCases[idx]); tactile(); dismiss()
-                    }
-                }
-            case .summarize:
-                infoCard("Condenses the input to a tight summary. No options.")
-            case .rewrite:
-                fieldGroup("REWRITE — the tone") {
-                    field($tone, "executive, plain, friendly…")
-                    choices(["executive", "plain", "friendly", "technical"].map { ($0, "pencil.and.outline", $0 == tone) }) { idx in
-                        tone = ["executive", "plain", "friendly", "technical"][idx]; commit(); tactile()
-                    }
-                }
-            case .keepIf:
-                fieldGroup("KEEP IF — only items with this keyword survive") { field($keyword, "risk, owner, budget…") }
-            case .llmCall:
-                llmEditor()
+                ForEach(Array(n.kind.outputs.enumerated()), id: \.offset) { _, t in typePill(t) }
+                if n.kind.outputs.isEmpty { tinyTag("ends here") }
             }
         }
+        .padding(14).frame(maxWidth: .infinity, alignment: .leading).signalCard(Sig.s1, radius: 16)
+    }
+    private func tinyTag(_ s: String) -> some View {
+        Text(s).font(.system(size: 11, weight: .bold)).foregroundStyle(Sig.faint)
+            .padding(.horizontal, 10).padding(.vertical, 6).background(Sig.s3, in: Capsule())
+    }
+    private func typePill(_ t: PortType) -> some View {
+        HStack(spacing: 6) {
+            Circle().fill(t.color).frame(width: 8, height: 8)
+            Text(t.label).font(.system(size: 11, weight: .bold)).foregroundStyle(Sig.text)
+        }
+        .padding(.horizontal, 10).padding(.vertical, 6)
+        .background(t.color.opacity(0.12), in: Capsule())
+        .overlay(Capsule().strokeBorder(t.color.opacity(0.3), lineWidth: 1))
     }
 
-    private func llmEditor() -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            fieldGroup("NAME") { field($name, "what this step does") }
-            fieldGroup("INPUT — what the prompt reads") {
-                choices(WorkflowInput.allCases.map { ("Reads \($0.label)", $0 == .meeting ? "text.alignleft" : "arrow.up.circle", $0 == llmInput) }) { idx in
-                    llmInput = WorkflowInput.allCases[idx]; commit(); tactile()
-                }
-            }
-            fieldGroup("PROMPT") {
+    @ViewBuilder private func editor(_ n: GraphNode) -> some View {
+        switch n.kind {
+        case .llm:
+            section("PROMPT") {
                 ZStack(alignment: .topLeading) {
                     if prompt.isEmpty {
-                        Text("Write your prompt. Use {input} where the input text should go.")
-                            .font(.system(size: 15)).foregroundStyle(Sig.faint).padding(.horizontal, 13).padding(.vertical, 16)
+                        Text("Write what the model should do. Use {input} for the wired input.")
+                            .font(.system(size: 14)).foregroundStyle(Sig.faint).padding(.horizontal, 9).padding(.vertical, 12)
                     }
-                    TextEditor(text: $prompt).focused($promptFocused).scrollContentBackground(.hidden)
-                        .font(.system(size: 15)).foregroundStyle(Sig.text).frame(minHeight: 150).padding(8)
+                    TextEditor(text: $prompt).font(.system(size: 14)).foregroundStyle(Sig.text)
+                        .scrollContentBackground(.hidden).frame(minHeight: 130).padding(5)
                 }
-                .background(Sig.s2, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
-                    .strokeBorder(promptFocused ? Sig.accent : Color.white.opacity(0.08), lineWidth: promptFocused ? 1.5 : 1))
-                HStack(spacing: 5) {
-                    Image(systemName: "curlybraces").font(.system(size: 10, weight: .black))
-                    Text("{input} is replaced with the input text").font(.system(size: 11, weight: .semibold))
-                }.foregroundStyle(Sig.faint).padding(.top, 2)
-            }
-        }
-        .onChange(of: prompt) { _, _ in commit() }
-        .onChange(of: name) { _, _ in commit() }
-        .onChange(of: keyword) { _, _ in commit() }
-        .onChange(of: tone) { _, _ in commit() }
-    }
-
-    // MARK: building blocks
-    private func fieldGroup<C: View>(_ title: String, @ViewBuilder _ c: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.system(size: 10, weight: .heavy)).tracking(1).foregroundStyle(Sig.faint)
-            c()
-        }
-    }
-
-    private func field(_ text: Binding<String>, _ hint: String) -> some View {
-        TextField("", text: text, prompt: Text(hint).foregroundColor(Sig.faint))
-            .textInputAutocapitalization(.never).autocorrectionDisabled()
-            .font(.system(size: 15, weight: .medium)).foregroundStyle(Sig.text)
-            .padding(.horizontal, 13).padding(.vertical, 12)
-            .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
-            .onChange(of: text.wrappedValue) { _, _ in commit() }
-    }
-
-    private func choices(_ items: [(String, String, Bool)], _ pick: @escaping (Int) -> Void) -> some View {
-        VStack(spacing: 8) {
-            ForEach(Array(items.enumerated()), id: \.offset) { i, it in
-                Button { pick(i) } label: {
-                    HStack(spacing: 11) {
-                        Image(systemName: it.1).font(.system(size: 15, weight: .bold)).foregroundStyle(it.2 ? Sig.accent : Sig.muted).frame(width: 24)
-                        Text(it.0).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text)
-                        Spacer()
-                        Image(systemName: it.2 ? "checkmark.circle.fill" : "circle").font(.system(size: 18, weight: .bold)).foregroundStyle(it.2 ? Sig.accent : Sig.faint)
-                    }
-                    .padding(13).background(Sig.s1, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
-                        .strokeBorder(it.2 ? AnyShapeStyle(Sig.accent) : AnyShapeStyle(Sig.topHairline), lineWidth: it.2 ? 1.5 : 1))
+                .background(Sig.s2, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Sig.topHairline, lineWidth: 1))
+                Button { prompt += (prompt.isEmpty ? "" : " ") + "{input}" } label: {
+                    Label("Insert {input}", systemImage: "curlybraces").font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(Sig.accent).padding(.horizontal, 12).padding(.vertical, 7)
+                        .background(Sig.accent.opacity(0.12), in: Capsule())
                 }.buttonStyle(PressableCard())
             }
+        case .rewrite:
+            section("TONE") { chipRow(tones.map { ($0, $0, "") }, selected: tone) { tone = $0 } }
+        case .filter:
+            section("KEEP LINES CONTAINING") {
+                TextField("keyword", text: $keyword).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text)
+                    .padding(14).background(Sig.s2, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Sig.topHairline, lineWidth: 1))
+                    .autocorrectionDisabled().textInputAutocapitalization(.never)
+            }
+        default:
+            EmptyView()
         }
     }
 
-    private func infoCard(_ text: String) -> some View {
-        Text(text).font(.system(size: 14, weight: .medium)).foregroundStyle(Sig.muted)
-            .frame(maxWidth: .infinity, alignment: .leading).padding(15).signalCard(Sig.s1, radius: 14)
+    // The runtime contract for a model-backed node: where it runs, and what happens if that's down.
+    private func runtimeSection(_ n: GraphNode) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            section("RUNS ON") {
+                chipRow(ModelPref.allCases.map { ($0.rawValue, $0.label, $0.glyph) }, selected: modelPref.rawValue) {
+                    if let p = ModelPref(rawValue: $0) { modelPref = p }
+                }
+                Text(modelPref.hint).font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+            }
+            section("IF UNREACHABLE") {
+                chipRow(FailurePolicy.allCases.map { ($0.rawValue, $0.label, $0.glyph) }, selected: onFail.rawValue) {
+                    if let p = FailurePolicy(rawValue: $0) { onFail = p }
+                }
+                Text(onFail.hint).font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+            }
+        }
+        .padding(15).frame(maxWidth: .infinity, alignment: .leading).signalCard(Sig.s1, radius: 16)
+        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Sig.accent.opacity(0.16), lineWidth: 1))
     }
 
-    private func seed() {
-        guard let s = step else { return }
-        switch s {
-        case .llmCall(let n, let p, let inp): name = n; prompt = p; llmInput = inp
-        case .rewrite(let t): tone = t
-        case .keepIf(let k): keyword = k
-        default: break
+    @ViewBuilder private func section<C: View>(_ title: String, @ViewBuilder _ content: () -> C) -> some View {
+        VStack(alignment: .leading, spacing: 9) {
+            Text(title).font(.system(size: 10, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint)
+            content()
+        }
+    }
+
+    // A horizontal row of selectable chips: (id, label, sf-glyph). Glyph optional ("").
+    private func chipRow(_ options: [(String, String, String)], selected: String, _ pick: @escaping (String) -> Void) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(options, id: \.0) { opt in
+                    let on = opt.0 == selected
+                    Button { tactile(); withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { pick(opt.0) } } label: {
+                        HStack(spacing: 6) {
+                            if !opt.2.isEmpty { Image(systemName: opt.2).font(.system(size: 11, weight: .bold)) }
+                            Text(opt.1).font(.system(size: 13, weight: .heavy))
+                        }
+                        .foregroundStyle(on ? .black : Sig.muted)
+                        .padding(.horizontal, 13).padding(.vertical, 9)
+                        .background(on ? AnyShapeStyle(Sig.accentGradient) : AnyShapeStyle(Sig.s2), in: Capsule())
+                        .overlay { if !on { Capsule().strokeBorder(Sig.topHairline, lineWidth: 1) } }
+                    }.buttonStyle(PressableCard())
+                }
+            }.padding(.bottom, 1)
         }
     }
 
     private func commit() {
-        guard let i = stepIndex, wf.steps.indices.contains(i) else { return }
-        switch wf.steps[i] {
-        case .llmCall: wf.steps[i] = .llmCall(name: name.isEmpty ? "LLM call" : name, prompt: prompt, input: llmInput)
-        case .rewrite: wf.steps[i] = .rewrite(tone: tone.isEmpty ? "plain" : tone)
-        case .keepIf:  wf.steps[i] = .keepIf(keyword)
-        default: break
+        guard let i = model.idx(nodeID) else { return }
+        model.nodes[i].prompt = prompt
+        model.nodes[i].tone = tone
+        model.nodes[i].keyword = keyword
+        model.nodes[i].modelPref = modelPref
+        model.nodes[i].onFail = onFail
+    }
+}
+
+/// The Workbench: a node-based visual language for composing intelligence. Hosts the graph canvas.
+/// HSM-14-16 — this is now the Blueprints canvas (v2): a real two-wire (exec + typed data) visual
+/// programming editor that lowers to `Blueprint` and runs through `BlueprintInterpreter` live.
+struct WorkbenchView: View {
+    // v2 (BlueprintCanvasView) is mid-build + demo-gated; the home uses the working v1 until v2 is
+    // finished and device-walked. (Recording-first: paused the canvas to fix the core.)
+    var body: some View { GraphCanvasView() }
+}
+
+// MARK: - HSM-14-16 — the Blueprints canvas (Workbench v2)
+//
+// A draw.io-grade visual programming editor on top of the shipped `Blueprint`/`BlueprintInterpreter`
+// engine. TWO wire kinds, Unreal-Blueprints style:
+//   • EXEC pins (white, arrow) — control flow. Every node has one exec-in + named exec-outs.
+//   • DATA pins (colored circles, one per `BPDataType`) — typed values; connections are type-checked.
+// Drag an exec-out → an exec-in to make a white exec wire; a data-out → a data-in to make a colored
+// data wire (rejected with a haptic + flash if the `BPDataType`s don't match). Run lowers the canvas
+// to a `Blueprint`, runs it through `BlueprintInterpreter`, and drives the canvas LIVE off the real
+// `ExecutionEvent` stream: the active node ignites, statuses recolor, branches light the taken path
+// and dim the other, for-each shows a live n/total, a glowing token travels the active exec wire.
+
+// MARK: Blueprints palette vocabulary
+
+/// One palette entry: a `BPNodeKind` template + its presentation. Grouped into the five rails the
+/// owner asked for (Sources · Intelligence · Control flow · Transforms · Outputs).
+private enum BPPaletteItem: String, CaseIterable, Identifiable {
+    case source
+    case llm, extractDecisions, extractActions, summarize, rewrite
+    case branch, forEach, whileLoop, sequence, merge
+    case keepIf, splitIntoItems
+    case output
+    var id: String { rawValue }
+
+    enum Group: String, CaseIterable { case sources = "SOURCES", intel = "INTELLIGENCE", control = "CONTROL FLOW", transforms = "TRANSFORMS", outputs = "OUTPUTS" }
+
+    var group: Group {
+        switch self {
+        case .source:                                   return .sources
+        case .llm, .extractDecisions, .extractActions, .summarize, .rewrite: return .intel
+        case .branch, .forEach, .whileLoop, .sequence, .merge:               return .control
+        case .keepIf, .splitIntoItems:                  return .transforms
+        case .output:                                   return .outputs
+        }
+    }
+
+    /// A fresh model kind for this palette item (with sensible defaults the inspector can edit).
+    func makeKind() -> BPNodeKind {
+        switch self {
+        case .source:           return .source
+        case .llm:              return .llm(name: "LLM call", prompt: "From {input}, list the sharpest open questions a reviewer should ask. One per line.")
+        case .extractDecisions: return .extract(.decisions)
+        case .extractActions:   return .extract(.actionItems)
+        case .summarize:        return .summarize
+        case .rewrite:          return .rewrite(tone: "Executive")
+        case .branch:           return .branch(condition: .contains(keyword: "risk"))
+        case .forEach:          return .forEach
+        case .whileLoop:        return .whileLoop(condition: .isNonEmpty, maxIterations: 3)
+        case .sequence:         return .sequence(count: 2)
+        case .merge:            return .merge
+        case .keepIf:           return .keepIf(keyword: "risk")
+        case .splitIntoItems:   return .splitIntoItems
+        case .output:           return .output
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .source: return "Source"; case .llm: return "LLM call"
+        case .extractDecisions: return "Decisions"; case .extractActions: return "Action items"
+        case .summarize: return "Summarize"; case .rewrite: return "Rewrite"
+        case .branch: return "Branch"; case .forEach: return "For-each"; case .whileLoop: return "While"
+        case .sequence: return "Sequence"; case .merge: return "Merge"
+        case .keepIf: return "Keep if"; case .splitIntoItems: return "Split items"; case .output: return "Output"
+        }
+    }
+    var glyph: String {
+        switch self {
+        case .source: return "waveform"; case .llm: return "terminal.fill"
+        case .extractDecisions: return "checkmark.seal.fill"; case .extractActions: return "checklist"
+        case .summarize: return "text.append"; case .rewrite: return "pencil.and.outline"
+        case .branch: return "arrow.triangle.branch"; case .forEach: return "repeat"; case .whileLoop: return "arrow.2.circlepath"
+        case .sequence: return "list.number"; case .merge: return "arrow.triangle.merge"
+        case .keepIf: return "line.3.horizontal.decrease.circle"; case .splitIntoItems: return "square.split.2x1"; case .output: return "tray.full.fill"
         }
     }
 }
+
+/// The look of a `BPNodeKind` on the canvas — its accent + gradient, keyed off the five families.
+private enum BPNodeStyle {
+    static func family(_ kind: BPNodeKind) -> BPPaletteItem.Group {
+        switch kind {
+        case .entry, .source:                       return .sources
+        case .llm, .extract, .summarize, .rewrite:  return .intel
+        case .branch, .forEach, .whileLoop, .sequence, .merge: return .control
+        case .keepIf, .splitIntoItems:              return .transforms
+        case .output:                               return .outputs
+        }
+    }
+    static func accent(_ kind: BPNodeKind) -> Color {
+        switch family(kind) {
+        case .sources:    return Sig.local
+        case .intel:      return Sig.ok
+        case .control:    return Color(hex: 0xC08BFF)   // a distinct violet for control flow
+        case .transforms: return Sig.accent
+        case .outputs:    return Sig.warn
+        }
+    }
+    static func gradient(_ kind: BPNodeKind) -> LinearGradient {
+        let a = accent(kind)
+        return LinearGradient(colors: [a.opacity(0.85), a], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+    static func glyph(_ kind: BPNodeKind) -> String {
+        switch kind {
+        case .entry:        return "play.fill"
+        case .source:       return "waveform"
+        case .llm:          return "terminal.fill"
+        case .extract:      return "checkmark.seal.fill"
+        case .summarize:    return "text.append"
+        case .rewrite:      return "pencil.and.outline"
+        case .branch:       return "arrow.triangle.branch"
+        case .forEach:      return "repeat"
+        case .whileLoop:    return "arrow.2.circlepath"
+        case .sequence:     return "list.number"
+        case .merge:        return "arrow.triangle.merge"
+        case .keepIf:       return "line.3.horizontal.decrease.circle"
+        case .splitIntoItems: return "square.split.2x1"
+        case .output:       return "tray.full.fill"
+        }
+    }
+    static func title(_ kind: BPNodeKind) -> String {
+        switch kind {
+        case .entry:                 return "Start"
+        case .source:                return "Source"
+        case .llm(let n, _):         return n
+        case .extract(let t):        return artifactTypeLabel(t)
+        case .summarize:             return "Summarize"
+        case .rewrite(let tone):     return "Rewrite"
+        case .branch:                return "Branch"
+        case .forEach:               return "For-each"
+        case .whileLoop:             return "While"
+        case .sequence:              return "Sequence"
+        case .merge:                 return "Merge"
+        case .keepIf:                return "Keep if"
+        case .splitIntoItems:        return "Split items"
+        case .output:                return "Output"
+        }
+    }
+    static func subtitle(_ kind: BPNodeKind) -> String? {
+        switch kind {
+        case .llm(_, let p):
+            let t = p.trimmingCharacters(in: .whitespacesAndNewlines)
+            return t.isEmpty ? "tap to write a prompt" : "\u{201C}\(t.prefix(30))\(t.count > 30 ? "\u{2026}" : "")\u{201D}"
+        case .branch(let c):     return conditionLabel(c)
+        case .whileLoop(let c, let n): return "\(conditionLabel(c)) · ≤\(n)"
+        case .rewrite(let tone): return "tone · \(tone.lowercased())"
+        case .keepIf(let kw):    return "keep · \(kw)"
+        case .sequence(let n):   return "\(n) branches"
+        default:                 return nil
+        }
+    }
+    static func conditionLabel(_ c: BPCondition) -> String {
+        switch c {
+        case .contains(let kw): return "contains \u{201C}\(kw)\u{201D}"
+        case .isEmpty:          return "is empty"
+        case .isNonEmpty:       return "has content"
+        case .countAtLeast(let n): return "count ≥ \(n)"
+        }
+    }
+}
+
+private extension BPDataType {
+    var color: Color {
+        switch self { case .text: return Sig.accent; case .collection: return Sig.local; case .bool: return Color(hex: 0xC08BFF) }
+    }
+    var label: String { rawValue }
+}
+
+// MARK: Canvas geometry + pin model
+
+private enum BPGeom {
+    static let nodeW: CGFloat = 210
+    static let rowH: CGFloat = 26          // height of one pin row
+    static let headerH: CGFloat = 52
+    static let canvas = CGSize(width: 3200, height: 2200)
+}
+
+/// A reference to one pin on a placed node, for hit-testing + cable endpoints.
+private struct BPPinRef: Equatable {
+    enum Kind: Equatable { case execIn, execOut(String), dataIn(String), dataOut }
+    let node: BPNodeID
+    let kind: Kind
+    var isOutput: Bool { switch kind { case .execOut, .dataOut: return true; default: return false } }
+    var isExec: Bool { switch kind { case .execIn, .execOut: return true; default: return false } }
+}
+
+/// The placed node: the engine `BPNode` + a canvas position. The model is the source of truth for
+/// pin layout (so geometry + the lowered `Blueprint` never disagree).
+private struct BPPlaced: Identifiable, Equatable {
+    var node: BPNode
+    var pos: CGPoint
+    var id: BPNodeID { node.id }
+
+    /// The data-in pin names this node exposes (left side, below the exec-in).
+    var dataInNames: [String] {
+        switch node.kind {
+        case .entry, .source:   return []
+        case .forEach:          return ["collection"]
+        default:                return node.kind.dataInType != nil ? ["in"] : []
+        }
+    }
+    /// Whether this node exposes a data-out (right side).
+    var hasDataOut: Bool { node.kind.dataOutType != nil }
+    var execOutNames: [String] { node.kind.execOutNames }
+
+    /// Total card height = header + the taller of (exec-outs, data rows).
+    var height: CGFloat {
+        let rightRows = execOutNames.count + (hasDataOut ? 1 : 0)
+        let leftRows = 1 + dataInNames.count                       // exec-in + data-ins
+        return BPGeom.headerH + CGFloat(max(rightRows, leftRows, 1)) * BPGeom.rowH + 8
+    }
+}
+
+// MARK: The canvas model — graph + wiring + lowering + live run state
+
+@MainActor private final class BPCanvasModel: ObservableObject {
+    @Published var placed: [BPPlaced] = []
+    @Published var execEdges: [BPExecEdge] = []
+    @Published var dataEdges: [BPDataEdge] = []
+    @Published var selected: BPNodeID?
+    @Published var entry: BPNodeID = "entry"
+
+    // In-flight wire drag: the source pin + the live cursor point (canvas space).
+    @Published var pending: (from: BPPinRef, point: CGPoint)?
+    // A brief red flash + location when a bad (type-mismatched / illegal) connection is rejected.
+    @Published var rejection: (point: CGPoint, t: Date)?
+
+    // Live-run state (driven by ExecutionEvents).
+    @Published var running = false
+    @Published var status: [BPNodeID: BPNodeStatus] = [:]
+    @Published var activeNode: BPNodeID?
+    @Published var litExecEdges: Set<Int> = []           // indices into execEdges that are "taken"
+    @Published var tokenEdge: Int?                        // exec edge the glowing token is travelling
+    @Published var branchTaken: [BPNodeID: Bool] = [:]    // a branch node → which exec-out fired
+    @Published var loopCounter: [BPNodeID: (Int, Int?)] = [:]  // forEach/while → (index, total?)
+    @Published var finished = false
+
+    var dragOrigin: [BPNodeID: CGPoint] = [:]
+
+    func placed(_ id: BPNodeID) -> BPPlaced? { placed.first { $0.id == id } }
+    func idx(_ id: BPNodeID) -> Int? { placed.firstIndex { $0.id == id } }
+
+    // MARK: Pin geometry — the model owns it so the lowered graph + the canvas agree.
+
+    /// The center of a pin in canvas coordinates. Exec-in is row 0 on the left; data-ins follow.
+    /// On the right, exec-outs come first, then the data-out.
+    func pinCenter(_ ref: BPPinRef) -> CGPoint? {
+        guard let p = placed(ref.node) else { return nil }
+        let left = p.pos.x - BPGeom.nodeW / 2
+        let right = p.pos.x + BPGeom.nodeW / 2
+        let top = p.pos.y - p.height / 2
+        func rowY(_ i: Int) -> CGFloat { top + BPGeom.headerH + BPGeom.rowH * (CGFloat(i) + 0.5) }
+        switch ref.kind {
+        case .execIn:
+            return CGPoint(x: left, y: rowY(0))
+        case .dataIn(let name):
+            guard let di = p.dataInNames.firstIndex(of: name) else { return nil }
+            return CGPoint(x: left, y: rowY(1 + di))
+        case .execOut(let name):
+            guard let oi = p.execOutNames.firstIndex(of: name) else { return nil }
+            return CGPoint(x: right, y: rowY(oi))
+        case .dataOut:
+            guard p.hasDataOut else { return nil }
+            return CGPoint(x: right, y: rowY(p.execOutNames.count))
+        }
+    }
+
+    /// Enumerate every pin on every node, with its center — for the draggable hit targets + dots.
+    func allPins() -> [(BPPinRef, CGPoint)] {
+        var out: [(BPPinRef, CGPoint)] = []
+        for p in placed {
+            let refs: [BPPinRef.Kind] =
+                [.execIn]
+                + p.dataInNames.map { .dataIn($0) }
+                + p.execOutNames.map { .execOut($0) }
+                + (p.hasDataOut ? [.dataOut] : [])
+            for k in refs {
+                let r = BPPinRef(node: p.id, kind: k)
+                if let c = pinCenter(r) { out.append((r, c)) }
+            }
+        }
+        return out
+    }
+
+    func move(_ id: BPNodeID, to point: CGPoint) {
+        guard let i = idx(id) else { return }
+        let x = min(max(point.x, BPGeom.nodeW/2 + 8), BPGeom.canvas.width - BPGeom.nodeW/2 - 8)
+        let h = placed[i].height
+        let y = min(max(point.y, h/2 + 8), BPGeom.canvas.height - h/2 - 8)
+        placed[i].pos = CGPoint(x: x, y: y)
+    }
+
+    // MARK: Wiring — start at an output pin, drop near a compatible input pin.
+
+    func beginWire(from ref: BPPinRef, at point: CGPoint) { pending = (ref, point) }
+    func dragWire(to point: CGPoint) { pending?.point = point }
+
+    /// Finish a wire. Snaps to the nearest input pin of the matching wire family within reach.
+    /// EXEC-out → exec-in makes a white exec edge. DATA-out → data-in makes a colored data edge,
+    /// TYPE-CHECKED: a mismatch (or any illegal pairing) is rejected with a haptic + a red flash.
+    func endWire(at point: CGPoint) {
+        defer { pending = nil }
+        guard let pend = pending else { return }
+        let from = pend.from
+        guard from.isOutput else { reject(at: point); return }
+
+        // Find the nearest compatible-family INPUT pin within snap distance.
+        var best: (BPPinRef, CGFloat)?
+        for (ref, c) in allPins() where !ref.isOutput && ref.node != from.node && ref.isExec == from.isExec {
+            let d = hypot(c.x - point.x, c.y - point.y)
+            if d < 52, best == nil || d < best!.1 { best = (ref, d) }
+        }
+        guard let (target, _) = best else { reject(at: point); return }
+
+        if from.isExec {
+            connectExec(from: from, to: target)
+        } else {
+            connectData(from: from, to: target, at: point)
+        }
+    }
+
+    private func connectExec(from: BPPinRef, to: BPPinRef) {
+        guard case .execOut(let name) = from.kind, case .execIn = to.kind else { return }
+        let pin = BPExecPin(node: from.node, name: name)
+        execEdges.removeAll { $0.from == pin }           // one wire per exec-out
+        execEdges.append(BPExecEdge(from: pin, to: to.node))
+        tactile(.medium)
+    }
+
+    private func connectData(from: BPPinRef, to: BPPinRef, at point: CGPoint) {
+        guard case .dataOut = from.kind, case .dataIn(let inName) = to.kind,
+              let fromNode = placed(from.node)?.node, let toNode = placed(to.node)?.node,
+              let outT = fromNode.kind.dataOutType, let inT = toNode.kind.dataInType else { reject(at: point); return }
+        // TYPE CHECK — the heart of the data-wire contract. A collection-out into a text-in (etc.)
+        // is refused; no silent bad wires.
+        guard outT == inT else { reject(at: point); return }
+        let toPin = BPDataPin(node: to.node, name: inName)
+        dataEdges.removeAll { $0.to == toPin }           // one wire per data-in
+        dataEdges.append(BPDataEdge(from: BPDataPin(node: from.node, name: "out"), to: toPin))
+        tactile(.medium)
+    }
+
+    private func reject(at point: CGPoint) {
+        rejection = (point, Date())
+        tactile(.heavy)
+    }
+
+    // MARK: Add / remove nodes
+
+    private var counter = 0
+    func addNode(_ item: BPPaletteItem, at point: CGPoint) {
+        counter += 1
+        let id = "\(item.rawValue)-\(counter)"
+        var node = BPNode(id: id, kind: item.makeKind())
+        node.failurePolicy = .skip
+        placed.append(BPPlaced(node: node, pos: point))
+        selected = id
+    }
+
+    func remove(_ id: BPNodeID) {
+        guard id != entry else { tactile(.heavy); return }   // never delete the start
+        execEdges.removeAll { $0.from.node == id || $0.to == id }
+        dataEdges.removeAll { $0.from.node == id || $0.to.node == id }
+        placed.removeAll { $0.id == id }
+        if selected == id { selected = nil }
+    }
+
+    /// Mutate a node's kind in place (the inspector commits through here).
+    func update(_ id: BPNodeID, _ transform: (inout BPNode) -> Void) {
+        guard let i = idx(id) else { return }
+        transform(&placed[i].node)
+    }
+
+    // MARK: Lower the canvas to the engine `Blueprint`
+
+    func lower(name: String = "Blueprint run") -> Blueprint {
+        Blueprint(id: blueprintID, name: name, entry: entry,
+                  nodes: placed.map(\.node), execEdges: execEdges, dataEdges: dataEdges)
+    }
+    /// A stable id so a re-run streams `runStarted(blueprint:)` for the same graph.
+    let blueprintID = UUID()
+
+    // MARK: Live-run drivers (set by the event consumer)
+
+    func resetRun() {
+        status.removeAll(); activeNode = nil; litExecEdges.removeAll(); tokenEdge = nil
+        branchTaken.removeAll(); loopCounter.removeAll(); finished = false
+    }
+
+    /// Light the exec edge whose `from` pin matches (node, outName) — the path control just took.
+    func lightExec(from node: BPNodeID, out name: String) {
+        let pin = BPExecPin(node: node, name: name)
+        if let i = execEdges.firstIndex(where: { $0.from == pin }) {
+            litExecEdges.insert(i)
+            tokenEdge = i
+        }
+    }
+}
+
+/// HSM-14-16 — a seeded fake `ILLMProvider` for the Blueprints canvas in the Simulator / when no GGUF
+/// is loaded. Returns short, branch-relevant canned text with a small delay so the live trace is
+/// watchable. Real device runs use `InferenceConfigStore.makeProvider(...)`.
+private struct BPSeededProvider: ILLMProvider {
+    var stepDelay: Duration = .milliseconds(520)
+    func complete(prompt: String) async throws -> String {
+        try? await Task.sleep(for: stepDelay)
+        let p = prompt.lowercased()
+        if p.contains("decision") { return "Decision: ship the Blueprints canvas.\nDecision: keep the model behind ILLMProvider." }
+        if p.contains("action")   { return "[ ] Wire Run to BlueprintInterpreter — owner: mobile\n[ ] Drive the live trace off ExecutionEvent" }
+        if p.contains("question") { return "Open question: when do we need a real diamond merge?\nQuestion: should loops fan out on the mesh?" }
+        if p.contains("summar")   { return "The Workbench is a real visual program: exec + typed data wires, control flow, a live trace." }
+        if p.contains("rewrite")  { return "We shipped the Blueprints canvas; runs reflect the real interpreter, branch and loop included." }
+        return "Risk: a branch only lights the taken path.\nRisk: loops must stay bounded."
+    }
+}
+
+// MARK: The Blueprints canvas view
+
+private struct BlueprintCanvasView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @StateObject private var model = BPCanvasModel()
+    @State private var pan: CGSize = .zero
+    @State private var panStart: CGSize = .zero
+    @State private var zoom: CGFloat = 0.82
+    @State private var zoomStart: CGFloat = 0.82
+    @State private var inspect: BPNodeID?
+    @State private var spin = false
+    @State private var runTask: Task<Void, Never>?
+    @State private var flourish = false
+
+    var body: some View {
+        ZStack {
+            Sig.bgGradient.ignoresSafeArea()
+            Circle().fill(Sig.accent.opacity(0.10)).frame(width: 480).blur(radius: 160).offset(x: 170, y: -360).ignoresSafeArea()
+            Circle().fill(Color(hex: 0xC08BFF).opacity(0.08)).frame(width: 420).blur(radius: 160).offset(x: -200, y: 260).ignoresSafeArea()
+            graphArea
+            VStack(spacing: 0) { header; Spacer(minLength: 0); palette }
+            if flourish { completionFlourish.transition(.opacity).allowsHitTesting(false) }
+        }
+        .toolbar(.hidden, for: .navigationBar).tint(Sig.accent)
+        .onAppear {
+            spin = true
+            if model.placed.isEmpty { seed() }
+            #if targetEnvironment(simulator)
+            let env = ProcessInfo.processInfo.environment
+            if env["HS_DEMO_BP_EDIT"] == "1" { inspect = model.placed.first { if case .llm = $0.node.kind { return true }; return false }?.id }
+            if env["HS_DEMO_BP_RUN"] == "1" { startRun() }
+            #endif
+        }
+        .sheet(item: Binding(get: { inspect.map(BPSheetID.init) }, set: { inspect = $0?.id })) { s in
+            BPNodeInspector(model: model, nodeID: s.id)
+        }
+        .topBack { dismiss() }
+    }
+
+    // A wrapper so a String id is `Identifiable` for `.sheet(item:)`.
+    private struct BPSheetID: Identifiable { let id: BPNodeID }
+
+    private var graphArea: some View {
+        GeometryReader { geo in
+            ZStack {
+                BPDotGrid()
+                edgeLayer
+                nodeLayer
+                pinHandles
+                rejectionFlash
+            }
+            .frame(width: BPGeom.canvas.width, height: BPGeom.canvas.height)
+            .coordinateSpace(name: "bp")
+            .scaleEffect(zoom)
+            .offset(pan)
+            .frame(width: geo.size.width, height: geo.size.height)
+            .contentShape(Rectangle())
+            .gesture(panGesture)
+            .simultaneousGesture(zoomGesture)
+            .clipped()
+        }
+    }
+
+    private var header: some View {
+        HStack(spacing: 11) {
+            Spacer().frame(width: 64)   // clear the topBack chip
+            ZStack {
+                Circle().fill(Sig.accent.opacity(0.4)).frame(width: 30, height: 30).blur(radius: 13)
+                pixelAsset("crystal", size: 34, fallback: "point.3.connected.trianglepath.dotted", tint: Sig.accent)
+                    .rotationEffect(.degrees(spin ? 360 : 0))
+                    .animation(reduceMotion ? nil : .linear(duration: 18).repeatForever(autoreverses: false), value: spin)
+            }
+            VStack(alignment: .leading, spacing: 1) {
+                Text("BLUEPRINTS").font(.system(size: 9, weight: .heavy)).tracking(1.8).foregroundStyle(Sig.accent)
+                Text("Compose intelligence").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
+            }
+            Spacer(minLength: 6)
+            runButton
+        }
+        .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 14)
+        .background(LinearGradient(colors: [Sig.bg, Sig.bg.opacity(0)], startPoint: .top, endPoint: .bottom).ignoresSafeArea(edges: .top))
+    }
+
+    private var runButton: some View {
+        Button {
+            tactile(.medium)
+            if model.running { stopRun() } else { startRun() }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: model.running ? "stop.fill" : "play.fill").font(.system(size: 12, weight: .black))
+                Text(model.running ? "Running" : "Run").font(.system(size: 14, weight: .heavy))
+            }
+            .foregroundStyle(.black)
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            .background(Sig.accentGradient, in: Capsule())
+            .shadow(color: Sig.accent.opacity(model.running ? 0.65 : 0.3), radius: model.running ? 14 : 6)
+        }.buttonStyle(PressableCard())
+    }
+
+    // MARK: Edge layer — bezier cables, white for exec, colored for data, with a travelling token.
+
+    private var edgeLayer: some View {
+        TimelineView(.animation(paused: !model.running)) { tl in
+            Canvas { ctx, _ in
+                let t = tl.date.timeIntervalSinceReferenceDate
+                // Data wires (colored) under the exec wires.
+                for e in model.dataEdges {
+                    guard let a = model.pinCenter(BPPinRef(node: e.from.node, kind: .dataOut)),
+                          let b = model.pinCenter(BPPinRef(node: e.to.node, kind: .dataIn(e.to.name))),
+                          let ty = model.placed(e.from.node)?.node.kind.dataOutType else { continue }
+                    let path = cablePath(a, b)
+                    ctx.drawLayer { l in l.addFilter(.blur(radius: 6)); l.stroke(path, with: .color(ty.color.opacity(0.45)), style: StrokeStyle(lineWidth: 5, lineCap: .round)) }
+                    ctx.stroke(path, with: .color(ty.color.opacity(0.9)), style: StrokeStyle(lineWidth: 2.2, lineCap: .round, dash: [1, 6]))
+                }
+                // Exec wires (white). Taken edges glow; the token rides the active one.
+                for (i, e) in model.execEdges.enumerated() {
+                    guard let a = model.pinCenter(BPPinRef(node: e.from.node, kind: .execOut(e.from.name))),
+                          let b = model.pinCenter(BPPinRef(node: e.to, kind: .execIn)) else { continue }
+                    let path = cablePath(a, b)
+                    let lit = model.litExecEdges.contains(i)
+                    let baseColor: Color = lit ? Sig.accent : .white
+                    let dim = (model.running && !lit && model.tokenEdge != nil) ? 0.16 : (lit ? 0.95 : 0.6)
+                    if lit { ctx.drawLayer { l in l.addFilter(.blur(radius: 8)); l.stroke(path, with: .color(Sig.accent.opacity(0.55)), style: StrokeStyle(lineWidth: 7, lineCap: .round)) } }
+                    ctx.stroke(path, with: .color(baseColor.opacity(dim)), style: StrokeStyle(lineWidth: lit ? 3 : 2.2, lineCap: .round))
+                    drawArrowHead(ctx: ctx, at: b, from: a, color: baseColor.opacity(dim))
+                    if model.running && model.tokenEdge == i {
+                        let phase = CGFloat((t * 1.1).truncatingRemainder(dividingBy: 1))
+                        let p = cablePoint(a, b, phase)
+                        ctx.drawLayer { l in l.addFilter(.blur(radius: 6)); l.fill(Path(ellipseIn: CGRect(x: p.x-7, y: p.y-7, width: 14, height: 14)), with: .color(Sig.accent)) }
+                        ctx.fill(Path(ellipseIn: CGRect(x: p.x-3.5, y: p.y-3.5, width: 7, height: 7)), with: .color(.white))
+                    }
+                }
+                // The in-flight wire being dragged.
+                if let pend = model.pending, let a = model.pinCenter(pend.from) {
+                    let col: Color = pend.from.isExec ? .white : (model.placed(pend.from.node)?.node.kind.dataOutType?.color ?? Sig.accent)
+                    ctx.stroke(cablePath(a, pend.point), with: .color(col.opacity(0.85)),
+                               style: StrokeStyle(lineWidth: 2.4, lineCap: .round, dash: [7, 6]))
+                    ctx.fill(Path(ellipseIn: CGRect(x: pend.point.x-5, y: pend.point.y-5, width: 10, height: 10)), with: .color(col))
+                }
+            }
+            .frame(width: BPGeom.canvas.width, height: BPGeom.canvas.height)
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func drawArrowHead(ctx: GraphicsContext, at b: CGPoint, from a: CGPoint, color: Color) {
+        let ang = atan2(0, b.x - a.x)   // cables enter horizontally
+        let size: CGFloat = 7
+        var tri = Path()
+        tri.move(to: b)
+        tri.addLine(to: CGPoint(x: b.x - size*cos(ang - 0.5), y: b.y - size*sin(ang - 0.5)))
+        tri.addLine(to: CGPoint(x: b.x - size*cos(ang + 0.5), y: b.y - size*sin(ang + 0.5)))
+        tri.closeSubpath()
+        ctx.fill(tri, with: .color(color))
+    }
+
+    private var nodeLayer: some View {
+        ForEach(model.placed) { p in
+            BPNodeCard(placed: p,
+                       selected: model.selected == p.id,
+                       status: model.status[p.id],
+                       active: model.activeNode == p.id,
+                       branch: model.branchTaken[p.id],
+                       loop: model.loopCounter[p.id],
+                       onDelete: { withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { model.remove(p.id) }; tactile() })
+                .position(p.pos)
+                .gesture(
+                    DragGesture(coordinateSpace: .named("bp"))
+                        .onChanged { v in
+                            if model.dragOrigin[p.id] == nil { model.dragOrigin[p.id] = p.pos; model.selected = p.id }
+                            let o = model.dragOrigin[p.id]!
+                            model.move(p.id, to: CGPoint(x: o.x + v.translation.width, y: o.y + v.translation.height))
+                        }
+                        .onEnded { _ in model.dragOrigin[p.id] = nil; tactile() }
+                )
+                .onTapGesture { tactile(); model.selected = p.id; inspect = p.id }
+        }
+    }
+
+    // Invisible grab targets over each OUTPUT pin — drag to pull a wire to an input.
+    private var pinHandles: some View {
+        ForEach(Array(model.allPins().enumerated()), id: \.offset) { _, entry in
+            let (ref, c) = entry
+            if ref.isOutput {
+                Circle().fill(Color.white.opacity(0.001)).frame(width: 44, height: 44).contentShape(Circle())
+                    .position(c)
+                    .gesture(
+                        DragGesture(coordinateSpace: .named("bp"))
+                            .onChanged { v in model.beginWire(from: ref, at: v.location); model.dragWire(to: v.location) }
+                            .onEnded { v in model.endWire(at: v.location) }
+                    )
+            }
+        }
+    }
+
+    @ViewBuilder private var rejectionFlash: some View {
+        if let r = model.rejection {
+            BPRejectBadge(at: r.point, stamp: r.t)
+        }
+    }
+
+    private var palette: some View {
+        VStack(spacing: 0) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 14) {
+                    ForEach(BPPaletteItem.Group.allCases, id: \.self) { g in paletteGroup(g) }
+                }.padding(.horizontal, 18).padding(.vertical, 13)
+            }
+        }
+        .background(.ultraThinMaterial)
+        .overlay(LinearGradient(colors: [Sig.accent.opacity(0.4), .clear], startPoint: .top, endPoint: .bottom).frame(height: 1.5), alignment: .top)
+    }
+
+    private func paletteGroup(_ g: BPPaletteItem.Group) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text(g.rawValue).font(.system(size: 8.5, weight: .heavy)).tracking(1.3).foregroundStyle(Sig.faint)
+            HStack(spacing: 8) {
+                ForEach(BPPaletteItem.allCases.filter { $0.group == g }) { paletteChip($0) }
+            }
+        }
+    }
+
+    private func paletteChip(_ item: BPPaletteItem) -> some View {
+        let accent = BPNodeStyle.accent(item.makeKind())
+        return Button {
+            tactile()
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) {
+                let c = CGPoint(x: BPGeom.canvas.width/2 - pan.width/zoom + CGFloat.random(in: -50...50),
+                                y: BPGeom.canvas.height/2 - pan.height/zoom + CGFloat.random(in: -40...40))
+                model.addNode(item, at: c)
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: item.glyph).font(.system(size: 11, weight: .bold))
+                Text(item.title).font(.system(size: 12.5, weight: .heavy))
+                Image(systemName: "plus").font(.system(size: 8, weight: .black)).opacity(0.6)
+            }
+            .foregroundStyle(accent)
+            .padding(.horizontal, 11).padding(.vertical, 8)
+            .background(accent.opacity(0.13), in: Capsule())
+            .overlay(Capsule().strokeBorder(accent.opacity(0.35), lineWidth: 1))
+        }.buttonStyle(PressableCard())
+    }
+
+    private var completionFlourish: some View {
+        VStack {
+            Spacer()
+            HStack(spacing: 9) {
+                Image(systemName: "checkmark.seal.fill").font(.system(size: 16, weight: .bold)).foregroundStyle(Sig.ok)
+                Text("Run complete").font(.system(size: 15, weight: .heavy)).foregroundStyle(Sig.text)
+            }
+            .padding(.horizontal, 18).padding(.vertical, 12)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(Capsule().strokeBorder(Sig.ok.opacity(0.4), lineWidth: 1))
+            .shadow(color: Sig.ok.opacity(0.4), radius: 16)
+            Spacer().frame(height: 150)
+        }
+    }
+
+    private var panGesture: some Gesture {
+        DragGesture()
+            .onChanged { v in pan = CGSize(width: panStart.width + v.translation.width, height: panStart.height + v.translation.height) }
+            .onEnded { _ in panStart = pan }
+    }
+    private var zoomGesture: some Gesture {
+        MagnificationGesture()
+            .onChanged { m in zoom = min(1.5, max(0.5, zoomStart * m)) }
+            .onEnded { _ in zoomStart = zoom }
+    }
+
+    // MARK: The seed — a believable starter Blueprint with real control flow.
+    //
+    // Source → split into items → For-each (body: keep-if "risk" → an LLM rewrite of the item),
+    // completed → Branch (contains "decision") → true: extract Decisions → Output; false: Summarize → Output.
+    // Demonstrates a loop AND a branch with two output paths.
+    private func seed() {
+        let cx = BPGeom.canvas.width/2, cy = BPGeom.canvas.height/2
+        func n(_ id: String, _ k: BPNodeKind, _ x: CGFloat, _ y: CGFloat, _ fp: FailurePolicy? = nil) -> BPPlaced {
+            var node = BPNode(id: id, kind: k); node.failurePolicy = fp ?? .skip
+            return BPPlaced(node: node, pos: CGPoint(x: cx + x, y: cy + y))
+        }
+        let entry  = n("entry",  .entry,                       -780, -40)
+        let source = n("source", .source,                      -560, -40)
+        let split  = n("split",  .splitIntoItems,              -330, -40)
+        let each   = n("each",   .forEach,                     -110, -40)
+        let keep   = n("keep",   .keepIf(keyword: "risk"),      80,  120)
+        let rwrite = n("rewrite",.rewrite(tone: "Executive"),  330,  120)
+        let branch = n("branch", .branch(condition: .contains(keyword: "decision")), 170, -180)
+        let dec    = n("dec",    .extract(.decisions),          440, -260)
+        let summ   = n("summ",   .summarize,                    440, -90)
+        let outA   = n("outA",   .output,                       720, -260)
+        let outB   = n("outB",   .output,                       720, -90)
+        model.placed = [entry, source, split, each, keep, rwrite, branch, dec, summ, outA, outB]
+        model.entry = "entry"
+
+        func ex(_ from: String, _ out: String, _ to: String) -> BPExecEdge {
+            BPExecEdge(from: BPExecPin(node: from, name: out), to: to)
+        }
+        func da(_ from: String, _ to: String, _ inName: String = "in") -> BPDataEdge {
+            BPDataEdge(from: BPDataPin(node: from, name: "out"), to: BPDataPin(node: to, name: inName))
+        }
+        model.execEdges = [
+            ex("entry", "then", "source"),
+            ex("source", "then", "split"),
+            ex("split", "then", "each"),
+            ex("each", "body", "keep"),
+            ex("keep", "then", "rewrite"),
+            ex("each", "completed", "branch"),
+            ex("branch", "true", "dec"),
+            ex("branch", "false", "summ"),
+            ex("dec", "then", "outA"),
+            ex("summ", "then", "outB"),
+        ]
+        model.dataEdges = [
+            da("split", "each", "collection"),    // collection → forEach
+            da("each", "keep"),                     // current item → keep-if (text)
+            da("keep", "rewrite"),                  // text → rewrite
+            da("dec", "outA"),
+            da("summ", "outB"),
+        ]
+    }
+
+    // MARK: Run — lower → interpret → drive the canvas off the ExecutionEvent stream.
+
+    private func stopRun() {
+        runTask?.cancel(); runTask = nil
+        withAnimation(.easeInOut(duration: 0.3)) { model.running = false }
+        model.resetRun()
+    }
+
+    private func startRun() {
+        runTask?.cancel()
+        model.resetRun()
+        withAnimation(.easeInOut(duration: 0.3)) { model.running = true }
+        flourish = false
+        let blueprint = model.lower()
+        let sourceText = "Standup transcript. Decision: ship the Blueprints canvas. "
+            + "Risk: branching graphs only light the taken path. Action: wire Run to the interpreter. "
+            + "Risk: loops must stay bounded. Open question: do we need a true diamond merge?"
+        let provider = makeRunProvider()
+        runTask = Task { await consume(blueprint: blueprint, sourceText: sourceText, provider: provider) }
+    }
+
+    /// Subscribe to the interpreter's `ExecutionEvent` AsyncStream and animate the canvas live.
+    /// Every animation below is driven by a REAL event (not a scripted timeline):
+    ///   • nodeEntered   → set the active node (ignite/scale) + light the exec wire that reached it
+    ///   • nodeStatus    → recolor the node (running / done / skipped / failed)
+    ///   • branchTaken   → record which exec-out fired (the card shows ✓/✗) + light that path, dim the other
+    ///   • loopIteration → update the For-each card's live n/total counter
+    ///   • runFinished   → completion flourish + haptic
+    private func consume(blueprint: Blueprint, sourceText: String, provider: ILLMProvider) async {
+        let queue = RunQueueStore.shared
+        let runName = "Blueprint run"
+        let target = InferenceConfigStore.shared.isLocal ? "On-device" : "Endpoint"
+        let interp = BlueprintInterpreter(provider: provider, policy: RunPolicy(maxRetries: 1, failurePolicy: .skip))
+
+        for await ev in interp.events(blueprint, sourceText: sourceText) {
+            if Task.isCancelled { break }
+            switch ev {
+            case .runStarted:
+                break
+            case .nodeEntered(let id):
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                    model.activeNode = id
+                    model.status[id] = .running
+                }
+                // Light the exec wire that just reached this node (the path taken).
+                if let edgeIdx = model.execEdges.firstIndex(where: { $0.to == id && model.status[$0.from.node] != nil }) {
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        model.litExecEdges.insert(edgeIdx); model.tokenEdge = edgeIdx
+                    }
+                }
+                tactile(.light)
+                if let node = model.placed(id)?.node, node.kind.isModelOp {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                        queue.jobs.insert(QueuedJob(runName, BPNodeStyle.title(node.kind), target: target, status: .working, progress: 0.4), at: 0)
+                    }
+                }
+            case .nodeStatus(let id, let s):
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { model.status[id] = s }
+                if s != .running, model.activeNode == id { model.activeNode = nil }
+                if s == .done || s == .skipped || s == .failed {
+                    if let qi = queue.jobs.firstIndex(where: { $0.step == BPNodeStyle.title(model.placed(id)?.node.kind ?? .merge) && $0.status == .working }) {
+                        queue.jobs[qi].status = (s == .failed ? .failed : .done); queue.jobs[qi].progress = 1
+                    }
+                }
+            case .branchTaken(let id, let took):
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    model.branchTaken[id] = took
+                    model.lightExec(from: id, out: took ? "true" : "false")
+                }
+                tactile(.medium)
+            case .loopIteration(let id, let index, let count):
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { model.loopCounter[id] = (index + 1, count) }
+                tactile(.light)
+            case .nodeProduced:
+                break
+            case .runFinished:
+                withAnimation(.easeInOut(duration: 0.4)) { model.running = false; model.tokenEdge = nil; model.finished = true; flourish = true }
+                tactile(.heavy)
+                runTask = nil
+                Task { try? await Task.sleep(for: .seconds(2)); await MainActor.run { withAnimation { flourish = false } } }
+            case .runFailed(let msg):
+                withAnimation(.easeInOut(duration: 0.4)) { model.running = false; model.tokenEdge = nil }
+                _ = msg
+                tactile(.heavy)
+                runTask = nil
+            }
+        }
+    }
+
+    private func makeRunProvider() -> ILLMProvider {
+        #if targetEnvironment(simulator)
+        return BPSeededProvider()
+        #else
+        if let p = try? InferenceConfigStore.shared.makeProvider(localModelPath: MeetingReviewState.localGGUF(), context: 16_384) { return p }
+        return BPSeededProvider()
+        #endif
+    }
+}
+
+/// A dim graph-paper dot grid for the Blueprints canvas.
+private struct BPDotGrid: View {
+    var body: some View {
+        Canvas { ctx, size in
+            let step: CGFloat = 36, r: CGFloat = 1.3
+            var y: CGFloat = step
+            while y < size.height {
+                var x: CGFloat = step
+                while x < size.width {
+                    ctx.fill(Path(ellipseIn: CGRect(x: x-r, y: y-r, width: r*2, height: r*2)), with: .color(.white.opacity(0.045)))
+                    x += step
+                }
+                y += step
+            }
+        }
+        .frame(width: BPGeom.canvas.width, height: BPGeom.canvas.height)
+        .allowsHitTesting(false)
+    }
+}
+
+/// A short-lived red flash where a bad connection was refused (type mismatch / illegal pairing).
+private struct BPRejectBadge: View {
+    let at: CGPoint
+    let stamp: Date
+    @State private var show = false
+    var body: some View {
+        Group {
+            if show {
+                HStack(spacing: 5) {
+                    Image(systemName: "xmark.octagon.fill").font(.system(size: 12, weight: .bold))
+                    Text("type mismatch").font(.system(size: 11, weight: .heavy))
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 11).padding(.vertical, 7)
+                .background(Sig.bad, in: Capsule())
+                .shadow(color: Sig.bad.opacity(0.6), radius: 10)
+                .position(at)
+                .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .onChange(of: stamp) { _, _ in flash() }
+        .onAppear { flash() }
+    }
+    private func flash() {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { show = true }
+        Task { try? await Task.sleep(for: .milliseconds(1100)); await MainActor.run { withAnimation { show = false } } }
+    }
+}
+
+// Minimal leaf views to keep the mid-build v2 canvas compiling (it's demo-gated only). They get
+// fully built when the Blueprints canvas resumes — recording-first paused that work.
+private struct BPNodeCard: View {
+    let placed: BPPlaced
+    let selected: Bool
+    let status: BPNodeStatus?
+    let active: Bool
+    let branch: Bool?
+    let loop: (Int, Int?)?
+    let onDelete: () -> Void
+    var body: some View {
+        Text(String("\(placed.node.kind)".prefix(18)))
+            .font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.text)
+            .padding(12).frame(width: 168, height: 60)
+            .signalCard(Sig.s1, radius: 16)
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(selected || active ? AnyShapeStyle(Sig.accent) : AnyShapeStyle(Sig.topHairline),
+                              lineWidth: selected || active ? 2 : 1))
+    }
+}
+private struct BPNodeInspector: View {
+    @ObservedObject var model: BPCanvasModel
+    let nodeID: BPNodeID
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        VStack(spacing: 14) {
+            Text("Node").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text)
+            Button("Done") { dismiss() }.tint(Sig.accent)
+        }.padding(24).presentationDetents([.medium])
+    }
+}
+
+// MARK: - The run queue — a first-class, app-wide transparency surface (HSM-14-15)
+//
+// Every workflow run is a Job with a visible state. The queue rides ABOVE every screen (home,
+// meeting capture, the notebook) as a small pill under the status bar — tap to expand and see
+// exactly what's queued, what's being asked, what's working, and what's blocked. 1000% transparency.
+
+enum JobStatus: String {
+    case queued, working, blocked, done, failed
+    var label: String {
+        switch self {
+        case .queued: return "Queued"; case .working: return "Working"; case .blocked: return "Blocked"
+        case .done: return "Done"; case .failed: return "Failed"
+        }
+    }
+    var color: Color {
+        switch self {
+        case .queued: return Sig.faint; case .working: return Sig.accent; case .blocked: return Sig.warn
+        case .done: return Sig.ok; case .failed: return Sig.bad
+        }
+    }
+    var glyph: String {
+        switch self {
+        case .queued: return "hourglass"; case .working: return "bolt.fill"; case .blocked: return "pause.circle.fill"
+        case .done: return "checkmark.circle.fill"; case .failed: return "xmark.octagon.fill"
+        }
+    }
+}
+
+/// One unit of work the queue tracks: a single node executing for a workflow run.
+struct QueuedJob: Identifiable {
+    let id: UUID
+    var workflow: String        // which run it belongs to
+    var step: String            // what's being asked (the node)
+    var target: String          // where it runs — "On-device" / "Endpoint"
+    var status: JobStatus
+    var progress: Double = 0    // 0…1 while working
+    var note: String?           // e.g. "endpoint down · retry 2/4"
+    init(_ workflow: String, _ step: String, target: String, status: JobStatus, progress: Double = 0, note: String? = nil) {
+        self.id = UUID(); self.workflow = workflow; self.step = step
+        self.target = target; self.status = status; self.progress = progress; self.note = note
+    }
+}
+
+/// One agent waiting on you, as the HUD shows it (HSM-15-09) — a first-class lane item
+/// alongside jobs. The queue is "what the machine is doing"; this is "who's waiting on
+/// you". Tapping the lane opens the desk; the nudge is the louder, dismissible surface.
+struct WaitingAgent: Identifiable, Equatable {
+    let id: String          // "agent/sessionID" — matches PresenceEvent.id
+    var agent: String       // "claude" / "codex"
+    var repo: String        // project, for the lane label
+}
+
+@MainActor final class RunQueueStore: ObservableObject {
+    static let shared = RunQueueStore()
+    @Published var jobs: [QueuedJob] = []
+    /// Agents waiting on a reply — the proactive lane (HSM-15-09). App-wide, even mid-meeting.
+    @Published var waitingAgents: [WaitingAgent] = []
+    @Published var expanded = false
+
+    var working: Int { jobs.filter { $0.status == .working }.count }
+    var queued: Int { jobs.filter { $0.status == .queued }.count }
+    var blocked: Int { jobs.filter { $0.status == .blocked }.count }
+    var live: Int { working + queued + blocked }
+    /// The HUD is visible whenever there's a job OR an agent waiting on you.
+    var hasContent: Bool { !jobs.isEmpty || !waitingAgents.isEmpty }
+    /// Active jobs first (working → blocked → queued), then recently finished.
+    var ordered: [QueuedJob] {
+        let rank: [JobStatus: Int] = [.working: 0, .blocked: 1, .queued: 2, .done: 3, .failed: 4]
+        return jobs.sorted { (rank[$0.status] ?? 9) < (rank[$1.status] ?? 9) }
+    }
+
+    /// Reconcile the waiting lane against the latest companion snapshot — the lane shows
+    /// *currently* waiting agents (it isn't edge-triggered; the nudge is). Idempotent.
+    func setWaiting(_ agents: [WaitingAgent]) {
+        if waitingAgents != agents { waitingAgents = agents }
+    }
+
+    func seedDemo() {
+        jobs = [
+            QueuedJob("Standup digest", "Risks → questions", target: "Endpoint", status: .working, progress: 0.62),
+            QueuedJob("Standup digest", "Decisions", target: "On-device", status: .queued),
+            QueuedJob("Aftercare", "Action items", target: "Endpoint", status: .blocked, note: "endpoint down · retry 3/4 · auto-resumes"),
+            QueuedJob("Standup digest", "Summary", target: "On-device", status: .done),
+        ]
+    }
+}
+
+/// The floating queue pill + its expandable panel. Lives at the app root, above every screen.
+struct QueueHUD: View {
+    @ObservedObject private var store = RunQueueStore.shared
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var pulse = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if store.hasContent {
+                if store.expanded { panel } else { pill }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.top, 6)
+        .frame(maxWidth: .infinity)
+        .animation(.spring(response: 0.4, dampingFraction: 0.84), value: store.expanded)
+        .animation(.spring(response: 0.45, dampingFraction: 0.85), value: store.jobs.count)
+        .animation(.spring(response: 0.45, dampingFraction: 0.85), value: store.waitingAgents.count)
+        .onAppear { pulse = true }
+    }
+
+    // Collapsed: a glanceable status pill, Dynamic-Island-style, under the status bar.
+    private var pill: some View {
+        Button { tactile(); store.expanded = true } label: {
+            HStack(spacing: 9) {
+                ZStack {
+                    Circle().fill(beacon.color.opacity(0.25)).frame(width: 22, height: 22)
+                        .scaleEffect(pulse ? 1.25 : 0.85)
+                        .animation(reduceMotion ? nil : .easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: pulse)
+                    Image(systemName: beacon.glyph).font(.system(size: 11, weight: .black)).foregroundStyle(beacon.color)
+                }
+                Text(summary).font(.system(size: 13, weight: .heavy)).foregroundStyle(Sig.text)
+                if !store.waitingAgents.isEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "hand.raised.fill").font(.system(size: 9, weight: .black))
+                        Text(agentSummary).font(.system(size: 11, weight: .bold))
+                    }
+                    .foregroundStyle(Sig.warn)
+                    .padding(.horizontal, 7).padding(.vertical, 3).background(Sig.warn.opacity(0.16), in: Capsule())
+                }
+                if store.blocked > 0 {
+                    Text("\(store.blocked) blocked").font(.system(size: 11, weight: .bold)).foregroundStyle(Sig.warn)
+                        .padding(.horizontal, 7).padding(.vertical, 3).background(Sig.warn.opacity(0.16), in: Capsule())
+                }
+                Image(systemName: "chevron.down").font(.system(size: 9, weight: .black)).foregroundStyle(Sig.faint)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 9)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(Capsule().strokeBorder(Sig.topHairline, lineWidth: 1))
+            .shadow(color: .black.opacity(0.4), radius: 12, y: 5)
+        }.buttonStyle(PressableCard())
+    }
+
+    // Expanded: the full ledger of what the machine is doing right now.
+    private var panel: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 10) {
+                Image(systemName: "square.stack.3d.up.fill").font(.system(size: 14, weight: .bold)).foregroundStyle(Sig.accent)
+                Text("QUEUE").font(.system(size: 11, weight: .heavy)).tracking(1.5).foregroundStyle(Sig.text)
+                Text(summary).font(.system(size: 11, weight: .bold)).foregroundStyle(Sig.faint)
+                Spacer()
+                Button { tactile(); store.expanded = false } label: {
+                    Image(systemName: "chevron.up").font(.system(size: 13, weight: .black)).foregroundStyle(Sig.muted)
+                        .frame(width: 30, height: 30).background(Sig.s2, in: Circle())
+                }.buttonStyle(PressableCard())
+            }
+            .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 10)
+
+            VStack(spacing: 8) {
+                ForEach(store.waitingAgents) { agent in agentLaneRow(agent) }
+                ForEach(store.ordered) { job in jobRow(job) }
+            }
+            .padding(.horizontal, 12).padding(.bottom, 12)
+
+            if store.blocked > 0 {
+                HStack(spacing: 7) {
+                    Image(systemName: "clock.arrow.circlepath").font(.system(size: 11, weight: .bold))
+                    Text("Blocked runs auto-resume when their model is reachable.").font(.system(size: 11, weight: .medium))
+                }
+                .foregroundStyle(Sig.faint).padding(.horizontal, 16).padding(.bottom, 14)
+            }
+        }
+        .frame(maxWidth: 440)
+        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
+        .shadow(color: .black.opacity(0.55), radius: 28, y: 14)
+        .padding(.horizontal, 14)
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
+
+    private func jobRow(_ job: QueuedJob) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle().fill(job.status.color.opacity(0.16)).frame(width: 36, height: 36)
+                if job.status == .working {
+                    Image(systemName: "bolt.fill").font(.system(size: 14, weight: .black)).foregroundStyle(job.status.color)
+                        .scaleEffect(pulse ? 1.12 : 0.9)
+                        .animation(reduceMotion ? nil : .easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: pulse)
+                } else {
+                    Image(systemName: job.status.glyph).font(.system(size: 14, weight: .bold)).foregroundStyle(job.status.color)
+                }
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(job.step).font(.system(size: 14, weight: .bold)).foregroundStyle(Sig.text).lineLimit(1)
+                HStack(spacing: 5) {
+                    Text(job.workflow).font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.faint)
+                    Text("·").foregroundStyle(Sig.faint)
+                    Image(systemName: job.target == "On-device" ? "ipad" : "network").font(.system(size: 9, weight: .bold))
+                    Text(job.target).font(.system(size: 11, weight: .semibold))
+                }.foregroundStyle(Sig.faint).lineLimit(1)
+                if job.status == .working {
+                    GeometryReader { g in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Sig.s3).frame(height: 4)
+                            Capsule().fill(Sig.accentGradient).frame(width: max(6, g.size.width * job.progress), height: 4)
+                        }
+                    }.frame(height: 4).padding(.top, 3)
+                } else if let note = job.note {
+                    Text(note).font(.system(size: 10.5, weight: .semibold)).foregroundStyle(job.status.color).lineLimit(1).padding(.top, 1)
+                }
+            }
+            Spacer(minLength: 4)
+            Text(job.status.label).font(.system(size: 10, weight: .heavy)).tracking(0.4)
+                .foregroundStyle(job.status.color)
+                .padding(.horizontal, 9).padding(.vertical, 5)
+                .background(job.status.color.opacity(0.14), in: Capsule())
+        }
+        .padding(11).background(Sig.s2, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
+    }
+
+    // An agent-waiting lane row: a raised-hand glyph, "{agent} is waiting", the repo, and a
+    // tap-to-open-desk affordance. Matches the jobRow craft (same chip + capsule label vocabulary).
+    private func agentLaneRow(_ agent: WaitingAgent) -> some View {
+        Button {
+            tactile(); store.expanded = false; PresenceStore.shared.requestDesk = true
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle().fill(Sig.warn.opacity(0.16)).frame(width: 36, height: 36)
+                    Image(systemName: "hand.raised.fill").font(.system(size: 14, weight: .black)).foregroundStyle(Sig.warn)
+                        .scaleEffect(pulse ? 1.12 : 0.9)
+                        .animation(reduceMotion ? nil : .easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: pulse)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(agentName(agent.agent)) is waiting").font(.system(size: 14, weight: .bold)).foregroundStyle(Sig.text).lineLimit(1)
+                    HStack(spacing: 5) {
+                        Image(systemName: "cpu").font(.system(size: 9, weight: .bold))
+                        Text(agent.repo).font(.system(size: 11, weight: .semibold))
+                        Text("·").foregroundStyle(Sig.faint)
+                        Text("tap to answer").font(.system(size: 11, weight: .medium))
+                    }.foregroundStyle(Sig.faint).lineLimit(1)
+                }
+                Spacer(minLength: 4)
+                Text("WAITING").font(.system(size: 10, weight: .heavy)).tracking(0.4)
+                    .foregroundStyle(Sig.warn)
+                    .padding(.horizontal, 9).padding(.vertical, 5)
+                    .background(Sig.warn.opacity(0.14), in: Capsule())
+            }
+            .padding(11).background(Sig.s2, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(Sig.warn.opacity(0.25), lineWidth: 1))
+        }
+        .buttonStyle(PressableCard())
+    }
+
+    private func agentName(_ a: String) -> String { a.lowercased() == "codex" ? "Codex" : "Claude" }
+
+    private var beacon: JobStatus { store.blocked > 0 || !store.waitingAgents.isEmpty ? .blocked : (store.working > 0 ? .working : .queued) }
+    private var summary: String {
+        var parts: [String] = []
+        if store.working > 0 { parts.append("\(store.working) working") }
+        if store.queued > 0 { parts.append("\(store.queued) queued") }
+        if parts.isEmpty && store.jobs.isEmpty && !store.waitingAgents.isEmpty { return "Agent desk" }
+        if parts.isEmpty { parts.append("idle") }
+        return parts.joined(separator: " · ")
+    }
+    private var agentSummary: String {
+        let n = store.waitingAgents.count
+        if n == 1, let one = store.waitingAgents.first { return "1 agent waiting · \(one.repo)" }
+        return "\(n) agents waiting"
+    }
+}
+
+
+// MARK: - Proactive agent presence (HSM-15-09)
+
+// Dictation taps the agent; presence taps YOU. This is the app-wide proactive layer: a
+// poll of `companionStatus()` feeds the pure `PresenceWatcher`, the HUD gains a waiting
+// lane, and the moment a coder crosses into "awaiting on you" a tight nudge slides in —
+// answer by voice on the spot, open the desk, or dismiss. It only ever surfaces; it never
+// answers for you. Quiet-mode + per-agent mute respect your focus.
+
+/// The app-wide presence brain + the surfaces' shared state. One instance, mounted at the
+/// app root next to the Queue HUD, so a waiting agent reaches every screen — even mid-meeting.
+@MainActor final class PresenceStore: ObservableObject {
+    static let shared = PresenceStore()
+
+    /// The current nudge stack (newest on top). Edge-triggered: one entry per rising edge.
+    @Published var nudges: [PresenceEvent] = []
+    /// The latest full companion snapshot — so opening the desk from a nudge/lane shows the
+    /// live board (not an empty one).
+    @Published var board = CompanionBoardState()
+    /// Set by the HUD lane / a nudge action to ask the host to open the Agent Desk.
+    @Published var requestDesk = false
+    /// The session a nudge wants to answer-by-voice; the host routes it into the desk's
+    /// answer composer (reusing the HSM-13 spine). nil when no answer is pending.
+    @Published var answerTarget: CompanionTarget?
+    /// Focus / do-not-disturb — suppresses surfacing (the watcher still tracks edges).
+    @Published var quiet = false { didSet { watcher.quiet = quiet } }
+
+    private var watcher = PresenceWatcher()
+    private var pollTask: Task<Void, Never>?
+
+    /// Drive the watcher + the HUD lane from a fresh companion snapshot. The lane reflects
+    /// *currently* waiting agents; the nudge is fired only on a rising edge.
+    func ingest(_ state: CompanionBoardState, now: Date = Date()) {
+        board = state
+        // The always-on HUD lane: who is waiting right now.
+        let waiting = state.targets
+            .filter { PresenceWatcher.isWaiting($0) }
+            .map { WaitingAgent(id: $0.id, agent: $0.agent, repo: $0.project ?? "—") }
+        RunQueueStore.shared.setWaiting(waiting)
+
+        // The rising-edge nudge(s).
+        for event in watcher.ingest(state, now: now) where !nudges.contains(where: { $0.id == event.id }) {
+            nudges.append(event)
+        }
+    }
+
+    /// Mute a session for the rest of the run (per-agent mute) and drop its nudge.
+    func mute(_ id: String) {
+        watcher.muted.insert(id)
+        nudges.removeAll { $0.id == id }
+    }
+
+    /// Dismiss a nudge without muting — the lane keeps it; the agent's NEXT fresh ask re-fires.
+    func dismiss(_ id: String) {
+        watcher.forget(id)
+        nudges.removeAll { $0.id == id }
+    }
+
+    /// One-tap voice answer from a nudge: hand the target to the desk's answer composer
+    /// (the HSM-13 spine) and clear the nudge. Honest + non-autonomous — it opens the
+    /// composer, it never sends for you.
+    func answerByVoice(_ event: PresenceEvent) {
+        answerTarget = event.target
+        requestDesk = true
+        nudges.removeAll { $0.id == event.id }
+    }
+
+    /// Begin polling a live desktop client (device/LAN). Off in the Simulator demo (which
+    /// seeds `ingest` directly). Honors quiet-mode via the watcher.
+    func startPolling(_ client: IDesktopClient, every seconds: TimeInterval = 4) {
+        pollTask?.cancel()
+        pollTask = Task { [weak self] in
+            while !Task.isCancelled {
+                if let state = try? await client.companionStatus() { self?.ingest(state) }
+                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            }
+        }
+        // TODO(HSM-15-09): when backgrounded, raise an opt-in local notification for a
+        // fresh rising edge (UNUserNotificationCenter), gated by quiet-mode + per-agent mute.
+    }
+
+    func stopPolling() { pollTask?.cancel(); pollTask = nil }
+
+    #if targetEnvironment(simulator)
+    /// A freshly-waiting board for the `HS_DEMO_PRESENCE` screenshot: one agent crossing into
+    /// "awaiting on you" with a real-sounding ask (fires the nudge + populates the HUD lane).
+    static let demoSeed = CompanionBoardState(
+        readyForReply: true, blockers: [], awaiting: true,
+        targets: [
+            CompanionTarget(agent: "claude", sessionID: "s1",
+                            question: "Run the destructive schema migration on prod now, or stage it behind a backup first?",
+                            project: "holdspeak/web-runtime", selected: true, confidence: "high"),
+            CompanionTarget(agent: "codex", sessionID: "s2",
+                            question: "Keep retrying the flaky integration test or skip it?",
+                            project: "acme/billing-api", confidence: "medium"),
+        ])
+    #endif
+}
+
+/// The presence nudge: a tight, dismissible Signal card that slides in from the top when an
+/// agent crosses into waiting. The question rides as a TIGHT quote (never prose); actions are
+/// Answer (voice) / Open desk / Dismiss. Only the topmost nudge shows; the rest stack behind.
+struct PresenceNudgeOverlay: View {
+    @ObservedObject private var store = PresenceStore.shared
+    @ObservedObject private var queue = RunQueueStore.shared
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var pulse = false
+
+    var body: some View {
+        VStack {
+            if let event = store.nudges.last {
+                PresenceNudgeCard(event: event, pulse: $pulse,
+                                  onAnswer: { store.answerByVoice(event) },
+                                  onOpenDesk: { store.requestDesk = true; store.dismiss(event.id) },
+                                  onDismiss: { store.dismiss(event.id) },
+                                  onMute: { store.mute(event.id) })
+                    .padding(.horizontal, 14)
+                    .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
+                    .id(event.id)
+            }
+            Spacer(minLength: 0)
+        }
+        // Sit below the Queue HUD: the collapsed pill (~64) or the expanded ledger panel,
+        // so the two proactive surfaces never overlap.
+        .padding(.top, queue.expanded ? 260 : 64)
+        .frame(maxWidth: .infinity)
+        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.82), value: store.nudges.map(\.id))
+        .onAppear { if !reduceMotion { pulse = true } }
+    }
+}
+
+private struct PresenceNudgeCard: View {
+    let event: PresenceEvent
+    @Binding var pulse: Bool
+    let onAnswer: () -> Void
+    let onOpenDesk: () -> Void
+    let onDismiss: () -> Void
+    let onMute: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var agentLabel: String { event.agent.lowercased() == "codex" ? "Codex" : "Claude" }
+    private var agentGlyph: String { event.agent.lowercased() == "codex" ? "chevron.left.forwardslash.chevron.right" : "sparkles" }
+
+    /// The ask, tightened to a single quote — the SAME discipline the desk card uses (no prose).
+    private var tightQuestion: String? {
+        guard let q = event.question?.trimmingCharacters(in: .whitespacesAndNewlines), !q.isEmpty else { return nil }
+        let collapsed = q.split(whereSeparator: { $0.isNewline || $0 == "\t" })
+            .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }.joined(separator: " ")
+        var first = collapsed
+        if let end = collapsed.firstIndex(where: { $0 == "?" || $0 == "." || $0 == "!" }) {
+            first = String(collapsed[...end])
+        }
+        if first.count > 92 { first = String(first.prefix(89)).trimmingCharacters(in: .whitespaces) + "…" }
+        return first
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 11) {
+                GlyphChip(system: agentGlyph, gradient: Sig.accentGradient, size: 42)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Circle().fill(Sig.warn).frame(width: 7, height: 7)
+                            .scaleEffect(pulse ? 1.35 : 1)
+                            .animation(reduceMotion ? nil : .easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: pulse)
+                        Text("WAITING ON YOU").font(.system(size: 10, weight: .heavy)).tracking(1.1).foregroundStyle(Sig.warn)
+                    }
+                    HStack(spacing: 5) {
+                        Text(event.project ?? "—").font(.system(size: 13, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
+                        Text("·").foregroundStyle(Sig.faint)
+                        Text(agentLabel).font(.system(size: 13, weight: .semibold)).foregroundStyle(Sig.faint)
+                    }
+                }
+                Spacer(minLength: 4)
+                Button { tactile(.light); onMute() } label: {
+                    Image(systemName: "bell.slash.fill").font(.system(size: 12, weight: .bold)).foregroundStyle(Sig.faint)
+                        .frame(width: 32, height: 32).background(Sig.s3, in: Circle())
+                }.buttonStyle(PressableCard()).accessibilityLabel("Mute this agent")
+                Button { tactile(.light); onDismiss() } label: {
+                    Image(systemName: "xmark").font(.system(size: 12, weight: .black)).foregroundStyle(Sig.muted)
+                        .frame(width: 32, height: 32).background(Sig.s3, in: Circle())
+                }.buttonStyle(PressableCard()).accessibilityLabel("Dismiss")
+            }
+
+            if let q = tightQuestion {
+                Text("“\(q)”")
+                    .font(.system(size: 15, weight: .semibold).italic())
+                    .foregroundStyle(Sig.text).lineSpacing(3).lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 11).padding(.leading, 15).padding(.trailing, 13)
+                    .background(Sig.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .overlay(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 2, style: .continuous)
+                            .fill(Sig.accentGradient).frame(width: 3).padding(.vertical, 9).padding(.leading, 6)
+                    }
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Sig.accent.opacity(0.12), lineWidth: 1))
+            }
+
+            HStack(spacing: 10) {
+                Button { tactile(.medium); onAnswer() } label: {
+                    HStack(spacing: 7) {
+                        Image(systemName: "mic.fill").font(.system(size: 13, weight: .bold))
+                        Text("Answer").font(.system(size: 14, weight: .heavy))
+                    }
+                    .foregroundStyle(.black).padding(.horizontal, 18).padding(.vertical, 10)
+                    .background(Sig.accentGradient, in: Capsule())
+                    .overlay(Capsule().strokeBorder(.white.opacity(0.2), lineWidth: 1))
+                }.buttonStyle(PressableCard())
+                Button { tactile(.light); onOpenDesk() } label: {
+                    Text("Open desk").font(.system(size: 14, weight: .bold)).foregroundStyle(Sig.text)
+                        .padding(.horizontal, 16).padding(.vertical, 10)
+                        .background(Sig.s3, in: Capsule())
+                        .overlay(Capsule().strokeBorder(Sig.topHairline, lineWidth: 1))
+                }.buttonStyle(PressableCard())
+                Spacer(minLength: 0)
+            }
+        }
+        .padding(15)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Sig.accent.opacity(pulse ? 0.5 : 0.28), lineWidth: 1.5)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 1.4).repeatForever(autoreverses: true), value: pulse))
+        .shadow(color: .black.opacity(0.5), radius: 26, y: 12)
+        .shadow(color: Sig.accent.opacity(0.16), radius: 20, y: 6)
+        .frame(maxWidth: 460)
+    }
+}
+
 
 // MARK: - Meeting list
 
 struct MeetingListView: View {
     @StateObject private var model = CaptureModel()
+    @ObservedObject private var peers = DictatePeerStore.shared
+    @ObservedObject private var presence = PresenceStore.shared
     @State private var capturing = false
     @State private var appeared = false
     @State private var recordPulse = false
+    @State private var showAgentDesk = false
+    @State private var showDictate = false
+    @State private var showConnect = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -2253,6 +4024,10 @@ struct MeetingListView: View {
         if ProcessInfo.processInfo.environment["HS_DEMO_GEN"] == "1" { return AnyView(GenTheaterDemo()) }
         if ProcessInfo.processInfo.environment["HS_DEMO_SETTINGS"] == "1" { return AnyView(SettingsDemo()) }
         if ProcessInfo.processInfo.environment["HS_DEMO_WORKBENCH"] == "1" || ProcessInfo.processInfo.environment["HS_DEMO_WORKBENCH_LLM"] == "1" { return AnyView(NavigationStack { WorkbenchView() }) }
+        if ProcessInfo.processInfo.environment["HS_DEMO_WB_EXEC"] == "1" { return AnyView(NavigationStack { WorkbenchView() }) }
+        if ProcessInfo.processInfo.environment["HS_DEMO_AGENTDESK"] == "1" { return AnyView(AgentDeskDemo()) }
+        if ProcessInfo.processInfo.environment["HS_DEMO_DICTATE"] == "1" { return AnyView(DictateDemo()) }
+        if ProcessInfo.processInfo.environment["HS_DEMO_CONNECT"] == "1" { return AnyView(ConnectDemo()) }
         #endif
         return AnyView(listBody)
     }
@@ -2267,7 +4042,14 @@ struct MeetingListView: View {
                         Button { tactile(.medium); capturing = true } label: { recordHero }
                             .buttonStyle(PressableCard())
                             .accessibilityLabel("New recording — capture a meeting on-device")
+                        Button { tactile(.medium); showDictate = true } label: { dictateCta }
+                            .buttonStyle(PressableCard())
+                            .accessibilityLabel("Dictate to your Mac — talk on this iPad, the words land on your Mac")
+                        Button { tactile(.medium); showConnect = true } label: { connectCta }
+                            .buttonStyle(PressableCard())
+                            .accessibilityLabel("Your Computer — find and pair with your desktop on your network")
                         NavigationLink { WorkbenchView() } label: { workbenchCta }.buttonStyle(PressableCard())
+                        NavigationLink { AgentDeskView(state: CompanionBoardState()) } label: { agentDeskCta }.buttonStyle(PressableCard())
                         HStack(spacing: 12) {
                             NavigationLink { ModelsView() } label: { modelsCta }.buttonStyle(PressableCard())
                             NavigationLink { SketchToDiagramView() } label: { sketchCta }.buttonStyle(PressableCard())
@@ -2294,11 +4076,28 @@ struct MeetingListView: View {
             .navigationDestination(isPresented: $capturing) {
                 CaptureView(model: model, done: { capturing = false })
             }
+            .navigationDestination(isPresented: $showAgentDesk) {
+                // Opened from a nudge/lane → show the live presence board, not an empty one.
+                AgentDeskView(state: presence.board.targets.isEmpty ? CompanionBoardState() : presence.board)
+            }
+            // A nudge "Answer"/"Open desk" or a HUD lane tap requests the desk; route it here.
+            .onChange(of: presence.requestDesk) { _, want in
+                if want { showAgentDesk = true; presence.requestDesk = false }
+            }
+            .navigationDestination(isPresented: $showDictate) {
+                DictateView()
+            }
+            .navigationDestination(isPresented: $showConnect) {
+                ConnectView()
+            }
             #if targetEnvironment(simulator)
             // Design-screenshot convenience: HS_DEMO=1 opens straight to the live canvas; HS_DEMO_HOME seeds rows.
             .onAppear {
                 if ProcessInfo.processInfo.environment["HS_DEMO_HOME"] == "1" { model.seedHomeDemo() }
                 if ProcessInfo.processInfo.environment["HS_DEMO"] == "1" { capturing = true }
+                if ProcessInfo.processInfo.environment["HS_DEMO_AGENTDESK"] == "1" { showAgentDesk = true }
+                if ProcessInfo.processInfo.environment["HS_DEMO_DICTATE"] == "1" { showDictate = true }
+                if ProcessInfo.processInfo.environment["HS_DEMO_CONNECT"] == "1" { showConnect = true }
             }
             #endif
             .toolbar(.hidden, for: .navigationBar)
@@ -2391,6 +4190,80 @@ struct MeetingListView: View {
             }
             Spacer()
             Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
+        }
+        .padding(15).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 20)
+    }
+
+    // The Agent Desk — your live coding agents and the question each is asking.
+    private var agentDeskCta: some View {
+        HStack(spacing: 14) {
+            GlyphChip(system: "cpu.fill", gradient: Sig.localGradient, size: 50)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Agent Desk").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Your live agents — answer the one that's waiting").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+            }
+            Spacer()
+            Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
+        }
+        .padding(15).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 20)
+    }
+
+    // The flagship mesh tile — talk on this iPad, the words land in whatever's focused on your Mac.
+    // Peer-named when paired; invites pairing when not. Wears the ON-DEVICE / local-mesh badge.
+    private var dictateCta: some View {
+        let paired = peers.isPaired
+        return HStack(spacing: 14) {
+            GlyphChip(system: "mic.fill", gradient: Sig.accentGradient, size: 50)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(paired ? "Dictate to \(peers.displayName)" : "Dictate to your Mac")
+                    .font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
+                if paired {
+                    HStack(spacing: 6) {
+                        Image(systemName: "lock.fill").font(.system(size: 8, weight: .black))
+                        Text("ON-DEVICE · LOCAL MESH").font(.system(size: 10, weight: .heavy)).tracking(0.9)
+                    }
+                    .foregroundStyle(Sig.local)
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(Sig.local.opacity(0.12), in: Capsule())
+                    .overlay(Capsule().strokeBorder(Sig.local.opacity(0.25), lineWidth: 1))
+                } else {
+                    Text("Tap to pair — your iPad is the best mic in the house")
+                        .font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1)
+                }
+            }
+            Spacer()
+            Image(systemName: paired ? "chevron.right" : "link.badge.plus")
+                .font(.system(size: 14, weight: .bold)).foregroundStyle(paired ? Sig.faint : Sig.accent)
+        }
+        .padding(15).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 20)
+    }
+
+    // The mesh connection home (HSM-15-10) — find your computer on the network and pair, no IP typing.
+    // Names the paired Mac when connected; invites discovery when not. Wears the local-network badge.
+    private var connectCta: some View {
+        let paired = peers.isPaired
+        return HStack(spacing: 14) {
+            GlyphChip(system: "laptopcomputer", gradient: Sig.localGradient, size: 50)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(paired ? peers.displayName : "Your Computer")
+                    .font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
+                if paired {
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.seal.fill").font(.system(size: 9, weight: .black))
+                        Text("PAIRED · ON YOUR NETWORK").font(.system(size: 10, weight: .heavy)).tracking(0.9)
+                    }
+                    .foregroundStyle(Sig.local)
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(Sig.local.opacity(0.12), in: Capsule())
+                    .overlay(Capsule().strokeBorder(Sig.local.opacity(0.25), lineWidth: 1))
+                } else {
+                    Text("Find and pair your desktop — no IP to type")
+                        .font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1)
+                }
+            }
+            Spacer()
+            Image(systemName: paired ? "chevron.right" : "dot.radiowaves.left.and.right")
+                .font(.system(size: 14, weight: .bold)).foregroundStyle(paired ? Sig.faint : Sig.local)
         }
         .padding(15).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 20)
     }
@@ -2493,6 +4366,10 @@ struct CaptureView: View {
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.82), value: model.recording)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: model.flash)
+        .overlay(alignment: .topLeading) {
+            // Guaranteed escape from the capture lobby (the recorder has its own stop while recording).
+            if !model.recording { BackChip(action: done).padding(.top, 10).padding(.leading, 16) }
+        }
         .toolbar(.hidden, for: .navigationBar)
         // HSM-14 — sending a transcript moment to notes flips to the Notes pane so the user
         // sees it land in the canvas.
@@ -2712,8 +4589,10 @@ struct FloatingRecorder: View {
             ZStack {
                 Circle().fill(.ultraThinMaterial).frame(width: 60, height: 60)
                     .overlay(Circle().stroke(Sig.line, lineWidth: 1))
-                Circle().stroke(Sig.bad.opacity(0.55), lineWidth: 2).frame(width: 60, height: 60)
-                    .scaleEffect(1 + CGFloat(model.level) * 0.18)   // breathes with the mic
+                Circle().stroke(Sig.bad.opacity(0.4 + 0.55 * Double(min(1, model.level))), lineWidth: 2 + CGFloat(min(1, model.level)) * 3)
+                    .frame(width: 60, height: 60)
+                    .scaleEffect(1 + CGFloat(min(1, model.level)) * 0.4)   // swells with your voice
+                    .animation(.easeOut(duration: 0.07), value: model.level)
                 VStack(spacing: 1) {
                     Circle().fill(Sig.bad).frame(width: 7, height: 7)
                     TimelineView(.periodic(from: .now, by: 1)) { _ in
@@ -2910,6 +4789,35 @@ struct DesktopGrid: View {
     }
 }
 
+/// A live mic-health readout shown during recording so a broken capture is diagnosable on the
+/// device at a glance: frames climbing ⇒ audio is flowing; peak > 0 ⇒ the mic hears sound; "text ✓"
+/// ⇒ Whisper is producing. Temporary while the recording regression is chased.
+private struct MicDiag: View {
+    let frames: Int
+    let peak: Float
+    let level: Float
+    let hasText: Bool
+    private var healthy: Bool { frames > 0 && peak > 0.005 }
+    var body: some View {
+        HStack(spacing: 9) {
+            Circle().fill(frames == 0 ? Sig.bad : (healthy ? Sig.ok : Sig.warn)).frame(width: 8, height: 8)
+            Text("MIC").font(.system(size: 9, weight: .heavy)).tracking(1).foregroundStyle(Sig.faint)
+            Text("\(frames / 16_000)s·\(frames)fr").font(.system(size: 11, weight: .semibold).monospacedDigit())
+                .foregroundStyle(frames == 0 ? Sig.bad : Sig.text)
+            Text("peak \(String(format: "%.3f", peak))").font(.system(size: 11, weight: .semibold).monospacedDigit())
+                .foregroundStyle(peak > 0.005 ? Sig.text : Sig.warn)
+            Text("lvl \(String(format: "%.2f", level))").font(.system(size: 11, weight: .semibold).monospacedDigit())
+                .foregroundStyle(Sig.muted)
+            Text(hasText ? "text ✓" : "text –").font(.system(size: 11, weight: .bold))
+                .foregroundStyle(hasText ? Sig.ok : Sig.faint)
+        }
+        .padding(.horizontal, 14).padding(.vertical, 8)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay(Capsule().strokeBorder(Sig.topHairline, lineWidth: 1))
+        .shadow(color: .black.opacity(0.4), radius: 8, y: 3)
+    }
+}
+
 /// HSM-14 — the audio-reactive VU. Bars dance to the live mic amplitude (`level`) with a
 /// travelling shimmer, so the control plane visibly responds to sound the instant it arrives —
 /// before any transcription. Quiet → a gentle idle ripple; loud → tall bars.
@@ -2920,21 +4828,28 @@ struct MicWaveform: View {
     var height: CGFloat = 44
 
     var body: some View {
-        let amp = active ? min(1, max(0.04, level * 7)) : 0
+        // Perceptual gain: a gamma < 1 expands the quiet end so normal speech drives full bars.
+        let amp = active ? min(1, pow(max(0, level), 0.62)) : 0
         TimelineView(.animation) { ctx in
             let t = ctx.date.timeIntervalSinceReferenceDate
             HStack(alignment: .center, spacing: 3) {
                 ForEach(0..<bars, id: \.self) { i in
-                    let shimmer = 0.45 + 0.55 * (0.5 + 0.5 * sin(t * 7 + Double(i) * 0.55))
-                    let centerBias = 1 - abs(Double(i) - Double(bars) / 2) / Double(bars)   // taller in the middle
-                    let h = 3 + CGFloat(shimmer * centerBias) * amp * height + (active ? 2 : 0)
+                    // Each bar gets its own fast, irregular wobble — but the WHOLE envelope scales
+                    // with amp, so silence is a calm flat line and your voice makes it leap.
+                    let phase = t * 12 + Double(i) * 0.9
+                    let wobble = 0.5 + 0.5 * sin(phase) * sin(phase * 0.41 + 1.3)
+                    let centerBias = 1 - 0.55 * abs(Double(i) - Double(bars - 1) / 2) / (Double(bars) / 2)
+                    let dyn = amp * CGFloat(wobble * centerBias)              // voice-driven
+                    let idle = active ? 0.05 + 0.03 * CGFloat(0.5 + 0.5 * sin(phase)) : 0
+                    let h = 3 + (dyn + idle) * height
                     Capsule()
-                        .fill(LinearGradient(colors: [Sig.accent, Sig.accent.opacity(0.55)], startPoint: .bottom, endPoint: .top))
+                        .fill(LinearGradient(colors: [Sig.accent, Sig.accent.opacity(0.5)], startPoint: .bottom, endPoint: .top))
                         .frame(width: 3, height: max(3, h))
+                        .shadow(color: Sig.accent.opacity(Double(min(0.8, dyn * 1.4))), radius: 3)  // glows on peaks
                         .opacity(active ? 1 : 0.35)
                 }
             }
-            .animation(.easeOut(duration: 0.08), value: amp)
+            .animation(.easeOut(duration: 0.06), value: amp)
         }
         .frame(height: height)
     }
@@ -3451,8 +5366,9 @@ private func profileBlurb(_ p: MIRProfile) -> String {
 private func clockString(_ s: Double) -> String {
     let t = Int(max(0, s)); return String(format: "%d:%02d", t / 60, t % 60)
 }
-/// A light tactile tap (HSM-14 — the app should feel hand-driven).
-private func tactile(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
+/// A light tactile tap (HSM-14 — the app should feel hand-driven). Internal so the extracted
+/// DesignSystem.swift (BackChip) shares it (HSM-14-19 decomposition).
+func tactile(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
     UIImpactFeedbackGenerator(style: style).impactOccurred()
 }
 
@@ -3879,12 +5795,15 @@ struct TranscriptBlock: View {
     let text: String
     let color: Color
     let index: Int
+    var canPlay: Bool = false           // diarization replay: this block has saved audio to play
+    var playing: Bool = false           // this block is currently sounding
+    var onPlay: () -> Void = {}
     @State private var appeared = false
     @State private var copied = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            RoundedRectangle(cornerRadius: 2).fill(color.opacity(0.85)).frame(width: 3)
+            RoundedRectangle(cornerRadius: 2).fill((playing ? Sig.accent : color).opacity(0.85)).frame(width: 3)
             VStack(alignment: .leading, spacing: 7) {
                 if let speaker, !speaker.isEmpty {
                     HStack(spacing: 8) {
@@ -3893,6 +5812,13 @@ struct TranscriptBlock: View {
                             .frame(width: 24, height: 24)
                         Text(speaker).font(.system(size: 13, weight: .heavy)).foregroundStyle(color)
                         if let time { Text(timeStr(time)).font(.system(size: 11, weight: .semibold).monospacedDigit()).foregroundStyle(Sig.faint) }
+                        // Tap to HEAR this segment — the owner's tool to judge if the speaker label is right.
+                        if canPlay {
+                            Button { onPlay() } label: {
+                                Image(systemName: playing ? "pause.circle.fill" : "play.circle.fill")
+                                    .font(.system(size: 18)).foregroundStyle(playing ? Sig.accent : color)
+                            }.buttonStyle(.plain)
+                        }
                         Spacer(minLength: 0)
                         if copied { Image(systemName: "checkmark.circle.fill").font(.system(size: 13)).foregroundStyle(Sig.ok) }
                     }
@@ -3903,7 +5829,8 @@ struct TranscriptBlock: View {
         }
         .padding(15)
         .background(Sig.s1, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Sig.line, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .stroke(playing ? Sig.accent : Sig.line, lineWidth: playing ? 2 : 1))
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 14)
         .onAppear { withAnimation(.spring(response: 0.55, dampingFraction: 0.8).delay(Double(index) * 0.05)) { appeared = true } }
@@ -3922,6 +5849,12 @@ struct TranscriptBlock: View {
 
 struct TranscriptView: View {
     let segments: [Segment]
+    @StateObject private var player: SegmentAudioPlayer
+
+    init(segments: [Segment], meetingID: String) {
+        self.segments = segments
+        _player = StateObject(wrappedValue: SegmentAudioPlayer(meetingID: meetingID))
+    }
 
     var body: some View {
         if segments.isEmpty {
@@ -3935,7 +5868,10 @@ struct TranscriptView: View {
             VStack(alignment: .leading, spacing: 12) {
                 header
                 ForEach(Array(blocks.enumerated()), id: \.offset) { i, b in
-                    TranscriptBlock(speaker: b.speaker, time: b.time, text: b.text, color: b.color, index: i)
+                    TranscriptBlock(speaker: b.speaker, time: b.time, text: b.text, color: b.color, index: i,
+                                    canPlay: player.canPlay && b.time != nil,
+                                    playing: player.playingIndex == i,
+                                    onPlay: { if let s = b.time, let e = b.end { player.toggle(index: i, start: s, end: e) } })
                 }
             }
         }
@@ -3961,12 +5897,12 @@ struct TranscriptView: View {
     private var wordCount: Int { fullText.split(whereSeparator: { $0 == " " || $0 == "\n" }).count }
 
     /// Multi-segment → speaker utterances; a single run-on segment → readable sentence paragraphs.
-    private var blocks: [(speaker: String?, time: Double?, text: String, color: Color)] {
+    private var blocks: [(speaker: String?, time: Double?, end: Double?, text: String, color: Color)] {
         if segments.count > 1 {
-            return segments.map { (speaker: $0.speaker.isEmpty ? "Speaker" : $0.speaker, time: $0.startTime, text: $0.text, color: speakerColor($0.speaker)) }
+            return segments.map { (speaker: $0.speaker.isEmpty ? "Speaker" : $0.speaker, time: $0.startTime, end: $0.endTime, text: $0.text, color: speakerColor($0.speaker)) }
         }
         guard let seg = segments.first else { return [] }
-        return paragraphs(seg.text).map { (speaker: nil, time: nil, text: $0, color: Sig.local) }
+        return paragraphs(seg.text).map { (speaker: nil, time: nil, end: nil, text: $0, color: Sig.local) }
     }
     private func speakerColor(_ s: String) -> Color {
         let palette = [Sig.local, Sig.accent, Sig.ok, Sig.warn, Color(hex: 0xB57BEE), Color(hex: 0x3FC7C7)]
@@ -4085,7 +6021,1263 @@ private struct GenerationTheater: View {
     }
 }
 
+// MARK: - The Agent Desk (HSM-15-08)
+
+/// The Agent Desk — HoldSpeak's third pillar beside dictation and meetings: a glanceable command
+/// surface for the AI coding agents you run. Each live `CompanionTarget` becomes a Signal card —
+/// repo, the agent (Claude/Codex), a STATE chip (working / waiting on you / idle / stale), and, when
+/// waiting, the question as a tight quote (never prose). Waiting agents sort to the top and pulse.
+/// Reads from a `CompanionBoardState`: live over `HTTPDesktopClient.companionStatus()`, or an injected
+/// seed for the Simulator. No narration — chips + quotes only (POSITIONING).
+struct AgentDeskView: View {
+    /// Injected for the Simulator seed; the live wiring polls `companionStatus()` into this.
+    @State var state: CompanionBoardState
+    @State private var pulse = false
+    @State private var appeared = false
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// Waiting (and pinned) sort to the top; within a tier, stable by id.
+    private var ordered: [CompanionTarget] {
+        state.targets.enumerated().sorted { a, b in
+            let (ai, av) = a; let (bi, bv) = b
+            if AgentDeskView.rank(av) != AgentDeskView.rank(bv) {
+                return AgentDeskView.rank(av) < AgentDeskView.rank(bv)
+            }
+            return ai < bi
+        }.map { $0.element }
+    }
+
+    /// Sort key: a waiting agent first, then pinned, then everything else; stale sinks.
+    static func rank(_ t: CompanionTarget) -> Int {
+        if AgentDeskView.isWaiting(t) { return t.pinned ? 0 : 1 }
+        if t.stale { return 4 }
+        return t.pinned ? 2 : 3
+    }
+
+    static func isWaiting(_ t: CompanionTarget) -> Bool {
+        !t.stale && (t.question?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
+    }
+
+    private var waitingCount: Int { state.targets.filter { AgentDeskView.isWaiting($0) }.count }
+
+    var body: some View {
+        ZStack {
+            background
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    header
+                    if state.targets.isEmpty {
+                        emptyState.transition(.opacity)
+                    } else {
+                        ForEach(Array(ordered.enumerated()), id: \.element.id) { i, t in
+                            AgentDeskCard(target: t, pulse: $pulse,
+                                          onAnswer: { answer(t) }, onPin: { pin(t) }, onDismiss: { dismiss(t) })
+                                .opacity(appeared ? 1 : 0)
+                                .offset(y: appeared ? 0 : 16)
+                                .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.82)
+                                    .delay(0.04 + Double(i) * 0.05), value: appeared)
+                        }
+                    }
+                }
+                .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
+            }
+        }
+        .navigationTitle("")
+        .topBack { dismiss() }
+        .toolbar(.hidden, for: .navigationBar)
+        .tint(Sig.accent)
+        .onAppear {
+            withAnimation(reduceMotion ? nil : .spring(response: 0.6, dampingFraction: 0.85)) { appeared = true }
+            if !reduceMotion { pulse = true }
+        }
+    }
+
+    private var background: some View {
+        ZStack {
+            Sig.bgGradient.ignoresSafeArea()
+            Circle().fill(Sig.accent.opacity(waitingCount > 0 ? 0.18 : 0.12)).frame(width: 420)
+                .blur(radius: 130).offset(x: 150, y: -300).ignoresSafeArea()
+            Circle().fill(Sig.local.opacity(0.10)).frame(width: 360)
+                .blur(radius: 140).offset(x: -180, y: -180).ignoresSafeArea()
+        }
+    }
+
+    // Workbench-grade header: an eyebrow badge that reads waiting count, a heavy title, a glyph chip.
+    private var header: some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 7) {
+                HStack(spacing: 6) {
+                    Circle().fill(waitingCount > 0 ? Sig.warn : Sig.ok).frame(width: 7, height: 7)
+                        .scaleEffect(pulse && waitingCount > 0 ? 1.35 : 1)
+                        .animation(reduceMotion ? nil : .easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: pulse)
+                    Text(waitingCount > 0 ? "\(waitingCount) WAITING ON YOU" : "ALL CLEAR")
+                        .font(.system(size: 10, weight: .heavy)).tracking(1.4)
+                }
+                .foregroundStyle(waitingCount > 0 ? Sig.warn : Sig.ok)
+                .padding(.horizontal, 10).padding(.vertical, 5)
+                .background((waitingCount > 0 ? Sig.warn : Sig.ok).opacity(0.12), in: Capsule())
+                .overlay(Capsule().strokeBorder((waitingCount > 0 ? Sig.warn : Sig.ok).opacity(0.25), lineWidth: 1))
+                Text("Agent Desk").font(.system(size: 38, weight: .heavy)).foregroundStyle(Sig.text)
+                    .shadow(color: .black.opacity(0.3), radius: 8, y: 3)
+            }
+            Spacer()
+            ZStack {
+                GlyphChip(system: "cpu.fill", gradient: Sig.accentGradient, size: 50)
+                if !state.targets.isEmpty {
+                    Text("\(state.targets.count)").font(.system(size: 11, weight: .heavy).monospacedDigit())
+                        .foregroundStyle(.white).padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(Sig.bad, in: Capsule()).overlay(Capsule().strokeBorder(Sig.bg, lineWidth: 2))
+                        .offset(x: 20, y: -20)
+                }
+            }
+        }
+        .padding(.top, 8)
+        .opacity(appeared ? 1 : 0).offset(y: appeared ? 0 : 10)
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 16) {
+            ZStack {
+                Circle().fill(Sig.accentSoft).frame(width: 84, height: 84)
+                Circle().strokeBorder(Sig.accent.opacity(0.3), lineWidth: 1).frame(width: 84, height: 84)
+                Image(systemName: "cpu").font(.system(size: 32, weight: .semibold)).foregroundStyle(Sig.accent)
+            }
+            VStack(spacing: 6) {
+                Text("No agents linked").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Run a coding agent on your desktop — it appears here the moment it needs you")
+                    .font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.faint)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 50)
+    }
+
+    // Answer / manage actions reuse the HSM-13 spine over the companion routes. Stubbed here for the
+    // surface build; the live wiring drives select → voice/type → /api/dictation/remote (TODO HSM-15-08).
+    private func answer(_ t: CompanionTarget) {
+        tactile(.medium)
+        // TODO(HSM-15-08): selectCompanionTarget(t) → present the HSM-13 voice/type answer composer →
+        // sendRemoteDictation → delivered into this agent's tmux pane.
+    }
+    private func pin(_ t: CompanionTarget) {
+        tactile(.light)
+        // TODO(HSM-15-08): pinCompanionTarget(agent:sessionID:pinned:) over the live client; mutate locally too.
+        if let i = state.targets.firstIndex(where: { $0.id == t.id }) {
+            state.targets[i].pinned.toggle()
+        }
+    }
+    private func dismiss(_ t: CompanionTarget) {
+        tactile(.light)
+        // TODO(HSM-15-08): dismissCompanionTarget(agent:sessionID:) over the live client.
+        if let i = state.targets.firstIndex(where: { $0.id == t.id }) {
+            state.targets[i].question = nil
+        }
+    }
+}
+
+/// One agent on the desk — a Signal card. Waiting agents wear a warm border + a breathing pulse and
+/// surface the question as a tight quote; idle/stale read quieter.
+private struct AgentDeskCard: View {
+    let target: CompanionTarget
+    @Binding var pulse: Bool
+    let onAnswer: () -> Void
+    let onPin: () -> Void
+    let onDismiss: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var waiting: Bool { AgentDeskView.isWaiting(target) }
+    private var agentLabel: String { target.agent.lowercased() == "codex" ? "Codex" : "Claude" }
+    private var agentGlyph: String { target.agent.lowercased() == "codex" ? "chevron.left.forwardslash.chevron.right" : "sparkles" }
+
+    /// State chip color + label + glyph.
+    private var stateColor: Color { target.stale ? Sig.faint : (waiting ? Sig.warn : Sig.ok) }
+    private var stateLabel: String { target.stale ? "STALE" : (waiting ? "WAITING ON YOU" : "WORKING") }
+    private var stateGlyph: String { target.stale ? "clock.badge.xmark" : (waiting ? "hand.raised.fill" : "bolt.fill") }
+
+    /// The question, tightened to a single tight quote — never a paragraph (POSITIONING).
+    private var tightQuestion: String? {
+        guard let q = target.question?.trimmingCharacters(in: .whitespacesAndNewlines), !q.isEmpty else { return nil }
+        // Collapse whitespace; take the first sentence/line; cap length.
+        let collapsed = q.split(whereSeparator: { $0.isNewline || $0 == "\t" })
+            .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }.joined(separator: " ")
+        var first = collapsed
+        if let end = collapsed.firstIndex(where: { $0 == "?" || $0 == "." || $0 == "!" }) {
+            first = String(collapsed[...end])
+        }
+        if first.count > 96 {
+            first = String(first.prefix(93)).trimmingCharacters(in: .whitespaces) + "…"
+        }
+        return first
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            HStack(spacing: 13) {
+                GlyphChip(system: agentGlyph, gradient: waiting ? Sig.accentGradient : Sig.localGradient, size: 46)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 7) {
+                        Text(agentLabel).font(.system(size: 16, weight: .heavy)).foregroundStyle(Sig.text)
+                        if target.pinned {
+                            Image(systemName: "pin.fill").font(.system(size: 10, weight: .bold)).foregroundStyle(Sig.accent)
+                        }
+                    }
+                    Text(target.project ?? "—").font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Sig.faint).lineLimit(1)
+                }
+                Spacer()
+                stateChip
+            }
+
+            if let q = tightQuestion, waiting {
+                Text("“\(q)”")
+                    .font(.system(size: 15, weight: .semibold).italic())
+                    .foregroundStyle(Sig.text)
+                    .lineSpacing(4)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 12).padding(.leading, 16).padding(.trailing, 14)
+                    .background(Sig.accent.opacity(0.07), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .overlay(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 2, style: .continuous)
+                            .fill(Sig.accentGradient).frame(width: 3).padding(.vertical, 10).padding(.leading, 7)
+                    }
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Sig.accent.opacity(0.12), lineWidth: 1))
+            }
+
+            if waiting {
+                HStack(spacing: 10) {
+                    Button(action: onAnswer) {
+                        HStack(spacing: 7) {
+                            Image(systemName: "mic.fill").font(.system(size: 13, weight: .bold))
+                            Text("Answer").font(.system(size: 14, weight: .heavy))
+                        }
+                        .foregroundStyle(.black).padding(.horizontal, 16).padding(.vertical, 10)
+                        .background(Sig.accentGradient, in: Capsule())
+                        .overlay(Capsule().strokeBorder(.white.opacity(0.2), lineWidth: 1))
+                    }
+                    .buttonStyle(PressableCard())
+                    deskGlyphButton("pin.fill", tint: target.pinned ? Sig.accent : Sig.muted, action: onPin)
+                    deskGlyphButton("xmark", tint: Sig.muted, action: onDismiss)
+                    Spacer()
+                }
+            }
+        }
+        .padding(15)
+        .signalCard(waiting ? Sig.s2 : Sig.s1, radius: 20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(waiting ? Sig.accent.opacity(pulse ? 0.65 : 0.30) : .clear, lineWidth: 1.5)
+                .animation(reduceMotion ? nil : .easeInOut(duration: 1.3).repeatForever(autoreverses: true), value: pulse)
+        )
+        .shadow(color: waiting ? Sig.accent.opacity(pulse ? 0.28 : 0.12) : .clear, radius: 18, y: 8)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 1.3).repeatForever(autoreverses: true), value: pulse)
+        .opacity(target.stale ? 0.72 : 1)
+    }
+
+    private var stateChip: some View {
+        HStack(spacing: 5) {
+            Image(systemName: stateGlyph).font(.system(size: 10, weight: .black))
+            Text(stateLabel).font(.system(size: 10, weight: .heavy)).tracking(0.8)
+        }
+        .foregroundStyle(stateColor)
+        .padding(.horizontal, 9).padding(.vertical, 6)
+        .background(stateColor.opacity(0.14), in: Capsule())
+        .overlay(Capsule().strokeBorder(stateColor.opacity(0.30), lineWidth: 1))
+    }
+
+    private func deskGlyphButton(_ system: String, tint: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: system).font(.system(size: 14, weight: .bold)).foregroundStyle(tint)
+                .frame(width: 40, height: 40).signalCard(Sig.s3, radius: 12, elevated: false)
+        }
+        .buttonStyle(PressableCard())
+    }
+}
+
+// MARK: - Dictate to your Mac (HSM-15-01 — the flagship mesh surface)
+
+/// The paired desktop peer, persisted across launches. The flagship home reads this to name the
+/// "Dictate to {your Mac}" tile and to know whether to invite pairing. Seedable via the
+/// `HS_DESKTOP_*` env (a real-metal LAN trace) so a device run points at a live server with no taps.
+@MainActor final class DictatePeerStore: ObservableObject {
+    static let shared = DictatePeerStore()
+
+    // UserDefaults-backed so pairing survives launches; @Published so the home tile + sheet react.
+    @Published var host: String { didSet { defaults.set(host, forKey: "hs.peer.host") } }
+    @Published var portText: String { didSet { defaults.set(portText, forKey: "hs.peer.port") } }
+    @Published var token: String { didSet { defaults.set(token, forKey: "hs.peer.token") } }
+    @Published var name: String { didSet { defaults.set(name, forKey: "hs.peer.name") } }
+    private let defaults = UserDefaults.standard
+
+    private init() {
+        let env = ProcessInfo.processInfo.environment
+        host = defaults.string(forKey: "hs.peer.host") ?? ""
+        portText = defaults.string(forKey: "hs.peer.port") ?? "8000"
+        token = defaults.string(forKey: "hs.peer.token") ?? ""
+        name = defaults.string(forKey: "hs.peer.name") ?? ""
+        if host.isEmpty, let h = env["HS_DESKTOP_HOST"], !h.isEmpty { host = h }
+        if let p = env["HS_DESKTOP_PORT"], !p.isEmpty { portText = p }
+        if token.isEmpty, let t = env["HS_DESKTOP_TOKEN"], !t.isEmpty { token = t }
+        if name.isEmpty, let n = env["HS_DESKTOP_NAME"], !n.isEmpty { name = n }
+    }
+
+    /// True once a host has been entered — the tile then names the Mac; otherwise it invites pairing.
+    var isPaired: Bool { !host.trimmingCharacters(in: .whitespaces).isEmpty }
+
+    /// The Mac's display name: a user-given name, else the host, else a sensible default.
+    var displayName: String {
+        let n = name.trimmingCharacters(in: .whitespaces)
+        if !n.isEmpty { return n }
+        let h = host.trimmingCharacters(in: .whitespaces)
+        return h.isEmpty ? "your Mac" : h
+    }
+
+    var peer: DesktopPeer? {
+        guard let port = Int(portText.trimmingCharacters(in: .whitespaces)), port > 0 else { return nil }
+        let h = host.trimmingCharacters(in: .whitespaces)
+        guard !h.isEmpty else { return nil }
+        return DesktopPeer(host: h, port: port, token: token.isEmpty ? nil : token, scheme: "http")
+    }
+
+    func client() -> HTTPDesktopClient? {
+        guard let peer, let config = HTTPDesktopClient.Config(peer: peer) else { return nil }
+        return HTTPDesktopClient(config: config)
+    }
+
+    /// Persist a discovered computer as the paired peer (HSM-15-10). Host/port come from
+    /// Bonjour resolution — no IP typing — and only the token (when required) is entered.
+    func adopt(name: String, host: String, port: Int, token: String? = nil) {
+        self.name = name
+        self.host = host
+        self.portText = String(port)
+        if let token { self.token = token }
+    }
+
+    /// Forget the paired computer (HSM-15-10) — every mesh feature reads this one peer, so a
+    /// clean forget returns the whole app to the "no computer yet" state. The token is cleared
+    /// first (a credential, never left behind).
+    func forget() {
+        token = ""
+        host = ""
+        name = ""
+        portText = "8000"
+    }
+}
+
+/// The dictation session: on-device WhisperKit hears you, each finalized utterance is delivered to
+/// the paired Mac via `POST /api/dictation/remote` with `target_mode: focused` — the desktop runs it
+/// through the full pipeline and free-types it into whatever app is focused. The transcription is
+/// LOCAL; only the finished words cross the LAN. An unreachable Mac is a rendered state, never an error.
+@MainActor final class DictateModel: ObservableObject {
+    /// Reachability of the paired Mac — a first-class state, not an error wall.
+    enum Reach: Equatable { case unknown, reachable, asleep, unpaired }
+    /// One delivered line in the read-back: the words + whether the desktop confirmed delivery.
+    struct Line: Identifiable, Equatable { let id = UUID(); let text: String; var delivered: Bool }
+
+    @Published var listening = false
+    @Published var handsFree = false        // hands-free keeps the mic open between utterances
+    @Published var transcribing = false
+    @Published var level: Float = 0          // live mic amplitude — drives the reactive waveform
+    @Published var partial = ""              // the words still being heard
+    @Published var lines: [Line] = []        // the finalized read-back (newest last)
+    @Published var reach: Reach = .unknown
+    @Published var lastDelivered = false     // the quiet confirmation tick
+
+    private let peers = DictatePeerStore.shared
+    private let capture = AudioCaptureService()
+    private let sink = ChunkSink()
+    private let meter = LevelMeter()
+    private var levelTicker: Task<Void, Never>?
+
+    var egressLabel: String { "local mesh → \(peers.displayName)" }
+    var isPaired: Bool { peers.isPaired }
+    var macName: String { peers.displayName }
+
+    /// Probe the Mac so the surface opens honest. Never throws — maps to a rendered Reach.
+    func probe() async {
+        guard peers.isPaired else { reach = .unpaired; return }
+        guard let client = peers.client() else { reach = .asleep; return }
+        let c = await client.handshake()
+        reach = c.reachable ? .reachable : .asleep
+    }
+
+    /// Push-to-talk down / hands-free arm: open the mic and start sampling the level.
+    func startListening() async {
+        guard !listening else { return }
+        guard await CaptureModel.requestMic() else { reach = .asleep; return }
+        sink.reset(); meter.reset(); partial = ""
+        do { try capture.start { [sink, meter] chunk in sink.add(chunk); meter.ingest(chunk) }; listening = true }
+        catch { listening = false; return }
+        // Poll the live mic amplitude (20 Hz) so the waveform reacts the instant sound arrives.
+        levelTicker = Task { [weak self] in
+            while !Task.isCancelled, self?.listening == true {
+                await MainActor.run { self?.level = self?.meter.level ?? 0 }
+                try? await Task.sleep(nanoseconds: 50_000_000)
+            }
+            await MainActor.run { self?.level = 0 }
+        }
+    }
+
+    /// Push-to-talk up / hands-free stop: close the mic, transcribe the clip ON-DEVICE, deliver it.
+    func stopAndDeliver() async {
+        guard listening else { return }
+        try? capture.stop()
+        listening = false
+        levelTicker?.cancel(); levelTicker = nil; level = 0
+        transcribing = true; defer { transcribing = false }
+        let said: String
+        do {
+            let segs = try await WhisperKitTranscriber(chunks: sink.drain(), model: "base").transcribe()
+            said = segs.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        } catch { return }
+        guard !said.isEmpty else { return }
+        await deliver(said)
+    }
+
+    /// Deliver a finalized utterance to the focused Mac app. Appends to the read-back optimistically,
+    /// then flips its tick from the desktop's `RemoteDictationResult.delivered`. Unreachable → the
+    /// line stays (un-ticked) and Reach goes `.asleep`; never a thrown error at the user.
+    func deliver(_ text: String) async {
+        var line = Line(text: text, delivered: false)
+        lines.append(line)
+        if lines.count > 6 { lines.removeFirst(lines.count - 6) }
+        guard let client = peers.client() else { reach = .asleep; return }
+        do {
+            let result = try await client.sendRemoteDictation(text: text, target: .focused)
+            line.delivered = result.delivered
+            if let i = lines.firstIndex(where: { $0.id == line.id }) { lines[i].delivered = result.delivered }
+            lastDelivered = result.delivered
+            reach = .reachable
+        } catch {
+            reach = .asleep
+        }
+    }
+
+    #if targetEnvironment(simulator)
+    /// Simulator-only: stage a live-looking session for the design screenshot — connected, an active
+    /// mic level (so the waveform leaps), a trailing partial, and a read-back with one line in flight.
+    func seedDemo() {
+        reach = .reachable
+        level = 0.72
+        partial = "and bump the retry budget to five attempts"
+        lines = [
+            Line(text: "Refactor the dictation runner so the focused-app path doesn't gate on a coder session.", delivered: true),
+            Line(text: "Add a regression test for the asleep-peer first-class state.", delivered: true),
+            Line(text: "Wire the egress badge to the live peer name.", delivered: false),
+        ]
+    }
+    #endif
+}
+
+/// The flagship "Dictate to your Mac" surface (HSM-15-01): the iPad is the best mic in the house,
+/// your Mac has every app you work in. Pick it up, talk, and the words land in whatever is focused —
+/// transcribed on-device, typed through the desktop's full dictation pipeline. No prose; chips + symbols.
+struct DictateView: View {
+    @StateObject private var model = DictateModel()
+    @State private var appeared = false
+    @State private var ring = false
+    @State private var pairing = false
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ZStack {
+            background
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    header
+                    reachChip
+                    waveformHero
+                    talkControls
+                    readBack
+                }
+                .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
+            }
+        }
+        .toolbar(.hidden, for: .navigationBar)
+        .tint(Sig.accent)
+        .sheet(isPresented: $pairing) { PairMacSheet() }
+        .onAppear {
+            withAnimation(reduceMotion ? nil : .spring(response: 0.6, dampingFraction: 0.85)) { appeared = true }
+            if !reduceMotion { ring = true }
+            #if targetEnvironment(simulator)
+            if ProcessInfo.processInfo.environment["HS_DEMO_DICTATE"] == "1" { model.seedDemo(); return }
+            #endif
+            Task { await model.probe() }
+        }
+    }
+
+    private var background: some View {
+        ZStack {
+            Sig.bgGradient.ignoresSafeArea()
+            Circle().fill(Sig.accent.opacity(model.listening ? 0.22 : 0.14)).frame(width: 460)
+                .blur(radius: 140).offset(x: 120, y: -300).ignoresSafeArea()
+                .animation(.easeInOut(duration: 0.6), value: model.listening)
+            Circle().fill(Sig.local.opacity(0.10)).frame(width: 360)
+                .blur(radius: 140).offset(x: -180, y: -160).ignoresSafeArea()
+        }
+    }
+
+    private var header: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 9) {
+                Button { tactile(); dismiss() } label: {
+                    HStack(spacing: 6) { Image(systemName: "chevron.left"); Text("Home") }
+                        .font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
+                }
+                .buttonStyle(.plain)
+                egressBadge
+                Text("Dictate").font(.system(size: 38, weight: .heavy)).foregroundStyle(Sig.text)
+                    .shadow(color: .black.opacity(0.3), radius: 8, y: 3)
+                HStack(spacing: 7) {
+                    Image(systemName: "arrow.right").font(.system(size: 12, weight: .black)).foregroundStyle(Sig.faint)
+                    Text(model.macName).font(.system(size: 16, weight: .heavy)).foregroundStyle(Sig.accent)
+                }
+            }
+            Spacer()
+            GlyphChip(system: "mic.fill", gradient: Sig.accentGradient, size: 50)
+        }
+        .padding(.top, 8)
+        .opacity(appeared ? 1 : 0).offset(y: appeared ? 0 : 10)
+    }
+
+    /// The egress reality, one badge (POSITIONING canon): on-device hearing, the words cross the LAN.
+    private var egressBadge: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "lock.fill").font(.system(size: 9, weight: .black))
+            Text("ON-DEVICE · ").font(.system(size: 10, weight: .heavy)).tracking(1.0)
+            + Text(model.egressLabel.uppercased()).font(.system(size: 10, weight: .heavy)).tracking(1.0)
+        }
+        .foregroundStyle(Sig.local)
+        .padding(.horizontal, 10).padding(.vertical, 5)
+        .background(Sig.local.opacity(0.12), in: Capsule())
+        .overlay(Capsule().strokeBorder(Sig.local.opacity(0.25), lineWidth: 1))
+    }
+
+    /// First-class reachability: a tight chip, never an error wall. Unpaired invites pairing.
+    @ViewBuilder private var reachChip: some View {
+        switch model.reach {
+        case .unpaired:
+            Button { tactile(.medium); pairing = true } label: {
+                statusChip("link.badge.plus", "Pair your Mac to start", Sig.accent, filled: true)
+            }
+            .buttonStyle(PressableCard())
+        case .asleep:
+            Button { tactile(); Task { await model.probe() } } label: {
+                statusChip("moon.zzz.fill", "Mac asleep · not reachable — tap to retry", Sig.warn)
+            }
+            .buttonStyle(PressableCard())
+        case .reachable:
+            statusChip("checkmark.circle.fill", "Connected · words land on \(model.macName)", Sig.ok)
+        case .unknown:
+            statusChip("dot.radiowaves.left.and.right", "Reaching \(model.macName)…", Sig.muted)
+        }
+    }
+
+    private func statusChip(_ glyph: String, _ text: String, _ color: Color, filled: Bool = false) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: glyph).font(.system(size: 13, weight: .bold))
+            Text(text).font(.system(size: 13, weight: .heavy))
+            Spacer(minLength: 0)
+            if filled { Image(systemName: "chevron.right").font(.system(size: 12, weight: .black)).opacity(0.7) }
+        }
+        .foregroundStyle(filled ? .black : color)
+        .padding(.horizontal, 14).padding(.vertical, 11)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(filled ? AnyShapeStyle(Sig.accentGradient) : AnyShapeStyle(color.opacity(0.12)),
+                    in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .strokeBorder(filled ? Color.white.opacity(0.2) : color.opacity(0.28), lineWidth: 1))
+        .opacity(appeared ? 1 : 0)
+    }
+
+    /// The hero: the reactive waveform that leaps with your voice, on a deep Signal stage. The
+    /// trailing partial caption shows what's being heard right now.
+    private var waveformHero: some View {
+        VStack(spacing: 16) {
+            MicWaveform(level: CGFloat(model.level), active: model.listening || model.level > 0.001,
+                        bars: 40, height: 64)
+                .frame(height: 64).frame(maxWidth: .infinity)
+            Text(model.partial.isEmpty
+                 ? (model.listening ? "Listening…" : (model.transcribing ? "Transcribing on-device…" : "Hold to talk"))
+                 : model.partial)
+                .font(.system(size: 16, weight: model.partial.isEmpty ? .heavy : .semibold))
+                .foregroundStyle(model.partial.isEmpty ? Sig.faint : Sig.text)
+                .multilineTextAlignment(.center).lineLimit(2)
+                .frame(maxWidth: .infinity, minHeight: 24)
+                .animation(.easeOut(duration: 0.2), value: model.partial)
+        }
+        .padding(.vertical, 26).padding(.horizontal, 18)
+        .frame(maxWidth: .infinity)
+        .signalCard(Sig.s1, radius: 24)
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous)
+            .strokeBorder(model.listening ? Sig.accent.opacity(ring ? 0.55 : 0.25) : Sig.line, lineWidth: 1.5)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 1.1).repeatForever(autoreverses: true), value: ring))
+        .shadow(color: model.listening ? Sig.accent.opacity(0.3) : .clear, radius: 22, y: 10)
+        .opacity(appeared ? 1 : 0).scaleEffect(appeared ? 1 : 0.97)
+    }
+
+    /// The two ways to talk: a big push-to-talk (press-and-hold) and a hands-free toggle that keeps
+    /// the mic open. Disabled until the Mac is paired (the reach chip then leads to pairing).
+    private var talkControls: some View {
+        VStack(spacing: 12) {
+            // Push-to-talk: press down to open the mic, release to transcribe + deliver.
+            ZStack {
+                Circle().fill(model.listening ? AnyShapeStyle(Sig.accentGradient) : AnyShapeStyle(Sig.s2))
+                    .frame(width: 110, height: 110)
+                    .overlay(Circle().strokeBorder(model.listening ? Color.white.opacity(0.25) : Sig.line, lineWidth: 1.5))
+                    .shadow(color: model.listening ? Sig.accent.opacity(0.5) : .black.opacity(0.3),
+                            radius: model.listening ? 26 : 12, y: 8)
+                    .scaleEffect(model.listening ? 1.06 : 1)
+                if model.listening {
+                    Circle().stroke(Sig.accent.opacity(0.5), lineWidth: 2).frame(width: 110, height: 110)
+                        .scaleEffect(ring ? 1.35 : 1).opacity(ring ? 0 : 0.8)
+                        .animation(reduceMotion ? nil : .easeOut(duration: 1.0).repeatForever(autoreverses: false), value: ring)
+                }
+                Image(systemName: model.listening ? "waveform" : "mic.fill")
+                    .font(.system(size: 38, weight: .bold))
+                    .foregroundStyle(model.listening ? .black : Sig.accent)
+            }
+            .contentShape(Circle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in
+                        guard model.isPaired, !model.handsFree, !model.listening else { return }
+                        tactile(.medium); Task { await model.startListening() }
+                    }
+                    .onEnded { _ in
+                        guard !model.handsFree, model.listening else { return }
+                        tactile(.light); Task { await model.stopAndDeliver() }
+                    }
+            )
+            .animation(.spring(response: 0.32, dampingFraction: 0.7), value: model.listening)
+            .disabled(!model.isPaired)
+            .opacity(model.isPaired ? 1 : 0.5)
+
+            Text(model.handsFree ? "Hands-free · tap to stop" : "Press and hold to talk")
+                .font(.system(size: 13, weight: .heavy)).foregroundStyle(Sig.faint)
+
+            // Hands-free toggle: arms the mic open between utterances; tap again to stop + deliver.
+            Button {
+                guard model.isPaired else { tactile(.medium); pairing = true; return }
+                tactile(.medium)
+                model.handsFree.toggle()
+                if model.handsFree { Task { await model.startListening() } }
+                else if model.listening { Task { await model.stopAndDeliver() } }
+            } label: {
+                HStack(spacing: 9) {
+                    Image(systemName: model.handsFree ? "infinity.circle.fill" : "infinity")
+                        .font(.system(size: 16, weight: .bold))
+                    Text(model.handsFree ? "Hands-free ON" : "Hands-free")
+                        .font(.system(size: 15, weight: .heavy))
+                }
+                .foregroundStyle(model.handsFree ? .black : Sig.muted)
+                .padding(.horizontal, 18).padding(.vertical, 11)
+                .background(model.handsFree ? AnyShapeStyle(Sig.accent) : AnyShapeStyle(Sig.s2), in: Capsule())
+                .overlay(Capsule().strokeBorder(model.handsFree ? Color.clear : Sig.line, lineWidth: 1))
+            }
+            .buttonStyle(PressableCard())
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .opacity(appeared ? 1 : 0)
+    }
+
+    /// The live read-back: the finalized utterances that have been sent, each with a quiet delivery
+    /// tick once the Mac confirms it. No prose — the lines are the words, the tick is the receipt.
+    @ViewBuilder private var readBack: some View {
+        if !model.lines.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 7) {
+                    Image(systemName: "text.line.first.and.arrowtriangle.forward")
+                        .font(.system(size: 11, weight: .black))
+                    Text("SENT TO \(model.macName.uppercased())").font(.system(size: 11, weight: .heavy)).tracking(1.4)
+                    Spacer()
+                }
+                .foregroundStyle(Sig.faint)
+                ForEach(model.lines) { line in
+                    HStack(alignment: .top, spacing: 11) {
+                        Image(systemName: line.delivered ? "checkmark.circle.fill" : "arrow.up.circle")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(line.delivered ? Sig.ok : Sig.muted)
+                        Text(line.text).font(.system(size: 15, weight: .medium)).foregroundStyle(Sig.text)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(13)
+                    .background(Sig.s2, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Sig.line, lineWidth: 1))
+                    .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity), removal: .opacity))
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .animation(.spring(response: 0.45, dampingFraction: 0.82), value: model.lines)
+            .opacity(appeared ? 1 : 0)
+        }
+    }
+}
+
+// MARK: - The Connect surface ("Your Computer" — discovery-first pairing, HSM-15-10)
+
+/// One computer the iPad found on the LAN by Bonjour (`_holdspeak._tcp`). Identified by the
+/// advertised name; host/port arrive on resolve so tap-to-connect needs no IP typing. `requiresToken`
+/// is read from the service's TXT record (and confirmed by `GET /api/mesh/info` on connect).
+struct DiscoveredComputer: Identifiable, Equatable {
+    let id: String            // a stable identity for the discovered endpoint (the Bonjour name)
+    var name: String          // the desktop's advertised name ("Karol's Mac")
+    var host: String?         // resolved host (nil until resolved)
+    var port: Int?            // resolved port
+    var requiresToken: Bool   // TXT `requiresToken` — does pairing need the desktop's token
+    var reachable: Bool       // last-known reach (true while advertising; refined by /api/mesh/info)
+
+    var resolved: Bool { host != nil && port != nil }
+}
+
+/// Browses the LAN for HoldSpeak desktops via Bonjour (`NWBrowser` over `_holdspeak._tcp`) and
+/// resolves each to host + port (`NWConnection`). The "discovery verb": find the Mac by name, never
+/// type its IP. Fail-soft — a Simulator with no LAN service simply shows an empty list (or the
+/// `HS_DEMO_CONNECT` seed), never an error wall. Requires NSBonjourServices in Info.plist.
+@MainActor final class MeshBrowser: ObservableObject {
+    @Published var computers: [DiscoveredComputer] = []
+    @Published var browsing = false
+
+    private var browser: NWBrowser?
+    private var resolvers: [String: NWConnection] = [:]
+
+    /// Begin browsing. Idempotent — a second call while already browsing is a no-op.
+    func start() {
+        guard browser == nil else { return }
+        #if targetEnvironment(simulator)
+        // The Simulator can't browse a real LAN service; HS_DEMO_CONNECT seeds the list instead.
+        if ProcessInfo.processInfo.environment["HS_DEMO_CONNECT"] == "1" { seedDemo(); return }
+        #endif
+        let params = NWParameters()
+        params.includePeerToPeer = true
+        let b = NWBrowser(for: .bonjourWithTXTRecord(type: "_holdspeak._tcp", domain: nil), using: params)
+        b.stateUpdateHandler = { [weak self] state in
+            Task { @MainActor in
+                switch state {
+                case .ready, .setup: self?.browsing = true
+                case .failed, .cancelled: self?.browsing = false
+                default: break
+                }
+            }
+        }
+        b.browseResultsChangedHandler = { [weak self] results, _ in
+            Task { @MainActor in self?.ingest(results) }
+        }
+        browser = b
+        browsing = true
+        b.start(queue: .main)
+    }
+
+    func stop() {
+        browser?.cancel(); browser = nil
+        resolvers.values.forEach { $0.cancel() }; resolvers.removeAll()
+        browsing = false
+    }
+
+    /// Map the current Bonjour result set into discovered rows, resolving any new ones.
+    private func ingest(_ results: Set<NWBrowser.Result>) {
+        var next: [DiscoveredComputer] = []
+        for result in results {
+            guard case let .service(name, _, _, _) = result.endpoint else { continue }
+            var requiresToken = false
+            if case let .bonjour(txt) = result.metadata, let v = txt["requiresToken"] {
+                requiresToken = (v == "1" || v.lowercased() == "true")
+            }
+            // Preserve an already-resolved host/port across result-set churn.
+            let prior = computers.first { $0.id == name }
+            next.append(DiscoveredComputer(id: name, name: name, host: prior?.host, port: prior?.port,
+                                           requiresToken: requiresToken, reachable: true))
+            if prior?.resolved != true { resolve(result.endpoint, name: name) }
+        }
+        computers = next.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    /// Resolve a Bonjour endpoint to a concrete host + port via a short-lived NWConnection.
+    private func resolve(_ endpoint: NWEndpoint, name: String) {
+        guard resolvers[name] == nil else { return }
+        let conn = NWConnection(to: endpoint, using: .tcp)
+        resolvers[name] = conn
+        conn.stateUpdateHandler = { [weak self, weak conn] state in
+            guard state == .ready, let conn, let inner = conn.currentPath?.remoteEndpoint else { return }
+            if case let .hostPort(host, port) = inner {
+                let h = Self.hostString(host)
+                Task { @MainActor in
+                    self?.apply(name: name, host: h, port: Int(port.rawValue))
+                    conn.cancel()
+                }
+            }
+        }
+        conn.start(queue: .main)
+    }
+
+    private func apply(name: String, host: String, port: Int) {
+        guard let i = computers.firstIndex(where: { $0.id == name }) else { return }
+        computers[i].host = host
+        computers[i].port = port
+        resolvers[name]?.cancel(); resolvers[name] = nil
+    }
+
+    nonisolated private static func hostString(_ host: NWEndpoint.Host) -> String {
+        switch host {
+        case .name(let n, _): return n
+        case .ipv4(let a): return "\(a)".components(separatedBy: "%").first ?? "\(a)"
+        case .ipv6(let a): return "\(a)".components(separatedBy: "%").first ?? "\(a)"
+        @unknown default: return "\(host)"
+        }
+    }
+
+    /// Seed a believable discovered list for the Simulator screenshot (HS_DEMO_CONNECT=1):
+    /// two reachable computers (one token-gated) and one asleep/unreachable.
+    func seedDemo() {
+        browsing = true
+        computers = [
+            DiscoveredComputer(id: "Karol's Mac", name: "Karol's Mac", host: "192.168.1.13", port: 8000,
+                               requiresToken: true, reachable: true),
+            DiscoveredComputer(id: "studio-linux", name: "studio-linux", host: "192.168.1.43", port: 8000,
+                               requiresToken: false, reachable: true),
+            DiscoveredComputer(id: "mac-mini-loft", name: "mac-mini-loft", host: "192.168.1.27", port: 8000,
+                               requiresToken: false, reachable: false),
+        ]
+    }
+}
+
+/// The desktop's self-identification from the unauthenticated `GET /api/mesh/info` (name, version,
+/// whether a token is required). Confirms a discovered computer's identity on connect.
+struct MeshInfo: Decodable, Equatable {
+    var name: String?
+    var version: String?
+    var requiresToken: Bool?
+}
+
+/// "Your Computer" — the first-class, discovery-first place to find and pair with your desktop
+/// (HSM-15-10). Browses the LAN by Bonjour, lists computers by name + reach, tap-to-connect (host/port
+/// from discovery — no IP typing), a tight token pairing step when required, and a manual fallback.
+/// The single paired peer it writes (`DictatePeerStore`) is what dictation / Agent Desk / the Queue
+/// HUD all read. The home of the mesh connection.
+struct ConnectView: View {
+    @StateObject private var browser = MeshBrowser()
+    @ObservedObject private var peers = DictatePeerStore.shared
+    @State private var appeared = false
+    @State private var pairTarget: DiscoveredComputer?     // the computer mid-pairing (token step / confirm)
+    @State private var pairToken = ""
+    @State private var confirming = false                  // hitting /api/mesh/info on tap
+    @State private var manual = false                      // the "Connect manually" sheet
+    @State private var reach: DictateModel.Reach = .unknown
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ZStack {
+            background
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    header
+                    if peers.isPaired { pairedCard }
+                    discoverySection
+                    manualRow
+                }
+                .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
+            }
+        }
+        .toolbar(.hidden, for: .navigationBar)
+        .tint(Sig.accent)
+        .sheet(item: $pairTarget) { target in
+            tokenSheet(for: target)
+        }
+        .sheet(isPresented: $manual) { PairMacSheet() }
+        .onAppear {
+            withAnimation(reduceMotion ? nil : .spring(response: 0.6, dampingFraction: 0.85)) { appeared = true }
+            browser.start()
+            if peers.isPaired { Task { await probePaired() } }
+            #if targetEnvironment(simulator)
+            if ProcessInfo.processInfo.environment["HS_DEMO_CONNECT"] == "1" { browser.seedDemo() }
+            #endif
+        }
+        .onDisappear { browser.stop() }
+    }
+
+    private var background: some View {
+        ZStack {
+            Sig.bgGradient.ignoresSafeArea()
+            Circle().fill(Sig.local.opacity(0.16)).frame(width: 440)
+                .blur(radius: 140).offset(x: 150, y: -300).ignoresSafeArea()
+            Circle().fill(Sig.accent.opacity(0.08)).frame(width: 360)
+                .blur(radius: 140).offset(x: -180, y: -180).ignoresSafeArea()
+        }
+    }
+
+    private var header: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 9) {
+                Button { tactile(); dismiss() } label: {
+                    HStack(spacing: 6) { Image(systemName: "chevron.left"); Text("Home") }
+                        .font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
+                }
+                .buttonStyle(.plain)
+                HStack(spacing: 7) {
+                    Image(systemName: "dot.radiowaves.left.and.right").font(.system(size: 9, weight: .black))
+                    Text("ON YOUR NETWORK").font(.system(size: 10, weight: .heavy)).tracking(1.4)
+                }
+                .foregroundStyle(Sig.local)
+                .padding(.horizontal, 10).padding(.vertical, 5)
+                .background(Sig.local.opacity(0.12), in: Capsule())
+                .overlay(Capsule().strokeBorder(Sig.local.opacity(0.25), lineWidth: 1))
+                Text("Your Computer").font(.system(size: 36, weight: .heavy)).foregroundStyle(Sig.text)
+                    .shadow(color: .black.opacity(0.3), radius: 8, y: 3)
+            }
+            Spacer()
+            GlyphChip(system: "laptopcomputer", gradient: Sig.localGradient, size: 50)
+        }
+        .padding(.top, 8)
+        .opacity(appeared ? 1 : 0).offset(y: appeared ? 0 : 10)
+    }
+
+    // The paired computer: a tight reach chip + forget / re-pair. The one peer the whole mesh reads.
+    private var pairedCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 14) {
+                GlyphChip(system: "checkmark.seal.fill", gradient: Sig.localGradient, size: 46)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(peers.displayName).font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
+                    Text("\(peers.host):\(peers.portText)").font(.system(size: 12, weight: .semibold).monospaced())
+                        .foregroundStyle(Sig.faint)
+                }
+                Spacer()
+                reachChip
+            }
+            HStack(spacing: 10) {
+                Button { tactile(); Task { await probePaired() } } label: {
+                    manageButton("arrow.clockwise", "Re-check", Sig.local)
+                }.buttonStyle(PressableCard())
+                Button { tactile(.medium); withAnimation { peers.forget(); reach = .unknown } } label: {
+                    manageButton("trash.fill", "Forget", Sig.bad)
+                }.buttonStyle(PressableCard())
+            }
+        }
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 20)
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Sig.local.opacity(0.30), lineWidth: 1))
+        .opacity(appeared ? 1 : 0).offset(y: appeared ? 0 : 10)
+    }
+
+    private func manageButton(_ icon: String, _ label: String, _ tint: Color) -> some View {
+        HStack(spacing: 7) {
+            Image(systemName: icon).font(.system(size: 12, weight: .bold))
+            Text(label).font(.system(size: 14, weight: .heavy))
+        }
+        .foregroundStyle(tint)
+        .frame(maxWidth: .infinity).padding(.vertical, 11)
+        .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(tint.opacity(0.28), lineWidth: 1))
+    }
+
+    @ViewBuilder private var reachChip: some View {
+        let (icon, label, color): (String, String, Color) = {
+            switch reach {
+            case .reachable: return ("checkmark.circle.fill", "Reachable", Sig.ok)
+            case .asleep: return ("moon.zzz.fill", "Asleep", Sig.warn)
+            case .unpaired: return ("link.badge.plus", "Not paired", Sig.faint)
+            case .unknown: return ("dot.radiowaves.left.and.right", "Checking…", Sig.muted)
+            }
+        }()
+        HStack(spacing: 6) {
+            Image(systemName: icon).font(.system(size: 11, weight: .black))
+            Text(label.uppercased()).font(.system(size: 10, weight: .heavy)).tracking(0.8)
+        }
+        .foregroundStyle(color)
+        .padding(.horizontal, 10).padding(.vertical, 6)
+        .background(color.opacity(0.14), in: Capsule())
+        .overlay(Capsule().strokeBorder(color.opacity(0.30), lineWidth: 1))
+    }
+
+    // The discovered list — computers found on the LAN by name, tap to connect.
+    @ViewBuilder private var discoverySection: some View {
+        HStack(spacing: 8) {
+            Text("DISCOVERED ON YOUR NETWORK").font(.system(size: 11, weight: .heavy)).tracking(1.4)
+                .foregroundStyle(Sig.faint)
+            if browser.browsing {
+                ProgressView().controlSize(.mini).tint(Sig.local)
+            }
+            Spacer()
+        }
+        .padding(.top, 6).padding(.leading, 2)
+        .opacity(appeared ? 1 : 0)
+
+        if browser.computers.isEmpty {
+            scanningState.opacity(appeared ? 1 : 0).offset(y: appeared ? 0 : 12)
+        } else {
+            ForEach(Array(browser.computers.enumerated()), id: \.element.id) { i, c in
+                Button { tactile(.medium); tap(c) } label: { discoveredRow(c) }
+                    .buttonStyle(PressableCard())
+                    .disabled(!c.reachable)
+                    .opacity(appeared ? 1 : 0).offset(y: appeared ? 0 : 14)
+                    .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.82)
+                        .delay(0.05 + Double(i) * 0.05), value: appeared)
+            }
+        }
+    }
+
+    private func discoveredRow(_ c: DiscoveredComputer) -> some View {
+        HStack(spacing: 14) {
+            GlyphChip(system: c.name.lowercased().contains("linux") ? "pc" : "laptopcomputer",
+                      gradient: c.reachable ? Sig.localGradient : Sig.localGradient, size: 50)
+                .opacity(c.reachable ? 1 : 0.5)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(c.name).font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
+                HStack(spacing: 7) {
+                    Image(systemName: c.reachable ? "dot.radiowaves.left.and.right" : "moon.zzz.fill")
+                        .font(.system(size: 9, weight: .black))
+                    Text(c.reachable ? (c.requiresToken ? "Reachable · needs pairing code" : "Reachable · ready to pair")
+                                     : "Asleep · not reachable")
+                        .font(.system(size: 11, weight: .heavy)).tracking(0.4)
+                }
+                .foregroundStyle(c.reachable ? Sig.ok : Sig.warn)
+            }
+            Spacer()
+            if confirming && pairTarget?.id == c.id {
+                ProgressView().controlSize(.small).tint(Sig.local)
+            } else if c.reachable {
+                Image(systemName: c.requiresToken ? "key.fill" : "arrow.right")
+                    .font(.system(size: 14, weight: .black)).foregroundStyle(Sig.local)
+            }
+        }
+        .padding(15).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 20)
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
+            .strokeBorder(c.reachable ? Sig.local.opacity(0.18) : Sig.line, lineWidth: 1))
+    }
+
+    private var scanningState: some View {
+        VStack(spacing: 14) {
+            ZStack {
+                Circle().fill(Sig.local.opacity(0.12)).frame(width: 78, height: 78)
+                Circle().strokeBorder(Sig.local.opacity(0.3), lineWidth: 1).frame(width: 78, height: 78)
+                Image(systemName: "dot.radiowaves.left.and.right").font(.system(size: 30, weight: .semibold))
+                    .foregroundStyle(Sig.local)
+            }
+            VStack(spacing: 6) {
+                Text("Looking for your computer…").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Run HoldSpeak on your Mac and it shows up here by name. No IP to type.")
+                    .font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.faint)
+                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 28).padding(.horizontal, 18).signalCard(Sig.s1, radius: 22)
+    }
+
+    // The manual fallback for when discovery isn't available (no Bonjour on the network).
+    private var manualRow: some View {
+        Button { tactile(); manual = true } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "keyboard").font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
+                    .frame(width: 40, height: 40).background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Connect manually").font(.system(size: 15, weight: .heavy)).foregroundStyle(Sig.text)
+                    Text("Enter the host, port and token by hand").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundStyle(Sig.faint)
+            }
+            .padding(14).frame(maxWidth: .infinity, alignment: .leading).signalCard(Sig.s1, radius: 16)
+        }
+        .buttonStyle(PressableCard())
+        .padding(.top, 6)
+        .opacity(appeared ? 1 : 0)
+    }
+
+    // The token pairing step — tight, guided, not a raw form.
+    private func tokenSheet(for target: DiscoveredComputer) -> some View {
+        ZStack {
+            Sig.bg.ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 20) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Pair with").font(.system(size: 13, weight: .heavy)).tracking(0.6).foregroundStyle(Sig.faint)
+                        Text(target.name).font(.system(size: 26, weight: .heavy)).foregroundStyle(Sig.text)
+                    }
+                    Spacer()
+                    Button { pairTarget = nil; pairToken = "" } label: {
+                        Image(systemName: "xmark").font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
+                            .frame(width: 38, height: 38).background(Sig.s2, in: Circle())
+                    }
+                }
+                HStack(spacing: 10) {
+                    Image(systemName: "key.fill").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.local)
+                    Text("This computer needs a pairing token.").font(.system(size: 14, weight: .semibold)).foregroundStyle(Sig.text)
+                }
+                .padding(13).frame(maxWidth: .infinity, alignment: .leading)
+                .background(Sig.local.opacity(0.10), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("PAIRING TOKEN").font(.system(size: 11, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint)
+                    TextField("shown when you run holdspeak web", text: $pairToken)
+                        .font(.system(size: 16, weight: .semibold).monospaced()).foregroundStyle(Sig.text)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .padding(14).background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Sig.line, lineWidth: 1))
+                    Text("Your Mac prints it on startup. Copy it here once and this iPad stays paired.")
+                        .font(.system(size: 12)).foregroundStyle(Sig.faint)
+                }
+                Button { connect(target, token: pairToken.isEmpty ? nil : pairToken) } label: {
+                    Text("Pair").font(.system(size: 17, weight: .heavy)).foregroundStyle(.black)
+                        .frame(maxWidth: .infinity).padding(.vertical, 14)
+                        .background(Sig.localGradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .disabled(pairToken.trimmingCharacters(in: .whitespaces).isEmpty)
+                .opacity(pairToken.trimmingCharacters(in: .whitespaces).isEmpty ? 0.5 : 1)
+                Spacer()
+            }
+            .padding(24).frame(maxWidth: 560).frame(maxWidth: .infinity)
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    // MARK: actions
+
+    /// Tap a discovered computer: confirm identity via `GET /api/mesh/info`, then either pair
+    /// straight through (no token) or present the token step (token required).
+    private func tap(_ c: DiscoveredComputer) {
+        guard c.reachable, let host = c.host, let port = c.port else { return }
+        confirming = true
+        pairTarget = nil
+        Task {
+            let info = await fetchMeshInfo(host: host, port: port)
+            await MainActor.run {
+                confirming = false
+                let needsToken = info?.requiresToken ?? c.requiresToken
+                if needsToken {
+                    pairToken = ""
+                    pairTarget = c        // present the token step
+                } else {
+                    connect(c, token: nil)
+                }
+            }
+        }
+    }
+
+    /// Persist the discovered computer as the paired peer (host/port from discovery) and probe it.
+    private func connect(_ c: DiscoveredComputer, token: String?) {
+        guard let host = c.host, let port = c.port else { return }
+        peers.adopt(name: c.name, host: host, port: port, token: token)
+        pairTarget = nil; pairToken = ""
+        Task { await probePaired() }
+    }
+
+    private func probePaired() async {
+        guard peers.isPaired else { reach = .unpaired; return }
+        guard let client = peers.client() else { reach = .asleep; return }
+        let c = await client.handshake()
+        await MainActor.run { reach = c.reachable ? .reachable : .asleep }
+    }
+
+    /// The unauthenticated identity probe (`GET /api/mesh/info`). Fail-soft — `nil` when the
+    /// endpoint isn't there yet (the desktop half ships separately), so the TXT hint is used.
+    private func fetchMeshInfo(host: String, port: Int) async -> MeshInfo? {
+        guard let url = URL(string: "http://\(host):\(port)/api/mesh/info") else { return nil }
+        var req = URLRequest(url: url); req.timeoutInterval = 4
+        guard let (data, resp) = try? await URLSession.shared.data(for: req),
+              let http = resp as? HTTPURLResponse, (200...299).contains(http.statusCode) else { return nil }
+        return try? HoldSpeakContracts.decoder().decode(MeshInfo.self, from: data)
+    }
+}
+
 #if targetEnvironment(simulator)
+/// Simulator-only: the Connect surface with a seeded discovery list (HS_DEMO_CONNECT=1) so the
+/// "Your Computer" screen renders fully without a live LAN service.
+private struct ConnectDemo: View {
+    var body: some View { NavigationStack { ConnectView() } }
+}
+#endif
+
+/// The pairing sheet: enter the Mac's host + port (and an optional token) so the iPad can reach the
+/// desktop server on the LAN. One clear path, not buried in Settings (HSM-15-01).
+struct PairMacSheet: View {
+    @ObservedObject private var peers = DictatePeerStore.shared
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            Sig.bg.ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    HStack {
+                        Text("Pair your Mac").font(.system(size: 28, weight: .heavy)).foregroundStyle(Sig.text)
+                        Spacer()
+                        Button { dismiss() } label: {
+                            Image(systemName: "xmark").font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
+                                .frame(width: 38, height: 38).background(Sig.s2, in: Circle())
+                        }
+                    }
+                    Text("Run HoldSpeak on your Mac, then point this iPad at it over your network.")
+                        .font(.system(size: 14)).foregroundStyle(Sig.faint)
+                    field("Name", text: $peers.name, placeholder: "Karol's Mac")
+                    field("Host", text: $peers.host, placeholder: "192.168.1.x")
+                    field("Port", text: $peers.portText, placeholder: "8000")
+                    field("Token (optional)", text: $peers.token, placeholder: "")
+                    Button { dismiss() } label: {
+                        Text("Done").font(.system(size: 17, weight: .heavy)).foregroundStyle(.black)
+                            .frame(maxWidth: .infinity).padding(.vertical, 14)
+                            .background(Sig.accentGradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    }
+                    .disabled(!peers.isPaired)
+                    .opacity(peers.isPaired ? 1 : 0.5)
+                }
+                .padding(22).frame(maxWidth: 600).frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    private func field(_ label: String, text: Binding<String>, placeholder: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label.uppercased()).font(.system(size: 11, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint)
+            TextField(placeholder, text: text)
+                .font(.system(size: 16, weight: .semibold)).foregroundStyle(Sig.text)
+                .textInputAutocapitalization(.never).autocorrectionDisabled()
+                .padding(14).background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Sig.line, lineWidth: 1))
+        }
+    }
+}
+
+#if targetEnvironment(simulator)
+/// Simulator-only: the Dictate surface seeded for a design screenshot — a named Mac, an active
+/// waveform (a non-zero level so the meter leaps), a read-back of dictated lines (one in-flight),
+/// and the egress badge. The desktop peer + a real mic aren't live in the Simulator. HS_DEMO_DICTATE=1.
+private struct DictateDemo: View {
+    var body: some View {
+        NavigationStack { DictateView() }
+            .onAppear {
+                let p = DictatePeerStore.shared
+                if p.host.isEmpty { p.host = "192.168.1.13"; p.portText = "8081" }
+                if p.name.isEmpty { p.name = "Karol's Mac" }
+            }
+    }
+}
+
+/// Simulator-only: the Agent Desk seeded with a few live agents (one working, one waiting with a
+/// real-sounding question, one idle, one stale) for a design screenshot. Waiting sorts first + pulses.
+private struct AgentDeskDemo: View {
+    static let seed = CompanionBoardState(
+        readyForReply: true,
+        blockers: [],
+        awaiting: true,
+        targets: [
+            CompanionTarget(agent: "claude", sessionID: "s1",
+                            question: "Run the destructive schema migration on prod now, or stage it behind a backup first?",
+                            project: "holdspeak/web-runtime", selected: true, pinned: false, stale: false, confidence: "high"),
+            CompanionTarget(agent: "codex", sessionID: "s2",
+                            question: nil, project: "acme/billing-api", selected: false, pinned: true, stale: false, confidence: "high"),
+            CompanionTarget(agent: "claude", sessionID: "s3",
+                            question: nil, project: "infra/terraform", selected: false, pinned: false, stale: false, confidence: "medium"),
+            CompanionTarget(agent: "codex", sessionID: "s4",
+                            question: "Should I keep retrying the flaky integration test or skip it?",
+                            project: "tools/scratchpad", selected: false, pinned: false, stale: true, confidence: "low"),
+        ])
+    var body: some View { NavigationStack { AgentDeskView(state: AgentDeskDemo.seed) } }
+}
+
 /// Simulator-only: open Settings with a sample LAN endpoint configured, for a design screenshot.
 private struct SettingsDemo: View {
     var body: some View {
@@ -4124,10 +7316,78 @@ private struct GenTheaterDemo: View {
 }
 #endif
 
+// MARK: - Segment replay (judge the diarizer's speaker labels by ear)
+
+/// Plays back a single transcript segment from a meeting's saved WAV so the owner can HEAR a segment
+/// and judge whether its speaker label is right (the diarizer's whole point). It loads the meeting's
+/// `…/meeting-audio/<id>.wav` once, seeks the player to the segment's `startTime`, plays, and stops
+/// after `(endTime - startTime)`. If no WAV exists (older meetings, or capture never wrote one), it is
+/// simply unavailable — `canPlay` is false and the play control is absent. Never crashes on a missing
+/// file. `@MainActor` because it drives `@Published` UI state and an `AVAudioPlayer`.
+@MainActor
+final class SegmentAudioPlayer: ObservableObject {
+    /// The segment index currently sounding (for the row highlight + ▶/⏸ toggle), or `nil` when idle.
+    @Published private(set) var playingIndex: Int?
+
+    private var player: AVAudioPlayer?
+    private var stopWork: DispatchWorkItem?
+    /// The category we found before we forced `.playback`, restored when playback ends — capture set
+    /// `.record`, which makes a player produce no sound, so we must switch and put it back politely.
+    private var priorCategory: AVAudioSession.Category?
+
+    /// Whether this meeting actually has a replayable take on disk. The UI hides the play control when false.
+    let canPlay: Bool
+    private let audioURL: URL?
+
+    init(meetingID: String) {
+        let url = MeetingAudioStore.audioURL(for: meetingID)
+        self.audioURL = url
+        self.canPlay = url.map { FileManager.default.fileExists(atPath: $0.path) } ?? false
+    }
+
+    /// Toggle playback of one segment: tapping the one already sounding stops it; tapping another
+    /// retargets. Seeks to `start`, plays, and self-stops after the segment's duration.
+    func toggle(index: Int, start: Double, end: Double) {
+        if playingIndex == index { stop(); return }
+        guard canPlay, let url = audioURL else { return }
+
+        // Recording left the session in `.record` (silent playback). Force a playback-capable category
+        // for the duration of the replay, remembering the old one to restore.
+        let session = AVAudioSession.sharedInstance()
+        if priorCategory == nil { priorCategory = session.category }
+        try? session.setCategory(.playback, mode: .default)
+        try? session.setActive(true)
+
+        if player == nil { player = try? AVAudioPlayer(contentsOf: url) }
+        guard let p = player else { stop(); return }
+        p.prepareToPlay()
+        p.currentTime = max(0, min(start, p.duration))
+        p.play()
+        playingIndex = index
+
+        let dur = max(0.05, end - start)
+        let work = DispatchWorkItem { [weak self] in self?.stop() }
+        stopWork?.cancel(); stopWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + dur, execute: work)
+    }
+
+    func stop() {
+        stopWork?.cancel(); stopWork = nil
+        player?.stop()
+        playingIndex = nil
+        // Restore whatever category was active before we forced `.playback` (best-effort).
+        if let prior = priorCategory {
+            try? AVAudioSession.sharedInstance().setCategory(prior)
+            priorCategory = nil
+        }
+    }
+}
+
 // MARK: - Meeting detail (reopen-intact)
 
 struct MeetingDetailView: View {
     let meeting: Meeting
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var notes: NotebookModel
     @StateObject private var review: MeetingReviewState
     @ObservedObject private var workflows = WorkflowStore.shared
@@ -4175,7 +7435,7 @@ struct MeetingDetailView: View {
                     artifactsSection
 
                     Text("TRANSCRIPT").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.faint).padding(.top, 4)
-                    TranscriptView(segments: meeting.segments).id(0)
+                    TranscriptView(segments: meeting.segments, meetingID: meeting.id).id(0)
 
                     Text("NOTES").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.local).padding(.top, 8)
                     // Reloads the meeting's PencilKit pages + pulled-in transcript cards; editable
@@ -4187,6 +7447,7 @@ struct MeetingDetailView: View {
             }
             }
         }
+        .topBack { dismiss() }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $openDoc) { doc in
             ArtifactDetailView(artifact: doc.artifact, ink: doc.ink, onCorrect: { spoken in

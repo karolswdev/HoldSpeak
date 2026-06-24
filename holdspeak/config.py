@@ -620,6 +620,23 @@ class PresenceConfig:
 
 
 @dataclass
+class MeshConfig:
+    """Mesh / LAN-discovery config (HSM-15-10).
+
+    When ``holdspeak web`` binds off-loopback it advertises itself on the LAN
+    via Bonjour (``_holdspeak._tcp``) so a companion (the iPad) can FIND it by
+    name instead of hand-typing host/port. ``device_name`` is the advertised
+    name; empty (the default) means "use the machine hostname". Loopback binds
+    advertise nothing.
+    """
+
+    device_name: str = ""
+
+    def __post_init__(self) -> None:
+        self.device_name = str(self.device_name or "").strip()
+
+
+@dataclass
 class WakeWordConfig:
     """The wake word (HS-60): hands-free ARMING of dictation, off by default.
 
@@ -666,6 +683,7 @@ class Config:
     device: DeviceConfig = field(default_factory=DeviceConfig)
     presence: PresenceConfig = field(default_factory=PresenceConfig)
     wake_word: WakeWordConfig = field(default_factory=WakeWordConfig)
+    mesh: MeshConfig = field(default_factory=MeshConfig)
 
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "Config":
@@ -708,6 +726,7 @@ class Config:
                 device=_coerce(DeviceConfig, data.get("device", {}) or {}, section="device"),
                 presence=_coerce(PresenceConfig, data.get("presence", {}) or {}, section="presence"),
                 wake_word=_coerce(WakeWordConfig, data.get("wake_word", {}) or {}, section="wake_word"),
+                mesh=_coerce(MeshConfig, data.get("mesh", {}) or {}, section="mesh"),
             )
         except Exception as exc:
             # Last-resort fallback for a genuinely broken config (bad JSON, wrong

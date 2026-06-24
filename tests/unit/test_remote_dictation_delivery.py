@@ -103,3 +103,72 @@ def test_rejects_empty_text(_patch_session):
     rt = _Runtime()
     with pytest.raises(ValueError):
         rt._deliver_remote_dictation("   ")
+
+
+# ── HSM-15-01a: the explicit "focused" target mode ────────────────────────────
+
+
+def test_focused_target_types_without_any_awaiting_session(monkeypatch):
+    """target="focused" free-types via the typer with NO awaiting-agent lookup
+    and NO auto-submit — and never raises on a missing agent session."""
+    # If anything tried to consult an awaiting agent session, blow up loudly so
+    # the test proves the focused path does not require one.
+    monkeypatch.setattr(
+        "holdspeak.agent_context.get_recent_awaiting_agent_session",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("must not be consulted")),
+    )
+    typer = _RecordingTyper()
+    rt = _Runtime(typer=typer)
+
+    result = rt._deliver_remote_dictation("freeform into the focused app", target="focused")
+
+    assert result["delivered"] is True
+    assert result["method"] == "type"
+    assert typer.calls[0][0] == "freeform into the focused app"
+    assert typer.calls[0][2] is False        # focused → never auto-submit
+    assert rt.first_dictation_marks == 1
+
+
+def test_focused_target_raises_when_typer_unavailable(monkeypatch):
+    monkeypatch.setattr(
+        "holdspeak.agent_context.get_recent_awaiting_agent_session",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("must not be consulted")),
+    )
+    rt = _Runtime(typer=None)
+    with pytest.raises(RuntimeError):
+        rt._deliver_remote_dictation("nowhere to type", target="focused")
+
+
+def test_focused_target_honours_configured_profile_override():
+    """The focused path types with the configured target_profile_override (a
+    non-auto value becomes the typer's target_profile hint)."""
+    import types
+
+    typer = _RecordingTyper()
+    rt = _Runtime(typer=typer)
+    rt.config = types.SimpleNamespace(
+        dictation=types.SimpleNamespace(
+            pipeline=types.SimpleNamespace(target_profile_override="editor")
+        )
+    )
+
+    rt._deliver_remote_dictation("typed into the editor", target="focused")
+
+    assert typer.calls[0][1] == "editor"     # target_profile threaded through
+    assert typer.calls[0][2] is False
+
+
+def test_default_target_is_byte_identical_to_agent_path(monkeypatch, _patch_session):
+    """An unset target == "agent": the existing tmux-then-typer behaviour, unchanged."""
+    sent: list[dict] = []
+    monkeypatch.setattr(
+        "holdspeak.tmux_transport.send_text_to_pane",
+        lambda *, pane, text, submit=True: sent.append({"pane": pane, "text": text}),
+    )
+    _patch_session(_Session(pane="cli:0.1"))
+    rt = _Runtime()
+
+    default_result = rt._deliver_remote_dictation("answer the coder")
+    agent_result = rt._deliver_remote_dictation("answer the coder", target="agent")
+
+    assert default_result == agent_result == {"delivered": True, "method": "tmux", "target": "cli:0.1"}

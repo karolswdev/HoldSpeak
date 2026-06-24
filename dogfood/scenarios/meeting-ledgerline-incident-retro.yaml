@@ -1,0 +1,38 @@
+id: meeting-ledgerline-incident-retro
+kind: meeting
+repo: ledgerline
+profile: incident
+title: "Ledgerline — double-post retro (LL-118)"
+description: >
+  Blameless incident retro for the 2026-04-17 double-post. A gateway retry storm
+  double-posted 23 charges ($4,118 over-billed) because the idempotency
+  check-and-record was non-atomic. Expect: an incident timeline, a runbook
+  delta, a risk assessment, action items with owners, a captured decision.
+lines:
+  - speaker: Sam
+    voice: Daniel
+    text: "Thanks everyone. This is a blameless retro for LL one eighteen, the double-post on April seventeenth. Let me set the timeline. At 14:02 the payment gateway started returning 5xx and began retrying with the same idempotency key."
+  - speaker: Priya
+    voice: Samantha
+    text: "At 14:03 we saw the first duplicate postings land. By 14:11 we'd double-posted twenty-three charges, four thousand one hundred eighteen dollars over-billed across nineteen customers."
+  - speaker: Sam
+    voice: Daniel
+    text: "Root cause. The idempotency check and the record write were two separate statements, not one atomic operation. Two concurrent retries with the same key both read empty, both passed the check, and both posted."
+  - speaker: Mara
+    voice: Karen
+    text: "The thing that saved us is the ledger is append-only. Nothing was corrupted. We reversed every duplicate with a new reversing entry, we never mutated a posted row. Customers were made whole by 16:40."
+  - speaker: Priya
+    voice: Samantha
+    text: "Detection was slow though. We found out from a customer support ticket, not from monitoring. We had no alert on duplicate idempotency keys posting within a short window."
+  - speaker: Sam
+    voice: Daniel
+    text: "The fix already shipped in 0.3.1, we made the check-and-record a single atomic upsert under a unique constraint on the key. But the issue stays open until we prove it with a test."
+  - speaker: Mara
+    voice: Karen
+    text: "Biggest remaining risk in my view is that we don't have a concurrency regression test, and we've never load-tested the retry-storm path in CI. So the fix is unproven under the exact conditions that caused the incident."
+  - speaker: Priya
+    voice: Samantha
+    text: "Two runbook gaps too. There's no runbook step for over-billing remediation, the on-call had to improvise the reversal script. And our alerting runbook says nothing about idempotency-key duplicates."
+  - speaker: Sam
+    voice: Daniel
+    text: "Decision: we block closing LL one eighteen until both the concurrency regression test and the CI retry-storm load test are green. Action items. Mara owns the concurrency regression test. Priya, you add the over-billing remediation runbook and the duplicate-key alert. I'll own the CI load test."

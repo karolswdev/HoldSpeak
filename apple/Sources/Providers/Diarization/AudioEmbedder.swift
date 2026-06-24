@@ -36,6 +36,14 @@ public final class AudioEmbedder: @unchecked Sendable {
         self.model = try MLModel(contentsOf: url, configuration: config)
     }
 
+    /// Load from an explicit COMPILED model URL (an `AudioEmbed.mlmodelc`), rather than scanning a
+    /// bundle. For a sideloaded / downloaded model (HSM-5-03 — the weights need not be app-bundled)
+    /// and for the host diarization proof, which compiles the `.mlpackage` then loads it here. The
+    /// `Bundle.main` path stays the app default.
+    public init(compiledModelURL url: URL) throws {
+        self.model = try MLModel(contentsOf: url, configuration: MLModelConfiguration())
+    }
+
     /// Embed ONE 25 440-sample partial (float32 in [-1, 1]) → a 256-dim L2-normalised embedding.
     /// Pads/truncates defensively to the model's input length.
     public func embed(partial: [Float]) throws -> [Float] {

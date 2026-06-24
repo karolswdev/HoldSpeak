@@ -72,7 +72,7 @@ final class CompanionShellTests: XCTestCase {
         func runtimeState() async throws -> RuntimeState { throw Boom() }
         func startMeeting(title: String?) async throws -> RuntimeState { throw Boom() }
         func stopMeeting() async throws -> RuntimeState { throw Boom() }
-        func sendRemoteDictation(text: String) async throws -> RemoteDictationResult { throw Boom() }
+        func sendRemoteDictation(text: String, target: DictationTarget) async throws -> RemoteDictationResult { throw Boom() }
         func companionStatus() async throws -> CompanionBoardState { throw Boom() }
         func selectCompanionTarget(agent: String, sessionID: String) async throws { throw Boom() }
         func dismissCompanionTarget(agent: String, sessionID: String) async throws { throw Boom() }

@@ -118,11 +118,17 @@ import HoldMark from "../components/HoldMark.astro";
             <span class="stat-label">Open actions</span>
             <span class="stat-value mono" x-text="activeActionItems().filter(i => i.status !== 'done').length"></span>
           </div>
-          {/* HS-25-08: meeting-intel egress posture — whether transcripts can
-              leave the machine. Full sentence in the title tooltip. */}
-          <div class="stat" x-show="intelEgress" x-cloak>
+          {/* HS-69-01: meeting-intel egress posture as the canonical
+              structured badge (the SAME chip /presence carries), not prose.
+              The full sentence stays only in the title tooltip. */}
+          <div class="stat" x-show="intelEgressBadge()" x-cloak>
             <span class="stat-label">Privacy</span>
-            <span class="stat-value" :title="intelEgress?.egress" x-text="egressLabel()"></span>
+            <span
+              class="egress-badge"
+              :class="`is-${intelEgressBadge()?.scope}`"
+              :title="intelEgress?.egress"
+              x-text="egressBadgeText()"
+            ></span>
           </div>
         </div>
       </div>
@@ -132,26 +138,26 @@ import HoldMark from "../components/HoldMark.astro";
         the Phase-43 wizard), shown only when no meeting is live so the active
         meeting view keeps the screen. */}
     <section class="home-actions" x-show="!meetingActive && !stopInProgress" x-cloak aria-label="Quick actions">
-      <a class="home-card" href="/dictation">
-        <span class="home-card-glyph" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg></span>
+      <a class="home-card signal-card is-pressable" href="/dictation">
+        <span class="home-card-glyph glyph-chip" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg></span>
         <span class="home-card-t">Dictation cockpit</span>
         <span class="home-card-d">Tune intelligent typing — blocks, project context, runtime</span>
         <span class="home-card-go" aria-hidden="true">→</span>
       </a>
-      <a class="home-card" href="/history">
-        <span class="home-card-glyph" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></span>
+      <a class="home-card signal-card is-pressable" href="/history">
+        <span class="home-card-glyph glyph-chip" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></span>
         <span class="home-card-t">Meeting history</span>
         <span class="home-card-d">Past meetings, transcripts, artifacts &amp; exports</span>
         <span class="home-card-go" aria-hidden="true">→</span>
       </a>
-      <a class="home-card" href="/activity">
-        <span class="home-card-glyph" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+      <a class="home-card signal-card is-pressable" href="/activity">
+        <span class="home-card-glyph glyph-chip" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
         <span class="home-card-t">Local activity</span>
         <span class="home-card-d">Your private work-context ledger &amp; connectors</span>
         <span class="home-card-go" aria-hidden="true">→</span>
       </a>
-      <a class="home-card" href="/settings">
-        <span class="home-card-glyph" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+      <a class="home-card signal-card is-pressable" href="/settings">
+        <span class="home-card-glyph glyph-chip" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
         <span class="home-card-t">Settings</span>
         <span class="home-card-d">Every global knob — sectioned &amp; searchable</span>
         <span class="home-card-go" aria-hidden="true">→</span>
@@ -165,8 +171,8 @@ import HoldMark from "../components/HoldMark.astro";
         <a class="home-recent-all" href="/history">All history →</a>
       </header>
       <div class="recent-row">
-        <template x-for="m in recentMeetings" :key="m.id">
-          <a class="recent-card" :href="`/history#meeting-${m.id}`">
+        <template x-for="(m, i) in recentMeetings" :key="m.id">
+          <a class="recent-card signal-card is-pressable hs-materialize" :href="`/history#meeting-${m.id}`" :style="`--i: ${i}`">
             <span class="recent-title" x-text="m.title || 'Untitled meeting'"></span>
             <span class="recent-date" x-text="formatDate(m.started_at)"></span>
             <span class="recent-meta">
@@ -597,14 +603,17 @@ import HoldMark from "../components/HoldMark.astro";
     import Alpine from "alpinejs";
     import factorySource from "../scripts/dashboard-app.js?raw";
     import briefingMdSource from "../scripts/briefing-markdown.js?raw";
+    import egressBadgeSource from "../scripts/egress-badge.js?raw";
 
     // The factory is evaluated via `new Function`, so ES module
     // imports don't reach inside it. Concatenating the shared
-    // briefing renderer (HS-13-08 + HS-13-09) before the factory
-    // gives both this page and /history one definition without
-    // turning either factory into an ES module.
-    const sharedSource = briefingMdSource
-      .replace(/^\s*export\s+function/gm, "function");
+    // briefing renderer (HS-13-08 + HS-13-09) + the HS-69-01 egress
+    // badge helpers before the factory gives the factory those
+    // definitions without turning it into an ES module.
+    const stripExports = (src) =>
+      src.replace(/^\s*export\s+(function|const|let|var)/gm, "$1");
+    const sharedSource =
+      stripExports(briefingMdSource) + "\n" + stripExports(egressBadgeSource);
     const fn = new Function(
       sharedSource + "\n" + factorySource + "; return HoldSpeakDashboard;"
     );
@@ -644,15 +653,14 @@ import HoldMark from "../components/HoldMark.astro";
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--space-3);
   }
+  /* HS-69-02: surface / radius / top-lit hairline / shadow now come from
+     the shared `.signal-card` primitive (global.css). This rule keeps
+     only layout + the hover lift. */
   .home-card {
-    position: relative;
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
     padding: var(--space-4) var(--space-4) var(--space-5);
-    border-radius: var(--radius-lg);
-    background: var(--surface-2);
-    border: 1px solid var(--border-subtle);
     text-decoration: none;
     overflow: hidden;
     transition: border-color var(--duration-short) var(--ease-standard),
@@ -660,19 +668,17 @@ import HoldMark from "../components/HoldMark.astro";
       box-shadow var(--duration-short) var(--ease-standard);
   }
   .home-card:hover {
-    border-color: var(--accent);
     transform: translateY(-2px);
-    box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 16%, transparent);
+    box-shadow: var(--elev-2), 0 12px 28px color-mix(in srgb, var(--accent) 16%, transparent);
   }
   .home-card:focus-visible {
     outline: var(--focus-outline-width) solid var(--accent);
     outline-offset: var(--focus-outline-offset);
   }
+  /* HS-69-02: the glyph now uses the shared `.glyph-chip` (gradient fill +
+     soft shadow). Only the cockpit-specific 38px size + spacing remain. */
   .home-card-glyph {
-    width: 38px; height: 38px;
-    border-radius: var(--radius-md);
-    display: grid; place-items: center;
-    background: var(--accent-tint); color: var(--accent);
+    --chip-size: 38px;
     margin-bottom: var(--space-2);
   }
   .home-card-t { font-family: var(--font-display); font-weight: 600; color: var(--text); font-size: var(--font-size-md); }
@@ -705,16 +711,17 @@ import HoldMark from "../components/HoldMark.astro";
   .home-recent-all { color: var(--accent); font-size: var(--font-size-sm); text-decoration: none; }
   .home-recent-all:hover { text-decoration: underline; }
   .recent-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
+  /* HS-69-02: surface / radius / hairline / shadow from `.signal-card`.
+     The accent left-bar identity is kept as a scoped override; the
+     primitive's ::before hairline layers over the other three edges. */
   .recent-card {
     display: flex; flex-direction: column; gap: var(--space-1);
     padding: var(--space-4);
-    border-radius: var(--radius-md);
-    background: var(--surface-2); border: 1px solid var(--border-subtle);
     border-left: 3px solid var(--accent);
     text-decoration: none;
-    transition: transform var(--duration-short) var(--ease-standard), border-color var(--duration-short) var(--ease-standard);
+    transition: transform var(--duration-short) var(--ease-standard), box-shadow var(--duration-short) var(--ease-standard);
   }
-  .recent-card:hover { transform: translateY(-2px); border-left-color: var(--accent); border-color: var(--border-strong); }
+  .recent-card:hover { transform: translateY(-2px); box-shadow: var(--elev-3); }
   .recent-card:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: var(--focus-outline-offset); }
   @media (prefers-reduced-motion: reduce) { .recent-card:hover { transform: none; } }
   .recent-title { font-weight: 600; color: var(--text); font-size: var(--font-size-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

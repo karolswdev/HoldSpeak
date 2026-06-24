@@ -1,0 +1,8 @@
+kb:
+  stack: "TypeScript · Next.js 14 App Router · Postgres · Prisma · tRPC; deployed on Vercel, analytics via internal events module"
+  product_north_star: "Weekly Active Quests Completed per user (WAQC) — the single number we move; activation and retention are read in its shadow"
+  invariants: "Every user-facing change ships behind a feature flag; every meaningful interaction emits a tracked event; streaks must NEVER reset due to a timezone bug; freemium gate caps free users at 3 active quests and 1 guild"
+  dod: "feature flagged · tracked event emitted · a11y pass (keyboard + screen reader) · e2e happy path green · PRD/issue linked"
+  owners: "Product: Priya (north-star, roadmap). Eng lead: Marcus (streaks, tRPC). Growth: Dana (activation, churn signals). Design: Sam (guilds, a11y)"
+  key_metrics: "WAQC (north star), D7 activation (% reaching first completed quest in 7 days), W4 retention, free→paid conversion, streak-save rate"
+  audience: "Self-improvement-minded consumers (22-40) who bounced off plain to-do apps; want games-style motivation for real-life goals"

@@ -75,5 +75,11 @@
     </dict>
     <key>NSLocalNetworkUsageDescription</key>
     <string>HoldSpeak connects to your own local AI server (e.g. a llama.cpp endpoint on your LAN) to recognize sketches and run intelligence — nothing leaves your network.</string>
+    <!-- HSM-15-10: the "Your Computer" Connect surface BROWSES the LAN for your desktop
+         via Bonjour (NWBrowser). NWBrowser silently fails without this declared service. -->
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_holdspeak._tcp</string>
+    </array>
 </dict>
 </plist>

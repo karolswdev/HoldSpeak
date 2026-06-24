@@ -1,0 +1,14 @@
+id: dictation-german
+kind: dictation
+repo: ledgerline
+voice: Anna
+language: de
+description: >
+  German speech to exercise model.language pinning (HS-59). Set
+  config.model.language to "de" (or "auto") before transcribing. The text is a
+  ledgerline coding task spoken in German; with language="de" Whisper should
+  transcribe it cleanly. Compare against language="auto" to confirm the one-knob
+  behaviour. Spoken-symbol and rewrite grounding still apply.
+utterances:
+  - "Bitte füge einen Test hinzu der beweist dass eine doppelte Idempotenzschlüssel-Anfrage nur einen einzigen Buchungssatz erzeugt"
+  - "Der Ladger ist nur anfügend, ändere niemals eine bestehende Zeile, korrigiere stattdessen mit einer neuen Gegenbuchung"

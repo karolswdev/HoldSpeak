@@ -1,0 +1,76 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write # OIDC for the apply role
+
+jobs:
+  validate:
+    name: terraform fmt / validate / plan
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: [dev, staging, prod]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      - name: fmt
+        run: terraform fmt -check -recursive
+
+      - name: init
+        working-directory: terraform
+        run: terraform init -backend=false
+
+      - name: validate
+        working-directory: terraform
+        run: terraform validate
+
+      - name: plan
+        working-directory: terraform
+        run: terraform plan -var-file=env/${{ matrix.env }}.tfvars -out=plan.${{ matrix.env }}
+        # Plan is posted to the PR; a clean plan (no surprise drift) is a
+        # merge requirement. See .hs/workflows.md.
+
+  apply:
+    name: apply on main
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1 # never apply two environments at once
+      matrix:
+        env: [dev, staging]
+    environment: ${{ matrix.env }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+      - name: apply
+        working-directory: terraform
+        run: terraform apply -auto-approve -var-file=env/${{ matrix.env }}.tfvars
+
+  apply-prod:
+    name: apply prod (manual gate)
+    needs: apply
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: prod # requires a manual approval in GitHub before it runs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+      - name: apply
+        working-directory: terraform
+        # Workload changes then roll out progressively via the operator;
+        # this step only applies infra. No manual kubectl on prod.
+        run: terraform apply -auto-approve -var-file=env/prod.tfvars

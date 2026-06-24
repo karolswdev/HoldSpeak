@@ -1,0 +1,8 @@
+kb:
+  stack: "Terraform · Kubernetes · Go operator · GitHub Actions · Prometheus/Grafana. Three clusters: dev, staging, prod (EKS-equivalent, 3 AZs each)."
+  invariants: "every change is a reviewed PR · prod rollouts are progressive (canary→10%→100%) · no manual kubectl in prod · secrets via the sealed-secrets controller, never plaintext in git · TLS certs auto-renew via cert-manager"
+  dod: "PR approved by a platform owner · terraform plan is clean (no unreviewed drift) · CI green (fmt/validate/plan) · rollback plan documented in the PR · relevant runbook updated if behavior changed · SLO dashboard checked after rollout"
+  slo: "API availability 99.9% monthly (43m error budget) · p99 ingress latency < 300ms · control-plane reconcile lag < 30s · cert expiry headroom > 14 days"
+  on_call: "PagerDuty rotation 'platform-primary' (1-week shifts) · war-room in #incident-platform · incident commander declares SEV and owns comms · postmortems blameless, due within 5 business days"
+  blast_radius_rule: "no single change may touch more than one cluster's prod node pool at once · destructive terraform (replace/destroy) on prod requires a second owner approval and a maintenance window"
+  environments: "dev (auto-apply on merge) · staging (auto-apply, soak 24h) · prod (manual approval gate in CI, progressive rollout only)"

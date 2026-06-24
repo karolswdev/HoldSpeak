@@ -1,0 +1,7 @@
+# Generated audio fixtures (regenerate with make_fixtures.py)
+_audio/
+# Isolated sandbox HOME (config + db + symlinked caches)
+_home/
+# Per-run filled-in protocol results
+results/*.md
+!results/.gitkeep

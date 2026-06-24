@@ -3,7 +3,22 @@
 > 🚀 **New agent? Start here:** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Last updated:** 2026-06-22 (**PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **The Workbench is a real
+**Last updated:** 2026-06-22 (**PHASE 15 — THE MESH OPENED.** The owner ratified the holistic
+framing: HoldSpeak is a **personal intelligence mesh** — a desktop hub + mobile companions, two
+modes on every surface, fluid compute (on-device / your Mac / endpoint), one queue, one approval +
+egress contract, all private and **air-gappable**. New phase authored at
+[`phase-15-the-mesh`](./phase-15-the-mesh/current-phase-status.md) (7 stories): **15-01 dictation
+into your Mac** (first-class flagship mode, reuses `/api/dictation/remote` — leads), 15-02 the
+Workbench targeting the mesh (RUNS ON: Your Mac + real connectors), 15-03 the mesh queue, 15-04 one
+mesh runner (local OR dispatched, policy-enforcing), 15-05 one approval+egress contract, **15-06 the
+Proof** (an owner-driven **air-gapped** value session + a LinkedIn-ready launch narrative), 15-07
+docs. Grounded in the existing seam (`HTTPDesktopClient` pairing, `/api/dictation/remote`,
+`/api/companion/*`, `RuntimeMode` A/B/C). Same session, the Workbench was **rebuilt as a node-graph
+visual language** (typed draggable primitives, type-colored cables, pan/zoom, a premium node
+inspector with per-node RUNS-ON + IF-UNREACHABLE), a **first-class app-wide Queue HUD** was added
+(Dynamic-Island pill → job ledger), and the **recorder waveform reactivity was fixed** (was dead;
+now voice-dominant). Simulator-proven; device build + the runner are the next builds. Prior
+context below. **PHASE 14 — MOBILE EXPERIENCE & CRAFT.** **The Workbench is a real
 builder now** — on owner feedback ("this is not a builder"): a fully **custom LLM-call node** (write
 your own prompt over a chosen input — the meeting or the previous step) sits first-class beside the
 curated lens/extract blocks, and **every block is tap-to-configure** via a real editor sheet (the
@@ -450,7 +465,10 @@ Earlier today: **program scaffolded** — the Council Implementation
 Charter (Rev 1.0) mapped onto a 12-phase roadmap (Phase 0 Contract Extraction →
 Phase 11 Hardening), charter captured as [`CHARTER.md`](./CHARTER.md), every phase
 folder carrying a `current-phase-status.md` + story stubs grounded in its track.)
-**Current phase:** [phase-7-mir-port](./phase-7-mir-port/current-phase-status.md) closed; Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5**, **7 ✅ Gate H**; Phase 5 host-complete (engine pick + structured output + endpoint Modes B/C + on-device Mode A + model packaging — all host-proven; device runs pending the iPad unlock); Phase 10 in-progress (HSM-10-01 done); 2 + 3 testable cores done, device-gated remainder; 6-06 Follow-ups deferred. **Phases 12–13 (Tracks M–N — the Companion Client + Answer the Coder) in progress (owner steer 2026-06-20): Phase 12 2/4 (HSM-12-01 seam + HSM-12-02 meetings remote, merged); **Phase 13 — Answer the Coder COMPLETE (4/4): HSM-13-01 inject, 13-02 voice-note composer, 13-03 Companion board, 13-04 Track N gate ACHIEVED by voice** (a spoken answer from a physical iPad, transcribed on-device, lands in a live tmux coder). Companion track (Tracks M–N) is now Phase 12 3/4 (12-01 seam, 12-02 meetings, 12-03 unified shell; only 12-04 gate remains) + Phase 13 done. **Phase 8 (Track I — the iPad on-device experience) 5/8: HSM-8-01 capture + 8-02 notebook + 8-03 linking + 8-04 on-device artifact review (the Track I workflow gate ACHIEVED on a physical iPad) + 8-06 ink-into-intelligence (handwriting → image + on-device Vision text + marked-moment-weighted MIR, proven on a real 13-min meeting) done; **8-07 (chunked long-meeting extraction) + 8-08 (OOM-safe budget) HOST-COMPLETE** (cores + 12 host tests + app wiring + device build; on-device proofs deferred — owner not at the iPad); HSM-8-05 (air-gapped gate) + the 8-07/8-08 device proofs remain.**
+**Current phase:** [**phase-15-the-mesh**](./phase-15-the-mesh/current-phase-status.md) **in-progress
+(opened 2026-06-22 — the personal intelligence mesh; leading with HSM-15-01 dictation into your Mac)**
++ [phase-14-mobile-experience-craft](./phase-14-mobile-experience-craft/current-phase-status.md)
+in-progress (the craft track). Earlier: [phase-7-mir-port](./phase-7-mir-port/current-phase-status.md) closed; Phases 0 ✅, 1 ✅, 4 ✅, **6 ✅ Gate 5**, **7 ✅ Gate H**; Phase 5 host-complete (engine pick + structured output + endpoint Modes B/C + on-device Mode A + model packaging — all host-proven; device runs pending the iPad unlock); Phase 10 in-progress (HSM-10-01 done); 2 + 3 testable cores done, device-gated remainder; 6-06 Follow-ups deferred. **Phases 12–13 (Tracks M–N — the Companion Client + Answer the Coder) in progress (owner steer 2026-06-20): Phase 12 2/4 (HSM-12-01 seam + HSM-12-02 meetings remote, merged); **Phase 13 — Answer the Coder COMPLETE (4/4): HSM-13-01 inject, 13-02 voice-note composer, 13-03 Companion board, 13-04 Track N gate ACHIEVED by voice** (a spoken answer from a physical iPad, transcribed on-device, lands in a live tmux coder). Companion track (Tracks M–N) is now Phase 12 3/4 (12-01 seam, 12-02 meetings, 12-03 unified shell; only 12-04 gate remains) + Phase 13 done. **Phase 8 (Track I — the iPad on-device experience) 5/8: HSM-8-01 capture + 8-02 notebook + 8-03 linking + 8-04 on-device artifact review (the Track I workflow gate ACHIEVED on a physical iPad) + 8-06 ink-into-intelligence (handwriting → image + on-device Vision text + marked-moment-weighted MIR, proven on a real 13-min meeting) done; **8-07 (chunked long-meeting extraction) + 8-08 (OOM-safe budget) HOST-COMPLETE** (cores + 12 host tests + app wiring + device build; on-device proofs deferred — owner not at the iPad); HSM-8-05 (air-gapped gate) + the 8-07/8-08 device proofs remain.**
 
 **Highest-value direction (owner steer, 2026-06-20; ratified in charter Amendment
 1.1).** The program's value now concentrates on the **two device faces, both
@@ -536,7 +554,9 @@ WebView, or UIKit.
 | 10 | K | Sync to desktop / homelab / Tailscale — cross-device continuity | in-progress (object model + transport + conflict + `SyncCoordinator` orchestration host-proven; only the live cross-device walkthrough (device) remains) | [phase-10](./phase-10-sync/) |
 | 11 | L | Hardening: the five stress scenarios **+ companion failure scenarios** (Gate 7 extended), production readiness — **runs last** (after 12–13, per Amendment 1.1) | not-started | [phase-11](./phase-11-hardening/) |
 | 12 | M | **The Companion Client:** point the iPhone/iPad at the same server you code against — a unified shell (on-device runtime + server, never a dumb terminal) + meetings remote control | **in-progress (2/4 — HSM-12-01 seam + HSM-12-02 meetings remote control done)** | [phase-12](./phase-12-companion-client/) |
-| 13 | N | **Answer the Coder:** the AI PI payoff — the agent's question surfaces on the device, you answer by native voice note, it lands back in the coder session | not-started (scaffolded 2026-06-20) | [phase-13](./phase-13-answer-the-coder/) |
+| 13 | N | **Answer the Coder:** the AI PI payoff — the agent's question surfaces on the device, you answer by native voice note, it lands back in the coder session | **done (4/4) ✅ Track N gate by voice** | [phase-13](./phase-13-answer-the-coder/) |
+| 14 | — | **Mobile Experience & Craft:** make the app a premium, modern, hand-driven native product (design system, recrafted screens, the Workbench visual builder) — owner craft track | in-progress | [phase-14](./phase-14-mobile-experience-craft/) |
+| 15 | — | **The Mesh:** desktop hub + mobile companions as one personal intelligence mesh — dictation into your Mac, the Workbench targeting the mesh, one queue, one approval contract, and the air-gapped launch proof | **in-progress (opened 2026-06-22)** | [phase-15](./phase-15-the-mesh/) |
 
 **Tracks M–N (Phases 12–13)** were added by owner steer (2026-06-20) and **ratified
 into the charter as Amendment 1.1 (co-canon with Rev 1.0)**. They close a gap the

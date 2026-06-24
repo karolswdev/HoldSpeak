@@ -316,6 +316,18 @@ def build_pipeline_router(
             return JSONResponse(
                 {"error": "target must be an object when provided"}, status_code=400
             )
+        # HSM-15-01a: the delivery target mode. "agent" (default) answers the
+        # waiting coder exactly as before (byte-identical); "focused" free-types
+        # the processed text into whatever Mac app is focused, with no awaiting
+        # coder session required.
+        target_mode = payload.get("target_mode") if isinstance(payload, dict) else None
+        if target_mode is None:
+            target_mode = "agent"
+        if target_mode not in ("agent", "focused"):
+            return JSONResponse(
+                {"error": 'target_mode must be one of "agent" or "focused"'},
+                status_code=400,
+            )
 
         # Reuse the exact rich-pipeline path the browser dry-run uses, so the same
         # corrections/blocks/plugins apply — the answer is as smart as one spoken at
@@ -341,7 +353,12 @@ def build_pipeline_router(
         delivered = False
         if ctx.on_remote_dictation is not None:
             try:
-                ctx.on_remote_dictation(final_text)
+                if target_mode == "agent":
+                    # Byte-identical to the pre-15 call (a plain str hook): the
+                    # default path never threads the new keyword.
+                    ctx.on_remote_dictation(final_text)
+                else:
+                    ctx.on_remote_dictation(final_text, target=target_mode)
                 delivered = True
             except Exception as exc:
                 log.error(f"Remote dictation delivery failed: {exc}")

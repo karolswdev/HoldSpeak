@@ -1,0 +1,19 @@
+1
+00:00:00,000 --> 00:00:06,000
+Priya: Quick ledgerline sync. The double-post issue LL-118 is still open until we prove the fix.
+
+2
+00:00:06,000 --> 00:00:13,000
+Mara: I'm writing the concurrency regression test now. It posts two retries with the same idempotency key concurrently and asserts exactly one pair of entries.
+
+3
+00:00:13,000 --> 00:00:20,000
+Sam: Good. I've got the CI retry-storm load test in progress. Decision stands: we don't close LL-118 until both are green.
+
+4
+00:00:20,000 --> 00:00:27,000
+Priya: Separately, Alex is drafting the ADR for the event-sourced write path from last week's architecture review. Sharding is deferred.
+
+5
+00:00:27,000 --> 00:00:33,000
+Mara: Action item for me: also add the over-billing remediation runbook. The on-call had to improvise the reversal script last time.

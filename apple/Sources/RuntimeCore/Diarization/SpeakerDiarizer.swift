@@ -160,8 +160,17 @@ public enum SpeakerClustering {
 public final class SpeakerDiarizer: @unchecked Sendable {
     private let embedder: AudioEmbedding
 
-    /// The cosine merge threshold for the global clustering (the desktop's `SIMILARITY_THRESHOLD`).
-    /// Higher ⇒ more speakers (stricter); lower ⇒ fewer (more merging). Tunable; default 0.75.
+    /// The cosine merge threshold for the global clustering. Higher ⇒ more speakers (stricter);
+    /// lower ⇒ fewer (more merging). Default **0.65**.
+    ///
+    /// The desktop's online EMA matcher uses 0.75, but that value **over-splits this offline global
+    /// clustering pass**: a real-model proof on a clean two-voice recording (`DiarizeProofTests`)
+    /// measured cross-speaker cosine ≤ 0.13 but within-speaker dipping to 0.65 — so 0.75 cut into one
+    /// speaker's own variation and invented a phantom third speaker, while every threshold 0.55–0.70
+    /// recovered the true two. 0.65 sits below normal within-speaker variation yet far above the
+    /// cross-speaker band. NOTE: calibrated on the model's real embeddings but with synthetic (`say`)
+    /// voices, which embed less consistently than real speech — real-human calibration is the
+    /// device-proof follow-up, and `threshold` stays a public knob for it.
     public var threshold: Float
 
     /// Mirrors the desktop's `MIN_AUDIO_DURATION = 1.0 s`. Segments shorter than this aren't embedded
@@ -170,7 +179,7 @@ public final class SpeakerDiarizer: @unchecked Sendable {
 
     private var _speakers: [SpeakerProfile] = []
 
-    public init(embedder: AudioEmbedding, threshold: Float = 0.75, alpha: Float = 0.3,
+    public init(embedder: AudioEmbedding, threshold: Float = 0.65, alpha: Float = 0.3,
                 minDurationSeconds: Double = 1.0) {
         self.embedder = embedder
         self.threshold = threshold

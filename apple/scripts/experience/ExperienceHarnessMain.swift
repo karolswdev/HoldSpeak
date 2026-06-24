@@ -7,7 +7,7 @@ import SwiftUI
 struct ExperienceHarnessApp: App {
     var body: some Scene {
         WindowGroup {
-            MeetingExperienceView(vm: ExperienceMock.meeting)
+            DeskShellView()
         }
     }
 }
