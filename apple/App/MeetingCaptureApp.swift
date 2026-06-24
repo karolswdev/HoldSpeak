@@ -25,8 +25,16 @@ struct MeetingCaptureApp: App {
                 // screenshot run (no mic/taps needed); the real entry is the meeting list.
                 if ProcessInfo.processInfo.environment["HS_DEMO_NOTEBOOK"] != nil {
                     DemoNotebookView()
-                } else {
+                } else if ProcessInfo.processInfo.environment["HS_CLASSIC_HOME"] != nil {
                     MeetingListView()
+                        .onOpenURL { url in
+                            guard url.pathExtension.lowercased() == "gguf" else { return }
+                            try? ModelFiles.importModel(from: url)
+                        }
+                } else {
+                    // HSM-14-19 — THE DESK is the home: real meetings as physical objects on a
+                    // gamified physics desk. The classic list lives behind HS_CLASSIC_HOME=1.
+                    DeskHome()
                         // AirDrop / "Open in HoldSpeak" a .gguf → copy it into the app's container.
                         .onOpenURL { url in
                             guard url.pathExtension.lowercased() == "gguf" else { return }
