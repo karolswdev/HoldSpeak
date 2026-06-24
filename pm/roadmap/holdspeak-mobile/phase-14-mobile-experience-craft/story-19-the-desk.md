@@ -120,6 +120,9 @@ ViewModels/        MeetingReviewState, CaptureModel, … (lifted out of the view
 - [ ] Motion + a11y polish pass.
 
 ## Notes
+- **The object convention is canon in [[story-20-the-desk-object-model]]** — every primitive (meeting,
+  output, model, directory, knowledge base, …) is one **DeskObject** filling in the same facets; add a
+  kind by declaring it, not by coding it. Knowledge Base is the first primitive built *on* that convention.
 - Craft bar: bespoke objects over SF glyphs/CSS shapes (lean on PixelLab — [[project_qlippy_mascot]]).
 - The contrast — pixel-art **objects** on **sleek** dark chrome — is the premium feel; keep both.
 - Prove on the device, not seeded shots, for anything claimed `done` (see

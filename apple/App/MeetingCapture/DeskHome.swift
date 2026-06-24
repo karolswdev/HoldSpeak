@@ -10,11 +10,25 @@ import UIKit
 // open the real meeting. Bound to real data. Classic list behind HS_CLASSIC_HOME=1.
 
 enum DeskFolder: String, Hashable, CaseIterable {
-    case all, today, week, pinned, models, archive
-    var label: String { ["all": "All Meetings", "today": "Today", "week": "This Week",
-                         "pinned": "Pinned", "models": "Models", "archive": "Archive"][rawValue] ?? rawValue }
-    var icon: String { ["all": "tray.full.fill", "today": "sun.max.fill", "week": "calendar",
-                        "pinned": "pin.fill", "models": "cpu.fill", "archive": "archivebox.fill"][rawValue] ?? "folder" }
+    case all, today, week, pinned, models, knowledge, archive
+    var label: String { ["all": "All Meetings", "today": "Today", "week": "This Week", "pinned": "Pinned",
+                         "models": "Models", "knowledge": "Knowledge", "archive": "Archive"][rawValue] ?? rawValue }
+    var icon: String { ["all": "tray.full.fill", "today": "sun.max.fill", "week": "calendar", "pinned": "pin.fill",
+                        "models": "cpu.fill", "knowledge": "sparkles", "archive": "archivebox.fill"][rawValue] ?? "folder" }
+}
+
+// HSM-14-20 — the one typed convention. Every card on the desk is a DeskObject of some kind; the kind
+// (parsed from the id namespace) decides what a tap does. This retires the scattered hasPrefix() hacks
+// into a single dispatch — add a primitive by adding a case, not by sprinkling string checks.
+enum DeskObjectKind {
+    case meeting, output, notebook, model, knowledgeBase
+    static func of(_ id: String) -> DeskObjectKind {
+        if id.hasPrefix("model:") { return .model }
+        if id.hasPrefix("kb:") { return .knowledgeBase }
+        if id.hasPrefix("open:") { return .notebook }
+        if id.hasPrefix("out:") { return .output }
+        return .meeting
+    }
 }
 
 struct DeskHome: View {
@@ -22,7 +36,8 @@ struct DeskHome: View {
     @AppStorage("hs.desk.pinned") private var pinnedCSV = ""
     @AppStorage("hs.desk.cardmodes") private var modesCSV = ""    // "id=full;id=header" — persists each card's presentation
     @AppStorage("hs.desk.folders") private var foldersCSV = ""    // user directories: "Project Atlas;Hiring"
-    @AppStorage("hs.desk.filed") private var filedCSV = ""        // which card lives in which directory: "id=Project Atlas;..."
+    @AppStorage("hs.desk.kbs") private var kbsCSV = ""            // knowledge bases (typed containers): "Onboarding;Architecture"
+    @AppStorage("hs.desk.filed") private var filedCSV = ""        // membership: "id=Project Atlas;..." (dirs AND KBs share this map)
     @State private var folder: DeskFolder = .all
     @State private var activeUserFolder: String?                  // non-nil = a user directory is open (overrides the smart folder)
     @State private var tidyToken = 0
@@ -32,6 +47,8 @@ struct DeskHome: View {
     @State private var lassoMode = false
     @State private var selectedIDs: Set<String> = []
     @State private var expanded: Set<String> = []                // meetings whose outputs are spilled onto the desk
+    @State private var expandedKBs: Set<String> = []             // knowledge bases opened (members spilled)
+    @State private var newIsKB = false                           // the New… alert is creating a KB vs a directory
     @State private var spilledCards: [DeskCardData] = []         // the meeting's outputs, living as desk objects
     @State private var outputBodies: [String: OutputDoc] = [:]   // output id -> what opening it shows
     @State private var windows: [DeskWindowItem] = []            // apps open AS windows on the desk, not as pushed screens
@@ -46,20 +63,23 @@ struct DeskHome: View {
                 DeskSidebar(folder: $folder, activeUserFolder: $activeUserFolder, userFolders: userFolders,
                             count: { count($0) }, userCount: { userFolderCount($0) },
                             onPick: { selectedIDs = []; clearToken += 1 },
-                            onNewFolder: { fileAfterCreate = false; newFolderName = ""; showNewFolder = true })
+                            onNewFolder: { fileAfterCreate = false; newIsKB = false; newFolderName = ""; showNewFolder = true })
                     .frame(width: 236)
                 canvas
             }
             .background(Sig.bg.ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
-            .alert("New Directory", isPresented: $showNewFolder) {
+            .alert(newIsKB ? "New Knowledge Base" : "New Directory", isPresented: $showNewFolder) {
                 TextField("Name", text: $newFolderName)
                 Button("Create") {
                     let n = newFolderName.trimmingCharacters(in: .whitespaces)
-                    createFolder(n); if fileAfterCreate, !n.isEmpty { fileSelected(to: n) }; newFolderName = ""
+                    if newIsKB { createKB(n) } else { createFolder(n) }
+                    if fileAfterCreate, !n.isEmpty { fileSelected(to: n) }
+                    newFolderName = ""
                 }
                 Button("Cancel", role: .cancel) { newFolderName = "" }
-            } message: { Text("Group meetings into a directory you organize yourself.") }
+            } message: { Text(newIsKB ? "A knowledge base classifies what you file into it; open it to spill its contents."
+                                       : "Group meetings into a directory you organize yourself.") }
         }
         .tint(Sig.accent)
         .onAppear { model.refresh() }
@@ -75,16 +95,24 @@ struct DeskHome: View {
                                   onCycle: { id in tactile(); cycleMode(id) },
                                   onSelect: { ids in selectedIDs = ids })
                 if cardData.isEmpty { DeskEmptyHint(folder: activeUserFolder == nil ? folder : .all).position(x: geo.size.width / 2, y: geo.size.height * 0.42) }
-                if selectedIDs.isEmpty, activeUserFolder == nil, folder != .models {
+                if selectedIDs.isEmpty, activeUserFolder == nil, folder != .models, folder != .knowledge {
                     DeskMic().position(x: geo.size.width * 0.5, y: geo.size.height - 92)
                         .onTapGesture { tactile(.medium); open(.capture) }
                 }
+                if folder == .knowledge, activeUserFolder == nil, selectedIDs.isEmpty {
+                    Button { tactile(.medium); fileAfterCreate = false; newIsKB = true; newFolderName = ""; showNewFolder = true } label: {
+                        HStack(spacing: 8) { Image(systemName: "plus").font(.system(size: 13, weight: .black)); Text("New Knowledge Base").font(.system(size: 14, weight: .heavy)) }
+                            .foregroundStyle(.white).padding(.horizontal, 18).padding(.vertical, 12)
+                            .background(Capsule().fill(Sig.accentGradient).shadow(color: Sig.accent.opacity(0.45), radius: 14, y: 5))
+                    }.buttonStyle(PressableCard()).position(x: geo.size.width * 0.5, y: geo.size.height - 86)
+                }
                 if !selectedIDs.isEmpty {
                     VStack { Spacer()
-                        DeskSelectionBar(count: selectedIDs.count, folders: userFolders,
+                        DeskSelectionBar(count: selectedIDs.count, directories: userFolders, knowledgeBases: knowledgeBases,
                                          onBundle: { tactile(.medium); gatherToken += 1 },
                                          onFile: { f in tactile(.medium); fileSelected(to: f) },
-                                         onNewFolder: { fileAfterCreate = true; newFolderName = ""; showNewFolder = true },
+                                         onNewFolder: { fileAfterCreate = true; newIsKB = false; newFolderName = ""; showNewFolder = true },
+                                         onNewKB: { fileAfterCreate = true; newIsKB = true; newFolderName = ""; showNewFolder = true },
                                          onClear: { tactile(); selectedIDs = []; clearToken += 1 })
                         .padding(.horizontal, 18).padding(.bottom, 22)
                     }
@@ -111,17 +139,20 @@ struct DeskHome: View {
 
     private func handleTap(_ id: String) {
         tactile()
-        if id.hasPrefix("model:") { open(.models) }
-        else if id.hasPrefix("open:") { open(.meeting(String(id.dropFirst(5)))) }     // the full notebook (generation lives here)
-        else if id.hasPrefix("out:") { if let d = outputBodies[id] { open(.output(id: id, title: d.title, icon: d.icon, body: d.body)) } }
-        else { toggleSpill(id) }                                                      // a meeting card -> spill / collapse its parts
+        switch DeskObjectKind.of(id) {
+        case .model: open(.models)
+        case .notebook: open(.meeting(String(id.dropFirst(5))))                       // the full notebook (generation lives here)
+        case .output: if let d = outputBodies[id] { open(.output(id: id, title: d.title, icon: d.icon, body: d.body)) }
+        case .knowledgeBase: toggleSpillKB(String(id.dropFirst(3)))                   // a KB opens by spilling its members
+        case .meeting: toggleSpill(id)                                                // a meeting opens by spilling its parts
+        }
     }
     private func childParent(_ id: String) -> String? {
         if id.hasPrefix("open:") { return String(id.dropFirst(5)) }
         if id.hasPrefix("out:") { let p = id.split(separator: ":"); return p.count >= 3 ? String(p[2]) : nil }
         return nil
     }
-    private func collapseAll() { expanded.removeAll(); spilledCards.removeAll() }
+    private func collapseAll() { expanded.removeAll(); expandedKBs.removeAll(); spilledCards.removeAll() }
     private func toggleSpill(_ mid: String) {
         if expanded.contains(mid) {
             expanded.remove(mid); spilledCards.removeAll { childParent($0.id) == mid }
@@ -204,6 +235,13 @@ struct DeskHome: View {
                              sub: "loaded · on device", sprite: "cartridge", tintHex: 0x5B8DEF, mode: modeFor("model:\($0.id)"))
             }
         }
+        if activeUserFolder == nil, folder == .knowledge {
+            let kbCards = knowledgeBases.map { name in
+                DeskCardData(id: "kb:\(name)", title: name, sub: "\(kbCount(name)) item\(kbCount(name) == 1 ? "" : "s") · knowledge base",
+                             sprite: "crystal", tintHex: 0x9B8CFF, mode: modeFor("kb:\(name)"))
+            }
+            return kbCards + spilledCards     // tapping a KB spills its members alongside
+        }
         let base = filtered.map { m in
             DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m), tintHex: tintHexFor(m), mode: modeFor(m.id))
         }
@@ -218,7 +256,7 @@ struct DeskHome: View {
         case .week: return model.meetings.filter { cal.isDate($0.startedAt, equalTo: Date(), toGranularity: .weekOfYear) }
         case .pinned: return model.meetings.filter { pinnedSet.contains($0.id) }
         case .archive: return model.meetings.filter { !cal.isDate($0.startedAt, equalTo: Date(), toGranularity: .weekOfYear) }
-        case .models: return []
+        case .models, .knowledge: return []
         }
     }
 
@@ -244,8 +282,35 @@ struct DeskHome: View {
         filedCSV = d.map { "\($0.key)=\($0.value)" }.joined(separator: ";")
         selectedIDs = []; clearToken += 1
     }
+
+    // MARK: knowledge bases — a typed container that reuses filing (to classify) + spill (to open)
+
+    private var knowledgeBases: [String] { kbsCSV.split(separator: ";").map(String.init).filter { !$0.isEmpty } }
+    private func kbCount(_ name: String) -> Int { filedDict().values.filter { $0 == name }.count }
+    private func createKB(_ name: String) {
+        let n = name.trimmingCharacters(in: .whitespaces)
+        guard !n.isEmpty, !knowledgeBases.contains(n) else { return }
+        kbsCSV = (knowledgeBases + [n]).joined(separator: ";")
+    }
+    /// Open a KB by spilling its classified members onto the desk (tap again to collapse).
+    private func toggleSpillKB(_ name: String) {
+        if expandedKBs.contains(name) {
+            expandedKBs.remove(name)
+            let members = Set(filedDict().filter { $0.value == name }.map(\.key))
+            spilledCards.removeAll { members.contains($0.id) }
+        } else {
+            expandedKBs.insert(name)
+            let d = filedDict()
+            let members = model.meetings.filter { d[$0.id] == name }
+            spilledCards.append(contentsOf: members.map { m in
+                DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m), tintHex: tintHexFor(m), mode: modeFor(m.id))
+            })
+        }
+    }
+    private var allContainers: [String] { knowledgeBases + userFolders }   // both share the filing map
     private func count(_ f: DeskFolder) -> Int {
         if f == .models { return ModelFiles.installed().count }
+        if f == .knowledge { return knowledgeBases.count }
         let cal = Calendar.current
         switch f {
         case .all: return model.meetings.count
@@ -253,7 +318,7 @@ struct DeskHome: View {
         case .week: return model.meetings.filter { cal.isDate($0.startedAt, equalTo: Date(), toGranularity: .weekOfYear) }.count
         case .pinned: return pinnedSet.count
         case .archive: return model.meetings.filter { !cal.isDate($0.startedAt, equalTo: Date(), toGranularity: .weekOfYear) }.count
-        case .models: return 0
+        case .models, .knowledge: return 0
         }
     }
     private var pinnedSet: Set<String> { Set(pinnedCSV.split(separator: ",").map(String.init)) }
@@ -306,7 +371,7 @@ struct DeskSidebar: View {
                     section("SMART")
                     ForEach([DeskFolder.all, .today, .week, .pinned], id: \.self) { row($0) }
                     section("LIBRARY").padding(.top, 14)
-                    ForEach([DeskFolder.models, .archive], id: \.self) { row($0) }
+                    ForEach([DeskFolder.models, .knowledge, .archive], id: \.self) { row($0) }
                     HStack {
                         section("DIRECTORIES")
                         Spacer()
@@ -362,10 +427,12 @@ struct DeskSidebar: View {
 
 struct DeskSelectionBar: View {
     let count: Int
-    let folders: [String]
+    let directories: [String]
+    let knowledgeBases: [String]
     let onBundle: () -> Void
     let onFile: (String) -> Void
     let onNewFolder: () -> Void
+    let onNewKB: () -> Void
     let onClear: () -> Void
     var body: some View {
         HStack(spacing: 10) {
@@ -376,8 +443,14 @@ struct DeskSelectionBar: View {
             Spacer()
             Button(action: onBundle) { plain("Bundle", "circle.grid.3x3.fill") }.buttonStyle(PressableCard())
             Menu {
-                ForEach(folders, id: \.self) { f in Button(f) { onFile(f) } }
-                if !folders.isEmpty { Divider() }
+                if !knowledgeBases.isEmpty {
+                    Section("Knowledge bases") { ForEach(knowledgeBases, id: \.self) { k in Button { onFile(k) } label: { Label(k, systemImage: "sparkles") } } }
+                }
+                if !directories.isEmpty {
+                    Section("Directories") { ForEach(directories, id: \.self) { f in Button { onFile(f) } label: { Label(f, systemImage: "folder") } } }
+                }
+                Divider()
+                Button { onNewKB() } label: { Label("New Knowledge Base…", systemImage: "sparkles") }
                 Button { onNewFolder() } label: { Label("New Directory…", systemImage: "folder.badge.plus") }
             } label: { filled("File to", "tray.and.arrow.down.fill") }
             Button(action: onClear) {
@@ -468,7 +541,10 @@ struct DeskEmptyHint: View {
         VStack(spacing: 10) {
             Image(systemName: folder.icon).font(.system(size: 28, weight: .bold)).foregroundStyle(Sig.faint)
             Text(folder == .all ? "Your desk is empty." : "Nothing in \(folder.label) yet.").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text)
-            if folder != .models {
+            if folder == .knowledge {
+                Text("A knowledge base classifies what you file into it.\nMake one, then lasso cards and File them in.")
+                    .font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.muted).multilineTextAlignment(.center)
+            } else if folder != .models {
                 Text("Tap the mic to record — it lands here as a card\nyou can fling, arrange, and tidy.")
                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.muted).multilineTextAlignment(.center)
             }
