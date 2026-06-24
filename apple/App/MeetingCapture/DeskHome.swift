@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 // HSM-14-19 — DeskOS: a world-class organization PANE (a directory tree over your real meetings —
 // Smart folders by time, Pinned, the model Library) beside a real PHYSICS CANVAS (SpriteKit) where each
@@ -28,6 +31,9 @@ struct DeskHome: View {
     @State private var gatherToken = 0
     @State private var lassoMode = false
     @State private var selectedIDs: Set<String> = []
+    @State private var expanded: Set<String> = []                // meetings whose outputs are spilled onto the desk
+    @State private var spilledCards: [DeskCardData] = []         // the meeting's outputs, living as desk objects
+    @State private var outputBodies: [String: OutputDoc] = [:]   // output id -> what opening it shows
     @State private var windows: [DeskWindowItem] = []            // apps open AS windows on the desk, not as pushed screens
     @State private var topZ: Double = 1
     @State private var showNewFolder = false
@@ -65,7 +71,7 @@ struct DeskHome: View {
                 DeskCanvasBackground()
                 DeskPhysicsCanvas(cards: cardData, tidyToken: tidyToken, zoomToken: zoomToken,
                                   lassoMode: lassoMode, clearToken: clearToken, gatherToken: gatherToken,
-                                  onTap: { id in tactile(); if id.hasPrefix("model:") { open(.models) } else { open(.meeting(id)) } },
+                                  onTap: { id in handleTap(id) },
                                   onCycle: { id in tactile(); cycleMode(id) },
                                   onSelect: { ids in selectedIDs = ids })
                 if cardData.isEmpty { DeskEmptyHint(folder: activeUserFolder == nil ? folder : .all).position(x: geo.size.width / 2, y: geo.size.height * 0.42) }
@@ -97,8 +103,65 @@ struct DeskHome: View {
                 }
             }
         }
-        .onChange(of: folder) { _ in selectedIDs = []; clearToken += 1 }
-        .onChange(of: activeUserFolder) { _ in selectedIDs = []; clearToken += 1 }
+        .onChange(of: folder) { _ in collapseAll(); selectedIDs = []; clearToken += 1 }
+        .onChange(of: activeUserFolder) { _ in collapseAll(); selectedIDs = []; clearToken += 1 }
+    }
+
+    // MARK: spill — a meeting opens into its OUTPUT OBJECTS on the desk (not files in a panel)
+
+    private func handleTap(_ id: String) {
+        tactile()
+        if id.hasPrefix("model:") { open(.models) }
+        else if id.hasPrefix("open:") { open(.meeting(String(id.dropFirst(5)))) }     // the full notebook (generation lives here)
+        else if id.hasPrefix("out:") { if let d = outputBodies[id] { open(.output(id: id, title: d.title, icon: d.icon, body: d.body)) } }
+        else { toggleSpill(id) }                                                      // a meeting card -> spill / collapse its parts
+    }
+    private func childParent(_ id: String) -> String? {
+        if id.hasPrefix("open:") { return String(id.dropFirst(5)) }
+        if id.hasPrefix("out:") { let p = id.split(separator: ":"); return p.count >= 3 ? String(p[2]) : nil }
+        return nil
+    }
+    private func collapseAll() { expanded.removeAll(); spilledCards.removeAll() }
+    private func toggleSpill(_ mid: String) {
+        if expanded.contains(mid) {
+            expanded.remove(mid); spilledCards.removeAll { childParent($0.id) == mid }
+        } else {
+            expanded.insert(mid)
+            let (cards, bodies) = buildOutputs(mid)
+            spilledCards.append(contentsOf: cards); outputBodies.merge(bodies) { _, n in n }
+        }
+    }
+    private func artifacts(for id: String) -> [Artifact] {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let s = try? SQLiteStorage(path: docs.appendingPathComponent("meetings.sqlite").path)
+        return (try? s?.loadArtifacts(meetingId: id)) ?? []
+    }
+    private func buildOutputs(_ mid: String) -> ([DeskCardData], [String: OutputDoc]) {
+        guard let m = model.meetings.first(where: { $0.id == mid }) else { return ([], [:]) }
+        var cards: [DeskCardData] = []; var bodies: [String: OutputDoc] = [:]
+        func add(_ id: String, _ title: String, _ sub: String, _ sprite: String, _ tint: UInt, _ icon: String, _ body: String) {
+            cards.append(DeskCardData(id: id, title: title, sub: sub, sprite: sprite, tintHex: tint, mode: .full))
+            bodies[id] = OutputDoc(title: title, icon: icon, body: body)
+        }
+        // The notebook itself — the full detail view (generation / review / ink) is never lost; it's an object too.
+        cards.append(DeskCardData(id: "open:\(mid)", title: titleFor(m), sub: "open notebook", sprite: "folder", tintHex: 0xFF6B35, mode: .full))
+        if let s = m.intel?.summary, !s.isEmpty { add("out:sum:\(mid)", "Summary", "intelligence", "robot", 0x3ECF8E, "sparkles", s) }
+        if let t = m.intel?.topics, !t.isEmpty {
+            add("out:top:\(mid)", "Topics", "\(t.count) topic\(t.count == 1 ? "" : "s")", "note", 0x5B8DEF, "tag.fill", t.map { "- \($0)" }.joined(separator: "\n"))
+        }
+        for (i, a) in (m.intel?.actionItems ?? []).enumerated() {
+            add("out:act:\(mid):\(i)", a.task, "action" + (a.owner.map { " · \($0)" } ?? ""), "note", 0xF2A33C, "checkmark.circle.fill",
+                "\(a.task)\n\n**Owner:** \(a.owner ?? "—")\n**Due:** \(a.due ?? "—")")
+        }
+        for art in artifacts(for: mid) {
+            add("out:art:\(mid):\(art.id)", art.title, artifactTypeLabel(art.artifactType), "note", 0xF2A33C, "doc.text.fill", art.bodyMarkdown)
+        }
+        if !m.segments.isEmpty {
+            let spk = Set(m.segments.map(\.speaker)).count
+            add("out:tx:\(mid)", "Transcript", "\(m.segments.count) segs · \(spk) spk", "cassette2", 0x9B8CFF, "text.alignleft",
+                m.segments.map { "**\($0.speaker):** \($0.text)" }.joined(separator: "\n\n"))
+        }
+        return (cards, bodies)
     }
 
     // MARK: window management
@@ -128,6 +191,7 @@ struct DeskHome: View {
             else { ContentUnavailable(text: "Meeting unavailable") }
         case .capture: CaptureView(model: model, done: { closeKind(.capture); model.refresh() })
         case .models: ModelsView()
+        case .output(_, let t, let i, let b): OutputWindowView(title: t, icon: i, text: b)
         }
     }
 
@@ -140,9 +204,10 @@ struct DeskHome: View {
                              sub: "loaded · on device", sprite: "cartridge", tintHex: 0x5B8DEF, mode: modeFor("model:\($0.id)"))
             }
         }
-        return filtered.map { m in
+        let base = filtered.map { m in
             DeskCardData(id: m.id, title: titleFor(m), sub: subFor(m), sprite: spriteFor(m), tintHex: tintHexFor(m), mode: modeFor(m.id))
         }
+        return base + spilledCards            // the meeting's spilled output objects live alongside the cards
     }
     private var filtered: [Meeting] {
         if let uf = activeUserFolder { let d = filedDict(); return model.meetings.filter { d[$0.id] == uf } }
@@ -175,7 +240,7 @@ struct DeskHome: View {
     }
     private func fileSelected(to name: String) {
         var d = filedDict()
-        for id in selectedIDs where !id.hasPrefix("model:") { d[id] = name }
+        for id in selectedIDs where !id.contains(":") { d[id] = name }   // file real meetings only (outputs/models carry a ":")
         filedCSV = d.map { "\($0.key)=\($0.value)" }.joined(separator: ";")
         selectedIDs = []; clearToken += 1
     }
@@ -416,12 +481,55 @@ struct ContentUnavailable: View {
     var body: some View { Text(text).font(.system(size: 14, weight: .semibold)).foregroundStyle(Sig.muted).frame(maxWidth: .infinity, maxHeight: .infinity) }
 }
 
+// A meeting output opened to read in full — the body is rendered (markdown), copyable.
+struct OutputWindowView: View {
+    let title: String; let icon: String; let text: String
+    @State private var copied = false
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 9) {
+                Image(systemName: icon).font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.accent)
+                Text(title).font(.system(size: 15, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
+                Spacer()
+                Button {
+                    #if canImport(UIKit)
+                    UIPasteboard.general.string = text
+                    #endif
+                    tactile(); withAnimation { copied = true }
+                } label: {
+                    HStack(spacing: 5) { Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                        Text(copied ? "Copied" : "Copy").font(.system(size: 12, weight: .bold)) }
+                        .foregroundStyle(copied ? Sig.local : Sig.muted)
+                }
+            }.padding(.horizontal, 18).padding(.top, 16).padding(.bottom, 10)
+            ScrollView {
+                Text(LocalizedStringKey(text)).font(.system(size: 14, weight: .regular)).foregroundStyle(Sig.text)
+                    .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 18).padding(.bottom, 22)
+            }
+        }.frame(maxWidth: .infinity, maxHeight: .infinity).background(Sig.s1)
+    }
+}
+
 // MARK: - The window layer: apps open ON the desk (draggable / layered / closeable), not as pushed screens
+
+struct OutputDoc { let title: String; let icon: String; let body: String }
 
 enum DeskWindowKind: Equatable {
     case meeting(String), capture, models
-    var title: String { switch self { case .meeting: return "Meeting"; case .capture: return "Record"; case .models: return "Models" } }
-    var icon: String { switch self { case .meeting: return "doc.text.fill"; case .capture: return "mic.fill"; case .models: return "cpu.fill" } }
+    case output(id: String, title: String, icon: String, body: String)   // a meeting output, opened to read in full
+    var title: String {
+        switch self {
+        case .meeting: return "Meeting"; case .capture: return "Record"; case .models: return "Models"
+        case .output(_, let t, _, _): return t
+        }
+    }
+    var icon: String {
+        switch self {
+        case .meeting: return "doc.text.fill"; case .capture: return "mic.fill"; case .models: return "cpu.fill"
+        case .output(_, _, let i, _): return i
+        }
+    }
 }
 
 struct DeskWindowItem: Identifiable, Equatable {

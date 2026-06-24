@@ -108,10 +108,18 @@ struct DeskCardFace: View {
         return n
     }
 
+    // Output cards encode their parent meeting in the id ("open:<mid>", "out:<kind>:<mid>...") so a
+    // spilled child can be born AT its parent and spray outward — the meeting opening into its parts.
+    private func parentMeetingId(_ id: String) -> String? {
+        if id.hasPrefix("open:") { return String(id.dropFirst(5)) }
+        if id.hasPrefix("out:") { let p = id.split(separator: ":"); return p.count >= 3 ? String(p[2]) : nil }
+        return nil
+    }
     func sync(_ cards: [DeskCardData], size: CGSize) {
         let ids = Set(cards.map(\.id))
         for (id, n) in nodes where !ids.contains(id) { n.removeFromParent(); nodes[id] = nil }
         let fw = CardMode.full.size, cols = max(1, Int((size.width - 40) / (fw.width + 22)))
+        var burst: [String: Int] = [:]
         for (i, c) in cards.enumerated() {
             if let n = nodes[c.id] {
                 if (n.userData?["mode"] as? String) != c.mode.rawValue {
@@ -122,8 +130,17 @@ struct DeskCardFace: View {
                 }
             } else {
                 let n = makeCard(c)
-                let col = i % cols, row = i / cols
-                n.position = CGPoint(x: 40 + CGFloat(col) * (fw.width + 22) + fw.width / 2, y: size.height - 120 - CGFloat(row) * (fw.height + 20))
+                if let pid = parentMeetingId(c.id), let pnode = nodes[pid] {
+                    let k = burst[pid] ?? 0; burst[pid] = k + 1
+                    let a = CGFloat(k) * 2.399, rad: CGFloat = 150 + CGFloat(k % 4) * 30
+                    n.position = pnode.position; n.setScale(0.25); n.zRotation = 0
+                    n.run(.group([.move(to: CGPoint(x: pnode.position.x + cos(a) * rad, y: pnode.position.y + sin(a) * rad), duration: 0.42),
+                                  .scale(to: 1, duration: 0.42),
+                                  .rotate(toAngle: CGFloat.random(in: -0.12...0.12), duration: 0.42, shortestUnitArc: true)]))
+                } else {
+                    let col = i % cols, row = i / cols
+                    n.position = CGPoint(x: 40 + CGFloat(col) * (fw.width + 22) + fw.width / 2, y: size.height - 120 - CGFloat(row) * (fw.height + 20))
+                }
                 addChild(n); nodes[c.id] = n
             }
         }
