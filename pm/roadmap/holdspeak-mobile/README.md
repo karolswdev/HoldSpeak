@@ -3,7 +3,21 @@
 > 🚀 **New agent? Start here:** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Last updated:** 2026-06-22 (**PHASE 15 — THE MESH OPENED.** The owner ratified the holistic
+**Current phase:** [Phase 16 — The Desk, Everywhere](./phase-16-the-desk-everywhere/current-phase-status.md)
+(web/Astro parity of the DeskOS + desktop sync of the organization layer across the mesh).
+
+**Last updated:** 2026-06-24 (**PHASE 16 — THE DESK, EVERYWHERE OPENED.** On the owner's
+instruction to step back after the iPad DeskOS landed (HSM-14-19/20: objects, spill, lasso,
+directories, floating windows, the Knowledge Base primitive on a documented DeskObject convention)
+and (1) build **web/Astro parity** of the Desk and (2) **design desktop synchronization** so the
+organization layer — knowledge bases, directories, classifications — flows desktop ↔ iPad ↔ web as
+one mesh. Authored at [`phase-16-the-desk-everywhere`](./phase-16-the-desk-everywhere/current-phase-status.md)
+(7 stories): **16-01 the parity & sync contract** (the platform-neutral spec — leads), 16-02 the
+organization sync model (extends Phase-10 `SyncKind`/`ChangeSet`), 16-03 the desktop hub surface,
+**16-04 the web Astro Desk** (the parity build), 16-05 wire the mesh, 16-06 the cross-device proof,
+16-07 docs. The load-bearing call: **content** (meetings/artifacts) already syncs (Phase 10),
+**organization** (KBs/directories/membership) must sync as canonical via the desktop hub, **layout**
+(where a card sits) stays per-device. Prior context below. **PHASE 15 — THE MESH OPENED.** The owner ratified the holistic
 framing: HoldSpeak is a **personal intelligence mesh** — a desktop hub + mobile companions, two
 modes on every surface, fluid compute (on-device / your Mac / endpoint), one queue, one approval +
 egress contract, all private and **air-gappable**. New phase authored at
