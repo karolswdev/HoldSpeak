@@ -17,3 +17,16 @@ app, GLB → USDZ (Reality Converter / `usdzconvert`) → bundled, loaded native
 
 When vendoring any new asset, add its row here at fetch time. Prefer CC0; for CC-BY, the credit line is
 mandatory in shipped builds.
+
+## Vendored into the app (HSM-14-22 populated desk) — all CC0
+
+| Model | App file | Creator | Source |
+|---|---|---|---|
+| Light Desk (lamp) | App/lightdesk.scn | Quaternius | poly.pizza/m/uJDWrSJGVH |
+| Plant - White Pot | App/plant.scn | (poly.pizza CC0) | poly.pizza/m/7ig0HcyfT93 |
+| Book Stack | App/books.scn | (poly.pizza CC0) | poly.pizza/m/1WggoIFq8tx |
+| Mug | App/mug.scn | (poly.pizza CC0) | poly.pizza/m/2jVUdnj4mVP |
+| Keyboard | App/keyboard.scn | (poly.pizza CC0) | poly.pizza/m/3oFfQCSsUmQ |
+
+Pipeline used: poly.pizza GLB -> trimesh OBJ+texture -> `xcrun scntool` SCN -> bundled; palette texture
+re-applied in code from the `*_tex.png` atlases.

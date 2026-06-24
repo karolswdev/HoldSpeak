@@ -30,7 +30,11 @@ struct LivingDeskCanvas: UIViewRepresentable {
         let lp = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coord.onLongPress(_:)))
         lp.minimumPressDuration = 0.42
         let pan = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coord.onPan(_:)))
-        for g in [tap, lp, pan] as [UIGestureRecognizer] { v.addGestureRecognizer(g) }
+        pan.maximumNumberOfTouches = 1                                  // one finger drags a card
+        let camPan = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coord.onCamPan(_:)))
+        camPan.minimumNumberOfTouches = 2                               // two fingers pan the desk
+        let pinch = UIPinchGestureRecognizer(target: context.coordinator, action: #selector(Coord.onPinch(_:)))
+        for g in [tap, lp, pan, camPan, pinch] as [UIGestureRecognizer] { v.addGestureRecognizer(g) }
         return v
     }
 
@@ -61,19 +65,19 @@ struct LivingDeskCanvas: UIViewRepresentable {
             let scene = SCNScene()
             scene.physicsWorld.gravity = SCNVector3(0, -9.8, 0)
             scene.background.contents = UIColor(white: 0.05, alpha: 1)
-            scene.lightingEnvironment.contents = UIColor(red: 0.74, green: 0.75, blue: 0.78, alpha: 1)
-            scene.lightingEnvironment.intensity = 1.4
+            scene.lightingEnvironment.contents = UIColor(white: 0.72, alpha: 1)
+            scene.lightingEnvironment.intensity = 1.25
 
-            let cam = SCNCamera(); cam.fieldOfView = 38; cam.zNear = 0.1; cam.zFar = 400
-            cam.wantsHDR = true
+            let cam = SCNCamera(); cam.fieldOfView = 40; cam.zNear = 0.1; cam.zFar = 500
             cameraNode.camera = cam
-            cameraNode.position = SCNVector3(0, 32, 11)
-            cameraNode.eulerAngles = SCNVector3(-82.0 * .pi / 180.0, 0, 0)
+            cameraNode.position = SCNVector3(0, 32, 12)
+            cameraNode.eulerAngles = SCNVector3(-80.0 * .pi / 180.0, 0, 0)
             scene.rootNode.addChildNode(cameraNode)
 
-            let desk = SCNBox(width: 66, height: 1, length: 48, chamferRadius: 0.5)
+            // Desk — light marble (blinn, even + predictable; environments retune this later).
+            let desk = SCNBox(width: 70, height: 1, length: 52, chamferRadius: 0.5)
             let dm = SCNMaterial(); dm.lightingModel = .blinn
-            dm.diffuse.contents = UIColor(red: 0.12, green: 0.13, blue: 0.16, alpha: 1)   // Midnight Carbon default
+            dm.diffuse.contents = UIColor(red: 0.85, green: 0.83, blue: 0.79, alpha: 1)
             dm.specular.contents = UIColor(white: 0.5, alpha: 1); dm.shininess = 0.3
             desk.materials = [dm]
             let dnode = SCNNode(geometry: desk); dnode.position = SCNVector3(0, -0.5, 0)
@@ -81,22 +85,51 @@ struct LivingDeskCanvas: UIViewRepresentable {
             dnode.physicsBody?.friction = 0.85; dnode.physicsBody?.restitution = 0.04
             scene.rootNode.addChildNode(dnode); deskNode = dnode
 
-            let key = SCNNode(); let kl = SCNLight(); kl.type = .directional
-            kl.intensity = 700; kl.color = UIColor.white
-            key.eulerAngles = SCNVector3(-1.32, 0.25, 0); scene.rootNode.addChildNode(key)
+            // Key light — the main shadow caster (covers the whole desk so every object casts a shadow).
+            let key = SCNNode(); let kl = SCNLight(); kl.type = .directional; kl.intensity = 680
+            kl.color = UIColor.white
+            kl.castsShadow = true; kl.shadowSampleCount = 16; kl.shadowRadius = 4
+            kl.shadowColor = UIColor(white: 0, alpha: 0.4)
+            key.position = SCNVector3(10, 40, 20); key.eulerAngles = SCNVector3(-1.05, 0.4, 0)
+            scene.rootNode.addChildNode(key)
 
+            // Warm lamp pool (no shadow; the key owns shadows).
             let spot = SCNNode(); let sl = SCNLight(); sl.type = .spot
-            sl.color = UIColor(red: 1.0, green: 0.88, blue: 0.72, alpha: 1); sl.intensity = 2000
-            sl.spotInnerAngle = 30; sl.spotOuterAngle = 80
-            sl.castsShadow = true; sl.shadowMode = .deferred; sl.shadowSampleCount = 16
-            sl.shadowRadius = 8; sl.shadowColor = UIColor(white: 0, alpha: 0.4)
-            spot.light = sl; spot.position = SCNVector3(-13, 26, 6); spot.look(at: SCNVector3(-2, 0, -2))
+            sl.color = UIColor(red: 1.0, green: 0.86, blue: 0.66, alpha: 1); sl.intensity = 1700
+            sl.spotInnerAngle = 26; sl.spotOuterAngle = 66; sl.attenuationEndDistance = 70
+            spot.light = sl; spot.position = SCNVector3(-17, 13, -7); spot.look(at: SCNVector3(-6, 0, 2))
             scene.rootNode.addChildNode(spot)
 
             let amb = SCNNode(); let al = SCNLight(); al.type = .ambient
-            al.intensity = 380; al.color = UIColor(white: 0.55, alpha: 1)
+            al.intensity = 260; al.color = UIColor(white: 0.5, alpha: 1)
             amb.light = al; scene.rootNode.addChildNode(amb)
+
+            // Real poly.pizza props (bundled .scn + palette texture), arranged around the work area.
+            let props: [(String, Float, Float, Float, Float)] = [
+                ("lightdesk", 16,   -13, -7, 0.6),
+                ("plant",      3.2,  13, -7, 0),
+                ("books",      5,   -13,  4, 0.3),
+                ("mug",       24,    12,  4, 0),
+                ("keyboard",   0.03,  0, -6, 3.14),
+            ]
+            for (n, s, x, z, ry) in props { if let p = loadProp(n, scale: s, x, z, rotY: ry) { scene.rootNode.addChildNode(p) } }
             return scene
+        }
+
+        private func loadProp(_ name: String, scale s: Float, _ x: Float, _ z: Float, rotY: Float) -> SCNNode? {
+            guard let url = Bundle.main.url(forResource: name, withExtension: "scn"),
+                  let sc = try? SCNScene(url: url, options: nil) else { return nil }
+            let group = SCNNode(); for c in sc.rootNode.childNodes { group.addChildNode(c) }
+            if let tex = UIImage(named: "\(name)_tex") {
+                group.enumerateHierarchy { n, _ in n.geometry?.materials.forEach { $0.diffuse.contents = tex } }
+            }
+            var mn = SCNVector3Zero
+            group.enumerateHierarchy { n, _ in if let g = n.geometry { mn = g.boundingBox.min } }
+            let holder = SCNNode(); holder.addChildNode(group)
+            group.scale = SCNVector3(s, s, s); group.eulerAngles = SCNVector3(0, rotY, 0)
+            holder.position = SCNVector3(x, -Float(mn.y) * s + 0.02, z)
+            holder.enumerateHierarchy { n, _ in n.castsShadow = true }
+            return holder
         }
 
         @MainActor private func texture(_ c: DeskCardData) -> UIImage? {
@@ -115,6 +148,7 @@ struct LivingDeskCanvas: UIViewRepresentable {
 
             let visual = SCNNode(geometry: shape)
             visual.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)   // lay flat, face up
+            visual.castsShadow = true
 
             let container = SCNNode(); container.name = c.id; container.addChildNode(visual)
             let body = SCNPhysicsBody(type: .dynamic,
@@ -188,6 +222,21 @@ struct LivingDeskCanvas: UIViewRepresentable {
                 picked = nil
             default: break
             }
+        }
+
+        private var camStart: SCNVector3?
+        @objc func onCamPan(_ g: UIPanGestureRecognizer) {        // two fingers pan the desk
+            let t = g.translation(in: view)
+            if g.state == .began { camStart = cameraNode.position }
+            guard let s = camStart else { return }
+            let f: Float = 0.07
+            cameraNode.position = SCNVector3(s.x - Float(t.x) * f, s.y, s.z - Float(t.y) * f)
+            if g.state == .ended || g.state == .cancelled { camStart = nil }
+        }
+        @objc func onPinch(_ g: UIPinchGestureRecognizer) {      // pinch to zoom (FOV)
+            guard g.state == .changed, let cam = cameraNode.camera else { return }
+            cam.fieldOfView = max(20, min(58, cam.fieldOfView / Double(g.scale)))
+            g.scale = 1
         }
     }
 }
