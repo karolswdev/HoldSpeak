@@ -56,6 +56,7 @@ struct DeskHome: View {
     @State private var showNewFolder = false
     @State private var newFolderName = ""
     @State private var fileAfterCreate = false                    // creating a directory to immediately file the current selection
+    @AppStorage("hs.desk.living") private var livingDesk = false   // HSM-14-22: the 3D Living Desk (toolbar toggle)
 
     var body: some View {
         NavigationStack {
@@ -89,11 +90,15 @@ struct DeskHome: View {
         GeometryReader { geo in
             ZStack(alignment: .topLeading) {
                 DeskCanvasBackground()
-                DeskPhysicsCanvas(cards: cardData, tidyToken: tidyToken, zoomToken: zoomToken,
-                                  lassoMode: lassoMode, clearToken: clearToken, gatherToken: gatherToken,
-                                  onTap: { id in handleTap(id) },
-                                  onCycle: { id in tactile(); cycleMode(id) },
-                                  onSelect: { ids in selectedIDs = ids })
+                if livingDesk {
+                    LivingDeskCanvas(cards: cardData, onTap: { handleTap($0) }, onCycle: { id in tactile(); cycleMode(id) })
+                } else {
+                    DeskPhysicsCanvas(cards: cardData, tidyToken: tidyToken, zoomToken: zoomToken,
+                                      lassoMode: lassoMode, clearToken: clearToken, gatherToken: gatherToken,
+                                      onTap: { id in handleTap(id) },
+                                      onCycle: { id in tactile(); cycleMode(id) },
+                                      onSelect: { ids in selectedIDs = ids })
+                }
                 if cardData.isEmpty { DeskEmptyHint(folder: activeUserFolder == nil ? folder : .all).position(x: geo.size.width / 2, y: geo.size.height * 0.42) }
                 if selectedIDs.isEmpty, activeUserFolder == nil, folder != .models, folder != .knowledge {
                     DeskMic().position(x: geo.size.width * 0.5, y: geo.size.height - 92)
@@ -118,6 +123,7 @@ struct DeskHome: View {
                     }
                 }
                 VStack { DeskCanvasBar(folder: folder, userFolder: activeUserFolder, count: cardData.count, lassoMode: lassoMode,
+                                       livingDesk: livingDesk, onToggle3D: { tactile(.medium); livingDesk.toggle() },
                                        onLasso: { tactile(); lassoMode.toggle(); if !lassoMode { selectedIDs = []; clearToken += 1 } },
                                        onTidy: { tactile(); tidyToken += 1 }, onZoom: { tactile(); zoomToken += 1 }); Spacer() }
 
@@ -492,6 +498,7 @@ struct DeskMic: View {
 
 struct DeskCanvasBar: View {
     let folder: DeskFolder; let userFolder: String?; let count: Int; let lassoMode: Bool
+    let livingDesk: Bool; let onToggle3D: () -> Void
     let onLasso: () -> Void; let onTidy: () -> Void; let onZoom: () -> Void
     var body: some View {
         HStack(spacing: 10) {
@@ -502,9 +509,12 @@ struct DeskCanvasBar: View {
                     .padding(.horizontal, 6).padding(.vertical, 2).background(Capsule().fill(Sig.s3)) }
             }
             Spacer()
-            pill("lasso", "Select", onLasso, on: lassoMode)
-            pill("arrow.up.left.and.arrow.down.right", "Fit", onZoom)
-            pill("square.grid.2x2.fill", "Tidy", onTidy)
+            pill("cube.fill", livingDesk ? "3D" : "2D", onToggle3D, on: livingDesk)
+            if !livingDesk {
+                pill("lasso", "Select", onLasso, on: lassoMode)
+                pill("arrow.up.left.and.arrow.down.right", "Fit", onZoom)
+                pill("square.grid.2x2.fill", "Tidy", onTidy)
+            }
         }.padding(.horizontal, 18).padding(.top, 14)
     }
     private func pill(_ icon: String, _ label: String, _ action: @escaping () -> Void, on: Bool = false) -> some View {

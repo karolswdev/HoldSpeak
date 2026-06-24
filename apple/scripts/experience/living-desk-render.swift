@@ -22,13 +22,17 @@ func cardImage(_ tint: NSColor, title: String) -> NSImage {
 }
 
 func card(_ tint: NSColor, _ x: Float, _ z: Float, y: Float = 0.30, rot: Float = 0) -> SCNNode {
-    let g = SCNBox(width: 8.8, height: 0.22, length: 2.8, chamferRadius: 0.12)
-    let top = SCNMaterial(); top.diffuse.contents = cardImage(tint, title: ""); top.roughness.contents = 0.5
+    // An extruded rounded-rect so the card SILHOUETTE follows the face model (not a plain box).
+    let w: CGFloat = 8.8, h: CGFloat = 2.8, r: CGFloat = 0.6, thick: CGFloat = 0.22
+    let path = NSBezierPath(roundedRect: NSRect(x: -w/2, y: -h/2, width: w, height: h), xRadius: r, yRadius: r)
+    let g = SCNShape(path: path, extrusionDepth: thick)
+    let front = SCNMaterial(); front.diffuse.contents = cardImage(tint, title: ""); front.roughness.contents = 0.5
     let edge = SCNMaterial(); edge.diffuse.contents = NSColor(calibratedWhite: 0.10, alpha: 1); edge.roughness.contents = 0.7
-    // SCNBox material order: +Z, +X, -Z, -X, +Y(top), -Y(bottom). The camera looks at the TOP (+Y).
-    g.materials = [edge, edge, edge, edge, top, edge]
+    g.materials = [front, edge, edge]                 // SCNShape: [front, back, sides]
     let n = SCNNode(geometry: g)
-    n.position = SCNVector3(x, y, z); n.eulerAngles = SCNVector3(0, rot, 0)
+    // Lay flat, face up: rotate -90deg about X, then spin so the title reads toward the viewer.
+    n.eulerAngles = SCNVector3(-Float.pi / 2, Float.pi + rot, 0)
+    n.position = SCNVector3(x, y, z)
     return n
 }
 
