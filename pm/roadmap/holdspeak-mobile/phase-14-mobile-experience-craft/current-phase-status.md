@@ -537,6 +537,33 @@ signed + **installed on the iPad Air M4** (launch pended on the lock screen). st
 ecosystem now does the full arc: **record → route → keep → send.** Next: the visible route arc (cable
 motion) + the long-press "Route to…/Send to…" menu (the discoverable twin of the drag).
 
+**2026-06-25 — GROUNDED: connectors ride the HoldSpeak actuator framework, gated on host PC connectivity
+(owner: "I hope this is all grounded in those HoldSpeak actuators… this should be gated on host PC
+connectivity").** Owned the gap honestly: the first connector was an ad-hoc iPad→Slack webhook POST — NOT
+grounded in the Phase 37/38/61 actuator framework, and it held the credential on the iPad. Refactored end to
+end so the connector is a faithful **propose→approve→execute** actuator routed **through the paired Mac**:
+- **Host (Python), grounded in the real framework:** two new companion endpoints —
+  `POST /api/companion/slack/propose` (records a `proposed` `ActuatorProposal`: target `slack`, action
+  `post_message`, preview == the exact wire body, payload `{body:{text}}`, idempotent on content hash; a
+  hidden sentinel `companion` meeting satisfies the proposals FK and is excluded from `list_meetings`) and
+  `POST /api/companion/slack/{id}/decision` (approve → executes **immediately through the existing
+  `_execute_slack_proposal` / `build_slack_connector` / `ActuatorExecutor`** guard stack — status gate,
+  payload parity, manifest allow-list). **The webhook URL is joined in memory ON THE MAC at execute time —
+  never accepted from or returned to the iPad, never on the proposal, never broadcast.** `/api/companion/status`
+  now reports `connectors.slack_configured` (bool, no URL) so the iPad can gate. **13 new tests**
+  (`tests/integration/test_web_companion_slack.py`) prove the matrix incl. the credential rule; existing
+  slack-export (24) + meetings/history (43) green, no regressions. (One pre-existing, unrelated dashboard
+  `egressLabel()` failure — confirmed failing on a clean tree, a stale gitignored web bundle.)
+- **iPad (Swift):** the connector no longer holds a webhook. It reuses the desk's **Mac pairing**
+  (`hs.peer.host`/`hs.peer.port`), is **gated on connectivity** (a `DeskHostLink.reachable()` `/health`
+  check before any send; "your Mac isn't reachable" otherwise), and on **Approve & send** does
+  propose→decide over the host endpoints — the iPad sends only text, receives only a preview/status. The
+  connector tile now says "via your Mac"; the connect action pairs the Mac (host:port), not a webhook.
+- The **egress badge** stays the one badge (`Cloud · Slack`); the send card reads "approve → your Mac posts
+  it." Device-arch **BUILD SUCCEEDED**; harness send-card reshot
+  ([send card](./screenshots/connector-send-card.png)). This is the right grounding the owner asked for —
+  the iPad is a companion, the host owns the actuators and the credential.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a

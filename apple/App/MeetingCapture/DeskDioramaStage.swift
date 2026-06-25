@@ -577,6 +577,53 @@ struct DioSendCard: View {
     }
 }
 
+// The link to the paired Mac (host PC). Connectors route THROUGH it: the iPad proposes + approves; the host
+// executes with the Slack credential joined in memory ON THE MAC — the iPad never holds it. Grounded in the
+// HoldSpeak actuator framework (propose→approve→execute, Phase 37/38/61) via /api/companion/slack/*.
+struct DeskHostLink {
+    let host: String; let port: Int
+    enum HostError: Error { case message(String) }
+    private var base: URL? { URL(string: "http://\(host):\(port)") }
+
+    func reachable() async -> Bool {
+        guard let u = base?.appendingPathComponent("health") else { return false }
+        var r = URLRequest(url: u); r.timeoutInterval = 4
+        if let (_, resp) = try? await URLSession.shared.data(for: r), (resp as? HTTPURLResponse)?.statusCode == 200 { return true }
+        return false
+    }
+    /// Propose an arbitrary-text Slack send on the host → (proposalId, preview). No credential crosses.
+    func propose(title: String, text: String) async throws -> (id: String, preview: String) {
+        var body: [String: Any] = ["text": text]
+        if !title.isEmpty { body["title"] = title }
+        let (data, resp) = try await post("api/companion/slack/propose", body)
+        try Self.check(data, resp, "Your Mac refused the send.")
+        let p = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["proposal"] as? [String: Any]
+        return (p?["id"] as? String ?? "", p?["preview"] as? String ?? text)
+    }
+    /// Approve (→ execute) or reject the proposal on the host → (status, error?).
+    func decide(id: String, approved: Bool) async throws -> (status: String, error: String?) {
+        let (data, resp) = try await post("api/companion/slack/\(id)/decision",
+                                          ["decision": approved ? "approved" : "rejected", "decided_by": "ipad-desk"])
+        try Self.check(data, resp, "Your Mac refused the decision.")
+        let p = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["proposal"] as? [String: Any]
+        return (p?["status"] as? String ?? "", p?["error"] as? String)
+    }
+    private func post(_ path: String, _ body: [String: Any]) async throws -> (Data, URLResponse) {
+        guard let u = base?.appendingPathComponent(path) else { throw HostError.message("No Mac paired.") }
+        var r = URLRequest(url: u); r.httpMethod = "POST"; r.timeoutInterval = 14
+        r.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        r.httpBody = try JSONSerialization.data(withJSONObject: body)
+        return try await URLSession.shared.data(for: r)
+    }
+    private static func check(_ data: Data, _ resp: URLResponse, _ fallback: String) throws {
+        let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
+        guard (200..<300).contains(code) else {
+            let msg = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String
+            throw HostError.message(msg ?? fallback)
+        }
+    }
+}
+
 struct DioStage: View {
     @StateObject private var model = CaptureModel()
     @AppStorage("hs.diorama.pos") private var posCSV = ""
@@ -607,8 +654,10 @@ struct DioStage: View {
     @State private var routing = false
     @State private var printed: OutputRecord? = nil
     @State private var routeError: String? = nil
-    // connectors (the integrations half: drop an output on Slack → approve → send)
-    @AppStorage("hs.diorama.slack") private var slackWebhook = ""
+    // connectors (the integrations half: drop an output on Slack → approve → the MAC sends).
+    // Routed through the paired host PC — the iPad holds no credential. Reuses the desk's Mac pairing.
+    @AppStorage("hs.peer.host") private var peerHost = ""
+    @AppStorage("hs.peer.port") private var peerPort = "8000"
     @State private var sendSourceId: String? = nil
     @State private var sendTargetName = ""
     @State private var showSendCard = false
@@ -648,9 +697,14 @@ struct DioStage: View {
             }
             for kb in knowledgeBases.prefix(3) { out.append(KBPrimitive(name: kb, items: kbCount(kb))) }
             out.append(ConnectorPrimitive(connId: "slack", name: "Slack", symbol: "number", tint: DioPal.violet,
-                                          configured: !slackWebhook.isEmpty, detail: "ready to send"))
+                                          configured: hostLink != nil, detail: peerHost.isEmpty ? "" : peerHost))
         }
         return out
+    }
+    private var hostLink: DeskHostLink? {
+        let h = peerHost.trimmingCharacters(in: .whitespaces)
+        guard !h.isEmpty, let p = Int(peerPort.trimmingCharacters(in: .whitespaces)), p > 0 else { return nil }
+        return DeskHostLink(host: h, port: p)
     }
     private func membersOf(_ zpath: String) -> [any DeskPrimitive] {
         var out: [any DeskPrimitive] = []
@@ -776,11 +830,11 @@ struct DioStage: View {
             .alert("Couldn’t route", isPresented: Binding(get: { routeError != nil }, set: { if !$0 { routeError = nil } })) {
                 Button("OK", role: .cancel) { routeError = nil }
             } message: { Text(routeError ?? "") }
-            .alert("Connect Slack", isPresented: $connecting) {
-                TextField("Incoming webhook URL", text: $connectURL)
+            .alert("Pair your Mac", isPresented: $connecting) {
+                TextField("host or host:port (e.g. 192.168.1.13:8000)", text: $connectURL)
                 Button("Cancel", role: .cancel) {}
-                Button("Save") { slackWebhook = connectURL.trimmingCharacters(in: .whitespacesAndNewlines) }
-            } message: { Text("Paste a Slack incoming-webhook URL. It’s stored on this device and used only when you approve a send.") }
+                Button("Save") { savePeer(connectURL) }
+            } message: { Text("Your iPad sends through your Mac. The Slack credential stays on the Mac — the iPad never holds it.") }
             .alert("New zone", isPresented: $namingZone) {
                 TextField("Name", text: $newZoneName)
                 Button("Cancel", role: .cancel) { newZoneName = "" }
@@ -833,7 +887,7 @@ struct DioStage: View {
     private func handle(_ act: PrimitiveAction, on prim: any DeskPrimitive) {
         switch act.role {
         case .openEditor: if let m = meeting(forObj: prim.id) { openMeeting = m }
-        case .custom("connect"): connectURL = slackWebhook; select(nil); connecting = true
+        case .custom("connect"): connectURL = peerHost.isEmpty ? "" : "\(peerHost):\(peerPort)"; select(nil); connecting = true
         case .route, .send, .custom: break
         }
     }
@@ -923,31 +977,43 @@ struct DioStage: View {
         }
     }
     private func sendNow(_ src: any DeskPrimitive) {
-        guard !slackWebhook.isEmpty, let u = URL(string: slackWebhook), u.scheme?.hasPrefix("http") == true else {
-            withAnimation { showSendCard = false }; routeError = "Connect \(sendTargetName) first — tap it and add a webhook URL."; return
+        guard let link = hostLink else {
+            withAnimation { showSendCard = false }; routeError = "Pair your Mac first — tap the \(sendTargetName) tile."; return
         }
         sending = true
-        let text = "*\(src.title)*\n\(src.routableText)"
-        let target = sendTargetName
+        let title = src.title, text = src.routableText, target = sendTargetName
         Task { @MainActor in
-            var req = URLRequest(url: u); req.httpMethod = "POST"
-            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            req.httpBody = try? JSONSerialization.data(withJSONObject: ["text": text])
+            if await link.reachable() == false {
+                sending = false; withAnimation { showSendCard = false }
+                routeError = "Your Mac isn’t reachable. Wake it and make sure it’s on the same network."
+                return
+            }
             do {
-                let (_, resp) = try await URLSession.shared.data(for: req)
+                // propose → approve → execute, all on the host (the credential never leaves the Mac)
+                let proposal = try await link.propose(title: title, text: text)
+                let decision = try await link.decide(id: proposal.id, approved: true)
                 sending = false; withAnimation { showSendCard = false }; sendSourceId = nil
-                let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
-                if (200..<300).contains(code) {
+                if decision.status == "executed" {
                     #if canImport(UIKit)
                     UINotificationFeedbackGenerator().notificationOccurred(.success)
                     #endif
-                    toast("Sent to \(target)")
-                } else { routeError = "\(target) rejected the send (HTTP \(code))." }
+                    toast("Sent to \(target) via your Mac")
+                } else {
+                    routeError = decision.error ?? "\(target) send didn’t complete (status: \(decision.status))."
+                }
+            } catch let DeskHostLink.HostError.message(m) {
+                sending = false; withAnimation { showSendCard = false }; routeError = m
             } catch {
-                sending = false; withAnimation { showSendCard = false }
-                routeError = "Couldn’t reach \(target). Check the webhook URL and your network."
+                sending = false; withAnimation { showSendCard = false }; routeError = "Couldn’t reach your Mac."
             }
         }
+    }
+    private func savePeer(_ raw: String) {
+        let s = raw.trimmingCharacters(in: .whitespaces)
+        guard !s.isEmpty else { return }
+        if let colon = s.lastIndex(of: ":"), let p = Int(s[s.index(after: colon)...]), p > 0 {
+            peerHost = String(s[..<colon]); peerPort = String(p)
+        } else { peerHost = s }
     }
     private func toast(_ s: String) {
         withAnimation { sentToast = s }

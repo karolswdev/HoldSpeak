@@ -517,7 +517,7 @@ struct SendCardH: View {
                     Image(systemName: "paperplane.fill").font(.system(size: 15, weight: .bold)).foregroundStyle(.white).frame(width: 36, height: 36).background(Circle().fill(Pal.cobalt))
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Send to \(conn)").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
-                        Text("you approve every send").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
+                        Text("approve → your Mac posts it").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
                     }
                     Spacer(minLength: 0)
                     HStack(spacing: 5) { Image(systemName: "arrow.up.forward.app.fill").font(.system(size: 9, weight: .bold)); Text("Cloud · \(conn)").font(.system(size: 10, weight: .heavy, design: .rounded)) }

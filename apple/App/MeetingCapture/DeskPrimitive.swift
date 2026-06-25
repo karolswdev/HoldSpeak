@@ -183,15 +183,15 @@ struct ConnectorPrimitive: DeskPrimitive {
     var color: Color { tint }
     var base: CGFloat { 116 }
     var title: String { name }
-    var subtitle: String { configured ? detail : "tap to connect" }
-    var preview: String? { configured ? "ready" : "tap to connect" }
+    var subtitle: String { configured ? "via your Mac · \(detail)" : "tap to pair your Mac" }
+    var preview: String? { configured ? "via your Mac" : "pair your Mac" }
     var sections: [PrimitiveSection] {
         [.init(label: "CONNECTOR", tint: tint, body: .text(configured
-            ? "Connected. Drop a card here to send it to \(name) — you approve every send."
-            : "Not connected. Add a \(name) webhook, then drop a card here to send it. You approve every send."))]
+            ? "Sends go through your Mac (\(detail)). Drop a card here, approve it, and your Mac posts to \(name) — the credential stays on the Mac, never on this iPad."
+            : "Pair your Mac to send. Your iPad proposes; your Mac approves and posts to \(name). The iPad never holds the \(name) credential."))]
     }
     var actions: [PrimitiveAction] {
-        [PrimitiveAction(label: configured ? "Change webhook" : "Connect \(name)", icon: "link", role: .custom("connect"))]
+        [PrimitiveAction(label: configured ? "Your Mac · \(detail)" : "Pair your Mac", icon: "desktopcomputer", role: .custom("connect"))]
     }
     var accepts: [PrimitiveKind] { configured ? [.artifact, .summary, .actions, .topics, .meeting] : [] }
 }

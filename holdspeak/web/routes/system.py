@@ -209,6 +209,14 @@ def build_system_router(ctx: WebContext) -> APIRouter:
             and getattr(session, "tmux_pane", None)
         )
 
+        # HSM-14: companion connectors are gated on the host. Report whether
+        # Slack is configured WITHOUT leaking the URL — the iPad gates its
+        # connector tile on this + reachability, and never holds the credential.
+        try:
+            slack_configured = bool(Config.load().meeting.slack_webhook_url)
+        except Exception:
+            slack_configured = False
+
         dictation_error: str | None = None
         try:
             dictation_cfg = Config.load().dictation
@@ -310,6 +318,9 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                     "count": len(devices),
                     "items": devices,
                     "query_names": sorted(AGENT_QUERY_NAMES),
+                },
+                "connectors": {
+                    "slack_configured": slack_configured,
                 },
                 "agent": {
                     "awaiting_response": agent_waiting,

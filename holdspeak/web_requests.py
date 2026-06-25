@@ -57,6 +57,15 @@ class _SlackExportRequest(BaseModel):
     what: str = ""
 
 
+class _CompanionSlackRequest(BaseModel):
+    # HSM-14: a companion (the iPad desk) proposes sending ARBITRARY text to
+    # Slack through the host's actuator framework. `text` is both the preview
+    # and the exact message body. Nothing is sent until separately approved;
+    # the webhook URL stays on the host (joined in memory at execution time).
+    text: str = ""
+    title: Optional[str] = None
+
+
 class _UpdateMeetingRequest(BaseModel):
     title: Optional[str] = None
     tags: Optional[list[str]] = None

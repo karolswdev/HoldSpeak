@@ -31,6 +31,7 @@ from ...web_requests import (
     _GlobalActionItemUpdateRequest,
     _IntelProcessRequest,
     _MeetingStartRequest,
+    _CompanionSlackRequest,
     _ProposalDecisionRequest,
     _SlackExportRequest,
     _SpeakerUpdateRequest,
@@ -1136,6 +1137,125 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             )
         except Exception as e:
             return error_500(e, log, "Failed to propose Slack export")
+
+    # ----- HSM-14: the iPad desk (a companion) routes a connector send through
+    # the HOST's actuator framework. The companion holds NO credential; it
+    # proposes arbitrary text, the host executes with the webhook joined in
+    # memory at execution time. Same propose -> approve -> execute as Phase 61.
+    _COMPANION_MEETING_ID = "companion"
+
+    @router.post("/api/companion/slack/propose")
+    async def api_companion_slack_propose(payload: _CompanionSlackRequest) -> Any:
+        """Propose sending arbitrary companion (desk) text to Slack (HSM-14).
+
+        A non-meeting-scoped sibling of the aftercare Slack export: the iPad
+        drops a generated card onto its Slack connector, and that becomes a
+        `proposed` actuator proposal here. The preview IS the exact message
+        body; the webhook URL is never accepted from or returned to the
+        companion — it stays on the host, joined at execution time only.
+        """
+        import hashlib
+
+        from ...config import Config
+
+        text = str(payload.text or "").strip()
+        if not text:
+            return JSONResponse({"success": False, "error": "text is required"}, status_code=400)
+        if not Config.load().meeting.slack_webhook_url:
+            return JSONResponse(
+                {"success": False, "error": "Slack is not configured on the host (set the webhook URL in Settings first)"},
+                status_code=400,
+            )
+        try:
+            from datetime import datetime
+
+            from ...db import get_database
+            from ...meeting_session import MeetingState
+            from ...plugins.builtin.webhook_post_actuator import WebhookPostActuator
+
+            db = get_database()
+            # actuator_proposals.meeting_id is a NOT NULL FK to meetings(id); a
+            # companion send isn't tied to a meeting, so it hangs off one hidden
+            # sentinel row (excluded from list_meetings). Created on demand.
+            if db.meetings.get_meeting(_COMPANION_MEETING_ID) is None:
+                db.meetings.save_meeting(
+                    MeetingState(
+                        id=_COMPANION_MEETING_ID,
+                        started_at=datetime.now(),
+                        title="Desk · companion sends",
+                    )
+                )
+            body = f"*{payload.title.strip()}*\n{text}" if (payload.title or "").strip() else text
+            content_key = hashlib.sha256(body.encode("utf-8")).hexdigest()[:16]
+            proposal = db.actuators.record_proposal(
+                meeting_id=_COMPANION_MEETING_ID,
+                window_id="companion:slack",
+                plugin_id=WebhookPostActuator.id,
+                plugin_version=WebhookPostActuator.version,
+                idempotency_key=f"companion-slack:{content_key}",
+                target="slack",
+                action="post_message",
+                preview=body,
+                payload={"body": {"text": body}},
+                reversible=False,
+                required_capabilities=["actuator"],
+            )
+            ctx.broadcast(
+                "actuator_proposed",
+                {
+                    "id": proposal.id,
+                    "meeting_id": proposal.meeting_id,
+                    "plugin_id": proposal.plugin_id,
+                    "status": proposal.status,
+                    "target": proposal.target,
+                    "action": proposal.action,
+                    "preview": proposal.preview,
+                    "reversible": bool(proposal.reversible),
+                },
+            )
+            return JSONResponse({"success": True, "proposal": _proposal_to_dict(proposal)})
+        except Exception as e:
+            return error_500(e, log, "Failed to propose companion Slack send")
+
+    @router.post("/api/companion/slack/{proposal_id}/decision")
+    async def api_decide_companion_slack(
+        proposal_id: str, payload: _ProposalDecisionRequest
+    ) -> Any:
+        """Approve (→ execute) or reject a companion Slack proposal (HSM-14).
+
+        Mirrors the meeting decision route but scoped to companion proposals.
+        Approving a `slack` proposal executes immediately through the full
+        guarded executor (status gate, payload parity, manifest allow-list),
+        with the webhook URL injected in memory by the connector — never on the
+        proposal, never returned.
+        """
+        decision = str(payload.decision or "").strip().lower()
+        if decision not in ("approved", "rejected"):
+            return JSONResponse({"success": False, "error": f"Invalid decision: {decision!r}"}, status_code=400)
+        try:
+            from ...db import get_database
+
+            db = get_database()
+            existing = db.actuators.get_proposal(proposal_id)
+            if existing is None or existing.meeting_id != _COMPANION_MEETING_ID:
+                return JSONResponse({"success": False, "error": "Proposal not found"}, status_code=404)
+            try:
+                updated = db.actuators.transition_proposal(
+                    proposal_id,
+                    to_status=decision,
+                    actor=(payload.decided_by or "companion").strip() or "companion",
+                )
+            except ValueError as ve:
+                return JSONResponse({"success": False, "error": str(ve)}, status_code=400)
+            if decision == "rejected":
+                ctx.broadcast("actuator_result", _actuator_result_event(updated))
+            if decision == "approved" and updated.target == "slack":
+                updated = _execute_slack_proposal(
+                    db, updated, actor=(payload.decided_by or "companion").strip() or "companion"
+                )
+            return JSONResponse({"success": True, "proposal": _proposal_to_dict(updated)})
+        except Exception as e:
+            return error_500(e, log, "Failed to decide companion Slack proposal")
 
     @router.get("/api/all-action-items")
     async def api_list_all_action_items(
