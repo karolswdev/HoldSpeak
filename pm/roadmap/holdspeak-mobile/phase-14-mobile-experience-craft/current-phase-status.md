@@ -366,6 +366,21 @@ floating output card drifts + sways on its own phase (a `TimelineView` with a pe
 amplitude — a few points / fractions of a unit. `xcodebuild` **BUILD SUCCEEDED**; installed on the iPad
 Air M4 (launch pending an unlock).
 
+**2026-06-24 — FOUNDATION PIVOT: the Desk becomes a premium 2.5D diorama (owner: "rethink the
+approach").** After a run of features that were mechanically present but read as an *alpha* build, the
+owner called it — and chose, from a direct question, to **rethink the foundation** rather than keep
+polishing the hand-rolled real-time 3D. The honest root causes: (a) procedural box-geometry is
+programmer-art by construction, (b) I was rendering **blind** (the offscreen renderer is dark/untone-mapped
+and the device kept locking), so every pass was a guess. New direction (owner-picked): a **crafted,
+art-directed 2.5D diorama** — the bespoke **PixelLab** objects (cassette = meeting, AI-core cartridge =
+model, crystal = knowledge) on a warm, lit desk that recedes into space, with grounding shadows, a leather
+work mat, depth haze, wood grain, and elegant zone trays. The decisive win: it's built in SwiftUI and
+**verified at FULL fidelity in the iOS Simulator** (`scripts/diorama/` + `scripts/diorama-shot.sh`, a clean
+one-module harness isolated from the macOS SceneKit CLI) — quality stops being a guess. First composition
+proven + committed ([shot](./screenshots/desk-diorama-v1.png)). The 3D `LivingDeskCanvas` stays in the app
+untouched for now; the diorama is the new target to build the experience (objects, zones, the dive, the
+focus lens) up to — at this bar, screenshot-verified each step.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a

@@ -143,6 +143,18 @@ These are the owner's explicit, repeated asks — the road to "meaningful":
    notes:** the dive→settle handoff has a tiny camera discontinuity (diveInto ends on the zone center;
    syncLevel snaps to a fixed pose then eases home) — tune on device. Per-level card LAYOUT positions
    aren't persisted yet (cards re-grid each entry). Tune the dive timing/drama on the glass.
+> **FOUNDATION PIVOT — 2.5D DIORAMA (2026-06-24, owner: "rethink the approach; it looks alpha").** The
+> hand-rolled real-time 3D (procedural geometry + a dark blind renderer) was the alpha smell. New direction:
+> a premium **art-directed 2.5D diorama** in SwiftUI using the bespoke **PixelLab** objects, **verified at
+> full fidelity in the iOS Simulator**. Harness: `scripts/diorama/Diorama.swift` (self-contained, `@main`)
+> + `scripts/diorama-shot.sh` (`DIO_DEVICE` iPad Air; sources sprites from `scripts/experience/assets/`;
+> screenshot needs an ABSOLUTE path; the sim renders portrait — design for it, or rotate via osascript key
+> code 124/123). First shot: `screenshots/desk-diorama-v1.png`. **THE LOOP TO USE NOW:** edit Diorama.swift
+> → `./scripts/diorama-shot.sh /tmp/x.png` → Read it → iterate. Build the whole experience (objects, zones,
+> dive, focus lens) up to this bar here FIRST, then port into the app. The 3D `LivingDeskCanvas` stays
+> untouched until the diorama is genuinely better. (The old offscreen SceneKit renderer + 3D notes below
+> are superseded for look work — keep them only as 3D reference.)
+
 > **FOCUS LENS (2026-06-24, owner's vision for "expand"):** tapping a meeting in 3D no longer spills cards
 > into the physics desk — it **lifts the object toward the camera** (`LivingDeskCanvas.liftToFocus`:
 > kinematic + collisionBitMask 0 so it's non-solid, transform saved in `focusSaved`, animated up+scaled;
