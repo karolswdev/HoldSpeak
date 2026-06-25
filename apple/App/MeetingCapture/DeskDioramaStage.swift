@@ -32,7 +32,7 @@ struct DioHero: View {
     var body: some View {
         let s = prim.base
         VStack(spacing: 7) {
-            DioHeroVisual(glyph: prim.glyph, glow: prim.color, base: s, seed: prim.id, focused: mode == .focus, hot: hot).frame(width: s, height: s)
+            DioHeroVisual(glyph: prim.glyph, glow: prim.color, base: s, seed: prim.id, focused: mode == .focus, hot: hot, symbol: prim.isSymbol).frame(width: s, height: s)
             Text(prim.title).font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.85))
                 .lineLimit(1).frame(maxWidth: s + 36)
                 .padding(.horizontal, 8).padding(.vertical, 3)
@@ -67,7 +67,7 @@ struct DioHero: View {
 
 struct DioHeroVisual: View {
     let glyph: String; let glow: Color; let base: CGFloat; let seed: String; let focused: Bool
-    var hot: Bool = false
+    var hot: Bool = false; var symbol: Bool = false
     var body: some View {
         let s = base
         TimelineView(.animation) { tl in
@@ -86,9 +86,20 @@ struct DioHeroVisual: View {
                     Circle().strokeBorder(DioPal.accent.opacity(0.7 + 0.3 * ring), lineWidth: 3)
                         .frame(width: s * (1.1 + 0.08 * ring), height: s * (1.1 + 0.08 * ring))
                 }
-                DeskSprite(name: glyph, size: s)
-                    .rotationEffect(.degrees(tilt)).scaleEffect(breathe).offset(y: -bob)
-                    .shadow(color: .black.opacity(0.55), radius: 15, y: 11)
+                Group {
+                    if symbol {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: s * 0.24, style: .continuous)
+                                .fill(LinearGradient(colors: [glow.opacity(0.42), Color(hex: 0x12101A)], startPoint: .top, endPoint: .bottom))
+                                .overlay(RoundedRectangle(cornerRadius: s * 0.24, style: .continuous).strokeBorder(glow.opacity(0.7), lineWidth: 1.5))
+                            Image(systemName: glyph).font(.system(size: s * 0.38, weight: .bold)).foregroundStyle(.white)
+                        }.frame(width: s * 0.84, height: s * 0.84)
+                    } else {
+                        DeskSprite(name: glyph, size: s)
+                    }
+                }
+                .rotationEffect(.degrees(tilt)).scaleEffect(breathe).offset(y: -bob)
+                .shadow(color: .black.opacity(0.55), radius: 15, y: 11)
             }
             .frame(width: s, height: s)
         }
@@ -502,6 +513,70 @@ struct DioPrintedCard: View {
     }
 }
 
+// The ONE egress badge (POSITIONING canon): local / local+cloud / cloud+target. No privacy prose.
+struct EgressBadge: View {
+    enum Scope { case local; case cloud(String) }
+    let scope: Scope
+    var body: some View {
+        let (icon, label, tint): (String, String, Color) = {
+            switch scope {
+            case .local: return ("lock.fill", "On device", DioPal.mint)
+            case .cloud(let t): return ("arrow.up.forward.app.fill", "Cloud · \(t)", Color(hex: 0xF5A524))
+            }
+        }()
+        HStack(spacing: 5) {
+            Image(systemName: icon).font(.system(size: 9, weight: .bold))
+            Text(label).font(.system(size: 10, weight: .heavy, design: .rounded))
+        }.foregroundStyle(tint).padding(.horizontal, 9).frame(height: 26).background(Capsule().fill(tint.opacity(0.14)))
+    }
+}
+
+// THE SEND CARD — propose→approve→execute for a connector. Shows what, where, and the egress badge.
+struct DioSendCard: View {
+    let sourceTitle: String, preview: String, connName: String
+    let sending: Bool
+    let onApprove: () -> Void; let onCancel: () -> Void
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.7).ignoresSafeArea().onTapGesture { if !sending { onCancel() } }
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 9) {
+                    Image(systemName: "paperplane.fill").font(.system(size: 15, weight: .bold)).foregroundStyle(.white)
+                        .frame(width: 36, height: 36).background(Circle().fill(DioPal.cobalt))
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Send to \(connName)").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                        Text("you approve every send").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                    }
+                    Spacer(minLength: 0)
+                    EgressBadge(scope: .cloud(connName))
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(sourceTitle).font(.system(size: 13.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                    Text(preview).font(.system(size: 13, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.82)).lineLimit(5).fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading).padding(13)
+                .background(RoundedRectangle(cornerRadius: 14).fill(.white.opacity(0.04)).overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.white.opacity(0.07), lineWidth: 1)))
+                HStack(spacing: 10) {
+                    Button(action: onCancel) { Text("Cancel").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).frame(maxWidth: .infinity).frame(height: 46).background(Capsule().fill(.white.opacity(0.06))) }.buttonStyle(.plain).disabled(sending)
+                    Button(action: onApprove) {
+                        HStack(spacing: 6) {
+                            if sending { ProgressView().tint(.white) } else { Image(systemName: "checkmark").font(.system(size: 14, weight: .bold)) }
+                            Text(sending ? "Sending…" : "Approve & send").font(.system(size: 14.5, weight: .heavy, design: .rounded))
+                        }.foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 46)
+                            .background(Capsule().fill(LinearGradient(colors: [Color(hex: 0x7AA2F7), DioPal.cobalt], startPoint: .top, endPoint: .bottom)))
+                    }.buttonStyle(.plain).disabled(sending)
+                }
+            }
+            .padding(20).frame(maxWidth: 460)
+            .background(RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom))
+                .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1))
+                .shadow(color: .black.opacity(0.6), radius: 30, y: 16))
+            .padding(.horizontal, 18)
+        }
+    }
+}
+
 struct DioStage: View {
     @StateObject private var model = CaptureModel()
     @AppStorage("hs.diorama.pos") private var posCSV = ""
@@ -532,6 +607,15 @@ struct DioStage: View {
     @State private var routing = false
     @State private var printed: OutputRecord? = nil
     @State private var routeError: String? = nil
+    // connectors (the integrations half: drop an output on Slack → approve → send)
+    @AppStorage("hs.diorama.slack") private var slackWebhook = ""
+    @State private var sendSourceId: String? = nil
+    @State private var sendTargetName = ""
+    @State private var showSendCard = false
+    @State private var sending = false
+    @State private var connecting = false
+    @State private var connectURL = ""
+    @State private var sentToast: String? = nil
     private let diveSpring = Animation.spring(response: 0.6, dampingFraction: 0.74)
     private let focusSpring = Animation.spring(response: 0.5, dampingFraction: 0.72)
 
@@ -563,6 +647,8 @@ struct DioStage: View {
                 out.append(ModelPrimitive(modelId: mdl.id, name: mdl.name.replacingOccurrences(of: ".gguf", with: "")))
             }
             for kb in knowledgeBases.prefix(3) { out.append(KBPrimitive(name: kb, items: kbCount(kb))) }
+            out.append(ConnectorPrimitive(connId: "slack", name: "Slack", symbol: "number", tint: DioPal.violet,
+                                          configured: !slackWebhook.isEmpty, detail: "ready to send"))
         }
         return out
     }
@@ -654,7 +740,7 @@ struct DioStage: View {
                         .transition(.move(edge: .trailing).combined(with: .opacity)).zIndex(60)
                 }
 
-                if !path.isEmpty && selected == nil && !showRouteSheet && !routing && printed == nil {
+                if !path.isEmpty && selected == nil && !showRouteSheet && !routing && printed == nil && !showSendCard {
                     DioBackBar(crumbs: crumbs(), onBack: { climbOut() }, onJump: { jump(to: $0) })
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                         .padding(.top, h * 0.045).zIndex(100)
@@ -674,12 +760,27 @@ struct DioStage: View {
                 if let rec = printed {
                     DioPrintedCard(rec: rec, onKeep: { keepPrinted() }, onBin: { binPrinted() }).zIndex(130)
                 }
+                if showSendCard, let src = members().first(where: { $0.id == sendSourceId }) {
+                    DioSendCard(sourceTitle: src.title, preview: String(src.routableText.prefix(220)), connName: sendTargetName, sending: sending,
+                                onApprove: { sendNow(src) }, onCancel: { if !sending { withAnimation { showSendCard = false }; sendSourceId = nil } }).zIndex(135)
+                }
+                if let t = sentToast {
+                    HStack(spacing: 7) { Image(systemName: "checkmark.circle.fill"); Text(t).font(.system(size: 13, weight: .heavy, design: .rounded)) }
+                        .foregroundStyle(.white).padding(.horizontal, 16).frame(height: 40).background(Capsule().fill(DioPal.mint.opacity(0.92)))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top).padding(.top, h * 0.04)
+                        .transition(.move(edge: .top).combined(with: .opacity)).zIndex(200)
+                }
             }
             .ignoresSafeArea()
             .onAppear { landed = true; load(); model.refresh() }
             .alert("Couldn’t route", isPresented: Binding(get: { routeError != nil }, set: { if !$0 { routeError = nil } })) {
                 Button("OK", role: .cancel) { routeError = nil }
             } message: { Text(routeError ?? "") }
+            .alert("Connect Slack", isPresented: $connecting) {
+                TextField("Incoming webhook URL", text: $connectURL)
+                Button("Cancel", role: .cancel) {}
+                Button("Save") { slackWebhook = connectURL.trimmingCharacters(in: .whitespacesAndNewlines) }
+            } message: { Text("Paste a Slack incoming-webhook URL. It’s stored on this device and used only when you approve a send.") }
             .alert("New zone", isPresented: $namingZone) {
                 TextField("Name", text: $newZoneName)
                 Button("Cancel", role: .cancel) { newZoneName = "" }
@@ -732,7 +833,8 @@ struct DioStage: View {
     private func handle(_ act: PrimitiveAction, on prim: any DeskPrimitive) {
         switch act.role {
         case .openEditor: if let m = meeting(forObj: prim.id) { openMeeting = m }
-        case .route, .send, .custom: break   // wired next (the keystone routing gesture)
+        case .custom("connect"): connectURL = slackWebhook; select(nil); connecting = true
+        case .route, .send, .custom: break
         }
     }
 
@@ -807,14 +909,49 @@ struct DioStage: View {
     // MARK: the intelligence engine — route a primitive through the AI core (or a KB)
     private func beginRoute(sourceId: String, target: any DeskPrimitive) {
         haptic(.medium)
-        if target.kind == .model {                              // the AI core → ask the LLM
+        switch target.kind {
+        case .model:                                            // the AI core → ask the LLM
             routeSourceId = sourceId
             withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { showRouteSheet = true }
-        } else {                                                // e.g. a KB → file into it (simple route for now)
+        case .connector:                                        // a connector → propose→approve→send
+            sendSourceId = sourceId; sendTargetName = target.title
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { showSendCard = true }
+        default:
             #if canImport(UIKit)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             #endif
         }
+    }
+    private func sendNow(_ src: any DeskPrimitive) {
+        guard !slackWebhook.isEmpty, let u = URL(string: slackWebhook), u.scheme?.hasPrefix("http") == true else {
+            withAnimation { showSendCard = false }; routeError = "Connect \(sendTargetName) first — tap it and add a webhook URL."; return
+        }
+        sending = true
+        let text = "*\(src.title)*\n\(src.routableText)"
+        let target = sendTargetName
+        Task { @MainActor in
+            var req = URLRequest(url: u); req.httpMethod = "POST"
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            req.httpBody = try? JSONSerialization.data(withJSONObject: ["text": text])
+            do {
+                let (_, resp) = try await URLSession.shared.data(for: req)
+                sending = false; withAnimation { showSendCard = false }; sendSourceId = nil
+                let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
+                if (200..<300).contains(code) {
+                    #if canImport(UIKit)
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    #endif
+                    toast("Sent to \(target)")
+                } else { routeError = "\(target) rejected the send (HTTP \(code))." }
+            } catch {
+                sending = false; withAnimation { showSendCard = false }
+                routeError = "Couldn’t reach \(target). Check the webhook URL and your network."
+            }
+        }
+    }
+    private func toast(_ s: String) {
+        withAnimation { sentToast = s }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.9) { withAnimation { if sentToast == s { sentToast = nil } } }
     }
     private func runRoute(lens: String, prompt: String) {
         withAnimation { showRouteSheet = false }

@@ -72,6 +72,7 @@ extension DeskPrimitive {
     var emits: [PrimitiveKind] { [] }
     var accepts: [PrimitiveKind] { [] }
     func canReceive(_ other: DeskPrimitive) -> Bool { accepts.contains(other.kind) }
+    var isSymbol: Bool { false }              // glyph is an SF Symbol (a tool/connector), not a pixel sprite
 
     // The text you feed to an LLM when this primitive is routed — derived from its sections, generically.
     var routableText: String {
@@ -168,6 +169,31 @@ struct OutputPrimitive: DeskPrimitive {
     var preview: String? { rec.body }
     var sections: [PrimitiveSection] { [.init(label: rec.lens.uppercased(), tint: DioPal.accent, body: .text(rec.body))] }
     var emits: [PrimitiveKind] { [.artifact] }
+}
+
+// A CONNECTOR — a tool on the desk that sends an output OUT of the app (the integrations half). Same
+// grammar as the AI core: drop a primitive on it → it `accepts` it → propose→approve→execute. Rendered from
+// an SF Symbol (it's a tool, not a recording). Configured by a webhook URL the user pastes.
+struct ConnectorPrimitive: DeskPrimitive {
+    let connId: String; let name: String; let symbol: String; let tint: Color; let configured: Bool; let detail: String
+    var id: String { "conn:\(connId)" }
+    var kind: PrimitiveKind { .connector }
+    var glyph: String { symbol }
+    var isSymbol: Bool { true }
+    var color: Color { tint }
+    var base: CGFloat { 116 }
+    var title: String { name }
+    var subtitle: String { configured ? detail : "tap to connect" }
+    var preview: String? { configured ? "ready" : "tap to connect" }
+    var sections: [PrimitiveSection] {
+        [.init(label: "CONNECTOR", tint: tint, body: .text(configured
+            ? "Connected. Drop a card here to send it to \(name) — you approve every send."
+            : "Not connected. Add a \(name) webhook, then drop a card here to send it. You approve every send."))]
+    }
+    var actions: [PrimitiveAction] {
+        [PrimitiveAction(label: configured ? "Change webhook" : "Connect \(name)", icon: "link", role: .custom("connect"))]
+    }
+    var accepts: [PrimitiveKind] { configured ? [.artifact, .summary, .actions, .topics, .meeting] : [] }
 }
 
 // The lenses you can route a primitive through (the prompt presets). "Ask…" is a free prompt.

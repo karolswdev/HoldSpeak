@@ -521,6 +521,22 @@ ecosystem real. Owner runs the real on-metal route (needs an on-device model or 
 the visible route arc, the long-press "Route to…/Send to…" menu, and connectors-as-primitives (drop an output
 on Slack → propose→approve→execute).
 
+**2026-06-25 — THE INTEGRATIONS HALF: connectors as primitives (owner: "keep going").** The loop closes —
+capture → route into the AI core → judge → **act into the world**. A **`ConnectorPrimitive`** (a Slack tile)
+is a first-class primitive like any other, but rendered from an **SF Symbol** (the contract gained
+`isSymbol` — connectors are tools, not pixel recordings) and it `accepts` outputs. **Drop a kept output (or a
+meeting) onto Slack** → it lights up hot (same `accepts ∋ kind` grammar as the AI core) → a **send card**:
+propose→approve→execute, showing *what*, *where*, and the **one egress badge** (`Cloud · Slack`, per
+POSITIONING canon — no privacy prose). **Approve & send** POSTs to a Slack **incoming webhook** (real
+`URLSession`), stored on-device (`hs.diorama.slack`, pasted via a Connect sheet on the connector's pull-out
+action), with a sent toast / honest failure. Routing is now fully generic: `beginRoute` switches on
+`target.kind` (model → ask the LLM, connector → send), and *the AI core and a connector are reached by the
+exact same drag gesture*. Harness-proven ([Slack on the desk](./screenshots/desk-with-connector.png) ·
+[send card + egress badge](./screenshots/connector-send-card.png)); device-arch **BUILD SUCCEEDED**; built +
+signed + **installed on the iPad Air M4** (launch pended on the lock screen). story-25 build-order #4. The
+ecosystem now does the full arc: **record → route → keep → send.** Next: the visible route arc (cable
+motion) + the long-press "Route to…/Send to…" menu (the discoverable twin of the drag).
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a

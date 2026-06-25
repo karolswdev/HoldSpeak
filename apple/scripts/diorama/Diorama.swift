@@ -32,7 +32,7 @@ struct Sprite: View {
     }
 }
 
-struct Obj: Identifiable { let id: String; let sprite: String; let base: CGFloat; let glow: Color; let title: String }
+struct Obj: Identifiable { let id: String; let sprite: String; let base: CGFloat; let glow: Color; let title: String; var symbol: Bool = false }
 enum Mode { case home, focus, recede }
 
 enum World {
@@ -42,7 +42,8 @@ enum World {
     static let members: [String: [Obj]] = [
         "": [Obj(id: "standup", sprite: "cassette", base: 130, glow: Pal.accent, title: "Standup"),
              Obj(id: "core",    sprite: "cartridge", base: 162, glow: Pal.cobalt, title: "AI Core"),
-             Obj(id: "docs",    sprite: "crystal",  base: 120, glow: Pal.violet, title: "Docs KB")],
+             Obj(id: "docs",    sprite: "crystal",  base: 120, glow: Pal.violet, title: "Docs KB"),
+             Obj(id: "slack",   sprite: "number",   base: 116, glow: Pal.violet, title: "Slack", symbol: true)],
         "Atlas": [Obj(id: "kickoff", sprite: "cassette",  base: 130, glow: Pal.accent, title: "Kickoff"),
                   Obj(id: "roadmap", sprite: "cassette2", base: 130, glow: Pal.accent, title: "Roadmap")],
         "Atlas/Q3": [Obj(id: "sprint1", sprite: "cassette",  base: 126, glow: Pal.accent, title: "Sprint 1"),
@@ -71,7 +72,18 @@ struct Hero: View {
                         .blur(radius: 11).offset(y: s * 0.46 * modeScale + bob * 0.25).opacity(landed ? dim : 0)
                     Circle().fill(RadialGradient(colors: [obj.glow.opacity(mode == .focus ? 0.75 : 0.5), .clear], center: .center, startRadius: 2, endRadius: s * 0.8))
                         .frame(width: s * 1.9, height: s * 1.9).blur(radius: 12).opacity(landed ? pulse * dim : 0)
-                    Sprite(name: obj.sprite, size: s)
+                    Group {
+                        if obj.symbol {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: s * 0.24, style: .continuous)
+                                    .fill(LinearGradient(colors: [obj.glow.opacity(0.42), Color(hex: 0x12101A)], startPoint: .top, endPoint: .bottom))
+                                    .overlay(RoundedRectangle(cornerRadius: s * 0.24, style: .continuous).strokeBorder(obj.glow.opacity(0.7), lineWidth: 1.5))
+                                Image(systemName: obj.sprite).font(.system(size: s * 0.38, weight: .bold)).foregroundStyle(.white)
+                            }.frame(width: s * 0.84, height: s * 0.84)
+                        } else {
+                            Sprite(name: obj.sprite, size: s)
+                        }
+                    }
                         .rotationEffect(.degrees(landed ? tilt : -8))
                         .scaleEffect(landed ? modeScale * breathe : 0.15)
                         .offset(y: landed ? -bob : -260)
@@ -495,9 +507,43 @@ struct PrintedH: View {
     }
 }
 
+struct SendCardH: View {
+    let source: String, preview: String, conn: String
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.7).ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 9) {
+                    Image(systemName: "paperplane.fill").font(.system(size: 15, weight: .bold)).foregroundStyle(.white).frame(width: 36, height: 36).background(Circle().fill(Pal.cobalt))
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Send to \(conn)").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
+                        Text("you approve every send").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
+                    }
+                    Spacer(minLength: 0)
+                    HStack(spacing: 5) { Image(systemName: "arrow.up.forward.app.fill").font(.system(size: 9, weight: .bold)); Text("Cloud · \(conn)").font(.system(size: 10, weight: .heavy, design: .rounded)) }
+                        .foregroundStyle(Color(hex: 0xF5A524)).padding(.horizontal, 9).frame(height: 26).background(Capsule().fill(Color(hex: 0xF5A524).opacity(0.14)))
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(source).font(.system(size: 13.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
+                    Text(preview).font(.system(size: 13, weight: .medium, design: .rounded)).foregroundStyle(Pal.text.opacity(0.82)).lineLimit(5).fixedSize(horizontal: false, vertical: true)
+                }.frame(maxWidth: .infinity, alignment: .leading).padding(13)
+                .background(RoundedRectangle(cornerRadius: 14).fill(.white.opacity(0.04)).overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.white.opacity(0.07), lineWidth: 1)))
+                HStack(spacing: 10) {
+                    Text("Cancel").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted).frame(maxWidth: .infinity).frame(height: 46).background(Capsule().fill(.white.opacity(0.06)))
+                    HStack(spacing: 6) { Image(systemName: "checkmark").font(.system(size: 14, weight: .bold)); Text("Approve & send").font(.system(size: 14.5, weight: .heavy, design: .rounded)) }
+                        .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 46).background(Capsule().fill(LinearGradient(colors: [Color(hex: 0x7AA2F7), Pal.cobalt], startPoint: .top, endPoint: .bottom)))
+                }
+            }
+            .padding(20).frame(maxWidth: 460)
+            .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom)).overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1)).shadow(color: .black.opacity(0.6), radius: 30, y: 16))
+            .padding(.horizontal, 18)
+        }
+    }
+}
+
 struct Stage: View {
     @State private var landed = false
-    @State private var routeStage = ""           // "", "sheet", "theater", "printed" (DIO_ROUTE_STAGE)
+    @State private var routeStage = ""           // "", "sheet", "theater", "printed", "send" (DIO_ROUTE_STAGE)
     @State private var path: [String] = []
     @State private var diveDir = 1
     @State private var flash = 0.0
@@ -610,6 +656,9 @@ struct Stage: View {
 
                 if routeStage == "sheet" { RouteSheetH(source: "Standup").zIndex(120) }
                 if routeStage == "theater" { TheaterH(source: "Standup").zIndex(120) }
+                if routeStage == "send" {
+                    SendCardH(source: "Risks", preview: "• Pricing is unresolved and blocks the all-hands message — needs a decision by Monday.\n• Finance is waiting on the beta numbers; the follow-up depends on you sending them today.", conn: "Slack").zIndex(135)
+                }
                 if routeStage == "printed" {
                     PrintedH(title: "Risks",
                              text: "• Pricing is unresolved and blocks the all-hands message — needs a decision by Monday.\n• Finance is waiting on the beta numbers; the follow-up depends on you sending them today.\n• Ownership of the customer deck is on Priya alone — single point of failure if she's out.\n• No date set for the pricing decision itself, only \"next week.\"",
