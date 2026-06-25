@@ -394,6 +394,16 @@ interactive AND auto-played (`DIO_DEMO=1`) so the whole flow records in motion. 
 [stage](./screenshots/delight-stage.png) · [focus bloom](./screenshots/delight-focus.png) + the recorded
 clips. The lesson, locked: **stop proving feel with frozen frames — record motion, then feel it on device.**
 
+**2026-06-24 — expanded the loop: the capture moment (record → listen → a meeting is BORN).** On "keep
+expanding on it," added the app's core action in the same alive style: a breathing **record orb** → a calm
+**Listening…** state (a voice core — breathing orb + expanding rings + a ring of reactive bars — with live
+words rising and fading) → Stop, and the recording **crystallises into a new cassette** that pops onto the
+stage with a spring + a success haptic, then opens to its intelligence. Create and consume, both delightful,
+both verified in motion. Auto-played tour under `DIO_DEMO=1`. Proof:
+[listening](./screenshots/delight-listening.png) · [born](./screenshots/delight-born.png) + the recorded
+clip. Next candidate expansions (keep it simple): the model/KB objects responding on tap, acting on a card
+(send/approve), and the fractal dive — then port the whole feel into the real app + onto the device.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
