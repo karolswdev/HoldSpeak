@@ -449,29 +449,27 @@ struct DioRouteSheet: View {
 }
 
 // THE THEATER — the route running through the AI core, on this iPad (or the endpoint).
+// On-desk routing: the cable runs from the source to the target (which pulses as it works) — no modal.
 struct DioRoutingTheater: View {
-    let sourceTitle: String; let lens: String; let local: Bool
+    let from: CGPoint, to: CGPoint; let sourceTitle: String; let lens: String; let local: Bool; let tint: Color
     var body: some View {
         ZStack {
-            Color.black.opacity(0.74).ignoresSafeArea()
+            Color.black.opacity(0.42).ignoresSafeArea()
+            RouteArc(from: from, to: to, tint: tint)
             TimelineView(.animation) { tl in
                 let t = tl.date.timeIntervalSinceReferenceDate
-                VStack(spacing: 22) {
-                    ZStack {
-                        ForEach(0..<3) { i in
-                            let p = ((t * 0.7 + Double(i) * 0.33).truncatingRemainder(dividingBy: 1))
-                            Circle().stroke(DioPal.accent.opacity(0.5 * (1 - p)), lineWidth: 2).frame(width: 90 + CGFloat(p) * 120, height: 90 + CGFloat(p) * 120)
-                        }
-                        Circle().fill(RadialGradient(colors: [Color(hex: 0xFFB070), DioPal.accent.opacity(0.7), .clear], center: .center, startRadius: 3, endRadius: 55))
-                            .frame(width: 96, height: 96).scaleEffect(1 + CGFloat(sin(t * 2.4) * 0.06))
-                        DeskSprite(name: "cartridge", size: 60).rotationEffect(.degrees(sin(t * 1.2) * 6))
-                    }
-                    VStack(spacing: 5) {
-                        Text("Routing \(sourceTitle)").font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
-                        Text("\(lens) · \(local ? "on this iPad · no network" : "endpoint")").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
-                    }
+                ForEach(0..<3) { i in
+                    let p = ((t * 0.7 + Double(i) * 0.33).truncatingRemainder(dividingBy: 1))
+                    Circle().stroke(tint.opacity(0.55 * (1 - p)), lineWidth: 2)
+                        .frame(width: 70 + CGFloat(p) * 90, height: 70 + CGFloat(p) * 90).position(to)
                 }
             }
+            VStack(spacing: 3) {
+                Text("Routing \(sourceTitle)").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                Text("\(lens) · \(local ? "on this iPad · no network" : "endpoint")").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+            }
+            .padding(.horizontal, 16).padding(.vertical, 9).background(Capsule().fill(.black.opacity(0.55)))
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(.bottom, 130)
         }
         .transition(.opacity)
     }
@@ -510,6 +508,35 @@ struct DioPrintedCard: View {
             .padding(.horizontal, 18).scaleEffect(shown ? 1 : 0.85).opacity(shown ? 1 : 0)
         }
         .onAppear { withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { shown = true } }
+    }
+}
+
+// THE ROUTE ARC — a glowing cable from a source primitive to its target with tokens traveling the wire
+// while the route runs (the Blueprints "token travels wires" viz, on the desk).
+func dioQuad(_ a: CGPoint, _ c: CGPoint, _ b: CGPoint, _ t: Double) -> CGPoint {
+    let u = 1 - t
+    return CGPoint(x: u * u * a.x + 2 * u * t * c.x + t * t * b.x,
+                   y: u * u * a.y + 2 * u * t * c.y + t * t * b.y)
+}
+struct RouteArc: View {
+    let from: CGPoint, to: CGPoint, tint: Color
+    var body: some View {
+        let ctrl = CGPoint(x: (from.x + to.x) / 2, y: min(from.y, to.y) - 90)
+        TimelineView(.animation) { tl in
+            let t = tl.date.timeIntervalSinceReferenceDate
+            Canvas { ctx, _ in
+                var path = Path(); path.move(to: from); path.addQuadCurve(to: to, control: ctrl)
+                ctx.stroke(path, with: .color(tint.opacity(0.22)), style: StrokeStyle(lineWidth: 9, lineCap: .round))
+                ctx.stroke(path, with: .color(tint.opacity(0.8)), style: StrokeStyle(lineWidth: 2.5, lineCap: .round, dash: [2, 7]))
+                for k in 0..<3 {
+                    let p = (t * 0.85 + Double(k) * 0.34).truncatingRemainder(dividingBy: 1)
+                    let pt = dioQuad(from, ctrl, to, p)
+                    ctx.fill(Path(ellipseIn: CGRect(x: pt.x - 8, y: pt.y - 8, width: 16, height: 16)), with: .color(tint.opacity(0.3)))
+                    ctx.fill(Path(ellipseIn: CGRect(x: pt.x - 3.5, y: pt.y - 3.5, width: 7, height: 7)), with: .color(.white))
+                }
+            }
+        }
+        .allowsHitTesting(false)
     }
 }
 
@@ -652,6 +679,8 @@ struct DioStage: View {
     @State private var routeLensRun = ""
     @State private var showRouteSheet = false
     @State private var routing = false
+    @State private var routeFrom: CGPoint = .zero
+    @State private var routeTo: CGPoint = .zero
     @State private var printed: OutputRecord? = nil
     @State private var routeError: String? = nil
     // connectors (the integrations half: drop an output on Slack → approve → the MAC sends).
@@ -808,8 +837,9 @@ struct DioStage: View {
                         .zIndex(120)
                 }
                 if routing {
-                    DioRoutingTheater(sourceTitle: members().first(where: { $0.id == routeSourceId })?.title ?? "the desk",
-                                      lens: routeLensRun, local: InferenceConfigStore.shared.isLocal).zIndex(125)
+                    DioRoutingTheater(from: routeFrom, to: routeTo,
+                                      sourceTitle: members().first(where: { $0.id == routeSourceId })?.title ?? "the desk",
+                                      lens: routeLensRun, local: InferenceConfigStore.shared.isLocal, tint: DioPal.accent).zIndex(125)
                 }
                 if let rec = printed {
                     DioPrintedCard(rec: rec, onKeep: { keepPrinted() }, onBin: { binPrinted() }).zIndex(130)
@@ -918,18 +948,18 @@ struct DioStage: View {
     }
     private func updateHot(_ p: any DeskPrimitive, _ pt: CGPoint?, _ zs: [(path: String, color: Int)], _ slotN: Int, _ w: CGFloat, _ h: CGFloat) {
         guard let pt = pt else { dragHotZone = nil; dragHotObjectId = nil; return }
-        if let target = objectHit(pt, members(), w, h, excluding: p.id), target.accepts.contains(p.kind) {
-            dragHotObjectId = target.id; dragHotZone = nil; return    // a route target wins
+        if let target = objectHit(pt, members(), w, h, excluding: p.id), target.prim.accepts.contains(p.kind) {
+            dragHotObjectId = target.prim.id; dragHotZone = nil; return    // a route target wins
         }
         dragHotObjectId = nil
         dragHotZone = (p.kind == .meeting) ? trayHit(pt, zs, slotN, w, h) : nil
     }
-    private func objectHit(_ pt: CGPoint, _ ms: [any DeskPrimitive], _ w: CGFloat, _ h: CGFloat, excluding: String) -> (any DeskPrimitive)? {
+    private func objectHit(_ pt: CGPoint, _ ms: [any DeskPrimitive], _ w: CGFloat, _ h: CGFloat, excluding: String) -> (prim: any DeskPrimitive, center: CGPoint)? {
         for (i, o) in ms.enumerated() where o.id != excluding {
             let c = pos(o.id, looseHome(i, ms.count, w, h), w, h)
             let s = o.base
             let rect = CGRect(x: c.x - s / 2, y: c.y - s / 2, width: s, height: s).insetBy(dx: -8, dy: -8)
-            if rect.contains(pt) { return o }
+            if rect.contains(pt) { return (o, c) }
         }
         return nil
     }
@@ -946,9 +976,10 @@ struct DioStage: View {
         let start = pos(p.id, fallback, w, h)
         let end = CGPoint(x: start.x + tr.width, y: start.y + tr.height)
         defer { dragHotZone = nil; dragHotObjectId = nil }
-        // 1) routed onto a compatible primitive (the AI core / a KB)?
-        if let target = objectHit(end, members(), w, h, excluding: p.id), target.accepts.contains(p.kind) {
-            beginRoute(sourceId: p.id, target: target); return
+        // 1) routed onto a compatible primitive (the AI core / a connector)?
+        if let target = objectHit(end, members(), w, h, excluding: p.id), target.prim.accepts.contains(p.kind) {
+            routeFrom = start; routeTo = target.center            // the cable runs source → target
+            beginRoute(sourceId: p.id, target: target.prim); return
         }
         // 2) a meeting filed into a zone?
         let zs = childZones(); let slotN = zs.count + 1

@@ -507,6 +507,36 @@ struct PrintedH: View {
     }
 }
 
+// THE ROUTE ARC — a glowing cable from a source primitive to its target (the AI core / a connector) with
+// tokens traveling the wire while the route runs. The gamified "token travels wires" viz from the Blueprints
+// canon, made real for the desk. One mechanism for both routing-in and sending-out.
+func dioQuad(_ a: CGPoint, _ c: CGPoint, _ b: CGPoint, _ t: Double) -> CGPoint {
+    let u = 1 - t
+    return CGPoint(x: u * u * a.x + 2 * u * t * c.x + t * t * b.x,
+                   y: u * u * a.y + 2 * u * t * c.y + t * t * b.y)
+}
+struct RouteArc: View {
+    let from: CGPoint, to: CGPoint, tint: Color
+    var body: some View {
+        let ctrl = CGPoint(x: (from.x + to.x) / 2, y: min(from.y, to.y) - 90)
+        TimelineView(.animation) { tl in
+            let t = tl.date.timeIntervalSinceReferenceDate
+            Canvas { ctx, _ in
+                var path = Path(); path.move(to: from); path.addQuadCurve(to: to, control: ctrl)
+                ctx.stroke(path, with: .color(tint.opacity(0.22)), style: StrokeStyle(lineWidth: 9, lineCap: .round))
+                ctx.stroke(path, with: .color(tint.opacity(0.8)), style: StrokeStyle(lineWidth: 2.5, lineCap: .round, dash: [2, 7]))
+                for k in 0..<3 {
+                    let p = (t * 0.85 + Double(k) * 0.34).truncatingRemainder(dividingBy: 1)
+                    let pt = dioQuad(from, ctrl, to, p)
+                    ctx.fill(Path(ellipseIn: CGRect(x: pt.x - 8, y: pt.y - 8, width: 16, height: 16)), with: .color(tint.opacity(0.3)))
+                    ctx.fill(Path(ellipseIn: CGRect(x: pt.x - 3.5, y: pt.y - 3.5, width: 7, height: 7)), with: .color(.white))
+                }
+            }
+        }
+        .allowsHitTesting(false)
+    }
+}
+
 struct SendCardH: View {
     let source: String, preview: String, conn: String
     var body: some View {
@@ -656,6 +686,26 @@ struct Stage: View {
 
                 if routeStage == "sheet" { RouteSheetH(source: "Standup").zIndex(120) }
                 if routeStage == "theater" { TheaterH(source: "Standup").zIndex(120) }
+                if routeStage == "wire" {
+                    let src = loosePos(0, 4, w, h), tgt = loosePos(1, 4, w, h)
+                    ZStack {
+                        Color.black.opacity(0.4).ignoresSafeArea()
+                        RouteArc(from: src, to: tgt, tint: Pal.accent)
+                        TimelineView(.animation) { tl in
+                            let t = tl.date.timeIntervalSinceReferenceDate
+                            ForEach(0..<3) { i in
+                                let p = ((t * 0.7 + Double(i) * 0.33).truncatingRemainder(dividingBy: 1))
+                                Circle().stroke(Pal.accent.opacity(0.55 * (1 - p)), lineWidth: 2)
+                                    .frame(width: 70 + CGFloat(p) * 90, height: 70 + CGFloat(p) * 90).position(tgt)
+                            }
+                        }
+                        Text("Routing Standup → AI Core · on this iPad")
+                            .font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
+                            .padding(.horizontal, 14).padding(.vertical, 8)
+                            .background(Capsule().fill(.black.opacity(0.5)))
+                            .position(x: w * 0.5, y: tgt.y + 110)
+                    }.zIndex(118)
+                }
                 if routeStage == "send" {
                     SendCardH(source: "Risks", preview: "• Pricing is unresolved and blocks the all-hands message — needs a decision by Monday.\n• Finance is waiting on the beta numbers; the follow-up depends on you sending them today.", conn: "Slack").zIndex(135)
                 }

@@ -564,6 +564,17 @@ end so the connector is a faithful **propose→approve→execute** actuator rout
   ([send card](./screenshots/connector-send-card.png)). This is the right grounding the owner asked for —
   the iPad is a companion, the host owns the actuators and the credential.
 
+**2026-06-25 — the route made VISIBLE: the cable + traveling token (story-25 #2).** Routing used to jump to
+a centred modal — the gesture didn't read. Now a route DRAWS itself: a glowing dashed **cable** arcs from the
+source primitive to its target with **tokens traveling the wire** while the model works (the Blueprints
+"token travels wires" viz from the canon, on the desk), the target **pulses** as it runs, and the desk dims
+behind — no modal. The modal `DioRoutingTheater` was replaced with this **on-desk** treatment fed by the real
+source/target screen positions (captured at drop: `routeFrom` = source centre, `routeTo` = target centre via
+`objectHit`). One mechanism, both routes (into the AI core, out to a connector). Composed + **video-proven**
+in the harness (tokens visibly travel the cable frame-to-frame), ported to `DioStage`; device-arch **BUILD
+SUCCEEDED**. Proof: [route arc](./screenshots/route-arc.png) + the recorded clip. Next on the list: the
+long-press "Route to…/Send to…" menu (discoverable twin) + lasso→bundle→Ask + a second grounded connector.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
