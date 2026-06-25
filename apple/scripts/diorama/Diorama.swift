@@ -3,12 +3,11 @@ import SwiftUI
 import UIKit
 #endif
 
-// HSM-14 — THE FRACTAL DESK (harness). The owner's most-excited idea, into the 2.5D diorama: the stage now
-// has PLACES. Named zone trays HOLD objects; tap a tray and you DIVE in — the camera rushes, the zone
-// becomes the whole desk, showing its members and its own sub-zones (recursive). A breadcrumb shows where
-// you are and jumps you back out; tap empty to climb a level. The dive is gamified motion, not a cut.
-// Keeps the delight: objects spring/breathe, the record→listen→born loop, Qlippy with character.
-// Compose here in the Simulator, then port to the app's DioStage. Auto-tour with env DIO_DEMO=1.
+// HSM-14 — THE FRACTAL DESK (harness), v2 on owner feedback: zones are LOW-PROFILE (a compact top shelf,
+// not dominating boxes) so the canvas stays open for PULL-OUTS. A tapped object's intelligence now PULLS
+// OUT from the right edge as a rich in-world drawer (no centered modal, no plain nav window). A big
+// always-on-top Back bar makes escaping a zone unmissable; a focus fog catches stray taps. Keeps the
+// delight: spring-in objects, idle motion, record→listen→born, Qlippy. Compose here, then port to DioStage.
 
 extension Color {
     init(hex: UInt, a: Double = 1) {
@@ -36,32 +35,28 @@ struct Sprite: View {
 struct Obj: Identifiable { let id: String; let sprite: String; let base: CGFloat; let glow: Color; let title: String }
 enum Mode { case home, focus, recede }
 
-// MARK: - The zone world (a path-keyed tree). Zone ids ARE their full path ("Atlas", "Atlas/Q3").
 enum World {
-    static let name: [String: String] = ["Atlas": "Project Atlas", "Personal": "Personal",
-                                          "Atlas/Q3": "Q3 Planning"]
+    static let name: [String: String] = ["Atlas": "Project Atlas", "Personal": "Personal", "Atlas/Q3": "Q3 Planning"]
     static let tint: [String: Color] = ["Atlas": Pal.accent, "Personal": Pal.mint, "Atlas/Q3": Pal.cobalt]
-    static let children: [String: [String]] = ["": ["Atlas", "Personal"], "Atlas": ["Atlas/Q3"],
-                                               "Atlas/Q3": [], "Personal": []]
+    static let children: [String: [String]] = ["": ["Atlas", "Personal"], "Atlas": ["Atlas/Q3"], "Atlas/Q3": [], "Personal": []]
     static let members: [String: [Obj]] = [
-        "": [Obj(id: "standup", sprite: "cassette", base: 132, glow: Pal.accent, title: "Standup"),
-             Obj(id: "core",    sprite: "cartridge", base: 168, glow: Pal.cobalt, title: "AI Core"),
-             Obj(id: "docs",    sprite: "crystal",  base: 122, glow: Pal.violet, title: "Docs KB")],
-        "Atlas": [Obj(id: "kickoff", sprite: "cassette",  base: 132, glow: Pal.accent, title: "Kickoff"),
-                  Obj(id: "roadmap", sprite: "cassette2", base: 132, glow: Pal.accent, title: "Roadmap")],
-        "Atlas/Q3": [Obj(id: "sprint1", sprite: "cassette",  base: 128, glow: Pal.accent, title: "Sprint 1"),
-                     Obj(id: "sprint2", sprite: "cassette2", base: 128, glow: Pal.accent, title: "Sprint 2"),
-                     Obj(id: "notes",   sprite: "note",      base: 108, glow: Pal.mint,   title: "Notes")],
-        "Personal": [Obj(id: "oneonone", sprite: "cassette2", base: 132, glow: Pal.mint, title: "1:1 w/ Sam")],
+        "": [Obj(id: "standup", sprite: "cassette", base: 130, glow: Pal.accent, title: "Standup"),
+             Obj(id: "core",    sprite: "cartridge", base: 162, glow: Pal.cobalt, title: "AI Core"),
+             Obj(id: "docs",    sprite: "crystal",  base: 120, glow: Pal.violet, title: "Docs KB")],
+        "Atlas": [Obj(id: "kickoff", sprite: "cassette",  base: 130, glow: Pal.accent, title: "Kickoff"),
+                  Obj(id: "roadmap", sprite: "cassette2", base: 130, glow: Pal.accent, title: "Roadmap")],
+        "Atlas/Q3": [Obj(id: "sprint1", sprite: "cassette",  base: 126, glow: Pal.accent, title: "Sprint 1"),
+                     Obj(id: "sprint2", sprite: "cassette2", base: 126, glow: Pal.accent, title: "Sprint 2"),
+                     Obj(id: "notes",   sprite: "note",      base: 106, glow: Pal.mint,   title: "Notes")],
+        "Personal": [Obj(id: "oneonone", sprite: "cassette2", base: 130, glow: Pal.mint, title: "1:1 w/ Sam")],
     ]
 }
 
-// A hero object: springs in (overshoot), idles forever, reacts to selection.
 struct Hero: View {
     let obj: Obj; let landed: Bool; let mode: Mode
     let onTap: () -> Void
-    private var modeScale: CGFloat { mode == .focus ? 1.32 : (mode == .recede ? 0.62 : 1) }
-    private var dim: Double { mode == .recede ? 0.34 : 1 }
+    private var modeScale: CGFloat { mode == .focus ? 1.34 : (mode == .recede ? 0.6 : 1) }
+    private var dim: Double { mode == .recede ? 0.3 : 1 }
     var body: some View {
         TimelineView(.animation) { tl in
             let t = tl.date.timeIntervalSinceReferenceDate, ph = Double(abs(obj.id.hashValue) % 7)
@@ -74,7 +69,7 @@ struct Hero: View {
                 ZStack {
                     Ellipse().fill(.black.opacity(0.5)).frame(width: s * 0.62, height: s * 0.15)
                         .blur(radius: 11).offset(y: s * 0.46 * modeScale + bob * 0.25).opacity(landed ? dim : 0)
-                    Circle().fill(RadialGradient(colors: [obj.glow.opacity(mode == .focus ? 0.7 : 0.5), .clear], center: .center, startRadius: 2, endRadius: s * 0.8))
+                    Circle().fill(RadialGradient(colors: [obj.glow.opacity(mode == .focus ? 0.75 : 0.5), .clear], center: .center, startRadius: 2, endRadius: s * 0.8))
                         .frame(width: s * 1.9, height: s * 1.9).blur(radius: 12).opacity(landed ? pulse * dim : 0)
                     Sprite(name: obj.sprite, size: s)
                         .rotationEffect(.degrees(landed ? tilt : -8))
@@ -89,28 +84,23 @@ struct Hero: View {
                     .opacity(landed && mode != .recede ? 0.95 : 0)
             }
             .contentShape(Rectangle())
-            .onTapGesture(perform: onTap)
+            .onTapGesture { if mode != .recede { onTap() } }   // a receded object ignores taps (the fog handles them)
         }
     }
 }
 
-// A small breathing object preview that sits inside a zone tray.
 struct TrayMote: View {
     let sprite: String; let seed: Int
     var body: some View {
         TimelineView(.animation) { tl in
             let t = tl.date.timeIntervalSinceReferenceDate, ph = Double(seed)
-            let bob = CGFloat(sin(t * 1.3 + ph) * 3)
-            ZStack {
-                Ellipse().fill(.black.opacity(0.45)).frame(width: 34, height: 8).blur(radius: 4).offset(y: 22)
-                Sprite(name: sprite, size: 46).offset(y: -bob).shadow(color: .black.opacity(0.5), radius: 5, y: 4)
-            }
-            .frame(width: 52, height: 60)
+            let bob = CGFloat(sin(t * 1.3 + ph) * 2)
+            Sprite(name: sprite, size: 30).offset(y: -bob)
         }
     }
 }
 
-// A premium recessed zone tray — a named place on the desk that HOLDS objects. Tap to dive in.
+// LOW-PROFILE zone tray — a compact labeled shelf tile (a place that holds meetings). Tap to dive; drop a meeting on it to file.
 struct ZoneTray: View {
     let zid: String, name: String, tint: Color
     let members: [Obj]; let subZones: Int; let size: CGSize
@@ -119,112 +109,188 @@ struct ZoneTray: View {
     @State private var press = false
     var body: some View {
         let w = size.width, h = size.height
-        ZStack {
-            RoundedRectangle(cornerRadius: 26, style: .continuous).fill(tint.opacity(0.20))
-                .blur(radius: 26).frame(width: w * 0.96, height: h * 0.9)
+        HStack(spacing: 10) {
             ZStack {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(LinearGradient(colors: [Pal.trayTop, Pal.trayBot], startPoint: .top, endPoint: .bottom))
-                RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(.white.opacity(0.05), lineWidth: 1)
-                RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(tint.opacity(0.5), lineWidth: 1.5)
-                RoundedRectangle(cornerRadius: 24, style: .continuous)            // inner recess shadow
-                    .stroke(.black.opacity(0.55), lineWidth: 7).blur(radius: 6).offset(y: 4)
-                    .mask(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                RoundedRectangle(cornerRadius: 12, style: .continuous).fill(tint.opacity(0.18))
+                Image(systemName: subZones > 0 ? "square.stack.3d.up.fill" : "tray.full.fill")
+                    .font(.system(size: 18, weight: .bold)).foregroundStyle(tint)
             }
-            .shadow(color: .black.opacity(0.55), radius: 18, y: 14)
-
-            VStack(spacing: 0) {
-                HStack(spacing: 7) {                                              // label tab
-                    Circle().fill(tint).frame(width: 9, height: 9).shadow(color: tint, radius: 4)
-                    Text(name).font(.system(size: 14.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text).lineLimit(1)
-                    Spacer(minLength: 0)
-                    Text("\(members.count)").font(.system(size: 12, weight: .black, design: .rounded)).foregroundStyle(tint)
-                        .padding(.horizontal, 7).padding(.vertical, 2).background(Capsule().fill(tint.opacity(0.16)))
+            .frame(width: 44, height: 44)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(name).font(.system(size: 14.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text).lineLimit(1)
+                HStack(spacing: 5) {
+                    ForEach(Array(members.prefix(3).enumerated()), id: \.offset) { i, m in TrayMote(sprite: m.sprite, seed: i) }
+                    Text("\(members.count)\(subZones > 0 ? " · +\(subZones)" : "")")
+                        .font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(tint)
                 }
-                .padding(.horizontal, 14).padding(.top, 12)
-                Spacer(minLength: 0)
-                HStack(spacing: 8) {                                              // members idling inside
-                    ForEach(Array(members.prefix(3).enumerated()), id: \.offset) { i, m in
-                        TrayMote(sprite: m.sprite, seed: i + zid.count)
-                    }
-                    if subZones > 0 {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.06)).frame(width: 46, height: 46)
-                                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(tint.opacity(0.4), lineWidth: 1))
-                            VStack(spacing: 1) {
-                                Image(systemName: "square.stack.3d.up.fill").font(.system(size: 16)).foregroundStyle(tint)
-                                Text("+\(subZones)").font(.system(size: 8, weight: .black, design: .rounded)).foregroundStyle(tint)
-                            }
-                        }
-                    }
-                }
-                Spacer(minLength: 0)
-                HStack(spacing: 5) {                                              // teach the affordance
-                    Image(systemName: "arrow.down.forward.and.arrow.up.backward").font(.system(size: 9, weight: .black))
-                    Text("DIVE IN").font(.system(size: 10, weight: .heavy, design: .rounded)).tracking(1.6)
-                }
-                .foregroundStyle(tint.opacity(0.92)).padding(.bottom, 11)
             }
-            .frame(width: w, height: h)
+            Spacer(minLength: 0)
+            Image(systemName: "arrow.down.forward.and.arrow.up.backward").font(.system(size: 11, weight: .black)).foregroundStyle(tint.opacity(0.85))
         }
+        .padding(.horizontal, 13)
         .frame(width: w, height: h)
-        .scaleEffect(press ? 0.95 : (landed ? 1 : 0.3))
-        .opacity(landed ? (dimmed ? 0 : 1) : 0)
-        .animation(.spring(response: 0.7, dampingFraction: 0.6).delay(Double(index) * 0.08), value: landed)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(LinearGradient(colors: [Pal.trayTop, Pal.trayBot], startPoint: .top, endPoint: .bottom))
+                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(tint.opacity(0.45), lineWidth: 1.5))
+                .shadow(color: .black.opacity(0.45), radius: 12, y: 8)
+        )
+        .scaleEffect(press ? 0.96 : (landed ? 1 : 0.4)).opacity(landed ? (dimmed ? 0 : 1) : 0)
+        .animation(.spring(response: 0.65, dampingFraction: 0.62).delay(Double(index) * 0.07), value: landed)
         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: press)
         .allowsHitTesting(!dimmed)
-        .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .onTapGesture {
-            press = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { press = false; onDive() }
-        }
+        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .onTapGesture { press = true; DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { press = false; onDive() } }
     }
 }
 
-// Where am I — a tappable trail that climbs back out.
-struct Breadcrumb: View {
-    let crumbs: [(String, Color)]            // (display, tint) ; index 0 = "Desk"
-    let onJump: (Int) -> Void
+struct CreateTile: View {
+    let size: CGSize; let landed: Bool; let dimmed: Bool; let onTap: () -> Void
     var body: some View {
-        HStack(spacing: 6) {
-            ForEach(Array(crumbs.enumerated()), id: \.offset) { i, c in
-                if i > 0 { Image(systemName: "chevron.right").font(.system(size: 10, weight: .black)).foregroundStyle(Pal.muted) }
-                let last = i == crumbs.count - 1
-                Button { if !last { onJump(i) } } label: {
-                    HStack(spacing: 5) {
-                        if i == 0 { Image(systemName: "house.fill").font(.system(size: 10, weight: .bold)) }
-                        else { Circle().fill(c.1).frame(width: 7, height: 7) }
-                        Text(c.0).font(.system(size: 12.5, weight: .heavy, design: .rounded))
+        HStack(spacing: 8) {
+            Image(systemName: "plus.circle.fill").font(.system(size: 17, weight: .bold)).foregroundStyle(Pal.muted)
+            Text("New Zone").font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted)
+        }
+        .frame(width: size.width, height: size.height)
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(Pal.muted.opacity(0.4)))
+        .opacity(landed ? (dimmed ? 0 : 0.9) : 0)
+        .allowsHitTesting(!dimmed).contentShape(Rectangle()).onTapGesture(perform: onTap)
+    }
+}
+
+// The big, always-on-top way OUT.
+struct BackBar: View {
+    let crumbs: [(String, Color)]
+    let onBack: () -> Void; let onJump: (Int) -> Void
+    var body: some View {
+        HStack(spacing: 10) {
+            Button(action: onBack) {
+                HStack(spacing: 5) {
+                    Image(systemName: "chevron.left").font(.system(size: 15, weight: .black))
+                    Text("Back").font(.system(size: 15, weight: .heavy, design: .rounded))
+                }
+                .foregroundStyle(Pal.text).padding(.horizontal, 16).frame(height: 44)
+                .background(Capsule().fill(.white.opacity(0.10)).overlay(Capsule().strokeBorder(.white.opacity(0.18), lineWidth: 1)))
+            }.buttonStyle(.plain)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(Array(crumbs.enumerated()), id: \.offset) { i, c in
+                        if i > 0 { Image(systemName: "chevron.right").font(.system(size: 10, weight: .black)).foregroundStyle(Pal.muted) }
+                        let last = i == crumbs.count - 1
+                        Button { if !last { onJump(i) } } label: {
+                            HStack(spacing: 5) {
+                                if i == 0 { Image(systemName: "house.fill").font(.system(size: 11, weight: .bold)) }
+                                else { Circle().fill(c.1).frame(width: 7, height: 7) }
+                                Text(c.0).font(.system(size: 13, weight: .heavy, design: .rounded))
+                            }
+                            .foregroundStyle(last ? Pal.text : Pal.muted).padding(.horizontal, 11).frame(height: 38)
+                            .background(Capsule().fill(.white.opacity(last ? 0.10 : 0.04))
+                                .overlay(Capsule().strokeBorder((last ? c.1 : .clear).opacity(0.6), lineWidth: 1)))
+                        }.buttonStyle(.plain).disabled(last)
                     }
-                    .foregroundStyle(last ? Pal.text : Pal.muted)
-                    .padding(.horizontal, 9).padding(.vertical, 5)
-                    .background(Capsule().fill(.white.opacity(last ? 0.10 : 0.04))
-                        .overlay(Capsule().strokeBorder((last ? c.1 : .clear).opacity(0.5), lineWidth: 1)))
-                }.buttonStyle(.plain).disabled(last)
-            }
-        }
-    }
-}
-
-struct InfoCard: View {
-    let icon: String, title: String, line: String, tint: Color
-    var body: some View {
-        HStack(spacing: 11) {
-            Image(systemName: icon).font(.system(size: 15, weight: .bold)).foregroundStyle(.white)
-                .frame(width: 34, height: 34).background(Circle().fill(tint))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
-                Text(line).font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted).lineLimit(1)
+                }
             }
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 13).padding(.vertical, 11).frame(width: 264)
+        .padding(.horizontal, 16).frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// THE PULL-OUT — a tapped object's contents slide out from the right as a rich in-world drawer.
+struct Pullout: View {
+    let obj: Obj; let onClose: () -> Void
+    private var isMeeting: Bool { obj.sprite.hasPrefix("cassette") }
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 11) {
+                Sprite(name: obj.sprite, size: 40)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(obj.title).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text).lineLimit(1)
+                    Text(isMeeting ? "32 min · 3 speakers" : "on this iPad").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
+                }
+                Spacer(minLength: 0)
+                HStack(spacing: 5) {
+                    Image(systemName: "lock.fill").font(.system(size: 9, weight: .bold))
+                    Text("On device").font(.system(size: 10, weight: .heavy, design: .rounded))
+                }.foregroundStyle(Pal.mint).padding(.horizontal, 9).frame(height: 26).background(Capsule().fill(Pal.mint.opacity(0.14)))
+                Button(action: onClose) {
+                    Image(systemName: "xmark").font(.system(size: 14, weight: .black)).foregroundStyle(Pal.text)
+                        .frame(width: 36, height: 36).background(Circle().fill(.white.opacity(0.10)))
+                }.buttonStyle(.plain)
+            }
+            .padding(.horizontal, 18).padding(.top, 16).padding(.bottom, 12)
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 16) {
+                    if isMeeting {
+                        Section("SUMMARY", Pal.accent) { Text("Shipped the beta Friday. Pricing is the open call for next week; Priya owns the customer deck and finance needs the numbers by EOD.").font(.system(size: 14.5, weight: .medium, design: .rounded)).foregroundStyle(Pal.text.opacity(0.92)).fixedSize(horizontal: false, vertical: true) }
+                        Section("ACTIONS · 3", Pal.mint) {
+                            VStack(alignment: .leading, spacing: 10) {
+                                ActionRow("Send the finance deck to Priya", "you · EOD")
+                                ActionRow("Lock pricing tiers before the all-hands", "Priya · Mon")
+                                ActionRow("Email finance the beta numbers", "you")
+                            }
+                        }
+                        Section("TOPICS", Pal.violet) { Chips(["pricing", "beta launch", "finance", "deck", "all-hands"]) }
+                        Section("TRANSCRIPT · 4 lines", Pal.cobalt) {
+                            VStack(alignment: .leading, spacing: 9) {
+                                Line("Sam", "Let's ship the beta Friday and decide pricing next week.")
+                                Line("Priya", "I'll own the customer deck.")
+                                Line("Sam", "Finance needs the numbers by end of day.")
+                                Line("You", "On it — I'll email them after this.")
+                            }
+                        }
+                    } else {
+                        Section(obj.sprite == "crystal" ? "KNOWLEDGE" : "MODEL", obj.glow) {
+                            Text(obj.sprite == "crystal" ? "12 documents filed here. Ask a grounded question and get an answer cited from your own notes." : "Qwen3-4B-Instruct, loaded and ready. Every meeting is summarised on this iPad — nothing leaves the device.")
+                                .font(.system(size: 14, weight: .medium, design: .rounded)).foregroundStyle(Pal.text.opacity(0.9)).fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                .padding(.horizontal, 18).padding(.bottom, 26)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.white.opacity(0.06))
-                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.black.opacity(0.3)))
-                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(tint.opacity(0.35), lineWidth: 1))
-                .shadow(color: .black.opacity(0.5), radius: 16, y: 10)
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(LinearGradient(colors: [Color(hex: 0x161320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom))
+                .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1))
+                .shadow(color: .black.opacity(0.6), radius: 28, x: -10, y: 8)
         )
+    }
+    @ViewBuilder private func Section(_ label: String, _ tint: Color, @ViewBuilder _ c: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 7) { RoundedRectangle(cornerRadius: 2).fill(tint).frame(width: 4, height: 13)
+                Text(label).font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(tint).tracking(1.2) }
+            c()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading).padding(14)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.white.opacity(0.04))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.white.opacity(0.06), lineWidth: 1)))
+    }
+    @ViewBuilder private func ActionRow(_ task: String, _ meta: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "circle").font(.system(size: 15, weight: .bold)).foregroundStyle(Pal.mint).padding(.top, 1)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(task).font(.system(size: 14, weight: .semibold, design: .rounded)).foregroundStyle(Pal.text)
+                Text(meta).font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
+            }
+        }
+    }
+    @ViewBuilder private func Line(_ who: String, _ what: String) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(who).font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.cobalt)
+            Text(what).font(.system(size: 13.5, weight: .regular, design: .rounded)).foregroundStyle(Pal.text.opacity(0.88)).fixedSize(horizontal: false, vertical: true)
+        }
+    }
+    @ViewBuilder private func Chips(_ items: [String]) -> some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 8, alignment: .leading)], alignment: .leading, spacing: 8) {
+            ForEach(Array(items.enumerated()), id: \.offset) { _, it in
+                Text(it).font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(Pal.text.opacity(0.9))
+                    .padding(.horizontal, 10).padding(.vertical, 6)
+                    .background(Capsule().fill(Pal.violet.opacity(0.14)).overlay(Capsule().strokeBorder(Pal.violet.opacity(0.35), lineWidth: 1)))
+            }
+        }
     }
 }
 
@@ -238,9 +304,9 @@ struct Companion: View {
             let cycle = t.truncatingRemainder(dividingBy: excited ? 1.4 : 3.4)
             let hop = cycle < 0.4 ? CGFloat(sin(cycle / 0.4 * .pi)) * (excited ? 34 : 24) : 0
             ZStack {
-                Ellipse().fill(.black.opacity(0.5)).frame(width: 66, height: 15).blur(radius: 9)
-                    .offset(y: 50).opacity(landed ? (hop > 1 ? 0.4 : 1) : 0)
-                Sprite(name: "qlippy", size: 112)
+                Ellipse().fill(.black.opacity(0.5)).frame(width: 60, height: 14).blur(radius: 9)
+                    .offset(y: 46).opacity(landed ? (hop > 1 ? 0.4 : 1) : 0)
+                Sprite(name: "qlippy", size: 100)
                     .rotationEffect(.degrees(landed ? sway : 0))
                     .offset(y: landed ? -bob - hop : -300)
                     .scaleEffect(landed ? 1 : 0.1).opacity(landed ? 1 : 0)
@@ -256,12 +322,12 @@ struct Motes: View {
         TimelineView(.animation) { tl in
             let t = tl.date.timeIntervalSinceReferenceDate
             Canvas { ctx, size in
-                for i in 0..<18 {
+                for i in 0..<16 {
                     let s = Double(i)
                     let x = (sin(t * 0.18 + s * 1.7) * 0.5 + 0.5) * size.width
                     let y = size.height - (t * 9 + s * 57).truncatingRemainder(dividingBy: Double(size.height + 80))
                     let r = 1.4 + s.truncatingRemainder(dividingBy: 3)
-                    ctx.opacity = 0.07 + 0.06 * (sin(t + s) * 0.5 + 0.5)
+                    ctx.opacity = 0.06 + 0.05 * (sin(t + s) * 0.5 + 0.5)
                     ctx.fill(Path(ellipseIn: CGRect(x: x, y: y, width: r, height: r)), with: .color(.white))
                 }
             }
@@ -285,8 +351,7 @@ struct RecordOrb: View {
                     .frame(width: 66, height: 66).shadow(color: Pal.accent.opacity(0.6), radius: 16, y: 6)
                 Image(systemName: "mic.fill").font(.system(size: 24, weight: .bold)).foregroundStyle(.white)
             }
-            .scaleEffect(1 + CGFloat(sin(t * 2) * 0.02))
-            .contentShape(Circle()).onTapGesture(perform: onTap)
+            .scaleEffect(1 + CGFloat(sin(t * 2) * 0.02)).contentShape(Circle()).onTapGesture(perform: onTap)
         }
     }
 }
@@ -304,8 +369,7 @@ struct VoiceCore: View {
                 ForEach(0..<40) { i in
                     let a = Double(i) / 40 * 2 * .pi
                     let lvl = 0.5 + 0.5 * sin(t * 6 + Double(i) * 0.7)
-                    Capsule().fill(Pal.accent.opacity(0.85))
-                        .frame(width: 3, height: 10 + CGFloat(lvl) * 22)
+                    Capsule().fill(Pal.accent.opacity(0.85)).frame(width: 3, height: 10 + CGFloat(lvl) * 22)
                         .offset(y: -78).rotationEffect(.radians(a))
                 }
                 Circle().fill(RadialGradient(colors: [Color(hex: 0xFFB070), Pal.accent.opacity(0.7), .clear],
@@ -327,8 +391,7 @@ struct RisingWords: View {
                     let local = cycle
                     let vis = local > 0 && local < 1.6
                     Text(words[i]).font(.system(size: 13, weight: .bold, design: .rounded)).foregroundStyle(Pal.text.opacity(0.85))
-                        .opacity(vis ? max(0, 1 - local / 1.6) : 0)
-                        .offset(y: vis ? CGFloat(-local * 40) : 40)
+                        .opacity(vis ? max(0, 1 - local / 1.6) : 0).offset(y: vis ? CGFloat(-local * 40) : 40)
                 }
             }
         }
@@ -337,50 +400,50 @@ struct RisingWords: View {
 
 struct Stage: View {
     @State private var landed = false
-    @State private var path: [String] = []          // current zone path (ids); [] = root desk
-    @State private var diveDir = 1                   // +1 dive in, -1 climb out (transition asymmetry)
-    @State private var flash = 0.0                   // dive "whoosh"
+    @State private var path: [String] = []
+    @State private var diveDir = 1
+    @State private var flash = 0.0
     @State private var selected: String? = nil
-    @State private var cardsIn = false
     @State private var recording = false
     @State private var born = false
-    @State private var newPos = CGPoint(x: 0.5, y: 0.34)
+    @State private var newPos = CGPoint(x: 0.78, y: 0.5)
 
-    private let cards: [(String, String, String, Color)] = [
-        ("sparkles", "Summary", "Shipped the beta Friday; pricing next week", Pal.accent),
-        ("checkmark.circle.fill", "3 Actions", "Send the finance deck to Priya · EOD", Pal.mint),
-        ("text.alignleft", "Transcript", "32 min · 3 speakers", Pal.cobalt),
-    ]
-    private let spring = Animation.spring(response: 0.55, dampingFraction: 0.62)
     private let diveSpring = Animation.spring(response: 0.6, dampingFraction: 0.74)
+    private let focusSpring = Animation.spring(response: 0.5, dampingFraction: 0.72)
 
     private var pathKey: String { path.joined(separator: "/") }
     private var curTint: Color { path.isEmpty ? Pal.accent : (World.tint[pathKey] ?? Pal.accent) }
     private func zones() -> [String] { World.children[pathKey] ?? [] }
     private func members() -> [Obj] { World.members[pathKey] ?? [] }
     private func mode(_ id: String) -> Mode { selected == nil ? .home : (selected == id ? .focus : .recede) }
+    private func selectedObj() -> Obj? { members().first { $0.id == selected } }
 
     private var diveTransition: AnyTransition {
         diveDir >= 0
-            ? .asymmetric(insertion: .scale(scale: 0.55).combined(with: .opacity),
-                          removal:   .scale(scale: 1.7).combined(with: .opacity))
-            : .asymmetric(insertion: .scale(scale: 1.7).combined(with: .opacity),
-                          removal:   .scale(scale: 0.55).combined(with: .opacity))
+            ? .asymmetric(insertion: .scale(scale: 0.6).combined(with: .opacity), removal: .scale(scale: 1.6).combined(with: .opacity))
+            : .asymmetric(insertion: .scale(scale: 1.6).combined(with: .opacity), removal: .scale(scale: 0.6).combined(with: .opacity))
     }
 
-    private func zoneSize(_ n: Int, _ w: CGFloat, _ h: CGFloat) -> CGSize {
-        let width = n <= 1 ? w * 0.58 : w * 0.43
-        return CGSize(width: width, height: width * 0.66)
+    // a compact zone shelf row, plus a "+ New Zone" tile, near the top
+    private func shelfSize(_ n: Int, _ w: CGFloat) -> CGSize {
+        let cols = max(1, min(3, n)); return CGSize(width: (w - 40) / CGFloat(cols) - 10, height: 66)
     }
-    private func zonePos(_ i: Int, _ n: Int, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
-        let x = n == 1 ? 0.5 : 0.27 + 0.46 * Double(i) / Double(max(1, n - 1))
-        return CGPoint(x: w * x, y: h * 0.37)
+    private func shelfPos(_ i: Int, _ n: Int, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
+        let cols = max(1, min(3, n)); let size = shelfSize(n, w)
+        let r = i / cols, c = i % cols
+        let rowW = CGFloat(cols) * (size.width + 10) - 10
+        let x = (w - rowW) / 2 + size.width / 2 + CGFloat(c) * (size.width + 10)
+        let y = h * 0.16 + CGFloat(r) * (size.height + 10)
+        return CGPoint(x: x, y: y)
     }
-    private func loosePos(_ i: Int, _ n: Int, _ hasZones: Bool, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
-        let y = hasZones ? 0.67 : 0.47
-        let x = n == 1 ? 0.5 : 0.2 + 0.6 * Double(i) / Double(max(1, n - 1))
+    private func loosePos(_ i: Int, _ n: Int, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
+        let cols = max(1, min(3, n)); let r = i / cols, c = i % cols
+        let x = cols == 1 ? 0.5 : 0.22 + 0.56 * Double(c) / Double(cols - 1)
+        let rows = max(1, Int(ceil(Double(n) / Double(cols))))
+        let y = rows == 1 ? 0.55 : 0.48 + 0.2 * Double(r) / Double(rows - 1)
         return CGPoint(x: w * x, y: h * y)
     }
+    private func focusPos(_ w: CGFloat, _ h: CGFloat) -> CGPoint { CGPoint(x: w * 0.24, y: h * 0.44) }
 
     var body: some View {
         GeometryReader { geo in
@@ -389,8 +452,8 @@ struct Stage: View {
                 LinearGradient(colors: [Pal.bgTop, Pal.bgMid, Pal.bgBot], startPoint: .top, endPoint: .bottom)
                 TimelineView(.animation) { tl in
                     let t = tl.date.timeIntervalSinceReferenceDate
-                    RadialGradient(colors: [(selected == nil ? curTint : Pal.cobalt).opacity(0.20 + 0.05 * sin(t * 1.2)), .clear],
-                                   center: .init(x: 0.5, y: selected == nil ? 0.4 : 0.27), startRadius: 20, endRadius: w * 0.95)
+                    RadialGradient(colors: [(selected == nil ? curTint : Pal.cobalt).opacity(0.18 + 0.05 * sin(t * 1.2)), .clear],
+                                   center: .init(x: 0.5, y: 0.4), startRadius: 20, endRadius: w * 0.95)
                         .blendMode(.plusLighter).animation(diveSpring, value: pathKey)
                 }
                 Motes()
@@ -398,48 +461,52 @@ struct Stage: View {
                     if selected != nil { select(nil) } else if !path.isEmpty { climbOut() }
                 }
 
-                // title (root only), else breadcrumb
+                // title at root only
                 VStack(spacing: 3) {
-                    Text("HoldSpeak").font(.system(size: 26, weight: .black, design: .rounded)).foregroundStyle(Pal.text)
-                    Text("your meetings, alive").font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted).tracking(1)
+                    Text("HoldSpeak").font(.system(size: 25, weight: .black, design: .rounded)).foregroundStyle(Pal.text)
+                    Text("your meetings, alive").font(.system(size: 12.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted).tracking(1)
                 }
-                .opacity(landed && selected == nil && path.isEmpty ? 1 : 0).offset(y: landed ? 0 : -14)
-                .frame(maxHeight: .infinity, alignment: .top).padding(.top, h * 0.055)
+                .opacity(landed && selected == nil && path.isEmpty ? 1 : 0)
+                .frame(maxHeight: .infinity, alignment: .top).padding(.top, h * 0.05)
 
-                if !path.isEmpty {
-                    Breadcrumb(crumbs: crumbs(), onJump: { jump(to: $0) })
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                        .padding(.top, h * 0.06)
-                        .opacity(selected == nil ? 1 : 0)
-                }
-
-                // THE LEVEL — keyed by path so a dive triggers the camera transition
                 ForEach([pathKey], id: \.self) { _ in level(w, h) }
                     .transition(diveTransition)
 
-                Companion(landed: landed, excited: selected != nil || recording).position(x: w * 0.85, y: h * 0.88)
+                Companion(landed: landed, excited: selected != nil || recording).position(x: w * 0.9, y: h * 0.9)
                 if landed && !recording && selected == nil {
-                    RecordOrb { startRecord() }.position(x: w * 0.5, y: h * 0.91)
-                        .transition(.scale.combined(with: .opacity))
+                    RecordOrb { startRecord() }.position(x: w * 0.5, y: h * 0.91).transition(.scale.combined(with: .opacity))
                 }
 
-                // freshly-captured cassette pops onto the current desk
                 if born {
                     VStack(spacing: 7) {
-                        Sprite(name: "cassette2", size: 128).shadow(color: .black.opacity(0.55), radius: 16, y: 12)
+                        Sprite(name: "cassette2", size: 124).shadow(color: .black.opacity(0.55), radius: 16, y: 12)
                         Text("New Meeting").font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
                             .padding(.horizontal, 10).padding(.vertical, 5).background(Capsule().fill(.black.opacity(0.35)))
                     }
-                    .position(x: w * newPos.x, y: h * newPos.y)
-                    .transition(.scale(scale: 0.2).combined(with: .opacity))
+                    .position(x: w * newPos.x, y: h * newPos.y).transition(.scale(scale: 0.2).combined(with: .opacity))
                 }
 
-                RadialGradient(colors: [.clear, .clear, .black.opacity(0.55)], center: .center, startRadius: 140, endRadius: 760)
+                RadialGradient(colors: [.clear, .clear, .black.opacity(0.5)], center: .center, startRadius: 160, endRadius: 800)
                     .blendMode(.multiply).allowsHitTesting(false)
-
-                // the dive whoosh
                 RadialGradient(colors: [curTint.opacity(flash), .clear], center: .center, startRadius: 10, endRadius: w)
                     .blendMode(.plusLighter).allowsHitTesting(false)
+
+                // the PULL-OUT (right edge) for the selected object
+                if let o = selectedObj() {
+                    Pullout(obj: o, onClose: { select(nil) })
+                        .frame(width: min(560, w * 0.62))
+                        .padding(.vertical, 22).padding(.trailing, 16)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                        .zIndex(60)
+                }
+
+                // the big, always-on-top Back bar (above EVERYTHING so no tile steals its tap)
+                if !path.isEmpty && selected == nil {
+                    BackBar(crumbs: crumbs(), onBack: { climbOut() }, onJump: { jump(to: $0) })
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .padding(.top, h * 0.045).zIndex(100)
+                }
 
                 if recording { listeningOverlay() }
             }
@@ -448,6 +515,7 @@ struct Stage: View {
                 landed = true
                 let env = ProcessInfo.processInfo.environment
                 if let p = env["DIO_PATH"], !p.isEmpty { path = p.split(separator: "/").map(String.init) }
+                if let s = env["DIO_SELECT"], !s.isEmpty { DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { select(s) } }
                 if env["DIO_DEMO"] == "1" { runDemo() }
             }
         }
@@ -455,30 +523,31 @@ struct Stage: View {
     }
 
     @ViewBuilder private func level(_ w: CGFloat, _ h: CGFloat) -> some View {
-        let zs = zones(); let ms = members(); let hasZones = !zs.isEmpty
+        let zs = zones(); let ms = members(); let slotN = zs.count + 1
         ZStack {
+            // low-profile zone shelf + create tile
             ForEach(Array(zs.enumerated()), id: \.element) { i, zid in
                 ZoneTray(zid: zid, name: World.name[zid] ?? zid, tint: World.tint[zid] ?? Pal.accent,
                          members: World.members[zid] ?? [], subZones: (World.children[zid] ?? []).count,
-                         size: zoneSize(zs.count, w, h), landed: landed, index: i, dimmed: selected != nil,
+                         size: shelfSize(slotN, w), landed: landed, index: i, dimmed: selected != nil,
                          onDive: { dive(into: zid) })
-                    .position(zonePos(i, zs.count, w, h))
+                    .position(shelfPos(i, slotN, w, h))
             }
+            CreateTile(size: shelfSize(slotN, w), landed: landed, dimmed: selected != nil) {}
+                .position(shelfPos(zs.count, slotN, w, h))
+
+            // objects
             ForEach(Array(ms.enumerated()), id: \.element.id) { i, o in
                 Hero(obj: o, landed: landed, mode: mode(o.id)) { select(selected == o.id ? nil : o.id) }
-                    .position(selected == o.id ? CGPoint(x: w * 0.5, y: h * 0.24) : loosePos(i, ms.count, hasZones, w, h))
-                    .animation(spring, value: selected)
+                    .position(selected == o.id ? focusPos(w, h) : loosePos(i, ms.count, w, h))
+                    .animation(focusSpring, value: selected)
                     .zIndex(selected == o.id ? 10 : 0)
             }
-            if let sel = selected, ms.contains(where: { $0.id == sel }) {
-                VStack(spacing: 11) {
-                    ForEach(Array(cards.enumerated()), id: \.offset) { i, c in
-                        InfoCard(icon: c.0, title: c.1, line: c.2, tint: c.3)
-                            .scaleEffect(cardsIn ? 1 : 0.4).opacity(cardsIn ? 1 : 0).offset(y: cardsIn ? 0 : 40)
-                            .animation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.08 + Double(i) * 0.07), value: cardsIn)
-                    }
-                }
-                .position(x: w * 0.5, y: h * 0.62)
+
+            // focus fog — catches stray taps, dims the desk behind the pull-out
+            if selected != nil {
+                Color.black.opacity(0.45).ignoresSafeArea().onTapGesture { select(nil) }
+                    .zIndex(5).transition(.opacity)
             }
         }
     }
@@ -504,64 +573,41 @@ struct Stage: View {
     }
 
     private func crumbs() -> [(String, Color)] {
-        var out: [(String, Color)] = [("Desk", Pal.accent)]
-        var acc: [String] = []
-        for comp in path {
-            acc.append(comp)
-            let id = acc.joined(separator: "/")
-            out.append((World.name[id] ?? comp, World.tint[id] ?? Pal.accent))
-        }
+        var out: [(String, Color)] = [("Desk", Pal.accent)]; var acc: [String] = []
+        for comp in path { acc.append(comp); let id = acc.joined(separator: "/"); out.append((World.name[id] ?? comp, World.tint[id] ?? Pal.accent)) }
         return out
     }
-
     private func haptic(_ s: UIImpactFeedbackGenerator.FeedbackStyle) {
         #if canImport(UIKit)
         UIImpactFeedbackGenerator(style: s).impactOccurred()
         #endif
     }
-    private func whoosh() {
-        flash = 0.5; withAnimation(.easeOut(duration: 0.6)) { flash = 0 }
-    }
+    private func whoosh() { flash = 0.5; withAnimation(.easeOut(duration: 0.6)) { flash = 0 } }
     private func dive(into id: String) {
         haptic(.heavy); whoosh(); diveDir = 1
-        withAnimation(diveSpring) { selected = nil; cardsIn = false; path = id.split(separator: "/").map(String.init) }
+        withAnimation(diveSpring) { selected = nil; path = id.split(separator: "/").map(String.init) }
     }
-    private func climbOut() {
-        guard !path.isEmpty else { return }
-        haptic(.medium); whoosh(); diveDir = -1
-        withAnimation(diveSpring) { selected = nil; cardsIn = false; path.removeLast() }
-    }
-    private func jump(to crumbIndex: Int) {
-        haptic(.medium); whoosh(); diveDir = -1
-        withAnimation(diveSpring) { selected = nil; cardsIn = false; path = Array(path.prefix(crumbIndex)) }
-    }
-    private func select(_ id: String?) {
-        haptic(id == nil ? .light : .medium)
-        withAnimation(spring) { selected = id }
-        cardsIn = false
-        if id != nil { withAnimation { cardsIn = true } }
-    }
-    private func startRecord() {
-        haptic(.medium); withAnimation(.easeInOut(duration: 0.35)) { recording = true }
-    }
+    private func climbOut() { guard !path.isEmpty else { return }; haptic(.medium); whoosh(); diveDir = -1
+        withAnimation(diveSpring) { selected = nil; path.removeLast() } }
+    private func jump(to i: Int) { haptic(.medium); whoosh(); diveDir = -1
+        withAnimation(diveSpring) { selected = nil; path = Array(path.prefix(i)) } }
+    private func select(_ id: String?) { haptic(id == nil ? .light : .medium); withAnimation(focusSpring) { selected = id } }
+    private func startRecord() { haptic(.medium); withAnimation(.easeInOut(duration: 0.35)) { recording = true } }
     private func stopRecord() {
         #if canImport(UIKit)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         #endif
         withAnimation(.easeInOut(duration: 0.3)) { recording = false }
-        newPos = CGPoint(x: 0.5, y: 0.5)
-        withAnimation(.spring(response: 0.55, dampingFraction: 0.55)) { born = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-            withAnimation(.spring(response: 0.7, dampingFraction: 0.62)) { newPos = CGPoint(x: 0.78, y: 0.5) }
-        }
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) { born = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { withAnimation(.spring(response: 0.7, dampingFraction: 0.62)) { newPos = CGPoint(x: 0.78, y: 0.55) } }
     }
     private func runDemo() {
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 2_400_000_000); dive(into: "Atlas")        // dive into a zone
-            try? await Task.sleep(nanoseconds: 2_600_000_000); dive(into: "Atlas/Q3")     // deeper (recursive)
-            try? await Task.sleep(nanoseconds: 2_600_000_000); select("sprint1")          // open an object inside
-            try? await Task.sleep(nanoseconds: 2_800_000_000); select(nil)
-            try? await Task.sleep(nanoseconds: 1_000_000_000); jump(to: 0)                // breadcrumb home
+            try? await Task.sleep(nanoseconds: 2_200_000_000); select("standup")     // pull out intelligence
+            try? await Task.sleep(nanoseconds: 3_000_000_000); select(nil)
+            try? await Task.sleep(nanoseconds: 1_200_000_000); dive(into: "Atlas")    // dive into a zone
+            try? await Task.sleep(nanoseconds: 2_600_000_000); dive(into: "Atlas/Q3") // deeper
+            try? await Task.sleep(nanoseconds: 2_600_000_000); jump(to: 0)            // back home
         }
     }
 }

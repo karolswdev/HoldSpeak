@@ -464,6 +464,26 @@ screen — the install completes regardless). Proof: [root](./screenshots/fracta
 into the diorama, and the start of #5 (zones). Next: feel the dive on glass with the owner, then act-on-expand
 (§7 #3) + the Ask-AI atom (§7 #7).
 
+**2026-06-24 — zones go LOW-PROFILE + intelligence becomes a PULL-OUT (owner feedback on the device walk).**
+The owner walked the first cut and hit real failures: (1) **no way out of a zone** — the small "Desk" crumb
+fell through to the "+ New Zone" handler underneath; (2) after recording, **stray taps outside the menus
+triggered things** (a receded object still ate the tap); (3) tapping a meeting's contents opened **"the plane,
+super boring old-ass window"** (the `MeetingDetailView` nav sheet) — "the biggest and laziest shortcut," when
+the whole point is a **seamless drawer experience with first-class primitives**. Plus a direction: zones should
+be **lower-profile** to leave room for **"pull-outs such as intelligence."** All addressed, composed in the
+harness first then ported to `DioStage`: (1) **a big always-on-top Back bar** (a 44pt "‹ Back" pill + the
+breadcrumb, `zIndex 100`) — no tile can steal its tap; (2) **a focus fog** that catches outside taps → close,
+and a receded object no longer accepts taps; (3) the centered modal/nav sheet is gone — a tapped object's
+intelligence now **PULLS OUT from the right edge** as a rich in-world drawer (real **Summary / Actions (owner ·
+due) / Topics chips / Transcript**, an On-device badge, a subtle "Open full editor" fallback) while the object
+stays spotlit on the left over the fog; (4) **zones are now a compact top shelf** of labeled trays (icon +
+name + member dots + dive cue), not dominating boxes — the canvas stays open for the pull-outs. Drag-to-file
+still hit-tests the shelf trays. Harness screenshot-proven (root shelf, the intel pull-out, the in-zone Back
+bar); device-arch **BUILD SUCCEEDED**; built + signed + **launched live on the iPad Air M4** (unlocked). Proof:
+[root shelf](./screenshots/fractal-desk-root.png) · [intel pull-out](./screenshots/fractal-intel-pullout.png) ·
+[in-zone Back bar](./screenshots/fractal-desk-atlas.png). Next: feel it on glass + the act-on-card affordance
+inside the pull-out (approve an action → task/issue) + the Ask-AI atom (§7 #7).
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
