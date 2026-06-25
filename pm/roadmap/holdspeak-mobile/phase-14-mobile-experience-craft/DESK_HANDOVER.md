@@ -216,6 +216,12 @@ These are the owner's explicit, repeated asks — the road to "meaningful":
 - [[story-22-the-living-desk]] — the 3D SceneKit substrate decision + buildable barriers.
 - [[story-23-the-deskos-shell]] — the shell anatomy (organizer / toolbar / drawers / desk / floating).
 - [[story-24-nested-zones]] — the fractal dive-into-a-zone idea.
+- [[story-25-the-desk-interaction-system]] — **the coherence layer (owner-driven 2026-06-24): the
+  `DeskPrimitive` contract (everything declares kind/title/preview/sections/actions/emits/accepts → ALL UI is
+  derived, one renderer per surface), the gesture library, the intelligence engine (drag any output onto the
+  AI core → LLM → new primitive), and integrations (drop onto a connector → propose→approve→execute). The
+  diorama (`DioStage` + `DeskPrimitive.swift`) is now primitive-driven. NEXT BUILD: the keystone routing
+  gesture on real metal.**
 - [[DESK_BUILD_SEQUENCE]] — the dependency-ordered build order (substrate -> surface -> sync).
 - Phase 16 (`../phase-16-the-desk-everywhere/`) — web parity + mesh sync; the state taxonomy
   (content / organization / **capability** / layout); the Ask atom; capability objects. **Models never
