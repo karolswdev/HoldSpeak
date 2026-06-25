@@ -484,6 +484,24 @@ bar); device-arch **BUILD SUCCEEDED**; built + signed + **launched live on the i
 [in-zone Back bar](./screenshots/fractal-desk-atlas.png). Next: feel it on glass + the act-on-card affordance
 inside the pull-out (approve an action → task/issue) + the Ask-AI atom (§7 #7).
 
+**2026-06-24 — THE PRIMITIVE CONTRACT (owner: "literally everything should be a primitive, emitting a
+standard UI integration pattern you can rely on"; chose "contract refactor first").** The interactions had
+been built one-off, so the desk "felt weird." Designed the coherence layer ([[story-25-the-desk-interaction-system]])
+and built its foundation: a `DeskPrimitive` protocol (`DeskPrimitive.swift`) — every desk concept declares the
+same facets (`kind` → glyph + colour, `title`, `subtitle`, `preview`, **`sections`**, **`actions`**, `emits`,
+`accepts`) and the **entire UI is DERIVED from that declaration**: the canvas object (`DioHero`), the card,
+and the right-edge **pull-out** (`DioPullout` — ONE renderer that draws any primitive's `sections`/`actions`,
+no per-type code). `MeetingPrimitive`/`ModelPrimitive`/`KBPrimitive` conform; `DioStage` now holds
+`[any DeskPrimitive]` and renders uniformly. Adding a platform concept = declaring one primitive; its whole UI
+appears for free. `emits`/`accepts`/compat are declared now so the **keystone routing gesture** (drag an
+output onto the AI core → LLM → a new primitive prints) is trivial to add next — that's the agreed next build.
+Proven: the SAME pull-out renderer draws a meeting (summary/actions/topics/transcript) and the AI core (model
+status) identically — [meeting](./screenshots/fractal-intel-pullout.png) vs
+[AI core](./screenshots/primitive-model-pullout.png). Device-arch **BUILD SUCCEEDED**; built + signed +
+**launched live on the iPad Air M4**. The whole design canon is in
+[story-25](./story-25-the-desk-interaction-system.md) (gesture library · intelligence engine · integrations ·
+build order). Next: the keystone routing gesture (drag → AI core → real LLM → new card) on real metal.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a

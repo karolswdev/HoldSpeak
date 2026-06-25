@@ -3,13 +3,12 @@ import SwiftUI
 import UIKit
 #endif
 
-// HSM-14 — THE FRACTAL DESK, wired to the REAL app (v2 on owner feedback). Zones are LOW-PROFILE (a compact
-// top shelf, not dominating boxes) so the canvas stays open. A tapped object's intelligence PULLS OUT from
-// the right edge as a rich in-world drawer (real summary / actions / topics / transcript) — no centered
-// modal, no plain nav window. A big always-on-top Back bar makes escaping a zone unmissable; a focus fog
-// catches stray taps (a receded object no longer eats them). Make a place (+ New Zone), DRAG a meeting onto
-// a shelf tray to file it, TAP a tray to DIVE in (camera rush, recursive sub-zones), breadcrumb climbs out.
-// Reuses CaptureModel / CaptureView / MeetingDetailView / ModelFiles + DeskSprite. 3D desk behind HS_REAL_DESK=1.
+// HSM-14 — THE FRACTAL DESK, now PRIMITIVE-DRIVEN (story-25). Every object on the desk is a `DeskPrimitive`
+// (see DeskPrimitive.swift); the canvas object, the card, and the right-edge intelligence PULL-OUT are all
+// DERIVED from the contract — one renderer, no per-type screens. Zones are a low-profile top shelf; tap an
+// object → its `sections` pull out from the right; tap a tray → DIVE (recursive); a big always-on-top Back
+// bar + a focus fog. Drag a meeting onto a tray to file it. Reuses CaptureModel / CaptureView /
+// MeetingDetailView / ModelFiles + DeskSprite. 3D desk behind HS_REAL_DESK=1.
 
 enum DioPal {
     static let bgTop = Color(hex: 0x0B0D12), bgMid = Color(hex: 0x16111F), bgBot = Color(hex: 0x090A0E)
@@ -19,23 +18,21 @@ enum DioPal {
     static let zoneTints: [Color] = [accent, cobalt, violet, mint]
 }
 
-enum DioKind { case meeting, model, kb }
-struct DioObj: Identifiable { let id: String; let kind: DioKind; let sprite: String; let base: CGFloat; let glow: Color; let title: String }
 enum DioMode { case home, focus, recede }
 
-// MARK: - hero object (drag to move/file, tap to open). Gesture on the STABLE outer view, not the TimelineView.
+// MARK: - canvas object — derived ENTIRELY from a DeskPrimitive (glyph/colour/title/id). Gesture on the stable outer view.
 struct DioHero: View {
-    let obj: DioObj; let landed: Bool; let mode: DioMode; let index: Int; let pos: CGPoint
+    let prim: any DeskPrimitive; let landed: Bool; let mode: DioMode; let index: Int; let pos: CGPoint
     let onTap: () -> Void; let onDrop: (CGSize) -> Void; let onDragChange: (CGPoint?) -> Void
     @State private var drag: CGSize = .zero
     private var modeScale: CGFloat { mode == .focus ? 1.34 : (mode == .recede ? 0.6 : 1) }
     private var dim: Double { mode == .recede ? 0.3 : 1 }
     private let spring = Animation.spring(response: 0.5, dampingFraction: 0.72)
     var body: some View {
-        let s = obj.base
+        let s = prim.base
         VStack(spacing: 7) {
-            DioHeroVisual(obj: obj, focused: mode == .focus).frame(width: s, height: s)
-            Text(obj.title).font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.85))
+            DioHeroVisual(glyph: prim.glyph, glow: prim.color, base: s, seed: prim.id, focused: mode == .focus).frame(width: s, height: s)
+            Text(prim.title).font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.85))
                 .lineLimit(1).frame(maxWidth: s + 36)
                 .padding(.horizontal, 8).padding(.vertical, 3)
                 .background(Capsule().fill(.black.opacity(0.32)))
@@ -60,9 +57,7 @@ struct DioHero: View {
                 .onEnded { v in
                     onDragChange(nil)
                     let d = hypot(v.translation.width, v.translation.height)
-                    if mode != .recede {                       // a receded object ignores taps; the fog catches them
-                        if d < 9 { onTap() } else { onDrop(v.translation) }
-                    }
+                    if mode != .recede { if d < 9 { onTap() } else { onDrop(v.translation) } }
                     drag = .zero
                 }
         )
@@ -70,11 +65,11 @@ struct DioHero: View {
 }
 
 struct DioHeroVisual: View {
-    let obj: DioObj; let focused: Bool
+    let glyph: String; let glow: Color; let base: CGFloat; let seed: String; let focused: Bool
     var body: some View {
-        let s = obj.base
+        let s = base
         TimelineView(.animation) { tl in
-            let t = tl.date.timeIntervalSinceReferenceDate, ph = Double(abs(obj.id.hashValue) % 7)
+            let t = tl.date.timeIntervalSinceReferenceDate, ph = Double(abs(seed.hashValue) % 7)
             let bob = CGFloat(sin(t * 0.9 + ph) * 6)
             let breathe = 1 + CGFloat(sin(t * 1.15 + ph) * 0.018)
             let tilt = sin(t * 0.65 + ph) * 2.0
@@ -82,9 +77,9 @@ struct DioHeroVisual: View {
             ZStack {
                 Ellipse().fill(.black.opacity(0.5)).frame(width: s * 0.6, height: s * 0.15)
                     .blur(radius: 11).offset(y: s * 0.45 + bob * 0.25)
-                Circle().fill(RadialGradient(colors: [obj.glow.opacity(focused ? 0.75 : 0.5), .clear], center: .center, startRadius: 2, endRadius: s * 0.8))
+                Circle().fill(RadialGradient(colors: [glow.opacity(focused ? 0.75 : 0.5), .clear], center: .center, startRadius: 2, endRadius: s * 0.8))
                     .frame(width: s * 1.8, height: s * 1.8).blur(radius: 12).opacity(pulse)
-                DeskSprite(name: obj.sprite, size: s)
+                DeskSprite(name: glyph, size: s)
                     .rotationEffect(.degrees(tilt)).scaleEffect(breathe).offset(y: -bob)
                     .shadow(color: .black.opacity(0.55), radius: 15, y: 11)
             }
@@ -94,20 +89,20 @@ struct DioHeroVisual: View {
 }
 
 struct DioTrayMote: View {
-    let sprite: String
+    let glyph: String
     var body: some View {
         TimelineView(.animation) { tl in
             let t = tl.date.timeIntervalSinceReferenceDate
-            let bob = CGFloat(sin(t * 1.3 + Double(sprite.count)) * 2)
-            DeskSprite(name: sprite, size: 30).offset(y: -bob)
+            let bob = CGFloat(sin(t * 1.3 + Double(glyph.count)) * 2)
+            DeskSprite(name: glyph, size: 30).offset(y: -bob)
         }
     }
 }
 
-// LOW-PROFILE zone tray — a compact labeled shelf tile (a place that holds meetings). Tap to dive; drop a meeting on it to file.
+// LOW-PROFILE zone tray — a compact labeled shelf tile that holds primitives. Tap to dive; drop a meeting on it to file.
 struct DioZoneTray: View {
     let name: String, tint: Color
-    let members: [DioObj]; let subZones: Int; let size: CGSize
+    let members: [any DeskPrimitive]; let subZones: Int; let size: CGSize
     let landed: Bool; let index: Int; let dimmed: Bool; let hot: Bool
     let onDive: () -> Void
     @State private var press = false
@@ -123,7 +118,7 @@ struct DioZoneTray: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(name).font(.system(size: 14.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text).lineLimit(1)
                 HStack(spacing: 5) {
-                    ForEach(Array(members.prefix(3).enumerated()), id: \.offset) { _, m in DioTrayMote(sprite: m.sprite) }
+                    ForEach(Array(members.prefix(3).enumerated()), id: \.offset) { _, m in DioTrayMote(glyph: m.glyph) }
                     Text(hot ? "drop to file" : "\(members.count)\(subZones > 0 ? " · +\(subZones)" : "")")
                         .font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(tint)
                 }
@@ -164,7 +159,6 @@ struct DioCreateTile: View {
     }
 }
 
-// The big, always-on-top way OUT of a zone.
 struct DioBackBar: View {
     let crumbs: [(String, Color)]
     let onBack: () -> Void; let onJump: (Int) -> Void
@@ -202,25 +196,18 @@ struct DioBackBar: View {
     }
 }
 
-// THE PULL-OUT — a tapped object's contents slide out from the right as a rich in-world drawer (real data).
+// THE PULL-OUT — ONE renderer for ANY primitive. Header (glyph/title/egress) + the primitive's `sections`
+// (each SectionBody drawn one way, here) + its `actions`. No per-type code — the contract drives it.
 struct DioPullout: View {
-    let obj: DioObj; let meeting: Meeting?; let kbItems: Int
-    let onClose: () -> Void; let onFullEditor: () -> Void
-
-    private var subtitle: String {
-        guard let m = meeting else { return obj.kind == .model ? "on this iPad" : "\(kbItems) item\(kbItems == 1 ? "" : "s")" }
-        let f = DateFormatter(); f.dateFormat = "MMM d · h:mm a"
-        let spk = Set(m.segments.map(\.speaker)).count
-        let dur = m.formattedDuration ?? (m.duration.map { "\(Int($0 / 60)) min" } ?? "")
-        return [f.string(from: m.startedAt), dur.isEmpty ? nil : dur, "\(spk) speaker\(spk == 1 ? "" : "s")"].compactMap { $0 }.joined(separator: "  ·  ")
-    }
+    let prim: any DeskPrimitive
+    let onClose: () -> Void; let onAction: (PrimitiveAction) -> Void
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 11) {
-                DeskSprite(name: obj.sprite, size: 40)
+                DeskSprite(name: prim.glyph, size: 40)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(obj.title).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text).lineLimit(1)
-                    Text(subtitle).font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
+                    Text(prim.title).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text).lineLimit(1)
+                    Text(prim.subtitle).font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
                 }
                 Spacer(minLength: 0)
                 HStack(spacing: 5) {
@@ -234,8 +221,25 @@ struct DioPullout: View {
             }
             .padding(.horizontal, 18).padding(.top, 16).padding(.bottom, 12)
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 16) { content() }
-                    .padding(.horizontal, 18).padding(.bottom, 26)
+                VStack(alignment: .leading, spacing: 16) {
+                    ForEach(Array(prim.sections.enumerated()), id: \.offset) { _, sec in
+                        DrawerSection(label: sec.label, tint: sec.tint) { sectionBody(sec.body) }
+                    }
+                    if prim.sections.isEmpty {
+                        Text("Nothing here yet.").font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                            .frame(maxWidth: .infinity, alignment: .center).padding(.vertical, 24)
+                    }
+                    ForEach(Array(prim.actions.enumerated()), id: \.offset) { _, act in
+                        Button { onAction(act) } label: {
+                            HStack(spacing: 7) {
+                                Image(systemName: act.icon).font(.system(size: 12, weight: .bold))
+                                Text(act.label).font(.system(size: 12.5, weight: .heavy, design: .rounded))
+                            }.foregroundStyle(DioPal.muted).frame(maxWidth: .infinity).frame(height: 40)
+                                .background(Capsule().strokeBorder(DioPal.muted.opacity(0.4), lineWidth: 1))
+                        }.buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 18).padding(.bottom, 26)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -247,67 +251,39 @@ struct DioPullout: View {
         )
     }
 
-    @ViewBuilder private func content() -> some View {
-        switch obj.kind {
-        case .meeting:
-            if let m = meeting {
-                if let s = m.intel?.summary, !s.isEmpty {
-                    DrawerSection(label: "SUMMARY", tint: DioPal.accent) {
-                        Text(s).font(.system(size: 14.5, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.92)).fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                let acts = m.intel?.actionItems ?? []
-                if !acts.isEmpty {
-                    DrawerSection(label: "ACTIONS · \(acts.count)", tint: DioPal.mint) {
-                        VStack(alignment: .leading, spacing: 10) {
-                            ForEach(acts, id: \.id) { a in
-                                HStack(alignment: .top, spacing: 10) {
-                                    Image(systemName: "circle").font(.system(size: 15, weight: .bold)).foregroundStyle(DioPal.mint).padding(.top, 1)
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(a.task).font(.system(size: 14, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text).fixedSize(horizontal: false, vertical: true)
-                                        if a.owner != nil || a.due != nil {
-                                            Text([a.owner, a.due].compactMap { $0 }.joined(separator: " · ")).font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
-                                        }
-                                    }
-                                }
-                            }
+    // the ONE place that knows how to draw each section body
+    @ViewBuilder private func sectionBody(_ body: SectionBody) -> some View {
+        switch body {
+        case .text(let s):
+            Text(s).font(.system(size: 14.5, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.92)).fixedSize(horizontal: false, vertical: true)
+        case .actions(let rows):
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "circle").font(.system(size: 15, weight: .bold)).foregroundStyle(DioPal.mint).padding(.top, 1)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(r.task).font(.system(size: 14, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text).fixedSize(horizontal: false, vertical: true)
+                            if let meta = r.meta { Text(meta).font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted) }
                         }
                     }
                 }
-                let topics = m.intel?.topics ?? []
-                if !topics.isEmpty { DrawerSection(label: "TOPICS", tint: DioPal.violet) { FlowChips(items: topics, tint: DioPal.violet) } }
-                if !m.segments.isEmpty {
-                    DrawerSection(label: "TRANSCRIPT · \(m.segments.count) lines", tint: DioPal.cobalt) {
-                        VStack(alignment: .leading, spacing: 9) {
-                            ForEach(Array(m.segments.enumerated()), id: \.offset) { _, seg in
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(seg.speaker.isEmpty ? "Speaker" : seg.speaker).font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.cobalt)
-                                    Text(seg.text).font(.system(size: 13.5, weight: .regular, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.88)).fixedSize(horizontal: false, vertical: true)
-                                }
-                            }
-                        }
+            }
+        case .chips(let items):
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 76), spacing: 8, alignment: .leading)], alignment: .leading, spacing: 8) {
+                ForEach(Array(items.enumerated()), id: \.offset) { _, it in
+                    Text(it).font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.9))
+                        .lineLimit(1).padding(.horizontal, 10).padding(.vertical, 6)
+                        .background(Capsule().fill(DioPal.violet.opacity(0.14)).overlay(Capsule().strokeBorder(DioPal.violet.opacity(0.35), lineWidth: 1)))
+                }
+            }
+        case .transcript(let lines):
+            VStack(alignment: .leading, spacing: 9) {
+                ForEach(Array(lines.enumerated()), id: \.offset) { _, ln in
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(ln.who).font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.cobalt)
+                        Text(ln.what).font(.system(size: 13.5, weight: .regular, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.88)).fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                if (m.intel?.summary.isEmpty ?? true) && (m.intel?.actionItems.isEmpty ?? true) && m.segments.isEmpty {
-                    Text("No intelligence yet — it's still on the way, or generate it from the meeting.")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
-                        .frame(maxWidth: .infinity, alignment: .center).padding(.vertical, 24)
-                }
-                Button(action: onFullEditor) {
-                    Text("Open full editor").font(.system(size: 12.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
-                        .frame(maxWidth: .infinity).frame(height: 40)
-                        .background(Capsule().strokeBorder(DioPal.muted.opacity(0.4), lineWidth: 1))
-                }.buttonStyle(.plain).padding(.top, 4)
-            }
-        case .model:
-            DrawerSection(label: "MODEL", tint: DioPal.cobalt) {
-                Text("\(obj.title) — loaded and ready. Every meeting is summarised on this iPad; nothing leaves the device.")
-                    .font(.system(size: 14, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.9)).fixedSize(horizontal: false, vertical: true)
-            }
-        case .kb:
-            DrawerSection(label: "KNOWLEDGE", tint: DioPal.violet) {
-                Text("\(kbItems) item\(kbItems == 1 ? "" : "s") filed here. Ask a grounded question and get an answer cited from your own notes.")
-                    .font(.system(size: 14, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.9)).fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -326,19 +302,6 @@ struct DrawerSection<Content: View>: View {
         .frame(maxWidth: .infinity, alignment: .leading).padding(14)
         .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.white.opacity(0.04))
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.white.opacity(0.06), lineWidth: 1)))
-    }
-}
-
-struct FlowChips: View {
-    let items: [String]; let tint: Color
-    var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 76), spacing: 8, alignment: .leading)], alignment: .leading, spacing: 8) {
-            ForEach(Array(items.enumerated()), id: \.offset) { _, it in
-                Text(it).font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.9))
-                    .lineLimit(1).padding(.horizontal, 10).padding(.vertical, 6)
-                    .background(Capsule().fill(tint.opacity(0.14)).overlay(Capsule().strokeBorder(tint.opacity(0.35), lineWidth: 1)))
-            }
-        }
     }
 }
 
@@ -445,38 +408,29 @@ struct DioStage: View {
     private func kbCount(_ n: String) -> Int {
         kbFiledCSV.split(separator: ";").compactMap { p -> String? in let kv = p.split(separator: "=", maxSplits: 1); return kv.count == 2 ? String(kv[1]) : nil }.filter { $0 == n }.count
     }
-    private func meetingTitle(_ m: Meeting) -> String {
-        if let t = m.title, !t.isEmpty { return t }
-        let f = DateFormatter(); f.dateFormat = "MMM d · h:mm a"; return f.string(from: m.startedAt)
-    }
-    private func obj(for m: Meeting, _ i: Int) -> DioObj {
-        DioObj(id: "m:\(m.id)", kind: .meeting, sprite: i % 2 == 0 ? "cassette" : "cassette2", base: 130, glow: DioPal.accent, title: meetingTitle(m))
-    }
-    private func members() -> [DioObj] {
-        var out: [DioObj] = []
-        for (i, m) in meetings.enumerated() where (filed["m:\(m.id)"] ?? "") == pathKey { out.append(obj(for: m, i)) }
+
+    // EVERYTHING is a DeskPrimitive — built here from the live model.
+    private func members() -> [any DeskPrimitive] {
+        var out: [any DeskPrimitive] = []
+        for (i, m) in meetings.enumerated() where (filed["m:\(m.id)"] ?? "") == pathKey { out.append(MeetingPrimitive(meeting: m, index: i)) }
         if path.isEmpty {
             for mdl in ModelFiles.installed().prefix(2) {
-                out.append(DioObj(id: "model:\(mdl.id)", kind: .model, sprite: "cartridge", base: 162, glow: DioPal.cobalt,
-                                  title: mdl.name.replacingOccurrences(of: ".gguf", with: "")))
+                out.append(ModelPrimitive(modelId: mdl.id, name: mdl.name.replacingOccurrences(of: ".gguf", with: "")))
             }
-            for kb in knowledgeBases.prefix(3) {
-                out.append(DioObj(id: "kb:\(kb)", kind: .kb, sprite: "crystal", base: 120, glow: DioPal.violet, title: kb))
-            }
+            for kb in knowledgeBases.prefix(3) { out.append(KBPrimitive(name: kb, items: kbCount(kb))) }
         }
         return out
     }
-    private func membersOf(_ zpath: String) -> [DioObj] {
-        var out: [DioObj] = []
-        for (i, m) in meetings.enumerated() where (filed["m:\(m.id)"] ?? "") == zpath { out.append(obj(for: m, i)) }
+    private func membersOf(_ zpath: String) -> [any DeskPrimitive] {
+        var out: [any DeskPrimitive] = []
+        for (i, m) in meetings.enumerated() where (filed["m:\(m.id)"] ?? "") == zpath { out.append(MeetingPrimitive(meeting: m, index: i)) }
         return out
     }
     private func meeting(forObj id: String) -> Meeting? {
         guard id.hasPrefix("m:") else { return nil }
         let mid = String(id.dropFirst(2)); return model.meetings.first { $0.id == mid }
     }
-    private func selectedObj() -> DioObj? { members().first { $0.id == selected } }
-
+    private func selectedPrim() -> (any DeskPrimitive)? { members().first { $0.id == selected } }
     private func mode(_ id: String) -> DioMode { selected == nil ? .home : (selected == id ? .focus : .recede) }
 
     // MARK: layout — low-profile shelf at top, objects on the open canvas
@@ -499,7 +453,7 @@ struct DioStage: View {
         return CGPoint(x: w * x, y: h * y)
     }
     private func pos(_ id: String, _ fallback: CGPoint, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
-        if selected == id { return CGPoint(x: w * 0.24, y: h * 0.44) }   // spotlight to the left, drawer pulls out right
+        if selected == id { return CGPoint(x: w * 0.24, y: h * 0.44) }
         if let u = positions[id] { return CGPoint(x: w * u.x, y: h * u.y) }
         return fallback
     }
@@ -547,10 +501,8 @@ struct DioStage: View {
                 RadialGradient(colors: [curTint.opacity(flash), .clear], center: .center, startRadius: 10, endRadius: w)
                     .blendMode(.plusLighter).allowsHitTesting(false)
 
-                if let o = selectedObj() {
-                    DioPullout(obj: o, meeting: meeting(forObj: o.id), kbItems: o.kind == .kb ? kbCount(o.title) : 0,
-                               onClose: { select(nil) },
-                               onFullEditor: { if let m = meeting(forObj: o.id) { openMeeting = m } })
+                if let p = selectedPrim() {
+                    DioPullout(prim: p, onClose: { select(nil) }, onAction: { handle($0, on: p) })
                         .frame(width: min(560, w * 0.62))
                         .padding(.vertical, 22).padding(.trailing, 16)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
@@ -593,11 +545,11 @@ struct DioStage: View {
             DioCreateTile(size: shelfSize(slotN, w), landed: landed, dimmed: selected != nil) { haptic(.light); namingZone = true }
                 .position(shelfPos(zs.count, slotN, w, h))
 
-            ForEach(Array(ms.enumerated()), id: \.element.id) { i, o in
-                DioHero(obj: o, landed: landed, mode: mode(o.id), index: i, pos: pos(o.id, looseHome(i, ms.count, w, h), w, h),
-                        onTap: { select(selected == o.id ? nil : o.id) },
-                        onDrop: { tr in drop(o, looseHome(i, ms.count, w, h), tr, w, h) },
-                        onDragChange: { p in updateHot(o, p, zs, slotN, w, h) })
+            ForEach(Array(ms.enumerated()), id: \.element.id) { i, p in
+                DioHero(prim: p, landed: landed, mode: mode(p.id), index: i, pos: pos(p.id, looseHome(i, ms.count, w, h), w, h),
+                        onTap: { select(selected == p.id ? nil : p.id) },
+                        onDrop: { tr in drop(p, looseHome(i, ms.count, w, h), tr, w, h) },
+                        onDragChange: { pt in updateHot(p, pt, zs, slotN, w, h) })
             }
 
             if selected != nil {
@@ -611,6 +563,13 @@ struct DioStage: View {
         var out: [(String, Color)] = [("Desk", DioPal.accent)]; var acc: [String] = []
         for comp in path { acc.append(comp); let id = acc.joined(separator: "/"); out.append((comp, tintFor(id))) }
         return out
+    }
+
+    private func handle(_ act: PrimitiveAction, on prim: any DeskPrimitive) {
+        switch act.role {
+        case .openEditor: if let m = meeting(forObj: prim.id) { openMeeting = m }
+        case .route, .send, .custom: break   // wired next (the keystone routing gesture)
+        }
     }
 
     private func haptic(_ s: UIImpactFeedbackGenerator.FeedbackStyle) {
@@ -637,28 +596,28 @@ struct DioStage: View {
         withAnimation(.spring(response: 0.6, dampingFraction: 0.62)) { zones.append((zpath, zones.count)) }
         persistZones()
     }
-    private func updateHot(_ o: DioObj, _ p: CGPoint?, _ zs: [(path: String, color: Int)], _ slotN: Int, _ w: CGFloat, _ h: CGFloat) {
-        guard o.kind == .meeting, let p = p else { if dragHotZone != nil { dragHotZone = nil }; return }
-        dragHotZone = trayHit(p, zs, slotN, w, h)
+    private func updateHot(_ p: any DeskPrimitive, _ pt: CGPoint?, _ zs: [(path: String, color: Int)], _ slotN: Int, _ w: CGFloat, _ h: CGFloat) {
+        guard p.kind == .meeting, let pt = pt else { if dragHotZone != nil { dragHotZone = nil }; return }
+        dragHotZone = trayHit(pt, zs, slotN, w, h)
     }
-    private func trayHit(_ p: CGPoint, _ zs: [(path: String, color: Int)], _ slotN: Int, _ w: CGFloat, _ h: CGFloat) -> String? {
+    private func trayHit(_ pt: CGPoint, _ zs: [(path: String, color: Int)], _ slotN: Int, _ w: CGFloat, _ h: CGFloat) -> String? {
         let size = shelfSize(slotN, w)
         for (i, z) in zs.enumerated() {
             let c = shelfPos(i, slotN, w, h)
             let rect = CGRect(x: c.x - size.width / 2, y: c.y - size.height / 2, width: size.width, height: size.height).insetBy(dx: -14, dy: -14)
-            if rect.contains(p) { return z.path }
+            if rect.contains(pt) { return z.path }
         }
         return nil
     }
-    private func drop(_ o: DioObj, _ fallback: CGPoint, _ tr: CGSize, _ w: CGFloat, _ h: CGFloat) {
-        let start = pos(o.id, fallback, w, h)
+    private func drop(_ p: any DeskPrimitive, _ fallback: CGPoint, _ tr: CGSize, _ w: CGFloat, _ h: CGFloat) {
+        let start = pos(p.id, fallback, w, h)
         let end = CGPoint(x: start.x + tr.width, y: start.y + tr.height)
         let zs = childZones(); let slotN = zs.count + 1
-        if o.kind == .meeting, let z = trayHit(end, zs, slotN, w, h) { file(o.id, into: z) }
+        if p.kind == .meeting, let z = trayHit(end, zs, slotN, w, h) { file(p.id, into: z) }
         else {
             haptic(.light)
-            let u = positions[o.id] ?? CGPoint(x: start.x / w, y: start.y / h)
-            positions[o.id] = CGPoint(x: min(0.92, max(0.08, u.x + tr.width / w)), y: min(0.82, max(0.2, u.y + tr.height / h)))
+            let u = positions[p.id] ?? CGPoint(x: start.x / w, y: start.y / h)
+            positions[p.id] = CGPoint(x: min(0.92, max(0.08, u.x + tr.width / w)), y: min(0.82, max(0.2, u.y + tr.height / h)))
             persistPositions()
         }
         dragHotZone = nil
