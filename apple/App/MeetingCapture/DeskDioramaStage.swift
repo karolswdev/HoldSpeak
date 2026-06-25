@@ -3,10 +3,10 @@ import SwiftUI
 import UIKit
 #endif
 
-// HSM-14 — THE DESK as a premium 2.5D, motion-first DIORAMA, integrated into the app so it runs on the
-// device (owner's bar: "premium = I'm delighted when I use it"). Reuses DeskSprite + the app's Color(hex:).
-// Default home behind no flag; the 3D LivingDesk/list stay reachable via HS_REAL_DESK / HS_CLASSIC_HOME.
-// Composed + tuned in the iOS Simulator harness (scripts/diorama) first; this is the same scene, on metal.
+// HSM-14 — THE DESK as a premium 2.5D, motion-first DIORAMA, on device. Owner's bar: "premium = I'm
+// delighted when I use it." Objects are alive (spring in, breathe, drift), you DRAG them to rearrange,
+// TAP (tight hit zone) to open their own per-type intelligence, and the record orb captures a new meeting.
+// Reuses DeskSprite + the app's Color(hex:). 3D desk behind HS_REAL_DESK=1, classic list HS_CLASSIC_HOME=1.
 
 enum DioPal {
     static let bgTop = Color(hex: 0x0B0D12), bgMid = Color(hex: 0x16111F), bgBot = Color(hex: 0x090A0E)
@@ -17,11 +17,15 @@ enum DioPal {
 struct DioObj: Identifiable { let id: String; let sprite: String; let base: CGFloat; let glow: Color; let home: CGPoint }
 enum DioMode { case home, focus, recede }
 
-// A hero object: springs in (overshoot), idles forever (breathe/drift/tilt), reacts to selection.
+// A hero object: springs in (overshoot), idles forever (breathe/drift/tilt), DRAGS to move, TAPS to open.
+// The tap/drag hit zone is the SPRITE footprint (the glow + shadow overflow visually but don't grab touches).
 struct DioHero: View {
-    let obj: DioObj; let landed: Bool; let mode: DioMode; let onTap: () -> Void
+    let obj: DioObj; let landed: Bool; let mode: DioMode; let index: Int; let pos: CGPoint
+    let onTap: () -> Void; let onMoved: (CGSize) -> Void
+    @State private var drag: CGSize = .zero
     private var modeScale: CGFloat { mode == .focus ? 1.32 : (mode == .recede ? 0.62 : 1) }
     private var dim: Double { mode == .recede ? 0.34 : 1 }
+    private let spring = Animation.spring(response: 0.55, dampingFraction: 0.62)
     var body: some View {
         TimelineView(.animation) { tl in
             let t = tl.date.timeIntervalSinceReferenceDate, ph = Double(abs(obj.id.hashValue) % 7)
@@ -42,7 +46,21 @@ struct DioHero: View {
                     .opacity(landed ? dim : 0)
                     .shadow(color: .black.opacity(0.55), radius: 16, y: 12)
             }
-            .contentShape(Rectangle()).onTapGesture(perform: onTap)
+            .frame(width: s, height: s)                          // TIGHT hit zone (glow/shadow overflow only visually)
+            .contentShape(Rectangle())
+            .animation(spring, value: mode)
+            .animation(.spring(response: 0.72, dampingFraction: 0.54).delay(Double(index) * 0.13), value: landed)
+            .position(x: pos.x + drag.width, y: pos.y + drag.height)
+            .animation(spring, value: mode)
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { if mode != .recede { drag = $0.translation } }
+                    .onEnded { v in
+                        let d = hypot(v.translation.width, v.translation.height)
+                        if d < 9 { onTap() } else if mode != .recede { onMoved(v.translation) }
+                        drag = .zero
+                    }
+            )
         }
     }
 }
@@ -127,7 +145,7 @@ struct DioRecordOrb: View {
                 Image(systemName: "mic.fill").font(.system(size: 24, weight: .bold)).foregroundStyle(.white)
             }
             .scaleEffect(1 + CGFloat(sin(t * 2) * 0.02))
-            .contentShape(Circle()).onTapGesture(perform: onTap)
+            .frame(width: 92, height: 92).contentShape(Circle()).onTapGesture(perform: onTap)
         }
     }
 }
@@ -181,22 +199,35 @@ struct DioStage: View {
     @State private var recording = false
     @State private var born = false
     @State private var newPos = CGPoint(x: 0.5, y: 0.5)
+    @State private var positions: [String: CGPoint] = [:]    // per-object unit position (you drag to rearrange)
 
     private let objects = [
         DioObj(id: "cassette", sprite: "cassette", base: 150, glow: DioPal.accent, home: CGPoint(x: 0.27, y: 0.34)),
         DioObj(id: "crystal",  sprite: "crystal",  base: 150, glow: DioPal.violet, home: CGPoint(x: 0.74, y: 0.33)),
-        DioObj(id: "cartridge", sprite: "cartridge", base: 210, glow: DioPal.cobalt, home: CGPoint(x: 0.5, y: 0.52)),
-    ]
-    private let cards: [(String, String, String, Color)] = [
-        ("sparkles", "Summary", "Shipped the beta Friday; pricing next week", DioPal.accent),
-        ("checkmark.circle.fill", "3 Actions", "Send the finance deck to Priya · EOD", DioPal.mint),
-        ("text.alignleft", "Transcript", "32 min · 3 speakers", DioPal.cobalt),
+        DioObj(id: "cartridge", sprite: "cartridge", base: 210, glow: DioPal.cobalt, home: CGPoint(x: 0.5, y: 0.55)),
     ]
     private let spring = Animation.spring(response: 0.55, dampingFraction: 0.62)
 
+    // Each object opens its OWN intelligence — a meeting's summary, the KB's contents, the model's status.
+    private func contentFor(_ id: String) -> [(String, String, String, Color)] {
+        switch id {
+        case "cassette": return [("sparkles", "Summary", "Shipped the beta Friday; pricing next week", DioPal.accent),
+                                 ("checkmark.circle.fill", "3 Actions", "Send the finance deck to Priya · EOD", DioPal.mint),
+                                 ("text.alignleft", "Transcript", "32 min · 3 speakers", DioPal.cobalt)]
+        case "crystal": return [("doc.text.fill", "Architecture", "12 documents", DioPal.violet),
+                                ("list.bullet.rectangle.fill", "Decisions", "8 logged", DioPal.violet),
+                                ("magnifyingglass", "Ask the KB", "grounded answers", DioPal.violet)]
+        case "cartridge": return [("cpu.fill", "Qwen3-4B", "on device · ready", DioPal.cobalt),
+                                  ("bolt.fill", "~40 tok/s", "fast + private", DioPal.cobalt),
+                                  ("checkmark.seal.fill", "Nothing leaves", "fully local", DioPal.mint)]
+        default: return []
+        }
+    }
     private func mode(_ id: String) -> DioMode { selected == nil ? .home : (selected == id ? .focus : .recede) }
+    private func unit(_ id: String) -> CGPoint { positions[id] ?? (objects.first { $0.id == id }?.home ?? CGPoint(x: 0.5, y: 0.5)) }
     private func pos(_ o: DioObj, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
-        selected == o.id ? CGPoint(x: w * 0.5, y: h * 0.27) : CGPoint(x: w * o.home.x, y: h * o.home.y)
+        if selected == o.id { return CGPoint(x: w * 0.5, y: h * 0.27) }
+        let u = unit(o.id); return CGPoint(x: w * u.x, y: h * u.y)
     }
 
     var body: some View {
@@ -211,25 +242,20 @@ struct DioStage: View {
                         .blendMode(.plusLighter).animation(spring, value: selected)
                 }
                 DioMotes()
-                Color.clear.contentShape(Rectangle()).onTapGesture { select(nil) }
+                Color.clear.contentShape(Rectangle()).onTapGesture { if selected != nil { select(nil) } }
 
                 VStack(spacing: 3) {
                     Text("HoldSpeak").font(.system(size: 26, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
-                    Text("your meetings, alive").font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).tracking(1)
+                    Text("drag to arrange · tap to open").font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).tracking(0.5)
                 }
                 .opacity(landed && selected == nil && !recording ? 1 : 0).offset(y: landed ? 0 : -14)
                 .animation(.easeOut(duration: 0.5), value: selected)
                 .frame(maxHeight: .infinity, alignment: .top).padding(.top, h * 0.10)
 
-                ForEach(objects.filter { mode($0.id) != .focus }) { o in
-                    DioHero(obj: o, landed: landed, mode: mode(o.id)) { select(o.id) }
-                        .position(pos(o, w, h)).animation(spring, value: selected)
-                        .animation(.spring(response: 0.72, dampingFraction: 0.54).delay(idx(o) * 0.13), value: landed)
-                }
-
-                if selected != nil {
+                // the intelligence cards bloom under the focused object (its OWN content)
+                if let sel = selected {
                     VStack(spacing: 11) {
-                        ForEach(Array(cards.enumerated()), id: \.offset) { i, c in
+                        ForEach(Array(contentFor(sel).enumerated()), id: \.offset) { i, c in
                             DioInfoCard(icon: c.0, title: c.1, line: c.2, tint: c.3)
                                 .scaleEffect(cardsIn ? 1 : 0.4).opacity(cardsIn ? 1 : 0).offset(y: cardsIn ? 0 : 40)
                                 .animation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.08 + Double(i) * 0.07), value: cardsIn)
@@ -238,9 +264,12 @@ struct DioStage: View {
                     .position(x: w * 0.5, y: h * 0.66)
                 }
 
-                ForEach(objects.filter { mode($0.id) == .focus }) { o in
-                    DioHero(obj: o, landed: landed, mode: .focus) { select(nil) }
-                        .position(pos(o, w, h)).animation(spring, value: selected)
+                // ONE list, z-ordered (focused on top) so identity is stable and nothing jumps
+                ForEach(Array(objects.enumerated()), id: \.element.id) { i, o in
+                    DioHero(obj: o, landed: landed, mode: mode(o.id), index: i, pos: pos(o, w, h),
+                            onTap: { select(selected == o.id ? nil : o.id) },
+                            onMoved: { tr in move(o.id, tr, w, h) })
+                        .zIndex(selected == o.id ? 10 : 0)
                 }
 
                 if born {
@@ -252,7 +281,7 @@ struct DioStage: View {
                     .position(x: w * newPos.x, y: h * newPos.y).transition(.scale(scale: 0.2).combined(with: .opacity))
                 }
 
-                DioCompanion(landed: landed, excited: selected != nil || recording).position(x: w * 0.84, y: h * 0.88)
+                DioCompanion(landed: landed, excited: selected != nil || recording).position(x: w * 0.86, y: h * 0.88)
                 if landed && !recording && selected == nil {
                     DioRecordOrb { startRecord() }.position(x: w * 0.5, y: h * 0.9).transition(.scale.combined(with: .opacity))
                 }
@@ -285,7 +314,6 @@ struct DioStage: View {
         .preferredColorScheme(.dark)
     }
 
-    private func idx(_ o: DioObj) -> Double { Double(objects.firstIndex { $0.id == o.id } ?? 0) }
     private func haptic(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
         #if canImport(UIKit)
         UIImpactFeedbackGenerator(style: style).impactOccurred()
@@ -296,6 +324,12 @@ struct DioStage: View {
         withAnimation(spring) { selected = id }
         cardsIn = false
         if id != nil { withAnimation { cardsIn = true } }
+    }
+    private func move(_ id: String, _ tr: CGSize, _ w: CGFloat, _ h: CGFloat) {
+        haptic(.light)
+        let u = unit(id)
+        positions[id] = CGPoint(x: min(0.92, max(0.08, u.x + tr.width / w)),
+                                y: min(0.86, max(0.16, u.y + tr.height / h)))
     }
     private func startRecord() { haptic(.medium); withAnimation(.easeInOut(duration: 0.35)) { recording = true } }
     private func stopRecord() {

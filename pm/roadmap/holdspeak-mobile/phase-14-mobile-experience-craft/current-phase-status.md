@@ -413,6 +413,17 @@ M4** via the proven `meeting-capture-device.sh` pipeline (launch pended on the l
 real test the owner asked for — feel it on glass (haptics on tap/record live). Next: tune the feel WITH
 him on the device, then keep expanding (other objects respond, act-on-card, the dive).
 
+**2026-06-24 — unwound the device bugs the owner hit (drag / hit-testing / per-type content).** First real
+device walk of `DioStage` surfaced three: (1) **no drag** — objects couldn't be moved; added a per-object
+`DragGesture(minimumDistance:0)` that distinguishes tap (<9pt → open) from drag (→ reposition, persisted in
+a unit-coord `positions` map, clamped on-desk), with a light haptic. (2) **unreliable taps** — the hit zone
+was the object's ~2× glow, so the big AI Core swallowed the crystal's taps; tightened each hit zone to the
+sprite footprint (`.frame(s,s).contentShape`). (3) **every object showed meeting cards** — added per-type
+`contentFor(id)` (meeting → Summary/Actions/Transcript; KB → docs/decisions/ask; model → on-device status).
+Also killed the jump: the focused object had been swapping between two `ForEach`es (identity loss → broken
+animation) — now ONE z-ordered list. Device-arch **BUILD SUCCEEDED**; **launched live on the iPad Air M4**
+(unlocked). Awaiting the owner's feel pass on drag + per-object taps.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
