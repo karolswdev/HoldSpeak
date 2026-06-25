@@ -381,6 +381,19 @@ proven + committed ([shot](./screenshots/desk-diorama-v1.png)). The 3D `LivingDe
 untouched for now; the diorama is the new target to build the experience (objects, zones, the dive, the
 focus lens) up to — at this bar, screenshot-verified each step.
 
+**2026-06-24 — DELIGHT, found (owner: "the exact simplicity and delightfulness I was looking for. Keep
+expanding").** The static-diorama screenshot was rightly called embarrassing; the unlock was the owner's
+definition — *"premium = I'm delighted when I use it."* Delight is **felt in motion**, which a screenshot
+can never carry — so the proof medium changed to **Simulator VIDEO** and the craft to **motion + character**.
+What landed: a clean dark stage, the bespoke PixelLab objects **springing in with overshoot** (staggered),
+then never sitting still (breathe / drift / tilt on their own rhythms), a pulsing stage glow, and **Qlippy
+with real character** (sways, hops). Then **expanded to respond to touch**: tap a meeting → it springs to
+centre, the others recede + dim, and its intelligence **blooms** out as clean cards (Summary / Actions /
+Transcript) with a staggered spring; Qlippy gets excited; tap empty → everything springs home. Built
+interactive AND auto-played (`DIO_DEMO=1`) so the whole flow records in motion. Proof:
+[stage](./screenshots/delight-stage.png) · [focus bloom](./screenshots/delight-focus.png) + the recorded
+clips. The lesson, locked: **stop proving feel with frozen frames — record motion, then feel it on device.**
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
