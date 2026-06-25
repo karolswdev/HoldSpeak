@@ -23,15 +23,16 @@ enum DioMode { case home, focus, recede }
 // MARK: - canvas object — derived ENTIRELY from a DeskPrimitive (glyph/colour/title/id). Gesture on the stable outer view.
 struct DioHero: View {
     let prim: any DeskPrimitive; let landed: Bool; let mode: DioMode; let index: Int; let pos: CGPoint
+    var hot: Bool = false                          // a compatible primitive is hovering over me → I'm a route target
     let onTap: () -> Void; let onDrop: (CGSize) -> Void; let onDragChange: (CGPoint?) -> Void
     @State private var drag: CGSize = .zero
-    private var modeScale: CGFloat { mode == .focus ? 1.34 : (mode == .recede ? 0.6 : 1) }
+    private var modeScale: CGFloat { hot ? 1.12 : (mode == .focus ? 1.34 : (mode == .recede ? 0.6 : 1)) }
     private var dim: Double { mode == .recede ? 0.3 : 1 }
     private let spring = Animation.spring(response: 0.5, dampingFraction: 0.72)
     var body: some View {
         let s = prim.base
         VStack(spacing: 7) {
-            DioHeroVisual(glyph: prim.glyph, glow: prim.color, base: s, seed: prim.id, focused: mode == .focus).frame(width: s, height: s)
+            DioHeroVisual(glyph: prim.glyph, glow: prim.color, base: s, seed: prim.id, focused: mode == .focus, hot: hot).frame(width: s, height: s)
             Text(prim.title).font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.85))
                 .lineLimit(1).frame(maxWidth: s + 36)
                 .padding(.horizontal, 8).padding(.vertical, 3)
@@ -66,6 +67,7 @@ struct DioHero: View {
 
 struct DioHeroVisual: View {
     let glyph: String; let glow: Color; let base: CGFloat; let seed: String; let focused: Bool
+    var hot: Bool = false
     var body: some View {
         let s = base
         TimelineView(.animation) { tl in
@@ -74,11 +76,16 @@ struct DioHeroVisual: View {
             let breathe = 1 + CGFloat(sin(t * 1.15 + ph) * 0.018)
             let tilt = sin(t * 0.65 + ph) * 2.0
             let pulse = 0.6 + 0.4 * sin(t * 1.7 + ph)
+            let ring = 0.5 + 0.5 * sin(t * 5)
             ZStack {
                 Ellipse().fill(.black.opacity(0.5)).frame(width: s * 0.6, height: s * 0.15)
                     .blur(radius: 11).offset(y: s * 0.45 + bob * 0.25)
-                Circle().fill(RadialGradient(colors: [glow.opacity(focused ? 0.75 : 0.5), .clear], center: .center, startRadius: 2, endRadius: s * 0.8))
-                    .frame(width: s * 1.8, height: s * 1.8).blur(radius: 12).opacity(pulse)
+                Circle().fill(RadialGradient(colors: [(hot ? DioPal.accent : glow).opacity(focused || hot ? 0.8 : 0.5), .clear], center: .center, startRadius: 2, endRadius: s * 0.8))
+                    .frame(width: s * 1.8, height: s * 1.8).blur(radius: 12).opacity(hot ? 0.9 : pulse)
+                if hot {
+                    Circle().strokeBorder(DioPal.accent.opacity(0.7 + 0.3 * ring), lineWidth: 3)
+                        .frame(width: s * (1.1 + 0.08 * ring), height: s * (1.1 + 0.08 * ring))
+                }
                 DeskSprite(name: glyph, size: s)
                     .rotationEffect(.degrees(tilt)).scaleEffect(breathe).offset(y: -bob)
                     .shadow(color: .black.opacity(0.55), radius: 15, y: 11)
@@ -368,6 +375,133 @@ struct DioRecordOrb: View {
     }
 }
 
+// THE ROUTE SHEET — drop a primitive on the AI core → pick a lens (or write a prompt) → Ask.
+struct DioRouteSheet: View {
+    let sourceTitle: String; let onAsk: (String, String) -> Void; let onCancel: () -> Void
+    @State private var lens = RouteLenses.all.first!.name
+    @State private var prompt = RouteLenses.all.first!.instruction
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.55).ignoresSafeArea().onTapGesture { onCancel() }
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 9) {
+                    DeskSprite(name: "cartridge", size: 34)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Route through the AI core").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                        Text(sourceTitle).font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
+                    HStack(spacing: 5) {
+                        Image(systemName: "lock.fill").font(.system(size: 9, weight: .bold))
+                        Text("On device").font(.system(size: 10, weight: .heavy, design: .rounded))
+                    }.foregroundStyle(DioPal.mint).padding(.horizontal, 9).frame(height: 26).background(Capsule().fill(DioPal.mint.opacity(0.14)))
+                }
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 8)], spacing: 8) {
+                    ForEach(RouteLenses.all) { l in
+                        Button { lens = l.name; prompt = l.instruction } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: l.icon).font(.system(size: 12, weight: .bold))
+                                Text(l.name).font(.system(size: 12.5, weight: .heavy, design: .rounded)).lineLimit(1)
+                            }
+                            .foregroundStyle(lens == l.name ? DioPal.text : DioPal.muted)
+                            .frame(maxWidth: .infinity).frame(height: 38)
+                            .background(Capsule().fill(lens == l.name ? DioPal.accent.opacity(0.22) : .white.opacity(0.04))
+                                .overlay(Capsule().strokeBorder((lens == l.name ? DioPal.accent : .clear).opacity(0.6), lineWidth: 1)))
+                        }.buttonStyle(.plain)
+                    }
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("PROMPT").font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).tracking(1.4)
+                    TextEditor(text: $prompt).font(.system(size: 13.5, weight: .medium, design: .rounded))
+                        .scrollContentBackground(.hidden).foregroundStyle(DioPal.text).frame(height: 78)
+                        .padding(10).background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(0.05))
+                            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+                }
+                HStack(spacing: 10) {
+                    Button(action: onCancel) { Text("Cancel").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).frame(maxWidth: .infinity).frame(height: 46).background(Capsule().fill(.white.opacity(0.06))) }.buttonStyle(.plain)
+                    Button { onAsk(lens, prompt) } label: {
+                        HStack(spacing: 6) { Image(systemName: "wand.and.stars").font(.system(size: 14, weight: .bold)); Text("Ask").font(.system(size: 15, weight: .heavy, design: .rounded)) }
+                            .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 46)
+                            .background(Capsule().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom)))
+                    }.buttonStyle(.plain)
+                }
+            }
+            .padding(20).frame(maxWidth: 460)
+            .background(RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom))
+                .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1))
+                .shadow(color: .black.opacity(0.6), radius: 30, y: 16))
+            .padding(.horizontal, 18)
+        }
+        .transition(.opacity)
+    }
+}
+
+// THE THEATER — the route running through the AI core, on this iPad (or the endpoint).
+struct DioRoutingTheater: View {
+    let sourceTitle: String; let lens: String; let local: Bool
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.74).ignoresSafeArea()
+            TimelineView(.animation) { tl in
+                let t = tl.date.timeIntervalSinceReferenceDate
+                VStack(spacing: 22) {
+                    ZStack {
+                        ForEach(0..<3) { i in
+                            let p = ((t * 0.7 + Double(i) * 0.33).truncatingRemainder(dividingBy: 1))
+                            Circle().stroke(DioPal.accent.opacity(0.5 * (1 - p)), lineWidth: 2).frame(width: 90 + CGFloat(p) * 120, height: 90 + CGFloat(p) * 120)
+                        }
+                        Circle().fill(RadialGradient(colors: [Color(hex: 0xFFB070), DioPal.accent.opacity(0.7), .clear], center: .center, startRadius: 3, endRadius: 55))
+                            .frame(width: 96, height: 96).scaleEffect(1 + CGFloat(sin(t * 2.4) * 0.06))
+                        DeskSprite(name: "cartridge", size: 60).rotationEffect(.degrees(sin(t * 1.2) * 6))
+                    }
+                    VStack(spacing: 5) {
+                        Text("Routing \(sourceTitle)").font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                        Text("\(lens) · \(local ? "on this iPad · no network" : "endpoint")").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                    }
+                }
+            }
+        }
+        .transition(.opacity)
+    }
+}
+
+// THE PRINTED CARD — the new primitive that just came out of the core. Keep it (lands on the desk) or bin it.
+struct DioPrintedCard: View {
+    let rec: OutputRecord; let onKeep: () -> Void; let onBin: () -> Void
+    @State private var shown = false
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.7).ignoresSafeArea().onTapGesture { onBin() }
+            VStack(spacing: 0) {
+                HStack(spacing: 11) {
+                    DeskSprite(name: "note", size: 38)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(rec.title).font(.system(size: 17, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                        Text("fresh from the AI core · from \(rec.source)").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
+                }.padding(.horizontal, 18).padding(.top, 16).padding(.bottom, 10)
+                ScrollView(showsIndicators: false) {
+                    Text(rec.body).font(.system(size: 14.5, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.92))
+                        .frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: false, vertical: true).padding(.horizontal, 18)
+                }
+                HStack(spacing: 10) {
+                    Button(action: onBin) { HStack(spacing: 6) { Image(systemName: "trash"); Text("Bin") }.font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).frame(maxWidth: .infinity).frame(height: 46).background(Capsule().fill(.white.opacity(0.06))) }.buttonStyle(.plain)
+                    Button(action: onKeep) { HStack(spacing: 6) { Image(systemName: "tray.and.arrow.down.fill"); Text("Keep on desk") }.font(.system(size: 14.5, weight: .heavy, design: .rounded)).foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 46).background(Capsule().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom))) }.buttonStyle(.plain)
+                }.padding(16)
+            }
+            .frame(maxWidth: 480, maxHeight: 520)
+            .background(RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom))
+                .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(DioPal.accent.opacity(0.4), lineWidth: 1))
+                .shadow(color: .black.opacity(0.6), radius: 30, y: 16))
+            .padding(.horizontal, 18).scaleEffect(shown ? 1 : 0.85).opacity(shown ? 1 : 0)
+        }
+        .onAppear { withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { shown = true } }
+    }
+}
+
 struct DioStage: View {
     @StateObject private var model = CaptureModel()
     @AppStorage("hs.diorama.pos") private var posCSV = ""
@@ -388,6 +522,16 @@ struct DioStage: View {
     @State private var dragHotZone: String? = nil
     @State private var namingZone = false
     @State private var newZoneName = ""
+    // routing (the keystone: drag a primitive onto the AI core → LLM → a new primitive)
+    @AppStorage("hs.diorama.outputs") private var outputsJSON = ""
+    @State private var outputs: [OutputRecord] = []
+    @State private var dragHotObjectId: String? = nil          // a compatible route target under a dragged primitive
+    @State private var routeSourceId: String? = nil
+    @State private var routeLensRun = ""
+    @State private var showRouteSheet = false
+    @State private var routing = false
+    @State private var printed: OutputRecord? = nil
+    @State private var routeError: String? = nil
     private let diveSpring = Animation.spring(response: 0.6, dampingFraction: 0.74)
     private let focusSpring = Animation.spring(response: 0.5, dampingFraction: 0.72)
 
@@ -413,6 +557,7 @@ struct DioStage: View {
     private func members() -> [any DeskPrimitive] {
         var out: [any DeskPrimitive] = []
         for (i, m) in meetings.enumerated() where (filed["m:\(m.id)"] ?? "") == pathKey { out.append(MeetingPrimitive(meeting: m, index: i)) }
+        for rec in outputs where rec.path == pathKey { out.append(OutputPrimitive(rec: rec)) }
         if path.isEmpty {
             for mdl in ModelFiles.installed().prefix(2) {
                 out.append(ModelPrimitive(modelId: mdl.id, name: mdl.name.replacingOccurrences(of: ".gguf", with: "")))
@@ -509,14 +654,32 @@ struct DioStage: View {
                         .transition(.move(edge: .trailing).combined(with: .opacity)).zIndex(60)
                 }
 
-                if !path.isEmpty && selected == nil {
+                if !path.isEmpty && selected == nil && !showRouteSheet && !routing && printed == nil {
                     DioBackBar(crumbs: crumbs(), onBack: { climbOut() }, onJump: { jump(to: $0) })
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                         .padding(.top, h * 0.045).zIndex(100)
                 }
+
+                // the keystone routing flow: sheet → theater → printed card (keep/bin)
+                if showRouteSheet, let src = members().first(where: { $0.id == routeSourceId }) {
+                    DioRouteSheet(sourceTitle: src.title,
+                                  onAsk: { l, p in runRoute(lens: l, prompt: p) },
+                                  onCancel: { withAnimation { showRouteSheet = false }; routeSourceId = nil })
+                        .zIndex(120)
+                }
+                if routing {
+                    DioRoutingTheater(sourceTitle: members().first(where: { $0.id == routeSourceId })?.title ?? "the desk",
+                                      lens: routeLensRun, local: InferenceConfigStore.shared.isLocal).zIndex(125)
+                }
+                if let rec = printed {
+                    DioPrintedCard(rec: rec, onKeep: { keepPrinted() }, onBin: { binPrinted() }).zIndex(130)
+                }
             }
             .ignoresSafeArea()
             .onAppear { landed = true; load(); model.refresh() }
+            .alert("Couldn’t route", isPresented: Binding(get: { routeError != nil }, set: { if !$0 { routeError = nil } })) {
+                Button("OK", role: .cancel) { routeError = nil }
+            } message: { Text(routeError ?? "") }
             .alert("New zone", isPresented: $namingZone) {
                 TextField("Name", text: $newZoneName)
                 Button("Cancel", role: .cancel) { newZoneName = "" }
@@ -547,6 +710,7 @@ struct DioStage: View {
 
             ForEach(Array(ms.enumerated()), id: \.element.id) { i, p in
                 DioHero(prim: p, landed: landed, mode: mode(p.id), index: i, pos: pos(p.id, looseHome(i, ms.count, w, h), w, h),
+                        hot: dragHotObjectId == p.id,
                         onTap: { select(selected == p.id ? nil : p.id) },
                         onDrop: { tr in drop(p, looseHome(i, ms.count, w, h), tr, w, h) },
                         onDragChange: { pt in updateHot(p, pt, zs, slotN, w, h) })
@@ -597,8 +761,21 @@ struct DioStage: View {
         persistZones()
     }
     private func updateHot(_ p: any DeskPrimitive, _ pt: CGPoint?, _ zs: [(path: String, color: Int)], _ slotN: Int, _ w: CGFloat, _ h: CGFloat) {
-        guard p.kind == .meeting, let pt = pt else { if dragHotZone != nil { dragHotZone = nil }; return }
-        dragHotZone = trayHit(pt, zs, slotN, w, h)
+        guard let pt = pt else { dragHotZone = nil; dragHotObjectId = nil; return }
+        if let target = objectHit(pt, members(), w, h, excluding: p.id), target.accepts.contains(p.kind) {
+            dragHotObjectId = target.id; dragHotZone = nil; return    // a route target wins
+        }
+        dragHotObjectId = nil
+        dragHotZone = (p.kind == .meeting) ? trayHit(pt, zs, slotN, w, h) : nil
+    }
+    private func objectHit(_ pt: CGPoint, _ ms: [any DeskPrimitive], _ w: CGFloat, _ h: CGFloat, excluding: String) -> (any DeskPrimitive)? {
+        for (i, o) in ms.enumerated() where o.id != excluding {
+            let c = pos(o.id, looseHome(i, ms.count, w, h), w, h)
+            let s = o.base
+            let rect = CGRect(x: c.x - s / 2, y: c.y - s / 2, width: s, height: s).insetBy(dx: -8, dy: -8)
+            if rect.contains(pt) { return o }
+        }
+        return nil
     }
     private func trayHit(_ pt: CGPoint, _ zs: [(path: String, color: Int)], _ slotN: Int, _ w: CGFloat, _ h: CGFloat) -> String? {
         let size = shelfSize(slotN, w)
@@ -612,16 +789,84 @@ struct DioStage: View {
     private func drop(_ p: any DeskPrimitive, _ fallback: CGPoint, _ tr: CGSize, _ w: CGFloat, _ h: CGFloat) {
         let start = pos(p.id, fallback, w, h)
         let end = CGPoint(x: start.x + tr.width, y: start.y + tr.height)
-        let zs = childZones(); let slotN = zs.count + 1
-        if p.kind == .meeting, let z = trayHit(end, zs, slotN, w, h) { file(p.id, into: z) }
-        else {
-            haptic(.light)
-            let u = positions[p.id] ?? CGPoint(x: start.x / w, y: start.y / h)
-            positions[p.id] = CGPoint(x: min(0.92, max(0.08, u.x + tr.width / w)), y: min(0.82, max(0.2, u.y + tr.height / h)))
-            persistPositions()
+        defer { dragHotZone = nil; dragHotObjectId = nil }
+        // 1) routed onto a compatible primitive (the AI core / a KB)?
+        if let target = objectHit(end, members(), w, h, excluding: p.id), target.accepts.contains(p.kind) {
+            beginRoute(sourceId: p.id, target: target); return
         }
-        dragHotZone = nil
+        // 2) a meeting filed into a zone?
+        let zs = childZones(); let slotN = zs.count + 1
+        if p.kind == .meeting, let z = trayHit(end, zs, slotN, w, h) { file(p.id, into: z); return }
+        // 3) free-place
+        haptic(.light)
+        let u = positions[p.id] ?? CGPoint(x: start.x / w, y: start.y / h)
+        positions[p.id] = CGPoint(x: min(0.92, max(0.08, u.x + tr.width / w)), y: min(0.82, max(0.2, u.y + tr.height / h)))
+        persistPositions()
     }
+
+    // MARK: the intelligence engine — route a primitive through the AI core (or a KB)
+    private func beginRoute(sourceId: String, target: any DeskPrimitive) {
+        haptic(.medium)
+        if target.kind == .model {                              // the AI core → ask the LLM
+            routeSourceId = sourceId
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { showRouteSheet = true }
+        } else {                                                // e.g. a KB → file into it (simple route for now)
+            #if canImport(UIKit)
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            #endif
+        }
+    }
+    private func runRoute(lens: String, prompt: String) {
+        withAnimation { showRouteSheet = false }
+        guard let src = members().first(where: { $0.id == routeSourceId }) else { return }
+        routeLensRun = lens
+        let material = String(src.routableText.prefix(6000))
+        let srcTitle = src.title
+        let full = prompt + "\n\nMaterial:\n" + material
+        let zpath = pathKey
+        haptic(.heavy)
+        withAnimation { routing = true }
+        Task { @MainActor in
+            let result = await callLLM(full)
+            withAnimation { routing = false }
+            switch result {
+            case .success(let raw):
+                let clean = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+                #if canImport(UIKit)
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                #endif
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    printed = OutputRecord(id: UUID().uuidString, title: lens, body: clean.isEmpty ? "(the model returned nothing)" : clean,
+                                           source: srcTitle, lens: lens, path: zpath)
+                }
+            case .failure(let e):
+                routeError = friendly(e)
+            }
+        }
+    }
+    @MainActor private func callLLM(_ prompt: String) async -> Result<String, Error> {
+        do {
+            let cfg = InferenceConfigStore.shared
+            let localPath = ModelFiles.installed().first { $0.url.lastPathComponent.lowercased().contains("mmproj") == false }?.url.path
+            let provider = try cfg.makeProvider(localModelPath: localPath, context: 8192)
+            let text = try await provider.complete(prompt: prompt)
+            return .success(text)
+        } catch { return .failure(error) }
+    }
+    private func friendly(_ e: Error) -> String {
+        let cfg = InferenceConfigStore.shared
+        if cfg.isLocal { return "No on-device model is loaded. Add one in Models, or point at an endpoint in Settings → where intelligence runs." }
+        return "Couldn’t reach the endpoint. Check Settings → where intelligence runs (URL / model)."
+    }
+    private func keepPrinted() {
+        guard let rec = printed else { return }
+        #if canImport(UIKit)
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        #endif
+        withAnimation(focusSpring) { outputs.append(rec); printed = nil }
+        routeSourceId = nil; persistOutputs()
+    }
+    private func binPrinted() { haptic(.light); withAnimation { printed = nil }; routeSourceId = nil }
     private func file(_ id: String, into zpath: String) {
         #if canImport(UIKit)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -633,6 +878,9 @@ struct DioStage: View {
     private func persistPositions() { posCSV = positions.map { "\($0.key)=\($0.value.x),\($0.value.y)" }.joined(separator: ";") }
     private func persistZones() { zonesCSV = zones.map { "\($0.path)|\($0.color)" }.joined(separator: ";") }
     private func persistFiled() { dfiledCSV = filed.map { "\($0.key)=\($0.value)" }.joined(separator: ";") }
+    private func persistOutputs() {
+        if let data = try? JSONEncoder().encode(outputs), let s = String(data: data, encoding: .utf8) { outputsJSON = s }
+    }
     private func load() {
         var pd: [String: CGPoint] = [:]
         for row in posCSV.split(separator: ";") {
@@ -651,5 +899,6 @@ struct DioStage: View {
             fd[String(kv[0])] = String(kv[1])
         }
         filed = fd
+        if let data = outputsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([OutputRecord].self, from: data) { outputs = arr }
     }
 }

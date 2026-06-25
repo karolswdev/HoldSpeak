@@ -72,6 +72,18 @@ extension DeskPrimitive {
     var emits: [PrimitiveKind] { [] }
     var accepts: [PrimitiveKind] { [] }
     func canReceive(_ other: DeskPrimitive) -> Bool { accepts.contains(other.kind) }
+
+    // The text you feed to an LLM when this primitive is routed — derived from its sections, generically.
+    var routableText: String {
+        sections.map { sec -> String in
+            switch sec.body {
+            case .text(let s):        return s
+            case .actions(let rows):  return rows.map { "- \($0.task)" }.joined(separator: "\n")
+            case .chips(let c):       return c.joined(separator: ", ")
+            case .transcript(let l):  return l.map { "\($0.who): \($0.what)" }.joined(separator: "\n")
+            }
+        }.joined(separator: "\n\n")
+    }
 }
 
 // MARK: - conformers (every desk concept is one declaration)
@@ -138,6 +150,36 @@ struct KBPrimitive: DeskPrimitive {
         [.init(label: "KNOWLEDGE", tint: DioPal.violet, body: .text("\(items) item\(items == 1 ? "" : "s") filed here. Ask a grounded question and get an answer cited from your own notes."))]
     }
     var accepts: [PrimitiveKind] { [.note, .artifact, .summary] }
+}
+
+// A generated output — the result of routing a primitive through the AI core. It's a first-class primitive
+// itself, so you can route it AGAIN (every output is also an input). Persisted as an OutputRecord.
+struct OutputRecord: Codable, Identifiable, Equatable {
+    var id: String; var title: String; var body: String; var source: String; var lens: String; var path: String
+}
+struct OutputPrimitive: DeskPrimitive {
+    let rec: OutputRecord
+    var id: String { "out:\(rec.id)" }
+    var kind: PrimitiveKind { .artifact }
+    var glyph: String { "note" }
+    var base: CGFloat { 112 }
+    var title: String { rec.title }
+    var subtitle: String { "from \(rec.source) · \(rec.lens.lowercased())" }
+    var preview: String? { rec.body }
+    var sections: [PrimitiveSection] { [.init(label: rec.lens.uppercased(), tint: DioPal.accent, body: .text(rec.body))] }
+    var emits: [PrimitiveKind] { [.artifact] }
+}
+
+// The lenses you can route a primitive through (the prompt presets). "Ask…" is a free prompt.
+struct RouteLens: Identifiable { let id = UUID(); let name: String; let icon: String; let instruction: String }
+enum RouteLenses {
+    static let all: [RouteLens] = [
+        .init(name: "Summarize", icon: "sparkles", instruction: "Summarize the following in 3–4 tight sentences. Be concrete."),
+        .init(name: "Action items", icon: "checkmark.circle", instruction: "Extract the concrete action items as a short list, each as 'task — owner — due' when known."),
+        .init(name: "Risks", icon: "exclamationmark.triangle", instruction: "List the top risks, blockers, and open questions implied by the following. Be specific and brief."),
+        .init(name: "Decisions", icon: "flag", instruction: "List the decisions that were made in the following. One line each."),
+        .init(name: "Draft email", icon: "envelope", instruction: "Write a short, friendly follow-up email summarizing the following and its next steps."),
+    ]
 }
 
 private extension String { var nilIfEmpty: String? { isEmpty ? nil : self } }

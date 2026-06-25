@@ -398,8 +398,106 @@ struct RisingWords: View {
     }
 }
 
+// ROUTING (the keystone) — mirrors the app's DioRouteSheet / DioRoutingTheater / DioPrintedCard for the
+// screenshot record. The app wires these to a real ILLMProvider; here they're driven by DIO_ROUTE_STAGE.
+struct RouteSheetH: View {
+    let source: String
+    private let lenses = [("Summarize", "sparkles"), ("Action items", "checkmark.circle"), ("Risks", "exclamationmark.triangle"), ("Decisions", "flag"), ("Draft email", "envelope")]
+    @State private var sel = "Risks"
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.55).ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 9) {
+                    Sprite(name: "cartridge", size: 34)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Route through the AI core").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
+                        Text(source).font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
+                    }
+                    Spacer(minLength: 0)
+                    HStack(spacing: 5) { Image(systemName: "lock.fill").font(.system(size: 9, weight: .bold)); Text("On device").font(.system(size: 10, weight: .heavy, design: .rounded)) }
+                        .foregroundStyle(Pal.mint).padding(.horizontal, 9).frame(height: 26).background(Capsule().fill(Pal.mint.opacity(0.14)))
+                }
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 8)], spacing: 8) {
+                    ForEach(lenses, id: \.0) { l in
+                        HStack(spacing: 6) { Image(systemName: l.1).font(.system(size: 12, weight: .bold)); Text(l.0).font(.system(size: 12.5, weight: .heavy, design: .rounded)).lineLimit(1) }
+                            .foregroundStyle(sel == l.0 ? Pal.text : Pal.muted).frame(maxWidth: .infinity).frame(height: 38)
+                            .background(Capsule().fill(sel == l.0 ? Pal.accent.opacity(0.22) : .white.opacity(0.04)).overlay(Capsule().strokeBorder((sel == l.0 ? Pal.accent : .clear).opacity(0.6), lineWidth: 1)))
+                    }
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("PROMPT").font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted).tracking(1.4)
+                    Text("List the top risks, blockers, and open questions implied by the following. Be specific and brief.")
+                        .font(.system(size: 13.5, weight: .medium, design: .rounded)).foregroundStyle(Pal.text).frame(maxWidth: .infinity, alignment: .leading).frame(height: 78, alignment: .topLeading)
+                        .padding(10).background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(0.05)).overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+                }
+                HStack(spacing: 10) {
+                    Text("Cancel").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted).frame(maxWidth: .infinity).frame(height: 46).background(Capsule().fill(.white.opacity(0.06)))
+                    HStack(spacing: 6) { Image(systemName: "wand.and.stars").font(.system(size: 14, weight: .bold)); Text("Ask").font(.system(size: 15, weight: .heavy, design: .rounded)) }
+                        .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 46).background(Capsule().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), Pal.accent], startPoint: .top, endPoint: .bottom)))
+                }
+            }
+            .padding(20).frame(maxWidth: 460)
+            .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom)).overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1)).shadow(color: .black.opacity(0.6), radius: 30, y: 16))
+            .padding(.horizontal, 18)
+        }
+    }
+}
+struct TheaterH: View {
+    let source: String
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.74).ignoresSafeArea()
+            TimelineView(.animation) { tl in
+                let t = tl.date.timeIntervalSinceReferenceDate
+                VStack(spacing: 22) {
+                    ZStack {
+                        ForEach(0..<3) { i in
+                            let p = ((t * 0.7 + Double(i) * 0.33).truncatingRemainder(dividingBy: 1))
+                            Circle().stroke(Pal.accent.opacity(0.5 * (1 - p)), lineWidth: 2).frame(width: 90 + CGFloat(p) * 120, height: 90 + CGFloat(p) * 120)
+                        }
+                        Circle().fill(RadialGradient(colors: [Color(hex: 0xFFB070), Pal.accent.opacity(0.7), .clear], center: .center, startRadius: 3, endRadius: 55)).frame(width: 96, height: 96).scaleEffect(1 + CGFloat(sin(t * 2.4) * 0.06))
+                        Sprite(name: "cartridge", size: 60).rotationEffect(.degrees(sin(t * 1.2) * 6))
+                    }
+                    VStack(spacing: 5) {
+                        Text("Routing \(source)").font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
+                        Text("Risks · on this iPad · no network").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
+                    }
+                }
+            }
+        }
+    }
+}
+struct PrintedH: View {
+    let title: String, text: String, source: String
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.7).ignoresSafeArea()
+            VStack(spacing: 0) {
+                HStack(spacing: 11) {
+                    Sprite(name: "note", size: 38)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title).font(.system(size: 17, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
+                        Text("fresh from the AI core · from \(source)").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
+                    }
+                    Spacer(minLength: 0)
+                }.padding(.horizontal, 18).padding(.top, 16).padding(.bottom, 10)
+                ScrollView(showsIndicators: false) { Text(text).font(.system(size: 14.5, weight: .medium, design: .rounded)).foregroundStyle(Pal.text.opacity(0.92)).frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: false, vertical: true).padding(.horizontal, 18) }
+                HStack(spacing: 10) {
+                    HStack(spacing: 6) { Image(systemName: "trash"); Text("Bin") }.font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted).frame(maxWidth: .infinity).frame(height: 46).background(Capsule().fill(.white.opacity(0.06)))
+                    HStack(spacing: 6) { Image(systemName: "tray.and.arrow.down.fill"); Text("Keep on desk") }.font(.system(size: 14.5, weight: .heavy, design: .rounded)).foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 46).background(Capsule().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), Pal.accent], startPoint: .top, endPoint: .bottom)))
+                }.padding(16)
+            }
+            .frame(maxWidth: 480, maxHeight: 520)
+            .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom)).overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Pal.accent.opacity(0.4), lineWidth: 1)).shadow(color: .black.opacity(0.6), radius: 30, y: 16))
+            .padding(.horizontal, 18)
+        }
+    }
+}
+
 struct Stage: View {
     @State private var landed = false
+    @State private var routeStage = ""           // "", "sheet", "theater", "printed" (DIO_ROUTE_STAGE)
     @State private var path: [String] = []
     @State private var diveDir = 1
     @State private var flash = 0.0
@@ -509,6 +607,14 @@ struct Stage: View {
                 }
 
                 if recording { listeningOverlay() }
+
+                if routeStage == "sheet" { RouteSheetH(source: "Standup").zIndex(120) }
+                if routeStage == "theater" { TheaterH(source: "Standup").zIndex(120) }
+                if routeStage == "printed" {
+                    PrintedH(title: "Risks",
+                             text: "• Pricing is unresolved and blocks the all-hands message — needs a decision by Monday.\n• Finance is waiting on the beta numbers; the follow-up depends on you sending them today.\n• Ownership of the customer deck is on Priya alone — single point of failure if she's out.\n• No date set for the pricing decision itself, only \"next week.\"",
+                             source: "Standup").zIndex(130)
+                }
             }
             .ignoresSafeArea()
             .onAppear {
@@ -516,6 +622,7 @@ struct Stage: View {
                 let env = ProcessInfo.processInfo.environment
                 if let p = env["DIO_PATH"], !p.isEmpty { path = p.split(separator: "/").map(String.init) }
                 if let s = env["DIO_SELECT"], !s.isEmpty { DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { select(s) } }
+                if let r = env["DIO_ROUTE_STAGE"], !r.isEmpty { routeStage = r }
                 if env["DIO_DEMO"] == "1" { runDemo() }
             }
         }

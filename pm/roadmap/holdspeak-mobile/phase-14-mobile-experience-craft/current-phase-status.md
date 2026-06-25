@@ -502,6 +502,25 @@ status) identically — [meeting](./screenshots/fractal-intel-pullout.png) vs
 [story-25](./story-25-the-desk-interaction-system.md) (gesture library · intelligence engine · integrations ·
 build order). Next: the keystone routing gesture (drag → AI core → real LLM → new card) on real metal.
 
+**2026-06-25 — THE KEYSTONE: route any primitive through the AI core → a real LLM → a new primitive
+(owner: "keep building an ecosystem!").** The intelligence engine, made tactile. **Drag a primitive (a
+meeting, or a kept output) onto the AI-core cartridge** — it lights up "hot" (accent ring) when a compatible
+target is under it (`accepts ∋ kind`, from the Primitive contract) — and on drop a **route sheet** opens:
+pick a **lens** (Summarize / Action items / Risks / Decisions / Draft email) or edit the prompt freely. "Ask"
+runs it through the **real `ILLMProvider`** — on-device `LlamaProvider` (GGUF) or the configured endpoint, via
+`InferenceConfigStore.makeProvider` — grounded in the source's `routableText` (derived generically from its
+sections), with a **generation theater** (the thinking orb + "on this iPad · no network"). The result
+**prints as a NEW first-class primitive** (`OutputPrimitive`, kind `.artifact`) → **Keep on desk** (it lands,
+persisted in `hs.diorama.outputs`, and can be routed AGAIN — every output is an input) or **Bin**. Routing is
+generic over the contract: drop is `target.receive(source)`; the AI core `accepts` everything, a KB accepts
+notes/artifacts. Composed + screenshot-proven in the harness ([sheet](./screenshots/route-sheet.png) ·
+[theater](./screenshots/route-theater.png) · [printed](./screenshots/route-printed.png)), wired to the real
+provider in `DioStage`. Device-arch **BUILD SUCCEEDED**; built + signed + **installed on the iPad Air M4**
+(launch pended on the lock screen). This is story-25 build-order #1 — the smallest thing that makes the whole
+ecosystem real. Owner runs the real on-metal route (needs an on-device model or a configured endpoint). Next:
+the visible route arc, the long-press "Route to…/Send to…" menu, and connectors-as-primitives (drop an output
+on Slack → propose→approve→execute).
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
