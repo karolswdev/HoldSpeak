@@ -781,19 +781,27 @@ struct DeskFocusOverlay: View {
                     .onTapGesture { onExit() }
                     .opacity(appear ? 1 : 0)
 
-                // the outputs, fanned in the air around the lifted object
-                ForEach(Array(outputs.enumerated()), id: \.element.id) { i, c in
-                    let pos = floatPos(i, outputs.count, geo.size)
-                    DeskCardFace(data: c)
-                        .scaleEffect(0.92)
-                        .rotationEffect(.degrees(Double((abs(c.id.hashValue) % 9) - 4)))
-                        .shadow(color: .black.opacity(0.5), radius: 14, y: 8)
-                        .position(pos)
-                        .opacity(appear ? 1 : 0)
-                        .offset(y: appear ? 0 : 60)
-                        .scaleEffect(appear ? 1 : 0.6)
-                        .animation(.spring(response: 0.5, dampingFraction: 0.78).delay(0.06 + Double(i) * 0.05), value: appear)
-                        .onTapGesture { onOpen(c.id) }
+                // the outputs, fanned in the air around the lifted object — each LEVITATING with its own
+                // gentle, slightly-random drift + tilt so they read as floating, not pinned.
+                TimelineView(.animation) { tl in
+                    let t = tl.date.timeIntervalSinceReferenceDate
+                    ForEach(Array(outputs.enumerated()), id: \.element.id) { i, c in
+                        let pos = floatPos(i, outputs.count, geo.size)
+                        let s = Double(abs(c.id.hashValue) % 1000) / 1000          // per-card phase seed
+                        let dx = CGFloat(sin(t * (0.55 + s * 0.5) + s * 6.28) * 4.5)
+                        let dy = CGFloat(cos(t * (0.48 + s * 0.4) + s * 4.0) * 6.0)
+                        let hr = sin(t * (0.42 + s * 0.3) + s * 3.0) * 1.7          // degrees of sway
+                        DeskCardFace(data: c)
+                            .scaleEffect(0.92)
+                            .rotationEffect(.degrees(Double((abs(c.id.hashValue) % 9) - 4) + (appear ? hr : 0)))
+                            .shadow(color: .black.opacity(0.5), radius: 14, y: 8)
+                            .position(pos)
+                            .offset(x: appear ? dx : 0, y: (appear ? 0 : 60) + (appear ? dy : 0))
+                            .opacity(appear ? 1 : 0)
+                            .scaleEffect(appear ? 1 : 0.6)
+                            .animation(.spring(response: 0.5, dampingFraction: 0.78).delay(0.06 + Double(i) * 0.05), value: appear)
+                            .onTapGesture { onOpen(c.id) }
+                    }
                 }
 
                 VStack {

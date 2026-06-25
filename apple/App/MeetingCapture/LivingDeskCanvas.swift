@@ -541,10 +541,23 @@ struct LivingDeskCanvas: UIViewRepresentable {
             n.position = SCNVector3(0, 16, 15)                            // lifted up + toward the camera
             n.eulerAngles = SCNVector3(0, 0, 0)                           // squared up, presented
             n.scale = SCNVector3(1.5, 1.5, 1.5)
+            SCNTransaction.completionBlock = { [weak self, weak n] in if let n { self?.startHover(n) } }
             SCNTransaction.commit()
+        }
+        // Idle LEVITATION — once lifted, the object never sits still: a slow vertical bob + a gentle drift
+        // and a tiny tumble, on three different periods so the combined motion never looks like a loop.
+        private func startHover(_ n: SCNNode) {
+            let pos = SCNAction.repeatForever(.sequence([
+                { let a = SCNAction.moveBy(x: 0.28, y: 0.55, z: 0.16, duration: 1.7); a.timingMode = .easeInEaseOut; return a }(),
+                { let a = SCNAction.moveBy(x: -0.28, y: -0.55, z: -0.16, duration: 1.7); a.timingMode = .easeInEaseOut; return a }()]))
+            let rot = SCNAction.repeatForever(.sequence([
+                { let a = SCNAction.rotateBy(x: 0.03, y: 0.06, z: 0.02, duration: 2.4); a.timingMode = .easeInEaseOut; return a }(),
+                { let a = SCNAction.rotateBy(x: -0.03, y: -0.06, z: -0.02, duration: 2.4); a.timingMode = .easeInEaseOut; return a }()]))
+            n.runAction(pos, forKey: "hoverPos"); n.runAction(rot, forKey: "hoverRot")
         }
         private func dropFromFocus(_ n: SCNNode, _ id: String) {
             guard let s = focusSaved[id] else { return }
+            n.removeAction(forKey: "hoverPos"); n.removeAction(forKey: "hoverRot")   // stop levitating before it clips back
             hLight.impactOccurred(intensity: 0.6)
             SCNTransaction.begin(); SCNTransaction.animationDuration = 0.4
             SCNTransaction.animationTimingFunction = CAMediaTimingFunction(name: .easeInEaseOut)

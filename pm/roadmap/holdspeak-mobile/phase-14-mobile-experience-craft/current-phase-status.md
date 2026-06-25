@@ -358,6 +358,14 @@ by reason, not yet eyeballed on the glass. **Real-asset note:** tried CC0 poly.p
 and read worse than the procedural objects, so they're set aside pending a real texturing/curation pass
 (IDs + pipeline saved in the handover). The procedural objects stay for now.
 
+**2026-06-24 — levitation idle on the focus lens (owner: "make them hover, unsettled, like they're
+floating").** The lifted object and its floating outputs were frozen once settled — reads as stuck. Now
+both **levitate**: the 3D lifted object runs a slow bob + drift + tiny tumble on three different periods
+(so the motion never looks like a loop), started on lift-settle and removed before it clips back; each
+floating output card drifts + sways on its own phase (a `TimelineView` with a per-card seed). Subtle
+amplitude — a few points / fractions of a unit. `xcodebuild` **BUILD SUCCEEDED**; installed on the iPad
+Air M4 (launch pending an unlock).
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
