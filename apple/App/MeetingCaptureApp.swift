@@ -31,15 +31,19 @@ struct MeetingCaptureApp: App {
                             guard url.pathExtension.lowercased() == "gguf" else { return }
                             try? ModelFiles.importModel(from: url)
                         }
-                } else {
-                    // HSM-14-19 — THE DESK is the home: real meetings as physical objects on a
-                    // gamified physics desk. The classic list lives behind HS_CLASSIC_HOME=1.
+                } else if ProcessInfo.processInfo.environment["HS_REAL_DESK"] != nil {
+                    // The 3D physics object desk (HSM-14-19..24), behind a flag while the motion-first
+                    // 2.5D diorama is the front door.
                     DeskHome()
-                        // AirDrop / "Open in HoldSpeak" a .gguf → copy it into the app's container.
                         .onOpenURL { url in
                             guard url.pathExtension.lowercased() == "gguf" else { return }
                             try? ModelFiles.importModel(from: url)
                         }
+                } else {
+                    // HSM-14 — the premium, motion-first 2.5D DIORAMA is the home (owner-blessed direction):
+                    // alive objects, tap-to-focus intelligence, the capture moment. 3D desk behind
+                    // HS_REAL_DESK=1; the classic list behind HS_CLASSIC_HOME=1.
+                    DioStage()
                 }
                 // The run queue rides above every screen — the app-wide transparency surface.
                 QueueHUD()

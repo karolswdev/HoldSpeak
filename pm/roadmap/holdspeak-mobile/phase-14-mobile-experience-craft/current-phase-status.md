@@ -404,6 +404,15 @@ both verified in motion. Auto-played tour under `DIO_DEMO=1`. Proof:
 clip. Next candidate expansions (keep it simple): the model/KB objects responding on tap, acting on a card
 (send/approve), and the fractal dive — then port the whole feel into the real app + onto the device.
 
+**2026-06-24 — the diorama is ON THE DEVICE (owner: "let's get it on my iPad").** Integrated the
+motion-first 2.5D stage into the real app as `DioStage` (`App/MeetingCapture/DeskDioramaStage.swift`,
+Dio-prefixed to avoid collisions, reuses `DeskSprite` + the app's `Color(hex:)`), and made it the app's
+**front door** (`MeetingCaptureApp`): the 3D object desk is now behind `HS_REAL_DESK=1`, the classic list
+behind `HS_CLASSIC_HOME=1`. Device-arch **BUILD SUCCEEDED**; built + signed + **installed on the iPad Air
+M4** via the proven `meeting-capture-device.sh` pipeline (launch pended on the lock screen). This is the
+real test the owner asked for — feel it on glass (haptics on tap/record live). Next: tune the feel WITH
+him on the device, then keep expanding (other objects respond, act-on-card, the dive).
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
