@@ -424,6 +424,19 @@ Also killed the jump: the focused object had been swapping between two `ForEach`
 animation) — now ONE z-ordered list. Device-arch **BUILD SUCCEEDED**; **launched live on the iPad Air M4**
 (unlocked). Awaiting the owner's feel pass on drag + per-object taps.
 
+**2026-06-24 — the diorama becomes a real ENGINE + the drag root-cause fix (owner: "build out a full
+engine... and still can't drag").** Drag never worked because the `DragGesture` was attached INSIDE the
+per-frame idle `TimelineView` (rebuilt ~60×/s → the in-progress drag was torn down every frame; taps
+squeaked through, continuous drags died). Fix: split `DioHero` so the gesture + `.position` live on a STABLE
+outer view and only the idle motion stays in `DioHeroVisual`'s TimelineView. Then wired the **real engine**:
+`DioStage` now owns a `CaptureModel` and renders **real objects** — your recent meetings as cassettes,
+installed models (`ModelFiles`) as AI-core cartridges, knowledge bases as crystals — each with **real
+content** in the bloom (a meeting's actual summary/actions/transcript counts; model status; KB item count),
+**drag positions persisted** in `@AppStorage`, the record orb opening the **real `CaptureView`** (a captured
+meeting refreshes onto the desk), and a meeting card opening the **real `MeetingDetailView`**. Reinstalled
+clean (uninstall → fresh install) to kill the stale-build worry. Device-arch **BUILD SUCCEEDED**; installed
+on the iPad Air M4 (launch pended on the lock screen).
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
