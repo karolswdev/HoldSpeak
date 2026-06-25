@@ -37,10 +37,10 @@ cat > "$APP/Info.plist" <<PLIST
   <key>UIDeviceFamily</key><array><integer>2</integer></array>
   <key>UIRequiresFullScreen</key><true/>
   <key>UISupportedInterfaceOrientations</key><array>
-    <string>UIInterfaceOrientationLandscapeRight</string>
+    <string>UIInterfaceOrientationPortrait</string>
   </array>
   <key>UISupportedInterfaceOrientations~ipad</key><array>
-    <string>UIInterfaceOrientationLandscapeRight</string>
+    <string>UIInterfaceOrientationPortrait</string>
   </array>
 </dict></plist>
 PLIST

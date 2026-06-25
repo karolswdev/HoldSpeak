@@ -155,6 +155,17 @@ These are the owner's explicit, repeated asks — the road to "meaningful":
 > untouched until the diorama is genuinely better. (The old offscreen SceneKit renderer + 3D notes below
 > are superseded for look work — keep them only as 3D reference.)
 
+> **FRACTAL ZONES + DIVE — IN THE DIORAMA (2026-06-24).** The diorama (`DioStage` + harness
+> `scripts/diorama/Diorama.swift`) now has **places**: premium recessed **zone trays** that hold meetings,
+> a **+ New Zone** create tile, **drag-a-meeting-onto-a-tray to file** (drop-to-tag, "hot" highlight), and
+> **tap-to-DIVE** (asymmetric scale-through + accent whoosh + breadcrumb). **Recursive + path-based**
+> (`hs.diorama.zones` = "path|colorIdx", `hs.diorama.filed` = "objId=zonePath"); models/KBs stay at root.
+> Breadcrumb climbs out; tap-empty climbs a level; the glow retints per zone. Proven in the Simulator
+> harness (portrait now — the landscape Info.plist letterboxed it) by screenshot + recorded video, then
+> installed on the iPad. **The dive FEEL on glass is the one acceptance left** (a static frame can't carry
+> it). Tune `diveSpring`/whoosh on device. This is §7 #1 + #2 in the diorama; next: act-on-expand (§7 #3)
+> + the Ask-AI atom (§7 #7), and zone choreography (#6) for many trays.
+>
 > **FOCUS LENS (2026-06-24, owner's vision for "expand"):** tapping a meeting in 3D no longer spills cards
 > into the physics desk — it **lifts the object toward the camera** (`LivingDeskCanvas.liftToFocus`:
 > kinematic + collisionBitMask 0 so it's non-solid, transform saved in `focusSaved`, animated up+scaled;

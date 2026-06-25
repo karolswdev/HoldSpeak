@@ -5,7 +5,10 @@ design, and modern hand-driven mobile practice were never in the roadmap, and th
 shipped as a bare functional shell, not a crafted product. This phase makes the
 **experience** first-class.)
 
-**Last updated:** 2026-06-21 (**opened + first craft delivered.** The owner chose the
+**Last updated:** 2026-06-24 (**the diorama gets fractal zones + the dive** — see the latest "Where we are"
+entry; the 2.5D front door now has recursive places you file meetings into and dive through, on the iPad).
+
+**(Historical) 2026-06-21 (**opened + first craft delivered.** The owner chose the
 **Tactile Sheets** design direction from three concrete mockups (gesture-first: swipeable
 cards, draggable action sheet, big targets, haptic-forward). HSM-14-01 in progress: a native
 `DS` design system (color/spacing/radii/elevation tokens + reusable swipeable-card / action-
@@ -436,6 +439,30 @@ content** in the bloom (a meeting's actual summary/actions/transcript counts; mo
 meeting refreshes onto the desk), and a meeting card opening the **real `MeetingDetailView`**. Reinstalled
 clean (uninstall → fresh install) to kill the stale-build worry. Device-arch **BUILD SUCCEEDED**; installed
 on the iPad Air M4 (launch pended on the lock screen).
+
+**2026-06-24 — the diorama gets PLACES: fractal zones + the dive (owner's most-excited idea, now in the
+2.5D front door).** The pivot diorama could show your meetings but had no structure — a flat stage of loose
+objects. This leap gives it **places**. A **zone tray** is a premium recessed drawer that HOLDS meetings: a
+tinted label + count, member previews idling inside, an empty-state nudge, and a teaching **DIVE IN** cue.
+You **make a place** (a dashed **+ New Zone** tile → name it), **drag a meeting onto a tray to file it**
+(drop-to-tag — the tray lights up "hot" as you hover, a success haptic + count tick on drop), and **tap the
+tray to DIVE in**: a gamified camera rush (asymmetric scale-through + an accent **whoosh** flare + heavy
+haptic) where the zone *becomes the whole desk*, showing its members and its own **sub-zones** —
+**recursive**, path-based (`Atlas` → `Atlas/Q3`). A **breadcrumb** (`🏠 Desk › Project Atlas › Q3 Planning`,
+each crumb tap-to-jump) shows where you are; tap empty climbs out a level; the accent glow **retints to each
+zone's colour** as you descend. Built in the **harness first** (`scripts/diorama/Diorama.swift`) and
+**screenshot- + VIDEO-proven in the Simulator** — the dive is motion a frozen frame can't carry, so the
+auto-tour (`DIO_DEMO=1`) was recorded and the mid-dive frames confirm the camera-rush + breadcrumb-extend +
+interior-materialize reads right. Then **ported to the real app** (`DioStage`) against the live
+`CaptureModel`: real meetings file into real zones (`hs.diorama.zones`/`hs.diorama.filed`, path-based,
+persisted), models (cartridges) + KBs (crystals) stay at root, drag-to-file hit-tests the trays. Harness
+switched to **portrait full-screen** (the landscape Info.plist was letterboxing the canvas into a short band).
+Device-arch **BUILD SUCCEEDED**; built + signed + **installed on the iPad Air M4** (launch pended on the lock
+screen — the install completes regardless). Proof: [root](./screenshots/fractal-desk-root.png) ·
+[inside Atlas](./screenshots/fractal-desk-atlas.png) · [mid-dive](./screenshots/fractal-dive-transition.png) ·
+[deep in Q3](./screenshots/fractal-zone-q3.png). This is handover §7 #2 (dive) + #1 (drop-to-tag) brought
+into the diorama, and the start of #5 (zones). Next: feel the dive on glass with the owner, then act-on-expand
+(§7 #3) + the Ask-AI atom (§7 #7).
 
 ## Operating principle (standing, beyond this phase)
 
