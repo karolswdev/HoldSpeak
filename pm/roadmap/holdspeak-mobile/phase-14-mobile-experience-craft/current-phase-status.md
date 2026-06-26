@@ -590,6 +590,19 @@ device-arch **BUILD SUCCEEDED**. Routing is now: drag onto a target, lasso a bun
 three ways into the same engine. Next: a second grounded connector (webhook/GitHub via the host actuators) +
 act-on-action inside the pull-out.
 
+**2026-06-25 — workflows as primitives: saved Asks become reusable desk TOOLS (the-desk-map ▶).** The desk
+stops being one-shot asks and becomes a place where you **build tools**. In the route sheet, **"Save as a
+reusable tool"** turns the current lens/prompt into a named **`WorkflowPrimitive`** (kind `.workflow`, an SF
+gears tile) that lands on the desk and persists (`hs.diorama.workflows`). It `accepts` meetings/outputs, so
+**dropping a meeting on a tool runs that saved Ask straight through the AI core — no sheet, no retyping** (a
+`.workflow` branch in `beginRoute` calls `runRoute` with the saved prompt), with the same visible cable +
+theater, printing a new primitive. Every tool's output is itself routable. Generic over the Primitive
+contract — a workflow is just another primitive that `accepts` and produces. Harness screenshot-proven
+([tool on the desk](./screenshots/desk-with-workflow.png) · [save-as-tool](./screenshots/route-sheet-save-tool.png)),
+ported to `DioStage`; device-arch **BUILD SUCCEEDED**. This is the holistic map's "workflows as primitives"
+link — see [[THE_DESK_WHOLE_PICTURE]]. Next on the map: a second grounded connector (webhook/GitHub via the
+host actuators), act-on-section, web parity.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a

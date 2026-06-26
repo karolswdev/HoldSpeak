@@ -43,7 +43,8 @@ enum World {
         "": [Obj(id: "standup", sprite: "cassette", base: 130, glow: Pal.accent, title: "Standup"),
              Obj(id: "core",    sprite: "cartridge", base: 162, glow: Pal.cobalt, title: "AI Core"),
              Obj(id: "docs",    sprite: "crystal",  base: 120, glow: Pal.violet, title: "Docs KB"),
-             Obj(id: "slack",   sprite: "number",   base: 116, glow: Pal.violet, title: "Slack", symbol: true)],
+             Obj(id: "slack",   sprite: "number",   base: 116, glow: Pal.violet, title: "Slack", symbol: true),
+             Obj(id: "risklens", sprite: "gearshape.2.fill", base: 118, glow: Pal.mint, title: "Risk Lens", symbol: true)],
         "Atlas": [Obj(id: "kickoff", sprite: "cassette",  base: 130, glow: Pal.accent, title: "Kickoff"),
                   Obj(id: "roadmap", sprite: "cassette2", base: 130, glow: Pal.accent, title: "Roadmap")],
         "Atlas/Q3": [Obj(id: "sprint1", sprite: "cassette",  base: 126, glow: Pal.accent, title: "Sprint 1"),
@@ -453,6 +454,8 @@ struct RouteSheetH: View {
                     HStack(spacing: 6) { Image(systemName: "wand.and.stars").font(.system(size: 14, weight: .bold)); Text("Ask").font(.system(size: 15, weight: .heavy, design: .rounded)) }
                         .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 46).background(Capsule().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), Pal.accent], startPoint: .top, endPoint: .bottom)))
                 }
+                HStack(spacing: 6) { Image(systemName: "gearshape.2.fill").font(.system(size: 12, weight: .bold)); Text("Save as a reusable tool").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
+                    .foregroundStyle(Pal.violet).frame(maxWidth: .infinity).frame(height: 38).background(Capsule().strokeBorder(Pal.violet.opacity(0.5), lineWidth: 1))
             }
             .padding(20).frame(maxWidth: 460)
             .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom)).overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1)).shadow(color: .black.opacity(0.6), radius: 30, y: 16))

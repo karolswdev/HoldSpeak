@@ -402,7 +402,7 @@ struct DioRecordOrb: View {
 
 // THE ROUTE SHEET — drop a primitive on the AI core → pick a lens (or write a prompt) → Ask.
 struct DioRouteSheet: View {
-    let sourceTitle: String; let onAsk: (String, String) -> Void; let onCancel: () -> Void
+    let sourceTitle: String; let onAsk: (String, String) -> Void; let onCancel: () -> Void; let onSaveTool: (String) -> Void
     @State private var lens = RouteLenses.all.first!.name
     @State private var prompt = RouteLenses.all.first!.instruction
     var body: some View {
@@ -450,6 +450,11 @@ struct DioRouteSheet: View {
                             .background(Capsule().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom)))
                     }.buttonStyle(.plain)
                 }
+                Button { onSaveTool(prompt) } label: {
+                    HStack(spacing: 6) { Image(systemName: "gearshape.2.fill").font(.system(size: 12, weight: .bold)); Text("Save as a reusable tool").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
+                        .foregroundStyle(DioPal.violet).frame(maxWidth: .infinity).frame(height: 38)
+                        .background(Capsule().strokeBorder(DioPal.violet.opacity(0.5), lineWidth: 1))
+                }.buttonStyle(.plain)
             }
             .padding(20).frame(maxWidth: 460)
             .background(RoundedRectangle(cornerRadius: 26, style: .continuous)
@@ -691,6 +696,12 @@ struct DioStage: View {
     @State private var selectedSet: Set<String> = []
     @State private var bundleTitle = ""
     @State private var bundleText = ""
+    // workflows: saved Asks as reusable desk tools (drop a primitive → runs the saved prompt)
+    @AppStorage("hs.diorama.workflows") private var workflowsJSON = ""
+    @State private var workflows: [WorkflowRecord] = []
+    @State private var savingTool = false
+    @State private var toolName = ""
+    @State private var pendingToolPrompt = ""
     // routing (the keystone: drag a primitive onto the AI core → LLM → a new primitive)
     @AppStorage("hs.diorama.outputs") private var outputsJSON = ""
     @State private var outputs: [OutputRecord] = []
@@ -747,6 +758,7 @@ struct DioStage: View {
             for kb in knowledgeBases.prefix(3) { out.append(KBPrimitive(name: kb, items: kbCount(kb))) }
             out.append(ConnectorPrimitive(connId: "slack", name: "Slack", symbol: "number", tint: DioPal.violet,
                                           configured: hostLink != nil, detail: peerHost.isEmpty ? "" : peerHost))
+            for wf in workflows { out.append(WorkflowPrimitive(rec: wf)) }
         }
         return out
     }
@@ -894,7 +906,8 @@ struct DioStage: View {
                 if showRouteSheet {
                     DioRouteSheet(sourceTitle: routeSourceTitle(),
                                   onAsk: { l, p in runRoute(lens: l, prompt: p) },
-                                  onCancel: { withAnimation { showRouteSheet = false }; routeSourceId = nil })
+                                  onCancel: { withAnimation { showRouteSheet = false }; routeSourceId = nil },
+                                  onSaveTool: { p in pendingToolPrompt = p; toolName = ""; withAnimation { showRouteSheet = false }; savingTool = true })
                         .zIndex(120)
                 }
                 if routing {
@@ -925,6 +938,11 @@ struct DioStage: View {
                 Button("Cancel", role: .cancel) {}
                 Button("Save") { savePeer(connectURL) }
             } message: { Text("Your iPad sends through your Mac. The Slack credential stays on the Mac — the iPad never holds it.") }
+            .alert("Save as a tool", isPresented: $savingTool) {
+                TextField("Tool name (e.g. Risks, Brief)", text: $toolName)
+                Button("Cancel", role: .cancel) { routeSourceId = nil }
+                Button("Save") { saveTool(); routeSourceId = nil }
+            } message: { Text("It becomes a tile on your desk. Drop a meeting or output on it to run this Ask again — no retyping.") }
             .alert("New zone", isPresented: $namingZone) {
                 TextField("Name", text: $newZoneName)
                 Button("Cancel", role: .cancel) { newZoneName = "" }
@@ -1112,6 +1130,10 @@ struct DioStage: View {
         case .connector:                                        // a connector → propose→approve→send
             sendSourceId = sourceId; sendTargetName = target.title
             withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { showSendCard = true }
+        case .workflow:                                         // a saved tool → run its prompt, no sheet
+            guard let wf = target as? WorkflowPrimitive else { break }
+            routeSourceId = sourceId
+            runRoute(lens: wf.rec.name, prompt: wf.rec.prompt)
         default:
             #if canImport(UIKit)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -1231,6 +1253,18 @@ struct DioStage: View {
     private func persistOutputs() {
         if let data = try? JSONEncoder().encode(outputs), let s = String(data: data, encoding: .utf8) { outputsJSON = s }
     }
+    private func persistWorkflows() {
+        if let data = try? JSONEncoder().encode(workflows), let s = String(data: data, encoding: .utf8) { workflowsJSON = s }
+    }
+    private func saveTool() {
+        let nm = toolName.trimmingCharacters(in: .whitespaces)
+        guard !nm.isEmpty, !pendingToolPrompt.isEmpty else { return }
+        haptic(.medium)
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.62)) {
+            workflows.append(WorkflowRecord(id: UUID().uuidString, name: nm, prompt: pendingToolPrompt))
+        }
+        persistWorkflows()
+    }
     private func load() {
         var pd: [String: CGPoint] = [:]
         for row in posCSV.split(separator: ";") {
@@ -1250,5 +1284,6 @@ struct DioStage: View {
         }
         filed = fd
         if let data = outputsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([OutputRecord].self, from: data) { outputs = arr }
+        if let data = workflowsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([WorkflowRecord].self, from: data) { workflows = arr }
     }
 }

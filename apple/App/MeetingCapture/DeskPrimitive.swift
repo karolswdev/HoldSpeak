@@ -196,6 +196,30 @@ struct ConnectorPrimitive: DeskPrimitive {
     var accepts: [PrimitiveKind] { configured ? [.artifact, .summary, .actions, .topics, .meeting] : [] }
 }
 
+// A WORKFLOW — a saved Ask, turned into a reusable tool on the desk. Drop a meeting/output on it and it runs
+// the saved prompt through the AI core (no sheet). The desk becomes a place where you BUILD tools, not just
+// one-shot asks. Persisted as a WorkflowRecord; every output it makes is itself a routable primitive.
+struct WorkflowRecord: Codable, Identifiable, Equatable {
+    var id: String; var name: String; var prompt: String
+}
+struct WorkflowPrimitive: DeskPrimitive {
+    let rec: WorkflowRecord
+    var id: String { "wf:\(rec.id)" }
+    var kind: PrimitiveKind { .workflow }
+    var glyph: String { "gearshape.2.fill" }
+    var isSymbol: Bool { true }
+    var color: Color { DioPal.violet }
+    var base: CGFloat { 118 }
+    var title: String { rec.name }
+    var subtitle: String { "a saved Ask · drop to run" }
+    var preview: String? { "drop to run" }
+    var sections: [PrimitiveSection] {
+        [.init(label: "WORKFLOW", tint: DioPal.violet, body: .text("A saved Ask. Drop a meeting or an output here and it runs through the AI core — no prompt to retype.")),
+         .init(label: "PROMPT", tint: DioPal.muted, body: .text(rec.prompt))]
+    }
+    var accepts: [PrimitiveKind] { [.meeting, .summary, .actions, .topics, .artifact] }
+}
+
 // The lenses you can route a primitive through (the prompt presets). "Ask…" is a free prompt.
 struct RouteLens: Identifiable { let id = UUID(); let name: String; let icon: String; let instruction: String }
 enum RouteLenses {
