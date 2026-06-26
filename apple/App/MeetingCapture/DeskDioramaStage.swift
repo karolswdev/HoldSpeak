@@ -688,6 +688,78 @@ struct DeskHostLink {
     }
 }
 
+// A tool's glyph (SF-symbol tool or pixel sprite) at any size — used in the dock.
+struct DioToolGlyph: View {
+    let prim: any DeskPrimitive; let size: CGFloat
+    var body: some View {
+        Group {
+            if prim.isSymbol {
+                ZStack {
+                    RoundedRectangle(cornerRadius: size * 0.26, style: .continuous)
+                        .fill(LinearGradient(colors: [prim.color.opacity(0.42), Color(hex: 0x12101A)], startPoint: .top, endPoint: .bottom))
+                        .overlay(RoundedRectangle(cornerRadius: size * 0.26, style: .continuous).strokeBorder(prim.color.opacity(0.7), lineWidth: 1.5))
+                    Image(systemName: prim.glyph).font(.system(size: size * 0.4, weight: .bold)).foregroundStyle(.white)
+                }.frame(width: size, height: size)
+            } else {
+                DeskSprite(name: prim.glyph, size: size)
+            }
+        }
+    }
+}
+
+// One tool tile in the open dock — a drop target (highlights "hot") + tap to inspect.
+struct DioDockTile: View {
+    let prim: any DeskPrimitive; let hot: Bool; let onTap: () -> Void
+    var body: some View {
+        VStack(spacing: 6) {
+            DioToolGlyph(prim: prim, size: 60)
+                .scaleEffect(hot ? 1.12 : 1)
+                .overlay(hot ? Circle().strokeBorder(DioPal.accent, lineWidth: 3).frame(width: 70, height: 70) : nil)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: hot)
+            Text(prim.title).font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.85)).lineLimit(1).frame(maxWidth: 78)
+        }
+        .contentShape(Rectangle()).onTapGesture(perform: onTap)
+    }
+}
+
+// The dock chrome — the collapsed handle (with peek icons) or the open panel background.
+struct DioDockChrome: View {
+    let open: Bool; let tools: [any DeskPrimitive]; let onToggle: () -> Void
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 0)
+            if open {
+                VStack(spacing: 10) {
+                    Capsule().fill(.white.opacity(0.25)).frame(width: 42, height: 5)
+                    HStack(spacing: 5) {
+                        Text("TOOLS").font(.system(size: 11, weight: .heavy, design: .rounded)).tracking(2).foregroundStyle(DioPal.muted)
+                        Text("· drop a card on one").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(.top, 10).frame(maxWidth: .infinity).frame(height: 150)
+                .background(UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28, style: .continuous)
+                    .fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom))
+                    .overlay(UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1))
+                    .shadow(color: .black.opacity(0.6), radius: 24, y: -8))
+                .contentShape(Rectangle()).onTapGesture(perform: onToggle)
+            } else {
+                HStack(spacing: 10) {
+                    Image(systemName: "chevron.up").font(.system(size: 13, weight: .black)).foregroundStyle(DioPal.accent)
+                    Text("Tools").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                    Spacer(minLength: 0)
+                    HStack(spacing: 8) { ForEach(Array(tools.prefix(5).enumerated()), id: \.element.id) { _, t in DioToolGlyph(prim: t, size: 30) } }
+                }
+                .padding(.horizontal, 18).frame(height: 56)
+                .background(Capsule().fill(.white.opacity(0.07)).overlay(Capsule().strokeBorder(.white.opacity(0.12), lineWidth: 1)))
+                .padding(.horizontal, 16).padding(.bottom, 14)
+                .contentShape(Rectangle()).onTapGesture(perform: onToggle)
+            }
+        }
+        .ignoresSafeArea(edges: .bottom)
+    }
+}
+
 struct DioStage: View {
     @StateObject private var model = CaptureModel()
     @AppStorage("hs.diorama.pos") private var posCSV = ""
@@ -744,6 +816,7 @@ struct DioStage: View {
     @State private var connecting = false
     @State private var connectURL = ""
     @State private var sentToast: String? = nil
+    @State private var dockOpen = false                  // the tool dock (tools live here, in the thumb zone)
     private let diveSpring = Animation.spring(response: 0.6, dampingFraction: 0.74)
     private let focusSpring = Animation.spring(response: 0.5, dampingFraction: 0.72)
 
@@ -766,25 +839,30 @@ struct DioStage: View {
     }
 
     // EVERYTHING is a DeskPrimitive — built here from the live model.
-    private func members() -> [any DeskPrimitive] {
+    // CONTENT lives on the desk (meetings, generated outputs, knowledge); TOOLS live in the dock.
+    private func contentMembers() -> [any DeskPrimitive] {
         var out: [any DeskPrimitive] = []
         for (i, m) in meetings.enumerated() where (filed["m:\(m.id)"] ?? "") == pathKey { out.append(MeetingPrimitive(meeting: m, index: i)) }
         for rec in outputs where rec.path == pathKey { out.append(OutputPrimitive(rec: rec)) }
-        if path.isEmpty {
-            for mdl in ModelFiles.installed().prefix(2) {
-                out.append(ModelPrimitive(modelId: mdl.id, name: mdl.name.replacingOccurrences(of: ".gguf", with: "")))
-            }
-            for kb in knowledgeBases.prefix(3) { out.append(KBPrimitive(name: kb, items: kbCount(kb))) }
-            out.append(ConnectorPrimitive(connId: "slack", name: "Slack", symbol: "number", tint: DioPal.violet,
-                                          configured: hostLink != nil, detail: peerHost.isEmpty ? "" : peerHost))
-            out.append(ConnectorPrimitive(connId: "webhook", name: "Webhook", symbol: "bolt.horizontal.fill", tint: DioPal.cobalt,
-                                          configured: hostLink != nil, detail: peerHost.isEmpty ? "" : peerHost))
-            out.append(ConnectorPrimitive(connId: "github", name: "GitHub", symbol: "exclamationmark.bubble.fill", tint: DioPal.mint,
-                                          configured: hostLink != nil, detail: peerHost.isEmpty ? "" : peerHost))
-            for wf in workflows { out.append(WorkflowPrimitive(rec: wf)) }
-        }
+        if path.isEmpty { for kb in knowledgeBases.prefix(3) { out.append(KBPrimitive(name: kb, items: kbCount(kb))) } }
         return out
     }
+    private func toolMembers() -> [any DeskPrimitive] {
+        guard path.isEmpty else { return [] }            // tools are the root dock
+        var out: [any DeskPrimitive] = []
+        for mdl in ModelFiles.installed().prefix(2) {
+            out.append(ModelPrimitive(modelId: mdl.id, name: mdl.name.replacingOccurrences(of: ".gguf", with: "")))
+        }
+        out.append(ConnectorPrimitive(connId: "slack", name: "Slack", symbol: "number", tint: DioPal.violet,
+                                      configured: hostLink != nil, detail: peerHost.isEmpty ? "" : peerHost))
+        out.append(ConnectorPrimitive(connId: "webhook", name: "Webhook", symbol: "bolt.horizontal.fill", tint: DioPal.cobalt,
+                                      configured: hostLink != nil, detail: peerHost.isEmpty ? "" : peerHost))
+        out.append(ConnectorPrimitive(connId: "github", name: "GitHub", symbol: "exclamationmark.bubble.fill", tint: DioPal.mint,
+                                      configured: hostLink != nil, detail: peerHost.isEmpty ? "" : peerHost))
+        for wf in workflows { out.append(WorkflowPrimitive(rec: wf)) }
+        return out
+    }
+    private func members() -> [any DeskPrimitive] { contentMembers() + toolMembers() }
     private var hostLink: DeskHostLink? {
         let h = peerHost.trimmingCharacters(in: .whitespaces)
         guard !h.isEmpty, let p = Int(peerPort.trimmingCharacters(in: .whitespaces)), p > 0 else { return nil }
@@ -853,7 +931,7 @@ struct DioStage: View {
                                 if selected != nil { select(nil) }
                                 lassoStart = v.startLocation; lassoEnd = v.location
                                 if hypot(v.translation.width, v.translation.height) > 12 {
-                                    selectedSet = primitivesIn(lassoRect(), members(), w, h)
+                                    selectedSet = primitivesIn(lassoRect(), contentMembers(), w, h)
                                 }
                             }
                             .onEnded { v in
@@ -901,9 +979,20 @@ struct DioStage: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(.bottom, h * 0.12).zIndex(116)
                 }
 
-                DioCompanion(landed: landed, excited: selected != nil).position(x: w * 0.9, y: h * 0.9)
-                if landed && selected == nil {
-                    DioRecordOrb { capturing = true }.position(x: w * 0.5, y: h * 0.91).transition(.scale.combined(with: .opacity))
+                DioCompanion(landed: landed, excited: selected != nil).position(x: w * 0.9, y: h * 0.86)
+                if landed && selected == nil && !dockOpen {
+                    DioRecordOrb { capturing = true }.position(x: w * 0.5, y: h * 0.8).transition(.scale.combined(with: .opacity))
+                }
+
+                // THE TOOL DOCK — tools in the thumb zone; swipe/tap to open; drop a card on a tool to route/send
+                if landed && selected == nil && !showRouteSheet && !routing && printed == nil && !showSendCard {
+                    DioDockChrome(open: dockOpen, tools: toolMembers(), onToggle: { withAnimation(diveSpring) { dockOpen.toggle() } }).zIndex(108)
+                    if dockOpen {
+                        ForEach(Array(toolMembers().enumerated()), id: \.element.id) { i, t in
+                            DioDockTile(prim: t, hot: dragHotObjectId == t.id) { select(t.id) }
+                                .position(dockToolPos(i, toolMembers().count, w, h)).zIndex(109)
+                        }
+                    }
                 }
 
                 RadialGradient(colors: [.clear, .clear, .black.opacity(0.5)], center: .center, startRadius: 160, endRadius: 800)
@@ -983,7 +1072,7 @@ struct DioStage: View {
     }
 
     @ViewBuilder private func level(_ w: CGFloat, _ h: CGFloat) -> some View {
-        let zs = childZones(); let ms = members(); let slotN = zs.count + 1
+        let zs = childZones(); let ms = contentMembers(); let slotN = zs.count + 1
         ZStack {
             ForEach(Array(zs.enumerated()), id: \.element.path) { i, z in
                 DioZoneTray(name: name(of: z.path), tint: DioPal.zoneTints[z.color % DioPal.zoneTints.count],
@@ -1049,10 +1138,28 @@ struct DioStage: View {
         withAnimation(.spring(response: 0.6, dampingFraction: 0.62)) { zones.append((zpath, zones.count)) }
         persistZones()
     }
+    private func dockToolPos(_ i: Int, _ n: Int, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
+        let tile: CGFloat = 60, gap: CGFloat = 22
+        let rowW = CGFloat(n) * tile + CGFloat(max(0, n - 1)) * gap
+        let startX = (w - rowW) / 2 + tile / 2
+        return CGPoint(x: startX + CGFloat(i) * (tile + gap), y: h - 100)
+    }
+    private func dockHit(_ pt: CGPoint, _ w: CGFloat, _ h: CGFloat) -> (prim: any DeskPrimitive, center: CGPoint)? {
+        let tm = toolMembers(); guard dockOpen, !tm.isEmpty else { return nil }
+        for (i, t) in tm.enumerated() {
+            let c = dockToolPos(i, tm.count, w, h)
+            if CGRect(x: c.x - 38, y: c.y - 42, width: 76, height: 84).contains(pt) { return (t, c) }
+        }
+        return nil
+    }
     private func updateHot(_ p: any DeskPrimitive, _ pt: CGPoint?, _ zs: [(path: String, color: Int)], _ slotN: Int, _ w: CGFloat, _ h: CGFloat) {
         guard let pt = pt else { dragHotZone = nil; dragHotObjectId = nil; return }
-        if let target = objectHit(pt, members(), w, h, excluding: p.id), target.prim.accepts.contains(p.kind) {
-            dragHotObjectId = target.prim.id; dragHotZone = nil; return    // a route target wins
+        if !dockOpen && !p.emits.isEmpty { withAnimation(diveSpring) { dockOpen = true } }   // a content drag opens the dock
+        if let hit = dockHit(pt, w, h), hit.prim.accepts.contains(p.kind) {
+            dragHotObjectId = hit.prim.id; dragHotZone = nil; return            // a dock tool target
+        }
+        if let target = objectHit(pt, contentMembers(), w, h, excluding: p.id), target.prim.accepts.contains(p.kind) {
+            dragHotObjectId = target.prim.id; dragHotZone = nil; return         // a desk content target (a KB)
         }
         dragHotObjectId = nil
         dragHotZone = (p.kind == .meeting) ? trayHit(pt, zs, slotN, w, h) : nil
@@ -1061,10 +1168,10 @@ struct DioStage: View {
     private func menuItems(for p: any DeskPrimitive, at center: CGPoint, _ w: CGFloat, _ h: CGFloat) -> [DioMenuItem] {
         var items: [DioMenuItem] = [DioMenuItem(label: "Open", icon: "arrow.up.left.and.arrow.down.right") { select(p.id) }]
         let ms = members()
-        if let core = ms.enumerated().first(where: { $0.element.kind == .model && $0.element.accepts.contains(p.kind) }) {
+        if let core = coreTarget(w, h) {
             items.append(DioMenuItem(label: "Route to AI core", icon: "wand.and.stars") {
-                routeFrom = center; routeTo = pos(core.element.id, looseHome(core.offset, ms.count, w, h), w, h)
-                routeSourceId = p.id; haptic(.medium); withAnimation { showRouteSheet = true }
+                routeFrom = center; routeTo = core.center
+                routeSourceId = p.id; haptic(.medium); withAnimation { dockOpen = true; showRouteSheet = true }
             })
         }
         for c in ms where c.kind == .connector && c.accepts.contains(p.kind) {
@@ -1080,15 +1187,14 @@ struct DioStage: View {
     }
     // act on one facet: route just this section (the summary, the actions…) through the AI core
     private func routeFacet(_ title: String, _ text: String, _ w: CGFloat, _ h: CGFloat) {
-        let ms = members()
-        guard let core = ms.enumerated().first(where: { $0.element.kind == .model }) else {
+        guard let core = coreTarget(w, h) else {
             select(nil); routeError = "Add an on-device model (or pair an endpoint in Settings) to ask the AI."; return
         }
         bundleText = text; bundleTitle = title; routeSourceId = "__bundle__"
-        routeTo = pos(core.element.id, looseHome(core.offset, ms.count, w, h), w, h)
+        routeTo = core.center
         routeFrom = CGPoint(x: w * 0.24, y: h * 0.24)
         select(nil)                                  // close the pull-out; the route sheet takes over
-        haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { showRouteSheet = true }
+        haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { dockOpen = true; showRouteSheet = true }
     }
     private func routeSourceTitle() -> String {
         routeSourceId == "__bundle__" ? bundleTitle : (members().first { $0.id == routeSourceId }?.title ?? "the desk")
@@ -1102,22 +1208,28 @@ struct DioStage: View {
         for (i, o) in ms.enumerated() where rect.contains(pos(o.id, looseHome(i, ms.count, w, h), w, h)) { out.insert(o.id) }
         return out
     }
+    // the AI core's id + its dock position (the cable target for menu/bundle/facet routes)
+    private func coreTarget(_ w: CGFloat, _ h: CGFloat) -> (id: String, center: CGPoint)? {
+        let tm = toolMembers()
+        guard let e = tm.enumerated().first(where: { $0.element.kind == .model }) else { return nil }
+        return (e.element.id, dockToolPos(e.offset, tm.count, w, h))
+    }
     private func askBundle(_ w: CGFloat, _ h: CGFloat) {
-        let ms = members()
-        let picked = ms.enumerated().filter { selectedSet.contains($0.element.id) }
+        let cm = contentMembers()
+        let picked = cm.enumerated().filter { selectedSet.contains($0.element.id) }
         guard !picked.isEmpty else { return }
-        guard let core = ms.enumerated().first(where: { $0.element.kind == .model }) else {
+        guard let core = coreTarget(w, h) else {
             routeError = "Add an on-device model (or pair an endpoint in Settings) to ask the AI."; return
         }
         bundleText = picked.map { "## \($0.element.title)\n\($0.element.routableText)" }.joined(separator: "\n\n")
         bundleTitle = "\(picked.count) items"
-        let centers = picked.map { pos($0.element.id, looseHome($0.offset, ms.count, w, h), w, h) }
+        let centers = picked.map { pos($0.element.id, looseHome($0.offset, cm.count, w, h), w, h) }
         routeFrom = CGPoint(x: centers.map(\.x).reduce(0, +) / CGFloat(centers.count),
                             y: centers.map(\.y).reduce(0, +) / CGFloat(centers.count))
-        routeTo = pos(core.element.id, looseHome(core.offset, ms.count, w, h), w, h)
+        routeTo = core.center
         routeSourceId = "__bundle__"
         haptic(.medium)
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { showRouteSheet = true }
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { dockOpen = true; showRouteSheet = true }
     }
 
     private func objectHit(_ pt: CGPoint, _ ms: [any DeskPrimitive], _ w: CGFloat, _ h: CGFloat, excluding: String) -> (prim: any DeskPrimitive, center: CGPoint)? {
@@ -1142,8 +1254,13 @@ struct DioStage: View {
         let start = pos(p.id, fallback, w, h)
         let end = CGPoint(x: start.x + tr.width, y: start.y + tr.height)
         defer { dragHotZone = nil; dragHotObjectId = nil }
-        // 1) routed onto a compatible primitive (the AI core / a connector)?
-        if let target = objectHit(end, members(), w, h, excluding: p.id), target.prim.accepts.contains(p.kind) {
+        // 1) dropped on a tool in the dock (AI core / a connector)?
+        if let hit = dockHit(end, w, h), hit.prim.accepts.contains(p.kind) {
+            routeFrom = start; routeTo = hit.center
+            beginRoute(sourceId: p.id, target: hit.prim); return
+        }
+        // 2) dropped on a desk content target (a KB)?
+        if let target = objectHit(end, contentMembers(), w, h, excluding: p.id), target.prim.accepts.contains(p.kind) {
             routeFrom = start; routeTo = target.center            // the cable runs source → target
             beginRoute(sourceId: p.id, target: target.prim); return
         }

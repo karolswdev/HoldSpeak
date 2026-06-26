@@ -40,13 +40,9 @@ enum World {
     static let tint: [String: Color] = ["Atlas": Pal.accent, "Personal": Pal.mint, "Atlas/Q3": Pal.cobalt]
     static let children: [String: [String]] = ["": ["Atlas", "Personal"], "Atlas": ["Atlas/Q3"], "Atlas/Q3": [], "Personal": []]
     static let members: [String: [Obj]] = [
-        "": [Obj(id: "standup", sprite: "cassette", base: 130, glow: Pal.accent, title: "Standup"),
-             Obj(id: "core",    sprite: "cartridge", base: 162, glow: Pal.cobalt, title: "AI Core"),
-             Obj(id: "docs",    sprite: "crystal",  base: 120, glow: Pal.violet, title: "Docs KB"),
-             Obj(id: "slack",   sprite: "number",   base: 116, glow: Pal.violet, title: "Slack", symbol: true),
-             Obj(id: "webhook", sprite: "bolt.horizontal.fill", base: 116, glow: Pal.cobalt, title: "Webhook", symbol: true),
-             Obj(id: "github", sprite: "exclamationmark.bubble.fill", base: 116, glow: Pal.mint, title: "GitHub", symbol: true),
-             Obj(id: "risklens", sprite: "gearshape.2.fill", base: 118, glow: Pal.violet, title: "Risk Lens", symbol: true)],
+        "": [Obj(id: "standup", sprite: "cassette",  base: 130, glow: Pal.accent, title: "Standup"),
+             Obj(id: "kickoff", sprite: "cassette2", base: 130, glow: Pal.accent, title: "Kickoff"),
+             Obj(id: "docs",    sprite: "crystal",   base: 120, glow: Pal.violet, title: "Docs KB")],
         "Atlas": [Obj(id: "kickoff", sprite: "cassette",  base: 130, glow: Pal.accent, title: "Kickoff"),
                   Obj(id: "roadmap", sprite: "cassette2", base: 130, glow: Pal.accent, title: "Roadmap")],
         "Atlas/Q3": [Obj(id: "sprint1", sprite: "cassette",  base: 126, glow: Pal.accent, title: "Sprint 1"),
@@ -553,6 +549,67 @@ struct RouteArc: View {
     }
 }
 
+// A tool's glyph (an SF-symbol tool or a pixel sprite) at any size — used in the dock.
+struct ToolGlyph: View {
+    let obj: Obj; let size: CGFloat
+    var body: some View {
+        Group {
+            if obj.symbol {
+                ZStack {
+                    RoundedRectangle(cornerRadius: size * 0.26, style: .continuous)
+                        .fill(LinearGradient(colors: [obj.glow.opacity(0.42), Color(hex: 0x12101A)], startPoint: .top, endPoint: .bottom))
+                        .overlay(RoundedRectangle(cornerRadius: size * 0.26, style: .continuous).strokeBorder(obj.glow.opacity(0.7), lineWidth: 1.5))
+                    Image(systemName: obj.sprite).font(.system(size: size * 0.4, weight: .bold)).foregroundStyle(.white)
+                }.frame(width: size, height: size)
+            } else {
+                Sprite(name: obj.sprite, size: size)
+            }
+        }
+    }
+}
+
+// THE TOOL DOCK — tools (AI core, connectors, saved workflows) live here, in the thumb zone. A collapsed
+// handle swipes up into a panel; you drop a card from the desk onto a tool to route/send. Declutters the desk.
+struct DockH: View {
+    let tools: [Obj]; let open: Bool
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 0)
+            if open {
+                VStack(spacing: 12) {
+                    Capsule().fill(.white.opacity(0.25)).frame(width: 42, height: 5)
+                    HStack(spacing: 5) {
+                        Text("TOOLS").font(.system(size: 11, weight: .heavy, design: .rounded)).tracking(2).foregroundStyle(Pal.muted)
+                        Text("· drop a card on one").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
+                    }
+                    HStack(spacing: 16) {
+                        ForEach(tools) { t in
+                            VStack(spacing: 6) { ToolGlyph(obj: t, size: 60)
+                                Text(t.title).font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text.opacity(0.85)) }
+                        }
+                    }
+                }
+                .padding(.top, 12).padding(.bottom, 34).padding(.horizontal, 18).frame(maxWidth: .infinity)
+                .background(UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28, style: .continuous)
+                    .fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom))
+                    .overlay(UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1))
+                    .shadow(color: .black.opacity(0.6), radius: 24, y: -8))
+            } else {
+                HStack(spacing: 10) {
+                    Image(systemName: "chevron.up").font(.system(size: 13, weight: .black)).foregroundStyle(Pal.accent)
+                    Text("Tools").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
+                    Spacer(minLength: 0)
+                    HStack(spacing: 8) { ForEach(tools.prefix(5)) { t in ToolGlyph(obj: t, size: 30) } }
+                }
+                .padding(.horizontal, 18).frame(height: 56)
+                .background(Capsule().fill(.white.opacity(0.07)).overlay(Capsule().strokeBorder(.white.opacity(0.12), lineWidth: 1)))
+                .padding(.horizontal, 16).padding(.bottom, 14)
+            }
+        }
+        .ignoresSafeArea(edges: .bottom)
+    }
+}
+
 struct SendCardH: View {
     let source: String, preview: String, conn: String
     var body: some View {
@@ -591,6 +648,14 @@ struct Stage: View {
     @State private var landed = false
     @State private var routeStage = ""           // "", "sheet", "theater", "printed", "send", "wire" (DIO_ROUTE_STAGE)
     @State private var lassoSel: Set<String> = []   // DIO_LASSO: multi-select → Ask the bundle
+    @State private var dockOpen = false             // DIO_DOCK: the tool dock
+    private let tools: [Obj] = [
+        Obj(id: "core",    sprite: "cartridge", base: 60, glow: Pal.cobalt, title: "AI Core"),
+        Obj(id: "slack",   sprite: "number", base: 56, glow: Pal.violet, title: "Slack", symbol: true),
+        Obj(id: "webhook", sprite: "bolt.horizontal.fill", base: 56, glow: Pal.cobalt, title: "Webhook", symbol: true),
+        Obj(id: "github",  sprite: "exclamationmark.bubble.fill", base: 56, glow: Pal.mint, title: "GitHub", symbol: true),
+        Obj(id: "risklens", sprite: "gearshape.2.fill", base: 56, glow: Pal.violet, title: "Risk Lens", symbol: true),
+    ]
     @State private var path: [String] = []
     @State private var diveDir = 1
     @State private var flash = 0.0
@@ -663,10 +728,13 @@ struct Stage: View {
                 ForEach([pathKey], id: \.self) { _ in level(w, h) }
                     .transition(diveTransition)
 
-                Companion(landed: landed, excited: selected != nil || recording).position(x: w * 0.9, y: h * 0.9)
+                Companion(landed: landed, excited: selected != nil || recording).position(x: w * 0.9, y: h * 0.86)
                 if landed && !recording && selected == nil {
-                    RecordOrb { startRecord() }.position(x: w * 0.5, y: h * 0.91).transition(.scale.combined(with: .opacity))
+                    RecordOrb { startRecord() }.position(x: w * 0.5, y: dockOpen ? h * 0.5 : h * 0.8).transition(.scale.combined(with: .opacity))
                 }
+
+                // the tool dock (tools live here, in the thumb zone)
+                if landed && selected == nil && !recording { DockH(tools: tools, open: dockOpen).zIndex(110) }
 
                 if born {
                     VStack(spacing: 7) {
@@ -758,6 +826,7 @@ struct Stage: View {
                 if let s = env["DIO_SELECT"], !s.isEmpty { DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { select(s) } }
                 if let r = env["DIO_ROUTE_STAGE"], !r.isEmpty { routeStage = r }
                 if env["DIO_LASSO"] == "1" { lassoSel = ["standup", "docs"] }
+                if env["DIO_DOCK"] == "open" { dockOpen = true }
                 if env["DIO_DEMO"] == "1" { runDemo() }
             }
         }

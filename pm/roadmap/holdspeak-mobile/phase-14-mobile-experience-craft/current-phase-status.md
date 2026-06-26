@@ -645,6 +645,19 @@ Webhook + GitHub, a saved tool ([toolkit](./screenshots/desk-toolkit.png)). Devi
 30 companion-connector tests green. The map's "GitHub-issue connector" link is done; remaining ▶: web parity
 + mesh sync (Phase 16), real-metal proof. See [[THE_DESK_WHOLE_PICTURE]].
 
+**2026-06-25 — the TOOL DOCK (owner: "the tooling isn't in the lower part of my screen… wouldn't we rather
+have a docked tool chooser that swipes out?").** Tools (the AI core, the Slack/Webhook/GitHub connectors,
+saved workflows) moved OFF the cluttered desk into a **swipe-out bottom dock** in the thumb zone; the desk
+surface now holds only **content** (meetings, outputs, knowledge). `members()` split into `contentMembers()`
+(desk) + `toolMembers()` (dock). Collapsed, the dock is a "⌃ Tools" bar with peek icons; tap/swipe opens a
+panel of tool tiles ("TOOLS · drop a card on one"). **A content drag auto-opens the dock**, the target tool
+lights up "hot", and the drop routes/sends (`dockHit` hit-tests the tiles; the visible cable runs to the dock
+tile via `dockToolPos`); menu/lasso/facet routes target the core in the dock too. Tap a tool → its pull-out.
+This fixes the lower-screen reachability and declutters the desk (it was carrying 3 connectors + tools +
+content). Harness screenshot-proven ([dock closed](./screenshots/tool-dock-closed.png) ·
+[dock open](./screenshots/tool-dock-open.png)), ported to `DioStage`; device-arch **BUILD SUCCEEDED**. Still
+open from the same feedback: **resizable / tetris-able zones** (#1) — next.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
