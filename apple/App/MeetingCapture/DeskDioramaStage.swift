@@ -148,6 +148,7 @@ struct DioHero: View {
     var onSummon: () -> Void = {}                   // long-press → radial summon (route/send)
     let onTap: () -> Void; let onDrop: (CGSize) -> Void; let onDragChange: (CGPoint?) -> Void
     @State private var drag: CGSize = .zero
+    @State private var didSummon = false        // the long-press fired the radial → swallow the trailing tap/drop
     private var modeScale: CGFloat { hot ? 1.12 : (mode == .focus ? 1.34 : (mode == .recede ? 0.6 : 1)) }
     private var dim: Double { mode == .recede ? 0.3 : 1 }
     private let spring = Animation.spring(response: 0.5, dampingFraction: 0.72)
@@ -180,11 +181,14 @@ struct DioHero: View {
                 .onEnded { v in
                     onDragChange(nil)
                     let d = hypot(v.translation.width, v.translation.height)
+                    // a long-press already bloomed the radial — don't ALSO select/route on finger-up
+                    // (the trap that opened the pull-out behind the summon overlay).
+                    if didSummon { didSummon = false; drag = .zero; return }
                     if mode != .recede { if d < 9 { onTap() } else { onDrop(v.translation) } }
                     drag = .zero
                 }
         )
-        .simultaneousGesture(LongPressGesture(minimumDuration: 0.32).onEnded { _ in if mode != .recede { onSummon() } })
+        .simultaneousGesture(LongPressGesture(minimumDuration: 0.32).onEnded { _ in if mode != .recede { didSummon = true; onSummon() } })
     }
 }
 
@@ -535,110 +539,241 @@ struct DioMotes: View {
     }
 }
 
-// THE IN-DESK RECORDING CONSOLE — recording happens ON the desk, not in a separate window. A live
-// waveform off the real mic, the words as they're heard, the elapsed time, and one big stop. When you
-// stop, the meeting weaves on-device and a cassette lands on the desk.
-struct DioRecordingConsole: View {
-    @ObservedObject var model: CaptureModel
-    let onStop: () -> Void
-    @State private var reveal = false        // tap the waveform → the recent segments push out (the "tape")
-    @State private var expanded = false      // pull it up into the full live-transcript modal
-    private func timeString(_ s: Double) -> String { let i = Int(s); return String(format: "%d:%02d", i / 60, i % 60) }
-    private func tapHaptic() {
-        #if canImport(UIKit)
-        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
-        #endif
-    }
-    private var segments: [String] {
-        model.liveTranscript.replacingOccurrences(of: "\n", with: " ")
-            .components(separatedBy: CharacterSet(charactersIn: ".?!"))
-            .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-    }
-    private var caption: String {
-        if model.transcribing { return "Weaving your meeting on this iPad…" }
-        if !model.partial.isEmpty { return model.partial }
-        return segments.last ?? "Listening…"
-    }
+// THE CAPTURE LENSES — pre-baked "intelligence markers" you can fire on a window of the LIVE transcript
+// while Whisper keeps running. Each runs through the on-device model (or the endpoint) and pops a small card.
+struct LiveLens { let name: String; let icon: String; let instruction: String }
+enum LiveLenses {
+    static let all: [LiveLens] = [
+        .init(name: "Summary", icon: "sparkles", instruction: "Summarize the key points from this meeting transcript window in 3–4 tight sentences."),
+        .init(name: "Questions", icon: "questionmark.circle.fill", instruction: "List every open question raised in this transcript window, one per line. If there are none, say 'No open questions yet.'"),
+        .init(name: "Decisions", icon: "flag.checkered", instruction: "List the decisions made in this transcript window, one per line. If none, say 'No decisions yet.'"),
+        .init(name: "Actions", icon: "checkmark.circle.fill", instruction: "Extract the concrete action items from this transcript window as a short list (task — owner when known)."),
+    ]
+}
+// one live-intelligence result floating by the mic
+struct LiveIntelCard: Identifiable { let id: String; let lens: String; let minutes: Double; var text: String?; var thinking: Bool }
+
+// what a live marker fires: a quick built-in lens, one of YOUR tailored agents, or a whole crew — all on a window
+enum LiveTarget { case lens(LiveLens); case agent(AgentRecord); case chain(ChainRecord) }
+
+// THE MODE PICKER — a hovering popup over the corner mic: are we recording a meeting, or talking to the Mac?
+struct DioRecordModePicker: View {
+    let anchor: CGPoint
+    let onMeeting: () -> Void; let onDesktop: () -> Void; let onClose: () -> Void
     var body: some View {
         ZStack {
-            LinearGradient(colors: [DioPal.bgTop, DioPal.bgMid, DioPal.bgBot], startPoint: .top, endPoint: .bottom).ignoresSafeArea().opacity(0.96)
-            TimelineView(.animation) { tl in
-                let t = tl.date.timeIntervalSinceReferenceDate
-                RadialGradient(colors: [(model.transcribing ? DioPal.cobalt : Color(hex: 0xFF4D4D)).opacity(0.14 + 0.05 * sin(t * 1.5)), .clear], center: .center, startRadius: 20, endRadius: 460)
-                    .ignoresSafeArea().blendMode(.plusLighter)
+            Color.black.opacity(0.4).ignoresSafeArea().onTapGesture { onClose() }
+            VStack(alignment: .leading, spacing: 11) {
+                Text("WHAT ARE WE CAPTURING?").font(.system(size: 10, weight: .black, design: .rounded)).tracking(1.2).foregroundStyle(DioPal.muted)
+                choice(icon: "waveform.badge.mic", title: "Start a meeting", sub: "record & weave it on-device", tint: DioPal.accent, action: onMeeting)
+                choice(icon: "desktopcomputer", title: "Talk to the desktop", sub: "dictate straight to your Mac", tint: DioPal.cobalt, action: onDesktop)
             }
-            VStack(spacing: 22) {
-                Spacer()
-                TimelineView(.animation) { tl in
-                    let blink = 0.4 + 0.6 * abs(sin(tl.date.timeIntervalSinceReferenceDate * 2))
-                    HStack(spacing: 10) {
-                        Circle().fill(model.transcribing ? DioPal.cobalt : Color(hex: 0xFF4D4D)).frame(width: 11, height: 11).opacity(model.recording ? blink : 1)
-                        Text(model.transcribing ? "WEAVING" : "REC").font(.system(size: 13, weight: .heavy, design: .rounded)).tracking(3).foregroundStyle(DioPal.text)
-                        Text(timeString(model.elapsedSeconds)).font(.system(size: 15, weight: .heavy, design: .rounded).monospacedDigit()).foregroundStyle(DioPal.muted)
-                    }
+            .padding(15).frame(width: 296)
+            .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Color(hex: 0x15121C))
+                .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(.white.opacity(0.12), lineWidth: 1))
+                .shadow(color: .black.opacity(0.5), radius: 24, y: 10))
+            .position(x: min(anchor.x + 150, 330), y: max(170, anchor.y - 140))
+            .transition(.scale(scale: 0.85, anchor: .bottomLeading).combined(with: .opacity))
+        }
+    }
+    private func choice(icon: String, title: String, sub: String, tint: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 13) {
+                Image(systemName: icon).font(.system(size: 19, weight: .bold)).foregroundStyle(.white)
+                    .frame(width: 46, height: 46).background(RoundedRectangle(cornerRadius: 14).fill(LinearGradient(colors: [tint, tint.opacity(0.5)], startPoint: .top, endPoint: .bottom)))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(.system(size: 15.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                    Text(sub).font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                 }
-                // the waveform is a button — tap it to pull the transcript tape out
-                Button { tapHaptic(); withAnimation(.spring(response: 0.5, dampingFraction: 0.78)) { reveal.toggle() } } label: {
-                    VStack(spacing: 6) {
-                        MicWaveform(level: CGFloat(model.level), active: model.recording, bars: 34, height: 76).frame(maxWidth: 340).padding(.horizontal, 28)
-                        HStack(spacing: 5) {
-                            Image(systemName: reveal ? "chevron.up" : "text.alignleft").font(.system(size: 9, weight: .black))
-                            Text(reveal ? "hide" : "tap to read what it's hearing").font(.system(size: 10, weight: .heavy, design: .rounded))
-                        }.foregroundStyle(DioPal.muted)
-                    }
-                }.buttonStyle(.plain).disabled(model.transcribing)
-                // the transcript TAPE — recent segments unspool; pull it up for the full modal
-                if reveal && !model.transcribing {
-                    DioTranscriptTape(segments: Array(segments.suffix(3)), partial: model.partial, onExpand: { tapHaptic(); withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { expanded = true } })
-                        .transition(.move(edge: .top).combined(with: .opacity)).padding(.horizontal, 22)
-                } else {
-                    Text(caption).font(.system(size: 16, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.92))
-                        .multilineTextAlignment(.center).lineLimit(3).frame(maxWidth: 360, minHeight: 60).padding(.horizontal, 24)
-                }
-                HStack(spacing: 6) {
-                    Image(systemName: "lock.fill").font(.system(size: 9, weight: .bold))
-                    Text("On device").font(.system(size: 10, weight: .heavy, design: .rounded))
-                }.foregroundStyle(DioPal.mint).padding(.horizontal, 10).frame(height: 26).background(Capsule().fill(DioPal.mint.opacity(0.14)))
-                Spacer()
-                if model.transcribing {
-                    HStack(spacing: 11) { ProgressView().tint(DioPal.text); Text("Weaving your meeting…").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text) }
-                        .padding(.bottom, 60)
-                } else {
-                    VStack(spacing: 12) {
-                        Button(action: onStop) {
-                            ZStack {
-                                TimelineView(.animation) { tl in
-                                    Circle().stroke(Color(hex: 0xFF4D4D).opacity(0.5), lineWidth: 2)
-                                        .frame(width: 100, height: 100).scaleEffect(1 + CGFloat(min(1, model.level)) * 0.35)
-                                        .opacity(0.5 + 0.5 * abs(sin(tl.date.timeIntervalSinceReferenceDate * 1.6)))
-                                }
-                                Circle().fill(Color(hex: 0xFF4D4D)).frame(width: 84, height: 84).shadow(color: Color(hex: 0xFF4D4D).opacity(0.6), radius: 20, y: 6)
-                                RoundedRectangle(cornerRadius: 7, style: .continuous).fill(.white).frame(width: 30, height: 30)
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right").font(.system(size: 12, weight: .black)).foregroundStyle(DioPal.muted)
+            }.padding(11).frame(maxWidth: .infinity).background(RoundedRectangle(cornerRadius: 16).fill(.white.opacity(0.05)))
+        }.buttonStyle(.plain)
+    }
+}
+
+// THE AMBIENT RECORDER — recording does NOT take over. The corner mic stays put and RADIATES: faint angled
+// waveform sprawls, a small live transcript, and the intelligence markers. Fire one → a quick window slider →
+// the agent runs on the recent transcript WHILE Whisper keeps going, and a small card floats up by the mic.
+struct DioAmbientRecorder: View {
+    @ObservedObject var model: CaptureModel
+    let isDesktop: Bool
+    let orb: CGPoint; let w: CGFloat; let h: CGFloat
+    let cards: [LiveIntelCard]
+    let agents: [AgentRecord]; let chains: [ChainRecord]
+    let onFire: (LiveTarget, Double) -> Void
+    let onKeep: (LiveIntelCard) -> Void
+    let onDismiss: (String) -> Void
+    let onStop: () -> Void
+    let onExpand: () -> Void
+    @State private var pending: LiveTarget? = nil
+    @State private var mins: Double = 0.5
+    private func timeString(_ s: Double) -> String { let i = Int(s); return String(format: "%d:%02d", i / 60, i % 60) }
+    private var lastLine: String {
+        if !model.partial.isEmpty { return model.partial }
+        let segs = model.liveTranscript.replacingOccurrences(of: "\n", with: " ").components(separatedBy: CharacterSet(charactersIn: ".?!")).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        return segs.last ?? "listening…"
+    }
+    private var hot: Color { model.transcribing ? DioPal.cobalt : Color(hex: 0xFF4D4D) }
+    var body: some View {
+        ZStack {
+            sprawls
+            VStack(alignment: .leading, spacing: 9) {
+                ForEach(cards) { c in DioLiveIntelCard(card: c, onKeep: { onKeep(c) }, onDismiss: { onDismiss(c.id) }) }
+                if !model.transcribing {
+                    Button(action: onExpand) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            HStack(spacing: 5) { Image(systemName: "text.alignleft").font(.system(size: 8, weight: .black)); Text("HEARING").font(.system(size: 8, weight: .heavy, design: .rounded)).tracking(1.5); Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 7, weight: .black)) }.foregroundStyle(DioPal.muted)
+                            Text(lastLine).font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.9)).lineLimit(2).frame(maxWidth: w * 0.5, alignment: .leading)
+                        }.padding(10).background(RoundedRectangle(cornerRadius: 13).fill(.black.opacity(0.4)).overlay(RoundedRectangle(cornerRadius: 13).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+                    }.buttonStyle(.plain)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 7) {
+                            // quick built-in lenses
+                            ForEach(LiveLenses.all, id: \.name) { l in
+                                Button { pending = .lens(l); mins = 0.5; tap() } label: {
+                                    HStack(spacing: 5) { Image(systemName: l.icon).font(.system(size: 10, weight: .bold)); Text(l.name).font(.system(size: 11.5, weight: .heavy, design: .rounded)) }
+                                        .foregroundStyle(DioPal.text).padding(.horizontal, 11).frame(height: 32)
+                                        .background(Capsule().fill(DioPal.violet.opacity(0.22)).overlay(Capsule().strokeBorder(DioPal.violet.opacity(0.5), lineWidth: 1)))
+                                }.buttonStyle(.plain)
                             }
-                        }.buttonStyle(.plain)
-                        Text("tap to stop & save").font(.system(size: 12.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
-                    }.padding(.bottom, 50)
+                            // YOUR tailored agents — summon any of them onto a live window
+                            ForEach(agents) { a in
+                                Button { pending = .agent(a); mins = 0.5; tap() } label: {
+                                    HStack(spacing: 6) { AgentAvatarView(avatarId: a.avatar, size: 24); Text(a.name).font(.system(size: 11.5, weight: .heavy, design: .rounded)) }
+                                        .foregroundStyle(DioPal.text).padding(.horizontal, 8).frame(height: 32)
+                                        .background(Capsule().fill(AgentAvatars.color(a.avatar).opacity(0.2)).overlay(Capsule().strokeBorder(AgentAvatars.color(a.avatar).opacity(0.5), lineWidth: 1)))
+                                }.buttonStyle(.plain)
+                            }
+                            // your crews
+                            ForEach(chains.filter { !$0.steps.isEmpty }) { c in
+                                Button { pending = .chain(c); mins = 0.5; tap() } label: {
+                                    HStack(spacing: 5) { Image(systemName: "arrow.triangle.branch").font(.system(size: 10, weight: .bold)); Text(c.name).font(.system(size: 11.5, weight: .heavy, design: .rounded)) }
+                                        .foregroundStyle(DioPal.text).padding(.horizontal, 11).frame(height: 32)
+                                        .background(Capsule().fill(DioPal.accent.opacity(0.2)).overlay(Capsule().strokeBorder(DioPal.accent.opacity(0.5), lineWidth: 1)))
+                                }.buttonStyle(.plain)
+                            }
+                        }.padding(.trailing, 12)
+                    }.frame(maxWidth: w * 0.62)
                 }
+                bottomRow
             }
-            if !model.error.isEmpty {
-                Text(model.error).font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(.white)
-                    .padding(12).background(RoundedRectangle(cornerRadius: 12).fill(Color(hex: 0xFF4D4D).opacity(0.9)))
-                    .frame(maxHeight: .infinity, alignment: .top).padding(.top, 70)
-            }
-            #if targetEnvironment(simulator)
-            Color.clear.onAppear {
-                let r = ProcessInfo.processInfo.environment["HS_DESK_RECORD"] ?? ""
-                if r == "tape" || r == "modal" { reveal = true }
-                if r == "modal" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { expanded = true } }
-            }
-            #endif
-            // the full live-transcript modal — pulled up from the tape
-            if expanded {
-                DioLiveTranscriptModal(segments: segments, partial: model.partial, elapsed: timeString(model.elapsedSeconds),
-                                       onClose: { tapHaptic(); withAnimation(.spring(response: 0.5, dampingFraction: 0.84)) { expanded = false } })
-                    .transition(.move(edge: .bottom).combined(with: .opacity)).zIndex(10)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+            .padding(.leading, 16).padding(.bottom, h * 0.03)
+            if let p = pending {
+                DioWindowSlider(title: targetTitle(p), icon: targetIcon(p), tint: targetTint(p), minutes: $mins,
+                                onGo: { onFire(p, mins); withAnimation { pending = nil } },
+                                onCancel: { withAnimation { pending = nil } }).zIndex(20)
             }
         }
+    }
+    private func targetTitle(_ t: LiveTarget) -> String { switch t { case .lens(let l): return l.name; case .agent(let a): return a.name; case .chain(let c): return c.name } }
+    private func targetIcon(_ t: LiveTarget) -> String { switch t { case .lens(let l): return l.icon; case .agent: return "person.fill"; case .chain: return "arrow.triangle.branch" } }
+    private func targetTint(_ t: LiveTarget) -> Color { switch t { case .lens: return DioPal.violet; case .agent(let a): return AgentAvatars.color(a.avatar); case .chain: return DioPal.accent } }
+    private var bottomRow: some View {
+        HStack(spacing: 11) {
+            Button(action: onStop) {
+                ZStack {
+                    TimelineView(.animation) { tl in
+                        let p = 0.5 + 0.5 * abs(sin(tl.date.timeIntervalSinceReferenceDate * 1.7))
+                        Circle().stroke(hot.opacity(0.5), lineWidth: 2).frame(width: 60 + CGFloat(min(1, model.level)) * 22, height: 60 + CGFloat(min(1, model.level)) * 22).opacity(0.4 + 0.5 * p)
+                    }
+                    Circle().fill(hot).frame(width: 54, height: 54).shadow(color: hot.opacity(0.6), radius: 14, y: 5)
+                    if model.transcribing { ProgressView().tint(.white) } else { RoundedRectangle(cornerRadius: 5, style: .continuous).fill(.white).frame(width: 18, height: 18) }
+                }
+            }.buttonStyle(.plain).disabled(model.transcribing)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Circle().fill(hot).frame(width: 8, height: 8)
+                    Text(model.transcribing ? "WEAVING" : (isDesktop ? "DICTATING" : "REC")).font(.system(size: 10, weight: .heavy, design: .rounded)).tracking(2).foregroundStyle(DioPal.text)
+                    Text(timeString(model.elapsedSeconds)).font(.system(size: 11, weight: .heavy, design: .rounded).monospacedDigit()).foregroundStyle(DioPal.muted)
+                }
+                HStack(spacing: 4) { Image(systemName: isDesktop ? "desktopcomputer" : "lock.fill").font(.system(size: 8, weight: .bold)); Text(isDesktop ? "to your Mac" : "on device").font(.system(size: 9, weight: .heavy, design: .rounded)) }
+                    .foregroundStyle(isDesktop ? DioPal.cobalt : DioPal.mint)
+            }
+        }
+    }
+    // faint angled waveforms fanning up-and-right from the docked mic
+    private var sprawls: some View {
+        ZStack {
+            ForEach(0..<5, id: \.self) { i in
+                let ang = -Double.pi / 2 + Double(i - 2) * 0.46
+                MicWaveform(level: CGFloat(model.level), active: model.recording, bars: 13, height: 26)
+                    .frame(width: 130)
+                    .opacity(model.transcribing ? 0.05 : (i == 2 ? 0.18 : 0.1))
+                    .rotationEffect(.radians(ang + Double.pi / 2))
+                    .offset(x: cos(ang) * 92, y: sin(ang) * 92)
+            }
+        }
+        .position(orb).allowsHitTesting(false)
+    }
+    private func tap() {
+        #if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        #endif
+    }
+}
+
+// the quick window slider — 0:30 → 5:00, fired while the recording keeps rolling
+struct DioWindowSlider: View {
+    let title: String; let icon: String; let tint: Color; @Binding var minutes: Double
+    let onGo: () -> Void; let onCancel: () -> Void
+    private func fmt(_ m: Double) -> String { let s = Int(m * 60); return String(format: "%d:%02d", s / 60, s % 60) }
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.5).ignoresSafeArea().onTapGesture { onCancel() }
+            VStack(alignment: .leading, spacing: 13) {
+                HStack(spacing: 9) {
+                    Image(systemName: icon).font(.system(size: 16, weight: .bold)).foregroundStyle(tint)
+                    Text(title).font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                    Spacer(minLength: 0)
+                    Button { onCancel() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 22)).foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
+                }
+                Text("OVER THE LAST").font(.system(size: 10, weight: .black, design: .rounded)).tracking(1.2).foregroundStyle(DioPal.muted)
+                Text(fmt(minutes)).font(.system(size: 36, weight: .black, design: .rounded).monospacedDigit()).foregroundStyle(tint).frame(maxWidth: .infinity, alignment: .center)
+                Slider(value: $minutes, in: 0.5...5, step: 0.5).tint(tint)
+                HStack { Text("0:30").font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted); Spacer(); Text("5:00").font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted) }
+                Button { onGo() } label: {
+                    HStack(spacing: 7) { Image(systemName: "sparkles"); Text("Go").font(.system(size: 16, weight: .heavy, design: .rounded)) }
+                        .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 50)
+                        .background(Capsule().fill(LinearGradient(colors: [tint, tint.opacity(0.6)], startPoint: .top, endPoint: .bottom)))
+                }.buttonStyle(.plain)
+                Text("Runs now — your recording keeps going.").font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).frame(maxWidth: .infinity, alignment: .center)
+            }
+            .padding(20).frame(width: 322)
+            .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(Color(hex: 0x15121C)).overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.12), lineWidth: 1)))
+        }
+    }
+}
+
+// a live-intelligence result, floating by the mic; keep it to drop a card on the desk
+struct DioLiveIntelCard: View {
+    let card: LiveIntelCard; let onKeep: () -> Void; let onDismiss: () -> Void
+    private func fmt(_ m: Double) -> String { let s = Int(m * 60); return String(format: "%d:%02d", s / 60, s % 60) }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 6) {
+                Image(systemName: "sparkles").font(.system(size: 9, weight: .bold)).foregroundStyle(DioPal.violet)
+                Text(card.lens.uppercased()).font(.system(size: 9, weight: .heavy, design: .rounded)).tracking(1).foregroundStyle(DioPal.violet)
+                Text("· last \(fmt(card.minutes))").font(.system(size: 9, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                Spacer(minLength: 0)
+                Button { onDismiss() } label: { Image(systemName: "xmark").font(.system(size: 9, weight: .black)).foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
+            }
+            if card.thinking {
+                TimelineView(.animation) { tl in
+                    let t = tl.date.timeIntervalSinceReferenceDate
+                    HStack(spacing: 5) { ForEach(0..<3, id: \.self) { i in Circle().fill(DioPal.violet.opacity(0.4 + 0.5 * (0.5 + 0.5 * sin(t * 4 + Double(i) * 0.7)))).frame(width: 6, height: 6) } }
+                }
+            } else if let txt = card.text {
+                Text(txt).font(.system(size: 12, weight: .medium, design: .rounded)).foregroundStyle(txt.hasPrefix("⚠️") ? Color(hex: 0xFFB4A0) : DioPal.text.opacity(0.92)).lineLimit(7)
+                if !txt.hasPrefix("⚠️") {
+                    Button { onKeep() } label: { HStack(spacing: 4) { Image(systemName: "tray.and.arrow.down.fill").font(.system(size: 9, weight: .bold)); Text("Keep").font(.system(size: 10, weight: .heavy, design: .rounded)) }.foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(11).frame(maxWidth: 300, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color(hex: 0x171320).opacity(0.97)).overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(DioPal.violet.opacity(0.3), lineWidth: 1)))
+        .transition(.move(edge: .leading).combined(with: .opacity))
     }
 }
 
@@ -722,6 +857,7 @@ struct DioLiveTranscriptModal: View {
     }
 }
 
+// A compact, corner-tucked record button — present but not shouting. One tap arms the mic.
 struct DioRecordOrb: View {
     let onTap: () -> Void
     var body: some View {
@@ -730,15 +866,15 @@ struct DioRecordOrb: View {
             ZStack {
                 ForEach(0..<2) { i in
                     let p = (sin(t * 1.3 + Double(i) * 1.6) * 0.5 + 0.5)
-                    Circle().stroke(DioPal.accent.opacity(0.35 * (1 - p)), lineWidth: 2)
-                        .frame(width: 64 + CGFloat(p) * 46, height: 64 + CGFloat(p) * 46)
+                    Circle().stroke(DioPal.accent.opacity(0.28 * (1 - p)), lineWidth: 1.5)
+                        .frame(width: 44 + CGFloat(p) * 28, height: 44 + CGFloat(p) * 28)
                 }
                 Circle().fill(RadialGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent, Color(hex: 0xC23C16)],
-                                             center: .init(x: 0.4, y: 0.35), startRadius: 2, endRadius: 40))
-                    .frame(width: 66, height: 66).shadow(color: DioPal.accent.opacity(0.6), radius: 16, y: 6)
-                Image(systemName: "mic.fill").font(.system(size: 24, weight: .bold)).foregroundStyle(.white)
+                                             center: .init(x: 0.4, y: 0.35), startRadius: 1, endRadius: 26))
+                    .frame(width: 46, height: 46).shadow(color: DioPal.accent.opacity(0.55), radius: 11, y: 4)
+                Image(systemName: "mic.fill").font(.system(size: 17, weight: .bold)).foregroundStyle(.white)
             }
-            .scaleEffect(1 + CGFloat(sin(t * 2) * 0.02)).frame(width: 96, height: 96).contentShape(Circle())
+            .scaleEffect(1 + CGFloat(sin(t * 2) * 0.02)).frame(width: 64, height: 64).contentShape(Circle())
         }
         .onTapGesture(perform: onTap)
     }
@@ -1178,6 +1314,11 @@ struct DioStage: View {
     @State private var flash = 0.0
     @State private var selected: String? = nil
     @State private var capturing = false
+    @State private var showRecordPicker = false       // the meeting-vs-desktop hovering choice
+    @State private var captureDesktop = false         // this capture is a "talk to the desktop" dictation
+    @State private var liveExpanded = false           // the ambient transcript pulled into the full modal
+    @State private var liveCards: [LiveIntelCard] = [] // live-intelligence results floating by the mic
+    @State private var liveTimeline: [(t: Double, len: Int)] = []  // (elapsed, transcript length) samples → time windows
     @State private var showSettings = false
     @State private var openMeeting: Meeting? = nil
     @State private var positions: [String: CGPoint] = [:]
@@ -1227,6 +1368,21 @@ struct DioStage: View {
     @State private var sentToast: String? = nil
     @State private var summonSource: String? = nil       // the card being routed (radial summon active)
     @State private var summonAt: CGPoint = .zero          // where the radial centers (the card's position)
+    // tailored agents — characters you build (avatar + system prompt + context); ask them or route cards through them
+    @AppStorage("hs.diorama.agents") private var agentsJSON = ""
+    @State private var agents: [AgentRecord] = []
+    @State private var editingAgent: AgentRecord? = nil  // builder open with this draft (new or existing)
+    @State private var openAgent: AgentRecord? = nil      // the agent conversation is open
+    @AppStorage("hs.diorama.agentchats") private var agentChatsJSON = ""
+    @State private var agentChats: [String: [AgentMessage]] = [:]   // per-agent conversation threads
+    // agent chains (crews) — Scout → Critic → Editor, run in order
+    @AppStorage("hs.diorama.chains") private var chainsJSON = ""
+    @State private var chains: [ChainRecord] = []
+    @State private var editingChain: ChainRecord? = nil   // chain builder open
+    @State private var runChainSheet: ChainRecord? = nil  // the run/manage sheet
+    @State private var chainRelay: ChainRecord? = nil     // the live relay overlay
+    @State private var chainStep = 0
+    @State private var chainResults: [String] = []
     private let diveSpring = Animation.spring(response: 0.6, dampingFraction: 0.74)
     private let focusSpring = Animation.spring(response: 0.5, dampingFraction: 0.72)
     private let dockSpring = Animation.spring(response: 0.5, dampingFraction: 0.84)
@@ -1278,7 +1434,9 @@ struct DioStage: View {
         for wf in workflows { out.append(WorkflowPrimitive(rec: wf)) }
         return out
     }
-    private func members() -> [any DeskPrimitive] { contentMembers() + toolMembers() }
+    private func agentMembers() -> [any DeskPrimitive] { agents.map { AgentPrimitive(rec: $0) } }
+    private func chainMembers() -> [any DeskPrimitive] { chains.filter { !$0.steps.isEmpty }.map { ChainPrimitive(rec: $0) } }
+    private func members() -> [any DeskPrimitive] { contentMembers() + toolMembers() + agentMembers() + chainMembers() }
     private var hostLink: DeskHostLink? {
         let h = peerHost.trimmingCharacters(in: .whitespaces)
         guard !h.isEmpty, let p = Int(peerPort.trimmingCharacters(in: .whitespaces)), p > 0 else { return nil }
@@ -1320,6 +1478,8 @@ struct DioStage: View {
         if let u = positions[id] { return CGPoint(x: w * u.x, y: h * u.y) }
         return fallback
     }
+    // the record button's tucked-away corner home (bottom-left), shared by the button + the first-boot trail
+    private func orbPos(_ w: CGFloat, _ h: CGFloat) -> CGPoint { CGPoint(x: 58, y: h * 0.9) }
 
     private var diveTransition: AnyTransition {
         diveDir >= 0
@@ -1374,17 +1534,18 @@ struct DioStage: View {
                     DioFirstBoot(w: w, h: h)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                         .padding(.top, h * 0.035).transition(.opacity).zIndex(5)
-                    // the guiding trail — energy flows down from the lesson to the one action
+                    // the guiding trail — energy flows from the lesson down to the corner record button
                     TimelineView(.animation) { tl in
                         let phase = tl.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1) * -10
-                        Path { p in p.move(to: CGPoint(x: w * 0.5, y: h * 0.50)); p.addLine(to: CGPoint(x: w * 0.5, y: h * 0.735)) }
+                        let orb = orbPos(w, h)
+                        Path { p in p.move(to: CGPoint(x: w * 0.5, y: h * 0.52)); p.addQuadCurve(to: CGPoint(x: orb.x, y: orb.y - 46), control: CGPoint(x: w * 0.30, y: h * 0.72)) }
                             .stroke(LinearGradient(colors: [DioPal.violet.opacity(0.0), DioPal.violet.opacity(0.55), DioPal.accent.opacity(0.8)], startPoint: .top, endPoint: .bottom),
                                     style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [2.5, 8], dashPhase: phase))
                     }
                     .allowsHitTesting(false).zIndex(5)
-                    Text("Press to record your first meeting")
+                    Text("Tap to record your first meeting")
                         .font(.system(size: 12.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
-                        .position(x: w * 0.5, y: h * 0.745).zIndex(6).allowsHitTesting(false)
+                        .position(x: min(w - 130, orbPos(w, h).x + 96), y: orbPos(w, h).y - 4).zIndex(6).allowsHitTesting(false)
                 }
 
                 // an empty zone you dived into — teach how to fill it (you file from the desk; or nest deeper)
@@ -1421,7 +1582,11 @@ struct DioStage: View {
 
                 DioCompanion(landed: landed, excited: selected != nil).position(x: w * 0.9, y: h * 0.86)
                 if landed && selected == nil && summonSource == nil && !capturing {
-                    DioRecordOrb { startCapture() }.position(x: w * 0.5, y: h * 0.8).transition(.scale.combined(with: .opacity))
+                    VStack(spacing: 4) {
+                        DioRecordOrb { haptic(.medium); withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { showRecordPicker = true } }
+                        Text("Record").font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).tracking(0.5)
+                    }
+                    .position(orbPos(w, h)).transition(.scale.combined(with: .opacity)).zIndex(72)
                 }
                 // a desk-native settings entry (no bouncing to an old screen)
                 if landed && selected == nil && summonSource == nil && !capturing && path.isEmpty {
@@ -1431,10 +1596,45 @@ struct DioStage: View {
                     }.buttonStyle(.plain)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).padding(.top, h * 0.045).padding(.leading, 18).zIndex(70)
                 }
-                // recording lives ON the desk now (not a separate window)
+                // THE AGENT ROSTER — your tailored characters, always to hand on the right edge. Tap one to
+                // ask it; long-press a card and pick it to route the card through it; "+" builds a new one.
+                if landed && selected == nil && summonSource == nil && !capturing && openAgent == nil
+                    && editingAgent == nil && editingChain == nil && runChainSheet == nil && chainRelay == nil
+                    && !showRouteSheet && !routing && printed == nil && !showSendCard && !showActSheet && !firstRun {
+                    DioAgentRail(agents: agents, chains: chains, dimmed: false,
+                                 onOpen: { a in haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { openAgent = a } },
+                                 onCreate: { haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { editingAgent = AgentRecord.blank() } },
+                                 onRunChain: { c in haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { runChainSheet = c } },
+                                 onCreateChain: { haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { editingChain = ChainRecord.blank() } })
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                        .padding(.trailing, 10).zIndex(64).transition(.move(edge: .trailing).combined(with: .opacity))
+                }
+
+                // the mode picker — hovering over the corner mic
+                if showRecordPicker && !capturing {
+                    DioRecordModePicker(anchor: orbPos(w, h),
+                                        onMeeting: { startCapture(desktop: false) },
+                                        onDesktop: { if hostLink == nil { withAnimation { showRecordPicker = false }; connectURL = peerHost.isEmpty ? "" : "\(peerHost):\(peerPort)"; connecting = true } else { startCapture(desktop: true) } },
+                                        onClose: { withAnimation { showRecordPicker = false } })
+                        .zIndex(116)
+                }
+                // recording is AMBIENT — anchored to the corner mic, it does not take over the desk
                 if capturing {
-                    DioRecordingConsole(model: model, onStop: { stopCapture() })
-                        .transition(.opacity).zIndex(150)
+                    DioAmbientRecorder(model: model, isDesktop: captureDesktop, orb: orbPos(w, h), w: w, h: h,
+                                       cards: liveCards, agents: agents, chains: chains,
+                                       onFire: { target, m in fireLive(target, minutes: m) },
+                                       onKeep: { c in keepLiveCard(c) },
+                                       onDismiss: { id in withAnimation { liveCards.removeAll { $0.id == id } } },
+                                       onStop: { stopCapture() },
+                                       onExpand: { haptic(.light); withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { liveExpanded = true } })
+                        .transition(.opacity).zIndex(110)
+                    if liveExpanded {
+                        DioLiveTranscriptModal(segments: model.liveTranscript.replacingOccurrences(of: "\n", with: " ").components(separatedBy: CharacterSet(charactersIn: ".?!")).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty },
+                                               partial: model.partial,
+                                               elapsed: { let i = Int(model.elapsedSeconds); return String(format: "%d:%02d", i / 60, i % 60) }(),
+                                               onClose: { withAnimation(.spring(response: 0.5, dampingFraction: 0.84)) { liveExpanded = false } })
+                            .transition(.move(edge: .bottom).combined(with: .opacity)).zIndex(151)
+                    }
                 }
 
                 // THE RADIAL SUMMON — long-press a card and its VALID tools bloom around it; tap one to route.
@@ -1521,6 +1721,50 @@ struct DioStage: View {
                                 onFile: { actFile() },
                                 onCancel: { withAnimation { showActSheet = false }; actItem = nil }).zIndex(136)
                 }
+                // the agent's home — a living multi-turn conversation; harvest replies to the desk
+                if let a = openAgent {
+                    DioAgentChat(agent: a,
+                                 messages: agentChats[a.id] ?? [],
+                                 onInfer: { history, q in await agentReply(a, history: history, question: q) },
+                                 onChange: { msgs in agentChats[a.id] = msgs; persistAgentChats() },
+                                 onSaveCard: { text in saveAgentReply(text, from: a) },
+                                 onEdit: { withAnimation { openAgent = nil; editingAgent = a } },
+                                 onDelete: { deleteAgent(a.id) },
+                                 onClose: { withAnimation { openAgent = nil } })
+                        .id(a.id)
+                        .zIndex(140).transition(.opacity)
+                }
+                // the builder — craft / edit an agent (avatar gallery, presets, context)
+                if let draft = editingAgent {
+                    DioAgentBuilder(draft: draft, knowledgeBases: knowledgeBases,
+                                    onSave: { saveAgent($0) },
+                                    onCancel: { withAnimation { editingAgent = nil } },
+                                    isNew: !agents.contains { $0.id == draft.id })
+                        .id(draft.id)
+                        .zIndex(145).transition(.opacity)
+                }
+                // the chain run/manage sheet
+                if let c = runChainSheet {
+                    DioChainSheet(chain: c, agents: agents,
+                                  onRun: { input in withAnimation { runChainSheet = nil }; runChain(c, input: input, inputTitle: "Crew run") },
+                                  onEdit: { withAnimation { runChainSheet = nil; editingChain = c } },
+                                  onDelete: { deleteChain(c.id) },
+                                  onClose: { withAnimation { runChainSheet = nil } })
+                        .id(c.id).zIndex(141).transition(.opacity)
+                }
+                // the chain builder
+                if let draft = editingChain {
+                    DioChainBuilder(draft: draft, agents: agents,
+                                    onSave: { saveChain($0) },
+                                    onCancel: { withAnimation { editingChain = nil } },
+                                    isNew: !chains.contains { $0.id == draft.id })
+                        .id(draft.id).zIndex(146).transition(.opacity)
+                }
+                // the live relay (the gamified payoff)
+                if let c = chainRelay {
+                    DioChainRelay(chain: c, agents: agents, step: chainStep, results: chainResults)
+                        .zIndex(128).transition(.opacity)
+                }
                 if let t = sentToast {
                     HStack(spacing: 7) { Image(systemName: "checkmark.circle.fill"); Text(t).font(.system(size: 13, weight: .heavy, design: .rounded)) }
                         .foregroundStyle(.white).padding(.horizontal, 16).frame(height: 40).background(Capsule().fill(DioPal.mint.opacity(0.92)))
@@ -1535,13 +1779,51 @@ struct DioStage: View {
                     if s == "local" { InferenceConfigStore.shared.mode = .local }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { showSettings = true }
                 }
-                if let r = ProcessInfo.processInfo.environment["HS_DESK_RECORD"], r == "1" || r == "tape" || r == "modal" {
+                if let r = ProcessInfo.processInfo.environment["HS_DESK_RECORD"] {
                     model.liveTranscript = "Welcome everyone to the Q3 kickoff. The big bet this quarter is shipping the desk to the web. Karol will own the mesh sync and the approval contract. We agreed to demo the air-gapped proof by Friday"
                     model.partial = "and then we will"
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { withAnimation { capturing = true }; model.recording = true; model.level = 0.6 }
+                    captureDesktop = (r == "desktop")
+                    agents = [
+                        AgentRecord(id: "seed1", name: "Scout", avatar: "p1", role: "digs for the facts", systemPrompt: "You are a researcher.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: ""),
+                        AgentRecord(id: "seed3", name: "Critic", avatar: "p7", role: "finds the holes", systemPrompt: "You are a critic.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: ""),
+                    ]
+                    chains = [ChainRecord(id: "c1", name: "Refine", steps: ["seed1", "seed3"])]
+                    if r == "intel" {
+                        liveCards = [LiveIntelCard(id: "lc1", lens: "Summary", minutes: 1.0, text: "The Q3 bet is shipping the desk to the web. Karol owns mesh sync and the approval contract; the air-gapped proof is due Friday.", thinking: false),
+                                     LiveIntelCard(id: "lc2", lens: "Questions", minutes: 0.5, text: nil, thinking: true)]
+                    }
+                    if r == "picker" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { showRecordPicker = true } } }
+                    else { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { withAnimation { capturing = true }; model.recording = true; model.level = 0.6 } }
+                }
+                if let ag = ProcessInfo.processInfo.environment["HS_DESK_AGENTS"] {
+                    agents = [
+                        AgentRecord(id: "seed1", name: "Scout", avatar: "p1", role: "digs for the facts", systemPrompt: "You are a sharp researcher. Pull out concrete facts, names and numbers.", userTemplate: "{input}", manualContext: "", useZoneContext: true, kb: ""),
+                        AgentRecord(id: "seed2", name: "Sage", avatar: "p3", role: "turns talk into a plan", systemPrompt: "You are a pragmatic planner.", userTemplate: "Make a plan from this:\n{input}", manualContext: "The team is three engineers.", useZoneContext: false, kb: ""),
+                        AgentRecord(id: "seed3", name: "Critic", avatar: "p7", role: "finds the holes", systemPrompt: "You are a constructive critic.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: ""),
+                    ]
+                    chains = [ChainRecord(id: "c1", name: "Refine", steps: ["seed1", "seed3", "seed2"])]
+                    if ag == "builder" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { editingAgent = AgentRecord.blank() } } }
+                    if ag == "chainbuild" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { editingChain = ChainRecord(id: "newc", name: "Refine", steps: ["seed1", "seed3"]) } } }
+                    if ag == "chainrun" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { runChainSheet = chains.first } } }
+                    if ag == "chainrelay" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { chainStep = 1; chainResults = ["Three key facts: the mesh-sync approval contract is the riskiest piece, the air-gapped proof is due Friday, and the egress badge copy has no owner yet."]; withAnimation { chainRelay = chains.first } } }
+                    if ["p0", "o0", "s0"].contains(ag) { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { var d = AgentRecord.blank(); d.avatar = ag; d.name = "Buddy"; withAnimation { editingAgent = d } } }
+                    if ag == "sheet" || ag == "chat" {
+                        agentChats["seed1"] = [
+                            AgentMessage(id: "m1", role: "you", text: "What should I focus on after today's kickoff?"),
+                            AgentMessage(id: "m2", role: "agent", text: "Three things stood out: lock the mesh-sync approval contract (it's the riskiest piece), get the air-gapped proof recorded before Friday, and pin down who owns the egress badge copy. Want me to draft a short plan for the first one?"),
+                            AgentMessage(id: "m3", role: "you", text: "Yes, keep it tight."),
+                        ]
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { openAgent = agents.first } }
+                    }
                 }
                 if ProcessInfo.processInfo.environment["HS_DESK_SUMMON"] == "1" {
                     outputs = [OutputRecord(id: "demo", title: "Standup notes", body: "Shipped the egress badge; review the dock by Friday.", source: "Standup", lens: "Note", path: "")]
+                    if agents.isEmpty {
+                        agents = [
+                            AgentRecord(id: "seed1", name: "Scout", avatar: "a21", role: "digs for the facts", systemPrompt: "You are a researcher.", userTemplate: "{input}", manualContext: "", useZoneContext: true, kb: ""),
+                            AgentRecord(id: "seed3", name: "Critic", avatar: "a22", role: "finds the holes", systemPrompt: "You are a critic.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: ""),
+                        ]
+                    }
                     let b = UIScreen.main.bounds
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
                         summonAt = CGPoint(x: b.width * 0.5, y: b.height * 0.5)
@@ -1549,6 +1831,9 @@ struct DioStage: View {
                     }
                 }
                 #endif
+            }
+            .onChange(of: model.liveTranscript) { newValue in
+                if capturing { liveTimeline.append((model.elapsedSeconds, newValue.count)) }   // for "last N minutes" windows
             }
             .alert("Couldn’t route", isPresented: Binding(get: { routeError != nil }, set: { if !$0 { routeError = nil } })) {
                 Button("OK", role: .cancel) { routeError = nil }
@@ -1735,14 +2020,14 @@ struct DioStage: View {
     }
     // MARK: the radial summon — the tools that can take this card, blooming around it
     private func summonTargets(for src: any DeskPrimitive) -> [any DeskPrimitive] {
-        toolMembers().filter { t in
-            switch t.kind {
-            case .model:     return true                          // the AI core takes anything
-            case .connector: return true                          // connectors are valid targets (tap guides pairing)
-            case .workflow:  return t.accepts.contains(src.kind)
-            default:         return false
-            }
-        }
+        var out: [any DeskPrimitive] = []
+        // the AI core first, then your tailored agents, then saved workflows, then connectors
+        out += toolMembers().filter { $0.kind == .model }                        // takes anything
+        out += agentMembers().filter { $0.accepts.contains(src.kind) }           // route the card through an agent
+        out += chainMembers().filter { $0.accepts.contains(src.kind) }           // …or a whole crew
+        out += toolMembers().filter { $0.kind == .workflow && $0.accepts.contains(src.kind) }
+        out += toolMembers().filter { $0.kind == .connector }                    // tap guides pairing
+        return out
     }
     private func summonPos(_ i: Int, _ n: Int, _ center: CGPoint, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
         let r: CGFloat = 134
@@ -1757,9 +2042,11 @@ struct DioStage: View {
 
     // recording on the desk (not a separate window): the console shows immediately, the mic starts, and
     // on stop the meeting weaves on-device and a fresh cassette lands on the desk.
-    private func startCapture() {
+    private func startCapture(desktop: Bool) {
         haptic(.medium)
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) { capturing = true }
+        captureDesktop = desktop
+        liveCards = []; liveTimeline = [(0, 0)]
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) { showRecordPicker = false; capturing = true }
         Task { await model.startRecording() }
     }
     private func stopCapture() {
@@ -1767,8 +2054,78 @@ struct DioStage: View {
         Task {
             await model.stopRecording()
             model.refresh()
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.84)) { capturing = false }
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.84)) { capturing = false; liveExpanded = false }
+            liveCards = []; liveTimeline = []
         }
+    }
+
+    // MARK: live intelligence — fire a lens on a window of the LIVE transcript while Whisper keeps running
+    private func windowedTranscript(_ minutes: Double) -> String {
+        let full = model.liveTranscript
+        let cutoff = model.elapsedSeconds - minutes * 60
+        let startLen = liveTimeline.last(where: { $0.t <= cutoff })?.len ?? 0
+        guard startLen > 0, startLen < full.count else { return full }
+        return String(full.dropFirst(startLen))
+    }
+    // a live marker fired: a quick lens, one of your agents, or a crew — all on a transcript window
+    private func fireLive(_ target: LiveTarget, minutes: Double) {
+        switch target {
+        case .lens(let l):  fireLiveIntel(l, minutes: minutes)
+        case .agent(let a): fireLiveAgent(a, minutes: minutes)
+        case .chain(let c): fireLiveChain(c, minutes: minutes)
+        }
+    }
+    private func startLiveCard(_ lens: String, _ minutes: Double) -> String {
+        haptic(.medium)
+        let id = UUID().uuidString
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.72)) {
+            liveCards.append(LiveIntelCard(id: id, lens: lens, minutes: minutes, text: nil, thinking: true))
+        }
+        return id
+    }
+    private func setLiveCard(_ id: String, _ text: String) {
+        guard let i = liveCards.firstIndex(where: { $0.id == id }) else { return }
+        liveCards[i].text = text.isEmpty ? "Nothing notable yet." : text
+        withAnimation { liveCards[i].thinking = false }
+        #if canImport(UIKit)
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        #endif
+    }
+    private func liveWindowMaterial(_ minutes: Double) -> String {
+        let window = windowedTranscript(minutes).trimmingCharacters(in: .whitespacesAndNewlines)
+        return window.isEmpty ? "(nothing transcribed in this window yet)" : String(window.suffix(6000))
+    }
+    private func fireLiveIntel(_ lens: LiveLens, minutes: Double) {
+        let id = startLiveCard(lens.name, minutes)
+        let prompt = lens.instruction + "\n\nTranscript:\n" + liveWindowMaterial(minutes)
+        Task { @MainActor in
+            switch await callLLM(prompt) {
+            case .success(let raw): setLiveCard(id, raw.trimmingCharacters(in: .whitespacesAndNewlines))
+            case .failure(let e): setLiveCard(id, "⚠️ " + friendly(e))
+            }
+        }
+    }
+    private func fireLiveAgent(_ a: AgentRecord, minutes: Double) {
+        let id = startLiveCard(a.name, minutes)
+        let question = "Based on this live meeting transcript window, respond per your role:\n\n" + liveWindowMaterial(minutes)
+        Task { @MainActor in setLiveCard(id, await agentReply(a, history: [], question: question)) }
+    }
+    private func fireLiveChain(_ c: ChainRecord, minutes: Double) {
+        let steps = c.steps.compactMap { sid in agents.first { $0.id == sid } }
+        guard !steps.isEmpty else { return }
+        let id = startLiveCard(c.name, minutes)
+        Task { @MainActor in
+            var carry = liveWindowMaterial(minutes)
+            for ag in steps { let r = await agentReply(ag, history: [], question: carry); carry = r; if r.hasPrefix("⚠️") { break } }
+            setLiveCard(id, carry)
+        }
+    }
+    private func keepLiveCard(_ card: LiveIntelCard) {
+        guard let text = card.text, !text.hasPrefix("⚠️") else { return }
+        haptic(.medium)
+        let rec = OutputRecord(id: UUID().uuidString, title: "\(card.lens) · live", body: text, source: "Live capture", lens: card.lens, path: pathKey)
+        outputs.append(rec); persistOutputs()
+        withAnimation { liveCards.removeAll { $0.id == card.id } }
     }
 
     private func askBundle(_ w: CGFloat, _ h: CGFloat) {
@@ -1839,6 +2196,14 @@ struct DioStage: View {
             guard let wf = target as? WorkflowPrimitive else { break }
             routeSourceId = sourceId
             runRoute(lens: wf.rec.name, prompt: wf.rec.prompt)
+        case .agent:                                            // a tailored agent → answer grounded in the card
+            guard let ap = target as? AgentPrimitive,
+                  let src = members().first(where: { $0.id == sourceId }) else { break }
+            runAgent(ap.rec, input: src.routableText, inputTitle: src.title)
+        case .chain:                                            // a crew → run the card through each agent in order
+            guard let cp = target as? ChainPrimitive,
+                  let src = members().first(where: { $0.id == sourceId }) else { break }
+            runChain(cp.rec, input: src.routableText, inputTitle: src.title)
         default:
             #if canImport(UIKit)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -1928,13 +2293,17 @@ struct DioStage: View {
             guard let src = members().first(where: { $0.id == routeSourceId }) else { return }
             material = String(src.routableText.prefix(6000)); srcTitle = src.title
         }
+        runAssembled(lens: lens, source: srcTitle, fullPrompt: prompt + "\n\nMaterial:\n" + material)
+    }
+
+    // the shared inference tail: theater → callLLM → printed card (keep/bin). Used by routes and agents.
+    private func runAssembled(lens: String, source: String, fullPrompt: String) {
         routeLensRun = lens
-        let full = prompt + "\n\nMaterial:\n" + material
         let zpath = pathKey
         haptic(.heavy)
         withAnimation { routing = true }
         Task { @MainActor in
-            let result = await callLLM(full)
+            let result = await callLLM(fullPrompt)
             withAnimation { routing = false }
             switch result {
             case .success(let raw):
@@ -1944,13 +2313,109 @@ struct DioStage: View {
                 #endif
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     printed = OutputRecord(id: UUID().uuidString, title: lens, body: clean.isEmpty ? "(the model returned nothing)" : clean,
-                                           source: srcTitle, lens: lens, path: zpath)
+                                           source: source, lens: lens, path: zpath)
                 }
                 selectedSet = []
             case .failure(let e):
                 routeError = friendly(e)
             }
         }
+    }
+
+    // the agent's role + always-on context (manual notes, zone meetings, KB) — shared by routing and chat.
+    private func agentRoleAndContext(_ a: AgentRecord) -> [String] {
+        var blocks: [String] = []
+        blocks.append("[ROLE]\n" + (a.systemPrompt.isEmpty ? "You are \(a.name), a helpful assistant." : a.systemPrompt))
+        var ctx: [String] = []
+        if !a.manualContext.isEmpty { ctx.append(a.manualContext) }
+        if a.useZoneContext {
+            let z = contentMembers().filter { $0.kind == .meeting }
+                .map { "## \($0.title)\n\(String($0.routableText.prefix(2000)))" }.joined(separator: "\n\n")
+            if !z.isEmpty { ctx.append("Meetings filed here:\n" + z) }
+        }
+        if !a.kb.isEmpty { ctx.append("Lean on the knowledge base \"\(a.kb)\" when relevant.") }
+        if !ctx.isEmpty { blocks.append("[CONTEXT]\n" + ctx.joined(separator: "\n\n")) }
+        return blocks
+    }
+
+    // route a card THROUGH an agent (radial): assemble role + context + the card, infer → printed card.
+    private func runAgent(_ a: AgentRecord, input: String, inputTitle: String) {
+        var blocks = agentRoleAndContext(a)
+        let template = a.userTemplate.isEmpty ? "{input}" : a.userTemplate
+        blocks.append("[TASK]\n" + template.replacingOccurrences(of: "{input}", with: String(input.prefix(6000))))
+        routeSourceId = nil
+        runAssembled(lens: a.name, source: inputTitle, fullPrompt: blocks.joined(separator: "\n\n"))
+    }
+
+    // one conversational turn — role + context + the running transcript + the new message.
+    @MainActor private func agentReply(_ a: AgentRecord, history: [AgentMessage], question: String) async -> String {
+        var blocks = agentRoleAndContext(a)
+        if !history.isEmpty {
+            let convo = history.suffix(12).map { ($0.isYou ? "User: " : "\(a.name): ") + $0.text }.joined(separator: "\n")
+            blocks.append("[CONVERSATION SO FAR]\n" + convo)
+        }
+        blocks.append("[USER]\n" + String(question.prefix(6000)) + "\n\nReply as \(a.name).")
+        switch await callLLM(blocks.joined(separator: "\n\n")) {
+        case .success(let raw):
+            let c = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            return c.isEmpty ? "⚠️ The model returned nothing — try rephrasing." : c
+        case .failure(let e): return "⚠️ " + friendly(e)
+        }
+    }
+
+    // run a chain (crew): thread the input through each agent in order; the relay animates; final → printed card.
+    private func runChain(_ c: ChainRecord, input: String, inputTitle: String) {
+        let steps = c.steps.compactMap { sid in agents.first { $0.id == sid } }
+        guard !steps.isEmpty else { return }
+        haptic(.heavy)
+        chainResults = []; chainStep = 0
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { chainRelay = c }
+        Task { @MainActor in
+            var carry = input
+            for (i, ag) in steps.enumerated() {
+                withAnimation { chainStep = i }
+                let out = await agentReply(ag, history: [], question: carry)
+                chainResults.append(out)
+                carry = out
+                if out.hasPrefix("⚠️") { break }              // a step failed → stop, surface what we got
+            }
+            withAnimation { chainStep = steps.count }
+            try? await Task.sleep(nanoseconds: 800_000_000)    // a beat on "Done"
+            let zpath = pathKey
+            withAnimation { chainRelay = nil }
+            #if canImport(UIKit)
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            #endif
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                printed = OutputRecord(id: UUID().uuidString, title: c.name, body: carry, source: inputTitle, lens: "Chain", path: zpath)
+            }
+        }
+    }
+    private func saveChain(_ rec: ChainRecord) {
+        haptic(.medium)
+        withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) {
+            if let i = chains.firstIndex(where: { $0.id == rec.id }) { chains[i] = rec } else { chains.append(rec) }
+            editingChain = nil
+        }
+        persistChains()
+    }
+    private func deleteChain(_ id: String) {
+        haptic(.medium)
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.78)) { chains.removeAll { $0.id == id }; runChainSheet = nil }
+        persistChains()
+    }
+    private func persistChains() {
+        if let data = try? JSONEncoder().encode(chains), let s = String(data: data, encoding: .utf8) { chainsJSON = s }
+    }
+
+    // harvest a reply onto the desk as a routable output card.
+    private func saveAgentReply(_ text: String, from a: AgentRecord) {
+        haptic(.medium)
+        let rec = OutputRecord(id: UUID().uuidString, title: "\(a.name) · reply", body: text, source: a.name, lens: "Agent", path: pathKey)
+        withAnimation(focusSpring) { outputs.append(rec) }
+        persistOutputs()
+        withAnimation { sentToast = "Saved to desk" }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { withAnimation { sentToast = nil } }
     }
     @MainActor private func callLLM(_ prompt: String) async -> Result<String, Error> {
         do {
@@ -1993,6 +2458,27 @@ struct DioStage: View {
     private func persistWorkflows() {
         if let data = try? JSONEncoder().encode(workflows), let s = String(data: data, encoding: .utf8) { workflowsJSON = s }
     }
+    private func persistAgents() {
+        if let data = try? JSONEncoder().encode(agents), let s = String(data: data, encoding: .utf8) { agentsJSON = s }
+    }
+    private func persistAgentChats() {
+        if let data = try? JSONEncoder().encode(agentChats), let s = String(data: data, encoding: .utf8) { agentChatsJSON = s }
+    }
+    private func saveAgent(_ rec: AgentRecord) {
+        haptic(.medium)
+        withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) {
+            if let i = agents.firstIndex(where: { $0.id == rec.id }) { agents[i] = rec } else { agents.append(rec) }
+            editingAgent = nil
+        }
+        persistAgents()
+    }
+    private func deleteAgent(_ id: String) {
+        haptic(.medium)
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.78)) {
+            agents.removeAll { $0.id == id }; openAgent = nil
+        }
+        persistAgents()
+    }
     private func saveTool() {
         let nm = toolName.trimmingCharacters(in: .whitespaces)
         guard !nm.isEmpty, !pendingToolPrompt.isEmpty else { return }
@@ -2027,5 +2513,8 @@ struct DioStage: View {
         filed = fd
         if let data = outputsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([OutputRecord].self, from: data) { outputs = arr }
         if let data = workflowsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([WorkflowRecord].self, from: data) { workflows = arr }
+        if let data = agentsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([AgentRecord].self, from: data) { agents = arr }
+        if let data = agentChatsJSON.data(using: .utf8), let d = try? JSONDecoder().decode([String: [AgentMessage]].self, from: data) { agentChats = d }
+        if let data = chainsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([ChainRecord].self, from: data) { chains = arr }
     }
 }

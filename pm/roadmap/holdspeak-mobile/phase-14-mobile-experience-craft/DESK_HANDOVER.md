@@ -41,7 +41,8 @@ derived** from that declaration — the canvas object, the pull-out, the routing
 - Facets: `kind` (→ glyph + colour), `title`/`subtitle`/`preview`, `sections` (the pull-out body — ONE
   renderer), `actions`, **`emits`**, **`accepts`**, plus the visual facets `glyph`/`color`/`base`/`isSymbol`.
 - Conformers: `MeetingPrimitive`, `OutputPrimitive` (a generated card — itself routable), `ModelPrimitive`
-  (the AI core), `KBPrimitive`, `ConnectorPrimitive` (Slack/Webhook/GitHub), `WorkflowPrimitive` (a saved Ask).
+  (the AI core), `KBPrimitive`, `ConnectorPrimitive` (Slack/Webhook/GitHub), `WorkflowPrimitive` (a saved Ask),
+  **`AgentPrimitive`** (a tailored agent — avatar + system prompt + context; in `DeskAgents.swift`).
 - **⚠️ THE PROTOCOL-DISPATCH TRAP (cost us the cassette-icon bug):** a facet that a conformer **overrides**
   MUST be a **protocol requirement**, not extension-only. Accessed through `any DeskPrimitive`, an
   extension-only member dispatches **statically to the default** and ignores the override. `glyph`/`color`/
@@ -60,7 +61,34 @@ derived** from that declaration — the canvas object, the pull-out, the routing
   `beginRoute(sourceId:target:)` → model→ask sheet, connector→send card, workflow→run. No "+"/create — workflow
   **creation lives in the Workbench**, the summon only surfaces things you route TO. (`DioSummonSatellite`,
   `summonPos`, `summonSource`/`summonAt`.) NOTE: it's **tap-to-pick** today; the owner picked "flick toward
-  one" — a continuous press-hold-and-slide is the next refinement.
+  one" — a continuous press-hold-and-slide is the next refinement. **GESTURE FIX (this session):** the long-press
+  used to ALSO fire the trailing tap on finger-up — blooming the radial AND opening the pull-out behind it (the
+  object lifted out of the ring, the side-panel slid in). `DioHero` now sets `didSummon` in the LongPress and
+  swallows the next tap/drop in the DragGesture's `onEnded`. The radial now also blooms **tailored agents** and
+  saved **workflows** as route targets (`summonTargets` builds: AI core → agents → workflows → connectors).
+- **TAILORED AGENTS (`DeskAgents.swift`, this session).** A tailored agent is a `DeskPrimitive` you BUILD:
+  an avatar + name + `systemPrompt` (how it behaves) + `userTemplate` (`{input}` = the question / routed card)
+  + always-on context (manual notes, the current zone's meetings, an optional KB). Persisted as `AgentRecord`
+  in `hs.diorama.agents`. They live on a right-edge **roster rail** (`DioAgentRail`) — tap one → `DioAgentSheet`
+  (a LIVING multi-turn conversation — `DioAgentChat`, threads persisted per agent in `hs.diorama.agentchats`,
+  the avatar emotes while `thinking`, every reply has a one-tap "Save to desk" → `saveAgentReply` prints a
+  routable output card; `agentReply` builds role+context+transcript+message via the shared `agentRoleAndContext`),
+  or long-press a card and pick it to route the card through it
+  (`beginRoute(.agent)` → `runAgent`). The builder (`DioAgentBuilder`) is a sectioned sheet: preset templates,
+  a **grouped 68-avatar gallery** (`AgentAvatars.groups`: "Glyphs" = 52 SF-symbol badges; "Pixel" = 16 bespoke
+  PixelLab pixel-art characters bundled as `App/agent_p0..p15.png` and rendered crisp via `DeskSprite` inside
+  `AgentAvatarView`. The builder has a group tab-switcher; add a group = append to `AgentAvatars.groups`.) Identity,
+  behaviour, context. Inference reuses the one seam: `runAgent` assembles `[ROLE]/[CONTEXT]/[TASK]` → the shared
+  `runAssembled` tail (theater → `callLLM` → printed keep/bin card). KB content isn't loaded on the iPad yet —
+  the agent is just told to lean on it (next refinement: pull real KB text).
+- **AGENT CHAINS / CREWS (`DeskAgents.swift`, ChainRecord in `hs.diorama.chains`).** Scout → Critic → Editor
+  in one tap: an ordered list of agents where each one's output feeds the next. Built in `DioChainBuilder`
+  (name + add/reorder/remove steps), run via `DioChainSheet` (type an input) or by routing a card through the
+  chain in the radial (`beginRoute(.chain)` → `runChain`). `runChain` threads the carry through `agentReply`
+  per step and drives `DioChainRelay` (the gamified payoff: each avatar lights up, drops a ✓, passes the baton)
+  → final = a printed card. The rail (`DioAgentRail`) now has **Agents / Chains** tabs.
+- **The record button is now corner-tucked** (`orbPos` = bottom-left), smaller (64pt), with a quiet "Record"
+  label. Owner's call: it has to be on the desk but should not dominate. The first-boot trail re-aims at it.
 - **Zones** = resizable, free-placed fractal **areas** you file meetings into and **dive** through
   (`ZoneRec`, `hs.diorama.zones`/`hs.diorama.filed`; breadcrumb to climb out). Empty zones teach (`DioZoneEmpty`).
 - **The pull-out** (`DioPullout`): the right-edge drawer; renders any primitive's `sections` + per-section
@@ -68,11 +96,17 @@ derived** from that declaration — the canvas object, the pull-out, the routing
   or keep as a card).
 - **The first boot** (`DioFirstBoot`): a fresh desk isn't a void — a guided spine teaches objects/AI-core/zones
   and points to record. Every empty surface orients.
-- **In-desk recording** (`DioRecordingConsole`): tapping the orb starts the mic and shows a desk-native console
-  — live `MicWaveform` off the real mic level, the words as heard, an On-device badge, one big stop; on stop the
-  meeting weaves on-device and a cassette lands. **Tap the waveform** → the transcript **tape** (`DioTranscriptTape`,
-  last 3 segments + live partial) pushes out → **Expand** → the full live transcript modal
-  (`DioLiveTranscriptModal`, the whole meeting so far, scrolling, still recording).
+- **THE AMBIENT RECORDER (`DioAmbientRecorder`, 2026-06-26).** Recording no longer takes over — the corner mic
+  stays put and RADIATES: faint angled waveform sprawls, a small live transcript (tap → `DioLiveTranscriptModal`),
+  and **live intelligence markers**. The markers are UNIFIED (`LiveTarget`): quick built-in lenses
+  (`LiveLenses`: Summary/Questions/Decisions/Actions) **+ your tailored agents + your crews** — fire ANY of them on
+  a window. Fire one → `DioWindowSlider` (0:30–5:00, default 0:30) → `fireLive` dispatches to `fireLiveIntel` /
+  `fireLiveAgent` (→ `agentReply`) / `fireLiveChain` (steps fed in sequence) on a transcript WINDOW
+  (`windowedTranscript` slices by `liveTimeline` (elapsed,len) samples) through the model WHILE Whisper keeps
+  running → a `DioLiveIntelCard` floats by the mic; Keep → an output card. (Shared helpers: `startLiveCard` /
+  `setLiveCard` / `liveWindowMaterial`.) This fuses the recorder + agents + chains into one pipeline. Tapping the orb first shows `DioRecordModePicker` — **Start a meeting** vs
+  **Talk to the desktop** (desktop gates on Mac pairing; the full dictation-into-the-Mac send is the next step).
+  The old full-screen `DioRecordingConsole` is gone; `DioTranscriptTape`/`DioLiveTranscriptModal` stay.
 - **Settings on the desk**: a gear (top-left at root) → `SettingsView` (where intelligence runs: This iPad vs
   LAN endpoint; the **on-device LLM model picker**; the **Whisper speech-model picker**; diarization). See §6.
 
@@ -108,7 +142,8 @@ desk on-screen, which is the only reason this session's UI fixes were possible.
    ```
    `sips -c <h> 1668 --cropOffset <y> 0 shot.png --out crop.png` zooms a region (the dock-overlap bug was only
    visible zoomed). simctl can't tap, so I added **sim-only `#if targetEnvironment(simulator)` env hooks** to
-   stage states for screenshots: `HS_DESK_SUMMON=1` (radial over a seeded output), `HS_DESK_RECORD=tape|modal`
+   stage states for screenshots: `HS_DESK_SUMMON=1` (radial over a seeded output — now also seeds agents),
+   `HS_DESK_AGENTS=1|builder|sheet` (agent rail / builder / ask-sheet, seeded roster), `HS_DESK_RECORD=tape|modal`
    (recording console + transcript reveal), `HS_DESK_SETTINGS=local` (settings, forced to on-device mode). These
    are harmless in production (env-gated); remove them in a cleanup pass if you like.
 2. **Device-arch compile check:** same xcodebuild with `-destination 'generic/platform=iOS' -derivedDataPath
@@ -141,6 +176,10 @@ desk on-screen, which is the only reason this session's UI fixes were possible.
   ugly dock** (coordinate-space bug) — then **killed the dock for the radial summon**.
 - **In-desk recording console** + the **transcript tape / full modal**.
 - **Settings on the desk** + **on-device LLM model picker** + **Whisper model picker**.
+- **Long-press double-trigger fix** (radial no longer also opens the pull-out) + **agents/workflows in the radial**.
+- **Tailored Agents** (`DeskAgents.swift`): the builder (52-avatar gallery + presets + context), the roster rail,
+  the ask-sheet, and card→agent routing — all on the one inference seam.
+- **Record button corner-tucked + shrunk** (less prominent, per owner).
 
 ## 8. The work ahead (owner-steered)
 

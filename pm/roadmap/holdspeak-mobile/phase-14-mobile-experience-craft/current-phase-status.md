@@ -100,6 +100,24 @@ Pencil), accessibility + adaptivity, and a polish pass — each delivered with c
 
 ## Where we are
 
+**2026-06-26 — Tailored Agents + the ambient recorder (one pipeline).** A big owner-driven craft arc on
+the desk, all Simulator-verified (screenshots under `screenshots/agents-*` and `screenshots/recorder-*`):
+- **Fixed the long-press double-trigger** (the radial summon no longer also opens the pull-out behind it) and
+  put **agents, workflows, and crews** into the radial as route targets. **Record orb shrunk + corner-tucked.**
+- **Tailored Agents** (`DeskAgents.swift`): a gamified, avatar-first **builder** (Surprise-me, personality
+  **trait chips** instead of a blank prompt, Advanced folded away); a **roster rail** (Agents / Chains tabs);
+  a **living conversation** (multi-turn, persisted, the avatar emotes, Save-to-desk); and card→agent routing.
+- **100 avatars** in 4 groups — Glyphs (52 SF-symbol) + 3 bespoke **PixelLab** pixel-art sets (Critters,
+  Objects incl. the school bus, Snacks), each a tinted badge; grouped picker is the standing design.
+- **Agent crews/chains** — Scout → Critic → Editor in one tap, with an animated **relay** payoff.
+- **The recorder, reimagined** — no longer a takeover. Tap the mic → a hovering **mode picker** (meeting vs
+  talk-to-the-desktop). Recording is **ambient**: the corner mic radiates faint waveforms, a small transcript,
+  and **live intelligence markers** = quick lenses **+ your agents + your crews**, each fireable on a
+  **0:30–5:00 window** of the live transcript *while Whisper keeps running* → results float by the mic, Keep →
+  a desk card. The recorder, agents, and chains are now **one pipeline**. Builds clean on Simulator + device arch.
+  OPEN follow-ups: "talk to the desktop" send into the Mac (companion-inject), real per-segment timestamps for
+  the window slice (currently a sampling heuristic), and the real-metal walk with a live model.
+
 Just opened, in direct response to owner feedback that craft/usability/design was absent from
 the roadmap and undelivered. The runtime is done; this phase is about the **experience on top
 of it**. It runs design-first: each story is built, then **screenshotted in the Simulator and
