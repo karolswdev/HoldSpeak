@@ -541,12 +541,23 @@ struct DioMotes: View {
 struct DioRecordingConsole: View {
     @ObservedObject var model: CaptureModel
     let onStop: () -> Void
+    @State private var reveal = false        // tap the waveform → the recent segments push out (the "tape")
+    @State private var expanded = false      // pull it up into the full live-transcript modal
     private func timeString(_ s: Double) -> String { let i = Int(s); return String(format: "%d:%02d", i / 60, i % 60) }
+    private func tapHaptic() {
+        #if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+        #endif
+    }
+    private var segments: [String] {
+        model.liveTranscript.replacingOccurrences(of: "\n", with: " ")
+            .components(separatedBy: CharacterSet(charactersIn: ".?!"))
+            .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    }
     private var caption: String {
         if model.transcribing { return "Weaving your meeting on this iPad…" }
         if !model.partial.isEmpty { return model.partial }
-        let last = model.liveTranscript.split(separator: "\n").last.map(String.init) ?? ""
-        return last.isEmpty ? "Listening…" : last
+        return segments.last ?? "Listening…"
     }
     var body: some View {
         ZStack {
@@ -556,7 +567,7 @@ struct DioRecordingConsole: View {
                 RadialGradient(colors: [(model.transcribing ? DioPal.cobalt : Color(hex: 0xFF4D4D)).opacity(0.14 + 0.05 * sin(t * 1.5)), .clear], center: .center, startRadius: 20, endRadius: 460)
                     .ignoresSafeArea().blendMode(.plusLighter)
             }
-            VStack(spacing: 26) {
+            VStack(spacing: 22) {
                 Spacer()
                 TimelineView(.animation) { tl in
                     let blink = 0.4 + 0.6 * abs(sin(tl.date.timeIntervalSinceReferenceDate * 2))
@@ -566,10 +577,24 @@ struct DioRecordingConsole: View {
                         Text(timeString(model.elapsedSeconds)).font(.system(size: 15, weight: .heavy, design: .rounded).monospacedDigit()).foregroundStyle(DioPal.muted)
                     }
                 }
-                MicWaveform(level: CGFloat(model.level), active: model.recording, bars: 34, height: 76).frame(maxWidth: 340).padding(.horizontal, 28)
-                Text(caption).font(.system(size: 16, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.92))
-                    .multilineTextAlignment(.center).lineLimit(3).frame(maxWidth: 360, minHeight: 66)
-                    .padding(.horizontal, 24)
+                // the waveform is a button — tap it to pull the transcript tape out
+                Button { tapHaptic(); withAnimation(.spring(response: 0.5, dampingFraction: 0.78)) { reveal.toggle() } } label: {
+                    VStack(spacing: 6) {
+                        MicWaveform(level: CGFloat(model.level), active: model.recording, bars: 34, height: 76).frame(maxWidth: 340).padding(.horizontal, 28)
+                        HStack(spacing: 5) {
+                            Image(systemName: reveal ? "chevron.up" : "text.alignleft").font(.system(size: 9, weight: .black))
+                            Text(reveal ? "hide" : "tap to read what it's hearing").font(.system(size: 10, weight: .heavy, design: .rounded))
+                        }.foregroundStyle(DioPal.muted)
+                    }
+                }.buttonStyle(.plain).disabled(model.transcribing)
+                // the transcript TAPE — recent segments unspool; pull it up for the full modal
+                if reveal && !model.transcribing {
+                    DioTranscriptTape(segments: Array(segments.suffix(3)), partial: model.partial, onExpand: { tapHaptic(); withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { expanded = true } })
+                        .transition(.move(edge: .top).combined(with: .opacity)).padding(.horizontal, 22)
+                } else {
+                    Text(caption).font(.system(size: 16, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.92))
+                        .multilineTextAlignment(.center).lineLimit(3).frame(maxWidth: 360, minHeight: 60).padding(.horizontal, 24)
+                }
                 HStack(spacing: 6) {
                     Image(systemName: "lock.fill").font(.system(size: 9, weight: .bold))
                     Text("On device").font(.system(size: 10, weight: .heavy, design: .rounded))
@@ -600,6 +625,99 @@ struct DioRecordingConsole: View {
                     .padding(12).background(RoundedRectangle(cornerRadius: 12).fill(Color(hex: 0xFF4D4D).opacity(0.9)))
                     .frame(maxHeight: .infinity, alignment: .top).padding(.top, 70)
             }
+            #if targetEnvironment(simulator)
+            Color.clear.onAppear {
+                let r = ProcessInfo.processInfo.environment["HS_DESK_RECORD"] ?? ""
+                if r == "tape" || r == "modal" { reveal = true }
+                if r == "modal" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { expanded = true } }
+            }
+            #endif
+            // the full live-transcript modal — pulled up from the tape
+            if expanded {
+                DioLiveTranscriptModal(segments: segments, partial: model.partial, elapsed: timeString(model.elapsedSeconds),
+                                       onClose: { tapHaptic(); withAnimation(.spring(response: 0.5, dampingFraction: 0.84)) { expanded = false } })
+                    .transition(.move(edge: .bottom).combined(with: .opacity)).zIndex(10)
+            }
+        }
+    }
+}
+
+// The transcript TAPE — the last few heard segments, unspooling like a printout; tap to pull up the full modal.
+struct DioTranscriptTape: View {
+    let segments: [String]; let partial: String; let onExpand: () -> Void
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "waveform").font(.system(size: 10, weight: .bold)).foregroundStyle(DioPal.accent)
+                Text("JUST HEARD").font(.system(size: 10, weight: .heavy, design: .rounded)).tracking(2).foregroundStyle(DioPal.muted)
+                Spacer(minLength: 0)
+                Button(action: onExpand) {
+                    HStack(spacing: 4) { Text("Expand").font(.system(size: 11, weight: .heavy, design: .rounded)); Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 9, weight: .black)) }
+                        .foregroundStyle(DioPal.accent)
+                }.buttonStyle(.plain)
+            }
+            if segments.isEmpty && partial.isEmpty {
+                Text("…nothing yet").font(.system(size: 14, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+            } else {
+                ForEach(Array(segments.enumerated()), id: \.offset) { i, s in
+                    HStack(alignment: .top, spacing: 8) {
+                        Circle().fill(DioPal.accent.opacity(0.5)).frame(width: 5, height: 5).padding(.top, 7)
+                        Text(s + ".").font(.system(size: 14.5, weight: i == segments.count - 1 ? .semibold : .regular, design: .rounded))
+                            .foregroundStyle(DioPal.text.opacity(i == segments.count - 1 ? 0.95 : 0.6))
+                    }
+                }
+                if !partial.isEmpty {
+                    HStack(alignment: .top, spacing: 8) {
+                        Circle().fill(DioPal.accent).frame(width: 5, height: 5).padding(.top, 7)
+                        Text(partial).font(.system(size: 14.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.accent)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: 380, alignment: .leading).padding(16)
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(.white.opacity(0.05))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(.white.opacity(0.09), lineWidth: 1)))
+    }
+}
+
+// The full live transcript, pulled up — the whole meeting so far, scrolling, while you keep recording.
+struct DioLiveTranscriptModal: View {
+    let segments: [String]; let partial: String; let elapsed: String; let onClose: () -> Void
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            Color.black.opacity(0.6).ignoresSafeArea().contentShape(Rectangle()).onTapGesture(perform: onClose)
+            VStack(spacing: 0) {
+                Capsule().fill(.white.opacity(0.3)).frame(width: 46, height: 5).padding(.top, 12).padding(.bottom, 14)
+                HStack(spacing: 8) {
+                    Image(systemName: "text.alignleft").font(.system(size: 13, weight: .bold)).foregroundStyle(DioPal.accent)
+                    Text("Live transcript").font(.system(size: 17, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                    Spacer(minLength: 0)
+                    Text(elapsed).font(.system(size: 13, weight: .heavy, design: .rounded).monospacedDigit()).foregroundStyle(DioPal.muted)
+                    Button(action: onClose) { Image(systemName: "xmark").font(.system(size: 13, weight: .black)).foregroundStyle(DioPal.text).frame(width: 32, height: 32).background(Circle().fill(.white.opacity(0.1))) }.buttonStyle(.plain)
+                }.padding(.horizontal, 20).padding(.bottom, 12)
+                ScrollViewReader { proxy in
+                    ScrollView(showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: 11) {
+                            ForEach(Array(segments.enumerated()), id: \.offset) { i, s in
+                                Text(s + ".").font(.system(size: 15.5, weight: .regular, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.9))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            if !partial.isEmpty {
+                                Text(partial).font(.system(size: 15.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.accent)
+                                    .frame(maxWidth: .infinity, alignment: .leading).id("tail")
+                            }
+                        }.padding(.horizontal, 20).padding(.bottom, 24)
+                    }
+                    .onAppear { withAnimation { proxy.scrollTo("tail", anchor: .bottom) } }
+                }
+                HStack(spacing: 6) {
+                    Image(systemName: "lock.fill").font(.system(size: 9, weight: .bold)); Text("Still recording · on device").font(.system(size: 10.5, weight: .heavy, design: .rounded))
+                }.foregroundStyle(DioPal.mint).padding(.horizontal, 11).frame(height: 28).background(Capsule().fill(DioPal.mint.opacity(0.14))).padding(.bottom, 22)
+            }
+            .frame(maxWidth: .infinity).frame(height: UIScreen.main.bounds.height * 0.62)
+            .background(UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30, style: .continuous)
+                .fill(LinearGradient(colors: [Color(hex: 0x191522), Color(hex: 0x0B0910)], startPoint: .top, endPoint: .bottom))
+                .overlay(UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)).ignoresSafeArea(edges: .bottom))
         }
     }
 }
@@ -1413,8 +1531,9 @@ struct DioStage: View {
             .ignoresSafeArea()
             .onAppear { landed = true; load(); model.refresh()
                 #if targetEnvironment(simulator)
-                if ProcessInfo.processInfo.environment["HS_DESK_RECORD"] == "1" {
-                    model.liveTranscript = "So the plan for Q3 is to ship the desk to the web."
+                if let r = ProcessInfo.processInfo.environment["HS_DESK_RECORD"], r == "1" || r == "tape" || r == "modal" {
+                    model.liveTranscript = "Welcome everyone to the Q3 kickoff. The big bet this quarter is shipping the desk to the web. Karol will own the mesh sync and the approval contract. We agreed to demo the air-gapped proof by Friday"
+                    model.partial = "and then we will"
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { withAnimation { capturing = true }; model.recording = true; model.level = 0.6 }
                 }
                 if ProcessInfo.processInfo.environment["HS_DESK_SUMMON"] == "1" {
