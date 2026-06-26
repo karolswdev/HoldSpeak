@@ -1,0 +1,41 @@
+flowchart TB
+    rec(["🎙️  Record"]) --> meet["📼 Meeting<br/>(a DeskPrimitive)"]
+
+    subgraph IPAD["📱 iPad — the spatial companion (DeskOS)"]
+        direction TB
+        subgraph DESK["The Desk — everything is one DeskPrimitive (UI derived from kind / sections / emits / accepts)"]
+            direction LR
+            meet
+            kb["💎 Knowledge"]
+            zone["🗂️ Zones<br/>fractal · dive-in"]
+            out["🗒️ Output<br/>(printed primitive)"]
+        end
+        gest["Gestures — one grammar:<br/>tap = open · drag = move / file / route<br/>lasso = bundle · long-press = menu"]
+        core{{"🟦 AI Core<br/>on-device or endpoint LLM<br/>(accepts everything)"}}
+
+        meet -- "drag · lasso · long-press" --> core
+        kb -- route --> core
+        zone -. holds .- meet
+        core == "visible cable · lens · grounded in routableText" ==> out
+        out -- "keep (lands, routable again)" --> DESK
+        out -- "route again — every output is an input" --> core
+    end
+
+    out -- "drop on a connector tile" --> conn["📤 Connector<br/>(a DeskPrimitive · host-gated)"]
+
+    subgraph MAC["💻 Mac — the host (owns the actuators + every credential)"]
+        direction TB
+        act["Actuator framework<br/>propose → approve → execute<br/>manifest-gated · guarded executor"]
+        cred["Credential joined in memory<br/>ON THE MAC at execute time"]
+        act --> cred
+    end
+
+    conn -- "companion API · gated on connectivity<br/>iPad sends only text + approval" --> act
+    cred -- "egress badge: cloud · target" --> world(["🌍 Slack / GitHub / webhook"])
+
+    classDef ipad fill:#16111f,stroke:#ff6b35,color:#f4ece0;
+    classDef mac fill:#0f1320,stroke:#5b8def,color:#f4ece0;
+    classDef obj fill:#1b1626,stroke:#9b6bff,color:#f4ece0;
+    class IPAD,DESK ipad;
+    class MAC mac;
+    class meet,kb,zone,out,core,conn,gest obj;
