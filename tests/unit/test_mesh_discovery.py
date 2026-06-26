@@ -13,6 +13,13 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+# The LAN advertiser uses `zeroconf` (shipped in the `[meeting]` extra). The Unit
+# Tests job installs the base set only, so skip this module there rather than
+# erroring on import.
+pytest.importorskip("zeroconf")
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
