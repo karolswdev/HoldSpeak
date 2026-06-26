@@ -5,8 +5,8 @@ design, and modern hand-driven mobile practice were never in the roadmap, and th
 shipped as a bare functional shell, not a crafted product. This phase makes the
 **experience** first-class.)
 
-**Last updated:** 2026-06-24 (**the diorama gets fractal zones + the dive** — see the latest "Where we are"
-entry; the 2.5D front door now has recursive places you file meetings into and dive through, on the iPad).
+**Last updated:** 2026-06-25 (**the first-boot ritual** — the empty desk is now a crafted cold-start that
+teaches the spatial model, DioStage `DioFirstBoot`, device-arch built; see the latest "Where we are" entry).
 
 **(Historical) 2026-06-21 (**opened + first craft delivered.** The owner chose the
 **Tactile Sheets** design direction from three concrete mockups (gesture-first: swipeable
@@ -682,6 +682,21 @@ pull-out / the routing engine), the GROUNDED + host-gated connectors, the build/
 **the path forward — finish/polish DeskOS (walk it on the device, real-metal LLM + send proof) then WEB PARITY
 (Phase 16, the same primitive model on the web + mesh sync)**. The owner wants momentum on DeskOS then web
 parity; the handover §6 is the runway.
+
+**2026-06-25 — the FIRST BOOT, a desk that teaches itself (handover §6A polish).** The empty desk was a
+single gray line ("tap record to capture your first meeting") — a bare shell for an app whose whole pitch
+is a spatial command center. Replaced it with a crafted **cold-start ritual** (`DioFirstBoot` in DioStage):
+a quiet breathing **hero core**, a "Your desk is ready" title, and a **guided spine** that teaches the
+three things the spatial model is made of — *meetings become objects* (they land on the desk), *your AI
+core waits below* (the dock), *zones file your work* (drag to keep) — each a tinted node on a connected
+spine, springing in with a stagger. A faint **guiding trail** of energy then flows down from the lesson to
+the one action that begins everything: the record orb, captioned "Press to record your first meeting." The
+premature **+ New Zone** tile is hidden on a desk with nothing to file yet (Norman: make the wrong action
+hard). Real condition (`firstRun` = root + no content + no zones, tools excluded), so it appears only on a
+genuinely fresh desk and dissolves the instant the first meeting lands. Composed in the diorama harness
+first (new `DIO_EMPTY=1` hook) — screenshot + recorded motion — then ported 1:1 to `DioStage`. `xcodebuild`
+device-arch **BUILD SUCCEEDED**; committed shot `screenshots/first-boot.png`. Next per handover §6A: the
+device walk (dock timing / zone clamps / first-boot feel) + the real-metal LLM-route + send proof.
 
 ## Operating principle (standing, beyond this phase)
 

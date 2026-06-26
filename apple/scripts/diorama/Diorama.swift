@@ -638,11 +638,84 @@ struct SendCardH: View {
     }
 }
 
+// THE FIRST BOOT — an empty desk is not a void; it is a desk that teaches itself. A calm guided
+// spine orients you to the spatial model (objects · the AI core · zones) and points to the one
+// action that begins everything: record. Felt in motion — a breathing core, a staggered spine.
+struct FirstBootStep: Identifiable { let id: Int; let glyph: String; let tint: Color; let title: String; let line: String }
+
+struct FirstBoot: View {
+    let w: CGFloat; let h: CGFloat
+    @State private var shown = false
+    private let steps: [FirstBootStep] = [
+        FirstBootStep(id: 0, glyph: "rectangle.stack.fill", tint: Pal.accent, title: "Meetings become objects", line: "Capture one and it lands right here."),
+        FirstBootStep(id: 1, glyph: "cpu",                  tint: Pal.cobalt, title: "Your AI core waits below", line: "Drop an object on it to ask."),
+        FirstBootStep(id: 2, glyph: "square.dashed",        tint: Pal.violet, title: "Zones file your work", line: "Drag a meeting into a place to keep it."),
+    ]
+
+    var body: some View {
+        TimelineView(.animation) { tl in
+            let t = tl.date.timeIntervalSinceReferenceDate
+            let breathe = 1 + CGFloat(sin(t * 1.1) * 0.022)
+            VStack(spacing: 0) {
+                Text("HoldSpeak").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Pal.text)
+                    .padding(.bottom, 18)
+                // the hero core — a quiet, ready pulse
+                ZStack {
+                    ForEach(0..<3) { i in
+                        Circle().strokeBorder(Pal.accent.opacity(0.20 - Double(i) * 0.055), lineWidth: 1.4)
+                            .frame(width: 78 + CGFloat(i) * 30, height: 78 + CGFloat(i) * 30).scaleEffect(breathe)
+                    }
+                    Circle().fill(RadialGradient(colors: [Pal.accent.opacity(0.9), Pal.accent.opacity(0.18)], center: .center, startRadius: 1, endRadius: 40))
+                        .frame(width: 58, height: 58)
+                    Circle().fill(.white.opacity(0.92)).frame(width: 13, height: 13).shadow(color: Pal.accent, radius: 9)
+                }
+                .frame(height: 140)
+                VStack(spacing: 6) {
+                    Text("Your desk is ready").font(.system(size: 21, weight: .black, design: .rounded)).foregroundStyle(Pal.text)
+                    Text("An empty desk, waiting for your first meeting.").font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
+                }
+                .padding(.bottom, 26)
+                // the guided spine
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(steps) { s in
+                        HStack(alignment: .top, spacing: 14) {
+                            VStack(spacing: 0) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                        .fill(LinearGradient(colors: [s.tint.opacity(0.34), Color(hex: 0x14121C)], startPoint: .top, endPoint: .bottom))
+                                        .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(s.tint.opacity(0.72), lineWidth: 1.3))
+                                        .frame(width: 46, height: 46)
+                                    Image(systemName: s.glyph).font(.system(size: 19, weight: .bold)).foregroundStyle(.white)
+                                }
+                                if s.id < steps.count - 1 {
+                                    Rectangle().fill(LinearGradient(colors: [s.tint.opacity(0.55), steps[s.id + 1].tint.opacity(0.55)], startPoint: .top, endPoint: .bottom))
+                                        .frame(width: 2, height: 24)
+                                }
+                            }
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(s.title).font(.system(size: 15.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
+                                Text(s.line).font(.system(size: 12.5, weight: .medium, design: .rounded)).foregroundStyle(Pal.muted)
+                            }.padding(.top, 4)
+                            Spacer(minLength: 0)
+                        }
+                        .opacity(shown ? 1 : 0).offset(y: shown ? 0 : 14)
+                        .animation(.spring(response: 0.6, dampingFraction: 0.78).delay(0.15 + Double(s.id) * 0.12), value: shown)
+                    }
+                }
+                .frame(maxWidth: 326, alignment: .leading)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .onAppear { shown = true }
+    }
+}
+
 struct Stage: View {
     @State private var landed = false
     @State private var routeStage = ""           // "", "sheet", "theater", "printed", "send", "wire" (DIO_ROUTE_STAGE)
     @State private var lassoSel: Set<String> = []   // DIO_LASSO: multi-select → Ask the bundle
     @State private var dockOpen = false             // DIO_DOCK: the tool dock
+    @State private var firstRun = false             // DIO_EMPTY: the cold-start / first-boot ritual
     private let tools: [Obj] = [
         Obj(id: "core",    sprite: "cartridge", base: 60, glow: Pal.cobalt, title: "AI Core"),
         Obj(id: "slack",   sprite: "number", base: 56, glow: Pal.violet, title: "Slack", symbol: true),
@@ -663,8 +736,8 @@ struct Stage: View {
 
     private var pathKey: String { path.joined(separator: "/") }
     private var curTint: Color { path.isEmpty ? Pal.accent : (World.tint[pathKey] ?? Pal.accent) }
-    private func zones() -> [String] { World.children[pathKey] ?? [] }
-    private func members() -> [Obj] { World.members[pathKey] ?? [] }
+    private func zones() -> [String] { (firstRun && path.isEmpty) ? [] : (World.children[pathKey] ?? []) }
+    private func members() -> [Obj] { (firstRun && path.isEmpty) ? [] : (World.members[pathKey] ?? []) }
     private func mode(_ id: String) -> Mode { selected == nil ? .home : (selected == id ? .focus : .recede) }
     private func selectedObj() -> Obj? { members().first { $0.id == selected } }
 
@@ -724,8 +797,27 @@ struct Stage: View {
                     Text("HoldSpeak").font(.system(size: 25, weight: .black, design: .rounded)).foregroundStyle(Pal.text)
                     Text("your meetings, alive").font(.system(size: 12.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted).tracking(1)
                 }
-                .opacity(landed && selected == nil && path.isEmpty ? 1 : 0)
+                .opacity(landed && selected == nil && path.isEmpty && !firstRun ? 1 : 0)
                 .frame(maxHeight: .infinity, alignment: .top).padding(.top, h * 0.05)
+
+                // THE FIRST BOOT — the cold-start ritual (an empty desk that teaches itself)
+                if firstRun && landed && selected == nil && path.isEmpty {
+                    FirstBoot(w: w, h: h)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .padding(.top, h * 0.035)
+                        .transition(.opacity).zIndex(5)
+                    // the guiding trail — energy flows down from the lesson to the one action
+                    TimelineView(.animation) { tl in
+                        let phase = tl.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1) * -10
+                        Path { p in p.move(to: CGPoint(x: w * 0.5, y: h * 0.50)); p.addLine(to: CGPoint(x: w * 0.5, y: h * 0.735)) }
+                            .stroke(LinearGradient(colors: [Pal.violet.opacity(0.0), Pal.violet.opacity(0.55), Pal.accent.opacity(0.8)], startPoint: .top, endPoint: .bottom),
+                                    style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [2.5, 8], dashPhase: phase))
+                    }
+                    .allowsHitTesting(false).zIndex(5)
+                    Text("Press to record your first meeting")
+                        .font(.system(size: 12.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
+                        .position(x: w * 0.5, y: h * 0.745).zIndex(6).allowsHitTesting(false)
+                }
 
                 ForEach([pathKey], id: \.self) { _ in level(w, h) }
                     .transition(diveTransition)
@@ -829,6 +921,7 @@ struct Stage: View {
                 if let r = env["DIO_ROUTE_STAGE"], !r.isEmpty { routeStage = r }
                 if env["DIO_LASSO"] == "1" { lassoSel = ["standup", "docs"] }
                 if env["DIO_DOCK"] == "open" { dockOpen = true }
+                if env["DIO_EMPTY"] == "1" { firstRun = true }
                 if env["DIO_DEMO"] == "1" { runDemo() }
             }
         }
@@ -851,7 +944,7 @@ struct Stage: View {
                 .foregroundStyle(Pal.muted).padding(.horizontal, 12).frame(height: 36)
                 .background(Capsule().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(Pal.muted.opacity(0.45)))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(.top, h * 0.12).padding(.trailing, 20)
-                .opacity(landed && selected == nil ? 0.9 : 0)
+                .opacity(landed && selected == nil && !(firstRun && path.isEmpty) ? 0.9 : 0)
 
             // objects
             ForEach(Array(ms.enumerated()), id: \.element.id) { i, o in

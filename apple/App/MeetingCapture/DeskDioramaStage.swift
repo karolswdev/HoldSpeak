@@ -20,6 +20,78 @@ enum DioPal {
 
 enum DioMode { case home, focus, recede }
 
+// THE FIRST BOOT — an empty desk is not a void; it is a desk that teaches itself. A calm guided
+// spine orients you to the spatial model (objects · the AI core · zones) and points to the one
+// action that begins everything: record. Felt in motion — a breathing core, a staggered spine.
+struct DioFirstBootStep: Identifiable { let id: Int; let glyph: String; let tint: Color; let title: String; let line: String }
+
+struct DioFirstBoot: View {
+    let w: CGFloat; let h: CGFloat
+    @State private var shown = false
+    private let steps: [DioFirstBootStep] = [
+        DioFirstBootStep(id: 0, glyph: "rectangle.stack.fill", tint: DioPal.accent, title: "Meetings become objects", line: "Capture one and it lands right here."),
+        DioFirstBootStep(id: 1, glyph: "cpu",                  tint: DioPal.cobalt, title: "Your AI core waits below", line: "Drop an object on it to ask."),
+        DioFirstBootStep(id: 2, glyph: "square.dashed",        tint: DioPal.violet, title: "Zones file your work", line: "Drag a meeting into a place to keep it."),
+    ]
+
+    var body: some View {
+        TimelineView(.animation) { tl in
+            let t = tl.date.timeIntervalSinceReferenceDate
+            let breathe = 1 + CGFloat(sin(t * 1.1) * 0.022)
+            VStack(spacing: 0) {
+                Text("HoldSpeak").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                    .padding(.bottom, 18)
+                // the hero core — a quiet, ready pulse
+                ZStack {
+                    ForEach(0..<3) { i in
+                        Circle().strokeBorder(DioPal.accent.opacity(0.20 - Double(i) * 0.055), lineWidth: 1.4)
+                            .frame(width: 78 + CGFloat(i) * 30, height: 78 + CGFloat(i) * 30).scaleEffect(breathe)
+                    }
+                    Circle().fill(RadialGradient(colors: [DioPal.accent.opacity(0.9), DioPal.accent.opacity(0.18)], center: .center, startRadius: 1, endRadius: 40))
+                        .frame(width: 58, height: 58)
+                    Circle().fill(.white.opacity(0.92)).frame(width: 13, height: 13).shadow(color: DioPal.accent, radius: 9)
+                }
+                .frame(height: 140)
+                VStack(spacing: 6) {
+                    Text("Your desk is ready").font(.system(size: 21, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                    Text("An empty desk, waiting for your first meeting.").font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                }
+                .padding(.bottom, 26)
+                // the guided spine
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(steps) { s in
+                        HStack(alignment: .top, spacing: 14) {
+                            VStack(spacing: 0) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                        .fill(LinearGradient(colors: [s.tint.opacity(0.34), Color(hex: 0x14121C)], startPoint: .top, endPoint: .bottom))
+                                        .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(s.tint.opacity(0.72), lineWidth: 1.3))
+                                        .frame(width: 46, height: 46)
+                                    Image(systemName: s.glyph).font(.system(size: 19, weight: .bold)).foregroundStyle(.white)
+                                }
+                                if s.id < steps.count - 1 {
+                                    Rectangle().fill(LinearGradient(colors: [s.tint.opacity(0.55), steps[s.id + 1].tint.opacity(0.55)], startPoint: .top, endPoint: .bottom))
+                                        .frame(width: 2, height: 24)
+                                }
+                            }
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(s.title).font(.system(size: 15.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                                Text(s.line).font(.system(size: 12.5, weight: .medium, design: .rounded)).foregroundStyle(DioPal.muted)
+                            }.padding(.top, 4)
+                            Spacer(minLength: 0)
+                        }
+                        .opacity(shown ? 1 : 0).offset(y: shown ? 0 : 14)
+                        .animation(.spring(response: 0.6, dampingFraction: 0.78).delay(0.15 + Double(s.id) * 0.12), value: shown)
+                    }
+                }
+                .frame(maxWidth: 326, alignment: .leading)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .onAppear { shown = true }
+    }
+}
+
 // A long-press menu entry — the discoverable twin of a drag-route/drag-send.
 struct DioMenuItem: Identifiable { let id = UUID(); let label: String; let icon: String; let action: () -> Void }
 
@@ -852,6 +924,8 @@ struct DioStage: View {
         var c = zpath.split(separator: "/").map(String.init); if !c.isEmpty { c.removeLast() }; return c.joined(separator: "/")
     }
     private func childZones() -> [ZoneRec] { zones.filter { parent(of: $0.path) == pathKey } }
+    // a fresh desk: at root with nothing you've captured yet (tools like the AI core are always present)
+    private var firstRun: Bool { path.isEmpty && contentMembers().isEmpty && childZones().isEmpty }
 
     private var meetings: [Meeting] { model.meetings.sorted { $0.startedAt > $1.startedAt } }
     private var knowledgeBases: [String] { kbsCSV.split(separator: ";").map(String.init).filter { !$0.isEmpty } }
@@ -968,11 +1042,29 @@ struct DioStage: View {
 
                 VStack(spacing: 3) {
                     Text("HoldSpeak").font(.system(size: 25, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
-                    Text(members().isEmpty && childZones().isEmpty ? "tap record to capture your first meeting" : "drag a meeting onto a zone · tap to open")
+                    Text("drag a meeting onto a zone · tap to open")
                         .font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).tracking(0.5)
                 }
-                .opacity(landed && selected == nil && path.isEmpty ? 1 : 0)
+                .opacity(landed && selected == nil && path.isEmpty && !firstRun ? 1 : 0)
                 .frame(maxHeight: .infinity, alignment: .top).padding(.top, h * 0.05)
+
+                // THE FIRST BOOT — the cold-start ritual: an empty desk that teaches itself
+                if firstRun && landed && selected == nil {
+                    DioFirstBoot(w: w, h: h)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .padding(.top, h * 0.035).transition(.opacity).zIndex(5)
+                    // the guiding trail — energy flows down from the lesson to the one action
+                    TimelineView(.animation) { tl in
+                        let phase = tl.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1) * -10
+                        Path { p in p.move(to: CGPoint(x: w * 0.5, y: h * 0.50)); p.addLine(to: CGPoint(x: w * 0.5, y: h * 0.735)) }
+                            .stroke(LinearGradient(colors: [DioPal.violet.opacity(0.0), DioPal.violet.opacity(0.55), DioPal.accent.opacity(0.8)], startPoint: .top, endPoint: .bottom),
+                                    style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [2.5, 8], dashPhase: phase))
+                    }
+                    .allowsHitTesting(false).zIndex(5)
+                    Text("Press to record your first meeting")
+                        .font(.system(size: 12.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                        .position(x: w * 0.5, y: h * 0.745).zIndex(6).allowsHitTesting(false)
+                }
 
                 ForEach([pathKey], id: \.self) { _ in level(w, h) }
                     .transition(diveTransition)
@@ -1103,7 +1195,7 @@ struct DioStage: View {
                             onMove: { tr in moveZone(z.path, tr, w, h) }, onResize: { tr in resizeZone(z.path, tr) })
                     .position(x: w * z.cx, y: h * z.cy)
             }
-            if selected == nil {
+            if selected == nil && !firstRun {
                 Button { haptic(.light); namingZone = true } label: {
                     HStack(spacing: 6) { Image(systemName: "plus.circle.fill").font(.system(size: 14, weight: .bold)); Text("New Zone").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
                         .foregroundStyle(DioPal.muted).padding(.horizontal, 12).frame(height: 36)
