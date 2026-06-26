@@ -726,6 +726,26 @@ in the harness (new `DIO_EMPTYZONE=1` hook → `screenshots/empty-zone.png`) the
 `xcodebuild` device-arch **BUILD SUCCEEDED**. Every empty surface in the desk now orients instead of
 dead-ending. Next per handover §6A: the device walk + the real-metal LLM-route + live send proof.
 
+**2026-06-25 — the device-walk overhaul: the dock dies, the desk owns the experience.** A real on-device
+walk (owner, livid and right) exposed that the Tools dock was both broken and uninspired. Fixed at the root,
+in order: (1) **tools rendered as cassettes** — the `DeskPrimitive` protocol declared `glyph`/`isSymbol`/
+`color`/`base` only in an extension, so through `any DeskPrimitive` they dispatched statically to the
+default (connector glyph → `.connector` `default:` → "cassette", isSymbol → false); made them protocol
+requirements. (2) **tools vanished under a zone** — `toolMembers()` was root-gated; made global. (3) the
+**open dock looked broken + you couldn't drop on it** — tiles lived in the GeometryReader space while the
+panel was screen-anchored, so the safe-area inset both shoved the header onto the tiles AND made the
+drop-hit-rect miss the visible tile (the routing was dead on arrival). (4) Then the owner's verdict — the
+drawer concept itself is sludge — so it was **deleted entirely** for a **radial summon**: long-press a card
+and the tools that *accept* it bloom around your finger (connector lines, glow, labels), tap to route; no
+'+', workflow creation stays in the Workbench. (5) **recording moved onto the desk** — the orb no longer
+opens a fullScreenCover window; a desk-native `DioRecordingConsole` (live waveform, the words as heard,
+on-device badge, one stop) records in-world and a cassette lands on stop. (6) a **settings gear** now lives
+on the desk (opens the real `SettingsView`). Unblocked all of this by **fixing the app's Simulator build**
+(the handover wrongly blamed swift-syntax; it was a `private` access level on the demo entry points) — so
+the desk is now diagnosable on-screen without the cabled device. Shots: `dock-open-fixed.png`,
+`radial-summon.png`, `recording-on-desk.png`. NEXT: flick-to-route (continuous gesture), and keep pulling
+every old-window surface into the desk.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
