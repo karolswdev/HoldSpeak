@@ -15,6 +15,8 @@ struct SettingsView: View {
     @FocusState private var focused: Field?
     @State private var fetch: FetchState = .idle
     @State private var models: [String] = []
+    @State private var localModels: [InstalledModel] = []     // installed on-device GGUF language models
+    @State private var showModels = false                     // present the model manager (import/delete)
     enum Field: Hashable { case url, key }
     enum FetchState: Equatable { case idle, loading, ok(Int), fail }
 
@@ -28,6 +30,7 @@ struct SettingsView: View {
                     header
                     label("WHERE INTELLIGENCE RUNS")
                     targetCard(.local, "This iPad", "Fully on-device · nothing ever leaves", "ipad", Sig.localGradient)
+                    if cfg.isLocal { onDeviceModelCard }
                     targetCard(.homelab, "LAN endpoint", "An OpenAI-compatible server on your network", "server.rack", Sig.accentGradient)
                     if !cfg.isLocal { endpointCard }
                     egressRow
@@ -40,6 +43,63 @@ struct SettingsView: View {
         .toolbar(.hidden, for: .navigationBar)
         .tint(Sig.accent)
         .onTapGesture { focused = nil }
+        .onAppear { refreshLocalModels() }
+        .sheet(isPresented: $showModels, onDismiss: { refreshLocalModels() }) { NavigationStack { ModelsView() }.preferredColorScheme(.dark) }
+    }
+
+    private func refreshLocalModels() { localModels = ModelFiles.installed().filter { $0.kind == .language } }
+    private func selectedLocalName() -> String {
+        if let m = localModels.first(where: { $0.id == cfg.localModelId }) { return m.name }
+        return localModels.first?.name ?? ""
+    }
+
+    // ON-DEVICE MODEL — pick which installed .gguf runs local intelligence, or import one. The desk's
+    // AI core uses exactly this choice (callLLM resolves cfg.localModelId → its path).
+    private var onDeviceModelCard: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack(spacing: 8) {
+                Text("ON-DEVICE MODEL").font(.system(size: 10, weight: .heavy)).tracking(0.8).foregroundStyle(Sig.faint)
+                Spacer()
+                Text("\(localModels.count) installed").font(.system(size: 10, weight: .heavy)).foregroundStyle(Sig.faint)
+            }
+            if localModels.isEmpty {
+                Button { tactile(); showModels = true } label: {
+                    HStack(spacing: 10) {
+                        GlyphChip(system: "tray.and.arrow.down.fill", gradient: Sig.accentGradient, size: 42)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("No models on this iPad").font(.system(size: 15.5, weight: .heavy)).foregroundStyle(Sig.text)
+                            Text("Import a .gguf to run intelligence on-device").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+                        }
+                        Spacer(); Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
+                    }
+                }.buttonStyle(PressableCard())
+            } else {
+                HStack(spacing: 8) {
+                    Menu {
+                        ForEach(localModels) { m in
+                            Button { cfg.localModelId = m.id; tactile() } label: {
+                                Label(m.name, systemImage: cfg.localModelId == m.id || (cfg.localModelId.isEmpty && m.id == localModels.first?.id) ? "checkmark" : "brain.head.profile")
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Image(systemName: "brain.head.profile").font(.system(size: 14, weight: .bold)).foregroundStyle(Sig.accent)
+                            Text(selectedLocalName()).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text).lineLimit(1)
+                            Spacer(); Image(systemName: "chevron.up.chevron.down").font(.system(size: 12, weight: .bold)).foregroundStyle(Sig.faint)
+                        }
+                        .padding(.horizontal, 13).padding(.vertical, 12)
+                        .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
+                    }
+                    Button { tactile(); showModels = true } label: {
+                        Image(systemName: "slider.horizontal.3").font(.system(size: 18, weight: .bold)).foregroundStyle(.black)
+                            .frame(width: 48, height: 48).background(Sig.accentGradient, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    }.buttonStyle(PressableCard()).accessibilityLabel("Manage models")
+                }
+            }
+        }
+        .padding(16).signalCard(radius: 20)
+        .transition(.asymmetric(insertion: .scale(scale: 0.96).combined(with: .opacity), removal: .opacity))
     }
 
     private var header: some View {

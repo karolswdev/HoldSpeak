@@ -528,15 +528,19 @@ struct SketchToDiagramView: View {
     /// HSM-14-17 — on-device speaker diarization (opt-in). Default ON. When set, capture's `stop()`
     /// labels each transcript segment with who spoke it, fully on-device (no network).
     @Published var diarizationOn: Bool { didSet { d.set(diarizationOn, forKey: K.diarize) } }
+    /// Which installed on-device model (its `InstalledModel.id`, i.e. the .gguf filename) runs local
+    /// intelligence. Empty = "use the first installed language model" (back-compat default).
+    @Published var localModelId: String { didSet { d.set(localModelId, forKey: K.localModel) } }
 
     private let d = UserDefaults.standard
-    private enum K { static let mode = "hs.inf.mode", url = "hs.inf.url", model = "hs.inf.model", key = "hs.inf.key", diarize = "hs.inf.diarize" }
+    private enum K { static let mode = "hs.inf.mode", url = "hs.inf.url", model = "hs.inf.model", key = "hs.inf.key", diarize = "hs.inf.diarize", localModel = "hs.inf.localmodel" }
     private init() {
         mode = RuntimeMode(rawValue: d.string(forKey: K.mode) ?? "") ?? .local
         endpointURL = d.string(forKey: K.url) ?? ""
         endpointModel = d.string(forKey: K.model) ?? ""
         endpointKey = d.string(forKey: K.key) ?? ""
         diarizationOn = d.object(forKey: K.diarize) as? Bool ?? true
+        localModelId = d.string(forKey: K.localModel) ?? ""
     }
 
     var isLocal: Bool { mode == .local }

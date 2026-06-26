@@ -1531,6 +1531,10 @@ struct DioStage: View {
             .ignoresSafeArea()
             .onAppear { landed = true; load(); model.refresh()
                 #if targetEnvironment(simulator)
+                if let s = ProcessInfo.processInfo.environment["HS_DESK_SETTINGS"], s == "1" || s == "local" {
+                    if s == "local" { InferenceConfigStore.shared.mode = .local }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { showSettings = true }
+                }
                 if let r = ProcessInfo.processInfo.environment["HS_DESK_RECORD"], r == "1" || r == "tape" || r == "modal" {
                     model.liveTranscript = "Welcome everyone to the Q3 kickoff. The big bet this quarter is shipping the desk to the web. Karol will own the mesh sync and the approval contract. We agreed to demo the air-gapped proof by Friday"
                     model.partial = "and then we will"
@@ -1951,8 +1955,9 @@ struct DioStage: View {
     @MainActor private func callLLM(_ prompt: String) async -> Result<String, Error> {
         do {
             let cfg = InferenceConfigStore.shared
-            let localPath = ModelFiles.installed().first { $0.url.lastPathComponent.lowercased().contains("mmproj") == false }?.url.path
-            let provider = try cfg.makeProvider(localModelPath: localPath, context: 8192)
+            let langModels = ModelFiles.installed().filter { $0.kind == .language }
+            let chosen = langModels.first { $0.id == cfg.localModelId } ?? langModels.first
+            let provider = try cfg.makeProvider(localModelPath: chosen?.url.path, context: 8192)
             let text = try await provider.complete(prompt: prompt)
             return .success(text)
         } catch { return .failure(error) }
