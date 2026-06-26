@@ -1,4 +1,5 @@
 import SwiftUI
+import QuartzCore
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -72,6 +73,21 @@ private final class ArkGame: ObservableObject {
 
     private var lastStep: TimeInterval = 0
     private let speed: CGFloat = 250       // points / sec
+    private var ticker: Timer?            // the REAL game loop — drives tick() off the view body
+
+    // Run the loop on a timer in .common mode so it keeps stepping during paddle-drag (touch tracking),
+    // and so we NEVER mutate @Published state inside SwiftUI's view-update pass (that stalls + bursts).
+    func start() {
+        lastStep = 0
+        ticker?.invalidate()
+        let t = Timer(timeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
+            self?.tick(CACurrentMediaTime())
+        }
+        RunLoop.main.add(t, forMode: .common)
+        ticker = t
+    }
+    func stop() { ticker?.invalidate(); ticker = nil }
+    deinit { ticker?.invalidate() }
 
     init(fieldW: CGFloat, fieldH: CGFloat) {
         self.fieldW = fieldW
@@ -368,16 +384,27 @@ struct DeskArkanoidWindow: View {
     }
 
     var body: some View {
+        // the game LOOP runs on a timer (game.start), NOT in this body — mutating @Published during a view
+        // update is what stalled it and made physics fire in bursts. TimelineView here only renders the shake.
         TimelineView(.animation) { tl in
-            let _ = game.tick(tl.date.timeIntervalSinceReferenceDate)
-            let sx = CGFloat.random(in: -1...1) * game.shake
-            let sy = CGFloat.random(in: -1...1) * game.shake
+            let s = game.shake
+            let sx = s > 0 ? CGFloat(sin(tl.date.timeIntervalSinceReferenceDate * 80)) * s : 0
+            let sy = s > 0 ? CGFloat(cos(tl.date.timeIntervalSinceReferenceDate * 73)) * s : 0
             windowBody
                 .frame(width: winW, height: winH)
                 .background(windowChrome)
                 .offset(x: sx, y: sy)
                 .position(pin)
         }
+        .onAppear {
+            game.start()
+            #if targetEnvironment(simulator)
+            if ProcessInfo.processInfo.environment["HS_DESK_ARCADE"] == "play" {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { game.tapPlayField() }
+            }
+            #endif
+        }
+        .onDisappear { game.stop() }
     }
 
     private var windowChrome: some View {
@@ -498,25 +525,20 @@ struct DeskArkanoidWindow: View {
                 .shadow(color: DioPal.accent.opacity(0.5 + game.paddleGlow * 0.5), radius: 8 + CGFloat(game.paddleGlow) * 8)
                 .position(x: game.paddleX, y: game.paddleY)
 
-            // phase overlays
-            phaseOverlay
+            // phase overlays — VISUAL ONLY; must not intercept the tap (that blocked "Tap to launch")
+            phaseOverlay.allowsHitTesting(false)
         }
         .frame(width: game.fieldW, height: game.fieldH)
-        // STYLUS / FINGER paddle control — drag x maps to the paddle; a tap launches / restarts.
+        // STYLUS / FINGER control — drag x slides the paddle; a near-stationary press launches / restarts.
+        // ONE gesture (no competing onTapGesture) so the tap reliably registers.
         .contentShape(Rectangle())
         .gesture(
             DragGesture(minimumDistance: 0)
-                .onChanged { v in
-                    game.movePaddle(to: v.location.x)
-                    if game.phase == .ready { /* track paddle; launch on release/tap */ }
-                }
+                .onChanged { v in game.movePaddle(to: v.location.x) }
                 .onEnded { v in
-                    if game.phase == .ready, abs(v.translation.width) < 4, abs(v.translation.height) < 4 {
-                        game.tapPlayField()
-                    }
+                    if abs(v.translation.width) < 8, abs(v.translation.height) < 8 { game.tapPlayField() }
                 }
         )
-        .onTapGesture { game.tapPlayField() }
     }
 
     @ViewBuilder private var phaseOverlay: some View {
