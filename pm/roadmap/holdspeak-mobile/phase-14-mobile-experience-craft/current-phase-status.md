@@ -670,6 +670,19 @@ tetris-style with the resize grip ([resizable zones](./screenshots/zones-resizab
 device-arch **BUILD SUCCEEDED**. **All three of the owner's desk-refinement asks are now in:** resizable
 zones (#1), tooling reachable in the lower screen + a docked swipe-out tool chooser (#2/#3, the tool dock).
 
+**2026-06-25 — PR #133 MERGED to `main` + handover rewritten for the next agent.** The whole DeskPrimitive
+era (70+ commits) is now on `main` (merge commit). CI was red on two issues unrelated to the desk work, both
+root-caused + fixed before merge: the Phase-15 mesh tests imported `zeroconf` (a `[meeting]` extra) at module
+level → guarded with `pytest.importorskip`; and HS-69-01 had replaced the dashboard's prose `egressLabel()`
+with the structured `egress-badge` but left `test_web_server`'s assertion stale → updated to the new markers
+(the gitignored web bundle is built by CI; verified locally via `npm run build`). All 8 checks green, merged.
+[[DESK_HANDOVER]] was **rewritten** to the contract era (current-state section on top; the 3D notes demoted to
+HISTORICAL): the spine (DeskPrimitive), DioStage anatomy (content on desk / tools in dock / resizable zones /
+pull-out / the routing engine), the GROUNDED + host-gated connectors, the build/verify loop, what's done, and
+**the path forward — finish/polish DeskOS (walk it on the device, real-metal LLM + send proof) then WEB PARITY
+(Phase 16, the same primitive model on the web + mesh sync)**. The owner wants momentum on DeskOS then web
+parity; the handover §6 is the runway.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
