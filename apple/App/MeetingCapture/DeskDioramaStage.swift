@@ -145,7 +145,7 @@ struct DioHero: View {
     let prim: any DeskPrimitive; let landed: Bool; let mode: DioMode; let index: Int; let pos: CGPoint
     var hot: Bool = false                          // a compatible primitive is hovering over me → I'm a route target
     var picked: Bool = false                       // selected by the lasso (part of an Ask bundle)
-    var menu: [DioMenuItem] = []                    // long-press → route/send/open
+    var onSummon: () -> Void = {}                   // long-press → radial summon (route/send)
     let onTap: () -> Void; let onDrop: (CGSize) -> Void; let onDragChange: (CGPoint?) -> Void
     @State private var drag: CGSize = .zero
     private var modeScale: CGFloat { hot ? 1.12 : (mode == .focus ? 1.34 : (mode == .recede ? 0.6 : 1)) }
@@ -184,11 +184,7 @@ struct DioHero: View {
                     drag = .zero
                 }
         )
-        .contextMenu {
-            ForEach(menu) { item in
-                Button { item.action() } label: { Label(item.label, systemImage: item.icon) }
-            }
-        }
+        .simultaneousGesture(LongPressGesture(minimumDuration: 0.32).onEnded { _ in if mode != .recede { onSummon() } })
     }
 }
 
@@ -924,6 +920,24 @@ struct DioToolGlyph: View {
     }
 }
 
+// One tool blooming in the radial summon — a lit satellite around the card; tap to route.
+struct DioSummonSatellite: View {
+    let prim: any DeskPrimitive; let index: Int; let onTap: () -> Void
+    @State private var shown = false
+    var body: some View {
+        VStack(spacing: 6) {
+            DioToolGlyph(prim: prim, size: 60)
+                .background(Circle().fill(prim.color.opacity(0.18)).frame(width: 80, height: 80))
+                .shadow(color: prim.color.opacity(0.55), radius: 13)
+            Text(prim.title).font(.system(size: 11.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                .lineLimit(1).padding(.horizontal, 9).padding(.vertical, 3).background(Capsule().fill(.black.opacity(0.45)))
+        }
+        .scaleEffect(shown ? 1 : 0.2).opacity(shown ? 1 : 0)
+        .contentShape(Circle()).onTapGesture(perform: onTap)
+        .onAppear { withAnimation(.spring(response: 0.42, dampingFraction: 0.68).delay(Double(index) * 0.05)) { shown = true } }
+    }
+}
+
 // One tool tile in the open dock — a drop target (highlights "hot") + tap to inspect.
 struct DioDockTile: View {
     let prim: any DeskPrimitive; let hot: Bool; let onTap: () -> Void
@@ -1023,7 +1037,8 @@ struct DioStage: View {
     @State private var connecting = false
     @State private var connectURL = ""
     @State private var sentToast: String? = nil
-    @State private var dockOpen = false                  // the tool dock (tools live here, in the thumb zone)
+    @State private var summonSource: String? = nil       // the card being routed (radial summon active)
+    @State private var summonAt: CGPoint = .zero          // where the radial centers (the card's position)
     private let diveSpring = Animation.spring(response: 0.6, dampingFraction: 0.74)
     private let focusSpring = Animation.spring(response: 0.5, dampingFraction: 0.72)
     private let dockSpring = Animation.spring(response: 0.5, dampingFraction: 0.84)
@@ -1167,7 +1182,7 @@ struct DioStage: View {
                 .frame(maxHeight: .infinity, alignment: .top).padding(.top, h * 0.05)
 
                 // THE FIRST BOOT — the cold-start ritual: an empty desk that teaches itself
-                if firstRun && landed && selected == nil && !dockOpen {
+                if firstRun && landed && selected == nil && summonSource == nil {
                     DioFirstBoot(w: w, h: h)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                         .padding(.top, h * 0.035).transition(.opacity).zIndex(5)
@@ -1217,48 +1232,39 @@ struct DioStage: View {
                 }
 
                 DioCompanion(landed: landed, excited: selected != nil).position(x: w * 0.9, y: h * 0.86)
-                if landed && selected == nil && !dockOpen {
+                if landed && selected == nil && summonSource == nil {
                     DioRecordOrb { capturing = true }.position(x: w * 0.5, y: h * 0.8).transition(.scale.combined(with: .opacity))
                 }
 
-                // THE TOOL DOCK — tools in the thumb zone; swipe/tap to open; drop a card on a tool to route/send.
-                // ALL drawn in the GeometryReader space (same as the tiles + drag-hit), so nothing drifts.
-                if landed && selected == nil && !showRouteSheet && !routing && printed == nil && !showSendCard {
-                    if dockOpen {
-                        // backdrop — overscanned below `h` so it bleeds to the physical screen edge
-                        UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30, style: .continuous)
-                            .fill(LinearGradient(colors: [Color(hex: 0x191522), Color(hex: 0x0B0910)], startPoint: .top, endPoint: .bottom))
-                            .overlay(UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1))
-                            .frame(width: w, height: kDioDockOpenHeight + 160)
-                            .shadow(color: .black.opacity(0.65), radius: 30, y: -10)
-                            .position(x: w / 2, y: h - kDioDockOpenHeight + (kDioDockOpenHeight + 160) / 2)
-                            .contentShape(Rectangle())
-                            .onTapGesture { withAnimation(dockSpring) { dockOpen = false } }
-                            .gesture(DragGesture(minimumDistance: 12).onEnded { if $0.translation.height > 28 { withAnimation(dockSpring) { dockOpen = false } } })
-                            .transition(.move(edge: .bottom).combined(with: .opacity)).zIndex(108)
-                        // grabber + header, pinned just above the tile row
-                        VStack(spacing: 8) {
-                            Capsule().fill(.white.opacity(0.32)).frame(width: 46, height: 5)
-                            HStack(spacing: 7) {
-                                Image(systemName: "wrench.and.screwdriver.fill").font(.system(size: 11, weight: .bold)).foregroundStyle(DioPal.accent)
-                                Text("TOOLS").font(.system(size: 12, weight: .heavy, design: .rounded)).tracking(2.5).foregroundStyle(DioPal.text)
-                                Text("drop a card on one").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
-                            }
+                // THE RADIAL SUMMON — long-press a card and its VALID tools bloom around it; tap one to route.
+                // No drawer, no menu: the targets come to your finger, and only the tools that accept the card show.
+                if let src = summonSource, let srcPrim = members().first(where: { $0.id == src }) {
+                    let targets = summonTargets(for: srcPrim)
+                    Color.black.opacity(0.55).ignoresSafeArea().contentShape(Rectangle())
+                        .onTapGesture { dismissSummon() }.transition(.opacity).zIndex(118)
+                    Circle().strokeBorder(DioPal.accent.opacity(0.9), lineWidth: 3)
+                        .frame(width: srcPrim.base * 1.12, height: srcPrim.base * 1.12)
+                        .shadow(color: DioPal.accent.opacity(0.7), radius: 14)
+                        .position(summonAt).allowsHitTesting(false).zIndex(119)
+                    if targets.isEmpty {
+                        VStack(spacing: 6) {
+                            Image(systemName: "tray").font(.system(size: 26)).foregroundStyle(DioPal.muted)
+                            Text("No tool can take this yet").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                            Text("Add a model in Settings, or pair your Mac for connectors.").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).multilineTextAlignment(.center)
+                        }.padding(18).background(RoundedRectangle(cornerRadius: 18).fill(.black.opacity(0.8)))
+                        .frame(maxWidth: 280).position(x: w / 2, y: max(140, summonAt.y - 150)).zIndex(121)
+                    } else {
+                        ForEach(Array(targets.enumerated()), id: \.element.id) { i, t in
+                            let p = summonPos(i, targets.count, summonAt, w, h)
+                            Path { pa in pa.move(to: summonAt); pa.addLine(to: p) }
+                                .stroke(t.color.opacity(0.55), style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [2, 6]))
+                                .allowsHitTesting(false).zIndex(119)
+                            DioSummonSatellite(prim: t, index: i) { routeFrom = summonAt; routeTo = p; let s = srcPrim; dismissSummon(); beginRoute(sourceId: s.id, target: t) }
+                                .position(p).zIndex(122)
                         }
-                        .position(x: w / 2, y: h - kDioDockOpenHeight + 24).allowsHitTesting(false)
-                        .transition(.opacity).zIndex(110)
-                    }
-                    if !dockOpen {
-                        DioDockHandle(tools: toolMembers(), onOpen: { withAnimation(dockSpring) { dockOpen = true } }).zIndex(108)
-                    }
-                    // the tiles — always present so they rise/settle (not pop); positioned by dockToolPos (== dockHit)
-                    ForEach(Array(toolMembers().enumerated()), id: \.element.id) { i, t in
-                        DioDockTile(prim: t, hot: dragHotObjectId == t.id) { select(t.id) }
-                            .position(dockToolPos(i, toolMembers().count, w, h))
-                            .opacity(dockOpen ? 1 : 0).offset(y: dockOpen ? 0 : 26).scaleEffect(dockOpen ? 1 : 0.82)
-                            .allowsHitTesting(dockOpen)
-                            .animation(.spring(response: 0.5, dampingFraction: 0.82).delay(dockOpen ? Double(i) * 0.05 : 0), value: dockOpen)
-                            .zIndex(111)
+                        Text("tap a tool to route").font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
+                            .padding(.horizontal, 12).padding(.vertical, 6).background(Capsule().fill(.black.opacity(0.5)))
+                            .position(x: w / 2, y: min(h - 36, summonAt.y + srcPrim.base * 0.7 + 26)).allowsHitTesting(false).zIndex(121)
                     }
                 }
 
@@ -1324,7 +1330,14 @@ struct DioStage: View {
             .ignoresSafeArea()
             .onAppear { landed = true; load(); model.refresh()
                 #if targetEnvironment(simulator)
-                if ProcessInfo.processInfo.environment["HS_DESK_DOCK"] == "open" { dockOpen = true }
+                if ProcessInfo.processInfo.environment["HS_DESK_SUMMON"] == "1" {
+                    outputs = [OutputRecord(id: "demo", title: "Standup notes", body: "Shipped the egress badge; review the dock by Friday.", source: "Standup", lens: "Note", path: "")]
+                    let b = UIScreen.main.bounds
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                        summonAt = CGPoint(x: b.width * 0.5, y: b.height * 0.5)
+                        withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { summonSource = "out:demo" }
+                    }
+                }
                 #endif
             }
             .alert("Couldn’t route", isPresented: Binding(get: { routeError != nil }, set: { if !$0 { routeError = nil } })) {
@@ -1378,7 +1391,8 @@ struct DioStage: View {
             ForEach(Array(ms.enumerated()), id: \.element.id) { i, p in
                 DioHero(prim: p, landed: landed, mode: mode(p.id), index: i, pos: pos(p.id, looseHome(i, ms.count, w, h), w, h),
                         hot: dragHotObjectId == p.id, picked: selectedSet.contains(p.id),
-                        menu: menuItems(for: p, at: pos(p.id, looseHome(i, ms.count, w, h), w, h), w, h),
+                        onSummon: { summonAt = pos(p.id, looseHome(i, ms.count, w, h), w, h); haptic(.medium)
+                                    withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { summonSource = p.id } },
                         onTap: { select(selected == p.id ? nil : p.id) },
                         onDrop: { tr in drop(p, looseHome(i, ms.count, w, h), tr, w, h) },
                         onDragChange: { pt in updateHot(p, pt, w, h) })
@@ -1453,20 +1467,8 @@ struct DioStage: View {
         // sit in the panel's lower space, clear of the top header (panel is kDioDockOpenHeight tall)
         return CGPoint(x: startX + CGFloat(i) * (tile + gap), y: h - 78)
     }
-    private func dockHit(_ pt: CGPoint, _ w: CGFloat, _ h: CGFloat) -> (prim: any DeskPrimitive, center: CGPoint)? {
-        let tm = toolMembers(); guard dockOpen, !tm.isEmpty else { return nil }
-        for (i, t) in tm.enumerated() {
-            let c = dockToolPos(i, tm.count, w, h)
-            if CGRect(x: c.x - 38, y: c.y - 42, width: 76, height: 84).contains(pt) { return (t, c) }
-        }
-        return nil
-    }
     private func updateHot(_ p: any DeskPrimitive, _ pt: CGPoint?, _ w: CGFloat, _ h: CGFloat) {
         guard let pt = pt else { dragHotZone = nil; dragHotObjectId = nil; return }
-        if !dockOpen && !p.emits.isEmpty { withAnimation(diveSpring) { dockOpen = true } }   // a content drag opens the dock
-        if let hit = dockHit(pt, w, h), hit.prim.accepts.contains(p.kind) {
-            dragHotObjectId = hit.prim.id; dragHotZone = nil; return            // a dock tool target
-        }
         if let target = objectHit(pt, contentMembers(), w, h, excluding: p.id), target.prim.accepts.contains(p.kind) {
             dragHotObjectId = target.prim.id; dragHotZone = nil; return         // a desk content target (a KB)
         }
@@ -1480,7 +1482,7 @@ struct DioStage: View {
         if let core = coreTarget(w, h) {
             items.append(DioMenuItem(label: "Route to AI core", icon: "wand.and.stars") {
                 routeFrom = center; routeTo = core.center
-                routeSourceId = p.id; haptic(.medium); withAnimation { dockOpen = true; showRouteSheet = true }
+                routeSourceId = p.id; haptic(.medium); withAnimation { showRouteSheet = true }
             })
         }
         for c in ms where c.kind == .connector && c.accepts.contains(p.kind) {
@@ -1503,7 +1505,7 @@ struct DioStage: View {
         routeTo = core.center
         routeFrom = CGPoint(x: w * 0.24, y: h * 0.24)
         select(nil)                                  // close the pull-out; the route sheet takes over
-        haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { dockOpen = true; showRouteSheet = true }
+        haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { showRouteSheet = true }
     }
     private func routeSourceTitle() -> String {
         routeSourceId == "__bundle__" ? bundleTitle : (members().first { $0.id == routeSourceId }?.title ?? "the desk")
@@ -1523,6 +1525,28 @@ struct DioStage: View {
         guard let e = tm.enumerated().first(where: { $0.element.kind == .model }) else { return nil }
         return (e.element.id, dockToolPos(e.offset, tm.count, w, h))
     }
+    // MARK: the radial summon — the tools that can take this card, blooming around it
+    private func summonTargets(for src: any DeskPrimitive) -> [any DeskPrimitive] {
+        toolMembers().filter { t in
+            switch t.kind {
+            case .model:     return true                          // the AI core takes anything
+            case .connector: return true                          // connectors are valid targets (tap guides pairing)
+            case .workflow:  return t.accepts.contains(src.kind)
+            default:         return false
+            }
+        }
+    }
+    private func summonPos(_ i: Int, _ n: Int, _ center: CGPoint, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
+        let r: CGFloat = 134
+        let fan = min(CGFloat.pi * 1.25, CGFloat(max(1, n)) * 0.62)     // total spread, centered straight up
+        let startA = -CGFloat.pi / 2 - fan / 2
+        let a = startA + fan * (CGFloat(i) + 0.5) / CGFloat(max(1, n))
+        let x = min(w - 62, max(62, center.x + r * cos(a)))
+        let y = min(h - 96, max(100, center.y + r * sin(a)))
+        return CGPoint(x: x, y: y)
+    }
+    private func dismissSummon() { haptic(.light); withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { summonSource = nil } }
+
     private func askBundle(_ w: CGFloat, _ h: CGFloat) {
         let cm = contentMembers()
         let picked = cm.enumerated().filter { selectedSet.contains($0.element.id) }
@@ -1538,7 +1562,7 @@ struct DioStage: View {
         routeTo = core.center
         routeSourceId = "__bundle__"
         haptic(.medium)
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { dockOpen = true; showRouteSheet = true }
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { showRouteSheet = true }
     }
 
     private func objectHit(_ pt: CGPoint, _ ms: [any DeskPrimitive], _ w: CGFloat, _ h: CGFloat, excluding: String) -> (prim: any DeskPrimitive, center: CGPoint)? {
@@ -1562,12 +1586,7 @@ struct DioStage: View {
         let start = pos(p.id, fallback, w, h)
         let end = CGPoint(x: start.x + tr.width, y: start.y + tr.height)
         defer { dragHotZone = nil; dragHotObjectId = nil }
-        // 1) dropped on a tool in the dock (AI core / a connector)?
-        if let hit = dockHit(end, w, h), hit.prim.accepts.contains(p.kind) {
-            routeFrom = start; routeTo = hit.center
-            beginRoute(sourceId: p.id, target: hit.prim); return
-        }
-        // 2) dropped on a desk content target (a KB)?
+        // 1) dropped on a desk content target (a KB)?
         if let target = objectHit(end, contentMembers(), w, h, excluding: p.id), target.prim.accepts.contains(p.kind) {
             routeFrom = start; routeTo = target.center            // the cable runs source → target
             beginRoute(sourceId: p.id, target: target.prim); return
