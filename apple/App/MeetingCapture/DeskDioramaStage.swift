@@ -939,41 +939,28 @@ struct DioDockTile: View {
     }
 }
 
-// The dock chrome — the collapsed handle (with peek icons) or the open panel background.
-struct DioDockChrome: View {
-    let open: Bool; let tools: [any DeskPrimitive]; let onToggle: () -> Void
+// The COLLAPSED dock handle (the "Tools" pill with peek icons). The OPEN dock is drawn by the parent
+// (DioStage) entirely in the GeometryReader's coordinate space — backdrop + header + tiles all share ONE
+// space, the same one the drag-hit math uses, so nothing drifts apart from the safe-area inset (the old bug).
+let kDioDockOpenHeight: CGFloat = 150
+struct DioDockHandle: View {
+    let tools: [any DeskPrimitive]; let onOpen: () -> Void
     var body: some View {
-        VStack(spacing: 0) {
+        HStack(spacing: 10) {
+            Image(systemName: "chevron.up").font(.system(size: 13, weight: .black)).foregroundStyle(DioPal.accent)
+            Text("Tools").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
             Spacer(minLength: 0)
-            if open {
-                VStack(spacing: 10) {
-                    Capsule().fill(.white.opacity(0.25)).frame(width: 42, height: 5)
-                    HStack(spacing: 5) {
-                        Text("TOOLS").font(.system(size: 11, weight: .heavy, design: .rounded)).tracking(2).foregroundStyle(DioPal.muted)
-                        Text("· drop a card on one").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
-                    }
-                    Spacer(minLength: 0)
-                }
-                .padding(.top, 10).frame(maxWidth: .infinity).frame(height: 150)
-                .background(UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28, style: .continuous)
-                    .fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom))
-                    .overlay(UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1))
-                    .shadow(color: .black.opacity(0.6), radius: 24, y: -8))
-                .contentShape(Rectangle()).onTapGesture(perform: onToggle)
-            } else {
-                HStack(spacing: 10) {
-                    Image(systemName: "chevron.up").font(.system(size: 13, weight: .black)).foregroundStyle(DioPal.accent)
-                    Text("Tools").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
-                    Spacer(minLength: 0)
-                    HStack(spacing: 8) { ForEach(Array(tools.prefix(5).enumerated()), id: \.element.id) { _, t in DioToolGlyph(prim: t, size: 30) } }
-                }
-                .padding(.horizontal, 18).frame(height: 56)
-                .background(Capsule().fill(.white.opacity(0.07)).overlay(Capsule().strokeBorder(.white.opacity(0.12), lineWidth: 1)))
-                .padding(.horizontal, 16).padding(.bottom, 14)
-                .contentShape(Rectangle()).onTapGesture(perform: onToggle)
-            }
+            HStack(spacing: 9) { ForEach(Array(tools.prefix(5).enumerated()), id: \.element.id) { _, t in DioToolGlyph(prim: t, size: 28) } }
         }
-        .ignoresSafeArea(edges: .bottom)
+        .padding(.horizontal, 18).frame(height: 56)
+        .background(Capsule().fill(.white.opacity(0.08)).overlay(Capsule().strokeBorder(.white.opacity(0.13), lineWidth: 1))
+            .shadow(color: .black.opacity(0.4), radius: 12, y: 4))
+        .padding(.horizontal, 16).padding(.bottom, 14)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onOpen)
+        .gesture(DragGesture(minimumDistance: 12).onEnded { if $0.translation.height < -20 { onOpen() } })    // swipe up to open
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 }
 
@@ -1039,6 +1026,7 @@ struct DioStage: View {
     @State private var dockOpen = false                  // the tool dock (tools live here, in the thumb zone)
     private let diveSpring = Animation.spring(response: 0.6, dampingFraction: 0.74)
     private let focusSpring = Animation.spring(response: 0.5, dampingFraction: 0.72)
+    private let dockSpring = Animation.spring(response: 0.5, dampingFraction: 0.84)
 
     private var pathKey: String { path.joined(separator: "/") }
     private var curTint: Color { path.isEmpty ? DioPal.accent : tintFor(pathKey) }
@@ -1179,7 +1167,7 @@ struct DioStage: View {
                 .frame(maxHeight: .infinity, alignment: .top).padding(.top, h * 0.05)
 
                 // THE FIRST BOOT — the cold-start ritual: an empty desk that teaches itself
-                if firstRun && landed && selected == nil {
+                if firstRun && landed && selected == nil && !dockOpen {
                     DioFirstBoot(w: w, h: h)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                         .padding(.top, h * 0.035).transition(.opacity).zIndex(5)
@@ -1233,14 +1221,44 @@ struct DioStage: View {
                     DioRecordOrb { capturing = true }.position(x: w * 0.5, y: h * 0.8).transition(.scale.combined(with: .opacity))
                 }
 
-                // THE TOOL DOCK — tools in the thumb zone; swipe/tap to open; drop a card on a tool to route/send
+                // THE TOOL DOCK — tools in the thumb zone; swipe/tap to open; drop a card on a tool to route/send.
+                // ALL drawn in the GeometryReader space (same as the tiles + drag-hit), so nothing drifts.
                 if landed && selected == nil && !showRouteSheet && !routing && printed == nil && !showSendCard {
-                    DioDockChrome(open: dockOpen, tools: toolMembers(), onToggle: { withAnimation(diveSpring) { dockOpen.toggle() } }).zIndex(108)
                     if dockOpen {
-                        ForEach(Array(toolMembers().enumerated()), id: \.element.id) { i, t in
-                            DioDockTile(prim: t, hot: dragHotObjectId == t.id) { select(t.id) }
-                                .position(dockToolPos(i, toolMembers().count, w, h)).zIndex(109)
+                        // backdrop — overscanned below `h` so it bleeds to the physical screen edge
+                        UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30, style: .continuous)
+                            .fill(LinearGradient(colors: [Color(hex: 0x191522), Color(hex: 0x0B0910)], startPoint: .top, endPoint: .bottom))
+                            .overlay(UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1))
+                            .frame(width: w, height: kDioDockOpenHeight + 160)
+                            .shadow(color: .black.opacity(0.65), radius: 30, y: -10)
+                            .position(x: w / 2, y: h - kDioDockOpenHeight + (kDioDockOpenHeight + 160) / 2)
+                            .contentShape(Rectangle())
+                            .onTapGesture { withAnimation(dockSpring) { dockOpen = false } }
+                            .gesture(DragGesture(minimumDistance: 12).onEnded { if $0.translation.height > 28 { withAnimation(dockSpring) { dockOpen = false } } })
+                            .transition(.move(edge: .bottom).combined(with: .opacity)).zIndex(108)
+                        // grabber + header, pinned just above the tile row
+                        VStack(spacing: 8) {
+                            Capsule().fill(.white.opacity(0.32)).frame(width: 46, height: 5)
+                            HStack(spacing: 7) {
+                                Image(systemName: "wrench.and.screwdriver.fill").font(.system(size: 11, weight: .bold)).foregroundStyle(DioPal.accent)
+                                Text("TOOLS").font(.system(size: 12, weight: .heavy, design: .rounded)).tracking(2.5).foregroundStyle(DioPal.text)
+                                Text("drop a card on one").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                            }
                         }
+                        .position(x: w / 2, y: h - kDioDockOpenHeight + 24).allowsHitTesting(false)
+                        .transition(.opacity).zIndex(110)
+                    }
+                    if !dockOpen {
+                        DioDockHandle(tools: toolMembers(), onOpen: { withAnimation(dockSpring) { dockOpen = true } }).zIndex(108)
+                    }
+                    // the tiles — always present so they rise/settle (not pop); positioned by dockToolPos (== dockHit)
+                    ForEach(Array(toolMembers().enumerated()), id: \.element.id) { i, t in
+                        DioDockTile(prim: t, hot: dragHotObjectId == t.id) { select(t.id) }
+                            .position(dockToolPos(i, toolMembers().count, w, h))
+                            .opacity(dockOpen ? 1 : 0).offset(y: dockOpen ? 0 : 26).scaleEffect(dockOpen ? 1 : 0.82)
+                            .allowsHitTesting(dockOpen)
+                            .animation(.spring(response: 0.5, dampingFraction: 0.82).delay(dockOpen ? Double(i) * 0.05 : 0), value: dockOpen)
+                            .zIndex(111)
                     }
                 }
 
@@ -1304,7 +1322,11 @@ struct DioStage: View {
                 }
             }
             .ignoresSafeArea()
-            .onAppear { landed = true; load(); model.refresh() }
+            .onAppear { landed = true; load(); model.refresh()
+                #if targetEnvironment(simulator)
+                if ProcessInfo.processInfo.environment["HS_DESK_DOCK"] == "open" { dockOpen = true }
+                #endif
+            }
             .alert("Couldn’t route", isPresented: Binding(get: { routeError != nil }, set: { if !$0 { routeError = nil } })) {
                 Button("OK", role: .cancel) { routeError = nil }
             } message: { Text(routeError ?? "") }
@@ -1425,10 +1447,11 @@ struct DioStage: View {
         persistZones()
     }
     private func dockToolPos(_ i: Int, _ n: Int, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
-        let tile: CGFloat = 60, gap: CGFloat = 22
+        let tile: CGFloat = 60, gap: CGFloat = 26
         let rowW = CGFloat(n) * tile + CGFloat(max(0, n - 1)) * gap
         let startX = (w - rowW) / 2 + tile / 2
-        return CGPoint(x: startX + CGFloat(i) * (tile + gap), y: h - 100)
+        // sit in the panel's lower space, clear of the top header (panel is kDioDockOpenHeight tall)
+        return CGPoint(x: startX + CGFloat(i) * (tile + gap), y: h - 78)
     }
     private func dockHit(_ pt: CGPoint, _ w: CGFloat, _ h: CGFloat) -> (prim: any DeskPrimitive, center: CGPoint)? {
         let tm = toolMembers(); guard dockOpen, !tm.isEmpty else { return nil }

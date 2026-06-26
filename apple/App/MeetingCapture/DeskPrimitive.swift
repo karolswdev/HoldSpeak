@@ -58,6 +58,13 @@ protocol DeskPrimitive {
     var actions: [PrimitiveAction] { get }    // long-press menu / drawer buttons
     var emits: [PrimitiveKind] { get }        // outputs you can pull off / drag away
     var accepts: [PrimitiveKind] { get }      // what it consumes when something is dropped on it
+    // These MUST be protocol requirements (not extension-only): accessed through `any DeskPrimitive`,
+    // an extension-only member dispatches STATICALLY to the default and ignores a conformer's override —
+    // which silently rendered every connector/workflow as a cassette (glyph→default, isSymbol→false).
+    var glyph: String { get }                 // the sprite asset OR SF-symbol name
+    var color: Color { get }
+    var base: CGFloat { get }                 // canvas sprite size
+    var isSymbol: Bool { get }                // glyph is an SF Symbol (a tool/connector), not a pixel sprite
 }
 
 // Derived defaults so a primitive only declares what's distinctive.
