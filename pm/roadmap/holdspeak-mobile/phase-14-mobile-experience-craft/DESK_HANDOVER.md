@@ -102,6 +102,18 @@ derived** from that declaration — the canvas object, the pull-out, the routing
   DioPal bricks, juice (trail/pop/glow/shake), score+lives. Honest canon adaptations: a game has no routable
   artifact (Law 6) and no egress (Law 8), so "harvest" = persisted state and the badge carries SCORE/LIVES.
   Verified via its own harness `scripts/arkanoid/`; integrated into `DioStage` (token + window overlay zIndex 112).
+- **RECORDER REFINEMENTS (2026-06-26 pass 2, owner notes):** (1) killed the audio-driven *moving* waveform
+  `sprawls` — the active mic now stays STILL; louder audio just intensifies its **glow + a fog halo** (opacity,
+  not size; in `bottomRow`). (2) The live "ASK LIVE" markers (lenses + agents + crews) moved from a cut-off
+  horizontal scroll to a **`FlowLayout`** wrap — everything visible, nothing scrolls off. (3) Production runs a REAL
+  DEFAULT PIPELINE, not a cosmetic timer: `stopCapture` does the on-device weave (step 1) then runs
+  `LiveLenses.defaultPipeline` (Summary, Actions) against the new meeting through `callLLM` — each is a genuine
+  step that lands an `OutputRecord` deliverable on the desk. `DioWeaveProgress` reports real **x-of-N** (`done`/
+  `total` = 1 + lenses), names the live step, has a flowing sheen + a **Skip** (`weaveCancel`). No provider →
+  it stops after the weave (just the cassette). (4) Everything produced lands with a **glaring arrival** —
+  `DioHero(arrived:)` (halo + pulsing ring + NEW badge + `flash`); `arrivedIds` (the meeting + its deliverables)
+  cleared after ~6s. (Soft spot: the weave itself is one opaque async call so it's a single step; the
+  intelligence steps are genuinely discrete. True sub-weave stage hooks = future work.)
 - **The record button is now corner-tucked** (`orbPos` = bottom-left), smaller (64pt), with a quiet "Record"
   label. Owner's call: it has to be on the desk but should not dominate. The first-boot trail re-aims at it.
 - **Zones** = resizable, free-placed fractal **areas** you file meetings into and **dive** through

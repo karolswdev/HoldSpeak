@@ -145,6 +145,7 @@ struct DioHero: View {
     let prim: any DeskPrimitive; let landed: Bool; let mode: DioMode; let index: Int; let pos: CGPoint
     var hot: Bool = false                          // a compatible primitive is hovering over me → I'm a route target
     var picked: Bool = false                       // selected by the lasso (part of an Ask bundle)
+    var arrived: Bool = false                      // just woven off a recording → glaringly highlighted for a beat
     var onSummon: () -> Void = {}                   // long-press → radial summon (route/send)
     let onTap: () -> Void; let onDrop: (CGSize) -> Void; let onDragChange: (CGPoint?) -> Void
     @State private var drag: CGSize = .zero
@@ -155,14 +156,35 @@ struct DioHero: View {
     var body: some View {
         let s = prim.base
         VStack(spacing: 7) {
-            DioHeroVisual(glyph: prim.glyph, glow: prim.color, base: s, seed: prim.id, focused: mode == .focus, hot: hot, symbol: prim.isSymbol, picked: picked).frame(width: s, height: s)
+            ZStack {
+                // the "glaringly new" beat — a bright halo + pulsing ring + a NEW badge, just after it weaves
+                if arrived {
+                    TimelineView(.animation) { tl in
+                        let r = 0.5 + 0.5 * sin(tl.date.timeIntervalSinceReferenceDate * 3.4)
+                        ZStack {
+                            Circle().fill(RadialGradient(colors: [DioPal.accent.opacity(0.5), .clear], center: .center, startRadius: 2, endRadius: s * 0.95)).frame(width: s * 2, height: s * 2).blur(radius: 10)
+                            Circle().strokeBorder(DioPal.accent.opacity(0.7 + 0.3 * r), lineWidth: 3).frame(width: s * (1.18 + 0.1 * r), height: s * (1.18 + 0.1 * r))
+                        }
+                    }.allowsHitTesting(false)
+                }
+                DioHeroVisual(glyph: prim.glyph, glow: prim.color, base: s, seed: prim.id, focused: mode == .focus, hot: hot, symbol: prim.isSymbol, picked: picked).frame(width: s, height: s)
+                if arrived && prim.kind == .artifact {
+                    ConstellationEcho(tint: prim.color).frame(width: s * 0.9, height: s * 0.9).allowsHitTesting(false)   // riff 4: the deliverable keeps a faint star-map of where it came from
+                }
+                if arrived {
+                    Text("NEW").font(.system(size: 9, weight: .black, design: .rounded)).tracking(1).foregroundStyle(.white)
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .background(Capsule().fill(DioPal.accent).shadow(color: DioPal.accent.opacity(0.7), radius: 6))
+                        .offset(y: -s * 0.62).transition(.scale.combined(with: .opacity))
+                }
+            }
             Text(prim.title).font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.85))
                 .lineLimit(1).frame(maxWidth: s + 36)
                 .padding(.horizontal, 8).padding(.vertical, 3)
                 .background(Capsule().fill(.black.opacity(0.32)))
                 .opacity(mode == .recede ? 0.0 : 0.95)
         }
-        .scaleEffect(landed ? (drag == .zero ? modeScale : modeScale * 1.08) : 0.15)
+        .scaleEffect(landed ? (drag == .zero ? (arrived ? modeScale * 1.12 : modeScale) : modeScale * 1.08) : 0.15)
         .opacity(landed ? dim : 0)
         .offset(y: landed ? 0 : -240)
         .contentShape(Rectangle())
@@ -620,6 +642,9 @@ enum LiveLenses {
         .init(name: "Decisions", icon: "flag.checkered", instruction: "List the decisions made in this transcript window, one per line. If none, say 'No decisions yet.'"),
         .init(name: "Actions", icon: "checkmark.circle.fill", instruction: "Extract the concrete action items from this transcript window as a short list (task — owner when known)."),
     ]
+    // THE DEFAULT POST-RECORD PIPELINE — every recording auto-runs these against the meeting (real steps,
+    // real x-of-N progress, each spits a deliverable onto the desk). Summary + Actions: the lean, useful pair.
+    static let defaultPipeline: [LiveLens] = [all[0], all[3]]
 }
 // one live-intelligence result floating by the mic
 struct LiveIntelCard: Identifiable { let id: String; let lens: String; let minutes: Double; var text: String?; var thinking: Bool }
@@ -666,6 +691,206 @@ struct DioRecordModePicker: View {
 // THE AMBIENT RECORDER — recording does NOT take over. The corner mic stays put and RADIATES: faint angled
 // waveform sprawls, a small live transcript, and the intelligence markers. Fire one → a quick window slider →
 // the agent runs on the recent transcript WHILE Whisper keeps going, and a small card floats up by the mic.
+// A wrapping flow — chips flow left-to-right and wrap to new rows so NOTHING cuts off (no horizontal scroll).
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxW = proposal.width ?? .infinity
+        var x: CGFloat = 0, y: CGFloat = 0, rowH: CGFloat = 0
+        for v in subviews {
+            let s = v.sizeThatFits(.unspecified)
+            if x > 0, x + s.width > maxW { x = 0; y += rowH + spacing; rowH = 0 }
+            x += s.width + spacing; rowH = max(rowH, s.height)
+        }
+        return CGSize(width: maxW == .infinity ? x : maxW, height: y + rowH)
+    }
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let maxW = bounds.width
+        var x: CGFloat = 0, y: CGFloat = 0, rowH: CGFloat = 0
+        for v in subviews {
+            let s = v.sizeThatFits(.unspecified)
+            if x > 0, x + s.width > maxW { x = 0; y += rowH + spacing; rowH = 0 }
+            v.place(at: CGPoint(x: bounds.minX + x, y: bounds.minY + y), proposal: ProposedViewSize(s))
+            x += s.width + spacing; rowH = max(rowH, s.height)
+        }
+    }
+}
+
+// THE WEAVE — THE CONSTELLATION. On stop, the record pane becomes a living node field: the meeting's ideas
+// scatter as stars, connections fire between them as the model thinks, and each completed step CONDENSES a
+// burst of the field into a deliverable (the real card then lands on the desk). Real x-of-N drives it; a
+// skip bails to the desk. Reusable for ANY N-step pipeline.
+struct DioConstellationWeave: View {
+    let stepName: String; let done: Int; let total: Int; let lensNames: [String]
+    var words: [String] = []              // riff 1: the meeting's real words become the stars
+    var lensColors: [Color] = []          // riff 2: each step tints the firing connections + the born card
+    let onSkip: () -> Void
+    @State private var pop = 0.0          // one-shot "condense → card" beat, fired when a step completes
+    @State private var popColor = DioPal.mint
+    private var finished: Bool { done >= total }
+    private var progress: Double { total > 0 ? Double(done) / Double(total) : 0 }
+    // a stable scatter of nodes (deterministic pseudo-random in a unit rect)
+    private static let nodes: [CGPoint] = (0..<30).map { i in
+        func rnd(_ s: Double) -> Double { let v = sin(s) * 43758.5453; return v - Foundation.floor(v) }
+        return CGPoint(x: 0.06 + 0.88 * rnd(Double(i) * 12.9898), y: 0.10 + 0.80 * rnd(Double(i) * 78.233 + 1))
+    }
+    // riff 3: a nearest-neighbour tour the "attention" walks edge-to-edge through the graph
+    private static let tour: [Int] = {
+        var remaining = Array(1..<nodes.count), order = [0], cur = 0
+        while !remaining.isEmpty {
+            let c = nodes[cur]
+            let nxt = remaining.min { hypot(nodes[$0].x - c.x, nodes[$0].y - c.y) < hypot(nodes[$1].x - c.x, nodes[$1].y - c.y) }!
+            order.append(nxt); remaining.removeAll { $0 == nxt }; cur = nxt
+        }
+        return order
+    }()
+    private func tint(_ i: Int) -> Color { DioPal.zoneTints[i % DioPal.zoneTints.count] }
+    private func attnPos(_ t: Double, _ size: CGSize) -> (p: CGPoint, a: CGPoint, b: CGPoint) {
+        let hop = 0.55, f = t / hop, idx = Int(f) % Self.tour.count, frac = f - Foundation.floor(f)
+        let a = Self.nodes[Self.tour[idx]], b = Self.nodes[Self.tour[(idx + 1) % Self.tour.count]]
+        let ap = CGPoint(x: a.x * size.width, y: a.y * size.height), bp = CGPoint(x: b.x * size.width, y: b.y * size.height)
+        return (CGPoint(x: ap.x + (bp.x - ap.x) * frac, y: ap.y + (bp.y - ap.y) * frac), ap, bp)
+    }
+    private var stepColor: Color? { let li = done - 1; return (!finished && li >= 0 && li < lensColors.count) ? lensColors[li] : nil }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 9) {
+                TimelineView(.animation) { tl in
+                    let r = 0.5 + 0.5 * sin(tl.date.timeIntervalSinceReferenceDate * 3.2)
+                    Image(systemName: finished ? "checkmark.circle.fill" : "brain.head.profile")
+                        .font(.system(size: 20, weight: .bold)).foregroundStyle(finished ? DioPal.mint : DioPal.cobalt)
+                        .shadow(color: (finished ? DioPal.mint : DioPal.cobalt).opacity(0.5 + 0.4 * r), radius: 8)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(finished ? "Meeting ready" : "Connecting ideas…").font(.system(size: 14, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                    Text(finished ? "all deliverables on the desk" : "Step \(min(done + 1, total)) of \(total) · \(stepName)")
+                        .font(.system(size: 11.5, weight: .heavy, design: .rounded)).foregroundStyle(finished ? DioPal.mint : DioPal.cobalt).lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                if !finished {
+                    Button(action: onSkip) { Text("Skip").font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).padding(.horizontal, 9).frame(height: 24).background(Capsule().fill(.white.opacity(0.07))) }.buttonStyle(.plain)
+                }
+            }
+            constellation.frame(width: 300, height: 132)
+            // the deliverables condensing out — a chip lights as its step lands
+            HStack(spacing: 6) {
+                ForEach(Array(lensNames.enumerated()), id: \.offset) { i, name in
+                    let stepDone = (done - 1) > i           // step 1 is the weave; lenses are steps 2…N
+                    let active = (done - 1) == i && !finished
+                    HStack(spacing: 4) {
+                        Image(systemName: stepDone ? "checkmark" : (active ? "circle.dotted" : "circle")).font(.system(size: 8, weight: .black))
+                        Text(name).font(.system(size: 10, weight: .heavy, design: .rounded))
+                    }
+                    .foregroundStyle(stepDone ? .white : (active ? DioPal.cobalt : DioPal.muted))
+                    .padding(.horizontal, 8).frame(height: 24)
+                    .background(Capsule().fill(stepDone ? DioPal.mint.opacity(0.85) : .white.opacity(0.06)).overlay(Capsule().strokeBorder((active ? DioPal.cobalt : .clear).opacity(0.6), lineWidth: 1)))
+                    .scaleEffect(active ? 1.0 + 0.03 : 1)
+                }
+                Spacer(minLength: 0)
+                HStack(spacing: 4) { Image(systemName: "lock.fill").font(.system(size: 8, weight: .bold)); Text("on device").font(.system(size: 9, weight: .heavy, design: .rounded)) }.foregroundStyle(DioPal.mint)
+            }.frame(width: 300)
+        }
+        .padding(15)
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(.black.opacity(0.6)).overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+        .padding(.leading, 16).padding(.bottom, 36)
+        .transition(.opacity)
+        .onChange(of: done) { nv in
+            popColor = (nv - 2 >= 0 && nv - 2 < lensColors.count) ? lensColors[nv - 2] : DioPal.mint
+            pop = 0; withAnimation(.easeOut(duration: 0.9)) { pop = 1 }
+        }
+    }
+    private var constellation: some View {
+        TimelineView(.animation) { tl in
+            let t = tl.date.timeIntervalSinceReferenceDate
+            Canvas { ctx, size in
+                let pts = Self.nodes.map { CGPoint(x: $0.x * size.width, y: $0.y * size.height) }
+                let reveal = 0.2 + 0.65 * progress + 0.05 * sin(t)          // more connections as it thinks
+                let edgeBase = stepColor                                    // riff 2: active step tints the edges
+                // edges between near neighbours, lit progressively, pulsing
+                for i in pts.indices {
+                    for j in (i + 1)..<pts.count {
+                        let dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y
+                        guard (dx * dx + dy * dy).squareRoot() < size.width * 0.24 else { continue }
+                        guard (sin(Double(i * 31 + j * 17)) * 0.5 + 0.5) < reveal else { continue }
+                        let pulse = 0.25 + 0.5 * (0.5 + 0.5 * sin(t * 2 + Double(i + j)))
+                        var path = Path(); path.move(to: pts[i]); path.addLine(to: pts[j])
+                        ctx.stroke(path, with: .color((edgeBase ?? tint(i)).opacity(0.22 * pulse)), lineWidth: 1)
+                    }
+                }
+                // riff 1: the nodes ARE the meeting's words (twinkling); plain dots fill the rest of the field
+                for (i, p) in pts.enumerated() {
+                    let tw = 0.4 + 0.6 * (0.5 + 0.5 * sin(t * 1.6 + Double(i)))
+                    let c = edgeBase ?? tint(i)
+                    if i < words.count {
+                        var gc = ctx; gc.opacity = 0.45 + 0.5 * tw
+                        gc.draw(Text(words[i]).font(.system(size: 8.5, weight: .heavy, design: .rounded)).foregroundColor(c), at: p, anchor: .center)
+                    } else {
+                        let r = 1.4 + 1.3 * tw
+                        ctx.fill(Path(ellipseIn: CGRect(x: p.x - r, y: p.y - r, width: 2 * r, height: 2 * r)), with: .color(c.opacity(0.4 + 0.5 * tw)))
+                    }
+                }
+                // riff 3: the "attention" TRACES the graph edge to edge, with a fading trail
+                if !finished {
+                    for k in stride(from: 6, through: 0, by: -1) {
+                        let (tp, _, _) = attnPos(t - Double(k) * 0.05, size)
+                        let op = (1 - Double(k) / 7) * 0.5
+                        ctx.fill(Path(ellipseIn: CGRect(x: tp.x - 2.5, y: tp.y - 2.5, width: 5, height: 5)), with: .color(.white.opacity(op)))
+                    }
+                    let (ap, ea, eb) = attnPos(t, size)
+                    var edge = Path(); edge.move(to: ea); edge.addLine(to: eb)
+                    ctx.stroke(edge, with: .color(.white.opacity(0.35)), lineWidth: 1.5)
+                    ctx.fill(Path(ellipseIn: CGRect(x: ap.x - 4, y: ap.y - 4, width: 8, height: 8)), with: .color(.white.opacity(0.95)))
+                    ctx.fill(Path(ellipseIn: CGRect(x: ap.x - 10, y: ap.y - 10, width: 20, height: 20)), with: .color(.white.opacity(0.12)))
+                }
+                // riff 2: a step lands → the lit cluster CONDENSES (ring inward) then a deliverable card is born
+                // and flies toward the desk (up-right), tinted the just-finished lens colour
+                if pop > 0, pop < 1 {
+                    let c = CGPoint(x: size.width / 2, y: size.height / 2)
+                    if pop < 0.5 {
+                        let rr = size.width * 0.45 * (1 - pop / 0.5)
+                        ctx.stroke(Path(ellipseIn: CGRect(x: c.x - rr, y: c.y - rr, width: 2 * rr, height: 2 * rr)), with: .color(popColor.opacity(0.85 * (1 - pop / 0.5))), lineWidth: 2.5)
+                    } else {
+                        let f = (pop - 0.5) / 0.5
+                        let p = CGPoint(x: c.x + (size.width * 0.5 - c.x) * f, y: c.y + (-size.height * 0.5 - c.y) * f)
+                        let sc = 0.6 + 0.7 * f, cw = 34 * sc, ch = 22 * sc
+                        let op = f < 0.6 ? 1.0 : (1 - (f - 0.6) / 0.4)
+                        ctx.fill(Path(roundedRect: CGRect(x: p.x - cw / 2, y: p.y - ch / 2, width: cw, height: ch), cornerRadius: 5), with: .color(popColor.opacity(0.9 * op)))
+                    }
+                }
+            }
+        }
+    }
+}
+
+// riff 4 — a faint, brief star-map drifting over a freshly-born deliverable: it remembers the constellation
+// it condensed out of. Used by DioHero on arrived artifacts.
+struct ConstellationEcho: View {
+    let tint: Color
+    private static let pts: [CGPoint] = (0..<10).map { i in
+        func rnd(_ s: Double) -> Double { let v = sin(s) * 43758.5453; return v - Foundation.floor(v) }
+        return CGPoint(x: 0.12 + 0.76 * rnd(Double(i) * 9.17), y: 0.12 + 0.76 * rnd(Double(i) * 4.71 + 2))
+    }
+    var body: some View {
+        TimelineView(.animation) { tl in
+            let t = tl.date.timeIntervalSinceReferenceDate
+            Canvas { ctx, size in
+                let p = Self.pts.map { CGPoint(x: $0.x * size.width, y: $0.y * size.height) }
+                for i in p.indices {
+                    for j in (i + 1)..<p.count where hypot(p[i].x - p[j].x, p[i].y - p[j].y) < size.width * 0.4 {
+                        var path = Path(); path.move(to: p[i]); path.addLine(to: p[j])
+                        ctx.stroke(path, with: .color(tint.opacity(0.12)), lineWidth: 0.6)
+                    }
+                }
+                for (i, q) in p.enumerated() {
+                    let tw = 0.4 + 0.6 * (0.5 + 0.5 * sin(t * 2 + Double(i)))
+                    ctx.fill(Path(ellipseIn: CGRect(x: q.x - 1.3, y: q.y - 1.3, width: 2.6, height: 2.6)), with: .color(.white.opacity(0.25 * tw)))
+                }
+            }
+        }
+    }
+}
+
 struct DioAmbientRecorder: View {
     @ObservedObject var model: CaptureModel
     let isDesktop: Bool
@@ -693,39 +918,35 @@ struct DioAmbientRecorder: View {
     private var hot: Color { model.transcribing ? DioPal.cobalt : Color(hex: 0xFF4D4D) }
     var body: some View {
         ZStack {
-            sprawls
             VStack(alignment: .leading, spacing: 9) {
                 ForEach(cards) { c in DioLiveIntelCard(card: c, onKeep: { onKeep(c) }, onDismiss: { onDismiss(c.id) }) }
                 if !model.transcribing {
                     if expanded { transcriptPanel } else { peekChip }
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 7) {
-                            // quick built-in lenses
-                            ForEach(LiveLenses.all, id: \.name) { l in
-                                Button { pending = .lens(l); mins = 0.5; tap() } label: {
-                                    HStack(spacing: 5) { Image(systemName: l.icon).font(.system(size: 10, weight: .bold)); Text(l.name).font(.system(size: 11.5, weight: .heavy, design: .rounded)) }
-                                        .foregroundStyle(DioPal.text).padding(.horizontal, 11).frame(height: 32)
-                                        .background(Capsule().fill(DioPal.violet.opacity(0.22)).overlay(Capsule().strokeBorder(DioPal.violet.opacity(0.5), lineWidth: 1)))
-                                }.buttonStyle(.plain)
-                            }
-                            // YOUR tailored agents — summon any of them onto a live window
-                            ForEach(agents) { a in
-                                Button { pending = .agent(a); mins = 0.5; tap() } label: {
-                                    HStack(spacing: 6) { AgentAvatarView(avatarId: a.avatar, size: 24); Text(a.name).font(.system(size: 11.5, weight: .heavy, design: .rounded)) }
-                                        .foregroundStyle(DioPal.text).padding(.horizontal, 8).frame(height: 32)
-                                        .background(Capsule().fill(AgentAvatars.color(a.avatar).opacity(0.2)).overlay(Capsule().strokeBorder(AgentAvatars.color(a.avatar).opacity(0.5), lineWidth: 1)))
-                                }.buttonStyle(.plain)
-                            }
-                            // your crews
-                            ForEach(chains.filter { !$0.steps.isEmpty }) { c in
-                                Button { pending = .chain(c); mins = 0.5; tap() } label: {
-                                    HStack(spacing: 5) { Image(systemName: "arrow.triangle.branch").font(.system(size: 10, weight: .bold)); Text(c.name).font(.system(size: 11.5, weight: .heavy, design: .rounded)) }
-                                        .foregroundStyle(DioPal.text).padding(.horizontal, 11).frame(height: 32)
-                                        .background(Capsule().fill(DioPal.accent.opacity(0.2)).overlay(Capsule().strokeBorder(DioPal.accent.opacity(0.5), lineWidth: 1)))
-                                }.buttonStyle(.plain)
-                            }
-                        }.padding(.trailing, 12)
-                    }.frame(maxWidth: w * 0.62)
+                    // ASK LIVE — every lens, agent, and crew, wrapped so NONE cut off (no horizontal scroll)
+                    Text("ASK LIVE").font(.system(size: 8, weight: .black, design: .rounded)).tracking(1.5).foregroundStyle(DioPal.muted.opacity(0.8))
+                    FlowLayout(spacing: 7) {
+                        ForEach(LiveLenses.all, id: \.name) { l in
+                            Button { pending = .lens(l); mins = 0.5; tap() } label: {
+                                HStack(spacing: 5) { Image(systemName: l.icon).font(.system(size: 10, weight: .bold)); Text(l.name).font(.system(size: 11.5, weight: .heavy, design: .rounded)) }
+                                    .foregroundStyle(DioPal.text).padding(.horizontal, 11).frame(height: 32)
+                                    .background(Capsule().fill(DioPal.violet.opacity(0.22)).overlay(Capsule().strokeBorder(DioPal.violet.opacity(0.5), lineWidth: 1)))
+                            }.buttonStyle(.plain)
+                        }
+                        ForEach(agents) { a in
+                            Button { pending = .agent(a); mins = 0.5; tap() } label: {
+                                HStack(spacing: 6) { AgentAvatarView(avatarId: a.avatar, size: 24); Text(a.name).font(.system(size: 11.5, weight: .heavy, design: .rounded)) }
+                                    .foregroundStyle(DioPal.text).padding(.horizontal, 8).frame(height: 32)
+                                    .background(Capsule().fill(AgentAvatars.color(a.avatar).opacity(0.2)).overlay(Capsule().strokeBorder(AgentAvatars.color(a.avatar).opacity(0.5), lineWidth: 1)))
+                            }.buttonStyle(.plain)
+                        }
+                        ForEach(chains.filter { !$0.steps.isEmpty }) { c in
+                            Button { pending = .chain(c); mins = 0.5; tap() } label: {
+                                HStack(spacing: 5) { Image(systemName: "arrow.triangle.branch").font(.system(size: 10, weight: .bold)); Text(c.name).font(.system(size: 11.5, weight: .heavy, design: .rounded)) }
+                                    .foregroundStyle(DioPal.text).padding(.horizontal, 11).frame(height: 32)
+                                    .background(Capsule().fill(DioPal.accent.opacity(0.2)).overlay(Capsule().strokeBorder(DioPal.accent.opacity(0.5), lineWidth: 1)))
+                            }.buttonStyle(.plain)
+                        }
+                    }.frame(maxWidth: w * 0.62, alignment: .leading)
                 }
                 bottomRow
             }
@@ -748,13 +969,20 @@ struct DioAmbientRecorder: View {
         HStack(spacing: 11) {
             Button(action: onStop) {
                 ZStack {
+                    // the mic stays STILL; louder audio just makes its glow + fog more intense (no size jitter)
+                    let lvl = CGFloat(min(1, model.level))
                     TimelineView(.animation) { tl in
-                        let p = 0.5 + 0.5 * abs(sin(tl.date.timeIntervalSinceReferenceDate * 1.7))
-                        Circle().stroke(hot.opacity(0.5), lineWidth: 2).frame(width: 60 + CGFloat(min(1, model.level)) * 22, height: 60 + CGFloat(min(1, model.level)) * 22).opacity(0.4 + 0.5 * p)
+                        let breathe = 0.85 + 0.15 * abs(sin(tl.date.timeIntervalSinceReferenceDate * 1.7))
+                        // the fog emitted from the mic — opacity rides the audio level
+                        Circle().fill(RadialGradient(colors: [hot.opacity((0.06 + 0.5 * lvl) * breathe), .clear], center: .center, startRadius: 2, endRadius: 64))
+                            .frame(width: 132, height: 132).blur(radius: 14)
+                        // a fixed-size ring whose brightness (not size) tracks the level
+                        Circle().stroke(hot.opacity(0.25 + 0.55 * lvl), lineWidth: 2).frame(width: 64, height: 64)
                     }
-                    Circle().fill(hot).frame(width: 54, height: 54).shadow(color: hot.opacity(0.6), radius: 14, y: 5)
+                    Circle().fill(hot).frame(width: 54, height: 54).shadow(color: hot.opacity(0.5 + 0.4 * lvl), radius: 12 + 10 * lvl, y: 5)
                     if model.transcribing { ProgressView().tint(.white) } else { RoundedRectangle(cornerRadius: 5, style: .continuous).fill(.white).frame(width: 18, height: 18) }
                 }
+                .frame(width: 132, height: 132)
             }.buttonStyle(.plain).disabled(model.transcribing)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
@@ -820,20 +1048,6 @@ struct DioAmbientRecorder: View {
         .gesture(DragGesture(minimumDistance: 1)
             .onChanged { dragH = $0.translation.height }
             .onEnded { v in panelH = min(max(140, panelH - v.translation.height), h * 0.58); dragH = 0 })
-    }
-    // faint angled waveforms fanning up-and-right from the docked mic
-    private var sprawls: some View {
-        ZStack {
-            ForEach(0..<5, id: \.self) { i in
-                let ang = -Double.pi / 2 + Double(i - 2) * 0.46
-                MicWaveform(level: CGFloat(model.level), active: model.recording, bars: 13, height: 26)
-                    .frame(width: 130)
-                    .opacity(model.transcribing ? 0.05 : (i == 2 ? 0.18 : 0.1))
-                    .rotationEffect(.radians(ang + Double.pi / 2))
-                    .offset(x: cos(ang) * 92, y: sin(ang) * 92)
-            }
-        }
-        .position(orb).allowsHitTesting(false)
     }
     private func tap() {
         #if canImport(UIKit)
@@ -1442,6 +1656,12 @@ struct DioStage: View {
     @State private var flash = 0.0
     @State private var selected: String? = nil
     @State private var capturing = false
+    @State private var weaving = false                // the post-stop default pipeline is running
+    @State private var weaveStepName = ""             // the REAL current step (weave, then each intelligence lens)
+    @State private var weaveDone = 0                  // steps actually completed
+    @State private var weaveTotal = 1                 // total steps in this run (1 weave + N deliverables)
+    @State private var weaveCancel = false            // user hit "skip to desk"
+    @State private var arrivedIds: Set<String> = []   // the freshly-produced meeting + deliverables, glaringly highlighted
     @State private var showRecordPicker = false       // the meeting-vs-desktop hovering choice
     @State private var captureDesktop = false         // this capture is a "talk to the desktop" dictation
     @State private var liveCards: [LiveIntelCard] = [] // live-intelligence results floating by the mic
@@ -1756,7 +1976,7 @@ struct DioStage: View {
                         .zIndex(116)
                 }
                 // recording is AMBIENT — anchored to the corner mic, it does not take over the desk
-                if capturing {
+                if capturing && !weaving {
                     DioAmbientRecorder(model: model, isDesktop: captureDesktop, orb: orbPos(w, h), w: w, h: h,
                                        cards: liveCards, agents: agents, chains: chains,
                                        onFire: { target, m in fireLive(target, minutes: m) },
@@ -1764,6 +1984,14 @@ struct DioStage: View {
                                        onDismiss: { id in withAnimation { liveCards.removeAll { $0.id == id } } },
                                        onStop: { stopCapture() })
                         .transition(.opacity).zIndex(110)
+                }
+                // the record pane metamorphoses into a staged progress bar, then the meeting lands on the desk
+                if weaving {
+                    DioConstellationWeave(stepName: weaveStepName, done: weaveDone, total: weaveTotal,
+                                          lensNames: LiveLenses.defaultPipeline.map(\.name),
+                                          words: notableWords(model.liveTranscript),
+                                          lensColors: LiveLenses.defaultPipeline.map { lensColor($0.name) },
+                                          onSkip: { weaveCancel = true }).zIndex(111)
                 }
                 // the arcade window — a pinnable floating Breakout (above the recorder, below the routing sheets)
                 if arkadeOpen {
@@ -1930,10 +2158,17 @@ struct DioStage: View {
                                      LiveIntelCard(id: "lc2", lens: "Questions", minutes: 0.5, text: nil, thinking: true)]
                     }
                     if r == "picker" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { showRecordPicker = true } } }
+                    else if r == "weave" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { weaveStepName = "Action items"; weaveDone = 1; weaveTotal = 3; withAnimation { capturing = true; weaving = true } } }
                     else { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { withAnimation { capturing = true }; model.recording = true; model.level = 0.6 } }
                 }
                 if ProcessInfo.processInfo.environment["HS_DESK_ARCADE"] == "1" {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { arkadeOpen = true } }
+                }
+                if ProcessInfo.processInfo.environment["HS_DESK_ARRIVE"] == "1" {
+                    let m = Meeting(id: "demoNew", startedAt: Date(), title: "Q3 kickoff", segments: [Segment(text: "Welcome to the kickoff.", speaker: "Speaker 1", startTime: 0, endTime: 2)])
+                    model.meetings = [m] + model.meetings
+                    outputs = [OutputRecord(id: "delivNew", title: "Summary", body: "Shipping the desk to the web is the Q3 bet; Karol owns mesh sync and the approval contract; air-gapped proof due Friday.", source: "Q3 kickoff", lens: "Summary", path: "")]
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { arrivedIds = ["m:demoNew", "out:delivNew"]; flash = 0.5 }; withAnimation(.easeOut(duration: 0.9)) { flash = 0 } }
                 }
                 if ProcessInfo.processInfo.environment["HS_DESK_TRANSCRIPT"] == "1" {
                     let segs = [
@@ -2036,7 +2271,7 @@ struct DioStage: View {
 
             ForEach(Array(ms.enumerated()), id: \.element.id) { i, p in
                 DioHero(prim: p, landed: landed, mode: mode(p.id), index: i, pos: pos(p.id, looseHome(i, ms.count, w, h), w, h),
-                        hot: dragHotObjectId == p.id, picked: selectedSet.contains(p.id),
+                        hot: dragHotObjectId == p.id, picked: selectedSet.contains(p.id), arrived: arrivedIds.contains(p.id),
                         onSummon: { summonAt = pos(p.id, looseHome(i, ms.count, w, h), w, h); haptic(.medium)
                                     withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { summonSource = p.id } },
                         onTap: { select(selected == p.id ? nil : p.id) },
@@ -2204,11 +2439,68 @@ struct DioStage: View {
     }
     private func stopCapture() {
         haptic(.medium)
-        Task {
+        let before = Set(model.meetings.map(\.id))
+        let pipeline = LiveLenses.defaultPipeline
+        weaveCancel = false; weaveDone = 0; weaveTotal = 1 + pipeline.count
+        weaveStepName = "Hearing every word"
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { weaving = true }
+        let zpath = pathKey
+        Task { @MainActor in
+            // STEP 1 (real): the on-device weave — transcribe + diarize → the cassette.
             await model.stopRecording()
             model.refresh()
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.84)) { capturing = false }
+            weaveDone = 1
+            let newId = model.meetings.first(where: { !before.contains($0.id) })?.id ?? model.meetings.first?.id
+            var produced: [String] = []
+            if let nid = newId, let m = model.meetings.first(where: { $0.id == nid }) {
+                let material = String(MeetingPrimitive(meeting: m, index: 0).routableText.prefix(6000))
+                // STEPS 2..N (real): the default pipeline runs against the meeting; each lands a deliverable.
+                for lens in pipeline {
+                    if weaveCancel { break }
+                    weaveStepName = lens.name
+                    let result = await callLLM(lens.instruction + "\n\nTranscript:\n" + material)
+                    guard case .success(let raw) = result else { break }   // no provider → stop, keep the cassette
+                    let clean = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !clean.isEmpty {
+                        let rec = OutputRecord(id: UUID().uuidString, title: lens.name, body: clean, source: m.title ?? "Meeting", lens: lens.name, path: zpath)
+                        outputs.append(rec); produced.append("out:\(rec.id)")
+                    }
+                    weaveDone += 1
+                }
+                persistOutputs()
+            }
+            weaveDone = weaveTotal; weaveStepName = "Ready"
+            #if canImport(UIKit)
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            #endif
+            try? await Task.sleep(nanoseconds: 450_000_000)   // a beat on "Ready"
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) {
+                weaving = false; capturing = false
+                arrivedIds = Set(produced + (newId.map { ["m:\($0)"] } ?? [])); flash = 0.5
+            }
             liveCards = []; liveTimeline = []
+            withAnimation(.easeOut(duration: 0.9)) { flash = 0 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 6) { withAnimation { arrivedIds = [] } }
+        }
+    }
+
+    // the meeting's notable words → the constellation's stars (riff 1)
+    private func notableWords(_ text: String) -> [String] {
+        var seen = Set<String>(); var out: [String] = []
+        for raw in text.split(whereSeparator: { !$0.isLetter }) {
+            let w = String(raw); guard w.count >= 5 else { continue }
+            let key = w.lowercased(); if seen.contains(key) { continue }
+            seen.insert(key); out.append(w); if out.count >= 20 { break }
+        }
+        return out
+    }
+    private func lensColor(_ name: String) -> Color {
+        switch name {
+        case "Summary": return DioPal.violet
+        case "Actions": return DioPal.mint
+        case "Decisions": return DioPal.accent
+        case "Questions": return DioPal.cobalt
+        default: return DioPal.cobalt
         }
     }
 
