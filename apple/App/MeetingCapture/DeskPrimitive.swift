@@ -8,7 +8,7 @@ import SwiftUI
 // the keystone gesture (drag onto the AI core → LLM → new primitive) becomes trivial to add next.
 
 enum PrimitiveKind: String {
-    case meeting, summary, actions, transcript, topics, note, artifact, model, kb, workflow, connector
+    case meeting, summary, actions, transcript, topics, note, artifact, model, kb, workflow, connector, agent, chain
 
     var glyph: String {                       // the sprite asset (one source of truth → canvas + card + pull-out)
         switch self {
@@ -16,6 +16,8 @@ enum PrimitiveKind: String {
         case .model:   return "cartridge"
         case .kb:      return "crystal"
         case .note:    return "note"
+        case .agent:   return "sparkles"      // overridden per-agent by its chosen avatar
+        case .chain:   return "arrow.triangle.branch"
         default:       return "cassette"
         }
     }
@@ -26,11 +28,13 @@ enum PrimitiveKind: String {
         case .transcript, .model:           return DioPal.cobalt
         case .topics, .kb, .workflow:       return DioPal.violet
         case .connector:                    return DioPal.cobalt
+        case .agent:                        return DioPal.mint   // overridden per-agent by its avatar hue
+        case .chain:                        return DioPal.accent
         }
     }
     var badge: String { rawValue.uppercased() }
     var base: CGFloat {                       // canvas sprite size
-        switch self { case .model: return 162; case .kb: return 120; case .note: return 106; default: return 130 }
+        switch self { case .model: return 162; case .kb: return 120; case .note: return 106; case .agent: return 104; case .chain: return 110; default: return 130 }
     }
 }
 
@@ -58,6 +62,13 @@ protocol DeskPrimitive {
     var actions: [PrimitiveAction] { get }    // long-press menu / drawer buttons
     var emits: [PrimitiveKind] { get }        // outputs you can pull off / drag away
     var accepts: [PrimitiveKind] { get }      // what it consumes when something is dropped on it
+    // These MUST be protocol requirements (not extension-only): accessed through `any DeskPrimitive`,
+    // an extension-only member dispatches STATICALLY to the default and ignores a conformer's override —
+    // which silently rendered every connector/workflow as a cassette (glyph→default, isSymbol→false).
+    var glyph: String { get }                 // the sprite asset OR SF-symbol name
+    var color: Color { get }
+    var base: CGFloat { get }                 // canvas sprite size
+    var isSymbol: Bool { get }                // glyph is an SF Symbol (a tool/connector), not a pixel sprite
 }
 
 // Derived defaults so a primitive only declares what's distinctive.

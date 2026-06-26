@@ -30,3 +30,11 @@ mandatory in shipped builds.
 
 Pipeline used: poly.pizza GLB -> trimesh OBJ+texture -> `xcrun scntool` SCN -> bundled; palette texture
 re-applied in code from the `*_tex.png` atlases.
+
+## Tailored-agent "Pixel" avatar group (HSM-14)
+- 16 bespoke pixel-art agent characters generated via PixelLab (create_1_direction_object, 64x64,
+  sidescroller view), object 28d05da0-577e-451f-a8c7-a7e42896d89a. Bundled as App/agent_p0..p15.png.
+  Order: robot, owl, fox, wizard, dragon, cat-mage, lion, wolf, rabbit, jellyfish, axolotl, android,
+  bear, crystal-golem, ghost, bee. © generated content via PixelLab (pixellab.ai).
+- 16 "Objects" anthropomorphized everyday objects (school bus/mug/lamp/…), object ba53dbf6-9e05-42e9-8d07-3dce08667cd3, App/agent_o0..o15.png.
+- 16 "Snacks" anthropomorphized foods (donut/taco/avocado/…), object 5a67be7e-bea3-479b-b0cb-f9ec95e2434c, App/agent_s0..s15.png.

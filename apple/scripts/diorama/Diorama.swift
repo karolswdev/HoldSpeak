@@ -638,11 +638,183 @@ struct SendCardH: View {
     }
 }
 
+// THE FIRST BOOT — an empty desk is not a void; it is a desk that teaches itself. A calm guided
+// spine orients you to the spatial model (objects · the AI core · zones) and points to the one
+// action that begins everything: record. Felt in motion — a breathing core, a staggered spine.
+struct FirstBootStep: Identifiable { let id: Int; let glyph: String; let tint: Color; let title: String; let line: String }
+
+struct FirstBoot: View {
+    let w: CGFloat; let h: CGFloat
+    @State private var shown = false
+    private let steps: [FirstBootStep] = [
+        FirstBootStep(id: 0, glyph: "rectangle.stack.fill", tint: Pal.accent, title: "Meetings become objects", line: "Capture one and it lands right here."),
+        FirstBootStep(id: 1, glyph: "cpu",                  tint: Pal.cobalt, title: "Your AI core waits below", line: "Drop an object on it to ask."),
+        FirstBootStep(id: 2, glyph: "square.dashed",        tint: Pal.violet, title: "Zones file your work", line: "Drag a meeting into a place to keep it."),
+    ]
+
+    var body: some View {
+        TimelineView(.animation) { tl in
+            let t = tl.date.timeIntervalSinceReferenceDate
+            let breathe = 1 + CGFloat(sin(t * 1.1) * 0.022)
+            VStack(spacing: 0) {
+                Text("HoldSpeak").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Pal.text)
+                    .padding(.bottom, 18)
+                // the hero core — a quiet, ready pulse
+                ZStack {
+                    ForEach(0..<3) { i in
+                        Circle().strokeBorder(Pal.accent.opacity(0.20 - Double(i) * 0.055), lineWidth: 1.4)
+                            .frame(width: 78 + CGFloat(i) * 30, height: 78 + CGFloat(i) * 30).scaleEffect(breathe)
+                    }
+                    Circle().fill(RadialGradient(colors: [Pal.accent.opacity(0.9), Pal.accent.opacity(0.18)], center: .center, startRadius: 1, endRadius: 40))
+                        .frame(width: 58, height: 58)
+                    Circle().fill(.white.opacity(0.92)).frame(width: 13, height: 13).shadow(color: Pal.accent, radius: 9)
+                }
+                .frame(height: 140)
+                VStack(spacing: 6) {
+                    Text("Your desk is ready").font(.system(size: 21, weight: .black, design: .rounded)).foregroundStyle(Pal.text)
+                    Text("An empty desk, waiting for your first meeting.").font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
+                }
+                .padding(.bottom, 26)
+                // the guided spine
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(steps) { s in
+                        HStack(alignment: .top, spacing: 14) {
+                            VStack(spacing: 0) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                        .fill(LinearGradient(colors: [s.tint.opacity(0.34), Color(hex: 0x14121C)], startPoint: .top, endPoint: .bottom))
+                                        .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(s.tint.opacity(0.72), lineWidth: 1.3))
+                                        .frame(width: 46, height: 46)
+                                    Image(systemName: s.glyph).font(.system(size: 19, weight: .bold)).foregroundStyle(.white)
+                                }
+                                if s.id < steps.count - 1 {
+                                    Rectangle().fill(LinearGradient(colors: [s.tint.opacity(0.55), steps[s.id + 1].tint.opacity(0.55)], startPoint: .top, endPoint: .bottom))
+                                        .frame(width: 2, height: 24)
+                                }
+                            }
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(s.title).font(.system(size: 15.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
+                                Text(s.line).font(.system(size: 12.5, weight: .medium, design: .rounded)).foregroundStyle(Pal.muted)
+                            }.padding(.top, 4)
+                            Spacer(minLength: 0)
+                        }
+                        .opacity(shown ? 1 : 0).offset(y: shown ? 0 : 14)
+                        .animation(.spring(response: 0.6, dampingFraction: 0.78).delay(0.15 + Double(s.id) * 0.12), value: shown)
+                    }
+                }
+                .frame(maxWidth: 326, alignment: .leading)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .onAppear { shown = true }
+    }
+}
+
+// An empty zone you dived into (harness mirror) — teach how to fill it, never a blank dead-end.
+struct ZoneEmpty: View {
+    let name: String; let tint: Color
+    @State private var shown = false
+    var body: some View {
+        TimelineView(.animation) { tl in
+            let breathe = 1 + CGFloat(sin(tl.date.timeIntervalSinceReferenceDate * 1.1) * 0.02)
+            VStack(spacing: 16) {
+                ZStack {
+                    ForEach(0..<2) { i in
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .strokeBorder(tint.opacity(0.22 - Double(i) * 0.08), style: StrokeStyle(lineWidth: 1.5, dash: [5, 6]))
+                            .frame(width: 92 + CGFloat(i) * 26, height: 92 + CGFloat(i) * 26).scaleEffect(breathe)
+                    }
+                    Image(systemName: "tray").font(.system(size: 34, weight: .regular)).foregroundStyle(tint.opacity(0.9))
+                }.frame(height: 130)
+                VStack(spacing: 7) {
+                    Text("\(name) is empty").font(.system(size: 20, weight: .black, design: .rounded)).foregroundStyle(Pal.text)
+                    Text("Drag a meeting onto this zone from your desk to file it here.")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
+                        .multilineTextAlignment(.center).frame(maxWidth: 300)
+                }
+                HStack(spacing: 7) { Image(systemName: "plus.circle.fill").font(.system(size: 14, weight: .bold)); Text("New sub-zone here").font(.system(size: 13.5, weight: .heavy, design: .rounded)) }
+                    .foregroundStyle(.white).padding(.horizontal, 18).frame(height: 46)
+                    .background(Capsule().fill(LinearGradient(colors: [tint.opacity(0.95), tint.opacity(0.7)], startPoint: .top, endPoint: .bottom)))
+                HStack(spacing: 6) { Image(systemName: "arrow.up.left").font(.system(size: 11, weight: .bold)); Text("tap the breadcrumb to climb back out").font(.system(size: 11.5, weight: .semibold, design: .rounded)) }
+                    .foregroundStyle(Pal.muted.opacity(0.8))
+            }
+            .opacity(shown ? 1 : 0).scaleEffect(shown ? 1 : 0.96).animation(.spring(response: 0.5, dampingFraction: 0.8), value: shown)
+        }
+        .onAppear { shown = true }
+    }
+}
+
+// THE ACT SHEET (harness mirror) — an action item becomes tracked work (a host-gated connector) or a card.
+struct ActSheet: View {
+    let itemText: String
+    let onCancel: () -> Void
+    private let conns: [(name: String, symbol: String, tint: Color)] = [
+        ("Slack", "number", Pal.violet), ("GitHub issue", "exclamationmark.bubble.fill", Pal.mint), ("Webhook", "bolt.horizontal.fill", Pal.cobalt),
+    ]
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.7).ignoresSafeArea().onTapGesture { onCancel() }
+            VStack(alignment: .leading, spacing: 13) {
+                HStack(spacing: 9) {
+                    Image(systemName: "bolt.fill").font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
+                        .frame(width: 34, height: 34).background(Circle().fill(Pal.mint))
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Act on this").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
+                        Text("turn it into tracked work, or keep it").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
+                    }
+                    Spacer(minLength: 0)
+                }
+                Text(itemText).font(.system(size: 13.5, weight: .medium, design: .rounded)).foregroundStyle(Pal.text.opacity(0.9))
+                    .lineLimit(4).fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(12)
+                    .background(RoundedRectangle(cornerRadius: 13).fill(.white.opacity(0.04)).overlay(RoundedRectangle(cornerRadius: 13).strokeBorder(.white.opacity(0.07), lineWidth: 1)))
+                Text("SEND TO").font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted).tracking(1.4)
+                VStack(spacing: 8) {
+                    ForEach(conns, id: \.name) { c in row(symbol: c.symbol, tint: c.tint, name: "Send to \(c.name)", sub: "via your Mac", egress: c.name) }
+                }
+                Text("OR KEEP IT").font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted).tracking(1.4).padding(.top, 2)
+                row(symbol: "tray.and.arrow.down.fill", tint: Pal.accent, name: "Keep as a card", sub: "on your desk, to route again", egress: nil)
+                Text("Cancel").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted)
+                    .frame(maxWidth: .infinity).frame(height: 44).background(Capsule().fill(.white.opacity(0.06))).padding(.top, 2)
+            }
+            .padding(20).frame(maxWidth: 460)
+            .background(RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom))
+                .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+            .padding(.horizontal, 18)
+        }
+    }
+    @ViewBuilder private func row(symbol: String, tint: Color, name: String, sub: String, egress: String?) -> some View {
+        HStack(spacing: 11) {
+            Image(systemName: symbol).font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
+                .frame(width: 34, height: 34).background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(tint.opacity(0.9)))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(name).font(.system(size: 14.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
+                Text(sub).font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
+            }
+            Spacer(minLength: 0)
+            if let e = egress {
+                HStack(spacing: 4) { Image(systemName: "arrow.up.forward").font(.system(size: 8, weight: .bold)); Text(e).font(.system(size: 10, weight: .heavy, design: .rounded)) }
+                    .foregroundStyle(Pal.cobalt).padding(.horizontal, 8).frame(height: 24).background(Capsule().fill(Pal.cobalt.opacity(0.14)))
+            } else {
+                HStack(spacing: 4) { Image(systemName: "lock.fill").font(.system(size: 8, weight: .bold)); Text("On device").font(.system(size: 10, weight: .heavy, design: .rounded)) }
+                    .foregroundStyle(Pal.mint).padding(.horizontal, 8).frame(height: 24).background(Capsule().fill(Pal.mint.opacity(0.14)))
+            }
+        }
+        .padding(.horizontal, 12).frame(height: 54)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.white.opacity(0.04))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.white.opacity(0.07), lineWidth: 1)))
+    }
+}
+
 struct Stage: View {
     @State private var landed = false
     @State private var routeStage = ""           // "", "sheet", "theater", "printed", "send", "wire" (DIO_ROUTE_STAGE)
     @State private var lassoSel: Set<String> = []   // DIO_LASSO: multi-select → Ask the bundle
     @State private var dockOpen = false             // DIO_DOCK: the tool dock
+    @State private var firstRun = false             // DIO_EMPTY: the cold-start / first-boot ritual
+    @State private var showAct = false              // DIO_ACT: the act-on-an-action-item sheet
+    @State private var emptyZoneMode = false        // DIO_EMPTYZONE: an empty zone you dived into
     private let tools: [Obj] = [
         Obj(id: "core",    sprite: "cartridge", base: 60, glow: Pal.cobalt, title: "AI Core"),
         Obj(id: "slack",   sprite: "number", base: 56, glow: Pal.violet, title: "Slack", symbol: true),
@@ -663,8 +835,9 @@ struct Stage: View {
 
     private var pathKey: String { path.joined(separator: "/") }
     private var curTint: Color { path.isEmpty ? Pal.accent : (World.tint[pathKey] ?? Pal.accent) }
-    private func zones() -> [String] { World.children[pathKey] ?? [] }
-    private func members() -> [Obj] { World.members[pathKey] ?? [] }
+    private func zones() -> [String] { ((firstRun && path.isEmpty) || (emptyZoneMode && !path.isEmpty)) ? [] : (World.children[pathKey] ?? []) }
+    private func members() -> [Obj] { ((firstRun && path.isEmpty) || (emptyZoneMode && !path.isEmpty)) ? [] : (World.members[pathKey] ?? []) }
+    private var emptyZone: Bool { !path.isEmpty && members().isEmpty && zones().isEmpty }
     private func mode(_ id: String) -> Mode { selected == nil ? .home : (selected == id ? .focus : .recede) }
     private func selectedObj() -> Obj? { members().first { $0.id == selected } }
 
@@ -724,8 +897,27 @@ struct Stage: View {
                     Text("HoldSpeak").font(.system(size: 25, weight: .black, design: .rounded)).foregroundStyle(Pal.text)
                     Text("your meetings, alive").font(.system(size: 12.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted).tracking(1)
                 }
-                .opacity(landed && selected == nil && path.isEmpty ? 1 : 0)
+                .opacity(landed && selected == nil && path.isEmpty && !firstRun ? 1 : 0)
                 .frame(maxHeight: .infinity, alignment: .top).padding(.top, h * 0.05)
+
+                // THE FIRST BOOT — the cold-start ritual (an empty desk that teaches itself)
+                if firstRun && landed && selected == nil && path.isEmpty {
+                    FirstBoot(w: w, h: h)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .padding(.top, h * 0.035)
+                        .transition(.opacity).zIndex(5)
+                    // the guiding trail — energy flows down from the lesson to the one action
+                    TimelineView(.animation) { tl in
+                        let phase = tl.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1) * -10
+                        Path { p in p.move(to: CGPoint(x: w * 0.5, y: h * 0.50)); p.addLine(to: CGPoint(x: w * 0.5, y: h * 0.735)) }
+                            .stroke(LinearGradient(colors: [Pal.violet.opacity(0.0), Pal.violet.opacity(0.55), Pal.accent.opacity(0.8)], startPoint: .top, endPoint: .bottom),
+                                    style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [2.5, 8], dashPhase: phase))
+                    }
+                    .allowsHitTesting(false).zIndex(5)
+                    Text("Press to record your first meeting")
+                        .font(.system(size: 12.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
+                        .position(x: w * 0.5, y: h * 0.745).zIndex(6).allowsHitTesting(false)
+                }
 
                 ForEach([pathKey], id: \.self) { _ in level(w, h) }
                     .transition(diveTransition)
@@ -737,6 +929,14 @@ struct Stage: View {
 
                 // the tool dock (tools live here, in the thumb zone)
                 if landed && selected == nil && !recording { DockH(tools: tools, open: dockOpen).zIndex(110) }
+
+                if showAct {
+                    ActSheet(itemText: "Ship the egress badge across the Qlippy cards\nKarol · Fri", onCancel: { showAct = false }).zIndex(140)
+                }
+                if emptyZone && landed && selected == nil {
+                    ZoneEmpty(name: World.name[pathKey] ?? pathKey, tint: curTint)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity).zIndex(5)
+                }
 
                 if born {
                     VStack(spacing: 7) {
@@ -829,6 +1029,9 @@ struct Stage: View {
                 if let r = env["DIO_ROUTE_STAGE"], !r.isEmpty { routeStage = r }
                 if env["DIO_LASSO"] == "1" { lassoSel = ["standup", "docs"] }
                 if env["DIO_DOCK"] == "open" { dockOpen = true }
+                if env["DIO_EMPTY"] == "1" { firstRun = true }
+                if env["DIO_ACT"] == "1" { showAct = true }
+                if env["DIO_EMPTYZONE"] == "1" { emptyZoneMode = true }
                 if env["DIO_DEMO"] == "1" { runDemo() }
             }
         }
@@ -851,7 +1054,7 @@ struct Stage: View {
                 .foregroundStyle(Pal.muted).padding(.horizontal, 12).frame(height: 36)
                 .background(Capsule().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(Pal.muted.opacity(0.45)))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(.top, h * 0.12).padding(.trailing, 20)
-                .opacity(landed && selected == nil ? 0.9 : 0)
+                .opacity(landed && selected == nil && !(firstRun && path.isEmpty) && !emptyZone ? 0.9 : 0)
 
             // objects
             ForEach(Array(ms.enumerated()), id: \.element.id) { i, o in

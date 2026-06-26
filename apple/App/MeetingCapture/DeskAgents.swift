@@ -1,0 +1,938 @@
+import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
+
+// HSM-14 — TAILORED AGENTS. A tailored agent is a DeskPrimitive you BUILD: an avatar + a name + how it
+// behaves (system prompt) + what to ask (a user template) + the context it always carries (manual notes,
+// the current zone's meetings, a knowledge base). Once built it lives on the desk as a character you can
+// ASK a question, or ROUTE a card through (it answers grounded in its system prompt + context). The whole
+// thing runs on the SAME inference seam as everything else (on-device GGUF or an OpenAI-compatible endpoint).
+
+// MARK: - the persisted record
+
+struct AgentRecord: Codable, Identifiable, Equatable {
+    var id: String
+    var name: String
+    var avatar: String              // an AgentAvatars id (drives the glyph + hue)
+    var role: String                // a one-line tagline shown on the chip / card
+    var systemPrompt: String        // how it behaves
+    var userTemplate: String        // what to ask — "{input}" is replaced by the question / routed card
+    var manualContext: String       // always-on context the user pins
+    var useZoneContext: Bool        // also feed the current zone's meetings
+    var kb: String                  // an optional knowledge-base name ("" = none)
+
+    static func blank() -> AgentRecord {
+        AgentRecord(id: UUID().uuidString, name: "", avatar: AgentAvatars.all.first!.id, role: "",
+                    systemPrompt: "", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: "")
+    }
+}
+
+// One turn in a conversation with an agent. Threads are persisted per agent (hs.diorama.agentchats).
+struct AgentMessage: Codable, Identifiable, Equatable {
+    var id: String; var role: String /* "you" | "agent" */; var text: String
+    var isYou: Bool { role == "you" }
+    var isError: Bool { text.hasPrefix("⚠️") }
+}
+
+// MARK: - the avatar gallery (grouped — pick a group, then a face)
+
+enum AvatarArt: Equatable { case symbol(String); case pixel(String) }   // SF-symbol glyph OR a bundled pixel-art PNG
+struct AgentAvatar: Identifiable { let id: String; let art: AvatarArt; let hue: Double }
+struct AgentAvatarGroup: Identifiable { let id: String; let title: String; let avatars: [AgentAvatar] }
+
+enum AgentAvatars {
+    // GROUP 1 "Glyphs" — each an SF-symbol face + a baked hue, so the set reads as distinct characters.
+    static let symbols: [String] = [
+        "brain.head.profile", "brain", "sparkles", "wand.and.stars", "bolt.fill", "flame.fill",
+        "leaf.fill", "drop.fill", "snowflake", "sun.max.fill", "moon.stars.fill", "cloud.fill",
+        "wind", "atom", "function", "infinity", "cpu", "memorychip",
+        "gearshape.2.fill", "puzzlepiece.fill", "lightbulb.fill", "magnifyingglass", "scope", "binoculars.fill",
+        "chart.line.uptrend.xyaxis", "book.fill", "graduationcap.fill", "pencil.and.outline", "paintbrush.pointed.fill", "paintpalette.fill",
+        "theatermasks.fill", "music.note", "guitars.fill", "camera.fill", "film.fill", "gamecontroller.fill",
+        "die.face.5.fill", "crown.fill", "shield.fill", "flag.fill", "star.fill", "heart.fill",
+        "bell.fill", "globe", "hare.fill", "tortoise.fill", "ladybug.fill", "fish.fill",
+        "bird.fill", "pawprint.fill", "ant.fill", "sailboat.fill",
+    ]
+    // GROUPS 2-4 — bespoke PixelLab pixel-art characters bundled as `agent_<prefix><N>.png` (see DeskSprite).
+    static let glyphs: [AgentAvatar] = symbols.enumerated().map { i, s in
+        AgentAvatar(id: "a\(i)", art: .symbol(s), hue: Double(i) / Double(symbols.count))
+    }
+    private static func pixelSet(_ prefix: String, _ count: Int) -> [AgentAvatar] {
+        (0..<count).map { i in AgentAvatar(id: "\(prefix)\(i)", art: .pixel("agent_\(prefix)\(i)"), hue: Double(i) / Double(count)) }
+    }
+    static let critters: [AgentAvatar] = pixelSet("p", 16)   // robot/owl/fox/wizard/dragon/…
+    static let objects: [AgentAvatar]  = pixelSet("o", 16)   // school bus/mug/lamp/… brought to life
+    static let snacks: [AgentAvatar]   = pixelSet("s", 16)   // donut/taco/avocado/… brought to life
+    static let groups: [AgentAvatarGroup] = [
+        .init(id: "glyph",   title: "Glyphs",   avatars: glyphs),
+        .init(id: "critter", title: "Critters", avatars: critters),
+        .init(id: "object",  title: "Objects",  avatars: objects),
+        .init(id: "snack",   title: "Snacks",   avatars: snacks),
+    ]
+    static let all: [AgentAvatar] = glyphs + critters + objects + snacks
+
+    static func avatar(_ id: String) -> AgentAvatar { all.first { $0.id == id } ?? glyphs[0] }
+    static func symbol(_ id: String) -> String { if case .symbol(let s) = avatar(id).art { return s }; return "sparkles" }
+    static func color(_ id: String) -> Color { Color(hue: avatar(id).hue, saturation: 0.66, brightness: 0.95) }
+    static func deep(_ id: String) -> Color { Color(hue: avatar(id).hue, saturation: 0.74, brightness: 0.55) }
+}
+
+// One avatar badge — a premium gradient tile carrying either an SF symbol or a pixel-art sprite. Reused on
+// the chip, the gallery, the builder preview, and the cards.
+struct AgentAvatarView: View {
+    let avatarId: String
+    var size: CGFloat = 64
+    var selected: Bool = false
+    var body: some View {
+        let av = AgentAvatars.avatar(avatarId)
+        let c = AgentAvatars.color(avatarId), d = AgentAvatars.deep(avatarId)
+        ZStack {
+            if selected {
+                RoundedRectangle(cornerRadius: size * 0.32, style: .continuous)
+                    .fill(c.opacity(0.35)).blur(radius: size * 0.18).scaleEffect(1.16)
+            }
+            RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
+                .fill(LinearGradient(colors: [c, d, Color(hex: 0x14121C)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .overlay(
+                    RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
+                        .fill(RadialGradient(colors: [.white.opacity(0.30), .clear], center: .init(x: 0.3, y: 0.22), startRadius: 1, endRadius: size * 0.55))
+                )
+                .overlay(RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
+                    .strokeBorder(.white.opacity(selected ? 0.9 : 0.18), lineWidth: selected ? 2 : 1))
+                .shadow(color: d.opacity(0.6), radius: size * 0.12, y: size * 0.06)
+            switch av.art {
+            case .symbol(let s):
+                Image(systemName: s).font(.system(size: size * 0.42, weight: .bold)).foregroundStyle(.white)
+                    .shadow(color: .black.opacity(0.4), radius: 2, y: 1)
+            case .pixel(let asset):
+                DeskSprite(name: asset, size: size * 0.92)
+                    .shadow(color: .black.opacity(0.45), radius: 2, y: 1)
+            }
+        }
+        .frame(width: size, height: size)
+    }
+}
+
+// MARK: - the primitive (every desk concept is one declaration)
+
+struct AgentPrimitive: DeskPrimitive {
+    let rec: AgentRecord
+    var id: String { "agent:\(rec.id)" }
+    var kind: PrimitiveKind { .agent }
+    var glyph: String { AgentAvatars.symbol(rec.avatar) }
+    var isSymbol: Bool { true }
+    var color: Color { AgentAvatars.color(rec.avatar) }
+    var base: CGFloat { 104 }
+    var title: String { rec.name.isEmpty ? "Agent" : rec.name }
+    var subtitle: String { rec.role.isEmpty ? "your tailored agent" : rec.role }
+    var preview: String? { rec.role.isEmpty ? "tap to ask" : rec.role }
+    var sections: [PrimitiveSection] {
+        var out: [PrimitiveSection] = []
+        out.append(.init(label: "ROLE", tint: AgentAvatars.color(rec.avatar),
+                         body: .text(rec.systemPrompt.isEmpty ? "A general assistant." : rec.systemPrompt)))
+        var ctx: [String] = []
+        if !rec.manualContext.isEmpty { ctx.append("Pinned notes") }
+        if rec.useZoneContext { ctx.append("This zone's meetings") }
+        if !rec.kb.isEmpty { ctx.append("KB · \(rec.kb)") }
+        if !ctx.isEmpty { out.append(.init(label: "CONTEXT", tint: DioPal.muted, body: .chips(ctx))) }
+        return out
+    }
+    var accepts: [PrimitiveKind] { [.meeting, .summary, .actions, .topics, .transcript, .artifact, .note] }
+    var emits: [PrimitiveKind] { [.artifact] }
+}
+
+// MARK: - starter presets (one tap to a working agent — the "fun + easy" on-ramp)
+
+struct AgentPreset { let name: String; let role: String; let avatar: String; let system: String; let template: String }
+enum AgentPresets {
+    static let all: [AgentPreset] = [
+        .init(name: "Scout", role: "digs for the facts", avatar: "a21",
+              system: "You are a sharp researcher. Pull out the concrete facts, names, numbers and open questions. Be precise; never invent details.",
+              template: "{input}"),
+        .init(name: "Editor", role: "tightens your words", avatar: "a27",
+              system: "You are a ruthless editor. Make the text clearer and tighter without changing its meaning. Prefer plain words and short sentences.",
+              template: "Edit this:\n{input}"),
+        .init(name: "Critic", role: "finds the holes", avatar: "a22",
+              system: "You are a constructive critic. Surface the weakest assumptions, risks, and gaps. Be specific and fair; suggest a fix for each.",
+              template: "{input}"),
+        .init(name: "Coach", role: "keeps you moving", avatar: "a5",
+              system: "You are an encouraging coach. Turn the input into one clear next step and a short, motivating nudge. Keep it warm and brief.",
+              template: "{input}"),
+        .init(name: "Planner", role: "turns talk into a plan", avatar: "a24",
+              system: "You are a pragmatic planner. Produce a short, ordered plan with owners and rough timing where implied. No fluff.",
+              template: "Make a plan from this:\n{input}"),
+        .init(name: "Muse", role: "sparks new ideas", avatar: "a20",
+              system: "You are an imaginative brainstorm partner. Offer several distinct, bold ideas. Range wide; one line each.",
+              template: "{input}"),
+    ]
+}
+
+// MARK: - personality traits (tap to stack a behaviour clause — no blank-page prompt writing)
+
+struct AgentTrait { let label: String; let icon: String; let clause: String }
+enum AgentTraits {
+    static let all: [AgentTrait] = [
+        .init(label: "Concise", icon: "scissors", clause: "Keep answers short and to the point."),
+        .init(label: "Warm", icon: "heart.fill", clause: "Be warm and encouraging."),
+        .init(label: "Skeptical", icon: "exclamationmark.triangle.fill", clause: "Question assumptions and call out risks."),
+        .init(label: "Creative", icon: "sparkles", clause: "Offer bold, imaginative ideas."),
+        .init(label: "Formal", icon: "briefcase.fill", clause: "Use a professional, formal tone."),
+        .init(label: "Playful", icon: "face.smiling.inverse", clause: "Keep a light, playful tone."),
+        .init(label: "Thorough", icon: "list.bullet.rectangle.fill", clause: "Be thorough and cover the edge cases."),
+        .init(label: "Step-by-step", icon: "arrow.down.right.circle.fill", clause: "Explain your reasoning step by step."),
+        .init(label: "Witty", icon: "theatermasks.fill", clause: "Add a touch of wit."),
+        .init(label: "Action-first", icon: "bolt.fill", clause: "Lead with the next concrete action."),
+    ]
+}
+
+// MARK: - the desk roster rail (your characters, always to hand on the right edge)
+
+struct DioAgentRail: View {
+    let agents: [AgentRecord]; let chains: [ChainRecord]; let dimmed: Bool
+    let onOpen: (AgentRecord) -> Void; let onCreate: () -> Void
+    let onRunChain: (ChainRecord) -> Void; let onCreateChain: () -> Void
+    @State private var tab = 0   // 0 = agents, 1 = chains
+    var body: some View {
+        VStack(spacing: 11) {
+            // two tiny tabs — Agents / Chains
+            HStack(spacing: 4) {
+                ForEach(Array(["Agents", "Chains"].enumerated()), id: \.offset) { i, t in
+                    Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.82)) { tab = i }; haptic() } label: {
+                        Text(t).font(.system(size: 8.5, weight: .black, design: .rounded)).tracking(0.6)
+                            .foregroundStyle(tab == i ? .white : DioPal.muted.opacity(0.8))
+                            .padding(.horizontal, 8).frame(height: 22)
+                            .background(Capsule().fill(tab == i ? DioPal.accent.opacity(0.8) : .white.opacity(0.05)))
+                    }.buttonStyle(.plain)
+                }
+            }
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 13) {
+                    if tab == 0 {
+                        ForEach(agents) { a in Button { onOpen(a) } label: { DioAgentChip(agent: a) }.buttonStyle(.plain) }
+                        plusTile(onCreate)
+                    } else {
+                        ForEach(chains) { c in Button { onRunChain(c) } label: { DioChainChip(chain: c, agents: agents) }.buttonStyle(.plain) }
+                        plusTile(onCreateChain)
+                        if chains.isEmpty {
+                            Text("Build a\ncrew").font(.system(size: 9, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).multilineTextAlignment(.center)
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            .frame(maxHeight: 388)
+        }
+        .padding(.vertical, 12).padding(.horizontal, 9)
+        .background(RoundedRectangle(cornerRadius: 22, style: .continuous)
+            .fill(.black.opacity(0.32)).overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+        .opacity(dimmed ? 0 : 1).allowsHitTesting(!dimmed)
+    }
+    private func plusTile(_ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(style: StrokeStyle(lineWidth: 1.6, dash: [5, 4]))
+                    .foregroundStyle(DioPal.muted.opacity(0.55)).frame(width: 54, height: 54)
+                Image(systemName: "plus").font(.system(size: 20, weight: .black)).foregroundStyle(DioPal.muted)
+            }
+        }.buttonStyle(.plain)
+    }
+    private func haptic() {
+        #if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        #endif
+    }
+}
+
+struct DioAgentChip: View {
+    let agent: AgentRecord
+    var body: some View {
+        VStack(spacing: 4) {
+            TimelineView(.animation) { tl in
+                let t = tl.date.timeIntervalSinceReferenceDate
+                let bob = CGFloat(sin(t * 1.1 + Double(abs(agent.id.hashValue % 7))) * 2)
+                AgentAvatarView(avatarId: agent.avatar, size: 54).offset(y: -bob)
+            }
+            Text(agent.name.isEmpty ? "Agent" : agent.name)
+                .font(.system(size: 9.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.9))
+                .lineLimit(1).frame(width: 60)
+        }
+    }
+}
+
+// MARK: - the builder (create / edit) — engaging, sectioned, with a live preview
+
+struct DioAgentBuilder: View {
+    @State var draft: AgentRecord
+    let knowledgeBases: [String]
+    let onSave: (AgentRecord) -> Void
+    let onCancel: () -> Void
+    var isNew: Bool
+    @State private var avatarGroup = 0
+    @State private var showAdvanced = false
+    @State private var showRawPrompt = false
+    @State private var pop = false
+
+    private let cols = Array(repeating: GridItem(.flexible(), spacing: 12), count: 6)
+    private let traitCols = [GridItem(.adaptive(minimum: 118), spacing: 8)]
+    private var tint: Color { AgentAvatars.color(draft.avatar) }
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.62).ignoresSafeArea().onTapGesture { onCancel() }
+            VStack(spacing: 0) {
+                header
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 22) {
+                        pickAFace
+                        whoAreThey
+                        personality
+                        advanced
+                    }
+                    .padding(.horizontal, 22).padding(.top, 4).padding(.bottom, 18)
+                }
+                saveBar
+            }
+            .frame(maxWidth: 600)
+            .background(RoundedRectangle(cornerRadius: 30, style: .continuous).fill(Color(hex: 0x14121B))
+                .overlay(RoundedRectangle(cornerRadius: 30, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+            .padding(.horizontal, 24).padding(.vertical, 36)
+        }
+        .onAppear { avatarGroup = AgentAvatars.groups.firstIndex { $0.avatars.contains { $0.id == draft.avatar } } ?? 0 }
+        .onChange(of: draft.avatar) { _ in pop = true; DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { pop = false } }
+    }
+
+    // the playful hero — a big bobbing avatar that pops when you change it, the name inline, a dice to reroll
+    private var header: some View {
+        HStack(spacing: 14) {
+            TimelineView(.animation) { tl in
+                let bob = CGFloat(sin(tl.date.timeIntervalSinceReferenceDate * 1.4) * 3)
+                AgentAvatarView(avatarId: draft.avatar, size: 68).offset(y: -bob)
+                    .scaleEffect(pop ? 1.18 : 1).animation(.spring(response: 0.3, dampingFraction: 0.5), value: pop)
+            }
+            .frame(width: 72, height: 72)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(isNew ? "Meet your new agent" : "Edit agent").font(.system(size: 11.5, weight: .heavy, design: .rounded)).foregroundStyle(tint).tracking(0.4)
+                Text(draft.name.isEmpty ? "Unnamed" : draft.name).font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(DioPal.text).lineLimit(1)
+                Text(draft.role.isEmpty ? "give them a vibe below" : draft.role).font(.system(size: 12.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
+            }
+            Spacer(minLength: 0)
+            Button { surprise() } label: {
+                Image(systemName: "dice.fill").font(.system(size: 17, weight: .bold)).foregroundStyle(.white)
+                    .frame(width: 40, height: 40).background(Circle().fill(tint.opacity(0.85)))
+            }.buttonStyle(.plain)
+            Button { onCancel() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 26)).foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
+        }
+        .padding(.horizontal, 22).padding(.top, 18).padding(.bottom, 14)
+    }
+
+    // FACE FIRST — the fun part: group tabs + the gallery
+    private var pickAFace: some View {
+        section("PICK A FACE · \(AgentAvatars.all.count)") {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(Array(AgentAvatars.groups.enumerated()), id: \.element.id) { i, g in
+                        Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { avatarGroup = i }; haptic() } label: {
+                            Text("\(g.title) · \(g.avatars.count)")
+                                .font(.system(size: 12.5, weight: .heavy, design: .rounded))
+                                .foregroundStyle(avatarGroup == i ? .white : DioPal.muted)
+                                .padding(.horizontal, 14).frame(height: 34)
+                                .background(Capsule().fill(avatarGroup == i ? tint.opacity(0.85) : .white.opacity(0.06)))
+                        }.buttonStyle(.plain)
+                    }
+                }.padding(.horizontal, 2)
+            }
+            LazyVGrid(columns: cols, spacing: 12) {
+                ForEach(AgentAvatars.groups[avatarGroup].avatars) { av in
+                    Button { draft.avatar = av.id; haptic() } label: {
+                        AgentAvatarView(avatarId: av.id, size: 44, selected: draft.avatar == av.id)
+                    }.buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private var whoAreThey: some View {
+        section("WHO ARE THEY?") {
+            field("Name", text: $draft.name, placeholder: "e.g. Scout")
+            field("Vibe (one line)", text: $draft.role, placeholder: "e.g. digs for the facts")
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 9) {
+                    ForEach(AgentPresets.all, id: \.name) { p in
+                        Button { applyPreset(p) } label: {
+                            HStack(spacing: 7) {
+                                AgentAvatarView(avatarId: p.avatar, size: 24)
+                                VStack(alignment: .leading, spacing: 0) {
+                                    Text(p.name).font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                                    Text(p.role).font(.system(size: 9, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                                }
+                            }
+                            .padding(.horizontal, 10).padding(.vertical, 7)
+                            .background(Capsule().fill(.white.opacity(0.06)).overlay(Capsule().strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+                        }.buttonStyle(.plain)
+                    }
+                }.padding(.horizontal, 2)
+            }
+        }
+    }
+
+    // PERSONALITY — tap trait chips to stack behaviour clauses; raw prompt is an optional fine-tune
+    private var personality: some View {
+        section("GIVE THEM A PERSONALITY") {
+            LazyVGrid(columns: traitCols, spacing: 8) {
+                ForEach(AgentTraits.all, id: \.label) { t in
+                    let on = hasTrait(t)
+                    Button { toggleTrait(t) } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: t.icon).font(.system(size: 11, weight: .bold))
+                            Text(t.label).font(.system(size: 12.5, weight: .heavy, design: .rounded)); Spacer(minLength: 0)
+                            if on { Image(systemName: "checkmark").font(.system(size: 10, weight: .black)) }
+                        }
+                        .foregroundStyle(on ? .white : DioPal.text.opacity(0.85))
+                        .padding(.horizontal, 12).frame(height: 38)
+                        .background(Capsule().fill(on ? tint.opacity(0.85) : .white.opacity(0.06))
+                            .overlay(Capsule().strokeBorder(.white.opacity(on ? 0 : 0.1), lineWidth: 1)))
+                    }.buttonStyle(.plain)
+                }
+            }
+            Button { withAnimation { showRawPrompt.toggle() } } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: showRawPrompt ? "chevron.down" : "chevron.right").font(.system(size: 10, weight: .black))
+                    Text(showRawPrompt ? "Hide the raw instructions" : "Fine-tune in your own words").font(.system(size: 11.5, weight: .heavy, design: .rounded))
+                }.foregroundStyle(DioPal.muted)
+            }.buttonStyle(.plain)
+            if showRawPrompt {
+                editor($draft.systemPrompt, placeholder: "You are a sharp researcher who…", minH: 88)
+            } else if !draft.systemPrompt.isEmpty {
+                Text(draft.systemPrompt).font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                    .padding(.horizontal, 13).padding(.vertical, 10).frame(maxWidth: .infinity, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.white.opacity(0.04)))
+            }
+        }
+    }
+
+    // ADVANCED — folded away so the default path stays short
+    private var advanced: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Button { withAnimation { showAdvanced.toggle() } } label: {
+                HStack(spacing: 7) {
+                    Image(systemName: showAdvanced ? "chevron.down" : "chevron.right").font(.system(size: 11, weight: .black))
+                    Text("ADVANCED").font(.system(size: 10.5, weight: .black, design: .rounded)).tracking(1.2)
+                    Text("context · what to ask").font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.7))
+                    Spacer(minLength: 0)
+                }.foregroundStyle(DioPal.muted)
+            }.buttonStyle(.plain)
+            if showAdvanced {
+                Text("WHAT TO ASK").font(.system(size: 10, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted)
+                editor($draft.userTemplate, placeholder: "{input}", minH: 52)
+                Text("Use {input} for your question, or the card you route through it.")
+                    .font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                Text("CONTEXT IT CARRIES").font(.system(size: 10, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted).padding(.top, 4)
+                editor($draft.manualContext, placeholder: "Pinned notes the agent always knows…", minH: 60)
+                Toggle(isOn: $draft.useZoneContext) {
+                    Text("Include this zone's meetings").font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                }.tint(tint)
+                if !knowledgeBases.isEmpty {
+                    HStack {
+                        Text("Knowledge base").font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                        Spacer()
+                        Menu {
+                            Button("None") { draft.kb = "" }
+                            ForEach(knowledgeBases, id: \.self) { k in Button(k) { draft.kb = k } }
+                        } label: {
+                            HStack(spacing: 5) { Text(draft.kb.isEmpty ? "None" : draft.kb).font(.system(size: 12.5, weight: .heavy, design: .rounded)); Image(systemName: "chevron.up.chevron.down").font(.system(size: 10, weight: .bold)) }
+                                .foregroundStyle(tint).padding(.horizontal, 12).frame(height: 34).background(Capsule().fill(.white.opacity(0.07)))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var saveBar: some View {
+        HStack(spacing: 12) {
+            Button { onCancel() } label: {
+                Text("Cancel").font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
+                    .frame(maxWidth: .infinity).frame(height: 50).background(Capsule().fill(.white.opacity(0.06)))
+            }.buttonStyle(.plain)
+            Button { save() } label: {
+                HStack(spacing: 7) {
+                    Image(systemName: isNew ? "sparkles" : "checkmark")
+                    Text(isNew ? "Bring to life" : "Save").font(.system(size: 15.5, weight: .heavy, design: .rounded))
+                }
+                .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 50)
+                .background(Capsule().fill(LinearGradient(colors: [tint, AgentAvatars.deep(draft.avatar)], startPoint: .top, endPoint: .bottom)))
+                .opacity(canSave ? 1 : 0.45)
+            }.buttonStyle(.plain).disabled(!canSave)
+        }
+        .padding(.horizontal, 22).padding(.vertical, 16)
+    }
+
+    private var canSave: Bool { !draft.name.trimmingCharacters(in: .whitespaces).isEmpty }
+    private func save() { guard canSave else { return }; haptic(.medium); onSave(draft) }
+    private func applyPreset(_ p: AgentPreset) {
+        haptic()
+        if draft.name.trimmingCharacters(in: .whitespaces).isEmpty { draft.name = p.name }
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+            draft.role = p.role; draft.avatar = p.avatar; draft.systemPrompt = p.system; draft.userTemplate = p.template
+            avatarGroup = AgentAvatars.groups.firstIndex { $0.avatars.contains { $0.id == p.avatar } } ?? avatarGroup
+        }
+    }
+    private func surprise() {
+        haptic(.medium)
+        let p = AgentPresets.all.randomElement()!
+        let face = AgentAvatars.all.randomElement()!
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.65)) {
+            draft.avatar = face.id
+            if draft.name.trimmingCharacters(in: .whitespaces).isEmpty { draft.name = p.name }
+            draft.role = p.role; draft.systemPrompt = p.system
+            avatarGroup = AgentAvatars.groups.firstIndex { $0.avatars.contains { $0.id == face.id } } ?? avatarGroup
+        }
+    }
+    private func hasTrait(_ t: AgentTrait) -> Bool { draft.systemPrompt.contains(t.clause) }
+    private func toggleTrait(_ t: AgentTrait) {
+        haptic()
+        var s = draft.systemPrompt
+        if let r = s.range(of: t.clause) {
+            s.removeSubrange(r)
+        } else {
+            s = s.isEmpty ? t.clause : s + " " + t.clause
+        }
+        draft.systemPrompt = s.replacingOccurrences(of: "  ", with: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    @ViewBuilder private func section<C: View>(_ title: String, @ViewBuilder _ content: () -> C) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title).font(.system(size: 10.5, weight: .black, design: .rounded)).tracking(1.2).foregroundStyle(DioPal.muted)
+            content()
+        }
+    }
+    @ViewBuilder private func field(_ label: String, text: Binding<String>, placeholder: String) -> some View {
+        TextField("", text: text, prompt: Text(placeholder).foregroundColor(DioPal.muted.opacity(0.7)))
+            .font(.system(size: 15, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text)
+            .padding(.horizontal, 14).frame(height: 46)
+            .background(RoundedRectangle(cornerRadius: 13, style: .continuous).fill(.white.opacity(0.05)).overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+    }
+    @ViewBuilder private func editor(_ text: Binding<String>, placeholder: String, minH: CGFloat) -> some View {
+        ZStack(alignment: .topLeading) {
+            if text.wrappedValue.isEmpty {
+                Text(placeholder).font(.system(size: 14, weight: .regular, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.6))
+                    .padding(.horizontal, 16).padding(.top, 14).allowsHitTesting(false)
+            }
+            TextEditor(text: text)
+                .font(.system(size: 14, weight: .regular, design: .rounded)).foregroundStyle(DioPal.text)
+                .scrollContentBackground(.hidden).padding(.horizontal, 11).padding(.vertical, 7).frame(minHeight: minH)
+        }
+        .background(RoundedRectangle(cornerRadius: 13, style: .continuous).fill(.white.opacity(0.05)).overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+    }
+
+    private func haptic(_ s: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
+        #if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: s).impactOccurred()
+        #endif
+    }
+}
+
+// MARK: - the agent's home — a LIVING CONVERSATION (multi-turn; the avatar emotes; harvest replies to the desk)
+
+struct DioAgentChat: View {
+    let agent: AgentRecord
+    @State var messages: [AgentMessage]
+    let onInfer: (_ history: [AgentMessage], _ question: String) async -> String   // assembles + calls the LLM
+    let onChange: ([AgentMessage]) -> Void        // persist the thread
+    let onSaveCard: (String) -> Void              // harvest a reply onto the desk
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+    let onClose: () -> Void
+
+    @State private var input = ""
+    @State private var thinking = false
+    @FocusState private var focused: Bool
+    private var tint: Color { AgentAvatars.color(agent.avatar) }
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.62).ignoresSafeArea().onTapGesture { if !thinking { onClose() } }
+            VStack(spacing: 0) {
+                header
+                Rectangle().fill(.white.opacity(0.06)).frame(height: 1)
+                transcript
+                inputBar
+            }
+            .frame(maxWidth: 560, maxHeight: 740)
+            .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(Color(hex: 0x14121B))
+                .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+            .padding(.horizontal, 24).padding(.vertical, 40)
+        }
+    }
+
+    private var header: some View {
+        HStack(spacing: 13) {
+            ZStack {
+                if thinking {
+                    TimelineView(.animation) { tl in
+                        let r = 0.5 + 0.5 * sin(tl.date.timeIntervalSinceReferenceDate * 5)
+                        Circle().strokeBorder(tint.opacity(0.7), lineWidth: 2).frame(width: 58 + 10 * r, height: 58 + 10 * r)
+                    }
+                }
+                AgentAvatarView(avatarId: agent.avatar, size: 50)
+            }
+            VStack(alignment: .leading, spacing: 1) {
+                Text(agent.name).font(.system(size: 18, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                Text(thinking ? "thinking…" : (agent.role.isEmpty ? "your tailored agent" : agent.role))
+                    .font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(thinking ? tint : DioPal.muted)
+            }
+            Spacer(minLength: 0)
+            Menu {
+                Button { onEdit() } label: { Label("Edit agent", systemImage: "slider.horizontal.3") }
+                if !messages.isEmpty { Button { clearChat() } label: { Label("Clear chat", systemImage: "eraser") } }
+                Button(role: .destructive) { onDelete() } label: { Label("Delete agent", systemImage: "trash") }
+            } label: { Image(systemName: "ellipsis.circle.fill").font(.system(size: 23)).foregroundStyle(DioPal.muted) }
+            Button { onClose() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 23)).foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
+        }
+        .padding(.horizontal, 18).padding(.vertical, 14)
+    }
+
+    private var transcript: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    if messages.isEmpty && !thinking { emptyState }
+                    ForEach(messages) { m in bubble(m).id(m.id) }
+                    if thinking { thinkingBubble.id("thinking") }
+                }
+                .padding(.horizontal, 16).padding(.vertical, 16)
+            }
+            .onChange(of: messages.count) { _ in withAnimation { proxy.scrollTo(messages.last?.id ?? "thinking", anchor: .bottom) } }
+            .onChange(of: thinking) { _ in if thinking { withAnimation { proxy.scrollTo("thinking", anchor: .bottom) } } }
+        }
+        .frame(maxHeight: .infinity)
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 11) {
+            AgentAvatarView(avatarId: agent.avatar, size: 66)
+            Text("Say hi to \(agent.name)").font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+            if hasContext {
+                HStack(spacing: 7) {
+                    if agent.useZoneContext { tag("This zone", "tray.full.fill") }
+                    if !agent.kb.isEmpty { tag(agent.kb, "crystal.fill") }
+                    if !agent.manualContext.isEmpty { tag("Pinned notes", "note.text") }
+                }
+            }
+            Text("Tip: long-press a card on the desk and pick \(agent.name) to bring it in.")
+                .font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.8)).multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity).padding(.top, 28)
+    }
+
+    private func bubble(_ m: AgentMessage) -> some View {
+        HStack(alignment: .bottom, spacing: 8) {
+            if m.isYou { Spacer(minLength: 44) } else { AgentAvatarView(avatarId: agent.avatar, size: 26) }
+            VStack(alignment: m.isYou ? .trailing : .leading, spacing: 5) {
+                Text(m.text)
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(m.isYou ? .white : (m.isError ? Color(hex: 0xFFB4A0) : DioPal.text))
+                    .padding(.horizontal, 13).padding(.vertical, 10)
+                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(
+                        m.isYou ? AnyShapeStyle(LinearGradient(colors: [tint, AgentAvatars.deep(agent.avatar)], startPoint: .top, endPoint: .bottom))
+                                : AnyShapeStyle(Color.white.opacity(0.06))))
+                if !m.isYou && !m.isError {
+                    Button { onSaveCard(m.text) } label: {
+                        HStack(spacing: 4) { Image(systemName: "tray.and.arrow.down.fill").font(.system(size: 9, weight: .bold)); Text("Save to desk").font(.system(size: 10, weight: .heavy, design: .rounded)) }
+                            .foregroundStyle(DioPal.muted)
+                    }.buttonStyle(.plain)
+                }
+            }
+            if !m.isYou { Spacer(minLength: 44) }
+        }
+    }
+
+    private var thinkingBubble: some View {
+        HStack(alignment: .bottom, spacing: 8) {
+            AgentAvatarView(avatarId: agent.avatar, size: 26)
+            TimelineView(.animation) { tl in
+                let t = tl.date.timeIntervalSinceReferenceDate
+                HStack(spacing: 5) {
+                    ForEach(0..<3) { i in Circle().fill(tint.opacity(0.35 + 0.55 * (0.5 + 0.5 * sin(t * 4 + Double(i) * 0.7)))).frame(width: 7, height: 7) }
+                }
+                .padding(.horizontal, 14).padding(.vertical, 12)
+                .background(RoundedRectangle(cornerRadius: 16).fill(.white.opacity(0.06)))
+            }
+            Spacer(minLength: 44)
+        }
+    }
+
+    private var inputBar: some View {
+        HStack(spacing: 10) {
+            TextField("", text: $input, prompt: Text("Message \(agent.name)…").foregroundColor(DioPal.muted.opacity(0.7)), axis: .vertical)
+                .lineLimit(1...4)
+                .font(.system(size: 15, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text).focused($focused)
+                .padding(.horizontal, 14).padding(.vertical, 10)
+                .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(.white.opacity(0.06)).overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+            Button { send() } label: {
+                Image(systemName: "arrow.up").font(.system(size: 17, weight: .black)).foregroundStyle(.white)
+                    .frame(width: 44, height: 44).background(Circle().fill(canSend ? AnyShapeStyle(tint) : AnyShapeStyle(Color.white.opacity(0.1))))
+            }.buttonStyle(.plain).disabled(!canSend)
+        }
+        .padding(.horizontal, 14).padding(.vertical, 12)
+    }
+
+    private var canSend: Bool { !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !thinking }
+    private var hasContext: Bool { agent.useZoneContext || !agent.kb.isEmpty || !agent.manualContext.isEmpty }
+    private func clearChat() { haptic(); messages = []; onChange(messages) }
+    private func send() {
+        let q = input.trimmingCharacters(in: .whitespacesAndNewlines); guard !q.isEmpty, !thinking else { return }
+        haptic()
+        let history = messages
+        messages.append(AgentMessage(id: UUID().uuidString, role: "you", text: q))
+        onChange(messages); input = ""; thinking = true; focused = false
+        Task {
+            let reply = await onInfer(history, q)
+            await MainActor.run {
+                thinking = false
+                messages.append(AgentMessage(id: UUID().uuidString, role: "agent", text: reply))
+                onChange(messages)
+            }
+        }
+    }
+    private func tag(_ s: String, _ icon: String) -> some View {
+        HStack(spacing: 5) { Image(systemName: icon).font(.system(size: 9, weight: .bold)); Text(s).font(.system(size: 11, weight: .heavy, design: .rounded)) }
+            .foregroundStyle(tint).padding(.horizontal, 10).padding(.vertical, 5)
+            .background(Capsule().fill(tint.opacity(0.14)))
+    }
+    private func haptic(_ s: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
+        #if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: s).impactOccurred()
+        #endif
+    }
+}
+
+// MARK: - AGENT CHAINS (crews) — Scout → Critic → Editor, one tap. Each agent's output feeds the next.
+
+struct ChainRecord: Codable, Identifiable, Equatable {
+    var id: String; var name: String; var steps: [String]   // ordered AgentRecord ids
+    static func blank() -> ChainRecord { ChainRecord(id: UUID().uuidString, name: "", steps: []) }
+}
+
+// A chain as a routable primitive (route a card → run it through the crew).
+struct ChainPrimitive: DeskPrimitive {
+    let rec: ChainRecord
+    var id: String { "chain:\(rec.id)" }
+    var kind: PrimitiveKind { .chain }
+    var glyph: String { "arrow.triangle.branch" }
+    var isSymbol: Bool { true }
+    var color: Color { DioPal.accent }
+    var base: CGFloat { 110 }
+    var title: String { rec.name.isEmpty ? "Chain" : rec.name }
+    var subtitle: String { "\(rec.steps.count)-agent crew · drop to run" }
+    var preview: String? { "drop to run" }
+    var accepts: [PrimitiveKind] { [.meeting, .summary, .actions, .topics, .transcript, .artifact, .note] }
+    var emits: [PrimitiveKind] { [.artifact] }
+}
+
+// the rail chip — the crew's members overlapping like a team photo
+struct DioChainChip: View {
+    let chain: ChainRecord; let agents: [AgentRecord]
+    private var members: [AgentRecord] { chain.steps.compactMap { sid in agents.first { $0.id == sid } } }
+    var body: some View {
+        VStack(spacing: 4) {
+            ZStack {
+                let show = Array(members.prefix(3))
+                if show.isEmpty {
+                    RoundedRectangle(cornerRadius: 14).fill(.white.opacity(0.08)).frame(width: 54, height: 54)
+                        .overlay(Image(systemName: "arrow.triangle.branch").foregroundStyle(DioPal.muted))
+                } else {
+                    ForEach(Array(show.enumerated()), id: \.offset) { i, a in
+                        AgentAvatarView(avatarId: a.avatar, size: 34)
+                            .offset(x: CGFloat(i) * 14 - CGFloat(show.count - 1) * 7)
+                            .zIndex(Double(show.count - i))
+                    }
+                }
+            }
+            .frame(width: 60, height: 54)
+            Text(chain.name.isEmpty ? "Chain" : chain.name)
+                .font(.system(size: 9.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.9))
+                .lineLimit(1).frame(width: 64)
+        }
+    }
+}
+
+// the run/manage sheet — see the flow, give it something to chew on, run it
+struct DioChainSheet: View {
+    let chain: ChainRecord; let agents: [AgentRecord]
+    let onRun: (String) -> Void
+    let onEdit: () -> Void; let onDelete: () -> Void; let onClose: () -> Void
+    @State private var input = ""
+    private var members: [AgentRecord] { chain.steps.compactMap { sid in agents.first { $0.id == sid } } }
+    private var ready: Bool { !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !members.isEmpty }
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.62).ignoresSafeArea().onTapGesture { onClose() }
+            VStack(alignment: .leading, spacing: 15) {
+                HStack(spacing: 12) {
+                    Image(systemName: "arrow.triangle.branch").font(.system(size: 20, weight: .bold)).foregroundStyle(DioPal.accent)
+                        .frame(width: 46, height: 46).background(RoundedRectangle(cornerRadius: 14).fill(DioPal.accent.opacity(0.16)))
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(chain.name).font(.system(size: 19, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                        Text("\(members.count)-agent crew · runs in order").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                    }
+                    Spacer(minLength: 0)
+                    Menu {
+                        Button { onEdit() } label: { Label("Edit crew", systemImage: "slider.horizontal.3") }
+                        Button(role: .destructive) { onDelete() } label: { Label("Delete crew", systemImage: "trash") }
+                    } label: { Image(systemName: "ellipsis.circle.fill").font(.system(size: 22)).foregroundStyle(DioPal.muted) }
+                    Button { onClose() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 22)).foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
+                }
+                flowPreview
+                Text("WHAT SHOULD THE CREW WORK ON?").font(.system(size: 10, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted)
+                ZStack(alignment: .topLeading) {
+                    if input.isEmpty { Text("e.g. our Q3 plan, the rough idea, the notes…").font(.system(size: 14, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.6)).padding(.horizontal, 16).padding(.top, 13).allowsHitTesting(false) }
+                    TextEditor(text: $input).font(.system(size: 14, design: .rounded)).foregroundStyle(DioPal.text).scrollContentBackground(.hidden).padding(.horizontal, 11).padding(.vertical, 6).frame(height: 80)
+                }.background(RoundedRectangle(cornerRadius: 14).fill(.white.opacity(0.05)).overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+                Button { let q = input.trimmingCharacters(in: .whitespacesAndNewlines); guard ready else { return }; onRun(q) } label: {
+                    HStack(spacing: 8) { Image(systemName: "play.fill"); Text("Run the chain").font(.system(size: 16, weight: .heavy, design: .rounded)) }
+                        .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 52)
+                        .background(Capsule().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom)))
+                        .opacity(ready ? 1 : 0.45)
+                }.buttonStyle(.plain)
+                Text("Tip: long-press a desk card and pick this chain to run it on that card.").font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.8))
+            }
+            .padding(20).frame(maxWidth: 520)
+            .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(Color(hex: 0x14121B)).overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+            .padding(.horizontal, 26)
+        }
+    }
+    private var flowPreview: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(Array(members.enumerated()), id: \.offset) { i, a in
+                    VStack(spacing: 3) { AgentAvatarView(avatarId: a.avatar, size: 42); Text(a.name).font(.system(size: 9, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1).frame(width: 54) }
+                    if i < members.count - 1 { Image(systemName: "arrow.right").font(.system(size: 11, weight: .black)).foregroundStyle(DioPal.muted.opacity(0.7)) }
+                }
+            }.padding(.vertical, 8).padding(.horizontal, 12)
+        }
+        .background(RoundedRectangle(cornerRadius: 16).fill(.white.opacity(0.04)))
+    }
+}
+
+// the builder — name the crew, stack agents in order
+struct DioChainBuilder: View {
+    @State var draft: ChainRecord
+    let agents: [AgentRecord]
+    let onSave: (ChainRecord) -> Void; let onCancel: () -> Void; var isNew: Bool
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.62).ignoresSafeArea().onTapGesture { onCancel() }
+            VStack(spacing: 0) {
+                HStack(spacing: 12) {
+                    Image(systemName: "arrow.triangle.branch").font(.system(size: 20, weight: .bold)).foregroundStyle(DioPal.accent).frame(width: 46, height: 46).background(RoundedRectangle(cornerRadius: 14).fill(DioPal.accent.opacity(0.16)))
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(isNew ? "Build a crew" : "Edit crew").font(.system(size: 11.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.accent)
+                        Text(draft.name.isEmpty ? "Unnamed crew" : draft.name).font(.system(size: 20, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                    }
+                    Spacer(minLength: 0)
+                    Button { onCancel() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 24)).foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
+                }.padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 12)
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 18) {
+                        sec("NAME") { field($draft.name, "e.g. Refine") }
+                        sec("THE PIPELINE · runs top to bottom") {
+                            if draft.steps.isEmpty {
+                                Text("Add agents below — each one's output flows into the next.").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                            }
+                            ForEach(Array(draft.steps.enumerated()), id: \.offset) { i, sid in
+                                if let a = agents.first(where: { $0.id == sid }) {
+                                    HStack(spacing: 10) {
+                                        Text("\(i + 1)").font(.system(size: 12, weight: .black, design: .rounded)).foregroundStyle(.white).frame(width: 22, height: 22).background(Circle().fill(DioPal.accent.opacity(0.7)))
+                                        AgentAvatarView(avatarId: a.avatar, size: 34)
+                                        VStack(alignment: .leading, spacing: 0) { Text(a.name).font(.system(size: 13.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text); Text(a.role).font(.system(size: 9.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1) }
+                                        Spacer(minLength: 0)
+                                        Button { move(i, -1) } label: { Image(systemName: "chevron.up").font(.system(size: 12, weight: .black)).foregroundStyle(i == 0 ? DioPal.muted.opacity(0.3) : DioPal.muted) }.buttonStyle(.plain).disabled(i == 0)
+                                        Button { move(i, 1) } label: { Image(systemName: "chevron.down").font(.system(size: 12, weight: .black)).foregroundStyle(i == draft.steps.count - 1 ? DioPal.muted.opacity(0.3) : DioPal.muted) }.buttonStyle(.plain).disabled(i == draft.steps.count - 1)
+                                        Button { draft.steps.remove(at: i) } label: { Image(systemName: "minus.circle.fill").font(.system(size: 16)).foregroundStyle(Color(hex: 0xFF6B6B)) }.buttonStyle(.plain)
+                                    }
+                                    .padding(.horizontal, 12).padding(.vertical, 8)
+                                    .background(RoundedRectangle(cornerRadius: 13).fill(.white.opacity(0.05)))
+                                }
+                            }
+                        }
+                        sec("ADD AN AGENT") {
+                            if agents.isEmpty {
+                                Text("Create some agents first, then chain them here.").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                            } else {
+                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], spacing: 8) {
+                                    ForEach(agents) { a in
+                                        Button { draft.steps.append(a.id); haptic() } label: {
+                                            HStack(spacing: 7) { AgentAvatarView(avatarId: a.avatar, size: 26); Text(a.name).font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text); Spacer(minLength: 0); Image(systemName: "plus").font(.system(size: 11, weight: .black)).foregroundStyle(DioPal.muted) }
+                                                .padding(.horizontal, 10).frame(height: 40).background(Capsule().fill(.white.opacity(0.06)).overlay(Capsule().strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+                                        }.buttonStyle(.plain)
+                                    }
+                                }
+                            }
+                        }
+                    }.padding(.horizontal, 20).padding(.bottom, 16)
+                }
+                HStack(spacing: 12) {
+                    Button { onCancel() } label: { Text("Cancel").font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).frame(maxWidth: .infinity).frame(height: 50).background(Capsule().fill(.white.opacity(0.06))) }.buttonStyle(.plain)
+                    Button { save() } label: { HStack(spacing: 7) { Image(systemName: "checkmark"); Text(isNew ? "Create crew" : "Save").font(.system(size: 15.5, weight: .heavy, design: .rounded)) }.foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 50).background(Capsule().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom))).opacity(canSave ? 1 : 0.45) }.buttonStyle(.plain).disabled(!canSave)
+                }.padding(.horizontal, 20).padding(.vertical, 14)
+            }
+            .frame(maxWidth: 560)
+            .background(RoundedRectangle(cornerRadius: 30, style: .continuous).fill(Color(hex: 0x14121B)).overlay(RoundedRectangle(cornerRadius: 30, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+            .padding(.horizontal, 24).padding(.vertical, 40)
+        }
+    }
+    private var canSave: Bool { !draft.name.trimmingCharacters(in: .whitespaces).isEmpty && !draft.steps.isEmpty }
+    private func save() { guard canSave else { return }; haptic(.medium); onSave(draft) }
+    private func move(_ i: Int, _ d: Int) { let j = i + d; guard draft.steps.indices.contains(j) else { return }; haptic(); draft.steps.swapAt(i, j) }
+    @ViewBuilder private func sec<C: View>(_ t: String, @ViewBuilder _ c: () -> C) -> some View { VStack(alignment: .leading, spacing: 10) { Text(t).font(.system(size: 10.5, weight: .black, design: .rounded)).tracking(1.2).foregroundStyle(DioPal.muted); c() } }
+    @ViewBuilder private func field(_ b: Binding<String>, _ p: String) -> some View {
+        TextField("", text: b, prompt: Text(p).foregroundColor(DioPal.muted.opacity(0.7))).font(.system(size: 15, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text).padding(.horizontal, 14).frame(height: 46).background(RoundedRectangle(cornerRadius: 13).fill(.white.opacity(0.05)).overlay(RoundedRectangle(cornerRadius: 13).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+    }
+    private func haptic(_ s: UIImpactFeedbackGenerator.FeedbackStyle = .light) { 
+        #if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: s).impactOccurred()
+        #endif
+    }
+}
+
+// the relay — the gamified payoff: each agent lights up in turn, a checkmark drops, the baton passes down
+struct DioChainRelay: View {
+    let chain: ChainRecord; let agents: [AgentRecord]
+    let step: Int               // current step (== count when finished)
+    let results: [String]       // completed outputs so far
+    private var members: [AgentRecord] { chain.steps.compactMap { sid in agents.first { $0.id == sid } } }
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.8).ignoresSafeArea()
+            VStack(spacing: 18) {
+                Text(step >= members.count ? "Done" : "Running \(chain.name)…").font(.system(size: 18, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                VStack(spacing: 0) {
+                    ForEach(Array(members.enumerated()), id: \.offset) { i, a in
+                        HStack(spacing: 12) {
+                            ZStack {
+                                if i == step {
+                                    TimelineView(.animation) { tl in let r = 0.5 + 0.5 * sin(tl.date.timeIntervalSinceReferenceDate * 5); Circle().strokeBorder(AgentAvatars.color(a.avatar).opacity(0.8), lineWidth: 2).frame(width: 50 + 10 * r, height: 50 + 10 * r) }
+                                }
+                                AgentAvatarView(avatarId: a.avatar, size: 46)
+                                if i < step { Circle().fill(DioPal.mint).frame(width: 18, height: 18).overlay(Image(systemName: "checkmark").font(.system(size: 10, weight: .black)).foregroundStyle(.white)).offset(x: 18, y: -18) }
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(a.name).font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                                Text(i < step ? String((i < results.count ? results[i] : "").prefix(64)) : (i == step ? "working…" : "waiting"))
+                                    .font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(i == step ? AgentAvatars.color(a.avatar) : DioPal.muted).lineLimit(2)
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.vertical, 8).opacity(i <= step ? 1 : 0.5)
+                        if i < members.count - 1 { Rectangle().fill(i < step ? DioPal.mint.opacity(0.6) : DioPal.muted.opacity(0.3)).frame(width: 2, height: 18).padding(.leading, 22) }
+                    }
+                }
+                .padding(18).frame(maxWidth: 420)
+                .background(RoundedRectangle(cornerRadius: 22).fill(Color(hex: 0x14121B)).overlay(RoundedRectangle(cornerRadius: 22).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+            }
+        }
+    }
+}

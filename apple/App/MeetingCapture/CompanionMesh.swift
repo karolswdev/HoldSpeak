@@ -1171,7 +1171,7 @@ struct ConnectView: View {
 #if targetEnvironment(simulator)
 /// Simulator-only: the Connect surface with a seeded discovery list (HS_DEMO_CONNECT=1) so the
 /// "Your Computer" screen renders fully without a live LAN service.
-private struct ConnectDemo: View {
+struct ConnectDemo: View {
     var body: some View { NavigationStack { ConnectView() } }
 }
 #endif
@@ -1230,7 +1230,7 @@ struct PairMacSheet: View {
 /// Simulator-only: the Dictate surface seeded for a design screenshot — a named Mac, an active
 /// waveform (a non-zero level so the meter leaps), a read-back of dictated lines (one in-flight),
 /// and the egress badge. The desktop peer + a real mic aren't live in the Simulator. HS_DEMO_DICTATE=1.
-private struct DictateDemo: View {
+struct DictateDemo: View {
     var body: some View {
         NavigationStack { DictateView() }
             .onAppear {
@@ -1243,7 +1243,7 @@ private struct DictateDemo: View {
 
 /// Simulator-only: the Agent Desk seeded with a few live agents (one working, one waiting with a
 /// real-sounding question, one idle, one stale) for a design screenshot. Waiting sorts first + pulses.
-private struct AgentDeskDemo: View {
+struct AgentDeskDemo: View {
     static let seed = CompanionBoardState(
         readyForReply: true,
         blockers: [],
@@ -1264,7 +1264,7 @@ private struct AgentDeskDemo: View {
 }
 
 /// Simulator-only: open Settings with a sample LAN endpoint configured, for a design screenshot.
-private struct SettingsDemo: View {
+struct SettingsDemo: View {
     var body: some View {
         NavigationStack { SettingsView() }
             .onAppear {
@@ -1277,7 +1277,7 @@ private struct SettingsDemo: View {
 
 /// Simulator-only: the generation theater mid-flight, inside the real INTELLIGENCE card, for a
 /// design screenshot (the live model needs a resident GGUF + minutes). Never in the device build.
-private struct GenTheaterDemo: View {
+struct GenTheaterDemo: View {
     private let types: [ArtifactType] = [.decisions, .actionItems, .riskRegister, .requirements]
     var body: some View {
         ZStack {

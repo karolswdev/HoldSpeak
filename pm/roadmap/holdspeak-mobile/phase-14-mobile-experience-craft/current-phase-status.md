@@ -5,8 +5,8 @@ design, and modern hand-driven mobile practice were never in the roadmap, and th
 shipped as a bare functional shell, not a crafted product. This phase makes the
 **experience** first-class.)
 
-**Last updated:** 2026-06-24 (**the diorama gets fractal zones + the dive** — see the latest "Where we are"
-entry; the 2.5D front door now has recursive places you file meetings into and dive through, on the iPad).
+**Last updated:** 2026-06-25 (**empty-state coherence** — the empty zone you dive into now teaches how to
+fill it, completing the first-boot/act-on-item craft run. See the latest "Where we are".)
 
 **(Historical) 2026-06-21 (**opened + first craft delivered.** The owner chose the
 **Tactile Sheets** design direction from three concrete mockups (gesture-first: swipeable
@@ -99,6 +99,24 @@ Pencil), accessibility + adaptivity, and a polish pass — each delivered with c
 | HSM-14-18 | Real-time MIR (live intelligence on the iPad, configurable) | in-progress (the cadence/trigger brain `LiveIntelCadence` host-tested; runner + Queue HUD + setup screen + device proof pending) | [story-18](./story-18-realtime-mir.md) | `LiveIntelCadenceTests` (6/0) |
 
 ## Where we are
+
+**2026-06-26 — Tailored Agents + the ambient recorder (one pipeline).** A big owner-driven craft arc on
+the desk, all Simulator-verified (screenshots under `screenshots/agents-*` and `screenshots/recorder-*`):
+- **Fixed the long-press double-trigger** (the radial summon no longer also opens the pull-out behind it) and
+  put **agents, workflows, and crews** into the radial as route targets. **Record orb shrunk + corner-tucked.**
+- **Tailored Agents** (`DeskAgents.swift`): a gamified, avatar-first **builder** (Surprise-me, personality
+  **trait chips** instead of a blank prompt, Advanced folded away); a **roster rail** (Agents / Chains tabs);
+  a **living conversation** (multi-turn, persisted, the avatar emotes, Save-to-desk); and card→agent routing.
+- **100 avatars** in 4 groups — Glyphs (52 SF-symbol) + 3 bespoke **PixelLab** pixel-art sets (Critters,
+  Objects incl. the school bus, Snacks), each a tinted badge; grouped picker is the standing design.
+- **Agent crews/chains** — Scout → Critic → Editor in one tap, with an animated **relay** payoff.
+- **The recorder, reimagined** — no longer a takeover. Tap the mic → a hovering **mode picker** (meeting vs
+  talk-to-the-desktop). Recording is **ambient**: the corner mic radiates faint waveforms, a small transcript,
+  and **live intelligence markers** = quick lenses **+ your agents + your crews**, each fireable on a
+  **0:30–5:00 window** of the live transcript *while Whisper keeps running* → results float by the mic, Keep →
+  a desk card. The recorder, agents, and chains are now **one pipeline**. Builds clean on Simulator + device arch.
+  OPEN follow-ups: "talk to the desktop" send into the Mac (companion-inject), real per-segment timestamps for
+  the window slice (currently a sampling heuristic), and the real-metal walk with a live model.
 
 Just opened, in direct response to owner feedback that craft/usability/design was absent from
 the roadmap and undelivered. The runtime is done; this phase is about the **experience on top
@@ -682,6 +700,69 @@ pull-out / the routing engine), the GROUNDED + host-gated connectors, the build/
 **the path forward — finish/polish DeskOS (walk it on the device, real-metal LLM + send proof) then WEB PARITY
 (Phase 16, the same primitive model on the web + mesh sync)**. The owner wants momentum on DeskOS then web
 parity; the handover §6 is the runway.
+
+**2026-06-25 — the FIRST BOOT, a desk that teaches itself (handover §6A polish).** The empty desk was a
+single gray line ("tap record to capture your first meeting") — a bare shell for an app whose whole pitch
+is a spatial command center. Replaced it with a crafted **cold-start ritual** (`DioFirstBoot` in DioStage):
+a quiet breathing **hero core**, a "Your desk is ready" title, and a **guided spine** that teaches the
+three things the spatial model is made of — *meetings become objects* (they land on the desk), *your AI
+core waits below* (the dock), *zones file your work* (drag to keep) — each a tinted node on a connected
+spine, springing in with a stagger. A faint **guiding trail** of energy then flows down from the lesson to
+the one action that begins everything: the record orb, captioned "Press to record your first meeting." The
+premature **+ New Zone** tile is hidden on a desk with nothing to file yet (Norman: make the wrong action
+hard). Real condition (`firstRun` = root + no content + no zones, tools excluded), so it appears only on a
+genuinely fresh desk and dissolves the instant the first meeting lands. Composed in the diorama harness
+first (new `DIO_EMPTY=1` hook) — screenshot + recorded motion — then ported 1:1 to `DioStage`. `xcodebuild`
+device-arch **BUILD SUCCEEDED**; committed shot `screenshots/first-boot.png`. Next per handover §6A: the
+device walk (dock timing / zone clamps / first-boot feel) + the real-metal LLM-route + send proof.
+
+**2026-06-25 — act on an action item: insight → tracked work (handover §6A polish).** An action item in a
+meeting's intelligence was a dead bullet — you could read it, not act on it. Now every action row in the
+pull-out carries a subtle **act** affordance (↗) that opens a premium **"Act on this" sheet**: turn that one
+item into **tracked work** — *Send to Slack / Open as a GitHub issue / Post to a Webhook* — or **Keep it as
+a card** on your desk (a first-class `OutputPrimitive` you can route again). Sends ride the existing
+**host-gated actuator path** unchanged (propose→approve→execute on the Mac; the credential is joined in
+memory at execute time, never on the iPad) — the send flow was generalized to carry an explicit title+text
+(`sendOverride`) so a single row sends without inventing a card, and the SendCard/egress badge are reused
+verbatim. Every row shows the honest **egress badge** (cloud·target for a send, On device for keep), so the
+boundary is legible without prose. The sheet is path-independent (works on a meeting filed deep in a zone),
+and degrades cleanly when the Mac isn't paired (rows dimmed + a "pair your Mac" hint; Keep-as-a-card always
+works). Composed in the diorama harness (new `DIO_ACT=1` hook → `screenshots/act-on-item.png`) then built in
+DioStage (`DioActSheet` + `beginActOnItem`/`actSend`/`actFile`). `xcodebuild` device-arch **BUILD SUCCEEDED**.
+Next per handover §6A: the device walk + the real-metal LLM-route + live send proof (control-vs-treatment).
+
+**2026-06-25 — empty-state coherence: a dived-into zone teaches itself too (handover §6A polish, cont.).**
+With the first-boot ritual the *root* desk teaches itself, but the OTHER empty surface in the spatial model
+was still a dead-end: dive into a freshly-made zone and you landed on a bare desk with no idea how to fill
+it (and you can't even file from inside a zone — you file by dragging a meeting onto its tray from the
+desk). Now an empty zone (`emptyZone` = not-root + no content + no child zones) shows a crafted
+**`DioZoneEmpty`** state matching the first-boot language: a breathing dashed tray glyph in the zone's tint,
+**"{Zone} is empty"**, the honest one-liner *"Drag a meeting onto this zone from your desk to file it
+here,"* a tinted **New sub-zone here** action, and a quiet *"tap the breadcrumb to climb back out"* cue. The
+premature corner **+ New Zone** tile is suppressed here (its job is taken by the in-state button). Composed
+in the harness (new `DIO_EMPTYZONE=1` hook → `screenshots/empty-zone.png`) then built in DioStage.
+`xcodebuild` device-arch **BUILD SUCCEEDED**. Every empty surface in the desk now orients instead of
+dead-ending. Next per handover §6A: the device walk + the real-metal LLM-route + live send proof.
+
+**2026-06-25 — the device-walk overhaul: the dock dies, the desk owns the experience.** A real on-device
+walk (owner, livid and right) exposed that the Tools dock was both broken and uninspired. Fixed at the root,
+in order: (1) **tools rendered as cassettes** — the `DeskPrimitive` protocol declared `glyph`/`isSymbol`/
+`color`/`base` only in an extension, so through `any DeskPrimitive` they dispatched statically to the
+default (connector glyph → `.connector` `default:` → "cassette", isSymbol → false); made them protocol
+requirements. (2) **tools vanished under a zone** — `toolMembers()` was root-gated; made global. (3) the
+**open dock looked broken + you couldn't drop on it** — tiles lived in the GeometryReader space while the
+panel was screen-anchored, so the safe-area inset both shoved the header onto the tiles AND made the
+drop-hit-rect miss the visible tile (the routing was dead on arrival). (4) Then the owner's verdict — the
+drawer concept itself is sludge — so it was **deleted entirely** for a **radial summon**: long-press a card
+and the tools that *accept* it bloom around your finger (connector lines, glow, labels), tap to route; no
+'+', workflow creation stays in the Workbench. (5) **recording moved onto the desk** — the orb no longer
+opens a fullScreenCover window; a desk-native `DioRecordingConsole` (live waveform, the words as heard,
+on-device badge, one stop) records in-world and a cassette lands on stop. (6) a **settings gear** now lives
+on the desk (opens the real `SettingsView`). Unblocked all of this by **fixing the app's Simulator build**
+(the handover wrongly blamed swift-syntax; it was a `private` access level on the demo entry points) — so
+the desk is now diagnosable on-screen without the cabled device. Shots: `dock-open-fixed.png`,
+`radial-summon.png`, `recording-on-desk.png`. NEXT: flick-to-route (continuous gesture), and keep pulling
+every old-window surface into the desk.
 
 ## Operating principle (standing, beyond this phase)
 
