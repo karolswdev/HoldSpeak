@@ -34,6 +34,8 @@ struct SettingsView: View {
                     targetCard(.homelab, "LAN endpoint", "An OpenAI-compatible server on your network", "server.rack", Sig.accentGradient)
                     if !cfg.isLocal { endpointCard }
                     egressRow
+                    label("TRANSCRIPTION")
+                    whisperCard
                     label("WHO'S TALKING")
                     diarizeCard
                 }
@@ -225,6 +227,46 @@ struct SettingsView: View {
             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(focused == f ? Sig.accent : Color.white.opacity(0.08), lineWidth: focused == f ? 1.5 : 1))
         }
+    }
+
+    // The WhisperKit speech model for recording + import. Bigger = sharper but slower + a larger one-time
+    // download on first use. Read by the capture transcriber from UserDefaults on the next recording.
+    private struct WhisperOpt: Identifiable { let id: String; let title: String; let hint: String }
+    private var whisperOpts: [WhisperOpt] { [
+        .init(id: "tiny", title: "Tiny", hint: "Fastest · roughest"),
+        .init(id: "base", title: "Base", hint: "Balanced · the default"),
+        .init(id: "small", title: "Small", hint: "Sharper · slower · bigger download"),
+        .init(id: "large-v3", title: "Large v3", hint: "Best · slowest · large download"),
+    ] }
+    private func whisperTitle() -> String { whisperOpts.first { $0.id == cfg.whisperModel }?.title ?? cfg.whisperModel }
+    private func whisperHint() -> String { whisperOpts.first { $0.id == cfg.whisperModel }?.hint ?? "Bigger = sharper but slower" }
+
+    private var whisperCard: some View {
+        HStack(spacing: 14) {
+            GlyphChip(system: "waveform.badge.mic", gradient: Sig.localGradient, size: 50)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Speech model").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
+                Text(whisperHint()).font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+            }
+            Spacer()
+            Menu {
+                ForEach(whisperOpts) { o in
+                    Button { cfg.whisperModel = o.id; tactile() } label: {
+                        Label("\(o.title) — \(o.hint)", systemImage: cfg.whisperModel == o.id ? "checkmark" : "waveform")
+                    }
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Text(whisperTitle()).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text)
+                    Image(systemName: "chevron.up.chevron.down").font(.system(size: 12, weight: .bold)).foregroundStyle(Sig.faint)
+                }
+                .padding(.horizontal, 13).padding(.vertical, 11)
+                .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
+            }
+        }
+        .padding(15).background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
     }
 
     // HSM-14-17 — the opt-in diarization toggle. Fully on-device; the egress badge below the toggle

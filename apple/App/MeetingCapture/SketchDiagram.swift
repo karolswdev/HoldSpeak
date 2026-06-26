@@ -531,9 +531,13 @@ struct SketchToDiagramView: View {
     /// Which installed on-device model (its `InstalledModel.id`, i.e. the .gguf filename) runs local
     /// intelligence. Empty = "use the first installed language model" (back-compat default).
     @Published var localModelId: String { didSet { d.set(localModelId, forKey: K.localModel) } }
+    /// The WhisperKit transcription model for recording + import (tiny/base/small/large-v3). Read by the
+    /// capture transcriber from UserDefaults at transcribe time, so a change applies on the next recording.
+    @Published var whisperModel: String { didSet { d.set(whisperModel, forKey: K.whisper) } }
+    static let whisperKey = "hs.inf.whisper"        // the UserDefaults key the transcriber reads directly
 
     private let d = UserDefaults.standard
-    private enum K { static let mode = "hs.inf.mode", url = "hs.inf.url", model = "hs.inf.model", key = "hs.inf.key", diarize = "hs.inf.diarize", localModel = "hs.inf.localmodel" }
+    private enum K { static let mode = "hs.inf.mode", url = "hs.inf.url", model = "hs.inf.model", key = "hs.inf.key", diarize = "hs.inf.diarize", localModel = "hs.inf.localmodel", whisper = "hs.inf.whisper" }
     private init() {
         mode = RuntimeMode(rawValue: d.string(forKey: K.mode) ?? "") ?? .local
         endpointURL = d.string(forKey: K.url) ?? ""
@@ -541,6 +545,7 @@ struct SketchToDiagramView: View {
         endpointKey = d.string(forKey: K.key) ?? ""
         diarizationOn = d.object(forKey: K.diarize) as? Bool ?? true
         localModelId = d.string(forKey: K.localModel) ?? ""
+        whisperModel = d.string(forKey: K.whisper) ?? "base"
     }
 
     var isLocal: Bool { mode == .local }

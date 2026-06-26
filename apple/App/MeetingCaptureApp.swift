@@ -168,7 +168,9 @@ final class CaptureModel: ObservableObject {
         do { store = try SQLiteMeetingStore() }
         catch { self.error = "Store unavailable: \(error)"; return }
         mc = MeetingCapture(capture: AudioCaptureService(), store: store,
-                            makeTranscriber: { WhisperKitTranscriber(chunks: $0, model: "base") },
+                            // read the chosen Whisper model from UserDefaults at call time (thread-safe; a
+                            // settings change applies on the next recording without rebuilding capture)
+                            makeTranscriber: { WhisperKitTranscriber(chunks: $0, model: UserDefaults.standard.string(forKey: "hs.inf.whisper") ?? "base") },   // key == InferenceConfigStore.whisperKey
                             diarize: Self.makeDiarize())
         refresh()
     }
