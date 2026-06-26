@@ -326,6 +326,7 @@ struct DioBackBar: View {
 struct DioPullout: View {
     let prim: any DeskPrimitive
     let onClose: () -> Void; let onAction: (PrimitiveAction) -> Void; let onRouteSection: (String, String) -> Void
+    var onActItem: ((String, String) -> Void)? = nil      // act on a single action row → send/file
     private func sectionText(_ body: SectionBody) -> String {
         switch body {
         case .text(let s): return s
@@ -407,6 +408,14 @@ struct DioPullout: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(r.task).font(.system(size: 14, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text).fixedSize(horizontal: false, vertical: true)
                             if let meta = r.meta { Text(meta).font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted) }
+                        }
+                        Spacer(minLength: 6)
+                        if let act = onActItem {
+                            Button { act(r.task, r.task + (r.meta.map { "\n\($0)" } ?? "")) } label: {
+                                Image(systemName: "arrow.up.forward").font(.system(size: 12, weight: .black)).foregroundStyle(DioPal.mint)
+                                    .frame(width: 30, height: 30)
+                                    .background(Circle().fill(DioPal.mint.opacity(0.13)).overlay(Circle().strokeBorder(DioPal.mint.opacity(0.4), lineWidth: 1)))
+                            }.buttonStyle(.plain)
                         }
                     }
                 }
@@ -734,6 +743,80 @@ struct DioSendCard: View {
     }
 }
 
+// THE ACT SHEET — an action item is not a dead bullet; act on it. Turn it into tracked work (a host-gated
+// connector → propose→approve→execute, the credential stays on the Mac) or keep it as a card on your desk.
+struct DioActSheet: View {
+    let itemText: String
+    let connectors: [(connId: String, name: String, symbol: String, tint: Color)]
+    let configured: Bool
+    let onSend: (String, String) -> Void
+    let onFile: () -> Void
+    let onCancel: () -> Void
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.7).ignoresSafeArea().onTapGesture { onCancel() }
+            VStack(alignment: .leading, spacing: 13) {
+                HStack(spacing: 9) {
+                    Image(systemName: "bolt.fill").font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
+                        .frame(width: 34, height: 34).background(Circle().fill(DioPal.mint))
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Act on this").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                        Text("turn it into tracked work, or keep it").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                    }
+                    Spacer(minLength: 0)
+                }
+                Text(itemText).font(.system(size: 13.5, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.9))
+                    .lineLimit(4).fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(12)
+                    .background(RoundedRectangle(cornerRadius: 13).fill(.white.opacity(0.04)).overlay(RoundedRectangle(cornerRadius: 13).strokeBorder(.white.opacity(0.07), lineWidth: 1)))
+                if !configured {
+                    HStack(spacing: 6) {
+                        Image(systemName: "desktopcomputer").font(.system(size: 10, weight: .bold))
+                        Text("Pair your Mac to send · tap a connector tile on the desk").font(.system(size: 10.5, weight: .heavy, design: .rounded))
+                    }.foregroundStyle(DioPal.muted).padding(.horizontal, 10).frame(height: 28).background(Capsule().fill(.white.opacity(0.05)))
+                }
+                Text("SEND TO").font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).tracking(1.4)
+                VStack(spacing: 8) {
+                    ForEach(connectors, id: \.connId) { c in
+                        Button { onSend(c.connId, c.name) } label: {
+                            actRow(symbol: c.symbol, tint: c.tint, name: "Send to \(c.name)", sub: configured ? "via your Mac" : "needs your Mac", egress: .cloud(c.name))
+                        }.buttonStyle(.plain).disabled(!configured).opacity(configured ? 1 : 0.45)
+                    }
+                }
+                Text("OR KEEP IT").font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).tracking(1.4).padding(.top, 2)
+                Button { onFile() } label: {
+                    actRow(symbol: "tray.and.arrow.down.fill", tint: DioPal.accent, name: "Keep as a card", sub: "on your desk, to route again", egress: .local)
+                }.buttonStyle(.plain)
+                Button(action: onCancel) {
+                    Text("Cancel").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
+                        .frame(maxWidth: .infinity).frame(height: 44).background(Capsule().fill(.white.opacity(0.06)))
+                }.buttonStyle(.plain).padding(.top, 2)
+            }
+            .padding(20).frame(maxWidth: 460)
+            .background(RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom))
+                .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1))
+                .shadow(color: .black.opacity(0.6), radius: 30, y: 16))
+            .padding(.horizontal, 18)
+        }
+    }
+    @ViewBuilder private func actRow(symbol: String, tint: Color, name: String, sub: String, egress: EgressBadge.Scope) -> some View {
+        HStack(spacing: 11) {
+            Image(systemName: symbol).font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
+                .frame(width: 34, height: 34).background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(tint.opacity(0.9)))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(name).font(.system(size: 14.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                Text(sub).font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+            }
+            Spacer(minLength: 0)
+            EgressBadge(scope: egress)
+        }
+        .padding(.horizontal, 12).frame(height: 54)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.white.opacity(0.04))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.white.opacity(0.07), lineWidth: 1)))
+    }
+}
+
 // The link to the paired Mac (host PC). Connectors route THROUGH it: the iPad proposes + approves; the host
 // executes with the Slack credential joined in memory ON THE MAC — the iPad never holds it. Grounded in the
 // HoldSpeak actuator framework (propose→approve→execute, Phase 37/38/61) via /api/companion/slack/*.
@@ -904,6 +987,9 @@ struct DioStage: View {
     @State private var sendSourceId: String? = nil
     @State private var sendTargetName = ""
     @State private var sendTargetConn = "slack"          // which host connector ("slack" / "webhook")
+    @State private var sendOverride: (title: String, text: String)? = nil   // act-on-item: send THIS, not a whole card
+    @State private var actItem: (title: String, text: String, source: String)? = nil   // the row being acted on
+    @State private var showActSheet = false
     @State private var showSendCard = false
     @State private var sending = false
     @State private var connecting = false
@@ -1115,7 +1201,8 @@ struct DioStage: View {
 
                 if let p = selectedPrim() {
                     DioPullout(prim: p, onClose: { select(nil) }, onAction: { handle($0, on: p) },
-                               onRouteSection: { t, x in routeFacet(t, x, w, h) })
+                               onRouteSection: { t, x in routeFacet(t, x, w, h) },
+                               onActItem: { task, text in beginActOnItem(from: p, task: task, text: text) })
                         .frame(width: min(560, w * 0.62))
                         .padding(.vertical, 22).padding(.trailing, 16)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
@@ -1143,9 +1230,21 @@ struct DioStage: View {
                 if let rec = printed {
                     DioPrintedCard(rec: rec, onKeep: { keepPrinted() }, onBin: { binPrinted() }).zIndex(130)
                 }
-                if showSendCard, let src = members().first(where: { $0.id == sendSourceId }) {
-                    DioSendCard(sourceTitle: src.title, preview: String(src.routableText.prefix(220)), connName: sendTargetName, sending: sending,
-                                onApprove: { sendNow(src) }, onCancel: { if !sending { withAnimation { showSendCard = false }; sendSourceId = nil } }).zIndex(135)
+                if showSendCard {
+                    let member = members().first(where: { $0.id == sendSourceId })
+                    let sTitle = sendOverride?.title ?? member?.title
+                    let sText = sendOverride?.text ?? member?.routableText
+                    if let sTitle, let sText {
+                        DioSendCard(sourceTitle: sTitle, preview: String(sText.prefix(220)), connName: sendTargetName, sending: sending,
+                                    onApprove: { sendNow(title: sTitle, text: sText) },
+                                    onCancel: { if !sending { withAnimation { showSendCard = false }; sendSourceId = nil; sendOverride = nil } }).zIndex(135)
+                    }
+                }
+                if showActSheet, let item = actItem {
+                    DioActSheet(itemText: item.text, connectors: actConnectors(), configured: hostLink != nil,
+                                onSend: { cid, nm in actSend(connId: cid, name: nm) },
+                                onFile: { actFile() },
+                                onCancel: { withAnimation { showActSheet = false }; actItem = nil }).zIndex(136)
                 }
                 if let t = sentToast {
                     HStack(spacing: 7) { Image(systemName: "checkmark.circle.fill"); Text(t).font(.system(size: 13, weight: .heavy, design: .rounded)) }
@@ -1430,15 +1529,46 @@ struct DioStage: View {
             #endif
         }
     }
-    private func sendNow(_ src: any DeskPrimitive) {
+    // act on a single action row: turn it into tracked work (a connector) or keep it as a card
+    private func beginActOnItem(from prim: any DeskPrimitive, task: String, text: String) {
+        haptic(.light)
+        actItem = (title: task, text: text, source: prim.title)
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { showActSheet = true }
+    }
+    private func actConnectors() -> [(connId: String, name: String, symbol: String, tint: Color)] {
+        [("slack", "Slack", "number", DioPal.violet),
+         ("github", "GitHub issue", "exclamationmark.bubble.fill", DioPal.mint),
+         ("webhook", "Webhook", "bolt.horizontal.fill", DioPal.cobalt)]
+    }
+    private func actSend(connId: String, name: String) {
+        guard let item = actItem else { return }
+        withAnimation { showActSheet = false }
+        sendTargetConn = connId; sendTargetName = name
+        sendOverride = (title: item.title, text: item.text); sendSourceId = nil
+        haptic(.medium)
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { showSendCard = true }
+    }
+    private func actFile() {
+        guard let item = actItem else { return }
+        withAnimation { showActSheet = false }
+        let rec = OutputRecord(id: UUID().uuidString, title: String(item.title.prefix(48)), body: item.text,
+                               source: item.source, lens: "Action", path: pathKey)
+        #if canImport(UIKit)
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        #endif
+        withAnimation(focusSpring) { outputs.append(rec) }
+        persistOutputs(); actItem = nil
+        toast("Kept on your desk")
+    }
+    private func sendNow(title: String, text: String) {
         guard let link = hostLink else {
-            withAnimation { showSendCard = false }; routeError = "Pair your Mac first — tap the \(sendTargetName) tile."; return
+            withAnimation { showSendCard = false }; sendOverride = nil; routeError = "Pair your Mac first — tap the \(sendTargetName) tile."; return
         }
         sending = true
-        let title = src.title, text = src.routableText, target = sendTargetName
+        let target = sendTargetName
         Task { @MainActor in
             if await link.reachable() == false {
-                sending = false; withAnimation { showSendCard = false }
+                sending = false; withAnimation { showSendCard = false }; sendOverride = nil
                 routeError = "Your Mac isn’t reachable. Wake it and make sure it’s on the same network."
                 return
             }
@@ -1446,7 +1576,7 @@ struct DioStage: View {
                 // propose → approve → execute, all on the host (the credential never leaves the Mac)
                 let proposal = try await link.propose(target: sendTargetConn, title: title, text: text)
                 let decision = try await link.decide(target: sendTargetConn, id: proposal.id, approved: true)
-                sending = false; withAnimation { showSendCard = false }; sendSourceId = nil
+                sending = false; withAnimation { showSendCard = false }; sendSourceId = nil; sendOverride = nil
                 if decision.status == "executed" {
                     #if canImport(UIKit)
                     UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -1456,9 +1586,9 @@ struct DioStage: View {
                     routeError = decision.error ?? "\(target) send didn’t complete (status: \(decision.status))."
                 }
             } catch let DeskHostLink.HostError.message(m) {
-                sending = false; withAnimation { showSendCard = false }; routeError = m
+                sending = false; withAnimation { showSendCard = false }; sendOverride = nil; routeError = m
             } catch {
-                sending = false; withAnimation { showSendCard = false }; routeError = "Couldn’t reach your Mac."
+                sending = false; withAnimation { showSendCard = false }; sendOverride = nil; routeError = "Couldn’t reach your Mac."
             }
         }
     }

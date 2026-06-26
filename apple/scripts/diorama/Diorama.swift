@@ -710,12 +710,76 @@ struct FirstBoot: View {
     }
 }
 
+// THE ACT SHEET (harness mirror) — an action item becomes tracked work (a host-gated connector) or a card.
+struct ActSheet: View {
+    let itemText: String
+    let onCancel: () -> Void
+    private let conns: [(name: String, symbol: String, tint: Color)] = [
+        ("Slack", "number", Pal.violet), ("GitHub issue", "exclamationmark.bubble.fill", Pal.mint), ("Webhook", "bolt.horizontal.fill", Pal.cobalt),
+    ]
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.7).ignoresSafeArea().onTapGesture { onCancel() }
+            VStack(alignment: .leading, spacing: 13) {
+                HStack(spacing: 9) {
+                    Image(systemName: "bolt.fill").font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
+                        .frame(width: 34, height: 34).background(Circle().fill(Pal.mint))
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Act on this").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
+                        Text("turn it into tracked work, or keep it").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
+                    }
+                    Spacer(minLength: 0)
+                }
+                Text(itemText).font(.system(size: 13.5, weight: .medium, design: .rounded)).foregroundStyle(Pal.text.opacity(0.9))
+                    .lineLimit(4).fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(12)
+                    .background(RoundedRectangle(cornerRadius: 13).fill(.white.opacity(0.04)).overlay(RoundedRectangle(cornerRadius: 13).strokeBorder(.white.opacity(0.07), lineWidth: 1)))
+                Text("SEND TO").font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted).tracking(1.4)
+                VStack(spacing: 8) {
+                    ForEach(conns, id: \.name) { c in row(symbol: c.symbol, tint: c.tint, name: "Send to \(c.name)", sub: "via your Mac", egress: c.name) }
+                }
+                Text("OR KEEP IT").font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted).tracking(1.4).padding(.top, 2)
+                row(symbol: "tray.and.arrow.down.fill", tint: Pal.accent, name: "Keep as a card", sub: "on your desk, to route again", egress: nil)
+                Text("Cancel").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted)
+                    .frame(maxWidth: .infinity).frame(height: 44).background(Capsule().fill(.white.opacity(0.06))).padding(.top, 2)
+            }
+            .padding(20).frame(maxWidth: 460)
+            .background(RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom))
+                .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+            .padding(.horizontal, 18)
+        }
+    }
+    @ViewBuilder private func row(symbol: String, tint: Color, name: String, sub: String, egress: String?) -> some View {
+        HStack(spacing: 11) {
+            Image(systemName: symbol).font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
+                .frame(width: 34, height: 34).background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(tint.opacity(0.9)))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(name).font(.system(size: 14.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text)
+                Text(sub).font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
+            }
+            Spacer(minLength: 0)
+            if let e = egress {
+                HStack(spacing: 4) { Image(systemName: "arrow.up.forward").font(.system(size: 8, weight: .bold)); Text(e).font(.system(size: 10, weight: .heavy, design: .rounded)) }
+                    .foregroundStyle(Pal.cobalt).padding(.horizontal, 8).frame(height: 24).background(Capsule().fill(Pal.cobalt.opacity(0.14)))
+            } else {
+                HStack(spacing: 4) { Image(systemName: "lock.fill").font(.system(size: 8, weight: .bold)); Text("On device").font(.system(size: 10, weight: .heavy, design: .rounded)) }
+                    .foregroundStyle(Pal.mint).padding(.horizontal, 8).frame(height: 24).background(Capsule().fill(Pal.mint.opacity(0.14)))
+            }
+        }
+        .padding(.horizontal, 12).frame(height: 54)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.white.opacity(0.04))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.white.opacity(0.07), lineWidth: 1)))
+    }
+}
+
 struct Stage: View {
     @State private var landed = false
     @State private var routeStage = ""           // "", "sheet", "theater", "printed", "send", "wire" (DIO_ROUTE_STAGE)
     @State private var lassoSel: Set<String> = []   // DIO_LASSO: multi-select → Ask the bundle
     @State private var dockOpen = false             // DIO_DOCK: the tool dock
     @State private var firstRun = false             // DIO_EMPTY: the cold-start / first-boot ritual
+    @State private var showAct = false              // DIO_ACT: the act-on-an-action-item sheet
     private let tools: [Obj] = [
         Obj(id: "core",    sprite: "cartridge", base: 60, glow: Pal.cobalt, title: "AI Core"),
         Obj(id: "slack",   sprite: "number", base: 56, glow: Pal.violet, title: "Slack", symbol: true),
@@ -830,6 +894,10 @@ struct Stage: View {
                 // the tool dock (tools live here, in the thumb zone)
                 if landed && selected == nil && !recording { DockH(tools: tools, open: dockOpen).zIndex(110) }
 
+                if showAct {
+                    ActSheet(itemText: "Ship the egress badge across the Qlippy cards\nKarol · Fri", onCancel: { showAct = false }).zIndex(140)
+                }
+
                 if born {
                     VStack(spacing: 7) {
                         Sprite(name: "cassette2", size: 124).shadow(color: .black.opacity(0.55), radius: 16, y: 12)
@@ -922,6 +990,7 @@ struct Stage: View {
                 if env["DIO_LASSO"] == "1" { lassoSel = ["standup", "docs"] }
                 if env["DIO_DOCK"] == "open" { dockOpen = true }
                 if env["DIO_EMPTY"] == "1" { firstRun = true }
+                if env["DIO_ACT"] == "1" { showAct = true }
                 if env["DIO_DEMO"] == "1" { runDemo() }
             }
         }

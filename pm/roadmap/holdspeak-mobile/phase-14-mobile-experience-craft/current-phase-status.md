@@ -5,8 +5,8 @@ design, and modern hand-driven mobile practice were never in the roadmap, and th
 shipped as a bare functional shell, not a crafted product. This phase makes the
 **experience** first-class.)
 
-**Last updated:** 2026-06-25 (**the first-boot ritual** — the empty desk is now a crafted cold-start that
-teaches the spatial model, DioStage `DioFirstBoot`, device-arch built; see the latest "Where we are" entry).
+**Last updated:** 2026-06-25 (**act on an action item** — an action row → send to Slack/GitHub/Webhook via
+the host-gated path, or keep as a card; on top of the first-boot ritual. See the latest "Where we are".)
 
 **(Historical) 2026-06-21 (**opened + first craft delivered.** The owner chose the
 **Tactile Sheets** design direction from three concrete mockups (gesture-first: swipeable
@@ -697,6 +697,21 @@ genuinely fresh desk and dissolves the instant the first meeting lands. Composed
 first (new `DIO_EMPTY=1` hook) — screenshot + recorded motion — then ported 1:1 to `DioStage`. `xcodebuild`
 device-arch **BUILD SUCCEEDED**; committed shot `screenshots/first-boot.png`. Next per handover §6A: the
 device walk (dock timing / zone clamps / first-boot feel) + the real-metal LLM-route + send proof.
+
+**2026-06-25 — act on an action item: insight → tracked work (handover §6A polish).** An action item in a
+meeting's intelligence was a dead bullet — you could read it, not act on it. Now every action row in the
+pull-out carries a subtle **act** affordance (↗) that opens a premium **"Act on this" sheet**: turn that one
+item into **tracked work** — *Send to Slack / Open as a GitHub issue / Post to a Webhook* — or **Keep it as
+a card** on your desk (a first-class `OutputPrimitive` you can route again). Sends ride the existing
+**host-gated actuator path** unchanged (propose→approve→execute on the Mac; the credential is joined in
+memory at execute time, never on the iPad) — the send flow was generalized to carry an explicit title+text
+(`sendOverride`) so a single row sends without inventing a card, and the SendCard/egress badge are reused
+verbatim. Every row shows the honest **egress badge** (cloud·target for a send, On device for keep), so the
+boundary is legible without prose. The sheet is path-independent (works on a meeting filed deep in a zone),
+and degrades cleanly when the Mac isn't paired (rows dimmed + a "pair your Mac" hint; Keep-as-a-card always
+works). Composed in the diorama harness (new `DIO_ACT=1` hook → `screenshots/act-on-item.png`) then built in
+DioStage (`DioActSheet` + `beginActOnItem`/`actSend`/`actFile`). `xcodebuild` device-arch **BUILD SUCCEEDED**.
+Next per handover §6A: the device walk + the real-metal LLM-route + live send proof (control-vs-treatment).
 
 ## Operating principle (standing, beyond this phase)
 
