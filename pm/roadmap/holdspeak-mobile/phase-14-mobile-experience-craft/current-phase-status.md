@@ -613,6 +613,22 @@ section grain. Harness screenshot-proven ([act-on-section](./screenshots/act-on-
 `DioStage`; device-arch **BUILD SUCCEEDED**. Next on the map: a second grounded connector (webhook/GitHub via
 the host actuators) + web parity.
 
+**2026-06-25 — a SECOND grounded connector: Webhook (proves "connector = one primitive + a thin host
+endpoint").** A generic **Webhook** connector (Discord / Zapier / n8n / any endpoint) lands on the desk
+beside Slack, grounded through the Mac's actuator framework exactly like Slack — NOT an iPad POST. **Host
+(Python):** a `companion_webhook_url` config field (credential, stays on the Mac), a generic
+`build_url_webhook_connector(url)` (the Slack connector minus the slack.com host check — allow-lists the
+URL's host, injects the URL in memory at execute), and two endpoints
+(`/api/companion/webhook/propose` + `/{id}/decision`) reusing the guarded `ActuatorExecutor`; the Slack and
+Webhook decision routes are **target-scoped so they can't cross**; `/api/companion/status` now reports
+`webhook_configured`. **9 new tests** (`test_web_companion_webhook.py`) incl. the credential rule + the
+cross-target guard; 320 in the config/settings/companion/slack/schema sweep green (the new config field broke
+no snapshot). **iPad:** `DeskHostLink.propose/decide` took a **target** param (`slack`/`webhook`), a Webhook
+`ConnectorPrimitive` tile, and the send (drag + long-press) carries `sendTargetConn`. **The desk is now a real
+toolkit** — meetings, the AI core, knowledge, two connectors, a saved tool — all primitives, all routable
+([desk toolkit](./screenshots/desk-connectors.png)). Device-arch **BUILD SUCCEEDED**. Adding the next
+connector is now genuinely "one primitive + a thin host endpoint." See [[THE_DESK_WHOLE_PICTURE]].
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a

@@ -44,6 +44,7 @@ enum World {
              Obj(id: "core",    sprite: "cartridge", base: 162, glow: Pal.cobalt, title: "AI Core"),
              Obj(id: "docs",    sprite: "crystal",  base: 120, glow: Pal.violet, title: "Docs KB"),
              Obj(id: "slack",   sprite: "number",   base: 116, glow: Pal.violet, title: "Slack", symbol: true),
+             Obj(id: "webhook", sprite: "bolt.horizontal.fill", base: 116, glow: Pal.cobalt, title: "Webhook", symbol: true),
              Obj(id: "risklens", sprite: "gearshape.2.fill", base: 118, glow: Pal.mint, title: "Risk Lens", symbol: true)],
         "Atlas": [Obj(id: "kickoff", sprite: "cassette",  base: 130, glow: Pal.accent, title: "Kickoff"),
                   Obj(id: "roadmap", sprite: "cassette2", base: 130, glow: Pal.accent, title: "Roadmap")],

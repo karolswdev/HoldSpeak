@@ -213,9 +213,12 @@ def build_system_router(ctx: WebContext) -> APIRouter:
         # Slack is configured WITHOUT leaking the URL — the iPad gates its
         # connector tile on this + reachability, and never holds the credential.
         try:
-            slack_configured = bool(Config.load().meeting.slack_webhook_url)
+            _mc = Config.load().meeting
+            slack_configured = bool(_mc.slack_webhook_url)
+            webhook_configured = bool(_mc.companion_webhook_url)
         except Exception:
             slack_configured = False
+            webhook_configured = False
 
         dictation_error: str | None = None
         try:
@@ -321,6 +324,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                 },
                 "connectors": {
                     "slack_configured": slack_configured,
+                    "webhook_configured": webhook_configured,
                 },
                 "agent": {
                     "awaiting_response": agent_waiting,

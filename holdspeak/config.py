@@ -198,6 +198,13 @@ class MeetingConfig:
     # a broadcast, or a non-settings API response.
     slack_webhook_url: str = ""
 
+    # HSM-14: a generic outbound webhook for the iPad desk's Webhook connector
+    # (Discord / Zapier / n8n / any endpoint). Default-empty = the connector is
+    # offline. Same credential rule as Slack: the URL stays on the host, its
+    # host is the only thing the webhook connector's manifest allow-lists, and
+    # it never rides a proposal payload, a broadcast, or a non-settings response.
+    companion_webhook_url: str = ""
+
     # Speaker diarization
     diarization_enabled: bool = False  # Identify multiple speakers in system audio
     diarize_mic: bool = False  # Also diarize mic input (for on-site meetings)

@@ -655,18 +655,18 @@ struct DeskHostLink {
         if let (_, resp) = try? await URLSession.shared.data(for: r), (resp as? HTTPURLResponse)?.statusCode == 200 { return true }
         return false
     }
-    /// Propose an arbitrary-text Slack send on the host → (proposalId, preview). No credential crosses.
-    func propose(title: String, text: String) async throws -> (id: String, preview: String) {
+    /// Propose an arbitrary-text send on the host for a target ("slack"/"webhook") → (proposalId, preview).
+    func propose(target: String, title: String, text: String) async throws -> (id: String, preview: String) {
         var body: [String: Any] = ["text": text]
         if !title.isEmpty { body["title"] = title }
-        let (data, resp) = try await post("api/companion/slack/propose", body)
+        let (data, resp) = try await post("api/companion/\(target)/propose", body)
         try Self.check(data, resp, "Your Mac refused the send.")
         let p = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["proposal"] as? [String: Any]
         return (p?["id"] as? String ?? "", p?["preview"] as? String ?? text)
     }
     /// Approve (→ execute) or reject the proposal on the host → (status, error?).
-    func decide(id: String, approved: Bool) async throws -> (status: String, error: String?) {
-        let (data, resp) = try await post("api/companion/slack/\(id)/decision",
+    func decide(target: String, id: String, approved: Bool) async throws -> (status: String, error: String?) {
+        let (data, resp) = try await post("api/companion/\(target)/\(id)/decision",
                                           ["decision": approved ? "approved" : "rejected", "decided_by": "ipad-desk"])
         try Self.check(data, resp, "Your Mac refused the decision.")
         let p = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["proposal"] as? [String: Any]
@@ -738,6 +738,7 @@ struct DioStage: View {
     @AppStorage("hs.peer.port") private var peerPort = "8000"
     @State private var sendSourceId: String? = nil
     @State private var sendTargetName = ""
+    @State private var sendTargetConn = "slack"          // which host connector ("slack" / "webhook")
     @State private var showSendCard = false
     @State private var sending = false
     @State private var connecting = false
@@ -775,6 +776,8 @@ struct DioStage: View {
             }
             for kb in knowledgeBases.prefix(3) { out.append(KBPrimitive(name: kb, items: kbCount(kb))) }
             out.append(ConnectorPrimitive(connId: "slack", name: "Slack", symbol: "number", tint: DioPal.violet,
+                                          configured: hostLink != nil, detail: peerHost.isEmpty ? "" : peerHost))
+            out.append(ConnectorPrimitive(connId: "webhook", name: "Webhook", symbol: "bolt.horizontal.fill", tint: DioPal.cobalt,
                                           configured: hostLink != nil, detail: peerHost.isEmpty ? "" : peerHost))
             for wf in workflows { out.append(WorkflowPrimitive(rec: wf)) }
         }
@@ -1063,8 +1066,9 @@ struct DioStage: View {
             })
         }
         for c in ms where c.kind == .connector && c.accepts.contains(p.kind) {
+            let conn = (c as? ConnectorPrimitive)?.connId ?? "slack"
             items.append(DioMenuItem(label: "Send to \(c.title)", icon: "paperplane") {
-                sendSourceId = p.id; sendTargetName = c.title; haptic(.medium); withAnimation { showSendCard = true }
+                sendSourceId = p.id; sendTargetName = c.title; sendTargetConn = conn; haptic(.medium); withAnimation { showSendCard = true }
             })
         }
         if p.kind == .meeting {
@@ -1160,6 +1164,7 @@ struct DioStage: View {
             withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { showRouteSheet = true }
         case .connector:                                        // a connector → propose→approve→send
             sendSourceId = sourceId; sendTargetName = target.title
+            sendTargetConn = (target as? ConnectorPrimitive)?.connId ?? "slack"
             withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { showSendCard = true }
         case .workflow:                                         // a saved tool → run its prompt, no sheet
             guard let wf = target as? WorkflowPrimitive else { break }
@@ -1185,8 +1190,8 @@ struct DioStage: View {
             }
             do {
                 // propose → approve → execute, all on the host (the credential never leaves the Mac)
-                let proposal = try await link.propose(title: title, text: text)
-                let decision = try await link.decide(id: proposal.id, approved: true)
+                let proposal = try await link.propose(target: sendTargetConn, title: title, text: text)
+                let decision = try await link.decide(target: sendTargetConn, id: proposal.id, approved: true)
                 sending = false; withAnimation { showSendCard = false }; sendSourceId = nil
                 if decision.status == "executed" {
                     #if canImport(UIKit)

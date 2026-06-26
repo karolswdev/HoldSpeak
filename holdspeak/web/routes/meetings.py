@@ -851,6 +851,33 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
         )
         return executor.execute(proposal.id)
 
+    def _execute_webhook_proposal(db: Any, proposal: Any, *, actor: str) -> Any:
+        """HSM-14: the execute leg for an approved companion Webhook proposal.
+
+        The generic sibling of `_execute_slack_proposal` — same consent model and
+        guard stack, but the URL comes from `meeting.companion_webhook_url` and
+        the host is allow-listed by `build_url_webhook_connector`. The credential
+        is read from config at execution time and injected in memory only.
+        """
+        from ...config import Config
+        from ...plugins.actuator_executor import ActuatorExecutor
+        from ...slack_export import build_url_webhook_connector
+
+        url = Config.load().meeting.companion_webhook_url
+        if not url:
+            updated = db.actuators.transition_proposal(
+                proposal.id, to_status="failed", actor=actor,
+                detail="companion webhook: no URL configured at execution time",
+                error="Webhook is not configured (meeting.companion_webhook_url is empty)",
+            )
+            ctx.broadcast("actuator_result", _actuator_result_event(updated))
+            return updated
+        executor = ActuatorExecutor(
+            db, connector=build_url_webhook_connector(url), allow_actuators=True,
+            actor=actor, on_result=lambda event: ctx.broadcast("actuator_result", event),
+        )
+        return executor.execute(proposal.id)
+
     @router.get("/api/meetings/{meeting_id}/proposals")
     async def api_get_meeting_proposals(
         meeting_id: str,
@@ -1237,7 +1264,7 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
 
             db = get_database()
             existing = db.actuators.get_proposal(proposal_id)
-            if existing is None or existing.meeting_id != _COMPANION_MEETING_ID:
+            if existing is None or existing.meeting_id != _COMPANION_MEETING_ID or existing.target != "slack":
                 return JSONResponse({"success": False, "error": "Proposal not found"}, status_code=404)
             try:
                 updated = db.actuators.transition_proposal(
@@ -1256,6 +1283,79 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"success": True, "proposal": _proposal_to_dict(updated)})
         except Exception as e:
             return error_500(e, log, "Failed to decide companion Slack proposal")
+
+    @router.post("/api/companion/webhook/propose")
+    async def api_companion_webhook_propose(payload: _CompanionSlackRequest) -> Any:
+        """Propose sending arbitrary companion (desk) text to a generic webhook (HSM-14).
+
+        The generic sibling of the Slack propose — same shape, target `webhook`,
+        gated on `meeting.companion_webhook_url`. No credential crosses.
+        """
+        import hashlib
+
+        from ...config import Config
+
+        text = str(payload.text or "").strip()
+        if not text:
+            return JSONResponse({"success": False, "error": "text is required"}, status_code=400)
+        if not Config.load().meeting.companion_webhook_url:
+            return JSONResponse(
+                {"success": False, "error": "Webhook is not configured on the host (set companion_webhook_url first)"},
+                status_code=400,
+            )
+        try:
+            from datetime import datetime
+
+            from ...db import get_database
+            from ...meeting_session import MeetingState
+            from ...plugins.builtin.webhook_post_actuator import WebhookPostActuator
+
+            db = get_database()
+            if db.meetings.get_meeting(_COMPANION_MEETING_ID) is None:
+                db.meetings.save_meeting(MeetingState(id=_COMPANION_MEETING_ID, started_at=datetime.now(), title="Desk · companion sends"))
+            body = f"*{payload.title.strip()}*\n{text}" if (payload.title or "").strip() else text
+            content_key = hashlib.sha256(body.encode("utf-8")).hexdigest()[:16]
+            proposal = db.actuators.record_proposal(
+                meeting_id=_COMPANION_MEETING_ID, window_id="companion:webhook",
+                plugin_id=WebhookPostActuator.id, plugin_version=WebhookPostActuator.version,
+                idempotency_key=f"companion-webhook:{content_key}",
+                target="webhook", action="post_message", preview=body,
+                payload={"body": {"text": body}}, reversible=False, required_capabilities=["actuator"],
+            )
+            ctx.broadcast("actuator_proposed", {
+                "id": proposal.id, "meeting_id": proposal.meeting_id, "plugin_id": proposal.plugin_id,
+                "status": proposal.status, "target": proposal.target, "action": proposal.action,
+                "preview": proposal.preview, "reversible": bool(proposal.reversible),
+            })
+            return JSONResponse({"success": True, "proposal": _proposal_to_dict(proposal)})
+        except Exception as e:
+            return error_500(e, log, "Failed to propose companion webhook send")
+
+    @router.post("/api/companion/webhook/{proposal_id}/decision")
+    async def api_decide_companion_webhook(proposal_id: str, payload: _ProposalDecisionRequest) -> Any:
+        """Approve (→ execute) or reject a companion Webhook proposal (HSM-14)."""
+        decision = str(payload.decision or "").strip().lower()
+        if decision not in ("approved", "rejected"):
+            return JSONResponse({"success": False, "error": f"Invalid decision: {decision!r}"}, status_code=400)
+        try:
+            from ...db import get_database
+
+            db = get_database()
+            existing = db.actuators.get_proposal(proposal_id)
+            if existing is None or existing.meeting_id != _COMPANION_MEETING_ID or existing.target != "webhook":
+                return JSONResponse({"success": False, "error": "Proposal not found"}, status_code=404)
+            try:
+                updated = db.actuators.transition_proposal(
+                    proposal_id, to_status=decision, actor=(payload.decided_by or "companion").strip() or "companion")
+            except ValueError as ve:
+                return JSONResponse({"success": False, "error": str(ve)}, status_code=400)
+            if decision == "rejected":
+                ctx.broadcast("actuator_result", _actuator_result_event(updated))
+            if decision == "approved" and updated.target == "webhook":
+                updated = _execute_webhook_proposal(db, updated, actor=(payload.decided_by or "companion").strip() or "companion")
+            return JSONResponse({"success": True, "proposal": _proposal_to_dict(updated)})
+        except Exception as e:
+            return error_500(e, log, "Failed to decide companion webhook proposal")
 
     @router.get("/api/all-action-items")
     async def api_list_all_action_items(
