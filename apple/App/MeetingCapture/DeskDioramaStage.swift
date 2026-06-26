@@ -535,6 +535,75 @@ struct DioMotes: View {
     }
 }
 
+// THE IN-DESK RECORDING CONSOLE — recording happens ON the desk, not in a separate window. A live
+// waveform off the real mic, the words as they're heard, the elapsed time, and one big stop. When you
+// stop, the meeting weaves on-device and a cassette lands on the desk.
+struct DioRecordingConsole: View {
+    @ObservedObject var model: CaptureModel
+    let onStop: () -> Void
+    private func timeString(_ s: Double) -> String { let i = Int(s); return String(format: "%d:%02d", i / 60, i % 60) }
+    private var caption: String {
+        if model.transcribing { return "Weaving your meeting on this iPad…" }
+        if !model.partial.isEmpty { return model.partial }
+        let last = model.liveTranscript.split(separator: "\n").last.map(String.init) ?? ""
+        return last.isEmpty ? "Listening…" : last
+    }
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [DioPal.bgTop, DioPal.bgMid, DioPal.bgBot], startPoint: .top, endPoint: .bottom).ignoresSafeArea().opacity(0.96)
+            TimelineView(.animation) { tl in
+                let t = tl.date.timeIntervalSinceReferenceDate
+                RadialGradient(colors: [(model.transcribing ? DioPal.cobalt : Color(hex: 0xFF4D4D)).opacity(0.14 + 0.05 * sin(t * 1.5)), .clear], center: .center, startRadius: 20, endRadius: 460)
+                    .ignoresSafeArea().blendMode(.plusLighter)
+            }
+            VStack(spacing: 26) {
+                Spacer()
+                TimelineView(.animation) { tl in
+                    let blink = 0.4 + 0.6 * abs(sin(tl.date.timeIntervalSinceReferenceDate * 2))
+                    HStack(spacing: 10) {
+                        Circle().fill(model.transcribing ? DioPal.cobalt : Color(hex: 0xFF4D4D)).frame(width: 11, height: 11).opacity(model.recording ? blink : 1)
+                        Text(model.transcribing ? "WEAVING" : "REC").font(.system(size: 13, weight: .heavy, design: .rounded)).tracking(3).foregroundStyle(DioPal.text)
+                        Text(timeString(model.elapsedSeconds)).font(.system(size: 15, weight: .heavy, design: .rounded).monospacedDigit()).foregroundStyle(DioPal.muted)
+                    }
+                }
+                MicWaveform(level: CGFloat(model.level), active: model.recording, bars: 34, height: 76).frame(maxWidth: 340).padding(.horizontal, 28)
+                Text(caption).font(.system(size: 16, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.92))
+                    .multilineTextAlignment(.center).lineLimit(3).frame(maxWidth: 360, minHeight: 66)
+                    .padding(.horizontal, 24)
+                HStack(spacing: 6) {
+                    Image(systemName: "lock.fill").font(.system(size: 9, weight: .bold))
+                    Text("On device").font(.system(size: 10, weight: .heavy, design: .rounded))
+                }.foregroundStyle(DioPal.mint).padding(.horizontal, 10).frame(height: 26).background(Capsule().fill(DioPal.mint.opacity(0.14)))
+                Spacer()
+                if model.transcribing {
+                    HStack(spacing: 11) { ProgressView().tint(DioPal.text); Text("Weaving your meeting…").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text) }
+                        .padding(.bottom, 60)
+                } else {
+                    VStack(spacing: 12) {
+                        Button(action: onStop) {
+                            ZStack {
+                                TimelineView(.animation) { tl in
+                                    Circle().stroke(Color(hex: 0xFF4D4D).opacity(0.5), lineWidth: 2)
+                                        .frame(width: 100, height: 100).scaleEffect(1 + CGFloat(min(1, model.level)) * 0.35)
+                                        .opacity(0.5 + 0.5 * abs(sin(tl.date.timeIntervalSinceReferenceDate * 1.6)))
+                                }
+                                Circle().fill(Color(hex: 0xFF4D4D)).frame(width: 84, height: 84).shadow(color: Color(hex: 0xFF4D4D).opacity(0.6), radius: 20, y: 6)
+                                RoundedRectangle(cornerRadius: 7, style: .continuous).fill(.white).frame(width: 30, height: 30)
+                            }
+                        }.buttonStyle(.plain)
+                        Text("tap to stop & save").font(.system(size: 12.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
+                    }.padding(.bottom, 50)
+                }
+            }
+            if !model.error.isEmpty {
+                Text(model.error).font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(.white)
+                    .padding(12).background(RoundedRectangle(cornerRadius: 12).fill(Color(hex: 0xFF4D4D).opacity(0.9)))
+                    .frame(maxHeight: .infinity, alignment: .top).padding(.top, 70)
+            }
+        }
+    }
+}
+
 struct DioRecordOrb: View {
     let onTap: () -> Void
     var body: some View {
@@ -991,6 +1060,7 @@ struct DioStage: View {
     @State private var flash = 0.0
     @State private var selected: String? = nil
     @State private var capturing = false
+    @State private var showSettings = false
     @State private var openMeeting: Meeting? = nil
     @State private var positions: [String: CGPoint] = [:]
     @State private var zones: [ZoneRec] = []
@@ -1232,8 +1302,21 @@ struct DioStage: View {
                 }
 
                 DioCompanion(landed: landed, excited: selected != nil).position(x: w * 0.9, y: h * 0.86)
-                if landed && selected == nil && summonSource == nil {
-                    DioRecordOrb { capturing = true }.position(x: w * 0.5, y: h * 0.8).transition(.scale.combined(with: .opacity))
+                if landed && selected == nil && summonSource == nil && !capturing {
+                    DioRecordOrb { startCapture() }.position(x: w * 0.5, y: h * 0.8).transition(.scale.combined(with: .opacity))
+                }
+                // a desk-native settings entry (no bouncing to an old screen)
+                if landed && selected == nil && summonSource == nil && !capturing && path.isEmpty {
+                    Button { haptic(.light); showSettings = true } label: {
+                        Image(systemName: "gearshape.fill").font(.system(size: 16, weight: .bold)).foregroundStyle(DioPal.text.opacity(0.85))
+                            .frame(width: 42, height: 42).background(Circle().fill(.white.opacity(0.08)).overlay(Circle().strokeBorder(.white.opacity(0.12), lineWidth: 1)))
+                    }.buttonStyle(.plain)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).padding(.top, h * 0.045).padding(.leading, 18).zIndex(70)
+                }
+                // recording lives ON the desk now (not a separate window)
+                if capturing {
+                    DioRecordingConsole(model: model, onStop: { stopCapture() })
+                        .transition(.opacity).zIndex(150)
                 }
 
                 // THE RADIAL SUMMON — long-press a card and its VALID tools bloom around it; tap one to route.
@@ -1330,6 +1413,10 @@ struct DioStage: View {
             .ignoresSafeArea()
             .onAppear { landed = true; load(); model.refresh()
                 #if targetEnvironment(simulator)
+                if ProcessInfo.processInfo.environment["HS_DESK_RECORD"] == "1" {
+                    model.liveTranscript = "So the plan for Q3 is to ship the desk to the web."
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { withAnimation { capturing = true }; model.recording = true; model.level = 0.6 }
+                }
                 if ProcessInfo.processInfo.environment["HS_DESK_SUMMON"] == "1" {
                     outputs = [OutputRecord(id: "demo", title: "Standup notes", body: "Shipped the egress badge; review the dock by Friday.", source: "Standup", lens: "Note", path: "")]
                     let b = UIScreen.main.bounds
@@ -1358,12 +1445,10 @@ struct DioStage: View {
                 Button("Cancel", role: .cancel) { newZoneName = "" }
                 Button("Create") { createZone(newZoneName); newZoneName = "" }
             } message: { Text(path.isEmpty ? "A place on your desk that holds meetings." : "A sub-zone inside \(name(of: pathKey)).") }
-            .fullScreenCover(isPresented: $capturing) {
-                CaptureView(model: model, done: { capturing = false; model.refresh() })
-            }
             .sheet(isPresented: Binding(get: { openMeeting != nil }, set: { if !$0 { openMeeting = nil } })) {
                 if let m = openMeeting { NavigationStack { MeetingDetailView(meeting: m) }.preferredColorScheme(.dark) }
             }
+            .sheet(isPresented: $showSettings) { NavigationStack { SettingsView() }.preferredColorScheme(.dark) }
         }
         .preferredColorScheme(.dark)
     }
@@ -1546,6 +1631,22 @@ struct DioStage: View {
         return CGPoint(x: x, y: y)
     }
     private func dismissSummon() { haptic(.light); withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { summonSource = nil } }
+
+    // recording on the desk (not a separate window): the console shows immediately, the mic starts, and
+    // on stop the meeting weaves on-device and a fresh cassette lands on the desk.
+    private func startCapture() {
+        haptic(.medium)
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) { capturing = true }
+        Task { await model.startRecording() }
+    }
+    private func stopCapture() {
+        haptic(.medium)
+        Task {
+            await model.stopRecording()
+            model.refresh()
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.84)) { capturing = false }
+        }
+    }
 
     private func askBundle(_ w: CGFloat, _ h: CGFloat) {
         let cm = contentMembers()
