@@ -55,6 +55,7 @@ enum World {
 
 struct Hero: View {
     let obj: Obj; let landed: Bool; let mode: Mode
+    var picked: Bool = false
     let onTap: () -> Void
     private var modeScale: CGFloat { mode == .focus ? 1.34 : (mode == .recede ? 0.6 : 1) }
     private var dim: Double { mode == .recede ? 0.3 : 1 }
@@ -72,6 +73,10 @@ struct Hero: View {
                         .blur(radius: 11).offset(y: s * 0.46 * modeScale + bob * 0.25).opacity(landed ? dim : 0)
                     Circle().fill(RadialGradient(colors: [obj.glow.opacity(mode == .focus ? 0.75 : 0.5), .clear], center: .center, startRadius: 2, endRadius: s * 0.8))
                         .frame(width: s * 1.9, height: s * 1.9).blur(radius: 12).opacity(landed ? pulse * dim : 0)
+                    if picked {
+                        Circle().strokeBorder(Pal.accent.opacity(0.9), lineWidth: 3).frame(width: s * 1.05, height: s * 1.05)
+                            .background(Circle().fill(Pal.accent.opacity(0.12)).frame(width: s * 1.05, height: s * 1.05))
+                    }
                     Group {
                         if obj.symbol {
                             ZStack {
@@ -573,7 +578,8 @@ struct SendCardH: View {
 
 struct Stage: View {
     @State private var landed = false
-    @State private var routeStage = ""           // "", "sheet", "theater", "printed", "send" (DIO_ROUTE_STAGE)
+    @State private var routeStage = ""           // "", "sheet", "theater", "printed", "send", "wire" (DIO_ROUTE_STAGE)
+    @State private var lassoSel: Set<String> = []   // DIO_LASSO: multi-select → Ask the bundle
     @State private var path: [String] = []
     @State private var diveDir = 1
     @State private var flash = 0.0
@@ -684,6 +690,24 @@ struct Stage: View {
 
                 if recording { listeningOverlay() }
 
+                // lasso multi-select → Ask the bundle
+                if !lassoSel.isEmpty {
+                    let a = loosePos(0, 4, w, h), b = loosePos(2, 4, w, h)
+                    let rect = CGRect(x: min(a.x, b.x) - 70, y: min(a.y, b.y) - 70, width: abs(a.x - b.x) + 140, height: abs(a.y - b.y) + 140)
+                    RoundedRectangle(cornerRadius: 18).strokeBorder(Pal.accent.opacity(0.8), style: StrokeStyle(lineWidth: 2, dash: [7, 6]))
+                        .background(RoundedRectangle(cornerRadius: 18).fill(Pal.accent.opacity(0.06)))
+                        .frame(width: rect.width, height: rect.height).position(x: rect.midX, y: rect.midY).zIndex(40)
+                    HStack(spacing: 12) {
+                        Text("\(lassoSel.count) selected").font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted)
+                        HStack(spacing: 7) { Image(systemName: "wand.and.stars").font(.system(size: 14, weight: .bold)); Text("Ask AI about these").font(.system(size: 14.5, weight: .heavy, design: .rounded)) }
+                            .foregroundStyle(.white).padding(.horizontal, 18).frame(height: 46)
+                            .background(Capsule().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), Pal.accent], startPoint: .top, endPoint: .bottom)))
+                        Text("Clear").font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(Pal.muted).padding(.horizontal, 14).frame(height: 46).background(Capsule().fill(.white.opacity(0.06)))
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 8).background(Capsule().fill(.black.opacity(0.6)))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(.bottom, h * 0.12).zIndex(116)
+                }
+
                 if routeStage == "sheet" { RouteSheetH(source: "Standup").zIndex(120) }
                 if routeStage == "theater" { TheaterH(source: "Standup").zIndex(120) }
                 if routeStage == "wire" {
@@ -722,6 +746,7 @@ struct Stage: View {
                 if let p = env["DIO_PATH"], !p.isEmpty { path = p.split(separator: "/").map(String.init) }
                 if let s = env["DIO_SELECT"], !s.isEmpty { DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { select(s) } }
                 if let r = env["DIO_ROUTE_STAGE"], !r.isEmpty { routeStage = r }
+                if env["DIO_LASSO"] == "1" { lassoSel = ["standup", "docs"] }
                 if env["DIO_DEMO"] == "1" { runDemo() }
             }
         }
@@ -744,7 +769,7 @@ struct Stage: View {
 
             // objects
             ForEach(Array(ms.enumerated()), id: \.element.id) { i, o in
-                Hero(obj: o, landed: landed, mode: mode(o.id)) { select(selected == o.id ? nil : o.id) }
+                Hero(obj: o, landed: landed, mode: mode(o.id), picked: lassoSel.contains(o.id)) { select(selected == o.id ? nil : o.id) }
                     .position(selected == o.id ? focusPos(w, h) : loosePos(i, ms.count, w, h))
                     .animation(focusSpring, value: selected)
                     .zIndex(selected == o.id ? 10 : 0)

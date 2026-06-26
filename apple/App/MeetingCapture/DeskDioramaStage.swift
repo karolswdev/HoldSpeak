@@ -20,10 +20,15 @@ enum DioPal {
 
 enum DioMode { case home, focus, recede }
 
+// A long-press menu entry — the discoverable twin of a drag-route/drag-send.
+struct DioMenuItem: Identifiable { let id = UUID(); let label: String; let icon: String; let action: () -> Void }
+
 // MARK: - canvas object — derived ENTIRELY from a DeskPrimitive (glyph/colour/title/id). Gesture on the stable outer view.
 struct DioHero: View {
     let prim: any DeskPrimitive; let landed: Bool; let mode: DioMode; let index: Int; let pos: CGPoint
     var hot: Bool = false                          // a compatible primitive is hovering over me → I'm a route target
+    var picked: Bool = false                       // selected by the lasso (part of an Ask bundle)
+    var menu: [DioMenuItem] = []                    // long-press → route/send/open
     let onTap: () -> Void; let onDrop: (CGSize) -> Void; let onDragChange: (CGPoint?) -> Void
     @State private var drag: CGSize = .zero
     private var modeScale: CGFloat { hot ? 1.12 : (mode == .focus ? 1.34 : (mode == .recede ? 0.6 : 1)) }
@@ -32,7 +37,7 @@ struct DioHero: View {
     var body: some View {
         let s = prim.base
         VStack(spacing: 7) {
-            DioHeroVisual(glyph: prim.glyph, glow: prim.color, base: s, seed: prim.id, focused: mode == .focus, hot: hot, symbol: prim.isSymbol).frame(width: s, height: s)
+            DioHeroVisual(glyph: prim.glyph, glow: prim.color, base: s, seed: prim.id, focused: mode == .focus, hot: hot, symbol: prim.isSymbol, picked: picked).frame(width: s, height: s)
             Text(prim.title).font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.85))
                 .lineLimit(1).frame(maxWidth: s + 36)
                 .padding(.horizontal, 8).padding(.vertical, 3)
@@ -62,12 +67,17 @@ struct DioHero: View {
                     drag = .zero
                 }
         )
+        .contextMenu {
+            ForEach(menu) { item in
+                Button { item.action() } label: { Label(item.label, systemImage: item.icon) }
+            }
+        }
     }
 }
 
 struct DioHeroVisual: View {
     let glyph: String; let glow: Color; let base: CGFloat; let seed: String; let focused: Bool
-    var hot: Bool = false; var symbol: Bool = false
+    var hot: Bool = false; var symbol: Bool = false; var picked: Bool = false
     var body: some View {
         let s = base
         TimelineView(.animation) { tl in
@@ -85,6 +95,10 @@ struct DioHeroVisual: View {
                 if hot {
                     Circle().strokeBorder(DioPal.accent.opacity(0.7 + 0.3 * ring), lineWidth: 3)
                         .frame(width: s * (1.1 + 0.08 * ring), height: s * (1.1 + 0.08 * ring))
+                }
+                if picked {
+                    Circle().fill(DioPal.accent.opacity(0.12)).frame(width: s * 1.05, height: s * 1.05)
+                        .overlay(Circle().strokeBorder(DioPal.accent.opacity(0.9), lineWidth: 3))
                 }
                 Group {
                     if symbol {
@@ -671,6 +685,12 @@ struct DioStage: View {
     @State private var dragHotZone: String? = nil
     @State private var namingZone = false
     @State private var newZoneName = ""
+    // lasso → bundle → Ask (the Ask-AI atom): select many primitives, route them through the core together
+    @State private var lassoStart: CGPoint? = nil
+    @State private var lassoEnd: CGPoint? = nil
+    @State private var selectedSet: Set<String> = []
+    @State private var bundleTitle = ""
+    @State private var bundleText = ""
     // routing (the keystone: drag a primitive onto the AI core → LLM → a new primitive)
     @AppStorage("hs.diorama.outputs") private var outputsJSON = ""
     @State private var outputs: [OutputRecord] = []
@@ -790,9 +810,27 @@ struct DioStage: View {
                         .blendMode(.plusLighter).animation(diveSpring, value: pathKey)
                 }
                 DioMotes()
-                Color.clear.contentShape(Rectangle()).onTapGesture {
-                    if selected != nil { select(nil) } else if !path.isEmpty { climbOut() }
-                }
+                // the desk surface: a tap deselects/climbs out; a drag on empty space LASSOS objects into a bundle
+                Color.clear.contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { v in
+                                if selected != nil { select(nil) }
+                                lassoStart = v.startLocation; lassoEnd = v.location
+                                if hypot(v.translation.width, v.translation.height) > 12 {
+                                    selectedSet = primitivesIn(lassoRect(), members(), w, h)
+                                }
+                            }
+                            .onEnded { v in
+                                let moved = hypot(v.translation.width, v.translation.height)
+                                lassoStart = nil; lassoEnd = nil
+                                if moved < 12 {                       // a tap, not a lasso
+                                    if !selectedSet.isEmpty { selectedSet = [] }
+                                    else if selected != nil { select(nil) }
+                                    else if !path.isEmpty { climbOut() }
+                                }
+                            }
+                    )
 
                 VStack(spacing: 3) {
                     Text("HoldSpeak").font(.system(size: 25, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
@@ -804,6 +842,29 @@ struct DioStage: View {
 
                 ForEach([pathKey], id: \.self) { _ in level(w, h) }
                     .transition(diveTransition)
+
+                // the live lasso rectangle while dragging on empty desk
+                if let r = lassoStart, let e = lassoEnd, hypot(e.x - r.x, e.y - r.y) > 12 {
+                    let rect = lassoRect()
+                    RoundedRectangle(cornerRadius: 16).strokeBorder(DioPal.accent.opacity(0.85), style: StrokeStyle(lineWidth: 2, dash: [7, 6]))
+                        .background(RoundedRectangle(cornerRadius: 16).fill(DioPal.accent.opacity(0.06)))
+                        .frame(width: rect.width, height: rect.height).position(x: rect.midX, y: rect.midY)
+                        .allowsHitTesting(false).zIndex(40)
+                }
+                // the bundle bar: Ask the selected primitives together
+                if !selectedSet.isEmpty && selected == nil && !showRouteSheet && !routing {
+                    HStack(spacing: 12) {
+                        Text("\(selectedSet.count) selected").font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
+                        Button { askBundle(w, h) } label: {
+                            HStack(spacing: 7) { Image(systemName: "wand.and.stars").font(.system(size: 14, weight: .bold)); Text("Ask AI about these").font(.system(size: 14.5, weight: .heavy, design: .rounded)) }
+                                .foregroundStyle(.white).padding(.horizontal, 18).frame(height: 46)
+                                .background(Capsule().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom)))
+                        }.buttonStyle(.plain)
+                        Button { selectedSet = [] } label: { Text("Clear").font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).padding(.horizontal, 14).frame(height: 46).background(Capsule().fill(.white.opacity(0.06))) }.buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 8).background(Capsule().fill(.black.opacity(0.6)))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(.bottom, h * 0.12).zIndex(116)
+                }
 
                 DioCompanion(landed: landed, excited: selected != nil).position(x: w * 0.9, y: h * 0.9)
                 if landed && selected == nil {
@@ -830,15 +891,14 @@ struct DioStage: View {
                 }
 
                 // the keystone routing flow: sheet → theater → printed card (keep/bin)
-                if showRouteSheet, let src = members().first(where: { $0.id == routeSourceId }) {
-                    DioRouteSheet(sourceTitle: src.title,
+                if showRouteSheet {
+                    DioRouteSheet(sourceTitle: routeSourceTitle(),
                                   onAsk: { l, p in runRoute(lens: l, prompt: p) },
                                   onCancel: { withAnimation { showRouteSheet = false }; routeSourceId = nil })
                         .zIndex(120)
                 }
                 if routing {
-                    DioRoutingTheater(from: routeFrom, to: routeTo,
-                                      sourceTitle: members().first(where: { $0.id == routeSourceId })?.title ?? "the desk",
+                    DioRoutingTheater(from: routeFrom, to: routeTo, sourceTitle: routeSourceTitle(),
                                       lens: routeLensRun, local: InferenceConfigStore.shared.isLocal, tint: DioPal.accent).zIndex(125)
                 }
                 if let rec = printed {
@@ -895,7 +955,8 @@ struct DioStage: View {
 
             ForEach(Array(ms.enumerated()), id: \.element.id) { i, p in
                 DioHero(prim: p, landed: landed, mode: mode(p.id), index: i, pos: pos(p.id, looseHome(i, ms.count, w, h), w, h),
-                        hot: dragHotObjectId == p.id,
+                        hot: dragHotObjectId == p.id, picked: selectedSet.contains(p.id),
+                        menu: menuItems(for: p, at: pos(p.id, looseHome(i, ms.count, w, h), w, h), w, h),
                         onTap: { select(selected == p.id ? nil : p.id) },
                         onDrop: { tr in drop(p, looseHome(i, ms.count, w, h), tr, w, h) },
                         onDragChange: { pt in updateHot(p, pt, zs, slotN, w, h) })
@@ -954,6 +1015,56 @@ struct DioStage: View {
         dragHotObjectId = nil
         dragHotZone = (p.kind == .meeting) ? trayHit(pt, zs, slotN, w, h) : nil
     }
+    // the long-press menu for a primitive — the discoverable twin of drag-to-route / drag-to-send
+    private func menuItems(for p: any DeskPrimitive, at center: CGPoint, _ w: CGFloat, _ h: CGFloat) -> [DioMenuItem] {
+        var items: [DioMenuItem] = [DioMenuItem(label: "Open", icon: "arrow.up.left.and.arrow.down.right") { select(p.id) }]
+        let ms = members()
+        if let core = ms.enumerated().first(where: { $0.element.kind == .model && $0.element.accepts.contains(p.kind) }) {
+            items.append(DioMenuItem(label: "Route to AI core", icon: "wand.and.stars") {
+                routeFrom = center; routeTo = pos(core.element.id, looseHome(core.offset, ms.count, w, h), w, h)
+                routeSourceId = p.id; haptic(.medium); withAnimation { showRouteSheet = true }
+            })
+        }
+        for c in ms where c.kind == .connector && c.accepts.contains(p.kind) {
+            items.append(DioMenuItem(label: "Send to \(c.title)", icon: "paperplane") {
+                sendSourceId = p.id; sendTargetName = c.title; haptic(.medium); withAnimation { showSendCard = true }
+            })
+        }
+        if p.kind == .meeting {
+            items.append(DioMenuItem(label: "Open full editor", icon: "rectangle.expand.vertical") { if let m = meeting(forObj: p.id) { openMeeting = m } })
+        }
+        return items
+    }
+    private func routeSourceTitle() -> String {
+        routeSourceId == "__bundle__" ? bundleTitle : (members().first { $0.id == routeSourceId }?.title ?? "the desk")
+    }
+    private func lassoRect() -> CGRect {
+        guard let s = lassoStart, let e = lassoEnd else { return .zero }
+        return CGRect(x: min(s.x, e.x), y: min(s.y, e.y), width: abs(e.x - s.x), height: abs(e.y - s.y))
+    }
+    private func primitivesIn(_ rect: CGRect, _ ms: [any DeskPrimitive], _ w: CGFloat, _ h: CGFloat) -> Set<String> {
+        var out: Set<String> = []
+        for (i, o) in ms.enumerated() where rect.contains(pos(o.id, looseHome(i, ms.count, w, h), w, h)) { out.insert(o.id) }
+        return out
+    }
+    private func askBundle(_ w: CGFloat, _ h: CGFloat) {
+        let ms = members()
+        let picked = ms.enumerated().filter { selectedSet.contains($0.element.id) }
+        guard !picked.isEmpty else { return }
+        guard let core = ms.enumerated().first(where: { $0.element.kind == .model }) else {
+            routeError = "Add an on-device model (or pair an endpoint in Settings) to ask the AI."; return
+        }
+        bundleText = picked.map { "## \($0.element.title)\n\($0.element.routableText)" }.joined(separator: "\n\n")
+        bundleTitle = "\(picked.count) items"
+        let centers = picked.map { pos($0.element.id, looseHome($0.offset, ms.count, w, h), w, h) }
+        routeFrom = CGPoint(x: centers.map(\.x).reduce(0, +) / CGFloat(centers.count),
+                            y: centers.map(\.y).reduce(0, +) / CGFloat(centers.count))
+        routeTo = pos(core.element.id, looseHome(core.offset, ms.count, w, h), w, h)
+        routeSourceId = "__bundle__"
+        haptic(.medium)
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { showRouteSheet = true }
+    }
+
     private func objectHit(_ pt: CGPoint, _ ms: [any DeskPrimitive], _ w: CGFloat, _ h: CGFloat, excluding: String) -> (prim: any DeskPrimitive, center: CGPoint)? {
         for (i, o) in ms.enumerated() where o.id != excluding {
             let c = pos(o.id, looseHome(i, ms.count, w, h), w, h)
@@ -1052,10 +1163,14 @@ struct DioStage: View {
     }
     private func runRoute(lens: String, prompt: String) {
         withAnimation { showRouteSheet = false }
-        guard let src = members().first(where: { $0.id == routeSourceId }) else { return }
+        let material: String, srcTitle: String
+        if routeSourceId == "__bundle__" {
+            material = String(bundleText.prefix(6000)); srcTitle = bundleTitle
+        } else {
+            guard let src = members().first(where: { $0.id == routeSourceId }) else { return }
+            material = String(src.routableText.prefix(6000)); srcTitle = src.title
+        }
         routeLensRun = lens
-        let material = String(src.routableText.prefix(6000))
-        let srcTitle = src.title
         let full = prompt + "\n\nMaterial:\n" + material
         let zpath = pathKey
         haptic(.heavy)
@@ -1073,6 +1188,7 @@ struct DioStage: View {
                     printed = OutputRecord(id: UUID().uuidString, title: lens, body: clean.isEmpty ? "(the model returned nothing)" : clean,
                                            source: srcTitle, lens: lens, path: zpath)
                 }
+                selectedSet = []
             case .failure(let e):
                 routeError = friendly(e)
             }

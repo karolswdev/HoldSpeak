@@ -575,6 +575,21 @@ in the harness (tokens visibly travel the cable frame-to-frame), ported to `DioS
 SUCCEEDED**. Proof: [route arc](./screenshots/route-arc.png) + the recorded clip. Next on the list: the
 long-press "Route to…/Send to…" menu (discoverable twin) + lasso→bundle→Ask + a second grounded connector.
 
+**2026-06-25 — the Ask-AI atom (lasso → bundle → Ask) + the long-press menu (story-25 #3 + #5).** Two
+capability leaps that make routing powerful AND discoverable. **Lasso:** drag on the empty desk → a dashed
+selection rect; every primitive whose centre falls inside lights up with a selection ring; a bottom **bundle
+bar** ("N selected · Ask AI about these · Clear") routes the WHOLE selection through the AI core at once —
+their `routableText` is concatenated (`## title` headers) into one grounded prompt, through the same route
+sheet + on-desk cable + real `ILLMProvider`, printing one new primitive (the multi-context Ask-AI atom; a tap
+vs. lasso is disambiguated by drag distance, so tap-to-deselect/climb still works). **Long-press menu:** every
+primitive now has a `.contextMenu` — **Open · Route to AI core · Send to <connector> · Open full editor** —
+built from the contract (`accepts`), the discoverable twin of the drag (so you never need pixel-perfect
+aim). Both generic over the Primitive contract; the bundle reuses the route arc + theater. Lasso composed +
+screenshot-proven in the harness ([lasso → Ask](./screenshots/lasso-bundle.png)); both ported to `DioStage`;
+device-arch **BUILD SUCCEEDED**. Routing is now: drag onto a target, lasso a bundle, or long-press a menu —
+three ways into the same engine. Next: a second grounded connector (webhook/GitHub via the host actuators) +
+act-on-action inside the pull-out.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
