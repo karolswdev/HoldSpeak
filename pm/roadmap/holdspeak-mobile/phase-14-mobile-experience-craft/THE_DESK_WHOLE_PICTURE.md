@@ -83,12 +83,13 @@ One grammar end to end. Nothing is a dead end; every output is an input.
 - ✅ The visible route — a cable with a traveling token (one mechanism for routing-in and sending-out)
 - ✅ The Ask-AI atom — lasso a bundle → ask the model about all of it at once
 - ✅ The long-press menu — Route to… / Send to… / Open (the discoverable twin)
-- ✅ Connectors grounded — Slack via the **Mac's actuator framework**, host-gated, credential on the Mac (13 tests)
-- ▶ More connectors — webhook / GitHub issue (each = one primitive + a thin host endpoint)
-- ▶ Workflows as primitives — drop a meeting on a saved pipeline; it runs
-- ▶ Act-on-section — route/send a single facet (just the actions, just the summary)
-- ▶ Web parity + mesh sync (Phase 16) — the desk everywhere, one approval + egress contract
-- ▶ Real-metal proof — the on-device LLM route + a live Slack send via the Mac
+- ✅ Three connectors grounded — **Slack · Webhook · GitHub issue**, all via the **Mac's actuator
+  framework** (propose→approve→execute), host-gated, credential on the Mac, target-scoped (30 tests). Adding
+  the next is "one primitive + one thin host endpoint."
+- ✅ Workflows as primitives — "Save as a tool" → a tile; drop a meeting on it and it runs the saved Ask
+- ✅ Act-on-section — route a single facet (just the actions, just the summary) through the core
+- ▶ Web parity + mesh sync (Phase 16) — the desk everywhere, one approval + egress contract — **the next big track**
+- ▶ Real-metal proof — the on-device LLM route + a live send via the Mac, walked on the iPad
 
 ## 9. The map
 
