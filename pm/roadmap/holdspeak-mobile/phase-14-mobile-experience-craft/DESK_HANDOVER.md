@@ -1,8 +1,155 @@
-# The Desk — handover for the next agent
+# The Desk (DeskOS) — handover for the next agent
 
-> Written 2026-06-24 at the end of a long build session. Read this top-to-bottom before touching code.
-> The branch is `holdspeak-mobile/the-desk`; **PR #133** is open to `main` (33 commits, not merged).
-> Everything is committed + pushed. The owner asked for a fresh mind — this is the running start.
+> Rewritten 2026-06-25 after **PR #133 merged to `main`** (the whole DeskPrimitive era — 70+ commits). This
+> top section is the CURRENT source of truth; the 3D / pre-contract notes further down are HISTORICAL (the
+> diorama + contract superseded them). Companion docs: [[THE_DESK_WHOLE_PICTURE]] (the holistic map + its
+> rendered `the-desk-map.png`) and [[story-25-the-desk-interaction-system]] (the contract detail). The
+> running log is `current-phase-status.md` "Where we are".
+
+## 0. The 60-second orientation
+
+DeskOS is the iPad app reimagined as a spatial, gamified **command center**: meetings, their intelligence,
+the AI, your knowledge, and your integrations are all **manipulable objects on one desk**. The iPad is a
+**companion to the Mac** (the host). The shipping front door is the **2.5D motion-first diorama**
+(`apple/App/MeetingCapture/DeskDioramaStage.swift` = `DioStage`), NOT the old 3D `LivingDeskCanvas` (which
+stays unused in the tree behind `HS_REAL_DESK=1`).
+
+Owner's bar (unchanged): coherent, meaningful, **delightful** leaps — not tech-demo mechanics. Premium =
+"I'm delighted when I use it," and delight is felt in MOTION. Prove feel with Simulator video/screenshots,
+then on the device.
+
+## 1. The spine — everything is a DeskPrimitive (read this first)
+
+`apple/App/MeetingCapture/DeskPrimitive.swift`. EVERY concept declares the same facets and the **entire UI is
+derived** from that declaration — the canvas object, the card, the pull-out, the menu, the routing. Add a
+concept = declare one primitive; its whole UI appears for free.
+
+- Facets: `kind` (→ glyph + colour; `isSymbol` = an SF-symbol tool, not a pixel sprite), `title`/`subtitle`/
+  `preview`, `sections` (the pull-out body — text/actions/chips/transcript, ONE renderer), `actions`,
+  **`emits`**, **`accepts`**, `routableText` (the LLM input, derived generically from sections).
+- Conformers: `MeetingPrimitive`, `OutputPrimitive` (a generated card — itself routable), `ModelPrimitive`
+  (the AI core), `KBPrimitive`, `ConnectorPrimitive` (Slack/Webhook/GitHub), `WorkflowPrimitive` (a saved Ask).
+- Routing is generic: a drop is allowed iff `target.accepts ∋ source.kind`; `beginRoute` switches on
+  `target.kind` (model → ask the LLM, connector → send, workflow → run the saved prompt).
+
+**DO NOT add bespoke per-type screens.** If you're tempted, you're fighting the contract — declare a primitive.
+
+## 2. The anatomy of DioStage (where things live)
+
+- **Content on the desk** (`contentMembers()`): meetings, outputs, knowledge bases. Free-placed (drag),
+  positions persisted (`hs.diorama.pos`).
+- **Tools in the dock** (`toolMembers()`): the AI core, connectors, saved workflows — a swipe-out **bottom
+  Tool Dock** in the thumb zone (`DioDockChrome`/`DioDockTile`). A content drag auto-opens it; drop a card on
+  a tool to route/send (`dockHit` / `dockToolPos`); tap a tool → its pull-out. (Built because the owner said
+  the tooling wasn't reachable in the lower screen + wanted a docked chooser.)
+- **Zones** = resizable, free-placed 2D **areas** (`ZoneRec`: path/color/cx/cy/w/h; drag to arrange, corner
+  grip to resize, tap to dive — fractal/recursive, path-based; `hs.diorama.zones`). Drop a meeting in one to
+  file it (`hs.diorama.filed`).
+- **The pull-out** (`DioPullout`): the right-edge drawer; renders any primitive's `sections` + a per-section
+  "Route this to AI" (act-on-section) + `actions`.
+- **The intelligence engine:** drag / lasso / long-press → the route sheet (pick a lens or prompt; "Save as a
+  reusable tool" → a `WorkflowPrimitive`) → the real `ILLMProvider` (on-device GGUF or an endpoint, via
+  `InferenceConfigStore.makeProvider`) → the **visible cable** (`RouteArc`, a token travels the wire) → a new
+  `OutputPrimitive` prints → keep/bin (`hs.diorama.outputs`).
+- **Three ways to route:** drag onto a target, **lasso** a bundle (the Ask-AI atom), **long-press** a menu.
+
+## 3. Integrations are GROUNDED + HOST-GATED (do not regress this)
+
+The owner was emphatic: connectors do NOT act from the iPad. They ride the **HoldSpeak actuator framework on
+the Mac** (propose→approve→execute, permission manifest, guarded executor), and the **credential is joined in
+memory ON THE MAC at execute time — never on the iPad, never on a proposal/broadcast/response**.
+
+- Host (Python, `holdspeak/web/routes/meetings.py`): `POST /api/companion/{slack,webhook,github}/propose` +
+  `/{id}/decision`, **target-scoped so they can't cross**; reuse `build_slack_connector` /
+  `build_url_webhook_connector` / `build_github_issue_connector` + `ActuatorExecutor`. Config:
+  `slack_webhook_url` / `companion_webhook_url` / `companion_github_repo`. Status: `/api/companion/status` →
+  `connectors.{slack,webhook,github}_configured` (no URL leaks). A sentinel `companion` meeting satisfies the
+  proposals FK (excluded from `list_meetings`). Tests:
+  `tests/integration/test_web_companion_{slack,webhook,github}.py` (30 — MIRROR these for the next connector).
+- iPad: `DeskHostLink` (in DioStage) reuses the desk's Mac pairing (`hs.peer.host`/`hs.peer.port`), gates on
+  `/health` reachability, and propose→decide by `target`. **A new connector = one `ConnectorPrimitive` + one
+  thin host endpoint pair + its tests.**
+- Egress = the ONE badge (local / cloud·target), no privacy prose (POSITIONING canon).
+
+## 4. The build / verify loop (USE THIS)
+
+1. **Compose the FEEL in the harness first** (the Simulator works for it; the full app's Simulator build does
+   not). `apple/scripts/diorama/Diorama.swift` mirrors DioStage's look; `./scripts/diorama-shot.sh /tmp/x.png`
+   builds + screenshots in **PORTRAIT**. Deterministic env hooks (via `SIMCTL_CHILD_*`): `DIO_SELECT`,
+   `DIO_PATH`, `DIO_ROUTE_STAGE` (sheet/theater/wire/send/printed), `DIO_LASSO=1`, `DIO_DOCK=open`. Record
+   motion with `simctl io recordVideo` — delight is felt in motion.
+2. **Port to DioStage + device-arch compile-check:** `cd apple && ruby scripts/gen-meeting-capture.rb &&
+   xcodebuild -project build/HoldSpeakMeetingCapture.xcodeproj -scheme HoldSpeakMobile -destination
+   'generic/platform=iOS' -derivedDataPath build/mc-verify2 -skipMacroValidation CODE_SIGNING_ALLOWED=NO build`.
+3. **Install on device:** `./scripts/meeting-capture-device.sh` then `xcrun devicectl device process launch
+   --device 6B2F424D-707F-51F7-A33E-259427861CB1 dev.holdspeak.mobile`. Error 10002 = iPad locked (the install
+   still completed). The owner walks it on the cabled iPad Air M4 (AjPed).
+4. **Host side:** `uv run pytest -q ...` — the companion-connector tests are the pattern.
+
+## 5. What's DONE (all on `main` via PR #133)
+
+The DeskPrimitive contract; fractal + resizable zones with the dive; the right-edge pull-out; the keystone LLM
+routing + the visible cable; the Ask-AI atom (lasso) + long-press menu + act-on-section; three host-grounded
+connectors (Slack/Webhook/GitHub, 30 tests); workflows as primitives; the swipe-out tool dock. The earlier 3D
+era (LivingDeskCanvas, paper cards, fences) is in the tree but superseded by the diorama.
+
+## 6. The path forward (owner: "momentum on DeskOS, then Web Parity")
+
+**A) Finish + polish DeskOS (near-term).**
+- **Walk it on the device and tune the feel** — the dock auto-open timing, the zone resize clamps + overlap,
+  the cable, the record-orb position while the dock is open. (The device was unavailable at the end of the
+  last session, so the dock / resizable zones / connectors are arch-verified + harness-proven but **not yet
+  hand-walked** — that's the first thing to do.)
+- **The real-metal proof the owner prizes:** a real on-device LLM route (drag a meeting → AI core → a card
+  prints) AND a live Slack/GitHub send via the Mac. Control-vs-treatment, not a no-LLM plumbing pass.
+- Smaller: the desk's empty/first-run state; surfacing per-connector config; "act on an action item" (an
+  action row → send/file); retiring the old 3D `LivingDeskCanvas` so the diorama is the only desk.
+
+**B) WEB PARITY + the Mesh (Phase 16, the next big track) — `../phase-16-the-desk-everywhere/`.**
+- Goal: the SAME desk on the **web (Astro, `web/src`)** and synced across Mac + iPad, on **one approval +
+  egress contract**. Build it on the SAME primitive model — the web desk and the iPad desk must be ONE model,
+  not two builds. The Mac already owns the actuators + the companion API + the web frontend, so the web desk
+  is a new surface over the same engine, **not a reimplementation**.
+- The mesh seam exists: `HTTPDesktopClient` + `/api/companion/*`; `holdspeak/mesh.py` + `/api/mesh/*` (Phase
+  15 LAN discovery). Models never sync (manifest only — owner-confirmed). Any web→world action reuses the
+  grounded actuator path.
+
+## 7. Gotchas that will bite you
+
+- **The contract is load-bearing** — routing, the pull-out, the dock, all derive from DeskPrimitive. Change a
+  facet, not a screen.
+- **Host-gated connectors / the credential rule** — never POST to a webhook from the iPad; never put a
+  credential on a proposal/broadcast/response. Mirror the 30 companion tests.
+- **The harness renders PORTRAIT** (a landscape Info.plist was letterboxing it). Compose for portrait; the
+  device adapts via GeometryReader fractions.
+- **CI lessons from merging #133:** the Phase-15 mesh tests need `pytest.importorskip("zeroconf")` (zeroconf
+  is a `[meeting]` extra; the Unit Tests job is base-install). Any web change that renames a dashboard helper
+  must update `tests/integration/test_web_server.py` (HS-69-01 swapped `egressLabel()` → the structured
+  `egress-badge`). The web bundle `holdspeak/static/_built/` is **gitignored** — CI builds it; `cd web && npm
+  run build` to verify locally.
+- **PMO hook:** every commit needs a fresh `.tmp/CONTRACT.md` with 7 `[x]`. No `--no-verify`. Merge phases via
+  a PR to `main` with **merge commits** when CI is green.
+- `GGML_NO_BACKTRACE` (`holdspeak/__init__.py`) + MLX-is-thread-bound are load-bearing on the Python/meeting
+  side — don't remove.
+
+## 8. How to work with this owner (the meta-lessons)
+
+- He gives a big vision in voice, then reacts hard. Match the energy; **own the gap honestly** when something
+  isn't good enough (he respects that more than spin). Don't narrate options you won't pursue — act.
+- **Build coherent, meaningful, DELIGHTFUL leaps.** Prove feel in MOTION (Simulator video), then on the metal.
+- **Declutter + reachability matter** (the tool dock came straight from "the tooling isn't in the lower part
+  of my screen"). Premium, modern, hand-driven; flat/default components are a regression.
+- He wants the HOLISTIC picture, not just a feature stream — keep `THE_DESK_WHOLE_PICTURE.md` true.
+- When you finish a chunk: screenshot/video proof → update `current-phase-status.md` → commit (fresh contract).
+  Don't fan out subagents for PMO/roadmap writing — author it yourself. Don't dwell on the device being
+  unavailable — keep building and arch-verify.
+
+---
+
+## HISTORICAL — the 3D / pre-contract era (superseded; kept for reference only)
+
+> Everything below predates the diorama + the DeskPrimitive contract. The diorama (`DioStage`) is the front
+> door now; the 3D `LivingDeskCanvas` stays unused in the tree. Read the sections above for the current truth.
 
 ---
 
