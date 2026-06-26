@@ -5,8 +5,8 @@ design, and modern hand-driven mobile practice were never in the roadmap, and th
 shipped as a bare functional shell, not a crafted product. This phase makes the
 **experience** first-class.)
 
-**Last updated:** 2026-06-25 (**act on an action item** — an action row → send to Slack/GitHub/Webhook via
-the host-gated path, or keep as a card; on top of the first-boot ritual. See the latest "Where we are".)
+**Last updated:** 2026-06-25 (**empty-state coherence** — the empty zone you dive into now teaches how to
+fill it, completing the first-boot/act-on-item craft run. See the latest "Where we are".)
 
 **(Historical) 2026-06-21 (**opened + first craft delivered.** The owner chose the
 **Tactile Sheets** design direction from three concrete mockups (gesture-first: swipeable
@@ -712,6 +712,19 @@ and degrades cleanly when the Mac isn't paired (rows dimmed + a "pair your Mac" 
 works). Composed in the diorama harness (new `DIO_ACT=1` hook → `screenshots/act-on-item.png`) then built in
 DioStage (`DioActSheet` + `beginActOnItem`/`actSend`/`actFile`). `xcodebuild` device-arch **BUILD SUCCEEDED**.
 Next per handover §6A: the device walk + the real-metal LLM-route + live send proof (control-vs-treatment).
+
+**2026-06-25 — empty-state coherence: a dived-into zone teaches itself too (handover §6A polish, cont.).**
+With the first-boot ritual the *root* desk teaches itself, but the OTHER empty surface in the spatial model
+was still a dead-end: dive into a freshly-made zone and you landed on a bare desk with no idea how to fill
+it (and you can't even file from inside a zone — you file by dragging a meeting onto its tray from the
+desk). Now an empty zone (`emptyZone` = not-root + no content + no child zones) shows a crafted
+**`DioZoneEmpty`** state matching the first-boot language: a breathing dashed tray glyph in the zone's tint,
+**"{Zone} is empty"**, the honest one-liner *"Drag a meeting onto this zone from your desk to file it
+here,"* a tinted **New sub-zone here** action, and a quiet *"tap the breadcrumb to climb back out"* cue. The
+premature corner **+ New Zone** tile is suppressed here (its job is taken by the in-state button). Composed
+in the harness (new `DIO_EMPTYZONE=1` hook → `screenshots/empty-zone.png`) then built in DioStage.
+`xcodebuild` device-arch **BUILD SUCCEEDED**. Every empty surface in the desk now orients instead of
+dead-ending. Next per handover §6A: the device walk + the real-metal LLM-route + live send proof.
 
 ## Operating principle (standing, beyond this phase)
 

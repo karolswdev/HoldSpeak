@@ -25,6 +25,47 @@ enum DioMode { case home, focus, recede }
 // action that begins everything: record. Felt in motion — a breathing core, a staggered spine.
 struct DioFirstBootStep: Identifiable { let id: Int; let glyph: String; let tint: Color; let title: String; let line: String }
 
+// An empty zone you dived into. You file meetings INTO a zone from the desk (drag onto its tray), so the
+// honest guidance from inside is: file from your desk, or nest a sub-zone here. Never a blank dead-end.
+struct DioZoneEmpty: View {
+    let name: String; let tint: Color; let onNewSubzone: () -> Void
+    @State private var shown = false
+    var body: some View {
+        TimelineView(.animation) { tl in
+            let breathe = 1 + CGFloat(sin(tl.date.timeIntervalSinceReferenceDate * 1.1) * 0.02)
+            VStack(spacing: 16) {
+                ZStack {
+                    ForEach(0..<2) { i in
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .strokeBorder(tint.opacity(0.22 - Double(i) * 0.08), style: StrokeStyle(lineWidth: 1.5, dash: [5, 6]))
+                            .frame(width: 92 + CGFloat(i) * 26, height: 92 + CGFloat(i) * 26).scaleEffect(breathe)
+                    }
+                    Image(systemName: "tray").font(.system(size: 34, weight: .regular)).foregroundStyle(tint.opacity(0.9))
+                }
+                .frame(height: 130)
+                VStack(spacing: 7) {
+                    Text("\(name) is empty").font(.system(size: 20, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                    Text("Drag a meeting onto this zone from your desk to file it here.")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                        .multilineTextAlignment(.center).frame(maxWidth: 300)
+                }
+                Button(action: onNewSubzone) {
+                    HStack(spacing: 7) { Image(systemName: "plus.circle.fill").font(.system(size: 14, weight: .bold)); Text("New sub-zone here").font(.system(size: 13.5, weight: .heavy, design: .rounded)) }
+                        .foregroundStyle(.white).padding(.horizontal, 18).frame(height: 46)
+                        .background(Capsule().fill(LinearGradient(colors: [tint.opacity(0.95), tint.opacity(0.7)], startPoint: .top, endPoint: .bottom)))
+                }.buttonStyle(.plain)
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.up.left").font(.system(size: 11, weight: .bold))
+                    Text("tap the breadcrumb to climb back out").font(.system(size: 11.5, weight: .semibold, design: .rounded))
+                }.foregroundStyle(DioPal.muted.opacity(0.8))
+            }
+            .opacity(shown ? 1 : 0).scaleEffect(shown ? 1 : 0.96)
+            .animation(.spring(response: 0.5, dampingFraction: 0.8), value: shown)
+        }
+        .onAppear { shown = true }
+    }
+}
+
 struct DioFirstBoot: View {
     let w: CGFloat; let h: CGFloat
     @State private var shown = false
@@ -1012,6 +1053,8 @@ struct DioStage: View {
     private func childZones() -> [ZoneRec] { zones.filter { parent(of: $0.path) == pathKey } }
     // a fresh desk: at root with nothing you've captured yet (tools like the AI core are always present)
     private var firstRun: Bool { path.isEmpty && contentMembers().isEmpty && childZones().isEmpty }
+    // a place you dived into that holds nothing yet — teach how to fill it, don't dead-end
+    private var emptyZone: Bool { !path.isEmpty && contentMembers().isEmpty && childZones().isEmpty }
 
     private var meetings: [Meeting] { model.meetings.sorted { $0.startedAt > $1.startedAt } }
     private var knowledgeBases: [String] { kbsCSV.split(separator: ";").map(String.init).filter { !$0.isEmpty } }
@@ -1150,6 +1193,12 @@ struct DioStage: View {
                     Text("Press to record your first meeting")
                         .font(.system(size: 12.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
                         .position(x: w * 0.5, y: h * 0.745).zIndex(6).allowsHitTesting(false)
+                }
+
+                // an empty zone you dived into — teach how to fill it (you file from the desk; or nest deeper)
+                if emptyZone && landed && selected == nil {
+                    DioZoneEmpty(name: name(of: pathKey), tint: curTint, onNewSubzone: { haptic(.light); namingZone = true })
+                        .frame(maxWidth: .infinity, maxHeight: .infinity).zIndex(5).transition(.opacity)
                 }
 
                 ForEach([pathKey], id: \.self) { _ in level(w, h) }
@@ -1294,7 +1343,7 @@ struct DioStage: View {
                             onMove: { tr in moveZone(z.path, tr, w, h) }, onResize: { tr in resizeZone(z.path, tr) })
                     .position(x: w * z.cx, y: h * z.cy)
             }
-            if selected == nil && !firstRun {
+            if selected == nil && !firstRun && !emptyZone {
                 Button { haptic(.light); namingZone = true } label: {
                     HStack(spacing: 6) { Image(systemName: "plus.circle.fill").font(.system(size: 14, weight: .bold)); Text("New Zone").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
                         .foregroundStyle(DioPal.muted).padding(.horizontal, 12).frame(height: 36)

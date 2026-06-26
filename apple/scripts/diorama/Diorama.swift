@@ -710,6 +710,40 @@ struct FirstBoot: View {
     }
 }
 
+// An empty zone you dived into (harness mirror) — teach how to fill it, never a blank dead-end.
+struct ZoneEmpty: View {
+    let name: String; let tint: Color
+    @State private var shown = false
+    var body: some View {
+        TimelineView(.animation) { tl in
+            let breathe = 1 + CGFloat(sin(tl.date.timeIntervalSinceReferenceDate * 1.1) * 0.02)
+            VStack(spacing: 16) {
+                ZStack {
+                    ForEach(0..<2) { i in
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .strokeBorder(tint.opacity(0.22 - Double(i) * 0.08), style: StrokeStyle(lineWidth: 1.5, dash: [5, 6]))
+                            .frame(width: 92 + CGFloat(i) * 26, height: 92 + CGFloat(i) * 26).scaleEffect(breathe)
+                    }
+                    Image(systemName: "tray").font(.system(size: 34, weight: .regular)).foregroundStyle(tint.opacity(0.9))
+                }.frame(height: 130)
+                VStack(spacing: 7) {
+                    Text("\(name) is empty").font(.system(size: 20, weight: .black, design: .rounded)).foregroundStyle(Pal.text)
+                    Text("Drag a meeting onto this zone from your desk to file it here.")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(Pal.muted)
+                        .multilineTextAlignment(.center).frame(maxWidth: 300)
+                }
+                HStack(spacing: 7) { Image(systemName: "plus.circle.fill").font(.system(size: 14, weight: .bold)); Text("New sub-zone here").font(.system(size: 13.5, weight: .heavy, design: .rounded)) }
+                    .foregroundStyle(.white).padding(.horizontal, 18).frame(height: 46)
+                    .background(Capsule().fill(LinearGradient(colors: [tint.opacity(0.95), tint.opacity(0.7)], startPoint: .top, endPoint: .bottom)))
+                HStack(spacing: 6) { Image(systemName: "arrow.up.left").font(.system(size: 11, weight: .bold)); Text("tap the breadcrumb to climb back out").font(.system(size: 11.5, weight: .semibold, design: .rounded)) }
+                    .foregroundStyle(Pal.muted.opacity(0.8))
+            }
+            .opacity(shown ? 1 : 0).scaleEffect(shown ? 1 : 0.96).animation(.spring(response: 0.5, dampingFraction: 0.8), value: shown)
+        }
+        .onAppear { shown = true }
+    }
+}
+
 // THE ACT SHEET (harness mirror) — an action item becomes tracked work (a host-gated connector) or a card.
 struct ActSheet: View {
     let itemText: String
@@ -780,6 +814,7 @@ struct Stage: View {
     @State private var dockOpen = false             // DIO_DOCK: the tool dock
     @State private var firstRun = false             // DIO_EMPTY: the cold-start / first-boot ritual
     @State private var showAct = false              // DIO_ACT: the act-on-an-action-item sheet
+    @State private var emptyZoneMode = false        // DIO_EMPTYZONE: an empty zone you dived into
     private let tools: [Obj] = [
         Obj(id: "core",    sprite: "cartridge", base: 60, glow: Pal.cobalt, title: "AI Core"),
         Obj(id: "slack",   sprite: "number", base: 56, glow: Pal.violet, title: "Slack", symbol: true),
@@ -800,8 +835,9 @@ struct Stage: View {
 
     private var pathKey: String { path.joined(separator: "/") }
     private var curTint: Color { path.isEmpty ? Pal.accent : (World.tint[pathKey] ?? Pal.accent) }
-    private func zones() -> [String] { (firstRun && path.isEmpty) ? [] : (World.children[pathKey] ?? []) }
-    private func members() -> [Obj] { (firstRun && path.isEmpty) ? [] : (World.members[pathKey] ?? []) }
+    private func zones() -> [String] { ((firstRun && path.isEmpty) || (emptyZoneMode && !path.isEmpty)) ? [] : (World.children[pathKey] ?? []) }
+    private func members() -> [Obj] { ((firstRun && path.isEmpty) || (emptyZoneMode && !path.isEmpty)) ? [] : (World.members[pathKey] ?? []) }
+    private var emptyZone: Bool { !path.isEmpty && members().isEmpty && zones().isEmpty }
     private func mode(_ id: String) -> Mode { selected == nil ? .home : (selected == id ? .focus : .recede) }
     private func selectedObj() -> Obj? { members().first { $0.id == selected } }
 
@@ -897,6 +933,10 @@ struct Stage: View {
                 if showAct {
                     ActSheet(itemText: "Ship the egress badge across the Qlippy cards\nKarol · Fri", onCancel: { showAct = false }).zIndex(140)
                 }
+                if emptyZone && landed && selected == nil {
+                    ZoneEmpty(name: World.name[pathKey] ?? pathKey, tint: curTint)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity).zIndex(5)
+                }
 
                 if born {
                     VStack(spacing: 7) {
@@ -991,6 +1031,7 @@ struct Stage: View {
                 if env["DIO_DOCK"] == "open" { dockOpen = true }
                 if env["DIO_EMPTY"] == "1" { firstRun = true }
                 if env["DIO_ACT"] == "1" { showAct = true }
+                if env["DIO_EMPTYZONE"] == "1" { emptyZoneMode = true }
                 if env["DIO_DEMO"] == "1" { runDemo() }
             }
         }
@@ -1013,7 +1054,7 @@ struct Stage: View {
                 .foregroundStyle(Pal.muted).padding(.horizontal, 12).frame(height: 36)
                 .background(Capsule().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(Pal.muted.opacity(0.45)))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(.top, h * 0.12).padding(.trailing, 20)
-                .opacity(landed && selected == nil && !(firstRun && path.isEmpty) ? 0.9 : 0)
+                .opacity(landed && selected == nil && !(firstRun && path.isEmpty) && !emptyZone ? 0.9 : 0)
 
             // objects
             ForEach(Array(ms.enumerated()), id: \.element.id) { i, o in
