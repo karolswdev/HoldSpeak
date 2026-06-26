@@ -205,6 +205,12 @@ class MeetingConfig:
     # it never rides a proposal payload, a broadcast, or a non-settings response.
     companion_webhook_url: str = ""
 
+    # HSM-14: the default repo (owner/name) the iPad desk's GitHub connector files
+    # issues into via `gh issue create`. Auth is the host's already-authenticated
+    # local `gh` — no token is stored or crosses the wire. Default-empty = the
+    # connector is offline.
+    companion_github_repo: str = ""
+
     # Speaker diarization
     diarization_enabled: bool = False  # Identify multiple speakers in system audio
     diarize_mic: bool = False  # Also diarize mic input (for on-site meetings)

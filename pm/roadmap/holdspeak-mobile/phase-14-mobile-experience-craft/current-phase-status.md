@@ -629,6 +629,22 @@ toolkit** — meetings, the AI core, knowledge, two connectors, a saved tool —
 ([desk toolkit](./screenshots/desk-connectors.png)). Device-arch **BUILD SUCCEEDED**. Adding the next
 connector is now genuinely "one primitive + a thin host endpoint." See [[THE_DESK_WHOLE_PICTURE]].
 
+**2026-06-25 — a THIRD grounded connector: GitHub issues (intelligence → tracked work).** Drop a card on
+the GitHub tile → your Mac files a real **GitHub issue** via the Phase-38 `gh issue create` connector — auth
+is the Mac's already-authenticated local `gh`, so **no token is stored or crosses the wire** (there's no
+credential to leak). **Host (Python):** reuses the existing `build_github_issue_connector` + the guarded
+`ActuatorExecutor`; a `companion_github_repo` config field (the default repo), `/api/companion/github/propose`
+(payload `{repo, title, body}`, repo from the request or config) + `/{id}/decision` (approve → files, returns
+the issue URL), target-scoped vs slack/webhook, a **testable runner seam** (`_GITHUB_RUNNER`, prod =
+`subprocess.run`, tests inject a fake `gh`), and `github_configured` in the status. **8 new tests**
+(`test_web_companion_github.py`) incl. argv carries repo/title/body, the returned URL, files-nothing-before-
+approval, and the cross-target guard. **iPad:** a GitHub `ConnectorPrimitive` tile (the generic `DeskHostLink`
+already routes by target). **Three connectors now ride the identical grounded path** (propose→approve→execute
+on the Mac, credential on the Mac); the desk is a real toolkit — meetings, AI core, knowledge, Slack +
+Webhook + GitHub, a saved tool ([toolkit](./screenshots/desk-toolkit.png)). Device-arch **BUILD SUCCEEDED**;
+30 companion-connector tests green. The map's "GitHub-issue connector" link is done; remaining ▶: web parity
++ mesh sync (Phase 16), real-metal proof. See [[THE_DESK_WHOLE_PICTURE]].
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a

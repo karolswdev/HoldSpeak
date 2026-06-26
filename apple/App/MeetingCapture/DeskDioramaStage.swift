@@ -779,6 +779,8 @@ struct DioStage: View {
                                           configured: hostLink != nil, detail: peerHost.isEmpty ? "" : peerHost))
             out.append(ConnectorPrimitive(connId: "webhook", name: "Webhook", symbol: "bolt.horizontal.fill", tint: DioPal.cobalt,
                                           configured: hostLink != nil, detail: peerHost.isEmpty ? "" : peerHost))
+            out.append(ConnectorPrimitive(connId: "github", name: "GitHub", symbol: "exclamationmark.bubble.fill", tint: DioPal.mint,
+                                          configured: hostLink != nil, detail: peerHost.isEmpty ? "" : peerHost))
             for wf in workflows { out.append(WorkflowPrimitive(rec: wf)) }
         }
         return out

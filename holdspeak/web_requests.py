@@ -64,6 +64,7 @@ class _CompanionSlackRequest(BaseModel):
     # the webhook URL stays on the host (joined in memory at execution time).
     text: str = ""
     title: Optional[str] = None
+    repo: Optional[str] = None  # GitHub only: owner/name; defaults to the host's companion_github_repo
 
 
 class _UpdateMeetingRequest(BaseModel):

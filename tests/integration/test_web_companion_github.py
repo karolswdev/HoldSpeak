@@ -1,0 +1,170 @@
+"""HSM-14 — the iPad desk's GitHub-issue connector, grounded in the host actuators.
+
+A companion proposes filing a desk card as a GitHub issue; the host refuses
+honestly when no repo is configured/empty text; the payload is {repo, title,
+body}; nothing is filed before approval; approving runs the Phase-38
+`gh issue create` connector (the subprocess faked via the route's runner seam)
+and returns the issue URL; the github decision route is target-scoped; and the
+companion status reports `github_configured`. Auth is the host's local `gh` —
+no token is stored or crosses (there is no credential to leak here).
+"""
+from __future__ import annotations
+
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+
+import pytest
+
+pytest.importorskip(
+    "fastapi.testclient",
+    reason="requires meeting/web dependencies (install with `.[meeting]`)",
+)
+from fastapi.testclient import TestClient
+
+pytestmark = [pytest.mark.requires_meeting]
+
+import holdspeak.config as config_module
+import holdspeak.web.routes.meetings as meetings_module
+from holdspeak.config import Config
+from holdspeak.db import Database, get_database, reset_database
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+REPO = "acme/app"
+ISSUE_URL = "https://github.com/acme/app/issues/42"
+PROPOSE = "/api/companion/github/propose"
+
+
+class _FakeGh:
+    """A stand-in for subprocess.run that records argv and returns a CompletedProcess."""
+
+    def __init__(self, *, returncode=0, stdout=ISSUE_URL, stderr=""):
+        self.calls: list[list[str]] = []
+        self._rc, self._out, self._err = returncode, stdout, stderr
+
+    def __call__(self, argv, **kwargs):
+        self.calls.append(list(argv))
+        return subprocess.CompletedProcess(argv, returncode=self._rc, stdout=self._out, stderr=self._err)
+
+
+@pytest.fixture
+def temp_db_dir():
+    temp_dir = tempfile.mkdtemp()
+    yield Path(temp_dir)
+    reset_database()
+    shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+@pytest.fixture
+def db(temp_db_dir):
+    reset_database()
+    return get_database(temp_db_dir / "test.db")
+
+
+@pytest.fixture
+def settings_path(tmp_path, monkeypatch):
+    target = tmp_path / "config.json"
+    monkeypatch.setattr(config_module, "CONFIG_FILE", target)
+    Config().save(path=target)
+    return target
+
+
+def _configure(settings_path, repo=REPO):
+    config = Config.load()
+    config.meeting.companion_github_repo = repo
+    config.save(path=settings_path)
+
+
+@pytest.fixture
+def server():
+    return MeetingWebServer(
+        WebRuntimeCallbacks(on_bookmark=lambda *_a, **_k: None, on_stop=lambda *_a, **_k: None, get_state=lambda: None),
+        host="127.0.0.1",
+    )
+
+
+@pytest.fixture
+def client(server, settings_path) -> TestClient:
+    return TestClient(server.app)
+
+
+@pytest.fixture
+def gh(monkeypatch):
+    """Inject the fake `gh` runner the route's GitHub connector uses."""
+    fake = _FakeGh()
+    monkeypatch.setattr(meetings_module, "_GITHUB_RUNNER", fake)
+    return fake
+
+
+def _decide(client, pid, decision, by="karol"):
+    return client.post(f"/api/companion/github/{pid}/decision", json={"decision": decision, "decided_by": by})
+
+
+@pytest.mark.integration
+def test_no_repo_refuses_with_400(client, db):
+    res = client.post(PROPOSE, json={"text": "ship it"})
+    assert res.status_code == 400
+    assert "repo" in res.json()["error"].lower()
+
+
+@pytest.mark.integration
+def test_empty_text_refuses_with_400(client, db, settings_path):
+    _configure(settings_path)
+    assert client.post(PROPOSE, json={"text": "  "}).status_code == 400
+
+
+@pytest.mark.integration
+def test_propose_carries_repo_title_body(client, db, settings_path):
+    _configure(settings_path)
+    proposal = client.post(PROPOSE, json={"text": "the body", "title": "Wire onboarding"}).json()["proposal"]
+    assert proposal["status"] == "proposed"
+    assert proposal["target"] == "github"
+    assert proposal["action"] == "create_issue"
+    assert proposal["payload"] == {"repo": REPO, "title": "Wire onboarding", "body": "the body"}
+    assert REPO in proposal["preview"]
+
+
+@pytest.mark.integration
+def test_a_proposed_issue_files_nothing(client, db, settings_path, gh):
+    _configure(settings_path)
+    client.post(PROPOSE, json={"text": "ship it"})
+    assert gh.calls == []                          # proposing never shells out
+
+
+@pytest.mark.integration
+def test_approval_files_the_issue_and_returns_the_url(client, db, settings_path, gh):
+    _configure(settings_path)
+    proposal = client.post(PROPOSE, json={"text": "the body", "title": "Wire onboarding"}).json()["proposal"]
+    final = _decide(client, proposal["id"], "approved").json()["proposal"]
+    assert final["status"] == "executed"
+    assert final["result"]["url"] == ISSUE_URL
+    # exactly one `gh issue create`, argv carries repo/title/body, no shell
+    assert len(gh.calls) == 1
+    argv = gh.calls[0]
+    assert argv[:3] == ["gh", "issue", "create"]
+    assert REPO in argv and "Wire onboarding" in argv and "the body" in argv
+
+
+@pytest.mark.integration
+def test_rejection_files_nothing(client, db, settings_path, gh):
+    _configure(settings_path)
+    pid = client.post(PROPOSE, json={"text": "ship it"}).json()["proposal"]["id"]
+    assert _decide(client, pid, "rejected").json()["proposal"]["status"] == "rejected"
+    assert gh.calls == []
+
+
+@pytest.mark.integration
+def test_github_decision_is_target_scoped(client, db, settings_path, gh):
+    _configure(settings_path)
+    pid = client.post(PROPOSE, json={"text": "ship it"}).json()["proposal"]["id"]
+    # a github proposal cannot be decided on the slack or webhook routes
+    assert client.post(f"/api/companion/slack/{pid}/decision", json={"decision": "approved"}).status_code == 404
+    assert client.post(f"/api/companion/webhook/{pid}/decision", json={"decision": "approved"}).status_code == 404
+
+
+@pytest.mark.integration
+def test_companion_status_reports_github_configured(client, db, settings_path):
+    assert client.get("/api/companion/status").json()["connectors"]["github_configured"] is False
+    _configure(settings_path)
+    assert client.get("/api/companion/status").json()["connectors"]["github_configured"] is True

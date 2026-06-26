@@ -216,9 +216,11 @@ def build_system_router(ctx: WebContext) -> APIRouter:
             _mc = Config.load().meeting
             slack_configured = bool(_mc.slack_webhook_url)
             webhook_configured = bool(_mc.companion_webhook_url)
+            github_configured = bool(_mc.companion_github_repo)
         except Exception:
             slack_configured = False
             webhook_configured = False
+            github_configured = False
 
         dictation_error: str | None = None
         try:
@@ -325,6 +327,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                 "connectors": {
                     "slack_configured": slack_configured,
                     "webhook_configured": webhook_configured,
+                    "github_configured": github_configured,
                 },
                 "agent": {
                     "awaiting_response": agent_waiting,

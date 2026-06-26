@@ -43,6 +43,11 @@ from ..context import WebContext
 
 log = get_logger("web.routes.meetings")
 
+# HSM-14: the runner the companion GitHub connector uses for `gh issue create`.
+# None = production `subprocess.run` (the host's local, authenticated `gh`); tests
+# inject a fake so the suite never shells out.
+_GITHUB_RUNNER = None
+
 
 def _parse_facet_date(value: Optional[str], *, end_of_day: bool = False):
     """Parse a facet date param (ISO date or datetime); None on blank/garbage.
@@ -878,6 +883,22 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
         )
         return executor.execute(proposal.id)
 
+    def _execute_github_proposal(db: Any, proposal: Any, *, actor: str) -> Any:
+        """HSM-14: the execute leg for an approved companion GitHub-issue proposal.
+
+        Files the issue via the Phase-38 `gh issue create` connector — auth is the
+        host's local `gh`, no token is stored or crosses. The created issue URL is
+        the result. The same guarded executor stack (status gate, payload parity).
+        """
+        from ...plugins.actuator_executor import ActuatorExecutor
+        from ...plugins.builtin.github_issue_actuator import build_github_issue_connector
+
+        executor = ActuatorExecutor(
+            db, connector=build_github_issue_connector(runner=_GITHUB_RUNNER), allow_actuators=True,
+            actor=actor, on_result=lambda event: ctx.broadcast("actuator_result", event),
+        )
+        return executor.execute(proposal.id)
+
     @router.get("/api/meetings/{meeting_id}/proposals")
     async def api_get_meeting_proposals(
         meeting_id: str,
@@ -1356,6 +1377,83 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"success": True, "proposal": _proposal_to_dict(updated)})
         except Exception as e:
             return error_500(e, log, "Failed to decide companion webhook proposal")
+
+    @router.post("/api/companion/github/propose")
+    async def api_companion_github_propose(payload: _CompanionSlackRequest) -> Any:
+        """Propose filing a companion (desk) card as a GitHub issue (HSM-14).
+
+        target `github`, action `create_issue`; the payload carries `{repo, title,
+        body}` — exactly what the Phase-38 `gh issue create` connector consumes on
+        approval. The repo is the request's or the host's `companion_github_repo`.
+        """
+        import hashlib
+
+        from ...config import Config
+
+        text = str(payload.text or "").strip()
+        if not text:
+            return JSONResponse({"success": False, "error": "text is required"}, status_code=400)
+        repo = str(payload.repo or "").strip() or str(Config.load().meeting.companion_github_repo or "").strip()
+        if not repo:
+            return JSONResponse(
+                {"success": False, "error": "No GitHub repo (set companion_github_repo on the host, or pass repo)"},
+                status_code=400,
+            )
+        try:
+            from datetime import datetime
+
+            from ...db import get_database
+            from ...meeting_session import MeetingState
+            from ...plugins.builtin.github_issue_actuator import GithubIssueActuator
+
+            db = get_database()
+            if db.meetings.get_meeting(_COMPANION_MEETING_ID) is None:
+                db.meetings.save_meeting(MeetingState(id=_COMPANION_MEETING_ID, started_at=datetime.now(), title="Desk · companion sends"))
+            title = str(payload.title or "").strip() or (text.splitlines()[0][:72] if text else "Desk issue")
+            preview = f"Open a GitHub issue in {repo}: “{title}”"
+            content_key = hashlib.sha256(f"{repo}|{title}|{text}".encode("utf-8")).hexdigest()[:16]
+            proposal = db.actuators.record_proposal(
+                meeting_id=_COMPANION_MEETING_ID, window_id="companion:github",
+                plugin_id=GithubIssueActuator.id, plugin_version=GithubIssueActuator.version,
+                idempotency_key=f"companion-github:{content_key}",
+                target="github", action="create_issue", preview=preview,
+                payload={"repo": repo, "title": title, "body": text}, reversible=False,
+                required_capabilities=["actuator"],
+            )
+            ctx.broadcast("actuator_proposed", {
+                "id": proposal.id, "meeting_id": proposal.meeting_id, "plugin_id": proposal.plugin_id,
+                "status": proposal.status, "target": proposal.target, "action": proposal.action,
+                "preview": proposal.preview, "reversible": bool(proposal.reversible),
+            })
+            return JSONResponse({"success": True, "proposal": _proposal_to_dict(proposal)})
+        except Exception as e:
+            return error_500(e, log, "Failed to propose companion GitHub issue")
+
+    @router.post("/api/companion/github/{proposal_id}/decision")
+    async def api_decide_companion_github(proposal_id: str, payload: _ProposalDecisionRequest) -> Any:
+        """Approve (→ file the issue) or reject a companion GitHub proposal (HSM-14)."""
+        decision = str(payload.decision or "").strip().lower()
+        if decision not in ("approved", "rejected"):
+            return JSONResponse({"success": False, "error": f"Invalid decision: {decision!r}"}, status_code=400)
+        try:
+            from ...db import get_database
+
+            db = get_database()
+            existing = db.actuators.get_proposal(proposal_id)
+            if existing is None or existing.meeting_id != _COMPANION_MEETING_ID or existing.target != "github":
+                return JSONResponse({"success": False, "error": "Proposal not found"}, status_code=404)
+            try:
+                updated = db.actuators.transition_proposal(
+                    proposal_id, to_status=decision, actor=(payload.decided_by or "companion").strip() or "companion")
+            except ValueError as ve:
+                return JSONResponse({"success": False, "error": str(ve)}, status_code=400)
+            if decision == "rejected":
+                ctx.broadcast("actuator_result", _actuator_result_event(updated))
+            if decision == "approved" and updated.target == "github":
+                updated = _execute_github_proposal(db, updated, actor=(payload.decided_by or "companion").strip() or "companion")
+            return JSONResponse({"success": True, "proposal": _proposal_to_dict(updated)})
+        except Exception as e:
+            return error_500(e, log, "Failed to decide companion GitHub proposal")
 
     @router.get("/api/all-action-items")
     async def api_list_all_action_items(
