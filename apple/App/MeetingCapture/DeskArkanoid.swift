@@ -407,11 +407,14 @@ struct DeskArkanoidWindow: View {
         .onDisappear { game.stop() }
     }
 
+    // EPHEMERAL container (follows the record-button philosophy): a frosted pane that lets the desk read
+    // through it, a hairline edge, a soft short shadow — it floats ON the desk, it is not a heavy window.
     private var windowChrome: some View {
-        RoundedRectangle(cornerRadius: 24, style: .continuous)
-            .fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0B0A11)], startPoint: .top, endPoint: .bottom))
-            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(DioPal.violet.opacity(0.35), lineWidth: 1.2))
-            .shadow(color: .black.opacity(0.6), radius: 26, y: 14)
+        RoundedRectangle(cornerRadius: 22, style: .continuous)
+            .fill(.ultraThinMaterial)
+            .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(DioPal.violet.opacity(0.05)))
+            .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(.white.opacity(0.12), lineWidth: 0.5))
+            .shadow(color: .black.opacity(0.28), radius: 12, y: 6)
     }
 
     private var windowBody: some View {
@@ -483,8 +486,8 @@ struct DeskArkanoidWindow: View {
     // the play field — the canvas + the paddle-drag + the ready/win/lose overlays
     private var playField: some View {
         ZStack {
-            // subtle field backdrop
-            LinearGradient(colors: [Color(hex: 0x0E0C16), Color(hex: 0x080710)], startPoint: .top, endPoint: .bottom)
+            // a whisper of darkening for brick contrast — the frosted pane + desk still read through
+            LinearGradient(colors: [Color.black.opacity(0.14), Color.black.opacity(0.06)], startPoint: .top, endPoint: .bottom)
 
             // bricks
             ForEach(game.bricks) { b in
