@@ -1072,7 +1072,8 @@ struct DioStage: View {
         return out
     }
     private func toolMembers() -> [any DeskPrimitive] {
-        guard path.isEmpty else { return [] }            // tools are the root dock
+        // tools are GLOBAL — the AI core / connectors / workflows live in the dock at EVERY level, not just
+        // the root. (Owner walk: "under the main pane the tools toolbar loses its stuff" — it was root-gated.)
         var out: [any DeskPrimitive] = []
         for mdl in ModelFiles.installed().prefix(2) {
             out.append(ModelPrimitive(modelId: mdl.id, name: mdl.name.replacingOccurrences(of: ".gguf", with: "")))
