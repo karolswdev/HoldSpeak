@@ -69,6 +69,10 @@ meeting = [
     "llama-cpp-python>=0.2.0",
     "openai>=1.0.0",
     "resemblyzer>=0.1.3",
+    # HSM-15-10: LAN discovery — `holdspeak web` advertises `_holdspeak._tcp`
+    # via Bonjour when bound off-loopback so a companion can find it by name.
+    # Best-effort: the runtime degrades gracefully if this is absent.
+    "zeroconf>=0.131.0",
 ]
 wakeword = [
     # HS-60: the optional local wake-word engine (Apache-2.0; ONNX runtime).

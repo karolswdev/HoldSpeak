@@ -14,6 +14,8 @@ OUT="${1:-build/experience-shot.png}"
 
 rm -rf "$TMP" "$APP"; mkdir -p "$TMP" "$APP"
 cp scripts/experience/*.swift "$TMP/"
+# Bundle pixel-art primitive sprites (PixelLab) into the .app so SwiftUI loads them by name.
+cp scripts/experience/assets/*.png "$APP/" 2>/dev/null || true
 
 xcrun --sdk iphonesimulator swiftc \
   -target arm64-apple-ios17.0-simulator -sdk "$SDK" -parse-as-library \

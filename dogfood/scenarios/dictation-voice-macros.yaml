@@ -1,0 +1,17 @@
+id: dictation-voice-macros
+kind: dictation
+repo: ledgerline
+voice: Samantha
+language: en
+description: >
+  Exercises voice command macros (HS-52). Enable config.dictation.macros and
+  configure items whose keywords match these utterances exactly (normalised:
+  case-folded, trimmed, trailing punctuation stripped). A matched utterance
+  fires the action (open_url / launch_app / shell / type_text) INSTEAD of being
+  typed. Test each kind. Use `/api/commands/test` or the `/commands` board to
+  dry-fire first. The "paste quote" line proves type_text still types.
+utterances:
+  - "open inbox"
+  - "launch editor"
+  - "list files"
+  - "paste quote"

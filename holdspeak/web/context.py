@@ -57,7 +57,10 @@ class WebContext:
     # pipeline) into the desktop's dictation target / AI PI delivery path. The host
     # injects the actual delivery; the route is deliver-on-command only (the client
     # user pressed send) and never autonomous. Absent hook = process-and-return only.
-    on_remote_dictation: Optional[Callable[[str], Any]] = None
+    # The hook accepts the processed text and an optional ``target`` keyword
+    # ("agent" | "focused", HSM-15-01a). The default-mode call site passes the
+    # text positionally only, so a plain ``Callable[[str], Any]`` hook still works.
+    on_remote_dictation: Optional[Callable[..., Any]] = None
 
     # HS-26-04: deferred plugin-job queue processing for the activity routes.
     # The activity-intelligence reads close over no server state; the meeting-
@@ -89,3 +92,9 @@ class WebContext:
     # fed at the same post-run seam; the dry-run path records a row through it,
     # the live runtime shares the instance via `server.dictation_journal`.
     journal: Optional[Any] = None
+
+    # HSM-15-10: whether this server requires a token to talk to it (i.e. it is
+    # bound off-loopback). Surfaced UNauthenticated via `GET /api/mesh/info` so a
+    # freshly-discovered companion knows whether pairing needs a token. A bool,
+    # not a callable — the server fixes it once at bind time.
+    mesh_requires_token: bool = False

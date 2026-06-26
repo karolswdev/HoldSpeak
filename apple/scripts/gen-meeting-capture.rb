@@ -36,6 +36,16 @@ end
 app = File.join(ROOT, 'App/MeetingCaptureApp.swift')
 FileUtils.cp(app, File.join(STAGE, 'MeetingCaptureApp.swift'))
 staged << File.join(STAGE, 'MeetingCaptureApp.swift')
+# HSM-14-19 "The Desk" decomposition: the app's own modules live in App/MeetingCapture/ (only THIS
+# build stages them, so they never collide with the other harness @main files in App/).
+Dir[File.join(ROOT, 'App/MeetingCapture', '**', '*.swift')].sort.each do |src|
+  base = File.basename(src)
+  raise "name collision staging #{base} (#{src} vs #{seen[base]})" if seen[base]
+  seen[base] = src
+  dst = File.join(STAGE, base)
+  FileUtils.cp(src, dst)
+  staged << dst
+end
 
 FileUtils.rm_rf(PROJ_PATH)
 project = Xcodeproj::Project.new(PROJ_PATH)
@@ -48,10 +58,18 @@ staged.each { |p| target.add_file_references([group.new_reference(p)]) }
 # craft surfaces. All optional — the UI falls back to SF Symbols if a file is missing — but
 # bundling them lights up the craft.
 res_group = project.new_group('Resources', File.join(ROOT, 'App'))
-%w[mermaid.min.js qlippy.png pushpin.png waveorb.png theaterorb.png crystal.png].each do |name|
+%w[mermaid.min.js qlippy.png pushpin.png waveorb.png theaterorb.png crystal.png cassette.png cassette2.png cartridge.png mic.png folder.png note.png robot.png lightdesk.scn plant.scn books.scn mug.scn keyboard.scn lightdesk_tex.png plant_tex.png books_tex.png keyboard_tex.png paper.png].each do |name|
   path = File.join(ROOT, 'App', name)
   target.add_resources([res_group.new_reference(path)]) if File.exist?(path)
 end
+
+# HSM-14-17 — the on-device speaker-diarization Core ML model (audio→256-dim embedding). Added as a
+# resource so Xcode compiles AudioEmbed.mlpackage → AudioEmbed.mlmodelc into the app bundle, where
+# `AudioEmbedder` loads it from Bundle.main. The owner-proven 0.99993-vs-resemblyzer model.
+ml_group = project.new_group('ML', File.join(ROOT, 'ml'))
+audio_embed = File.join(ROOT, 'ml', 'AudioEmbed.mlpackage')
+raise "AudioEmbed.mlpackage missing at #{audio_embed} (HSM-14-17 diarization model)" unless File.exist?(audio_embed)
+target.add_resources([ml_group.new_reference(audio_embed)])
 
 # --- Swift Package dependencies: WhisperKit (transcription) + LLM.swift (on-device LLM) ---
 def add_pkg(project, target, url, requirement, product)
@@ -75,6 +93,14 @@ add_pkg(project, target, 'https://github.com/gonzalezreal/swift-markdown-ui',
         { 'kind' => 'upToNextMajorVersion', 'minimumVersion' => '2.0.0' }, 'MarkdownUI')
 
 info_plist = File.join(ROOT, 'App/Capture-Info.plist')
+# HSM-15-10: the "Your Computer" Connect surface uses NWBrowser to discover the desktop
+# (`_holdspeak._tcp`). NWBrowser silently no-ops on device without NSBonjourServices +
+# NSLocalNetworkUsageDescription declared. Assert they survive `gen` (the plist is the
+# source of truth, referenced verbatim) so a regenerated project never loses discovery.
+plist_text = File.read(info_plist)
+%w[NSBonjourServices NSLocalNetworkUsageDescription _holdspeak._tcp].each do |needle|
+  raise "Capture-Info.plist missing #{needle} (NWBrowser discovery needs it) — see HSM-15-10" unless plist_text.include?(needle)
+end
 target.build_configurations.each do |config|
   s = config.build_settings
   s['PRODUCT_BUNDLE_IDENTIFIER'] = BUNDLE_ID

@@ -1,0 +1,42 @@
+id: meeting-questline-product-review
+kind: meeting
+repo: questline
+profile: product
+title: "Questline — Guilds vs fix activation (QL-310)"
+description: >
+  Product review for Stage 5 social/guilds. Strong qualitative demand but no
+  experiment proves social moves the north-star metric WAQC, and the onboarding
+  step-3 leak (QL-301) may be the real growth bottleneck. Expect: requirements
+  extraction, customer-signal extraction, a risk/heatmap, a captured decision,
+  action items with owners.
+lines:
+  - speaker: Dana
+    voice: Samantha
+    text: "Agenda is the guilds decision, QL three ten. We've had this in discovery for a while. The question is do we build guilds v1 this quarter or do we defer and fix activation first."
+  - speaker: Ravi
+    voice: Rishi
+    text: "Let me bring the customer signals. From the Q2 digest, the top theme is people want accountability with friends. We have a dozen quotes asking for shared goals or teams. It's real demand, it's the most requested thing."
+  - speaker: Dana
+    voice: Samantha
+    text: "Counter-signal though. Our north star is weekly active quests completed per user, WAQC. We have zero evidence that social actually moves WAQC. The demand is loud but it's not tied to the metric we said we care about."
+  - speaker: Meaghan
+    voice: Karen
+    text: "And the bigger leak is activation. QL three oh one, we lose a huge fraction of new users at onboarding step three. If the funnel is broken at the top, adding guilds just gives a feature to users who already churned."
+  - speaker: Ravi
+    voice: Rishi
+    text: "Fair. But guilds could be a retention lever for the users who do activate. The risk if we don't build it is a competitor ships social first and we look like a solo-only app."
+  - speaker: Meaghan
+    voice: Karen
+    text: "The risk if we do build it now is moderation and abuse surface. Guilds means user-generated group names, invites, member lists. That's a whole privacy and abuse workstream we haven't scoped."
+  - speaker: Dana
+    voice: Samantha
+    text: "Let me frame the requirements either way. Whatever we ship has to be behind a feature flag, has to emit a tracked event so we can read WAQC impact, and has to pass an a11y check. That's our definition of done."
+  - speaker: Ravi
+    voice: Rishi
+    text: "If we did guilds v1, the must-haves are create a guild, invite by link, a shared weekly quest, and a guild leaderboard. The privacy non-goal is no public directory in v1, invite-only only."
+  - speaker: Dana
+    voice: Samantha
+    text: "Here's the decision. We defer guilds v1 to next quarter and we fix activation first, because we can't justify the moderation cost without WAQC evidence. But we run a cheap social experiment now, a shared-quest invite, behind a flag, to actually measure whether social moves the metric."
+  - speaker: Meaghan
+    voice: Karen
+    text: "I support that. Action items. I'll own the activation funnel fix for step three. Ravi, you design the shared-quest experiment and define the WAQC success metric. Dana, you update the PRD to mark guilds v1 deferred-pending-experiment."

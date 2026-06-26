@@ -341,23 +341,36 @@ class DictationCaptureMixin:
             return True
         return self.typer is not None
 
-    def _deliver_remote_dictation(self, text: str) -> dict[str, Any]:
-        """HSM-13-04 — deliver a companion-dictated answer into the waiting coder.
+    def _deliver_remote_dictation(self, text: str, *, target: str = "agent") -> dict[str, Any]:
+        """HSM-13-04 — deliver a companion-dictated answer into the desktop.
 
         The text was ALREADY run through the rich dictation pipeline by the
         ``/api/dictation/remote`` route, so this is **deliver-only** — it does not
-        re-transcribe or re-run the pipeline. It reuses the exact path the local
-        dictation loop uses (``_try_tmux_agent_reply`` → fall back to
-        ``typer.type_text``), so an answer spoken on the iPad lands the same way one
-        spoken at the desk does. Deliver-on-command (the client user pressed send);
-        never autonomous. **Raises** when it cannot be delivered, so the client sees
-        an honest failure rather than a false ack.
-        """
-        from ..agent_context import get_recent_awaiting_agent_session
+        re-transcribe or re-run the pipeline. Deliver-on-command (the client user
+        pressed send); never autonomous. **Raises** when it cannot be delivered, so
+        the client sees an honest failure rather than a false ack.
 
+        ``target`` selects the delivery mode (HSM-15-01a):
+
+        - ``"agent"`` (default): answer the coder. Reuses the exact path the local
+          dictation loop uses (``_try_tmux_agent_reply`` → fall back to
+          ``typer.type_text``), keyed on a recent **awaiting** agent session, so an
+          answer spoken on the iPad lands the same way one spoken at the desk does.
+          Raises if there is no delivery target. Byte-identical to the pre-15
+          behaviour.
+        - ``"focused"``: free-type into whatever Mac app is focused, with **no**
+          awaiting-agent requirement. Delivers via ``typer.type_text`` and does NOT
+          auto-submit (no Enter), so it lands like ordinary dictation into any text
+          field. Raises if text injection is unavailable.
+        """
         text = (text or "").strip()
         if not text:
             raise ValueError("remote dictation text is empty")
+        if target == "focused":
+            return self._deliver_remote_dictation_focused(text)
+
+        from ..agent_context import get_recent_awaiting_agent_session
+
         session = get_recent_awaiting_agent_session(max_age_seconds=120)
         if self._try_tmux_agent_reply(text, session):
             self._mark_first_dictation()
@@ -373,6 +386,39 @@ class DictationCaptureMixin:
         raise RuntimeError(
             "no delivery target: no waiting agent tmux pane and text injection is unavailable"
         )
+
+    def _deliver_remote_dictation_focused(self, text: str) -> dict[str, Any]:
+        """Free-type the (already-processed) text into the focused Mac app.
+
+        HSM-15-01a — the general "dictate into anything on my Mac" path: no
+        awaiting coder session is needed. Uses the configured target-profile
+        override (``auto`` lets the typer classify the focused app) and never
+        auto-submits. Raises honestly when text injection is unavailable.
+        """
+        if self.typer is None:
+            raise RuntimeError(
+                "no delivery target: text injection is unavailable for focused dictation"
+            )
+        target_profile = self._focused_target_profile()
+        self.typer.type_text(text, target_profile=target_profile, submit=False)
+        self._mark_first_dictation()
+        return {"delivered": True, "method": "type", "target": target_profile}
+
+    def _focused_target_profile(self) -> str | None:
+        """The target profile to free-type into the focused app with.
+
+        Honours the configured ``target_profile_override`` (``auto`` → no hint,
+        let the typer treat it generically). Best-effort: any failure resolving
+        config degrades to ``None`` so the typing path never raises here.
+        """
+        try:
+            override = self.config.dictation.pipeline.target_profile_override
+        except Exception:
+            return None
+        cleaned = str(override or "auto").strip().lower()
+        if cleaned in ("", "auto"):
+            return None
+        return cleaned
 
     def _on_hotkey_press(self) -> None:
         if self.runtime_stop_event.is_set():

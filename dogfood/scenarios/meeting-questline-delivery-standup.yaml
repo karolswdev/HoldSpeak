@@ -1,0 +1,38 @@
+id: meeting-questline-delivery-standup
+kind: meeting
+repo: questline
+profile: delivery
+title: "Questline — Q3 scope cut (QL-318)"
+description: >
+  Delivery planning. The draft Q3 bundles Guilds v1, the onboarding revamp, and
+  streak-engine timezone hardening into ~15 eng-weeks against ~11 weeks of
+  capacity — ~30% over. Expect: milestone plan, scope-guard flags, risk, action
+  items with owners, a captured decision on what gets cut/sequenced.
+lines:
+  - speaker: Tom
+    voice: Daniel
+    text: "Delivery sync for Q3. QL three eighteen. The draft plan has three big lines. Guilds v1, the onboarding revamp, and streak-engine timezone hardening. I've estimated it at roughly fifteen engineering weeks."
+  - speaker: Dana
+    voice: Samantha
+    text: "And our capacity for the quarter is about eleven weeks once you take out on-call and holidays. So we're roughly thirty percent over. Something has to give."
+  - speaker: Tom
+    voice: Daniel
+    text: "The product review already deferred guilds v1, so the milestone there is just the shared-quest experiment, which is small, maybe a week behind a flag. That alone gets us most of the way back under capacity."
+  - speaker: Meaghan
+    voice: Karen
+    text: "The onboarding revamp is the highest priority because it's the activation leak, QL three oh one. That's M1, it should land first. I'd scope it as a two-week milestone with the step-three fix as the must-have."
+  - speaker: Dana
+    voice: Samantha
+    text: "Streak timezone hardening, QL three twenty two, is a correctness bug. Streaks must never reset on a timezone boundary. I don't think that's optional, it's eating trust. But it's small, maybe three days."
+  - speaker: Tom
+    voice: Daniel
+    text: "So the sequence I'm hearing is M1 onboarding fix first, M2 streak timezone hardening, M3 the shared-quest experiment. Guilds v1 proper is explicitly out of Q3."
+  - speaker: Meaghan
+    voice: Karen
+    text: "One scope risk to flag. The onboarding revamp keeps wanting to grow. People will ask to redesign the whole first-run flow. We should guard that, the milestone is only the step-three leak, not a full redesign."
+  - speaker: Dana
+    voice: Samantha
+    text: "Agreed, that's out of scope for M1. Decision: Q3 is M1 onboarding step-three fix, M2 streak timezone hardening, M3 shared-quest experiment, and guilds v1 is deferred to Q4. We accept that and we hold the line on the onboarding scope."
+  - speaker: Tom
+    voice: Daniel
+    text: "Action items. I'll update the Q3 roadmap doc with the three sequenced milestones and the cut. Meaghan owns M1. Dana, you own the M3 experiment definition. We review milestone dates Friday."

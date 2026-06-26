@@ -83,7 +83,12 @@ public protocol IDesktopClient: Sendable {
     /// desktop runs it through the rich dictation pipeline and delivers it into the
     /// coder; this returns the processed text + whether it was delivered.
     /// Deliver-on-command — the user pressed send; never autonomous.
-    func sendRemoteDictation(text: String) async throws -> RemoteDictationResult
+    ///
+    /// `target`: where the words land on the Mac. `.agent` (the default — keeps the
+    /// "answer the coder" call sites byte-identical) routes into the waiting coder
+    /// session; `.focused` (HSM-15-01) free-types into whatever Mac app is focused,
+    /// no awaiting session required.
+    func sendRemoteDictation(text: String, target: DictationTarget) async throws -> RemoteDictationResult
 
     // MARK: The Companion board (HSM-13-03)
 
@@ -97,6 +102,25 @@ public protocol IDesktopClient: Sendable {
     func dismissCompanionTarget(agent: String, sessionID: String) async throws
     /// Pin/unpin a waiting session as the sticky target (`POST /api/companion/pin`).
     func pinCompanionTarget(agent: String, sessionID: String, pinned: Bool) async throws
+}
+
+/// Where a remote dictation lands on the Mac (HSM-15-01). Maps to the desktop's
+/// `target_mode` field on `POST /api/dictation/remote`.
+public enum DictationTarget: String, Sendable, Equatable {
+    /// Route into the waiting coder session (the "answer the coder" path, HSM-13). The
+    /// historical default — keeps every prior call site byte-identical.
+    case agent
+    /// Free-type the processed text into whatever Mac app is focused, no awaiting coder
+    /// session required (the flagship "dictate into your Mac" surface, HSM-15-01).
+    case focused
+}
+
+/// Default-`.agent` convenience so the HSM-13 call sites (the coder composer, the probe)
+/// stay byte-identical: they call `sendRemoteDictation(text:)` and route to the agent.
+public extension IDesktopClient {
+    func sendRemoteDictation(text: String) async throws -> RemoteDictationResult {
+        try await sendRemoteDictation(text: text, target: .agent)
+    }
 }
 
 /// The desktop's response to a remote-dictation inject (HSM-13-01).

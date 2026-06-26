@@ -74,7 +74,11 @@ public final class AudioCaptureService: IAudioCapture, @unchecked Sendable {
         let session = AVAudioSession.sharedInstance()
         // Bluetooth-input options are intentionally omitted here (the option name
         // shifted across SDKs); BT-mic support is device-phase follow-up work.
-        try session.setCategory(.record, mode: .measurement)
+        // `.measurement` mode strips the system mic gain/AGC, so speech arrives
+        // unnaturally quiet — a dead-looking VU meter AND weak audio for Whisper.
+        // `.default` keeps the normal input processing so the level tracks the voice
+        // and the transcriber gets a healthy signal.
+        try session.setCategory(.record, mode: .default)
         try session.setActive(true)
     }
 

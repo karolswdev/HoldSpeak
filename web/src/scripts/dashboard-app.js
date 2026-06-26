@@ -261,6 +261,16 @@
             return e.provider === "auto" ? "☁︎ Auto → cloud" : "☁︎ Cloud";
           },
 
+          // HS-69-01: the SAME structured egress badge `/presence` carries,
+          // now on the live-intel surface. `intelEgressBadge` → {scope,label}
+          // (or null → no chip); the markup binds class + text off it.
+          intelEgressBadge() {
+            return toEgressBadge(this.intelEgress);
+          },
+          egressBadgeText() {
+            return egressBadgeText(this.intelEgressBadge());
+          },
+
           activeActionItems() {
             return this.intel.action_items.filter((item) => item.status !== "dismissed");
           },

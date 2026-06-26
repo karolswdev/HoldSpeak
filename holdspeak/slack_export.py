@@ -196,8 +196,45 @@ def build_slack_connector(
     return connector
 
 
+def build_url_webhook_connector(
+    webhook_url: str,
+    *,
+    client: Optional[Callable[..., Any]] = None,
+) -> Callable[[Any], dict[str, Any]]:
+    """A generic webhook connector (HSM-14) — the Slack connector, minus the
+    slack.com host check, for the iPad desk's Webhook connector.
+
+    Same credential discipline: the manifest allow-lists exactly the configured
+    URL's host, and the URL is injected into the payload **in memory only** —
+    the stored proposal never carries it. ``client`` is the test seam.
+    """
+    from urllib.parse import urlparse
+
+    parsed = urlparse(str(webhook_url).strip())
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        raise ValueError(f"invalid webhook URL: {webhook_url!r}")
+    host = parsed.hostname.lower()
+    inner = build_webhook_connector(allowed_hosts=[host], client=client)
+
+    def connector(proposal: Any) -> dict[str, Any]:
+        merged = dict(getattr(proposal, "payload", None) or {})
+        merged["url"] = str(webhook_url).strip()
+        view = ActuatorProposal(
+            target=str(getattr(proposal, "target", "webhook")),
+            action=str(getattr(proposal, "action", "post_message")),
+            preview=str(getattr(proposal, "preview", "")),
+            payload=merged,
+            reversible=bool(getattr(proposal, "reversible", False)),
+            required_capabilities=tuple(getattr(proposal, "required_capabilities", ()) or ()),
+        )
+        return inner(view)
+
+    return connector
+
+
 __all__ = [
     "EXPORT_KINDS",
+    "build_url_webhook_connector",
     "SLACK_TEXT_LIMIT",
     "TRUNCATION_NOTICE",
     "build_slack_connector",

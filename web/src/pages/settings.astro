@@ -148,7 +148,7 @@ const WHISPER_LANGUAGES = [
         </aside>
 
         <!-- panel -->
-        <form class="set-panel" @submit.prevent="save">
+        <form class="set-panel signal-card" @submit.prevent="save">
           <p class="set-search-hint" x-show="searching" x-cloak x-text="`Showing settings matching “${query}”`"></p>
 
           <!-- Appearance -->
@@ -362,7 +362,10 @@ const WHISPER_LANGUAGES = [
   .local-chip { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--local-soft, var(--surface-2)); color: var(--local, var(--text-muted)); font-family: var(--font-mono); font-size: var(--font-size-xs); width: fit-content; }
   .local-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--local, var(--ok)); box-shadow: 0 0 8px var(--local, var(--ok)); }
 
-  .set-panel { min-width: 0; }
+  /* HS-69-02: the form is now a raised `.signal-card` (surface + top-lit
+     hairline + shadow from the primitive); this adds the inner padding. */
+  .set-panel { min-width: 0; padding: var(--space-5) var(--space-6); }
+  @media (max-width: 640px) { .set-panel { padding: var(--space-4); } }
   .set-search-hint { color: var(--text-muted); font-size: var(--font-size-sm); margin: 0 0 var(--space-4); }
   .set-sec-h { font-family: var(--font-display); font-size: var(--font-size-lg); font-weight: 600; color: var(--text); margin: var(--space-2) 0 var(--space-4); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border-subtle); }
   .set-sec-h:first-of-type { margin-top: 0; }

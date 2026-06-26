@@ -5,7 +5,10 @@ design, and modern hand-driven mobile practice were never in the roadmap, and th
 shipped as a bare functional shell, not a crafted product. This phase makes the
 **experience** first-class.)
 
-**Last updated:** 2026-06-21 (**opened + first craft delivered.** The owner chose the
+**Last updated:** 2026-06-24 (**the diorama gets fractal zones + the dive** — see the latest "Where we are"
+entry; the 2.5D front door now has recursive places you file meetings into and dive through, on the iPad).
+
+**(Historical) 2026-06-21 (**opened + first craft delivered.** The owner chose the
 **Tactile Sheets** design direction from three concrete mockups (gesture-first: swipeable
 cards, draggable action sheet, big targets, haptic-forward). HSM-14-01 in progress: a native
 `DS` design system (color/spacing/radii/elevation tokens + reusable swipeable-card / action-
@@ -275,6 +278,397 @@ useful real-time signal) always wins when enabled; **cadence** fires only when B
 Whisper + diarization on one chip. Both toggle + tune independently. `LiveIntelCadenceTests` 6/0;
 `swift test` green. Remaining on the story: the live-intel runner, the gamified tack moment + Queue
 HUD, the setup screen (incl. an OpenRouter endpoint with a fetched model picker), and the device proof.
+
+**2026-06-24 — the desk's zones now HOLD things (drop-to-tag, handover §7 #1).** The 3D Living Desk's
+drawn zones were beautiful and *empty* — you could scribble a crayon area, name it "Project Atlas," and
+nothing could live in it; the drawn zones existed only as ephemeral SceneKit nodes the data model never
+knew about. This leap makes a zone a **real, persisted place that holds cards**: a `DeskZone` (named
+footprint, persisted in `hs.desk.zones`) is created when you name an area, and **a zone IS a directory**
+(it reuses the existing filing map, so it also appears in the sidebar and opens in 2D). **Dropping a card
+inside a zone's footprint files it** — the card settles in (a deliberate drop no longer flings back out),
+a medium haptic fires, the zone pulses, and its count placard ticks up (`Project Atlas · 3`). Drawing
+your first zone retires the auto time-fences (the desk becomes your manual workspace). Composed in the
+offscreen renderer first — which caught a real layering bug (the zone fill was hidden *under* the leather
+mat) before any device build; heights retuned (fill at y=0.53, above the mat top at 0.5) and ported 1:1.
+`xcodebuild` device-arch **BUILD SUCCEEDED**; built + signed + **installed on the iPad Air M4** (live
+launch pending an unlock — the install completes regardless). This is the prerequisite for
+[[story-24-nested-zones]] (dive-into-a-zone): a zone you can dive into must first have contents. Next: the
+dive. See [[DESK_HANDOVER]] §7.
+
+**2026-06-24 — a boundary becomes a doorway (dive into a zone, HSM-14-24).** The owner's most-excited
+idea, built right on top of drop-to-tag: **double-tap a zone and you fall INTO it** — the camera rushes in
+and zooms, and the zone *becomes* the whole desk, showing exactly the cards filed into it, with room for
+its own sub-zones. It's **recursive**: zones are now **path-based containers** (`Atlas`, `Atlas/Q3`), so
+drawing a zone while inside "Atlas" makes the child "Atlas/Q3" — a sub-zone is just a child directory
+(Phase-16 organization sync carries it for free). Every level is **backable**: a `DeskBreadcrumb`
+(`Desk › Atlas › Q3`, each crumb a tap-to-jump) plus a symmetric **double-tap the empty desk to climb
+out**. The transition is gamified, not a cut — `syncLevel` settles the camera home from a directional
+offset (dive = drop in from close; back = pull out from wide) with haptics. The nested-desk state was
+composed in the offscreen renderer first (Atlas's members + a "Q3 Planning · 2" sub-zone reads as a place
+inside a place). `xcodebuild` device-arch **BUILD SUCCEEDED**; built + signed + **installed on the iPad Air
+M4** (the live dive-FEEL walk is the last acceptance criterion — the one thing a static renderer can't
+show). Handover §7 #1 + #2 are now both done; the desk is becoming the fractal workspace the owner can see.
+
+**2026-06-24 — cards that MEAN something + the owner's card-craft feedback (handover §7 #3).** Cards were
+title-and-metadata chips, all the same rounded rect. Now a card is a **window into its content**: every
+card carries a real **snippet** (a meeting's actual summary, else its topics, else the first thing said;
+an output card shows its body preview). And on the owner's sharp feedback — *"some cards should be more
+obvious what they are, cards should come in different shapes and sizes, and the sticker needs to be less
+regulated"* — a new `DeskCardKind` (parsed from the id) drives **form**: (1) **type-legible** — a tinted
+TYPE badge (SUMMARY / TOPICS / ACTION / TRANSCRIPT / ARTIFACT / MODEL / KNOWLEDGE; a meeting needs none)
+plus per-type colour; (2) **different shapes + sizes** — a summary is a big wide document, a transcript a
+tall page, an action a small slip, each with its own corner radius, flowing through both canvases
+(`renderSize`/`corner` replace the one-size `mode.size`) and the snippet line-count flexes with height;
+(3) a **loose sticker** — the die-cut now varies rotation (±15°), scale, shape (rounded/circle/square)
+and nudge per card with a lifted-corner shadow, instead of one regulated tile. Composed in the offscreen
+renderer (a `faces` contact-sheet mode added) so the badges/snippets/sticker variety were judged at full
+clarity first. `xcodebuild` device-arch **BUILD SUCCEEDED**; built + signed + **installed on the iPad Air
+M4**. Handover §7 #1/#2/#3 are now done; the desk reads like a real workspace, not a tech demo.
+
+**2026-06-24 — the OBJECT LANGUAGE + the dive fix (owner feedback on the device walk).** Two things from
+walking the build. (1) **Dive was broken** — `cardNode(at:)` returned ANY named node, so a tap on a zone
+hit the zone's own node, fired `onTap("zone:…")` (a no-op) and ate the gesture; double-tap was unreliable
+on top of that. Fixed: zones are excluded from `cardNode`, and **a single tap on a zone now dives in**
+(double-tap still works too; double-tap empty climbs out), with a `›` "enter" cue on the placard.
+(2) The bigger one — *"why would everything be this wooden chip with shit written on it instead of doing
+something proper?"* Right. Introduced an **object language**: hardware/containers are now real 3D things,
+not paper chips — a **meeting is a cassette** (body, reels, tinted title label — a recording), a **model
+is a glowing cartridge** (glossy slab, an emissive accent bar = loaded/alive, gold contact pins; the owner
+singled models out), a **knowledge base is a crystal**, a **notebook is a book**. Only actual **documents**
+(summary / topics / action / transcript / artifact) stay paper — appropriate, since they're what a meeting
+spills into. `makeObject` dispatches by `DeskCardKind`; each object keeps a box physics body so it still
+flings/stacks/files. Sculpted in the offscreen renderer first (cassettes + cartridge-with-glow + crystal +
+book, judged together) then ported 1:1. `xcodebuild` device-arch **BUILD SUCCEEDED**; built + signed +
+**launched live on the iPad Air M4** (unlocked this time). Next: extend the object language to the paper
+documents (a scroll for transcript, a sticky for action, a stack for summary) + the act-on-expand affordance.
+
+**2026-06-24 — the FOCUS LENS (lift-to-inspect) + long-press fix (owner feedback on a device walk).**
+(1) **Long-press churned the whole desk** — it cycled a card's paper *style*, and the default desk's
+zone-layout rebuilds *everything* when any card's style signature changes. Gated: long-press only cycles
+style on **paper documents**, so it's a no-op on the cassette/cartridge objects (and the default desk).
+(2) The big one — the owner's vision for **expand**: selecting an object should **lift it toward the
+camera**, and during the lift it goes **non-solid** (so it doesn't shove the desk), with its desk
+position **saved** so it **clips back** on exit; the world goes **under a fog lens** (clear centre on the
+lifted object, denser fog toward the edges); and its **outputs float in a VIRTUAL layer** around it
+instead of spilling into the physics desk. Built: tapping a meeting in 3D enters focus (`focusedId`) →
+`LivingDeskCanvas` lifts the node (kinematic + collisionless, transform saved, animated up + scaled) and
+drops it back on exit; a SwiftUI `DeskFocusOverlay` fogs the desk (radial clear→dark) and fans the
+meeting's output cards (real `DeskCardFace`, readable) in the air with a staggered spring; tap anywhere to
+close. `xcodebuild` device-arch **BUILD SUCCEEDED**; installed on the iPad Air M4 (launch pending an
+unlock). **Needs an on-device tuning pass:** the lift target/scale + the fog's clear-centre radius are set
+by reason, not yet eyeballed on the glass. **Real-asset note:** tried CC0 poly.pizza models
+(cassette/microchip/crystal/book) for the objects — they imported untextured/rough (palette-UV → white)
+and read worse than the procedural objects, so they're set aside pending a real texturing/curation pass
+(IDs + pipeline saved in the handover). The procedural objects stay for now.
+
+**2026-06-24 — levitation idle on the focus lens (owner: "make them hover, unsettled, like they're
+floating").** The lifted object and its floating outputs were frozen once settled — reads as stuck. Now
+both **levitate**: the 3D lifted object runs a slow bob + drift + tiny tumble on three different periods
+(so the motion never looks like a loop), started on lift-settle and removed before it clips back; each
+floating output card drifts + sways on its own phase (a `TimelineView` with a per-card seed). Subtle
+amplitude — a few points / fractions of a unit. `xcodebuild` **BUILD SUCCEEDED**; installed on the iPad
+Air M4 (launch pending an unlock).
+
+**2026-06-24 — FOUNDATION PIVOT: the Desk becomes a premium 2.5D diorama (owner: "rethink the
+approach").** After a run of features that were mechanically present but read as an *alpha* build, the
+owner called it — and chose, from a direct question, to **rethink the foundation** rather than keep
+polishing the hand-rolled real-time 3D. The honest root causes: (a) procedural box-geometry is
+programmer-art by construction, (b) I was rendering **blind** (the offscreen renderer is dark/untone-mapped
+and the device kept locking), so every pass was a guess. New direction (owner-picked): a **crafted,
+art-directed 2.5D diorama** — the bespoke **PixelLab** objects (cassette = meeting, AI-core cartridge =
+model, crystal = knowledge) on a warm, lit desk that recedes into space, with grounding shadows, a leather
+work mat, depth haze, wood grain, and elegant zone trays. The decisive win: it's built in SwiftUI and
+**verified at FULL fidelity in the iOS Simulator** (`scripts/diorama/` + `scripts/diorama-shot.sh`, a clean
+one-module harness isolated from the macOS SceneKit CLI) — quality stops being a guess. First composition
+proven + committed ([shot](./screenshots/desk-diorama-v1.png)). The 3D `LivingDeskCanvas` stays in the app
+untouched for now; the diorama is the new target to build the experience (objects, zones, the dive, the
+focus lens) up to — at this bar, screenshot-verified each step.
+
+**2026-06-24 — DELIGHT, found (owner: "the exact simplicity and delightfulness I was looking for. Keep
+expanding").** The static-diorama screenshot was rightly called embarrassing; the unlock was the owner's
+definition — *"premium = I'm delighted when I use it."* Delight is **felt in motion**, which a screenshot
+can never carry — so the proof medium changed to **Simulator VIDEO** and the craft to **motion + character**.
+What landed: a clean dark stage, the bespoke PixelLab objects **springing in with overshoot** (staggered),
+then never sitting still (breathe / drift / tilt on their own rhythms), a pulsing stage glow, and **Qlippy
+with real character** (sways, hops). Then **expanded to respond to touch**: tap a meeting → it springs to
+centre, the others recede + dim, and its intelligence **blooms** out as clean cards (Summary / Actions /
+Transcript) with a staggered spring; Qlippy gets excited; tap empty → everything springs home. Built
+interactive AND auto-played (`DIO_DEMO=1`) so the whole flow records in motion. Proof:
+[stage](./screenshots/delight-stage.png) · [focus bloom](./screenshots/delight-focus.png) + the recorded
+clips. The lesson, locked: **stop proving feel with frozen frames — record motion, then feel it on device.**
+
+**2026-06-24 — expanded the loop: the capture moment (record → listen → a meeting is BORN).** On "keep
+expanding on it," added the app's core action in the same alive style: a breathing **record orb** → a calm
+**Listening…** state (a voice core — breathing orb + expanding rings + a ring of reactive bars — with live
+words rising and fading) → Stop, and the recording **crystallises into a new cassette** that pops onto the
+stage with a spring + a success haptic, then opens to its intelligence. Create and consume, both delightful,
+both verified in motion. Auto-played tour under `DIO_DEMO=1`. Proof:
+[listening](./screenshots/delight-listening.png) · [born](./screenshots/delight-born.png) + the recorded
+clip. Next candidate expansions (keep it simple): the model/KB objects responding on tap, acting on a card
+(send/approve), and the fractal dive — then port the whole feel into the real app + onto the device.
+
+**2026-06-24 — the diorama is ON THE DEVICE (owner: "let's get it on my iPad").** Integrated the
+motion-first 2.5D stage into the real app as `DioStage` (`App/MeetingCapture/DeskDioramaStage.swift`,
+Dio-prefixed to avoid collisions, reuses `DeskSprite` + the app's `Color(hex:)`), and made it the app's
+**front door** (`MeetingCaptureApp`): the 3D object desk is now behind `HS_REAL_DESK=1`, the classic list
+behind `HS_CLASSIC_HOME=1`. Device-arch **BUILD SUCCEEDED**; built + signed + **installed on the iPad Air
+M4** via the proven `meeting-capture-device.sh` pipeline (launch pended on the lock screen). This is the
+real test the owner asked for — feel it on glass (haptics on tap/record live). Next: tune the feel WITH
+him on the device, then keep expanding (other objects respond, act-on-card, the dive).
+
+**2026-06-24 — unwound the device bugs the owner hit (drag / hit-testing / per-type content).** First real
+device walk of `DioStage` surfaced three: (1) **no drag** — objects couldn't be moved; added a per-object
+`DragGesture(minimumDistance:0)` that distinguishes tap (<9pt → open) from drag (→ reposition, persisted in
+a unit-coord `positions` map, clamped on-desk), with a light haptic. (2) **unreliable taps** — the hit zone
+was the object's ~2× glow, so the big AI Core swallowed the crystal's taps; tightened each hit zone to the
+sprite footprint (`.frame(s,s).contentShape`). (3) **every object showed meeting cards** — added per-type
+`contentFor(id)` (meeting → Summary/Actions/Transcript; KB → docs/decisions/ask; model → on-device status).
+Also killed the jump: the focused object had been swapping between two `ForEach`es (identity loss → broken
+animation) — now ONE z-ordered list. Device-arch **BUILD SUCCEEDED**; **launched live on the iPad Air M4**
+(unlocked). Awaiting the owner's feel pass on drag + per-object taps.
+
+**2026-06-24 — the diorama becomes a real ENGINE + the drag root-cause fix (owner: "build out a full
+engine... and still can't drag").** Drag never worked because the `DragGesture` was attached INSIDE the
+per-frame idle `TimelineView` (rebuilt ~60×/s → the in-progress drag was torn down every frame; taps
+squeaked through, continuous drags died). Fix: split `DioHero` so the gesture + `.position` live on a STABLE
+outer view and only the idle motion stays in `DioHeroVisual`'s TimelineView. Then wired the **real engine**:
+`DioStage` now owns a `CaptureModel` and renders **real objects** — your recent meetings as cassettes,
+installed models (`ModelFiles`) as AI-core cartridges, knowledge bases as crystals — each with **real
+content** in the bloom (a meeting's actual summary/actions/transcript counts; model status; KB item count),
+**drag positions persisted** in `@AppStorage`, the record orb opening the **real `CaptureView`** (a captured
+meeting refreshes onto the desk), and a meeting card opening the **real `MeetingDetailView`**. Reinstalled
+clean (uninstall → fresh install) to kill the stale-build worry. Device-arch **BUILD SUCCEEDED**; installed
+on the iPad Air M4 (launch pended on the lock screen).
+
+**2026-06-24 — the diorama gets PLACES: fractal zones + the dive (owner's most-excited idea, now in the
+2.5D front door).** The pivot diorama could show your meetings but had no structure — a flat stage of loose
+objects. This leap gives it **places**. A **zone tray** is a premium recessed drawer that HOLDS meetings: a
+tinted label + count, member previews idling inside, an empty-state nudge, and a teaching **DIVE IN** cue.
+You **make a place** (a dashed **+ New Zone** tile → name it), **drag a meeting onto a tray to file it**
+(drop-to-tag — the tray lights up "hot" as you hover, a success haptic + count tick on drop), and **tap the
+tray to DIVE in**: a gamified camera rush (asymmetric scale-through + an accent **whoosh** flare + heavy
+haptic) where the zone *becomes the whole desk*, showing its members and its own **sub-zones** —
+**recursive**, path-based (`Atlas` → `Atlas/Q3`). A **breadcrumb** (`🏠 Desk › Project Atlas › Q3 Planning`,
+each crumb tap-to-jump) shows where you are; tap empty climbs out a level; the accent glow **retints to each
+zone's colour** as you descend. Built in the **harness first** (`scripts/diorama/Diorama.swift`) and
+**screenshot- + VIDEO-proven in the Simulator** — the dive is motion a frozen frame can't carry, so the
+auto-tour (`DIO_DEMO=1`) was recorded and the mid-dive frames confirm the camera-rush + breadcrumb-extend +
+interior-materialize reads right. Then **ported to the real app** (`DioStage`) against the live
+`CaptureModel`: real meetings file into real zones (`hs.diorama.zones`/`hs.diorama.filed`, path-based,
+persisted), models (cartridges) + KBs (crystals) stay at root, drag-to-file hit-tests the trays. Harness
+switched to **portrait full-screen** (the landscape Info.plist was letterboxing the canvas into a short band).
+Device-arch **BUILD SUCCEEDED**; built + signed + **installed on the iPad Air M4** (launch pended on the lock
+screen — the install completes regardless). Proof: [root](./screenshots/fractal-desk-root.png) ·
+[inside Atlas](./screenshots/fractal-desk-atlas.png) · [mid-dive](./screenshots/fractal-dive-transition.png) ·
+[deep in Q3](./screenshots/fractal-zone-q3.png). This is handover §7 #2 (dive) + #1 (drop-to-tag) brought
+into the diorama, and the start of #5 (zones). Next: feel the dive on glass with the owner, then act-on-expand
+(§7 #3) + the Ask-AI atom (§7 #7).
+
+**2026-06-24 — zones go LOW-PROFILE + intelligence becomes a PULL-OUT (owner feedback on the device walk).**
+The owner walked the first cut and hit real failures: (1) **no way out of a zone** — the small "Desk" crumb
+fell through to the "+ New Zone" handler underneath; (2) after recording, **stray taps outside the menus
+triggered things** (a receded object still ate the tap); (3) tapping a meeting's contents opened **"the plane,
+super boring old-ass window"** (the `MeetingDetailView` nav sheet) — "the biggest and laziest shortcut," when
+the whole point is a **seamless drawer experience with first-class primitives**. Plus a direction: zones should
+be **lower-profile** to leave room for **"pull-outs such as intelligence."** All addressed, composed in the
+harness first then ported to `DioStage`: (1) **a big always-on-top Back bar** (a 44pt "‹ Back" pill + the
+breadcrumb, `zIndex 100`) — no tile can steal its tap; (2) **a focus fog** that catches outside taps → close,
+and a receded object no longer accepts taps; (3) the centered modal/nav sheet is gone — a tapped object's
+intelligence now **PULLS OUT from the right edge** as a rich in-world drawer (real **Summary / Actions (owner ·
+due) / Topics chips / Transcript**, an On-device badge, a subtle "Open full editor" fallback) while the object
+stays spotlit on the left over the fog; (4) **zones are now a compact top shelf** of labeled trays (icon +
+name + member dots + dive cue), not dominating boxes — the canvas stays open for the pull-outs. Drag-to-file
+still hit-tests the shelf trays. Harness screenshot-proven (root shelf, the intel pull-out, the in-zone Back
+bar); device-arch **BUILD SUCCEEDED**; built + signed + **launched live on the iPad Air M4** (unlocked). Proof:
+[root shelf](./screenshots/fractal-desk-root.png) · [intel pull-out](./screenshots/fractal-intel-pullout.png) ·
+[in-zone Back bar](./screenshots/fractal-desk-atlas.png). Next: feel it on glass + the act-on-card affordance
+inside the pull-out (approve an action → task/issue) + the Ask-AI atom (§7 #7).
+
+**2026-06-24 — THE PRIMITIVE CONTRACT (owner: "literally everything should be a primitive, emitting a
+standard UI integration pattern you can rely on"; chose "contract refactor first").** The interactions had
+been built one-off, so the desk "felt weird." Designed the coherence layer ([[story-25-the-desk-interaction-system]])
+and built its foundation: a `DeskPrimitive` protocol (`DeskPrimitive.swift`) — every desk concept declares the
+same facets (`kind` → glyph + colour, `title`, `subtitle`, `preview`, **`sections`**, **`actions`**, `emits`,
+`accepts`) and the **entire UI is DERIVED from that declaration**: the canvas object (`DioHero`), the card,
+and the right-edge **pull-out** (`DioPullout` — ONE renderer that draws any primitive's `sections`/`actions`,
+no per-type code). `MeetingPrimitive`/`ModelPrimitive`/`KBPrimitive` conform; `DioStage` now holds
+`[any DeskPrimitive]` and renders uniformly. Adding a platform concept = declaring one primitive; its whole UI
+appears for free. `emits`/`accepts`/compat are declared now so the **keystone routing gesture** (drag an
+output onto the AI core → LLM → a new primitive prints) is trivial to add next — that's the agreed next build.
+Proven: the SAME pull-out renderer draws a meeting (summary/actions/topics/transcript) and the AI core (model
+status) identically — [meeting](./screenshots/fractal-intel-pullout.png) vs
+[AI core](./screenshots/primitive-model-pullout.png). Device-arch **BUILD SUCCEEDED**; built + signed +
+**launched live on the iPad Air M4**. The whole design canon is in
+[story-25](./story-25-the-desk-interaction-system.md) (gesture library · intelligence engine · integrations ·
+build order). Next: the keystone routing gesture (drag → AI core → real LLM → new card) on real metal.
+
+**2026-06-25 — THE KEYSTONE: route any primitive through the AI core → a real LLM → a new primitive
+(owner: "keep building an ecosystem!").** The intelligence engine, made tactile. **Drag a primitive (a
+meeting, or a kept output) onto the AI-core cartridge** — it lights up "hot" (accent ring) when a compatible
+target is under it (`accepts ∋ kind`, from the Primitive contract) — and on drop a **route sheet** opens:
+pick a **lens** (Summarize / Action items / Risks / Decisions / Draft email) or edit the prompt freely. "Ask"
+runs it through the **real `ILLMProvider`** — on-device `LlamaProvider` (GGUF) or the configured endpoint, via
+`InferenceConfigStore.makeProvider` — grounded in the source's `routableText` (derived generically from its
+sections), with a **generation theater** (the thinking orb + "on this iPad · no network"). The result
+**prints as a NEW first-class primitive** (`OutputPrimitive`, kind `.artifact`) → **Keep on desk** (it lands,
+persisted in `hs.diorama.outputs`, and can be routed AGAIN — every output is an input) or **Bin**. Routing is
+generic over the contract: drop is `target.receive(source)`; the AI core `accepts` everything, a KB accepts
+notes/artifacts. Composed + screenshot-proven in the harness ([sheet](./screenshots/route-sheet.png) ·
+[theater](./screenshots/route-theater.png) · [printed](./screenshots/route-printed.png)), wired to the real
+provider in `DioStage`. Device-arch **BUILD SUCCEEDED**; built + signed + **installed on the iPad Air M4**
+(launch pended on the lock screen). This is story-25 build-order #1 — the smallest thing that makes the whole
+ecosystem real. Owner runs the real on-metal route (needs an on-device model or a configured endpoint). Next:
+the visible route arc, the long-press "Route to…/Send to…" menu, and connectors-as-primitives (drop an output
+on Slack → propose→approve→execute).
+
+**2026-06-25 — THE INTEGRATIONS HALF: connectors as primitives (owner: "keep going").** The loop closes —
+capture → route into the AI core → judge → **act into the world**. A **`ConnectorPrimitive`** (a Slack tile)
+is a first-class primitive like any other, but rendered from an **SF Symbol** (the contract gained
+`isSymbol` — connectors are tools, not pixel recordings) and it `accepts` outputs. **Drop a kept output (or a
+meeting) onto Slack** → it lights up hot (same `accepts ∋ kind` grammar as the AI core) → a **send card**:
+propose→approve→execute, showing *what*, *where*, and the **one egress badge** (`Cloud · Slack`, per
+POSITIONING canon — no privacy prose). **Approve & send** POSTs to a Slack **incoming webhook** (real
+`URLSession`), stored on-device (`hs.diorama.slack`, pasted via a Connect sheet on the connector's pull-out
+action), with a sent toast / honest failure. Routing is now fully generic: `beginRoute` switches on
+`target.kind` (model → ask the LLM, connector → send), and *the AI core and a connector are reached by the
+exact same drag gesture*. Harness-proven ([Slack on the desk](./screenshots/desk-with-connector.png) ·
+[send card + egress badge](./screenshots/connector-send-card.png)); device-arch **BUILD SUCCEEDED**; built +
+signed + **installed on the iPad Air M4** (launch pended on the lock screen). story-25 build-order #4. The
+ecosystem now does the full arc: **record → route → keep → send.** Next: the visible route arc (cable
+motion) + the long-press "Route to…/Send to…" menu (the discoverable twin of the drag).
+
+**2026-06-25 — GROUNDED: connectors ride the HoldSpeak actuator framework, gated on host PC connectivity
+(owner: "I hope this is all grounded in those HoldSpeak actuators… this should be gated on host PC
+connectivity").** Owned the gap honestly: the first connector was an ad-hoc iPad→Slack webhook POST — NOT
+grounded in the Phase 37/38/61 actuator framework, and it held the credential on the iPad. Refactored end to
+end so the connector is a faithful **propose→approve→execute** actuator routed **through the paired Mac**:
+- **Host (Python), grounded in the real framework:** two new companion endpoints —
+  `POST /api/companion/slack/propose` (records a `proposed` `ActuatorProposal`: target `slack`, action
+  `post_message`, preview == the exact wire body, payload `{body:{text}}`, idempotent on content hash; a
+  hidden sentinel `companion` meeting satisfies the proposals FK and is excluded from `list_meetings`) and
+  `POST /api/companion/slack/{id}/decision` (approve → executes **immediately through the existing
+  `_execute_slack_proposal` / `build_slack_connector` / `ActuatorExecutor`** guard stack — status gate,
+  payload parity, manifest allow-list). **The webhook URL is joined in memory ON THE MAC at execute time —
+  never accepted from or returned to the iPad, never on the proposal, never broadcast.** `/api/companion/status`
+  now reports `connectors.slack_configured` (bool, no URL) so the iPad can gate. **13 new tests**
+  (`tests/integration/test_web_companion_slack.py`) prove the matrix incl. the credential rule; existing
+  slack-export (24) + meetings/history (43) green, no regressions. (One pre-existing, unrelated dashboard
+  `egressLabel()` failure — confirmed failing on a clean tree, a stale gitignored web bundle.)
+- **iPad (Swift):** the connector no longer holds a webhook. It reuses the desk's **Mac pairing**
+  (`hs.peer.host`/`hs.peer.port`), is **gated on connectivity** (a `DeskHostLink.reachable()` `/health`
+  check before any send; "your Mac isn't reachable" otherwise), and on **Approve & send** does
+  propose→decide over the host endpoints — the iPad sends only text, receives only a preview/status. The
+  connector tile now says "via your Mac"; the connect action pairs the Mac (host:port), not a webhook.
+- The **egress badge** stays the one badge (`Cloud · Slack`); the send card reads "approve → your Mac posts
+  it." Device-arch **BUILD SUCCEEDED**; harness send-card reshot
+  ([send card](./screenshots/connector-send-card.png)). This is the right grounding the owner asked for —
+  the iPad is a companion, the host owns the actuators and the credential.
+
+**2026-06-25 — the route made VISIBLE: the cable + traveling token (story-25 #2).** Routing used to jump to
+a centred modal — the gesture didn't read. Now a route DRAWS itself: a glowing dashed **cable** arcs from the
+source primitive to its target with **tokens traveling the wire** while the model works (the Blueprints
+"token travels wires" viz from the canon, on the desk), the target **pulses** as it runs, and the desk dims
+behind — no modal. The modal `DioRoutingTheater` was replaced with this **on-desk** treatment fed by the real
+source/target screen positions (captured at drop: `routeFrom` = source centre, `routeTo` = target centre via
+`objectHit`). One mechanism, both routes (into the AI core, out to a connector). Composed + **video-proven**
+in the harness (tokens visibly travel the cable frame-to-frame), ported to `DioStage`; device-arch **BUILD
+SUCCEEDED**. Proof: [route arc](./screenshots/route-arc.png) + the recorded clip. Next on the list: the
+long-press "Route to…/Send to…" menu (discoverable twin) + lasso→bundle→Ask + a second grounded connector.
+
+**2026-06-25 — the Ask-AI atom (lasso → bundle → Ask) + the long-press menu (story-25 #3 + #5).** Two
+capability leaps that make routing powerful AND discoverable. **Lasso:** drag on the empty desk → a dashed
+selection rect; every primitive whose centre falls inside lights up with a selection ring; a bottom **bundle
+bar** ("N selected · Ask AI about these · Clear") routes the WHOLE selection through the AI core at once —
+their `routableText` is concatenated (`## title` headers) into one grounded prompt, through the same route
+sheet + on-desk cable + real `ILLMProvider`, printing one new primitive (the multi-context Ask-AI atom; a tap
+vs. lasso is disambiguated by drag distance, so tap-to-deselect/climb still works). **Long-press menu:** every
+primitive now has a `.contextMenu` — **Open · Route to AI core · Send to <connector> · Open full editor** —
+built from the contract (`accepts`), the discoverable twin of the drag (so you never need pixel-perfect
+aim). Both generic over the Primitive contract; the bundle reuses the route arc + theater. Lasso composed +
+screenshot-proven in the harness ([lasso → Ask](./screenshots/lasso-bundle.png)); both ported to `DioStage`;
+device-arch **BUILD SUCCEEDED**. Routing is now: drag onto a target, lasso a bundle, or long-press a menu —
+three ways into the same engine. Next: a second grounded connector (webhook/GitHub via the host actuators) +
+act-on-action inside the pull-out.
+
+**2026-06-25 — workflows as primitives: saved Asks become reusable desk TOOLS (the-desk-map ▶).** The desk
+stops being one-shot asks and becomes a place where you **build tools**. In the route sheet, **"Save as a
+reusable tool"** turns the current lens/prompt into a named **`WorkflowPrimitive`** (kind `.workflow`, an SF
+gears tile) that lands on the desk and persists (`hs.diorama.workflows`). It `accepts` meetings/outputs, so
+**dropping a meeting on a tool runs that saved Ask straight through the AI core — no sheet, no retyping** (a
+`.workflow` branch in `beginRoute` calls `runRoute` with the saved prompt), with the same visible cable +
+theater, printing a new primitive. Every tool's output is itself routable. Generic over the Primitive
+contract — a workflow is just another primitive that `accepts` and produces. Harness screenshot-proven
+([tool on the desk](./screenshots/desk-with-workflow.png) · [save-as-tool](./screenshots/route-sheet-save-tool.png)),
+ported to `DioStage`; device-arch **BUILD SUCCEEDED**. This is the holistic map's "workflows as primitives"
+link — see [[THE_DESK_WHOLE_PICTURE]]. Next on the map: a second grounded connector (webhook/GitHub via the
+host actuators), act-on-section, web parity.
+
+**2026-06-25 — act-on-section: the intelligence is granularly actionable (the-desk-map ▶).** A pull-out used
+to be route-the-whole-thing or read. Now **every section carries a "Route this to AI" chip** — route just the
+**summary**, just the **action items**, just the **transcript** through the AI core, not the whole meeting.
+The facet's text is extracted generically from its `SectionBody` (text/actions/chips/transcript) and routed
+through the same bundle path (sheet → cable → real LLM → new primitive); the chip shows only when the
+primitive `emits` (so it's on meetings/outputs, not the model/connector tiles). Makes `emits` real at the
+section grain. Harness screenshot-proven ([act-on-section](./screenshots/act-on-section.png)), ported to
+`DioStage`; device-arch **BUILD SUCCEEDED**. Next on the map: a second grounded connector (webhook/GitHub via
+the host actuators) + web parity.
+
+**2026-06-25 — a SECOND grounded connector: Webhook (proves "connector = one primitive + a thin host
+endpoint").** A generic **Webhook** connector (Discord / Zapier / n8n / any endpoint) lands on the desk
+beside Slack, grounded through the Mac's actuator framework exactly like Slack — NOT an iPad POST. **Host
+(Python):** a `companion_webhook_url` config field (credential, stays on the Mac), a generic
+`build_url_webhook_connector(url)` (the Slack connector minus the slack.com host check — allow-lists the
+URL's host, injects the URL in memory at execute), and two endpoints
+(`/api/companion/webhook/propose` + `/{id}/decision`) reusing the guarded `ActuatorExecutor`; the Slack and
+Webhook decision routes are **target-scoped so they can't cross**; `/api/companion/status` now reports
+`webhook_configured`. **9 new tests** (`test_web_companion_webhook.py`) incl. the credential rule + the
+cross-target guard; 320 in the config/settings/companion/slack/schema sweep green (the new config field broke
+no snapshot). **iPad:** `DeskHostLink.propose/decide` took a **target** param (`slack`/`webhook`), a Webhook
+`ConnectorPrimitive` tile, and the send (drag + long-press) carries `sendTargetConn`. **The desk is now a real
+toolkit** — meetings, the AI core, knowledge, two connectors, a saved tool — all primitives, all routable
+([desk toolkit](./screenshots/desk-connectors.png)). Device-arch **BUILD SUCCEEDED**. Adding the next
+connector is now genuinely "one primitive + a thin host endpoint." See [[THE_DESK_WHOLE_PICTURE]].
+
+**2026-06-25 — a THIRD grounded connector: GitHub issues (intelligence → tracked work).** Drop a card on
+the GitHub tile → your Mac files a real **GitHub issue** via the Phase-38 `gh issue create` connector — auth
+is the Mac's already-authenticated local `gh`, so **no token is stored or crosses the wire** (there's no
+credential to leak). **Host (Python):** reuses the existing `build_github_issue_connector` + the guarded
+`ActuatorExecutor`; a `companion_github_repo` config field (the default repo), `/api/companion/github/propose`
+(payload `{repo, title, body}`, repo from the request or config) + `/{id}/decision` (approve → files, returns
+the issue URL), target-scoped vs slack/webhook, a **testable runner seam** (`_GITHUB_RUNNER`, prod =
+`subprocess.run`, tests inject a fake `gh`), and `github_configured` in the status. **8 new tests**
+(`test_web_companion_github.py`) incl. argv carries repo/title/body, the returned URL, files-nothing-before-
+approval, and the cross-target guard. **iPad:** a GitHub `ConnectorPrimitive` tile (the generic `DeskHostLink`
+already routes by target). **Three connectors now ride the identical grounded path** (propose→approve→execute
+on the Mac, credential on the Mac); the desk is a real toolkit — meetings, AI core, knowledge, Slack +
+Webhook + GitHub, a saved tool ([toolkit](./screenshots/desk-toolkit.png)). Device-arch **BUILD SUCCEEDED**;
+30 companion-connector tests green. The map's "GitHub-issue connector" link is done; remaining ▶: web parity
++ mesh sync (Phase 16), real-metal proof. See [[THE_DESK_WHOLE_PICTURE]].
+
+**2026-06-25 — the TOOL DOCK (owner: "the tooling isn't in the lower part of my screen… wouldn't we rather
+have a docked tool chooser that swipes out?").** Tools (the AI core, the Slack/Webhook/GitHub connectors,
+saved workflows) moved OFF the cluttered desk into a **swipe-out bottom dock** in the thumb zone; the desk
+surface now holds only **content** (meetings, outputs, knowledge). `members()` split into `contentMembers()`
+(desk) + `toolMembers()` (dock). Collapsed, the dock is a "⌃ Tools" bar with peek icons; tap/swipe opens a
+panel of tool tiles ("TOOLS · drop a card on one"). **A content drag auto-opens the dock**, the target tool
+lights up "hot", and the drop routes/sends (`dockHit` hit-tests the tiles; the visible cable runs to the dock
+tile via `dockToolPos`); menu/lasso/facet routes target the core in the dock too. Tap a tool → its pull-out.
+This fixes the lower-screen reachability and declutters the desk (it was carrying 3 connectors + tools +
+content). Harness screenshot-proven ([dock closed](./screenshots/tool-dock-closed.png) ·
+[dock open](./screenshots/tool-dock-open.png)), ported to `DioStage`; device-arch **BUILD SUCCEEDED**. Still
+open from the same feedback: **resizable / tetris-able zones** (#1) — next.
+
+**2026-06-25 — resizable, tetris-able zones (owner: "why isn't their size customizable so we could tetris
+them out?").** Zones stopped being a fixed low-profile shelf and became **free-placed, resizable 2D AREAS**:
+each is a `ZoneRec` (path, colour, unit-centre `cx/cy`, point size `w/h`); **drag the body to arrange**
+(tetris), **drag the corner grip to resize** (clamped 120–360 × 78–260), **tap to dive** (distance-
+disambiguated). Persisted in the extended `hs.diorama.zones` ("path|color|cx|cy|w|h"), with **backward-compat**
+load (old "path|color" zones get a default frame). `trayHit` now uses each area's real frame, so drop-to-file
+follows the moved/resized area; `createZone` flows new areas into a loose grid; the "+ New Zone" affordance
+moved to a fixed top-right pill. Harness screenshot-proven — Project Atlas (wide) + Personal (tall) arranged
+tetris-style with the resize grip ([resizable zones](./screenshots/zones-resizable.png)); ported to `DioStage`;
+device-arch **BUILD SUCCEEDED**. **All three of the owner's desk-refinement asks are now in:** resizable
+zones (#1), tooling reachable in the lower screen + a docked swipe-out tool chooser (#2/#3, the tool dock).
 
 ## Operating principle (standing, beyond this phase)
 

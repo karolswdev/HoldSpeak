@@ -80,3 +80,59 @@ def test_delivery_failure_surfaces_502_not_autonomous_retry():
     r = _client(ctx).post("/api/dictation/remote", json={"text": "hi"})
     assert r.status_code == 502
     assert r.json()["delivered"] is False
+
+
+# ── HSM-15-01a: the explicit target_mode field ────────────────────────────────
+
+
+def test_default_target_mode_calls_hook_positionally_byte_identical():
+    """An unset target_mode delivers exactly as before: the hook is called with the
+    processed text positionally and NO `target` keyword (a plain str hook works)."""
+    calls: list = []
+
+    def hook(text):  # NOTE: accepts only the positional text — the legacy signature
+        calls.append(text)
+
+    ctx = _ctx(on_remote_dictation=hook)
+    r = _client(ctx).post("/api/dictation/remote", json={"text": "ship it"})
+    assert r.status_code == 200
+    assert r.json()["delivered"] is True
+    assert calls == ["[corrected] ship it"]
+
+
+def test_target_mode_focused_threads_through_to_hook():
+    """target_mode="focused" threads `target="focused"` to the delivery hook."""
+    seen: list = []
+
+    def hook(text, *, target="agent"):
+        seen.append((text, target))
+
+    ctx = _ctx(on_remote_dictation=hook)
+    r = _client(ctx).post(
+        "/api/dictation/remote", json={"text": "freeform note", "target_mode": "focused"}
+    )
+    assert r.status_code == 200
+    assert r.json()["delivered"] is True
+    assert seen == [("[corrected] freeform note", "focused")]
+
+
+def test_explicit_agent_target_mode_does_not_thread_keyword():
+    """target_mode="agent" is the default path: hook called positionally only."""
+    calls: list = []
+
+    def hook(text):  # legacy positional-only hook would break if a kwarg were passed
+        calls.append(text)
+
+    ctx = _ctx(on_remote_dictation=hook)
+    r = _client(ctx).post(
+        "/api/dictation/remote", json={"text": "answer", "target_mode": "agent"}
+    )
+    assert r.status_code == 200
+    assert calls == ["[corrected] answer"]
+
+
+def test_rejects_unknown_target_mode():
+    r = _client(_ctx()).post(
+        "/api/dictation/remote", json={"text": "hi", "target_mode": "nonsense"}
+    )
+    assert r.status_code == 400

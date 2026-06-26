@@ -1,0 +1,39 @@
+id: meeting-pylon-incident-warroom
+kind: meeting
+repo: pylon-infra
+profile: incident
+title: "Pylon — cert outage war-room (PI-204)"
+description: >
+  Incident war-room for the 2026-05-19 TLS outage. The api.prod certificate
+  expired; ingress served an expired cert for ~38 minutes (SEV-2) because
+  cert-manager had been silently failing renewal for a week after a network
+  policy change (PI-198) blocked the ACME HTTP-01 solver. Expect: incident
+  timeline, runbook delta, risk assessment, action items with owners, decision.
+lines:
+  - speaker: Jordan
+    voice: Daniel
+    text: "War-room for PI two oh four. Let me reconstruct the timeline. At 09:14 UTC monitoring paged on a spike in edge 5xx on api dot prod. At 09:18 we confirmed clients were getting TLS errors, the certificate had expired."
+  - speaker: Wei
+    voice: Karen
+    text: "We mitigated by 09:52, so about thirty eight minutes of impact, SEV two. The mitigation was a manual cert reissue. But here's the scary part, cert-manager had been silently failing the renewal for about a week before expiry."
+  - speaker: Jordan
+    voice: Daniel
+    text: "Root cause chain. A week earlier, PI one ninety eight changed a network policy. That change blocked the ACME HTTP-01 solver path, so cert-manager could not complete the challenge. Renewals failed quietly."
+  - speaker: Priya
+    voice: Samantha
+    text: "And the reason a silent renewal failure became a customer-facing outage is we only alerted on edge 5xx, which fires after the cert is already dead. We had no alert on certificate expiry headroom."
+  - speaker: Wei
+    voice: Karen
+    text: "I want to flag we also violated an invariant during mitigation. The manual cert reissue was effectively manual kubectl in prod. It was the right call under fire, but it's exactly the thing our runbooks say we don't do."
+  - speaker: Jordan
+    voice: Daniel
+    text: "Noted, and the postmortem should say the break-glass was justified. The biggest risk going forward is we have no synthetic test that the ACME path actually works. Any future network policy change could silently break renewal again."
+  - speaker: Priya
+    voice: Samantha
+    text: "Runbook gaps. The cert-renewal runbook has no break-glass manual reissue procedure, the on-call improvised it. And we have nothing that validates the ACME solver path after a network policy change."
+  - speaker: Wei
+    voice: Karen
+    text: "Decision. We add an alert on certificate expiry headroom at fourteen days, and we add a synthetic ACME-path test to CI that runs on any network policy change. Those two together would have caught this a week early."
+  - speaker: Jordan
+    voice: Daniel
+    text: "Action items. Priya owns the fourteen-day expiry-headroom alert. Wei, you add the synthetic ACME-path CI test. I'll update the cert-renewal runbook with the break-glass reissue procedure. Postmortem doc is mine too, due Thursday."

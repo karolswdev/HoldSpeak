@@ -1,0 +1,43 @@
+id: meeting-ledgerline-arch-review
+kind: meeting
+repo: ledgerline
+profile: architect
+title: "Ledgerline — scaling the write path (Stage 5 / LL-130)"
+description: >
+  Architecture review. The single SQLite writer is a throughput ceiling as
+  ledger_entries grows. Three options on the table, no decision yet: (a) shard
+  by account range, (b) event-sourced append log with periodic balance
+  snapshots, (c) stay on SQLite with read replicas. Expect: an ADR draft, a
+  mermaid component diagram, a captured decision, a dependency map, action items
+  with owners.
+lines:
+  - speaker: Priya
+    voice: Samantha
+    text: "Okay, let's start. The reason we're here is Stage five, LL one thirty. Our single SQLite writer is becoming the throughput ceiling. As ledger_entries grows we're seeing write contention spike during settlement windows."
+  - speaker: Alex
+    voice: Daniel
+    text: "Right. So I see three options on the table and I don't think we've actually decided. One, we shard ledger_entries by account range. Two, we move to an event sourced append log with periodic balance snapshots. Three, we stay on SQLite and just add read replicas for the reconcile queries."
+  - speaker: Mara
+    voice: Karen
+    text: "Read replicas only help reads though. The contention is on the write path. Reconcile is heavy but it's reads. So option three doesn't actually solve the stated problem."
+  - speaker: Priya
+    voice: Samantha
+    text: "Agreed. The real fork is sharding versus event sourcing. Sharding keeps the double-entry invariant simple per shard, but cross-account transfers now span two shards and we lose the single transaction boundary."
+  - speaker: Alex
+    voice: Daniel
+    text: "Event sourcing is appealing because we're already append-only. The ledger is literally an event log. But the snapshot rebuild logic is new code and it's exactly the kind of thing that can drift from the source of truth if we get it wrong."
+  - speaker: Mara
+    voice: Karen
+    text: "The invariant that scares me is that money is integer minor units and every posting sums to zero. Whatever we pick, a charge still has to post two balanced rows atomically. If event sourcing breaks atomicity across the snapshot boundary we've reintroduced the double-post class of bug."
+  - speaker: Priya
+    voice: Samantha
+    text: "Let's make the call. I'm leaning event sourcing with snapshots, because it's the natural shape of an append-only ledger and it keeps a single global ordering. The decision is: we adopt an event-sourced write log with hourly balance snapshots, and we explicitly defer sharding."
+  - speaker: Alex
+    voice: Daniel
+    text: "I can live with that. The dependency is the snapshot service depends on the append log, and the reconcile job now reads from snapshots plus the tail of the log. The charges API stays the same public contract."
+  - speaker: Mara
+    voice: Karen
+    text: "Two conditions from me. We need a property test that the snapshot plus log tail always reconstructs the exact balance, and we need a migration plan that can run with zero downtime against the live ledger."
+  - speaker: Priya
+    voice: Samantha
+    text: "Good. Action items. Alex, you draft the ADR for the event-sourced write path. Mara, you own the snapshot-reconstruction property test. I'll write the zero-downtime migration plan and bring it back next week. Let's get an ADR before any code lands."

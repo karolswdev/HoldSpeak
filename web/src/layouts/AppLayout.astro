@@ -14,6 +14,7 @@ import "../styles/global.css";
 import TopNav from "../components/TopNav.astro";
 import TrustChip from "../components/TrustChip.astro";
 import ConfirmDialog from "../components/ConfirmDialog.astro";
+import QueueHud from "../components/QueueHud.astro";
 
 type Route = "runtime" | "activity" | "history" | "dictation" | "companion" | "commands";
 
@@ -58,6 +59,11 @@ const hasSecondary = Astro.slots.has("secondary");
     <main id="main" tabindex="-1">
       <slot />
     </main>
+
+    {/* HS-69-07: the app-wide Queue HUD (collapsed pill → ledger), fed from
+        the shared runtime-bus. Rides every route from the shell; starts hidden
+        and reveals only when there is a live job. */}
+    <QueueHud />
 
     <ConfirmDialog />
 

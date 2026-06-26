@@ -403,6 +403,7 @@ class MeetingRepository(BaseRepository):
                     (SELECT GROUP_CONCAT(tag) FROM meeting_tags WHERE meeting_id = m.id) as tags
                 FROM meetings m
                 WHERE 1=1
+                  AND m.id != 'companion'
             """
             params: list[Any] = []
 

@@ -20,7 +20,7 @@ final class CompanionLinkTests: XCTestCase {
         func runtimeState() async throws -> RuntimeState { RuntimeState(status: "ok") }
         func startMeeting(title: String?) async throws -> RuntimeState { RuntimeState(status: "ok", meetingActive: true) }
         func stopMeeting() async throws -> RuntimeState { RuntimeState(status: "ok") }
-        func sendRemoteDictation(text: String) async throws -> RemoteDictationResult {
+        func sendRemoteDictation(text: String, target: DictationTarget) async throws -> RemoteDictationResult {
             RemoteDictationResult(success: true, finalText: text, delivered: true)
         }
         // HSM-13-03 companion-board verbs — unused by these tests; default stubs.

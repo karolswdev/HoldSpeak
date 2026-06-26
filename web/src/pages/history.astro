@@ -180,9 +180,9 @@ import AppLayout from "../layouts/AppLayout.astro";
             </div>
 
             <div class="grid" x-show="!loading && meetings.length > 0">
-              <template x-for="meeting in meetings" :key="meeting.id">
+              <template x-for="(meeting, i) in meetings" :key="meeting.id">
                 <div class="meeting-card-wrap">
-                  <button class="meeting-card" @click="openMeeting(meeting.id)">
+                  <button class="meeting-card signal-card hs-materialize" :style="`--i: ${i}`" @click="openMeeting(meeting.id)">
                     <div class="card-top">
                       <div class="card-id">
                         <p class="card-title" x-text="meeting.title || '(untitled meeting)'"></p>
@@ -1575,12 +1575,13 @@ import AppLayout from "../layouts/AppLayout.astro";
   /* HS-44-03: archive rows lifted to the wizard's bar — rounded,
    * subtle border, and a hover lift with depth (retired the flat
    * square rows). The selected row keeps the inverse-bar idiom. */
+  /* HS-69-02: layout shared by all four row types. `.meeting-card` now
+     carries the `.signal-card` primitive (surface + radius + top-lit
+     hairline + shadow), so its surface props live there; the others
+     keep their own surface in the rule just below. */
   .meeting-card, .action-card, .speaker-card, .segment {
     appearance: none;
     text-align: left;
-    background: var(--surface-2);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
     padding: var(--space-3);
     color: var(--text);
     display: flex;
@@ -1592,6 +1593,11 @@ import AppLayout from "../layouts/AppLayout.astro";
                 border-color var(--duration-short) var(--ease-standard),
                 transform var(--duration-short) var(--ease-standard),
                 box-shadow var(--duration-short) var(--ease-standard);
+  }
+  .action-card, .speaker-card, .segment {
+    background: var(--surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
   }
   .segment, .meeting-card--static { cursor: default; }
   .meeting-card:hover:not(.meeting-card--static):not(.meeting-card--selected),

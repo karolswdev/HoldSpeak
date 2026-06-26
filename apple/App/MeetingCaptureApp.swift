@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import Network
 import WhisperKit
 import PencilKit
 import Vision
@@ -19,443 +20,56 @@ import WebKit
 struct MeetingCaptureApp: App {
     var body: some Scene {
         WindowGroup {
-            // HS_DEMO_NOTEBOOK opens straight onto the notebook surface for a
-            // screenshot run (no mic/taps needed); the real entry is the meeting list.
-            if ProcessInfo.processInfo.environment["HS_DEMO_NOTEBOOK"] != nil {
-                DemoNotebookView().preferredColorScheme(.dark)
-            } else {
-                MeetingListView().preferredColorScheme(.dark)
-                    // AirDrop / "Open in HoldSpeak" a .gguf → copy it into the app's container.
-                    .onOpenURL { url in
-                        guard url.pathExtension.lowercased() == "gguf" else { return }
-                        try? ModelFiles.importModel(from: url)
-                    }
-            }
-        }
-    }
-}
-
-/// A standalone notebook for screenshot-verification of the rich surface (tool picker +
-/// pages), over an in-memory store.
-struct DemoNotebookView: View {
-    @StateObject private var notes = NotebookModel(store: InMemoryNotebookStore(), meetingID: "demo")
-    var body: some View {
-        ZStack {
-            Color(.sRGB, red: 0x0E/255, green: 0x0F/255, blue: 0x13/255, opacity: 1).ignoresSafeArea()
-            VStack(alignment: .leading, spacing: 14) {
-                Text("NOTEBOOK").font(.caption.weight(.bold)).tracking(2)
-                    .foregroundStyle(Color(.sRGB, red: 0x5B/255, green: 0x8D/255, blue: 0xEF/255, opacity: 1))
-                Text("Handwritten notes").font(.largeTitle.bold()).foregroundStyle(.white)
-                NotebookView(model: notes, editable: true)
-            }
-            .padding(20).frame(maxWidth: 760).frame(maxWidth: .infinity)
-        }
-    }
-}
-
-final class InMemoryNotebookStore: NotebookStore, @unchecked Sendable {
-    private var blobs: [String: Data] = [:]
-    func saveNotebook(_ data: Data, meetingID: String) throws { blobs[meetingID] = data }
-    func loadNotebook(meetingID: String) throws -> Data? { blobs[meetingID] }
-}
-
-// MARK: - On-device transcription (WhisperKit behind ITranscriber)
-
-final class WhisperKitTranscriber: ITranscriber, @unchecked Sendable {
-    private let chunks: [AudioChunk]
-    private let model: String
-    init(chunks: [AudioChunk], model: String) { self.chunks = chunks; self.model = model }
-
-    // The WhisperKit model is LOADED ONCE and reused. Previously every call constructed a fresh
-    // `WhisperKit(...)`, which reloads the CoreML model from disk (seconds) — so live ticks
-    // compounded into a frozen-feeling control plane. Cached in a lock-guarded static (WhisperKit
-    // isn't Sendable, so it never crosses an isolation boundary — created + used in this method).
-    private static let cacheLock = NSLock()
-    nonisolated(unsafe) private static var modelCache: [String: WhisperKit] = [:]
-    private static func cachedModel(_ k: String) -> WhisperKit? { cacheLock.lock(); defer { cacheLock.unlock() }; return modelCache[k] }
-    private static func cacheModel(_ k: String, _ m: WhisperKit) { cacheLock.lock(); modelCache[k] = m; cacheLock.unlock() }
-
-    func transcribe() async throws -> [Segment] {
-        let samples = chunks.flatMap { $0.samples }
-        guard samples.count >= 16_000 / 4 else { return [] }
-        let floats = samples.map { Float($0) / 32768.0 }
-        let whisper: WhisperKit
-        if let cached = Self.cachedModel(model) {
-            whisper = cached
-        } else {
-            whisper = try await WhisperKit(WhisperKitConfig(model: model))
-            Self.cacheModel(model, whisper)
-        }
-        let results = try await whisper.transcribe(audioArray: floats)
-        // Preserve WhisperKit's real per-segment timestamps (relative to this window) instead of
-        // collapsing to one zero-timestamp segment — the sliding-window commit (HSM-14-12) needs
-        // them to know exactly which audio a committed segment covers. `WhisperText.clean` runs
-        // per segment; all-non-speech segments drop out, so a blank window still cleans to [].
-        let segs = results.flatMap { $0.segments }.compactMap { seg -> Segment? in
-            let text = WhisperText.clean(seg.text)
-            guard !text.isEmpty else { return nil }
-            return TranscribedSegment(text: text, startTime: Double(seg.start), endTime: Double(seg.end)).asContractSegment()
-        }
-        return segs
-    }
-}
-
-// MARK: - SQLite-backed MeetingStore (Phase-4 persistence)
-
-/// Adapts the Phase-4 `SQLiteStorage` to the capture loop's `MeetingStore`, most-recent
-/// first. Falls back to an in-memory store if the DB can't open, so the app still runs.
-final class SQLiteMeetingStore: MeetingStore, @unchecked Sendable {
-    private let storage: SQLiteStorage
-    init() throws {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        storage = try SQLiteStorage(path: docs.appendingPathComponent("meetings.sqlite").path)
-    }
-    func save(_ meeting: Meeting) throws { try storage.saveMeeting(meeting) }
-    func load(id: String) throws -> Meeting? { try storage.loadMeeting(id: id) }
-    func list() throws -> [Meeting] {
-        try storage.allMeetings().sorted { $0.modifiedAt > $1.modifiedAt }.map(\.meeting)
-    }
-}
-
-// MARK: - Notebook persistence (HSM-8-02) — a meeting-keyed blob behind the seam
-
-/// Backs the `NotebookStore` seam with one JSON blob per meeting in the app container.
-/// The view never touches files — it goes through the `Notebook` view-model.
-final class FileNotebookStore: NotebookStore, @unchecked Sendable {
-    private let dir: URL
-    init() {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        dir = docs.appendingPathComponent("notebooks", isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-    }
-    private func url(_ id: String) -> URL { dir.appendingPathComponent("\(id).json") }
-    func saveNotebook(_ data: Data, meetingID: String) throws { try data.write(to: url(meetingID), options: .atomic) }
-    func loadNotebook(meetingID: String) throws -> Data? {
-        let u = url(meetingID)
-        return FileManager.default.fileExists(atPath: u.path) ? try Data(contentsOf: u) : nil
-    }
-}
-
-/// File-backed `LinkStore` (HSM-8-03) — a meeting-keyed JSON blob of transcript links.
-final class FileLinkStore: LinkStore, @unchecked Sendable {
-    private let dir: URL
-    init() {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        dir = docs.appendingPathComponent("links", isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-    }
-    private func url(_ id: String) -> URL { dir.appendingPathComponent("\(id).json") }
-    func saveLinks(_ data: Data, meetingID: String) throws { try data.write(to: url(meetingID), options: .atomic) }
-    func loadLinks(meetingID: String) throws -> Data? {
-        let u = url(meetingID)
-        return FileManager.default.fileExists(atPath: u.path) ? try Data(contentsOf: u) : nil
-    }
-}
-
-// MARK: - PencilKit canvas (the magic pencil)
-
-/// A PencilKit canvas with the system tool picker (pen / highlighter / eraser). Strokes
-/// flow back through `drawing`; stroke capture stays on PencilKit's own path so it never
-/// fights transcription for the main thread.
-struct PencilCanvas: UIViewRepresentable {
-    @Binding var drawing: PKDrawing
-    var editable: Bool
-
-    func makeUIView(context: Context) -> PKCanvasView {
-        let cv = PKCanvasView()
-        cv.drawing = drawing
-        cv.backgroundColor = .clear
-        cv.isOpaque = false
-        cv.drawingPolicy = .anyInput               // finger OR pencil (the sim has no pencil)
-        cv.delegate = context.coordinator
-        if editable {
-            let picker = context.coordinator.toolPicker
-            picker.setVisible(true, forFirstResponder: cv)
-            picker.addObserver(cv)
-            DispatchQueue.main.async { cv.becomeFirstResponder() }
-        } else {
-            cv.isUserInteractionEnabled = false
-        }
-        return cv
-    }
-
-    func updateUIView(_ cv: PKCanvasView, context: Context) {
-        if cv.drawing != drawing { cv.drawing = drawing }
-    }
-
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
-
-    final class Coordinator: NSObject, PKCanvasViewDelegate {
-        let parent: PencilCanvas
-        let toolPicker = PKToolPicker()
-        init(_ parent: PencilCanvas) { self.parent = parent }
-        func canvasViewDrawingDidChange(_ cv: PKCanvasView) { parent.drawing = cv.drawing }
-    }
-}
-
-/// HSM-14 — a snippet pulled from the transcript onto the note canvas. The user grabs a moment
-/// (a live bubble or a tacked note) and drops it here as a movable card to ink around.
-struct NoteCard: Identifiable, Codable, Equatable {
-    var id = UUID()
-    var text: String
-    var x: Double
-    var y: Double
-}
-
-@MainActor
-final class NotebookModel: ObservableObject {
-    @Published var pages: [PKDrawing]
-    @Published var current = 0
-    @Published var cards: [NoteCard] = []          // transcript snippets pulled onto the canvas
-    private let notebook: Notebook
-    private let cardsURL: URL
-
-    init(store: NotebookStore, meetingID: String) {
-        notebook = Notebook(store: store, meetingID: meetingID)
-        let loaded = notebook.reload().compactMap { try? PKDrawing(data: $0) }
-        pages = loaded.isEmpty ? [PKDrawing()] : loaded
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        cardsURL = docs.appendingPathComponent("notecards-\(meetingID).json")
-        cards = (try? JSONDecoder().decode([NoteCard].self, from: Data(contentsOf: cardsURL))) ?? []
-    }
-
-    func page(_ i: Int) -> Binding<PKDrawing> {
-        Binding(get: { self.pages[i] }, set: { self.pages[i] = $0; self.save() })
-    }
-    func addPage() { pages.append(PKDrawing()); current = pages.count - 1; save() }
-    func save() { try? notebook.save(pages: pages.map { $0.dataRepresentation() }) }
-    var hasInk: Bool { pages.contains { !$0.strokes.isEmpty } }
-
-    // HSM-14 — transcript → note canvas.
-    func addCard(_ text: String, at p: CGPoint) {
-        cards.append(NoteCard(text: text, x: Double(p.x), y: Double(p.y))); saveCards()
-    }
-    func moveCard(_ id: UUID, to p: CGPoint) {
-        guard let i = cards.firstIndex(where: { $0.id == id }) else { return }
-        cards[i].x = Double(p.x); cards[i].y = Double(p.y); saveCards()
-    }
-    func removeCard(_ id: UUID) { cards.removeAll { $0.id == id }; saveCards() }
-    private func saveCards() { try? JSONEncoder().encode(cards).write(to: cardsURL, options: .atomic) }
-}
-
-// MARK: - Notebook surface
-
-struct NotebookView: View {
-    @ObservedObject var model: NotebookModel
-    var editable: Bool
-    var onPromote: ((NoteCard, ArtifactType) -> Void)? = nil
-
-    var body: some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 10) {
-                Text("Page \(model.current + 1) of \(model.pages.count)")
-                    .font(.caption.weight(.medium)).foregroundStyle(SigN.muted)
-                Spacer()
-                if editable {
-                    Button { if model.current > 0 { model.current -= 1 } } label: {
-                        Image(systemName: "chevron.left").foregroundStyle(model.current > 0 ? SigN.accent : SigN.faint)
-                    }.disabled(model.current == 0)
-                    Button { if model.current < model.pages.count - 1 { model.current += 1 } } label: {
-                        Image(systemName: "chevron.right").foregroundStyle(model.current < model.pages.count - 1 ? SigN.accent : SigN.faint)
-                    }.disabled(model.current == model.pages.count - 1)
-                    Button { model.addPage() } label: {
-                        HStack(spacing: 4) { Image(systemName: "plus"); Text("Page") }
-                            .font(.caption.weight(.semibold)).foregroundStyle(SigN.accent)
-                    }
-                }
-            }
-            ZStack(alignment: .topLeading) {
-                PencilCanvas(drawing: editable ? model.page(model.current) : .constant(model.pages[model.current]),
-                             editable: editable)
-                // HSM-14 — transcript snippets pulled onto the canvas float ABOVE the ink, so you
-                // can drag them around and ink in the gaps. Always rendered (so they reliably
-                // reappear when a saved meeting is reopened).
-                ForEach(model.cards) { card in
-                    NoteCardView(card: card, editable: editable,
-                                 onMove: { model.moveCard(card.id, to: $0) },
-                                 onRemove: { withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { model.removeCard(card.id) } },
-                                 onPromote: onPromote.map { op in { type in op(card, type) } })
-                }
-            }
-            .frame(maxWidth: .infinity, minHeight: 360)
-            .background(SigN.s1, in: RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(SigN.line, lineWidth: 1))
-            .coordinateSpace(name: "notecanvas")
-        }
-    }
-}
-
-/// A transcript snippet living on the note canvas: a quoted, tinted card you drag to place and
-/// ink around. Tap its corner to remove. Lands with a spring when it arrives from the transcript.
-struct NoteCardView: View {
-    let card: NoteCard
-    let editable: Bool
-    let onMove: (CGPoint) -> Void
-    let onRemove: () -> Void
-    var onPromote: ((ArtifactType) -> Void)? = nil
-    @State private var landed = false
-    @State private var lifting = false
-    @State private var promoted = false
-
-    private let promoteTypes: [ArtifactType] = [.decisions, .actionItems, .riskRegister, .requirements, .adr]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .top, spacing: 7) {
-                Image(systemName: "quote.opening").font(.system(size: 11, weight: .bold)).foregroundStyle(SigN.accent)
-                Text(card.text)
-                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(SigN.muted)
-                    .lineLimit(5).fixedSize(horizontal: false, vertical: true)
-            }
-            // The card OFFERS something: turn this moment into a real intelligence artifact.
-            if let onPromote, editable {
-                Button {
-                    guard !promoted else { return }
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { promoted = true }
-                    tactile(.medium); onPromote(guessArtifactType(card.text))
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: promoted ? "checkmark.circle.fill" : "sparkles")
-                        Text(promoted ? "In review" : "Promote to artifact")
-                    }
-                    .font(.system(size: 10, weight: .heavy))
-                    .foregroundStyle(promoted ? SigN.accent : .black)
-                    .padding(.horizontal, 9).padding(.vertical, 5)
-                    .background(promoted ? SigN.accent.opacity(0.16) : SigN.accent, in: Capsule())
-                }
-                .buttonStyle(.plain)
-                .contextMenu {
-                    ForEach(promoteTypes, id: \.self) { t in
-                        Button { withAnimation { promoted = true }; tactile(.medium); onPromote(t) } label: {
-                            Label("Promote as \(artifactTypeLabel(t))", systemImage: artifactGlyph(t))
+            ZStack(alignment: .top) {
+                // HS_DEMO_NOTEBOOK opens straight onto the notebook surface for a
+                // screenshot run (no mic/taps needed); the real entry is the meeting list.
+                if ProcessInfo.processInfo.environment["HS_DEMO_NOTEBOOK"] != nil {
+                    DemoNotebookView()
+                } else if ProcessInfo.processInfo.environment["HS_CLASSIC_HOME"] != nil {
+                    MeetingListView()
+                        .onOpenURL { url in
+                            guard url.pathExtension.lowercased() == "gguf" else { return }
+                            try? ModelFiles.importModel(from: url)
                         }
-                    }
+                } else if ProcessInfo.processInfo.environment["HS_REAL_DESK"] != nil {
+                    // The 3D physics object desk (HSM-14-19..24), behind a flag while the motion-first
+                    // 2.5D diorama is the front door.
+                    DeskHome()
+                        .onOpenURL { url in
+                            guard url.pathExtension.lowercased() == "gguf" else { return }
+                            try? ModelFiles.importModel(from: url)
+                        }
+                } else {
+                    // HSM-14 — the premium, motion-first 2.5D DIORAMA is the home (owner-blessed direction):
+                    // alive objects, tap-to-focus intelligence, the capture moment. 3D desk behind
+                    // HS_REAL_DESK=1; the classic list behind HS_CLASSIC_HOME=1.
+                    DioStage()
                 }
+                // The run queue rides above every screen — the app-wide transparency surface.
+                QueueHUD()
+                // The proactive presence nudge rides above the queue — it taps YOU (HSM-15-09).
+                PresenceNudgeOverlay()
+            }
+            .preferredColorScheme(.dark)
+            .onAppear {
+                #if targetEnvironment(simulator)
+                let env = ProcessInfo.processInfo.environment
+                if env["HS_DEMO_QUEUE"] == "1" {
+                    RunQueueStore.shared.seedDemo()
+                    RunQueueStore.shared.expanded = env["HS_DEMO_QUEUE_OPEN"] == "1"
+                }
+                // HSM-15-09 — seed a freshly-waiting agent so BOTH the nudge card AND the HUD
+                // waiting lane are visible with no taps. Feeding `ingest` a rising edge fires
+                // the nudge; the lane shows the currently-waiting agents.
+                if env["HS_DEMO_PRESENCE"] == "1" {
+                    PresenceStore.shared.ingest(PresenceStore.demoSeed)
+                    // HS_DEMO_PRESENCE_OPEN=1 expands the HUD ledger to show the waiting LANE rows;
+                    // default keeps the pill (the always-on ambient lane badge) under the nudge.
+                    RunQueueStore.shared.expanded = env["HS_DEMO_PRESENCE_OPEN"] == "1"
+                }
+                #endif
             }
         }
-        .padding(.horizontal, 11).padding(.vertical, 9)
-        .frame(width: 196, alignment: .leading)
-        .background(SigN.s1, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(SigN.accent.opacity(lifting ? 0.85 : 0.4), lineWidth: lifting ? 1.6 : 1))
-        .shadow(color: .black.opacity(lifting ? 0.5 : 0.28), radius: lifting ? 14 : 7, y: lifting ? 8 : 4)
-        .overlay(alignment: .topTrailing) {
-            if editable {
-                Button(action: onRemove) {
-                    Image(systemName: "xmark.circle.fill").font(.system(size: 16))
-                        .foregroundStyle(SigN.faint).background(Circle().fill(SigN.s1))
-                }
-                .buttonStyle(.plain).offset(x: 6, y: -6)
-            }
-        }
-        .scaleEffect(landed ? (lifting ? 1.04 : 1) : 1.3)
-        .position(x: card.x, y: card.y)
-        .gesture(editable ?
-            DragGesture(coordinateSpace: .named("notecanvas"))
-                .onChanged { v in if !lifting { withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) { lifting = true } }; onMove(v.location) }
-                .onEnded { _ in withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { lifting = false } }
-            : nil)
-        .onAppear { withAnimation(.spring(response: 0.34, dampingFraction: 0.6)) { landed = true } }
-        .transition(.scale.combined(with: .opacity))
-    }
-}
-
-/// A tiny palette mirror so the notebook views compile alongside the (fileprivate) one.
-private enum SigN {
-    static let s1 = Color(.sRGB, red: 0x15/255, green: 0x17/255, blue: 0x1D/255, opacity: 1)
-    static let line = Color.white.opacity(0.07)
-    static let muted = Color(.sRGB, red: 0x9B/255, green: 0xA2/255, blue: 0xB0/255, opacity: 1)
-    static let faint = Color(.sRGB, red: 0x76/255, green: 0x7E/255, blue: 0x8D/255, opacity: 1)
-    static let accent = Color(.sRGB, red: 0xFF/255, green: 0x6B/255, blue: 0x35/255, opacity: 1)
-}
-
-// MARK: - Signal palette
-
-private enum Sig {
-    static let bg = Color(hex: 0x0E0F13)
-    static let s1 = Color(hex: 0x15171D)
-    static let s2 = Color(hex: 0x1C1F27)
-    static let s3 = Color(hex: 0x242833)
-    static let line = Color.white.opacity(0.07)
-    static let text = Color(hex: 0xF2F3F5)
-    static let muted = Color(hex: 0x9BA2B0)
-    static let faint = Color(hex: 0x767E8D)
-    static let accent = Color(hex: 0xFF6B35)
-    static let ok = Color(hex: 0x3ECF8E)
-    static let warn = Color(hex: 0xF2A33C)
-    static let bad = Color(hex: 0xE5544B)
-    static let local = Color(hex: 0x5B8DEF)
-}
-private extension Color {
-    init(hex: UInt) { self.init(.sRGB, red: Double((hex >> 16) & 0xFF)/255,
-                                green: Double((hex >> 8) & 0xFF)/255, blue: Double(hex & 0xFF)/255, opacity: 1) }
-}
-
-// MARK: - Signal depth + motion (HSM-14 craft elevation)
-
-private extension Sig {
-    static let bgTop = Color(hex: 0x191B23)
-    /// A cinematic vertical wash — depth instead of a flat fill.
-    static var bgGradient: LinearGradient {
-        LinearGradient(colors: [bgTop, bg], startPoint: .top, endPoint: .bottom)
-    }
-    /// The brand accent as a warm diagonal gradient (amber → ember) for hero surfaces.
-    static var accentGradient: LinearGradient {
-        LinearGradient(colors: [Color(hex: 0xFF9D5C), accent, Color(hex: 0xF24A2E)],
-                       startPoint: .topLeading, endPoint: .bottomTrailing)
-    }
-    static var accentSoft: Color { accent.opacity(0.15) }
-    static var localGradient: LinearGradient {
-        LinearGradient(colors: [Color(hex: 0x7AA6FF), local], startPoint: .topLeading, endPoint: .bottomTrailing)
-    }
-    /// A top-lit hairline so cards catch light at the top edge (glass realism).
-    static var topHairline: LinearGradient {
-        LinearGradient(colors: [Color.white.opacity(0.12), Color.white.opacity(0.035)],
-                       startPoint: .top, endPoint: .bottom)
-    }
-}
-
-/// Elevated Signal surface: layered fill + a top-lit hairline + a soft drop shadow. The one card
-/// treatment the whole app shares, so elevation is consistent (not random shadow values).
-private struct SignalCard: ViewModifier {
-    var fill: Color = Sig.s1
-    var radius: CGFloat = 18
-    var elevated: Bool = true
-    func body(content: Content) -> some View {
-        content
-            .background(fill, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous)
-                .strokeBorder(Sig.topHairline, lineWidth: 1))
-            .shadow(color: .black.opacity(elevated ? 0.38 : 0), radius: elevated ? 16 : 0, y: elevated ? 9 : 0)
-    }
-}
-private extension View {
-    func signalCard(_ fill: Color = Sig.s1, radius: CGFloat = 18, elevated: Bool = true) -> some View {
-        modifier(SignalCard(fill: fill, radius: radius, elevated: elevated))
-    }
-}
-
-/// A gradient-filled rounded glyph chip — the consistent icon container across rows/CTAs.
-private struct GlyphChip: View {
-    let system: String
-    var gradient: LinearGradient = Sig.localGradient
-    var size: CGFloat = 46
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: size * 0.28, style: .continuous).fill(gradient)
-                .shadow(color: .black.opacity(0.25), radius: 5, y: 3)
-            Image(systemName: system).font(.system(size: size * 0.42, weight: .bold)).foregroundStyle(.white)
-        }.frame(width: size, height: size)
-    }
-}
-
-/// Press feedback every tappable card shares: a subtle scale + dim on a spring (HIG scale-feedback).
-private struct PressableCard: ButtonStyle {
-    var scale: CGFloat = 0.975
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? scale : 1)
-            .opacity(configuration.isPressed ? 0.94 : 1)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
 
@@ -536,6 +150,8 @@ final class CaptureModel: ObservableObject {
     private var ticker: Task<Void, Never>?
     private var levelTicker: Task<Void, Never>?
     @Published var level: Float = 0            // HSM-14 — live mic amplitude for the waveform
+    @Published var diagFrames: Int = 0         // diagnostic: audio frames captured (0 ⇒ no mic audio)
+    @Published var diagPeak: Float = 0         // diagnostic: loudest raw RMS this run
 
     // HSM-14-13 — the floating recorder's spatial state (dock / free position / minimized), held on
     // the model so it survives pane switches and re-entry within the session. The snap math lives
@@ -552,11 +168,27 @@ final class CaptureModel: ObservableObject {
         do { store = try SQLiteMeetingStore() }
         catch { self.error = "Store unavailable: \(error)"; return }
         mc = MeetingCapture(capture: AudioCaptureService(), store: store,
-                            makeTranscriber: { WhisperKitTranscriber(chunks: $0, model: "base") })
+                            makeTranscriber: { WhisperKitTranscriber(chunks: $0, model: "base") },
+                            diarize: Self.makeDiarize())
         refresh()
     }
 
     func refresh() { meetings = mc?.meetings() ?? [] }
+
+    /// HSM-14-17 — the diarize closure handed to `MeetingCapture`. Lazily loads the bundled Core ML
+    /// embedder once (on first use, off the main thread by the time `stop()` calls it), and gates on
+    /// the live opt-in setting: when OFF it returns the segments untouched, so capture behaves exactly
+    /// as before. A fresh `SpeakerDiarizer` per meeting keeps "Speaker 1/2/…" scoped to the recording.
+    private static let sharedEmbedder: AudioEmbedding? = { try? AudioEmbedder() }()
+    private static func makeDiarize() -> (@Sendable ([Segment], [Int16], Int) -> [Segment])? {
+        guard let embedder = sharedEmbedder else { return nil }
+        return { segments, audio, sampleRate in
+            // Read the toggle at call time so flipping it takes effect without rebuilding capture.
+            let on = DispatchQueue.main.sync { InferenceConfigStore.shared.diarizationOn }
+            guard on else { return segments }
+            return SpeakerDiarizer(embedder: embedder).diarize(segments, audio: audio, sampleRate: sampleRate)
+        }
+    }
 
     func startRecording() async {
         guard let mc else { return }
@@ -573,7 +205,7 @@ final class CaptureModel: ObservableObject {
         }
         ticker = Task { [weak self] in
             while !Task.isCancelled, self?.recording == true {
-                try? await Task.sleep(nanoseconds: 1_200_000_000)   // window the live transcript (model is cached, so this is the cadence)
+                try? await Task.sleep(nanoseconds: 700_000_000)   // poll cadence; the bounded ~10s window keeps each tick cheap
                 await mc.tick()
                 if case .recording(let t) = mc.state { await MainActor.run { self?.liveTranscript = t; self?.ingest(t) } }
             }
@@ -582,7 +214,12 @@ final class CaptureModel: ObservableObject {
         // instant it arrives, with no transcription round-trip.
         levelTicker = Task { [weak self] in
             while !Task.isCancelled, self?.recording == true {
-                await MainActor.run { self?.level = self?.mc?.inputLevel ?? 0 }
+                await MainActor.run {
+                    guard let self else { return }
+                    self.level = self.mc?.inputLevel ?? 0
+                    self.diagFrames = self.mc?.capturedFrames ?? 0
+                    self.diagPeak = self.mc?.peakLevel ?? 0
+                }
                 try? await Task.sleep(nanoseconds: 50_000_000)
             }
             await MainActor.run { self?.level = 0 }
@@ -832,6 +469,24 @@ final class ChunkSink: @unchecked Sendable {
     func reset() { q.sync { chunks.removeAll() } }
 }
 
+/// Thread-safe live mic amplitude (0…~1), gained + instant-attack/fast-decay so a waveform visibly
+/// tracks the voice (HSM-15-01). Mirrors `MeetingCapture.updateLevel`; used by the Dictate surface,
+/// whose `AudioCaptureService` doesn't expose a level itself.
+final class LevelMeter: @unchecked Sendable {
+    private let q = DispatchQueue(label: "voice.level")
+    private var _level: Float = 0
+    var level: Float { q.sync { _level } }
+    func reset() { q.sync { _level = 0 } }
+    func ingest(_ chunk: AudioChunk) {
+        guard !chunk.samples.isEmpty else { return }
+        var sum: Float = 0
+        for s in chunk.samples { let f = Float(s) / 32768.0; sum += f * f }
+        let rms = (sum / Float(chunk.samples.count)).squareRoot()
+        let gained = Swift.min(1, rms * 4.5)
+        q.sync { _level = Swift.max(gained, _level * 0.74) }
+    }
+}
+
 /// A short on-device voice capture for a correction: record the mic, transcribe the clip with
 /// WhisperKit. No meeting is created — fully local, just the user's words.
 @MainActor
@@ -862,1390 +517,18 @@ final class VoiceCaptureState: ObservableObject {
     }
 }
 
-// MARK: - Models (import & manage — front and center, owner-requested)
-
-/// An on-device model file in the app's container.
-struct InstalledModel: Identifiable {
-    let url: URL
-    var sizeBytes: Int
-    var id: String { url.lastPathComponent }
-    var name: String { url.deletingPathExtension().lastPathComponent }
-    enum Kind { case language, visionProjector
-        var label: String { self == .visionProjector ? "Vision projector" : "Language / vision model" }
-        var glyph: String { self == .visionProjector ? "eye.fill" : "brain.head.profile" }
-        var tint: Color { self == .visionProjector ? Sig.local : Sig.accent }
-    }
-    var kind: Kind { url.lastPathComponent.lowercased().contains("mmproj") ? .visionProjector : .language }
-}
-
-/// The app-side model-files helper: imports/lists/deletes `.gguf` in the app's **Documents**
-/// (where the on-device runtime's `localGGUF()` loads from + where pushes land). Delegates to
-/// the tested Providers `ModelStore` (HSM-5-03), wrapping the security scope for picker URLs.
-enum ModelFiles {
-    static var root: URL { FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0] }
-    static var store: ModelStore { ModelStore(root: root) }
-
-    static func installed() -> [InstalledModel] {
-        ((try? store.installedModels()) ?? [])
-            .map { InstalledModel(url: $0, sizeBytes: (try? $0.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) }
-    }
-
-    /// Copy an imported/AirDropped file into the container (the host owns the security scope).
-    @discardableResult
-    static func importModel(from src: URL) throws -> URL {
-        let scoped = src.startAccessingSecurityScopedResource()
-        defer { if scoped { src.stopAccessingSecurityScopedResource() } }
-        return try store.importModel(from: src)
-    }
-
-    static func delete(_ m: InstalledModel) { try? store.delete(m.url) }
-
-    static func size(_ bytes: Int) -> String {
-        let f = ByteCountFormatter(); f.allowedUnits = [.useGB, .useMB]; f.countStyle = .file
-        return f.string(fromByteCount: Int64(bytes))
-    }
-    static var ggufTypes: [UTType] { [UTType(filenameExtension: "gguf") ?? .data] }
-}
-
-struct ModelsView: View {
-    @State private var models: [InstalledModel] = []
-    @State private var importing = false
-    @State private var note = ""
-    @State private var busy = false
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        ZStack {
-            Sig.bg.ignoresSafeArea()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Button { dismiss() } label: {
-                        HStack(spacing: 6) { Image(systemName: "chevron.left"); Text("Home") }
-                            .font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
-                            .padding(.vertical, 8).padding(.trailing, 12)
-                    }
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Models").font(.system(size: 32, weight: .heavy)).foregroundStyle(Sig.text)
-                        Text("Everything runs on this iPad. Import a .gguf from Files or AirDrop — no Mac, no account.")
-                            .font(.system(size: 14)).foregroundStyle(Sig.faint)
-                    }
-                    Button { importing = true } label: { importCta }.disabled(busy)
-                    if !note.isEmpty {
-                        HStack(spacing: 7) {
-                            if busy { ProgressView().tint(Sig.accent) }
-                            Text(note).font(.system(size: 13, weight: .semibold)).foregroundStyle(Sig.muted)
-                        }
-                    }
-                    if models.isEmpty && !busy {
-                        Text("No models yet. Import one to power on-device intelligence.")
-                            .font(.callout).foregroundStyle(Sig.faint).padding(.top, 6)
-                    } else {
-                        ForEach(models) { modelCard($0) }
-                    }
-                }
-                .padding(20).frame(maxWidth: 760).frame(maxWidth: .infinity)
-            }
-        }
-        .toolbar(.hidden, for: .navigationBar)
-        .fileImporter(isPresented: $importing, allowedContentTypes: ModelFiles.ggufTypes, allowsMultipleSelection: true) { result in
-            guard case .success(let urls) = result, !urls.isEmpty else { return }
-            busy = true; note = "Importing \(urls.count) file\(urls.count == 1 ? "" : "s")…"; tactile()
-            Task.detached {
-                var ok = 0
-                for u in urls { if (try? ModelFiles.importModel(from: u)) != nil { ok += 1 } }
-                await MainActor.run {
-                    busy = false; note = "Imported \(ok) model\(ok == 1 ? "" : "s"). They're on this iPad now."; refresh()
-                }
-            }
-        }
-        .onAppear(perform: refresh)
-    }
-
-    private func refresh() { withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { models = ModelFiles.installed() } }
-
-    private var importCta: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "square.and.arrow.down.fill").font(.system(size: 20, weight: .bold)).foregroundStyle(Sig.accent)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Import a model").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
-                Text("Pick a .gguf from Files (AirDrop a model, then import it here)").font(.system(size: 12)).foregroundStyle(Sig.faint)
-            }
-            Spacer()
-            Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity)
-        .background(Sig.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [7, 5])).foregroundStyle(Sig.accent.opacity(0.5)))
-    }
-
-    private func modelCard(_ m: InstalledModel) -> some View {
-        HStack(spacing: 13) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous).fill(m.kind.tint.opacity(0.16))
-                Image(systemName: m.kind.glyph).font(.system(size: 18, weight: .bold)).foregroundStyle(m.kind.tint)
-            }.frame(width: 44, height: 44)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(m.name).font(.system(size: 15.5, weight: .bold)).foregroundStyle(Sig.text).lineLimit(1)
-                HStack(spacing: 6) {
-                    Text(m.kind.label).font(.system(size: 12, weight: .heavy)).foregroundStyle(m.kind.tint)
-                    Text("·").foregroundStyle(Sig.faint)
-                    Text(ModelFiles.size(m.sizeBytes)).font(.system(size: 12, weight: .semibold)).foregroundStyle(Sig.faint)
-                }
-            }
-            Spacer(minLength: 4)
-            Button { tactile(); ModelFiles.delete(m); refresh() } label: {
-                Image(systemName: "trash").font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.faint)
-                    .frame(width: 38, height: 38).background(Sig.s3, in: Circle())
-            }
-        }
-        .padding(13)
-        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Sig.line, lineWidth: 1))
-    }
-}
-
-// MARK: - Sketch → Diagram (HSM-14-08: the Pencil as a diagram language, live)
-
-private func shapeTint(_ k: ShapeKind) -> Color {
-    switch k { case .rectangle: return Sig.local; case .diamond: return Sig.accent; case .ellipse: return Sig.ok }
-}
-
-/// Recognizes the PencilKit drawing into a graph + Mermaid, live + on-device. Geometry does the
-/// shapes/edges (HSM-14-08 engine); on-device Vision reads the handwriting into node labels.
-@MainActor final class SketchModel: ObservableObject {
-    @Published var drawing = PKDrawing() { didSet { schedule() } }
-    @Published var graph = DiagramGraph(nodes: [], edges: [])
-    @Published var mermaid = ""
-    @Published var vlmBusy = false
-    @Published var vlmError = ""
-    @Published var usedAI = false
-    @Published var diagramType = ""
-    private var task: Task<Void, Never>?
-
-    /// HSM-14-09 — hand the whole sketch to the local vision model (Qwythos on .43) when the
-    /// geometry isn't enough. It returns Mermaid; we parse + render it natively.
-    func recognizeWithAI() {
-        guard !drawing.strokes.isEmpty, !vlmBusy else { return }
-        let png = Self.renderPNG(drawing)
-        vlmBusy = true; vlmError = ""; tactile(.medium)
-        Task { [weak self] in
-            do {
-                let raw = try await SketchVLM.mermaid(from: png)
-                let (mm, type) = MermaidParse.parseResponse(raw)
-                let g = MermaidParse.graph(mm)
-                await MainActor.run {
-                    self?.vlmBusy = false; self?.usedAI = true; self?.mermaid = mm; self?.diagramType = type
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { self?.graph = g }
-                }
-            } catch {
-                await MainActor.run { self?.vlmBusy = false; self?.vlmError = "Couldn't reach the vision model: \(error.localizedDescription)" }
-            }
-        }
-    }
-    nonisolated static func renderPNG(_ drawing: PKDrawing) -> Data {
-        let b = drawing.bounds.insetBy(dx: -24, dy: -24)
-        let rect = (b.isNull || b.isEmpty) ? CGRect(x: 0, y: 0, width: 400, height: 300) : b
-        let drawn = drawing.image(from: rect, scale: 2)
-        let r = UIGraphicsImageRenderer(size: drawn.size)
-        let onWhite = r.image { ctx in
-            UIColor.white.setFill(); ctx.fill(CGRect(origin: .zero, size: drawn.size)); drawn.draw(at: .zero)
-        }
-        return onWhite.pngData() ?? Data()
-    }
-
-    func schedule() {
-        task?.cancel()
-        let d = drawing
-        task = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 280_000_000)        // debounce while drawing
-            if Task.isCancelled { return }
-            let result = await Task.detached { Self.recognize(d) }.value   // Vision off the main actor
-            if Task.isCancelled { return }
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { self?.graph = result.0 }
-            self?.mermaid = result.1
-        }
-    }
-    func clear() {
-        drawing = PKDrawing(); graph = DiagramGraph(nodes: [], edges: []); mermaid = ""
-    }
-
-    nonisolated static func recognize(_ drawing: PKDrawing) -> (DiagramGraph, String) {
-        var nodes: [DiagramBuilder.NodeInput] = []
-        var connectors: [DiagramBuilder.ConnectorInput] = []
-        for s in drawing.strokes {
-            let pts = s.path.map { StrokePoint(Double($0.location.x), Double($0.location.y)) }
-            guard pts.count >= 2 else { continue }
-            switch ShapeRecognizer.classify(pts) {
-            case .shape(let kind, let b):
-                nodes.append(.init(kind: kind, text: ocrText(in: b, drawing: drawing), bounds: b))
-            case .connector(let from, let to):
-                let len = ((to.x - from.x) * (to.x - from.x) + (to.y - from.y) * (to.y - from.y)).squareRoot()
-                if len > 30 { connectors.append(.init(from: from, to: to, label: nil)) }   // skip tiny text strokes
-            }
-        }
-        let g = DiagramBuilder.build(nodes: nodes, connectors: connectors)
-        return (g, MermaidGenerator.flowchart(g))
-    }
-
-    /// On-device handwriting OCR over a shape's region → its node label.
-    nonisolated static func ocrText(in b: Bounds, drawing: PKDrawing) -> String {
-        let rect = CGRect(x: b.minX - 6, y: b.minY - 6, width: b.w + 12, height: b.h + 12)
-        guard rect.width > 8, rect.height > 8 else { return "" }
-        let img = drawing.image(from: rect, scale: 2)
-        guard let cg = img.cgImage else { return "" }
-        var text = ""
-        let req = VNRecognizeTextRequest { request, _ in
-            text = (request.results as? [VNRecognizedTextObservation])?
-                .compactMap { $0.topCandidates(1).first?.string }.joined(separator: " ") ?? ""
-        }
-        req.recognitionLevel = .accurate
-        req.usesLanguageCorrection = true
-        try? VNImageRequestHandler(cgImage: cg, options: [:]).perform([req])
-        return text.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-}
-
-/// Calls a local OpenAI-compatible VISION endpoint (Qwythos + mmproj on .43) to turn a sketch
-/// image into Mermaid. Points at the owner's LAN server; swap the URL to retarget.
-enum SketchVLM {
-    static let endpoint = URL(string: "http://192.168.1.43:8080/v1/chat/completions")!
-    static func mermaid(from png: Data) async throws -> String {
-        let b64 = png.base64EncodedString()
-        let prompt = """
-        You are an expert at reading hand-drawn diagrams. Look at this sketch and reproduce it as a Mermaid diagram.
-
-        FIRST decide which Mermaid diagram type best fits what is actually drawn:
-        - "flowchart"        — boxes/diamonds joined by arrows (processes, decisions)
-        - "sequenceDiagram"  — actors with vertical lifelines and horizontal messages
-        - "classDiagram"     — boxes with a title + a list of fields/methods, connected
-        - "stateDiagram-v2"  — states with labelled transitions, often a start/end dot
-        - "erDiagram"        — entities with attributes and relationship lines
-        - "mindmap"          — a central node with radiating branches
-        - "gantt" or "timeline" — bars/events along a time axis
-
-        THEN output VALID Mermaid for that type. Read the handwritten labels (fix obvious misspellings),
-        keep it minimal and correct. For flowcharts: box A["x"], diamond B{"x"}, circle C(("x")),
-        edge A --> B, labelled edge B -->|yes| C.
-
-        Return ONLY JSON: {"diagram_type": "<one of the names above>", "mermaid": "<the full mermaid code, \\n between lines>"}.
-        """
-        let body: [String: Any] = [
-            "messages": [["role": "user", "content": [
-                ["type": "text", "text": prompt],
-                ["type": "image_url", "image_url": ["url": "data:image/png;base64,\(b64)"]],
-            ]]],
-            "max_tokens": 900, "temperature": 0.2,
-            "response_format": [
-                "type": "json_schema",
-                "json_schema": [
-                    "name": "diagram",
-                    "schema": ["type": "object",
-                               "properties": ["diagram_type": ["type": "string"],
-                                              "mermaid": ["type": "string", "minLength": 1]],
-                               "required": ["diagram_type", "mermaid"], "additionalProperties": false],
-                ],
-            ],
-        ]
-        var req = URLRequest(url: endpoint, timeoutInterval: 120)
-        req.httpMethod = "POST"
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try JSONSerialization.data(withJSONObject: body)
-        let (data, _) = try await URLSession.shared.data(for: req)
-        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        let msg = (json?["choices"] as? [[String: Any]])?.first?["message"] as? [String: Any]
-        return (msg?["content"] as? String) ?? ""
-    }
-}
-
-/// Parse Mermaid flowchart text → a `DiagramGraph` with a simple layered layout, so the VLM's
-/// output renders natively. Best-effort: a parse miss just leaves the graph empty (the raw
-/// Mermaid is still shown).
-enum MermaidParse {
-    static func extract(_ raw: String) -> String {
-        var s = raw
-        if let f = s.range(of: "```") {
-            s = String(s[f.upperBound...])
-            if let e = s.range(of: "```") { s = String(s[..<e.lowerBound]) }
-        }
-        if let nl = s.firstIndex(of: "\n"), s[s.startIndex..<nl].lowercased().contains("mermaid") {
-            s = String(s[s.index(after: nl)...])
-        }
-        if let r = s.range(of: "flowchart") { s = String(s[r.lowerBound...]) }
-        else if let r = s.range(of: "graph ") { s = String(s[r.lowerBound...]) }
-        return s.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    /// The model returns `{"diagram_type":"…","mermaid":"…"}` (json_schema) or raw/fenced mermaid.
-    /// Returns the cleaned mermaid + the diagram type (inferred from the header if absent).
-    static func parseResponse(_ content: String) -> (mermaid: String, type: String) {
-        if let data = content.data(using: .utf8),
-           let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let mm = obj["mermaid"] as? String {
-            let m = extract(mm)
-            let t = (obj["diagram_type"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? inferType(m)
-            return (m, t)
-        }
-        let m = extract(content)
-        return (m, inferType(m))
-    }
-    static func inferType(_ mermaid: String) -> String {
-        let head = (mermaid.split(separator: "\n").first.map(String.init) ?? "").lowercased()
-        let map: [(String, String)] = [
-            ("sequencediagram", "sequence"), ("classdiagram", "class"), ("statediagram", "state"),
-            ("erdiagram", "ER"), ("mindmap", "mindmap"), ("gantt", "gantt"), ("timeline", "timeline"),
-            ("flowchart", "flowchart"), ("graph", "flowchart"),
-        ]
-        for (k, v) in map where head.contains(k) { return v }
-        return "diagram"
-    }
-
-    static func graph(_ mermaid: String) -> DiagramGraph {
-        var kinds: [String: ShapeKind] = [:]
-        var texts: [String: String] = [:]
-        var order: [String] = []
-        var edges: [(String, String, String?)] = []
-        func note(_ id: String, _ kind: ShapeKind?, _ text: String?) {
-            if !order.contains(id) { order.append(id) }
-            if let k = kind { kinds[id] = k }
-            if let t = text, !t.isEmpty { texts[id] = t }
-        }
-        for raw in mermaid.split(separator: "\n") {
-            let line = raw.trimmingCharacters(in: .whitespaces)
-            scanDefs(line, note)
-            for e in scanEdges(line) { note(e.0, nil, nil); note(e.1, nil, nil); edges.append(e) }
-        }
-        var depth: [String: Int] = [:]; for id in order { depth[id] = 0 }
-        for _ in 0..<max(order.count, 1) {
-            for (a, b, _) in edges { let d = (depth[a] ?? 0) + 1; if d > (depth[b] ?? 0) { depth[b] = d } }
-        }
-        var perRow: [Int: Int] = [:]
-        var nodes: [DiagramNode] = []
-        for id in order {
-            let d = depth[id] ?? 0
-            let col = perRow[d, default: 0]; perRow[d] = col + 1
-            let x = Double(col) * 175, y = Double(d) * 115
-            nodes.append(DiagramNode(id: id, kind: kinds[id] ?? .rectangle, text: texts[id] ?? id,
-                                     bounds: Bounds(minX: x, minY: y, maxX: x + 130, maxY: y + 54)))
-        }
-        return DiagramGraph(nodes: nodes, edges: edges.map { DiagramEdge(from: $0.0, to: $0.1, label: $0.2) })
-    }
-
-    private static func scanDefs(_ l: String, _ note: (String, ShapeKind?, String?) -> Void) {
-        let pats: [(String, ShapeKind)] = [
-            (#"([A-Za-z0-9_]+)\(\(\s*\"?([^\")]*)\"?\s*\)\)"#, .ellipse),
-            (#"([A-Za-z0-9_]+)\{\s*\"?([^\"}]*)\"?\s*\}"#, .diamond),
-            (#"([A-Za-z0-9_]+)\[\s*\"?([^\"\]]*)\"?\s*\]"#, .rectangle),
-        ]
-        for (pat, kind) in pats {
-            guard let re = try? NSRegularExpression(pattern: pat) else { continue }
-            let ns = l as NSString
-            re.enumerateMatches(in: l, range: NSRange(location: 0, length: ns.length)) { m, _, _ in
-                guard let m = m, m.numberOfRanges >= 3 else { return }
-                note(ns.substring(with: m.range(at: 1)), kind,
-                     ns.substring(with: m.range(at: 2)).trimmingCharacters(in: .whitespaces))
-            }
-        }
-    }
-    private static func scanEdges(_ l: String) -> [(String, String, String?)] {
-        let pat = #"([A-Za-z0-9_]+)(?:\[[^\]]*\]|\{[^}]*\}|\(\([^)]*\)\))?\s*[-.=]+>\s*(?:\|([^|]*)\|\s*)?([A-Za-z0-9_]+)"#
-        guard let re = try? NSRegularExpression(pattern: pat) else { return [] }
-        let ns = l as NSString
-        var out: [(String, String, String?)] = []
-        re.enumerateMatches(in: l, range: NSRange(location: 0, length: ns.length)) { m, _, _ in
-            guard let m = m, m.numberOfRanges >= 4 else { return }
-            let a = ns.substring(with: m.range(at: 1))
-            let label = m.range(at: 2).location != NSNotFound ? ns.substring(with: m.range(at: 2)).trimmingCharacters(in: .whitespaces) : nil
-            out.append((a, ns.substring(with: m.range(at: 3)), label))
-        }
-        return out
-    }
-}
-
-/// A REAL Mermaid renderer — a WKWebView running the bundled mermaid.js (offline). Renders any
-/// valid Mermaid the geometry engine or the VLM produces, re-rendering on each code change.
-struct MermaidWebView: UIViewRepresentable {
-    let code: String
-
-    func makeCoordinator() -> Coordinator { Coordinator() }
-
-    func makeUIView(context: Context) -> WKWebView {
-        let cfg = WKWebViewConfiguration()
-        let wv = WKWebView(frame: .zero, configuration: cfg)
-        wv.navigationDelegate = context.coordinator
-        wv.isOpaque = false
-        wv.backgroundColor = .clear
-        wv.scrollView.backgroundColor = .clear
-        context.coordinator.wv = wv
-        wv.loadHTMLString(Self.html(), baseURL: nil)
-        return wv
-    }
-
-    func updateUIView(_ wv: WKWebView, context: Context) {
-        context.coordinator.latest = code
-        if context.coordinator.ready { context.coordinator.render(code) }
-    }
-
-    final class Coordinator: NSObject, WKNavigationDelegate {
-        weak var wv: WKWebView?
-        var ready = false
-        var latest = ""
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            ready = true
-            if !latest.isEmpty { render(latest) }
-        }
-        func render(_ code: String) {
-            let esc = code.replacingOccurrences(of: "\\", with: "\\\\")
-                .replacingOccurrences(of: "`", with: "\\`").replacingOccurrences(of: "$", with: "\\$")
-            wv?.evaluateJavaScript("renderMermaid(`\(esc)`)", completionHandler: nil)
-        }
-    }
-
-    static func html() -> String {
-        let lib = (Bundle.main.url(forResource: "mermaid.min", withExtension: "js")
-            .flatMap { try? String(contentsOf: $0, encoding: .utf8) }) ?? ""
-        return """
-        <!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3">
-        <style>
-          html,body{margin:0;background:transparent;}
-          #wrap{padding:10px;display:flex;align-items:center;justify-content:center;min-height:100%;}
-          .mermaid svg{max-width:100%;height:auto;}
-          .err{color:#E5544B;font:12px -apple-system;padding:10px;white-space:pre-wrap;}
-        </style>
-        <script>\(lib)</script></head>
-        <body><div id="wrap"><div class="mermaid" id="m"></div></div>
-        <script>
-          mermaid.initialize({ startOnLoad:false, theme:'dark', securityLevel:'loose',
-            themeVariables:{ background:'transparent', primaryColor:'#1D202A', primaryTextColor:'#F3F4F7',
-              lineColor:'#9CA3B2', primaryBorderColor:'#FF6B35' } });
-          async function renderMermaid(code){
-            const t = (code||'').trim();
-            if(!t){ document.getElementById('m').innerHTML=''; return; }
-            try{ const { svg } = await mermaid.render('g'+Date.now(), t);
-                 document.getElementById('m').innerHTML = svg; }
-            catch(e){ document.getElementById('m').innerHTML = '<div class="err">'+String(e&&e.message||e)+'</div>'; }
-          }
-        </script></body></html>
-        """
-    }
-}
-
-/// Renders a `DiagramGraph` natively (offline, on-brand) — nodes as shapes, edges as arrows,
-/// laid out at the sketched positions, scaled to fit.
-struct DiagramPreview: View {
-    let graph: DiagramGraph
-
-    var body: some View {
-        GeometryReader { geo in
-            if graph.nodes.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: "scribble.variable").font(.system(size: 26)).foregroundStyle(Sig.faint)
-                    Text("Draw boxes, diamonds and arrows — the diagram builds itself.")
-                        .font(.system(size: 13)).foregroundStyle(Sig.faint).multilineTextAlignment(.center)
-                }.frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                Canvas { ctx, size in render(ctx, size) }
-            }
-        }
-    }
-
-    private func render(_ ctx: GraphicsContext, _ size: CGSize) {
-        let minX = graph.nodes.map { $0.bounds.minX }.min() ?? 0
-        let maxX = graph.nodes.map { $0.bounds.maxX }.max() ?? 1
-        let minY = graph.nodes.map { $0.bounds.minY }.min() ?? 0
-        let maxY = graph.nodes.map { $0.bounds.maxY }.max() ?? 1
-        let gw = max(maxX - minX, 1), gh = max(maxY - minY, 1)
-        let pad: CGFloat = 44
-        let scale = max(min((size.width - 2 * pad) / gw, (size.height - 2 * pad) / gh), 0.05)
-        let offX = (size.width - gw * scale) / 2 - minX * scale
-        let offY = (size.height - gh * scale) / 2 - minY * scale
-        func pt(_ x: Double, _ y: Double) -> CGPoint { CGPoint(x: x * scale + offX, y: y * scale + offY) }
-        func centerOf(_ n: DiagramNode) -> CGPoint { pt(n.bounds.cx, n.bounds.cy) }
-
-        // edges (under nodes)
-        for e in graph.edges {
-            guard let a = graph.nodes.first(where: { $0.id == e.from }),
-                  let b = graph.nodes.first(where: { $0.id == e.to }) else { continue }
-            let p1 = centerOf(a), p2 = centerOf(b)
-            var line = Path(); line.move(to: p1); line.addLine(to: p2)
-            ctx.stroke(line, with: .color(Sig.muted), lineWidth: 2)
-            // arrowhead
-            let ang = atan2(p2.y - p1.y, p2.x - p1.x)
-            let tip = CGPoint(x: p2.x - cos(ang) * 14, y: p2.y - sin(ang) * 14)
-            var head = Path()
-            head.move(to: tip)
-            head.addLine(to: CGPoint(x: tip.x - cos(ang - 0.5) * 12, y: tip.y - sin(ang - 0.5) * 12))
-            head.addLine(to: CGPoint(x: tip.x - cos(ang + 0.5) * 12, y: tip.y - sin(ang + 0.5) * 12))
-            head.closeSubpath()
-            ctx.fill(head, with: .color(Sig.muted))
-        }
-        // nodes
-        for n in graph.nodes {
-            let c = centerOf(n)
-            let w = max(n.bounds.w * scale, 56), h = max(n.bounds.h * scale, 34)
-            let r = CGRect(x: c.x - w / 2, y: c.y - h / 2, width: w, height: h)
-            let tint = shapeTint(n.kind)
-            let shape: Path
-            switch n.kind {
-            case .rectangle: shape = Path(roundedRect: r, cornerRadius: 9)
-            case .ellipse: shape = Path(ellipseIn: r)
-            case .diamond:
-                var p = Path()
-                p.move(to: CGPoint(x: r.midX, y: r.minY)); p.addLine(to: CGPoint(x: r.maxX, y: r.midY))
-                p.addLine(to: CGPoint(x: r.midX, y: r.maxY)); p.addLine(to: CGPoint(x: r.minX, y: r.midY)); p.closeSubpath()
-                shape = p
-            }
-            ctx.fill(shape, with: .color(tint.opacity(0.18)))
-            ctx.stroke(shape, with: .color(tint), lineWidth: 2)
-            let label = n.text.isEmpty ? "…" : n.text
-            ctx.draw(Text(label).font(.system(size: 12, weight: .bold)).foregroundColor(Sig.text), at: c)
-        }
-    }
-}
-
-struct SketchToDiagramView: View {
-    @StateObject private var model = SketchModel()
-    @Environment(\.dismiss) private var dismiss
-    @State private var copied = false
-
-    var body: some View {
-        ZStack {
-            Sig.bg.ignoresSafeArea()
-            VStack(spacing: 12) {
-                HStack {
-                    Button { dismiss() } label: {
-                        HStack(spacing: 6) { Image(systemName: "chevron.left"); Text("Home") }
-                            .font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
-                    }
-                    Spacer()
-                    Text("Sketch → Diagram").font(.system(size: 16, weight: .heavy)).foregroundStyle(Sig.text)
-                    Spacer()
-                    Button { tactile(); model.clear() } label: {
-                        Image(systemName: "trash").font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.faint)
-                    }
-                }.padding(.horizontal, 16).padding(.top, 8)
-
-                // Draw
-                ZStack(alignment: .topLeading) {
-                    PencilCanvas(drawing: $model.drawing, editable: true)
-                    if model.drawing.strokes.isEmpty {
-                        Text("Draw here ✏️").font(.system(size: 13, weight: .semibold)).foregroundStyle(Sig.faint).padding(14)
-                    }
-                }
-                .background(Sig.s1, in: RoundedRectangle(cornerRadius: 18))
-                .overlay(RoundedRectangle(cornerRadius: 18).stroke(Sig.line, lineWidth: 1))
-                .frame(maxHeight: .infinity)
-                .padding(.horizontal, 14)
-
-                // Recognize-with-AI (the local vision model rescues messy sketches)
-                Button { model.recognizeWithAI() } label: {
-                    HStack(spacing: 8) {
-                        if model.vlmBusy { ProgressView().tint(.black) } else { Image(systemName: "sparkles") }
-                        Text(model.vlmBusy ? "Reading your sketch…" : "Recognize with AI")
-                    }
-                    .font(.system(size: 15, weight: .heavy)).foregroundStyle(.black)
-                    .frame(maxWidth: .infinity).frame(height: 50)
-                    .background(Sig.accent.opacity(model.drawing.strokes.isEmpty ? 0.3 : 1), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                }
-                .disabled(model.drawing.strokes.isEmpty || model.vlmBusy)
-                .padding(.horizontal, 14)
-                if !model.vlmError.isEmpty {
-                    Text(model.vlmError).font(.caption).foregroundStyle(Sig.warn).padding(.horizontal, 16)
-                }
-
-                // Live diagram
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 8) {
-                        Text(model.usedAI ? "AI DIAGRAM" : "LIVE DIAGRAM").font(.system(size: 11, weight: .heavy)).tracking(1.4)
-                            .foregroundStyle(model.usedAI ? Sig.accent : Sig.faint)
-                        if model.usedAI && !model.diagramType.isEmpty {
-                            Text(model.diagramType).font(.system(size: 10, weight: .heavy)).foregroundStyle(Sig.local)
-                                .padding(.horizontal, 7).padding(.vertical, 2).background(Sig.local.opacity(0.16), in: Capsule())
-                        }
-                        Spacer()
-                        if !model.usedAI && !model.graph.nodes.isEmpty {
-                            Text("\(model.graph.nodes.count) nodes · \(model.graph.edges.count) edges")
-                                .font(.system(size: 11, weight: .semibold)).foregroundStyle(Sig.muted)
-                        }
-                    }
-                    Group {
-                        if model.mermaid.isEmpty {
-                            VStack(spacing: 8) {
-                                Image(systemName: "scribble.variable").font(.system(size: 26)).foregroundStyle(Sig.faint)
-                                Text("Draw boxes, diamonds and arrows — or tap Recognize with AI.")
-                                    .font(.system(size: 13)).foregroundStyle(Sig.faint).multilineTextAlignment(.center)
-                            }.frame(maxWidth: .infinity, maxHeight: .infinity)
-                        } else {
-                            MermaidWebView(code: model.mermaid)
-                        }
-                    }
-                    .frame(height: 240)
-                    .background(Sig.s1, in: RoundedRectangle(cornerRadius: 16))
-                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Sig.line, lineWidth: 1))
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    if !model.mermaid.isEmpty {
-                        HStack {
-                            Text(model.mermaid).font(.system(size: 11, design: .monospaced)).foregroundStyle(Sig.muted).lineLimit(3)
-                            Spacer(minLength: 8)
-                            Button {
-                                UIPasteboard.general.string = model.mermaid; tactile(.medium)
-                                withAnimation { copied = true }
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) { withAnimation { copied = false } }
-                            } label: {
-                                Image(systemName: copied ? "checkmark.circle.fill" : "doc.on.doc")
-                                    .foregroundStyle(copied ? Sig.ok : Sig.accent)
-                            }
-                            ShareLink(item: model.mermaid) { Image(systemName: "square.and.arrow.up").foregroundStyle(Sig.accent) }
-                        }
-                        .padding(10).background(Sig.s2, in: RoundedRectangle(cornerRadius: 12))
-                    }
-                }
-                .padding(.horizontal, 14).padding(.bottom, 10)
-            }
-        }
-        .toolbar(.hidden, for: .navigationBar)
-        .preferredColorScheme(.dark)
-    }
-}
-
-// MARK: - Inference settings store (where intelligence runs) — HSM-14 / HSM-5-06
-
-/// The persisted choice of where a meeting's intelligence runs: fully on this iPad (Mode A,
-/// LlamaProvider) or against an OpenAI-compatible endpoint on your LAN (Modes B/C,
-/// OpenAIEndpointProvider). One store the Settings UI writes and `generate()` reads, so flipping
-/// the target takes effect with no code change. Persisted in UserDefaults; the API key never
-/// leaves this store and is attached only at request time.
-@MainActor final class InferenceConfigStore: ObservableObject {
-    static let shared = InferenceConfigStore()
-    @Published var mode: RuntimeMode { didSet { d.set(mode.rawValue, forKey: K.mode) } }
-    @Published var endpointURL: String { didSet { d.set(endpointURL, forKey: K.url) } }
-    @Published var endpointModel: String { didSet { d.set(endpointModel, forKey: K.model) } }
-    @Published var endpointKey: String { didSet { d.set(endpointKey, forKey: K.key) } }
-
-    private let d = UserDefaults.standard
-    private enum K { static let mode = "hs.inf.mode", url = "hs.inf.url", model = "hs.inf.model", key = "hs.inf.key" }
-    private init() {
-        mode = RuntimeMode(rawValue: d.string(forKey: K.mode) ?? "") ?? .local
-        endpointURL = d.string(forKey: K.url) ?? ""
-        endpointModel = d.string(forKey: K.model) ?? ""
-        endpointKey = d.string(forKey: K.key) ?? ""
-    }
-
-    var isLocal: Bool { mode == .local }
-
-    /// The endpoint config, or nil if the URL is blank/invalid (so generate() can refuse cleanly).
-    var endpointConfig: EndpointConfig? {
-        let t = endpointURL.trimmingCharacters(in: .whitespaces)
-        guard !t.isEmpty, let u = URL(string: t), u.host != nil else { return nil }
-        return EndpointConfig(baseURL: u, model: endpointModel.isEmpty ? "local-model" : endpointModel,
-                              apiKey: endpointKey.isEmpty ? nil : endpointKey)
-    }
-
-    /// A fresh provider for one inference (Llama must be fresh per call; an endpoint client is cheap).
-    func makeProvider(localModelPath: String?, context: Int) throws -> ILLMProvider {
-        switch mode {
-        case .local:
-            guard let p = localModelPath else { throw InferenceSettingsError.localEngineUnavailable }
-            return try LlamaProvider(modelPath: p, maxTokenCount: Int32(context))
-        case .homelab, .endpoint:
-            guard let cfg = endpointConfig else { throw InferenceSettingsError.endpointNotConfigured }
-            return OpenAIEndpointProvider(config: cfg)
-        }
-    }
-
-    /// The egress reality for the badge: local keeps everything on the iPad; an endpoint sends to its host.
-    var egressLabel: String { isLocal ? "On-device · nothing leaves" : "Sends to \(endpointConfig?.baseURL.host ?? "your endpoint")" }
-
-    private struct ModelsResponse: Decodable { let data: [Entry]; struct Entry: Decodable { let id: String } }
-
-    /// Ask the endpoint what it serves (OpenAI-compatible `GET /v1/models`) so the user PICKS from
-    /// the real list instead of typing a name. A successful fetch doubles as the reachability test.
-    func fetchModels() async throws -> [String] {
-        let base = endpointURL.trimmingCharacters(in: .whitespaces)
-        guard !base.isEmpty,
-              let u = URL(string: base.hasSuffix("/") ? base + "models" : base + "/models") else { throw URLError(.badURL) }
-        var req = URLRequest(url: u); req.timeoutInterval = 12
-        if !endpointKey.isEmpty { req.setValue("Bearer \(endpointKey)", forHTTPHeaderField: "Authorization") }
-        let (data, resp) = try await URLSession.shared.data(for: req)
-        guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { throw URLError(.badServerResponse) }
-        return try JSONDecoder().decode(ModelsResponse.self, from: data).data.map(\.id)
-    }
-}
-
-// MARK: - Settings (where intelligence runs)
-
-/// The settings surface the owner asked for: choose where a meeting's intelligence runs — fully on
-/// this iPad, or against an OpenAI-compatible endpoint on your LAN — and configure + live-test that
-/// endpoint. Signal depth throughout; the egress reality is shown plainly, never narrated.
-struct SettingsView: View {
-    @ObservedObject private var cfg = InferenceConfigStore.shared
-    @Environment(\.dismiss) private var dismiss
-    @FocusState private var focused: Field?
-    @State private var fetch: FetchState = .idle
-    @State private var models: [String] = []
-    enum Field: Hashable { case url, key }
-    enum FetchState: Equatable { case idle, loading, ok(Int), fail }
-
-    var body: some View {
-        ZStack {
-            Sig.bgGradient.ignoresSafeArea()
-            Circle().fill(Sig.local.opacity(0.13)).frame(width: 400).blur(radius: 130)
-                .offset(x: -150, y: -300).ignoresSafeArea()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    header
-                    label("WHERE INTELLIGENCE RUNS")
-                    targetCard(.local, "This iPad", "Fully on-device · nothing ever leaves", "ipad", Sig.localGradient)
-                    targetCard(.homelab, "LAN endpoint", "An OpenAI-compatible server on your network", "server.rack", Sig.accentGradient)
-                    if !cfg.isLocal { endpointCard }
-                    egressRow
-                }
-                .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
-            }
-        }
-        .toolbar(.hidden, for: .navigationBar)
-        .tint(Sig.accent)
-        .onTapGesture { focused = nil }
-    }
-
-    private var header: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("SETTINGS").font(.system(size: 10, weight: .heavy)).tracking(1.6).foregroundStyle(Sig.accent)
-                Text("Intelligence").font(.system(size: 32, weight: .heavy)).foregroundStyle(Sig.text)
-            }
-            Spacer()
-            Button { dismiss() } label: {
-                Image(systemName: "xmark").font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
-                    .frame(width: 44, height: 44).signalCard(Sig.s2, radius: 14)
-            }.buttonStyle(PressableCard())
-        }.padding(.top, 6)
-    }
-
-    private func label(_ s: String) -> some View {
-        Text(s).font(.system(size: 11, weight: .heavy)).tracking(1.4).foregroundStyle(Sig.faint).padding(.leading, 2).padding(.top, 4)
-    }
-
-    private func targetCard(_ m: RuntimeMode, _ title: String, _ sub: String, _ glyph: String, _ g: LinearGradient) -> some View {
-        let sel = (m == .local) == cfg.isLocal
-        return Button {
-            tactile(); withAnimation(.spring(response: 0.42, dampingFraction: 0.8)) { cfg.mode = m; fetch = .idle }
-        } label: {
-            HStack(spacing: 14) {
-                GlyphChip(system: glyph, gradient: g, size: 50)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(title).font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
-                    Text(sub).font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
-                }
-                Spacer()
-                Image(systemName: sel ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 22, weight: .bold)).foregroundStyle(sel ? Sig.accent : Sig.faint)
-            }
-            .padding(15)
-            .background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(sel ? AnyShapeStyle(Sig.accent) : AnyShapeStyle(Sig.topHairline), lineWidth: sel ? 2 : 1))
-            .shadow(color: .black.opacity(0.34), radius: sel ? 16 : 8, y: sel ? 9 : 5)
-        }.buttonStyle(PressableCard())
-    }
-
-    private var endpointCard: some View {
-        VStack(alignment: .leading, spacing: 13) {
-            field("ENDPOINT URL", $cfg.endpointURL, "http://192.168.1.43:8080/v1", .url, keyboard: .URL)
-            modelRow
-            field("API KEY (OPTIONAL)", $cfg.endpointKey, "Bearer token, if your server needs one", .key, secure: true)
-        }
-        .padding(16).signalCard(radius: 20)
-        .transition(.asymmetric(insertion: .scale(scale: 0.96).combined(with: .opacity), removal: .opacity))
-    }
-
-    // The model is PICKED from what the endpoint actually serves (GET /v1/models) — never typed.
-    // The fetch button doubles as the reachability check; states stay tight (no prose).
-    private var modelRow: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text("MODEL").font(.system(size: 10, weight: .heavy)).tracking(0.8).foregroundStyle(Sig.faint)
-                Spacer()
-                statusChip
-            }
-            HStack(spacing: 8) {
-                Menu {
-                    ForEach(models, id: \.self) { m in Button(m) { cfg.endpointModel = m; tactile() } }
-                } label: {
-                    HStack {
-                        Text(cfg.endpointModel.isEmpty ? "Fetch to choose" : cfg.endpointModel)
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(cfg.endpointModel.isEmpty ? Sig.faint : Sig.text).lineLimit(1)
-                        Spacer()
-                        Image(systemName: "chevron.up.chevron.down").font(.system(size: 12, weight: .bold)).foregroundStyle(Sig.faint)
-                    }
-                    .padding(.horizontal, 13).padding(.vertical, 12)
-                    .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
-                }
-                .disabled(models.isEmpty)
-
-                Button { fetchModels() } label: {
-                    Image(systemName: "arrow.down.circle.fill").font(.system(size: 20, weight: .bold)).foregroundStyle(.black)
-                        .frame(width: 48, height: 48)
-                        .background(Sig.accentGradient, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                        .opacity(cfg.endpointConfig == nil ? 0.5 : 1)
-                }
-                .buttonStyle(PressableCard())
-                .disabled(cfg.endpointConfig == nil || fetch == .loading)
-                .accessibilityLabel("Fetch models from endpoint")
-            }
-        }
-    }
-
-    @ViewBuilder private var statusChip: some View {
-        switch fetch {
-        case .loading: ProgressView().controlSize(.small).tint(Sig.accent)
-        case .ok(let n): chip("\(n) found", "checkmark", Sig.ok)
-        case .fail: chip("no connection", "xmark", Sig.bad)
-        case .idle: EmptyView()
-        }
-    }
-
-    private func chip(_ t: String, _ icon: String, _ c: Color) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: icon).font(.system(size: 9, weight: .black))
-            Text(t).font(.system(size: 10, weight: .heavy))
-        }
-        .foregroundStyle(c).padding(.horizontal, 7).padding(.vertical, 3).background(c.opacity(0.16), in: Capsule())
-    }
-
-    private func field(_ l: String, _ text: Binding<String>, _ placeholder: String, _ f: Field,
-                       keyboard: UIKeyboardType = .default, secure: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(l).font(.system(size: 10, weight: .heavy)).tracking(0.8).foregroundStyle(Sig.faint)
-            Group {
-                if secure { SecureField("", text: text, prompt: Text(placeholder).foregroundColor(Sig.faint)) }
-                else { TextField("", text: text, prompt: Text(placeholder).foregroundColor(Sig.faint)) }
-            }
-            .focused($focused, equals: f)
-            .keyboardType(keyboard).textInputAutocapitalization(.never).autocorrectionDisabled()
-            .font(.system(size: 15, weight: .medium)).foregroundStyle(Sig.text)
-            .padding(.horizontal, 13).padding(.vertical, 12)
-            .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(focused == f ? Sig.accent : Color.white.opacity(0.08), lineWidth: focused == f ? 1.5 : 1))
-        }
-    }
-
-    private var egressRow: some View {
-        HStack(spacing: 8) {
-            Image(systemName: cfg.isLocal ? "lock.shield.fill" : "antenna.radiowaves.left.and.right")
-                .font(.system(size: 12, weight: .bold))
-            Text(cfg.egressLabel).font(.system(size: 12, weight: .heavy))
-        }
-        .foregroundStyle(cfg.isLocal ? Sig.local : Sig.accent)
-        .padding(.horizontal, 12).padding(.vertical, 8)
-        .background((cfg.isLocal ? Sig.local : Sig.accent).opacity(0.12), in: Capsule())
-        .padding(.top, 4)
-    }
-
-    private func fetchModels() {
-        guard cfg.endpointConfig != nil else { return }
-        focused = nil; withAnimation { fetch = .loading }; tactile()
-        Task {
-            do {
-                let ms = try await cfg.fetchModels()
-                await MainActor.run {
-                    models = ms
-                    if cfg.endpointModel.isEmpty || !ms.contains(cfg.endpointModel) { cfg.endpointModel = ms.first ?? cfg.endpointModel }
-                    withAnimation { fetch = .ok(ms.count) }; tactile(.medium)
-                }
-            } catch {
-                await MainActor.run { withAnimation { fetch = .fail } ; tactile(.heavy) }
-            }
-        }
-    }
-}
-
-// MARK: - Workbench (user-defined intelligence builder)
-
-/// The library of saved user-defined workflows, persisted to UserDefaults. The builder edits a
-/// working copy and saves here; a meeting runs any saved workflow.
-@MainActor final class WorkflowStore: ObservableObject {
-    static let shared = WorkflowStore()
-    @Published var saved: [Workflow] = []
-    private let d = UserDefaults.standard
-    private let key = "hs.workflows.v1"
-    private init() {
-        if let data = d.data(forKey: key), let ws = try? JSONDecoder().decode([Workflow].self, from: data) { saved = ws }
-    }
-    func save(_ w: Workflow) {
-        if let i = saved.firstIndex(where: { $0.id == w.id }) { saved[i] = w } else { saved.insert(w, at: 0) }
-        persist()
-    }
-    func delete(_ id: UUID) { saved.removeAll { $0.id == id }; persist() }
-    private func persist() { if let data = try? JSONEncoder().encode(saved) { d.set(data, forKey: key) } }
-}
-
-/// The Workbench: a gamified, tap-to-build pipeline editor for user-defined intelligence. Reads
-/// top-to-bottom (SOURCE → STEPs → OUTPUT) — the crushing-usability bet over a node graph. Tap a
-/// block from the palette to add a step, configure it inline, reorder, save. Signal depth + a
-/// bespoke PixelLab energy core; no prose.
-struct WorkbenchView: View {
-    @Environment(\.dismiss) private var dismiss
-    @ObservedObject private var store = WorkflowStore.shared
-    @State private var wf = Workflow(name: "My workflow", source: .fullTranscript,
-                                     steps: [.lens(.delivery), .extract(.decisions)], output: .artifacts)
-    @State private var spin = false
-    @State private var editing: EditTarget?
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    // What the configuration sheet is editing — a block's details open in a real editor, not a menu.
-    enum EditTarget: Identifiable, Equatable {
-        case source, output, step(Int)
-        var id: String { switch self { case .source: return "src"; case .output: return "out"; case .step(let i): return "s\(i)" } }
-    }
-
-    var body: some View {
-        ZStack {
-            Sig.bgGradient.ignoresSafeArea()
-            Circle().fill(Sig.accent.opacity(0.15)).frame(width: 420).blur(radius: 130)
-                .offset(x: 150, y: -300).ignoresSafeArea()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    header
-                    presetsRow
-                    pipeline
-                    paletteBar
-                    saveBar
-                    if !store.saved.isEmpty { savedRow }
-                }
-                .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
-            }
-        }
-        .toolbar(.hidden, for: .navigationBar).tint(Sig.accent)
-        .onAppear {
-            spin = true
-            #if targetEnvironment(simulator)
-            let env = ProcessInfo.processInfo.environment
-            if env["HS_DEMO_WORKBENCH"] == "1" || env["HS_DEMO_WORKBENCH_LLM"] == "1" {
-                wf = Workflow(name: "Custom workflow", source: .fullTranscript,
-                              steps: [.lens(.delivery),
-                                      .llmCall(name: "Risks → questions",
-                                               prompt: "From {input}, list the top risks as pointed questions a reviewer should ask. One per line, no preamble.",
-                                               input: .meeting),
-                                      .extract(.actionItems)],
-                              output: .note)
-            }
-            if env["HS_DEMO_WORKBENCH_LLM"] == "1" { editing = .step(1) }
-            #endif
-        }
-        .sheet(item: $editing) { target in
-            WorkbenchEditorSheet(wf: $wf, target: target).presentationDetents([.medium, .large])
-        }
-    }
-
-    private var header: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle().fill(Sig.accent.opacity(0.5)).frame(width: 40, height: 40).blur(radius: 16)
-                pixelAsset("crystal", size: 46, fallback: "cube.transparent.fill", tint: .black)
-                    .rotationEffect(.degrees(spin ? 360 : 0))
-                    .animation(reduceMotion ? nil : .linear(duration: 12).repeatForever(autoreverses: false), value: spin)
-            }
-            VStack(alignment: .leading, spacing: 3) {
-                Text("WORKBENCH").font(.system(size: 10, weight: .heavy)).tracking(1.6).foregroundStyle(Sig.accent)
-                Text("Build intelligence").font(.system(size: 27, weight: .heavy)).foregroundStyle(Sig.text)
-            }
-            Spacer()
-            Button { dismiss() } label: {
-                Image(systemName: "xmark").font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
-                    .frame(width: 44, height: 44).signalCard(Sig.s2, radius: 14)
-            }.buttonStyle(PressableCard())
-        }.padding(.top, 6)
-    }
-
-    private var presetsRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 9) {
-                ForEach(WorkflowPresets.all) { p in
-                    Button {
-                        tactile(); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
-                            wf = Workflow(name: p.name, source: p.source, steps: p.steps, output: p.output)
-                        }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "wand.and.stars").font(.system(size: 11, weight: .bold))
-                            Text(p.name).font(.system(size: 12, weight: .heavy))
-                        }
-                        .foregroundStyle(Sig.text)
-                        .padding(.horizontal, 12).padding(.vertical, 8)
-                        .background(Sig.s2, in: Capsule()).overlay(Capsule().strokeBorder(Sig.topHairline, lineWidth: 1))
-                    }.buttonStyle(PressableCard())
-                }
-            }.padding(.vertical, 1)
-        }
-    }
-
-    // The pipeline: SOURCE → steps → OUTPUT, with flowing connectors between.
-    private var pipeline: some View {
-        VStack(spacing: 0) {
-            sourceBlock
-            ForEach(Array(wf.steps.enumerated()), id: \.offset) { i, step in
-                connector
-                stepBlock(i, step)
-            }
-            connector
-            outputBlock
-        }
-    }
-
-    private var connector: some View {
-        ZStack {
-            Rectangle().fill(Sig.accent.opacity(0.5)).frame(width: 2, height: 26)
-            Image(systemName: "chevron.compact.down").font(.system(size: 13, weight: .black)).foregroundStyle(Sig.accent.opacity(0.7))
-        }
-    }
-
-    // Every block is tap-to-configure: tapping opens a real editor sheet (not a cramped menu).
-    private func tapBlock(_ tag: String, _ glyph: String, _ gradient: LinearGradient, _ value: String,
-                          subtitle: String? = nil, tagColor: Color = Sig.faint, tap: @escaping () -> Void) -> some View {
-        Button { tactile(); tap() } label: {
-            HStack(spacing: 13) {
-                GlyphChip(system: glyph, gradient: gradient, size: 46)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(tag).font(.system(size: 9, weight: .heavy)).tracking(1.2).foregroundStyle(tagColor)
-                    Text(value).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text).lineLimit(1)
-                    if let s = subtitle { Text(s).font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1) }
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "slider.horizontal.3").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
-            }
-            .padding(14).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 18).contentShape(Rectangle())
-        }.buttonStyle(PressableCard())
-    }
-
-    private var sourceBlock: some View {
-        tapBlock("SOURCE", wf.source.glyph, Sig.localGradient, wf.source.label) { editing = .source }
-    }
-
-    private var outputBlock: some View {
-        tapBlock("OUTPUT", wf.output.glyph, wf.output.isEgress ? Sig.accentGradient : Sig.localGradient,
-                 wf.output.label, subtitle: wf.output.isEgress ? "leaves device" : nil) { editing = .output }
-    }
-
-    private func stepBlock(_ i: Int, _ step: WorkflowStep) -> some View {
-        HStack(spacing: 10) {
-            Button { tactile(); editing = .step(i) } label: {
-                HStack(spacing: 13) {
-                    GlyphChip(system: step.glyph, gradient: Sig.accentGradient, size: 46)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(step.isCustom ? "CUSTOM" : "STEP \(i + 1)").font(.system(size: 9, weight: .heavy)).tracking(1.2)
-                            .foregroundStyle(step.isCustom ? Sig.accent : Sig.faint)
-                        Text(step.label).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text).lineLimit(1)
-                        if let sub = stepSubtitle(step) { Text(sub).font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1) }
-                    }
-                    Spacer(minLength: 0)
-                    Image(systemName: "slider.horizontal.3").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
-                }.contentShape(Rectangle())
-            }.buttonStyle(PressableCard())
-            VStack(spacing: 8) {
-                Button { move(i, -1) } label: { Image(systemName: "chevron.up").font(.system(size: 13, weight: .bold)) }
-                    .disabled(i == 0).foregroundStyle(i == 0 ? Sig.faint.opacity(0.4) : Sig.muted)
-                Button { move(i, 1) } label: { Image(systemName: "chevron.down").font(.system(size: 13, weight: .bold)) }
-                    .disabled(i == wf.steps.count - 1).foregroundStyle(i == wf.steps.count - 1 ? Sig.faint.opacity(0.4) : Sig.muted)
-            }.buttonStyle(.plain)
-            Button { withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { wf.steps.remove(at: i) }; tactile() } label: {
-                Image(systemName: "xmark.circle.fill").font(.system(size: 19, weight: .bold)).foregroundStyle(Sig.faint)
-            }.buttonStyle(.plain)
-        }
-        .padding(12).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 18)
-        .transition(.scale(scale: 0.95).combined(with: .opacity))
-    }
-
-    private func stepSubtitle(_ step: WorkflowStep) -> String? {
-        if case .llmCall(_, let prompt, let input) = step {
-            let p = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
-            return p.isEmpty ? "Set a prompt · in: \(input.label)" : "\"\(p.prefix(38))\(p.count > 38 ? "…" : "")\" · in: \(input.label)"
-        }
-        return nil
-    }
-
-    // The palette — tap a block kind to append a step. The custom LLM-call node leads, and opens
-    // its editor immediately so you go straight to writing the prompt.
-    private var paletteBar: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Text("ADD A STEP").font(.system(size: 10, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint).padding(.leading, 2)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    paletteChip("LLM call", "terminal.fill", emphasized: true) {
-                        wf.steps.append(.llmCall(name: "LLM call", prompt: "", input: .meeting))
-                        editing = .step(wf.steps.count - 1)
-                    }
-                    paletteChip("Lens", "camera.filters") { wf.steps.append(.lens(.delivery)) }
-                    paletteChip("Extract", "doc.text.magnifyingglass") { wf.steps.append(.extract(.actionItems)) }
-                    paletteChip("Summarize", "text.append") { wf.steps.append(.summarize) }
-                    paletteChip("Rewrite", "pencil.and.outline") { wf.steps.append(.rewrite(tone: "executive")) }
-                    paletteChip("Filter", "line.3.horizontal.decrease.circle") { wf.steps.append(.keepIf("risk")) }
-                }.padding(.vertical, 1)
-            }
-        }
-    }
-
-    private func paletteChip(_ title: String, _ glyph: String, emphasized: Bool = false, _ add: @escaping () -> Void) -> some View {
-        Button { tactile(); withAnimation(.spring(response: 0.4, dampingFraction: 0.78)) { add() } } label: {
-            HStack(spacing: 6) {
-                Image(systemName: glyph).font(.system(size: 12, weight: .bold))
-                Text(title).font(.system(size: 13, weight: .heavy))
-                Image(systemName: "plus").font(.system(size: 10, weight: .black))
-            }
-            .foregroundStyle(emphasized ? .black : Sig.accent)
-            .padding(.horizontal, 12).padding(.vertical, 9)
-            .background(emphasized ? AnyShapeStyle(Sig.accentGradient) : AnyShapeStyle(Sig.accent.opacity(0.12)), in: Capsule())
-            .overlay { if !emphasized { Capsule().strokeBorder(Sig.accent.opacity(0.3), lineWidth: 1) } }
-        }.buttonStyle(PressableCard())
-    }
-
-    private var saveBar: some View {
-        Button {
-            tactile(.medium)
-            store.save(Workflow(name: wf.name, source: wf.source, steps: wf.steps, output: wf.output))
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "tray.and.arrow.down.fill")
-                Text("Save workflow")
-            }
-            .font(.system(size: 15, weight: .heavy)).foregroundStyle(.black)
-            .frame(maxWidth: .infinity).padding(.vertical, 14)
-            .background(Sig.accentGradient, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .opacity(wf.isRunnable ? 1 : 0.5)
-        }
-        .buttonStyle(PressableCard()).disabled(!wf.isRunnable)
-        .padding(.top, 2)
-    }
-
-    private var savedRow: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Text("SAVED — RUN FROM A MEETING").font(.system(size: 10, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint).padding(.leading, 2)
-            ForEach(store.saved) { w in
-                HStack(spacing: 12) {
-                    GlyphChip(system: "wand.and.stars", gradient: Sig.localGradient, size: 38)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(w.name).font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.text).lineLimit(1)
-                        Text(w.plan).font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1)
-                    }
-                    Spacer()
-                    Button { tactile(); withAnimation { wf = w } } label: {
-                        Image(systemName: "square.and.pencil").font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
-                    }.buttonStyle(.plain)
-                    Button { withAnimation { store.delete(w.id) }; tactile() } label: {
-                        Image(systemName: "trash").font(.system(size: 14, weight: .bold)).foregroundStyle(Sig.faint)
-                    }.buttonStyle(.plain)
-                }
-                .padding(12).signalCard(Sig.s1, radius: 14)
-            }
-        }
-    }
-
-    private func move(_ i: Int, _ dir: Int) {
-        let j = i + dir
-        guard wf.steps.indices.contains(j) else { return }
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { wf.steps.swapAt(i, j) }; tactile()
-    }
-}
-
-/// The block configuration editor — a pleasant, full-size sheet (not a cramped menu). For the
-/// custom LLM-call node it's a real prompt editor: a name, the input it reads, and a big prompt
-/// field where `{input}` is injected. For curated blocks it's a clean choices list.
-struct WorkbenchEditorSheet: View {
-    @Binding var wf: Workflow
-    let target: WorkbenchView.EditTarget
-    @Environment(\.dismiss) private var dismiss
-    @State private var name = ""
-    @State private var prompt = ""
-    @State private var keyword = ""
-    @State private var tone = ""
-    @State private var llmInput: WorkflowInput = .meeting
-    @FocusState private var promptFocused: Bool
-
-    private var stepIndex: Int? { if case .step(let i) = target { return i }; return nil }
-    private var step: WorkflowStep? { if let i = stepIndex, wf.steps.indices.contains(i) { return wf.steps[i] }; return nil }
-
-    var body: some View {
-        ZStack {
-            Sig.bg.ignoresSafeArea()
-            VStack(spacing: 0) {
-                header
-                ScrollView { content.padding(20) }
-            }
-        }
-        .tint(Sig.accent).onAppear(perform: seed)
-    }
-
-    private var titleText: String {
-        switch target {
-        case .source: return "Source"
-        case .output: return "Output"
-        case .step:   return step?.isCustom == true ? "LLM call" : "Configure step"
-        }
-    }
-
-    private var header: some View {
-        HStack {
-            Text(titleText).font(.system(size: 21, weight: .heavy)).foregroundStyle(Sig.text)
-            Spacer()
-            Button { commit(); dismiss() } label: {
-                Text("Done").font(.system(size: 15, weight: .heavy)).foregroundStyle(.black)
-                    .padding(.horizontal, 18).padding(.vertical, 9).background(Sig.accentGradient, in: Capsule())
-            }.buttonStyle(.plain)
-        }
-        .padding(.horizontal, 20).padding(.top, 20).padding(.bottom, 8)
-    }
-
-    @ViewBuilder private var content: some View {
-        switch target {
-        case .source:
-            choices(WorkflowSource.allCases.map { ($0.label, $0.glyph, $0 == wf.source) }) { i in
-                wf.source = WorkflowSource.allCases[i]; tactile(); dismiss()
-            }
-        case .output:
-            choices(WorkflowOutput.allCases.map { ($0.label, $0.glyph, $0 == wf.output) }) { i in
-                wf.output = WorkflowOutput.allCases[i]; tactile(); dismiss()
-            }
-        case .step(let i):
-            stepContent(i)
-        }
-    }
-
-    @ViewBuilder private func stepContent(_ i: Int) -> some View {
-        if let s = step {
-            switch s {
-            case .lens(let p):
-                fieldGroup("WHICH LENS — weights what to surface") {
-                    choices(MIRProfile.allCases.map { ("Lens · \($0.rawValue.capitalized)", "camera.filters", $0 == p) }) { idx in
-                        wf.steps[i] = .lens(MIRProfile.allCases[idx]); tactile(); dismiss()
-                    }
-                }
-            case .extract(let t):
-                fieldGroup("WHICH ARTIFACT TYPE TO DRAFT") {
-                    choices(ArtifactType.allCases.map { ($0.rawValue, "doc.text.magnifyingglass", $0 == t) }) { idx in
-                        wf.steps[i] = .extract(ArtifactType.allCases[idx]); tactile(); dismiss()
-                    }
-                }
-            case .summarize:
-                infoCard("Condenses the input to a tight summary. No options.")
-            case .rewrite:
-                fieldGroup("REWRITE — the tone") {
-                    field($tone, "executive, plain, friendly…")
-                    choices(["executive", "plain", "friendly", "technical"].map { ($0, "pencil.and.outline", $0 == tone) }) { idx in
-                        tone = ["executive", "plain", "friendly", "technical"][idx]; commit(); tactile()
-                    }
-                }
-            case .keepIf:
-                fieldGroup("KEEP IF — only items with this keyword survive") { field($keyword, "risk, owner, budget…") }
-            case .llmCall:
-                llmEditor()
-            }
-        }
-    }
-
-    private func llmEditor() -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            fieldGroup("NAME") { field($name, "what this step does") }
-            fieldGroup("INPUT — what the prompt reads") {
-                choices(WorkflowInput.allCases.map { ("Reads \($0.label)", $0 == .meeting ? "text.alignleft" : "arrow.up.circle", $0 == llmInput) }) { idx in
-                    llmInput = WorkflowInput.allCases[idx]; commit(); tactile()
-                }
-            }
-            fieldGroup("PROMPT") {
-                ZStack(alignment: .topLeading) {
-                    if prompt.isEmpty {
-                        Text("Write your prompt. Use {input} where the input text should go.")
-                            .font(.system(size: 15)).foregroundStyle(Sig.faint).padding(.horizontal, 13).padding(.vertical, 16)
-                    }
-                    TextEditor(text: $prompt).focused($promptFocused).scrollContentBackground(.hidden)
-                        .font(.system(size: 15)).foregroundStyle(Sig.text).frame(minHeight: 150).padding(8)
-                }
-                .background(Sig.s2, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
-                    .strokeBorder(promptFocused ? Sig.accent : Color.white.opacity(0.08), lineWidth: promptFocused ? 1.5 : 1))
-                HStack(spacing: 5) {
-                    Image(systemName: "curlybraces").font(.system(size: 10, weight: .black))
-                    Text("{input} is replaced with the input text").font(.system(size: 11, weight: .semibold))
-                }.foregroundStyle(Sig.faint).padding(.top, 2)
-            }
-        }
-        .onChange(of: prompt) { _, _ in commit() }
-        .onChange(of: name) { _, _ in commit() }
-        .onChange(of: keyword) { _, _ in commit() }
-        .onChange(of: tone) { _, _ in commit() }
-    }
-
-    // MARK: building blocks
-    private func fieldGroup<C: View>(_ title: String, @ViewBuilder _ c: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.system(size: 10, weight: .heavy)).tracking(1).foregroundStyle(Sig.faint)
-            c()
-        }
-    }
-
-    private func field(_ text: Binding<String>, _ hint: String) -> some View {
-        TextField("", text: text, prompt: Text(hint).foregroundColor(Sig.faint))
-            .textInputAutocapitalization(.never).autocorrectionDisabled()
-            .font(.system(size: 15, weight: .medium)).foregroundStyle(Sig.text)
-            .padding(.horizontal, 13).padding(.vertical, 12)
-            .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
-            .onChange(of: text.wrappedValue) { _, _ in commit() }
-    }
-
-    private func choices(_ items: [(String, String, Bool)], _ pick: @escaping (Int) -> Void) -> some View {
-        VStack(spacing: 8) {
-            ForEach(Array(items.enumerated()), id: \.offset) { i, it in
-                Button { pick(i) } label: {
-                    HStack(spacing: 11) {
-                        Image(systemName: it.1).font(.system(size: 15, weight: .bold)).foregroundStyle(it.2 ? Sig.accent : Sig.muted).frame(width: 24)
-                        Text(it.0).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text)
-                        Spacer()
-                        Image(systemName: it.2 ? "checkmark.circle.fill" : "circle").font(.system(size: 18, weight: .bold)).foregroundStyle(it.2 ? Sig.accent : Sig.faint)
-                    }
-                    .padding(13).background(Sig.s1, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
-                        .strokeBorder(it.2 ? AnyShapeStyle(Sig.accent) : AnyShapeStyle(Sig.topHairline), lineWidth: it.2 ? 1.5 : 1))
-                }.buttonStyle(PressableCard())
-            }
-        }
-    }
-
-    private func infoCard(_ text: String) -> some View {
-        Text(text).font(.system(size: 14, weight: .medium)).foregroundStyle(Sig.muted)
-            .frame(maxWidth: .infinity, alignment: .leading).padding(15).signalCard(Sig.s1, radius: 14)
-    }
-
-    private func seed() {
-        guard let s = step else { return }
-        switch s {
-        case .llmCall(let n, let p, let inp): name = n; prompt = p; llmInput = inp
-        case .rewrite(let t): tone = t
-        case .keepIf(let k): keyword = k
-        default: break
-        }
-    }
-
-    private func commit() {
-        guard let i = stepIndex, wf.steps.indices.contains(i) else { return }
-        switch wf.steps[i] {
-        case .llmCall: wf.steps[i] = .llmCall(name: name.isEmpty ? "LLM call" : name, prompt: prompt, input: llmInput)
-        case .rewrite: wf.steps[i] = .rewrite(tone: tone.isEmpty ? "plain" : tone)
-        case .keepIf:  wf.steps[i] = .keepIf(keyword)
-        default: break
-        }
-    }
-}
-
 // MARK: - Meeting list
 
 struct MeetingListView: View {
     @StateObject private var model = CaptureModel()
+    @ObservedObject private var peers = DictatePeerStore.shared
+    @ObservedObject private var presence = PresenceStore.shared
     @State private var capturing = false
     @State private var appeared = false
     @State private var recordPulse = false
+    @State private var showAgentDesk = false
+    @State private var showDictate = false
+    @State private var showConnect = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -2253,6 +536,10 @@ struct MeetingListView: View {
         if ProcessInfo.processInfo.environment["HS_DEMO_GEN"] == "1" { return AnyView(GenTheaterDemo()) }
         if ProcessInfo.processInfo.environment["HS_DEMO_SETTINGS"] == "1" { return AnyView(SettingsDemo()) }
         if ProcessInfo.processInfo.environment["HS_DEMO_WORKBENCH"] == "1" || ProcessInfo.processInfo.environment["HS_DEMO_WORKBENCH_LLM"] == "1" { return AnyView(NavigationStack { WorkbenchView() }) }
+        if ProcessInfo.processInfo.environment["HS_DEMO_WB_EXEC"] == "1" { return AnyView(NavigationStack { WorkbenchView() }) }
+        if ProcessInfo.processInfo.environment["HS_DEMO_AGENTDESK"] == "1" { return AnyView(AgentDeskDemo()) }
+        if ProcessInfo.processInfo.environment["HS_DEMO_DICTATE"] == "1" { return AnyView(DictateDemo()) }
+        if ProcessInfo.processInfo.environment["HS_DEMO_CONNECT"] == "1" { return AnyView(ConnectDemo()) }
         #endif
         return AnyView(listBody)
     }
@@ -2267,7 +554,14 @@ struct MeetingListView: View {
                         Button { tactile(.medium); capturing = true } label: { recordHero }
                             .buttonStyle(PressableCard())
                             .accessibilityLabel("New recording — capture a meeting on-device")
+                        Button { tactile(.medium); showDictate = true } label: { dictateCta }
+                            .buttonStyle(PressableCard())
+                            .accessibilityLabel("Dictate to your Mac — talk on this iPad, the words land on your Mac")
+                        Button { tactile(.medium); showConnect = true } label: { connectCta }
+                            .buttonStyle(PressableCard())
+                            .accessibilityLabel("Your Computer — find and pair with your desktop on your network")
                         NavigationLink { WorkbenchView() } label: { workbenchCta }.buttonStyle(PressableCard())
+                        NavigationLink { AgentDeskView(state: CompanionBoardState()) } label: { agentDeskCta }.buttonStyle(PressableCard())
                         HStack(spacing: 12) {
                             NavigationLink { ModelsView() } label: { modelsCta }.buttonStyle(PressableCard())
                             NavigationLink { SketchToDiagramView() } label: { sketchCta }.buttonStyle(PressableCard())
@@ -2294,11 +588,28 @@ struct MeetingListView: View {
             .navigationDestination(isPresented: $capturing) {
                 CaptureView(model: model, done: { capturing = false })
             }
+            .navigationDestination(isPresented: $showAgentDesk) {
+                // Opened from a nudge/lane → show the live presence board, not an empty one.
+                AgentDeskView(state: presence.board.targets.isEmpty ? CompanionBoardState() : presence.board)
+            }
+            // A nudge "Answer"/"Open desk" or a HUD lane tap requests the desk; route it here.
+            .onChange(of: presence.requestDesk) { _, want in
+                if want { showAgentDesk = true; presence.requestDesk = false }
+            }
+            .navigationDestination(isPresented: $showDictate) {
+                DictateView()
+            }
+            .navigationDestination(isPresented: $showConnect) {
+                ConnectView()
+            }
             #if targetEnvironment(simulator)
             // Design-screenshot convenience: HS_DEMO=1 opens straight to the live canvas; HS_DEMO_HOME seeds rows.
             .onAppear {
                 if ProcessInfo.processInfo.environment["HS_DEMO_HOME"] == "1" { model.seedHomeDemo() }
                 if ProcessInfo.processInfo.environment["HS_DEMO"] == "1" { capturing = true }
+                if ProcessInfo.processInfo.environment["HS_DEMO_AGENTDESK"] == "1" { showAgentDesk = true }
+                if ProcessInfo.processInfo.environment["HS_DEMO_DICTATE"] == "1" { showDictate = true }
+                if ProcessInfo.processInfo.environment["HS_DEMO_CONNECT"] == "1" { showConnect = true }
             }
             #endif
             .toolbar(.hidden, for: .navigationBar)
@@ -2391,6 +702,80 @@ struct MeetingListView: View {
             }
             Spacer()
             Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
+        }
+        .padding(15).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 20)
+    }
+
+    // The Agent Desk — your live coding agents and the question each is asking.
+    private var agentDeskCta: some View {
+        HStack(spacing: 14) {
+            GlyphChip(system: "cpu.fill", gradient: Sig.localGradient, size: 50)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Agent Desk").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Your live agents — answer the one that's waiting").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+            }
+            Spacer()
+            Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
+        }
+        .padding(15).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 20)
+    }
+
+    // The flagship mesh tile — talk on this iPad, the words land in whatever's focused on your Mac.
+    // Peer-named when paired; invites pairing when not. Wears the ON-DEVICE / local-mesh badge.
+    private var dictateCta: some View {
+        let paired = peers.isPaired
+        return HStack(spacing: 14) {
+            GlyphChip(system: "mic.fill", gradient: Sig.accentGradient, size: 50)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(paired ? "Dictate to \(peers.displayName)" : "Dictate to your Mac")
+                    .font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
+                if paired {
+                    HStack(spacing: 6) {
+                        Image(systemName: "lock.fill").font(.system(size: 8, weight: .black))
+                        Text("ON-DEVICE · LOCAL MESH").font(.system(size: 10, weight: .heavy)).tracking(0.9)
+                    }
+                    .foregroundStyle(Sig.local)
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(Sig.local.opacity(0.12), in: Capsule())
+                    .overlay(Capsule().strokeBorder(Sig.local.opacity(0.25), lineWidth: 1))
+                } else {
+                    Text("Tap to pair — your iPad is the best mic in the house")
+                        .font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1)
+                }
+            }
+            Spacer()
+            Image(systemName: paired ? "chevron.right" : "link.badge.plus")
+                .font(.system(size: 14, weight: .bold)).foregroundStyle(paired ? Sig.faint : Sig.accent)
+        }
+        .padding(15).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 20)
+    }
+
+    // The mesh connection home (HSM-15-10) — find your computer on the network and pair, no IP typing.
+    // Names the paired Mac when connected; invites discovery when not. Wears the local-network badge.
+    private var connectCta: some View {
+        let paired = peers.isPaired
+        return HStack(spacing: 14) {
+            GlyphChip(system: "laptopcomputer", gradient: Sig.localGradient, size: 50)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(paired ? peers.displayName : "Your Computer")
+                    .font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
+                if paired {
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.seal.fill").font(.system(size: 9, weight: .black))
+                        Text("PAIRED · ON YOUR NETWORK").font(.system(size: 10, weight: .heavy)).tracking(0.9)
+                    }
+                    .foregroundStyle(Sig.local)
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(Sig.local.opacity(0.12), in: Capsule())
+                    .overlay(Capsule().strokeBorder(Sig.local.opacity(0.25), lineWidth: 1))
+                } else {
+                    Text("Find and pair your desktop — no IP to type")
+                        .font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1)
+                }
+            }
+            Spacer()
+            Image(systemName: paired ? "chevron.right" : "dot.radiowaves.left.and.right")
+                .font(.system(size: 14, weight: .bold)).foregroundStyle(paired ? Sig.faint : Sig.local)
         }
         .padding(15).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 20)
     }
@@ -2493,6 +878,10 @@ struct CaptureView: View {
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.82), value: model.recording)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: model.flash)
+        .overlay(alignment: .topLeading) {
+            // Guaranteed escape from the capture lobby (the recorder has its own stop while recording).
+            if !model.recording { BackChip(action: done).padding(.top, 10).padding(.leading, 16) }
+        }
         .toolbar(.hidden, for: .navigationBar)
         // HSM-14 — sending a transcript moment to notes flips to the Notes pane so the user
         // sees it land in the canvas.
@@ -2712,8 +1101,10 @@ struct FloatingRecorder: View {
             ZStack {
                 Circle().fill(.ultraThinMaterial).frame(width: 60, height: 60)
                     .overlay(Circle().stroke(Sig.line, lineWidth: 1))
-                Circle().stroke(Sig.bad.opacity(0.55), lineWidth: 2).frame(width: 60, height: 60)
-                    .scaleEffect(1 + CGFloat(model.level) * 0.18)   // breathes with the mic
+                Circle().stroke(Sig.bad.opacity(0.4 + 0.55 * Double(min(1, model.level))), lineWidth: 2 + CGFloat(min(1, model.level)) * 3)
+                    .frame(width: 60, height: 60)
+                    .scaleEffect(1 + CGFloat(min(1, model.level)) * 0.4)   // swells with your voice
+                    .animation(.easeOut(duration: 0.07), value: model.level)
                 VStack(spacing: 1) {
                     Circle().fill(Sig.bad).frame(width: 7, height: 7)
                     TimelineView(.periodic(from: .now, by: 1)) { _ in
@@ -2910,6 +1301,35 @@ struct DesktopGrid: View {
     }
 }
 
+/// A live mic-health readout shown during recording so a broken capture is diagnosable on the
+/// device at a glance: frames climbing ⇒ audio is flowing; peak > 0 ⇒ the mic hears sound; "text ✓"
+/// ⇒ Whisper is producing. Temporary while the recording regression is chased.
+private struct MicDiag: View {
+    let frames: Int
+    let peak: Float
+    let level: Float
+    let hasText: Bool
+    private var healthy: Bool { frames > 0 && peak > 0.005 }
+    var body: some View {
+        HStack(spacing: 9) {
+            Circle().fill(frames == 0 ? Sig.bad : (healthy ? Sig.ok : Sig.warn)).frame(width: 8, height: 8)
+            Text("MIC").font(.system(size: 9, weight: .heavy)).tracking(1).foregroundStyle(Sig.faint)
+            Text("\(frames / 16_000)s·\(frames)fr").font(.system(size: 11, weight: .semibold).monospacedDigit())
+                .foregroundStyle(frames == 0 ? Sig.bad : Sig.text)
+            Text("peak \(String(format: "%.3f", peak))").font(.system(size: 11, weight: .semibold).monospacedDigit())
+                .foregroundStyle(peak > 0.005 ? Sig.text : Sig.warn)
+            Text("lvl \(String(format: "%.2f", level))").font(.system(size: 11, weight: .semibold).monospacedDigit())
+                .foregroundStyle(Sig.muted)
+            Text(hasText ? "text ✓" : "text –").font(.system(size: 11, weight: .bold))
+                .foregroundStyle(hasText ? Sig.ok : Sig.faint)
+        }
+        .padding(.horizontal, 14).padding(.vertical, 8)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay(Capsule().strokeBorder(Sig.topHairline, lineWidth: 1))
+        .shadow(color: .black.opacity(0.4), radius: 8, y: 3)
+    }
+}
+
 /// HSM-14 — the audio-reactive VU. Bars dance to the live mic amplitude (`level`) with a
 /// travelling shimmer, so the control plane visibly responds to sound the instant it arrives —
 /// before any transcription. Quiet → a gentle idle ripple; loud → tall bars.
@@ -2920,21 +1340,28 @@ struct MicWaveform: View {
     var height: CGFloat = 44
 
     var body: some View {
-        let amp = active ? min(1, max(0.04, level * 7)) : 0
+        // Perceptual gain: a gamma < 1 expands the quiet end so normal speech drives full bars.
+        let amp = active ? min(1, pow(max(0, level), 0.62)) : 0
         TimelineView(.animation) { ctx in
             let t = ctx.date.timeIntervalSinceReferenceDate
             HStack(alignment: .center, spacing: 3) {
                 ForEach(0..<bars, id: \.self) { i in
-                    let shimmer = 0.45 + 0.55 * (0.5 + 0.5 * sin(t * 7 + Double(i) * 0.55))
-                    let centerBias = 1 - abs(Double(i) - Double(bars) / 2) / Double(bars)   // taller in the middle
-                    let h = 3 + CGFloat(shimmer * centerBias) * amp * height + (active ? 2 : 0)
+                    // Each bar gets its own fast, irregular wobble — but the WHOLE envelope scales
+                    // with amp, so silence is a calm flat line and your voice makes it leap.
+                    let phase = t * 12 + Double(i) * 0.9
+                    let wobble = 0.5 + 0.5 * sin(phase) * sin(phase * 0.41 + 1.3)
+                    let centerBias = 1 - 0.55 * abs(Double(i) - Double(bars - 1) / 2) / (Double(bars) / 2)
+                    let dyn = amp * CGFloat(wobble * centerBias)              // voice-driven
+                    let idle = active ? 0.05 + 0.03 * CGFloat(0.5 + 0.5 * sin(phase)) : 0
+                    let h = 3 + (dyn + idle) * height
                     Capsule()
-                        .fill(LinearGradient(colors: [Sig.accent, Sig.accent.opacity(0.55)], startPoint: .bottom, endPoint: .top))
+                        .fill(LinearGradient(colors: [Sig.accent, Sig.accent.opacity(0.5)], startPoint: .bottom, endPoint: .top))
                         .frame(width: 3, height: max(3, h))
+                        .shadow(color: Sig.accent.opacity(Double(min(0.8, dyn * 1.4))), radius: 3)  // glows on peaks
                         .opacity(active ? 1 : 0.35)
                 }
             }
-            .animation(.easeOut(duration: 0.08), value: amp)
+            .animation(.easeOut(duration: 0.06), value: amp)
         }
         .frame(height: height)
     }
@@ -3091,1043 +1518,11 @@ struct PinnedNoteView: View {
     }
 }
 
-// MARK: - On-device artifact generation + review (HSM-8-04)
-
-@MainActor
-final class MeetingReviewState: ObservableObject {
-    let meeting: Meeting
-    @Published var artifacts: [Artifact] = []
-    @Published var profile: MIRProfile
-    @Published var generating = false
-    @Published var note = ""
-    @Published var correctingId: String?     // HSM-14-07 — the card regenerating from a voice correction
-    // HSM-14 generation theater — real per-type progress the UI animates as the model drafts each.
-    @Published var genTypes: [ArtifactType] = []   // the lens's planned types for this run
-    @Published var genDone: Set<ArtifactType> = [] // types the model has produced so far
-    @Published var genCurrent: ArtifactType?       // the type in flight right now
-    @Published var genFlourish: Int = 0            // >0 briefly after a run: "N insights ready"
-
-    private let storage: SQLiteStorage?
-    private let marks: [Double]              // hand-flagged moments (HSM-8-03) — weight extraction
-
-    init(meeting: Meeting) {
-        self.meeting = meeting
-        self.profile = meeting.routingProfile
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        storage = try? SQLiteStorage(path: docs.appendingPathComponent("meetings.sqlite").path)
-        marks = TranscriptLinker(store: FileLinkStore(), meetingID: meeting.id).links().map(\.anchorTime)
-        load()
-    }
-
-    func load() { artifacts = (try? storage?.loadArtifacts(meetingId: meeting.id)) ?? [] }
-
-    var groups: [ArtifactGroup] { ReviewModel(artifacts: artifacts).grouped(profile: profile) }
-    var pendingCount: Int { ReviewModel(artifacts: artifacts).pendingCount }
-
-    /// Generate the meeting's artifacts ON-DEVICE (Mode A): the MIR profile picks the
-    /// types, the local GGUF model drafts each, and they persist as proposals.
-    /// The on-device context CEILING — what we'd *like* (16K ≈ ~80 min of speech).
-    /// HSM-8-08 lowers it to what THIS device can actually afford (the KV-cache is RAM),
-    /// and HSM-8-07 chunks anything that still won't fit — so we never gamble on memory
-    /// regardless of meeting length.
-    private static let contextCeiling = 16_384
-
-    /// Memory headroom before the iOS jetsam limit, with a conservative fallback.
-    private static func availableMemoryBytes() -> Int {
-        let avail = Int(os_proc_available_memory())
-        return avail > 0 ? avail : Int(ProcessInfo.processInfo.physicalMemory / 2)
-    }
-
-    // Pullable diagnostics for the generation path (Documents/gen-debug.log).
-    static func glogReset() { try? FileManager.default.removeItem(at: glogURL()) }
-    static func glogURL() -> URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("gen-debug.log")
-    }
-    static func glog(_ s: String) {
-        NSLog("HSGEN: \(s)")
-        let url = glogURL(); let line = s + "\n"
-        if let h = try? FileHandle(forWritingTo: url) { h.seekToEndOfFile(); if let d = line.data(using: .utf8) { h.write(d) }; try? h.close() }
-        else { try? line.write(to: url, atomically: true, encoding: .utf8) }
-    }
-
-    func generate(workflowTypes: [ArtifactType]? = nil) async {
-        Self.glogReset()
-        let chars = meeting.segments.map(\.text).joined(separator: " ").count
-        Self.glog("segments=\(meeting.segments.count) chars=\(chars) tokens≈\(chars / 4)")
-        guard !meeting.segments.isEmpty else {
-            note = "No transcript to analyze — this recording saved no text."; Self.glog("ABORT empty"); return
-        }
-        // Where intelligence runs is a user setting (Settings → Intelligence): on this iPad, or a
-        // LAN endpoint. Refuse cleanly if the chosen target isn't ready.
-        let cfg = InferenceConfigStore.shared
-        let modelPath = Self.localGGUF()
-        if cfg.isLocal && modelPath == nil {
-            note = "No on-device model found. Push a .gguf to the app's Documents, or switch to a LAN endpoint in Settings."
-            Self.glog("ABORT no model"); return
-        }
-        if !cfg.isLocal && cfg.endpointConfig == nil {
-            note = "No endpoint configured. Set a LAN endpoint URL in Settings, or switch to on-device."
-            Self.glog("ABORT no endpoint"); return
-        }
-        generating = true; defer { generating = false }
-
-        // Regenerate cleanly: drop any PRIOR model artifacts so a re-run replaces rather
-        // than piles up (ids are fresh UUIDs each run). The handwritten ink is preserved.
-        for a in artifacts where a.pluginId == "holdspeak.mobile.intelligence" {
-            try? storage?.deleteArtifact(id: a.id, at: Date())
-        }
-        load()
-
-        // HSM-8-08 — on-device, size the context to THIS device (the KV-cache is RAM), never a
-        // blind constant. An endpoint has its own memory, so use the ceiling there.
-        let context: Int
-        if cfg.isLocal, let mp = modelPath {
-            let modelBytes = ((try? FileManager.default.attributesOfItem(atPath: mp))?[.size] as? Int) ?? 0
-            let avail = Self.availableMemoryBytes()
-            context = OnDeviceBudget.contextTokens(
-                availableBytes: avail, modelBytes: modelBytes,
-                marginBytes: 768 * 1_048_576, ceiling: Self.contextCeiling)
-            Self.glog("local availMB=\(avail / 1_048_576) modelMB=\(modelBytes / 1_048_576) context=\(context)")
-        } else {
-            context = Self.contextCeiling
-            Self.glog("endpoint mode host=\(cfg.endpointConfig?.baseURL.host ?? "?") context=\(context)")
-        }
-        let windowBudget = OnDeviceBudget.windowTokens(context: context)
-
-        let transcript = Transcript(meetingId: meeting.id, segments: meeting.segments,
-                                    transcriptHash: "ondevice-\(meeting.segments.count)")
-        // A workflow run pins the types it produces; otherwise the lens (+ tacked moments) pick them.
-        let types = workflowTypes ?? (marks.isEmpty
-            ? (MIRRouter.baseEmphasis[profile] ?? [.decisions, .actionItems, .requirements])
-            : InkEmphasis.routedTypes(profile: profile, transcript: transcript, marks: marks))
-        Self.glog("types=\(types.map(\.rawValue)) workflow=\(workflowTypes != nil)")
-        // Light up the generation theater with the planned types.
-        genTypes = types; genDone = []; genCurrent = nil; genFlourish = 0
-
-        // HSM-8-07 — chunk a long meeting into length-bounded windows; a short one is a
-        // single window (the whole transcript). One loop drives both.
-        let chunk = OnDeviceBudget.needsChunking(
-            transcriptTokens: OnDeviceBudget.transcriptTokens(transcript.segments), windowTokens: windowBudget)
-        let windows = chunk
-            ? TranscriptWindowing.windows(transcript.segments, maxTokens: windowBudget)
-            : [transcript.segments]
-        Self.glog("chunk=\(chunk) windows=\(windows.count) sizes=\(windows.map { $0.count }) tokens=\(windows.map { OnDeviceBudget.transcriptTokens($0) })")
-
-        var all: [Artifact] = []
-        var lastError = ""
-        for (wi, segs) in windows.enumerated() {
-            let sub = Transcript(meetingId: transcript.meetingId, segments: segs,
-                                 transcriptHash: "\(transcript.transcriptHash)#w\(wi)")
-            for type in types {
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { genCurrent = type }
-                note = chunk ? "Long meeting — pass \(wi + 1)/\(windows.count): \(artifactTypeLabel(type))…"
-                             : "Generating \(artifactTypeLabel(type))…"
-                do {
-                    // FRESH provider per inference — a clean llama context every time. The
-                    // FIRST call always works; reusing one instance accumulates KV (the
-                    // 2nd+ call starves → noJSON) and clearing it mid-flight races the
-                    // decoder (crash). A new instance is the deterministic clean slate, and
-                    // it also dodges LLM.swift's `isAvailable` getting stuck after a bad run
-                    // (the "had to restart the app" symptom). It deinits at scope exit, so
-                    // only one llama context is ever resident.
-                    let provider = try cfg.makeProvider(localModelPath: modelPath, context: context)
-                    let engine = ArtifactGenerationEngine(provider: provider, maxAttempts: 2)
-                    let a = try await engine.generate(type, from: sub)
-                    all.append(a)
-                    // The type landed — light it up in the theater and stream the card in.
-                    withAnimation(.spring(response: 0.45, dampingFraction: 0.7)) { _ = genDone.insert(type); genCurrent = nil }
-                    tactile(.light)
-                    // Stream the single pass — animate the insert so each card materializes in.
-                    if !chunk { try? storage?.saveArtifact(a); withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { load() } }
-                    Self.glog("w\(wi) ok \(type.rawValue)")
-                } catch {
-                    lastError = "\(error)"; Self.glog("w\(wi) FAIL \(type.rawValue): \(error)")
-                }
-            }
-        }
-        let merged = ArtifactMerge.dedup(all)
-        if chunk { for a in merged { try? storage?.saveArtifact(a) }; withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { load() } }
-        Self.glog("done produced=\(merged.count)")
-        genCurrent = nil
-        note = merged.isEmpty
-            ? "The model produced nothing." + (lastError.isEmpty ? "" : " (\(lastError))")
-            : ""
-        // A satisfying finish: a heavier haptic + a transient "N insights ready" flourish.
-        if !merged.isEmpty {
-            tactile(.heavy)
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { genFlourish = merged.count }
-            Task { try? await Task.sleep(nanoseconds: 3_200_000_000)
-                   await MainActor.run { withAnimation(.easeOut(duration: 0.4)) { genFlourish = 0 } } }
-        }
-    }
-
-    /// HSM-14 — promote a hand-note into a real `needs_review` artifact that joins the model's
-    /// in the intelligence pane (the loop closes: your notes become reviewable intelligence).
-    func promoteNote(_ text: String, type: ArtifactType) {
-        try? storage?.saveArtifact(noteArtifact(meetingId: meeting.id, type: type, text: text))
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { load() }
-    }
-
-    func approve(_ id: String) {
-        try? ReviewModel(artifacts: artifacts, store: storage).approve(id); load()
-    }
-    func reject(_ id: String) {
-        try? ReviewModel(artifacts: artifacts, store: storage).reject(id); load()
-    }
-
-    /// HSM-14-07 — apply a spoken correction: re-route the artifact + the user's words back to
-    /// the local model and **regenerate it in place** (same id → the card morphs, no duplicate).
-    /// Propose-and-confirm: the corrected version returns as a `.draft` the user re-approves.
-    func correct(_ artifact: Artifact, spoken: String) async {
-        let spoken = spoken.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !spoken.isEmpty else { return }
-        guard let modelPath = Self.localGGUF() else { note = "No on-device model found."; return }
-        withAnimation(.easeInOut(duration: 0.35)) { correctingId = artifact.id }
-        defer { withAnimation(.easeInOut(duration: 0.45)) { correctingId = nil } }
-        let modelBytes = ((try? FileManager.default.attributesOfItem(atPath: modelPath))?[.size] as? Int) ?? 0
-        let context = OnDeviceBudget.contextTokens(
-            availableBytes: Self.availableMemoryBytes(), modelBytes: modelBytes,
-            marginBytes: 768 * 1_048_576, ceiling: Self.contextCeiling)
-        do {
-            let provider = try LlamaProvider(modelPath: modelPath, maxTokenCount: Int32(context))
-            let transcript = Transcript(meetingId: meeting.id, segments: meeting.segments,
-                                        transcriptHash: "ondevice-\(meeting.segments.count)")
-            let fixed = try await ArtifactCorrection.corrected(
-                original: artifact, correction: spoken, transcript: transcript,
-                provider: provider, idGenerator: { artifact.id })   // replace in place
-            try? storage?.saveArtifact(fixed)
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { load() }
-        } catch { note = "Couldn't apply the correction: \(error)" }
-    }
-
-    var hasInkArtifacts: Bool { artifacts.contains { $0.pluginId == "holdspeak.mobile.ink" } }
-    var hasGeneratedArtifacts: Bool { artifacts.contains { $0.pluginId == "holdspeak.mobile.intelligence" } }
-
-    /// HSM-8-06 — the magic pencil, involved. Render each handwritten page to an actual
-    /// IMAGE attached to the meeting (the literal scribble — arrows, sketches, stars),
-    /// AND recognize the handwriting on-device (Vision) into a text note. Both are
-    /// proposals you review; nothing is auto-committed.
-    func promoteNotes() async {
-        let pages = NotebookModel(store: FileNotebookStore(), meetingID: meeting.id).pages
-        let inked = pages.filter { !$0.strokes.isEmpty }
-        guard !inked.isEmpty else { note = "No handwritten notes on this meeting yet."; return }
-        generating = true; note = "Reading your handwriting on-device…"; defer { generating = false }
-        let dir = Self.inkDir()
-        for (i, drawing) in inked.enumerated() {
-            guard let image = Self.render(drawing) else { continue }
-            // 1) attach the literal ink as an image artifact
-            if let png = image.pngData() {
-                let url = dir.appendingPathComponent("\(meeting.id)-\(i).png")
-                try? png.write(to: url, options: .atomic)
-                let imageArtifact = Artifact(
-                    id: "ink-img-\(meeting.id)-\(i)", meetingId: meeting.id, artifactType: .diagram,
-                    title: "Handwritten note \(i + 1)", bodyMarkdown: "",
-                    structuredJson: .object(["source": .string("ink"), "image_path": .string(url.path)]),
-                    confidence: 1, status: .draft, pluginId: "holdspeak.mobile.ink",
-                    pluginVersion: HoldSpeakContracts.contractVersion,
-                    sources: [ArtifactSource(sourceType: "handwriting", sourceRef: "notebook")])
-                try? storage?.saveArtifact(imageArtifact); load()
-            }
-            // 2) recognize the handwriting → a text note proposal (best-effort; the image
-            //    above is already attached, so OCR never blocks the owner's ask)
-            let text = await Self.recognize(image)
-            if !text.isEmpty {
-                let recognized = InkPromoter.artifact(text: text, type: .actionItems,
-                                                      meetingID: meeting.id, id: "ink-txt-\(meeting.id)-\(i)")
-                try? storage?.saveArtifact(recognized); load()
-            }
-        }
-        note = ""
-    }
-
-    private static func inkDir() -> URL {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let dir = docs.appendingPathComponent("ink-images", isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir
-    }
-
-
-    /// Render a PencilKit page to a light-background image (dark ink reads best for the
-    /// eye and Vision). Defensive: a sprawling canvas's bounds could be huge — clamp the
-    /// pixel budget so the renderer can't OOM (the crash on first try).
-    private static func render(_ drawing: PKDrawing) -> UIImage? {
-        var bounds = drawing.bounds
-        guard bounds.width > 1, bounds.height > 1, bounds.width.isFinite, bounds.height.isFinite else { return nil }
-        bounds = bounds.insetBy(dx: -24, dy: -24)
-        // Fit into ~6 megapixels at most, scaling down a large drawing rather than
-        // allocating a giant bitmap.
-        let budget: CGFloat = 6_000_000
-        let scale = min(2.0, (budget / (bounds.width * bounds.height)).squareRoot())
-        let ink = drawing.image(from: bounds, scale: scale)
-        let format = UIGraphicsImageRendererFormat.default()
-        format.scale = scale
-        format.opaque = true
-        let renderer = UIGraphicsImageRenderer(size: bounds.size, format: format)
-        return renderer.image { ctx in
-            UIColor(white: 0.97, alpha: 1).setFill()
-            ctx.fill(CGRect(origin: .zero, size: bounds.size))
-            ink.draw(in: CGRect(origin: .zero, size: bounds.size))
-        }
-    }
-
-    /// On-device handwriting recognition (Vision). Runs in a **detached** task so the
-    /// synchronous `perform` (and its results read) never cross the main actor — the
-    /// actor-crossing was the crash. `nonisolated` + a fresh request per call.
-    nonisolated private static func recognize(_ image: UIImage) async -> String {
-        guard let cg = image.cgImage else { return "" }
-        return await Task.detached(priority: .userInitiated) {
-            let request = VNRecognizeTextRequest()
-            request.recognitionLevel = .accurate
-            request.usesLanguageCorrection = true
-            do {
-                try VNImageRequestHandler(cgImage: cg, options: [:]).perform([request])
-                let lines = (request.results)?.compactMap { $0.topCandidates(1).first?.string } ?? []
-                return lines.joined(separator: "\n")
-            } catch {
-                return ""
-            }
-        }.value
-    }
-
-    static func localGGUF() -> String? {
-        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return nil }
-        return ((try? FileManager.default.contentsOfDirectory(at: docs, includingPropertiesForKeys: nil)) ?? [])
-            .filter { $0.pathExtension.lowercased() == "gguf" }
-            .sorted { $0.lastPathComponent < $1.lastPathComponent }.first?.path
-    }
-}
-
-private func artifactTypeLabel(_ t: ArtifactType) -> String {
-    t.rawValue.replacingOccurrences(of: "_", with: " ").capitalized
-}
-
-/// Per-type accent (HSM-14 Tactile Sheets — each artifact type reads at a glance).
-private func artifactTint(_ t: ArtifactType) -> Color {
-    switch t {
-    case .decisions, .decisionAnnouncement: return Sig.ok
-    case .actionItems, .milestonePlan: return Sig.accent
-    case .riskRegister, .incidentTimeline, .runbookDelta: return Sig.warn
-    case .requirements, .scopeReview, .dependencyMap: return Sig.local
-    default: return Sig.local
-    }
-}
-private func artifactGlyph(_ t: ArtifactType) -> String {
-    switch t {
-    case .decisions, .decisionAnnouncement: return "checkmark.seal.fill"
-    case .actionItems: return "bolt.fill"
-    case .riskRegister: return "exclamationmark.triangle.fill"
-    case .incidentTimeline: return "clock.badge.exclamationmark.fill"
-    case .requirements: return "list.bullet.rectangle.fill"
-    case .adr: return "doc.text.fill"
-    case .diagram, .dependencyMap: return "rectangle.3.group.fill"
-    case .milestonePlan: return "flag.checkered"
-    case .customerSignals, .stakeholderUpdate: return "person.2.fill"
-    default: return "sparkles"
-    }
-}
-/// HSM-14 — the MIR profile as a meaningful LENS, not a sort toggle: an icon + a one-line
-/// description of what it surfaces first. The lens drives BOTH what gets generated (which
-/// artifact types) and the order it reads in — these helpers make that legible in the UI.
-private func profileIcon(_ p: MIRProfile) -> String {
-    switch p {
-    case .balanced: return "circle.grid.cross.fill"
-    case .architect: return "ruler.fill"
-    case .delivery: return "shippingbox.fill"
-    case .product: return "sparkles.rectangle.stack.fill"
-    case .incident: return "exclamationmark.octagon.fill"
-    }
-}
-private func profileBlurb(_ p: MIRProfile) -> String {
-    switch p {
-    case .balanced: return "An even read of the room — decisions, action items, risks and requirements."
-    case .architect: return "Leads with the design record — ADRs, decisions and the dependency map."
-    case .delivery: return "Plans the work — milestones, action items and what could slip."
-    case .product: return "Hears the customer — requirements, customer signals and scope."
-    case .incident: return "Reconstructs what happened — timeline, runbook changes and risks."
-    }
-}
-/// mm:ss for the recorder timer.
-private func clockString(_ s: Double) -> String {
-    let t = Int(max(0, s)); return String(format: "%d:%02d", t / 60, t % 60)
-}
-/// A light tactile tap (HSM-14 — the app should feel hand-driven).
-private func tactile(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
-    UIImpactFeedbackGenerator(style: style).impactOccurred()
-}
-
-/// A clean one-glance teaser for a card: strip the common Markdown syntax so the preview
-/// reads as plain prose (the full doc renders the real Markdown on tap).
-private func plainPreview(_ md: String) -> String {
-    var s = md
-    for token in ["**", "__", "`", "#", ">", "- ", "* "] { s = s.replacingOccurrences(of: token, with: "") }
-    return s.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespacesAndNewlines)
-}
-
-/// Wraps an artifact so it can drive a `.sheet(item:)` without retroactive Identifiable.
-struct OpenDoc: Identifiable { let id = UUID(); let artifact: Artifact; let ink: UIImage? }
-
-// MARK: - Note → artifact promotion (HSM-14)
-
-/// Build a `needs_review` artifact from hand-authored note text — a proposal the user reviews
-/// alongside the model's. `pluginId` marks it as note-sourced; confidence is 1.0 (you wrote it).
-func noteArtifact(meetingId: String, type: ArtifactType, text: String) -> Artifact {
-    Artifact(
-        id: UUID().uuidString, meetingId: meetingId, artifactType: type,
-        title: noteArtifactTitle(text), bodyMarkdown: text, structuredJson: .object([:]),
-        confidence: 1.0, status: .needsReview, pluginId: "holdspeak.mobile.note",
-        pluginVersion: "1", sources: [ArtifactSource(sourceType: "note", sourceRef: "handwritten")])
-}
-private func noteArtifactTitle(_ text: String) -> String {
-    let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
-    if let c = t.firstIndex(of: ":") { return String(t[..<c]).trimmingCharacters(in: .whitespaces) }  // "Decision: …" → "Decision"
-    let words = t.split(separator: " ").prefix(6).joined(separator: " ")
-    return words.isEmpty ? "Note" : words
-}
-/// Guess the artifact type from the snippet so the one-tap "Promote" does the obvious thing;
-/// the long-press menu still offers an explicit choice.
-func guessArtifactType(_ text: String) -> ArtifactType {
-    let t = text.lowercased()
-    if t.hasPrefix("decision") || t.contains("decided") || t.contains("we'll go with") { return .decisions }
-    if t.hasPrefix("risk") || t.contains("risk") || t.contains("blocker") { return .riskRegister }
-    if t.hasPrefix("action") || t.contains("todo") || t.contains("owner") || t.contains("follow up") { return .actionItems }
-    if t.hasPrefix("requirement") || t.contains("must ") || t.contains("should ") || t.contains("need to") { return .requirements }
-    return .decisions
-}
-
-/// HSM-14-03 — the Tactile Sheets artifact card: gesture-first + ALIVE. Swipe tilts/scales
-/// the card and pops a bouncing action badge (left → approve, right → dismiss, haptic on
-/// commit); tap opens the full readable/copyable/shareable document; cards spring + stagger
-/// in on appear. Tinted by type, elevated. Wired to the live review actions.
-struct SwipeableArtifactCard: View {
-    let artifact: Artifact
-    let ink: UIImage?
-    var index: Int = 0
-    var regenerating: Bool = false
-    let onApprove: () -> Void
-    let onDismiss: () -> Void
-    let onOpen: () -> Void
-    @State private var dragX: CGFloat = 0
-    @State private var appeared = false
-    @State private var pressed = false
-    @State private var shimmerX: CGFloat = -0.7
-    @State private var materialize = false   // HSM-14 — the tint-ring flash when a card first lands
-
-    private var actionable: Bool { artifact.status == .draft || artifact.status == .needsReview }
-    private var tint: Color { artifactTint(artifact.artifactType) }
-    private var swipeProgress: CGFloat { min(abs(dragX) / 100, 1) }
-
-    var body: some View {
-        ZStack {
-            HStack {
-                sideAction("xmark.circle.fill", "Dismiss", Sig.bad, active: dragX > 55, lead: true)
-                Spacer()
-                sideAction("checkmark.circle.fill", "Approve", Sig.ok, active: dragX < -55, lead: false)
-            }
-            face
-                .blur(radius: regenerating ? 3 : 0)
-                .overlay { if regenerating { regeneratingOverlay } }
-                .offset(x: regenerating ? 0 : dragX)
-                .rotationEffect(.degrees(regenerating ? 0 : Double(dragX) / 26), anchor: .bottom)
-                .scaleEffect(pressed ? 0.97 : 1 - swipeProgress * 0.05)
-                .gesture(actionable && !regenerating ? drag : nil)
-                .onTapGesture {
-                    guard !regenerating else { return }
-                    tactile()
-                    withAnimation(.spring(response: 0.22, dampingFraction: 0.55)) { pressed = true }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.13) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { pressed = false }
-                        onOpen()
-                    }
-                }
-                .animation(.easeInOut(duration: 0.35), value: regenerating)
-        }
-        .opacity(appeared ? 1 : 0)
-        .offset(y: appeared ? 0 : 22)
-        .scaleEffect(appeared ? 1 : 0.95, anchor: .top)
-        // HSM-14 — a card doesn't just "appear": it MATERIALIZES. A tint-colored ring flashes
-        // around it as it lands, then fades — so a freshly-generated insight announces itself.
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(tint, lineWidth: 2.5)
-                .opacity(materialize ? 0.9 : 0)
-                .shadow(color: tint.opacity(0.85), radius: materialize ? 16 : 0)
-                .allowsHitTesting(false)
-        )
-        .onAppear {
-            let d = Double(index) * 0.06
-            withAnimation(.spring(response: 0.55, dampingFraction: 0.74).delay(d)) { appeared = true }
-            withAnimation(.easeOut(duration: 0.32).delay(d)) { materialize = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + d + 0.65) {
-                withAnimation(.easeInOut(duration: 0.85)) { materialize = false }
-            }
-        }
-        .onChange(of: regenerating) { _, on in
-            if on {
-                shimmerX = -0.7
-                withAnimation(.linear(duration: 1.15).repeatForever(autoreverses: false)) { shimmerX = 1.3 }
-            }
-        }
-    }
-
-    /// HSM-14-07 — the card "re-thinking" with the user's spoken note: a tint shimmer sweep,
-    /// a glowing border, and a pulsing sparkle badge, over the blurred old content. The
-    /// corrected content is revealed underneath when the overlay fades.
-    @ViewBuilder private var regeneratingOverlay: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Sig.bg.opacity(0.55))
-            GeometryReader { geo in
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(LinearGradient(colors: [.clear, tint.opacity(0.5), .clear], startPoint: .leading, endPoint: .trailing))
-                    .frame(width: geo.size.width * 0.55)
-                    .offset(x: shimmerX * geo.size.width)
-                    .blendMode(.plusLighter)
-            }
-            VStack(spacing: 9) {
-                Image(systemName: "sparkles").font(.system(size: 24, weight: .bold)).foregroundStyle(tint)
-                    .symbolEffect(.variableColor.iterative.reversing, options: .repeating)
-                Text("Re-thinking with your note…").font(.system(size: 13, weight: .heavy)).foregroundStyle(Sig.text)
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(tint, lineWidth: 2)
-            .shadow(color: tint.opacity(0.85), radius: 11))
-        .transition(.opacity.combined(with: .scale(scale: 1.03)))
-    }
-
-    private var drag: some Gesture {
-        DragGesture(minimumDistance: 12)
-            .onChanged { g in withAnimation(.interactiveSpring()) { dragX = max(-170, min(170, g.translation.width)) } }
-            .onEnded { g in
-                if g.translation.width < -100 { tactile(.heavy); onApprove() }
-                else if g.translation.width > 100 { tactile(.heavy); onDismiss() }
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.62)) { dragX = 0 }
-            }
-    }
-
-    private var face: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 11) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 11, style: .continuous).fill(tint.opacity(0.18))
-                    Image(systemName: artifactGlyph(artifact.artifactType)).font(.system(size: 15, weight: .bold)).foregroundStyle(tint)
-                }.frame(width: 36, height: 36)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(artifactTypeLabel(artifact.artifactType)).font(.system(size: 12, weight: .heavy)).tracking(0.4).foregroundStyle(tint)
-                    Text(artifact.title).font(.system(size: 16.5, weight: .bold)).foregroundStyle(Sig.text).lineLimit(2)
-                }
-                Spacer(minLength: 4)
-                statusView
-            }
-            if let ink {
-                Image(uiImage: ink).resizable().scaledToFit().frame(maxHeight: 220).frame(maxWidth: .infinity)
-                    .background(Color.white, in: RoundedRectangle(cornerRadius: 10))
-            }
-            if !artifact.bodyMarkdown.isEmpty {
-                Text(plainPreview(artifact.bodyMarkdown))
-                    .font(.system(size: 14)).foregroundStyle(Sig.muted).lineSpacing(2).lineLimit(3)
-            }
-            HStack(spacing: 6) {
-                if actionable {
-                    Image(systemName: "hand.draw.fill").font(.system(size: 11, weight: .bold))
-                    Text("swipe → approve  ·  ← dismiss").font(.system(size: 12, weight: .semibold))
-                }
-                Spacer()
-                Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 11, weight: .bold))
-                Text("Open").font(.system(size: 12, weight: .heavy))
-            }
-            .foregroundStyle(Sig.faint.opacity(0.9))
-        }
-        .padding(15)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Sig.line, lineWidth: 1))
-        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
-            .stroke((dragX < 0 ? Sig.ok : Sig.bad).opacity(0.7 * swipeProgress), lineWidth: 2))
-        .shadow(color: .black.opacity(0.32 + swipeProgress * 0.1), radius: 14 + swipeProgress * 8, x: 0, y: 8)
-    }
-
-    @ViewBuilder private var statusView: some View {
-        switch artifact.status {
-        case .accepted: pill("Approved", Sig.ok)
-        case .rejected: pill("Dismissed", Sig.faint)
-        default: Image(systemName: "circle.dashed").font(.system(size: 14, weight: .semibold)).foregroundStyle(Sig.faint)
-        }
-    }
-    private func pill(_ t: String, _ c: Color) -> some View {
-        Text(t).font(.system(size: 11, weight: .heavy)).foregroundStyle(c)
-            .padding(.horizontal, 9).padding(.vertical, 4).background(c.opacity(0.14), in: Capsule())
-    }
-    private func sideAction(_ sys: String, _ label: String, _ c: Color, active: Bool, lead: Bool) -> some View {
-        VStack(spacing: 5) {
-            Image(systemName: sys).font(.system(size: 30, weight: .heavy)).foregroundStyle(c)
-                .symbolEffect(.bounce, value: active)
-            Text(label).font(.system(size: 11, weight: .bold)).foregroundStyle(c)
-        }
-        .padding(.horizontal, 20)
-        .scaleEffect(active ? 1.18 : 0.85)
-        .opacity(active ? 1 : 0.6)
-        .animation(.spring(response: 0.3, dampingFraction: 0.55), value: active)
-    }
-}
-
-/// HSM-14-03 — the full artifact as a readable document: rendered Markdown (MarkdownUI,
-/// styled code blocks), selectable text, Copy + Share. Tap a card to open it.
-struct ArtifactDetailView: View {
-    let artifact: Artifact
-    let ink: UIImage?
-    var onCorrect: ((String) -> Void)? = nil
-    @Environment(\.dismiss) private var dismiss
-    @State private var copied = false
-    @State private var showVoice = false
-    private var tint: Color { artifactTint(artifact.artifactType) }
-    private var actionable: Bool { artifact.status == .draft || artifact.status == .needsReview }
-    private var shareText: String {
-        "\(artifactTypeLabel(artifact.artifactType)) — \(artifact.title)\n\n\(artifact.bodyMarkdown)"
-    }
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    HStack(spacing: 12) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 13, style: .continuous).fill(tint.opacity(0.18))
-                            Image(systemName: artifactGlyph(artifact.artifactType)).font(.system(size: 19, weight: .bold)).foregroundStyle(tint)
-                        }.frame(width: 46, height: 46)
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(artifactTypeLabel(artifact.artifactType)).font(.system(size: 12, weight: .heavy)).tracking(0.6).foregroundStyle(tint)
-                            Text(artifact.title).font(.system(size: 23, weight: .heavy)).foregroundStyle(Sig.text)
-                        }
-                        Spacer(minLength: 0)
-                    }
-                    if let ink {
-                        Image(uiImage: ink).resizable().scaledToFit().frame(maxWidth: .infinity)
-                            .background(Color.white, in: RoundedRectangle(cornerRadius: 12))
-                    }
-                    if artifact.bodyMarkdown.isEmpty {
-                        Text("No written content for this artifact.").font(.callout).foregroundStyle(Sig.faint)
-                    } else {
-                        Markdown(artifact.bodyMarkdown)
-                            .markdownTextStyle { ForegroundColor(Sig.text); FontSize(16) }
-                            .markdownBlockStyle(\.codeBlock) { config in
-                                config.label.padding(12).font(.system(.callout, design: .monospaced))
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12))
-                            }
-                            .tint(Sig.accent)
-                            .textSelection(.enabled)
-                    }
-
-                    if onCorrect != nil && actionable {
-                        Button { showVoice = true } label: {
-                            HStack(spacing: 9) {
-                                Image(systemName: "mic.badge.plus").font(.system(size: 16, weight: .bold))
-                                Text("Not right? Fix it by voice").font(.system(size: 15.5, weight: .heavy))
-                            }
-                            .foregroundStyle(tint)
-                            .frame(maxWidth: .infinity).frame(height: 54)
-                            .background(tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(tint.opacity(0.45), lineWidth: 1))
-                        }
-                        .padding(.top, 6)
-                    }
-                }
-                .padding(20)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .background(Sig.bg.ignoresSafeArea())
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button { dismiss() } label: {
-                        Image(systemName: "xmark.circle.fill").font(.system(size: 22)).foregroundStyle(Sig.faint)
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 16) {
-                        Button {
-                            UIPasteboard.general.string = artifact.bodyMarkdown.isEmpty ? artifact.title : artifact.bodyMarkdown
-                            tactile(.medium)
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) { copied = true }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { withAnimation { copied = false } }
-                        } label: {
-                            Image(systemName: copied ? "checkmark.circle.fill" : "doc.on.doc")
-                                .font(.system(size: 18, weight: .semibold)).foregroundStyle(copied ? Sig.ok : Sig.text)
-                                .symbolEffect(.bounce, value: copied)
-                        }
-                        ShareLink(item: shareText) {
-                            Image(systemName: "square.and.arrow.up").font(.system(size: 18, weight: .semibold)).foregroundStyle(Sig.text)
-                        }
-                    }
-                }
-            }
-        }
-        .preferredColorScheme(.dark)
-        .sheet(isPresented: $showVoice) {
-            VoiceCorrectionSheet(artifact: artifact) { spoken in onCorrect?(spoken) }
-        }
-    }
-}
-
-/// HSM-14-07 — "say what's wrong," on-device. Record → WhisperKit → the spoken correction (or
-/// type it), then re-route to the local model. Submitting closes back to the meeting where the
-/// card itself shows the "re-thinking" effect.
-struct VoiceCorrectionSheet: View {
-    let artifact: Artifact
-    let onSubmit: (String) -> Void
-    @Environment(\.dismiss) private var dismiss
-    @StateObject private var voice = VoiceCaptureState()
-    @State private var correction = ""
-    @State private var pulse = false
-    private var tint: Color { artifactTint(artifact.artifactType) }
-    private var canSubmit: Bool { !correction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                VStack(spacing: 6) {
-                    Text("What's wrong with it?").font(.system(size: 25, weight: .heavy)).foregroundStyle(Sig.text)
-                    Text(artifact.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Sig.faint).lineLimit(1)
-                }.padding(.top, 6)
-
-                Spacer(minLength: 0)
-                Button { Task { await toggle() } } label: { micButton }
-                    .disabled(voice.transcribing)
-                Text(statusLine).font(.system(size: 13, weight: .semibold)).foregroundStyle(Sig.muted)
-                Spacer(minLength: 0)
-
-                TextField("…or type what to fix", text: $correction, axis: .vertical)
-                    .lineLimit(2...5).font(.system(size: 16)).foregroundStyle(Sig.text)
-                    .padding(14).background(Sig.s2, in: RoundedRectangle(cornerRadius: 16))
-                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Sig.line, lineWidth: 1))
-                if !voice.error.isEmpty {
-                    Text(voice.error).font(.caption).foregroundStyle(Sig.warn)
-                }
-
-                Button { onSubmit(correction) } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "wand.and.stars")
-                        Text("Regenerate with this")
-                    }
-                    .font(.system(size: 16, weight: .heavy)).foregroundStyle(.black)
-                    .frame(maxWidth: .infinity).frame(height: 56)
-                    .background(canSubmit ? Sig.accent : Sig.s3, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                }
-                .disabled(!canSubmit)
-            }
-            .padding(24)
-            .background(Sig.bg.ignoresSafeArea())
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Cancel") { dismiss() }.tint(Sig.faint) } }
-            .onChange(of: voice.text) { _, t in if !t.isEmpty { correction = t } }
-        }
-        .preferredColorScheme(.dark)
-        .presentationDetents([.medium, .large])
-    }
-
-    private var micButton: some View {
-        ZStack {
-            Circle().fill(voice.recording ? Sig.bad.opacity(0.18) : tint.opacity(0.16))
-                .frame(width: 112, height: 112)
-                .scaleEffect(voice.recording && pulse ? 1.14 : 1)
-            Circle().fill(voice.recording ? Sig.bad : tint).frame(width: 80, height: 80)
-            Image(systemName: voice.transcribing ? "waveform" : (voice.recording ? "stop.fill" : "mic.fill"))
-                .font(.system(size: 30, weight: .bold)).foregroundStyle(.black)
-                .symbolEffect(.variableColor.iterative, isActive: voice.transcribing)
-        }
-        .onChange(of: voice.recording) { _, on in
-            pulse = false
-            if on { withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) { pulse = true } }
-        }
-    }
-    private var statusLine: String {
-        if voice.transcribing { return "Transcribing on-device…" }
-        if voice.recording { return "Listening… tap to stop" }
-        if !correction.isEmpty { return "Tap to re-record, or edit below" }
-        return "Tap the mic and say what to fix"
-    }
-    private func toggle() async {
-        if voice.recording { await voice.stopAndTranscribe() } else { await voice.start() }
-    }
-}
-
-// MARK: - Transcript, recrafted (HSM-14 — alive, not a wall of text in a gray box)
-
-/// A gently-breathing waveform so the transcript feels alive, not static.
-struct WaveformBars: View {
-    var color: Color = Sig.accent
-    var count: Int = 30
-    var body: some View {
-        TimelineView(.animation) { ctx in
-            let t = ctx.date.timeIntervalSinceReferenceDate
-            HStack(spacing: 3) {
-                ForEach(0..<count, id: \.self) { i in
-                    let s = 0.5 + 0.5 * sin(t * 2.1 + Double(i) * 0.45)
-                    Capsule().fill(color.opacity(0.3 + 0.45 * s)).frame(width: 3, height: 5 + 16 * s)
-                }
-            }
-        }
-        .frame(height: 24)
-    }
-}
-
-/// One utterance / paragraph — staggered fade-in, speaker-coloured, tap to copy.
-struct TranscriptBlock: View {
-    let speaker: String?
-    let time: Double?
-    let text: String
-    let color: Color
-    let index: Int
-    @State private var appeared = false
-    @State private var copied = false
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            RoundedRectangle(cornerRadius: 2).fill(color.opacity(0.85)).frame(width: 3)
-            VStack(alignment: .leading, spacing: 7) {
-                if let speaker, !speaker.isEmpty {
-                    HStack(spacing: 8) {
-                        ZStack { Circle().fill(color.opacity(0.2))
-                            Text(initials(speaker)).font(.system(size: 10, weight: .heavy)).foregroundStyle(color) }
-                            .frame(width: 24, height: 24)
-                        Text(speaker).font(.system(size: 13, weight: .heavy)).foregroundStyle(color)
-                        if let time { Text(timeStr(time)).font(.system(size: 11, weight: .semibold).monospacedDigit()).foregroundStyle(Sig.faint) }
-                        Spacer(minLength: 0)
-                        if copied { Image(systemName: "checkmark.circle.fill").font(.system(size: 13)).foregroundStyle(Sig.ok) }
-                    }
-                }
-                Text(text).font(.system(size: 16)).foregroundStyle(Sig.text).lineSpacing(5)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-        .padding(15)
-        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Sig.line, lineWidth: 1))
-        .opacity(appeared ? 1 : 0)
-        .offset(y: appeared ? 0 : 14)
-        .onAppear { withAnimation(.spring(response: 0.55, dampingFraction: 0.8).delay(Double(index) * 0.05)) { appeared = true } }
-        .onTapGesture {
-            UIPasteboard.general.string = text; tactile()
-            withAnimation { copied = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { withAnimation { copied = false } }
-        }
-    }
-    private func initials(_ s: String) -> String {
-        let i = s.split(separator: " ").prefix(2).compactMap { $0.first }.map(String.init).joined()
-        return i.isEmpty ? "•" : i.uppercased()
-    }
-    private func timeStr(_ t: Double) -> String { String(format: "%d:%02d", Int(t) / 60, Int(t) % 60) }
-}
-
-struct TranscriptView: View {
-    let segments: [Segment]
-
-    var body: some View {
-        if segments.isEmpty {
-            HStack(spacing: 10) {
-                Image(systemName: "waveform.slash").foregroundStyle(Sig.faint)
-                Text("No speech was transcribed.").font(.callout).foregroundStyle(Sig.faint)
-            }
-            .padding(16).frame(maxWidth: .infinity, alignment: .leading)
-            .background(Sig.s1, in: RoundedRectangle(cornerRadius: 16))
-        } else {
-            VStack(alignment: .leading, spacing: 12) {
-                header
-                ForEach(Array(blocks.enumerated()), id: \.offset) { i, b in
-                    TranscriptBlock(speaker: b.speaker, time: b.time, text: b.text, color: b.color, index: i)
-                }
-            }
-        }
-    }
-
-    private var header: some View {
-        HStack(spacing: 12) {
-            WaveformBars()
-            Spacer()
-            Text("\(wordCount) words").font(.system(size: 12, weight: .heavy)).foregroundStyle(Sig.muted)
-            Button { UIPasteboard.general.string = fullText; tactile(.medium) } label: {
-                Image(systemName: "doc.on.doc").font(.system(size: 14, weight: .semibold)).foregroundStyle(Sig.accent)
-            }
-            ShareLink(item: fullText) { Image(systemName: "square.and.arrow.up").font(.system(size: 14, weight: .semibold)).foregroundStyle(Sig.accent) }
-        }
-        .padding(.horizontal, 14).padding(.vertical, 10)
-        .background(LinearGradient(colors: [Sig.accent.opacity(0.12), Sig.s1], startPoint: .leading, endPoint: .trailing),
-                    in: RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Sig.line, lineWidth: 1))
-    }
-
-    private var fullText: String { segments.map(\.text).joined(separator: "\n\n") }
-    private var wordCount: Int { fullText.split(whereSeparator: { $0 == " " || $0 == "\n" }).count }
-
-    /// Multi-segment → speaker utterances; a single run-on segment → readable sentence paragraphs.
-    private var blocks: [(speaker: String?, time: Double?, text: String, color: Color)] {
-        if segments.count > 1 {
-            return segments.map { (speaker: $0.speaker.isEmpty ? "Speaker" : $0.speaker, time: $0.startTime, text: $0.text, color: speakerColor($0.speaker)) }
-        }
-        guard let seg = segments.first else { return [] }
-        return paragraphs(seg.text).map { (speaker: nil, time: nil, text: $0, color: Sig.local) }
-    }
-    private func speakerColor(_ s: String) -> Color {
-        let palette = [Sig.local, Sig.accent, Sig.ok, Sig.warn, Color(hex: 0xB57BEE), Color(hex: 0x3FC7C7)]
-        return palette[abs(s.hashValue) % palette.count]
-    }
-    private func paragraphs(_ text: String) -> [String] {
-        var sentences: [String] = []; var cur = ""
-        for ch in text {
-            cur.append(ch)
-            if ch == "." || ch == "!" || ch == "?" {
-                let t = cur.trimmingCharacters(in: .whitespaces); if !t.isEmpty { sentences.append(t) }; cur = ""
-            }
-        }
-        let tail = cur.trimmingCharacters(in: .whitespaces); if !tail.isEmpty { sentences.append(tail) }
-        if sentences.isEmpty { return [text] }
-        var out: [String] = []; var i = 0
-        while i < sentences.count { out.append(sentences[i..<min(i + 2, sentences.count)].joined(separator: " ")); i += 2 }
-        return out
-    }
-}
-
-// MARK: - Generation theater (HSM-14 craft) — the on-device model, thinking, made visible
-
-/// The post-meeting payoff, made beautiful: a living "thinking" orb (concentric accent rings + a
-/// rotating conic shimmer + a breathing core) over a constellation of the lens's target types that
-/// light up one-by-one as the on-device model drafts each. This replaces a 1pt spinner — the user
-/// watches their meeting's intelligence assemble itself, on this iPad, with nothing leaving.
-private struct GenerationTheater: View {
-    let note: String
-    let lens: MIRProfile
-    let types: [ArtifactType]
-    let done: Set<ArtifactType>
-    let current: ArtifactType?
-    @State private var pulse = false
-    @State private var spin = false
-    @State private var orbSpin = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    private var headline: String {
-        if let c = current { return "Drafting \(artifactTypeLabel(c))…" }
-        return note.isEmpty ? "Reading the meeting on-device…" : note
-    }
-
-    var body: some View {
-        VStack(spacing: 16) {
-            orb
-            VStack(spacing: 5) {
-                Text(headline).font(.system(size: 16, weight: .heavy)).foregroundStyle(Sig.text)
-                    .contentTransition(.opacity).id(headline)
-                Text("Through the \(lens.rawValue.capitalized) lens")
-                    .font(.system(size: 12, weight: .heavy)).foregroundStyle(Sig.accent)
-            }
-            if !types.isEmpty { constellation }
-            HStack(spacing: 6) {
-                Image(systemName: "lock.shield.fill").font(.system(size: 11, weight: .bold))
-                Text("Running on this iPad · no network").font(.system(size: 11, weight: .semibold))
-            }
-            .foregroundStyle(Sig.local)
-            .padding(.horizontal, 11).padding(.vertical, 6)
-            .background(Sig.local.opacity(0.10), in: Capsule())
-        }
-        .frame(maxWidth: .infinity).padding(.vertical, 26).padding(.horizontal, 12)
-        .background(
-            RadialGradient(colors: [Sig.accent.opacity(0.12), .clear], center: .top, startRadius: 8, endRadius: 220)
-        )
-        .onAppear { pulse = true; spin = true; orbSpin = true }
-    }
-
-    // A bespoke PixelLab plasma core — a swirling energy orb, slowly rotating + breathing — ringed
-    // by outward accent pulses and a sweeping shimmer arc. The intelligence, literally alive.
-    private var orb: some View {
-        ZStack {
-            ForEach(0..<3, id: \.self) { i in
-                Circle().stroke(Sig.accent.opacity(0.45 - Double(i) * 0.12), lineWidth: 2)
-                    .frame(width: 74 + CGFloat(i) * 28, height: 74 + CGFloat(i) * 28)
-                    .scaleEffect(pulse ? 1.12 : 0.92)
-                    .opacity(pulse ? 0.15 : 0.8)
-                    .animation(reduceMotion ? nil : .easeInOut(duration: 1.7).repeatForever().delay(Double(i) * 0.22), value: pulse)
-            }
-            Circle().fill(Sig.accent.opacity(0.5)).frame(width: 66, height: 66).blur(radius: 24)   // bloom
-            pixelAsset("theaterorb", size: 80, fallback: "sparkles", tint: .black)
-                .rotationEffect(.degrees(orbSpin ? 360 : 0))
-                .scaleEffect(pulse ? 1.05 : 0.96)
-                .shadow(color: Sig.accent.opacity(0.7), radius: 16)
-                .animation(reduceMotion ? nil : .linear(duration: 9).repeatForever(autoreverses: false), value: orbSpin)
-                .animation(reduceMotion ? nil : .easeInOut(duration: 1.2).repeatForever(), value: pulse)
-            Circle().trim(from: 0, to: 0.32)
-                .stroke(AngularGradient(colors: [.clear, .white.opacity(0.9), .clear], center: .center),
-                        style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                .frame(width: 96, height: 96)
-                .rotationEffect(.degrees(spin ? 360 : 0))
-                .animation(reduceMotion ? nil : .linear(duration: 1.2).repeatForever(autoreverses: false), value: spin)
-        }
-        .frame(height: 132)
-    }
-
-    // The lens's types — pending (dim) → in-flight (glowing, ringed) → done (filled + check).
-    private var constellation: some View {
-        HStack(spacing: 8) {
-            ForEach(types, id: \.self) { t in
-                let isDone = done.contains(t), isCur = current == t
-                HStack(spacing: 5) {
-                    Image(systemName: isDone ? "checkmark.circle.fill" : artifactGlyph(t))
-                        .font(.system(size: 11, weight: .bold))
-                    Text(artifactTypeLabel(t)).font(.system(size: 11, weight: .heavy))
-                }
-                .foregroundStyle(isDone ? .black : (isCur ? artifactTint(t) : Sig.faint))
-                .padding(.horizontal, 10).padding(.vertical, 6)
-                .background(isDone ? artifactTint(t) : (isCur ? artifactTint(t).opacity(0.16) : Sig.s2), in: Capsule())
-                .overlay(Capsule().stroke(isCur ? artifactTint(t) : .clear, lineWidth: 1.5))
-                .scaleEffect(isCur ? 1.07 : 1)
-                .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isDone)
-                .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isCur)
-            }
-        }
-    }
-}
-
-#if targetEnvironment(simulator)
-/// Simulator-only: open Settings with a sample LAN endpoint configured, for a design screenshot.
-private struct SettingsDemo: View {
-    var body: some View {
-        NavigationStack { SettingsView() }
-            .onAppear {
-                let c = InferenceConfigStore.shared
-                c.mode = .homelab
-                if c.endpointURL.isEmpty { c.endpointURL = "http://192.168.1.43:8080/v1"; c.endpointModel = "qwen3-9b" }
-            }
-    }
-}
-
-/// Simulator-only: the generation theater mid-flight, inside the real INTELLIGENCE card, for a
-/// design screenshot (the live model needs a resident GGUF + minutes). Never in the device build.
-private struct GenTheaterDemo: View {
-    private let types: [ArtifactType] = [.decisions, .actionItems, .riskRegister, .requirements]
-    var body: some View {
-        ZStack {
-            Sig.bgGradient.ignoresSafeArea()
-            Circle().fill(Sig.accent.opacity(0.14)).frame(width: 420).blur(radius: 130)
-                .offset(x: 150, y: -320).ignoresSafeArea()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Text("INTELLIGENCE").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.accent)
-                        Spacer()
-                    }
-                    GenerationTheater(note: "", lens: .delivery, types: types,
-                                      done: [.decisions], current: .actionItems)
-                }
-                .padding(16).signalCard(radius: 18)
-                .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
-            }
-        }
-    }
-}
-#endif
-
 // MARK: - Meeting detail (reopen-intact)
 
 struct MeetingDetailView: View {
     let meeting: Meeting
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var notes: NotebookModel
     @StateObject private var review: MeetingReviewState
     @ObservedObject private var workflows = WorkflowStore.shared
@@ -4175,7 +1570,7 @@ struct MeetingDetailView: View {
                     artifactsSection
 
                     Text("TRANSCRIPT").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.faint).padding(.top, 4)
-                    TranscriptView(segments: meeting.segments).id(0)
+                    TranscriptView(segments: meeting.segments, meetingID: meeting.id).id(0)
 
                     Text("NOTES").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.local).padding(.top, 8)
                     // Reloads the meeting's PencilKit pages + pulled-in transcript cards; editable
@@ -4187,6 +1582,7 @@ struct MeetingDetailView: View {
             }
             }
         }
+        .topBack { dismiss() }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $openDoc) { doc in
             ArtifactDetailView(artifact: doc.artifact, ink: doc.ink, onCorrect: { spoken in

@@ -1,0 +1,8 @@
+Dana: Questline product sync notes. Topic is the guilds decision QL-310.
+Ravi: Customer signals say people want accountability with friends, most requested theme in Q2.
+Dana: But we have no evidence social moves WAQC, our north-star metric, and activation QL-301 is the bigger leak.
+Meaghan: Moderation and abuse surface for guilds is unscoped. Privacy non-goal: no public directory in v1.
+Dana: Decision: defer guilds v1 to Q4, fix activation first, and run a cheap shared-quest experiment behind a flag to measure WAQC.
+Meaghan: Action: I own the activation step-three fix.
+Ravi: Action: I design the shared-quest experiment and define the WAQC success metric.
+Dana: Action: I update the PRD to mark guilds v1 deferred-pending-experiment.

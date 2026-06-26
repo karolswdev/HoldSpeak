@@ -1,0 +1,15 @@
+id: dictation-ledgerline
+kind: dictation
+repo: ledgerline
+voice: Samantha
+language: en
+description: >
+  Rambling coding-agent tasks for ledgerline. The project-rewriter should turn
+  these into precise, imperative tasks that name concrete files, add an
+  acceptance-criteria checklist, and call out the append-only / double-entry /
+  idempotency invariants from .hs/memory.md. Run each through `holdspeak
+  dictation dry-run` (no LLM) and against the real pipeline (Tier 2).
+utterances:
+  - "okay claude so i need you to add a concurrency regression test for the idempotency thing you know the double post bug where two retries with the same key both posted we need a test that proves it can't happen anymore"
+  - "so the charges endpoint um when the gateway sends the same idempotency key twice really fast we should make absolutely sure we only ever post one pair of entries can you write that and make sure it doesn't mutate any existing rows"
+  - "i want to start sketching the event sourced write log thing from the architecture review we decided on append log plus hourly snapshots so draft the reconstruction logic that takes a snapshot plus the log tail and rebuilds the exact balance"

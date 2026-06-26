@@ -1,0 +1,104 @@
+// questline data model
+// Postgres + Prisma. See src/server for the tRPC layer that consumes it.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  FREE
+  PRO
+}
+
+enum Cadence {
+  DAILY
+  WEEKLY
+  N_PER_WEEK
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  plan      Plan     @default(FREE)
+  timezone  String   @default("UTC") // IANA tz, e.g. "America/Los_Angeles"
+  createdAt DateTime @default(now())
+
+  quests      Quest[]
+  events      Event[]
+  memberships GuildMember[]
+
+  @@index([plan])
+}
+
+model Quest {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  cadence     Cadence  @default(DAILY)
+  perWeek     Int?     // required when cadence = N_PER_WEEK
+  xp          Int      @default(0)
+  archived    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  streak      Streak?
+  completions QuestCompletion[]
+
+  @@index([userId, archived])
+}
+
+model QuestCompletion {
+  id          String   @id @default(cuid())
+  questId     String
+  quest       Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+  completedAt DateTime @default(now()) // stored UTC; bucketed in user tz
+
+  @@index([questId, completedAt])
+}
+
+model Streak {
+  id            String    @id @default(cuid())
+  questId       String    @unique
+  quest         Quest     @relation(fields: [questId], references: [id], onDelete: Cascade)
+  current       Int       @default(0)
+  longest       Int       @default(0)
+  lastCompleted DateTime? // UTC instant of the last counted completion
+
+  @@index([current])
+}
+
+model Guild {
+  id        String        @id @default(cuid())
+  name      String
+  createdAt DateTime      @default(now())
+  members   GuildMember[]
+}
+
+model GuildMember {
+  id       String   @id @default(cuid())
+  guildId  String
+  guild    Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime @default(now())
+
+  @@unique([guildId, userId])
+}
+
+// Append-only analytics. Mirrors src/lib/analytics.ts track() calls.
+model Event {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name      String   // e.g. "quest_completed", "freemium_gate_hit"
+  props     Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([name, createdAt])
+}

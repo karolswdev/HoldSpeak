@@ -104,3 +104,162 @@ pre {
 .conn-dot.is-live {
   animation: hs-pulse 1.6s var(--ease-standard) infinite;
 }
+
+/* ============================================================
+ * HS-69-02 — the shared Signal card primitive.
+ *
+ * One reusable utility that composes the iPad `.signalCard()` modifier
+ * (apple/App/MeetingCaptureApp.swift:433-449) on the web: a layered
+ * surface fill + the `--elev-*` soft shadow + a GRADIENT TOP-LIT
+ * HAIRLINE (a 1px border, brighter at the top edge, so cards catch
+ * light like glass). The hairline is the directional `white .12 → .035`
+ * gradient (iPad `Sig.topHairline`, :425-427), NOT the dimmer flat
+ * `inset white .04` the old `--elev-1` carried.
+ *
+ * Authored GLOBAL (not Astro component-scoped) on purpose: some cockpit
+ * cards are rendered at runtime by JS/Alpine, so a scoped class can
+ * silently fail to apply. Global rules apply wherever the class lands.
+ * Surface + elevation only — never sets a status colour (web-wins).
+ * ============================================================ */
+.signal-card {
+  position: relative;
+  background: var(--surface-1);
+  border: 1px solid transparent;     /* the visible edge is the ::before hairline */
+  border-radius: var(--radius-5);
+  box-shadow: var(--elev-2);
+}
+
+/* The gradient top-lit hairline. A 1px ring drawn as a masked gradient
+ * border so it stays crisp around the rounded corners (border-image is
+ * a known papercut on radii). `padding-box` mask cuts out the interior,
+ * leaving only the 1px frame. Brighter at the top, fading down. */
+.signal-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.035) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* The glyph chip — a gradient-filled rounded icon container (iPad
+ * `GlyphChip`, :452-463). Default 46px; radius ≈ size × 0.28 ≈ 13px.
+ * Size overridable via `--chip-size` for smaller chips. */
+.glyph-chip {
+  --chip-size: 46px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--chip-size);
+  height: var(--chip-size);
+  border-radius: calc(var(--chip-size) * 0.28);
+  background: var(--accent-gradient);
+  color: #fff;
+  box-shadow: 0 4px 14px var(--accent-glow);
+}
+.glyph-chip svg { width: 55%; height: 55%; }
+
+/* HS-69-02: a pressable scale-on-press feedback (iPad `PressableCard`,
+ * :466-474; web spec .98 vs iPad .975, cosmetic). Opt-in. */
+.is-pressable {
+  transition: transform var(--duration-short) var(--ease-standard);
+}
+.is-pressable:active { transform: scale(0.98); }
+
+/* ============================================================
+ * HS-69-04 — materialize + stagger motion.
+ *
+ * The arrival personality: cards glow + insert (fade + lift + a brief
+ * accent shadow that settles) on the Signal settle ease, applied where
+ * cards arrive (intel results, history rows, …). Plus a stagger helper
+ * so lists materialize in sequence, not all at once.
+ *
+ * Gated on reduced motion below (and the global tokens.css kill-switch
+ * already forces animation-duration to 0ms): the card still APPEARS,
+ * it just doesn't animate in. The depth/hairline/chip are static, so
+ * the craft survives motion-off — only the entrance animates.
+ * ============================================================ */
+@keyframes hs-materialize {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+    box-shadow: var(--elev-2), 0 0 0 1px var(--accent-glow), 0 4px 22px var(--accent-glow);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    box-shadow: var(--elev-2);
+  }
+}
+
+.hs-materialize {
+  animation: hs-materialize var(--duration-medium) var(--ease-standard) both;
+}
+
+/* Stagger helper: set `--i` (the item index) on each materializing child
+ * and they cascade. Inline `style="--i: 3"` or a small JS loop both work. */
+.hs-materialize {
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Belt-and-braces over the global kill-switch: no entrance motion, no
+   * stagger delay — the card is simply present. */
+  .hs-materialize {
+    animation: none;
+    animation-delay: 0ms;
+  }
+}
+
+/* ============================================================
+ * HS-69-01 — the egress badge (the shared cockpit chip).
+ *
+ * The canonical, structured `{scope, label}` chip — POSITIONING's
+ * one-glance privacy badge, NEVER a sentence. Lifted off `/presence`'s
+ * `.q-egress` (its visual source of truth) into a reusable class so the
+ * SAME badge rides the cockpit cards. Global-scoped on purpose: the cards
+ * it lands on are Alpine/JS-rendered, so a scoped style would not apply
+ * (the standing Astro-scoped-CSS-on-JS-DOM gotcha).
+ *
+ * Colors honor the web-wins status palette: local = `--ok` (cobalt-green
+ * "stays here"), local+cloud / cloud = `--accent` ("leaves, with a target").
+ * ============================================================ */
+.egress-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  padding: 0.12rem 0.55rem;
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.02em;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.egress-badge.is-local {
+  color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 10%, transparent);
+  border-color: color-mix(in srgb, var(--ok) 30%, transparent);
+}
+.egress-badge.is-mixed,
+.egress-badge.is-cloud {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
