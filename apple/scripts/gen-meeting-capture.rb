@@ -62,8 +62,9 @@ res_group = project.new_group('Resources', File.join(ROOT, 'App'))
   path = File.join(ROOT, 'App', name)
   target.add_resources([res_group.new_reference(path)]) if File.exist?(path)
 end
-# HSM-14 — the PixelLab pixel-art tailored-agent avatar groups (agent_p*/o*/s*.png)
-Dir[File.join(ROOT, 'App', 'agent_*.png')].sort.each do |p|
+# HSM-14 — bundled PixelLab pixel-art: tailored-agent avatars (agent_*), diarized-speaker
+# portraits (speaker_*), and the Arkanoid desk-game sprites (ark_*).
+Dir[File.join(ROOT, 'App', '{agent,speaker,ark}_*.png')].sort.each do |p|
   target.add_resources([res_group.new_reference(p)])
 end
 

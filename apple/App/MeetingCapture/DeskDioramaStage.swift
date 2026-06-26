@@ -362,6 +362,84 @@ struct DioBackBar: View {
     }
 }
 
+// SPEAKER AVATARS — tiny PixelLab portraits assigned to "Speaker N" by index, bundled as speaker_<i>.png.
+// They give diarized speakers a face, and double as the filter values in the transcript.
+enum SpeakerAvatars {
+    static let count = 16
+    static func index(for speaker: String) -> Int {
+        let digits = speaker.filter(\.isNumber)
+        if let n = Int(digits), n > 0 { return (n - 1) % count }
+        return abs(speaker.hashValue) % count
+    }
+    static func asset(for speaker: String) -> String { "speaker_\(index(for: speaker))" }
+    static func tint(for speaker: String) -> Color { DioPal.zoneTints[index(for: speaker) % DioPal.zoneTints.count] }
+}
+struct SpeakerAvatarView: View {
+    let speaker: String; var size: CGFloat = 26
+    var body: some View {
+        let tint = SpeakerAvatars.tint(for: speaker)
+        ZStack {
+            Circle().fill(LinearGradient(colors: [tint.opacity(0.55), Color(hex: 0x14121C)], startPoint: .top, endPoint: .bottom))
+                .overlay(Circle().strokeBorder(tint.opacity(0.6), lineWidth: 1))
+            DeskSprite(name: SpeakerAvatars.asset(for: speaker), size: size * 0.86)
+        }
+        .frame(width: size, height: size)
+    }
+}
+
+// THE TRANSCRIPT — speaker-grouped lines with tiny portraits + tap-a-portrait to filter by speaker. Stateful,
+// so it's its own view (the pull-out's pure SectionBody renderer can't hold filter state).
+struct DioTranscriptSection: View {
+    let lines: [(who: String, what: String)]
+    @State private var filter: String? = nil
+    private var speakers: [String] {
+        var seen = Set<String>(); var out: [String] = []
+        for l in lines where !seen.contains(l.who) { seen.insert(l.who); out.append(l.who) }
+        return out
+    }
+    private var shown: [(who: String, what: String)] { filter == nil ? lines : lines.filter { $0.who == filter } }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            if speakers.count > 1 {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 7) {
+                        chip(nil, "All", lines.count)
+                        ForEach(speakers, id: \.self) { s in chip(s, s, lines.filter { $0.who == s }.count) }
+                    }.padding(.bottom, 1)
+                }
+            }
+            ForEach(Array(shown.enumerated()), id: \.offset) { _, ln in
+                HStack(alignment: .top, spacing: 9) {
+                    SpeakerAvatarView(speaker: ln.who, size: 26)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(ln.who).font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(SpeakerAvatars.tint(for: ln.who))
+                        Text(ln.what).font(.system(size: 13.5, weight: .regular, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.88)).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+        }
+    }
+    private func chip(_ value: String?, _ label: String, _ n: Int) -> some View {
+        let on = filter == value
+        let tint = value.map { SpeakerAvatars.tint(for: $0) } ?? DioPal.muted
+        return Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { filter = on ? nil : value }; tapHaptic() } label: {
+            HStack(spacing: 5) {
+                if let v = value { SpeakerAvatarView(speaker: v, size: 18) } else { Image(systemName: "person.2.fill").font(.system(size: 9, weight: .bold)) }
+                Text(label).font(.system(size: 11, weight: .heavy, design: .rounded)).lineLimit(1)
+                Text("\(n)").font(.system(size: 9, weight: .black, design: .rounded)).opacity(0.7)
+            }
+            .foregroundStyle(on ? .white : DioPal.text.opacity(0.85))
+            .padding(.horizontal, 9).frame(height: 30)
+            .background(Capsule().fill(on ? tint.opacity(0.85) : .white.opacity(0.06)).overlay(Capsule().strokeBorder(tint.opacity(on ? 0 : 0.4), lineWidth: 1)))
+        }.buttonStyle(.plain)
+    }
+    private func tapHaptic() {
+        #if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        #endif
+    }
+}
+
 // THE PULL-OUT — ONE renderer for ANY primitive. Header (glyph/title/egress) + the primitive's `sections`
 // (each SectionBody drawn one way, here) + its `actions`. No per-type code — the contract drives it.
 struct DioPullout: View {
@@ -470,14 +548,7 @@ struct DioPullout: View {
                 }
             }
         case .transcript(let lines):
-            VStack(alignment: .leading, spacing: 9) {
-                ForEach(Array(lines.enumerated()), id: \.offset) { _, ln in
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(ln.who).font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.cobalt)
-                        Text(ln.what).font(.system(size: 13.5, weight: .regular, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.88)).fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-            }
+            DioTranscriptSection(lines: lines)
         }
     }
 }
@@ -605,10 +676,15 @@ struct DioAmbientRecorder: View {
     let onKeep: (LiveIntelCard) -> Void
     let onDismiss: (String) -> Void
     let onStop: () -> Void
-    let onExpand: () -> Void
     @State private var pending: LiveTarget? = nil
     @State private var mins: Double = 0.5
+    @State private var expanded = false          // the transcript grew in place
+    @State private var panelH: CGFloat = 250      // committed transcript-panel height
+    @State private var dragH: CGFloat = 0         // live resize delta from the corner grip
     private func timeString(_ s: Double) -> String { let i = Int(s); return String(format: "%d:%02d", i / 60, i % 60) }
+    private var segments: [String] {
+        model.liveTranscript.replacingOccurrences(of: "\n", with: " ").components(separatedBy: CharacterSet(charactersIn: ".?!")).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    }
     private var lastLine: String {
         if !model.partial.isEmpty { return model.partial }
         let segs = model.liveTranscript.replacingOccurrences(of: "\n", with: " ").components(separatedBy: CharacterSet(charactersIn: ".?!")).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
@@ -621,12 +697,7 @@ struct DioAmbientRecorder: View {
             VStack(alignment: .leading, spacing: 9) {
                 ForEach(cards) { c in DioLiveIntelCard(card: c, onKeep: { onKeep(c) }, onDismiss: { onDismiss(c.id) }) }
                 if !model.transcribing {
-                    Button(action: onExpand) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            HStack(spacing: 5) { Image(systemName: "text.alignleft").font(.system(size: 8, weight: .black)); Text("HEARING").font(.system(size: 8, weight: .heavy, design: .rounded)).tracking(1.5); Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 7, weight: .black)) }.foregroundStyle(DioPal.muted)
-                            Text(lastLine).font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.9)).lineLimit(2).frame(maxWidth: w * 0.5, alignment: .leading)
-                        }.padding(10).background(RoundedRectangle(cornerRadius: 13).fill(.black.opacity(0.4)).overlay(RoundedRectangle(cornerRadius: 13).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
-                    }.buttonStyle(.plain)
+                    if expanded { transcriptPanel } else { peekChip }
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 7) {
                             // quick built-in lenses
@@ -666,6 +737,9 @@ struct DioAmbientRecorder: View {
                                 onCancel: { withAnimation { pending = nil } }).zIndex(20)
             }
         }
+        #if targetEnvironment(simulator)
+        .onAppear { if ProcessInfo.processInfo.environment["HS_DESK_RECORD"] == "transcript" { expanded = true } }
+        #endif
     }
     private func targetTitle(_ t: LiveTarget) -> String { switch t { case .lens(let l): return l.name; case .agent(let a): return a.name; case .chain(let c): return c.name } }
     private func targetIcon(_ t: LiveTarget) -> String { switch t { case .lens(let l): return l.icon; case .agent: return "person.fill"; case .chain: return "arrow.triangle.branch" } }
@@ -692,6 +766,60 @@ struct DioAmbientRecorder: View {
                     .foregroundStyle(isDesktop ? DioPal.cobalt : DioPal.mint)
             }
         }
+    }
+    // collapsed: a one-line peek; tap to GROW it in place (no separate modal — canon Law 1/2)
+    private var peekChip: some View {
+        Button { withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { expanded = true } } label: {
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 5) { Image(systemName: "text.alignleft").font(.system(size: 8, weight: .black)); Text("HEARING").font(.system(size: 8, weight: .heavy, design: .rounded)).tracking(1.5); Image(systemName: "chevron.up").font(.system(size: 7, weight: .black)) }.foregroundStyle(DioPal.muted)
+                Text(lastLine).font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.9)).lineLimit(2).frame(maxWidth: w * 0.5, alignment: .leading)
+            }.padding(10).background(RoundedRectangle(cornerRadius: 13).fill(.black.opacity(0.4)).overlay(RoundedRectangle(cornerRadius: 13).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+        }.buttonStyle(.plain)
+    }
+    // expanded: the transcript grows out of the same frame, resizable by the pulsing corner grip
+    private var transcriptPanel: some View {
+        let H = min(max(140, panelH - dragH), h * 0.58)
+        return VStack(spacing: 0) {
+            HStack(spacing: 7) {
+                Image(systemName: "text.alignleft").font(.system(size: 11, weight: .bold)).foregroundStyle(DioPal.accent)
+                Text("LIVE TRANSCRIPT").font(.system(size: 10, weight: .heavy, design: .rounded)).tracking(1).foregroundStyle(DioPal.text)
+                Spacer(minLength: 0)
+                Text(timeString(model.elapsedSeconds)).font(.system(size: 10.5, weight: .heavy, design: .rounded).monospacedDigit()).foregroundStyle(DioPal.muted)
+                Button { withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) { expanded = false } } label: {
+                    Image(systemName: "chevron.down").font(.system(size: 11, weight: .black)).foregroundStyle(DioPal.muted).frame(width: 26, height: 26).background(Circle().fill(.white.opacity(0.08)))
+                }.buttonStyle(.plain)
+            }.padding(.horizontal, 12).padding(.top, 10).padding(.bottom, 6)
+            ScrollViewReader { proxy in
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 7) {
+                        ForEach(Array(segments.enumerated()), id: \.offset) { _, s in
+                            Text(s + ".").font(.system(size: 12.5, weight: .regular, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.85)).frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        if !model.partial.isEmpty {
+                            Text(model.partial).font(.system(size: 12.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.accent).frame(maxWidth: .infinity, alignment: .leading).id("tail")
+                        }
+                    }.padding(.horizontal, 12).padding(.bottom, 10)
+                }
+                .onChange(of: model.liveTranscript) { _ in withAnimation { proxy.scrollTo("tail", anchor: .bottom) } }
+            }
+        }
+        .frame(width: w * 0.6, height: H, alignment: .top)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.black.opacity(0.58)).overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+        .overlay(alignment: .topTrailing) { resizeGrip }
+    }
+    // the corner grip — pulses to suggest "drag me to size"; drag up = taller
+    private var resizeGrip: some View {
+        TimelineView(.animation) { tl in
+            let p = 0.5 + 0.5 * sin(tl.date.timeIntervalSinceReferenceDate * 2.2)
+            Image(systemName: "arrow.up.and.down").font(.system(size: 10, weight: .black)).foregroundStyle(DioPal.accent)
+                .frame(width: 28, height: 28)
+                .background(Circle().fill(DioPal.accent.opacity(0.16)).overlay(Circle().strokeBorder(DioPal.accent.opacity(0.35 + 0.4 * p), lineWidth: 1.5)))
+                .scaleEffect(1 + 0.07 * p)
+        }
+        .offset(x: -6, y: 6)
+        .gesture(DragGesture(minimumDistance: 1)
+            .onChanged { dragH = $0.translation.height }
+            .onEnded { v in panelH = min(max(140, panelH - v.translation.height), h * 0.58); dragH = 0 })
     }
     // faint angled waveforms fanning up-and-right from the docked mic
     private var sprawls: some View {
@@ -1316,9 +1444,12 @@ struct DioStage: View {
     @State private var capturing = false
     @State private var showRecordPicker = false       // the meeting-vs-desktop hovering choice
     @State private var captureDesktop = false         // this capture is a "talk to the desktop" dictation
-    @State private var liveExpanded = false           // the ambient transcript pulled into the full modal
     @State private var liveCards: [LiveIntelCard] = [] // live-intelligence results floating by the mic
     @State private var liveTimeline: [(t: Double, len: Int)] = []  // (elapsed, transcript length) samples → time windows
+    // the arcade — a pinnable Breakout to play during a boring meeting (DeskArkanoid.swift, follows the component canon)
+    @State private var arkadeOpen = false
+    @AppStorage("hs.desk.arkanoid.posX") private var arkadeX: Double = 0.5
+    @AppStorage("hs.desk.arkanoid.posY") private var arkadeY: Double = 0.46
     @State private var showSettings = false
     @State private var openMeeting: Meeting? = nil
     @State private var positions: [String: CGPoint] = [:]
@@ -1596,6 +1727,12 @@ struct DioStage: View {
                     }.buttonStyle(.plain)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).padding(.top, h * 0.045).padding(.leading, 18).zIndex(70)
                 }
+                // THE ARCADE — a quiet pinnable Breakout to play during a boring meeting (the desk keeps running behind it)
+                if landed && selected == nil && summonSource == nil && !capturing && path.isEmpty && !arkadeOpen {
+                    DeskArkanoidToken { haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { arkadeOpen = true } }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .padding(.top, h * 0.13).padding(.leading, 22).zIndex(70)
+                }
                 // THE AGENT ROSTER — your tailored characters, always to hand on the right edge. Tap one to
                 // ask it; long-press a card and pick it to route the card through it; "+" builds a new one.
                 if landed && selected == nil && summonSource == nil && !capturing && openAgent == nil
@@ -1625,16 +1762,16 @@ struct DioStage: View {
                                        onFire: { target, m in fireLive(target, minutes: m) },
                                        onKeep: { c in keepLiveCard(c) },
                                        onDismiss: { id in withAnimation { liveCards.removeAll { $0.id == id } } },
-                                       onStop: { stopCapture() },
-                                       onExpand: { haptic(.light); withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { liveExpanded = true } })
+                                       onStop: { stopCapture() })
                         .transition(.opacity).zIndex(110)
-                    if liveExpanded {
-                        DioLiveTranscriptModal(segments: model.liveTranscript.replacingOccurrences(of: "\n", with: " ").components(separatedBy: CharacterSet(charactersIn: ".?!")).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty },
-                                               partial: model.partial,
-                                               elapsed: { let i = Int(model.elapsedSeconds); return String(format: "%d:%02d", i / 60, i % 60) }(),
-                                               onClose: { withAnimation(.spring(response: 0.5, dampingFraction: 0.84)) { liveExpanded = false } })
-                            .transition(.move(edge: .bottom).combined(with: .opacity)).zIndex(151)
-                    }
+                }
+                // the arcade window — a pinnable floating Breakout (above the recorder, below the routing sheets)
+                if arkadeOpen {
+                    DeskArkanoidWindow(onMinimize: { withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { arkadeOpen = false } },
+                                       onClose: { withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { arkadeOpen = false } },
+                                       screen: CGSize(width: w, height: h),
+                                       pinNX: $arkadeX, pinNY: $arkadeY)
+                        .transition(.scale(scale: 0.9).combined(with: .opacity)).zIndex(112)
                 }
 
                 // THE RADIAL SUMMON — long-press a card and its VALID tools bloom around it; tap one to route.
@@ -1794,6 +1931,22 @@ struct DioStage: View {
                     }
                     if r == "picker" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { showRecordPicker = true } } }
                     else { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { withAnimation { capturing = true }; model.recording = true; model.level = 0.6 } }
+                }
+                if ProcessInfo.processInfo.environment["HS_DESK_ARCADE"] == "1" {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { arkadeOpen = true } }
+                }
+                if ProcessInfo.processInfo.environment["HS_DESK_TRANSCRIPT"] == "1" {
+                    let segs = [
+                        Segment(text: "Welcome everyone to the Q3 kickoff. Big bet this quarter is the desk on the web.", speaker: "Speaker 1", startTime: 0, endTime: 5),
+                        Segment(text: "I can own the mesh sync and the approval contract.", speaker: "Speaker 2", startTime: 5, endTime: 9),
+                        Segment(text: "Great. What's the riskiest part of that?", speaker: "Speaker 1", startTime: 9, endTime: 12),
+                        Segment(text: "Honestly the credential boundary. The iPad must never hold the token.", speaker: "Speaker 2", startTime: 12, endTime: 17),
+                        Segment(text: "Agreed. Let's demo the air-gapped proof by Friday.", speaker: "Speaker 3", startTime: 17, endTime: 21),
+                        Segment(text: "I'll draft the egress badge copy so it stays one line.", speaker: "Speaker 3", startTime: 21, endTime: 25),
+                    ]
+                    let m = Meeting(id: "demoT", startedAt: Date(), title: "Q3 kickoff", segments: segs)
+                    model.meetings = [m] + model.meetings
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { withAnimation { selected = "m:demoT" } }
                 }
                 if let ag = ProcessInfo.processInfo.environment["HS_DESK_AGENTS"] {
                     agents = [
@@ -2054,7 +2207,7 @@ struct DioStage: View {
         Task {
             await model.stopRecording()
             model.refresh()
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.84)) { capturing = false; liveExpanded = false }
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.84)) { capturing = false }
             liveCards = []; liveTimeline = []
         }
     }
