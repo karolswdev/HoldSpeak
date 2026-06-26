@@ -278,13 +278,19 @@ struct Pullout: View {
     }
     @ViewBuilder private func Section(_ label: String, _ tint: Color, @ViewBuilder _ c: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 7) { RoundedRectangle(cornerRadius: 2).fill(tint).frame(width: 4, height: 13)
-                Text(label).font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(tint).tracking(1.2) }
-            c()
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 7) { RoundedRectangle(cornerRadius: 2).fill(tint).frame(width: 4, height: 13)
+                    Text(label).font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(tint).tracking(1.2) }
+                c()
+            }
+            .frame(maxWidth: .infinity, alignment: .leading).padding(14)
+            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.white.opacity(0.04))
+                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.white.opacity(0.06), lineWidth: 1)))
+            if isMeeting {
+                HStack(spacing: 5) { Image(systemName: "wand.and.stars").font(.system(size: 11, weight: .bold)); Text("Route this to AI").font(.system(size: 11.5, weight: .heavy, design: .rounded)) }
+                    .foregroundStyle(Pal.accent).padding(.horizontal, 11).frame(height: 30).background(Capsule().strokeBorder(Pal.accent.opacity(0.5), lineWidth: 1))
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading).padding(14)
-        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.white.opacity(0.04))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.white.opacity(0.06), lineWidth: 1)))
     }
     @ViewBuilder private func ActionRow(_ task: String, _ meta: String) -> some View {
         HStack(alignment: .top, spacing: 10) {

@@ -603,6 +603,16 @@ ported to `DioStage`; device-arch **BUILD SUCCEEDED**. This is the holistic map'
 link — see [[THE_DESK_WHOLE_PICTURE]]. Next on the map: a second grounded connector (webhook/GitHub via the
 host actuators), act-on-section, web parity.
 
+**2026-06-25 — act-on-section: the intelligence is granularly actionable (the-desk-map ▶).** A pull-out used
+to be route-the-whole-thing or read. Now **every section carries a "Route this to AI" chip** — route just the
+**summary**, just the **action items**, just the **transcript** through the AI core, not the whole meeting.
+The facet's text is extracted generically from its `SectionBody` (text/actions/chips/transcript) and routed
+through the same bundle path (sheet → cable → real LLM → new primitive); the chip shows only when the
+primitive `emits` (so it's on meetings/outputs, not the model/connector tiles). Makes `emits` real at the
+section grain. Harness screenshot-proven ([act-on-section](./screenshots/act-on-section.png)), ported to
+`DioStage`; device-arch **BUILD SUCCEEDED**. Next on the map: a second grounded connector (webhook/GitHub via
+the host actuators) + web parity.
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a

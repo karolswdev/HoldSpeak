@@ -232,7 +232,15 @@ struct DioBackBar: View {
 // (each SectionBody drawn one way, here) + its `actions`. No per-type code — the contract drives it.
 struct DioPullout: View {
     let prim: any DeskPrimitive
-    let onClose: () -> Void; let onAction: (PrimitiveAction) -> Void
+    let onClose: () -> Void; let onAction: (PrimitiveAction) -> Void; let onRouteSection: (String, String) -> Void
+    private func sectionText(_ body: SectionBody) -> String {
+        switch body {
+        case .text(let s): return s
+        case .actions(let r): return r.map { "- \($0.task)" + ($0.meta.map { " (\($0))" } ?? "") }.joined(separator: "\n")
+        case .chips(let c): return c.joined(separator: ", ")
+        case .transcript(let l): return l.map { "\($0.who): \($0.what)" }.joined(separator: "\n")
+        }
+    }
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 11) {
@@ -253,9 +261,19 @@ struct DioPullout: View {
             }
             .padding(.horizontal, 18).padding(.top, 16).padding(.bottom, 12)
             ScrollView(showsIndicators: false) {
+                let canRoute = !prim.emits.isEmpty
                 VStack(alignment: .leading, spacing: 16) {
                     ForEach(Array(prim.sections.enumerated()), id: \.offset) { _, sec in
-                        DrawerSection(label: sec.label, tint: sec.tint) { sectionBody(sec.body) }
+                        VStack(alignment: .leading, spacing: 8) {
+                            DrawerSection(label: sec.label, tint: sec.tint) { sectionBody(sec.body) }
+                            if canRoute {
+                                Button { onRouteSection("\(prim.title) · \(sec.label.capitalized)", sectionText(sec.body)) } label: {
+                                    HStack(spacing: 5) { Image(systemName: "wand.and.stars").font(.system(size: 11, weight: .bold)); Text("Route this to AI").font(.system(size: 11.5, weight: .heavy, design: .rounded)) }
+                                        .foregroundStyle(DioPal.accent).padding(.horizontal, 11).frame(height: 30)
+                                        .background(Capsule().strokeBorder(DioPal.accent.opacity(0.5), lineWidth: 1))
+                                }.buttonStyle(.plain)
+                            }
+                        }
                     }
                     if prim.sections.isEmpty {
                         Text("Nothing here yet.").font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
@@ -889,7 +907,8 @@ struct DioStage: View {
                     .blendMode(.plusLighter).allowsHitTesting(false)
 
                 if let p = selectedPrim() {
-                    DioPullout(prim: p, onClose: { select(nil) }, onAction: { handle($0, on: p) })
+                    DioPullout(prim: p, onClose: { select(nil) }, onAction: { handle($0, on: p) },
+                               onRouteSection: { t, x in routeFacet(t, x, w, h) })
                         .frame(width: min(560, w * 0.62))
                         .padding(.vertical, 22).padding(.trailing, 16)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
@@ -1052,6 +1071,18 @@ struct DioStage: View {
             items.append(DioMenuItem(label: "Open full editor", icon: "rectangle.expand.vertical") { if let m = meeting(forObj: p.id) { openMeeting = m } })
         }
         return items
+    }
+    // act on one facet: route just this section (the summary, the actions…) through the AI core
+    private func routeFacet(_ title: String, _ text: String, _ w: CGFloat, _ h: CGFloat) {
+        let ms = members()
+        guard let core = ms.enumerated().first(where: { $0.element.kind == .model }) else {
+            select(nil); routeError = "Add an on-device model (or pair an endpoint in Settings) to ask the AI."; return
+        }
+        bundleText = text; bundleTitle = title; routeSourceId = "__bundle__"
+        routeTo = pos(core.element.id, looseHome(core.offset, ms.count, w, h), w, h)
+        routeFrom = CGPoint(x: w * 0.24, y: h * 0.24)
+        select(nil)                                  // close the pull-out; the route sheet takes over
+        haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { showRouteSheet = true }
     }
     private func routeSourceTitle() -> String {
         routeSourceId == "__bundle__" ? bundleTitle : (members().first { $0.id == routeSourceId }?.title ?? "the desk")
