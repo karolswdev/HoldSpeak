@@ -94,6 +94,14 @@ derived** from that declaration — the canvas object, the pull-out, the routing
   chain in the radial (`beginRoute(.chain)` → `runChain`). `runChain` threads the carry through `agentReply`
   per step and drives `DioChainRelay` (the gamified payoff: each avatar lights up, drops a ✓, passes the baton)
   → final = a printed card. The rail (`DioAgentRail`) now has **Agents / Chains** tabs.
+- **THE ARCADE (`DeskArkanoid.swift`) — the canon's first proof.** A pinnable, stylus-playable Breakout you can
+  play during a boring meeting while the desk keeps running. Built by a separate agent against
+  `docs/internal/DESKOS_COMPONENT_PATTERN.md` (a different kind of component dropping onto the same skeleton):
+  a quiet rest token (`DeskArkanoidToken`) → a compact draggable, pin-persisted floating window
+  (`DeskArkanoidWindow`, `hs.desk.arkanoid.pos*`), never full-screen, with a real `TimelineView` physics loop,
+  DioPal bricks, juice (trail/pop/glow/shake), score+lives. Honest canon adaptations: a game has no routable
+  artifact (Law 6) and no egress (Law 8), so "harvest" = persisted state and the badge carries SCORE/LIVES.
+  Verified via its own harness `scripts/arkanoid/`; integrated into `DioStage` (token + window overlay zIndex 112).
 - **The record button is now corner-tucked** (`orbPos` = bottom-left), smaller (64pt), with a quiet "Record"
   label. Owner's call: it has to be on the desk but should not dominate. The first-boot trail re-aims at it.
 - **Zones** = resizable, free-placed fractal **areas** you file meetings into and **dive** through
@@ -113,7 +121,17 @@ derived** from that declaration — the canvas object, the pull-out, the routing
   running → a `DioLiveIntelCard` floats by the mic; Keep → an output card. (Shared helpers: `startLiveCard` /
   `setLiveCard` / `liveWindowMaterial`.) This fuses the recorder + agents + chains into one pipeline. Tapping the orb first shows `DioRecordModePicker` — **Start a meeting** vs
   **Talk to the desktop** (desktop gates on Mac pairing; the full dictation-into-the-Mac send is the next step).
-  The old full-screen `DioRecordingConsole` is gone; `DioTranscriptTape`/`DioLiveTranscriptModal` stay.
+  The old full-screen `DioRecordingConsole` is gone.
+- **TRANSCRIPT REVEAL — grow-in-place, not a modal (2026-06-26).** Owner: the old bottom-sheet
+  `DioLiveTranscriptModal` "looks ugly, not integrated." Fixed per the component canon (Law 1/2): tapping the
+  ambient peek chip now GROWS the transcript in place from the same corner frame into a **resizable** panel
+  (`transcriptPanel` in `DioAmbientRecorder`), sized by dragging a **pulsing corner grip** (`resizeGrip`, the
+  gesture hint), `panelH`/`dragH` clamped to `h*0.58`. No separate sheet (the modal is unused now).
+- **SPEAKER DIARIZATION IN THE TRANSCRIPT.** The woven-meeting transcript (`DioTranscriptSection`, used by the
+  pull-out's `.transcript` case) groups lines by speaker with **tiny PixelLab portraits** (`SpeakerAvatars` →
+  `speaker_0..15.png`, assigned by "Speaker N" index) and a **filter row** (tap a portrait → filter to that
+  speaker). NOTE: diarization only exists AFTER a meeting is woven (`Segment.speaker`); the LIVE transcript has
+  no speakers yet (`LiveBubble` carries none) — live diarization is future work.
 - **Settings on the desk**: a gear (top-left at root) → `SettingsView` (where intelligence runs: This iPad vs
   LAN endpoint; the **on-device LLM model picker**; the **Whisper speech-model picker**; diarization). See §6.
 
