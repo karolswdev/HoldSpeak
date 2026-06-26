@@ -125,37 +125,31 @@ struct ZoneTray: View {
     @State private var press = false
     var body: some View {
         let w = size.width, h = size.height
-        HStack(spacing: 10) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous).fill(tint.opacity(0.18))
-                Image(systemName: subZones > 0 ? "square.stack.3d.up.fill" : "tray.full.fill")
-                    .font(.system(size: 18, weight: .bold)).foregroundStyle(tint)
-            }
-            .frame(width: 44, height: 44)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(name).font(.system(size: 14.5, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text).lineLimit(1)
-                HStack(spacing: 5) {
-                    ForEach(Array(members.prefix(3).enumerated()), id: \.offset) { i, m in TrayMote(sprite: m.sprite, seed: i) }
-                    Text("\(members.count)\(subZones > 0 ? " · +\(subZones)" : "")")
-                        .font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(tint)
+        ZStack(alignment: .bottomTrailing) {
+            VStack(alignment: .leading, spacing: 7) {
+                HStack(spacing: 7) {
+                    Image(systemName: subZones > 0 ? "square.stack.3d.up.fill" : "tray.full.fill").font(.system(size: 14, weight: .bold)).foregroundStyle(tint)
+                    Text(name).font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(Pal.text).lineLimit(1)
+                    Spacer(minLength: 0)
+                    Text("\(members.count)\(subZones > 0 ? "·+\(subZones)" : "")").font(.system(size: 11, weight: .black, design: .rounded)).foregroundStyle(tint)
+                        .padding(.horizontal, 6).padding(.vertical, 2).background(Capsule().fill(tint.opacity(0.16)))
                 }
+                HStack(spacing: 8) { ForEach(Array(members.prefix(max(1, Int((w - 26) / 40))).enumerated()), id: \.offset) { i, m in TrayMote(sprite: m.sprite, seed: i) } }
+                Spacer(minLength: 0)
+                HStack(spacing: 4) { Image(systemName: "arrow.down.forward.and.arrow.up.backward").font(.system(size: 9, weight: .black)); Text("TAP TO DIVE").font(.system(size: 9, weight: .heavy, design: .rounded)).tracking(1) }.foregroundStyle(tint.opacity(0.9))
             }
-            Spacer(minLength: 0)
-            Image(systemName: "arrow.down.forward.and.arrow.up.backward").font(.system(size: 11, weight: .black)).foregroundStyle(tint.opacity(0.85))
+            .padding(13).frame(width: w, height: h, alignment: .topLeading)
+            .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(LinearGradient(colors: [tint.opacity(0.1), Pal.trayBot.opacity(0.9)], startPoint: .top, endPoint: .bottom))
+                .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(tint.opacity(0.5), lineWidth: 1.5)).shadow(color: .black.opacity(0.4), radius: 12, y: 8))
+            Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 12, weight: .black)).foregroundStyle(tint)
+                .frame(width: 30, height: 30).background(Circle().fill(.black.opacity(0.4)).overlay(Circle().strokeBorder(tint.opacity(0.6), lineWidth: 1))).offset(x: 6, y: 6)
         }
-        .padding(.horizontal, 13)
         .frame(width: w, height: h)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(LinearGradient(colors: [Pal.trayTop, Pal.trayBot], startPoint: .top, endPoint: .bottom))
-                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(tint.opacity(0.45), lineWidth: 1.5))
-                .shadow(color: .black.opacity(0.45), radius: 12, y: 8)
-        )
         .scaleEffect(press ? 0.96 : (landed ? 1 : 0.4)).opacity(landed ? (dimmed ? 0 : 1) : 0)
         .animation(.spring(response: 0.65, dampingFraction: 0.62).delay(Double(index) * 0.07), value: landed)
         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: press)
         .allowsHitTesting(!dimmed)
-        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .onTapGesture { press = true; DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { press = false; onDive() } }
     }
 }
@@ -684,6 +678,14 @@ struct Stage: View {
     private func shelfSize(_ n: Int, _ w: CGFloat) -> CGSize {
         let cols = max(1, min(3, n)); return CGSize(width: (w - 40) / CGFloat(cols) - 10, height: 66)
     }
+    private func zoneFrame(_ zid: String, _ i: Int, _ w: CGFloat, _ h: CGFloat) -> (pos: CGPoint, size: CGSize) {
+        switch zid {
+        case "Atlas":    return (CGPoint(x: w * 0.36, y: h * 0.25), CGSize(width: w * 0.52, height: 116))
+        case "Personal": return (CGPoint(x: w * 0.75, y: h * 0.37), CGSize(width: w * 0.34, height: 196))
+        case "Atlas/Q3": return (CGPoint(x: w * 0.5, y: h * 0.3), CGSize(width: w * 0.6, height: 132))
+        default:         return (CGPoint(x: w * (0.32 + 0.22 * Double(i)), y: h * 0.3), CGSize(width: 168, height: 104))
+        }
+    }
     private func shelfPos(_ i: Int, _ n: Int, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
         let cols = max(1, min(3, n)); let size = shelfSize(n, w)
         let r = i / cols, c = i % cols
@@ -836,16 +838,20 @@ struct Stage: View {
     @ViewBuilder private func level(_ w: CGFloat, _ h: CGFloat) -> some View {
         let zs = zones(); let ms = members(); let slotN = zs.count + 1
         ZStack {
-            // low-profile zone shelf + create tile
+            // resizable, tetris-able zone AREAS (varied sizes)
             ForEach(Array(zs.enumerated()), id: \.element) { i, zid in
+                let f = zoneFrame(zid, i, w, h)
                 ZoneTray(zid: zid, name: World.name[zid] ?? zid, tint: World.tint[zid] ?? Pal.accent,
                          members: World.members[zid] ?? [], subZones: (World.children[zid] ?? []).count,
-                         size: shelfSize(slotN, w), landed: landed, index: i, dimmed: selected != nil,
+                         size: f.size, landed: landed, index: i, dimmed: selected != nil,
                          onDive: { dive(into: zid) })
-                    .position(shelfPos(i, slotN, w, h))
+                    .position(f.pos)
             }
-            CreateTile(size: shelfSize(slotN, w), landed: landed, dimmed: selected != nil) {}
-                .position(shelfPos(zs.count, slotN, w, h))
+            HStack(spacing: 6) { Image(systemName: "plus.circle.fill").font(.system(size: 14, weight: .bold)); Text("New Zone").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
+                .foregroundStyle(Pal.muted).padding(.horizontal, 12).frame(height: 36)
+                .background(Capsule().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(Pal.muted.opacity(0.45)))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(.top, h * 0.12).padding(.trailing, 20)
+                .opacity(landed && selected == nil ? 0.9 : 0)
 
             // objects
             ForEach(Array(ms.enumerated()), id: \.element.id) { i, o in

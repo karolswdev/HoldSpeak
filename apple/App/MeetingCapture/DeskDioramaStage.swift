@@ -23,6 +23,10 @@ enum DioMode { case home, focus, recede }
 // A long-press menu entry — the discoverable twin of a drag-route/drag-send.
 struct DioMenuItem: Identifiable { let id = UUID(); let label: String; let icon: String; let action: () -> Void }
 
+// A zone is a resizable, free-placed AREA: a path (recursion), a colour, a unit-centre (cx,cy) and a size
+// (w,h in points). Drag to arrange (tetris), corner-grip to resize. Persisted in hs.diorama.zones.
+struct ZoneRec: Equatable { var path: String; var color: Int; var cx: Double; var cy: Double; var w: Double; var h: Double }
+
 // MARK: - canvas object — derived ENTIRELY from a DeskPrimitive (glyph/colour/title/id). Gesture on the stable outer view.
 struct DioHero: View {
     let prim: any DeskPrimitive; let landed: Bool; let mode: DioMode; let index: Int; let pos: CGPoint
@@ -132,47 +136,64 @@ struct DioTrayMote: View {
 }
 
 // LOW-PROFILE zone tray — a compact labeled shelf tile that holds primitives. Tap to dive; drop a meeting on it to file.
+// A resizable, movable 2D AREA — drag the body to arrange (tetris), drag the corner grip to resize, tap to
+// dive. Holds meetings; a meeting dropped inside it files there. `drag`/`rsz` give live feedback; commit on end.
 struct DioZoneTray: View {
     let name: String, tint: Color
     let members: [any DeskPrimitive]; let subZones: Int; let size: CGSize
     let landed: Bool; let index: Int; let dimmed: Bool; let hot: Bool
-    let onDive: () -> Void
-    @State private var press = false
+    let onDive: () -> Void; let onMove: (CGSize) -> Void; let onResize: (CGSize) -> Void
+    @State private var drag: CGSize = .zero
+    @State private var rsz: CGSize = .zero
     var body: some View {
-        let w = size.width, h = size.height
-        HStack(spacing: 10) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous).fill(tint.opacity(hot ? 0.4 : 0.18))
-                Image(systemName: subZones > 0 ? "square.stack.3d.up.fill" : "tray.full.fill")
-                    .font(.system(size: 18, weight: .bold)).foregroundStyle(tint)
-            }
-            .frame(width: 44, height: 44)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(name).font(.system(size: 14.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text).lineLimit(1)
-                HStack(spacing: 5) {
-                    ForEach(Array(members.prefix(3).enumerated()), id: \.offset) { _, m in DioTrayMote(glyph: m.glyph) }
-                    Text(hot ? "drop to file" : "\(members.count)\(subZones > 0 ? " · +\(subZones)" : "")")
-                        .font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(tint)
+        let w = max(120, size.width + rsz.width), h = max(78, size.height + rsz.height)
+        let cap = max(1, Int((w - 26) / 40))
+        ZStack(alignment: .bottomTrailing) {
+            VStack(alignment: .leading, spacing: 7) {
+                HStack(spacing: 7) {
+                    Image(systemName: subZones > 0 ? "square.stack.3d.up.fill" : "tray.full.fill").font(.system(size: 14, weight: .bold)).foregroundStyle(tint)
+                    Text(name).font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text).lineLimit(1)
+                    Spacer(minLength: 0)
+                    Text("\(members.count)\(subZones > 0 ? "·+\(subZones)" : "")").font(.system(size: 11, weight: .black, design: .rounded)).foregroundStyle(tint)
+                        .padding(.horizontal, 6).padding(.vertical, 2).background(Capsule().fill(tint.opacity(0.16)))
                 }
+                HStack(spacing: 8) { ForEach(Array(members.prefix(cap).enumerated()), id: \.offset) { _, m in DioTrayMote(glyph: m.glyph) } }
+                Spacer(minLength: 0)
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.down.forward.and.arrow.up.backward").font(.system(size: 9, weight: .black))
+                    Text(hot ? "DROP TO FILE" : "TAP TO DIVE").font(.system(size: 9, weight: .heavy, design: .rounded)).tracking(1)
+                }.foregroundStyle(tint.opacity(0.9))
             }
-            Spacer(minLength: 0)
-            Image(systemName: "arrow.down.forward.and.arrow.up.backward").font(.system(size: 11, weight: .black)).foregroundStyle(tint.opacity(0.85))
+            .padding(13).frame(width: w, height: h, alignment: .topLeading)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(LinearGradient(colors: [tint.opacity(hot ? 0.2 : 0.1), DioPal.trayBot.opacity(0.9)], startPoint: .top, endPoint: .bottom))
+                    .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(tint.opacity(hot ? 1 : 0.5), lineWidth: hot ? 2.5 : 1.5))
+                    .shadow(color: .black.opacity(0.4), radius: 12, y: 8)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .gesture(DragGesture(minimumDistance: 0)
+                .onChanged { if hypot($0.translation.width, $0.translation.height) > 6 { drag = $0.translation } }
+                .onEnded { v in
+                    let d = hypot(v.translation.width, v.translation.height)
+                    if d < 9 { onDive() } else { onMove(v.translation) }
+                    drag = .zero
+                })
+            // corner resize grip
+            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                .font(.system(size: 12, weight: .black)).foregroundStyle(tint)
+                .frame(width: 30, height: 30).background(Circle().fill(.black.opacity(0.4)).overlay(Circle().strokeBorder(tint.opacity(0.6), lineWidth: 1)))
+                .offset(x: 6, y: 6)
+                .gesture(DragGesture(minimumDistance: 1)
+                    .onChanged { rsz = CGSize(width: max(120 - size.width, $0.translation.width), height: max(78 - size.height, $0.translation.height)) }
+                    .onEnded { v in onResize(CGSize(width: v.translation.width, height: v.translation.height)); rsz = .zero })
         }
-        .padding(.horizontal, 13)
         .frame(width: w, height: h)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(LinearGradient(colors: [DioPal.trayTop, DioPal.trayBot], startPoint: .top, endPoint: .bottom))
-                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(tint.opacity(hot ? 1 : 0.45), lineWidth: hot ? 2.5 : 1.5))
-                .shadow(color: .black.opacity(0.45), radius: 12, y: 8)
-        )
-        .scaleEffect(hot ? 1.04 : (press ? 0.96 : (landed ? 1 : 0.4))).opacity(landed ? (dimmed ? 0 : 1) : 0)
-        .animation(.spring(response: 0.65, dampingFraction: 0.62).delay(Double(index) * 0.07), value: landed)
-        .animation(.spring(response: 0.4, dampingFraction: 0.6), value: press)
+        .scaleEffect(hot ? 1.03 : (landed ? 1 : 0.4)).opacity(landed ? (dimmed ? 0 : 1) : 0)
+        .offset(drag)
+        .animation(.spring(response: 0.65, dampingFraction: 0.62).delay(Double(index) * 0.06), value: landed)
         .animation(.spring(response: 0.35, dampingFraction: 0.6), value: hot)
         .allowsHitTesting(!dimmed)
-        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .onTapGesture { press = true; DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { press = false; onDive() } }
     }
 }
 
@@ -775,7 +796,7 @@ struct DioStage: View {
     @State private var capturing = false
     @State private var openMeeting: Meeting? = nil
     @State private var positions: [String: CGPoint] = [:]
-    @State private var zones: [(path: String, color: Int)] = []
+    @State private var zones: [ZoneRec] = []
     @State private var filed: [String: String] = [:]
     @State private var dragHotZone: String? = nil
     @State private var namingZone = false
@@ -830,7 +851,7 @@ struct DioStage: View {
     private func parent(of zpath: String) -> String {
         var c = zpath.split(separator: "/").map(String.init); if !c.isEmpty { c.removeLast() }; return c.joined(separator: "/")
     }
-    private func childZones() -> [(path: String, color: Int)] { zones.filter { parent(of: $0.path) == pathKey } }
+    private func childZones() -> [ZoneRec] { zones.filter { parent(of: $0.path) == pathKey } }
 
     private var meetings: [Meeting] { model.meetings.sorted { $0.startedAt > $1.startedAt } }
     private var knowledgeBases: [String] { kbsCSV.split(separator: ";").map(String.init).filter { !$0.isEmpty } }
@@ -1072,17 +1093,24 @@ struct DioStage: View {
     }
 
     @ViewBuilder private func level(_ w: CGFloat, _ h: CGFloat) -> some View {
-        let zs = childZones(); let ms = contentMembers(); let slotN = zs.count + 1
+        let zs = childZones(); let ms = contentMembers()
         ZStack {
             ForEach(Array(zs.enumerated()), id: \.element.path) { i, z in
                 DioZoneTray(name: name(of: z.path), tint: DioPal.zoneTints[z.color % DioPal.zoneTints.count],
                             members: membersOf(z.path), subZones: zones.filter { parent(of: $0.path) == z.path }.count,
-                            size: shelfSize(slotN, w), landed: landed, index: i, dimmed: selected != nil,
-                            hot: dragHotZone == z.path, onDive: { dive(into: z.path) })
-                    .position(shelfPos(i, slotN, w, h))
+                            size: CGSize(width: z.w, height: z.h), landed: landed, index: i, dimmed: selected != nil,
+                            hot: dragHotZone == z.path, onDive: { dive(into: z.path) },
+                            onMove: { tr in moveZone(z.path, tr, w, h) }, onResize: { tr in resizeZone(z.path, tr) })
+                    .position(x: w * z.cx, y: h * z.cy)
             }
-            DioCreateTile(size: shelfSize(slotN, w), landed: landed, dimmed: selected != nil) { haptic(.light); namingZone = true }
-                .position(shelfPos(zs.count, slotN, w, h))
+            if selected == nil {
+                Button { haptic(.light); namingZone = true } label: {
+                    HStack(spacing: 6) { Image(systemName: "plus.circle.fill").font(.system(size: 14, weight: .bold)); Text("New Zone").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
+                        .foregroundStyle(DioPal.muted).padding(.horizontal, 12).frame(height: 36)
+                        .background(Capsule().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(DioPal.muted.opacity(0.45)))
+                }.buttonStyle(.plain).opacity(landed ? 0.9 : 0)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(.top, h * 0.12).padding(.trailing, 20)
+            }
 
             ForEach(Array(ms.enumerated()), id: \.element.id) { i, p in
                 DioHero(prim: p, landed: landed, mode: mode(p.id), index: i, pos: pos(p.id, looseHome(i, ms.count, w, h), w, h),
@@ -1090,7 +1118,7 @@ struct DioStage: View {
                         menu: menuItems(for: p, at: pos(p.id, looseHome(i, ms.count, w, h), w, h), w, h),
                         onTap: { select(selected == p.id ? nil : p.id) },
                         onDrop: { tr in drop(p, looseHome(i, ms.count, w, h), tr, w, h) },
-                        onDragChange: { pt in updateHot(p, pt, zs, slotN, w, h) })
+                        onDragChange: { pt in updateHot(p, pt, w, h) })
             }
 
             if selected != nil {
@@ -1134,8 +1162,25 @@ struct DioStage: View {
         guard !nm.isEmpty else { return }
         let zpath = path.isEmpty ? nm : pathKey + "/" + nm
         guard !zones.contains(where: { $0.path == zpath }) else { return }
+        let n = childZones().count, col = n % 3, row = n / 3
         haptic(.medium)
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.62)) { zones.append((zpath, zones.count)) }
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.62)) {
+            zones.append(ZoneRec(path: zpath, color: zones.count, cx: 0.27 + 0.23 * Double(col), cy: 0.2 + 0.18 * Double(row), w: 168, h: 104))
+        }
+        persistZones()
+    }
+    private func moveZone(_ path: String, _ tr: CGSize, _ w: CGFloat, _ h: CGFloat) {
+        guard let idx = zones.firstIndex(where: { $0.path == path }) else { return }
+        haptic(.light)
+        zones[idx].cx = min(0.92, max(0.08, zones[idx].cx + Double(tr.width / w)))
+        zones[idx].cy = min(0.84, max(0.1, zones[idx].cy + Double(tr.height / h)))
+        persistZones()
+    }
+    private func resizeZone(_ path: String, _ tr: CGSize) {
+        guard let idx = zones.firstIndex(where: { $0.path == path }) else { return }
+        haptic(.light)
+        zones[idx].w = min(360, max(120, zones[idx].w + Double(tr.width)))
+        zones[idx].h = min(260, max(78, zones[idx].h + Double(tr.height)))
         persistZones()
     }
     private func dockToolPos(_ i: Int, _ n: Int, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
@@ -1152,7 +1197,7 @@ struct DioStage: View {
         }
         return nil
     }
-    private func updateHot(_ p: any DeskPrimitive, _ pt: CGPoint?, _ zs: [(path: String, color: Int)], _ slotN: Int, _ w: CGFloat, _ h: CGFloat) {
+    private func updateHot(_ p: any DeskPrimitive, _ pt: CGPoint?, _ w: CGFloat, _ h: CGFloat) {
         guard let pt = pt else { dragHotZone = nil; dragHotObjectId = nil; return }
         if !dockOpen && !p.emits.isEmpty { withAnimation(diveSpring) { dockOpen = true } }   // a content drag opens the dock
         if let hit = dockHit(pt, w, h), hit.prim.accepts.contains(p.kind) {
@@ -1162,7 +1207,7 @@ struct DioStage: View {
             dragHotObjectId = target.prim.id; dragHotZone = nil; return         // a desk content target (a KB)
         }
         dragHotObjectId = nil
-        dragHotZone = (p.kind == .meeting) ? trayHit(pt, zs, slotN, w, h) : nil
+        dragHotZone = (p.kind == .meeting) ? trayHit(pt, w, h) : nil
     }
     // the long-press menu for a primitive — the discoverable twin of drag-to-route / drag-to-send
     private func menuItems(for p: any DeskPrimitive, at center: CGPoint, _ w: CGFloat, _ h: CGFloat) -> [DioMenuItem] {
@@ -1241,11 +1286,10 @@ struct DioStage: View {
         }
         return nil
     }
-    private func trayHit(_ pt: CGPoint, _ zs: [(path: String, color: Int)], _ slotN: Int, _ w: CGFloat, _ h: CGFloat) -> String? {
-        let size = shelfSize(slotN, w)
-        for (i, z) in zs.enumerated() {
-            let c = shelfPos(i, slotN, w, h)
-            let rect = CGRect(x: c.x - size.width / 2, y: c.y - size.height / 2, width: size.width, height: size.height).insetBy(dx: -14, dy: -14)
+    private func trayHit(_ pt: CGPoint, _ w: CGFloat, _ h: CGFloat) -> String? {
+        for z in childZones() {
+            let c = CGPoint(x: w * z.cx, y: h * z.cy)
+            let rect = CGRect(x: c.x - z.w / 2, y: c.y - z.h / 2, width: z.w, height: z.h).insetBy(dx: -14, dy: -14)
             if rect.contains(pt) { return z.path }
         }
         return nil
@@ -1265,8 +1309,7 @@ struct DioStage: View {
             beginRoute(sourceId: p.id, target: target.prim); return
         }
         // 2) a meeting filed into a zone?
-        let zs = childZones(); let slotN = zs.count + 1
-        if p.kind == .meeting, let z = trayHit(end, zs, slotN, w, h) { file(p.id, into: z); return }
+        if p.kind == .meeting, let z = trayHit(end, w, h) { file(p.id, into: z); return }
         // 3) free-place
         haptic(.light)
         let u = positions[p.id] ?? CGPoint(x: start.x / w, y: start.y / h)
@@ -1403,7 +1446,7 @@ struct DioStage: View {
     }
 
     private func persistPositions() { posCSV = positions.map { "\($0.key)=\($0.value.x),\($0.value.y)" }.joined(separator: ";") }
-    private func persistZones() { zonesCSV = zones.map { "\($0.path)|\($0.color)" }.joined(separator: ";") }
+    private func persistZones() { zonesCSV = zones.map { "\($0.path)|\($0.color)|\($0.cx)|\($0.cy)|\($0.w)|\($0.h)" }.joined(separator: ";") }
     private func persistFiled() { dfiledCSV = filed.map { "\($0.key)=\($0.value)" }.joined(separator: ";") }
     private func persistOutputs() {
         if let data = try? JSONEncoder().encode(outputs), let s = String(data: data, encoding: .utf8) { outputsJSON = s }
@@ -1428,9 +1471,14 @@ struct DioStage: View {
             pd[String(kv[0])] = CGPoint(x: x, y: y)
         }
         positions = pd
-        zones = zonesCSV.split(separator: ";").compactMap { row in
-            let f = row.split(separator: "|"); guard f.count == 2, let ci = Int(f[1]) else { return nil }
-            return (String(f[0]), ci)
+        zones = zonesCSV.split(separator: ";").enumerated().compactMap { idx, row in
+            let f = row.split(separator: "|"); guard f.count >= 2, let ci = Int(f[1]) else { return nil }
+            if f.count >= 6, let cx = Double(f[2]), let cy = Double(f[3]), let zw = Double(f[4]), let zh = Double(f[5]) {
+                return ZoneRec(path: String(f[0]), color: ci, cx: cx, cy: cy, w: zw, h: zh)
+            }
+            // backward-compat: an old "path|color" zone gets a default frame
+            let col = idx % 3, r = idx / 3
+            return ZoneRec(path: String(f[0]), color: ci, cx: 0.27 + 0.23 * Double(col), cy: 0.2 + 0.18 * Double(r), w: 168, h: 104)
         }
         var fd: [String: String] = [:]
         for row in dfiledCSV.split(separator: ";") {

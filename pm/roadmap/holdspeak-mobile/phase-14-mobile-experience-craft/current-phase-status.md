@@ -658,6 +658,18 @@ content). Harness screenshot-proven ([dock closed](./screenshots/tool-dock-close
 [dock open](./screenshots/tool-dock-open.png)), ported to `DioStage`; device-arch **BUILD SUCCEEDED**. Still
 open from the same feedback: **resizable / tetris-able zones** (#1) — next.
 
+**2026-06-25 — resizable, tetris-able zones (owner: "why isn't their size customizable so we could tetris
+them out?").** Zones stopped being a fixed low-profile shelf and became **free-placed, resizable 2D AREAS**:
+each is a `ZoneRec` (path, colour, unit-centre `cx/cy`, point size `w/h`); **drag the body to arrange**
+(tetris), **drag the corner grip to resize** (clamped 120–360 × 78–260), **tap to dive** (distance-
+disambiguated). Persisted in the extended `hs.diorama.zones` ("path|color|cx|cy|w|h"), with **backward-compat**
+load (old "path|color" zones get a default frame). `trayHit` now uses each area's real frame, so drop-to-file
+follows the moved/resized area; `createZone` flows new areas into a loose grid; the "+ New Zone" affordance
+moved to a fixed top-right pill. Harness screenshot-proven — Project Atlas (wide) + Personal (tall) arranged
+tetris-style with the resize grip ([resizable zones](./screenshots/zones-resizable.png)); ported to `DioStage`;
+device-arch **BUILD SUCCEEDED**. **All three of the owner's desk-refinement asks are now in:** resizable
+zones (#1), tooling reachable in the lower screen + a docked swipe-out tool chooser (#2/#3, the tool dock).
+
 ## Operating principle (standing, beyond this phase)
 
 Design/usability/craft is now a **standing quality bar on every mobile surface**, not a
