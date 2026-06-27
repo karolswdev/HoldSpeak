@@ -470,6 +470,63 @@ function DeskApp() {
       return a ? a.name : id;
     },
 
+    // ── provenance / lineage ────────────────────────────────────────────────
+    // Artifacts (and run results) carry `sources: [{source_type, source_ref}]`.
+    // We resolve a source_ref to a loaded primitive's title when we have it,
+    // and fall back to the raw id. The hub lands `sources` in parallel this
+    // wave, so everything here degrades gracefully when it's absent.
+
+    /** Resolve any primitive id (any kind, incl. directories) to a label. */
+    resolveRef(ref) {
+      if (!ref) return "";
+      for (const kind of [
+        "meeting", "artifact", "note", "directory", "kb",
+        "agent", "chain", "workflow",
+      ]) {
+        const hit = (this.items[kind] || []).find((x) => x.id === ref);
+        if (hit) return { kind, label: this.primitiveTitle(hit), resolved: true };
+      }
+      // Not loaded on this surface (synced elsewhere) — show the id honestly.
+      return { kind: "", label: ref, resolved: false };
+    },
+
+    /**
+     * Normalize a raw `sources` array into render-ready lineage entries.
+     * Tolerates `{source_type, source_ref}` (canonical), bare strings, and
+     * `{type, ref}` / `{source}` drift. Splits into the body sources (where it
+     * came FROM) and the via-capability (the agent/chain/workflow that ran it).
+     */
+    lineage(sources) {
+      const list = Array.isArray(sources) ? sources : [];
+      const from = [];
+      let via = null;
+      for (const s of list) {
+        if (!s) continue;
+        const type = (typeof s === "string"
+          ? "" : (s.source_type || s.type || "")).toLowerCase();
+        const ref = typeof s === "string"
+          ? s
+          : (s.source_ref || s.ref || s.source || s.id || "");
+        if (!ref) continue;
+        const r = this.resolveRef(ref);
+        const entry = { type, ref, kind: r.kind, label: r.label, resolved: r.resolved };
+        // a capability that produced this is the "via"; everything else is "from"
+        if (["agent", "chain", "workflow"].includes(type) ||
+            ["agent", "chain", "workflow"].includes(r.kind)) {
+          if (!via) via = entry;
+          else from.push(entry);
+        } else {
+          from.push(entry);
+        }
+      }
+      return { from, via, any: from.length > 0 || via != null };
+    },
+
+    /** True when a primitive (or result) has any usable lineage. */
+    hasLineage(sources) {
+      return this.lineage(sources).any;
+    },
+
     // ── coder lane (live presence stream) ──
     async refreshCoders() {
       try {
@@ -789,6 +846,7 @@ function DeskApp() {
         this.runResult = {
           output: data.output || "",
           provider: data.provider || "",
+          sources: data.sources || [],
         };
       } catch (e) {
         this.runError = e.message;
@@ -818,10 +876,20 @@ function DeskApp() {
           agentId: s.agent_id || "",
           agentName: this.agentName(s.agent_id),
           output: s.output || "",
+          // a step may carry its own provider (per-step display is kept)
+          provider: s.provider || "",
         }));
         this.runResult = {
           output: data.output || "",
-          provider: data.provider || "",
+          // the hub now lands a TOP-LEVEL provider on the chain response this
+          // wave; fall back to the last step's provider if it's not there yet.
+          provider:
+            data.provider ||
+            (this.chainSteps.length
+              ? this.chainSteps[this.chainSteps.length - 1].provider
+              : "") ||
+            "",
+          sources: data.sources || [],
         };
       } catch (e) {
         this.runError = e.message;
@@ -851,6 +919,7 @@ function DeskApp() {
         this.runResult = {
           output: data.output || "",
           provider: data.provider || "",
+          sources: data.sources || [],
         };
       } catch (e) {
         this.runError = e.message;
@@ -869,6 +938,30 @@ function DeskApp() {
       }
     },
     runCopied: false,
+
+    /**
+     * "Produced by <name>" for the active run result. Prefers a capability
+     * named in the result's own `sources` (hub-supplied, authoritative), and
+     * falls back to the primitive we ran (always known on this surface).
+     */
+    runProducedBy() {
+      const lin = this.lineage(this.runResult?.sources);
+      if (lin.via && lin.via.label) {
+        return { label: lin.via.label, kind: lin.via.kind || this.runningKind || "" };
+      }
+      if (this.running) {
+        return {
+          label: this.running.name || this.runTitle(),
+          kind: this.runningKind || "",
+        };
+      }
+      return null;
+    },
+
+    /** The non-capability lineage of the run result (what it was fed). */
+    runFrom() {
+      return this.lineage(this.runResult?.sources).from;
+    },
 
     /** Egress scope for an agent run — local provider vs a cloud endpoint. */
     runEgress() {

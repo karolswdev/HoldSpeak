@@ -144,6 +144,14 @@ const GROUPS = [
                       <div class="card-type"><span class="dot"></span><span x-text="item.artifactType || 'artifact'"></span></div>
                       <h3 class="card-title" x-text="item.title">Artifact</h3>
                       <p class="card-body" x-text="(item.bodyMarkdown || '').slice(0, 160)"></p>
+                      {/* lineage — where this artifact came from + what produced it */}
+                      <p class="lineage" x-show="hasLineage(item.sources)" x-cloak title="Provenance">
+                        <svg class="lineage-glyph" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v12M18 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a9 9 0 0 0 9 9" /></svg>
+                        <template x-for="(src, i) in lineage(item.sources).from" {...{ ":key": "i" }}>
+                          <span class="lineage-part"><span x-show="i > 0" x-cloak class="lineage-sep">·</span><span class="lineage-from">from</span> <span class="lineage-ref" :class="{ unresolved: !src.resolved }" x-text="src.label"></span></span>
+                        </template>
+                        <span class="lineage-part" x-show="lineage(item.sources).via" x-cloak><span class="lineage-sep">·</span><span class="lineage-via">via</span> <span class="lineage-ref" :class="{ unresolved: !lineage(item.sources).via.resolved }" x-text="lineage(item.sources).via && lineage(item.sources).via.label"></span></span>
+                      </p>
                       <div class="card-foot">
                         <span class="tag" x-text="item.status"></span>
                         <span class="tag" x-show="item.confidence != null" x-cloak x-text="`conf ${Math.round((item.confidence||0)*100)}%`"></span>
@@ -606,6 +614,7 @@ const GROUPS = [
                   <div class="crew-step-head">
                     <span class="chain-num" x-text="i + 1"></span>
                     <span class="crew-step-name" x-text="step.agentName"></span>
+                    <span class="crew-step-provider" x-show="step.provider" x-cloak x-text="step.provider" title="Ran on"></span>
                     <svg class="crew-step-arrow" x-show="i < (chainSteps.length - 1)" x-cloak viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7" /></svg>
                   </div>
                   <pre class="crew-step-output" x-text="step.output"></pre>
@@ -618,15 +627,33 @@ const GROUPS = [
           <div class="run-result" x-show="runResult && !runBusy" x-cloak>
             <div class="run-result-head">
               <span class="run-result-label" x-text="runningKind === 'chain' ? 'Final output' : 'Output'">Output</span>
-              <span class="egress" :class="runEgress().scope">
+              <span class="egress" :class="runEgress().scope" :title="runEgress().label">
                 <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
                 <span x-text="runEgress().scope === 'local' ? 'on-device' : (runEgress().scope === 'cloud' ? 'cloud' : 'egress')">egress</span>
               </span>
-              <span class="run-provider" x-show="runResult && runResult.provider" x-cloak x-text="runResult && runResult.provider"></span>
               <button type="button" class="run-copy" @click="copyRun()" title="Copy output">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" x-show="!runCopied" x-cloak><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
                 <span x-show="!runCopied" x-cloak>Copy</span>
                 <span x-show="runCopied" x-cloak class="copied">Copied ✓</span>
               </button>
+            </div>
+            {/* provenance ribbon — produced by + what it was fed + provider */}
+            <div class="run-provenance">
+              <span class="prov-produced" x-show="runProducedBy()" x-cloak>
+                <span class="prov-label">Produced by</span>
+                <span class="prov-name" x-text="runProducedBy() && runProducedBy().label"></span>
+                <span class="prov-kind" x-show="runProducedBy() && runProducedBy().kind" x-cloak x-text="runProducedBy() && runProducedBy().kind"></span>
+              </span>
+              <span class="prov-from" x-show="runFrom().length" x-cloak>
+                <span class="prov-label">from</span>
+                <template x-for="(src, i) in runFrom()" {...{ ":key": "i" }}>
+                  <span class="prov-ref" :class="{ unresolved: !src.resolved }" x-text="src.label"></span>
+                </template>
+              </span>
+              <span class="prov-provider" x-show="runResult && runResult.provider" x-cloak title="The provider that ran this">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9z" /></svg>
+                <span x-text="runResult && runResult.provider"></span>
+              </span>
             </div>
             <pre class="run-output" x-text="runResult && runResult.output"></pre>
           </div>
@@ -989,6 +1016,20 @@ const GROUPS = [
   .file-option-state { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-faint); flex-shrink: 0; }
   .file-option-state.filed { color: #E0A458; }
 
+  /* ── lineage / provenance line (on artifact cards) ── */
+  .lineage {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    margin: 0; font-family: var(--font-mono); font-size: 0.6875rem;
+    color: var(--text-faint); line-height: var(--line-height-normal);
+  }
+  .lineage-glyph { color: var(--ck, var(--accent)); opacity: 0.8; flex-shrink: 0; }
+  .lineage-part { display: inline-flex; align-items: center; gap: 4px; }
+  .lineage-sep { color: var(--text-faint); opacity: 0.6; }
+  .lineage-from, .lineage-via { color: var(--text-faint); text-transform: lowercase; }
+  .lineage-via { color: var(--ck, var(--accent)); }
+  .lineage-ref { color: var(--text-muted); font-weight: 600; }
+  .lineage-ref.unresolved { color: var(--text-faint); font-weight: 400; opacity: 0.85; }
+
   /* empty / unreachable */
   .cards-empty { grid-column: 1 / -1; }
   .empty-inner { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); border: 1px dashed var(--border); border-radius: var(--radius-md); color: var(--text-faint); font-size: var(--font-size-sm); }
@@ -1078,17 +1119,49 @@ const GROUPS = [
   .run-role { margin: var(--space-1) 0 0; color: var(--text-muted); font-size: var(--font-size-sm); }
   .run-loading { display: flex; align-items: center; gap: var(--space-3); color: var(--text-muted); font-size: var(--font-size-sm); padding: var(--space-4); border: 1px dashed var(--border); border-radius: var(--radius-md); }
   .run-spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--surface-3); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
-  .run-result { display: flex; flex-direction: column; gap: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); overflow: hidden; }
-  .run-result-head { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border-subtle); background: var(--surface-1); }
-  .run-result-label { font-family: var(--font-mono); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-eyebrow); color: var(--text-faint); }
-  .egress { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 0.6875rem; padding: 1px var(--space-2); border-radius: var(--radius-pill); }
+  .run-result {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--border); border-radius: var(--radius-md);
+    background: var(--surface-2); overflow: hidden;
+    box-shadow: var(--elev-2);
+    animation: resultin var(--duration-medium) var(--ease-emphasized);
+  }
+  /* a thin accent crown so the final output reads as the moment of the surface */
+  .run-result::before { content: ""; display: block; height: 2px; background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 30%, transparent) 70%, transparent); }
+  @keyframes resultin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .run-result-head { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3); border-bottom: 1px solid var(--border-subtle); background: var(--surface-1); }
+  .run-result-label { font-family: var(--font-mono); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-eyebrow); color: var(--text-muted); font-weight: 600; }
+  .egress { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 0.6875rem; padding: 1px var(--space-2); border-radius: var(--radius-pill); font-weight: 600; }
   .egress.local { color: var(--ok-strong); background: var(--ok-soft); }
   .egress.cloud { color: var(--info); background: var(--info-soft); }
   .egress.unknown { color: var(--text-faint); background: var(--surface-3); }
-  .run-provider { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-faint); }
-  .run-copy { margin-left: auto; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-xs); color: var(--text-muted); font-family: var(--font-mono); font-size: 0.6875rem; padding: 1px var(--space-2); cursor: pointer; }
+  .run-copy { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-xs); color: var(--text-muted); font-family: var(--font-mono); font-size: 0.6875rem; padding: 2px var(--space-2); cursor: pointer; transition: color var(--duration-short) var(--ease-standard), border-color var(--duration-short) var(--ease-standard); }
   .run-copy:hover { color: var(--text); border-color: var(--border-strong); }
   .run-copy .copied { color: var(--ok-strong); }
+
+  /* provenance ribbon — produced by / from / provider, under the head */
+  .run-provenance {
+    display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    background: color-mix(in srgb, var(--accent) 5%, var(--surface-1));
+    border-bottom: 1px solid var(--border-subtle);
+    font-family: var(--font-mono); font-size: 0.6875rem;
+  }
+  .prov-produced, .prov-from, .prov-provider { display: inline-flex; align-items: center; gap: 5px; }
+  .prov-label { color: var(--text-faint); text-transform: lowercase; }
+  .prov-produced .prov-label { text-transform: none; }
+  .prov-name { color: var(--text); font-weight: 600; }
+  .prov-kind {
+    color: var(--accent); background: var(--accent-tint);
+    border-radius: var(--radius-xs); padding: 0 5px; text-transform: uppercase;
+    letter-spacing: 0.04em; font-size: 0.625rem;
+  }
+  .prov-from .prov-ref { color: var(--text-muted); font-weight: 600; }
+  .prov-from .prov-ref + .prov-ref::before { content: ", "; color: var(--text-faint); font-weight: 400; }
+  .prov-from .prov-ref.unresolved { color: var(--text-faint); font-weight: 400; }
+  .prov-provider { margin-left: auto; color: var(--text-muted); }
+  .prov-provider svg { color: var(--warn-signal); }
+
   .run-output { margin: 0; padding: var(--space-4); font-family: var(--font-mono); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); color: var(--text); white-space: pre-wrap; word-break: break-word; max-height: 40vh; overflow-y: auto; }
 
   /* run-drawer kind glyph (chain / workflow) */
@@ -1110,7 +1183,13 @@ const GROUPS = [
   .crew-step { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); overflow: hidden; }
   .crew-step-head { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border-subtle); background: var(--surface-1); }
   .crew-step-name { font-family: var(--font-display); font-weight: 600; font-size: var(--font-size-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .crew-step-provider {
+    font-family: var(--font-mono); font-size: 0.625rem; color: var(--text-faint);
+    background: var(--surface-3); border-radius: var(--radius-xs); padding: 0 5px;
+    flex-shrink: 0; max-width: 10rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   .crew-step-arrow { margin-left: auto; color: #A78BFA; }
+  .crew-step-provider + .crew-step-arrow { margin-left: var(--space-2); }
   .crew-step-output { margin: 0; padding: var(--space-3); font-family: var(--font-mono); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); color: var(--text-muted); white-space: pre-wrap; word-break: break-word; max-height: 22vh; overflow-y: auto; }
 
   @media (max-width: 720px) {

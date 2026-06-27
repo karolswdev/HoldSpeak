@@ -107,10 +107,39 @@ def test_run_agent_invokes_engine(client: TestClient, monkeypatch) -> None:
     resp = client.post(f"/api/agents/{aid}/run", json={"input": "hello"})
     assert resp.status_code == 200
     body = resp.json()
-    assert body == {"agent_id": aid, "output": "ANSWER", "provider": "local"}
+    assert body == {
+        "agent_id": aid,
+        "output": "ANSWER",
+        "provider": "local",
+        "sources": [{"source_type": "agent", "source_ref": aid}],
+    }
     # The persona's system prompt + rendered template reached the engine.
     assert captured["system_prompt"] == "SYS"
     assert captured["user_prompt"] == "Q: hello"
+
+
+def test_run_agent_includes_input_source(client: TestClient, monkeypatch) -> None:
+    """A caller-provided `source_ref` is recorded as an `input` lineage source."""
+    aid = client.post("/api/agents", json={
+        "name": "Echo", "user_template": "{input}",
+    }).json()["agent"]["id"]
+
+    class _FakeIntel:
+        active_provider = "local"
+
+        def run_prompt(self, **kwargs):
+            return "OUT"
+
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+    )
+    resp = client.post(
+        f"/api/agents/{aid}/run", json={"input": "x", "source_ref": "meeting_7"}
+    )
+    assert resp.json()["sources"] == [
+        {"source_type": "agent", "source_ref": aid},
+        {"source_type": "input", "source_ref": "meeting_7"},
+    ]
 
 
 def test_run_agent_unknown_is_404(client: TestClient) -> None:
@@ -237,6 +266,14 @@ def test_run_chain_threads_steps(client: TestClient, monkeypatch) -> None:
     assert body["steps"][0]["provider"] == "local"
     # Chain output is the last step's output.
     assert body["output"] == body["steps"][-1]["output"] == "out(step2: out(step1: hello))"
+    # Top-level provider = the last step's provider (kills the "provider unknown" badge).
+    assert body["provider"] == "local"
+    # Provenance: the chain plus each step's agent.
+    assert body["sources"] == [
+        {"source_type": "chain", "source_ref": cid},
+        {"source_type": "agent", "source_ref": a1},
+        {"source_type": "agent", "source_ref": a2},
+    ]
 
 
 def test_run_chain_unknown_chain_is_404(client: TestClient) -> None:
@@ -338,29 +375,124 @@ def test_run_workflow_prompt(client: TestClient, monkeypatch) -> None:
     resp = client.post(f"/api/workflows/{wid}/run", json={"input": "the thing"})
     assert resp.status_code == 200
     body = resp.json()
-    assert body == {"workflow_id": wid, "output": "WF-OUT", "provider": "local"}
+    assert body == {
+        "workflow_id": wid,
+        "output": "WF-OUT",
+        "provider": "local",
+        "sources": [{"source_type": "workflow", "source_ref": wid}],
+    }
     # Workflow runs with an empty system prompt + the rendered prompt.
     assert fake.captured == {"system_prompt": "", "user_prompt": "Do: the thing"}
 
 
-def test_run_workflow_graph_only_warns(client: TestClient, monkeypatch) -> None:
-    wid = client.post(
-        "/api/workflows", json={"name": "G", "graph_json": {"nodes": [1, 2]}}
-    ).json()["workflow"]["id"]
-    _stub_intel(monkeypatch)
+# A real Workbench Blueprint shape: entry -> summarize -> rewrite -> output, a single
+# linear chain (Swift-Codable snake_case tagged-union node kinds).
+def _linear_graph() -> dict:
+    return {
+        "id": "11111111-1111-1111-1111-111111111111",
+        "name": "Summary then Exec",
+        "entry": "e1",
+        "nodes": [
+            {"id": "e1", "kind": {"entry": {}}, "failure_policy": None},
+            {"id": "sum", "kind": {"summarize": {}}, "failure_policy": None},
+            {"id": "rw", "kind": {"rewrite": {"tone": "executive"}}, "failure_policy": None},
+            {"id": "out", "kind": {"output": {}}, "failure_policy": None},
+        ],
+        "exec_edges": [
+            {"from": {"node": "e1", "name": "then"}, "to": "sum"},
+            {"from": {"node": "sum", "name": "then"}, "to": "rw"},
+            {"from": {"node": "rw", "name": "then"}, "to": "out"},
+        ],
+        "data_edges": [],
+    }
 
-    # No prompt, but `input` keeps it runnable; the response notes graph isn't wired.
+
+# A branching Blueprint we MUST NOT linearize: entry -> branch -> {true,false}.
+def _branching_graph() -> dict:
+    return {
+        "id": "22222222-2222-2222-2222-222222222222",
+        "name": "Branchy",
+        "entry": "e1",
+        "nodes": [
+            {"id": "e1", "kind": {"entry": {}}, "failure_policy": None},
+            {"id": "br", "kind": {"branch": {"condition": {"contains": {"keyword": "x"}}}},
+             "failure_policy": None},
+            {"id": "a", "kind": {"summarize": {}}, "failure_policy": None},
+            {"id": "b", "kind": {"summarize": {}}, "failure_policy": None},
+        ],
+        "exec_edges": [
+            {"from": {"node": "e1", "name": "then"}, "to": "br"},
+            {"from": {"node": "br", "name": "true"}, "to": "a"},
+            {"from": {"node": "br", "name": "false"}, "to": "b"},
+        ],
+        "data_edges": [],
+    }
+
+
+def test_run_workflow_linear_graph_runs_in_order(client: TestClient, monkeypatch) -> None:
+    wid = client.post(
+        "/api/workflows", json={"name": "G", "graph_json": _linear_graph()}
+    ).json()["workflow"]["id"]
+
+    calls = []
+
+    class _FakeIntel:
+        active_provider = "local"
+
+        def run_prompt(self, *, system_prompt, user_prompt, temperature=None, max_tokens=None):
+            calls.append(user_prompt)
+            return f"out{len(calls)}"
+
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+    )
+
+    resp = client.post(f"/api/workflows/{wid}/run", json={"input": "the meeting"})
+    assert resp.status_code == 200
+    body = resp.json()
+
+    # Two model ops ran in chain order: summarize first (over the input), then rewrite
+    # (over summarize's output) — output threaded through, no guessed order.
+    assert len(calls) == 2
+    assert calls[0].startswith("Summarize the following")
+    assert "the meeting" in calls[0]
+    assert calls[1].startswith("Rewrite the following text in a executive tone")
+    assert "out1" in calls[1]  # rewrite ran on summarize's output
+
+    # The trail + final output + lineage are returned.
+    assert [s["node_id"] for s in body["steps"]] == ["sum", "rw"]
+    assert [s["kind"] for s in body["steps"]] == ["summarize", "rewrite"]
+    assert body["output"] == "out2"
+    assert body["provider"] == "local"
+    assert body["sources"] == [{"source_type": "workflow", "source_ref": wid}]
+    assert "warning" not in body
+
+
+def test_run_workflow_branching_graph_falls_back_with_warning(client: TestClient, monkeypatch) -> None:
+    # A branching graph + a prompt: we refuse the graph (no guessed order) and run the
+    # prompt, with an honest warning naming why.
+    wid = client.post(
+        "/api/workflows",
+        json={"name": "G", "prompt": "fallback: {input}", "graph_json": _branching_graph()},
+    ).json()["workflow"]["id"]
+    fake = _stub_intel(monkeypatch)
+
     resp = client.post(f"/api/workflows/{wid}/run", json={"input": "x"})
     assert resp.status_code == 200
-    assert "graph execution is not yet wired" in resp.json()["warning"]
+    body = resp.json()
+    assert body["output"] == "WF-OUT"
+    assert "control-flow" in body["warning"] and "prompt fallback" in body["warning"]
+    # It ran the PROMPT, not any graph node.
+    assert fake.captured["user_prompt"] == "fallback: x"
+    assert "steps" not in body
 
 
-def test_run_workflow_graph_only_no_input_is_400(client: TestClient, monkeypatch) -> None:
+def test_run_workflow_branching_graph_no_prompt_no_input_is_400(client: TestClient, monkeypatch) -> None:
+    # A branching graph, no prompt, no input: nothing safe to run -> 400 (never a guess).
     wid = client.post(
-        "/api/workflows", json={"name": "G", "graph_json": {"nodes": [1]}}
+        "/api/workflows", json={"name": "G", "graph_json": _branching_graph()}
     ).json()["workflow"]["id"]
     _stub_intel(monkeypatch)
-    # No prompt and no input => nothing to run.
     assert client.post(f"/api/workflows/{wid}/run", json={}).status_code == 400
 
 

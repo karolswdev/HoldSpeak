@@ -1847,15 +1847,28 @@ struct DioRecordOrb: View {
 // A pending route through an agent/chain whose "where it runs" the user is choosing —
 // on this iPad (on-device) or on the paired Mac (the hub's big model). Captured so the
 // run target sheet can fire the right path with the card's text intact.
+// The RUNS-ON choice the user can remember (Phase-15 fluid compute) — on this iPad or your Mac.
+// (Named `DeskRunTarget` to avoid colliding with RuntimeCore's workflow-step `RunTarget`.)
+enum DeskRunTarget: String { case device, mac }
+
 struct PendingHubRun: Identifiable, Equatable {
     enum Kind: Equatable { case agent(AgentRecord); case chain(ChainRecord) }
     let id = UUID()
     let kind: Kind
     let input: String
+    let inputId: String            // the routed primitive's id — the lineage's "from" card
     let inputTitle: String
     var name: String { switch kind { case .agent(let a): return a.name.isEmpty ? "Agent" : a.name
                                       case .chain(let c): return c.name.isEmpty ? "Crew" : c.name } }
     var isChain: Bool { if case .chain = kind { return true }; return false }
+    // The id + kind of what produced the run — carried into the output's provenance.
+    var viaId: String { switch kind { case .agent(let a): return a.id; case .chain(let c): return c.id } }
+    var viaKind: String { isChain ? "chain" : "agent" }
+    // The lineage record stamped onto the resulting OutputRecord.
+    var provenance: RunProvenance {
+        RunProvenance(sourceCardId: inputId, sourceCardTitle: inputTitle,
+                      viaId: viaId, viaName: name, viaKind: viaKind)
+    }
 }
 
 // WHERE IT RUNS — the Mesh RUNS-ON choice for routing a card through an agent/chain:
@@ -1866,6 +1879,8 @@ struct DioRunTargetSheet: View {
     let run: PendingHubRun
     let paired: Bool
     let peerLabel: String          // e.g. "192.168.1.43" — what the hub row names
+    var preferred: DeskRunTarget = .device   // the remembered/sensible default — pre-highlighted
+    var remembered: Bool = false         // true once the user has made an explicit pick
     let onDevice: () -> Void
     let onHub: () -> Void
     let onCancel: () -> Void
@@ -1886,12 +1901,14 @@ struct DioRunTargetSheet: View {
                 }
                 // ON DEVICE — the default, private, no network.
                 runRow(icon: "ipad", tint: DioPal.mint, name: "On this iPad",
-                       sub: "private · no network", egress: .local, enabled: true, action: onDevice)
+                       sub: "private · no network", egress: .local, enabled: true,
+                       isDefault: preferred == .device, action: onDevice)
                 // ON YOUR MAC — the hub's big model; LAN egress; disabled when unpaired.
                 runRow(icon: "desktopcomputer", tint: Color(hex: 0xF5A524),
                        name: "On your Mac",
                        sub: paired ? "big model · \(peerLabel)" : "pair your Mac to use its big model",
-                       egress: .cloud("your Mac"), enabled: paired, action: onHub)
+                       egress: .cloud("your Mac"), enabled: paired,
+                       isDefault: paired && preferred == .mac, action: onHub)
                 Button(action: onCancel) {
                     Text("Cancel").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
                         .frame(maxWidth: .infinity).frame(height: 44).background(Capsule().fill(.white.opacity(0.06)))
@@ -1908,13 +1925,29 @@ struct DioRunTargetSheet: View {
         .onAppear { withAnimation(.spring(response: 0.5, dampingFraction: 0.74)) { shown = true } }
     }
     @ViewBuilder private func runRow(icon: String, tint: Color, name: String, sub: String,
-                                     egress: EgressBadge.Scope, enabled: Bool, action: @escaping () -> Void) -> some View {
+                                     egress: EgressBadge.Scope, enabled: Bool, isDefault: Bool = false,
+                                     action: @escaping () -> Void) -> some View {
+        // The remembered/sensible choice is pre-highlighted (a brighter ring + glow + a small
+        // "Default" cue) so the user can fire it without re-deciding — the override is just the
+        // other row, one tap away.
+        let highlight = enabled && isDefault
         Button(action: { if enabled { action() } }) {
             HStack(spacing: 12) {
                 Image(systemName: icon).font(.system(size: 17, weight: .bold)).foregroundStyle(enabled ? tint : DioPal.muted)
                     .frame(width: 30)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(name).font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(enabled ? DioPal.text : DioPal.muted)
+                    HStack(spacing: 7) {
+                        Text(name).font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(enabled ? DioPal.text : DioPal.muted)
+                        if highlight {
+                            HStack(spacing: 3) {
+                                Image(systemName: "checkmark.seal.fill").font(.system(size: 8.5, weight: .black))
+                                Text(remembered ? "LAST CHOICE" : "DEFAULT").font(.system(size: 8.5, weight: .black, design: .rounded)).tracking(0.4)
+                            }
+                            .foregroundStyle(tint)
+                            .padding(.horizontal, 7).frame(height: 17)
+                            .background(Capsule().fill(tint.opacity(0.16)).overlay(Capsule().strokeBorder(tint.opacity(0.45), lineWidth: 0.8)))
+                        }
+                    }
                     Text(sub).font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
                 }
                 Spacer(minLength: 0)
@@ -1922,8 +1955,9 @@ struct DioRunTargetSheet: View {
                 else { Image(systemName: "lock.slash").font(.system(size: 13, weight: .bold)).foregroundStyle(DioPal.muted) }
             }
             .padding(13).frame(maxWidth: .infinity)
-            .background(RoundedRectangle(cornerRadius: 16).fill(enabled ? tint.opacity(0.10) : .white.opacity(0.03))
-                .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder((enabled ? tint : .white).opacity(enabled ? 0.4 : 0.06), lineWidth: 1)))
+            .background(RoundedRectangle(cornerRadius: 16).fill(enabled ? tint.opacity(highlight ? 0.16 : 0.10) : Color.white.opacity(0.03))
+                .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder((enabled ? tint : Color.white).opacity(highlight ? 0.85 : (enabled ? 0.4 : 0.06)), lineWidth: highlight ? 1.6 : 1))
+                .shadow(color: highlight ? tint.opacity(0.35) : .clear, radius: highlight ? 12 : 0, y: highlight ? 4 : 0))
         }.buttonStyle(.plain).opacity(enabled ? 1 : 0.7)
     }
 }
@@ -2026,9 +2060,9 @@ struct DioPrintedCard: View {
     let rec: OutputRecord; let egress: EgressBadge.Scope; let onKeep: () -> Void; let onBin: () -> Void
     @State private var shown = false
     // honest provenance: a hub run reads "fresh from your Mac", anything else "from the AI core".
-    private var provenance: String {
-        if case .cloud(let t) = egress, t == "your Mac" { return "fresh from your Mac · from \(rec.source)" }
-        return "fresh from the AI core · from \(rec.source)"
+    private var freshLine: String {
+        if case .cloud(let t) = egress, t == "your Mac" { return "fresh from your Mac" }
+        return "fresh from the AI core"
     }
     var body: some View {
         ZStack {
@@ -2038,11 +2072,16 @@ struct DioPrintedCard: View {
                     DeskSprite(name: "note", size: 38)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(rec.title).font(.system(size: 17, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
-                        Text(provenance).font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
+                        Text(freshLine).font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
                     }
                     Spacer(minLength: 0)
                     EgressBadge(scope: egress)
-                }.padding(.horizontal, 18).padding(.top, 16).padding(.bottom, 10)
+                }.padding(.horizontal, 18).padding(.top, 16).padding(.bottom, 8)
+                // LINEAGE — where this came from + what produced it ("from Q3 kickoff · via Scout").
+                // A crafted chip, not a flat caption: a branch glyph + the source card + the agent/chain.
+                if let p = rec.provenance, !p.line.isEmpty {
+                    DioLineageRow(provenance: p).padding(.horizontal, 18).padding(.bottom, 8)
+                }
                 ScrollView(showsIndicators: false) {
                     Text(rec.body).font(.system(size: 14.5, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.92))
                         .frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: false, vertical: true).padding(.horizontal, 18)
@@ -2060,6 +2099,39 @@ struct DioPrintedCard: View {
             .padding(.horizontal, 18).scaleEffect(shown ? 1 : 0.85).opacity(shown ? 1 : 0)
         }
         .onAppear { withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { shown = true } }
+    }
+}
+
+// THE LINEAGE ROW — the crafted "from <source card> · via <agent/chain>" line on a run result.
+// Not a flat caption: a tinted source-card pill, a flowing connector glyph, and a via-pill that
+// reads the agent vs crew icon. Reused by the printed card; the Output pull-out carries the same
+// text in its subtitle. Honest provenance the user (and the synced Artifact) can trust.
+struct DioLineageRow: View {
+    let provenance: RunProvenance
+    private var viaIsChain: Bool { provenance.viaKind == "chain" }
+    var body: some View {
+        HStack(spacing: 7) {
+            // FROM — the input card.
+            HStack(spacing: 5) {
+                Image(systemName: "doc.text.fill").font(.system(size: 9, weight: .bold)).foregroundStyle(DioPal.accent.opacity(0.9))
+                Text(provenance.sourceCardTitle.isEmpty ? "a card" : provenance.sourceCardTitle)
+                    .font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.92)).lineLimit(1)
+            }
+            .padding(.horizontal, 9).frame(height: 24)
+            .background(Capsule().fill(DioPal.accent.opacity(0.12)).overlay(Capsule().strokeBorder(DioPal.accent.opacity(0.3), lineWidth: 0.8)))
+            // the flow connector
+            Image(systemName: "arrow.right").font(.system(size: 9, weight: .black)).foregroundStyle(DioPal.muted.opacity(0.8))
+            // VIA — the agent/chain that produced it.
+            HStack(spacing: 5) {
+                Image(systemName: viaIsChain ? "arrow.triangle.branch" : "sparkles")
+                    .font(.system(size: 9, weight: .bold)).foregroundStyle(DioPal.mint)
+                Text(provenance.viaName.isEmpty ? (viaIsChain ? "a crew" : "an agent") : provenance.viaName)
+                    .font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.mint).lineLimit(1)
+            }
+            .padding(.horizontal, 9).frame(height: 24)
+            .background(Capsule().fill(DioPal.mint.opacity(0.12)).overlay(Capsule().strokeBorder(DioPal.mint.opacity(0.32), lineWidth: 0.8)))
+            Spacer(minLength: 0)
+        }
     }
 }
 
@@ -2437,6 +2509,10 @@ struct DioStage: View {
     // Routed through the paired host PC — the iPad holds no credential. Reuses the desk's Mac pairing.
     @AppStorage("hs.peer.host") private var peerHost = ""
     @AppStorage("hs.peer.port") private var peerPort = "8000"
+    // The remembered RUNS-ON choice (Phase-15 fluid compute) — "" = unset (sensible default),
+    // "device" = on this iPad, "mac" = on your Mac. The picker still opens; it just pre-honors
+    // the last pick so the user isn't re-choosing every run. Falls back to on-device when unpaired.
+    @AppStorage("hs.desk.runtarget") private var runTargetPref = ""
     @State private var sendSourceId: String? = nil
     @State private var sendTargetName = ""
     @State private var sendTargetConn = "slack"          // which host connector ("slack" / "webhook")
@@ -2874,6 +2950,8 @@ struct DioStage: View {
                 if let run = pendingHubRun {
                     DioRunTargetSheet(run: run, paired: hostLink != nil,
                                       peerLabel: peerHost.isEmpty ? "your Mac" : peerHost,
+                                      preferred: preferredRunTarget,
+                                      remembered: DeskRunTarget(rawValue: runTargetPref) != nil,
                                       onDevice: { runOnDevice(run) },
                                       onHub: { runOnHub(run) },
                                       onCancel: { withAnimation { pendingHubRun = nil } })
@@ -3141,7 +3219,7 @@ struct DioStage: View {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                             withAnimation { pendingHubRun = PendingHubRun(kind: .agent(agents[0]),
                                                                           input: "Welcome to the Q3 kickoff. The big bet is shipping the desk to the web; Karol owns mesh sync.",
-                                                                          inputTitle: "Q3 kickoff") }
+                                                                          inputId: "mtg.q3", inputTitle: "Q3 kickoff") }
                         }
                     }
                     // a hub run's RESULT — the printed card with the cloud · your Mac egress badge.
@@ -3151,7 +3229,9 @@ struct DioStage: View {
                             printedEgress = .cloud("your Mac")
                             withAnimation { printed = OutputRecord(id: "hubdemo", title: "Scout",
                                 body: "Three concrete facts: the mesh-sync approval contract is the riskiest piece, the air-gapped proof is due Friday, and the egress badge copy still has no owner.",
-                                source: "Q3 kickoff", lens: "Agent · your Mac", path: "") }
+                                source: "Q3 kickoff", lens: "Agent · your Mac", path: "",
+                                provenance: RunProvenance(sourceCardId: "mtg.q3", sourceCardTitle: "Q3 kickoff",
+                                                          viaId: "seed1", viaName: "Scout", viaKind: "agent")) }
                         }
                     }
                     if ag == "chainrelay" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { chainStep = 1; chainResults = ["Three key facts: the mesh-sync approval contract is the riskiest piece, the air-gapped proof is due Friday, and the egress badge copy has no owner yet."]; withAnimation { chainRelay = chains.first } } }
@@ -3696,11 +3776,11 @@ struct DioStage: View {
             guard let ap = target as? AgentPrimitive,
                   let src = members().first(where: { $0.id == sourceId }) else { break }
             // offer WHERE it runs (on-device vs your Mac's big model) — on-device stays default.
-            offerRunTarget(.init(kind: .agent(ap.rec), input: src.routableText, inputTitle: src.title))
+            offerRunTarget(.init(kind: .agent(ap.rec), input: src.routableText, inputId: src.id, inputTitle: src.title))
         case .chain:                                            // a crew → run the card through each agent in order
             guard let cp = target as? ChainPrimitive,
                   let src = members().first(where: { $0.id == sourceId }) else { break }
-            offerRunTarget(.init(kind: .chain(cp.rec), input: src.routableText, inputTitle: src.title))
+            offerRunTarget(.init(kind: .chain(cp.rec), input: src.routableText, inputId: src.id, inputTitle: src.title))
         case .kb:                                               // a knowledge base → file the card into it
             guard let kp = target as? KBPrimitive, let idx = kbs.firstIndex(where: { $0.id == kp.rec.id }) else { break }
             #if canImport(UIKit)
@@ -3801,7 +3881,9 @@ struct DioStage: View {
     }
 
     // the shared inference tail: theater → callLLM → printed card (keep/bin). Used by routes and agents.
-    private func runAssembled(lens: String, source: String, fullPrompt: String) {
+    // `provenance` is the run lineage (input card + the agent/chain that produced it) for routed runs;
+    // nil for direct lens routes (their `source` is the lineage).
+    private func runAssembled(lens: String, source: String, fullPrompt: String, provenance: RunProvenance? = nil) {
         routeLensRun = lens
         let zpath = pathKey
         haptic(.heavy)
@@ -3817,7 +3899,7 @@ struct DioStage: View {
                 #endif
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     printed = OutputRecord(id: UUID().uuidString, title: lens, body: clean.isEmpty ? "(the model returned nothing)" : clean,
-                                           source: source, lens: lens, path: zpath)
+                                           source: source, lens: lens, path: zpath, provenance: provenance)
                     printedEgress = InferenceConfigStore.shared.isLocal ? .local : .cloud("endpoint")
                 }
                 selectedSet = []
@@ -3844,12 +3926,13 @@ struct DioStage: View {
     }
 
     // route a card THROUGH an agent (radial): assemble role + context + the card, infer → printed card.
-    private func runAgent(_ a: AgentRecord, input: String, inputTitle: String) {
+    // `provenance` records the lineage (input card + this agent) onto the resulting output.
+    private func runAgent(_ a: AgentRecord, input: String, inputTitle: String, provenance: RunProvenance? = nil) {
         var blocks = agentRoleAndContext(a)
         let template = a.userTemplate.isEmpty ? "{input}" : a.userTemplate
         blocks.append("[TASK]\n" + template.replacingOccurrences(of: "{input}", with: String(input.prefix(6000))))
         routeSourceId = nil
-        runAssembled(lens: a.name, source: inputTitle, fullPrompt: blocks.joined(separator: "\n\n"))
+        runAssembled(lens: a.name, source: inputTitle, fullPrompt: blocks.joined(separator: "\n\n"), provenance: provenance)
     }
 
     // one conversational turn — role + context + the running transcript + the new message.
@@ -3869,7 +3952,8 @@ struct DioStage: View {
     }
 
     // run a chain (crew): thread the input through each agent in order; the relay animates; final → printed card.
-    private func runChain(_ c: ChainRecord, input: String, inputTitle: String) {
+    // `provenance` records the lineage (input card + this crew) onto the final output.
+    private func runChain(_ c: ChainRecord, input: String, inputTitle: String, provenance: RunProvenance? = nil) {
         let steps = c.steps.compactMap { sid in agents.first { $0.id == sid } }
         guard !steps.isEmpty else { return }
         haptic(.heavy)
@@ -3892,7 +3976,7 @@ struct DioStage: View {
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             #endif
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                printed = OutputRecord(id: UUID().uuidString, title: c.name, body: carry, source: inputTitle, lens: "Chain", path: zpath)
+                printed = OutputRecord(id: UUID().uuidString, title: c.name, body: carry, source: inputTitle, lens: "Chain", path: zpath, provenance: provenance)
                 printedEgress = InferenceConfigStore.shared.isLocal ? .local : .cloud("endpoint")
             }
         }
@@ -3910,8 +3994,21 @@ struct DioStage: View {
         return HTTPDesktopClient(config: cfg)
     }
 
-    /// Open the where-it-runs picker for a routed agent/chain. On-device stays the
-    /// default; "your Mac" is offered when paired, disabled (with a cue) when not.
+    /// The remembered RUN-ON choice, sanity-clamped to what's actually possible right now:
+    /// honors the last pick when valid; otherwise on-device. "On your Mac" is only sensible
+    /// when paired — an unpaired desk always defaults to on-device regardless of the stored pref.
+    private var preferredRunTarget: DeskRunTarget {
+        if hostLink != nil, DeskRunTarget(rawValue: runTargetPref) == .mac { return .mac }
+        return .device
+    }
+
+    /// Persist the user's RUN-ON pick so the next run pre-selects it (easy override stays — the
+    /// picker still opens). We don't persist a forced on-device fallback, only an explicit choice.
+    private func rememberRunTarget(_ t: DeskRunTarget) { runTargetPref = t.rawValue }
+
+    /// Open the where-it-runs picker for a routed agent/chain. The picker pre-highlights the
+    /// remembered choice (on-device by default / when unpaired); "your Mac" is offered when
+    /// paired, disabled (with a cue) when not.
     private func offerRunTarget(_ run: PendingHubRun) {
         haptic(.medium)
         withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { pendingHubRun = run }
@@ -3919,10 +4016,11 @@ struct DioStage: View {
 
     /// The user picked on-device — fire the existing local run (unchanged behavior).
     private func runOnDevice(_ run: PendingHubRun) {
+        rememberRunTarget(.device)
         withAnimation { pendingHubRun = nil }
         switch run.kind {
-        case .agent(let a): runAgent(a, input: run.input, inputTitle: run.inputTitle)
-        case .chain(let c): runChain(c, input: run.input, inputTitle: run.inputTitle)
+        case .agent(let a): runAgent(a, input: run.input, inputTitle: run.inputTitle, provenance: run.provenance)
+        case .chain(let c): runChain(c, input: run.input, inputTitle: run.inputTitle, provenance: run.provenance)
         }
     }
 
@@ -3930,6 +4028,7 @@ struct DioStage: View {
     /// via `HTTPDesktopClient`, land the result as a printed card with a CLOUD egress
     /// badge (it ran on the Mac, not on-device). Errors surface honestly — never silent.
     private func runOnHub(_ run: PendingHubRun) {
+        rememberRunTarget(.mac)
         withAnimation { pendingHubRun = nil }
         guard let client = desktopClient else {
             routeError = "Pair your Mac first to run on its big model."
@@ -3960,7 +4059,8 @@ struct DioStage: View {
                                            body: clean.isEmpty ? "(your Mac returned nothing)" : clean,
                                            source: source,
                                            lens: run.isChain ? "Chain · your Mac" : "Agent · your Mac",
-                                           path: zpath)
+                                           path: zpath,
+                                           provenance: run.provenance)
                     printedEgress = .cloud("your Mac")
                 }
                 selectedSet = []
