@@ -63,7 +63,7 @@ reuses three proven seams:
 
 | ID | Title | Status |
 |----|-------|--------|
-| HSM-18-01 | The dictation pipeline client + authoring/preview screen — **leads** | todo |
+| HSM-18-01 | The dictation pipeline client + authoring/preview screen — **leads** | in-progress (client spine + teleprompter screen landed, sim-proven; voice input + metal proof remain) |
 | HSM-18-02 | Voice command macros fire on the remote relay + the iPad CommandsBoard | in-progress (hub half landed; iPad board todo) |
 | HSM-18-03 | Spoken language at every WhisperKit call site | in-progress (main app done; harness apps + metal proof remain) |
 | HSM-18-04 | The spoken-symbol dictionary, ported to Swift | in-progress (built-ins ported + tested + on the dictation path; user-symbol editor + metal proof remain) |

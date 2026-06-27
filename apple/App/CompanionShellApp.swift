@@ -94,6 +94,35 @@ final class ShellModel: ObservableObject {
         _ = await CompanionMeetings(client: c).stop()
         await load()
     }
+
+    // MARK: Dictation teleprompter (HSM-18-01) — preview the rewrite + its destination
+    // BEFORE a keystroke leaves the app, then send to the Mac. Voice input is the next layer;
+    // the hero here is the receipt-before-the-action.
+    @Published var dictateText = ""
+    @Published var dictatePreview: DictationDryRun?
+    @Published var dictating = false
+    @Published var dictateError = ""
+    @Published var dictateSent = false
+
+    /// Run the typed utterance through the hub's dry-run so the user watches the rewrite resolve.
+    func previewDictation() async {
+        let utterance = dictateText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !utterance.isEmpty else { return }
+        guard let c = client() else { dictateError = "Pair your Mac first."; return }
+        dictating = true; dictateError = ""; dictateSent = false; defer { dictating = false }
+        do { dictatePreview = try await c.dictationDryRun(utterance: utterance) }
+        catch { dictatePreview = nil; dictateError = "Couldn't reach your Mac for a preview." }
+    }
+
+    /// Commit the previewed text: free-type the rewritten result into the focused Mac app.
+    func sendDictation() async {
+        guard let c = client(), let preview = dictatePreview else { return }
+        dictating = true; dictateError = ""; defer { dictating = false }
+        do {
+            _ = try await c.sendRemoteDictation(text: preview.finalText, target: .focused)
+            dictateSent = true; dictatePreview = nil; dictateText = ""
+        } catch { dictateError = "Send failed — is a Mac app focused?" }
+    }
 }
 
 // MARK: - Shell
@@ -136,6 +165,20 @@ struct ShellView: View {
         }
         .tint(Sig.accent)
         .task { if model.canConnect { await model.load() } }
+        .onAppear {
+            #if targetEnvironment(simulator)
+            // HS_SHELL_DEMO=teleprompter seeds a resolved dry-run so the Dictate screen's preview
+            // hero renders without a live hub (a layout proof, not a device proof).
+            if ProcessInfo.processInfo.environment["HS_SHELL_DEMO"] == "teleprompter" {
+                model.host = model.host.isEmpty ? "192.168.1.13" : model.host
+                model.dictateText = "use redis with a twenty four hour TTL period"
+                model.dictatePreview = DictationDryRun(
+                    finalText: "Use Redis with a 24 hour TTL.",
+                    target: DryRunTarget(app: "Cursor", window: nil, process: nil, profile: nil, confidence: 0.91),
+                    warnings: [], totalElapsedMs: 380, status: "ok", blocksCount: 2, project: "holdspeak")
+            }
+            #endif
+        }
     }
 
     // MARK: top bar — identity + connection chip
@@ -226,12 +269,91 @@ struct ShellView: View {
     // MARK: Dictate — nav slot (on-device)
 
     private var dictateScreen: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            peerHeader("DICTATE", "Speak; it types — fully on-device", Sig.local, live: true)
-            FlowChips(["Push-to-talk", "On-device Whisper", "Rich pipeline on send"], tint: Sig.local)
-            rowNote("Dictation runs on this iPad. The deep dictation surface lands with the on-device experience; the companion never moves it off the device.")
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                peerHeader("DICTATE", "Watch the rewrite resolve, then send to your Mac", Sig.local, live: true)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("WHAT YOU'D SAY").font(.caption2.weight(.bold)).tracking(1.4).foregroundStyle(Sig.faint)
+                    TextField("Type or paste an utterance…", text: $model.dictateText, axis: .vertical)
+                        .lineLimit(2...5).font(.body).foregroundStyle(Sig.text)
+                        .padding(12).background(Sig.s2, in: RoundedRectangle(cornerRadius: 11))
+                        .overlay(RoundedRectangle(cornerRadius: 11).stroke(Sig.line, lineWidth: 1))
+                    Button { Task { await model.previewDictation() } } label: {
+                        HStack(spacing: 7) {
+                            if model.dictating && model.dictatePreview == nil { ProgressView().controlSize(.mini).tint(.black) }
+                            else { Image(systemName: "wand.and.stars") }
+                            Text(model.dictating && model.dictatePreview == nil ? "Resolving…" : "Preview the rewrite")
+                        }
+                        .font(.subheadline.weight(.semibold)).foregroundStyle(.black)
+                        .frame(maxWidth: .infinity).padding(.vertical, 11)
+                        .background(Sig.local, in: RoundedRectangle(cornerRadius: 11))
+                    }
+                    .disabled(model.dictateText.trimmingCharacters(in: .whitespaces).isEmpty || model.dictating)
+                }
+
+                if let preview = model.dictatePreview {
+                    let destination = preview.target?.label
+                    VStack(alignment: .leading, spacing: 11) {
+                        HStack(spacing: 7) {
+                            Image(systemName: "arrow.right.circle.fill").foregroundStyle(Sig.local)
+                            Text(destination.map { "Types into \($0)" } ?? "Types into the focused Mac app")
+                                .font(.caption.weight(.semibold)).foregroundStyle(Sig.muted)
+                            Spacer()
+                            Text("local + LAN").font(.caption2.weight(.medium)).foregroundStyle(Sig.faint)
+                        }
+                        Text(preview.finalText).font(.title3.weight(.semibold)).foregroundStyle(Sig.text)
+                            .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+                        HStack(spacing: 8) {
+                            if let ms = preview.totalElapsedMs { metaChip("\(Int(ms)) ms", "bolt.fill", Sig.faint) }
+                            if let b = preview.blocksCount, b > 0 { metaChip("\(b) block\(b == 1 ? "" : "s")", "square.stack.3d.up.fill", Sig.faint) }
+                            if let w = preview.warnings, !w.isEmpty { metaChip("\(w.count) warning\(w.count == 1 ? "" : "s")", "exclamationmark.triangle.fill", Sig.warn) }
+                        }
+                        HStack(spacing: 10) {
+                            Button { model.dictatePreview = nil } label: {
+                                Text("Edit").font(.subheadline.weight(.semibold)).foregroundStyle(Sig.muted)
+                                    .frame(maxWidth: .infinity).padding(.vertical, 11)
+                                    .background(Sig.s2, in: RoundedRectangle(cornerRadius: 11))
+                            }
+                            Button { Task { await model.sendDictation() } } label: {
+                                HStack(spacing: 7) {
+                                    if model.dictating { ProgressView().controlSize(.mini).tint(.black) }
+                                    else { Image(systemName: "paperplane.fill") }
+                                    Text("Send to your Mac")
+                                }
+                                .font(.subheadline.weight(.semibold)).foregroundStyle(.black)
+                                .frame(maxWidth: .infinity).padding(.vertical, 11)
+                                .background(Sig.local, in: RoundedRectangle(cornerRadius: 11))
+                            }.disabled(model.dictating)
+                        }
+                    }
+                    .padding(13).background(Sig.s1, in: RoundedRectangle(cornerRadius: 13))
+                    .overlay(RoundedRectangle(cornerRadius: 13).stroke(Sig.local.opacity(0.45), lineWidth: 1))
+                }
+
+                if model.dictateSent {
+                    HStack(spacing: 7) {
+                        Image(systemName: "checkmark.circle.fill").foregroundStyle(Sig.ok)
+                        Text("Sent to your Mac").font(.caption.weight(.semibold)).foregroundStyle(Sig.ok)
+                    }
+                }
+                if !model.dictateError.isEmpty {
+                    Text(model.dictateError).font(.caption).foregroundStyle(Sig.warn)
+                }
+                rowNote("Preview shows exactly what would type, before anything leaves the app. Send free-types it into the focused Mac app, never autonomously. Speak-to-fill lands next.")
+            }
+            .cardChrome(border: Sig.local.opacity(0.35))
         }
-        .cardChrome(border: Sig.local.opacity(0.35))
+    }
+
+    private func metaChip(_ text: String, _ icon: String, _ tint: Color) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon).font(.system(size: 9, weight: .bold))
+            Text(text).font(.caption2.weight(.medium))
+        }
+        .foregroundStyle(tint)
+        .padding(.horizontal, 8).padding(.vertical, 5)
+        .background(Sig.s2, in: Capsule())
     }
 
     // MARK: Companion — nav slot (Phase 13 lives here)
