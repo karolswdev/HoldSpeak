@@ -78,6 +78,18 @@ const GROUPS = [
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7M21 3v5h-5" /></svg>
         <span x-text="`Synced ${updatedLabel()}`">not synced</span>
       </span>
+      {/* ── ambient trust: the canonical egress badge + a readiness line,
+            both sourced from GET /api/setup/status (no reassurance prose;
+            POSITIONING canon — ONE structured badge, never a sentence). ── */}
+      <a class="hub-egress egress-badge" :class="`is-${egressBadge().scope}`"
+         x-show="setupLoaded" x-cloak href="/setup"
+         :title="egressBadge().title" :aria-label="egressBadge().title"
+         x-text="egressBadge().text">Local</a>
+      <a class="hub-ready" :class="readyTone()" x-show="setupLoaded" x-cloak
+         href="/setup" :title="readyTitle()">
+        <span class="hub-ready-dot"></span>
+        <span x-text="readyLine()">Ready</span>
+      </a>
       <span class="hub-error" x-show="error" x-cloak x-text="error"></span>
     </div>
 
@@ -925,6 +937,23 @@ const GROUPS = [
   .hub-status.unreachable .hub-dot{ background: var(--danger-signal); }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
   .hub-synced { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--text-faint); }
+  /* ambient trust: the egress badge (canonical .egress-badge styling) + a
+     one-line readiness chip, both linking through to /setup. */
+  .hub-egress { font-family: var(--font-mono); text-decoration: none; cursor: pointer; }
+  .hub-egress:hover { filter: brightness(1.15); }
+  .hub-egress:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: var(--focus-outline-offset); }
+  .hub-ready {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    font-family: var(--font-mono); font-size: var(--font-size-xs); text-decoration: none;
+    padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill);
+    border: 1px solid var(--border-subtle); color: var(--text-faint);
+  }
+  .hub-ready:hover { border-color: var(--border-strong); color: var(--text-muted); }
+  .hub-ready:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: var(--focus-outline-offset); }
+  .hub-ready-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .hub-ready.ready   { color: var(--ok-strong); }
+  .hub-ready.warn    { color: var(--warn-strong); }
+  .hub-ready.blocked { color: var(--danger); }
   .hub-error { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--danger); margin-left: auto; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   /* ── group ── */

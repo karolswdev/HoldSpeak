@@ -37,6 +37,12 @@ function DeskApp() {
     coderReady: false,
     coderBlockers: [],
 
+    // ── ambient trust (HS-21-04) — the canonical egress posture + readiness,
+    // both sourced from GET /api/setup/status. `setup` is the raw status block
+    // (or null when the adapter is unreachable — the chips simply hide).
+    setup: null,
+    setupLoaded: false,
+
     // ── the store, by kind ──
     items: {
       meeting: [],
@@ -97,8 +103,87 @@ function DeskApp() {
     async init() {
       await this.loadAll();
       this.loading = false;
+      this.loadSetup();
       this.refreshCoders();
       this.coderTimer = setInterval(() => this.refreshCoders(), 4000);
+    },
+
+    // ── ambient trust + readiness (HS-21-04) ─────────────────────────────────
+    // Read the live posture from the same adapter the /setup surface uses
+    // (GET /api/setup/status). Failures are silent: the chips stay hidden so we
+    // never assert a posture we couldn't confirm.
+    async loadSetup() {
+      try {
+        const res = await fetch("/api/setup/status");
+        if (!res.ok) return;
+        this.setup = await res.json();
+        this.setupLoaded = true;
+      } catch (_e) {
+        /* adapter unreachable — leave the ambient chips hidden (honest). */
+      }
+    },
+
+    /**
+     * The canonical egress badge for the live posture: `{scope, text, title}`.
+     * `scope` is the structured value the shared `.egress-badge` CSS keys on
+     * (local | mixed | cloud) — the ONE structured badge that replaces privacy
+     * prose (POSITIONING canon). The glyph + fallback word mirror the shared
+     * `EGRESS_SCOPES` map in egress-badge.js; this is a placement port, not a
+     * new visual language (desk-app.js is eval'd via ?raw, so no ES import).
+     */
+    egressBadge() {
+      const t = (this.setup && this.setup.trust) || {};
+      // Off-loopback bind with no auth token, or actuators on → external writes
+      // are possible: local + cloud.
+      const bind = t.web_bind;
+      const offLoopback = bind && bind !== "127.0.0.1" && bind !== "localhost" && bind !== "::1";
+      if (t.actuators_enabled || (offLoopback && !t.auth_token_set)) {
+        return { scope: "mixed", text: "⌂+☁ Local + cloud", title: "Local plus a configured cloud reach. Writes still need your approval." };
+      }
+      // A transcript can be sent to a configured endpoint → cloud.
+      if (t.transcript_egress && t.transcript_egress !== "none") {
+        const ep = (t.configured_endpoints && t.configured_endpoints[0]) || "";
+        const label = ep ? `Cloud · ${ep}` : "Configured endpoint";
+        return { scope: "cloud", text: `☁ ${label}`, title: "A transcript can be sent to a configured endpoint." };
+      }
+      // Nothing leaves the machine → local.
+      return { scope: "local", text: "⌂ Local only", title: "Everything stays on this machine." };
+    },
+
+    /** The /api/setup/status overall verdict: "ready" | "blocked" | other. */
+    setupOverall() {
+      return (this.setup && this.setup.overall) || "unknown";
+    },
+
+    /** The readiness chip tone class. */
+    readyTone() {
+      const o = this.setupOverall();
+      if (o === "ready") return "ready";
+      if (o === "blocked") return "blocked";
+      return "warn";
+    },
+
+    /** A one-line readiness indicator, e.g. "Ready · 6/6 checks". */
+    readyLine() {
+      const s = this.setup;
+      if (!s) return "";
+      const sections = s.sections || [];
+      const pass = sections.filter((x) => x.status === "pass").length;
+      const total = sections.length;
+      const counts = total ? ` · ${pass}/${total} checks` : "";
+      const o = this.setupOverall();
+      if (o === "ready") return `Ready${counts}`;
+      if (o === "blocked") {
+        const fails = sections.filter((x) => x.status === "fail").length;
+        return `${fails || 1} blocking${counts}`;
+      }
+      const advisory = sections.filter((x) => x.status === "warn").length;
+      return advisory ? `${advisory} to review${counts}` : `Almost ready${counts}`;
+    },
+
+    /** Hover title for the readiness chip — points at /setup for the detail. */
+    readyTitle() {
+      return `${this.readyLine()}. Open Setup for the full checklist.`;
     },
 
     // ── totals + grouping helpers (data-driven by the page descriptor) ──
