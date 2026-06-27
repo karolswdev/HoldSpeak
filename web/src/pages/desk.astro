@@ -794,16 +794,16 @@ const GROUPS = [
           <ul class="file-list" x-show="items.directory.length" x-cloak>
             <template x-for="d in items.directory" {...{ ":key": "d.id" }}>
               <li>
-                <button type="button" class="file-option" :class="{ on: isFiledIn(filing.id, d.id) }" :disabled="filingBusy === d.id" @click="toggleFile(d)">
-                  <span class="file-check" :class="{ on: isFiledIn(filing.id, d.id) }">
-                    <svg x-show="isFiledIn(filing.id, d.id)" x-cloak viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                <button type="button" class="file-option" :class="{ on: isFiledIn(filing?.id, d.id) }" :disabled="filingBusy === d.id" @click="toggleFile(d)">
+                  <span class="file-check" :class="{ on: isFiledIn(filing?.id, d.id) }">
+                    <svg x-show="isFiledIn(filing?.id, d.id)" x-cloak viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
                   </span>
                   <span class="file-option-body">
                     <span class="file-option-name" x-text="d.name"></span>
                     <span class="file-option-meta" x-text="`${d.memberIds.length} item${d.memberIds.length === 1 ? '' : 's'}`"></span>
                   </span>
                   <span class="file-option-state" x-show="filingBusy === d.id" x-cloak>…</span>
-                  <span class="file-option-state filed" x-show="filingBusy !== d.id && isFiledIn(filing.id, d.id)" x-cloak>filed</span>
+                  <span class="file-option-state filed" x-show="filingBusy !== d.id && isFiledIn(filing?.id, d.id)" x-cloak>filed</span>
                 </button>
               </li>
             </template>
