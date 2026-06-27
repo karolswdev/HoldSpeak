@@ -535,9 +535,15 @@ struct SketchToDiagramView: View {
     /// capture transcriber from UserDefaults at transcribe time, so a change applies on the next recording.
     @Published var whisperModel: String { didSet { d.set(whisperModel, forKey: K.whisper) } }
     static let whisperKey = "hs.inf.whisper"        // the UserDefaults key the transcriber reads directly
+    /// HSM-18-03 — the spoken language for transcription (dictation, meetings, import). "auto" (the
+    /// default) is Whisper's per-utterance detection, byte-identical to before. Read by every
+    /// transcriber from UserDefaults at transcribe time (so a change applies on the next recording),
+    /// matching the hub's one-knob language model (holdspeak/languages.py, Phase 59).
+    @Published var whisperLanguage: String { didSet { d.set(whisperLanguage, forKey: K.whisperLang) } }
+    static let whisperLangKey = "hs.inf.whisperlang"  // the UserDefaults key the transcriber reads directly
 
     private let d = UserDefaults.standard
-    private enum K { static let mode = "hs.inf.mode", url = "hs.inf.url", model = "hs.inf.model", key = "hs.inf.key", diarize = "hs.inf.diarize", localModel = "hs.inf.localmodel", whisper = "hs.inf.whisper" }
+    private enum K { static let mode = "hs.inf.mode", url = "hs.inf.url", model = "hs.inf.model", key = "hs.inf.key", diarize = "hs.inf.diarize", localModel = "hs.inf.localmodel", whisper = "hs.inf.whisper", whisperLang = "hs.inf.whisperlang" }
     private init() {
         mode = RuntimeMode(rawValue: d.string(forKey: K.mode) ?? "") ?? .local
         endpointURL = d.string(forKey: K.url) ?? ""
@@ -546,6 +552,7 @@ struct SketchToDiagramView: View {
         diarizationOn = d.object(forKey: K.diarize) as? Bool ?? true
         localModelId = d.string(forKey: K.localModel) ?? ""
         whisperModel = d.string(forKey: K.whisper) ?? "base"
+        whisperLanguage = d.string(forKey: K.whisperLang) ?? "auto"
     }
 
     var isLocal: Bool { mode == .local }

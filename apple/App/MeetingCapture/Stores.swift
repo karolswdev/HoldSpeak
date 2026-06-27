@@ -19,6 +19,18 @@ final class WhisperKitTranscriber: ITranscriber, @unchecked Sendable {
     private let model: String
     init(chunks: [AudioChunk], model: String) { self.chunks = chunks; self.model = model }
 
+    /// HSM-18-03 — the user's chosen transcription language as WhisperKit decode options. Read at
+    /// transcribe time from the same UserDefaults key `InferenceConfigStore` writes (key ==
+    /// `InferenceConfigStore.whisperLangKey`, "hs.inf.whisperlang"; hard-coded here to stay off the
+    /// main actor). "auto"/unknown resolves to `nil` = Whisper's per-utterance detection, so the
+    /// default path is byte-identical to before this wiring.
+    static func decodeOptions() -> DecodingOptions {
+        var opts = DecodingOptions()
+        let raw = UserDefaults.standard.string(forKey: "hs.inf.whisperlang") ?? "auto"
+        opts.language = (try? WhisperLanguage.normalize(raw)) ?? nil
+        return opts
+    }
+
     // The WhisperKit model is LOADED ONCE and reused. Previously every call constructed a fresh
     // `WhisperKit(...)`, which reloads the CoreML model from disk (seconds) — so live ticks
     // compounded into a frozen-feeling control plane. Cached in a lock-guarded static (WhisperKit
@@ -39,7 +51,7 @@ final class WhisperKitTranscriber: ITranscriber, @unchecked Sendable {
             whisper = try await WhisperKit(WhisperKitConfig(model: model))
             Self.cacheModel(model, whisper)
         }
-        let results = try await whisper.transcribe(audioArray: floats)
+        let results = try await whisper.transcribe(audioArray: floats, decodeOptions: Self.decodeOptions())
         // Preserve WhisperKit's real per-segment timestamps (relative to this window) instead of
         // collapsing to one zero-timestamp segment — the sliding-window commit (HSM-14-12) needs
         // them to know exactly which audio a committed segment covers. `WhisperText.clean` runs
