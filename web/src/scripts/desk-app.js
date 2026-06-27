@@ -68,7 +68,10 @@ function DeskApp() {
     kbForm: { name: "", memberIds: "" },
     directoryForm: { name: "", parentId: "" },
     chainForm: { name: "", steps: "" },
-    workflowForm: { name: "", prompt: "" },
+    // A workflow is authored either as a saved prompt OR as a minimal LINEAR
+    // chain of steps (entry → … → output). `nodes` holds the ordered model-op
+    // steps the chain builder emits; `mode` toggles which the form ships.
+    workflowForm: { name: "", prompt: "", mode: "prompt", nodes: [] },
 
     // ── filing (membership picker) ──
     filing: null, // the primitive being filed: { kind, id, title } | null
@@ -774,6 +777,88 @@ function DeskApp() {
       }
     },
 
+    // ── authoring: the linear chain builder ──
+    //
+    // The web Desk authors a MINIMAL LINEAR workflow: entry → step → … → output.
+    // The kinds offered are the chain-safe ones the hub's `workflow_graph.linearize`
+    // accepts and the iPad Blueprint produces (no branch/loop/fan-out). Each step
+    // is one model op; `buildGraphJson` lowers them to the canonical snake_case
+    // `graph_json` wire (nodes with id + a single-key `kind` tag, ordered `exec_edges`
+    // on the "then" exec-out, and the `entry` id) — byte-shaped like the iPad's and
+    // accepted as-is by the hub linearizer.
+
+    /** The step kinds the linear builder offers (chain-safe model ops). */
+    workflowStepKinds: [
+      { kind: "llm", label: "Prompt", hint: "Your own instruction; {input} is the prior step's text." },
+      { kind: "summarize", label: "Summarize", hint: "Tighten the input into a faithful summary." },
+      { kind: "rewrite", label: "Rewrite", hint: "Restate the input in a tone you set." },
+      { kind: "extract", label: "Extract", hint: "Pull one artifact (decisions, actions…) out of the input." },
+    ],
+
+    /** Append a fresh step to the linear chain. */
+    addWorkflowStep(kind = "llm") {
+      this.workflowForm.nodes.push({
+        kind,
+        prompt: "",       // llm
+        tone: "concise",  // rewrite
+        artifactType: "decisions", // extract
+      });
+    },
+    /** Drop the step at `i` from the chain. */
+    removeWorkflowStep(i) {
+      this.workflowForm.nodes.splice(i, 1);
+    },
+    /** Move a step one slot toward the start (`dir=-1`) or end (`dir=+1`). */
+    moveWorkflowStep(i, dir) {
+      const j = i + dir;
+      const n = this.workflowForm.nodes;
+      if (j < 0 || j >= n.length) return;
+      [n[i], n[j]] = [n[j], n[i]];
+    },
+
+    /**
+     * Lower the ordered builder steps into the canonical snake_case `graph_json`.
+     *
+     * Shape (matches the iPad Blueprint + the hub `workflow_graph.linearize`):
+     *   nodes: [{ id, kind }]   kind is a single-key tag —
+     *     entry/summarize/output → {"entry":{}}, {"summarize":{}}, {"output":{}}
+     *     llm     → {"llm": {"name": .., "prompt": ..}}
+     *     rewrite → {"rewrite": {"tone": ..}}
+     *     extract → {"extract": "decisions"}   (bare-string payload)
+     *   exec_edges: [{ from: { node, name: "then" }, to }]  in chain order
+     *   entry: <entry node id>
+     *
+     * Web ships LINEAR-only by construction; it labels itself so (no control flow).
+     */
+    buildGraphJson(steps) {
+      const nodes = [{ id: "entry", kind: { entry: {} } }];
+      steps.forEach((s, i) => {
+        const id = `n${i + 1}`;
+        let kind;
+        if (s.kind === "llm") {
+          kind = { llm: { name: "Prompt", prompt: s.prompt || "" } };
+        } else if (s.kind === "rewrite") {
+          kind = { rewrite: { tone: s.tone || "concise" } };
+        } else if (s.kind === "extract") {
+          kind = { extract: s.artifactType || "decisions" };
+        } else {
+          kind = { summarize: {} };
+        }
+        nodes.push({ id, kind });
+      });
+      nodes.push({ id: "output", kind: { output: {} } });
+
+      // Wire one straight chain along the "then" exec-out, in node order.
+      const execEdges = [];
+      for (let i = 0; i < nodes.length - 1; i++) {
+        execEdges.push({
+          from: { node: nodes[i].id, name: "then" },
+          to: nodes[i + 1].id,
+        });
+      }
+      return { entry: "entry", nodes, exec_edges: execEdges, linear: true };
+    },
+
     // ── authoring: Workflow (LIVE POST /api/workflows) ──
     async submitWorkflow() {
       const f = this.workflowForm;
@@ -781,11 +866,22 @@ function DeskApp() {
         this.error = "A workflow needs a name.";
         return;
       }
+      const graphing = f.mode === "graph";
+      if (graphing && !f.nodes.length) {
+        this.error = "Add at least one step, or switch to a prompt.";
+        return;
+      }
+      if (!graphing && !f.prompt.trim()) {
+        this.error = "A prompt workflow needs a prompt, or switch to a chain.";
+        return;
+      }
       const payload = {
         name: f.name.trim(),
-        prompt: f.prompt,
-        // graph authoring lives in the Workbench; the web form ships a prompt.
-        graph_json: {},
+        // A graph workflow carries an empty prompt; the chain IS the run.
+        prompt: graphing ? "" : f.prompt,
+        // Prompt workflows ship no graph; chain workflows ship the linear graph_json
+        // the hub linearizer + the iPad both speak.
+        graph_json: graphing ? this.buildGraphJson(f.nodes) : {},
       };
       this.busy = true;
       try {
@@ -796,7 +892,7 @@ function DeskApp() {
         });
         this.items.workflow.unshift(this.fromWireWorkflow(data.workflow || data));
         this.status.workflow = "live";
-        this.workflowForm = { name: "", prompt: "" };
+        this.workflowForm = { name: "", prompt: "", mode: "prompt", nodes: [] };
         this.closeCreate();
       } catch (e) {
         this.error = `Save workflow: ${e.message}`;
